@@ -131,6 +131,7 @@ describe('ejected React skins', () => {
   it('produces CSS and Tailwind players with matching dependencies', async () => {
     const cssSkin = SKINS.find(({ id }) => id === 'default-live-video-react');
     const tailwindSkin = SKINS.find(({ id }) => id === 'default-live-video-react-tailwind');
+
     if (cssSkin?.platform !== 'react' || tailwindSkin?.platform !== 'react') {
       throw new Error('Missing live React skin fixtures');
     }

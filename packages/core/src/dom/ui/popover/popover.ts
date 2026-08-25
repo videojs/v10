@@ -339,9 +339,7 @@ export function createPopover(options: PopoverOptions): PopoverApi {
     onFocusOut(event) {
       const relatedTarget = event.relatedTarget as Node | null;
       // Don't close if focus moved within trigger or popup
-      if (relatedTarget && (triggerEl?.contains(relatedTarget) || popupEl?.contains(relatedTarget))) {
-        return;
-      }
+      if (relatedTarget && (triggerEl?.contains(relatedTarget) || popupEl?.contains(relatedTarget))) return;
 
       if (options.openOnHover?.()) {
         applyClose('blur');
@@ -385,9 +383,7 @@ export function createPopover(options: PopoverOptions): PopoverApi {
 
     onFocusOut(event) {
       const relatedTarget = event.relatedTarget as Node | null;
-      if (relatedTarget && (triggerEl?.contains(relatedTarget) || popupEl?.contains(relatedTarget))) {
-        return;
-      }
+      if (relatedTarget && (triggerEl?.contains(relatedTarget) || popupEl?.contains(relatedTarget))) return;
 
       if (consumeBlurGuard()) return;
 
@@ -403,9 +399,7 @@ export function createPopover(options: PopoverOptions): PopoverApi {
           }
 
           const active = document.activeElement;
-          if (active && (triggerEl?.contains(active) || popupEl?.contains(active))) {
-            return;
-          }
+          if (active && (triggerEl?.contains(active) || popupEl?.contains(active))) return;
 
           applyClose('blur');
         });

@@ -231,6 +231,7 @@ function baseOptions(overrides: Partial<FixtureOptions> = {}): FixtureOptions {
       items: (modules) =>
         modules.flatMap<ShadcnItem<FixtureMeta>>((module) => {
           const { filename, meta: itemMeta, transform } = module;
+
           if (basename(filename) === 'utils.ts') {
             return [
               {

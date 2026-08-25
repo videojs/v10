@@ -42,6 +42,7 @@ function isUnknownOrAnyType(type: ESTree.TSType): boolean {
 
 function isBroadRecordKeyType(type: ESTree.TSType): boolean {
   const unwrapped = unwrapTypeParentheses(type);
+
   if (
     unwrapped.type === "TSStringKeyword" ||
     unwrapped.type === "TSNumberKeyword" ||
@@ -153,9 +154,7 @@ function isDefinitelyObjectType(type: ESTree.TSType): boolean {
 
 function isDefinitelyNarrowerRecordType(type: ESTree.TSType): boolean {
   const unwrapped = unwrapTypeParentheses(type);
-  if (unwrapped.type === "TSTypeLiteral") {
-    return unwrapped.members.some((member) => member.type !== "TSIndexSignature");
-  }
+  if (unwrapped.type === "TSTypeLiteral") return unwrapped.members.some((member) => member.type !== "TSIndexSignature");
 
   if (unwrapped.type !== "TSTypeReference") return false;
 
@@ -263,6 +262,7 @@ function knownValueEvidence(
   }
 
   const declarator = variableDeclarator(variable);
+
   if (
     declarator === null ||
     declarator.parent.type !== "VariableDeclaration" ||
@@ -292,6 +292,7 @@ function widenedBinding(
   readonly boundary: ESTree.Node | null;
 } | null {
   const declarator = variableDeclarator(variable);
+
   if (
     declarator === null ||
     declarator.parent.type !== "VariableDeclaration" ||
@@ -361,6 +362,7 @@ export const noWidenThenAssertRule = defineRule({
       if (variable === null) return;
 
       const widened = widenedBinding(variable, scopes);
+
       if (
         widened === null ||
         node.start <= widened.declaredAt ||

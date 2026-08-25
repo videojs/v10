@@ -134,6 +134,7 @@ export async function buildOgTitleMap(): Promise<Map<string, string>> {
   for (const entry of await listOgTitleEntries()) {
     const normalizedPath = normalizeSitePath(entry.path);
     const existingTitle = titleMap.get(normalizedPath);
+
     if (existingTitle && existingTitle !== entry.title) {
       throw new Error(
         `Duplicate OG image path "${normalizedPath}" maps to multiple titles: ` +

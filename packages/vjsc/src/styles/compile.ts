@@ -107,6 +107,7 @@ function collectRelationships(
 
 function registerRelationshipOwner(owners: Map<string, string>, utility: string, rule: StyleManifestRule): void {
   const previous = owners.get(utility);
+
   if (previous && previous !== rule.className) {
     throw new Error(`Style relationship marker \`${utility}\` maps to both \`${previous}\` and \`${rule.className}\`.`);
   }

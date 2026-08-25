@@ -114,6 +114,7 @@ export async function requestAppCertificate({ config, signal }: FairPlayContext)
       NativeHlsDrmErrors.CERTIFICATE_REQUEST_FAILED
     );
   });
+
   if (!response.ok) {
     throw createDrmError(
       NativeHlsDrmMessages.CERTIFICATE_REQUEST_FAILED,
@@ -140,6 +141,7 @@ export async function requestLicenseKey(
   }).catch((cause) => {
     throw toDrmError(cause, NativeHlsDrmMessages.LICENSE_REQUEST_FAILED, NativeHlsDrmErrors.LICENSE_REQUEST_FAILED);
   });
+
   if (!response.ok) {
     throw createDrmError(NativeHlsDrmMessages.LICENSE_REQUEST_FAILED, NativeHlsDrmErrors.LICENSE_REQUEST_FAILED);
   }

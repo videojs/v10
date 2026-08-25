@@ -119,6 +119,7 @@ function findLocalDeclarationText(sourceFile: ts.SourceFile, localName: string):
 function getNamedExportText(sourceFile: ts.SourceFile, exportName: string): string | null {
   for (const statement of sourceFile.statements) {
     const isExported = hasExportModifier(statement);
+
     if (isExported && getStatementName(statement) === exportName) {
       return stripExportModifier(statement.getText(sourceFile));
     }
@@ -173,9 +174,7 @@ function collectDeclarationClosure(
   }
 
   const declarationText = declarations.get(declarationName) ?? getNamedExportText(sourceFile, declarationName);
-  if (!declarationText) {
-    throw new Error(`Could not find declaration "${declarationName}" in "${sourceFile.fileName}"`);
-  }
+  if (!declarationText) throw new Error(`Could not find declaration "${declarationName}" in "${sourceFile.fileName}"`);
 
   seen.add(declarationName);
 
@@ -232,11 +231,10 @@ function inlineRelativeImports(source: string, sourcePath: string, rewriteSource
     }
 
     const specifier = statement.moduleSpecifier.getText(sourceFile).slice(1, -1);
-    if (!isRelativeImport(specifier)) {
-      continue;
-    }
+    if (!isRelativeImport(specifier)) continue;
 
     const importClause = statement.importClause;
+
     if (!importClause?.namedBindings || !ts.isNamedImports(importClause.namedBindings) || importClause.name) {
       throw new Error(`Unsupported relative import in "${toRepoPath(sourcePath)}": ${statement.getText(sourceFile)}`);
     }
@@ -258,6 +256,7 @@ function inlineRelativeImports(source: string, sourcePath: string, rewriteSource
       }
 
       const targetSpecifier = targetStatement.moduleSpecifier.getText(transformedTargetFile).slice(1, -1);
+
       if (isRelativeImport(targetSpecifier)) {
         throw new Error(
           `Relative import remained after inlining in "${toRepoPath(targetPath)}": ${targetStatement.getText(

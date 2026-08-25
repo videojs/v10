@@ -14,9 +14,7 @@ export const remotePlaybackFeature = definePlayerFeature({
 
     async toggleRemotePlayback() {
       const { media, container } = target();
-      if (isRemotePlaybackConnected(media)) {
-        return requestRemotePlayback(media);
-      }
+      if (isRemotePlaybackConnected(media)) return requestRemotePlayback(media);
 
       if (isFullscreen(container, media)) {
         await exitFullscreen(media);

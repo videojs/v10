@@ -48,9 +48,7 @@ export function componentMetaPlugin(exportName = 'meta'): Plugin {
 
         const componentMeta = parseComponentMeta(exported.declarator.init, id, exportName);
         const magicString = transform.magicString;
-        if (!magicString) {
-          throw new Error('vjsc: Rolldown did not provide MagicString to the component metadata pass.');
-        }
+        if (!magicString) throw new Error('vjsc: Rolldown did not provide MagicString to the component metadata pass.');
 
         removeDeclarator(magicString, exported);
 
@@ -123,6 +121,7 @@ function removeDeclarator(magicString: RolldownMagicString, exported: ExportedMe
 
 function parseComponentMeta(expression: Expression, id: string, exportName: string): ComponentMeta {
   const value = staticValue(expression, id);
+
   if (!isRecord(value) || typeof value.name !== 'string' || value.name.length === 0) {
     throw new Error(`Component metadata \`${exportName}\` in ${id} must contain a non-empty literal \`name\`.`);
   }

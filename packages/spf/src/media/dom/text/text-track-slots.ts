@@ -55,9 +55,7 @@ export function getShowingSubtitlesTrackFromMedia(mediaElement: HTMLMediaElement
 
   for (const el of elements) {
     const track = el.track;
-    if (track.mode === 'showing' && isCaptionOrSubtitleTrack(track)) {
-      return track;
-    }
+    if (track.mode === 'showing' && isCaptionOrSubtitleTrack(track)) return track;
   }
 
   return undefined;

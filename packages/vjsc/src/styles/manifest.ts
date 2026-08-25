@@ -43,9 +43,7 @@ export async function loadStyleManifest(files: readonly string[]): Promise<Style
       const modulePath = await realpath(inputFile);
       const evaluated = await evaluateStyleModule(modulePath);
       const definition = getStyleDefinition(evaluated.module.default);
-      if (!definition) {
-        throw new Error(`Style module \`${inputFile}\` must default-export \`styles({...})\`.`);
-      }
+      if (!definition) throw new Error(`Style module \`${inputFile}\` must default-export \`styles({...})\`.`);
 
       return { definition, modulePath, watchFiles: evaluated.watchFiles };
     })
@@ -66,9 +64,7 @@ export function utilityGroupsForRule(rule: StyleManifestRule, variant?: string):
   if (!variant || Object.keys(rule.variantGroups).length === 0) return rule.utilityGroups;
 
   const selected = rule.variantGroups[variant];
-  if (!selected) {
-    throw new Error(`Style rule \`${displayRule(rule)}\` does not define the \`${variant}\` variant.`);
-  }
+  if (!selected) throw new Error(`Style rule \`${displayRule(rule)}\` does not define the \`${variant}\` variant.`);
 
   return mergeUtilityGroups([...rule.utilityGroups, ...selected]);
 }
@@ -152,6 +148,7 @@ function createStyleManifest(
     validateStyleDefinition(definition);
 
     const previousLayer = files.get(definition.file);
+
     if (previousLayer && previousLayer !== definition.layer) {
       throw new Error(
         `Style output \`${definition.file}\` is assigned to both \`${previousLayer}\` and \`${definition.layer}\`.`
@@ -188,6 +185,7 @@ function createStyleManifest(
       });
 
       const previous = classes.get(manifestRule.className);
+
       if (previous) {
         throw new Error(
           `Style class \`${manifestRule.className}\` is defined by both \`${displayRule(previous)}\` and \`${displayRule(manifestRule)}\`.`
@@ -309,6 +307,7 @@ async function evaluateStyleModule(
   try {
     const output = await bundle.generate({ format: 'esm', codeSplitting: false });
     const chunks = output.output.filter((item): item is OutputChunk => item.type === 'chunk');
+
     if (chunks.length !== 1 || !chunks[0]) {
       throw new Error(`Style module \`${modulePath}\` compiled to ${chunks.length} chunks.`);
     }

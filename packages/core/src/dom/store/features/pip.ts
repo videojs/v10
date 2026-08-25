@@ -36,9 +36,7 @@ export const pipFeature = definePlayerFeature({
 
     async togglePictureInPicture() {
       const { media, container } = target();
-      if (isPictureInPicture(media)) {
-        return exitPictureInPicture(media);
-      }
+      if (isPictureInPicture(media)) return exitPictureInPicture(media);
 
       if (isFullscreen(container, media)) {
         await exitFullscreen(media);

@@ -65,9 +65,7 @@ export function extractDataAttrs(
   componentName: string
 ): DataAttrsExtraction | null {
   const sourceFile = program.getSourceFile(filePath);
-  if (!sourceFile) {
-    return null;
-  }
+  if (!sourceFile) return null;
 
   const attrs: Array<{ name: string; description: string }> = [];
 
@@ -169,6 +167,7 @@ export function getJsDocComment(node: ts.PropertyAssignment, sourceFile: ts.Sour
   if (!lastRange) return '';
 
   const commentText = fullText.substring(lastRange.pos, lastRange.end);
+
   // Parse JSDoc comment
   if (commentText.startsWith('/**')) {
     return commentText

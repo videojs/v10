@@ -70,6 +70,7 @@ export const shadcnPackConfig: PackUserConfig = {
         items: (modules) =>
           modules.flatMap<ShadcnItem<SkinModuleMeta>>((module) => {
             const { filename, meta, transform } = module;
+
             if (filename === registryUtils) {
               return [
                 {

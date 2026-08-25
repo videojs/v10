@@ -80,6 +80,7 @@ function readExpression(expression: TargetExpression): TargetExpressionNode {
 
 function readBinding(binding: TargetBinding): string {
   const expression = readExpression(binding);
+
   if (expression.kind !== 'reference' || expression.code.includes('.')) {
     throw new Error('vjsc/target: generated function parameters must be direct bindings.');
   }

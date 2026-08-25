@@ -227,6 +227,7 @@ export function getAdjacentGuides(
 
   // Find the current guide's index
   const currentIndex = allGuides.indexOf(currentSlug);
+
   if (currentIndex === -1) {
     // Current guide not found in filtered sidebar
     return { prev: null, next: null };

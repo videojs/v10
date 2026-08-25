@@ -286,6 +286,7 @@ function renderTargetReference(
 
   const path: ComponentTargetPath = { component: reference.component, part: reference.part };
   const resolved = context.target.resolve(path);
+
   if (!resolved || !isTargetElement(resolved)) {
     throw new Error(
       `Component target did not resolve <${reference.component}${reference.part ? `.${reference.part}` : ''}>.`

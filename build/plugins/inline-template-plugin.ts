@@ -31,9 +31,7 @@ export function inlineTemplatePlugin(options: TemplatePluginOptions = {}): Build
       if (!code.includes(HTML_MARKER) && !code.includes(CSS_MARKER)) return null;
 
       const magicString = meta?.magicString;
-      if (!magicString) {
-        throw new Error('inline-template requires experimental.nativeMagicString: true.');
-      }
+      if (!magicString) throw new Error('inline-template requires experimental.nativeMagicString: true.');
 
       if (!processTemplates(code, magicString)) return null;
 
@@ -217,6 +215,7 @@ function minifyCssQuasis(quasis: string[]): string[] {
   for (let i = 0; i < quasis.length - 1; i++) {
     const token = `${EXPR_PLACEHOLDER + i}___`;
     const tokenIdx = remaining.indexOf(token);
+
     if (tokenIdx === -1) {
       // Placeholder was removed by minifier (e.g. dead code elimination).
       // Fall back to unminified for safety.

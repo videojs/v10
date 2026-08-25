@@ -144,9 +144,7 @@ export function onSkinChange(callback: (skin: Skin) => void): () => void {
 
 export function getInitialSource(audioOnly?: boolean): SourceId {
   const stored = currentSource;
-  if (audioOnly && SOURCES[stored].type !== 'mp4') {
-    return DEFAULT_AUDIO_SOURCE;
-  }
+  if (audioOnly && SOURCES[stored].type !== 'mp4') return DEFAULT_AUDIO_SOURCE;
 
   return stored;
 }

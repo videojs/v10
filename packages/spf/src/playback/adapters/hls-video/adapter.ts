@@ -439,9 +439,7 @@ export function HlsVideoMediaMixin<Base extends Constructor<any>>(BaseClass: Bas
 
     play(): Promise<void> {
       const mediaElement = this.#signals.context.mediaElement.get();
-      if (!mediaElement) {
-        return Promise.reject(new Error('HlsVideoMediaElement: no media element attached'));
-      }
+      if (!mediaElement) return Promise.reject(new Error('HlsVideoMediaElement: no media element attached'));
 
       // Signal play intent — enables loading even with preload="none"
       this.#signals.state.loadActivated.set(true);

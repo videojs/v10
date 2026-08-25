@@ -25,6 +25,7 @@ export const GET: APIRoute = async ({ params }) => {
   // Dynamic mode intentionally uses a whitelist of known site paths instead of
   // allowing arbitrary title or slug inputs.
   const ogRequest = await resolveOgRequest(params.path);
+
   if (!ogRequest) {
     return new Response('Not found', {
       status: 404,

@@ -36,9 +36,7 @@ export function formatPercent(fraction: number, locale?: string | string[]): str
 
   try {
     const formatter = getFormatter(locale) ?? getFormatter(undefined);
-    if (formatter) {
-      return formatter.format(value);
-    }
+    if (formatter) return formatter.format(value);
   } catch {
     // fall through to simple percent string
   }

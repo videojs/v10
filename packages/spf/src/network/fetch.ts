@@ -138,6 +138,7 @@ export type FetchText = (addressable: Resource, options?: RequestInit) => Promis
 /** Default {@link FetchText}: fetch the resource, reject on non-OK, return text. */
 export const fetchResolvableText: FetchText = async (addressable, options) => {
   const response = await fetchResolvable(addressable, options);
+
   if (!response.ok) {
     throw new Error(`fetchResolvableText: ${response.status} ${response.statusText} for ${addressable.url}`);
   }

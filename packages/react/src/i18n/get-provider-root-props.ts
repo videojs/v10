@@ -45,6 +45,7 @@ export function getProviderRootProps(
   const hasOverrides =
     props.locale !== undefined || props.translations !== undefined || props.onActiveLocaleChange !== undefined;
   const langRootOnly = props.langRootRef !== undefined && !hasOverrides;
+
   // Nested providers without their own locale root or overrides can use the
   // existing parent context instead of mounting another root.
   if (parent && !hasOverrides && (!langRootOnly || (parent.localeFromOwnProp ?? parent.localeFromProp))) {

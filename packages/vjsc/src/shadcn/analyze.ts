@@ -94,6 +94,7 @@ function importReference(
 
     if (node.source.type === 'TemplateLiteral' && node.source.expressions.length === 0) {
       const value = node.source.quasis[0]?.value.cooked;
+
       if (value !== null && value !== undefined) {
         return { literal: { value, start: node.source.start, end: node.source.end }, kind: 'dynamic' };
       }

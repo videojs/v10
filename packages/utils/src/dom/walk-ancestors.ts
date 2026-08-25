@@ -12,9 +12,7 @@ export function walkAncestors<Value>(
 
   while (node) {
     const value = callback(node);
-    if (!isUndefined(value)) {
-      return value;
-    }
+    if (!isUndefined(value)) return value;
 
     node = node.parentElement;
   }

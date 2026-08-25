@@ -24,6 +24,7 @@ const reactVideo = skins.find((s) => s.id === 'default-video-react');
 
 const componentSource = reactVideo?.tsx?.['VideoPlayer.tsx'];
 const playerSource = reactVideo?.tsx?.['player.ts'];
+
 if (!componentSource || !playerSource) {
   throw new Error('Ejected skin "default-video-react" not found. Run `pnpm -F site ejected-skins` first.');
 }

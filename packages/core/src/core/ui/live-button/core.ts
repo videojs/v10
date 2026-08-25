@@ -126,9 +126,7 @@ export class LiveButtonCore {
 
   #isAtLiveEdge(media: LiveButtonMediaState): boolean {
     const { currentTime, liveEdgeStart } = media;
-    if (Number.isFinite(liveEdgeStart)) {
-      return currentTime >= liveEdgeStart - LIVE_EDGE_TOLERANCE;
-    }
+    if (Number.isFinite(liveEdgeStart)) return currentTime >= liveEdgeStart - LIVE_EDGE_TOLERANCE;
 
     // Fallback: treat the trailing `LIVE_EDGE_OFFSET` window as the live edge.
     const target = liveEdgeTarget(media);

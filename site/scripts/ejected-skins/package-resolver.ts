@@ -23,6 +23,7 @@ const packageManifestCache = new Map<string, PackageManifest>();
 
 function parsePackageSpecifier(specifier: string): PackageSpecifierParts {
   const parts = specifier.split('/');
+
   if (parts.length < 2 || parts[0] !== '@videojs') {
     throw new Error(`Expected a @videojs package specifier, got "${specifier}"`);
   }
@@ -39,9 +40,7 @@ function readPackageManifest(packageDir: string): PackageManifest {
   if (cached) return cached;
 
   const manifestPath = resolve(packageDir, 'package.json');
-  if (!existsSync(manifestPath)) {
-    throw new Error(`Missing package manifest: ${manifestPath}`);
-  }
+  if (!existsSync(manifestPath)) throw new Error(`Missing package manifest: ${manifestPath}`);
 
   const manifest = JSON.parse(readFileSync(manifestPath, 'utf-8')) as PackageManifest;
 

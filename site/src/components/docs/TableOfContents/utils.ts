@@ -23,14 +23,10 @@ export function calculateRailGeometry(headingCount: number, availableHeight: num
   }
 
   const desiredHeight = headingCount * stripeHeight + (headingCount - 1) * gap;
-  if (desiredHeight <= availableHeight) {
-    return { stripeHeight, gap };
-  }
+  if (desiredHeight <= availableHeight) return { stripeHeight, gap };
 
   const compressedGap = (availableHeight - headingCount * stripeHeight) / (headingCount - 1);
-  if (compressedGap >= 0) {
-    return { stripeHeight, gap: compressedGap };
-  }
+  if (compressedGap >= 0) return { stripeHeight, gap: compressedGap };
 
   return {
     stripeHeight: Math.max(0, availableHeight / headingCount),

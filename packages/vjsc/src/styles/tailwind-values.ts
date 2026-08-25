@@ -249,9 +249,7 @@ function resolveTailwindTokens(
 
         const local = environment.get(name);
         const replacement = local ?? token.value.fallback;
-        if (replacement == null) {
-          throw new Error(`style emission: cannot resolve Tailwind variable '${name}'.`);
-        }
+        if (replacement == null) throw new Error(`style emission: cannot resolve Tailwind variable '${name}'.`);
 
         output.push(...resolveTailwindTokens(replacement, environment, [...stack, name]));
         continue;

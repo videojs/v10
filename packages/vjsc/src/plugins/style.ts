@@ -243,6 +243,7 @@ function styleBindings(filename: string, ast: Program, manifest: StyleManifest):
     if (!modulePath) continue;
 
     const defaults = statement.specifiers.filter((specifier) => specifier.type === 'ImportDefaultSpecifier');
+
     if (defaults.length !== 1 || statement.specifiers.length !== 1) {
       throw new Error(`Style import \`${statement.source.value}\` must use a default import.`);
     }

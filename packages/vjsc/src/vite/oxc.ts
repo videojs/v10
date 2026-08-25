@@ -50,6 +50,7 @@ export function viteOxcPlugin(plugin: Plugin): ViteOxcPlugin {
       ast,
       magicString: magicString as unknown as RolldownMagicString,
     });
+
     if (!result || typeof result === 'string' || result.code === undefined || typeof result.code === 'string') {
       return result;
     }

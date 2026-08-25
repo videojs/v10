@@ -142,6 +142,7 @@ describe('createHlsAudioEngine', () => {
   it('plays truly audio-only HLS source (parity with default-engine tolerance)', async () => {
     const mockFetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+
       if (url.includes('playlist.m3u8')) {
         return Promise.resolve(
           new Response(`#EXTM3U
@@ -202,6 +203,7 @@ http://example.com/audio-seg1.m4s
     // buffer actor, no video segment loading.
     const mockFetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+
       if (url.includes('playlist.m3u8')) {
         return Promise.resolve(
           new Response(`#EXTM3U
@@ -278,6 +280,7 @@ http://example.com/audio-seg1.m4s
     // subtracted in Phase 1, so no text-track machinery should be set up.
     const mockFetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+
       if (url.includes('playlist.m3u8')) {
         return Promise.resolve(
           new Response(`#EXTM3U
@@ -354,6 +357,7 @@ http://example.com/audio-seg1.m4s
     // rebuild fresh ones for B.
     const mockFetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+
       if (url.includes('playlist-a.m3u8')) {
         return Promise.resolve(
           new Response(`#EXTM3U

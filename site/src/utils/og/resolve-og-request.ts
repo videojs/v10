@@ -43,15 +43,11 @@ function parseOgRequestPath(pathParam: string | undefined): { size: OgSize; site
     .split('/')
     .filter(Boolean)
     .map(decodePathSegment);
-  if (rawSegments.some((segment) => segment === '.' || segment === '..')) {
-    return null;
-  }
+  if (rawSegments.some((segment) => segment === '.' || segment === '..')) return null;
 
   const size: OgSize = rawSegments[0] === 'twitter' ? 'twitter' : 'og';
   const siteSegments = size === 'twitter' ? rawSegments.slice(1) : rawSegments;
-  if (siteSegments.length === 0) {
-    return null;
-  }
+  if (siteSegments.length === 0) return null;
 
   return {
     size,
@@ -61,15 +57,11 @@ function parseOgRequestPath(pathParam: string | undefined): { size: OgSize; site
 
 export async function resolveOgRequest(pathParam: string | undefined): Promise<ResolvedOgRequest | null> {
   const parsedRequest = parseOgRequestPath(pathParam);
-  if (!parsedRequest) {
-    return null;
-  }
+  if (!parsedRequest) return null;
 
   const titleMap = await getOgTitleMap();
   const title = titleMap.get(parsedRequest.sitePath);
-  if (!title) {
-    return null;
-  }
+  if (!title) return null;
 
   return {
     ...parsedRequest,

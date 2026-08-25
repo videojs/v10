@@ -24,6 +24,7 @@ export function validateSkinConfig(parameters: URLSearchParams): SkinConfig | nu
   const target = parameters.get('target');
   const skin = parameters.get('skin');
   const style = parameters.get('style');
+
   if (
     (target !== 'react' && target !== 'html') ||
     !skin ||

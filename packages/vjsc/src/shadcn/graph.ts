@@ -52,6 +52,7 @@ export function validateSourceGraph<Item extends ComponentMeta>(
 
     const filename = resolve(module.filename);
     const sourcePath = toPosixPath(relative(root, filename));
+
     if (!sourcePath || escapesRoot(sourcePath)) {
       throw new Error(`Shadcn graph module must be inside the graph root: \`${module.filename}\`.`);
     }
@@ -75,6 +76,7 @@ export function validateSourceGraph<Item extends ComponentMeta>(
       if (!isAbsolute(dependencyFilename)) continue;
 
       const dependencyPath = toPosixPath(relative(root, dependencyFilename));
+
       if (dependencyPath && !escapesRoot(dependencyPath)) {
         throw new Error(
           `Shadcn source dependency was not captured: \`${sourceImport.specifier}\` from \`${module.id}\`.`

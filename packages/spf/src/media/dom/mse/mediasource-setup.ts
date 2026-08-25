@@ -44,9 +44,7 @@ export interface CreateMediaSourceOptions {
  */
 export function createMediaSource(options: CreateMediaSourceOptions = {}): MediaSource {
   const { preferManaged = false } = options;
-  if (preferManaged && supportsManagedMediaSource()) {
-    return new ManagedMediaSource!();
-  }
+  if (preferManaged && supportsManagedMediaSource()) return new ManagedMediaSource!();
 
   if (supportsMediaSource()) {
     return new MediaSource();

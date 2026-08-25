@@ -28,9 +28,7 @@ type I18nRegistryHost = { [I18N_REGISTRY_KEY]?: I18nRegistry };
 function getRegistry(): I18nRegistry {
   const host = globalThis as I18nRegistryHost;
   const existing = host[I18N_REGISTRY_KEY];
-  if (existing) {
-    return existing;
-  }
+  if (existing) return existing;
 
   const registry: I18nRegistry = { layers: new Map(), subscribers: new Set() };
 
@@ -53,9 +51,7 @@ function stripUnicodeExtensions(tag: Locale): Locale {
   const xIdx = tag.indexOf('-x-');
   const beforePrivateUse = xIdx === -1 ? tag : tag.slice(0, xIdx);
   const uIdx = beforePrivateUse.indexOf('-u-');
-  if (uIdx === -1) {
-    return tag;
-  }
+  if (uIdx === -1) return tag;
 
   return tag.slice(0, uIdx) + (xIdx === -1 ? '' : tag.slice(xIdx));
 }
@@ -82,9 +78,7 @@ export function getCanonicalLocaleKey(locale: Locale): Locale {
  */
 export function findLocaleKeys(locale: Locale): Locale[] {
   const base = getCanonicalLocaleKey(locale);
-  if (!base) {
-    return [DEFAULT_LOCALE];
-  }
+  if (!base) return [DEFAULT_LOCALE];
 
   const segments = base.split('-').filter(Boolean);
   const chain: Locale[] = [];

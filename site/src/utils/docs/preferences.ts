@@ -72,9 +72,7 @@ export function getStylePreferenceClient<F extends SupportedFramework>(framework
 
   const storageKey = STYLE_STORAGE_KEY_PREFIX + framework;
   const style = localStorage.getItem(storageKey);
-  if (style && isValidStyleForFramework(framework, style)) {
-    return style as SupportedStyle<F>;
-  }
+  if (style && isValidStyleForFramework(framework, style)) return style as SupportedStyle<F>;
 
   return null;
 }

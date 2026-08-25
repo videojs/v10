@@ -4,6 +4,14 @@ import type { ESTree, Fixer, SourceCode } from "@oxlint/plugins";
 
 type Statement = ESTree.Directive | ESTree.Statement;
 
+type CollapsibleGuard = {
+	block: ESTree.BlockStatement;
+	exit: ESTree.Statement;
+	guard: ESTree.IfStatement;
+};
+
+const MAX_COMPACT_GUARD_LENGTH = 120;
+
 const CONTROL_FLOW_TYPES = new Set([
 	"DoWhileStatement",
 	"ForInStatement",
@@ -41,9 +49,6 @@ function isControlFlowStatement(statement: Statement): boolean {
 
 function isAbruptStatement(statement: Statement): boolean {
 	const unwrapped = unwrapLabeledStatement(statement);
-	if (unwrapped.type === "BlockStatement") {
-		return unwrapped.body.length === 1 && isAbruptStatement(unwrapped.body[0]);
-	}
 
 	return (
 		unwrapped.type === "BreakStatement" ||
@@ -53,7 +58,7 @@ function isAbruptStatement(statement: Statement): boolean {
 	);
 }
 
-function guardIfStatement(statement: Statement): ESTree.IfStatement | null {
+function directGuardIfStatement(statement: Statement): ESTree.IfStatement | null {
 	const unwrapped = unwrapLabeledStatement(statement);
 
 	return unwrapped.type === "IfStatement" &&
@@ -61,6 +66,41 @@ function guardIfStatement(statement: Statement): ESTree.IfStatement | null {
 		isAbruptStatement(unwrapped.consequent)
 		? unwrapped
 		: null;
+}
+
+function singleLineGuardIfStatement(statement: Statement): ESTree.IfStatement | null {
+	const guard = directGuardIfStatement(statement);
+
+	return guard !== null && statement.loc.start.line === statement.loc.end.line ? guard : null;
+}
+
+function collapsibleGuardIfStatement(
+	sourceCode: SourceCode,
+	statement: Statement,
+): CollapsibleGuard | null {
+	if (statement.type !== "IfStatement" || statement.alternate !== null) return null;
+
+	const block = statement.consequent;
+	if (block.type !== "BlockStatement" || block.body.length !== 1) return null;
+
+	const [exit] = block.body;
+	if (!isAbruptStatement(exit) || exit.loc.start.line !== exit.loc.end.line) return null;
+
+	if (sourceCode.getCommentsInside(statement).length > 0) return null;
+
+	const openingBrace = sourceCode.getFirstToken(block);
+	if (openingBrace === null || statement.loc.start.line !== openingBrace.loc.start.line) return null;
+
+	const header = sourceCode.text.slice(statement.range[0], openingBrace.range[0]).trimEnd();
+	const exitText = sourceCode.getText(exit);
+
+	if (header.includes("\n") || header.includes("\r")) return null;
+
+	if (statement.loc.start.column + header.length + 1 + exitText.length > MAX_COMPACT_GUARD_LENGTH) {
+		return null;
+	}
+
+	return { block, exit, guard: statement };
 }
 
 function testReferencesDeclaration(
@@ -71,9 +111,7 @@ function testReferencesDeclaration(
 	return sourceCode.scopeManager.scopes.some((scope) =>
 		scope.references.some((reference) => {
 			const identifier = reference.identifier;
-			if (identifier.range[0] < test.range[0] || identifier.range[1] > test.range[1]) {
-				return false;
-			}
+			if (identifier.range[0] < test.range[0] || identifier.range[1] > test.range[1]) return false;
 
 			return reference.resolved?.defs.some(
 				(definition) =>
@@ -86,10 +124,9 @@ function testReferencesDeclaration(
 function isDeclarationBackedGuard(
 	sourceCode: SourceCode,
 	previous: Statement,
-	current: Statement,
+	guard: ESTree.IfStatement | null,
 ): boolean {
 	const declaration = variableDeclaration(previous);
-	const guard = guardIfStatement(current);
 
 	return (
 		declaration !== null &&
@@ -192,16 +229,34 @@ function removeBlankLines(
 	return fixes;
 }
 
+function collapseGuardBlock(
+	sourceCode: SourceCode,
+	guard: CollapsibleGuard,
+	fixer: Fixer,
+) {
+	const openingBrace = sourceCode.getFirstToken(guard.block);
+	const closingBrace = sourceCode.getLastToken(guard.block);
+	const previousToken = openingBrace && sourceCode.getTokenBefore(openingBrace);
+	if (openingBrace === null || closingBrace === null || previousToken === null) return [];
+
+	return [
+		fixer.replaceTextRange([previousToken.range[1], guard.exit.range[0]], " "),
+		fixer.replaceTextRange([guard.exit.range[1], closingBrace.range[1]], ""),
+	];
+}
+
 /** Keep declarations, their guards, and control flow in semantic visual paragraphs. */
 export const paddingLineBetweenStatementsRule = defineRule({
 	meta: {
 		type: "layout",
 		docs: {
 			description:
-				"Require semantic statement groups, including declaration-backed guards, to use consistent blank lines.",
+				"Keep single-line declaration-backed guards compact and separate other control flow with blank lines.",
 		},
-		fixable: "whitespace",
+		fixable: "code",
 		messages: {
+			collapsibleGuard:
+				"Collapse this declaration-backed guard to one line with its declaration.",
 			expectedBlankLine: "Expected a blank line between these statements.",
 			unexpectedBlankLine:
 				"Unexpected blank line between a declaration and its guard clause.",
@@ -212,20 +267,43 @@ export const paddingLineBetweenStatementsRule = defineRule({
 			for (let index = 1; index < statements.length; index++) {
 				const previous = statements[index - 1];
 				const current = statements[index];
-				const declarationBackedGuard = isDeclarationBackedGuard(
+				const singleLineGuard = singleLineGuardIfStatement(current);
+				const declarationBackedSingleLineGuard = isDeclarationBackedGuard(
 					context.sourceCode,
 					previous,
-					current,
+					singleLineGuard,
 				);
 				const blankLine = hasBlankLine(context.sourceCode, previous, current);
 
-				if (declarationBackedGuard) {
+				if (declarationBackedSingleLineGuard) {
 					if (!blankLine) continue;
 
 					context.report({
 						node: current,
 						messageId: "unexpectedBlankLine",
 						fix: (fixer) => removeBlankLines(context.sourceCode, previous, current, fixer),
+					});
+
+					continue;
+				}
+
+				const collapsibleGuard = collapsibleGuardIfStatement(context.sourceCode, current);
+
+				if (
+					collapsibleGuard !== null &&
+					isDeclarationBackedGuard(
+						context.sourceCode,
+						previous,
+						collapsibleGuard.guard,
+					)
+				) {
+					context.report({
+						node: current,
+						messageId: "collapsibleGuard",
+						fix: (fixer) => [
+							...removeBlankLines(context.sourceCode, previous, current, fixer),
+							...collapseGuardBlock(context.sourceCode, collapsibleGuard, fixer),
+						],
 					});
 
 					continue;

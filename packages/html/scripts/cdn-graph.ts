@@ -57,9 +57,7 @@ export function resolveClosure(dir: string, roots: readonly string[]): Set<strin
     if (seen.has(file)) continue;
 
     const path = resolve(dir, file);
-    if (!existsSync(path)) {
-      throw new Error(`Expected bundle is missing from the build: ${file}`);
-    }
+    if (!existsSync(path)) throw new Error(`Expected bundle is missing from the build: ${file}`);
 
     seen.add(file);
 

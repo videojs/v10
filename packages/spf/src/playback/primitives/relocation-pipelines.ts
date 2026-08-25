@@ -172,6 +172,7 @@ export function relocationPipelinesFor(trackType: 'video' | 'audio', derive: Der
     // discoverable type awaits the derived origin (which for shared-`min` legitimately
     // blocks on the other selected type — the barrier).
     const own = peek(state.mediaContainerData)?.[trackType];
+
     if (own?.timescale === undefined || own.baseMediaDecodeTime === undefined || own.segmentStartTime === undefined) {
       return;
     }
@@ -248,6 +249,7 @@ const relocateCuesStep = async <C extends Cue>(
     if (!presentation) return undefined;
 
     const primaryId = state.selectedVideoTrackId.get() ?? state.selectedAudioTrackId.get();
+
     if (primaryId !== undefined) {
       // A/V selected: use its origin once stamped (undefined until then → keep waiting).
       return findTrackById(presentation, primaryId)?.startMediaTime;

@@ -125,9 +125,7 @@ function wrapElement(
 function selectedLabelEdit(code: string, root: Node, binding: string): SourceEdit | undefined {
   const submenu = findJsxElement(root, 'Submenu');
   const selectedLabel = submenu && findJsxAttribute(submenu, 'selectedLabel');
-  if (selectedLabel?.value?.type !== 'JSXExpressionContainer') {
-    return undefined;
-  }
+  if (selectedLabel?.value?.type !== 'JSXExpressionContainer') return undefined;
 
   const value = selectedLabel.value.expression;
   if (value.type !== 'JSXElement') return undefined;

@@ -25,9 +25,7 @@ export function extractTemplateLiteral(source: string): string {
   const match = source.match(
     /function\s+getTemplateHTML\s*\([^)]*\)\s*\{[\s\S]*?return\s+(?:\/\*html\*\/\s*)?`([\s\S]*?)`\s*;?\s*\}/
   );
-  if (!match) {
-    throw new Error('Could not extract getTemplateHTML template literal');
-  }
+  if (!match) throw new Error('Could not extract getTemplateHTML template literal');
 
   return match[1];
 }

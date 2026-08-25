@@ -75,6 +75,7 @@ function hasKnownEvidence(
 	if (variable === null || visitedVariables.has(variable)) return false;
 
 	const declarator = variableDeclarator(variable);
+
 	if (
 		declarator === null ||
 		declarator.init === null ||
@@ -128,6 +129,7 @@ function functionName(sourceCode: SourceCode, owner: FunctionExpression | null):
 	if (owner.id !== null) return owner.id.name;
 
 	const parent = owner.parent;
+
 	if (parent.type === "VariableDeclarator" && parent.id.type === "Identifier")
 		return parent.id.name;
 

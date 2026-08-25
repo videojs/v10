@@ -65,6 +65,7 @@ export function templateTargetPlugin(options: ComponentTargetPluginOptions): Plu
 
                 return rule ? [{ target, rule }] : [];
               });
+
               if (owned.length === 0) {
                 throw new Error(`Component target does not define <Template name=${JSON.stringify(name)}>.`);
               }
@@ -265,6 +266,7 @@ function assertAvailableHostAttributes(opening: JSXOpeningElement, attributes: r
 
   for (const attribute of attributes) {
     const name = /^([:$\w-]+)/.exec(attribute)?.[1];
+
     if (name && declared.has(name)) {
       throw new Error(
         `Template parent already declares ${JSON.stringify(name)} in ${code.slice(opening.start, opening.end)}.`

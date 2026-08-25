@@ -85,6 +85,7 @@ export default function llmsMarkdown(): AstroIntegration {
 
             // Check if page has llms content
             const contentElements = document.querySelectorAll('[data-llms-content]');
+
             if (contentElements.length === 0) {
               // No llms content, skip silently
               return;

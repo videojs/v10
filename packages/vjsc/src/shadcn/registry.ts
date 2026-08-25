@@ -114,6 +114,7 @@ function describePublishedModules<Item extends ComponentMeta>(
     if (item.filename) validateRelativePath(item.filename, `Shadcn item ${item.name} filename`);
 
     const previous = names.get(item.name);
+
     if (previous) {
       throw new Error(`Shadcn item \`${item.name}\` is described by both \`${previous}\` and \`${module.id}\`.`);
     }
@@ -323,6 +324,7 @@ async function loadStyle<Item extends ComponentMeta>(
     .sort(([left], [right]) => left.localeCompare(right))
     .map(([filename, content]) => {
       const relativePath = filename === input ? entryName : toPosixPath(relative(styleRoot, filename));
+
       if (escapesRoot(relativePath)) {
         throw new Error(`Shadcn style dependency must be inside the style entry directory: \`${filename}\`.`);
       }
@@ -418,6 +420,7 @@ function optionalList<Key extends string>(key: Key, values: ReadonlySet<string>)
 
 function validateRelativePath(path: string, label: string): void {
   const normalized = normalizePath(path);
+
   if (
     !normalized ||
     normalized === '.' ||
@@ -441,6 +444,7 @@ function assertInsideRoot(root: string, filename: string, source: string): void 
 
 function assertNoCollision(paths: Map<string, string>, path: string, id: string, kind: string): void {
   const previous = paths.get(path);
+
   if (previous && previous !== id) {
     throw new Error(`Shadcn registry ${kind} collision: \`${previous}\` and \`${id}\` both map to \`${path}\`.`);
   }
@@ -450,6 +454,7 @@ function assertNoCollision(paths: Map<string, string>, path: string, id: string,
 
 function addUnique(files: Map<string, string>, path: string, content: string, kind: string): void {
   const previous = files.get(path);
+
   if (previous !== undefined && previous !== content)
     throw new Error(`Shadcn registry ${kind} collision: \`${path}\`.`);
 

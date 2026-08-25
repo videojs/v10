@@ -32,6 +32,7 @@ type ValidationResult = { valid: true } | { valid: false; reason: string };
 
 export function validateInstallationOptions(opts: InstallationOptions): ValidationResult {
   const preset = getInstallationPreset(opts.useCase);
+
   if (!preset.renderers.includes(opts.renderer)) {
     return {
       valid: false,

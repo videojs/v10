@@ -64,9 +64,7 @@ function restoreNamedPlaceholders(translated: string, slots: readonly string[]):
 
 async function translateProtectingPlaceholders(translator: BrowserTranslatorInstance, value: string): Promise<string> {
   const { masked, slots } = maskNamedPlaceholders(value);
-  if (slots.length === 0) {
-    return translator.translate(value);
-  }
+  if (slots.length === 0) return translator.translate(value);
 
   const translated = await translator.translate(masked);
 

@@ -610,9 +610,7 @@ function resolveMixinDeclaration(
   const sourceFile = ts.createSourceFile(mixinFilePath, content, ts.ScriptTarget.Latest, true);
 
   const innerClass = findMixinInnerClass(sourceFile, mixinName);
-  if (innerClass) {
-    return { name: mixinName, filePath: mixinFilePath, sourceFile, innerClass };
-  }
+  if (innerClass) return { name: mixinName, filePath: mixinFilePath, sourceFile, innerClass };
 
   // Not declared here — follow a re-export if present.
   const reExport = findReExportSource(sourceFile, mixinName);
@@ -634,6 +632,7 @@ function resolveMixinDeclaration(
     const importedContent = fs.readFileSync(importedFilePath, 'utf-8');
     const importedSourceFile = ts.createSourceFile(importedFilePath, importedContent, ts.ScriptTarget.Latest, true);
     const importedInner = findMixinInnerClass(importedSourceFile, mixinName);
+
     if (importedInner) {
       return { name: mixinName, filePath: importedFilePath, sourceFile: importedSourceFile, innerClass: importedInner };
     }
@@ -654,6 +653,7 @@ function resolveMixinDeclaration(
   visited.add(targetVisitKey);
 
   const targetInner = findMixinInnerClass(targetSourceFile, targetName);
+
   if (targetInner) {
     return { name: targetName, filePath: targetFilePath, sourceFile: targetSourceFile, innerClass: targetInner };
   }
@@ -1138,6 +1138,7 @@ function serializeDefaultValue(
   compilerOptions: ts.CompilerOptions
 ): string | undefined {
   const value = unwrapExpression(expr);
+
   if (
     ts.isStringLiteral(value) ||
     ts.isNoSubstitutionTemplateLiteral(value) ||

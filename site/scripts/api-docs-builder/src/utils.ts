@@ -91,6 +91,7 @@ export function partKebabFromSource(source: string, componentKebab: string): str
   const basename = source.split('/').at(-1) ?? source;
   const prefix = `./${componentKebab}-`;
   const basenamePrefix = `${componentKebab}-`;
+
   if (source.startsWith(prefix) || basename.startsWith(basenamePrefix)) {
     return basename.replace(new RegExp(`^${componentKebab}-`), '');
   }

@@ -151,16 +151,12 @@ export function pickAudioTrackFromTracks(
   // Try preferred language first
   if (config?.preferredAudioLanguage) {
     const languageMatch = tracks.find((track) => track.language === config.preferredAudioLanguage);
-    if (languageMatch) {
-      return languageMatch.id;
-    }
+    if (languageMatch) return languageMatch.id;
   }
 
   // Try default track
   const defaultTrack = tracks.find((track) => track.default === true);
-  if (defaultTrack) {
-    return defaultTrack.id;
-  }
+  if (defaultTrack) return defaultTrack.id;
 
   // Fall back to first track
   return tracks[0]?.id;

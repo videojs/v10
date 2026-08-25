@@ -40,6 +40,7 @@ vi.mock('@vimeo/player', () => {
       // the document URL). Mirror it so tests can't pass on an embed the real
       // player would have thrown on.
       const src = (target as Element | null)?.getAttribute?.('src') ?? '';
+
       if (!/^https?:\/\/((player|www)\.)?vimeo\.com\//.test(src)) {
         throw new Error('The player element passed isn’t a Vimeo embed.');
       }

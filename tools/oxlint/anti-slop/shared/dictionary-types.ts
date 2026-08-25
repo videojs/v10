@@ -252,6 +252,7 @@ function unsafeDirectValue(
 	}
 
 	const substitution = substitutions.get(name);
+
 	if (substitution !== undefined) {
 		return isUnappliedReferenceTo(substitution, name)
 			? null
@@ -259,6 +260,7 @@ function unsafeDirectValue(
 	}
 
 	const interfaceDeclarations = environment.interfaces.get(name);
+
 	if (interfaceDeclarations !== undefined) {
 		return isEffectivelyEmptyInterface(interfaceDeclarations) ? "empty-object" : null;
 	}
@@ -281,6 +283,7 @@ function dictionaryValueTypes(
 	resolvingAliases: ReadonlySet<string>,
 ): readonly ResolvedType[] {
 	const unwrapped = unwrapTransparentType(type);
+
 	if (unwrapped.type === "TSTypeLiteral") {
 		return unwrapped.members.flatMap((member): readonly ResolvedType[] =>
 			member.type === "TSIndexSignature" && member.typeAnnotation !== null
@@ -301,6 +304,7 @@ function dictionaryValueTypes(
 	if (name === null) return [];
 
 	const substitution = substitutions.get(name);
+
 	if (substitution !== undefined) {
 		return isUnappliedReferenceTo(substitution, name)
 			? []
@@ -431,6 +435,7 @@ function isBroadMappedKey(
 	substitutions: TypeAliasEnvironment,
 ): boolean {
 	const unwrapped = unwrapTransparentType(type);
+
 	if (
 		unwrapped.type === "TSStringKeyword" ||
 		unwrapped.type === "TSNumberKeyword" ||
@@ -451,6 +456,7 @@ function isBroadMappedKey(
 	if (name === null) return false;
 
 	const substitution = substitutions.get(name);
+
 	if (substitution !== undefined && !isUnappliedReferenceTo(substitution, name)) {
 		return isBroadMappedKey(substitution, environment, substitutions);
 	}
@@ -487,6 +493,7 @@ function classifyAliasBroadTarget(
 	if (name === null) return null;
 
 	const substitution = substitutions.get(name);
+
 	if (substitution !== undefined) {
 		return isUnappliedReferenceTo(substitution, name)
 			? null

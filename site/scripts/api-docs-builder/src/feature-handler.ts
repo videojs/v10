@@ -714,6 +714,7 @@ function resolvePublishedShape(
   if (!source.stateTypeName) return { state: {}, actions: {} };
 
   const interfaceDecl = interfaces.get(source.stateTypeName);
+
   if (interfaceDecl) {
     return {
       ...extractInterfaceMembers(interfaceDecl, checker, stateSourceFile),

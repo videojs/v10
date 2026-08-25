@@ -422,6 +422,7 @@ function canonicalPath(name: JSXElementName, bindings: CanonicalBindings): Canon
   if (path.length === 0) return undefined;
 
   const namespace = bindings.namespaces.get(path[0]!);
+
   if (namespace && path.length > 1) {
     return { target: namespace, component: path[1]!, part: path.length > 2 ? path.slice(2).join('.') : null };
   }

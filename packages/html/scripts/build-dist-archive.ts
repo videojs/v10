@@ -34,6 +34,7 @@ const SOURCE_MAPPING_URL = /\n?\/\/# sourceMappingURL=.*$/;
 
 function run(command: string, args: string[], cwd: string): void {
   const result = spawnSync(command, args, { cwd, stdio: 'inherit' });
+
   if (result.error) {
     throw new Error(`\`${command}\` is required to build the archive but could not be run: ${result.error.message}`);
   }

@@ -381,9 +381,7 @@ async function render() {
     await loadCdnMedia(preset);
     return true;
   });
-  if (!loaded) {
-    return;
-  }
+  if (!loaded) return;
 
   // Load the locale before rendering, but outside loadLatest so locale errors keep their specific message.
   await ensureCdnSandboxLocale(locale);

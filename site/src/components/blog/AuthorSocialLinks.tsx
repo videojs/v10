@@ -48,9 +48,7 @@ const SOCIAL_CONFIGS = {
 
 export function AuthorSocialLinks({ socialLinks, className }: AuthorSocialLinksProps) {
   const links = Object.entries(socialLinks).filter(([_, url]) => url) as Array<[keyof SocialLinks, string]>;
-  if (links.length === 0) {
-    return null;
-  }
+  if (links.length === 0) return null;
 
   return (
     <TooltipProvider>

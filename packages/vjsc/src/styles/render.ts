@@ -117,6 +117,7 @@ function scopedRelationship(
   relationshipOwners: ReadonlySet<string>
 ): { owner: string; selector: Selector } | undefined {
   const owner = selector[0];
+
   if (
     owner?.type !== 'pseudo-class' ||
     owner.kind !== 'where' ||
