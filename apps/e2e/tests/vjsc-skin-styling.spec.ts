@@ -538,7 +538,6 @@ async function focusContract(target: Locator) {
   return target.evaluate((element) => {
     const style = getComputedStyle(element);
     const context = new OffscreenCanvas(1, 1).getContext('2d');
-
     if (!context) throw new Error('Expected a 2D canvas context.');
 
     context.fillStyle = style.outlineColor;
@@ -558,7 +557,6 @@ async function buttonStateContract(button: Locator) {
   return button.evaluate((element) => {
     const style = getComputedStyle(element);
     const context = new OffscreenCanvas(1, 1).getContext('2d');
-
     if (!context) throw new Error('Expected a 2D canvas context.');
 
     context.fillStyle = style.outlineColor;
@@ -635,7 +633,6 @@ async function seekDragContract(page: Page) {
     'xpath=ancestor::*[contains(concat(" ", normalize-space(@class), " "), " media-slider ") or contains(concat(" ", normalize-space(@class), " "), " media-time-slider ") or contains(@class, "group/slider")][1]'
   );
   const box = await slider.boundingBox();
-
   if (!box) throw new Error('Expected the seek slider to have a rendered box.');
 
   const pointerX = box.x + box.width * 0.73;
@@ -918,7 +915,6 @@ async function indicatorContract(indicator: Locator) {
 
       const target = progress ?? content;
       const trackStyle = getComputedStyle(target, progress ? null : '::before');
-
       if (!progress && (trackStyle.content === 'none' || trackStyle.display === 'none')) return null;
 
       const fillStyle = getComputedStyle(target, progress ? '::before' : '::after');
@@ -1010,7 +1006,6 @@ async function openSeekPreview(page: Page) {
   const thumb = page.getByRole('slider', { name: 'Seek' });
   const slider = thumb.locator('..');
   const box = await slider.boundingBox();
-
   if (!box) throw new Error('Expected the seek slider to have a rendered box.');
 
   await slider.hover({ position: { x: box.width / 2, y: box.height / 2 } });
@@ -1091,7 +1086,6 @@ async function triggerMediaError(page: Page): Promise<Locator> {
 
 async function errorDialogContract(root: Locator, dialog: Locator) {
   const rootRect = await root.boundingBox();
-
   if (!rootRect) throw new Error('Expected the media player to have a rendered box.');
 
   return dialog.evaluate((element, playerRect) => {
@@ -1174,7 +1168,6 @@ async function layoutContract(root: Locator) {
       { includeGap = true, includeHorizontalPosition = true, includeRadius = true, includeWidth = true } = {}
     ) => {
       const target = selector === ':scope' ? element : element.querySelector<HTMLElement>(selector);
-
       if (!target) return null;
 
       const style = getComputedStyle(target);
@@ -1343,7 +1336,6 @@ async function openTooltip(page: Page, name: string): Promise<Locator> {
 
 async function popupSurfaceContract(root: Locator, popup: Locator) {
   const rootRect = await root.boundingBox();
-
   if (!rootRect) throw new Error('Expected the media player to have a rendered box.');
 
   return popup.evaluate((element, playerRect) => {
@@ -1388,7 +1380,6 @@ function minimalVolumeSurfaceContract(contract: Awaited<ReturnType<typeof popupS
 
 async function popupContract(root: Locator, popup: Locator) {
   const rootRect = await root.boundingBox();
-
   if (!rootRect) throw new Error('Expected the media player to have a rendered box.');
 
   return popup.evaluate((element, playerRect) => {
