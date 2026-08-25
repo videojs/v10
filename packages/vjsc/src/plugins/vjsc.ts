@@ -35,14 +35,16 @@ export interface VjscPluginOptions {
  * Create the ordered compiler passes for query-selected component modules. Use this as the default VJSC integration for
  * Rolldown-compatible builds.
  *
- * @param options - Resolves targets and styles once for each module identity.
- * @example Promote suspicious structural selectors to build errors.
- * ```ts
- * vjscPlugin({
+ * @example
+ *   Promote suspicious structural selectors to build errors.
+ *   ```ts
+ *   vjscPlugin({
  *   diagnostics: { complexSelectors: 'error' },
  *   configure,
- * });
- * ```
+ *   });
+ *   ```
+ *
+ * @param options - Resolves targets and styles once for each module identity.
  */
 export function vjscPlugin(options: VjscPluginOptions): Plugin[] {
   return createVjscPluginPipeline(options);
