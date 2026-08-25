@@ -1191,6 +1191,7 @@ export function VideoHotkeys({ disabled = false }: VideoHotkeysProps = {}) {
 // ===== react/default-video/css/skins/default-video/controls.tsx =====
 /** @jsxImportSource react */
 
+
 import { AirPlayButton } from '../../components/buttons/airplay-button';
 import { CaptionsButton } from '../../components/buttons/captions-button';
 import { CastButton } from '../../components/buttons/cast-button';
@@ -2375,6 +2376,7 @@ export function VideoHotkeys({ disabled = false }: VideoHotkeysProps = {}) {
 
 // ===== react/default-video/tailwind/skins/default-video/controls.tsx =====
 /** @jsxImportSource react */
+
 
 import { AirPlayButton } from '../../components/buttons/airplay-button';
 import { CaptionsButton } from '../../components/buttons/captions-button';
@@ -3654,6 +3656,7 @@ export function VideoHotkeys({ disabled = false }: VideoHotkeysProps = {}) {
 // ===== react/minimal-video/css/skins/minimal-video/controls.tsx =====
 /** @jsxImportSource react */
 
+
 import { AirPlayButton } from '../../components/buttons/airplay-button';
 import { CaptionsButton } from '../../components/buttons/captions-button';
 import { CastButton } from '../../components/buttons/cast-button';
@@ -4839,6 +4842,7 @@ export function VideoHotkeys({ disabled = false }: VideoHotkeysProps = {}) {
 // ===== react/minimal-video/tailwind/skins/minimal-video/controls.tsx =====
 /** @jsxImportSource react */
 
+
 import { AirPlayButton } from '../../components/buttons/airplay-button';
 import { CaptionsButton } from '../../components/buttons/captions-button';
 import { CastButton } from '../../components/buttons/cast-button';
@@ -6002,6 +6006,7 @@ export function VideoHotkeys({ disabled = false }: VideoHotkeysProps = {}) {
 // ===== html/default-video/css/skins/default-video/controls.tsx =====
 /** @jsxImportSource vjsc/html-runtime */
 
+
 import { AirPlayButton } from '../../components/buttons/airplay-button';
 import { CaptionsButton } from '../../components/buttons/captions-button';
 import { CastButton } from '../../components/buttons/cast-button';
@@ -7065,6 +7070,7 @@ export function VideoHotkeys({ disabled = false }: VideoHotkeysProps = {}) {
 
 // ===== html/default-video/tailwind/skins/default-video/controls.tsx =====
 /** @jsxImportSource vjsc/html-runtime */
+
 
 import { AirPlayButton } from '../../components/buttons/airplay-button';
 import { CaptionsButton } from '../../components/buttons/captions-button';
@@ -8223,6 +8229,7 @@ export function VideoHotkeys({ disabled = false }: VideoHotkeysProps = {}) {
 // ===== html/minimal-video/css/skins/minimal-video/controls.tsx =====
 /** @jsxImportSource vjsc/html-runtime */
 
+
 import { AirPlayButton } from '../../components/buttons/airplay-button';
 import { CaptionsButton } from '../../components/buttons/captions-button';
 import { CastButton } from '../../components/buttons/cast-button';
@@ -9290,6 +9297,7 @@ export function VideoHotkeys({ disabled = false }: VideoHotkeysProps = {}) {
 
 // ===== html/minimal-video/tailwind/skins/minimal-video/controls.tsx =====
 /** @jsxImportSource vjsc/html-runtime */
+
 
 import { AirPlayButton } from '../../components/buttons/airplay-button';
 import { CaptionsButton } from '../../components/buttons/captions-button';
