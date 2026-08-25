@@ -1,5 +1,5 @@
 import { flush } from '@videojs/store';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import type { UIKeyboardEvent, UIPointerEvent } from '../event';
 import { createSlider, type SliderApi, type SliderOptions } from '../slider';

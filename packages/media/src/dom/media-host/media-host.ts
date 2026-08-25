@@ -1,4 +1,5 @@
 import type { EventListenerFor, EventType, QueriedElement } from '@videojs/utils/dom';
+
 import { EMPTY_REMOTE, EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES } from '../../core/constants';
 import {
   type EventLike,
@@ -11,13 +12,7 @@ import {
 } from '../../core/types';
 import { getMediaComponents, getMediaOwner, getMediaProp, setMediaProp } from '../utils';
 
-export {
-  addMediaComponent,
-  getMediaComponents,
-  getMediaOwner,
-  getMediaProp,
-  setMediaProp,
-} from '../utils';
+export { addMediaComponent, getMediaComponents, getMediaOwner, getMediaProp, setMediaProp } from '../utils';
 
 export interface HTMLMediaTargetLike extends MediaTargetLike, EventTarget {
   querySelector<E extends Element = Element>(selectors: string): E | null;

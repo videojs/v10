@@ -6,6 +6,7 @@ import { useAlertDialogContext } from './context';
 
 export interface AlertDialogDescriptionProps extends UIComponentProps<'p', AlertDialogCore.State> {}
 
+/** Renders the description announced with the alert dialog. */
 export const AlertDialogDescription = createContextPart<AlertDialogDescriptionProps, AlertDialogCore.State>({
   displayName: 'AlertDialogDescription',
   tag: 'p',

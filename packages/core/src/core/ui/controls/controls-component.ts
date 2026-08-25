@@ -1,4 +1,5 @@
 import { defineComponent } from 'vjsc/components';
+
 import { ControlsDataAttrs } from './controls-data-attrs';
 
 export default defineComponent({

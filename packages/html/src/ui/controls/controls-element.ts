@@ -6,10 +6,10 @@ import { isFunction } from '@videojs/utils/predicate';
 
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
-import { MediaElement } from '../media-element';
+import { UIElement } from '../ui-element';
 import { controlsContext } from './context';
 
-export class ControlsElement extends MediaElement {
+export class ControlsElement extends UIElement {
   static readonly tagName = 'media-controls';
 
   readonly #core = new ControlsCore();

@@ -8,6 +8,7 @@ import {
 } from '@videojs/core/i18n';
 import type { ReactiveController, ReactiveControllerHost } from '@videojs/element';
 import { ContextConsumer } from '@videojs/element/context';
+
 import type { I18nContext } from './context';
 
 let fallbackTranslator: Translator | undefined;

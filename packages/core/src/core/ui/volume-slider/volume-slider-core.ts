@@ -2,6 +2,7 @@ import type { MediaFeatureAvailability, MediaVolumeState } from '@videojs/media'
 import { defaults } from '@videojs/utils/object';
 import { formatPercent } from '@videojs/utils/percent';
 import type { NonNullableObject } from '@videojs/utils/types';
+
 import type { Text } from '../../i18n';
 import { labelText, mutedValueText } from '../../i18n/text/volume';
 import { SliderCore, type SliderProps, type SliderState } from '../slider/slider-core';

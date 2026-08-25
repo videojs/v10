@@ -1,11 +1,12 @@
 import type coreSchema from '@videojs/core/vjsc';
+
 import {
   type ComponentTarget,
   type ComponentTargetHelpers,
   defineComponentTarget,
   type TemplateTargetDefinition,
-} from 'vjsc/target';
-import { Host, jsx } from 'vjsc/target/jsx-runtime';
+} from '../../../vjsc/src/target/index.ts';
+import { Host, jsx } from '../../../vjsc/src/target/jsx-runtime.ts';
 
 type CoreSchema = typeof coreSchema;
 
@@ -119,113 +120,110 @@ const publicNames: Readonly<Record<string, string>> = {
   PiPButton: 'pip-button',
 };
 
-export const htmlComponentTarget: ComponentTarget<CoreSchema> = defineComponentTarget<CoreSchema>()(
-  ({ target, element }) => {
-    const Button = element('button');
-    const Div = element('div');
-    const Slot = element('slot');
-    const Span = element('span');
-    const Sup = element('sup');
-    const HtmlTemplate = element('template');
+export const htmlComponentTarget: ComponentTarget<CoreSchema> = defineComponentTarget<CoreSchema>()(({
+  target,
+  element,
+}) => {
+  const Button = element('button');
+  const Div = element('div');
+  const Slot = element('slot');
+  const Span = element('span');
+  const Sup = element('sup');
+  const HtmlTemplate = element('template');
 
-    const I18nText = element('media-text', {
-      import: { from: '@videojs/html/i18n', sideEffect: true },
-    });
+  const I18nText = element('media-text', {
+    import: { from: '@videojs/html/i18n', sideEffect: true },
+  });
 
-    const optionTemplate: TemplateTargetDefinition = {
-      render: ({ children }) => jsx(HtmlTemplate, { children }),
-      parts: {
-        label: ({ props }) => jsx(Span, { 'data-part': 'label', ...props }),
+  const optionTemplate: TemplateTargetDefinition = {
+    render: ({ children }) => jsx(HtmlTemplate, { children }),
+    parts: {
+      label: ({ props }) => jsx(Span, { 'data-part': 'label', ...props }),
+    },
+  };
+
+  return {
+    source: '@videojs/core/vjsc',
+    resolve: ({ component, part }) => {
+      const name = part ? componentParts[component]?.[part] : component === 'Container' ? 'MediaContainer' : component;
+      return name ? htmlElementTarget(name, element) : undefined;
+    },
+    components: {
+      ErrorDialog: {
+        Root: ({ children }) => children,
       },
-    };
-
-    return {
-      source: '@videojs/core/vjsc',
-      resolve: ({ component, part }) => {
-        const name = part
-          ? componentParts[component]?.[part]
-          : component === 'Container'
-            ? 'MediaContainer'
-            : component;
-        return name ? htmlElementTarget(name, element) : undefined;
+      Menu: {
+        Trigger: ({ props, children, id }) => jsx(Button, { commandfor: id('content'), ...props, children }),
+        SubmenuTrigger: ({ props, children, id }) =>
+          jsx(target.Menu.Item, {
+            commandfor: id('content'),
+            'data-has-submenu': '',
+            ...props,
+            children,
+          }),
+        Content: ({ props, children, id }) => jsx(target.Menu.Content, { id: id('content'), ...props, children }),
+        Group: ({ children }) => children,
+        Separator: Div,
       },
-      components: {
-        ErrorDialog: {
-          Root: ({ children }) => children,
+      Popover: ({ props, parts }) => [
+        parts.Trigger.children,
+        jsx(target.Popover.Popup, {
+          ...props.merge(parts.Popup.props),
+          children: parts.Popup.children,
+        }),
+      ],
+      Slider: {
+        Thumbnail: {
+          Root: Div,
         },
-        Menu: {
-          Trigger: ({ props, children, id }) => jsx(Button, { commandfor: id('content'), ...props, children }),
-          SubmenuTrigger: ({ props, children, id }) =>
-            jsx(target.Menu.Item, {
-              commandfor: id('content'),
-              'data-has-submenu': '',
-              ...props,
-              children,
-            }),
-          Content: ({ props, children, id }) => jsx(target.Menu.Content, { id: id('content'), ...props, children }),
-          Group: ({ children }) => children,
-          Separator: Div,
-        },
-        Popover: ({ props, parts }) => [
-          parts.Trigger.children,
-          jsx(target.Popover.Popup, {
+      },
+      Tooltip: ({ props, parts, id }) => {
+        const trigger = id('trigger');
+        return [
+          jsx(Host, { id: trigger, children: parts.Trigger.children }),
+          jsx(target.Tooltip.Popup, {
+            trigger,
             ...props.merge(parts.Popup.props),
             children: parts.Popup.children,
           }),
-        ],
-        Slider: {
-          Thumbnail: {
-            Root: Div,
+        ];
+      },
+    },
+    primitives: {
+      Group: Div,
+      Slot,
+      Text: ({ props, children }) =>
+        props.has('token') ? jsx(I18nText, { ...props, children }) : jsx(Span, { ...props, children }),
+      Template: {
+        chapter: {
+          render: ({ props, children }) => jsx(HtmlTemplate, { children: jsx(Div, { ...props, children }) }),
+        },
+        'quality-option': {
+          ...optionTemplate,
+          parts: {
+            ...optionTemplate.parts,
+            tier: ({ props }) => jsx(Sup, { 'data-part': 'tier', ...props }),
+            badge: ({ props }) => jsx(Span, { 'data-part': 'badge', ...props }),
           },
         },
-        Tooltip: ({ props, parts, id }) => {
-          const trigger = id('trigger');
-          return [
-            jsx(Host, { id: trigger, children: parts.Trigger.children }),
-            jsx(target.Tooltip.Popup, {
-              trigger,
-              ...props.merge(parts.Popup.props),
-              children: parts.Popup.children,
-            }),
-          ];
-        },
+        'audio-track-option': optionTemplate,
+        'playback-rate-option': optionTemplate,
+        'captions-option': optionTemplate,
       },
-      primitives: {
-        Group: Div,
-        Slot,
-        Text: ({ props, children }) =>
-          props.has('token') ? jsx(I18nText, { ...props, children }) : jsx(Span, { ...props, children }),
-        Template: {
-          chapter: {
-            render: ({ props, children }) => jsx(HtmlTemplate, { children: jsx(Div, { ...props, children }) }),
-          },
-          'quality-option': {
-            ...optionTemplate,
-            parts: {
-              ...optionTemplate.parts,
-              tier: ({ props }) => jsx(Sup, { 'data-part': 'tier', ...props }),
-              badge: ({ props }) => jsx(Span, { 'data-part': 'badge', ...props }),
-            },
-          },
-          'audio-track-option': optionTemplate,
-          'playback-rate-option': optionTemplate,
-          'captions-option': optionTemplate,
-        },
-      },
-      jsx: {
-        importSource: 'vjsc/html-runtime',
-        attributes: 'html',
-        host: { from: 'vjsc/html-runtime/jsx-runtime', name: 'Host' },
-        scope: { from: 'vjsc/html-runtime/jsx-runtime', name: 'Scope' },
-      },
-    };
-  }
-);
+    },
+    jsx: {
+      importSource: 'vjsc/html-runtime',
+      attributes: 'html',
+      host: { from: 'vjsc/html-runtime/jsx-runtime', name: 'Host' },
+      scope: { from: 'vjsc/html-runtime/jsx-runtime', name: 'Scope' },
+    },
+  };
+});
 
 function htmlElementTarget(name: string, element: ComponentTargetHelpers<CoreSchema>['element']) {
   const publicName = publicNames[name] ?? kebabCase(name === 'MediaContainer' ? 'container' : name);
   const moduleName = groupedModules[name] ?? publicName;
-  const source = name === 'MediaContainer' ? `@videojs/html/media/${moduleName}` : `@videojs/html/ui/${moduleName}`;
+  const source = `@videojs/html/ui/${moduleName}`;
 
   return element(`media-${publicName}`, { import: { from: source, sideEffect: true } });
 }

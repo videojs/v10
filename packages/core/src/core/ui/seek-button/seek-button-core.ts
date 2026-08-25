@@ -2,6 +2,7 @@ import type { MediaTimeState } from '@videojs/media';
 import { createState } from '@videojs/store';
 import { defaults } from '@videojs/utils/object';
 import type { NonNullableObject } from '@videojs/utils/types';
+
 import { resolveText, type Text } from '../../i18n';
 import { backwardText, forwardText } from '../../i18n/text/seek';
 import type { ButtonState } from '../types';

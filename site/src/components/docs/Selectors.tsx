@@ -1,4 +1,5 @@
 import { useStore } from '@nanostores/react';
+
 import { Select } from '@/components/Select';
 import { currentStyle as styleStore } from '@/stores/preferences';
 import type { AnySupportedStyle, SupportedFramework } from '@/types/docs';
@@ -81,9 +82,9 @@ export function Selectors({ currentFramework, currentSlug }: SelectorProps) {
   }));
 
   return (
-    <div className="px-6 pb-6 pt-2.5 md:py-6 xl:p-6 border-b border-manila-75 dark:border-faded-black">
+    <div className="border-manila-75 dark:border-faded-black border-b px-6 pt-2.5 pb-6 md:py-6 xl:p-6">
       <div
-        className="max-w-3xl mx-auto w-full grid grid-flow-col grid-cols-2 grid-rows-2 gap-x-2 md:grid-flow-row md:grid-cols-(--md-grid-cols) md:gap-x-6 md:gap-y-2 items-center"
+        className="mx-auto grid w-full max-w-3xl grid-flow-col grid-cols-2 grid-rows-2 items-center gap-x-2 md:grid-flow-row md:grid-cols-(--md-grid-cols) md:gap-x-6 md:gap-y-2"
         style={{ '--md-grid-cols': 'auto minmax(0, 1fr)' } as React.CSSProperties}
       >
         <span className="text-p3 text-faded-black dark:text-manila-light">Framework</span>

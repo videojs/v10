@@ -1,5 +1,5 @@
 import { cleanup, render } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
 /** SVTA 2011 — no video track this environment can play. */
 const NO_SUPPORTED_VIDEO_TRACK = 2011;

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { loadLocale } from '../load-locale';
 import { registerI18n, resetI18nRegistry } from '../registry';

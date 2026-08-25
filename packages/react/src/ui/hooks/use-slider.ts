@@ -11,23 +11,23 @@ import {
 import { useSnapshot } from '@videojs/store/react';
 import { applyStyles } from '@videojs/utils/dom';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+
 import { useOptionalPlayer } from '../../player/context';
 import { useDestroy } from '../../utils/use-destroy';
 import { useForceRender } from '../../utils/use-force-render';
 import { useLatestRef } from '../../utils/use-latest-ref';
 
-export interface UseSliderOptions<State extends SliderState = SliderState>
-  extends Pick<
-    SliderOptions,
-    | 'getPercent'
-    | 'getStepPercent'
-    | 'getLargeStepPercent'
-    | 'changeThrottle'
-    | 'onValueChange'
-    | 'onValueCommit'
-    | 'onDragStart'
-    | 'onDragEnd'
-  > {
+export interface UseSliderOptions<State extends SliderState = SliderState> extends Pick<
+  SliderOptions,
+  | 'getPercent'
+  | 'getStepPercent'
+  | 'getLargeStepPercent'
+  | 'changeThrottle'
+  | 'onValueChange'
+  | 'onValueCommit'
+  | 'onDragStart'
+  | 'onDragEnd'
+> {
   computeState: (input: SliderInput) => State;
   orientation?: 'horizontal' | 'vertical' | undefined;
   disabled?: boolean | undefined;

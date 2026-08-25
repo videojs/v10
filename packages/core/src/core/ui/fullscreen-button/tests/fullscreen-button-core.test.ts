@@ -1,5 +1,6 @@
 import type { MediaFullscreenState } from '@videojs/media';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
+
 import type { FullscreenButtonState } from '../fullscreen-button-core';
 import { FullscreenButtonCore } from '../fullscreen-button-core';
 

@@ -2,6 +2,7 @@ import type { MediaBufferState, MediaLiveState, MediaTimeState } from '@videojs/
 import { createState } from '@videojs/store';
 import { defaults } from '@videojs/utils/object';
 import type { NonNullableObject } from '@videojs/utils/types';
+
 import { resolveText, type Text } from '../../i18n';
 import { badgeText, playingText, seekToEdgeText } from '../../i18n/text/live';
 import type { ButtonState } from '../types';

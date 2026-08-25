@@ -1,6 +1,7 @@
 import type { MediaFeatureAvailability, MediaVolumeState } from '@videojs/media';
 import { isMediaMutedCapable, isMediaVolumeCapable } from '@videojs/media';
 import { listen } from '@videojs/utils/dom';
+
 import { definePlayerFeature } from '../../feature';
 
 /** Volume to restore when unmuting at zero. */

@@ -3,11 +3,11 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { rolldown } from 'rolldown';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
+import { vjscPlugin } from '..';
 import { defineSchema } from '../../components/definition';
 import { defineComponentTarget } from '../../target/definition';
-import { vjscPlugin } from '..';
 
 const schema = defineSchema('@fixture/components', {});
 const target = defineComponentTarget<typeof schema>()(() => ({

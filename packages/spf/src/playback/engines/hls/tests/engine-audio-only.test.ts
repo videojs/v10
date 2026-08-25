@@ -1,4 +1,5 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
+
 import { snapshot } from '../../../../core/signals/primitives';
 import type { Presentation } from '../../../../media/types';
 import { createHlsAudioEngine } from '../engine-audio-only';

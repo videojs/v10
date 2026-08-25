@@ -1,4 +1,5 @@
 import { atom } from 'nanostores';
+
 import type { AnySupportedStyle, SupportedFramework } from '@/types/docs';
 
 /**

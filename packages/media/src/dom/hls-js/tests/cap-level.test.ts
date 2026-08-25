@@ -1,5 +1,6 @@
 import Hls, { type Level } from 'hls.js';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
+
 import type { MediaResolution } from '../../../core/types';
 import {
   createCapLevelController,

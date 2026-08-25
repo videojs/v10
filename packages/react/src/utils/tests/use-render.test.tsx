@@ -1,7 +1,7 @@
 import { cleanup, render } from '@testing-library/react';
 import type { ForwardedRef, Ref } from 'react';
 import { createRef, forwardRef } from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { renderElement } from '../use-render';
 

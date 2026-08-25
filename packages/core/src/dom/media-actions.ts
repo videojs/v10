@@ -1,4 +1,5 @@
 import { isUndefined } from '@videojs/utils/predicate';
+
 import type { AnyPlayerStore } from './player';
 import { selectPlaybackRate, selectTime, selectVolume } from './store/selectors';
 

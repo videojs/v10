@@ -7,7 +7,8 @@
  * `switchTextTrack` in `playback/behaviors/tests/track-switching.test.ts` — since
  * the policy and its lifecycle are only meaningful together.
  */
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
+
 import { byDescendingResolution, smallestCoveringPixelArea, tracksUnderPixelArea } from '../select-tracks';
 
 describe('smallestCoveringPixelArea', () => {

@@ -1,5 +1,5 @@
-import { MediaElement } from '../media-element';
+import { UIElement } from '../ui-element';
 
-export class VolumeIndicatorValueElement extends MediaElement {
+export class VolumeIndicatorValueElement extends UIElement {
   static readonly tagName = 'media-volume-indicator-value';
 }

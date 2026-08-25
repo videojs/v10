@@ -1,12 +1,17 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
+    "allowImportingTsExtensions": true,
     "outDir": "./dist",
     "rootDir": ".",
     "declaration": true,
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "paths": {
+      "vjsc/*": ["../vjsc/src/*"]
+    },
     "types": ["node"],
     "jsx": "react-jsx"
   },
-  "include": ["scripts/internal/svg.ts", "src/element.ts", "vjsc"]
+  "include": ["scripts/internal/svg.ts", "src/element.ts", "vjsc"],
+  "references": [{ "path": "../vjsc" }]
 }

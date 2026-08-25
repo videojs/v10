@@ -1,4 +1,5 @@
 import * as p from '@clack/prompts';
+
 import { validateInstallationOptions } from '@/utils/installation/codegen';
 import { RENDERER_LABELS } from '@/utils/installation/renderer-options';
 import {
@@ -8,6 +9,7 @@ import {
   USE_CASES,
   type UseCase,
 } from '@/utils/installation/types';
+
 import type { Framework } from '../utils/config.js';
 import { getConfigValue } from '../utils/config.js';
 import { docExistsInAnyFramework, readBundledDoc, readLlmsTxt } from '../utils/docs.js';

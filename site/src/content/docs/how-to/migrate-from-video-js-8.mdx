@@ -99,7 +99,6 @@ With a bundler, the same thing is three imports:
 ```js
 import '@videojs/html/video/player';
 import '@videojs/html/video/skin';
-import '@videojs/html/video/skin.css';
 ```
 
 Four differences worth understanding, because each one is a pattern you'll see again:
@@ -618,7 +617,7 @@ Ordered roughly by how likely each is to block a v8 migration.
 - No spatial navigation. v8's `spatialNavigation` for TV and D-pad remotes has no equivalent.
 - Nothing persists between sessions: volume, captions language, speed, quality. That's out of scope for GA ([#944](https://github.com/videojs/v10/issues/944)). Default subtitle language is tracked at [#1423](https://github.com/videojs/v10/issues/1423).
 - No VHS-equivalent tuning surface. Engine settings belong to the engine you chose, and the default HLS component deliberately exposes few of them.
-- Chapters render in the time slider from a `<track kind="chapters">`, but there's no chapter menu to navigate from and no active-chapter state, so v8's chapters menu has no equivalent ([#1873](https://github.com/videojs/v10/issues/1873)). Cue points aren't implemented ([#1442](https://github.com/videojs/v10/issues/1442)).
+- Chapters render in the time slider from a `<track kind="chapters">`, and its segments reflect `data-active`. There is no player-level active chapter value or chapter menu, so v8's chapters menu has no equivalent ([#1873](https://github.com/videojs/v10/issues/1873)). Cue points aren't implemented ([#1442](https://github.com/videojs/v10/issues/1442)).
 - The controls auto-hide delay isn't configurable, so v8's `inactivityTimeout` has no equivalent ([#1728](https://github.com/videojs/v10/issues/1728)).
 - No full-window fullscreen fallback. v8 had one for browsers without the Fullscreen API; [support is around 96%](https://caniuse.com/fullscreen) now.
 - Multiple `<source>` elements with `size` metadata don't become a quality menu. Use HLS or DASH for adaptive quality; picking renditions by resolution won't be added ([#1415](https://github.com/videojs/v10/issues/1415)).

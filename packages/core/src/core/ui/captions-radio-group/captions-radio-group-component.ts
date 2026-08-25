@@ -1,4 +1,5 @@
 import { defineComponent } from 'vjsc/components';
+
 import type { CaptionsRadioGroupProps } from './captions-radio-group-core';
 import { CaptionsRadioGroupDataAttrs } from './captions-radio-group-data-attrs';
 

@@ -1,15 +1,18 @@
 {
   "name": "vjsc",
   "version": "0.0.0",
-  "type": "module",
+  "private": true,
   "description": "Video.js source transforms",
   "license": "Apache-2.0",
-  "private": true,
   "repository": {
     "type": "git",
     "url": "https://github.com/videojs/v10",
     "directory": "packages/vjsc"
   },
+  "files": [
+    "dist"
+  ],
+  "type": "module",
   "sideEffects": false,
   "exports": {
     ".": {
@@ -61,15 +64,11 @@
       "default": "./dist/vite/index.js"
     }
   },
-  "files": [
-    "dist"
-  ],
   "scripts": {
-    "build": "tsdown && node scripts/check-exports.mjs",
-    "build:watch": "tsdown --watch ./src --no-clean",
+    "build:watch": "vp pack --watch ./src --no-clean",
     "dev": "pnpm run build:watch",
-    "test": "vitest run",
-    "test:watch": "vitest",
+    "test": "vp test run",
+    "test:watch": "vp test",
     "clean": "rimraf --glob dist types '*.tsbuildinfo'"
   },
   "dependencies": {
@@ -86,8 +85,8 @@
     "tailwindcss": "4.2.1"
   },
   "devDependencies": {
-    "tsdown": "^0.22.14",
     "vite": "^8.2.2",
-    "vitest": "^4.1.10"
+    "vite-plus": "catalog:",
+    "vitest": "catalog:"
   }
 }

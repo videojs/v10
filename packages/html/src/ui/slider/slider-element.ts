@@ -11,14 +11,15 @@ import { type Text, translateText } from '@videojs/core/i18n';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextProvider } from '@videojs/element/context';
 import { applyStyles } from '@videojs/utils/dom';
+
 import { i18nContext } from '../../i18n/context';
 import { I18nController } from '../../i18n/controller';
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
-import { MediaElement } from '../media-element';
+import { UIElement } from '../ui-element';
 import { sliderContext } from './context';
 
-export class SliderElement extends MediaElement {
+export class SliderElement extends UIElement {
   static readonly tagName = 'media-slider';
 
   static override properties = {

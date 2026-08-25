@@ -28,14 +28,14 @@ export const { Player } = createPlayer({
 
 <FrameworkCase frameworks={["html"]}>
 ```ts title="player.ts"
-import { createPlayer, features, MediaElement } from '@videojs/html';
+import { createPlayer, features, UIElement } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
 
 const { ProviderMixin } = createPlayer({
   features: [...videoFeatures, features.orientationLock],
 });
 
-class MyPlayer extends ProviderMixin(MediaElement) {}
+class MyPlayer extends ProviderMixin(UIElement) {}
 
 customElements.define('my-player', MyPlayer);
 ```
@@ -97,14 +97,14 @@ function OrientationToggle() {
 
 <FrameworkCase frameworks={["html"]}>
 ```ts title="orientation-toggle.ts"
-import { createPlayer, features, MediaElement, selectOrientationLock } from '@videojs/html';
+import { createPlayer, features, UIElement, selectOrientationLock } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
 
 const { PlayerController, context } = createPlayer({
   features: [...videoFeatures, features.orientationLock],
 });
 
-class OrientationToggle extends MediaElement {
+class OrientationToggle extends UIElement {
   readonly #lock = new PlayerController(this, context, selectOrientationLock);
 }
 ```

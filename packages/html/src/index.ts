@@ -8,7 +8,7 @@ export type {
   ReactiveController,
   ReactiveControllerHost,
 } from '@videojs/element';
-// Element — reactive primitives for users extending MediaElement
+// Element — reactive primitives for users extending UIElement
 export { DestroyMixin, ReactiveElement } from '@videojs/element';
 // Media predicates
 export {
@@ -64,13 +64,10 @@ export {
 export type { I18nContext as I18nLitContext } from './i18n/context';
 // i18n — `@videojs/html/i18n` registers `<media-i18n>` / `<media-text>`.
 export { i18nContext } from './i18n/context';
-// Media
-export { MediaContainerElement } from './media/container-element';
 // Player
 export * from './player/context';
 export * from './player/create-player';
 export * from './player/player-controller';
-export * from './store/container-mixin';
 export * from './store/media-attach-mixin';
 export * from './store/provider-mixin';
 export * from './store/types';
@@ -86,6 +83,7 @@ export { BufferingIndicatorElement } from './ui/buffering-indicator/buffering-in
 export { CaptionsButtonElement } from './ui/captions-button/captions-button-element';
 export { CaptionsRadioGroupElement } from './ui/captions-radio-group/captions-radio-group-element';
 export { CastButtonElement } from './ui/cast-button/cast-button-element';
+export { ContainerElement } from './ui/container/container-element';
 export { ContextPartElement, type PartContextValue } from './ui/context-part-element';
 export { ControlsElement } from './ui/controls/controls-element';
 export { ControlsGroupElement } from './ui/controls/controls-group-element';
@@ -96,8 +94,6 @@ export { AriaKeyShortcutsController } from './ui/hotkey/aria-key-shortcuts-contr
 export { HotkeyElement } from './ui/hotkey/hotkey-element';
 export { LiveButtonElement } from './ui/live-button/live-button-element';
 export { MediaButtonElement } from './ui/media-button-element';
-// Primitives
-export * from './ui/media-element';
 export { MediaUIElement } from './ui/media-ui-element';
 export {
   type MenuContextValue,
@@ -153,6 +149,8 @@ export { TooltipElement } from './ui/tooltip/tooltip-element';
 export { TooltipGroupElement } from './ui/tooltip/tooltip-group-element';
 export { TooltipLabelElement } from './ui/tooltip/tooltip-label-element';
 export { TooltipShortcutElement } from './ui/tooltip/tooltip-shortcut-element';
+// Primitives
+export * from './ui/ui-element';
 export { VolumeIndicatorElement } from './ui/volume-indicator/volume-indicator-element';
 export { VolumeIndicatorFillElement } from './ui/volume-indicator/volume-indicator-fill-element';
 export { VolumeIndicatorValueElement } from './ui/volume-indicator/volume-indicator-value-element';

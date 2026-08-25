@@ -1,4 +1,5 @@
 import { generateId } from '@videojs/utils/string';
+
 import type {
   AddressableObject,
   AudioSelectionSet,

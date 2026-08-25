@@ -18,6 +18,7 @@
  * `state.currentTime` back to the element.
  */
 import { listen } from '@videojs/utils/dom';
+
 import { defineBehavior } from '../../../core/composition/create-composition';
 import { effect } from '../../../core/signals/effect';
 import type { ReadonlySignal, Signal } from '../../../core/signals/primitives';

@@ -1,6 +1,6 @@
 import { parseSync } from 'oxc-parser';
 import { RolldownMagicString } from 'rolldown';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { collectFunctionDeclarations, prependBlockBody } from '..';
 

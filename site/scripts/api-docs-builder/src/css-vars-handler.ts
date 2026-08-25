@@ -1,4 +1,5 @@
 import * as ts from 'typescript';
+
 import { getJsDocComment } from './data-attrs-handler.js';
 import type { CSSVarsExtraction } from './types.js';
 import { unwrapObjectLiteral } from './utils.js';

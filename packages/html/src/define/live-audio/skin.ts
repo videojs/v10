@@ -1,7 +1,9 @@
 import { renderIcon } from '@videojs/icons/render';
 import { createShadowStyle, createTemplate } from '@videojs/utils/dom';
+
 import { safeDefine } from '../safe-define';
 import { SkinElement } from '../skin-element';
+
 import styles from './skin.css?inline';
 
 // Register the live audio player, container, and all UI custom elements.

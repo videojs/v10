@@ -1,17 +1,13 @@
-import { resolve } from 'node:path';
-import { build } from 'tsdown';
-import { describe, expect, it } from 'vitest';
+import { build } from 'vite-plus/pack';
+import { describe, expect, it } from 'vite-plus/test';
 import type { ShadcnRegistry } from 'vjsc/shadcn';
 
-const packageDir = resolve(import.meta.dirname, '../..');
-const configFile = resolve(packageDir, 'tsdown.shadcn.config.ts');
+import { shadcnPackConfig } from '../../shadcn/vite.config';
 
 describe('Skins Shadcn registry', () => {
   it('emits editable React and Tailwind JSON without a synthetic runtime chunk', async () => {
     const [result] = await build({
-      cwd: packageDir,
-      config: configFile,
-      configLoader: 'unrun',
+      ...shadcnPackConfig,
       logLevel: 'silent',
       write: false,
     });

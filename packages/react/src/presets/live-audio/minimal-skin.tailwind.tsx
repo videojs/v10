@@ -15,6 +15,7 @@ import {
 } from '@videojs/skins/minimal/tailwind/audio.tailwind';
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
+
 import {
   PauseIcon,
   PlayIcon,
@@ -36,6 +37,7 @@ import { Popover } from '@/ui/popover';
 import { StatusAnnouncer } from '@/ui/status-announcer';
 import { Tooltip } from '@/ui/tooltip';
 import { VolumeSlider } from '@/ui/volume-slider';
+
 import type { MinimalLiveAudioSkinProps } from './minimal-skin';
 
 const Button = forwardRef<HTMLButtonElement, ComponentProps<'button'>>(function Button({ className, ...props }, ref) {
@@ -75,7 +77,7 @@ const SliderThumb = forwardRef<HTMLDivElement, ComponentProps<'div'> & { persist
   return (
     <div
       ref={ref}
-      className={cn(slider.thumb.base, persistent ? undefined : slider.thumb.interactive, className)}
+      className={cn(slider.thumb.base, persistent ? slider.thumb.persistent : slider.thumb.interactive, className)}
       {...props}
     />
   );
@@ -92,11 +94,27 @@ function VolumePopover(): ReactNode {
     </MuteButton>
   );
 
-  if (volumeUnavailable) return muteButton;
+  if (volumeUnavailable) {
+    return (
+      <Tooltip.Root side="top" delay={0} sticky>
+        <Tooltip.Trigger render={muteButton} />
+        <Tooltip.Popup className={cn(popup.tooltip)}>
+          <Tooltip.Label />
+          <Tooltip.Shortcut className={popup.tooltipShortcut} />
+        </Tooltip.Popup>
+      </Tooltip.Root>
+    );
+  }
 
   return (
     <Popover.Root openOnHover delay={200} closeDelay={100} side="left" boundary="viewport">
-      <Popover.Trigger render={muteButton} />
+      <Tooltip.Root side="top" delay={0} sticky>
+        <Tooltip.Trigger render={<Popover.Trigger render={muteButton} />} />
+        <Tooltip.Popup className={cn(popup.tooltip)}>
+          <Tooltip.Label />
+          <Tooltip.Shortcut className={popup.tooltipShortcut} />
+        </Tooltip.Popup>
+      </Tooltip.Root>
       <Popover.Popup className={cn(popup.volume)}>
         <VolumeSlider.Root orientation="horizontal" thumbAlignment="edge" render={<SliderRoot />}>
           <VolumeSlider.Track render={<SliderTrack />}>

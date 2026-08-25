@@ -2,6 +2,7 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { basename, resolve } from 'node:path';
 
 import type { Plugin } from 'vite';
+
 import { optimizeSvg } from '../scripts/internal/svg.js';
 
 const elementId = '@videojs/icons/element';

@@ -1,6 +1,8 @@
 import { Suspense, use } from 'react';
 import type { BundledLanguage } from 'shiki';
+
 import { shared } from '@/components/typography/styles';
+
 import { getClientHighlighter } from './clientHighlighter';
 import Shared from './Shared';
 

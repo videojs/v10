@@ -2,6 +2,7 @@ import type { MediaTimeState } from '@videojs/media';
 import { defaults } from '@videojs/utils/object';
 import { formatTime, formatTimeAsPhrase, secondsToIsoDuration } from '@videojs/utils/time';
 import type { NonNullableObject } from '@videojs/utils/types';
+
 import type { Text } from '../../i18n';
 import {
   currentText,

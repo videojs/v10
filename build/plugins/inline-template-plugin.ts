@@ -1,4 +1,5 @@
 import { transform } from 'lightningcss';
+
 import type { BuildMagicString, BuildPlugin } from './types.ts';
 
 const HTML_MARKER = '/*html*/';
@@ -9,7 +10,7 @@ interface TemplatePluginOptions {
 }
 
 /**
- * Rolldown/tsdown transform plugin that minifies tagged template literals
+ * Rolldown/Vite+ pack transform plugin that minifies tagged template literals
  * marked with {@link HTML_MARKER} or {@link CSS_MARKER}.
  *
  * - `/*html*​/` templates: collapse inter-tag whitespace, strip HTML comments.

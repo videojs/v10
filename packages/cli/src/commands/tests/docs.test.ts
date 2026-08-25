@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from 'vite-plus/test';
 
 // --- Fixtures ---
 
@@ -50,6 +50,7 @@ vi.mock('@clack/prompts', () => ({
 }));
 
 import * as p from '@clack/prompts';
+
 import { getConfigValue } from '../../utils/config.js';
 import { docExistsInAnyFramework, readBundledDoc, readLlmsTxt } from '../../utils/docs.js';
 import { handleDocs } from '../docs.js';

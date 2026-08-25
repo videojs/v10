@@ -1,4 +1,4 @@
-import { assertType, describe, expect, it, vi } from 'vitest';
+import { assertType, describe, expect, it, vi } from 'vite-plus/test';
 
 import { combine } from '../combine';
 import { defineSlice, type InferSliceTarget } from '../slice';

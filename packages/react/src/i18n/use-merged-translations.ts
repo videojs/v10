@@ -20,8 +20,8 @@ export function useMergedTranslations(
     void registryEpoch;
     const registryLayer = getI18nTranslations(resolvedLocale);
     return {
-      ...registryLayer,
       ...lazyLayer,
+      ...registryLayer,
       ...flattenTranslations(translationsProp ?? {}),
     } as FlatTranslations;
   }, [resolvedLocale, lazyLayer, translationsProp, registryEpoch]);

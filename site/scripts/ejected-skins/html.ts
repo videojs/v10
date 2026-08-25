@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+
 import {
   DEMO_LIVE_POSTER_SRC,
   DEMO_LIVE_SRC,

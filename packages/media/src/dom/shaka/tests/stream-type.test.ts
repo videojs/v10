@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 
 import { MediaStreamTypes } from '../../../core/types';
 import { HTMLVideoElementHost } from '../../video-host';

@@ -1,6 +1,7 @@
 import clsx from 'clsx';
 import { CheckIcon } from 'lucide-react';
 import { useState } from 'react';
+
 import useIsHydrated from '@/utils/useIsHydrated';
 
 export interface CopyMarkdownButtonProps {
@@ -113,7 +114,7 @@ export default function CopyMarkdownButton({ className, style }: CopyMarkdownBut
             'absolute inset-0 inline-flex items-center justify-center'
           )}
         >
-          Copied <CheckIcon className="ml-1 w-4 h-4" />
+          Copied <CheckIcon className="ml-1 h-4 w-4" />
         </span>
         <span
           className={clsx(

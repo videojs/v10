@@ -1,5 +1,6 @@
 import type { Program } from '@oxc-project/types';
 import type { RolldownMagicString } from 'rolldown';
+
 import type { ModuleImport } from '../ast/imports';
 import type {
   ComponentDefinition,

@@ -69,11 +69,11 @@ for (const { platform, skin, styling } of CASES) {
   });
 }
 
-for (const { platform, styling } of CASES.filter(({ skin }) => skin === 'minimal')) {
-  test(`${platform} minimal ${styling} reveals the volume thumb on keyboard focus`, async ({ page }) => {
+for (const { platform, skin, styling } of CASES) {
+  test(`${platform} ${skin} ${styling} opens the volume popover`, async ({ page }) => {
     const query = new URLSearchParams({
       styling,
-      skin: 'minimal',
+      skin,
       source: 'mp4-1',
       autoplay: '0',
       muted: '1',
@@ -87,10 +87,22 @@ for (const { platform, styling } of CASES.filter(({ skin }) => skin === 'minimal
     await expect(root).toBeVisible({ timeout: 15_000 });
 
     const muteButton = page.getByRole('button', { name: 'Unmute' }).first();
+    await muteButton.hover();
+    const muteTooltip = page.locator('[popover="manual"]').filter({ hasText: 'Unmute' }).first();
+
+    if (skin === 'minimal') await expect(muteTooltip).toBeVisible();
+    else await expect(muteTooltip).toHaveCount(0);
+
+    const volumeThumb = page.getByRole('slider', { name: 'Volume' }).first();
+    await expect(volumeThumb).toBeVisible();
+    await expect(volumeThumb).toHaveCSS('opacity', '1');
+    await expect(volumeThumb).toHaveCSS('scale', '1');
+
+    if (skin === 'minimal') await expect(muteTooltip).toBeVisible();
+
     await muteButton.focus();
     await page.keyboard.press('Tab');
 
-    const volumeThumb = page.getByRole('slider', { name: 'Volume' }).first();
     await expect(volumeThumb).toBeFocused();
     await expect(volumeThumb).toHaveCSS('opacity', '1');
     await expect(volumeThumb).toHaveCSS('scale', '1');

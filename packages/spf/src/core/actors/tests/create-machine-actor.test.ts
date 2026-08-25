@@ -1,4 +1,5 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
+
 import { SerialRunner, Task } from '../../tasks/task';
 import { createMachineActor } from '../create-machine-actor';
 

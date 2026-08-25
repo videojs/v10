@@ -5,9 +5,9 @@ import { ContextConsumer } from '@videojs/element/context';
 
 import { containerContext, playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
-import { MediaElement } from '../media-element';
+import { UIElement } from '../ui-element';
 
-export class GestureElement extends MediaElement {
+export class GestureElement extends UIElement {
   static readonly tagName = 'media-gesture';
 
   static override properties: PropertyDeclarationMap = {

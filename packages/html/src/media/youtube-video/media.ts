@@ -1,6 +1,7 @@
 import { CustomMediaElement } from '@videojs/media/dom/custom-media-element';
 import { buildYouTubeIframeSrc, YouTubeMedia } from '@videojs/media/dom/youtube';
 import { escapeHtml } from '@videojs/utils/string';
+
 import { MediaAttachMixin } from '../../store/media-attach-mixin';
 
 class YouTubeCustomMediaElement extends CustomMediaElement('iframe', YouTubeMedia) {

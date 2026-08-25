@@ -1,7 +1,7 @@
-import { ActionError, defineAction } from 'astro:actions';
-import { MUX_API_URL, MUX_TOKEN_ID, MUX_TOKEN_SECRET } from 'astro:env/server';
 import Mux from '@mux/mux-node';
 import { z } from 'astro/zod';
+import { ActionError, defineAction } from 'astro:actions';
+import { MUX_API_URL, MUX_TOKEN_ID, MUX_TOKEN_SECRET } from 'astro:env/server';
 
 /**
  * Creates an authenticated Mux API client

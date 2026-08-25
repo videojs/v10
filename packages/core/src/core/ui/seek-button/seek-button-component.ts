@@ -1,4 +1,5 @@
 import { defineComponent } from 'vjsc/components';
+
 import type { SeekButtonProps } from './seek-button-core';
 import { SeekButtonDataAttrs } from './seek-button-data-attrs';
 

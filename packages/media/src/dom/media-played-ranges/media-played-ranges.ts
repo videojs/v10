@@ -7,6 +7,7 @@
 
 import { isNumber } from '@videojs/utils/predicate';
 import type { Constructor, MixinReturn } from '@videojs/utils/types';
+
 import type { TimeRangeLike } from '../../core/types';
 
 export interface PlayedRange {

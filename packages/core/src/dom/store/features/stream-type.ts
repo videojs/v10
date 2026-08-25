@@ -7,6 +7,7 @@ import {
   MediaStreamTypes,
 } from '@videojs/media';
 import { listen } from '@videojs/utils/dom';
+
 import { definePlayerFeature } from '../../feature';
 
 export const streamTypeFeature = definePlayerFeature({

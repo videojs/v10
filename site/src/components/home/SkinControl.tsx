@@ -1,5 +1,7 @@
 import { useStore } from '@nanostores/react';
+
 import { skin } from '@/stores/homePageDemos';
+
 import ToggleGroup from '../ToggleGroup';
 
 export default function SkinControl({ className }: { className?: string }) {

@@ -6,6 +6,7 @@ import {
 import { applyStateDataAttrs, logMissingFeature, selectAudioTrack } from '@videojs/core/dom';
 import { type Text, translateText } from '@videojs/core/i18n';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
+
 import { i18nContext } from '../../i18n/context';
 import { I18nController } from '../../i18n/controller';
 import { playerContext } from '../../player/context';

@@ -1,4 +1,5 @@
 import { expect, type Page, test } from '@playwright/test';
+
 import { DATA_ATTRS, SELECTORS } from '../fixtures/selectors';
 import { PlayerPage } from '../page-objects/player';
 

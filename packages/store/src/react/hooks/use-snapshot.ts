@@ -1,4 +1,5 @@
 import { identity } from '@videojs/utils/function';
+
 import type { State } from '../../core/state';
 import { type Comparator, type Selector, useSelector } from './use-selector';
 

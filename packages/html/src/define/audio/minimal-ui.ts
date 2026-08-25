@@ -1,8 +1,8 @@
 // Registers the audio player, container, and all audio UI custom elements
 // used by the minimal skin without creating a skin element. Use this entry
 // when building an ejected (light DOM) player layout.
-import { MediaContainerElement } from '../../media/container-element';
 import { BufferingIndicatorElement } from '../../ui/buffering-indicator/buffering-indicator-element';
+import { ContainerElement } from '../../ui/container/container-element';
 import { HotkeyElement } from '../../ui/hotkey/hotkey-element';
 import { MuteButtonElement } from '../../ui/mute-button/mute-button-element';
 import { PlayButtonElement } from '../../ui/play-button/play-button-element';
@@ -19,14 +19,13 @@ import {
   defineTooltip,
   defineVolumeSlider,
 } from '../ui/compounds';
-
 // Value import — player.ts body runs before this module's body.
 import { AudioPlayerElement } from './player';
 
 // ── Registration (providers / parents first) ────────────────────────────
 
 safeDefine(AudioPlayerElement);
-safeDefine(MediaContainerElement);
+safeDefine(ContainerElement);
 
 // Compound groups.
 defineErrorDialog();

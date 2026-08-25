@@ -9,6 +9,7 @@
  * collide with a global attribute.
  */
 import { z } from 'astro/zod';
+
 import { PropDefSchema, StateDefSchema } from './component-reference';
 
 export const FeatureStateDefSchema = StateDefSchema;

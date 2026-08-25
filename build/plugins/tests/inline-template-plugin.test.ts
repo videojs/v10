@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
+
 import MagicString from 'magic-string';
+
 import { inlineTemplatePlugin } from '../inline-template-plugin.ts';
 
 // Helper: run the plugin's transform on a code string.

@@ -1,6 +1,7 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { Hls, HlsJsMedia } from '../../hls-js';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
+
 import { MuxMedia, type MuxSource } from '..';
+import { Hls, HlsJsMedia } from '../../hls-js';
 
 afterEach(() => {
   vi.unstubAllGlobals();

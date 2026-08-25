@@ -2,7 +2,7 @@ import { resolve } from 'node:path';
 
 import type { Plugin } from 'rolldown';
 import { rolldown } from 'rolldown';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { compileStyles } from '../../styles/compile';
 import { loadDesignSystem } from '../../styles/design-system';

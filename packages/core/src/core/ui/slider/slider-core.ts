@@ -1,8 +1,8 @@
 import { clamp, roundToStep, toPercent } from '@videojs/utils/number';
 import { defaults } from '@videojs/utils/object';
 import type { NonNullableObject } from '@videojs/utils/types';
-import type { Text } from '../../i18n';
 
+import type { Text } from '../../i18n';
 import { resolveLabel } from '../utils/resolve-label';
 
 /** Configuration shared by all slider variants. */

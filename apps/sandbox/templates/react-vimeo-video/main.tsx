@@ -18,8 +18,8 @@ function App() {
 
   return (
     <VideoPlayer>
-      <VideoSkinComponent skin={skin} styling={styling} className="aspect-video max-w-4xl mx-auto">
-        <VimeoVideo className="block w-full h-full" src={VIMEO_VIDEO_SRC} playsInline />
+      <VideoSkinComponent skin={skin} styling={styling} className="mx-auto aspect-video max-w-4xl">
+        <VimeoVideo className="block h-full w-full" src={VIMEO_VIDEO_SRC} playsInline />
       </VideoSkinComponent>
     </VideoPlayer>
   );

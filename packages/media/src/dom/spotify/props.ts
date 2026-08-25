@@ -10,8 +10,10 @@ import type { SpotifySource } from './source';
  * own to replace and `playsInline` no inline-playback switch, so those two are
  * kept for a uniform prop shape but are stored and reported without effect.
  */
-export interface SpotifyMediaProps
-  extends Pick<Video, 'src' | 'autoplay' | 'loop' | 'controls' | 'playsInline' | 'preload' | 'poster'> {
+export interface SpotifyMediaProps extends Pick<
+  Video,
+  'src' | 'autoplay' | 'loop' | 'controls' | 'playsInline' | 'preload' | 'poster'
+> {
   source: SpotifySource | null;
 }
 

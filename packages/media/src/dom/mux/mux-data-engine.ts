@@ -1,4 +1,5 @@
 import { hasMethods, isFunction, isObject, isString } from '@videojs/utils/predicate';
+
 import type { MuxDataOptions } from './types';
 
 /** The `mux-embed` monitor options that hook a playback engine's own telemetry. */

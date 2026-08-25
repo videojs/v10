@@ -1,5 +1,5 @@
 import type { HlsBackgroundVideoMedia } from '@videojs/spf/hls-background-video';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { MuxBackgroundVideo } from '../../mux-background-video';
 import { HlsBackgroundVideo } from '../index';

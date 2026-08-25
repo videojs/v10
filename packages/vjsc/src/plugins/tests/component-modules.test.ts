@@ -4,7 +4,7 @@ import { basename, join } from 'node:path';
 
 import type { Plugin } from 'rolldown';
 import { rolldown } from 'rolldown';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { moduleFilename } from '../../utils/module-id';
 import { componentModulesPlugin } from '../component-modules';

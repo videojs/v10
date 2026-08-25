@@ -1,4 +1,5 @@
 import { isFunction } from '@videojs/utils/predicate';
+
 import type { Text } from '../../i18n';
 
 export function resolveLabel<State>(

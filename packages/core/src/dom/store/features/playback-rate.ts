@@ -1,6 +1,7 @@
 import type { MediaPlaybackRateState } from '@videojs/media';
 import { isMediaPlaybackRateCapable } from '@videojs/media';
 import { listen } from '@videojs/utils/dom';
+
 import { definePlayerFeature } from '../../feature';
 
 const DEFAULT_RATES: readonly number[] = [0.2, 0.5, 0.7, 1, 1.2, 1.5, 1.7, 2];

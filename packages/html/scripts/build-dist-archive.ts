@@ -16,6 +16,7 @@ import { spawnSync } from 'node:child_process';
 import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+
 import { findUnresolvableSpecifiers, resolveClosure } from './cdn-graph.ts';
 
 const PACKAGE_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -53,14 +54,14 @@ function sha256(path: string): string {
 
 async function main() {
   if (!existsSync(CDN_DIR)) {
-    log.error(`CDN build not found at ${CDN_DIR}. Run \`pnpm -F @videojs/html build:cdn\` first.`);
+    log.error(`CDN build not found at ${CDN_DIR}. Run \`pnpm build:cdn\` from the workspace root first.`);
     process.exit(1);
   }
 
   // The build config resolves its entry globs against the working directory.
   process.chdir(PACKAGE_DIR);
   const [{ entries }, pkg] = await Promise.all([
-    import('../tsdown.cdn.config.ts'),
+    import('../vite.config.ts'),
     import('../package.json', { with: { type: 'json' } }).then((module) => module.default),
   ]);
 

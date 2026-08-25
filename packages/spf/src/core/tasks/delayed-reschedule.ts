@@ -1,4 +1,5 @@
 import { sleep } from '@videojs/utils/time';
+
 import type { Reschedule } from './task';
 
 /**

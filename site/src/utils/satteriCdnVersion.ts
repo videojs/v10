@@ -1,4 +1,5 @@
 import { defineMdastPlugin } from 'satteri';
+
 import { VJS10_HTML_CDN_BASE } from '../consts';
 
 export const VJS10_HTML_CDN_PLACEHOLDER = '{{VJS10_HTML_CDN_BASE}}';

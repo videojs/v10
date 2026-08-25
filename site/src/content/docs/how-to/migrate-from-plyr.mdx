@@ -79,12 +79,11 @@ If you prefer not to use the CDN, you can use the individual modules:
 ```js
 import '@videojs/html/video/player';
 import '@videojs/html/video/minimal-skin';
-import '@videojs/html/video/minimal-skin.css';
 ```
 
 ### Notes
 
-- CSS styles are injected automatically into the Shadow DOM we create for the player.
+- The skin attaches its styles automatically to its shadow root.
 - The poster is a slotted `img` rather than a `poster` attribute, which gives the skin control over how it appears. That's much like Plyr's `data-poster`.
 - There's also a default skin with a modern, frosted appearance that some may prefer. Try it by removing the `-minimal` suffix from the script `src` if you're using the CDN, or the `minimal-` prefix from the imports.
 

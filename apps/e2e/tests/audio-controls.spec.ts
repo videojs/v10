@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+
 import { AUDIO_PAGES, type PageEntry } from '../fixtures/media';
 import { DATA_ATTRS, SELECTORS } from '../fixtures/selectors';
 import { PlayerPage } from '../page-objects/player';

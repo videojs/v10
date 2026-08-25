@@ -1,4 +1,5 @@
 import { parseJwt } from '@videojs/utils/jwt';
+
 import type { DrmSystemsConfig } from '../../core/drm';
 import { createMuxQuery, MUX_VIDEO_DOMAIN, type MuxJWT, type MuxSourceBase } from './source';
 

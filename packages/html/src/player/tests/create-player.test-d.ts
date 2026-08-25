@@ -12,9 +12,9 @@ import {
   videoFeatures,
 } from '@videojs/core/dom';
 import type { Slice } from '@videojs/store';
-import { assertType, describe, it } from 'vitest';
+import { assertType, describe, it } from 'vite-plus/test';
 
-import { MediaElement } from '../../ui/media-element';
+import { UIElement } from '../../ui/ui-element';
 import { type CreatePlayerResult, createPlayer } from '../create-player';
 
 describe('createPlayer', () => {
@@ -22,7 +22,7 @@ describe('createPlayer', () => {
     const result = createPlayer({ features: videoFeatures });
 
     assertType<CreatePlayerResult<VideoPlayerStore>>(result);
-    // @ts-expect-error ContainerMixin is imported from the package root, not created per player.
+    // @ts-expect-error ContainerMixin is no longer part of the HTML API.
     result.ContainerMixin;
   });
 
@@ -61,8 +61,8 @@ describe('createPlayer', () => {
   it('infers config properties from selected features', () => {
     const withMetadata = createPlayer({ features: [metadataFeature] });
     const withoutMetadata = createPlayer({ features: [features.playback] });
-    const MetadataProvider = withMetadata.ProviderMixin(MediaElement);
-    const PlainProvider = withoutMetadata.ProviderMixin(MediaElement);
+    const MetadataProvider = withMetadata.ProviderMixin(UIElement);
+    const PlainProvider = withoutMetadata.ProviderMixin(UIElement);
     const metadataProvider = new MetadataProvider();
     const plainProvider = new PlainProvider();
 
@@ -76,8 +76,8 @@ describe('createPlayer', () => {
   it('exposes orientation lock configuration as a provider property', () => {
     const withOrientationLock = createPlayer({ features: [features.orientationLock] });
     const withoutOrientationLock = createPlayer({ features: [features.playback] });
-    const OrientationProvider = withOrientationLock.ProviderMixin(MediaElement);
-    const PlainProvider = withoutOrientationLock.ProviderMixin(MediaElement);
+    const OrientationProvider = withOrientationLock.ProviderMixin(UIElement);
+    const PlainProvider = withoutOrientationLock.ProviderMixin(UIElement);
     const orientationProvider = new OrientationProvider();
     const plainProvider = new PlainProvider();
 

@@ -1,4 +1,5 @@
 import { isFunction } from '@videojs/utils/predicate';
+
 import type { AudioRendition } from './audio-rendition';
 import type { AudioTrack } from './audio-track';
 import { RenditionEvent } from './rendition-event';

@@ -130,18 +130,6 @@ import { videoFeatures } from '@videojs/react/video';
 const { Player } = createPlayer({ features: videoFeatures });
 ```
 
-Where Media Chrome asks you to restyle a shadow root, Video.js components take a `render` prop, so you supply the element and Video.js supplies the behavior and state:
-
-```tsx
-<PlayButton
-  render={(props, state) => (
-    <button {...props} className="play-button">
-      {state.paused ? <span className="play-icon">Play</span> : <span className="pause-icon">Pause</span>}
-    </button>
-  )}
-/>
-```
-
 Read player state with <DocsLink slug="reference/use-player">`usePlayer`</DocsLink>, <DocsLink slug="reference/use-media">`useMedia`</DocsLink>, and <DocsLink slug="reference/use-store">`useStore`</DocsLink>. Player hooks must run in a descendant component rendered inside `VideoPlayer` or the `Player` returned by `createPlayer`. A hook in the same component that returns the provider is still outside that provider.
 
 </FrameworkCase>
@@ -163,7 +151,7 @@ Media Chrome configures behavior through `<media-controller>` attributes. Video.
 | `nohotkeys` | `media-hotkey disabled`, or omit | Disable per hotkey element, or leave them out. |
 | `hotkeys="noarrowleft …"` | individual `media-hotkey` | Each shortcut is its own element, so remove the ones you don't want. |
 | `keyboardforwardseekoffset`, `keyboardbackwardseekoffset` | `value` on `media-hotkey` | Set the signed seek amount per element. |
-| `defaultsubtitles` | `media-captions-button` or player state | Partial: captions can be toggled, but "on by default" isn't a flag yet. |
+| `defaultsubtitles` | `<track default>` for authored tracks | Add `default` to an authored captions or subtitles track. Tracks discovered from a provider or manifest don't have one generic player-level default flag. |
 | `defaultstreamtype` | `streamType` feature | Partial: derived from the media, with no pre-load default. |
 | `liveedgeoffset`, `seektoliveoffset` | live media engine | Live-edge behavior lives in the playback engine, not a UI attribute. |
 | `lang` | i18n translator | Localization is configured through the <DocsLink slug="concepts/i18n">translator and locale registry</DocsLink>. |
@@ -317,7 +305,7 @@ These Media Chrome features have no direct equivalent yet. Several can be approx
 - No preference persistence, so Media Chrome's `novolumepref`, `nomutedpref`, and `nosubtitleslangpref` opt-outs have nothing to opt out of. Persistence is out of scope for GA; tracked at [#944](https://github.com/videojs/v10/issues/944), with subtitle language at [#1423](https://github.com/videojs/v10/issues/1423)
 - No `breakpoints` or container-breakpoint attributes; use CSS container queries instead
 - No `seektoliveoffset` or `noautoseektolive` controls, and live-edge offset and tolerance aren't configurable ([#1730](https://github.com/videojs/v10/issues/1730))
-- Chapters render, but there's no active-chapter state, no `chapterchange` event, and no menu to jump between them ([#1873](https://github.com/videojs/v10/issues/1873))
+- Chapters render and each time-slider segment reflects `data-active`, but there's no player-level active chapter value, `chapterchange` event, or menu to jump between them ([#1873](https://github.com/videojs/v10/issues/1873))
 - Cue points are not supported ([#1442](https://github.com/videojs/v10/issues/1442))
 
 Chapters themselves do work. Add a default `<track kind="chapters">` and the packaged skins segment the time slider and show the chapter title on hover, via `media-time-slider-chapters` and `media-time-slider-chapter-title`.
@@ -326,30 +314,7 @@ Chapters themselves do work. Add a default `<track kind="chapters">` and the pac
 
 ### Disable autohide (`autohide="-1"`)
 
-The skin hides controls by removing `data-visible` from the root `<media-controls>`. Which element then fades depends on the player's width: below `32rem` it's the `--primary` and `--secondary` groups inside the root, and at or above `32rem` it's the root itself. Override both, plus the hidden cursor, in your player CSS:
-
-```css
-.media-default-skin--video .media-controls--root:not([data-visible]) {
-  opacity: 1;
-  scale: 1;
-  filter: none;
-  pointer-events: auto;
-
-  .media-controls--primary,
-  .media-controls--secondary {
-    opacity: 1;
-    scale: 1;
-    filter: none;
-    pointer-events: auto;
-  }
-}
-
-.media-default-skin--video:has(.media-controls--root:not([data-visible])) {
-  cursor: auto;
-}
-```
-
-Two things make this fragile. It matches the skin's own selectors exactly, so it only wins on source order — load your stylesheet after the skin's. And the class names are the default skin's; the minimal skin fades `.media-minimal-skin--video .media-controls` instead, with no groups to reach.
+Packaged skins don't expose an autohide switch. Eject the closest skin and remove its hidden-control styles. That's safer than overriding internal selectors in a skin you don't own.
 
 To change the *delay* rather than disable it, note that the idle timer is a constant inside `controlsFeature`. Fork that feature, swap it into a custom feature list, and pass that list to `createPlayer`:
 
@@ -378,19 +343,25 @@ Media Chrome remembers volume, muted state, and language across sessions. Video.
 <FrameworkCase frameworks={["react"]}>
 ```tsx
 import { selectVolume, usePlayer } from '@videojs/react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 function PersistVolume() {
   const volume = usePlayer(selectVolume);
+  const [readyToSave, setReadyToSave] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem('vjs:volume');
-    if (saved) volume.setVolume(Number(saved));
+    if (saved !== null) {
+      const savedVolume = Number(saved);
+      if (Number.isFinite(savedVolume)) volume.setVolume(savedVolume);
+    }
+    setReadyToSave(true);
   }, []);
 
   useEffect(() => {
+    if (!readyToSave) return;
     localStorage.setItem('vjs:volume', String(volume.volume));
-  }, [volume.volume]);
+  }, [readyToSave, volume.volume]);
 
   return null;
 }

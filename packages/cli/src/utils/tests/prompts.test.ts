@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
+
 import { supportsCdnInstall } from '../prompts.js';
 
 // Mirrors the install page's CDN gating: preset renderers and media renderers

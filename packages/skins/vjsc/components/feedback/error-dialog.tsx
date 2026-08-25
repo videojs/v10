@@ -1,5 +1,6 @@
 import * as $ from '@videojs/core/vjsc';
 import type { Props } from 'vjsc/components';
+
 import type { SkinComponentMeta } from '../../meta';
 import buttonStyles from '../../styles/components/button.styles';
 import styles from '../../styles/components/error-dialog.styles';

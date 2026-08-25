@@ -22,7 +22,9 @@
  */
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+
 import * as ts from 'typescript';
+
 import { extractCSSVars } from './css-vars-handler.js';
 import { abbreviateType } from './formatter.js';
 import type {

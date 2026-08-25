@@ -1,4 +1,5 @@
 import { defineComponent } from 'vjsc/components';
+
 import type { SliderValueProps } from '../slider/slider-component';
 import type { SliderPreviewProps } from '../slider/slider-core';
 import type { TimeSliderProps } from './time-slider-core';

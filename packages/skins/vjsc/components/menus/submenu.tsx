@@ -1,6 +1,7 @@
 import type { MenuProps } from '@videojs/core';
 import * as $ from '@videojs/core/vjsc';
 import { type PropsWithChildren, Text, type VjscNode } from 'vjsc/components';
+
 import styles from '../../styles/components/menu.styles';
 import { MenuChevron } from './menu-chevron';
 

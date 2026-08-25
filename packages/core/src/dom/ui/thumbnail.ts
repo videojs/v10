@@ -1,4 +1,5 @@
 import { listen, observeResize } from '@videojs/utils/dom';
+
 import { ThumbnailCore } from '../../core/ui/thumbnail/thumbnail-core';
 import type { ThumbnailConstraints } from '../../core/ui/thumbnail/types';
 

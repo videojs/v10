@@ -80,13 +80,13 @@ function referencedBindings(ast: Program, imported: ReadonlySet<string>): Readon
 function isPropertyName(node: { readonly type: 'Identifier'; readonly name: string }, parent: Node | null): boolean {
   return Boolean(
     (parent?.type === 'TSQualifiedName' && parent.right === node) ||
-      (parent?.type === 'MemberExpression' && !parent.computed && parent.property === node) ||
-      (parent?.type === 'Property' && !parent.computed && parent.key === node && !parent.shorthand) ||
-      (parent?.type === 'PropertyDefinition' && !parent.computed && parent.key === node) ||
-      (parent?.type === 'MethodDefinition' && !parent.computed && parent.key === node) ||
-      (parent?.type === 'AccessorProperty' && !parent.computed && parent.key === node) ||
-      (parent?.type === 'TSPropertySignature' && !parent.computed && parent.key === node) ||
-      (parent?.type === 'TSMethodSignature' && !parent.computed && parent.key === node)
+    (parent?.type === 'MemberExpression' && !parent.computed && parent.property === node) ||
+    (parent?.type === 'Property' && !parent.computed && parent.key === node && !parent.shorthand) ||
+    (parent?.type === 'PropertyDefinition' && !parent.computed && parent.key === node) ||
+    (parent?.type === 'MethodDefinition' && !parent.computed && parent.key === node) ||
+    (parent?.type === 'AccessorProperty' && !parent.computed && parent.key === node) ||
+    (parent?.type === 'TSPropertySignature' && !parent.computed && parent.key === node) ||
+    (parent?.type === 'TSMethodSignature' && !parent.computed && parent.key === node)
   );
 }
 

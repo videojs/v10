@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
+
 import { SeekIndicatorElement } from '../seek-indicator-element';
 import { SeekIndicatorValueElement } from '../seek-indicator-value-element';
 

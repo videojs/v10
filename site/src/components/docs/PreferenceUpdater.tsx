@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+
 import { currentFramework as frameworkStore, currentStyle as styleStore } from '@/stores/preferences';
 import { getDefaultStyle, type SupportedFramework } from '@/types/docs';
 import { getStylePreferenceClient } from '@/utils/docs/preferences';
@@ -24,6 +25,7 @@ export function PreferenceUpdater({ currentFramework }: PreferenceUpdaterProps) 
     styleStore.set(style);
   }, [currentFramework]);
 
-  // biome-ignore lint/complexity/noUselessFragments: Astro SSR logs false "Invalid hook call" when a React component with hooks returns null. See withastro/astro#12283.
+  // Astro SSR logs false "Invalid hook call" when a React component with hooks returns null. See withastro/astro#12283.
+  // oxlint-disable-next-line react/jsx-no-useless-fragment
   return <></>;
 }

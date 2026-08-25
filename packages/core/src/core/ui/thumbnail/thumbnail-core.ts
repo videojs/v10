@@ -1,4 +1,5 @@
 import { findLastAtOrBefore } from '@videojs/utils/array';
+
 import type {
   ThumbnailConstraints,
   ThumbnailCrossOrigin,

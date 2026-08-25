@@ -3,6 +3,7 @@
 import { playbackRateText } from '@videojs/core/i18n/text/menu';
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
+
 import { useTranslator } from '@/i18n/context';
 import {
   CheckIcon,
@@ -33,6 +34,7 @@ import { Time } from '@/ui/time';
 import { TimeSlider } from '@/ui/time-slider';
 import { Tooltip } from '@/ui/tooltip';
 import { VolumeSlider } from '@/ui/volume-slider';
+
 import type { BaseSkinProps } from '../types';
 
 const SEEK_TIME = 10;

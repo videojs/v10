@@ -4,11 +4,11 @@ import { ContextProvider } from '@videojs/element/context';
 import type { MediaTimeState } from '@videojs/media';
 import { createStore } from '@videojs/store';
 import { formatTimeAsPhrase } from '@videojs/utils/time';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { MediaI18nProviderElement } from '../../../i18n';
 import { playerContext } from '../../../player/context';
-import { MediaElement } from '../../media-element';
+import { UIElement } from '../../ui-element';
 import { TimeElement } from '../time-element';
 
 let tagCounter = 0;
@@ -62,7 +62,7 @@ function createTimeStore(overrides: Partial<MediaTimeState> = {}): AnyPlayerStor
   }) as unknown as AnyPlayerStore;
 }
 
-class TestPlayerProviderElement extends MediaElement {
+class TestPlayerProviderElement extends UIElement {
   store: AnyPlayerStore = createTimeStore();
 
   readonly #provider = new ContextProvider(this, { context: playerContext });

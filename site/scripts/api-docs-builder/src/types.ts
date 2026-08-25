@@ -30,11 +30,7 @@ export type {
   ReactMediaReference,
 } from '../../../src/types/media-reference.js';
 export { MediaReferenceSchema } from '../../../src/types/media-reference.js';
-export type {
-  PresetFeatureRef,
-  PresetReference,
-  PresetSkinDef,
-} from '../../../src/types/preset-reference.js';
+export type { PresetFeatureRef, PresetReference, PresetSkinDef } from '../../../src/types/preset-reference.js';
 export { PresetReferenceSchema } from '../../../src/types/preset-reference.js';
 
 export type { UtilReference } from '../../../src/types/util-reference.js';

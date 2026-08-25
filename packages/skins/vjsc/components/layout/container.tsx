@@ -1,5 +1,6 @@
 import * as $ from '@videojs/core/vjsc';
 import type { PropsWithChildren } from 'vjsc/components';
+
 import type { SkinComponentMeta } from '../../meta';
 import styles from '../../styles/components/container.styles';
 

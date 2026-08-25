@@ -1,4 +1,5 @@
 import { defineComponent } from 'vjsc/components';
+
 import type { SliderPreviewProps, SliderProps } from './slider-core';
 import { SliderDataAttrs } from './slider-data-attrs';
 

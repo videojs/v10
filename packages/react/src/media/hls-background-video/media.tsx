@@ -7,6 +7,7 @@ import {
 } from '@videojs/spf/hls-background-video';
 import type { VideoHTMLAttributes } from 'react';
 import { forwardRef, useEffect, useRef } from 'react';
+
 import { useAttachMedia } from '../../utils/use-attach-media';
 import { useComposedRefs } from '../../utils/use-composed-refs';
 import { useMediaInstance } from '../../utils/use-media-instance';
@@ -15,7 +16,8 @@ import { useSyncProps } from '../../utils/use-sync-props';
 // `src` is the only prop the Media owns, taken from the adapter rather than
 // restated here so the two can't disagree about what the surface is.
 export interface HlsBackgroundVideoProps
-  extends Omit<VideoHTMLAttributes<HTMLVideoElement>, keyof HlsBackgroundVideoMediaProps>,
+  extends
+    Omit<VideoHTMLAttributes<HTMLVideoElement>, keyof HlsBackgroundVideoMediaProps>,
     Partial<HlsBackgroundVideoMediaProps> {}
 
 /**

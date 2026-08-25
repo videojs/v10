@@ -1,4 +1,5 @@
 import type { Constructor } from '@videojs/utils/types';
+
 import type { NativeMediaHost } from './errors';
 import { getStreamInfoFromSrc, looksLikeM3u8 } from './m3u8-utils';
 
@@ -19,17 +20,18 @@ export function NativeHlsMediaLiveMixin<Base extends Constructor<NativeMediaHost
     #currentSrc = '';
 
     /**
-     * Seekable range size for live content. `0` for standard live, `Infinity`
-     * for DVR, `NaN` for on-demand or unknown.
+     * Describes the kind of live window available. `0` for a sliding live
+     * window, `Infinity` for a live event with playback history, and `NaN` for
+     * on-demand or unknown. This value is not a duration.
      */
     get targetLiveWindow() {
       return this.#targetLiveWindow;
     }
 
     /**
-     * Presentation time marking the start of the Live Edge Window. Derived on
-     * each read from the current `seekable.end` and cached offset; `NaN` when
-     * the stream is not live or the offset is unavailable.
+     * Playback time where the live edge begins. Calculated from the newest
+     * available time and the playlist's live-edge offset. `NaN` when the
+     * stream is not live or the offset is unavailable.
      */
     get liveEdgeStart() {
       if (this.#liveEdgeStartOffset === undefined) return Number.NaN;

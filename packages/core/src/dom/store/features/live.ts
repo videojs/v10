@@ -1,6 +1,7 @@
 import type { MediaLiveState } from '@videojs/media';
 import { isMediaLiveCapable } from '@videojs/media';
 import { listen } from '@videojs/utils/dom';
+
 import { definePlayerFeature } from '../../feature';
 
 /**

@@ -1,7 +1,9 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+
 import { z } from 'astro/zod';
+
 import { type EjectedSkinEntry, SKINS, type SkinDef } from './config.ts';
 import { processHtmlSkin } from './html.ts';
 import { processReactSkin, resolveCss } from './react.ts';

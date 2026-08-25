@@ -21,17 +21,18 @@ export {
 // `[preferHighestResolution]` alone drops the screen-size cap, for one.
 export type { SelectTrackRule } from '../../behaviors/select-tracks';
 export { preferHighestResolution, screenResolutionCap } from '../../behaviors/select-tracks';
+export { stickToSelectedCodecs } from '../../behaviors/track-switching';
+export {
+  type CodecPreferenceConfig,
+  DEFAULT_PREFERRED_CODECS,
+  preferCodecFamilies,
+} from '../../primitives/selection-rules';
 // The Medias over these engines are not here: they live behind
 // `@videojs/spf/hls-video`, `@videojs/spf/hls-audio`, and
 // `@videojs/spf/hls-background-video` so that driving an engine directly doesn't pull
 // a Media (and `@videojs/media`) in with it — and so this entry stays the
 // engines' own size budget.
-export type {
-  HlsVideoEngineConfig,
-  HlsVideoEngineContext,
-  HlsVideoEngineSignals,
-  HlsVideoEngineState,
-} from './engine';
+export type { HlsVideoEngineConfig, HlsVideoEngineContext, HlsVideoEngineSignals, HlsVideoEngineState } from './engine';
 export { createHlsVideoEngine } from './engine';
 export type {
   HlsAudioEngineConfig,

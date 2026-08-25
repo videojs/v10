@@ -2,7 +2,7 @@ import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { CAPTIONS_OFF_VALUE } from '@videojs/core';
 import { registerI18n, resetI18nRegistry } from '@videojs/core/i18n';
 import type { ReactNode } from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { I18nProvider } from '../../../i18n';
 import { PlayerContextProvider, type PlayerContextValue } from '../../../player/context';

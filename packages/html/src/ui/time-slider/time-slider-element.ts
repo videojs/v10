@@ -21,10 +21,10 @@ import { i18nContext } from '../../i18n/context';
 import { I18nController } from '../../i18n/controller';
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
-import { MediaElement } from '../media-element';
 import { sliderContext } from '../slider/context';
+import { UIElement } from '../ui-element';
 
-export class TimeSliderElement extends MediaElement {
+export class TimeSliderElement extends UIElement {
   static readonly tagName = 'media-time-slider';
 
   static override properties = {

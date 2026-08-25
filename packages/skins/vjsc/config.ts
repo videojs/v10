@@ -1,4 +1,5 @@
 import type { VjscModule, VjscModuleConfig } from 'vjsc/plugins';
+
 import { type SkinName, skinStyles } from './meta';
 import { createStyleOptions } from './style';
 import { createComponentTargets } from './target';

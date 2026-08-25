@@ -9,6 +9,7 @@ import {
 import { useSnapshot } from '@videojs/store/react';
 import type { ReactNode } from 'react';
 import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
+
 import { useOptionalContainer, useOptionalPlayer } from '../../player/context';
 import { useOptionalPopupGroup } from '../../player/popup-group-context';
 import { useDestroy } from '../../utils/use-destroy';

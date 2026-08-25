@@ -17,6 +17,7 @@ export interface AlertDialogRootProps extends AlertDialogProps {
   children?: ReactNode;
 }
 
+/** Manages alert dialog state and provides it to the compound parts. Does not render an element. */
 export function AlertDialogRoot({
   open: controlledOpen,
   defaultOpen = AlertDialogCore.defaultProps.defaultOpen,

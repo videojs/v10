@@ -1,4 +1,5 @@
 import { defineComponent } from 'vjsc/components';
+
 import type { TimeProps } from './time-core';
 import { TimeDataAttrs } from './time-data-attrs';
 

@@ -2,6 +2,7 @@ import type { BufferingIndicatorProps as CoreProps } from '@videojs/core';
 import * as $ from '@videojs/core/vjsc';
 import { SpinnerIcon } from '@videojs/icons/vjsc';
 import type { Props } from 'vjsc/components';
+
 import type { SkinComponentMeta } from '../../meta';
 import styles from '../../styles/components/buffering.styles';
 

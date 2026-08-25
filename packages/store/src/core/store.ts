@@ -1,4 +1,5 @@
 import { isNull, isObject } from '@videojs/utils/predicate';
+
 import { AbortControllerRegistry } from './abort-controller-registry';
 import type { StoreCallbacks } from './config';
 import { throwDestroyedError, throwNoTargetError } from './errors';
@@ -286,6 +287,8 @@ export type AnyStore<Target = any> = BaseStore<Target, object>;
 
 export type UnknownStore<Target = unknown> = Store<Target, UnknownState>;
 
-export type InferStoreTarget<S extends AnyStore> = S extends { readonly target: infer Target | null } ? Target : never;
+export type InferStoreTarget<S extends AnyStore> = S extends { readonly target: (infer Target) | null }
+  ? Target
+  : never;
 
 export type InferStoreState<S extends AnyStore> = S extends { readonly state: infer State } ? State : never;

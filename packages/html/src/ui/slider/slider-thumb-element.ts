@@ -2,10 +2,10 @@ import { applyElementProps, applyStateDataAttrs } from '@videojs/core/dom';
 import type { PropertyValues } from '@videojs/element';
 import { ContextConsumer } from '@videojs/element/context';
 
-import { MediaElement } from '../media-element';
+import { UIElement } from '../ui-element';
 import { sliderContext } from './context';
 
-export class SliderThumbElement extends MediaElement {
+export class SliderThumbElement extends UIElement {
   static readonly tagName = 'media-slider-thumb';
 
   readonly #ctx = new ContextConsumer(this, {

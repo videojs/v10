@@ -2,8 +2,8 @@ import { getActionContext } from 'astro:actions';
 import { defineMiddleware } from 'astro:middleware';
 import type { JWTPayload } from 'jose';
 import { jwtVerify } from 'jose';
-import type { OAuthResponse } from '@/utils/auth';
 
+import type { OAuthResponse } from '@/utils/auth';
 import { getJWKS, INACTIVITY_EXPIRY, refreshToken, SESSION_COOKIE_NAME, seal, unseal } from '@/utils/auth';
 
 /** JWT payload structure from the OAuth ID token */

@@ -1,5 +1,6 @@
 import { useStore } from '@nanostores/react';
 import { Globe, Image, RadioTower } from 'lucide-react';
+
 import ImageRadioGroup from '@/components/ImageRadioGroup';
 import { useCase } from '@/stores/installation';
 import { getInstallationPreset, USE_CASES, type UseCase } from '@/utils/installation/types';

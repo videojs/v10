@@ -1,6 +1,7 @@
+import { z } from 'astro/zod';
 import { ActionError, defineAction } from 'astro:actions';
 import { OAUTH_CLIENT_ID, OAUTH_REDIRECT_URI, OAUTH_URL } from 'astro:env/server';
-import { z } from 'astro/zod';
+
 import { SESSION_COOKIE_NAME } from '@/utils/auth';
 
 export const auth = {

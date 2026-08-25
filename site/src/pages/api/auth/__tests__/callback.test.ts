@@ -1,7 +1,7 @@
 // @vitest-environment node
 
 import type { APIContext } from 'astro';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
 const env = vi.hoisted(() => ({
   OAUTH_CLIENT_ID: 'test-client-id' as string | undefined,

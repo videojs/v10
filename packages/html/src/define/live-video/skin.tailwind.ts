@@ -22,9 +22,9 @@ import {
 } from '@videojs/skins/default/tailwind/video.tailwind';
 import { createTemplate } from '@videojs/utils/dom';
 import { cn } from '@videojs/utils/style';
+
 import { safeDefine } from '../safe-define';
 import { SkinElement } from '../skin-element';
-
 // Register the live video player, container, and all UI custom elements.
 import './ui';
 

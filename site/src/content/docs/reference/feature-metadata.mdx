@@ -40,12 +40,12 @@ function ContentTitle() {
 Pass `selectMetadata` to <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> to subscribe to metadata state. Returns `undefined` if the metadata feature is not configured.
 
 ```ts title="content-title.ts"
-import { createPlayer, MediaElement, selectMetadata } from '@videojs/html';
+import { createPlayer, UIElement, selectMetadata } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
 
 const { PlayerController, context } = createPlayer({ features: videoFeatures });
 
-class ContentTitle extends MediaElement {
+class ContentTitle extends UIElement {
   readonly #metadata = new PlayerController(this, context, selectMetadata);
 }
 ```

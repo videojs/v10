@@ -2,15 +2,15 @@ import type { AnyPlayerStore } from '@videojs/core/dom';
 import { ContextProvider } from '@videojs/element/context';
 import type { MediaPlaybackRateState } from '@videojs/media';
 import { createStore } from '@videojs/store';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { playerContext } from '../../../player/context';
-import { MediaElement } from '../../media-element';
 import { MenuElement } from '../../menu/menu-element';
 import { MenuItemIndicatorElement } from '../../menu/menu-item-indicator-element';
 import { MenuRadioGroupElement } from '../../menu/menu-radio-group-element';
 import { MenuRadioItemElement } from '../../menu/menu-radio-item-element';
 import { PlaybackRateButtonElement } from '../../playback-rate-button/playback-rate-button-element';
+import { UIElement } from '../../ui-element';
 import { PlaybackRateRadioGroupElement } from '../playback-rate-radio-group-element';
 
 let tagCounter = 0;
@@ -72,7 +72,7 @@ function createPlaybackRateStore({
   }) as unknown as AnyPlayerStore;
 }
 
-class TestPlayerProviderElement extends MediaElement {
+class TestPlayerProviderElement extends UIElement {
   store: AnyPlayerStore = createPlaybackRateStore();
 
   readonly #provider = new ContextProvider(this, { context: playerContext });

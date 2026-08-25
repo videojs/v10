@@ -135,10 +135,10 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
     };
 
     static get observedAttributes() {
-      // biome-ignore lint/complexity/noThisInStatic: resolves to the subclass that may override `properties`
+      // `this` resolves to the subclass, which may override `properties`.
       CustomMedia.#define(this);
       return [
-        // biome-ignore lint/complexity/noThisInStatic: intentional use of this
+        // Intentionally use `this` so subclasses can override the constructor.
         ...getAttrsFromProps(this.properties),
       ];
     }

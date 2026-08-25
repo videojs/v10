@@ -1,4 +1,5 @@
 import Hls, { type Level } from 'hls.js';
+
 import type { MediaResolution } from '../../core/types';
 
 /**

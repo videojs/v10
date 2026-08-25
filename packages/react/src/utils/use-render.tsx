@@ -3,6 +3,7 @@ import { isFunction } from '@videojs/utils/predicate';
 import { resolveClassName } from '@videojs/utils/style';
 import type { CSSProperties, ReactElement, Ref } from 'react';
 import { cloneElement, createElement, isValidElement } from 'react';
+
 import { mergeProps } from './merge-props';
 import type { HTMLProps, RenderProp } from './types';
 import { composeRefs } from './use-composed-refs';

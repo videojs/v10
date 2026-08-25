@@ -1,5 +1,5 @@
 import { type Plugin, rolldown } from 'rolldown';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { defineSchema } from '../../components/definition';
 import { defineComponentTarget } from '../../target/definition';

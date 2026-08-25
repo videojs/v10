@@ -3,15 +3,15 @@ import { registerI18n, resetI18nRegistry } from '@videojs/core/i18n';
 import { ContextProvider } from '@videojs/element/context';
 import type { MediaAudioTrackState } from '@videojs/media';
 import { createStore } from '@videojs/store';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { MediaI18nProviderElement } from '../../../i18n/provider-element';
 import { playerContext } from '../../../player/context';
-import { MediaElement } from '../../media-element';
 import { MenuElement } from '../../menu/menu-element';
 import { MenuItemIndicatorElement } from '../../menu/menu-item-indicator-element';
 import { MenuRadioGroupElement } from '../../menu/menu-radio-group-element';
 import { MenuRadioItemElement } from '../../menu/menu-radio-item-element';
+import { UIElement } from '../../ui-element';
 import { AudioTrackRadioGroupElement } from '../audio-track-radio-group-element';
 
 let tagCounter = 0;
@@ -71,7 +71,7 @@ function createAudioTrackStore({
   }) as unknown as AnyPlayerStore;
 }
 
-class TestPlayerProviderElement extends MediaElement {
+class TestPlayerProviderElement extends UIElement {
   store: AnyPlayerStore = createAudioTrackStore();
 
   readonly #provider = new ContextProvider(this, { context: playerContext });

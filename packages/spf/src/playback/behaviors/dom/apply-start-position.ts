@@ -45,6 +45,7 @@
 
 import { listen } from '@videojs/utils/dom';
 import { isUndefined } from '@videojs/utils/predicate';
+
 import { defineBehavior } from '../../../core/composition/create-composition';
 import type { Reactor } from '../../../core/reactors/create-machine-reactor';
 import { createMachineReactor } from '../../../core/reactors/create-machine-reactor';

@@ -1,52 +1,59 @@
+import { globSync } from 'node:fs';
 import { resolve } from 'node:path';
-import tailwindcss from '@tailwindcss/vite';
-import react from '@vitejs/plugin-react';
-import { defineConfig, normalizePath } from 'vite';
-import { vjscPlugin } from 'vjsc/vite';
-import { iconElementSourcePlugin } from '../icons/vjsc/vite';
-import { configureSkinModule } from './vjsc/config';
+
+import { defineConfig } from 'vite-plus';
+import type { UserConfig as PackUserConfig } from 'vite-plus/pack';
+
+import { type PackageBuildMode, packageBuildConfig, packageBuildModes } from '../../build/pack.ts';
+import { copyCssPlugin } from '../../build/plugins/copy-css-plugin.ts';
+import { cachedTaskInputs, packageTestTask, workspaceTaskDependencies } from '../../build/task.ts';
 
 const packageDir = import.meta.dirname;
-const reactSourceDir = normalizePath(resolve(packageDir, '../react/src'));
-const htmlDefineDir = normalizePath(resolve(packageDir, '../html/src/define'));
-const htmlIconElementDir = normalizePath(resolve(packageDir, '../html/src/icons/element'));
+const skinsDir = resolve(packageDir, 'src');
+const entries = Object.fromEntries(
+  globSync('src/**/*.tailwind.ts', { cwd: packageDir }).map((file) => {
+    const key = file.replace('src/', '').replace('.ts', '');
+    return [key, file];
+  })
+);
 
-export default defineConfig(createPreviewConfig());
+const createPackConfig = (mode: PackageBuildMode): PackUserConfig => ({
+  ...packageBuildConfig(mode, 'browser'),
+  name: 'skins',
+  entry: entries,
+  plugins: [copyCssPlugin({ skinsDir, outDir: `dist/${mode}`, inline: false, rebuild: false })],
+});
 
-function createPreviewConfig() {
-  return {
-    root: resolve(packageDir, 'dev'),
-    define: {
-      __DEV__: 'true',
+export default defineConfig({
+  run: {
+    tasks: {
+      build: {
+        command: 'vp pack',
+        dependsOn: workspaceTaskDependencies(),
+        input: cachedTaskInputs,
+        output: ['dist/**', '!dist/registry', '!dist/registry/**'],
+      },
+      'build:shadcn': {
+        command: 'vp -C shadcn pack',
+        dependsOn: workspaceTaskDependencies(),
+        // The registry plugin compares files in its output directory before
+        // rewriting them; those reads must not turn outputs into inputs.
+        input: [...cachedTaskInputs, '!dist/registry', '!dist/registry/**'],
+        output: ['dist/registry/**'],
+      },
+      'test:ci': packageTestTask('pnpm run test:types && vp test run'),
     },
-    plugins: [
-      iconElementSourcePlugin(),
-      vjscPlugin({
-        configure: configureSkinModule,
-      }),
-      tailwindcss(),
-      react({ jsxImportSource: 'react' }),
-    ],
-    resolve: {
-      alias: [
-        { find: /^@videojs\/react(?=\/|$)/, replacement: reactSourceDir },
-        { find: /^@videojs\/html\/icons\/element(?=\/|$)/, replacement: htmlIconElementDir },
-        { find: /^@videojs\/html(?=\/|$)/, replacement: htmlDefineDir },
-      ],
-      conditions: ['development', 'import', 'module', 'browser', 'default'],
-      dedupe: ['react', 'react-dom'],
-    },
-    optimizeDeps: {
-      include: ['react', 'react-dom'],
-      exclude: ['vjsc', 'vjsc/styles', '@videojs/core', '@videojs/icons', '@videojs/react', '@videojs/utils'],
-    },
-    build: {
-      sourcemap: true,
-      rolldownOptions: {
-        experimental: {
-          nativeMagicString: true,
+  },
+  test: {
+    projects: [
+      {
+        test: {
+          name: 'skins',
+          root: packageDir,
+          include: ['vjsc/**/*.test.ts'],
         },
       },
-    },
-  };
-}
+    ],
+  },
+  pack: packageBuildModes.map(createPackConfig),
+});

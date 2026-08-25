@@ -2,11 +2,11 @@ import type { AnyPlayerStore } from '@videojs/core/dom';
 import { ContextProvider } from '@videojs/element/context';
 import type { MediaControlsState } from '@videojs/media';
 import { createStore, flush } from '@videojs/store';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { playerContext } from '../../../player/context';
 import { ControlsElement } from '../../controls/controls-element';
-import { MediaElement } from '../../media-element';
+import { UIElement } from '../../ui-element';
 import { MenuCheckboxItemElement } from '../menu-checkbox-item-element';
 import { MenuElement } from '../menu-element';
 import { MenuGroupElement } from '../menu-group-element';
@@ -57,7 +57,7 @@ function createControlsStore(
   }) as unknown as AnyPlayerStore;
 }
 
-class TestPlayerProviderElement extends MediaElement {
+class TestPlayerProviderElement extends UIElement {
   readonly releaseControlsLock = vi.fn();
   readonly requestControlsLock = vi.fn(() => this.releaseControlsLock);
   store = createControlsStore(this.requestControlsLock);

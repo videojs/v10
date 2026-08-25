@@ -4,10 +4,10 @@ import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextConsumer } from '@videojs/element/context';
 import { applyStyles, observeResize } from '@videojs/utils/dom';
 
-import { MediaElement } from '../media-element';
+import { UIElement } from '../ui-element';
 import { sliderContext } from './context';
 
-export class SliderPreviewElement extends MediaElement {
+export class SliderPreviewElement extends UIElement {
   static readonly tagName = 'media-slider-preview';
 
   static override properties = {

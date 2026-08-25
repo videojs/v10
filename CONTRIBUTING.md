@@ -111,7 +111,7 @@ pnpm build
 
 ### 🧹 Style & Linting
 
-For the bulk of our core code, we use [Biome](https://biomejs.dev). Between IDE configs, pre-commit hooks, and manual CLI fixes, many styling and linting issues should get caught automatically.
+We use [Vite+](https://viteplus.dev/) with Oxlint and Oxfmt for linting and formatting. Between IDE integration, pre-commit hooks, and manual CLI fixes, many issues should get caught automatically.
 
 To ensure your code follows our lint rules with:
 
@@ -121,7 +121,7 @@ pnpm lint:fix                # check and auto-fix the whole workspace
 pnpm lint:fix:file <file>    # check and auto-fix a single file
 ```
 
-Pre‑commit hooks automatically lint staged files via **simple-git-hooks** and **lint‑staged**.
+Vite+ pre-commit hooks automatically check and fix staged files.
 
 ### 🔎 Typechecking
 

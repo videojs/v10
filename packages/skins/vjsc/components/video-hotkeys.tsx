@@ -1,4 +1,5 @@
 import * as $ from '@videojs/core/vjsc';
+
 import type { SkinComponentMeta } from '../meta';
 
 export interface VideoHotkeysProps {

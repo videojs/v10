@@ -13,7 +13,9 @@
 import { existsSync, readFileSync, statSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+
 import ts from 'typescript';
+
 import { resolveImports } from '../../../build/plugins/resolve-css-imports.ts';
 import { normalizeImports } from '../normalize-imports.ts';
 import {

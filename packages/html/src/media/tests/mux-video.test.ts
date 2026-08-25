@@ -1,4 +1,5 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vite-plus/test';
+
 import { MuxVideo } from '../mux-video';
 
 customElements.define('test-mux-video', MuxVideo);

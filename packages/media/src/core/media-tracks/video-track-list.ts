@@ -1,4 +1,5 @@
 import { isFunction } from '@videojs/utils/predicate';
+
 import { TrackEvent } from './change-event';
 import { getPrivate } from './utils';
 import type { VideoTrack } from './video-track';

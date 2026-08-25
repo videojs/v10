@@ -1,7 +1,8 @@
 import { combine, createStore, defineSlice } from '@videojs/store';
 import type { WebKitVideoElement } from '@videojs/utils/dom';
-import type { Mock } from 'vitest';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import type { Mock } from 'vite-plus/test';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
+
 import type { PlayerTarget } from '../../../player';
 import { createMockVideo } from '../../../tests/test-helpers';
 import type { ScreenOrientationLockType } from '../orientation-lock';

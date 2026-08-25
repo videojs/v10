@@ -1,4 +1,5 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
+
 import { addMediaComponent, type HTMLMediaTargetLike } from '../../media-host';
 import { HTMLVideoElementHost } from '../../video-host';
 import { GoogleCastProvider } from '../google-cast-provider';

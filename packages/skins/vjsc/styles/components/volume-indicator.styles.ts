@@ -1,4 +1,5 @@
 import { styles } from 'vjsc/styles';
+
 import { defaultSurface, minimalSurfaceFrameOnly } from './popup.styles';
 
 export default styles({

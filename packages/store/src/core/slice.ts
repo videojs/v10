@@ -1,4 +1,5 @@
 import type { Simplify, UnionToIntersection } from '@videojs/utils/types';
+
 import type { AbortControllerRegistry } from './abort-controller-registry';
 import type { UnknownState } from './state';
 

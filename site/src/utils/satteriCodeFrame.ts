@@ -1,5 +1,6 @@
 import type { MdastContent } from 'satteri';
 import { defineMdastPlugin } from 'satteri';
+
 import type { MdastVisitorContext } from './satteriAstroData';
 
 const TITLE_RE = /title=(?:"([^"]+)"|'([^']+)'|([^\s"']+))/;

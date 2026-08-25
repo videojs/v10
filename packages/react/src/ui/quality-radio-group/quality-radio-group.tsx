@@ -20,8 +20,7 @@ export interface QualityRadioGroupItemProps extends Omit<MenuRadioItemProps, 're
 }
 
 export interface QualityRadioGroupProps
-  extends Omit<UIComponentProps<'div', QualityRadioGroupCore.State>, 'children'>,
-    QualityOptionsProps {
+  extends Omit<UIComponentProps<'div', QualityRadioGroupCore.State>, 'children'>, QualityOptionsProps {
   /** Render one consumer-owned menu radio item for every quality option. */
   renderItem: (props: QualityRadioGroupItemProps, state: QualityRadioGroupItemState) => ReactElement;
 }

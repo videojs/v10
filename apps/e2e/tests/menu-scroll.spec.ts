@@ -1,4 +1,5 @@
 import { type ElementHandle, expect, type Page, test } from '@playwright/test';
+
 import { VIDEO_PAGES } from '../fixtures/media';
 import { SELECTORS } from '../fixtures/selectors';
 import { PlayerPage } from '../page-objects/player';

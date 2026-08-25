@@ -1,4 +1,5 @@
 import { pick } from '@videojs/utils/object';
+
 import { AbortControllerRegistry } from './abort-controller-registry';
 import { throwNoTargetError } from './errors';
 import type { Selector } from './shallow-equal';

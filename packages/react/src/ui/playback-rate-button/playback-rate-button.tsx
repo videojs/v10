@@ -5,8 +5,7 @@ import type { UIComponentProps } from '../../utils/types';
 import { createMediaButton } from '../create-media-button';
 
 export interface PlaybackRateButtonProps
-  extends UIComponentProps<'button', PlaybackRateButtonCore.State>,
-    PlaybackRateButtonCore.Props {}
+  extends UIComponentProps<'button', PlaybackRateButtonCore.State>, PlaybackRateButtonCore.Props {}
 
 /**
  * A button that cycles through playback rates.

@@ -1,6 +1,7 @@
 import { type Text, translateText } from '@videojs/core/i18n';
 import type { PropertyValues, ReactiveElement } from '@videojs/element';
 import type { Constructor } from '@videojs/utils/types';
+
 import type { I18nContext } from './context';
 import { I18nController } from './controller';
 import type { ReactiveElementMixinBase } from './types';

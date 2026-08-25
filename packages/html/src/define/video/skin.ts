@@ -1,9 +1,11 @@
 import { audioText, captionsText, qualityText, settingsText, speedText } from '@videojs/core/i18n/text/menu';
 import { renderIcon } from '@videojs/icons/render';
 import { createShadowStyle, createTemplate } from '@videojs/utils/dom';
+
 import { renderText } from '../../i18n/render-text';
 import { safeDefine } from '../safe-define';
 import { SkinElement } from '../skin-element';
+
 import styles from './skin.css?inline';
 
 // Register the player, container, and all UI custom elements.

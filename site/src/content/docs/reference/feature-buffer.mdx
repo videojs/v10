@@ -7,7 +7,9 @@ import FeatureReference from "@/components/docs/api-reference/FeatureReference.a
 import DocsLink from "@/components/docs/DocsLink.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 
-Read-only — tracks buffered and seekable time ranges.
+Tracks buffered and seekable time ranges. Each range is a `[start, end]` pair rather than a browser `TimeRanges` object.
+
+During live playback, `seekable` tells you which times remain available. The first start is the oldest available time, and the last end is the newest. Both values can move forward as a sliding live stream drops older video and adds new video. See <DocsLink slug="reference/feature-live">live state</DocsLink> for the live-edge values.
 
 <FeatureReference feature="buffer" />
 
@@ -38,12 +40,12 @@ function BufferBar() {
 
 <FrameworkCase frameworks={["html"]}>
 ```ts title="buffer-bar.ts"
-import { createPlayer, MediaElement, selectBuffer } from '@videojs/html';
+import { createPlayer, UIElement, selectBuffer } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
 
 const { PlayerController, context } = createPlayer({ features: videoFeatures });
 
-class BufferBar extends MediaElement {
+class BufferBar extends UIElement {
   readonly #buffer = new PlayerController(this, context, selectBuffer);
 }
 ```

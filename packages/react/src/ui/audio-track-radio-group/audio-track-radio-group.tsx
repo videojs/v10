@@ -24,8 +24,7 @@ export interface AudioTrackRadioGroupItemProps extends Omit<MenuRadioItemProps, 
 }
 
 export interface AudioTrackRadioGroupProps
-  extends Omit<UIComponentProps<'div', AudioTrackRadioGroupCore.State>, 'children'>,
-    AudioTrackOptionsProps {
+  extends Omit<UIComponentProps<'div', AudioTrackRadioGroupCore.State>, 'children'>, AudioTrackOptionsProps {
   /** Render one consumer-owned menu radio item for every audio track. */
   renderItem: (props: AudioTrackRadioGroupItemProps, state: AudioTrackRadioGroupItemState) => ReactElement;
 }

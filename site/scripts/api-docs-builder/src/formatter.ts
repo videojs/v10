@@ -1,5 +1,6 @@
 import { uniq } from 'es-toolkit/array';
 import * as tae from 'typescript-api-extractor';
+
 import type { PropDef } from './types.js';
 
 /**

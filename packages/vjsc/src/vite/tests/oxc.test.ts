@@ -1,7 +1,7 @@
 import MagicString from 'magic-string';
 import type { OutputAsset, OutputChunk, Plugin, RolldownOutput } from 'rolldown';
 import { build } from 'vite';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { viteOxcPlugin } from '../oxc';
 

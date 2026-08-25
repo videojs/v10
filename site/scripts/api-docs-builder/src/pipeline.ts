@@ -6,7 +6,9 @@
  */
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+
 import * as ts from 'typescript';
+
 import { NAME_OVERRIDES } from '../../../src/utils/api-reference-overrides.js';
 import { extractCore } from './core-handler.js';
 import { extractCSSVars } from './css-vars-handler.js';

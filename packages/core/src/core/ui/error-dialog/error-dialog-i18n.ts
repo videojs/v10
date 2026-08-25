@@ -1,4 +1,5 @@
 import { MediaError } from '@videojs/media';
+
 import type { TranslationParams } from '../../i18n/params';
 import type { Text } from '../../i18n/text';
 import { emptyText, okText } from '../../i18n/text/common';

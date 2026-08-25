@@ -19,10 +19,10 @@ import { i18nContext } from '../../i18n/context';
 import { I18nController } from '../../i18n/controller';
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
-import { MediaElement } from '../media-element';
 import { sliderContext } from '../slider/context';
+import { UIElement } from '../ui-element';
 
-export class VolumeSliderElement extends MediaElement {
+export class VolumeSliderElement extends UIElement {
   static readonly tagName = 'media-volume-slider';
 
   static override properties = {

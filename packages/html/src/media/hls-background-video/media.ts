@@ -2,6 +2,7 @@ import type { Media } from '@videojs/media/dom';
 import { HlsBackgroundVideoMedia, type HlsVideoMediaError } from '@videojs/spf/hls-background-video';
 import { type CustomElement, namedNodeMapToObject } from '@videojs/utils/dom';
 import type { Constructor } from '@videojs/utils/types';
+
 import { MediaAttachMixin } from '../../store/media-attach-mixin';
 import { getTemplateHTML } from '../background-video/template';
 

@@ -1,4 +1,5 @@
 import type { WebKitVideoElement } from '@videojs/utils/dom';
+
 import { KeySystems } from '../../core/drm';
 import {
   createDrmError,

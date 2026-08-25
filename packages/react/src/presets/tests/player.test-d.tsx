@@ -5,7 +5,8 @@ import type {
   LiveVideoPlayerStore,
   VideoPlayerStore,
 } from '@videojs/core/dom';
-import { assertType, describe, it } from 'vitest';
+import { assertType, describe, it } from 'vite-plus/test';
+
 import { AudioPlayer, usePlayer as useAudioPlayer } from '../audio/player';
 import { BackgroundVideoPlayer, usePlayer as useBackgroundVideoPlayer } from '../background/player';
 import { LiveAudioPlayer, usePlayer as useLiveAudioPlayer } from '../live-audio/player';

@@ -1,6 +1,8 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
+    "composite": false,
+    "incremental": false,
     "lib": ["ES2020"]
   },
   "include": ["src/**/*.ts"]

@@ -3,6 +3,7 @@ import { toPercent } from '@videojs/utils/number';
 import { defaults } from '@videojs/utils/object';
 import { formatTimeAsPhrase } from '@videojs/utils/time';
 import type { NonNullableObject } from '@videojs/utils/types';
+
 import type { Text } from '../../i18n';
 import { seekText } from '../../i18n/text/slider';
 import { positionText } from '../../i18n/text/time';

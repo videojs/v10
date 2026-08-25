@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vite-plus/test';
 
 import { createCoreTestStore, createTestHost } from '../../tests/test-utils';
 import { StoreController } from '../store-controller';

@@ -49,8 +49,9 @@ export const DEFAULT_QUALITY_CONFIG: QualityConfig = {
  * `setupTrackSwitching` (`playback/behaviors/track-switching.ts`) so the
  * function can be passed directly as a variant's `selectOptimal`.
  */
-export interface SelectQualityCtx<T extends { bandwidth: number } = PartiallyResolvedVideoTrack | VideoTrack>
-  extends Partial<QualityConfig> {
+export interface SelectQualityCtx<
+  T extends { bandwidth: number } = PartiallyResolvedVideoTrack | VideoTrack,
+> extends Partial<QualityConfig> {
   bandwidth: number;
   /**
    * Track currently selected. When supplied, `selectQuality` returns

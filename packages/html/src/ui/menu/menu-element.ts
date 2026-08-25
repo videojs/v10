@@ -21,11 +21,12 @@ import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextConsumer, ContextProvider } from '@videojs/element/context';
 import { SnapshotController } from '@videojs/store/html';
 import { tryHidePopover, tryShowPopover } from '@videojs/utils/dom';
+
 import { containerContext, playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
 import { popupGroupContext } from '../../player/popup-group-context';
-import { MediaElement } from '../media-element';
 import { PositionController } from '../position-controller';
+import { UIElement } from '../ui-element';
 import { type MenuContextValue, type MenuTriggerState, menuContext } from './context';
 
 const defaultTriggerState: MenuTriggerState = {
@@ -33,7 +34,7 @@ const defaultTriggerState: MenuTriggerState = {
   disabled: false,
 };
 
-export class MenuElement extends MediaElement {
+export class MenuElement extends UIElement {
   static readonly tagName: string = 'media-menu';
 
   static override properties = {

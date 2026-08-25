@@ -1,4 +1,5 @@
 import * as ts from 'typescript';
+
 import type { HtmlExtraction } from './types.js';
 
 /** Extract tagName and reactive properties from a Lit element file. */

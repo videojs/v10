@@ -3,6 +3,7 @@
 // The API arrives from a script tag, so there is no npm SDK to type against.
 
 import { loadScript } from '@videojs/utils/dom';
+
 import { MediaError } from '../../core/media-error';
 
 export interface YouTubePlayerApi {

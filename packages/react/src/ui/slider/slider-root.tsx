@@ -3,6 +3,7 @@ import { getSliderCSSVars } from '@videojs/core/dom';
 import { translateText } from '@videojs/core/i18n';
 import type { ForwardedRef } from 'react';
 import { forwardRef, useState } from 'react';
+
 import { useTranslator } from '../../i18n/context';
 import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';

@@ -1,4 +1,5 @@
 import type { MediaTextCue } from '@videojs/media';
+
 import type { SliderSegmentRange, SliderSegmentState } from '../../slider/slider-segments-core';
 
 export interface TimeSliderChapterRange extends SliderSegmentRange {

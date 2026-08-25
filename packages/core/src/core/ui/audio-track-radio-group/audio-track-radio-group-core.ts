@@ -2,6 +2,7 @@ import type { MediaAudioTrack, MediaAudioTrackState } from '@videojs/media';
 import { createState } from '@videojs/store';
 import { defaults } from '@videojs/utils/object';
 import type { NonNullableObject } from '@videojs/utils/types';
+
 import { resolveText, type Text } from '../../i18n';
 import { audioText } from '../../i18n/text/menu';
 import type { RadioOption, RadioOptionsState } from '../types';

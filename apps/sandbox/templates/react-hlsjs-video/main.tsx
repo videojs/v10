@@ -47,7 +47,7 @@ function App() {
           skin={skin}
           styling={styling}
           live={live}
-          className="aspect-video max-w-4xl mx-auto"
+          className="mx-auto aspect-video max-w-4xl"
         >
           <HlsJsVideo
             {...(hlsSource ? { source: hlsSource } : { src: url ?? '' })}

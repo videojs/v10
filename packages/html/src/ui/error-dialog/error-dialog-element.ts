@@ -1,7 +1,7 @@
 import {
-  AlertDialogDataAttrs,
   type AlertDialogInput,
   ErrorDialogCore,
+  ErrorDialogDataAttrs,
   getErrorDialogDismissText,
   getErrorDialogTitleText,
   getErrorDialogUnexpectedText,
@@ -20,12 +20,13 @@ import type { PropertyValues } from '@videojs/element';
 import { ContextProvider } from '@videojs/element/context';
 import type { ErrorLike } from '@videojs/media';
 import { SnapshotController } from '@videojs/store/html';
+
 import { i18nContext } from '../../i18n/context';
 import { I18nController } from '../../i18n/controller';
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
 import { alertDialogContext } from '../alert-dialog/context';
-import { MediaElement } from '../media-element';
+import { UIElement } from '../ui-element';
 
 let idCounter = 0;
 
@@ -33,7 +34,7 @@ function hasAuthoredContent(host: HTMLElement): boolean {
   return Array.from(host.childNodes).some((node) => !!node.textContent?.trim());
 }
 
-export class ErrorDialogElement extends MediaElement {
+export class ErrorDialogElement extends UIElement {
   static readonly tagName = 'media-error-dialog';
 
   readonly #core = new ErrorDialogCore();
@@ -123,11 +124,11 @@ export class ErrorDialogElement extends MediaElement {
     const state = this.#core.getState();
 
     applyElementProps(this, this.#core.getAttrs(state));
-    applyStateDataAttrs(this, state, AlertDialogDataAttrs);
+    applyStateDataAttrs(this, state, ErrorDialogDataAttrs);
 
     this.#provider.setValue({
       state,
-      stateAttrMap: AlertDialogDataAttrs,
+      stateAttrMap: ErrorDialogDataAttrs,
       close: () => this.#dialog?.close(),
     });
   }

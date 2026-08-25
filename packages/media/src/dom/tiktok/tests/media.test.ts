@@ -1,8 +1,9 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
+
+import { buildTikTokIframeSrc, parseTikTokSource, parseTikTokVideoId, TikTokMedia, tiktokMediaDefaultProps } from '..';
 import { MediaError } from '../../../core/media-error';
 import { isMediaMutedCapable, isMediaVolumeCapable } from '../../../core/predicate';
 import type { Video } from '../../../core/types';
-import { buildTikTokIframeSrc, parseTikTokSource, parseTikTokVideoId, TikTokMedia, tiktokMediaDefaultProps } from '..';
 
 // https://developers.tiktok.com/doc/embed-player
 const STATE = { INIT: -1, ENDED: 0, PLAYING: 1, PAUSED: 2, BUFFERING: 3 } as const;

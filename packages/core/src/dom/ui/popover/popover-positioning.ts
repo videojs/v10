@@ -1,6 +1,7 @@
 import { getElementSize, resolveCSSLength, supportsAnchorPositioning } from '@videojs/utils/dom';
 import type { TextDirection } from '@videojs/utils/i18n';
 import { clamp } from '@videojs/utils/number';
+
 import type { PopoverAlign, PopoverSide } from '../../../core/ui/popover/popover-core';
 import { PopoverCSSVars } from '../../../core/ui/popover/popover-css-vars';
 import { createDOMRect } from '../../utils/layout';

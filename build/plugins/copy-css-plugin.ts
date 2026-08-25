@@ -1,5 +1,6 @@
 import { existsSync, globSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
+
 import { resolveImports } from './resolve-css-imports.ts';
 import type { BuildPlugin } from './types.ts';
 

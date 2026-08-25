@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
+
 import type { StateSignals } from '../../../core/composition/create-composition';
 import { signal } from '../../../core/signals/primitives';
 import type { SvtaError } from '../../../media/errors';

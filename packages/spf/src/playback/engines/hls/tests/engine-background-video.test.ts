@@ -7,7 +7,8 @@
  * confirm the seed, the absence of subtracted state slots, and the selection
  * rule chain — its screen-size cap and its configurability.
  */
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
+
 import { snapshot } from '../../../../core/signals/primitives';
 import { SVTA_NO_SUPPORTED_VIDEO_TRACK } from '../../../../media/errors';
 import type { MaybeResolvedPresentation } from '../../../../media/types';

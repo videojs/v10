@@ -1,4 +1,5 @@
 import type { UnionToIntersection } from '@videojs/utils/types';
+
 import type {
   AnySlice,
   AttachContext,

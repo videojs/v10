@@ -1,4 +1,5 @@
 import { expect, type Page, test } from '@playwright/test';
+
 import { ALL_VIDEO_PAGES, type PageEntry, VIDEO_PAGES } from '../fixtures/media';
 import { mockPresentation } from '../fixtures/presentation';
 import { DATA_ATTRS, SELECTORS } from '../fixtures/selectors';

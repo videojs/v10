@@ -15,6 +15,7 @@ import {
 } from '@videojs/skins/default/tailwind/audio.tailwind';
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
+
 import { PauseIcon, PlayIcon, RestartIcon, SpinnerIcon, VolumeHighIcon, VolumeLowIcon, VolumeOffIcon } from '@/icons';
 import { Container } from '@/player/container';
 import { usePlayer } from '@/player/context';
@@ -28,6 +29,7 @@ import { Popover } from '@/ui/popover';
 import { StatusAnnouncer } from '@/ui/status-announcer';
 import { Tooltip } from '@/ui/tooltip';
 import { VolumeSlider } from '@/ui/volume-slider';
+
 import type { LiveAudioSkinProps } from './skin';
 
 const Button = forwardRef<HTMLButtonElement, ComponentProps<'button'>>(function Button({ className, ...props }, ref) {

@@ -2,6 +2,7 @@ import { SKINS } from '@app/constants';
 import { DEFAULT_SANDBOX_LOCALE, SANDBOX_LOCALE_TAGS, type SandboxLocaleTag } from '@app/shared/i18n/locale-meta';
 import type { Skin } from '@app/types';
 import type { MediaResolution } from '@videojs/media';
+
 import { DEFAULT_AUDIO_SOURCE, SOURCES, type SourceId } from './sources';
 
 export const PRELOAD_VALUES = ['none', 'metadata', 'auto'] as const;

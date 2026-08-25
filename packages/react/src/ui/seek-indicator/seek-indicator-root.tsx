@@ -8,8 +8,7 @@ import { useInputIndicatorRoot } from '../input-indicator/use-input-indicator-ro
 import { SeekIndicatorProvider } from './context';
 
 export interface SeekIndicatorRootProps
-  extends UIComponentProps<'div', SeekIndicatorCore.State>,
-    SeekIndicatorCore.Props {}
+  extends UIComponentProps<'div', SeekIndicatorCore.State>, SeekIndicatorCore.Props {}
 
 export const SeekIndicatorRoot = forwardRef(function SeekIndicatorRoot(
   componentProps: SeekIndicatorRootProps,

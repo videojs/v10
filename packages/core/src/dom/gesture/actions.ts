@@ -1,4 +1,5 @@
 import { isFunction } from '@videojs/utils/predicate';
+
 import { MEDIA_INPUT_ACTION_OVERRIDES } from '../media-actions';
 import type { AnyPlayerStore } from '../player';
 

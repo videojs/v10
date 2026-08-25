@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
+
 import {
   DEMO_LIVE_POSTER_SRC,
   DEMO_LIVE_SRC,

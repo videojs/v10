@@ -1,6 +1,7 @@
 import { useStore } from '@nanostores/react';
 import { Code2, Minus, Sparkles } from 'lucide-react';
 import { useEffect } from 'react';
+
 import type { ImageRadioOption } from '@/components/ImageRadioGroup';
 import ImageRadioGroup from '@/components/ImageRadioGroup';
 import { skin, useCase } from '@/stores/installation';

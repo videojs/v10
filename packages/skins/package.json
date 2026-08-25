@@ -1,19 +1,26 @@
 {
   "name": "@videojs/skins",
-  "type": "module",
   "version": "10.0.0-beta.31",
   "private": true,
   "description": "Shared skin CSS and Tailwind classname tokens for Video.js",
+  "keywords": [
+    "css",
+    "media",
+    "skins",
+    "tailwind",
+    "videojs"
+  ],
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/videojs/v10",
     "directory": "packages/skins"
   },
-  "sideEffects": false,
   "files": [
     "dist"
   ],
+  "type": "module",
+  "sideEffects": false,
   "exports": {
     "./*.css": {
       "style": "./dist/default/*.css",
@@ -26,11 +33,9 @@
     }
   },
   "scripts": {
-    "build": "tsdown",
-    "build:shadcn": "tsdown --config tsdown.shadcn.config.ts --config-loader unrun",
-    "build:watch": "tsdown --watch ./src --no-clean",
-    "dev": "vite --host",
-    "test": "pnpm run test:types && vitest run",
+    "build:watch": "vp pack --filter skins --watch ./src --no-clean",
+    "dev": "vp -C dev dev --host",
+    "test": "pnpm run test:types && vp test run",
     "test:types": "tsgo --project ./vjsc/tsconfig.json",
     "clean": "rimraf --glob dist types '*.tsbuildinfo'"
   },
@@ -42,25 +47,18 @@
     "@types/node": "^22.18.6",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^6.0.4",
-    "vjsc": "workspace:*",
     "@videojs/core": "workspace:*",
     "@videojs/icons": "workspace:*",
+    "@vitejs/plugin-react": "^6.0.4",
     "clsx": "^2.1.1",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
-    "tailwindcss": "4.2.1",
     "tailwind-merge": "^3.5.0",
-    "tsdown": "^0.22.14",
+    "tailwindcss": "^4.3.3",
     "typescript": "^6.0.2",
     "vite": "^8.2.2",
-    "vitest": "^4.1.10"
-  },
-  "keywords": [
-    "media",
-    "skins",
-    "css",
-    "tailwind",
-    "videojs"
-  ]
+    "vite-plus": "catalog:",
+    "vitest": "catalog:",
+    "vjsc": "workspace:*"
+  }
 }

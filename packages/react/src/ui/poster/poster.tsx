@@ -100,7 +100,7 @@ export const Poster = forwardRef(function Poster(
   // pixels in place until the new one settles, so reading them again would call
   // the new source loaded while it is still fetching. `load` and `error` cover
   // every source after this one, the way the HTML element reads an image once.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: reads the first source only, at mount
+  // oxlint-disable-next-line react/exhaustive-deps -- reads the first source only, at mount
   useEffect(() => {
     const img = imgRef.current;
 

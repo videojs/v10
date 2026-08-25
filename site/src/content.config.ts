@@ -1,6 +1,7 @@
-import { defineCollection, reference } from 'astro:content';
 import { file, glob } from 'astro/loaders';
 import { z } from 'astro/zod';
+import { defineCollection, reference } from 'astro:content';
+
 import { ComponentReferenceSchema } from './types/component-reference';
 import { SUPPORTED_FRAMEWORKS } from './types/docs';
 import { FeatureReferenceSchema } from './types/feature-reference';

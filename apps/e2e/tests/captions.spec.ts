@@ -1,4 +1,5 @@
 import { expect, type Page, test } from '@playwright/test';
+
 import { CAPTIONS, MEDIA } from '../fixtures/resources';
 import { DATA_ATTRS, SELECTORS } from '../fixtures/selectors';
 import { PlayerPage } from '../page-objects/player';

@@ -2,6 +2,7 @@ import type { SeekButtonProps as CoreProps } from '@videojs/core';
 import * as $ from '@videojs/core/vjsc';
 import { SeekIcon } from '@videojs/icons/vjsc';
 import { type Props, Text } from 'vjsc/components';
+
 import type { SkinComponentMeta } from '../../meta';
 import styles from '../../styles/components/button.styles';
 import { ButtonTooltip } from './button-tooltip';

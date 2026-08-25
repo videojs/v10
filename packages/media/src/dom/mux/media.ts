@@ -1,4 +1,5 @@
 import { shallowEqual } from '@videojs/utils/object';
+
 import { HlsJsMedia, type HlsSource } from '../hls-js';
 import { createMuxDrmSystems } from './drm';
 import {

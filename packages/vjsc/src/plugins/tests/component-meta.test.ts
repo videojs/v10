@@ -1,5 +1,5 @@
 import { type OutputChunk, type Plugin, rolldown } from 'rolldown';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { componentMetaPlugin, readComponentMeta, readComponentSource } from '../component-meta';
 import { componentSourcePlugin } from '../component-source';

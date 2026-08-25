@@ -1,5 +1,6 @@
 import type { Media } from '@videojs/media/dom';
 import { namedNodeMapToObject } from '@videojs/utils/dom';
+
 import { MediaAttachMixin } from '../../store/media-attach-mixin';
 import { getTemplateHTML } from './template';
 

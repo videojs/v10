@@ -1,4 +1,5 @@
 import { expect, type Locator, type Page, test } from '@playwright/test';
+
 import { AUDIO_PAGES, type PageEntry, VIDEO_PAGES } from '../fixtures/media';
 import { mockPresentation } from '../fixtures/presentation';
 import { DATA_ATTRS, SELECTORS } from '../fixtures/selectors';

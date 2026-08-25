@@ -1,4 +1,5 @@
 import type { DerivedContext, SliceConfig } from '@videojs/store';
+
 import type { AnyPlayerFeature, PlayerFeature, PlayerFeatureConfig, PlayerTarget } from './player';
 
 type DerivedFunctions<State> = Record<string, (ctx: DerivedContext<State>) => unknown>;

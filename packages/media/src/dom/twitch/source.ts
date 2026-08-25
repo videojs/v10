@@ -1,4 +1,5 @@
 import { isNil, isString } from '@videojs/utils/predicate';
+
 import { TWITCH_PLAYER_ORIGIN } from './player-api';
 import { type TwitchMediaProps, twitchMediaDefaultProps } from './props';
 

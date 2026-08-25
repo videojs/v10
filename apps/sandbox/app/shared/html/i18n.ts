@@ -1,5 +1,4 @@
 import '@videojs/html/i18n';
-
 import { syncDocumentLocale } from '../i18n/document-locale';
 import { ensureSandboxLocale, type SandboxLocaleTag } from '../i18n/sandbox-locales';
 import { getInitialLocale, onLocaleChange } from '../sandbox-listener';

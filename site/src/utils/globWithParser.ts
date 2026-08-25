@@ -1,5 +1,4 @@
 import type { ParseDataOptions } from 'astro/loaders';
-
 import { glob } from 'astro/loaders';
 
 /**

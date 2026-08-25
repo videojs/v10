@@ -25,12 +25,24 @@ However, you should consider placing your components in `<Container>`. Component
 <FrameworkCase frameworks={["html"]}>
 UI Components can go anywhere inside a <DocsLink slug="reference/player-provider">`<video-player>`</DocsLink>.
 
-However, you should consider placing your components in `<player-container>`. Components in `<player-container>` will go fullscreen with the player, respond to user activity, and more.
+However, you should consider placing your components in `<media-container>`. Components in `<media-container>` will go fullscreen with the player, respond to user activity, and more.
 
-<DocsLinkCard slug="reference/player-container">Read more about `<player-container>`</DocsLinkCard>
+<DocsLinkCard slug="reference/player-container">Read more about `<media-container>`</DocsLinkCard>
 </FrameworkCase>
 
 ## Styling and customization
+
+<FrameworkCase frameworks={["react"]}>
+
+For components you add yourself, use the documented props, state `data-*` attributes, and CSS custom properties. Add your own `className` when you need a selector.
+
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+
+For components you add yourself, select them by their custom element name. Use the documented state `data-*` attributes and CSS custom properties to style them.
+
+</FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
 

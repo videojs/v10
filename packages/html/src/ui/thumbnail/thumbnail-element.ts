@@ -13,7 +13,7 @@ import { isNull, isUndefined } from '@videojs/utils/predicate';
 
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
-import { MediaElement } from '../media-element';
+import { UIElement } from '../ui-element';
 
 const SHADOW_CSS = `\
 :host {
@@ -24,7 +24,7 @@ img {
   display: block;
 }`;
 
-export class ThumbnailElement extends MediaElement {
+export class ThumbnailElement extends UIElement {
   static readonly tagName = 'media-thumbnail';
 
   static override properties = {

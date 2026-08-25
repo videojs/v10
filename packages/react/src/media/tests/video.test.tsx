@@ -1,7 +1,7 @@
 import { render } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { createRef } from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 
 import { PlayerContextProvider, type PlayerContextValue } from '../../player/context';
 import { Video } from '../video';

@@ -1,4 +1,5 @@
 import type { Plugin } from 'vite';
+
 import {
   VJS8_DEMO_VIDEO,
   VJS10_DEMO_BACKGROUND_VIDEO_MP4,

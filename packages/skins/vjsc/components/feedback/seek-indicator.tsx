@@ -2,6 +2,7 @@ import type { SeekIndicatorProps as CoreProps } from '@videojs/core';
 import * as $ from '@videojs/core/vjsc';
 import { ChevronIcon } from '@videojs/icons/vjsc';
 import type { Props } from 'vjsc/components';
+
 import type { SkinComponentMeta } from '../../meta';
 import styles from '../../styles/components/seek-indicator.styles';
 

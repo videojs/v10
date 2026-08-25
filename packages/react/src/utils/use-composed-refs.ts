@@ -1,6 +1,5 @@
 import { isFunction } from '@videojs/utils/predicate';
 import type { Ref, RefCallback } from 'react';
-
 import { useCallback } from 'react';
 
 type OptionalRef<T> = Ref<T> | undefined;

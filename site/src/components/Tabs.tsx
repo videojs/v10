@@ -15,12 +15,13 @@
  */
 
 import clsx from 'clsx';
-
 import { Check } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+
 import CopyIcon from '@/assets/icons/copy.svg?react';
 import { twMerge } from '@/utils/twMerge';
 import useIsHydrated from '@/utils/useIsHydrated';
+
 import CopyButton from './CopyButton';
 
 export type TabsVariant = 'expanded' | 'compact';
@@ -260,7 +261,7 @@ export function Tab({ value, children, initial, variant = 'compact' }: TabProps)
         )}
         <span className="relative">
           {/* to prevent layout shift on state change, we have an invisible bold version of the text preserving space */}
-          <span className="font-bold invisible" aria-hidden="true" data-search-ignore data-llms-ignore>
+          <span className="invisible font-bold" aria-hidden="true" data-search-ignore data-llms-ignore>
             {children}
           </span>
           <span className={clsx('absolute top-0 left-0', isActive && 'font-bold')}>{children}</span>

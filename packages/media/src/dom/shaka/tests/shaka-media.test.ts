@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 vi.mock('shaka-player/dist/shaka-player.compiled-es2021', () => {
   const CONFIG_DEFAULTS = { streaming: { bufferingGoal: 10, rebufferingGoal: 2 } };

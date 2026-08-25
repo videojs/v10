@@ -107,8 +107,10 @@ export type BackgroundVideoEngineSignals = {
  * `HlsVideoEngineConfig`, audio/text/ABR/bandwidth/quality knobs are
  * dropped: the variant subtracts the behaviors that read them.
  */
-export interface BackgroundVideoEngineConfig
-  extends ShareSignalsConfig<BackgroundVideoEngineState, BackgroundVideoEngineContext> {
+export interface BackgroundVideoEngineConfig extends ShareSignalsConfig<
+  BackgroundVideoEngineState,
+  BackgroundVideoEngineContext
+> {
   /**
    * Hard-constraint pre-pass handed to `selectVideoTrack`. Defaults to
    * `[excludeUnplayableTracks, reportAbsentTrackType(2011)]` — prune the renditions

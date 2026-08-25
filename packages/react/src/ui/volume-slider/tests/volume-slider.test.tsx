@@ -1,6 +1,6 @@
 import { cleanup, render } from '@testing-library/react';
 import { createRef } from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { createPlayerWrapper } from '../../../testing/mocks';
 import { SliderFill } from '../../slider/slider-fill';

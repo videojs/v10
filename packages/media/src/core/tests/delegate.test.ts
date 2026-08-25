@@ -1,5 +1,6 @@
 import type { Constructor } from '@videojs/utils/types';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
+
 import { bridgeEvents } from '../bridge-events';
 
 interface MediaBase extends EventTarget {

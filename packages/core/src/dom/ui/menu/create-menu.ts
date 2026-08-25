@@ -1,4 +1,5 @@
 import type { State } from '@videojs/store';
+
 import type { MenuInput, MenuState } from '../../../core/ui/menu/menu-core';
 import { MenuCSSVars } from '../../../core/ui/menu/menu-css-vars';
 import { MenuItemDataAttrs } from '../../../core/ui/menu/menu-item-data-attrs';
@@ -127,10 +128,10 @@ export function createMenu(options: MenuOptions): MenuApi {
 
     return Boolean(
       item.hidden ||
-        item.hasAttribute('data-hidden') ||
-        item.getAttribute('aria-hidden') === 'true' ||
-        availability === 'unavailable' ||
-        availability === 'unsupported'
+      item.hasAttribute('data-hidden') ||
+      item.getAttribute('aria-hidden') === 'true' ||
+      availability === 'unavailable' ||
+      availability === 'unsupported'
     );
   }
 

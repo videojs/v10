@@ -1,22 +1,28 @@
 {
   "name": "@videojs/spf",
-  "type": "module",
   "version": "10.0.0-beta.31",
   "description": "Stream Processing Framework for Video.js 10",
+  "keywords": [
+    "hls",
+    "spf",
+    "streaming",
+    "video",
+    "videojs"
+  ],
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/videojs/v10",
     "directory": "packages/spf"
   },
-  "keywords": [
-    "video",
-    "hls",
-    "streaming",
-    "spf",
-    "videojs"
+  "files": [
+    "dist"
   ],
+  "type": "module",
   "sideEffects": false,
+  "main": "dist/default/index.js",
+  "module": "dist/default/index.js",
+  "types": "dist/dev/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/dev/index.d.ts",
@@ -69,19 +75,15 @@
       "default": "./dist/default/mux-video.js"
     }
   },
-  "main": "dist/default/index.js",
-  "module": "dist/default/index.js",
-  "types": "dist/dev/index.d.ts",
-  "files": [
-    "dist"
-  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
-    "build": "tsdown",
-    "build:watch": "tsdown --watch ./src --no-clean",
+    "build:watch": "vp pack --watch ./src --no-clean",
     "dev": "pnpm run build:watch",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "clean": "rimraf --glob dist types '*.tsbuildinfo'",
+    "test": "vp test run",
+    "test:watch": "vp test",
+    "clean": "rimraf --glob dist types '*.tsbuildinfo' 'src/**/*.tsbuildinfo'",
     "size": "node scripts/measure-size.js --hls",
     "size:all": "node scripts/measure-size.js --all"
   },
@@ -91,15 +93,10 @@
     "signal-polyfill": "^0.2.2"
   },
   "devDependencies": {
-    "@vitest/browser": "^4.1.10",
-    "@vitest/browser-playwright": "^4.1.10",
     "@vitest/coverage-v8": "^4.1.10",
     "jsdom": "^26.1.0",
     "playwright": "^1.59.1",
-    "tsdown": "^0.22.14",
-    "vitest": "^4.1.10"
-  },
-  "publishConfig": {
-    "access": "public"
+    "vite-plus": "catalog:",
+    "vitest": "catalog:"
   }
 }

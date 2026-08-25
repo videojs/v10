@@ -49,7 +49,7 @@ function App() {
           skin={skin}
           styling={styling}
           live={live}
-          className="w-full aspect-video max-w-4xl mx-auto"
+          className="mx-auto aspect-video w-full max-w-4xl"
         >
           <NativeHlsVideo
             {...(hlsSource ? { source: hlsSource } : { src: url ?? '' })}

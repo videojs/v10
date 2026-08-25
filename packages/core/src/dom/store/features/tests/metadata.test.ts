@@ -1,6 +1,7 @@
 import type { MediaContentData, MediaContentValue } from '@videojs/media';
 import { createStore } from '@videojs/store';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
+
 import { setPlayerConfigValue } from '../../../feature';
 import type { PlayerTarget } from '../../../player';
 import { selectMetadata } from '../../selectors';

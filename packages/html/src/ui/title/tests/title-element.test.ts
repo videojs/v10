@@ -2,10 +2,10 @@ import type { AnyPlayerStore, PlayerTarget } from '@videojs/core/dom';
 import { controlsFeature, metadataFeature, playbackFeature, setPlayerConfigValue } from '@videojs/core/dom';
 import { ContextProvider } from '@videojs/element/context';
 import { combine, createStore } from '@videojs/store';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vite-plus/test';
 
 import { playerContext } from '../../../player/context';
-import { MediaElement } from '../../media-element';
+import { UIElement } from '../../ui-element';
 import { TitleElement } from '../title-element';
 
 let tagCounter = 0;
@@ -94,7 +94,7 @@ function setTitle(store: object, value: string | null): void {
   setPlayerConfigValue(store, titleConfig, value);
 }
 
-class TestPlayerProviderElement extends MediaElement {
+class TestPlayerProviderElement extends UIElement {
   store: AnyPlayerStore = createTitleStore() as unknown as AnyPlayerStore;
 
   readonly #provider = new ContextProvider(this, { context: playerContext });

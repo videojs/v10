@@ -6,6 +6,7 @@ import type {
 } from '@videojs/media';
 import { isMediaVideoDimensionsCapable, isMediaVideoRenditionCapable } from '@videojs/media';
 import { listen } from '@videojs/utils/dom';
+
 import { definePlayerFeature } from '../../feature';
 
 const QUALITY_AUTO_VALUE = 'auto';

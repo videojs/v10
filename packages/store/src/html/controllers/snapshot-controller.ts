@@ -1,5 +1,6 @@
 import type { ReactiveController, ReactiveControllerHost } from '@videojs/element';
 import { noop } from '@videojs/utils/function';
+
 import type { Selector } from '../../core/shallow-equal';
 import { shallowEqual } from '../../core/shallow-equal';
 import type { State } from '../../core/state';

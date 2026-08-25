@@ -8,8 +8,11 @@
     "jsx": "react-jsx",
     "jsxImportSource": "vjsc/components",
     "lib": ["ES2022"],
+    "paths": {
+      "vjsc/*": ["../../vjsc/src/*"]
+    },
     "types": ["node"],
     "noEmit": true
   },
-  "include": ["**/*.ts", "**/*.tsx", "../tsdown.shadcn.config.ts"]
+  "include": ["**/*.ts", "**/*.tsx", "../vite.config.ts"]
 }

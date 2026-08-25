@@ -11,6 +11,7 @@ import {
   snapshotAttributes,
   walkAncestors,
 } from '@videojs/utils/dom';
+
 import { MenuCSSVars } from '../../../core/ui/menu/menu-css-vars';
 
 const MENU_SUBMENU_ATTR = 'data-submenu';

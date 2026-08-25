@@ -1,4 +1,5 @@
 import { Group, type Props } from 'vjsc/components';
+
 import type { SkinComponentMeta } from '../../meta';
 import styles from '../../styles/components/overlay.styles';
 

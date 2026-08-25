@@ -29,7 +29,7 @@ function App() {
   return (
     <SandboxI18nProvider>
       <AudioPlayer>
-        <AudioSkinComponent skin={skin} styling={styling} className="w-full max-w-xl mx-auto">
+        <AudioSkinComponent skin={skin} styling={styling} className="mx-auto w-full max-w-xl">
           <Audio
             src={SOURCES[source].url}
             autoPlay={autoplay}

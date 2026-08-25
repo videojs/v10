@@ -5,6 +5,7 @@
 import { createPublicPromise, type PublicPromise, tryCall } from '@videojs/utils/function';
 import { deepEqual } from '@videojs/utils/object';
 import { isNumber } from '@videojs/utils/predicate';
+
 import { EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES } from '../../core/constants';
 import { MediaError } from '../../core/media-error';
 import type { Video } from '../../core/types';

@@ -1,21 +1,27 @@
 {
   "name": "@videojs/media",
-  "type": "module",
   "version": "10.0.0-beta.31",
   "description": "Media contracts, hosts, and playback engines for Video.js",
-  "license": "Apache-2.0",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/videojs/v10",
-    "directory": "packages/media"
-  },
   "keywords": [
     "media",
     "player",
     "streaming",
     "videojs"
   ],
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/videojs/v10",
+    "directory": "packages/media"
+  },
+  "files": [
+    "dist"
+  ],
+  "type": "module",
   "sideEffects": false,
+  "main": "dist/default/index.js",
+  "module": "dist/default/index.js",
+  "types": "dist/dev/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/dev/index.d.ts",
@@ -38,18 +44,14 @@
       "default": "./dist/default/media-tracks.js"
     }
   },
-  "main": "dist/default/index.js",
-  "module": "dist/default/index.js",
-  "types": "dist/dev/index.d.ts",
-  "files": [
-    "dist"
-  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
-    "build": "tsdown",
-    "build:watch": "tsdown --watch ./src --no-clean",
+    "build:watch": "vp pack --watch ./src --no-clean",
     "dev": "pnpm run build:watch",
-    "test": "vitest run",
-    "test:watch": "vitest",
+    "test": "vp test run",
+    "test:watch": "vp test",
     "clean": "rimraf --glob dist types '*.tsbuildinfo'"
   },
   "dependencies": {
@@ -64,10 +66,7 @@
     "@types/chrome": "^0.1.40",
     "@types/chromecast-caf-sender": "^1.0.11",
     "jsdom": "^26.1.0",
-    "tsdown": "^0.22.14",
-    "vitest": "^4.1.0"
-  },
-  "publishConfig": {
-    "access": "public"
+    "vite-plus": "catalog:",
+    "vitest": "catalog:"
   }
 }

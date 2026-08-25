@@ -1,4 +1,5 @@
 import * as ts from 'typescript';
+
 import type { DataAttrsExtraction } from './types.js';
 import { unwrapObjectLiteral } from './utils.js';
 

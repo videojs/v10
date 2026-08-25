@@ -1,5 +1,6 @@
 import * as $ from '@videojs/core/vjsc';
 import { type PropsOf, Slot, type VjscNode } from 'vjsc/components';
+
 import { AirPlayButton } from '../../components/buttons/airplay-button';
 import { CaptionsButton } from '../../components/buttons/captions-button';
 import { CastButton } from '../../components/buttons/cast-button';

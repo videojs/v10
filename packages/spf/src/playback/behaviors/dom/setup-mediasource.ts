@@ -53,6 +53,7 @@
  * read.
  */
 import { listen } from '@videojs/utils/dom';
+
 import { defineBehavior } from '../../../core/composition/create-composition';
 import type { Reactor } from '../../../core/reactors/create-machine-reactor';
 import { createMachineReactor } from '../../../core/reactors/create-machine-reactor';

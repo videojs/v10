@@ -1,4 +1,5 @@
 import type { MuxSource } from '@videojs/media/dom/mux';
+
 import { getMuxAssetId } from './mux';
 
 export interface ChapterTrack {
@@ -153,6 +154,21 @@ const SOURCE_MAP = {
     // Exercises non-zero-PTS timestampOffset relocation: currentTime stays 0-based.
     label: 'HLS - Instant Clip (non-zero PTS)',
     url: 'https://stream.mux.com/s41JYeqIpBMBzE4OzxDyGR2yrp2hD1CQ6gJN9SlVGDQ.m3u8?asset_start_time=60&asset_end_time=600',
+    type: 'hls',
+    subType: 'mp4',
+  },
+  /**
+   * Apple's official HLS example stream (bipbop advanced, fMP4): HEVC and AVC
+   * renditions of the same content in one multivariant playlist, which makes
+   * it the shared mixed-codec source — the initial pick decides a codec
+   * family and SPF's ABR must hold it for the source's lifetime (no
+   * `SourceBuffer.changeType()`). Deliberately messy beyond the codecs: not
+   * CMAF-compliant, ~44ms A/V origin skew, a 10s timestamp origin, and VTT
+   * subtitles relying on `X-TIMESTAMP-MAP`.
+   */
+  'hls-mixed-codec': {
+    label: 'HLS - Apple bipbop (HEVC + AVC)',
+    url: 'https://devstreaming-cdn.apple.com/videos/streaming/examples/bipbop_adv_example_hevc/master.m3u8',
     type: 'hls',
     subType: 'mp4',
   },

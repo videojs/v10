@@ -8,6 +8,7 @@ import type {
 import { isMediaSourceCapable, isMediaTextTrackCapable, isQuerySelectorAllCapable } from '@videojs/media';
 import { findTrackElement, isCaptionOrSubtitleTrack, listen } from '@videojs/utils/dom';
 import { isNil } from '@videojs/utils/predicate';
+
 import { DEFAULT_LOCALE, findLocaleKeys, getCanonicalLocaleKey } from '../../../core/i18n';
 import { definePlayerFeature } from '../../feature';
 

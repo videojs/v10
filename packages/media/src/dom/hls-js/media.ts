@@ -1,8 +1,8 @@
 import { deepEqual } from '@videojs/utils/object';
 import Hls, { type HlsConfig as HlsJsConfig } from 'hls.js';
+
 import { bridgeEvents } from '../../core/bridge-events';
 import { type DrmSystemsConfig, KeySystems } from '../../core/drm';
-
 import { type MediaResolution, type MediaStreamType, MediaStreamTypes } from '../../core/types';
 import { type NativeHlsConfig, NativeHlsMedia, type NativeHlsSource } from '../native-hls';
 import { HTMLVideoElementHost } from '../video-host';

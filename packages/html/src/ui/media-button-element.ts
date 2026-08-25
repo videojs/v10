@@ -22,7 +22,7 @@ import { i18nContext } from '../i18n/context';
 import { I18nController } from '../i18n/controller';
 import type { PlayerController } from '../player/player-controller';
 import { AriaKeyShortcutsController } from './hotkey/aria-key-shortcuts-controller';
-import { MediaElement } from './media-element';
+import { UIElement } from './ui-element';
 
 type LabelParams = Record<string, string | number>;
 type LabelParamsCore<Core extends MediaButtonComponent> = Core & {
@@ -37,7 +37,7 @@ function getLabelParams<Core extends MediaButtonComponent>(
 }
 
 /** Abstract base for HTML custom elements that render a media-control button. */
-export abstract class MediaButtonElement<Core extends MediaButtonComponent> extends MediaElement {
+export abstract class MediaButtonElement<Core extends MediaButtonComponent> extends UIElement {
   static override properties: PropertyDeclarationMap = {
     label: { type: String },
     disabled: { type: Boolean },

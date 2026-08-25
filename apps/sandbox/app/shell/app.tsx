@@ -21,6 +21,7 @@ import {
 } from '@app/shared/sources';
 import type { Platform, Preset, Styling } from '@app/types';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
 import { Navbar } from './navbar';
 import { Preview } from './preview';
 
@@ -220,7 +221,7 @@ export function App() {
   const handleSourceChange = useCallback((value: string) => setSource(value as SourceId), []);
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden">
+    <div className="flex h-screen flex-col overflow-hidden">
       <Navbar
         platform={platform}
         onPlatformChange={setPlatform}

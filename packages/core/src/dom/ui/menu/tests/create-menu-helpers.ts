@@ -1,4 +1,5 @@
-import { vi } from 'vitest';
+import { vi } from 'vite-plus/test';
+
 import { createTransition } from '../../transition';
 import { createMenu, type MenuApi, type MenuChangeDetails } from '../create-menu';
 

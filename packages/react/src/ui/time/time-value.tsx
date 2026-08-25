@@ -38,7 +38,8 @@ export const Value = forwardRef(function Value(
 
   const defaultType = type ?? TimeCore.defaultProps.type;
   const [activeType, setActiveType] = useState(defaultType);
-  // biome-ignore lint/correctness/useExhaustiveDependencies: We want to listen for changes to defaultType and toggle (so we revert to default), this just means one less useEffect.
+  // We want to listen for changes to defaultType and toggle (so we revert to default), this just means one less useEffect.
+  // oxlint-disable-next-line react/exhaustive-deps
   useEffect(() => {
     setActiveType(defaultType);
   }, [defaultType, toggle]);

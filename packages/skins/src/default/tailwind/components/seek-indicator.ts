@@ -1,4 +1,5 @@
 import { cn } from '@videojs/utils/style';
+
 import { centeredIndicatorRoot } from './input-indicator';
 
 export const seekIndicator = {

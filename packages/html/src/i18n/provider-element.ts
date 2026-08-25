@@ -1,4 +1,5 @@
 import { ReactiveElement } from '@videojs/element';
+
 import { i18nContext } from './context';
 import { createI18nProviderMixin, type I18nProviderMixin as ProviderMixin } from './provider-mixin';
 

@@ -2,6 +2,7 @@ import { globSync, readFileSync } from 'node:fs';
 
 import type { CallExpression, ExportDefaultDeclaration, PropertyKey } from '@oxc-project/types';
 import { parseSync } from 'oxc-parser';
+
 import { toArray } from '../../utils/array';
 import { absolutePath, fileStem } from '../../utils/path';
 import type { ComponentDefinition, ComponentRecord } from '../definition';

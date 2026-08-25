@@ -1,6 +1,7 @@
 import { cleanup, render } from '@testing-library/react';
 import type { StatusIndicatorCore } from '@videojs/core';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vite-plus/test';
+
 import { StatusIndicator } from '..';
 import { StatusIndicatorProvider } from '../context';
 

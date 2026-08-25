@@ -6,15 +6,15 @@ description: The default player context instance for consuming the player store 
 import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
 import DocsLink from "@/components/docs/DocsLink.astro";
 
-`playerContext` is a Web Components context token that carries the player store through the DOM tree. Provider elements publish the store to this context, and consumer elements (via <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> or <DocsLink slug="reference/container-mixin">`ContainerMixin`</DocsLink>) read from it.
+`playerContext` is a Web Components context token that carries the player store through the DOM tree. Provider elements publish the store to this context, and consumer elements such as <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> and <DocsLink slug="reference/player-container">`ContainerElement`</DocsLink> read from it.
 
 Pass it as the second argument to `PlayerController`:
 
 ```ts title="play-button.ts"
-import { PlayerController, MediaElement, playerContext, selectPlayback } from '@videojs/html';
+import { PlayerController, UIElement, playerContext, selectPlayback } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
 
-class PlayButton extends MediaElement {
+class PlayButton extends UIElement {
   #playback = new PlayerController(this, playerContext, selectPlayback);
 
   render() {
@@ -41,6 +41,6 @@ Use the direct import when building reusable elements that don't depend on a spe
 
 ### When you need this
 
-Most elements should use <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> (which accepts a context argument) rather than importing `playerContext` directly. Import it directly when you need to pass the context token to a lower-level factory such as `createContainerMixin` or `createProviderMixin`.
+Most elements should use <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> (which accepts a context argument) rather than importing `playerContext` directly. Import it directly when you need to pass the context token to a lower-level factory such as `createProviderMixin`.
 
 <UtilReference util="playerContext" />

@@ -20,8 +20,7 @@ export interface CaptionsRadioGroupItemProps extends Omit<MenuRadioItemProps, 'r
 }
 
 export interface CaptionsRadioGroupProps
-  extends Omit<UIComponentProps<'div', CaptionsRadioGroupCore.State>, 'children'>,
-    CaptionsOptionsProps {
+  extends Omit<UIComponentProps<'div', CaptionsRadioGroupCore.State>, 'children'>, CaptionsOptionsProps {
   /** Render one consumer-owned menu radio item for every captions option. */
   renderItem: (props: CaptionsRadioGroupItemProps, state: CaptionsRadioGroupItemState) => ReactElement;
 }

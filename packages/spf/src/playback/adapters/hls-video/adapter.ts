@@ -1,5 +1,6 @@
 import { type MediaStreamType, MediaStreamTypes } from '@videojs/media';
 import type { Constructor, MixinReturn } from '@videojs/utils/types';
+
 import type { Composition } from '../../../core/composition/create-composition';
 import { effect } from '../../../core/signals/effect';
 import {

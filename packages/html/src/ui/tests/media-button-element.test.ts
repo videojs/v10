@@ -3,12 +3,12 @@ import { createHotkey, HOTKEY_SHORTCUT_CHANGE_EVENT, playbackFeature } from '@vi
 import { registerI18n, resetI18nRegistry } from '@videojs/core/i18n';
 import { ContextProvider } from '@videojs/element/context';
 import { createStore, flush } from '@videojs/store';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { MediaI18nProviderElement } from '../../i18n';
 import { containerContext, playerContext } from '../../player/context';
-import { MediaElement } from '../media-element';
 import { PlayButtonElement } from '../play-button/play-button-element';
+import { UIElement } from '../ui-element';
 
 let tagCounter = 0;
 
@@ -47,17 +47,17 @@ function createPlaybackStore(): AnyPlayerStore {
   return store;
 }
 
-class TestContainerProviderElement extends MediaElement {
+class TestContainerProviderElement extends UIElement {
   readonly provider = new ContextProvider(this, {
     context: containerContext,
     initialValue: {
       container: this,
-      setContainer: () => {},
+      registerContainer: () => () => {},
     },
   });
 }
 
-class TestPlayerProviderElement extends MediaElement {
+class TestPlayerProviderElement extends UIElement {
   static readonly tagName = 'test-media-button-player';
 
   store = createPlaybackStore();

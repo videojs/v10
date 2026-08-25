@@ -55,10 +55,7 @@ export {
   useTranslator,
 } from './i18n';
 // Media primitives
-export {
-  Container,
-  type ContainerProps,
-} from './player/container';
+export { Container, type ContainerProps } from './player/container';
 export {
   type PlayerContextValue,
   useContainer,

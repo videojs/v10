@@ -1,5 +1,6 @@
 import * as ts from 'typescript';
 import * as tae from 'typescript-api-extractor';
+
 import { formatProperties } from './formatter.js';
 import type { CoreExtraction, ExtractedProp } from './types.js';
 

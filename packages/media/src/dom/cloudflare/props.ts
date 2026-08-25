@@ -6,11 +6,10 @@ import type { CloudflareSource } from './source';
  * the video. `playsInline` is stored and reported but never reaches the player:
  * the Stream embed has no inline-playback knob and plays inline on its own.
  */
-export interface CloudflareMediaProps
-  extends Pick<
-    Video,
-    'src' | 'autoplay' | 'defaultMuted' | 'muted' | 'loop' | 'controls' | 'playsInline' | 'preload' | 'poster'
-  > {
+export interface CloudflareMediaProps extends Pick<
+  Video,
+  'src' | 'autoplay' | 'defaultMuted' | 'muted' | 'loop' | 'controls' | 'playsInline' | 'preload' | 'poster'
+> {
   source: CloudflareSource | null;
 }
 

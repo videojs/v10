@@ -4,11 +4,11 @@ import { basename, dirname, join } from 'node:path';
 
 import { type RolldownOutput, rolldown } from 'rolldown';
 import { registryItemSchema, registrySchema } from 'shadcn/schema';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
+import { shadcnPlugin, vjscPlugin } from '..';
 import type { ComponentMeta } from '../../components';
 import type { ShadcnItem, ShadcnPluginOptions } from '../../shadcn';
-import { shadcnPlugin, vjscPlugin } from '..';
 
 interface FixtureMeta extends ComponentMeta {
   readonly type: 'block' | 'component';

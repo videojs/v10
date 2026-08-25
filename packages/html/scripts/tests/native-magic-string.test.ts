@@ -1,5 +1,5 @@
 import { type OutputAsset, type OutputChunk, type Plugin, RolldownMagicString, rolldown } from 'rolldown';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { CDN_I18N_REGISTRY, cdnI18nExternalPlugin } from '../../../../build/plugins/cdn-i18n-external-plugin';
 import { inlineTemplatePlugin } from '../../../../build/plugins/inline-template-plugin';

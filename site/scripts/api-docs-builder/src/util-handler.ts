@@ -34,8 +34,10 @@
  */
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+
 import * as ts from 'typescript';
 import * as tae from 'typescript-api-extractor';
+
 import type { ParamDef, ReturnValue, UtilOverload, UtilReference } from '../../../src/types/util-reference.js';
 import { utilReferenceSlug } from '../../../src/utils/utilReferenceSlug.js';
 import { abbreviateType, formatDetailedType, formatType } from './formatter.js';
@@ -279,7 +281,7 @@ function isUtilExport(exportNode: tae.ExportNode): boolean {
 
 function getDisplayName(name: string): string {
   if (name.startsWith('create') && name.includes('Mixin')) {
-    // createProviderMixin → ProviderMixin
+    // createMediaAttachMixin → MediaAttachMixin
     return name.replace(/^create/, '');
   }
 

@@ -1,5 +1,6 @@
 import * as ts from 'typescript';
 import * as tae from 'typescript-api-extractor';
+
 import type { PropDef } from './types.js';
 
 export interface PartExport {

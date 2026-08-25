@@ -1,6 +1,6 @@
 ---
 name: create-vite-plugin
-description: Create Video.js Vite plugins. Use for config, environments, servers, HTML, HMR, or builds.
+description: Create Vite plugins. Use for hooks.
 ---
 
 # Vite plugin implementation

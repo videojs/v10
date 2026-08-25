@@ -441,7 +441,7 @@ async function render() {
 
   if (isAudioPreset(preset)) {
     root.innerHTML = html`
-      <div class="w-full max-w-xl mx-auto">
+      <div class="mx-auto w-full max-w-xl">
         ${wrapCdnPlayerI18n(
           playerTag,
           html`

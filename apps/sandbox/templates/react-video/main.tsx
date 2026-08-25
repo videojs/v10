@@ -40,7 +40,7 @@ function App() {
           renderPoster={<img alt="" crossOrigin="" />}
           skin={skin}
           styling={styling}
-          className="aspect-video max-w-4xl mx-auto"
+          className="mx-auto aspect-video max-w-4xl"
         >
           <Video
             src={SOURCES[source].url}

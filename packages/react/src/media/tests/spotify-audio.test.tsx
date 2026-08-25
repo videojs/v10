@@ -1,5 +1,6 @@
 import { render, waitFor } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
+
 import { SpotifyAudio } from '../spotify-audio/media';
 
 const TRACK_URL = 'https://open.spotify.com/track/1301WleyT98MSxVHPZCA6M';

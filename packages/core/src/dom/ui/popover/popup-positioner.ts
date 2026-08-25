@@ -11,6 +11,7 @@ import {
   supportsAnchorPositioning,
 } from '@videojs/utils/dom';
 import { kebabCase } from '@videojs/utils/string';
+
 import { PopoverCSSVars } from '../../../core/ui/popover/popover-css-vars';
 import { isEventWithinElement } from '../../utils/event';
 import { getPositioningBoundaryRect, type PositioningBoundary, resolvePositioningBoundary } from '../../utils/layout';

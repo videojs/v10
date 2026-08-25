@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import type { MediaAudioTrack } from '@videojs/media';
 import type { ReactNode } from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { createPlayerWrapper } from '../../../testing/mocks';
 import { Menu } from '../../menu';

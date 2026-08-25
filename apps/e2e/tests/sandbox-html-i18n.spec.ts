@@ -1,4 +1,5 @@
 import { expect, type Frame, type Page, test } from '@playwright/test';
+
 import { SELECTORS } from '../fixtures/selectors';
 
 const SANDBOX_BASE = process.env.SANDBOX_URL ?? 'http://localhost:5299';

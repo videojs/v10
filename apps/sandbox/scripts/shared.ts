@@ -1,4 +1,5 @@
 import path from 'node:path';
+
 import chalk from 'chalk';
 import { createTwoFilesPatch } from 'diff';
 import type { Result } from 'dir-compare';

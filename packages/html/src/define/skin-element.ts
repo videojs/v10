@@ -6,6 +6,7 @@ import {
   renderTemplate,
   type ShadowStyle,
 } from '@videojs/utils/dom';
+
 import globalStyles from './global.css?inline';
 import sharedStyles from './shared.css?inline';
 

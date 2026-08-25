@@ -9,11 +9,10 @@ import type { TwitchSource } from './source';
  * Twitch decides for itself on a phone; and `poster`, which the embed draws
  * itself and offers no way to replace.
  */
-export interface TwitchMediaProps
-  extends Pick<
-    Video,
-    'src' | 'autoplay' | 'defaultMuted' | 'muted' | 'loop' | 'controls' | 'playsInline' | 'preload' | 'poster'
-  > {
+export interface TwitchMediaProps extends Pick<
+  Video,
+  'src' | 'autoplay' | 'defaultMuted' | 'muted' | 'loop' | 'controls' | 'playsInline' | 'preload' | 'poster'
+> {
   source: TwitchSource | null;
 }
 

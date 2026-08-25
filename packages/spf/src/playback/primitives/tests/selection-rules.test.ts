@@ -6,7 +6,8 @@
  * chain bails at one survivor while every constraint always runs, and constraint
  * order can't change the outcome while rule order can.
  */
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
+
 import { applyConstraints, applyRules, type SelectionRule } from '../selection-rules';
 
 // ============================================================================

@@ -1,6 +1,7 @@
 import { isWebKitAirPlayCapable, listen, type WebKitVideoElement } from '@videojs/utils/dom';
 import type { Constructor } from '@videojs/utils/types';
 import Hls from 'hls.js';
+
 import type { HlsEngineHost } from './types';
 
 /**

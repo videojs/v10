@@ -454,20 +454,21 @@ export interface MediaLiveEvents {
 
 export interface MediaLiveCapability {
   /**
-   * Presentation time marking the start of the Live Edge Window. Playing at
-   * the live edge when `currentTime >= liveEdgeStart`. `NaN` when the stream
-   * isn't live or the value is unknown.
+   * Playback time where the live edge begins. Playback is live when
+   * `currentTime >= liveEdgeStart`. `NaN` when the stream is not live or the
+   * value is unknown.
    *
-   * Derived — no dedicated change event; re-read when `seekable`,
-   * `targetLiveWindow`, or `streamType` change.
+   * No change event fires for this value alone. Read it again when `seekable`,
+   * `targetLiveWindow`, or `streamType` changes.
    *
    * @see https://github.com/video-dev/media-ui-extensions/blob/main/proposals/0007-live-edge.md
    */
   readonly liveEdgeStart: number;
   /**
-   * Offset representing the seekable range size for live content. `0` for
-   * standard latency live, `Infinity` for DVR, `NaN` for on-demand or
-   * unknown. Fires `targetlivewindowchange` when the value changes.
+   * Describes the kind of live window available. `0` for a sliding live
+   * window, `Infinity` for a live event with playback history, and `NaN` for
+   * on-demand or unknown. This value is not a duration. Fires
+   * `targetlivewindowchange` when it changes.
    */
   readonly targetLiveWindow: number;
 }
@@ -578,15 +579,15 @@ export interface MediaVideoDimensionsCapability {
 export interface MediaEvents extends MediaPlaybackEvents {}
 
 export interface Media<Events extends { [K in keyof Events]: EventLike } = MediaEvents>
-  extends MediaPlaybackCapability,
-    EventTargetLike<Events> {}
+  extends MediaPlaybackCapability, EventTargetLike<Events> {}
 
 // ----------------------------------------
 // Composed shapes
 // ----------------------------------------
 
 export interface MediaFullEvents
-  extends MediaEvents,
+  extends
+    MediaEvents,
     MediaPauseEvents,
     MediaSeekEvents,
     MediaSourceEvents,
@@ -600,7 +601,8 @@ export interface MediaFullEvents
     MediaContentDataEvents {}
 
 export interface MediaFull<Events extends { [K in keyof Events]: EventLike } = MediaFullEvents>
-  extends Media<Events>,
+  extends
+    Media<Events>,
     MediaPauseCapability,
     MediaSeekCapability,
     MediaSourceCapability,
@@ -620,7 +622,8 @@ export interface MediaFull<Events extends { [K in keyof Events]: EventLike } = M
 export interface VideoEvents extends MediaFullEvents, MediaPictureInPictureEvents, MediaVideoDimensionsEvents {}
 
 export interface Video
-  extends MediaFull<VideoEvents>,
+  extends
+    MediaFull<VideoEvents>,
     MediaPlaysInlineCapability,
     MediaPosterCapability,
     MediaFullscreenCapability,
@@ -636,7 +639,8 @@ export interface Audio extends MediaFull<AudioEvents> {}
 // ----------------------------------------
 
 export interface MediaTargetLike
-  extends MediaPlaybackCapability,
+  extends
+    MediaPlaybackCapability,
     MediaPauseCapability,
     MediaSeekCapability,
     MediaSourceCapability,
@@ -656,10 +660,7 @@ export interface MediaTargetLike
 }
 
 export interface VideoTargetLike
-  extends MediaTargetLike,
-    MediaPosterCapability,
-    MediaPlaysInlineCapability,
-    MediaVideoDimensionsCapability {
+  extends MediaTargetLike, MediaPosterCapability, MediaPlaysInlineCapability, MediaVideoDimensionsCapability {
   disablePictureInPicture: boolean;
   requestPictureInPicture(): Promise<unknown>;
   requestFullscreen(): Promise<unknown>;

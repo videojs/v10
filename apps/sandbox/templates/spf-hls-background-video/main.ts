@@ -1,5 +1,4 @@
 import '@app/styles.css';
-
 // SPF HLS Background Video — sandbox demo
 // http://localhost:5173/spf-hls-background-video/
 //
@@ -15,7 +14,6 @@ import '@app/styles.css';
 // is the manifest's job — pick a source whose URL caps it. Reload tears the adapter
 // down and builds a new one, which is the only way to re-run resolution against a
 // URL that is already playing.
-
 import { SOURCES } from '@app/shared/sources';
 import { effect, snapshot } from '@videojs/spf';
 import type { BackgroundVideoEngineState } from '@videojs/spf/hls';

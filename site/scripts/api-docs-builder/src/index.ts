@@ -1,4 +1,5 @@
 import * as path from 'node:path';
+
 import { generateFeatureReferences } from './feature-handler.js';
 import { generateMediaElementReferences } from './media-element-handler.js';
 import { type ReferenceGroup, validateReferenceGroup, writeReferenceGroup } from './output.js';

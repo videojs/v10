@@ -83,10 +83,12 @@ function formatFixedFiles(files) {
   return remainder > 0 ? `${visible}, and ${remainder} more` : visible;
 }
 
-function formatWithBiome(files) {
+function formatWithVitePlus(files) {
   const require = createRequire(import.meta.url);
-  const biomePath = require.resolve('@biomejs/biome/bin/biome');
-  const result = spawnSync(process.execPath, [biomePath, 'format', '--write', ...files], {
+  const packagePath = require.resolve('vite-plus/package.json');
+  const packageJson = JSON.parse(readFileSync(packagePath, 'utf8'));
+  const vitePlusPath = resolve(dirname(packagePath), packageJson.bin.vp);
+  const result = spawnSync(process.execPath, [vitePlusPath, 'fmt', ...files, '--write'], {
     cwd: ROOT,
     encoding: 'utf8',
   });
@@ -94,7 +96,7 @@ function formatWithBiome(files) {
   if (result.error) throw result.error;
 
   if (result.status !== 0) {
-    throw new Error(result.stderr.trim() || result.stdout.trim() || `Biome exited with status ${result.status}`);
+    throw new Error(result.stderr.trim() || result.stdout.trim() || `Vite Plus exited with status ${result.status}`);
   }
 }
 
@@ -125,7 +127,7 @@ export function enforceSourceSpacing(paths) {
     fixedFiles.push(file);
   }
 
-  if (fixedFiles.length > 0) formatWithBiome(fixedFiles);
+  if (fixedFiles.length > 0) formatWithVitePlus(fixedFiles);
 
   return { errors, fixedFiles };
 }

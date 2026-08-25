@@ -1,4 +1,5 @@
 import { DEFAULT_LOCALE } from '@videojs/utils/i18n';
+
 import type { FlatTranslations, Locale, Translations } from './params';
 import { flattenTranslations } from './utils';
 

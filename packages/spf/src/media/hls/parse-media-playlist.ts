@@ -1,4 +1,5 @@
 import { isUndefined } from '@videojs/utils/predicate';
+
 import {
   type AudioTrack,
   getMediaPlaylistMetadata,

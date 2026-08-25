@@ -1,7 +1,9 @@
 import { renderIcon } from '@videojs/icons/render/minimal';
 import { createShadowStyle, createTemplate } from '@videojs/utils/dom';
+
 import { safeDefine } from '../safe-define';
 import { SkinElement } from '../skin-element';
+
 import styles from './minimal-skin.css?inline';
 
 // Register the live video player, container, and minimal UI custom elements.
@@ -51,11 +53,15 @@ function getTemplateHTML() {
 
             <media-live-button class="media-button media-button--subtle media-button--live"></media-live-button>
 
-            <media-mute-button commandfor="live-video-volume-popover" class="media-button media-button--subtle media-button--icon media-button--mute">
+            <media-mute-button id="live-video-mute-trigger" commandfor="live-video-volume-popover" class="media-button media-button--subtle media-button--icon media-button--mute">
               ${renderIcon('volume-off', { class: 'media-icon media-icon--volume-off' })}
               ${renderIcon('volume-low', { class: 'media-icon media-icon--volume-low' })}
               ${renderIcon('volume-high', { class: 'media-icon media-icon--volume-high' })}
             </media-mute-button>
+            <media-tooltip trigger="live-video-mute-trigger" delay="0" sticky side="top" class="media-tooltip">
+              <media-tooltip-label></media-tooltip-label>
+              <media-tooltip-shortcut class="media-tooltip__kbd"></media-tooltip-shortcut>
+            </media-tooltip>
 
             <media-popover id="live-video-volume-popover" open-on-hover delay="200" close-delay="100" side="right" class="media-popover media-popover--volume">
               <media-volume-slider class="media-slider" orientation="horizontal" thumb-alignment="edge">

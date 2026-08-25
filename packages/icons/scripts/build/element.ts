@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { transformSync } from 'oxc-transform';
+
 import { DIST_DIR } from '../internal/paths.js';
 import type { IconFamily } from './model.js';
 import { writeOutput } from './output.js';

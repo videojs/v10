@@ -1,8 +1,6 @@
 import { loadScript } from '@videojs/utils/dom';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { MediaError } from '../../../core/media-error';
-import { isMediaVolumeCapable } from '../../../core/predicate';
-import type { Video } from '../../../core/types';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
+
 import {
   buildSpotifyIframeSrc,
   parseSpotifyEntityId,
@@ -12,6 +10,9 @@ import {
   type SpotifyPlaybackUpdateEvent,
   spotifyMediaDefaultProps,
 } from '..';
+import { MediaError } from '../../../core/media-error';
+import { isMediaVolumeCapable } from '../../../core/predicate';
+import type { Video } from '../../../core/types';
 
 vi.mock(import('@videojs/utils/dom'), async (importOriginal) => {
   const mod = await importOriginal();

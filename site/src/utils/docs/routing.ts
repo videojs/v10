@@ -1,6 +1,7 @@
 import { sidebar as defaultSidebar } from '@/docs.config';
 import type { Sidebar, SupportedFramework } from '@/types/docs';
 import { DEFAULT_FRAMEWORK, isValidFramework } from '@/types/docs';
+
 import { findFirstGuide, findGuideBySlug, getValidFrameworksForGuide } from './sidebar';
 
 /**

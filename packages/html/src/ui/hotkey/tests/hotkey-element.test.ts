@@ -1,7 +1,8 @@
 import { ContextProvider } from '@videojs/element/context';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vite-plus/test';
+
 import { containerContext } from '../../../player/context';
-import { MediaElement } from '../../media-element';
+import { UIElement } from '../../ui-element';
 import { AriaKeyShortcutsController } from '../aria-key-shortcuts-controller';
 import { HotkeyElement } from '../hotkey-element';
 
@@ -45,12 +46,12 @@ describe('HotkeyElement', () => {
 });
 
 describe('AriaKeyShortcutsController', () => {
-  class TestContainerProviderElement extends MediaElement {
+  class TestContainerProviderElement extends UIElement {
     readonly provider = new ContextProvider(this, {
       context: containerContext,
       initialValue: {
         container: this,
-        setContainer: () => {},
+        registerContainer: () => () => {},
       },
     });
   }

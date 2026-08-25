@@ -1,4 +1,5 @@
 import { isCaptionOrSubtitleTrack } from '@videojs/utils/dom';
+
 import type { HTMLMediaTargetLike } from '../media-host';
 import type { GoogleCastProps } from './index';
 import { castFramework, ensureCastFramework, googleCastInstances } from './registry';

@@ -2,10 +2,10 @@ import { applyElementProps, applyStateDataAttrs, createButton } from '@videojs/c
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextConsumer } from '@videojs/element/context';
 
-import { MediaElement } from '../media-element';
+import { UIElement } from '../ui-element';
 import { alertDialogContext } from './context';
 
-export class AlertDialogCloseElement extends MediaElement {
+export class AlertDialogCloseElement extends UIElement {
   static readonly tagName = 'media-alert-dialog-close';
 
   static override properties = {

@@ -2,6 +2,7 @@ import { createStatusAnnouncerLabels, StatusAnnouncerCore } from '@videojs/core'
 import { shouldAnnounceStatusChange, subscribeToStatusAnnouncer } from '@videojs/core/dom';
 import type { ForwardedRef } from 'react';
 import { forwardRef, useEffect, useState, useSyncExternalStore } from 'react';
+
 import { useLocale, useTranslator } from '../../i18n/context';
 import { useContainer, usePlayer } from '../../player/context';
 import type { UIComponentProps } from '../../utils/types';
@@ -9,7 +10,8 @@ import { useDestroy } from '../../utils/use-destroy';
 import { renderElement } from '../../utils/use-render';
 
 export interface StatusAnnouncerProps
-  extends UIComponentProps<'div', StatusAnnouncerCore.State>,
+  extends
+    UIComponentProps<'div', StatusAnnouncerCore.State>,
     Pick<StatusAnnouncerCore.Props, 'closeDelay' | 'labels'> {}
 
 export const StatusAnnouncer = forwardRef(function StatusAnnouncer(

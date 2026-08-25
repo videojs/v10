@@ -1,7 +1,6 @@
 // Keep this import first: it lends shaka's UMD evaluation the `self` global a
 // server runtime lacks. See `server-shim.ts`.
 import './server-shim';
-
 import { deepEqual } from '@videojs/utils/object';
 import { isObject } from '@videojs/utils/predicate';
 // The es2021 bundle is the same everything-but-UI API as the package default,
@@ -9,6 +8,7 @@ import { isObject } from '@videojs/utils/predicate';
 // no `exports` map, so the deep path is public surface — and `dist/*.ui*` is
 // where the UI library lives; never import those.
 import shaka from 'shaka-player/dist/shaka-player.compiled-es2021';
+
 import type { DrmSystemsConfig } from '../../core/drm';
 import { MediaError } from '../../core/media-error';
 import { MediaTracksMixin } from '../../core/media-tracks';
@@ -478,7 +478,7 @@ class ShakaMediaBase
  * @fires sourcechange - Fired when `source` changes, either directly or by resolving a new `src`. Read `source` for the new value.
  * @fires error - Fired when playback fails in a way Shaka could not recover from. Read `error` for the failure.
  * @fires streamtypechange - Fired when the detected stream type changes. Read `streamType` for the new value.
- * @fires targetlivewindowchange - Fired when the live window duration changes. Read `targetLiveWindow` for the new value.
+ * @fires targetlivewindowchange - Fired when `targetLiveWindow` changes. Read it for the new value.
  */
 export class ShakaMedia extends ShakaMediaLiveMixin(
   ShakaMediaStreamTypeMixin(ShakaMediaMediaTracksMixin(ShakaMediaBase))

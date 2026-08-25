@@ -19,6 +19,7 @@
 import { getDevicePixelRatio, listen, watchDevicePixelRatio } from '@videojs/utils/dom';
 import { shallowEqual } from '@videojs/utils/object';
 import { isFunction } from '@videojs/utils/predicate';
+
 import { type Resolution, scaleResolution } from '../primitives/resolution';
 
 /** A screen's pixel dimensions. */

@@ -1,6 +1,7 @@
 import { CustomMediaElement } from '@videojs/media/dom/custom-media-element';
 import { buildVimeoIframeSrc, VimeoMedia } from '@videojs/media/dom/vimeo';
 import { escapeHtml } from '@videojs/utils/string';
+
 import { MediaAttachMixin } from '../../store/media-attach-mixin';
 
 class VimeoCustomMediaElement extends CustomMediaElement('iframe', VimeoMedia) {

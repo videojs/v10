@@ -1,6 +1,7 @@
 import clsx from 'clsx';
 import type { BundledLanguage, Highlighter } from 'shiki';
 import { hastToHtml } from 'shiki';
+
 import { shared } from '@/components/typography/styles';
 import { shikiNotationTransformers } from '@/utils/shikiNotationTransformers';
 

@@ -1,4 +1,5 @@
 import type { Constructor } from '@videojs/utils/types';
+
 import { type MediaStreamType, MediaStreamTypes } from '../../core/types';
 import type { NativeMediaHost } from './errors';
 

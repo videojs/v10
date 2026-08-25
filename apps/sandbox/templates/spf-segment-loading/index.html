@@ -66,8 +66,12 @@
         color: var(--fg);
         background: var(--bg);
       }
-      h1 { margin-bottom: 6px; }
-      p { margin: 0 0 12px; }
+      h1 {
+        margin-bottom: 6px;
+      }
+      p {
+        margin: 0 0 12px;
+      }
 
       /* Drag the bottom-right corner to exercise the player-size cap. */
       #video-frame {
@@ -128,7 +132,12 @@
         margin-bottom: 10px;
         font-size: 12px;
       }
-      #playback-config label { display: flex; gap: 4px; align-items: center; cursor: pointer; }
+      #playback-config label {
+        display: flex;
+        gap: 4px;
+        align-items: center;
+        cursor: pointer;
+      }
       #playback-config select {
         padding: 2px 6px;
         font-family: monospace;
@@ -156,10 +165,14 @@
         white-space: nowrap;
         text-decoration: none;
       }
-      #share-link:hover { text-decoration: underline; }
+      #share-link:hover {
+        text-decoration: underline;
+      }
 
       /* ── Main controls ── */
-      #controls { margin-bottom: 10px; }
+      #controls {
+        margin-bottom: 10px;
+      }
       button {
         padding: 8px 16px;
         margin-right: 8px;
@@ -171,7 +184,9 @@
         border: 1px solid var(--control-border-strong);
         border-radius: 4px;
       }
-      button:hover { background: var(--control-bg-hover); }
+      button:hover {
+        background: var(--control-bg-hover);
+      }
 
       /* ── Video info strip ── */
       #now-playing-quality {
@@ -180,7 +195,10 @@
         font-size: 12px;
         color: var(--fg-muted);
       }
-      #now-playing-quality.has-quality { font-weight: bold; color: var(--accent); }
+      #now-playing-quality.has-quality {
+        font-weight: bold;
+        color: var(--accent);
+      }
       #player-size-display {
         margin-bottom: 2px;
         font-family: monospace;
@@ -193,15 +211,22 @@
         font-size: 12px;
         color: var(--fg-muted);
       }
-      #throughput-display.has-data { color: var(--ok); }
-      #throughput-display.warming { color: var(--pinned); }
+      #throughput-display.has-data {
+        color: var(--ok);
+      }
+      #throughput-display.warming {
+        color: var(--pinned);
+      }
       #live-status {
         margin-bottom: 12px;
         font-family: monospace;
         font-size: 12px;
         color: var(--fg-muted);
       }
-      #live-status.is-live { font-weight: bold; color: var(--danger); }
+      #live-status.is-live {
+        font-weight: bold;
+        color: var(--danger);
+      }
 
       /* ── Rendition / resolution / audio panels ── */
       #rendition-picker,
@@ -214,9 +239,20 @@
         border: 1px solid var(--panel-border);
         border-radius: 4px;
       }
-      #rendition-picker h2, #audio-track-picker h2, #text-track-picker h2, #resolution-status h2 { margin-top: 0; font-size: 14px; }
+      #rendition-picker h2,
+      #audio-track-picker h2,
+      #text-track-picker h2,
+      #resolution-status h2 {
+        margin-top: 0;
+        font-size: 14px;
+      }
 
-      #audio-track-buttons, #text-track-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+      #audio-track-buttons,
+      #text-track-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
       .audio-track-btn {
         padding: 6px 12px;
         font-family: monospace;
@@ -227,20 +263,55 @@
         border: 2px solid var(--control-border);
         border-radius: 4px;
       }
-      .audio-track-btn:hover { background: var(--control-bg-hover); border-color: var(--control-border-strong); }
-      .audio-track-btn.selected-default { font-weight: bold; color: var(--accent); background: var(--accent-bg); border-color: var(--accent); }
-      .audio-track-btn.selected-pinned  { font-weight: bold; color: var(--pinned); background: var(--pinned-bg); border-color: var(--pinned); }
-
-      .audio-status { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
-      .mode-default { font-weight: bold; color: var(--accent); }
-      .mode-pinned  { font-weight: bold; color: var(--pinned); }
-      .clear-filter-btn {
-        padding: 4px 10px; font-size: 11px; color: var(--pinned); cursor: pointer; background: var(--pinned-bg);
-        border: 1px solid var(--pinned); border-radius: 4px;
+      .audio-track-btn:hover {
+        background: var(--control-bg-hover);
+        border-color: var(--control-border-strong);
       }
-      .clear-filter-btn:hover { background: var(--pinned-bg-hover); }
+      .audio-track-btn.selected-default {
+        font-weight: bold;
+        color: var(--accent);
+        background: var(--accent-bg);
+        border-color: var(--accent);
+      }
+      .audio-track-btn.selected-pinned {
+        font-weight: bold;
+        color: var(--pinned);
+        background: var(--pinned-bg);
+        border-color: var(--pinned);
+      }
 
-      #rendition-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+      .audio-status {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+      .mode-default {
+        font-weight: bold;
+        color: var(--accent);
+      }
+      .mode-pinned {
+        font-weight: bold;
+        color: var(--pinned);
+      }
+      .clear-filter-btn {
+        padding: 4px 10px;
+        font-size: 11px;
+        color: var(--pinned);
+        cursor: pointer;
+        background: var(--pinned-bg);
+        border: 1px solid var(--pinned);
+        border-radius: 4px;
+      }
+      .clear-filter-btn:hover {
+        background: var(--pinned-bg-hover);
+      }
+
+      #rendition-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
       .rendition-btn {
         padding: 6px 12px;
         font-family: monospace;
@@ -251,53 +322,126 @@
         border: 2px solid var(--control-border);
         border-radius: 4px;
       }
-      .rendition-btn:hover { background: var(--control-bg-hover); border-color: var(--control-border-strong); }
-      .rendition-btn.selected-abr  { font-weight: bold; color: var(--accent); background: var(--accent-bg); border-color: var(--accent); }
-      .rendition-btn.selected-manual { font-weight: bold; color: var(--pinned); background: var(--pinned-bg); border-color: var(--pinned); }
-
-      .abr-status { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
-      .mode-abr    { font-weight: bold; color: var(--accent); }
-      .mode-manual { font-weight: bold; color: var(--pinned); }
-      .enable-abr-btn {
-        padding: 4px 10px; font-size: 11px; color: var(--accent); cursor: pointer;background: var(--accent-bg);
-        border: 1px solid var(--accent); border-radius: 4px;
+      .rendition-btn:hover {
+        background: var(--control-bg-hover);
+        border-color: var(--control-border-strong);
       }
-      .enable-abr-btn:hover { background: var(--accent-bg-hover); }
+      .rendition-btn.selected-abr {
+        font-weight: bold;
+        color: var(--accent);
+        background: var(--accent-bg);
+        border-color: var(--accent);
+      }
+      .rendition-btn.selected-manual {
+        font-weight: bold;
+        color: var(--pinned);
+        background: var(--pinned-bg);
+        border-color: var(--pinned);
+      }
 
-      #resolution-list { display: flex; flex-wrap: wrap; gap: 8px; }
+      .abr-status {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+      .mode-abr {
+        font-weight: bold;
+        color: var(--accent);
+      }
+      .mode-manual {
+        font-weight: bold;
+        color: var(--pinned);
+      }
+      .enable-abr-btn {
+        padding: 4px 10px;
+        font-size: 11px;
+        color: var(--accent);
+        cursor: pointer;
+        background: var(--accent-bg);
+        border: 1px solid var(--accent);
+        border-radius: 4px;
+      }
+      .enable-abr-btn:hover {
+        background: var(--accent-bg-hover);
+      }
+
+      #resolution-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
       .resolution-item {
         padding: 4px 10px;
-        font-family: monospace; font-size: 11px;border: 1px solid var(--surface-border); border-radius: 4px;
+        font-family: monospace;
+        font-size: 11px;
+        border: 1px solid var(--surface-border);
+        border-radius: 4px;
       }
-      .resolution-item.resolved   { color: var(--ok); border-color: var(--ok); }
-      .resolution-item.unresolved { color: var(--fg-faint); border-color: var(--control-border); }
+      .resolution-item.resolved {
+        color: var(--ok);
+        border-color: var(--ok);
+      }
+      .resolution-item.unresolved {
+        color: var(--fg-faint);
+        border-color: var(--control-border);
+      }
 
       /* ── Logs ── */
-      #logs-section { margin: 16px 0; }
-      #logs-section h2 { margin-bottom: 6px; font-size: 14px; }
-      #logs {
-        max-height: 400px; padding: 10px; overflow-y: auto; font-size: 12px;
-        background: var(--panel-bg); border: 1px solid var(--panel-border); border-radius: 4px;
+      #logs-section {
+        margin: 16px 0;
       }
-      #logs div { padding: 2px 0; border-bottom: 1px solid var(--divider); }
+      #logs-section h2 {
+        margin-bottom: 6px;
+        font-size: 14px;
+      }
+      #logs {
+        max-height: 400px;
+        padding: 10px;
+        overflow-y: auto;
+        font-size: 12px;
+        background: var(--panel-bg);
+        border: 1px solid var(--panel-border);
+        border-radius: 4px;
+      }
+      #logs div {
+        padding: 2px 0;
+        border-bottom: 1px solid var(--divider);
+      }
 
       /* ── State inspector ── */
       #state {
-        padding: 15px; margin: 16px 0;font-size: 12px;
+        padding: 15px;
+        margin: 16px 0;
+        font-size: 12px;
         background: var(--panel-bg);
-        border: 1px solid var(--panel-border); border-radius: 4px;
+        border: 1px solid var(--panel-border);
+        border-radius: 4px;
       }
-      #state h2 { margin-top: 0; font-size: 14px; }
+      #state h2 {
+        margin-top: 0;
+        font-size: 14px;
+      }
       #state pre {
         padding: 10px;
-        margin: 10px 0; overflow-x: auto;background: var(--surface-bg);
-        border: 1px solid var(--panel-border); border-radius: 4px;
+        margin: 10px 0;
+        overflow-x: auto;
+        background: var(--surface-bg);
+        border: 1px solid var(--panel-border);
+        border-radius: 4px;
       }
 
       /* ── Log colours ── */
-      .error   { font-weight: bold; color: var(--danger); }
-      .success { color: var(--ok); }
-      .warning { color: var(--pinned); }
+      .error {
+        font-weight: bold;
+        color: var(--danger);
+      }
+      .success {
+        color: var(--ok);
+      }
+      .warning {
+        color: var(--pinned);
+      }
     </style>
   </head>
   <body>
@@ -326,11 +470,6 @@
           <option value="auto">auto</option>
         </select>
       </label>
-      <label
-        title="Filter out HEVC renditions so ABR stays within one codec family, avoiding SourceBuffer.changeType() (not yet implemented). Needed for mixed-codec sources like the Apple bipbop example."
-      >
-        <input type="checkbox" id="avc-only-toggle" /> AVC-only (avoid changeType)
-      </label>
     </div>
 
     <div id="share-url-section">
@@ -341,14 +480,22 @@
     <div id="controls">
       <button type="button" id="play">Play</button>
       <button type="button" id="pause">Pause</button>
-      <button type="button" id="seek-to-edge" title="Seek to the live edge (window end − HOLD-BACK)">Seek to Live Edge</button>
-      <button type="button" id="seek-behind-window" title="Seek 30s behind the window start — exercises the window-exit rescue">Seek Out of Window</button>
+      <button type="button" id="seek-to-edge" title="Seek to the live edge (window end − HOLD-BACK)">
+        Seek to Live Edge
+      </button>
+      <button
+        type="button"
+        id="seek-behind-window"
+        title="Seek 30s behind the window start — exercises the window-exit rescue"
+      >
+        Seek Out of Window
+      </button>
       <button type="button" id="inspect">Inspect State</button>
       <button type="button" id="clearLogs">Clear Logs</button>
     </div>
 
     <div id="video-frame">
-      <!-- biome-ignore lint/a11y/useMediaCaption: test harness, captions managed by SPF -->
+      <!-- Test harness: captions are managed by SPF. -->
       <video id="video" controls preload="none"></video>
     </div>
     <div id="now-playing-quality"></div>

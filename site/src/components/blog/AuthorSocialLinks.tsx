@@ -2,6 +2,7 @@
 // Lucide will remove them in v1.0 — replace with simple-icons or custom SVGs then.
 import { AtSign, Github, Globe, Linkedin, Twitter } from 'lucide-react';
 import { Fragment } from 'react';
+
 import { Tooltip, TooltipProvider } from '../Tooltip';
 
 interface SocialLinks {
@@ -70,7 +71,7 @@ export function AuthorSocialLinks({ socialLinks, className }: AuthorSocialLinksP
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={`${config.label} profile`}
-                  className="inline-flex items-center justify-center p-2 rounded-xs intent:text-warm-gray dark:intent:text-manila-50"
+                  className="intent:text-warm-gray dark:intent:text-manila-50 inline-flex items-center justify-center rounded-xs p-2"
                 >
                   <Icon size={20} strokeWidth={1.5} />
                 </a>

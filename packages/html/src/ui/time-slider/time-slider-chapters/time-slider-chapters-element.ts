@@ -11,8 +11,8 @@ import { cloneTemplateRoot, getTemplateElement, getTemplateRoot } from '@videojs
 
 import { playerContext } from '../../../player/context';
 import { PlayerController } from '../../../player/player-controller';
-import { MediaElement } from '../../media-element';
 import { sliderContext } from '../../slider/context';
+import { UIElement } from '../../ui-element';
 
 /**
  * Clones a light-DOM template once per normalized chapter range.
@@ -20,7 +20,7 @@ import { sliderContext } from '../../slider/context';
  * The required template must contain exactly one HTML root element. When no chapter cues are available, the template
  * is cloned once for a full-duration range.
  */
-export class TimeSliderChaptersElement extends MediaElement {
+export class TimeSliderChaptersElement extends UIElement {
   static readonly tagName = 'media-time-slider-chapters';
 
   readonly #segments = new SliderSegmentsCore();

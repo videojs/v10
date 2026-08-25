@@ -6,6 +6,7 @@ import type {
   VideoRenditionLike,
 } from '@videojs/media';
 import type { Constructor } from '@videojs/utils/types';
+
 import type { Composition } from '../../../core/composition/create-composition';
 import { effect } from '../../../core/signals/effect';
 import { computed, untrack } from '../../../core/signals/primitives';

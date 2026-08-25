@@ -8,8 +8,8 @@ import {
   prependBlockBody,
   renderSourceRange,
   type SourceEdit,
-} from 'vjsc/ast';
-import type { ComponentTargetTransform, ComponentTargetTransformContext } from 'vjsc/target';
+} from '../../../vjsc/src/ast/index.ts';
+import type { ComponentTargetTransform, ComponentTargetTransformContext } from '../../../vjsc/src/target/index.ts';
 
 const optionMenus = [
   { component: 'QualityMenu', binding: 'quality', hook: 'useQualityOptions' },

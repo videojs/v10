@@ -1,6 +1,6 @@
 import { cleanup, render } from '@testing-library/react';
 import type { MediaTextTrackState } from '@videojs/media';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { createPlayerWrapper } from '../../../testing/mocks';
 import { Thumbnail, type ThumbnailProps } from '../thumbnail';

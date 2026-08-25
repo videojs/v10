@@ -1,5 +1,5 @@
-import { actions } from 'astro:actions';
 import type { APIRoute } from 'astro';
+import { actions } from 'astro:actions';
 
 export const prerender = false;
 

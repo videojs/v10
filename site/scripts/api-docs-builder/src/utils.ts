@@ -1,4 +1,5 @@
 import * as ts from 'typescript';
+
 import type { PropDef } from './types.js';
 
 const PREFIX = '\x1b[35m[api-docs-builder]\x1b[0m';

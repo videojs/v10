@@ -14,7 +14,7 @@ import {
   Tooltip,
   VolumeSlider,
 } from '@videojs/core/vjsc';
-import { describe, it } from 'vitest';
+import { describe, it } from 'vite-plus/test';
 import { Slot, Text } from 'vjsc/components';
 
 describe('constrained JSX', () => {

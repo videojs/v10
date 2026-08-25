@@ -3,6 +3,7 @@
 import { captionsText } from '@videojs/core/i18n/text/menu';
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
+
 import { useTranslator } from '@/i18n/context';
 import {
   AirPlayEnterIcon,
@@ -48,6 +49,7 @@ import { StatusIndicator } from '@/ui/status-indicator';
 import { Tooltip } from '@/ui/tooltip';
 import { VolumeIndicator } from '@/ui/volume-indicator';
 import { VolumeSlider } from '@/ui/volume-slider';
+
 import type { BaseVideoSkinProps } from '../types';
 
 const TOP_STATUS_ACTIONS = ['toggleSubtitles', 'toggleFullscreen', 'togglePictureInPicture'] as const;

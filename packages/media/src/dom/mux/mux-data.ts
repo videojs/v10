@@ -1,4 +1,5 @@
 import Mux from 'mux-embed';
+
 import { getPlayerVersion } from './env';
 import { toMuxDataEngineOptions } from './mux-data-engine';
 import type { MuxDataOptions, MuxDataSdk } from './types';

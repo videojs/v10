@@ -1,4 +1,5 @@
 import { defineComponent } from 'vjsc/components';
+
 import type { QualityRadioGroupProps } from './quality-radio-group-core';
 import { QualityRadioGroupDataAttrs } from './quality-radio-group-data-attrs';
 

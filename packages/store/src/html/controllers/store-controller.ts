@@ -1,5 +1,6 @@
 import type { ReactiveController, ReactiveControllerHost } from '@videojs/element';
 import { isNull, isUndefined } from '@videojs/utils/predicate';
+
 import type { Selector } from '../../core/shallow-equal';
 import type { AnyStore, InferStoreState } from '../../core/store';
 import { StoreAccessor, type StoreSource } from '../store-accessor';

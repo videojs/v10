@@ -18,6 +18,7 @@ import type {
 } from '@videojs/media';
 import type { AnySlice, InferSliceSourceState, Slice, Store, UnionSliceState } from '@videojs/store';
 import type { CamelCase, Simplify, UnionToIntersection } from '@videojs/utils/types';
+
 import type { metadataFeature } from './store/features/metadata';
 
 export interface MediaContainer extends HTMLElement {}

@@ -1,4 +1,5 @@
 import type { Constructor } from '@videojs/utils/types';
+
 import type { ShakaEngineHost } from './types';
 
 export function ShakaMediaLiveMixin<Base extends Constructor<ShakaEngineHost>>(BaseClass: Base) {

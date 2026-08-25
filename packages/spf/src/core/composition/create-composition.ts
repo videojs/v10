@@ -114,7 +114,8 @@ type DepsOf<B> = B extends { setup: (deps: infer D, ...args: any[]) => any } ? D
  * contexts (likely a TS quirk around the `object` upper bound), whereas
  * `{} & {x: T}` simplifies cleanly to `{x: T}`.
  */
-// biome-ignore lint/complexity/noBannedTypes: see comment above
+// see comment above
+// oxlint-disable-next-line typescript/no-empty-object-type
 type Empty = {};
 
 /**

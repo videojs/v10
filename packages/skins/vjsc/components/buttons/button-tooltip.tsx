@@ -1,6 +1,7 @@
 import type { TooltipProps } from '@videojs/core';
 import * as $ from '@videojs/core/vjsc';
 import type { PropsWithChildren, VjscElement } from 'vjsc/components';
+
 import type { SkinComponentMeta } from '../../meta';
 import styles from '../../styles/components/popup.styles';
 

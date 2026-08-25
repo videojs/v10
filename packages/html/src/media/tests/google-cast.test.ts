@@ -3,19 +3,20 @@ import type { Media } from '@videojs/media/dom';
 import { GoogleCast } from '@videojs/media/dom/google-cast';
 import { getMediaComponents } from '@videojs/media/dom/media-host';
 import { HTMLVideoElementHost } from '@videojs/media/dom/video-host';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vite-plus/test';
+
 import { mediaContext } from '../../player/context';
-import { MediaElement } from '../../ui/media-element';
+import { UIElement } from '../../ui/ui-element';
 import { GoogleCastElement } from '../google-cast';
 
-class TestMediaProvider extends MediaElement {
+class TestMediaProvider extends UIElement {
   readonly #provider = new ContextProvider(this, {
     context: mediaContext,
-    initialValue: { media: null, setMedia: () => {} },
+    initialValue: { media: null, registerMedia: () => () => {} },
   });
 
   setMedia(media: Media | null) {
-    this.#provider.setValue({ media, setMedia: () => {} });
+    this.#provider.setValue({ media, registerMedia: () => () => {} });
   }
 }
 

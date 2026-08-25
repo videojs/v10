@@ -1,4 +1,5 @@
 import { styles } from 'vjsc/styles';
+
 import { defaultSurface } from '../components/popup.styles';
 
 const defaultSurfaceAtLarge = [

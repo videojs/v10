@@ -1,6 +1,7 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { MediaError } from '../../../core/media-error';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
+
 import { buildTwitchIframeSrc, parseTwitchSource, parseTwitchVideoId, TwitchMedia, twitchMediaDefaultProps } from '..';
+import { MediaError } from '../../../core/media-error';
 
 const VOD_SRC = 'https://www.twitch.tv/videos/123456789';
 const CHANNEL_SRC = 'https://www.twitch.tv/twitchpresents';

@@ -1,6 +1,6 @@
 import type { Plugin } from 'rolldown';
 import { rolldown } from 'rolldown';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import type { ComponentTarget } from '../../target/definition';
 import { readComponentSource } from '../component-meta';

@@ -1,4 +1,5 @@
 import type { Rule, Selector, SelectorComponent, SelectorList } from 'lightningcss';
+
 import { cloneCssAst, visitCssRules } from './css-ast';
 
 function cloneSelectorList(selectors: SelectorList): SelectorList {

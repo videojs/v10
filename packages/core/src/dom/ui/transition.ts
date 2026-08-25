@@ -1,5 +1,6 @@
 import { createState, type State } from '@videojs/store';
 import { noop } from '@videojs/utils/function';
+
 import type { TransitionState } from '../../core/ui/transition';
 
 export interface TransitionApi {

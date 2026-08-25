@@ -1,4 +1,5 @@
 import { cn } from '@videojs/utils/style';
+
 import { reset } from './reset';
 
 export const container = cn(

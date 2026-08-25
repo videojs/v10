@@ -2,9 +2,9 @@ import { createPublicPromise, type PublicPromise, tryCall } from '@videojs/utils
 import { deepEqual } from '@videojs/utils/object';
 import { isNull, isString, isUndefined } from '@videojs/utils/predicate';
 import VimeoPlayer, { type LoadVideoOptions, type VimeoEmbedParameters, type VimeoUrl } from '@vimeo/player';
+
 import { EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES } from '../../core/constants';
 import { MediaError } from '../../core/media-error';
-
 import type { ErrorLike, MediaContentData, MediaPreloadType, TextTrackListLike, Video } from '../../core/types';
 import { MediaPlayedRangesMixin } from '../media-played-ranges';
 import { createTimeRange, serializeEmbedParams } from '../utils';

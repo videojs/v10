@@ -1,5 +1,7 @@
 import { useStore } from '@nanostores/react';
+
 import { useCase } from '@/stores/installation';
+
 import SkinPicker from './SkinPicker';
 
 export default function SkinPickerSection({ children }: { children: React.ReactNode }) {

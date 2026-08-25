@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 
 import type { HotkeyActionContext } from '../actions';
 import { isHotkeyToggleAction, resolveHotkeyAction } from '../actions';

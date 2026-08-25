@@ -128,12 +128,12 @@ Your element needs to be inside <DocsLink slug="reference/player-provider">`<vid
 </video-player> <!-- [!code focus] -->
 ```
 
-Extend `MediaElement` from `@videojs/html` so `PlayerController` can schedule DOM updates when state changes:
+Extend `UIElement` from `@videojs/html` so `PlayerController` can schedule DOM updates when state changes:
 
 ```ts
-import { MediaElement, PlayerController, playerContext, selectTime, type PropertyValues } from '@videojs/html';
+import { UIElement, PlayerController, playerContext, selectTime, type PropertyValues } from '@videojs/html';
 
-class SkipIntroButtonElement extends MediaElement {
+class SkipIntroButtonElement extends UIElement {
   #player = new PlayerController(this, playerContext, selectTime);
 
   update(changed: PropertyValues) {
@@ -217,7 +217,7 @@ A "skip intro" button that appears during the first 30 seconds of playback and s
   <TabsPanel client:idle value="ts" initial>
     ```ts
     import {
-      MediaElement,
+      UIElement,
       PlayerController,
       playerContext,
       selectTime,
@@ -225,7 +225,7 @@ A "skip intro" button that appears during the first 30 seconds of playback and s
       type PropertyValues,
     } from '@videojs/html';
 
-    class SkipIntroButtonElement extends MediaElement {
+    class SkipIntroButtonElement extends UIElement {
       #time = new PlayerController(this, playerContext, selectTime);
       #playback = new PlayerController(this, playerContext, selectPlayback);
       #disconnect: AbortController | null = null;

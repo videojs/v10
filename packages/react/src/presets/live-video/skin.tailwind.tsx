@@ -24,6 +24,7 @@ import {
 } from '@videojs/skins/default/tailwind/video.tailwind';
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
+
 import { useTranslator } from '@/i18n/context';
 import {
   AirPlayEnterIcon,
@@ -69,6 +70,7 @@ import { StatusIndicator } from '@/ui/status-indicator';
 import { Tooltip } from '@/ui/tooltip';
 import { VolumeIndicator } from '@/ui/volume-indicator';
 import { VolumeSlider } from '@/ui/volume-slider';
+
 import type { LiveVideoSkinProps } from './skin';
 
 const TOP_STATUS_ACTIONS = ['toggleSubtitles', 'toggleFullscreen', 'togglePictureInPicture'] as const;

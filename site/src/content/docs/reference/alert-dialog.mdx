@@ -1,0 +1,129 @@
+---
+title: AlertDialog
+frameworkTitle:
+  html: media-alert-dialog
+description: A modal alert dialog for urgent messages that require acknowledgement
+---
+
+import ComponentReference from "@/components/docs/api-reference/ComponentReference.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+import StyleCase from "@/components/docs/StyleCase.astro";
+import Demo from "@/components/docs/demos/Demo.astro";
+
+{/* React demos */}
+import BasicUsageDemoReact from "@/components/docs/demos/alert-dialog/react/css/BasicUsage";
+import basicUsageReactTsx from "@/components/docs/demos/alert-dialog/react/css/BasicUsage.tsx?raw";
+import basicUsageReactCss from "@/components/docs/demos/alert-dialog/react/css/BasicUsage.css?raw";
+
+{/* HTML demos */}
+import BasicUsageDemoHtml from "@/components/docs/demos/alert-dialog/html/css/BasicUsage.astro";
+import basicUsageHtml from "@/components/docs/demos/alert-dialog/html/css/BasicUsage.html?raw";
+import basicUsageHtmlCss from "@/components/docs/demos/alert-dialog/html/css/BasicUsage.css?raw";
+import basicUsageHtmlTs from "@/components/docs/demos/alert-dialog/html/css/BasicUsage.ts?raw";
+
+## Anatomy
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<AlertDialog.Root>
+  <AlertDialog.Popup>
+    <AlertDialog.Title />
+    <AlertDialog.Description />
+    <AlertDialog.Close />
+  </AlertDialog.Popup>
+</AlertDialog.Root>
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```html
+<media-alert-dialog>
+  <media-alert-dialog-title></media-alert-dialog-title>
+  <media-alert-dialog-description></media-alert-dialog-description>
+  <media-alert-dialog-close></media-alert-dialog-close>
+</media-alert-dialog>
+```
+</FrameworkCase>
+
+## Behavior
+
+Use an alert dialog for an urgent message that interrupts the user and requires acknowledgement. Your application controls when it opens and supplies its content. The component does not create a trigger or manage application flows such as opening a player from a thumbnail.
+
+<FrameworkCase frameworks={["react"]}>
+Use `open` with `onOpenChange` for controlled state, or `defaultOpen` for uncontrolled state. `Root` provides state without rendering an element, while `Popup` renders only while the dialog is open.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+Set the `open` property to show the dialog. The element updates the property and dispatches `open-change` when the dialog closes.
+</FrameworkCase>
+
+The close part and <kbd>Escape</kbd> close the dialog. The dialog stays rendered during a closing transition, then restores focus to the element that was focused before it opened.
+
+## Styling
+
+Use the open and transition data attributes to style visibility and animations:
+
+| Attribute | Description |
+|-----------|-------------|
+| `data-open` | Present while the dialog is open, including its closing transition |
+| `data-starting-style` | Present at the start of the opening transition |
+| `data-ending-style` | Present during the closing transition |
+
+<FrameworkCase frameworks={["html"]}>
+```css
+media-alert-dialog:not([data-open]) {
+  display: none;
+}
+
+media-alert-dialog[data-starting-style],
+media-alert-dialog[data-ending-style] {
+  opacity: 0;
+}
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+React renders standard DOM elements. Add a `className` to the popup and use it as the selector:
+
+```css
+.alert-dialog[data-starting-style],
+.alert-dialog[data-ending-style] {
+  opacity: 0;
+}
+```
+</FrameworkCase>
+
+## Accessibility
+
+The dialog uses `role="alertdialog"` and `aria-modal="true"`. The title and description receive generated IDs that are connected with `aria-labelledby` and `aria-describedby`. Pressing <kbd>Escape</kbd> closes the dialog.
+
+The current component does not trap focus. If your interface requires strict modal behavior, prevent interaction with content outside the dialog while it is open. In HTML, make the dialog focusable with `tabindex="-1"` so it can receive initial focus.
+
+## Examples
+
+### Basic usage
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
+      { title: "App.css", code: basicUsageReactCss, lang: "css" },
+    ]}>
+      <BasicUsageDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "index.html", code: basicUsageHtml, lang: "html" },
+      { title: "index.css", code: basicUsageHtmlCss, lang: "css" },
+      { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
+    ]}>
+      <BasicUsageDemoHtml />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<ComponentReference component="AlertDialog" />

@@ -1,4 +1,5 @@
 import type { AstroCookies } from 'astro';
+
 import type { AnySupportedStyle, SupportedFramework, SupportedStyle } from '@/types/docs';
 import { DEFAULT_FRAMEWORK, isValidFramework, isValidStyleForFramework } from '@/types/docs';
 

@@ -2,6 +2,7 @@ import type { ReactiveController, ReactiveControllerHost } from '@videojs/elemen
 import type { Context } from '@videojs/element/context';
 import { ContextConsumer } from '@videojs/element/context';
 import { noop } from '@videojs/utils/function';
+
 import type { AnyStore } from '../core/store';
 import { isStore } from '../core/store';
 

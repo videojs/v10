@@ -3,6 +3,7 @@ import { createState } from '@videojs/store';
 import { isCaptionOrSubtitleTrack } from '@videojs/utils/dom';
 import { defaults } from '@videojs/utils/object';
 import type { NonNullableObject } from '@videojs/utils/types';
+
 import { resolveText, type Text } from '../../i18n';
 import { captionsText, offText, subtitlesText } from '../../i18n/text/menu';
 import type { RadioOption, RadioOptionsState } from '../types';
@@ -20,8 +21,7 @@ export interface CaptionsRadioGroupProps {
 export interface CaptionsRadioGroupOption extends RadioOption {}
 
 export interface CaptionsRadioGroupState
-  extends Pick<MediaTextTrackState, 'subtitlesShowing'>,
-    RadioOptionsState<CaptionsRadioGroupOption> {}
+  extends Pick<MediaTextTrackState, 'subtitlesShowing'>, RadioOptionsState<CaptionsRadioGroupOption> {}
 
 export const CAPTIONS_OFF_VALUE = 'off';
 

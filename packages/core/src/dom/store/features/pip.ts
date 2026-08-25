@@ -1,5 +1,6 @@
 import type { MediaPictureInPictureState } from '@videojs/media';
 import { listen, type WebKitVideoElement } from '@videojs/utils/dom';
+
 import { definePlayerFeature } from '../../feature';
 import { exitFullscreen, isFullscreen } from '../../presentation/fullscreen';
 import {

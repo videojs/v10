@@ -1,4 +1,5 @@
 import { DEFAULT_LOCALE, isDefaultLocale } from '@videojs/utils/i18n';
+
 import en from './locales/en';
 import type { FlatTranslations, Locale } from './params';
 import { findLocaleKeys, hasRegisteredLocale } from './registry';

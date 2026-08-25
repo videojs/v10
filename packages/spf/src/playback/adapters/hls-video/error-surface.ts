@@ -16,6 +16,7 @@
  * this rests on.
  */
 import type { ErrorLike } from '@videojs/media';
+
 import {
   SVTA_UNSUPPORTED_AUDIO_FORMAT,
   SVTA_UNSUPPORTED_DRM_SYSTEM,

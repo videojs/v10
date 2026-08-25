@@ -7,6 +7,7 @@ import { useAlertDialogContext } from './context';
 
 export interface AlertDialogCloseProps extends UIComponentProps<'button', AlertDialogCore.State> {}
 
+/** Renders a button that closes the alert dialog. */
 export const AlertDialogClose = forwardRef<HTMLButtonElement, AlertDialogCloseProps>(function AlertDialogClose(
   { render, className, style, disabled, ...elementProps },
   forwardedRef

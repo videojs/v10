@@ -1,4 +1,5 @@
 import * as p from '@clack/prompts';
+
 import cdnMedia from '@/content/cdn-media.json';
 import { rendererSupportsCdn } from '@/utils/installation/cdn-code';
 import type { InstallationOptions } from '@/utils/installation/codegen';
@@ -12,6 +13,7 @@ import {
   USE_CASES,
   type UseCase,
 } from '@/utils/installation/types';
+
 import type { Framework } from './config.js';
 
 const CDN_MEDIA_SUBPATHS = cdnMedia.map((entry) => entry.id);

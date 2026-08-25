@@ -1,6 +1,6 @@
 import type { MediaTimeState } from '@videojs/media';
 import { formatTimeAsPhrase } from '@videojs/utils/time';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { createTranslator, flattenTranslations, translateText, translations } from '../../../i18n';
 import { TimeCore } from '../time-core';

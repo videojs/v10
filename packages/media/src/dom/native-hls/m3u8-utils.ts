@@ -11,8 +11,9 @@
 
 export interface StreamInfo {
   /**
-   * Offset representing the seekable range size for live content.
-   * `0` for standard latency live, `Infinity` for DVR, `NaN` for on-demand.
+   * Describes the kind of live window available. `0` for a sliding live
+   * window, `Infinity` for a live event with playback history, and `NaN` for
+   * on-demand. This value is not a duration.
    */
   targetLiveWindow: number;
   /**

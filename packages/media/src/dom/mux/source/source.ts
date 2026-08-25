@@ -8,6 +8,7 @@
 import { parseJwt } from '@videojs/utils/jwt';
 import { isNil } from '@videojs/utils/predicate';
 import { camelCase, snakeCase } from '@videojs/utils/string';
+
 import type { DrmSystemsConfig } from '../../../core/drm';
 import type { MediaContentData, MediaResolution } from '../../../core/types';
 

@@ -1,4 +1,5 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
+
 import { MenuItemDataAttrs } from '../../../../core/ui/menu/menu-item-data-attrs';
 import type { UIFocusEvent, UIKeyboardEvent } from '../../event';
 import { createPopupGroup } from '../../popover/popup-group';

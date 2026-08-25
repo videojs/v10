@@ -1,5 +1,5 @@
-import { OAUTH_CLIENT_ID, OAUTH_CLIENT_SECRET, OAUTH_REDIRECT_URI, OAUTH_URL } from 'astro:env/server';
 import type { APIRoute } from 'astro';
+import { OAUTH_CLIENT_ID, OAUTH_CLIENT_SECRET, OAUTH_REDIRECT_URI, OAUTH_URL } from 'astro:env/server';
 
 import { exchangeAuthorizationCode, INACTIVITY_EXPIRY, SESSION_COOKIE_NAME, seal } from '@/utils/auth';
 

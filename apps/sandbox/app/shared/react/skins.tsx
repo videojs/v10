@@ -76,7 +76,8 @@ function useLoadedComponent<Props>(
     return () => {
       active = false;
     };
-    // biome-ignore lint/correctness/useExhaustiveDependencies: we're proxying the deps
+    // we're proxying the deps
+    // oxlint-disable-next-line react/exhaustive-deps
   }, deps);
 
   return component;

@@ -1,5 +1,6 @@
 import { hasMethods } from '@videojs/utils/predicate';
 import type { AnyConstructor, MixinReturn } from '@videojs/utils/types';
+
 import type {
   MediaAudioRenditionCapability,
   MediaAudioTrackCapability,

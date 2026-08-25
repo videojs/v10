@@ -28,6 +28,7 @@
  * See `internal/decisions/spf/end-of-stream-av-skew-recovery.md`.
  */
 import { listen } from '@videojs/utils/dom';
+
 import { defineBehavior } from '../../../core/composition/create-composition';
 import { effect } from '../../../core/signals/effect';
 import type { ReadonlySignal } from '../../../core/signals/primitives';

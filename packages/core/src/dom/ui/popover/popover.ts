@@ -1,5 +1,6 @@
 import type { State } from '@videojs/store';
 import { listen, tryHidePopover, tryShowPopover } from '@videojs/utils/dom';
+
 import type { PopoverInput } from '../../../core/ui/popover/popover-core';
 import { createDismissLayer } from '../dismiss-layer';
 import type { UIFocusEvent, UIPointerEvent } from '../event';

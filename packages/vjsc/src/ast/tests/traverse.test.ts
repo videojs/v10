@@ -1,5 +1,5 @@
 import { parseSync } from 'oxc-parser';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { collectFunctionDeclarations, findJsxAttribute, findJsxElement, jsxNamePath } from '..';
 

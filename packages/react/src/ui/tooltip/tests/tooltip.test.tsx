@@ -1,7 +1,7 @@
 import { render, waitFor } from '@testing-library/react';
 import { popup } from '@videojs/skins/default/tailwind/video.tailwind';
 import { useLayoutEffect } from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { Tooltip, useOptionalTooltipContext } from '..';
 

@@ -1,15 +1,28 @@
 {
   "auto_install_extensions": {
-    "biome": true,
+    "oxc": true,
     "astro": true,
     "mdx": true,
     "markdownlint": true
   },
   "format_on_save": "on",
   "lsp": {
-    "biome": {
-      "settings": {
-        "require_config_file": true
+    "oxlint": {
+      "initialization_options": {
+        "settings": {
+          "run": "onType",
+          "fixKind": "safe_fix",
+          "typeAware": false,
+          "unusedDisableDirectives": "warn"
+        }
+      }
+    },
+    "oxfmt": {
+      "initialization_options": {
+        "settings": {
+          "fmt.configPath": "./vite.config.ts",
+          "run": "onSave"
+        }
       }
     },
     "vtsls": {
@@ -22,60 +35,35 @@
   },
   "languages": {
     "JavaScript": {
-      "formatter": { "language_server": { "name": "biome" } },
-      "code_actions_on_format": {
-        "source.fixAll.biome": true,
-        "source.organizeImports.biome": true
-      },
-      "prettier": { "allowed": false },
+      "formatter": [{ "language_server": { "name": "oxfmt" } }],
+      "code_action": "source.fixAll.oxc",
       "language_servers": ["!eslint", "..."]
     },
     "TypeScript": {
-      "formatter": { "language_server": { "name": "biome" } },
-      "code_actions_on_format": {
-        "source.fixAll.biome": true,
-        "source.organizeImports.biome": true
-      },
-      "prettier": { "allowed": false },
+      "formatter": [{ "language_server": { "name": "oxfmt" } }],
+      "code_action": "source.fixAll.oxc",
       "language_servers": ["!eslint", "..."]
     },
     "TSX": {
-      "formatter": { "language_server": { "name": "biome" } },
-      "code_actions_on_format": {
-        "source.fixAll.biome": true,
-        "source.organizeImports.biome": true
-      },
-      "prettier": { "allowed": false },
+      "formatter": [{ "language_server": { "name": "oxfmt" } }],
+      "code_action": "source.fixAll.oxc",
       "language_servers": ["!eslint", "..."]
     },
     "JSON": {
-      "formatter": { "language_server": { "name": "biome" } },
-      "code_actions_on_format": {
-        "source.fixAll.biome": true
-      },
-      "prettier": { "allowed": false }
+      "formatter": [{ "language_server": { "name": "oxfmt" } }],
+      "code_action": "source.fixAll.oxc"
     },
     "JSONC": {
-      "formatter": { "language_server": { "name": "biome" } },
-      "code_actions_on_format": {
-        "source.fixAll.biome": true
-      },
-      "prettier": { "allowed": false }
+      "formatter": [{ "language_server": { "name": "oxfmt" } }],
+      "code_action": "source.fixAll.oxc"
     },
     "CSS": {
-      "formatter": { "language_server": { "name": "biome" } },
-      "code_actions_on_format": {
-        "source.fixAll.biome": true
-      },
-      "prettier": { "allowed": false }
+      "formatter": [{ "language_server": { "name": "oxfmt" } }],
+      "code_action": "source.fixAll.oxc"
     },
     "Astro": {
-      "formatter": "prettier",
-      "code_actions_on_format": {
-        "source.fixAll.biome": true,
-        "source.organizeImports.biome": true
-      },
-      "prettier": { "allowed": true }
+      "formatter": [{ "language_server": { "name": "oxfmt" } }],
+      "code_action": "source.fixAll.oxc"
     }
   }
 }

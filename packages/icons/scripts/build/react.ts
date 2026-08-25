@@ -2,6 +2,7 @@ import { join } from 'node:path';
 
 import { transform } from '@svgr/core';
 import { transformSync } from 'oxc-transform';
+
 import { DIST_DIR } from '../internal/paths.js';
 import type { IconDefinition, IconFamily } from './model.js';
 import { writeOutput } from './output.js';

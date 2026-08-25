@@ -1,11 +1,20 @@
-@import "tailwindcss";
+@import "tailwindcss" source(none);
 
 @source "../app";
-@source "../src";
 @source "../templates";
-/* NOTE: This is non-standard since you'd usually eject the Tailwind skin into your own project and not scan it from node_modules. @videojs/skins is private and bundled into these two, so its class tokens are inlined here rather than resolvable on their own. */
-@source "../node_modules/@videojs/html";
-@source "../node_modules/@videojs/react";
+/*
+ * Normally the Tailwind skin would be ejected into the consuming project.
+ * @videojs/skins is private, so the sandbox scans the copies bundled into the
+ * public packages. Keep these paths narrow: scanning either package root follows
+ * workspace symlinks across thousands of generated files and blocks cold requests.
+ */
+@source "../node_modules/@videojs/html/dist/default/define/audio";
+@source "../node_modules/@videojs/html/dist/default/define/live-audio";
+@source "../node_modules/@videojs/html/dist/default/define/live-video";
+@source "../node_modules/@videojs/html/dist/default/define/video";
+@source "../node_modules/@videojs/html/dist/default/skins/dist/default";
+@source "../node_modules/@videojs/react/dist/default/presets";
+@source "../node_modules/@videojs/react/dist/default/skins/dist/default";
 
 :root {
   color-scheme: light dark;

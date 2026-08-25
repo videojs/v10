@@ -24,8 +24,7 @@ export interface PlaybackRateRadioGroupItemProps extends Omit<MenuRadioItemProps
 }
 
 export interface PlaybackRateRadioGroupProps
-  extends Omit<UIComponentProps<'div', PlaybackRateRadioGroupCore.State>, 'children'>,
-    PlaybackRateOptionsProps {
+  extends Omit<UIComponentProps<'div', PlaybackRateRadioGroupCore.State>, 'children'>, PlaybackRateOptionsProps {
   /** Render one consumer-owned menu radio item for every playback rate. */
   renderItem: (props: PlaybackRateRadioGroupItemProps, state: PlaybackRateRadioGroupItemState) => ReactElement;
 }

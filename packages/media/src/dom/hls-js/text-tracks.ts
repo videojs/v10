@@ -2,6 +2,7 @@ import { isCaptionOrSubtitleTrack, listen } from '@videojs/utils/dom';
 import type { Constructor } from '@videojs/utils/types';
 import type { CuesParsedData, NonNativeTextTracksData } from 'hls.js';
 import Hls from 'hls.js';
+
 import type { HlsEngineHost } from './types';
 
 /** Marks the `<track>` elements created here for hls.js's own text tracks. */

@@ -5,8 +5,7 @@ import type { UIComponentProps } from '../../utils/types';
 import { createMediaButton } from '../create-media-button';
 
 export interface CaptionsButtonProps
-  extends UIComponentProps<'button', CaptionsButtonCore.State>,
-    CaptionsButtonCore.Props {}
+  extends UIComponentProps<'button', CaptionsButtonCore.State>, CaptionsButtonCore.Props {}
 
 /** A button that toggles captions. */
 export const CaptionsButton = createMediaButton<CaptionsButtonCore, CaptionsButtonProps>({

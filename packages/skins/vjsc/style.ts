@@ -1,6 +1,7 @@
 import { resolve } from 'node:path';
 
 import type { StylePluginOptions } from 'vjsc/styles';
+
 import type { SkinConfig } from './config';
 import { skinStyles } from './meta';
 

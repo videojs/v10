@@ -137,8 +137,8 @@ export interface MediaStreamTypeState {
   /**
    * Current stream delivery type.
    *
-   * Components use this to toggle live-specific UI (e.g. a live indicator,
-   * a "jump to live edge" affordance, or hiding the time display).
+   * Components use this to show live-specific UI (for example, a live
+   * indicator or a "jump to live edge" button) or hide the time display.
    *
    * @see {@link MediaStreamTypes} for the canonical string values.
    * @see https://github.com/video-dev/media-ui-extensions/blob/main/proposals/0010-stream-type.md
@@ -159,19 +159,19 @@ export interface MediaMetadataState {
 
 export interface MediaLiveState {
   /**
-   * Presentation time marking the start of the Live Edge Window.
+   * Playback time where the live edge begins.
    *
-   * Playing at the live edge when `currentTime >= liveEdgeStart`. `NaN`
-   * when the stream isn't live or the value is unknown.
+   * Playback is live when `currentTime >= liveEdgeStart`. `NaN` when the
+   * stream is not live or the value is unknown.
    *
    * @see https://github.com/video-dev/media-ui-extensions/blob/main/proposals/0007-live-edge.md
    */
   liveEdgeStart: number;
   /**
-   * Offset representing the seekable range size for live content.
+   * Describes the kind of live window available. This value is not a duration.
    *
-   * `0` for standard latency live, `Infinity` for DVR, `NaN` for on-demand
-   * or unknown.
+   * `0` for a sliding live window, `Infinity` for a live event with playback
+   * history, and `NaN` for on-demand or unknown.
    */
   targetLiveWindow: number;
 }

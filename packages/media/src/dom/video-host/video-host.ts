@@ -1,5 +1,6 @@
 import type { WebKitDocument, WebKitPresentationMode, WebKitVideoElement } from '@videojs/utils/dom';
 import { isFunction } from '@videojs/utils/predicate';
+
 import type { Video, VideoEvents, VideoTargetLike } from '../../core/types';
 import { getMediaProp, HTMLMediaElementHost, type HTMLMediaTargetLike, setMediaProp } from '../media-host';
 

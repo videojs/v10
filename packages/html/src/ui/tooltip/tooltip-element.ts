@@ -24,12 +24,13 @@ import type { State } from '@videojs/store';
 import { SnapshotController } from '@videojs/store/html';
 import { listen, tryHidePopover, tryShowPopover } from '@videojs/utils/dom';
 import { isFunction } from '@videojs/utils/predicate';
+
 import { i18nContext } from '../../i18n/context';
 import { I18nController } from '../../i18n/controller';
 import { containerContext } from '../../player/context';
 import { popupGroupContext } from '../../player/popup-group-context';
-import { MediaElement } from '../media-element';
 import { PositionController } from '../position-controller';
+import { UIElement } from '../ui-element';
 import { tooltipGroupContext } from './context';
 import { TooltipLabelElement } from './tooltip-label-element';
 import { TooltipShortcutElement } from './tooltip-shortcut-element';
@@ -45,7 +46,7 @@ function isLabelTrigger(el: HTMLElement): el is TriggerElement {
   return '$state' in el;
 }
 
-export class TooltipElement extends MediaElement {
+export class TooltipElement extends UIElement {
   static readonly tagName = 'media-tooltip';
 
   static override properties = {
@@ -57,6 +58,7 @@ export class TooltipElement extends MediaElement {
     closeDelay: { type: Number, attribute: 'close-delay' },
     disableHoverablePopup: { type: Boolean, attribute: 'disable-hoverable-popup' },
     disabled: { type: Boolean },
+    sticky: { type: Boolean },
     boundary: { type: String },
     trigger: { type: String },
   } satisfies PropertyDeclarationMap<keyof TooltipCore.Props | 'boundary' | 'trigger'>;
@@ -69,6 +71,7 @@ export class TooltipElement extends MediaElement {
   closeDelay = TooltipCore.defaultProps.closeDelay;
   disableHoverablePopup = TooltipCore.defaultProps.disableHoverablePopup;
   disabled = TooltipCore.defaultProps.disabled;
+  sticky = TooltipCore.defaultProps.sticky;
   boundary: PositioningBoundary = 'container';
   trigger = '';
 
@@ -105,6 +108,7 @@ export class TooltipElement extends MediaElement {
       closeDelay: () => this.closeDelay,
       disableHoverablePopup: () => this.disableHoverablePopup,
       disabled: () => this.disabled,
+      sticky: () => this.sticky,
       // Lazy getter — group may arrive after connect via context.
       group: () => this.#groupConsumer.value,
       popupGroup: () => this.#popupGroupCtx.value,

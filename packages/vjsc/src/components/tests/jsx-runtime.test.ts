@@ -1,4 +1,5 @@
-import { describe, expect, expectTypeOf, it } from 'vitest';
+import { describe, expect, expectTypeOf, it } from 'vite-plus/test';
+
 import { defineComponent } from '../definition';
 import {
   type ClassNameValue,

@@ -1,6 +1,7 @@
 import { buildCloudflareIframeSrc, CloudflareMedia } from '@videojs/media/dom/cloudflare';
 import { CustomMediaElement } from '@videojs/media/dom/custom-media-element';
 import { escapeHtml } from '@videojs/utils/string';
+
 import { MediaAttachMixin } from '../../store/media-attach-mixin';
 
 class CloudflareCustomMediaElement extends CustomMediaElement('iframe', CloudflareMedia) {

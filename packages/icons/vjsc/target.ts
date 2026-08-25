@@ -1,6 +1,6 @@
-import type { ComponentSchema } from 'vjsc/components';
-import { type ComponentTarget, defineComponentTarget, type SourceProps } from 'vjsc/target';
-import { jsx } from 'vjsc/target/jsx-runtime';
+import type { ComponentSchema } from '../../vjsc/src/components/index.ts';
+import { type ComponentTarget, defineComponentTarget, type SourceProps } from '../../vjsc/src/target/index.ts';
+import { jsx } from '../../vjsc/src/target/jsx-runtime.ts';
 
 export interface IconTargetOptions {
   readonly family?: string | undefined;

@@ -1,6 +1,7 @@
 import type { Constructor, MixinReturn } from '@videojs/utils/types';
 import type { ErrorData } from 'hls.js';
 import Hls from 'hls.js';
+
 import { MediaError } from '../../core/media-error';
 import type { HlsEngineHost } from './types';
 

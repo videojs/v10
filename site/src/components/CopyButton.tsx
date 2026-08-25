@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+
 import useIsHydrated from '@/utils/useIsHydrated';
 
 export interface CopyButtonProps {

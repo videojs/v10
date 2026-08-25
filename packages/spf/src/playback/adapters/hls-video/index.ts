@@ -7,12 +7,7 @@
  * from `@videojs/spf/hls` so wiring the engine directly doesn't pull the Media
  * (or `@videojs/media`) in with it.
  */
-export type {
-  HlsVideoMediaAPI,
-  HlsVideoMediaError,
-  HlsVideoMediaProps,
-  HlsVideoMediaStreamType,
-} from './adapter';
+export type { HlsVideoMediaAPI, HlsVideoMediaError, HlsVideoMediaProps, HlsVideoMediaStreamType } from './adapter';
 export { HlsVideoMediaElement, HlsVideoMediaMixin, hlsVideoMediaDefaultProps } from './adapter';
 export { HlsVideoMedia } from './media';
 export { HlsVideoMediaMediaTracksMixin } from './media-tracks';

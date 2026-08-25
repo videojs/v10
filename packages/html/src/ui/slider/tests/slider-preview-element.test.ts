@@ -1,4 +1,4 @@
-import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vite-plus/test';
 
 import { SliderElement } from '../slider-element';
 import { SliderPreviewElement } from '../slider-preview-element';

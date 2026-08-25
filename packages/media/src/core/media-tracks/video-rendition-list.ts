@@ -1,4 +1,5 @@
 import { isFunction } from '@videojs/utils/predicate';
+
 import { RenditionEvent } from './rendition-event';
 import { getPrivate } from './utils';
 import type { VideoRendition } from './video-rendition';

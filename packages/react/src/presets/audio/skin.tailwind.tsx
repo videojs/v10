@@ -21,6 +21,7 @@ import {
 } from '@videojs/skins/default/tailwind/audio.tailwind';
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
+
 import { useTranslator } from '@/i18n/context';
 import {
   CheckIcon,
@@ -51,6 +52,7 @@ import { Time } from '@/ui/time';
 import { TimeSlider } from '@/ui/time-slider';
 import { Tooltip } from '@/ui/tooltip';
 import { VolumeSlider } from '@/ui/volume-slider';
+
 import type { AudioSkinProps } from './skin';
 
 const SEEK_TIME = 10;

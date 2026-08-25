@@ -2,10 +2,10 @@ import type { AnyPlayerStore, PlayerTarget } from '@videojs/core/dom';
 import { metadataFeature, playbackFeature, setPlayerConfigValue } from '@videojs/core/dom';
 import { ContextProvider } from '@videojs/element/context';
 import { combine, createStore } from '@videojs/store';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { playerContext } from '../../../player/context';
-import { MediaElement } from '../../media-element';
+import { UIElement } from '../../ui-element';
 import { PosterElement } from '../poster-element';
 
 function ensureDefined(ctor: CustomElementConstructor & { readonly tagName: string }): void {
@@ -17,7 +17,7 @@ function setUserPoster(store: object, value: string | null): void {
   setPlayerConfigValue(store, metadataFeature.config!.poster, value);
 }
 
-class TestProviderElement extends MediaElement {
+class TestProviderElement extends UIElement {
   static readonly tagName = 'test-poster-provider';
 
   readonly store = createStore<PlayerTarget>()(combine(playbackFeature, metadataFeature)) as unknown as AnyPlayerStore;

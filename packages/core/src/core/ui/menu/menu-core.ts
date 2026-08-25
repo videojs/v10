@@ -1,5 +1,6 @@
 import { defaults } from '@videojs/utils/object';
 import type { NonNullableObject } from '@videojs/utils/types';
+
 import type { PopoverAlign, PopoverSide } from '../popover/popover-core';
 import type { TransitionFlags, TransitionState, TransitionStatus } from '../transition';
 import { getTransitionFlags } from '../transition';

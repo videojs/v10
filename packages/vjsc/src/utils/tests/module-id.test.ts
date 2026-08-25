@@ -1,6 +1,6 @@
 import { resolve } from 'node:path';
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { moduleFilename, moduleId, normalizeModuleId, normalizeResolvedId, parseModuleId } from '../module-id';
 import { escapesRoot, isInsideRoot, toPosixPath } from '../path';

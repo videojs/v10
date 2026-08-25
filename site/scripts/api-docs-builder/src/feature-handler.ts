@@ -30,7 +30,9 @@
  */
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+
 import * as ts from 'typescript';
+
 import type { FeatureActionDef, FeatureConfigDef, FeatureReference, FeatureStateDef } from './types.js';
 import { createTypeScriptProgram } from './typescript.js';
 import { getJSDocDescription, log, unwrapObjectLiteral } from './utils.js';

@@ -3,8 +3,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { rolldown } from 'rolldown';
-import { build } from 'tsdown';
-import { describe, expect, it } from 'vitest';
+import { build } from 'vite-plus/pack';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { componentSchemaPlugin } from '..';
 
@@ -68,7 +68,7 @@ describe('componentSchemaPlugin', () => {
         entry: ['does-not-match.ts'],
       },
       deps: { neverBundle: ['vjsc/components'] },
-      // tsdown currently owns a newer compatible Rolldown type instance than this package.
+      // Vite+ pack owns a newer compatible Rolldown type instance than this package.
       plugins: [plugin],
       unbundle: true,
       write: false,

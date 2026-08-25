@@ -48,6 +48,7 @@
  * its own.
  */
 import { listen } from '@videojs/utils/dom';
+
 import type { Behavior } from '../../../core/composition/create-composition';
 import { createMachineReactor, type Reactor } from '../../../core/reactors/create-machine-reactor';
 import { computed, peek, type ReadonlySignal, type Signal } from '../../../core/signals/primitives';

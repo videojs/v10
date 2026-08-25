@@ -2,7 +2,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { registerI18n, resetI18nRegistry } from '@videojs/core/i18n';
 import type { MediaAudioTrack } from '@videojs/media';
 import { createRef } from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { I18nProvider } from '../../../i18n';
 import { createPlayerWrapper } from '../../../testing/mocks';

@@ -1,4 +1,5 @@
 import type { CollectionEntry } from 'astro:content';
+
 import type { SupportedFramework } from '@/types/docs';
 
 /**

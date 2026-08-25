@@ -9,8 +9,7 @@ import { useInputIndicatorRoot } from '../input-indicator/use-input-indicator-ro
 import { StatusIndicatorProvider } from './context';
 
 export interface StatusIndicatorRootProps
-  extends UIComponentProps<'div', StatusIndicatorCore.State>,
-    Omit<StatusIndicatorCore.Props, 'labels'> {}
+  extends UIComponentProps<'div', StatusIndicatorCore.State>, Omit<StatusIndicatorCore.Props, 'labels'> {}
 
 export const StatusIndicatorRoot = forwardRef(function StatusIndicatorRoot(
   componentProps: StatusIndicatorRootProps,

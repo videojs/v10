@@ -1,4 +1,5 @@
 import { identity, noop } from '@videojs/utils/function';
+
 import type { AnyStore, InferStoreState } from '../../core/store';
 import { type Comparator, type Selector, useSelector } from './use-selector';
 

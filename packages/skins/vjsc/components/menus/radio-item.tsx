@@ -2,6 +2,7 @@ import type { MenuItemProps } from '@videojs/core';
 import * as $ from '@videojs/core/vjsc';
 import { CheckIcon } from '@videojs/icons/vjsc';
 import type { PropsWithChildren } from 'vjsc/components';
+
 import styles from '../../styles/components/menu.styles';
 
 export function RadioItem({ children, className, ...props }: PropsWithChildren<MenuItemProps>) {

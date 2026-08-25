@@ -1,6 +1,7 @@
 import getReadingTime from 'reading-time';
 import type { MdastPluginInput } from 'satteri';
 import { defineMdastPlugin } from 'satteri';
+
 import { getAstroFrontmatter, type MdastVisitorContext } from './satteriAstroData';
 
 /**

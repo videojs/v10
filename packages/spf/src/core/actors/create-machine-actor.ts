@@ -105,8 +105,11 @@ export type ActorDefinition<
 // =============================================================================
 
 /** Live actor instance returned by `createMachineActor`. */
-export interface MessageActor<State extends string, Context extends object, Message extends { type: string }>
-  extends SignalActor<State, Context> {
+export interface MessageActor<
+  State extends string,
+  Context extends object,
+  Message extends { type: string },
+> extends SignalActor<State, Context> {
   send(message: Message): void;
 }
 

@@ -1,4 +1,5 @@
 import { type Props, Group as StatusIndicatorGroup } from 'vjsc/components';
+
 import styles from '../../styles/components/status-indicator-overlay.styles';
 import { SeekIndicator } from './seek-indicator';
 import { StatusAnnouncer } from './status-announcer';

@@ -1,4 +1,5 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
+
 import type { ContextSignals, StateSignals } from '../../../core/composition/create-composition';
 import { effect } from '../../../core/signals/effect';
 import { signal } from '../../../core/signals/primitives';

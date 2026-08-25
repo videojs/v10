@@ -7,10 +7,10 @@ import { isFunction } from '@videojs/utils/predicate';
 import { i18nContext } from '../i18n/context';
 import { I18nController } from '../i18n/controller';
 import type { PlayerController } from '../player/player-controller';
-import { MediaElement } from './media-element';
+import { UIElement } from './ui-element';
 
 /** Abstract base for HTML custom elements that display media state with data attributes. */
-export abstract class MediaUIElement<Core extends MediaUIComponent> extends MediaElement {
+export abstract class MediaUIElement<Core extends MediaUIComponent> extends UIElement {
   readonly #i18n = new I18nController(this, i18nContext);
 
   protected abstract readonly core: Core;

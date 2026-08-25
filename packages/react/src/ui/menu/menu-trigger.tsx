@@ -11,8 +11,10 @@ import { callKeyDownHandler, preventMenuKeyDefault } from './menu-keyboard';
 
 type MenuTriggerElement = HTMLButtonElement | HTMLDivElement;
 
-export interface MenuTriggerProps
-  extends Omit<UIComponentProps<'button', MenuState>, 'type' | 'onClick' | 'onKeyDown'> {
+export interface MenuTriggerProps extends Omit<
+  UIComponentProps<'button', MenuState>,
+  'type' | 'onClick' | 'onKeyDown'
+> {
   /** Disables the trigger. */
   disabled?: boolean;
   onClick?: React.MouseEventHandler<MenuTriggerElement>;

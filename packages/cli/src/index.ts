@@ -1,4 +1,5 @@
 import { parse } from '@bomb.sh/args';
+
 import { handleConfig } from './commands/config.js';
 import { handleDocs } from './commands/docs.js';
 

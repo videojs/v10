@@ -10,7 +10,8 @@
  * `@videojs/spf/mux-background-video` re-exports these same classes, so its own
  * test asserts identity and leans on this file for behavior.
  */
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
+
 import {
   SVTA_NO_SUPPORTED_VIDEO_TRACK,
   SVTA_UNSUPPORTED_DRM_SYSTEM,

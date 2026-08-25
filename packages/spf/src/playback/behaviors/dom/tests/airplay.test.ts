@@ -1,4 +1,5 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
+
 import { signal } from '../../../../core/signals/primitives';
 import type { MaybeResolvedPresentation } from '../../../../media/types';
 import { setupAirPlay } from '../airplay';

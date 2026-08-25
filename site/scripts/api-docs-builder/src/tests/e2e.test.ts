@@ -90,13 +90,15 @@
  *                   Also exercises a hoisted-const base with an `as` cast
  *                   (`extends (Base as typeof Base)`) — the builder must
  *                   unwrap the cast and resolve the local const initializer.
- *   container.ts  — Exclusion case. Not a media element — re-exports an
- *                   existing class instead of declaring one inline.
+ *   define/ui/container.ts — Container registration lives with UI elements,
+ *                   so it is outside media-element discovery.
  *   background-video.ts — Exclusion case. Uses MediaAttachMixin(HTMLElement)
  *                   without CustomMediaElement. API reference manually maintained.
  */
 import * as path from 'node:path';
-import { describe, expect, it, vi } from 'vitest';
+
+import { describe, expect, it, vi } from 'vite-plus/test';
+
 import { type FeatureResult, generateFeatureReferences } from '../feature-handler';
 import { generateMediaElementReferences, type MediaElementResult } from '../media-element-handler';
 import { generateComponentReferences } from '../pipeline';
@@ -667,9 +669,9 @@ describe('Util pipeline (end-to-end)', () => {
 
   describe('Display name & slug', () => {
     it('strips "create" prefix from mixin display names', () => {
-      const mixin = findByName('ContainerMixin', 'html');
+      const mixin = findByName('MediaAttachMixin', 'html');
       expect(mixin).toBeDefined();
-      expect(mixin!.slug).toBe('container-mixin');
+      expect(mixin!.slug).toBe('media-attach-mixin');
     });
 
     it('resolves slug collisions: React bare, HTML prefixed', () => {
@@ -1428,9 +1430,8 @@ describe('Media element pipeline (end-to-end)', () => {
       expect(names).toEqual(['ComplexVideo', 'EmbedVideo', 'ExtendingVideo', 'MixinVideo', 'SimpleVideo', 'SpfAudio']);
     });
 
-    it('excludes container (re-export, not inline class declaration)', () => {
-      expect(findElement('MediaContainer')).toBeUndefined();
-      expect(findElement('MediaContainerElement')).toBeUndefined();
+    it('does not treat the UI container as a media element', () => {
+      expect(findElement('ContainerElement')).toBeUndefined();
     });
 
     it('excludes background-video (no CustomMediaElement, manually maintained)', () => {

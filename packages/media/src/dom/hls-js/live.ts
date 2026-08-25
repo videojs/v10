@@ -1,6 +1,7 @@
 import type { Constructor } from '@videojs/utils/types';
 import type { LevelLoadedData } from 'hls.js';
 import Hls from 'hls.js';
+
 import { MediaStreamTypes } from '../../core/types';
 import type { HlsEngineHost, HlsPlaylistTypes } from './types';
 

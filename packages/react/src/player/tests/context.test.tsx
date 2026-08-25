@@ -1,6 +1,6 @@
 import { cleanup, render, renderHook, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { createI18n } from '../../i18n/create-i18n';
 import { createMockStore } from '../../testing/mocks';

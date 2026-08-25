@@ -1,6 +1,7 @@
 import type { Constructor } from '@videojs/utils/types';
 import Hls from 'hls.js';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
+
 import { HlsJsMediaAirPlayMixin } from '../airplay-bridge';
 import type { HlsEngineHost } from '../types';
 

@@ -1,4 +1,5 @@
 import { cn } from '@videojs/utils/style';
+
 import { container as baseContainer } from './components/container';
 import { controls as baseControls } from './components/controls';
 import { error as baseError } from './components/error';

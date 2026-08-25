@@ -9,8 +9,7 @@ import { useDestroy } from '../../utils/use-destroy';
 import { renderElement } from '../../utils/use-render';
 
 export interface BufferingIndicatorProps
-  extends UIComponentProps<'div', BufferingIndicatorCore.State>,
-    BufferingIndicatorCore.Props {}
+  extends UIComponentProps<'div', BufferingIndicatorCore.State>, BufferingIndicatorCore.Props {}
 
 /**
  * Displays a buffering indicator when media is waiting for data.

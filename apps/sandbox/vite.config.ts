@@ -4,8 +4,9 @@ import { dirname, resolve } from 'node:path';
 
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
-import { defineConfig, normalizePath, type Plugin } from 'vite';
+import { defineConfig, normalizePath, type Plugin } from 'vite-plus';
 
+import { cachedTaskInputs, cachedTaskOutputs, workspaceTaskDependencies } from '../../build/task.ts';
 import { mirrorTemplatesToSrc } from './scripts/shared';
 
 // Locate @videojs/html through Node resolution rather than a workspace-relative
@@ -102,6 +103,10 @@ function getSandboxEntries(): Record<string, string> {
   const srcDir = resolve(__dirname, 'src');
   const entries: Record<string, string> = {};
 
+  // `src` is generated and gitignored. Vite+ loads every workspace config
+  // before it can schedule the setup command that creates this directory.
+  if (!existsSync(srcDir)) return entries;
+
   for (const entry of readdirSync(srcDir)) {
     const dir = resolve(srcDir, entry);
     const indexHtml = resolve(dir, 'index.html');
@@ -149,6 +154,32 @@ function serveAppShell(): Plugin {
 }
 
 export default defineConfig({
+  run: {
+    tasks: {
+      dev: {
+        command: 'vp dev --host',
+        cache: false,
+        dependsOn: ['setup', ...workspaceTaskDependencies(), '@videojs/html#build:cdn'],
+      },
+      setup: {
+        command: 'tsx scripts/setup.ts',
+        dependsOn: ['@videojs/core#build'],
+        // Setup deterministically mirrors tracked templates into the gitignored
+        // scratch tree. Keep that generated tree out of its own fingerprint.
+        input: ['scripts/setup.ts', 'scripts/shared.ts', 'scripts/generate-cdn-locale-loaders.ts', 'templates/**'],
+        output: ['src/**', 'app/shared/i18n/cdn-locale-loaders.generated.ts'],
+      },
+      build: {
+        command: 'vp build',
+        dependsOn: ['setup', ...workspaceTaskDependencies(), '@videojs/html#build:cdn'],
+        // The app-shell plugin creates this file for the build and removes it
+        // afterwards. Workspace dependencies are fingerprinted through the task
+        // graph, not their mutable package-local node_modules links.
+        input: [...cachedTaskInputs, '!src/index.html', '!node_modules/@videojs', '!node_modules/@videojs/**'],
+        output: [...cachedTaskOutputs, '!src/index.html'],
+      },
+    },
+  },
   root: 'src',
   appType: 'mpa',
   plugins: [sandboxTemplateSyncPlugin(), cdnSandboxI18nPlugin(), tailwindcss(), react(), serveAppShell()],
@@ -162,8 +193,12 @@ export default defineConfig({
     dedupe: ['react', 'react-dom'],
   },
   optimizeDeps: {
-    include: ['react', 'react-dom'],
+    include: ['@videojs/html > @videojs/element > @lit/context', 'react', 'react-dom'],
     exclude: ['@videojs/core', '@videojs/html', '@videojs/react', '@videojs/spf', '@videojs/store', '@videojs/utils'],
+  },
+  server: {
+    port: 5173,
+    strictPort: true,
   },
   build: {
     outDir: resolve(__dirname, 'dist'),

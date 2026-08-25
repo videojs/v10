@@ -144,7 +144,7 @@
   letter-spacing: var(--text-h4--letter-spacing);
   background: none;
   border: none;
-  /* biome-ignore lint/complexity/noImportantStyles: Override DocSearch's inline theme precedence. */
+  /* Override DocSearch's inline theme precedence. */
   box-shadow: none !important;
 }
 

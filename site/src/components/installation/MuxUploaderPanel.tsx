@@ -1,5 +1,3 @@
-import { actions } from 'astro:actions';
-
 import MuxUploader, {
   MuxUploaderDrop,
   MuxUploaderFileSelect,
@@ -7,12 +5,14 @@ import MuxUploader, {
   MuxUploaderRetry,
   MuxUploaderStatus,
 } from '@mux/mux-uploader-react';
+import { actions } from 'astro:actions';
 import { useCallback, useRef, useState } from 'react';
+
 import { muxPlaybackId, renderer, sourceUrl } from '@/stores/installation';
 import { initiateAuthPopup } from '@/utils/mux/auth-flow';
 import { pollForPlaybackId } from '@/utils/mux/polling';
-import type { UploaderState } from './UploaderOverlay';
 
+import type { UploaderState } from './UploaderOverlay';
 import UploaderOverlay from './UploaderOverlay';
 
 // import './MuxUploaderPanel.module.css';
@@ -180,7 +180,7 @@ export default function MuxUploaderPanel() {
   }, []);
 
   return (
-    <div className="flex-1 relative rounded-xs border border-dashed border-light-40 overflow-hidden border-faded-black dark:border-manila-dark">
+    <div className="border-light-40 border-faded-black dark:border-manila-dark relative flex-1 overflow-hidden rounded-xs border border-dashed">
       <MuxUploader
         // @ts-expect-error — MuxUploaderElement type not hoisted by pnpm; only used for dispatchEvent
         ref={uploaderRef}
@@ -196,20 +196,20 @@ export default function MuxUploaderPanel() {
       {/* Custom Mux Uploader UI */}
       <MuxUploaderDrop
         muxUploader="mux-uploader"
-        className="w-full h-full flex flex-col items-center justify-center p-4"
+        className="flex h-full w-full flex-col items-center justify-center p-4"
         overlay
         overlayText="Let it go"
       >
-        <span slot="heading" className="text-p3 font-bold mb-2">
+        <span slot="heading" className="text-p3 mb-2 font-bold">
           Drop a video
         </span>
-        <span slot="separator" className="text-p3 block mb-3">
+        <span slot="separator" className="text-p3 mb-3 block">
           — or —
         </span>
         <MuxUploaderFileSelect muxUploader="mux-uploader">
           <button
             type="button"
-            className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-faded-black text-manila-light dark:bg-manila-light dark:text-faded-black rounded-xs text-p3 font-bold intent:bg-orange intent:text-faded-black"
+            className="bg-faded-black text-manila-light dark:bg-manila-light dark:text-faded-black text-p3 intent:bg-orange intent:text-faded-black inline-flex cursor-pointer items-center gap-2 rounded-xs px-4 py-2 font-bold"
           >
             Select a file
           </button>
