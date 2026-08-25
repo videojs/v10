@@ -145,6 +145,7 @@ function normalizeGeneratedSource(code: string): string {
   return code
     .replaceAll('\r\n', '\n')
     .replace(/[ \t]+$/gm, '')
+    .replace(/virtual:vjsc\/css\/[a-f0-9]{12}\//g, 'virtual:vjsc/css/<hash>/')
     .replace(/__vjsc-id-[A-Za-z0-9_-]{8}-/g, '__vjsc-id-<module>-')
     .replace(/(<Scope prefix=")[A-Za-z0-9_-]{8}-/g, '$1<module>-');
 }

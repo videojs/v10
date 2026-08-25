@@ -8,8 +8,8 @@
 
 
 import { ButtonTooltip } from './button-tooltip';
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/b01fe420d698/buttons.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/buttons.css";
 import { AirPlayButton as AirPlayButtonPrimitive } from "@videojs/react";
 import { AirPlayEnterIcon as AirPlayEnterIconPrimitive, AirPlayExitIcon as AirPlayExitIconPrimitive } from "@videojs/react/icons";
 import { cn, resolveClassName } from "@videojs/utils/style";
@@ -38,8 +38,8 @@ export function AirPlayButton({ className, ...props }: AirPlayButtonProps = {}) 
 
 
 
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/4db96e7945a7/popups.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/popups.css";
 import { Tooltip } from "@videojs/react";
 
 import type { ReactElement } from "react";
@@ -73,8 +73,8 @@ export function ButtonTooltip({ children, ...props }: ButtonTooltipProps) {
 
 
 import { ButtonTooltip } from './button-tooltip';
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/78049068f168/buttons.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/buttons.css";
 import { CaptionsButton as CaptionsButtonPrimitive } from "@videojs/react";
 import { CaptionsOffIcon as CaptionsOffIconPrimitive, CaptionsOnIcon as CaptionsOnIconPrimitive } from "@videojs/react/icons";
 import { cn, resolveClassName } from "@videojs/utils/style";
@@ -105,8 +105,8 @@ export function CaptionsButton({ className, ...props }: CaptionsButtonProps = {}
 
 
 import { ButtonTooltip } from './button-tooltip';
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/35aa67923582/buttons.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/buttons.css";
 import { CastButton as CastButtonPrimitive } from "@videojs/react";
 import { CastEnterIcon as CastEnterIconPrimitive, CastExitIcon as CastExitIconPrimitive } from "@videojs/react/icons";
 import { cn, resolveClassName } from "@videojs/utils/style";
@@ -137,8 +137,8 @@ export function CastButton({ className, ...props }: CastButtonProps = {}) {
 
 
 import { ButtonTooltip } from './button-tooltip';
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/5c8aa8853954/buttons.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/buttons.css";
 import { FullscreenButton as FullscreenButtonPrimitive } from "@videojs/react";
 import { FullscreenEnterIcon as FullscreenEnterIconPrimitive, FullscreenExitIcon as FullscreenExitIconPrimitive } from "@videojs/react/icons";
 import { cn, resolveClassName } from "@videojs/utils/style";
@@ -168,8 +168,8 @@ export function FullscreenButton({ className, ...props }: FullscreenButtonProps 
 
 
 
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/e79d3687fca3/buttons.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/buttons.css";
 import { MuteButton as MuteButtonPrimitive } from "@videojs/react";
 import { VolumeOffIcon as VolumeOffIconPrimitive, VolumeLowIcon as VolumeLowIconPrimitive, VolumeHighIcon as VolumeHighIconPrimitive } from "@videojs/react/icons";
 import { cn, resolveClassName } from "@videojs/utils/style";
@@ -199,8 +199,8 @@ export function MuteButton({ className, ...props }: MuteButtonProps = {}) {
 
 
 import { ButtonTooltip } from './button-tooltip';
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/422a5636cdb5/buttons.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/buttons.css";
 import { PiPButton as PiPButtonPrimitive } from "@videojs/react";
 import { PipEnterIcon as PipEnterIconPrimitive, PipExitIcon as PipExitIconPrimitive } from "@videojs/react/icons";
 import { cn, resolveClassName } from "@videojs/utils/style";
@@ -231,8 +231,8 @@ export function PiPButton({ className, ...props }: PiPButtonProps = {}) {
 
 
 import { ButtonTooltip } from './button-tooltip';
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/b50582772d44/buttons.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/buttons.css";
 import { PlayButton as PlayButtonPrimitive } from "@videojs/react";
 import { RestartIcon as RestartIconPrimitive, PlayIcon as PlayIconPrimitive, PauseIcon as PauseIconPrimitive } from "@videojs/react/icons";
 import { cn, resolveClassName } from "@videojs/utils/style";
@@ -264,8 +264,8 @@ export function PlayButton({ className, ...props }: PlayButtonProps = {}) {
 
 
 import { ButtonTooltip } from './button-tooltip';
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/1cedab86c96b/buttons.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/buttons.css";
 import { SeekButton as SeekButtonPrimitive } from "@videojs/react";
 import { SeekIcon as SeekIconPrimitive } from "@videojs/react/icons";
 import { cn, resolveClassName } from "@videojs/utils/style";
@@ -296,8 +296,8 @@ export function SeekButton({ className, seconds = 10, ...props }: SeekButtonProp
 
 import { MuteButton } from '../buttons/mute-button';
 import { VolumeSlider } from '../sliders/volume-slider';
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/c9beccccaaf5/popups.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/popups.css";
 import { usePlayer } from "@videojs/react";
 import { Popover } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
@@ -334,8 +334,8 @@ const volumeAvailability = usePlayer(state => state.volumeAvailability);
 
 
 
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/d55f9ee6dba6/indicator.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/indicator.css";
 import { BufferingIndicator as BufferingIndicatorPrimitive } from "@videojs/react";
 import { SpinnerIcon as SpinnerIconPrimitive } from "@videojs/react/icons";
 import { cn, resolveClassName } from "@videojs/utils/style";
@@ -361,9 +361,9 @@ export function BufferingIndicator({ className, ...props }: BufferingIndicatorPr
 
 
 
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/e4734d425eff/buttons.css";
-import "virtual:vjsc/css/4f5485dc18fb/dialog.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/buttons.css";
+import "virtual:vjsc/css/<hash>/dialog.css";
 import { ErrorDialog as ErrorDialogPrimitive } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
@@ -392,8 +392,8 @@ export function ErrorDialog({ className, ...props }: ErrorDialogProps = {}) {
 
 
 
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/d495ce8500cd/indicator.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/indicator.css";
 import { SeekIndicator as SeekIndicatorPrimitive } from "@videojs/react";
 import { ChevronIcon as ChevronIconPrimitive } from "@videojs/react/icons";
 import { cn, resolveClassName } from "@videojs/utils/style";
@@ -420,8 +420,8 @@ export function SeekIndicator({ className, ...props }: SeekIndicatorProps = {}) 
 
 
 
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/0c334683682c/indicator.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/indicator.css";
 import { StatusAnnouncer as StatusAnnouncerPrimitive } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
@@ -442,8 +442,8 @@ export function StatusAnnouncer({ className, ...props }: StatusAnnouncerProps = 
 
 
 
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/083d58e00aa3/indicator.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/indicator.css";
 import { StatusIndicator as StatusIndicatorPrimitive } from "@videojs/react";
 import { CaptionsOnIcon as CaptionsOnIconPrimitive, CaptionsOffIcon as CaptionsOffIconPrimitive, FullscreenEnterIcon as FullscreenEnterIconPrimitive, FullscreenExitIcon as FullscreenExitIconPrimitive, PipEnterIcon as PipEnterIconPrimitive, PipExitIcon as PipExitIconPrimitive, PlayIcon as PlayIconPrimitive, PauseIcon as PauseIconPrimitive } from "@videojs/react/icons";
 import { cn, resolveClassName } from "@videojs/utils/style";
@@ -490,8 +490,8 @@ import { SeekIndicator } from './seek-indicator';
 import { StatusAnnouncer } from './status-announcer';
 import { PlaybackStatusIndicator, StatusIndicator } from './status-indicator';
 import { VolumeIndicator } from './volume-indicator';
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/8201128867a8/indicator.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/indicator.css";
 import type { ComponentProps } from "react";
 import { cn } from "@videojs/utils/style";
 
@@ -522,8 +522,8 @@ export function VideoStatusIndicators({ className, ...props }: VideoStatusIndica
 
 
 
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/0307a475cee7/indicator.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/indicator.css";
 import { VolumeIndicator as VolumeIndicatorPrimitive } from "@videojs/react";
 import { VolumeHighIcon as VolumeHighIconPrimitive, VolumeLowIcon as VolumeLowIconPrimitive, VolumeOffIcon as VolumeOffIconPrimitive } from "@videojs/react/icons";
 import { cn, resolveClassName } from "@videojs/utils/style";
@@ -553,8 +553,8 @@ export function VolumeIndicator({ className, ...props }: VolumeIndicatorProps = 
 
 
 
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/7c27e75dc682/container.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/container.css";
 import { Container as ContainerPrimitive } from "@videojs/react";
 import { cn } from "@videojs/utils/style";
 
@@ -576,8 +576,8 @@ export function Container({ children, className, ...props }: ContainerProps) {
 
 
 
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/291fcf126366/overlays.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/overlays.css";
 import type { ComponentProps } from "react";
 import { cn } from "@videojs/utils/style";
 
@@ -597,8 +597,8 @@ export function Overlay({ className, ...props }: OverlayProps = {}) {
 
 
 
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/945e2b7f8ecb/poster.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/poster.css";
 import { Poster as PosterPrimitive } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
@@ -622,8 +622,8 @@ import { audioText } from '@videojs/core/i18n/text/menu';
 import { AudioTrackRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/de95b39aacc0/menus.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/menus.css";
 import { useAudioTrackOptions } from "@videojs/react";
 import type { ComponentProps } from "react";
 import { Text as TextPrimitive } from "@videojs/react";
@@ -669,8 +669,8 @@ import { captionsText } from '@videojs/core/i18n/text/menu';
 import { CaptionsRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/de95b39aacc0/menus.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/menus.css";
 import { useCaptionsOptions } from "@videojs/react";
 import type { ComponentProps } from "react";
 import { Text as TextPrimitive } from "@videojs/react";
@@ -712,8 +712,8 @@ const available = captions?.state.availability === 'available';
 
 
 
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/d1f1f5b2c83b/menus.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/menus.css";
 import type { IconProps } from "@videojs/react/icons";
 import { ChevronIcon as ChevronIconPrimitive } from "@videojs/react/icons";
 import { cn } from "@videojs/utils/style";
@@ -744,8 +744,8 @@ import { speedText } from '@videojs/core/i18n/text/menu';
 import { PlaybackRateRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/de95b39aacc0/menus.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/menus.css";
 import { usePlaybackRateOptions } from "@videojs/react";
 import type { ComponentProps } from "react";
 import { Text as TextPrimitive } from "@videojs/react";
@@ -791,8 +791,8 @@ import { qualityText } from '@videojs/core/i18n/text/menu';
 import { QualityRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/c13acb93276a/menus.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/menus.css";
 import { useQualityOptions } from "@videojs/react";
 import type { ComponentProps } from "react";
 import { Text as TextPrimitive } from "@videojs/react";
@@ -839,8 +839,8 @@ const available = quality?.state.availability === 'available';
 
 
 
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/3254c9bd3398/menus.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/menus.css";
 import { QualityRadioGroup as QualityRadioGroupPrimitive, AudioTrackRadioGroup as AudioTrackRadioGroupPrimitive, PlaybackRateRadioGroup as PlaybackRateRadioGroupPrimitive, CaptionsRadioGroup as CaptionsRadioGroupPrimitive } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
@@ -875,8 +875,8 @@ export function CaptionsRadioGroup({ className, ...props }: CaptionsRadioGroupPr
 
 
 
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/bd55498150e6/menus.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/menus.css";
 import { Menu } from "@videojs/react";
 import { CheckIcon as CheckIconPrimitive } from "@videojs/react/icons";
 import { cn, resolveClassName } from "@videojs/utils/style";
@@ -908,10 +908,10 @@ import { settingsText } from '@videojs/core/i18n/text/menu';
 
 
 
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/99242b010542/buttons.css";
-import "virtual:vjsc/css/c29d7fce0e53/menus.css";
-import "virtual:vjsc/css/ef2aa9687011/popups.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/buttons.css";
+import "virtual:vjsc/css/<hash>/menus.css";
+import "virtual:vjsc/css/<hash>/popups.css";
 import { Menu } from "@videojs/react";
 import { Text as TextPrimitive } from "@videojs/react";
 import { GearIcon as GearIconPrimitive } from "@videojs/react/icons";
@@ -953,8 +953,8 @@ export function SettingsMenu({ children, className, ...props }: SettingsMenuProp
 
 
 import { MenuChevron } from './menu-chevron';
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/74ce933c8e5c/menus.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/menus.css";
 import { Menu } from "@videojs/react";
 
 
@@ -1038,9 +1038,9 @@ const hasSettings = quality?.state.availability === 'available' || audioTrack?.s
 
 
 
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/16fa720a9fea/popups.css";
-import "virtual:vjsc/css/a937b219c292/sliders.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/popups.css";
+import "virtual:vjsc/css/<hash>/sliders.css";
 import { TimeSlider as TimeSliderPrimitive } from "@videojs/react";
 import { Slider } from "@videojs/react";
 import { SpinnerIcon as SpinnerIconPrimitive } from "@videojs/react/icons";
@@ -1085,8 +1085,8 @@ export function TimeSlider({ className, ...props }: TimeSliderProps = {}) {
 
 
 
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/a0635efdfb16/sliders.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/sliders.css";
 import { VolumeSlider as VolumeSliderPrimitive } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
@@ -1189,8 +1189,8 @@ import { VideoGestures } from '../../components/video-gestures';
 import { VideoHotkeys } from '../../components/video-hotkeys';
 
 
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/cd69baf182cf/controls.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/controls.css";
 import type { ComponentProps, ReactNode } from "react";
 import { Controls, Time, Tooltip } from "@videojs/react";
 import { cn } from "@videojs/utils/style";
@@ -2418,8 +2418,8 @@ export function DefaultVideoSkin({ children, className, poster, ...props }: Defa
 
 
 import { ButtonTooltip } from './button-tooltip';
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/aec2ff69d680/buttons.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/buttons.css";
 import { AirPlayButton as AirPlayButtonPrimitive } from "@videojs/react";
 import { AirPlayEnterIcon as AirPlayEnterIconPrimitive, AirPlayExitIcon as AirPlayExitIconPrimitive } from "@videojs/react/icons/minimal";
 import { cn, resolveClassName } from "@videojs/utils/style";
@@ -2448,8 +2448,8 @@ export function AirPlayButton({ className, ...props }: AirPlayButtonProps = {}) 
 
 
 
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/9bcf845d9d22/popups.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/popups.css";
 import { Tooltip } from "@videojs/react";
 
 import type { ReactElement } from "react";
@@ -2483,8 +2483,8 @@ export function ButtonTooltip({ children, ...props }: ButtonTooltipProps) {
 
 
 import { ButtonTooltip } from './button-tooltip';
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/f124e7449d14/buttons.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/buttons.css";
 import { CaptionsButton as CaptionsButtonPrimitive } from "@videojs/react";
 import { CaptionsOffIcon as CaptionsOffIconPrimitive, CaptionsOnIcon as CaptionsOnIconPrimitive } from "@videojs/react/icons/minimal";
 import { cn, resolveClassName } from "@videojs/utils/style";
@@ -2515,8 +2515,8 @@ export function CaptionsButton({ className, ...props }: CaptionsButtonProps = {}
 
 
 import { ButtonTooltip } from './button-tooltip';
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/dc4c6302a92e/buttons.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/buttons.css";
 import { CastButton as CastButtonPrimitive } from "@videojs/react";
 import { CastEnterIcon as CastEnterIconPrimitive, CastExitIcon as CastExitIconPrimitive } from "@videojs/react/icons/minimal";
 import { cn, resolveClassName } from "@videojs/utils/style";
@@ -2547,8 +2547,8 @@ export function CastButton({ className, ...props }: CastButtonProps = {}) {
 
 
 import { ButtonTooltip } from './button-tooltip';
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/4a4a2bda24bc/buttons.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/buttons.css";
 import { FullscreenButton as FullscreenButtonPrimitive } from "@videojs/react";
 import { FullscreenEnterIcon as FullscreenEnterIconPrimitive, FullscreenExitIcon as FullscreenExitIconPrimitive } from "@videojs/react/icons/minimal";
 import { cn, resolveClassName } from "@videojs/utils/style";
@@ -2578,8 +2578,8 @@ export function FullscreenButton({ className, ...props }: FullscreenButtonProps 
 
 
 
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/550f19db015f/buttons.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/buttons.css";
 import { MuteButton as MuteButtonPrimitive } from "@videojs/react";
 import { VolumeOffIcon as VolumeOffIconPrimitive, VolumeLowIcon as VolumeLowIconPrimitive, VolumeHighIcon as VolumeHighIconPrimitive } from "@videojs/react/icons/minimal";
 import { cn, resolveClassName } from "@videojs/utils/style";
@@ -2609,8 +2609,8 @@ export function MuteButton({ className, ...props }: MuteButtonProps = {}) {
 
 
 import { ButtonTooltip } from './button-tooltip';
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/4d520c93f82b/buttons.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/buttons.css";
 import { PiPButton as PiPButtonPrimitive } from "@videojs/react";
 import { PipEnterIcon as PipEnterIconPrimitive, PipExitIcon as PipExitIconPrimitive } from "@videojs/react/icons/minimal";
 import { cn, resolveClassName } from "@videojs/utils/style";
@@ -2641,8 +2641,8 @@ export function PiPButton({ className, ...props }: PiPButtonProps = {}) {
 
 
 import { ButtonTooltip } from './button-tooltip';
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/5a42f75d0bcf/buttons.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/buttons.css";
 import { PlayButton as PlayButtonPrimitive } from "@videojs/react";
 import { RestartIcon as RestartIconPrimitive, PlayIcon as PlayIconPrimitive, PauseIcon as PauseIconPrimitive } from "@videojs/react/icons/minimal";
 import { cn, resolveClassName } from "@videojs/utils/style";
@@ -2674,8 +2674,8 @@ export function PlayButton({ className, ...props }: PlayButtonProps = {}) {
 
 
 import { ButtonTooltip } from './button-tooltip';
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/bd10355d518c/buttons.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/buttons.css";
 import { SeekButton as SeekButtonPrimitive } from "@videojs/react";
 import { SeekIcon as SeekIconPrimitive } from "@videojs/react/icons/minimal";
 import { cn, resolveClassName } from "@videojs/utils/style";
@@ -2706,8 +2706,8 @@ export function SeekButton({ className, seconds = 10, ...props }: SeekButtonProp
 
 import { MuteButton } from '../buttons/mute-button';
 import { VolumeSlider } from '../sliders/volume-slider';
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/2117966d42b1/popups.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/popups.css";
 import { usePlayer } from "@videojs/react";
 import { Popover } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
@@ -2744,8 +2744,8 @@ const volumeAvailability = usePlayer(state => state.volumeAvailability);
 
 
 
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/38384b81e271/indicator.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/indicator.css";
 import { BufferingIndicator as BufferingIndicatorPrimitive } from "@videojs/react";
 import { SpinnerIcon as SpinnerIconPrimitive } from "@videojs/react/icons/minimal";
 import { cn, resolveClassName } from "@videojs/utils/style";
@@ -2771,9 +2771,9 @@ export function BufferingIndicator({ className, ...props }: BufferingIndicatorPr
 
 
 
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/826adbd29102/buttons.css";
-import "virtual:vjsc/css/56e9045bb232/dialog.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/buttons.css";
+import "virtual:vjsc/css/<hash>/dialog.css";
 import { ErrorDialog as ErrorDialogPrimitive } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
@@ -2802,8 +2802,8 @@ export function ErrorDialog({ className, ...props }: ErrorDialogProps = {}) {
 
 
 
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/376ec5a88533/indicator.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/indicator.css";
 import { SeekIndicator as SeekIndicatorPrimitive } from "@videojs/react";
 import { ChevronIcon as ChevronIconPrimitive } from "@videojs/react/icons/minimal";
 import { cn, resolveClassName } from "@videojs/utils/style";
@@ -2830,8 +2830,8 @@ export function SeekIndicator({ className, ...props }: SeekIndicatorProps = {}) 
 
 
 
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/badc124fbf52/indicator.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/indicator.css";
 import { StatusAnnouncer as StatusAnnouncerPrimitive } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
@@ -2852,8 +2852,8 @@ export function StatusAnnouncer({ className, ...props }: StatusAnnouncerProps = 
 
 
 
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/75c8a3310f3d/indicator.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/indicator.css";
 import { StatusIndicator as StatusIndicatorPrimitive } from "@videojs/react";
 import { CaptionsOnIcon as CaptionsOnIconPrimitive, CaptionsOffIcon as CaptionsOffIconPrimitive, FullscreenEnterIcon as FullscreenEnterIconPrimitive, FullscreenExitIcon as FullscreenExitIconPrimitive, PipEnterIcon as PipEnterIconPrimitive, PipExitIcon as PipExitIconPrimitive, PlayIcon as PlayIconPrimitive, PauseIcon as PauseIconPrimitive } from "@videojs/react/icons/minimal";
 import { cn, resolveClassName } from "@videojs/utils/style";
@@ -2900,8 +2900,8 @@ import { SeekIndicator } from './seek-indicator';
 import { StatusAnnouncer } from './status-announcer';
 import { PlaybackStatusIndicator, StatusIndicator } from './status-indicator';
 import { VolumeIndicator } from './volume-indicator';
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/4f68f0acb503/indicator.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/indicator.css";
 import type { ComponentProps } from "react";
 import { cn } from "@videojs/utils/style";
 
@@ -2932,8 +2932,8 @@ export function VideoStatusIndicators({ className, ...props }: VideoStatusIndica
 
 
 
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/c4bede14e8b4/indicator.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/indicator.css";
 import { VolumeIndicator as VolumeIndicatorPrimitive } from "@videojs/react";
 import { VolumeHighIcon as VolumeHighIconPrimitive, VolumeLowIcon as VolumeLowIconPrimitive, VolumeOffIcon as VolumeOffIconPrimitive } from "@videojs/react/icons/minimal";
 import { cn, resolveClassName } from "@videojs/utils/style";
@@ -2963,8 +2963,8 @@ export function VolumeIndicator({ className, ...props }: VolumeIndicatorProps = 
 
 
 
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/191f04562082/container.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/container.css";
 import { Container as ContainerPrimitive } from "@videojs/react";
 import { cn } from "@videojs/utils/style";
 
@@ -2986,8 +2986,8 @@ export function Container({ children, className, ...props }: ContainerProps) {
 
 
 
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/aba1d0b4eb6f/overlays.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/overlays.css";
 import type { ComponentProps } from "react";
 import { cn } from "@videojs/utils/style";
 
@@ -3007,8 +3007,8 @@ export function Overlay({ className, ...props }: OverlayProps = {}) {
 
 
 
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/bc55adb2d2e6/poster.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/poster.css";
 import { Poster as PosterPrimitive } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
@@ -3032,8 +3032,8 @@ import { audioText } from '@videojs/core/i18n/text/menu';
 import { AudioTrackRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/7359f78f2117/menus.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/menus.css";
 import { useAudioTrackOptions } from "@videojs/react";
 import type { ComponentProps } from "react";
 import { Text as TextPrimitive } from "@videojs/react";
@@ -3079,8 +3079,8 @@ import { captionsText } from '@videojs/core/i18n/text/menu';
 import { CaptionsRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/7359f78f2117/menus.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/menus.css";
 import { useCaptionsOptions } from "@videojs/react";
 import type { ComponentProps } from "react";
 import { Text as TextPrimitive } from "@videojs/react";
@@ -3122,8 +3122,8 @@ const available = captions?.state.availability === 'available';
 
 
 
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/eb2fec8addb9/menus.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/menus.css";
 import type { IconProps } from "@videojs/react/icons/minimal";
 import { ChevronIcon as ChevronIconPrimitive } from "@videojs/react/icons/minimal";
 import { cn } from "@videojs/utils/style";
@@ -3154,8 +3154,8 @@ import { speedText } from '@videojs/core/i18n/text/menu';
 import { PlaybackRateRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/7359f78f2117/menus.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/menus.css";
 import { usePlaybackRateOptions } from "@videojs/react";
 import type { ComponentProps } from "react";
 import { Text as TextPrimitive } from "@videojs/react";
@@ -3201,8 +3201,8 @@ import { qualityText } from '@videojs/core/i18n/text/menu';
 import { QualityRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/d5a59123855c/menus.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/menus.css";
 import { useQualityOptions } from "@videojs/react";
 import type { ComponentProps } from "react";
 import { Text as TextPrimitive } from "@videojs/react";
@@ -3249,8 +3249,8 @@ const available = quality?.state.availability === 'available';
 
 
 
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/a39d0b990c62/menus.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/menus.css";
 import { QualityRadioGroup as QualityRadioGroupPrimitive, AudioTrackRadioGroup as AudioTrackRadioGroupPrimitive, PlaybackRateRadioGroup as PlaybackRateRadioGroupPrimitive, CaptionsRadioGroup as CaptionsRadioGroupPrimitive } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
@@ -3285,8 +3285,8 @@ export function CaptionsRadioGroup({ className, ...props }: CaptionsRadioGroupPr
 
 
 
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/d8e69a8a32f8/menus.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/menus.css";
 import { Menu } from "@videojs/react";
 import { CheckIcon as CheckIconPrimitive } from "@videojs/react/icons/minimal";
 import { cn, resolveClassName } from "@videojs/utils/style";
@@ -3318,10 +3318,10 @@ import { settingsText } from '@videojs/core/i18n/text/menu';
 
 
 
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/447c10d89d45/buttons.css";
-import "virtual:vjsc/css/c1eba693c971/menus.css";
-import "virtual:vjsc/css/8aa944d6bb10/popups.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/buttons.css";
+import "virtual:vjsc/css/<hash>/menus.css";
+import "virtual:vjsc/css/<hash>/popups.css";
 import { Menu } from "@videojs/react";
 import { Text as TextPrimitive } from "@videojs/react";
 import { GearIcon as GearIconPrimitive } from "@videojs/react/icons/minimal";
@@ -3363,8 +3363,8 @@ export function SettingsMenu({ children, className, ...props }: SettingsMenuProp
 
 
 import { MenuChevron } from './menu-chevron';
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/a1a61f523219/menus.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/menus.css";
 import { Menu } from "@videojs/react";
 
 
@@ -3448,9 +3448,9 @@ const hasSettings = quality?.state.availability === 'available' || audioTrack?.s
 
 
 
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/a03d714e2f16/popups.css";
-import "virtual:vjsc/css/667f5ed970ca/sliders.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/popups.css";
+import "virtual:vjsc/css/<hash>/sliders.css";
 import { TimeSlider as TimeSliderPrimitive } from "@videojs/react";
 import { Slider } from "@videojs/react";
 import { SpinnerIcon as SpinnerIconPrimitive } from "@videojs/react/icons/minimal";
@@ -3495,8 +3495,8 @@ export function TimeSlider({ className, ...props }: TimeSliderProps = {}) {
 
 
 
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/e009640592bf/sliders.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/sliders.css";
 import { VolumeSlider as VolumeSliderPrimitive } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
@@ -3599,8 +3599,8 @@ import { VideoGestures } from '../../components/video-gestures';
 import { VideoHotkeys } from '../../components/video-hotkeys';
 
 
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/864280b5676e/controls.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/controls.css";
 import type { ComponentProps, ReactNode } from "react";
 import { Controls, Time, Tooltip } from "@videojs/react";
 import { cn } from "@videojs/utils/style";
@@ -4824,8 +4824,8 @@ import type { Props } from 'vjsc/components';
 
 
 import { ButtonTooltip } from './button-tooltip';
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/b01fe420d698/buttons.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/buttons.css";
 import "@videojs/html/icons/element";
 import "@videojs/html/ui/airplay-button";
 
@@ -4850,8 +4850,8 @@ import type { PropsWithChildren, VjscElement } from 'vjsc/components';
 
 
 
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/4db96e7945a7/popups.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/popups.css";
 import "@videojs/html/ui/tooltip";
 import { Host, Scope } from "vjsc/html-runtime/jsx-runtime";
 
@@ -4876,8 +4876,8 @@ import type { Props } from 'vjsc/components';
 
 
 import { ButtonTooltip } from './button-tooltip';
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/78049068f168/buttons.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/buttons.css";
 import "@videojs/html/icons/element";
 import "@videojs/html/ui/captions-button";
 
@@ -4904,8 +4904,8 @@ import type { Props } from 'vjsc/components';
 
 
 import { ButtonTooltip } from './button-tooltip';
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/35aa67923582/buttons.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/buttons.css";
 import "@videojs/html/icons/element";
 import "@videojs/html/ui/cast-button";
 
@@ -4932,8 +4932,8 @@ import type { Props } from 'vjsc/components';
 
 
 import { ButtonTooltip } from './button-tooltip';
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/5c8aa8853954/buttons.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/buttons.css";
 import "@videojs/html/icons/element";
 import "@videojs/html/ui/fullscreen-button";
 
@@ -4959,8 +4959,8 @@ import type { Props } from 'vjsc/components';
 
 
 
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/e79d3687fca3/buttons.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/buttons.css";
 import "@videojs/html/icons/element";
 import "@videojs/html/ui/mute-button";
 
@@ -4986,8 +4986,8 @@ import type { Props } from 'vjsc/components';
 
 
 import { ButtonTooltip } from './button-tooltip';
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/422a5636cdb5/buttons.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/buttons.css";
 import "@videojs/html/icons/element";
 import "@videojs/html/ui/pip-button";
 
@@ -5014,8 +5014,8 @@ import type { Props } from 'vjsc/components';
 
 
 import { ButtonTooltip } from './button-tooltip';
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/b50582772d44/buttons.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/buttons.css";
 import "@videojs/html/icons/element";
 import "@videojs/html/ui/play-button";
 
@@ -5043,8 +5043,8 @@ import { type Props } from "vjsc/components";
 
 
 import { ButtonTooltip } from './button-tooltip';
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/1cedab86c96b/buttons.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/buttons.css";
 import "@videojs/html/icons/element";
 import "@videojs/html/ui/seek-button";
 
@@ -5071,8 +5071,8 @@ import type { Props } from 'vjsc/components';
 
 import { MuteButton } from '../buttons/mute-button';
 import { VolumeSlider } from '../sliders/volume-slider';
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/c9beccccaaf5/popups.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/popups.css";
 import "@videojs/html/ui/popover";
 
 
@@ -5105,8 +5105,8 @@ import type { Props } from 'vjsc/components';
 
 
 
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/d55f9ee6dba6/indicator.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/indicator.css";
 import "@videojs/html/icons/element";
 import "@videojs/html/ui/buffering-indicator";
 
@@ -5128,9 +5128,9 @@ import type { Props } from 'vjsc/components';
 
 
 
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/e4734d425eff/buttons.css";
-import "virtual:vjsc/css/4f5485dc18fb/dialog.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/buttons.css";
+import "virtual:vjsc/css/<hash>/dialog.css";
 import "@videojs/html/ui/alert-dialog-title";
 import "@videojs/html/ui/alert-dialog-description";
 import "@videojs/html/ui/alert-dialog-close";
@@ -5159,8 +5159,8 @@ import type { Props } from 'vjsc/components';
 
 
 
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/d495ce8500cd/indicator.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/indicator.css";
 import "@videojs/html/icons/element";
 import "@videojs/html/ui/seek-indicator-value";
 import "@videojs/html/ui/seek-indicator";
@@ -5184,8 +5184,8 @@ import type { Props } from 'vjsc/components';
 
 
 
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/0c334683682c/indicator.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/indicator.css";
 import "@videojs/html/ui/status-announcer";
 
 
@@ -5203,8 +5203,8 @@ import type { Props } from 'vjsc/components';
 
 
 
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/083d58e00aa3/indicator.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/indicator.css";
 import "@videojs/html/icons/element";
 import "@videojs/html/ui/status-indicator-value";
 import "@videojs/html/ui/status-indicator";
@@ -5247,8 +5247,8 @@ import { SeekIndicator } from './seek-indicator';
 import { StatusAnnouncer } from './status-announcer';
 import { PlaybackStatusIndicator, StatusIndicator } from './status-indicator';
 import { VolumeIndicator } from './volume-indicator';
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/8201128867a8/indicator.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/indicator.css";
 
 
 export function VideoStatusIndicators({ className, ...props }: Props = {}) {
@@ -5274,8 +5274,8 @@ import type { Props } from 'vjsc/components';
 
 
 
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/0307a475cee7/indicator.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/indicator.css";
 import "@videojs/html/icons/element";
 import "@videojs/html/ui/volume-indicator-value";
 import "@videojs/html/ui/volume-indicator-fill";
@@ -5303,8 +5303,8 @@ import type { PropsWithChildren } from 'vjsc/components';
 
 
 
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/7c27e75dc682/container.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/container.css";
 import "@videojs/html/ui/container";
 
 
@@ -5323,8 +5323,8 @@ import { type Props } from "vjsc/components";
 
 
 
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/291fcf126366/overlays.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/overlays.css";
 
 
 export function Overlay({ className, ...props }: Props = {}) {
@@ -5339,8 +5339,8 @@ import { type PropsWithChildren } from "vjsc/components";
 
 
 
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/945e2b7f8ecb/poster.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/poster.css";
 import "@videojs/html/ui/poster";
 
 
@@ -5363,8 +5363,8 @@ import { type PropsOf } from "vjsc/components";
 import { AudioTrackRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/de95b39aacc0/menus.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/menus.css";
 import "@videojs/html/i18n";
 import "@videojs/html/icons/element";
 
@@ -5405,8 +5405,8 @@ import { type PropsOf } from "vjsc/components";
 import { CaptionsRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/de95b39aacc0/menus.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/menus.css";
 import "@videojs/html/i18n";
 import "@videojs/html/icons/element";
 
@@ -5443,8 +5443,8 @@ export function CaptionsMenu(props: CaptionsMenuProps = {}) {
 import type { Props } from 'vjsc/components';
 
 
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/d1f1f5b2c83b/menus.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/menus.css";
 import "@videojs/html/icons/element";
 
 
@@ -5465,8 +5465,8 @@ import { type PropsOf } from "vjsc/components";
 import { PlaybackRateRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/de95b39aacc0/menus.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/menus.css";
 import "@videojs/html/i18n";
 import "@videojs/html/icons/element";
 
@@ -5507,8 +5507,8 @@ import { type PropsOf } from "vjsc/components";
 import { QualityRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/c13acb93276a/menus.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/menus.css";
 import "@videojs/html/i18n";
 import "@videojs/html/icons/element";
 
@@ -5555,8 +5555,8 @@ import type {
 import type { PropsWithChildren } from 'vjsc/components';
 
 
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/3254c9bd3398/menus.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/menus.css";
 import "@videojs/html/ui/quality-radio-group";
 import "@videojs/html/ui/audio-track-radio-group";
 import "@videojs/html/ui/playback-rate-radio-group";
@@ -5588,8 +5588,8 @@ import type { MenuItemProps } from '@videojs/core';
 import type { PropsWithChildren } from 'vjsc/components';
 
 
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/bd55498150e6/menus.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/menus.css";
 import "@videojs/html/icons/element";
 import "@videojs/html/ui/menu";
 
@@ -5617,10 +5617,10 @@ import { type PropsWithChildren } from "vjsc/components";
 
 
 
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/99242b010542/buttons.css";
-import "virtual:vjsc/css/c29d7fce0e53/menus.css";
-import "virtual:vjsc/css/ef2aa9687011/popups.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/buttons.css";
+import "virtual:vjsc/css/<hash>/menus.css";
+import "virtual:vjsc/css/<hash>/popups.css";
 import "@videojs/html/i18n";
 import "@videojs/html/icons/element";
 import "@videojs/html/ui/menu";
@@ -5651,8 +5651,8 @@ import { type PropsWithChildren, type VjscNode } from "vjsc/components";
 
 
 import { MenuChevron } from './menu-chevron';
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/74ce933c8e5c/menus.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/menus.css";
 import "@videojs/html/ui/menu";
 import { Scope } from "vjsc/html-runtime/jsx-runtime";
 
@@ -5725,9 +5725,9 @@ import { type Props } from "vjsc/components";
 
 
 
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/16fa720a9fea/popups.css";
-import "virtual:vjsc/css/a937b219c292/sliders.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/popups.css";
+import "virtual:vjsc/css/<hash>/sliders.css";
 import "@videojs/html/ui/slider-buffer";
 import "@videojs/html/ui/slider-fill";
 import "@videojs/html/ui/slider-track";
@@ -5776,8 +5776,8 @@ import type { Props } from 'vjsc/components';
 
 
 
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/a0635efdfb16/sliders.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/sliders.css";
 import "@videojs/html/ui/slider-fill";
 import "@videojs/html/ui/slider-track";
 import "@videojs/html/ui/slider-thumb";
@@ -5880,8 +5880,8 @@ import { VideoGestures } from '../../components/video-gestures';
 import { VideoHotkeys } from '../../components/video-hotkeys';
 
 
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/cd69baf182cf/controls.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/controls.css";
 import "@videojs/html/ui/controls-group";
 import "@videojs/html/ui/time";
 import "@videojs/html/ui/tooltip-group";
@@ -6982,8 +6982,8 @@ import type { Props } from 'vjsc/components';
 
 
 import { ButtonTooltip } from './button-tooltip';
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/aec2ff69d680/buttons.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/buttons.css";
 import "@videojs/html/icons/element/minimal";
 import "@videojs/html/ui/airplay-button";
 
@@ -7008,8 +7008,8 @@ import type { PropsWithChildren, VjscElement } from 'vjsc/components';
 
 
 
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/9bcf845d9d22/popups.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/popups.css";
 import "@videojs/html/ui/tooltip";
 import { Host, Scope } from "vjsc/html-runtime/jsx-runtime";
 
@@ -7034,8 +7034,8 @@ import type { Props } from 'vjsc/components';
 
 
 import { ButtonTooltip } from './button-tooltip';
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/f124e7449d14/buttons.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/buttons.css";
 import "@videojs/html/icons/element/minimal";
 import "@videojs/html/ui/captions-button";
 
@@ -7062,8 +7062,8 @@ import type { Props } from 'vjsc/components';
 
 
 import { ButtonTooltip } from './button-tooltip';
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/dc4c6302a92e/buttons.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/buttons.css";
 import "@videojs/html/icons/element/minimal";
 import "@videojs/html/ui/cast-button";
 
@@ -7090,8 +7090,8 @@ import type { Props } from 'vjsc/components';
 
 
 import { ButtonTooltip } from './button-tooltip';
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/4a4a2bda24bc/buttons.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/buttons.css";
 import "@videojs/html/icons/element/minimal";
 import "@videojs/html/ui/fullscreen-button";
 
@@ -7117,8 +7117,8 @@ import type { Props } from 'vjsc/components';
 
 
 
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/550f19db015f/buttons.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/buttons.css";
 import "@videojs/html/icons/element/minimal";
 import "@videojs/html/ui/mute-button";
 
@@ -7144,8 +7144,8 @@ import type { Props } from 'vjsc/components';
 
 
 import { ButtonTooltip } from './button-tooltip';
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/4d520c93f82b/buttons.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/buttons.css";
 import "@videojs/html/icons/element/minimal";
 import "@videojs/html/ui/pip-button";
 
@@ -7172,8 +7172,8 @@ import type { Props } from 'vjsc/components';
 
 
 import { ButtonTooltip } from './button-tooltip';
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/5a42f75d0bcf/buttons.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/buttons.css";
 import "@videojs/html/icons/element/minimal";
 import "@videojs/html/ui/play-button";
 
@@ -7201,8 +7201,8 @@ import { type Props } from "vjsc/components";
 
 
 import { ButtonTooltip } from './button-tooltip';
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/bd10355d518c/buttons.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/buttons.css";
 import "@videojs/html/icons/element/minimal";
 import "@videojs/html/ui/seek-button";
 
@@ -7229,8 +7229,8 @@ import type { Props } from 'vjsc/components';
 
 import { MuteButton } from '../buttons/mute-button';
 import { VolumeSlider } from '../sliders/volume-slider';
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/2117966d42b1/popups.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/popups.css";
 import "@videojs/html/ui/popover";
 
 
@@ -7263,8 +7263,8 @@ import type { Props } from 'vjsc/components';
 
 
 
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/38384b81e271/indicator.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/indicator.css";
 import "@videojs/html/icons/element/minimal";
 import "@videojs/html/ui/buffering-indicator";
 
@@ -7286,9 +7286,9 @@ import type { Props } from 'vjsc/components';
 
 
 
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/826adbd29102/buttons.css";
-import "virtual:vjsc/css/56e9045bb232/dialog.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/buttons.css";
+import "virtual:vjsc/css/<hash>/dialog.css";
 import "@videojs/html/ui/alert-dialog-title";
 import "@videojs/html/ui/alert-dialog-description";
 import "@videojs/html/ui/alert-dialog-close";
@@ -7317,8 +7317,8 @@ import type { Props } from 'vjsc/components';
 
 
 
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/376ec5a88533/indicator.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/indicator.css";
 import "@videojs/html/icons/element/minimal";
 import "@videojs/html/ui/seek-indicator-value";
 import "@videojs/html/ui/seek-indicator";
@@ -7342,8 +7342,8 @@ import type { Props } from 'vjsc/components';
 
 
 
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/badc124fbf52/indicator.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/indicator.css";
 import "@videojs/html/ui/status-announcer";
 
 
@@ -7361,8 +7361,8 @@ import type { Props } from 'vjsc/components';
 
 
 
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/75c8a3310f3d/indicator.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/indicator.css";
 import "@videojs/html/icons/element/minimal";
 import "@videojs/html/ui/status-indicator-value";
 import "@videojs/html/ui/status-indicator";
@@ -7405,8 +7405,8 @@ import { SeekIndicator } from './seek-indicator';
 import { StatusAnnouncer } from './status-announcer';
 import { PlaybackStatusIndicator, StatusIndicator } from './status-indicator';
 import { VolumeIndicator } from './volume-indicator';
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/4f68f0acb503/indicator.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/indicator.css";
 
 
 export function VideoStatusIndicators({ className, ...props }: Props = {}) {
@@ -7432,8 +7432,8 @@ import type { Props } from 'vjsc/components';
 
 
 
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/c4bede14e8b4/indicator.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/indicator.css";
 import "@videojs/html/icons/element/minimal";
 import "@videojs/html/ui/volume-indicator-value";
 import "@videojs/html/ui/volume-indicator-fill";
@@ -7461,8 +7461,8 @@ import type { PropsWithChildren } from 'vjsc/components';
 
 
 
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/191f04562082/container.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/container.css";
 import "@videojs/html/ui/container";
 
 
@@ -7481,8 +7481,8 @@ import { type Props } from "vjsc/components";
 
 
 
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/aba1d0b4eb6f/overlays.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/overlays.css";
 
 
 export function Overlay({ className, ...props }: Props = {}) {
@@ -7497,8 +7497,8 @@ import { type PropsWithChildren } from "vjsc/components";
 
 
 
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/bc55adb2d2e6/poster.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/poster.css";
 import "@videojs/html/ui/poster";
 
 
@@ -7521,8 +7521,8 @@ import { type PropsOf } from "vjsc/components";
 import { AudioTrackRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/7359f78f2117/menus.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/menus.css";
 import "@videojs/html/i18n";
 import "@videojs/html/icons/element/minimal";
 
@@ -7563,8 +7563,8 @@ import { type PropsOf } from "vjsc/components";
 import { CaptionsRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/7359f78f2117/menus.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/menus.css";
 import "@videojs/html/i18n";
 import "@videojs/html/icons/element/minimal";
 
@@ -7601,8 +7601,8 @@ export function CaptionsMenu(props: CaptionsMenuProps = {}) {
 import type { Props } from 'vjsc/components';
 
 
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/eb2fec8addb9/menus.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/menus.css";
 import "@videojs/html/icons/element/minimal";
 
 
@@ -7623,8 +7623,8 @@ import { type PropsOf } from "vjsc/components";
 import { PlaybackRateRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/7359f78f2117/menus.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/menus.css";
 import "@videojs/html/i18n";
 import "@videojs/html/icons/element/minimal";
 
@@ -7665,8 +7665,8 @@ import { type PropsOf } from "vjsc/components";
 import { QualityRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/d5a59123855c/menus.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/menus.css";
 import "@videojs/html/i18n";
 import "@videojs/html/icons/element/minimal";
 
@@ -7713,8 +7713,8 @@ import type {
 import type { PropsWithChildren } from 'vjsc/components';
 
 
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/a39d0b990c62/menus.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/menus.css";
 import "@videojs/html/ui/quality-radio-group";
 import "@videojs/html/ui/audio-track-radio-group";
 import "@videojs/html/ui/playback-rate-radio-group";
@@ -7746,8 +7746,8 @@ import type { MenuItemProps } from '@videojs/core';
 import type { PropsWithChildren } from 'vjsc/components';
 
 
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/d8e69a8a32f8/menus.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/menus.css";
 import "@videojs/html/icons/element/minimal";
 import "@videojs/html/ui/menu";
 
@@ -7775,10 +7775,10 @@ import { type PropsWithChildren } from "vjsc/components";
 
 
 
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/447c10d89d45/buttons.css";
-import "virtual:vjsc/css/c1eba693c971/menus.css";
-import "virtual:vjsc/css/8aa944d6bb10/popups.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/buttons.css";
+import "virtual:vjsc/css/<hash>/menus.css";
+import "virtual:vjsc/css/<hash>/popups.css";
 import "@videojs/html/i18n";
 import "@videojs/html/icons/element/minimal";
 import "@videojs/html/ui/menu";
@@ -7809,8 +7809,8 @@ import { type PropsWithChildren, type VjscNode } from "vjsc/components";
 
 
 import { MenuChevron } from './menu-chevron';
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/a1a61f523219/menus.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/menus.css";
 import "@videojs/html/ui/menu";
 import { Scope } from "vjsc/html-runtime/jsx-runtime";
 
@@ -7883,9 +7883,9 @@ import { type Props } from "vjsc/components";
 
 
 
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/a03d714e2f16/popups.css";
-import "virtual:vjsc/css/667f5ed970ca/sliders.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/popups.css";
+import "virtual:vjsc/css/<hash>/sliders.css";
 import "@videojs/html/ui/slider-buffer";
 import "@videojs/html/ui/slider-fill";
 import "@videojs/html/ui/slider-track";
@@ -7934,8 +7934,8 @@ import type { Props } from 'vjsc/components';
 
 
 
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/e009640592bf/sliders.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/sliders.css";
 import "@videojs/html/ui/slider-fill";
 import "@videojs/html/ui/slider-track";
 import "@videojs/html/ui/slider-thumb";
@@ -8038,8 +8038,8 @@ import { VideoGestures } from '../../components/video-gestures';
 import { VideoHotkeys } from '../../components/video-hotkeys';
 
 
-import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/864280b5676e/controls.css";
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/controls.css";
 import "@videojs/html/ui/controls-group";
 import "@videojs/html/ui/time";
 import "@videojs/html/ui/time-separator";
