@@ -54,13 +54,14 @@ import {
   declaredEncryptionScheme,
   fetchLicense,
   fetchServerCertificate,
+  initDataFromKeyUri,
   KEY_SYSTEM_BY_KEY_FORMAT,
-  keyInitDataRequest,
   keySystemCandidates,
   requestKeySystemAccess,
   resolveDrmHeaders,
   resolveDrmUrl,
   shapeLicenseRequest,
+  toCencInitData,
   unplayableEncryptedTypes,
 } from '../../../media/dom/eme';
 import {
@@ -241,21 +242,18 @@ function setupMediaKeysSetup({
               });
             };
 
-            // One session per key the manifest declares for the chosen system —
-            // a Widevine PSSH or PlayReady object inline as `data:`, or
-            // FairPlay's `skd://` URI, which carries the content id and IV.
+            // One session per manifest-carried init data of the chosen system
+            // (Widevine PSSH / PlayReady PRO as `data:` URIs).
             for (const key of keys) {
               if (key.keyFormat === undefined || KEY_SYSTEM_BY_KEY_FORMAT[key.keyFormat] !== keySystem) continue;
-              const request = keyInitDataRequest(keySystem, key);
-              if (!request) continue;
-              openSession(request.initDataType, request.initData);
+              const initData = key.uri === undefined ? undefined : initDataFromKeyUri(key.uri);
+              if (!initData) continue;
+              openSession('cenc', toCencInitData(keySystem, initData));
             }
 
-            // Event-driven fallback: a manifest that declares nothing this key
-            // system can open a session from surfaces protection only once an
-            // appended init segment fires `encrypted` (`sinf` on the MSE path,
-            // which names the key but carries neither content id nor IV — hence
-            // the manifest being preferred wherever it says enough). Active only when the
+            // Event-driven fallback: keys without inline init data (FairPlay
+            // `skd://`) surface protection only once an appended init segment
+            // fires `encrypted` (`sinf` on the MSE path). Active only when the
             // manifest path opened no session — on manifest-licensed sources
             // appends re-fire `encrypted` for content already being licensed,
             // and reacting would double-license. Deduped by init-data bytes:

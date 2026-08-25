@@ -55,10 +55,6 @@ const PLAYREADY_KEY = {
   keyFormat: 'com.microsoft.playready',
 };
 
-// A FairPlay key naming no URI: nothing for the manifest path to use, so the
-// `encrypted` event is the only way protection surfaces.
-const FAIRPLAY_KEY_NO_URI = { method: 'SAMPLE-AES', keyFormat: 'com.apple.streamingkeydelivery' };
-
 const DRM_CONFIG = {
   'com.widevine.alpha': { licenseUrl: 'https://license.example.com/widevine' },
   'com.microsoft.playready': { licenseUrl: 'https://license.example.com/playready' },
@@ -269,42 +265,16 @@ describe('setupMediaKeys', () => {
     reactor.destroy();
   });
 
-  it('opens a manifest-driven FairPlay session from the skd:// URI', async () => {
-    const eme = makeFakeEme('com.apple.fps');
-    vi.mocked(requestKeySystemAccess).mockResolvedValue(eme);
-    const video = document.createElement('video');
-    const { reactor } = setupSetupMediaKeys(
-      { presentation: makePresentation([FAIRPLAY_KEY]) },
-      { mediaElement: video }
-    );
-
-    // The URI is handed over as authored: it carries the content id and IV that
-    // `sinf` from an appended segment does not, and that a license server may
-    // require. Native HLS gives the CDM the same bytes.
-    await vi.waitFor(() => expect(eme.sessions).toHaveLength(1));
-    expect(eme.sessions[0]!.generateRequest).toHaveBeenCalledWith('skd', new TextEncoder().encode(FAIRPLAY_KEY.uri));
-
-    // Having licensed from the manifest, an appended segment's `encrypted` must
-    // not open a second session for the same content.
-    video.dispatchEvent(
-      Object.assign(new Event('encrypted'), { initDataType: 'sinf', initData: new Uint8Array([5, 5, 5]).buffer })
-    );
-    await new Promise((resolve) => setTimeout(resolve, 50));
-    expect(eme.sessions).toHaveLength(1);
-
-    reactor.destroy();
-  });
-
   it('opens event-driven sessions when the manifest carries no init data, deduped by bytes', async () => {
     const eme = makeFakeEme('com.apple.fps');
     vi.mocked(requestKeySystemAccess).mockResolvedValue(eme);
     const video = document.createElement('video');
     const { context, reactor } = setupSetupMediaKeys(
-      { presentation: makePresentation([FAIRPLAY_KEY_NO_URI]) },
+      { presentation: makePresentation([FAIRPLAY_KEY]) },
       { mediaElement: video }
     );
 
-    // Nothing in the manifest to open a session from, so none opens.
+    // skd:// carries no inline init data, so no manifest-driven session opens.
     await vi.waitFor(() => expect(context.mediaKeys.get()).toBe(eme.mediaKeys));
     expect(eme.sessions).toHaveLength(0);
 
