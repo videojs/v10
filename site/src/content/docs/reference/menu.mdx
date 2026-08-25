@@ -102,6 +102,8 @@ A root menu owns one positioned Popup. Nested `Content` elements share that Popu
 
 Menus open from a trigger and close when you select an item, click outside, move focus away, or press <kbd>Escape</kbd>. Root menus use `side` and `align` as their preferred placement. When the preferred side overflows the positioning boundary, the menu uses the opposite side if it has more space.
 
+Root menus inside a <DocsLink slug="reference/player-container">Container</DocsLink> join its popup group. Opening one closes any other root menu or popover that is open in the same container. Submenus remain part of their root menu instead of registering separately.
+
 In React, create a submenu by nesting another `Menu.Root` in the parent `Menu.Content`; its `Menu.Trigger` behaves as a parent item and its `Menu.Content` becomes the active Content. In HTML, add another `<media-menu-content>` as a sibling, give it an `id`, and point the parent `<media-menu-item>` at it with `commandfor`.
 
 Media option groups can render the current selection beside a submenu trigger. See <DocsLink slug="reference/playback-rate-radio-group">PlaybackRateRadioGroup</DocsLink>, <DocsLink slug="reference/quality-radio-group">QualityRadioGroup</DocsLink>, <DocsLink slug="reference/audio-track-radio-group">AudioTrackRadioGroup</DocsLink>, and <DocsLink slug="reference/captions-radio-group">CaptionsRadioGroup</DocsLink>.

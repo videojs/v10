@@ -6,6 +6,7 @@ description: A tooltip component for displaying contextual labels on hover and f
 ---
 
 import ComponentReference from "@/components/docs/api-reference/ComponentReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 import StyleCase from "@/components/docs/StyleCase.astro";
 import Demo from "@/components/docs/demos/Demo.astro";
@@ -82,6 +83,8 @@ The `side` and `align` props control the preferred placement relative to the tri
   timing — the group's `delay`, `close-delay`, and `timeout` attributes control shared
   timing for all contained tooltips.
 </FrameworkCase>
+
+Tooltips inside a <DocsLink slug="reference/player-container">Container</DocsLink> also observe its popup group. By default, a tooltip does not open—or closes if already open—while a menu or popover attached to the same trigger is open. Set `sticky` when the tooltip should remain visible with that trigger's popup. `Tooltip.Provider` and `<media-tooltip-group>` coordinate tooltip delay timing only; they do not replace the container's popup group.
 
 ## Styling
 

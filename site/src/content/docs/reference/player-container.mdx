@@ -141,6 +141,10 @@ The container is where user intent enters the player. It listens for physical in
 - **Gestures** — Tap and double-tap actions, optionally limited by pointer type and left, center, or right region. Configured via the <DocsLink slug="reference/gesture">`Gesture`</DocsLink> component.
 - **Keyboard controls** — Spacebar to play/pause, arrow keys to seek, and other keyboard shortcuts scoped to the container. Configured via the `Hotkey` component.
 
+### Popup coordination
+
+Each container owns one popup group. Opening a root <DocsLink slug="reference/menu">menu</DocsLink> or <DocsLink slug="reference/popover">popover</DocsLink> closes the previously open popup in that container. A popup rendered outside the container still manages its own open state, but it does not participate in the container's group.
+
 ## Relationship to skins
 
 A <DocsLink slug="concepts/skins">skin</DocsLink> is a container plus UI controls. When you use a packaged skin, the container is built in — you don't need to add one yourself.
