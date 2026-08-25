@@ -19,7 +19,7 @@ export class HotkeyElement extends UIElement {
   };
 
   keys: HotkeyProps['keys'] = '';
-  action: HotkeyProps['action'] = '';
+  action: HotkeyProps['action'] | '' = '';
   value: HotkeyProps['value'] = undefined;
   disabled: NonNullable<HotkeyProps['disabled']> = false;
   target: NonNullable<HotkeyProps['target']> = 'player';

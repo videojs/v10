@@ -1,5 +1,6 @@
 import { isUndefined } from '@videojs/utils/predicate';
 
+import type { HotkeyActionName } from '../../core/ui/hotkey/core';
 import { MEDIA_INPUT_ACTION_OVERRIDES } from '../media-actions';
 import type { AnyPlayerStore } from '../player';
 import {
@@ -11,17 +12,7 @@ import {
   selectVolume,
 } from '../store/selectors';
 
-export type HotkeyActionName =
-  | 'togglePaused'
-  | 'toggleMuted'
-  | 'toggleFullscreen'
-  | 'toggleSubtitles'
-  | 'togglePictureInPicture'
-  | 'seekStep'
-  | 'volumeStep'
-  | 'speedUp'
-  | 'speedDown'
-  | 'seekToPercent';
+export type { HotkeyActionName } from '../../core/ui/hotkey/core';
 
 export interface HotkeyActionContext {
   store: AnyPlayerStore;
