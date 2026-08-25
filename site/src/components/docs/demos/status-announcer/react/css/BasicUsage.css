@@ -1,0 +1,111 @@
+.react-status-announcer-basic {
+  position: relative;
+}
+
+.react-status-announcer-basic video {
+  display: block;
+  width: 100%;
+}
+
+.react-status-announcer-basic__instructions {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  padding: 6px 10px;
+  margin: 0;
+  color: white;
+  background: rgb(0 0 0 / 70%);
+  border-radius: 4px;
+}
+
+.react-status-announcer-basic__controls {
+  position: absolute;
+  right: 12px;
+  bottom: 36px;
+  left: 12px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.react-status-announcer-basic__button {
+  padding: 7px 14px;
+  color: black;
+  cursor: pointer;
+  background: rgb(255 255 255 / 85%);
+  border: 1px solid rgb(255 255 255 / 30%);
+  border-radius: 9999px;
+}
+
+.react-status-announcer-basic__volume-slider,
+.react-status-announcer-basic__time-slider {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 20px;
+  cursor: pointer;
+}
+
+.react-status-announcer-basic__volume-slider {
+  width: 100px;
+}
+
+.react-status-announcer-basic__time-slider {
+  position: absolute;
+  right: 12px;
+  bottom: 8px;
+  left: 12px;
+}
+
+.react-status-announcer-basic__track {
+  position: absolute;
+  right: 0;
+  left: 0;
+  height: 5px;
+  overflow: hidden;
+  background: rgb(255 255 255 / 30%);
+  border-radius: 9999px;
+}
+
+.react-status-announcer-basic__buffer,
+.react-status-announcer-basic__fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  border-radius: inherit;
+}
+
+.react-status-announcer-basic__buffer {
+  width: var(--media-slider-buffer);
+  background: rgb(255 255 255 / 30%);
+}
+
+.react-status-announcer-basic__fill {
+  width: var(--media-slider-fill);
+  background: white;
+}
+
+.react-status-announcer-basic__thumb {
+  position: absolute;
+  left: var(--media-slider-fill);
+  width: 14px;
+  height: 14px;
+  background: white;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 40%);
+  translate: -50%;
+}
+
+.react-status-announcer-basic__announcer {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  white-space: nowrap;
+  border: 0;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+}

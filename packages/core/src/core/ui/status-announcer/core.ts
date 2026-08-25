@@ -9,13 +9,18 @@ import { deriveStatusAnnouncement, deriveVolumeAnnouncement } from './status-ann
 const ANNOUNCEMENT_DEBOUNCE = 200;
 
 export interface StatusAnnouncerProps extends IndicatorCoreProps {
+  /** Delay in milliseconds before the current announcement label is cleared. */
+  closeDelay?: number | undefined;
+  /** Overrides for the translated announcement labels. */
   labels?: Partial<StatusAnnouncerLabels> | undefined;
-  /** Whether debounced seek and volume changes should be announced. */
+  /** Internal gate used by platform adapters to suppress debounced seek and volume announcements. */
   shouldAnnounce?: (() => boolean) | undefined;
 }
 
 export interface StatusAnnouncerState {
+  /** Increments for each announcement so repeated labels replace the live-region content. */
   generation: number;
+  /** Current announcement text, or `null` when the live region is empty. */
   label: string | null;
 }
 
