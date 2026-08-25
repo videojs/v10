@@ -15,6 +15,7 @@ import {
   type HlsAudioEngineState,
 } from '../../engines/hls/engine-audio-only';
 import { UNSUPPORTED_PLAYBACK_FEATURE_MESSAGE } from '../../primitives/error-messages';
+import type { HlsVideoSource } from '../hls-video/adapter';
 import {
   firstFatal,
   type HlsVideoMediaError,
@@ -24,12 +25,14 @@ import {
 
 export interface HlsAudioMediaProps {
   src: string;
+  source: HlsVideoSource | null;
   preload: '' | 'none' | 'metadata' | 'auto';
   disableRemotePlayback: boolean;
 }
 
 export const hlsAudioMediaDefaultProps: HlsAudioMediaProps = {
   src: '',
+  source: null,
   preload: '',
   disableRemotePlayback: false,
 };
@@ -95,6 +98,7 @@ export function HlsAudioMediaMixin<Base extends Constructor<any>>(BaseClass: Bas
 
     /** Pending loadstart listener from a deferred play() retry, if any. */
     #loadstartListener: (() => void) | null = null;
+    #source: HlsVideoSource | null = hlsAudioMediaDefaultProps.source;
 
     constructor(...args: any[]) {
       super(...args);
@@ -236,6 +240,39 @@ export function HlsAudioMediaMixin<Base extends Constructor<any>>(BaseClass: Bas
 
     set src(value: string) {
       // Unchanged URL, no reload — see the video adapter's note.
+      if (value === this.src) return;
+
+      this.#source = value ? { src: value } : null;
+      this.#applySrc(value);
+      this.dispatchEvent?.(new Event('sourcechange'));
+    }
+
+    /**
+     * Structured source, the same shape the video flavor takes so one object
+     * serves either.
+     *
+     * `drm` is accepted and inert: this engine composes no EME. It is kept in
+     * the shape rather than removed so a source can be handed to both flavors —
+     * and because Mux encrypts video renditions and leaves audio clear, so a
+     * protected playback ID plays here regardless.
+     *
+     * @fires sourcechange - Fired when `source` changes. Read `source` for the new value.
+     */
+    get source(): HlsVideoSource | null {
+      return this.#source;
+    }
+
+    set source(value: HlsVideoSource | null) {
+      const source = value ?? null;
+      if (source === this.#source) return;
+
+      this.#source = source;
+      this.#applySrc(source?.src ?? '');
+      this.dispatchEvent?.(new Event('sourcechange'));
+    }
+
+    /** Point the engine at a URL; an unchanged one is not a reload request. */
+    #applySrc(value: string): void {
       if (value === this.src) return;
 
       this.#cancelPendingPlay();

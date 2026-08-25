@@ -8,11 +8,7 @@ import {
   parseMuxVideoURL,
 } from '@videojs/media/dom/mux/source';
 import { shallowEqual } from '@videojs/utils/object';
-import type { Constructor, MixinReturn } from '@videojs/utils/types';
-import type { DrmSystemsConfig } from '../../../media/drm';
-
-/** Key-system ids Mux's license-server derivation is keyed by. */
-type MuxKeySystem = keyof NonNullable<ReturnType<typeof createMuxDrmSystems>>;
+import type { Constructor } from '@videojs/utils/types';
 
 export interface MuxMediaProps {
   src: string;
@@ -59,33 +55,6 @@ export function MuxMediaMixin<Base extends Constructor<any>>(BaseClass: Base) {
 
     #source: MuxSourceBase | null = muxMediaDefaultProps.source;
     #contentData: MuxContentData = {};
-    /** Memoized license servers, and the source they were derived from. */
-    #drmSystems: ReturnType<typeof createMuxDrmSystems>;
-    #drmSystemsSource: MuxSourceBase | null = muxMediaDefaultProps.source;
-
-    constructor(...args: any[]) {
-      const [options] = args;
-      // License servers are per-source, so the engine is handed one resolver per
-      // key system instead of URLs it would have to be rebuilt to change. Mux
-      // serves all three from a playback ID, so naming them costs nothing when a
-      // source licenses none of them — each resolver answers `undefined` and its
-      // renditions prune exactly as an unconfigured system's do.
-      //
-      // Built before `super()`, which is why they close over `this` rather than
-      // reading it: nothing resolves a URL during engine construction, since the
-      // first read is a capability probe and no presentation is set yet.
-      const drm: DrmSystemsConfig = {
-        'com.apple.fps': {
-          licenseUrl: () => this.#drmSystem('com.apple.fps')?.licenseUrl,
-          serverCertificateUrl: () => this.#drmSystem('com.apple.fps')?.serverCertificateUrl,
-        },
-        'com.widevine.alpha': { licenseUrl: () => this.#drmSystem('com.widevine.alpha')?.licenseUrl },
-        'com.microsoft.playready': { licenseUrl: () => this.#drmSystem('com.microsoft.playready')?.licenseUrl },
-      };
-
-      super({ ...options, config: { ...options?.config, drm } });
-    }
-
     /**
      * Media source URL. Setting a Mux stream URL (`https://stream.mux.com/<playback-id>.m3u8?...`) extracts the
      * playback ID and query params into `source`; other URLs are kept as a plain `source.src`.
@@ -123,14 +92,22 @@ export function MuxMediaMixin<Base extends Constructor<any>>(BaseClass: Base) {
 
       this.#source = source;
 
-      // Refresh the bag before announcing `sourcechange`, because listeners read
-      // `contentData` from that event. Announcing its own change waits until
-      // after, so `src` is in step by the time either event fires.
+      // Refresh the bag first: `sourcechange` comes from the base's own setter
+      // below, and listeners read `contentData` from that event.
       const contentDataChanged = this.#refreshContentData();
 
-      super.src = (source && (createMuxVideoURL(source) ?? source.src)) || '';
-
-      this.dispatchEvent?.(new Event('sourcechange'));
+      // Project Mux identity onto the generic source the base understands. A
+      // `drm.token` derives Mux's three license servers here, and entries naming
+      // servers outright override them — the base's resolvers read the result,
+      // so there is one licensing path rather than a Mux-shaped copy of it.
+      const { token: _token, ...named } = source?.drm ?? {};
+      const drm = { ...createMuxDrmSystems(source), ...named };
+      super.source = source
+        ? {
+            src: (createMuxVideoURL(source) ?? source.src) || '',
+            ...(Object.keys(drm).length > 0 && { drm }),
+          }
+        : null;
 
       if (contentDataChanged) this.dispatchEvent?.(new Event('contentdatachange'));
     }
@@ -144,22 +121,6 @@ export function MuxMediaMixin<Base extends Constructor<any>>(BaseClass: Base) {
      */
     get contentData(): MuxContentData {
       return this.#contentData;
-    }
-
-    /**
-     * One key system's license server for the current source: Mux's, derived
-     * from a `drm.token`, under anything `source.drm` names outright.
-     *
-     * Memoized on source identity because this runs inside rendition pruning,
-     * which asks per track on every selection pass.
-     */
-    #drmSystem(keySystem: MuxKeySystem) {
-      if (this.#drmSystemsSource !== this.#source) {
-        const { token: _token, ...named } = this.#source?.drm ?? {};
-        this.#drmSystems = { ...createMuxDrmSystems(this.#source), ...named };
-        this.#drmSystemsSource = this.#source;
-      }
-      return this.#drmSystems?.[keySystem];
     }
 
     /** Rebuild the derived bag, reporting whether anything about it changed. */
@@ -178,9 +139,15 @@ export function MuxMediaMixin<Base extends Constructor<any>>(BaseClass: Base) {
     }
   }
 
-  // `MixinReturn` sources statics from `Base`, so this mixin's own needs adding
-  // back to the type or callers can't read it.
-  return MuxMediaImpl as unknown as MixinReturn<Base, MuxMediaAPI> & {
-    readonly alternativeMediaSuggestion: string | undefined;
-  };
+  // `source` is re-typed rather than intersected with the base's: this mixin
+  // accepts the wider Mux shape, whose `drm` carries a `token` that the generic
+  // key-system map — an index signature over `DrmSystemConfig` — has no place
+  // for. Intersecting the two would make every Mux source unassignable.
+  //
+  // Statics are sourced from `Base`, so this mixin's own needs adding back to
+  // the type or callers can't read it.
+  return MuxMediaImpl as unknown as Constructor<Omit<InstanceType<Base>, 'source'> & MuxMediaAPI> &
+    Omit<Base, 'prototype'> & {
+      readonly alternativeMediaSuggestion: string | undefined;
+    };
 }

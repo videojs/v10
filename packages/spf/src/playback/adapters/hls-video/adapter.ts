@@ -3,6 +3,8 @@ import type { Constructor, MixinReturn } from '@videojs/utils/types';
 
 import type { Composition } from '../../../core/composition/create-composition';
 import { effect } from '../../../core/signals/effect';
+import type { DrmSystemsConfig } from '../../../media/drm';
+import { KEY_SYSTEM_BY_KEY_FORMAT } from '../../../media/drm';
 import {
   SVTA_NO_SUPPORTED_AUDIO_TRACK,
   SVTA_NO_SUPPORTED_VIDEO_TRACK,
@@ -47,8 +49,32 @@ export type HlsVideoMediaStreamType = MediaStreamType;
 
 export type { HlsVideoMediaError } from './error-surface';
 
+/**
+ * What this Media can be pointed at, beyond a bare URL.
+ *
+ * Deliberately narrower than `@videojs/media`'s `HlsSource`: that shape also
+ * carries `preferPlayback`, `engine`, and the rendition caps, none of which this
+ * engine can honour — SPF publishes no engine-shaped config, and there is no
+ * native path to prefer. A value typed as the wider shape still assigns here.
+ */
+export interface HlsVideoSource {
+  /** Manifest URL. Mirrors the host's `src` property. */
+  src?: string | undefined;
+  /** MIME type of the source. Takes precedence over inference from `src`. */
+  type?: string | undefined;
+  /**
+   * License servers for protected content, keyed by EME key-system id.
+   *
+   * Read per license request rather than captured, so changing the source
+   * changes what is licensed without rebuilding the engine. Accepts a resolver
+   * per URL (see `DrmUrl`) for servers only known once a source is set.
+   */
+  drm?: DrmSystemsConfig | undefined;
+}
+
 export interface HlsVideoMediaProps {
   src: string;
+  source: HlsVideoSource | null;
   preload: '' | 'none' | 'metadata' | 'auto';
   disableRemotePlayback: boolean;
   streamType: HlsVideoMediaStreamType;
@@ -56,6 +82,7 @@ export interface HlsVideoMediaProps {
 
 export const hlsVideoMediaDefaultProps: HlsVideoMediaProps = {
   src: '',
+  source: null,
   preload: '',
   disableRemotePlayback: false,
   streamType: MediaStreamTypes.UNKNOWN,
@@ -170,12 +197,32 @@ export function HlsVideoMediaMixin<Base extends Constructor<any>>(BaseClass: Bas
     /** Pending loadstart listener from a deferred play() retry, if any. */
     #loadstartListener: (() => void) | null = null;
 
+    #source: HlsVideoSource | null = hlsVideoMediaDefaultProps.source;
+
     constructor(...args: any[]) {
       super(...args);
 
       const { config } = args?.[0] ?? {};
 
-      this.#config = config;
+      // Every key system this engine knows is named up front with a resolver
+      // that reads whatever source is current, so `source.drm` licenses playback
+      // without the engine — built once, here — ever being rebuilt. A system the
+      // current source says nothing about resolves to `undefined`, which prunes
+      // its renditions exactly as naming no server at all does.
+      //
+      // The resolvers close over `this` but are built before `super()` returns:
+      // safe because nothing resolves a URL during engine construction, the
+      // first read being a capability probe with no presentation set yet.
+      const drm: DrmSystemsConfig = Object.fromEntries(
+        Object.values(KEY_SYSTEM_BY_KEY_FORMAT).map((keySystem) => [
+          keySystem,
+          {
+            licenseUrl: () => this.#source?.drm?.[keySystem]?.licenseUrl as string | undefined,
+            serverCertificateUrl: () => this.#source?.drm?.[keySystem]?.serverCertificateUrl as string | undefined,
+          },
+        ])
+      );
+      this.#config = { ...config, drm: { ...drm, ...config?.drm } };
       this.#engine = this.#createEngine();
 
       // Mirror the engine's live/stream-type detection onto the media surface,
@@ -404,12 +451,47 @@ export function HlsVideoMediaMixin<Base extends Constructor<any>>(BaseClass: Bas
     }
 
     set src(value: string) {
-      // Assigning the URL already playing is not a request to reload it. The
-      // presentation is set from a fresh object every time, so re-resolving an
-      // unchanged URL restarts playback — which is what a caller changing only
-      // the parts of a structured source that describe images, rather than the
-      // stream, would get. The hls.js Media draws the same line: it announces
-      // every source change and loads only when the URL or engine config moves.
+      // Guarded on the URL rather than on source identity: the presentation can
+      // also be written straight to the engine, and clearing `src` has to reach
+      // it either way.
+      if (value === this.src) return;
+
+      // A bare URL names a different asset, so whatever the previous source said
+      // about licensing it no longer applies — same line the Mux flavor draws
+      // when a URL replaces a structured source.
+      this.#source = value ? { src: value } : null;
+      this.#applySrc(value);
+      this.dispatchEvent?.(new Event('sourcechange'));
+    }
+
+    /**
+     * Structured source: the manifest URL plus what a URL cannot carry, which
+     * today is the license servers for protected content. Setting it derives
+     * `src`. Assigning the same object back costs nothing — changing anything
+     * takes a new one.
+     *
+     * @fires sourcechange - Fired when `source` changes. Read `source` for the new value.
+     */
+    get source(): HlsVideoSource | null {
+      return this.#source;
+    }
+
+    set source(value: HlsVideoSource | null) {
+      const source = value ?? null;
+      if (source === this.#source) return;
+
+      this.#source = source;
+      this.#applySrc(source?.src ?? '');
+      this.dispatchEvent?.(new Event('sourcechange'));
+    }
+
+    /**
+     * Point the engine at a URL. Assigning the one already playing is not a
+     * request to reload it: the presentation is set from a fresh object every
+     * time, so re-resolving an unchanged URL would restart playback — which is
+     * what changing only the licensing half of a source would otherwise cause.
+     */
+    #applySrc(value: string): void {
       if (value === this.src) return;
 
       this.#cancelPendingPlay();
