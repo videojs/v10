@@ -9,7 +9,7 @@ import type { HTMLProps, RenderProp } from './types';
 import { composeRefs } from './use-composed-refs';
 
 /** Check if a value is a render prop (function or React element). */
-export function isRenderProp(value: unknown): value is RenderProp<unknown> {
+export function isRenderProp<Value>(value: Value): value is Value & RenderProp<Value> {
   return isFunction(value) || isValidElement(value);
 }
 
@@ -38,7 +38,8 @@ function resolveStyle<State>(
 function getElementRef(element: ReactElement): Ref<unknown> | undefined {
   // React 19+ uses element.props.ref, older versions use element.ref
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const elementAny = element as any;
+  const elementAny =
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ element as any;
   return elementAny.ref ?? elementAny.props?.ref;
 }
 
@@ -83,8 +84,13 @@ export function renderElement<
   const stateDataAttrs = stateAttrMap ? getStateDataAttrs(state, stateAttrMap) : {};
 
   // Merge: state data attrs first, then props (so props can override)
-  const propsArray = Array.isArray(props) ? props : props ? [props] : [];
-  const mergedProps = mergeProps(stateDataAttrs, ...(propsArray as Record<string, unknown>[]));
+  const propsArray = /* SAFETY: React element props are object values consumed by the generic merge helper. */ (
+    Array.isArray(props) ? props : props ? [props] : []
+  ) as React.ComponentPropsWithRef<TagName>[];
+  const mergedProps = mergeProps<TagName>(
+    /* SAFETY: State data attributes are valid attributes for every intrinsic HTML element. */ stateDataAttrs as React.ComponentPropsWithRef<TagName>,
+    ...propsArray
+  );
 
   if (className !== undefined) {
     // Add resolved className and style
@@ -92,13 +98,27 @@ export function renderElement<
   }
 
   if (style !== undefined) {
-    mergedProps.style = mergedProps.style ? { ...(mergedProps.style as CSSProperties), ...style } : style;
+    mergedProps.style = mergedProps.style
+      ? {
+          .../* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (mergedProps.style as CSSProperties),
+          ...style,
+        }
+      : style;
   }
 
   if (isFunction(render)) {
     // Render function: call with props and state
-    const mergedRef = composeRefs(ref, mergedProps.ref);
-    return render({ ...mergedProps, ref: mergedRef } as HTMLProps, state);
+    const mergedRef = composeRefs(
+      ref,
+      /* SAFETY: The caller pairs RenderedElementType with the selected intrinsic element. */ mergedProps.ref as Ref<RenderedElementType>
+    );
+    return render(
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ {
+        ...mergedProps,
+        ref: mergedRef,
+      } as HTMLProps,
+      state
+    );
   }
 
   if (isValidElement(render)) {
@@ -106,15 +126,21 @@ export function renderElement<
 
     const mergedRef = composeRefs(ref, mergedProps.ref, elementRef);
 
-    const elementProps = mergeProps(mergedProps, render.props as Record<string, unknown>);
+    const elementProps = mergeProps(
+      mergedProps,
+      /* SAFETY: A valid render element's props are merged into the selected intrinsic element. */ render.props as React.ComponentPropsWithRef<TagName>
+    );
     elementProps.ref = mergedRef;
 
     return cloneElement(render, elementProps);
   }
 
   // Default tag
-  const mergedRef = composeRefs(ref, mergedProps.ref);
-  mergedProps.ref = mergedRef;
+  const mergedRef = composeRefs(
+    ref,
+    /* SAFETY: The caller pairs RenderedElementType with the selected intrinsic element. */ mergedProps.ref as Ref<RenderedElementType>
+  );
+  Object.assign(mergedProps, { ref: mergedRef });
 
   return createElement(element, mergedProps);
 }

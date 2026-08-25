@@ -2,9 +2,10 @@ import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { observeElementSize, observeElements, observeRenderedSize, observeResize } from '../observe-elements';
 
-class ResizeObserverStub {
+class ResizeObserverStub implements ResizeObserver {
   static instances: ResizeObserverStub[] = [];
   readonly observe = vi.fn();
+  readonly unobserve = vi.fn();
   readonly disconnect = vi.fn();
 
   constructor(readonly callback: ResizeObserverCallback) {
@@ -14,8 +15,16 @@ class ResizeObserverStub {
 
 /** Drive one observation, carrying the content box the size observers read. */
 function deliver(observer: ResizeObserverStub, width: number, height: number) {
-  const entry = { contentBoxSize: [{ inlineSize: width, blockSize: height }] } as unknown as ResizeObserverEntry;
-  observer.callback([entry], observer as unknown as ResizeObserver);
+  const box = { inlineSize: width, blockSize: height };
+  const target = document.createElement('div');
+  const entry: ResizeObserverEntry = {
+    target,
+    contentRect: target.getBoundingClientRect(),
+    borderBoxSize: [box],
+    contentBoxSize: [box],
+    devicePixelContentBoxSize: [box],
+  };
+  observer.callback([entry], observer);
 }
 
 /** A `MediaQueryList` stand-in; see `device-pixel-ratio.test.ts`. */
@@ -35,10 +44,11 @@ function stubMatchMedia(): FakeMediaQueryList[] {
   return queries;
 }
 
-class MutationObserverStub {
+class MutationObserverStub implements MutationObserver {
   static instances: MutationObserverStub[] = [];
   readonly observe = vi.fn();
   readonly disconnect = vi.fn();
+  readonly takeRecords = vi.fn((): MutationRecord[] => []);
 
   constructor(readonly callback: MutationCallback) {
     MutationObserverStub.instances.push(this);
@@ -64,7 +74,7 @@ describe('observeResize', () => {
     expect(observer.observe).toHaveBeenCalledWith(first);
     expect(observer.observe).toHaveBeenCalledWith(second);
 
-    observer.callback([], observer as unknown as ResizeObserver);
+    observer.callback([], observer);
     expect(callback).toHaveBeenCalledOnce();
 
     cleanup();
@@ -98,7 +108,7 @@ describe('observeElementSize', () => {
 
     observeElementSize(document.createElement('div'), onResize);
     const observer = ResizeObserverStub.instances[0]!;
-    observer.callback([], observer as unknown as ResizeObserver);
+    observer.callback([], observer);
 
     expect(onResize).not.toHaveBeenCalled();
   });
@@ -184,7 +194,7 @@ describe('observeElements', () => {
     expect(ResizeObserverStub.instances[0]!.observe).toHaveBeenCalledWith(first);
 
     elements = [second];
-    MutationObserverStub.instances[0]!.callback([], MutationObserverStub.instances[0] as unknown as MutationObserver);
+    MutationObserverStub.instances[0]!.callback([], MutationObserverStub.instances[0]!);
 
     expect(ResizeObserverStub.instances[0]!.disconnect).toHaveBeenCalledOnce();
     expect(ResizeObserverStub.instances[1]!.observe).toHaveBeenCalledWith(second);

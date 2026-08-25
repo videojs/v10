@@ -3,9 +3,9 @@ import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { setupDrm } from '../drm';
 
-function createEngine(userConfig: Record<string, any> = {}): Hls {
+function createEngine(userConfig: Partial<Hls['config']> = {}): Hls {
   const listeners = new Map<string, Set<(...args: any[]) => void>>();
-  return {
+  return /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
     config: {
       emeEnabled: false,
       requestMediaKeySystemAccessFunc: Hls.DefaultConfig.requestMediaKeySystemAccessFunc,
@@ -22,11 +22,14 @@ function createEngine(userConfig: Record<string, any> = {}): Hls {
     emit(event: string, ...args: any[]) {
       for (const fn of listeners.get(event) ?? []) fn(event, ...args);
     },
-  } as unknown as Hls;
+  } as Hls;
 }
 
 function stubKeySystemAccess() {
-  const requestMediaKeySystemAccess = vi.fn(async () => ({}) as MediaKeySystemAccess);
+  const requestMediaKeySystemAccess = vi.fn(
+    async (_keySystem: string, _configurations: MediaKeySystemConfiguration[]) =>
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ ({}) as MediaKeySystemAccess
+  );
   Object.defineProperty(navigator, 'requestMediaKeySystemAccess', {
     value: requestMediaKeySystemAccess,
     configurable: true,
@@ -76,12 +79,14 @@ describe('setupDrm', () => {
       setupDrm(engine);
 
       const configurations = [{ videoCapabilities: videoCapabilities() }];
-      await engine.config.requestMediaKeySystemAccessFunc!('com.widevine.alpha' as any, configurations as any);
+      await engine.config.requestMediaKeySystemAccessFunc!(
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ 'com.widevine.alpha' as any,
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ configurations as any
+      );
 
-      const [keySystem, requested] = requestMediaKeySystemAccess.mock.calls[0] as unknown as [
-        string,
-        MediaKeySystemConfiguration[],
-      ];
+      const call = requestMediaKeySystemAccess.mock.calls[0];
+      if (!call) throw new Error('Expected a key-system access request.');
+      const [keySystem, requested] = call;
 
       expect(keySystem).toBe('com.widevine.alpha');
       expect(requested).toHaveLength(2);
@@ -97,7 +102,10 @@ describe('setupDrm', () => {
       setupDrm(engine);
 
       const configurations = [{ videoCapabilities: videoCapabilities() }];
-      await engine.config.requestMediaKeySystemAccessFunc!('com.apple.fps' as any, configurations as any);
+      await engine.config.requestMediaKeySystemAccessFunc!(
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ 'com.apple.fps' as any,
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ configurations as any
+      );
 
       expect(requestMediaKeySystemAccess).toHaveBeenCalledWith('com.apple.fps', configurations);
     });
@@ -109,9 +117,12 @@ describe('setupDrm', () => {
       const engine = createEngine({ emeEnabled: true });
       setupDrm(engine);
 
-      await expect(engine.config.requestMediaKeySystemAccessFunc!('com.widevine.alpha' as any, [])).rejects.toThrow(
-        'unsupported'
-      );
+      await expect(
+        engine.config.requestMediaKeySystemAccessFunc!(
+          /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ 'com.widevine.alpha' as any,
+          []
+        )
+      ).rejects.toThrow('unsupported');
     });
   });
 
@@ -120,7 +131,9 @@ describe('setupDrm', () => {
     const engine = createEngine({ emeEnabled: true });
 
     setupDrm(engine);
-    (engine as any).emit(Hls.Events.ERROR, {
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+      engine as any
+    ).emit(Hls.Events.ERROR, {
       fatal: false,
       type: Hls.ErrorTypes.KEY_SYSTEM_ERROR,
       details: 'keySystemStatusOutputRestricted',
@@ -134,7 +147,9 @@ describe('setupDrm', () => {
     const engine = createEngine({ emeEnabled: true });
 
     setupDrm(engine);
-    (engine as any).emit(Hls.Events.ERROR, {
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+      engine as any
+    ).emit(Hls.Events.ERROR, {
       fatal: true,
       type: Hls.ErrorTypes.KEY_SYSTEM_ERROR,
       details: 'keySystemNoAccess',

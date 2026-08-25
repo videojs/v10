@@ -1,3 +1,4 @@
+import { isString } from '@videojs/utils/predicate';
 import { describe, expect, it, vi } from 'vite-plus/test';
 
 import type { Guide, Sidebar } from '../../../types/docs';
@@ -161,7 +162,7 @@ describe('routing utilities', () => {
         });
 
         expect(result.selectedSlug).toBeTruthy();
-        expect(typeof result.selectedSlug).toBe('string');
+        expect(isString(result.selectedSlug)).toBe(true);
       });
 
       it('should build correct URL', () => {

@@ -36,11 +36,12 @@ export function isHotkeyToggleAction(action: string): boolean {
   return action.startsWith('toggle');
 }
 
-const HOTKEY_ACTIONS: Record<HotkeyActionName, HotkeyActionResolver> = {
+const HOTKEY_ACTIONS = {
   togglePaused({ store }) {
     const playback = selectPlayback(store.state);
     if (!playback) return;
-    playback.paused ? playback.play() : playback.pause();
+    if (playback.paused) playback.play();
+    else playback.pause();
   },
 
   toggleMuted({ store }) {
@@ -50,7 +51,8 @@ const HOTKEY_ACTIONS: Record<HotkeyActionName, HotkeyActionResolver> = {
   toggleFullscreen({ store }) {
     const fs = selectFullscreen(store.state);
     if (!fs) return;
-    fs.fullscreen ? fs.exitFullscreen() : fs.requestFullscreen();
+    if (fs.fullscreen) fs.exitFullscreen();
+    else fs.requestFullscreen();
   },
 
   toggleSubtitles({ store }) {
@@ -60,7 +62,8 @@ const HOTKEY_ACTIONS: Record<HotkeyActionName, HotkeyActionResolver> = {
   togglePictureInPicture({ store }) {
     const pip = selectPiP(store.state);
     if (!pip) return;
-    pip.pip ? pip.exitPictureInPicture() : pip.requestPictureInPicture();
+    if (pip.pip) pip.exitPictureInPicture();
+    else pip.requestPictureInPicture();
   },
 
   seekStep: MEDIA_INPUT_ACTION_OVERRIDES.seekStep,
@@ -87,10 +90,13 @@ const HOTKEY_ACTIONS: Record<HotkeyActionName, HotkeyActionResolver> = {
 
     time.seek((percent / 100) * time.duration);
   },
-};
+} satisfies Record<HotkeyActionName, HotkeyActionResolver>;
 
 export function resolveHotkeyAction(name: string): HotkeyActionResolver | undefined {
-  const resolver = HOTKEY_ACTIONS[name as HotkeyActionName];
+  const resolver =
+    HOTKEY_ACTIONS[
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ name as HotkeyActionName
+    ];
 
   if (__DEV__ && !resolver) {
     console.warn(`[vjs-hotkey] Unknown action: "${name}"`);

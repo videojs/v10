@@ -27,7 +27,10 @@ export async function ensureCdnSandboxLocale(tag: SandboxLocaleTag): Promise<voi
     return;
   }
 
-  const load = cdnLocaleLoaders[tag as keyof typeof cdnLocaleLoaders];
+  const load =
+    cdnLocaleLoaders[
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ tag as keyof typeof cdnLocaleLoaders
+    ];
   if (!load) {
     throw new Error(`Unknown sandbox locale: ${tag}`);
   }

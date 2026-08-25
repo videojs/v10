@@ -37,7 +37,11 @@ describe('BackgroundVideo', () => {
 
       expect(shadow.querySelectorAll('[onerror]')).toHaveLength(0);
       expect(shadow.querySelectorAll('[onload]')).toHaveLength(0);
-      expect((globalThis as any).__xss).toBeUndefined();
+      expect(
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+          globalThis as any
+        ).__xss
+      ).toBeUndefined();
     });
 
     it('does not inject script elements when a whitelisted attribute contains angle brackets', () => {
@@ -46,7 +50,11 @@ describe('BackgroundVideo', () => {
       const shadow = el.shadowRoot!;
 
       expect(shadow.querySelectorAll('script')).toHaveLength(0);
-      expect((globalThis as any).__xss).toBeUndefined();
+      expect(
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+          globalThis as any
+        ).__xss
+      ).toBeUndefined();
     });
 
     it('does not inject img elements via controlslist value', () => {
@@ -55,7 +63,11 @@ describe('BackgroundVideo', () => {
       const shadow = el.shadowRoot!;
 
       expect(shadow.querySelectorAll('img')).toHaveLength(0);
-      expect((globalThis as any).__xss).toBeUndefined();
+      expect(
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+          globalThis as any
+        ).__xss
+      ).toBeUndefined();
     });
 
     it('does not forward non-whitelisted attributes into the shadow template', () => {
@@ -71,7 +83,10 @@ describe('BackgroundVideo', () => {
     it('preserves safe whitelisted attribute values correctly', () => {
       const tag = defineElement();
       // Test template generation directly — happy-dom may return null for IDL attrs (crossorigin) on shadow DOM elements.
-      const Ctor = customElements.get(tag) as typeof BackgroundVideo;
+      const Ctor =
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ customElements.get(
+          tag
+        ) as typeof BackgroundVideo;
       const attrs = {
         crossorigin: 'anonymous',
         preload: 'metadata',
@@ -83,7 +98,10 @@ describe('BackgroundVideo', () => {
         disablepictureinpicture: '',
       };
       const container = document.createElement('div');
-      container.innerHTML = (Ctor as any).getTemplateHTML(attrs);
+      container.innerHTML =
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+          Ctor as any
+        ).getTemplateHTML(attrs);
 
       const video = container.querySelector('video')!;
       expect(video.getAttribute('crossorigin')).toBe('anonymous');

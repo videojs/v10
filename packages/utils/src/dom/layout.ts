@@ -70,13 +70,13 @@ export function getBlockExtent(edges: LogicalBoxEdges): number {
   return edges.blockStart + edges.blockEnd;
 }
 
-function getPaddingOrigin(element: Element): { x: number; y: number } {
+function getPaddingOrigin(element: Element) {
   const style = getComputedStyle(element);
 
   return {
     x: Number.parseFloat(style.paddingLeft) || 0,
     y: Number.parseFloat(style.paddingTop) || 0,
-  };
+  } satisfies { x: number; y: number };
 }
 
 export interface ChildMeasurement {

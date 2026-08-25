@@ -1,3 +1,4 @@
+import { isFunction } from '@videojs/utils/predicate';
 import { afterEach, describe, expect, it } from 'vite-plus/test';
 
 import { createCoreTestStore, createTestHost } from '../../tests/test-utils';
@@ -17,7 +18,7 @@ describe('StoreController', () => {
 
     expect(value).toBe(store);
     expect(value.volume).toBe(1);
-    expect(typeof value.setVolume).toBe('function');
+    expect(isFunction(value.setVolume)).toBe(true);
   });
 
   it('does not trigger updates without selector', async () => {

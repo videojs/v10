@@ -22,7 +22,7 @@ import type { SandboxLocalePack } from './locale-meta';
 /** CDN locale chunks register via \`../i18n.dev.js\` — same module graph as \`@videojs/html/cdn/video\`. */
 export const cdnLocaleLoaders = {
 ${entries}
-} as const satisfies Record<Exclude<SandboxLocalePack, 'en'>, () => Promise<unknown>>;
+} as const satisfies Record<Exclude<SandboxLocalePack, 'en'>, () => Promise<object>>;
 `;
 
 writeFileSync(outPath, source);

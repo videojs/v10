@@ -30,7 +30,11 @@ export default function ImageRadioGroup<T extends string = string>({
   return (
     <RadioGroup
       value={value}
-      onValueChange={(newValue) => onChange(newValue as T)}
+      onValueChange={(newValue) =>
+        onChange(
+          /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ newValue as T
+        )
+      }
       aria-label={ariaLabel}
       className={twMerge(clsx('grid auto-rows-min gap-4'), className)}
       style={{

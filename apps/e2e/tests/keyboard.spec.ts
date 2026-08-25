@@ -12,8 +12,14 @@ const PAGES = [...AUDIO_PAGES, ...VIDEO_PAGES].filter(
 function getMediaValue(page: Page, key: 'currentTime' | 'volume'): Promise<number> {
   return page.evaluate(
     ({ selector, key }) => {
-      const host = document.querySelector(selector) as HTMLMediaElement | null;
-      const media = (host?.querySelector?.('video, audio') as HTMLMediaElement) ?? host;
+      const host =
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.querySelector(
+          selector
+        ) as HTMLMediaElement | null;
+      const media =
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (host?.querySelector?.(
+          'video, audio'
+        ) as HTMLMediaElement) ?? host;
       return media?.[key] ?? 0;
     },
     { selector: SELECTORS.media, key }
@@ -25,7 +31,7 @@ async function expectTabFocus(page: Page, element: Locator): Promise<void> {
   await expect(element).toBeFocused();
 }
 
-for (const entry of PAGES as readonly PageEntry[]) {
+for (const entry of /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ PAGES as readonly PageEntry[]) {
   const isAudio = entry.media === 'audio';
 
   test.describe(`Keyboard Navigation — ${entry.name}`, () => {

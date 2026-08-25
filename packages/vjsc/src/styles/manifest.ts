@@ -2,6 +2,7 @@ import { readFile, realpath } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
 import type { Expression, Program } from '@oxc-project/types';
+import { isString } from '@videojs/utils/predicate';
 import { parseSync } from 'oxc-parser';
 import { walk } from 'oxc-walker';
 import { type OutputChunk, rolldown } from 'rolldown';
@@ -231,7 +232,7 @@ function readAccessPath(expression: Expression): string[] | undefined {
   const object = readAccessPath(expression.object);
   if (!object) return undefined;
   if (!expression.computed) return [...object, expression.property.name];
-  if (expression.property.type === 'Literal' && typeof expression.property.value === 'string') {
+  if (expression.property.type === 'Literal' && isString(expression.property.value)) {
     return [...object, expression.property.value];
   }
   return undefined;
@@ -250,7 +251,10 @@ function mergeUtilityGroups(groups: readonly string[]): readonly string[] {
 
   for (const utility of merged) retained.set(utility, (retained.get(utility) ?? 0) + 1);
 
-  const output = Array.from({ length: groups.length }, () => [] as string[]);
+  const output = Array.from(
+    { length: groups.length },
+    () => /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ [] as string[]
+  );
   const indexedGroups = groups.map((group, index) => ({ index, utilities: splitClassNames(group) }));
 
   for (const { index, utilities } of indexedGroups.reverse()) {
@@ -313,7 +317,9 @@ async function evaluateStyleModule(
     const dataUrl = `data:text/javascript;base64,${Buffer.from(chunks[0].code).toString('base64')}`;
 
     return {
-      module: (await import(dataUrl)) as { default?: unknown },
+      module: /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (await import(
+        dataUrl
+      )) as { default?: unknown },
       watchFiles: await bundle.watchFiles,
     };
   } finally {

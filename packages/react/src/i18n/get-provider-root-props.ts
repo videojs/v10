@@ -1,32 +1,41 @@
+import type { Translations } from '@videojs/core/i18n';
+import { isObject } from '@videojs/utils/predicate';
+
 import type { AddLocaleRoot, I18nContextValue } from './context';
 import type { I18nProviderProps } from './create-i18n';
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return value !== null && typeof value === 'object' && !Array.isArray(value);
+function isTranslations(value: string | Translations | undefined): value is Translations {
+  return isObject(value) && !Array.isArray(value);
 }
 
 function mergeTranslations(
   parent: I18nProviderProps['translations'],
   child: I18nProviderProps['translations']
 ): I18nProviderProps['translations'] {
-  return {
+  const translations: Partial<Translations> = {
     ...parent,
     ...child,
-    ...(parent && child
-      ? Object.fromEntries(
-          Object.keys(parent)
-            .filter((key) => isRecord(parent[key]) && isRecord(child[key]))
-            .map((key) => {
-              const parentValue = parent[key];
-              const childValue = child[key];
-              return [
-                key,
-                isRecord(parentValue) && isRecord(childValue) ? { ...parentValue, ...childValue } : childValue,
-              ];
-            })
-        )
-      : {}),
-  } as I18nProviderProps['translations'];
+  };
+  if (parent && child) {
+    Object.assign(
+      translations,
+      Object.fromEntries(
+        Object.keys(parent)
+          .filter((key) => isTranslations(parent[key]) && isTranslations(child[key]))
+          .map((key) => {
+            const parentValue = parent[key];
+            const childValue = child[key];
+            return [
+              key,
+              isTranslations(parentValue) && isTranslations(childValue)
+                ? { ...parentValue, ...childValue }
+                : childValue,
+            ];
+          })
+      )
+    );
+  }
+  return translations;
 }
 
 export interface I18nProviderRootProps extends I18nProviderProps {
@@ -61,14 +70,15 @@ export function getProviderRootProps(
   const localeFromProp =
     props.locale !== undefined || (props.langRootRef === undefined && parent?.localeFromProp === true);
 
-  return {
+  const rootProps: I18nProviderRootProps = {
     ...props,
-    ...(inheritedLocale !== undefined ? { locale: inheritedLocale } : {}),
     localeFromProp,
     localeFromOwnProp: props.locale !== undefined,
-    ...(parentLocale !== undefined ? { parentLocale } : {}),
-    ...(inheritedTranslations !== undefined ? { translations: inheritedTranslations } : {}),
-    ...(onActiveLocaleChange !== undefined ? { onActiveLocaleChange } : {}),
-    ...(parentAddLocaleRoot !== undefined ? { parentAddLocaleRoot } : {}),
   };
+  if (inheritedLocale !== undefined) rootProps.locale = inheritedLocale;
+  if (parentLocale !== undefined) rootProps.parentLocale = parentLocale;
+  if (inheritedTranslations !== undefined) rootProps.translations = inheritedTranslations;
+  if (onActiveLocaleChange !== undefined) rootProps.onActiveLocaleChange = onActiveLocaleChange;
+  if (parentAddLocaleRoot !== undefined) rootProps.parentAddLocaleRoot = parentAddLocaleRoot;
+  return rootProps;
 }

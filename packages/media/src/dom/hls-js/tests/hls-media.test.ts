@@ -50,7 +50,9 @@ describe('HlsJsMedia', () => {
 
       expect(handler).toHaveBeenCalledOnce();
 
-      const event = handler.mock.calls[0]![0] as ErrorEvent;
+      const event =
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ handler.mock
+          .calls[0]![0] as ErrorEvent;
       expect(event).toBeInstanceOf(ErrorEvent);
       expect(event.error).toBeInstanceOf(MediaError);
       expect(event.error.code).toBe(MediaError.MEDIA_ERR_NETWORK);
@@ -516,21 +518,23 @@ describe('HlsJsMedia', () => {
      * element installed and ask it what the current policy resolves to.
      */
     function probeEngine(levels: Array<{ width: number; height: number; bitrate: number }>) {
-      const listeners = new Map<string, Array<{ fn: (...args: any[]) => void; ctx: unknown }>>();
-      return {
-        levels,
-        autoLevelCapping: -1,
-        autoLevelEnabled: true,
-        logger: { log: () => {} },
-        config: { capLevelToPlayerSize: false, ignoreDevicePixelRatio: true, maxDevicePixelRatio: Infinity },
-        on(event: string, fn: (...args: any[]) => void, ctx?: unknown) {
+      const listeners = new Map<string, Array<{ fn: (...args: any[]) => void; ctx: Hls | undefined }>>();
+      const engine = new Hls({
+        capLevelToPlayerSize: false,
+        ignoreDevicePixelRatio: true,
+        maxDevicePixelRatio: Infinity,
+      });
+      Object.defineProperty(engine, 'levels', { configurable: true, value: levels, writable: true });
+      engine.autoLevelCapping = -1;
+      return Object.assign(engine, {
+        on(event: string, fn: (...args: any[]) => void, ctx?: Hls) {
           listeners.set(event, [...(listeners.get(event) ?? []), { fn, ctx }]);
         },
         off: () => {},
-        emit(event: string, data: unknown) {
+        emit(event: string, data: { levels: Array<{ width: number; height: number; bitrate: number }> }) {
           for (const { fn, ctx } of listeners.get(event) ?? []) fn.call(ctx, event, data);
         },
-      } as unknown as Hls;
+      });
     }
 
     const LADDER = [
@@ -554,7 +558,9 @@ describe('HlsJsMedia', () => {
       const probeVideo = document.createElement('video');
       probeVideo.width = playerSize.width;
       probeVideo.height = playerSize.height;
-      (engine as any).emit(Hls.Events.MEDIA_ATTACHING, { media: probeVideo });
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+        engine as any
+      ).emit(Hls.Events.MEDIA_ATTACHING, { media: probeVideo });
 
       const index = controller.getMaxLevel(LADDER.length - 1);
       controller.destroy();
@@ -765,7 +771,13 @@ describe('HlsJsMedia', () => {
 
       const component: MediaComponent = {
         get targetOverride() {
-          return { remote: { state: 'connected' } as RemotePlaybackLike, load };
+          return {
+            remote:
+              /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+                state: 'connected',
+              } as RemotePlaybackLike,
+            load,
+          };
         },
       };
       addMediaComponent(media, component);

@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vite-plus/test';
 
+import type { MediaSnapshot } from '../../../core/ui/input-action/input-action';
 import { StatusAnnouncerCore } from '../../../core/ui/status-announcer/status-announcer-core';
 import { type StatusAnnouncerStore, subscribeToStatusAnnouncer } from '../status-announcer';
 
@@ -47,7 +48,7 @@ describe('subscribeToStatusAnnouncer', () => {
   });
 });
 
-function createStore(initialState: Record<string, unknown>) {
+function createStore(initialState: MediaSnapshot) {
   let state = initialState;
   let target: unknown | null = null;
   const listeners = new Set<() => void>();
@@ -64,14 +65,14 @@ function createStore(initialState: Record<string, unknown>) {
     },
   };
 
-  const setState = (partial: Record<string, unknown>) => {
+  const setState = (partial: Partial<MediaSnapshot>) => {
     state = { ...state, ...partial };
     for (const listener of listeners) listener();
   };
 
   return {
     store,
-    attach(partial: Record<string, unknown>) {
+    attach(partial: Partial<MediaSnapshot>) {
       target = {};
       setState(partial);
     },

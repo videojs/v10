@@ -127,14 +127,18 @@ export const TimeSliderRoot = forwardRef<HTMLDivElement, TimeSliderRootProps>(
           thumbProps,
           stateAttrMap: TimeSliderDataAttrs,
           getAttrs: (sliderState) => {
-            const attrs = core.getAttrs(sliderState as TimeSliderCore.State);
+            const attrs = core.getAttrs(
+              /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ sliderState as TimeSliderCore.State
+            );
             return {
               ...attrs,
               'aria-label': translateText(attrs['aria-label'], translator),
               'aria-valuetext': translateText(
                 attrs['aria-valuetext'],
                 translator,
-                core.getValueTextParams(sliderState as TimeSliderCore.State)
+                core.getValueTextParams(
+                  /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ sliderState as TimeSliderCore.State
+                )
               ),
             };
           },

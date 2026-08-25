@@ -7,27 +7,28 @@ import { optimize } from 'svgo';
 import { ASSETS_DIR, getIconSets, getSvgFiles } from './internal/paths.js';
 import { createSvgoConfig, PRESET_DEFAULT_OVERRIDES, REMOVE_ATTRS_PLUGIN, replaceColors } from './internal/svg.js';
 
-const SHAPES = new Set(['circle', 'ellipse', 'line', 'path', 'polygon', 'polyline', 'rect']);
+const GRAPHIC_ELEMENTS = new Set(['circle', 'ellipse', 'line', 'path', 'polygon', 'polyline', 'rect']);
+const CONVERT_GRAPHICS_TO_PATH_OPTION = 'convertShapeToPath';
 
-function allShapesUseCurrentColor(node: XastElement, inheritedFill: string): boolean {
+function allGraphicElementsUseCurrentColor(node: XastElement, inheritedFill: string): boolean {
   for (const child of node.children) {
     if (child.type !== 'element') continue;
 
     const effectiveFill = child.attributes.fill ?? inheritedFill;
 
-    if (SHAPES.has(child.name)) {
+    if (GRAPHIC_ELEMENTS.has(child.name)) {
       if (effectiveFill !== 'currentColor') return false;
-    } else if (!allShapesUseCurrentColor(child, effectiveFill)) {
+    } else if (!allGraphicElementsUseCurrentColor(child, effectiveFill)) {
       return false;
     }
   }
   return true;
 }
 
-function hasShapeDescendant(node: XastElement): boolean {
+function hasGraphicElementDescendant(node: XastElement): boolean {
   for (const child of node.children) {
     if (child.type !== 'element') continue;
-    if (SHAPES.has(child.name) || hasShapeDescendant(child)) return true;
+    if (GRAPHIC_ELEMENTS.has(child.name) || hasGraphicElementDescendant(child)) return true;
   }
   return false;
 }
@@ -56,8 +57,8 @@ const hoistCurrentColorFill: CustomPlugin = {
       exit(node) {
         if (node.name !== 'svg') return;
         if (node.attributes.fill !== 'none') return;
-        if (!hasShapeDescendant(node)) return;
-        if (!allShapesUseCurrentColor(node, 'none')) return;
+        if (!hasGraphicElementDescendant(node)) return;
+        if (!allGraphicElementsUseCurrentColor(node, 'none')) return;
 
         node.attributes.fill = 'currentColor';
 
@@ -76,7 +77,7 @@ const SVGO_CONFIG = createSvgoConfig(
       params: {
         overrides: {
           ...PRESET_DEFAULT_OVERRIDES,
-          convertShapeToPath: false,
+          [CONVERT_GRAPHICS_TO_PATH_OPTION]: false,
         },
       },
     },

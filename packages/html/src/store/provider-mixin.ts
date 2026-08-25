@@ -5,7 +5,7 @@ import {
   type PlayerTarget,
   setPlayerConfigValue,
 } from '@videojs/core/dom';
-import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
+import type { PropertyValues } from '@videojs/element';
 import { ContextProvider } from '@videojs/element/context';
 import type { Media } from '@videojs/media/dom';
 import { isNull } from '@videojs/utils/predicate';
@@ -38,6 +38,10 @@ interface ConfigInput {
   property: string;
   attribute: string;
   entry: PlayerFeatureConfig[string];
+}
+
+interface ConfigPropertyOwner {
+  [property: string]: string | null | undefined;
 }
 
 /**
@@ -79,7 +83,7 @@ export function createProviderMixin<Store extends PlayerStore>(
   return <Class extends UIElementConstructor>(BaseClass: Class) => {
     class PlayerProviderElement extends BaseClass {
       static properties = {
-        ...(BaseClass as unknown as { properties: PropertyDeclarationMap }).properties,
+        ...BaseClass.properties,
         ...Object.fromEntries(inputs.map(({ property, attribute }) => [property, { type: String, attribute }])),
       };
 
@@ -183,7 +187,15 @@ export function createProviderMixin<Store extends PlayerStore>(
         // write to the store. Store-side writers do not reflect back here.
         for (const { property, entry } of inputs) {
           if (!changed.has(property)) continue;
-          setPlayerConfigValue(this.store, entry, (this as unknown as Record<string, unknown>)[property]);
+          setPlayerConfigValue(
+            this.store,
+            entry,
+            property in this
+              ? /* SAFETY: ConfigInput names provider properties whose feature contract is nullable text. */ (
+                  this as this & ConfigPropertyOwner
+                )[property]
+              : undefined
+          );
         }
       }
 
@@ -255,12 +267,22 @@ export function createProviderMixin<Store extends PlayerStore>(
         if (this.#configuredStore === store) return;
 
         for (const { property, entry } of inputs) {
-          setPlayerConfigValue(store, entry, (this as unknown as Record<string, unknown>)[property]);
+          setPlayerConfigValue(
+            store,
+            entry,
+            property in this
+              ? /* SAFETY: ConfigInput names provider properties whose feature contract is nullable text. */ (
+                  this as this & ConfigPropertyOwner
+                )[property]
+              : undefined
+          );
         }
         this.#configuredStore = store;
       }
     }
 
-    return PlayerProviderElement as unknown as Class & PlayerProviderConstructor<Store>;
+    return /* SAFETY: The subclass preserves BaseClass and adds the declared provider interface. */ PlayerProviderElement as typeof PlayerProviderElement &
+      Class &
+      PlayerProviderConstructor<Store>;
   };
 }

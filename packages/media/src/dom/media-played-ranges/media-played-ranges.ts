@@ -61,7 +61,8 @@ export function MediaPlayedRangesMixin<Base extends Constructor<EventTarget & { 
 
     /** The host (subclass) supplies `currentTime` / `paused`. */
     get #host(): MediaPlayedRangesHost {
-      return this as unknown as MediaPlayedRangesHost;
+      return /* SAFETY: The mixin requires this host contract and preserves the concrete instance type. */ this as this &
+        MediaPlayedRangesHost;
     }
 
     get #currentTime(): number {
@@ -139,13 +140,14 @@ export function MediaPlayedRangesMixin<Base extends Constructor<EventTarget & { 
     }
   }
 
-  return MediaPlayedRanges as unknown as MixinReturn<Base, MediaPlayedRangesAPI>;
+  return /* SAFETY: The mixed class preserves the supplied base constructor. */ MediaPlayedRanges as typeof MediaPlayedRanges &
+    MixinReturn<Base, MediaPlayedRangesAPI>;
 }
 
 function createTimeRanges(ranges: number[][]): TimeRangeLike {
-  Object.defineProperties(ranges, {
-    start: { value: (i: number) => ranges[i]?.[0] ?? 0 },
-    end: { value: (i: number) => ranges[i]?.[1] ?? 0 },
-  });
-  return ranges as unknown as TimeRangeLike;
+  return {
+    length: ranges.length,
+    start: (index) => ranges[index]?.[0] ?? 0,
+    end: (index) => ranges[index]?.[1] ?? 0,
+  };
 }

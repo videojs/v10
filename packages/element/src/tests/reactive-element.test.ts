@@ -1,3 +1,4 @@
+import { isNumber } from '@videojs/utils/predicate';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { ReactiveElement } from '../reactive-element';
@@ -12,9 +13,14 @@ function uniqueTag(base: string): string {
 function createElement<T extends HTMLElement>(ctor: { new (): T }): T {
   const tag = uniqueTag('test-el');
   if (!customElements.get(tag)) {
-    customElements.define(tag, class extends (ctor as typeof HTMLElement) {} as typeof HTMLElement);
+    customElements.define(
+      tag,
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ class extends /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (ctor as typeof HTMLElement) {} as typeof HTMLElement
+    );
   }
-  return document.createElement(tag) as T;
+  return /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+    tag
+  ) as T;
 }
 
 afterEach(() => {
@@ -134,7 +140,7 @@ describe('ReactiveElement properties', () => {
 
     el.setAttribute('count', '42');
     expect(el.count).toBe(42);
-    expect(typeof el.count).toBe('number');
+    expect(isNumber(el.count)).toBe(true);
 
     el.setAttribute('count', '3.14');
     expect(el.count).toBe(3.14);
@@ -181,7 +187,9 @@ describe('ReactiveElement properties', () => {
     await el.updateComplete;
 
     expect(update).toHaveBeenCalledOnce();
-    const changed = update.mock.calls[0]![0] as PropertyValues;
+    const changed =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ update.mock
+        .calls[0]![0] as PropertyValues;
     expect(changed.get('label')).toBe('default');
   });
 
@@ -213,7 +221,9 @@ describe('ReactiveElement properties', () => {
     await el.updateComplete;
 
     expect(update).toHaveBeenCalledOnce();
-    const changed = update.mock.calls[0]![0] as PropertyValues;
+    const changed =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ update.mock
+        .calls[0]![0] as PropertyValues;
     expect(changed.has('label')).toBe(true);
     expect(changed.has('disabled')).toBe(true);
   });
@@ -370,7 +380,9 @@ describe('ReactiveElement lifecycle', () => {
     await el.updateComplete;
 
     expect(updated).toHaveBeenCalledOnce();
-    const changed = updated.mock.calls[0]![0] as PropertyValues;
+    const changed =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ updated.mock
+        .calls[0]![0] as PropertyValues;
     expect(changed.get('label')).toBe('');
   });
 
@@ -632,10 +644,13 @@ describe('ReactiveElement upgrade', () => {
     }
 
     const tag = uniqueTag('upgrade-el');
-    const el = document.createElement(tag) as TestElement;
+    const el =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+        tag
+      ) as TestElement;
 
     // Set property before defining custom element
-    (el as unknown as Record<string, unknown>).label = 'pre-upgrade';
+    Reflect.set(el, 'label', 'pre-upgrade');
     document.body.appendChild(el);
 
     // Define after (upgrade scenario)

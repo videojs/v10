@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 
 import { __unstable__loadDesignSystem, compile, normalizePath } from '@tailwindcss/node';
+import { isString } from '@videojs/utils/predicate';
 
 /** Operations style generation needs from a loaded Tailwind v4 design system. */
 export interface DesignSystem {
@@ -39,7 +40,7 @@ export async function loadDesignSystem(cssPath: string): Promise<DesignSystem> {
       const cached = candidateCache.get(candidate);
       if (cached !== undefined) return cached;
       const css = design.candidatesToCss([candidate])[0];
-      const recognized = typeof css === 'string' && css.trim().length > 0;
+      const recognized = isString(css) && css.trim().length > 0;
       candidateCache.set(candidate, recognized);
       return recognized;
     },

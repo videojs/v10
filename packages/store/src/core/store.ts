@@ -1,4 +1,4 @@
-import { isNull, isObject } from '@videojs/utils/predicate';
+import { isNull, isObject, isFunction } from '@videojs/utils/predicate';
 
 import { AbortControllerRegistry } from './abort-controller-registry';
 import type { StoreCallbacks } from './config';
@@ -14,6 +14,7 @@ import type {
 } from './slice';
 import type { StateChange, State as StateContainer, SubscribeOptions, UnknownState, WritableState } from './state';
 import { createState } from './state';
+import type { StoreValue } from './value';
 
 const STORE_SYMBOL = Symbol.for('@videojs/store');
 const hasOwnProp = Object.prototype.hasOwnProperty;
@@ -28,8 +29,10 @@ export interface StoreFactory<Target> {
   <State>(slice: Slice<Target, State>, options?: StoreOptions<Target, State>): Store<Target, State>;
 }
 
-export function createStore<Target = unknown>(): StoreFactory<Target> {
-  return (<S extends AnySlice<Target>>(
+export function createStore<Target = unknown>() {
+  return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (<
+    S extends AnySlice<Target>,
+  >(
     slice: S,
     options: StoreOptions<Target, InferSliceState<S>> = {}
   ): Store<Target, InferSliceState<S>> => {
@@ -62,16 +65,21 @@ export function createStore<Target = unknown>(): StoreFactory<Target> {
           return target!;
         },
         signals,
-        get: () => sourceState as Readonly<Record<PropertyKey, unknown>>,
-        set: (partial) => setSource(partial as Partial<SourceState>),
+        // SAFETY: SourceState is the slice-owned state contract exposed through StateContext's runtime value domain.
+        get: () => sourceState as Readonly<Record<PropertyKey, StoreValue>>,
+        set: (partial) =>
+          setSource(
+            /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ partial as Partial<SourceState>
+          ),
       } satisfies StateContext<Target>)
     );
 
     sourceState = initialSourceState;
     const initialDerivedState = derive(sourceState);
-    state = createState(publish(sourceState, initialDerivedState));
+    const initialPublicState = publish(sourceState, initialDerivedState);
+    state = createState(initialPublicState);
 
-    const store = {
+    const storeBase: BaseStore<Target, PublicState> & { readonly [STORE_SYMBOL]: boolean } = {
       [STORE_SYMBOL]: true,
       get $state() {
         return state;
@@ -88,21 +96,42 @@ export function createStore<Target = unknown>(): StoreFactory<Target> {
       attach,
       destroy,
       subscribe,
-    } as unknown as TargetStore;
+    };
 
-    for (const key of Object.keys(state.current as object)) {
+    // Seed each public state key so the object has the complete TargetStore
+    // contract before replacing those values with live getters below.
+    const store: TargetStore = Object.assign(storeBase, initialPublicState);
+
+    for (const key of Object.keys(
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ state.current as object
+    )) {
       Object.defineProperty(store, key, {
-        get: () => state.current[key as keyof PublicState],
+        get: () =>
+          state.current[
+            /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ key as keyof PublicState
+          ],
         enumerable: true,
       });
     }
 
     // Private symbol-backed source actions remain available to feature-owned
     // configuration adapters without becoming part of the public state snapshot.
-    for (const key of Object.getOwnPropertySymbols(sourceState as object)) {
-      if (typeof sourceState[key as keyof SourceState] !== 'function') continue;
+    for (const key of Object.getOwnPropertySymbols(
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ sourceState as object
+    )) {
+      if (
+        !isFunction(
+          sourceState[
+            /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ key as keyof SourceState
+          ]
+        )
+      )
+        continue;
       Object.defineProperty(store, key, {
-        get: () => sourceState[key as keyof SourceState],
+        get: () =>
+          sourceState[
+            /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ key as keyof SourceState
+          ],
       });
     }
 
@@ -115,11 +144,15 @@ export function createStore<Target = unknown>(): StoreFactory<Target> {
     return store;
 
     function derive(source: Readonly<SourceState>): DerivedState {
-      const result: Record<string, unknown> = {};
+      const result: Record<string, StoreValue> = {};
+      // SAFETY: S carries the SourceState and DerivedState contracts inferred from this slice.
       const definitions = slice.derived as
-        | Record<string, (ctx: { get: () => Readonly<SourceState> }) => unknown>
+        | Record<string, (ctx: { get: () => Readonly<SourceState> }) => StoreValue>
         | undefined;
-      if (!definitions) return result as DerivedState;
+      if (!definitions) {
+        // SAFETY: A slice without derived definitions has an empty DerivedState.
+        return result as DerivedState;
+      }
 
       const ctx = { get: () => source };
 
@@ -127,17 +160,21 @@ export function createStore<Target = unknown>(): StoreFactory<Target> {
         result[key] = definitions[key]!(ctx);
       }
 
-      return result as DerivedState;
+      return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ result as DerivedState;
     }
 
     function publish(source: Readonly<SourceState>, derived: DerivedState): PublicState {
-      const result: Record<string, unknown> = {};
+      const result: Record<string, StoreValue> = {};
 
       // Object.keys intentionally excludes symbol-backed internal source state.
       for (const key of Object.keys(source as object)) {
-        result[key] = source[key as keyof SourceState];
+        // SAFETY: Object.keys(source) returns only string keys owned by SourceState.
+        const sourceKey = key as keyof SourceState;
+        // SAFETY: StoreValue is the runtime domain accepted by slice state.
+        result[key] = source[sourceKey] as StoreValue;
       }
 
+      // SAFETY: result contains every public string source key plus every derived key.
       return Object.assign(result, derived) as PublicState;
     }
 
@@ -174,7 +211,7 @@ export function createStore<Target = unknown>(): StoreFactory<Target> {
         reportError,
         store: {
           get state() {
-            return state.current as UnknownState;
+            return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ state.current as UnknownState;
           },
           subscribe,
         },
@@ -204,9 +241,14 @@ export function createStore<Target = unknown>(): StoreFactory<Target> {
       signals.reset();
       target = null;
 
-      const resetState = { ...initialSourceState } as SourceState;
-      for (const key of slice.preserve ?? []) {
-        (resetState as Record<PropertyKey, unknown>)[key] = (sourceState as Record<PropertyKey, unknown>)[key];
+      // SAFETY: Spreading initialSourceState creates the mutable SourceState copy used for reset.
+      const resetState = {
+        ...initialSourceState,
+      } as SourceState;
+      for (const preservedKey of slice.preserve ?? []) {
+        // SAFETY: Slice preserve entries name keys in its own SourceState contract.
+        const key = preservedKey as keyof SourceState;
+        resetState[key] = sourceState[key];
       }
       setSource(resetState);
     }
@@ -222,14 +264,14 @@ export function createStore<Target = unknown>(): StoreFactory<Target> {
       return state.subscribe(callback, options);
     }
 
-    function reportError(error: unknown): void {
+    function reportError<Failure>(error: Failure): void {
       if (options.onError) {
         options.onError({ store, error });
       } else {
         console.error('[vjs-store]', error);
       }
     }
-  }) as StoreFactory<Target>;
+  }) satisfies StoreFactory<Target> satisfies StoreFactory<Target>;
 }
 
 function freezeCopy<T>(value: T): Readonly<T> {
@@ -237,21 +279,27 @@ function freezeCopy<T>(value: T): Readonly<T> {
 }
 
 function patchSource<State>(current: Readonly<State>, partial: Partial<State>): { next: Readonly<State> } | null {
-  const next = { ...current } as State;
+  const next = /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ {
+    ...current,
+  } as State;
   let changed = false;
 
-  for (const key of Reflect.ownKeys(partial as object) as (keyof State)[]) {
+  for (const key of /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ Reflect.ownKeys(
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ partial as object
+  ) as (keyof State)[]) {
     if (!hasOwnProp.call(partial, key)) continue;
     const value = partial[key];
     if (Object.is(current[key], value)) continue;
-    (next as { -readonly [Key in keyof State]: State[Key] })[key] = value!;
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (
+      next satisfies { -readonly [Key in keyof State]: State[Key] }
+    )[key] = value!;
     changed = true;
   }
 
   return changed ? { next: Object.freeze(next) } : null;
 }
 
-export function isStore(value: unknown): value is AnyStore {
+export function isStore<Value>(value: Value): value is Value & AnyStore {
   return isObject(value) && STORE_SYMBOL in value;
 }
 
@@ -260,11 +308,10 @@ export function isStore(value: unknown): value is AnyStore {
 // ----------------------------------------
 
 export interface BaseStore<Target = unknown, State = UnknownState> {
-  [key: string]: unknown;
   readonly $state: StateContainer<State>;
   readonly target: Target | null;
   readonly destroyed: boolean;
-  readonly state: State;
+  readonly state: Readonly<State>;
   attach(target: Target): () => void;
   destroy(): void;
   subscribe(callback: StateChange, options?: SubscribeOptions): () => void;

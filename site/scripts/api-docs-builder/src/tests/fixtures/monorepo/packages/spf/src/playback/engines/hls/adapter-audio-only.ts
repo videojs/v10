@@ -33,7 +33,10 @@ export const SpfAudioOnlyMediaMixin = <Base extends Constructor>(BaseClass: Base
 
     set src(value: string) {
       this.#src = value;
-      (this as unknown as EventTarget).dispatchEvent(new Event('audiomodechange'));
+      const target: object = this;
+      /* SAFETY: The fixture models a mixin applied to an EventTarget host. */ (target as EventTarget).dispatchEvent(
+        new Event('audiomodechange')
+      );
     }
 
     /** Preload hint forwarded to the internal audio element. */
@@ -46,5 +49,5 @@ export const SpfAudioOnlyMediaMixin = <Base extends Constructor>(BaseClass: Base
     }
   }
 
-  return SpfAudioOnlyMedia as unknown as Base & Constructor<{ src: string; preload: string }>;
+  return SpfAudioOnlyMedia as Base & Constructor<{ src: string; preload: string }>;
 };

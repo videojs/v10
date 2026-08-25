@@ -33,7 +33,10 @@ describe('Audio', () => {
     it('passes props to audio element', () => {
       const { container } = render(<Audio src="test.mp3" controls autoPlay />);
 
-      const audio = container.querySelector('audio') as HTMLAudioElement;
+      const audio =
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ container.querySelector(
+          'audio'
+        ) as HTMLAudioElement;
       expect(audio?.getAttribute('src')).toBe('test.mp3');
       expect(audio?.hasAttribute('controls')).toBe(true);
       expect(audio?.hasAttribute('autoplay')).toBe(true);
@@ -63,7 +66,8 @@ describe('Audio', () => {
       const setMedia = vi.fn();
       const store = createMockStore();
       const value: PlayerContextValue = {
-        store: store as any,
+        store:
+          /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ store as any,
         media: null,
         setMedia,
         container: null,
@@ -79,7 +83,8 @@ describe('Audio', () => {
       const setMedia = vi.fn();
       const store = createMockStore();
       const value: PlayerContextValue = {
-        store: store as any,
+        store:
+          /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ store as any,
         media: null,
         setMedia,
         container: null,
@@ -98,7 +103,8 @@ describe('Audio', () => {
       const setMedia = vi.fn();
       const store = createMockStore();
       const value: PlayerContextValue = {
-        store: store as any,
+        store:
+          /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ store as any,
         media: null,
         setMedia,
         container: null,

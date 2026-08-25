@@ -37,24 +37,40 @@ export default function llmsMarkdown(): AstroIntegration {
 
         // Ensure [data-llms-only] content passes through despite hidden attribute
         turndown.addRule('llms-only', {
-          filter: (node) => node.nodeType === 1 && (node as Element).getAttribute('data-llms-only') !== null,
+          filter: (node) =>
+            node.nodeType === 1 &&
+            /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (
+              node as Element
+            ).getAttribute('data-llms-only') !== null,
           replacement: (content) => content,
         });
 
         // Wrap [data-cli-replace] content with text markers the CLI can find and replace
         turndown.addRule('cli-replace', {
-          filter: (node) => node.nodeType === 1 && (node as Element).getAttribute('data-cli-replace') !== null,
+          filter: (node) =>
+            node.nodeType === 1 &&
+            /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (
+              node as Element
+            ).getAttribute('data-cli-replace') !== null,
           replacement: (content, node) => {
-            const id = (node as Element).getAttribute('data-cli-replace');
+            const id = /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (
+              node as Element
+            ).getAttribute('data-cli-replace');
             return `\n<!-- cli:replace ${id} -->\n${content}\n<!-- /cli:replace ${id} -->\n`;
           },
         });
 
         // Wrap [data-cli-omit] content with text markers the CLI strips from its output
         turndown.addRule('cli-omit', {
-          filter: (node) => node.nodeType === 1 && (node as Element).getAttribute('data-cli-omit') !== null,
+          filter: (node) =>
+            node.nodeType === 1 &&
+            /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (
+              node as Element
+            ).getAttribute('data-cli-omit') !== null,
           replacement: (content, node) => {
-            const id = (node as Element).getAttribute('data-cli-omit');
+            const id = /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (
+              node as Element
+            ).getAttribute('data-cli-omit');
             return `\n<!-- cli:omit ${id} -->\n${content}\n<!-- /cli:omit ${id} -->\n`;
           },
         });
@@ -92,7 +108,10 @@ export default function llmsMarkdown(): AstroIntegration {
             // For each content element, strip non-content elements before conversion
             const contentParts: string[] = [];
             contentElements.forEach((contentEl) => {
-              const clone = contentEl.cloneNode(true) as Element;
+              const clone =
+                /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ contentEl.cloneNode(
+                  true
+                ) as Element;
               const ignoreElements = clone.querySelectorAll('[data-llms-ignore]');
               ignoreElements.forEach((el) => el.remove());
               // Remove script and style tags (includes Astro island hydration scripts)

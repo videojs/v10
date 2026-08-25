@@ -1,3 +1,4 @@
+import { isUndefined } from '@videojs/utils/predicate';
 /**
  * jsdom test setup for `core/dom`.
  *
@@ -5,7 +6,7 @@
  */
 
 // jsdom lacks PointerEvent — polyfill via MouseEvent with pointer-specific properties.
-if (typeof globalThis.PointerEvent === 'undefined') {
+if (isUndefined(globalThis.PointerEvent)) {
   // @ts-expect-error -- intentional incomplete polyfill for test environment.
   globalThis.PointerEvent = class PointerEvent extends MouseEvent {
     readonly pointerId: number;

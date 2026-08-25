@@ -1,6 +1,8 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
+import type { ApiDocInput } from './boundary-types';
+
 interface ValidationIssue {
   path: readonly PropertyKey[];
   message: string;
@@ -8,11 +10,11 @@ interface ValidationIssue {
 
 interface Schema<T> {
   safeParse(
-    value: unknown
+    value: ApiDocInput
   ): { success: true; data: T } | { success: false; error: { issues: readonly ValidationIssue[] } };
 }
 
-export interface GeneratedDoc<T = unknown> {
+export interface GeneratedDoc<T extends ApiDocInput = ApiDocInput> {
   /** Output filename including the `.json` extension. */
   fileName: string;
   /** Human-readable name used in diagnostics. */
@@ -22,7 +24,7 @@ export interface GeneratedDoc<T = unknown> {
   detail?: string;
 }
 
-export interface ReferenceGroup<T = unknown> {
+export interface ReferenceGroup<T extends ApiDocInput = ApiDocInput> {
   name: string;
   outputPath: string;
   schema: Schema<T>;
@@ -47,7 +49,7 @@ export type ReferenceGroupValidation =
   | { success: false; name: string; errors: ReferenceValidationError[] };
 
 /** Validate a complete output group before any generated files are changed. */
-export function validateReferenceGroup<T>(group: ReferenceGroup<T>): ReferenceGroupValidation {
+export function validateReferenceGroup<T extends ApiDocInput>(group: ReferenceGroup<T>): ReferenceGroupValidation {
   const docs: GeneratedDoc[] = [];
   const errors: ReferenceValidationError[] = [];
   const seenFileNames = new Set<string>();
@@ -110,7 +112,7 @@ export function validateReferenceGroup<T>(group: ReferenceGroup<T>): ReferenceGr
  * Write a validated group and remove JSON files that are no longer generated.
  * Non-JSON files are left untouched.
  */
-export function writeReferenceGroup(group: ValidatedReferenceGroup): { written: number; removed: string[] } {
+export function writeReferenceGroup(group: ValidatedReferenceGroup) {
   const parentPath = path.dirname(group.outputPath);
   fs.mkdirSync(parentPath, { recursive: true });
 
@@ -137,7 +139,7 @@ export function writeReferenceGroup(group: ValidatedReferenceGroup): { written: 
       removed.push(fileName);
     }
 
-    return { written: group.docs.length, removed };
+    return { written: group.docs.length, removed } satisfies { written: number; removed: string[] };
   } finally {
     fs.rmSync(stagingPath, { recursive: true, force: true });
   }

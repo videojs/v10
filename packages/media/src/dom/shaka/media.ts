@@ -122,7 +122,7 @@ class ShakaMediaBase
 
     // A server render has no DOM to probe or play into; the client constructs
     // an instance of its own. Even the support check needs browser globals.
-    if (typeof document === 'undefined') return;
+    if (!('document' in globalThis)) return;
 
     installPolyfills();
 
@@ -423,15 +423,19 @@ class ShakaMediaBase
    *
    * Nothing awaits these, so a rejection is reported rather than left unhandled.
    */
-  #run(operation: Promise<unknown>) {
+  #run<Result>(operation: Promise<Result>) {
     operation.catch((error) => this.#reportError(error));
   }
 
   #onEngineError = (event: Event) => {
-    this.#reportError((event as Event & { detail?: unknown }).detail);
+    this.#reportError(
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (
+        event as Event & { detail?: unknown }
+      ).detail
+    );
   };
 
-  #reportError(error: unknown) {
+  #reportError<Failure>(error: Failure) {
     // A teardown rejects whatever it was racing; there is no one left to tell.
     if (this.#isDestroyed) return;
 
@@ -519,13 +523,13 @@ function withDrmConfig(config: ShakaConfig | undefined, drm: DrmSystemsConfig | 
   } satisfies ShakaConfig;
 }
 
-const categoryToCode: Record<number, number> = {
-  [shaka.util.Error.Category.NETWORK]: MediaError.MEDIA_ERR_NETWORK,
-  [shaka.util.Error.Category.MEDIA]: MediaError.MEDIA_ERR_DECODE,
-  [shaka.util.Error.Category.MANIFEST]: MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED,
-  [shaka.util.Error.Category.STREAMING]: MediaError.MEDIA_ERR_DECODE,
-  [shaka.util.Error.Category.DRM]: MediaError.MEDIA_ERR_ENCRYPTED,
-};
+const categoryToCode = new Map<number, number>([
+  [shaka.util.Error.Category.NETWORK, MediaError.MEDIA_ERR_NETWORK],
+  [shaka.util.Error.Category.MEDIA, MediaError.MEDIA_ERR_DECODE],
+  [shaka.util.Error.Category.MANIFEST, MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED],
+  [shaka.util.Error.Category.STREAMING, MediaError.MEDIA_ERR_DECODE],
+  [shaka.util.Error.Category.DRM, MediaError.MEDIA_ERR_ENCRYPTED],
+]);
 
 /** Shaka codes for a load that a newer one replaced. */
 const abortedCodes = new Set<number>([shaka.util.Error.Code.LOAD_INTERRUPTED, shaka.util.Error.Code.OPERATION_ABORTED]);
@@ -542,7 +546,7 @@ const abortedCodes = new Set<number>([shaka.util.Error.Code.LOAD_INTERRUPTED, sh
  * Shaka classifies a failure by category rather than by a media error code, so
  * the code is derived from that.
  */
-function toMediaError(error: unknown): MediaError | null {
+function toMediaError<Failure>(error: Failure): MediaError | null {
   if (!isShakaError(error)) {
     return error instanceof Error ? new MediaError(error.message, MediaError.MEDIA_ERR_CUSTOM, true) : null;
   }
@@ -557,13 +561,13 @@ function toMediaError(error: unknown): MediaError | null {
     return null;
   }
 
-  const code = categoryToCode[error.category] ?? MediaError.MEDIA_ERR_CUSTOM;
+  const code = categoryToCode.get(error.category) ?? MediaError.MEDIA_ERR_CUSTOM;
   const mediaError = new MediaError(error.message, code, true, `shaka-${error.code}`);
   mediaError.data = error;
 
   return mediaError;
 }
 
-function isShakaError(value: unknown): value is shaka.util.Error & { message?: string } {
+function isShakaError<Value>(value: Value): value is Value & shaka.util.Error & { message?: string } {
   return typeof value === 'object' && value !== null && 'code' in value && 'category' in value;
 }

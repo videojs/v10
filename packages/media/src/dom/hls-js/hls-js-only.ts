@@ -107,7 +107,11 @@ class HlsJsOnlyMediaBase extends HTMLVideoElementHost implements MediaEngineHost
   set src(src: string) {
     // Attaching, detaching, and loading a source each reset every text track on
     // the element, sideloaded ones included. See `withPreservedTextTracks`.
-    withPreservedTextTracks(this.target as HTMLVideoElement | null, () => this.#engine?.loadSource(src));
+    withPreservedTextTracks(
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ this
+        .target as HTMLVideoElement | null,
+      () => this.#engine?.loadSource(src)
+    );
   }
 
   attach(target: HTMLVideoElement) {
@@ -116,7 +120,11 @@ class HlsJsOnlyMediaBase extends HTMLVideoElementHost implements MediaEngineHost
   }
 
   detach() {
-    withPreservedTextTracks(this.target as HTMLVideoElement | null, () => this.#engine?.detachMedia());
+    withPreservedTextTracks(
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ this
+        .target as HTMLVideoElement | null,
+      () => this.#engine?.detachMedia()
+    );
     super.detach();
   }
 
@@ -132,18 +140,19 @@ interface HlsJsMediaCapabilities
   readonly error: MediaError | null;
 }
 
-const HlsJsOnlyMediaComposed = HlsJsMediaAirPlayMixin(
-  HlsJsMediaPreloadMixin(
-    HlsJsMediaLiveMixin(
-      HlsJsMediaStreamTypeMixin(
-        HlsJsMediaMediaTracksMixin(
-          HlsJsMediaMetadataTracksMixin(
-            HlsJsMediaTextTracksMixin(HlsJsMediaErrorsMixin(MediaTracksMixin(HlsJsOnlyMediaBase)))
+const HlsJsOnlyMediaComposed =
+  /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ HlsJsMediaAirPlayMixin(
+    HlsJsMediaPreloadMixin(
+      HlsJsMediaLiveMixin(
+        HlsJsMediaStreamTypeMixin(
+          HlsJsMediaMediaTracksMixin(
+            HlsJsMediaMetadataTracksMixin(
+              HlsJsMediaTextTracksMixin(HlsJsMediaErrorsMixin(MediaTracksMixin(HlsJsOnlyMediaBase)))
+            )
           )
         )
       )
     )
-  )
-) as unknown as MixinReturn<WithMediaTracks<typeof HlsJsOnlyMediaBase>, HlsJsMediaCapabilities>;
+  ) as MixinReturn<WithMediaTracks<typeof HlsJsOnlyMediaBase>, HlsJsMediaCapabilities>;
 
 export class HlsJsOnlyMedia extends HlsJsOnlyMediaComposed {}

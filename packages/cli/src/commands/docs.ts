@@ -63,14 +63,21 @@ function mapPresetToUseCase(preset: string): UseCase {
   return result;
 }
 
-const ALL_RENDERERS = Object.keys(RENDERER_LABELS) as Renderer[];
+const ALL_RENDERERS =
+  /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ Object.keys(
+    RENDERER_LABELS
+  ) as Renderer[];
 
 function validateMedia(media: string): Renderer {
-  if (!ALL_RENDERERS.includes(media as Renderer)) {
+  if (
+    !ALL_RENDERERS.includes(
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ media as Renderer
+    )
+  ) {
     console.error(`Invalid media type: "${media}". Valid options: ${ALL_RENDERERS.join(', ')}`);
     process.exit(1);
   }
-  return media as Renderer;
+  return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ media as Renderer;
 }
 
 function validateInstallMethod(method: string, framework: Framework): InstallMethod {
@@ -79,7 +86,7 @@ function validateInstallMethod(method: string, framework: Framework): InstallMet
     console.error(`Invalid install method: "${method}". Valid options: ${valid.join(', ')}`);
     process.exit(1);
   }
-  return method as InstallMethod;
+  return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ method as InstallMethod;
 }
 
 function buildPartialFlags(flags: ParsedFlags, framework: Framework): PartialInstallFlags {

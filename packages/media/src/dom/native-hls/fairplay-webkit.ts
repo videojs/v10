@@ -60,7 +60,8 @@ export function supportsWebKitFairPlay(media: HTMLMediaElement): boolean {
  */
 export function createFairPlayWebKit(context: FairPlayContext): FairPlayKeySystem {
   const { media, signal, reportError } = context;
-  const element = media as WebKitEncryptedMediaElement;
+  const element =
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ media as WebKitEncryptedMediaElement;
   const sessions = new Set<WebKitMediaKeySession>();
 
   let certificate: Promise<ArrayBuffer | null> | null = null;
@@ -68,7 +69,10 @@ export function createFairPlayWebKit(context: FairPlayContext): FairPlayKeySyste
   function setupKeys(): void {
     if (element.webkitKeys) return;
 
-    const MediaKeysConstructor = (globalThis as { WebKitMediaKeys?: WebKitMediaKeysConstructor }).WebKitMediaKeys;
+    const MediaKeysConstructor =
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (
+        globalThis as { WebKitMediaKeys?: WebKitMediaKeysConstructor }
+      ).WebKitMediaKeys;
     if (!MediaKeysConstructor || !supportsWebKitFairPlay(media)) {
       throw createDrmError(NativeHlsDrmMessages.UNSUPPORTED_KEY_SYSTEM, NativeHlsDrmErrors.UNSUPPORTED_KEY_SYSTEM);
     }
@@ -126,7 +130,11 @@ export function createFairPlayWebKit(context: FairPlayContext): FairPlayKeySyste
 
       session.addEventListener(
         'webkitkeymessage',
-        (message) => void onMessage(session, message as WebKitKeyMessageEvent),
+        (message) =>
+          void onMessage(
+            session,
+            /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ message as WebKitKeyMessageEvent
+          ),
         {
           signal,
         }

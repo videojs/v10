@@ -24,7 +24,7 @@ type MediaTracksHost = DashEngineHost & MediaVideoTrackCapability & MediaVideoRe
  * and friends.
  */
 export function DashMediaMediaTracksMixin<Base extends Constructor<MediaTracksHost>>(BaseClass: Base) {
-  class DashMediaMediaTracks extends (BaseClass as Constructor<MediaTracksHost>) {
+  class DashMediaMediaTracks extends BaseClass {
     // The source is announced as a whole, so the URL it resolved to last is what
     // tells a new stream apart from a settings-only change.
     #src = '';
@@ -165,7 +165,7 @@ export function DashMediaMediaTracksMixin<Base extends Constructor<MediaTracksHo
     }
   }
 
-  return DashMediaMediaTracks as unknown as Base;
+  return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ DashMediaMediaTracks as Base;
 }
 
 /**

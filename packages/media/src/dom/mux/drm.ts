@@ -1,7 +1,7 @@
 import { parseJwt } from '@videojs/utils/jwt';
 
 import type { DrmSystemsConfig } from '../../core/drm';
-import { createMuxQuery, MUX_VIDEO_DOMAIN, type MuxJWT, type MuxSourceBase } from './source';
+import { createMuxQuery, MUX_VIDEO_DOMAIN, type MuxSourceBase } from './source';
 
 /**
  * Build the license servers a source describes, keyed by EME key system id —
@@ -25,7 +25,7 @@ export function createMuxDrmSystems(source?: MuxSourceBase | null): DrmSystemsCo
   const { token } = drm ?? {};
 
   // License tokens must carry the DRM (`d`) audience.
-  if (!token || parseJwt<MuxJWT>(token)?.aud !== 'd') return undefined;
+  if (!token || parseJwt(token)?.aud !== 'd') return undefined;
 
   const query = createMuxQuery({ token });
   const url = (path: string) => `https://license.${customDomain}/${path}/${playbackId}${query}`;

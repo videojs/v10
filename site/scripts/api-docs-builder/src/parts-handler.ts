@@ -83,7 +83,7 @@ export function extractPartDescription(filePath: string, program: ts.Program, pa
  * from `node_modules`). This picks up props from project types like
  * `TooltipGroupProps` while excluding inherited React DOM attributes.
  */
-export function extractSubPartProps(filePath: string, program: ts.Program, localName: string): Record<string, PropDef> {
+export function extractSubPartProps(filePath: string, program: ts.Program, localName: string) {
   const sourceFile = program.getSourceFile(filePath);
   if (!sourceFile) return {};
   const checker = program.getTypeChecker();
@@ -143,5 +143,5 @@ export function extractSubPartProps(filePath: string, program: ts.Program, local
     ts.forEachChild(node, visit);
   });
 
-  return props;
+  return props satisfies Record<string, PropDef>;
 }

@@ -5,7 +5,12 @@ import { SliderSegmentsCore } from '../../../slider/slider-segments-core';
 import { normalizeChapterCues, TimeSliderChaptersCore } from '../core';
 
 function cue(startTime: number, endTime: number, text: string, id = ''): MediaTextCue {
-  return { startTime, endTime, text, id } as MediaTextCue;
+  return /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+    startTime,
+    endTime,
+    text,
+    id,
+  } as MediaTextCue;
 }
 
 describe('normalizeChapterCues', () => {

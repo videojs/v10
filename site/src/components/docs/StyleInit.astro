@@ -40,7 +40,7 @@ const allStyles = [...new Set(Object.values(FRAMEWORK_STYLES).flat())];
     defaultStyle: defaultStyleConfig,
   }}
 >
-  if (typeof localStorage !== "undefined" && typeof document !== "undefined") {
+  if ("localStorage" in globalThis && "document" in globalThis) {
     // Extract framework from URL: /docs/framework/{framework}/...
     const pathMatch = window.location.pathname.match(
       /\/docs\/framework\/([^/]+)/,

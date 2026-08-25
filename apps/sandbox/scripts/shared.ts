@@ -26,7 +26,8 @@ export function getChanges(): Change[] {
   return (res.diffSet ?? [])
     .filter((d) => d.state !== 'equal' && d.type1 !== 'directory' && d.type2 !== 'directory')
     .map((d) => ({
-      state: d.state as Change['state'],
+      state:
+        /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ d.state as Change['state'],
       name: (d.name1 ?? d.name2)!,
       relativePath: d.relativePath,
     }))

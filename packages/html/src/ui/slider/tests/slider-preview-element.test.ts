@@ -5,11 +5,12 @@ import { SliderPreviewElement } from '../slider-preview-element';
 
 // jsdom doesn't provide ResizeObserver.
 beforeAll(() => {
-  globalThis.ResizeObserver = class ResizeObserver {
-    observe() {}
-    unobserve() {}
-    disconnect() {}
-  } as unknown as typeof globalThis.ResizeObserver;
+  globalThis.ResizeObserver =
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ class ResizeObserver {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    } as typeof globalThis.ResizeObserver;
 });
 
 let tagCounter = 0;
@@ -18,10 +19,15 @@ function uniqueTag(base: string): string {
   return `${base}-${tagCounter++}`;
 }
 
-function createElement<Element extends HTMLElement>(Base: abstract new () => Element): Element {
+function createElement<Element extends HTMLElement>(Base: new () => Element): Element {
   const tag = uniqueTag('test-slp');
-  customElements.define(tag, class extends (Base as unknown as typeof HTMLElement) {});
-  return document.createElement(tag) as Element;
+  customElements.define(
+    tag,
+    class extends /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (Base as typeof HTMLElement) {}
+  );
+  return /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+    tag
+  ) as Element;
 }
 
 afterEach(() => {

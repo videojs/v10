@@ -1,7 +1,9 @@
 export interface PublicPromise<T> extends Promise<T> {
   resolve: (value: T) => void;
-  reject: (reason?: unknown) => void;
+  reject: (reason?: PromiseRejectionReason) => void;
 }
+
+export type PromiseRejectionReason = Error | string | number | boolean | null | undefined;
 
 /**
  * A promise that can be settled from outside its executor.
@@ -19,11 +21,14 @@ export interface PublicPromise<T> extends Promise<T> {
  */
 export function createPublicPromise<T>(): PublicPromise<T> {
   let resolve!: (value: T) => void;
-  let reject!: (reason?: unknown) => void;
-  const promise = new Promise<T>((res, rej) => {
-    resolve = res;
-    reject = rej;
-  }) as PublicPromise<T>;
+  let reject!: (reason?: PromiseRejectionReason) => void;
+  const promise =
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ new Promise<T>(
+      (res, rej) => {
+        resolve = res;
+        reject = rej;
+      }
+    ) as PublicPromise<T>;
   promise.resolve = resolve;
   promise.reject = reject;
   return promise;

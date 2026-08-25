@@ -807,7 +807,7 @@ function createContainer(): HTMLElement {
 
 function createPointerEvent(type: string, init?: { pointerType?: string }): Event {
   const event = new Event(type, { bubbles: true });
-  (event as unknown as Record<string, unknown>).pointerType = init?.pointerType ?? '';
+  Object.defineProperty(event, 'pointerType', { value: init?.pointerType ?? '' });
   return event;
 }
 
@@ -822,7 +822,11 @@ function addToggleControlsGesture(container: HTMLElement): () => void {
 }
 
 function createMockRemote(): EventTarget & { state: string; prompt: () => Promise<void> } {
-  const target = new EventTarget() as EventTarget & { state: string; prompt: () => Promise<void> };
+  const target =
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ new EventTarget() as EventTarget & {
+      state: string;
+      prompt: () => Promise<void>;
+    };
   target.state = 'disconnected';
   target.prompt = () => Promise.resolve();
   return target;

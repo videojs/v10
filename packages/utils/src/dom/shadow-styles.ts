@@ -1,3 +1,4 @@
+import { isString, isUndefined } from '../predicate';
 export type ShadowStyle = CSSStyleSheet | string;
 
 /** Inject a `<style>` tag into `document.head` once (idempotent by `id`). */
@@ -16,7 +17,7 @@ function isConstructableStyleSheet(value: ShadowStyle): value is CSSStyleSheet {
 }
 
 function getStyleText(style: ShadowStyle): string {
-  if (typeof style === 'string') return style;
+  if (isString(style)) return style;
 
   return Array.from(style.cssRules)
     .map((rule) => rule.cssText)
@@ -25,7 +26,7 @@ function getStyleText(style: ShadowStyle): string {
 
 /** Create a constructable stylesheet when available, otherwise return raw CSS. */
 export function createShadowStyle(css: string): ShadowStyle {
-  if (typeof globalThis.CSSStyleSheet === 'undefined') {
+  if (isUndefined(globalThis.CSSStyleSheet)) {
     return css;
   }
 

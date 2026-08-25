@@ -183,7 +183,10 @@ export function getSectionsForGuide(slug: string, sidebarToSearch: Sidebar = sid
  * ancestor section along the path, then applies the guide's own restriction on top.
  */
 export function getValidFrameworksForGuide(guide: Guide, sidebarToSearch: Sidebar = sidebar): SupportedFramework[] {
-  const allFrameworks = Object.keys(FRAMEWORK_STYLES) as SupportedFramework[];
+  const allFrameworks =
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ Object.keys(
+      FRAMEWORK_STYLES
+    ) as SupportedFramework[];
 
   function findWithRestrictions(items: Sidebar, inherited: SupportedFramework[]): SupportedFramework[] | null {
     for (const item of items) {
@@ -209,10 +212,7 @@ export function getValidFrameworksForGuide(guide: Guide, sidebarToSearch: Sideba
  * @param framework - The framework to filter for
  * @returns Object with prev and next guides (null if at start/end)
  */
-export function getAdjacentGuides(
-  currentSlug: string,
-  framework: SupportedFramework
-): { prev: Guide | null; next: Guide | null } {
+export function getAdjacentGuides(currentSlug: string, framework: SupportedFramework) {
   // Get the filtered sidebar for this framework
   const filteredSidebar = filterSidebar(framework);
 
@@ -224,7 +224,7 @@ export function getAdjacentGuides(
 
   if (currentIndex === -1) {
     // Current guide not found in filtered sidebar
-    return { prev: null, next: null };
+    return { prev: null, next: null } satisfies { prev: Guide | null; next: Guide | null };
   }
 
   // Get prev and next slugs
@@ -235,5 +235,5 @@ export function getAdjacentGuides(
   const prev = prevSlug ? findGuideBySlug(prevSlug, filteredSidebar) : null;
   const next = nextSlug ? findGuideBySlug(nextSlug, filteredSidebar) : null;
 
-  return { prev, next };
+  return { prev, next } satisfies { prev: Guide | null; next: Guide | null };
 }

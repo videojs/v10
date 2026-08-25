@@ -6,9 +6,9 @@ import { isWebKitAirPlayCapable, supportsWebKitAirPlay } from '../webkit';
 function stubWebKit(present: boolean) {
   const key = 'WebKitPlaybackTargetAvailabilityEvent';
   if (present) {
-    (globalThis as unknown as Record<string, unknown>)[key] = class {};
+    Object.defineProperty(globalThis, key, { configurable: true, value: class {} });
   } else {
-    delete (globalThis as unknown as Record<string, unknown>)[key];
+    Reflect.deleteProperty(globalThis, key);
   }
 }
 
@@ -30,13 +30,13 @@ describe('webkit', () => {
   describe('isWebKitAirPlayCapable', () => {
     it('returns true when supported and the media exposes the AirPlay flag', () => {
       stubWebKit(true);
-      const media = { webkitCurrentPlaybackTargetIsWireless: false } as unknown as EventTarget;
+      const media = Object.assign(new EventTarget(), { webkitCurrentPlaybackTargetIsWireless: false });
       expect(isWebKitAirPlayCapable(media)).toBe(true);
     });
 
     it('returns false when WebKit is unsupported', () => {
       stubWebKit(false);
-      const media = { webkitCurrentPlaybackTargetIsWireless: false } as unknown as EventTarget;
+      const media = Object.assign(new EventTarget(), { webkitCurrentPlaybackTargetIsWireless: false });
       expect(isWebKitAirPlayCapable(media)).toBe(false);
     });
 

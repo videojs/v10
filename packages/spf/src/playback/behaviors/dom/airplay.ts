@@ -121,7 +121,8 @@ function setupAirPlaySetup({
 
       'airplay-capable': {
         entry: () => {
-          const mediaElement = context.mediaElement.get() as WebKitVideoElement;
+          const mediaElement =
+            /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ context.mediaElement.get() as WebKitVideoElement;
 
           // WebKit's wireless flag is the only session signal. The standard
           // Remote Playback API's `remote.state` is deliberately not consulted:

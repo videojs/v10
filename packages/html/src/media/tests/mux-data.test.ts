@@ -45,7 +45,9 @@ describe('MuxDataElement', () => {
     const host = new HTMLVideoElementHost();
     const provider = new TestMediaProvider();
     document.body.append(provider);
-    provider.setMedia(host as unknown as Media);
+    provider.setMedia(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ host as Media
+    );
 
     provider.innerHTML = '<test-mux-data></test-mux-data>';
 
@@ -61,14 +63,18 @@ describe('MuxDataElement', () => {
   it('registers a MuxData component with the media host from context', () => {
     const { host, provider } = setup();
 
-    provider.setMedia(host as unknown as Media);
+    provider.setMedia(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ host as Media
+    );
 
     expect(getMediaComponents(host).get(MuxData)).toBeInstanceOf(MuxData);
   });
 
   it('forwards attributes to the component', () => {
     const { host, provider, el } = setup();
-    provider.setMedia(host as unknown as Media);
+    provider.setMedia(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ host as Media
+    );
 
     el.setAttribute('env-key', 'test-key');
     el.setAttribute('player-software-name', 'mux-video');
@@ -88,7 +94,9 @@ describe('MuxDataElement', () => {
 
   it('forwards the metadata property to the component', () => {
     const { host, provider, el } = setup();
-    provider.setMedia(host as unknown as Media);
+    provider.setMedia(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ host as Media
+    );
 
     const metadata = { video_title: 'Test' };
     el.metadata = metadata;
@@ -98,7 +106,9 @@ describe('MuxDataElement', () => {
 
   it('removes the component when the element disconnects', () => {
     const { host, provider, el } = setup();
-    provider.setMedia(host as unknown as Media);
+    provider.setMedia(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ host as Media
+    );
 
     el.remove();
 

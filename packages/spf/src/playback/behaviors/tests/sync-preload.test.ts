@@ -260,7 +260,8 @@ describe('syncPreload', () => {
     // `PresentationState['preload']` is currently typed to the W3C union;
     // a follow-up will widen the type to allow extended values. Until then,
     // the behavior already supports them at runtime — cast in tests.
-    const EXTENDED = 'canplay' as unknown as PresentationState['preload'];
+    const EXTENDED =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ 'canplay' as PresentationState['preload'];
 
     it('preserves extended state.preload across mediaElement swap (read skips)', async () => {
       const state = makeState({ preload: EXTENDED });

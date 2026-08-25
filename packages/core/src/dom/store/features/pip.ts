@@ -25,7 +25,7 @@ export const pipFeature = definePlayerFeature({
         await exitFullscreen(media);
       }
 
-      return requestPictureInPicture(media);
+      await requestPictureInPicture(media);
     },
 
     async exitPictureInPicture() {
@@ -44,7 +44,7 @@ export const pipFeature = definePlayerFeature({
         await exitFullscreen(media);
       }
 
-      return requestPictureInPicture(media);
+      await requestPictureInPicture(media);
     },
   }),
 
@@ -70,7 +70,8 @@ export const pipFeature = definePlayerFeature({
     listen(media, 'leavepictureinpicture', sync, { signal });
 
     // iOS Safari presentation mode change (covers PiP)
-    const video = media as WebKitVideoElement;
+    const video =
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ media as WebKitVideoElement;
     if ('webkitPresentationMode' in video) {
       listen(media, 'webkitpresentationmodechanged', sync, { signal });
     }

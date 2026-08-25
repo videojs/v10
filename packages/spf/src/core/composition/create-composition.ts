@@ -1,3 +1,5 @@
+import { isFunction } from '@videojs/utils/predicate';
+
 import { type ReadonlySignal, type Signal, signal } from '../signals/primitives';
 
 /**
@@ -297,9 +299,15 @@ export function buildSignalMap<S extends object>(
   keys: Iterable<PropertyKey>,
   initial: Partial<S>
 ): { [K in keyof S]-?: Signal<S[K]> } {
-  const init = initial as Record<PropertyKey, unknown>;
   const uniqueKeys = new Set(keys);
-  return Object.fromEntries([...uniqueKeys].map((key) => [key, signal(init[key])])) as {
+  const entries = [...uniqueKeys].map((key) => {
+    // SAFETY: Behavior state/context keys are validated against S by the composition type.
+    const typedKey = key as keyof S;
+    return [key, signal(initial[typedKey])];
+  });
+  return /* SAFETY: Each unique key is materialized with the value type declared for that key in S. */ Object.fromEntries(
+    entries
+  ) as {
     [K in keyof S]-?: Signal<S[K]>;
   };
 }
@@ -319,7 +327,8 @@ export function createComposition<const Behaviors extends readonly AnyBehavior[]
   // ValidateComposition<Behaviors> is `[...Behaviors]` on success, an error
   // string on conflict. The function body only runs when the call typechecks
   // (i.e. the success case), so iterating as the behavior tuple is sound.
-  const validBehaviors = behaviors as unknown as readonly AnyBehavior[];
+  const validBehaviors =
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ behaviors as readonly AnyBehavior[];
 
   const state = buildSignalMap<S>(
     validBehaviors.flatMap((b) => b.stateKeys),
@@ -333,7 +342,9 @@ export function createComposition<const Behaviors extends readonly AnyBehavior[]
   const deps: BehaviorDeps<StateSignals<S>, ContextSignals<C>, Cfg> = {
     state,
     context,
-    config: (options?.config ?? {}) as Cfg,
+    config:
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (options?.config ??
+        {}) as Cfg,
   };
   const cleanups = validBehaviors.map((behavior) => behavior.setup(deps));
 
@@ -344,7 +355,7 @@ export function createComposition<const Behaviors extends readonly AnyBehavior[]
       const results: (void | Promise<void>)[] = [];
       for (const cleanup of cleanups) {
         if (cleanup == null) continue;
-        if (typeof cleanup === 'function') {
+        if (isFunction(cleanup)) {
           results.push(cleanup());
         } else if ('destroy' in cleanup) {
           results.push(cleanup.destroy());
@@ -354,8 +365,14 @@ export function createComposition<const Behaviors extends readonly AnyBehavior[]
       // Reset every signal to undefined as a final cleanup, matching the
       // prior post-destroy `owners.set({})` semantics. A later stage will
       // move per-signal cleanup into the behaviors that own the writes.
-      for (const sig of Object.values(state) as Signal<unknown>[]) sig.set(undefined);
-      for (const sig of Object.values(context) as Signal<unknown>[]) sig.set(undefined);
+      for (const sig of /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ Object.values(
+        state
+      ) as Signal<unknown>[])
+        sig.set(undefined);
+      for (const sig of /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ Object.values(
+        context
+      ) as Signal<unknown>[])
+        sig.set(undefined);
     },
   };
 }
@@ -448,7 +465,7 @@ export function defineBehavior<
   // The runtime shape is identical; the cast bridges TS's view of the
   // parameter (config required) to the return view (config optional when
   // Cfg has no keys).
-  return behavior as unknown as {
+  return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ behavior as {
     stateKeys: SK;
     contextKeys: CK;
     setup: (deps: DepsForCfg<StateMap, ContextMap, Cfg>) => R;

@@ -48,8 +48,10 @@ function getAudioTrackKind(audioTrack: HlsJsMediaAudioTrack): string {
  * earlier in the chain so the host exposes `addVideoTrack`, `videoRenditions`,
  * and friends.
  */
-export function HlsJsMediaMediaTracksMixin<Base extends Constructor<MediaTracksHost>>(BaseClass: Base) {
-  class HlsJsMediaMediaTracks extends (BaseClass as Constructor<MediaTracksHost>) {
+export function HlsJsMediaMediaTracksMixin<Base extends Constructor<MediaTracksHost>>(BaseClass: Base): Base {
+  class HlsJsMediaMediaTracks
+    extends /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (BaseClass as Constructor<MediaTracksHost>)
+  {
     #levelIdMap = new Map<string, string>();
     #currentVideoTrack: VideoTrackLike | null = null;
 
@@ -223,5 +225,6 @@ export function HlsJsMediaMediaTracksMixin<Base extends Constructor<MediaTracksH
     }
   }
 
-  return HlsJsMediaMediaTracks as unknown as Base;
+  return /* SAFETY: The mixed class preserves the supplied base constructor. */ HlsJsMediaMediaTracks as typeof HlsJsMediaMediaTracks &
+    Base;
 }

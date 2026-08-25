@@ -4,7 +4,7 @@ export function walkAncestors<Value>(
   start: Element | null,
   callback: (node: Element) => Value | undefined
 ): Value | undefined {
-  if (!start || typeof document === 'undefined') {
+  if (!start || !('document' in globalThis)) {
     return undefined;
   }
 

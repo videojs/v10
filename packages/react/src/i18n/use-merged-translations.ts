@@ -19,6 +19,7 @@ export function useMergedTranslations(
   return useMemo(() => {
     void registryEpoch;
     const registryLayer = getI18nTranslations(resolvedLocale);
+    // SAFETY: Every spread layer contains flat translated strings keyed by translation id.
     return {
       ...lazyLayer,
       ...registryLayer,

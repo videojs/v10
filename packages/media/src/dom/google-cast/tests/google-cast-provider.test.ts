@@ -10,7 +10,11 @@ vi.mock('../registry', async (importOriginal) => {
   const original = await importOriginal<typeof import('../registry')>();
   return {
     ...original,
-    ensureCastFramework: vi.fn(() => Promise.resolve({} as typeof cast.framework)),
+    ensureCastFramework: vi.fn(() =>
+      Promise.resolve(
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {} as typeof cast.framework
+      )
+    ),
   };
 });
 
@@ -18,10 +22,14 @@ vi.mock('../registry', async (importOriginal) => {
 // so use a minimal structural target instead of a real element.
 function createTarget(disableRemotePlayback = false) {
   const textTracks = new EventTarget();
-  const target = Object.assign(new EventTarget(), {
-    textTracks,
-    disableRemotePlayback,
-  }) as unknown as HTMLMediaTargetLike;
+  const target =
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ Object.assign(
+      new EventTarget(),
+      {
+        textTracks,
+        disableRemotePlayback,
+      }
+    ) as HTMLMediaTargetLike;
   return { target, textTracks };
 }
 
@@ -104,7 +112,11 @@ describe('GoogleCast', () => {
 
     const host = new HTMLVideoElementHost();
     const { target } = createTarget();
-    host.attach(target as Parameters<HTMLVideoElementHost['attach']>[0]);
+    host.attach(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ target as Parameters<
+        HTMLVideoElementHost['attach']
+      >[0]
+    );
 
     addMediaComponent(host, new GoogleCast());
     expect(ensureCastFramework).not.toHaveBeenCalled();

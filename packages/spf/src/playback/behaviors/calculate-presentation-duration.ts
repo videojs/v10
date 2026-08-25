@@ -97,7 +97,10 @@ function calculatePresentationDurationSetup({
     // the constraint. The guard at the top of the effect already
     // established that the slot holds a defined value, so cast to narrow
     // the signal type and use the cleaner merge form.
-    update(state.presentation as Signal<MaybeResolvedPresentation>, { duration });
+    update(
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ state.presentation as Signal<MaybeResolvedPresentation>,
+      { duration }
+    );
   });
 }
 

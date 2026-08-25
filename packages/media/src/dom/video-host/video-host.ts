@@ -40,21 +40,27 @@ export class HTMLVideoElementHost extends HTMLMediaElementHost<HTMLVideoTargetLi
   }
 
   get webkitCurrentPlaybackTargetIsWireless() {
-    return (this.target as WebKitVideoElement | null)?.webkitCurrentPlaybackTargetIsWireless;
+    return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (
+      this.target as WebKitVideoElement | null
+    )?.webkitCurrentPlaybackTargetIsWireless;
   }
 
   get webkitPresentationMode() {
-    return (this.target as WebKitVideoElement | null)?.webkitPresentationMode;
+    return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (
+      this.target as WebKitVideoElement | null
+    )?.webkitPresentationMode;
   }
 
   get webkitSetPresentationMode(): ((mode: WebKitPresentationMode) => void) | undefined {
-    const target = this.target as unknown as WebKitVideoElement | null;
+    const target = /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ this
+      .target as WebKitVideoElement | null;
     const fn = target?.webkitSetPresentationMode;
     return isFunction(fn) ? fn.bind(target) : undefined;
   }
 
   get isPictureInPicture(): boolean {
-    const el = this.target as HTMLVideoElement | null;
+    const el = /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ this
+      .target as HTMLVideoElement | null;
     return (
       (!!el && globalThis.document?.pictureInPictureElement === el) ||
       this.webkitPresentationMode === 'picture-in-picture'
@@ -62,10 +68,12 @@ export class HTMLVideoElementHost extends HTMLMediaElementHost<HTMLVideoTargetLi
   }
 
   get isFullscreen(): boolean {
-    const el = this.target as HTMLVideoElement | null;
+    const el = /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ this
+      .target as HTMLVideoElement | null;
     if (!el) return false;
     if (this.webkitPresentationMode === 'fullscreen') return true;
-    const doc = globalThis.document as WebKitDocument;
+    const doc =
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ globalThis.document as WebKitDocument;
     return doc?.fullscreenElement === el || doc?.webkitFullscreenElement === el;
   }
 

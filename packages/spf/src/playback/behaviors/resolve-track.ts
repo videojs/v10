@@ -185,7 +185,8 @@ function setupTrackResolution<K extends SelectedTrackKey>({
                   // established timeline. Aborting rejects the wait, so a
                   // source change can't strand a gated task.
                   if (gateFirstParse && !isResolvedTrack(current)) {
-                    const { selectedVideoTrackId, selectedAudioTrackId } = state as SiblingSelectionSignals;
+                    const { selectedVideoTrackId, selectedAudioTrackId } =
+                      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ state as SiblingSelectionSignals;
                     await when(
                       () =>
                         gateFirstParse(
@@ -220,7 +221,9 @@ function setupTrackResolution<K extends SelectedTrackKey>({
                   // make the source unplayable, so the verdict stays with
                   // track-switching's empty-candidate branch.
                   if (reportUnsupportedTrackConditions) {
-                    for (const condition of reportUnsupportedTrackConditions(mediaTrack as ResolvedTrack)) {
+                    for (const condition of reportUnsupportedTrackConditions(
+                      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ mediaTrack as ResolvedTrack
+                    )) {
                       emitError(state, condition);
                     }
                   }

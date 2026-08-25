@@ -7,7 +7,12 @@ afterEach(() => vi.restoreAllMocks());
 function setSize(element: HTMLElement, width: number, height: number): void {
   Object.defineProperty(element, 'scrollWidth', { configurable: true, value: width });
   Object.defineProperty(element, 'scrollHeight', { configurable: true, value: height });
-  vi.spyOn(element, 'getBoundingClientRect').mockReturnValue({ width, height } as DOMRect);
+  vi.spyOn(element, 'getBoundingClientRect').mockReturnValue(
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+      width,
+      height,
+    } as DOMRect
+  );
 }
 
 describe('syncMenuSize', () => {

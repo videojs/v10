@@ -200,11 +200,12 @@ export function HlsBackgroundVideoMediaMixin<Base extends Constructor<any>>(Base
       // has no chrome to put it in anyway.
       console.error(UNPLAYABLE_SOURCE_MESSAGE, { conditions: errors });
 
-      this.#error = {
+      const surfaceError: HlsVideoMediaError = {
         code: hasUnsupportedFeatureCause(errors) ? SVTA_UNSUPPORTED_PLAYBACK_FEATURE : reported.code,
         message: reported.message ?? '',
-        ...(reported.data === undefined ? {} : { data: reported.data }),
       };
+      if (reported.data !== undefined) Object.assign(surfaceError, { data: reported.data });
+      this.#error = surfaceError;
       // Optional-chained: with an EventTarget-less base (`HlsBackgroundVideoMediaElement`
       // standalone) there's nowhere to dispatch.
       this.dispatchEvent?.(new Event('error'));
@@ -313,7 +314,10 @@ export function HlsBackgroundVideoMediaMixin<Base extends Constructor<any>>(Base
     }
   }
 
-  return HlsBackgroundVideoMediaImpl as unknown as MixinReturn<Base, HlsBackgroundVideoMediaAPI>;
+  return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ HlsBackgroundVideoMediaImpl as MixinReturn<
+    Base,
+    HlsBackgroundVideoMediaAPI
+  >;
 }
 
 /** Standalone SPF background-video adapter with no base class. */

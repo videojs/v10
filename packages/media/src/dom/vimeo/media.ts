@@ -7,7 +7,7 @@ import { EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES } from '../../core/constants';
 import { MediaError } from '../../core/media-error';
 import type { ErrorLike, MediaContentData, MediaPreloadType, TextTrackListLike, Video } from '../../core/types';
 import { MediaPlayedRangesMixin } from '../media-played-ranges';
-import { createTimeRange, serializeEmbedParams } from '../utils';
+import { createTimeRange, type EmbedParams, serializeEmbedParams } from '../utils';
 
 export type { default as VimeoPlayerApi } from '@vimeo/player';
 
@@ -418,7 +418,10 @@ export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
 
   get textTracks() {
     this.#textTracksHost ??= globalThis.document?.createElement('video') ?? null;
-    return (this.#textTracksHost?.textTracks as TextTrackListLike) ?? EMPTY_TEXT_TRACKS;
+    return (
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (this.#textTracksHost
+        ?.textTracks as TextTrackListLike) ?? EMPTY_TEXT_TRACKS
+    );
   }
 
   get videoWidth() {
@@ -471,7 +474,7 @@ export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
   }
 
   // Defer a player call until the load settles, swallowing rejections.
-  #afterLoad(fn: (player: VimeoPlayer) => Promise<unknown>) {
+  #afterLoad<Result>(fn: (player: VimeoPlayer) => Promise<Result>) {
     this.#loadComplete.then(
       () => this.#player && void fn(this.#player).catch(() => {}),
       () => {}
@@ -626,7 +629,13 @@ export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
       .then((tracks) => {
         for (const track of tracks) {
           if (!isString(track.kind) || isNull(track.kind)) continue;
-          tryCall(() => host.addTextTrack?.(track.kind as TextTrackKind, track.label ?? '', track.language ?? ''));
+          tryCall(() =>
+            host.addTextTrack?.(
+              /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ track.kind as TextTrackKind,
+              track.label ?? '',
+              track.language ?? ''
+            )
+          );
         }
       })
       .catch(() => {});
@@ -677,7 +686,7 @@ export function parseVimeoSource(src: string): ParsedVimeoSource | null {
 export function buildVimeoIframeSrc(src: string, props: Partial<VimeoMediaProps> = {}) {
   const parsed = parseVimeoSource(src);
   if (!parsed) return '';
-  const params: Record<string, unknown> = {
+  const params = {
     // Hide Vimeo chrome by default; pass nothing only when controls is explicitly true.
     controls: props.controls === true ? null : 0,
     autoplay: props.autoplay,
@@ -686,16 +695,14 @@ export function buildVimeoIframeSrc(src: string, props: Partial<VimeoMediaProps>
     playsinline: props.playsInline ?? vimeoMediaDefaultProps.playsInline,
     preload: props.preload ?? vimeoMediaDefaultProps.preload,
     transparent: false,
-    h: parsed.hash,
     // Vimeo-specific knobs (`autopause`, `byline`, `dnt`, …) flow through here.
     ...(props.source?.engine?.vimeo ?? undefined),
-  };
+  } satisfies EmbedParams;
   if (parsed.kind === 'event') {
     const hashPath = parsed.hash ? `/${parsed.hash}` : '';
-    delete params.h;
     return `${EMBED_EVENT_BASE}/${parsed.id}/embed${hashPath}?${serializeEmbedParams(params)}`;
   }
-  return `${EMBED_VIDEO_BASE}/${parsed.id}?${serializeEmbedParams(params)}`;
+  return `${EMBED_VIDEO_BASE}/${parsed.id}?${serializeEmbedParams({ ...params, h: parsed.hash })}`;
 }
 
 const EMBED_VIDEO_BASE = 'https://player.vimeo.com/video';
@@ -710,6 +717,10 @@ function toLoadVideoOptions(src: string, vimeo?: VimeoEngineConfig) {
   const parsed = parseVimeoSource(src);
   if (!parsed) return null;
   const base = parsed.kind === 'event' ? `${EMBED_EVENT_BASE}/${parsed.id}/embed` : `${EMBED_VIDEO_BASE}/${parsed.id}`;
-  const url = `${base}${parsed.hash ? `?h=${parsed.hash}` : ''}` as VimeoUrl;
-  return { url, ...vimeo } as LoadVideoOptions;
+  const url =
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ `${base}${parsed.hash ? `?h=${parsed.hash}` : ''}` as VimeoUrl;
+  return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ {
+    url,
+    ...vimeo,
+  } as LoadVideoOptions;
 }

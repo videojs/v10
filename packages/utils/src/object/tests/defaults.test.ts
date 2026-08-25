@@ -84,7 +84,10 @@ describe('defaults', () => {
     const proto = {};
     Object.defineProperty(proto, 'delay', { get: () => 900, enumerable: true });
 
-    const input = Object.create(proto) as { delay?: number };
+    const input =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ Object.create(
+        proto
+      ) as { delay?: number };
 
     expect(Object.hasOwn(input, 'delay')).toBe(false);
     expect(defaults(input, { delay: 600, timeout: 400 })).toEqual({ delay: 900, timeout: 400 });
@@ -95,7 +98,10 @@ describe('defaults', () => {
     const proto = {};
     Object.defineProperty(proto, 'inherited', { get: inherited, enumerable: true });
 
-    const input = Object.create(proto) as { a?: number };
+    const input =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ Object.create(
+        proto
+      ) as { a?: number };
     input.a = 2;
 
     const result = defaults(input, { a: 1 });
@@ -109,7 +115,12 @@ describe('defaults', () => {
     const input = {};
     Object.defineProperty(input, 'a', { get: a, enumerable: true });
 
-    defaults(input as { a?: number }, { a: 1, b: 0 });
+    defaults(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ input satisfies {
+        a?: number;
+      },
+      { a: 1, b: 0 }
+    );
 
     expect(a).toHaveBeenCalledTimes(1);
   });

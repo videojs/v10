@@ -1,3 +1,4 @@
+import { isObject } from '../predicate';
 /**
  * Flattens nested object values into dot-separated keys.
  *
@@ -15,15 +16,17 @@ export interface FlattenOptions {
   prefix?: string;
 }
 
-export function flatten(object: Record<string, unknown>, options: FlattenOptions = {}): Record<string, unknown> {
+export type Flattened<ObjectType extends object> = Record<string, ObjectType[keyof ObjectType]>;
+
+export function flatten<ObjectType extends object>(object: ObjectType, options: FlattenOptions = {}) {
   const { prefix = '' } = options;
-  const result: Record<string, unknown> = {};
+  const result: Partial<Flattened<ObjectType>> = {};
 
   for (const [key, value] of Object.entries(object)) {
     const fullKey = prefix ? `${prefix}.${key}` : key;
 
-    if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
-      Object.assign(result, flatten(value as Record<string, unknown>, { prefix: fullKey }));
+    if (value !== null && isObject(value) && !Array.isArray(value)) {
+      Object.assign(result, flatten(value, { prefix: fullKey }));
     } else {
       result[fullKey] = value;
     }

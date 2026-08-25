@@ -70,20 +70,21 @@ const AUDIO_CODEC_PREFIXES = ['mp4a.', 'ac-3', 'ec-3', 'ac-4', 'opus', 'flac', '
 /**
  * Parse CODECS attribute into separate video and audio codecs.
  */
-export function parseCodecs(codecs: string): { video?: string; audio?: string } {
+export function parseCodecs(codecs: string) {
   const parts = codecs.split(',').map((s) => s.trim());
-  const result: { video?: string; audio?: string } = {};
+  let video: string | undefined;
+  let audio: string | undefined;
 
   for (const codec of parts) {
     const lower = codec.toLowerCase();
     if (codec.startsWith('avc1.') || codec.startsWith('hvc1.') || codec.startsWith('hev1.')) {
-      result.video = codec;
+      video = codec;
     } else if (AUDIO_CODEC_PREFIXES.some((prefix) => lower.startsWith(prefix))) {
-      result.audio = codec;
+      audio = codec;
     }
   }
 
-  return result;
+  return { video, audio };
 }
 
 /**

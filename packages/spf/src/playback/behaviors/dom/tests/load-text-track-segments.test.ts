@@ -13,7 +13,7 @@ import type {
 } from '../../../../media/types';
 import type { TextTrackSegmentLoaderActor } from '../../../actors/text-track-segment-loader';
 import type { TextTracksActor } from '../../../actors/text-tracks';
-import { loadTextTrackSegments } from '../load-segments';
+import { loadTextTrackSegments, type TextTrackSegmentLoaderDispatcher } from '../load-segments';
 import { setupTextTrackActors, type TextTrackActorsContext } from '../setup-text-track-actors';
 
 // Local narrow type aliases — the text-specific slice of the
@@ -62,18 +62,39 @@ function makeState(initial: TextTrackSegmentLoadingState = {}): StateSignals<Tex
 
 function makeContext(initial: ComposedContext = {}): ContextSignals<ComposedContext> {
   return {
-    mediaElement: signal<(MediaElementWithTextTracks & HTMLMediaElement) | undefined>(
-      initial.mediaElement as (MediaElementWithTextTracks & HTMLMediaElement) | undefined
-    ) as ContextSignals<ComposedContext>['mediaElement'],
-    textTracksActor: signal<TextTracksActor<VTTCue & Cue> | undefined>(
-      initial.textTracksActor as TextTracksActor<VTTCue & Cue> | undefined
-    ) as ContextSignals<ComposedContext>['textTracksActor'],
+    mediaElement:
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ signal<
+        (MediaElementWithTextTracks & HTMLMediaElement) | undefined
+      >(
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ initial.mediaElement as
+          | (MediaElementWithTextTracks & HTMLMediaElement)
+          | undefined
+      ) as ContextSignals<ComposedContext>['mediaElement'],
+    textTracksActor:
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ signal<
+        TextTracksActor<VTTCue & Cue> | undefined
+      >(
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ initial.textTracksActor as
+          | TextTracksActor<VTTCue & Cue>
+          | undefined
+      ) as ContextSignals<ComposedContext>['textTracksActor'],
     textTrackSegmentLoaderActor: signal<TextTrackSegmentLoaderActor | undefined>(initial.textTrackSegmentLoaderActor),
   };
 }
 
-function createMockPresentation(tracks: Partial<TextTrack>[]): Presentation {
+function makeTextTrackLoader(send: TextTrackSegmentLoaderDispatcher['send']): TextTrackSegmentLoaderActor {
   return {
+    snapshot: signal({
+      value: 'idle',
+      context: { inFlightTrackId: null, inFlightSegmentId: null },
+    }),
+    send,
+    destroy: vi.fn(),
+  };
+}
+
+function createMockPresentation(tracks: Partial<TextTrack>[]): Presentation {
+  return /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
     url: 'https://example.com/playlist.m3u8',
     selectionSets: [
       {
@@ -88,7 +109,8 @@ function createMockPresentation(tracks: Partial<TextTrack>[]): Presentation {
               bandwidth: 0,
               groupId: 'subs',
               label: t.label || 'English',
-              kind: (t.kind || 'subtitles') as 'subtitles' | 'captions',
+              kind: /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (t.kind ||
+                'subtitles') as 'subtitles' | 'captions',
               language: t.language || 'en',
               segments: t.segments || [],
               ...t,
@@ -115,11 +137,14 @@ function setupLoadTextTrackCues(initialState: TextTrackSegmentLoadingState, init
   // targeting dormant / activation behavior override this explicitly.
   const state = makeState({ preload: 'auto', ...initialState });
   const context = makeContext(initialContext);
-  const setupCleanup = setupTextTrackActors.setup({
-    state,
-    context,
-    config: { resolveTextTrackSegment: resolveVttSegment },
-  }) as () => void;
+  const setupCleanup =
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ setupTextTrackActors.setup(
+      {
+        state,
+        context,
+        config: { resolveTextTrackSegment: resolveVttSegment },
+      }
+    ) as () => void;
   const reactor = loadTextTrackSegments.setup({ state, context });
   const cleanup = () => {
     reactor.destroy();
@@ -144,14 +169,17 @@ describe('loadTextTrackSegments', () => {
       const persistedCues: VTTCue[] = [];
 
       const addCueSpy = vi.spyOn(trackElement.track, 'addCue').mockImplementation((cue) => {
-        persistedCues.push(cue as VTTCue);
+        persistedCues.push(
+          /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ cue as VTTCue
+        );
       });
 
       Object.defineProperty(trackElement.track, 'cues', {
-        get: () =>
-          Object.assign(persistedCues, {
-            item: (i: number) => persistedCues[i] ?? null,
-          }) as unknown as TextTrackCueList,
+        get: (): TextTrackCueList =>
+          Object.assign(new EventTarget(), persistedCues, {
+            item: (index: number) => persistedCues[index] ?? null,
+            getCueById: (id: string) => persistedCues.find((cue) => cue.id === id) ?? null,
+          }),
         configurable: true,
       });
 
@@ -320,11 +348,12 @@ describe('loadTextTrackSegments', () => {
         presentation: createMockPresentation([
           {
             id: 'text-1',
-            segments: [
-              { id: 'seg-0', url: 'https://example.com/segment-0.vtt', duration: 10, startTime: 0 },
-              { id: 'seg-1', url: 'https://example.com/fail.vtt', duration: 10, startTime: 10 },
-              { id: 'seg-2', url: 'https://example.com/segment-2.vtt', duration: 10, startTime: 20 },
-            ] as Segment[],
+            segments:
+              /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ [
+                { id: 'seg-0', url: 'https://example.com/segment-0.vtt', duration: 10, startTime: 0 },
+                { id: 'seg-1', url: 'https://example.com/fail.vtt', duration: 10, startTime: 10 },
+                { id: 'seg-2', url: 'https://example.com/segment-2.vtt', duration: 10, startTime: 20 },
+              ] as Segment[],
           },
         ]),
       },
@@ -432,7 +461,10 @@ describe('loadTextTrackSegments', () => {
       await new Promise((resolve) => setTimeout(resolve, 50));
 
       const { resolveVttSegment } = await import('../../../../media/dom/text/resolve-vtt-segment');
-      const callsBefore = (resolveVttSegment as ReturnType<typeof vi.fn>).mock.calls.map((c) => c[0]);
+      const callsBefore =
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+          resolveVttSegment as ReturnType<typeof vi.fn>
+        ).mock.calls.map((c) => c[0]);
       expect(callsBefore).toContain('https://example.com/segment-0.vtt');
 
       state.currentTime.set(15);
@@ -440,7 +472,10 @@ describe('loadTextTrackSegments', () => {
         expect(resolveVttSegment).toHaveBeenCalledTimes(5);
       });
 
-      const allCalls = (resolveVttSegment as ReturnType<typeof vi.fn>).mock.calls.map((c) => c[0]);
+      const allCalls =
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+          resolveVttSegment as ReturnType<typeof vi.fn>
+        ).mock.calls.map((c) => c[0]);
       expect(allCalls.filter((u) => u === 'https://example.com/segment-0.vtt')).toHaveLength(1);
       expect(allCalls.filter((u) => u === 'https://example.com/segment-1.vtt')).toHaveLength(1);
       expect(allCalls.filter((u) => u === 'https://example.com/segment-2.vtt')).toHaveLength(1);
@@ -613,7 +648,10 @@ describe('loadTextTrackSegments', () => {
       await new Promise((resolve) => setTimeout(resolve, 50));
 
       const { resolveVttSegment } = await import('../../../../media/dom/text/resolve-vtt-segment');
-      const callsAfterInitial = (resolveVttSegment as ReturnType<typeof vi.fn>).mock.calls.length;
+      const callsAfterInitial =
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+          resolveVttSegment as ReturnType<typeof vi.fn>
+        ).mock.calls.length;
       expect(callsAfterInitial).toBeGreaterThan(0);
 
       // Tick currentTime within segment 0 (boundary stays at 0). Loader
@@ -625,7 +663,11 @@ describe('loadTextTrackSegments', () => {
 
       await new Promise((resolve) => setTimeout(resolve, 50));
 
-      expect((resolveVttSegment as ReturnType<typeof vi.fn>).mock.calls.length).toBe(callsAfterInitial);
+      expect(
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+          resolveVttSegment as ReturnType<typeof vi.fn>
+        ).mock.calls.length
+      ).toBe(callsAfterInitial);
 
       cleanup();
     });
@@ -637,7 +679,7 @@ describe('loadTextTrackSegments', () => {
   describe('loadingSuspended (observed dormant gate)', () => {
     it('does not dispatch while suspended, even with preload="auto"', async () => {
       const send = vi.fn();
-      const fakeLoader = { send } as unknown as TextTrackSegmentLoaderActor;
+      const fakeLoader = makeTextTrackLoader(send);
       const state = makeState({
         preload: 'auto',
         loadingSuspended: true,
@@ -660,7 +702,7 @@ describe('loadTextTrackSegments', () => {
       // (text fetches are small and bounded), and the derive re-dispatches
       // when the writer clears the slot.
       const send = vi.fn();
-      const fakeLoader = { send } as unknown as TextTrackSegmentLoaderActor;
+      const fakeLoader = makeTextTrackLoader(send);
       const state = makeState({
         preload: 'auto',
         selectedTextTrackId: 'text-1',

@@ -22,23 +22,30 @@ vi.mock('../../../../media/dom/mse/mediasource-setup', async () => {
   };
 });
 
-function makeMediaSource({ readyState = 'open' as MediaSource['readyState'] } = {}) {
+function makeMediaSource({
+  readyState = /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ 'open' as MediaSource['readyState'],
+} = {}) {
   const target = new EventTarget();
-  return Object.create(MediaSource.prototype, {
-    readyState: { value: readyState, writable: true },
-    addEventListener: { value: target.addEventListener.bind(target) },
-    removeEventListener: { value: target.removeEventListener.bind(target) },
-    dispatchEvent: { value: target.dispatchEvent.bind(target) },
-  }) as MediaSource;
+  return /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ Object.create(
+    MediaSource.prototype,
+    {
+      readyState: { value: readyState, writable: true },
+      addEventListener: { value: target.addEventListener.bind(target) },
+      removeEventListener: { value: target.removeEventListener.bind(target) },
+      dispatchEvent: { value: target.dispatchEvent.bind(target) },
+    }
+  ) as MediaSource;
 }
 
 function transitionMediaSource(mediaSource: MediaSource, readyState: MediaSource['readyState'], eventType: string) {
-  (mediaSource as MediaSource & { readyState: MediaSource['readyState'] }).readyState = readyState;
+  /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+    mediaSource as MediaSource & { readyState: MediaSource['readyState'] }
+  ).readyState = readyState;
   mediaSource.dispatchEvent(new Event(eventType));
 }
 
 function makeResolvedPresentation(overrides: Partial<Presentation> = {}): Presentation {
-  return {
+  return /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
     url: 'https://example.com/video.m3u8',
     id: 'presentation-1',
     selectionSets: [],
@@ -97,7 +104,8 @@ describe('setupMediaSource', () => {
     const { createMediaSource, attachMediaSource } = await import('../../../../media/dom/mse/mediasource-setup');
 
     const { state, context, reactor } = setupSetupMediaSource();
-    const mediaElement = {} as HTMLMediaElement;
+    const mediaElement =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {} as HTMLMediaElement;
 
     context.mediaElement.set(mediaElement);
     state.presentation.set(makeResolvedPresentation());
@@ -118,7 +126,9 @@ describe('setupMediaSource', () => {
     vi.mocked(createMediaSource).mockImplementation(() => closedMediaSource);
 
     const { state, context, reactor } = setupSetupMediaSource();
-    context.mediaElement.set({} as HTMLMediaElement);
+    context.mediaElement.set(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {} as HTMLMediaElement
+    );
     state.presentation.set(makeResolvedPresentation());
 
     // Behavior is awaiting sourceopen — context.mediaSource not yet set.
@@ -142,7 +152,9 @@ describe('setupMediaSource', () => {
     vi.mocked(createMediaSource).mockImplementation(() => closedMediaSource);
 
     const { state, context, reactor } = setupSetupMediaSource();
-    context.mediaElement.set({} as HTMLMediaElement);
+    context.mediaElement.set(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {} as HTMLMediaElement
+    );
     state.presentation.set(makeResolvedPresentation());
 
     // Race: readyState jumps straight to 'ended' (e.g. premature endOfStream).
@@ -170,7 +182,9 @@ describe('setupMediaSource', () => {
     const { createMediaSource } = await import('../../../../media/dom/mse/mediasource-setup');
 
     const { state, context, reactor } = setupSetupMediaSource();
-    context.mediaElement.set({} as HTMLMediaElement);
+    context.mediaElement.set(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {} as HTMLMediaElement
+    );
     // Unresolved presentation — has url but no id / selectionSets.
     state.presentation.set({ url: 'https://example.com/video.m3u8' });
 
@@ -189,7 +203,9 @@ describe('setupMediaSource', () => {
     vi.mocked(attachMediaSource).mockImplementation(() => ({ url: 'blob:mock', detach }));
 
     const { state, context, reactor } = setupSetupMediaSource();
-    context.mediaElement.set({} as HTMLMediaElement);
+    context.mediaElement.set(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {} as HTMLMediaElement
+    );
     state.presentation.set(makeResolvedPresentation());
 
     await vi.waitFor(() => {
@@ -222,7 +238,9 @@ describe('setupMediaSource', () => {
       .mockImplementationOnce(() => ({ url: 'blob:2', detach: secondDetach }));
 
     const { state, context, reactor } = setupSetupMediaSource();
-    context.mediaElement.set({} as HTMLMediaElement);
+    context.mediaElement.set(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {} as HTMLMediaElement
+    );
     state.presentation.set(makeResolvedPresentation({ url: 'https://example.com/a.m3u8' }));
 
     await vi.waitFor(() => {
@@ -259,7 +277,9 @@ describe('setupMediaSource', () => {
     vi.mocked(attachMediaSource).mockImplementation(() => ({ url: 'blob:mock', detach }));
 
     const { state, context, reactor } = setupSetupMediaSource();
-    context.mediaElement.set({} as HTMLMediaElement);
+    context.mediaElement.set(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {} as HTMLMediaElement
+    );
     state.presentation.set(makeResolvedPresentation());
 
     await vi.waitFor(() => {
@@ -276,7 +296,9 @@ describe('setupMediaSource', () => {
     const { createMediaSource } = await import('../../../../media/dom/mse/mediasource-setup');
 
     const { state, context, reactor } = setupSetupMediaSource();
-    context.mediaElement.set({} as HTMLMediaElement);
+    context.mediaElement.set(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {} as HTMLMediaElement
+    );
     state.presentation.set(makeResolvedPresentation({ duration: 60 }));
 
     await vi.waitFor(() => {
@@ -319,7 +341,7 @@ describe('setupMediaSource', () => {
     const AIRPLAY_KEY = 'WebKitPlaybackTargetAvailabilityEvent';
 
     function composeWithAirPlay() {
-      (globalThis as unknown as Record<string, unknown>)[AIRPLAY_KEY] = class {};
+      Object.defineProperty(globalThis, AIRPLAY_KEY, { configurable: true, value: class {} });
 
       const state = {
         presentation: signal<MediaSourceState['presentation']>(undefined),
@@ -342,7 +364,7 @@ describe('setupMediaSource', () => {
       const destroy = async () => {
         const results = [mediaSourceReactor.destroy(), airPlayReactor.destroy()];
         await Promise.all(results);
-        delete (globalThis as unknown as Record<string, unknown>)[AIRPLAY_KEY];
+        Reflect.deleteProperty(globalThis, AIRPLAY_KEY);
       };
 
       return { state, context, destroy };
@@ -354,7 +376,10 @@ describe('setupMediaSource', () => {
 
     /** A `<video>` WebKit's AirPlay probe recognizes (`'…IsWireless' in media`). */
     function makeAirPlayVideo(): WebKitVideoLike {
-      const video = document.createElement('video') as WebKitVideoLike;
+      const video =
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+          'video'
+        ) as WebKitVideoLike;
       video.webkitCurrentPlaybackTargetIsWireless = false;
       return video;
     }
@@ -383,9 +408,14 @@ describe('setupMediaSource', () => {
       const mseUrl = mediaElement.querySelector<HTMLSourceElement>('source[type="video/mp4"]')!.src;
       Object.defineProperty(mediaElement, 'currentSrc', { value: mseUrl, configurable: true });
 
-      const seen: { fallbackPresentAtReset?: boolean } = {};
+      let fallbackPresentAtReset: boolean | undefined;
+      const seen = {
+        get fallbackPresentAtReset(): boolean | undefined {
+          return fallbackPresentAtReset;
+        },
+      };
       const load = vi.spyOn(mediaElement, 'load').mockImplementation(() => {
-        seen.fallbackPresentAtReset = !!mediaElement.querySelector('source[type="application/x-mpegURL"]');
+        fallbackPresentAtReset = !!mediaElement.querySelector('source[type="application/x-mpegURL"]');
       });
 
       return { state, destroy, load, seen };

@@ -1,13 +1,14 @@
-import { isPlainObject, isString } from '../predicate';
+import { isPlainObject, isString, isFunction } from '../predicate';
 
-type ClassPrimitive = string | Record<string, unknown> | undefined;
+type ClassState = Record<string, boolean | number | string | null | undefined>;
+type ClassPrimitive = string | ClassState | undefined;
 type ClassValue = ClassPrimitive | readonly string[] | readonly ClassPrimitive[];
 
 export type ClassName<State> = string | ((state: State) => string | undefined) | undefined;
 
 /** Resolve a static or state-derived class name. */
 export function resolveClassName<State>(className: ClassName<State>, state: State): string | undefined {
-  return typeof className === 'function' ? className(state) : className;
+  return isFunction(className) ? className(state) : className;
 }
 
 /**

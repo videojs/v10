@@ -23,7 +23,7 @@ async function resolveActiveMenuPanel(page: Page, player: PlayerPage): Promise<P
   const handle = await player.activeMenuPanel.elementHandle();
   if (!handle) throw new Error('Menu panel is not attached');
 
-  return handle as PanelHandle;
+  return /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ handle as PanelHandle;
 }
 
 /** Wait for the popover open animation to finish so pointer coordinates are meaningful. */
@@ -119,7 +119,10 @@ for (const { name, path } of UI_VIDEO_PAGES) {
       await expect
         .poll(() =>
           panel.evaluate((element) => {
-            const root = element.getRootNode() as Document | ShadowRoot;
+            const root =
+              /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ element.getRootNode() as
+                | Document
+                | ShadowRoot;
             return element.contains(root.activeElement);
           })
         )

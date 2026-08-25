@@ -61,7 +61,10 @@ describe('StoreAccessor', () => {
       const host = createTestHost();
 
       // Use a symbol as context (this is what createContext returns)
-      const fakeContext = Symbol('test-context') as any;
+      const fakeContext =
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ Symbol(
+          'test-context'
+        ) as any;
 
       const accessor = new StoreAccessor(host, fakeContext);
 

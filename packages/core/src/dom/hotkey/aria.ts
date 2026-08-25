@@ -1,18 +1,18 @@
 import type { HotkeyModifierKey, ParsedHotkeyBinding } from './hotkey';
 
-const ARIA_MODIFIER_MAP: Record<HotkeyModifierKey, string> = {
+const ARIA_MODIFIER_MAP = {
   shift: 'Shift',
   ctrl: 'Control',
   alt: 'Alt',
   meta: 'Meta',
-};
+} satisfies Record<HotkeyModifierKey, string>;
 
-const DISPLAY_MODIFIER_MAP: Record<HotkeyModifierKey, string> = {
+const DISPLAY_MODIFIER_MAP = {
   shift: 'Shift',
   ctrl: 'Ctrl',
   alt: 'Alt',
   meta: 'Meta',
-};
+} satisfies Record<HotkeyModifierKey, string>;
 
 const MODIFIER_ORDER: readonly HotkeyModifierKey[] = ['ctrl', 'shift', 'alt', 'meta'];
 

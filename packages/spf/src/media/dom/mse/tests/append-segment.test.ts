@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vite-plus/test';
 
 import { appendSegment } from '../append-segment';
+import { createSourceBufferDouble } from './source-buffer-test-double';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -9,7 +10,7 @@ import { appendSegment } from '../append-segment';
 function makeSourceBuffer(): SourceBuffer {
   const listeners: Record<string, EventListener[]> = {};
 
-  return {
+  return createSourceBufferDouble({
     updating: false,
     abort: vi.fn(),
     appendBuffer: vi.fn(() => {
@@ -24,7 +25,7 @@ function makeSourceBuffer(): SourceBuffer {
     removeEventListener: vi.fn((type: string, listener: EventListener) => {
       listeners[type] = (listeners[type] ?? []).filter((l) => l !== listener);
     }),
-  } as unknown as SourceBuffer;
+  });
 }
 
 async function* chunks(...buffers: ArrayBuffer[]): AsyncGenerator<Uint8Array> {
@@ -51,7 +52,7 @@ describe('appendSegment', () => {
     const listeners: Record<string, EventListener[]> = {};
     let updating = true;
 
-    const sb = {
+    const sb = createSourceBufferDouble({
       get updating() {
         return updating;
       },
@@ -68,7 +69,7 @@ describe('appendSegment', () => {
       removeEventListener: vi.fn((type: string, listener: EventListener) => {
         listeners[type] = (listeners[type] ?? []).filter((l) => l !== listener);
       }),
-    } as unknown as SourceBuffer;
+    });
 
     // Simulate an external updateend that clears updating
     setTimeout(() => {
@@ -161,15 +162,24 @@ describe('appendSegment', () => {
       })()
     );
 
-    const appended = (sb.appendBuffer as ReturnType<typeof vi.fn>).mock.calls[0]?.[0];
-    expect(Array.from(new Uint8Array(appended as ArrayBuffer))).toEqual([1, 2, 3, 4]);
+    const appended =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+        sb.appendBuffer as ReturnType<typeof vi.fn>
+      ).mock.calls[0]?.[0];
+    expect(
+      Array.from(
+        new Uint8Array(
+          /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ appended as ArrayBuffer
+        )
+      )
+    ).toEqual([1, 2, 3, 4]);
   });
 
   it('appends chunks in order', async () => {
     const appended: number[][] = [];
 
     const listeners: Record<string, EventListener[]> = {};
-    const sb = {
+    const sb = createSourceBufferDouble({
       updating: false,
       appendBuffer: vi.fn((data: ArrayBuffer) => {
         appended.push(Array.from(new Uint8Array(data)));
@@ -184,7 +194,7 @@ describe('appendSegment', () => {
       removeEventListener: vi.fn((type: string, listener: EventListener) => {
         listeners[type] = (listeners[type] ?? []).filter((l) => l !== listener);
       }),
-    } as unknown as SourceBuffer;
+    });
 
     const chunk1 = new Uint8Array([1, 2]);
     const chunk2 = new Uint8Array([3, 4]);

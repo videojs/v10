@@ -24,12 +24,12 @@ async function* streamOf(bytes: Uint8Array): AsyncIterable<Uint8Array> {
   yield bytes;
 }
 
-function makeDeps(): {
-  deps: StepDeps;
-  slot: ReturnType<typeof signal<Record<string, MediaContainerData> | undefined>>;
-} {
+function makeDeps() {
   const slot = signal<Record<string, MediaContainerData> | undefined>(undefined);
-  return { deps: { state: { mediaContainerData: slot }, context: {}, config: {} }, slot };
+  return { deps: { state: { mediaContainerData: slot }, context: {}, config: {} }, slot } satisfies {
+    deps: StepDeps;
+    slot: ReturnType<typeof signal<Record<string, MediaContainerData> | undefined>>;
+  };
 }
 
 /** The discover steps at their pipeline positions: `[fetch, discover, dispatch]`. The
@@ -45,19 +45,21 @@ describe('relocationPipelinesFor', () => {
     const { readInitTrackInfo, readSegmentOrigin } = discoverSteps('video');
     const signalNotAborted = new AbortController().signal;
 
-    const initFrame = {
-      op: { type: 'append-init', meta: { trackId: 'v', language: undefined }, url: 'init.mp4' },
-      data: streamOf(captionFirstInit),
-    } as unknown as Frame;
+    const initFrame =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+        op: { type: 'append-init', meta: { trackId: 'v', language: undefined }, url: 'init.mp4' },
+        data: streamOf(captionFirstInit),
+      } as Frame;
     await readInitTrackInfo(initFrame, signalNotAborted, deps);
 
     // The `vide` track — id 1, timescale 6000 — not the caption track (id 2).
     expect(slot.get()?.video).toEqual({ trackId: 1, timescale: 6000 });
 
-    const segmentFrame = {
-      op: { type: 'append-segment', meta: { id: 's0', startTime: 0, duration: 6, trackId: 'v' } },
-      data: streamOf(captionFirstSegment),
-    } as unknown as Frame;
+    const segmentFrame =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+        op: { type: 'append-segment', meta: { id: 's0', startTime: 0, duration: 6, trackId: 'v' } },
+        data: streamOf(captionFirstSegment),
+      } as Frame;
     await readSegmentOrigin(segmentFrame, signalNotAborted, deps);
 
     // Track 1's tfdt (60000), never the caption track's (300000).
@@ -72,18 +74,20 @@ describe('relocationPipelinesFor', () => {
     const signalNotAborted = new AbortController().signal;
 
     // Video-only muxing: no `soun` track for the audio pipeline to match.
-    const initFrame = {
-      op: { type: 'append-init', meta: { trackId: 'a', language: undefined }, url: 'init.mp4' },
-      data: streamOf(captionFirstInit),
-    } as unknown as Frame;
+    const initFrame =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+        op: { type: 'append-init', meta: { trackId: 'a', language: undefined }, url: 'init.mp4' },
+        data: streamOf(captionFirstInit),
+      } as Frame;
     await readInitTrackInfo(initFrame, signalNotAborted, deps);
     expect(slot.get()?.audio).toBeUndefined();
 
     // Without a discovered track_id, the segment step no-ops (no origin to relocate by).
-    const segmentFrame = {
-      op: { type: 'append-segment', meta: { id: 's0', startTime: 0, duration: 6, trackId: 'a' } },
-      data: streamOf(captionFirstSegment),
-    } as unknown as Frame;
+    const segmentFrame =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+        op: { type: 'append-segment', meta: { id: 's0', startTime: 0, duration: 6, trackId: 'a' } },
+        data: streamOf(captionFirstSegment),
+      } as Frame;
     await readSegmentOrigin(segmentFrame, signalNotAborted, deps);
     expect(slot.get()?.audio?.baseMediaDecodeTime).toBeUndefined();
   });
@@ -98,14 +102,14 @@ describe('relocatingTextPipelines — relocateCues origin resolution', () => {
   const appleMap = { timestampMap: { mpegts: 900000, local: 0 } };
 
   const presWithVideo = (startMediaTime: number | undefined): MaybeResolvedPresentation =>
-    ({
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ ({
       selectionSets: [{ type: 'video', switchingSets: [{ tracks: [{ id: 'v', type: 'video', startMediaTime }] }] }],
-    }) as unknown as MaybeResolvedPresentation;
+    }) as MaybeResolvedPresentation;
 
   const presTextOnly = (): MaybeResolvedPresentation =>
-    ({
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ ({
       selectionSets: [{ type: 'text', switchingSets: [{ tracks: [{ id: 't', type: 'text' }] }] }],
-    }) as unknown as MaybeResolvedPresentation;
+    }) as MaybeResolvedPresentation;
 
   const makeState = (presentation: MaybeResolvedPresentation) => ({
     presentation: signal<MaybeResolvedPresentation | undefined>(presentation),
@@ -113,15 +117,27 @@ describe('relocatingTextPipelines — relocateCues origin resolution', () => {
     selectedAudioTrackId: signal<string | undefined>(undefined),
   });
 
-  const cue = (startTime: number, endTime: number): Cue => ({ startTime, endTime, text: 'x' }) as unknown as Cue;
+  const cue = (startTime: number, endTime: number): Cue =>
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ ({
+      startTime,
+      endTime,
+      text: 'x',
+    }) as Cue;
 
   it('waits for the selected A/V origin instead of shifting cues by the full map correction', async () => {
     // A/V exists but nothing selected yet — the race. Must WAIT, not resolve with 0
     // (which would shift every cue by the full +10s mapCorrection).
     const state = makeState(presWithVideo(undefined));
-    const deps = { state, context: {}, config: {} } as unknown as TextStepDeps;
+    const deps = /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+      state,
+      context: {},
+      config: {},
+    } as TextStepDeps;
     const c = cue(5, 6);
-    const frame = { cues: [c], metadata: appleMap } as unknown as TextFrame<Cue>;
+    const frame = /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+      cues: [c],
+      metadata: appleMap,
+    } as TextFrame<Cue>;
 
     const done = relocateCues(frame, notAborted, deps);
     await Promise.resolve();
@@ -140,9 +156,16 @@ describe('relocatingTextPipelines — relocateCues origin resolution', () => {
   it('relocates a genuinely text-only source by offset 0 without hanging', async () => {
     // No A/V tracks ⇒ no origin will ever come; resolve immediately with startMediaTime 0.
     const state = makeState(presTextOnly());
-    const deps = { state, context: {}, config: {} } as unknown as TextStepDeps;
+    const deps = /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+      state,
+      context: {},
+      config: {},
+    } as TextStepDeps;
     const c = cue(5, 6);
-    const frame = { cues: [c], metadata: appleMap } as unknown as TextFrame<Cue>;
+    const frame = /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+      cues: [c],
+      metadata: appleMap,
+    } as TextFrame<Cue>;
 
     await relocateCues(frame, notAborted, deps);
 

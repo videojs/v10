@@ -107,7 +107,9 @@ describe('fetchResolvableStream', () => {
       )
     );
 
-    const req: Request = fetchSpy.mock.calls[0]![0] as Request;
+    const req: Request =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ fetchSpy.mock
+        .calls[0]![0] as Request;
     expect(req.headers.get('Range')).toBe('bytes=0-99');
   });
 
@@ -126,7 +128,9 @@ describe('fetchResolvableStream', () => {
     await collect(fetchResolvableStream({ url: 'https://example.com/seg.m4s' }, { minChunkSize: 512 }));
 
     // fetch should have been called with a Request, not an object with minChunkSize
-    const req: Request = fetchSpy.mock.calls[0]![0] as Request;
+    const req: Request =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ fetchSpy.mock
+        .calls[0]![0] as Request;
     expect(req).toBeInstanceOf(Request);
   });
 });

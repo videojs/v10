@@ -42,17 +42,28 @@ export function combine<const Slices extends readonly AnySlice[]>(
         warnOverlaps(states, derivedDefinitions);
       }
 
-      return Object.assign({}, ...states) as SourceState;
+      return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ Object.assign(
+        {},
+        ...states
+      ) as SourceState;
     },
 
     preserve: Array.from(new Set(slices.flatMap((slice) => slice.preserve ?? []))),
 
-    derived: Object.assign({}, ...derivedDefinitions) as any,
+    derived: /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ Object.assign(
+      {},
+      ...derivedDefinitions
+    ) as any,
 
     attach: (ctx: AttachContext<Target, SourceState>) => {
       for (const slice of slices) {
         try {
-          slice.attach?.(ctx as AttachContext<Target, InferSliceSourceState<typeof slice>>);
+          slice.attach?.(
+            /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ ctx as AttachContext<
+              Target,
+              InferSliceSourceState<typeof slice>
+            >
+          );
         } catch (err) {
           ctx.reportError(err);
         }

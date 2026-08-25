@@ -1,6 +1,7 @@
 import { type Locale, registerI18n, resetI18nRegistry, type Text, type Translator } from '@videojs/core/i18n';
 import { type PropertyValues, ReactiveElement } from '@videojs/element';
 import { ContextProvider } from '@videojs/element/context';
+import { isString } from '@videojs/utils/predicate';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { SkinElement } from '../../define/skin-element';
@@ -49,11 +50,14 @@ class TestI18nProviderElement extends ReactiveElement {
   readonly provider = new ContextProvider(this, {
     context: i18nContext,
     initialValue: {
-      translator: ((value: string | Text) => {
-        const key = typeof value === 'string' ? value : value.key;
-        return key === 'menu.settings' ? 'Ancestor settings' : typeof value === 'string' ? value : value.text;
+      translator: /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ ((
+        value: string | Text
+      ) => {
+        const key = isString(value) ? value : value.key;
+        return key === 'menu.settings' ? 'Ancestor settings' : isString(value) ? value : value.text;
       }) as Translator,
-      locale: 'xx' as Locale,
+      locale:
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ 'xx' as Locale,
     },
   });
 }
@@ -110,7 +114,10 @@ describe('provider', () => {
 
     const skin = root.querySelector<TestSkinElement>('test-skin-i18n')!;
     await skin.updateComplete;
-    const text = skin.shadowRoot!.querySelector(MediaTextElement.tagName) as MediaTextElement;
+    const text =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ skin.shadowRoot!.querySelector(
+        MediaTextElement.tagName
+      ) as MediaTextElement;
     await text.updateComplete;
 
     const button = skin.shadowRoot!.querySelector('button')!;
@@ -120,23 +127,35 @@ describe('provider', () => {
 
   it('uses English fallback for shadow labels without a provider', async () => {
     registerI18n('xx', { 'menu.settings': 'Skin settings' });
-    const skin = document.createElement('test-skin-i18n') as TestSkinElement;
+    const skin =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+        'test-skin-i18n'
+      ) as TestSkinElement;
     skin.lang = 'xx';
     document.body.append(skin);
 
     await skin.updateComplete;
-    const text = skin.shadowRoot!.querySelector(MediaTextElement.tagName) as MediaTextElement;
+    const text =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ skin.shadowRoot!.querySelector(
+        MediaTextElement.tagName
+      ) as MediaTextElement;
     await text.updateComplete;
 
     expect(text.textContent).toBe('Settings');
   });
 
   it('keeps the child text when a shadow label has no token', async () => {
-    const skin = document.createElement('test-skin-i18n-missing-key') as TestMissingKeyElement;
+    const skin =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+        'test-skin-i18n-missing-key'
+      ) as TestMissingKeyElement;
     document.body.append(skin);
 
     await skin.updateComplete;
-    const text = skin.shadowRoot!.querySelector(MediaTextElement.tagName) as MediaTextElement;
+    const text =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ skin.shadowRoot!.querySelector(
+        MediaTextElement.tagName
+      ) as MediaTextElement;
     await text.updateComplete;
 
     expect(text.textContent).toBe('missingLabel');
@@ -146,13 +165,19 @@ describe('provider', () => {
     registerI18n('xx', { 'menu.settings': 'Skin settings' });
     registerI18n('yy', { 'menu.settings': 'Other settings' });
     const provider = new MediaI18nProviderElement();
-    const skin = document.createElement('test-skin-i18n') as TestSkinElement;
+    const skin =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+        'test-skin-i18n'
+      ) as TestSkinElement;
     provider.lang = 'xx';
     provider.append(skin);
     document.body.append(provider);
 
     await skin.updateComplete;
-    const text = skin.shadowRoot!.querySelector(MediaTextElement.tagName) as MediaTextElement;
+    const text =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ skin.shadowRoot!.querySelector(
+        MediaTextElement.tagName
+      ) as MediaTextElement;
     await text.updateComplete;
 
     expect(text.textContent).toBe('Skin settings');
@@ -165,13 +190,19 @@ describe('provider', () => {
   it('publishes provider lang before child text updates', async () => {
     registerI18n('xx', { 'menu.settings': 'Skin settings' });
     const provider = new MediaI18nProviderElement();
-    const skin = document.createElement('test-skin-i18n-first-update') as TestFirstUpdateElement;
+    const skin =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+        'test-skin-i18n-first-update'
+      ) as TestFirstUpdateElement;
     provider.lang = 'xx';
     provider.append(skin);
     document.body.append(provider);
 
     await skin.updateComplete;
-    const text = skin.shadowRoot!.querySelector('test-skin-i18n-first-text') as TestFirstTextElement;
+    const text =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ skin.shadowRoot!.querySelector(
+        'test-skin-i18n-first-text'
+      ) as TestFirstTextElement;
     await text.updateComplete;
 
     expect(text.firstText).toBe('Skin settings');
@@ -179,11 +210,17 @@ describe('provider', () => {
   });
 
   it('keeps child text when key is undefined', async () => {
-    const skin = document.createElement('test-skin-i18n-child-text') as TestChildTextElement;
+    const skin =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+        'test-skin-i18n-child-text'
+      ) as TestChildTextElement;
     document.body.append(skin);
 
     await skin.updateComplete;
-    const text = skin.shadowRoot!.querySelector(MediaTextElement.tagName) as MediaTextElement;
+    const text =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ skin.shadowRoot!.querySelector(
+        MediaTextElement.tagName
+      ) as MediaTextElement;
     await text.updateComplete;
 
     expect(text.textContent).toBe('Fallback label');

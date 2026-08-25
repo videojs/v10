@@ -5,8 +5,12 @@ import type { HTMLVideoElementHost } from '../video-host';
 
 export type NativeMediaHost = HTMLVideoElementHost;
 
-export function NativeHlsMediaErrorsMixin<Base extends Constructor<NativeMediaHost>>(BaseClass: Base) {
-  class NativeHlsMediaErrors extends (BaseClass as Constructor<NativeMediaHost>) {
+export function NativeHlsMediaErrorsMixin<Base extends Constructor<NativeMediaHost>>(
+  BaseClass: Base
+): Base & Constructor<{ readonly error: MediaError | null; setError(error: MediaError): void }> {
+  class NativeHlsMediaErrors
+    extends /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (BaseClass as Constructor<NativeMediaHost>)
+  {
     #disconnect: AbortController | null = null;
     #error: MediaError | null = null;
 
@@ -81,6 +85,7 @@ export function NativeHlsMediaErrorsMixin<Base extends Constructor<NativeMediaHo
     }
   }
 
-  return NativeHlsMediaErrors as unknown as Base &
+  return /* SAFETY: The mixed class preserves the supplied base constructor. */ NativeHlsMediaErrors as typeof NativeHlsMediaErrors &
+    Base &
     Constructor<{ readonly error: MediaError | null; setError(error: MediaError): void }>;
 }

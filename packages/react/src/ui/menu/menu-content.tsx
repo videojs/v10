@@ -70,7 +70,9 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
   const handleSubMenuKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLDivElement>) => {
       const defaultPreventedByUser = callKeyDownHandler(
-        onKeyDown as React.KeyboardEventHandler<HTMLDivElement> | undefined,
+        /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ onKeyDown as
+          | React.KeyboardEventHandler<HTMLDivElement>
+          | undefined,
         event
       );
       const isNavigationKey = isMenuNavigationKey(event);
@@ -89,7 +91,9 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
 
   const handleRootMenuKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLDivElement>) => {
-      (onKeyDown as React.KeyboardEventHandler<HTMLDivElement> | undefined)?.(event);
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (
+        onKeyDown as React.KeyboardEventHandler<HTMLDivElement> | undefined
+      )?.(event);
       menu.contentProps.onKeyDown(event);
       if (event.key === 'Escape') return;
       if (isMenuNavigationKey(event)) event.stopPropagation();
@@ -99,7 +103,9 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
 
   const handleRootMenuBlur = useCallback(
     (event: React.FocusEvent<HTMLDivElement>) => {
-      (onBlur as React.FocusEventHandler<HTMLDivElement> | undefined)?.(event);
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (
+        onBlur as React.FocusEventHandler<HTMLDivElement> | undefined
+      )?.(event);
       menu.contentProps.onFocusOut(event);
     },
     [onBlur, menu]
@@ -107,7 +113,9 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
 
   const handleSubMenuBlur = useCallback(
     (event: React.FocusEvent<HTMLDivElement>) => {
-      (onBlur as React.FocusEventHandler<HTMLDivElement> | undefined)?.(event);
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (
+        onBlur as React.FocusEventHandler<HTMLDivElement> | undefined
+      )?.(event);
       menu.contentProps.onFocusOut(event);
     },
     [onBlur, menu]

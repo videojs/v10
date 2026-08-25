@@ -7,6 +7,7 @@ interface ResolvedMeta {
 
 const cache = new WeakMap<typeof ReactiveElement, ResolvedMeta>();
 const propertyKeys = new Map<string, symbol>();
+const propertyValues = new WeakMap<ReactiveElement, Map<symbol, unknown>>();
 
 /**
  * Lightweight reactive custom element base class.
@@ -99,17 +100,27 @@ export class ReactiveElement extends HTMLElement {
     // has connected before the first update. The resolver is assigned to
     // `this.enableUpdating`, overriding the no-op prototype method.
     this.#updatePromise = new Promise<boolean>(
-      (res) => (this.enableUpdating = res as (requestedUpdate: boolean) => void)
+      (res) =>
+        (this.enableUpdating =
+          /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ res as (
+            requestedUpdate: boolean
+          ) => void)
     );
 
     // Save instance properties that might shadow prototype accessors.
     // Handles the "upgrade" case where properties were set before registration.
-    const { props } = resolve(this.constructor as typeof ReactiveElement);
+    const { props } = resolve(
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ this
+        .constructor as typeof ReactiveElement
+    );
 
     for (const name of props.keys()) {
       if (Object.hasOwn(this, name)) {
-        (this.#instanceProperties ??= new Map()).set(name, (this as Record<string, unknown>)[name]);
-        delete (this as Record<string, unknown>)[name];
+        const descriptor = Object.getOwnPropertyDescriptor(this, name);
+        if (descriptor && 'value' in descriptor) {
+          (this.#instanceProperties ??= new Map()).set(name, descriptor.value);
+        }
+        Reflect.deleteProperty(this, name);
       }
     }
 
@@ -174,21 +185,24 @@ export class ReactiveElement extends HTMLElement {
   attributeChangedCallback(attr: string, oldValue: string | null, newValue: string | null): void {
     if (oldValue === newValue) return;
 
-    const { props, attrToProp } = resolve(this.constructor as typeof ReactiveElement);
+    const { props, attrToProp } = resolve(
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ this
+        .constructor as typeof ReactiveElement
+    );
     const propName = attrToProp.get(attr);
     if (!propName) return;
 
     const decl = props.get(propName);
     if (!decl) return;
 
-    let value: unknown = newValue;
+    let value: string | number | boolean | null = newValue;
 
     if (decl.type === Boolean) {
       value = newValue !== null;
     } else if (decl.type === Number) {
       value = newValue === null ? null : Number(newValue);
     }
-    (this as Record<string, unknown>)[propName] = value;
+    Reflect.set(this, propName, value);
   }
 
   /**
@@ -199,7 +213,7 @@ export class ReactiveElement extends HTMLElement {
    * this case, pass the property `name` and `oldValue` to ensure that any
    * configured property options are honored.
    */
-  requestUpdate(name?: string, oldValue?: unknown): void {
+  requestUpdate<Value>(name?: string, oldValue?: Value): void {
     if (name !== undefined) {
       this.#changedProperties.set(name, oldValue);
     }
@@ -220,7 +234,7 @@ export class ReactiveElement extends HTMLElement {
       // Ensure any previous update has resolved before updating.
       // This `await` also ensures that property changes are batched.
       await this.#updatePromise;
-    } catch (e: unknown) {
+    } catch (e) {
       // Refire any previous errors async so they do not disrupt the
       // update cycle.
       Promise.reject(e);
@@ -247,13 +261,13 @@ export class ReactiveElement extends HTMLElement {
    * For instance, to schedule updates to occur just before the next frame:
    *
    * ```ts
-   * override protected async scheduleUpdate(): Promise<unknown> {
+   * override protected async scheduleUpdate(): Promise<void> {
    *   await new Promise((resolve) => requestAnimationFrame(() => resolve()));
    *   super.scheduleUpdate();
    * }
    * ```
    */
-  protected scheduleUpdate(): void | Promise<unknown> {
+  protected scheduleUpdate(): void | Promise<void> {
     this.performUpdate();
   }
 
@@ -274,7 +288,7 @@ export class ReactiveElement extends HTMLElement {
     // Restore saved instance properties on first update.
     if (!this.hasUpdated && this.#instanceProperties) {
       for (const [name, value] of this.#instanceProperties) {
-        (this as Record<string, unknown>)[name] = value;
+        Reflect.set(this, name, value);
       }
       this.#instanceProperties = undefined;
     }
@@ -385,11 +399,13 @@ function resolve(ctor: typeof ReactiveElement): ResolvedMeta {
 
       Object.defineProperty(ctor.prototype, name, {
         get(this: ReactiveElement) {
-          return (this as unknown as Record<symbol, unknown>)[key];
+          return propertyValues.get(this)?.get(key);
         },
-        set(this: ReactiveElement, value: unknown) {
-          const old = (this as unknown as Record<symbol, unknown>)[key];
-          (this as unknown as Record<symbol, unknown>)[key] = value;
+        set(this: ReactiveElement, value) {
+          let values = propertyValues.get(this);
+          if (!values) propertyValues.set(this, (values = new Map()));
+          const old = values.get(key);
+          values.set(key, value);
 
           if (!Object.is(old, value)) {
             this.requestUpdate(name, old);

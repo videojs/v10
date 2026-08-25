@@ -21,14 +21,28 @@ describe('video/minimal-ui ejected registration', () => {
       ...document.querySelectorAll('media-volume-indicator, media-status-indicator, media-seek-indicator'),
     ];
 
-    await (announcer as HTMLElement & { updateComplete: Promise<boolean> }).updateComplete;
+    await /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+      announcer as HTMLElement & { updateComplete: Promise<boolean> }
+    ).updateComplete;
     await Promise.all(
-      indicators.map((indicator) => (indicator as HTMLElement & { updateComplete: Promise<boolean> }).updateComplete)
+      indicators.map(
+        (indicator) =>
+          /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+            indicator as HTMLElement & { updateComplete: Promise<boolean> }
+          ).updateComplete
+      )
     );
 
     expect(announcer.getAttribute('role')).toBe('status');
     expect(announcer.querySelector('[data-status-announcer-content]')).not.toBeNull();
-    expect(indicators.every((indicator) => (indicator as HTMLElement).hidden)).toBe(true);
+    expect(
+      indicators.every(
+        (indicator) =>
+          /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+            indicator as HTMLElement
+          ).hidden
+      )
+    ).toBe(true);
     expect(customElements.get('media-popover')).toBeDefined();
     expect(customElements.get('media-menu')).toBeDefined();
   });

@@ -378,7 +378,10 @@ export class CloudflareMedia extends CloudflareMediaBase implements Partial<Vide
   /** Always empty: the SDK exposes no track API, and the embed owns the track picked by `defaultTextTrack`. */
   get textTracks() {
     this.#textTracksHost ??= globalThis.document?.createElement('video') ?? null;
-    return (this.#textTracksHost?.textTracks as TextTrackListLike) ?? EMPTY_TEXT_TRACKS;
+    return (
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (this.#textTracksHost
+        ?.textTracks as TextTrackListLike) ?? EMPTY_TEXT_TRACKS
+    );
   }
 
   get videoWidth() {

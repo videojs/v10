@@ -16,8 +16,12 @@ export type PreloadType = '' | 'none' | 'metadata' | 'auto';
  * Loading is started at most once per source. Widening the limits afterwards is
  * a plain config write, never a second `startLoad()`.
  */
-export function HlsJsMediaPreloadMixin<Base extends Constructor<HlsEngineHost>>(BaseClass: Base) {
-  class HlsJsMediaPreload extends (BaseClass as Constructor<HlsEngineHost>) {
+export function HlsJsMediaPreloadMixin<Base extends Constructor<HlsEngineHost>>(
+  BaseClass: Base
+): Base & Constructor<{ preload: PreloadType }> {
+  class HlsJsMediaPreload
+    extends /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (BaseClass as Constructor<HlsEngineHost>)
+  {
     #preloadAbort: AbortController | null = null;
     #preload: PreloadType = 'metadata';
     #defaultMaxBufferLength: number | undefined;
@@ -56,7 +60,8 @@ export function HlsJsMediaPreloadMixin<Base extends Constructor<HlsEngineHost>>(
     #init(): void {
       this.#preloadAbort?.abort();
 
-      const target = this.target as HTMLVideoElement | null;
+      const target = /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ this
+        .target as HTMLVideoElement | null;
       if (!target) return;
 
       // Sync stored preload to the native element (may have been set before attach)
@@ -118,5 +123,7 @@ export function HlsJsMediaPreloadMixin<Base extends Constructor<HlsEngineHost>>(
     }
   }
 
-  return HlsJsMediaPreload as unknown as Base & Constructor<{ preload: PreloadType }>;
+  return /* SAFETY: The mixed class preserves the supplied base constructor. */ HlsJsMediaPreload as typeof HlsJsMediaPreload &
+    Base &
+    Constructor<{ preload: PreloadType }>;
 }

@@ -17,12 +17,12 @@ export type ComponentType = Component<never> | typeof Fragment;
 export interface VjscElement {
   readonly [VIDEOJS_NODE]: true;
   readonly type: ComponentType;
-  readonly props: Record<string, unknown>;
+  readonly props: Record<string, import('../value').VjscValue>;
   readonly key: string | number | null;
 }
 
 /** Framework-neutral content accepted by a component child or named content slot. */
-export type VjscNode = unknown;
+export type VjscNode = VjscElement | string | number | boolean | null | undefined | readonly VjscNode[];
 
 type ClassNamePart = string | false | null | undefined;
 
@@ -31,7 +31,7 @@ export type ClassNameValue = ClassNamePart | readonly ClassNameValue[];
 
 export interface BaseProps {
   className?: ClassNameValue;
-  children?: unknown;
+  children?: import('../value').VjscValue;
 }
 
 export type Props<CoreProps extends object = EmptyProps> = CoreProps & Pick<BaseProps, 'className'>;
@@ -39,7 +39,9 @@ export type Props<CoreProps extends object = EmptyProps> = CoreProps & Pick<Base
 export type PropsWithChildren<CoreProps extends object = EmptyProps> = Props<CoreProps> & Pick<BaseProps, 'children'>;
 
 /** Props accepted by another VJSC component. Targets replace this with their public props export. */
-export type PropsOf<Component extends (props: never) => unknown> = NonNullable<Parameters<Component>[0]>;
+export type PropsOf<Component extends (props: never) => import('../value').VjscValue> = NonNullable<
+  Parameters<Component>[0]
+>;
 
 type ComponentAttributes<Props extends object> = Omit<PropsWithChildren<Props>, 'className'> & {
   className?: ClassNameValue;
@@ -47,7 +49,7 @@ type ComponentAttributes<Props extends object> = Omit<PropsWithChildren<Props>, 
 
 export interface SlotProps {
   name?: string | undefined;
-  children?: unknown;
+  children?: import('../value').VjscValue;
 }
 
 export interface TemplateProps extends BaseProps {
@@ -103,7 +105,7 @@ function createRuntimeComponentPart<Props extends object>(name: string, part: st
 
   Object.assign(component, { $$component: { name, part } });
 
-  return component as Component<Props>;
+  return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ component as Component<Props>;
 }
 
 export const Slot = createRuntimeComponentPart<SlotProps>('Slot', null);
@@ -117,7 +119,9 @@ export function createComponent<Props extends object>(manifest: ComponentManifes
 export function createComponent<const Parts extends ComponentRecord>(
   manifest: ComponentManifest<object, Parts>
 ): CompoundComponent<Parts>;
-export function createComponent(manifest: ComponentManifest): Component<object> | Record<string, unknown> {
+export function createComponent(
+  manifest: ComponentManifest
+): Component<object> | Record<string, import('../value').VjscValue> {
   if (!hasParts(manifest)) {
     return createRuntimeComponentPart(manifest.name, null);
   }
@@ -125,8 +129,8 @@ export function createComponent(manifest: ComponentManifest): Component<object> 
   return createComponentParts(manifest.name, manifest.parts);
 }
 
-function createComponentParts(name: string, parts: ComponentRecord, prefix = ''): Record<string, unknown> {
-  const compound: Record<string, unknown> = {};
+function createComponentParts(name: string, parts: ComponentRecord, prefix = '') {
+  const compound: Record<string, import('../value').VjscValue> = {};
 
   for (const part of Object.keys(parts)) {
     const partPath = prefix ? `${prefix}.${part}` : part;
@@ -137,10 +141,14 @@ function createComponentParts(name: string, parts: ComponentRecord, prefix = '')
       : createRuntimeComponentPart(name, partPath);
   }
 
-  return compound;
+  return compound satisfies Record<string, import('../value').VjscValue>;
 }
 
-function createNode(type: ComponentType, props: Record<string, unknown>, key?: string | number | null): VjscElement {
+function createNode(
+  type: ComponentType,
+  props: Record<string, import('../value').VjscValue>,
+  key?: string | number | null
+): VjscElement {
   return {
     [VIDEOJS_NODE]: true,
     type,
@@ -149,15 +157,26 @@ function createNode(type: ComponentType, props: Record<string, unknown>, key?: s
   };
 }
 
-export function jsx(type: ComponentType, props: Record<string, unknown>, key?: string | number | null): VjscElement {
+export function jsx(
+  type: ComponentType,
+  props: Record<string, import('../value').VjscValue>,
+  key?: string | number | null
+): VjscElement {
   return createNode(type, props, key);
 }
 
-export function jsxs(type: ComponentType, props: Record<string, unknown>, key?: string | number | null): VjscElement {
+export function jsxs(
+  type: ComponentType,
+  props: Record<string, import('../value').VjscValue>,
+  key?: string | number | null
+): VjscElement {
   return createNode(type, props, key);
 }
 
-export const Fragment: unique symbol = Symbol.for('@videojs/fragment') as never;
+export const Fragment: unique symbol =
+  /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ Symbol.for(
+    '@videojs/fragment'
+  ) as never;
 
 export namespace JSX {
   export type Element = VjscElement;

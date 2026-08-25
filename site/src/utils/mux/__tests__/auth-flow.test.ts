@@ -19,7 +19,9 @@ describe('initiateAuthPopup', () => {
   });
 
   it('opens centered popup with correct dimensions', () => {
-    openSpy.mockReturnValue({} as Window);
+    openSpy.mockReturnValue(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {} as Window
+    );
 
     initiateAuthPopup({
       authorizationUrl: 'https://auth.example.com',
@@ -35,7 +37,9 @@ describe('initiateAuthPopup', () => {
   });
 
   it('adds message event listener when popup opens', () => {
-    openSpy.mockReturnValue({} as Window);
+    openSpy.mockReturnValue(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {} as Window
+    );
 
     initiateAuthPopup({
       authorizationUrl: 'https://auth.example.com',
@@ -79,14 +83,19 @@ describe('initiateAuthPopup', () => {
   });
 
   it('ignores messages from different origins', () => {
-    openSpy.mockReturnValue({} as Window);
+    openSpy.mockReturnValue(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {} as Window
+    );
     const onSuccess = vi.fn();
 
     // Capture the handler when addEventListener is called
     let messageHandler: ((event: MessageEvent) => void) | null = null;
     addEventListenerSpy.mockImplementation((type: string, handler: EventListener) => {
       if (type === 'message') {
-        messageHandler = handler as (event: MessageEvent) => void;
+        messageHandler =
+          /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ handler as (
+            event: MessageEvent
+          ) => void;
       }
     });
 
@@ -108,14 +117,19 @@ describe('initiateAuthPopup', () => {
   });
 
   it('ignores messages with wrong type', () => {
-    openSpy.mockReturnValue({} as Window);
+    openSpy.mockReturnValue(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {} as Window
+    );
     const onSuccess = vi.fn();
 
     // Capture the handler when addEventListener is called
     let messageHandler: ((event: MessageEvent) => void) | null = null;
     addEventListenerSpy.mockImplementation((type: string, handler: EventListener) => {
       if (type === 'message') {
-        messageHandler = handler as (event: MessageEvent) => void;
+        messageHandler =
+          /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ handler as (
+            event: MessageEvent
+          ) => void;
       }
     });
 
@@ -137,14 +151,19 @@ describe('initiateAuthPopup', () => {
   });
 
   it('calls onSuccess when auth-complete received from same origin', () => {
-    openSpy.mockReturnValue({} as Window);
+    openSpy.mockReturnValue(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {} as Window
+    );
     const onSuccess = vi.fn();
 
     // Capture the handler when addEventListener is called
     let messageHandler: ((event: MessageEvent) => void) | null = null;
     addEventListenerSpy.mockImplementation((type: string, handler: EventListener) => {
       if (type === 'message') {
-        messageHandler = handler as (event: MessageEvent) => void;
+        messageHandler =
+          /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ handler as (
+            event: MessageEvent
+          ) => void;
       }
     });
 
@@ -168,13 +187,18 @@ describe('initiateAuthPopup', () => {
   });
 
   it('removes listener after successful auth', () => {
-    openSpy.mockReturnValue({} as Window);
+    openSpy.mockReturnValue(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {} as Window
+    );
 
     // Capture the handler when addEventListener is called
     let messageHandler: ((event: MessageEvent) => void) | null = null;
     addEventListenerSpy.mockImplementation((type: string, handler: EventListener) => {
       if (type === 'message') {
-        messageHandler = handler as (event: MessageEvent) => void;
+        messageHandler =
+          /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ handler as (
+            event: MessageEvent
+          ) => void;
       }
     });
 
@@ -196,7 +220,9 @@ describe('initiateAuthPopup', () => {
   });
 
   it('returns cleanup function that removes listener', () => {
-    openSpy.mockReturnValue({} as Window);
+    openSpy.mockReturnValue(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {} as Window
+    );
 
     const cleanup = initiateAuthPopup({
       authorizationUrl: 'https://auth.example.com',

@@ -2,9 +2,10 @@ import { describe, expect, it, vi } from 'vite-plus/test';
 
 import type { ContextSignals, StateSignals } from '../../../../core/composition/create-composition';
 import { signal } from '../../../../core/signals/primitives';
-import type { MaybeResolvedPresentation, Presentation, Segment, VideoTrack } from '../../../../media/types';
+import type { AudioTrack, MaybeResolvedPresentation, Presentation, Segment, VideoTrack } from '../../../../media/types';
 import { createSourceBufferActor, type SourceBufferActor } from '../../../actors/dom/source-buffer';
 import { type EndOfStreamContext, type EndOfStreamState, endOfStream } from '../end-of-stream';
+import { createSourceBufferDouble } from './source-buffer-test-double';
 
 function makeState(initial: EndOfStreamState = {}): StateSignals<EndOfStreamState> {
   return {
@@ -21,6 +22,18 @@ function makeState(initial: EndOfStreamState = {}): StateSignals<EndOfStreamStat
 interface EndOfStreamTestContext extends EndOfStreamContext {
   videoBufferActor?: SourceBufferActor;
   audioBufferActor?: SourceBufferActor;
+}
+
+function makeSourceBufferList(sourceBuffers: SourceBuffer[]): SourceBufferList {
+  const events = new EventTarget();
+  return Object.assign(sourceBuffers, {
+    item: (index: number) => sourceBuffers[index] ?? null,
+    onaddsourcebuffer: null,
+    onremovesourcebuffer: null,
+    addEventListener: events.addEventListener.bind(events),
+    removeEventListener: events.removeEventListener.bind(events),
+    dispatchEvent: events.dispatchEvent.bind(events),
+  });
 }
 
 function makeContext(initial: EndOfStreamTestContext = {}): ContextSignals<EndOfStreamContext> & {
@@ -44,7 +57,10 @@ function setupEndOfStream(initialState: EndOfStreamState, initialContext: EndOfS
   // doesn't consume it. Pass {} explicitly. cleanup widens to
   // BehaviorCleanup (void | () => void | { destroy }) — the real return is
   // a () => void; cast for callable ergonomics in tests.
-  const cleanup = endOfStream.setup({ state, context, config: {} }) as () => void;
+  const cleanup =
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ endOfStream.setup(
+      { state, context, config: {} }
+    ) as () => void;
   return { state, context, cleanup };
 }
 
@@ -60,27 +76,40 @@ function makeMediaSource(
   overrides: { readyState?: MediaSource['readyState']; duration?: number; sourceBuffers?: SourceBuffer[] } = {}
 ): MediaSource {
   const target = new EventTarget();
-  const ms = Object.create(MediaSource.prototype, {
-    readyState: { value: overrides.readyState ?? 'open', writable: true },
-    duration: { value: overrides.duration ?? 0, writable: true },
-    sourceBuffers: { value: (overrides.sourceBuffers ?? []) as unknown as SourceBufferList, writable: false },
-    addEventListener: { value: target.addEventListener.bind(target) },
-    removeEventListener: { value: target.removeEventListener.bind(target) },
-    dispatchEvent: { value: target.dispatchEvent.bind(target) },
-  }) as MediaSource;
+  const ms =
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ Object.create(
+      MediaSource.prototype,
+      {
+        readyState: { value: overrides.readyState ?? 'open', writable: true },
+        duration: { value: overrides.duration ?? 0, writable: true },
+        sourceBuffers: {
+          value: makeSourceBufferList(overrides.sourceBuffers ?? []),
+          writable: false,
+        },
+        addEventListener: { value: target.addEventListener.bind(target) },
+        removeEventListener: { value: target.removeEventListener.bind(target) },
+        dispatchEvent: { value: target.dispatchEvent.bind(target) },
+      }
+    ) as MediaSource;
   ms.endOfStream = vi.fn();
   return ms;
 }
 
 function transitionMediaSource(mediaSource: MediaSource, readyState: MediaSource['readyState'], eventType: string) {
-  (mediaSource as MediaSource & { readyState: MediaSource['readyState'] }).readyState = readyState;
+  /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+    mediaSource as MediaSource & { readyState: MediaSource['readyState'] }
+  ).readyState = readyState;
   mediaSource.dispatchEvent(new Event(eventType));
 }
 
 function makeSourceBuffer(): SourceBuffer {
   const listeners: Record<string, EventListener[]> = {};
-  return {
-    buffered: { length: 0, start: () => 0, end: () => 0 } as TimeRanges,
+  return createSourceBufferDouble({
+    buffered: /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+      length: 0,
+      start: () => 0,
+      end: () => 0,
+    } as TimeRanges,
     updating: false,
     appendBuffer: vi.fn(() => {
       setTimeout(() => {
@@ -99,7 +128,7 @@ function makeSourceBuffer(): SourceBuffer {
     removeEventListener: vi.fn((type: string, listener: EventListener) => {
       listeners[type] = (listeners[type] ?? []).filter((l) => l !== listener);
     }),
-  } as unknown as SourceBuffer;
+  });
 }
 
 function makeSegments(count: number): Segment[] {
@@ -120,20 +149,26 @@ function makeResolvedVideoTrack(segmentCount: number, id = 'video-1', complete =
     url: 'https://example.com/video.m3u8',
     mimeType: 'video/mp4',
     bandwidth: 1_000_000,
-    initialization: { id: 'init', url: 'https://example.com/init.mp4' },
+    initialization: { url: 'https://example.com/init.mp4' },
     segments: makeSegments(segmentCount),
     startTime: 0,
     duration: complete ? segmentCount * 2.5 : Number.POSITIVE_INFINITY,
-    codecs: 'avc1.64001f',
-  } as unknown as VideoTrack;
+    codecs: ['avc1.64001f'],
+  };
 }
 
 function makePresentation(videoTrack: VideoTrack, id = 'pres-1'): Presentation {
   return {
     id,
     url: 'https://example.com/playlist.m3u8',
-    selectionSets: [{ type: 'video', switchingSets: [{ tracks: [videoTrack] }] }],
-  } as unknown as Presentation;
+    selectionSets: [
+      {
+        id: 'video-selection',
+        type: 'video',
+        switchingSets: [{ id: 'video-switching', type: 'video', tracks: [videoTrack] }],
+      },
+    ],
+  };
 }
 
 function makeActorWithSegments(segmentIds: string[], trackId = 'video-1'): SourceBufferActor {
@@ -318,7 +353,9 @@ describe('endOfStream', () => {
 
     // Real MSE: endOfStream() flips readyState to 'ended' synchronously
     // and dispatches `sourceended`.
-    (mockMs.endOfStream as ReturnType<typeof vi.fn>).mockImplementation(() => {
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+      mockMs.endOfStream as ReturnType<typeof vi.fn>
+    ).mockImplementation(() => {
       transitionMediaSource(mockMs, 'ended', 'sourceended');
     });
 
@@ -346,7 +383,9 @@ describe('endOfStream', () => {
     const track = makeResolvedVideoTrack(4);
     const mockMs = makeMediaSource();
 
-    (mockMs.endOfStream as ReturnType<typeof vi.fn>).mockImplementation(() => {
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+      mockMs.endOfStream as ReturnType<typeof vi.fn>
+    ).mockImplementation(() => {
       transitionMediaSource(mockMs, 'ended', 'sourceended');
     });
 
@@ -377,12 +416,16 @@ describe('endOfStream', () => {
     const track = makeResolvedVideoTrack(4);
     // SourceBuffer that stays `updating` so waitForSourceBuffersReady
     // never resolves on its own.
-    const buffer = {
-      buffered: { length: 0, start: () => 0, end: () => 0 } as TimeRanges,
+    const buffer = createSourceBufferDouble({
+      buffered: /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+        length: 0,
+        start: () => 0,
+        end: () => 0,
+      } as TimeRanges,
       updating: true,
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
-    } as unknown as SourceBuffer;
+    });
     const mockMs = makeMediaSource({ sourceBuffers: [buffer] });
 
     const { state, cleanup } = setupEndOfStream(
@@ -406,20 +449,34 @@ describe('endOfStream', () => {
   it('composes against an audio-only configuration', async () => {
     // Audio-only: only audioBufferActor in scope; the behavior iterates
     // whatever's present without per-type-specialized paths.
-    const audioTrack = {
+    const audioTrack: AudioTrack = {
       id: 'audio-1',
       type: 'audio',
       url: 'https://example.com/audio.m3u8',
       mimeType: 'audio/mp4',
+      bandwidth: 128_000,
+      initialization: { url: 'https://example.com/audio-init.mp4' },
+      codecs: ['mp4a.40.2'],
+      groupId: 'audio-group',
+      name: 'English',
+      sampleRate: 48_000,
+      channels: 2,
+      startTime: 0,
       // Complete playlist — finite duration opens the completeness gate.
       duration: 10,
       segments: makeSegments(4).map((s) => ({ ...s, id: `audio-${s.id}` })),
-    } as unknown as VideoTrack;
-    const presentation = {
+    };
+    const presentation: Presentation = {
       id: 'pres-1',
       url: 'https://example.com/playlist.m3u8',
-      selectionSets: [{ type: 'audio', switchingSets: [{ tracks: [audioTrack] }] }],
-    } as unknown as Presentation;
+      selectionSets: [
+        {
+          id: 'audio-selection',
+          type: 'audio',
+          switchingSets: [{ id: 'audio-switching', type: 'audio', tracks: [audioTrack] }],
+        },
+      ],
+    };
 
     const mockMs = makeMediaSource();
     const audioBufferActor = makeActorWithSegments(

@@ -1,3 +1,4 @@
+import { isBoolean, isFunction } from '@videojs/utils/predicate';
 import { describe, expect, it, vi } from 'vite-plus/test';
 
 import {
@@ -21,7 +22,7 @@ describe('supportsManagedMediaSource', () => {
   it('should detect ManagedMediaSource availability', () => {
     // Will test actual browser API
     const result = supportsManagedMediaSource();
-    expect(typeof result).toBe('boolean');
+    expect(isBoolean(result)).toBe(true);
   });
 });
 
@@ -48,7 +49,7 @@ describe('attachMediaSource', () => {
     expect(url).toBeTruthy();
     expect(url).toContain('blob:');
     expect(mediaElement.src).toBe(url);
-    expect(typeof detach).toBe('function');
+    expect(isFunction(detach)).toBe(true);
   });
 
   it('should return detach function that cleans up', () => {
@@ -150,7 +151,8 @@ describe('attachMediaSourceAsSourceElement', () => {
     const createObjectURL = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:fake-mms');
     const revokeObjectURL = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
     try {
-      const mediaSource = new FakeManagedMediaSource() as unknown as MediaSource;
+      const mediaSource =
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ new FakeManagedMediaSource() as MediaSource;
       const mediaElement = document.createElement('video');
       mediaElement.setAttribute('src', 'https://example.com/old.mp4');
       const sibling = document.createElement('source');

@@ -44,16 +44,17 @@ export function usePopupPosition({
       return;
     }
 
-    positioner.sync({
+    const syncOptions: Parameters<typeof positioner.sync>[0] = {
       anchorName,
       position,
       trigger: triggerSource.triggerElement,
       popup: popupRef.current,
       boundary,
       container,
-      ...(cssVars ? { cssVars } : {}),
-      ...(onSideChange ? { onSideChange } : {}),
-    });
+    };
+    if (cssVars) Object.assign(syncOptions, { cssVars });
+    if (onSideChange) Object.assign(syncOptions, { onSideChange });
+    positioner.sync(syncOptions);
   });
 
   useLayoutEffect(() => () => positioner.cleanup(), [positioner]);

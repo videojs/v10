@@ -80,12 +80,18 @@ export type TwitchInboundMessage = TwitchEmbedMessage | TwitchPlayerProxyMessage
 export interface TwitchCommandMessage {
   namespace: typeof PLAYER_PROXY_NAMESPACE;
   eventName: number;
-  params?: unknown;
+  params?: TwitchCommandParam;
 }
 
+export type TwitchCommandParam = boolean | number | string;
+
 /** Narrow a `message` payload to something the embed sent; any page can post here, so the namespace is the filter. */
-export function isTwitchMessage(data: unknown): data is TwitchInboundMessage {
+export function isTwitchMessage<Value>(data: Value): data is Value & TwitchInboundMessage {
   if (!isObject(data)) return false;
-  const { namespace, eventName } = data as { namespace?: unknown; eventName?: unknown };
+  const { namespace, eventName } =
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ data as {
+      namespace?: unknown;
+      eventName?: unknown;
+    };
   return isString(eventName) && (namespace === EMBED_NAMESPACE || namespace === PLAYER_PROXY_NAMESPACE);
 }

@@ -25,7 +25,7 @@ export default function HeroVideo({
       <SkinComponent
         className={className}
         style={
-          {
+          /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ {
             '--media-border-radius': `calc(var(--spacing) * 6)`,
             '--media-object-fit': 'cover',
             ...style,

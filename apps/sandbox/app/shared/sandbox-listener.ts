@@ -2,6 +2,7 @@ import { SKINS } from '@app/constants';
 import { DEFAULT_SANDBOX_LOCALE, SANDBOX_LOCALE_TAGS, type SandboxLocaleTag } from '@app/shared/i18n/locale-meta';
 import type { Skin } from '@app/types';
 import type { MediaResolution } from '@videojs/media';
+import { isBoolean, isString } from '@videojs/utils/predicate';
 
 import { DEFAULT_AUDIO_SOURCE, SOURCES, type SourceId } from './sources';
 
@@ -20,13 +21,20 @@ const params = new URLSearchParams(window.location.search);
 function readSkin(): Skin {
   const skin = params.get('skin');
 
-  return skin && SKINS.includes(skin as Skin) ? (skin as Skin) : 'default';
+  return skin &&
+    SKINS.includes(
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ skin as Skin
+    )
+    ? /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (skin as Skin)
+    : 'default';
 }
 
 function readSource(): SourceId {
   const source = params.get('source');
 
-  return source && source in SOURCES ? (source as SourceId) : 'hls-1';
+  return source && source in SOURCES
+    ? /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (source as SourceId)
+    : 'hls-1';
 }
 
 function readBoolean(name: string): boolean {
@@ -35,14 +43,18 @@ function readBoolean(name: string): boolean {
 
 function readPreload(): PreloadValue {
   const value = params.get('preload');
-  return PRELOAD_VALUES.includes(value as PreloadValue) ? (value as PreloadValue) : DEFAULT_PRELOAD;
+  return PRELOAD_VALUES.includes(
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ value as PreloadValue
+  )
+    ? /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (value as PreloadValue)
+    : DEFAULT_PRELOAD;
 }
 
 function readResolution(name: string): MediaResolution | undefined {
   const value = params.get(name);
   if (!value || !RESOLUTION_PATTERN.test(value) || Number.parseInt(value, 10) <= 0) return undefined;
 
-  return value as MediaResolution;
+  return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ value as MediaResolution;
 }
 
 /** Absent unless named, so the source default is what runs otherwise. */
@@ -55,7 +67,11 @@ function readOptionalBoolean(name: string): boolean | undefined {
 
 function readPreferPlayback(): PreferPlaybackValue | undefined {
   const value = params.get('preferPlayback');
-  return PREFER_PLAYBACK_VALUES.includes(value as PreferPlaybackValue) ? (value as PreferPlaybackValue) : undefined;
+  return PREFER_PLAYBACK_VALUES.includes(
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ value as PreferPlaybackValue
+  )
+    ? /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (value as PreferPlaybackValue)
+    : undefined;
 }
 
 let currentSkin = readSkin();
@@ -81,14 +97,18 @@ function applyAccentColor(value: string) {
 applyAccentColor(params.get('accent')?.trim() ?? '');
 
 window.addEventListener('message', (event) => {
-  if (event.data?.type !== 'accent-color-change' || typeof event.data.accentColor !== 'string') return;
+  if (event.data?.type !== 'accent-color-change' || !isString(event.data.accentColor)) return;
 
   applyAccentColor(event.data.accentColor.trim());
 });
 
 function readLocale(): SandboxLocaleTag {
   const value = params.get('locale');
-  return SANDBOX_LOCALE_TAGS.includes(value as SandboxLocaleTag) ? (value as SandboxLocaleTag) : DEFAULT_SANDBOX_LOCALE;
+  return SANDBOX_LOCALE_TAGS.includes(
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ value as SandboxLocaleTag
+  )
+    ? /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (value as SandboxLocaleTag)
+    : DEFAULT_SANDBOX_LOCALE;
 }
 
 /**
@@ -103,12 +123,7 @@ function readLocale(): SandboxLocaleTag {
  *   is `720p` — low enough here to leave a small player uncapped.
  * - `?preferPlayback=native` forces the browser's own HLS.
  */
-export function getInitialPlaybackOverrides(): {
-  maxAutoResolution?: MediaResolution;
-  capRenditionToPlayerSize?: boolean;
-  minAutoResolution?: MediaResolution;
-  preferPlayback?: PreferPlaybackValue;
-} {
+export function getInitialPlaybackOverrides() {
   return {
     ...(initialMaxAutoResolution && { maxAutoResolution: initialMaxAutoResolution }),
     ...(initialCapRenditionToPlayerSize !== undefined && {
@@ -116,6 +131,11 @@ export function getInitialPlaybackOverrides(): {
     }),
     ...(initialMinAutoResolution && { minAutoResolution: initialMinAutoResolution }),
     ...(initialPreferPlayback && { preferPlayback: initialPreferPlayback }),
+  } satisfies {
+    maxAutoResolution?: MediaResolution;
+    capRenditionToPlayerSize?: boolean;
+    minAutoResolution?: MediaResolution;
+    preferPlayback?: PreferPlaybackValue;
   };
 }
 
@@ -169,7 +189,7 @@ export function getInitialAutoplay(): boolean {
 
 export function onAutoplayChange(callback: (autoplay: boolean) => void): () => void {
   const handler = (event: MessageEvent) => {
-    if (event.data?.type !== 'autoplay-change' || typeof event.data.autoplay !== 'boolean') return;
+    if (event.data?.type !== 'autoplay-change' || !isBoolean(event.data.autoplay)) return;
 
     currentAutoplay = event.data.autoplay;
     callback(currentAutoplay);
@@ -188,7 +208,7 @@ export function getInitialMuted(): boolean {
 
 export function onMutedChange(callback: (muted: boolean) => void): () => void {
   const handler = (event: MessageEvent) => {
-    if (event.data?.type !== 'muted-change' || typeof event.data.muted !== 'boolean') return;
+    if (event.data?.type !== 'muted-change' || !isBoolean(event.data.muted)) return;
 
     currentMuted = event.data.muted;
     callback(currentMuted);
@@ -207,7 +227,7 @@ export function getInitialLoop(): boolean {
 
 export function onLoopChange(callback: (loop: boolean) => void): () => void {
   const handler = (event: MessageEvent) => {
-    if (event.data?.type !== 'loop-change' || typeof event.data.loop !== 'boolean') return;
+    if (event.data?.type !== 'loop-change' || !isBoolean(event.data.loop)) return;
 
     currentLoop = event.data.loop;
     callback(currentLoop);

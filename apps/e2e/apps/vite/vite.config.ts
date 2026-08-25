@@ -4,7 +4,7 @@ import { resolve } from 'node:path';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite-plus';
 
-function getPageEntries(): Record<string, string> {
+function getPageEntries() {
   const entries: Record<string, string> = {};
 
   // Hand-written pages in src/ (ejected, captions, etc.)
@@ -27,7 +27,7 @@ function getPageEntries(): Record<string, string> {
     }
   }
 
-  return entries;
+  return entries satisfies Record<string, string>;
 }
 
 export default defineConfig({

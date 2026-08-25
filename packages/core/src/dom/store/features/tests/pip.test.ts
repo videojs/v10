@@ -22,7 +22,8 @@ function enablePictureInPicture() {
  */
 function createPipCapableVideo(): HTMLVideoElement {
   const video = createMockVideo();
-  video.requestPictureInPicture = async () => ({}) as PictureInPictureWindow;
+  video.requestPictureInPicture = async () =>
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ ({}) as PictureInPictureWindow;
   return video;
 }
 
@@ -83,7 +84,8 @@ describe('pipFeature', () => {
 
       // iPhone Safari reaches picture-in-picture through presentation mode rather
       // than through `requestPictureInPicture`, so the media is capable without it.
-      const video = createMockVideo() as WebKitVideoElement;
+      const video =
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ createMockVideo() as WebKitVideoElement;
       video.webkitSetPresentationMode = () => {};
       const store = createStore<PlayerTarget>()(pipFeature);
       store.attach({ media: video, container: null });
@@ -127,7 +129,9 @@ describe('pipFeature', () => {
     });
 
     it('syncs pip on webkitpresentationmodechanged event (iOS Safari)', () => {
-      const video = createMockVideo() as HTMLVideoElement & WebKitVideoElement;
+      const video =
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ createMockVideo() as HTMLVideoElement &
+          WebKitVideoElement;
       video.webkitPresentationMode = 'inline';
 
       const store = createStore<PlayerTarget>()(pipFeature);
@@ -163,7 +167,9 @@ describe('pipFeature', () => {
     });
 
     it('requestPictureInPicture() uses webkitSetPresentationMode first when available (iOS Safari)', async () => {
-      const video = createMockVideo() as HTMLVideoElement & WebKitVideoElement;
+      const video =
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ createMockVideo() as HTMLVideoElement &
+          WebKitVideoElement;
       video.requestPictureInPicture = vi.fn().mockResolvedValue({});
       video.webkitSetPresentationMode = vi.fn();
 
@@ -360,7 +366,9 @@ describe('pipFeature with HTMLVideoElementHost', () => {
     });
 
     it('syncs pip on webkitpresentationmodechanged forwarded from target (iOS Safari)', () => {
-      const video = createMockVideo() as HTMLVideoElement & WebKitVideoElement;
+      const video =
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ createMockVideo() as HTMLVideoElement &
+          WebKitVideoElement;
       video.webkitPresentationMode = 'inline';
       const host = new HTMLVideoElementHost();
       host.attach(video);
@@ -398,7 +406,9 @@ describe('pipFeature with HTMLVideoElementHost', () => {
     });
 
     it('requestPictureInPicture() prefers webkitSetPresentationMode on the underlying video (iOS Safari)', async () => {
-      const video = createMockVideo() as HTMLVideoElement & WebKitVideoElement;
+      const video =
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ createMockVideo() as HTMLVideoElement &
+          WebKitVideoElement;
       video.requestPictureInPicture = vi.fn().mockResolvedValue({});
       video.webkitSetPresentationMode = vi.fn();
       const host = new HTMLVideoElementHost();

@@ -50,12 +50,12 @@ export interface PopoverPositionStyle {
 
 const ZERO_OFFSETS: PositioningOffsets = { sideOffset: 0, alignOffset: 0, boundaryOffset: 0 };
 
-const OPPOSITE_SIDE: Record<PopoverSide, PopoverSide> = {
+const OPPOSITE_SIDE = {
   top: 'bottom',
   bottom: 'top',
   left: 'right',
   right: 'left',
-};
+} satisfies Record<PopoverSide, PopoverSide>;
 
 function formatPixels(value: number): string {
   return `${clamp(value, 0, Infinity)}px`;
@@ -80,7 +80,7 @@ function getAnchorCrossAxisShift(
   align: PopoverAlign,
   alignOffset: number,
   boundaryOffset: number
-): { base: string; translate: string } {
+) {
   const base =
     align === 'start' ? start + alignOffset : align === 'end' ? end + alignOffset : start + size / 2 + alignOffset;
   const desiredTranslate = align === 'start' ? '0px' : align === 'end' ? '-100%' : '-50%';
@@ -90,7 +90,7 @@ function getAnchorCrossAxisShift(
     translate: `clamp(${boundaryStart + boundaryOffset - base}px, ${desiredTranslate}, calc(${
       boundaryEnd - boundaryOffset - base
     }px - 100%))`,
-  };
+  } satisfies { base: string; translate: string };
 }
 
 /**
@@ -118,21 +118,25 @@ export function getAnchorPositionStyle(
   cssVars: PositioningCSSVars = PopoverCSSVars
 ): PopoverPositionStyle & Record<string, string | undefined> {
   if (supportsAnchorPositioning()) {
-    return {
+    const style: PopoverPositionStyle & Record<string, string | undefined> = {
       ...getAnchorPositionCSS(anchorName, opts, cssVars, triggerRect, boundaryRect, offsets),
-      ...(triggerRect && boundaryRect ? getPositioningCSSVars(triggerRect, boundaryRect, opts, offsets, cssVars) : {}),
     };
+    if (triggerRect && boundaryRect) {
+      Object.assign(style, getPositioningCSSVars(triggerRect, boundaryRect, opts, offsets, cssVars));
+    }
+    return style;
   }
 
   // JS fallback when CSS Anchor Positioning is not supported.
   if (triggerRect && popupRect) {
     const resolved: PositioningOffsets = offsets ?? ZERO_OFFSETS;
-    return {
+    const style: PopoverPositionStyle & Record<string, string | undefined> = {
       position: 'fixed',
       margin: '0',
       ...getManualPositionStyle(triggerRect, popupRect, opts, resolved, boundaryRect),
-      ...(boundaryRect ? getPositioningCSSVars(triggerRect, boundaryRect, opts, resolved, cssVars) : {}),
     };
+    if (boundaryRect) Object.assign(style, getPositioningCSSVars(triggerRect, boundaryRect, opts, resolved, cssVars));
+    return style;
   }
 
   return {};
@@ -250,7 +254,7 @@ export function getPositioningCSSVars(
   opts: PositioningOptions,
   offsets: PositioningOffsets = ZERO_OFFSETS,
   cssVars: PositioningCSSVars = PopoverCSSVars
-): Record<string, string> {
+) {
   const vars: Record<string, string> = {};
   const { side } = opts;
   const boundaryOffset = offsets.boundaryOffset ?? 0;
@@ -274,7 +278,7 @@ export function getPositioningCSSVars(
     vars[cssVars.availableHeight] = formatPixels(boundaryEndY - boundaryStartY);
   }
 
-  return vars;
+  return vars satisfies Record<string, string>;
 }
 
 /**

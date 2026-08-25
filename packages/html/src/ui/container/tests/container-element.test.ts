@@ -6,9 +6,11 @@ import { ContainerElement } from '../container-element';
 
 let tagCounter = 0;
 
-function createElement<Element extends HTMLElement>(Base: abstract new () => Element): Element {
+function createElement<Element extends HTMLElement>(Base: new () => Element): Element {
   const tag = `test-media-container-${tagCounter++}`;
-  customElements.define(tag, class extends (Base as unknown as typeof HTMLElement) {});
+  // SAFETY: The helper constrains Base to an HTMLElement constructor accepted by customElements.define.
+  customElements.define(tag, class extends (Base as typeof HTMLElement) {});
+  // SAFETY: The tag was defined immediately above with Base, so creation returns Element.
   return document.createElement(tag) as Element;
 }
 
@@ -53,6 +55,7 @@ describe('ContainerElement', () => {
       customElements.define(MediaI18nProviderElement.tagName, MediaI18nProviderElement);
     }
     registerI18n('x-container', { container: { label: 'Translated media player' } });
+    // SAFETY: The tag is registered with MediaI18nProviderElement immediately above.
     const provider = document.createElement(MediaI18nProviderElement.tagName) as MediaI18nProviderElement;
     const container = createElement(ContainerElement);
     provider.lang = 'x-container';

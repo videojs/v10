@@ -1,4 +1,4 @@
-import type { AnyPlayerStore } from '@videojs/core/dom';
+import type { AnyPlayerStore, PlayerTarget } from '@videojs/core/dom';
 import { registerI18n, resetI18nRegistry } from '@videojs/core/i18n';
 import { ContextProvider } from '@videojs/element/context';
 import type { MediaQualityState } from '@videojs/media';
@@ -20,10 +20,15 @@ function uniqueTag(base: string): string {
   return `${base}-${tagCounter++}`;
 }
 
-function createElement<Element extends HTMLElement>(Base: abstract new () => Element): Element {
+function createElement<Element extends HTMLElement>(Base: new () => Element): Element {
   const tag = uniqueTag('test-el');
-  customElements.define(tag, class extends (Base as unknown as typeof HTMLElement) {});
-  return document.createElement(tag) as Element;
+  customElements.define(
+    tag,
+    class extends /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (Base as typeof HTMLElement) {}
+  );
+  return /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+    tag
+  ) as Element;
 }
 
 function defineElement(tagName: string, Base: CustomElementConstructor): void {
@@ -64,14 +69,14 @@ function createQualityStore({
   activeVideoRendition?: MediaQualityState['activeVideoRendition'] | undefined;
   selectVideoRendition?: MediaQualityState['selectVideoRendition'] | undefined;
 } = {}): AnyPlayerStore {
-  return createStore<unknown>()<MediaQualityState>({
+  return createStore<PlayerTarget>()({
     name: 'quality',
     state: () => ({
       videoRenditionList,
       activeVideoRendition,
       selectVideoRendition,
     }),
-  }) as unknown as AnyPlayerStore;
+  });
 }
 
 class TestPlayerProviderElement extends UIElement {
@@ -113,7 +118,10 @@ function setup({
 } = {}) {
   const store = createQualityStore({ videoRenditionList, activeVideoRendition, selectVideoRendition });
   const i18n = new MediaI18nProviderElement();
-  const provider = document.createElement('test-quality-player') as TestPlayerProviderElement;
+  const provider =
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+      'test-quality-player'
+    ) as TestPlayerProviderElement;
   const menu = createElement(MenuElement);
   const options = createElement(QualityRadioGroupElement);
 

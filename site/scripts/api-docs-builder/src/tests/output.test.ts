@@ -2,13 +2,14 @@ import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
 
+import { isString } from '@videojs/utils/predicate';
 import { afterEach, describe, expect, it } from 'vite-plus/test';
 
 import { validateReferenceGroup, writeReferenceGroup } from '../output';
 
 const stringSchema = {
-  safeParse(value: unknown) {
-    return typeof value === 'string'
+  safeParse<Value>(value: Value) {
+    return isString(value)
       ? ({ success: true, data: value } as const)
       : ({
           success: false,

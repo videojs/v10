@@ -29,7 +29,7 @@ export function getCdnId(url: string): string {
 // first CDN with surviving tracks (the head), so this makes "the primary CDN
 // is the video CDN" a guarantee of `getOrderedCdnIds` rather than a side effect
 // of the order tracks happen to be parsed in.
-const CDN_TYPE_PRIORITY: Record<TrackType, number> = { video: 0, audio: 1, text: 2 };
+const CDN_TYPE_PRIORITY = { video: 0, audio: 1, text: 2 } satisfies Record<TrackType, number>;
 
 /**
  * The distinct CDNs a presentation's tracks are served from, ordered video CDNs

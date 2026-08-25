@@ -209,7 +209,10 @@ function messageToTask(
   message: IndividualSourceBufferMessage,
   options: MessageTaskOptions
 ): Task<SourceBufferActorContext> {
-  const factory = messageTaskFactories[message.type] as MessageTaskFactory<typeof message>;
+  const factory =
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ messageTaskFactories[
+      message.type
+    ] as MessageTaskFactory<typeof message>;
   return factory(message, options);
 }
 
@@ -223,9 +226,9 @@ export function createSourceBufferActor(
 ): SourceBufferActor {
   type UserState = Exclude<SourceBufferActorState, 'destroyed'>;
 
-  const handleError = (e: unknown): void => {
-    if (!(e instanceof Error && e.name === 'AbortError')) {
-      console.error('SourceBuffer operation failed:', e);
+  const handleError = (cause: unknown): void => {
+    if (!(cause instanceof Error && cause.name === 'AbortError')) {
+      console.error('SourceBuffer operation failed:', cause);
     }
   };
 

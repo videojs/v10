@@ -1,5 +1,6 @@
 import { resolve } from 'node:path';
 
+import { isString } from '@videojs/utils/predicate';
 import { build, createServer, type ViteDevServer } from 'vite';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
@@ -124,7 +125,7 @@ describe('Skins Vite workflow', () => {
     if (!resolved) throw new Error('Expected the source icon plugin to resolve the minimal family.');
 
     const loaded = await server.pluginContainer.load(resolved.id);
-    const source = typeof loaded === 'string' ? loaded : loaded?.code;
+    const source = isString(loaded) ? loaded : loaded?.code;
     const runtime = await server.pluginContainer.resolveId('virtual:videojs/icons/element-runtime');
 
     expect(source).toContain('aria-hidden');

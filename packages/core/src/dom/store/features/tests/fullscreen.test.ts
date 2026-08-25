@@ -91,7 +91,8 @@ describe('fullscreenFeature', () => {
       });
 
       // Simulate iOS Safari: webkitSetPresentationMode on video prototype
-      const proto = HTMLVideoElement.prototype as WebKitVideoElement;
+      const proto =
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ HTMLVideoElement.prototype as WebKitVideoElement;
       const original = proto.webkitSetPresentationMode;
       proto.webkitSetPresentationMode = () => {};
 
@@ -115,7 +116,9 @@ describe('fullscreenFeature', () => {
         configurable: true,
       });
 
-      const video = createMockVideo() as HTMLVideoElement & WebKitVideoElement;
+      const video =
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ createMockVideo() as HTMLVideoElement &
+          WebKitVideoElement;
       video.webkitPresentationMode = 'inline';
 
       const container = document.createElement('div');
@@ -327,7 +330,9 @@ describe('fullscreenFeature', () => {
         configurable: true,
       });
 
-      const video = createMockVideo() as HTMLVideoElement & WebKitVideoElement;
+      const video =
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ createMockVideo() as HTMLVideoElement &
+          WebKitVideoElement;
       video.webkitSetPresentationMode = vi.fn();
       const container = document.createElement('div');
 
@@ -343,7 +348,9 @@ describe('fullscreenFeature', () => {
       const originalExit = document.exitFullscreen;
       document.exitFullscreen = vi.fn();
 
-      const video = createMockVideo() as HTMLVideoElement & WebKitVideoElement;
+      const video =
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ createMockVideo() as HTMLVideoElement &
+          WebKitVideoElement;
       video.webkitPresentationMode = 'fullscreen';
       video.webkitSetPresentationMode = vi.fn();
 
@@ -543,7 +550,9 @@ describe('fullscreenFeature with HTMLVideoElementHost', () => {
     });
 
     it('syncs fullscreen on webkitpresentationmodechanged forwarded from target (iOS Safari)', () => {
-      const video = createMockVideo() as HTMLVideoElement & WebKitVideoElement;
+      const video =
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ createMockVideo() as HTMLVideoElement &
+          WebKitVideoElement;
       video.webkitPresentationMode = 'inline';
       const container = document.createElement('div');
       const host = new HTMLVideoElementHost();
@@ -609,7 +618,9 @@ describe('fullscreenFeature with HTMLVideoElementHost', () => {
         configurable: true,
       });
 
-      const video = createMockVideo() as HTMLVideoElement & WebKitVideoElement;
+      const video =
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ createMockVideo() as HTMLVideoElement &
+          WebKitVideoElement;
       video.webkitSetPresentationMode = vi.fn();
       const container = document.createElement('div');
       const host = new HTMLVideoElementHost();

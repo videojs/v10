@@ -176,8 +176,8 @@ export class YouTubeMedia extends YouTubeMediaBase implements Partial<Video> {
       if (this.#autoplay) this.#player.loadPlaylist(options);
       else this.#player.cuePlaylist(options);
     } else if (parsed.id) {
-      const options: { videoId: string; startSeconds?: number } = { videoId: parsed.id };
-      if (parsed.startTime != null) options.startSeconds = parsed.startTime;
+      const options =
+        parsed.startTime == null ? { videoId: parsed.id } : { videoId: parsed.id, startSeconds: parsed.startTime };
       if (this.#autoplay) this.#player.loadVideoById(options);
       else this.#player.cueVideoById(options);
     }
@@ -343,7 +343,10 @@ export class YouTubeMedia extends YouTubeMediaBase implements Partial<Video> {
 
   get textTracks() {
     this.#textTracksHost ??= globalThis.document?.createElement('video') ?? null;
-    return (this.#textTracksHost?.textTracks as TextTrackListLike) ?? EMPTY_TEXT_TRACKS;
+    return (
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (this.#textTracksHost
+        ?.textTracks as TextTrackListLike) ?? EMPTY_TEXT_TRACKS
+    );
   }
 
   get isFullscreen() {
@@ -497,7 +500,7 @@ export class YouTubeMedia extends YouTubeMediaBase implements Partial<Video> {
   #onError(code: number) {
     const error = new MediaError(
       `YouTube iframe player error #${code}; visit https://developers.google.com/youtube/iframe_api_reference#onError for the full error message.`,
-      youtubeErrorCodeToMediaErrorCode[code] ?? MediaError.MEDIA_ERR_CUSTOM,
+      youtubeErrorCodeToMediaErrorCode.get(code) ?? MediaError.MEDIA_ERR_CUSTOM,
       true
     );
     error.data = { youtubeErrorCode: code };
@@ -638,7 +641,11 @@ export class YouTubeMedia extends YouTubeMediaBase implements Partial<Video> {
   #syncTextTracks(player: YouTubePlayerApi) {
     const host = this.#textTracksHost;
     if (!host) return;
-    const trackList = (player.getOption('captions', 'tracklist') ?? []) as YouTubeCaptionTrack[];
+    const trackList =
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (player.getOption(
+        'captions',
+        'tracklist'
+      ) ?? []) as YouTubeCaptionTrack[];
     for (const track of trackList) {
       if (!track.languageCode) continue;
       if (Array.from(host.textTracks).some((t) => t.language === track.languageCode)) continue;

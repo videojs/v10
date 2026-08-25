@@ -42,7 +42,10 @@ const PLACEHOLDER_PATTERN = /{{([A-Z0-9_]+)}}/g;
 /** Resolve the shared media source placeholders used in demo snippets. */
 export function replaceDemoPlaceholders(source: string): string {
   return source.replace(PLACEHOLDER_PATTERN, (placeholder, name: string) => {
-    const value = DEMO_PLACEHOLDERS[name as keyof typeof DEMO_PLACEHOLDERS];
+    const value =
+      DEMO_PLACEHOLDERS[
+        /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ name as keyof typeof DEMO_PLACEHOLDERS
+      ];
 
     if (!value) {
       throw new Error(`Unknown demo placeholder: ${placeholder}`);

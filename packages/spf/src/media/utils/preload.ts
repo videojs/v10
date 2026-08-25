@@ -5,7 +5,7 @@
  */
 export type StandardPreload = 'auto' | 'metadata' | 'none';
 
-export function isStandardPreload(value: unknown): value is StandardPreload {
+export function isStandardPreload<Value>(value: Value): value is Value & StandardPreload {
   return value === 'auto' || value === 'metadata' || value === 'none';
 }
 

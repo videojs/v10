@@ -10,7 +10,7 @@ export function useAmbientLang(hasLangRoot: boolean, langRootElement: Element | 
   return useSyncExternalStore(
     subscribeAmbientLang,
     () => {
-      const root = hasLangRoot || typeof document === 'undefined' ? langRootElement : document.documentElement;
+      const root = hasLangRoot || !('document' in globalThis) ? langRootElement : document.documentElement;
       if (!root) return undefined;
       return resolveLangAttr<Locale>(nearestLang(root));
     },

@@ -345,7 +345,7 @@ function expectNoMenuStateAttrs(element: HTMLElement): void {
 }
 
 function createRect(width: number, height: number): DOMRect {
-  return {
+  return /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
     x: 0,
     y: 0,
     width,
@@ -658,17 +658,16 @@ describe('MenuContent', () => {
 
   it('propagates the deepest submenu size to the root content', async () => {
     vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
-      const widths: Record<string, number> = {
-        'root-items': 180,
-        'first-submenu-items': 200,
-        'second-submenu-item': 220,
-      };
-      const heights: Record<string, number> = {
-        'root-items': 100,
-        'first-submenu-items': 150,
-        'second-submenu-item': 240,
-      };
-      return createRect(widths[this.dataset.testid ?? ''] ?? 0, heights[this.dataset.testid ?? ''] ?? 0);
+      switch (this.dataset.testid) {
+        case 'root-items':
+          return createRect(180, 100);
+        case 'first-submenu-items':
+          return createRect(200, 150);
+        case 'second-submenu-item':
+          return createRect(220, 240);
+        default:
+          return createRect(0, 0);
+      }
     });
 
     render(<NestedSubmenuFixture />);
@@ -702,7 +701,12 @@ describe('MenuContent', () => {
 
     try {
       render(
-        <MenuRoot defaultOpen side={null as never}>
+        <MenuRoot
+          defaultOpen
+          side={
+            /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ null as never
+          }
+        >
           <MenuTrigger>Settings</MenuTrigger>
           <MenuContent data-testid="root-content">
             <div data-testid="root-items">

@@ -69,7 +69,9 @@ describe('MediaComponentElement', () => {
 
     provider.append(el);
     document.body.append(provider);
-    provider.setMedia(host as unknown as Media);
+    provider.setMedia(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ host as Media
+    );
 
     expect(getMediaComponents(host).get(FakeComponent)).toBe(el.instance);
   });
@@ -81,7 +83,9 @@ describe('MediaComponentElement', () => {
 
     provider.append(el);
     document.body.append(provider);
-    provider.setMedia(host as unknown as Media);
+    provider.setMedia(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ host as Media
+    );
 
     el.destroy();
 

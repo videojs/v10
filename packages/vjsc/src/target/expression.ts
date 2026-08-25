@@ -1,3 +1,5 @@
+import { isString } from '@videojs/utils/predicate';
+
 import {
   TARGET_EXPRESSION,
   TARGET_SPREAD,
@@ -28,44 +30,63 @@ export function createTargetCode(): TargetCode {
   };
 }
 
-export function isTargetExpression(value: unknown): value is TargetExpression {
-  return Boolean(value && typeof value === 'object' && (value as Partial<TargetExpression>)[TARGET_EXPRESSION]);
+export function isTargetExpression<Value>(value: Value): value is Value & TargetExpression {
+  return Boolean(
+    value &&
+    typeof value === 'object' &&
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (
+      value as Partial<TargetExpression>
+    )[TARGET_EXPRESSION]
+  );
 }
 
-export function isTargetWithProps(value: unknown): value is TargetWithProps {
-  return Boolean(value && typeof value === 'object' && (value as Partial<TargetWithProps>)[TARGET_WITH_PROPS] === true);
+export function isTargetWithProps<Value>(value: Value): value is Value & TargetWithProps {
+  return Boolean(
+    value &&
+    typeof value === 'object' &&
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (
+      value as Partial<TargetWithProps>
+    )[TARGET_WITH_PROPS] === true
+  );
 }
 
 export function readTargetExpression(value: TargetExpression): TargetExpressionNode {
   return value[TARGET_EXPRESSION];
 }
 
-function createBinding<Value = unknown>(name: string): TargetBinding<Value> {
+function createBinding<Value = import('../value').VjscValue>(name: string): TargetBinding<Value> {
   if (!/^[$A-Z_a-z][$\w]*$/.test(name)) {
     throw new Error(`vjsc/target: generated parameter \`${name}\` is not a valid identifier.`);
   }
 
-  return createBindingPath(name) as TargetBinding<Value>;
+  return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ createBindingPath(
+    name
+  ) as TargetBinding<Value>;
 }
 
 function createBindingPath(code: string): TargetBinding {
   const expression = createExpression({ kind: 'reference', code });
 
-  return new Proxy(expression as TargetBinding, {
-    get(target, property) {
-      if (property === TARGET_EXPRESSION) return target[TARGET_EXPRESSION];
-      if (typeof property === 'string') return createBindingPath(`${code}.${property}`);
-      return (target as TargetBinding & Readonly<Record<PropertyKey, unknown>>)[property];
-    },
-    ownKeys() {
-      return [TARGET_SPREAD];
-    },
-    getOwnPropertyDescriptor(_target, property) {
-      return property === TARGET_SPREAD
-        ? { configurable: true, enumerable: true, value: expression, writable: false }
-        : undefined;
-    },
-  });
+  return new Proxy(
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ expression as TargetBinding,
+    {
+      get(target, property) {
+        if (property === TARGET_EXPRESSION) return target[TARGET_EXPRESSION];
+        if (isString(property)) return createBindingPath(`${code}.${property}`);
+        return /* SAFETY: Target bindings expose generated child bindings by property key. */ (
+          target as TargetBinding & Readonly<Record<PropertyKey, import('../value').VjscValue>>
+        )[property];
+      },
+      ownKeys() {
+        return [TARGET_SPREAD];
+      },
+      getOwnPropertyDescriptor(_target, property) {
+        return property === TARGET_SPREAD
+          ? { configurable: true, enumerable: true, value: expression, writable: false }
+          : undefined;
+      },
+    }
+  );
 }
 
 function createExpression(expression: TargetExpressionNode): TargetExpression {

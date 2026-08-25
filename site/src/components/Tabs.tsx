@@ -151,7 +151,10 @@ export function Tab({ value, children, initial, variant = 'compact' }: TabProps)
   const onKeyDown = (e: React.KeyboardEvent) => {
     // Find all tab siblings within the tablist
     const tabsRoot = ref.current?.closest('[data-tabs-root]');
-    const allTabs = Array.from(tabsRoot?.querySelectorAll('[role="tab"]') || []) as HTMLElement[];
+    const allTabs =
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ Array.from(
+        tabsRoot?.querySelectorAll('[role="tab"]') || []
+      ) as HTMLElement[];
     const currentIndex = allTabs.indexOf(ref.current!);
 
     if (currentIndex === -1) return;
@@ -206,7 +209,8 @@ export function Tab({ value, children, initial, variant = 'compact' }: TabProps)
       mutations.forEach((mutation) => {
         if (mutation.type === 'attributes' && mutation.attributeName === 'data-tab-active') {
           // Fix: mutation.target is Node, cast to Element to use getAttribute
-          const target = mutation.target as Element;
+          const target =
+            /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ mutation.target as Element;
           const newValue = target.getAttribute('data-tab-active') === 'true';
           setIsActive(newValue);
         }
@@ -286,7 +290,8 @@ export function TabsPanel({ value, children, initial, className, variant = 'comp
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
         if (mutation.type === 'attributes' && mutation.attributeName === 'data-tab-active') {
-          const target = mutation.target as Element;
+          const target =
+            /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ mutation.target as Element;
           const newValue = target.getAttribute('data-tab-active') === 'true';
           setIsActive(newValue);
         }

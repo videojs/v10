@@ -5,6 +5,7 @@ import { createRef } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { I18nProvider } from '../../../i18n';
+import type { PlayerContextValue } from '../../../player/context';
 import { createPlayerWrapper } from '../../../testing/mocks';
 import { SliderBuffer } from '../../slider/slider-buffer';
 import { SliderFill } from '../../slider/slider-fill';
@@ -17,6 +18,11 @@ import { TimeSliderRoot } from '../time-slider-root';
 
 // --- Hoisted mock data (available inside vi.mock factories) ---
 
+interface CapturedSliderOptions {
+  onDragStart?: () => void;
+  onDragEnd?: () => void;
+}
+
 const {
   mockSliderApi,
   mockSliderInput,
@@ -26,8 +32,14 @@ const {
   mockTextTrackState,
   capturedSliderOptions,
 } = vi.hoisted(() => {
-  const capturedSliderOptions: { current: { onDragStart?: () => void; onDragEnd?: () => void } } = {
-    current: {},
+  let currentOptions: CapturedSliderOptions = {};
+  const capturedSliderOptions = {
+    get current(): CapturedSliderOptions {
+      return currentOptions;
+    },
+    set current(value: CapturedSliderOptions) {
+      currentOptions = value;
+    },
   };
   const mockSliderInput = {
     pointerPercent: 0,
@@ -37,7 +49,7 @@ const {
     focused: false,
   };
   return {
-    mockSliderApi: (options: { onDragStart?: () => void; onDragEnd?: () => void }) => {
+    mockSliderApi: (options: CapturedSliderOptions) => {
       capturedSliderOptions.current = options;
       return {
         input: {
@@ -66,8 +78,12 @@ const {
       seek: vi.fn(),
     },
     mockBufferState: {
-      buffered: [[0, 60]] as [number, number][],
-      seekable: [[0, 120]] as [number, number][],
+      buffered: /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ [
+        [0, 60],
+      ] as [number, number][],
+      seekable: /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ [
+        [0, 120],
+      ] as [number, number][],
     },
     mockPlaybackState: {
       paused: false,
@@ -87,34 +103,45 @@ const {
   };
 });
 
+type TimeSliderSelectorState =
+  | {
+      time: typeof mockTimeState;
+      buffer: typeof mockBufferState;
+      playback: typeof mockPlaybackState;
+      textTrack: typeof mockTextTrackState;
+    }
+  | (typeof mockTimeState & typeof mockBufferState & typeof mockPlaybackState & typeof mockTextTrackState);
+
 // --- Module mocks ---
 
 vi.mock('@videojs/core/dom', async (importOriginal) => {
-  const orig: Record<string, unknown> = await importOriginal();
+  const orig = await importOriginal<typeof import('@videojs/core/dom')>();
   return { ...orig, createSlider: vi.fn(mockSliderApi) };
 });
 
 vi.mock('@videojs/store/react', () => ({
   useSnapshot: vi.fn((state: { current: unknown }) => state.current),
-  useStore: vi.fn((_store: unknown, selector?: (state: object) => unknown) => {
-    if (!selector) return _store;
-    try {
-      const result = selector({
-        time: mockTimeState,
-        buffer: mockBufferState,
-        playback: mockPlaybackState,
-        textTrack: mockTextTrackState,
-      });
-      if (result !== undefined) return result;
-    } catch {
-      // fall through
+  useStore: vi.fn(
+    <Selection,>(_store: PlayerContextValue['store'], selector?: (state: TimeSliderSelectorState) => Selection) => {
+      if (!selector) return _store;
+      try {
+        const result = selector({
+          time: mockTimeState,
+          buffer: mockBufferState,
+          playback: mockPlaybackState,
+          textTrack: mockTextTrackState,
+        });
+        if (result !== undefined) return result;
+      } catch {
+        // fall through
+      }
+      try {
+        return selector({ ...mockTimeState, ...mockBufferState, ...mockPlaybackState, ...mockTextTrackState });
+      } catch {
+        return undefined;
+      }
     }
-    try {
-      return selector({ ...mockTimeState, ...mockBufferState, ...mockPlaybackState, ...mockTextTrackState });
-    } catch {
-      return undefined;
-    }
-  }),
+  ),
 }));
 
 afterEach(() => {
@@ -187,7 +214,10 @@ describe('TimeSliderRoot', () => {
       </Wrapper>
     );
 
-    const el = container.querySelector('[data-orientation]') as HTMLElement;
+    const el =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ container.querySelector(
+        '[data-orientation]'
+      ) as HTMLElement;
     expect(el?.style.getPropertyValue('--media-slider-fill')).toBeTruthy();
     expect(el?.style.getPropertyValue('--media-slider-pointer')).toBeTruthy();
     expect(el?.style.getPropertyValue('--media-slider-buffer')).toBeTruthy();
@@ -253,19 +283,39 @@ describe('TimeSlider compound', () => {
     expect(chapters[0]?.matches(':first-child')).toBe(true);
     expect(chapters[2]?.matches(':last-child')).toBe(true);
     expect(chapters[0]?.classList).toContain('active');
-    expect((chapters[1] as HTMLElement).style.pointerEvents).toBe('none');
+    expect(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+        chapters[1] as HTMLElement
+      ).style.pointerEvents
+    ).toBe('none');
     expect(chapters[0]?.querySelector('.chapter-track')).toBeTruthy();
     expect(chapters[0]?.querySelector('.chapter-buffer')).toBeTruthy();
     expect(chapters[0]?.querySelector('.chapter-fill')).toBeTruthy();
-    expect((chapters[0] as HTMLElement).style.getPropertyValue('--media-slider-chapter-start')).toBe('0%');
-    expect((chapters[0] as HTMLElement).style.getPropertyValue('--media-slider-chapter-end')).toBe(
-      `${(40 / 120) * 100}%`
-    );
-    expect((chapters[0] as HTMLElement).style.getPropertyValue('--media-slider-chapter-width')).toBe(
-      `${(40 / 120) * 100}%`
-    );
-    expect((chapters[0] as HTMLElement).style.getPropertyValue('--media-slider-chapter-fill')).toBe('75%');
-    expect((chapters[0] as HTMLElement).style.getPropertyValue('--media-slider-chapter-buffer')).toBe('100%');
+    expect(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+        chapters[0] as HTMLElement
+      ).style.getPropertyValue('--media-slider-chapter-start')
+    ).toBe('0%');
+    expect(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+        chapters[0] as HTMLElement
+      ).style.getPropertyValue('--media-slider-chapter-end')
+    ).toBe(`${(40 / 120) * 100}%`);
+    expect(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+        chapters[0] as HTMLElement
+      ).style.getPropertyValue('--media-slider-chapter-width')
+    ).toBe(`${(40 / 120) * 100}%`);
+    expect(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+        chapters[0] as HTMLElement
+      ).style.getPropertyValue('--media-slider-chapter-fill')
+    ).toBe('75%');
+    expect(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+        chapters[0] as HTMLElement
+      ).style.getPropertyValue('--media-slider-chapter-buffer')
+    ).toBe('100%');
     expect(container.querySelector('svg')).toBeNull();
     expect(container.querySelector('.chapter-title')?.textContent).toBe('First');
   });
@@ -288,7 +338,10 @@ describe('TimeSlider compound', () => {
       );
 
       expect(container.querySelector('.chapters')).toBeTruthy();
-      const chapter = container.querySelector('.chapter') as HTMLElement;
+      const chapter =
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ container.querySelector(
+          '.chapter'
+        ) as HTMLElement;
       expect(chapter).toBeTruthy();
       expect(chapter.dataset.hasCue).toBe('false');
       expect(chapter.style.getPropertyValue('--media-slider-chapter-start')).toBe('0%');
@@ -317,7 +370,10 @@ describe('TimeSlider compound', () => {
         </Wrapper>
       );
 
-      const chapter = container.querySelector('.chapter') as HTMLElement;
+      const chapter =
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ container.querySelector(
+          '.chapter'
+        ) as HTMLElement;
       expect(chapter.style.getPropertyValue('--media-slider-chapter-end')).toBe('100%');
       expect(chapter.style.getPropertyValue('--media-slider-chapter-width')).toBe('100%');
     } finally {

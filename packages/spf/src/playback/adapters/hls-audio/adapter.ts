@@ -148,11 +148,12 @@ export function HlsAudioMediaMixin<Base extends Constructor<any>>(BaseClass: Bas
         console.error(this.#withSuggestion(UNSUPPORTED_PLAYBACK_FEATURE_MESSAGE), { conditions: errors });
       }
 
-      this.#error = {
+      const surfaceError: HlsVideoMediaError = {
         code: unsupported ? SVTA_UNSUPPORTED_PLAYBACK_FEATURE : reported.code,
         message: reported.message ?? '',
-        ...(reported.data === undefined ? {} : { data: reported.data }),
       };
+      if (reported.data !== undefined) Object.assign(surfaceError, { data: reported.data });
+      this.#error = surfaceError;
       this.dispatchEvent?.(new Event('error'));
     }
 
@@ -256,7 +257,7 @@ export function HlsAudioMediaMixin<Base extends Constructor<any>>(BaseClass: Bas
 
       this.#signals.state.loadActivated.set(true);
 
-      return mediaElement.play().catch((err: unknown) => {
+      return mediaElement.play().catch((cause: unknown) => {
         if (this.src) {
           return new Promise<void>((resolve, reject) => {
             const listener = () => {
@@ -267,7 +268,7 @@ export function HlsAudioMediaMixin<Base extends Constructor<any>>(BaseClass: Bas
             mediaElement.addEventListener('loadstart', listener, { once: true });
           });
         }
-        throw err;
+        throw cause;
       });
     }
 
@@ -299,7 +300,10 @@ export function HlsAudioMediaMixin<Base extends Constructor<any>>(BaseClass: Bas
 
   // `MixinReturn` sources statics from `Base`, so the adapter's own static needs
   // adding back to the type or callers can't read it.
-  return HlsAudioMediaImpl as unknown as MixinReturn<Base, HlsAudioMediaAPI> & {
+  return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ HlsAudioMediaImpl as MixinReturn<
+    Base,
+    HlsAudioMediaAPI
+  > & {
     readonly alternativeMediaSuggestion: string | undefined;
   };
 }

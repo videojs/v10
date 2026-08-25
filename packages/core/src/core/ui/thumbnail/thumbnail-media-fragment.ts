@@ -3,16 +3,15 @@ import { isNumber } from '@videojs/utils/predicate';
 
 import type { ThumbnailCoords, ThumbnailImage } from './types';
 
-/** Parse `url#xywh=x,y,w,h` into a URL and optional sprite coordinates. */
-export function parseMediaFragment(
-  text: string,
-  baseURL?: string
-): {
+export interface ParsedMediaFragment {
   url: string;
   width?: number;
   height?: number;
   coords?: ThumbnailCoords;
-} {
+}
+
+/** Parse `url#xywh=x,y,w,h` into a URL and optional sprite coordinates. */
+export function parseMediaFragment(text: string, baseURL?: string): ParsedMediaFragment {
   const parts = text.trim().split('#');
   const rawURL = parts[0] ?? '';
   const hash = parts[1];
@@ -39,7 +38,7 @@ export function parseMediaFragment(
     }
   }
 
-  const result: { url: string; width?: number; height?: number; coords?: ThumbnailCoords } = { url };
+  const result: ParsedMediaFragment = { url };
 
   if (isNumber(data.w)) result.width = data.w;
   if (isNumber(data.h)) result.height = data.h;

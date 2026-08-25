@@ -7,7 +7,8 @@ import { NativeHlsMediaErrorsMixin } from '../errors';
 class FakeHost extends HTMLVideoElementHost {
   // Re-expose the now-protected `target` for test assertions.
   override get target(): HTMLVideoElement | null {
-    return super.target as HTMLVideoElement | null;
+    return /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ super
+      .target as HTMLVideoElement | null;
   }
 }
 
@@ -39,7 +40,9 @@ describe('NativeHlsMediaErrorsMixin', () => {
 
     expect(handler).toHaveBeenCalledOnce();
 
-    const event = handler.mock.calls[0]![0] as ErrorEvent;
+    const event =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ handler.mock
+        .calls[0]![0] as ErrorEvent;
     expect(event.error).toBeInstanceOf(MediaError);
     expect(event.error.code).toBe(MediaError.MEDIA_ERR_NETWORK);
     expect(event.error.fatal).toBe(true);
@@ -54,7 +57,9 @@ describe('NativeHlsMediaErrorsMixin', () => {
 
     fireNativeError(video, MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED, 'Failed to open media');
 
-    const event = handler.mock.calls[0]![0] as ErrorEvent;
+    const event =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ handler.mock
+        .calls[0]![0] as ErrorEvent;
     expect(event.error.code).toBe(MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED);
     expect(event.error.message).toBe(MediaError.defaultMessages[MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED]);
   });
@@ -67,7 +72,9 @@ describe('NativeHlsMediaErrorsMixin', () => {
 
     fireNativeError(video, MediaError.MEDIA_ERR_DECODE);
 
-    const event = handler.mock.calls[0]![0] as ErrorEvent;
+    const event =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ handler.mock
+        .calls[0]![0] as ErrorEvent;
     expect(event.error.code).toBe(MediaError.MEDIA_ERR_DECODE);
     expect(event.error.message).toBe(MediaError.defaultMessages[MediaError.MEDIA_ERR_DECODE]);
   });
@@ -103,7 +110,9 @@ describe('NativeHlsMediaErrorsMixin', () => {
 
     fireNativeError(video, MediaError.MEDIA_ERR_ABORTED);
 
-    const event = handler.mock.calls[0]![0] as ErrorEvent;
+    const event =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ handler.mock
+        .calls[0]![0] as ErrorEvent;
     expect(event.error.code).toBe(MediaError.MEDIA_ERR_ABORTED);
   });
 
@@ -184,7 +193,8 @@ describe('NativeHlsMediaErrorsMixin', () => {
     const host = new NativeHlsMediaErrors();
     const video = document.createElement('video');
 
-    let targetDuringError: EventTarget | null = 'unset' as any;
+    let targetDuringError: EventTarget | null =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ 'unset' as any;
     host.addEventListener('error', () => {
       targetDuringError = host.target;
     });
@@ -235,7 +245,9 @@ describe('NativeHlsMediaErrorsMixin', () => {
 
     expect(handler).toHaveBeenCalledOnce();
 
-    const event = handler.mock.calls[0]![0] as ErrorEvent;
+    const event =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ handler.mock
+        .calls[0]![0] as ErrorEvent;
     expect(event.error.code).toBe(MediaError.MEDIA_ERR_NETWORK);
   });
 });

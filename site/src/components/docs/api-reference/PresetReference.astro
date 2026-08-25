@@ -34,7 +34,11 @@ const pkg = framework && isValidFramework(framework) ? `@videojs/${framework}` :
  * Native media elements used by presets that don't have a custom element.
  * The pipeline can't detect these since they're not classes with `static tagName`.
  */
-const NATIVE_MEDIA_ELEMENTS: Record<string, string> = {
+interface NativeMediaElementByPreset {
+  readonly [preset: string]: string | undefined;
+}
+
+const NATIVE_MEDIA_ELEMENTS: NativeMediaElementByPreset = {
   video: 'video',
   audio: 'audio',
 };
@@ -213,7 +217,7 @@ const listFormat = new Intl.ListFormat('en', { style: 'long', type: 'unit' });
     .querySelectorAll<HTMLTableRowElement>("[data-preset-row]")
     .forEach((row) => {
       row.addEventListener("click", (e) => {
-        if ((e.target as Element).closest("a, button")) return;
+        if ((/* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ e.target as Element).closest("a, button")) return;
         row.querySelector<HTMLButtonElement>("[data-preset-toggle]")?.click();
       });
     });

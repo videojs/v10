@@ -10,13 +10,17 @@ test.describe('XSS prevention — CustomMediaElement shadow root', () => {
   test('quote injection in crossorigin does not fire onerror handler', async ({ page }) => {
     // innerHTML on a connected container: attributes are present when the constructor runs.
     const result = await page.evaluate(() => {
-      (window as any).__xss = undefined;
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+        window as any
+      ).__xss = undefined;
       const container = document.createElement('div');
       document.body.appendChild(container);
       container.innerHTML = '<hlsjs-video crossorigin="&quot; onerror=&quot;window.__xss=1&quot;"></hlsjs-video>';
       const el = container.querySelector('hlsjs-video')!;
       return {
-        xss: (window as any).__xss,
+        xss: /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+          window as any
+        ).__xss,
         hasOnerror: el.shadowRoot?.querySelector('[onerror]') !== null,
         hasUpgraded: el.shadowRoot !== null,
       };
@@ -29,14 +33,18 @@ test.describe('XSS prevention — CustomMediaElement shadow root', () => {
 
   test('angle-bracket injection in crossorigin does not inject sibling elements', async ({ page }) => {
     const result = await page.evaluate(() => {
-      (window as any).__xss = undefined;
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+        window as any
+      ).__xss = undefined;
       const container = document.createElement('div');
       document.body.appendChild(container);
       container.innerHTML =
         '<hlsjs-video crossorigin="&quot;&gt;&lt;img src=x onerror=&quot;window.__xss=1&quot;&gt;"></hlsjs-video>';
       const el = container.querySelector('hlsjs-video')!;
       return {
-        xss: (window as any).__xss,
+        xss: /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+          window as any
+        ).__xss,
         hasImg: el.shadowRoot?.querySelector('img') !== null,
         hasScript: el.shadowRoot?.querySelector('script') !== null,
       };

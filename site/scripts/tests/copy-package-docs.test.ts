@@ -142,7 +142,8 @@ describe('synthesizeReadme', () => {
   it('throws on an unsupported framework', () => {
     expect(() =>
       synthesizeReadme({
-        framework: 'svelte' as unknown as Framework,
+        framework:
+          /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ 'svelte' as Framework,
         version: '1.0.0',
       })
     ).toThrow();

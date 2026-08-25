@@ -6,8 +6,10 @@
  * back as soon as shaka is through: a patched server global left behind would
  * only confuse other libraries' environment detection.
  */
-export const didShimSelf = typeof self === 'undefined';
+export const didShimSelf = !('self' in globalThis);
 
 if (didShimSelf) {
-  (globalThis as { self?: typeof globalThis }).self = globalThis;
+  /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (
+    globalThis as { self?: typeof globalThis }
+  ).self = globalThis;
 }

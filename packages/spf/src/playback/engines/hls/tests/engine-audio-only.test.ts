@@ -1,3 +1,4 @@
+import { isFunction, isString } from '@videojs/utils/predicate';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { snapshot } from '../../../../core/signals/primitives';
@@ -40,7 +41,7 @@ describe('createHlsAudioEngine', () => {
 
     const originalConsoleError = console.error.bind(console);
     consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation((...args: unknown[]) => {
-      const text = args.map((a) => (typeof a === 'string' ? a : String(a))).join(' ');
+      const text = args.map((a) => (isString(a) ? a : String(a))).join(' ');
       if (expectedErrorPatterns.some((p) => p.test(text))) return;
       originalConsoleError(...args);
     });
@@ -56,7 +57,7 @@ describe('createHlsAudioEngine', () => {
 
     expect(engine.state).toBeDefined();
     expect(engine.context).toBeDefined();
-    expect(typeof engine.destroy).toBe('function');
+    expect(isFunction(engine.destroy)).toBe(true);
 
     engine.destroy();
   });
@@ -67,8 +68,8 @@ describe('createHlsAudioEngine', () => {
     // Slot exists as a signal — consumer-facing programmatic-write path
     // for multi-language-audio.
     expect(engine.state.userAudioTrackSelection).toBeDefined();
-    expect(typeof engine.state.userAudioTrackSelection.get).toBe('function');
-    expect(typeof engine.state.userAudioTrackSelection.set).toBe('function');
+    expect(isFunction(engine.state.userAudioTrackSelection.get)).toBe(true);
+    expect(isFunction(engine.state.userAudioTrackSelection.set)).toBe(true);
 
     engine.state.userAudioTrackSelection.set({ language: 'es' });
     expect(engine.state.userAudioTrackSelection.get()).toEqual({ language: 'es' });
@@ -83,37 +84,39 @@ describe('createHlsAudioEngine', () => {
     // rather than selected. (If the default weren't wired, the constraint would
     // pass through and select it.)
     const engine = createHlsAudioEngine();
-    engine.state.presentation.set({
-      id: 'pres-aac',
-      url: 'https://example.com/master.m3u8',
-      startTime: 0,
-      selectionSets: [
-        {
-          id: 'a',
-          type: 'audio',
-          switchingSets: [
-            {
-              id: 'as',
-              type: 'audio',
-              tracks: [
-                {
-                  type: 'audio',
-                  id: 'aud-aac',
-                  codecs: ['mp4a.40.2'],
-                  url: 'https://example.com/aud.m3u8',
-                  bandwidth: 128_000,
-                  mimeType: 'audio/aac',
-                  groupId: 'audio',
-                  name: 'Default',
-                  sampleRate: 48_000,
-                  channels: 2,
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    } as Presentation);
+    engine.state.presentation.set(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+        id: 'pres-aac',
+        url: 'https://example.com/master.m3u8',
+        startTime: 0,
+        selectionSets: [
+          {
+            id: 'a',
+            type: 'audio',
+            switchingSets: [
+              {
+                id: 'as',
+                type: 'audio',
+                tracks: [
+                  {
+                    type: 'audio',
+                    id: 'aud-aac',
+                    codecs: ['mp4a.40.2'],
+                    url: 'https://example.com/aud.m3u8',
+                    bandwidth: 128_000,
+                    mimeType: 'audio/aac',
+                    groupId: 'audio',
+                    name: 'Default',
+                    sampleRate: 48_000,
+                    channels: 2,
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      } as Presentation
+    );
     await flush();
 
     expect(engine.state.selectedAudioTrackId.get()).toBeUndefined();
@@ -124,7 +127,7 @@ describe('createHlsAudioEngine', () => {
   it('does not seed bandwidthState (no ABR behavior subscribed at init)', () => {
     const engine = createHlsAudioEngine();
 
-    const state = snapshot(engine.state) as Record<string, unknown>;
+    const state = snapshot(engine.state);
     // bandwidthState slot may or may not exist depending on whether any
     // composed behavior declares it; if it exists, it must not be seeded.
     if ('bandwidthState' in state) {
@@ -136,7 +139,13 @@ describe('createHlsAudioEngine', () => {
 
   it('plays truly audio-only HLS source (parity with default-engine tolerance)', async () => {
     const mockFetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
-      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+      const url = isString(input)
+        ? input
+        : input instanceof URL
+          ? input.href
+          : /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+              input as Request
+            ).url;
 
       if (url.includes('playlist.m3u8')) {
         return Promise.resolve(
@@ -195,7 +204,13 @@ http://example.com/audio-seg1.m4s
     // should compose audio behaviors only — no video selection, no video
     // buffer actor, no video segment loading.
     const mockFetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
-      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+      const url = isString(input)
+        ? input
+        : input instanceof URL
+          ? input.href
+          : /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+              input as Request
+            ).url;
 
       if (url.includes('playlist.m3u8')) {
         return Promise.resolve(
@@ -238,8 +253,8 @@ http://example.com/audio-seg1.m4s
 
     await vi.waitFor(
       () => {
-        const state = snapshot(engine.state) as Record<string, unknown>;
-        const owners = snapshot(engine.context) as Record<string, unknown>;
+        const state = snapshot(engine.state);
+        const owners = snapshot(engine.context);
 
         // Audio-side fully exercised
         expect(state.selectedAudioTrackId).toBeDefined();
@@ -270,7 +285,13 @@ http://example.com/audio-seg1.m4s
     // Mixed AV manifest with a subtitle rendition. Subtitle behaviors are
     // subtracted in Phase 1, so no text-track machinery should be set up.
     const mockFetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
-      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+      const url = isString(input)
+        ? input
+        : input instanceof URL
+          ? input.href
+          : /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+              input as Request
+            ).url;
 
       if (url.includes('playlist.m3u8')) {
         return Promise.resolve(
@@ -313,8 +334,8 @@ http://example.com/audio-seg1.m4s
 
     await vi.waitFor(
       () => {
-        const state = snapshot(engine.state) as Record<string, unknown>;
-        const owners = snapshot(engine.context) as Record<string, unknown>;
+        const state = snapshot(engine.state);
+        const owners = snapshot(engine.context);
 
         expect(state.selectedAudioTrackId).toBeDefined();
         expect(owners.audioBufferActor).toBeDefined();
@@ -344,7 +365,13 @@ http://example.com/audio-seg1.m4s
     // downstream behaviors tear down A's actors via reactor state-exit and
     // rebuild fresh ones for B.
     const mockFetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
-      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+      const url = isString(input)
+        ? input
+        : input instanceof URL
+          ? input.href
+          : /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+              input as Request
+            ).url;
 
       if (url.includes('playlist-a.m3u8')) {
         return Promise.resolve(
@@ -454,7 +481,13 @@ http://example.com/audio-b-seg1.m4s
 
   function mockAudioOnlyManifest(onFetch?: (url: string) => void) {
     return vi.fn().mockImplementation((input: RequestInfo | URL) => {
-      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+      const url = isString(input)
+        ? input
+        : input instanceof URL
+          ? input.href
+          : /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+              input as Request
+            ).url;
       onFetch?.(url);
 
       if (url.includes('playlist.m3u8')) {
@@ -516,7 +549,7 @@ http://example.com/audio-seg1.m4s
 
   it('materializes the startPosition / loadingSuspended / disableRemotePlayback slots', () => {
     const engine = createHlsAudioEngine();
-    const state = snapshot(engine.state) as Record<string, unknown>;
+    const state = snapshot(engine.state);
 
     // `startPosition` + `loadingSuspended` come from setupAirPlay /
     // applyStartPosition declaring them; `disableRemotePlayback` is a

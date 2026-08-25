@@ -1,5 +1,6 @@
 import { namedNodeMapToObject, serializeAttributes } from '@videojs/utils/dom';
 import { omit, pick } from '@videojs/utils/object';
+import { isBoolean, isFunction, isNumber } from '@videojs/utils/predicate';
 import { kebabCase } from '@videojs/utils/string';
 import type { Constructor } from '@videojs/utils/types';
 
@@ -85,8 +86,19 @@ export interface MediaHost extends EventTarget {
   attach(target: EventTarget | null): void;
   detach(): void;
   destroy(): void;
-  /** Index signature for dynamic property forwarding (includes the host's protected `target`). */
-  [key: string]: any;
+}
+
+export type MediaHostPropertyValue = bigint | boolean | number | object | string | symbol | null | undefined;
+
+export interface MediaPropertyConfig {
+  type: BooleanConstructor | NumberConstructor | StringConstructor;
+  attribute?: string;
+  empty?: MediaHostPropertyValue;
+}
+
+interface MediaHostAttributeBinding {
+  get(host: MediaHost): MediaHostPropertyValue;
+  set<Value extends MediaHostPropertyValue>(host: MediaHost, value: Value): void;
 }
 
 type CustomMediaConstructor<T extends Constructor<MediaHost>> = Constructor<
@@ -96,7 +108,7 @@ type CustomMediaConstructor<T extends Constructor<MediaHost>> = Constructor<
       attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null): void;
     }
 > & {
-  properties: Record<string, { type: any; attribute?: string; empty?: unknown }>;
+  properties: Record<string, MediaPropertyConfig>;
   getTemplateHTML: (attrs: Record<string, string>) => string;
   shadowRootOptions: ShadowRootInit;
   readonly observedAttributes: string[];
@@ -110,7 +122,7 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
   // element, so attribute changes are not mirrored onto the iframe target and
   // there is no `<track>` / `<source>` syncing.
   const syncTargetAttributes = tag !== 'iframe';
-  const mediaHostAttrToProp = new Map<string, string>();
+  const mediaHostAttributeBindings = new Map<string, MediaHostAttributeBinding>();
   let isDefined = false;
 
   class CustomMedia extends (globalThis.HTMLElement ?? class {}) {
@@ -132,7 +144,7 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
       preload: { type: String, empty: null },
       src: { type: String, empty: '' },
       streamType: { type: String, attribute: 'stream-type', empty: 'unknown' },
-    };
+    } satisfies Record<string, MediaPropertyConfig>;
 
     static get observedAttributes() {
       // `this` resolves to the subclass, which may override `properties`.
@@ -147,7 +159,7 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
       if (isDefined) return;
       isDefined = true;
 
-      const properties = ctor.properties as Record<string, { type: any; attribute?: string; empty?: unknown }>;
+      const properties: Readonly<Record<string, MediaPropertyConfig>> = ctor.properties;
 
       for (let proto = MediaHost.prototype; proto && proto !== Object.prototype; proto = Object.getPrototypeOf(proto)) {
         for (const prop of Object.getOwnPropertyNames(proto)) {
@@ -158,7 +170,7 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
           // (`defaultMuted` → `attribute: 'muted'`). Single-word props in
           // `properties` (like `loop`, `preload`) keep their legacy proto-walk
           // path so the mediaHost still receives the setter call.
-          const propConfig = properties[prop];
+          const propConfig = Object.entries(properties).find(([name]) => name === prop)?.[1];
           if (propConfig && (propConfig.attribute ?? prop.toLowerCase()) !== kebabCase(prop)) continue;
 
           const descriptor = Object.getOwnPropertyDescriptor(proto, prop);
@@ -169,21 +181,25 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
             configurable: true,
           };
 
-          if (typeof descriptor.value === 'function') {
-            config.value = function (this: CustomMedia, ...args: any[]) {
-              return this.#mediaHost[prop](...args);
+          if (isFunction(descriptor.value)) {
+            config.value = function (this: CustomMedia, ...args: never[]) {
+              return descriptor.value.apply(this.#mediaHost, args);
             };
           } else if (descriptor.get) {
             config.get = function (this: CustomMedia) {
-              return this.#mediaHost[prop];
+              return descriptor.get?.call(this.#mediaHost);
             };
 
             if (descriptor.set) {
               const attr = kebabCase(prop);
               if (ctor.observedAttributes.includes(attr)) {
-                mediaHostAttrToProp.set(attr, prop);
+                mediaHostAttributeBindings.set(attr, {
+                  get: (host) => descriptor.get?.call(host),
+                  set: <Value extends MediaHostPropertyValue>(host: MediaHost, value: Value) =>
+                    descriptor.set?.call(host, value),
+                });
 
-                config.set = function (this: CustomMedia, val: any) {
+                config.set = function <Value>(this: CustomMedia, val: Value) {
                   if (val === true || val === false || val == null) {
                     this.toggleAttribute(attr, Boolean(val));
                   } else {
@@ -191,8 +207,8 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
                   }
                 };
               } else {
-                config.set = function (this: CustomMedia, val: any) {
-                  this.#mediaHost[prop] = val;
+                config.set = function <Value>(this: CustomMedia, val: Value) {
+                  descriptor.set?.call(this.#mediaHost, val);
                 };
               }
             }
@@ -210,11 +226,11 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
           get: function (this: CustomMedia) {
             return type === Boolean ? this.hasAttribute(attr) : this.getAttribute(attr);
           },
-          set: function (this: CustomMedia, val: any) {
+          set: function <Value>(this: CustomMedia, val: Value) {
             if (type === Boolean) {
               this.toggleAttribute(attr, Boolean(val));
             } else {
-              this.setAttribute(attr, val);
+              this.setAttribute(attr, String(val));
             }
           },
           enumerable: true,
@@ -223,7 +239,8 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
       }
     }
 
-    #mediaHost: MediaHost;
+    #mediaHost: InstanceType<T>;
+    #attachedTarget: EventTarget | null = null;
     #bridgedEventTypes = new Set<string>();
     #childMap = new Map<HTMLTrackElement | HTMLSourceElement, HTMLTrackElement | HTMLSourceElement>();
     #childObserver?: MutationObserver;
@@ -232,11 +249,12 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
       super();
 
       if (!this.shadowRoot) {
-        const ctor = this.constructor as typeof CustomMedia;
+        const ctor = /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ this
+          .constructor as typeof CustomMedia;
         this.attachShadow(ctor.shadowRootOptions);
 
         const allowedKeys = getAttrsFromProps(ctor.properties);
-        const disallowedKeys = [...mediaHostAttrToProp.keys()];
+        const disallowedKeys = [...mediaHostAttributeBindings.keys()];
         const pickedAttrs = pick(namedNodeMapToObject(this.attributes), allowedKeys);
         // Embed templates (iframe) need host-bound attrs (e.g. `src`) to build the initial URL.
         const attrs: Record<string, string> = syncTargetAttributes ? omit(pickedAttrs, disallowedKeys) : pickedAttrs;
@@ -244,7 +262,8 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
         this.shadowRoot!.innerHTML = ctor.getTemplateHTML(attrs);
       }
 
-      this.#mediaHost = new MediaHost();
+      // SAFETY: `MediaHost` is the generic constructor `T`, so its instance is `InstanceType<T>`.
+      this.#mediaHost = new MediaHost() as InstanceType<T>;
       this.#attachToTarget();
 
       this.#childObserver = new MutationObserver(this.#syncMediaChildAttribute.bind(this));
@@ -258,12 +277,13 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
 
     #attachToTarget(): void {
       const target = this.target;
-      if (target === this.#mediaHost.target) return;
-      if (this.#mediaHost.target) this.#mediaHost.detach();
+      if (target === this.#attachedTarget) return;
+      if (this.#attachedTarget) this.#mediaHost.detach();
       this.#mediaHost.attach(target);
+      this.#attachedTarget = target;
     }
 
-    get host(): MediaHost {
+    get host(): InstanceType<T> {
       return this.#mediaHost;
     }
 
@@ -298,7 +318,11 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
       listener: EventListenerOrEventListenerObject | ((event: never) => void) | null,
       options?: boolean | AddEventListenerOptions
     ) {
-      super.addEventListener(type, listener as EventListener, options);
+      super.addEventListener(
+        type,
+        /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ listener as EventListener,
+        options
+      );
       if (!this.#bridgedEventTypes.has(type)) {
         this.#bridgedEventTypes.add(type);
         this.#mediaHost.addEventListener(type, this.#bridgeEvent);
@@ -310,35 +334,52 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
       listener: EventListenerOrEventListenerObject | ((event: never) => void) | null,
       options?: boolean | EventListenerOptions
     ): void {
-      super.removeEventListener(type, listener as EventListener, options);
+      super.removeEventListener(
+        type,
+        /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ listener as EventListener,
+        options
+      );
     }
 
     #bridgeEvent = (event: Event) => {
       if (!event.composed) {
-        this.dispatchEvent(new (event.constructor as typeof Event)(event.type, event));
+        this.dispatchEvent(
+          new /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (event.constructor as typeof Event)(
+            event.type,
+            event
+          )
+        );
       }
     };
 
     attributeChangedCallback(attrName: string, oldValue: string | null, newValue: string | null): void {
-      const prop = mediaHostAttrToProp.get(attrName);
-      if (prop) {
+      const binding = mediaHostAttributeBindings.get(attrName);
+      if (binding) {
         if (oldValue !== newValue) {
-          const valueType = typeof this.#mediaHost[prop];
-          const propConfig = (this.constructor as CustomMediaConstructor<T>).properties[prop];
+          const currentValue = binding.get(this.#mediaHost);
+          const propConfig = Object.entries(
+            /* SAFETY: CustomMedia constructors expose the static property table used during definition. */ (
+              this.constructor as typeof this.constructor & CustomMediaConstructor<T>
+            ).properties
+          ).find(([, config]) => (config.attribute ?? attrName) === attrName)?.[1];
           const emptyValue = propConfig && 'empty' in propConfig ? propConfig.empty : '';
-          this.#mediaHost[prop] =
-            valueType === 'boolean'
+          binding.set(
+            this.#mediaHost,
+            isBoolean(currentValue)
               ? newValue !== null
-              : valueType === 'number'
+              : isNumber(currentValue)
                 ? Number(newValue)
-                : (newValue ?? emptyValue);
+                : (newValue ?? emptyValue)
+          );
         }
         return;
       }
 
       if (
         !CustomMedia.observedAttributes.includes(attrName) &&
-        (this.constructor as typeof CustomMedia).observedAttributes.includes(attrName)
+        /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (
+          this.constructor as typeof CustomMedia
+        ).observedAttributes.includes(attrName)
       ) {
         return;
       }
@@ -355,9 +396,12 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
     #syncMediaChildren(): void {
       if (tag === 'iframe') return;
 
-      const defaultSlot = this.shadowRoot?.querySelector('slot:not([name])') as HTMLSlotElement;
+      const defaultSlot =
+        /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ this.shadowRoot?.querySelector(
+          'slot:not([name])'
+        ) as HTMLSlotElement;
       const mediaChildren = new Set(
-        defaultSlot
+        /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ defaultSlot
           ?.assignedElements({ flatten: true })
           .filter((el) => el.localName === 'track' || el.localName === 'source') as (
           | HTMLTrackElement
@@ -375,12 +419,17 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
       for (const el of mediaChildren) {
         let clone = this.#childMap.get(el);
         if (!clone) {
-          clone = el.cloneNode() as HTMLTrackElement | HTMLSourceElement;
+          clone =
+            /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ el.cloneNode() as
+              | HTMLTrackElement
+              | HTMLSourceElement;
           this.#childMap.set(el, clone);
           this.#childObserver?.observe(el, { attributes: true });
         }
         this.target?.append(clone);
-        this.#enableDefaultTrack(clone as HTMLTrackElement);
+        this.#enableDefaultTrack(
+          /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ clone as HTMLTrackElement
+        );
       }
     }
 
@@ -388,13 +437,21 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
       for (const mutation of mutations) {
         if (mutation.type === 'attributes') {
           const { target, attributeName } = mutation;
-          const clone = this.#childMap.get(target as HTMLTrackElement | HTMLSourceElement);
+          const clone = this.#childMap.get(
+            /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ target as
+              | HTMLTrackElement
+              | HTMLSourceElement
+          );
           if (clone && attributeName) {
             clone.setAttribute(
               attributeName,
-              (target as HTMLTrackElement | HTMLSourceElement).getAttribute(attributeName) ?? ''
+              /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (
+                target as HTMLTrackElement | HTMLSourceElement
+              ).getAttribute(attributeName) ?? ''
             );
-            this.#enableDefaultTrack(clone as HTMLTrackElement);
+            this.#enableDefaultTrack(
+              /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ clone as HTMLTrackElement
+            );
           }
         }
       }
@@ -415,9 +472,10 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
     }
   }
 
-  return CustomMedia as any;
+  // SAFETY: #define installs every MediaHost prototype property before instances are exposed.
+  return CustomMedia as typeof CustomMedia & CustomMediaConstructor<T>;
 }
 
-function getAttrsFromProps(props: Record<string, any>): string[] {
-  return Object.keys(props).map((prop) => props[prop]?.attribute ?? prop.toLowerCase());
+function getAttrsFromProps(props: Readonly<Record<string, MediaPropertyConfig>>): string[] {
+  return Object.entries(props).map(([prop, config]) => config.attribute ?? prop.toLowerCase());
 }

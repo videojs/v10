@@ -40,7 +40,15 @@ export default function BasicUsage() {
     <div className="react-use-translator-basic">
       <label>
         Language
-        <select value={locale} onChange={(event) => setLocale(event.currentTarget.value as Locale)}>
+        <select
+          value={locale}
+          onChange={(event) =>
+            setLocale(
+              /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ event
+                .currentTarget.value as Locale
+            )
+          }
+        >
           <option value="es">Spanish</option>
           <option value="fr">French</option>
         </select>

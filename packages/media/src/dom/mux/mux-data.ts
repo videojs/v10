@@ -1,3 +1,4 @@
+import { isString } from '@videojs/utils/predicate';
 import Mux from 'mux-embed';
 
 import { getPlayerVersion } from './env';
@@ -222,23 +223,27 @@ export class MuxData implements MuxDataProps {
     metadata.view_session_id = view_session_id;
     if (video_id) metadata.video_id = video_id;
 
-    this.MuxDataSdk?.monitor(target, {
-      debug,
-      ...(beaconCollectionDomain ? { beaconCollectionDomain } : {}),
-      ...(disableCookies ? { disableCookies } : {}),
-      ...toMuxDataEngineOptions(media.engine),
-      data: {
-        ...(env_key ? { env_key } : {}),
-        ...(player_software_name ? { player_software_name } : {}),
+    const data = { ...metadata };
+    if (env_key) Object.assign(data, { env_key });
+    if (player_software_name) {
+      Object.assign(data, {
+        player_software_name,
         // NOTE: Adding this because there appears to be some instability on whether
         // player_software_name or player_software "wins" for Mux Data (CJP)
-        ...(player_software_name ? { player_software: player_software_name } : {}),
-        ...(player_software_version ? { player_software_version } : {}),
-        ...(player_init_time ? { player_init_time } : {}),
-        // Use any metadata passed in programmatically (which may override the defaults above)
-        ...metadata,
-      },
-    });
+        player_software: player_software_name,
+      });
+    }
+    if (player_software_version) Object.assign(data, { player_software_version });
+    if (player_init_time) Object.assign(data, { player_init_time });
+
+    const monitorOptions = {
+      debug,
+      ...toMuxDataEngineOptions(media.engine),
+      data,
+    };
+    if (beaconCollectionDomain) Object.assign(monitorOptions, { beaconCollectionDomain });
+    if (disableCookies) Object.assign(monitorOptions, { disableCookies });
+    this.MuxDataSdk?.monitor(target, monitorOptions);
   }
 
   #generatePlayerInitTime() {
@@ -249,7 +254,7 @@ export class MuxData implements MuxDataProps {
 
 export type MuxVideoIdProps = {
   src: string;
-  metadata?: Record<string, any>;
+  metadata?: MuxDataOptions['data'];
 };
 
 export function toVideoId(props: MuxVideoIdProps): string | undefined {
@@ -265,7 +270,7 @@ export function toPlaybackIdFromSrc(src: string): string | undefined {
 }
 
 export function isMuxVideoSrc({ src }: MuxVideoIdProps): boolean {
-  if (typeof src !== 'string') return false;
+  if (!isString(src)) return false;
   const base = window?.location.href;
   const hostname = new URL(src, base).hostname.toLocaleLowerCase();
   return hostname.includes(MUX_VIDEO_DOMAIN);

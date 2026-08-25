@@ -91,7 +91,8 @@ export function defineComponent<
   Props extends object = EmptyProps,
   const Parts extends ComponentRecord | undefined = undefined,
 >(options?: ComponentOptions<Props, Parts>): ComponentDefinition<Props, Parts> {
-  return (options ?? {}) as ComponentDefinition<Props, Parts>;
+  return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (options ??
+    {}) as ComponentDefinition<Props, Parts>;
 }
 
 export function defineSchema<const Source extends string, const Definitions extends ComponentRecord>(

@@ -11,6 +11,12 @@ const STATE = { INIT: -1, ENDED: 0, PLAYING: 1, PAUSED: 2, BUFFERING: 3 } as con
 const VIDEO_ID = '7273420104193772846';
 const OTHER_VIDEO_ID = '7268615078845893934';
 
+type TikTokReportValue =
+  | number
+  | boolean
+  | { currentTime: number; duration: number }
+  | { errorCode: number; errorType: string };
+
 afterEach(() => {
   document.body.replaceChildren();
   vi.restoreAllMocks();
@@ -42,7 +48,7 @@ function watchCommands(iframe: HTMLIFrameElement) {
 }
 
 /** Report a message the way the embed does: on `window`, from the embed's frame. */
-function report(iframe: HTMLIFrameElement, type: string, value?: unknown): void {
+function report(iframe: HTMLIFrameElement, type: string, value?: TikTokReportValue): void {
   globalThis.dispatchEvent(
     new MessageEvent('message', {
       data: { 'x-tiktok-player': true, type, ...(value !== undefined && { value }) },
@@ -503,7 +509,8 @@ describe('TikTokMedia', () => {
     // The embed reports a level but takes no command to set one, so the member is
     // absent rather than read-only — the player would render a slider that cannot
     // move. `mute` and `unMute` are commands it does take, so mute stays.
-    const media = new TikTokMedia() as Partial<Video>;
+    const media =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ new TikTokMedia() as Partial<Video>;
     expect(media.volume).toBeUndefined();
     expect(media.muted).toBeDefined();
     expect(isMediaVolumeCapable(media)).toBe(false);

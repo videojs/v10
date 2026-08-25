@@ -405,6 +405,9 @@ export class MenuElement extends UIElement {
 function isTriggerExplicitlyDisabled(trigger: HTMLElement): boolean {
   return (
     trigger.hasAttribute('disabled') ||
-    ('disabled' in trigger && (trigger as HTMLElement & { disabled?: boolean }).disabled === true)
+    ('disabled' in trigger &&
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (
+        trigger as HTMLElement & { disabled?: boolean }
+      ).disabled === true)
   );
 }

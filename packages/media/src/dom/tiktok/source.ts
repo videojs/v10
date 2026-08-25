@@ -1,4 +1,4 @@
-import { serializeEmbedParams } from '../utils';
+import { type EmbedParams, type EmbedParamValue, serializeEmbedParams } from '../utils';
 import type { TikTokMediaProps } from './props';
 
 /**
@@ -12,7 +12,7 @@ import type { TikTokMediaProps } from './props';
  * anything not listed here, so undocumented knobs and whatever TikTok adds next
  * keep working.
  */
-export interface TikTokEngineConfig extends Record<string, unknown> {
+export interface TikTokEngineConfig extends Partial<Record<string, EmbedParamValue>> {
   /** Show the closed-caption button. Defaults to `1`. */
   closed_caption?: 0 | 1;
   /** Show the video description. Defaults to `0`. */
@@ -97,7 +97,7 @@ export function buildTikTokIframeSrc(src: string, props: Partial<TikTokMediaProp
   // `referrerPolicy` is an attribute of the iframe hosting the embed rather than
   // something the player reads, so it never reaches the URL.
   const { referrerPolicy: _referrerPolicy, ...tiktok } = props.source?.engine?.tiktok ?? {};
-  const params: Record<string, unknown> = {
+  const params = {
     // Drops the progress bar and control buttons only: the centre play button, author header, and social rail all
     // survive `controls=0`, and of those only the play button has a parameter of its own.
     controls: props.controls === true ? null : 0,
@@ -113,7 +113,7 @@ export function buildTikTokIframeSrc(src: string, props: Partial<TikTokMediaProp
     // TikTok-specific knobs (`description`, `music_info`, `timestamp`, …) flow
     // through here.
     ...tiktok,
-  };
+  } satisfies EmbedParams;
   return `${EMBED_BASE}/${parsed.id}?${serializeEmbedParams(params)}`;
 }
 

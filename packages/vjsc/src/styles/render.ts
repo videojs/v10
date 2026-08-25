@@ -18,7 +18,7 @@ const encoder = new TextEncoder();
 
 const decoder = new TextDecoder();
 
-interface RenderStylesheetsOptions {
+export interface RenderStylesheetsOptions {
   design: DesignSystem;
   scope?: string | undefined;
   files: readonly StyleOutputFile[];

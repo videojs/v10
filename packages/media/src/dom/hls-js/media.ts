@@ -147,6 +147,13 @@ export interface HlsEngineConfig {
   nativeHls?: NativeHlsConfig | undefined;
 }
 
+interface HlsEngineConfigKey {
+  drm: HlsSource['drm'];
+  engine: HlsSource['engine'];
+  preferPlayback: HlsSource['preferPlayback'];
+  contentType: SourceType;
+}
+
 export const hlsMediaDefaultProps: HlsMediaProps = {
   src: '',
   source: null,
@@ -170,7 +177,7 @@ export class HlsJsMedia extends HTMLVideoElementHost implements HlsMediaProps {
   #streamType: StreamType = hlsMediaDefaultProps.streamType;
   #isUserStreamType = false;
   #loadRequested?: Promise<void> | null;
-  #prevEngineConfigKey?: Record<string, any> | null;
+  #prevEngineConfigKey?: HlsEngineConfigKey | null;
 
   constructor() {
     super();
@@ -466,7 +473,7 @@ export class HlsJsMedia extends HTMLVideoElementHost implements HlsMediaProps {
     this.load();
   }
 
-  #shouldEngineUpdate(nextEngineConfigKey: Record<string, any>) {
+  #shouldEngineUpdate(nextEngineConfigKey: HlsEngineConfigKey) {
     return !deepEqual(this.#prevEngineConfigKey, nextEngineConfigKey);
   }
 
@@ -476,7 +483,7 @@ export class HlsJsMedia extends HTMLVideoElementHost implements HlsMediaProps {
    * like `drmSystems`, which a flat comparison would see as changed whenever
    * the object identity did.
    */
-  #engineConfigKey() {
+  #engineConfigKey(): HlsEngineConfigKey {
     const { type, preferPlayback, drm, engine } = this.#source ?? {};
     return { drm, engine, preferPlayback, contentType: type ?? inferContentType(this.src) };
   }
@@ -509,7 +516,12 @@ function withDrmSystems(
 
   // hls.js declares `serverCertificateUrl` without `undefined`, which an
   // omittable property here is allowed to carry. The values are the same.
-  return { emeEnabled: true, ...hlsJs, drmSystems: drmSystems as HlsJsConfig['drmSystems'] };
+  return {
+    emeEnabled: true,
+    ...hlsJs,
+    drmSystems:
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ drmSystems as HlsJsConfig['drmSystems'],
+  };
 }
 
 function inferContentType(src: string): SourceType {

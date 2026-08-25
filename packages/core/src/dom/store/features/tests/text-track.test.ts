@@ -25,7 +25,8 @@ function mockTextTracks(video: HTMLVideoElement, tracks: TextTrack[]): void {
 
   Object.defineProperty(video, 'textTracks', {
     configurable: true,
-    value: list as TextTrackList,
+    value:
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ list as TextTrackList,
   });
 }
 
@@ -34,7 +35,7 @@ function createMockTrack(
   mode: TextTrackMode = 'disabled',
   options: { id?: string; label?: string; language?: string } = {}
 ): TextTrack {
-  return {
+  return /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
     id: options.id ?? '',
     kind,
     mode,

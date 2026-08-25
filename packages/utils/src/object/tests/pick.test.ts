@@ -20,7 +20,12 @@ describe('pick', () => {
 
   it('ignores non-existent keys', () => {
     const obj = { a: 1, b: 2 };
-    expect(pick(obj, ['a', 'nonexistent' as keyof typeof obj])).toEqual({ a: 1 });
+    expect(
+      pick(obj, [
+        'a',
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ 'nonexistent' as keyof typeof obj,
+      ])
+    ).toEqual({ a: 1 });
   });
 
   it('handles nested objects (shallow copy)', () => {
@@ -60,19 +65,22 @@ describe('pick', () => {
 
   it('does not include non-existent keys as undefined properties', () => {
     const obj = { a: 1 };
-    const result = pick(obj, ['a', 'b' as keyof typeof obj]);
+    const result = pick(obj, [
+      'a',
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ 'b' as keyof typeof obj,
+    ]);
 
     expect(Object.keys(result)).toEqual(['a']);
     expect(result).not.toHaveProperty('b');
   });
 
   it('filters element attributes to only allowed media attributes', () => {
-    const elementAttrs: Record<string, string> = {
+    const elementAttrs = {
       src: 'video.mp4',
       autoplay: '',
       class: 'player',
       style: 'width: 100%',
-    };
+    } satisfies Record<string, string>;
     const allowedAttrs = ['src', 'autoplay', 'controls', 'muted', 'loop'];
 
     const result = pick(elementAttrs, allowedAttrs);

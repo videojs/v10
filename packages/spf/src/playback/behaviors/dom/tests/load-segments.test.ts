@@ -2,6 +2,7 @@
  * Tests for segment loading orchestration (F4 + F5)
  */
 
+import { isString } from '@videojs/utils/predicate';
 import { describe, expect, it, vi } from 'vite-plus/test';
 
 import type { ContextSignals, StateSignals } from '../../../../core/composition/create-composition';
@@ -9,15 +10,17 @@ import { signal } from '../../../../core/signals/primitives';
 import type { MaybeResolvedPresentation, Segment } from '../../../../media/types';
 import type { BandwidthState } from '../../../../network/bandwidth-estimator';
 import { createTrackedFetch, type FetchBytes, fetchStream } from '../../../../network/fetch';
-import { createSegmentLoaderActor, type SegmentLoaderActor } from '../../../actors/dom/segment-loader';
+import { createSegmentLoaderActor } from '../../../actors/dom/segment-loader';
 import { createSourceBufferActor, type SourceBufferActor } from '../../../actors/dom/source-buffer';
-import type { TextTrackSegmentLoaderActor } from '../../../actors/text-track-segment-loader';
 import {
   loadAudioSegments,
   loadVideoSegments,
+  type SegmentLoaderDispatcher,
   type SegmentLoadingContext,
   type SegmentLoadingState,
+  type TextTrackSegmentLoaderDispatcher,
 } from '../load-segments';
+import { createSourceBufferDouble } from './source-buffer-test-double';
 
 function makeState(initial: SegmentLoadingState = {}): StateSignals<SegmentLoadingState> {
   return {
@@ -41,17 +44,19 @@ function makeContext(
   initial: {
     videoBufferActor?: SourceBufferActor;
     audioBufferActor?: SourceBufferActor;
-    videoSegmentLoaderActor?: SegmentLoaderActor;
-    audioSegmentLoaderActor?: SegmentLoaderActor;
-    textTrackSegmentLoaderActor?: TextTrackSegmentLoaderActor;
+    videoSegmentLoaderActor?: SegmentLoaderDispatcher;
+    audioSegmentLoaderActor?: SegmentLoaderDispatcher;
+    textTrackSegmentLoaderActor?: TextTrackSegmentLoaderDispatcher;
   } = {}
 ): TestContext {
   return {
     videoBufferActor: signal<SourceBufferActor | undefined>(initial.videoBufferActor),
     audioBufferActor: signal<SourceBufferActor | undefined>(initial.audioBufferActor),
-    videoSegmentLoaderActor: signal<SegmentLoaderActor | undefined>(initial.videoSegmentLoaderActor),
-    audioSegmentLoaderActor: signal<SegmentLoaderActor | undefined>(initial.audioSegmentLoaderActor),
-    textTrackSegmentLoaderActor: signal<TextTrackSegmentLoaderActor | undefined>(initial.textTrackSegmentLoaderActor),
+    videoSegmentLoaderActor: signal<SegmentLoaderDispatcher | undefined>(initial.videoSegmentLoaderActor),
+    audioSegmentLoaderActor: signal<SegmentLoaderDispatcher | undefined>(initial.audioSegmentLoaderActor),
+    textTrackSegmentLoaderActor: signal<TextTrackSegmentLoaderDispatcher | undefined>(
+      initial.textTrackSegmentLoaderActor
+    ),
   };
 }
 
@@ -109,9 +114,9 @@ function makeSourceBuffer(
     ranges = next;
   };
 
-  return {
+  return createSourceBufferDouble({
     get buffered() {
-      return {
+      return /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
         get length() {
           return ranges.length;
         },
@@ -144,7 +149,7 @@ function makeSourceBuffer(
     removeEventListener: vi.fn((type: string, listener: EventListener) => {
       listeners[type] = (listeners[type] ?? []).filter((l) => l !== listener);
     }),
-  } as unknown as SourceBuffer;
+  });
 }
 
 /**
@@ -212,7 +217,13 @@ describe('loadSegments orchestration (F5)', () => {
 
     const fetchedUrls: string[] = [];
     globalThis.fetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
-      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+      const url = isString(input)
+        ? input
+        : input instanceof URL
+          ? input.href
+          : /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+              input as Request
+            ).url;
       fetchedUrls.push(url);
       return Promise.resolve(new Response(new ArrayBuffer(100)));
     });
@@ -252,7 +263,13 @@ describe('loadSegments orchestration (F5)', () => {
 
     const fetchedUrls: string[] = [];
     globalThis.fetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
-      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+      const url = isString(input)
+        ? input
+        : input instanceof URL
+          ? input.href
+          : /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+              input as Request
+            ).url;
       fetchedUrls.push(url);
       return Promise.resolve(new Response(new ArrayBuffer(100)));
     });
@@ -290,7 +307,13 @@ describe('loadSegments orchestration (F5)', () => {
 
     const fetchedUrls: string[] = [];
     globalThis.fetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
-      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+      const url = isString(input)
+        ? input
+        : input instanceof URL
+          ? input.href
+          : /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+              input as Request
+            ).url;
       fetchedUrls.push(url);
       return Promise.resolve(new Response(new ArrayBuffer(100)));
     });
@@ -356,7 +379,13 @@ describe('loadSegments orchestration (metadata mode)', () => {
 
     const fetchedUrls: string[] = [];
     globalThis.fetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
-      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+      const url = isString(input)
+        ? input
+        : input instanceof URL
+          ? input.href
+          : /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+              input as Request
+            ).url;
       fetchedUrls.push(url);
       return Promise.resolve(new Response(new ArrayBuffer(100)));
     });
@@ -412,7 +441,13 @@ describe('loadSegments orchestration (metadata mode)', () => {
 
     const fetchedUrls: string[] = [];
     globalThis.fetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
-      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+      const url = isString(input)
+        ? input
+        : input instanceof URL
+          ? input.href
+          : /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+              input as Request
+            ).url;
       fetchedUrls.push(url);
       return Promise.resolve(new Response(new ArrayBuffer(100)));
     });
@@ -456,7 +491,13 @@ describe('loadSegments seek handling', () => {
     const fetchedUrls: string[] = [];
 
     const fetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
-      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+      const url = isString(input)
+        ? input
+        : input instanceof URL
+          ? input.href
+          : /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+              input as Request
+            ).url;
       fetchedUrls.push(url);
       return new Promise<Response>((resolve) => {
         resolvers.set(url, () => resolve(new Response(new ArrayBuffer(100))));
@@ -570,7 +611,13 @@ describe('loadSegments seek handling', () => {
 
     const fetchedUrls: string[] = [];
     globalThis.fetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
-      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+      const url = isString(input)
+        ? input
+        : input instanceof URL
+          ? input.href
+          : /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+              input as Request
+            ).url;
       fetchedUrls.push(url);
       return Promise.resolve(new Response(new ArrayBuffer(100)));
     });
@@ -614,7 +661,13 @@ describe('loadSegments back buffer flushing', () => {
     const fetchedUrls: string[] = [];
 
     const fetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
-      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+      const url = isString(input)
+        ? input
+        : input instanceof URL
+          ? input.href
+          : /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+              input as Request
+            ).url;
       fetchedUrls.push(url);
       return new Promise<Response>((resolve) => {
         resolvers.set(url, () => resolve(new Response(new ArrayBuffer(100))));
@@ -776,7 +829,13 @@ describe('loadSegments forward buffer flushing', () => {
     const resolvers = new Map<string, () => void>();
     const fetchedUrls: string[] = [];
     const fetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
-      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+      const url = isString(input)
+        ? input
+        : input instanceof URL
+          ? input.href
+          : /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+              input as Request
+            ).url;
       fetchedUrls.push(url);
       return new Promise<Response>((resolve) => {
         resolvers.set(url, () => resolve(new Response(new ArrayBuffer(100))));
@@ -930,7 +989,10 @@ describe('loadSegments byte-range segment fetching', () => {
 
     const rangeHeaders: string[] = [];
     globalThis.fetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
-      const range = (input as Request).headers?.get('Range');
+      const range =
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+          input as Request
+        ).headers?.get('Range');
       if (range) rangeHeaders.push(range);
       return Promise.resolve(new Response(new ArrayBuffer(100)));
     });
@@ -985,7 +1047,10 @@ describe('loadSegments byte-range segment fetching', () => {
 
     const rangeHeaders: string[] = [];
     globalThis.fetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
-      const range = (input as Request).headers?.get('Range');
+      const range =
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+          input as Request
+        ).headers?.get('Range');
       if (range) rangeHeaders.push(range);
       return Promise.resolve(new Response(new ArrayBuffer(100)));
     });
@@ -1172,9 +1237,17 @@ describe('loadSegments bandwidth tracking', () => {
     );
 
     // Each response body yields [1,2,3,4,5,6,7,8] — both init and segment appends should match
-    const calls = (sourceBuffer.appendBuffer as ReturnType<typeof vi.fn>).mock.calls;
+    const calls = /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+      sourceBuffer.appendBuffer as ReturnType<typeof vi.fn>
+    ).mock.calls;
     for (const [data] of calls) {
-      expect(Array.from(new Uint8Array(data as ArrayBuffer))).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
+      expect(
+        Array.from(
+          new Uint8Array(
+            /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ data as ArrayBuffer
+          )
+        )
+      ).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
     }
 
     cleanup();
@@ -1207,7 +1280,13 @@ describe('loadSegments load-mode FSM', () => {
 
     const fetchedUrls: string[] = [];
     globalThis.fetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
-      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+      const url = isString(input)
+        ? input
+        : input instanceof URL
+          ? input.href
+          : /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+              input as Request
+            ).url;
       fetchedUrls.push(url);
       return Promise.resolve(new Response(new ArrayBuffer(100)));
     });
@@ -1232,7 +1311,13 @@ describe('loadSegments load-mode FSM', () => {
 
     const fetchedUrls: string[] = [];
     globalThis.fetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
-      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+      const url = isString(input)
+        ? input
+        : input instanceof URL
+          ? input.href
+          : /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+              input as Request
+            ).url;
       fetchedUrls.push(url);
       return Promise.resolve(new Response(new ArrayBuffer(100)));
     });
@@ -1262,7 +1347,13 @@ describe('loadSegments load-mode FSM', () => {
 
     const fetchedUrls: string[] = [];
     globalThis.fetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
-      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+      const url = isString(input)
+        ? input
+        : input instanceof URL
+          ? input.href
+          : /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+              input as Request
+            ).url;
       fetchedUrls.push(url);
       return Promise.resolve(new Response(new ArrayBuffer(100)));
     });
@@ -1307,7 +1398,13 @@ describe('loadSegments load-mode FSM', () => {
 
     const fetchedUrls: string[] = [];
     globalThis.fetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
-      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+      const url = isString(input)
+        ? input
+        : input instanceof URL
+          ? input.href
+          : /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+              input as Request
+            ).url;
       fetchedUrls.push(url);
       return Promise.resolve(new Response(new ArrayBuffer(100)));
     });
@@ -1361,7 +1458,13 @@ describe('loadSegments load-mode FSM', () => {
 
     const fetchedUrls: string[] = [];
     globalThis.fetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
-      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+      const url = isString(input)
+        ? input
+        : input instanceof URL
+          ? input.href
+          : /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+              input as Request
+            ).url;
       fetchedUrls.push(url);
       return Promise.resolve(new Response(new ArrayBuffer(100)));
     });
@@ -1425,7 +1528,7 @@ describe('loadSegments orchestration (loadingSuspended)', () => {
 
   it('goes dormant while suspended, even with preload="auto"', async () => {
     const send = vi.fn();
-    const fakeLoader = { send } as unknown as SegmentLoaderActor;
+    const fakeLoader = { send } satisfies SegmentLoaderDispatcher;
     const state = makeState({
       preload: 'auto',
       loadingSuspended: true,
@@ -1449,7 +1552,7 @@ describe('loadSegments orchestration (loadingSuspended)', () => {
     // actors are torn down by sourceclose moments later anyway; text
     // fetches are small and bounded).
     const send = vi.fn();
-    const fakeLoader = { send } as unknown as SegmentLoaderActor;
+    const fakeLoader = { send } satisfies SegmentLoaderDispatcher;
     const state = makeState({
       preload: 'auto',
       selectedVideoTrackId: 'track-1',
@@ -1477,7 +1580,7 @@ describe('loadSegments orchestration (loadingSuspended)', () => {
     // No variant declares the key, so compositions without a writer have no
     // slot at all — the dispatcher must behave exactly as if unsuspended.
     const send = vi.fn();
-    const fakeLoader = { send } as unknown as SegmentLoaderActor;
+    const fakeLoader = { send } satisfies SegmentLoaderDispatcher;
     const { loadingSuspended: _omitted, ...state } = makeState({
       preload: 'auto',
       selectedVideoTrackId: 'track-1',
@@ -1485,7 +1588,13 @@ describe('loadSegments orchestration (loadingSuspended)', () => {
       presentation: makePresentation([makeSegment('s1', 0, 10)]),
     });
     const context = makeContext({ videoSegmentLoaderActor: fakeLoader });
-    const reactor = loadVideoSegments.setup({ state: state as ReturnType<typeof makeState>, context });
+    const reactor = loadVideoSegments.setup({
+      state:
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ state as ReturnType<
+          typeof makeState
+        >,
+      context,
+    });
 
     await vi.waitFor(() => expect(send).toHaveBeenCalledWith(expect.objectContaining({ type: 'load' })));
 

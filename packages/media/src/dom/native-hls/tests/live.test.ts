@@ -1,3 +1,4 @@
+import { isString } from '@videojs/utils/predicate';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { HTMLVideoElementHost } from '../../video-host';
@@ -6,7 +7,8 @@ import { NativeHlsMediaLiveMixin } from '../live';
 class FakeHost extends HTMLVideoElementHost {
   // Re-expose the now-protected `target` for test assertions.
   override get target(): HTMLVideoElement | null {
-    return super.target as HTMLVideoElement | null;
+    return /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ super
+      .target as HTMLVideoElement | null;
   }
 }
 
@@ -20,7 +22,7 @@ function createVideoWithSrc(src: string, seekableEnd: number | null = null): HTM
     Object.defineProperty(video, 'seekable', {
       configurable: true,
       get() {
-        return {
+        return /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
           length: 1,
           start: () => 0,
           end: () => seekableEnd,
@@ -40,7 +42,7 @@ function mockFetch(responses: Record<string, string | { status: number; body?: s
       if (entry === undefined) {
         return new Response('not found', { status: 404 });
       }
-      if (typeof entry === 'string') {
+      if (isString(entry)) {
         return new Response(entry, { status: 200 });
       }
       return new Response(entry.body ?? '', { status: entry.status });

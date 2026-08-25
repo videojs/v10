@@ -1,3 +1,6 @@
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+
 /**
  * Media element reference extraction.
  *
@@ -20,9 +23,7 @@
  *   - background-video.ts: uses MediaAttachMixin(HTMLElement) without CustomMediaElement →
  *     parseCustomMediaElementCall returns null. Its API reference is manually maintained in MDX.
  */
-import * as fs from 'node:fs';
-import * as path from 'node:path';
-
+import { isString } from '@videojs/utils/predicate';
 import * as ts from 'typescript';
 
 import { extractCSSVars } from './css-vars-handler.js';
@@ -301,7 +302,8 @@ function parseCustomMediaElementCall(
         // First arg: rendered target tag (`video`, `audio`, or `iframe`).
         const tagArg = node.arguments[0]!;
         if (ts.isStringLiteral(tagArg) && ['video', 'audio', 'iframe'].includes(tagArg.text)) {
-          targetTag = tagArg.text as MediaTargetTag;
+          targetTag =
+            /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ tagArg.text as MediaTargetTag;
           // A `video`/`audio` target names the media type outright. An
           // `iframe` target says nothing about what plays inside it, so fall
           // back to the element's own name: `SpotifyAudio` is audio-only, and
@@ -339,7 +341,7 @@ function extractHostProperties(
   hostClassName: string,
   compilerOptions: ts.CompilerOptions,
   nativeNames: Set<string>
-): Record<string, HostPropertyDef> {
+) {
   const properties: Record<string, HostPropertyDef> = {};
   const visitedFiles: string[] = [];
   extractClassProperties(filePath, hostClassName, properties, compilerOptions, new Set(), nativeNames, visitedFiles);
@@ -355,7 +357,7 @@ function extractHostProperties(
     if (value !== undefined) def.default = value;
   }
 
-  return properties;
+  return properties satisfies Record<string, HostPropertyDef>;
 }
 
 /**
@@ -484,10 +486,7 @@ function processExtendsExpression(
  * of mixin names (outermost first) and the innermost expression (the base).
  * Parens and `as` casts are stripped between layers.
  */
-function unwindMixinChain(callExpr: ts.CallExpression): {
-  mixins: Array<{ name: string }>;
-  base: ts.Expression;
-} {
+function unwindMixinChain(callExpr: ts.CallExpression) {
   const mixins: Array<{ name: string }> = [];
   let current: ts.Expression = callExpr;
   while (ts.isCallExpression(current)) {
@@ -500,7 +499,10 @@ function unwindMixinChain(callExpr: ts.CallExpression): {
     if (current.arguments.length === 0) break;
     current = unwrapExpression(current.arguments[0]!);
   }
-  return { mixins, base: current };
+  return { mixins, base: current } satisfies {
+    mixins: Array<{ name: string }>;
+    base: ts.Expression;
+  };
 }
 
 /**
@@ -1480,7 +1482,9 @@ function walkExtendsForDispatchEvents(
  */
 function scanForFiresTags(sourceFile: ts.SourceFile, fires: Map<string, string>): void {
   function visit(node: ts.Node): void {
-    const jsDocNodes = (node as { jsDoc?: ts.JSDoc[] }).jsDoc;
+    const jsDocNodes = /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (
+      node as { jsDoc?: ts.JSDoc[] }
+    ).jsDoc;
     if (jsDocNodes) {
       for (const doc of jsDocNodes) {
         for (const tag of doc.tags ?? []) {
@@ -1499,7 +1503,7 @@ function scanForFiresTags(sourceFile: ts.SourceFile, fires: Map<string, string>)
 
 function parseFiresTagComment(tag: ts.JSDocTag): { name: string; description: string } | undefined {
   let comment = '';
-  if (typeof tag.comment === 'string') {
+  if (isString(tag.comment)) {
     comment = tag.comment;
   } else if (tag.comment) {
     comment = tag.comment.map((part) => ('text' in part ? part.text : '')).join('');
@@ -1827,7 +1831,6 @@ export function generateMediaElementReferences(monorepoRoot: string): MediaEleme
       name: source.className,
       tagName: source.tagName,
       mediaType: source.mediaType,
-      ...(engineOptions ? { engineOptions } : {}),
       platforms: {
         html: {
           target: source.targetTag,
@@ -1846,9 +1849,10 @@ export function generateMediaElementReferences(monorepoRoot: string): MediaEleme
           methods,
           cssCustomProperties,
         },
-        ...(react ? { react } : {}),
       },
     };
+    if (engineOptions) reference.engineOptions = engineOptions;
+    if (react) reference.platforms.react = react;
 
     results.push({ name: source.className, reference });
   }

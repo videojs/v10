@@ -100,7 +100,10 @@ export const INSTALLATION_PRESETS = {
 
 export type UseCase = keyof typeof INSTALLATION_PRESETS;
 
-export const USE_CASES = Object.keys(INSTALLATION_PRESETS) as UseCase[];
+export const USE_CASES =
+  /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ Object.keys(
+    INSTALLATION_PRESETS
+  ) as UseCase[];
 
 export function getInstallationPreset(useCase: UseCase): InstallationPreset {
   return INSTALLATION_PRESETS[useCase];
@@ -110,7 +113,11 @@ export function getInstallationPreset(useCase: UseCase): InstallationPreset {
 // Preset renderers (html5-video/audio, background-video) are covered by their
 // preset bundle and have no separate media script, so they map to null.
 export function getMediaSubpath(renderer: Renderer): string | null {
-  const map: Partial<Record<Renderer, string>> = {
+  interface MediaSubpathByRenderer {
+    readonly [renderer: string]: string | undefined;
+  }
+
+  const map: MediaSubpathByRenderer = {
     hls: 'hlsjs-video',
     dash: 'dash-video',
     'mux-video': 'mux-video',

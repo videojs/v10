@@ -10,10 +10,15 @@ function uniqueTag(base: string): string {
   return `${base}-${tagCounter++}`;
 }
 
-function createElement<Element extends HTMLElement>(Base: abstract new () => Element): Element {
+function createElement<Element extends HTMLElement>(Base: new () => Element): Element {
   const tag = uniqueTag('test-slt');
-  customElements.define(tag, class extends (Base as unknown as typeof HTMLElement) {});
-  return document.createElement(tag) as Element;
+  customElements.define(
+    tag,
+    class extends /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (Base as typeof HTMLElement) {}
+  );
+  return /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+    tag
+  ) as Element;
 }
 
 afterEach(() => {

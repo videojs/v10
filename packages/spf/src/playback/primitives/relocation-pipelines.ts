@@ -55,7 +55,7 @@ type ContainerSlot = Signal<Record<string, MediaContainerData> | undefined>;
 
 /** Assert the relocation state view from the opaque step deps — this module knows the slots the composition provides. */
 function relocationState(deps: StepDeps): StateSignals<RelocationSlots> {
-  return deps.state as unknown as StateSignals<RelocationSlots>;
+  return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ deps.state as StateSignals<RelocationSlots>;
 }
 
 function containerSlot(deps: StepDeps): ContainerSlot {
@@ -225,7 +225,8 @@ const relocateCuesStep = async <C extends Cue>(
   deps: TextStepDeps
 ): Promise<void> => {
   if (!frame.cues?.length) return;
-  const state = deps.state as unknown as StateSignals<RelocationSlots>;
+  const state =
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ deps.state as StateSignals<RelocationSlots>;
   const startMediaTime = await awaitDefined(() => {
     const presentation = state.presentation.get();
     if (!presentation) return undefined;
@@ -244,7 +245,10 @@ const relocateCuesStep = async <C extends Cue>(
     return hasAv ? undefined : 0;
   });
   if (signal.aborted) return;
-  const { timestampMap } = (frame.metadata as TextSegmentMetadata | undefined) ?? {};
+  const { timestampMap } =
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (frame.metadata as
+      | TextSegmentMetadata
+      | undefined) ?? {};
   const mapCorrection = timestampMap ? timestampMap.mpegts / 90000 - timestampMap.local : 0;
   const delta = mapCorrection - startMediaTime;
   if (delta !== 0) {

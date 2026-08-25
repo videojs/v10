@@ -10,8 +10,9 @@ afterEach(() => {
 
 // Header `{"alg":"HS256"}`, body sets `aud`, empty signature. Unpadded base64url,
 // like a real JWT, so it survives a query string untouched.
-function fakeJwt(payload: Record<string, unknown>): string {
-  const encode = (obj: unknown) => btoa(JSON.stringify(obj)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+function fakeJwt(payload: { aud: string; exp?: number }): string {
+  const encode = <Value extends object>(obj: Value) =>
+    btoa(JSON.stringify(obj)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
   return `${encode({ alg: 'HS256' })}.${encode(payload)}.`;
 }
 
@@ -549,7 +550,13 @@ describe('MuxMedia', () => {
         requestMediaKeySystemAccess: async () => ({ createMediaKeys: async () => mediaKeys }),
       });
 
-      const fetchMock = vi.fn(async () => ({ ok: true, arrayBuffer: async () => new ArrayBuffer(4) }) as Response);
+      const fetchMock = vi.fn(
+        async () =>
+          /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ ({
+            ok: true,
+            arrayBuffer: async () => new ArrayBuffer(4),
+          }) as Response
+      );
       vi.stubGlobal('fetch', fetchMock);
       return fetchMock;
     }

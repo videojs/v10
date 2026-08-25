@@ -93,10 +93,13 @@ export interface SegmentLoadingState {
 }
 
 /** Context shape for segment loading. Each variant only consumes its own type's loader actor. */
+export type SegmentLoaderDispatcher = Pick<SegmentLoaderActor, 'send'>;
+export type TextTrackSegmentLoaderDispatcher = Pick<TextTrackSegmentLoaderActor, 'send'>;
+
 export interface SegmentLoadingContext {
-  videoSegmentLoaderActor?: SegmentLoaderActor;
-  audioSegmentLoaderActor?: SegmentLoaderActor;
-  textTrackSegmentLoaderActor?: TextTrackSegmentLoaderActor;
+  videoSegmentLoaderActor?: SegmentLoaderDispatcher;
+  audioSegmentLoaderActor?: SegmentLoaderDispatcher;
+  textTrackSegmentLoaderActor?: TextTrackSegmentLoaderDispatcher;
 }
 
 // ============================================================================

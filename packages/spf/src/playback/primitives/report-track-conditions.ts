@@ -24,7 +24,14 @@ import {
   type SvtaError,
 } from '../../media/errors';
 import { NON_FMP4_CONTAINER_MIMES } from '../../media/hls/parse-media-playlist';
-import { getMediaPlaylistMetadata, type ResolvedTrack, type TrackType } from '../../media/types';
+import { getMediaPlaylistMetadata, type HamMetadata, type ResolvedTrack, type TrackType } from '../../media/types';
+
+export interface TrackConditionInput {
+  id: string;
+  type: TrackType;
+  mimeType?: string;
+  metadata?: HamMetadata;
+}
 
 /**
  * Conditions worth reporting about a just-resolved track. Return an empty array
@@ -33,10 +40,10 @@ import { getMediaPlaylistMetadata, type ResolvedTrack, type TrackType } from '..
 export type ReportUnsupportedTrackConditions = (track: ResolvedTrack) => readonly SvtaError[];
 
 /** Unsupported-format code per type; text has none — absent captions aren't a failure. */
-const UNSUPPORTED_FORMAT_CODE: Partial<Record<TrackType, number>> = {
-  video: SVTA_UNSUPPORTED_VIDEO_FORMAT,
-  audio: SVTA_UNSUPPORTED_AUDIO_FORMAT,
-};
+const UNSUPPORTED_FORMAT_CODE = new Map<TrackType, number>([
+  ['video', SVTA_UNSUPPORTED_VIDEO_FORMAT],
+  ['audio', SVTA_UNSUPPORTED_AUDIO_FORMAT],
+]);
 
 /**
  * The types a reported cause can legitimately describe: the ones whose candidates
@@ -72,14 +79,14 @@ const CAPABILITY_PRUNED_TYPES: ReadonlySet<TrackType> = new Set<TrackType>(['vid
  * carry it. `trackId` alongside it is what distinguishes two renditions of the
  * same type.
  */
-export function reportUnsupportedTrackConditions(track: ResolvedTrack): readonly SvtaError[] {
+export function reportUnsupportedTrackConditions(track: TrackConditionInput): readonly SvtaError[] {
   if (!CAPABILITY_PRUNED_TYPES.has(track.type)) return [];
 
   const conditions: SvtaError[] = [];
   const data = { trackType: track.type, trackId: track.id };
 
-  const formatCode = UNSUPPORTED_FORMAT_CODE[track.type];
-  if (formatCode !== undefined && NON_FMP4_CONTAINER_MIMES.has(track.mimeType)) {
+  const formatCode = UNSUPPORTED_FORMAT_CODE.get(track.type);
+  if (formatCode !== undefined && track.mimeType !== undefined && NON_FMP4_CONTAINER_MIMES.has(track.mimeType)) {
     conditions.push({ code: formatCode, data: { ...data, mimeType: track.mimeType } });
   }
   if (getMediaPlaylistMetadata(track)?.encrypted) {

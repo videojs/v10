@@ -1,3 +1,4 @@
+import { isFunction } from '@videojs/utils/predicate';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { HotkeyCoordinator } from '../coordinator';
@@ -29,7 +30,7 @@ describe('HotkeyCoordinator', () => {
       const c = setup();
       const remove = c.add({ keys: 'k', onActivate: vi.fn() });
 
-      expect(typeof remove).toBe('function');
+      expect(isFunction(remove)).toBe(true);
 
       remove();
     });

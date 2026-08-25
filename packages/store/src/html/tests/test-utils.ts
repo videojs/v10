@@ -72,13 +72,13 @@ export type AudioSliceState = {
 type TestStore = Store<MockMedia, AudioSliceState>;
 
 // For controller tests - creates core store with attached target
-export function createCoreTestStore(): { store: TestStore; target: MockMedia } {
+export function createCoreTestStore() {
   const store = createCoreStore<MockMedia>()(audioSlice, { onError: noop });
 
   const target = new MockMedia();
   store.attach(target);
 
-  return { store, target };
+  return { store, target } satisfies { store: TestStore; target: MockMedia };
 }
 
 /** Type alias for test host. */
@@ -92,7 +92,9 @@ export function createTestHost(): TestHost {
   if (!customElements.get(tagName)) {
     customElements.define(tagName, class extends TestHostElement {});
   }
-  return document.createElement(tagName) as TestHost;
+  return /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+    tagName
+  ) as TestHost;
 }
 
 // For mixin tests - unique custom element tags

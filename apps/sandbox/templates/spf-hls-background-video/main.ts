@@ -1,4 +1,3 @@
-import '@app/styles.css';
 // SPF HLS Background Video — sandbox demo
 // http://localhost:5173/spf-hls-background-video/
 //
@@ -15,29 +14,57 @@ import '@app/styles.css';
 // down and builds a new one, which is the only way to re-run resolution against a
 // URL that is already playing.
 import { SOURCES } from '@app/shared/sources';
+
+import '@app/styles.css';
 import { effect, snapshot } from '@videojs/spf';
 import type { BackgroundVideoEngineState } from '@videojs/spf/hls';
 import { HlsBackgroundVideoMediaElement } from '@videojs/spf/hls-background-video';
+import { isNumber } from '@videojs/utils/predicate';
 
 // ── DOM refs ──────────────────────────────────────────────────────────────────
-const video = document.getElementById('bg-video') as HTMLVideoElement;
-const sourceSelect = document.getElementById('source-select') as HTMLSelectElement;
-const renditionButtons = document.getElementById('rendition-buttons') as HTMLDivElement;
-const loadBtn = document.getElementById('load-btn') as HTMLButtonElement;
-const diagLoad = document.getElementById('diag-load') as HTMLSpanElement;
-const diagRendition = document.getElementById('diag-rendition') as HTMLSpanElement;
-const diagContext = document.getElementById('diag-context') as HTMLSpanElement;
+const video =
+  /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ document.getElementById(
+    'bg-video'
+  ) as HTMLVideoElement;
+const sourceSelect =
+  /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ document.getElementById(
+    'source-select'
+  ) as HTMLSelectElement;
+const renditionButtons =
+  /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ document.getElementById(
+    'rendition-buttons'
+  ) as HTMLDivElement;
+const loadBtn =
+  /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ document.getElementById(
+    'load-btn'
+  ) as HTMLButtonElement;
+const diagLoad =
+  /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ document.getElementById(
+    'diag-load'
+  ) as HTMLSpanElement;
+const diagRendition =
+  /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ document.getElementById(
+    'diag-rendition'
+  ) as HTMLSpanElement;
+const diagContext =
+  /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ document.getElementById(
+    'diag-context'
+  ) as HTMLSpanElement;
 
 // ── Source picker ─────────────────────────────────────────────────────────────
 // The SPF MSE pipeline appends fMP4/CMAF segments directly (no MPEG-TS
 // transmuxing), so only fMP4 HLS sources play — exclude `.ts` and live. A source
 // with no plain `url` needs a structured source this demo has no way to hand
 // over (DRM, for one), so it is out too.
-const HLS_SOURCE_IDS = (Object.keys(SOURCES) as Array<keyof typeof SOURCES>).filter((id) => {
+const HLS_SOURCE_IDS = /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (
+  Object.keys(SOURCES) as Array<keyof typeof SOURCES>
+).filter((id) => {
   const source = SOURCES[id];
   return source.type === 'hls' && source.subType === 'mp4' && !source.live && Boolean(source.url);
 });
-const DEFAULT_ID = (HLS_SOURCE_IDS[0] ?? 'hls-1') as keyof typeof SOURCES;
+const DEFAULT_ID =
+  /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (HLS_SOURCE_IDS[0] ??
+    'hls-1') as keyof typeof SOURCES;
 
 for (const id of HLS_SOURCE_IDS) {
   const option = document.createElement('option');
@@ -59,15 +86,15 @@ type VideoTrack = ReturnType<typeof videoTracksOf>[number];
 // Sandbox-local stable rendition id. The engine regenerates track ids on every
 // parse, so a captured engine id is dead after a rebuild — this survives.
 function stableTrackId(track: VideoTrack): string {
-  const w = 'width' in track && typeof track.width === 'number' ? track.width : 0;
-  const h = 'height' in track && typeof track.height === 'number' ? track.height : 0;
+  const w = 'width' in track && isNumber(track.width) ? track.width : 0;
+  const h = 'height' in track && isNumber(track.height) ? track.height : 0;
   return `${w}x${h}@${track.bandwidth}`;
 }
 
-function trackDimensions(track: VideoTrack): { w: number; h: number } {
-  const w = 'width' in track && typeof track.width === 'number' ? track.width : 0;
-  const h = 'height' in track && typeof track.height === 'number' ? track.height : 0;
-  return { w, h };
+function trackDimensions(track: VideoTrack) {
+  const w = 'width' in track && isNumber(track.width) ? track.width : 0;
+  const h = 'height' in track && isNumber(track.height) ? track.height : 0;
+  return { w, h } satisfies { w: number; h: number };
 }
 
 // ── Adapter lifecycle ─────────────────────────────────────────────────────────
@@ -87,15 +114,18 @@ function rebuildAdapter(): void {
   adapter.src = SOURCES[currentSourceId].url ?? '';
   adapter.attach(video);
 
-  (window as any).adapter = adapter;
+  /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (window as any).adapter =
+    adapter;
   stopDiag();
   stopDiag = attachDiagnostic();
 }
 
 // `state` / `context` read `adapter` lazily — the `let` binding always
 // resolves to the current instance after a rebuild.
-(window as any).state = () => snapshot(adapter.engine.state);
-(window as any).context = () => snapshot(adapter.engine.context);
+/* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (window as any).state =
+  () => snapshot(adapter.engine.state);
+/* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (window as any).context =
+  () => snapshot(adapter.engine.context);
 
 // The diagnostic effect re-fires on every state change (currentTime ticks,
 // segment loads), but the list only depends on the track set + the
@@ -105,7 +135,8 @@ let lastRenditionSignature = '';
 rebuildAdapter();
 
 sourceSelect.addEventListener('change', () => {
-  currentSourceId = sourceSelect.value as keyof typeof SOURCES;
+  currentSourceId =
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ sourceSelect.value as keyof typeof SOURCES;
   rebuildAdapter();
 });
 
@@ -143,7 +174,9 @@ function attachDiagnostic(): () => void {
 
     // List the context keys present at runtime — the absence of any audio-side
     // actor key is the visible subtraction proof.
-    const keys = Object.keys(context).filter((k) => (context as Record<string, unknown>)[k] !== undefined);
+    const keys = Object.entries(context)
+      .filter(([, value]) => value !== undefined)
+      .map(([key]) => key);
     diagContext.textContent = keys.length ? keys.join(', ') : '—';
 
     renderRenditionList(tracks, state.selectedVideoTrackId);

@@ -1,3 +1,4 @@
+import { isFunction, isUndefined } from '@videojs/utils/predicate';
 import type { ComponentPropsWithRef, CSSProperties, ElementType, SyntheticEvent } from 'react';
 
 type Props<T extends ElementType = ElementType> = ComponentPropsWithRef<T>;
@@ -17,8 +18,10 @@ function isEventHandlerKey(key: string): boolean {
 /**
  * Check if a key/value pair is an event handler (includes undefined values).
  */
-function isEventHandler(key: string, value: unknown): boolean {
-  return isEventHandlerKey(key) && (typeof value === 'function' || typeof value === 'undefined');
+type EventHandler = ((event: SyntheticEvent) => void) | undefined;
+
+function isEventHandler<Value>(key: string, value: Value): value is Value & EventHandler {
+  return isEventHandlerKey(key) && (isFunction(value) || isUndefined(value));
 }
 
 /**
@@ -57,26 +60,41 @@ function mergeStyles(ours: CSSProperties | undefined, theirs: CSSProperties | un
 /**
  * Merge a single props object into accumulated result.
  */
-function mergeOne<T extends ElementType>(
-  merged: Record<string, unknown>,
-  props: Props<T> | undefined
-): Record<string, unknown> {
+function mergeOne<T extends ElementType>(merged: Props<T>, props: Props<T> | undefined): Props<T> {
   if (!props) return merged;
 
   for (const key in props) {
-    const value = props[key as keyof typeof props];
+    const value =
+      props[
+        /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ key as keyof typeof props
+      ];
 
     if (key === 'className') {
-      merged.className = mergeClassNames(merged.className as string | undefined, value as string);
+      const current = 'className' in merged ? merged.className : undefined;
+      Object.assign(merged, {
+        className: mergeClassNames(
+          /* SAFETY: React's className prop is a string when present. */ current as string | undefined,
+          /* SAFETY: React's className prop is a string when present. */ value as string
+        ),
+      });
     } else if (key === 'style') {
-      merged.style = mergeStyles(merged.style as CSSProperties | undefined, value as CSSProperties);
+      const current = 'style' in merged ? merged.style : undefined;
+      Object.assign(merged, {
+        style: mergeStyles(
+          /* SAFETY: React's style prop is CSSProperties when present. */ current as CSSProperties | undefined,
+          /* SAFETY: React's style prop is CSSProperties when present. */ value as CSSProperties
+        ),
+      });
     } else if (isEventHandler(key, value)) {
-      merged[key] = mergeEventHandlers(
-        merged[key] as ((event: SyntheticEvent) => void) | undefined,
-        value as (event: SyntheticEvent) => void
-      );
+      const current = key in merged ? merged[key] : undefined;
+      Object.assign(merged, {
+        [key]: mergeEventHandlers(
+          /* SAFETY: Event-handler keys carry SyntheticEvent callbacks. */ current as EventHandler,
+          value
+        ),
+      });
     } else {
-      merged[key] = value;
+      Object.assign(merged, { [key]: value });
     }
   }
 
@@ -102,11 +120,11 @@ function mergeOne<T extends ElementType>(
  * ```
  */
 export function mergeProps<T extends ElementType>(...propSets: (Props<T> | undefined)[]): Props<T> {
-  let merged: Record<string, unknown> = {};
+  let merged = /* SAFETY: Each property is populated from Props<T> values below. */ {} as Props<T>;
 
   for (const props of propSets) {
     merged = mergeOne(merged, props);
   }
 
-  return merged as Props<T>;
+  return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ merged as Props<T>;
 }

@@ -1,15 +1,16 @@
+import { isFunction, isUndefined } from '../predicate';
 export function supportsIdleCallback(): boolean {
-  return typeof requestIdleCallback === 'function';
+  return isFunction(globalThis.requestIdleCallback);
 }
 
 export function supportsAnimationFrame(): boolean {
-  return typeof requestAnimationFrame === 'function';
+  return isFunction(globalThis.requestAnimationFrame);
 }
 
 export function supportsAnchorPositioning(): boolean {
-  return typeof CSS !== 'undefined' && CSS.supports('anchor-name: --a');
+  return !isUndefined(globalThis.CSS) && globalThis.CSS.supports('anchor-name: --a');
 }
 
 export function supportsPopoverAPI(): boolean {
-  return typeof HTMLElement !== 'undefined' && 'popover' in HTMLElement.prototype;
+  return !isUndefined(globalThis.HTMLElement) && 'popover' in globalThis.HTMLElement.prototype;
 }

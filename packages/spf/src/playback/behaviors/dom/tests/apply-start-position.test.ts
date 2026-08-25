@@ -25,7 +25,9 @@ function makeVideo(opts: { readyState?: number } = {}): HTMLVideoElement {
 }
 
 function reachMetadata(video: HTMLVideoElement): void {
-  (video as unknown as { readyState: number }).readyState = HTMLMediaElement.HAVE_METADATA;
+  /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+    video as { readyState: number }
+  ).readyState = HTMLMediaElement.HAVE_METADATA;
   video.dispatchEvent(new Event('loadedmetadata'));
 }
 

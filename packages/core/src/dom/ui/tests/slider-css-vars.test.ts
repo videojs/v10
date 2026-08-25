@@ -28,7 +28,7 @@ describe('getSliderCSSVars', () => {
   it('does not include buffer', () => {
     const vars = getSliderCSSVars(createSliderState());
 
-    expect(vars['--media-slider-buffer']).toBeUndefined();
+    expect('--media-slider-buffer' in vars).toBe(false);
   });
 });
 

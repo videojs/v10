@@ -3,7 +3,11 @@ import { TARGET_FRAGMENT, TARGET_HOST, TARGET_NODE, type TargetElementType, type
 export const Fragment = TARGET_FRAGMENT;
 export const Host: typeof TARGET_HOST = TARGET_HOST;
 
-export function jsx(type: TargetElementType, props: Record<string, unknown>, key?: string | number | null): TargetNode {
+export function jsx(
+  type: TargetElementType,
+  props: Record<string, import('../value').VjscValue>,
+  key?: string | number | null
+): TargetNode {
   return {
     [TARGET_NODE]: true,
     type,

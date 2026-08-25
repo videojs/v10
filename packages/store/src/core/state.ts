@@ -1,9 +1,11 @@
 import { noop } from '@videojs/utils/function';
 import { shallowEqual } from '@videojs/utils/object';
 
+import type { StoreValue } from './value';
+
 export type StateChange = () => void;
 
-export type UnknownState = Record<string, unknown>;
+export type UnknownState = Record<string, StoreValue>;
 
 export interface SubscribeOptions {
   signal?: AbortSignal;
@@ -54,7 +56,9 @@ class StateContainer<T> implements WritableState<T> {
 
     let changed = false;
 
-    for (const key of Reflect.ownKeys(partial as object) as (keyof T)[]) {
+    for (const key of /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ Reflect.ownKeys(
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ partial as object
+    ) as (keyof T)[]) {
       if (!hasOwnProp.call(partial, key)) continue;
 
       const value = partial[key];
@@ -116,6 +120,6 @@ export function createState<T>(initial: T): WritableState<T> {
   return new StateContainer(initial);
 }
 
-export function isState(value: unknown): value is State<object> {
+export function isState<Value>(value: Value): value is Value & State<object> {
   return value instanceof StateContainer;
 }

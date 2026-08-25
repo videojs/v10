@@ -1,17 +1,25 @@
 import { isUndefined } from '@videojs/utils/predicate';
 import { useRef } from 'react';
 
-export function useSyncProps<Props extends object, Rest extends Record<string, unknown>>(
-  target: Props,
+function hasKey<Owner extends object>(owner: Owner, key: PropertyKey): key is keyof Owner {
+  return key in owner;
+}
+
+export function useSyncProps<Props extends object, Rest extends object, Target extends Props = Props>(
+  target: Target,
   props: Partial<Props> & Rest,
   defaults: Props
 ): Omit<Rest, keyof Props> {
-  const rest: Record<string, unknown> = {};
-  const synced = new Set<string>();
-  const prevSyncedRef = useRef<Set<string> | null>(null);
+  const syncTarget: Props = target;
+  const rest = /* SAFETY: Properties outside the media contract are copied into this object below. */ {} as Omit<
+    Rest,
+    keyof Props
+  >;
+  const synced = new Set<keyof Props & string>();
+  const prevSyncedRef = useRef<Set<keyof Props & string> | null>(null);
 
-  const sync = (key: string, value: unknown) => {
-    if (target[key as keyof Props] !== value) target[key as keyof Props] = value as Props[keyof Props];
+  const sync = <Key extends keyof Props>(key: Key, value: Props[Key]) => {
+    if (syncTarget[key] !== value) syncTarget[key] = value;
   };
 
   // Reset props the consumer stopped passing (or passed as `undefined`) back to
@@ -19,20 +27,27 @@ export function useSyncProps<Props extends object, Rest extends Record<string, u
   // value another prop derives in the same render (e.g. `source` deriving `src`).
   // Mirrors react-dom removing absent attributes.
   for (const key of prevSyncedRef.current ?? []) {
-    if (isUndefined((props as Record<string, unknown>)[key])) sync(key, (defaults as Record<string, unknown>)[key]);
+    if (isUndefined(props[key])) sync(key, defaults[key]);
   }
 
   for (const key in props) {
-    if (key in defaults) {
-      if (isUndefined(props[key])) continue;
+    if (hasKey(defaults, key)) {
+      const value = props[key];
+      if (isUndefined(value)) continue;
       synced.add(key);
-      sync(key, props[key]);
+      sync(
+        key,
+        /* SAFETY: A present Partial<Props> value preserves the corresponding Props property contract. */ value as typeof value &
+          Props[typeof key]
+      );
     } else {
-      rest[key] = props[key];
+      Object.assign(rest, {
+        [key]: props[/* SAFETY: A for-in key comes from props. */ key as keyof typeof props],
+      });
     }
   }
 
   prevSyncedRef.current = synced;
 
-  return rest as Omit<Rest, keyof Props>;
+  return rest;
 }

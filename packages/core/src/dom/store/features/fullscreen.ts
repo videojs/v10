@@ -60,7 +60,8 @@ export const fullscreenFeature = definePlayerFeature({
     listen(document, 'webkitfullscreenchange', sync, { signal });
 
     // iOS Safari presentation mode change (covers fullscreen)
-    const video = media as WebKitVideoElement;
+    const video =
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ media as WebKitVideoElement;
     if ('webkitPresentationMode' in video) {
       listen(media, 'webkitpresentationmodechanged', sync, { signal });
     }

@@ -27,6 +27,7 @@ import {
   PLAYER_PROXY_NAMESPACE,
   TWITCH_PLAYER_ORIGIN,
   type TwitchCommandMessage,
+  type TwitchCommandParam,
   type TwitchPlaybackState,
   type TwitchPlayerState,
 } from './player-api';
@@ -449,10 +450,13 @@ export class TwitchMedia extends TwitchMediaBase implements Partial<Video> {
     );
   }
 
-  #sendCommand(command: number, params?: unknown) {
+  #sendCommand(command: number, params?: TwitchCommandParam) {
     const embedWindow = this.#target?.contentWindow;
     if (!embedWindow) return;
-    const message: TwitchCommandMessage = { namespace: PLAYER_PROXY_NAMESPACE, eventName: command, params };
+    const message: TwitchCommandMessage =
+      params === undefined
+        ? { namespace: PLAYER_PROXY_NAMESPACE, eventName: command }
+        : { namespace: PLAYER_PROXY_NAMESPACE, eventName: command, params };
     embedWindow.postMessage(message, TWITCH_PLAYER_ORIGIN);
   }
 

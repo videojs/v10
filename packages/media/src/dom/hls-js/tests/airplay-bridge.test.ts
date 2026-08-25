@@ -1,14 +1,14 @@
-import type { Constructor } from '@videojs/utils/types';
 import Hls from 'hls.js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
+import { HTMLVideoElementHost } from '../../video-host';
 import { HlsJsMediaAirPlayMixin } from '../airplay-bridge';
-import type { HlsEngineHost } from '../types';
 
-function createEngine(url = ''): Hls {
+function createEngine(url = '') {
   const listeners = new Map<string, Set<(...args: any[]) => void>>();
-  return {
-    url,
+  const engine = new Hls();
+  Object.defineProperty(engine, 'url', { configurable: true, value: url });
+  return Object.assign(engine, {
     on(event: string, fn: (...args: any[]) => void) {
       if (!listeners.has(event)) listeners.set(event, new Set());
       listeners.get(event)!.add(fn);
@@ -21,30 +21,24 @@ function createEngine(url = ''): Hls {
     },
     startLoad: vi.fn(),
     stopLoad: vi.fn(),
-  } as unknown as Hls;
+  });
 }
 
-// The real engine host exposes `target` as a protected getter; the mixin reads
-// it internally. Here we model a minimal host with a writable `target` so tests
-// can simulate attachment, then bridge to the mixin's expected host shape.
-class FakeHost extends EventTarget {
-  engine: Hls | null;
-  target: HTMLMediaElement | null = null;
+class FakeHost extends HTMLVideoElementHost {
+  engine: ReturnType<typeof createEngine> | null;
 
-  constructor(engine: Hls | null = null) {
+  constructor(engine: ReturnType<typeof createEngine> | null = null) {
     super();
     this.engine = engine;
   }
 }
 
-const AirPlayHost = HlsJsMediaAirPlayMixin(
-  FakeHost as unknown as Constructor<HlsEngineHost>
-) as unknown as typeof FakeHost;
+const AirPlayHost = HlsJsMediaAirPlayMixin(FakeHost);
 
 function createVideo(initialWireless = false): HTMLVideoElement & { webkitCurrentPlaybackTargetIsWireless: boolean } {
-  const video = document.createElement('video') as HTMLVideoElement & {
-    webkitCurrentPlaybackTargetIsWireless: boolean;
-  };
+  const video = Object.assign(document.createElement('video'), {
+    webkitCurrentPlaybackTargetIsWireless: initialWireless,
+  });
   let wireless = initialWireless;
   Object.defineProperty(video, 'webkitCurrentPlaybackTargetIsWireless', {
     configurable: true,
@@ -59,20 +53,26 @@ function createVideo(initialWireless = false): HTMLVideoElement & { webkitCurren
 describe('HlsJsMediaAirPlayMixin', () => {
   beforeEach(() => {
     // Stub the WebKit AirPlay capability check (jsdom lacks it).
-    (globalThis as any).WebKitPlaybackTargetAvailabilityEvent = class {};
+    Object.defineProperty(globalThis, 'WebKitPlaybackTargetAvailabilityEvent', {
+      configurable: true,
+      value: class {},
+    });
   });
 
   afterEach(() => {
-    delete (globalThis as any).WebKitPlaybackTargetAvailabilityEvent;
+    Object.defineProperty(globalThis, 'WebKitPlaybackTargetAvailabilityEvent', {
+      configurable: true,
+      value: undefined,
+    });
   });
 
   it('appends a fallback <source> element on MEDIA_ATTACHED', () => {
     const engine = createEngine('https://example.com/master.m3u8');
     const host = new AirPlayHost(engine);
     const video = createVideo();
-    host.target = video;
+    host.attach(video);
 
-    (engine as any).emit(Hls.Events.MEDIA_ATTACHED);
+    engine.emit(Hls.Events.MEDIA_ATTACHED);
 
     const source = video.querySelector('source');
     expect(source).not.toBeNull();
@@ -85,9 +85,9 @@ describe('HlsJsMediaAirPlayMixin', () => {
     const host = new AirPlayHost(engine);
     const video = createVideo();
     video.disableRemotePlayback = true;
-    host.target = video;
+    host.attach(video);
 
-    (engine as any).emit(Hls.Events.MEDIA_ATTACHED);
+    engine.emit(Hls.Events.MEDIA_ATTACHED);
 
     expect(video.disableRemotePlayback).toBe(false);
   });
@@ -96,10 +96,10 @@ describe('HlsJsMediaAirPlayMixin', () => {
     const engine = createEngine('https://example.com/old.m3u8');
     const host = new AirPlayHost(engine);
     const video = createVideo();
-    host.target = video;
+    host.attach(video);
 
-    (engine as any).emit(Hls.Events.MEDIA_ATTACHED);
-    (engine as any).emit(Hls.Events.MANIFEST_LOADING, { url: 'https://example.com/new.m3u8' });
+    engine.emit(Hls.Events.MEDIA_ATTACHED);
+    engine.emit(Hls.Events.MANIFEST_LOADING, { url: 'https://example.com/new.m3u8' });
 
     expect(video.querySelector('source')?.src).toContain('new.m3u8');
   });
@@ -108,10 +108,10 @@ describe('HlsJsMediaAirPlayMixin', () => {
     const engine = createEngine();
     const host = new AirPlayHost(engine);
     const video = createVideo();
-    host.target = video;
-    (engine as any).emit(Hls.Events.MEDIA_ATTACHED);
-    (engine.stopLoad as ReturnType<typeof vi.fn>).mockClear();
-    (engine.startLoad as ReturnType<typeof vi.fn>).mockClear();
+    host.attach(video);
+    engine.emit(Hls.Events.MEDIA_ATTACHED);
+    engine.stopLoad.mockClear();
+    engine.startLoad.mockClear();
 
     video.webkitCurrentPlaybackTargetIsWireless = true;
     video.dispatchEvent(new Event('webkitcurrentplaybacktargetiswirelesschanged'));
@@ -126,9 +126,9 @@ describe('HlsJsMediaAirPlayMixin', () => {
     const engine = createEngine();
     const host = new AirPlayHost(engine);
     const video = createVideo(true);
-    host.target = video;
-    (engine as any).emit(Hls.Events.MEDIA_ATTACHED);
-    (engine.startLoad as ReturnType<typeof vi.fn>).mockClear();
+    host.attach(video);
+    engine.emit(Hls.Events.MEDIA_ATTACHED);
+    engine.startLoad.mockClear();
 
     video.webkitCurrentPlaybackTargetIsWireless = false;
     video.dispatchEvent(new Event('webkitcurrentplaybacktargetiswirelesschanged'));
@@ -143,9 +143,9 @@ describe('HlsJsMediaAirPlayMixin', () => {
     const engine = createEngine();
     const host = new AirPlayHost(engine);
     const video = createVideo();
-    host.target = video;
-    (engine as any).emit(Hls.Events.MEDIA_ATTACHED);
-    (engine.startLoad as ReturnType<typeof vi.fn>).mockClear();
+    host.attach(video);
+    engine.emit(Hls.Events.MEDIA_ATTACHED);
+    engine.startLoad.mockClear();
 
     for (const wireless of [true, false, true]) {
       video.webkitCurrentPlaybackTargetIsWireless = wireless;
@@ -159,9 +159,9 @@ describe('HlsJsMediaAirPlayMixin', () => {
     const engine = createEngine();
     const host = new AirPlayHost(engine);
     const video = createVideo(true);
-    host.target = video;
+    host.attach(video);
 
-    (engine as any).emit(Hls.Events.MEDIA_ATTACHED);
+    engine.emit(Hls.Events.MEDIA_ATTACHED);
 
     expect(engine.stopLoad).toHaveBeenCalled();
   });
@@ -170,27 +170,30 @@ describe('HlsJsMediaAirPlayMixin', () => {
     const engine = createEngine();
     const host = new AirPlayHost(engine);
     const video = createVideo();
-    host.target = video;
-    (engine as any).emit(Hls.Events.MEDIA_ATTACHED);
+    host.attach(video);
+    engine.emit(Hls.Events.MEDIA_ATTACHED);
 
-    (engine as any).emit(Hls.Events.MEDIA_DETACHED);
+    engine.emit(Hls.Events.MEDIA_DETACHED);
 
     expect(video.querySelector('source')).toBeNull();
 
-    (engine.stopLoad as ReturnType<typeof vi.fn>).mockClear();
+    engine.stopLoad.mockClear();
     video.webkitCurrentPlaybackTargetIsWireless = true;
     video.dispatchEvent(new Event('webkitcurrentplaybacktargetiswirelesschanged'));
     expect(engine.stopLoad).not.toHaveBeenCalled();
   });
 
   it('no-ops when target lacks WebKit AirPlay APIs', () => {
-    delete (globalThis as any).WebKitPlaybackTargetAvailabilityEvent;
+    Object.defineProperty(globalThis, 'WebKitPlaybackTargetAvailabilityEvent', {
+      configurable: true,
+      value: undefined,
+    });
     const engine = createEngine();
     const host = new AirPlayHost(engine);
     const video = document.createElement('video');
-    host.target = video;
+    host.attach(video);
 
-    (engine as any).emit(Hls.Events.MEDIA_ATTACHED);
+    engine.emit(Hls.Events.MEDIA_ATTACHED);
 
     expect(video.querySelector('source')).toBeNull();
     expect(engine.stopLoad).not.toHaveBeenCalled();

@@ -47,7 +47,10 @@ const SOCIAL_CONFIGS = {
 } as const;
 
 export function AuthorSocialLinks({ socialLinks, className }: AuthorSocialLinksProps) {
-  const links = Object.entries(socialLinks).filter(([_, url]) => url) as Array<[keyof SocialLinks, string]>;
+  const links =
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ Object.entries(
+      socialLinks
+    ).filter(([_, url]) => url) as Array<[keyof SocialLinks, string]>;
 
   if (links.length === 0) {
     return null;

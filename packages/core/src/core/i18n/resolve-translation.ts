@@ -13,7 +13,5 @@ export function resolveTranslation<Key extends string>(
   key: Key,
   ...args: ResolveTranslationArgs<Key>
 ): string {
-  const [params] = args;
-  const translate = translator as (key: string, params?: unknown) => string;
-  return params !== undefined ? translate(key, params) : translate(key);
+  return translator(key, ...args);
 }

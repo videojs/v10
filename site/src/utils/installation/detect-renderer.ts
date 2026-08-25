@@ -150,7 +150,7 @@ export function isRendererValidForUseCase(renderer: Renderer, useCase: UseCase):
   return getInstallationPreset(useCase).renderers.includes(renderer);
 }
 
-const RENDERER_ARTICLES: Record<Renderer, 'a' | 'an'> = {
+const RENDERER_ARTICLES = {
   'background-video': 'a',
   cloudflare: 'a',
   dash: 'a',
@@ -164,7 +164,7 @@ const RENDERER_ARTICLES: Record<Renderer, 'a' | 'an'> = {
   twitch: 'a',
   vimeo: 'a',
   youtube: 'a',
-};
+} satisfies Record<Renderer, 'a' | 'an'>;
 
 export function articleFor(renderer: Renderer): 'a' | 'an' {
   return RENDERER_ARTICLES[renderer];

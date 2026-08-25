@@ -46,7 +46,9 @@ function run(command: string, args: string[], cwd: string): void {
 function sha256(path: string): string {
   const result = spawnSync('shasum', ['-a', '256', path], { encoding: 'utf8' });
   if (result.status !== 0) throw new Error(`Could not checksum ${path}`);
-  return (result.stdout.split(' ')[0] as string).trim();
+  return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (
+    result.stdout.split(' ')[0] as string
+  ).trim();
 }
 
 async function main() {
@@ -107,7 +109,7 @@ async function main() {
   }
 }
 
-main().catch((error: unknown) => {
-  log.error(error instanceof Error ? error.message : error);
+main().catch((cause: unknown) => {
+  log.error(cause instanceof Error ? cause.message : cause);
   process.exit(1);
 });

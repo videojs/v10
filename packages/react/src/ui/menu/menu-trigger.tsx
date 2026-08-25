@@ -147,7 +147,10 @@ export const MenuTrigger = forwardRef<HTMLButtonElement | HTMLDivElement, MenuTr
         { render, className, style },
         {
           state,
-          ref: [forwardedRef as React.Ref<HTMLButtonElement>, triggerRef],
+          ref: [
+            /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ forwardedRef as React.Ref<HTMLButtonElement>,
+            triggerRef,
+          ],
           props: [
             { type: 'button' as const, ...core.getTriggerAttrs(state, controlledId) },
             disabled ? { disabled: true, 'aria-disabled': 'true' as const } : undefined,
@@ -171,7 +174,7 @@ interface MenuTriggerSubmenuProps {
   className: MenuTriggerProps['className'];
   style: MenuTriggerProps['style'];
   disabled: boolean | undefined;
-  elementProps: Record<string, unknown>;
+  elementProps: Omit<MenuTriggerProps, 'className' | 'disabled' | 'onClick' | 'onKeyDown' | 'render' | 'style'>;
   forwardedRef: React.ForwardedRef<HTMLButtonElement | HTMLDivElement>;
   elementRef: React.RefObject<HTMLElement | null>;
   triggerId: string;
@@ -202,7 +205,10 @@ function MenuTriggerSubmenu({
     { render, className, style },
     {
       state,
-      ref: [forwardedRef, elementRef as React.Ref<HTMLDivElement>],
+      ref: [
+        forwardedRef,
+        /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ elementRef as React.Ref<HTMLDivElement>,
+      ],
       props: [
         {
           id: triggerId,

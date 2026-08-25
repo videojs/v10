@@ -7,7 +7,7 @@ import { createPlayerWrapper } from '../../../testing/mocks';
 import { Value } from '../time-value';
 
 vi.mock('@videojs/store/react', () => ({
-  useStore: vi.fn((store: { state: object }, selector?: (state: object) => unknown) =>
+  useStore: vi.fn(<State extends object, Selection>(store: { state: State }, selector?: (state: State) => Selection) =>
     selector ? selector(store.state) : store
   ),
 }));

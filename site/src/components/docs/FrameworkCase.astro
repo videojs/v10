@@ -10,7 +10,7 @@ const { frameworks } = Astro.props;
 const { framework } = Astro.params;
 
 // Only render if current framework matches, or if no frameworks specified (all frameworks)
-const shouldRender = !frameworks || frameworks.includes(framework as SupportedFramework);
+const shouldRender = !frameworks || frameworks.includes(/* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ framework as SupportedFramework);
 ---
 
 {

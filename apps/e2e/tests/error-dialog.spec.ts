@@ -8,7 +8,10 @@ test.describe('Error Dialog', () => {
 
   async function triggerError(page: Page) {
     await page.evaluate(() => {
-      const video = document.querySelector('video') as HTMLVideoElement;
+      const video =
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.querySelector(
+          'video'
+        ) as HTMLVideoElement;
       if (!video) return;
 
       Object.defineProperty(video, 'error', {

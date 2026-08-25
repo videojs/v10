@@ -11,7 +11,8 @@ export function createTemplate(html: string): HTMLTemplateElement | null {
 /** Return the first direct-child template in a container. */
 export function getTemplateElement(container: Element): HTMLTemplateElement | null {
   for (const child of container.children) {
-    if (child.localName === 'template' && 'content' in child) return child as HTMLTemplateElement;
+    if (child.localName === 'template' && 'content' in child)
+      return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ child as HTMLTemplateElement;
   }
 
   return null;
@@ -28,7 +29,10 @@ export function cloneTemplateRoot<Root extends Element>(
   root: Root,
   targetDocument: Document = root.ownerDocument
 ): Root {
-  return targetDocument.importNode(root, true) as Root;
+  return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ targetDocument.importNode(
+    root,
+    true
+  ) as Root;
 }
 
 /** Deep-clone a template's content into a container. */

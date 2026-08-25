@@ -2,7 +2,7 @@ import type { SelectOption } from '@/components/Select';
 import type { Renderer, UseCase } from '@/utils/installation/types';
 import { getInstallationPreset } from '@/utils/installation/types';
 
-export const RENDERER_LABELS: Record<Renderer, string> = {
+export const RENDERER_LABELS = {
   'background-video': 'Background Video',
   cloudflare: 'Cloudflare Stream',
   dash: 'DASH',
@@ -16,7 +16,7 @@ export const RENDERER_LABELS: Record<Renderer, string> = {
   twitch: 'Twitch',
   vimeo: 'Vimeo',
   youtube: 'YouTube',
-};
+} satisfies Record<Renderer, string>;
 
 export function buildOptions(useCase: UseCase): SelectOption<Renderer>[] {
   return getInstallationPreset(useCase).renderers.map((r) => ({

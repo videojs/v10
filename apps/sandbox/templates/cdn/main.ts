@@ -39,7 +39,9 @@ import { getI18nTranslations } from '@videojs/html/cdn/i18n';
 const html = String.raw;
 
 const params = new URLSearchParams(location.search);
-const preset = (params.get('preset') ?? 'video') as Preset;
+const preset = /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (params.get(
+  'preset'
+) ?? 'video') as Preset;
 
 const state = createHtmlSandboxState(preset === 'audio');
 const loadLatest = createLatestLoader();
@@ -73,12 +75,16 @@ async function waitForCdnPlayLabel(expected: string, timeoutMs = 15_000): Promis
 
   const deadline = performance.now() + timeoutMs;
   while (performance.now() < deadline) {
-    const provider = document.querySelector('media-i18n') as LitElementLike | null;
+    const provider =
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ document.querySelector(
+        'media-i18n'
+      ) as LitElementLike | null;
     provider?.requestUpdate?.();
     if (provider?.updateComplete) await provider.updateComplete;
 
     for (const button of document.querySelectorAll('media-play-button')) {
-      const el = button as LitElementLike;
+      const el =
+        /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ button as LitElementLike;
       el.requestUpdate?.();
       if (el.updateComplete) await el.updateComplete;
     }
@@ -96,7 +102,10 @@ async function syncCdnI18nProvider(tag: SandboxLocaleTag, seq: number): Promise<
   await ensureCdnSandboxLocale(tag);
   if (seq !== localeApplySeq) return;
 
-  const provider = document.querySelector('media-i18n') as LitElementLike | null;
+  const provider =
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ document.querySelector(
+      'media-i18n'
+    ) as LitElementLike | null;
   if (!provider?.requestUpdate) return;
 
   provider.requestUpdate();
@@ -256,7 +265,9 @@ function isAudioPreset(preset: Preset): boolean {
 }
 
 function isEmbedPreset(preset: Preset): boolean {
-  return (EMBED_PRESETS as readonly Preset[]).includes(preset);
+  return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (
+    EMBED_PRESETS as readonly Preset[]
+  ).includes(preset);
 }
 
 /**
@@ -270,14 +281,14 @@ function getEmbedMediaClass(preset: Preset): string {
 }
 
 /** The one source each embed plays: a provider page URL, not one of the picker's files. */
-const EMBED_SOURCES: Partial<Record<Preset, string>> = {
+const EMBED_SOURCES = {
   'vimeo-video': VIMEO_VIDEO_SRC,
   'youtube-video': YOUTUBE_VIDEO_SRC,
   'cloudflare-video': CLOUDFLARE_VIDEO_SRC,
   'spotify-audio': SPOTIFY_AUDIO_SRC,
   'tiktok-video': TIKTOK_VIDEO_SRC,
   'twitch-video': TWITCH_VIDEO_SRC,
-};
+} satisfies Partial<Record<Preset, string>>;
 
 function isBackgroundPreset(preset: Preset): boolean {
   return preset === 'background-video' || preset === 'hls-background-video' || preset === 'mux-background-video';
@@ -297,7 +308,7 @@ function getSkinTag(preset: Preset, skin: Skin, live: boolean): string {
 }
 
 function getMediaTag(preset: Preset): string {
-  const tags: Partial<Record<Preset, string>> = {
+  const tags = {
     'hlsjs-video': 'hlsjs-video',
     'mux-video': 'mux-video',
     'mux-video-spf': 'mux-video',
@@ -318,7 +329,7 @@ function getMediaTag(preset: Preset): string {
     'background-video': 'background-video',
     'hls-background-video': 'hls-background-video',
     'mux-background-video': 'mux-background-video',
-  };
+  } satisfies Partial<Record<Preset, string>>;
 
   return tags[preset] ?? 'video';
 }

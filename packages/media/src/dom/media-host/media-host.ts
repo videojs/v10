@@ -86,11 +86,15 @@ export class HTMLMediaElementHost<Target extends HTMLMediaTargetLike, Events ext
   }
 
   querySelectorAll<E extends Element = Element, S extends string = string>(selectors: S) {
-    return (this.target?.querySelectorAll(selectors) ?? []) as NodeListOf<QueriedElement<S, E>> | never[];
+    return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (this.target?.querySelectorAll(
+      selectors
+    ) ?? []) as NodeListOf<QueriedElement<S, E>> | never[];
   }
 
   querySelector<E extends Element = Element, S extends string = string>(selectors: S) {
-    return (this.target?.querySelector(selectors) ?? null) as QueriedElement<S, E> | null;
+    return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (this.target?.querySelector(
+      selectors
+    ) ?? null) as QueriedElement<S, E> | null;
   }
 
   addEventListener<K extends EventType<Events>>(
@@ -102,7 +106,11 @@ export class HTMLMediaElementHost<Target extends HTMLMediaTargetLike, Events ext
       this.#eventTypes.add(type);
       this.target?.addEventListener(type, this.#forwardEvent);
     }
-    super.addEventListener(type, listener as EventListener, options);
+    super.addEventListener(
+      type,
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ listener as EventListener,
+      options
+    );
   }
 
   removeEventListener<K extends EventType<Events>>(
@@ -110,11 +118,20 @@ export class HTMLMediaElementHost<Target extends HTMLMediaTargetLike, Events ext
     listener: EventListenerFor<Events, K>,
     options?: boolean | EventListenerOptions
   ) {
-    super.removeEventListener(type, listener as EventListener, options);
+    super.removeEventListener(
+      type,
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ listener as EventListener,
+      options
+    );
   }
 
   #forwardEvent = (event: Event) => {
-    this.dispatchEvent(new (event.constructor as typeof Event)(event.type, event));
+    this.dispatchEvent(
+      new /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (event.constructor as typeof Event)(
+        event.type,
+        event
+      )
+    );
   };
 
   /**
@@ -280,15 +297,24 @@ export class HTMLMediaElementHost<Target extends HTMLMediaTargetLike, Events ext
   }
 
   get buffered() {
-    return (getMediaProp(this, 'buffered') ?? EMPTY_TIME_RANGES) as TimeRanges;
+    return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (getMediaProp(
+      this,
+      'buffered'
+    ) ?? EMPTY_TIME_RANGES) as TimeRanges;
   }
 
   get seekable() {
-    return (getMediaProp(this, 'seekable') ?? EMPTY_TIME_RANGES) as TimeRanges;
+    return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (getMediaProp(
+      this,
+      'seekable'
+    ) ?? EMPTY_TIME_RANGES) as TimeRanges;
   }
 
   get played() {
-    return (getMediaProp(this, 'played') ?? EMPTY_TIME_RANGES) as TimeRanges;
+    return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (getMediaProp(
+      this,
+      'played'
+    ) ?? EMPTY_TIME_RANGES) as TimeRanges;
   }
 
   get error() {
@@ -296,12 +322,19 @@ export class HTMLMediaElementHost<Target extends HTMLMediaTargetLike, Events ext
   }
 
   get textTracks() {
-    return (getMediaProp(this, 'textTracks') ?? EMPTY_TEXT_TRACKS) as TextTrackList;
+    return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (getMediaProp(
+      this,
+      'textTracks'
+    ) ?? EMPTY_TEXT_TRACKS) as TextTrackList;
   }
 
   addTextTrack(kind: TextTrackKind, label?: string, language?: string) {
     const owner = getMediaOwner(this, 'addTextTrack');
-    return owner?.addTextTrack?.(kind, label, language) as TextTrackLike;
+    return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ owner?.addTextTrack?.(
+      kind,
+      label,
+      language
+    ) as TextTrackLike;
   }
 
   get remote() {

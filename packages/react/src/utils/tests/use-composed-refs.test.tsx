@@ -1,4 +1,5 @@
 import { render } from '@testing-library/react';
+import { isFunction } from '@videojs/utils/predicate';
 import type { MutableRefObject, RefObject } from 'react';
 import { useRef } from 'react';
 import { describe, expect, it, vi } from 'vite-plus/test';
@@ -54,10 +55,13 @@ describe('composeRefs', () => {
     const callbackRef = vi.fn().mockReturnValue(cleanup);
     const composed = composeRefs(callbackRef);
 
-    const returnedCleanup = composed('test-value') as (() => void) | void;
+    const returnedCleanup =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ composed(
+        'test-value'
+      ) as (() => void) | void;
 
     expect(returnedCleanup).toBeTypeOf('function');
-    if (typeof returnedCleanup === 'function') {
+    if (isFunction(returnedCleanup)) {
       returnedCleanup();
     }
     expect(cleanup).toHaveBeenCalled();
@@ -72,8 +76,11 @@ describe('composeRefs', () => {
     composed('test-value');
     expect(refObject.current).toBe('test-value');
 
-    const returnedCleanup = composed('test-value') as (() => void) | void;
-    if (typeof returnedCleanup === 'function') {
+    const returnedCleanup =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ composed(
+        'test-value'
+      ) as (() => void) | void;
+    if (isFunction(returnedCleanup)) {
       returnedCleanup();
     }
 

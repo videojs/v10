@@ -2,7 +2,7 @@
 
 import type { CloudflareMediaProps } from '@videojs/media/dom/cloudflare';
 import { buildCloudflareIframeSrc, CloudflareMedia, cloudflareMediaDefaultProps } from '@videojs/media/dom/cloudflare';
-import type { ReactNode } from 'react';
+import type { ComponentPropsWithoutRef, ReactNode } from 'react';
 import { forwardRef, useState } from 'react';
 
 import { useAttachIframe } from '../../utils/use-attach-iframe';
@@ -10,16 +10,17 @@ import { useComposedRefs } from '../../utils/use-composed-refs';
 import { useMediaInstance } from '../../utils/use-media-instance';
 import { useSyncProps } from '../../utils/use-sync-props';
 
-export interface CloudflareVideoProps extends Partial<CloudflareMediaProps> {
-  children?: ReactNode;
-}
+export type CloudflareVideoProps = Partial<CloudflareMediaProps> &
+  Omit<ComponentPropsWithoutRef<'iframe'>, keyof CloudflareMediaProps> & {
+    children?: ReactNode;
+  };
 
 export const CloudflareVideo = forwardRef<HTMLIFrameElement, CloudflareVideoProps>(function CloudflareVideo(
   { children, ...rawProps },
   ref
 ) {
   const media = useMediaInstance(CloudflareMedia);
-  const props: Partial<CloudflareMediaProps> & Record<string, unknown> = { ...rawProps };
+  const props = { ...rawProps };
   const attachRef = useAttachIframe(media);
   const composedRef = useComposedRefs(attachRef, ref);
   const [initialSrc] = useState(() =>
@@ -33,11 +34,7 @@ export const CloudflareVideo = forwardRef<HTMLIFrameElement, CloudflareVideoProp
       defaultMuted: !!(props.defaultMuted || props.muted),
     })
   );
-  const iframeProps = useSyncProps<CloudflareMediaProps, Record<string, unknown>>(
-    media,
-    props,
-    cloudflareMediaDefaultProps
-  );
+  const iframeProps = useSyncProps<CloudflareMediaProps, typeof props>(media, props, cloudflareMediaDefaultProps);
 
   return (
     <iframe

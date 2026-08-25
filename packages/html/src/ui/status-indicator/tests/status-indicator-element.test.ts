@@ -18,7 +18,10 @@ describe('StatusIndicatorElement', () => {
   });
 
   it('keeps repeated updates in the current transition', () => {
-    const element = document.createElement('test-status-indicator') as TestStatusIndicatorElement;
+    const element =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+        'test-status-indicator'
+      ) as TestStatusIndicatorElement;
 
     expect(element.transitionOptions).toEqual({ replayOnUpdate: false });
   });

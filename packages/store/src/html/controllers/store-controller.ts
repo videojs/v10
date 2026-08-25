@@ -83,7 +83,8 @@ export class StoreController<Store extends AnyStore, Result = Store> implements 
 
     // Without selector: return store
     if (isUndefined(this.#selector)) {
-      return store as unknown as Result;
+      // SAFETY: The no-selector constructor overload fixes Result to its default Store type.
+      return store as Store & Result;
     }
 
     // With selector: delegate to snapshot controller
@@ -98,7 +99,14 @@ export class StoreController<Store extends AnyStore, Result = Store> implements 
     if (isUndefined(this.#selector)) return;
 
     if (!this.#snapshot) {
-      this.#snapshot = new SnapshotController(this.#host, store.$state, this.#selector as Selector<object, Result>);
+      this.#snapshot = new SnapshotController(
+        this.#host,
+        store.$state,
+        /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ this.#selector as Selector<
+          object,
+          Result
+        >
+      );
     } else {
       this.#snapshot.track(store.$state);
     }

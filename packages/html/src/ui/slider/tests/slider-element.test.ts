@@ -1,4 +1,4 @@
-import type { AnyPlayerStore } from '@videojs/core/dom';
+import type { AnyPlayerStore, PlayerTarget } from '@videojs/core/dom';
 import { ContextProvider } from '@videojs/element/context';
 import type { MediaControlsState } from '@videojs/media';
 import { createStore } from '@videojs/store';
@@ -20,14 +20,19 @@ function uniqueTag(base: string): string {
   return `${base}-${tagCounter++}`;
 }
 
-function createElement<Element extends HTMLElement>(Base: abstract new () => Element): Element {
+function createElement<Element extends HTMLElement>(Base: new () => Element): Element {
   const tag = uniqueTag('test-el');
-  customElements.define(tag, class extends (Base as unknown as typeof HTMLElement) {});
-  return document.createElement(tag) as Element;
+  customElements.define(
+    tag,
+    class extends /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (Base as typeof HTMLElement) {}
+  );
+  return /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+    tag
+  ) as Element;
 }
 
 function createControlsStore(requestControlsLock: MediaControlsState['requestControlsLock']): AnyPlayerStore {
-  return createStore<unknown>()<MediaControlsState>({
+  return createStore<PlayerTarget>()({
     name: 'controls',
     state: () => ({
       userActive: true,
@@ -35,7 +40,7 @@ function createControlsStore(requestControlsLock: MediaControlsState['requestCon
       requestControlsLock,
       toggleControls: () => true,
     }),
-  }) as unknown as AnyPlayerStore;
+  });
 }
 
 class TestPlayerProviderElement extends UIElement {
@@ -198,9 +203,14 @@ describe('SliderElement', () => {
     // Events are dispatched by the createSlider handle during interaction.
     // We verify the element can dispatch events with the correct shape.
     const received: CustomEvent[] = [];
-    slider.addEventListener('value-change', ((event: CustomEvent) => {
-      received.push(event);
-    }) as EventListener);
+    slider.addEventListener(
+      'value-change',
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ ((
+        event: CustomEvent
+      ) => {
+        received.push(event);
+      }) as EventListener
+    );
 
     slider.dispatchEvent(new CustomEvent('value-change', { detail: { value: 42 }, bubbles: true }));
 

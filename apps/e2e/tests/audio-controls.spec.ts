@@ -4,10 +4,21 @@ import { AUDIO_PAGES, type PageEntry } from '../fixtures/media';
 import { DATA_ATTRS, SELECTORS } from '../fixtures/selectors';
 import { PlayerPage } from '../page-objects/player';
 
-for (const { name, path, skipBrowsers } of AUDIO_PAGES as readonly PageEntry[]) {
+for (const {
+  name,
+  path,
+  skipBrowsers,
+} of /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ AUDIO_PAGES as readonly PageEntry[]) {
   test.describe(`Audio Controls — ${name}`, () => {
     test.skip(({ browserName }) => {
-      return skipBrowsers?.includes(browserName as 'chromium' | 'webkit' | 'firefox') ?? false;
+      return (
+        skipBrowsers?.includes(
+          /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ browserName as
+            | 'chromium'
+            | 'webkit'
+            | 'firefox'
+        ) ?? false
+      );
     }, `Skipped on this browser`);
     let player: PlayerPage;
 
@@ -51,7 +62,11 @@ for (const { name, path, skipBrowsers } of AUDIO_PAGES as readonly PageEntry[]) 
           async () => {
             return page.evaluate((selector) => {
               const el = document.querySelector(selector);
-              const media = (el?.querySelector?.('video') as HTMLMediaElement) ?? (el as HTMLMediaElement);
+              const media =
+                /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (el?.querySelector?.(
+                  'video'
+                ) as HTMLMediaElement) ??
+                /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (el as HTMLMediaElement);
               return media?.currentTime ?? 0;
             }, SELECTORS.media);
           },

@@ -26,7 +26,10 @@ describe('VimeoVideo', () => {
 
     // How every framework builds the element: created first, `src` set after, so
     // the constructor runs with no attributes to build an embed from.
-    const element = document.createElement(tag) as HTMLElement & { engine: unknown };
+    const element =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+        tag
+      ) as HTMLElement & { engine: unknown };
     expect(iframeSrc(element)).toBe('');
 
     element.setAttribute('src', 'https://vimeo.com/1181503036');
@@ -38,7 +41,10 @@ describe('VimeoVideo', () => {
 
   it('builds the embed from attributes set after src in the same task', async () => {
     const tag = defineVimeoVideo();
-    const element = document.createElement(tag) as HTMLElement & { engine: unknown };
+    const element =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+        tag
+      ) as HTMLElement & { engine: unknown };
     element.setAttribute('src', 'https://vimeo.com/1181503036');
     element.setAttribute('controls', '');
     await flushDeferredEmbed();

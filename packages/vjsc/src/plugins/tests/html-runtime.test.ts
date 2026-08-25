@@ -7,9 +7,15 @@ import { HTML_RUNTIME } from '../html-runtime';
 
 interface HtmlRuntime {
   readonly Fragment: symbol;
-  readonly Host: (props: Record<string, unknown>) => unknown;
-  readonly Scope: (props: Record<string, unknown>) => unknown;
-  jsx(type: string | symbol | ((props: Record<string, unknown>) => unknown), props: Record<string, unknown>): unknown;
+  readonly Host: (props: Record<string, import('../../value').VjscValue>) => import('../../value').VjscValue;
+  readonly Scope: (props: Record<string, import('../../value').VjscValue>) => import('../../value').VjscValue;
+  jsx(
+    type:
+      | string
+      | symbol
+      | ((props: Record<string, import('../../value').VjscValue>) => import('../../value').VjscValue),
+    props: Record<string, import('../../value').VjscValue>
+  ): import('../../value').VjscValue;
 }
 
 describe('htmlRuntimePlugin', () => {
@@ -82,5 +88,7 @@ async function loadRuntime(): Promise<HtmlRuntime> {
   if (!chunk) throw new Error('Expected the HTML runtime bundle to contain a chunk.');
 
   const url = `data:text/javascript;base64,${Buffer.from(chunk.code).toString('base64')}`;
-  return (await import(url)) as HtmlRuntime;
+  return /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (await import(
+    url
+  )) as HtmlRuntime;
 }

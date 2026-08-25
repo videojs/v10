@@ -21,7 +21,11 @@ describe('TextTrack Cue Persistence Investigation', () => {
 
       expect(track.track.cues).not.toBeNull();
       expect(track.track.cues!.length).toBe(1);
-      expect((track.track.cues![0] as VTTCue).text).toBe('Test cue');
+      expect(
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+          track.track.cues![0] as VTTCue
+        ).text
+      ).toBe('Test cue');
     });
   });
 

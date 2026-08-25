@@ -170,7 +170,7 @@ export function getCodecFamilies(track: { codecs?: string[] }): readonly string[
  * if mixed ladders come into scope.
  */
 export function applyContainerMimeType(presentation: Presentation, type: TrackType, mimeType: string): Presentation {
-  return {
+  return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ {
     ...presentation,
     selectionSets: presentation.selectionSets.map((selectionSet) =>
       selectionSet.type === type
@@ -197,7 +197,7 @@ export function updateTrackInPresentation<T extends ResolvedTrack>(
   resolvedTrack: T
 ): Presentation {
   const trackId = resolvedTrack.id;
-  return {
+  return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ {
     ...presentation,
     selectionSets: presentation.selectionSets.map((selectionSet) => ({
       ...selectionSet,

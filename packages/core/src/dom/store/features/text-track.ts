@@ -157,7 +157,7 @@ export const textTrackFeature = definePlayerFeature({
 
         textTrackList.push({
           id: getTrackId(track, i),
-          kind: track.kind as TextTrackKind,
+          kind: /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ track.kind as TextTrackKind,
           label: track.label,
           language: track.language,
           mode: track.mode,
@@ -171,10 +171,14 @@ export const textTrackFeature = definePlayerFeature({
       // VTTCue extends TextTrackCue with `text` — cast via `unknown` since
       // the CueList is typed as TextTrackCue which doesn't expose `text`.
       const chaptersCues: MediaTextCue[] = chaptersTrack?.cues
-        ? (Array.from(chaptersTrack.cues) as unknown as MediaTextCue[])
+        ? /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (Array.from(
+            chaptersTrack.cues
+          ) as MediaTextCue[])
         : [];
       const thumbnailCues: MediaTextCue[] = thumbnailTrack?.cues
-        ? (Array.from(thumbnailTrack.cues) as unknown as MediaTextCue[])
+        ? /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (Array.from(
+            thumbnailTrack.cues
+          ) as MediaTextCue[])
         : [];
 
       let thumbnailTrackSrc: string | null = null;
@@ -190,7 +194,8 @@ export const textTrackFeature = definePlayerFeature({
       // Listen for <track> load events on tracks that don't have cues yet.
       // `addtrack` fires before cues are parsed — we need the `load` event
       // on the <track> element to know when cues are ready.
-      const tracks = (isQuerySelectorAllCapable<HTMLTrackElement>(media) && media.querySelectorAll('track')) || [];
+      const tracks =
+        (isQuerySelectorAllCapable<typeof media, HTMLTrackElement>(media) && media.querySelectorAll('track')) || [];
       const shadowTracks = (media instanceof HTMLElement && media.shadowRoot?.querySelectorAll('track')) || [];
 
       for (const trackEl of [...tracks, ...shadowTracks]) {

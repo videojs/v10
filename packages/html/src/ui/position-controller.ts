@@ -25,7 +25,10 @@ export class PositionController implements ReactiveController {
 
   /** Discover an explicit trigger by ID or one linked via `commandfor`. */
   findTrigger(trigger?: string): HTMLElement | null {
-    const root = this.#host.getRootNode() as Document | ShadowRoot;
+    const root =
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ this.#host.getRootNode() as
+        | Document
+        | ShadowRoot;
     if (trigger) {
       this.#releaseImplicitBinding();
       return root.getElementById(trigger);

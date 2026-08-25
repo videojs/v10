@@ -20,7 +20,7 @@ function isConstAssertion(node: TypeAssertion): boolean {
   );
 }
 
-function hasSafetyComment(sourceCode: SourceCode, node: TypeAssertion): boolean {
+export function hasSafetyComment(sourceCode: SourceCode, node: TypeAssertion): boolean {
   let current: ESTree.Node = node;
   while (true) {
     if (
@@ -30,7 +30,12 @@ function hasSafetyComment(sourceCode: SourceCode, node: TypeAssertion): boolean 
     ) {
       return true;
     }
-    if (commentOwnerKinds.has(current.type) || current.parent.type === "Program") return false;
+    if (commentOwnerKinds.has(current.type) || current.parent.type === "Program") {
+      // Formatters can move a leading assertion comment inside parentheses or a
+      // conditional expression. It still justifies the assertion when it sits
+      // between the containing statement's start and the assertion itself.
+      return /\/[*\/]\s*SAFETY\s*:/u.test(sourceCode.text.slice(current.start, node.start));
+    }
     current = current.parent;
   }
 }

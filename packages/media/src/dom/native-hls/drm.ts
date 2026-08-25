@@ -44,8 +44,10 @@ export type NativeHlsDrmHost = NativeMediaHost & {
  * Encrypted content with nothing configured fails loudly. Safari otherwise
  * stalls without explanation, which is indistinguishable from a slow network.
  */
-export function NativeHlsMediaDrmMixin<Base extends Constructor<NativeHlsDrmHost>>(BaseClass: Base) {
-  class NativeHlsMediaDrm extends (BaseClass as Constructor<NativeHlsDrmHost>) {
+export function NativeHlsMediaDrmMixin<Base extends Constructor<NativeHlsDrmHost>>(BaseClass: Base): Base {
+  class NativeHlsMediaDrm
+    extends /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (BaseClass as Constructor<NativeHlsDrmHost>)
+  {
     #disconnect: AbortController | null = null;
     #active: { keySystem: FairPlayKeySystem; disconnect: AbortController } | null = null;
     #useWebKit = false;
@@ -80,8 +82,24 @@ export function NativeHlsMediaDrmMixin<Base extends Constructor<NativeHlsDrmHost
       // Both events are always observed, and each is served only by the
       // implementation that owns it — Safari can fire both, and only one of
       // them describes the keys the active CDM is holding.
-      target.addEventListener('encrypted', (event) => this.#serve(event as MediaEncryptedEvent, false), { signal });
-      target.addEventListener('webkitneedkey', (event) => this.#serve(event as MediaEncryptedEvent, true), { signal });
+      target.addEventListener(
+        'encrypted',
+        (event) =>
+          this.#serve(
+            /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ event as MediaEncryptedEvent,
+            false
+          ),
+        { signal }
+      );
+      target.addEventListener(
+        'webkitneedkey',
+        (event) =>
+          this.#serve(
+            /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ event as MediaEncryptedEvent,
+            true
+          ),
+        { signal }
+      );
 
       // Fired when the element starts on a new resource, so the keys and
       // sessions held for the previous one are no longer good for anything.
@@ -114,7 +132,8 @@ export function NativeHlsMediaDrmMixin<Base extends Constructor<NativeHlsDrmHost
     #serve(event: MediaEncryptedEvent, fromWebKit: boolean): void {
       if (fromWebKit !== this.#useWebKit) return;
 
-      const media = this.target as HTMLVideoElement | null;
+      const media = /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ this
+        .target as HTMLVideoElement | null;
       const drmSystems = this.#drmSystems();
       const config = drmSystems[KeySystems.FAIRPLAY];
       if (!media) return;
@@ -200,5 +219,6 @@ export function NativeHlsMediaDrmMixin<Base extends Constructor<NativeHlsDrmHost
     }
   }
 
-  return NativeHlsMediaDrm as unknown as Base;
+  return /* SAFETY: The mixed class preserves the supplied base constructor. */ NativeHlsMediaDrm as typeof NativeHlsMediaDrm &
+    Base;
 }

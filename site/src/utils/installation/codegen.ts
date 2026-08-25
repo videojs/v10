@@ -55,7 +55,7 @@ function getDefaultSourceUrl(renderer: Renderer, useCase: UseCase): string {
     return VJS10_DEMO_LIVE.hls;
   }
 
-  const map: Record<Renderer, string> = {
+  const map = {
     'html5-video': VJS10_DEMO_VIDEO.mp4,
     // Pre-existing quirk: the audio default points at a video .mp4. Fixing it
     // needs a real audio asset we don't have — tracked as a follow-up.
@@ -72,7 +72,7 @@ function getDefaultSourceUrl(renderer: Renderer, useCase: UseCase): string {
     spotify: VJS10_DEMO_SPOTIFY,
     tiktok: VJS10_DEMO_TIKTOK,
     twitch: VJS10_DEMO_TWITCH,
-  };
+  } satisfies Record<Renderer, string>;
   return map[renderer];
 }
 
@@ -105,27 +105,27 @@ function getSkinFile(skin: Exclude<Skin, 'none'>): 'skin' | 'minimal-skin' {
 export function generateHTMLInstallCode(
   opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer'>,
   cdnMediaSubpaths: readonly string[]
-): Record<'cdn' | 'npm' | 'pnpm' | 'yarn' | 'bun', string> {
+) {
   return {
     cdn: generateCdnCode(opts.useCase, opts.skin, opts.renderer, cdnMediaSubpaths),
     npm: 'npm install @videojs/html',
     pnpm: 'pnpm add @videojs/html',
     yarn: 'yarn add @videojs/html',
     bun: 'bun add @videojs/html',
-  };
+  } satisfies Record<'cdn' | 'npm' | 'pnpm' | 'yarn' | 'bun', string>;
 }
 
 // ---------------------------------------------------------------------------
 // React Install
 // ---------------------------------------------------------------------------
 
-export function generateReactInstallCode(): Record<'npm' | 'pnpm' | 'yarn' | 'bun', string> {
+export function generateReactInstallCode() {
   return {
     npm: 'npm install @videojs/react',
     pnpm: 'pnpm add @videojs/react',
     yarn: 'yarn add @videojs/react',
     bun: 'bun add @videojs/react',
-  };
+  } satisfies Record<'npm' | 'pnpm' | 'yarn' | 'bun', string>;
 }
 
 // ---------------------------------------------------------------------------
@@ -133,7 +133,7 @@ export function generateReactInstallCode(): Record<'npm' | 'pnpm' | 'yarn' | 'bu
 // ---------------------------------------------------------------------------
 
 function getRendererTag(renderer: Renderer): string {
-  const map: Record<Renderer, string> = {
+  const map = {
     'background-video': 'background-video',
     dash: 'dash-video',
     hls: 'hlsjs-video',
@@ -147,7 +147,7 @@ function getRendererTag(renderer: Renderer): string {
     spotify: 'spotify-audio',
     tiktok: 'tiktok-video',
     twitch: 'twitch-video',
-  };
+  } satisfies Record<Renderer, string>;
   return map[renderer];
 }
 
@@ -193,7 +193,13 @@ ${mediaComment}
 </${providerTag}>`;
   }
 
-  const skinTag = getSkinTag(useCase, skin as Exclude<Skin, 'none'>);
+  const skinTag = getSkinTag(
+    useCase,
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ skin as Exclude<
+      Skin,
+      'none'
+    >
+  );
   return `${providerComment}
 <${providerTag}>
   <!--
@@ -228,10 +234,10 @@ import '@videojs/html/${group}/${getSkinFile(skin)}';${mediaImport}`;
 
 export function generateHTMLUsageCode(
   opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer' | 'sourceUrl' | 'installMethod'>
-): { html: string; js?: string } {
+) {
   const html = generateHTMLMarkup(opts.useCase, opts.skin, opts.renderer, opts.sourceUrl);
   const js = opts.installMethod !== 'cdn' ? generateHTMLJSImports(opts.useCase, opts.skin, opts.renderer) : undefined;
-  return { html, js };
+  return { html, js } satisfies { html: string; js?: string };
 }
 
 // ---------------------------------------------------------------------------
@@ -239,7 +245,7 @@ export function generateHTMLUsageCode(
 // ---------------------------------------------------------------------------
 
 function getRendererComponent(renderer: Renderer): string {
-  const map: Record<Renderer, string> = {
+  const map = {
     'background-video': 'BackgroundVideo',
     dash: 'DashVideo',
     hls: 'HlsJsVideo',
@@ -253,7 +259,7 @@ function getRendererComponent(renderer: Renderer): string {
     spotify: 'SpotifyAudio',
     tiktok: 'TikTokVideo',
     twitch: 'TwitchVideo',
-  };
+  } satisfies Record<Renderer, string>;
   return map[renderer];
 }
 
@@ -270,9 +276,7 @@ function isPresetRenderer(renderer: Renderer): boolean {
   return renderer === 'html5-video' || renderer === 'html5-audio' || renderer === 'background-video';
 }
 
-export function generateReactCreateCode(
-  opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer'>
-): Record<'MyPlayer.tsx', string> {
+export function generateReactCreateCode(opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer'>) {
   const { useCase, skin, renderer } = opts;
   const rendererComponent = getRendererComponent(renderer);
   const playerComponent = getPresetPlayer(useCase);
@@ -339,16 +343,14 @@ export const MyPlayer = ({ src }: MyPlayerProps) => {
 ${playerJsx}
   );
 };`,
-  };
+  } satisfies Record<'MyPlayer.tsx', string>;
 }
 
 // ---------------------------------------------------------------------------
 // React Usage
 // ---------------------------------------------------------------------------
 
-export function generateReactUsageCode(
-  opts: Pick<InstallationOptions, 'useCase' | 'renderer' | 'sourceUrl'>
-): Record<'App.tsx', string> {
+export function generateReactUsageCode(opts: Pick<InstallationOptions, 'useCase' | 'renderer' | 'sourceUrl'>) {
   const source = resolveSourceUrl(opts.sourceUrl, opts.renderer, opts.useCase);
 
   return {
@@ -362,5 +364,5 @@ export const HomePage = () => {
     </div>
   );
 };`,
-  };
+  } satisfies Record<'App.tsx', string>;
 }

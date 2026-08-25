@@ -1,30 +1,59 @@
+import { isObject } from '@videojs/utils/predicate';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
+
+type MockConfigValue = boolean | number | string | null | MockConfig | MockConfigValue[];
+
+interface MockConfig {
+  [key: string]: MockConfigValue;
+}
+
+interface MockShakaError {
+  severity: number;
+  category: number;
+  code: number;
+  data: never[];
+  message: string;
+}
+
+interface MockShakaEvent {
+  type?: string;
+  detail?: MockShakaError;
+}
+
+const shakaFixture: { engine: MockEngine | null } = vi.hoisted(() => ({ engine: null }));
 
 vi.mock('shaka-player/dist/shaka-player.compiled-es2021', () => {
   const CONFIG_DEFAULTS = { streaming: { bufferingGoal: 10, rebufferingGoal: 2 } };
 
   /** Shaka merges every `configure()` call into the current configuration. */
-  function merge(target: Record<string, any>, source: Record<string, any>) {
+  function isConfig(value: MockConfigValue | undefined): value is MockConfig {
+    return isObject(value) && value !== null && !Array.isArray(value);
+  }
+
+  function merge(target: MockConfig, source: MockConfig): MockConfig {
     for (const [key, value] of Object.entries(source)) {
-      const isPlainObject = typeof value === 'object' && value !== null && !Array.isArray(value);
-      target[key] = isPlainObject ? merge({ ...target[key] }, value) : value;
+      const current = target[key];
+      target[key] = isConfig(value) ? merge(isConfig(current) ? { ...current } : {}, value) : value;
     }
     return target;
   }
 
   function create() {
-    const listeners = new Map<string, Set<(event: any) => void>>();
+    const listeners = new Map<string, Set<(event: MockShakaEvent) => void>>();
+    const config: MockConfig = {};
+    const videoTracks: MockVideoTrack[] = [];
+    const audioTracks: MockAudioTrack[] = [];
 
     const player = {
-      config: {} as Record<string, any>,
-      videoTracks: [] as any[],
-      audioTracks: [] as any[],
+      config,
+      videoTracks,
+      audioTracks,
       attach: vi.fn(async () => {}),
       detach: vi.fn(async () => {}),
-      load: vi.fn(async (_src?: string, _startTime?: unknown, _mimeType?: string) => {}),
+      load: vi.fn(async (_src?: string, _startTime?: number, _mimeType?: string) => {}),
       unload: vi.fn(async () => {}),
       destroy: vi.fn(async () => {}),
-      configure: vi.fn((config: Record<string, any>) => {
+      configure: vi.fn((config: MockConfig) => {
         player.config = merge(player.config, config);
         return true;
       }),
@@ -38,24 +67,25 @@ vi.mock('shaka-player/dist/shaka-player.compiled-es2021', () => {
       getAudioTracks: vi.fn(() => player.audioTracks),
       selectVideoTrack: vi.fn(),
       selectAudioTrack: vi.fn(),
-      addEventListener: vi.fn((type: string, listener: (event: any) => void) => {
+      addEventListener: vi.fn((type: string, listener: (event: MockShakaEvent) => void) => {
         const typeListeners = listeners.get(type) ?? new Set();
         typeListeners.add(listener);
         listeners.set(type, typeListeners);
       }),
-      removeEventListener: vi.fn((type: string, listener: (event: any) => void) => {
+      removeEventListener: vi.fn((type: string, listener: (event: MockShakaEvent) => void) => {
         listeners.get(type)?.delete(listener);
       }),
       /** Test-only: dispatch a Shaka player event to its listeners. */
-      emit(type: string, event: Record<string, unknown> = {}) {
+      emit(type: string, event: MockShakaEvent = {}) {
         for (const listener of [...(listeners.get(type) ?? [])]) listener({ type, ...event });
       },
     };
 
+    shakaFixture.engine = player;
     return player;
   }
 
-  function Player(this: unknown) {
+  function Player() {
     return create();
   }
 
@@ -83,7 +113,7 @@ afterEach(() => {
 });
 
 type MockEngine = {
-  config: Record<string, any>;
+  config: MockConfig;
   videoTracks: MockVideoTrack[];
   audioTracks: MockAudioTrack[];
   attach: ReturnType<typeof vi.fn>;
@@ -95,7 +125,7 @@ type MockEngine = {
   resetConfiguration: ReturnType<typeof vi.fn>;
   selectVideoTrack: ReturnType<typeof vi.fn>;
   selectAudioTrack: ReturnType<typeof vi.fn>;
-  emit(type: string, event?: Record<string, unknown>): void;
+  emit(type: string, event?: MockShakaEvent): void;
 };
 
 type MockVideoTrack = {
@@ -127,8 +157,14 @@ function setup({ preload = 'auto' as const }: { preload?: ShakaMedia['preload'] 
   // preload suite opts back into the deferring defaults it is about.
   media.preload = preload;
   media.attach(video);
+  const engine = shakaFixture.engine;
+  if (!engine) throw new Error('The Shaka fixture did not create an engine.');
 
-  return { media, video, engine: media.engine as unknown as MockEngine };
+  return {
+    media,
+    video,
+    engine,
+  };
 }
 
 /** Engine calls are queued, and track list events are dispatched a microtask later. */
@@ -159,7 +195,7 @@ function loadTracks(engine: MockEngine, videoTracks = VIDEO_TRACKS, audioTracks 
   engine.emit('trackschanged');
 }
 
-function shakaError(overrides: Record<string, unknown> = {}) {
+function shakaError(overrides: Partial<MockShakaError> = {}): MockShakaError {
   return { severity: 2, category: 1, code: 1001, data: [], message: 'Bad HTTP status', ...overrides };
 }
 
@@ -188,7 +224,8 @@ describe('ShakaMedia', () => {
     it('loads a source that was assigned before there was a target', async () => {
       const video = document.createElement('video');
       const media = new ShakaMedia();
-      const engine = media.engine as unknown as MockEngine;
+      const engine = shakaFixture.engine;
+      if (!engine) throw new Error('The Shaka fixture did not create an engine.');
 
       media.src = MANIFEST;
       await flush();

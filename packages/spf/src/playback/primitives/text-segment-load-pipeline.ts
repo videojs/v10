@@ -102,7 +102,10 @@ export interface TextStepDeps {
 export function textStepWiring<C extends Cue>(
   deps: TextStepDeps
 ): { textTracksActor: CueSink<C>; resolveSegment: TextTrackSegmentResolver<C> } {
-  return deps.config as { textTracksActor: CueSink<C>; resolveSegment: TextTrackSegmentResolver<C> };
+  return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ deps.config as {
+    textTracksActor: CueSink<C>;
+    resolveSegment: TextTrackSegmentResolver<C>;
+  };
 }
 
 /**

@@ -4,7 +4,7 @@ import type { Presentation } from '../../types';
 import { applyContainerMimeType } from '../tracks';
 
 const presentation = (): Presentation =>
-  ({
+  /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ ({
     id: 'pres-1',
     url: 'https://example.com/master.m3u8',
     selectionSets: [
@@ -28,7 +28,7 @@ const presentation = (): Presentation =>
         switchingSets: [{ id: 'as', type: 'audio', tracks: [{ id: 'a1', mimeType: 'audio/mp4' }] }],
       },
     ],
-  }) as unknown as Presentation;
+  }) as Presentation;
 
 const mimeOf = (p: Presentation, type: string) =>
   p.selectionSets.find((s) => s.type === type)?.switchingSets[0]?.tracks.map((t) => t.mimeType);

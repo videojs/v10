@@ -3,6 +3,7 @@ import { stat } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
 import type { Expression, ImportDeclaration, Node, Program } from '@oxc-project/types';
+import { isFunction, isString } from '@videojs/utils/predicate';
 import { walk } from 'oxc-walker';
 import type { Plugin, RolldownMagicString } from 'rolldown';
 
@@ -75,7 +76,7 @@ export function stylePlugin(config: StylePluginConfig): Plugin {
     transform: {
       filter: { id: SCRIPT_ID, code: '.styles' },
       async handler(_code, id, transform) {
-        const options = typeof config === 'function' ? await config({ id, ...parseModuleId(id) }) : config;
+        const options = isFunction(config) ? await config({ id, ...parseModuleId(id) }) : config;
         if (!options || !transform.ast || !transform.magicString) {
           replaceVirtualCss(cssById, cssByOwner, id, []);
           return null;
@@ -104,12 +105,13 @@ export function stylePlugin(config: StylePluginConfig): Plugin {
         if (options.mode === 'css' && options.stylesheet) {
           const input = resolve(cwd, options.stylesheet.input);
           const cachedDesign = await cachedDesignSystem(designs, input);
-          const assets = await compileStyles({
+          const compileOptions: Parameters<typeof compileStyles>[0] = {
             design: cachedDesign.design,
             manifest,
-            ...(options.stylesheet.scope ? { scope: options.stylesheet.scope } : {}),
-            ...(options.variant ? { variant: options.variant } : {}),
-          });
+          };
+          if (options.stylesheet.scope) Object.assign(compileOptions, { scope: options.stylesheet.scope });
+          if (options.variant) Object.assign(compileOptions, { variant: options.variant });
+          const assets = await compileStyles(compileOptions);
           cachedDesign.versions = await fileVersions(cachedDesign.design.watchFiles);
           for (const file of cachedDesign.design.watchFiles) this.addWatchFile(file);
           const imports: string[] = [];
@@ -262,7 +264,7 @@ function readAccessPath(expression: Expression): string[] | undefined {
   if (!object) return undefined;
 
   if (!expression.computed) return [...object, expression.property.name];
-  if (expression.property.type === 'Literal' && typeof expression.property.value === 'string') {
+  if (expression.property.type === 'Literal' && isString(expression.property.value)) {
     return [...object, expression.property.value];
   }
 

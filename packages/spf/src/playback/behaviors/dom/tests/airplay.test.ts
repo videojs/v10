@@ -12,9 +12,9 @@ const SETTLE_MS = 1000;
 const AIRPLAY_KEY = 'WebKitPlaybackTargetAvailabilityEvent';
 function stubWebKit(present: boolean): void {
   if (present) {
-    (globalThis as unknown as Record<string, unknown>)[AIRPLAY_KEY] = class {};
+    Object.defineProperty(globalThis, AIRPLAY_KEY, { configurable: true, value: class {} });
   } else {
-    delete (globalThis as unknown as Record<string, unknown>)[AIRPLAY_KEY];
+    Reflect.deleteProperty(globalThis, AIRPLAY_KEY);
   }
 }
 
@@ -27,7 +27,10 @@ interface WebKitVideoLike extends HTMLVideoElement {
  * `isWebKitAirPlayCapable` recognizes it (`'…IsWireless' in media`).
  */
 function makeWebKitVideo(opts: { wireless?: boolean; disableRemotePlayback?: boolean } = {}): WebKitVideoLike {
-  const video = document.createElement('video') as WebKitVideoLike;
+  const video =
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+      'video'
+    ) as WebKitVideoLike;
   video.webkitCurrentPlaybackTargetIsWireless = opts.wireless ?? false;
   video.disableRemotePlayback = opts.disableRemotePlayback ?? false;
   return video;
@@ -56,7 +59,8 @@ function makeSignals(presentation?: MaybeResolvedPresentation) {
 }
 
 /** Stand-in for a published, open MediaSource (only identity matters here). */
-const fakeMediaSource = {} as MediaSource;
+const fakeMediaSource =
+  /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {} as MediaSource;
 
 /** Drain microtasks (reactor transition + entry effects) plus any nested effects. */
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
@@ -139,7 +143,9 @@ describe('setupAirPlay', () => {
     // the rebuild's fresh open re-adopts the source; until then it may drop.
     setWireless(video, false);
     await vi.advanceTimersByTimeAsync(SETTLE_MS);
-    context.mediaSource.set({} as MediaSource);
+    context.mediaSource.set(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {} as MediaSource
+    );
     await vi.advanceTimersByTimeAsync(0);
     expect(fallbackSourceOf(video)).not.toBeNull();
 
@@ -166,7 +172,9 @@ describe('setupAirPlay', () => {
 
     // The next source opens → fallback re-appears, now carrying the new URL.
     state.presentation.set({ url: 'https://example.com/b.m3u8' });
-    context.mediaSource.set({} as MediaSource);
+    context.mediaSource.set(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {} as MediaSource
+    );
     await flush();
     expect(fallbackSourceOf(video)?.src).toBe('https://example.com/b.m3u8');
 

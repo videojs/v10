@@ -1,3 +1,4 @@
+import { isFunction } from '@videojs/utils/predicate';
 import { describe, expect, it, vi } from 'vite-plus/test';
 
 import { SerialRunner, Task } from '../../tasks/task';
@@ -80,10 +81,30 @@ describe('createMachineActor', () => {
     actor.send({ type: 'go' });
 
     expect(captured).toBeDefined();
-    expect((captured!.msg as { type: string }).type).toBe('go');
-    expect((captured!.ctx as { context: unknown }).context).toEqual({ value: 42 });
-    expect(typeof (captured!.ctx as { transition: unknown }).transition).toBe('function');
-    expect(typeof (captured!.ctx as { setContext: unknown }).setContext).toBe('function');
+    expect(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+        captured!.msg as { type: string }
+      ).type
+    ).toBe('go');
+    expect(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+        captured!.ctx as { context: unknown }
+      ).context
+    ).toEqual({ value: 42 });
+    expect(
+      isFunction(
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+          captured!.ctx as { transition: unknown }
+        ).transition
+      )
+    ).toBe(true);
+    expect(
+      isFunction(
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+          captured!.ctx as { setContext: unknown }
+        ).setContext
+      )
+    ).toBe(true);
 
     actor.destroy();
   });
@@ -155,7 +176,13 @@ describe('createMachineActor', () => {
       },
     });
 
-    expect(() => actor.send({ type: 'anything' } as never)).not.toThrow();
+    expect(() =>
+      actor.send(
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+          type: 'anything',
+        } as never
+      )
+    ).not.toThrow();
 
     actor.destroy();
   });
@@ -254,14 +281,26 @@ describe('createMachineActor — runner', () => {
     actor.send({ type: 'go' });
 
     expect(capturedRunner).toBeDefined();
-    expect(typeof (capturedRunner as { schedule: unknown }).schedule).toBe('function');
-    expect(typeof (capturedRunner as { abortAll: unknown }).abortAll).toBe('function');
+    expect(
+      isFunction(
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+          capturedRunner as { schedule: unknown }
+        ).schedule
+      )
+    ).toBe(true);
+    expect(
+      isFunction(
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+          capturedRunner as { abortAll: unknown }
+        ).abortAll
+      )
+    ).toBe(true);
 
     actor.destroy();
   });
 
   it('omits runner from handler context when no runner factory is given', () => {
-    let capturedCtx: Record<string, unknown> | undefined;
+    let capturedCtx: object | undefined;
     const actor = createMachineActor({
       initial: 'idle' as const,
       context: {},
@@ -269,7 +308,7 @@ describe('createMachineActor — runner', () => {
         idle: {
           on: {
             go: (_, ctx) => {
-              capturedCtx = ctx as Record<string, unknown>;
+              capturedCtx = ctx;
             },
           },
         },

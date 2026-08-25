@@ -282,7 +282,7 @@ export function createMenu(options: MenuOptions): MenuApi {
 
   // --- Internal popover ---
 
-  const popover = createPopover({
+  const popoverOptions: Parameters<typeof createPopover>[0] = {
     transition: options.transition,
     deferOpenChanges: true,
     onOpenChange(open, details) {
@@ -306,8 +306,9 @@ export function createMenu(options: MenuOptions): MenuApi {
     },
     closeOnEscape: options.closeOnEscape,
     closeOnOutsideClick: options.closeOnOutsideClick,
-    ...(options.group ? { group: options.group } : {}),
-  });
+  };
+  if (options.group) Object.assign(popoverOptions, { group: options.group });
+  const popover = createPopover(popoverOptions);
 
   // --- Content keyboard navigation ---
 
@@ -435,7 +436,8 @@ export function createMenu(options: MenuOptions): MenuApi {
   }
 
   return {
-    input: popover.input as State<MenuInput>,
+    input:
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ popover.input as State<MenuInput>,
     // Menus open/close on trigger click — forward the popover's click handler.
     // Hover and focus-based open are disabled (openOnHover not set).
     triggerProps: {

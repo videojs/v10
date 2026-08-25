@@ -32,7 +32,10 @@ export default function HTMLInstallTabs({ cdnMedia }: HTMLInstallTabsProps) {
 
     const observer = new MutationObserver(() => {
       const value = el.querySelector('[role="tab"][data-tab-active="true"]')?.getAttribute('data-value');
-      if (value) installMethod.set(value as InstallMethod);
+      if (value)
+        installMethod.set(
+          /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ value as InstallMethod
+        );
     });
 
     observer.observe(el, { subtree: true, attributes: true, attributeFilter: ['data-tab-active'] });

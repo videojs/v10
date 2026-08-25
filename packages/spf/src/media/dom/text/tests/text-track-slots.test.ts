@@ -9,7 +9,7 @@ import {
 } from '../text-track-slots';
 
 function makeModelTrack(overrides: Partial<PartiallyResolvedTextTrack> = {}): PartiallyResolvedTextTrack {
-  return {
+  return /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
     id: 'track-en',
     type: 'text',
     kind: 'subtitles',
@@ -31,7 +31,10 @@ describe('addSubtitlesTracksToMedia', () => {
       makeModelTrack({ id: 'track-es', label: 'Spanish', language: 'es' }),
     ]);
 
-    const tracks = Array.from(media.children) as HTMLTrackElement[];
+    const tracks =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ Array.from(
+        media.children
+      ) as HTMLTrackElement[];
     expect(tracks.length).toBe(2);
     expect(tracks[0]!.tagName).toBe('TRACK');
     expect(tracks[0]!.id).toBe('track-en');
@@ -51,14 +54,22 @@ describe('addSubtitlesTracksToMedia', () => {
     const media = document.createElement('video');
     addSubtitlesTracksToMedia(media, [makeModelTrack({ default: true })]);
 
-    expect((media.children[0] as HTMLTrackElement).default).toBe(false);
+    expect(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+        media.children[0] as HTMLTrackElement
+      ).default
+    ).toBe(false);
   });
 
   it('omits srclang when the model has no language', () => {
     const media = document.createElement('video');
     addSubtitlesTracksToMedia(media, [makeModelTrack({ language: undefined })]);
 
-    expect((media.children[0] as HTMLTrackElement).srclang).toBe('');
+    expect(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+        media.children[0] as HTMLTrackElement
+      ).srclang
+    ).toBe('');
   });
 
   it('is a no-op when given an empty array', () => {
@@ -76,7 +87,9 @@ describe('getShowingSubtitlesTrackFromMedia', () => {
       makeModelTrack({ id: 'track-en', language: 'en' }),
       makeModelTrack({ id: 'track-es', label: 'Spanish', language: 'es' }),
     ]);
-    (media.children[1] as HTMLTrackElement).track.mode = 'showing';
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+      media.children[1] as HTMLTrackElement
+    ).track.mode = 'showing';
 
     const showing = getShowingSubtitlesTrackFromMedia(media);
     expect(showing?.id).toBe('track-es');
@@ -143,7 +156,11 @@ describe('removeAllSubtitlesTracksFromMedia', () => {
     removeAllSubtitlesTracksFromMedia(media);
 
     expect(media.children.length).toBe(1);
-    expect((media.children[0] as HTMLTrackElement).id).toBe('host-track');
+    expect(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+        media.children[0] as HTMLTrackElement
+      ).id
+    ).toBe('host-track');
   });
 
   it('is a no-op when no SPF-owned tracks are attached', () => {
@@ -154,10 +171,7 @@ describe('removeAllSubtitlesTracksFromMedia', () => {
 });
 
 describe('syncTextTrackModes', () => {
-  function setupTextTracks(tracks: { id: string; kind?: TextTrackKind }[]): {
-    media: HTMLVideoElement;
-    elements: HTMLTrackElement[];
-  } {
+  function setupTextTracks(tracks: { id: string; kind?: TextTrackKind }[]) {
     const media = document.createElement('video');
     const elements = tracks.map(({ id, kind = 'subtitles' }) => {
       const el = document.createElement('track');
@@ -167,7 +181,10 @@ describe('syncTextTrackModes', () => {
       media.appendChild(el);
       return el;
     });
-    return { media, elements };
+    return { media, elements } satisfies {
+      media: HTMLVideoElement;
+      elements: HTMLTrackElement[];
+    };
   }
 
   it('sets the matching track to showing and others to disabled', () => {

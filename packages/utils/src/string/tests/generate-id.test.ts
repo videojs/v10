@@ -1,12 +1,13 @@
 import { describe, expect, it } from 'vite-plus/test';
 
+import { isString } from '../../predicate';
 import { generateId } from '../generate-id';
 
 describe('generateId', () => {
   it('generates a string ID', () => {
     const id = generateId();
 
-    expect(typeof id).toBe('string');
+    expect(isString(id)).toBe(true);
   });
 
   it('generates unique IDs', () => {

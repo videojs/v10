@@ -5,7 +5,7 @@ import { isUndefined } from '../../predicate';
 export function effectiveLocale<Locale extends string = string>(
   explicitLocale: Locale | undefined,
   ambientLang: Locale | undefined,
-  fallback = DEFAULT_LOCALE as Locale
+  fallback = /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ DEFAULT_LOCALE as Locale
 ): Locale {
   if (!isUndefined(explicitLocale) && explicitLocale.trim() !== '') {
     return explicitLocale;

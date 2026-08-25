@@ -91,7 +91,7 @@ export function abbreviateType(name: string, type: string): string | undefined {
 /**
  * Format a list of properties into API reference format.
  */
-export function formatProperties(props: tae.PropertyNode[], allExports?: tae.ExportNode[]): Record<string, PropDef> {
+export function formatProperties(props: tae.PropertyNode[], allExports?: tae.ExportNode[]) {
   const result: Record<string, PropDef> = {};
 
   for (const prop of props) {
@@ -114,7 +114,7 @@ export function formatProperties(props: tae.PropertyNode[], allExports?: tae.Exp
     result[prop.name] = entry;
   }
 
-  return result;
+  return result satisfies Record<string, PropDef>;
 }
 
 /**
@@ -217,7 +217,9 @@ export function formatType(type: tae.AnyType, removeUndefined: boolean): string 
   }
 
   if (type instanceof tae.LiteralNode) {
-    return normalizeQuotes(type.value as string);
+    return normalizeQuotes(
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ type.value as string
+    );
   }
 
   if (type instanceof tae.ArrayNode) {

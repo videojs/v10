@@ -1,4 +1,3 @@
-import type { AstroCookies } from 'astro';
 import { describe, expect, it, vi } from 'vite-plus/test';
 
 import { DEFAULT_FRAMEWORK, SUPPORTED_FRAMEWORKS } from '@/types/docs';
@@ -21,7 +20,7 @@ describe('preferences utilities', () => {
       const mockCookies = {
         has: vi.fn().mockReturnValue(false),
         get: vi.fn(),
-      } as unknown as AstroCookies;
+      };
 
       const result = getPreferencesServer(mockCookies);
 
@@ -35,9 +34,9 @@ describe('preferences utilities', () => {
           if (name === FRAMEWORK_COOKIE) {
             return { value: firstFramework };
           }
-          return null;
+          return undefined;
         }),
-      } as unknown as AstroCookies;
+      };
 
       const result = getPreferencesServer(mockCookies);
 
@@ -51,9 +50,9 @@ describe('preferences utilities', () => {
           if (name === FRAMEWORK_COOKIE) {
             return { value: 'invalid-framework' };
           }
-          return null;
+          return undefined;
         }),
-      } as unknown as AstroCookies;
+      };
 
       const result = getPreferencesServer(mockCookies);
 
@@ -68,9 +67,9 @@ describe('preferences utilities', () => {
             if (name === FRAMEWORK_COOKIE) {
               return { value: framework };
             }
-            return null;
+            return undefined;
           }),
-        } as unknown as AstroCookies;
+        };
 
         const result = getPreferencesServer(mockCookies);
 

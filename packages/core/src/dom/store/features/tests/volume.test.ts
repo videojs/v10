@@ -33,9 +33,15 @@ describe('volumeFeature', () => {
     it('reports mute available on media that has no volume level', () => {
       // An embed that takes a mute command but offers no way to set a level.
       // Reading one availability for both would hide a mute button that works.
-      const media = { muted: false, addEventListener() {}, removeEventListener() {} };
+      const media = Object.assign(new EventTarget(), {
+        muted: false,
+        play: () => Promise.resolve(),
+      });
       const store = createStore<PlayerTarget>()(volumeFeature);
-      store.attach({ media: media as unknown as HTMLVideoElement, container: null });
+      store.attach({
+        media,
+        container: null,
+      });
 
       expect(store.state.mutedAvailability).toBe('available');
       expect(store.state.volumeAvailability).toBe('unavailable');
@@ -43,9 +49,12 @@ describe('volumeFeature', () => {
 
     it('reports both unavailable on media that has neither', () => {
       // Spotify: the embed takes no volume or mute command and reports neither.
-      const media = { addEventListener() {}, removeEventListener() {} };
+      const media = Object.assign(new EventTarget(), { play: () => Promise.resolve() });
       const store = createStore<PlayerTarget>()(volumeFeature);
-      store.attach({ media: media as unknown as HTMLVideoElement, container: null });
+      store.attach({
+        media,
+        container: null,
+      });
 
       expect(store.state.mutedAvailability).toBe('unavailable');
       expect(store.state.volumeAvailability).toBe('unavailable');

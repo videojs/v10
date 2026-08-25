@@ -1,10 +1,14 @@
 import type { DerivedContext, SliceConfig } from '@videojs/store';
+import { isFunction } from '@videojs/utils/predicate';
 
 import type { AnyPlayerFeature, PlayerFeature, PlayerFeatureConfig, PlayerTarget } from './player';
 
-type DerivedFunctions<State> = Record<string, (ctx: DerivedContext<State>) => unknown>;
+type DerivedFunctions<State> = Record<string, (ctx: DerivedContext<State>) => void>;
+interface PlayerConfigStore {
+  readonly constructor: Function;
+}
 
-type DerivedValues<Definitions extends Record<string, (...args: any[]) => unknown>> = {
+type DerivedValues<Definitions extends Record<string, (...args: never[]) => void>> = {
   [Key in keyof Definitions]: ReturnType<Definitions[Key]>;
 };
 
@@ -34,10 +38,11 @@ export function definePlayerFeature<State>(
 ): PlayerFeature<State> {
   const preserved = Object.values(definition.config ?? {}).map((entry) => entry.state);
 
-  return {
+  const feature = /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ {
     ...definition,
-    ...(preserved.length > 0 ? { preserve: preserved } : {}),
   } as PlayerFeature<State>;
+  if (preserved.length > 0) Object.assign(feature, { preserve: preserved });
+  return feature;
 }
 
 /** Merge the configuration declarations from the selected player features. */
@@ -60,9 +65,17 @@ export function combinePlayerFeatureConfigs(features: readonly AnyPlayerFeature[
 }
 
 /** Forward one configuration input through its feature-owned private action. */
-export function setPlayerConfigValue(store: object, entry: PlayerFeatureConfig[string], value: unknown): void {
-  const action = (store as Record<PropertyKey, unknown>)[entry.action];
-  if (typeof action !== 'function') {
+export function setPlayerConfigValue<Value>(
+  store: PlayerConfigStore,
+  entry: PlayerFeatureConfig[string],
+  value: Value
+): void {
+  if (!(entry.action in store)) {
+    throw new TypeError(`Missing config action "${String(entry.action)}"`);
+  }
+  const descriptor = Object.getOwnPropertyDescriptor(store, entry.action);
+  const action = descriptor?.get ? descriptor.get.call(store) : descriptor?.value;
+  if (!isFunction(action)) {
     throw new TypeError(`Missing config action "${String(entry.action)}"`);
   }
   action(value);

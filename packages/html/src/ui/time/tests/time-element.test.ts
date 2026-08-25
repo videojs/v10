@@ -1,6 +1,6 @@
-import type { AnyPlayerStore } from '@videojs/core/dom';
+import type { AnyPlayerStore, PlayerTarget } from '@videojs/core/dom';
 import { registerI18n, resetI18nRegistry } from '@videojs/core/i18n';
-import { ContextProvider } from '@videojs/element/context';
+import { type Context, ContextProvider } from '@videojs/element/context';
 import type { MediaTimeState } from '@videojs/media';
 import { createStore } from '@videojs/store';
 import { formatTimeAsPhrase } from '@videojs/utils/time';
@@ -17,10 +17,15 @@ function uniqueTag(base: string): string {
   return `${base}-${tagCounter++}`;
 }
 
-function createElement<Element extends HTMLElement>(Base: abstract new () => Element): Element {
+function createElement<Element extends HTMLElement>(Base: new () => Element): Element {
   const tag = uniqueTag('test-el');
-  customElements.define(tag, class extends (Base as unknown as typeof HTMLElement) {});
-  return document.createElement(tag) as Element;
+  customElements.define(
+    tag,
+    class extends /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (Base as typeof HTMLElement) {}
+  );
+  return /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+    tag
+  ) as Element;
 }
 
 function defineElement(tagName: string, Base: CustomElementConstructor): void {
@@ -50,7 +55,7 @@ async function waitForAssertion(assertion: () => void): Promise<void> {
 }
 
 function createTimeStore(overrides: Partial<MediaTimeState> = {}): AnyPlayerStore {
-  return createStore<unknown>()<MediaTimeState>({
+  return createStore<PlayerTarget>()({
     name: 'time',
     state: () => ({
       currentTime: 90,
@@ -59,13 +64,17 @@ function createTimeStore(overrides: Partial<MediaTimeState> = {}): AnyPlayerStor
       seek: vi.fn(),
       ...overrides,
     }),
-  }) as unknown as AnyPlayerStore;
+  });
 }
+
+const optionalPlayerContext: Context<symbol, AnyPlayerStore | undefined> = playerContext;
 
 class TestPlayerProviderElement extends UIElement {
   store: AnyPlayerStore = createTimeStore();
 
-  readonly #provider = new ContextProvider(this, { context: playerContext });
+  readonly #provider = new ContextProvider(this, {
+    context: optionalPlayerContext,
+  });
 
   setStore(store: AnyPlayerStore): void {
     this.store = store;
@@ -73,7 +82,7 @@ class TestPlayerProviderElement extends UIElement {
   }
 
   clearStore(): void {
-    this.#provider.setValue(undefined as unknown as AnyPlayerStore);
+    this.#provider.setValue(undefined);
   }
 
   override connectedCallback(): void {
@@ -86,7 +95,10 @@ defineElement('test-time-player', TestPlayerProviderElement);
 defineElement(MediaI18nProviderElement.tagName, MediaI18nProviderElement);
 
 async function setup(props: Partial<TimeElement> = {}, locale?: string, state?: Partial<MediaTimeState>) {
-  const provider = document.createElement('test-time-player') as TestPlayerProviderElement;
+  const provider =
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+      'test-time-player'
+    ) as TestPlayerProviderElement;
   const time = createElement(TimeElement);
 
   if (state) provider.store = createTimeStore(state);
@@ -186,7 +198,10 @@ describe('TimeElement', () => {
   });
 
   it('does not toggle before media state is available', async () => {
-    const provider = document.createElement('test-time-player') as TestPlayerProviderElement;
+    const provider =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+        'test-time-player'
+      ) as TestPlayerProviderElement;
     const time = createElement(TimeElement);
 
     time.toggle = true;

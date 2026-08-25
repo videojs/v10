@@ -6,7 +6,9 @@ import { getTemplateHTML } from './template';
 
 // Don't extend CustomMediaMixin to save some bytes, background videos don't need the full Media API.
 export class BackgroundVideo extends MediaAttachMixin(HTMLElement) {
-  static shadowRootOptions = { mode: 'open' as ShadowRootMode };
+  static shadowRootOptions = {
+    mode: /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ 'open' as ShadowRootMode,
+  };
   static getTemplateHTML = getTemplateHTML;
   static get observedAttributes() {
     return ['src'];
@@ -16,7 +18,11 @@ export class BackgroundVideo extends MediaAttachMixin(HTMLElement) {
     super();
 
     if (!this.shadowRoot) {
-      this.attachShadow((this.constructor as typeof BackgroundVideo).shadowRootOptions);
+      this.attachShadow(
+        /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (
+          this.constructor as typeof BackgroundVideo
+        ).shadowRootOptions
+      );
 
       const attrs = {
         ...namedNodeMapToObject(this.attributes),

@@ -5,6 +5,15 @@ import { requiresCastFramework } from './utils';
 
 type MediaHost = HTMLMediaElementHost<HTMLMediaTargetLike, any>;
 
+export type GoogleCastDataValue =
+  | boolean
+  | number
+  | string
+  | null
+  | readonly GoogleCastDataValue[]
+  | { readonly [key: string]: GoogleCastDataValue };
+export type GoogleCastCustomData = Readonly<Record<string, GoogleCastDataValue>>;
+
 export interface GoogleCastProps {
   /** Source URL loaded on the Cast receiver. Falls back to the host's `src` / `currentSrc`. */
   src?: string | undefined;
@@ -15,7 +24,7 @@ export interface GoogleCastProps {
   /** Cast receiver application ID. Defaults to Google's default media receiver. */
   receiver?: string | undefined;
   /** Custom data sent to the Cast receiver with the load request. */
-  customData?: Record<string, unknown> | null | undefined;
+  customData?: GoogleCastCustomData | null | undefined;
 }
 
 export const googleCastDefaultProps: GoogleCastProps = {
@@ -31,7 +40,7 @@ export class GoogleCast implements GoogleCastProps, MediaComponent {
   #contentType: string | undefined;
   #streamType: MediaStreamType | undefined;
   #receiver: string | undefined;
-  #customData: Record<string, unknown> | null | undefined;
+  #customData: GoogleCastCustomData | null | undefined;
   #media: MediaHost | null = null;
   #provider: GoogleCastProvider | null = null;
   #override: Partial<HTMLMediaTargetLike> | null = null;
@@ -114,7 +123,12 @@ export class GoogleCast implements GoogleCastProps, MediaComponent {
 
   /** Stream type used on the Cast receiver. Falls back to the host's `streamType` if it exposes one. */
   get streamType() {
-    return this.#streamType ?? (this.#media as { streamType?: MediaStreamType } | null)?.streamType;
+    return (
+      this.#streamType ??
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (
+        this.#media as { streamType?: MediaStreamType } | null
+      )?.streamType
+    );
   }
 
   set streamType(value: MediaStreamType | undefined) {
@@ -139,7 +153,7 @@ export class GoogleCast implements GoogleCastProps, MediaComponent {
     return this.#customData;
   }
 
-  set customData(value: Record<string, unknown> | null | undefined) {
+  set customData(value: GoogleCastCustomData | null | undefined) {
     if (this.#customData === value) return;
     this.#customData = value;
     this.#load();

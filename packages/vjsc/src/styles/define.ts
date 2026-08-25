@@ -1,3 +1,5 @@
+import { isObject } from '@videojs/utils/predicate';
+
 import { isStyleRule, visitStyleRules } from './tree';
 
 const styleDefinition = Symbol.for('vjsc/styles/definition');
@@ -44,7 +46,10 @@ type DefinedStyles<Rules extends StyleTree> = StyleReferences<Rules> & {
 export function styles<const Rules extends StyleTree>(definition: StyleDefinition<Rules>): StyleReferences<Rules> {
   validateStyleDefinition(definition);
 
-  const references = createReferences(definition.rules) as DefinedStyles<Rules>;
+  const references =
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ createReferences(
+      definition.rules
+    ) as DefinedStyles<Rules>;
 
   Object.defineProperty(references, styleDefinition, {
     configurable: false,
@@ -56,30 +61,34 @@ export function styles<const Rules extends StyleTree>(definition: StyleDefinitio
   return freezeReferences(references);
 }
 
-export function getStyleDefinition(value: unknown): StyleDefinition | undefined {
-  if (!value || typeof value !== 'object') return undefined;
-  return (value as Partial<DefinedStyles<StyleTree>>)[styleDefinition];
+export function getStyleDefinition<Value>(value: Value): StyleDefinition | undefined {
+  if (!value || !isObject(value)) return undefined;
+  return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (
+    value as Partial<DefinedStyles<StyleTree>>
+  )[styleDefinition];
 }
 
 export { isStyleRule };
 
-function createReferences(tree: StyleTree): Record<string, unknown> {
-  const references: Record<string, unknown> = {};
+function createReferences(tree: StyleTree) {
+  const references: Record<string, import('../value').VjscValue> = {};
 
   for (const [name, value] of Object.entries(tree)) {
     references[name] = isStyleRule(value) ? value.className : createReferences(value);
   }
 
-  return references;
+  return references satisfies Record<string, import('../value').VjscValue>;
 }
 
 function freezeReferences<Rules extends StyleTree>(references: DefinedStyles<Rules>): DefinedStyles<Rules> {
-  return freezeReferenceValue(references) as DefinedStyles<Rules>;
+  return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ freezeReferenceValue(
+    references
+  ) as DefinedStyles<Rules>;
 }
 
-function freezeReferenceValue(value: object): object {
+function freezeReferenceValue<Value extends object>(value: Value): Value {
   for (const child of Object.values(value)) {
-    if (child && typeof child === 'object') freezeReferenceValue(child);
+    if (child && isObject(child)) freezeReferenceValue(child);
   }
 
   return Object.freeze(value);

@@ -58,11 +58,11 @@ const createVideoTrack = (id: string, bandwidth: number): PartiallyResolvedVideo
 });
 
 const createPresentation = (tracks: PartiallyResolvedVideoTrack[]): Presentation =>
-  ({
+  /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ ({
     id: 'presentation-1',
     url: 'https://example.com/playlist.m3u8',
     selectionSets: [
-      {
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
         id: 'video-set',
         type: 'video' as const,
         switchingSets: [
@@ -713,7 +713,7 @@ function createAudioPresentation(tracks: AudioTrack[]): Presentation {
     id: 'pres-1',
     url: 'http://example.com/playlist.m3u8',
     selectionSets: [
-      {
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
         id: 'audio-set',
         type: 'audio' as const,
         switchingSets: [
@@ -1500,17 +1500,19 @@ describe('setupTrackSwitching (no-supported-track emission)', () => {
       language: 'en',
     };
     const state = {
-      presentation: signal<MaybeResolvedPresentation | undefined>({
-        id: 'presentation-text',
-        url: 'https://example.com/playlist.m3u8',
-        selectionSets: [
-          {
-            id: 'text-set',
-            type: 'text' as const,
-            switchingSets: [{ id: 'text-switching', type: 'text' as const, tracks: [subtitle] }],
-          } as TextSelectionSet,
-        ],
-      } as Presentation),
+      presentation: signal<MaybeResolvedPresentation | undefined>(
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+          id: 'presentation-text',
+          url: 'https://example.com/playlist.m3u8',
+          selectionSets: [
+            /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+              id: 'text-set',
+              type: 'text' as const,
+              switchingSets: [{ id: 'text-switching', type: 'text' as const, tracks: [subtitle] }],
+            } as TextSelectionSet,
+          ],
+        } as Presentation
+      ),
       selectedTextTrackId: signal<string | undefined>(undefined),
       userTextTrackSelection: signal<Partial<TextTrack> | 'off' | undefined>(undefined),
       failedCdns: signal<string[] | undefined>(['https://cdn-a.example.com']),
@@ -1633,11 +1635,11 @@ describe('switchTextTrack', () => {
   });
 
   const textPresentation = (textTracks: PartiallyResolvedTextTrack[]): Presentation =>
-    ({
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ ({
       id: 'presentation-text',
       url: 'https://example.com/playlist.m3u8',
       selectionSets: [
-        {
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
           id: 'text-set',
           type: 'text' as const,
           switchingSets: [{ id: 'text-switching', type: 'text' as const, tracks: textTracks }],

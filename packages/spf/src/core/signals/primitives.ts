@@ -1,3 +1,4 @@
+import { isFunction } from '@videojs/utils/predicate';
 import { Signal as SignalNS } from 'signal-polyfill';
 
 /** Read a signal value without tracking it as a dependency. */
@@ -17,8 +18,13 @@ export const untrack: <T>(fn: () => T) => T = SignalNS.subtle.untrack;
  * const value = peek(someSignal);
  * const id = peek(presentationSignal, (p) => p?.id);
  */
-export function peek<T, R = T>(source: { get(): T }, transform: (value: T) => R = (v: T) => v as unknown as R): R {
-  return untrack(() => transform(source.get()));
+export function peek<T>(source: { get(): T }): T;
+export function peek<T, R>(source: { get(): T }, transform: (value: T) => R): R;
+export function peek<T, R>(source: { get(): T }, transform?: (value: T) => R): T | R {
+  return untrack(() => {
+    const value = source.get();
+    return transform ? transform(value) : value;
+  });
 }
 
 /** A writable reactive value (read + write). */
@@ -36,12 +42,18 @@ export interface SignalOptions<T> {
 
 /** Create a writable reactive value. */
 export function signal<T>(initialValue: T, options?: SignalOptions<T>): Signal<T> {
-  return new SignalNS.State(initialValue, options as SignalNS.Options<T>);
+  return new SignalNS.State(
+    initialValue,
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ options as SignalNS.Options<T>
+  );
 }
 
 /** Create a computed reactive value. */
 export function computed<T>(fn: () => T, options?: SignalOptions<T>): Computed<T> {
-  return new SignalNS.Computed(fn, options as SignalNS.Options<T>);
+  return new SignalNS.Computed(
+    fn,
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ options as SignalNS.Options<T>
+  );
 }
 
 /**
@@ -59,13 +71,22 @@ export function computed<T>(fn: () => T, options?: SignalOptions<T>): Computed<T
  */
 export function update<T>(signal: Signal<T>, updater: (current: T) => T): void;
 export function update<T extends object>(signal: Signal<T>, updater: Partial<T>): void;
-export function update<T>(signal: Signal<T>, updater: ((current: T) => T) | object): void {
+export function update<T>(signal: Signal<T>, updater: ((current: T) => T) | Partial<T>): void {
   const current = untrack(() => signal.get());
-  if (typeof updater === 'function') {
-    signal.set((updater as (current: T) => T)(current));
+  if (isFunction(updater)) {
+    signal.set(
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (
+        updater as (current: T) => T
+      )(current)
+    );
   } else {
     // Partial<T> form — `T extends object` enforced by the public overload.
-    signal.set({ ...(current as object), ...updater } as T);
+    signal.set(
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ {
+        .../* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (current as NonNullable<T>),
+        ...updater,
+      } as T
+    );
   }
 }
 
@@ -95,12 +116,14 @@ export function equalsById<T extends { id?: string }>(a: T | undefined, b: T | u
  * Convenience for behaviors that pass whole state/context snapshots to pure
  * helpers; prefer per-field reads when only a few fields are needed.
  */
-export function snapshot<M extends Record<string, ReadonlySignal<unknown>>>(
-  map: M
-): { [K in keyof M]: M[K] extends { get(): infer V } ? V : never } {
-  const out = {} as { [K in keyof M]: M[K] extends { get(): infer V } ? V : never };
+export function snapshot<M extends Record<string, ReadonlySignal<unknown>>>(map: M) {
+  const out = /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ {} as {
+    [K in keyof M]: M[K] extends { get(): infer V } ? V : never;
+  };
   for (const key in map) {
-    out[key] = map[key]!.get() as never;
+    out[key] = /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ map[
+      key
+    ]!.get() as never;
   }
-  return out;
+  return out satisfies { [K in keyof M]: M[K] extends { get(): infer V } ? V : never };
 }

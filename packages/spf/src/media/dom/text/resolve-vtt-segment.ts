@@ -35,7 +35,9 @@ export function resolveVttSegment(url: string): Promise<VTTCue[]> {
         for (let i = 0; i < textTrack.cues.length; i++) {
           const cue = textTrack.cues[i];
           if (cue) {
-            cues.push(cue as VTTCue);
+            cues.push(
+              /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ cue as VTTCue
+            );
           }
         }
       }

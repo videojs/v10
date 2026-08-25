@@ -15,14 +15,11 @@ function hasExplicitLabel(elementProps: MenuGroupElementProps): boolean {
   return elementProps['aria-label'] !== undefined || elementProps['aria-labelledby'] !== undefined;
 }
 
-export function getMenuGroupProps(
-  labelId: string | undefined,
-  elementProps: MenuGroupElementProps
-): { role: 'group'; 'aria-labelledby'?: string | undefined } {
+export function getMenuGroupProps(labelId: string | undefined, elementProps: MenuGroupElementProps) {
   return {
     role: 'group',
     'aria-labelledby': hasExplicitLabel(elementProps) ? undefined : labelId,
-  };
+  } satisfies { role: 'group'; 'aria-labelledby'?: string | undefined };
 }
 
 export function MenuGroupProvider({ children }: MenuGroupProviderProps): ReactElement | null {

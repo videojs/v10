@@ -3,12 +3,25 @@ import { describe, expect, it, vi } from 'vite-plus/test';
 import { signal } from '../../../../core/signals/primitives';
 import type { MaybeResolvedPresentation, Presentation } from '../../../../media/types';
 import { updateMediaSourceDuration } from '../update-mediasource-duration';
+import { createSourceBufferDouble } from './source-buffer-test-double';
 
 function setupUpdateMediaSourceDuration() {
   const state = { presentation: signal<MaybeResolvedPresentation | undefined>(undefined) };
   const context = { mediaSource: signal<MediaSource | undefined>(undefined) };
   const reactor = updateMediaSourceDuration.setup({ state, context });
   return { state, context, reactor };
+}
+
+function makeSourceBufferList(sourceBuffers: SourceBuffer[]): SourceBufferList {
+  const events = new EventTarget();
+  return Object.assign(sourceBuffers, {
+    item: (index: number) => sourceBuffers[index] ?? null,
+    onaddsourcebuffer: null,
+    onremovesourcebuffer: null,
+    addEventListener: events.addEventListener.bind(events),
+    removeEventListener: events.removeEventListener.bind(events),
+    dispatchEvent: events.dispatchEvent.bind(events),
+  });
 }
 
 function makeMediaSource({
@@ -23,35 +36,47 @@ function makeMediaSource({
   // Back the mock with a real EventTarget so tests can dispatch
   // sourceopen / sourceended to drive `waitForMediaSourceOpen`.
   const target = new EventTarget();
-  return Object.create(MediaSource.prototype, {
-    readyState: { value: readyState, writable: true },
-    duration: { value: duration, writable: true },
-    sourceBuffers: { value: sourceBuffers as unknown as SourceBufferList, writable: false },
-    addEventListener: { value: target.addEventListener.bind(target) },
-    removeEventListener: { value: target.removeEventListener.bind(target) },
-    dispatchEvent: { value: target.dispatchEvent.bind(target) },
-  }) as MediaSource;
+  return /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ Object.create(
+    MediaSource.prototype,
+    {
+      readyState: { value: readyState, writable: true },
+      duration: { value: duration, writable: true },
+      sourceBuffers: {
+        value: makeSourceBufferList(sourceBuffers),
+        writable: false,
+      },
+      addEventListener: { value: target.addEventListener.bind(target) },
+      removeEventListener: { value: target.removeEventListener.bind(target) },
+      dispatchEvent: { value: target.dispatchEvent.bind(target) },
+    }
+  ) as MediaSource;
 }
 
 function transitionMediaSource(mediaSource: MediaSource, readyState: MediaSource['readyState'], eventType: string) {
-  (mediaSource as MediaSource & { readyState: MediaSource['readyState'] }).readyState = readyState;
+  /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+    mediaSource as MediaSource & { readyState: MediaSource['readyState'] }
+  ).readyState = readyState;
   mediaSource.dispatchEvent(new Event(eventType));
 }
 
 function makeUpdatingSourceBuffer() {
   const updateEndListeners: Array<() => void> = [];
 
-  const buffer = {
+  const buffer = createSourceBufferDouble({
     updating: true,
-    buffered: { length: 0, start: () => 0, end: () => 0 } as TimeRanges,
-    addEventListener: (_event: string, handler: () => void, _options?: unknown) => {
+    buffered: /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+      length: 0,
+      start: () => 0,
+      end: () => 0,
+    } as TimeRanges,
+    addEventListener: (_event: string, handler: () => void, _options?: boolean | AddEventListenerOptions) => {
       updateEndListeners.push(handler);
     },
     removeEventListener: vi.fn(),
-  } as unknown as SourceBuffer;
+  });
 
   const finishUpdating = () => {
-    (buffer as unknown as { updating: boolean }).updating = false;
+    buffer.updating = false;
     for (const h of updateEndListeners) h();
   };
 
@@ -64,7 +89,11 @@ describe('updateMediaSourceDuration', () => {
 
     const mockMediaSource = makeMediaSource();
     context.mediaSource.set(mockMediaSource);
-    state.presentation.set({ duration: 60 } as Presentation);
+    state.presentation.set(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+        duration: 60,
+      } as Presentation
+    );
 
     await vi.waitFor(() => {
       expect(mockMediaSource.duration).toBe(60);
@@ -80,14 +109,22 @@ describe('updateMediaSourceDuration', () => {
 
     const mockMediaSource = makeMediaSource();
     context.mediaSource.set(mockMediaSource);
-    state.presentation.set({ duration: 60 } as Presentation);
+    state.presentation.set(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+        duration: 60,
+      } as Presentation
+    );
 
     await vi.waitFor(() => {
       expect(mockMediaSource.duration).toBe(60);
     });
 
     // Simulate presentation.duration changing (e.g. recalculated) — must not re-fire
-    state.presentation.set({ duration: 120 } as Presentation);
+    state.presentation.set(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+        duration: 120,
+      } as Presentation
+    );
 
     await new Promise((resolve) => setTimeout(resolve, 50));
     expect(mockMediaSource.duration).toBe(60); // unchanged
@@ -100,7 +137,11 @@ describe('updateMediaSourceDuration', () => {
 
     const mockMediaSource = makeMediaSource({ readyState: 'closed' });
     context.mediaSource.set(mockMediaSource);
-    state.presentation.set({ duration: 60 } as Presentation);
+    state.presentation.set(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+        duration: 60,
+      } as Presentation
+    );
 
     // Behavior is awaiting sourceopen — duration not yet written.
     await new Promise((resolve) => setTimeout(resolve, 20));
@@ -121,7 +162,11 @@ describe('updateMediaSourceDuration', () => {
 
     const mockMediaSource = makeMediaSource({ readyState: 'closed' });
     context.mediaSource.set(mockMediaSource);
-    state.presentation.set({ duration: 60 } as Presentation);
+    state.presentation.set(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+        duration: 60,
+      } as Presentation
+    );
 
     // Race: endOfStream lands before sourceopen — readyState jumps to 'ended'.
     transitionMediaSource(mockMediaSource, 'ended', 'sourceended');
@@ -140,11 +185,19 @@ describe('updateMediaSourceDuration', () => {
     context.mediaSource.set(mockMediaSource);
 
     // Try NaN
-    state.presentation.set({ duration: NaN } as Presentation);
+    state.presentation.set(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+        duration: NaN,
+      } as Presentation
+    );
     expect(mockMediaSource.duration).toBe(0); // presentation validation guard fired
 
     // Try negative
-    state.presentation.set({ duration: -10 } as Presentation);
+    state.presentation.set(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+        duration: -10,
+      } as Presentation
+    );
     expect(mockMediaSource.duration).toBe(0);
 
     reactor.destroy();
@@ -158,7 +211,11 @@ describe('updateMediaSourceDuration', () => {
 
     const mockMediaSource = makeMediaSource();
     context.mediaSource.set(mockMediaSource);
-    state.presentation.set({ duration: Number.POSITIVE_INFINITY } as Presentation);
+    state.presentation.set(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+        duration: Number.POSITIVE_INFINITY,
+      } as Presentation
+    );
 
     await vi.waitFor(() => {
       expect(mockMediaSource.duration).toBe(Number.POSITIVE_INFINITY);
@@ -177,7 +234,11 @@ describe('updateMediaSourceDuration', () => {
 
     const mockMediaSource = makeMediaSource({ readyState: 'closed' });
     context.mediaSource.set(mockMediaSource);
-    state.presentation.set({ duration: Number.POSITIVE_INFINITY } as Presentation);
+    state.presentation.set(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+        duration: Number.POSITIVE_INFINITY,
+      } as Presentation
+    );
 
     // Awaiting sourceopen — nothing written yet.
     await new Promise((resolve) => setTimeout(resolve, 20));
@@ -203,7 +264,11 @@ describe('updateMediaSourceDuration', () => {
     const { buffer: mockBuffer, finishUpdating } = makeUpdatingSourceBuffer();
     const mockMediaSource = makeMediaSource({ duration: 30, sourceBuffers: [mockBuffer] });
     context.mediaSource.set(mockMediaSource);
-    state.presentation.set({ duration: Number.POSITIVE_INFINITY } as Presentation);
+    state.presentation.set(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+        duration: Number.POSITIVE_INFINITY,
+      } as Presentation
+    );
 
     // Buffer still updating — must not have written yet (and must not throw).
     await new Promise((resolve) => setTimeout(resolve, 20));
@@ -236,7 +301,11 @@ describe('updateMediaSourceDuration', () => {
     context.mediaSource.set(mockMediaSource);
 
     // Presentation duration is 60, but buffered is 60.5
-    state.presentation.set({ duration: 60 } as Presentation);
+    state.presentation.set(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+        duration: 60,
+      } as Presentation
+    );
 
     await vi.waitFor(() => {
       // Duration should be extended to match buffered range
@@ -253,7 +322,11 @@ describe('updateMediaSourceDuration', () => {
     const mockMediaSource = makeMediaSource({ sourceBuffers: [mockBuffer] });
 
     context.mediaSource.set(mockMediaSource);
-    state.presentation.set({ duration: 60 } as Presentation);
+    state.presentation.set(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+        duration: 60,
+      } as Presentation
+    );
 
     // Buffer finishes immediately after state change — must not throw
     finishUpdating();
@@ -272,7 +345,11 @@ describe('updateMediaSourceDuration', () => {
     const mockMediaSource = makeMediaSource({ sourceBuffers: [mockBuffer] });
 
     context.mediaSource.set(mockMediaSource);
-    state.presentation.set({ duration: 60 } as Presentation);
+    state.presentation.set(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+        duration: 60,
+      } as Presentation
+    );
 
     // Duration must not be set while buffer is still updating
     await new Promise((resolve) => setTimeout(resolve, 20));
@@ -296,7 +373,11 @@ describe('updateMediaSourceDuration', () => {
     const mockMediaSource = makeMediaSource({ sourceBuffers: [mockA, mockB] });
 
     context.mediaSource.set(mockMediaSource);
-    state.presentation.set({ duration: 60 } as Presentation);
+    state.presentation.set(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+        duration: 60,
+      } as Presentation
+    );
 
     // Neither buffer done — duration must not be set
     await new Promise((resolve) => setTimeout(resolve, 20));
@@ -324,13 +405,24 @@ describe('updateMediaSourceDuration', () => {
     const { state, context, reactor } = setupUpdateMediaSourceDuration();
 
     const mockAudioBuffer = Object.create(SourceBuffer.prototype, {
-      buffered: { value: { length: 0, start: () => 0, end: () => 0 } as TimeRanges, writable: false },
+      buffered: {
+        value: /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+          length: 0,
+          start: () => 0,
+          end: () => 0,
+        } as TimeRanges,
+        writable: false,
+      },
       updating: { value: false, writable: true },
     });
     const mockMediaSource = makeMediaSource({ sourceBuffers: [mockAudioBuffer] });
 
     context.mediaSource.set(mockMediaSource);
-    state.presentation.set({ duration: 45 } as Presentation);
+    state.presentation.set(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+        duration: 45,
+      } as Presentation
+    );
 
     await vi.waitFor(() => {
       expect(mockMediaSource.duration).toBe(45);
@@ -346,11 +438,17 @@ describe('updateMediaSourceDuration', () => {
     const { buffer: mockBuffer, finishUpdating } = makeUpdatingSourceBuffer();
     const mockMediaSource = makeMediaSource({ sourceBuffers: [mockBuffer] });
     context.mediaSource.set(mockMediaSource);
-    state.presentation.set({ duration: 60 } as Presentation);
+    state.presentation.set(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+        duration: 60,
+      } as Presentation
+    );
 
     // Simulate endOfStream() being called concurrently while the task is waiting —
     // transitions readyState to 'ended' before the task can set duration
-    (mockMediaSource as MediaSource & { readyState: MediaSource['readyState'] }).readyState = 'ended';
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+      mockMediaSource as MediaSource & { readyState: MediaSource['readyState'] }
+    ).readyState = 'ended';
     finishUpdating();
 
     // Should resolve without throwing, and duration should NOT be set
@@ -370,14 +468,22 @@ describe('updateMediaSourceDuration', () => {
     expect(mockMediaSource.duration).toBeNaN();
 
     // Presentation with duration arrives — initial set fires
-    state.presentation.set({ duration: 60 } as Presentation);
+    state.presentation.set(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+        duration: 60,
+      } as Presentation
+    );
 
     await vi.waitFor(() => {
       expect(mockMediaSource.duration).toBe(60);
     });
 
     // Further state changes must not trigger another set
-    state.presentation.set({ duration: 90 } as Presentation);
+    state.presentation.set(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+        duration: 90,
+      } as Presentation
+    );
     await new Promise((resolve) => setTimeout(resolve, 50));
     expect(mockMediaSource.duration).toBe(60); // unchanged
 

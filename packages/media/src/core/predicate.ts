@@ -24,33 +24,47 @@ export function hasMetadata(media: MediaSourceCapability): boolean {
   return media.readyState >= 1;
 }
 
-export function isMediaPauseCapable(value: unknown): value is MediaPauseCapability {
+export function isMediaPauseCapable<Value>(value: Value): value is Value & MediaPauseCapability {
   if (!isObject(value)) return false;
-  const media = value as Record<string, unknown>;
-  return !isUndefined(media.paused) && !isUndefined(media.ended) && isFunction(media.pause);
-}
-
-export function isMediaSeekCapable(value: unknown): value is MediaSeekCapability {
-  if (!isObject(value)) return false;
-  const media = value as Record<string, unknown>;
-  return !isUndefined(media.currentTime) && !isUndefined(media.duration) && !isUndefined(media.seeking);
-}
-
-export function isMediaSourceCapable(value: unknown): value is MediaSourceCapability {
-  if (!isObject(value)) return false;
-  const media = value as Record<string, unknown>;
   return (
-    !isUndefined(media.src) &&
-    !isUndefined(media.currentSrc) &&
-    !isUndefined(media.readyState) &&
-    isFunction(media.load)
+    'paused' in value &&
+    !isUndefined(value.paused) &&
+    'ended' in value &&
+    !isUndefined(value.ended) &&
+    'pause' in value &&
+    isFunction(value.pause)
   );
 }
 
-export function isMediaVolumeCapable(value: unknown): value is MediaVolumeCapability {
+export function isMediaSeekCapable<Value>(value: Value): value is Value & MediaSeekCapability {
   if (!isObject(value)) return false;
-  const media = value as Record<string, unknown>;
-  return !isUndefined(media.volume) && !isUndefined(media.muted);
+  return (
+    'currentTime' in value &&
+    !isUndefined(value.currentTime) &&
+    'duration' in value &&
+    !isUndefined(value.duration) &&
+    'seeking' in value &&
+    !isUndefined(value.seeking)
+  );
+}
+
+export function isMediaSourceCapable<Value>(value: Value): value is Value & MediaSourceCapability {
+  if (!isObject(value)) return false;
+  return (
+    'src' in value &&
+    !isUndefined(value.src) &&
+    'currentSrc' in value &&
+    !isUndefined(value.currentSrc) &&
+    'readyState' in value &&
+    !isUndefined(value.readyState) &&
+    'load' in value &&
+    isFunction(value.load)
+  );
+}
+
+export function isMediaVolumeCapable<Value>(value: Value): value is Value & MediaVolumeCapability {
+  if (!isObject(value)) return false;
+  return 'volume' in value && !isUndefined(value.volume) && 'muted' in value && !isUndefined(value.muted);
 }
 
 /**
@@ -58,16 +72,14 @@ export function isMediaVolumeCapable(value: unknown): value is MediaVolumeCapabi
  * `isMediaVolumeCapable`: an embed can take a mute command while offering no way
  * to set a level.
  */
-export function isMediaMutedCapable(value: unknown): value is Pick<MediaVolumeCapability, 'muted'> {
+export function isMediaMutedCapable<Value>(value: Value): value is Value & Pick<MediaVolumeCapability, 'muted'> {
   if (!isObject(value)) return false;
-  const media = value as Record<string, unknown>;
-  return !isUndefined(media.muted);
+  return 'muted' in value && !isUndefined(value.muted);
 }
 
-export function isMediaPlaybackRateCapable(value: unknown): value is MediaPlaybackRateCapability {
+export function isMediaPlaybackRateCapable<Value>(value: Value): value is Value & MediaPlaybackRateCapability {
   if (!isObject(value)) return false;
-  const media = value as Record<string, unknown>;
-  return !isUndefined(media.playbackRate);
+  return 'playbackRate' in value && !isUndefined(value.playbackRate);
 }
 
 /**
@@ -75,74 +87,73 @@ export function isMediaPlaybackRateCapable(value: unknown): value is MediaPlayba
  * but leaves exiting to `document`, so demanding the pair would rule out the one
  * media that most certainly can.
  */
-export function isMediaPictureInPictureCapable(value: unknown): value is MediaPictureInPictureCapability {
+export function isMediaPictureInPictureCapable<Value>(value: Value): value is Value & MediaPictureInPictureCapability {
   if (!isObject(value)) return false;
-  const media = value as Record<string, unknown>;
-  return isFunction(media.requestPictureInPicture);
+  return 'requestPictureInPicture' in value && isFunction(value.requestPictureInPicture);
 }
 
-export function isMediaBufferCapable(value: unknown): value is MediaBufferCapability {
+export function isMediaBufferCapable<Value>(value: Value): value is Value & MediaBufferCapability {
   if (!isObject(value)) return false;
-  const media = value as Record<string, unknown>;
   return (
-    !isUndefined(media.buffered) &&
-    media.buffered !== EMPTY_TIME_RANGES &&
-    !isUndefined(media.seekable) &&
-    media.seekable !== EMPTY_TIME_RANGES
+    'buffered' in value &&
+    !isUndefined(value.buffered) &&
+    value.buffered !== EMPTY_TIME_RANGES &&
+    'seekable' in value &&
+    !isUndefined(value.seekable) &&
+    value.seekable !== EMPTY_TIME_RANGES
   );
 }
 
-export function isMediaErrorCapable(value: unknown): value is MediaErrorCapability {
+export function isMediaErrorCapable<Value>(value: Value): value is Value & MediaErrorCapability {
   if (!isObject(value)) return false;
-  const media = value as Record<string, unknown>;
-  return !isUndefined(media.error);
+  return 'error' in value && !isUndefined(value.error);
 }
 
-export function isMediaTextTrackCapable(value: unknown): value is MediaTextTrackCapability {
+export function isMediaTextTrackCapable<Value>(value: Value): value is Value & MediaTextTrackCapability {
   if (!isObject(value)) return false;
-  const media = value as Record<string, unknown>;
-  return !isUndefined(media.textTracks) && media.textTracks !== EMPTY_TEXT_TRACKS;
+  return 'textTracks' in value && !isUndefined(value.textTracks) && value.textTracks !== EMPTY_TEXT_TRACKS;
 }
 
-export function isMediaVideoRenditionCapable(value: unknown): value is MediaVideoRenditionCapability {
+export function isMediaVideoRenditionCapable<Value>(value: Value): value is Value & MediaVideoRenditionCapability {
   if (!isObject(value)) return false;
-  const media = value as Record<string, unknown>;
-  return !isUndefined(media.videoRenditions);
+  return 'videoRenditions' in value && !isUndefined(value.videoRenditions);
 }
 
-export function isMediaAudioTrackCapable(value: unknown): value is MediaAudioTrackCapability {
+export function isMediaAudioTrackCapable<Value>(value: Value): value is Value & MediaAudioTrackCapability {
   if (!isObject(value)) return false;
-  const media = value as Record<string, unknown>;
-  return !isUndefined(media.audioTracks);
+  return 'audioTracks' in value && !isUndefined(value.audioTracks);
 }
 
-export function isMediaVideoDimensionsCapable(value: unknown): value is MediaVideoDimensionsCapability {
+export function isMediaVideoDimensionsCapable<Value>(value: Value): value is Value & MediaVideoDimensionsCapability {
   if (!isObject(value)) return false;
-  const media = value as Record<string, unknown>;
-  return !isUndefined(media.videoWidth) && !isUndefined(media.videoHeight);
+  return (
+    'videoWidth' in value && !isUndefined(value.videoWidth) && 'videoHeight' in value && !isUndefined(value.videoHeight)
+  );
 }
 
-export function isMediaRemotePlaybackCapable(value: unknown): value is MediaRemotePlaybackCapability {
+export function isMediaRemotePlaybackCapable<Value>(value: Value): value is Value & MediaRemotePlaybackCapability {
   if (!isObject(value)) return false;
-  const media = value as Record<string, unknown>;
-  return isObject(media.remote) && media.remote !== EMPTY_REMOTE;
+  return 'remote' in value && isObject(value.remote) && value.remote !== EMPTY_REMOTE;
 }
 
-export function isMediaStreamTypeCapable(value: unknown): value is MediaStreamTypeCapability {
+export function isMediaStreamTypeCapable<Value>(value: Value): value is Value & MediaStreamTypeCapability {
   if (!isObject(value)) return false;
-  const media = value as Record<string, unknown>;
-  return !isUndefined(media.streamType);
+  return 'streamType' in value && !isUndefined(value.streamType);
 }
 
-export function isMediaContentDataCapable(value: unknown): value is MediaContentDataCapability {
+export function isMediaContentDataCapable<Value>(value: Value): value is Value & MediaContentDataCapability {
   if (!isObject(value)) return false;
-  return !isUndefined((value as Record<string, unknown>).contentData);
+  return 'contentData' in value && !isUndefined(value.contentData);
 }
 
-export function isMediaLiveCapable(value: unknown): value is MediaLiveCapability {
+export function isMediaLiveCapable<Value>(value: Value): value is Value & MediaLiveCapability {
   if (!isObject(value)) return false;
-  const media = value as Record<string, unknown>;
-  return !isUndefined(media.liveEdgeStart) && !isUndefined(media.targetLiveWindow);
+  return (
+    'liveEdgeStart' in value &&
+    !isUndefined(value.liveEdgeStart) &&
+    'targetLiveWindow' in value &&
+    !isUndefined(value.targetLiveWindow)
+  );
 }
 
 /** Framework-agnostic `NodeList`-like shape returned by `querySelectorAll`. */
@@ -153,10 +164,8 @@ export interface NodeListLike<Element> {
   [Symbol.iterator](): Iterator<Element>;
 }
 
-export function isQuerySelectorAllCapable<Element = unknown>(
-  value: unknown
-): value is { querySelectorAll: (selectors: string) => NodeListLike<Element> } {
-  return (
-    isObject(value) && 'querySelectorAll' in value && isFunction((value as Record<string, unknown>).querySelectorAll)
-  );
+export function isQuerySelectorAllCapable<Value, Element = Value>(
+  value: Value
+): value is Value & { querySelectorAll: (selectors: string) => NodeListLike<Element> } {
+  return isObject(value) && 'querySelectorAll' in value && isFunction(value.querySelectorAll);
 }

@@ -34,45 +34,51 @@ function createPresentation(config: {
   const selectionSets = [];
 
   if (config.video && config.video.length > 0) {
-    selectionSets.push({
-      id: 'video-set',
-      type: 'video' as const,
-      switchingSets: [
-        {
-          id: 'video-switching',
-          type: 'video' as const,
-          tracks: config.video,
-        },
-      ],
-    } as VideoSelectionSet);
+    selectionSets.push(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+        id: 'video-set',
+        type: 'video' as const,
+        switchingSets: [
+          {
+            id: 'video-switching',
+            type: 'video' as const,
+            tracks: config.video,
+          },
+        ],
+      } as VideoSelectionSet
+    );
   }
 
   if (config.audio && config.audio.length > 0) {
-    selectionSets.push({
-      id: 'audio-set',
-      type: 'audio' as const,
-      switchingSets: [
-        {
-          id: 'audio-switching',
-          type: 'audio' as const,
-          tracks: config.audio,
-        },
-      ],
-    } as AudioSelectionSet);
+    selectionSets.push(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+        id: 'audio-set',
+        type: 'audio' as const,
+        switchingSets: [
+          {
+            id: 'audio-switching',
+            type: 'audio' as const,
+            tracks: config.audio,
+          },
+        ],
+      } as AudioSelectionSet
+    );
   }
 
   if (config.text && config.text.length > 0) {
-    selectionSets.push({
-      id: 'text-set',
-      type: 'text' as const,
-      switchingSets: [
-        {
-          id: 'text-switching',
-          type: 'text' as const,
-          tracks: config.text,
-        },
-      ],
-    } as TextSelectionSet);
+    selectionSets.push(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+        id: 'text-set',
+        type: 'text' as const,
+        switchingSets: [
+          {
+            id: 'text-switching',
+            type: 'text' as const,
+            tracks: config.text,
+          },
+        ],
+      } as TextSelectionSet
+    );
   }
 
   return {
@@ -260,7 +266,9 @@ describe('selectVideoTrack — capability constraint + verdict', () => {
     // What `applyContainerMimeType` does once the media playlist resolves with no
     // EXT-X-MAP: relabel every rendition of the type, in a new presentation object.
     state.presentation.set(
-      createPresentation({ video: [{ ...playable, id: 'video-1', mimeType: 'video/mp2t' }] }) as Presentation
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ createPresentation(
+        { video: [{ ...playable, id: 'video-1', mimeType: 'video/mp2t' }] }
+      ) as Presentation
     );
     await new Promise((resolve) => setTimeout(resolve, 50));
 
@@ -292,7 +300,11 @@ describe('selectVideoTrack — capability constraint + verdict', () => {
 
     pruneEncrypted = true;
     // Re-notify the candidate set the way committing a resolved track does.
-    state.presentation.set(createPresentation({ video: [encrypted, clear] }) as Presentation);
+    state.presentation.set(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ createPresentation(
+        { video: [encrypted, clear] }
+      ) as Presentation
+    );
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     // Dropped, not moved to `video-clear`.

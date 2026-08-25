@@ -187,9 +187,9 @@ export function createTextTrackSegmentLoaderActor<C extends Cue>(
 
   const scheduleAll = (tasks: TextLoadTask[], ctx: Ctx): void => {
     for (const op of tasks) {
-      ctx.runner.schedule(makeLoadTask(op, ctx)).then(undefined, (e: unknown) => {
-        if (e instanceof Error && e.name === 'AbortError') return;
-        console.error('Unexpected error in text-track segment loader:', e);
+      ctx.runner.schedule(makeLoadTask(op, ctx)).then(undefined, (cause: unknown) => {
+        if (cause instanceof Error && cause.name === 'AbortError') return;
+        console.error('Unexpected error in text-track segment loader:', cause);
         ctx.runner.abortPending();
       });
     }

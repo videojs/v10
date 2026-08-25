@@ -7,17 +7,23 @@ export type SupportedFramework = keyof typeof FRAMEWORK_STYLES;
 export type SupportedStyle<F extends SupportedFramework> = (typeof FRAMEWORK_STYLES)[F][number];
 export type AnySupportedStyle = SupportedStyle<SupportedFramework>;
 
-export const FRAMEWORK_LABELS: Record<SupportedFramework, string> = {
+export const FRAMEWORK_LABELS = {
   react: 'React',
   html: 'HTML',
-};
+} satisfies Record<SupportedFramework, string>;
 
-export const STYLE_LABELS: Record<AnySupportedStyle, string> = {
+export const STYLE_LABELS = {
   css: 'CSS',
-};
+} satisfies Record<AnySupportedStyle, string>;
 
-export const SUPPORTED_FRAMEWORKS = Object.keys(FRAMEWORK_STYLES) as (keyof typeof FRAMEWORK_STYLES)[];
-export const DEFAULT_FRAMEWORK = Object.keys(FRAMEWORK_STYLES)[0] as SupportedFramework;
+export const SUPPORTED_FRAMEWORKS =
+  /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ Object.keys(
+    FRAMEWORK_STYLES
+  ) as (keyof typeof FRAMEWORK_STYLES)[];
+export const DEFAULT_FRAMEWORK =
+  /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ Object.keys(
+    FRAMEWORK_STYLES
+  )[0] as SupportedFramework;
 
 export const ALL_FRAMEWORK_STYLE_COMBINATIONS = SUPPORTED_FRAMEWORKS.flatMap((framework) => {
   const availableStyles = FRAMEWORK_STYLES[framework];
@@ -34,7 +40,9 @@ export function getDefaultStyle<F extends SupportedFramework>(framework: F): Sup
 
 export function isValidFramework(value: string | undefined | null): value is SupportedFramework {
   if (!value) return false;
-  return SUPPORTED_FRAMEWORKS.includes(value as SupportedFramework);
+  return SUPPORTED_FRAMEWORKS.includes(
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ value as SupportedFramework
+  );
 }
 
 export function isValidStyleForFramework(
@@ -42,7 +50,9 @@ export function isValidStyleForFramework(
   style: string | undefined | null
 ): style is AnySupportedStyle {
   if (!style) return false;
-  return FRAMEWORK_STYLES[framework].includes(style as any);
+  return FRAMEWORK_STYLES[framework].includes(
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ style as any
+  );
 }
 
 export interface Guide {

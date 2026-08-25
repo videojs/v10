@@ -1,3 +1,4 @@
+import { isString } from '@videojs/utils/predicate';
 import { describe, expect, it } from 'vite-plus/test';
 
 import type { PartiallyResolvedAudioTrack, PartiallyResolvedTextTrack, PartiallyResolvedVideoTrack } from '../../types';
@@ -50,7 +51,7 @@ video-1080p.m3u8`;
       height: 360,
       codecs: ['avc1.4d401e', 'mp4a.40.2'],
     });
-    expect(typeof videoTracks?.[0]?.id).toBe('string');
+    expect(isString(videoTracks?.[0]?.id)).toBe(true);
 
     // Second track (720p)
     expect(videoTracks?.[1]).toMatchObject({
@@ -61,10 +62,11 @@ video-1080p.m3u8`;
       codecs: ['avc1.4d401f', 'mp4a.40.2'],
       mimeType: 'video/mp4',
     });
-    expect(typeof videoTracks?.[1]?.id).toBe('string');
+    expect(isString(videoTracks?.[1]?.id)).toBe(true);
 
     // Third track (1080p) - verify all fields
-    const track1080p = videoTracks?.[2] as PartiallyResolvedVideoTrack;
+    const track1080p =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ videoTracks?.[2] as PartiallyResolvedVideoTrack;
     expect(track1080p).toMatchObject({
       type: 'video',
       url: 'https://example.com/video-1080p.m3u8',
@@ -74,7 +76,7 @@ video-1080p.m3u8`;
       codecs: ['avc1.640028', 'mp4a.40.2'],
       mimeType: 'video/mp4',
     });
-    expect(typeof track1080p.id).toBe('string');
+    expect(isString(track1080p.id)).toBe(true);
     // Optional fields not present
     expect(track1080p.frameRate).toBeUndefined();
     expect(track1080p.audioGroupIds).toBeUndefined();
@@ -115,8 +117,10 @@ https://example.com/v720.m3u8
 https://example.com/v720.m3u8`;
 
     const result = parseMultivariantPlaylist(text, { url: baseUrl });
-    const videoTracks = (result.selectionSets.find((s) => s.type === 'video')?.switchingSets[0]?.tracks ??
-      []) as PartiallyResolvedVideoTrack[];
+    const videoTracks =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (result.selectionSets.find(
+        (s) => s.type === 'video'
+      )?.switchingSets[0]?.tracks ?? []) as PartiallyResolvedVideoTrack[];
 
     // Two unique URIs → two tracks, not four.
     expect(videoTracks).toHaveLength(2);
@@ -173,7 +177,10 @@ video.m3u8`;
       type: 'video',
       bandwidth: 800000,
     });
-    const videoTrack = videoTracks?.[0] as PartiallyResolvedVideoTrack | undefined;
+    const videoTrack =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ videoTracks?.[0] as
+        | PartiallyResolvedVideoTrack
+        | undefined;
     expect(videoTrack?.width).toBeUndefined();
     expect(videoTrack?.height).toBeUndefined();
     expect(videoTrack?.codecs).toEqual([]); // Default when not in playlist
@@ -220,7 +227,10 @@ video.m3u8`;
     const videoSet = result.selectionSets.find((s) => s.type === 'video');
     const videoTracks = videoSet?.switchingSets[0]?.tracks;
 
-    const videoTrack = videoTracks?.[0] as PartiallyResolvedVideoTrack | undefined;
+    const videoTrack =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ videoTracks?.[0] as
+        | PartiallyResolvedVideoTrack
+        | undefined;
     expect(videoTrack?.frameRate).toEqual({
       frameRateNumerator: 30000,
       frameRateDenominator: 1001,
@@ -301,11 +311,14 @@ video-lo.m3u8`;
 
       expect(audioTracks).toHaveLength(3);
 
-      expect(audioTracks?.map((t) => (t as PartiallyResolvedAudioTrack).groupId)).toEqual([
-        'audio-hi-0',
-        'audio-med-0',
-        'audio-lo-0',
-      ]);
+      expect(
+        audioTracks?.map(
+          (t) =>
+            /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+              t as PartiallyResolvedAudioTrack
+            ).groupId
+        )
+      ).toEqual(['audio-hi-0', 'audio-med-0', 'audio-lo-0']);
     });
 
     it('parses the CHANNELS attribute on audio renditions (6 for 5.1, default 2 when absent)', () => {
@@ -317,8 +330,10 @@ video-lo.m3u8`;
 https://example.com/v.m3u8`;
 
       const result = parseMultivariantPlaylist(text, { url: baseUrl });
-      const audioTracks = (result.selectionSets.find((s) => s.type === 'audio')?.switchingSets[0]?.tracks ??
-        []) as PartiallyResolvedAudioTrack[];
+      const audioTracks =
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (result.selectionSets.find(
+          (s) => s.type === 'audio'
+        )?.switchingSets[0]?.tracks ?? []) as PartiallyResolvedAudioTrack[];
       const byGroup = (groupId: string) => audioTracks.find((t) => t.groupId === groupId);
 
       expect(byGroup('surround')?.channels).toBe(6);
@@ -333,15 +348,23 @@ https://example.com/v.m3u8`;
       const audioTracks = audioSet?.switchingSets[0]?.tracks;
 
       // audio-med-0 is referenced by video stream - should have codec
-      const audioMed = audioTracks?.find((t) => (t as PartiallyResolvedAudioTrack).groupId === 'audio-med-0') as
-        | PartiallyResolvedAudioTrack
-        | undefined;
+      const audioMed =
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ audioTracks?.find(
+          (t) =>
+            /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+              t as PartiallyResolvedAudioTrack
+            ).groupId === 'audio-med-0'
+        ) as PartiallyResolvedAudioTrack | undefined;
       expect(audioMed?.codecs).toEqual(['mp4a.40.2']);
 
       // audio-hi-0 is NOT referenced - no codec info
-      const audioHi = audioTracks?.find((t) => (t as PartiallyResolvedAudioTrack).groupId === 'audio-hi-0') as
-        | PartiallyResolvedAudioTrack
-        | undefined;
+      const audioHi =
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ audioTracks?.find(
+          (t) =>
+            /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+              t as PartiallyResolvedAudioTrack
+            ).groupId === 'audio-hi-0'
+        ) as PartiallyResolvedAudioTrack | undefined;
       expect(audioHi?.codecs).toEqual([]); // Default when not extracted from streams
     });
 
@@ -420,7 +443,10 @@ video.m3u8`;
 
       expect(textTracks).toHaveLength(2);
 
-      const englishTrack = textTracks?.[0] as PartiallyResolvedTextTrack | undefined;
+      const englishTrack =
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ textTracks?.[0] as
+          | PartiallyResolvedTextTrack
+          | undefined;
       expect(englishTrack).toMatchObject({
         type: 'text',
         label: 'English',
@@ -429,7 +455,7 @@ video.m3u8`;
         default: true,
         autoselect: true,
       });
-      expect(typeof englishTrack?.id).toBe('string');
+      expect(isString(englishTrack?.id)).toBe(true);
 
       expect(textTracks?.[1]).toMatchObject({
         type: 'text',
@@ -449,7 +475,10 @@ video.m3u8`;
       const textSet = result.selectionSets.find((s) => s.type === 'text');
       const textTracks = textSet?.switchingSets[0]?.tracks;
 
-      const textTrack = textTracks?.[0] as PartiallyResolvedTextTrack | undefined;
+      const textTrack =
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ textTracks?.[0] as
+          | PartiallyResolvedTextTrack
+          | undefined;
       expect(textTrack?.forced).toBe(true);
     });
 
@@ -476,7 +505,9 @@ video.m3u8`;
 
       const result = parseMultivariantPlaylist(text, { url: baseUrl });
       const textSet = result.selectionSets.find((s) => s.type === 'text');
-      const textTracks = textSet?.switchingSets[0]?.tracks as PartiallyResolvedTextTrack[] | undefined;
+      const textTracks =
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ textSet
+          ?.switchingSets[0]?.tracks as PartiallyResolvedTextTrack[] | undefined;
 
       expect(textTracks).toHaveLength(3);
 
@@ -508,7 +539,9 @@ video.m3u8`;
 
       const result = parseMultivariantPlaylist(text, { url: baseUrl });
       const textSet = result.selectionSets.find((s) => s.type === 'text');
-      const textTracks = textSet?.switchingSets[0]?.tracks as PartiallyResolvedTextTrack[] | undefined;
+      const textTracks =
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ textSet
+          ?.switchingSets[0]?.tracks as PartiallyResolvedTextTrack[] | undefined;
 
       expect(textTracks).toHaveLength(2);
 

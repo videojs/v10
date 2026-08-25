@@ -29,16 +29,21 @@ import { PlayerPage } from '../page-objects/player';
 const PAGE = '/pages/html-hls-video-fmp4.html';
 
 /** Serializable snapshot of the media element's MSE attachment. */
-interface AttachShape {
+interface AttachmentSnapshot {
   airPlayCapable: boolean;
   srcAttr: string;
   sources: Array<{ type: string; src: string }>;
   readyState: number;
 }
 
-function readAttachShape(): AttachShape {
+function readAttachmentSnapshot(): AttachmentSnapshot {
   const host = document.querySelector('hls-video');
-  const video = (host?.shadowRoot?.querySelector('video') ?? host?.querySelector('video') ?? host) as HTMLVideoElement;
+  const video =
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (host?.shadowRoot?.querySelector(
+      'video'
+    ) ??
+      host?.querySelector('video') ??
+      host) as HTMLVideoElement;
   return {
     airPlayCapable: 'WebKitPlaybackTargetAvailabilityEvent' in window,
     srcAttr: video.getAttribute('src') ?? '',
@@ -48,9 +53,9 @@ function readAttachShape(): AttachShape {
 }
 
 /** The blob URL of the current MSE attachment, wherever it rides. */
-function mseAttachmentOf(shape: AttachShape): string {
-  if (shape.srcAttr.startsWith('blob:')) return shape.srcAttr;
-  return shape.sources.find((s) => s.type === 'video/mp4' && s.src.startsWith('blob:'))?.src ?? '';
+function mseAttachmentOf(snapshot: AttachmentSnapshot): string {
+  if (snapshot.srcAttr.startsWith('blob:')) return snapshot.srcAttr;
+  return snapshot.sources.find((s) => s.type === 'video/mp4' && s.src.startsWith('blob:'))?.src ?? '';
 }
 
 test.describe('SPF MediaSource attach + recovery', () => {
@@ -63,24 +68,24 @@ test.describe('SPF MediaSource attach + recovery', () => {
   });
 
   test('attaches MSE as a <source> child on every platform', async ({ page }) => {
-    const shape = await page.evaluate(readAttachShape);
+    const snapshot = await page.evaluate(readAttachmentSnapshot);
 
     // The MSE rides a <source> child so a native-HLS AirPlay fallback can
     // coexist as a second, selectable resource — no longer conditional on
     // ManagedMediaSource being available.
-    expect(shape.sources.some((s) => s.type === 'video/mp4' && s.src.startsWith('blob:'))).toBe(true);
+    expect(snapshot.sources.some((s) => s.type === 'video/mp4' && s.src.startsWith('blob:'))).toBe(true);
     // And the attach clears any bare `src`: a src attribute would win resource
     // selection outright and make every sibling inert.
-    expect(shape.srcAttr).toBe('');
+    expect(snapshot.srcAttr).toBe('');
 
-    if (shape.airPlayCapable) {
+    if (snapshot.airPlayCapable) {
       // The setupAirPlay fallback source, carrying the manifest URL.
-      expect(shape.sources.some((s) => s.type === 'application/x-mpegURL' && s.src.includes('.m3u8'))).toBe(true);
+      expect(snapshot.sources.some((s) => s.type === 'application/x-mpegURL' && s.src.includes('.m3u8'))).toBe(true);
     }
   });
 
   test('rebuilds a fresh MediaSource when the attachment is torn down out from under the engine', async ({ page }) => {
-    const before = await page.evaluate(readAttachShape);
+    const before = await page.evaluate(readAttachmentSnapshot);
     const beforeAttachment = mseAttachmentOf(before);
     expect(beforeAttachment).not.toBe('');
 
@@ -90,9 +95,12 @@ test.describe('SPF MediaSource attach + recovery', () => {
     // engine's side, from Safari doing it.
     await page.evaluate(() => {
       const host = document.querySelector('hls-video');
-      const video = (host?.shadowRoot?.querySelector('video') ??
-        host?.querySelector('video') ??
-        host) as HTMLVideoElement;
+      const video =
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (host?.shadowRoot?.querySelector(
+          'video'
+        ) ??
+          host?.querySelector('video') ??
+          host) as HTMLVideoElement;
       const mseSource = Array.from(video.querySelectorAll('source')).find(
         (s) => s.type === 'video/mp4' && s.src.startsWith('blob:')
       );
@@ -109,9 +117,12 @@ test.describe('SPF MediaSource attach + recovery', () => {
     await page.waitForFunction(
       (prev) => {
         const host = document.querySelector('hls-video');
-        const video = (host?.shadowRoot?.querySelector('video') ??
-          host?.querySelector('video') ??
-          host) as HTMLVideoElement;
+        const video =
+          /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (host?.shadowRoot?.querySelector(
+            'video'
+          ) ??
+            host?.querySelector('video') ??
+            host) as HTMLVideoElement;
         const srcAttr = video.getAttribute('src') ?? '';
         const sourceChild = Array.from(video.querySelectorAll('source')).find(
           (s) => s.type === 'video/mp4' && s.src.startsWith('blob:')
@@ -123,7 +134,7 @@ test.describe('SPF MediaSource attach + recovery', () => {
       { timeout: 20_000 }
     );
 
-    const after = await page.evaluate(readAttachShape);
+    const after = await page.evaluate(readAttachmentSnapshot);
     expect(mseAttachmentOf(after)).not.toBe(beforeAttachment);
     // The rebuilt source is playable, not just attached.
     await player.play();

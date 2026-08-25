@@ -1,4 +1,4 @@
-import { serializeEmbedParams } from '../utils';
+import { type EmbedParams, type EmbedParamValue, serializeEmbedParams } from '../utils';
 import { type YouTubeMediaProps, youtubeMediaDefaultProps } from './props';
 
 /**
@@ -13,7 +13,7 @@ import { type YouTubeMediaProps, youtubeMediaDefaultProps } from './props';
  * are absent too. The index signature still carries anything not listed here, so
  * undocumented knobs and whatever YouTube adds next keep working.
  */
-export interface YouTubeEngineConfig extends Record<string, unknown> {
+export interface YouTubeEngineConfig extends Partial<Record<string, EmbedParamValue>> {
   /** ISO 639-1 language to display captions in. Pair with `cc_load_policy`. */
   cc_lang_pref?: string;
   /** Show closed captions by default, even if the viewer has turned them off. */
@@ -117,7 +117,7 @@ export function buildYouTubeIframeSrc(src: string, props: Partial<YouTubeMediaPr
   const parsed = parseYouTubeSource(src);
   if (!parsed) return '';
   const embedBase = parsed.noCookie ? EMBED_BASE_NOCOOKIE : EMBED_BASE;
-  const params: Record<string, unknown> = {
+  const params = {
     // Hide YouTube chrome by default; pass nothing only when controls is explicitly true.
     controls: props.controls === true ? null : 0,
     autoplay: props.autoplay,
@@ -132,7 +132,7 @@ export function buildYouTubeIframeSrc(src: string, props: Partial<YouTubeMediaPr
     start: parsed.startTime,
     // YouTube-specific knobs (`cc_load_policy`, `hl`, `color`, …) flow through here.
     ...(props.source?.engine?.youtube ?? undefined),
-  };
+  } satisfies EmbedParams;
   if (parsed.kind === 'playlist' && parsed.listId) {
     return `${embedBase}?${serializeEmbedParams({ listType: 'playlist', list: parsed.listId, ...params })}`;
   }

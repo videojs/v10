@@ -148,10 +148,11 @@ function syncTextTracksSetup({
           // selection-set filter inside the helper ensures that — but its
           // declared return is the wide track union. Mirror the cast
           // pattern used by `track-switching` for the video branch.
-          const modelTextTracks = getTracksByType(state.presentation.get()!, 'text') as readonly (
-            | PartiallyResolvedTextTrack
-            | TextTrack
-          )[];
+          const modelTextTracks =
+            /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ getTracksByType(
+              state.presentation.get()!,
+              'text'
+            ) as readonly (PartiallyResolvedTextTrack | TextTrack)[];
 
           addSubtitlesTracksToMedia(mediaElement, modelTextTracks);
           // Apply our selection synchronously so the change-event tasks

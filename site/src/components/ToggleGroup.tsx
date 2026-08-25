@@ -50,12 +50,18 @@ export default function ToggleGroup<T extends string = string>({
       style={{ gridTemplateColumns: '1fr auto 1fr' }}
     >
       {options.map((option, index) => {
-        const isPressed = value.includes(option.value as T);
+        const isPressed = value.includes(
+          /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ option.value as T
+        );
         const isDisabled = disabled || option.disabled;
         const isLast = index === options.length - 1;
 
         return (
-          <Fragment key={option.value as string}>
+          <Fragment
+            key={
+              /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ option.value as string
+            }
+          >
             <Toggle
               value={option.value}
               disabled={isDisabled}
@@ -72,7 +78,11 @@ export default function ToggleGroup<T extends string = string>({
                 ),
                 toggleClassName
               )}
-              style={{ '--text': '0.75rem' } as React.CSSProperties}
+              style={
+                /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ {
+                  '--text': '0.75rem',
+                } as React.CSSProperties
+              }
               aria-label={option['aria-label']}
             >
               {option.label}

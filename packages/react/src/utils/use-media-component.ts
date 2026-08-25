@@ -24,7 +24,13 @@ export function useMediaComponent<Component extends MediaComponent & { destroy()
 
   useEffect(() => {
     if (!(media instanceof HTMLMediaElementHost)) return;
-    return addMediaComponent(media as HTMLMediaElementHost<HTMLMediaTargetLike, any>, component);
+    return addMediaComponent(
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ media as HTMLMediaElementHost<
+        HTMLMediaTargetLike,
+        any
+      >,
+      component
+    );
   }, [media, component]);
 
   return component;

@@ -43,7 +43,8 @@ variant2.m3u8`)
       expect(pres).toHaveProperty('selectionSets');
     });
 
-    const resolved = state.presentation.get() as Presentation;
+    const resolved =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ state.presentation.get() as Presentation;
     expect(resolved.url).toBe('http://example.com/playlist.m3u8');
     expect(resolved.selectionSets).toBeDefined();
     expect(resolved.selectionSets.length).toBeGreaterThan(0);
@@ -113,7 +114,8 @@ variant1.m3u8`)
       expect(pres).toHaveProperty('selectionSets');
     });
 
-    const resolved = state.presentation.get() as Presentation;
+    const resolved =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ state.presentation.get() as Presentation;
     expect(resolved.url).toBe('http://example.com/initial.m3u8');
     expect(resolved.selectionSets).toBeDefined();
 
@@ -186,11 +188,16 @@ variant2.m3u8`)
     await vi.waitFor(() => {
       const pres = state.presentation.get();
       expect(pres).toHaveProperty('id');
-      expect((pres as Presentation).url).toBe('http://example.com/second.m3u8');
+      expect(
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+          pres as Presentation
+        ).url
+      ).toBe('http://example.com/second.m3u8');
     });
 
     expect(fetchSpy).toHaveBeenCalledOnce();
-    const resolved = state.presentation.get() as Presentation;
+    const resolved =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ state.presentation.get() as Presentation;
     expect(resolved.url).toBe('http://example.com/second.m3u8');
     expect(resolved.selectionSets).toBeDefined();
 
@@ -440,7 +447,8 @@ variant1.m3u8`)
       state.presentation.set({ url: 'http://example.com/second.m3u8' });
 
       await vi.waitFor(() => {
-        const pres = state.presentation.get() as Presentation;
+        const pres =
+          /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ state.presentation.get() as Presentation;
         expect(pres).toHaveProperty('id');
         expect(pres.url).toBe('http://example.com/second.m3u8');
       });

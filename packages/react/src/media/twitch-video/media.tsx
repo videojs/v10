@@ -2,7 +2,7 @@
 
 import type { TwitchMediaProps } from '@videojs/media/dom/twitch';
 import { buildTwitchIframeSrc, TwitchMedia, twitchMediaDefaultProps } from '@videojs/media/dom/twitch';
-import type { ReactNode } from 'react';
+import type { ComponentPropsWithoutRef, ReactNode } from 'react';
 import { forwardRef, useState } from 'react';
 
 import { useAttachIframe } from '../../utils/use-attach-iframe';
@@ -10,16 +10,17 @@ import { useComposedRefs } from '../../utils/use-composed-refs';
 import { useMediaInstance } from '../../utils/use-media-instance';
 import { useSyncProps } from '../../utils/use-sync-props';
 
-export interface TwitchVideoProps extends Partial<TwitchMediaProps> {
-  children?: ReactNode;
-}
+export type TwitchVideoProps = Partial<TwitchMediaProps> &
+  Omit<ComponentPropsWithoutRef<'iframe'>, keyof TwitchMediaProps> & {
+    children?: ReactNode;
+  };
 
 export const TwitchVideo = forwardRef<HTMLIFrameElement, TwitchVideoProps>(function TwitchVideo(
   { children, ...rawProps },
   ref
 ) {
   const media = useMediaInstance(TwitchMedia);
-  const props: Partial<TwitchMediaProps> & Record<string, unknown> = { ...rawProps };
+  const props = { ...rawProps };
   const attachRef = useAttachIframe(media);
   const composedRef = useComposedRefs(attachRef, ref);
   const [initialSrc] = useState(() =>
@@ -31,7 +32,7 @@ export const TwitchVideo = forwardRef<HTMLIFrameElement, TwitchVideoProps>(funct
         buildTwitchIframeSrc(props.src || props.source?.src || '', { ...twitchMediaDefaultProps, ...props })
       : ''
   );
-  const iframeProps = useSyncProps<TwitchMediaProps, Record<string, unknown>>(media, props, twitchMediaDefaultProps);
+  const iframeProps = useSyncProps<TwitchMediaProps, typeof props>(media, props, twitchMediaDefaultProps);
 
   return (
     <iframe

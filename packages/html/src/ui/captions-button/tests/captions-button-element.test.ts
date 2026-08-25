@@ -1,4 +1,4 @@
-import type { AnyPlayerStore } from '@videojs/core/dom';
+import type { AnyPlayerStore, PlayerTarget } from '@videojs/core/dom';
 import { ContextProvider } from '@videojs/element/context';
 import type { MediaTextTrackState } from '@videojs/media';
 import { createStore } from '@videojs/store';
@@ -35,7 +35,7 @@ async function waitForAssertion(assertion: () => void): Promise<void> {
 }
 
 function createTextTrackStore(textTrackList: MediaTextTrackState['textTrackList']): AnyPlayerStore {
-  return createStore<unknown>()<MediaTextTrackState>({
+  return createStore<PlayerTarget>()({
     name: 'textTrack',
     state: () => ({
       chaptersCues: [],
@@ -47,7 +47,7 @@ function createTextTrackStore(textTrackList: MediaTextTrackState['textTrackList'
       toggleSubtitles: vi.fn(),
       selectSubtitlesTrack: vi.fn(),
     }),
-  }) as unknown as AnyPlayerStore;
+  });
 }
 
 class TestPlayerProviderElement extends UIElement {
@@ -67,8 +67,14 @@ describe('CaptionsButtonElement', () => {
   });
 
   it('restores the configured command target when captions no longer need a menu', async () => {
-    const provider = document.createElement('test-captions-button-player') as TestPlayerProviderElement;
-    const button = document.createElement(CaptionsButtonElement.tagName) as CaptionsButtonElement;
+    const provider =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+        'test-captions-button-player'
+      ) as TestPlayerProviderElement;
+    const button =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+        CaptionsButtonElement.tagName
+      ) as CaptionsButtonElement;
     const textTrackList: MediaTextTrackState['textTrackList'] = [
       { kind: 'subtitles', label: 'English', language: 'en', mode: 'disabled' },
       { kind: 'subtitles', label: 'Spanish', language: 'es', mode: 'disabled' },
@@ -100,7 +106,10 @@ describe('CaptionsButtonElement', () => {
   });
 
   it('maps the menu-for attribute to menuFor', async () => {
-    const button = document.createElement(CaptionsButtonElement.tagName) as CaptionsButtonElement;
+    const button =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+        CaptionsButtonElement.tagName
+      ) as CaptionsButtonElement;
 
     button.setAttribute('menu-for', 'captions-menu');
     document.body.append(button);

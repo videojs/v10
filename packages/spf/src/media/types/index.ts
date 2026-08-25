@@ -22,7 +22,12 @@ export interface Ham {
    * CMAF-HAM itself stashes protocol extras rather than growing the model).
    * Typed reads go through dedicated accessors (e.g. `getMediaPlaylistMetadata`).
    */
-  metadata?: Record<string, unknown>;
+  metadata?: HamMetadata;
+}
+
+/** Protocol-specific metadata slots owned by the normalized HAM model. */
+export interface HamMetadata {
+  mediaPlaylist?: MediaPlaylistMetadata;
 }
 
 /**
@@ -263,11 +268,7 @@ export type TextTrack = Track & {
  * carry. `mimeType` is optional so unprobeable candidates (no MIME) can be
  * passed straight through as playable rather than dropped.
  */
-export type CanPlayTrack = (track: {
-  mimeType?: string;
-  codecs?: string[];
-  metadata?: Record<string, unknown>;
-}) => boolean;
+export type CanPlayTrack = (track: { mimeType?: string; codecs?: string[]; metadata?: HamMetadata }) => boolean;
 
 /**
  * Minimal text-track cue shape — start time, end time, and display text.
@@ -483,7 +484,9 @@ export const MEDIA_PLAYLIST_METADATA_KEY = 'mediaPlaylist';
 
 /** Typed read of the media-playlist metadata stashed in `ham.metadata`. */
 export function getMediaPlaylistMetadata(ham: Pick<Ham, 'metadata'>): MediaPlaylistMetadata | undefined {
-  return ham.metadata?.[MEDIA_PLAYLIST_METADATA_KEY] as MediaPlaylistMetadata | undefined;
+  return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ ham.metadata?.[
+    MEDIA_PLAYLIST_METADATA_KEY
+  ] as MediaPlaylistMetadata | undefined;
 }
 
 // =============================================================================

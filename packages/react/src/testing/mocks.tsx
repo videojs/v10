@@ -15,7 +15,7 @@ import { I18nProvider } from '../i18n';
 import { PlayerContextProvider, type PlayerContextValue } from '../player/context';
 
 interface MockStore {
-  state: Record<string, unknown>;
+  state: PlayerContextValue['store']['state'];
   attach: Mock<() => Mock>;
   subscribe: Mock<() => Mock>;
   destroy: Mock;
@@ -26,7 +26,7 @@ interface MockStore {
  *
  * Pass optional `state` to seed the store's state snapshot.
  */
-export function createMockStore(state: Record<string, unknown> = {}): MockStore {
+export function createMockStore(state: PlayerContextValue['store']['state'] = {}): MockStore {
   return {
     state,
     attach: vi.fn(() => vi.fn()),
@@ -41,14 +41,10 @@ export function createMockStore(state: Record<string, unknown> = {}): MockStore 
  * Accepts an optional store state seed. Returns the wrapper component,
  * the mock store, and the context value for assertions.
  */
-export function createPlayerWrapper(storeState: Record<string, unknown> = {}): {
-  store: MockStore;
-  value: PlayerContextValue;
-  Wrapper: ({ children }: { children: ReactNode }) => ReactNode;
-} {
+export function createPlayerWrapper(storeState: PlayerContextValue['store']['state'] = {}) {
   const store = createMockStore(storeState);
   const value: PlayerContextValue = {
-    store: store as any,
+    store: /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ store as any,
     media: null,
     setMedia: vi.fn(),
     container: null,
@@ -65,5 +61,9 @@ export function createPlayerWrapper(storeState: Record<string, unknown> = {}): {
         </PlayerContextProvider>
       );
     },
+  } satisfies {
+    store: MockStore;
+    value: PlayerContextValue;
+    Wrapper: ({ children }: { children: ReactNode }) => ReactNode;
   };
 }

@@ -8,7 +8,7 @@ import {
   utilitiesForRule,
 } from './manifest';
 import type { StyleOutputFile, StyleOutputRule } from './output';
-import { renderStylesheets } from './render';
+import { renderStylesheets, type RenderStylesheetsOptions } from './render';
 
 export interface CompileStylesOptions {
   readonly design: DesignSystem;
@@ -48,11 +48,13 @@ export async function compileStyles(options: CompileStylesOptions): Promise<Map<
     });
   }
 
-  const rendered = await renderStylesheets({
+  let renderOptions: RenderStylesheetsOptions;
+  renderOptions = {
     design: options.design,
-    ...(options.scope ? { scope: options.scope } : {}),
     files: [...byFile.values()],
-  });
+  };
+  if (options.scope) renderOptions.scope = options.scope;
+  const rendered = await renderStylesheets(renderOptions);
 
   const outputFiles = new Set(options.manifest.rules.map((rule) => rule.file));
 
@@ -79,13 +81,7 @@ function compileRule(rule: StyleManifestRule, design: DesignSystem, variant?: st
   return { className: rule.className, candidates, scopeRoot: rule.scopeRoot };
 }
 
-function collectRelationships(
-  rules: readonly StyleManifestRule[],
-  variant?: string
-): {
-  groupOwners: ReadonlyMap<string, string>;
-  peerOwners: ReadonlyMap<string, string>;
-} {
+function collectRelationships(rules: readonly StyleManifestRule[], variant?: string) {
   const groupOwners = new Map<string, string>();
   const peerOwners = new Map<string, string>();
 
@@ -101,7 +97,10 @@ function collectRelationships(
     }
   }
 
-  return { groupOwners, peerOwners };
+  return { groupOwners, peerOwners } satisfies {
+    groupOwners: ReadonlyMap<string, string>;
+    peerOwners: ReadonlyMap<string, string>;
+  };
 }
 
 function registerRelationshipOwner(owners: Map<string, string>, utility: string, rule: StyleManifestRule): void {

@@ -3,8 +3,10 @@ import { describe, expect, it, vi } from 'vite-plus/test';
 import type { HotkeyActionContext } from '../actions';
 import { isHotkeyToggleAction, resolveHotkeyAction } from '../actions';
 
-function mockStore(state: Record<string, unknown>) {
-  return { state } as HotkeyActionContext['store'];
+function mockStore(state: HotkeyActionContext['store']['state']) {
+  return /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+    state,
+  } as HotkeyActionContext['store'];
 }
 
 describe('resolveHotkeyAction', () => {

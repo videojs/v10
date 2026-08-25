@@ -1,3 +1,4 @@
+import { isObject } from '@videojs/utils/predicate';
 import type { Rule, Selector, SelectorComponent } from 'lightningcss';
 
 export function cloneCssAst<T>(value: T): T {
@@ -7,10 +8,16 @@ export function cloneCssAst<T>(value: T): T {
 /** Lightning CSS serializes optional AST fields as `null`, but its returned-AST
  * deserializer accepts them only when omitted. */
 export function withoutNullValues<T>(value: T): T {
-  if (Array.isArray(value)) return value.map(withoutNullValues) as T;
-  if (!value || typeof value !== 'object') return value;
+  if (Array.isArray(value))
+    return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ value.map(
+      withoutNullValues
+    ) as T;
+  if (!value || !isObject(value)) return value;
 
-  const record = value as Record<string, unknown>;
+  const record = /* SAFETY: The CSS AST reader validates fields before consuming them. */ value as Record<
+    string,
+    import('../value').VjscValue
+  >;
   for (const key of Object.keys(record)) {
     if (record[key] === null) delete record[key];
     else record[key] = withoutNullValues(record[key]);

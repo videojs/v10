@@ -33,7 +33,10 @@ describe('Video', () => {
     it('passes props to video element', () => {
       const { container } = render(<Video src="test.mp4" controls autoPlay playsInline />);
 
-      const video = container.querySelector('video') as HTMLVideoElement;
+      const video =
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ container.querySelector(
+          'video'
+        ) as HTMLVideoElement;
       expect(video?.getAttribute('src')).toBe('test.mp4');
       expect(video?.hasAttribute('controls')).toBe(true);
       expect(video?.hasAttribute('autoplay')).toBe(true);
@@ -66,7 +69,8 @@ describe('Video', () => {
       const setMedia = vi.fn();
       const store = createMockStore();
       const value: PlayerContextValue = {
-        store: store as any,
+        store:
+          /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ store as any,
         media: null,
         setMedia,
         container: null,
@@ -82,7 +86,8 @@ describe('Video', () => {
       const setMedia = vi.fn();
       const store = createMockStore();
       const value: PlayerContextValue = {
-        store: store as any,
+        store:
+          /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ store as any,
         media: null,
         setMedia,
         container: null,
@@ -101,7 +106,8 @@ describe('Video', () => {
       const setMedia = vi.fn();
       const store = createMockStore();
       const value: PlayerContextValue = {
-        store: store as any,
+        store:
+          /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ store as any,
         media: null,
         setMedia,
         container: null,

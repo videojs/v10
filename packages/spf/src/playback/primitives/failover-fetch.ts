@@ -20,8 +20,13 @@ type FailoverState<K extends SelectedTrackKey> = {
   failedCdns?: Signal<string[] | undefined>;
 } & { [P in K]: ReadonlySignal<string | undefined> };
 
-/** Any `Resource`-addressable fetch — both `FetchText` and `FetchBytes` qualify. */
-type FailoverableFetch = (addressable: Resource, options?: FetchOptions) => Promise<unknown>;
+/** Select `Resource`-addressable async functions while preserving their exact result. */
+type FailoverableFetch<Fetch extends (...args: never[]) => void> = Fetch extends (
+  addressable: Resource,
+  options?: FetchOptions
+) => Promise<infer _Result>
+  ? Fetch
+  : never;
 
 /**
  * Decorate a fetch so a failed request trips the **selected track's** CDN into
@@ -41,13 +46,16 @@ type FailoverableFetch = (addressable: Resource, options?: FetchOptions) => Prom
  * No-op when no failover monitor is composed (it owns the signal) or the
  * selected track can't be located.
  */
-export function failoverFetch<K extends SelectedTrackKey, Fetch extends FailoverableFetch>(
-  baseFetch: Fetch,
+export function failoverFetch<K extends SelectedTrackKey, Fetch extends (...args: never[]) => void>(
+  baseFetch: FailoverableFetch<Fetch>,
   state: FailoverState<K>,
   config: { selectedKey: K; getCdnId?: GetCdnId }
-): Fetch {
+): FailoverableFetch<Fetch> {
   const getCdnId = config.getCdnId ?? defaultGetCdnId;
-  return (async (addressable: Resource, options?: FetchOptions) => {
+  return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (async (
+    addressable: Resource,
+    options?: FetchOptions
+  ) => {
     try {
       return await baseFetch(addressable, options);
     } catch (error) {
@@ -59,5 +67,5 @@ export function failoverFetch<K extends SelectedTrackKey, Fetch extends Failover
       }
       throw error;
     }
-  }) as Fetch;
+  }) as FailoverableFetch<Fetch>;
 }

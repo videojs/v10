@@ -26,7 +26,7 @@ function skdInitData(contentId: string): ArrayBuffer {
 function fireKeyRequest(
   video: HTMLVideoElement,
   type: 'encrypted' | 'webkitneedkey' = 'encrypted',
-  initData?: unknown
+  initData?: BufferSource | null
 ) {
   video.dispatchEvent(
     Object.assign(new Event(type), {
@@ -83,7 +83,11 @@ function stubKeySystem(): KeySystemStubs {
     writable: true,
   });
 
-  return { session, mediaKeys, requestMediaKeySystemAccess } as unknown as KeySystemStubs;
+  return /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+    session,
+    mediaKeys,
+    requestMediaKeySystemAccess,
+  } as KeySystemStubs;
 }
 
 /** The pre-EME WebKit key API, which jsdom has no notion of. */
@@ -91,7 +95,10 @@ function stubWebKitKeySystem() {
   const listeners = new Map<string, Set<EventListener>>();
 
   const session = {
-    error: null as { code: number; systemCode: number } | null,
+    error: /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ null as {
+      code: number;
+      systemCode: number;
+    } | null,
     update: vi.fn(),
     close: vi.fn(),
     addEventListener(type: string, listener: EventListener, options?: AddEventListenerOptions) {
@@ -108,7 +115,7 @@ function stubWebKitKeySystem() {
   };
 
   const createSession = vi.fn((_mimeType: string, _initData: BufferSource) => session);
-  const setMediaKeys = vi.fn((_keys: unknown) => {});
+  const setMediaKeys = vi.fn((_keys: MediaKeys | null) => {});
 
   vi.stubGlobal(
     'WebKitMediaKeys',
@@ -122,7 +129,7 @@ function stubWebKitKeySystem() {
     createSession,
     setMediaKeys,
     install(video: HTMLVideoElement) {
-      let current: unknown = null;
+      let current: MediaKeys | null = null;
       setMediaKeys.mockImplementation((value) => {
         current = value;
       });
@@ -137,7 +144,10 @@ function stubFetch() {
   return vi.fn(async (input: RequestInfo | URL) => {
     const url = String(input);
     const body = url === CERTIFICATE_URL ? CERTIFICATE : CKC;
-    return { ok: true, arrayBuffer: async () => body.buffer.slice(0) } as Response;
+    return /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+      ok: true,
+      arrayBuffer: async () => body.buffer.slice(0),
+    } as Response;
   });
 }
 
@@ -350,8 +360,8 @@ describe('NativeHlsMediaDrmMixin', () => {
     const { session } = stubKeySystem();
     fetchMock.mockImplementation(async (input: RequestInfo | URL) =>
       String(input) === CERTIFICATE_URL
-        ? ({ ok: true, arrayBuffer: async () => CERTIFICATE.buffer.slice(0) } as Response)
-        : ({ ok: false, arrayBuffer: async () => new ArrayBuffer(0) } as Response)
+        ? new Response(new Uint8Array(CERTIFICATE))
+        : new Response(null, { status: 500 })
     );
 
     const { media, video } = setup();
@@ -378,7 +388,9 @@ describe('NativeHlsMediaDrmMixin', () => {
     session.keyStatuses.set('key', 'output-restricted');
     session.dispatch(new Event('keystatuseschange'));
 
-    const event = errors.mock.calls[0]![0] as ErrorEvent;
+    const event =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ errors.mock
+        .calls[0]![0] as ErrorEvent;
     expect(event.error.context).toBe(NativeHlsDrmErrors.OUTPUT_RESTRICTED);
     expect(event.error.fatal).toBe(false);
     // Playback continues, so it must not stand in for whatever fails next.
@@ -505,7 +517,9 @@ describe('NativeHlsMediaDrmMixin', () => {
       fireKeyRequest(video, 'webkitneedkey');
       await settle();
 
-      const packed = webkit.createSession.mock.calls[0]![1] as Uint8Array;
+      const packed =
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ webkit
+          .createSession.mock.calls[0]![1] as Uint8Array;
       const initData = skdInitData('abc123');
       const view = new DataView(packed.buffer);
 

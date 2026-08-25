@@ -95,7 +95,12 @@ async function build(source: string, plugin: Plugin): Promise<{ chunk: OutputChu
 
   if (!chunk) throw new Error('Expected fixture build to emit a chunk.');
   if (!map) throw new Error('Expected fixture build to emit a source map.');
-  return { chunk, map: JSON.parse(String(map.source)) as SourceMapOutput };
+  return {
+    chunk,
+    map: /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ JSON.parse(
+      String(map.source)
+    ) as SourceMapOutput,
+  };
 }
 
 function fixturePlugin(source: string): Plugin {

@@ -1,5 +1,6 @@
 import { resolve } from 'node:path';
 
+import { isFunction } from '@videojs/utils/predicate';
 import type { Plugin } from 'rolldown';
 import { rolldown } from 'rolldown';
 import { describe, expect, it } from 'vite-plus/test';
@@ -117,12 +118,14 @@ function virtualCssIds(source: string): string[] {
   return [...source.matchAll(/["'](virtual:vjsc\/css\/[^"']+)["']/g)].map((match) => match[1]!);
 }
 
-async function resolvePluginId(plugin: Plugin, id: string): Promise<unknown> {
+async function resolvePluginId(plugin: Plugin, id: string): Promise<import('../../value').VjscValue> {
   const hook = plugin.resolveId;
   if (!hook) return null;
 
-  const handler = typeof hook === 'function' ? hook : hook.handler;
-  return (handler as (id: string) => unknown)(id);
+  const handler = isFunction(hook) ? hook : hook.handler;
+  return /* SAFETY: The fixture invokes the plugin's documented string-id shorthand. */ (
+    handler as (id: string) => import('../../value').VjscValue
+  )(id);
 }
 
 function fixturePlugin(source: string): Plugin {

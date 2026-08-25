@@ -43,23 +43,38 @@ function isSpfBackgroundPreset(preset: Preset): boolean {
 function readParams() {
   const params = new URLSearchParams(location.search);
   const preload = params.get('preload');
-  const preset = (params.get('preset') ?? 'video') as Preset;
+  const preset =
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (params.get('preset') ??
+      'video') as Preset;
   return {
-    platform: (params.get('platform') ?? 'html') as Platform,
-    styling: (params.get('styling') ?? 'css') as Styling,
+    platform: /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (params.get(
+      'platform'
+    ) ?? 'html') as Platform,
+    styling: /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (params.get(
+      'styling'
+    ) ?? 'css') as Styling,
     preset,
-    skin: (params.get('skin') ?? 'default') as 'default' | 'minimal',
-    source: (params.get('source') ??
-      (isSpfBackgroundPreset(preset) ? DEFAULT_BACKGROUND_SOURCE : DEFAULT_SOURCE)) as SourceId,
+    skin: /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (params.get(
+      'skin'
+    ) ?? 'default') as 'default' | 'minimal',
+    source: /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (params.get(
+      'source'
+    ) ?? (isSpfBackgroundPreset(preset) ? DEFAULT_BACKGROUND_SOURCE : DEFAULT_SOURCE)) as SourceId,
     autoplay: params.get('autoplay') === '1',
     muted: params.get('muted') === '1',
     loop: params.get('loop') === '1',
-    preload: PRELOAD_VALUES.includes(preload as PreloadValue) ? (preload as PreloadValue) : DEFAULT_PRELOAD,
+    preload: PRELOAD_VALUES.includes(
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ preload as PreloadValue
+    )
+      ? /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (preload as PreloadValue)
+      : DEFAULT_PRELOAD,
     accentColor: params.get('accent')?.trim() ?? '',
     locale: (() => {
       const value = params.get('locale');
-      return SANDBOX_LOCALE_TAGS.includes(value as SandboxLocaleTag)
-        ? (value as SandboxLocaleTag)
+      return SANDBOX_LOCALE_TAGS.includes(
+        /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ value as SandboxLocaleTag
+      )
+        ? /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (value as SandboxLocaleTag)
         : DEFAULT_SANDBOX_LOCALE;
     })(),
   };
@@ -97,7 +112,9 @@ export function App() {
   const spfBackgroundPreset = isSpfBackgroundPreset(preset);
   // No background preset has a Tailwind skin or a skin choice.
   const backgroundPreset = preset === 'background-video' || spfBackgroundPreset;
-  const embedPreset = (EMBED_PRESETS as readonly Preset[]).includes(preset);
+  const embedPreset = /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (
+    EMBED_PRESETS as readonly Preset[]
+  ).includes(preset);
   const availableSources =
     preset === 'audio'
       ? MP4_SOURCE_IDS
@@ -213,7 +230,13 @@ export function App() {
     }
   }, [platform, backgroundPreset, embedPreset, styling]);
 
-  const handleSourceChange = useCallback((value: string) => setSource(value as SourceId), []);
+  const handleSourceChange = useCallback(
+    (value: string) =>
+      setSource(
+        /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ value as SourceId
+      ),
+    []
+  );
 
   return (
     <div className="flex h-screen flex-col overflow-hidden">

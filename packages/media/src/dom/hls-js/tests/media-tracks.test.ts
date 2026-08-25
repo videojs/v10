@@ -16,9 +16,24 @@ class FakeHost extends HTMLVideoElementHost {
 
 const HlsJsMediaMediaTracks = HlsJsMediaMediaTracksMixin(MediaTracksMixin(FakeHost));
 
+interface MockVideoLevel {
+  url: string[];
+  width?: number;
+  height?: number;
+  videoCodec?: string;
+  bitrate?: number;
+}
+
+interface MockAudioTrack {
+  id: number;
+  default?: boolean;
+  name?: string;
+  lang?: string;
+}
+
 function createEngine(): Hls {
   const listeners = new Map<string, Set<(...args: any[]) => void>>();
-  return {
+  return /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
     audioTracks: [{ id: 0 }, { id: 1 }],
     audioTrack: 0,
     nextLevel: -1,
@@ -40,20 +55,28 @@ function createEngine(): Hls {
     emit(event: string, ...args: any[]) {
       for (const fn of [...(listeners.get(event) ?? [])]) fn(event, ...args);
     },
-  } as unknown as Hls;
+  } as Hls;
 }
 
-const manifestParsed = (engine: Hls, levels: Array<Record<string, unknown>>) =>
-  (engine as any).emit(Hls.Events.MANIFEST_PARSED, { levels });
+const manifestParsed = (engine: Hls, levels: MockVideoLevel[]) =>
+  /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+    engine as any
+  ).emit(Hls.Events.MANIFEST_PARSED, { levels });
 
-const audioTracksUpdated = (engine: Hls, audioTracks: Array<Record<string, unknown>>) =>
-  (engine as any).emit(Hls.Events.AUDIO_TRACKS_UPDATED, { audioTracks });
+const audioTracksUpdated = (engine: Hls, audioTracks: MockAudioTrack[]) =>
+  /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+    engine as any
+  ).emit(Hls.Events.AUDIO_TRACKS_UPDATED, { audioTracks });
 
-const audioTrackSwitching = (engine: Hls, audioTrack: Record<string, unknown>) =>
-  (engine as any).emit(Hls.Events.AUDIO_TRACK_SWITCHING, audioTrack);
+const audioTrackSwitching = (engine: Hls, audioTrack: MockAudioTrack) =>
+  /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+    engine as any
+  ).emit(Hls.Events.AUDIO_TRACK_SWITCHING, audioTrack);
 
-const audioTrackSwitched = (engine: Hls, audioTrack: Record<string, unknown>) =>
-  (engine as any).emit(Hls.Events.AUDIO_TRACK_SWITCHED, audioTrack);
+const audioTrackSwitched = (engine: Hls, audioTrack: MockAudioTrack) =>
+  /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+    engine as any
+  ).emit(Hls.Events.AUDIO_TRACK_SWITCHED, audioTrack);
 
 function flush() {
   return Promise.resolve();
@@ -128,7 +151,9 @@ describe('HlsJsMediaMediaTracksMixin', () => {
 
     manifestParsed(engine, [{ url: ['a'] }, { url: ['b'] }, { url: ['c'] }]);
 
-    (engine as any).emit(Hls.Events.LEVEL_SWITCHED, { level: 1 });
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+      engine as any
+    ).emit(Hls.Events.LEVEL_SWITCHED, { level: 1 });
 
     expect([...host.videoRenditions].map((rendition) => rendition.active)).toEqual([false, true, false]);
     expect(engine.nextLevel).toBe(-1);
@@ -159,7 +184,9 @@ describe('HlsJsMediaMediaTracksMixin', () => {
     manifestParsed(engine, levels);
     expect(host.videoRenditions.length).toBe(3);
 
-    (engine as any).emit(Hls.Events.LEVELS_UPDATED, { levels: [levels[0], levels[2]] });
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+      engine as any
+    ).emit(Hls.Events.LEVELS_UPDATED, { levels: [levels[0], levels[2]] });
 
     expect([...host.videoRenditions].map((rendition) => rendition.id)).toEqual(['0', '2']);
   });
@@ -172,7 +199,9 @@ describe('HlsJsMediaMediaTracksMixin', () => {
     manifestParsed(engine, levels);
     expect(host.videoRenditions.length).toBe(3);
 
-    (engine as any).emit(Hls.Events.LEVELS_UPDATED, { levels: [{ ...levels[0] }, { ...levels[2] }] });
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+      engine as any
+    ).emit(Hls.Events.LEVELS_UPDATED, { levels: [{ ...levels[0] }, { ...levels[2] }] });
 
     expect([...host.videoRenditions].map((rendition) => rendition.id)).toEqual(['0', '2']);
   });
@@ -215,12 +244,16 @@ describe('HlsJsMediaMediaTracksMixin', () => {
 
     // A rendition switch moves to another audio group: hls.js clears its
     // selection, re-announces the same languages, then re-applies the match.
-    (engine as any).audioTrack = -1;
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+      engine as any
+    ).audioTrack = -1;
     audioTracksUpdated(
       engine,
       audioTracks.map((audioTrack) => ({ ...audioTrack }))
     );
-    (engine as any).audioTrack = 1;
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+      engine as any
+    ).audioTrack = 1;
     audioTrackSwitching(engine, audioTracks[1]!);
     await flush();
 
@@ -255,7 +288,9 @@ describe('HlsJsMediaMediaTracksMixin', () => {
     expect(host.videoTracks.length).toBe(1);
     expect(host.audioTracks.length).toBe(1);
 
-    (engine as any).emit(Hls.Events.DESTROYING);
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+      engine as any
+    ).emit(Hls.Events.DESTROYING);
 
     expect(host.videoTracks.length).toBe(0);
     expect(host.audioTracks.length).toBe(0);

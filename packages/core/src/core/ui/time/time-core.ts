@@ -45,23 +45,23 @@ export interface TimeState {
   datetime: string;
 }
 
-const TOGGLE_LABELS: Record<TimeType, Text> = {
+const TOGGLE_LABELS = {
   current: showElapsedText,
   duration: showDurationText,
   remaining: showRemainingText,
-};
+} satisfies Record<TimeType, Text>;
 
-const DEFAULT_LABELS: Record<TimeType, Text> = {
+const DEFAULT_LABELS = {
   current: currentText,
   duration: durationText,
   remaining: remainingText,
-};
+} satisfies Record<TimeType, Text>;
 
-const TOGGLE_DESCRIPTIONS: Record<TimeType, Text> = {
+const TOGGLE_DESCRIPTIONS = {
   current: toggleElapsedText,
   duration: toggleDurationText,
   remaining: toggleDurationText,
-};
+} satisfies Record<TimeType, Text>;
 
 export class TimeCore {
   static readonly defaultProps: NonNullableObject<TimeProps> = {

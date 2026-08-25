@@ -14,6 +14,7 @@ import { existsSync, readFileSync, statSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { isFunction, isObject, isString } from '@videojs/utils/predicate';
 import ts from 'typescript';
 
 import { resolveImports } from '../../../build/plugins/resolve-css-imports.ts';
@@ -334,14 +335,19 @@ export function resolveCss(cssPath: string): string {
 // React skin processing - resolve imports, produce TSX + JSX.
 
 /** Serialize a JS value to source code. */
-function serializeValue(value: unknown, indent = 0): string {
-  if (typeof value === 'string') return JSON.stringify(value);
-  if (typeof value === 'function') {
+function serializeValue(value: import('./runtime-value').SkinRuntimeValue, indent = 0): string {
+  if (isString(value)) return JSON.stringify(value);
+  if (isFunction(value)) {
     // Function tokens (like `root`) — resolve with false (no shadow DOM)
-    return `() => ${JSON.stringify((value as (arg: boolean) => string)(false))}`;
+    return `() => ${JSON.stringify(/* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (value as (arg: boolean) => string)(false))}`;
   }
-  if (typeof value === 'object' && value !== null) {
-    const entries = Object.entries(value as Record<string, unknown>);
+  if (isObject(value) && value !== null) {
+    const entries = Object.entries(
+      /* SAFETY: isObject establishes an enumerable runtime module object. */ value as Record<
+        string,
+        import('./runtime-value').SkinRuntimeValue
+      >
+    );
     const pad = '  '.repeat(indent + 1);
     const closePad = '  '.repeat(indent);
     const parts = entries.map(([k, v]) => `${pad}${k}: ${serializeValue(v, indent + 1)}`);
@@ -545,7 +551,7 @@ function rewritePathAliases(source: string): string {
  * - `@videojs/utils/predicate` → inline function definitions
  * - `isRenderProp` from `@videojs/react` → inline (not a public export)
  */
-function inlinePrivatePackages(source: string): { source: string; utilities: string[] } {
+function inlinePrivatePackages(source: string) {
   const utilities: string[] = [];
 
   // Merge @videojs/core/dom imports into @videojs/react
@@ -606,7 +612,7 @@ function inlinePrivatePackages(source: string): { source: string; utilities: str
     );
   }
 
-  return { source, utilities };
+  return { source, utilities } satisfies { source: string; utilities: string[] };
 }
 
 /** Find the index of the closing `)` that matches the `(` at `openIndex`. */
@@ -723,7 +729,22 @@ export function resolvePropsInterface(source: string): string {
 
 type SectionKey = 'top' | 'mainType' | 'main' | 'labels' | 'components' | 'errorDialog' | 'utilities' | 'icons';
 
-const SECTION_HEADERS: Partial<Record<SectionKey, string>> = {
+interface SectionHeaderByKey {
+  readonly [section: string]: string | undefined;
+}
+
+interface ReactOutputSections {
+  top: string[];
+  mainType: string[];
+  main: string[];
+  labels: string[];
+  components: string[];
+  errorDialog: string[];
+  utilities: string[];
+  icons: string[];
+}
+
+const SECTION_HEADERS: SectionHeaderByKey = {
   mainType: 'Skin',
   labels: 'Labels',
   components: 'Components',
@@ -762,7 +783,7 @@ function reorganizeReactOutput(source: string, extraUtilities: string[], extraIc
   const sourceFile = createSourceFile('output.tsx', source);
 
   const imports: string[] = [];
-  const sections: Record<SectionKey, string[]> = {
+  const sections: ReactOutputSections = {
     top: [],
     mainType: [],
     main: [],
@@ -895,10 +916,7 @@ function destructureSkinProps(source: string): string {
  * into VideoPlayer/AudioPlayer wrapped in `Player`, and removes the
  * separate Skin export.
  */
-function flattenSkinIntoPlayer(
-  source: string,
-  skin: Pick<ReactSkinDef, 'group' | 'live' | 'mediaType' | 'style'>
-): { player: string; component: string } {
+function flattenSkinIntoPlayer(source: string, skin: Pick<ReactSkinDef, 'group' | 'live' | 'mediaType' | 'style'>) {
   const { group, live, mediaType, style } = skin;
   const isVideo = mediaType === 'video';
   const mediaTag = live ? LIVE_MEDIA[mediaType].component : isVideo ? 'Video' : 'Audio';
@@ -974,7 +992,7 @@ function flattenSkinIntoPlayer(
   // 4. Remove the "Skin" section header (it's now part of "Player")
   source = source.replace(/\/\/ =+\n\/\/ Skin\n\/\/ =+\n\n/, `${sectionHeader('Player')}\n\n`);
 
-  return { player, component: source };
+  return { player, component: source } satisfies { player: string; component: string };
 }
 
 /**

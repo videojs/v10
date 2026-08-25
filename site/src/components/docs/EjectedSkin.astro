@@ -13,7 +13,11 @@ const entry = await getEntry('ejectedSkins', id);
 if (!entry) return;
 const skin = entry.data;
 
-const EXT_TO_LANG: Record<string, BundledLanguage> = {
+interface LanguageByExtension {
+  readonly [extension: string]: BundledLanguage | undefined;
+}
+
+const EXT_TO_LANG: LanguageByExtension = {
   ts: 'ts',
   tsx: 'tsx',
   js: 'js',

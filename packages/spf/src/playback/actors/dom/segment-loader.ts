@@ -382,13 +382,15 @@ export function createSegmentLoaderActor(
 
   const scheduleAll = (tasks: LoadTask[], { getContext, setContext, runner }: Ctx): void => {
     tasks.forEach((op) => {
-      runner.schedule(makeLoadTask(op, { getContext, setContext, pipelines, deps })).then(undefined, (e: unknown) => {
-        if (e instanceof Error && e.name === 'AbortError') return;
-        // On unexpected fetch/append errors, abort remaining tasks so a failed
-        // init doesn't cause segment fetches to proceed with no init segment.
-        console.error('Unexpected error in segment loader:', e);
-        runner.abortPending();
-      });
+      runner
+        .schedule(makeLoadTask(op, { getContext, setContext, pipelines, deps }))
+        .then(undefined, (cause: unknown) => {
+          if (cause instanceof Error && cause.name === 'AbortError') return;
+          // On unexpected fetch/append errors, abort remaining tasks so a failed
+          // init doesn't cause segment fetches to proceed with no init segment.
+          console.error('Unexpected error in segment loader:', cause);
+          runner.abortPending();
+        });
     });
   };
 

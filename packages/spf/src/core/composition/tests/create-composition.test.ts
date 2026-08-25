@@ -1,3 +1,4 @@
+import { isFunction } from '@videojs/utils/predicate';
 import { describe, expect, it } from 'vite-plus/test';
 
 import {
@@ -31,7 +32,7 @@ describe('createComposition', () => {
       };
       const composition = createComposition([behavior]);
 
-      expect(typeof composition.state.count.get).toBe('function');
+      expect(isFunction(composition.state.count.get)).toBe(true);
       expect(composition.state.count.get()).toBeUndefined();
     });
 
@@ -43,7 +44,7 @@ describe('createComposition', () => {
       };
       const composition = createComposition([behavior]);
 
-      expect(typeof composition.context.resource.get).toBe('function');
+      expect(isFunction(composition.context.resource.get)).toBe(true);
       expect(composition.context.resource.get()).toBeUndefined();
     });
 
@@ -319,7 +320,11 @@ describe('defineBehavior', () => {
     const behavior = defineBehavior({
       stateKeys: ['a'],
       contextKeys: ['b'],
-      setup: setup as (deps: { state: StateSignals<{ a?: number }>; context: ContextSignals<{ b?: string }> }) => void,
+      setup:
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ setup as (deps: {
+          state: StateSignals<{ a?: number }>;
+          context: ContextSignals<{ b?: string }>;
+        }) => void,
     });
     expect(behavior.stateKeys).toEqual(['a']);
     expect(behavior.contextKeys).toEqual(['b']);
@@ -375,8 +380,8 @@ describe('defineBehavior', () => {
 describe('buildSignalMap', () => {
   it('creates one signal per key', () => {
     const map = buildSignalMap<{ a?: number; b?: string }>(['a', 'b'], {});
-    expect(typeof map.a.get).toBe('function');
-    expect(typeof map.b.get).toBe('function');
+    expect(isFunction(map.a.get)).toBe(true);
+    expect(isFunction(map.b.get)).toBe(true);
     expect(map.a.get()).toBeUndefined();
     expect(map.b.get()).toBeUndefined();
   });

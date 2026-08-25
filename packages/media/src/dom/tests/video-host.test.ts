@@ -63,7 +63,10 @@ describe('HTMLVideoElementHost', () => {
     });
 
     it('detects WebKit picture-in-picture presentation mode', () => {
-      const video = document.createElement('video') as HTMLVideoElement & WebKitVideoElement;
+      const video =
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+          'video'
+        ) as HTMLVideoElement & WebKitVideoElement;
       video.webkitPresentationMode = 'picture-in-picture';
 
       const host = new HTMLVideoElementHost();
@@ -73,7 +76,10 @@ describe('HTMLVideoElementHost', () => {
     });
 
     it('returns false when WebKit presentation mode is inline', () => {
-      const video = document.createElement('video') as HTMLVideoElement & WebKitVideoElement;
+      const video =
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+          'video'
+        ) as HTMLVideoElement & WebKitVideoElement;
       video.webkitPresentationMode = 'inline';
 
       const host = new HTMLVideoElementHost();
@@ -108,11 +114,15 @@ describe('HTMLVideoElementHost', () => {
       const host = new HTMLVideoElementHost();
       host.attach(video);
 
-      Object.defineProperty(document as WebKitDocument, 'webkitFullscreenElement', {
-        value: video,
-        writable: true,
-        configurable: true,
-      });
+      Object.defineProperty(
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document as WebKitDocument,
+        'webkitFullscreenElement',
+        {
+          value: video,
+          writable: true,
+          configurable: true,
+        }
+      );
 
       expect(host.isFullscreen).toBe(true);
     });
@@ -133,7 +143,10 @@ describe('HTMLVideoElementHost', () => {
     });
 
     it('detects WebKit fullscreen presentation mode', () => {
-      const video = document.createElement('video') as HTMLVideoElement & WebKitVideoElement;
+      const video =
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+          'video'
+        ) as HTMLVideoElement & WebKitVideoElement;
       video.webkitPresentationMode = 'fullscreen';
 
       const host = new HTMLVideoElementHost();
@@ -143,7 +156,10 @@ describe('HTMLVideoElementHost', () => {
     });
 
     it('returns false when WebKit presentation mode is inline', () => {
-      const video = document.createElement('video') as HTMLVideoElement & WebKitVideoElement;
+      const video =
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+          'video'
+        ) as HTMLVideoElement & WebKitVideoElement;
       video.webkitPresentationMode = 'inline';
 
       const host = new HTMLVideoElementHost();

@@ -71,7 +71,7 @@
       });
     }
 
-    if (typeof requestIdleCallback === "function") {
+    if (globalThis.requestIdleCallback instanceof Function) {
       requestIdleCallback(load);
     } else {
       setTimeout(load, 3000);

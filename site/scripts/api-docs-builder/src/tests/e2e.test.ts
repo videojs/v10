@@ -156,8 +156,16 @@ describe('Component pipeline (end-to-end)', () => {
       // `ref` prop is auto-skipped. `_internalFlag` has @ignore and is skipped.
       // What remains: disabled, label, onPressedChange.
       expect(Object.keys(ref.props)).toEqual(expect.arrayContaining(['disabled', 'label', 'onPressedChange']));
-      expect(ref.props['ref' as keyof typeof ref.props]).toBeUndefined();
-      expect(ref.props['_internalFlag' as keyof typeof ref.props]).toBeUndefined();
+      expect(
+        ref.props[
+          /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ 'ref' as keyof typeof ref.props
+        ]
+      ).toBeUndefined();
+      expect(
+        ref.props[
+          /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ '_internalFlag' as keyof typeof ref.props
+        ]
+      ).toBeUndefined();
 
       // disabled: simple boolean, has defaultProps value.
       // Props that are non-optional in the interface have required: true,
@@ -991,14 +999,17 @@ describe('Feature pipeline (end-to-end)', () => {
   // is part of the contract, not a nicety.
 
   describe('captionStyle (public setter and config degrade paths)', () => {
-    function generateWithWarnings(): { results: FeatureResult[]; warnings: string[] } {
+    function generateWithWarnings() {
       const warnings: string[] = [];
       const spy = vi.spyOn(console, 'warn').mockImplementation((...args: unknown[]) => {
         warnings.push(args.map(String).join(' '));
       });
 
       try {
-        return { results: generateFeatureReferences(FIXTURE_ROOT), warnings };
+        return { results: generateFeatureReferences(FIXTURE_ROOT), warnings } satisfies {
+          results: FeatureResult[];
+          warnings: string[];
+        };
       } finally {
         spy.mockRestore();
       }
@@ -1098,11 +1109,27 @@ describe('Feature pipeline (end-to-end)', () => {
     it('does not mix state and actions', () => {
       const ref = findFeature('playback')!.reference;
       // Methods should not appear in state
-      expect(ref.state['play' as keyof typeof ref.state]).toBeUndefined();
-      expect(ref.state['pause' as keyof typeof ref.state]).toBeUndefined();
+      expect(
+        ref.state[
+          /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ 'play' as keyof typeof ref.state
+        ]
+      ).toBeUndefined();
+      expect(
+        ref.state[
+          /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ 'pause' as keyof typeof ref.state
+        ]
+      ).toBeUndefined();
       // Properties should not appear in actions
-      expect(ref.actions['paused' as keyof typeof ref.actions]).toBeUndefined();
-      expect(ref.actions['ended' as keyof typeof ref.actions]).toBeUndefined();
+      expect(
+        ref.actions[
+          /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ 'paused' as keyof typeof ref.actions
+        ]
+      ).toBeUndefined();
+      expect(
+        ref.actions[
+          /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ 'ended' as keyof typeof ref.actions
+        ]
+      ).toBeUndefined();
     });
   });
 

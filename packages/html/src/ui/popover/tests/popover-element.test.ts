@@ -7,7 +7,9 @@ let tagCounter = 0;
 function createPopover(): PopoverElement {
   const tag = `test-popover-${tagCounter++}`;
   customElements.define(tag, class extends PopoverElement {});
-  return document.createElement(tag) as PopoverElement;
+  return /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+    tag
+  ) as PopoverElement;
 }
 
 function makeDOMRect(x: number, y: number, width: number, height: number): DOMRect {

@@ -14,7 +14,9 @@ import { MuxVideo } from '../mux-video';
 function renderWithMedia(ui: ReactElement) {
   const source = vi.spyOn(MuxMedia.prototype, 'source', 'set');
   const result = render(ui);
-  const media = source.mock.contexts[0] as MuxMedia;
+  const media =
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ source.mock
+      .contexts[0] as MuxMedia;
   source.mockRestore();
   return { ...result, media };
 }

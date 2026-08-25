@@ -4,9 +4,11 @@
 import { mdxToJs } from 'satteri';
 import { describe, expect, it } from 'vite-plus/test';
 
+import { isNumber, isPlainObject, isString } from '../../../../packages/utils/src/predicate/index';
 import { satteriConditionalHeadings } from '../satteriConditionalHeadings';
+import type { SiteDataObject, SiteDataValue } from '../site-data-value';
 
-interface Heading {
+interface Heading extends SiteDataObject {
   depth: number;
   text: string;
   slug: string;
@@ -14,17 +16,23 @@ interface Heading {
   styles?: string[];
 }
 
+function isHeading(value: SiteDataValue): value is Heading {
+  return isPlainObject(value) && isNumber(value.depth) && isString(value.text) && isString(value.slug);
+}
+
 function collect(source: string): Heading[] {
+  const frontmatter: Record<string, import('../site-data-value').SiteDataValue> = {};
   const data = {
     astro: {
-      frontmatter: {} as Record<string, unknown>,
+      frontmatter,
       headings: [],
       localImagePaths: new Set<string>(),
       remoteImagePaths: new Set<string>(),
     },
   };
   mdxToJs(source, { mdastPlugins: [satteriConditionalHeadings()], data });
-  return (data.astro.frontmatter.conditionalHeadings ?? []) as Heading[];
+  const headings = data.astro.frontmatter.conditionalHeadings;
+  return Array.isArray(headings) ? headings.filter(isHeading) : [];
 }
 
 describe('satteriConditionalHeadings', () => {

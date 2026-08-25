@@ -14,9 +14,11 @@ function uniqueTag(base: string): string {
   return `${base}-${tagCounter++}`;
 }
 
-function createElement<Element extends HTMLElement>(Base: abstract new () => Element): Element {
+function createElement<Element extends HTMLElement>(Base: new () => Element): Element {
   const tag = uniqueTag('test-el');
-  customElements.define(tag, class extends (Base as unknown as typeof HTMLElement) {});
+  // SAFETY: The helper constrains Base to an HTMLElement constructor accepted by customElements.define.
+  customElements.define(tag, class extends (Base as typeof HTMLElement) {});
+  // SAFETY: The tag was defined immediately above with Base, so creation returns Element.
   return document.createElement(tag) as Element;
 }
 
@@ -65,7 +67,7 @@ class FakeMedia extends EventTarget {
     this.dispatchEvent(new Event('pause'));
   }
 
-  play(): void {
+  async play(): Promise<void> {
     this.paused = false;
     this.dispatchEvent(new Event('play'));
   }
@@ -86,16 +88,22 @@ function createMetadataOnlyStore() {
 }
 
 type TitleStore = ReturnType<typeof createTitleStore>;
+type TestPlayerStore =
+  | TitleStore
+  | ReturnType<typeof createNoControlsStore>
+  | ReturnType<typeof createMetadataOnlyStore>;
+type ConfigurableStore = Parameters<typeof setPlayerConfigValue>[0];
 
 const titleConfig = metadataFeature.config!.title;
 
 /** Set the user title the way a provider does, through the feature's own config. */
-function setTitle(store: object, value: string | null): void {
+function setTitle(store: ConfigurableStore, value: string | null): void {
   setPlayerConfigValue(store, titleConfig, value);
 }
 
 class TestPlayerProviderElement extends UIElement {
-  store: AnyPlayerStore = createTitleStore() as unknown as AnyPlayerStore;
+  // SAFETY: createTitleStore returns the AnyPlayerStore contract consumed by playerContext.
+  store: AnyPlayerStore = createTitleStore() as AnyPlayerStore;
 
   readonly #provider = new ContextProvider(this, { context: playerContext });
 
@@ -107,9 +115,13 @@ class TestPlayerProviderElement extends UIElement {
 
 defineElement('test-title-player', TestPlayerProviderElement);
 
-async function setup(store?: object) {
+async function setup(store?: TestPlayerStore) {
+  // SAFETY: test-title-player is registered with TestPlayerProviderElement above.
   const provider = document.createElement('test-title-player') as TestPlayerProviderElement;
-  if (store) provider.store = store as unknown as AnyPlayerStore;
+  if (store) {
+    // SAFETY: Every TestPlayerStore variant implements the AnyPlayerStore context contract.
+    provider.store = store as AnyPlayerStore;
+  }
 
   const title = createElement(TitleElement);
 
@@ -162,7 +174,8 @@ describe('TitleElement', () => {
   it('ignores controls and playback state', async () => {
     const store: TitleStore = createTitleStore();
     const media = new FakeMedia();
-    store.attach({ media: media as unknown as PlayerTarget['media'], container: null });
+    // SAFETY: FakeMedia implements the playback capability surface used by this test's feature set.
+    store.attach({ media, container: null });
 
     const { title } = await setup(store);
 

@@ -9,13 +9,17 @@ import { describe, expect, it } from 'vite-plus/test';
  * Tests run in real Chromium via @vitest/browser-playwright.
  */
 describe('TextTrack cue preservation across mode transitions', () => {
-  function makeTrack(): { video: HTMLVideoElement; trackEl: HTMLTrackElement; track: TextTrack } {
+  function makeTrack() {
     const video = document.createElement('video');
     const trackEl = document.createElement('track');
     trackEl.kind = 'subtitles';
     // No src — SPF manages cues via addCue() only
     video.appendChild(trackEl);
-    return { video, trackEl, track: trackEl.track };
+    return { video, trackEl, track: trackEl.track } satisfies {
+      video: HTMLVideoElement;
+      trackEl: HTMLTrackElement;
+      track: TextTrack;
+    };
   }
 
   it('track.cues is null when mode="disabled"', () => {

@@ -27,14 +27,20 @@ function attach(media: Media) {
   const controller = new AbortController();
   const set = vi.fn();
 
-  remotePlaybackFeature.attach?.({
-    target: { media, container: null } as PlayerTarget,
-    signal: controller.signal,
-    set,
-    get: () => ({}) as RemotePlaybackState,
-    store: { state: {}, subscribe: () => () => {} },
-    reportError: () => {},
-  } as AttachContext<PlayerTarget, RemotePlaybackState>);
+  remotePlaybackFeature.attach?.(
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+      target: /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+        media,
+        container: null,
+      } as PlayerTarget,
+      signal: controller.signal,
+      set,
+      get: () =>
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ ({}) as RemotePlaybackState,
+      store: { state: {}, subscribe: () => () => {} },
+      reportError: () => {},
+    } as AttachContext<PlayerTarget, RemotePlaybackState>
+  );
 
   return { controller, set };
 }
@@ -42,7 +48,7 @@ function attach(media: Media) {
 describe('remotePlaybackFeature', () => {
   it('cancels availability watching on abort (W3C path)', () => {
     const remote = createRemote();
-    const media = { remote } as unknown as Media;
+    const media = Object.assign(document.createElement('video'), { remote });
 
     const { controller } = attach(media);
     controller.abort();
@@ -54,12 +60,14 @@ describe('remotePlaybackFeature', () => {
     // Simulate a custom element whose `remote` resolves to a partial object at
     // detach time — the captured reference must guard the method call.
     const remote = createRemote();
-    const media = { remote } as unknown as Media;
+    const media = Object.assign(document.createElement('video'), { remote });
 
     const { controller } = attach(media);
 
     // The W3C RemotePlayback object loses its method (e.g. inner video torn down).
-    (remote as { cancelWatchAvailability?: unknown }).cancelWatchAvailability = undefined;
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+      remote as { cancelWatchAvailability?: unknown }
+    ).cancelWatchAvailability = undefined;
 
     expect(() => controller.abort()).not.toThrow();
   });

@@ -10,9 +10,9 @@ import { AirPlayButtonCore } from '../airplay-button-core';
 function stubWebKit(present: boolean) {
   const key = 'WebKitPlaybackTargetAvailabilityEvent';
   if (present) {
-    (globalThis as unknown as Record<string, unknown>)[key] = class {};
+    Object.defineProperty(globalThis, key, { configurable: true, value: class {} });
   } else {
-    delete (globalThis as unknown as Record<string, unknown>)[key];
+    Reflect.deleteProperty(globalThis, key);
   }
 }
 

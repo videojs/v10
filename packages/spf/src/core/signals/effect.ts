@@ -1,3 +1,4 @@
+import { isFunction } from '@videojs/utils/predicate';
 import { Signal } from 'signal-polyfill';
 
 // Computeds waiting to re-run after their dependencies changed.
@@ -9,7 +10,9 @@ const watcher = new Signal.subtle.Watcher(() => {
 
 function runPending() {
   for (const c of watcher.getPending()) {
-    pending.add(c as Signal.Computed<void>);
+    pending.add(
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ c as Signal.Computed<void>
+    );
   }
   watcher.watch(); // re-arm before running effects, in case they write signals
   for (const c of pending) {
@@ -42,6 +45,7 @@ function runPending() {
  */
 function revalidateSources(c: Signal.Computed<void>): void {
   for (const source of Signal.subtle.introspectSources(c)) {
+    // SAFETY: introspectSources returns readable State or Computed signal nodes.
     (source as Signal.State<unknown> | Signal.Computed<unknown>).get();
   }
 }
@@ -59,7 +63,7 @@ function revalidateSources(c: Signal.Computed<void>): void {
 export function effect(fn: () => (() => void) | void): () => void {
   let cleanup: (() => void) | void;
   const c = new Signal.Computed(() => {
-    if (typeof cleanup === 'function') cleanup();
+    if (isFunction(cleanup)) cleanup();
     cleanup = fn();
   });
   watcher.watch(c);
@@ -67,6 +71,6 @@ export function effect(fn: () => (() => void) | void): () => void {
   revalidateSources(c); // an initial run may self-write too — see the note
   return () => {
     watcher.unwatch(c);
-    if (typeof cleanup === 'function') cleanup();
+    if (isFunction(cleanup)) cleanup();
   };
 }

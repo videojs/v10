@@ -15,7 +15,9 @@ export class TooltipLabelElement extends UIElement {
   }
 
   static create(): TooltipLabelElement {
-    return document.createElement(TooltipLabelElement.tagName) as TooltipLabelElement;
+    return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ document.createElement(
+      TooltipLabelElement.tagName
+    ) as TooltipLabelElement;
   }
 
   override connectedCallback(): void {

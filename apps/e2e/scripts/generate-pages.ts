@@ -35,7 +35,7 @@ interface MediaTypeConfig {
   isAudio: boolean;
 }
 
-const MEDIA_TYPES: Record<string, MediaTypeConfig> = {
+const MEDIA_TYPES = {
   video: {
     element: 'video',
     imports: [],
@@ -119,10 +119,10 @@ const MEDIA_TYPES: Record<string, MediaTypeConfig> = {
     hasPoster: false,
     isAudio: false,
   },
-};
+} satisfies Record<string, MediaTypeConfig>;
 
 // React component names for media elements
-const REACT_MEDIA: Record<string, { component: string; importPath: string }> = {
+const REACT_MEDIA = {
   video: { component: 'Video', importPath: '@videojs/react/video' },
   'hlsjs-video': { component: 'HlsJsVideo', importPath: '@videojs/react/media/hlsjs-video' },
   'shaka-video': { component: 'ShakaVideo', importPath: '@videojs/react/media/shaka-video' },
@@ -131,13 +131,13 @@ const REACT_MEDIA: Record<string, { component: string; importPath: string }> = {
     component: 'HlsBackgroundVideo',
     importPath: '@videojs/react/media/hls-background-video',
   },
-};
+} satisfies Record<string, { component: string; importPath: string }>;
 
 // CDN import paths (override standard imports)
-const CDN_IMPORTS: Record<string, string[]> = {
+const CDN_IMPORTS = {
   video: ['@videojs/html/cdn/video'],
   'hlsjs-video': ['@videojs/html/cdn/video', '@videojs/html/cdn/media/hlsjs-video'],
-};
+} satisfies Record<string, string[]>;
 
 // ---------------------------------------------------------------------------
 // Page entry type (matches fixtures/media.ts)
@@ -690,7 +690,7 @@ function getImports(page: PageDef, config: MediaTypeConfig): string[] {
   return base;
 }
 
-function generatePage(page: PageDef): { ts: string; html: string; ext: string } {
+function generatePage(page: PageDef) {
   const config = MEDIA_TYPES[page.media];
   if (!config) throw new Error(`Unknown media type: ${page.media}`);
 
@@ -723,7 +723,7 @@ function generatePage(page: PageDef): { ts: string; html: string; ext: string } 
 
   const html = htmlShell(page.name, `${page.path}.${ext}`);
 
-  return { ts, html, ext };
+  return { ts, html, ext } satisfies { ts: string; html: string; ext: string };
 }
 
 function generateIndexHtml(pages: PageDef[]): string {

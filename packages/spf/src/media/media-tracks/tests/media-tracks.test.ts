@@ -14,20 +14,20 @@ import {
 } from '../media-tracks';
 
 // Minimal presentation builders. Tracks carry only the fields the transforms
-// read — the `as unknown as` cast keeps the fixtures terse (matching the
+// read — the `as` cast keeps the fixtures terse (matching the
 // sibling track-util tests).
 const presentationWith = (
   videoTracks: Partial<VideoTrack>[],
   audioTracks: Partial<AudioTrack>[] = []
 ): MaybeResolvedPresentation =>
-  ({
+  /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ ({
     id: 'pres-1',
     url: 'https://example.com/master.m3u8',
     selectionSets: [
       { id: 'v', type: 'video', switchingSets: [{ id: 'vs', type: 'video', tracks: videoTracks }] },
       { id: 'a', type: 'audio', switchingSets: [{ id: 'as', type: 'audio', tracks: audioTracks }] },
     ],
-  }) as unknown as MaybeResolvedPresentation;
+  }) as MaybeResolvedPresentation;
 
 const video = (over: Partial<VideoTrack>): Partial<VideoTrack> => ({
   type: 'video',
@@ -140,9 +140,27 @@ describe('toUserVideoTrackSelection', () => {
 
   it('matches every underlying track sharing those properties (multi-CDN)', () => {
     const criteria = toUserVideoTrackSelection({ width: 1280, height: 720, bandwidth: 3_000_000 })!;
-    const cdnA = video({ id: 'cdn-a', width: 1280, height: 720, bandwidth: 3_000_000 }) as VideoTrack;
-    const cdnB = video({ id: 'cdn-b', width: 1280, height: 720, bandwidth: 3_000_000 }) as VideoTrack;
-    const other = video({ id: 'other', width: 1920, height: 1080, bandwidth: 5_000_000 }) as VideoTrack;
+    const cdnA =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ video({
+        id: 'cdn-a',
+        width: 1280,
+        height: 720,
+        bandwidth: 3_000_000,
+      }) as VideoTrack;
+    const cdnB =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ video({
+        id: 'cdn-b',
+        width: 1280,
+        height: 720,
+        bandwidth: 3_000_000,
+      }) as VideoTrack;
+    const other =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ video({
+        id: 'other',
+        width: 1920,
+        height: 1080,
+        bandwidth: 5_000_000,
+      }) as VideoTrack;
 
     expect(matchesPartialTrack(cdnA, criteria)).toBe(true);
     expect(matchesPartialTrack(cdnB, criteria)).toBe(true);
@@ -158,9 +176,26 @@ describe('toUserAudioTrackSelection', () => {
 
   it('matches same-language same-name tracks (multi-CDN) but not a different role', () => {
     const criteria = toUserAudioTrackSelection({ language: 'en', name: 'English' })!;
-    const enA = audio({ id: 'en-a', language: 'en', name: 'English', url: 'https://a/a.m3u8' }) as AudioTrack;
-    const enB = audio({ id: 'en-b', language: 'en', name: 'English', url: 'https://b/a.m3u8' }) as AudioTrack;
-    const commentary = audio({ id: 'en-c', language: 'en', name: 'English (Commentary)' }) as AudioTrack;
+    const enA =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ audio({
+        id: 'en-a',
+        language: 'en',
+        name: 'English',
+        url: 'https://a/a.m3u8',
+      }) as AudioTrack;
+    const enB =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ audio({
+        id: 'en-b',
+        language: 'en',
+        name: 'English',
+        url: 'https://b/a.m3u8',
+      }) as AudioTrack;
+    const commentary =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ audio({
+        id: 'en-c',
+        language: 'en',
+        name: 'English (Commentary)',
+      }) as AudioTrack;
 
     expect(matchesPartialTrack(enA, criteria)).toBe(true);
     expect(matchesPartialTrack(enB, criteria)).toBe(true);
@@ -208,13 +243,24 @@ describe('findAudioTrackById', () => {
 describe('isSameVideoTrack', () => {
   it('matches by width + height + bandwidth regardless of id/url', () => {
     const a = { width: 1280, height: 720, bandwidth: 3_000_000 };
-    const b = video({ id: 'other-cdn', width: 1280, height: 720, bandwidth: 3_000_000 }) as VideoTrack;
+    const b = /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ video(
+      { id: 'other-cdn', width: 1280, height: 720, bandwidth: 3_000_000 }
+    ) as VideoTrack;
     expect(isSameVideoTrack(a, b)).toBe(true);
   });
 
   it('does not match a different quality, and is false when the track is undefined', () => {
     const a = { width: 1280, height: 720, bandwidth: 3_000_000 };
-    expect(isSameVideoTrack(a, video({ width: 1920, height: 1080, bandwidth: 5_000_000 }) as VideoTrack)).toBe(false);
+    expect(
+      isSameVideoTrack(
+        a,
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ video({
+          width: 1920,
+          height: 1080,
+          bandwidth: 5_000_000,
+        }) as VideoTrack
+      )
+    ).toBe(false);
     expect(isSameVideoTrack(a, undefined)).toBe(false);
   });
 });
@@ -222,17 +268,35 @@ describe('isSameVideoTrack', () => {
 describe('isSameAudioTrack', () => {
   it('matches by language + name, treating empty and absent language alike', () => {
     expect(
-      isSameAudioTrack({ language: 'en', name: 'English' }, audio({ language: 'en', name: 'English' }) as AudioTrack)
+      isSameAudioTrack(
+        { language: 'en', name: 'English' },
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ audio({
+          language: 'en',
+          name: 'English',
+        }) as AudioTrack
+      )
     ).toBe(true);
     // DOM coerces a missing language to '' — must still match the model's `undefined`.
     expect(
-      isSameAudioTrack({ language: '', name: 'Audio' }, audio({ language: undefined, name: 'Audio' }) as AudioTrack)
+      isSameAudioTrack(
+        { language: '', name: 'Audio' },
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ audio({
+          language: undefined,
+          name: 'Audio',
+        }) as AudioTrack
+      )
     ).toBe(true);
   });
 
   it('does not match a different role, and is false when the track is undefined', () => {
     expect(
-      isSameAudioTrack({ language: 'en', name: 'English' }, audio({ language: 'en', name: 'Commentary' }) as AudioTrack)
+      isSameAudioTrack(
+        { language: 'en', name: 'English' },
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ audio({
+          language: 'en',
+          name: 'Commentary',
+        }) as AudioTrack
+      )
     ).toBe(false);
     expect(isSameAudioTrack({ language: 'en', name: 'English' }, undefined)).toBe(false);
   });

@@ -15,7 +15,12 @@ describe('composite define registration', () => {
 
   /** Tag names registered since `offset` (the call count before an import). */
   function batchSince(offset: number): string[] {
-    return spy.mock.calls.slice(offset).map((call) => call[0] as string);
+    return spy.mock.calls
+      .slice(offset)
+      .map(
+        (call) =>
+          /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ call[0] as string
+      );
   }
 
   beforeAll(() => {

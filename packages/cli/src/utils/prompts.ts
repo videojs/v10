@@ -41,7 +41,8 @@ const PRESET_OPTIONS = USE_CASES.map((value) => ({ value, label: getInstallation
 // lockstep with the UI.
 function mediaOptionsForUseCase(useCase: UseCase): Array<{ value: Renderer; label: string }> {
   return buildOptions(useCase).map((option) => ({
-    value: option.value as Renderer,
+    value:
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ option.value as Renderer,
     label: option.label,
   }));
 }
@@ -85,17 +86,17 @@ export interface PartialInstallFlags {
 
 export function mapRawSkin(skinFlag: string, useCase: UseCase): Skin {
   const isAudio = getInstallationPreset(useCase).mediaType === 'audio';
-  const map: Record<string, Skin> = {
-    default: isAudio ? 'audio' : 'video',
-    minimal: isAudio ? 'minimal-audio' : 'minimal-video',
-    none: 'none',
-  };
-  const result = map[skinFlag];
-  if (!result) {
-    console.error(`Invalid skin: "${skinFlag}". Must be "default", "minimal", or "none".`);
-    process.exit(1);
+  switch (skinFlag) {
+    case 'default':
+      return isAudio ? 'audio' : 'video';
+    case 'minimal':
+      return isAudio ? 'minimal-audio' : 'minimal-video';
+    case 'none':
+      return 'none';
+    default:
+      console.error(`Invalid skin: "${skinFlag}". Must be "default", "minimal", or "none".`);
+      process.exit(1);
   }
-  return result;
 }
 
 export async function promptInstallOptions(
@@ -157,7 +158,7 @@ export async function promptInstallOptions(
         initialValue: detected?.renderer,
       });
       if (p.isCancel(value)) process.exit(0);
-      return value as Renderer;
+      return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ value as Renderer;
     })());
 
   const installMethod =

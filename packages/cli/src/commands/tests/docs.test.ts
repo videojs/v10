@@ -1,3 +1,4 @@
+import { isNumber } from '@videojs/utils/predicate';
 import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from 'vite-plus/test';
 
 // --- Fixtures ---
@@ -61,7 +62,7 @@ class ExitError extends Error {
   code: number;
   constructor(code?: number | string | null) {
     super(`process.exit(${code})`);
-    this.code = typeof code === 'number' ? code : 0;
+    this.code = isNumber(code) ? code : 0;
   }
 }
 
@@ -89,16 +90,22 @@ beforeEach(() => {
     throw new ExitError(code);
   });
 
-  (readBundledDoc as Mock).mockImplementation((_fw: string, slug: string) => {
+  /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+    readBundledDoc as Mock
+  ).mockImplementation((_fw: string, slug: string) => {
     if (slug === 'how-to/installation') return INSTALLATION_DOC;
     if (slug === 'concepts/skins') return REGULAR_DOC;
     return null;
   });
-  (readLlmsTxt as Mock).mockReturnValue(LLMS_TXT);
-  (docExistsInAnyFramework as Mock).mockImplementation((slug: string) =>
-    ['how-to/installation', 'concepts/skins'].includes(slug)
-  );
-  (getConfigValue as Mock).mockReturnValue(undefined);
+  /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+    readLlmsTxt as Mock
+  ).mockReturnValue(LLMS_TXT);
+  /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+    docExistsInAnyFramework as Mock
+  ).mockImplementation((slug: string) => ['how-to/installation', 'concepts/skins'].includes(slug));
+  /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+    getConfigValue as Mock
+  ).mockReturnValue(undefined);
 });
 
 afterEach(() => {
@@ -131,13 +138,17 @@ describe('handleDocs', () => {
     });
 
     it('errors when doc does not exist in any framework', async () => {
-      (docExistsInAnyFramework as Mock).mockReturnValue(false);
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+        docExistsInAnyFramework as Mock
+      ).mockReturnValue(false);
       await expect(handleDocs({ framework: 'html' }, ['nonexistent'])).rejects.toThrow(ExitError);
       expect(errors()).toContain('Doc not found: "nonexistent"');
     });
 
     it('errors when doc exists in other framework but not the requested one', async () => {
-      (readBundledDoc as Mock).mockReturnValue(null);
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+        readBundledDoc as Mock
+      ).mockReturnValue(null);
       await expect(handleDocs({ framework: 'react' }, ['concepts/skins'])).rejects.toThrow(ExitError);
       expect(errors()).toContain('Doc not found: "concepts/skins" for framework "react"');
     });
@@ -386,7 +397,9 @@ describe('handleDocs', () => {
     });
 
     it('falls back to saved config when flag is omitted', async () => {
-      (getConfigValue as Mock).mockReturnValue('react');
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+        getConfigValue as Mock
+      ).mockReturnValue('react');
       await handleDocs({}, ['concepts/skins']);
       expect(readBundledDoc).toHaveBeenCalledWith('react', 'concepts/skins');
     });
@@ -411,11 +424,15 @@ describe('handleDocs', () => {
     });
 
     it('prompts for missing options when only some flags are provided', async () => {
-      (p.select as Mock)
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+        p.select as Mock
+      )
         .mockResolvedValueOnce('video') // skin
         .mockResolvedValueOnce('html5-video') // media
         .mockResolvedValueOnce('npm'); // installMethod
-      (p.text as Mock).mockResolvedValueOnce(''); // sourceUrl
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+        p.text as Mock
+      ).mockResolvedValueOnce(''); // sourceUrl
 
       await handleDocs({ framework: 'html', preset: 'video' }, ['how-to/installation']);
 
@@ -425,7 +442,9 @@ describe('handleDocs', () => {
     });
 
     it('source-url without --media still requires prompting (detection is a hint, not auto-set)', async () => {
-      (p.select as Mock)
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+        p.select as Mock
+      )
         .mockResolvedValueOnce('default-video') // preset
         .mockResolvedValueOnce('video') // skin
         .mockResolvedValueOnce('hls') // media (user confirms detection hint)

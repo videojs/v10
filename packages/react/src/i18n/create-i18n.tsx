@@ -94,17 +94,17 @@ export function createI18n(options?: CreateI18nOptions): CreateI18nResult {
 
     const translator = useMemo(() => createTranslator(translations, resolvedLocale), [translations, resolvedLocale]);
 
-    const value = useMemo<I18nContextValue>(
-      () => ({
+    const value = useMemo<I18nContextValue>(() => {
+      const context: I18nContextValue = {
         translator,
         locale: resolvedLocale,
         localeFromProp,
         localeFromOwnProp,
-        ...(translationsProp !== undefined ? { translations: translationsProp } : {}),
-        ...(onActiveLocaleChange !== undefined ? { onActiveLocaleChange } : {}),
-      }),
-      [translator, resolvedLocale, localeFromProp, localeFromOwnProp, translationsProp, onActiveLocaleChange]
-    );
+      };
+      if (translationsProp !== undefined) context.translations = translationsProp;
+      if (onActiveLocaleChange !== undefined) context.onActiveLocaleChange = onActiveLocaleChange;
+      return context;
+    }, [translator, resolvedLocale, localeFromProp, localeFromOwnProp, translationsProp, onActiveLocaleChange]);
 
     return (
       <LocaleRootContext.Provider value={addLocaleRoot}>

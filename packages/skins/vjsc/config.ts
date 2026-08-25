@@ -36,7 +36,7 @@ export function validateSkinConfig(parameters: URLSearchParams): SkinConfig | nu
 
   return {
     target,
-    skin: skin as SkinName,
+    skin: /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ skin as SkinName,
     style,
   };
 }

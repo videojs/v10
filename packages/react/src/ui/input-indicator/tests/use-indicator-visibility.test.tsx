@@ -1,5 +1,4 @@
 import { cleanup, fireEvent, render } from '@testing-library/react';
-import type { UnknownStore } from '@videojs/store';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { PlayerContextProvider, type PlayerContextValue } from '../../../player/context';
@@ -35,11 +34,19 @@ function VisibilityProbe({ close, id }: { close: () => void; id: string }) {
 }
 
 function createPlayerContextValue(): PlayerContextValue {
-  const store = {
-    state: {},
-    target: {},
+  const state = {};
+  const store: PlayerContextValue['store'] = {
+    $state: {
+      current: state,
+      subscribe: () => () => {},
+    },
+    state,
+    target: null,
+    destroyed: false,
+    attach: () => () => {},
+    destroy: () => {},
     subscribe: () => () => {},
-  } as unknown as UnknownStore;
+  };
 
   return {
     store,
@@ -47,5 +54,5 @@ function createPlayerContextValue(): PlayerContextValue {
     setMedia: vi.fn(),
     container: document.createElement('div'),
     setContainer: vi.fn(),
-  } as unknown as PlayerContextValue;
+  };
 }

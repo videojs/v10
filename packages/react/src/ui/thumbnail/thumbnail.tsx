@@ -137,7 +137,9 @@ export const Thumbnail = forwardRef<HTMLDivElement, ThumbnailProps>(function Thu
               loading={loading}
               style={imgStyle}
               // React's types omit `| undefined` from fetchPriority — cast to satisfy exactOptionalPropertyTypes.
-              fetchPriority={fetchPriority as ThumbnailFetchPriority}
+              fetchPriority={
+                /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ fetchPriority as ThumbnailFetchPriority
+              }
             />
           ),
         },

@@ -1,4 +1,4 @@
-import { serializeEmbedParams } from '../utils';
+import { type EmbedParams, type EmbedParamValue, serializeEmbedParams } from '../utils';
 import { type CloudflareMediaProps, cloudflareMediaDefaultProps } from './props';
 
 /**
@@ -14,7 +14,7 @@ import { type CloudflareMediaProps, cloudflareMediaDefaultProps } from './props'
  * signature still carries anything not listed here, so undocumented knobs and
  * whatever Cloudflare adds next keep working.
  */
-export interface CloudflareEngineConfig extends Record<string, unknown> {
+export interface CloudflareEngineConfig extends Partial<Record<string, EmbedParamValue>> {
   /** BCP 47 language of the text track to show by default (`'en'`, `'de'`). */
   defaultTextTrack?: string;
   /** Any CSS color for the progress bar and other player accents. */
@@ -83,7 +83,7 @@ export function buildCloudflareIframeSrc(src: string, props: Partial<CloudflareM
   // `referrerPolicy` is an attribute of the iframe hosting the embed rather than
   // something the player reads, so it never reaches the URL.
   const { referrerPolicy: _referrerPolicy, ...cloudflare } = props.source?.engine?.cloudflare ?? {};
-  const params: Record<string, unknown> = {
+  const params = {
     // `controls` defaults to on and is read by value, so hiding Cloudflare's own
     // chrome takes an explicit `0`; passing nothing leaves it shown.
     controls: props.controls === true ? null : 0,
@@ -106,7 +106,7 @@ export function buildCloudflareIframeSrc(src: string, props: Partial<CloudflareM
     poster: props.poster || null,
     // Cloudflare-specific knobs (`primaryColor`, `startTime`, `ad-url`, …) flow through here.
     ...cloudflare,
-  };
+  } satisfies EmbedParams;
   // A customer origin embeds at `/<id>/iframe`, where the shared host embeds at
   // `/<id>`; rebuilding onto the shared host would drop the very origin a signed
   // or access-controlled video is authorized for.

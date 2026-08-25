@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 
 import { addMediaComponent } from '../../media-host';
 import { HTMLVideoElementHost } from '../../video-host';
-import { GoogleCast } from '../index';
+import { GoogleCast, type GoogleCastProps } from '../index';
 
 const mocks = vi.hoisted(() => {
   class FakeRemote extends EventTarget {
@@ -30,7 +30,7 @@ const mocks = vi.hoisted(() => {
     detach = vi.fn();
     destroy = vi.fn();
 
-    constructor(public config: unknown) {
+    constructor(public config: GoogleCastProps) {
       FakeProvider.instances.push(this);
     }
   }

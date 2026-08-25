@@ -41,13 +41,17 @@ export { NAME_OVERRIDES };
 
 // Parts whose HTML element file doesn't follow the `{component}-{part}-element.ts` convention.
 // Key: `{component}/{part-kebab}`, Value: element file basename (without `.ts`).
-export const PART_ELEMENT_OVERRIDES: Record<string, string> = {
+interface PartElementByPath {
+  readonly [path: string]: string | undefined;
+}
+
+export const PART_ELEMENT_OVERRIDES: PartElementByPath = {
   'tooltip/provider': 'tooltip-group-element',
 };
 
 // ─── Build Helpers ─────────────────────────────────────────────────
 
-export function buildProps(coreData: CoreExtraction): Record<string, PropDef> {
+export function buildProps(coreData: CoreExtraction) {
   const props: Record<string, PropDef> = {};
   for (const prop of coreData.props) {
     props[prop.name] = {
@@ -63,10 +67,10 @@ export function buildProps(coreData: CoreExtraction): Record<string, PropDef> {
     if (props[prop.name]!.default === undefined) delete props[prop.name]!.default;
     if (!props[prop.name]!.required) delete props[prop.name]!.required;
   }
-  return props;
+  return props satisfies Record<string, PropDef>;
 }
 
-export function buildState(coreData: CoreExtraction): Record<string, StateDef> {
+export function buildState(coreData: CoreExtraction) {
   const state: Record<string, StateDef> = {};
   for (const s of coreData.state) {
     state[s.name] = {
@@ -77,10 +81,10 @@ export function buildState(coreData: CoreExtraction): Record<string, StateDef> {
     if (state[s.name]!.detailedType === undefined) delete state[s.name]!.detailedType;
     if (state[s.name]!.description === undefined) delete state[s.name]!.description;
   }
-  return state;
+  return state satisfies Record<string, StateDef>;
 }
 
-export function buildDataAttrs(dataAttrsData: DataAttrsExtraction): Record<string, DataAttrDef> {
+export function buildDataAttrs(dataAttrsData: DataAttrsExtraction) {
   const dataAttributes: Record<string, DataAttrDef> = {};
   for (const attr of dataAttrsData.attrs) {
     const def: DataAttrDef = { description: attr.description };
@@ -95,15 +99,15 @@ export function buildDataAttrs(dataAttrsData: DataAttrsExtraction): Record<strin
     }
     dataAttributes[attr.name] = def;
   }
-  return dataAttributes;
+  return dataAttributes satisfies Record<string, DataAttrDef>;
 }
 
-export function buildCSSVars(cssVarsData: CSSVarsExtraction): Record<string, CSSVarDef> {
+export function buildCSSVars(cssVarsData: CSSVarsExtraction) {
   const cssCustomProperties: Record<string, CSSVarDef> = {};
   for (const v of cssVarsData.vars) {
     cssCustomProperties[v.name] = { description: v.description };
   }
-  return cssCustomProperties;
+  return cssCustomProperties satisfies Record<string, CSSVarDef>;
 }
 
 // ─── Discovery ─────────────────────────────────────────────────────

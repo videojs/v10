@@ -229,9 +229,10 @@ describe('TextTrackSegmentLoaderActor', () => {
     });
 
     // seg-0 was fetched exactly once across the two sends.
-    const seg0Calls = (resolveVttSegment as ReturnType<typeof vi.fn>).mock.calls.filter(
-      ([url]) => url === 'https://example.com/seg-0.vtt'
-    );
+    const seg0Calls =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+        resolveVttSegment as ReturnType<typeof vi.fn>
+      ).mock.calls.filter(([url]) => url === 'https://example.com/seg-0.vtt');
     expect(seg0Calls).toHaveLength(1);
 
     actor.destroy();

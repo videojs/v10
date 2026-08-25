@@ -38,7 +38,10 @@ describe('createComponent', () => {
     const node = jsx(PlayButton, { className: 'play' }, 'control');
 
     expectTypeOf(node).toEqualTypeOf<VjscElement>();
-    expectTypeOf<VjscNode>().toEqualTypeOf<unknown>();
+    expectTypeOf<VjscElement>().toMatchTypeOf<VjscNode>();
+    expectTypeOf<string>().toMatchTypeOf<VjscNode>();
+    expectTypeOf<readonly VjscNode[]>().toMatchTypeOf<VjscNode>();
+    expectTypeOf<unknown>().not.toMatchTypeOf<VjscNode>();
 
     expect(node).toEqual({
       [VIDEOJS_NODE]: true,

@@ -7,7 +7,7 @@ describe('ShakaMedia', () => {
   it('imports without browser globals and leaves none behind', async () => {
     const { ShakaMedia } = await import('../index');
 
-    expect(typeof self).toBe('undefined');
+    expect('self' in globalThis).toBe(false);
     expect(ShakaMedia).toBeTypeOf('function');
   });
 

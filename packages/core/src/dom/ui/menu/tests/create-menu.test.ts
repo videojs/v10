@@ -330,7 +330,7 @@ describe('createMenu', () => {
     it('opens on click when closed', () => {
       const { menu, onOpenChange } = createTestMenu();
 
-      menu.triggerProps.onClick({ preventDefault: vi.fn(), stopPropagation: vi.fn() } as unknown as UIEvent);
+      menu.triggerProps.onClick(new UIEvent('click'));
 
       expect(menu.input.current.active).toBe(true);
       expect(onOpenChange).toHaveBeenCalledWith(true, expect.objectContaining({ reason: 'click' }));
@@ -342,7 +342,7 @@ describe('createMenu', () => {
       menu.open();
       onOpenChange.mockClear();
 
-      menu.triggerProps.onClick({ preventDefault: vi.fn(), stopPropagation: vi.fn() } as unknown as UIEvent);
+      menu.triggerProps.onClick(new UIEvent('click'));
 
       expect(onOpenChange).toHaveBeenCalledWith(false, expect.objectContaining({ reason: 'click' }));
     });

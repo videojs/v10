@@ -1,5 +1,6 @@
 import { SeekButtonCore, SeekButtonDataAttrs } from '@videojs/core';
 import { selectTime } from '@videojs/core/dom';
+import { isNumber } from '@videojs/utils/predicate';
 
 import type { UIComponentProps } from '../../utils/types';
 import { createMediaButton } from '../create-media-button';
@@ -30,7 +31,7 @@ export const SeekButton = createMediaButton<SeekButtonCore, SeekButtonProps>({
   selector: selectTime,
   action: (core, state) => core.seek(state),
   hotkeyAction: 'seekStep',
-  hotkeyValue: (props) => (typeof props.seconds === 'number' ? props.seconds : SeekButtonCore.defaultProps.seconds),
+  hotkeyValue: (props) => (isNumber(props.seconds) ? props.seconds : SeekButtonCore.defaultProps.seconds),
 });
 
 export namespace SeekButton {

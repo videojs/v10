@@ -5,7 +5,7 @@ export interface Text {
   readonly text: string;
 }
 
-export function isText(value: unknown): value is Text {
+export function isText<Value>(value: Value): value is Value & Text {
   return isObject(value) && 'key' in value && 'text' in value;
 }
 

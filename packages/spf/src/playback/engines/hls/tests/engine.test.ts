@@ -1,3 +1,4 @@
+import { isFunction, isString } from '@videojs/utils/predicate';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { snapshot } from '../../../../core/signals/primitives';
@@ -41,7 +42,7 @@ describe('createHlsVideoEngine', () => {
 
     const originalConsoleError = console.error.bind(console);
     consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation((...args: unknown[]) => {
-      const text = args.map((a) => (typeof a === 'string' ? a : String(a))).join(' ');
+      const text = args.map((a) => (isString(a) ? a : String(a))).join(' ');
       if (expectedErrorPatterns.some((p) => p.test(text))) return;
       originalConsoleError(...args);
     });
@@ -58,7 +59,7 @@ describe('createHlsVideoEngine', () => {
     expect(engine.state).toBeDefined();
     expect(engine.context).toBeDefined();
     expect(engine.destroy).toBeDefined();
-    expect(typeof engine.destroy).toBe('function');
+    expect(isFunction(engine.destroy)).toBe(true);
 
     engine.destroy();
   });
@@ -111,24 +112,26 @@ describe('createHlsVideoEngine', () => {
     });
 
     // Same rendition duplicated across cdn-a (manifest head) and cdn-b.
-    engine.state.presentation.set({
-      id: 'pres-1',
-      url: 'https://cdn-a.example.com/master.m3u8',
-      startTime: 0,
-      selectionSets: [
-        {
-          id: 'v',
-          type: 'video',
-          switchingSets: [
-            {
-              id: 'vs',
-              type: 'video',
-              tracks: [videoTrack('720p-a', 'cdn-a.example.com'), videoTrack('720p-b', 'cdn-b.example.com')],
-            },
-          ],
-        },
-      ],
-    } as Presentation);
+    engine.state.presentation.set(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+        id: 'pres-1',
+        url: 'https://cdn-a.example.com/master.m3u8',
+        startTime: 0,
+        selectionSets: [
+          {
+            id: 'v',
+            type: 'video',
+            switchingSets: [
+              {
+                id: 'vs',
+                type: 'video',
+                tracks: [videoTrack('720p-a', 'cdn-a.example.com'), videoTrack('720p-b', 'cdn-b.example.com')],
+              },
+            ],
+          },
+        ],
+      } as Presentation
+    );
     await flush();
 
     // resolveCdns publishes the manifest-ordered list; preferActiveCdn narrows
@@ -180,38 +183,40 @@ describe('createHlsVideoEngine', () => {
       channels: 2,
     });
 
-    engine.state.presentation.set({
-      id: 'pres-asym',
-      url: 'https://cdn-a.example.com/master.m3u8',
-      startTime: 0,
-      // Audio selection set listed FIRST, cdn-b first within it — the reverse of
-      // the video order on both axes. Type-priority ordering must still put video
-      // (cdn-a) at the head of cdnPriority.
-      selectionSets: [
-        {
-          id: 'a',
-          type: 'audio',
-          switchingSets: [
-            {
-              id: 'as',
-              type: 'audio',
-              tracks: [audioTrack('aud-b', 'cdn-b.example.com'), audioTrack('aud-a', 'cdn-a.example.com')],
-            },
-          ],
-        },
-        {
-          id: 'v',
-          type: 'video',
-          switchingSets: [
-            {
-              id: 'vs',
-              type: 'video',
-              tracks: [videoTrack('vid-a', 'cdn-a.example.com'), videoTrack('vid-b', 'cdn-b.example.com')],
-            },
-          ],
-        },
-      ],
-    } as Presentation);
+    engine.state.presentation.set(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+        id: 'pres-asym',
+        url: 'https://cdn-a.example.com/master.m3u8',
+        startTime: 0,
+        // Audio selection set listed FIRST, cdn-b first within it — the reverse of
+        // the video order on both axes. Type-priority ordering must still put video
+        // (cdn-a) at the head of cdnPriority.
+        selectionSets: [
+          {
+            id: 'a',
+            type: 'audio',
+            switchingSets: [
+              {
+                id: 'as',
+                type: 'audio',
+                tracks: [audioTrack('aud-b', 'cdn-b.example.com'), audioTrack('aud-a', 'cdn-a.example.com')],
+              },
+            ],
+          },
+          {
+            id: 'v',
+            type: 'video',
+            switchingSets: [
+              {
+                id: 'vs',
+                type: 'video',
+                tracks: [videoTrack('vid-a', 'cdn-a.example.com'), videoTrack('vid-b', 'cdn-b.example.com')],
+              },
+            ],
+          },
+        ],
+      } as Presentation
+    );
     await flush();
 
     expect(engine.state.cdnPriority.get()).toEqual(['https://cdn-a.example.com', 'https://cdn-b.example.com']);
@@ -248,35 +253,37 @@ describe('createHlsVideoEngine', () => {
       channels: 2,
     });
 
-    engine.state.presentation.set({
-      id: 'pres-failover',
-      url: 'https://cdn-a.example.com/master.m3u8',
-      startTime: 0,
-      selectionSets: [
-        {
-          id: 'v',
-          type: 'video',
-          switchingSets: [
-            {
-              id: 'vs',
-              type: 'video',
-              tracks: [videoTrack('vid-a', 'cdn-a.example.com'), videoTrack('vid-b', 'cdn-b.example.com')],
-            },
-          ],
-        },
-        {
-          id: 'a',
-          type: 'audio',
-          switchingSets: [
-            {
-              id: 'as',
-              type: 'audio',
-              tracks: [audioTrack('aud-a', 'cdn-a.example.com'), audioTrack('aud-b', 'cdn-b.example.com')],
-            },
-          ],
-        },
-      ],
-    } as Presentation);
+    engine.state.presentation.set(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+        id: 'pres-failover',
+        url: 'https://cdn-a.example.com/master.m3u8',
+        startTime: 0,
+        selectionSets: [
+          {
+            id: 'v',
+            type: 'video',
+            switchingSets: [
+              {
+                id: 'vs',
+                type: 'video',
+                tracks: [videoTrack('vid-a', 'cdn-a.example.com'), videoTrack('vid-b', 'cdn-b.example.com')],
+              },
+            ],
+          },
+          {
+            id: 'a',
+            type: 'audio',
+            switchingSets: [
+              {
+                id: 'as',
+                type: 'audio',
+                tracks: [audioTrack('aud-a', 'cdn-a.example.com'), audioTrack('aud-b', 'cdn-b.example.com')],
+              },
+            ],
+          },
+        ],
+      } as Presentation
+    );
     await flush();
 
     // Primary CDN initially.
@@ -313,24 +320,26 @@ describe('createHlsVideoEngine', () => {
       mimeType: 'video/mp4',
     });
 
-    engine.state.presentation.set({
-      id: 'pres-codec',
-      url: 'https://example.com/master.m3u8',
-      startTime: 0,
-      selectionSets: [
-        {
-          id: 'v',
-          type: 'video',
-          switchingSets: [
-            {
-              id: 'vs',
-              type: 'video',
-              tracks: [videoTrack('1080p-hevc', 'hvc1.1.6.L120.B0'), videoTrack('1080p-avc', 'avc1.640028')],
-            },
-          ],
-        },
-      ],
-    } as Presentation);
+    engine.state.presentation.set(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+        id: 'pres-codec',
+        url: 'https://example.com/master.m3u8',
+        startTime: 0,
+        selectionSets: [
+          {
+            id: 'v',
+            type: 'video',
+            switchingSets: [
+              {
+                id: 'vs',
+                type: 'video',
+                tracks: [videoTrack('1080p-hevc', 'hvc1.1.6.L120.B0'), videoTrack('1080p-avc', 'avc1.640028')],
+              },
+            ],
+          },
+        ],
+      } as Presentation
+    );
     await flush();
 
     // HEVC pruned upstream by the capability constraint; AVC selected.
@@ -356,33 +365,35 @@ describe('createHlsVideoEngine', () => {
 #EXT-X-ENDLIST`)
     );
 
-    engine.state.presentation.set({
-      id: 'pres-report',
-      url: 'https://example.com/master.m3u8',
-      startTime: 0,
-      selectionSets: [
-        {
-          id: 'v',
-          type: 'video',
-          switchingSets: [
-            {
-              id: 'vs',
-              type: 'video',
-              tracks: [
-                {
-                  type: 'video',
-                  id: 'v1',
-                  codecs: ['avc1.640028'],
-                  url: 'https://example.com/v1.m3u8',
-                  bandwidth: 1_000_000,
-                  mimeType: 'video/mp4',
-                } as PartiallyResolvedVideoTrack,
-              ],
-            },
-          ],
-        },
-      ],
-    } as Presentation);
+    engine.state.presentation.set(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+        id: 'pres-report',
+        url: 'https://example.com/master.m3u8',
+        startTime: 0,
+        selectionSets: [
+          {
+            id: 'v',
+            type: 'video',
+            switchingSets: [
+              {
+                id: 'vs',
+                type: 'video',
+                tracks: [
+                  /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+                    type: 'video',
+                    id: 'v1',
+                    codecs: ['avc1.640028'],
+                    url: 'https://example.com/v1.m3u8',
+                    bandwidth: 1_000_000,
+                    mimeType: 'video/mp4',
+                  } as PartiallyResolvedVideoTrack,
+                ],
+              },
+            ],
+          },
+        ],
+      } as Presentation
+    );
 
     await vi.waitFor(() => {
       expect(engine.state.errors.get()?.map((error) => error.code)).toEqual([99001]);
@@ -395,33 +406,35 @@ describe('createHlsVideoEngine', () => {
     const flush = () => Promise.resolve().then(() => Promise.resolve());
     const engine = createHlsVideoEngine({ canPlayTrack: () => false });
 
-    engine.state.presentation.set({
-      id: 'pres-unsupported',
-      url: 'https://example.com/master.m3u8',
-      startTime: 0,
-      selectionSets: [
-        {
-          id: 'v',
-          type: 'video',
-          switchingSets: [
-            {
-              id: 'vs',
-              type: 'video',
-              tracks: [
-                {
-                  type: 'video',
-                  id: '1080p-hevc',
-                  codecs: ['hvc1.1.6.L120.B0'],
-                  url: 'https://example.com/1080p-hevc.m3u8',
-                  bandwidth: 4_800_000,
-                  mimeType: 'video/mp4',
-                } as PartiallyResolvedVideoTrack,
-              ],
-            },
-          ],
-        },
-      ],
-    } as Presentation);
+    engine.state.presentation.set(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+        id: 'pres-unsupported',
+        url: 'https://example.com/master.m3u8',
+        startTime: 0,
+        selectionSets: [
+          {
+            id: 'v',
+            type: 'video',
+            switchingSets: [
+              {
+                id: 'vs',
+                type: 'video',
+                tracks: [
+                  /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+                    type: 'video',
+                    id: '1080p-hevc',
+                    codecs: ['hvc1.1.6.L120.B0'],
+                    url: 'https://example.com/1080p-hevc.m3u8',
+                    bandwidth: 4_800_000,
+                    mimeType: 'video/mp4',
+                  } as PartiallyResolvedVideoTrack,
+                ],
+              },
+            ],
+          },
+        ],
+      } as Presentation
+    );
     await flush();
 
     expect(engine.state.selectedVideoTrackId.get()).toBeUndefined();
@@ -433,11 +446,20 @@ describe('createHlsVideoEngine', () => {
     const engine = createHlsVideoEngine({ failover: { cooldownMs: 60_000 } });
 
     // cdn-a is down (media-playlist fetch rejects); cdn-b serves a valid playlist.
-    globalThis.fetch = vi.fn(async (input: RequestInfo | URL) => {
-      const url = typeof input === 'string' ? input : String((input as Request).url ?? input);
-      if (url.includes('cdn-a')) throw new TypeError('cdn-a unreachable');
-      return new Response('#EXTM3U\n#EXT-X-TARGETDURATION:10\n#EXTINF:10.0,\nseg-1.m4s\n#EXT-X-ENDLIST');
-    }) as typeof fetch;
+    globalThis.fetch =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ vi.fn(
+        async (input: RequestInfo | URL) => {
+          const url = isString(input)
+            ? input
+            : String(
+                /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+                  input as Request
+                ).url ?? input
+              );
+          if (url.includes('cdn-a')) throw new TypeError('cdn-a unreachable');
+          return new Response('#EXTM3U\n#EXT-X-TARGETDURATION:10\n#EXTINF:10.0,\nseg-1.m4s\n#EXT-X-ENDLIST');
+        }
+      ) as typeof fetch;
 
     const videoTrack = (id: string, host: string): PartiallyResolvedVideoTrack => ({
       type: 'video',
@@ -448,24 +470,26 @@ describe('createHlsVideoEngine', () => {
       mimeType: 'video/mp4',
     });
 
-    engine.state.presentation.set({
-      id: 'pres-failover',
-      url: 'https://cdn-a.example.com/master.m3u8',
-      startTime: 0,
-      selectionSets: [
-        {
-          id: 'v',
-          type: 'video',
-          switchingSets: [
-            {
-              id: 'vs',
-              type: 'video',
-              tracks: [videoTrack('vid-a', 'cdn-a.example.com'), videoTrack('vid-b', 'cdn-b.example.com')],
-            },
-          ],
-        },
-      ],
-    } as Presentation);
+    engine.state.presentation.set(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+        id: 'pres-failover',
+        url: 'https://cdn-a.example.com/master.m3u8',
+        startTime: 0,
+        selectionSets: [
+          {
+            id: 'v',
+            type: 'video',
+            switchingSets: [
+              {
+                id: 'vs',
+                type: 'video',
+                tracks: [videoTrack('vid-a', 'cdn-a.example.com'), videoTrack('vid-b', 'cdn-b.example.com')],
+              },
+            ],
+          },
+        ],
+      } as Presentation
+    );
 
     // The primary (cdn-a) is picked first, its media-playlist fetch fails, the
     // monitor trips it, the constraint prunes it, and the scope fails over to
@@ -485,11 +509,20 @@ describe('createHlsVideoEngine', () => {
     const getCdnId = (url: string) => new URL(url).searchParams.get('cdn') ?? url;
     const engine = createHlsVideoEngine({ getCdnId, failover: { cooldownMs: 60_000 } });
 
-    globalThis.fetch = vi.fn(async (input: RequestInfo | URL) => {
-      const url = typeof input === 'string' ? input : String((input as Request).url ?? input);
-      if (url.includes('cdn=a')) throw new TypeError('cdn-a unreachable');
-      return new Response('#EXTM3U\n#EXT-X-TARGETDURATION:10\n#EXTINF:10.0,\nseg-1.m4s\n#EXT-X-ENDLIST');
-    }) as typeof fetch;
+    globalThis.fetch =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ vi.fn(
+        async (input: RequestInfo | URL) => {
+          const url = isString(input)
+            ? input
+            : String(
+                /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+                  input as Request
+                ).url ?? input
+              );
+          if (url.includes('cdn=a')) throw new TypeError('cdn-a unreachable');
+          return new Response('#EXTM3U\n#EXT-X-TARGETDURATION:10\n#EXTINF:10.0,\nseg-1.m4s\n#EXT-X-ENDLIST');
+        }
+      ) as typeof fetch;
 
     const videoTrack = (id: string, cdn: string): PartiallyResolvedVideoTrack => ({
       type: 'video',
@@ -500,18 +533,20 @@ describe('createHlsVideoEngine', () => {
       mimeType: 'video/mp4',
     });
 
-    engine.state.presentation.set({
-      id: 'pres-custom-cdn',
-      url: 'https://cdn.example.com/master.m3u8',
-      startTime: 0,
-      selectionSets: [
-        {
-          id: 'v',
-          type: 'video',
-          switchingSets: [{ id: 'vs', type: 'video', tracks: [videoTrack('vid-a', 'a'), videoTrack('vid-b', 'b')] }],
-        },
-      ],
-    } as Presentation);
+    engine.state.presentation.set(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+        id: 'pres-custom-cdn',
+        url: 'https://cdn.example.com/master.m3u8',
+        startTime: 0,
+        selectionSets: [
+          {
+            id: 'v',
+            type: 'video',
+            switchingSets: [{ id: 'vs', type: 'video', tracks: [videoTrack('vid-a', 'a'), videoTrack('vid-b', 'b')] }],
+          },
+        ],
+      } as Presentation
+    );
 
     await vi.waitFor(() => {
       // deriveCdnPriority keyed on the param (not origin → not a single CDN).
@@ -573,7 +608,13 @@ describe('createHlsVideoEngine', () => {
   it('resolves presentation when URL and preload are patched', async () => {
     // Mock fetch with URL-based lookup for different playlist types
     const mockFetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
-      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+      const url = isString(input)
+        ? input
+        : input instanceof URL
+          ? input.href
+          : /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+              input as Request
+            ).url;
 
       // Multivariant playlist
       if (url.includes('playlist.m3u8')) {
@@ -628,7 +669,13 @@ http://example.com/segment1.m4s
   it('orchestrates complete pipeline: presentation → tracks → MediaSource → SourceBuffers', async () => {
     // Mock fetch with URL-based lookup for all playlist types
     const mockFetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
-      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+      const url = isString(input)
+        ? input
+        : input instanceof URL
+          ? input.href
+          : /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+              input as Request
+            ).url;
 
       // Multivariant playlist with video and audio
       if (url.includes('playlist.m3u8')) {
@@ -742,7 +789,13 @@ http://example.com/audio-seg1.m4s
     // tear down A's actors via reactor state-exit and rebuild fresh actors
     // for B without recreating the engine.
     const mockFetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
-      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+      const url = isString(input)
+        ? input
+        : input instanceof URL
+          ? input.href
+          : /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+              input as Request
+            ).url;
 
       if (url.includes('playlist-a.m3u8')) {
         return Promise.resolve(
@@ -879,7 +932,13 @@ http://example.com/audio-b-seg1.m4s
   it('handles video-only stream (no audio tracks)', async () => {
     // Mock fetch for video-only stream
     const mockFetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
-      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+      const url = isString(input)
+        ? input
+        : input instanceof URL
+          ? input.href
+          : /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+              input as Request
+            ).url;
 
       if (url.includes('playlist.m3u8')) {
         return Promise.resolve(
@@ -942,7 +1001,13 @@ http://example.com/video-seg1.m4s
   it('handles audio-only stream (no video tracks)', async () => {
     // Mock fetch for audio-only stream
     const mockFetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
-      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+      const url = isString(input)
+        ? input
+        : input instanceof URL
+          ? input.href
+          : /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+              input as Request
+            ).url;
 
       if (url.includes('playlist.m3u8')) {
         return Promise.resolve(
@@ -1006,7 +1071,13 @@ http://example.com/audio-seg1.m4s
   it('does not auto-select text tracks (user opt-in)', async () => {
     // Mock fetch for stream with text tracks
     const mockFetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
-      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+      const url = isString(input)
+        ? input
+        : input instanceof URL
+          ? input.href
+          : /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+              input as Request
+            ).url;
 
       if (url.includes('playlist.m3u8')) {
         return Promise.resolve(
@@ -1062,7 +1133,13 @@ http://example.com/video-seg1.m4s
 
   it('resolves presentation and tracks but not MediaSource without mediaElement', async () => {
     const mockFetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
-      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+      const url = isString(input)
+        ? input
+        : input instanceof URL
+          ? input.href
+          : /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+              input as Request
+            ).url;
 
       if (url.includes('playlist.m3u8')) {
         return Promise.resolve(
@@ -1126,7 +1203,13 @@ http://example.com/video-seg1.m4s
 
   it('defers resolution with preload: "none" until play event', async () => {
     const mockFetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
-      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+      const url = isString(input)
+        ? input
+        : input instanceof URL
+          ? input.href
+          : /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+              input as Request
+            ).url;
 
       if (url.includes('playlist.m3u8')) {
         return Promise.resolve(
@@ -1215,7 +1298,13 @@ http://example.com/audio-seg1.m4s
 
   it('resolves presentation and tracks with preload: "metadata"', async () => {
     const mockFetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
-      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+      const url = isString(input)
+        ? input
+        : input instanceof URL
+          ? input.href
+          : /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+              input as Request
+            ).url;
 
       if (url.includes('playlist.m3u8')) {
         return Promise.resolve(
@@ -1277,8 +1366,17 @@ http://example.com/seg1.m4s
     // Media segments NOT fetched — preload="metadata" stops at init
     expect(mockFetch).toHaveBeenCalledTimes(3);
     const fetchedUrls = mockFetch.mock.calls.map((c: any[]) => {
-      const input = c[0] as RequestInfo | URL;
-      return typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+      const input =
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ c[0] as
+          | RequestInfo
+          | URL;
+      return isString(input)
+        ? input
+        : input instanceof URL
+          ? input.href
+          : /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+              input as Request
+            ).url;
     });
     expect(fetchedUrls).not.toContain('http://example.com/seg1.m4s');
 
@@ -1287,7 +1385,13 @@ http://example.com/seg1.m4s
 
   it('resolves only selected track (not all qualities)', async () => {
     const mockFetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
-      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+      const url = isString(input)
+        ? input
+        : input instanceof URL
+          ? input.href
+          : /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+              input as Request
+            ).url;
 
       if (url.includes('playlist.m3u8')) {
         return Promise.resolve(
@@ -1361,8 +1465,17 @@ http://example.com/seg1.m4s
     // media playlist is fetched. Asserts the intent directly rather than a brittle
     // total fetch count (which shifts with init/segment loading of the selected track).
     const fetchedUrls = mockFetch.mock.calls.map((call: unknown[]) => {
-      const input = call[0] as RequestInfo | URL;
-      return typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+      const input =
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ call[0] as
+          | RequestInfo
+          | URL;
+      return isString(input)
+        ? input
+        : input instanceof URL
+          ? input.href
+          : /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+              input as Request
+            ).url;
     });
     expect(fetchedUrls.some((u: string) => u.includes('video-720p.m3u8'))).toBe(false);
     expect(fetchedUrls.some((u: string) => u.includes('video-1080p.m3u8'))).toBe(false);
@@ -1372,7 +1485,13 @@ http://example.com/seg1.m4s
 
   it('manually selects text track via patch()', async () => {
     const mockFetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
-      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+      const url = isString(input)
+        ? input
+        : input instanceof URL
+          ? input.href
+          : /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+              input as Request
+            ).url;
 
       if (url.includes('playlist.m3u8')) {
         return Promise.resolve(
@@ -1475,7 +1594,13 @@ http://example.com/text-es-seg1.vtt
 
   it('auto-selects DEFAULT text track when enableDefaultTrack is true', async () => {
     const mockFetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
-      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+      const url = isString(input)
+        ? input
+        : input instanceof URL
+          ? input.href
+          : /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+              input as Request
+            ).url;
 
       if (url.includes('playlist.m3u8')) {
         return Promise.resolve(
@@ -1550,7 +1675,13 @@ http://example.com/text-es-seg1.vtt
 
   it('auto-selects preferred subtitle language', async () => {
     const mockFetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
-      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+      const url = isString(input)
+        ? input
+        : input instanceof URL
+          ? input.href
+          : /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+              input as Request
+            ).url;
 
       if (url.includes('playlist.m3u8')) {
         return Promise.resolve(
@@ -1625,7 +1756,13 @@ http://example.com/text-fr-seg1.vtt
 
   it('switches between text tracks via patch()', async () => {
     const mockFetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
-      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+      const url = isString(input)
+        ? input
+        : input instanceof URL
+          ? input.href
+          : /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+              input as Request
+            ).url;
 
       if (url.includes('playlist.m3u8')) {
         return Promise.resolve(
@@ -1739,7 +1876,13 @@ http://example.com/text-es-seg1.vtt
 
   it('creates track elements for all text tracks', async () => {
     const mockFetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
-      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+      const url = isString(input)
+        ? input
+        : input instanceof URL
+          ? input.href
+          : /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+              input as Request
+            ).url;
 
       if (url.includes('playlist.m3u8')) {
         return Promise.resolve(
@@ -1815,7 +1958,13 @@ http://example.com/video-seg1.m4s
 
   it('syncs text track modes with selection', async () => {
     const mockFetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
-      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+      const url = isString(input)
+        ? input
+        : input instanceof URL
+          ? input.href
+          : /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+              input as Request
+            ).url;
 
       if (url.includes('playlist.m3u8')) {
         return Promise.resolve(
@@ -1933,7 +2082,13 @@ http://example.com/text-es-seg1.vtt
 
 it('tracks buffer state for video segments', async () => {
   const mockFetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
-    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+    const url = isString(input)
+      ? input
+      : input instanceof URL
+        ? input.href
+        : /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+            input as Request
+          ).url;
 
     if (url.includes('playlist.m3u8')) {
       return Promise.resolve(
@@ -1999,7 +2154,13 @@ http://example.com/seg2.m4s
 
 it('tracks buffer state separately for video and audio', async () => {
   const mockFetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
-    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+    const url = isString(input)
+      ? input
+      : input instanceof URL
+        ? input.href
+        : /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+            input as Request
+          ).url;
 
     if (url.includes('playlist.m3u8')) {
       return Promise.resolve(

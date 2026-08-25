@@ -43,13 +43,14 @@ const blog = defineCollection({
       const updatedDate = await defaultGitService.getLastModifiedDate(filePath);
 
       // Return transformed entry with added fields
+      const data = {
+        ...entry.data,
+        pubDate,
+      };
+      if (updatedDate && updatedDate.getTime() !== pubDate.getTime()) Object.assign(data, { updatedDate });
       return {
         ...entry,
-        data: {
-          ...entry.data,
-          pubDate,
-          ...(updatedDate && updatedDate.getTime() !== pubDate.getTime() ? { updatedDate } : {}),
-        },
+        data,
       };
     },
   }),
@@ -79,12 +80,11 @@ const docs = defineCollection({
       const updatedDate = await defaultGitService.getLastModifiedDate(filePath);
 
       // Return transformed entry with added field if updatedDate exists
+      const data = { ...entry.data };
+      if (updatedDate) Object.assign(data, { updatedDate });
       return {
         ...entry,
-        data: {
-          ...entry.data,
-          ...(updatedDate ? { updatedDate } : {}),
-        },
+        data,
       };
     },
   }),
@@ -93,7 +93,17 @@ const docs = defineCollection({
     description: z.string(),
     updatedDate: z.coerce.date().optional(),
     ogTitle: z.string().optional(),
-    frameworkTitle: z.partialRecord(z.enum(SUPPORTED_FRAMEWORKS as [string, ...string[]]), z.string()).optional(),
+    frameworkTitle: z
+      .partialRecord(
+        z.enum(
+          /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ SUPPORTED_FRAMEWORKS as [
+            string,
+            ...string[],
+          ]
+        ),
+        z.string()
+      )
+      .optional(),
   }),
 });
 

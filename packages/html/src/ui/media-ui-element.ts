@@ -35,9 +35,10 @@ export abstract class MediaUIElement<Core extends MediaUIComponent> extends UIEl
     this.core.setMedia(media);
     const state = this.core.getState();
     if (isFunction(this.core.getAttrs)) {
-      const attrs = this.core.getAttrs(state) as Record<string, unknown>;
-      if (isText(attrs['aria-label'])) {
-        attrs['aria-label'] = translateText(attrs['aria-label'], this.#i18n.value);
+      const attrs = this.core.getAttrs(state);
+      const ariaLabel = 'aria-label' in attrs ? attrs['aria-label'] : undefined;
+      if (isText(ariaLabel)) {
+        Object.assign(attrs, { 'aria-label': translateText(ariaLabel, this.#i18n.value) });
       }
       applyElementProps(this, attrs);
     }

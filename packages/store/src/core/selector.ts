@@ -29,7 +29,12 @@ const stateContext: StateContext<unknown> = {
  */
 export function createSelector<S extends AnySlice>(slice: S): Selector<object, InferSliceState<S> | undefined> {
   const initialState = slice.state(stateContext);
-  const keys = [...Object.keys(initialState as object), ...Object.keys(slice.derived ?? {})];
+  const keys = [
+    ...Object.keys(
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ initialState as object
+    ),
+    ...Object.keys(slice.derived ?? {}),
+  ];
 
   const firstKey = keys[0];
 
@@ -37,12 +42,14 @@ export function createSelector<S extends AnySlice>(slice: S): Selector<object, I
     return Object.assign(() => undefined, { displayName: slice.name });
   }
 
-  return Object.assign(
-    (state: object) => {
-      // WARN: Could be the source of a bug if two slices have overlapping state keys
-      if (!(firstKey in state)) return undefined;
-      return pick(state as Record<string, unknown>, keys) as InferSliceState<S>;
-    },
-    { displayName: slice.name }
-  );
+  const select: Selector<object, InferSliceState<S> | undefined> = (state) => {
+    // WARN: Could be the source of a bug if two slices have overlapping state keys
+    if (!(firstKey in state)) return undefined;
+    return /* SAFETY: firstKey establishes this store contains the selected slice projection. */ pick(
+      state,
+      keys
+    ) as InferSliceState<S>;
+  };
+
+  return Object.assign(select, { displayName: slice.name });
 }

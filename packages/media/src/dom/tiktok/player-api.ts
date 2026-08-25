@@ -58,20 +58,21 @@ export const ERROR_PLAYER_CATEGORY = 3000;
 export const ERROR_CATEGORY_END = 4000;
 
 /** Whether a `message` event's data is one of the embed's; every frame posts here, so the marker tells them apart. */
-export function isTikTokPlayerMessage(data: unknown): data is TikTokPlayerEventMessage {
+export function isTikTokPlayerMessage<Value>(data: Value): data is Value & TikTokPlayerEventMessage {
   if (!isObject(data)) return false;
-  const message = data as Partial<TikTokPlayerEventMessage>;
+  const message =
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ data as Partial<TikTokPlayerEventMessage>;
   return !!message[PLAYER_MESSAGE_KEY] && isString(message.type);
 }
 
 /** Whether a value is the pair `onCurrentTime` reports. */
-export function isTikTokCurrentTime(value: unknown): value is TikTokCurrentTime {
-  return isObject(value) && isNumber((value as TikTokCurrentTime).currentTime);
+export function isTikTokCurrentTime<Value>(value: Value): value is Value & TikTokCurrentTime {
+  return isObject(value) && 'currentTime' in value && isNumber(value.currentTime);
 }
 
 /** Whether a value is the payload `onPlayerError` reports. */
-export function isTikTokPlayerError(value: unknown): value is TikTokPlayerError {
-  return isObject(value) && isNumber((value as TikTokPlayerError).errorCode);
+export function isTikTokPlayerError<Value>(value: Value): value is Value & TikTokPlayerError {
+  return isObject(value) && 'errorCode' in value && isNumber(value.errorCode);
 }
 
 /** Build a command message. A command without a value must not carry one at all. */

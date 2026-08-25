@@ -228,10 +228,11 @@ describe('HlsBackgroundVideoMediaElement', () => {
       // What `?max_resolution=720p` produces: the excluded renditions are absent
       // from the manifest rather than present and skipped.
       const capped = presentationWithFourTracks();
-      capped.selectionSets![0]!.switchingSets[0]!.tracks = [
-        videoTrack('360p', 640, 360, 500_000),
-        videoTrack('720p', 1280, 720, 2_000_000),
-      ] as never;
+      capped.selectionSets![0]!.switchingSets[0]!.tracks =
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ [
+          videoTrack('360p', 640, 360, 500_000),
+          videoTrack('720p', 1280, 720, 2_000_000),
+        ] as never;
 
       const media = new HlsBackgroundVideoMediaElement();
       media.engine.state.screenResolution.set({ width: 3840, height: 2160 });
@@ -451,7 +452,7 @@ describe('HlsBackgroundVideoMediaElement', () => {
 });
 
 function videoTrack(id: string, width: number, height: number, bandwidth: number) {
-  return {
+  return /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
     type: 'video' as const,
     id,
     url: `https://example.com/${id}.m3u8`,

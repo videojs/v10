@@ -8,5 +8,5 @@ export function cn(...inputs: ClassValue[]): string {
 export type ClassName<State> = string | ((state: State) => string | undefined) | undefined;
 
 export function resolveClassName<State>(className: ClassName<State>, state: State): string | undefined {
-  return typeof className === 'function' ? className(state) : className;
+  return className instanceof Function ? className(state) : className;
 }

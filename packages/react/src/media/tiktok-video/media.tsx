@@ -2,7 +2,7 @@
 
 import type { TikTokMediaProps } from '@videojs/media/dom/tiktok';
 import { buildTikTokIframeSrc, TikTokMedia, tiktokMediaDefaultProps } from '@videojs/media/dom/tiktok';
-import type { ReactNode } from 'react';
+import type { ComponentPropsWithoutRef, ReactNode } from 'react';
 import { forwardRef, useState } from 'react';
 
 import { useAttachIframe } from '../../utils/use-attach-iframe';
@@ -10,16 +10,17 @@ import { useComposedRefs } from '../../utils/use-composed-refs';
 import { useMediaInstance } from '../../utils/use-media-instance';
 import { useSyncProps } from '../../utils/use-sync-props';
 
-export interface TikTokVideoProps extends Partial<TikTokMediaProps> {
-  children?: ReactNode;
-}
+export type TikTokVideoProps = Partial<TikTokMediaProps> &
+  Omit<ComponentPropsWithoutRef<'iframe'>, keyof TikTokMediaProps> & {
+    children?: ReactNode;
+  };
 
 export const TikTokVideo = forwardRef<HTMLIFrameElement, TikTokVideoProps>(function TikTokVideo(
   { children, ...rawProps },
   ref
 ) {
   const media = useMediaInstance(TikTokMedia);
-  const props: Partial<TikTokMediaProps> & Record<string, unknown> = { ...rawProps };
+  const props = { ...rawProps };
   const attachRef = useAttachIframe(media);
   const composedRef = useComposedRefs(attachRef, ref);
   const [initialSrc] = useState(() =>
@@ -33,7 +34,7 @@ export const TikTokVideo = forwardRef<HTMLIFrameElement, TikTokVideoProps>(funct
       defaultMuted: !!(props.defaultMuted || props.muted),
     })
   );
-  const iframeProps = useSyncProps<TikTokMediaProps, Record<string, unknown>>(media, props, tiktokMediaDefaultProps);
+  const iframeProps = useSyncProps<TikTokMediaProps, typeof props>(media, props, tiktokMediaDefaultProps);
 
   return (
     <iframe

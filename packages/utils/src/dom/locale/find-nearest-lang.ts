@@ -1,3 +1,4 @@
+import { isString } from '../../predicate';
 import { walkAncestors } from '../walk-ancestors';
 
 function getElementLang(node: Element): string | undefined {
@@ -5,7 +6,7 @@ function getElementLang(node: Element): string | undefined {
   if (fromAttribute) {
     return fromAttribute;
   }
-  if ('lang' in node && typeof node.lang === 'string') {
+  if ('lang' in node && isString(node.lang)) {
     const fromProperty = node.lang.trim();
     if (fromProperty) {
       return fromProperty;

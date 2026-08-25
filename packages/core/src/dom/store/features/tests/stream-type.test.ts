@@ -66,22 +66,25 @@ describe('streamTypeFeature', () => {
 
   describe('native (media exposes `streamType`)', () => {
     it('reads `streamType` directly when available', () => {
-      const media = new EventTarget() as EventTarget & { streamType: MediaStreamType };
-      media.streamType = MediaStreamTypes.LIVE;
+      const streamType: MediaStreamType = MediaStreamTypes.LIVE;
+      const media: HTMLVideoElement & { streamType: MediaStreamType } = Object.assign(createMockVideo(), {
+        streamType,
+      });
 
       const store = createStore<PlayerTarget>()(streamTypeFeature);
-      // The store target accepts any `Media`-shaped object; cast for the test.
-      store.attach({ media: media as unknown as PlayerTarget['media'], container: null });
+      store.attach({ media, container: null });
 
       expect(store.state.streamType).toBe(MediaStreamTypes.LIVE);
     });
 
     it('syncs on `streamtypechange`', () => {
-      const media = new EventTarget() as EventTarget & { streamType: MediaStreamType };
-      media.streamType = MediaStreamTypes.UNKNOWN;
+      const streamType: MediaStreamType = MediaStreamTypes.UNKNOWN;
+      const media: HTMLVideoElement & { streamType: MediaStreamType } = Object.assign(createMockVideo(), {
+        streamType,
+      });
 
       const store = createStore<PlayerTarget>()(streamTypeFeature);
-      store.attach({ media: media as unknown as PlayerTarget['media'], container: null });
+      store.attach({ media, container: null });
 
       expect(store.state.streamType).toBe(MediaStreamTypes.UNKNOWN);
 
@@ -99,13 +102,12 @@ describe('streamTypeFeature', () => {
     it('prefers native `streamType` over duration-based fallback', () => {
       // Build an object that has both a finite duration and a user-asserted
       // `streamType` — the feature should trust the explicit stream type.
-      const media = Object.assign(new EventTarget(), {
-        duration: 120,
+      const media = Object.assign(createMockVideo({ duration: 120 }), {
         streamType: MediaStreamTypes.LIVE,
       });
 
       const store = createStore<PlayerTarget>()(streamTypeFeature);
-      store.attach({ media: media as unknown as PlayerTarget['media'], container: null });
+      store.attach({ media, container: null });
 
       expect(store.state.streamType).toBe(MediaStreamTypes.LIVE);
     });

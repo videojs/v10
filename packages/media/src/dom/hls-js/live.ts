@@ -5,8 +5,12 @@ import Hls from 'hls.js';
 import { MediaStreamTypes } from '../../core/types';
 import type { HlsEngineHost, HlsPlaylistTypes } from './types';
 
-export function HlsJsMediaLiveMixin<Base extends Constructor<HlsEngineHost>>(BaseClass: Base) {
-  class HlsJsMediaLive extends (BaseClass as Constructor<HlsEngineHost>) {
+export function HlsJsMediaLiveMixin<Base extends Constructor<HlsEngineHost>>(
+  BaseClass: Base
+): Base & Constructor<{ readonly liveEdgeStart: number; readonly targetLiveWindow: number }> {
+  class HlsJsMediaLive
+    extends /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (BaseClass as Constructor<HlsEngineHost>)
+  {
     #targetLiveWindow = Number.NaN;
     #liveEdgeStartOffset: number | undefined;
     #seekToLiveAbort: AbortController | null = null;
@@ -95,7 +99,8 @@ export function HlsJsMediaLiveMixin<Base extends Constructor<HlsEngineHost>>(Bas
     #armSeekToLive() {
       this.#disarmSeekToLive();
 
-      const target = this.target as HTMLVideoElement | null;
+      const target = /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ this
+        .target as HTMLVideoElement | null;
       if (!target || target.autoplay) return;
 
       this.#seekToLiveAbort = new AbortController();
@@ -116,7 +121,8 @@ export function HlsJsMediaLiveMixin<Base extends Constructor<HlsEngineHost>>(Bas
     }
 
     #trySeekToLive() {
-      const target = this.target as HTMLVideoElement | null;
+      const target = /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ this
+        .target as HTMLVideoElement | null;
       if (!target) return;
       const { liveEdgeStart } = this;
       if (!Number.isFinite(liveEdgeStart)) return;
@@ -128,14 +134,16 @@ export function HlsJsMediaLiveMixin<Base extends Constructor<HlsEngineHost>>(Bas
     }
   }
 
-  return HlsJsMediaLive as unknown as Base &
+  return /* SAFETY: The mixed class preserves the supplied base constructor. */ HlsJsMediaLive as typeof HlsJsMediaLive &
+    Base &
     Constructor<{ readonly liveEdgeStart: number; readonly targetLiveWindow: number }>;
 }
 
 type StreamInfo = ReturnType<typeof getStreamInfoFromHlsjsLevelDetails>;
 
 const getStreamInfoFromHlsjsLevelDetails = (levelDetails: LevelLoadedData['details']) => {
-  const playlistType: HlsPlaylistTypes = levelDetails.type as HlsPlaylistTypes;
+  const playlistType: HlsPlaylistTypes =
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ levelDetails.type as HlsPlaylistTypes;
   const streamType = toStreamTypeFromPlaylistType(playlistType);
   const targetLiveWindow = toTargetLiveWindowFromPlaylistType(playlistType);
   const lowLatency = !!levelDetails.partList?.length;

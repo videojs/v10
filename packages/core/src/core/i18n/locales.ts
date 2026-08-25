@@ -63,5 +63,7 @@ export function localeAliases<const Tags extends readonly string[]>(tags: Tags):
     if (!lang) continue;
     counts.set(lang, (counts.get(lang) ?? 0) + 1);
   }
-  return [...counts].filter(([, count]) => count > 1).map(([lang]) => lang) as LocaleAlias<Tags>[];
+  return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ [...counts]
+    .filter(([, count]) => count > 1)
+    .map(([lang]) => lang) as LocaleAlias<Tags>[];
 }

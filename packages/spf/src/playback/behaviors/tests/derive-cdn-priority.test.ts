@@ -22,7 +22,7 @@ const videoTrack = (id: string, url: string): PartiallyResolvedVideoTrack => ({
 });
 
 const presentationWith = (urls: string[], id = 'pres-1'): Presentation =>
-  ({
+  /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ ({
     id,
     url: 'https://cdn-a.example.com/master.m3u8',
     selectionSets: [

@@ -1,3 +1,4 @@
+import { isString } from '@videojs/utils/predicate';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import {
@@ -17,7 +18,7 @@ function mockFetch(responses: Record<string, string | { status: number; body?: s
       if (entry === undefined) {
         return new Response('not found', { status: 404 });
       }
-      if (typeof entry === 'string') {
+      if (isString(entry)) {
         return new Response(entry, { status: 200 });
       }
       const response = new Response(entry.body ?? '', { status: entry.status });

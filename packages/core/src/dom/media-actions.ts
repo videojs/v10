@@ -12,7 +12,7 @@ export interface MediaInputActionContext {
 
 export type MediaInputActionResolver = (context: MediaInputActionContext) => void;
 
-export const MEDIA_INPUT_ACTION_OVERRIDES: Record<MediaInputActionName, MediaInputActionResolver> = {
+export const MEDIA_INPUT_ACTION_OVERRIDES = {
   seekStep({ store, value }) {
     if (isUndefined(value)) return;
     const time = selectTime(store.state);
@@ -44,4 +44,4 @@ export const MEDIA_INPUT_ACTION_OVERRIDES: Record<MediaInputActionName, MediaInp
     const next = idx <= 0 ? playbackRates.length - 1 : idx - 1;
     rate.setPlaybackRate(playbackRates[next]!);
   },
-};
+} satisfies Record<MediaInputActionName, MediaInputActionResolver>;

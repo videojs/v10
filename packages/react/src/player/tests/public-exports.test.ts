@@ -6,7 +6,9 @@ import * as ReactApi from '../../index';
 // @ts-expect-error Popup coordination is not player context.
 type PlayerContextPopupGroup = PlayerContextValue['popupGroup'];
 
-void (0 as unknown as PlayerContextPopupGroup);
+void (
+  /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (0 as PlayerContextPopupGroup)
+);
 
 describe('@videojs/react player exports', () => {
   it('preserves the established player context API', () => {

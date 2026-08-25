@@ -12,9 +12,10 @@ interface ShikiGlobalCache {
 }
 
 function getShikiGlobalCache(): ShikiGlobalCache {
-  const global = globalThis as typeof globalThis & {
-    [SHIKI_CACHE_SYMBOL]?: ShikiGlobalCache;
-  };
+  const global =
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ globalThis as typeof globalThis & {
+      [SHIKI_CACHE_SYMBOL]?: ShikiGlobalCache;
+    };
   global[SHIKI_CACHE_SYMBOL] ??= {};
   return global[SHIKI_CACHE_SYMBOL];
 }

@@ -2,9 +2,12 @@ import type { MediaRemotePlaybackCapability } from '@videojs/media';
 import { isObject } from '@videojs/utils/predicate';
 
 function resolveRemote(media: EventTarget): MediaRemotePlaybackCapability['remote'] | undefined {
-  const target = media as EventTarget & { remote?: unknown };
+  const target =
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ media as EventTarget & {
+      remote?: unknown;
+    };
   if (isObject(target.remote) && 'state' in target.remote && 'prompt' in target.remote) {
-    return target.remote as MediaRemotePlaybackCapability['remote'];
+    return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ target.remote as MediaRemotePlaybackCapability['remote'];
   }
   return undefined;
 }

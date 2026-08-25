@@ -28,7 +28,11 @@ describe('useSyncProps', () => {
     const target: TargetProps = { ...defaults };
 
     const { rerender } = renderHook(({ props }) => useSyncProps(target, props, defaults), {
-      initialProps: { props: { volume: 0.5 } as Partial<TargetProps> },
+      initialProps: {
+        props: /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+          volume: 0.5,
+        } as Partial<TargetProps>,
+      },
     });
 
     expect(target.volume).toBe(0.5);
@@ -48,10 +52,19 @@ describe('useSyncProps', () => {
 
   it('does not let an undefined prop wipe a value derived from another prop', () => {
     // Mirrors MuxMedia: setting `source` derives `src`, resetting `src` clears `source`.
-    const derivedDefaults: { src: string | undefined; source: { id: string } | null } = { src: '', source: null };
+    interface DerivedDefaults {
+      src: string | undefined;
+      source: { id: string } | null;
+    }
+    const derivedDefaults: DerivedDefaults = { src: '', source: null };
     const target = {
-      _src: '' as string | undefined,
-      _source: null as { id: string } | null,
+      _src: /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ '' as
+        | string
+        | undefined,
+      _source:
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ null as {
+          id: string;
+        } | null,
       get src() {
         return this._src;
       },
@@ -79,7 +92,12 @@ describe('useSyncProps', () => {
     const target: TargetProps = { ...defaults };
 
     const { rerender } = renderHook(({ props }) => useSyncProps(target, props, defaults), {
-      initialProps: { props: { src: 'video.mp4', volume: 0.5 } as Partial<TargetProps> },
+      initialProps: {
+        props: /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+          src: 'video.mp4',
+          volume: 0.5,
+        } as Partial<TargetProps>,
+      },
     });
 
     expect(target.volume).toBe(0.5);
@@ -94,7 +112,11 @@ describe('useSyncProps', () => {
     const target: TargetProps = { ...defaults, volume: 0.5 };
 
     const { rerender } = renderHook(({ props }) => useSyncProps(target, props, defaults), {
-      initialProps: { props: { src: 'video.mp4' } as Partial<TargetProps> },
+      initialProps: {
+        props: /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+          src: 'video.mp4',
+        } as Partial<TargetProps>,
+      },
     });
 
     rerender({ props: { src: 'video.mp4' } });

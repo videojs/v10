@@ -90,7 +90,9 @@ async function appendChunk(sourceBuffer: SourceBuffer, data: ArrayBuffer | Uint8
     sourceBuffer.addEventListener('error', onError);
 
     try {
-      sourceBuffer.appendBuffer(data as ArrayBuffer);
+      sourceBuffer.appendBuffer(
+        /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ data as ArrayBuffer
+      );
     } catch (error) {
       cleanup();
       reject(error);

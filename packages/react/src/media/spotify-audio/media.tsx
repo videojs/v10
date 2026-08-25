@@ -2,7 +2,7 @@
 
 import type { SpotifyMediaProps } from '@videojs/media/dom/spotify';
 import { buildSpotifyIframeSrc, SpotifyMedia, spotifyMediaDefaultProps } from '@videojs/media/dom/spotify';
-import type { CSSProperties, ReactNode } from 'react';
+import type { ComponentPropsWithoutRef, ReactNode } from 'react';
 import { forwardRef, useState } from 'react';
 
 import { useAttachIframe } from '../../utils/use-attach-iframe';
@@ -10,27 +10,28 @@ import { useComposedRefs } from '../../utils/use-composed-refs';
 import { useMediaInstance } from '../../utils/use-media-instance';
 import { useSyncProps } from '../../utils/use-sync-props';
 
-export interface SpotifyAudioProps extends Partial<SpotifyMediaProps> {
-  children?: ReactNode;
-}
+export type SpotifyAudioProps = Partial<SpotifyMediaProps> &
+  Omit<ComponentPropsWithoutRef<'iframe'>, keyof SpotifyMediaProps> & {
+    children?: ReactNode;
+  };
 
 export const SpotifyAudio = forwardRef<HTMLIFrameElement, SpotifyAudioProps>(function SpotifyAudio(
   { children, ...rawProps },
   ref
 ) {
   const media = useMediaInstance(SpotifyMedia);
-  const props: Partial<SpotifyMediaProps> & Record<string, unknown> = { ...rawProps };
+  const props = { ...rawProps };
   const attachRef = useAttachIframe(media);
   const composedRef = useComposedRefs(attachRef, ref);
   const [initialSrc] = useState(() =>
     // `source.src` is the only other way to name an entity, so honor it when `src` is absent.
     buildSpotifyIframeSrc(props.src || props.source?.src || '', { ...spotifyMediaDefaultProps, ...props })
   );
-  const { style, ...iframeProps } = useSyncProps<SpotifyMediaProps, Record<string, unknown>>(
+  const { style, ...iframeProps } = useSyncProps<SpotifyMediaProps, typeof props>(
     media,
     props,
     spotifyMediaDefaultProps
-  ) as Record<string, unknown> & { style?: CSSProperties };
+  );
 
   return (
     <iframe

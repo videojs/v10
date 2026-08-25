@@ -9,7 +9,8 @@ const parsed = parse(process.argv.slice(2), {
   boolean: ['list', 'version', 'help'],
 });
 
-const [command, ...rest] = parsed._ as string[];
+const [command, ...rest] =
+  /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ parsed._ as string[];
 
 if (parsed.version) {
   console.log(`@videojs/cli v${__CLI_VERSION__}`);

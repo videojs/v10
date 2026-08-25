@@ -32,5 +32,5 @@ export const MixinBVolumeMixin = <Base extends Constructor>(superclass: Base) =>
     }
   }
 
-  return MixinBVolume as unknown as Base & Constructor<{ volume: number; src: string }>;
+  return MixinBVolume as Base & Constructor<{ volume: number; src: string }>;
 };

@@ -8,7 +8,7 @@ import {
 } from '../input-action';
 import { isSliderFocused } from '../slider-focus';
 
-function mockStore(state: Record<string, unknown>): MediaSnapshotStore {
+function mockStore(state: MediaSnapshotStore['state']): MediaSnapshotStore {
   return { state };
 }
 

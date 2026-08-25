@@ -26,7 +26,10 @@ describe('GestureElement', () => {
   });
 
   it('initializes with default property values', () => {
-    const el = document.createElement('media-gesture') as GestureElement;
+    const el =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+        'media-gesture'
+      ) as GestureElement;
     expect(el.type).toBe('');
     expect(el.action).toBe('');
     expect(el.value).toBeUndefined();
@@ -36,7 +39,10 @@ describe('GestureElement', () => {
   });
 
   it('is hidden when connected', () => {
-    const el = document.createElement('media-gesture') as GestureElement;
+    const el =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+        'media-gesture'
+      ) as GestureElement;
     document.body.appendChild(el);
     expect(el.style.display).toBe('none');
   });

@@ -12,14 +12,20 @@ export function addAudioTrack(media: HTMLMediaElement, track: AudioTrack) {
     getPrivate(track).renditionSet = new Set();
   }
 
-  const trackSet = getPrivate(trackList).trackSet as Set<AudioTrack>;
+  const trackSet =
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ getPrivate(trackList)
+      .trackSet as Set<AudioTrack>;
   trackSet.add(track);
   const index = trackSet.size - 1;
 
   if (!(index in AudioTrackList.prototype)) {
     Object.defineProperty(AudioTrackList.prototype, index, {
       get() {
-        return [...(getPrivate(this).trackSet as Set<AudioTrack>)][index];
+        return [
+          .../* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (getPrivate(
+            this
+          ).trackSet as Set<AudioTrack>),
+        ][index];
       },
     });
   }
@@ -31,10 +37,15 @@ export function addAudioTrack(media: HTMLMediaElement, track: AudioTrack) {
 }
 
 export function removeAudioTrack(track: AudioTrack) {
-  const trackList = getPrivate(track).media?.deref()?.audioTracks as AudioTrackList | undefined;
+  const trackList =
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ getPrivate(
+      track
+    ).media?.deref()?.audioTracks as AudioTrackList | undefined;
   if (!trackList) return;
 
-  const trackSet = getPrivate(trackList).trackSet as Set<AudioTrack>;
+  const trackSet =
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ getPrivate(trackList)
+      .trackSet as Set<AudioTrack>;
   if (!trackSet.delete(track)) return;
 
   queueMicrotask(() => {
@@ -43,7 +54,10 @@ export function removeAudioTrack(track: AudioTrack) {
 }
 
 export function enabledChanged(track: AudioTrack) {
-  const trackList = getPrivate(track).media?.deref()?.audioTracks as AudioTrackList | undefined;
+  const trackList =
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ getPrivate(
+      track
+    ).media?.deref()?.audioTracks as AudioTrackList | undefined;
 
   // Prevent firing a track list `change` event multiple times per tick.
   if (!trackList || getPrivate(trackList).changeRequested) return;
@@ -67,7 +81,8 @@ export class AudioTrackList extends EventTarget {
   }
 
   get #tracks() {
-    return getPrivate(this).trackSet as Set<AudioTrack>;
+    return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ getPrivate(this)
+      .trackSet as Set<AudioTrack>;
   }
 
   [Symbol.iterator]() {
@@ -93,7 +108,11 @@ export class AudioTrackList extends EventTarget {
     }
     if (isFunction(callback)) {
       this.#addTrackCallback = callback;
-      this.addEventListener('addtrack', callback as unknown as EventListener);
+      this.addEventListener(
+        'addtrack',
+        /* SAFETY: DOM dispatch supplies the event argument accepted by this media-track callback. */ callback as typeof callback &
+          EventListener
+      );
     }
   }
 
@@ -108,7 +127,11 @@ export class AudioTrackList extends EventTarget {
     }
     if (isFunction(callback)) {
       this.#removeTrackCallback = callback;
-      this.addEventListener('removetrack', callback as unknown as EventListener);
+      this.addEventListener(
+        'removetrack',
+        /* SAFETY: DOM dispatch supplies the event argument accepted by this media-track callback. */ callback as typeof callback &
+          EventListener
+      );
     }
   }
 

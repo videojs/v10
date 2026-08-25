@@ -121,11 +121,12 @@ test.describe('Visual — HTML Portrait Layout', () => {
     )}`;
 
     await page.evaluate((url) => {
-      const thumbnail = document
-        .querySelector('video-skin')
-        ?.shadowRoot?.querySelector('media-slider-thumbnail') as HTMLElement & {
-        thumbnails?: Array<{ url: string; startTime: number; width: number; height: number }>;
-      };
+      const thumbnail =
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document
+          .querySelector('video-skin')
+          ?.shadowRoot?.querySelector('media-slider-thumbnail') as HTMLElement & {
+          thumbnails?: Array<{ url: string; startTime: number; width: number; height: number }>;
+        };
 
       if (!thumbnail) return;
       thumbnail.thumbnails = [{ url, startTime: 0, width: 270, height: 480 }];

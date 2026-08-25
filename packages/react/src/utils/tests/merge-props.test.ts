@@ -5,7 +5,9 @@ import { mergeProps } from '../merge-props';
 
 // Create a minimal mock event for testing
 function createMockEvent(): MouseEvent<HTMLButtonElement> {
-  return { type: 'click' } as MouseEvent<HTMLButtonElement>;
+  return /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+    type: 'click',
+  } as MouseEvent<HTMLButtonElement>;
 }
 
 describe('mergeProps', () => {
@@ -72,7 +74,9 @@ describe('mergeProps', () => {
 
       const merged = mergeProps<'button'>({ onKeyDown: () => log.push('1') }, { onKeyDown: () => log.push('2') });
 
-      merged.onKeyDown?.({} as React.KeyboardEvent<HTMLButtonElement>);
+      merged.onKeyDown?.(
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {} as React.KeyboardEvent<HTMLButtonElement>
+      );
 
       expect(log).toEqual(['2', '1']);
     });

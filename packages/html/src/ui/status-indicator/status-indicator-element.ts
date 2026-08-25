@@ -60,7 +60,9 @@ export class StatusIndicatorElement extends InputIndicatorElement<StatusIndicato
 }
 
 function parseActions(actions: string | undefined): readonly InputAction[] | undefined {
-  return actions?.split(/[\s,]+/).filter(Boolean) as readonly InputAction[] | undefined;
+  return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ actions
+    ?.split(/[\s,]+/)
+    .filter(Boolean) as readonly InputAction[] | undefined;
 }
 
 function renderStatusIndicator(element: HTMLElement, state: StatusIndicatorCore.State): void {

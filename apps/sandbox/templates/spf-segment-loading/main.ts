@@ -14,25 +14,32 @@ import type { HlsVideoEngineSignals, HlsVideoEngineState } from '@videojs/spf/hl
 import { createHlsVideoEngine, getMediaPlaylistMetadata } from '@videojs/spf/hls';
 
 // ── DOM refs ──────────────────────────────────────────────────────────────────
-const video = document.getElementById('video') as HTMLVideoElement;
-const logsDiv = document.getElementById('logs') as HTMLDivElement;
-const liveStatusDiv = document.getElementById('live-status') as HTMLDivElement;
-const stateDiv = document.getElementById('state') as HTMLDivElement;
-const renditionButtonsDiv = document.getElementById('rendition-buttons') as HTMLDivElement;
-const audioTrackButtonsDiv = document.getElementById('audio-track-buttons') as HTMLDivElement;
-const textTrackButtonsDiv = document.getElementById('text-track-buttons') as HTMLDivElement;
-const resolutionListDiv = document.getElementById('resolution-list') as HTMLDivElement;
-const nowPlayingQualityDiv = document.getElementById('now-playing-quality') as HTMLDivElement;
-const throughputDiv = document.getElementById('throughput-display') as HTMLDivElement;
-const playerSizeDiv = document.getElementById('player-size-display') as HTMLDivElement;
-const srcPreset = document.getElementById('src-preset') as HTMLSelectElement;
-const srcInput = document.getElementById('src-input') as HTMLInputElement;
-const setSrcBtn = document.getElementById('set-src') as HTMLButtonElement;
-const mutedToggle = document.getElementById('muted-toggle') as HTMLInputElement;
-const autoplayToggle = document.getElementById('autoplay-toggle') as HTMLInputElement;
-const loopToggle = document.getElementById('loop-toggle') as HTMLInputElement;
-const preloadSelect = document.getElementById('preload-select') as HTMLSelectElement;
-const shareLink = document.getElementById('share-link') as HTMLAnchorElement;
+function getElement<Element extends HTMLElement>(id: string): Element {
+  const element = document.getElementById(id);
+  if (!element) throw new Error(`Missing #${id} in the SPF segment-loading template`);
+  // SAFETY: Each call names a fixed template id whose markup establishes the requested element subtype.
+  return element as Element;
+}
+
+const video = getElement<HTMLVideoElement>('video');
+const logsDiv = getElement<HTMLDivElement>('logs');
+const liveStatusDiv = getElement<HTMLDivElement>('live-status');
+const stateDiv = getElement<HTMLDivElement>('state');
+const renditionButtonsDiv = getElement<HTMLDivElement>('rendition-buttons');
+const audioTrackButtonsDiv = getElement<HTMLDivElement>('audio-track-buttons');
+const textTrackButtonsDiv = getElement<HTMLDivElement>('text-track-buttons');
+const resolutionListDiv = getElement<HTMLDivElement>('resolution-list');
+const nowPlayingQualityDiv = getElement<HTMLDivElement>('now-playing-quality');
+const throughputDiv = getElement<HTMLDivElement>('throughput-display');
+const playerSizeDiv = getElement<HTMLDivElement>('player-size-display');
+const srcPreset = getElement<HTMLSelectElement>('src-preset');
+const srcInput = getElement<HTMLInputElement>('src-input');
+const setSrcBtn = getElement<HTMLButtonElement>('set-src');
+const mutedToggle = getElement<HTMLInputElement>('muted-toggle');
+const autoplayToggle = getElement<HTMLInputElement>('autoplay-toggle');
+const loopToggle = getElement<HTMLInputElement>('loop-toggle');
+const preloadSelect = getElement<HTMLSelectElement>('preload-select');
+const shareLink = getElement<HTMLAnchorElement>('share-link');
 
 // ── Query params ──────────────────────────────────────────────────────────────
 const DEFAULT_STREAM = 'https://stream.mux.com/JX01bG8eB4uaoV3OpDuK602rBfvdSgrMObjwuUOBn4JrQ.m3u8';
@@ -67,7 +74,18 @@ const INITIAL_SRC = params.get('src') ?? DEFAULT_STREAM;
 const INITIAL_MUTED = params.get('muted') === 'true';
 const INITIAL_AUTOPLAY = params.get('autoplay') === 'true';
 const INITIAL_LOOP = params.get('loop') === 'true';
-const INITIAL_PRELOAD = (params.get('preload') as 'auto' | 'metadata' | 'none') ?? 'none';
+type Preload = 'auto' | 'metadata' | 'none';
+interface PreviousSelectionState {
+  hasPresentation: boolean;
+  selectedVideoTrackId: string | undefined;
+  selectedAudioTrackId: string | undefined;
+  selectedTextTrackId: string | undefined;
+}
+
+function parsePreload(value: string | null): Preload {
+  return value === 'auto' || value === 'metadata' ? value : 'none';
+}
+const INITIAL_PRELOAD = parsePreload(params.get('preload'));
 
 // Populate the preset picker; selecting one loads it. Reflects the current src
 // when it matches a preset.
@@ -757,20 +775,22 @@ function startEngine(src: string) {
       signals = refs;
     },
   });
-  (window as any).engine = engine;
-  (window as any).signals = signals;
-  (window as any).state = () => snapshot(engine.state);
-  (window as any).context = () => snapshot(engine.context);
+  Object.assign(window, {
+    engine,
+    signals,
+    state: () => snapshot(engine.state),
+    context: () => snapshot(engine.context),
+  });
 
   // ── Reactive effects ───────────────────────────────────────────────────────
 
   // prev/prevContext track one-time transitions for logging purposes.
   // They are reset on each startEngine call so a new source logs correctly.
-  const prev = {
+  const prev: PreviousSelectionState = {
     hasPresentation: false,
-    selectedVideoTrackId: undefined as string | undefined,
-    selectedAudioTrackId: undefined as string | undefined,
-    selectedTextTrackId: undefined as string | undefined,
+    selectedVideoTrackId: undefined,
+    selectedAudioTrackId: undefined,
+    selectedTextTrackId: undefined,
   };
   const prevContext = { hasMediaSource: false, hasVideoBuffer: false, hasAudioBuffer: false };
 
@@ -888,7 +908,7 @@ function startEngine(src: string) {
   // Set preload on the element BEFORE wiring context so syncPreload's read
   // effect picks up the user-selected value rather than the hardcoded "none"
   // from the HTML.
-  video.preload = preloadSelect.value as 'auto' | 'metadata' | 'none';
+  video.preload = parsePreload(preloadSelect.value);
   signals.context.mediaElement.set(video);
   signals.state.presentation.set({ url: src });
 
@@ -904,7 +924,7 @@ try {
   video.loop = INITIAL_LOOP;
   startEngine(INITIAL_SRC);
 } catch (error) {
-  log(`✗ Error creating engine: ${(error as Error).message}`, 'error');
+  log(`✗ Error creating engine: ${error instanceof Error ? error.message : String(error)}`, 'error');
   console.error(error);
 }
 
@@ -979,7 +999,7 @@ loopToggle.addEventListener('change', () => {
 });
 
 preloadSelect.addEventListener('change', () => {
-  const value = preloadSelect.value as 'auto' | 'metadata' | 'none';
+  const value = parsePreload(preloadSelect.value);
   signals.state.preload.set(value);
   log(`Preload: ${value}`);
   updateShareUrl();

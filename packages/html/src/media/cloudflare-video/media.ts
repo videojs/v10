@@ -47,7 +47,12 @@ function templateAttrsToEmbedProps(attrs: Record<string, string>) {
     defaultMuted: attrs.muted !== undefined,
     loop: attrs.loop !== undefined,
     controls: attrs.controls !== undefined,
-    preload: (attrs.preload as 'none' | 'metadata' | 'auto' | undefined) ?? 'metadata',
+    preload:
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (attrs.preload as
+        | 'none'
+        | 'metadata'
+        | 'auto'
+        | undefined) ?? 'metadata',
     // The Stream embed paints the poster itself, so it is part of the URL.
     poster: attrs.poster ?? '',
   };

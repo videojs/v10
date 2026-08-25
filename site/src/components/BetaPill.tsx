@@ -16,7 +16,12 @@ export default function BetaPill({ className, style, compact }: BetaPillProps) {
           : 'h-7 px-3 font-display lg:h-10 lg:border-2 lg:px-4 lg:text-h4',
         className
       )}
-      style={{ '--text': '0.75rem', ...style } as React.CSSProperties}
+      style={
+        /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ {
+          '--text': '0.75rem',
+          ...style,
+        } as React.CSSProperties
+      }
     >
       {compact ? (
         <>

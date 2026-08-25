@@ -22,10 +22,13 @@ type PartialWithUndefined<T> = { [K in keyof T]?: T[K] | undefined };
 export function defaults<T extends object>(object: PartialWithUndefined<T>, defaultValues: T): T {
   const result = { ...defaultValues };
 
-  for (const key of Object.keys(defaultValues) as (keyof T)[]) {
+  for (const key of /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ Object.keys(
+    defaultValues
+  ) as (keyof T)[]) {
     const value = object[key];
     if (!isUndefined(value)) {
-      result[key] = value as T[keyof T];
+      result[key] =
+        /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ value as T[keyof T];
     }
   }
 

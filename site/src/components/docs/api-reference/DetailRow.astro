@@ -124,7 +124,7 @@ const hasDetail = Boolean(attributeName || detailedType || description);
     .querySelectorAll<HTMLTableRowElement>("[data-apiref-row]")
     .forEach((row) => {
       row.addEventListener("click", (e) => {
-        if ((e.target as Element).closest("a, button")) return;
+        if ((/* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ e.target as Element).closest("a, button")) return;
         row.querySelector<HTMLButtonElement>("[data-apiref-toggle]")?.click();
       });
     });

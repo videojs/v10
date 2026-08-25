@@ -13,12 +13,16 @@ export type MdastVisitorContext = Parameters<NonNullable<MdastPluginInstance['he
  * `render().remarkPluginFrontmatter`.
  */
 interface AstroData {
-  frontmatter: Record<string, unknown>;
+  frontmatter: Record<string, import('./site-data-value').SiteDataValue>;
   headings: Array<{ depth: number; slug: string; text: string }>;
 }
 
 /** Typed accessor for the Astro frontmatter bag a Sätteri plugin writes into. */
-export function getAstroFrontmatter(ctx: MdastVisitorContext): Record<string, unknown> | undefined {
-  const astro = (ctx.data as { astro?: AstroData }).astro;
+export function getAstroFrontmatter(
+  ctx: MdastVisitorContext
+): Record<string, import('./site-data-value').SiteDataValue> | undefined {
+  const astro = /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (
+    ctx.data as { astro?: AstroData }
+  ).astro;
   return astro?.frontmatter;
 }

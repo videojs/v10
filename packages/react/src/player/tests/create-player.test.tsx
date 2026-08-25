@@ -1,6 +1,7 @@
 import { act, render, renderHook, screen, waitFor } from '@testing-library/react';
 import { features, metadataFeature, type PlayerStore } from '@videojs/core/dom';
 import { defineSlice } from '@videojs/store';
+import { isFunction } from '@videojs/utils/predicate';
 import { Component, type ErrorInfo, type ReactNode, StrictMode, useState } from 'react';
 import { renderToString } from 'react-dom/server';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
@@ -42,9 +43,9 @@ describe('createPlayer', () => {
       );
 
       expect(store).toBeDefined();
-      expect(typeof store.subscribe).toBe('function');
-      expect(typeof store.attach).toBe('function');
-      expect(typeof store.destroy).toBe('function');
+      expect(isFunction(store.subscribe)).toBe(true);
+      expect(isFunction(store.attach)).toBe(true);
+      expect(isFunction(store.destroy)).toBe(true);
     });
 
     it('destroys store on unmount', () => {
@@ -470,8 +471,8 @@ describe('createPlayer', () => {
       const { result } = renderHook(() => usePlayer(), { wrapper });
 
       expect(result.current).toBeDefined();
-      expect(typeof result.current.subscribe).toBe('function');
-      expect(typeof result.current.attach).toBe('function');
+      expect(isFunction(result.current.subscribe)).toBe(true);
+      expect(isFunction(result.current.attach)).toBe(true);
     });
 
     it('returns selected state with selector', () => {

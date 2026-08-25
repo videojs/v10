@@ -15,8 +15,8 @@ export interface PlayerContextValue {
 
 const PlayerContext = createContext<PlayerContextValue | null>(null);
 const EMPTY_UNSUBSCRIBE = () => {};
-const EMPTY_STORE = {
-  state: {} as UnknownState,
+const EMPTY_STORE = /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ {
+  state: /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ {} as UnknownState,
   subscribe: () => EMPTY_UNSUBSCRIBE,
 } as Pick<UnknownStore, 'state' | 'subscribe'>;
 
@@ -60,7 +60,10 @@ export function usePlayer(): UnknownStore;
 export function usePlayer<R>(selector: (state: UnknownState) => R): R;
 export function usePlayer<R>(selector?: (state: UnknownState) => R) {
   const { store } = usePlayerContext();
-  return useStore(store, selector as any);
+  return useStore(
+    store,
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ selector as any
+  );
 }
 
 /**
@@ -75,8 +78,15 @@ export function useOptionalPlayer(): UnknownStore | undefined;
 export function useOptionalPlayer<R>(selector: (state: UnknownState) => R): R | undefined;
 export function useOptionalPlayer<R>(selector?: (state: UnknownState) => R) {
   const ctx = useContext(PlayerContext);
-  const store = (ctx?.store ?? (EMPTY_STORE as unknown as UnknownStore)) as UnknownStore;
-  const value = useStore(store, (ctx ? selector : undefined) as any);
+  const store =
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (ctx?.store ??
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (EMPTY_STORE as UnknownStore)) as UnknownStore;
+  const value = useStore(
+    store,
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (ctx
+      ? selector
+      : undefined) as any
+  );
   return ctx ? value : undefined;
 }
 

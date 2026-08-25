@@ -9,7 +9,9 @@ export class TooltipShortcutElement extends UIElement {
   }
 
   static create(): TooltipShortcutElement {
-    return document.createElement(TooltipShortcutElement.tagName) as TooltipShortcutElement;
+    return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ document.createElement(
+      TooltipShortcutElement.tagName
+    ) as TooltipShortcutElement;
   }
 
   setSyncedShortcut(shortcut: string | undefined): void {

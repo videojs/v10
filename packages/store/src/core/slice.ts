@@ -2,6 +2,7 @@ import type { Simplify, UnionToIntersection } from '@videojs/utils/types';
 
 import type { AbortControllerRegistry } from './abort-controller-registry';
 import type { UnknownState } from './state';
+import type { StoreValue } from './value';
 
 // ----------------------------------------
 // Attach
@@ -20,7 +21,7 @@ export interface AttachContext<Target, State> {
   store: AttachStore;
   get: () => Readonly<State>;
   set: (partial: Partial<State>) => void;
-  reportError: (error: unknown) => void;
+  reportError: <Failure>(error: Failure) => void;
 }
 
 // ----------------------------------------
@@ -42,9 +43,9 @@ export interface StateContext<Target> {
    */
   signals: AbortControllerRegistry;
   /** Read slice state before derived values. Safe inside action closures, not during `state()` init. */
-  get: () => Readonly<Record<PropertyKey, unknown>>;
+  get: () => Readonly<Record<PropertyKey, StoreValue>>;
   /** Patch slice state before derived values. Safe inside action closures, not during `state()` init. */
-  set: (partial: Record<PropertyKey, unknown>) => void;
+  set: (partial: Record<PropertyKey, StoreValue>) => void;
 }
 
 // ----------------------------------------
@@ -85,9 +86,9 @@ export type AnySlice<Target = any> = Slice<Target, any, object>;
 // Factory
 // ----------------------------------------
 
-type DerivedFunctions<State> = Record<string, (ctx: DerivedContext<State>) => unknown>;
+type DerivedFunctions<State> = Record<string, (ctx: DerivedContext<State>) => StoreValue>;
 
-type DerivedValues<Definitions extends Record<string, (...args: any[]) => unknown>> = {
+type DerivedValues<Definitions extends DerivedFunctions<never>> = {
   [Key in keyof Definitions]: ReturnType<Definitions[Key]>;
 };
 
@@ -101,7 +102,9 @@ export interface SliceFactory<Target> {
 }
 
 export function defineSlice<Target>(): SliceFactory<Target> {
-  return ((config: SliceConfig<Target, unknown, unknown>) => config) as SliceFactory<Target>;
+  return /* SAFETY: The implementation returns the exact config unchanged. */ ((
+    config: SliceConfig<Target, StoreValue, StoreValue>
+  ) => config) as SliceFactory<Target>;
 }
 
 // ----------------------------------------

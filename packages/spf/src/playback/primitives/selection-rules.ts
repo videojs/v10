@@ -148,9 +148,15 @@ export function excludeUnplayableTracks<T, State, Context, Config>(
   tracks: readonly T[],
   { config }: SelectionRuleDeps<State, Context, Config>
 ): readonly T[] {
-  const canPlay = (config as CapabilityConstraintConfig | undefined)?.canPlayTrack;
+  const canPlay = /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (
+    config as CapabilityConstraintConfig | undefined
+  )?.canPlayTrack;
   if (!canPlay) return tracks;
-  return tracks.filter((track) => canPlay(track as Parameters<CanPlayTrack>[0]));
+  return tracks.filter((track) =>
+    canPlay(
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ track as Parameters<CanPlayTrack>[0]
+    )
+  );
 }
 
 /**
@@ -200,10 +206,12 @@ export function preferCodecFamilies<T, State, Context, Config>(
   tracks: readonly T[],
   { config }: SelectionRuleDeps<State, Context, Config>
 ): readonly T[] {
+  // SAFETY: This rule is installed only in selection pipelines whose config supports codec preferences.
   const preferred = (config as CodecPreferenceConfig | undefined)?.preferredCodecs ?? DEFAULT_PREFERRED_CODECS;
   if (!preferred.length) return tracks;
   const preferredFamilies = new Set(preferred.map(getCodecFamily));
   return tracks.filter((track) => {
+    // SAFETY: Codec-family preference is composed only for media candidates carrying optional codecs.
     const families = getCodecFamilies(track as { codecs?: string[] });
     return !!families && families.every((family) => preferredFamilies.has(family));
   });

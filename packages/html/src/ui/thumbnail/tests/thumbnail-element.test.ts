@@ -1,4 +1,4 @@
-import type { AnyPlayerStore } from '@videojs/core/dom';
+import type { AnyPlayerStore, PlayerTarget } from '@videojs/core/dom';
 import { ContextProvider } from '@videojs/element/context';
 import type { MediaTextTrackState } from '@videojs/media';
 import { createStore } from '@videojs/store';
@@ -11,7 +11,7 @@ import { ThumbnailElement } from '../thumbnail-element';
 function createTextTrackStore(
   thumbnailTrackCrossOrigin: MediaTextTrackState['thumbnailTrackCrossOrigin']
 ): AnyPlayerStore {
-  return createStore<unknown>()<MediaTextTrackState>({
+  return createStore<PlayerTarget>()({
     name: 'textTrack',
     state: () => ({
       chaptersCues: [],
@@ -23,7 +23,7 @@ function createTextTrackStore(
       toggleSubtitles: vi.fn(),
       selectSubtitlesTrack: vi.fn(),
     }),
-  }) as unknown as AnyPlayerStore;
+  });
 }
 
 class TestPlayerProviderElement extends UIElement {
@@ -55,8 +55,14 @@ async function renderCrossOrigin(
   mediaCrossOrigin: MediaTextTrackState['thumbnailTrackCrossOrigin'],
   configure?: (el: ThumbnailElement) => void
 ): Promise<string | null> {
-  const provider = document.createElement('test-thumbnail-player') as TestPlayerProviderElement;
-  const thumbnail = document.createElement(ThumbnailElement.tagName) as ThumbnailElement;
+  const provider =
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+      'test-thumbnail-player'
+    ) as TestPlayerProviderElement;
+  const thumbnail =
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+      ThumbnailElement.tagName
+    ) as ThumbnailElement;
 
   configure?.(thumbnail);
   provider.setStore(createTextTrackStore(mediaCrossOrigin));

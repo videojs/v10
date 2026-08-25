@@ -105,5 +105,7 @@ type BuiltItem = Omit<ShadcnRegistry['items'][number], 'files'> & {
 function assetJson<Value>(assets: ReadonlyMap<string, string>, fileName: string): Value {
   const source = assets.get(fileName);
   if (!source) throw new Error(`Missing registry asset: ${fileName}`);
-  return JSON.parse(source) as Value;
+  return /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ JSON.parse(
+    source
+  ) as Value;
 }

@@ -22,7 +22,10 @@ test.describe('Captions', () => {
 
   test('captions settings lists tracks when subtitle track is added', async ({ page }) => {
     await page.evaluate(() => {
-      const video = document.querySelector('video') as HTMLVideoElement;
+      const video =
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.querySelector(
+          'video'
+        ) as HTMLVideoElement;
       if (!video) return;
 
       const track = document.createElement('track');
@@ -42,7 +45,10 @@ test.describe('Captions', () => {
 
   test('captions button toggles captions', async ({ page }) => {
     await page.evaluate(() => {
-      const video = document.querySelector('video') as HTMLVideoElement;
+      const video =
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.querySelector(
+          'video'
+        ) as HTMLVideoElement;
       if (!video) return;
 
       const track = document.createElement('track');

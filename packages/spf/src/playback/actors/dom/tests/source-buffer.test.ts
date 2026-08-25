@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vite-plus/test';
 
 import { effect } from '../../../../core/signals/effect';
 import { createSourceBufferActor } from '../source-buffer';
+import { createSourceBufferDouble } from './source-buffer-test-double';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -33,9 +34,9 @@ function makeSourceBuffer(appendRanges: Array<[number, number]> = []): SourceBuf
     ranges = next;
   };
 
-  return {
+  return createSourceBufferDouble({
     get buffered() {
-      return {
+      return /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
         get length() {
           return ranges.length;
         },
@@ -68,7 +69,7 @@ function makeSourceBuffer(appendRanges: Array<[number, number]> = []): SourceBuf
     removeEventListener: vi.fn((type: string, listener: EventListener) => {
       listeners[type] = (listeners[type] ?? []).filter((l) => l !== listener);
     }),
-  } as unknown as SourceBuffer;
+  });
 }
 
 describe('createSourceBufferActor', () => {

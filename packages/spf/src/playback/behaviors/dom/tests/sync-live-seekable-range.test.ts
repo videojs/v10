@@ -39,11 +39,11 @@ function makePresentation(): Presentation {
 }
 
 function fakeMediaSource(readyState: MediaSource['readyState'] = 'open') {
-  return {
+  return /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
     readyState,
     duration: Number.NaN,
     setLiveSeekableRange: vi.fn(),
-  } as unknown as MediaSource & { setLiveSeekableRange: ReturnType<typeof vi.fn> };
+  } as MediaSource & { setLiveSeekableRange: ReturnType<typeof vi.fn> };
 }
 
 function run(opts: { presentation?: MaybeResolvedPresentation; trackId?: string; mediaSource?: MediaSource }) {
@@ -52,7 +52,9 @@ function run(opts: { presentation?: MaybeResolvedPresentation; trackId?: string;
     selectedVideoTrackId: signal<string | undefined>(opts.trackId),
   };
   const context = { mediaSource: signal<MediaSource | undefined>(opts.mediaSource) };
-  return syncLiveSeekableRange.setup({ state, context, config: {} }) as () => void;
+  return /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ syncLiveSeekableRange.setup(
+    { state, context, config: {} }
+  ) as () => void;
 }
 
 describe('syncLiveSeekableRange', () => {
@@ -76,7 +78,10 @@ describe('syncLiveSeekableRange', () => {
       selectedVideoTrackId: signal<string | undefined>('v-1'),
     };
     const context = { mediaSource: signal<MediaSource | undefined>(undefined) };
-    const cleanup = syncLiveSeekableRange.setup({ state, context, config: {} }) as () => void;
+    const cleanup =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ syncLiveSeekableRange.setup(
+        { state, context, config: {} }
+      ) as () => void;
 
     expect(ms.setLiveSeekableRange).not.toHaveBeenCalled(); // unpublished → no declaration
 
@@ -90,7 +95,9 @@ describe('syncLiveSeekableRange', () => {
   it('no-ops for a complete (finite-duration) playlist — VoD / ended live', () => {
     const ms = fakeMediaSource();
     const presentation = makePresentation();
-    (presentation.selectionSets[0]!.switchingSets[0]!.tracks[0] as VideoTrack).duration = 110;
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+      presentation.selectionSets[0]!.switchingSets[0]!.tracks[0] as VideoTrack
+    ).duration = 110;
 
     const cleanup = run({ presentation, trackId: 'v-1', mediaSource: ms });
 

@@ -6,7 +6,12 @@ import type { MaybeResolvedPresentation, Presentation } from '../../../media/typ
 import { collectErrors, emitError } from '../collect-errors';
 
 const resolved = (id = 'pres-1'): Presentation =>
-  ({ id, url: 'https://example.com/master.m3u8', startTime: 0, selectionSets: [] }) as Presentation;
+  /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ ({
+    id,
+    url: 'https://example.com/master.m3u8',
+    startTime: 0,
+    selectionSets: [],
+  }) as Presentation;
 
 const makeState = (presentation?: MaybeResolvedPresentation) => ({
   presentation: signal<MaybeResolvedPresentation | undefined>(presentation),

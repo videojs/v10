@@ -7,6 +7,7 @@
  * confirm the seed, the absence of subtracted state slots, and the selection
  * rule chain — its screen-size cap and its configurability.
  */
+import { isFunction } from '@videojs/utils/predicate';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { snapshot } from '../../../../core/signals/primitives';
@@ -34,7 +35,7 @@ describe('createBackgroundVideoEngine', () => {
 
     expect(engine.state).toBeDefined();
     expect(engine.context).toBeDefined();
-    expect(typeof engine.destroy).toBe('function');
+    expect(isFunction(engine.destroy)).toBe(true);
 
     engine.destroy();
   });
@@ -47,12 +48,12 @@ describe('createBackgroundVideoEngine', () => {
 
   it('omits subtracted state slots — no audio/text/userVideoTrackSelection signals', () => {
     const engine = createBackgroundVideoEngine();
-    const state = snapshot(engine.state) as Record<string, unknown>;
+    const state = snapshot(engine.state);
 
     // selectedAudioTrackId is declared by calculatePresentationDuration so
     // its signal is created, but it stays undefined since no audio-selection
     // behavior is composed in.
-    expect(state.selectedAudioTrackId).toBeUndefined();
+    expect('selectedAudioTrackId' in state ? state.selectedAudioTrackId : undefined).toBeUndefined();
 
     // Text-track and userVideoTrackSelection signals must not exist —
     // no behavior in this composition declares them.
@@ -100,7 +101,7 @@ describe('createBackgroundVideoEngine', () => {
 
     it('declares the errors slot', () => {
       const engine = createBackgroundVideoEngine();
-      expect('errors' in (snapshot(engine.state) as Record<string, unknown>)).toBe(true);
+      expect('errors' in snapshot(engine.state)).toBe(true);
       engine.destroy();
     });
 
@@ -184,7 +185,7 @@ describe('createBackgroundVideoEngine', () => {
     });
 
     const audioOnlyPresentation = (): MaybeResolvedPresentation =>
-      ({
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ ({
         id: 'p',
         url: 'https://example.com/audio-only.m3u8',
         startTime: 0,
@@ -245,12 +246,12 @@ describe('createBackgroundVideoEngine', () => {
 
   it('omits subtracted context slots — no audio segment loader / text actors', () => {
     const engine = createBackgroundVideoEngine();
-    const context = snapshot(engine.context) as Record<string, unknown>;
+    const context = snapshot(engine.context);
 
     // `audioBufferActor` IS declared by `endOfStream` (cross-type EOS
     // coordination), so the signal exists — but no behavior in this
     // composition writes it, so it stays `undefined`.
-    expect(context.audioBufferActor).toBeUndefined();
+    expect('audioBufferActor' in context ? context.audioBufferActor : undefined).toBeUndefined();
 
     // The audio segment loader and both text-track actors aren't declared
     // by any behavior left in the composition — their signals don't exist.
@@ -282,7 +283,7 @@ describe('createBackgroundVideoEngine', () => {
               id: 'video-switching',
               type: 'video',
               tracks: [
-                {
+                /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
                   type: 'video',
                   id: '480p',
                   url: 'https://example.com/480p.m3u8',
@@ -296,7 +297,7 @@ describe('createBackgroundVideoEngine', () => {
                   width: 854,
                   height: 480,
                 } as never,
-                {
+                /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
                   type: 'video',
                   id: '1080p',
                   url: 'https://example.com/1080p.m3u8',
@@ -329,7 +330,7 @@ describe('createBackgroundVideoEngine', () => {
     engine.state.screenResolution.set({ width: 1280, height: 720 });
 
     const videoTrack = (id: string, width: number, height: number, bandwidth: number) =>
-      ({
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ ({
         type: 'video',
         id,
         url: `https://example.com/${id}.m3u8`,
@@ -344,24 +345,26 @@ describe('createBackgroundVideoEngine', () => {
         height,
       }) as never;
 
-    engine.state.presentation.set({
-      id: 'p',
-      url: 'https://example.com/manifest.m3u8',
-      startTime: 0,
-      selectionSets: [
-        {
-          id: 'video-set',
-          type: 'video',
-          switchingSets: [
-            {
-              id: 'video-switching',
-              type: 'video',
-              tracks: [videoTrack('480p', 854, 480, 1_000_000), videoTrack('1080p', 1920, 1080, 4_000_000)],
-            },
-          ],
-        },
-      ],
-    } as MaybeResolvedPresentation);
+    engine.state.presentation.set(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+        id: 'p',
+        url: 'https://example.com/manifest.m3u8',
+        startTime: 0,
+        selectionSets: [
+          {
+            id: 'video-set',
+            type: 'video',
+            switchingSets: [
+              {
+                id: 'video-switching',
+                type: 'video',
+                tracks: [videoTrack('480p', 854, 480, 1_000_000), videoTrack('1080p', 1920, 1080, 4_000_000)],
+              },
+            ],
+          },
+        ],
+      } as MaybeResolvedPresentation
+    );
 
     await new Promise<void>((resolve) => queueMicrotask(resolve));
     expect(engine.state.selectedVideoTrackId.get()).toBe('480p');
@@ -389,7 +392,7 @@ describe('createBackgroundVideoEngine', () => {
               id: 'video-switching',
               type: 'video',
               tracks: [
-                {
+                /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
                   type: 'video',
                   id: '480p',
                   url: 'https://example.com/480p.m3u8',
@@ -403,7 +406,7 @@ describe('createBackgroundVideoEngine', () => {
                   width: 854,
                   height: 480,
                 } as never,
-                {
+                /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
                   type: 'video',
                   id: '720p',
                   url: 'https://example.com/720p.m3u8',

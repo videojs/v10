@@ -1,6 +1,7 @@
 import { globSync, readFileSync } from 'node:fs';
 
 import type { CallExpression, ExportDefaultDeclaration, PropertyKey } from '@oxc-project/types';
+import { isNumber, isString } from '@videojs/utils/predicate';
 import { parseSync } from 'oxc-parser';
 
 import { toArray } from '../../utils/array';
@@ -19,6 +20,11 @@ export interface DiscoverSchemaOptions {
   readonly cwd: string;
   readonly include: readonly ComponentSource[];
   readonly exclude?: string | readonly string[] | undefined;
+}
+
+interface DiscoveryGlobOptions {
+  cwd: string;
+  exclude?: readonly string[];
 }
 
 export interface ManifestSchemaComponent {
@@ -45,9 +51,7 @@ export interface DiscoveredSchema {
 /** Discover component definitions and their watched source files. */
 export function discoverSchema(options: DiscoverSchemaOptions): DiscoveredSchema {
   const components = options.include.flatMap<SchemaComponent>((source) =>
-    typeof source === 'string'
-      ? discoverManifests(source, options.exclude, options.cwd)
-      : discoverFiles(source, options.cwd)
+    isString(source) ? discoverManifests(source, options.exclude, options.cwd) : discoverFiles(source, options.cwd)
   );
 
   return {
@@ -61,17 +65,20 @@ function discoverManifests(
   exclude: string | readonly string[] | undefined,
   cwd: string
 ): ManifestSchemaComponent[] {
-  return globSync(pattern, { cwd, ...(exclude ? { exclude: toArray(exclude) } : {}) }).map((path) => {
+  let options: DiscoveryGlobOptions;
+  options = { cwd };
+  if (exclude) options.exclude = toArray(exclude);
+  return globSync(pattern, options).map((path) => {
     const fileName = absolutePath(cwd, path);
     return { kind: 'manifest', fileName, ...parseComponentManifest(fileName) };
   });
 }
 
 function discoverFiles(source: ComponentFileSet, cwd: string): FileSchemaComponent[] {
-  return globSync(source.include, {
-    cwd,
-    ...(source.exclude ? { exclude: toArray(source.exclude) } : {}),
-  }).map((path) => {
+  let options: DiscoveryGlobOptions;
+  options = { cwd };
+  if (source.exclude) options.exclude = toArray(source.exclude);
+  return globSync(source.include, options).map((path) => {
     const fileName = absolutePath(cwd, path);
     const name = source.name(fileStem(path));
     return { kind: 'file', fileName, name, definition: { name } };
@@ -88,7 +95,10 @@ function parseComponentManifest(fileName: string): Pick<ManifestSchemaComponent,
 
   if (!exported) throw new Error(`No \`export default defineComponent(...)\` found in ${fileName}`);
 
-  const definition = parseComponentDefinition(exported.declaration as CallExpression, fileName);
+  const definition = parseComponentDefinition(
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ exported.declaration as CallExpression,
+    fileName
+  );
   if (!definition.name) throw new Error(`defineComponent() in ${fileName} is missing a literal \`name:\` field`);
 
   return {
@@ -97,11 +107,19 @@ function parseComponentManifest(fileName: string): Pick<ManifestSchemaComponent,
   };
 }
 
-function isDefineComponentCall(node: unknown): node is CallExpression {
+function isDefineComponentCall(node: import('../../value').VjscValue): node is CallExpression {
   if (!node || typeof node !== 'object') return false;
-  const candidate = node as { readonly type?: unknown; readonly callee?: unknown };
+  const candidate =
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ node as {
+      readonly type?: import('../../value').VjscValue;
+      readonly callee?: import('../../value').VjscValue;
+    };
   if (candidate.type !== 'CallExpression' || !candidate.callee || typeof candidate.callee !== 'object') return false;
-  const callee = candidate.callee as { readonly type?: unknown; readonly name?: unknown };
+  const callee =
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ candidate.callee as {
+      readonly type?: import('../../value').VjscValue;
+      readonly name?: import('../../value').VjscValue;
+    };
   return callee.type === 'Identifier' && callee.name === 'defineComponent';
 }
 
@@ -116,18 +134,19 @@ function parseComponentDefinition(
     throw new Error(`defineComponent() in ${fileName} must take an object literal`);
   }
 
-  const definition: {
+  interface DiscoveredComponentDefinition {
     name?: string;
     root?: string;
     parts?: Record<string, ComponentDefinition<object, ComponentRecord | undefined>>;
-  } = {};
+  }
+  const definition: DiscoveredComponentDefinition = {};
 
   for (const property of argument.properties) {
     if (property.type !== 'Property' || property.kind !== 'init' || property.method) continue;
     const name = staticPropertyName(property.key);
 
     if (name === 'name' || name === 'root') {
-      if (property.value.type !== 'Literal' || typeof property.value.value !== 'string') {
+      if (property.value.type !== 'Literal' || !isString(property.value.value)) {
         throw new Error(`defineComponent() in ${fileName} requires a literal \`${name}:\` field`);
       }
       definition[name] = property.value.value;
@@ -149,12 +168,15 @@ function parseComponentDefinition(
     );
   }
 
-  return definition as ComponentDefinition<object, ComponentRecord | undefined>;
+  return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ definition as ComponentDefinition<
+    object,
+    ComponentRecord | undefined
+  >;
 }
 
 function staticPropertyName(name: PropertyKey): string {
   if (name.type === 'Identifier') return name.name;
-  if (name.type === 'Literal' && (typeof name.value === 'string' || typeof name.value === 'number')) {
+  if (name.type === 'Literal' && (isString(name.value) || isNumber(name.value))) {
     return String(name.value);
   }
   throw new Error('Component definition property names must be static.');

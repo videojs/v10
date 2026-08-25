@@ -10,8 +10,9 @@ import {
 
 // Header `{"alg":"HS256"}`, body sets `aud`, empty signature. Unpadded base64url,
 // like a real JWT, so it survives a query string untouched.
-function fakeJwt(payload: Record<string, unknown>): string {
-  const encode = (obj: unknown) => btoa(JSON.stringify(obj)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+function fakeJwt(payload: { aud: string; exp?: number }): string {
+  const encode = <Value extends object>(obj: Value) =>
+    btoa(JSON.stringify(obj)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
   return `${encode({ alg: 'HS256' })}.${encode(payload)}.`;
 }
 

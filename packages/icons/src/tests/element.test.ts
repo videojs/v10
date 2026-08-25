@@ -7,7 +7,9 @@ let id = 0;
 function createIcon(): MediaIconElement {
   const tag = `test-media-icon-${id++}`;
   customElements.define(tag, class extends MediaIconElement {});
-  return document.createElement(tag) as MediaIconElement;
+  return /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+    tag
+  ) as MediaIconElement;
 }
 
 function uniqueFamily(): string {

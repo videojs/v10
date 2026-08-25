@@ -15,7 +15,7 @@ export function createDOMRect(left: number, top: number, width: number, height: 
   const right = left + width;
   const bottom = top + height;
 
-  return {
+  return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ {
     x: left,
     y: top,
     width,

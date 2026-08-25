@@ -8,11 +8,11 @@ afterEach(() => {
   cleanup();
 });
 
-function metadataState(title: string): Record<string, unknown> {
+function metadataState(title: string) {
   return { title, poster: '' };
 }
 
-function controlsState(controlsVisible: boolean): Record<string, unknown> {
+function controlsState(controlsVisible: boolean) {
   return {
     userActive: true,
     controlsVisible,
@@ -21,7 +21,7 @@ function controlsState(controlsVisible: boolean): Record<string, unknown> {
   };
 }
 
-function playbackState(paused: boolean): Record<string, unknown> {
+function playbackState(paused: boolean) {
   return {
     paused,
     ended: false,

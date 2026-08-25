@@ -11,7 +11,12 @@ const MANIFEST_FEATURE_UNSUPPORTED = 2039;
  * is reached by tracking what it constructs. Everything else about the entry is
  * the real thing.
  */
-const instances: { engine: { state: { errors: { set(value: unknown): void } } } }[] = vi.hoisted(() => []);
+interface TestPlaybackError {
+  code: number;
+}
+
+const instances: { engine: { state: { errors: { set(value: TestPlaybackError[] | undefined): void } } } }[] =
+  vi.hoisted(() => []);
 
 vi.mock('@videojs/spf/hls-background-video', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@videojs/spf/hls-background-video')>();
@@ -20,7 +25,9 @@ vi.mock('@videojs/spf/hls-background-video', async (importOriginal) => {
     HlsBackgroundVideoMedia: class extends actual.HlsBackgroundVideoMedia {
       constructor(...args: unknown[]) {
         super(...args);
-        instances.push(this as never);
+        instances.push(
+          /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ this as never
+        );
       }
     },
   };

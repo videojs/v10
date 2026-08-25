@@ -31,15 +31,17 @@ function setupDuration(
   // public setup signature requires `context` even though the behavior
   // doesn't consume it. Cleanup widens to BehaviorCleanup; cast for
   // callable ergonomics.
-  return calculatePresentationDuration.setup({
-    state,
-    context: {},
-    config: { resolveDuration },
-  }) as () => void;
+  return /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ calculatePresentationDuration.setup(
+    {
+      state,
+      context: {},
+      config: { resolveDuration },
+    }
+  ) as () => void;
 }
 
 const mockPresentation = (overrides: Partial<Presentation> = {}): Presentation =>
-  ({
+  /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ ({
     id: 'pres-1',
     url: 'http://example.com/playlist.m3u8',
     startTime: 0,

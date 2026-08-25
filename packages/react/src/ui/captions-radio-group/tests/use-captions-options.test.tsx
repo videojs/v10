@@ -52,10 +52,24 @@ function renderCaptionsMenu({
   return { selectSubtitlesTrack };
 }
 
-function createReactiveTextTrackWrapper(initialState: Record<string, unknown>) {
+function createReactiveTextTrackWrapper(initialState: PlayerContextValue['store']['state']) {
+  let state = initialState;
   const listeners = new Set<() => void>();
   const store = {
-    state: initialState,
+    $state: {
+      get current() {
+        return state;
+      },
+      subscribe: (callback: () => void) => {
+        listeners.add(callback);
+        return () => listeners.delete(callback);
+      },
+    },
+    target: null,
+    destroyed: false,
+    get state() {
+      return state;
+    },
     subscribe: (callback: () => void) => {
       listeners.add(callback);
       return () => listeners.delete(callback);
@@ -65,7 +79,7 @@ function createReactiveTextTrackWrapper(initialState: Record<string, unknown>) {
   };
 
   const value: PlayerContextValue = {
-    store: store as unknown as PlayerContextValue['store'],
+    store,
     media: null,
     setMedia: vi.fn(),
     container: null,
@@ -73,8 +87,8 @@ function createReactiveTextTrackWrapper(initialState: Record<string, unknown>) {
   };
 
   return {
-    updateState(next: Record<string, unknown>) {
-      store.state = next;
+    updateState(next: PlayerContextValue['store']['state']) {
+      state = next;
       for (const listener of listeners) listener();
     },
     Wrapper({ children }: { children: ReactNode }) {

@@ -56,4 +56,4 @@ export const cdnLocaleLoaders = {
   zh: () => import('@videojs/html/cdn/locales/zh'),
   'zh-CN': () => import('@videojs/html/cdn/locales/zh-CN'),
   'zh-TW': () => import('@videojs/html/cdn/locales/zh-TW'),
-} as const satisfies Record<Exclude<SandboxLocalePack, 'en'>, () => Promise<unknown>>;
+} as const satisfies Record<Exclude<SandboxLocalePack, 'en'>, () => Promise<object>>;

@@ -332,9 +332,12 @@ export type SourceId = keyof typeof SOURCE_MAP;
 // Annotated rather than `as const`: indexing by a `SourceId` yields one entry
 // shape, so callers see `url` and `source` as the optional fields they are
 // instead of a union of literal types that only some members share.
-export const SOURCES: Record<SourceId, SandboxSource> = SOURCE_MAP;
+export const SOURCES = SOURCE_MAP satisfies Record<SourceId, SandboxSource>;
 
-export const SOURCE_IDS = Object.keys(SOURCES) as SourceId[];
+export const SOURCE_IDS =
+  /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ Object.keys(
+    SOURCES
+  ) as SourceId[];
 export const NON_DASH_SOURCE_IDS = SOURCE_IDS.filter(
   (id) => SOURCES[id].type !== 'dash' && !isDrmSource(id) && !isMuxSource(id)
 );

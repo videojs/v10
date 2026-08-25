@@ -48,7 +48,8 @@ export class SnapshotController<T extends object, R = T> implements ReactiveCont
 
   get value(): R {
     if (!this.#selector) {
-      return this.#state.current as unknown as R;
+      return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ this.#state
+        .current as R;
     }
 
     this.#cached ??= this.#selector(this.#state.current);

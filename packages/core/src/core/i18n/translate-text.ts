@@ -1,3 +1,5 @@
+import { isFunction, isString } from '@videojs/utils/predicate';
+
 import { resolveText } from './resolve-text';
 import type { Text, TextParams } from './text';
 import type { Translator } from './translator';
@@ -10,8 +12,8 @@ export function translateText(
   translatorOrParams?: Translator | TextParams,
   params?: TextParams
 ): string {
-  if (typeof text === 'string') return text;
-  if (typeof translatorOrParams === 'function') {
+  if (isString(text)) return text;
+  if (isFunction(translatorOrParams)) {
     return translatorOrParams(text, params);
   }
   return interpolate(resolveText(text), translatorOrParams ?? params);

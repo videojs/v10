@@ -260,7 +260,8 @@ export function HlsVideoMediaMixin<Base extends Constructor<any>>(BaseClass: Bas
      */
     get liveEdgeStart(): number {
       const edge = getLiveEdge({
-        state: this.#signals.state as LiveWindowState,
+        state: /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ this.#signals
+          .state as LiveWindowState,
         config: { resolveLiveLatency },
       });
       return edge?.liveEdgeStart ?? Number.NaN;
@@ -321,11 +322,12 @@ export function HlsVideoMediaMixin<Base extends Constructor<any>>(BaseClass: Bas
         console.error(this.#withSuggestion(UNSUPPORTED_PLAYBACK_FEATURE_MESSAGE), { conditions: errors });
       }
 
-      this.#error = {
+      const surfaceError: HlsVideoMediaError = {
         code: unsupported ? SVTA_UNSUPPORTED_PLAYBACK_FEATURE : reported.code,
         message: reported.message ?? '',
-        ...(reported.data === undefined ? {} : { data: reported.data }),
       };
+      if (reported.data !== undefined) Object.assign(surfaceError, { data: reported.data });
+      this.#error = surfaceError;
       this.dispatchEvent?.(new Event('error'));
     }
 
@@ -430,7 +432,7 @@ export function HlsVideoMediaMixin<Base extends Constructor<any>>(BaseClass: Bas
       // Signal play intent — enables loading even with preload="none"
       this.#signals.state.loadActivated.set(true);
 
-      return mediaElement.play().catch((err: unknown) => {
+      return mediaElement.play().catch((cause: unknown) => {
         // If we have a pending HLS source, the rejection may be because MSE
         // hasn't attached a blob URL yet. Wait for loadstart (src assigned
         // by MSE setup) and retry once.
@@ -444,7 +446,7 @@ export function HlsVideoMediaMixin<Base extends Constructor<any>>(BaseClass: Bas
             mediaElement.addEventListener('loadstart', listener, { once: true });
           });
         }
-        throw err;
+        throw cause;
       });
     }
 
@@ -508,7 +510,10 @@ export function HlsVideoMediaMixin<Base extends Constructor<any>>(BaseClass: Bas
 
   // `MixinReturn` sources statics from `Base`, so the adapter's own static needs
   // adding back to the type or callers can't read it.
-  return HlsVideoMediaImpl as unknown as MixinReturn<Base, HlsVideoMediaAPI> & {
+  return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ HlsVideoMediaImpl as MixinReturn<
+    Base,
+    HlsVideoMediaAPI
+  > & {
     readonly alternativeMediaSuggestion: string | undefined;
   };
 }

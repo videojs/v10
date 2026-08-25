@@ -1,4 +1,20 @@
+import { isObject } from '@videojs/utils/predicate';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
+
+type MockSettingValue = boolean | number | string | null | MockSettings | MockSettingValue[];
+
+interface MockSettings {
+  [key: string]: MockSettingValue;
+}
+
+interface MockDashEvent {
+  type?: string;
+  error?: Error | null;
+  mediaType?: string;
+  newRepresentation?: { id: string };
+}
+
+const dashFixture: { engine: MockEngine | null } = vi.hoisted(() => ({ engine: null }));
 
 vi.mock('dashjs', () => {
   const events = {
@@ -7,25 +23,32 @@ vi.mock('dashjs', () => {
   };
 
   /** dash.js merges every `updateSettings()` call into the current settings. */
-  function merge(target: Record<string, any>, source: Record<string, any>) {
+  function isSettings(value: MockSettingValue | undefined): value is MockSettings {
+    return isObject(value) && value !== null && !Array.isArray(value);
+  }
+
+  function merge(target: MockSettings, source: MockSettings): MockSettings {
     for (const [key, value] of Object.entries(source)) {
-      const isPlainObject = typeof value === 'object' && value !== null && !Array.isArray(value);
-      target[key] = isPlainObject ? merge({ ...target[key] }, value) : value;
+      const current = target[key];
+      target[key] = isSettings(value) ? merge(isSettings(current) ? { ...current } : {}, value) : value;
     }
     return target;
   }
 
   function create() {
-    const listeners = new Map<string, Set<(event: any) => void>>();
+    const listeners = new Map<string, Set<(event: MockDashEvent) => void>>();
+    const representations: MockRepresentation[] = [];
+    const currentRepresentation: MockRepresentation | null = null;
+    const settings: MockSettings = {};
 
     const player = {
-      representations: [] as any[],
-      currentRepresentation: null as any,
-      settings: {} as Record<string, any>,
+      representations,
+      currentRepresentation,
+      settings,
       initialize: vi.fn(),
       attachView: vi.fn(),
       attachSource: vi.fn(),
-      updateSettings: vi.fn((settings: Record<string, any>) => {
+      updateSettings: vi.fn((settings: MockSettings) => {
         player.settings = merge(player.settings, settings);
       }),
       resetSettings: vi.fn(() => {
@@ -33,23 +56,24 @@ vi.mock('dashjs', () => {
       }),
       getSettings: vi.fn(() => player.settings),
       destroy: vi.fn(),
-      on: vi.fn((type: string, listener: (event: any) => void) => {
+      on: vi.fn((type: string, listener: (event: MockDashEvent) => void) => {
         const typeListeners = listeners.get(type) ?? new Set();
         typeListeners.add(listener);
         listeners.set(type, typeListeners);
       }),
-      off: vi.fn((type: string, listener: (event: any) => void) => {
+      off: vi.fn((type: string, listener: (event: MockDashEvent) => void) => {
         listeners.get(type)?.delete(listener);
       }),
       getRepresentationsByType: vi.fn((type: string) => (type === 'video' ? player.representations : [])),
       getCurrentRepresentationForType: vi.fn(() => player.currentRepresentation),
       setRepresentationForTypeById: vi.fn(),
       /** Test-only: dispatch a dash.js player event to its listeners. */
-      emit(type: string, event: Record<string, unknown> = {}) {
+      emit(type: string, event: MockDashEvent = {}) {
         for (const listener of [...(listeners.get(type) ?? [])]) listener({ type, ...event });
       },
     };
 
+    dashFixture.engine = player;
     return player;
   }
 
@@ -73,7 +97,7 @@ type MockEngine = {
   resetSettings: ReturnType<typeof vi.fn>;
   getSettings: ReturnType<typeof vi.fn>;
   setRepresentationForTypeById: ReturnType<typeof vi.fn>;
-  emit(type: string, event?: Record<string, unknown>): void;
+  emit(type: string, event?: MockDashEvent): void;
 };
 
 type MockRepresentation = {
@@ -92,8 +116,14 @@ function setup() {
 
   const media = new DashMedia();
   media.attach(video);
+  const engine = dashFixture.engine;
+  if (!engine) throw new Error('The dash.js fixture did not create an engine.');
 
-  return { media, video, engine: media.engine as unknown as MockEngine };
+  return {
+    media,
+    video,
+    engine,
+  };
 }
 
 /** dash.js announces a stream with the video representations it can play. */

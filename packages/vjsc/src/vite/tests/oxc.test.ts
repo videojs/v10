@@ -47,11 +47,18 @@ describe('viteOxcPlugin', () => {
         },
       },
     });
-    const outputs = (Array.isArray(result) ? result : [result]) as RolldownOutput[];
+    const outputs =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+        Array.isArray(result) ? result : [result]
+      ) as RolldownOutput[];
     const output = outputs.flatMap((result) => result.output);
     const chunk = output.find((item): item is OutputChunk => item.type === 'chunk');
     const map = output.find((item): item is OutputAsset => item.type === 'asset' && item.fileName.endsWith('.map'));
-    const sourceMap = map ? (JSON.parse(String(map.source)) as { mappings: string; sources: string[] }) : undefined;
+    const sourceMap = map
+      ? /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (JSON.parse(
+          String(map.source)
+        ) as { mappings: string; sources: string[] })
+      : undefined;
 
     expect(topLevelHasOxcMetadata).toBe(false);
     expect(rolldownOptionsHasOxcMetadata).toBe(false);

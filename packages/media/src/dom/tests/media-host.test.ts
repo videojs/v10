@@ -213,7 +213,9 @@ describe('HTMLMediaElementHost', () => {
 
     it('rejects when the target lacks a play implementation', async () => {
       const host = new HTMLAudioElementHost();
-      host.attach({} as HTMLAudioElement);
+      host.attach(
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {} as HTMLAudioElement
+      );
 
       await expect(host.play()).rejects.toBeInstanceOf(DOMException);
     });
@@ -221,9 +223,12 @@ describe('HTMLMediaElementHost', () => {
 
   it('forwards contentdatachange from the attached media target', () => {
     const host = new HTMLAudioElementHost();
-    const audio = document.createElement('audio') as HTMLAudioElement & {
-      contentData: Record<string, string | null>;
-    };
+    const audio =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+        'audio'
+      ) as HTMLAudioElement & {
+        contentData: Record<string, string | null>;
+      };
     audio.contentData = { title: null };
     const listener = vi.fn();
 

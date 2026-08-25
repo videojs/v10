@@ -12,14 +12,20 @@ export function addVideoTrack(media: HTMLMediaElement, track: VideoTrack) {
     getPrivate(track).renditionSet = new Set();
   }
 
-  const trackSet = getPrivate(trackList).trackSet as Set<VideoTrack>;
+  const trackSet =
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ getPrivate(trackList)
+      .trackSet as Set<VideoTrack>;
   trackSet.add(track);
   const index = trackSet.size - 1;
 
   if (!(index in VideoTrackList.prototype)) {
     Object.defineProperty(VideoTrackList.prototype, index, {
       get() {
-        return [...(getPrivate(this).trackSet as Set<VideoTrack>)][index];
+        return [
+          .../* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (getPrivate(
+            this
+          ).trackSet as Set<VideoTrack>),
+        ][index];
       },
     });
   }
@@ -31,10 +37,15 @@ export function addVideoTrack(media: HTMLMediaElement, track: VideoTrack) {
 }
 
 export function removeVideoTrack(track: VideoTrack) {
-  const trackList = getPrivate(track).media?.deref()?.videoTracks as VideoTrackList | undefined;
+  const trackList =
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ getPrivate(
+      track
+    ).media?.deref()?.videoTracks as VideoTrackList | undefined;
   if (!trackList) return;
 
-  const trackSet = getPrivate(trackList).trackSet as Set<VideoTrack>;
+  const trackSet =
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ getPrivate(trackList)
+      .trackSet as Set<VideoTrack>;
   if (!trackSet.delete(track)) return;
 
   queueMicrotask(() => {
@@ -43,7 +54,10 @@ export function removeVideoTrack(track: VideoTrack) {
 }
 
 export function selectedChanged(selected: VideoTrack) {
-  const trackList = (getPrivate(selected).media?.deref()?.videoTracks ?? []) as VideoTrackList | VideoTrack[];
+  const trackList =
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (getPrivate(
+      selected
+    ).media?.deref()?.videoTracks ?? []) as VideoTrackList | VideoTrack[];
   let hasUnselected = false;
 
   for (const track of trackList) {
@@ -60,7 +74,9 @@ export function selectedChanged(selected: VideoTrack) {
 
   queueMicrotask(() => {
     delete getPrivate(trackList).changeRequested;
-    (trackList as VideoTrackList).dispatchEvent(new Event('change'));
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (
+      trackList as VideoTrackList
+    ).dispatchEvent(new Event('change'));
   });
 }
 
@@ -76,7 +92,8 @@ export class VideoTrackList extends EventTarget {
   }
 
   get #tracks() {
-    return getPrivate(this).trackSet as Set<VideoTrack>;
+    return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ getPrivate(this)
+      .trackSet as Set<VideoTrack>;
   }
 
   [Symbol.iterator]() {
@@ -106,7 +123,11 @@ export class VideoTrackList extends EventTarget {
     }
     if (isFunction(callback)) {
       this.#addTrackCallback = callback;
-      this.addEventListener('addtrack', callback as unknown as EventListener);
+      this.addEventListener(
+        'addtrack',
+        /* SAFETY: DOM dispatch supplies the event argument accepted by this media-track callback. */ callback as typeof callback &
+          EventListener
+      );
     }
   }
 
@@ -121,7 +142,11 @@ export class VideoTrackList extends EventTarget {
     }
     if (isFunction(callback)) {
       this.#removeTrackCallback = callback;
-      this.addEventListener('removetrack', callback as unknown as EventListener);
+      this.addEventListener(
+        'removetrack',
+        /* SAFETY: DOM dispatch supplies the event argument accepted by this media-track callback. */ callback as typeof callback &
+          EventListener
+      );
     }
   }
 

@@ -11,7 +11,7 @@ export interface EventLike {
  *
  * Works with DOM Events, React SyntheticEvents, and RN events.
  */
-export function isEventLike(value: unknown): value is EventLike {
+export function isEventLike<Value>(value: Value): value is Value & EventLike {
   return (
     isObject(value) && 'type' in value && isString(value.type) && 'timeStamp' in value && isNumber(value.timeStamp)
   );

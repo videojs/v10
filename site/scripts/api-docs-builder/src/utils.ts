@@ -1,3 +1,4 @@
+import { isString } from '@videojs/utils/predicate';
 import * as ts from 'typescript';
 
 import type { PropDef } from './types.js';
@@ -12,13 +13,17 @@ export const log = {
 };
 
 export function getJSDocNodes(node: ts.Node): readonly ts.JSDoc[] {
-  return (node as ts.Node & { jsDoc?: ts.JSDoc[] }).jsDoc ?? [];
+  return (
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (
+      node as ts.Node & { jsDoc?: ts.JSDoc[] }
+    ).jsDoc ?? []
+  );
 }
 
 export function getJSDocDescription(node: ts.Node): string | undefined {
   const doc = getJSDocNodes(node)[0];
   if (!doc?.comment) return undefined;
-  if (typeof doc.comment === 'string') return doc.comment;
+  if (isString(doc.comment)) return doc.comment;
   return doc.comment.map((part) => ('text' in part ? part.text : '')).join('') || undefined;
 }
 
@@ -45,7 +50,7 @@ export function getJSDocTagValue(node: ts.Node, tagName: string): string | undef
     for (const tag of doc.tags) {
       if (tag.tagName.text === tagName) {
         if (!tag.comment) return undefined;
-        if (typeof tag.comment === 'string') return tag.comment.trim();
+        if (isString(tag.comment)) return tag.comment.trim();
         return tag.comment
           .map((c: ts.JSDocComment) => ('text' in c ? c.text : ''))
           .join('')

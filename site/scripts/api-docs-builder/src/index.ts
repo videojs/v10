@@ -1,5 +1,7 @@
 import * as path from 'node:path';
 
+import { isString } from '@videojs/utils/predicate';
+
 import { generateFeatureReferences } from './feature-handler.js';
 import { generateMediaElementReferences } from './media-element-handler.js';
 import { type ReferenceGroup, validateReferenceGroup, writeReferenceGroup } from './output.js';
@@ -22,7 +24,7 @@ const CONTENT_ROOT = path.join(MONOREPO_ROOT, 'site/src/content');
 function suppressExtractorWarnings(): () => void {
   const originalWarn = console.warn;
   console.warn = (...args: unknown[]) => {
-    if (typeof args[0] === 'string' && args[0].startsWith('Unable to handle a type with flag')) return;
+    if (isString(args[0]) && args[0].startsWith('Unable to handle a type with flag')) return;
     originalWarn.apply(console, args);
   };
   return () => {
@@ -30,10 +32,7 @@ function suppressExtractorWarnings(): () => void {
   };
 }
 
-function createReferenceGroups(): {
-  groups: ReferenceGroup[];
-  presetResults: ReturnType<typeof generatePresetReferences>;
-} {
+function createReferenceGroups() {
   const componentResults = generateComponentReferences(MONOREPO_ROOT);
   const utilEntries = getUtilEntries(MONOREPO_ROOT);
   const featureResults = generateFeatureReferences(MONOREPO_ROOT);
@@ -99,7 +98,10 @@ function createReferenceGroups(): {
     },
   ];
 
-  return { groups, presetResults };
+  return { groups, presetResults } satisfies {
+    groups: ReferenceGroup[];
+    presetResults: ReturnType<typeof generatePresetReferences>;
+  };
 }
 
 function reportUnlinkedPresetFeatures(presetResults: ReturnType<typeof generatePresetReferences>): void {

@@ -5,47 +5,50 @@ import { getDocTitle, isCodeIdentifier } from '../title';
 
 describe('getDocTitle', () => {
   // Mock fixtures
-  const mockDocWithFrameworkTitle: CollectionEntry<'docs'> = {
-    id: 'reference/play-button',
-    collection: 'docs',
-    data: {
-      title: 'PlayButton',
-      description: 'A button component for playing and pausing media playback',
-      frameworkTitle: {
-        react: 'PlayButton',
-        html: 'play-button',
+  const mockDocWithFrameworkTitle: CollectionEntry<'docs'> =
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+      id: 'reference/play-button',
+      collection: 'docs',
+      data: {
+        title: 'PlayButton',
+        description: 'A button component for playing and pausing media playback',
+        frameworkTitle: {
+          react: 'PlayButton',
+          html: 'play-button',
+        },
       },
-    },
-    // Mock required Astro fields
-    body: '',
-    slug: 'reference/play-button',
-  } as CollectionEntry<'docs'>;
+      // Mock required Astro fields
+      body: '',
+      slug: 'reference/play-button',
+    } as CollectionEntry<'docs'>;
 
-  const mockDocWithoutFrameworkTitle: CollectionEntry<'docs'> = {
-    id: 'concepts/basic',
-    collection: 'docs',
-    data: {
-      title: 'Basic Concepts',
-      description: 'Introduction to basic concepts',
-    },
-    body: '',
-    slug: 'concepts/basic',
-  } as CollectionEntry<'docs'>;
-
-  const mockDocWithPartialFrameworkTitle: CollectionEntry<'docs'> = {
-    id: 'reference/mute-button',
-    collection: 'docs',
-    data: {
-      title: 'MuteButton',
-      description: 'A button for muting audio',
-      frameworkTitle: {
-        react: 'MuteButton',
-        // html framework title not defined
+  const mockDocWithoutFrameworkTitle: CollectionEntry<'docs'> =
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+      id: 'concepts/basic',
+      collection: 'docs',
+      data: {
+        title: 'Basic Concepts',
+        description: 'Introduction to basic concepts',
       },
-    },
-    body: '',
-    slug: 'reference/mute-button',
-  } as CollectionEntry<'docs'>;
+      body: '',
+      slug: 'concepts/basic',
+    } as CollectionEntry<'docs'>;
+
+  const mockDocWithPartialFrameworkTitle: CollectionEntry<'docs'> =
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+      id: 'reference/mute-button',
+      collection: 'docs',
+      data: {
+        title: 'MuteButton',
+        description: 'A button for muting audio',
+        frameworkTitle: {
+          react: 'MuteButton',
+          // html framework title not defined
+        },
+      },
+      body: '',
+      slug: 'reference/mute-button',
+    } as CollectionEntry<'docs'>;
 
   describe('with frameworkTitle defined', () => {
     it('should return framework-specific title when available', () => {
@@ -111,17 +114,18 @@ describe('getDocTitle', () => {
 
   describe('edge cases', () => {
     it('should handle empty frameworkTitle object', () => {
-      const docWithEmptyFrameworkTitle: CollectionEntry<'docs'> = {
-        id: 'edge-case/empty',
-        collection: 'docs',
-        data: {
-          title: 'Default Title',
-          description: 'Test',
-          frameworkTitle: {},
-        },
-        body: '',
-        slug: 'edge-case/empty',
-      } as CollectionEntry<'docs'>;
+      const docWithEmptyFrameworkTitle: CollectionEntry<'docs'> =
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+          id: 'edge-case/empty',
+          collection: 'docs',
+          data: {
+            title: 'Default Title',
+            description: 'Test',
+            frameworkTitle: {},
+          },
+          body: '',
+          slug: 'edge-case/empty',
+        } as CollectionEntry<'docs'>;
 
       const result = getDocTitle(docWithEmptyFrameworkTitle, 'react');
 

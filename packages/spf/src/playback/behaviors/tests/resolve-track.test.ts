@@ -13,6 +13,7 @@ import type {
   ResolvedTrack,
 } from '../../../media/types';
 import { isResolvedTrack } from '../../../media/types';
+import type { GateFirstParseContext } from '../../primitives/gate-first-parse';
 import { reportUnsupportedTrackConditions } from '../../primitives/report-track-conditions';
 import { type ResolveTrackState, resolveAudioTrack, resolveTextTrack, resolveVideoTrack } from '../resolve-track';
 
@@ -596,17 +597,20 @@ http://example.com/seg0.m4s`;
     await started;
     // Establish + stamp the anchor mid-fetch, exactly as the establishment
     // reactor's stampStartDates does.
-    const current = state.presentation.get() as Presentation;
-    state.presentation.set({
-      ...current,
-      selectionSets: current.selectionSets.map((selectionSet) => ({
-        ...selectionSet,
-        switchingSets: selectionSet.switchingSets.map((switchingSet) => ({
-          ...switchingSet,
-          tracks: switchingSet.tracks.map((track) => ({ ...track, startDate: ANCHOR })),
+    const current =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ state.presentation.get() as Presentation;
+    state.presentation.set(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+        ...current,
+        selectionSets: current.selectionSets.map((selectionSet) => ({
+          ...selectionSet,
+          switchingSets: selectionSet.switchingSets.map((switchingSet) => ({
+            ...switchingSet,
+            tracks: switchingSet.tracks.map((track) => ({ ...track, startDate: ANCHOR })),
+          })),
         })),
-      })),
-    } as Presentation);
+      } as Presentation
+    );
     releaseFetch();
 
     await vi.waitFor(() => {
@@ -677,8 +681,11 @@ http://example.com/audio-seg1.m4s
   // A stand-in for `gateFirstParseOnAnchor`'s anchored branch: open once the
   // track's shell carries a (stamped) `startDate`. Keeps the seam mechanics
   // under test decoupled from the establishment behavior's policy.
-  const gateOnOwnStartDate = (pres: MaybeResolvedPresentation | undefined, _ctx: object, trackId: string) =>
-    pres !== undefined && findTrackById(pres, trackId)?.startDate !== undefined;
+  const gateOnOwnStartDate = (
+    pres: MaybeResolvedPresentation | undefined,
+    _ctx: GateFirstParseContext,
+    trackId: string
+  ) => pres !== undefined && findTrackById(pres, trackId)?.startDate !== undefined;
 
   it('holds the parse (not the fetch) until the gate opens, then parses the re-read anchor-stamped shell', async () => {
     const state = makeState({
@@ -701,20 +708,22 @@ http://example.com/audio-seg1.m4s
     // land the segment at startTime 5.
     const anchor = SEGMENT_PDT - 5;
     const presentation = state.presentation.get()!;
-    state.presentation.set({
-      ...presentation,
-      selectionSets: presentation.selectionSets!.map((selectionSet) =>
-        selectionSet.type === 'audio'
-          ? {
-              ...selectionSet,
-              switchingSets: selectionSet.switchingSets.map((switchingSet) => ({
-                ...switchingSet,
-                tracks: switchingSet.tracks.map((track) => ({ ...track, startDate: anchor })),
-              })),
-            }
-          : selectionSet
-      ),
-    } as Presentation);
+    state.presentation.set(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+        ...presentation,
+        selectionSets: presentation.selectionSets!.map((selectionSet) =>
+          selectionSet.type === 'audio'
+            ? {
+                ...selectionSet,
+                switchingSets: selectionSet.switchingSets.map((switchingSet) => ({
+                  ...switchingSet,
+                  tracks: switchingSet.tracks.map((track) => ({ ...track, startDate: anchor })),
+                })),
+              }
+            : selectionSet
+        ),
+      } as Presentation
+    );
 
     await vi.waitFor(() => {
       expect(isResolvedTrack(findTrackById(state.presentation.get()!, 'audio-1')!)).toBe(true);
@@ -781,7 +790,7 @@ describe('resolveVideoTrack — playlist-derived condition reporting', () => {
   };
 
   const presentation = (): Presentation =>
-    ({
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ ({
       id: 'pres-1',
       url: 'http://example.com/playlist.m3u8',
       startTime: 0,

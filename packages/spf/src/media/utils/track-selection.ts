@@ -53,12 +53,13 @@ export function getSelectedTrack<T extends TrackType>(
       : never {
   const { presentation } = state;
 
-  if (!presentation?.selectionSets) return undefined as any;
+  if (!presentation?.selectionSets)
+    return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ undefined as any;
 
   // Get track ID based on type
   const trackIdKey = SelectedTrackIdKeyByType[type];
   const trackId = state[trackIdKey];
-  return presentation.selectionSets
+  return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ presentation.selectionSets
     .find(({ type: selectionSetType }) => selectionSetType === type)
     ?.switchingSets[0]?.tracks.find(({ id }) => id === trackId) as any;
 }

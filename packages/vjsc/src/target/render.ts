@@ -1,3 +1,5 @@
+import { isBoolean, isNumber, isString } from '@videojs/utils/predicate';
+
 import { type ModuleImports, sliceSource } from '../ast';
 import { htmlAttributeName } from './attributes';
 import {
@@ -46,7 +48,7 @@ export function renderTargetOutput(output: TargetOutput, context: TargetRenderCo
   if (isTargetExpression(output)) return `{${renderTargetExpression(readTargetExpression(output), context)}}`;
   if (isTargetWithProps(output)) return renderWithProps(output.children, output.props, context);
   if (isTargetNode(output)) return renderTargetNode(output, context);
-  if (typeof output === 'string' || typeof output === 'number' || typeof output === 'boolean') {
+  if (isString(output) || isNumber(output) || isBoolean(output)) {
     return `{${JSON.stringify(output)}}`;
   }
 
@@ -55,7 +57,13 @@ export function renderTargetOutput(output: TargetOutput, context: TargetRenderCo
 
 function renderTargetNode(node: TargetNode, context: TargetRenderContext): string {
   if (node.type === TARGET_FRAGMENT) return `<>${renderChildren(node.props.children, context)}</>`;
-  if (node.type === TARGET_HOST) return renderWithProps(node.props.children as TargetOutput, node.props, context);
+  if (node.type === TARGET_HOST)
+    return renderWithProps(
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ node.props
+        .children as TargetOutput,
+      node.props,
+      context
+    );
   if (!isTargetElement(node.type)) throw new Error('vjsc/target: target JSX contains an invalid element type.');
 
   const name = renderTargetElement(node.type, context);
@@ -69,7 +77,10 @@ function renderTargetNode(node: TargetNode, context: TargetRenderContext): strin
 
 export function renderTargetAttributes(node: TargetNode, context: TargetRenderContext): string[] {
   const attributes: string[] = [];
-  const props = node.props as Readonly<Record<PropertyKey, unknown>>;
+  const props =
+    /* SAFETY: Target node props are VJSC runtime values keyed by their generated names. */ node.props as Readonly<
+      Record<PropertyKey, import('../value').VjscValue>
+    >;
 
   if (node.key !== null) attributes.push(renderGeneratedAttribute('key', node.key, context));
 
@@ -87,7 +98,7 @@ export function renderTargetAttributes(node: TargetNode, context: TargetRenderCo
       }
       continue;
     }
-    if (typeof property !== 'string' || value === undefined) continue;
+    if (!isString(property) || value === undefined) continue;
 
     const attribute = renderAttribute(property, value, context);
     if (attribute) attributes.push(attribute);
@@ -96,7 +107,7 @@ export function renderTargetAttributes(node: TargetNode, context: TargetRenderCo
   return attributes;
 }
 
-function renderChildren(value: unknown, context: TargetRenderContext): string {
+function renderChildren(value: import('../value').VjscValue, context: TargetRenderContext): string {
   if (isSourceChildrenToken(value)) return value.value;
   if (isSourcePropToken(value)) return renderSourcePropValue(value);
   if (isTargetExpression(value)) return `{${renderTargetExpression(readTargetExpression(value), context)}}`;
@@ -104,14 +115,18 @@ function renderChildren(value: unknown, context: TargetRenderContext): string {
   if (isTargetNode(value)) return renderTargetNode(value, context);
   if (Array.isArray(value)) return value.map((child) => renderChildren(child, context)).join('');
   if (value === null || value === undefined || value === false) return '';
-  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+  if (isString(value) || isNumber(value) || isBoolean(value)) {
     return `{${JSON.stringify(value)}}`;
   }
 
   throw new Error('vjsc/target: target JSX contains an unsupported child value.');
 }
 
-function renderAttribute(name: string, value: unknown, context: TargetRenderContext): string | undefined {
+function renderAttribute(
+  name: string,
+  value: import('../value').VjscValue,
+  context: TargetRenderContext
+): string | undefined {
   const targetName = targetAttributeName(name, context.target.jsx.attributes);
 
   if (isSourcePropToken(value)) return renderSourcePropAttribute(targetName, value);
@@ -123,7 +138,11 @@ function renderAttribute(name: string, value: unknown, context: TargetRenderCont
   return renderGeneratedAttribute(targetName, value, context);
 }
 
-function renderGeneratedAttribute(name: string, value: unknown, context: TargetRenderContext): string {
+function renderGeneratedAttribute(
+  name: string,
+  value: import('../value').VjscValue,
+  context: TargetRenderContext
+): string {
   if (value === true) return name;
   if (isTargetExpression(value)) {
     return `${name}={${renderTargetExpression(readTargetExpression(value), context)}}`;
@@ -132,8 +151,8 @@ function renderGeneratedAttribute(name: string, value: unknown, context: TargetR
   if (isTargetNode(value)) return `${name}={${renderTargetNode(value, context)}}`;
   if (Array.isArray(value)) return `${name}={<>${renderChildren(value, context)}</>}`;
   if (value === null) return `${name}={null}`;
-  if (typeof value === 'string') return `${name}=${JSON.stringify(value)}`;
-  if (typeof value === 'number' || typeof value === 'boolean') return `${name}={${String(value)}}`;
+  if (isString(value)) return `${name}=${JSON.stringify(value)}`;
+  if (isNumber(value) || isBoolean(value)) return `${name}={${String(value)}}`;
 
   throw new Error(`vjsc/target: target JSX prop \`${name}\` contains an unsupported value.`);
 }
@@ -195,7 +214,7 @@ function renderExpressionOutput(output: TargetOutput, context: TargetRenderConte
 
 function renderWithProps(
   children: TargetOutput,
-  props: TargetExpressionNode | Readonly<Record<string, unknown>>,
+  props: TargetExpressionNode | Readonly<Record<string, import('../value').VjscValue>>,
   context: TargetRenderContext
 ): string {
   if (!isSourceChildrenToken(children)) {
@@ -217,7 +236,7 @@ function renderWithProps(
 }
 
 function isExpressionNode(
-  value: TargetExpressionNode | Readonly<Record<string, unknown>>
+  value: TargetExpressionNode | Readonly<Record<string, import('../value').VjscValue>>
 ): value is TargetExpressionNode {
   return value.kind === 'reference' || value.kind === 'function' || value.kind === 'conditional';
 }
@@ -252,6 +271,12 @@ function targetAttributeName(name: string, attributes: ComponentTarget['jsx']['a
   return htmlAttributeName(name);
 }
 
-export function isTargetNode(value: unknown): value is TargetNode {
-  return Boolean(value && typeof value === 'object' && (value as Partial<TargetNode>)[TARGET_NODE] === true);
+export function isTargetNode<Value>(value: Value): value is Value & TargetNode {
+  return Boolean(
+    value &&
+    typeof value === 'object' &&
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (
+      value as Partial<TargetNode>
+    )[TARGET_NODE] === true
+  );
 }

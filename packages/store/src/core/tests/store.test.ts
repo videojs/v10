@@ -280,17 +280,22 @@ describe('store', () => {
 
     it('makes private symbol actions available without publishing their state', () => {
       const store = createStore<MockMedia>()(responsiveSlice);
-      const setUserValue = (store as unknown as Record<PropertyKey, unknown>)[SET_USER_VALUE];
+      // SAFETY: responsiveSlice declares SET_USER_VALUE as its private symbol-backed action.
+      const setUserValue = (store as typeof store & Pick<TestSourceState, typeof SET_USER_VALUE>)[SET_USER_VALUE];
 
       expect(setUserValue).toBeInstanceOf(Function);
       expect(INTERNAL_VALUE in store).toBe(false);
       expect(USER_VALUE in store).toBe(false);
       expect(Object.getOwnPropertySymbols(store.state)).toEqual([]);
 
-      (setUserValue as (value: string | undefined) => void)('initial');
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+        setUserValue as (value: string | undefined) => void
+      )('initial');
       expect(store.resolved).toBe('initial');
 
-      (setUserValue as (value: string | undefined) => void)(undefined);
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+        setUserValue as (value: string | undefined) => void
+      )(undefined);
       expect(store.resolved).toBe('fallback');
     });
 

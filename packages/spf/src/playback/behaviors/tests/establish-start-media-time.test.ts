@@ -62,21 +62,24 @@ const textShell: PartiallyResolvedTextTrack = {
 
 /** Resolve a video shell with segments (and optionally a wall-clock `startDate`). */
 const resolveVideo = (shell: PartiallyResolvedVideoTrack, startDate?: number): VideoTrack =>
-  ({
-    ...shell,
-    startTime: 0,
-    ...(startDate !== undefined ? { startDate } : {}),
-    duration: 10,
-    segments: [{ id: 'seg-0', url: 'http://example.com/v-seg0.m4s', startTime: 0, duration: 10 }],
-    initialization: { url: 'http://example.com/v-init.mp4' },
-  }) as VideoTrack;
+  /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (() => {
+    const track = {
+      ...shell,
+      startTime: 0,
+      duration: 10,
+      segments: [{ id: 'seg-0', url: 'http://example.com/v-seg0.m4s', startTime: 0, duration: 10 }],
+      initialization: { url: 'http://example.com/v-init.mp4' },
+    };
+    if (startDate !== undefined) Object.assign(track, { startDate });
+    return track;
+  })() as VideoTrack;
 
 function makePresentation(tracks: {
   video?: (PartiallyResolvedVideoTrack | VideoTrack)[];
   audio?: (PartiallyResolvedAudioTrack | AudioTrack)[];
   text?: PartiallyResolvedTextTrack[];
 }): Presentation {
-  return {
+  return /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
     id: 'pres-1',
     url: 'http://example.com/playlist.m3u8',
     selectionSets: [
@@ -116,13 +119,20 @@ function makeEstablishState(initial: {
 }
 
 const trackStartDate = (presentation: MaybeResolvedPresentation | undefined, id: string): number | undefined =>
-  (findTrackById(presentation as Presentation, id) as PartiallyResolvedTrack | ResolvedTrack | undefined)?.startDate;
+  /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+    findTrackById(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ presentation as Presentation,
+      id
+    ) as PartiallyResolvedTrack | ResolvedTrack | undefined
+  )?.startDate;
 
 // establishStartMediaTime uses a manual Behavior<> literal, so the public
 // setup signature requires `context`/`config` even though this behavior takes
 // no context, and its cleanup widens to BehaviorCleanup; cast for ergonomics.
 const setupEstablish = (state: ReturnType<typeof makeEstablishState>) =>
-  establishStartMediaTime.setup({ state, context: {}, config: {} }) as { destroy(): void };
+  /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ establishStartMediaTime.setup(
+    { state, context: {}, config: {} }
+  ) as { destroy(): void };
 
 describe('establishStartMediaTime', () => {
   it('freezes the reference track startDate as the anchor and stamps it onto every track lacking one', async () => {
@@ -246,10 +256,12 @@ describe('establishStartMediaTime', () => {
     // Source change: through unresolved, then a new presentation with a new anchor.
     const newAnchor = ANCHOR + 3600;
     state.presentation.set(undefined);
-    state.presentation.set({
-      ...makePresentation({ video: [resolveVideo(videoShell('v1'), newAnchor)], audio: [audioShell] }),
-      id: 'pres-2',
-    } as Presentation);
+    state.presentation.set(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+        ...makePresentation({ video: [resolveVideo(videoShell('v1'), newAnchor)], audio: [audioShell] }),
+        id: 'pres-2',
+      } as Presentation
+    );
 
     await vi.waitFor(() => expect(trackStartDate(state.presentation.get(), 'a1')).toBe(newAnchor));
 

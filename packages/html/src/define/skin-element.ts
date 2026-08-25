@@ -29,7 +29,8 @@ export class SkinElement extends ReactiveElement {
     ensureGlobalStyle(STYLES_ID, globalStyles);
 
     if (!this.shadowRoot) {
-      const ctor = this.constructor as typeof SkinElement;
+      const ctor = /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ this
+        .constructor as typeof SkinElement;
       this.attachShadow(ctor.shadowRootOptions);
 
       if (ctor.template) {

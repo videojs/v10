@@ -1,7 +1,9 @@
-import { DestroyMixin, ReactiveElement } from '@videojs/element';
+import { DestroyMixin, type PropertyDeclarationMap, ReactiveElement } from '@videojs/element';
 import type { Constructor } from '@videojs/utils/types';
 
 /** Base class for interactive media UI elements. */
 export class UIElement extends DestroyMixin(ReactiveElement) {}
 
-export interface UIElementConstructor extends Constructor<UIElement> {}
+export interface UIElementConstructor extends Constructor<UIElement> {
+  properties: PropertyDeclarationMap;
+}

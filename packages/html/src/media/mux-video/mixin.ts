@@ -1,7 +1,7 @@
 import { type MediaStreamType, MediaStreamTypes } from '@videojs/media';
 import type { MuxContentData, MuxSourceBase } from '@videojs/media/dom/mux/source';
 import { isUndefined } from '@videojs/utils/predicate';
-import type { AnyConstructor, Constructor } from '@videojs/utils/types';
+import type { Constructor } from '@videojs/utils/types';
 
 /**
  * What this mixin needs from whichever Mux Media the element hosts.
@@ -18,8 +18,7 @@ interface MuxVideoHost {
   addEventListener(type: string, listener: () => void): void;
 }
 
-interface MuxVideoElementLike extends HTMLElement {
-  readonly host: MuxVideoHost;
+interface MuxVideoElementBase extends HTMLElement {
   attributeChangedCallback?(name: string, oldValue: string | null, newValue: string | null): void;
 }
 
@@ -31,13 +30,18 @@ interface MuxVideoElementLike extends HTMLElement {
  * different `CustomMediaElement`, so there is no common class to extend — only a
  * common host contract.
  */
-export function MuxVideoMixin<Class extends AnyConstructor<HTMLElement>>(BaseClass: Class): Class {
-  class MuxVideoElement extends (BaseClass as unknown as Constructor<MuxVideoElementLike>) {
+export function MuxVideoMixin<Class extends Constructor<MuxVideoElementBase>>(BaseClass: Class): Class {
+  class MuxVideoElement extends BaseClass {
+    declare readonly host: MuxVideoHost;
+
     // Declared here rather than in `static properties` because it does not map to a
     // host property of its own: it feeds `source.poster.time`. The generic path
     // would also coerce a removed attribute to `0`, which is a valid poster time.
     static get observedAttributes(): string[] {
-      const inherited = (BaseClass as unknown as { observedAttributes?: string[] }).observedAttributes ?? [];
+      const inherited =
+        /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (
+          BaseClass as { observedAttributes?: string[] }
+        ).observedAttributes ?? [];
       return [...inherited, 'poster-time'];
     }
 
@@ -132,5 +136,5 @@ export function MuxVideoMixin<Class extends AnyConstructor<HTMLElement>>(BaseCla
     }
   }
 
-  return MuxVideoElement as unknown as Class;
+  return MuxVideoElement;
 }

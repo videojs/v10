@@ -57,12 +57,15 @@ type FakeMediaElement = HTMLMediaElement & {
 function fakeMediaElement(
   init: Partial<Pick<FakeMediaElement, 'currentTime' | 'paused' | 'seeking' | 'readyState'>> = {}
 ): FakeMediaElement {
-  return Object.assign(new EventTarget(), {
-    currentTime: init.currentTime ?? 0,
-    paused: init.paused ?? true,
-    seeking: init.seeking ?? false,
-    readyState: init.readyState ?? 4,
-  }) as unknown as FakeMediaElement;
+  return /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ Object.assign(
+    new EventTarget(),
+    {
+      currentTime: init.currentTime ?? 0,
+      paused: init.paused ?? true,
+      seeking: init.seeking ?? false,
+      readyState: init.readyState ?? 4,
+    }
+  ) as FakeMediaElement;
 }
 
 function run(opts: {
@@ -90,7 +93,10 @@ function run(opts: {
   const config = { resolveLiveLatency: () => 6, ...opts.config };
   // The manual `Behavior<>` literal widens the setup return to `BehaviorCleanup`;
   // narrow back to the reactor's destroy handle for teardown.
-  const reactor = seekToLiveEdge.setup({ state, context, config }) as { destroy: () => void };
+  const reactor =
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ seekToLiveEdge.setup(
+      { state, context, config }
+    ) as { destroy: () => void };
   return { cleanup: () => reactor.destroy(), state, context };
 }
 
@@ -116,7 +122,9 @@ describe('seekToLiveEdge', () => {
 
     const presentation = makePresentation();
     // Complete playlist → parser sets a finite Track.duration.
-    const video = presentation.selectionSets[0]!.switchingSets[0]!.tracks[0] as VideoTrack;
+    const video =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ presentation
+        .selectionSets[0]!.switchingSets[0]!.tracks[0] as VideoTrack;
     video.duration = 110;
 
     const { cleanup, state } = run({ presentation, trackId: 'v-1', mediaElement: el });

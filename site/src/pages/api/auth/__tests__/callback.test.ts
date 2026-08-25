@@ -4,10 +4,22 @@ import type { APIContext } from 'astro';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
 const env = vi.hoisted(() => ({
-  OAUTH_CLIENT_ID: 'test-client-id' as string | undefined,
-  OAUTH_CLIENT_SECRET: 'test-client-secret' as string | undefined,
-  OAUTH_REDIRECT_URI: 'https://example.com/callback' as string | undefined,
-  OAUTH_URL: 'https://auth.example.com' as string | undefined,
+  OAUTH_CLIENT_ID:
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ 'test-client-id' as
+      | string
+      | undefined,
+  OAUTH_CLIENT_SECRET:
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ 'test-client-secret' as
+      | string
+      | undefined,
+  OAUTH_REDIRECT_URI:
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ 'https://example.com/callback' as
+      | string
+      | undefined,
+  OAUTH_URL:
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ 'https://auth.example.com' as
+      | string
+      | undefined,
 }));
 
 vi.mock('astro:env/server', () => ({
@@ -48,8 +60,11 @@ function createMockContext(params: { code?: string; state?: string; storedState?
   if (params.code) url.searchParams.set('code', params.code);
   if (params.state) url.searchParams.set('state', params.state);
 
-  return {
+  const context: Partial<APIContext> = {
     request: new Request(url.toString()),
+    redirect: vi.fn((path: string) => new Response(null, { status: 302, headers: { Location: path } })),
+  };
+  Object.assign(context, {
     cookies: {
       get: vi.fn((name: string) => {
         if (name === 'state' && params.storedState) {
@@ -59,9 +74,9 @@ function createMockContext(params: { code?: string; state?: string; storedState?
       }),
       set: vi.fn(),
       delete: vi.fn(),
-    } as any,
-    redirect: vi.fn((path: string) => new Response(null, { status: 302, headers: { Location: path } })),
-  } as unknown as APIContext;
+    },
+  });
+  return /* SAFETY: The partial context contains every member exercised by this fixture. */ context as APIContext;
 }
 
 describe('callback endpoint', () => {
@@ -132,7 +147,9 @@ describe('callback endpoint', () => {
     it.each(['OAUTH_CLIENT_ID', 'OAUTH_CLIENT_SECRET'])(
       'should redirect to error when %s is missing',
       async (envVar) => {
-        env[envVar as keyof typeof env] = undefined;
+        env[
+          /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ envVar as keyof typeof env
+        ] = undefined;
 
         const mockContext = createMockContext({ code: '123', state: 'abc', storedState: 'abc' });
         await callbackHandler(mockContext);

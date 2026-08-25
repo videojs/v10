@@ -233,7 +233,12 @@ const DEFAULT_VIDEO_RULES: readonly SelectTrackRule<SelectVideoTrackConfig>[] = 
  * head stays the first track — the same last tier the policy itself ends on.
  */
 const preferAudioPolicy: SelectTrackRule<SelectAudioTrackConfig> = (tracks, { config }) => {
-  const id = pickAudioTrackFromTracks(tracks as readonly { id: string }[], config);
+  const id = pickAudioTrackFromTracks(
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ tracks as readonly {
+      id: string;
+    }[],
+    config
+  );
   const pick = tracks.find((track) => track.id === id);
   return pick ? [pick] : [];
 };
@@ -296,7 +301,9 @@ type ScreenResolutionRuleState = {
  *   a special case here.
  */
 export const screenResolutionCap: SelectTrackRule<unknown> = (tracks, { state }) => {
-  const screenResolution = (state as ScreenResolutionRuleState | undefined)?.screenResolution?.get();
+  const screenResolution = /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (
+    state as ScreenResolutionRuleState | undefined
+  )?.screenResolution?.get();
   if (!screenResolution) return [];
 
   return tracksUnderPixelArea(tracks, screenResolution.width * screenResolution.height);

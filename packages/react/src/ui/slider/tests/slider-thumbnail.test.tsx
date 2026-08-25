@@ -48,7 +48,7 @@ const { mockSliderApi, mockThumbnailApi } = vi.hoisted(() => ({
 }));
 
 vi.mock('@videojs/core/dom', async (importOriginal) => {
-  const orig: Record<string, unknown> = await importOriginal();
+  const orig = await importOriginal<typeof import('@videojs/core/dom')>();
   return {
     ...orig,
     createSlider: vi.fn(mockSliderApi),

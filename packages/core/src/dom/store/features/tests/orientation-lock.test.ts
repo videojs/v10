@@ -10,10 +10,11 @@ import { orientationLockFeature, selectOrientationLock } from '../orientation-lo
 
 /** Stands in for the unrelated features a real player publishes alongside. */
 const noiseSlice = defineSlice<PlayerTarget>()({
-  state: ({ set }): { tick: number; setTick(value: number): void } => ({
-    tick: 0,
-    setTick: (value) => set({ tick: value }),
-  }),
+  state: ({ set }) =>
+    ({
+      tick: 0,
+      setTick: (value) => set({ tick: value }),
+    }) satisfies { tick: number; setTick(value: number): void },
 });
 
 type OrientationMock = {
@@ -224,7 +225,9 @@ describe('orientationLockFeature', () => {
 
   it('handles webkit presentation mode changes', async () => {
     const orientation = stubOrientation();
-    const video = createMockVideo() as HTMLVideoElement & WebKitVideoElement;
+    const video =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ createMockVideo() as HTMLVideoElement &
+        WebKitVideoElement;
     video.webkitPresentationMode = 'inline';
     const container = document.createElement('div');
 
@@ -291,7 +294,9 @@ describe('orientationLockFeature', () => {
     stubOrientation();
 
     const store = createOrientationStore();
-    store.state.setOrientationLockType('' as ScreenOrientationLockType);
+    store.state.setOrientationLockType(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ '' as ScreenOrientationLockType
+    );
 
     expect(store.state.orientationLockType).toBe('landscape');
   });

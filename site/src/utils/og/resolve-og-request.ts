@@ -81,7 +81,7 @@ export async function resolveOgRequest(pathParam: string | undefined): Promise<R
   };
 }
 
-export function getOgCacheHeaders(): Record<string, string> {
+export function getOgCacheHeaders() {
   return {
     'Cache-Control': 'public, max-age=0, must-revalidate',
     'CDN-Cache-Control': `public, max-age=${ONE_YEAR_IN_SECONDS}`,
@@ -91,5 +91,5 @@ export function getOgCacheHeaders(): Record<string, string> {
     // intentionally omit so each deploy gets fresh images.
     // Ref: https://docs.netlify.com/build/caching/caching-overview/
     'Netlify-CDN-Cache-Control': `public, durable, max-age=${ONE_YEAR_IN_SECONDS}`,
-  };
+  } satisfies Record<string, string>;
 }

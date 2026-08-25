@@ -44,16 +44,17 @@ export const reactComponentTarget: ComponentTarget<CoreSchema> = defineComponent
       const path = part ? (part === 'SubmenuTrigger' ? 'Trigger' : part).split('.') : [];
       const propsPath = path.length === 0 ? ['Props'] : [...path.slice(0, -1), `${path.at(-1)}Props`];
 
-      return imported({
+      const targetImport: Parameters<typeof imported>[0] = {
         from: '@videojs/react',
         name: component,
-        ...(path.length > 0 ? { path } : {}),
         props: {
           from: '@videojs/react',
           name: component,
           path: propsPath,
         },
-      });
+      };
+      if (path.length > 0) Object.assign(targetImport, { path });
+      return imported(targetImport);
     },
     components: {
       Popover: {

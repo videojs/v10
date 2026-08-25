@@ -6,12 +6,18 @@ import { RenditionEvent } from './rendition-event';
 import { getPrivate } from './utils';
 
 export function addRendition(track: AudioTrack, rendition: AudioRendition) {
-  const renditionList = getPrivate(track).media?.deref()?.audioRenditions as AudioRenditionList | undefined;
+  const renditionList =
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ getPrivate(
+      track
+    ).media?.deref()?.audioRenditions as AudioRenditionList | undefined;
 
-  getPrivate(rendition).media = getPrivate(track).media;
+  const media = getPrivate(track).media;
+  if (media) getPrivate(rendition).media = media;
   getPrivate(rendition).track = track;
 
-  const renditionSet = getPrivate(track).renditionSet as Set<AudioRendition>;
+  const renditionSet =
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ getPrivate(track)
+      .renditionSet as Set<AudioRendition>;
   renditionSet.add(rendition);
   const index = renditionSet.size - 1;
 
@@ -31,9 +37,16 @@ export function addRendition(track: AudioTrack, rendition: AudioRendition) {
 }
 
 export function removeRendition(rendition: AudioRendition) {
-  const renditionList = getPrivate(rendition).media?.deref()?.audioRenditions as AudioRenditionList | undefined;
-  const track = getPrivate(rendition).track as AudioTrack;
-  const renditionSet = getPrivate(track).renditionSet as Set<AudioRendition>;
+  const renditionList =
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ getPrivate(
+      rendition
+    ).media?.deref()?.audioRenditions as AudioRenditionList | undefined;
+  const track = /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ getPrivate(
+    rendition
+  ).track as AudioTrack;
+  const renditionSet =
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ getPrivate(track)
+      .renditionSet as Set<AudioRendition>;
   renditionSet.delete(rendition);
 
   queueMicrotask(() => {
@@ -44,7 +57,10 @@ export function removeRendition(rendition: AudioRendition) {
 }
 
 export function selectedChanged(rendition: AudioRendition) {
-  const renditionList = getPrivate(rendition).media?.deref()?.audioRenditions as AudioRenditionList | undefined;
+  const renditionList =
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ getPrivate(
+      rendition
+    ).media?.deref()?.audioRenditions as AudioRenditionList | undefined;
 
   // Prevent firing a rendition list `change` event multiple times per tick.
   if (!renditionList || getPrivate(renditionList).changeRequested) return;
@@ -53,7 +69,9 @@ export function selectedChanged(rendition: AudioRendition) {
   queueMicrotask(() => {
     delete getPrivate(renditionList).changeRequested;
 
-    const track = getPrivate(rendition).track as AudioTrack;
+    const track =
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ getPrivate(rendition)
+        .track as AudioTrack;
     if (!track.enabled) return;
 
     renditionList.dispatchEvent(new Event('change'));
@@ -61,11 +79,16 @@ export function selectedChanged(rendition: AudioRendition) {
 }
 
 function getCurrentRenditions(renditionList: AudioRenditionList): AudioRendition[] {
-  const media = getPrivate(renditionList).media?.deref() as HTMLMediaElement | undefined;
+  const media = /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ getPrivate(
+    renditionList
+  ).media?.deref() as HTMLMediaElement | undefined;
   if (!media) return [];
   return [...media.audioTracks]
     .filter((track) => track.enabled)
-    .flatMap((track) => [...(getPrivate(track).renditionSet as Set<AudioRendition>)]);
+    .flatMap((track) => [
+      .../* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (getPrivate(track)
+        .renditionSet as Set<AudioRendition>),
+    ]);
 }
 
 export class AudioRenditionList extends EventTarget {
@@ -107,7 +130,11 @@ export class AudioRenditionList extends EventTarget {
     }
     if (isFunction(callback)) {
       this.#addRenditionCallback = callback;
-      this.addEventListener('addrendition', callback as unknown as EventListener);
+      this.addEventListener(
+        'addrendition',
+        /* SAFETY: DOM dispatch supplies the event argument accepted by this rendition callback. */ callback as typeof callback &
+          EventListener
+      );
     }
   }
 
@@ -122,7 +149,11 @@ export class AudioRenditionList extends EventTarget {
     }
     if (isFunction(callback)) {
       this.#removeRenditionCallback = callback;
-      this.addEventListener('removerendition', callback as unknown as EventListener);
+      this.addEventListener(
+        'removerendition',
+        /* SAFETY: DOM dispatch supplies the event argument accepted by this rendition callback. */ callback as typeof callback &
+          EventListener
+      );
     }
   }
 

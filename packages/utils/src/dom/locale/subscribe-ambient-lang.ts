@@ -17,7 +17,7 @@ const schedule = (): void => {
 };
 
 function start(): void {
-  if (observer || typeof document === 'undefined') {
+  if (observer || !('document' in globalThis)) {
     return;
   }
 
@@ -45,7 +45,7 @@ function stop(): void {
  * or subtree structural changes under `<html>` (which can move nodes between labeled ancestors).
  */
 export function subscribeAmbientLang(onStoreChange: () => void): () => void {
-  if (typeof document === 'undefined') {
+  if (!('document' in globalThis)) {
     return () => {};
   }
 

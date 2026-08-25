@@ -1,3 +1,4 @@
+import { isString } from '@videojs/utils/predicate';
 import { describe, expect, it, vi } from 'vite-plus/test';
 
 import { ConcurrentRunner, RecurringRunner, type Reschedule, runOnce, SerialRunner, Task } from '../task';
@@ -167,7 +168,7 @@ describe('Task', () => {
     it('generates a unique id when none provided', () => {
       const t1 = new Task(async () => {});
       const t2 = new Task(async () => {});
-      expect(typeof t1.id).toBe('string');
+      expect(isString(t1.id)).toBe(true);
       expect(t1.id).not.toBe(t2.id);
     });
   });

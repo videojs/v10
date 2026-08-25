@@ -30,7 +30,7 @@ export interface PlayerTarget {
 
 type ConfigValue = string | null | undefined;
 
-type ActionInput<Action> = Action extends (...args: infer Arguments) => unknown
+type ActionInput<Action> = Action extends (...args: infer Arguments) => void
   ? Arguments extends [infer Value]
     ? Value
     : never

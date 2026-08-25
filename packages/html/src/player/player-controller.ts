@@ -77,7 +77,9 @@ export class PlayerController<Store extends PlayerStore, Result = Store> impleme
     if (!store) return undefined;
 
     // Without selector: return store directly
-    if (!this.#selector) return store as unknown as Result;
+    if (!this.#selector)
+      return /* SAFETY: The no-selector constructor overload establishes that Result is Store. */ store as Store &
+        Result;
 
     // With selector: use StoreController
     return this.#store?.value;

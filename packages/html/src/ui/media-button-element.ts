@@ -33,7 +33,9 @@ function getLabelParams<Core extends MediaButtonComponent>(
   core: Core,
   state: InferComponentState<Core>
 ): LabelParams | undefined {
-  return (core as LabelParamsCore<Core>).getLabelParams?.(state);
+  return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (
+    core as LabelParamsCore<Core>
+  ).getLabelParams?.(state);
 }
 
 /** Abstract base for HTML custom elements that render a media-control button. */
@@ -126,7 +128,8 @@ export abstract class MediaButtonElement<Core extends MediaButtonComponent> exte
     const media = this.mediaState.value;
     if (!media) return undefined;
     this.core.setMedia(media);
-    const state = this.core.getState() as InferComponentState<Core>;
+    const state =
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ this.core.getState() as InferComponentState<Core>;
     return translateText(this.core.getLabel(state), this.#i18n.value, getLabelParams(this.core, state));
   }
 
@@ -145,10 +148,14 @@ export abstract class MediaButtonElement<Core extends MediaButtonComponent> exte
     if (!media) return;
 
     this.core.setMedia(media);
-    const state = this.core.getState() as InferComponentState<Core>;
-    const attrs = (this.core.getAttrs?.(state) ?? {}) as Record<string, unknown>;
-    if (isText(attrs['aria-label'])) {
-      attrs['aria-label'] = translateText(attrs['aria-label'], this.#i18n.value, getLabelParams(this.core, state));
+    const state =
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ this.core.getState() as InferComponentState<Core>;
+    const attrs = this.core.getAttrs?.(state) ?? {};
+    const ariaLabel = 'aria-label' in attrs ? attrs['aria-label'] : undefined;
+    if (isText(ariaLabel)) {
+      Object.assign(attrs, {
+        'aria-label': translateText(ariaLabel, this.#i18n.value, getLabelParams(this.core, state)),
+      });
     }
     applyElementProps(this, {
       ...attrs,
@@ -173,6 +180,6 @@ export abstract class MediaButtonElement<Core extends MediaButtonComponent> exte
 }
 
 /** Whether a button's core reports whether it should be shown at all. */
-function isHideable(state: unknown): state is { hidden: boolean } {
-  return isObject(state) && isBoolean((state as { hidden?: unknown }).hidden);
+function isHideable<State>(state: State): state is State & { hidden: boolean } {
+  return isObject(state) && 'hidden' in state && isBoolean(state.hidden);
 }

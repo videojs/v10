@@ -2,6 +2,8 @@ import { existsSync, readFileSync } from 'node:fs';
 import { dirname, relative, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
+import { isString } from '@videojs/utils/predicate';
+
 type PackageExportTarget = string | Record<string, string>;
 
 interface PackageManifest {
@@ -43,7 +45,10 @@ function readPackageManifest(packageDir: string): PackageManifest {
     throw new Error(`Missing package manifest: ${manifestPath}`);
   }
 
-  const manifest = JSON.parse(readFileSync(manifestPath, 'utf-8')) as PackageManifest;
+  const manifest =
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ JSON.parse(
+      readFileSync(manifestPath, 'utf-8')
+    ) as PackageManifest;
   packageManifestCache.set(packageDir, manifest);
   return manifest;
 }
@@ -57,7 +62,7 @@ function matchExportPattern(pattern: string, subpath: string): string | null {
 }
 
 function selectExportTarget(exportTarget: PackageExportTarget, specifier: string, packageName: string): string {
-  if (typeof exportTarget === 'string') return exportTarget;
+  if (isString(exportTarget)) return exportTarget;
 
   for (const condition of ['default', 'development', 'import', 'module', 'node', 'types']) {
     const target = exportTarget[condition];

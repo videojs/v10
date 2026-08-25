@@ -25,7 +25,7 @@ export interface ComponentSchemaPluginOptions extends Omit<CreateSchemaModuleOpt
  *
  * @param config - Component discovery and output settings.
  */
-export function componentSchemaPlugin(config: ComponentSchemaPluginOptions): Plugin {
+export function componentSchemaPlugin(config: ComponentSchemaPluginOptions) {
   const entry = config.file ?? 'component-schema';
   const moduleId = `\0vjsc:component-schema:${entry}`;
 
@@ -38,12 +38,13 @@ export function componentSchemaPlugin(config: ComponentSchemaPluginOptions): Plu
       output = resolve(cwd, `${entry}.ts`);
       declarationOutput = resolve(cwd, `${entry}.d.ts`);
 
+      const inputs = {
+        [entry]: moduleId,
+      } satisfies Record<string, string>;
+      if (config.declaration) inputs[`${entry}.d`] = declarationOutput;
       return {
         ...options,
-        input: addInputEntries(options.input, {
-          [entry]: moduleId,
-          ...(config.declaration ? { [`${entry}.d`]: declarationOutput } : {}),
-        }),
+        input: addInputEntries(options.input, inputs),
       };
     },
     resolveId(id) {
@@ -71,5 +72,5 @@ export function componentSchemaPlugin(config: ComponentSchemaPluginOptions): Plu
         };
       },
     },
-  };
+  } satisfies Plugin;
 }

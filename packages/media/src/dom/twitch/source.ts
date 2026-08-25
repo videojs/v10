@@ -1,5 +1,6 @@
 import { isNil, isString } from '@videojs/utils/predicate';
 
+import type { EmbedParamValue } from '../utils';
 import { TWITCH_PLAYER_ORIGIN } from './player-api';
 import { type TwitchMediaProps, twitchMediaDefaultProps } from './props';
 
@@ -18,7 +19,7 @@ import { type TwitchMediaProps, twitchMediaDefaultProps } from './props';
  * anything not listed, so undocumented knobs and whatever Twitch adds next keep
  * working.
  */
-export interface TwitchEngineConfig extends Record<string, unknown> {
+export interface TwitchEngineConfig extends Partial<Record<string, EmbedParamValue>> {
   /**
    * Every hostname the embed may be framed by. Twitch checks the frame's
    * ancestors against it and refuses to play when the current page is missing,
@@ -51,15 +52,22 @@ export interface TwitchSourceEngineConfig {
   twitch?: TwitchEngineConfig | undefined;
 }
 
-/** Parsed pieces of a Twitch source URL. */
-export interface ParsedTwitchSource {
-  /** `'video'` for VODs, `'channel'` for live channels. */
-  kind: 'video' | 'channel';
-  /** Numeric VOD id, without the `v` prefix the embed parameter carries. Null for channels. */
-  id: string | null;
-  /** Channel name. Null for VODs. */
-  channel: string | null;
+/** Parsed pieces of a Twitch VOD source URL. */
+interface ParsedTwitchVideoSource {
+  kind: 'video';
+  id: string;
+  channel: null;
 }
+
+/** Parsed pieces of a Twitch channel source URL. */
+interface ParsedTwitchChannelSource {
+  kind: 'channel';
+  id: null;
+  channel: string;
+}
+
+/** Parsed pieces of a Twitch source URL. */
+export type ParsedTwitchSource = ParsedTwitchVideoSource | ParsedTwitchChannelSource;
 
 /** Extract a Twitch VOD id from any recognized video URL. */
 export function parseTwitchVideoId(src: string) {
@@ -88,7 +96,7 @@ export function buildTwitchIframeSrc(src: string, props: Partial<TwitchMediaProp
   // Neither of these travels with the rest: `parent` repeats (see below), and
   // `referrerPolicy` is an attribute of the iframe hosting the embed.
   const { parent, referrerPolicy: _referrerPolicy, ...twitch } = props.source?.engine?.twitch ?? {};
-  const params: Record<string, unknown> = {
+  const params = {
     // The embed names its content by parameter rather than by path.
     ...(parsed.kind === 'video' ? { video: `v${parsed.id}` } : { channel: parsed.channel }),
     // Both default to on in the embed, so only turning them off says anything.
@@ -101,8 +109,7 @@ export function buildTwitchIframeSrc(src: string, props: Partial<TwitchMediaProp
   };
 
   const query = new URLSearchParams();
-  for (const key in params) {
-    const value = params[key];
+  for (const [key, value] of Object.entries(params)) {
     // Twitch reads every parameter by value, so an empty one says nothing and is
     // left off. The shared `serializeEmbedParams` cannot be used for this reason:
     // it writes the `1` an HTML attribute's presence means, which `time` and

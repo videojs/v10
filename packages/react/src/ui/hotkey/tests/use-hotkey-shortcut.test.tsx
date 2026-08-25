@@ -9,7 +9,8 @@ import { useHotkeyShortcut } from '../use-hotkey-shortcut';
 
 function createContextValue(container: HTMLElement): PlayerContextValue {
   return {
-    store: createMockStore() as any,
+    store:
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ createMockStore() as any,
     media: null,
     setMedia: vi.fn(),
     container,

@@ -69,7 +69,17 @@ describe('shallowEqual', () => {
   });
 
   it('returns false when comparing object to primitive', () => {
-    expect(shallowEqual({ a: 1 }, 1 as any)).toBe(false);
-    expect(shallowEqual(1 as any, { a: 1 })).toBe(false);
+    expect(
+      shallowEqual(
+        { a: 1 },
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ 1 as any
+      )
+    ).toBe(false);
+    expect(
+      shallowEqual(
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ 1 as any,
+        { a: 1 }
+      )
+    ).toBe(false);
   });
 });

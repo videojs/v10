@@ -1,3 +1,4 @@
+import { isFunction } from '@videojs/utils/predicate';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { HTMLAudioElementHost } from '../../audio-host';
@@ -29,10 +30,19 @@ class TestVideoHost extends HTMLVideoElementHost {
   }
 }
 
+interface TestSource {
+  src?: string;
+  engine?: { maxBufferLength?: number; startLevel?: number };
+}
+
+interface TestMetadata {
+  title?: string;
+}
+
 class TestVideoHostWithObjects extends HTMLVideoElementHost {
   #src = '';
-  #source: Record<string, any> | null = null;
-  #metadata: Record<string, any> | undefined;
+  #source: TestSource | null = null;
+  #metadata: TestMetadata | undefined;
   #debug = false;
 
   get src() {
@@ -47,7 +57,7 @@ class TestVideoHostWithObjects extends HTMLVideoElementHost {
     return this.#source;
   }
 
-  set source(value: Record<string, any> | null) {
+  set source(value: TestSource | null) {
     this.#source = value;
   }
 
@@ -55,7 +65,7 @@ class TestVideoHostWithObjects extends HTMLVideoElementHost {
     return this.#metadata;
   }
 
-  set metadata(value: Record<string, any> | undefined) {
+  set metadata(value: TestMetadata | undefined) {
     this.#metadata = value;
   }
 
@@ -110,7 +120,10 @@ function defineAudioElement() {
 
 function defineIframeElement() {
   const tag = `test-iframe-${++tagCounter}`;
-  const Ctor = CustomMediaElement('iframe', TestIframeHost as never);
+  const Ctor = CustomMediaElement(
+    'iframe',
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ TestIframeHost as never
+  );
   customElements.define(tag, Ctor);
   return { Ctor, tag };
 }
@@ -184,7 +197,13 @@ class TrackingVideoHost extends HTMLVideoElementHost {
   }
 
   override set preload(value: '' | 'none' | 'metadata' | 'auto') {
-    const preload = value as '' | 'none' | 'metadata' | 'auto' | null;
+    const preload =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ value as
+        | ''
+        | 'none'
+        | 'metadata'
+        | 'auto'
+        | null;
     this.calls.push(`set:preload:${preload}`);
     this.#preload = preload;
   }
@@ -634,9 +653,9 @@ describe('CustomMediaElement', () => {
 
     it('delegates methods to the MediaHost', () => {
       const el = create(defineVideoElement());
-      expect(typeof el.play).toBe('function');
-      expect(typeof el.pause).toBe('function');
-      expect(typeof el.load).toBe('function');
+      expect(isFunction(el.play)).toBe(true);
+      expect(isFunction(el.pause)).toBe(true);
+      expect(isFunction(el.load)).toBe(true);
     });
 
     it('excludes attach, detach, and destroy from delegation', () => {
@@ -1015,7 +1034,10 @@ describe('CustomMediaElement', () => {
       document.body.appendChild(el);
 
       el.setAttribute('playback-id', 'abc123');
-      expect((el as any).playbackId).toBe('abc123');
+      expect(
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (el as any)
+          .playbackId
+      ).toBe('abc123');
     });
 
     it('subclass property setter sets the attribute', () => {
@@ -1033,7 +1055,9 @@ describe('CustomMediaElement', () => {
       const el = new Extended();
       document.body.appendChild(el);
 
-      (el as any).playbackId = 'xyz789';
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+        el as any
+      ).playbackId = 'xyz789';
       expect(el.getAttribute('playback-id')).toBe('xyz789');
     });
   });
@@ -1050,7 +1074,11 @@ describe('CustomMediaElement', () => {
 
       expect(shadow.querySelectorAll('[onerror]')).toHaveLength(0);
       expect(shadow.querySelectorAll('[onload]')).toHaveLength(0);
-      expect((globalThis as any).__xss).toBeUndefined();
+      expect(
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+          globalThis as any
+        ).__xss
+      ).toBeUndefined();
     });
 
     it('does not inject script elements when an attribute value contains angle brackets', () => {
@@ -1059,11 +1087,18 @@ describe('CustomMediaElement', () => {
 
       // JSDOM shadow DOM has parsing quirks; test getTemplateHTML directly in a plain container.
       const container = document.createElement('div');
-      container.innerHTML = (Ctor as any).getTemplateHTML({ crossorigin: maliciousValue });
+      container.innerHTML =
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+          Ctor as any
+        ).getTemplateHTML({ crossorigin: maliciousValue });
 
       expect(container.querySelectorAll('script')).toHaveLength(0);
       expect(container.querySelectorAll('img[onerror]')).toHaveLength(0);
-      expect((globalThis as any).__xss).toBeUndefined();
+      expect(
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+          globalThis as any
+        ).__xss
+      ).toBeUndefined();
     });
 
     it('does not inject img elements when poster contains an angle-bracket payload', () => {
@@ -1072,10 +1107,17 @@ describe('CustomMediaElement', () => {
 
       // JSDOM shadow DOM has parsing quirks; test getTemplateHTML directly in a plain container.
       const container = document.createElement('div');
-      container.innerHTML = (Ctor as any).getTemplateHTML({ poster: maliciousValue });
+      container.innerHTML =
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+          Ctor as any
+        ).getTemplateHTML({ poster: maliciousValue });
 
       expect(container.querySelectorAll('img')).toHaveLength(0);
-      expect((globalThis as any).__xss).toBeUndefined();
+      expect(
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+          globalThis as any
+        ).__xss
+      ).toBeUndefined();
     });
 
     it('preserves the attribute value correctly after escaping', () => {

@@ -38,7 +38,7 @@ describe('createTransition', () => {
       const finished = new Promise<void>((resolve) => {
         finishAnimation = resolve;
       });
-      const getAnimations = vi.fn(() => [{ finished }] as unknown as Animation[]);
+      const getAnimations = vi.fn(() => [{ finished }]);
       Object.defineProperty(el, 'getAnimations', { value: getAnimations });
 
       let resolved = false;

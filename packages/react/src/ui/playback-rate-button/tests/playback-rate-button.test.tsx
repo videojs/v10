@@ -11,11 +11,14 @@ import { PlaybackRateButton } from '../playback-rate-button';
 
 function createContextValue(container: HTMLElement): PlayerContextValue {
   return {
-    store: createMockStore({
-      playbackRates: [0.5, 1, 1.5, 2],
-      playbackRate: 1,
-      setPlaybackRate: vi.fn(),
-    }) as any,
+    store:
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ createMockStore(
+        {
+          playbackRates: [0.5, 1, 1.5, 2],
+          playbackRate: 1,
+          setPlaybackRate: vi.fn(),
+        }
+      ) as any,
     media: null,
     setMedia: vi.fn(),
     container,

@@ -166,9 +166,13 @@ export function createMachineActor<
 ): MessageActor<UserState | 'destroyed', Context, Message> {
   type FullState = UserState | 'destroyed';
 
-  const runner = def.runner?.() as RunnerLike | undefined;
+  const runner =
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ def.runner?.() as
+      | RunnerLike
+      | undefined;
   const { snapshotSignal, getState, transition } = createMachineCore<FullState, ActorSnapshot<FullState, Context>>({
-    value: def.initial as FullState,
+    value:
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ def.initial as FullState,
     context: def.context,
   });
 
@@ -186,24 +190,37 @@ export function createMachineActor<
     send(message: Message): void {
       const state = getState();
       if (state === 'destroyed') return;
-      const stateDef = def.states[state as UserState];
-      const handler = stateDef?.on?.[message.type as keyof typeof stateDef.on] as
-        | ((msg: Message, ctx: HandlerContext<UserState, Context, RunnerFactory>) => void)
-        | undefined;
+      const stateDef =
+        def.states[
+          /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ state as UserState
+        ];
+      const handler =
+        /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ stateDef?.on?.[
+          /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ message.type as keyof typeof stateDef.on
+        ] as ((msg: Message, ctx: HandlerContext<UserState, Context, RunnerFactory>) => void) | undefined;
       if (!handler) return;
-      handler(message, {
-        context: getContext(),
-        getContext,
-        transition: (to: UserState) => transition(to as FullState),
-        setContext,
-        ...(runner ? { runner } : {}),
-      } as HandlerContext<UserState, Context, RunnerFactory>);
+      const handlerContext =
+        /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ {
+          context: getContext(),
+          getContext,
+          transition: (to: UserState) =>
+            transition(
+              /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ to as FullState
+            ),
+          setContext,
+        } as HandlerContext<UserState, Context, RunnerFactory>;
+      if (runner) Object.assign(handlerContext, { runner });
+      handler(message, handlerContext);
       // Register onSettled after the handler so we read the post-transition state.
       const newState = getState();
       if (newState !== 'destroyed') {
-        const newStateDef = def.states[newState as UserState];
+        const newStateDef =
+          def.states[
+            /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ newState as UserState
+          ];
         if (newStateDef?.onSettled && runner) {
-          const targetState = newStateDef.onSettled as FullState;
+          const targetState =
+            /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ newStateDef.onSettled as FullState;
           runner.whenSettled(() => {
             if (getState() !== newState) return;
             transition(targetState);

@@ -7,7 +7,7 @@ import { failoverFetch } from '../failover-fetch';
 
 const presentationWithVideo = (url: string): MaybeResolvedPresentation => ({
   url: 'https://cdn-a.example.com/master.m3u8',
-  selectionSets: [
+  selectionSets: /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ [
     {
       id: 'video-set',
       type: 'video',

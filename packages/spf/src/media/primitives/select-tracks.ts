@@ -74,8 +74,17 @@ export interface TextSelectionConfig {
  */
 export function matchesPartialTrack<T>(track: T, filter: Partial<T>): boolean {
   for (const key in filter) {
-    const filterValue = filter[key as keyof T];
-    if (filterValue !== undefined && track[key as keyof T] !== filterValue) return false;
+    const filterValue =
+      filter[
+        /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ key as keyof T
+      ];
+    if (
+      filterValue !== undefined &&
+      track[
+        /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ key as keyof T
+      ] !== filterValue
+    )
+      return false;
   }
   return true;
 }

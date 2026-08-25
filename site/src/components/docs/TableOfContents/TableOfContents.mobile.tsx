@@ -19,7 +19,9 @@ export function TableOfContentsMobile({ headings, activeId, onNavigate, classNam
   const [open, setOpen] = useState(false);
   const [viewportLayout, setViewportLayout] = useState({
     availableHeight: 400,
-    railTop: null as number | null,
+    railTop: /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ null as
+      | number
+      | null,
   });
 
   const railGeometry = calculateRailGeometry(headings.length, viewportLayout.availableHeight);

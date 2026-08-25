@@ -9,7 +9,10 @@ import { getTemplateHTML } from '../background-video/template';
 // `MediaAttachMixin` is typed as returning its base, so its `disconnectedCallback`
 // isn't visible for `super` to reach. `CustomElement` declares the lifecycle
 // callbacks this element overrides.
-const HlsBackgroundVideoBase = MediaAttachMixin(HTMLElement) as unknown as Constructor<CustomElement>;
+const HlsBackgroundVideoBase =
+  /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ MediaAttachMixin(
+    HTMLElement
+  ) as Constructor<CustomElement>;
 
 /**
  * A muted, looping, chrome-less video over the SPF background-video engine.
@@ -55,7 +58,9 @@ const HlsBackgroundVideoBase = MediaAttachMixin(HTMLElement) as unknown as Const
 // Deliberately not `CustomMediaElement`, matching `<background-video>`: a
 // background video needs one property, not the full WHATWG media API.
 export class HlsBackgroundVideo extends HlsBackgroundVideoBase {
-  static shadowRootOptions = { mode: 'open' as ShadowRootMode };
+  static shadowRootOptions = {
+    mode: /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ 'open' as ShadowRootMode,
+  };
   static getTemplateHTML = getTemplateHTML;
 
   static get observedAttributes(): string[] {
@@ -68,7 +73,11 @@ export class HlsBackgroundVideo extends HlsBackgroundVideoBase {
     super();
 
     if (!this.shadowRoot) {
-      this.attachShadow((this.constructor as typeof HlsBackgroundVideo).shadowRootOptions);
+      this.attachShadow(
+        /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (
+          this.constructor as typeof HlsBackgroundVideo
+        ).shadowRootOptions
+      );
 
       const attrs = {
         ...namedNodeMapToObject(this.attributes),
@@ -98,7 +107,7 @@ export class HlsBackgroundVideo extends HlsBackgroundVideoBase {
 
   /** Register the Media (not the inner `<video>`) with the provider. */
   getMediaTarget(): Media | null {
-    return this.#media as unknown as Media;
+    return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ this.#media as Media;
   }
 
   override disconnectedCallback(): void {

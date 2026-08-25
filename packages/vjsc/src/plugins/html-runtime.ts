@@ -4,7 +4,7 @@ const HTML_RUNTIME_ID = '\0vjsc:html-runtime';
 const HTML_RUNTIME_SOURCE = 'vjsc/html-runtime';
 
 export function htmlRuntimePlugin(): Plugin {
-  return {
+  return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ {
     name: 'vjsc:html-runtime',
     enforce: 'pre',
     resolveId: {

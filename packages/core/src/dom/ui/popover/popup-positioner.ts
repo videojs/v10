@@ -80,7 +80,9 @@ export class PopupPositioner {
 
     const boundaryElement = resolvePositioningBoundary(boundary, {
       container: container ?? null,
-      root: popup.getRootNode() as Document | ShadowRoot,
+      root: /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ popup.getRootNode() as
+        | Document
+        | ShadowRoot,
     });
     const previous = this.#options;
     const trackingChanged =
@@ -156,7 +158,7 @@ export class PopupPositioner {
     const anchorSupported = supportsAnchorPositioning();
     const getPosition = (popupRect: DOMRect) => {
       const side = getPositionedSide(triggerRect, popupRect, boundaryRect, preferredPosition, offsets);
-      const { positionAnchor: _, ...style } = getAnchorPositionStyle(
+      const { positionAnchor, ...style } = getAnchorPositionStyle(
         options.anchorName,
         { ...preferredPosition, side, direction: isRTL(trigger) ? 'rtl' : 'ltr' },
         triggerRect,
@@ -165,6 +167,7 @@ export class PopupPositioner {
         offsets,
         options.cssVars
       );
+      void positionAnchor;
 
       return { popupRect, side, style };
     };

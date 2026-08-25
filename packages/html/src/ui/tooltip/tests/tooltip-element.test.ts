@@ -20,14 +20,22 @@ function uniqueTag(base: string): string {
   return `${base}-${tagCounter++}`;
 }
 
-function createElement<Element extends HTMLElement>(Base: abstract new () => Element): Element {
+function createElement<Element extends HTMLElement>(Base: new () => Element): Element {
   const tag = uniqueTag('test-el');
-  customElements.define(tag, class extends (Base as unknown as typeof HTMLElement) {});
-  return document.createElement(tag) as Element;
+  customElements.define(
+    tag,
+    class extends /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (Base as typeof HTMLElement) {}
+  );
+  return /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+    tag
+  ) as Element;
 }
 
 function createPlaybackStore(): AnyPlayerStore {
-  const store = createStore<PlayerTarget>()(playbackFeature) as unknown as AnyPlayerStore;
+  const store =
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ createStore<PlayerTarget>()(
+      playbackFeature
+    ) as AnyPlayerStore;
   const video = document.createElement('video');
   Object.defineProperty(video, 'paused', { value: true, configurable: true });
   Object.defineProperty(video, 'ended', { value: false, configurable: true });
@@ -84,7 +92,10 @@ function defineTestElements(): void {
 function setup() {
   defineTestElements();
 
-  const trigger = document.createElement('test-tooltip-trigger') as TestTriggerElement;
+  const trigger =
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+      'test-tooltip-trigger'
+    ) as TestTriggerElement;
   const tooltip = createElement(TooltipElement);
 
   tooltip.id = 'tooltip';
@@ -105,7 +116,10 @@ afterEach(() => {
 describe('TooltipElement', () => {
   it('uses an explicit trigger that already controls another popup', async () => {
     defineTestElements();
-    const trigger = document.createElement('test-tooltip-trigger') as TestTriggerElement;
+    const trigger =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+        'test-tooltip-trigger'
+      ) as TestTriggerElement;
     const tooltip = createElement(TooltipElement);
     trigger.id = 'settings-trigger';
     trigger.setAttribute('commandfor', 'settings-menu');
@@ -217,14 +231,23 @@ describe('TooltipElement', () => {
     ensureDefined(TooltipElement);
     ensureDefined(MediaI18nProviderElement);
 
-    const player = document.createElement(TestPlayerProviderElement.tagName) as TestPlayerProviderElement;
+    const player =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+        TestPlayerProviderElement.tagName
+      ) as TestPlayerProviderElement;
     const provider = new MediaI18nProviderElement();
     provider.setAttribute('lang', 'es');
 
-    const button = document.createElement(PlayButtonElement.tagName) as PlayButtonElement;
+    const button =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+        PlayButtonElement.tagName
+      ) as PlayButtonElement;
     button.setAttribute('commandfor', 'tip');
 
-    const tooltip = document.createElement(TooltipElement.tagName) as TooltipElement;
+    const tooltip =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+        TooltipElement.tagName
+      ) as TooltipElement;
     tooltip.id = 'tip';
     tooltip.setAttribute('open', '');
 
@@ -247,14 +270,23 @@ describe('TooltipElement', () => {
     ensureDefined(TooltipElement);
     ensureDefined(MediaI18nProviderElement);
 
-    const player = document.createElement(TestPlayerProviderElement.tagName) as TestPlayerProviderElement;
+    const player =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+        TestPlayerProviderElement.tagName
+      ) as TestPlayerProviderElement;
     const provider = new MediaI18nProviderElement();
     provider.setAttribute('lang', 'es');
 
-    const button = document.createElement(PlayButtonElement.tagName) as PlayButtonElement;
+    const button =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+        PlayButtonElement.tagName
+      ) as PlayButtonElement;
     button.setAttribute('commandfor', 'tip');
 
-    const tooltip = document.createElement(TooltipElement.tagName) as TooltipElement;
+    const tooltip =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+        TooltipElement.tagName
+      ) as TooltipElement;
     tooltip.id = 'tip';
     tooltip.setAttribute('open', '');
 
@@ -298,10 +330,16 @@ describe('TooltipElement', () => {
     const provider = new MediaI18nProviderElement();
     provider.setAttribute('lang', 'es');
 
-    const trigger = document.createElement(StubTrigger.tagName) as StubTrigger;
+    const trigger =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+        StubTrigger.tagName
+      ) as StubTrigger;
     trigger.setAttribute('commandfor', 'tip');
 
-    const tooltip = document.createElement(TooltipElement.tagName) as TooltipElement;
+    const tooltip =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+        TooltipElement.tagName
+      ) as TooltipElement;
     tooltip.id = 'tip';
     tooltip.setAttribute('open', '');
 

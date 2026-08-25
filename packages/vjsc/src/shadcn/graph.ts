@@ -82,7 +82,7 @@ export function collectOwnedModules<Item extends ComponentMeta>(
   root: RegistrySourceModule<Item>,
   modules: ReadonlyMap<string, RegistrySourceModule<Item>>,
   published: ReadonlyMap<string, PublishedModule<Item>>
-): { modules: RegistrySourceModule<Item>[]; publishedDependencies: Set<string> } {
+) {
   const owned = new Map<string, RegistrySourceModule<Item>>();
   const publishedDependencies = new Set<string>();
 
@@ -100,7 +100,10 @@ export function collectOwnedModules<Item extends ComponentMeta>(
   };
 
   visit(root);
-  return { modules: [...owned.values()], publishedDependencies };
+  return { modules: [...owned.values()], publishedDependencies } satisfies {
+    modules: RegistrySourceModule<Item>[];
+    publishedDependencies: Set<string>;
+  };
 }
 
 function assertMetaRemoved(module: SourceModule): void {

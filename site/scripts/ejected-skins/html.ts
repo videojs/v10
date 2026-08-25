@@ -13,6 +13,13 @@ import {
   type SkinDef,
 } from './config.ts';
 import { pkgDistUrl, validatePackageImports } from './package-resolver.ts';
+import type { SkinRuntimeValue } from './runtime-value.ts';
+
+interface HtmlSkinTemplateContext {
+  SEEK_TIME: number;
+  renderIcon?: SkinRuntimeValue;
+  [name: string]: SkinRuntimeValue;
+}
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const workspaceRoot = resolve(scriptDir, '../../..');
@@ -51,9 +58,14 @@ export function parseImportedNames(source: string): Map<string, string> {
   return imports;
 }
 
-export function evaluateTemplate(templateBody: string, context: Record<string, unknown>): string {
+export function evaluateTemplate(
+  templateBody: string,
+  context: Record<string, import('./runtime-value').SkinRuntimeValue>
+): string {
   const fn = new Function(...Object.keys(context), `return \`${templateBody}\`;`);
-  const html = fn(...Object.values(context)) as string;
+  const html = /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ fn(
+    ...Object.values(context)
+  ) as string;
   const lines = html.split('\n').map((line) => line.trimEnd());
   const minIndent = lines
     .filter((line) => line.length > 0)
@@ -116,9 +128,9 @@ async function loadImportedNames(
   source: string,
   template: string,
   templatePath: string,
-  context: Record<string, unknown>
+  context: Record<string, import('./runtime-value').SkinRuntimeValue>
 ): Promise<void> {
-  const modules = new Map<string, Record<string, unknown>>();
+  const modules = new Map<string, Record<string, import('./runtime-value').SkinRuntimeValue>>();
 
   for (const [name, specifier] of parseImportedNames(source)) {
     if (!new RegExp(`\\b${name}\\b`).test(template)) continue;
@@ -128,7 +140,9 @@ async function loadImportedNames(
       const url = specifier.startsWith('@videojs/')
         ? pkgDistUrl(specifier)
         : pathToFileURL(resolve(workspaceRoot, dirname(templatePath), specifier)).href;
-      imported = (await import(url)) as Record<string, unknown>;
+      imported = /* SAFETY: Dynamic module exports are consumed by name by the template. */ (await import(
+        url
+      )) as Record<string, import('./runtime-value').SkinRuntimeValue>;
       modules.set(specifier, imported);
     }
 
@@ -141,7 +155,7 @@ export async function processHtmlSkin(skin: HtmlSkinDef): Promise<string> {
   const source = readFileSync(sourcePath, 'utf-8');
   validatePackageImports(source, skin.template);
   const templateBody = extractTemplateLiteral(source);
-  const context: Record<string, unknown> = { SEEK_TIME: 10 };
+  const context: HtmlSkinTemplateContext = { SEEK_TIME: 10 };
 
   await loadImportedNames(source, templateBody, skin.template, context);
   context.renderIcon = createRenderMediaIcon(skin.iconSet);

@@ -1,4 +1,5 @@
 import type { MediaControlsState } from '@videojs/media';
+import { isFunction } from '@videojs/utils/predicate';
 import { describe, expect, it } from 'vite-plus/test';
 
 import { ControlsCore } from '../controls-core';
@@ -63,7 +64,7 @@ describe('ControlsCore', () => {
       core.setMedia(createControlsState());
       const state = core.getState();
 
-      const functionKeys = Object.entries(state).filter(([, value]) => typeof value === 'function');
+      const functionKeys = Object.entries(state).filter(([, value]) => isFunction(value));
       expect(functionKeys).toHaveLength(0);
     });
   });

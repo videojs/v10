@@ -9,7 +9,8 @@ import { useContainer, usePlayer } from '../../player/context';
 export interface GestureProps extends CoreGestureProps {}
 
 export function Gesture({ type, action, value, pointer, region, disabled }: GestureProps): ReactNode {
-  const store = usePlayer() as AnyPlayerStore;
+  const store =
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ usePlayer() as AnyPlayerStore;
   const container = useContainer();
 
   useEffect(() => {

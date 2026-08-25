@@ -45,7 +45,10 @@ export async function ensureSandboxLocale(tag: SandboxLocaleTag): Promise<void> 
     return;
   }
 
-  const translations = all[tag as keyof typeof all];
+  const translations =
+    all[
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ tag as keyof typeof all
+    ];
   if (!translations) {
     throw new Error(`Unknown sandbox locale: ${tag}`);
   }

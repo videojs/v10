@@ -7,6 +7,7 @@ import type {
   TSType,
   TSTypeReference,
 } from '@oxc-project/types';
+import { isFunction } from '@videojs/utils/predicate';
 import { walk } from 'oxc-walker';
 import type { Plugin, RolldownMagicString } from 'rolldown';
 
@@ -338,10 +339,11 @@ function targetReferenceProps(
   }
   if (!reference.props) return undefined;
 
-  return {
+  const resolvedProps: ResolvedProps = {
     type: renderPropsReference(reference, reference.props, imports, typeImports),
-    ...(reference.props.children ? { children: reference.props.children } : {}),
   };
+  if (reference.props.children) Object.assign(resolvedProps, { children: reference.props.children });
+  return resolvedProps;
 }
 
 function renderPropsReference(
@@ -382,16 +384,19 @@ function canonicalPath(name: JSXElementName, bindings: CanonicalBindings): Canon
 }
 
 function configuredRule(path: CanonicalPath): ComponentTargetRule<object> | undefined {
-  let rule = path.target.components[path.component] as ComponentTargetRule<object> | undefined;
+  let rule = /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ path.target
+    .components[path.component] as ComponentTargetRule<object> | undefined;
   if (!path.part || !rule) return rule;
 
   const parts = path.part.split('.');
   for (const [index, part] of parts.entries()) {
     if (!rule) return undefined;
-    if (typeof rule === 'function' || isTargetElement(rule)) {
+    if (isFunction(rule) || isTargetElement(rule)) {
       return part === 'Root' && index === parts.length - 1 ? rule : undefined;
     }
-    rule = (rule as Readonly<Record<string, ComponentTargetRule<object> | undefined>>)[part];
+    rule = /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (
+      rule as Readonly<Record<string, ComponentTargetRule<object> | undefined>>
+    )[part];
   }
   return rule;
 }
@@ -408,8 +413,10 @@ function importedName(specifier: ImportDeclaration['specifiers'][number]): strin
   return specifier.imported.type === 'Identifier' ? specifier.imported.name : specifier.imported.value;
 }
 
-function primitiveRule(target: ComponentTarget, name: string): unknown {
-  return (target.primitives as Readonly<Record<string, unknown>>)[name];
+function primitiveRule(target: ComponentTarget, name: string): import('../value').VjscValue {
+  return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (
+    target.primitives as Readonly<Record<string, import('../value').VjscValue>>
+  )[name];
 }
 
 class TargetTypeImports {

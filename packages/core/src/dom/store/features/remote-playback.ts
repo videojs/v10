@@ -44,7 +44,8 @@ export const remotePlaybackFeature = definePlayerFeature({
       };
 
       const syncAvailability = (event: Event) => {
-        const { availability } = event as WebkitAvailabilityEvent;
+        const { availability } =
+          /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ event as WebkitAvailabilityEvent;
         set({ remotePlaybackAvailability: availability === 'available' ? 'available' : 'unavailable' });
       };
 
@@ -57,7 +58,12 @@ export const remotePlaybackFeature = definePlayerFeature({
     }
 
     // W3C Remote Playback path (Chromium / Edge with the cast extension).
-    const syncState = () => set({ remotePlaybackState: media.remote.state as RemotePlaybackConnectionState });
+    const syncState = () =>
+      set({
+        remotePlaybackState:
+          /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ media.remote
+            .state as RemotePlaybackConnectionState,
+      });
 
     syncState();
 

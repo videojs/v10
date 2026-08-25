@@ -1,3 +1,4 @@
+import { isString } from '../predicate';
 import { kebabCase } from '../string/casing';
 
 export interface InlineStyleSnapshotEntry {
@@ -47,7 +48,7 @@ export function addAnchorName(element: HTMLElement, name: string): () => void {
 
 export function applyStyles(element: HTMLElement, styles: Record<string, string | undefined>): void {
   for (const [prop, value] of Object.entries(styles)) {
-    if (typeof value === 'string') {
+    if (isString(value)) {
       element.style.setProperty(normalizeStyleProperty(prop), value);
     }
   }

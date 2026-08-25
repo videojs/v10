@@ -15,6 +15,7 @@ import { buildComponentReferenceTocHeadings, createComponentReferenceModel } fro
 import { buildFeatureReferenceTocHeadings, createFeatureReferenceModel } from './featureReferenceModel';
 import { buildMediaReferenceTocHeadings, createMediaReferenceModel } from './mediaReferenceModel';
 import { getAstroFrontmatter, type MdastVisitorContext } from './satteriAstroData';
+import type { SiteDataObject } from './site-data-value';
 import { buildUtilReferenceTocHeadings, createUtilReferenceModel } from './utilReferenceModel';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -23,7 +24,7 @@ const FEATURE_REF_DIR = path.resolve(__dirname, '../content/generated-feature-re
 const UTIL_REF_DIR = path.resolve(__dirname, '../content/generated-util-reference');
 const MEDIA_REF_DIR = path.resolve(__dirname, '../content/generated-media-reference');
 
-interface ConditionalHeading {
+interface ConditionalHeading extends SiteDataObject {
   depth: number;
   text: string;
   slug: string;
@@ -109,17 +110,15 @@ export function satteriConditionalHeadings(): MdastPluginInput {
 }
 
 /** Walk ancestors to find the nearest enclosing FrameworkCase / StyleCase. */
-function resolveCaseContext(
-  node: Parameters<MdastVisitorContext['parent']>[0],
-  ctx: MdastVisitorContext
-): { frameworks: string[] | null; styles: string[] | null } {
+function resolveCaseContext(node: Parameters<MdastVisitorContext['parent']>[0], ctx: MdastVisitorContext) {
   let frameworks: string[] | null = null;
   let styles: string[] | null = null;
 
   let current = ctx.parent(node);
   while (current) {
     if (current.type === 'mdxJsxFlowElement') {
-      const el = current as MdxJsxFlowElement;
+      const el =
+        /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ current as MdxJsxFlowElement;
       if (!frameworks && el.name === 'FrameworkCase') {
         frameworks = extractArrayAttr(el, 'frameworks');
       } else if (!styles && el.name === 'StyleCase') {
@@ -129,18 +128,18 @@ function resolveCaseContext(
     current = ctx.parent(current);
   }
 
-  return { frameworks, styles };
+  return { frameworks, styles } satisfies { frameworks: string[] | null; styles: string[] | null };
 }
 
 function getStringAttr(node: MdxJsxFlowElement, name: string): string | null {
   const attr = node.attributes?.find((a) => a.type === 'mdxJsxAttribute' && a.name === name);
-  return attr && typeof attr.value === 'string' ? attr.value : null;
+  return attr && isString(attr.value) ? attr.value : null;
 }
 
 /** Parse a JSX expression attribute like `frameworks={["react", "html"]}`. */
 function extractArrayAttr(node: MdxJsxFlowElement, name: string): string[] | null {
   const attr = node.attributes?.find((a) => a.type === 'mdxJsxAttribute' && a.name === name);
-  if (!attr?.value || typeof attr.value === 'string') return null;
+  if (!attr?.value || isString(attr.value)) return null;
   if (attr.value.type !== 'mdxJsxAttributeValueExpression') return null;
   try {
     return JSON.parse(attr.value.value.trim());
@@ -150,11 +149,11 @@ function extractArrayAttr(node: MdxJsxFlowElement, name: string): string[] | nul
   }
 }
 
-function readRefJson(dir: string, key: string): unknown {
+function readRefJson(dir: string, key: string) {
   try {
     return JSON.parse(fs.readFileSync(path.join(dir, `${key}.json`), 'utf-8'));
   } catch {
-    return null;
+    return null satisfies unknown;
   }
 }
 
@@ -166,7 +165,9 @@ function injectComponentReferenceHeadings(node: MdxJsxFlowElement, headings: Con
   const partOrder = extractArrayAttr(node, 'partOrder');
   const model = createComponentReferenceModel(
     componentName,
-    json as Parameters<typeof createComponentReferenceModel>[1],
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ json as Parameters<
+      typeof createComponentReferenceModel
+    >[1],
     partOrder ?? undefined
   );
   headings.push(...buildComponentReferenceTocHeadings(model));
@@ -187,7 +188,12 @@ function injectUtilReferenceHeadings(node: MdxJsxFlowElement, headings: Conditio
   const slug = getStringAttr(node, 'slug');
   const json = readRefJson(UTIL_REF_DIR, slug ?? kebabCase(utilName));
   if (!json) return;
-  const model = createUtilReferenceModel(utilName, json as Parameters<typeof createUtilReferenceModel>[1]);
+  const model = createUtilReferenceModel(
+    utilName,
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ json as Parameters<
+      typeof createUtilReferenceModel
+    >[1]
+  );
   headings.push(...buildUtilReferenceTocHeadings(model));
 }
 

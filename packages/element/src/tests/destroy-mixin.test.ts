@@ -12,10 +12,11 @@ function uniqueTag(base: string): string {
   return `${base}-${tagCounter++}`;
 }
 
-function createElement<T extends HTMLElement>(ctor: abstract new () => T): T {
+function createElement<T extends HTMLElement>(ctor: new () => T): T {
   const tag = uniqueTag('test-destroy');
-  customElements.define(tag, class extends (ctor as unknown as typeof HTMLElement) {});
-  return document.createElement(tag) as T;
+  class TestElement extends ctor {}
+  customElements.define(tag, TestElement);
+  return new TestElement();
 }
 
 afterEach(() => {

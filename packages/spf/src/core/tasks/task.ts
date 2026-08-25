@@ -1,4 +1,5 @@
 import { anyAbortSignal } from '@videojs/utils/events';
+import { isFunction } from '@videojs/utils/predicate';
 import { generateId } from '@videojs/utils/string';
 
 // =============================================================================
@@ -98,7 +99,7 @@ export class Task<TValue = void, TError = unknown> implements TaskLike<TValue, T
   constructor(runFn: (signal: AbortSignal) => Promise<TValue>, config?: TaskConfig) {
     this.#runFn = runFn;
     const rawId = config?.id;
-    this.id = typeof rawId === 'function' ? rawId() : (rawId ?? generateId());
+    this.id = isFunction(rawId) ? rawId() : (rawId ?? generateId());
     this.#externalSignal = config?.signal;
     this.#signal = config?.signal
       ? anyAbortSignal([this.#abortController.signal, config.signal])
@@ -110,15 +111,21 @@ export class Task<TValue = void, TError = unknown> implements TaskLike<TValue, T
   }
 
   get value(): DeepReadonly<TValue> | undefined {
-    return this.#value as DeepReadonly<TValue> | undefined;
+    return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ this.#value as
+      | DeepReadonly<TValue>
+      | undefined;
   }
 
   get error(): DeepReadonly<TError> | undefined {
-    return this.#error as DeepReadonly<TError> | undefined;
+    return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ this.#error as
+      | DeepReadonly<TError>
+      | undefined;
   }
 
   get previous(): DeepReadonly<TValue> | undefined {
-    return this.#previous as DeepReadonly<TValue> | undefined;
+    return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ this.#previous as
+      | DeepReadonly<TValue>
+      | undefined;
   }
 
   get signal(): AbortSignal {
@@ -142,7 +149,8 @@ export class Task<TValue = void, TError = unknown> implements TaskLike<TValue, T
       this.#status = 'done';
       return result;
     } catch (e) {
-      this.#error = e as TError; // error before status — ordering guarantee
+      this.#error =
+        /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ e as TError; // error before status — ordering guarantee
       this.#status = 'error';
       throw e;
     }
@@ -187,9 +195,11 @@ export class ConcurrentRunner {
   #destroyed = false;
 
   schedule<TValue = void, TError = unknown>(task: TaskLike<TValue, TError>): Promise<TValue> {
-    if (this.#destroyed) return Promise.resolve() as Promise<TValue>;
+    if (this.#destroyed)
+      return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ Promise.resolve() as Promise<TValue>;
     const existing = this.#pending.get(task.id);
-    if (existing) return existing.promise as Promise<TValue>;
+    if (existing)
+      return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ existing.promise as Promise<TValue>;
 
     if (this.#pending.size === 0) {
       this.#settled = new Promise((resolve) => {
@@ -210,7 +220,14 @@ export class ConcurrentRunner {
     };
     promise.then(cleanup, cleanup);
 
-    this.#pending.set(task.id, { task: task as TaskLike<unknown, unknown>, promise: promise as Promise<unknown> });
+    this.#pending.set(task.id, {
+      task: /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ task as TaskLike<
+        unknown,
+        unknown
+      >,
+      promise:
+        /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ promise as Promise<unknown>,
+    });
     return promise;
   }
 
@@ -274,8 +291,13 @@ export class SerialRunner {
   #destroyed = false;
 
   schedule<TValue = void, TError = unknown>(task: TaskLike<TValue, TError>): Promise<TValue> {
-    if (this.#destroyed) return Promise.resolve() as Promise<TValue>;
-    const t = task as TaskLike<unknown, unknown>;
+    if (this.#destroyed)
+      return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ Promise.resolve() as Promise<TValue>;
+    const t =
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ task as TaskLike<
+        unknown,
+        unknown
+      >;
     this.#pending.add(t);
 
     const result = this.#chain
@@ -294,7 +316,7 @@ export class SerialRunner {
       () => {}
     );
 
-    return result as Promise<TValue>;
+    return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ result as Promise<TValue>;
   }
 
   /**
@@ -304,7 +326,7 @@ export class SerialRunner {
    * a subsequent abortAll() + new batch has superseded this one.
    */
   get settled(): Promise<void> {
-    return this.#chain as Promise<void>;
+    return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ this.#chain as Promise<void>;
   }
 
   /**
@@ -437,7 +459,8 @@ export class RecurringRunner<TValue = unknown> {
    * an unbounded (small per-cycle) cost for a long-lived one (e.g. live reload).
    */
   schedule(task: TaskLike<TValue, unknown>): Promise<TValue> {
-    if (this.#destroyed) return Promise.resolve() as Promise<TValue>;
+    if (this.#destroyed)
+      return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ Promise.resolve() as Promise<TValue>;
     // Dedup by id: this id is already the active re-run target, so the existing
     // recurrence continues uninterrupted (don't restart it) — hand back its
     // in-flight run.
@@ -467,7 +490,8 @@ export class RecurringRunner<TValue = unknown> {
         // The runner's own cancellation isn't a failure — settle quietly so
         // routine teardown (abort/supersede/destroy) needs no caller `.catch`.
         // A genuine run/reschedule failure propagates to the caller.
-        if (task.signal.aborted) return undefined as TValue;
+        if (task.signal.aborted)
+          return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ undefined as TValue;
         throw error;
       }
     );

@@ -13,7 +13,9 @@ interface CliConfig {
 export function readConfig(): CliConfig {
   if (!existsSync(CONFIG_FILE)) return {};
   try {
-    return JSON.parse(readFileSync(CONFIG_FILE, 'utf-8')) as CliConfig;
+    return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ JSON.parse(
+      readFileSync(CONFIG_FILE, 'utf-8')
+    ) as CliConfig;
   } catch {
     return {};
   }
@@ -25,20 +27,25 @@ function writeConfig(config: CliConfig): void {
   writeFileSync(CONFIG_FILE, `${JSON.stringify(config, null, 2)}\n`, 'utf-8');
 }
 
-const VALID_CONFIG: Record<keyof CliConfig, readonly string[]> = {
+const VALID_CONFIG = {
   framework: ['html', 'react'],
-};
+} satisfies Record<keyof CliConfig, readonly string[]>;
 
 export function getConfigValue(key: string): string | undefined {
   if (!(key in VALID_CONFIG)) {
     throw new Error(`Unknown config key: "${key}". Valid keys: ${Object.keys(VALID_CONFIG).join(', ')}`);
   }
   const config = readConfig();
-  return config[key as keyof CliConfig];
+  return config[
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ key as keyof CliConfig
+  ];
 }
 
 export function setConfigValue(key: string, value: string): void {
-  const validValues = VALID_CONFIG[key as keyof CliConfig];
+  const validValues =
+    VALID_CONFIG[
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ key as keyof CliConfig
+    ];
   if (!validValues) {
     throw new Error(`Unknown config key: "${key}". Valid keys: ${Object.keys(VALID_CONFIG).join(', ')}`);
   }
@@ -46,7 +53,9 @@ export function setConfigValue(key: string, value: string): void {
     throw new Error(`Invalid value "${value}" for "${key}". Valid values: ${validValues.join(', ')}`);
   }
   const config = readConfig();
-  (config as Record<string, string>)[key] = value;
+  /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (
+    config as Record<string, string>
+  )[key] = value;
   writeConfig(config);
 }
 

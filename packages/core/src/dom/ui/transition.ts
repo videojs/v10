@@ -1,5 +1,6 @@
 import { createState, type State } from '@videojs/store';
 import { noop } from '@videojs/utils/function';
+import { isFunction } from '@videojs/utils/predicate';
 
 import type { TransitionState } from '../../core/ui/transition';
 
@@ -141,7 +142,7 @@ export function createTransition(): TransitionApi {
 }
 
 function resolveElement(element: TransitionElement): HTMLElement | null {
-  return typeof element === 'function' ? element() : element;
+  return isFunction(element) ? element() : element;
 }
 
 function flushStyles(el: HTMLElement | null): void {

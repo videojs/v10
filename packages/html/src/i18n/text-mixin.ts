@@ -1,5 +1,6 @@
 import { type Text, translateText } from '@videojs/core/i18n';
 import type { PropertyValues, ReactiveElement } from '@videojs/element';
+import { isString } from '@videojs/utils/predicate';
 import type { Constructor } from '@videojs/utils/types';
 
 import type { I18nContext } from './context';
@@ -36,7 +37,7 @@ export function createTextMixin({ context }: TextMixinConfig): I18nTextMixin {
         }
 
         const text: Text | string = this.token ? { key: this.token, text: this.#text } : this.#text;
-        this.textContent = typeof text === 'string' ? text : translateText(text, this.#i18n.value);
+        this.textContent = isString(text) ? text : translateText(text, this.#i18n.value);
       }
     }
 

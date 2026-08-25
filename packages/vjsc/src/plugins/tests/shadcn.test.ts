@@ -2,6 +2,7 @@ import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join } from 'node:path';
 
+import { isString } from '@videojs/utils/predicate';
 import { type RolldownOutput, rolldown } from 'rolldown';
 import { registryItemSchema, registrySchema } from 'shadcn/schema';
 import { describe, expect, it } from 'vite-plus/test';
@@ -198,7 +199,7 @@ async function build(
   const output = shadcnPlugin({ root, ...options });
   const plugins = order.flatMap((plugin) => (plugin === 'vjsc' ? transform : plugin === 'shadcn' ? output : plugin));
   const bundle = await rolldown({
-    input: typeof input === 'string' ? input : [...input],
+    input: isString(input) ? input : [...input],
     experimental: { nativeMagicString: true },
     external: (id) => !id.startsWith('.') && !id.startsWith('/') && !id.startsWith('\0'),
     plugins,

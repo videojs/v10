@@ -11,8 +11,10 @@ import type { HlsEngineHost } from './types';
  * attaches. This mixin re-enables those tracks by forcing `mode = 'hidden'`
  * and reloading the track source when cues have been wiped.
  */
-export function HlsJsMediaMetadataTracksMixin<Base extends Constructor<HlsEngineHost>>(BaseClass: Base) {
-  class HlsJsMediaMetadataTracks extends (BaseClass as Constructor<HlsEngineHost>) {
+export function HlsJsMediaMetadataTracksMixin<Base extends Constructor<HlsEngineHost>>(BaseClass: Base): Base {
+  class HlsJsMediaMetadataTracks
+    extends /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (BaseClass as Constructor<HlsEngineHost>)
+  {
     constructor(...args: any[]) {
       super(...args);
 
@@ -23,7 +25,8 @@ export function HlsJsMediaMetadataTracksMixin<Base extends Constructor<HlsEngine
 
     #forceHiddenTracks(): void {
       // The hls.js delegate always binds to the real `<video>` element.
-      const target = this.target as HTMLVideoElement | null;
+      const target = /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ this
+        .target as HTMLVideoElement | null;
       if (!target) return;
 
       [...target.textTracks].forEach((track) => {
@@ -33,7 +36,10 @@ export function HlsJsMediaMetadataTracksMixin<Base extends Constructor<HlsEngine
         if (track.kind) selector += `[kind="${track.kind}"]`;
         if (track.label) selector += `[label="${track.label}"]`;
 
-        const trackEl = target.querySelector(selector) as HTMLTrackElement | null;
+        const trackEl =
+          /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ target.querySelector(
+            selector
+          ) as HTMLTrackElement | null;
         if (!trackEl) return;
 
         const src = trackEl.getAttribute('src') ?? '';
@@ -41,12 +47,16 @@ export function HlsJsMediaMetadataTracksMixin<Base extends Constructor<HlsEngine
 
         // Only reset the track if it was loaded before and had no cues.
         if (src && trackEl.readyState === TRACK_LOADED && !track.cues?.length) {
-          const clonedTrackEl = trackEl.cloneNode() as HTMLTrackElement;
+          const clonedTrackEl =
+            /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ trackEl.cloneNode() as HTMLTrackElement;
           target.replaceChild(clonedTrackEl, trackEl);
         }
 
         // Force mode to 'hidden' for default tracks (independent of replacement).
-        const currentTrackEl = target.querySelector(selector) as HTMLTrackElement | null;
+        const currentTrackEl =
+          /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ target.querySelector(
+            selector
+          ) as HTMLTrackElement | null;
         if (currentTrackEl?.default && currentTrackEl.track.mode !== 'hidden') {
           currentTrackEl.track.mode = 'hidden';
         }
@@ -54,5 +64,6 @@ export function HlsJsMediaMetadataTracksMixin<Base extends Constructor<HlsEngine
     }
   }
 
-  return HlsJsMediaMetadataTracks as unknown as Base;
+  return /* SAFETY: The mixed class preserves the supplied base constructor. */ HlsJsMediaMetadataTracks as typeof HlsJsMediaMetadataTracks &
+    Base;
 }

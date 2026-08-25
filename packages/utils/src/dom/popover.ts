@@ -11,12 +11,12 @@ export interface PositionSideOffsets {
 
 const ZERO_OFFSETS: PositionSideOffsets = { sideOffset: 0, boundaryOffset: 0 };
 
-const OPPOSITE_SIDE: Record<PositionSide, PositionSide> = {
+const OPPOSITE_SIDE = {
   top: 'bottom',
   bottom: 'top',
   left: 'right',
   right: 'left',
-};
+} satisfies Record<PositionSide, PositionSide>;
 
 function getSideAvailable(
   triggerRect: DOMRect,

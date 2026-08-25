@@ -1,7 +1,7 @@
 import { render } from '@testing-library/react';
 import type { Media } from '@videojs/media';
 import { addMediaComponent, getMediaComponents } from '@videojs/media/dom/media-host';
-import { MuxData as MuxDataComponent, MuxMedia } from '@videojs/media/dom/mux';
+import { MuxData as MuxDataComponent, MuxMedia, muxDataDefaultProps } from '@videojs/media/dom/mux';
 import { describe, expect, it, vi } from 'vite-plus/test';
 
 import { createPlayerWrapper } from '../../testing/mocks';
@@ -10,7 +10,8 @@ import { MuxData } from '../mux-data';
 function setup() {
   const media = new MuxMedia();
   const { value, Wrapper } = createPlayerWrapper();
-  value.media = media as unknown as Media;
+  value.media =
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ media as Media;
   return { media, Wrapper };
 }
 
@@ -36,10 +37,10 @@ describe('MuxData', () => {
 
   it('disables monitoring when MuxDataSdk is explicitly undefined', () => {
     const { media, Wrapper } = setup();
-    const MuxDataSdk = {
-      monitor: vi.fn(),
-      utils: { now: () => 0 },
-    } as unknown as NonNullable<MuxDataComponent['MuxDataSdk']>;
+    const defaultSdk = muxDataDefaultProps.MuxDataSdk!;
+    const monitor = vi.spyOn(defaultSdk, 'monitor').mockImplementation(() => {});
+    const now = vi.spyOn(defaultSdk.utils, 'now').mockReturnValue(0);
+    const MuxDataSdk = defaultSdk;
 
     const { rerender } = render(<MuxData MuxDataSdk={MuxDataSdk} />, { wrapper: Wrapper });
     const component = getMediaComponents(media).get(MuxDataComponent)!;
@@ -50,6 +51,9 @@ describe('MuxData', () => {
 
     rerender(<MuxData />);
     expect(component.MuxDataSdk).toBeDefined();
+
+    monitor.mockRestore();
+    now.mockRestore();
   });
 
   it('resets a removed prop to its default', () => {

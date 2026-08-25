@@ -55,7 +55,9 @@ export function parseHotkeyPattern(pattern: string): ParsedHotkeyBinding[] {
     if (lower === 'mod') {
       modifiers.add(isMacOS() ? 'meta' : 'ctrl');
     } else if (MODIFIER_KEYS.has(lower)) {
-      modifiers.add(lower as HotkeyModifierKey);
+      modifiers.add(
+        /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ lower as HotkeyModifierKey
+      );
     } else if (__DEV__) {
       console.warn(`[vjs-hotkey] Unknown modifier: "${seg}" in pattern "${pattern}"`);
     }

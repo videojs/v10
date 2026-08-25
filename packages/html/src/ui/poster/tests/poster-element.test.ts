@@ -8,19 +8,24 @@ import { playerContext } from '../../../player/context';
 import { UIElement } from '../../ui-element';
 import { PosterElement } from '../poster-element';
 
+type ConfigurableStore = Parameters<typeof setPlayerConfigValue>[0];
+
 function ensureDefined(ctor: CustomElementConstructor & { readonly tagName: string }): void {
   if (!customElements.get(ctor.tagName)) customElements.define(ctor.tagName, ctor);
 }
 
 /** Set the user poster the way a provider element does, through the feature's config. */
-function setUserPoster(store: object, value: string | null): void {
+function setUserPoster(store: ConfigurableStore, value: string | null): void {
   setPlayerConfigValue(store, metadataFeature.config!.poster, value);
 }
 
 class TestProviderElement extends UIElement {
   static readonly tagName = 'test-poster-provider';
 
-  readonly store = createStore<PlayerTarget>()(combine(playbackFeature, metadataFeature)) as unknown as AnyPlayerStore;
+  readonly store =
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ createStore<PlayerTarget>()(
+      combine(playbackFeature, metadataFeature)
+    ) as AnyPlayerStore;
 
   readonly #provider = new ContextProvider(this, { context: playerContext, initialValue: this.store });
 
@@ -51,13 +56,19 @@ async function mount(options: { authorMarkup?: string } = {}): Promise<Harness> 
   ensureDefined(TestProviderElement);
   ensureDefined(PosterElement);
 
-  const provider = document.createElement(TestProviderElement.tagName) as TestProviderElement;
+  const provider =
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+      TestProviderElement.tagName
+    ) as TestProviderElement;
   document.body.appendChild(provider);
 
   const skin = provider.attachShadow({ mode: 'open' });
   const tag = PosterElement.tagName;
   skin.innerHTML = `<${tag}><slot name="poster"><img alt="" decoding="async"></slot></${tag}>`;
-  const poster = skin.querySelector(tag) as PosterElement;
+  const poster =
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ skin.querySelector(
+      tag
+    ) as PosterElement;
 
   if (options.authorMarkup) {
     provider.innerHTML = options.authorMarkup;
@@ -84,7 +95,10 @@ async function mount(options: { authorMarkup?: string } = {}): Promise<Harness> 
   return {
     poster,
     host: provider,
-    skinImage: skin.querySelector('img') as HTMLImageElement,
+    skinImage:
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ skin.querySelector(
+        'img'
+      ) as HTMLImageElement,
     authorImage: provider.querySelector('img'),
     settle,
     async setPoster(value) {
@@ -123,11 +137,17 @@ describe('PosterElement', () => {
     ensureDefined(TestProviderElement);
     ensureDefined(PosterElement);
 
-    const provider = document.createElement(TestProviderElement.tagName) as TestProviderElement;
+    const provider =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+        TestProviderElement.tagName
+      ) as TestProviderElement;
     provider.innerHTML = `<${PosterElement.tagName}></${PosterElement.tagName}>`;
     document.body.appendChild(provider);
 
-    const poster = provider.querySelector(PosterElement.tagName) as PosterElement;
+    const poster =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ provider.querySelector(
+        PosterElement.tagName
+      ) as PosterElement;
     provider.store.attach({ media: document.createElement('video'), container: null });
     setUserPoster(provider.store, 'poster.jpg');
     await poster.updateComplete;
@@ -331,7 +351,10 @@ describe('PosterElement', () => {
         </picture>`,
     });
 
-    const img = host.querySelector('picture img') as HTMLImageElement;
+    const img =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ host.querySelector(
+        'picture img'
+      ) as HTMLImageElement;
 
     // Omitting both `src` and `srcset` makes an image `complete` on its own
     // terms, mid-fetch or not, so its state says nothing about the candidate.
@@ -367,10 +390,16 @@ describe('PosterElement', () => {
     ensureDefined(PosterElement);
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
-    const provider = document.createElement(TestProviderElement.tagName) as TestProviderElement;
+    const provider =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+        TestProviderElement.tagName
+      ) as TestProviderElement;
     document.body.appendChild(provider);
 
-    const poster = document.createElement(PosterElement.tagName) as PosterElement;
+    const poster =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+        PosterElement.tagName
+      ) as PosterElement;
     provider.appendChild(poster);
     provider.store.attach({ media: document.createElement('video'), container: null });
     await poster.updateComplete;

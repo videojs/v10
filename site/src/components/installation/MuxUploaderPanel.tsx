@@ -129,7 +129,8 @@ export default function MuxUploaderPanel() {
         }
         return {
           data: {
-            status: response.data.status as 'waiting' | 'asset_created' | 'errored' | 'cancelled' | 'timed_out',
+            status: /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ response
+              .data.status as 'waiting' | 'asset_created' | 'errored' | 'cancelled' | 'timed_out',
             assetId: response.data.assetId,
           },
         };
@@ -141,7 +142,8 @@ export default function MuxUploaderPanel() {
         }
         return {
           data: {
-            status: response.data.status as 'preparing' | 'ready' | 'errored',
+            status: /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ response
+              .data.status as 'preparing' | 'ready' | 'errored',
             playbackId: response.data.playbackId,
           },
         };

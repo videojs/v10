@@ -1,4 +1,5 @@
 import type { Node } from '@oxc-project/types';
+import { isString } from '@videojs/utils/predicate';
 import { parseSync } from 'oxc-parser';
 import { walk } from 'oxc-walker';
 
@@ -66,20 +67,32 @@ function importReference(
       node.importKind === 'type' ||
       (node.specifiers.length > 0 &&
         node.specifiers.every((specifier) => specifier.type === 'ImportSpecifier' && specifier.importKind === 'type'));
-    return { literal: node.source, kind: typeOnly ? 'type' : 'static' };
+    return {
+      literal: { value: node.source.value, start: node.source.start, end: node.source.end },
+      kind: typeOnly ? 'type' : 'static',
+    };
   }
   if (node.type === 'ExportNamedDeclaration' && node.source) {
     const typeOnly =
       node.exportKind === 'type' ||
       (node.specifiers.length > 0 && node.specifiers.every((specifier) => specifier.exportKind === 'type'));
-    return { literal: node.source, kind: typeOnly ? 'type' : 'static' };
+    return {
+      literal: { value: node.source.value, start: node.source.start, end: node.source.end },
+      kind: typeOnly ? 'type' : 'static',
+    };
   }
   if (node.type === 'ExportAllDeclaration') {
-    return { literal: node.source, kind: node.exportKind === 'type' ? 'type' : 'static' };
+    return {
+      literal: { value: node.source.value, start: node.source.start, end: node.source.end },
+      kind: node.exportKind === 'type' ? 'type' : 'static',
+    };
   }
   if (node.type === 'ImportExpression') {
-    if (node.source.type === 'Literal' && typeof node.source.value === 'string') {
-      return { literal: node.source, kind: 'dynamic' };
+    if (node.source.type === 'Literal' && isString(node.source.value)) {
+      return {
+        literal: { value: node.source.value, start: node.source.start, end: node.source.end },
+        kind: 'dynamic',
+      };
     }
     if (node.source.type === 'TemplateLiteral' && node.source.expressions.length === 0) {
       const value = node.source.quasis[0]?.value.cooked;
@@ -88,7 +101,12 @@ function importReference(
       }
     }
   }
-  if (node.type === 'TSImportType') return { literal: node.source, kind: 'type' };
+  if (node.type === 'TSImportType' && isString(node.source.value)) {
+    return {
+      literal: { value: node.source.value, start: node.source.start, end: node.source.end },
+      kind: 'type',
+    };
+  }
   return undefined;
 }
 

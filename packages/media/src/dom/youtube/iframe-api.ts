@@ -26,8 +26,8 @@ export interface YouTubePlayerApi {
   loadPlaylist(options: { list: string; listType?: string }): void;
   cuePlaylist(options: { list: string; listType?: string }): void;
   stopVideo(): void;
-  getOption(module: string, option: string): unknown;
-  setOption(module: string, option: string, value: unknown): void;
+  getOption(module: string, option: string): YouTubeOptionValue;
+  setOption(module: string, option: string, value: YouTubeOptionValue): void;
   addEventListener(type: string, listener: (event: { data: number }) => void): void;
   destroy(): void;
 }
@@ -47,14 +47,27 @@ export interface YouTubeCaptionTrack {
   displayName?: string;
 }
 
+export type YouTubeOptionValue =
+  | YouTubeCaptionTrack
+  | readonly YouTubeCaptionTrack[]
+  | boolean
+  | number
+  | string
+  | null
+  | undefined;
+
 const API_URL = 'https://www.youtube.com/iframe_api';
 
 /** Load the iframe API once, reusing it if another host already pulled it in. */
 export async function loadYouTubeApi(): Promise<YouTubeApi> {
-  const existing = (globalThis as { YT?: YouTubeApi }).YT;
+  const existing = /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (
+    globalThis as { YT?: YouTubeApi }
+  ).YT;
   if (existing?.Player) return existing;
   await loadScript(API_URL);
-  const api = (globalThis as { YT?: YouTubeApi }).YT;
+  const api = /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (
+    globalThis as { YT?: YouTubeApi }
+  ).YT;
   if (!api) throw new Error('YouTube iframe API failed to load');
   // The loader stub exposes `YT.ready` before `YT.Player` is defined.
   await new Promise<void>((resolve) => api.ready(resolve));
@@ -69,10 +82,10 @@ export const STATE_PAUSED = 2;
 export const STATE_BUFFERING = 3;
 
 // https://developers.google.com/youtube/iframe_api_reference#onError
-export const youtubeErrorCodeToMediaErrorCode: Record<number, number> = {
-  2: MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED, // invalid parameter (e.g. malformed video id)
-  5: MediaError.MEDIA_ERR_DECODE, // HTML5 player error
-  100: MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED, // video not found, removed, or private
-  101: MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED, // embedding not allowed
-  150: MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED, // embedding not allowed (alias of 101)
-};
+export const youtubeErrorCodeToMediaErrorCode = new Map<number, number>([
+  [2, MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED], // invalid parameter (e.g. malformed video id)
+  [5, MediaError.MEDIA_ERR_DECODE], // HTML5 player error
+  [100, MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED], // video not found, removed, or private
+  [101, MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED], // embedding not allowed
+  [150, MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED], // embedding not allowed (alias of 101)
+]);

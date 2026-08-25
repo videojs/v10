@@ -18,7 +18,9 @@ function createMatches(handlers: Partial<Record<GestureType, (() => void) | null
 }
 
 function fakeEvent(): PointerEvent {
-  return new Event('pointerup') as PointerEvent;
+  return /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ new Event(
+    'pointerup'
+  ) as PointerEvent;
 }
 
 describe('TapRecognizer', () => {

@@ -17,7 +17,11 @@ export default function UseCasePicker() {
   return (
     <ImageRadioGroup
       value={$useCase}
-      onChange={(value) => useCase.set(value as UseCase)}
+      onChange={(value) =>
+        useCase.set(
+          /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ value as UseCase
+        )
+      }
       options={USE_CASES.map((value) => ({
         value,
         label: getInstallationPreset(value).label,

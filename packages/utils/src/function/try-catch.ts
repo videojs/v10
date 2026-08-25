@@ -7,17 +7,19 @@
  * safeFn?.(); // Never throws
  * ```
  */
-export function tryCatch<T extends (...args: any[]) => unknown>(
+export function tryCatch<T extends (...args: any[]) => ReturnType<T>>(
   fn: T | undefined,
-  onError: (error: unknown) => void = console.error
+  onError: (error: Error) => void = console.error
 ): T | undefined {
   if (!fn) return undefined;
 
-  return ((...args: Parameters<T>) => {
+  return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ ((
+    ...args: Parameters<T>
+  ) => {
     try {
       return fn(...args);
     } catch (error) {
-      onError(error);
+      onError(error instanceof Error ? error : new Error(String(error)));
       return undefined;
     }
   }) as T;

@@ -8,7 +8,7 @@ import { createSchemaModule } from '../generate';
 
 const STUB = 'const defineComponent: any = (manifest?: any) => manifest ?? {};';
 
-function setup(): { dir: string; output: string; pattern: string } {
+function setup() {
   const dir = mkdtempSync(join(tmpdir(), 'videojs-components-'));
   mkdirSync(join(dir, 'play-button'));
   mkdirSync(join(dir, 'slider'));
@@ -27,7 +27,11 @@ function setup(): { dir: string; output: string; pattern: string } {
      });`
   );
 
-  return { dir, output: join(dir, 'out.ts'), pattern: join(dir, '*/*-component.ts') };
+  return { dir, output: join(dir, 'out.ts'), pattern: join(dir, '*/*-component.ts') } satisfies {
+    dir: string;
+    output: string;
+    pattern: string;
+  };
 }
 
 describe('createSchemaModule', () => {

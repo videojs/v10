@@ -50,7 +50,8 @@ export function createAlertDialog(options: AlertDialogOptions): AlertDialogApi {
   // --- Open / Close ---
 
   function applyOpen(): void {
-    previousFocus = document.activeElement as HTMLElement | null;
+    previousFocus =
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ document.activeElement as HTMLElement | null;
 
     const opening = layer.open();
     if (!opening) return;

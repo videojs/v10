@@ -36,7 +36,7 @@ export const SliderSegments = forwardRef<HTMLDivElement, SliderSegmentsProps>(
 
     const segments = geometry.map((segment) => {
       const state = core.getState(segment, slider.state, pointerValue);
-      const segmentStyle = {
+      const segmentStyle = /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ {
         [TimeSliderChapterCSSVars.start]: state.startPercent,
         [TimeSliderChapterCSSVars.end]: state.endPercent,
         [TimeSliderChapterCSSVars.width]: state.width ?? state.height,

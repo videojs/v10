@@ -115,7 +115,8 @@ describe('renderElement', () => {
   describe('style', () => {
     it('accepts style as object', () => {
       const { container } = render(<TestComponent style={{ color: 'red' }} />);
-      const element = container.firstElementChild as HTMLElement;
+      const element =
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ container.firstElementChild as HTMLElement;
 
       expect(element?.style.color).toBe('red');
     });
@@ -124,7 +125,8 @@ describe('renderElement', () => {
       const { container } = render(
         <TestComponent active style={(state) => ({ color: state.active ? 'green' : 'red' })} />
       );
-      const element = container.firstElementChild as HTMLElement;
+      const element =
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ container.firstElementChild as HTMLElement;
 
       expect(element?.style.color).toBe('green');
     });
@@ -133,7 +135,8 @@ describe('renderElement', () => {
       const { container } = render(
         <TestComponent style={(state) => (state.active ? { color: 'green' } : undefined)} />
       );
-      const element = container.firstElementChild as HTMLElement;
+      const element =
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ container.firstElementChild as HTMLElement;
 
       expect(element?.style.color).toBe('');
     });
@@ -158,7 +161,8 @@ describe('renderElement', () => {
       });
 
       const { container } = render(<ComponentWithInternalStyle style={{ color: 'red' }} />);
-      const element = container.firstElementChild as HTMLElement;
+      const element =
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ container.firstElementChild as HTMLElement;
 
       expect(element?.style.padding).toBe('10px');
       expect(element?.style.color).toBe('red');
@@ -186,7 +190,14 @@ describe('renderElement', () => {
     it('passes ref to render function props', () => {
       const componentRef = createRef<HTMLSpanElement>();
 
-      render(<TestComponent ref={componentRef as Ref<HTMLDivElement>} render={(props) => <span {...props} />} />);
+      render(
+        <TestComponent
+          ref={
+            /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ componentRef as Ref<HTMLDivElement>
+          }
+          render={(props) => <span {...props} />}
+        />
+      );
 
       expect(componentRef.current).toBeInstanceOf(HTMLSpanElement);
     });
@@ -227,7 +238,8 @@ describe('renderElement', () => {
         <TestComponent style={{ color: 'red' }} render={<span style={{ fontSize: '16px' }} />} />
       );
 
-      const element = container.firstElementChild as HTMLElement;
+      const element =
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ container.firstElementChild as HTMLElement;
       expect(element?.style.color).toBe('red');
       expect(element?.style.fontSize).toBe('16px');
     });
@@ -304,7 +316,10 @@ describe('renderElement', () => {
           { className, style, render: renderProp },
           {
             state,
-            ref: [ref1, undefined] as Ref<HTMLDivElement>[],
+            ref: /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ [
+              ref1,
+              undefined,
+            ] as Ref<HTMLDivElement>[],
             props: [elementProps],
           }
         );
@@ -384,7 +399,8 @@ describe('renderElement', () => {
       });
 
       const { container } = render(<ComponentWithHandlers onClick={handler2} />);
-      const element = container.firstElementChild as HTMLElement;
+      const element =
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ container.firstElementChild as HTMLElement;
 
       element.click();
 

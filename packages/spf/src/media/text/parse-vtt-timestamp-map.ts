@@ -38,10 +38,15 @@ const TimeStampMapParserMap = {
 type TimeStampMapParserMap = typeof TimeStampMapParserMap;
 
 function parseTimestampMapBody(body: string): TimestampMap | undefined {
-  return Object.fromEntries(
+  return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ Object.fromEntries(
     body.split(',').map((kvStr) => {
       const [k, v] = kvStr.split(/:(.*)/).map((kOrV) => kOrV.trim());
-      return [k?.toLowerCase(), TimeStampMapParserMap[k as keyof TimeStampMapParserMap](v as string)];
+      return [
+        k?.toLowerCase(),
+        TimeStampMapParserMap[
+          /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ k as keyof TimeStampMapParserMap
+        ](/* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ v as string),
+      ];
     })
   ) as TimestampMap;
 }

@@ -124,14 +124,18 @@ export const VolumeSliderRoot = forwardRef<HTMLDivElement, VolumeSliderRootProps
           thumbProps,
           stateAttrMap: VolumeSliderDataAttrs,
           getAttrs: (sliderState) => {
-            const attrs = core.getAttrs(sliderState as VolumeSliderCore.State);
+            const attrs = core.getAttrs(
+              /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ sliderState as VolumeSliderCore.State
+            );
             return {
               ...attrs,
               'aria-label': translateText(attrs['aria-label'], translator),
               'aria-valuetext': translateText(
                 attrs['aria-valuetext'],
                 translator,
-                core.getValueTextParams(sliderState as VolumeSliderCore.State)
+                core.getValueTextParams(
+                  /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ sliderState as VolumeSliderCore.State
+                )
               ),
             };
           },

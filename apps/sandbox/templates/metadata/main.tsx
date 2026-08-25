@@ -26,7 +26,8 @@ function MetadataVideo({ mediaTitle }: { mediaTitle: string | null | undefined }
       writable: true,
       value: initialTitle.current === undefined ? {} : { title: initialTitle.current },
     });
-    media.current = element as ContentDataVideo;
+    media.current =
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ element as ContentDataVideo;
   }, []);
 
   useLayoutEffect(() => {

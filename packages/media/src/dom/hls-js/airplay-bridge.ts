@@ -16,8 +16,10 @@ import type { HlsEngineHost } from './types';
  *
  * No-op on non-WebKit platforms (Chromium, Firefox).
  */
-export function HlsJsMediaAirPlayMixin<Base extends Constructor<HlsEngineHost>>(BaseClass: Base) {
-  class HlsJsMediaAirPlay extends (BaseClass as Constructor<HlsEngineHost>) {
+export function HlsJsMediaAirPlayMixin<Base extends Constructor<HlsEngineHost>>(BaseClass: Base): Base {
+  class HlsJsMediaAirPlay
+    extends /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (BaseClass as Constructor<HlsEngineHost>)
+  {
     #sourceEl: HTMLSourceElement | null = null;
     #disconnect: AbortController | null = null;
 
@@ -68,9 +70,14 @@ export function HlsJsMediaAirPlayMixin<Base extends Constructor<HlsEngineHost>>(
       };
 
       this.#disconnect = new AbortController();
-      listen(target as EventTarget, 'webkitcurrentplaybacktargetiswirelesschanged', sync, {
-        signal: this.#disconnect.signal,
-      });
+      listen(
+        /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ target as EventTarget,
+        'webkitcurrentplaybacktargetiswirelesschanged',
+        sync,
+        {
+          signal: this.#disconnect.signal,
+        }
+      );
 
       // AirPlay may already be active at (re)attach.
       sync();
@@ -84,5 +91,6 @@ export function HlsJsMediaAirPlayMixin<Base extends Constructor<HlsEngineHost>>(
     }
   }
 
-  return HlsJsMediaAirPlay as unknown as Base;
+  return /* SAFETY: The mixed class preserves the supplied base constructor. */ HlsJsMediaAirPlay as typeof HlsJsMediaAirPlay &
+    Base;
 }

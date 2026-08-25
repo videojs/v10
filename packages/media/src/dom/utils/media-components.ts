@@ -12,14 +12,20 @@ const componentRegistry = new WeakMap<MediaHost, MediaComponents>();
 
 export function getMediaComponents(host: MediaHost) {
   let map = componentRegistry.get(host);
-  if (!map) componentRegistry.set(host, (map = new Map() as MediaComponents));
+  if (!map)
+    componentRegistry.set(
+      host,
+      (map =
+        /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ new Map() as MediaComponents)
+    );
   return map;
 }
 
 export function addMediaComponent<T extends MediaComponent>(host: MediaHost, component: T) {
   const components = getMediaComponents(host);
   // Get the component's constructor to use as the key for the component in the registry.
-  const ctor = component.constructor as MediaComponentConstructor<T>;
+  const ctor =
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ component.constructor as MediaComponentConstructor<T>;
 
   const previous = components.get(ctor);
   if (previous && previous !== component) previous.detach?.();
@@ -45,13 +51,20 @@ export function getMediaProp<T extends TargetLike, K extends keyof T>(host: Medi
 
 export function setMediaProp<T extends TargetLike, K extends keyof T>(host: MediaHost<T>, prop: K, value: T[K]): void {
   const own = getMediaOwner(host, prop);
-  if (own) (own as Record<K, T[K]>)[prop] = value;
+  if (own)
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (
+      own as Record<K, T[K]>
+    )[prop] = value;
 }
 
 /** Find the object that owns a media property: the first component `override` exposing it, otherwise the attached target. */
 export function getMediaOwner<T extends TargetLike>(host: MediaHost<T>, prop: keyof T): Partial<T> | null {
   for (const component of getMediaComponents(host).values()) {
-    const override = component.targetOverride as Partial<T> | null | undefined;
+    const override =
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ component.targetOverride as
+        | Partial<T>
+        | null
+        | undefined;
     if (override?.[prop] !== undefined) return override;
   }
   // @ts-expect-error `target` is protected, but these helpers are the host's own machinery.

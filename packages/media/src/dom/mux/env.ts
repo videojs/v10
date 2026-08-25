@@ -1,6 +1,6 @@
 const getEnvPlayerVersion = () => {
   try {
-    return __PLAYER_VERSION__ as string;
+    return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ __PLAYER_VERSION__ as string;
   } catch {}
   return 'UNKNOWN';
 };

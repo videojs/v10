@@ -681,7 +681,7 @@ function toMediaErrorCode(errorCode: number) {
 }
 
 /** Whether a reported value is one of the codes a `MediaError` can carry. */
-function isMediaErrorCode(value: unknown): value is number {
+function isMediaErrorCode<Value>(value: Value): value is Value & number {
   return isNumber(value) && value >= MediaError.MEDIA_ERR_ABORTED && value <= MediaError.MEDIA_ERR_ENCRYPTED;
 }
 

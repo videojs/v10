@@ -2,8 +2,12 @@ import type { Constructor } from '@videojs/utils/types';
 
 import type { ShakaEngineHost } from './types';
 
-export function ShakaMediaLiveMixin<Base extends Constructor<ShakaEngineHost>>(BaseClass: Base) {
-  class ShakaMediaLive extends (BaseClass as Constructor<ShakaEngineHost>) {
+export function ShakaMediaLiveMixin<Base extends Constructor<ShakaEngineHost>>(
+  BaseClass: Base
+): Base & Constructor<{ readonly liveEdgeStart: number; readonly targetLiveWindow: number }> {
+  class ShakaMediaLive
+    extends /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (BaseClass as Constructor<ShakaEngineHost>)
+  {
     #targetLiveWindow = Number.NaN;
     #liveEdgeStartOffset: number | undefined;
     #seekToLiveAbort: AbortController | null = null;
@@ -126,7 +130,8 @@ export function ShakaMediaLiveMixin<Base extends Constructor<ShakaEngineHost>>(B
     #armSeekToLive() {
       this.#disarmSeekToLive();
 
-      const target = this.target as HTMLVideoElement | null;
+      const target = /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ this
+        .target as HTMLVideoElement | null;
       if (!target || target.autoplay) return;
 
       this.#seekToLiveAbort = new AbortController();
@@ -147,7 +152,8 @@ export function ShakaMediaLiveMixin<Base extends Constructor<ShakaEngineHost>>(B
     }
 
     #trySeekToLive() {
-      const target = this.target as HTMLVideoElement | null;
+      const target = /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ this
+        .target as HTMLVideoElement | null;
       if (!target) return;
 
       const { liveEdgeStart } = this;
@@ -160,6 +166,7 @@ export function ShakaMediaLiveMixin<Base extends Constructor<ShakaEngineHost>>(B
     }
   }
 
-  return ShakaMediaLive as unknown as Base &
+  return /* SAFETY: The mixed class preserves the supplied base constructor. */ ShakaMediaLive as typeof ShakaMediaLive &
+    Base &
     Constructor<{ readonly liveEdgeStart: number; readonly targetLiveWindow: number }>;
 }

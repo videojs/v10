@@ -10,13 +10,14 @@ import { audioFeatures, backgroundFeatures, liveAudioFeatures, liveVideoFeatures
 
 const titleConfig = metadataFeature.config!.title;
 const posterConfig = metadataFeature.config!.poster;
+type ConfigurableStore = Parameters<typeof setPlayerConfigValue>[0];
 
 /** Set a user override the way a provider does, through the feature's own config. */
-function setUserTitle(store: object, value: MediaContentValue): void {
+function setUserTitle(store: ConfigurableStore, value: MediaContentValue): void {
   setPlayerConfigValue(store, titleConfig, value);
 }
 
-function setUserPoster(store: object, value: MediaContentValue): void {
+function setUserPoster(store: ConfigurableStore, value: MediaContentValue): void {
   setPlayerConfigValue(store, posterConfig, value);
 }
 
@@ -47,7 +48,8 @@ class ContentDataMedia extends EventTarget {
 }
 
 const target = (media: EventTarget): PlayerTarget => ({
-  media: media as PlayerTarget['media'],
+  media:
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ media as PlayerTarget['media'],
   container: null,
 });
 

@@ -1,3 +1,4 @@
+import { isString } from '@videojs/utils/predicate';
 import { describe, expect, it, vi } from 'vite-plus/test';
 
 import type { Guide, Section, Sidebar, SidebarLink } from '../../../types/docs';
@@ -79,7 +80,8 @@ describe('sidebar utilities', () => {
       const result = filterSidebar('react', mockSidebar);
 
       expect(result).toHaveLength(2);
-      const section = result[0] as Section;
+      const section =
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ result[0] as Section;
       expect(section.contents).toHaveLength(2);
       expect(section.contents).toContainEqual(mockGuide1);
       expect(section.contents).toContainEqual(mockGuide2);
@@ -119,9 +121,12 @@ describe('sidebar utilities', () => {
       const result = filterSidebar('html', [nestedSection]);
 
       expect(result).toHaveLength(1);
-      const parent = result[0] as Section;
+      const parent =
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ result[0] as Section;
       expect(parent.contents).toHaveLength(1);
-      const child = parent.contents[0] as Section;
+      const child =
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ parent
+          .contents[0] as Section;
       expect(child.contents).toHaveLength(1);
       expect(child.contents[0]).toEqual(mockGuide1);
     });
@@ -415,7 +420,7 @@ describe('sidebar utilities', () => {
       for (const framework of SUPPORTED_FRAMEWORKS) {
         const result = findFirstGuide(framework, realSidebar);
         expect(result, `findFirstGuide should return a guide for ${framework}`).toBeTruthy();
-        expect(typeof result).toBe('string');
+        expect(isString(result)).toBe(true);
       }
     });
   });
@@ -430,7 +435,11 @@ describe('sidebar utilities', () => {
       const sidebar: Sidebar = [{ sidebarLabel: 'Section', contents: [mockGuide1, mockLink] }];
       const result = filterSidebar('html', sidebar);
 
-      expect((result[0] as Section).contents).toContainEqual(mockLink);
+      expect(
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+          result[0] as Section
+        ).contents
+      ).toContainEqual(mockLink);
     });
 
     it('should filter out devOnly links in production', () => {
@@ -438,7 +447,11 @@ describe('sidebar utilities', () => {
       const sidebar: Sidebar = [{ sidebarLabel: 'Section', contents: [mockGuide1, devLink] }];
       const result = filterSidebar('html', sidebar, false);
 
-      expect((result[0] as Section).contents).toEqual([mockGuide1]);
+      expect(
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+          result[0] as Section
+        ).contents
+      ).toEqual([mockGuide1]);
     });
 
     it('should skip links in findFirstGuide', () => {

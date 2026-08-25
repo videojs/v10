@@ -4,7 +4,7 @@ import { HTMLVideoElementHost } from '../../video-host';
 import { ShakaMediaLiveMixin } from '../live';
 
 function createEngine({ live = false, inProgress = false, maxSegmentDuration = 2, seekEnd = 100 } = {}) {
-  const listeners = new Map<string, Set<(event: unknown) => void>>();
+  const listeners = new Map<string, Set<(event: Event) => void>>();
 
   const engine = {
     live,
@@ -15,16 +15,16 @@ function createEngine({ live = false, inProgress = false, maxSegmentDuration = 2
     isInProgress: vi.fn(() => engine.inProgress),
     getStats: vi.fn(() => ({ maxSegmentDuration: engine.maxSegmentDuration })),
     seekRange: vi.fn(() => ({ start: 0, end: engine.seekEnd })),
-    addEventListener(type: string, listener: (event: unknown) => void) {
+    addEventListener(type: string, listener: (event: Event) => void) {
       const typeListeners = listeners.get(type) ?? new Set();
       typeListeners.add(listener);
       listeners.set(type, typeListeners);
     },
-    removeEventListener(type: string, listener: (event: unknown) => void) {
+    removeEventListener(type: string, listener: (event: Event) => void) {
       listeners.get(type)?.delete(listener);
     },
     emit(type: string) {
-      for (const listener of [...(listeners.get(type) ?? [])]) listener({ type });
+      for (const listener of [...(listeners.get(type) ?? [])]) listener(new Event(type));
     },
   };
 
@@ -40,9 +40,12 @@ class FakeHost extends HTMLVideoElementHost {
   }
 }
 
-const ShakaMediaLive = ShakaMediaLiveMixin(FakeHost as any) as unknown as new (
-  engine?: ReturnType<typeof createEngine> | null
-) => FakeHost & { readonly liveEdgeStart: number; readonly targetLiveWindow: number };
+const ShakaMediaLive =
+  /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ ShakaMediaLiveMixin(
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ FakeHost as any
+  ) as new (
+    engine?: ReturnType<typeof createEngine> | null
+  ) => FakeHost & { readonly liveEdgeStart: number; readonly targetLiveWindow: number };
 
 function setupWithTarget(engine: ReturnType<typeof createEngine>) {
   const video = document.createElement('video');

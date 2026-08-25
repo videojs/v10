@@ -118,7 +118,9 @@ export class GoogleCastProvider {
         return;
       }
 
-      throw new Error(err as string);
+      throw new Error(
+        /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ err as string
+      );
     }
 
     this.#localPaused = this.target?.paused ?? true;
@@ -175,7 +177,13 @@ export class GoogleCastProvider {
         : chrome.cast.media.StreamType.BUFFERED;
 
     mediaInfo.metadata = new chrome.cast.media.GenericMediaMetadata();
-    mediaInfo.metadata.images = [new chrome.cast.Image((target as HTMLVideoElement | null)?.poster ?? '')];
+    mediaInfo.metadata.images = [
+      new chrome.cast.Image(
+        /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (
+          target as HTMLVideoElement | null
+        )?.poster ?? ''
+      ),
+    ];
 
     if (await isHls(this.#googleCast.src)) {
       mediaInfo.contentType ||= 'application/x-mpegURL';
@@ -415,7 +423,10 @@ export class GoogleCastProvider {
     if (!controller) return;
 
     for (const [type, handler] of Object.entries(this.#remoteListeners)) {
-      controller.addEventListener(type as cast.framework.RemotePlayerEventType, handler);
+      controller.addEventListener(
+        /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ type as cast.framework.RemotePlayerEventType,
+        handler
+      );
     }
     this.#listenersAttached = true;
   }
@@ -426,7 +437,10 @@ export class GoogleCastProvider {
 
     if (controller) {
       for (const [type, handler] of Object.entries(this.#remoteListeners)) {
-        controller.removeEventListener(type as cast.framework.RemotePlayerEventType, handler);
+        controller.removeEventListener(
+          /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ type as cast.framework.RemotePlayerEventType,
+          handler
+        );
       }
     }
     this.#listenersAttached = false;

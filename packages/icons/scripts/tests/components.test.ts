@@ -50,9 +50,12 @@ describe('generated icon modules', () => {
 
   it('builds an executable static renderer', async () => {
     const moduleUrl = pathToFileURL(resolve(distRoot, 'render/default/index.js')).href;
-    const { renderIcon } = (await import(moduleUrl)) as {
-      renderIcon(name: string, attributes?: Record<string, string>): string;
-    };
+    const { renderIcon } =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (await import(
+        moduleUrl
+      )) as {
+        renderIcon(name: string, attributes?: Record<string, string>): string;
+      };
 
     expect(renderIcon('play')).toContain('aria-hidden="true"');
     expect(renderIcon('play', { class: 'icon', title: `&<>"'\`` })).toContain(

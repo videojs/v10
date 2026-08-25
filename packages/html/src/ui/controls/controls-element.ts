@@ -53,7 +53,10 @@ export class ControlsElement extends UIElement {
 
   #closeOwnedOverlays(): void {
     for (const element of this.querySelectorAll(POPUP_HOST_SELECTOR)) {
-      const host = element as Element & { close?: unknown };
+      const host =
+        /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ element as Element & {
+          close?: unknown;
+        };
       if (!isFunction(host.close)) continue;
 
       host.close('imperative-action');

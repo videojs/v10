@@ -61,7 +61,11 @@ export const Poster = forwardRef(function Poster(
     });
   }
 
-  const { src: authoredSrc, srcSet: authoredSrcSet } = elementProps as { src?: string; srcSet?: string };
+  const { src: authoredSrc, srcSet: authoredSrcSet } =
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ elementProps as {
+      src?: string;
+      srcSet?: string;
+    };
 
   // Either authored source makes the image yours, matching `hasSource` in the
   // HTML element. Filling `src` alongside a `srcset` would inject the player's

@@ -84,7 +84,7 @@ export function createBlogPostingSchema(params: {
         ...(author.data.bio && { description: author.data.bio }),
         ...(author.data.avatar && { image: author.data.avatar }),
         ...(author.data.socialLinks && {
-          sameAs: [
+          sameAs: /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ [
             author.data.socialLinks.x,
             author.data.socialLinks.bluesky,
             author.data.socialLinks.mastodon,
@@ -160,14 +160,14 @@ export function createAuthorCollectionSchema(params: {
       itemListElement: params.authors.map((author, index) => ({
         '@type': 'ListItem',
         position: index + 1,
-        item: {
+        item: /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ {
           '@type': 'Person',
           name: author.data.name,
           url: `${params.siteUrl}blog/authors/${author.id}`,
           ...(author.data.bio && { description: author.data.bio }),
           ...(author.data.avatar && { image: author.data.avatar }),
           ...(author.data.socialLinks && {
-            sameAs: [
+            sameAs: /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ [
               author.data.socialLinks.x,
               author.data.socialLinks.bluesky,
               author.data.socialLinks.mastodon,
@@ -204,7 +204,7 @@ export function createProfilePageSchema(params: {
     ...(params.author.data.bio && { description: params.author.data.bio }),
     ...(params.author.data.avatar && { image: params.author.data.avatar }),
     ...(params.author.data.socialLinks && {
-      sameAs: [
+      sameAs: /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ [
         params.author.data.socialLinks.x,
         params.author.data.socialLinks.bluesky,
         params.author.data.socialLinks.mastodon,

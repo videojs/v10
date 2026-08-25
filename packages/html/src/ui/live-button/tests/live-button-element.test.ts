@@ -16,19 +16,21 @@ function defineElement(tagName: string, Base: CustomElementConstructor): void {
 }
 
 function createLiveStore(): AnyPlayerStore {
-  return createStore<unknown>()({
-    name: 'liveButton',
-    state: () => ({
-      liveEdgeStart: 90,
-      targetLiveWindow: 0,
-      currentTime: 80,
-      duration: 100,
-      seeking: false,
-      seek: vi.fn(),
-      buffered: [],
-      seekable: [{ start: 0, end: 100 }],
-    }),
-  }) as unknown as AnyPlayerStore;
+  return /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ createStore<unknown>()(
+    {
+      name: 'liveButton',
+      state: () => ({
+        liveEdgeStart: 90,
+        targetLiveWindow: 0,
+        currentTime: 80,
+        duration: 100,
+        seeking: false,
+        seek: vi.fn(),
+        buffered: [],
+        seekable: [{ start: 0, end: 100 }],
+      }),
+    }
+  ) as AnyPlayerStore;
 }
 
 class TestPlayerProviderElement extends UIElement {
@@ -45,8 +47,14 @@ defineElement('test-live-button-player', TestPlayerProviderElement);
 
 function setup(locale: string, text?: string) {
   const i18n = new MediaI18nProviderElement();
-  const player = document.createElement('test-live-button-player') as TestPlayerProviderElement;
-  const button = document.createElement(LiveButtonElement.tagName) as LiveButtonElement;
+  const player =
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+      'test-live-button-player'
+    ) as TestPlayerProviderElement;
+  const button =
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+      LiveButtonElement.tagName
+    ) as LiveButtonElement;
 
   i18n.setAttribute('lang', locale);
   player.setStore(createLiveStore());

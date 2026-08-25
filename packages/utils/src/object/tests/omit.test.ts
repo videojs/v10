@@ -23,7 +23,11 @@ describe('omit', () => {
 
   it('ignores non-existent keys', () => {
     const obj = { a: 1, b: 2 };
-    expect(omit(obj, ['nonexistent' as keyof typeof obj])).toEqual({ a: 1, b: 2 });
+    expect(
+      omit(obj, [
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ 'nonexistent' as keyof typeof obj,
+      ])
+    ).toEqual({ a: 1, b: 2 });
   });
 
   it('returns empty object when all keys are removed', () => {
@@ -36,7 +40,11 @@ describe('omit', () => {
     const result = omit(nested, ['c']);
 
     expect(result).toEqual({ a: { x: 1 }, b: { y: 2 } });
-    expect((result as any).a).toBe(nested.a);
+    expect(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+        result as any
+      ).a
+    ).toBe(nested.a);
   });
 
   it('preserves value types', () => {

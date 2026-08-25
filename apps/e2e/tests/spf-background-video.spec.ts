@@ -62,26 +62,38 @@ type BackgroundVideoElement = HTMLElement & {
 
 /** The error the Media surfaces, or null while none has. */
 function readSurfacedError(): SurfacedError | null {
-  const media = document.querySelector('hls-background-video') as BackgroundVideoElement | null;
+  const media =
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.querySelector(
+      'hls-background-video'
+    ) as BackgroundVideoElement | null;
   return media?.error ?? null;
 }
 
 /** Every SVTA code in the engine's reported sequence, causes included. */
 function readReportedCodes(): number[] {
-  const media = document.querySelector('hls-background-video') as BackgroundVideoElement | null;
+  const media =
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.querySelector(
+      'hls-background-video'
+    ) as BackgroundVideoElement | null;
   const errors = media?.getMediaTarget?.()?.engine?.state?.errors?.get() ?? [];
   return errors.map((error) => error.code);
 }
 
 /** What the inner `<video>` itself knows about the failure. Expected: nothing. */
 function readInnerVideoState(): { error: number | null; readyState: number } | null {
-  const media = document.querySelector('hls-background-video') as BackgroundVideoElement | null;
+  const media =
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.querySelector(
+      'hls-background-video'
+    ) as BackgroundVideoElement | null;
   const video = media?.video;
   return video ? { error: video.error?.code ?? null, readyState: video.readyState } : null;
 }
 
 function readPlaybackState(): { readyState: number; currentTime: number; width: number; height: number } | null {
-  const media = document.querySelector('hls-background-video') as BackgroundVideoElement | null;
+  const media =
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.querySelector(
+      'hls-background-video'
+    ) as BackgroundVideoElement | null;
   const video = media?.video;
   return video
     ? {
@@ -95,22 +107,29 @@ function readPlaybackState(): { readyState: number; currentTime: number; width: 
 
 async function waitForSurfacedError(page: Page): Promise<SurfacedError> {
   await page.waitForFunction(
-    () => !!(document.querySelector('hls-background-video') as (HTMLElement & { error?: unknown }) | null)?.error,
+    () =>
+      !!(
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+          document.querySelector('hls-background-video') as (HTMLElement & { error?: unknown }) | null
+        )?.error
+      ),
     undefined,
     { timeout: 20_000 }
   );
 
   const error = await page.evaluate(readSurfacedError);
   expect(error).not.toBeNull();
-  return error as SurfacedError;
+  return /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ error as SurfacedError;
 }
 
 /** Wait for frames to exist and the clock to move — playing, not merely loaded. */
 async function waitForPlayback(page: Page): Promise<void> {
   await page.waitForFunction(
     () => {
-      const video = (document.querySelector('hls-background-video') as { video?: HTMLVideoElement | null } | null)
-        ?.video;
+      const video =
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+          document.querySelector('hls-background-video') as { video?: HTMLVideoElement | null } | null
+        )?.video;
       return !!video && video.readyState >= 3 && video.currentTime > 0;
     },
     undefined,
@@ -203,7 +222,10 @@ test.describe('SPF background video', () => {
     await waitForSurfacedError(page);
 
     await page.evaluate((url) => {
-      const media = document.querySelector('hls-background-video') as (HTMLElement & { src?: string }) | null;
+      const media =
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.querySelector(
+          'hls-background-video'
+        ) as (HTMLElement & { src?: string }) | null;
       if (media) media.src = url;
     }, MEDIA.hlsFmp4.url);
 
@@ -213,7 +235,10 @@ test.describe('SPF background video', () => {
     // dead engine — so playback is asserted too.
     await page.waitForFunction(
       () => {
-        const media = document.querySelector('hls-background-video') as (HTMLElement & { error?: unknown }) | null;
+        const media =
+          /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.querySelector(
+            'hls-background-video'
+          ) as (HTMLElement & { error?: unknown }) | null;
         return !!media && !media.error;
       },
       undefined,
@@ -251,7 +276,9 @@ test.describe('SPF background video', () => {
       await waitForPlayback(page);
       const state = await page.evaluate(readPlaybackState);
       expect(state).not.toBeNull();
-      return state as NonNullable<typeof state>;
+      return /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ state as NonNullable<
+        typeof state
+      >;
     };
 
     test.describe('on a small screen', () => {

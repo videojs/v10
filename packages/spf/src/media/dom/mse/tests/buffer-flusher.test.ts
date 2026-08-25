@@ -1,11 +1,12 @@
 import { describe, expect, it, vi } from 'vite-plus/test';
 
 import { flushBuffer } from '../buffer-flusher';
+import { createSourceBufferDouble } from './source-buffer-test-double';
 
 function makeSourceBuffer(): SourceBuffer {
   const listeners: Record<string, EventListener[]> = {};
 
-  return {
+  return createSourceBufferDouble({
     updating: false,
     remove: vi.fn(() => {
       setTimeout(() => {
@@ -21,7 +22,7 @@ function makeSourceBuffer(): SourceBuffer {
     removeEventListener: vi.fn((type: string, listener: EventListener) => {
       listeners[type] = (listeners[type] ?? []).filter((l) => l !== listener);
     }),
-  } as unknown as SourceBuffer;
+  });
 }
 
 describe('flushBuffer', () => {
@@ -41,9 +42,12 @@ describe('flushBuffer', () => {
   it('waits for SourceBuffer to finish updating before removing', async () => {
     const listeners: Record<string, EventListener[]> = {};
     let updateEndCallback: (() => void) | undefined;
+    let updating = true;
 
-    const sourceBuffer = {
-      updating: true,
+    const sourceBuffer = createSourceBufferDouble({
+      get updating() {
+        return updating;
+      },
       remove: vi.fn(() => {
         setTimeout(() => {
           for (const listener of listeners.updateend ?? []) {
@@ -61,7 +65,7 @@ describe('flushBuffer', () => {
       removeEventListener: vi.fn((type: string, listener: EventListener) => {
         listeners[type] = (listeners[type] ?? []).filter((l) => l !== listener);
       }),
-    } as unknown as SourceBuffer;
+    });
 
     const flushPromise = flushBuffer(sourceBuffer, 0, 10);
 
@@ -69,7 +73,7 @@ describe('flushBuffer', () => {
     expect(sourceBuffer.remove).not.toHaveBeenCalled();
 
     // Simulate the previous operation finishing
-    (sourceBuffer as any).updating = false;
+    updating = false;
     if (updateEndCallback) updateEndCallback();
 
     await flushPromise;
@@ -79,7 +83,7 @@ describe('flushBuffer', () => {
   it('rejects when SourceBuffer fires an error event', async () => {
     const listeners: Record<string, EventListener[]> = {};
 
-    const sourceBuffer = {
+    const sourceBuffer = createSourceBufferDouble({
       updating: false,
       remove: vi.fn(() => {
         setTimeout(() => {
@@ -95,14 +99,16 @@ describe('flushBuffer', () => {
       removeEventListener: vi.fn((type: string, listener: EventListener) => {
         listeners[type] = (listeners[type] ?? []).filter((l) => l !== listener);
       }),
-    } as unknown as SourceBuffer;
+    });
 
     await expect(flushBuffer(sourceBuffer, 0, 10)).rejects.toThrow('SourceBuffer remove error');
   });
 
   it('rejects when remove() throws synchronously', async () => {
     const sourceBuffer = makeSourceBuffer();
-    (sourceBuffer.remove as ReturnType<typeof vi.fn>).mockImplementation(() => {
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+      sourceBuffer.remove as ReturnType<typeof vi.fn>
+    ).mockImplementation(() => {
       throw new Error('QuotaExceededError');
     });
 

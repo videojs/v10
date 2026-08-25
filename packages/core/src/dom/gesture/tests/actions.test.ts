@@ -125,10 +125,15 @@ describe('speedDown', () => {
 // Helpers
 // ---------------------------------------------------------------------------
 
-function ctx(stateProps: Record<string, unknown>, value?: number): GestureActionContext {
+function ctx(stateProps: GestureActionContext['store']['state'], value?: number): GestureActionContext {
   return {
-    store: { state: stateProps } as unknown as GestureActionContext['store'],
+    store: /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+      state: stateProps,
+    } as GestureActionContext['store'],
     value,
-    event: new Event('pointerup') as PointerEvent,
+    event:
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ new Event(
+        'pointerup'
+      ) as PointerEvent,
   };
 }

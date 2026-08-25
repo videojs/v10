@@ -30,7 +30,7 @@ const warnedEngines = new WeakSet<object>();
  * @returns Options to spread into a `Mux.monitor()` call. Empty when the engine
  *   has no integration, which leaves element-level monitoring intact.
  */
-export function toMuxDataEngineOptions(engine: unknown): MuxDataEngineOptions {
+export function toMuxDataEngineOptions<Engine>(engine: Engine): MuxDataEngineOptions {
   if (isDashJsEngine(engine)) return { dashjs: engine };
 
   if (isHlsJsEngine(engine)) {
@@ -57,12 +57,19 @@ export function toMuxDataEngineOptions(engine: unknown): MuxDataEngineOptions {
 // through `on` / `off`; the rendition APIs are what tell the two engines apart.
 
 /** hls.js: its monitor reads renditions from `levels`. */
-function isHlsJsEngine(engine: unknown): engine is MuxDataHlsJsEngine {
-  return hasMethods(engine, ['on', 'off']) && Array.isArray((engine as { levels?: unknown }).levels);
+function isHlsJsEngine<Engine>(engine: Engine): engine is Engine & MuxDataHlsJsEngine {
+  return (
+    hasMethods(engine, ['on', 'off']) &&
+    Array.isArray(
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (
+        engine as { levels?: unknown }
+      ).levels
+    )
+  );
 }
 
 /** dash.js: its monitor reads renditions through the track and rendition-list getters. */
-function isDashJsEngine(engine: unknown): engine is MuxDataDashJsEngine {
+function isDashJsEngine<Engine>(engine: Engine): engine is Engine & MuxDataDashJsEngine {
   if (!hasMethods(engine, ['on', 'off', 'getCurrentTrackFor'])) return false;
   // dash.js v5 replaced `getBitrateInfoListFor` with `getRepresentationsByType`.
   // `mux-embed` reads whichever the player has, so either one is a match.
@@ -70,9 +77,10 @@ function isDashJsEngine(engine: unknown): engine is MuxDataDashJsEngine {
 }
 
 /** hls.js's own class, the only place its event names and error details are published. */
-function toHlsJsClass(engine: object): MuxDataHlsJsClass | undefined {
+function toHlsJsClass<Engine extends object>(engine: Engine): MuxDataHlsJsClass | undefined {
   const engineClass: unknown = engine.constructor;
   if (!isFunction(engineClass)) return undefined;
-  const statics = engineClass as unknown as MuxDataHlsJsClass;
+  const statics =
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ engineClass as MuxDataHlsJsClass;
   return isObject(statics.Events) && isObject(statics.ErrorDetails) && isString(statics.version) ? statics : undefined;
 }

@@ -1,3 +1,4 @@
+import { isFunction } from '@videojs/utils/predicate';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { createHotkey, matchesHotkeyEvent, parseHotkeyPattern } from '../hotkey';
@@ -234,7 +235,7 @@ describe('createHotkey', () => {
     const el = setup();
     const cleanup = createHotkey(el, { keys: 'k', onActivate: vi.fn() });
 
-    expect(typeof cleanup).toBe('function');
+    expect(isFunction(cleanup)).toBe(true);
 
     cleanup();
   });

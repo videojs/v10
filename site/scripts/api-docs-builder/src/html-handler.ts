@@ -49,7 +49,9 @@ export function extractHtml(
     seen.add(classNode);
 
     const type = checker.getTypeAtLocation(classNode);
-    for (const baseType of checker.getBaseTypes(type as ts.InterfaceType) ?? []) {
+    for (const baseType of checker.getBaseTypes(
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ type as ts.InterfaceType
+    ) ?? []) {
       const declaration = baseType.getSymbol()?.declarations?.find(ts.isClassDeclaration);
       if (declaration) collectProperties(declaration);
     }

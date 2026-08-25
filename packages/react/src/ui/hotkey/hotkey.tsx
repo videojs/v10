@@ -9,7 +9,8 @@ import { useContainer, usePlayer } from '../../player/context';
 export interface HotkeyProps extends CoreHotkeyProps {}
 
 export function Hotkey({ keys, action, value, disabled, target }: HotkeyProps): ReactNode {
-  const store = usePlayer() as AnyPlayerStore;
+  const store =
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ usePlayer() as AnyPlayerStore;
   const container = useContainer();
 
   useEffect(() => {

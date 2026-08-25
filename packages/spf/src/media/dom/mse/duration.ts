@@ -39,13 +39,16 @@ export function getBufferedEnd(
   isEndMatch: (next: number, current: number) => boolean
 ): number {
   return (
-    ([...buffers].reduce((endMatch: number | undefined, buffer) => {
-      const { buffered } = buffer;
-      if (!buffered.length) return endMatch;
-      const end = buffered.end(buffered.length - 1);
-      if (!endMatch) return end;
-      return isEndMatch(end, endMatch) ? end : endMatch;
-    }, undefined) as number) ?? 0
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ ([...buffers].reduce(
+      (endMatch: number | undefined, buffer) => {
+        const { buffered } = buffer;
+        if (!buffered.length) return endMatch;
+        const end = buffered.end(buffered.length - 1);
+        if (!endMatch) return end;
+        return isEndMatch(end, endMatch) ? end : endMatch;
+      },
+      undefined
+    ) as number) ?? 0
   );
 }
 

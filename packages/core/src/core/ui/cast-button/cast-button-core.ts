@@ -74,7 +74,10 @@ export class CastButtonCore {
 
   getState(): CastButtonState {
     const media = this.#media!;
-    const castSupported = !!(globalThis as any).chrome;
+    const castSupported = !!(
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (globalThis as any)
+        .chrome
+    );
     const availability = castSupported ? media.remotePlaybackAvailability : 'unsupported';
 
     this.state.patch({

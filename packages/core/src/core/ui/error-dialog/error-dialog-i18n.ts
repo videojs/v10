@@ -40,7 +40,7 @@ export type MediaErrorTranslationKey = Extract<
   | 'common.empty'
 >;
 
-const MEDIA_ERROR_TRANSLATIONS: Record<number, Text | undefined> = {
+const MEDIA_ERROR_TRANSLATIONS = {
   [MediaError.MEDIA_ERR_ABORTED]: abortedText,
   [MediaError.MEDIA_ERR_NETWORK]: networkText,
   [MediaError.MEDIA_ERR_DECODE]: decodeText,
@@ -51,18 +51,24 @@ const MEDIA_ERROR_TRANSLATIONS: Record<number, Text | undefined> = {
   // unavailable or unsupported by their *browser*, which is wrong here. The
   // browser is fine; this player can't play the source.
   [SVTA_UNSUPPORTED_PLAYBACK_FEATURE]: unplayableText,
-};
+} satisfies Record<number, Text | undefined>;
 
-const STANDARD_CODE_UA_MESSAGES: Partial<Record<number, readonly string[]>> = {
+const STANDARD_CODE_UA_MESSAGES = {
   [MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED]: ['Failed to open media'],
-};
+} satisfies Partial<Record<number, readonly string[]>>;
 
 function isStandardMediaErrorCode(code: number): boolean {
   return code >= MediaError.MEDIA_ERR_ABORTED && code <= MediaError.MEDIA_ERR_ENCRYPTED;
 }
 
+function getOwnValue<Values extends object>(values: Values, key: PropertyKey): Values[keyof Values] | undefined {
+  if (!Object.hasOwn(values, key)) return undefined;
+  // SAFETY: Object.hasOwn establishes that key names a property owned by Values.
+  return values[key as keyof Values];
+}
+
 export function getMediaErrorTranslationKey(code: number): MediaErrorTranslationKey | undefined {
-  return MEDIA_ERROR_TRANSLATIONS[code]?.key as MediaErrorTranslationKey | undefined;
+  return getOwnValue(MEDIA_ERROR_TRANSLATIONS, code)?.key;
 }
 
 export function getErrorDialogTitleText(): Text {
@@ -86,14 +92,14 @@ export function resolveErrorDialogDescription(
   cachedMessage?: string | null
 ): Text | string {
   if (error) {
-    const text = MEDIA_ERROR_TRANSLATIONS[error.code];
+    const text = getOwnValue(MEDIA_ERROR_TRANSLATIONS, error.code);
     const message = error.message?.trim();
     if (message) {
-      const defaultForCode = MediaError.defaultMessages[error.code];
+      const defaultForCode = getOwnValue(MediaError.defaultMessages, error.code);
       if (text && defaultForCode && message === defaultForCode) {
         return text;
       }
-      const uaVariants = STANDARD_CODE_UA_MESSAGES[error.code];
+      const uaVariants = getOwnValue(STANDARD_CODE_UA_MESSAGES, error.code);
       if (text && isStandardMediaErrorCode(error.code) && !error.context && uaVariants?.includes(message)) {
         return text;
       }

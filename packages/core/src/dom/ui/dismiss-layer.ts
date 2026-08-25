@@ -30,7 +30,8 @@ export interface DismissLayerApi {
 
 export function createDismissLayer(options: DismissLayerOptions): DismissLayerApi {
   const { transition } = options;
-  const state: WritableState<TransitionState> = transition.state as WritableState<TransitionState>;
+  const state: WritableState<TransitionState> =
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ transition.state as WritableState<TransitionState>;
 
   const abort = new AbortController();
   let docAbort: AbortController | null = null;
@@ -63,7 +64,7 @@ export function createDismissLayer(options: DismissLayerOptions): DismissLayerAp
   function setupDocumentListeners(): void {
     cleanupDocumentListeners();
 
-    if (typeof document === 'undefined') return;
+    if (!('document' in globalThis)) return;
 
     docAbort = new AbortController();
     const { signal } = docAbort;

@@ -18,12 +18,14 @@ export type MediaAttachMixin = <Class extends AnyConstructor<HTMLElement>>(BaseC
  */
 export function createMediaAttachMixin(context: MediaContext): MediaAttachMixin {
   return <Class extends AnyConstructor<HTMLElement>>(BaseClass: Class) => {
-    class MediaAttachElement extends (BaseClass as unknown as Constructor<CustomElement>) {
+    // SAFETY: Every HTMLElement base satisfies the CustomElement lifecycle surface used by this mixin.
+    class MediaAttachElement extends (BaseClass as Constructor<CustomElement>) {
       #releaseMedia: (() => void) | null = null;
       #unsubscribe: (() => void) | null = null;
 
       getMediaTarget(): Media | null {
-        return this as unknown as Media;
+        // SAFETY: MediaAttachMixin is applied only to media host elements registered with the player.
+        return this as this & Media;
       }
 
       override connectedCallback() {
@@ -61,7 +63,8 @@ export function createMediaAttachMixin(context: MediaContext): MediaAttachMixin 
       }
     }
 
-    return MediaAttachElement as unknown as Class;
+    // SAFETY: The generated subclass preserves BaseClass's constructor and augments only lifecycle behavior.
+    return MediaAttachElement as typeof MediaAttachElement & Class;
   };
 }
 

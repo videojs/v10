@@ -1,4 +1,5 @@
 import { loadScript } from '@videojs/utils/dom';
+import { isUndefined } from '@videojs/utils/predicate';
 
 export class InvalidStateError extends Error {}
 export class NotSupportedError extends Error {}
@@ -40,8 +41,10 @@ export function onCastApiAvailable(callback: () => void) {
   const whenDefined = () => customElements.whenDefined('google-cast-button').then(callback);
 
   if (!globalThis.chrome?.cast?.isAvailable) {
-    (globalThis as { __onGCastApiAvailable?: () => void }).__onGCastApiAvailable = whenDefined;
-  } else if (typeof cast === 'undefined' || !cast.framework) {
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (
+      globalThis as { __onGCastApiAvailable?: () => void }
+    ).__onGCastApiAvailable = whenDefined;
+  } else if (isUndefined(globalThis.cast) || !globalThis.cast.framework) {
     whenDefined();
   } else {
     callback();
@@ -59,7 +62,7 @@ export async function loadCastFramework() {
 }
 
 export function getCastContext() {
-  return typeof cast === 'undefined' ? undefined : cast.framework?.CastContext.getInstance();
+  return isUndefined(globalThis.cast) ? undefined : globalThis.cast.framework?.CastContext.getInstance();
 }
 
 export function currentSession() {
@@ -108,7 +111,8 @@ export function getDefaultCastOptions(): CastOptions {
   return {
     receiverApplicationId: 'CC1AD845',
     autoJoinPolicy:
-      globalThis.chrome?.cast?.AutoJoinPolicy?.ORIGIN_SCOPED ?? ('origin_scoped' as chrome.cast.AutoJoinPolicy),
+      globalThis.chrome?.cast?.AutoJoinPolicy?.ORIGIN_SCOPED ??
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ ('origin_scoped' as chrome.cast.AutoJoinPolicy),
     androidReceiverCompatible: false,
     language: 'en-US',
     resumeSavedSession: true,

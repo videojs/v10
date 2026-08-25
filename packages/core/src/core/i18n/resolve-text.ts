@@ -1,5 +1,7 @@
+import { isString } from '@videojs/utils/predicate';
+
 import type { Text } from './text';
 
 export function resolveText(text: Text | string): string {
-  return typeof text === 'string' ? text : text.text;
+  return isString(text) ? text : text.text;
 }

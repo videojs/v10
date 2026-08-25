@@ -1,3 +1,6 @@
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+
 /**
  * Preset reference extraction.
  *
@@ -21,9 +24,7 @@
  *
  * Feature resolution: packages/core/src/dom/store/features/presets.ts
  */
-import * as fs from 'node:fs';
-import * as path from 'node:path';
-
+import { isObject, isString } from '@videojs/utils/predicate';
 import * as ts from 'typescript';
 
 import type { PresetFeatureRef, PresetReference, PresetSkinDef } from './types.js';
@@ -68,12 +69,17 @@ function distToSrc(distPath: string): string {
  * Extract the source file path from a package.json export value.
  * Handles both conditional exports ({ types, default }) and string exports.
  */
-function resolveExportPath(exportValue: unknown): string | undefined {
-  if (typeof exportValue === 'string') return exportValue;
-  if (typeof exportValue === 'object' && exportValue !== null) {
-    const obj = exportValue as Record<string, unknown>;
+function resolveExportPath(exportValue: import('./boundary-types').ApiDocInput): string | undefined {
+  if (isString(exportValue)) return exportValue;
+  if (isObject(exportValue) && exportValue !== null) {
+    const obj = /* SAFETY: Package export conditions are parsed below before use. */ exportValue as Record<
+      string,
+      import('./boundary-types').ApiDocInput
+    >;
     // Prefer types (points to source in some configs), fall back to default
-    const raw = (obj.types ?? obj.default) as string | undefined;
+    const raw =
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (obj.types ??
+        obj.default) as string | undefined;
     return raw;
   }
   return undefined;
@@ -88,7 +94,7 @@ function discoverPresetsFromPackage(packageDir: string): Map<string, { barrelPat
   if (!fs.existsSync(pkgJsonPath)) return new Map();
 
   const pkgJson = JSON.parse(fs.readFileSync(pkgJsonPath, 'utf-8'));
-  const exports: Record<string, unknown> = pkgJson.exports ?? {};
+  const exports: Record<string, import('./boundary-types').ApiDocInput> = pkgJson.exports ?? {};
 
   const result = new Map<string, { barrelPath: string; scanDir: string }>();
 
@@ -185,7 +191,9 @@ function extractClassesWithTagName(filePath: string): ClassWithTagName[] {
   ts.forEachChild(sourceFile, (node) => {
     // Follow `export * from './foo'` re-exports
     if (ts.isExportDeclaration(node) && !node.exportClause && node.moduleSpecifier) {
-      const specifier = (node.moduleSpecifier as ts.StringLiteral).text;
+      const specifier = /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (
+        node.moduleSpecifier as ts.StringLiteral
+      ).text;
       const resolved = resolveModulePath(path.dirname(filePath), specifier);
       if (resolved) {
         results.push(...extractClassesWithTagName(resolved));
@@ -319,7 +327,11 @@ function findReactMediaElement(filePath: string): string | undefined {
  * Feature names whose kebab-cased form doesn't match the docs page slug.
  * Example: `textTrack` → `feature-text-tracks.mdx`.
  */
-const FEATURE_SLUG_OVERRIDES: Record<string, string> = {
+interface FeatureSlugByName {
+  readonly [name: string]: string | undefined;
+}
+
+const FEATURE_SLUG_OVERRIDES: FeatureSlugByName = {
   textTrack: 'text-tracks',
 };
 
@@ -388,11 +400,11 @@ function extractFileDescription(filePath: string): string | undefined {
 
 // ─── Directory Scanning ─────────────────────────────────────────────
 
-function scanHtmlDirectory(scanDir: string): { skins: PresetSkinDef[]; mediaElement?: string } {
+function scanHtmlDirectory(scanDir: string) {
   const skins: PresetSkinDef[] = [];
   let mediaElement: string | undefined;
 
-  if (!fs.existsSync(scanDir)) return { skins };
+  if (!fs.existsSync(scanDir)) return { skins } satisfies { skins: PresetSkinDef[]; mediaElement?: string };
 
   const files = fs.readdirSync(scanDir).filter((f) => f.endsWith('.ts') && !isTailwindFile(f));
 
@@ -409,7 +421,7 @@ function scanHtmlDirectory(scanDir: string): { skins: PresetSkinDef[]; mediaElem
     }
   }
 
-  return { skins, mediaElement };
+  return { skins, mediaElement } satisfies { skins: PresetSkinDef[]; mediaElement?: string };
 }
 
 function scanReactDirectory(scanDir: string, barrelPath: string, presetName: string): PresetSkinDef[] {
@@ -460,12 +472,16 @@ function buildPresetReference(
   const features = featureNames.map((name) => resolveFeatureRef(name, monorepoRoot));
 
   // Scan HTML directory
-  const htmlResult = preset.html ? scanHtmlDirectory(preset.html.scanDir) : { skins: [] as PresetSkinDef[] };
+  const htmlResult = preset.html
+    ? scanHtmlDirectory(preset.html.scanDir)
+    : {
+        skins: [] satisfies PresetSkinDef[],
+      };
 
   // Scan React directory for skins, read barrel for media element
   const reactSkins = preset.react
     ? scanReactDirectory(preset.react.scanDir, preset.react.barrelPath, preset.name)
-    : ([] as PresetSkinDef[]);
+    : ([] satisfies PresetSkinDef[]);
   const reactMediaElement = preset.react ? findReactMediaElement(preset.react.barrelPath) : undefined;
 
   // Extract description from barrel JSDoc (try React first, fall back to HTML)

@@ -1,4 +1,5 @@
 ---
+import { isString } from '@videojs/utils/predicate';
 
 import type { CollectionEntry } from 'astro:content';
 import { getCollection, getEntries, render } from 'astro:content';
@@ -26,7 +27,7 @@ const authors = await getEntries(post.data.authors);
 
 // Resolve OG image URL for JSON-LD
 const ogImageUrl = post.data.ogImage
-  ? typeof post.data.ogImage === 'string'
+  ? isString(post.data.ogImage)
     ? post.data.ogImage
     : new URL(post.data.ogImage.src, Astro.url).toString()
   : undefined;

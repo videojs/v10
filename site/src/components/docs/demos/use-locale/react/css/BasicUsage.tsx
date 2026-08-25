@@ -34,7 +34,15 @@ export default function BasicUsage() {
     <div className="react-use-locale-basic">
       <label>
         Locale
-        <select value={locale} onChange={(event) => setLocale(event.currentTarget.value as Locale)}>
+        <select
+          value={locale}
+          onChange={(event) =>
+            setLocale(
+              /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ event
+                .currentTarget.value as Locale
+            )
+          }
+        >
           {locales.map((value) => (
             <option key={value}>{value}</option>
           ))}

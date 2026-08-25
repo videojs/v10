@@ -6,22 +6,23 @@ import { buildComponentReferenceTocHeadings, createComponentReferenceModel } fro
 
 describe('createComponentReferenceModel', () => {
   it('builds a single-part model with H3 sections for present data only', () => {
-    const apiReference = {
-      name: 'PlayButton',
-      props: {
-        size: {
-          type: 'string',
+    const apiReference =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+        name: 'PlayButton',
+        props: {
+          size: {
+            type: 'string',
+          },
         },
-      },
-      state: {
-        pressed: {
-          type: 'boolean',
+        state: {
+          pressed: {
+            type: 'boolean',
+          },
         },
-      },
-      dataAttributes: {},
-      cssCustomProperties: {},
-      platforms: {},
-    } as ComponentReference;
+        dataAttributes: {},
+        cssCustomProperties: {},
+        platforms: {},
+      } as ComponentReference;
 
     const model = createComponentReferenceModel('PlayButton', apiReference);
 

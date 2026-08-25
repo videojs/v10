@@ -88,6 +88,11 @@ export interface MuxStoryboardParams {
   [param: string]: string | number | undefined;
 }
 
+export interface MuxQueryParams {
+  token?: string | undefined;
+  [param: string]: string | number | boolean | null | undefined;
+}
+
 /**
  * Mux's DRM authoring input: a license token, in place of the license servers
  * `source.drm` normally names. Servers named outright alongside it still win,
@@ -128,7 +133,7 @@ export interface MuxSourceBase {
  * `snake_case` and skipping nullish values. A `token` replaces every other
  * param — signed URLs bake all modifiers into the token itself.
  */
-export function createMuxQuery(params: Record<string, unknown> = {}): string {
+export function createMuxQuery(params: MuxQueryParams = {}): string {
   const { token, ...rest } = params;
   if (token) return `?${new URLSearchParams({ token: String(token) })}`;
 
@@ -227,7 +232,7 @@ export function createMuxPosterURL(source?: MuxSourceBase | null): string | unde
   const { ext = 'webp', token, ...query } = poster ?? {};
 
   // Image tokens must carry the image (`t`) audience.
-  if (token && parseJwt<MuxJWT>(token)?.aud !== 't') return undefined;
+  if (token && parseJwt(token)?.aud !== 't') return undefined;
   // Signed playback requires a matching image token; an unsigned URL would be rejected.
   if (!token && playback?.token) return undefined;
 
@@ -246,7 +251,7 @@ export function createMuxStoryboardURL(source?: MuxSourceBase | null): string | 
   const { token, ...query } = storyboard ?? {};
 
   // Storyboard tokens must carry the storyboard (`s`) audience.
-  if (token && parseJwt<MuxJWT>(token)?.aud !== 's') return undefined;
+  if (token && parseJwt(token)?.aud !== 's') return undefined;
   // Signed playback requires a matching storyboard token; an unsigned URL would be rejected.
   if (!token && playback?.token) return undefined;
 

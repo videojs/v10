@@ -38,7 +38,9 @@ export function createScreenOrientationLock(): ScreenOrientationLock {
   let settling = false;
 
   const releaseOrientation = () => {
-    const orientation = globalThis.screen?.orientation as ScreenOrientation | undefined;
+    const orientation =
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ globalThis.screen
+        ?.orientation as ScreenOrientation | undefined;
     const unlock = orientation?.unlock;
 
     if (!isFunction(unlock)) return;
@@ -68,7 +70,9 @@ export function createScreenOrientationLock(): ScreenOrientationLock {
           continue;
         }
 
-        const orientation = globalThis.screen?.orientation as ScreenOrientation | undefined;
+        const orientation =
+          /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ globalThis.screen
+            ?.orientation as ScreenOrientation | undefined;
         const lock = orientation?.lock;
 
         if (!isFunction(lock)) return;

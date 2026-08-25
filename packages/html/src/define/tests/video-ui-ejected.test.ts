@@ -2,7 +2,10 @@ import { describe, expect, it } from 'vite-plus/test';
 
 async function waitForUpdates(elements: Element[]): Promise<void> {
   for (const element of elements) {
-    const maybeReactive = element as Element & { updateComplete?: Promise<boolean> };
+    const maybeReactive =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ element as Element & {
+        updateComplete?: Promise<boolean>;
+      };
     await maybeReactive.updateComplete;
   }
 }
@@ -34,7 +37,10 @@ describe('video/ui ejected registration', () => {
 
     await import('../video/ui');
 
-    const volumeSlider = document.querySelector('media-volume-slider')! as HTMLElement & { orientation: string };
+    const volumeSlider =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.querySelector(
+        'media-volume-slider'
+      )! as HTMLElement & { orientation: string };
     const volumeTrack = volumeSlider.querySelector('media-slider-track')!;
     const volumeFill = volumeSlider.querySelector('media-slider-fill')!;
     const volumeThumb = volumeSlider.querySelector('media-slider-thumb')!;

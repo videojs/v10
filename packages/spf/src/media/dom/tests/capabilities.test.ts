@@ -64,7 +64,9 @@ describe('canPlayTrack', () => {
     const encrypted = {
       mimeType: 'video/mp4',
       codecs: ['avc1.640028'],
-      metadata: { [MEDIA_PLAYLIST_METADATA_KEY]: { encrypted: true } },
+      metadata: {
+        [MEDIA_PLAYLIST_METADATA_KEY]: { targetDuration: 4, mediaSequence: 0, endList: true, encrypted: true },
+      },
     };
 
     expect(canPlayTrack(encrypted)).toBe(false);
@@ -78,7 +80,9 @@ describe('canPlayTrack', () => {
     const clear = {
       mimeType: 'video/mp4',
       codecs: ['avc1.640029'],
-      metadata: { [MEDIA_PLAYLIST_METADATA_KEY]: { encrypted: false } },
+      metadata: {
+        [MEDIA_PLAYLIST_METADATA_KEY]: { targetDuration: 4, mediaSequence: 0, endList: true, encrypted: false },
+      },
     };
 
     expect(canPlayTrack(clear)).toBe(true);

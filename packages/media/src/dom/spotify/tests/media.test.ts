@@ -6,6 +6,8 @@ import {
   parseSpotifyEntityId,
   parseSpotifySource,
   SpotifyMedia,
+  type SpotifyControllerOptions,
+  type SpotifyIframeApi,
   type SpotifyPlaybackState,
   type SpotifyPlaybackUpdateEvent,
   spotifyMediaDefaultProps,
@@ -34,7 +36,7 @@ type PlaybackUpdateListener = (event: SpotifyPlaybackUpdateEvent) => void;
 class MockController {
   static instances: MockController[] = [];
   target: HTMLElement;
-  options: unknown;
+  options: SpotifyControllerOptions;
   /** The iframe the controller built for itself. */
   iframeElement: HTMLIFrameElement;
   readyListeners = new Set<ReadyListener>();
@@ -50,7 +52,7 @@ class MockController {
     this.iframeElement.parentNode?.removeChild(this.iframeElement);
   });
 
-  constructor(target: HTMLElement, options: unknown) {
+  constructor(target: HTMLElement, options: SpotifyControllerOptions) {
     this.target = target;
     this.options = options;
     this.iframeElement = document.createElement('iframe');
@@ -63,8 +65,14 @@ class MockController {
   }
 
   addListener(type: 'ready' | 'playback_update', listener: ReadyListener | PlaybackUpdateListener): void {
-    if (type === 'ready') this.readyListeners.add(listener as ReadyListener);
-    else this.playbackListeners.add(listener as PlaybackUpdateListener);
+    if (type === 'ready')
+      this.readyListeners.add(
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ listener as ReadyListener
+      );
+    else
+      this.playbackListeners.add(
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ listener as PlaybackUpdateListener
+      );
   }
 
   ready(): void {
@@ -93,8 +101,11 @@ const OTHER_EPISODE_URL = `https://open.spotify.com/episode/${OTHER_EPISODE_ID}`
 beforeEach(() => {
   MockController.instances.length = 0;
   vi.stubGlobal('SpotifyIframeApi', {
-    createController: (target: HTMLIFrameElement, options: unknown, callback: (controller: MockController) => void) =>
-      callback(new MockController(target, options)),
+    createController: (
+      target: HTMLIFrameElement,
+      options: SpotifyControllerOptions,
+      callback: (controller: MockController) => void
+    ) => callback(new MockController(target, options)),
   });
 });
 
@@ -127,7 +138,7 @@ async function waitForEngine(media: SpotifyMedia): Promise<MockController> {
   await vi.waitFor(() => {
     if (!media.engine) throw new Error('controller not created yet');
   });
-  return media.engine as unknown as MockController;
+  return /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ media.engine as MockController;
 }
 
 async function attachAndLoad(media: SpotifyMedia): Promise<{
@@ -736,7 +747,8 @@ describe('SpotifyMedia', () => {
     // The embed takes neither command and reports neither value. Absent members
     // read as an incapable media, where inert ones would have the player render a
     // volume slider and a mute button that do nothing.
-    const media = new SpotifyMedia() as Partial<Video>;
+    const media =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ new SpotifyMedia() as Partial<Video>;
     expect(media.volume).toBeUndefined();
     expect(media.muted).toBeUndefined();
     expect(media.defaultMuted).toBeUndefined();
@@ -901,7 +913,7 @@ describe('SpotifyMedia', () => {
     vi.stubGlobal('SpotifyIframeApi', {
       createController: (
         target: HTMLIFrameElement,
-        options: unknown,
+        options: SpotifyControllerOptions,
         callback: (controller: MockController) => void
       ) => {
         const controller = new MockController(target, options);
@@ -1189,12 +1201,18 @@ describe('loadSpotifyIframeApi', () => {
     media.src = TRACK_URL;
     media.attach(createIframe());
 
-    const globals = globalThis as { onSpotifyIframeApiReady?: (api: unknown) => void };
+    const globals =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ globalThis as {
+        onSpotifyIframeApiReady?: (api: SpotifyIframeApi) => void;
+      };
     const ready = globals.onSpotifyIframeApiReady;
     expect(ready).not.toBe(hostReady);
     ready?.({
-      createController: (target: HTMLIFrameElement, options: unknown, callback: (controller: MockController) => void) =>
-        callback(new MockController(target, options)),
+      createController: (
+        target: HTMLIFrameElement,
+        options: SpotifyControllerOptions,
+        callback: (controller: MockController) => void
+      ) => callback(new MockController(target, options)),
     });
 
     await waitForEngine(media);

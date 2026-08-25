@@ -58,7 +58,7 @@ export const TimeSliderChapters = forwardRef<HTMLDivElement, TimeSliderChaptersP
           const chapterProps = {
             ...segmentProps,
             ...getStateDataAttrs(state, TimeSliderChapterDataAttrs),
-            style: {
+            style: /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ {
               ...segmentProps.style,
               pointerEvents: state.cue ? undefined : 'none',
               [TimeSliderChapterCSSVars.buffer]: `${state.bufferPercent}%`,

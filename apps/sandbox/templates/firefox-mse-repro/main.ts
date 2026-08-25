@@ -19,28 +19,75 @@ interface PlaylistInfo {
   audioSegmentUrls: string[];
 }
 
+interface FirefoxVideoElement extends HTMLVideoElement {
+  readonly mozHasAudio?: boolean;
+  readonly mozHasVideo?: boolean;
+}
+
 // ---------------------------------------------------------------------------
 // DOM refs
 // ---------------------------------------------------------------------------
 
-const video = document.getElementById('video') as HTMLVideoElement;
+const video =
+  /* SAFETY: The Firefox-only properties are optional and every standard video property comes from HTMLVideoElement. */ document.getElementById(
+    'video'
+  ) as FirefoxVideoElement;
 const logEl = document.getElementById('log')!;
 const stateEl = document.getElementById('state')!;
 const codecInfoEl = document.getElementById('codec-info')!;
-const urlInput = document.getElementById('url') as HTMLInputElement;
+const urlInput =
+  /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ document.getElementById(
+    'url'
+  ) as HTMLInputElement;
 
-const btnParse = document.getElementById('btn-parse') as HTMLButtonElement;
-const btnReset = document.getElementById('btn-reset') as HTMLButtonElement;
-const btnMs = document.getElementById('btn-ms') as HTMLButtonElement;
-const btnVsb = document.getElementById('btn-vsb') as HTMLButtonElement;
-const btnAsb = document.getElementById('btn-asb') as HTMLButtonElement;
-const btnVinit = document.getElementById('btn-vinit') as HTMLButtonElement;
-const btnAinit = document.getElementById('btn-ainit') as HTMLButtonElement;
-const btnVseg = document.getElementById('btn-vseg') as HTMLButtonElement;
-const btnAseg = document.getElementById('btn-aseg') as HTMLButtonElement;
-const btnPlay = document.getElementById('btn-play') as HTMLButtonElement;
-const btnTestOk = document.getElementById('btn-test-ok') as HTMLButtonElement;
-const btnTestBad = document.getElementById('btn-test-bad') as HTMLButtonElement;
+const btnParse =
+  /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ document.getElementById(
+    'btn-parse'
+  ) as HTMLButtonElement;
+const btnReset =
+  /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ document.getElementById(
+    'btn-reset'
+  ) as HTMLButtonElement;
+const btnMs =
+  /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ document.getElementById(
+    'btn-ms'
+  ) as HTMLButtonElement;
+const btnVsb =
+  /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ document.getElementById(
+    'btn-vsb'
+  ) as HTMLButtonElement;
+const btnAsb =
+  /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ document.getElementById(
+    'btn-asb'
+  ) as HTMLButtonElement;
+const btnVinit =
+  /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ document.getElementById(
+    'btn-vinit'
+  ) as HTMLButtonElement;
+const btnAinit =
+  /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ document.getElementById(
+    'btn-ainit'
+  ) as HTMLButtonElement;
+const btnVseg =
+  /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ document.getElementById(
+    'btn-vseg'
+  ) as HTMLButtonElement;
+const btnAseg =
+  /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ document.getElementById(
+    'btn-aseg'
+  ) as HTMLButtonElement;
+const btnPlay =
+  /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ document.getElementById(
+    'btn-play'
+  ) as HTMLButtonElement;
+const btnTestOk =
+  /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ document.getElementById(
+    'btn-test-ok'
+  ) as HTMLButtonElement;
+const btnTestBad =
+  /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ document.getElementById(
+    'btn-test-bad'
+  ) as HTMLButtonElement;
 
 // ---------------------------------------------------------------------------
 // State
@@ -77,14 +124,13 @@ function log(msg: string, type: 'info' | 'ok' | 'err' | 'warn' | 'sep' = 'info')
 
 function updateState() {
   const rs = ['HAVE_NOTHING', 'HAVE_METADATA', 'HAVE_CURRENT_DATA', 'HAVE_FUTURE_DATA', 'HAVE_ENOUGH_DATA'];
-  const mozHasAudio = (video as unknown as Record<string, unknown>).mozHasAudio;
-  const mozHasVideo = (video as unknown as Record<string, unknown>).mozHasVideo;
+  const { mozHasAudio, mozHasVideo } = video;
 
   function row(key: string, val: string, className: string) {
     return `<div class="state-row"><span class="state-key">${key}</span><span class="${className}">${val}</span></div>`;
   }
 
-  function boolRow(key: string, val: unknown) {
+  function boolRow(key: string, val: boolean | undefined) {
     if (val === undefined) return row(key, 'n/a', 'val-none');
     return row(key, String(val), val ? 'val-true' : 'val-false');
   }

@@ -10,7 +10,7 @@ describe('createUtilReferenceModel', () => {
   });
 
   it('builds a single-overload model with Parameters and Return Value H3s', () => {
-    const ref = {
+    const ref = /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
       name: 'useMedia',
       overloads: [
         {
@@ -36,7 +36,7 @@ describe('createUtilReferenceModel', () => {
   });
 
   it('includes parameters section when parameters are present', () => {
-    const ref = {
+    const ref = /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
       name: 'useButton',
       overloads: [
         {
@@ -62,7 +62,7 @@ describe('createUtilReferenceModel', () => {
   });
 
   it('builds a multi-overload model with overload H3s and H4 subsections', () => {
-    const ref = {
+    const ref = /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
       name: 'usePlayer',
       overloads: [
         {
@@ -107,7 +107,7 @@ describe('createUtilReferenceModel', () => {
     });
   });
   it('uses label for overload id and heading when present', () => {
-    const ref = {
+    const ref = /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
       name: 'createPlayer',
       overloads: [
         {
@@ -151,7 +151,7 @@ describe('createUtilReferenceModel', () => {
   });
 
   it('falls back to overload-N when label is absent', () => {
-    const ref = {
+    const ref = /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
       name: 'useStore',
       overloads: [
         {
@@ -183,7 +183,7 @@ describe('buildUtilReferenceTocHeadings', () => {
   });
 
   it('creates TOC headings for single-overload model', () => {
-    const ref = {
+    const ref = /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
       name: 'useButton',
       overloads: [
         {
@@ -204,7 +204,7 @@ describe('buildUtilReferenceTocHeadings', () => {
   });
 
   it('creates TOC headings for multi-overload model', () => {
-    const ref = {
+    const ref = /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
       name: 'useStore',
       overloads: [
         {
@@ -238,7 +238,7 @@ describe('buildUtilReferenceTocHeadings', () => {
   });
 
   it('uses label text and slug in TOC headings when present', () => {
-    const ref = {
+    const ref = /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
       name: 'createPlayer',
       overloads: [
         {

@@ -19,14 +19,13 @@ type ParametricKey = {
   [Key in TranslationKey]: TranslationParams[Key] extends never ? never : Key;
 }[TranslationKey];
 
-type ParametricTemplate<Params> =
-  Params extends Record<string, unknown>
-    ? UnionToIntersection<
-        {
-          [Name in keyof Params & string]: Contains<`{${Name}}`>;
-        }[keyof Params & string]
-      >
-    : never;
+type ParametricTemplate<Params> = Params extends object
+  ? UnionToIntersection<
+      {
+        [Name in keyof Params & string]: Contains<`{${Name}}`>;
+      }[keyof Params & string]
+    >
+  : never;
 
 type ParametricTranslations = {
   [Key in ParametricKey]: ParametricTemplate<TranslationParams[Key]>;

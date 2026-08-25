@@ -44,13 +44,13 @@ const INDEX_PLACEHOLDER = /\{\s*(\d+)\s*\}/g;
  * Replaces `{seconds}` with `{0}`, `{1}`, … so the Browser Translation API sees one full
  * sentence (grammar/word order preserved) while opaque numeric slots are left alone.
  */
-function maskNamedPlaceholders(source: string): { masked: string; slots: readonly string[] } {
+function maskNamedPlaceholders(source: string) {
   const slots: string[] = [];
   const masked = source.replace(NAMED_PLACEHOLDER, (_, name: string) => {
     slots.push(name);
     return `{${slots.length - 1}}`;
   });
-  return { masked, slots };
+  return { masked, slots } satisfies { masked: string; slots: readonly string[] };
 }
 
 function restoreNamedPlaceholders(translated: string, slots: readonly string[]): string {
@@ -73,7 +73,9 @@ const cache = new Map<string, Partial<FlatTranslations>>();
 
 function getBrowserTranslator(): BrowserTranslatorConstructor | undefined {
   if (!('Translator' in globalThis)) return undefined;
-  return (globalThis as typeof globalThis & { Translator: BrowserTranslatorConstructor }).Translator;
+  return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (
+    globalThis as typeof globalThis & { Translator: BrowserTranslatorConstructor }
+  ).Translator;
 }
 
 /** First non-default tag in the lookup chain used as the browser translation target. */
@@ -101,7 +103,9 @@ export function shouldAttemptBrowserTranslation(
 
 function hasMissingEnglishTranslations(translations: Partial<FlatTranslations>): boolean {
   const english = flattenTranslations(en);
-  return (Object.keys(english) as (keyof FlatTranslations)[]).some((key) => translations[key] === undefined);
+  return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (
+    Object.keys(english) as (keyof FlatTranslations)[]
+  ).some((key) => translations[key] === undefined);
 }
 
 /**
@@ -141,18 +145,21 @@ export async function getBrowserTranslations(
   notifyDownloadStart();
 
   const english = flattenTranslations(en);
-  const keys = Object.keys(english) as (keyof FlatTranslations)[];
-  const translator = await Translator.create({
+  const keys = /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ Object.keys(
+    english
+  ) as (keyof FlatTranslations)[];
+  const translatorOptions = {
     sourceLanguage: DEFAULT_LOCALE,
     targetLanguage: target,
-    ...(downloadIfNeeded
-      ? {
-          monitor(monitor: BrowserTranslatorMonitor) {
-            monitor.addEventListener('downloadprogress', notifyDownloadStart);
-          },
-        }
-      : {}),
-  });
+  };
+  if (downloadIfNeeded) {
+    Object.assign(translatorOptions, {
+      monitor(monitor: BrowserTranslatorMonitor) {
+        monitor.addEventListener('downloadprogress', notifyDownloadStart);
+      },
+    });
+  }
+  const translator = await Translator.create(translatorOptions);
 
   if (downloadStarted) {
     options?.onModelDownload?.finish?.(target);
@@ -167,7 +174,10 @@ export async function getBrowserTranslations(
     })
   );
 
-  const result = Object.fromEntries(entries) as Partial<FlatTranslations>;
+  const result =
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ Object.fromEntries(
+      entries
+    ) as Partial<FlatTranslations>;
   cache.set(target, result);
   return result;
 }

@@ -2,6 +2,7 @@
 // `engine` getter surfaces.
 export type {
   SpotifyControllerApi,
+  SpotifyControllerOptions,
   SpotifyIframeApi,
   SpotifyPlaybackState,
   SpotifyPlaybackUpdateEvent,

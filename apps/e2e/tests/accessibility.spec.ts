@@ -33,7 +33,10 @@ async function checkAccessibility(page: Page, testInfo: TestInfo, state: string)
 
   const brokenControls = await page.locator('[aria-controls]').evaluateAll((elements) =>
     elements.flatMap((element) => {
-      const root = element.getRootNode() as Document | ShadowRoot;
+      const root =
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ element.getRootNode() as
+          | Document
+          | ShadowRoot;
 
       return (element.getAttribute('aria-controls') ?? '')
         .split(/\s+/)

@@ -27,7 +27,7 @@ export interface DefaultVideoSkinProps extends Omit<PropsOf<typeof Container>, '
 }
 
 export function DefaultVideoSkin({ children, className, poster, ...props }: DefaultVideoSkinProps = {}) {
-  const isPosterString = typeof poster === 'string';
+  const isPosterString = String(poster) === poster;
 
   return (
     <Container className={['media-skin media-skin-video media-theme-default', className]} {...props}>

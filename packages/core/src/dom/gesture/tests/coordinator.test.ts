@@ -187,5 +187,5 @@ function pointerUp(target: HTMLElement, init: { pointerType: string; clientX: nu
   Object.defineProperty(event, 'clientX', { value: init.clientX });
   Object.defineProperty(event, 'button', { value: init.button ?? 0 });
   target.dispatchEvent(event);
-  return event as PointerEvent;
+  return /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ event as PointerEvent;
 }

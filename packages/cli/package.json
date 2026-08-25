@@ -28,6 +28,7 @@
     "@clack/prompts": "^0.10.1"
   },
   "devDependencies": {
+    "@videojs/utils": "workspace:*",
     "site": "workspace:*",
     "vite-plus": "catalog:",
     "vitest": "catalog:"

@@ -9,7 +9,7 @@ export function resolvePlayerLocale(explicit: Locale | undefined, inherited: Loc
 /** Effective locale for an i18n provider element (explicit `lang` → ancestor `lang` chain → `en`). */
 export function resolveProviderLocale(host: HTMLElement & { lang?: string }): Locale {
   const explicit = resolveLangAttr<Locale>(host.lang);
-  const root = host.parentElement ?? (typeof document !== 'undefined' ? document.documentElement : null);
+  const root = host.parentElement ?? ('document' in globalThis ? document.documentElement : null);
   const inherited = resolveLangAttr<Locale>(nearestLang(root));
   return resolvePlayerLocale(explicit, inherited);
 }

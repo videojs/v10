@@ -3,7 +3,17 @@
  * how both the YouTube and Vimeo embeds spell them, and nullish values are
  * dropped so an unset option is absent rather than the string `"undefined"`.
  */
-export function serializeEmbedParams(props: Record<string, unknown>): string {
+export type EmbedParamValue =
+  | boolean
+  | number
+  | string
+  | readonly (boolean | number | string | undefined)[]
+  | Readonly<Record<string, string>>
+  | null
+  | undefined;
+export type EmbedParams = Readonly<Record<string, EmbedParamValue>>;
+
+export function serializeEmbedParams(props: EmbedParams): string {
   const params = new URLSearchParams();
   for (const key in props) {
     const val = props[key];

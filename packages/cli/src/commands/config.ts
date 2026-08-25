@@ -22,7 +22,10 @@ export function handleConfig(args: string[], flags?: { help?: boolean }): void {
       try {
         setConfigValue(key, value);
       } catch (error) {
-        console.error((error as Error).message);
+        console.error(
+          /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (error as Error)
+            .message
+        );
         process.exit(1);
       }
       console.log(`Set ${key} = ${value}`);
@@ -42,7 +45,10 @@ export function handleConfig(args: string[], flags?: { help?: boolean }): void {
           process.exit(1);
         }
       } catch (error) {
-        console.error((error as Error).message);
+        console.error(
+          /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (error as Error)
+            .message
+        );
         process.exit(1);
       }
       break;

@@ -1,3 +1,5 @@
+import { isString } from '@videojs/utils/predicate';
+
 import type { FlatTranslations, Locale, TranslationKey, TranslationParams } from './params';
 import type { Text, TextParams } from './text';
 
@@ -31,9 +33,8 @@ declare const __DEV__: boolean;
 export function createTranslator(translations: FlatTranslations, locale: Locale): Translator {
   void locale;
 
-  const translate = (input: Text | string, params?: unknown): string => {
-    const options = params as (TextParams & { default?: string }) | undefined;
-    const isDescriptor = typeof input !== 'string';
+  const translate = (input: Text | string, options?: TextParams & TranslationOptions): string => {
+    const isDescriptor = !isString(input);
     const key = isDescriptor ? input.key : input;
     const translation = translations[key];
 
@@ -49,5 +50,5 @@ export function createTranslator(translations: FlatTranslations, locale: Locale)
     return interpolate(raw, values);
   };
 
-  return translate as Translator;
+  return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ translate as Translator;
 }

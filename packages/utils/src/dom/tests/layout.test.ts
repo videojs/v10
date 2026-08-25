@@ -22,10 +22,12 @@ function setDimensions(
     scrollHeight?: number;
   }
 ): void {
-  vi.spyOn(element, 'getBoundingClientRect').mockReturnValue({
-    width: dimensions.rectWidth,
-    height: dimensions.rectHeight,
-  } as DOMRect);
+  vi.spyOn(element, 'getBoundingClientRect').mockReturnValue(
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+      width: dimensions.rectWidth,
+      height: dimensions.rectHeight,
+    } as DOMRect
+  );
   Object.defineProperties(element, {
     offsetWidth: { configurable: true, value: dimensions.offsetWidth ?? 0 },
     offsetHeight: { configurable: true, value: dimensions.offsetHeight ?? 0 },
@@ -67,12 +69,14 @@ describe('DOM layout utilities', () => {
 
   it('reads logical padding', () => {
     const element = document.createElement('div');
-    vi.spyOn(globalThis, 'getComputedStyle').mockReturnValue({
-      paddingInlineStart: '4px',
-      paddingInlineEnd: '6px',
-      paddingBlockStart: '8px',
-      paddingBlockEnd: '10px',
-    } as CSSStyleDeclaration);
+    vi.spyOn(globalThis, 'getComputedStyle').mockReturnValue(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+        paddingInlineStart: '4px',
+        paddingInlineEnd: '6px',
+        paddingBlockStart: '8px',
+        paddingBlockEnd: '10px',
+      } as CSSStyleDeclaration
+    );
 
     const padding = getElementPadding(element);
     expect(getInlineExtent(padding)).toBe(10);
@@ -93,14 +97,16 @@ describe('DOM layout utilities', () => {
       offsetTop: { configurable: true, value: 42 },
     });
 
-    vi.spyOn(globalThis, 'getComputedStyle').mockReturnValue({
-      paddingLeft: '5px',
-      paddingTop: '2px',
-      paddingInlineStart: '5px',
-      paddingInlineEnd: '5px',
-      paddingBlockStart: '2px',
-      paddingBlockEnd: '3px',
-    } as CSSStyleDeclaration);
+    vi.spyOn(globalThis, 'getComputedStyle').mockReturnValue(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+        paddingLeft: '5px',
+        paddingTop: '2px',
+        paddingInlineStart: '5px',
+        paddingInlineEnd: '5px',
+        paddingBlockStart: '2px',
+        paddingBlockEnd: '3px',
+      } as CSSStyleDeclaration
+    );
 
     const measure = vi.fn((element: HTMLElement, width?: number) => ({
       width: width ?? (element === first ? 180 : 140),

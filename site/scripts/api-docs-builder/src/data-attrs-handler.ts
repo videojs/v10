@@ -3,6 +3,12 @@ import * as ts from 'typescript';
 import type { DataAttrsExtraction } from './types.js';
 import { unwrapObjectLiteral } from './utils.js';
 
+interface DataAttrEntry {
+  name: string;
+  description: string;
+  type?: string;
+}
+
 function extractSatisfiesExpression(node: ts.Expression): ts.TypeNode | undefined {
   if (ts.isSatisfiesExpression(node)) return node.type;
   if (ts.isParenthesizedExpression(node)) return extractSatisfiesExpression(node.expression);
@@ -65,7 +71,7 @@ export function extractDataAttrs(
     return null;
   }
 
-  const attrs: Array<{ name: string; description: string }> = [];
+  const attrs: DataAttrEntry[] = [];
 
   // Common naming patterns for data attributes exports
   const possibleNames = [`${componentName}DataAttrs`, `${componentName}DataAttributes`];
@@ -99,7 +105,7 @@ export function extractDataAttrs(
             // Get JSDoc comment and optional @type for this property
             const { description: jsDocComment, type: jsDocType } = parseJsDoc(prop, sourceFile);
 
-            const attrEntry: { name: string; description: string; type?: string } = {
+            const attrEntry: DataAttrEntry = {
               name: dataAttrValue || `data-${propName}`,
               description: jsDocComment || '',
             };
@@ -132,22 +138,19 @@ export function extractDataAttrs(
 /**
  * Parse JSDoc comment, extracting description and optional `@type` tag.
  */
-export function parseJsDoc(
-  node: ts.PropertyAssignment,
-  sourceFile: ts.SourceFile
-): { description: string; type?: string } {
+export function parseJsDoc(node: ts.PropertyAssignment, sourceFile: ts.SourceFile) {
   const raw = getJsDocComment(node, sourceFile);
-  if (!raw) return { description: '' };
+  if (!raw) return { description: '' } satisfies { description: string; type?: string };
 
   // Extract @type {value} tag
   const typeMatch = raw.match(/@type\s*\{([^}]+)\}/);
-  if (!typeMatch) return { description: raw };
+  if (!typeMatch) return { description: raw } satisfies { description: string; type?: string };
 
   const type = typeMatch[1]!.trim();
   // Remove the @type line from description
   const description = raw.replace(/@type\s*\{[^}]+\}/, '').trim();
 
-  return { description, type };
+  return { description, type } satisfies { description: string; type?: string };
 }
 
 /**

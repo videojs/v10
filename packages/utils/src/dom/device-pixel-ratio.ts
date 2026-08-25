@@ -1,4 +1,5 @@
 import { noop } from '../function/noop';
+import { isFunction } from '../predicate';
 import { listen } from './listen';
 
 /** The environment's `devicePixelRatio`, or `1` where it isn't reported. */
@@ -26,7 +27,7 @@ export function getDevicePixelRatio(): number {
  * @returns Cleanup that detaches the armed query
  */
 export function watchDevicePixelRatio(onChange: (devicePixelRatio: number) => void, signal?: AbortSignal): () => void {
-  if (typeof globalThis.matchMedia !== 'function') return noop;
+  if (!isFunction(globalThis.matchMedia)) return noop;
 
   const options: AddEventListenerOptions = signal ? { once: true, signal } : { once: true };
   // Only one listener is ever armed, so only its removal is worth holding: a

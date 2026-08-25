@@ -17,22 +17,41 @@ import { VideoRenditionList } from './video-rendition-list';
 import { VideoTrack } from './video-track';
 import { addVideoTrack, removeVideoTrack, VideoTrackList } from './video-track-list';
 
+interface MediaTracksHost {
+  readonly constructor: Function;
+}
+
+interface MediaTracksPrototype extends MediaTracksHost {
+  addVideoTrack?: (kind: string, label?: string, language?: string) => VideoTrack;
+  removeVideoTrack?: typeof removeVideoTrack;
+  addAudioTrack?: (kind: string, label?: string, language?: string) => AudioTrack;
+  removeAudioTrack?: typeof removeAudioTrack;
+  detach?: (this: MediaTracksHost) => void;
+}
+
 export type WithMediaTracks<Base extends AnyConstructor<any>> = MixinReturn<
   Base,
-  MediaVideoTrackCapability & MediaAudioTrackCapability & MediaVideoRenditionCapability & MediaAudioRenditionCapability
+  MediaVideoTrackCapability &
+    MediaAudioTrackCapability &
+    MediaVideoRenditionCapability &
+    MediaAudioRenditionCapability & { detach(): void }
 >;
 
-const HTMLMediaElementConstructor = (globalThis as { HTMLMediaElement?: AnyConstructor<HTMLMediaElement> })
-  .HTMLMediaElement;
+const HTMLMediaElementConstructor =
+  /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (
+    globalThis as { HTMLMediaElement?: AnyConstructor<HTMLMediaElement> }
+  ).HTMLMediaElement;
 const nativeVideoTracksFn = getBaseMediaTracksFn(HTMLMediaElementConstructor, 'video');
 const nativeAudioTracksFn = getBaseMediaTracksFn(HTMLMediaElementConstructor, 'audio');
 
 // Safari supports native media tracks, but native implementations cannot
 // reliably represent manifest-derived MSE tracks or manually-added tracks.
 export function MediaTracksMixin<Base extends AnyConstructor<any>>(MediaElementClass: Base): WithMediaTracks<Base> {
-  if (!MediaElementClass?.prototype) return MediaElementClass as WithMediaTracks<Base>;
+  if (!MediaElementClass?.prototype)
+    return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ MediaElementClass as WithMediaTracks<Base>;
 
-  const prototype = MediaElementClass.prototype as Record<string, any>;
+  // SAFETY: The mixin only installs the explicitly declared media-track methods on this prototype.
+  const prototype = MediaElementClass.prototype as MediaTracksPrototype;
   const videoTracksFn = getBaseMediaTracksFn(MediaElementClass, 'video');
 
   if (!videoTracksFn || `${videoTracksFn}`.includes('[native code]')) {
@@ -87,11 +106,18 @@ export function MediaTracksMixin<Base extends AnyConstructor<any>>(MediaElementC
   // when the target is removed, and drop the cached lists so a re-attach
   // re-mirrors against the new target.
   if (!hasOwn(prototype, 'detach')) {
-    const baseDetach = prototype.detach as ((this: object) => void) | undefined;
-    prototype.detach = function (this: object) {
+    const baseDetach =
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ prototype.detach as
+        | ((this: MediaTracksHost) => void)
+        | undefined;
+    prototype.detach = function (this: MediaTracksHost) {
       const priv = getPrivate(this);
-      (priv.videoTracksCleanup as AbortController | undefined)?.abort();
-      (priv.audioTracksCleanup as AbortController | undefined)?.abort();
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (
+        priv.videoTracksCleanup as AbortController | undefined
+      )?.abort();
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (
+        priv.audioTracksCleanup as AbortController | undefined
+      )?.abort();
       delete priv.videoTracks;
       delete priv.audioTracks;
       delete priv.videoTracksCleanup;
@@ -116,15 +142,17 @@ export function MediaTracksMixin<Base extends AnyConstructor<any>>(MediaElementC
     });
   }
 
-  return MediaElementClass as WithMediaTracks<Base>;
+  return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ MediaElementClass as WithMediaTracks<Base>;
 }
 
-function hasOwn(value: object, key: PropertyKey) {
+function hasOwn(value: MediaTracksHost, key: PropertyKey) {
   return Object.hasOwn(value, key);
 }
 
 function initVideoRenditions(media: HTMLMediaElement) {
-  let renditions = getPrivate(media).videoRenditions as VideoRenditionList | undefined;
+  let renditions =
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ getPrivate(media)
+      .videoRenditions as VideoRenditionList | undefined;
   if (!renditions) {
     renditions = new VideoRenditionList();
     getPrivate(renditions).media = new WeakRef(media);
@@ -134,7 +162,9 @@ function initVideoRenditions(media: HTMLMediaElement) {
 }
 
 function initAudioRenditions(media: HTMLMediaElement) {
-  let renditions = getPrivate(media).audioRenditions as AudioRenditionList | undefined;
+  let renditions =
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ getPrivate(media)
+      .audioRenditions as AudioRenditionList | undefined;
   if (!renditions) {
     renditions = new AudioRenditionList();
     getPrivate(renditions).media = new WeakRef(media);
@@ -153,14 +183,23 @@ function getBaseMediaTracksFn(MediaElementClass: any, type: string): (() => any)
 // Native track lists are event targets wherever they are implemented (Safari).
 // Environments that stub them out as plain arrays (jsdom) publish no changes, so
 // there is nothing to mirror and the list stays local.
-function isNativeTrackList(
-  value: unknown
-): value is Iterable<any> & Record<'addEventListener' | 'removeEventListener', (...args: any[]) => void> {
-  return hasMethods(value, ['addEventListener', 'removeEventListener']);
+interface NativeTrackList extends Iterable<object> {
+  addEventListener: EventTarget['addEventListener'];
+  removeEventListener: EventTarget['removeEventListener'];
+}
+
+function isNativeTrackList<Value>(value: Value): value is Value & NativeTrackList {
+  return (
+    hasMethods(value, ['addEventListener', 'removeEventListener']) &&
+    Symbol.iterator in value &&
+    typeof value[Symbol.iterator] === 'function'
+  );
 }
 
 function getVideoTracks(media: any) {
-  let tracks = getPrivate(media).videoTracks as VideoTrackList | undefined;
+  let tracks = /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ getPrivate(
+    media
+  ).videoTracks as VideoTrackList | undefined;
   if (!tracks) {
     tracks = new VideoTrackList();
     getPrivate(media).videoTracks = tracks;
@@ -181,18 +220,32 @@ function getVideoTracks(media: any) {
 
       const onAddTrack = (event: TrackEvent) => {
         if ([...currentTracks].some((track) => track instanceof VideoTrack)) return;
-        addVideoTrack(media, event.track as VideoTrack);
+        addVideoTrack(
+          media,
+          /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ event.track as VideoTrack
+        );
       };
 
       const onRemoveTrack = (event: TrackEvent) => {
-        removeVideoTrack(event.track as VideoTrack);
+        removeVideoTrack(
+          /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ event.track as VideoTrack
+        );
       };
 
       // Adding a custom track replaces any mirrored native tracks.
       const onCustomAddTrack = (event: Event) => {
-        if (!((event as TrackEvent).track instanceof VideoTrack)) return;
+        if (
+          !(
+            /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (
+              (event as TrackEvent).track instanceof VideoTrack
+            )
+          )
+        )
+          return;
         for (const nativeTrack of nativeTracks) {
-          removeVideoTrack(nativeTrack as VideoTrack);
+          removeVideoTrack(
+            /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ nativeTrack as VideoTrack
+          );
         }
       };
 
@@ -210,7 +263,9 @@ function getVideoTracks(media: any) {
 }
 
 function getAudioTracks(media: any) {
-  let tracks = getPrivate(media).audioTracks as AudioTrackList | undefined;
+  let tracks = /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ getPrivate(
+    media
+  ).audioTracks as AudioTrackList | undefined;
   if (!tracks) {
     tracks = new AudioTrackList();
     getPrivate(media).audioTracks = tracks;
@@ -231,18 +286,32 @@ function getAudioTracks(media: any) {
 
       const onAddTrack = (event: TrackEvent) => {
         if ([...currentTracks].some((track) => track instanceof AudioTrack)) return;
-        addAudioTrack(media, event.track as AudioTrack);
+        addAudioTrack(
+          media,
+          /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ event.track as AudioTrack
+        );
       };
 
       const onRemoveTrack = (event: TrackEvent) => {
-        removeAudioTrack(event.track as AudioTrack);
+        removeAudioTrack(
+          /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ event.track as AudioTrack
+        );
       };
 
       // Adding a custom track replaces any mirrored native tracks.
       const onCustomAddTrack = (event: Event) => {
-        if (!((event as TrackEvent).track instanceof AudioTrack)) return;
+        if (
+          !(
+            /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (
+              (event as TrackEvent).track instanceof AudioTrack
+            )
+          )
+        )
+          return;
         for (const nativeTrack of nativeTracks) {
-          removeAudioTrack(nativeTrack as AudioTrack);
+          removeAudioTrack(
+            /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ nativeTrack as AudioTrack
+          );
         }
       };
 

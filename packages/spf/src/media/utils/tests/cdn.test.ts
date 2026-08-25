@@ -9,7 +9,9 @@ const presentationWith = (urlsByType: {
   text?: string[];
 }): MaybeResolvedPresentation => ({
   url: 'https://cdn-a.example.com/master.m3u8',
-  selectionSets: (['video', 'audio', 'text'] as const)
+  selectionSets: /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+    ['video', 'audio', 'text'] as const
+  )
     .filter((type) => urlsByType[type]?.length)
     .map((type) => ({
       id: `${type}-set`,
@@ -86,36 +88,37 @@ describe('getOrderedCdnIds', () => {
     // but the head must be video-derived (cdn-a).
     const presentation: MaybeResolvedPresentation = {
       url: 'https://cdn-a.example.com/master.m3u8',
-      selectionSets: [
-        {
-          id: 'audio-set',
-          type: 'audio',
-          switchingSets: [
-            {
-              id: 'audio-switching',
-              type: 'audio',
-              tracks: [
-                { id: 'aud-b', type: 'audio', url: 'https://cdn-b.example.com/audio.m3u8', bandwidth: 0 },
-                { id: 'aud-a', type: 'audio', url: 'https://cdn-a.example.com/audio.m3u8', bandwidth: 0 },
-              ],
-            },
-          ],
-        },
-        {
-          id: 'video-set',
-          type: 'video',
-          switchingSets: [
-            {
-              id: 'video-switching',
-              type: 'video',
-              tracks: [
-                { id: 'vid-a', type: 'video', url: 'https://cdn-a.example.com/720p.m3u8', bandwidth: 0 },
-                { id: 'vid-b', type: 'video', url: 'https://cdn-b.example.com/720p.m3u8', bandwidth: 0 },
-              ],
-            },
-          ],
-        },
-      ] as MaybeResolvedPresentation['selectionSets'],
+      selectionSets:
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ [
+          {
+            id: 'audio-set',
+            type: 'audio',
+            switchingSets: [
+              {
+                id: 'audio-switching',
+                type: 'audio',
+                tracks: [
+                  { id: 'aud-b', type: 'audio', url: 'https://cdn-b.example.com/audio.m3u8', bandwidth: 0 },
+                  { id: 'aud-a', type: 'audio', url: 'https://cdn-a.example.com/audio.m3u8', bandwidth: 0 },
+                ],
+              },
+            ],
+          },
+          {
+            id: 'video-set',
+            type: 'video',
+            switchingSets: [
+              {
+                id: 'video-switching',
+                type: 'video',
+                tracks: [
+                  { id: 'vid-a', type: 'video', url: 'https://cdn-a.example.com/720p.m3u8', bandwidth: 0 },
+                  { id: 'vid-b', type: 'video', url: 'https://cdn-b.example.com/720p.m3u8', bandwidth: 0 },
+                ],
+              },
+            ],
+          },
+        ] as MaybeResolvedPresentation['selectionSets'],
     };
     expect(getOrderedCdnIds(presentation)).toEqual(['https://cdn-a.example.com', 'https://cdn-b.example.com']);
   });

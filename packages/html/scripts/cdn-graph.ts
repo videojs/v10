@@ -34,7 +34,10 @@ function isLikelySpecifier(value: string): boolean {
 
 export function collectSpecifiers(code: string): string[] {
   return [...code.replace(JSDOC_BLOCK, '').matchAll(SPECIFIER)]
-    .map((match) => match[1] as string)
+    .map(
+      (match) =>
+        /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ match[1] as string
+    )
     .filter(isLikelySpecifier);
 }
 
@@ -53,7 +56,8 @@ export function resolveClosure(dir: string, roots: readonly string[]): Set<strin
   const queue = [...roots];
 
   while (queue.length > 0) {
-    const file = queue.pop() as string;
+    const file =
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ queue.pop() as string;
     if (seen.has(file)) continue;
 
     const path = resolve(dir, file);

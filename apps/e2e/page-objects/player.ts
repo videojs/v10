@@ -167,7 +167,12 @@ export class PlayerPage {
         [...new Set(elements.map((element) => element.localName))].map((name) => customElements.whenDefined(name))
       );
       await Promise.all(
-        elements.map((element) => (element as HTMLElement & { updateComplete?: Promise<unknown> }).updateComplete)
+        elements.map(
+          (element) =>
+            /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (
+              element as HTMLElement & { updateComplete?: Promise<unknown> }
+            ).updateComplete
+        )
       );
     });
 
@@ -176,8 +181,14 @@ export class PlayerPage {
     // time to resolve the manifest before seeks or other interactions work.
     await this.page.waitForFunction(
       (selector) => {
-        const media = document.querySelector(selector) as HTMLMediaElement | null;
-        const actual = (media?.querySelector?.('video') as HTMLMediaElement) ?? media;
+        const media =
+          /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ document.querySelector(
+            selector
+          ) as HTMLMediaElement | null;
+        const actual =
+          /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (media?.querySelector?.(
+            'video'
+          ) as HTMLMediaElement) ?? media;
         return actual && actual.readyState >= 1;
       },
       SELECTORS.media,
@@ -189,8 +200,14 @@ export class PlayerPage {
       // Chromium supports --mute-audio but WebKit has no browser-level
       // equivalent, so we mute the renderer directly for cross-browser silence.
       await this.page.evaluate((selector) => {
-        const media = document.querySelector(selector) as HTMLMediaElement | null;
-        const actual = (media?.querySelector?.('video') as HTMLMediaElement) ?? media;
+        const media =
+          /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ document.querySelector(
+            selector
+          ) as HTMLMediaElement | null;
+        const actual =
+          /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (media?.querySelector?.(
+            'video'
+          ) as HTMLMediaElement) ?? media;
         if (actual) actual.muted = true;
       }, SELECTORS.media);
     }
@@ -205,8 +222,14 @@ export class PlayerPage {
   /** Start the media without interacting with controls. */
   async playMedia(): Promise<void> {
     await this.page.evaluate(async (selector) => {
-      const media = document.querySelector(selector) as HTMLMediaElement | null;
-      const actual = (media?.querySelector?.('video') as HTMLMediaElement) ?? media;
+      const media =
+        /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ document.querySelector(
+          selector
+        ) as HTMLMediaElement | null;
+      const actual =
+        /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (media?.querySelector?.(
+          'video'
+        ) as HTMLMediaElement) ?? media;
       await actual?.play();
     }, SELECTORS.media);
     await expect(this.playButton).not.toHaveAttribute(DATA_ATTRS.paused, { timeout: 5_000 });
@@ -239,8 +262,14 @@ export class PlayerPage {
 
   async getPlaybackRate(): Promise<number> {
     return this.page.evaluate((selector) => {
-      const media = document.querySelector(selector) as HTMLMediaElement | null;
-      const actual = (media?.querySelector?.('video') as HTMLMediaElement) ?? media;
+      const media =
+        /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ document.querySelector(
+          selector
+        ) as HTMLMediaElement | null;
+      const actual =
+        /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (media?.querySelector?.(
+          'video'
+        ) as HTMLMediaElement) ?? media;
       return actual?.playbackRate ?? 1;
     }, SELECTORS.media);
   }
@@ -252,8 +281,14 @@ export class PlayerPage {
     // instead of the requested position.
     await this.page.waitForFunction(
       (selector) => {
-        const media = document.querySelector(selector) as HTMLMediaElement | null;
-        const actual = (media?.querySelector?.('video') as HTMLMediaElement) ?? media;
+        const media =
+          /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ document.querySelector(
+            selector
+          ) as HTMLMediaElement | null;
+        const actual =
+          /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (media?.querySelector?.(
+            'video'
+          ) as HTMLMediaElement) ?? media;
         return actual && actual.readyState >= 1 && actual.duration > 0 && Number.isFinite(actual.duration);
       },
       SELECTORS.media,

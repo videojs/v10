@@ -118,7 +118,15 @@ export function createFairPlayEme(context: FairPlayContext, options: FairPlayEme
     const session = mediaKeys.createSession();
     sessions.add(session);
 
-    session.addEventListener('message', (event) => void onMessage(session, event as MediaKeyMessageEvent), { signal });
+    session.addEventListener(
+      'message',
+      (event) =>
+        void onMessage(
+          session,
+          /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ event as MediaKeyMessageEvent
+        ),
+      { signal }
+    );
     session.addEventListener('keystatuseschange', () => onKeyStatusesChange(session), { signal });
 
     try {
@@ -183,6 +191,10 @@ function isAirPlayUnsupported(media: HTMLMediaElement, cause: unknown): boolean 
   return (
     cause instanceof DOMException &&
     cause.name === 'NotSupportedError' &&
-    !!(media as WebKitVideoElement).webkitCurrentPlaybackTargetIsWireless
+    !!(
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (
+        media as WebKitVideoElement
+      ).webkitCurrentPlaybackTargetIsWireless
+    )
   );
 }

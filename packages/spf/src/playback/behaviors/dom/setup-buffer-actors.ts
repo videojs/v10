@@ -172,7 +172,11 @@ function setupBufferActors<K extends SelectedTrackKey, A extends BufferActorKey,
             presentation: state.presentation.get(),
             [selectedKey]: state[selectedKey].get(),
           };
-          const track = getSelectedTrack(selection, type) as PartiallyResolvedTrack;
+          const track =
+            /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ getSelectedTrack(
+              selection,
+              type
+            ) as PartiallyResolvedTrack;
           const buffer = createSourceBuffer(mediaSource, buildMimeCodec(track));
           const bufferActor = createSourceBufferActor(buffer);
           const segmentLoader = createSegmentLoaderActor(

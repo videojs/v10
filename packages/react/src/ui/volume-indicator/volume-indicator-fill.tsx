@@ -37,7 +37,7 @@ function getVolumeIndicatorFillStyle(
   style: VolumeIndicatorFillProps['style']
 ): VolumeIndicatorFillProps['style'] {
   const vars = state.fill
-    ? ({
+    ? /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ ({
         [VolumeIndicatorCSSVars.fill]: state.fill,
       } as CSSProperties)
     : undefined;

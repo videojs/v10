@@ -18,7 +18,15 @@ export default function Language() {
     <div className="react-i18n-language">
       <label>
         Language
-        <select value={locale} onChange={(event) => setLocale(event.currentTarget.value as Locale)}>
+        <select
+          value={locale}
+          onChange={(event) =>
+            setLocale(
+              /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ event
+                .currentTarget.value as Locale
+            )
+          }
+        >
           {locales.map((value) => (
             <option key={value} value={value}>
               {languageNames.of(value) ?? value}

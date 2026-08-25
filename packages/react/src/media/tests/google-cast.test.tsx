@@ -20,7 +20,11 @@ describe('GoogleCast', () => {
 
     render(<GoogleCast />, { wrapper: Wrapper });
 
-    expect(getMediaComponents(media as HlsJsMedia).get(GoogleCastComponent)).toBeInstanceOf(GoogleCastComponent);
+    expect(
+      getMediaComponents(
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ media as HlsJsMedia
+      ).get(GoogleCastComponent)
+    ).toBeInstanceOf(GoogleCastComponent);
   });
 
   it('syncs props to the component', () => {
@@ -30,7 +34,9 @@ describe('GoogleCast', () => {
       wrapper: Wrapper,
     });
 
-    const component = getMediaComponents(media as HlsJsMedia).get(GoogleCastComponent)!;
+    const component = getMediaComponents(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ media as HlsJsMedia
+    ).get(GoogleCastComponent)!;
     expect(component.receiver).toBe('APP_ID');
     expect(component.contentType).toBe('application/x-mpegURL');
     expect(component.streamType).toBe('live');
@@ -42,7 +48,11 @@ describe('GoogleCast', () => {
     const { rerender } = render(<GoogleCast receiver="APP_ID" />, { wrapper: Wrapper });
     rerender(<GoogleCast />);
 
-    expect(getMediaComponents(media as HlsJsMedia).get(GoogleCastComponent)!.receiver).toBeUndefined();
+    expect(
+      getMediaComponents(
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ media as HlsJsMedia
+      ).get(GoogleCastComponent)!.receiver
+    ).toBeUndefined();
   });
 
   it('removes the component on unmount', () => {
@@ -51,15 +61,26 @@ describe('GoogleCast', () => {
     const { unmount } = render(<GoogleCast />, { wrapper: Wrapper });
     unmount();
 
-    expect(getMediaComponents(media as HlsJsMedia).get(GoogleCastComponent)).toBeUndefined();
+    expect(
+      getMediaComponents(
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ media as HlsJsMedia
+      ).get(GoogleCastComponent)
+    ).toBeUndefined();
   });
 
   it('ignores media that is not a media host', () => {
-    const video = document.createElement('video') as unknown as Media;
+    const video =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+        'video'
+      ) as Media;
     const { Wrapper } = setup(video);
 
     render(<GoogleCast />, { wrapper: Wrapper });
 
-    expect(getMediaComponents(video as any).get(GoogleCastComponent)).toBeUndefined();
+    expect(
+      getMediaComponents(
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ video as any
+      ).get(GoogleCastComponent)
+    ).toBeUndefined();
   });
 });

@@ -46,20 +46,24 @@ export interface TooltipApi extends Omit<PopoverApi, 'triggerProps' | 'popupProp
 }
 
 /** Map popover reasons to tooltip reasons, filtering out click/outside-click. */
-const REASON_MAP: Partial<Record<PopoverOpenChangeReason, TooltipOpenChangeReason>> = {
+const REASON_MAP = {
   hover: 'hover',
   focus: 'focus',
   escape: 'escape',
   blur: 'blur',
   'imperative-action': 'imperative-action',
-};
+} satisfies Partial<Record<PopoverOpenChangeReason, TooltipOpenChangeReason>>;
+
+function isTooltipReason(reason: PopoverOpenChangeReason): reason is keyof typeof REASON_MAP {
+  return reason in REASON_MAP;
+}
 
 export function createTooltip(options: TooltipOptions): TooltipApi {
   const popoverOpts: PopoverOptions = {
     transition: options.transition,
     onOpenChange(open: boolean, details: PopoverChangeDetails) {
+      if (!isTooltipReason(details.reason)) return;
       const reason = REASON_MAP[details.reason];
-      if (!reason) return;
 
       const group = options.group?.();
       if (open) group?.notifyOpen();
@@ -122,6 +126,7 @@ export function createTooltip(options: TooltipOptions): TooltipApi {
 
   // Spread popover trigger props, omit onClick, guard disabled/touch on open handlers.
   const { onClick: _, ...baseTriggerProps } = popover.triggerProps;
+  void _;
   const triggerProps: TooltipTriggerProps = {
     ...baseTriggerProps,
     onPointerDown() {

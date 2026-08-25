@@ -1,3 +1,4 @@
+import { isString } from '@videojs/utils/predicate';
 import { Marked, type MarkedExtension, type Tokens } from 'marked';
 
 import { shared } from '@/components/typography/styles';
@@ -110,7 +111,7 @@ function unwrapSingleParagraph(html: string): string {
 
 export function renderInlineMarkdown(markdown: string): string {
   const raw = marked.parse(markdown);
-  if (typeof raw !== 'string') {
+  if (!isString(raw)) {
     return markdown;
   }
   return unwrapSingleParagraph(raw);

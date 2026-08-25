@@ -5,23 +5,23 @@ import { HTMLVideoElementHost } from '../../video-host';
 import { ShakaMediaStreamTypeMixin } from '../stream-type';
 
 function createEngine({ live = false, inProgress = false } = {}) {
-  const listeners = new Map<string, Set<(event: unknown) => void>>();
+  const listeners = new Map<string, Set<(event: Event) => void>>();
 
   const engine = {
     live,
     inProgress,
     isLive: vi.fn(() => engine.live),
     isInProgress: vi.fn(() => engine.inProgress),
-    addEventListener(type: string, listener: (event: unknown) => void) {
+    addEventListener(type: string, listener: (event: Event) => void) {
       const typeListeners = listeners.get(type) ?? new Set();
       typeListeners.add(listener);
       listeners.set(type, typeListeners);
     },
-    removeEventListener(type: string, listener: (event: unknown) => void) {
+    removeEventListener(type: string, listener: (event: Event) => void) {
       listeners.get(type)?.delete(listener);
     },
     emit(type: string) {
-      for (const listener of [...(listeners.get(type) ?? [])]) listener({ type });
+      for (const listener of [...(listeners.get(type) ?? [])]) listener(new Event(type));
     },
   };
 
@@ -37,9 +37,10 @@ class FakeHost extends HTMLVideoElementHost {
   }
 }
 
-const ShakaMediaStreamType = ShakaMediaStreamTypeMixin(FakeHost as any) as unknown as new (
-  engine?: ReturnType<typeof createEngine> | null
-) => FakeHost & { streamType: string };
+const ShakaMediaStreamType =
+  /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ ShakaMediaStreamTypeMixin(
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ FakeHost as any
+  ) as new (engine?: ReturnType<typeof createEngine> | null) => FakeHost & { streamType: string };
 
 describe('ShakaMediaStreamTypeMixin', () => {
   it('starts unknown', () => {

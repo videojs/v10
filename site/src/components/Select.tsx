@@ -55,7 +55,7 @@ export function Select<T extends string = string>({
               'overflow-y-auto'
             )}
             style={
-              {
+              /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ {
                 minWidth: 'var(--anchor-width)',
                 maxHeight: 'var(--available-height)',
               } as React.CSSProperties

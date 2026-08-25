@@ -45,7 +45,10 @@ export function dedupedVideoTracks(presentation: MaybeResolvedPresentation | und
   if (!presentation) return [];
 
   return dedupe({
-    tracks: getTracksByType(presentation, 'video') as readonly VideoTrack[],
+    tracks: /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ getTracksByType(
+      presentation,
+      'video'
+    ) as readonly VideoTrack[],
     keyFn: toUserVideoTrackSelection,
   });
 }
@@ -58,7 +61,10 @@ export function dedupedAudioTracks(presentation: MaybeResolvedPresentation | und
   if (!presentation) return [];
 
   return dedupe({
-    tracks: getTracksByType(presentation, 'audio') as readonly AudioTrack[],
+    tracks: /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ getTracksByType(
+      presentation,
+      'audio'
+    ) as readonly AudioTrack[],
     keyFn: toUserAudioTrackSelection,
   });
 }
@@ -76,7 +82,9 @@ export function findVideoTrackById(
 ): VideoTrack | undefined {
   if (!presentation || !id) return undefined;
   const track = findTrackById(presentation, id);
-  return track?.type === 'video' ? (track as VideoTrack) : undefined;
+  return track?.type === 'video'
+    ? /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (track as VideoTrack)
+    : undefined;
 }
 
 /** Audio counterpart of {@link findVideoTrackById}, for `enabled` reflection. */
@@ -86,7 +94,9 @@ export function findAudioTrackById(
 ): AudioTrack | undefined {
   if (!presentation || !id) return undefined;
   const track = findTrackById(presentation, id);
-  return track?.type === 'audio' ? (track as AudioTrack) : undefined;
+  return track?.type === 'audio'
+    ? /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (track as AudioTrack)
+    : undefined;
 }
 
 /**

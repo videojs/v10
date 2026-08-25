@@ -16,10 +16,7 @@ import type { StateAttrMap } from '../../core/ui/types';
  *
  * When a mapping is provided, only mapped keys are converted.
  */
-export function getStateDataAttrs<State extends object>(
-  state: State,
-  map?: StateAttrMap<State>
-): Record<string, string> {
+export function getStateDataAttrs<State extends object>(state: State, map?: StateAttrMap<State>) {
   const attrs: Record<string, string> = {};
 
   for (const key in state) {
@@ -35,7 +32,7 @@ export function getStateDataAttrs<State extends object>(
     }
   }
 
-  return attrs;
+  return attrs satisfies Record<string, string>;
 }
 
 /**

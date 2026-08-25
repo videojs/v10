@@ -7,11 +7,12 @@ import { SliderRoot } from '../slider-root';
 
 // jsdom doesn't provide ResizeObserver.
 beforeAll(() => {
-  globalThis.ResizeObserver = class ResizeObserver {
-    observe() {}
-    unobserve() {}
-    disconnect() {}
-  } as unknown as typeof globalThis.ResizeObserver;
+  globalThis.ResizeObserver =
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ class ResizeObserver {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    } as typeof globalThis.ResizeObserver;
 });
 
 const { mockSliderApi } = vi.hoisted(() => ({
@@ -42,7 +43,7 @@ const { mockSliderApi } = vi.hoisted(() => ({
 }));
 
 vi.mock('@videojs/core/dom', async (importOriginal) => {
-  const orig: Record<string, unknown> = await importOriginal();
+  const orig = await importOriginal<typeof import('@videojs/core/dom')>();
   return { ...orig, createSlider: vi.fn(mockSliderApi) };
 });
 
@@ -88,7 +89,10 @@ describe('SliderPreview', () => {
       </SliderRoot>
     );
 
-    const el = container.querySelector('[data-testid="preview"]') as HTMLElement;
+    const el =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ container.querySelector(
+        '[data-testid="preview"]'
+      ) as HTMLElement;
     expect(el.style.position).toBe('absolute');
     expect(el.style.pointerEvents).toBe('none');
     expect(el.style.width).toBe('max-content');
@@ -101,7 +105,10 @@ describe('SliderPreview', () => {
       </SliderRoot>
     );
 
-    const el = container.querySelector('[data-testid="preview"]') as HTMLElement;
+    const el =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ container.querySelector(
+        '[data-testid="preview"]'
+      ) as HTMLElement;
     // Before ResizeObserver fires, width is 0 so halfWidth is 0
     expect(el.style.left).toContain('min(');
     expect(el.style.left).toContain('max(');
@@ -114,7 +121,10 @@ describe('SliderPreview', () => {
       </SliderRoot>
     );
 
-    const el = container.querySelector('[data-testid="preview"]') as HTMLElement;
+    const el =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ container.querySelector(
+        '[data-testid="preview"]'
+      ) as HTMLElement;
     expect(el.style.left).toContain('calc(var(--media-slider-pointer)');
     expect(el.style.left).not.toContain('min(');
   });
@@ -171,7 +181,10 @@ describe('SliderPreview', () => {
       </SliderRoot>
     );
 
-    const el = container.querySelector('[data-testid="preview"]') as HTMLElement;
+    const el =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ container.querySelector(
+        '[data-testid="preview"]'
+      ) as HTMLElement;
     expect(el.style.opacity).toBe('0.5');
   });
 

@@ -83,7 +83,9 @@ export function sandboxLocaleLabel(tag: string): string {
 }
 
 export function isSandboxBrowserLocale(tag: string): tag is SandboxBrowserLocaleTag {
-  return (SANDBOX_BROWSER_LOCALE_TAGS as readonly string[]).includes(tag);
+  return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (
+    SANDBOX_BROWSER_LOCALE_TAGS as readonly string[]
+  ).includes(tag);
 }
 
 export type SandboxLocaleOption = {

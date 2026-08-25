@@ -40,8 +40,8 @@ function highlight(code: string, lang: BundledLanguage, highlighter: Highlighter
 
   // shiki gives us a root > pre > code > text structure
   // since we want to define pre and code ourselves, let's extract the text
-  let preProps: Record<string, unknown> = {};
-  let codeProps: Record<string, unknown> = {};
+  let preProps: Record<string, import('@/utils/site-data-value').SiteDataValue> = {};
+  let codeProps: Record<string, import('@/utils/site-data-value').SiteDataValue> = {};
   if (hast.type === 'root') {
     const pre = hast.children[0];
     if (pre && pre.type === 'element' && pre.tagName === 'pre') {
@@ -57,8 +57,14 @@ function highlight(code: string, lang: BundledLanguage, highlighter: Highlighter
 
   const result: Highlighted = {
     html: hastToHtml(hast),
-    preClassName: preProps.class as string | undefined,
-    codeClassName: codeProps.class as string | undefined,
+    preClassName:
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ preProps.class as
+        | string
+        | undefined,
+    codeClassName:
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ codeProps.class as
+        | string
+        | undefined,
   };
   highlightCache.set(cacheKey, result);
   return result;

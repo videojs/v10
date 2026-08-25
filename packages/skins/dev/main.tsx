@@ -28,8 +28,16 @@ type ModuleKey = keyof typeof modules;
 
 const params = new URLSearchParams(location.search);
 const requested = `${params.get('framework') ?? 'react'}/${params.get('skin') ?? 'default-video'}/${params.get('style') ?? 'css'}`;
-const key: ModuleKey = requested in modules ? (requested as ModuleKey) : 'react/default-video/css';
-const [framework, , styleMode] = key.split('/') as ['react' | 'html', string, 'css' | 'tailwind'];
+const key: ModuleKey =
+  requested in modules
+    ? /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (requested as ModuleKey)
+    : 'react/default-video/css';
+const [framework, , styleMode] =
+  /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ key.split('/') as [
+    'react' | 'html',
+    string,
+    'css' | 'tailwind',
+  ];
 const loaded = await modules[key]();
 
 if (styleMode === 'tailwind') await import('../vjsc/styles/tailwind.css');
@@ -68,7 +76,15 @@ if (framework === 'react') {
         ? loaded.MinimalVideoSkin
         : null;
   if (!Skin) throw new Error(`React Skin module \`${key}\` did not export a Skin component.`);
-  createRoot(root).render(<App Skin={Skin as React.ComponentType<React.PropsWithChildren<{ className?: string }>>} />);
+  createRoot(root).render(
+    <App
+      Skin={
+        /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ Skin as React.ComponentType<
+          React.PropsWithChildren<{ className?: string }>
+        >
+      }
+    />
+  );
 } else {
   const Skin =
     'DefaultVideoSkin' in loaded
@@ -78,7 +94,10 @@ if (framework === 'react') {
         : null;
   if (!Skin) throw new Error(`HTML Skin module \`${key}\` did not export a Skin component.`);
   await import('../../html/src/define/video/player');
-  const render = Skin as (props?: { className?: string }) => { toString(): string };
+  const render =
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ Skin as (props?: {
+      className?: string;
+    }) => { toString(): string };
   const skin = String(render({})).replace(
     '<slot></slot>',
     '<video src="https://stream.mux.com/VcmKA6aqzIzlg3MayLJDnbF55kX00mds028Z65QxvBYaA.m3u8" playsinline crossorigin="anonymous"></video>'

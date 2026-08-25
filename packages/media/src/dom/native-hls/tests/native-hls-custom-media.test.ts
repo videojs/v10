@@ -26,7 +26,9 @@ describe('NativeHlsMedia', () => {
 
     expect(handler).toHaveBeenCalledOnce();
 
-    const event = handler.mock.calls[0]![0] as ErrorEvent;
+    const event =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ handler.mock
+        .calls[0]![0] as ErrorEvent;
     expect(event).toBeInstanceOf(ErrorEvent);
     expect(event.error).toBeInstanceOf(MediaError);
     expect(event.error.code).toBe(MediaError.MEDIA_ERR_NETWORK);

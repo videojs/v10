@@ -11,6 +11,7 @@ import type {
 } from '../components/definition';
 import type { GroupProps, SlotProps, TemplatePartProps, TemplateProps, TextProps } from '../components/jsx-runtime';
 import { createTargetCode } from './expression';
+import type { SourceChildrenToken, SourcePropToken } from './source';
 
 export const TARGET_ELEMENT = Symbol.for('vjsc/target-element');
 export const TARGET_FRAGMENT = Symbol.for('vjsc/target-fragment');
@@ -53,7 +54,7 @@ export type TargetReference =
 export interface TargetNode {
   readonly [TARGET_NODE]: true;
   readonly type: TargetElementType;
-  readonly props: Record<string, unknown>;
+  readonly props: Record<string, import('../value').VjscValue>;
   readonly key: string | number | null;
 }
 
@@ -66,19 +67,21 @@ export interface TargetExpression {
   readonly [TARGET_EXPRESSION]: TargetExpressionNode;
 }
 
-export type TargetBinding<Value = unknown> = TargetExpression &
+export type TargetBinding<Value = import('../value').VjscValue> = TargetExpression &
   (Value extends object ? { readonly [Name in keyof Value]-?: TargetBinding<Value[Name]> } : object);
 
 export interface TargetWithProps {
   readonly [TARGET_WITH_PROPS]: true;
   readonly children: TargetOutput;
-  readonly props: TargetExpressionNode | Readonly<Record<string, unknown>>;
+  readonly props: TargetExpressionNode | Readonly<Record<string, import('../value').VjscValue>>;
 }
 
 export type TargetOutput =
   | TargetNode
   | TargetExpression
   | TargetWithProps
+  | SourceChildrenToken
+  | SourcePropToken
   | string
   | number
   | false
@@ -90,17 +93,22 @@ export interface TargetReferenceValue {
   readonly [TARGET_ELEMENT]: TargetReference;
 }
 
-export interface TargetElement<Props extends object = Record<string, unknown>> extends TargetReferenceValue {
-  (props: Props & { readonly children?: unknown }): TargetNode;
+export interface TargetElement<
+  Props extends object = Record<string, import('../value').VjscValue>,
+> extends TargetReferenceValue {
+  (props: Props & { readonly children?: import('../value').VjscValue }): TargetNode;
 }
 
 export type TargetElementType = TargetElement | typeof TARGET_FRAGMENT | typeof TARGET_HOST;
 
 export interface TargetCode {
-  param<Value = unknown>(name: string): TargetBinding<Value>;
+  param<Value = import('../value').VjscValue>(name: string): TargetBinding<Value>;
   fn(parameters: readonly TargetBinding[], output: TargetOutput): TargetExpression;
   when(test: TargetExpression, output: TargetOutput): TargetExpression;
-  withProps(children: TargetOutput, props: TargetExpression | Readonly<Record<string, unknown>>): TargetWithProps;
+  withProps(
+    children: TargetOutput,
+    props: TargetExpression | Readonly<Record<string, import('../value').VjscValue>>
+  ): TargetWithProps;
 }
 
 export interface ComponentTargetPath<Schema extends ComponentSchema = ComponentSchema> {
@@ -217,7 +225,7 @@ export type ComponentTargetRules<Definitions extends ComponentRecord> = {
 
 export type ComponentTargetResolver<Schema extends ComponentSchema> = (
   path: ComponentTargetPath<Schema>
-) => TargetElement | ComponentRewrite<unknown> | undefined;
+) => TargetElement | ComponentRewrite<import('../value').VjscValue> | undefined;
 
 export interface ComponentTargetJsx {
   readonly importSource: string;
@@ -276,11 +284,13 @@ export interface ImportedTargetOptions extends TargetImport {
 export interface ComponentTargetHelpers<Schema extends ComponentSchema> {
   readonly target: ComponentTargetNamespace<Schema>;
   readonly code: TargetCode;
-  element<Props extends object = Record<string, unknown>>(
+  element<Props extends object = Record<string, import('../value').VjscValue>>(
     tagName: string,
     options?: ElementTargetOptions
   ): TargetElement<Props>;
-  imported<Props extends object = Record<string, unknown>>(options: ImportedTargetOptions): TargetElement<Props>;
+  imported<Props extends object = Record<string, import('../value').VjscValue>>(
+    options: ImportedTargetOptions
+  ): TargetElement<Props>;
 }
 
 export function defineComponentTarget<const Schema extends ComponentSchema>(): (
@@ -306,41 +316,44 @@ export function defineComponentTarget<const Schema extends ComponentSchema>(): (
   };
 }
 
-export function createElementTarget<Props extends object = Record<string, unknown>>(
+export function createElementTarget<Props extends object = Record<string, import('../value').VjscValue>>(
   tagName: string,
   options: ElementTargetOptions = {}
 ): TargetElement<Props> {
   return createTargetElement({ kind: 'element', tagName, ...options });
 }
 
-export function createImportedTarget<Props extends object = Record<string, unknown>>(
+export function createImportedTarget<Props extends object = Record<string, import('../value').VjscValue>>(
   options: ImportedTargetOptions
 ): TargetElement<Props> {
   const { props, ...targetImport } = options;
 
-  return createTargetElement({
+  const reference: TargetReference = {
     kind: 'import',
     import: targetImport,
-    ...(props ? { props } : {}),
-  });
+  };
+  if (props) Object.assign(reference, { props });
+  return createTargetElement(reference);
 }
 
-export function createTargetElement<Props extends object = Record<string, unknown>>(
+export function createTargetElement<Props extends object = Record<string, import('../value').VjscValue>>(
   reference: TargetReference
 ): TargetElement<Props> {
-  const element = (_props: Props & { readonly children?: unknown }): TargetNode => {
+  const element = (_props: Props & { readonly children?: import('../value').VjscValue }): TargetNode => {
     throw new Error('vjsc/target: target elements can only be evaluated by the target JSX runtime.');
   };
 
   return Object.assign(element, { [TARGET_ELEMENT]: reference });
 }
 
-export function isTargetElement(value: unknown): value is TargetElement {
+export function isTargetElement<Value>(value: Value): value is Value & TargetElement {
   return typeof value === 'function' && TARGET_ELEMENT in value;
 }
 
 function createTargetNamespace<Schema extends ComponentSchema>(): ComponentTargetNamespace<Schema> {
-  return createComponentTargetReference([]) as ComponentTargetNamespace<Schema>;
+  return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ createComponentTargetReference(
+    []
+  ) as ComponentTargetNamespace<Schema>;
 }
 
 function createComponentTargetReference(path: readonly string[]): TargetElement {
@@ -349,12 +362,14 @@ function createComponentTargetReference(path: readonly string[]): TargetElement 
     component: path[0] ?? '',
     part: path.length > 1 ? path.slice(1).join('.') : null,
   });
-  const children = new Map<PropertyKey, unknown>();
+  const children = new Map<PropertyKey, import('../value').VjscValue>();
 
   return new Proxy(reference, {
     get(target, property) {
       if (property === 'then' && path.length === 0) return undefined;
-      const ownTarget = target as TargetElement & Readonly<Record<PropertyKey, unknown>>;
+      const ownTarget =
+        /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ target as TargetElement &
+          Readonly<Record<PropertyKey, import('../value').VjscValue>>;
       if (property in ownTarget) return ownTarget[property];
 
       if (!children.has(property)) {

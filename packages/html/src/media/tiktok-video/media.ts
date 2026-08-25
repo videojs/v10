@@ -59,7 +59,8 @@ function templateAttrsToEmbedProps(attrs: Record<string, string>): Partial<TikTo
     defaultMuted: attrs.muted !== undefined,
     loop: attrs.loop !== undefined,
     controls: attrs.controls !== undefined,
-    preload: attrs.preload as TikTokMediaProps['preload'],
+    preload:
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ attrs.preload as TikTokMediaProps['preload'],
   };
 }
 

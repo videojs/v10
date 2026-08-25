@@ -110,7 +110,7 @@ describe('resolveCSSLength', () => {
     const el = document.createElement('div');
     const getComputedStyleSpy = vi.spyOn(globalThis, 'getComputedStyle').mockImplementation(
       (target: Element) =>
-        ({
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ ({
           fontSize: target === document.documentElement ? '16px' : '14px',
         }) as CSSStyleDeclaration
     );
@@ -124,7 +124,7 @@ describe('resolveCSSLength', () => {
     const el = document.createElement('div');
     const getComputedStyleSpy = vi.spyOn(globalThis, 'getComputedStyle').mockImplementation(
       () =>
-        ({
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ ({
           fontSize: '14px',
         }) as CSSStyleDeclaration
     );
@@ -227,13 +227,16 @@ describe('resolveCSSLength', () => {
   it('Returns zero when a CSS length resolves to auto', () => {
     const el = document.createElement('div');
     const createElement = document.createElement.bind(document);
-    const getComputedStyleSpy = vi
-      .spyOn(globalThis, 'getComputedStyle')
-      .mockImplementation((target: Element) =>
-        target === el
-          ? ({ length: 0, fontSize: '14px' } as CSSStyleDeclaration)
-          : ({ inlineSize: 'auto' } as CSSStyleDeclaration)
-      );
+    const getComputedStyleSpy = vi.spyOn(globalThis, 'getComputedStyle').mockImplementation((target: Element) =>
+      target === el
+        ? /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ ({
+            length: 0,
+            fontSize: '14px',
+          } as CSSStyleDeclaration)
+        : /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ ({
+            inlineSize: 'auto',
+          } as CSSStyleDeclaration)
+    );
     const createElementSpy = vi.spyOn(document, 'createElement').mockImplementation((tagName: string) => {
       const node = createElement(tagName);
 
@@ -294,7 +297,7 @@ describe('resolveCSSLength', () => {
     const createElement = document.createElement.bind(document);
     const getComputedStyleSpy = vi.spyOn(globalThis, 'getComputedStyle').mockImplementation(
       () =>
-        ({
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ ({
           length: 1,
           fontSize: '14px',
           item(index: number) {

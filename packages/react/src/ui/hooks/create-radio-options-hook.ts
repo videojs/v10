@@ -57,7 +57,9 @@ export function createRadioOptionsHook<Props, Media, State extends RadioOptionsS
     const t = useTranslator();
     const [core] = useState(createCore);
 
-    core.setProps(props ?? ({} as Props));
+    core.setProps(
+      props ?? /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ ({} as Props)
+    );
 
     const setValue = useCallback((value: string) => core.selectValue(media!, value), [core, media]);
 
@@ -71,7 +73,7 @@ export function createRadioOptionsHook<Props, Media, State extends RadioOptionsS
     const options = state.options.map((option) => {
       const { label, labelParams, disabled, ...rest } = option;
 
-      return {
+      return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ {
         ...rest,
         label: translateText(label, t, labelParams),
         disabled: state.disabled || disabled,

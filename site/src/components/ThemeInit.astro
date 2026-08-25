@@ -8,9 +8,9 @@ import { THEME_KEY } from '@/consts';
 }
 <script is:inline define:vars={{ localStorageKey: THEME_KEY }}>
   if (
-    typeof localStorage !== "undefined" &&
-    typeof document !== "undefined" &&
-    typeof document.documentElement !== "undefined"
+    "localStorage" in globalThis &&
+    "document" in globalThis &&
+    "documentElement" in document
   ) {
     let localStorageValue = localStorage[localStorageKey];
     const isValidKey =
@@ -27,7 +27,7 @@ import { THEME_KEY } from '@/consts';
       isDark = true;
     } else if (localStorageValue === "system") {
       if (
-        typeof window.matchMedia !== "undefined" &&
+        "matchMedia" in window &&
         window.matchMedia("(prefers-color-scheme: dark)").matches
       ) {
         document.documentElement.classList.add("dark");

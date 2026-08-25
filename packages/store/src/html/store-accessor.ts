@@ -39,7 +39,8 @@ export class StoreAccessor<Store extends AnyStore> implements ReactiveController
 
     // Check if source is a store (object with subscribe) or context (symbol/string)
     if (isStore(source)) {
-      this.#directStore = source as Store;
+      this.#directStore =
+        /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ source as Store;
       this.#consumer = null;
     } else {
       this.#directStore = null;

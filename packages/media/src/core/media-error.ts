@@ -22,13 +22,13 @@ export class MediaError extends Error {
   // @see https://docs.mux.com/guides/data/monitor-html5-video-element#customize-error-tracking-behavior
   static MEDIA_ERR_CUSTOM = 100 as const;
 
-  static defaultMessages: Record<number, string> = {
+  static defaultMessages = {
     1: 'You stopped media playback before it finished.',
     2: 'This media could not be loaded due to a network or server issue.',
     3: 'This media could not be played. It may be corrupted, or your browser may not support its format.',
     4: 'This media could not be loaded. It may be unavailable, or your browser may not support its format.',
     5: 'This media could not be played because it could not be decrypted.',
-  };
+  } satisfies Record<number, string>;
 
   name: string;
   code: number;
@@ -44,7 +44,11 @@ export class MediaError extends Error {
     this.fatal = fatal ?? (code >= MediaError.MEDIA_ERR_NETWORK && code <= MediaError.MEDIA_ERR_ENCRYPTED);
 
     if (!this.message) {
-      this.message = MediaError.defaultMessages[this.code] ?? '';
+      this.message = isDefaultMessageCode(this.code) ? MediaError.defaultMessages[this.code] : '';
     }
   }
+}
+
+function isDefaultMessageCode(code: number): code is keyof typeof MediaError.defaultMessages {
+  return code in MediaError.defaultMessages;
 }

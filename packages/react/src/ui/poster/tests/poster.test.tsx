@@ -156,7 +156,10 @@ describe('Poster', () => {
       { wrapper: wrapper({ poster: 'poster.jpg' }) }
     );
 
-    const element = getByTestId('poster') as HTMLImageElement;
+    const element =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ getByTestId(
+        'poster'
+      ) as HTMLImageElement;
     expect(element.complete).toBe(true);
     expect(element.hasAttribute('data-loading')).toBe(true);
     expect(element.hasAttribute('data-error')).toBe(false);

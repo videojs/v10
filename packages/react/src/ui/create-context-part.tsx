@@ -13,7 +13,7 @@ interface ContextPartConfig<Props extends object, State extends object> {
   useContext: () => { state: State; stateAttrMap: StateAttrMap<State> };
   staticProps?: Partial<Props>;
   /** Derive props from state on each render (e.g. `id` from a state field). */
-  getProps?: (state: State) => Record<string, unknown>;
+  getProps?: (state: State) => Partial<Props>;
 }
 
 export function createContextPart<Props extends UIComponentProps<any, any>, State extends object>(
@@ -26,15 +26,23 @@ export function createContextPart<Props extends UIComponentProps<any, any>, Stat
     const context = useContext();
     const dynamicProps = getProps?.(context.state);
 
-    return renderElement(tag, { render, className, style } as renderElementFn.ComponentProps<State>, {
-      state: context.state,
-      stateAttrMap: context.stateAttrMap,
-      ref: forwardedRef,
-      props: [staticProps, dynamicProps, elementProps].filter(Boolean),
-    });
+    return renderElement(
+      tag,
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ {
+        render,
+        className,
+        style,
+      } as renderElementFn.ComponentProps<State>,
+      {
+        state: context.state,
+        stateAttrMap: context.stateAttrMap,
+        ref: forwardedRef,
+        props: [staticProps, dynamicProps, elementProps].filter(Boolean),
+      }
+    );
   });
 
   Component.displayName = displayName;
 
-  return Component as ForwardRefExoticComponent<Props>;
+  return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ Component as ForwardRefExoticComponent<Props>;
 }

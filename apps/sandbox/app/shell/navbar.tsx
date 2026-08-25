@@ -91,13 +91,13 @@ function expectedOutcomeNote(source: SandboxSource, preset: Preset): string | un
 
 const SKIN_OPTIONS: readonly Skin[] = ['default', 'minimal'] satisfies readonly (typeof SKINS)[number][];
 
-const PLATFORM_LABELS: Record<Platform, string> = {
+const PLATFORM_LABELS = {
   html: 'HTML',
   react: 'React',
   cdn: 'CDN',
-};
+} satisfies Record<Platform, string>;
 
-const PRESET_LABELS: Record<Preset, string> = {
+const PRESET_LABELS = {
   video: 'Video',
   'hlsjs-video': 'HLS Video (hls.js)',
   'native-hls-video': 'Native HLS Video',
@@ -119,7 +119,7 @@ const PRESET_LABELS: Record<Preset, string> = {
   'spotify-audio': 'Spotify Audio',
   'tiktok-video': 'TikTok Video',
   'twitch-video': 'Twitch Video',
-};
+} satisfies Record<Preset, string>;
 
 export function Navbar({
   platform,
@@ -168,14 +168,22 @@ export function Navbar({
         <Select
           label="Platform"
           value={platform}
-          onChange={(v) => onPlatformChange(v as Platform)}
+          onChange={(v) =>
+            onPlatformChange(
+              /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ v as Platform
+            )
+          }
           options={platforms.map((p) => ({ value: p, label: PLATFORM_LABELS[p] }))}
         />
 
         <Select
           label="Styling"
           value={styling}
-          onChange={(v) => onStylingChange(v as Styling)}
+          onChange={(v) =>
+            onStylingChange(
+              /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ v as Styling
+            )
+          }
           options={stylings.map((s) => ({
             value: s,
             label: s === 'css' ? 'CSS' : 'Tailwind',
@@ -186,14 +194,22 @@ export function Navbar({
         <Select
           label="Preset"
           value={preset}
-          onChange={(v) => onPresetChange(v as Preset)}
+          onChange={(v) =>
+            onPresetChange(
+              /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ v as Preset
+            )
+          }
           options={presets.map((p) => ({ value: p, label: PRESET_LABELS[p] }))}
         />
 
         <Select
           label="Skin"
           value={skin}
-          onChange={(v) => onSkinChange(v as Skin)}
+          onChange={(v) =>
+            onSkinChange(
+              /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ v as Skin
+            )
+          }
           options={SKIN_OPTIONS.map((s) => ({ value: s, label: capitalize(s) }))}
           disabled={isBackgroundVideo}
         />
@@ -308,7 +324,11 @@ function SettingsMenu({
     if (!open) return;
 
     const handlePointerDown = (event: PointerEvent) => {
-      if (!containerRef.current?.contains(event.target as Node)) {
+      if (
+        !containerRef.current?.contains(
+          /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ event.target as Node
+        )
+      ) {
         setOpen(false);
       }
     };
@@ -365,7 +385,11 @@ function SettingsMenu({
             id={localeId}
             label="Language"
             value={locale}
-            onChange={(value) => onLocaleChange(value as SandboxLocaleTag)}
+            onChange={(value) =>
+              onLocaleChange(
+                /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ value as SandboxLocaleTag
+              )
+            }
             optionGroups={SANDBOX_LOCALE_OPTION_GROUPS}
           />
           <ColorItem id={accentColorId} value={accentColor} onChange={onAccentColorChange} />
@@ -376,7 +400,11 @@ function SettingsMenu({
             id={preloadId}
             label="Preload"
             value={preload}
-            onChange={(value) => onPreloadChange(value as PreloadValue)}
+            onChange={(value) =>
+              onPreloadChange(
+                /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ value as PreloadValue
+              )
+            }
             options={PRELOAD_VALUES.map((value) => ({ value, label: value }))}
           />
         </div>

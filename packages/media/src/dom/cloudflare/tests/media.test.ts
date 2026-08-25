@@ -72,7 +72,11 @@ class MockPlayer {
 }
 
 function timeRanges(end: number): TimeRanges {
-  return { length: end > 0 ? 1 : 0, start: () => 0, end: () => end } as unknown as TimeRanges;
+  return /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+    length: end > 0 ? 1 : 0,
+    start: () => 0,
+    end: () => end,
+  } as TimeRanges;
 }
 
 beforeEach(() => {
@@ -135,7 +139,7 @@ async function waitForEngine(media: CloudflareMedia): Promise<MockPlayer> {
   await vi.waitFor(() => {
     if (!media.engine) throw new Error('player not created yet');
   });
-  return media.engine as unknown as MockPlayer;
+  return /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ media.engine as MockPlayer;
 }
 
 async function attachAndLoad(media: CloudflareMedia): Promise<{ iframe: HTMLIFrameElement; player: MockPlayer }> {
@@ -364,7 +368,8 @@ describe('CloudflareMedia', () => {
     // The Stream SDK documents no request or exit method and no enter or leave
     // event, so the members are absent rather than present and inert — a control
     // the player cannot drive is worse than one it does not offer.
-    const media = new CloudflareMedia() as Partial<Video>;
+    const media =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ new CloudflareMedia() as Partial<Video>;
     expect(media.requestPictureInPicture).toBeUndefined();
     expect(media.exitPictureInPicture).toBeUndefined();
     expect(media.isPictureInPicture).toBeUndefined();

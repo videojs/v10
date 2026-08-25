@@ -21,12 +21,12 @@ function createSnapshots() {
   return root;
 }
 
-function writeJson(
+function writeJson<Value>(
   root: string,
   phase: 'before' | 'after',
   kind: 'components' | 'utils',
   file: string,
-  value: unknown
+  value: Value
 ) {
   writeFileSync(join(root, `${phase}-${kind}`, file), JSON.stringify(value));
 }

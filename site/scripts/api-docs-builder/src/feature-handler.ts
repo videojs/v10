@@ -385,7 +385,7 @@ function extractInterfaceMembers(
   interfaceDecl: ts.InterfaceDeclaration,
   checker: ts.TypeChecker,
   sourceFile: ts.SourceFile
-): { state: Record<string, FeatureStateDef>; actions: Record<string, FeatureActionDef> } {
+) {
   const state: Record<string, FeatureStateDef> = {};
   const actions: Record<string, FeatureActionDef> = {};
 
@@ -421,7 +421,10 @@ function extractInterfaceMembers(
     }
   }
 
-  return { state, actions };
+  return { state, actions } satisfies {
+    state: Record<string, FeatureStateDef>;
+    actions: Record<string, FeatureActionDef>;
+  };
 }
 
 // ─── Derived Publication ──────────────────────────────────────────
@@ -436,19 +439,20 @@ function extractInterfaceMembers(
  * construction. `derived` keys are published on top, typed from what their
  * function returns.
  */
-function extractPublishedShape(
+function extractPublishedState(
   sourceStateDecl: ts.InterfaceDeclaration,
   derivedKeys: readonly DerivedKeySource[],
   derivedLiteral: ts.ObjectLiteralExpression | undefined,
   checker: ts.TypeChecker
-): { state: Record<string, FeatureStateDef>; actions: Record<string, FeatureActionDef> } {
+) {
   const state: Record<string, FeatureStateDef> = {};
   const actions: Record<string, FeatureActionDef> = {};
 
   const declaredType = checker.getTypeAtLocation(sourceStateDecl);
 
   for (const property of checker.getPropertiesOfType(declaredType)) {
-    const name = property.escapedName as string;
+    const name =
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ property.escapedName as string;
     if (name.startsWith(SYMBOL_MEMBER_PREFIX)) continue;
 
     const type = checker.getTypeOfSymbolAtLocation(property, sourceStateDecl);
@@ -478,7 +482,10 @@ function extractPublishedShape(
     state[key.name] = def;
   }
 
-  return { state, actions };
+  return { state, actions } satisfies {
+    state: Record<string, FeatureStateDef>;
+    actions: Record<string, FeatureActionDef>;
+  };
 }
 
 function derivedValueType(
@@ -510,7 +517,7 @@ function extractFeatureConfig(
   sourceStateDecl: ts.InterfaceDeclaration | undefined,
   checker: ts.TypeChecker,
   featureName: string
-): Record<string, FeatureConfigDef> {
+) {
   const config: Record<string, FeatureConfigDef> = {};
 
   for (const entry of entries) {
@@ -530,7 +537,7 @@ function extractFeatureConfig(
     config[entry.name] = def;
   }
 
-  return config;
+  return config satisfies Record<string, FeatureConfigDef>;
 }
 
 const UNRESOLVED_TYPE = 'unknown';
@@ -622,7 +629,7 @@ export function generateFeatureReferences(monorepoRoot: string): FeatureResult[]
     const sourceStateDecl = findSourceStateDecl(program, source);
     const config = extractFeatureConfig(source.config, sourceStateDecl, checker, source.name);
 
-    const published = resolvePublishedShape(source, interfaces, sourceStateDecl, program, checker, stateSourceFile);
+    const published = resolvePublishedState(source, interfaces, sourceStateDecl, program, checker, stateSourceFile);
     if (!published) continue;
 
     const ref: FeatureReference = {
@@ -650,7 +657,7 @@ function needsOwnSourceFile(source: FeatureSource): boolean {
   return source.config.length > 0 || source.derivedKeys.length > 0;
 }
 
-interface PublishedShape {
+interface PublishedState {
   state: Record<string, FeatureStateDef>;
   actions: Record<string, FeatureActionDef>;
   description?: string;
@@ -661,14 +668,14 @@ interface PublishedShape {
  * the annotation describes private source state, so derive the published shape
  * from the feature itself.
  */
-function resolvePublishedShape(
+function resolvePublishedState(
   source: FeatureSource,
   interfaces: ReadonlyMap<string, ts.InterfaceDeclaration>,
   sourceStateDecl: ts.InterfaceDeclaration | undefined,
   program: ts.Program,
   checker: ts.TypeChecker,
   stateSourceFile: ts.SourceFile
-): PublishedShape | undefined {
+): PublishedState | undefined {
   if (!source.stateTypeName) return { state: {}, actions: {} };
 
   const interfaceDecl = interfaces.get(source.stateTypeName);
@@ -688,7 +695,7 @@ function resolvePublishedShape(
 
   const featureSourceFile = program.getSourceFile(source.filePath);
   return {
-    ...extractPublishedShape(
+    ...extractPublishedState(
       sourceStateDecl,
       source.derivedKeys,
       featureSourceFile && findDerivedLiteral(featureSourceFile),

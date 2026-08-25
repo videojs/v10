@@ -11,7 +11,7 @@ function track(opts: {
   segments?: number;
   holdBack?: number;
 }): ResolvedTrack {
-  return {
+  return /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
     duration: opts.duration ?? Number.POSITIVE_INFINITY,
     segments: Array.from({ length: opts.segments ?? 1 }),
     metadata: {
@@ -22,7 +22,7 @@ function track(opts: {
         holdBack: opts.holdBack,
       },
     },
-  } as unknown as ResolvedTrack;
+  } as ResolvedTrack;
 }
 
 describe('mediaPlaylistReloadDelay', () => {
@@ -81,11 +81,11 @@ describe('resolveLiveLatency', () => {
       segments: [{ id: 's0', url: 's0.m4s', duration: 2, startTime: 0 }],
       metadata: { [MEDIA_PLAYLIST_METADATA_KEY]: { targetDuration, mediaSequence: 0, endList: false } },
     };
-    return {
+    return /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
       id: 'p-1',
       url: 'master.m3u8',
       selectionSets: [{ switchingSets: [{ tracks: [video] }] }],
-    } as unknown as MaybeResolvedPresentation;
+    } as MaybeResolvedPresentation;
   }
 
   it('returns the timeline-bearing track latency (3× target duration)', () => {

@@ -33,7 +33,8 @@ function createWrapper(value: PlayerContextValue) {
 
 function createContextValue(overrides?: Partial<PlayerContextValue>): PlayerContextValue {
   return {
-    store: createMockStore() as any,
+    store:
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ createMockStore() as any,
     media: null,
     setMedia: vi.fn(),
     container: null,
@@ -55,7 +56,10 @@ describe('usePlayerContext', () => {
 
   it('returns context value inside a Player', () => {
     const store = createMockStore();
-    const value = createContextValue({ store: store as any });
+    const value = createContextValue({
+      store:
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ store as any,
+    });
 
     const { result } = renderHook(() => usePlayerContext(), {
       wrapper: createWrapper(value),
@@ -147,7 +151,10 @@ describe('useOptionalContainer', () => {
 describe('usePlayer', () => {
   it('returns store without selector', () => {
     const store = createMockStore();
-    const value = createContextValue({ store: store as any });
+    const value = createContextValue({
+      store:
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ store as any,
+    });
 
     const { result } = renderHook(() => usePlayer(), {
       wrapper: createWrapper(value),
@@ -177,7 +184,10 @@ describe('useOptionalPlayer', () => {
 
   it('returns store inside a Player', () => {
     const store = createMockStore();
-    const value = createContextValue({ store: store as any });
+    const value = createContextValue({
+      store:
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ store as any,
+    });
 
     const { result } = renderHook(() => useOptionalPlayer(), {
       wrapper: createWrapper(value),
@@ -188,7 +198,10 @@ describe('useOptionalPlayer', () => {
 
   it('returns selected state inside a Player', () => {
     const store = createMockStore({ paused: true });
-    const value = createContextValue({ store: store as any });
+    const value = createContextValue({
+      store:
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ store as any,
+    });
 
     const { result } = renderHook(() => useOptionalPlayer((state: any) => state.paused), {
       wrapper: createWrapper(value),
@@ -443,7 +456,11 @@ describe('Container', () => {
   it('does not call store.attach directly', () => {
     const store = createMockStore();
     const media = document.createElement('video');
-    const value = createContextValue({ store: store as any, media });
+    const value = createContextValue({
+      store:
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ store as any,
+      media,
+    });
 
     render(
       <PlayerContextProvider value={value}>

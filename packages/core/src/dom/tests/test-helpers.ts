@@ -29,17 +29,17 @@ interface MockVideoOverrides {
 export function createMockVideo(overrides: MockVideoOverrides = {}): HTMLVideoElement {
   const video = document.createElement('video');
 
-  const readonly: Record<string, unknown> = {
-    paused: overrides.paused,
-    ended: overrides.ended,
-    readyState: overrides.readyState,
-    duration: overrides.duration,
-    currentSrc: overrides.currentSrc,
-    buffered: overrides.buffered,
-    seekable: overrides.seekable,
-  };
+  const readonly = [
+    ['paused', overrides.paused],
+    ['ended', overrides.ended],
+    ['readyState', overrides.readyState],
+    ['duration', overrides.duration],
+    ['currentSrc', overrides.currentSrc],
+    ['buffered', overrides.buffered],
+    ['seekable', overrides.seekable],
+  ] as const;
 
-  for (const [key, value] of Object.entries(readonly)) {
+  for (const [key, value] of readonly) {
     if (value !== undefined) {
       Object.defineProperty(video, key, { value, configurable: true });
     }

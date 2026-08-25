@@ -1,4 +1,4 @@
 export interface ComponentMeta {
   readonly name: string;
-  readonly [key: string]: unknown;
+  readonly [key: string]: import('../value').VjscValue;
 }

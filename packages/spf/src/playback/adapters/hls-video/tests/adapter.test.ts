@@ -25,7 +25,7 @@ import {
   SVTA_UNSUPPORTED_VIDEO_FORMAT,
   type SvtaError,
 } from '../../../../media/errors';
-import { MEDIA_PLAYLIST_METADATA_KEY, type Presentation } from '../../../../media/types';
+import { MEDIA_PLAYLIST_METADATA_KEY, type MediaPlaylistMetadata, type Presentation } from '../../../../media/types';
 import { UNSUPPORTED_PLAYBACK_FEATURE_MESSAGE } from '../../../primitives/error-messages';
 import { HlsVideoMediaElement, HlsVideoMediaMixin } from '../adapter';
 
@@ -434,7 +434,7 @@ describe('HlsVideoMediaElement', () => {
           [MEDIA_PLAYLIST_METADATA_KEY]: { mediaSequence: 0, targetDuration: 2, playlistType, endList: complete },
         },
       };
-      return {
+      return /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
         id: 'pres-1',
         url: 'https://example.com/master.m3u8',
         startTime: 0,
@@ -505,7 +505,9 @@ describe('HlsVideoMediaElement', () => {
 
       // The window slides (reload): derived value follows with no event needed.
       const slid = liveVideoPresentation();
-      const track = slid.selectionSets[0]!.switchingSets[0]!.tracks[0] as { segments: { startTime: number }[] };
+      const track =
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ slid
+          .selectionSets[0]!.switchingSets[0]!.tracks[0] as { segments: { startTime: number }[] };
       for (const segment of track.segments) segment.startTime += 10;
       media.engine.state.presentation.set(slid);
       expect(media.liveEdgeStart).toBe(114);
@@ -561,45 +563,48 @@ describe('HlsVideoMediaElement', () => {
     const noticesMatching = (spy: { mock: { calls: unknown[][] } }, pattern: RegExp) =>
       spy.mock.calls.map((call) => String(call[0])).filter((text) => pattern.test(text));
 
-    const livePresentation = (metadata: Record<string, unknown>) =>
-      ({
-        id: 'pres-1',
-        url: 'https://example.com/master.m3u8',
-        startTime: 0,
-        selectionSets: [
-          {
-            id: 'v',
-            type: 'video',
-            switchingSets: [
-              {
-                id: 'vs',
-                type: 'video',
-                tracks: [
-                  {
-                    type: 'video',
-                    id: 'v1',
-                    url: 'https://example.com/v1.m3u8',
-                    bandwidth: 1000,
-                    mimeType: 'video/mp4',
-                    codecs: ['avc1.4d401f'],
-                    startTime: 0,
-                    duration: 10,
-                    segments: [],
-                    metadata: {
-                      [MEDIA_PLAYLIST_METADATA_KEY]: {
-                        targetDuration: 4,
-                        mediaSequence: 0,
-                        endList: false,
-                        ...metadata,
-                      },
+    const livePresentation = (metadata: {
+      lowLatency?: boolean;
+      playlistType?: MediaPlaylistMetadata['playlistType'];
+    }): Presentation => ({
+      id: 'pres-1',
+      url: 'https://example.com/master.m3u8',
+      startTime: 0,
+      selectionSets: [
+        {
+          id: 'v',
+          type: 'video',
+          switchingSets: [
+            {
+              id: 'vs',
+              type: 'video',
+              tracks: [
+                {
+                  type: 'video',
+                  id: 'v1',
+                  url: 'https://example.com/v1.m3u8',
+                  bandwidth: 1000,
+                  mimeType: 'video/mp4',
+                  codecs: ['avc1.4d401f'],
+                  initialization: { url: 'https://example.com/init.mp4' },
+                  startTime: 0,
+                  duration: 10,
+                  segments: [],
+                  metadata: {
+                    [MEDIA_PLAYLIST_METADATA_KEY]: {
+                      targetDuration: 4,
+                      mediaSequence: 0,
+                      endList: false,
+                      ...metadata,
                     },
                   },
-                ],
-              },
-            ],
-          },
-        ],
-      }) as unknown as Presentation;
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
 
     it('warns that LL-HLS falls back to standard live', async () => {
       const spy = vi.spyOn(console, 'warn').mockImplementation(() => {});

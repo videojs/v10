@@ -13,10 +13,15 @@ function uniqueTag(base: string): string {
   return `${base}-${tagCounter++}`;
 }
 
-function createElement<Element extends HTMLElement>(Base: abstract new () => Element): Element {
+function createElement<Element extends HTMLElement>(Base: new () => Element): Element {
   const tag = uniqueTag('test-el');
-  customElements.define(tag, class extends (Base as unknown as typeof HTMLElement) {});
-  return document.createElement(tag) as Element;
+  customElements.define(
+    tag,
+    class extends /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (Base as typeof HTMLElement) {}
+  );
+  return /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+    tag
+  ) as Element;
 }
 
 function ensureDefined(tagName: string, Base: CustomElementConstructor): void {
@@ -42,9 +47,18 @@ describe('ErrorDialogElement', () => {
     ensureDefined(AlertDialogCloseElement.tagName, AlertDialogCloseElement);
 
     const el = createElement(ErrorDialogElement);
-    const title = document.createElement(AlertDialogTitleElement.tagName) as AlertDialogTitleElement;
-    const desc = document.createElement(AlertDialogDescriptionElement.tagName) as AlertDialogDescriptionElement;
-    const close = document.createElement(AlertDialogCloseElement.tagName) as AlertDialogCloseElement;
+    const title =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+        AlertDialogTitleElement.tagName
+      ) as AlertDialogTitleElement;
+    const desc =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+        AlertDialogDescriptionElement.tagName
+      ) as AlertDialogDescriptionElement;
+    const close =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+        AlertDialogCloseElement.tagName
+      ) as AlertDialogCloseElement;
 
     el.appendChild(title);
     el.appendChild(desc);
@@ -81,9 +95,18 @@ describe('ErrorDialogElement', () => {
     const provider = new MediaI18nProviderElement();
     provider.setAttribute('lang', 'es');
     const el = createElement(ErrorDialogElement);
-    const title = document.createElement(AlertDialogTitleElement.tagName) as AlertDialogTitleElement;
-    const desc = document.createElement(AlertDialogDescriptionElement.tagName) as AlertDialogDescriptionElement;
-    const close = document.createElement(AlertDialogCloseElement.tagName) as AlertDialogCloseElement;
+    const title =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+        AlertDialogTitleElement.tagName
+      ) as AlertDialogTitleElement;
+    const desc =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+        AlertDialogDescriptionElement.tagName
+      ) as AlertDialogDescriptionElement;
+    const close =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+        AlertDialogCloseElement.tagName
+      ) as AlertDialogCloseElement;
 
     el.append(title, desc, close);
     provider.appendChild(el);
@@ -110,9 +133,18 @@ describe('ErrorDialogElement', () => {
     const provider = new MediaI18nProviderElement();
     provider.setAttribute('lang', 'es');
     const el = createElement(ErrorDialogElement);
-    const title = document.createElement(AlertDialogTitleElement.tagName) as AlertDialogTitleElement;
-    const desc = document.createElement(AlertDialogDescriptionElement.tagName) as AlertDialogDescriptionElement;
-    const close = document.createElement(AlertDialogCloseElement.tagName) as AlertDialogCloseElement;
+    const title =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+        AlertDialogTitleElement.tagName
+      ) as AlertDialogTitleElement;
+    const desc =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+        AlertDialogDescriptionElement.tagName
+      ) as AlertDialogDescriptionElement;
+    const close =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+        AlertDialogCloseElement.tagName
+      ) as AlertDialogCloseElement;
     title.textContent = 'Custom title';
 
     el.append(title, desc, close);

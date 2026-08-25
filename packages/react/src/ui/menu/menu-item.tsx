@@ -62,7 +62,7 @@ export const MenuItem = forwardRef<HTMLDivElement, MenuItemProps>(function MenuI
 
 interface MenuItemContentProps {
   disabled: boolean | undefined;
-  elementProps: Record<string, unknown>;
+  elementProps: Omit<MenuItemProps, 'className' | 'disabled' | 'onClick' | 'onSelect' | 'render' | 'style'>;
   onClick: (event: React.MouseEvent<HTMLDivElement>) => void;
   onPointerEnter: () => void;
   render: MenuItemProps['render'];

@@ -47,12 +47,13 @@ export function classifyDirectory(beforeDirectory: string, afterDirectory: strin
 }
 
 export function classifySnapshots(artifactDirectory: string): ApiReferenceChanges {
-  const changes = Object.fromEntries(
-    SNAPSHOT_KINDS.map((kind) => [
-      kind,
-      classifyDirectory(join(artifactDirectory, `before-${kind}`), join(artifactDirectory, `after-${kind}`)),
-    ])
-  ) as Record<SnapshotKind, DirectoryChanges>;
+  const changes =
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ Object.fromEntries(
+      SNAPSHOT_KINDS.map((kind) => [
+        kind,
+        classifyDirectory(join(artifactDirectory, `before-${kind}`), join(artifactDirectory, `after-${kind}`)),
+      ])
+    ) as Record<SnapshotKind, DirectoryChanges>;
   const allChanges = SNAPSHOT_KINDS.flatMap((kind) => [
     ...changes[kind].new,
     ...changes[kind].changed,

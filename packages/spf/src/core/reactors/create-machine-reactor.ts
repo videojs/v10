@@ -1,3 +1,5 @@
+import { isFunction } from '@videojs/utils/predicate';
+
 import type { Machine, MachineSnapshot } from '../machine';
 import { createMachineCore } from '../machine';
 import { effect } from '../signals/effect';
@@ -117,14 +119,15 @@ export function createMachineReactor<State extends string>(
   type FullState = State | 'destroying' | 'destroyed';
 
   const { snapshotSignal, getState, transition } = createMachineCore<FullState, MachineSnapshot<FullState>>({
-    value: def.initial as FullState,
+    value:
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ def.initial as FullState,
   });
 
   const effectDisposals: Array<() => void> = [];
 
   const wrapResult = (result: ReturnType<ReactorEffectFn>) => {
     if (!result) return undefined;
-    if (typeof result === 'function') return result;
+    if (isFunction(result)) return result;
     return () => result.abort();
   };
 
@@ -149,11 +152,19 @@ export function createMachineReactor<State extends string>(
     ...toArray(def.monitor).map((fn) => ({
       fn: () => {
         const target = fn();
-        if (target !== (getState() as State)) transition(target as FullState);
+        if (
+          target !==
+          /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (getState() as State)
+        )
+          transition(
+            /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ target as FullState
+          );
       },
       shouldSkip: isTerminal,
     })),
-    ...(Object.entries(def.states) as Array<[State, ReactorStateDefinition]>).flatMap(([state, stateDef]) => {
+    .../* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (
+      Object.entries(def.states) as Array<[State, ReactorStateDefinition]>
+    ).flatMap(([state, stateDef]) => {
       const isNotState = (snapshot: { value: FullState }) => snapshot.value !== state;
       return [
         ...toArray(stateDef.entry).map((fn) => ({ fn, shouldSkip: isNotState, toFnCall: untracked })),

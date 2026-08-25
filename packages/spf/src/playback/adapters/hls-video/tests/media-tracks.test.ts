@@ -30,7 +30,11 @@ class FakeHost extends HTMLVideoElementHost {
   }
 }
 
-const HlsVideoMediaMediaTracks = HlsVideoMediaMediaTracksMixin(MediaTracksMixin(FakeHost as any));
+const HlsVideoMediaMediaTracks = HlsVideoMediaMediaTracksMixin(
+  MediaTracksMixin(
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ FakeHost as any
+  )
+);
 
 const presentation = (video: any[], audio: any[] = [], url = 'https://example.com/master.m3u8') => ({
   id: 'pres-1',
@@ -80,7 +84,10 @@ describe('HlsVideoMediaMediaTracksMixin', () => {
 
   beforeEach(() => {
     engine = createEngine();
-    host = new HlsVideoMediaMediaTracks(engine) as any;
+    host =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ new HlsVideoMediaMediaTracks(
+        engine
+      ) as any;
   });
 
   afterEach(() => {

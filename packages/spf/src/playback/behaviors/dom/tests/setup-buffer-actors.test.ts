@@ -5,7 +5,7 @@ import { signal } from '../../../../core/signals/primitives';
 import { buildMimeCodec } from '../../../../media/dom/mse/mediasource-setup';
 import type { AudioTrack, MaybeResolvedPresentation, Presentation, VideoTrack } from '../../../../media/types';
 import type { BandwidthState } from '../../../../network/bandwidth-estimator';
-import type { SegmentLoaderActor } from '../../../actors/dom/segment-loader';
+import type { createSegmentLoaderActor, SegmentLoaderActor } from '../../../actors/dom/segment-loader';
 import type { SourceBufferActor } from '../../../actors/dom/source-buffer';
 import {
   type BufferActorsContext,
@@ -36,8 +36,17 @@ vi.mock('../../../actors/dom/segment-loader', async (importOriginal) => {
   return {
     ...actual,
     createSegmentLoaderActor: vi.fn(
-      (_sourceBufferActor: SourceBufferActor, _fetchBytes: unknown): SegmentLoaderActor =>
-        ({ destroy: vi.fn() }) as unknown as SegmentLoaderActor
+      (
+        _sourceBufferActor: SourceBufferActor,
+        _fetchBytes: Parameters<typeof createSegmentLoaderActor>[1]
+      ): SegmentLoaderActor => ({
+        snapshot: signal({
+          value: 'idle',
+          context: { inFlightInitTrackId: null, inFlightSegment: null },
+        }),
+        send: vi.fn(),
+        destroy: vi.fn(),
+      })
     ),
   };
 });
@@ -45,7 +54,7 @@ vi.mock('../../../actors/dom/segment-loader', async (importOriginal) => {
 // Fake MediaSource — a real EventTarget so `sourceclose` can be dispatched to
 // the behavior's teardown listener; identity is preserved for call assertions.
 function makeMediaSource(): MediaSource {
-  return new EventTarget() as unknown as MediaSource;
+  return /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ new EventTarget() as MediaSource;
 }
 
 // Helper to create a resolved video track
@@ -370,7 +379,12 @@ describe('setupVideoBufferActors + setupAudioBufferActors', () => {
 
     const mediaSource = makeMediaSource();
     context.mediaSource.set(mediaSource);
-    state.presentation.set(createPresentationWithTracks({ audio: partiallyResolvedAudio as AudioTrack }));
+    state.presentation.set(
+      createPresentationWithTracks({
+        audio:
+          /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ partiallyResolvedAudio as AudioTrack,
+      })
+    );
     state.selectedAudioTrackId.set('audio-1');
 
     await vi.waitFor(() => {
@@ -458,7 +472,10 @@ describe('setupVideoBufferActors + setupAudioBufferActors', () => {
     });
 
     const loader = context.videoSegmentLoaderActor.get()!;
-    const loaderDestroy = loader.destroy as ReturnType<typeof vi.fn>;
+    const loaderDestroy =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ loader.destroy as ReturnType<
+        typeof vi.fn
+      >;
     expect(createSegmentLoaderActor).toHaveBeenCalledTimes(1);
 
     // Detach mediaSource → state machine transitions to 'preconditions-unmet'

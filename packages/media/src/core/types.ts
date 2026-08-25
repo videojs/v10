@@ -19,7 +19,9 @@ export interface EventTargetLike<Events extends { [K in keyof Events]: EventLike
 }
 
 export function TypedEventTarget<Events extends { [K in keyof Events]: EventLike }>() {
-  return EventTarget as unknown as { new (): EventTargetLike<Events> };
+  return /* SAFETY: EventTarget provides the runtime methods while this intersection adds their event map. */ EventTarget as typeof EventTarget & {
+    new (): EventTargetLike<Events>;
+  };
 }
 
 // ----------------------------------------
@@ -398,8 +400,8 @@ export interface MediaVideoRenditionCapability {
 
 export interface MediaFullscreenCapability {
   readonly isFullscreen: boolean;
-  requestFullscreen(): Promise<unknown>;
-  exitFullscreen(): Promise<unknown>;
+  requestFullscreen(): Promise<void>;
+  exitFullscreen(): Promise<void>;
 }
 
 // ----------------------------------------
@@ -411,11 +413,17 @@ export interface MediaPictureInPictureEvents {
   leavepictureinpicture: EventLike;
 }
 
+/** Browser picture-in-picture window surface used by framework-neutral media contracts. */
+export interface PictureInPictureWindowLike extends EventTargetLike<{ resize: EventLike }> {
+  readonly width: number;
+  readonly height: number;
+}
+
 export interface MediaPictureInPictureCapability {
   readonly isPictureInPicture: boolean;
   disablePictureInPicture: boolean;
-  requestPictureInPicture(): Promise<unknown>;
-  exitPictureInPicture(): Promise<unknown>;
+  requestPictureInPicture(): Promise<PictureInPictureWindowLike | void>;
+  exitPictureInPicture(): Promise<void>;
 }
 
 // ----------------------------------------
@@ -662,8 +670,8 @@ export interface MediaTargetLike
 export interface VideoTargetLike
   extends MediaTargetLike, MediaPosterCapability, MediaPlaysInlineCapability, MediaVideoDimensionsCapability {
   disablePictureInPicture: boolean;
-  requestPictureInPicture(): Promise<unknown>;
-  requestFullscreen(): Promise<unknown>;
+  requestPictureInPicture(): Promise<PictureInPictureWindowLike | void>;
+  requestFullscreen(): Promise<void>;
 }
 
 export interface MediaEngineHost<Engine = unknown, Target = unknown> {

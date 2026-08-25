@@ -85,7 +85,10 @@ describe('createSegmentLoaderActor — planTasks cross-rendition switch', () => 
       bufferedRanges: [{ start: 0, end: 18 }],
     });
 
-    const loader = createSegmentLoaderActor(bufferActor as unknown as SourceBufferActor, mockFetchBytes);
+    const loader = createSegmentLoaderActor(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ bufferActor as SourceBufferActor,
+      mockFetchBytes
+    );
 
     const newTrack = makeAudioTrack('audio-es', { language: 'es' });
     // Playhead at 2s (mid-segment-0). currentSegmentStart = 0.
@@ -93,7 +96,12 @@ describe('createSegmentLoaderActor — planTasks cross-rendition switch', () => 
 
     // Wait for the loader to schedule its work (init + segments).
     await vi.waitFor(() => {
-      const initCalls = bufferActor.send.mock.calls.filter((c) => (c[0] as SourceBufferMessage).type === 'append-init');
+      const initCalls = bufferActor.send.mock.calls.filter(
+        (c) =>
+          /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+            c[0] as SourceBufferMessage
+          ).type === 'append-init'
+      );
       expect(initCalls.length).toBeGreaterThan(0);
     });
 
@@ -102,7 +110,10 @@ describe('createSegmentLoaderActor — planTasks cross-rendition switch', () => 
     // entirely inside the load window, and no back-buffer threshold is
     // crossed at currentTime=2).
     const removeMsgs = bufferActor.send.mock.calls
-      .map((c) => c[0] as SourceBufferMessage)
+      .map(
+        (c) =>
+          /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ c[0] as SourceBufferMessage
+      )
       .filter((m): m is Extract<SourceBufferMessage, { type: 'remove' }> => m.type === 'remove');
 
     expect(removeMsgs).toHaveLength(0);
@@ -121,7 +132,10 @@ describe('createSegmentLoaderActor — planTasks cross-rendition switch', () => 
       bufferedRanges: [{ start: 0, end: 6 }],
     });
 
-    const loader = createSegmentLoaderActor(bufferActor as unknown as SourceBufferActor, mockFetchBytes);
+    const loader = createSegmentLoaderActor(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ bufferActor as SourceBufferActor,
+      mockFetchBytes
+    );
 
     const newTrack = makeAudioTrack('audio-en-256k', { language: 'en' });
     loader.send({ type: 'load', track: newTrack, range: { start: 2, end: 20 } });
@@ -129,7 +143,10 @@ describe('createSegmentLoaderActor — planTasks cross-rendition switch', () => 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     const crossRenditionRemove = bufferActor.send.mock.calls
-      .map((c) => c[0] as SourceBufferMessage)
+      .map(
+        (c) =>
+          /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ c[0] as SourceBufferMessage
+      )
       .find(
         (m): m is Extract<SourceBufferMessage, { type: 'remove' }> =>
           m.type === 'remove' && m.start > 0 && m.end === Infinity
@@ -149,14 +166,22 @@ describe('createSegmentLoaderActor — planTasks cross-rendition switch', () => 
     // No buffered track yet (initTrackId undefined). First load is the
     // initial setup — should emit append-init but no cross-rendition flush.
     const bufferActor = createMockBufferActor();
-    const loader = createSegmentLoaderActor(bufferActor as unknown as SourceBufferActor, mockFetchBytes);
+    const loader = createSegmentLoaderActor(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ bufferActor as SourceBufferActor,
+      mockFetchBytes
+    );
 
     const track = makeAudioTrack('audio-en', { language: 'en' });
     loader.send({ type: 'load', track, range: { start: 0, end: 20 } });
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
-    const removeCalls = bufferActor.send.mock.calls.filter((c) => (c[0] as SourceBufferMessage).type === 'remove');
+    const removeCalls = bufferActor.send.mock.calls.filter(
+      (c) =>
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+          c[0] as SourceBufferMessage
+        ).type === 'remove'
+    );
     expect(removeCalls).toHaveLength(0);
 
     loader.destroy();
@@ -183,7 +208,10 @@ describe('createSegmentLoaderActor — planTasks cross-rendition switch', () => 
       bufferedRanges: [{ start: 0, end: 18 }],
     });
 
-    const loader = createSegmentLoaderActor(bufferActor as unknown as SourceBufferActor, mockFetchBytes);
+    const loader = createSegmentLoaderActor(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ bufferActor as SourceBufferActor,
+      mockFetchBytes
+    );
 
     const newTrack = makeAudioTrack('audio-es', { language: 'es' });
     // Playhead at 2s (mid-seg-0). currentSegmentStart = 0 → stale range
@@ -192,13 +220,19 @@ describe('createSegmentLoaderActor — planTasks cross-rendition switch', () => 
 
     await vi.waitFor(() => {
       const appendSegmentCalls = bufferActor.send.mock.calls.filter(
-        (c) => (c[0] as SourceBufferMessage).type === 'append-segment'
+        (c) =>
+          /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+            c[0] as SourceBufferMessage
+          ).type === 'append-segment'
       );
       expect(appendSegmentCalls.length).toBeGreaterThan(0);
     });
 
     const segmentStartTimes = bufferActor.send.mock.calls
-      .map((c) => c[0] as SourceBufferMessage)
+      .map(
+        (c) =>
+          /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ c[0] as SourceBufferMessage
+      )
       .filter((m): m is Extract<SourceBufferMessage, { type: 'append-segment' }> => m.type === 'append-segment')
       .map((m) => m.meta.startTime);
 
@@ -217,18 +251,29 @@ describe('createSegmentLoaderActor — planTasks cross-rendition switch', () => 
     // Verify that planTasks includes `language` in the append-init meta
     // so the SourceBufferActor can capture initTrackLanguage on commit.
     const bufferActor = createMockBufferActor();
-    const loader = createSegmentLoaderActor(bufferActor as unknown as SourceBufferActor, mockFetchBytes);
+    const loader = createSegmentLoaderActor(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ bufferActor as SourceBufferActor,
+      mockFetchBytes
+    );
 
     const track = makeAudioTrack('audio-es', { language: 'es' });
     loader.send({ type: 'load', track, range: { start: 0, end: 20 } });
 
     await vi.waitFor(() => {
-      const initCall = bufferActor.send.mock.calls.find((c) => (c[0] as SourceBufferMessage).type === 'append-init');
+      const initCall = bufferActor.send.mock.calls.find(
+        (c) =>
+          /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+            c[0] as SourceBufferMessage
+          ).type === 'append-init'
+      );
       expect(initCall).toBeDefined();
     });
 
     const initMsg = bufferActor.send.mock.calls
-      .map((c) => c[0] as SourceBufferMessage)
+      .map(
+        (c) =>
+          /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ c[0] as SourceBufferMessage
+      )
       .find((m): m is Extract<SourceBufferMessage, { type: 'append-init' }> => m.type === 'append-init')!;
 
     expect(initMsg.meta.trackId).toBe('audio-es');

@@ -1,6 +1,7 @@
 import type { MediaTextCue } from '@videojs/media';
 import { findRangeAt } from '@videojs/utils/array';
 import { toPercent } from '@videojs/utils/number';
+import { isString } from '@videojs/utils/predicate';
 
 import type { SliderSegmentRange, SliderSegmentState } from '../../slider/slider-segments-core';
 import type { TimeSliderChapterRange, TimeSliderChapterState } from './types';
@@ -11,8 +12,10 @@ let cueKey = 0;
 function getCueKey(cue: MediaTextCue): string {
   let key = cueKeys.get(cue);
   if (!key) {
-    const id = (cue as MediaTextCue & { id?: unknown }).id;
-    key = `cue-${typeof id === 'string' && id ? `${id}-` : ''}${cueKey++}`;
+    const id = /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (
+      cue as MediaTextCue & { id?: unknown }
+    ).id;
+    key = `cue-${isString(id) && id ? `${id}-` : ''}${cueKey++}`;
     cueKeys.set(cue, key);
   }
   return key;

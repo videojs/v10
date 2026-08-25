@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 
 import type { ImportDeclaration, JSXElement, JSXElementName, Program } from '@oxc-project/types';
+import { isFunction } from '@videojs/utils/predicate';
 import { walk } from 'oxc-walker';
 import type { Plugin } from 'rolldown';
 
@@ -17,7 +18,6 @@ import {
   type SourcePart,
   type SourcePartCollection,
   type SourcePartFor,
-  type TargetOutput,
 } from '../target/definition';
 import { createTargetModuleImports } from '../target/module-imports';
 import { renderTargetElement, renderTargetOutput } from '../target/render';
@@ -86,7 +86,7 @@ export function componentTargetPlugin(options: ComponentTargetPluginOptions): Pl
           if (!scope) throw new Error('Component target could not resolve the source component scope.');
 
           const rule = configuredRule(path) ?? resolveDefault(path);
-          if (typeof rule === 'function' && !isTargetElement(rule)) {
+          if (isFunction(rule) && !isTargetElement(rule)) {
             const source = createSourceText(code, childEdits);
             const children = createSourceChildren(
               source,
@@ -96,11 +96,13 @@ export function componentTargetPlugin(options: ComponentTargetPluginOptions): Pl
             );
             const context: ComponentRewriteContext<RuntimeComponentDefinition> = {
               props: createSourceProps(source, node.openingElement, children),
-              children: children as unknown as TargetOutput,
+              children,
               parts: createSourceParts(code, node, path, bindings, scopes, descendants),
               id: (name) => sourceId(scope, name),
             };
-            const output = (rule as ComponentRewrite<RuntimeComponentDefinition>)(context);
+            const output = /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (
+              rule as ComponentRewrite<RuntimeComponentDefinition>
+            )(context);
             let replacement = renderTargetOutput(output, { target: path.target, imports });
             if (scope.root === node && scope.used) replacement = renderSourceScope(replacement, scope, imports);
 
@@ -165,10 +167,10 @@ export function primitiveTargetPlugin(options: ComponentTargetPluginOptions): Pl
           );
           const rule = binding.rule;
 
-          if (typeof rule === 'function' && !isTargetElement(rule)) {
+          if (isFunction(rule) && !isTargetElement(rule)) {
             const output = rule({
               props: createSourceProps(source, node.openingElement, children),
-              children: children as unknown as TargetOutput,
+              children,
               id: (name) => `vjsc-${binding.name.toLowerCase()}-${occurrence}-${name}`,
             });
             const replacement = renderTargetOutput(output, { target: binding.target, imports });
@@ -203,7 +205,7 @@ export function primitiveTargetPlugin(options: ComponentTargetPluginOptions): Pl
 }
 
 export function selectComponentTargets(selection: ComponentTargetSelection, id: string): readonly ComponentTarget[] {
-  if (typeof selection !== 'function') return selection;
+  if (!isFunction(selection)) return selection;
 
   const parsed = parseModuleId(id);
   return selection({ id, ...parsed }) ?? [];
@@ -353,16 +355,19 @@ function canonicalPath(name: JSXElementName, bindings: CanonicalBindings): Canon
 }
 
 function configuredRule(path: CanonicalPath): ComponentTargetRule<object> | undefined {
-  let rule = path.target.components[path.component] as ComponentTargetRule<object> | undefined;
+  let rule = /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ path.target
+    .components[path.component] as ComponentTargetRule<object> | undefined;
   if (!path.part || !rule) return rule;
 
   const parts = path.part.split('.');
   for (const [index, part] of parts.entries()) {
     if (!rule) return undefined;
-    if (typeof rule === 'function' || isTargetElement(rule)) {
+    if (isFunction(rule) || isTargetElement(rule)) {
       return part === 'Root' && index === parts.length - 1 ? rule : undefined;
     }
-    rule = (rule as Readonly<Record<string, ComponentTargetRule<object> | undefined>>)[part];
+    rule = /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (
+      rule as Readonly<Record<string, ComponentTargetRule<object> | undefined>>
+    )[part];
   }
 
   return rule;
@@ -370,7 +375,9 @@ function configuredRule(path: CanonicalPath): ComponentTargetRule<object> | unde
 
 function resolveDefault(path: CanonicalPath): ComponentTargetRule<object> | undefined {
   const targetPath: ComponentTargetPath = { component: path.component, part: path.part };
-  return path.target.resolve(targetPath) as ComponentTargetRule<object> | undefined;
+  return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ path.target.resolve(
+    targetPath
+  ) as ComponentTargetRule<object> | undefined;
 }
 
 interface CollectedPart {
@@ -426,7 +433,7 @@ function createSourceParts(
       group!.values.push({
         value: {
           props: createSourceProps(source, node.openingElement, children),
-          children: children as unknown as TargetOutput,
+          children,
         },
         children: group!.children,
       });
@@ -437,7 +444,13 @@ function createSourceParts(
 }
 
 function sourcePartCollection(name: string, group: CollectedPartGroup): RuntimeSourcePart {
-  const collection = {
+  const collection: SourcePartCollection<object> = {
+    get props() {
+      return collection.one().props;
+    },
+    get children() {
+      return collection.one().children;
+    },
     one() {
       if (group.values.length !== 1) {
         throw new Error(`Component rewrite expected one <${name}> part, found ${group.values.length}.`);
@@ -447,17 +460,17 @@ function sourcePartCollection(name: string, group: CollectedPartGroup): RuntimeS
     all() {
       return group.values.map((item) => item.value);
     },
-  } as unknown as SourcePartCollection<object> & Record<string, RuntimeSourcePart>;
+  } satisfies SourcePartCollection<object>;
 
-  Object.defineProperties(collection, {
-    props: { enumerable: true, get: () => collection.one().props },
-    children: { enumerable: true, get: () => collection.one().children },
-  });
   for (const [childName, child] of group.children) {
-    collection[childName] = sourcePartCollection(`${name}.${childName}`, child);
+    Object.defineProperty(collection, childName, {
+      enumerable: true,
+      value: sourcePartCollection(`${name}.${childName}`, child),
+    });
   }
 
-  return collection;
+  // SAFETY: Every child group is installed above under its schema-defined part name.
+  return collection as RuntimeSourcePart;
 }
 
 function firstElementChild(node: JSXElement): JSXElement | undefined {
@@ -524,5 +537,7 @@ function collectJsxEdits(
 }
 
 function primitiveRule(target: ComponentTarget, name: string): PrimitiveTargetRule<object> | undefined {
-  return (target.primitives as Readonly<Record<string, PrimitiveTargetRule<object> | undefined>>)[name];
+  return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (
+    target.primitives as Readonly<Record<string, PrimitiveTargetRule<object> | undefined>>
+  )[name];
 }

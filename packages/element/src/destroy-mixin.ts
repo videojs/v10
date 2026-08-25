@@ -79,5 +79,6 @@ export function DestroyMixin<Base extends new (...args: any[]) => ReactiveElemen
     }
   }
 
-  return DestroyableElement as unknown as Base & (new (...args: any[]) => Destroyable);
+  return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ DestroyableElement as Base &
+    (new (...args: any[]) => Destroyable);
 }

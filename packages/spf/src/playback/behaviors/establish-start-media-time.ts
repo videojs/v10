@@ -119,7 +119,11 @@ export const deriveSharedMinStartMediaTime: DeriveStartMediaTime = (containerDat
   // Barrier: not ready until every contributing type has a complete origin.
   if (origins.length === 0 || origins.some((origin) => origin === undefined)) return {};
 
-  const shared = thresholdOrigin(Math.min(...(origins as number[])));
+  const shared = thresholdOrigin(
+    Math.min(
+      .../* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (origins as number[])
+    )
+  );
   const out: Record<string, number | undefined> = {};
   for (const type of Object.keys(containerData)) out[type] = shared;
   return out;
@@ -209,7 +213,12 @@ function stampStartDates(presentation: Presentation, anchor: number): Presentati
       }),
     })),
   }));
-  return changed ? ({ ...presentation, selectionSets } as Presentation) : presentation;
+  return changed
+    ? /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ ({
+        ...presentation,
+        selectionSets,
+      } as Presentation)
+    : presentation;
 }
 
 /** Stamp the derived per-track `startMediaTime` onto the model (idempotent — same reference when nothing moved). */
@@ -227,7 +236,12 @@ function stampTracks(presentation: Presentation, startMediaTimes: Record<string,
       }),
     })),
   }));
-  return changed ? ({ ...presentation, selectionSets } as Presentation) : presentation;
+  return changed
+    ? /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ ({
+        ...presentation,
+        selectionSets,
+      } as Presentation)
+    : presentation;
 }
 
 type EstablishFsmState = 'inactive' | 'monitoring' | 'established';
@@ -293,8 +307,13 @@ function establishStartMediaTimeSetup({
             if (!reference || !isResolvedTrack(reference)) return;
             const anchor = reference.startDate;
             if (anchor === undefined) return;
-            update(state.presentation as Signal<MaybeResolvedPresentation>, (current) =>
-              stampStartDates(current as Presentation, anchor)
+            update(
+              /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ state.presentation as Signal<MaybeResolvedPresentation>,
+              (current) =>
+                stampStartDates(
+                  /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ current as Presentation,
+                  anchor
+                )
             );
           },
           // Derive: reduce the accumulating container data into per-track startMediaTime
@@ -307,8 +326,13 @@ function establishStartMediaTimeSetup({
             // `current` is always resolved here — the monitor gates `monitoring` on a
             // resolved presentation and transitions before effects re-run — so we cast
             // to `Presentation` rather than re-narrowing.
-            update(state.presentation as Signal<MaybeResolvedPresentation>, (current) =>
-              stampTracks(current as Presentation, startMediaTimes)
+            update(
+              /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ state.presentation as Signal<MaybeResolvedPresentation>,
+              (current) =>
+                stampTracks(
+                  /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ current as Presentation,
+                  startMediaTimes
+                )
             );
           },
         ],

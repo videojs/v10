@@ -64,11 +64,7 @@ export function extractCore(filePath: string, program: ts.Program, componentName
  *
  * Looks for: static readonly defaultProps = { label: '', disabled: false }
  */
-export function extractDefaultProps(
-  filePath: string,
-  program: ts.Program,
-  componentName: string
-): Record<string, string> {
+export function extractDefaultProps(filePath: string, program: ts.Program, componentName: string) {
   const sourceFile = program.getSourceFile(filePath);
   if (!sourceFile) return {};
 
@@ -108,7 +104,7 @@ export function extractDefaultProps(
 
   visit(sourceFile);
 
-  return defaultProps;
+  return defaultProps satisfies Record<string, string>;
 }
 
 /**

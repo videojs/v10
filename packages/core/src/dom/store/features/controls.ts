@@ -34,7 +34,7 @@ export const controlsFeature = definePlayerFeature({
       // Fallback before attach — no idle timer, just flip state.
       const next = !get().userActive;
       set({ userActive: next, controlsVisible: next });
-      return next as boolean;
+      return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ next as boolean;
     };
     const actions = createControlsActions(fallbackRequestControlsLock, fallbackToggleControls);
 
@@ -164,14 +164,18 @@ export const controlsFeature = definePlayerFeature({
         // to do here. An unclaimed tap (e.g. on a control button the coordinator
         // ignores) falls through and resets the idle timer below; without that,
         // repeatedly tapping a control lets the controls auto-hide mid-interaction.
-        const coordinator = findGestureCoordinator(container as HTMLElement);
+        const coordinator = findGestureCoordinator(
+          /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ container as HTMLElement
+        );
 
         if (coordinator?.claimsTap(event, 'toggleControls')) {
           return;
         }
 
         // Inline touch tap-to-toggle for standalone use (no gestures).
-        const isMediaOrContainer = [media, container].includes(event.target as HTMLElement);
+        const isMediaOrContainer = [media, container].includes(
+          /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ event.target as HTMLElement
+        );
         if (get().controlsVisible && isMediaOrContainer) {
           setInactive();
         } else {

@@ -166,7 +166,7 @@ describe('formatProperties', () => {
   it('expands type aliases when allExports is provided', () => {
     // Create a property with an ExternalTypeNode referencing 'TimeType'
     const externalType = createExternalTypeNode('TimeType');
-    const prop = {
+    const prop = /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
       name: 'type',
       type: externalType,
       optional: true,
@@ -174,15 +174,16 @@ describe('formatProperties', () => {
     } as tae.PropertyNode;
 
     // Create allExports with TimeType resolved to a union
-    const timeTypeExport = {
-      name: 'TimeType',
-      type: createUnionNode([
-        createLiteralNode("'current'"),
-        createLiteralNode("'duration'"),
-        createLiteralNode("'remaining'"),
-      ]),
-      documentation: undefined,
-    } as tae.ExportNode;
+    const timeTypeExport =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+        name: 'TimeType',
+        type: createUnionNode([
+          createLiteralNode("'current'"),
+          createLiteralNode("'duration'"),
+          createLiteralNode("'remaining'"),
+        ]),
+        documentation: undefined,
+      } as tae.ExportNode;
 
     const result = formatProperties([prop], [timeTypeExport]);
 
@@ -191,9 +192,9 @@ describe('formatProperties', () => {
 
   it('sets abbreviated type and detailedType for callback props', () => {
     const fnType = createFunctionNode([
-      {
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
         parameters: [
-          {
+          /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
             name: 'event',
             type: createIntrinsicNode('Event'),
             optional: false,
@@ -205,7 +206,7 @@ describe('formatProperties', () => {
       } as tae.CallSignature,
     ]);
 
-    const prop = {
+    const prop = /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
       name: 'onClick',
       type: fnType,
       optional: true,
@@ -330,9 +331,9 @@ describe('formatType', () => {
 
   it('formats FunctionNode without typeName', () => {
     const node = createFunctionNode([
-      {
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
         parameters: [
-          {
+          /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
             name: 'x',
             type: createIntrinsicNode('string'),
             optional: false,
@@ -351,7 +352,7 @@ describe('formatType', () => {
     const typeName = createTypeName('MyHandler');
     const node = createFunctionNode(
       [
-        {
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
           parameters: [],
           returnValueType: createIntrinsicNode('void'),
         } as tae.CallSignature,
@@ -432,7 +433,8 @@ describe('formatType', () => {
   // --- Unknown node ---
 
   it('returns unknown for unrecognized node type', () => {
-    const node = {} as tae.AnyType;
+    const node =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {} as tae.AnyType;
 
     expect(formatType(node, false)).toBe('unknown');
   });
@@ -483,7 +485,10 @@ describe('formatDetailedType', () => {
       createLiteralNode("'duration'"),
       createLiteralNode("'remaining'"),
     ]);
-    const allExports = [{ name: 'TimeType', type: resolvedUnion, documentation: undefined }] as tae.ExportNode[];
+    const allExports =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ [
+        { name: 'TimeType', type: resolvedUnion, documentation: undefined },
+      ] as tae.ExportNode[];
 
     expect(formatDetailedType(externalType, allExports, false)).toBe("'current' | 'duration' | 'remaining'");
   });
@@ -497,12 +502,13 @@ describe('formatDetailedType', () => {
   it('skips re-exported types (reexportedFrom is set)', () => {
     const externalType = createExternalTypeNode('TimeType');
     const resolvedUnion = createUnionNode([createLiteralNode("'current'"), createLiteralNode("'duration'")]);
-    const reexport = {
-      name: 'TimeType',
-      type: resolvedUnion,
-      documentation: undefined,
-      reexportedFrom: 'OriginalTimeType',
-    } as unknown as tae.ExportNode;
+    const reexport =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+        name: 'TimeType',
+        type: resolvedUnion,
+        documentation: undefined,
+        reexportedFrom: 'OriginalTimeType',
+      } as tae.ExportNode;
 
     expect(formatDetailedType(externalType, [reexport], false)).toBe('TimeType');
   });
@@ -533,11 +539,12 @@ describe('formatDetailedType', () => {
   it('prevents infinite recursion via visited set', () => {
     const externalType = createExternalTypeNode('SelfRef');
     // SelfRef resolves to itself
-    const selfRefExport = {
-      name: 'SelfRef',
-      type: createExternalTypeNode('SelfRef'),
-      documentation: undefined,
-    } as tae.ExportNode;
+    const selfRefExport =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+        name: 'SelfRef',
+        type: createExternalTypeNode('SelfRef'),
+        documentation: undefined,
+      } as tae.ExportNode;
 
     // Should not stack overflow; falls back to formatType
     expect(formatDetailedType(externalType, [selfRefExport], false)).toBe('SelfRef');
@@ -545,11 +552,12 @@ describe('formatDetailedType', () => {
 
   it('expands IntersectionNode members', () => {
     const externalA = createExternalTypeNode('BaseProps');
-    const basePropsExport = {
-      name: 'BaseProps',
-      type: createObjectNode([{ name: 'id', type: createIntrinsicNode('string'), optional: false }]),
-      documentation: undefined,
-    } as tae.ExportNode;
+    const basePropsExport =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+        name: 'BaseProps',
+        type: createObjectNode([{ name: 'id', type: createIntrinsicNode('string'), optional: false }]),
+        documentation: undefined,
+      } as tae.ExportNode;
     const intersection = createIntersectionNode([externalA, createIntrinsicNode('number')]);
 
     expect(formatDetailedType(intersection, [basePropsExport], false)).toBe('{ id: string } & number');
@@ -575,7 +583,7 @@ function createPropertyNode(
       ? createDocumentation(options)
       : undefined;
 
-  return {
+  return /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
     name,
     type,
     optional: options.optional ?? false,
@@ -588,11 +596,11 @@ function createDocumentation(options: {
   description?: string;
   defaultValue?: string;
 }): tae.Documentation {
-  return {
+  return /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
     description: options.description,
     defaultValue: options.defaultValue,
     hasTag: (tag: string) => (tag === 'ignore' ? (options.hasIgnoreTag ?? false) : false),
-  } as unknown as tae.Documentation;
+  } as tae.Documentation;
 }
 
 function createIntrinsicNode(intrinsic: string): tae.IntrinsicNode {

@@ -12,7 +12,7 @@ import {
 
 // Mock supportsAnchorPositioning for deterministic tests.
 vi.mock('@videojs/utils/dom', async (importOriginal) => {
-  const original = (await importOriginal()) as Record<string, unknown>;
+  const original = await importOriginal<typeof import('@videojs/utils/dom')>();
   return {
     ...original,
     supportsAnchorPositioning: vi.fn(() => false),
@@ -305,7 +305,7 @@ describe('resolveOffsets', () => {
     const el = document.createElement('div');
     const getComputedStyleSpy = vi.spyOn(globalThis, 'getComputedStyle').mockImplementation(
       (target: Element) =>
-        ({
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ ({
           fontSize: target === document.documentElement ? '16px' : '14px',
           getPropertyValue(name: string) {
             if (name === PopoverCSSVars.sideOffset) return '0.5rem';
@@ -402,7 +402,7 @@ describe('getAnchorPositionStyle (CSS Anchor Positioning)', () => {
   async function importWithAnchorSupport() {
     vi.resetModules();
     vi.doMock('@videojs/utils/dom', async (importOriginal) => {
-      const original = (await importOriginal()) as Record<string, unknown>;
+      const original = await importOriginal<typeof import('@videojs/utils/dom')>();
       return { ...original, supportsAnchorPositioning: () => true };
     });
     const mod = await import('../popover-positioning');

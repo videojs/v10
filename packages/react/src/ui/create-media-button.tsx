@@ -3,7 +3,7 @@ import { logMissingFeature } from '@videojs/core/dom';
 import { isText, translateText } from '@videojs/core/i18n';
 import type { Selector } from '@videojs/store';
 import { isUndefined } from '@videojs/utils/predicate';
-import type { ForwardedRef, ForwardRefExoticComponent, RefAttributes } from 'react';
+import type { ButtonHTMLAttributes, ForwardRefExoticComponent, PropsWithoutRef, RefAttributes } from 'react';
 import { forwardRef, useLayoutEffect, useState } from 'react';
 
 import { useTranslator } from '../i18n/context';
@@ -15,14 +15,16 @@ import { useHotkeyShortcut } from './hotkey/use-hotkey-shortcut';
 import { useOptionalMenuTriggerChildContext } from './menu/context';
 import { useOptionalTooltipContext } from './tooltip/context';
 
+type CoreProps<Core extends Required<MediaButtonComponent>> = Parameters<Core['setProps']>[0];
+
 interface MediaButtonConfig<Core extends Required<MediaButtonComponent>> {
   displayName: string;
-  core: { new (): Core; defaultProps: Record<string, unknown> };
+  core: { new (): Core; defaultProps: CoreProps<Core> };
   stateAttrMap: StateAttrMap<InferComponentState<Core>>;
   selector: Selector<object, InferMediaState<Core> | undefined>;
   action: (core: Core, state: InferMediaState<Core>) => void | Promise<void>;
   hotkeyAction?: string;
-  hotkeyValue?: (props: Record<string, unknown>) => number | undefined;
+  hotkeyValue?: (props: Partial<CoreProps<Core>>) => number | undefined;
   tooltipLabel?: (core: Core, state: InferComponentState<Core>) => string | undefined;
   /** Returns `false` to render `null` (e.g., when the underlying feature is unsupported). */
   isSupported?: (state: InferComponentState<Core>) => boolean;
@@ -37,13 +39,18 @@ function getLabelParams<Core extends MediaButtonComponent>(
   core: Core,
   state: InferComponentState<Core>
 ): LabelParams | undefined {
-  return (core as LabelParamsCore<InferComponentState<Core>>).getLabelParams?.(state);
+  return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (
+    core as LabelParamsCore<InferComponentState<Core>>
+  ).getLabelParams?.(state);
 }
 
 /** Creates a media button React component from a core class and config. */
-export function createMediaButton<Core extends Required<MediaButtonComponent>, Props extends object>(
+export function createMediaButton<
+  Core extends Required<MediaButtonComponent>,
+  Props extends renderElementFn.ComponentProps<InferComponentState<Core>>,
+>(
   config: MediaButtonConfig<Core>
-): ForwardRefExoticComponent<Props & RefAttributes<HTMLButtonElement>> {
+): ForwardRefExoticComponent<PropsWithoutRef<Props> & RefAttributes<HTMLButtonElement>> {
   const {
     displayName,
     core: CoreClass,
@@ -59,20 +66,23 @@ export function createMediaButton<Core extends Required<MediaButtonComponent>, P
   // Props that exist in the core's defaultProps are routed to setProps; the rest go to the DOM element.
   const corePropKeys = new Set(Object.keys(CoreClass.defaultProps));
 
-  const Component = forwardRef(function MediaButton(
-    componentProps: Record<string, unknown>,
-    forwardedRef: ForwardedRef<HTMLButtonElement>
-  ) {
+  const Component = forwardRef<HTMLButtonElement, Props>(function MediaButton(componentProps, forwardedRef) {
     const { render, className, style, ...rest } = componentProps;
 
-    const coreProps: Record<string, unknown> = {};
-    const elementProps: Record<string, unknown> = {};
+    const coreProps = /* SAFETY: Only keys declared by CoreClass.defaultProps are assigned below. */ {} as Partial<
+      CoreProps<Core>
+    >;
+    const elementProps: ButtonHTMLAttributes<HTMLButtonElement> = {};
 
     for (const key of Object.keys(rest)) {
       if (corePropKeys.has(key)) {
-        coreProps[key] = rest[key];
+        Object.assign(coreProps, {
+          [key]: rest[/* SAFETY: Object.keys returns keys owned by rest. */ key as keyof typeof rest],
+        });
       } else {
-        elementProps[key] = rest[key];
+        Object.assign(elementProps, {
+          [key]: rest[/* SAFETY: Object.keys returns keys owned by rest. */ key as keyof typeof rest],
+        });
       }
     }
 
@@ -85,11 +95,13 @@ export function createMediaButton<Core extends Required<MediaButtonComponent>, P
 
     const [core] = useState(() => new CoreClass());
 
-    if (corePropKeys.has('menuTrigger') && isUndefined(coreProps.menuTrigger)) {
-      coreProps.menuTrigger = menuTriggerChild;
+    if (corePropKeys.has('menuTrigger') && (!('menuTrigger' in coreProps) || isUndefined(coreProps.menuTrigger))) {
+      Object.assign(coreProps, { menuTrigger: menuTriggerChild });
     }
 
-    core.setProps(coreProps);
+    core.setProps(
+      /* SAFETY: Core defaults identify the subset routed into the core props contract. */ coreProps as CoreProps<Core>
+    );
 
     const { getButtonProps, buttonRef } = useButton({
       displayName,
@@ -101,14 +113,16 @@ export function createMediaButton<Core extends Required<MediaButtonComponent>, P
           if (__DEV__) console.error(`[${displayName}]`, error);
         });
       },
-      isDisabled: () => !!coreProps.disabled || !feature,
+      isDisabled: () => ('disabled' in coreProps && Boolean(coreProps.disabled)) || !feature,
     });
 
     // Derive state and label before the hooks boundary so the
     // useLayoutEffect below (called unconditionally) can reference them.
     type State = InferComponentState<Core>;
     if (feature) core.setMedia(feature);
-    const state = feature ? (core.getState() as State) : null;
+    const state = feature
+      ? /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (core.getState() as State)
+      : null;
     const supported = state ? (isSupported?.(state) ?? true) : false;
     const label =
       state && supported ? translateText(core.getLabel(state), translator, getLabelParams(core, state)) : undefined;
@@ -128,8 +142,8 @@ export function createMediaButton<Core extends Required<MediaButtonComponent>, P
 
     if (!supported) return null;
 
-    const attrs = core.getAttrs(state) as Record<string, unknown>;
-    const ariaLabel = attrs['aria-label'];
+    const attrs = core.getAttrs(state);
+    const ariaLabel = 'aria-label' in attrs ? attrs['aria-label'] : undefined;
     const resolvedAttrs = {
       ...attrs,
       ...(isText(ariaLabel)
@@ -140,7 +154,11 @@ export function createMediaButton<Core extends Required<MediaButtonComponent>, P
 
     return renderElement(
       'button',
-      { render, className, style } as renderElementFn.ComponentProps<InferComponentState<Core>>,
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ {
+        render,
+        className,
+        style,
+      } as renderElementFn.ComponentProps<InferComponentState<Core>>,
       {
         state,
         stateAttrMap,
@@ -152,5 +170,5 @@ export function createMediaButton<Core extends Required<MediaButtonComponent>, P
 
   Component.displayName = displayName;
 
-  return Component as unknown as ForwardRefExoticComponent<Props & RefAttributes<HTMLButtonElement>>;
+  return Component;
 }

@@ -18,19 +18,19 @@ if (!['note', 'tip', 'caution', 'danger'].includes(type)) {
   throw new Error(`Invalid aside type: ${type}`);
 }
 
-const icons: Record<AsideType, typeof Info> = {
+const icons = {
   note: Info,
   tip: Lightbulb,
   caution: TriangleAlert,
   danger: OctagonX,
-};
+} satisfies Record<AsideType, typeof Info>;
 
-const defaultTitles: Record<AsideType, string> = {
+const defaultTitles = {
   note: 'Note',
   tip: 'Tip',
   caution: 'Caution',
   danger: 'Danger',
-};
+} satisfies Record<AsideType, string>;
 
 const Icon = icons[type];
 const renderTitle = title ?? defaultTitles[type];

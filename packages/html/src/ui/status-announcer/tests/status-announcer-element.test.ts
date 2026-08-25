@@ -1,3 +1,4 @@
+import type { MediaSnapshot } from '@videojs/core';
 import type { AnyPlayerStore } from '@videojs/core/dom';
 import { ContextProvider } from '@videojs/element/context';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
@@ -14,11 +15,11 @@ function defineElement(tagName: string, Base: CustomElementConstructor): void {
   if (!customElements.get(tagName)) customElements.define(tagName, Base);
 }
 
-function createTestStore(initialState: Record<string, unknown> = {}) {
+function createTestStore(initialState: MediaSnapshot = {}) {
   let state = initialState;
   const target = {};
   const listeners = new Set<() => void>();
-  const store = {
+  const store = /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
     get state() {
       return state;
     },
@@ -29,9 +30,9 @@ function createTestStore(initialState: Record<string, unknown> = {}) {
       listeners.add(callback);
       return () => listeners.delete(callback);
     },
-  } as unknown as AnyPlayerStore;
+  } as AnyPlayerStore;
 
-  const setState = (partial: Record<string, unknown>) => {
+  const setState = (partial: Partial<MediaSnapshot>) => {
     state = { ...state, ...partial };
     for (const listener of listeners) listener();
   };
@@ -67,7 +68,10 @@ async function renderStatusAnnouncerElement(
   store: AnyPlayerStore,
   markup = '<media-status-announcer></media-status-announcer>'
 ) {
-  const provider = document.createElement('test-status-announcer-player') as TestStatusAnnouncerPlayerElement;
+  const provider =
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+      'test-status-announcer-player'
+    ) as TestStatusAnnouncerPlayerElement;
   provider.store = store;
   provider.innerHTML = markup;
   document.body.append(provider);
@@ -91,7 +95,9 @@ describe('StatusAnnouncerElement', () => {
 
     setState({ paused: false });
     await Promise.resolve();
-    await (announcer as StatusAnnouncerElement).updateComplete;
+    await /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+      announcer as StatusAnnouncerElement
+    ).updateComplete;
 
     expect(announcer.textContent).toBe('Playing');
   });
@@ -107,13 +113,17 @@ describe('StatusAnnouncerElement', () => {
       setState({ volume: 0 });
       await Promise.resolve();
       vi.advanceTimersByTime(200);
-      await (announcer as StatusAnnouncerElement).updateComplete;
+      await /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+        announcer as StatusAnnouncerElement
+      ).updateComplete;
       const firstContent = content.firstChild;
 
       setState({ muted: true });
       await Promise.resolve();
       vi.advanceTimersByTime(200);
-      await (announcer as StatusAnnouncerElement).updateComplete;
+      await /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+        announcer as StatusAnnouncerElement
+      ).updateComplete;
 
       expect(announcer.textContent).toBe('Muted');
       expect(content.firstChild).not.toBe(firstContent);
@@ -128,12 +138,16 @@ describe('StatusAnnouncerElement', () => {
     const { announcer, provider } = await renderStatusAnnouncerElement(first.store);
     first.setState({ paused: true });
     await Promise.resolve();
-    await (announcer as StatusAnnouncerElement).updateComplete;
+    await /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+      announcer as StatusAnnouncerElement
+    ).updateComplete;
     expect(announcer.textContent).toBe('Paused');
 
     provider.store = second.store;
     await Promise.resolve();
-    await (announcer as StatusAnnouncerElement).updateComplete;
+    await /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+      announcer as StatusAnnouncerElement
+    ).updateComplete;
 
     expect(announcer.textContent).toBe('');
   });
@@ -142,7 +156,7 @@ describe('StatusAnnouncerElement', () => {
     {
       name: 'completed seeks',
       initialState: { currentTime: 10, duration: 120, seeking: false },
-      update: async (setState: (partial: Record<string, unknown>) => void) => {
+      update: async (setState: (partial: Partial<MediaSnapshot>) => void) => {
         setState({ currentTime: 45, seeking: true });
         await Promise.resolve();
         setState({ seeking: false });
@@ -151,7 +165,7 @@ describe('StatusAnnouncerElement', () => {
     {
       name: 'volume changes',
       initialState: { volume: 0.5, muted: false },
-      update: async (setState: (partial: Record<string, unknown>) => void) => {
+      update: async (setState: (partial: Partial<MediaSnapshot>) => void) => {
         setState({ volume: 0.75 });
       },
     },
@@ -168,7 +182,9 @@ describe('StatusAnnouncerElement', () => {
       provider.querySelector<HTMLElement>('[role="slider"]')?.focus();
       await update(setState);
       vi.advanceTimersByTime(200);
-      await (announcer as StatusAnnouncerElement).updateComplete;
+      await /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+        announcer as StatusAnnouncerElement
+      ).updateComplete;
 
       expect(announcer.textContent).toBe('');
     } finally {
@@ -190,7 +206,9 @@ describe('StatusAnnouncerElement', () => {
       await Promise.resolve();
       vi.advanceTimersByTime(200);
       await Promise.resolve();
-      await (announcer as StatusAnnouncerElement).updateComplete;
+      await /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+        announcer as StatusAnnouncerElement
+      ).updateComplete;
 
       expect(announcer.textContent).toBe('Volume 75%');
     } finally {

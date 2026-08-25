@@ -9,10 +9,15 @@ function uniqueTag(base: string): string {
   return `${base}-${tagCounter++}`;
 }
 
-function createElement<Element extends HTMLElement>(Base: abstract new () => Element): Element {
+function createElement<Element extends HTMLElement>(Base: new () => Element): Element {
   const tag = uniqueTag('test-el');
-  customElements.define(tag, class extends (Base as unknown as typeof HTMLElement) {});
-  return document.createElement(tag) as Element;
+  customElements.define(
+    tag,
+    class extends /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (Base as typeof HTMLElement) {}
+  );
+  return /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+    tag
+  ) as Element;
 }
 
 afterEach(() => {
@@ -93,7 +98,11 @@ describe('AlertDialogElement', () => {
 
     expect(el.open).toBe(false);
     expect(spy).toHaveBeenCalledOnce();
-    expect((spy.mock.calls[0]![0] as CustomEvent).detail).toEqual({ open: false });
+    expect(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+        spy.mock.calls[0]![0] as CustomEvent
+      ).detail
+    ).toEqual({ open: false });
   });
 
   it('closes on Escape key press', async () => {

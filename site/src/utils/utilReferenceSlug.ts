@@ -1,6 +1,10 @@
 import { kebabCase } from 'es-toolkit/string';
 
-const UTIL_SLUG_OVERRIDES: Record<string, string> = {
+interface UtilSlugByName {
+  readonly [name: string]: string | undefined;
+}
+
+const UTIL_SLUG_OVERRIDES: UtilSlugByName = {
   registerI18n: 'register-i18n',
   getI18nTranslations: 'get-i18n-translations',
   hasRegisteredLocale: 'has-registered-locale',

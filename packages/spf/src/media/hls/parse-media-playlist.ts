@@ -27,13 +27,13 @@ export const RAW_AAC_MIME = 'audio/aac';
 // default) always carries an EXT-X-MAP init segment, so a media playlist with
 // no init segment and one of these extensions is a non-fMP4 rendition,
 // relabeled from the fMP4 default. Extend with `.mp3` → 'audio/mpeg' etc.
-const CONTAINER_MIME_BY_EXTENSION: Record<string, string> = {
-  '.ts': MPEG_TS_MIME,
-  '.aac': RAW_AAC_MIME,
-};
+const CONTAINER_MIME_BY_EXTENSION = new Map([
+  ['.ts', MPEG_TS_MIME],
+  ['.aac', RAW_AAC_MIME],
+]);
 
 /** The non-fMP4 container MIMEs the parser detects — all currently treated as unplayable. */
-export const NON_FMP4_CONTAINER_MIMES = new Set(Object.values(CONTAINER_MIME_BY_EXTENSION));
+export const NON_FMP4_CONTAINER_MIMES = new Set(CONTAINER_MIME_BY_EXTENSION.values());
 
 /**
  * Non-fMP4 container MIME for a (resolved, absolute) segment URL, by file
@@ -48,7 +48,7 @@ function containerMimeFromSegment(url: string | undefined): string | undefined {
     path = url.toLowerCase().split('?')[0] ?? '';
   }
   const dot = path.lastIndexOf('.');
-  return dot === -1 ? undefined : CONTAINER_MIME_BY_EXTENSION[path.slice(dot)];
+  return dot === -1 ? undefined : CONTAINER_MIME_BY_EXTENSION.get(path.slice(dot));
 }
 
 /**
@@ -383,12 +383,11 @@ export function parseMediaPlaylist<T extends PartiallyResolvedTrack>(
       : undefined;
 
   // Build initialization (VTT may not have init segment)
-  const initialization =
-    previous.type === 'text' && !initSegmentUrl
-      ? undefined
-      : initSegmentUrl
-        ? { url: initSegmentUrl, ...(initSegmentByteRange ? { byteRange: initSegmentByteRange } : {}) }
-        : { url: '' };
+  let initialization: { url: string; byteRange?: { start: number; end: number } } | undefined;
+  if (previous.type !== 'text' || initSegmentUrl) {
+    initialization = { url: initSegmentUrl ?? '' };
+    if (initSegmentByteRange) initialization.byteRange = initSegmentByteRange;
+  }
 
   // Container detection: fMP4 always carries an EXT-X-MAP init segment, so its
   // absence plus a recognized non-fMP4 segment extension (`.ts` → MPEG-TS,
@@ -401,7 +400,7 @@ export function parseMediaPlaylist<T extends PartiallyResolvedTrack>(
 
   // Generic resolution: All type-specific fields already on `previous` track
   // Just add parsed properties (startTime, duration, segments, initialization, metadata)
-  return {
+  return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ {
     ...previous,
     mimeType,
     startTime: 0,
@@ -421,5 +420,5 @@ export function parseMediaPlaylist<T extends PartiallyResolvedTrack>(
         encrypted,
       } satisfies MediaPlaylistMetadata,
     },
-  } as unknown as ResolveTrack<T>;
+  } as ResolveTrack<T>;
 }

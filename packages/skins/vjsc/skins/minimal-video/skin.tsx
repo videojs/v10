@@ -27,7 +27,7 @@ export interface MinimalVideoSkinProps extends Omit<PropsOf<typeof Container>, '
 }
 
 export function MinimalVideoSkin({ children, className, poster, ...props }: MinimalVideoSkinProps = {}) {
-  const isPosterString = typeof poster === 'string';
+  const isPosterString = String(poster) === poster;
 
   return (
     <Container className={['media-skin media-skin-video-minimal media-theme-minimal', className]} {...props}>

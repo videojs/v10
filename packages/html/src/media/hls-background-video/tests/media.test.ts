@@ -38,12 +38,14 @@ function create(tag: string, attrs: Record<string, string> = {}): HlsBackgroundV
     .map(([k, v]) => ` ${k}="${v.replace(/&/g, '&amp;').replace(/"/g, '&quot;')}"`)
     .join('');
   container.innerHTML = `<${tag}${attrStr}></${tag}>`;
-  return container.querySelector(tag) as HlsBackgroundVideo;
+  return /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ container.querySelector(
+    tag
+  ) as HlsBackgroundVideo;
 }
 
 /** The Media the element registers, which is what the engine hangs off. */
 function mediaOf(element: HlsBackgroundVideo) {
-  return element.getMediaTarget() as unknown as HlsBackgroundVideoMedia;
+  return /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ element.getMediaTarget() as HlsBackgroundVideoMedia;
 }
 
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0));

@@ -66,7 +66,10 @@ function shadcnEmitterPlugin<Item extends ComponentMeta>(options: ShadcnPluginOp
         const info = this.getModuleInfo(module.id);
         const source = readComponentSource(info?.meta);
         if (source === undefined) this.error(`Shadcn source has no captured component output: \`${module.id}\`.`);
-        const meta = readComponentMeta(info?.meta) as Item | undefined;
+        const meta =
+          /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ readComponentMeta(
+            info?.meta
+          ) as Item | undefined;
         const imports: SourceImport[] = [];
         for (const reference of analyzeImports(source, module.filename)) {
           const resolved = await this.resolve(reference.specifier, module.id);
@@ -86,9 +89,13 @@ function shadcnEmitterPlugin<Item extends ComponentMeta>(options: ShadcnPluginOp
               `Shadcn relative import \`${reference.specifier}\` from \`${module.filename}\` resolves outside the registry source root.`
             );
           }
-          imports.push({ ...reference, ...(resolvedId ? { resolvedId } : {}) });
+          const sourceImport: SourceImport = { ...reference };
+          if (resolvedId) Object.assign(sourceImport, { resolvedId });
+          imports.push(sourceImport);
         }
-        modules.push({ ...module, ...(meta ? { meta } : {}), source, imports });
+        const sourceModule: SourceModule<Item> = { ...module, source, imports };
+        if (meta) Object.assign(sourceModule, { meta });
+        modules.push(sourceModule);
       }
       graph = { root, modules: new Map(modules.map((module) => [module.id, module])) };
     },
@@ -138,7 +145,7 @@ function discoverFiles(
   return [
     ...new Set(
       patterns.flatMap((pattern) =>
-        globSync(pattern, { cwd: root, ...(excluded ? { exclude: excluded } : {}) }).map((filename) =>
+        globSync(pattern, excluded ? { cwd: root, exclude: excluded } : { cwd: root }).map((filename) =>
           resolveModulePath(resolve(root, filename))
         )
       )

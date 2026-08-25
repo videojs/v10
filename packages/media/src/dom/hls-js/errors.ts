@@ -5,15 +5,17 @@ import Hls from 'hls.js';
 import { MediaError } from '../../core/media-error';
 import type { HlsEngineHost } from './types';
 
-const hlsErrorTypeToCode: Record<string, number> = {
+const hlsErrorTypeToCode = {
   [Hls.ErrorTypes.NETWORK_ERROR]: MediaError.MEDIA_ERR_NETWORK,
   [Hls.ErrorTypes.MEDIA_ERROR]: MediaError.MEDIA_ERR_DECODE,
   [Hls.ErrorTypes.KEY_SYSTEM_ERROR]: MediaError.MEDIA_ERR_ENCRYPTED,
   [Hls.ErrorTypes.MUX_ERROR]: MediaError.MEDIA_ERR_DECODE,
   [Hls.ErrorTypes.OTHER_ERROR]: MediaError.MEDIA_ERR_CUSTOM,
-};
+} satisfies Record<string, number>;
 
-export function HlsJsMediaErrorsMixin<Base extends Constructor<HlsEngineHost>>(BaseClass: Base) {
+export function HlsJsMediaErrorsMixin<Base extends Constructor<HlsEngineHost>>(
+  BaseClass: Base
+): MixinReturn<Base, { readonly error: MediaError | null }> {
   class HlsJsMediaErrors extends BaseClass {
     #disconnect: AbortController | null = null;
     #error: MediaError | null = null;
@@ -69,5 +71,6 @@ export function HlsJsMediaErrorsMixin<Base extends Constructor<HlsEngineHost>>(B
     }
   }
 
-  return HlsJsMediaErrors as unknown as MixinReturn<Base, { readonly error: MediaError | null }>;
+  return /* SAFETY: The mixed class preserves the supplied base constructor. */ HlsJsMediaErrors as typeof HlsJsMediaErrors &
+    MixinReturn<Base, { readonly error: MediaError | null }>;
 }

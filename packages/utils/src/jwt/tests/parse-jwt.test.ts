@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vite-plus/test';
 
-import { parseJwt } from '../parse-jwt';
+import { parseJwt, type JsonObject, type JsonValue } from '../parse-jwt';
 
 // Header `{"alg":"HS256"}`, body is the payload (UTF-8), empty signature.
-function fakeJwt(payload: Record<string, unknown>): string {
-  const encode = (obj: unknown) =>
+function fakeJwt(payload: JsonObject): string {
+  const encode = (obj: JsonValue) =>
     btoa(String.fromCharCode(...new TextEncoder().encode(JSON.stringify(obj))))
       .replace(/\+/g, '-')
       .replace(/\//g, '_');

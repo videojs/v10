@@ -10,7 +10,7 @@ import { Host, jsx } from '../../../vjsc/src/target/jsx-runtime.ts';
 
 type CoreSchema = typeof coreSchema;
 
-const componentParts: Readonly<Record<string, Readonly<Record<string, string>>>> = {
+const componentParts = {
   Controls: {
     Root: 'Controls',
     Group: 'ControlsGroup',
@@ -99,9 +99,9 @@ const componentParts: Readonly<Record<string, Readonly<Record<string, string>>>>
     Preview: 'SliderPreview',
     Value: 'SliderValue',
   },
-};
+} satisfies Readonly<Record<string, Readonly<Record<string, string>>>>;
 
-const groupedModules: Readonly<Record<string, string>> = {
+const groupedModules = {
   MenuCheckboxItem: 'menu',
   MenuGroup: 'menu',
   MenuGroupLabel: 'menu',
@@ -113,12 +113,12 @@ const groupedModules: Readonly<Record<string, string>> = {
   SliderPreview: 'slider',
   TooltipLabel: 'tooltip',
   TooltipShortcut: 'tooltip',
-};
+} satisfies Readonly<Record<string, string>>;
 
-const publicNames: Readonly<Record<string, string>> = {
+const publicNames = {
   AirPlayButton: 'airplay-button',
   PiPButton: 'pip-button',
-};
+} satisfies Readonly<Record<string, string>>;
 
 export const htmlComponentTarget: ComponentTarget<CoreSchema> = defineComponentTarget<CoreSchema>()(({
   target,
@@ -145,7 +145,7 @@ export const htmlComponentTarget: ComponentTarget<CoreSchema> = defineComponentT
   return {
     source: '@videojs/core/vjsc',
     resolve: ({ component, part }) => {
-      const name = part ? componentParts[component]?.[part] : component === 'Container' ? 'MediaContainer' : component;
+      const name = part ? getComponentPart(component, part) : component === 'Container' ? 'MediaContainer' : component;
       return name ? htmlElementTarget(name, element) : undefined;
     },
     components: {
@@ -221,11 +221,22 @@ export const htmlComponentTarget: ComponentTarget<CoreSchema> = defineComponentT
 });
 
 function htmlElementTarget(name: string, element: ComponentTargetHelpers<CoreSchema>['element']) {
-  const publicName = publicNames[name] ?? kebabCase(name === 'MediaContainer' ? 'container' : name);
-  const moduleName = groupedModules[name] ?? publicName;
+  const publicName = getMappedValue(publicNames, name) ?? kebabCase(name === 'MediaContainer' ? 'container' : name);
+  const moduleName = getMappedValue(groupedModules, name) ?? publicName;
   const source = `@videojs/html/ui/${moduleName}`;
 
   return element(`media-${publicName}`, { import: { from: source, sideEffect: true } });
+}
+
+function getComponentPart(component: string, part: string): string | undefined {
+  const parts = getMappedValue(componentParts, component);
+  return parts ? getMappedValue(parts, part) : undefined;
+}
+
+function getMappedValue<Map extends object>(map: Map, key: string): Map[keyof Map] | undefined {
+  if (!(key in map)) return undefined;
+  // SAFETY: The membership check proves key names a property of map.
+  return map[key as keyof Map];
 }
 
 function kebabCase(value: string): string {

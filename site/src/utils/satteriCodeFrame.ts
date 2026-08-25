@@ -35,12 +35,15 @@ export function satteriCodeFrame() {
       const attributes = [{ type: 'mdxJsxAttribute', name: 'lang', value: node.lang ?? '' }];
       if (title) attributes.push({ type: 'mdxJsxAttribute', name: 'title', value: title });
 
-      ctx.wrapNode(node, {
-        type: 'mdxJsxFlowElement',
-        name: 'CodeFrame',
-        attributes,
-        children: [],
-      } as MdastContent);
+      ctx.wrapNode(
+        node,
+        /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ {
+          type: 'mdxJsxFlowElement',
+          name: 'CodeFrame',
+          attributes,
+          children: [],
+        } as MdastContent
+      );
     },
   });
 }

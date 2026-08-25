@@ -16,10 +16,15 @@ function uniqueTag(base: string): string {
   return `${base}-${tagCounter++}`;
 }
 
-function createElement<Element extends HTMLElement>(Base: abstract new () => Element): Element {
+function createElement<Element extends HTMLElement>(Base: new () => Element): Element {
   const tag = uniqueTag('test-el');
-  customElements.define(tag, class extends (Base as unknown as typeof HTMLElement) {});
-  return document.createElement(tag) as Element;
+  customElements.define(
+    tag,
+    class extends /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (Base as typeof HTMLElement) {}
+  );
+  return /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+    tag
+  ) as Element;
 }
 
 function ensureDefined(ctor: CustomElementConstructor & { readonly tagName: string }): void {
@@ -35,7 +40,10 @@ function defineElement(tagName: string, Base: CustomElementConstructor): void {
 }
 
 function createPlaybackStore(): AnyPlayerStore {
-  const store = createStore<PlayerTarget>()(playbackFeature) as unknown as AnyPlayerStore;
+  const store =
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ createStore<PlayerTarget>()(
+      playbackFeature
+    ) as AnyPlayerStore;
   const video = document.createElement('video');
   Object.defineProperty(video, 'paused', { value: true, configurable: true });
   Object.defineProperty(video, 'ended', { value: false, configurable: true });
@@ -83,8 +91,14 @@ describe('MediaButtonElement', () => {
   it('resolves its label before the first update', () => {
     ensureDefined(PlayButtonElement);
 
-    const player = document.createElement(TestPlayerProviderElement.tagName) as TestPlayerProviderElement;
-    const button = document.createElement(PlayButtonElement.tagName) as PlayButtonElement;
+    const player =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+        TestPlayerProviderElement.tagName
+      ) as TestPlayerProviderElement;
+    const button =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+        PlayButtonElement.tagName
+      ) as PlayButtonElement;
 
     document.body.append(player);
     player.append(button);
@@ -122,10 +136,16 @@ describe('MediaButtonElement', () => {
     ensureDefined(PlayButtonElement);
     ensureDefined(MediaI18nProviderElement);
 
-    const player = document.createElement(TestPlayerProviderElement.tagName) as TestPlayerProviderElement;
+    const player =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+        TestPlayerProviderElement.tagName
+      ) as TestPlayerProviderElement;
     const provider = new MediaI18nProviderElement();
     provider.setAttribute('lang', 'es');
-    const button = document.createElement(PlayButtonElement.tagName) as PlayButtonElement;
+    const button =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+        PlayButtonElement.tagName
+      ) as PlayButtonElement;
 
     document.body.append(player);
     player.append(provider);
@@ -150,9 +170,15 @@ describe('MediaButtonElement', () => {
     ensureDefined(PlayButtonElement);
     ensureDefined(MediaI18nProviderElement);
 
-    const player = document.createElement(TestPlayerProviderElement.tagName) as TestPlayerProviderElement;
+    const player =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+        TestPlayerProviderElement.tagName
+      ) as TestPlayerProviderElement;
     const provider = new MediaI18nProviderElement();
-    const button = document.createElement(PlayButtonElement.tagName) as PlayButtonElement;
+    const button =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+        PlayButtonElement.tagName
+      ) as PlayButtonElement;
 
     document.body.append(player);
     player.append(provider);

@@ -37,10 +37,14 @@ const API_URL = 'https://embed.videodelivery.net/embed/sdk.latest.js';
 
 /** Load the Stream SDK once, reusing it if another host already pulled it in. */
 export async function loadCloudflareStreamApi(): Promise<CloudflareStreamApi> {
-  const existing = (globalThis as { Stream?: CloudflareStreamApi }).Stream;
+  const existing = /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (
+    globalThis as { Stream?: CloudflareStreamApi }
+  ).Stream;
   if (existing) return existing;
   await loadScript(API_URL);
-  const api = (globalThis as { Stream?: CloudflareStreamApi }).Stream;
+  const api = /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (
+    globalThis as { Stream?: CloudflareStreamApi }
+  ).Stream;
   if (!api) throw new Error('Cloudflare Stream SDK failed to load');
   return api;
 }

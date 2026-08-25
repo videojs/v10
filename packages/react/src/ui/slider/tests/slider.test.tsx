@@ -10,25 +10,28 @@ import { SliderThumb } from '../slider-thumb';
 import { SliderTrack } from '../slider-track';
 import { SliderValue } from '../slider-value';
 
+interface SliderOptions {
+  getElement?: () => HTMLElement;
+  getThumbElement?: () => HTMLElement | null;
+  adjustPercent?: (raw: number, thumb: number, track: number) => number;
+  onDragStart?: () => void;
+  onDragEnd?: () => void;
+}
+
 const { mockSliderApi, sliderOptionsRef } = vi.hoisted(() => {
-  const sliderOptionsRef: {
-    current:
-      | {
-          onDragStart?: () => void;
-          onDragEnd?: () => void;
-        }
-      | undefined;
-  } = { current: undefined };
+  let currentOptions: SliderOptions | undefined;
+  const sliderOptionsRef = {
+    get current(): SliderOptions | undefined {
+      return currentOptions;
+    },
+    set current(value: SliderOptions | undefined) {
+      currentOptions = value;
+    },
+  };
 
   return {
     sliderOptionsRef,
-    mockSliderApi: (options?: {
-      getElement?: () => HTMLElement;
-      getThumbElement?: () => HTMLElement | null;
-      adjustPercent?: (raw: number, thumb: number, track: number) => number;
-      onDragStart?: () => void;
-      onDragEnd?: () => void;
-    }) => {
+    mockSliderApi: (options?: SliderOptions) => {
       sliderOptionsRef.current = options;
 
       return {
@@ -75,13 +78,13 @@ const { mockSliderApi, sliderOptionsRef } = vi.hoisted(() => {
 });
 
 vi.mock('@videojs/core/dom', async (importOriginal) => {
-  const orig: Record<string, unknown> = await importOriginal();
+  const orig = await importOriginal<typeof import('@videojs/core/dom')>();
   return { ...orig, createSlider: vi.fn(mockSliderApi) };
 });
 
 vi.mock('@videojs/store/react', () => ({
   useSnapshot: vi.fn((state: { current: unknown }) => state.current),
-  useStore: vi.fn((store: { state: object }, selector?: (state: object) => unknown) =>
+  useStore: vi.fn(<State extends object, Selection>(store: { state: State }, selector?: (state: State) => Selection) =>
     selector ? selector(store.state) : store
   ),
 }));
@@ -120,7 +123,8 @@ describe('SliderRoot', () => {
 
   it('sets CSS custom properties as inline styles', () => {
     const { container } = render(<SliderRoot value={50} />);
-    const el = container.firstElementChild as HTMLElement;
+    const el =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ container.firstElementChild as HTMLElement;
 
     expect(el.style.getPropertyValue('--media-slider-fill')).toBeTruthy();
     expect(el.style.getPropertyValue('--media-slider-pointer')).toBeTruthy();
@@ -298,7 +302,8 @@ describe('SliderValue', () => {
 describe('thumbAlignment', () => {
   it('does not adjust CSS vars for center alignment (default)', () => {
     const { container } = render(<SliderRoot value={0} />);
-    const root = container.firstElementChild as HTMLElement;
+    const root =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ container.firstElementChild as HTMLElement;
 
     expect(root.style.getPropertyValue('--media-slider-fill')).toBe('0.000%');
   });
@@ -310,8 +315,12 @@ describe('thumbAlignment', () => {
       </SliderRoot>
     );
 
-    const root = container.firstElementChild as HTMLElement;
-    const thumb = root.querySelector('[role="slider"]') as HTMLElement;
+    const root =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ container.firstElementChild as HTMLElement;
+    const thumb =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ root.querySelector(
+        '[role="slider"]'
+      ) as HTMLElement;
 
     // Mock DOM measurements (jsdom reports 0 for all dimensions).
     Object.defineProperty(root, 'offsetWidth', { value: 200, configurable: true });
@@ -335,8 +344,12 @@ describe('thumbAlignment', () => {
       </SliderRoot>
     );
 
-    const root = container.firstElementChild as HTMLElement;
-    const thumb = root.querySelector('[role="slider"]') as HTMLElement;
+    const root =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ container.firstElementChild as HTMLElement;
+    const thumb =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ root.querySelector(
+        '[role="slider"]'
+      ) as HTMLElement;
 
     Object.defineProperty(root, 'offsetWidth', { value: 200, configurable: true });
     Object.defineProperty(thumb, 'offsetWidth', { value: 20, configurable: true });

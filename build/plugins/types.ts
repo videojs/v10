@@ -1,5 +1,5 @@
 export interface BuildMagicString {
-  overwrite(start: number, end: number, content: string): unknown;
+  overwrite(start: number, end: number, content: string): BuildMagicString;
   toString(): string;
 }
 
@@ -9,6 +9,12 @@ interface BuildTransformMeta {
 
 interface BuildRenderChunkMeta {
   readonly magicString?: BuildMagicString | undefined;
+}
+
+interface BuildOutputOptions {
+  readonly dir?: string | undefined;
+  readonly file?: string | undefined;
+  readonly format?: string | undefined;
 }
 
 interface BuildCodeResult {
@@ -31,7 +37,7 @@ export interface BuildPlugin {
     this: void,
     code: string,
     chunk: { fileName: string },
-    outputOptions?: unknown,
+    outputOptions?: BuildOutputOptions,
     meta?: BuildRenderChunkMeta
   ) => BuildCodeResult | null;
   writeBundle?: (this: void) => void;

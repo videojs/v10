@@ -128,7 +128,9 @@ function setupMediaSourceSetup({
   // which is what materializes a slot. Shape redefined locally (canonical:
   // `SegmentLoadingState['loadingSuspended']`) to avoid a load-segments
   // module dependency.
-  const loadingSuspended = (state as { loadingSuspended?: ReadonlySignal<boolean | undefined> }).loadingSuspended;
+  const loadingSuspended = /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (
+    state as { loadingSuspended?: ReadonlySignal<boolean | undefined> }
+  ).loadingSuspended;
 
   // Close-fact for the currently-owned MediaSource, flipped by the
   // entry's shared teardown. Consumed in `'preconditions-unmet'`.

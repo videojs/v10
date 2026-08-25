@@ -1,5 +1,6 @@
 import { act, cleanup, render } from '@testing-library/react';
-import type { UnknownStore } from '@videojs/store';
+import type { MediaSnapshot } from '@videojs/core';
+import type { UnknownState } from '@videojs/store';
 import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
@@ -7,6 +8,10 @@ import { PlayerContextProvider, type PlayerContextValue } from '../../../player/
 import { StatusAnnouncer } from '../status-announcer';
 
 afterEach(cleanup);
+
+function toStoreState(snapshot: MediaSnapshot): UnknownState {
+  return { ...snapshot };
+}
 
 describe('StatusAnnouncer', () => {
   it('uses implicit live-region semantics without rendering text content', () => {
@@ -92,7 +97,7 @@ describe('StatusAnnouncer', () => {
     {
       name: 'completed seeks',
       initialState: { currentTime: 10, duration: 120, seeking: false },
-      update: async (setState: (partial: Record<string, unknown>) => void) => {
+      update: async (setState: (partial: Partial<MediaSnapshot>) => void) => {
         setState({ currentTime: 45, seeking: true });
         await act(async () => {});
         setState({ seeking: false });
@@ -101,7 +106,7 @@ describe('StatusAnnouncer', () => {
     {
       name: 'volume changes',
       initialState: { volume: 0.5, muted: false },
-      update: async (setState: (partial: Record<string, unknown>) => void) => {
+      update: async (setState: (partial: Partial<MediaSnapshot>) => void) => {
         setState({ volume: 0.75 });
       },
     },
@@ -146,26 +151,35 @@ describe('StatusAnnouncer', () => {
   });
 });
 
-function createTestStore(initialState: Record<string, unknown> = {}) {
-  let state = initialState;
-  const target = {};
+function createTestStore(initialState: MediaSnapshot = {}) {
+  let state = toStoreState(initialState);
   const listeners = new Set<() => void>();
-  const store = {
+  const store: PlayerContextValue['store'] = {
+    $state: {
+      get current() {
+        return state;
+      },
+      subscribe(callback: () => void) {
+        listeners.add(callback);
+        return () => listeners.delete(callback);
+      },
+    },
     get state() {
       return state;
     },
-    get target() {
-      return target;
-    },
+    target: {},
+    destroyed: false,
+    attach: () => () => {},
+    destroy: () => {},
     subscribe(callback: () => void) {
       listeners.add(callback);
       return () => listeners.delete(callback);
     },
-  } as unknown as UnknownStore;
+  };
 
-  const setState = (partial: Record<string, unknown>) => {
+  const setState = (partial: Partial<MediaSnapshot>) => {
     act(() => {
-      state = { ...state, ...partial };
+      state = toStoreState({ ...state, ...partial });
       for (const listener of listeners) listener();
     });
   };
@@ -174,7 +188,7 @@ function createTestStore(initialState: Record<string, unknown> = {}) {
 }
 
 function createPlayerContextValue(
-  store: UnknownStore,
+  store: PlayerContextValue['store'],
   container: HTMLElement = document.createElement('div')
 ): PlayerContextValue {
   return {
@@ -183,10 +197,14 @@ function createPlayerContextValue(
     setMedia: vi.fn(),
     container,
     setContainer: vi.fn(),
-  } as unknown as PlayerContextValue;
+  };
 }
 
-function renderWithPlayer(ui: ReactNode, store: UnknownStore = createTestStore().store, container?: HTMLElement) {
+function renderWithPlayer(
+  ui: ReactNode,
+  store: PlayerContextValue['store'] = createTestStore().store,
+  container?: HTMLElement
+) {
   return render(<PlayerContextProvider value={createPlayerContextValue(store, container)}>{ui}</PlayerContextProvider>);
 }
 

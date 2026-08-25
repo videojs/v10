@@ -79,7 +79,9 @@ export function filterHeadingsForToc(headings: MarkdownHeading[]): MarkdownHeadi
   const apiReferenceSubsectionTitles = new Set(API_REFERENCE_SUBSECTION_TITLES);
   const isTocHeadingDepth = (depth: number): boolean => depth === 2 || depth === 3;
   const isApiReferenceSubsectionHeading = (heading: MarkdownHeading): boolean => {
-    const tocKind = (heading as MarkdownHeading & { tocKind?: string }).tocKind;
+    const tocKind = /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (
+      heading as MarkdownHeading & { tocKind?: string }
+    ).tocKind;
 
     return tocKind === 'api-reference-subsection' && apiReferenceSubsectionTitles.has(heading.text);
   };

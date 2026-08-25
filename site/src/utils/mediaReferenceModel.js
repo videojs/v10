@@ -105,6 +105,25 @@ export function createMediaReferenceModel(mediaName, ref) {
 
   const engines = createEngines(ref);
 
+  /**
+   * @type {{
+   *   html: { sections: ReturnType<typeof createSections>; data: import('../types/media-reference').HtmlMediaReference };
+   *   react?: { sections: ReturnType<typeof createSections>; data: import('../types/media-reference').ReactMediaReference };
+   * }}
+   */
+  const platforms = {
+    html: {
+      sections: createSections(HTML_SUBSECTIONS, ref.platforms.html, ref),
+      data: ref.platforms.html,
+    },
+  };
+  if (ref.platforms.react) {
+    platforms.react = {
+      sections: createSections(REACT_SUBSECTIONS, ref.platforms.react, ref),
+      data: ref.platforms.react,
+    };
+  }
+
   return {
     mediaName,
     engines,
@@ -113,20 +132,7 @@ export function createMediaReferenceModel(mediaName, ref) {
       depth: 2,
       text: 'API Reference',
     },
-    platforms: {
-      html: {
-        sections: createSections(HTML_SUBSECTIONS, ref.platforms.html, ref),
-        data: ref.platforms.html,
-      },
-      ...(ref.platforms.react
-        ? {
-            react: {
-              sections: createSections(REACT_SUBSECTIONS, ref.platforms.react, ref),
-              data: ref.platforms.react,
-            },
-          }
-        : {}),
-    },
+    platforms,
     data: ref,
   };
 }

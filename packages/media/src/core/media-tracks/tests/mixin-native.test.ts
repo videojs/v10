@@ -1,37 +1,47 @@
 import { afterAll, describe, expect, it, vi } from 'vite-plus/test';
 
+interface FakeNativeTrack {
+  kind: string;
+}
+
 class FakeNativeTrackList extends EventTarget {
-  #tracks: object[] = [];
+  #tracks: FakeNativeTrack[] = [];
 
   [Symbol.iterator]() {
     return this.#tracks.values();
   }
 
-  add(track: object) {
+  add(track: FakeNativeTrack) {
     this.#tracks.push(track);
-    const event = new Event('addtrack') as Event & { track: object };
+    const event =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ new Event(
+        'addtrack'
+      ) as Event & { track: FakeNativeTrack };
     event.track = track;
     this.dispatchEvent(event);
   }
 }
 
 class FakeHTMLMediaElement {
-  #videoTracks: unknown;
-  #audioTracks: unknown;
+  #videoTracks: FakeNativeTrackList | FakeNativeTrack[];
+  #audioTracks: FakeNativeTrackList | FakeNativeTrack[];
 
   // Native lists are event targets where they are implemented, and stubbed out
   // as plain arrays where they are not (jsdom), so both are constructible here.
-  constructor(videoTracks: unknown = new FakeNativeTrackList(), audioTracks: unknown = new FakeNativeTrackList()) {
+  constructor(
+    videoTracks: FakeNativeTrackList | FakeNativeTrack[] = new FakeNativeTrackList(),
+    audioTracks: FakeNativeTrackList | FakeNativeTrack[] = new FakeNativeTrackList()
+  ) {
     this.#videoTracks = videoTracks;
     this.#audioTracks = audioTracks;
   }
 
   get videoTracks() {
-    return this.#videoTracks as FakeNativeTrackList;
+    return /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ this.#videoTracks as FakeNativeTrackList;
   }
 
   get audioTracks() {
-    return this.#audioTracks as FakeNativeTrackList;
+    return /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ this.#audioTracks as FakeNativeTrackList;
   }
 }
 
@@ -119,7 +129,9 @@ describe('MediaTracksMixin', () => {
     expect(videoList.length).toBe(1);
     expect(audioList.length).toBe(1);
 
-    (media as unknown as { detach(): void }).detach();
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+      media satisfies { detach(): void }
+    ).detach();
 
     media.target.videoTracks.add({ kind: 'alternative' });
     media.target.audioTracks.add({ kind: 'alternative' });

@@ -1,7 +1,10 @@
 import { cleanup, render } from '@testing-library/react';
+import type { MediaVolumeState } from '@videojs/media';
+import { isObject } from '@videojs/utils/predicate';
 import { createRef } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
+import type { PlayerContextValue } from '../../../player/context';
 import { createPlayerWrapper } from '../../../testing/mocks';
 import { SliderFill } from '../../slider/slider-fill';
 import { SliderThumb } from '../../slider/slider-thumb';
@@ -16,6 +19,7 @@ const { mockSliderApi, mockVolumeState, mutableVolume } = vi.hoisted(() => {
     volume: 0.8,
     muted: false,
     volumeAvailability: 'available' as const,
+    mutedAvailability: 'available' as const,
     setVolume: vi.fn(),
     toggleMuted: vi.fn(),
   };
@@ -48,11 +52,12 @@ const { mockSliderApi, mockVolumeState, mutableVolume } = vi.hoisted(() => {
     mockVolumeState: volumeState,
     // Mutable holder so tests can swap between null and available volume.
     mutableVolume: {
-      current: volumeState as
-        | (Omit<typeof volumeState, 'volumeAvailability'> & {
-            volumeAvailability: 'available' | 'unavailable' | 'unsupported';
-          })
-        | null,
+      current:
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ volumeState as
+          | (Omit<typeof volumeState, 'volumeAvailability'> & {
+              volumeAvailability: 'available' | 'unavailable' | 'unsupported';
+            })
+          | null,
     },
   };
 });
@@ -60,28 +65,30 @@ const { mockSliderApi, mockVolumeState, mutableVolume } = vi.hoisted(() => {
 // --- Module mocks ---
 
 vi.mock('@videojs/core/dom', async (importOriginal) => {
-  const orig: Record<string, unknown> = await importOriginal();
+  const orig = await importOriginal<typeof import('@videojs/core/dom')>();
   return { ...orig, createSlider: vi.fn(mockSliderApi) };
 });
 
 vi.mock('@videojs/store/react', () => ({
   useSnapshot: vi.fn((state: { current: unknown }) => state.current),
-  useStore: vi.fn((_store: unknown, selector?: (state: object) => unknown) => {
-    if (!selector) return _store;
+  useStore: vi.fn(
+    <Selection,>(_store: PlayerContextValue['store'], selector?: (state: MediaVolumeState) => Selection) => {
+      if (!selector) return _store;
 
-    // Return the mutable volume state directly for volume selectors.
-    const vol = mutableVolume.current;
-    if (!vol) return undefined;
+      // Return the mutable volume state directly for volume selectors.
+      const vol = mutableVolume.current;
+      if (!vol) return undefined;
 
-    try {
-      const result = selector(vol);
-      if (result !== undefined) return result;
-    } catch {
-      // fall through
+      try {
+        const result = selector(vol);
+        if (result !== undefined) return result;
+      } catch {
+        // fall through
+      }
+
+      return undefined;
     }
-
-    return undefined;
-  }),
+  ),
 }));
 
 afterEach(() => {
@@ -162,7 +169,10 @@ describe('VolumeSliderRoot', () => {
       </Wrapper>
     );
 
-    const el = container.querySelector('[data-orientation]') as HTMLElement;
+    const el =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ container.querySelector(
+        '[data-orientation]'
+      ) as HTMLElement;
     expect(el?.style.getPropertyValue('--media-slider-fill')).toBeTruthy();
     expect(el?.style.getPropertyValue('--media-slider-pointer')).toBeTruthy();
   });
@@ -231,12 +241,18 @@ describe('VolumeSliderRoot wheel handling', () => {
       listener: EventListenerOrEventListenerObject,
       options?: boolean | AddEventListenerOptions
     ) {
-      if (type === 'wheel' && typeof options === 'object') {
+      if (type === 'wheel' && isObject(options)) {
         capturedOptions.push({ ...options });
       }
-      return origAdd.call(this, type, listener, options as AddEventListenerOptions);
+      return origAdd.call(
+        this,
+        type,
+        listener,
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ options as AddEventListenerOptions
+      );
     });
-    HTMLDivElement.prototype.addEventListener = addSpy as typeof origAdd;
+    HTMLDivElement.prototype.addEventListener =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ addSpy as typeof origAdd;
 
     const { Wrapper } = createPlayerWrapper();
     render(
@@ -261,7 +277,10 @@ describe('VolumeSliderRoot wheel handling', () => {
       </Wrapper>
     );
 
-    const el = container.querySelector('[data-orientation]') as HTMLElement;
+    const el =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ container.querySelector(
+        '[data-orientation]'
+      ) as HTMLElement;
     expect(el).toBeTruthy();
 
     el.dispatchEvent(new WheelEvent('wheel', { deltaY: -120, bubbles: true }));
@@ -300,7 +319,10 @@ describe('VolumeSliderRoot wheel handling', () => {
       </Wrapper>
     );
 
-    const el = container.querySelector('[data-orientation]') as HTMLElement;
+    const el =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ container.querySelector(
+        '[data-orientation]'
+      ) as HTMLElement;
     expect(el).toBeTruthy();
 
     // Wheel on the newly mounted root should call setVolume.

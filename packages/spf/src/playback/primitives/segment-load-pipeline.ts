@@ -104,7 +104,10 @@ export interface StepDeps {
  * relocation's `containerSlot`).
  */
 function stepWiring(deps: StepDeps): { sourceBufferActor: AppendSink; fetch: FetchBytes } {
-  return deps.config as { sourceBufferActor: AppendSink; fetch: FetchBytes };
+  return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ deps.config as {
+    sourceBufferActor: AppendSink;
+    fetch: FetchBytes;
+  };
 }
 
 /**

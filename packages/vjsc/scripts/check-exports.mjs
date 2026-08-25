@@ -1,5 +1,7 @@
 import { access, readFile } from 'node:fs/promises';
 
+import { isString } from '@videojs/utils/predicate';
+
 const packageUrl = new URL('../package.json', import.meta.url);
 const packageJson = JSON.parse(await readFile(packageUrl, 'utf8'));
 
@@ -16,7 +18,7 @@ for (const [subpath, conditions] of Object.entries(packageJson.exports)) {
   }
 }
 
-const binTargets = typeof packageJson.bin === 'string' ? [packageJson.bin] : Object.values(packageJson.bin ?? {});
+const binTargets = isString(packageJson.bin) ? [packageJson.bin] : Object.values(packageJson.bin ?? {});
 
 for (const target of binTargets) {
   try {

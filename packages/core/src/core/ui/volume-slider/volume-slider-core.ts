@@ -75,7 +75,8 @@ export class VolumeSliderCore extends SliderCore {
 
   /** Wheel step as a percentage of the slider range. */
   getWheelStepPercent(): number {
-    const props = this.props as NonNullableObject<VolumeSliderProps>;
+    const props = /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ this
+      .props as NonNullableObject<VolumeSliderProps>;
     const range = props.max - props.min;
     return range > 0 ? (props.wheelStep / range) * 100 : 0;
   }
@@ -88,8 +89,8 @@ export class VolumeSliderCore extends SliderCore {
     return state.muted ? mutedValueText : this.getValueTextParams(state).percent;
   }
 
-  getValueTextParams(state: VolumeSliderState): { percent: string } {
-    return { percent: formatPercent(state.value / 100, this.#formatLocale) };
+  getValueTextParams(state: VolumeSliderState) {
+    return { percent: formatPercent(state.value / 100, this.#formatLocale) } satisfies { percent: string };
   }
 
   override getAttrs(state: VolumeSliderState) {

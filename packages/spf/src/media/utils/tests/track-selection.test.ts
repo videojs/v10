@@ -34,7 +34,7 @@ function createPresentation(config: { video?: VideoTrack[]; audio?: AudioTrack[]
     });
   }
 
-  return {
+  return /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
     id: 'pres-1',
     url: 'http://example.com/playlist.m3u8',
     selectionSets,
@@ -44,7 +44,7 @@ function createPresentation(config: { video?: VideoTrack[]; audio?: AudioTrack[]
 }
 
 const resolvedVideoTrack = (overrides: Partial<VideoTrack> = {}): VideoTrack =>
-  ({
+  /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ ({
     id: 'video-1',
     type: 'video',
     url: 'http://example.com/video.m3u8',
@@ -59,7 +59,7 @@ const resolvedVideoTrack = (overrides: Partial<VideoTrack> = {}): VideoTrack =>
   }) as VideoTrack;
 
 const resolvedAudioTrack = (overrides: Partial<AudioTrack> = {}): AudioTrack =>
-  ({
+  /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ ({
     id: 'audio-1',
     type: 'audio',
     url: 'http://example.com/audio.m3u8',
@@ -108,15 +108,16 @@ describe('getResolvedSelectedTrackDuration', () => {
 
   it('returns undefined when the selected video track is not yet resolved', () => {
     const state: TrackSelectionState = {
-      presentation: {
-        url: 'http://example.com/playlist.m3u8',
-        selectionSets: [
-          {
-            type: 'video',
-            switchingSets: [{ tracks: [{ id: 'video-1', type: 'video' }] }],
-          },
-        ],
-      } as any,
+      presentation:
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+          url: 'http://example.com/playlist.m3u8',
+          selectionSets: [
+            {
+              type: 'video',
+              switchingSets: [{ tracks: [{ id: 'video-1', type: 'video' }] }],
+            },
+          ],
+        } as any,
       selectedVideoTrackId: 'video-1',
     };
     expect(getResolvedSelectedTrackDuration(state)).toBeUndefined();

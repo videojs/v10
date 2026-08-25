@@ -1,4 +1,4 @@
-import type { AnyPlayerStore } from '@videojs/core/dom';
+import type { AnyPlayerStore, PlayerTarget } from '@videojs/core/dom';
 import { registerI18n, resetI18nRegistry } from '@videojs/core/i18n';
 import { ContextProvider } from '@videojs/element/context';
 import type { MediaTextTrackState } from '@videojs/media';
@@ -47,7 +47,7 @@ function createTextTrackStore({
   subtitlesShowing?: boolean | undefined;
   selectSubtitlesTrack?: MediaTextTrackState['selectSubtitlesTrack'] | undefined;
 } = {}): AnyPlayerStore {
-  return createStore<unknown>()<MediaTextTrackState>({
+  return createStore<PlayerTarget>()({
     name: 'textTrack',
     state: () => ({
       chaptersCues: [],
@@ -59,7 +59,7 @@ function createTextTrackStore({
       toggleSubtitles: vi.fn(),
       selectSubtitlesTrack,
     }),
-  }) as unknown as AnyPlayerStore;
+  });
 }
 
 class TestPlayerProviderElement extends UIElement {
@@ -78,9 +78,18 @@ defineElement('test-captions-radio-player', TestPlayerProviderElement);
 
 function setup(locale: string, storeOptions?: Parameters<typeof createTextTrackStore>[0]) {
   const i18n = new MediaI18nProviderElement();
-  const provider = document.createElement('test-captions-radio-player') as TestPlayerProviderElement;
-  const menu = document.createElement(MenuElement.tagName) as MenuElement;
-  const options = document.createElement(CaptionsRadioGroupElement.tagName) as CaptionsRadioGroupElement;
+  const provider =
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+      'test-captions-radio-player'
+    ) as TestPlayerProviderElement;
+  const menu =
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+      MenuElement.tagName
+    ) as MenuElement;
+  const options =
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.createElement(
+      CaptionsRadioGroupElement.tagName
+    ) as CaptionsRadioGroupElement;
 
   i18n.setAttribute('lang', locale);
   provider.setStore(createTextTrackStore(storeOptions));

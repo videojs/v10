@@ -38,7 +38,12 @@ interface FakeTrackElementInit {
 function fakeTrackElement({ mode = 'showing', cues = [], readyState = 2, hlsOwned = false }: FakeTrackElementInit) {
   const track = new FakeTextTrack();
   track.mode = 'hidden';
-  for (const id of cues) track.addCue({ id } as TextTrackCue);
+  for (const id of cues)
+    track.addCue(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+        id,
+      } as TextTrackCue
+    );
   track.mode = mode;
 
   return {
@@ -49,7 +54,9 @@ function fakeTrackElement({ mode = 'showing', cues = [], readyState = 2, hlsOwne
 }
 
 function fakeMedia(...trackEls: ReturnType<typeof fakeTrackElement>[]) {
-  return { querySelectorAll: () => trackEls } as unknown as HTMLMediaElement;
+  return {
+    querySelectorAll: () => trackEls,
+  };
 }
 
 function cueIds(track: FakeTextTrack): string[] {
@@ -89,7 +96,11 @@ describe('withPreservedTextTracks', () => {
     const trackEl = fakeTrackElement({ mode: 'showing', cues: ['one'] });
 
     withPreservedTextTracks(fakeMedia(trackEl), () => {
-      trackEl.track.addCue({ id: 'two' } as TextTrackCue);
+      trackEl.track.addCue(
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+          id: 'two',
+        } as TextTrackCue
+      );
     });
 
     expect(cueIds(trackEl.track)).toEqual(['one', 'two']);

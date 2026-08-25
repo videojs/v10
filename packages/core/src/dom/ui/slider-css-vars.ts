@@ -2,18 +2,18 @@ import type { SliderPreviewOverflow, SliderState } from '../../core/ui/slider/sl
 import { SliderCSSVars } from '../../core/ui/slider/slider-css-vars';
 import type { TimeSliderState } from '../../core/ui/time-slider/time-slider-core';
 
-export function getSliderCSSVars(state: SliderState): Record<string, string> {
+export function getSliderCSSVars(state: SliderState) {
   return {
     [SliderCSSVars.fill]: `${state.fillPercent.toFixed(3)}%`,
     [SliderCSSVars.pointer]: `${state.pointerPercent.toFixed(3)}%`,
-  };
+  } satisfies Record<string, string>;
 }
 
-export function getTimeSliderCSSVars(state: TimeSliderState): Record<string, string> {
+export function getTimeSliderCSSVars(state: TimeSliderState) {
   return {
     ...getSliderCSSVars(state),
     [SliderCSSVars.buffer]: `${state.bufferPercent.toFixed(3)}%`,
-  };
+  } satisfies Record<string, string>;
 }
 
 // ---------------------------------------------------------------------------

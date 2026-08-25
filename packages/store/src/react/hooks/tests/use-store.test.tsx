@@ -1,4 +1,5 @@
 import { act, renderHook } from '@testing-library/react';
+import { isFunction } from '@videojs/utils/predicate';
 import { describe, expect, it } from 'vite-plus/test';
 
 import { useStore } from '../use-store';
@@ -13,7 +14,7 @@ describe('useStore', () => {
 
       expect(result.current.volume).toBe(1);
       expect(result.current.muted).toBe(false);
-      expect(typeof result.current.setVolume).toBe('function');
+      expect(isFunction(result.current.setVolume)).toBe(true);
     });
 
     it('does not re-render on state change', async () => {

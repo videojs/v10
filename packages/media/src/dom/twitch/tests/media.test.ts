@@ -19,6 +19,14 @@ interface EmbedWindow {
   postMessage: ReturnType<typeof vi.fn>;
 }
 
+const embeds = new WeakMap<HTMLIFrameElement, EmbedWindow>();
+
+type TwitchProtocolValue = string | number | boolean | null | TwitchProtocolParams | TwitchProtocolValue[];
+
+interface TwitchProtocolParams {
+  [key: string]: TwitchProtocolValue;
+}
+
 beforeEach(() => {
   vi.useFakeTimers();
 });
@@ -34,10 +42,12 @@ afterEach(() => {
  */
 function createIframe(): HTMLIFrameElement {
   const iframe = document.createElement('iframe');
+  const embed = { postMessage: vi.fn() } satisfies EmbedWindow;
   Object.defineProperty(iframe, 'contentWindow', {
-    value: { postMessage: vi.fn() } satisfies EmbedWindow,
+    value: embed,
     configurable: true,
   });
+  embeds.set(iframe, embed);
   return iframe;
 }
 
@@ -49,14 +59,16 @@ function createEmptySrcIframe(): HTMLIFrameElement {
 }
 
 function embedOf(iframe: HTMLIFrameElement): EmbedWindow {
-  return iframe.contentWindow as unknown as EmbedWindow;
+  const embed = embeds.get(iframe);
+  if (!embed) throw new Error('The Twitch fixture did not create an embed window.');
+  return embed;
 }
 
 /**
  * Post a message as the embed would. A real `MessageEvent` cannot name an
  * arbitrary object as its `source`, so the event is assembled by hand.
  */
-function postFromWindow(source: unknown, data: unknown): void {
+function postFromWindow(source: Window | EmbedWindow | null, data: TwitchProtocolParams): void {
   const event = new Event('message');
   Object.defineProperties(event, { data: { value: data }, source: { value: source } });
   globalThis.dispatchEvent(event);
@@ -66,7 +78,7 @@ function postEmbedEvent(iframe: HTMLIFrameElement, eventName: string): void {
   postFromWindow(iframe.contentWindow, { namespace: EMBED_NAMESPACE, eventName });
 }
 
-function postPlayerState(iframe: HTMLIFrameElement, params: Record<string, unknown>): void {
+function postPlayerState(iframe: HTMLIFrameElement, params: TwitchProtocolParams): void {
   postFromWindow(iframe.contentWindow, { namespace: PROXY_NAMESPACE, eventName: 'UPDATE_STATE', params });
 }
 
@@ -81,7 +93,7 @@ async function flushDeferredEmbed(): Promise<void> {
   await Promise.resolve();
 }
 
-function command(eventName: number, params?: unknown) {
+function command(eventName: number, params?: TwitchProtocolValue) {
   return { namespace: PROXY_NAMESPACE, eventName, params };
 }
 
@@ -592,7 +604,10 @@ describe('TwitchMedia', () => {
     const media = new TwitchMedia();
     const { iframe } = await attachAndLoad(media);
 
-    const options = addEventListener.mock.calls.find(([type]) => type === 'message')?.[2] as AddEventListenerOptions;
+    const options =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ addEventListener.mock.calls.find(
+        ([type]) => type === 'message'
+      )?.[2] as AddEventListenerOptions;
     expect(options.signal?.aborted).toBe(false);
 
     media.detach();

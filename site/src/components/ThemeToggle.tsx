@@ -1,3 +1,4 @@
+import { isUndefined } from '@videojs/utils/predicate';
 import { useEffect, useState } from 'react';
 
 import Computer from '@/assets/icons/computer.svg?react';
@@ -17,7 +18,7 @@ const themeOptions = [
 ];
 
 function initPreference(): Preference {
-  if (typeof localStorage === 'undefined') return 'system';
+  if (!('localStorage' in globalThis)) return 'system';
   if (localStorage[THEME_KEY] === 'light') return 'light';
   if (localStorage[THEME_KEY] === 'dark') return 'dark';
   if (localStorage[THEME_KEY] === 'system') return 'system';
@@ -30,7 +31,7 @@ function getThemeFromPreference(preference: Preference): Theme {
   if (preference === 'light') return 'light';
   if (preference === 'dark') return 'dark';
   if (preference === 'system') {
-    if (typeof window !== 'undefined' && window.matchMedia?.('(prefers-color-scheme: dark)').matches) {
+    if ('window' in globalThis && window.matchMedia?.('(prefers-color-scheme: dark)').matches) {
       return 'dark';
     }
     return 'light';
@@ -44,7 +45,7 @@ export function ThemeToggle() {
 
   const setPreference = (newPreference: Preference) => {
     _setPreference(newPreference);
-    if (typeof localStorage !== 'undefined') localStorage[THEME_KEY] = newPreference;
+    if ('localStorage' in globalThis) localStorage[THEME_KEY] = newPreference;
     setTheme(getThemeFromPreference(newPreference));
   };
 
@@ -58,7 +59,7 @@ export function ThemeToggle() {
   // Listen to media query changes when preference is 'system'
   useEffect(() => {
     if (preference !== 'system') return;
-    if (typeof window === 'undefined' || typeof window.matchMedia === 'undefined') return;
+    if (!('window' in globalThis) || isUndefined(window.matchMedia)) return;
 
     const onMediaChange = (e: MediaQueryListEvent) => setTheme(e.matches ? 'dark' : 'light');
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
@@ -71,7 +72,7 @@ export function ThemeToggle() {
 
   // Keep document.documentElement and theme-color in sync with theme
   useEffect(() => {
-    if (typeof document === 'undefined') return;
+    if (!('document' in globalThis)) return;
     if (theme === 'light') {
       document.documentElement.classList.remove('dark');
       document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#ebe4c1');

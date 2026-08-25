@@ -2,23 +2,23 @@ import type { Skin } from '@app/types';
 
 type SkinTagMap = Record<Skin, { video: string; audio: string }>;
 
-export const CSS_SKIN_TAGS: SkinTagMap = {
+export const CSS_SKIN_TAGS = {
   default: { video: 'video-skin', audio: 'audio-skin' },
   minimal: { video: 'video-minimal-skin', audio: 'audio-minimal-skin' },
-};
+} satisfies SkinTagMap;
 
-export const TAILWIND_SKIN_TAGS: SkinTagMap = {
+export const TAILWIND_SKIN_TAGS = {
   default: { video: 'video-skin-tailwind', audio: 'audio-skin-tailwind' },
   minimal: { video: 'video-minimal-skin-tailwind', audio: 'audio-minimal-skin-tailwind' },
-};
+} satisfies SkinTagMap;
 
 /** Custom element tag names for the live HLS video preset (`@videojs/html/live-video` skins). */
-export const LIVE_VIDEO_CSS_SKIN_TAGS: Record<Skin, string> = {
+export const LIVE_VIDEO_CSS_SKIN_TAGS = {
   default: 'live-video-skin',
   minimal: 'live-video-minimal-skin',
-};
+} satisfies Record<Skin, string>;
 
-export const LIVE_VIDEO_TAILWIND_SKIN_TAGS: Record<Skin, string> = {
+export const LIVE_VIDEO_TAILWIND_SKIN_TAGS = {
   default: 'live-video-skin-tailwind',
   minimal: 'live-video-minimal-skin-tailwind',
-};
+} satisfies Record<Skin, string>;

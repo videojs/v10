@@ -118,7 +118,8 @@ export class TimeSliderChaptersElement extends UIElement {
       return null;
     }
 
-    this.#templateRoot = root as HTMLElement;
+    this.#templateRoot =
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ root as HTMLElement;
     return this.#templateRoot;
   }
 

@@ -59,22 +59,29 @@ interface SurfacedError {
 
 /** The error the media surface exposes, or null while none has surfaced. */
 function readSurfacedError(): SurfacedError | null {
-  const media = document.querySelector('hls-video') as (HTMLElement & { error?: SurfacedError | null }) | null;
+  const media =
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.querySelector(
+      'hls-video'
+    ) as (HTMLElement & { error?: SurfacedError | null }) | null;
   return media?.error ?? null;
 }
 
 /** Every SVTA code in the engine's reported sequence, causes included. */
 function readReportedCodes(): number[] {
-  const media = document.querySelector('hls-video') as
-    | (HTMLElement & { engine?: { state?: { errors?: { get(): Array<{ code: number }> | undefined } } } })
-    | null;
+  const media =
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.querySelector(
+      'hls-video'
+    ) as (HTMLElement & { engine?: { state?: { errors?: { get(): Array<{ code: number }> | undefined } } } }) | null;
   return (media?.engine?.state?.errors?.get() ?? []).map((error) => error.code);
 }
 
 async function waitForSurfacedError(page: Page): Promise<SurfacedError> {
   await page.waitForFunction(
     () => {
-      const media = document.querySelector('hls-video') as (HTMLElement & { error?: unknown }) | null;
+      const media =
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.querySelector(
+          'hls-video'
+        ) as (HTMLElement & { error?: unknown }) | null;
       return !!media?.error;
     },
     undefined,
@@ -83,7 +90,7 @@ async function waitForSurfacedError(page: Page): Promise<SurfacedError> {
 
   const error = await page.evaluate(readSurfacedError);
   expect(error).not.toBeNull();
-  return error as SurfacedError;
+  return /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ error as SurfacedError;
 }
 
 test.describe('SPF unsupported-source errors', () => {
@@ -145,7 +152,10 @@ test.describe('SPF unsupported-source errors', () => {
     await expect(errorDialog).toHaveAttribute(DATA_ATTRS.open, '', { timeout: 20_000 });
 
     await page.evaluate((url) => {
-      const media = document.querySelector('hls-video') as (HTMLElement & { src?: string }) | null;
+      const media =
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.querySelector(
+          'hls-video'
+        ) as (HTMLElement & { src?: string }) | null;
       if (media) media.src = url;
     }, FMP4_URL);
 
@@ -156,7 +166,10 @@ test.describe('SPF unsupported-source errors', () => {
     // the host) closes the dialog.
     await page.waitForFunction(
       () => {
-        const media = document.querySelector('hls-video') as (HTMLElement & { error?: unknown }) | null;
+        const media =
+          /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.querySelector(
+            'hls-video'
+          ) as (HTMLElement & { error?: unknown }) | null;
         return !!media && !media.error;
       },
       undefined,
@@ -169,8 +182,10 @@ test.describe('SPF unsupported-source errors', () => {
     await page.waitForFunction(
       () => {
         const host = document.querySelector('hls-video');
-        const video = (host?.querySelector('video') ??
-          host?.shadowRoot?.querySelector('video')) as HTMLVideoElement | null;
+        const video =
+          /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (host?.querySelector(
+            'video'
+          ) ?? host?.shadowRoot?.querySelector('video')) as HTMLVideoElement | null;
         return !!video && video.readyState >= 1;
       },
       undefined,

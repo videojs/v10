@@ -14,7 +14,14 @@ export default function BasicUsage() {
 
   return (
     <div className="demo">
-      <button ref={buttonRef as Ref<HTMLButtonElement>} {...getButtonProps()} className="button" disabled={disabled}>
+      <button
+        ref={
+          /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ buttonRef as Ref<HTMLButtonElement>
+        }
+        {...getButtonProps()}
+        className="button"
+        disabled={disabled}
+      >
         Activated {count} times
       </button>
       <label className="label">

@@ -1,4 +1,4 @@
-import type { AnyConstructor, Constructor } from '@videojs/utils/types';
+import type { Constructor } from '@videojs/utils/types';
 
 /**
  * What this mixin needs from whichever Mux Media the element hosts.
@@ -10,10 +10,6 @@ import type { AnyConstructor, Constructor } from '@videojs/utils/types';
 interface MuxAudioHost {
   readonly src: string;
   addEventListener(type: string, listener: () => void): void;
-}
-
-interface MuxAudioElementLike extends HTMLElement {
-  readonly host: MuxAudioHost;
 }
 
 /**
@@ -28,8 +24,10 @@ interface MuxAudioElementLike extends HTMLElement {
  * flavor's element is built on a different `CustomMediaElement`, so there is no
  * common class to extend, only a common host contract.
  */
-export function MuxAudioMixin<Class extends AnyConstructor<HTMLElement>>(BaseClass: Class): Class {
-  class MuxAudioElement extends (BaseClass as unknown as Constructor<MuxAudioElementLike>) {
+export function MuxAudioMixin<Class extends Constructor<HTMLElement>>(BaseClass: Class): Class {
+  class MuxAudioElement extends BaseClass {
+    declare readonly host: MuxAudioHost;
+
     constructor(...args: any[]) {
       super(...args);
       // Covers both the `src` attribute and the `source` property (JS-only).
@@ -47,5 +45,5 @@ export function MuxAudioMixin<Class extends AnyConstructor<HTMLElement>>(BaseCla
     }
   }
 
-  return MuxAudioElement as unknown as Class;
+  return MuxAudioElement;
 }

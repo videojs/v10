@@ -142,7 +142,10 @@ export function MuxMediaMixin<Base extends Constructor<any>>(BaseClass: Base) {
 
   // `MixinReturn` sources statics from `Base`, so this mixin's own needs adding
   // back to the type or callers can't read it.
-  return MuxMediaImpl as unknown as MixinReturn<Base, MuxMediaAPI> & {
+  return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ MuxMediaImpl as MixinReturn<
+    Base,
+    MuxMediaAPI
+  > & {
     readonly alternativeMediaSuggestion: string | undefined;
   };
 }

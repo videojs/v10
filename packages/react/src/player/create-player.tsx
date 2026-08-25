@@ -23,6 +23,9 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useDestroy } from '../utils/use-destroy';
 import { PlayerContextProvider, useMedia, usePlayerContext } from './context';
 
+type AnyPlayerState = InferStoreState<AnyPlayerStore>;
+type ConfigurablePlayerStore = Parameters<typeof setPlayerConfigValue>[0];
+
 export interface CreatePlayerConfig<Features extends AnyPlayerFeature[]> {
   features: Features;
   displayName?: string;
@@ -76,13 +79,13 @@ export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): Cr
   const featureConfig = combinePlayerFeatureConfigs(config.features);
   const configKeys = Object.keys(featureConfig);
 
-  function createConfiguredStore(values: Record<string, unknown>) {
+  function createConfiguredStore<Values extends object>(values: Values) {
     const store = createStore<PlayerTarget>()(slice);
     applyConfigValues(store, featureConfig, values);
     return store;
   }
 
-  function Player(props: PlayerProps<any>): ReactNode {
+  function Player<Props extends PlayerProps<object>>(props: Props): ReactNode {
     const { children } = props;
     // Only inputs declared by selected features are forwarded to store actions.
     const configValues = pick(props, configKeys);
@@ -104,8 +107,10 @@ export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): Cr
       }
 
       for (const key of configKeys) {
-        if (Object.is(previous.values[key], configValues[key])) continue;
-        setPlayerConfigValue(store, featureConfig[key]!, configValues[key]);
+        const previousValue = getConfigValue(previous.values, key);
+        const configValue = getConfigValue(configValues, key);
+        if (Object.is(previousValue, configValue)) continue;
+        setPlayerConfigValue(store, featureConfig[key]!, configValue);
       }
 
       syncedValues.current = { store, values: configValues };
@@ -134,9 +139,12 @@ export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): Cr
     Player.displayName = config.displayName;
   }
 
-  function usePlayer<R>(selector?: (state: object) => R): AnyPlayerStore | R {
+  function usePlayer<R>(selector?: (state: AnyPlayerState) => R): AnyPlayerStore | R {
     const { store } = usePlayerContext();
-    return useStore(store, selector as any);
+    return useStore(
+      store,
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ selector as any
+    );
   }
 
   return {
@@ -146,8 +154,18 @@ export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): Cr
   };
 }
 
-function applyConfigValues(store: object, config: PlayerFeatureConfig, values: Record<string, unknown>): void {
+function applyConfigValues<Values extends object>(
+  store: ConfigurablePlayerStore,
+  config: PlayerFeatureConfig,
+  values: Values
+): void {
   for (const key of Object.keys(config)) {
-    setPlayerConfigValue(store, config[key]!, values[key]);
+    setPlayerConfigValue(store, config[key]!, getConfigValue(values, key));
   }
+}
+
+function getConfigValue<Values extends object>(values: Values, key: string): Values[keyof Values] | undefined {
+  if (!(key in values)) return undefined;
+  // SAFETY: The presence check establishes that key names one of Values' runtime properties.
+  return values[key as keyof Values];
 }

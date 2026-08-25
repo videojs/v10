@@ -52,7 +52,9 @@ describe('trackCurrentTime', () => {
 
     const { state, cleanup } = setupTrackCurrentTime({}, { mediaElement });
 
-    (mediaElement as any).currentTime = 10.0;
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+      mediaElement as any
+    ).currentTime = 10.0;
     mediaElement.dispatchEvent(new Event('timeupdate'));
 
     await vi.waitFor(() => {
@@ -68,11 +70,15 @@ describe('trackCurrentTime', () => {
 
     const { state, cleanup } = setupTrackCurrentTime({}, { mediaElement });
 
-    (mediaElement as any).currentTime = 3.0;
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+      mediaElement as any
+    ).currentTime = 3.0;
     mediaElement.dispatchEvent(new Event('timeupdate'));
     await vi.waitFor(() => expect(state.currentTime.get()).toBe(3.0));
 
-    (mediaElement as any).currentTime = 7.5;
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+      mediaElement as any
+    ).currentTime = 7.5;
     mediaElement.dispatchEvent(new Event('timeupdate'));
     await vi.waitFor(() => expect(state.currentTime.get()).toBe(7.5));
 
@@ -174,7 +180,9 @@ describe('trackCurrentTime', () => {
     context.mediaElement.set(element2);
     await vi.waitFor(() => expect(state.currentTime.get()).toBe(20.0));
 
-    (element1 as any).currentTime = 99.0;
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+      element1 as any
+    ).currentTime = 99.0;
     element1.dispatchEvent(new Event('timeupdate'));
     await new Promise((resolve) => setTimeout(resolve, 30));
 
@@ -214,7 +222,9 @@ describe('trackCurrentTime', () => {
 
     const { state, cleanup } = setupTrackCurrentTime({}, { mediaElement });
 
-    (mediaElement as any).currentTime = 60.0;
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+      mediaElement as any
+    ).currentTime = 60.0;
     mediaElement.dispatchEvent(new Event('seeking'));
 
     await vi.waitFor(() => {
@@ -234,7 +244,9 @@ describe('trackCurrentTime', () => {
 
     cleanup();
 
-    (mediaElement as any).currentTime = 50.0;
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+      mediaElement as any
+    ).currentTime = 50.0;
     mediaElement.dispatchEvent(new Event('timeupdate'));
     mediaElement.dispatchEvent(new Event('seeking'));
     mediaElement.dispatchEvent(new Event('emptied'));

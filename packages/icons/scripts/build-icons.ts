@@ -74,7 +74,7 @@ async function main(): Promise<void> {
   }
 }
 
-main().catch((error: unknown) => {
-  console.error(error);
+main().catch((cause: unknown) => {
+  console.error(cause);
   process.exitCode = 1;
 });

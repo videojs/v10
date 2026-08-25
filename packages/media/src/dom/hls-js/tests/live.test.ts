@@ -1,12 +1,12 @@
-import Hls from 'hls.js';
+import Hls, { type LevelDetails } from 'hls.js';
 import { describe, expect, it, vi } from 'vite-plus/test';
 
 import { HTMLVideoElementHost } from '../../video-host';
 import { HlsJsMediaLiveMixin } from '../live';
 
-function createEngine(userConfig: Record<string, unknown> = {}): Hls {
+function createEngine(userConfig: Partial<Hls['config']> = {}): Hls {
   const listeners = new Map<string, Set<(...args: any[]) => void>>();
-  return {
+  return /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
     config: { ...userConfig },
     userConfig: { ...userConfig },
     on(event: string, fn: (...args: any[]) => void) {
@@ -19,7 +19,7 @@ function createEngine(userConfig: Record<string, unknown> = {}): Hls {
     emit(event: string, ...args: any[]) {
       for (const fn of listeners.get(event) ?? []) fn(event, ...args);
     },
-  } as unknown as Hls;
+  } as Hls;
 }
 
 class FakeHost extends HTMLVideoElementHost {
@@ -34,8 +34,8 @@ class FakeHost extends HTMLVideoElementHost {
 const HlsJsMediaLive = HlsJsMediaLiveMixin(FakeHost);
 
 // Minimal LevelDetails shape — only the fields the mixin reads.
-function levelDetails(overrides: Record<string, unknown>) {
-  return {
+function levelDetails(overrides: Partial<LevelDetails>): LevelDetails {
+  return /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
     live: false,
     type: null,
     partList: null,
@@ -48,8 +48,16 @@ function levelDetails(overrides: Record<string, unknown>) {
   } as any;
 }
 
-function emitLevelLoaded(engine: Hls, details: unknown) {
-  (engine as any).emit(Hls.Events.LEVEL_LOADED, { details });
+function emptyPart(): NonNullable<LevelDetails['partList']>[number] {
+  const part = {};
+  return /* SAFETY: These tests only use the presence of a part to select low-latency behavior. */ part as typeof part &
+    NonNullable<LevelDetails['partList']>[number];
+}
+
+function emitLevelLoaded(engine: Hls, details: LevelDetails) {
+  /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+    engine as any
+  ).emit(Hls.Events.LEVEL_LOADED, { details });
 }
 
 function setTargetSeekable(host: FakeHost, ranges: [number, number][]) {
@@ -57,7 +65,7 @@ function setTargetSeekable(host: FakeHost, ranges: [number, number][]) {
   Object.defineProperty(video, 'seekable', {
     configurable: true,
     get() {
-      return {
+      return /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
         length: ranges.length,
         start: (i: number) => ranges[i]?.[0] ?? 0,
         end: (i: number) => ranges[i]?.[1] ?? 0,
@@ -151,7 +159,7 @@ describe('HlsJsMediaLiveMixin', () => {
       const host = new HlsJsMediaLive(engine);
       setTargetSeekable(host, [[0, 60]]);
 
-      emitLevelLoaded(engine, levelDetails({ live: true, partList: [{}], partHoldBack: 2, partTarget: 0.5 }));
+      emitLevelLoaded(engine, levelDetails({ live: true, partList: [emptyPart()], partHoldBack: 2, partTarget: 0.5 }));
 
       expect(host.liveEdgeStart).toBe(58);
     });
@@ -161,7 +169,7 @@ describe('HlsJsMediaLiveMixin', () => {
       const host = new HlsJsMediaLive(engine);
       setTargetSeekable(host, [[0, 60]]);
 
-      emitLevelLoaded(engine, levelDetails({ live: true, partList: [{}], partHoldBack: 0, partTarget: 0.5 }));
+      emitLevelLoaded(engine, levelDetails({ live: true, partList: [emptyPart()], partHoldBack: 0, partTarget: 0.5 }));
 
       expect(host.liveEdgeStart).toBe(59);
     });
@@ -195,7 +203,7 @@ describe('HlsJsMediaLiveMixin', () => {
       Object.defineProperty(video, 'seekable', {
         configurable: true,
         get() {
-          return {
+          return /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
             length: 1,
             start: () => 0,
             end: () => end,
@@ -215,7 +223,9 @@ describe('HlsJsMediaLiveMixin', () => {
 
   describe('seek-to-live on first play', () => {
     function emitManifestLoading(engine: Hls) {
-      (engine as any).emit(Hls.Events.MANIFEST_LOADING);
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+        engine as any
+      ).emit(Hls.Events.MANIFEST_LOADING);
     }
 
     it('seeks to `liveEdgeStart` on the first `play` event', () => {
@@ -329,7 +339,9 @@ describe('HlsJsMediaLiveMixin', () => {
       emitManifestLoading(engine);
       emitLevelLoaded(engine, levelDetails({ live: true, holdBack: 18 }));
 
-      (engine as any).emit(Hls.Events.DESTROYING);
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+        engine as any
+      ).emit(Hls.Events.DESTROYING);
 
       video.dispatchEvent(new Event('play'));
 
@@ -343,11 +355,23 @@ describe('HlsJsMediaLiveMixin', () => {
       const host = new HlsJsMediaLive(engine);
       setTargetSeekable(host, [[0, 60]]);
 
-      emitLevelLoaded(engine, levelDetails({ live: true, partList: [{}], partHoldBack: 2, partTarget: 0.5 }));
+      emitLevelLoaded(engine, levelDetails({ live: true, partList: [emptyPart()], partHoldBack: 2, partTarget: 0.5 }));
 
-      expect((engine as any).config.backBufferLength).toBe(4);
-      expect((engine as any).config.maxFragLookUpTolerance).toBe(0.001);
-      expect((engine as any).config.abrBandWidthUpFactor).toBe(0.95);
+      expect(
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+          engine as any
+        ).config.backBufferLength
+      ).toBe(4);
+      expect(
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+          engine as any
+        ).config.maxFragLookUpTolerance
+      ).toBe(0.001);
+      expect(
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+          engine as any
+        ).config.abrBandWidthUpFactor
+      ).toBe(0.95);
     });
 
     it('applies standard live defaults when partList is absent', () => {
@@ -357,7 +381,11 @@ describe('HlsJsMediaLiveMixin', () => {
 
       emitLevelLoaded(engine, levelDetails({ live: true, holdBack: 18 }));
 
-      expect((engine as any).config.backBufferLength).toBe(8);
+      expect(
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+          engine as any
+        ).config.backBufferLength
+      ).toBe(8);
     });
 
     it('respects user-supplied overrides', () => {
@@ -367,7 +395,11 @@ describe('HlsJsMediaLiveMixin', () => {
 
       emitLevelLoaded(engine, levelDetails({ live: true, holdBack: 18 }));
 
-      expect((engine as any).config.backBufferLength).toBe(30);
+      expect(
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+          engine as any
+        ).config.backBufferLength
+      ).toBe(30);
     });
 
     it('does not touch config for non-live streams', () => {
@@ -377,7 +409,11 @@ describe('HlsJsMediaLiveMixin', () => {
 
       emitLevelLoaded(engine, levelDetails({ live: false, type: 'VOD' }));
 
-      expect((engine as any).config.backBufferLength).toBeUndefined();
+      expect(
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+          engine as any
+        ).config.backBufferLength
+      ).toBeUndefined();
     });
   });
 
@@ -393,7 +429,9 @@ describe('HlsJsMediaLiveMixin', () => {
       const handler = vi.fn();
       host.addEventListener('targetlivewindowchange', handler);
 
-      (engine as any).emit(Hls.Events.MANIFEST_LOADING);
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+        engine as any
+      ).emit(Hls.Events.MANIFEST_LOADING);
 
       expect(host.targetLiveWindow).toBeNaN();
       expect(host.liveEdgeStart).toBeNaN();
@@ -408,7 +446,9 @@ describe('HlsJsMediaLiveMixin', () => {
       emitLevelLoaded(engine, levelDetails({ live: true, holdBack: 18 }));
       expect(host.targetLiveWindow).toBe(0);
 
-      (engine as any).emit(Hls.Events.DESTROYING);
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+        engine as any
+      ).emit(Hls.Events.DESTROYING);
 
       expect(host.targetLiveWindow).toBeNaN();
       expect(host.liveEdgeStart).toBeNaN();

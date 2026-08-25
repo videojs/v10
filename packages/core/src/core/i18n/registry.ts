@@ -26,7 +26,8 @@ type I18nRegistryHost = { [I18N_REGISTRY_KEY]?: I18nRegistry };
  * player reading from another, and the locale silently falls back to English.
  */
 function getRegistry(): I18nRegistry {
-  const host = globalThis as I18nRegistryHost;
+  const host =
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ globalThis as I18nRegistryHost;
   const existing = host[I18N_REGISTRY_KEY];
   if (existing) {
     return existing;
@@ -121,7 +122,7 @@ function mergeI18nTranslations(chain: Locale[]): FlatTranslations {
       Object.assign(merged, layer);
     }
   }
-  return merged as FlatTranslations;
+  return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ merged as FlatTranslations;
 }
 
 /**

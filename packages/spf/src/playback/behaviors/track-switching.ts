@@ -703,6 +703,7 @@ function pickResolvedTextTrack<T extends TextTrackCandidate>(
     // The stored intent is a `Partial<TextTrack>`; cast to the candidate's own
     // partial shape so the generic `matchesPartialTrack` accepts it (every field
     // it carries — language, forced — exists on the candidate too).
+    // SAFETY: Text selection intent contains only fields shared by every T text-track candidate.
     const matched = candidates.filter((track) => matchesPartialTrack(track, intent as Partial<T>));
     if (matched.length) return matched[0]!.id;
   }
@@ -865,7 +866,11 @@ export const switchVideoTrack = defineBehavior({
         ...config,
         selectionKey: 'selectedVideoTrackId',
         userSelectionKey: 'userVideoTrackSelection',
-        getTracks: (presentation) => getTracksByType(presentation, 'video') as readonly VideoTrackCandidate[],
+        getTracks: (presentation) =>
+          /* SAFETY: The video discriminator narrows every returned track to VideoTrackCandidate. */ getTracksByType(
+            presentation,
+            'video'
+          ) as readonly VideoTrackCandidate[],
         constraints: [excludeFailedCdns, excludeUnplayableTracks, stickToSelectedCodecs],
         rules: [filterByUserSelection, preferCodecFamilies, preferActiveCdn, playerResolutionCap, rankByBandwidth],
         noSupportedTrackCode: SVTA_NO_SUPPORTED_VIDEO_TRACK,
@@ -917,7 +922,11 @@ export const switchAudioTrack = defineBehavior({
         ...config,
         selectionKey: 'selectedAudioTrackId',
         userSelectionKey: 'userAudioTrackSelection',
-        getTracks: (presentation) => getTracksByType(presentation, 'audio') as readonly AudioTrackCandidate[],
+        getTracks: (presentation) =>
+          /* SAFETY: The audio discriminator narrows every returned track to AudioTrackCandidate. */ getTracksByType(
+            presentation,
+            'audio'
+          ) as readonly AudioTrackCandidate[],
         constraints: [excludeFailedCdns, excludeUnplayableTracks, stickToSelectedCodecs],
         rules: [filterByUserSelection, preferCodecFamilies, preferActiveCdn, rankByBandwidth],
         noSupportedTrackCode: SVTA_NO_SUPPORTED_AUDIO_TRACK,
@@ -978,7 +987,11 @@ export const switchTextTrack = defineBehavior({
       config: {
         ...config,
         selectionKey: 'selectedTextTrackId',
-        getTracks: (presentation) => getTracksByType(presentation, 'text') as readonly TextTrackCandidate[],
+        getTracks: (presentation) =>
+          /* SAFETY: The text discriminator narrows every returned track to TextTrackCandidate. */ getTracksByType(
+            presentation,
+            'text'
+          ) as readonly TextTrackCandidate[],
         constraints: [excludeFailedCdns],
         rules: [preferActiveCdn],
         resolveSelection: pickResolvedTextTrack,

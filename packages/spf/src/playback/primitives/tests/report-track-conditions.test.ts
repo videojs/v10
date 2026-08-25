@@ -5,30 +5,24 @@ import {
   SVTA_UNSUPPORTED_DRM_SYSTEM,
   SVTA_UNSUPPORTED_VIDEO_FORMAT,
 } from '../../../media/errors';
-import { MEDIA_PLAYLIST_METADATA_KEY, type ResolvedTrack, type TrackType } from '../../../media/types';
-import { reportUnsupportedTrackConditions } from '../report-track-conditions';
+import { MEDIA_PLAYLIST_METADATA_KEY, type TrackType } from '../../../media/types';
+import { reportUnsupportedTrackConditions, type TrackConditionInput } from '../report-track-conditions';
 
-const track = (type: TrackType, opts: { mimeType?: string; encrypted?: boolean } = {}): ResolvedTrack =>
-  ({
-    id: `${type}-1`,
-    type,
-    url: `https://example.com/${type}.m3u8`,
-    bandwidth: 1000,
-    mimeType: opts.mimeType ?? (type === 'video' ? 'video/mp4' : 'audio/mp4'),
-    startTime: 0,
-    duration: 10,
-    segments: [],
-    metadata: {
-      [MEDIA_PLAYLIST_METADATA_KEY]: {
-        targetDuration: 4,
-        mediaSequence: 0,
-        endList: true,
-        encrypted: opts.encrypted ?? false,
-      },
+const track = (type: TrackType, opts: { mimeType?: string; encrypted?: boolean } = {}): TrackConditionInput => ({
+  id: `${type}-1`,
+  type,
+  mimeType: opts.mimeType ?? (type === 'video' ? 'video/mp4' : 'audio/mp4'),
+  metadata: {
+    [MEDIA_PLAYLIST_METADATA_KEY]: {
+      targetDuration: 4,
+      mediaSequence: 0,
+      endList: true,
+      encrypted: opts.encrypted ?? false,
     },
-  }) as unknown as ResolvedTrack;
+  },
+});
 
-const codes = (t: ResolvedTrack) => reportUnsupportedTrackConditions(t).map((error) => error.code);
+const codes = (t: TrackConditionInput) => reportUnsupportedTrackConditions(t).map((error) => error.code);
 
 describe('reportUnsupportedTrackConditions', () => {
   it('reports nothing for a playable fMP4 rendition', () => {

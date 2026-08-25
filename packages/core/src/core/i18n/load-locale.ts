@@ -60,12 +60,17 @@ const loaders = {
   zh: () => import('./locales/zh'),
 } as const satisfies Record<string, () => Promise<{ default: Translations }>>;
 
+function isLocaleLoaderKey(key: string): key is keyof typeof loaders {
+  return key in loaders;
+}
+
 /** Lazy-import a shipped locale pack when the tag is not already in the registry. */
 export async function loadLocale(tag: string): Promise<Partial<FlatTranslations> | undefined> {
   if (hasRegisteredLocale(tag)) return undefined;
   for (const chainTag of findLocaleKeys(tag)) {
     if (hasRegisteredLocale(chainTag)) return undefined;
-    const load = loaders[getCanonicalLocaleKey(chainTag) as keyof typeof loaders];
+    const key = getCanonicalLocaleKey(chainTag);
+    const load = isLocaleLoaderKey(key) ? loaders[key] : undefined;
     if (load) return flattenTranslations((await load()).default);
   }
   return undefined;

@@ -6,10 +6,10 @@ import type { SupportedFramework } from '@/types/docs';
 import { FRAMEWORK_LABELS, isValidFramework, SUPPORTED_FRAMEWORKS } from '@/types/docs';
 import { resolveFrameworkChange } from '@/utils/docs/routing';
 
-const FRAMEWORK_IMAGES: Record<SupportedFramework, ReactNode> = {
+const FRAMEWORK_IMAGES = {
   react: <Atom size={32} />,
   html: <Globe size={32} />,
-};
+} satisfies Record<SupportedFramework, ReactNode>;
 
 interface Props {
   currentFramework: SupportedFramework;

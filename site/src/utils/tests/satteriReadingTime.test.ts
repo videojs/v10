@@ -1,15 +1,17 @@
 // @vitest-environment node
 // Sätteri's native binding builds typed-array buffers that fail against jsdom's
 // patched ArrayBuffer/DataView globals; run these against the real node realm.
+import { isNumber } from '@videojs/utils/predicate';
 import { markdownToHtml } from 'satteri';
 import { describe, expect, it } from 'vite-plus/test';
 
 import { satteriReadingTime } from '../satteriReadingTime';
 
 function render(source: string) {
+  const frontmatter: Record<string, import('../site-data-value').SiteDataValue> = {};
   const data = {
     astro: {
-      frontmatter: {} as Record<string, unknown>,
+      frontmatter,
       headings: [],
       localImagePaths: new Set<string>(),
       remoteImagePaths: new Set<string>(),
@@ -25,8 +27,10 @@ describe('satteriReadingTime', () => {
     const frontmatter = render(`# Title\n\n${words}`);
 
     expect(frontmatter.minutesRead).toMatch(/min read/);
-    expect(typeof frontmatter.readingTimeMinutes).toBe('number');
-    expect(frontmatter.readingTimeMinutes as number).toBeGreaterThan(0);
+    expect(isNumber(frontmatter.readingTimeMinutes)).toBe(true);
+    expect(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ frontmatter.readingTimeMinutes as number
+    ).toBeGreaterThan(0);
   });
 
   it('counts code and inline code toward the total', () => {

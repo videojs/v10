@@ -1,14 +1,14 @@
 import type { Skin } from '../../types';
 
-const videoStylesheets: Record<Skin, string> = {
+const videoStylesheets = {
   default: new URL('@videojs/html/video/skin.css', import.meta.url).href,
   minimal: new URL('@videojs/html/video/minimal-skin.css', import.meta.url).href,
-};
+} satisfies Record<Skin, string>;
 
-const audioStylesheets: Record<Skin, string> = {
+const audioStylesheets = {
   default: new URL('@videojs/html/audio/skin.css', import.meta.url).href,
   minimal: new URL('@videojs/html/audio/minimal-skin.css', import.meta.url).href,
-};
+} satisfies Record<Skin, string>;
 
 function loadStylesheet(id: string, url: string) {
   const existing = document.querySelector(`link[rel="stylesheet"][data-sandbox-stylesheet="${id}"]`);

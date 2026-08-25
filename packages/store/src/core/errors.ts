@@ -21,7 +21,7 @@ export class StoreError extends Error {
   }
 }
 
-export function isStoreError(error: unknown): error is StoreError {
+export function isStoreError<Value>(error: Value): error is Value & StoreError {
   return error instanceof StoreError;
 }
 

@@ -60,7 +60,8 @@ let apiPromise: Promise<SpotifyIframeApi> | null = null;
 
 /** Load the iframe API once, reusing it if another host already pulled it in. */
 export function loadSpotifyIframeApi(): Promise<SpotifyIframeApi> {
-  const globals = globalThis as SpotifyApiGlobals;
+  const globals =
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ globalThis as SpotifyApiGlobals;
   const existing = globals.SpotifyIframeApi;
   if (existing) return Promise.resolve(existing);
 
@@ -74,7 +75,7 @@ export function loadSpotifyIframeApi(): Promise<SpotifyIframeApi> {
       hostReady?.(api);
     };
     loadScript(API_URL).catch(reject);
-  }).catch((error: unknown) => {
+  }).catch((error) => {
     // A failed load must not be the answer forever; drop it so the next host to ask can try again.
     apiPromise = null;
     throw error;

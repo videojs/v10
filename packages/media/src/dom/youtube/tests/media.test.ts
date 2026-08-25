@@ -52,7 +52,7 @@ class MockPlayer {
   setOption = vi.fn();
   destroy = vi.fn();
 
-  constructor(target: unknown, options?: { events?: MockPlayerEvents }) {
+  constructor(target: HTMLElement | string, options?: { events?: MockPlayerEvents }) {
     this.target = target;
     this.events = options?.events;
     MockPlayer.instances.push(this);
@@ -112,7 +112,7 @@ async function waitForEngine(media: YouTubeMedia): Promise<MockPlayer> {
   await vi.waitFor(() => {
     if (!media.engine) throw new Error('player not created yet');
   });
-  return media.engine as unknown as MockPlayer;
+  return /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ media.engine as MockPlayer;
 }
 
 async function attachAndLoad(media: YouTubeMedia): Promise<{ iframe: HTMLIFrameElement; player: MockPlayer }> {

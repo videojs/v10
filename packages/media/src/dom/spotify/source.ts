@@ -1,4 +1,4 @@
-import { serializeEmbedParams } from '../utils';
+import { type EmbedParams, type EmbedParamValue, serializeEmbedParams } from '../utils';
 import type { SpotifyMediaProps } from './props';
 
 /**
@@ -11,7 +11,7 @@ import type { SpotifyMediaProps } from './props';
  * The index signature still carries anything not listed here, so undocumented
  * knobs and whatever Spotify adds next keep working.
  */
-export interface SpotifyEngineConfig extends Record<string, unknown> {
+export interface SpotifyEngineConfig extends Partial<Record<string, EmbedParamValue>> {
   /** Start position in seconds. */
   t?: number;
   /**
@@ -70,7 +70,10 @@ export function parseSpotifyEntityId(src: string) {
 export function parseSpotifySource(src: string): ParsedSpotifySource | null {
   if (!src) return null;
   const match = MATCH_URI.exec(src) ?? MATCH_SRC.exec(src);
-  const type = match?.[1]?.toLowerCase() as SpotifyEntityType | undefined;
+  const type =
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ match?.[1]?.toLowerCase() as
+      | SpotifyEntityType
+      | undefined;
   const id = match?.[2];
   if (!type || !id) return null;
   return { type, id, startTime: parseStartTime(src) };
@@ -83,11 +86,11 @@ export function buildSpotifyIframeSrc(src: string, props: Partial<SpotifyMediaPr
   // Neither of these is an embed parameter: `preferVideo` picks the path below,
   // and `referrerPolicy` is an attribute of the iframe hosting the embed.
   const { preferVideo, referrerPolicy: _referrerPolicy, ...spotify } = props.source?.engine?.spotify ?? {};
-  const params: Record<string, unknown> = {
+  const params = {
     t: parsed.startTime,
     // Spotify-specific knobs (`theme`, `utm_source`, …) flow through here.
     ...spotify,
-  };
+  } satisfies EmbedParams;
   const videoPath = preferVideo ? '/video' : '';
   // Spotify publishes so few parameters that most embeds need none at all.
   const query = serializeEmbedParams(params);

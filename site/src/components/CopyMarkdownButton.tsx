@@ -1,3 +1,4 @@
+import { isUndefined } from '@videojs/utils/predicate';
 import clsx from 'clsx';
 import { CheckIcon } from 'lucide-react';
 import { useState } from 'react';
@@ -52,7 +53,7 @@ export default function CopyMarkdownButton({ className, style }: CopyMarkdownBut
             .then((text) => new Blob([text], { type: 'text/plain' }));
 
       // Feature detection: ClipboardItem required for Safari compatibility
-      if (typeof ClipboardItem === 'undefined') {
+      if (isUndefined(ClipboardItem)) {
         // Fallback for very old browsers (pre-2024)
         const blob = await markdownBlobPromise;
         const text = await blob.text();

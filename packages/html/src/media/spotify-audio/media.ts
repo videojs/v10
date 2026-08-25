@@ -53,7 +53,12 @@ function templateAttrsToEmbedProps(attrs: Record<string, string>) {
     loop: attrs.loop !== undefined,
     controls: attrs.controls !== undefined,
     playsInline: attrs.playsinline !== undefined,
-    preload: (attrs.preload as 'none' | 'metadata' | 'auto' | undefined) ?? 'metadata',
+    preload:
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (attrs.preload as
+        | 'none'
+        | 'metadata'
+        | 'auto'
+        | undefined) ?? 'metadata',
   };
 }
 

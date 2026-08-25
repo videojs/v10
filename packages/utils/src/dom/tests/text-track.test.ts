@@ -7,7 +7,8 @@ import { findTrackElement, isCaptionOrSubtitleTrack } from '../text-track';
  * so we mock the `.track` property to simulate real browser behavior.
  */
 function mockTrackProperty(el: HTMLTrackElement): TextTrack {
-  const track = {} as TextTrack;
+  const track =
+    /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {} as TextTrack;
   Object.defineProperty(el, 'track', { value: track, configurable: true });
   return track;
 }
@@ -41,14 +42,16 @@ describe('findTrackElement', () => {
     mockTrackProperty(el);
     video.appendChild(el);
 
-    const unmatchedTrack = {} as TextTrack;
+    const unmatchedTrack =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {} as TextTrack;
 
     expect(findTrackElement(video, unmatchedTrack)).toBeNull();
   });
 
   it('returns null when there are no track elements', () => {
     const video = document.createElement('video');
-    const unmatchedTrack = {} as TextTrack;
+    const unmatchedTrack =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {} as TextTrack;
 
     expect(findTrackElement(video, unmatchedTrack)).toBeNull();
   });

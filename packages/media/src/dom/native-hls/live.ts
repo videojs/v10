@@ -6,14 +6,18 @@ import { getStreamInfoFromSrc, looksLikeM3u8 } from './m3u8-utils';
 /**
  * @fires targetlivewindowchange - Fired when the target live window changes. Read `targetLiveWindow` for the new value.
  */
-export function NativeHlsMediaLiveMixin<Base extends Constructor<NativeMediaHost>>(BaseClass: Base) {
+export function NativeHlsMediaLiveMixin<Base extends Constructor<NativeMediaHost>>(
+  BaseClass: Base
+): Base & Constructor<{ readonly liveEdgeStart: number; readonly targetLiveWindow: number }> {
   // Native HLS does not expose manifest-level `HOLD-BACK` / `PART-HOLD-BACK`
   // through a JS API, so we fetch the m3u8 ourselves and parse the relevant
   // tags to derive `targetLiveWindow` and `liveEdgeStart` — mirroring the
   // approach in `muxinc/elements`.
   //
   // See https://github.com/muxinc/elements/blob/main/packages/playback-core/src/index.ts
-  class NativeHlsMediaLive extends (BaseClass as Constructor<NativeMediaHost>) {
+  class NativeHlsMediaLive
+    extends /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (BaseClass as Constructor<NativeMediaHost>)
+  {
     #targetLiveWindow = Number.NaN;
     #liveEdgeStartOffset: number | undefined;
     #disconnect: AbortController | null = null;
@@ -35,7 +39,8 @@ export function NativeHlsMediaLiveMixin<Base extends Constructor<NativeMediaHost
      */
     get liveEdgeStart() {
       if (this.#liveEdgeStartOffset === undefined) return Number.NaN;
-      const target = this.target as HTMLVideoElement | null;
+      const target = /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ this
+        .target as HTMLVideoElement | null;
       if (!target) return Number.NaN;
       const { seekable, buffered } = target;
       // Native HLS on Chrome doesn't fill the `seekable` property, so we use the `buffered` property instead.
@@ -121,6 +126,7 @@ export function NativeHlsMediaLiveMixin<Base extends Constructor<NativeMediaHost
     }
   }
 
-  return NativeHlsMediaLive as unknown as Base &
+  return /* SAFETY: The mixed class preserves the supplied base constructor. */ NativeHlsMediaLive as typeof NativeHlsMediaLive &
+    Base &
     Constructor<{ readonly liveEdgeStart: number; readonly targetLiveWindow: number }>;
 }

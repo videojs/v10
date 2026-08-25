@@ -1,3 +1,14 @@
+import { isUndefined } from '@videojs/utils/predicate';
+
+interface ManagedMediaSourceGlobal {
+  ManagedMediaSource?: NonNullable<typeof ManagedMediaSource>;
+}
+
+function getManagedMediaSourceConstructor() {
+  return /* SAFETY: The local ambient declaration models Safari's non-standard global constructor. */ (
+    globalThis as typeof globalThis & ManagedMediaSourceGlobal
+  ).ManagedMediaSource;
+}
 /**
  * MediaSource Setup
  *
@@ -11,7 +22,7 @@
  * Check if MediaSource API is supported.
  */
 export function supportsMediaSource(): boolean {
-  return typeof MediaSource !== 'undefined';
+  return !isUndefined(globalThis.MediaSource);
 }
 
 /**
@@ -19,7 +30,7 @@ export function supportsMediaSource(): boolean {
  * ManagedMediaSource is a newer Safari API with better lifecycle management.
  */
 export function supportsManagedMediaSource(): boolean {
-  return typeof ManagedMediaSource !== 'undefined';
+  return !isUndefined(getManagedMediaSourceConstructor());
 }
 
 /**
@@ -45,12 +56,14 @@ export interface CreateMediaSourceOptions {
 export function createMediaSource(options: CreateMediaSourceOptions = {}): MediaSource {
   const { preferManaged = false } = options;
 
-  if (preferManaged && supportsManagedMediaSource()) {
-    return new ManagedMediaSource!();
+  const ManagedMediaSourceConstructor = getManagedMediaSourceConstructor();
+  if (preferManaged && !isUndefined(ManagedMediaSourceConstructor)) {
+    return new ManagedMediaSourceConstructor();
   }
 
-  if (supportsMediaSource()) {
-    return new MediaSource();
+  const MediaSourceConstructor = globalThis.MediaSource;
+  if (!isUndefined(MediaSourceConstructor)) {
+    return new MediaSourceConstructor();
   }
 
   throw new Error('MediaSource API is not supported');

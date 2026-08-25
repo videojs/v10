@@ -10,13 +10,22 @@ import { isFunction, isUndefined } from '@videojs/utils/predicate';
  * - `undefined` removes the attribute
  * - Other props are set as string attributes
  */
-export function applyElementProps(element: HTMLElement, props: object, options?: { signal?: AbortSignal }): void {
+export function applyElementProps<Props extends object>(
+  element: HTMLElement,
+  props: Props,
+  options?: { signal?: AbortSignal }
+): void {
   const signal = options?.signal;
 
   for (const [key, value] of Object.entries(props)) {
     if (isFunction(value) && key.startsWith('on')) {
       const event = key.slice(2).toLowerCase();
-      listen(element, event, value as EventListener, signal ? { signal } : undefined);
+      listen(
+        element,
+        event,
+        /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ value as EventListener,
+        signal ? { signal } : undefined
+      );
     } else if (isUndefined(value) || value === false) {
       element.removeAttribute(key);
     } else if (value === true) {

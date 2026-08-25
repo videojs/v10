@@ -278,7 +278,13 @@ describe('ThumbnailCore', () => {
 
       // Verify all pixel values are integers (no sub-pixel rendering gaps).
       for (const key of ['containerWidth', 'containerHeight', 'imageWidth', 'imageHeight', 'offsetX', 'offsetY']) {
-        expect(Number.isInteger(result![key as keyof typeof result])).toBe(true);
+        expect(
+          Number.isInteger(
+            result![
+              /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ key as keyof typeof result
+            ]
+          )
+        ).toBe(true);
       }
     });
 

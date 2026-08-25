@@ -117,4 +117,7 @@ export const all = {
 export type LocaleTag = keyof typeof all;
 
 /** BCP 47 tags for every pack in {@link all}. */
-export const localeTags = Object.keys(all) as LocaleTag[];
+export const localeTags =
+  /* SAFETY: Object.keys(all) can only return the literal keys represented by LocaleTag. */ Object.keys(
+    all
+  ) as LocaleTag[];

@@ -5,7 +5,12 @@ import type { MaybeResolvedPresentation, Presentation } from '../../../media/typ
 import { DEFAULT_FAILOVER_MONITOR_CONFIG, setupFailoverMonitor } from '../setup-failover-monitor';
 
 const resolved = (): Presentation =>
-  ({ id: 'pres-1', url: 'https://cdn-a.example.com/master.m3u8', startTime: 0, selectionSets: [] }) as Presentation;
+  /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ ({
+    id: 'pres-1',
+    url: 'https://cdn-a.example.com/master.m3u8',
+    startTime: 0,
+    selectionSets: [],
+  }) as Presentation;
 
 const makeState = (presentation?: MaybeResolvedPresentation) => ({
   presentation: signal<MaybeResolvedPresentation | undefined>(presentation),

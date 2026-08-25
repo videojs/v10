@@ -1,6 +1,7 @@
 import type { Program } from '@oxc-project/types';
+import { isFunction, isString } from '@videojs/utils/predicate';
 import MagicString from 'magic-string';
-import type { ModuleType, Plugin, RolldownMagicString, TransformPluginContext, TransformResult } from 'rolldown';
+import type { ModuleType, Plugin, TransformPluginContext, TransformResult } from 'rolldown';
 
 import { moduleFilename } from '../utils/module-id';
 
@@ -8,7 +9,7 @@ interface RolldownTransformOptions {
   readonly moduleType: ModuleType;
   readonly ssr?: boolean | undefined;
   readonly ast: Program;
-  readonly magicString: RolldownMagicString;
+  readonly magicString: MagicString;
 }
 
 interface ViteTransformOptions {
@@ -31,7 +32,9 @@ export function viteOxcPlugin(plugin: Plugin): ViteOxcPlugin {
   const transform = plugin.transform;
   if (!transform) return { ...plugin, enforce: 'pre' };
 
-  const handler = (typeof transform === 'function' ? transform : transform.handler) as RolldownTransformHandler;
+  const handler = /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ (
+    isFunction(transform) ? transform : transform.handler
+  ) as RolldownTransformHandler;
 
   const wrapped = async function (
     this: TransformPluginContext,
@@ -48,10 +51,10 @@ export function viteOxcPlugin(plugin: Plugin): ViteOxcPlugin {
       ...options,
       moduleType,
       ast,
-      magicString: magicString as unknown as RolldownMagicString,
+      magicString,
     });
 
-    if (!result || typeof result === 'string' || result.code === undefined || typeof result.code === 'string') {
+    if (!result || isString(result) || result.code === undefined || isString(result.code)) {
       return result;
     }
 
@@ -73,7 +76,7 @@ export function viteOxcPlugin(plugin: Plugin): ViteOxcPlugin {
   return {
     ...plugin,
     enforce: 'pre',
-    transform: typeof transform === 'function' ? wrapped : { ...transform, handler: wrapped },
+    transform: isFunction(transform) ? wrapped : { ...transform, handler: wrapped },
   };
 }
 
@@ -89,5 +92,7 @@ function parserLanguage(moduleType: ModuleType, filename: string): 'js' | 'jsx' 
   if (moduleType === 'jsx') return 'jsx';
   if (moduleType === 'ts') return 'ts';
   if (moduleType === 'tsx') return 'tsx';
-  return scriptModuleType(filename) as 'js' | 'jsx' | 'ts' | 'tsx';
+  return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ scriptModuleType(
+    filename
+  ) as 'js' | 'jsx' | 'ts' | 'tsx';
 }

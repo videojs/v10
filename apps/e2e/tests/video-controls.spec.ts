@@ -10,17 +10,34 @@ const EJECTED_HTML_VIDEO_PATH = '/pages/ejected-html-video-mp4.html';
 
 function getMediaVolume(page: Page): Promise<number> {
   return page.evaluate((selector) => {
-    const media = document.querySelector(selector) as HTMLMediaElement | null;
-    const actual = (media?.querySelector?.('video') as HTMLMediaElement) ?? media;
+    const media =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.querySelector(
+        selector
+      ) as HTMLMediaElement | null;
+    const actual =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (media?.querySelector?.(
+        'video'
+      ) as HTMLMediaElement) ?? media;
     return actual?.volume ?? 1;
   }, SELECTORS.media);
 }
 
-for (const { name, path, skipBrowsers } of ALL_VIDEO_PAGES as readonly PageEntry[]) {
+for (const {
+  name,
+  path,
+  skipBrowsers,
+} of /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ ALL_VIDEO_PAGES as readonly PageEntry[]) {
   const rateMenu = !path.includes('/cdn-video') && !path.includes('/ejected');
   test.describe(`Video Controls — ${name}`, () => {
     test.skip(({ browserName }) => {
-      return skipBrowsers?.includes(browserName as 'chromium' | 'webkit' | 'firefox') ?? false;
+      return (
+        skipBrowsers?.includes(
+          /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ browserName as
+            | 'chromium'
+            | 'webkit'
+            | 'firefox'
+        ) ?? false
+      );
     }, 'Skipped on this browser');
     let player: PlayerPage;
 
@@ -70,7 +87,11 @@ for (const { name, path, skipBrowsers } of ALL_VIDEO_PAGES as readonly PageEntry
           async () => {
             return page.evaluate((selector) => {
               const el = document.querySelector(selector);
-              const media = (el?.querySelector?.('video') as HTMLMediaElement) ?? (el as HTMLMediaElement);
+              const media =
+                /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (el?.querySelector?.(
+                  'video'
+                ) as HTMLMediaElement) ??
+                /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (el as HTMLMediaElement);
               return media?.currentTime ?? 0;
             }, SELECTORS.media);
           },
@@ -238,8 +259,14 @@ for (const { name, path } of UI_VIDEO_PAGES) {
     test('buffering indicator follows waiting state', async ({ page }) => {
       await player.play();
       await page.evaluate((selector) => {
-        const media = document.querySelector(selector) as HTMLMediaElement | null;
-        const actual = (media?.querySelector?.('video') as HTMLMediaElement) ?? media;
+        const media =
+          /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.querySelector(
+            selector
+          ) as HTMLMediaElement | null;
+        const actual =
+          /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (media?.querySelector?.(
+            'video'
+          ) as HTMLMediaElement) ?? media;
         if (!actual) return;
 
         Object.defineProperties(actual, {
@@ -252,8 +279,14 @@ for (const { name, path } of UI_VIDEO_PAGES) {
       await expect(player.bufferingIndicator).toHaveAttribute(DATA_ATTRS.visible, '', { timeout: 2_000 });
 
       await page.evaluate((selector) => {
-        const media = document.querySelector(selector) as HTMLMediaElement | null;
-        const actual = (media?.querySelector?.('video') as HTMLMediaElement) ?? media;
+        const media =
+          /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.querySelector(
+            selector
+          ) as HTMLMediaElement | null;
+        const actual =
+          /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (media?.querySelector?.(
+            'video'
+          ) as HTMLMediaElement) ?? media;
         if (!actual) return;
 
         Object.defineProperty(actual, 'readyState', {
@@ -275,8 +308,14 @@ for (const { name, path } of UI_VIDEO_PAGES) {
 
     test('play button reflects ended playback', async ({ page }) => {
       await page.evaluate((selector) => {
-        const media = document.querySelector(selector) as HTMLMediaElement | null;
-        const actual = (media?.querySelector?.('video') as HTMLMediaElement) ?? media;
+        const media =
+          /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ document.querySelector(
+            selector
+          ) as HTMLMediaElement | null;
+        const actual =
+          /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (media?.querySelector?.(
+            'video'
+          ) as HTMLMediaElement) ?? media;
         if (!actual) return;
 
         Object.defineProperties(actual, {

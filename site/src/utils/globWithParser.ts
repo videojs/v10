@@ -5,10 +5,13 @@ import { glob } from 'astro/loaders';
  * Parser function that runs before Astro's schema validation.
  * Receives the entry and the original filename (before generateId transforms it).
  */
-type Parser = <TData extends Record<string, unknown>>(
-  options: ParseDataOptions<TData>,
-  originalEntry: string
-) => Promise<ParseDataOptions<TData>>;
+interface Parser {
+  // oxlint-disable-next-line anti-slop/no-unsafe-dictionary-type -- Astro's ParseDataOptions contract uses this exact generic constraint.
+  <TData extends Record<string, unknown>>(
+    options: ParseDataOptions<TData>,
+    originalEntry: string
+  ): Promise<ParseDataOptions<TData>>;
+}
 
 type GlobWithParserOptions = Parameters<typeof glob>[0] & {
   parser: Parser;

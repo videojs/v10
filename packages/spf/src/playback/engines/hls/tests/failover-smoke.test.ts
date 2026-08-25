@@ -1,3 +1,4 @@
+import { isString } from '@videojs/utils/predicate';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { isResolvedTrack, type MaybeResolvedPresentation } from '../../../../media/types';
@@ -12,7 +13,9 @@ import { createHlsVideoEngine } from '../engine';
 // We can't make a real Mux CDN drop requests, so the failure is "hacked": a
 // fetch wrapper rejects every request to the primary origin while letting the
 // manifest and the backup origin hit the real network.
-const SMOKE = (import.meta as unknown as { env?: Record<string, string | undefined> }).env?.VITE_FAILOVER_SMOKE;
+const SMOKE = /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+  import.meta as { env?: Record<string, string | undefined> }
+).env?.VITE_FAILOVER_SMOKE;
 
 const REDUNDANT_URL = 'https://stream.mux.com/s41JYeqIpBMBzE4OzxDyGR2yrp2hD1CQ6gJN9SlVGDQ.m3u8?redundant_streams=true';
 
@@ -44,14 +47,31 @@ describe.skipIf(!SMOKE)('multi-CDN failover (live smoke)', () => {
   it('fails over to the backup CDN when the primary is unreachable, then recovers', async () => {
     realFetch = globalThis.fetch;
     let blockPrimary = true;
-    globalThis.fetch = ((input: RequestInfo | URL, init?: RequestInit) => {
-      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
-      if (blockPrimary && url.includes(PRIMARY)) return Promise.reject(new TypeError('blocked (smoke)'));
-      return realFetch(input as RequestInfo, init);
-    }) as typeof fetch;
+    globalThis.fetch =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ ((
+        input: RequestInfo | URL,
+        init?: RequestInit
+      ) => {
+        const url = isString(input)
+          ? input
+          : input instanceof URL
+            ? input.href
+            : /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ (
+                input as Request
+              ).url;
+        if (blockPrimary && url.includes(PRIMARY)) return Promise.reject(new TypeError('blocked (smoke)'));
+        return realFetch(
+          /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ input as RequestInfo,
+          init
+        );
+      }) as typeof fetch;
 
     const engine = createHlsVideoEngine({ failover: { cooldownMs: 4000 } });
-    engine.state.presentation.set({ url: REDUNDANT_URL } as MaybeResolvedPresentation);
+    engine.state.presentation.set(
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+        url: REDUNDANT_URL,
+      } as MaybeResolvedPresentation
+    );
 
     // The primary is picked first, its media-playlist fetch fails, the trip
     // lands in failedCdns, the constraint prunes it, and the selected video

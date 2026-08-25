@@ -24,6 +24,10 @@ import {
   type SvtaError,
 } from '../../../media/errors';
 
+interface MediaConstructorOwner {
+  readonly constructor: Function;
+}
+
 /**
  * The error shape a media surface exposes: `@videojs/media`'s {@link ErrorLike}
  * plus the reporter context the engine carries alongside a condition.
@@ -46,8 +50,11 @@ export interface HlsVideoMediaError extends ErrorLike {
  * plays the MPEG-TS and DRM sources SPF doesn't — without either adapter knowing
  * that sibling exists.
  */
-export function withAlternativeMediaSuggestion(message: string, media: object): string {
-  const { alternativeMediaSuggestion } = media.constructor as { alternativeMediaSuggestion?: string };
+export function withAlternativeMediaSuggestion(message: string, media: MediaConstructorOwner): string {
+  const { alternativeMediaSuggestion } =
+    /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ media.constructor as {
+      alternativeMediaSuggestion?: string;
+    };
   const suggestion = alternativeMediaSuggestion?.trim();
 
   return suggestion ? `${message} ${suggestion}` : message;

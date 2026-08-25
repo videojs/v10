@@ -7,6 +7,7 @@ import type {
   VariableDeclaration,
   VariableDeclarator,
 } from '@oxc-project/types';
+import { isBoolean, isNumber, isString } from '@videojs/utils/predicate';
 import type { Plugin, RolldownMagicString } from 'rolldown';
 
 import type { ComponentMeta } from '../components/meta';
@@ -16,7 +17,7 @@ const SCRIPT_ID = /\.[cm]?[jt]sx?(?:\?|$)/;
 export interface ComponentModuleMeta {
   readonly componentMeta?: ComponentMeta | undefined;
   readonly componentSource?: string | undefined;
-  readonly [key: string]: unknown;
+  readonly [key: string]: import('../value').VjscValue;
 }
 
 interface ExportedMeta {
@@ -63,32 +64,30 @@ export function componentMetaPlugin(exportName = 'meta'): Plugin {
   };
 }
 
-export function readComponentModuleMeta(meta: unknown): ComponentModuleMeta | undefined {
+export function readComponentModuleMeta<Value>(meta: Value): ComponentModuleMeta | undefined {
   if (!isRecord(meta)) return undefined;
 
   const componentMeta = isComponentMeta(meta.componentMeta) ? meta.componentMeta : undefined;
-  const componentSource = typeof meta.componentSource === 'string' ? meta.componentSource : undefined;
+  const componentSource = isString(meta.componentSource) ? meta.componentSource : undefined;
   if (!componentMeta && componentSource === undefined) return undefined;
 
   return { ...meta, componentMeta, componentSource };
 }
 
-export function readComponentMeta(meta: unknown): ComponentMeta | undefined {
+export function readComponentMeta<Value>(meta: Value): ComponentMeta | undefined {
   return readComponentModuleMeta(meta)?.componentMeta;
 }
 
-export function readComponentSource(meta: unknown): string | undefined {
+export function readComponentSource<Value>(meta: Value): string | undefined {
   return readComponentModuleMeta(meta)?.componentSource;
 }
 
-export function mergeComponentModuleMeta(
-  meta: unknown,
+export function mergeComponentModuleMeta<Value>(
+  meta: Value,
   update: Partial<ComponentModuleMeta>
-): Readonly<Record<string, unknown>> {
-  return {
-    ...(isRecord(meta) ? meta : {}),
-    ...update,
-  };
+): Readonly<Record<string, import('../value').VjscValue>> {
+  const merged = isRecord(meta) ? { ...meta } : {};
+  return Object.assign(merged, update);
 }
 
 function findExportedMeta(ast: Program | undefined, exportName: string): ExportedMeta | undefined {
@@ -124,30 +123,25 @@ function removeDeclarator(magicString: RolldownMagicString, exported: ExportedMe
 function parseComponentMeta(expression: Expression, id: string, exportName: string): ComponentMeta {
   const value = staticValue(expression, id);
 
-  if (!isRecord(value) || typeof value.name !== 'string' || value.name.length === 0) {
+  if (!isRecord(value) || !isString(value.name) || value.name.length === 0) {
     throw new Error(`Component metadata \`${exportName}\` in ${id} must contain a non-empty literal \`name\`.`);
   }
 
-  return value as ComponentMeta;
+  return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ value as ComponentMeta;
 }
 
-function staticValue(expression: Expression, id: string): unknown {
+function staticValue(expression: Expression, id: string): import('../value').VjscValue {
   const value = unwrapExpression(expression);
 
   if (value.type === 'Literal') {
-    if (
-      typeof value.value === 'string' ||
-      typeof value.value === 'number' ||
-      typeof value.value === 'boolean' ||
-      value.value === null
-    ) {
+    if (isString(value.value) || isNumber(value.value) || isBoolean(value.value) || value.value === null) {
       return value.value;
     }
     throw nonStaticMeta(id);
   }
   if (value.type === 'UnaryExpression' && value.operator === '-') {
     const operand = staticValue(value.argument, id);
-    if (typeof operand === 'number') return -operand;
+    if (isNumber(operand)) return -operand;
   }
   if (value.type === 'TemplateLiteral' && value.expressions.length === 0) {
     return value.quasis[0]?.value.cooked ?? value.quasis[0]?.value.raw ?? '';
@@ -163,7 +157,10 @@ function staticValue(expression: Expression, id: string): unknown {
   throw nonStaticMeta(id);
 }
 
-function staticObject(expression: ObjectExpression, id: string): Readonly<Record<string, unknown>> {
+function staticObject(
+  expression: ObjectExpression,
+  id: string
+): Readonly<Record<string, import('../value').VjscValue>> {
   return Object.fromEntries(
     expression.properties.map((property) => {
       if (property.type !== 'Property' || property.kind !== 'init' || property.method) {
@@ -179,7 +176,7 @@ function staticPropertyName(property: ObjectProperty, id: string): string {
   const key: PropertyKey = property.key;
 
   if (!property.computed && key.type === 'Identifier') return key.name;
-  if (key.type === 'Literal' && (typeof key.value === 'string' || typeof key.value === 'number')) {
+  if (key.type === 'Literal' && (isString(key.value) || isNumber(key.value))) {
     return String(key.value);
   }
 
@@ -203,10 +200,10 @@ function nonStaticMeta(id: string): Error {
   return new Error(`Component metadata in ${id} must contain only static literal values.`);
 }
 
-function isRecord(value: unknown): value is Readonly<Record<string, unknown>> {
+function isRecord<Value>(value: Value): value is Value & Readonly<Record<string, import('../value').VjscValue>> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-function isComponentMeta(value: unknown): value is ComponentMeta {
+function isComponentMeta<Value>(value: Value): value is Value & ComponentMeta {
   return isRecord(value) && typeof value.name === 'string';
 }

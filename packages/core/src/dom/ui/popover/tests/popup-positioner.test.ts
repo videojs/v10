@@ -153,7 +153,7 @@ describe('PopupPositioner', () => {
   it('preserves consumer-authored and active popup anchor styles', async () => {
     vi.resetModules();
     vi.doMock('@videojs/utils/dom', async (importOriginal) => {
-      const original = (await importOriginal()) as Record<string, unknown>;
+      const original = await importOriginal<typeof import('@videojs/utils/dom')>();
       return { ...original, supportsAnchorPositioning: () => true };
     });
     const { PopupPositioner: AnchorPopupPositioner } = await import('../popup-positioner');

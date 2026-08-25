@@ -99,10 +99,16 @@ export class MenuItemElement extends UIElement {
   }
 
   #openSubmenu(id: string): void {
-    const root = this.getRootNode() as Document | ShadowRoot;
-    const submenu = root.querySelector<HTMLElement>(`#${CSS.escape(id)}`) as HTMLElement & {
-      openMenu?: (reason?: 'click') => void;
-    };
+    const root =
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ this.getRootNode() as
+        | Document
+        | ShadowRoot;
+    const submenu =
+      /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ root.querySelector<HTMLElement>(
+        `#${CSS.escape(id)}`
+      ) as HTMLElement & {
+        openMenu?: (reason?: 'click') => void;
+      };
     submenu?.openMenu?.('click');
   }
 

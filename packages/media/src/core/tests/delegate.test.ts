@@ -45,7 +45,9 @@ describe('Media Mixins', () => {
           return null;
         }
       }
-      const Mixed = TestMediaMixin(Base as unknown as Constructor<MediaBase>);
+      const Mixed = TestMediaMixin(
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ Base as Constructor<MediaBase>
+      );
       const host = new Mixed();
 
       const handler = vi.fn();
@@ -63,7 +65,9 @@ describe('Media Mixins', () => {
           return null;
         }
       }
-      const Mixed = TestMediaMixin(Base as unknown as Constructor<MediaBase>);
+      const Mixed = TestMediaMixin(
+        /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ Base as Constructor<MediaBase>
+      );
       const host = new Mixed();
       const hostEvents: Event[] = [];
       host.addEventListener('custom', (e) => hostEvents.push(e));

@@ -4,7 +4,10 @@ import type { GestureRegion } from '../gesture';
 import { resolveRegion } from '../region';
 
 describe('resolveRegion', () => {
-  const rect = { left: 0, width: 300 } as DOMRect;
+  const rect = /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+    left: 0,
+    width: 300,
+  } as DOMRect;
 
   describe('halves (left + right)', () => {
     const regions = new Set<GestureRegion>(['left', 'right']);
@@ -49,7 +52,11 @@ describe('resolveRegion', () => {
   });
 
   it('returns null for zero-width container', () => {
-    const zeroRect = { left: 0, width: 0 } as DOMRect;
+    const zeroRect =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+        left: 0,
+        width: 0,
+      } as DOMRect;
     const regions = new Set<GestureRegion>(['left', 'right']);
     expect(resolveRegion(0, zeroRect, regions)).toBe(null);
   });
@@ -80,7 +87,11 @@ describe('resolveRegion', () => {
   });
 
   it('handles offset container', () => {
-    const offsetRect = { left: 100, width: 300 } as DOMRect;
+    const offsetRect =
+      /* SAFETY: This fixture deliberately supplies the asserted contract for the scenario under test. */ {
+        left: 100,
+        width: 300,
+      } as DOMRect;
     const regions = new Set<GestureRegion>(['left', 'right']);
 
     // clientX 100 = left edge → left region

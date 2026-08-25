@@ -7,5 +7,8 @@ export interface FlattenTranslationsOptions {
 }
 
 export function flattenTranslations(locale: Translations, options: FlattenTranslationsOptions = {}): FlatTranslations {
-  return flatten(locale, options) as FlatTranslations;
+  return /* SAFETY: The surrounding typed API establishes the asserted contract at this boundary. */ flatten(
+    locale,
+    options
+  ) as FlatTranslations;
 }
