@@ -1,0 +1,15 @@
+<video-player>
+  <media-container class="html-hotkey-basic">
+    <video src="{{VJS10_DEMO_VIDEO_MP4}}" muted playsinline></video>
+    <p class="html-hotkey-basic__instructions">Space: play/pause · M: mute · ←/→: seek</p>
+    <media-play-button class="html-hotkey-basic__button">
+      <span class="show-when-paused">Play</span>
+      <span class="show-when-playing">Pause</span>
+      <span class="show-when-ended">Replay</span>
+    </media-play-button>
+    <media-hotkey keys="Space" action="togglePaused"></media-hotkey>
+    <media-hotkey keys="m" action="toggleMuted"></media-hotkey>
+    <media-hotkey keys="ArrowLeft" action="seekStep" value="-5"></media-hotkey>
+    <media-hotkey keys="ArrowRight" action="seekStep" value="5"></media-hotkey>
+  </media-container>
+</video-player>

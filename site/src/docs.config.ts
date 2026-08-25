@@ -119,6 +119,7 @@ export const sidebar: Sidebar = [
           { slug: 'reference/error-dialog' },
           { slug: 'reference/fullscreen-button' },
           { slug: 'reference/google-cast' },
+          { slug: 'reference/hotkey' },
           { slug: 'reference/menu' },
           { slug: 'reference/mute-button' },
           { slug: 'reference/mux-data' },
