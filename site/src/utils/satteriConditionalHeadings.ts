@@ -187,7 +187,8 @@ function injectFeatureReferenceHeadings(node: MdxJsxFlowElement, headings: Condi
   const json = readRefJson(FEATURE_REF_DIR, featureName);
   if (!json) return;
 
-  const model = createFeatureReferenceModel(featureName, json);
+  // SAFETY: This JSON is emitted by the feature-reference builder with the same schema consumed by the site.
+  const model = createFeatureReferenceModel(featureName, json as Parameters<typeof createFeatureReferenceModel>[1]);
 
   headings.push(...buildFeatureReferenceTocHeadings(model));
 }
@@ -212,7 +213,8 @@ function injectMediaReferenceHeadings(node: MdxJsxFlowElement, headings: Conditi
   const json = readRefJson(MEDIA_REF_DIR, resolveReferenceSlug(mediaName));
   if (!json) return;
 
-  const model = createMediaReferenceModel(mediaName, json);
+  // SAFETY: This JSON is emitted by the media-reference builder with the same schema consumed by the site.
+  const model = createMediaReferenceModel(mediaName, json as Parameters<typeof createMediaReferenceModel>[1]);
 
   headings.push(...buildMediaReferenceTocHeadings(model));
 }

@@ -14,7 +14,7 @@ export const GET: APIRoute = async (context) => {
   return rss({
     title: `${SITE_TITLE} Changelog`,
     description: 'New features, fixes, and improvements in every Video.js release',
-    site: context.site,
+    site: context.site!,
     trailingSlash: false,
     items: entries.map((entry) => ({
       title: `v${entry.data.version}`,

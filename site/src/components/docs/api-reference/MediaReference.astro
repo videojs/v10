@@ -21,8 +21,7 @@ if (!ref) return;
 const model = createMediaReferenceModel(media, ref);
 if (!model) return;
 
-const platform = model.platforms[framework];
-if (!platform) return;
+if (framework === 'react' && !model.platforms.react) return;
 
 // Engine prose comes from the page as `engine-<key>` slots: the paragraph that
 // names the provider's own docs belongs with the page, not the generator. Slot
@@ -44,17 +43,17 @@ for (const engine of model.engines) {
       <HtmlMediaReference
         media={media}
         mediaType={ref.mediaType}
-        data={platform.data}
-        sections={platform.sections}
+        data={model.platforms.html.data}
+        sections={model.platforms.html.sections}
         engines={model.engines}
         engineOptions={ref.engineOptions ?? {}}
         engineProse={engineProse}
       />
     ) : (
-      <ReactMediaReference
+      model.platforms.react && <ReactMediaReference
         media={media}
-        data={platform.data}
-        sections={platform.sections}
+        data={model.platforms.react.data}
+        sections={model.platforms.react.sections}
         engines={model.engines}
         engineOptions={ref.engineOptions ?? {}}
         engineProse={engineProse}

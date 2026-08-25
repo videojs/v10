@@ -54,12 +54,14 @@ interface MediaSubsectionDefinition<Reference> {
  * Options under `source.engine`, shared by both platforms: the structured source has the same shape in HTML and React,
  * so the section is defined once and placed after the properties or props it extends.
  */
-const ENGINE_OPTIONS_SUBSECTION: MediaSubsectionDefinition<unknown> = Object.freeze({
-  key: 'engineOptions',
-  title: 'Engine options',
-  id: 'engine-options',
-  isEmpty: (_platform, ref) => Object.keys(ref.engineOptions ?? {}).length === 0,
-});
+function createEngineOptionsSubsection<Reference>(): MediaSubsectionDefinition<Reference> {
+  return Object.freeze({
+    key: 'engineOptions',
+    title: 'Engine options',
+    id: 'engine-options',
+    isEmpty: (_platform: Reference, ref: MediaReference) => Object.keys(ref.engineOptions ?? {}).length === 0,
+  });
+}
 
 const HTML_SUBSECTIONS: readonly MediaSubsectionDefinition<HtmlMediaReference>[] = Object.freeze([
   {
@@ -76,7 +78,7 @@ const HTML_SUBSECTIONS: readonly MediaSubsectionDefinition<HtmlMediaReference>[]
     isEmpty: (html) =>
       Object.keys(html.properties?.definitions ?? {}).length === 0 && (html.properties?.native ?? []).length === 0,
   },
-  ENGINE_OPTIONS_SUBSECTION,
+  createEngineOptionsSubsection<HtmlMediaReference>(),
   {
     key: 'methods',
     title: 'Methods',
@@ -104,7 +106,7 @@ const REACT_SUBSECTIONS: readonly MediaSubsectionDefinition<ReactMediaReference>
     id: 'props',
     isEmpty: (react) => !react.acceptsNativeProps && Object.keys(react.props ?? {}).length === 0,
   },
-  ENGINE_OPTIONS_SUBSECTION,
+  createEngineOptionsSubsection<ReactMediaReference>(),
   {
     key: 'ref',
     title: 'Ref',
@@ -184,7 +186,7 @@ export function createMediaReferenceModel(mediaName: string, ref: MediaReference
 export function buildMediaReferenceTocHeadings(model: MediaReferenceModel | null): TocHeading[] {
   if (!model) return [];
 
-  const headings = [
+  const headings: TocHeading[] = [
     {
       depth: model.heading.depth,
       text: model.heading.text,
