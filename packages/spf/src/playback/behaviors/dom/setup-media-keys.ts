@@ -58,6 +58,7 @@ import {
   KEY_SYSTEM_BY_KEY_FORMAT,
   keySystemCandidates,
   requestKeySystemAccess,
+  resolveDrmHeaders,
   resolveDrmUrl,
   shapeLicenseRequest,
   toCencInitData,
@@ -208,7 +209,12 @@ function setupMediaKeysSetup({
               const { body, headers } = shapeLicenseRequest(keySystem, message);
               let license: Uint8Array<ArrayBuffer>;
               try {
-                license = await fetchLicense(licenseUrl, body, controller.signal, headers);
+                // Configured headers first so the shaped request's own win: a
+                // classic PlayReady challenge names the headers its CDM requires.
+                license = await fetchLicense(licenseUrl, body, controller.signal, {
+                  ...resolveDrmHeaders(entry.headers),
+                  ...headers,
+                });
               } catch (error) {
                 if (controller.signal.aborted) return;
                 emitError(state, { code: SVTA_BAD_LICENSE_REQUEST, data: { keySystem, reason: String(error) } });
