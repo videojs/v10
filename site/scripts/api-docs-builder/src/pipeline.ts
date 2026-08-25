@@ -131,6 +131,7 @@ export function buildCSSVars(cssVarsData: CSSVarsExtraction): Record<string, CSS
 // item-data.ts applied by create-menu).
 function dataAttrsComponentName(fileBasename: string, componentKebab: string): string {
   const qualifier = fileBasename.replace(/-data\.ts$/, '');
+
   return kebabToPascal(`${componentKebab}-${qualifier}`);
 }
 
