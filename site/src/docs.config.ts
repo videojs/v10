@@ -60,12 +60,7 @@ export const sidebar: Sidebar = [
       { slug: 'concepts/mux-data' },
       { slug: 'concepts/security' },
       { slug: 'concepts/i18n', sidebarLabel: 'Internationalization' },
-      {
-        sidebarLabel: 'Advanced',
-        frameworks: ['html'],
-        defaultOpen: false,
-        contents: [{ slug: 'concepts/custom-element-lifecycle' }],
-      },
+      { slug: 'concepts/custom-element-lifecycle', frameworks: ['html'] },
     ],
   },
   {

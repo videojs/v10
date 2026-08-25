@@ -143,7 +143,7 @@ class SkipIntroButtonElement extends UIElement {
 }
 ```
 
-`UIElement` treats disconnection as temporary before it permanently destroys owned resources. See <DocsLink slug="concepts/custom-element-lifecycle">Custom element lifecycle</DocsLink> for cleanup patterns, required superclass calls, and the `keep-alive` escape hatch.
+If your element starts listeners, observers, or other work, see <DocsLink slug="concepts/custom-element-lifecycle">Custom element lifecycle</DocsLink> for how to clean it up when the element is removed from the page.
 
 </FrameworkCase>
 
