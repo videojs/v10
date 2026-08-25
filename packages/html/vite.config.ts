@@ -16,7 +16,7 @@ import { cdnI18nExternalPlugin } from '../../build/plugins/cdn-i18n-external-plu
 import { copyCssPlugin } from '../../build/plugins/copy-css-plugin.ts';
 import { inlineCssPlugin } from '../../build/plugins/inline-css-plugin.ts';
 import { inlineTemplatePlugin } from '../../build/plugins/inline-template-plugin.ts';
-import { cachedTaskInputs } from '../../build/run.ts';
+import { cachedTaskInputs } from '../../build/task.ts';
 import { LOCALES, localeAliases } from '../core/src/core/i18n/locales.ts';
 
 type CdnBuildMode = 'dev' | 'prod';
@@ -59,7 +59,7 @@ const i18nLocaleEntries = Object.fromEntries([
   ...localeTags.map((tag) => [`i18n/locales/${tag}/register`, `src/i18n/locales/${tag}/register.ts`]),
 ]);
 
-const createPackagePackConfig = (mode: PackageBuildMode): PackUserConfig => ({
+const createPackConfig = (mode: PackageBuildMode): PackUserConfig => ({
   ...packageBuildConfig(mode, 'browser'),
   name: 'package',
   entry: {
@@ -273,5 +273,5 @@ export default defineConfig({
     // Dynamic composite imports can exceed Vitest's default under workspace load.
     testTimeout: 15_000,
   },
-  pack: [...packageBuildModes.map(createPackagePackConfig), ...cdnPackConfigs],
+  pack: [...packageBuildModes.map(createPackConfig), ...cdnPackConfigs],
 });

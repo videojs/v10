@@ -4,7 +4,6 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsx scripts/setup.ts && vp dev --host",
     "preview": "vp preview",
     "reset": "tsx scripts/reset.ts",
     "sync": "tsx scripts/sync.ts"

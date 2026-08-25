@@ -2,7 +2,7 @@ import { defineConfig } from 'vite-plus';
 import type { UserConfig as PackUserConfig } from 'vite-plus/pack';
 
 import { neutralLibraryConfig } from '../../build/pack.ts';
-import { cachedTaskInputs } from '../../build/run.ts';
+import { cachedTaskInputs } from '../../build/task.ts';
 
 const pack: PackUserConfig = {
   ...neutralLibraryConfig,

@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vite-plus';
 
 import { baseConfig } from '../../build/pack.ts';
-import { cachedTaskInputs } from '../../build/run.ts';
+import { cachedTaskInputs } from '../../build/task.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const pkg = JSON.parse(readFileSync(resolve(__dirname, 'package.json'), 'utf-8'));

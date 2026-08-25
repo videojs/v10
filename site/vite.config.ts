@@ -4,7 +4,7 @@ import react from '@vitejs/plugin-react';
 import { getViteConfig } from 'astro/config';
 import type { ViteUserConfig } from 'vite-plus';
 
-import { cachedTaskInputs } from '../build/run.ts';
+import { cachedTaskInputs } from '../build/task.ts';
 import { demoPlaceholderPlugin } from './scripts/replace-demo-placeholders.ts';
 
 // Typed as Vite+'s `ViteUserConfig` (Vite's config augmented with `test`) and

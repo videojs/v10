@@ -2,35 +2,12 @@ import { defineConfig } from 'vite-plus';
 import type { UserConfig as PackUserConfig } from 'vite-plus/pack';
 
 import { type PackageBuildMode, packageBuildConfig, packageBuildModes } from '../../build/pack.ts';
-import { cachedTaskInputs } from '../../build/run.ts';
+import { cachedTaskInputs } from '../../build/task.ts';
 import type {
   ComponentSchemaPluginOptions,
   componentSchemaPlugin as createComponentSchemaPlugin,
 } from '../vjsc/src/plugins/component-schema.ts';
 import { LOCALES, localeAliases } from './src/core/i18n/locales.ts';
-
-/** Load the private compiler after Vite+ has built Core's workspace dependencies. */
-function componentSchemaPlugin(config: ComponentSchemaPluginOptions) {
-  let plugin: ReturnType<typeof createComponentSchemaPlugin>;
-
-  return {
-    name: 'vjsc:deferred-component-schema',
-    async options(options) {
-      const module = await import('vjsc/plugins');
-      plugin = module.componentSchemaPlugin(config);
-      return plugin.options.call(this, options);
-    },
-    resolveId(id) {
-      return plugin.resolveId.call(this, id);
-    },
-    load: {
-      order: 'pre',
-      handler(id) {
-        return plugin.load.handler.call(this, id);
-      },
-    },
-  } satisfies ReturnType<typeof createComponentSchemaPlugin>;
-}
 import en from './src/core/i18n/locales/en.ts';
 
 const localeTags = [...LOCALES, ...localeAliases(LOCALES)];
@@ -124,3 +101,26 @@ export default defineConfig({
   },
   pack: packageBuildModes.map(createPackConfig),
 });
+
+/** Load the private compiler after Vite+ has built Core's workspace dependencies. */
+function componentSchemaPlugin(config: ComponentSchemaPluginOptions) {
+  let plugin: ReturnType<typeof createComponentSchemaPlugin>;
+
+  return {
+    name: 'vjsc:deferred-component-schema',
+    async options(options) {
+      const module = await import('vjsc/plugins');
+      plugin = module.componentSchemaPlugin(config);
+      return plugin.options.call(this, options);
+    },
+    resolveId(id) {
+      return plugin.resolveId.call(this, id);
+    },
+    load: {
+      order: 'pre',
+      handler(id) {
+        return plugin.load.handler.call(this, id);
+      },
+    },
+  } satisfies ReturnType<typeof createComponentSchemaPlugin>;
+}

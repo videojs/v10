@@ -9,9 +9,12 @@ import { emitVjscFamily } from './build/vjsc.js';
 import { ASSETS_DIR, DIST_DIR } from './internal/paths.js';
 
 const isWatch = process.argv.includes('--watch');
+let hasBuilt = false;
 
 async function build(): Promise<void> {
-  if (existsSync(DIST_DIR)) rmSync(DIST_DIR, { recursive: true, force: true });
+  // Keep the previous output available while sibling package watchers start.
+  // Later watch rebuilds still clean stale files after icon removals.
+  if ((!isWatch || hasBuilt) && existsSync(DIST_DIR)) rmSync(DIST_DIR, { recursive: true, force: true });
 
   const families = loadIconFamilies();
   console.log(`Building ${families.length} icon families: ${families.map(({ name }) => name).join(', ')}`);
@@ -25,6 +28,7 @@ async function build(): Promise<void> {
     emitRenderFamily(family);
     emitElementFamily(family);
   }
+  hasBuilt = true;
 }
 
 function watchAssets(): void {

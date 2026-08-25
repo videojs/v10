@@ -6,7 +6,7 @@ import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig, normalizePath, type Plugin } from 'vite-plus';
 
-import { cachedTaskInputs } from '../../build/run.ts';
+import { cachedTaskInputs } from '../../build/task.ts';
 import { mirrorTemplatesToSrc } from './scripts/shared';
 
 // Locate @videojs/html through Node resolution rather than a workspace-relative
@@ -152,6 +152,11 @@ function serveAppShell(): Plugin {
 export default defineConfig({
   run: {
     tasks: {
+      dev: {
+        command: 'vp dev --host',
+        cache: false,
+        dependsOn: ['setup', { task: 'build', from: ['dependencies', 'devDependencies'] }, '@videojs/html#build:cdn'],
+      },
       setup: {
         command: 'tsx scripts/setup.ts',
         dependsOn: ['@videojs/core#build'],
@@ -184,7 +189,7 @@ export default defineConfig({
     dedupe: ['react', 'react-dom'],
   },
   optimizeDeps: {
-    include: ['react', 'react-dom'],
+    include: ['@videojs/html > @videojs/element > @lit/context', 'react', 'react-dom'],
     exclude: ['@videojs/core', '@videojs/html', '@videojs/react', '@videojs/spf', '@videojs/store', '@videojs/utils'],
   },
   server: {

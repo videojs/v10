@@ -3,6 +3,9 @@ export type PackageBuildMode = 'dev' | 'default';
 
 export const packageBuildModes: PackageBuildMode[] = ['dev', 'default'];
 
+const isWatchMode =
+  process.env.VP_PACK_WATCH === 'true' || process.argv.includes('--watch') || process.argv.includes('-w');
+
 /** Applied to every Vite+ pack config in the monorepo. */
 export const baseConfig = {
   inputOptions: {
@@ -10,6 +13,7 @@ export const baseConfig = {
       nativeMagicString: true,
     },
   },
+  ignoreWatch: [/[/\\]packages[/\\][^/\\]+[/\\]dist(?:[/\\]|$)/],
   report: process.env.CI === 'true',
 } as const;
 
@@ -20,7 +24,7 @@ export function packageBuildConfig(mode: PackageBuildMode, platform: 'browser' |
     platform,
     format: 'es' as const,
     sourcemap: true,
-    clean: true,
+    clean: !isWatchMode,
     hash: false,
     unbundle: true,
     outDir: `dist/${mode}`,
@@ -41,7 +45,7 @@ export const neutralLibraryConfig = {
   platform: 'neutral' as const,
   format: 'es' as const,
   sourcemap: true,
-  clean: true,
+  clean: !isWatchMode,
   hash: false,
   unbundle: true,
   dts: { tsgo: true, tsconfig: 'tsconfig.dts.json' } as const,

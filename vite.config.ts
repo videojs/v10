@@ -143,6 +143,13 @@ export default defineConfig({
       scripts: true,
       tasks: true,
     },
+    tasks: {
+      'prepare:dev': {
+        command: 'node -e ""',
+        cache: false,
+        dependsOn: ['site#api-docs:generate', 'site#ejected-skins', 'site#cdn-manifest', '@videojs/sandbox#setup'],
+      },
+    },
   },
   staged: {
     'packages/icons/src/assets/**/*.svg': 'node --import tsx packages/icons/scripts/format-icons.ts',

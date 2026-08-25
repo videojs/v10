@@ -1,6 +1,6 @@
 import { defineConfig } from 'vite-plus';
 
-import { cachedTaskInputs } from '../../build/run.ts';
+import { cachedTaskInputs } from '../../build/task.ts';
 
 export default defineConfig({
   run: {

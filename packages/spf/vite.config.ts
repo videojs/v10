@@ -3,7 +3,7 @@ import type { UserConfig as PackUserConfig } from 'vite-plus/pack';
 import { playwright } from 'vite-plus/test/browser-playwright';
 
 import { type PackageBuildMode, packageBuildConfig, packageBuildModes } from '../../build/pack.ts';
-import { cachedTaskInputs } from '../../build/run.ts';
+import { cachedTaskInputs } from '../../build/task.ts';
 
 const createPackConfig = (mode: PackageBuildMode): PackUserConfig => ({
   ...packageBuildConfig(mode, 'neutral'),
