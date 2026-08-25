@@ -77,14 +77,12 @@ jobs:
         run: pnpm install --frozen-lockfile --prefer-offline
 
       - name: Restore Vite Task cache
-        id: vite-task-cache
         uses: actions/cache/restore@v6
         with:
           path: node_modules/.vite/task-cache
-          key: vite-task-${{ runner.os }}-${{ runner.arch }}-preview-${{ github.run_id }}-${{ github.run_attempt }}
+          key: vite-task-${{ runner.os }}-${{ runner.arch }}-restore-only-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}
           restore-keys: |
-            vite-task-${{ runner.os }}-${{ runner.arch }}-preview-
-            vite-task-${{ runner.os }}-${{ runner.arch }}-
+            vite-task-${{ runner.os }}-${{ runner.arch }}-packages-
 
       - name: Build packages
         run: pnpm build:packages
@@ -96,13 +94,6 @@ jobs:
       # nothing in the preview tarball.
       - name: Build CDN bundles
         run: pnpm build:cdn
-
-      - name: Save Vite Task cache
-        if: success()
-        uses: actions/cache/save@v6
-        with:
-          path: node_modules/.vite/task-cache
-          key: ${{ steps.vite-task-cache.outputs.cache-primary-key }}
 
       # Keep this list in sync with the public packages built by `build:packages`.
       # @videojs/cli is excluded because it is built separately and depends on a

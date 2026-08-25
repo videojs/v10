@@ -2,7 +2,7 @@ import { defineConfig } from 'vite-plus';
 import type { UserConfig as PackUserConfig } from 'vite-plus/pack';
 
 import { type PackageBuildMode, packageBuildConfig, packageBuildModes } from '../../build/pack.ts';
-import { cachedTaskInputs } from '../../build/task.ts';
+import { cachedTaskInputs, packageTestTask, workspaceTaskDependencies } from '../../build/task.ts';
 import type {
   ComponentSchemaPluginOptions,
   componentSchemaPlugin as createComponentSchemaPlugin,
@@ -56,7 +56,7 @@ export default defineConfig({
       build: {
         command:
           'node --import tsx ./scripts/generate-i18n-locales.ts && node --import tsx ./scripts/generate-i18n-types.ts && vp pack',
-        dependsOn: [{ task: 'build', from: ['dependencies', 'devDependencies'] }],
+        dependsOn: workspaceTaskDependencies(),
         // The CDN task consumes Core, but its generated output is not an input
         // to Core's locale generators or package build.
         input: [
@@ -66,7 +66,17 @@ export default defineConfig({
           { pattern: '!packages/html/cdn', base: 'workspace' },
           { pattern: '!packages/html/cdn/**', base: 'workspace' },
         ],
+        output: [
+          'dist/**',
+          'src/core/i18n/load-locale.ts',
+          'src/core/i18n/locales/all.ts',
+          'src/core/i18n/params.generated.ts',
+          'src/core/i18n/text/**',
+          { pattern: 'packages/html/src/i18n/locales/**', base: 'workspace' },
+          { pattern: 'packages/react/src/i18n/locales/**', base: 'workspace' },
+        ],
       },
+      'test:ci': packageTestTask('pnpm run test:types && vp test run'),
     },
   },
   define: {

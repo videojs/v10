@@ -31,24 +31,15 @@ jobs:
         run: pnpm install
 
       - name: Restore Vite Task cache
-        id: vite-task-cache
         uses: actions/cache/restore@v6
         with:
           path: node_modules/.vite/task-cache
-          key: vite-task-${{ runner.os }}-${{ runner.arch }}-website-test-${{ github.run_id }}-${{ github.run_attempt }}
+          key: vite-task-${{ runner.os }}-${{ runner.arch }}-restore-only-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}
           restore-keys: |
-            vite-task-${{ runner.os }}-${{ runner.arch }}-website-test-
-            vite-task-${{ runner.os }}-${{ runner.arch }}-
+            vite-task-${{ runner.os }}-${{ runner.arch }}-packages-
 
       - name: Run website tests
-        run: pnpm exec vp run --filter="site^..." build && pnpm exec vp run site#test
-
-      - name: Save Vite Task cache
-        if: success()
-        uses: actions/cache/save@v6
-        with:
-          path: node_modules/.vite/task-cache
-          key: ${{ steps.vite-task-cache.outputs.cache-primary-key }}
+        run: pnpm exec vp run site#test:ci
 
   astro-check:
     runs-on: ubuntu-latest
@@ -70,14 +61,12 @@ jobs:
         run: pnpm install
 
       - name: Restore Vite Task cache
-        id: vite-task-cache
         uses: actions/cache/restore@v6
         with:
           path: node_modules/.vite/task-cache
-          key: vite-task-${{ runner.os }}-${{ runner.arch }}-website-astro-check-${{ github.run_id }}-${{ github.run_attempt }}
+          key: vite-task-${{ runner.os }}-${{ runner.arch }}-restore-only-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}
           restore-keys: |
-            vite-task-${{ runner.os }}-${{ runner.arch }}-website-astro-check-
-            vite-task-${{ runner.os }}-${{ runner.arch }}-
+            vite-task-${{ runner.os }}-${{ runner.arch }}-packages-
 
       - name: Build packages
         run: pnpm build:packages
@@ -87,10 +76,3 @@ jobs:
 
       - name: Astro check
         run: cd site && pnpm astro check --minimumSeverity warning
-
-      - name: Save Vite Task cache
-        if: success()
-        uses: actions/cache/save@v6
-        with:
-          path: node_modules/.vite/task-cache
-          key: ${{ steps.vite-task-cache.outputs.cache-primary-key }}

@@ -42,14 +42,12 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Restore Vite Task cache
-        id: vite-task-cache
         uses: actions/cache/restore@v6
         with:
           path: node_modules/.vite/task-cache
-          key: vite-task-${{ runner.os }}-${{ runner.arch }}-e2e-${{ matrix.browser }}-${{ github.run_id }}-${{ github.run_attempt }}
+          key: vite-task-${{ runner.os }}-${{ runner.arch }}-restore-only-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}
           restore-keys: |
-            vite-task-${{ runner.os }}-${{ runner.arch }}-e2e-${{ matrix.browser }}-
-            vite-task-${{ runner.os }}-${{ runner.arch }}-
+            vite-task-${{ runner.os }}-${{ runner.arch }}-packages-
 
       - name: Build packages
         run: pnpm build:packages
@@ -72,13 +70,6 @@ jobs:
       - name: Run sandbox E2E tests
         if: matrix.browser == 'chromium'
         run: pnpm --dir apps/e2e test:sandbox
-
-      - name: Save Vite Task cache
-        if: success()
-        uses: actions/cache/save@v6
-        with:
-          path: node_modules/.vite/task-cache
-          key: ${{ steps.vite-task-cache.outputs.cache-primary-key }}
 
       - name: Upload test report
         if: always()

@@ -6,7 +6,7 @@ import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig, normalizePath, type Plugin } from 'vite-plus';
 
-import { cachedTaskInputs } from '../../build/task.ts';
+import { cachedTaskInputs, cachedTaskOutputs, workspaceTaskDependencies } from '../../build/task.ts';
 import { mirrorTemplatesToSrc } from './scripts/shared';
 
 // Locate @videojs/html through Node resolution rather than a workspace-relative
@@ -155,7 +155,7 @@ export default defineConfig({
       dev: {
         command: 'vp dev --host',
         cache: false,
-        dependsOn: ['setup', { task: 'build', from: ['dependencies', 'devDependencies'] }, '@videojs/html#build:cdn'],
+        dependsOn: ['setup', ...workspaceTaskDependencies(), '@videojs/html#build:cdn'],
       },
       setup: {
         command: 'tsx scripts/setup.ts',
@@ -167,12 +167,12 @@ export default defineConfig({
       },
       build: {
         command: 'vp build',
-        dependsOn: ['setup', { task: 'build', from: ['dependencies', 'devDependencies'] }, '@videojs/html#build:cdn'],
+        dependsOn: ['setup', ...workspaceTaskDependencies(), '@videojs/html#build:cdn'],
         // The app-shell plugin creates this file for the build and removes it
         // afterwards. Workspace dependencies are fingerprinted through the task
         // graph, not their mutable package-local node_modules links.
         input: [...cachedTaskInputs, '!src/index.html', '!node_modules/@videojs', '!node_modules/@videojs/**'],
-        output: [{ auto: true }, '!src/index.html'],
+        output: [...cachedTaskOutputs, '!src/index.html'],
       },
     },
   },

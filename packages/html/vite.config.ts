@@ -16,7 +16,7 @@ import { cdnI18nExternalPlugin } from '../../build/plugins/cdn-i18n-external-plu
 import { copyCssPlugin } from '../../build/plugins/copy-css-plugin.ts';
 import { inlineCssPlugin } from '../../build/plugins/inline-css-plugin.ts';
 import { inlineTemplatePlugin } from '../../build/plugins/inline-template-plugin.ts';
-import { cachedTaskInputs } from '../../build/task.ts';
+import { cachedTaskInputs, packageTestTask, workspaceTaskDependencies } from '../../build/task.ts';
 import { LOCALES, localeAliases } from '../core/src/core/i18n/locales.ts';
 
 type CdnBuildMode = 'dev' | 'prod';
@@ -247,11 +247,12 @@ export default defineConfig({
     tasks: {
       build: {
         command: 'vp pack --filter package',
-        dependsOn: [{ task: 'build', from: ['dependencies', 'devDependencies'] }],
+        dependsOn: workspaceTaskDependencies(),
         // CDN sources are consumed only by build:cdn. Pack config discovery
         // observes their parent directory even when filtering to `package`, so
         // keep the independent npm package build free of that generated tree.
         input: [...cachedTaskInputs, '!src/cdn/', '!src/cdn/**'],
+        output: ['dist/**'],
       },
       'build:cdn': {
         command: 'node --import tsx ./scripts/build-cdn-locales.ts && vp pack --filter cdn',
@@ -261,6 +262,7 @@ export default defineConfig({
         input: [...cachedTaskInputs, '!src/cdn/locales/', '!src/cdn/locales/**', '!cdn/', '!cdn/**'],
         output: ['src/cdn/locales/**', 'cdn/**'],
       },
+      'test:ci': packageTestTask(),
     },
   },
   define: {

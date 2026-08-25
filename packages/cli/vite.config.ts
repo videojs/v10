@@ -26,6 +26,14 @@ export default defineConfig({
         command: 'node --import tsx ../../site/scripts/copy-package-docs.ts cli && vp pack',
         dependsOn: ['site#build'],
         input: cachedTaskInputs,
+        output: ['dist/**', 'docs/**'],
+      },
+      'test:ci': {
+        command: 'pnpm test',
+        cache: false,
+        // CLI tests use a committed CDN-manifest fixture; only the private
+        // anti-slop plugin's Utils import needs a built workspace package.
+        dependsOn: ['@videojs/utils#build'],
       },
     },
   },

@@ -2,7 +2,7 @@ import { defineConfig } from 'vite-plus';
 import type { UserConfig as PackUserConfig } from 'vite-plus/pack';
 
 import { type PackageBuildMode, packageBuildConfig, packageBuildModes } from '../../build/pack.ts';
-import { cachedTaskInputs } from '../../build/task.ts';
+import { cachedTaskInputs, packageTestTask, workspaceTaskDependencies } from '../../build/task.ts';
 
 const createPackConfig = (mode: PackageBuildMode): PackUserConfig => ({
   ...packageBuildConfig(mode, 'neutral'),
@@ -18,9 +18,11 @@ export default defineConfig({
     tasks: {
       build: {
         command: 'vp pack',
-        dependsOn: [{ task: 'build', from: ['dependencies', 'devDependencies'] }],
+        dependsOn: workspaceTaskDependencies(),
         input: cachedTaskInputs,
+        output: ['dist/**'],
       },
+      'test:ci': packageTestTask(),
     },
   },
   define: {

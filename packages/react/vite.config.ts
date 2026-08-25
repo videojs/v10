@@ -6,7 +6,7 @@ import type { UserConfig as PackUserConfig } from 'vite-plus/pack';
 
 import { type PackageBuildMode, packageBuildConfig, packageBuildModes } from '../../build/pack.ts';
 import { copyCssPlugin } from '../../build/plugins/copy-css-plugin.ts';
-import { cachedTaskInputs } from '../../build/task.ts';
+import { cachedTaskInputs, packageTestTask, workspaceTaskDependencies } from '../../build/task.ts';
 import { LOCALES, localeAliases } from '../core/src/core/i18n/locales.ts';
 
 const skinsDir = resolve(dirname(fileURLToPath(import.meta.url)), '../skins/src');
@@ -41,9 +41,11 @@ export default defineConfig({
     tasks: {
       build: {
         command: 'vp pack',
-        dependsOn: [{ task: 'build', from: ['dependencies', 'devDependencies'] }],
+        dependsOn: workspaceTaskDependencies(),
         input: cachedTaskInputs,
+        output: ['dist/**'],
       },
+      'test:ci': packageTestTask(),
     },
   },
   define: {

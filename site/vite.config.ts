@@ -4,7 +4,7 @@ import react from '@vitejs/plugin-react';
 import { getViteConfig } from 'astro/config';
 import type { ViteUserConfig } from 'vite-plus';
 
-import { cachedTaskInputs } from '../build/task.ts';
+import { cachedTaskInputs, cachedTaskOutputs, workspaceTaskDependencies } from '../build/task.ts';
 import { demoPlaceholderPlugin } from './scripts/replace-demo-placeholders.ts';
 
 // Typed as Vite+'s `ViteUserConfig` (Vite's config augmented with `test`) and
@@ -28,7 +28,7 @@ const config: ViteUserConfig = {
     tasks: {
       'api-docs:generate': {
         command: 'tsx scripts/api-docs-builder/src/index.ts',
-        dependsOn: [{ task: 'build', from: ['dependencies', 'devDependencies'] }],
+        dependsOn: workspaceTaskDependencies(),
         input: [
           // Keep the extractor's workspace-wide TypeScript inputs explicit.
           // Automatic tracking also observes unrelated generated directories
@@ -54,25 +54,27 @@ const config: ViteUserConfig = {
       },
       'ejected-skins': {
         command: 'tsx scripts/build-ejected-skins.ts',
-        dependsOn: [{ task: 'build', from: ['dependencies', 'devDependencies'] }],
+        dependsOn: workspaceTaskDependencies(),
         input: cachedTaskInputs,
         output: ['src/content/ejected-skins.json'],
       },
       'cdn-manifest': {
         command: 'tsx scripts/build-cdn-manifest.ts',
-        dependsOn: [{ task: 'build:cdn', from: ['dependencies', 'devDependencies'] }],
+        dependsOn: workspaceTaskDependencies('build:cdn'),
         input: cachedTaskInputs,
         output: ['src/content/cdn-media.json'],
       },
       build: {
-        // Astro observes pnpm's selector-specific lifecycle metadata even though
-        // it does not affect the output, so normalize it for cross-task cache reuse.
-        command: "npm_lifecycle_event=vite-plus npm_lifecycle_script='astro build' astro build",
+        // Astro observes pnpm's selector-specific lifecycle metadata and host
+        // session values even though they do not affect the output, so normalize
+        // them for cross-task cache reuse.
+        command:
+          "SHLVL=0 XPC_SERVICE_NAME=0 npm_lifecycle_event=vite-plus npm_lifecycle_script='astro build' astro build",
         dependsOn: ['api-docs:generate', 'ejected-skins', 'cdn-manifest'],
         // Astro regenerates and consumes collection schemas during one build.
         // They are tool-managed state rather than stable inputs or outputs.
         input: [...cachedTaskInputs, '!.astro/**', '!.netlify/**'],
-        output: [{ auto: true }, '!.astro/**', '!.netlify/**'],
+        output: [...cachedTaskOutputs, '!.astro/**', '!.netlify/**'],
         env: [
           'OAUTH_CLIENT_ID',
           'OAUTH_CLIENT_SECRET',
@@ -82,13 +84,16 @@ const config: ViteUserConfig = {
           'SESSION_COOKIE_PASSWORD',
           'SENTRY_AUTH_TOKEN',
         ],
-        // Shell nesting changes between invocations but cannot affect Astro's output.
-        untrackedEnv: ['SHLVL'],
       },
       dev: {
         command: 'NETLIFY_DEV=1 astro dev',
         cache: false,
         dependsOn: ['api-docs:generate', 'ejected-skins', 'cdn-manifest'],
+      },
+      'test:ci': {
+        command: 'pnpm test',
+        cache: false,
+        dependsOn: workspaceTaskDependencies(),
       },
     },
   },

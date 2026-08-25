@@ -76,27 +76,18 @@ jobs:
         run: pnpm install --frozen-lockfile --prefer-offline
 
       - name: Restore Vite Task cache
-        id: vite-task-cache
         uses: actions/cache/restore@v6
         with:
           path: node_modules/.vite/task-cache
-          key: vite-task-${{ runner.os }}-${{ runner.arch }}-ci-typecheck-${{ github.run_id }}-${{ github.run_attempt }}
+          key: vite-task-${{ runner.os }}-${{ runner.arch }}-restore-only-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}
           restore-keys: |
-            vite-task-${{ runner.os }}-${{ runner.arch }}-ci-typecheck-
-            vite-task-${{ runner.os }}-${{ runner.arch }}-
+            vite-task-${{ runner.os }}-${{ runner.arch }}-packages-
 
       - name: Build packages for type resolution
         run: pnpm build:packages
 
       - name: Typecheck
         run: pnpm typecheck
-
-      - name: Save Vite Task cache
-        if: success()
-        uses: actions/cache/save@v6
-        with:
-          path: node_modules/.vite/task-cache
-          key: ${{ steps.vite-task-cache.outputs.cache-primary-key }}
 
   test:
     needs: install
@@ -135,34 +126,15 @@ jobs:
         run: pnpm install --frozen-lockfile --prefer-offline
 
       - name: Restore Vite Task cache
-        id: vite-task-cache
         uses: actions/cache/restore@v6
         with:
           path: node_modules/.vite/task-cache
-          key: vite-task-${{ runner.os }}-${{ runner.arch }}-ci-test-${{ matrix.package }}-${{ github.run_id }}-${{ github.run_attempt }}
+          key: vite-task-${{ runner.os }}-${{ runner.arch }}-restore-only-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}
           restore-keys: |
-            vite-task-${{ runner.os }}-${{ runner.arch }}-ci-test-${{ matrix.package }}-
-            vite-task-${{ runner.os }}-${{ runner.arch }}-
-
-      - name: Build package dependencies
-        if: matrix.package != '@videojs/cli'
-        run: pnpm exec vp run --filter="${{ matrix.package }}..." build
-
-      # CLI tests resolve a committed CDN-manifest fixture, so they do not need
-      # the Site build. Anti-slop predicates do require Utils declarations.
-      - name: Build CLI test dependencies
-        if: matrix.package == '@videojs/cli'
-        run: pnpm exec vp run @videojs/utils#build
+            vite-task-${{ runner.os }}-${{ runner.arch }}-packages-
 
       - name: Test package
-        run: pnpm --filter "${{ matrix.package }}" test
-
-      - name: Save Vite Task cache
-        if: success()
-        uses: actions/cache/save@v6
-        with:
-          path: node_modules/.vite/task-cache
-          key: ${{ steps.vite-task-cache.outputs.cache-primary-key }}
+        run: pnpm exec vp run "${{ matrix.package }}#test:ci"
 
   test-spf:
     name: Test (@videojs/spf)
@@ -188,24 +160,15 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Restore Vite Task cache
-        id: vite-task-cache
         uses: actions/cache/restore@v6
         with:
           path: node_modules/.vite/task-cache
-          key: vite-task-${{ runner.os }}-${{ runner.arch }}-ci-test-spf-${{ github.run_id }}-${{ github.run_attempt }}
+          key: vite-task-${{ runner.os }}-${{ runner.arch }}-restore-only-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}
           restore-keys: |
-            vite-task-${{ runner.os }}-${{ runner.arch }}-ci-test-spf-
-            vite-task-${{ runner.os }}-${{ runner.arch }}-
+            vite-task-${{ runner.os }}-${{ runner.arch }}-packages-
 
       - name: Test SPF
-        run: pnpm exec vp run --filter="@videojs/spf..." build && pnpm exec vp run @videojs/spf#test
-
-      - name: Save Vite Task cache
-        if: success()
-        uses: actions/cache/save@v6
-        with:
-          path: node_modules/.vite/task-cache
-          key: ${{ steps.vite-task-cache.outputs.cache-primary-key }}
+        run: pnpm exec vp run @videojs/spf#test:ci
 
   workspace:
     needs: install
@@ -255,10 +218,9 @@ jobs:
         uses: actions/cache/restore@v6
         with:
           path: node_modules/.vite/task-cache
-          key: vite-task-${{ runner.os }}-${{ runner.arch }}-ci-build-${{ github.run_id }}-${{ github.run_attempt }}
+          key: vite-task-${{ runner.os }}-${{ runner.arch }}-packages-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
-            vite-task-${{ runner.os }}-${{ runner.arch }}-ci-build-
-            vite-task-${{ runner.os }}-${{ runner.arch }}-
+            vite-task-${{ runner.os }}-${{ runner.arch }}-packages-
 
       - name: Build
         run: pnpm build:packages
