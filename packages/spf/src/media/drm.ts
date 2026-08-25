@@ -106,6 +106,41 @@ export function declaredDrmKeys(presentation: MaybeResolvedPresentation | undefi
   return keys;
 }
 
+/**
+ * The track types a presentation has nothing playable left in once no key system
+ * is usable: types with at least one resolved rendition, every one of them
+ * encrypted.
+ *
+ * Pruning decides the same question at selection time, but it runs before EME has
+ * negotiated — so a rendition naming a configured license server survives it, and
+ * only negotiation later reveals the CDM is absent. This is that late-arriving
+ * answer, and it is a *verdict*: with the type empty, the source cannot play. A
+ * type keeping any clear rendition is unaffected and reports nothing.
+ *
+ * Text is excluded deliberately — it runs no capability pre-pass, so it has no
+ * verdict for a cause to be matched against.
+ */
+export function unplayableEncryptedTypes(
+  presentation: MaybeResolvedPresentation | undefined
+): Array<'video' | 'audio'> {
+  const unplayable: Array<'video' | 'audio'> = [];
+  for (const type of ['video', 'audio'] as const) {
+    let resolved = 0;
+    let encrypted = 0;
+    for (const selectionSet of presentation?.selectionSets ?? []) {
+      for (const switchingSet of selectionSet.switchingSets) {
+        for (const track of switchingSet.tracks) {
+          if (track.type !== type || !isResolvedTrack(track)) continue;
+          resolved += 1;
+          if (getMediaPlaylistMetadata(track)?.encrypted) encrypted += 1;
+        }
+      }
+    }
+    if (resolved > 0 && encrypted === resolved) unplayable.push(type);
+  }
+  return unplayable;
+}
+
 /** Encryption scheme per HLS `METHOD`, for the MKSA encryption-scheme query. */
 const ENCRYPTION_SCHEME_BY_METHOD: Readonly<Record<string, 'cbcs' | 'cenc'>> = {
   'SAMPLE-AES': 'cbcs',

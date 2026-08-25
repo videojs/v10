@@ -11,6 +11,7 @@ import {
   resolveDrmUrl,
   shapeLicenseRequest,
   toCencInitData,
+  unplayableEncryptedTypes,
 } from '../eme';
 
 // "ping" in base64 — small stand-in for a PSSH payload.
@@ -261,6 +262,56 @@ describe('keySystemCandidates', () => {
         },
       })
     ).toEqual([]);
+  });
+});
+
+describe('unplayableEncryptedTypes', () => {
+  // `encrypted` is derived and stored by `parseMediaPlaylist`, so it is set
+  // explicitly here rather than inferred from a key list.
+  const track = (type: 'video' | 'audio', encrypted: boolean) => ({
+    type,
+    id: `${type}-${encrypted}`,
+    url: `https://example.com/${type}.m3u8`,
+    bandwidth: 1000,
+    mimeType: `${type}/mp4`,
+    codecs: [type === 'video' ? 'avc1.4d401f' : 'mp4a.40.2'],
+    segments: [{ id: 's0', url: 'https://example.com/0.m4s', startTime: 0, duration: 4 }],
+    startTime: 0,
+    duration: 4,
+    metadata: { mediaPlaylist: { targetDuration: 4, mediaSequence: 0, endList: true, encrypted } },
+  });
+
+  const presentationOf = (tracks: object[]) =>
+    ({
+      id: 'p1',
+      url: 'https://example.com/multivariant.m3u8',
+      selectionSets: [
+        { id: 's', type: 'video' as const, switchingSets: [{ id: 'sw', type: 'video' as const, tracks }] },
+      ],
+    }) as never;
+
+  it('names a type whose every resolved rendition is encrypted', () => {
+    expect(unplayableEncryptedTypes(presentationOf([track('video', true), track('video', true)]))).toEqual(['video']);
+  });
+
+  it('spares a type keeping any clear rendition', () => {
+    expect(unplayableEncryptedTypes(presentationOf([track('video', true), track('video', false)]))).toEqual([]);
+  });
+
+  it('reports each type independently — Mux encrypts video and leaves audio clear', () => {
+    expect(unplayableEncryptedTypes(presentationOf([track('video', true), track('audio', false)]))).toEqual(['video']);
+  });
+
+  it('names both types when neither has anything clear', () => {
+    expect(unplayableEncryptedTypes(presentationOf([track('video', true), track('audio', true)]))).toEqual([
+      'video',
+      'audio',
+    ]);
+  });
+
+  it('names nothing when no rendition has resolved', () => {
+    expect(unplayableEncryptedTypes(presentationOf([]))).toEqual([]);
+    expect(unplayableEncryptedTypes(undefined)).toEqual([]);
   });
 });
 
