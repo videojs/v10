@@ -1,5 +1,6 @@
 import type { InferPlayerHtmlConfig, PlayerStore } from '@videojs/core/dom';
 import type { Constructor } from '@videojs/utils/types';
+
 import type { UIElement } from '@/ui/ui-element';
 
 // ----------------------------------------
@@ -15,5 +16,4 @@ export type PlayerElement<Store extends PlayerStore> = UIElement &
     readonly store: Store;
   };
 
-export type PlayerElementConstructor<Store extends PlayerStore> = typeof UIElement &
-  Constructor<PlayerElement<Store>>;
+export type PlayerElementConstructor<Store extends PlayerStore> = typeof UIElement & Constructor<PlayerElement<Store>>;

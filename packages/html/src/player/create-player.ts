@@ -34,40 +34,40 @@ export interface CreatePlayerResult<Store extends PlayerStore> {
  * Creates a typed HTML player class and bound controller.
  *
  * @example
- * ```ts
- * import { createPlayer, UIElement, selectPlayback } from '@videojs/html';
- * import { videoFeatures } from '@videojs/html/video';
+ *   ```ts
+ *   import { createPlayer, UIElement, selectPlayback } from '@videojs/html';
+ *   import { videoFeatures } from '@videojs/html/video';
  *
- * const { PlayerElement: VideoPlayerElement, PlayerController } = createPlayer({
- *   features: videoFeatures,
- * });
+ *   const { PlayerElement: VideoPlayerElement, PlayerController } = createPlayer({
+ *     features: videoFeatures,
+ *   });
  *
- * customElements.define('video-player', VideoPlayerElement);
+ *   customElements.define('video-player', VideoPlayerElement);
  *
- * // Control element with selector
- * class PlayButton extends UIElement {
- *   #playback = new PlayerController(this, selectPlayback);
- * }
- * ```
+ *   // Control element with selector
+ *   class PlayButton extends UIElement {
+ *     #playback = new PlayerController(this, selectPlayback);
+ *   }
+ *   ```;
  *
- * @label Video
  * @param config - Player configuration with features.
+ * @label Video
  */
 export function createPlayer(config: CreatePlayerConfig<VideoFeatures>): CreatePlayerResult<VideoPlayerStore>;
 
 /**
  * Creates a typed HTML audio player class and bound controller.
  *
- * @label Audio
  * @param config - Player configuration with features.
+ * @label Audio
  */
 export function createPlayer(config: CreatePlayerConfig<AudioFeatures>): CreatePlayerResult<AudioPlayerStore>;
 
 /**
  * Creates a typed HTML player class with custom features.
  *
- * @label Generic
  * @param config - Player configuration with features.
+ * @label Generic
  */
 export function createPlayer<const Features extends AnyPlayerFeature[]>(
   config: CreatePlayerConfig<Features>

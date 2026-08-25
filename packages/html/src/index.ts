@@ -67,7 +67,7 @@ export { i18nContext } from './i18n/context';
 // Player
 export * from './player/context';
 export * from './player/create-player';
-export * from './player/player-controller';
+export { PlayerController, type PlayerControllerHost } from './player/player-controller';
 export * from './store/media-attach-mixin';
 export * from './store/types';
 export { AirPlayButtonElement } from './ui/airplay-button/airplay-button-element';

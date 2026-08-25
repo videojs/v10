@@ -224,6 +224,7 @@ describe('createPlayer', () => {
     customElements.define(tagName, PlayerElement);
 
     const player = document.createElement(tagName) as InstanceType<typeof PlayerElement>;
+
     player.setAttribute('content-title', 'Attribute title');
     document.body.append(player);
 
@@ -256,6 +257,7 @@ describe('createPlayer', () => {
     customElements.define(tagName, PlayerElement);
 
     const player = document.createElement(tagName) as InstanceType<typeof PlayerElement>;
+
     document.body.append(player);
 
     // Nothing was installed over the native accessor, so this is still the tooltip.
@@ -276,6 +278,7 @@ describe('createPlayer', () => {
     customElements.define(tagName, PlayerElement);
 
     const player = document.createElement(tagName) as InstanceType<typeof PlayerElement>;
+
     player.setAttribute('orientation-lock-type', 'portrait');
     document.body.append(player);
 

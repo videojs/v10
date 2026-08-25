@@ -10,6 +10,7 @@ import { ContextProvider } from '@videojs/element/context';
 import type { Media } from '@videojs/media/dom';
 import { isNull } from '@videojs/utils/predicate';
 import { camelCase, kebabCase } from '@videojs/utils/string';
+
 import type { PlayerElementConstructor } from '../store/types';
 import { UIElement } from '../ui/ui-element';
 import type { ContainerContext, MediaContext, PlayerContext } from './context';
@@ -48,7 +49,10 @@ function resolveInputs(config: PlayerFeatureConfig): ConfigInput[] {
 /** Creates a configured player element class that owns the store and attach lifecycle. */
 export function createPlayerElement<Store extends PlayerStore>(
   options: CreatePlayerElementOptions<Store>
-): PlayerElementConstructor<Store> {
+): PlayerElementConstructor<Store>;
+export function createPlayerElement<Store extends PlayerStore>(
+  options: CreatePlayerElementOptions<Store>
+): typeof UIElement {
   const inputs = resolveInputs(options.config);
 
   class ConfiguredPlayerElement extends UIElement {
@@ -159,7 +163,11 @@ export function createPlayerElement<Store extends PlayerStore>(
 
       for (const { property, entry } of inputs) {
         if (!changed.has(property)) continue;
-        setPlayerConfigValue(this.store, entry, (this as unknown as Record<string, unknown>)[property]);
+
+        // SAFETY: `resolveInputs` derives properties installed by this class's static property map.
+        const configProperty = property as keyof this;
+
+        setPlayerConfigValue(this.store, entry, this[configProperty]);
       }
     }
 
@@ -234,12 +242,15 @@ export function createPlayerElement<Store extends PlayerStore>(
       if (this.#configuredStore === store) return;
 
       for (const { property, entry } of inputs) {
-        setPlayerConfigValue(store, entry, (this as unknown as Record<string, unknown>)[property]);
+        // SAFETY: `resolveInputs` derives properties installed by this class's static property map.
+        const configProperty = property as keyof this;
+
+        setPlayerConfigValue(store, entry, this[configProperty]);
       }
 
       this.#configuredStore = store;
     }
   }
 
-  return ConfiguredPlayerElement as unknown as PlayerElementConstructor<Store>;
+  return ConfiguredPlayerElement;
 }
