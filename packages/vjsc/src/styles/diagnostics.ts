@@ -41,18 +41,22 @@ export function diagnoseStyleManifest(
     const unownedGroups = utilities.filter((utility) =>
       candidateVariants(utility).some((variant) => {
         const owner = groupOwnerForVariant(variant);
+
         return owner !== undefined && !owners.has(owner);
       })
     );
     const complex = utilities.filter(usesComplexSelector);
 
     if (peers.length > 0) diagnostics.push(createDiagnostic('VJSC_STYLE_PEER_RELATIONSHIP', rule, peers));
+
     if (implicitAncestors.length > 0) {
       diagnostics.push(createDiagnostic('VJSC_STYLE_IMPLICIT_ANCESTOR', rule, implicitAncestors));
     }
+
     if (unownedGroups.length > 0) {
       diagnostics.push(createDiagnostic('VJSC_STYLE_UNOWNED_GROUP', rule, unownedGroups));
     }
+
     if (complex.length > 0) diagnostics.push(createDiagnostic('VJSC_STYLE_COMPLEX_SELECTOR', rule, complex));
   }
 
@@ -83,6 +87,7 @@ export function diagnoseCompiledCandidate(
             }
 
             if (!selector.some((component) => component.type === 'nesting')) scopeEscape = true;
+
             if (selectorIsComplex(selector, groupOwners)) complex = true;
           }
         },
@@ -91,8 +96,11 @@ export function diagnoseCompiledCandidate(
   });
 
   const diagnostics: StyleDiagnostic[] = [];
+
   if (!hasRoot || scopeEscape) diagnostics.push(createDiagnostic('VJSC_STYLE_SCOPE_ESCAPE', rule, [candidate]));
+
   if (complex) diagnostics.push(createDiagnostic('VJSC_STYLE_COMPLEX_SELECTOR', rule, [candidate]));
+
   return diagnostics;
 }
 
@@ -111,7 +119,9 @@ export function diagnoseCompiledStyles(
 
     for (const candidate of utilitiesForRule(rule, variants)) {
       if (isGroupMarker(candidate)) continue;
+
       const css = design.candidateCss(candidate);
+
       if (css) diagnostics.push(...diagnoseCompiledCandidate(rule, candidate, css, groupOwners));
     }
   }
@@ -164,6 +174,7 @@ function collectGroupOwners(rules: readonly StyleManifestRule[], variants: reado
 
 function usesPeerRelationship(candidate: string): boolean {
   const { utility, variants } = splitCandidate(candidate);
+
   return isPeerPart(utility) || variants.some(isPeerPart);
 }
 
@@ -180,10 +191,13 @@ function usesImplicitAncestor(candidate: string): boolean {
 function usesComplexSelector(candidate: string): boolean {
   return candidateVariants(candidate).some((variant) => {
     if (variant === '*' || variant === '**') return true;
+
     if (variant.startsWith('has-') || variant.startsWith('group-has-')) return true;
+
     if (!variant.startsWith('[') || !variant.endsWith(']')) return false;
 
     const selector = variant.slice(1, -1);
+
     return selector.includes('&') && (selector.includes('_') || selector.includes(':has(') || hasCombinator(selector));
   });
 }
@@ -198,10 +212,12 @@ function hasCombinator(selector: string): boolean {
       escaped = false;
       continue;
     }
+
     if (character === '\\') {
       escaped = true;
       continue;
     }
+
     if (character === '[') squareDepth++;
     else if (character === ']') squareDepth--;
     else if (character === '(') parenthesisDepth++;
@@ -222,6 +238,7 @@ function groupOwnerForVariant(variant: string): string | undefined {
   if (!variant.startsWith('group-') && !variant.startsWith('group[')) return;
 
   const slash = lastTopLevelSlash(variant);
+
   return slash < 0 ? 'group' : `group/${variant.slice(slash + 1)}`;
 }
 
@@ -238,10 +255,12 @@ function lastTopLevelSlash(value: string): number {
       escaped = false;
       continue;
     }
+
     if (character === '\\') {
       escaped = true;
       continue;
     }
+
     if (character === '[') squareDepth++;
     else if (character === ']') squareDepth--;
     else if (character === '(') parenthesisDepth++;
@@ -270,10 +289,12 @@ function splitCandidate(candidate: string): { readonly variants: readonly string
       escaped = false;
       continue;
     }
+
     if (character === '\\') {
       escaped = true;
       continue;
     }
+
     if (character === '[') squareDepth++;
     else if (character === ']') squareDepth--;
     else if (character === '(') parenthesisDepth++;
@@ -298,19 +319,26 @@ function selectorIsComplex(selector: Selector, groupOwners: ReadonlySet<string>)
 
 function componentIsComplex(component: SelectorComponent, groupOwners: ReadonlySet<string>): boolean {
   if (component.type === 'combinator') return true;
+
   if (component.type !== 'pseudo-class') return false;
+
   if (component.kind === 'has') return true;
 
   const selectors = nestedSelectors(component);
+
   if (selectors.length === 0) return false;
+
   if (selectors.some((selector) => selectorContainsGroupOwner(selector, groupOwners))) return false;
+
   return selectors.some((selector) => selectorIsComplex(selector, groupOwners));
 }
 
 function selectorContainsGroupOwner(selector: Selector, groupOwners: ReadonlySet<string>): boolean {
   return selector.some((component) => {
     if (component.type === 'class' && groupOwners.has(component.name)) return true;
+
     if (component.type !== 'pseudo-class') return false;
+
     return nestedSelectors(component).some((nested) => selectorContainsGroupOwner(nested, groupOwners));
   });
 }

@@ -88,6 +88,7 @@ describe('Skins Vite workflow', () => {
     const logger = createLogger('warn');
     const warn = vi.spyOn(logger, 'warn').mockImplementation(() => {});
     const warnOnce = vi.spyOn(logger, 'warnOnce').mockImplementation(() => {});
+
     server = await createServer({
       configFile,
       customLogger: logger,

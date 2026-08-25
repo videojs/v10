@@ -1,6 +1,7 @@
 import { resolve } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
+
 import { loadDesignSystem } from '../design-system';
 import { diagnoseCompiledCandidate, diagnoseStyleManifest, formatStyleDiagnostic } from '../diagnostics';
 import type { StyleManifest, StyleManifestRule } from '../manifest';

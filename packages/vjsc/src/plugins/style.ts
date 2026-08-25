@@ -129,6 +129,7 @@ export function stylePlugin(config: StylePluginConfig, diagnostics: VjscDiagnost
           const input = resolve(cwd, options.stylesheet.input);
           const base = options.stylesheet.base ? resolve(cwd, options.stylesheet.base) : undefined;
           const cachedDesign = await cachedDesignSystem(designs, input);
+
           styleDiagnostics.push(
             ...diagnoseCompiledStyles(manifest, cachedDesign.design, referencedRules, options.variants)
           );
@@ -183,6 +184,7 @@ function mergeStyleDiagnostics(diagnostics: readonly StyleDiagnostic[]): readonl
   for (const diagnostic of diagnostics) {
     const key = `${diagnostic.code}:${diagnostic.rule.modulePath}:${diagnostic.rule.tokenPath.join('.')}`;
     const previous = merged.get(key);
+
     if (!previous) {
       merged.set(key, diagnostic);
       continue;
@@ -207,6 +209,7 @@ function reportStyleDiagnostic(
   const level = options.complexSelectors ?? 'warn';
 
   if (diagnostic.kind === 'error' || level === 'error') throw new Error(message);
+
   if (level === 'off' || reportedWarnings.has(message)) return;
 
   reportedWarnings.add(message);

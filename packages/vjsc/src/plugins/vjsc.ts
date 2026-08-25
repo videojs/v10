@@ -1,4 +1,5 @@
 import type { Plugin } from 'rolldown';
+
 import type { VjscDiagnosticsOptions } from '../styles/diagnostics';
 import type { StylePluginOptions } from '../styles/options';
 import type { ComponentTarget } from '../target/definition';
