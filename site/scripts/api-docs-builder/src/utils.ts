@@ -19,8 +19,8 @@ export function kebabToPascal(str: string): string {
 /**
  * Derive the kebab-case part segment from an `index.parts.ts` source path.
  *
- * Strips the leading `'./{componentKebab}-'` prefix to get the part segment.
- * Example: `partKebabFromSource('./time-value', 'time')` -> `'value'`
+ * Strips the leading `'./{componentKebab}-'` prefix to get the part segment. Example:
+ * `partKebabFromSource('./time-value', 'time')` -> `'value'`
  */
 export function partKebabFromSource(source: string, componentKebab: string): string {
   const basename = source.split('/').at(-1) ?? source;

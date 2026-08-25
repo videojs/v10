@@ -54,8 +54,8 @@ function setupEndOfStream(initialState: EndOfStreamState, initialContext: EndOfS
 // ============================================================================
 
 /**
- * Back the mock with a real EventTarget so tests can dispatch sourceopen /
- * sourceended to exercise the behavior's local readyState subscription.
+ * Back the mock with a real EventTarget so tests can dispatch sourceopen / sourceended to exercise the behavior's local
+ * readyState subscription.
  */
 function makeMediaSource(
   overrides: { readyState?: MediaSource['readyState']; duration?: number; sourceBuffers?: SourceBuffer[] } = {}

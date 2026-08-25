@@ -63,9 +63,8 @@ interface ModuleIndex {
 }
 
 /**
- * Cached Oxc source project with the small amount of module and type resolution
- * the docs conventions need. This intentionally resolves authored declarations,
- * not the complete TypeScript language.
+ * Cached Oxc source project with the small amount of module and type resolution the docs conventions need. This
+ * intentionally resolves authored declarations, not the complete TypeScript language.
  */
 export class OxcProject {
   readonly monorepoRoot: string;

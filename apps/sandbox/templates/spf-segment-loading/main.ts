@@ -736,9 +736,8 @@ function liveEdgeTarget(): number | undefined {
 }
 
 /**
- * Live status strip: stream type, the seekable (live) window as declared to
- * the element, and how far the playhead trails the edge. Interval-driven (not
- * an effect) because the window slides via reloads *and* the playhead moves —
+ * Live status strip: stream type, the seekable (live) window as declared to the element, and how far the playhead
+ * trails the edge. Interval-driven (not an effect) because the window slides via reloads _and_ the playhead moves —
  * both need reflecting even while nothing signal-shaped changes.
  */
 function updateLiveStatus() {

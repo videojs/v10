@@ -281,8 +281,8 @@ function isEmbedPreset(preset: Preset): boolean {
 /**
  * An embed fills the skin box the way `<video>` does on its own.
  *
- * TikTok's host floors itself at the portrait 325x578 its player refuses to draw
- * below, so a landscape box needs that floor cleared.
+ * TikTok's host floors itself at the portrait 325x578 its player refuses to draw below, so a landscape box needs that
+ * floor cleared.
  */
 function getEmbedMediaClass(preset: Preset): string {
   return preset === 'tiktok-video' ? 'block w-full h-full min-w-0 min-h-0' : 'block w-full h-full';

@@ -21,9 +21,9 @@ import { resolveUrl } from './resolve-url';
 /**
  * Parse HLS multivariant playlist into a Presentation.
  *
- * Returns Presentation with partially resolved tracks (no segment information).
- * Tracks contain metadata from multivariant playlist (bandwidth, resolution, codecs)
- * but segment information is added when media playlists are fetched.
+ * Returns Presentation with partially resolved tracks (no segment information). Tracks contain metadata from
+ * multivariant playlist (bandwidth, resolution, codecs) but segment information is added when media playlists are
+ * fetched.
  *
  * @param text - Raw playlist text content
  * @param unresolved - Unresolved presentation (contains URL for base URL resolution)

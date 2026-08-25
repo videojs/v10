@@ -47,10 +47,9 @@ function nextFrame(): Promise<void> {
 }
 
 /**
- * Mount a thumbnail inside a player reporting the given media CORS mode and
- * return the `crossorigin` attribute its inner `<img>` settles on. The player
- * context resolves a frame after connect, so settle across a few updates
- * rather than reading the first one.
+ * Mount a thumbnail inside a player reporting the given media CORS mode and return the `crossorigin` attribute its
+ * inner `<img>` settles on. The player context resolves a frame after connect, so settle across a few updates rather
+ * than reading the first one.
  */
 async function renderCrossOrigin(
   mediaCrossOrigin: MediaTextTrackState['thumbnailTrackCrossOrigin'],

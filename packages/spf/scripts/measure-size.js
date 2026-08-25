@@ -3,9 +3,7 @@
 /**
  * Measure SPF bundle size
  *
- * Usage:
- *   pnpm size                    # Measure the HLS engine entry (@videojs/spf/hls)
- *   pnpm size:all                # Measure all exports (all.ts)
+ * Usage: pnpm size # Measure the HLS engine entry (@videojs/spf/hls) pnpm size:all # Measure all exports (all.ts)
  */
 
 import { execSync } from 'node:child_process';

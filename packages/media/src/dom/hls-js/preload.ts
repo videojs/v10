@@ -6,15 +6,15 @@ import type { HlsEngineHost } from './types';
 export type PreloadType = '' | 'none' | 'metadata' | 'auto';
 
 /**
- * Manages HLS preload behavior by mapping the media element's `preload`
- * attribute to hls.js `startLoad` / buffer-limit configuration.
+ * Manages HLS preload behavior by mapping the media element's `preload` attribute to hls.js `startLoad` / buffer-limit
+ * configuration.
  *
  * - `'auto'` or already playing → full buffer limits, immediate start.
  * - `'metadata'` → minimal buffer (1 byte / 1 second), limits raised on play.
  * - `'none'` / `''` → no start, deferred load on play.
  *
- * Loading is started at most once per source. Widening the limits afterwards is
- * a plain config write, never a second `startLoad()`.
+ * Loading is started at most once per source. Widening the limits afterwards is a plain config write, never a second
+ * `startLoad()`.
  */
 export function HlsJsMediaPreloadMixin<Base extends Constructor<HlsEngineHost>>(BaseClass: Base) {
   class HlsJsMediaPreload extends (BaseClass as Constructor<HlsEngineHost>) {
@@ -76,14 +76,12 @@ export function HlsJsMediaPreloadMixin<Base extends Constructor<HlsEngineHost>>(
       const defaultSize = this.#defaultMaxBufferSize;
 
       /**
-       * Applies buffer limits, and starts loading only if this source has not
-       * been started yet.
+       * Applies buffer limits, and starts loading only if this source has not been started yet.
        *
-       * Once loading is under way, writing the limits is enough: hls.js reads
-       * both off `config` on every tick and its ticker is already armed. A
-       * second `startLoad()` would open with hls.js's own `stopLoad()`, which
-       * aborts the in-flight segment — and that abort resets the controller to
-       * IDLE a task later, so the next tick re-requests and re-aborts, forever.
+       * Once loading is under way, writing the limits is enough: hls.js reads both off `config` on every tick and its
+       * ticker is already armed. A second `startLoad()` would open with hls.js's own `stopLoad()`, which aborts the
+       * in-flight segment — and that abort resets the controller to IDLE a task later, so the next tick re-requests and
+       * re-aborts, forever.
        */
       const load = (length?: number, size?: number) => {
         const { engine } = this;

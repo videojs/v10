@@ -18,7 +18,10 @@ import {
 import { matchTag, parseByteRange, parseExtInfDuration } from './parse-attributes';
 import { resolveUrl } from './resolve-url';
 
-/** MPEG-2 Transport Stream (IANA `video/MP2T`, lowercased for `isTypeSupported`). Video + audio TS — there is no `audio/mp2t`. */
+/**
+ * MPEG-2 Transport Stream (IANA `video/MP2T`, lowercased for `isTypeSupported`). Video + audio TS — there is no
+ * `audio/mp2t`.
+ */
 export const MPEG_TS_MIME = 'video/mp2t';
 /** Raw ADTS AAC packed-audio (HLS `.aac` segments; IANA `audio/aac`). */
 export const RAW_AAC_MIME = 'audio/aac';
@@ -36,8 +39,8 @@ const CONTAINER_MIME_BY_EXTENSION: Record<string, string> = {
 export const NON_FMP4_CONTAINER_MIMES = new Set(Object.values(CONTAINER_MIME_BY_EXTENSION));
 
 /**
- * Non-fMP4 container MIME for a (resolved, absolute) segment URL, by file
- * extension, ignoring the query string. `undefined` for fMP4 / unrecognized.
+ * Non-fMP4 container MIME for a (resolved, absolute) segment URL, by file extension, ignoring the query string.
+ * `undefined` for fMP4 / unrecognized.
  */
 function containerMimeFromSegment(url: string | undefined): string | undefined {
   if (!url) return undefined;
@@ -55,9 +58,7 @@ function containerMimeFromSegment(url: string | undefined): string | undefined {
   return dot === -1 ? undefined : CONTAINER_MIME_BY_EXTENSION[path.slice(dot)];
 }
 
-/**
- * Resolve unresolved track type to its resolved equivalent.
- */
+/** Resolve unresolved track type to its resolved equivalent. */
 type ResolveTrack<T> = T extends PartiallyResolvedVideoTrack
   ? VideoTrack
   : T extends PartiallyResolvedAudioTrack
@@ -67,23 +68,18 @@ type ResolveTrack<T> = T extends PartiallyResolvedVideoTrack
       : never;
 
 /**
- * Position a freshly-parsed window (whose segment `startTime`s are snapshot-
- * local, i.e. from 0) onto the timeline established by the previous resolved
- * snapshot. Carries the timeline forward using the media-sequence overlap and
- * the previous window's *actual* segment durations — see
- * `internal/design/spf/live-presentation-timeline-model.md`.
+ * Position a freshly-parsed window (whose segment `startTime`s are snapshot- local, i.e. from 0) onto the timeline
+ * established by the previous resolved snapshot. Carries the timeline forward using the media-sequence overlap and the
+ * previous window's _actual_ segment durations — see `internal/design/spf/live-presentation-timeline-model.md`.
  *
- * - **Overlap** (`0 <= offset < previous.segments.length`): the new window's
- *   first segment is the same segment as `previous.segments[offset]`; anchor to
- *   its start (URLs checked — a mismatch warns).
+ * - **Overlap** (`0 <= offset < previous.segments.length`): the new window's first segment is the same segment as
+ *   `previous.segments[offset]`; anchor to its start (URLs checked — a mismatch warns).
  * - **Sequence went backwards** (non-conformant): reset to the local base.
- * - **Full turnover** (no overlap): estimate forward from the previous window's
- *   end across the unseen gap. This is the *only* place EXT-X-TARGETDURATION is
- *   used for timing — an upper-bound estimate, since the actual rolled-off
+ * - **Full turnover** (no overlap): estimate forward from the previous window's end across the unseen gap. This is the
+ *   _only_ place EXT-X-TARGETDURATION is used for timing — an upper-bound estimate, since the actual rolled-off
  *   durations are gone (exact recovery is the deferred PDT decision).
  *
- * Returns the rebased segments (the window edge is `segments[0].startTime`,
- * derived — never stored on the track).
+ * Returns the rebased segments (the window edge is `segments[0].startTime`, derived — never stored on the track).
  */
 function placeOnPreviousTimeline(
   previous: ResolvedTrack,
@@ -142,17 +138,13 @@ function placeOnPreviousTimeline(
 }
 
 /**
- * Place a window on the frozen wall-clock anchor — the track's `startDate`
- * (wall clock at media-time 0). The anchoring PDT-bearing segment lands at
- * `segment.startDate − anchor`, so the window sits on the shared presentation
- * timeline rather than a local-from-zero one (the `startDate` recomputed
- * afterwards then reads back as the anchor — idempotent). This is the **main
- * live path on every parse**: first resolves place against the pre-stamped
- * shell anchor, and reloads re-place from PDT so drift can't accumulate and a
- * long-stall turnover re-places with no overlap bridging (the HLS authoring
- * spec's §8.1 EXTINF-accuracy rule bounds the per-reload correction to ~one
- * video frame). Falls back to the local base when no segment carries PDT —
- * there's nothing to anchor against (callers guard this for reloads, where the
+ * Place a window on the frozen wall-clock anchor — the track's `startDate` (wall clock at media-time 0). The anchoring
+ * PDT-bearing segment lands at `segment.startDate − anchor`, so the window sits on the shared presentation timeline
+ * rather than a local-from-zero one (the `startDate` recomputed afterwards then reads back as the anchor — idempotent).
+ * This is the **main live path on every parse**: first resolves place against the pre-stamped shell anchor, and reloads
+ * re-place from PDT so drift can't accumulate and a long-stall turnover re-places with no overlap bridging (the HLS
+ * authoring spec's §8.1 EXTINF-accuracy rule bounds the per-reload correction to ~one video frame). Falls back to the
+ * local base when no segment carries PDT — there's nothing to anchor against (callers guard this for reloads, where the
  * local base would reset the timeline).
  */
 function placeOnAnchor(segments: Segment[], anchor: number): Segment[] {
@@ -174,12 +166,10 @@ function placeOnAnchor(segments: Segment[], anchor: number): Segment[] {
 /**
  * Parse HLS media playlist and resolve track with segments.
  *
- * `previous` is what was known about this track before this parse: the
- * partially-resolved track from the multivariant playlist on the first resolve,
- * or the previously-resolved snapshot on a live reload. Its metadata is carried
- * onto the result either way; when it's already resolved (has segments), its
- * timeline is carried forward so the new window lands on a stable, advancing
- * timeline (see {@link placeOnPreviousTimeline}).
+ * `previous` is what was known about this track before this parse: the partially-resolved track from the multivariant
+ * playlist on the first resolve, or the previously-resolved snapshot on a live reload. Its metadata is carried onto the
+ * result either way; when it's already resolved (has segments), its timeline is carried forward so the new window lands
+ * on a stable, advancing timeline (see {@link placeOnPreviousTimeline}).
  *
  * @param text - Media playlist text content
  * @param previous - Prior track state (unresolved shell, or previous resolved snapshot)

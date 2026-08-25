@@ -82,16 +82,16 @@ function isValidTime(value: number): boolean {
 /**
  * Format seconds to digital display string.
  *
+ * @example
+ *   formatTime(90); // "1:30"
+ *   formatTime(3661); // "1:01:01"
+ *   formatTime(35, 3600); // "0:00:35" (guided by 1-hour duration)
+ *   formatTime(35, 600); // "00:35" (guided by 10-minute duration)
+ *
  * @param seconds - Time in seconds (can be negative)
  * @param guide - Guide time (typically duration) to determine display format
  * @param options - Digital formatting options
  * @returns Formatted string like "1:30" or "1:05:30"
- *
- * @example
- * formatTime(90) // "1:30"
- * formatTime(3661) // "1:01:01"
- * formatTime(35, 3600) // "0:00:35" (guided by 1-hour duration)
- * formatTime(35, 600) // "00:35" (guided by 10-minute duration)
  */
 export function formatTime(seconds: number, guide?: number, options?: Pick<TimeFormatOptions, 'locale'>): string {
   if (!isValidTime(seconds)) {
@@ -128,12 +128,12 @@ export function formatTime(seconds: number, guide?: number, options?: Pick<TimeF
 /**
  * Convert seconds to ISO 8601 duration for datetime attribute.
  *
+ * @example
+ *   secondsToIsoDuration(90); // "PT1M30S"
+ *   secondsToIsoDuration(3661); // "PT1H1M1S"
+ *
  * @param seconds - Time in seconds
  * @returns ISO 8601 duration string like "PT1M30S"
- *
- * @example
- * secondsToIsoDuration(90) // "PT1M30S"
- * secondsToIsoDuration(3661) // "PT1H1M1S"
  */
 export function secondsToIsoDuration(seconds: number): string {
   if (!isValidTime(seconds)) {
@@ -160,8 +160,8 @@ export function secondsToIsoDuration(seconds: number): string {
 /**
  * Human-readable duration using `Intl.NumberFormat` and `Intl.ListFormat`.
  *
- * Negative `seconds` denote remaining time: the absolute value is formatted, then wrapped in a
- * localized phrase via {@link TimeFormatOptions.formatRemaining}; otherwise `{duration} remaining`.
+ * Negative `seconds` denote remaining time: the absolute value is formatted, then wrapped in a localized phrase via
+ * {@link TimeFormatOptions.formatRemaining}; otherwise `{duration} remaining`.
  */
 export function formatTimeAsPhrase(seconds: number, options?: TimeFormatOptions): string {
   if (!isValidTime(seconds)) {

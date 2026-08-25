@@ -18,9 +18,9 @@ export interface OnEventOptions extends AddEventListenerOptions {
  * Wait for an event to occur on a target.
  *
  * @example
- * ```ts
- * const event = await onEvent(video, 'seeked');
- * ```
+ *   ```ts
+ *   const event = await onEvent(video, 'seeked');
+ *   ```;
  */
 export function onEvent<K extends keyof HTMLMediaElementEventMap>(
   target: HTMLMediaElement,

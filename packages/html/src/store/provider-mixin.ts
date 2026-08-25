@@ -41,8 +41,8 @@ interface ConfigInput {
 }
 
 /**
- * Name each input on the element. A key whose own name is taken there declares
- * an `html.attribute` instead, and the property follows from that.
+ * Name each input on the element. A key whose own name is taken there declares an `html.attribute` instead, and the
+ * property follows from that.
  */
 function resolveInputs(config: PlayerFeatureConfig): ConfigInput[] {
   return Object.entries(config).map(([key, entry]) => {
@@ -59,15 +59,12 @@ function resolveInputs(config: PlayerFeatureConfig): ConfigInput[] {
 }
 
 /**
- * Create a mixin that provides player context to descendant elements and
- * owns the `store.attach()` lifecycle.
+ * Create a mixin that provides player context to descendant elements and owns the `store.attach()` lifecycle.
  *
- * Media and container elements register themselves via media/container
- * contexts. When a media element is available, the provider calls
- * `store.attach({ media, container })`.
+ * Media and container elements register themselves via media/container contexts. When a media element is available, the
+ * provider calls `store.attach({ media, container })`.
  *
- * Plain `<video>`/`<audio>` elements that cannot consume context are tracked
- * through the provider subtree.
+ * Plain `<video>`/`<audio>` elements that cannot consume context are tracked through the provider subtree.
  *
  * @param options - Provider options with contexts, store factory, and feature configuration.
  */

@@ -15,12 +15,11 @@ export function NativeHlsMediaErrorsMixin<Base extends Constructor<NativeMediaHo
     }
 
     /**
-     * Announce `error` as coming from this media, latching it as the current
-     * error when it is fatal. Non-fatal errors are announced only — playback
-     * continues, so they must not stand in for whatever fails next.
+     * Announce `error` as coming from this media, latching it as the current error when it is fatal. Non-fatal errors
+     * are announced only — playback continues, so they must not stand in for whatever fails next.
      *
-     * For siblings producing errors the media element never reports itself:
-     * DRM key exchange, notably, which fails entirely outside the element.
+     * For siblings producing errors the media element never reports itself: DRM key exchange, notably, which fails
+     * entirely outside the element.
      *
      * @internal
      */

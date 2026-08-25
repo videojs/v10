@@ -95,9 +95,8 @@ async function loadLiveVideoTailwindSkin(skin: Skin): Promise<string> {
 type VideoSkinOptions = { live?: boolean };
 
 /**
- * Loads and registers the video skin for the given skin / styling combination
- * and returns its custom element tag name. Pass `live: true` to swap in the
- * `live-video` skin variant (same feature set, trimmed time UI).
+ * Loads and registers the video skin for the given skin / styling combination and returns its custom element tag name.
+ * Pass `live: true` to swap in the `live-video` skin variant (same feature set, trimmed time UI).
  */
 export function loadVideoSkinTag(
   skin: Skin,

@@ -15,17 +15,13 @@ import {
 } from '../../i18n/text/errors';
 
 /**
- * SVTA 99 [Custom] 001 — an engine reporting that it has no pipeline for
- * something the source requires. Not a `MediaError.MEDIA_ERR_*` value: engines
- * that report SVTA codes surface them on `error.code` directly.
+ * SVTA 99 [Custom] 001 — an engine reporting that it has no pipeline for something the source requires. Not a
+ * `MediaError.MEDIA_ERR_*` value: engines that report SVTA codes surface them on `error.code` directly.
  *
- * The literal rather than an import. `@videojs/spf` defines this as
- * `SVTA_UNSUPPORTED_PLAYBACK_FEATURE` and owns its meaning, but core doesn't
- * depend on spf, and reaching it through `@videojs/media` would pull an engine
- * entry point into a barrel that has no other reason to load one. Same trade
- * `HlsVideoMediaStreamType` makes in the other direction — compatibility by
- * value, stated in a comment, instead of a dependency edge neither package
- * wants.
+ * The literal rather than an import. `@videojs/spf` defines this as `SVTA_UNSUPPORTED_PLAYBACK_FEATURE` and owns its
+ * meaning, but core doesn't depend on spf, and reaching it through `@videojs/media` would pull an engine entry point
+ * into a barrel that has no other reason to load one. Same trade `HlsVideoMediaStreamType` makes in the other direction
+ * — compatibility by value, stated in a comment, instead of a dependency edge neither package wants.
  */
 const SVTA_UNSUPPORTED_PLAYBACK_FEATURE = 99001;
 
@@ -78,8 +74,8 @@ export function getErrorDialogUnexpectedText(): Text {
 }
 
 /**
- * Resolves dialog body copy: default phrases for known {@link MediaError} defaults, literal text for
- * custom messages, otherwise the generic fallback key.
+ * Resolves dialog body copy: default phrases for known {@link MediaError} defaults, literal text for custom messages,
+ * otherwise the generic fallback key.
  */
 export function resolveErrorDialogDescription(
   error: (Pick<MediaError, 'code' | 'message'> & { context?: MediaError['context'] }) | null | undefined,

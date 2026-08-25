@@ -16,14 +16,15 @@ export interface ComponentModulesPluginOptions {
 }
 
 /**
- * Carry a component transform query through relative imports and retain type-only modules.
- * Use before component transforms when one source tree is built for multiple targets.
+ * Carry a component transform query through relative imports and retain type-only modules. Use before component
+ * transforms when one source tree is built for multiple targets.
  *
- * @example An import from `entry.tsx?target=react` inherits its transform query:
- * ```diff
- * - icon.tsx
- * + icon.tsx?target=react
- * ```
+ * @example
+ *   An import from `entry.tsx?target=react` inherits its transform query:
+ *   ```diff
+ *   - icon.tsx
+ *   + icon.tsx?target=react
+ *   ```
  *
  * @param options - Controls which query-bearing modules participate.
  */

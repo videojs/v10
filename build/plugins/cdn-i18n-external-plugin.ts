@@ -10,10 +10,9 @@ export interface CdnI18nExternalPluginOptions {
 /**
  * Keeps the i18n registry out of every CDN bundle by pointing them at the shared `i18n` entry.
  *
- * The rewritten specifier is always relative, so a mirrored copy of `cdn/` resolves entirely within
- * its own origin and works offline. Sharing one registry instance no longer depends on every bundle
- * naming the same absolute URL — `@videojs/core/i18n` keeps its state on `globalThis`, so duplicate
- * instances converge on their own.
+ * The rewritten specifier is always relative, so a mirrored copy of `cdn/` resolves entirely within its own origin and
+ * works offline. Sharing one registry instance no longer depends on every bundle naming the same absolute URL —
+ * `@videojs/core/i18n` keeps its state on `globalThis`, so duplicate instances converge on their own.
  */
 export function cdnI18nExternalPlugin(options: CdnI18nExternalPluginOptions): BuildPlugin {
   const file = options.prod ? 'i18n.js' : 'i18n.dev.js';

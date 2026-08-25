@@ -32,15 +32,12 @@ export const muxDataDefaultProps: MuxDataProps = {
 const MUX_VIDEO_DOMAIN = 'mux.com';
 
 /**
- * What Mux Data needs from the media it monitors: the source being played, a
- * `loadstart` to re-monitor on, and — for engine-backed playback — the engine
- * itself.
+ * What Mux Data needs from the media it monitors: the source being played, a `loadstart` to re-monitor on, and — for
+ * engine-backed playback — the engine itself.
  *
- * `engine` is deliberately untyped. Every engine-backed media host exposes one,
- * but they are unrelated types (an hls.js instance, a dash.js player, an SPF
- * composition), and which of them Mux Data can hook is decided by
- * {@link toMuxDataEngineOptions}, not by this contract. Media with no JS engine
- * simply omit it.
+ * `engine` is deliberately untyped. Every engine-backed media host exposes one, but they are unrelated types (an hls.js
+ * instance, a dash.js player, an SPF composition), and which of them Mux Data can hook is decided by
+ * {@link toMuxDataEngineOptions}, not by this contract. Media with no JS engine simply omit it.
  */
 export interface MuxDataMedia extends EventTarget {
   readonly engine?: unknown;
@@ -138,9 +135,8 @@ export class MuxData implements MuxDataProps {
   }
 
   /**
-   * Mux Data environment key. Omitted from the beacon when unset, which is the
-   * norm for Mux-hosted playback: the view reports the Mux playback ID as its
-   * `video_id` (see {@link toVideoId}) and Mux attributes it to the owning
+   * Mux Data environment key. Omitted from the beacon when unset, which is the norm for Mux-hosted playback: the view
+   * reports the Mux playback ID as its `video_id` (see {@link toVideoId}) and Mux attributes it to the owning
    * environment. Set this to monitor sources Mux doesn't host.
    */
   get envKey() {

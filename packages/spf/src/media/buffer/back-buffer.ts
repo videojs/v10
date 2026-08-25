@@ -1,26 +1,18 @@
 /**
  * Back Buffer Strategy (Simple)
  *
- * Calculates flush points for back buffer management.
- * V1 uses simple "keep N segments" strategy.
+ * Calculates flush points for back buffer management. V1 uses simple "keep N segments" strategy.
  */
 
 import type { Segment } from '../types';
 
-/**
- * Back buffer configuration.
- */
+/** Back buffer configuration. */
 export interface BackBufferConfig {
-  /**
-   * Number of segments to keep behind current playback position.
-   * Default: 2 segments.
-   */
+  /** Number of segments to keep behind current playback position. Default: 2 segments. */
   keepSegments: number;
 }
 
-/**
- * Default back buffer configuration.
- */
+/** Default back buffer configuration. */
 export const DEFAULT_BACK_BUFFER_CONFIG: BackBufferConfig = {
   keepSegments: 2,
 };
@@ -28,30 +20,28 @@ export const DEFAULT_BACK_BUFFER_CONFIG: BackBufferConfig = {
 /**
  * Calculate back buffer flush point.
  *
- * Determines where to flush old segments from the back buffer.
- * Keeps a fixed number of segments behind the current playback position.
+ * Determines where to flush old segments from the back buffer. Keeps a fixed number of segments behind the current
+ * playback position.
  *
- * Algorithm:
- * 1. Find segments before currentTime
- * 2. Count back N segments (keepSegments)
- * 3. Return startTime of segment N+1 back (flush everything before this)
+ * Algorithm: 1. Find segments before currentTime 2. Count back N segments (keepSegments) 3. Return startTime of segment
+ * N+1 back (flush everything before this)
+ *
+ * @example
+ *   const segments = [
+ *   { startTime: 0, duration: 6, ... },
+ *   { startTime: 6, duration: 6, ... },
+ *   { startTime: 12, duration: 6, ... },
+ *   { startTime: 18, duration: 6, ... },
+ *   ];
+ *
+ *   // Playing at 18s, keep 2 segments
+ *   const flushEnd = calculateBackBufferFlushPoint(segments, 18);
+ *   // Returns 6 (flush [0, 6), keep [6-18))
  *
  * @param segments - Available segments (should be sorted by startTime)
  * @param currentTime - Current playback position in seconds
  * @param config - Optional back buffer configuration
  * @returns Time in seconds to flush up to (flush range: [0, flushEnd))
- *
- * @example
- * const segments = [
- *   { startTime: 0, duration: 6, ... },
- *   { startTime: 6, duration: 6, ... },
- *   { startTime: 12, duration: 6, ... },
- *   { startTime: 18, duration: 6, ... },
- * ];
- *
- * // Playing at 18s, keep 2 segments
- * const flushEnd = calculateBackBufferFlushPoint(segments, 18);
- * // Returns 6 (flush [0, 6), keep [6-18))
  */
 export function calculateBackBufferFlushPoint(
   segments: Segment[],

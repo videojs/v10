@@ -34,7 +34,8 @@ import { buildTikTokIframeSrc, shouldBootstrapTikTokEmbed, type TikTokSource } f
 const TikTokMediaBase = MediaPlayedRangesMixin(EventTarget);
 
 /**
- * @fires sourcechange - Fired when `source` changes, either directly or by resolving a new `src`. Read `source` for the new value.
+ * @fires sourcechange - Fired when `source` changes, either directly or by resolving a new `src`. Read `source` for the
+ *   new value.
  */
 export class TikTokMedia extends TikTokMediaBase implements Partial<Video> {
   #target: HTMLIFrameElement | null = null;

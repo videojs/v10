@@ -10,18 +10,18 @@ export interface SeekButtonProps extends UIComponentProps<'button', SeekButtonCo
  * A button that seeks forward or backward by a configurable number of seconds.
  *
  * @example
- * ```tsx
- * <SeekButton seconds={-10} />
+ *   ```tsx
+ *   <SeekButton seconds={-10} />
  *
- * <SeekButton
+ *   <SeekButton
  *   seconds={30}
  *   render={(props, state) => (
- *     <button {...props}>
- *       {state.direction === 'backward' ? <RewindIcon /> : <FastForwardIcon />}
- *     </button>
+ *   <button {...props}>
+ *   {state.direction === 'backward' ? <RewindIcon /> : <FastForwardIcon />}
+ *   </button>
  *   )}
- * />
- * ```
+ *   />
+ *   ```;
  */
 export const SeekButton = createMediaButton<SeekButtonCore, SeekButtonProps>({
   displayName: 'SeekButton',

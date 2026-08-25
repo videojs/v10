@@ -29,16 +29,16 @@ export interface CaptionsRadioGroupProps
  * Renders menu radio items for the player's captions and subtitles tracks.
  *
  * @example
- * ```tsx
- * <CaptionsRadioGroup
- *   renderItem={(props, item) => (
- *     <Menu.RadioItem {...props}>
- *       {item.label}
- *       <Menu.ItemIndicator checked={item.checked} />
- *     </Menu.RadioItem>
- *   )}
- * />
- * ```
+ *   ```tsx
+ *   <CaptionsRadioGroup
+ *     renderItem={(props, item) => (
+ *       <Menu.RadioItem {...props}>
+ *         {item.label}
+ *         <Menu.ItemIndicator checked={item.checked} />
+ *       </Menu.RadioItem>
+ *     )}
+ *   />;
+ *   ```;
  */
 export const CaptionsRadioGroup = forwardRef<HTMLDivElement, CaptionsRadioGroupProps>(
   function CaptionsRadioGroup(componentProps, forwardedRef) {

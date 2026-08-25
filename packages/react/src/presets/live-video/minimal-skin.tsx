@@ -113,11 +113,9 @@ function VolumePopover(): ReactNode {
 }
 
 /**
- * Minimal video skin configured for live playback. Mirrors
- * {@link MinimalVideoSkin} but omits the time slider and the current /
- * duration / remaining time displays. A flexible spacer stretches between
- * the start and end button groups so they sit at opposite edges of the
- * control bar.
+ * Minimal video skin configured for live playback. Mirrors {@link MinimalVideoSkin} but omits the time slider and the
+ * current / duration / remaining time displays. A flexible spacer stretches between the start and end button groups so
+ * they sit at opposite edges of the control bar.
  */
 function CaptionsTrigger(): ReactNode {
   const t = useTranslator();

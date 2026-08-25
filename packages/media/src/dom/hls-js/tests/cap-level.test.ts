@@ -78,9 +78,8 @@ interface SetupOptions {
   /** Defaults to on, as a source without the key does. */
   capToPlayerSize?: boolean;
   /**
-   * Left unset by default, unlike a source, whose absent key means `'720p'`.
-   * The floor and the size cap it bounds are then measurable one at a time; the
-   * default itself is a property of the source layer, covered there.
+   * Left unset by default, unlike a source, whose absent key means `'720p'`. The floor and the size cap it bounds are
+   * then measurable one at a time; the default itself is a property of the source layer, covered there.
    */
   minAutoResolution?: MediaResolution | undefined;
   levels?: FakeLevel[];

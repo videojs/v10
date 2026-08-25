@@ -30,9 +30,8 @@ class TestMediaComponentElement extends MediaComponentElement<FakeComponent> {
   static readonly tagName = 'test-media-component';
 
   /**
-   * Subclass field initializers run after the base constructor, which is the
-   * window the media context callback can fire in during a custom element
-   * upgrade. Reading the component here proves it resolves that early.
+   * Subclass field initializers run after the base constructor, which is the window the media context callback can fire
+   * in during a custom element upgrade. Reading the component here proves it resolves that early.
    */
   readonly componentDuringFieldInit = this.component;
 

@@ -6,9 +6,8 @@ import { SpotifyAudio } from '../spotify-audio/media';
 const TRACK_URL = 'https://open.spotify.com/track/1301WleyT98MSxVHPZCA6M';
 
 /**
- * Stands in for a controller from the live iframe API, including the part React
- * has to survive: `createController` builds an iframe of its own and replaces the
- * element it was handed with it.
+ * Stands in for a controller from the live iframe API, including the part React has to survive: `createController`
+ * builds an iframe of its own and replaces the element it was handed with it.
  */
 class MockController {
   static instances: MockController[] = [];

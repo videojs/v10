@@ -5,13 +5,12 @@ import { defineMdastPlugin } from 'satteri';
 import { getAstroFrontmatter, type MdastVisitorContext } from './satteriAstroData';
 
 /**
- * Calculates reading time and injects it into the Astro frontmatter bag for
- * templates (read via `remarkPluginFrontmatter`).
+ * Calculates reading time and injects it into the Astro frontmatter bag for templates (read via
+ * `remarkPluginFrontmatter`).
  *
- * Returned as a factory so the text accumulator resets per document. Sätteri
- * has no end-of-document hook, so text is accumulated across literal nodes and
- * the reading time is recomputed as it grows; the final visit leaves the
- * correct value on the frontmatter.
+ * Returned as a factory so the text accumulator resets per document. Sätteri has no end-of-document hook, so text is
+ * accumulated across literal nodes and the reading time is recomputed as it grows; the final visit leaves the correct
+ * value on the frontmatter.
  */
 export function satteriReadingTime(): MdastPluginInput {
   return () => {

@@ -19,12 +19,11 @@ import { PlayerController } from '../../player/player-controller';
 import { UIElement } from '../ui-element';
 
 /**
- * `<media-live-button>` — selects from `live`, `time`, and `buffer` features
- * and composes them into the `LiveButtonMediaState` consumed by
- * `LiveButtonCore`.
+ * `<media-live-button>` — selects from `live`, `time`, and `buffer` features and composes them into the
+ * `LiveButtonMediaState` consumed by `LiveButtonCore`.
  *
- * Doesn't extend `MediaButtonElement` because that base couples a button to
- * a single feature selector; the LiveButton needs three.
+ * Doesn't extend `MediaButtonElement` because that base couples a button to a single feature selector; the LiveButton
+ * needs three.
  */
 export class LiveButtonElement extends UIElement {
   static readonly tagName = 'media-live-button';
@@ -130,9 +129,8 @@ export class LiveButtonElement extends UIElement {
   }
 
   /**
-   * Compose the LiveButton media state from the three feature slices.
-   * Returns `null` when any are missing so the button stays disabled until
-   * all three features are registered on the player.
+   * Compose the LiveButton media state from the three feature slices. Returns `null` when any are missing so the button
+   * stays disabled until all three features are registered on the player.
    */
   #getMedia(): LiveButtonMediaState | null {
     const live = this.live.value;

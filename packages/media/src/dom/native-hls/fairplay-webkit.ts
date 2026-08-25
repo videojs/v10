@@ -12,8 +12,8 @@ import {
 } from './fairplay';
 
 /**
- * The pre-EME WebKit key API. Still shipped by Safari, undeclared in
- * `lib.dom`, and only reachable through `window.WebKitMediaKeys`.
+ * The pre-EME WebKit key API. Still shipped by Safari, undeclared in `lib.dom`, and only reachable through
+ * `window.WebKitMediaKeys`.
  */
 interface WebKitMediaKeySession extends EventTarget {
   readonly error: { code: number; systemCode: number } | null;
@@ -47,12 +47,10 @@ export function supportsWebKitFairPlay(media: HTMLMediaElement): boolean {
 /**
  * Legacy WebKit FairPlay, driven by `webkitneedkey`.
  *
- * This exists for one reason: on some OS versions EME cannot generate a
- * license request while the playback target is an AirPlay receiver, and the
- * pre-EME API can. It mirrors the EME flow with the older calls, and differs
- * in two ways — the application certificate is mandatory (it is packed into
- * the session's initialization data rather than handed to the CDM), and
- * `webkitSetMediaKeys` / `update` are synchronous.
+ * This exists for one reason: on some OS versions EME cannot generate a license request while the playback target is an
+ * AirPlay receiver, and the pre-EME API can. It mirrors the EME flow with the older calls, and differs in two ways —
+ * the application certificate is mandatory (it is packed into the session's initialization data rather than handed to
+ * the CDM), and `webkitSetMediaKeys` / `update` are synchronous.
  *
  * Remove this once the underlying WebKit issue is fixed.
  *
@@ -161,13 +159,11 @@ export function createFairPlayWebKit(context: FairPlayContext): FairPlayKeySyste
 }
 
 /**
- * Repack `webkitneedkey` initialization data into what
- * `WebKitMediaKeys.createSession()` expects.
+ * Repack `webkitneedkey` initialization data into what `WebKitMediaKeys.createSession()` expects.
  *
- * In:  the raw event data — a `skd://` URI as UTF-16LE, in newer WebKit builds
- *      behind a 4-byte little-endian byte count.
- * Out: that data verbatim, then the content ID and the application
- *      certificate, each behind their own 4-byte little-endian byte count.
+ * In: the raw event data — a `skd://` URI as UTF-16LE, in newer WebKit builds behind a 4-byte little-endian byte count.
+ * Out: that data verbatim, then the content ID and the application certificate, each behind their own 4-byte
+ * little-endian byte count.
  */
 function packInitData(initData: ArrayBuffer, certificate: ArrayBuffer): Uint8Array<ArrayBuffer> {
   const source = new Uint8Array(initData);
@@ -197,9 +193,8 @@ function packInitData(initData: ArrayBuffer, certificate: ArrayBuffer): Uint8Arr
 }
 
 /**
- * The content ID FairPlay keys the session on: everything after the scheme in
- * the `skd://` URI. Locating the scheme rather than skipping a fixed prefix
- * covers both the bare URI older WebKit sends and the length-prefixed form.
+ * The content ID FairPlay keys the session on: everything after the scheme in the `skd://` URI. Locating the scheme
+ * rather than skipping a fixed prefix covers both the bare URI older WebKit sends and the length-prefixed form.
  */
 function getContentId(initData: ArrayBuffer): string {
   const decoded = new TextDecoder('utf-16le').decode(initData);

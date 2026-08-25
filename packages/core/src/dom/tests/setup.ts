@@ -1,5 +1,5 @@
 /**
- * jsdom test setup for `core/dom`.
+ * Jsdom test setup for `core/dom`.
  *
  * Patches missing APIs that jsdom doesn't implement but our DOM code depends on.
  */

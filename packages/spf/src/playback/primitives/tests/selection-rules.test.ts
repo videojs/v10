@@ -1,10 +1,9 @@
 /**
  * The rule-chain composers, tested pure — no signals, no behavior, no engine.
  *
- * The two differ in exactly three ways, and each is asserted here: a rule that
- * matches nothing falls through while a constraint's empty result stands, a rule
- * chain bails at one survivor while every constraint always runs, and constraint
- * order can't change the outcome while rule order can.
+ * The two differ in exactly three ways, and each is asserted here: a rule that matches nothing falls through while a
+ * constraint's empty result stands, a rule chain bails at one survivor while every constraint always runs, and
+ * constraint order can't change the outcome while rule order can.
  */
 import { describe, expect, it } from 'vite-plus/test';
 

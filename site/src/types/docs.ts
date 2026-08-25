@@ -77,9 +77,7 @@ export type SidebarItem = Guide | Section | SidebarLink;
 
 export type Sidebar = Array<SidebarItem>;
 
-/**
- * Type guard to check if an item is a Section (vs a Guide or SidebarLink)
- */
+/** Type guard to check if an item is a Section (vs a Guide or SidebarLink) */
 export function isSection(item: SidebarItem): item is Section {
   return 'contents' in item;
 }

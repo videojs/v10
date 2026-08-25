@@ -99,8 +99,8 @@ const marked = new Marked({ renderer });
 /**
  * Unwrap a single `<p>` wrapper so simple descriptions sit inline.
  *
- * If the output is a lone `<p class="…">…</p>` with no other block-level
- * elements, strip the wrapper and return only the inner content.
+ * If the output is a lone `<p class="…">…</p>` with no other block-level elements, strip the wrapper and return only
+ * the inner content.
  */
 function unwrapSingleParagraph(html: string): string {
   const trimmed = html.trim();

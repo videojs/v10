@@ -5,11 +5,10 @@ import type { PlayerTarget } from '../../../player';
 import { textTrackFeature } from '../text-track';
 
 /**
- * jsdom's TextTrackList does not implement EventTarget (no addEventListener/
- * dispatchEvent), so `listen(media.textTracks, ...)` throws. The store's
- * error boundary catches this, but we can't dispatch textTracks events in
- * tests. We test what we can: initial state, track detection via `addTextTrack`,
- * and `loadstart` resync (dispatched on media, which works).
+ * Jsdom's TextTrackList does not implement EventTarget (no addEventListener/ dispatchEvent), so
+ * `listen(media.textTracks, ...)` throws. The store's error boundary catches this, but we can't dispatch textTracks
+ * events in tests. We test what we can: initial state, track detection via `addTextTrack`, and `loadstart` resync
+ * (dispatched on media, which works).
  */
 
 function createVideo(): HTMLVideoElement {
@@ -62,9 +61,8 @@ describe('textTrackFeature', () => {
 
   describe('thumbnailTrackCrossOrigin', () => {
     /**
-     * Resolve the state for a media element carrying a thumbnail track. Uses
-     * `mockTextTracks` rather than `addTextTrack`, which jsdom implements as a
-     * no-op that never populates `textTracks`.
+     * Resolve the state for a media element carrying a thumbnail track. Uses `mockTextTracks` rather than
+     * `addTextTrack`, which jsdom implements as a no-op that never populates `textTracks`.
      */
     function crossOriginFor(crossOrigin: string | undefined, kind: TextTrackKind = 'metadata') {
       const video = createVideo();

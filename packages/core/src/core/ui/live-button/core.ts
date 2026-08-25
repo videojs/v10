@@ -16,23 +16,21 @@ export interface LiveButtonProps {
 }
 
 /**
- * Fallback offset (in seconds) from the end of the seekable window used to
- * decide "at live edge" when `liveEdgeStart` is unavailable.
+ * Fallback offset (in seconds) from the end of the seekable window used to decide "at live edge" when `liveEdgeStart`
+ * is unavailable.
  */
 const LIVE_EDGE_OFFSET = 10;
 
 /**
- * Grace window (in seconds) before `liveEdgeStart` that still counts as
- * "at the live edge". Absorbs the small gap between the player's initial
- * playback position (e.g. hls.js `liveSyncDuration`) and the manifest's
- * `HOLD-BACK`, so autoplay reliably reports live.
+ * Grace window (in seconds) before `liveEdgeStart` that still counts as "at the live edge". Absorbs the small gap
+ * between the player's initial playback position (e.g. hls.js `liveSyncDuration`) and the manifest's `HOLD-BACK`, so
+ * autoplay reliably reports live.
  */
 const LIVE_EDGE_TOLERANCE = 5;
 
 /**
- * Media state slice consumed by `LiveButtonCore` — composed by the HTML
- * and React `LiveButton` adapters from the `live`, `time`, and `buffer`
- * store slices.
+ * Media state slice consumed by `LiveButtonCore` — composed by the HTML and React `LiveButton` adapters from the
+ * `live`, `time`, and `buffer` store slices.
  */
 export type LiveButtonMediaState = Pick<MediaTimeState, 'currentTime' | 'seek'> &
   Pick<MediaBufferState, 'seekable'> &
@@ -46,8 +44,8 @@ export interface LiveButtonState extends ButtonState {
 }
 
 /**
- * Core state machine for a "Live" button. Indicates whether the player is
- * playing at the live edge and seeks to the Seekable Live Edge when activated.
+ * Core state machine for a "Live" button. Indicates whether the player is playing at the live edge and seeks to the
+ * Seekable Live Edge when activated.
  *
  * @see https://github.com/video-dev/media-ui-extensions/blob/main/proposals/0007-live-edge.md
  */

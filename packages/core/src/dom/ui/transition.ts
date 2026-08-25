@@ -16,15 +16,12 @@ export type TransitionElement = HTMLElement | null | (() => HTMLElement | null);
 /**
  * Manages open/close transition lifecycle via `createState`.
  *
- * **Open:** patches `{ active: true, status: 'starting' }`, then after a
- * double-RAF patches `{ status: 'idle' }` so the browser paints the
- * initial ("from") state before transitioning. It then waits for the resulting
- * element animations to finish. Reopening an active transition flushes styles
- * first so CSS transitions can restart.
+ * **Open:** patches `{ active: true, status: 'starting' }`, then after a double-RAF patches `{ status: 'idle' }` so the
+ * browser paints the initial ("from") state before transitioning. It then waits for the resulting element animations to
+ * finish. Reopening an active transition flushes styles first so CSS transitions can restart.
  *
- * **Close:** patches `{ status: 'ending' }` (keeping `active: true` so the
- * element stays mounted), then after a double-RAF waits for
- * `getAnimations()` to settle before patching `{ active: false, status: 'idle' }`.
+ * **Close:** patches `{ status: 'ending' }` (keeping `active: true` so the element stays mounted), then after a
+ * double-RAF waits for `getAnimations()` to settle before patching `{ active: false, status: 'idle' }`.
  */
 export function createTransition(): TransitionApi {
   const state = createState<TransitionState>({ active: false, status: 'idle' });

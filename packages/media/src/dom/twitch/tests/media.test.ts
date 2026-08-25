@@ -28,9 +28,8 @@ afterEach(() => {
 });
 
 /**
- * An iframe with a stand-in for the embed's window. It is the whole protocol
- * surface: commands are posted to it, and only messages claiming to come from it
- * are allowed to drive state.
+ * An iframe with a stand-in for the embed's window. It is the whole protocol surface: commands are posted to it, and
+ * only messages claiming to come from it are allowed to drive state.
  */
 function createIframe(): HTMLIFrameElement {
   const iframe = document.createElement('iframe');
@@ -55,8 +54,8 @@ function embedOf(iframe: HTMLIFrameElement): EmbedWindow {
 }
 
 /**
- * Post a message as the embed would. A real `MessageEvent` cannot name an
- * arbitrary object as its `source`, so the event is assembled by hand.
+ * Post a message as the embed would. A real `MessageEvent` cannot name an arbitrary object as its `source`, so the
+ * event is assembled by hand.
  */
 function postFromWindow(source: unknown, data: unknown): void {
   const event = new Event('message');

@@ -28,9 +28,8 @@ if (didShimSelf) {
 type Opaque = string | number | boolean | bigint | symbol | null | undefined | ArrayBufferView;
 
 /**
- * Every level optional. Shaka's own configuration type describes a fully
- * resolved configuration, while `configure()` merges whatever subset it is
- * handed into the current one.
+ * Every level optional. Shaka's own configuration type describes a fully resolved configuration, while `configure()`
+ * merges whatever subset it is handed into the current one.
  */
 type DeepPartial<T> = T extends Opaque | readonly any[] | ((...args: any[]) => any)
   ? T
@@ -42,21 +41,20 @@ export type ShakaConfig = DeepPartial<shaka.extern.PlayerConfiguration>;
 /** Structured Shaka source: which source to play, plus how to play it. */
 export interface ShakaSource {
   /**
-   * Manifest URL. Shaka plays DASH, HLS, and progressive files from the same
-   * property. Mirrors the host's `src` property.
+   * Manifest URL. Shaka plays DASH, HLS, and progressive files from the same property. Mirrors the host's `src`
+   * property.
    */
   src?: string | undefined;
   /**
-   * MIME type of the source. Handed to Shaka as the type to parse `src` as,
-   * which is what makes an extensionless manifest URL playable.
+   * MIME type of the source. Handed to Shaka as the type to parse `src` as, which is what makes an extensionless
+   * manifest URL playable.
    */
   type?: string | undefined;
   /**
    * License servers for protected content, keyed by EME key system id.
    *
-   * Translated into the `drm.servers` and `drm.advanced` Shaka configures EME
-   * from. Name every system you hold a license server for — which one is used
-   * is the browser's choice.
+   * Translated into the `drm.servers` and `drm.advanced` Shaka configures EME from. Name every system you hold a
+   * license server for — which one is used is the browser's choice.
    */
   drm?: DrmSystemsConfig | undefined;
   /** Playback options, keyed by the engine that reads them. */
@@ -66,10 +64,9 @@ export interface ShakaSource {
 /** The engines a Shaka source can configure. */
 export interface ShakaEngineConfig {
   /**
-   * Shaka Player's own configuration, passed through untouched. Replacing it
-   * resets any previously applied configuration. A `drm.servers` of its own
-   * replaces `source.drm` — an escape hatch for licensing against the parts of
-   * Shaka's DRM configuration `source.drm` does not cover.
+   * Shaka Player's own configuration, passed through untouched. Replacing it resets any previously applied
+   * configuration. A `drm.servers` of its own replaces `source.drm` — an escape hatch for licensing against the parts
+   * of Shaka's DRM configuration `source.drm` does not cover.
    */
   shaka?: ShakaConfig | undefined;
 }
@@ -89,10 +86,9 @@ export const shakaMediaDefaultProps: ShakaMediaProps = {
 };
 
 /**
- * Configuration this element applies on top of Shaka's own defaults — the
- * Shaka spelling of what the hls.js media ships (`capLevelToPlayerSize`):
- * adaptation stays within renditions no larger than the element rendering
- * them. Anything under `source.engine.shaka` overrides it.
+ * Configuration this element applies on top of Shaka's own defaults — the Shaka spelling of what the hls.js media ships
+ * (`capLevelToPlayerSize`): adaptation stays within renditions no larger than the element rendering them. Anything
+ * under `source.engine.shaka` overrides it.
  */
 const defaultShakaConfig: ShakaConfig = {
   abr: { restrictToElementSize: true },
@@ -197,24 +193,21 @@ class ShakaMediaBase
   }
 
   /**
-   * Underlying playback engine — the Shaka `Player` instance, or `null` when
-   * the browser cannot run it. An advanced escape hatch for direct engine
-   * access; normal playback is driven through this element's own properties
-   * and methods.
+   * Underlying playback engine — the Shaka `Player` instance, or `null` when the browser cannot run it. An advanced
+   * escape hatch for direct engine access; normal playback is driven through this element's own properties and
+   * methods.
    */
   get engine() {
     return this.#engine;
   }
 
   /**
-   * The last playback failure Shaka could not recover from, or `null`. Shaka
-   * loads asynchronously, so a manifest that cannot be played fails after `src`
-   * was assigned rather than at the assignment; the `error` event is when to
-   * read this.
+   * The last playback failure Shaka could not recover from, or `null`. Shaka loads asynchronously, so a manifest that
+   * cannot be played fails after `src` was assigned rather than at the assignment; the `error` event is when to read
+   * this.
    *
-   * A Shaka failure says more about what went wrong than the media element's
-   * own `error` does, so it wins while there is one; anything the element failed
-   * on by itself still reads through.
+   * A Shaka failure says more about what went wrong than the media element's own `error` does, so it wins while there
+   * is one; anything the element failed on by itself still reads through.
    */
   get error() {
     return this.#error ?? super.error;
@@ -242,20 +235,17 @@ class ShakaMediaBase
   }
 
   /**
-   * How much to fetch before playback is asked for, mirroring the media
-   * element's own `preload`. Shaka has no split between "know the source" and
-   * "buffer it", so this maps onto when and how `engine.load()` runs:
+   * How much to fetch before playback is asked for, mirroring the media element's own `preload`. Shaka has no split
+   * between "know the source" and "buffer it", so this maps onto when and how `engine.load()` runs:
    *
    * - `'auto'` — load immediately with the configured buffering goals.
-   * - `'metadata'` — load immediately, holding buffering to about a segment;
-   *   the configured goals come back on the first play intent.
+   * - `'metadata'` — load immediately, holding buffering to about a segment; the configured goals come back on the first
+   *   play intent.
    * - `'none'` / `''` — hold the load entirely until the first play intent.
    *
-   * A play intent is a `play` event, a target that is already playing, or
-   * `autoplay` — which the spec lets override `preload` for good reason: with
-   * nothing fetched there is nothing whose readiness could ever fire it.
-   * Widening (`none` → `auto`) takes effect immediately; narrowing after a
-   * load began cannot un-fetch and leaves it alone.
+   * A play intent is a `play` event, a target that is already playing, or `autoplay` — which the spec lets override
+   * `preload` for good reason: with nothing fetched there is nothing whose readiness could ever fire it. Widening
+   * (`none` → `auto`) takes effect immediately; narrowing after a load began cannot un-fetch and leaves it alone.
    */
   get preload(): MediaPreloadType {
     return this.#preload;
@@ -283,11 +273,11 @@ class ShakaMediaBase
   }
 
   /**
-   * Structured source: what to play (`src`, an optional `type`) plus how to
-   * play it (`drm`, `engine.shaka`). Replacing it re-derives `src`.
+   * Structured source: what to play (`src`, an optional `type`) plus how to play it (`drm`, `engine.shaka`). Replacing
+   * it re-derives `src`.
    *
-   * Shaka takes configuration on a live player, so changing `engine.shaka`
-   * re-applies it in place instead of recreating the engine.
+   * Shaka takes configuration on a live player, so changing `engine.shaka` re-applies it in place instead of recreating
+   * the engine.
    */
   get source(): ShakaSource | null {
     return this.#source;
@@ -395,10 +385,9 @@ class ShakaMediaBase
   }
 
   /**
-   * Holds Shaka's buffering to about one segment — the closest analog of
-   * fetching "metadata" an engine that always buffers through MSE has. The
-   * goals in force are captured first so the first play intent can put back
-   * exactly what configuration produced them.
+   * Holds Shaka's buffering to about one segment — the closest analog of fetching "metadata" an engine that always
+   * buffers through MSE has. The goals in force are captured first so the first play intent can put back exactly what
+   * configuration produced them.
    */
   #clampBuffering(engine: shaka.Player) {
     const { bufferingGoal, rebufferingGoal } = engine.getConfiguration().streaming;
@@ -433,12 +422,10 @@ class ShakaMediaBase
   }
 
   /**
-   * Shaka's `attach()`, `load()`, `unload()`, and `detach()` are asynchronous,
-   * and the player orders them itself: each takes an internal lock in call
-   * order, and a newer one interrupts whatever it supersedes. So a call is
-   * issued as it comes — holding it until the one before it settles would keep
-   * a new source waiting on a manifest that hangs, when cutting that load short
-   * is the point of assigning one.
+   * Shaka's `attach()`, `load()`, `unload()`, and `detach()` are asynchronous, and the player orders them itself: each
+   * takes an internal lock in call order, and a newer one interrupts whatever it supersedes. So a call is issued as it
+   * comes — holding it until the one before it settles would keep a new source waiting on a manifest that hangs, when
+   * cutting that load short is the point of assigning one.
    *
    * Nothing awaits these, so a rejection is reported rather than left unhandled.
    */
@@ -477,7 +464,8 @@ class ShakaMediaBase
 }
 
 /**
- * @fires sourcechange - Fired when `source` changes, either directly or by resolving a new `src`. Read `source` for the new value.
+ * @fires sourcechange - Fired when `source` changes, either directly or by resolving a new `src`. Read `source` for the
+ *   new value.
  * @fires error - Fired when playback fails in a way Shaka could not recover from. Read `error` for the failure.
  * @fires streamtypechange - Fired when the detected stream type changes. Read `streamType` for the new value.
  * @fires targetlivewindowchange - Fired when `targetLiveWindow` changes. Read it for the new value.
@@ -489,10 +477,9 @@ export class ShakaMedia extends ShakaMediaLiveMixin(
 let arePolyfillsInstalled = false;
 
 /**
- * Patches the browser APIs Shaka expects before anything reads them. Shaka
- * ships these as polyfills it does not install itself, and both
- * `isBrowserSupported()` and the DRM path depend on them — FairPlay EME on
- * Safari is patched in from here. Installing is global, so it happens once.
+ * Patches the browser APIs Shaka expects before anything reads them. Shaka ships these as polyfills it does not install
+ * itself, and both `isBrowserSupported()` and the DRM path depend on them — FairPlay EME on Safari is patched in from
+ * here. Installing is global, so it happens once.
  */
 function installPolyfills() {
   if (arePolyfillsInstalled) return;
@@ -503,19 +490,17 @@ function installPolyfills() {
 }
 
 /**
- * Everything Shaka is configured from. Compared structurally, so equivalent
- * options never re-apply — including nested ones like `drm`, which a flat
- * comparison would see as changed whenever the object identity did.
+ * Everything Shaka is configured from. Compared structurally, so equivalent options never re-apply — including nested
+ * ones like `drm`, which a flat comparison would see as changed whenever the object identity did.
  */
 function engineConfigKey(source: ShakaSource | null) {
   return { drm: source?.drm ?? null, shaka: source?.engine?.shaka ?? null };
 }
 
 /**
- * Shaka configuration with the source's DRM licensing folded in. Shaka names
- * license servers under `drm.servers` and server certificates under
- * `drm.advanced`, so `source.drm` is translated into both — unless
- * `engine.shaka.drm.servers` names servers of its own, which replaces it.
+ * Shaka configuration with the source's DRM licensing folded in. Shaka names license servers under `drm.servers` and
+ * server certificates under `drm.advanced`, so `source.drm` is translated into both — unless `engine.shaka.drm.servers`
+ * names servers of its own, which replaces it.
  */
 function withDrmConfig(config: ShakaConfig | undefined, drm: DrmSystemsConfig | undefined) {
   const systems = Object.entries(drm ?? {});
@@ -557,14 +542,11 @@ const abortedCodes = new Set<number>([shaka.util.Error.Code.LOAD_INTERRUPTED, sh
 /**
  * A Shaka failure as a `MediaError`, or `null` when there is nothing to report.
  *
- * Only a failure Shaka gave up on is reported. Shaka marks one it means to
- * retry as recoverable and fires it on the way through, and an announced error
- * stands until the next load — so announcing those would leave the error UI
- * over playback that is still running. Whatever a retry cannot save comes back
- * as critical.
+ * Only a failure Shaka gave up on is reported. Shaka marks one it means to retry as recoverable and fires it on the way
+ * through, and an announced error stands until the next load — so announcing those would leave the error UI over
+ * playback that is still running. Whatever a retry cannot save comes back as critical.
  *
- * Shaka classifies a failure by category rather than by a media error code, so
- * the code is derived from that.
+ * Shaka classifies a failure by category rather than by a media error code, so the code is derived from that.
  */
 function toMediaError(error: unknown): MediaError | null {
   if (!isShakaError(error)) {

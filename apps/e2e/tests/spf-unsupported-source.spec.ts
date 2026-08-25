@@ -5,30 +5,24 @@ import { DATA_ATTRS, SELECTORS } from '../fixtures/selectors';
 import { PlayerPage } from '../page-objects/player';
 
 /**
- * SPF unsupported-source error surfacing, end to end: engine detection →
- * adapter `error` → the player store's error feature → the dialog.
+ * SPF unsupported-source error surfacing, end to end: engine detection → adapter `error` → the player store's error
+ * feature → the dialog.
  *
- * `error-dialog.spec.ts` covers the dialog itself, but fakes the error with
- * `Object.defineProperty(video, 'error')`. Nothing there exercises a real
- * engine verdict, which is what the PRD's *Error Notices* ask is about: a
- * source the SPF engine genuinely cannot play should fail visibly instead of
- * stalling in silence.
+ * `error-dialog.spec.ts` covers the dialog itself, but fakes the error with `Object.defineProperty(video, 'error')`.
+ * Nothing there exercises a real engine verdict, which is what the PRD's _Error Notices_ ask is about: a source the SPF
+ * engine genuinely cannot play should fail visibly instead of stalling in silence.
  *
- * The source under test is an MPEG-TS ladder with no fMP4 rendition — the
- * PRD's exact legacy-format scenario. The engine derives `video/mp2t` from the
- * segment extension (no `EXT-X-MAP`), `canPlayTrack` prunes every video
- * rendition as unplayable, and `track-switching` reports the verdict for a
- * type that has renditions but none selectable. The adapter then substitutes
- * the unsupported-playback-feature code, because a cause it has no pipeline
- * for is more useful to a consumer than "a type emptied".
+ * The source under test is an MPEG-TS ladder with no fMP4 rendition — the PRD's exact legacy-format scenario. The
+ * engine derives `video/mp2t` from the segment extension (no `EXT-X-MAP`), `canPlayTrack` prunes every video rendition
+ * as unplayable, and `track-switching` reports the verdict for a type that has renditions but none selectable. The
+ * adapter then substitutes the unsupported-playback-feature code, because a cause it has no pipeline for is more useful
+ * to a consumer than "a type emptied".
  *
- * Assertions are split deliberately. The code the adapter surfaces is the
- * engine's contract and is asserted exactly — as is the empty `message`, whose
- * emptiness is load-bearing: `resolveErrorDialogDescription` prefers a
- * non-empty message over the translation a code resolves to, so engine prose
- * here would silently displace the localized copy. Dialog copy is asserted
- * against the player's own `errors.unplayable` translation, which is where
- * viewer-facing wording lives now that the engine reports a code instead.
+ * Assertions are split deliberately. The code the adapter surfaces is the engine's contract and is asserted exactly —
+ * as is the empty `message`, whose emptiness is load-bearing: `resolveErrorDialogDescription` prefers a non-empty
+ * message over the translation a code resolves to, so engine prose here would silently displace the localized copy.
+ * Dialog copy is asserted against the player's own `errors.unplayable` translation, which is where viewer-facing
+ * wording lives now that the engine reports a code instead.
  *
  * @see internal/design/spf/features/errors.md
  */

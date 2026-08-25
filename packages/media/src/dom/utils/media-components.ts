@@ -52,7 +52,10 @@ export function setMediaProp<T extends TargetLike, K extends keyof T>(host: Medi
   if (own) (own as Record<K, T[K]>)[prop] = value;
 }
 
-/** Find the object that owns a media property: the first component `override` exposing it, otherwise the attached target. */
+/**
+ * Find the object that owns a media property: the first component `override` exposing it, otherwise the attached
+ * target.
+ */
 export function getMediaOwner<T extends TargetLike>(host: MediaHost<T>, prop: keyof T): Partial<T> | null {
   for (const component of getMediaComponents(host).values()) {
     const override = component.targetOverride as Partial<T> | null | undefined;

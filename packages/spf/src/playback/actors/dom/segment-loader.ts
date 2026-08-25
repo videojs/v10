@@ -30,10 +30,7 @@ import type { SourceBufferActor } from './source-buffer';
 // BUFFER STATE TYPES
 // ============================================================================
 
-/**
- * Buffer state for a single SourceBuffer.
- * Tracks which init segment and media segments are loaded.
- */
+/** Buffer state for a single SourceBuffer. Tracks which init segment and media segments are loaded. */
 export interface SourceBufferState {
   /** Track ID of the loaded init segment */
   initTrackId?: string;
@@ -41,9 +38,7 @@ export interface SourceBufferState {
   segments: Array<{ id: string; trackId: string }>;
 }
 
-/**
- * Buffer state for all SourceBuffers.
- */
+/** Buffer state for all SourceBuffers. */
 export interface BufferState {
   video?: SourceBufferState;
   audio?: SourceBufferState;
@@ -59,12 +54,10 @@ export type SegmentLoaderTrack = VideoTrack | AudioTrack;
 /**
  * Message sent to a SegmentLoaderActor.
  *
- * `range` is optional to distinguish loading modes:
- * - No range: load init segment only (metadata preload mode)
- * - With range: load init + all segments overlapping [start, end]
+ * `range` is optional to distinguish loading modes: - No range: load init segment only (metadata preload mode) - With
+ * range: load init + all segments overlapping [start, end]
  *
- * `start` and `end` are raw time values — no segment snapping.
- * The actor maps them onto segment boundaries internally.
+ * `start` and `end` are raw time values — no segment snapping. The actor maps them onto segment boundaries internally.
  */
 export type SegmentLoaderMessage = {
   type: 'load';
@@ -84,12 +77,10 @@ export interface SegmentLoaderActorContext {
   /** Track ID of the init segment currently being fetched/appended, or null. */
   inFlightInitTrackId: string | null;
   /**
-   * Identity of the segment currently being fetched/appended, or null. Tracks
-   * the `trackId` alongside the positional `id` because renditions number
-   * segments independently (`segment-N`): an in-flight LOW `segment-0` must not
-   * be mistaken for a needed HIGH `segment-0` on a switch (see the loading
-   * handler's continue/preempt decision). Mirrors the text-track loader, which
-   * already matches its in-flight segment on `(inFlightTrackId, inFlightSegmentId)`.
+   * Identity of the segment currently being fetched/appended, or null. Tracks the `trackId` alongside the positional
+   * `id` because renditions number segments independently (`segment-N`): an in-flight LOW `segment-0` must not be
+   * mistaken for a needed HIGH `segment-0` on a switch (see the loading handler's continue/preempt decision). Mirrors
+   * the text-track loader, which already matches its in-flight segment on `(inFlightTrackId, inFlightSegmentId)`.
    */
   inFlightSegment: { id: string; trackId: string } | null;
 }
@@ -97,9 +88,8 @@ export interface SegmentLoaderActorContext {
 export type SegmentLoaderActor = MessageActor<SegmentLoaderActorState, SegmentLoaderActorContext, SegmentLoaderMessage>;
 
 /**
- * Configuration for `createSegmentLoaderActor`. Each sub-config is
- * spread over the corresponding `DEFAULT_*_CONFIG` so callers can
- * override individual fields.
+ * Configuration for `createSegmentLoaderActor`. Each sub-config is spread over the corresponding `DEFAULT_*_CONFIG` so
+ * callers can override individual fields.
  */
 export interface SegmentLoaderActorConfig {
   forwardBuffer?: Partial<ForwardBufferConfig>;
@@ -120,11 +110,9 @@ interface LoadTaskOptions {
 }
 
 /**
- * Wraps a LoadTask descriptor into a Task that runs the op's message pipeline
- * (fetch/discover/stamp/dispatch, per the composition's `messagePipelines`).
- * Updates in-flight context around the async region so the loading handler can
- * make accurate continue/preempt decisions at any point, and checks the abort
- * signal before each step.
+ * Wraps a LoadTask descriptor into a Task that runs the op's message pipeline (fetch/discover/stamp/dispatch, per the
+ * composition's `messagePipelines`). Updates in-flight context around the async region so the loading handler can make
+ * accurate continue/preempt decisions at any point, and checks the abort signal before each step.
  */
 function makeLoadTask(op: LoadTask, { getContext, setContext, pipelines, deps }: LoadTaskOptions): Task<void> {
   return new Task(async (taskSignal) => {
@@ -158,25 +146,20 @@ function makeLoadTask(op: LoadTask, { getContext, setContext, pipelines, deps }:
 /**
  * Creates a SegmentLoaderActor for one track type (video or audio).
  *
- * Receives load assignments via `send()` and owns all execution: planning,
- * removes, fetches, and appends. Coordinates with the SourceBufferActor for
- * all physical SourceBuffer operations.
+ * Receives load assignments via `send()` and owns all execution: planning, removes, fetches, and appends. Coordinates
+ * with the SourceBufferActor for all physical SourceBuffer operations.
  *
- * Planning (Cases 1–3) happens in the `load` handler on every incoming
- * message, producing an ordered LoadTask list. The runner drains that list
- * sequentially via SerialRunner. When a new message arrives mid-run, the
- * handler replans and either continues the in-flight operation (abortPending
- * + schedule new remainder) or preempts it (abortAll + cancel SourceBuffer
- * if needed + schedule new plan).
+ * Planning (Cases 1–3) happens in the `load` handler on every incoming message, producing an ordered LoadTask list. The
+ * runner drains that list sequentially via SerialRunner. When a new message arrives mid-run, the handler replans and
+ * either continues the in-flight operation (abortPending + schedule new remainder) or preempts it (abortAll + cancel
+ * SourceBuffer if needed + schedule new plan).
  *
  * @param sourceBufferActor - Shared SourceBufferActor reference (not owned)
- * @param fetchBytes - Tracked fetch closure (owns throughput sampling for segments).
- *   Accepts an optional `minChunkSize` in options; init segments pass `Infinity`
- *   so the entire body accumulates as one chunk before appending.
- * @param compositionDeps - The composition's `state`/`context`/`config`, threaded
- *   opaquely into each step's {@link StepDeps} (the loader never reads them). Lets
- *   injected steps (relocation) read composition signals at call time. Defaults to
- *   empty for standalone / base-pipeline use.
+ * @param fetchBytes - Tracked fetch closure (owns throughput sampling for segments). Accepts an optional `minChunkSize`
+ *   in options; init segments pass `Infinity` so the entire body accumulates as one chunk before appending.
+ * @param compositionDeps - The composition's `state`/`context`/`config`, threaded opaquely into each step's
+ *   {@link StepDeps} (the loader never reads them). Lets injected steps (relocation) read composition signals at call
+ *   time. Defaults to empty for standalone / base-pipeline use.
  */
 export function createSegmentLoaderActor(
   sourceBufferActor: SourceBufferActor,
@@ -227,29 +210,19 @@ export function createSegmentLoaderActor(
   };
 
   /**
-   * Translate a load message into an ordered LoadTask list based on committed
-   * actor state. In-flight awareness is handled separately in the load handler.
+   * Translate a load message into an ordered LoadTask list based on committed actor state. In-flight awareness is
+   * handled separately in the load handler.
    *
-   * @todo Rename alongside LoadTask (e.g. planOps).
-   *
-   * Case 1 — Removes: forward and back buffer flush points, segment-aligned.
-   *   ABR-style track switches (same content, different bitrate) do not flush:
-   *   appending new content overwrites existing buffer ranges, and the actor's
-   *   time-aligned deduplication keeps the segment model accurate as new
-   *   segments arrive.
-   *
-   *   Cross-rendition track switches (audio language change, text language
-   *   change) do flush: the buffered content is semantically incompatible with
-   *   the newly-selected track, so overwrite-on-append would leave stale
-   *   content playing until each replacement segment lands. Today's predicate:
-   *   `actorCtx.initTrackLanguage !== track.language` — fires for language
-   *   changes, no-ops for video / same-language audio bitrate switches.
-   *   Future stage: pluggable predicate / strategy at actor construction time
-   *   for codec-change (5.1 surround) and other cross-rendition shapes.
-   *
-   * Case 2 — Init: schedule if not yet committed for this track.
-   *
-   * Case 3 — Segments: all segments in the load window not yet committed.
+   * @todo Rename alongside LoadTask (e.g. planOps). Case 1 — Removes: forward and back buffer flush points,
+   *   segment-aligned. ABR-style track switches (same content, different bitrate) do not flush: appending new content
+   *   overwrites existing buffer ranges, and the actor's time-aligned deduplication keeps the segment model accurate as
+   *   new segments arrive. Cross-rendition track switches (audio language change, text language change) do flush: the
+   *   buffered content is semantically incompatible with the newly-selected track, so overwrite-on-append would leave
+   *   stale content playing until each replacement segment lands. Today's predicate: `actorCtx.initTrackLanguage !==
+   *   track.language` — fires for language changes, no-ops for video / same-language audio bitrate switches. Future
+   *   stage: pluggable predicate / strategy at actor construction time for codec-change (5.1 surround) and other
+   *   cross-rendition shapes. Case 2 — Init: schedule if not yet committed for this track. Case 3 — Segments: all
+   *   segments in the load window not yet committed.
    */
   const planTasks = (message: SegmentLoaderMessage): LoadTask[] => {
     const { track, range } = message;

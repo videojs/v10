@@ -46,22 +46,19 @@ function getElementRef(element: ReactElement): Ref<unknown> | undefined {
 /**
  * Render a UI component element.
  *
- * Handles:
- * - Default tag rendering
- * - Render prop (element or function)
- * - Props merging (event handlers chained, className concatenated, style merged)
- * - Ref composition
- * - className/style as functions of state
+ * Handles: - Default tag rendering - Render prop (element or function) - Props merging (event handlers chained,
+ * className concatenated, style merged) - Ref composition - className/style as functions of state
+ *
+ * @example
+ *   ```tsx
+ *   return renderElement('button', componentProps, {
+ *     state,
+ *     ref: [forwardedRef, buttonRef],
+ *     props: [{ type: 'button' }, elementProps, getButtonProps],
+ *   });
+ *   ```;
  *
  * @public
- * @example
- * ```tsx
- * return renderElement('button', componentProps, {
- *   state,
- *   ref: [forwardedRef, buttonRef],
- *   props: [{ type: 'button' }, elementProps, getButtonProps],
- * });
- * ```
  */
 export function renderElement<
   State extends object,

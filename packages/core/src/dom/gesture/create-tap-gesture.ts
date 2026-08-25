@@ -18,11 +18,15 @@ function getRecognizer(target: HTMLElement): TapRecognizer {
  * Register a tap gesture on a target element.
  *
  * @example
- * ```ts
- * const cleanup = createTapGesture(container, (event) => {
- *   store.paused ? store.play() : store.pause();
- * }, { pointer: 'mouse' });
- * ```
+ *   ```ts
+ *   const cleanup = createTapGesture(
+ *     container,
+ *     (event) => {
+ *       store.paused ? store.play() : store.pause();
+ *     },
+ *     { pointer: 'mouse' }
+ *   );
+ *   ```;
  */
 export function createTapGesture(
   target: HTMLElement,
@@ -45,11 +49,15 @@ export function createTapGesture(
  * Register a doubletap gesture on a target element.
  *
  * @example
- * ```ts
- * const cleanup = createDoubleTapGesture(container, (event) => {
- *   store.fullscreen ? store.exitFullscreen() : store.requestFullscreen();
- * }, { region: 'center' });
- * ```
+ *   ```ts
+ *   const cleanup = createDoubleTapGesture(
+ *     container,
+ *     (event) => {
+ *       store.fullscreen ? store.exitFullscreen() : store.requestFullscreen();
+ *     },
+ *     { region: 'center' }
+ *   );
+ *   ```;
  */
 export function createDoubleTapGesture(
   target: HTMLElement,

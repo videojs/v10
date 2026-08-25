@@ -8,11 +8,10 @@ import { type MediaContext, mediaContext } from '../player/context';
 export type MediaAttachMixin = <Class extends AnyConstructor<HTMLElement>>(BaseClass: Class) => Class;
 
 /**
- * Create a mixin that consumes `mediaContext` and registers the
- * element as the media with the player.
+ * Create a mixin that consumes `mediaContext` and registers the element as the media with the player.
  *
- * Uses the raw context-request protocol so it works with any
- * `HTMLElement` subclass — no `ReactiveControllerHost` required.
+ * Uses the raw context-request protocol so it works with any `HTMLElement` subclass — no `ReactiveControllerHost`
+ * required.
  *
  * @param context - The media context to consume.
  */

@@ -8,8 +8,8 @@ afterEach(() => {
 });
 
 /**
- * A minimal {@link TaskLike} for exercising `delayedReschedule` in isolation:
- * the cadence only reads `run()`, `previous`, and `signal`.
+ * A minimal {@link TaskLike} for exercising `delayedReschedule` in isolation: the cadence only reads `run()`,
+ * `previous`, and `signal`.
  */
 function fakeTask(
   run: () => Promise<number>,

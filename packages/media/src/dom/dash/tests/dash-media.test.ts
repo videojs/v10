@@ -6,7 +6,7 @@ vi.mock('dashjs', () => {
     QUALITY_CHANGE_RENDERED: 'qualityChangeRendered',
   };
 
-  /** dash.js merges every `updateSettings()` call into the current settings. */
+  /** Dash.js merges every `updateSettings()` call into the current settings. */
   function merge(target: Record<string, any>, source: Record<string, any>) {
     for (const [key, value] of Object.entries(source)) {
       const isPlainObject = typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -102,7 +102,7 @@ function setup() {
   return { media, video, engine: media.engine as unknown as MockEngine };
 }
 
-/** dash.js announces a stream with the video representations it can play. */
+/** Dash.js announces a stream with the video representations it can play. */
 function initStream(engine: MockEngine, representations: MockRepresentation[]) {
   engine.representations = representations;
   engine.emit('streamInitialized', { error: null });

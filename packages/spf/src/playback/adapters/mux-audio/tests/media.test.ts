@@ -1,11 +1,9 @@
 /**
  * SPF-backed MuxAudioMedia tests.
  *
- * The Mux surface is the shared mixin's, covered against the video flavor in
- * `../../mux/tests/media.test.ts`. What's worth asserting here is that applying
- * it to the audio-only Media keeps that surface intact — the two extend different
- * bases, so nothing guarantees it but a test — plus the two things this flavor
- * decides for itself.
+ * The Mux surface is the shared mixin's, covered against the video flavor in `../../mux/tests/media.test.ts`. What's
+ * worth asserting here is that applying it to the audio-only Media keeps that surface intact — the two extend different
+ * bases, so nothing guarantees it but a test — plus the two things this flavor decides for itself.
  */
 import { describe, expect, it, vi } from 'vite-plus/test';
 

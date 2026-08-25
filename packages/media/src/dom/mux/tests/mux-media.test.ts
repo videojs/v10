@@ -621,7 +621,7 @@ describe('MuxMedia', () => {
       return { media, video };
     }
 
-    /** jsdom has no `MediaEncryptedEvent`; only these two fields are read. */
+    /** Jsdom has no `MediaEncryptedEvent`; only these two fields are read. */
     function fireEncrypted(video: HTMLVideoElement) {
       video.dispatchEvent(Object.assign(new Event('encrypted'), { initDataType: 'skd', initData: new ArrayBuffer(8) }));
     }

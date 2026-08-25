@@ -8,9 +8,8 @@ export const auth = {
   /**
    * Initiates the OAuth 2.0 login flow
    *
-   * Generates a CSRF-protected state parameter and returns the authorization URL
-   * for the client to redirect to. The state is stored in a short-lived cookie
-   * and verified in the callback endpoint.
+   * Generates a CSRF-protected state parameter and returns the authorization URL for the client to redirect to. The
+   * state is stored in a short-lived cookie and verified in the callback endpoint.
    *
    * @returns {authorizationUrl} - The OAuth authorization URL to redirect to
    */

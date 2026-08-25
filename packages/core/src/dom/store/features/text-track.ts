@@ -22,8 +22,8 @@ function getTrackId(track: TextTrackLike, index: number): string {
 }
 
 /**
- * Caption/subtitle tracks paired with the ids exposed through `textTrackList`,
- * ordered like the captions menu so index-based fallbacks agree with the UI.
+ * Caption/subtitle tracks paired with the ids exposed through `textTrackList`, ordered like the captions menu so
+ * index-based fallbacks agree with the UI.
  */
 function getSubtitlesTracks(media: MediaTextTrackCapability): IdentifiedTrack[] {
   return Array.from(media.textTracks)
@@ -42,9 +42,8 @@ function showOnly(tracks: IdentifiedTrack[], active: TextTrackLike | null): void
 }
 
 /**
- * Map a media element's `crossOrigin` to a CORS mode. Per the CORS-settings
- * attribute, any value other than `use-credentials` is Anonymous — including
- * the empty string and unknown keywords.
+ * Map a media element's `crossOrigin` to a CORS mode. Per the CORS-settings attribute, any value other than
+ * `use-credentials` is Anonymous — including the empty string and unknown keywords.
  */
 function toCorsMode(value: string | null | undefined): MediaTextTrackState['thumbnailTrackCrossOrigin'] {
   if (isNil(value)) return null;

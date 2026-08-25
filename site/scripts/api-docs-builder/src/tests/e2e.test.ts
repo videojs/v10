@@ -1,41 +1,27 @@
 /**
- * ┌─────────────────────────────────────────────────────────────────────────────┐
- * │                    API DOCS BUILDER — END-TO-END SPEC                      │
- * │                                                                            │
- * │  This file IS the specification for the API docs builder pipeline.         │
- * │  It exercises every pattern the builder must handle, using a mock          │
- * │  monorepo under fixtures/monorepo/. If you're an agent trying to          │
- * │  understand how the builder works: read this file. The fixtures are        │
- * │  the inputs, the expected JSON objects are the outputs.                    │
- * │                                                                            │
- * │  The builder is a black box: given TypeScript source files following       │
- * │  specific conventions, it produces JSON reference objects. These tests     │
- * │  verify the contract between input conventions and output shape.           │
+ * ┌─────────────────────────────────────────────────────────────────────────────┐ │ API DOCS BUILDER — END-TO-END SPEC
+ * │ │ │ │ This file IS the specification for the API docs builder pipeline. │ │ It exercises every pattern the builder
+ * must handle, using a mock │ │ monorepo under fixtures/monorepo/. If you're an agent trying to │ │ understand how the
+ * builder works: read this file. The fixtures are │ │ the inputs, the expected JSON objects are the outputs. │ │ │ │
+ * The builder is a black box: given TypeScript source files following │ │ specific conventions, it produces JSON
+ * reference objects. These tests │ │ verify the contract between input conventions and output shape. │
  * └─────────────────────────────────────────────────────────────────────────────┘
  *
  * FIXTURE LAYOUT (under fixtures/monorepo/):
  *
- * Components (packages/core/src/core/ui/):
- *   toggle-button/  — Single-part component. Exercises: props, state, data-attrs,
- *                     CSS vars, defaultProps, HTML element, type abbreviation,
- *                     @ignore skipping, ref auto-skip, function-typed props.
- *   gauge/          — Multi-part component. Exercises: primary part detection via
- *                     Core instantiation, sub-parts with/without HTML elements,
- *                     React-only parts (no platforms.html), sub-part data-attr
- *                     inheritance (stateAttrMap heuristic), non-boolean type
- *                     inference (number, string literal union via type alias),
- *                     extra @parts-tagged data-attrs files attaching to the
- *                     listed parts (label-data.ts).
- *   slider/         — Base multi-part component. Exercises: base component whose
- *                     parts are re-exported by domain variants.
- *   volume-slider/  — Domain variant. Exercises: re-exported parts from slider,
- *                     origin-based element + data-attr resolution, re-exported
- *                     parts are never primary, always multi-part (no fallback).
+ * Components (packages/core/src/core/ui/): toggle-button/ — Single-part component. Exercises: props, state, data-attrs,
+ * CSS vars, defaultProps, HTML element, type abbreviation, @ignore skipping, ref auto-skip, function-typed props.
+ * gauge/ — Multi-part component. Exercises: primary part detection via Core instantiation, sub-parts with/without HTML
+ * elements, React-only parts (no platforms.html), sub-part data-attr inheritance (stateAttrMap heuristic), non-boolean
+ * type inference (number, string literal union via type alias), extra @parts-tagged data-attrs files attaching to the
+ * listed parts (label-data.ts). slider/ — Base multi-part component. Exercises: base component whose parts are
+ * re-exported by domain variants. volume-slider/ — Domain variant. Exercises: re-exported parts from slider,
+ * origin-based element + data-attr resolution, re-exported parts are never primary, always multi-part (no fallback).
  *
- * Utils (already existing fixtures for hooks, controllers, selectors, etc.):
- *   Exercises: hook discovery, controller discovery, @public context,
- *   create* factory, mixin display name stripping, selector discovery,
- *   @label overloads, slug collision (react vs html create-player),
+ * Utils (already existing fixtures for hooks, controllers, selectors, etc.): Exercises: hook discovery, controller
+ * discovery, @public context, create* factory, mixin display name stripping, selector discovery,
+ *
+ * @label overloads, slug collision (react vs html create-player),
  *   framework assignment.
  *   ui/rate-options/ — Hook re-exported through a directory index
  *   (entry index → ./ui/rate-options → ./use-rate-options), with a
@@ -55,13 +41,13 @@
  *                  naming the published interface when state() annotates
  *                  private source state, and `config` inputs typed from the
  *                  symbol-keyed private actions they forward to.
- *   presets.ts   — Feature bundles. Exercises: plural *Features naming
+ *   presets.ts   — Feature bundles. Exercises: plural _Features naming
  *                  (filtered out of feature discovery), array resolution
  *                  for preset feature lists.
  *   feature.parts.ts — Short aliases (playbackFeature as playback, etc.).
  *                  Exercises: namespace re-export filtering (export * as features).
  *   index.ts     — Re-export barrel. Exercises: feature discovery filtering
- *                  (singular *Feature only, not *Features or namespaces).
+ *                  (singular _Feature only, not *Features or namespaces).
  *
  * Presets:
  *   HTML (packages/html/src/presets/):
@@ -69,13 +55,13 @@
  *                  (SkinElement inheritance), tailwind skin exclusion.
  *     audio.ts   — Exercises: single skin, subset of features.
  *   React (packages/react/src/presets/):
- *     video/     — Exercises: feature bundle, React skins (*Skin naming),
+ *     video/     — Exercises: feature bundle, React skins (_Skin naming),
  *                  media element export, tailwind skin exclusion.
  *     audio/     — Exercises: single skin, different media element.
  *
  * Media elements (packages/html/src/define/media/ + packages/media/src/dom/):
  *   simple-video  — Simple media element. Exercises: discovery via static
- *                   tagName in define/media/*.ts, minimal host (src rw,
+ *                   tagName in define/media/_.ts, minimal host (src rw,
  *                   engine readonly), shared attributes/events/CSS vars
  *                   from custom-media-element.
  *   complex-video — Complex media element. Exercises: host with JSDoc

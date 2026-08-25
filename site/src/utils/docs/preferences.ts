@@ -13,9 +13,7 @@ export const STYLE_STORAGE_KEY_PREFIX = 'vjs_docs_style_';
 const COOKIE_MAX_AGE = 31536000; // 1 year in seconds
 const COOKIE_OPTIONS = `max-age=${COOKIE_MAX_AGE}; path=/; samesite=lax`;
 
-/**
- * Server-side API: Works with Astro.cookies
- */
+/** Server-side API: Works with Astro.cookies */
 
 interface NoPreference {
   framework: null;
@@ -33,9 +31,7 @@ export function getPreferencesServer(cookies: AstroCookies): Preference {
   return { framework } as Preference;
 }
 
-/**
- * Client-side API: Works with document.cookie and localStorage
- */
+/** Client-side API: Works with document.cookie and localStorage */
 
 export function getFrameworkPreferenceClient(): SupportedFramework | null {
   if (typeof document === 'undefined') return null;
@@ -64,9 +60,7 @@ export function setFrameworkPreferenceClient(framework: SupportedFramework): voi
   document.cookie = `${FRAMEWORK_COOKIE}=${framework}; ${COOKIE_OPTIONS}`;
 }
 
-/**
- * Get style preference from localStorage for a specific framework
- */
+/** Get style preference from localStorage for a specific framework */
 export function getStylePreferenceClient<F extends SupportedFramework>(framework: F): SupportedStyle<F> | null {
   if (typeof localStorage === 'undefined') return null;
 
@@ -80,9 +74,7 @@ export function getStylePreferenceClient<F extends SupportedFramework>(framework
   return null;
 }
 
-/**
- * Set style preference in localStorage for a specific framework
- */
+/** Set style preference in localStorage for a specific framework */
 export function setStylePreferenceClient<F extends SupportedFramework>(framework: F, style: SupportedStyle<F>): void {
   if (typeof localStorage === 'undefined') return;
 
@@ -95,9 +87,7 @@ export function setStylePreferenceClient<F extends SupportedFramework>(framework
   localStorage.setItem(storageKey, style);
 }
 
-/**
- * Update the DOM data-style attribute to match the current style
- */
+/** Update the DOM data-style attribute to match the current style */
 export function updateStyleAttribute(style: AnySupportedStyle): void {
   if (typeof document === 'undefined') return;
 

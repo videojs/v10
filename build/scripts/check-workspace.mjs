@@ -1,20 +1,15 @@
 /**
  * Workspace consistency checker.
  *
- * Validates that manually-maintained lists across config files stay in sync
- * with the actual package structure. Run via `pnpm check:workspace`.
+ * Validates that manually-maintained lists across config files stay in sync with the actual package structure. Run via
+ * `pnpm check:workspace`.
  *
- * Checks:
- * 1. CI test coverage — every testable package is tested in CI
- * 2. Commitlint scopes — every package dir is a valid commit scope
- * 3. Root tsconfig references — every composite project is referenced
- * 4. Package metadata — non-private packages have required fields
- * 5. Release-please config — every versioned package is registered
- * 6. Bundled docs — package publishing wires include generated docs
- * 7. Define imports — no bare side-effect imports from relative paths
- * 8. i18n locales — tag lists match locale files and generated stubs
- * 9. Agent context — portable skill metadata, compatibility imports, and budgets
- * 10. Internal records — organized design docs, frontmatter, and lifecycle status
+ * Checks: 1. CI test coverage — every testable package is tested in CI 2. Commitlint scopes — every package dir is a
+ * valid commit scope 3. Root tsconfig references — every composite project is referenced 4. Package metadata —
+ * non-private packages have required fields 5. Release-please config — every versioned package is registered 6. Bundled
+ * docs — package publishing wires include generated docs 7. Define imports — no bare side-effect imports from relative
+ * paths 8. i18n locales — tag lists match locale files and generated stubs 9. Agent context — portable skill metadata,
+ * compatibility imports, and budgets 10. Internal records — organized design docs, frontmatter, and lifecycle status
  */
 import { existsSync, readdirSync, readFileSync, realpathSync } from 'node:fs';
 import { dirname, join, resolve, sep } from 'node:path';
@@ -86,10 +81,7 @@ function checkCiTestCoverage() {
 
 // ── Check 2: Commitlint scope-enum ──────────────────────────────────────────
 
-/**
- * Known aliases where the commit scope differs from the directory name.
- * Key: directory name, Value: expected scope.
- */
+/** Known aliases where the commit scope differs from the directory name. Key: directory name, Value: expected scope. */
 const SCOPE_ALIASES = new Map([['skins', 'skin']]);
 
 function checkCommitlintScopes() {
@@ -119,8 +111,8 @@ function checkCommitlintScopes() {
 // ── Check 3: Root tsconfig references ───────────────────────────────────────
 
 /**
- * Intentionally excluded from root references.
- * packages/icons: private, custom build script, uses outDir/rootDir instead of declarationDir.
+ * Intentionally excluded from root references. packages/icons: private, custom build script, uses outDir/rootDir
+ * instead of declarationDir.
  */
 const TSCONFIG_EXCLUDE = new Set(['packages/icons']);
 
@@ -182,10 +174,7 @@ const REQUIRED_FIELDS = ['sideEffects', 'files', 'exports'];
 /** Required only when the package has a root "." export. */
 const ROOT_EXPORT_FIELDS = ['main', 'module', 'types'];
 
-/**
- * Packages excluded from metadata checks.
- * CLI is bin-only — sideEffects/exports don't apply.
- */
+/** Packages excluded from metadata checks. CLI is bin-only — sideEffects/exports don't apply. */
 const METADATA_EXCLUDE = new Set(['cli']);
 
 function checkPackageMetadata() {
@@ -259,10 +248,9 @@ function checkReleasePleaseConfig() {
 // ── Check 6: Bundled docs publishing ─────────────────────────────────────────
 
 /**
- * `@videojs/html` and `@videojs/react` ship the per-framework markdown docs
- * subtree inside their tarballs (see `site/scripts/copy-package-docs.ts`).
- * Both wires (the `files[]` entry and the `prepack` script) must stay in sync
- * — without one, publishing silently drops the docs.
+ * `@videojs/html` and `@videojs/react` ship the per-framework markdown docs subtree inside their tarballs (see
+ * `site/scripts/copy-package-docs.ts`). Both wires (the `files[]` entry and the `prepack` script) must stay in sync —
+ * without one, publishing silently drops the docs.
  */
 function checkBundledDocs() {
   const warnings = [];
@@ -295,9 +283,8 @@ function checkBundledDocs() {
 // ── Check 7: Define imports ──────────────────────────────────────────────────
 
 /**
- * Bare side-effect imports from relative paths in the define directory cause
- * non-deterministic registration order when loaded as native ESM in the
- * browser. All registration must go through explicit safeDefine() calls.
+ * Bare side-effect imports from relative paths in the define directory cause non-deterministic registration order when
+ * loaded as native ESM in the browser. All registration must go through explicit safeDefine() calls.
  */
 function checkDefineImports() {
   const warnings = [];

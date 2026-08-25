@@ -16,9 +16,8 @@ function enablePictureInPicture() {
 }
 
 /**
- * A video element as a browser that supports picture-in-picture presents one.
- * happy-dom implements neither the method nor the property, so a bare element
- * reads as media that cannot enter picture-in-picture at all.
+ * A video element as a browser that supports picture-in-picture presents one. happy-dom implements neither the method
+ * nor the property, so a bare element reads as media that cannot enter picture-in-picture at all.
  */
 function createPipCapableVideo(): HTMLVideoElement {
   const video = createMockVideo();

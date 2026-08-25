@@ -14,7 +14,10 @@ export interface CaptionsButtonProps {
   label?: Text | string | ((state: CaptionsButtonState) => Text | string) | undefined;
   /** Whether the button is disabled. */
   disabled?: boolean | undefined;
-  /** When true with multiple tracks, pointer activation opens a menu instead of toggling. React sets this automatically inside `Menu.Trigger`. */
+  /**
+   * When true with multiple tracks, pointer activation opens a menu instead of toggling. React sets this automatically
+   * inside `Menu.Trigger`.
+   */
   menuTrigger?: boolean | undefined;
 }
 

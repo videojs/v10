@@ -11,17 +11,17 @@ export interface PlaybackRateButtonProps
  * A button that cycles through playback rates.
  *
  * @example
- * ```tsx
- * <PlaybackRateButton />
+ *   ```tsx
+ *   <PlaybackRateButton />
  *
- * <PlaybackRateButton
+ *   <PlaybackRateButton
  *   render={(props, state) => (
- *     <button {...props}>
- *       {state.rate}&times;
- *     </button>
+ *   <button {...props}>
+ *   {state.rate}&times;
+ *   </button>
  *   )}
- * />
- * ```
+ *   />
+ *   ```;
  */
 export const PlaybackRateButton = createMediaButton<PlaybackRateButtonCore, PlaybackRateButtonProps>({
   displayName: 'PlaybackRateButton',

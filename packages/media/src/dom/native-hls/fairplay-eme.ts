@@ -15,9 +15,8 @@ import {
 } from './fairplay';
 
 /**
- * FairPlay negotiates against the manifest rather than a codec, holds no
- * persistent state, and needs no device identifier — the narrowest
- * configuration Safari will grant.
+ * FairPlay negotiates against the manifest rather than a codec, holds no persistent state, and needs no device
+ * identifier — the narrowest configuration Safari will grant.
  */
 const FAIRPLAY_CONFIGURATION: MediaKeySystemConfiguration = {
   initDataTypes: [FAIRPLAY_INIT_DATA_TYPE],
@@ -29,8 +28,8 @@ const FAIRPLAY_CONFIGURATION: MediaKeySystemConfiguration = {
 
 export interface FairPlayEmeOptions {
   /**
-   * Called when the CDM refuses to create a session in the one situation the
-   * legacy WebKit API still serves: an AirPlay receiver on an affected OS.
+   * Called when the CDM refuses to create a session in the one situation the legacy WebKit API still serves: an AirPlay
+   * receiver on an affected OS.
    */
   onUnsupported?: (() => void) | undefined;
 }
@@ -38,11 +37,9 @@ export interface FairPlayEmeOptions {
 /**
  * Standard EME FairPlay, driven by the media element's `encrypted` event.
  *
- * Key exchange is the documented three-step dance: negotiate access to the key
- * system and give the CDM its application certificate, open a session and let
- * it generate an SPC, then trade that SPC for a CKC at the license server. Key
- * system access and the certificate are shared by every session on the source,
- * so they are resolved once and reused.
+ * Key exchange is the documented three-step dance: negotiate access to the key system and give the CDM its application
+ * certificate, open a session and let it generate an SPC, then trade that SPC for a CKC at the license server. Key
+ * system access and the certificate are shared by every session on the source, so they are resolved once and reused.
  */
 export function createFairPlayEme(context: FairPlayContext, options: FairPlayEmeOptions = {}): FairPlayKeySystem {
   const { media, signal, reportError } = context;

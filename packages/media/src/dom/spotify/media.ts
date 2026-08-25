@@ -23,7 +23,8 @@ import { buildSpotifyIframeSrc, parseSpotifySource, type SpotifySource } from '.
 const SpotifyMediaBase = MediaPlayedRangesMixin(EventTarget);
 
 /**
- * @fires sourcechange - Fired when `source` changes, either directly or by resolving a new `src`. Read `source` for the new value.
+ * @fires sourcechange - Fired when `source` changes, either directly or by resolving a new `src`. Read `source` for the
+ *   new value.
  */
 export class SpotifyMedia extends SpotifyMediaBase implements Partial<Video> {
   #target: HTMLIFrameElement | null = null;

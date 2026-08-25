@@ -98,17 +98,14 @@ function getAnchorCrossAxisShift(
 /**
  * Get positioning styles for the popup element.
  *
- * When the browser supports CSS Anchor Positioning, returns native CSS properties
- * that reference the provided CSS var names for side/align offsets — no JS offset
- * values needed.
+ * When the browser supports CSS Anchor Positioning, returns native CSS properties that reference the provided CSS var
+ * names for side/align offsets — no JS offset values needed.
  *
- * When rects are provided and anchor positioning is unsupported, falls back to
- * manual JS-computed positioning. The caller must resolve offset CSS vars via
- * `getComputedStyle` and pass them as `offsets`.
+ * When rects are provided and anchor positioning is unsupported, falls back to manual JS-computed positioning. The
+ * caller must resolve offset CSS vars via `getComputedStyle` and pass them as `offsets`.
  *
- * Returns camelCase keys for standard CSS properties and `--*` keys for
- * custom properties — compatible with both React's `style` prop and
- * `applyStyles()` from `@videojs/utils/dom`.
+ * Returns camelCase keys for standard CSS properties and `--*` keys for custom properties — compatible with both
+ * React's `style` prop and `applyStyles()` from `@videojs/utils/dom`.
  */
 export function getAnchorPositionStyle(
   anchorName: string,
@@ -246,8 +243,8 @@ function getAnchorPositionCSS(
 /**
  * Compute CSS variables for sizing constraints relative to the anchor/boundary.
  *
- * Accepts a `cssVars` map so the same logic works for both popover
- * (`--media-popover-*`) and tooltip (`--media-tooltip-*`) namespaces.
+ * Accepts a `cssVars` map so the same logic works for both popover (`--media-popover-*`) and tooltip
+ * (`--media-tooltip-*`) namespaces.
  */
 export function getPositioningCSSVars(
   triggerRect: DOMRect,
@@ -286,12 +283,10 @@ export function getPositioningCSSVars(
 /**
  * Compute manual positioning when CSS Anchor Positioning is not supported.
  *
- * Returns inline `top`/`left` styles in **viewport coordinates** for use
- * with `position: fixed` (the popup is in the top layer). All rects from
- * `getBoundingClientRect()` are already viewport-relative.
+ * Returns inline `top`/`left` styles in **viewport coordinates** for use with `position: fixed` (the popup is in the
+ * top layer). All rects from `getBoundingClientRect()` are already viewport-relative.
  *
- * Offsets are resolved by the caller from CSS custom properties via
- * `getComputedStyle()` and passed as `offsets`.
+ * Offsets are resolved by the caller from CSS custom properties via `getComputedStyle()` and passed as `offsets`.
  */
 export function getManualPositionStyle(
   triggerRect: DOMRect,
@@ -370,8 +365,8 @@ export function getManualPositionStyle(
 }
 
 /**
- * Read positioning offset CSS custom properties from the
- * popup element's computed style, returning numeric pixel values.
+ * Read positioning offset CSS custom properties from the popup element's computed style, returning numeric pixel
+ * values.
  */
 export function resolveOffsets(el: Element, cssVars: PositioningCSSVars = PopoverCSSVars): PositioningOffsets {
   const computed = getComputedStyle(el);
@@ -386,9 +381,8 @@ export function resolveOffsets(el: Element, cssVars: PositioningCSSVars = Popove
 /**
  * Measure the popup's layout box for positioning.
  *
- * `getBoundingClientRect()` includes active transforms, which causes the
- * fallback position to drift while opening/closing animations scale the popup.
- * Using layout dimensions preserves the untransformed size, while the
+ * `getBoundingClientRect()` includes active transforms, which causes the fallback position to drift while
+ * opening/closing animations scale the popup. Using layout dimensions preserves the untransformed size, while the
  * side-axis scroll dimension includes content clipped by size constraints.
  */
 export function getPopupPositionRect(el: HTMLElement, side: PopoverSide): DOMRect {

@@ -11,8 +11,8 @@ type PanelHandle = ElementHandle<HTMLElement>;
 /**
  * Resolve the on-screen menu panel once the submenu view transition settled.
  *
- * The transition briefly leaves two panels on screen and clips their overflow,
- * so the panel is pinned to a handle to keep every later read on one element.
+ * The transition briefly leaves two panels on screen and clips their overflow, so the panel is pinned to a handle to
+ * keep every later read on one element.
  */
 async function resolveActiveMenuPanel(page: Page, player: PlayerPage): Promise<PanelHandle> {
   await expect(page.locator(SELECTORS.activeMenuPanel)).toHaveCount(1);

@@ -1,14 +1,12 @@
 /**
  * Minimal ISO-BMFF (MP4/CMAF) box walker.
  *
- * Just enough to locate boxes by nested path — the framework needs a couple of
- * leaf fields (`mdhd` timescale, `tfdt` baseMediaDecodeTime) to derive a
- * segment's decode-time origin, not a full demuxer. DOM-free: operates on an
+ * Just enough to locate boxes by nested path — the framework needs a couple of leaf fields (`mdhd` timescale, `tfdt`
+ * baseMediaDecodeTime) to derive a segment's decode-time origin, not a full demuxer. DOM-free: operates on an
  * `ArrayBuffer` / `Uint8Array` via `DataView`.
  *
- * Box layout: `[u32 size][u32 type][payload]`. `size === 1` means a `u64
- * largesize` follows the type (payload after it); `size === 0` means the box
- * runs to the end of its container.
+ * Box layout: `[u32 size][u32 type][payload]`. `size === 1` means a `u64 largesize` follows the type (payload after
+ * it); `size === 0` means the box runs to the end of its container.
  */
 
 /** A located box: its 4-char type and byte offsets within the buffer. */
@@ -68,9 +66,8 @@ export function* iterateBoxesOfType(view: DataView, type: string, start = 0, end
 }
 
 /**
- * Depth-first descent to the first box matching a nested path, e.g.
- * `['moov', 'trak', 'mdia', 'mdhd']`. Returns `undefined` if any level is
- * absent.
+ * Depth-first descent to the first box matching a nested path, e.g. `['moov', 'trak', 'mdia', 'mdhd']`. Returns
+ * `undefined` if any level is absent.
  */
 export function findBox(view: DataView, path: readonly string[], start = 0, end = view.byteLength): Box | undefined {
   const [head, ...rest] = path;
@@ -89,8 +86,8 @@ export function findBox(view: DataView, path: readonly string[], start = 0, end 
 }
 
 /**
- * Read the version byte of a FullBox — the `version(1) + flags(3)` header at the
- * start of the payload of `mdhd` / `tkhd` / `tfdt` / `hdlr` / `elst` / etc.
+ * Read the version byte of a FullBox — the `version(1) + flags(3)` header at the start of the payload of `mdhd` /
+ * `tkhd` / `tfdt` / `hdlr` / `elst` / etc.
  */
 export function readFullBoxVersion(view: DataView, dataStart: number): number {
   return view.getUint8(dataStart);

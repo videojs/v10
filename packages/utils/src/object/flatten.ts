@@ -1,15 +1,15 @@
 /**
  * Flattens nested object values into dot-separated keys.
  *
+ * @example
+ *   ```ts
+ *   flatten({ buttons: { play: 'Play' } });
+ *   // { 'buttons.play': 'Play' }
+ *   ```;
+ *
  * @param object - The object to flatten.
  * @param options - Options controlling the flattened key path.
  * @returns A new object containing the flattened values.
- *
- * @example
- * ```ts
- * flatten({ buttons: { play: 'Play' } });
- * // { 'buttons.play': 'Play' }
- * ```
  */
 export interface FlattenOptions {
   prefix?: string;

@@ -9,8 +9,8 @@ import { UIElement } from '../ui-element';
 /**
  * Displays the resolved content title.
  *
- * The element owns its text content. Set the title through the player's
- * `content-title` attribute rather than by writing children.
+ * The element owns its text content. Set the title through the player's `content-title` attribute rather than by
+ * writing children.
  */
 export class TitleElement extends UIElement {
   static readonly tagName = 'media-title';

@@ -1,17 +1,14 @@
 /**
- * Accessible tabs component implementing the WAI-ARIA Tabs pattern.
- * Reference: https://www.w3.org/WAI/ARIA/apg/patterns/tabs/
+ * Accessible tabs component implementing the WAI-ARIA Tabs pattern. Reference:
+ * https://www.w3.org/WAI/ARIA/apg/patterns/tabs/
  *
- * Built without context, using some unusual patterns,
- * to work around some restrictions with Astro islands:
- * namely, that separate islands can't share context, and that,
- * depending on rendering context, Astro may render the component tree
+ * Built without context, using some unusual patterns, to work around some restrictions with Astro islands: namely, that
+ * separate islands can't share context, and that, depending on rendering context, Astro may render the component tree
  * bottom-up or top-down
  *
- * IMPORTANT: Use `client:idle` instead of `client:visible` when hydrating
- * these components. TabsPanel elements start with `hidden` attribute,
- * which prevents them from triggering Intersection Observer visibility,
- * causing `client:visible` to never hydrate non-initial panels.
+ * IMPORTANT: Use `client:idle` instead of `client:visible` when hydrating these components. TabsPanel elements start
+ * with `hidden` attribute, which prevents them from triggering Intersection Observer visibility, causing
+ * `client:visible` to never hydrate non-initial panels.
  */
 
 import clsx from 'clsx';
@@ -38,17 +35,15 @@ export function TabsRoot({ children, maxWidth = true, className, id: propId, var
   const isHydrated = useIsHydrated();
 
   /**
-   * When this component initializes,
-   * it generates an ID for itself, and then
-   * uses that ID to
-   * - set [role="tab"] ID
-   * - set [role="tab"][aria-controls]
-   * - set [role="tabpanel"] ID
-   * - set [role="tabpanel"][aria-labelledby]
+   * When this component initializes, it generates an ID for itself, and then uses that ID to
    *
-   * This allows tabs and tabpanels to be associated
-   * without relying on context or parent-child relationships,
-   * as well as complying with WAI-ARIA authoring practices.
+   * - Set [role="tab"] ID
+   * - Set [role="tab"][aria-controls]
+   * - Set [role="tabpanel"] ID
+   * - Set [role="tabpanel"][aria-labelledby]
+   *
+   * This allows tabs and tabpanels to be associated without relying on context or parent-child relationships, as well
+   * as complying with WAI-ARIA authoring practices.
    */
   useEffect(() => {
     // I know this isHydrated check looks weird,

@@ -10,10 +10,7 @@ import type {
 } from '../types';
 import { isResolvedTrack } from '../types';
 
-/**
- * State shape for track selection.
- * Minimal shape containing presentation and selected track IDs.
- */
+/** State shape for track selection. Minimal shape containing presentation and selected track IDs. */
 export interface TrackSelectionState {
   presentation?: MaybeResolvedPresentation;
   selectedVideoTrackId?: string | undefined;
@@ -21,9 +18,7 @@ export interface TrackSelectionState {
   selectedTextTrackId?: string | undefined;
 }
 
-/**
- * Map track type to selected track ID property key in state.
- */
+/** Map track type to selected track ID property key in state. */
 export const SelectedTrackIdKeyByType = {
   video: 'selectedVideoTrackId',
   audio: 'selectedAudioTrackId',
@@ -31,15 +26,14 @@ export const SelectedTrackIdKeyByType = {
 } as const;
 
 /**
- * Get selected track from state by type.
- * Returns properly typed track (partially or fully resolved) or undefined.
- * Type parameter T is inferred from the type argument.
+ * Get selected track from state by type. Returns properly typed track (partially or fully resolved) or undefined. Type
+ * parameter T is inferred from the type argument.
  *
  * @example
- * const videoTrack = getSelectedTrack(state, 'video');
- * if (videoTrack && isResolvedTrack(videoTrack)) {
- *   // videoTrack is VideoTrack
- * }
+ *   const videoTrack = getSelectedTrack(state, 'video');
+ *   if (videoTrack && isResolvedTrack(videoTrack)) {
+ *     // videoTrack is VideoTrack
+ *   }
  */
 export function getSelectedTrack<T extends TrackType>(
   state: TrackSelectionState,
@@ -65,10 +59,9 @@ export function getSelectedTrack<T extends TrackType>(
 }
 
 /**
- * Returns the duration of the first resolved selected track, preferring
- * video over audio. A track is "resolved" once its media playlist has been
- * parsed (per {@link isResolvedTrack}). Returns `undefined` if neither
- * selected track is resolved.
+ * Returns the duration of the first resolved selected track, preferring video over audio. A track is "resolved" once
+ * its media playlist has been parsed (per {@link isResolvedTrack}). Returns `undefined` if neither selected track is
+ * resolved.
  */
 export function getResolvedSelectedTrackDuration(state: TrackSelectionState): number | undefined {
   if (state.selectedVideoTrackId) {

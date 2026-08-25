@@ -100,9 +100,8 @@ function createEmptySrcIframe(): HTMLIFrameElement {
 }
 
 /**
- * An iframe as a server-rendered page delivers it: the embed URL is already in
- * the markup and the frame has navigated to it, so a same-origin read of its
- * location throws the way a real cross-origin embed does.
+ * An iframe as a server-rendered page delivers it: the embed URL is already in the markup and the frame has navigated
+ * to it, so a same-origin read of its location throws the way a real cross-origin embed does.
  */
 function createServerRenderedIframe(src: string): HTMLIFrameElement {
   const iframe = document.createElement('iframe');

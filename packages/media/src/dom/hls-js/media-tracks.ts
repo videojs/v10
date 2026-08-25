@@ -40,13 +40,11 @@ function getAudioTrackKind(audioTrack: HlsJsMediaAudioTrack): string {
 }
 
 /**
- * Mirrors hls.js manifest levels and alternate audio into the media element's
- * `videoRenditions` / `audioTracks` lists, and wires user selection back to
- * `engine.nextLevel` and `engine.audioTrack`.
+ * Mirrors hls.js manifest levels and alternate audio into the media element's `videoRenditions` / `audioTracks` lists,
+ * and wires user selection back to `engine.nextLevel` and `engine.audioTrack`.
  *
- * Requires the media-tracks mixin (track-list infrastructure) to be applied
- * earlier in the chain so the host exposes `addVideoTrack`, `videoRenditions`,
- * and friends.
+ * Requires the media-tracks mixin (track-list infrastructure) to be applied earlier in the chain so the host exposes
+ * `addVideoTrack`, `videoRenditions`, and friends.
  */
 export function HlsJsMediaMediaTracksMixin<Base extends Constructor<MediaTracksHost>>(BaseClass: Base) {
   class HlsJsMediaMediaTracks extends (BaseClass as Constructor<MediaTracksHost>) {

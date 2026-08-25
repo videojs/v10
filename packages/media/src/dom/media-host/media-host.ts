@@ -120,9 +120,8 @@ export class HTMLMediaElementHost<Target extends HTMLMediaTargetLike, Events ext
   };
 
   /**
-   * Current stream type (`'on-demand'`, `'live'`, or `'unknown'`). Defaults to
-   * `'unknown'`; detecting hosts update it automatically, and consumers can set
-   * it to override detection.
+   * Current stream type (`'on-demand'`, `'live'`, or `'unknown'`). Defaults to `'unknown'`; detecting hosts update it
+   * automatically, and consumers can set it to override detection.
    */
   get streamType() {
     return getMediaProp(this, 'streamType') ?? this.#streamType;

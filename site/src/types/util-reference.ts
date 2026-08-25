@@ -1,8 +1,8 @@
 /**
  * Zod schemas for util API reference JSON files (hooks, controllers, mixins, etc.).
  *
- * ParamDef reuses PropDefSchema (identical shape) from component-reference.ts.
- * ReturnFieldDef reuses StateDefSchema (identical shape).
+ * ParamDef reuses PropDefSchema (identical shape) from component-reference.ts. ReturnFieldDef reuses StateDefSchema
+ * (identical shape).
  */
 import { z } from 'astro/zod';
 

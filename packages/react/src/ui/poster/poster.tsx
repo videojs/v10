@@ -19,27 +19,25 @@ interface ImageRequest {
 /**
  * Displays the video poster image. Shows before playback starts, hides after.
  *
- * Renders an `<img>`, so `srcset`, `sizes`, `loading`, and the rest of the
- * image attributes are yours. Leave the source off and the player's resolved
- * `poster` fills it in.
+ * Renders an `<img>`, so `srcset`, `sizes`, `loading`, and the rest of the image attributes are yours. Leave the source
+ * off and the player's resolved `poster` fills it in.
  *
- * The image is decorative unless you say otherwise. Describe a poster that
- * carries meaning by passing your own `alt`.
+ * The image is decorative unless you say otherwise. Describe a poster that carries meaning by passing your own `alt`.
  *
  * @example
- * ```tsx
- * <VideoPlayer poster="poster.jpg">
+ *   ```tsx
+ *   <VideoPlayer poster="poster.jpg">
  *   <Poster />
- * </VideoPlayer>
+ *   </VideoPlayer>
  *
- * <Poster srcSet="poster-480.jpg 480w, poster-1080.jpg 1080w" sizes="100vw" />
+ *   <Poster srcSet="poster-480.jpg 480w, poster-1080.jpg 1080w" sizes="100vw" />
  *
- * <Poster
+ *   <Poster
  *   render={({ src, ...props }: ComponentProps<'img'>) =>
- *     src ? <Image {...props} src={src} alt="" fill /> : null
+ *   src ? <Image {...props} src={src} alt="" fill /> : null
  *   }
- * />
- * ```
+ *   />
+ *   ```;
  */
 export const Poster = forwardRef(function Poster(
   componentProps: PosterProps,

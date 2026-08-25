@@ -43,9 +43,8 @@ interface Harness {
 }
 
 /**
- * Mounts the poster the way a skin does: inside a shadow root that forwards its
- * own `<slot name="poster">` into the element, carrying a plain image as that
- * slot's fallback content.
+ * Mounts the poster the way a skin does: inside a shadow root that forwards its own `<slot name="poster">` into the
+ * element, carrying a plain image as that slot's fallback content.
  */
 async function mount(options: { authorMarkup?: string } = {}): Promise<Harness> {
   ensureDefined(TestProviderElement);

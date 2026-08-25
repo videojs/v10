@@ -4,25 +4,20 @@ import { TWITCH_PLAYER_ORIGIN } from './player-api';
 import { type TwitchMediaProps, twitchMediaDefaultProps } from './props';
 
 /**
- * Twitch engine options, spelled exactly as Twitch spells them
- * (https://dev.twitch.tv/docs/embed/video-and-clips/). They are serialized onto
- * the embed URL verbatim, so what you write here is what the player reads.
+ * Twitch engine options, spelled exactly as Twitch spells them (https://dev.twitch.tv/docs/embed/video-and-clips/).
+ * They are serialized onto the embed URL verbatim, so what you write here is what the player reads.
  *
- * Parameters the host owns are deliberately absent: `video` and `channel` come
- * from `src`, and `controls`, `autoplay` and `muted` come from the props of the
- * same name, so configuring them here would give two ways to say one thing. So
- * are the ones Twitch documents for something other than the player URL —
- * `allowfullscreen` is an iframe attribute set by inclusion, and `quality`
- * belongs to the scripted embed's `setQuality` — since naming them here would
- * promise an effect the URL cannot have. The index signature still carries
- * anything not listed, so undocumented knobs and whatever Twitch adds next keep
- * working.
+ * Parameters the host owns are deliberately absent: `video` and `channel` come from `src`, and `controls`, `autoplay`
+ * and `muted` come from the props of the same name, so configuring them here would give two ways to say one thing. So
+ * are the ones Twitch documents for something other than the player URL — `allowfullscreen` is an iframe attribute set
+ * by inclusion, and `quality` belongs to the scripted embed's `setQuality` — since naming them here would promise an
+ * effect the URL cannot have. The index signature still carries anything not listed, so undocumented knobs and whatever
+ * Twitch adds next keep working.
  */
 export interface TwitchEngineConfig extends Record<string, unknown> {
   /**
-   * Every hostname the embed may be framed by. Twitch checks the frame's
-   * ancestors against it and refuses to play when the current page is missing,
-   * which is why the page's own hostname is always included on top of this.
+   * Every hostname the embed may be framed by. Twitch checks the frame's ancestors against it and refuses to play when
+   * the current page is missing, which is why the page's own hostname is always included on top of this.
    */
   parent?: string | readonly string[];
   /** Collection to play through, starting from the video named by `src`. */
@@ -30,9 +25,8 @@ export interface TwitchEngineConfig extends Record<string, unknown> {
   /** Start position, spelled the way Twitch spells timestamps: `1h30m10s`. */
   time?: string;
   /**
-   * `referrerpolicy` for the embed iframe. Not a Twitch embed parameter, so it
-   * never reaches the URL: the React player applies it to the iframe it renders,
-   * and the HTML player reads its own `referrerpolicy` attribute instead.
+   * `referrerpolicy` for the embed iframe. Not a Twitch embed parameter, so it never reaches the URL: the React player
+   * applies it to the iframe it renders, and the HTML player reads its own `referrerpolicy` attribute instead.
    */
   referrerPolicy?: ReferrerPolicy;
 }
@@ -67,9 +61,8 @@ export function parseTwitchVideoId(src: string) {
 }
 
 /**
- * Parse a Twitch source string. Recognizes VOD URLs (`twitch.tv/videos/<id>`
- * and `twitch.tv/?video=<id>`) and channel URLs (`twitch.tv/<channel>`), with
- * or without the `www.` and `go.` hosts, and with or without a trailing slash.
+ * Parse a Twitch source string. Recognizes VOD URLs (`twitch.tv/videos/<id>` and `twitch.tv/?video=<id>`) and channel
+ * URLs (`twitch.tv/<channel>`), with or without the `www.` and `go.` hosts, and with or without a trailing slash.
  */
 export function parseTwitchSource(src: string): ParsedTwitchSource | null {
   if (!src) return null;

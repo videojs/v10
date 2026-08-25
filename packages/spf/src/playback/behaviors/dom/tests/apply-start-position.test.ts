@@ -11,9 +11,8 @@ function makeResolvedPresentation(url = 'https://example.com/a.m3u8'): Presentat
 }
 
 /**
- * A real `<video>` with controllable `currentTime` / `readyState` — no media
- * is loaded in tests, so both are stubbed the way `track-current-time.test.ts`
- * stubs `currentTime`.
+ * A real `<video>` with controllable `currentTime` / `readyState` — no media is loaded in tests, so both are stubbed
+ * the way `track-current-time.test.ts` stubs `currentTime`.
  */
 function makeVideo(opts: { readyState?: number } = {}): HTMLVideoElement {
   const video = document.createElement('video');

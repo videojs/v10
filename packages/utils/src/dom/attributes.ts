@@ -23,9 +23,7 @@ export function restoreAttributes(element: Element, snapshot: AttributeSnapshot)
   }
 }
 
-/**
- * Convert a NamedNodeMap to a plain object.
- */
+/** Convert a NamedNodeMap to a plain object. */
 export function namedNodeMapToObject(namedNodeMap: NamedNodeMap) {
   const obj: Record<string, string> = {};
 
@@ -36,9 +34,7 @@ export function namedNodeMapToObject(namedNodeMap: NamedNodeMap) {
   return obj;
 }
 
-/**
- * Helper function to serialize attributes into a string.
- */
+/** Helper function to serialize attributes into a string. */
 export function serializeAttributes(attrs: Record<string, string>) {
   let html = '';
 

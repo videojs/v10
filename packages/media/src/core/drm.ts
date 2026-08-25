@@ -1,6 +1,6 @@
 /**
- * EME key system identifiers. The value is what a CDM is asked for, and what
- * `source.drm` — and each engine's own DRM configuration — is keyed by.
+ * EME key system identifiers. The value is what a CDM is asked for, and what `source.drm` — and each engine's own DRM
+ * configuration — is keyed by.
  *
  * @see https://developer.mozilla.org/en-US/docs/Web/API/Navigator/requestMediaKeySystemAccess
  */
@@ -18,8 +18,8 @@ export interface DrmSystemConfig {
   /** License server the CDM's license request is POSTed to. */
   licenseUrl: string;
   /**
-   * URL of the DRM server (application) certificate. FairPlay needs one unless
-   * its CDM is pre-provisioned; Widevine and PlayReady ignore it.
+   * URL of the DRM server (application) certificate. FairPlay needs one unless its CDM is pre-provisioned; Widevine and
+   * PlayReady ignore it.
    */
   serverCertificateUrl?: string | undefined;
 }
@@ -27,9 +27,8 @@ export interface DrmSystemConfig {
 /**
  * License servers keyed by EME key system id — the shape of `source.drm`.
  *
- * Name every system you hold a license server for: which one is negotiated is
- * the browser's choice, and each playback path reads the systems it can reach.
- * hls.js's own `drmSystems` takes the same shape, so a single object describes
- * DRM for either engine.
+ * Name every system you hold a license server for: which one is negotiated is the browser's choice, and each playback
+ * path reads the systems it can reach. hls.js's own `drmSystems` takes the same shape, so a single object describes DRM
+ * for either engine.
  */
 export type DrmSystemsConfig = Partial<Record<KeySystem, DrmSystemConfig>>;

@@ -10,9 +10,8 @@ import {
 import { type SeekToLiveEdgeConfig, seekToLiveEdge } from '../seek-to-live-edge';
 
 /**
- * 5-segment, 2s window sliding at `[windowStart, windowStart + 10]`.
- * With the injected 6s live latency, the live-edge start is
- * `(windowStart + 10) − 6 = windowStart + 4` (104 for the default 100).
+ * 5-segment, 2s window sliding at `[windowStart, windowStart + 10]`. With the injected 6s live latency, the live-edge
+ * start is `(windowStart + 10) − 6 = windowStart + 4` (104 for the default 100).
  */
 function makePresentation(windowStart = 100, mediaSequence = 50): Presentation {
   const video: VideoTrack = {
@@ -51,9 +50,8 @@ type FakeMediaElement = HTMLMediaElement & {
 };
 
 /**
- * Event-capable fake: `seekToLiveEdge` attaches a `play` listener, so the
- * element must be a real `EventTarget`. Defaults to paused + `readyState`
- * HAVE_ENOUGH_DATA (the post-initial-seek resting state).
+ * Event-capable fake: `seekToLiveEdge` attaches a `play` listener, so the element must be a real `EventTarget`.
+ * Defaults to paused + `readyState` HAVE_ENOUGH_DATA (the post-initial-seek resting state).
  */
 function fakeMediaElement(
   init: Partial<Pick<FakeMediaElement, 'currentTime' | 'paused' | 'seeking' | 'readyState'>> = {}

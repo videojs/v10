@@ -9,10 +9,9 @@ interface PreferenceUpdaterProps {
 }
 
 /**
- * PreferenceUpdater component updates the preference nanostore based on URL params and localStorage.
- * This component is loaded with client:idle directive on docs pages, making it non-blocking.
- * It updates the framework store from URL params and style store from localStorage.
- * PreferenceSync handles persisting framework to cookies.
+ * PreferenceUpdater component updates the preference nanostore based on URL params and localStorage. This component is
+ * loaded with client:idle directive on docs pages, making it non-blocking. It updates the framework store from URL
+ * params and style store from localStorage. PreferenceSync handles persisting framework to cookies.
  */
 export function PreferenceUpdater({ currentFramework }: PreferenceUpdaterProps) {
   useEffect(() => {

@@ -7,9 +7,8 @@ const NO_SUPPORTED_VIDEO_TRACK = 2011;
 const MANIFEST_FEATURE_UNSUPPORTED = 2039;
 
 /**
- * The component owns its Media and hands out no reference to it, so the engine
- * is reached by tracking what it constructs. Everything else about the entry is
- * the real thing.
+ * The component owns its Media and hands out no reference to it, so the engine is reached by tracking what it
+ * constructs. Everything else about the entry is the real thing.
  */
 const instances: { engine: { state: { errors: { set(value: unknown): void } } } }[] = vi.hoisted(() => []);
 

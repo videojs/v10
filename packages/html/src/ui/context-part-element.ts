@@ -11,8 +11,8 @@ export interface PartContextValue<State extends object> {
 }
 
 /**
- * Abstract base for compound-component part elements that consume a parent
- * context and apply data attributes from `ctx.state` + `ctx.stateAttrMap`.
+ * Abstract base for compound-component part elements that consume a parent context and apply data attributes from
+ * `ctx.state` + `ctx.stateAttrMap`.
  *
  * Subclasses only need to declare the `consumer` property:
  *

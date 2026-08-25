@@ -1,17 +1,21 @@
 /**
  * Centralized feature API reference subsection definitions.
  *
- * Mirrors componentReferenceModel.js for feature APIs. Produces heading/id data
- * consumed by both FeatureReference.astro and satteriConditionalHeadings.
+ * Mirrors componentReferenceModel.js for feature APIs. Produces heading/id data consumed by both FeatureReference.astro
+ * and satteriConditionalHeadings.
  *
  * Structure:
- *   ## API Reference (H2)
- *   ### Configuration (H3) — if feature declares provider inputs
- *   ### State (H3) — if feature has state properties
- *   ### Actions (H3) — if feature has action methods
  *
- * Configuration leads, mirroring props-before-state in componentReferenceModel:
- * inputs first, then what the store publishes back.
+ * ## API Reference (H2)
+ *
+ * ### Configuration (H3) — if feature declares provider inputs
+ *
+ * ### State (H3) — if feature has state properties
+ *
+ * ### Actions (H3) — if feature has action methods
+ *
+ * Configuration leads, mirroring props-before-state in componentReferenceModel: inputs first, then what the store
+ * publishes back.
  */
 
 function hasEntries(value) {

@@ -1,8 +1,7 @@
 /**
- * Hand-built ISO-BMFF boxes for unit tests — precise control over
- * version/field layout and multi-track muxing without committing binary
- * segment fixtures. Real-stream validation of the parsers lives in the
- * non-zero-PTS spike probes, not here.
+ * Hand-built ISO-BMFF boxes for unit tests — precise control over version/field layout and multi-track muxing without
+ * committing binary segment fixtures. Real-stream validation of the parsers lives in the non-zero-PTS spike probes, not
+ * here.
  */
 
 export function concat(...parts: Uint8Array[]): Uint8Array {

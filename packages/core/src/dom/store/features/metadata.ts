@@ -25,9 +25,8 @@ interface MetadataSourceState extends Omit<MediaMetadataState, 'title' | 'poster
 }
 
 /**
- * Resolves content metadata into player state, preferring what the author set
- * over what the media carries. Included in the standard audio, video, and live
- * presets.
+ * Resolves content metadata into player state, preferring what the author set over what the media carries. Included in
+ * the standard audio, video, and live presets.
  */
 export const metadataFeature = definePlayerFeature({
   name: 'metadata',
@@ -58,8 +57,8 @@ export const metadataFeature = definePlayerFeature({
     /** The resolved content title. Set it through the player, not through the store. */
     title: ({ get }) => get()[USER_TITLE] ?? get()[MEDIA_TITLE] ?? DEFAULT_TITLE,
     /**
-     * The resolved poster URL, independent of the media element's own `poster`.
-     * Set it through the player, not through the store.
+     * The resolved poster URL, independent of the media element's own `poster`. Set it through the player, not through
+     * the store.
      */
     poster: ({ get }) => get()[USER_POSTER] ?? get()[MEDIA_POSTER] ?? DEFAULT_POSTER,
   },

@@ -6,11 +6,9 @@ import { PlayerPage } from '../../page-objects/player';
 /**
  * Visual snapshot tests for the video skin.
  *
- * These verify the skin's CSS and layout aren't broken — not UX interactions.
- * Strategy:
- * - Screenshot the skin container in its initial paused state
- * - Generous pixel thresholds absorb cross-platform rendering differences
- * - Animations disabled globally (configured in playwright.config.ts)
+ * These verify the skin's CSS and layout aren't broken — not UX interactions. Strategy: - Screenshot the skin container
+ * in its initial paused state - Generous pixel thresholds absorb cross-platform rendering differences - Animations
+ * disabled globally (configured in playwright.config.ts)
  */
 
 const VISUAL_PAGES = [

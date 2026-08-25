@@ -1,6 +1,4 @@
-/**
- * Zod schemas for preset API reference JSON files.
- */
+/** Zod schemas for preset API reference JSON files. */
 import { z } from 'astro/zod';
 
 export const PresetSkinDefSchema = z.object({

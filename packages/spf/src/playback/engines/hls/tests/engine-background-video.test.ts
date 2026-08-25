@@ -1,11 +1,10 @@
 /**
- * createBackgroundVideoEngine tests.
+ * CreateBackgroundVideoEngine tests.
  *
- * The variant subtracts audio, text, ABR, and preload-monitoring behaviors
- * from the HLS video engine, then seeds `loadActivated: true` so the
- * composition behaves as if preload has already been activated. These tests
- * confirm the seed, the absence of subtracted state slots, and the selection
- * rule chain — its screen-size cap and its configurability.
+ * The variant subtracts audio, text, ABR, and preload-monitoring behaviors from the HLS video engine, then seeds
+ * `loadActivated: true` so the composition behaves as if preload has already been activated. These tests confirm the
+ * seed, the absence of subtracted state slots, and the selection rule chain — its screen-size cap and its
+ * configurability.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 

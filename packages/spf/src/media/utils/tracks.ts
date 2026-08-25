@@ -13,14 +13,12 @@ import { isResolvedTrack } from '../types';
 /**
  * Get the tracks of the given type from a presentation's first switching set.
  *
- * Returns `[]` when the presentation is unresolved, when no selection set of
- * `type` exists, or when its first switching set is empty. Returned tracks may
- * be partially resolved (URL only) or fully resolved (with segments) — callers
- * narrow as needed.
+ * Returns `[]` when the presentation is unresolved, when no selection set of `type` exists, or when its first switching
+ * set is empty. Returned tracks may be partially resolved (URL only) or fully resolved (with segments) — callers narrow
+ * as needed.
  *
- * The "first switching set" assumption matches the rest of the codebase
- * (HLS typically has one switching set per type); multi-group / multi-period
- * support would generalize this.
+ * The "first switching set" assumption matches the rest of the codebase (HLS typically has one switching set per type);
+ * multi-group / multi-period support would generalize this.
  */
 export function getTracksByType(
   presentation: MaybeResolvedPresentation,
@@ -32,10 +30,9 @@ export function getTracksByType(
 /**
  * Find a track of the given type and id within a presentation.
  *
- * Returns the matching track from the first switching set of the matching
- * selection set, or `undefined` if either is missing. The returned track may
- * be partially resolved (URL only) or fully resolved (with segments) — callers
- * narrow as needed.
+ * Returns the matching track from the first switching set of the matching selection set, or `undefined` if either is
+ * missing. The returned track may be partially resolved (URL only) or fully resolved (with segments) — callers narrow
+ * as needed.
  */
 export function findTrack(
   presentation: MaybeResolvedPresentation,
@@ -46,13 +43,11 @@ export function findTrack(
 }
 
 /**
- * Find a track by id across all selection sets in a presentation, without
- * knowing its type up front. Used when the caller has a track id obtained
- * from a downstream consumer (e.g. `SourceBufferActor.initTrackId`) and
- * needs to locate the corresponding track in the presentation.
+ * Find a track by id across all selection sets in a presentation, without knowing its type up front. Used when the
+ * caller has a track id obtained from a downstream consumer (e.g. `SourceBufferActor.initTrackId`) and needs to locate
+ * the corresponding track in the presentation.
  *
- * Track ids are unique within a presentation per the HLS spec; the first
- * match wins.
+ * Track ids are unique within a presentation per the HLS spec; the first match wins.
  */
 export function findTrackById(
   presentation: MaybeResolvedPresentation,
@@ -68,13 +63,12 @@ export function findTrackById(
 }
 
 /**
- * Find a text track of the given id within a presentation and narrow it to
- * the fully-resolved `TextTrack` shape (segments populated). Returns
- * `undefined` if no track matches the id, the matching track isn't a text
- * track, or it hasn't been resolved yet.
+ * Find a text track of the given id within a presentation and narrow it to the fully-resolved `TextTrack` shape
+ * (segments populated). Returns `undefined` if no track matches the id, the matching track isn't a text track, or it
+ * hasn't been resolved yet.
  *
- * The segments-non-empty check stays at the call site — a resolved track
- * with zero segments is a valid state, distinct from "ready to load."
+ * The segments-non-empty check stays at the call site — a resolved track with zero segments is a valid state, distinct
+ * from "ready to load."
  */
 export function findResolvedTextTrack(
   presentation: MaybeResolvedPresentation | undefined,
@@ -118,36 +112,31 @@ export function findResolvedAudioTrack(
 }
 
 /**
- * Whether a track carries a non-empty `codecs` array. Both partially-
- * resolved and fully-resolved tracks may carry codecs — they come from
- * the multivariant playlist's `EXT-X-STREAM-INF` line, not from the
- * per-type media playlist — so this works at either resolution stage.
+ * Whether a track carries a non-empty `codecs` array. Both partially- resolved and fully-resolved tracks may carry
+ * codecs — they come from the multivariant playlist's `EXT-X-STREAM-INF` line, not from the per-type media playlist —
+ * so this works at either resolution stage.
  *
- * `TextTrack` doesn't declare a `codecs` field; the `'codecs' in track`
- * check narrows it out for the false branch.
+ * `TextTrack` doesn't declare a `codecs` field; the `'codecs' in track` check narrows it out for the false branch.
  */
 export function hasCodecs(track: PartiallyResolvedTrack | ResolvedTrack | undefined): boolean {
   return !!track && 'codecs' in track && !!track.codecs?.length;
 }
 
 /**
- * The family (RFC 6381 4CC) of one codec string: `'avc1.640028'` → `'avc1'`,
- * `'mp4a.40.2'` → `'mp4a'`, dotless strings (`'ec-3'`) pass through whole.
- * Lowercased so families compare regardless of manifest casing.
+ * The family (RFC 6381 4CC) of one codec string: `'avc1.640028'` → `'avc1'`, `'mp4a.40.2'` → `'mp4a'`, dotless strings
+ * (`'ec-3'`) pass through whole. Lowercased so families compare regardless of manifest casing.
  *
- * The family is what a `SourceBuffer`'s bytestream is keyed on: renditions in
- * one family swap via a new init segment, while crossing families needs
- * `SourceBuffer.changeType()` (which SPF doesn't implement).
+ * The family is what a `SourceBuffer`'s bytestream is keyed on: renditions in one family swap via a new init segment,
+ * while crossing families needs `SourceBuffer.changeType()` (which SPF doesn't implement).
  */
 export function getCodecFamily(codec: string): string {
   return codec.trim().split('.', 1)[0]!.toLowerCase();
 }
 
 /**
- * The distinct codec families a track carries, or `undefined` when it carries
- * no codecs (unknowable, per `hasCodecs` — not "none"). A demuxed rendition
- * has one family; a muxed one (bipbop's `CODECS="hvc1…,mp4a…"`) has one per
- * elementary stream.
+ * The distinct codec families a track carries, or `undefined` when it carries no codecs (unknowable, per `hasCodecs` —
+ * not "none"). A demuxed rendition has one family; a muxed one (bipbop's `CODECS="hvc1…,mp4a…"`) has one per elementary
+ * stream.
  */
 export function getCodecFamilies(track: { codecs?: string[] }): readonly string[] | undefined {
   if (!track.codecs?.length) return undefined;
@@ -156,30 +145,24 @@ export function getCodecFamilies(track: { codecs?: string[] }): readonly string[
 }
 
 /**
- * Set `mimeType` on every track of one `type` (immutably). Used to propagate a
- * detected container across a type's renditions: an ABR ladder is the same
- * content at different bitrates, so one rendition's container holds for all of
- * them — capability probing + SourceBuffer setup then get the right MIME for the
- * whole type from a single resolved media playlist, without fetching the rest.
+ * Set `mimeType` on every track of one `type` (immutably). Used to propagate a detected container across a type's
+ * renditions: an ABR ladder is the same content at different bitrates, so one rendition's container holds for all of
+ * them — capability probing + SourceBuffer setup then get the right MIME for the whole type from a single resolved
+ * media playlist, without fetching the rest.
  *
- * Scoped to one type on purpose: propagating *across* audio/video would be wrong
- * for mixed-container sources (e.g. muxed-TS video + raw-`.aac` audio) and races
- * concurrent per-type resolution. Same-type writes are disjoint and safe.
+ * Scoped to one type on purpose: propagating _across_ audio/video would be wrong for mixed-container sources (e.g.
+ * muxed-TS video + raw-`.aac` audio) and races concurrent per-type resolution. Same-type writes are disjoint and safe.
  * Idempotent — tracks already at `mimeType` are left as-is.
  *
- * **Assumes one container per type, which the HLS specs don't guarantee.** Apple's
- * HLS Authoring Specification not only permits a mixed ladder, it produces one:
- * §1.5 requires HEVC in fMP4, while §9.22 says a 192 kbit/s H.264 variant
- * *packaged in a transport stream* SHOULD be provided for cellular — so a
- * conformant HEVC ladder with that fallback is necessarily mixed. RFC 8216 is
- * silent too (§6.2.4 constrains variant *content*, not container).
+ * **Assumes one container per type, which the HLS specs don't guarantee.** Apple's HLS Authoring Specification not only
+ * permits a mixed ladder, it produces one: §1.5 requires HEVC in fMP4, while §9.22 says a 192 kbit/s H.264 variant
+ * _packaged in a transport stream_ SHOULD be provided for cellular — so a conformant HEVC ladder with that fallback is
+ * necessarily mixed. RFC 8216 is silent too (§6.2.4 constrains variant _content_, not container).
  *
- * Where that happens, resolving the TS variant first relabels the whole type,
- * capability probing prunes all of it, and a source whose fMP4 variants were fine
- * reports as unplayable. Accepted because the current target is CMAF-compliant
- * single-container delivery (plus Apple's official fMP4 example); revisit by
- * narrowing the relabel to the resolved track, or gating propagation on config,
- * if mixed ladders come into scope.
+ * Where that happens, resolving the TS variant first relabels the whole type, capability probing prunes all of it, and
+ * a source whose fMP4 variants were fine reports as unplayable. Accepted because the current target is CMAF-compliant
+ * single-container delivery (plus Apple's official fMP4 example); revisit by narrowing the relabel to the resolved
+ * track, or gating propagation on config, if mixed ladders come into scope.
  */
 export function applyContainerMimeType(presentation: Presentation, type: TrackType, mimeType: string): Presentation {
   return {
@@ -200,10 +183,7 @@ export function applyContainerMimeType(presentation: Presentation, type: TrackTy
   } as Presentation;
 }
 
-/**
- * Updates a track within a presentation (immutably). Generic — works for
- * video, audio, or text tracks.
- */
+/** Updates a track within a presentation (immutably). Generic — works for video, audio, or text tracks. */
 export function updateTrackInPresentation<T extends ResolvedTrack>(
   presentation: Presentation,
   resolvedTrack: T

@@ -1,23 +1,27 @@
 /**
  * Preset reference extraction.
  *
- * Discovers presets from package.json exports in packages/{html,react}/ and
- * extracts feature bundles, skins, and media elements.
+ * Discovers presets from package.json exports in packages/{html,react}/ and extracts feature bundles, skins, and media
+ * elements.
  *
  * Discovery:
- *   - Reads package.json exports to find preset names and their source paths
- *   - Barrel file (./X export) → feature bundle name + file-level description
- *   - Source directory (./X/* export) → skins + media elements via directory scan
+ *
+ * - Reads package.json exports to find preset names and their source paths
+ * - Barrel file (./X export) → feature bundle name + file-level description
+ * - Source directory (./X/* export) → skins + media elements via directory scan
  *
  * Classification (positive detection only):
- *   - HTML: classes with `static readonly tagName`
- *     - *Skin*Element → skin
- *     - *Player* → skip
- *     - remaining → media element
- *   - React: exported functions/classes/consts
- *     - *Skin → skin
- *     - remaining → media element
- *   - .tailwind in filename → excluded (both frameworks)
+ *
+ * - HTML: classes with `static readonly tagName`
+ *
+ *   - _Skin_Element → skin
+ *   - _Player_ → skip
+ *   - Remaining → media element
+ * - React: exported functions/classes/consts
+ *
+ *   - *Skin → skin
+ *   - Remaining → media element
+ * - .tailwind in filename → excluded (both frameworks)
  *
  * Feature resolution: packages/core/src/dom/store/features/presets.ts
  */
@@ -52,9 +56,8 @@ export interface PresetResult {
 // ─── Package.json Discovery ─────────────────────────────────────────
 
 /**
- * Resolve a dist output path back to its source path.
- * Handles both real packages (dist/dev/... → src/...) and test fixtures
- * (src/... → src/..., already source paths).
+ * Resolve a dist output path back to its source path. Handles both real packages (dist/dev/... → src/...) and test
+ * fixtures (src/... → src/..., already source paths).
  */
 function distToSrc(distPath: string): string {
   // Real packages: dist/(dev|default)/foo/bar.js → src/foo/bar.ts
@@ -67,8 +70,8 @@ function distToSrc(distPath: string): string {
 }
 
 /**
- * Extract the source file path from a package.json export value.
- * Handles both conditional exports ({ types, default }) and string exports.
+ * Extract the source file path from a package.json export value. Handles both conditional exports ({ types, default })
+ * and string exports.
  */
 function resolveExportPath(exportValue: unknown): string | undefined {
   if (typeof exportValue === 'string') return exportValue;
@@ -85,8 +88,8 @@ function resolveExportPath(exportValue: unknown): string | undefined {
 }
 
 /**
- * Discover presets from package.json exports for a single package.
- * Returns a map of preset name → { barrelPath, scanDir }.
+ * Discover presets from package.json exports for a single package. Returns a map of preset name → { barrelPath, scanDir
+ * }.
  */
 function discoverPresetsFromPackage(packageDir: string): Map<string, { barrelPath: string; scanDir: string }> {
   const pkgJsonPath = path.join(packageDir, 'package.json');
@@ -133,9 +136,7 @@ function discoverPresetsFromPackage(packageDir: string): Map<string, { barrelPat
   return result;
 }
 
-/**
- * Discover all presets from both HTML and React packages.
- */
+/** Discover all presets from both HTML and React packages. */
 function discoverPresets(monorepoRoot: string): PresetInfo[] {
   const htmlPkgDir = path.join(monorepoRoot, 'packages/html');
   const reactPkgDir = path.join(monorepoRoot, 'packages/react');
@@ -278,9 +279,8 @@ function extractValueExports(filePath: string): string[] {
 // ─── Barrel Parsing (feature bundle only) ───────────────────────────
 
 /**
- * Parse named value export names from a barrel file.
- * Only reads `export { X } from '...'` syntax — skips `export *` since
- * skins are discovered via directory scanning.
+ * Parse named value export names from a barrel file. Only reads `export { X } from '...'` syntax — skips `export *`
+ * since skins are discovered via directory scanning.
  */
 function parseBarrelExportNames(filePath: string): string[] {
   if (!fs.existsSync(filePath)) return [];
@@ -307,8 +307,8 @@ function findFeatureBundleExport(filePath: string): string | undefined {
 }
 
 /**
- * Find the media element from a React barrel's named exports.
- * The media element is a named re-export that isn't a feature bundle or skin.
+ * Find the media element from a React barrel's named exports. The media element is a named re-export that isn't a
+ * feature bundle or skin.
  */
 function findReactMediaElement(filePath: string): string | undefined {
   const names = parseBarrelExportNames(filePath);
@@ -329,8 +329,8 @@ function findReactMediaElement(filePath: string): string | undefined {
 // ─── Feature Bundle Resolution ──────────────────────────────────────
 
 /**
- * Feature names whose kebab-cased form doesn't match the docs page slug.
- * Example: `textTrack` → `feature-text-tracks.mdx`.
+ * Feature names whose kebab-cased form doesn't match the docs page slug. Example: `textTrack` →
+ * `feature-text-tracks.mdx`.
  */
 const FEATURE_SLUG_OVERRIDES: Record<string, string> = {
   textTrack: 'text-tracks',

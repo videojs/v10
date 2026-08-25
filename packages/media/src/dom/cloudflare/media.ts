@@ -17,7 +17,8 @@ import { type CloudflareStreamApi, type CloudflareStreamPlayerApi, loadCloudflar
 const CloudflareMediaBase = MediaPlayedRangesMixin(EventTarget);
 
 /**
- * @fires sourcechange - Fired when `source` changes, either directly or by resolving a new `src`. Read `source` for the new value.
+ * @fires sourcechange - Fired when `source` changes, either directly or by resolving a new `src`. Read `source` for the
+ *   new value.
  */
 export class CloudflareMedia extends CloudflareMediaBase implements Partial<Video> {
   #target: HTMLIFrameElement | null = null;

@@ -7,9 +7,8 @@ import { describe, expect, it, vi } from 'vite-plus/test';
 import { MuxVideo } from '../mux-video';
 
 /**
- * Render and capture the host instance the `source` prop was written to, so
- * assertions can read the derived `src` off the real media rather than spying on
- * whichever internal setter happens to write it.
+ * Render and capture the host instance the `source` prop was written to, so assertions can read the derived `src` off
+ * the real media rather than spying on whichever internal setter happens to write it.
  */
 function renderWithMedia(ui: ReactElement) {
   const source = vi.spyOn(MuxMedia.prototype, 'source', 'set');

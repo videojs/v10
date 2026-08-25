@@ -18,7 +18,10 @@ import { callKeyDownHandler, preventMenuKeyDefault } from './menu-keyboard';
 
 export interface MenuContentProps extends UIComponentProps<'div', MenuState> {}
 
-/** Container for menu items. Positioned relative to the trigger at root level; renders in-place as a submenu panel when nested. */
+/**
+ * Container for menu items. Positioned relative to the trigger at root level; renders in-place as a submenu panel when
+ * nested.
+ */
 export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function MenuContent(
   { render, className, style, onKeyDown, onBlur, ...elementProps },
   forwardedRef

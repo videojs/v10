@@ -4,15 +4,11 @@ import { DATA_ATTRS } from '../fixtures/selectors';
 import { PlayerPage } from '../page-objects/player';
 
 /**
- * Gesture tests — validates the media-gesture components respond to
- * pointer events on the player container (not individual buttons).
+ * Gesture tests — validates the media-gesture components respond to pointer events on the player container (not
+ * individual buttons).
  *
- * The player's gesture system:
- * - tap (mouse, center):  togglePaused
- * - tap (touch):          toggleControls
- * - doubletap (left):     seek backward 10s
- * - doubletap (center):   toggleFullscreen
- * - doubletap (right):    seek forward 10s
+ * The player's gesture system: - tap (mouse, center): togglePaused - tap (touch): toggleControls - doubletap (left):
+ * seek backward 10s - doubletap (center): toggleFullscreen - doubletap (right): seek forward 10s
  */
 
 // Helper to get center coordinates of an element

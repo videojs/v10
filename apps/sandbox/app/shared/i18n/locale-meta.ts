@@ -7,6 +7,7 @@ export type SandboxLocalePack = (typeof SANDBOX_LOCALE_PACKS)[number];
 
 /**
  * Chrome Translator API tags (desktop).
+ *
  * @see https://developer.chrome.com/docs/ai/translator-api#supported_languages
  */
 const CHROME_TRANSLATOR_LOCALE_TAGS = [
@@ -59,8 +60,8 @@ export type SandboxBrowserLocaleTag = Extract<
 >;
 
 /**
- * Locales with no Video.js pack — Chrome Translator only, excluding tags we already ship.
- * Derived from {@link CHROME_TRANSLATOR_LOCALE_TAGS} so unsupported tags never appear in the picker.
+ * Locales with no Video.js pack — Chrome Translator only, excluding tags we already ship. Derived from
+ * {@link CHROME_TRANSLATOR_LOCALE_TAGS} so unsupported tags never appear in the picker.
  */
 export const SANDBOX_BROWSER_LOCALE_TAGS: readonly SandboxBrowserLocaleTag[] = CHROME_TRANSLATOR_LOCALE_TAGS.filter(
   (tag): tag is SandboxBrowserLocaleTag => tag !== 'en' && !sandboxLocalePackSet.has(tag)

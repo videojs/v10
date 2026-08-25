@@ -1,13 +1,13 @@
 /**
  * Build the distribution archives attached to each `@videojs/html` GitHub release.
  *
- * Package managers outside npm — Composer for Drupal, and anything vendoring a versioned
- * tarball — need a downloadable, browser-ready copy of the player. This assembles one from the
- * production CDN bundles: entry points, the shared chunks they import, and nothing else.
+ * Package managers outside npm — Composer for Drupal, and anything vendoring a versioned tarball — need a downloadable,
+ * browser-ready copy of the player. This assembles one from the production CDN bundles: entry points, the shared chunks
+ * they import, and nothing else.
  *
- * Everything is copied out of the existing `build:cdn` output rather than rebuilt, so the archive
- * ships the same bundles the CDN serves. Sourcemaps are left out to keep the download small, and
- * their now-dangling `sourceMappingURL` comments are stripped so browsers do not request them.
+ * Everything is copied out of the existing `build:cdn` output rather than rebuilt, so the archive ships the same
+ * bundles the CDN serves. Sourcemaps are left out to keep the download small, and their now-dangling `sourceMappingURL`
+ * comments are stripped so browsers do not request them.
  *
  * Prerequisites: `@videojs/html`'s `build:cdn`. Requires `zip` and `tar` on PATH.
  */

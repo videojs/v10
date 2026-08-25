@@ -12,16 +12,16 @@ export interface ComponentSchemaPluginOptions extends Omit<CreateSchemaModuleOpt
 }
 
 /**
- * Generate a build entry that exports schemas for matching components.
- * Use in package builds that publish a typed component schema.
+ * Generate a build entry that exports schemas for matching components. Use in package builds that publish a typed
+ * component schema.
  *
  * @example
- * ```ts
- * componentSchemaPlugin({
- *   source: '@videojs/core/vjsc',
- *   include: ['./src/components/*-component.ts'],
- * });
- * ```
+ *   ```ts
+ *   componentSchemaPlugin({
+ *     source: '@videojs/core/vjsc',
+ *     include: ['./src/components/*-component.ts'],
+ *   });
+ *   ```;
  *
  * @param config - Component discovery and output settings.
  */

@@ -19,19 +19,19 @@ export interface UseButtonReturnValue {
  * Hook for button behavior with keyboard and pointer interaction.
  *
  * @example
- * ```tsx
- * const { getButtonProps, buttonRef } = useButton({
- *   displayName: 'PlayButton',
- *   onActivate: () => togglePlayback(),
- *   isDisabled: () => disabled,
- * });
+ *   ```tsx
+ *   const { getButtonProps, buttonRef } = useButton({
+ *     displayName: 'PlayButton',
+ *     onActivate: () => togglePlayback(),
+ *     isDisabled: () => disabled,
+ *   });
  *
- * return useRender('button', componentProps, {
- *   state,
- *   ref: [forwardedRef, buttonRef],
- *   props: [elementProps, getButtonProps],
- * });
- * ```
+ *   return useRender('button', componentProps, {
+ *     state,
+ *     ref: [forwardedRef, buttonRef],
+ *     props: [elementProps, getButtonProps],
+ *   });
+ *   ```;
  *
  * @param params - Button configuration with activation handler and disabled check.
  */

@@ -69,8 +69,10 @@ export const vimeoMediaDefaultProps: VimeoMediaProps = {
 const VimeoMediaBase = MediaPlayedRangesMixin(EventTarget);
 
 /**
- * @fires sourcechange - Fired when `source` changes, either directly or by resolving a new `src`. Read `source` for the new value.
- * @fires contentdatachange - Fired when the embed reports a title and when that title is cleared. Read `contentData` for the new value.
+ * @fires sourcechange - Fired when `source` changes, either directly or by resolving a new `src`. Read `source` for the
+ *   new value.
+ * @fires contentdatachange - Fired when the embed reports a title and when that title is cleared. Read `contentData`
+ *   for the new value.
  */
 export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
   #target: HTMLIFrameElement | null = null;
@@ -397,23 +399,20 @@ export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
   }
 
   /**
-   * Metadata Vimeo reports about the loaded video, keyed by what it is — `title`
-   * for now. Unlike a Mux source, none of it can be derived from `src`; the embed
-   * has to report it, so the key is absent until then and empties again across a
-   * source change. `contentdatachange` announces both.
+   * Metadata Vimeo reports about the loaded video, keyed by what it is — `title` for now. Unlike a Mux source, none of
+   * it can be derived from `src`; the embed has to report it, so the key is absent until then and empties again across
+   * a source change. `contentdatachange` announces both.
    */
   get contentData(): MediaContentData {
     return this.#contentData;
   }
 
   /**
-   * Store the title the embed reported, reporting whether the content data
-   * changed. Announcing is left to the caller, which knows when the rest of what
-   * it is writing is in step.
+   * Store the title the embed reported, reporting whether the content data changed. Announcing is left to the caller,
+   * which knows when the rest of what it is writing is in step.
    *
-   * Vimeo cannot tell "no title yet" from "the title is blank" — a failed read
-   * falls back to the current value — and a blank would read as a deliberate one,
-   * stopping a consumer's fallback chain. So an empty title is reported as an
+   * Vimeo cannot tell "no title yet" from "the title is blank" — a failed read falls back to the current value — and a
+   * blank would read as a deliberate one, stopping a consumer's fallback chain. So an empty title is reported as an
    * absent key rather than an empty string.
    */
   #setTitle(value: string): boolean {

@@ -1,8 +1,8 @@
 import { selectedChanged } from './audio-rendition-list';
 
 /**
- * The consumer should use the `selected` setter to select one or multiple
- * renditions that the engine is allowed to play.
+ * The consumer should use the `selected` setter to select one or multiple renditions that the engine is allowed to
+ * play.
  */
 export class AudioRendition {
   src: string | undefined;

@@ -1,29 +1,24 @@
 /**
- * Non-zero-PTS relocation pipelines — the config-supplied, loader-facing half of the
- * `establishStartMediaTime` behavior (`../behaviors/establish-start-media-time`). The
- * reactor there owns the lifecycle and the `derive` coordination seam; this file supplies
- * the `messagePipelines` the segment/text loaders run to *fill and act on* that behavior's
- * state. It's the relocation analog of `track-switching`'s config-supplied constraint/rule
- * chain — a pluggable strategy handed to the machinery via config, not applied inline —
- * supplied to the loaders rather than applied by the behavior, so the two coordinate
- * through the shared `mediaContainerData` / `startMediaTime` slots alone, never by import.
+ * Non-zero-PTS relocation pipelines — the config-supplied, loader-facing half of the `establishStartMediaTime` behavior
+ * (`../behaviors/establish-start-media-time`). The reactor there owns the lifecycle and the `derive` coordination seam;
+ * this file supplies the `messagePipelines` the segment/text loaders run to _fill and act on_ that behavior's state.
+ * It's the relocation analog of `track-switching`'s config-supplied constraint/rule chain — a pluggable strategy handed
+ * to the machinery via config, not applied inline — supplied to the loaders rather than applied by the behavior, so the
+ * two coordinate through the shared `mediaContainerData` / `startMediaTime` slots alone, never by import.
  *
- * DOM-free: it composes the loader vocabularies (`segment-load-pipeline`,
- * `text-segment-load-pipeline`) through their structural sink seams and shifts cues via
- * the structural `Cue` type, so it names no `SourceBuffer`, `TextTracksActor`, or
- * `VTTCue`. The A/V pipeline is a plain `messagePipelines` array:
- *   - `discover` — init `track_id` + `mdhd` timescale for the buffered media track, then
- *     that same track's `tfdt` baseMediaDecodeTime, matched by `track_id` so a muxed
- *     segment reads the media track's origin, not the first `traf` — writes
- *     `state.mediaContainerData`.
- *   - `stamp` — reads that track's derived origin back and relocates via
- *     `timestampOffset = −startMediaTime`.
- * Steps read composition `state` from their call-time `deps` (no closures, no context).
+ * DOM-free: it composes the loader vocabularies (`segment-load-pipeline`, `text-segment-load-pipeline`) through their
+ * structural sink seams and shifts cues via the structural `Cue` type, so it names no `SourceBuffer`,
+ * `TextTracksActor`, or `VTTCue`. The A/V pipeline is a plain `messagePipelines` array:
  *
- * The text half (`relocatingTextPipelines`) is the same idea for the text-segment loader:
- * a `resolveWithMetadata → relocateCues → dispatchCues` pipeline that shifts cues onto the
- * same 0-based timeline, reading the primary A/V track's `startMediaTime` (the reactor's
- * consumed value) via `deps`.
+ * - `discover` — init `track_id` + `mdhd` timescale for the buffered media track, then that same track's `tfdt`
+ *   baseMediaDecodeTime, matched by `track_id` so a muxed segment reads the media track's origin, not the first `traf`
+ *   — writes `state.mediaContainerData`.
+ * - `stamp` — reads that track's derived origin back and relocates via `timestampOffset = −startMediaTime`. Steps read
+ *   composition `state` from their call-time `deps` (no closures, no context).
+ *
+ * The text half (`relocatingTextPipelines`) is the same idea for the text-segment loader: a `resolveWithMetadata →
+ * relocateCues → dispatchCues` pipeline that shifts cues onto the same 0-based timeline, reading the primary A/V
+ * track's `startMediaTime` (the reactor's consumed value) via `deps`.
  */
 import type { StateSignals } from '../../core/composition/create-composition';
 import { effect } from '../../core/signals/effect';
@@ -68,10 +63,9 @@ function writeContainer(slot: ContainerSlot, trackType: string, patch: Partial<M
 }
 
 /**
- * Resolve once `read()` returns a number. Shared by the A/V stamp (waits for the
- * `derive`d origin — immediate for per-type, the shared-`min` barrier for coordinated)
- * and the text step (waits for the primary A/V origin). No bound: for fMP4 the origin
- * always establishes.
+ * Resolve once `read()` returns a number. Shared by the A/V stamp (waits for the `derive`d origin — immediate for
+ * per-type, the shared-`min` barrier for coordinated) and the text step (waits for the primary A/V origin). No bound:
+ * for fMP4 the origin always establishes.
  */
 function awaitDefined(read: () => number | undefined): Promise<number> {
   return new Promise((resolve) => {
@@ -89,21 +83,19 @@ function awaitDefined(read: () => number | undefined): Promise<number> {
 }
 
 /**
- * Relocation pipelines for one track type — a plain config `messagePipelines`.
- * Keyed by **track type** (`'video'` / `'audio'`), so ABR rungs of a type share the
- * origin (discover skips once the type's value is present). The steps read/write
- * `state.mediaContainerData[trackType]` via their call-time `deps`; the stamp applies
- * the same `derive` seam the reactor uses (pass the composition's resolved
- * `deriveStartMediaTime` so the buffer offset and the model's `startMediaTime` agree).
+ * Relocation pipelines for one track type — a plain config `messagePipelines`. Keyed by **track type** (`'video'` /
+ * `'audio'`), so ABR rungs of a type share the origin (discover skips once the type's value is present). The steps
+ * read/write `state.mediaContainerData[trackType]` via their call-time `deps`; the stamp applies the same `derive` seam
+ * the reactor uses (pass the composition's resolved `deriveStartMediaTime` so the buffer offset and the model's
+ * `startMediaTime` agree).
  */
 export function relocationPipelinesFor(trackType: 'video' | 'audio', derive: DeriveStartMediaTime): MessagePipelines {
   const handlerType: MediaHandlerType = trackType === 'video' ? 'vide' : 'soun';
 
   /**
-   * Init step: head-peek the buffered media track's `track_id` + `mdhd` timescale into
-   * `mediaContainerData[trackType]`. Matching by handler (`vide`/`soun`) skips a muxed
-   * `clcp` caption track, and the `track_id` lets `readSegmentOrigin` read *this*
-   * track's `tfdt` rather than the first `traf` in the segment.
+   * Init step: head-peek the buffered media track's `track_id` + `mdhd` timescale into `mediaContainerData[trackType]`.
+   * Matching by handler (`vide`/`soun`) skips a muxed `clcp` caption track, and the `track_id` lets `readSegmentOrigin`
+   * read _this_ track's `tfdt` rather than the first `traf` in the segment.
    */
   const readInitTrackInfo: LoadStep = async (frame, _signal, deps) => {
     const { op } = frame;
@@ -125,12 +117,10 @@ export function relocationPipelinesFor(trackType: 'video' | 'audio', derive: Der
   };
 
   /**
-   * Media-segment step: head-peek the `tfdt` baseMediaDecodeTime of the media track's
-   * `traf` (matched by the `track_id` discovered from the init), recording the
-   * segment's 0-based `startTime` with it — the origin is `bmdt/ts − segmentStartTime`,
-   * so the first *loaded* segment need not be the 0th. Without a discovered `track_id`
-   * (non-fMP4 / mock init) there's no media track to relocate, so the step no-ops and
-   * the append stays native.
+   * Media-segment step: head-peek the `tfdt` baseMediaDecodeTime of the media track's `traf` (matched by the `track_id`
+   * discovered from the init), recording the segment's 0-based `startTime` with it — the origin is `bmdt/ts −
+   * segmentStartTime`, so the first _loaded_ segment need not be the 0th. Without a discovered `track_id` (non-fMP4 /
+   * mock init) there's no media track to relocate, so the step no-ops and the append stays native.
    */
   const readSegmentOrigin: LoadStep = async (frame, _signal, deps) => {
     const { op } = frame;
@@ -159,15 +149,13 @@ export function relocationPipelinesFor(trackType: 'video' | 'audio', derive: Der
   };
 
   /**
-   * Stamp step — tier-agnostic apply. Relocate by the `derive`d `startMediaTime` for
-   * this type (`offset = −startMediaTime`). Applies the **same** `derive` the reactor
-   * uses, over the shared `mediaContainerData` slot — so the buffer offset matches the
-   * model's stamped `startMediaTime`, and it's robust to `established` + late tracks
-   * (the slot persists; the model value may not be re-stamped after the reactor goes
-   * sticky). Awaited: per-type resolves at once (own origin discovered earlier in this
-   * pipeline); shared-`min` waits until every selected A/V origin is in — the barrier,
-   * filled by the other type's discover step. A derived `0` (0-PTS / below threshold)
-   * leaves the append native — setting `timestampOffset` at all can ripple.
+   * Stamp step — tier-agnostic apply. Relocate by the `derive`d `startMediaTime` for this type (`offset =
+   * −startMediaTime`). Applies the **same** `derive` the reactor uses, over the shared `mediaContainerData` slot — so
+   * the buffer offset matches the model's stamped `startMediaTime`, and it's robust to `established` + late tracks (the
+   * slot persists; the model value may not be re-stamped after the reactor goes sticky). Awaited: per-type resolves at
+   * once (own origin discovered earlier in this pipeline); shared-`min` waits until every selected A/V origin is in —
+   * the barrier, filled by the other type's discover step. A derived `0` (0-PTS / below threshold) leaves the append
+   * native — setting `timestampOffset` at all can ripple.
    */
   const stampStartMediaTime: LoadStep = async (frame, signal, deps) => {
     if (frame.op.type !== 'append-segment') return;
@@ -212,12 +200,10 @@ export function relocationPipelinesFor(trackType: 'video' | 'audio', derive: Der
 // ============================================================================
 
 /**
- * Resolve step for the relocation text pipeline. Reuses the injected host resolver
- * (the loader's folded `resolveSegment`, via `textStepWiring`) for cues and fetches
- * the `X-TIMESTAMP-MAP` header in parallel, stashing it on `frame.metadata` for
- * `relocateCuesStep`. Replaces the
- * base `resolveCuesStep` (which fetches cues only) — text's native `<track>` parser
- * discards the header, so the map needs its own raw-bytes fetch.
+ * Resolve step for the relocation text pipeline. Reuses the injected host resolver (the loader's folded
+ * `resolveSegment`, via `textStepWiring`) for cues and fetches the `X-TIMESTAMP-MAP` header in parallel, stashing it on
+ * `frame.metadata` for `relocateCuesStep`. Replaces the base `resolveCuesStep` (which fetches cues only) — text's
+ * native `<track>` parser discards the header, so the map needs its own raw-bytes fetch.
  */
 const resolveWithMetadataStep = async <C extends Cue>(
   frame: TextFrame<C>,
@@ -236,14 +222,12 @@ const resolveWithMetadataStep = async <C extends Cue>(
 };
 
 /**
- * Relocate step — shifts each cue onto the 0-based presentation timeline:
- * `cueFinal = cueNative − startMediaTime`, where `startMediaTime` is the primary
- * A/V track's origin (selected **video**, else **audio** — the single-anchor rule,
- * and defensive like the reactor's optional selection) and `cueNative` folds in the
- * `X-TIMESTAMP-MAP` correction (`mpegts/90000 − local`) for map-bearing VTT (Apple)
- * or is the absolute cue time (no map, e.g. Mux). Text can resolve before A/V
- * establishes, so the origin is awaited; fMP4 always establishes it (0-PTS → 0),
- * and a text-only source (no A/V selected) simply gets offset 0.
+ * Relocate step — shifts each cue onto the 0-based presentation timeline: `cueFinal = cueNative − startMediaTime`,
+ * where `startMediaTime` is the primary A/V track's origin (selected **video**, else **audio** — the single-anchor
+ * rule, and defensive like the reactor's optional selection) and `cueNative` folds in the `X-TIMESTAMP-MAP` correction
+ * (`mpegts/90000 − local`) for map-bearing VTT (Apple) or is the absolute cue time (no map, e.g. Mux). Text can resolve
+ * before A/V establishes, so the origin is awaited; fMP4 always establishes it (0-PTS → 0), and a text-only source (no
+ * A/V selected) simply gets offset 0.
  */
 const relocateCuesStep = async <C extends Cue>(
   frame: TextFrame<C>,
@@ -291,9 +275,8 @@ const relocateCuesStep = async <C extends Cue>(
 };
 
 /**
- * Relocation text pipeline — the text analog of `relocationPipelinesFor(type)`.
- * `resolveWithMetadata` (cues + `X-TIMESTAMP-MAP`) → `relocateCues` (shift by the
- * primary A/V origin) → `dispatchCues`.
+ * Relocation text pipeline — the text analog of `relocationPipelinesFor(type)`. `resolveWithMetadata` (cues +
+ * `X-TIMESTAMP-MAP`) → `relocateCues` (shift by the primary A/V origin) → `dispatchCues`.
  */
 export const relocatingTextPipelines = <C extends Cue>(): TextLoadStep<C>[] => [
   resolveWithMetadataStep,

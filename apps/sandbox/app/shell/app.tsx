@@ -32,10 +32,9 @@ function getPagePath(platform: Platform, preset: Preset): string {
 }
 
 /**
- * The SPF background presets default to their own source rather than the global
- * one, which is MPEG-TS and so is a failure case for that engine rather than a
- * demo of it. Only when nothing was asked for — an explicit `?source=` still wins,
- * so a shared link reaches the source it names.
+ * The SPF background presets default to their own source rather than the global one, which is MPEG-TS and so is a
+ * failure case for that engine rather than a demo of it. Only when nothing was asked for — an explicit `?source=` still
+ * wins, so a shared link reaches the source it names.
  */
 function isSpfBackgroundPreset(preset: Preset): boolean {
   return preset === 'hls-background-video' || preset === 'mux-background-video';

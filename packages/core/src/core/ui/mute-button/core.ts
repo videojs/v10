@@ -20,6 +20,7 @@ export interface MuteButtonProps {
 export interface MuteButtonState extends Pick<MediaVolumeState, 'muted'>, ButtonState {
   /**
    * Derived volume level:
+   *
    * - `off`: muted or volume is 0
    * - `low`: volume < 0.5
    * - `medium`: volume < 0.75

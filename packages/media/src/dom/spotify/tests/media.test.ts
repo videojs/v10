@@ -24,13 +24,11 @@ type ReadyListener = () => void;
 type PlaybackUpdateListener = (event: SpotifyPlaybackUpdateEvent) => void;
 
 /**
- * Stands in for a controller from the live iframe API, including the part that
- * matters most to this host: `createController` never drives the element it is
- * handed. It builds an iframe of its own and swaps it in for the target — but
- * only through `parentElement`, so a target that is detached, or one parented by
- * a shadow root rather than an element, is left alone. Reproducing that exactly
- * is the point: a mock that swapped on `parentNode` hid a bug where this host
- * followed the controller onto an iframe that was never in the document.
+ * Stands in for a controller from the live iframe API, including the part that matters most to this host:
+ * `createController` never drives the element it is handed. It builds an iframe of its own and swaps it in for the
+ * target — but only through `parentElement`, so a target that is detached, or one parented by a shadow root rather than
+ * an element, is left alone. Reproducing that exactly is the point: a mock that swapped on `parentNode` hid a bug where
+ * this host followed the controller onto an iframe that was never in the document.
  */
 class MockController {
   static instances: MockController[] = [];
@@ -1243,8 +1241,8 @@ describe('SpotifyMedia source', () => {
 });
 
 /**
- * Runs last: it settles the module-level API promise that every test above
- * bypasses through the `SpotifyIframeApi` global, and nothing can unsettle it.
+ * Runs last: it settles the module-level API promise that every test above bypasses through the `SpotifyIframeApi`
+ * global, and nothing can unsettle it.
  */
 describe('loadSpotifyIframeApi', () => {
   it('passes the API on to a ready callback the host page installed', async () => {

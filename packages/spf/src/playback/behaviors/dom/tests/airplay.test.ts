@@ -24,8 +24,8 @@ interface WebKitVideoLike extends HTMLVideoElement {
 }
 
 /**
- * A real `<video>` decorated with the WebKit AirPlay flag so
- * `isWebKitAirPlayCapable` recognizes it (`'…IsWireless' in media`).
+ * A real `<video>` decorated with the WebKit AirPlay flag so `isWebKitAirPlayCapable` recognizes it (`'…IsWireless' in
+ * media`).
  */
 function makeWebKitVideo(opts: { wireless?: boolean; disableRemotePlayback?: boolean } = {}): WebKitVideoLike {
   const video = document.createElement('video') as WebKitVideoLike;

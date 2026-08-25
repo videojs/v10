@@ -6,9 +6,8 @@ import type { AnyConstructor, Constructor } from '@videojs/utils/types';
 /**
  * What this mixin needs from whichever Mux Media the element hosts.
  *
- * Structural on purpose: the hls.js-backed `MuxMedia` and the SPF-backed one
- * satisfy it identically, and everything here is Mux identity or the WHATWG
- * surface — nothing engine-specific — so the element itself has no engine.
+ * Structural on purpose: the hls.js-backed `MuxMedia` and the SPF-backed one satisfy it identically, and everything
+ * here is Mux identity or the WHATWG surface — nothing engine-specific — so the element itself has no engine.
  */
 interface MuxVideoHost {
   src: string;
@@ -24,12 +23,11 @@ interface MuxVideoElementLike extends HTMLElement {
 }
 
 /**
- * The Mux-specific element behavior, over any Mux Media: the `poster-time`
- * attribute, `src` reflection, and the storyboard `<track>` child.
+ * The Mux-specific element behavior, over any Mux Media: the `poster-time` attribute, `src` reflection, and the
+ * storyboard `<track>` child.
  *
- * Mixin rather than a base class because each flavor's element is built on a
- * different `CustomMediaElement`, so there is no common class to extend — only a
- * common host contract.
+ * Mixin rather than a base class because each flavor's element is built on a different `CustomMediaElement`, so there
+ * is no common class to extend — only a common host contract.
  */
 export function MuxVideoMixin<Class extends AnyConstructor<HTMLElement>>(BaseClass: Class): Class {
   class MuxVideoElement extends (BaseClass as unknown as Constructor<MuxVideoElementLike>) {

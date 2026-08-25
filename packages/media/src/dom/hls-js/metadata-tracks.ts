@@ -4,12 +4,10 @@ import Hls from 'hls.js';
 import type { HlsEngineHost } from './types';
 
 /**
- * Ensures user-authored metadata and chapters `<track>` elements stay loaded
- * when hls.js is active.
+ * Ensures user-authored metadata and chapters `<track>` elements stay loaded when hls.js is active.
  *
- * hls.js forcibly clears all cues from text tracks on manifest loads and media
- * attaches. This mixin re-enables those tracks by forcing `mode = 'hidden'`
- * and reloading the track source when cues have been wiped.
+ * Hls.js forcibly clears all cues from text tracks on manifest loads and media attaches. This mixin re-enables those
+ * tracks by forcing `mode = 'hidden'` and reloading the track source when cues have been wiped.
  */
 export function HlsJsMediaMetadataTracksMixin<Base extends Constructor<HlsEngineHost>>(BaseClass: Base) {
   class HlsJsMediaMetadataTracks extends (BaseClass as Constructor<HlsEngineHost>) {

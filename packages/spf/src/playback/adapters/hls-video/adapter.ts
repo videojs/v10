@@ -39,9 +39,8 @@ import {
 } from './error-surface';
 
 /**
- * The media-level stream type: the engine's detected stream type (`'live'` /
- * `'on-demand'`) plus `'unknown'` for "no playlist parsed yet." `@videojs/media`'s
- * {@link MediaStreamType} itself, kept under its own name because that is what
+ * The media-level stream type: the engine's detected stream type (`'live'` / `'on-demand'`) plus `'unknown'` for "no
+ * playlist parsed yet." `@videojs/media`'s {@link MediaStreamType} itself, kept under its own name because that is what
  * this adapter's `streamType` property is documented against.
  */
 export type HlsVideoMediaStreamType = MediaStreamType;
@@ -74,9 +73,8 @@ export interface HlsVideoMediaAPI extends HlsVideoMediaProps {
 }
 
 /**
- * `targetLiveWindow` per the media-ui-extensions live-edge proposal: `NaN` for
- * on-demand (or nothing resolved yet), `0` for standard sliding-window live,
- * `Infinity` for DVR (`#EXT-X-PLAYLIST-TYPE:EVENT` — the window grows from the
+ * `targetLiveWindow` per the media-ui-extensions live-edge proposal: `NaN` for on-demand (or nothing resolved yet), `0`
+ * for standard sliding-window live, `Infinity` for DVR (`#EXT-X-PLAYLIST-TYPE:EVENT` — the window grows from the
  * start). Read from the timeline-bearing track's playlist metadata.
  */
 function deriveTargetLiveWindow(
@@ -103,15 +101,12 @@ function deriveTargetLiveWindow(
 // ============================================================================
 
 /**
- * Which reported conditions this composition treats as **fatal** — the ones that
- * reach `error` and fire `'error'`. Severity isn't part of an SVTA code
- * (§Approach: "impact varies with player implementation"), and here it also
- * varies by composition, so it's decided at this boundary rather than by the
- * reporter.
+ * Which reported conditions this composition treats as **fatal** — the ones that reach `error` and fire `'error'`.
+ * Severity isn't part of an SVTA code (§Approach: "impact varies with player implementation"), and here it also varies
+ * by composition, so it's decided at this boundary rather than by the reporter.
  *
- * An allow-list, deliberately: only *verdicts* are here. The per-rendition causes
- * `resolve-track` reports (unsupported format, unsupported DRM) stay in the
- * sequence as context — one unplayable rendition doesn't fail the source, and
+ * An allow-list, deliberately: only _verdicts_ are here. The per-rendition causes `resolve-track` reports (unsupported
+ * format, unsupported DRM) stay in the sequence as context — one unplayable rendition doesn't fail the source, and
  * promoting a cause would put a dialog over a mixed source that goes on to play.
  */
 const FATAL_SVTA_CODES: ReadonlySet<number> = new Set<number>([
@@ -122,36 +117,33 @@ const FATAL_SVTA_CODES: ReadonlySet<number> = new Set<number>([
 /**
  * Mixin that adds SPF playback engine behavior to any base class.
  *
- * Implements the src/play() contract per the WHATWG HTML spec so that SPF can
- * be used anywhere a media element API is expected.
+ * Implements the src/play() contract per the WHATWG HTML spec so that SPF can be used anywhere a media element API is
+ * expected.
  *
- * A single engine instance is created at construction and recycled across src
- * changes.
+ * A single engine instance is created at construction and recycled across src changes.
+ *
+ * @example
+ *   class HlsVideoMedia extends HlsVideoMediaMixin(HTMLVideoElementHost) {}
+ *
+ *   const media = new HlsVideoMedia();
+ *   media.attach(document.querySelector('video'));
+ *   media.src = 'https://stream.mux.com/abc123.m3u8';
  *
  * @fires streamtypechange - Fired when the detected stream type changes. Read `streamType` for the new value.
  * @fires targetlivewindowchange - Fired when the target live window changes. Read `targetLiveWindow` for the new value.
  * @fires error - Fired when a fatal condition is reported. Read `error` for it.
- *
- * @example
- * class HlsVideoMedia extends HlsVideoMediaMixin(HTMLVideoElementHost) {}
- *
- * const media = new HlsVideoMedia();
- * media.attach(document.querySelector('video'));
- * media.src = 'https://stream.mux.com/abc123.m3u8';
  */
 export function HlsVideoMediaMixin<Base extends Constructor<any>>(BaseClass: Base) {
   class HlsVideoMediaImpl extends BaseClass {
     /**
-     * A complete sentence naming the Media to reach for when this one can't play
-     * a source — `Try the hls.js-backed Mux media instead: import the hls-js
-     * flavor in place of the spf one.` Appended to the copy this adapter
-     * surfaces, and to the notices it logs. Name the flavor, not an import path:
-     * a Media is reached through several packages, each with its own counterpart.
+     * A complete sentence naming the Media to reach for when this one can't play a source — `Try the hls.js-backed Mux
+     * media instead: import the hls-js flavor in place of the spf one.` Appended to the copy this adapter surfaces, and
+     * to the notices it logs. Name the flavor, not an import path: a Media is reached through several packages, each
+     * with its own counterpart.
      *
-     * Empty here: `hls-video` has no better-equipped sibling to point at.
-     * A Media that does (a Mux Video built on this engine, whose hls.js-backed
-     * counterpart plays MPEG-TS and DRM) overrides this static, and its copy gains
-     * the second sentence with no other change.
+     * Empty here: `hls-video` has no better-equipped sibling to point at. A Media that does (a Mux Video built on this
+     * engine, whose hls.js-backed counterpart plays MPEG-TS and DRM) overrides this static, and its copy gains the
+     * second sentence with no other change.
      */
     static get alternativeMediaSuggestion(): string | undefined {
       return undefined;
@@ -167,9 +159,8 @@ export function HlsVideoMediaMixin<Base extends Constructor<any>>(BaseClass: Bas
     #targetLiveWindow = Number.NaN;
     #error: HlsVideoMediaError | null = null;
     /**
-     * The *reported* condition currently surfaced, which is what the re-fire
-     * latch keys on. Not `#error.code`: that's the code this adapter chose to
-     * surface, and a later cause can change the choice for a condition already
+     * The _reported_ condition currently surfaced, which is what the re-fire latch keys on. Not `#error.code`: that's
+     * the code this adapter chose to surface, and a later cause can change the choice for a condition already
      * announced.
      */
     #reportedCode: number | null = null;
@@ -214,10 +205,8 @@ export function HlsVideoMediaMixin<Base extends Constructor<any>>(BaseClass: Bas
     }
 
     /**
-     * Underlying playback engine — the low-level SPF reactive composition that
-     * drives playback. An advanced escape hatch for direct engine access;
-     * normal playback is driven through this element's own properties and
-     * methods.
+     * Underlying playback engine — the low-level SPF reactive composition that drives playback. An advanced escape
+     * hatch for direct engine access; normal playback is driven through this element's own properties and methods.
      */
     get engine(): Composition<HlsVideoEngineState, HlsVideoEngineContext> {
       return this.#engine;
@@ -230,9 +219,8 @@ export function HlsVideoMediaMixin<Base extends Constructor<any>>(BaseClass: Bas
     // -------------------------------------------------------------------------
 
     /**
-     * The current fatal error, or `null`. Only *fatal* conditions appear here —
-     * the engine reports non-fatal ones too (they stay in `engine.state.errors`),
-     * and promoting them would tell a consumer playback had failed when it
+     * The current fatal error, or `null`. Only _fatal_ conditions appear here — the engine reports non-fatal ones too
+     * (they stay in `engine.state.errors`), and promoting them would tell a consumer playback had failed when it
      * hadn't. Resets per source. Fires `'error'` when set.
      */
     get error(): HlsVideoMediaError | null {
@@ -240,9 +228,8 @@ export function HlsVideoMediaMixin<Base extends Constructor<any>>(BaseClass: Bas
     }
 
     /**
-     * The source's stream type — `'live'`, `'on-demand'`, or `'unknown'` until
-     * a media playlist has been parsed. Setting a non-`'unknown'` value pins a
-     * user override (detection stops updating it); setting `'unknown'` reverts
+     * The source's stream type — `'live'`, `'on-demand'`, or `'unknown'` until a media playlist has been parsed.
+     * Setting a non-`'unknown'` value pins a user override (detection stops updating it); setting `'unknown'` reverts
      * to the engine's detected value.
      */
     get streamType(): HlsVideoMediaStreamType {
@@ -261,12 +248,10 @@ export function HlsVideoMediaMixin<Base extends Constructor<any>>(BaseClass: Bas
     }
 
     /**
-     * Presentation time marking the start of the live-edge window — playback at
-     * `currentTime >= liveEdgeStart` counts as "at the live edge" (the same
-     * target the engine's `seekToLiveEdge` seeks to: window end − HOLD-BACK).
-     * `NaN` when the stream isn't live or nothing is resolved yet. Derived at
-     * read time from the engine's live window — no change event; re-read on
-     * `timeupdate`/`progress` (as the store's live feature does).
+     * Presentation time marking the start of the live-edge window — playback at `currentTime >= liveEdgeStart` counts
+     * as "at the live edge" (the same target the engine's `seekToLiveEdge` seeks to: window end − HOLD-BACK). `NaN`
+     * when the stream isn't live or nothing is resolved yet. Derived at read time from the engine's live window — no
+     * change event; re-read on `timeupdate`/`progress` (as the store's live feature does).
      */
     get liveEdgeStart(): number {
       const edge = getLiveEdge({
@@ -278,9 +263,8 @@ export function HlsVideoMediaMixin<Base extends Constructor<any>>(BaseClass: Bas
     }
 
     /**
-     * The target live window: `NaN` for on-demand (or unknown), `0` for
-     * standard sliding-window live, `Infinity` for DVR
-     * (`#EXT-X-PLAYLIST-TYPE:EVENT`). Fires `targetlivewindowchange` on change.
+     * The target live window: `NaN` for on-demand (or unknown), `0` for standard sliding-window live, `Infinity` for
+     * DVR (`#EXT-X-PLAYLIST-TYPE:EVENT`). Fires `targetlivewindowchange` on change.
      */
     get targetLiveWindow(): number {
       return this.#targetLiveWindow;
@@ -479,14 +463,12 @@ export function HlsVideoMediaMixin<Base extends Constructor<any>>(BaseClass: Bas
     }
 
     /**
-     * Log what this engine is delivering differently from what the playlist asked
-     * for. Neither condition stops playback, so neither is an error — they go to
-     * the console rather than the error surface.
+     * Log what this engine is delivering differently from what the playlist asked for. Neither condition stops
+     * playback, so neither is an error — they go to the console rather than the error surface.
      *
-     * Once per source, not per parse: a live playlist reloads every target
-     * duration, and the timeline track re-parses on each one. Keyed on the notice
-     * rather than latched with a boolean so the two are independent, and cleared
-     * when the presentation unresolves so the next source starts quiet.
+     * Once per source, not per parse: a live playlist reloads every target duration, and the timeline track re-parses
+     * on each one. Keyed on the notice rather than latched with a boolean so the two are independent, and cleared when
+     * the presentation unresolves so the next source starts quiet.
      */
     #reportDeliveryNotices(presentation: MaybeResolvedPresentation | undefined): void {
       if (!isResolvedPresentation(presentation)) {

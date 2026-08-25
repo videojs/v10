@@ -33,11 +33,10 @@ export class GestureCoordinator {
   }
 
   /**
-   * Whether a registered binding claims this tap for the given action. A claimed tap
-   * belongs to the gesture layer, so callers should leave it alone. Taps on interactive
-   * targets (buttons, sliders) are never claimed — the same filtering the pointerup
-   * listener applies. A disabled binding still claims: disabling a gesture opts out of
-   * the action, it doesn't hand the tap back to a fallback handler.
+   * Whether a registered binding claims this tap for the given action. A claimed tap belongs to the gesture layer, so
+   * callers should leave it alone. Taps on interactive targets (buttons, sliders) are never claimed — the same
+   * filtering the pointerup listener applies. A disabled binding still claims: disabling a gesture opts out of the
+   * action, it doesn't hand the tap back to a fallback handler.
    */
   claimsTap(event: PointerEvent, action: string): boolean {
     if (isInteractiveTarget(event)) return false;

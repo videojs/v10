@@ -30,9 +30,7 @@ export function isPromise(value: unknown): value is Promise<any> {
   return value instanceof Promise;
 }
 
-/**
- * Check if a value is an object, excluding null.
- */
+/** Check if a value is an object, excluding null. */
 export function isObject(value: unknown): value is object {
   return value !== null && typeof value === 'object';
 }
@@ -40,8 +38,8 @@ export function isObject(value: unknown): value is object {
 /**
  * Check if a value is an object carrying a callable method for every given name.
  *
- * Recognizes a foreign object by the shape a caller needs from it, without
- * importing the library that defines it or testing against its class.
+ * Recognizes a foreign object by the shape a caller needs from it, without importing the library that defines it or
+ * testing against its class.
  */
 export function hasMethods<K extends string>(
   value: unknown,
@@ -52,9 +50,7 @@ export function hasMethods<K extends string>(
   return methods.every((method) => isFunction((value as Record<string, unknown>)[method]));
 }
 
-/**
- * Check if a value is a plain object (not a class instance like Date, Map, etc).
- */
+/** Check if a value is a plain object (not a class instance like Date, Map, etc). */
 export function isPlainObject(value: unknown): value is Record<string, unknown> {
   if (!isObject(value)) return false;
 
@@ -63,9 +59,7 @@ export function isPlainObject(value: unknown): value is Record<string, unknown> 
   return proto === null || proto === Object.prototype;
 }
 
-/**
- * Check if a value is an AbortError.
- */
+/** Check if a value is an AbortError. */
 export function isAbortError(value: unknown): value is Error {
   return value instanceof Error && value.name === 'AbortError';
 }

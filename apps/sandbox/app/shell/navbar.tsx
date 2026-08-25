@@ -42,25 +42,20 @@ type NavbarProps = {
 };
 
 /**
- * What the selected media will do with a source, when that's worth labelling for
- * someone smoke-testing. The plain HLS presets are the SPF engine: no TS transmux pipeline
- * and no EME, so it refuses MPEG-TS on format and encrypted renditions on
- * protection. Derived from the pair rather than stored on the source, since every
- * source here plays fine under some other media.
+ * What the selected media will do with a source, when that's worth labelling for someone smoke-testing. The plain HLS
+ * presets are the SPF engine: no TS transmux pipeline and no EME, so it refuses MPEG-TS on format and encrypted
+ * renditions on protection. Derived from the pair rather than stored on the source, since every source here plays fine
+ * under some other media.
  *
- * Keyed on the *preset*, not a single is-SPF-HLS flag, because the variants answer
- * differently and a note promising the wrong outcome is worse than none — a
- * reviewer would file the difference as a bug:
+ * Keyed on the _preset_, not a single is-SPF-HLS flag, because the variants answer differently and a note promising the
+ * wrong outcome is worse than none — a reviewer would file the difference as a bug:
  *
- * - **DRM.** Mux encrypts video renditions and leaves audio clear. The audio-only
- *   engine resolves only the audio rendition, so it never fetches an encrypted
- *   playlist and plays the source instead of refusing it.
- * - **MPEG-TS.** Under audio-only, which specific failure depends on whether the
- *   source carries an audio rendition of its own or muxes audio into its video
- *   renditions — an absent type reports nothing and stalls silently rather than
- *   surfacing a verdict (see `internal/design/spf/features/errors.md`). Both mean
- *   nothing plays, so the note stops at that rather than naming a verdict that
- *   only appears for one of them.
+ * - **DRM.** Mux encrypts video renditions and leaves audio clear. The audio-only engine resolves only the audio
+ *   rendition, so it never fetches an encrypted playlist and plays the source instead of refusing it.
+ * - **MPEG-TS.** Under audio-only, which specific failure depends on whether the source carries an audio rendition of its
+ *   own or muxes audio into its video renditions — an absent type reports nothing and stalls silently rather than
+ *   surfacing a verdict (see `internal/design/spf/features/errors.md`). Both mean nothing plays, so the note stops at
+ *   that rather than naming a verdict that only appears for one of them.
  */
 function expectedOutcomeNote(source: SandboxSource, preset: Preset): string | undefined {
   // The background presets are the same engine again, error surface included:

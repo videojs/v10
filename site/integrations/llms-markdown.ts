@@ -335,10 +335,9 @@ function renderSidebarToMarkdown(
 }
 
 /**
- * Inline sidebar filter for the integration context where `@/` path aliases
- * aren't available (can't import `filterSidebar` from `src/utils/docs/sidebar`).
- * Filters out `devOnly` items and sections restricted to other frameworks,
- * then removes empty sections.
+ * Inline sidebar filter for the integration context where `@/` path aliases aren't available (can't import
+ * `filterSidebar` from `src/utils/docs/sidebar`). Filters out `devOnly` items and sections restricted to other
+ * frameworks, then removes empty sections.
  */
 function filterSidebarForLlms(items: Sidebar, framework: SupportedFramework): Sidebar {
   return items

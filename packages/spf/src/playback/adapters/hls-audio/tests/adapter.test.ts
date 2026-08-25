@@ -1,10 +1,8 @@
 /**
  * HlsAudioMediaElement adapter tests.
  *
- * Covers the HTMLMediaElement-compatible contract for src and play(), per the
- * WHATWG HTML spec, for the audio-only HLS variant. Parallels
- * adapter.test.ts — semantics match (the variant differs in composition,
- * not in adapter contract).
+ * Covers the HTMLMediaElement-compatible contract for src and play(), per the WHATWG HTML spec, for the audio-only HLS
+ * variant. Parallels adapter.test.ts — semantics match (the variant differs in composition, not in adapter contract).
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 

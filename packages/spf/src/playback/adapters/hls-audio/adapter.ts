@@ -44,45 +44,40 @@ export interface HlsAudioMediaAPI extends HlsAudioMediaProps {
 }
 
 /**
- * Which reported conditions this composition treats as fatal. Only the audio
- * verdict: an audio-only engine composes no video selection, so
- * `SVTA_NO_SUPPORTED_VIDEO_TRACK` is never reported and surfacing it would
- * describe a track type this media doesn't have.
+ * Which reported conditions this composition treats as fatal. Only the audio verdict: an audio-only engine composes no
+ * video selection, so `SVTA_NO_SUPPORTED_VIDEO_TRACK` is never reported and surfacing it would describe a track type
+ * this media doesn't have.
  */
 const FATAL_SVTA_CODES: ReadonlySet<number> = new Set<number>([SVTA_NO_SUPPORTED_AUDIO_TRACK]);
 
 /**
  * Mixin that adds SPF audio-only HLS playback to any base class.
  *
+ * @example
+ *   class HlsAudioMedia extends HlsAudioMediaMixin(HTMLVideoElementHost) {}
+ *
+ *   const media = new HlsAudioMedia();
+ *   media.attach(document.querySelector('video'));
+ *   media.src = 'https://stream.mux.com/abc123.m3u8';
+ *
  * @fires error - Fired when a fatal condition is reported. Read `error` for it.
  *
- * Parallel to `HlsVideoMediaMixin` with one substantive difference: the
- * underlying engine is the audio-only variant (`createHlsAudioEngine`),
- * which omits video and text-track behaviors. The src / preload /
- * disableRemotePlayback / play() contract per the WHATWG HTML spec is identical
- * to the default adapter.
+ *   Parallel to `HlsVideoMediaMixin` with one substantive difference: the underlying engine is the audio-only variant
+ *   (`createHlsAudioEngine`), which omits video and text-track behaviors. The src / preload / disableRemotePlayback /
+ *   play() contract per the WHATWG HTML spec is identical to the default adapter.
  *
- * Selecting this adapter is the variant decision: instantiating
- * `HlsAudioMediaElement` opts the consumer into audio-only
- * delivery even when the source is a mixed-AV HLS manifest.
- *
- * @example
- * class HlsAudioMedia extends HlsAudioMediaMixin(HTMLVideoElementHost) {}
- *
- * const media = new HlsAudioMedia();
- * media.attach(document.querySelector('video'));
- * media.src = 'https://stream.mux.com/abc123.m3u8';
+ *   Selecting this adapter is the variant decision: instantiating `HlsAudioMediaElement` opts the consumer into
+ *   audio-only delivery even when the source is a mixed-AV HLS manifest.
  */
 export function HlsAudioMediaMixin<Base extends Constructor<any>>(BaseClass: Base) {
   class HlsAudioMediaImpl extends BaseClass {
     /**
-     * A complete sentence naming the Media to reach for when this one can't play
-     * a source. Appended to the copy this adapter logs.
+     * A complete sentence naming the Media to reach for when this one can't play a source. Appended to the copy this
+     * adapter logs.
      *
-     * Empty here, and overridden the same way as on the video adapter — see its
-     * note. `hls-audio` has no better-equipped sibling of its own; the
-     * Mux audio Media built on this engine does, and points at the hls.js-backed
-     * one.
+     * Empty here, and overridden the same way as on the video adapter — see its note. `hls-audio` has no
+     * better-equipped sibling of its own; the Mux audio Media built on this engine does, and points at the
+     * hls.js-backed one.
      */
     static get alternativeMediaSuggestion(): string | undefined {
       return undefined;
@@ -121,9 +116,8 @@ export function HlsAudioMediaMixin<Base extends Constructor<any>>(BaseClass: Bas
     }
 
     /**
-     * The current fatal error, or `null`. Only *fatal* conditions appear here —
-     * the engine reports non-fatal ones too, which stay in `engine.state.errors`.
-     * Resets per source. Fires `'error'` when set.
+     * The current fatal error, or `null`. Only _fatal_ conditions appear here — the engine reports non-fatal ones too,
+     * which stay in `engine.state.errors`. Resets per source. Fires `'error'` when set.
      */
     get error(): HlsVideoMediaError | null {
       return this.#error;
@@ -162,10 +156,8 @@ export function HlsAudioMediaMixin<Base extends Constructor<any>>(BaseClass: Bas
     }
 
     /**
-     * Underlying playback engine — the low-level SPF reactive composition that
-     * drives playback. An advanced escape hatch for direct engine access;
-     * normal playback is driven through this element's own properties and
-     * methods.
+     * Underlying playback engine — the low-level SPF reactive composition that drives playback. An advanced escape
+     * hatch for direct engine access; normal playback is driven through this element's own properties and methods.
      */
     get engine(): Composition<HlsAudioEngineState, HlsAudioEngineContext> {
       return this.#engine;

@@ -18,20 +18,17 @@ interface TextTrackSnapshot {
 }
 
 /**
- * Runs an hls.js call that attaches, detaches, or loads a source, leaving the
- * `<track>` children hls.js does not own the way it found them.
+ * Runs an hls.js call that attaches, detaches, or loads a source, leaving the `<track>` children hls.js does not own
+ * the way it found them.
  *
- * hls.js resets *every* text track on the media element at those points: it
- * clears the cues of all of them and disables the ones it takes for subtitles,
- * without checking which tracks it created. Tracks sideloaded from `<track>`
- * elements are collateral damage, and losing their cues is permanent — an
- * element that finished loading is never parsed again, so the track keeps
- * reporting `showing` while rendering nothing. It surfaces whenever a `<track>`
- * outlives a source assignment, most visibly when `src` arrives after the
- * element connected and its default track already loaded.
+ * Hls.js resets _every_ text track on the media element at those points: it clears the cues of all of them and disables
+ * the ones it takes for subtitles, without checking which tracks it created. Tracks sideloaded from `<track>` elements
+ * are collateral damage, and losing their cues is permanent — an element that finished loading is never parsed again,
+ * so the track keeps reporting `showing` while rendering nothing. It surfaces whenever a `<track>` outlives a source
+ * assignment, most visibly when `src` arrives after the element connected and its default track already loaded.
  *
- * Cues are the objects the browser parsed, so putting back the ones hls.js took
- * restores the track without refetching its resource.
+ * Cues are the objects the browser parsed, so putting back the ones hls.js took restores the track without refetching
+ * its resource.
  */
 export function withPreservedTextTracks<T>(media: HTMLMediaElement | null, action: () => T): T {
   const snapshots = media ? snapshotTextTracks(media) : [];
@@ -95,14 +92,12 @@ function withReadableCues<T>(track: TextTrack, action: () => T): T {
 }
 
 /**
- * Bridges hls.js non-native text tracks to native `<track>` elements so the
- * rest of the player can treat them like any other text track.
+ * Bridges hls.js non-native text tracks to native `<track>` elements so the rest of the player can treat them like any
+ * other text track.
  *
- * When `renderTextTracksNatively: false`, hls.js fires
- * `NON_NATIVE_TEXT_TRACKS_FOUND` with track metadata and `CUES_PARSED` with
- * VTTCues. This mixin creates `<track>` elements on the media target and
- * forwards cues into them. It also syncs user track-mode changes back to
- * hls.js via `engine.subtitleTrack`.
+ * When `renderTextTracksNatively: false`, hls.js fires `NON_NATIVE_TEXT_TRACKS_FOUND` with track metadata and
+ * `CUES_PARSED` with VTTCues. This mixin creates `<track>` elements on the media target and forwards cues into them. It
+ * also syncs user track-mode changes back to hls.js via `engine.subtitleTrack`.
  */
 export function HlsJsMediaTextTracksMixin<Base extends Constructor<HlsEngineHost>>(BaseClass: Base) {
   class HlsJsMediaTextTracks extends (BaseClass as Constructor<HlsEngineHost>) {

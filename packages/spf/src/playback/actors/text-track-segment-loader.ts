@@ -22,11 +22,9 @@ import type { TextTracksActor } from './text-tracks';
 // =============================================================================
 
 /**
- * Mirrors the v/a `SegmentLoaderMessage` shape. `range` carries the
- * forward-window anchor (`range.start` is treated as the load anchor;
- * the actor computes its own forward window internally via
- * `getSegmentsToLoad`). When `range` is omitted (metadata mode), this
- * actor is a no-op — text tracks have no init-segment concept.
+ * Mirrors the v/a `SegmentLoaderMessage` shape. `range` carries the forward-window anchor (`range.start` is treated as
+ * the load anchor; the actor computes its own forward window internally via `getSegmentsToLoad`). When `range` is
+ * omitted (metadata mode), this actor is a no-op — text tracks have no init-segment concept.
  */
 export type TextTrackSegmentLoaderMessage = {
   type: 'load';
@@ -40,15 +38,13 @@ export type TextTrackSegmentLoaderActorState = 'idle' | 'loading' | 'destroyed';
 /** Non-finite (extended) data managed by the actor. */
 export interface TextTrackSegmentLoaderActorContext {
   /**
-   * Track ID of the segment currently being fetched, or null. Paired
-   * with `inFlightSegmentId` so the continue-vs-preempt check survives
-   * cross-track segment-id collisions (e.g. each track starts at
-   * `seg-0`).
+   * Track ID of the segment currently being fetched, or null. Paired with `inFlightSegmentId` so the
+   * continue-vs-preempt check survives cross-track segment-id collisions (e.g. each track starts at `seg-0`).
    */
   inFlightTrackId: string | null;
   /**
-   * Segment ID currently being fetched, or null. Used together with
-   * `inFlightTrackId` by the `loading` state's `load` handler.
+   * Segment ID currently being fetched, or null. Used together with `inFlightTrackId` by the `loading` state's `load`
+   * handler.
    */
   inFlightSegmentId: string | null;
 }
@@ -60,11 +56,9 @@ export type TextTrackSegmentLoaderActor = MessageActor<
 >;
 
 /**
- * Configuration for `createTextTrackSegmentLoaderActor`. Spread over
- * `DEFAULT_FORWARD_BUFFER_CONFIG` to override individual forward-window
- * fields (e.g. `bufferDuration`). Text tracks don't have a back-buffer
- * concern — cues evict by their playhead-relative window at runtime —
- * so no `backBuffer` config field.
+ * Configuration for `createTextTrackSegmentLoaderActor`. Spread over `DEFAULT_FORWARD_BUFFER_CONFIG` to override
+ * individual forward-window fields (e.g. `bufferDuration`). Text tracks don't have a back-buffer concern — cues evict
+ * by their playhead-relative window at runtime — so no `backBuffer` config field.
  */
 export interface TextTrackSegmentLoaderActorConfig<C extends Cue = Cue> {
   forwardBuffer?: Partial<ForwardBufferConfig>;
@@ -77,31 +71,25 @@ export interface TextTrackSegmentLoaderActorConfig<C extends Cue = Cue> {
 // =============================================================================
 
 /**
- * Loads text-track segments for a track and delegates cue management
- * to a TextTracksActor. Mirrors the v/a `SegmentLoaderActor` shape (FSM
- * with `idle` / `loading` and `inFlight*` context for continue-vs-preempt),
- * adapted to text:
+ * Loads text-track segments for a track and delegates cue management to a TextTracksActor. Mirrors the v/a
+ * `SegmentLoaderActor` shape (FSM with `idle` / `loading` and `inFlight*` context for continue-vs-preempt), adapted to
+ * text:
  *
- * - No init segment, no flush ops (text cues don't need eviction — they're
- *   small and the playhead-relative window is enforced by the runtime).
- * - Single in-flight identity (`inFlightSegmentId`) — text has only the
- *   media-segment path, no init-segment path.
+ * - No init segment, no flush ops (text cues don't need eviction — they're small and the playhead-relative window is
+ *   enforced by the runtime).
+ * - Single in-flight identity (`inFlightSegmentId`) — text has only the media-segment path, no init-segment path.
  *
- * Planning is done in the load handler on every incoming message:
- * `getSegmentsToLoad` filters to the forward window, then the segments
- * not already in `TextTracksActor`'s context are scheduled. When a new
- * `load` arrives mid-run, the handler replans and either:
+ * Planning is done in the load handler on every incoming message: `getSegmentsToLoad` filters to the forward window,
+ * then the segments not already in `TextTracksActor`'s context are scheduled. When a new `load` arrives mid-run, the
+ * handler replans and either:
  *
- * - **Continues**: the in-flight segment is still in the new plan →
- *   `abortPending` only, schedule the rest of the plan (minus the
- *   in-flight item, which covers its slot).
- * - **Preempts**: in-flight segment is no longer wanted (track switch,
- *   large seek out of window) → `abortAll`, schedule the new plan
- *   from scratch.
+ * - **Continues**: the in-flight segment is still in the new plan → `abortPending` only, schedule the rest of the plan
+ *   (minus the in-flight item, which covers its slot).
+ * - **Preempts**: in-flight segment is no longer wanted (track switch, large seek out of window) → `abortAll`, schedule
+ *   the new plan from scratch.
  *
- * The cue parser is injected so this factory is host-agnostic. A DOM
- * host supplies a VTT parser backed by `<track>`/`TextTrack` APIs; a
- * non-DOM host (worker, test fake, alternate runtime) supplies its own.
+ * The cue parser is injected so this factory is host-agnostic. A DOM host supplies a VTT parser backed by
+ * `<track>`/`TextTrack` APIs; a non-DOM host (worker, test fake, alternate runtime) supplies its own.
  */
 export function createTextTrackSegmentLoaderActor<C extends Cue>(
   textTracksActor: TextTracksActor<C>,
@@ -128,13 +116,11 @@ export function createTextTrackSegmentLoaderActor<C extends Cue>(
   const pipeline = (config.messagePipelines ?? DEFAULT_TEXT_MESSAGE_PIPELINES)();
 
   /**
-   * Translate a load message into an ordered TextLoadTask list based on
-   * committed actor state. In-flight awareness is handled separately in
-   * the `loading` state's load handler.
+   * Translate a load message into an ordered TextLoadTask list based on committed actor state. In-flight awareness is
+   * handled separately in the `loading` state's load handler.
    *
-   * Metadata mode (no `range`) is a no-op for text — text tracks have
-   * no init-segment concept, so there's nothing to load until a range
-   * arrives via `'full-range'` dispatch.
+   * Metadata mode (no `range`) is a no-op for text — text tracks have no init-segment concept, so there's nothing to
+   * load until a range arrives via `'full-range'` dispatch.
    */
   const planTasks = (message: TextTrackSegmentLoaderMessage): TextLoadTask[] => {
     const { track, range } = message;
@@ -159,15 +145,12 @@ export function createTextTrackSegmentLoaderActor<C extends Cue>(
   };
 
   /**
-   * Wraps a TextLoadTask into a Task that runs the op's step pipeline
-   * (resolve/relocate/dispatch, per the composition's `messagePipelines`).
-   * Updates `inFlightSegmentId` around the async region so the load handler can
-   * make accurate continue/preempt decisions, and checks the abort signal before
-   * each step.
+   * Wraps a TextLoadTask into a Task that runs the op's step pipeline (resolve/relocate/dispatch, per the composition's
+   * `messagePipelines`). Updates `inFlightSegmentId` around the async region so the load handler can make accurate
+   * continue/preempt decisions, and checks the abort signal before each step.
    *
-   * Text degrades gracefully: a step throwing (e.g. a failed segment fetch) is
-   * logged and swallowed so the runner continues to the next segment — unlike the
-   * v/a loader, where a failed init must abort the remaining tasks.
+   * Text degrades gracefully: a step throwing (e.g. a failed segment fetch) is logged and swallowed so the runner
+   * continues to the next segment — unlike the v/a loader, where a failed init must abort the remaining tasks.
    */
   const makeLoadTask = (op: TextLoadTask, { getContext, setContext }: Ctx): Task<void> => {
     return new Task(async (signal) => {

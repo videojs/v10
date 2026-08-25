@@ -26,10 +26,9 @@ export interface SliderOptions {
   getLargeStepPercent: () => number;
 
   /**
-   * Leading+trailing throttle (ms) for `onValueChange` during drag. When
-   * `> 0`, `onValueChange` fires immediately on the first drag move (leading
-   * edge), then at most once per window during subsequent moves. `0` (default)
-   * disables throttling — `onValueChange` fires on every pointermove.
+   * Leading+trailing throttle (ms) for `onValueChange` during drag. When `> 0`, `onValueChange` fires immediately on
+   * the first drag move (leading edge), then at most once per window during subsequent moves. `0` (default) disables
+   * throttling — `onValueChange` fires on every pointermove.
    */
   changeThrottle?: number | undefined;
   /** Adjust a raw 0–100 percent for thumb alignment. Enables `adjustForAlignment()`. */
@@ -69,9 +68,8 @@ export interface SliderApi {
   rootStyle: SliderRootStyle;
   thumbProps: SliderThumbProps;
   /**
-   * Adjust `fillPercent` and `pointerPercent` for edge thumb alignment using
-   * live DOM measurements from the root/thumb elements. No-op when
-   * `adjustPercent` was not provided or `thumbAlignment` is not `'edge'`.
+   * Adjust `fillPercent` and `pointerPercent` for edge thumb alignment using live DOM measurements from the root/thumb
+   * elements. No-op when `adjustPercent` was not provided or `thumbAlignment` is not `'edge'`.
    */
   adjustForAlignment: <S extends SliderState>(state: S) => S;
   destroy: () => void;

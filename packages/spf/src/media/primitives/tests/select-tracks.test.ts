@@ -1,11 +1,10 @@
 /**
  * Track geometry for the video selection rules: one filter, one comparator.
  *
- * The candidate-list policies alongside them (`pickAudioTrackFromTracks`,
- * `pickTextTrackFromTracks`) are covered through the behaviors that compose them —
- * `selectAudioTrack` in `playback/behaviors/tests/select-tracks.test.ts`, and
- * `switchTextTrack` in `playback/behaviors/tests/track-switching.test.ts` — since
- * the policy and its lifecycle are only meaningful together.
+ * The candidate-list policies alongside them (`pickAudioTrackFromTracks`, `pickTextTrackFromTracks`) are covered
+ * through the behaviors that compose them — `selectAudioTrack` in `playback/behaviors/tests/select-tracks.test.ts`, and
+ * `switchTextTrack` in `playback/behaviors/tests/track-switching.test.ts` — since the policy and its lifecycle are only
+ * meaningful together.
  */
 import { describe, expect, it } from 'vite-plus/test';
 

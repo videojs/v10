@@ -8,8 +8,8 @@ import { Thumbnail, type ThumbnailProps } from '../thumbnail';
 afterEach(cleanup);
 
 /**
- * Render a thumbnail inside a player reporting the given media CORS mode and
- * return the `crossorigin` attribute its inner `<img>` ends up with.
+ * Render a thumbnail inside a player reporting the given media CORS mode and return the `crossorigin` attribute its
+ * inner `<img>` ends up with.
  */
 function renderCrossOrigin(
   thumbnailTrackCrossOrigin: MediaTextTrackState['thumbnailTrackCrossOrigin'],

@@ -4,11 +4,9 @@ import { isFunction, isUndefined } from '@videojs/utils/predicate';
 /**
  * Apply props to a DOM element.
  *
- * Handles both attributes and event listeners:
- * - Event props (onClick, onKeyDown, etc.) are attached as listeners
- * - Boolean props: `true` sets empty attribute, `false` removes
- * - `undefined` removes the attribute
- * - Other props are set as string attributes
+ * Handles both attributes and event listeners: - Event props (onClick, onKeyDown, etc.) are attached as listeners -
+ * Boolean props: `true` sets empty attribute, `false` removes - `undefined` removes the attribute - Other props are set
+ * as string attributes
  */
 export function applyElementProps(element: HTMLElement, props: object, options?: { signal?: AbortSignal }): void {
   const signal = options?.signal;

@@ -8,8 +8,8 @@ const DRM: NativeHlsSource['engine'] = {
 };
 
 /**
- * jsdom implements neither the media load algorithm nor its events, so what
- * reaches the element is observed through the assignments themselves.
+ * Jsdom implements neither the media load algorithm nor its events, so what reaches the element is observed through the
+ * assignments themselves.
  */
 function setup() {
   const video = document.createElement('video');
