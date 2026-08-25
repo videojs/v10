@@ -213,6 +213,7 @@ export const sidebar: Sidebar = [
           { slug: 'reference/player-controller', frameworks: ['html'] },
           { slug: 'reference/use-player', frameworks: ['react'] },
           { slug: 'reference/use-media', frameworks: ['react'] },
+          { slug: 'reference/use-container', frameworks: ['react'] },
           { slug: 'reference/use-store', frameworks: ['react'] },
           { slug: 'reference/create-i18n' },
           { slug: 'reference/use-translator', frameworks: ['react'] },
