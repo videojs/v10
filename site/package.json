@@ -57,6 +57,7 @@
   "devDependencies": {
     "@astrojs/check": "^0.9.9",
     "@netlify/edge-functions": "^3.0.8",
+    "@oxc-project/types": "0.146.0",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
@@ -70,10 +71,11 @@
     "babel-plugin-react-compiler": "1.0.0",
     "jsdom": "^27.0.0",
     "linkedom": "^0.18.12",
+    "oxc-parser": "0.146.0",
+    "oxc-walker": "^1.1.1",
     "tsx": "^4.23.1",
     "turndown": "^7.2.2",
     "typescript": "npm:@typescript/typescript6@^6.0.0",
-    "typescript-api-extractor": "^1.0.0-alpha.13",
     "vite-plugin-svgr": "^4.5.0",
     "vite-plus": "catalog:",
     "vitest": "catalog:"

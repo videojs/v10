@@ -24,10 +24,11 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
-import * as ts from 'typescript';
+import { parseSync } from 'oxc-parser';
 
+import type { SourceFile } from './oxc-project.js';
+import { getJSDocDescription, staticName, unwrapExpression } from './oxc-project.js';
 import type { PresetFeatureRef, PresetReference, PresetSkinDef } from './types.js';
-import { getJSDocDescription } from './utils.js';
 
 // ─── Types ──────────────────────────────────────────────────────────
 
@@ -190,43 +191,43 @@ function extractClassesWithTagName(filePath: string): ClassWithTagName[] {
   if (!fs.existsSync(filePath)) return [];
 
   const content = fs.readFileSync(filePath, 'utf-8');
-  const sourceFile = ts.createSourceFile(filePath, content, ts.ScriptTarget.Latest, true);
+  const sourceFile = parseSource(filePath, content);
   const results: ClassWithTagName[] = [];
 
-  ts.forEachChild(sourceFile, (node) => {
+  for (const node of sourceFile.program.body) {
     // Follow `export * from './foo'` re-exports
-    if (ts.isExportDeclaration(node) && !node.exportClause && node.moduleSpecifier) {
-      const specifier = (node.moduleSpecifier as ts.StringLiteral).text;
+    if (node.type === 'ExportAllDeclaration' && !node.exported) {
+      const specifier = node.source.value;
       const resolved = resolveModulePath(path.dirname(filePath), specifier);
 
       if (resolved) {
         results.push(...extractClassesWithTagName(resolved));
       }
 
-      return;
+      continue;
     }
 
-    if (!ts.isClassDeclaration(node) || !node.name) return;
+    if (node.type !== 'ExportNamedDeclaration' || node.declaration?.type !== 'ClassDeclaration') continue;
 
-    if (!node.modifiers?.some((m) => m.kind === ts.SyntaxKind.ExportKeyword)) return;
+    const declaration = node.declaration;
 
-    for (const member of node.members) {
+    if (!declaration.id) continue;
+
+    for (const member of declaration.body.body) {
       if (
-        ts.isPropertyDeclaration(member) &&
-        member.name &&
-        ts.isIdentifier(member.name) &&
-        member.name.text === 'tagName' &&
-        member.modifiers?.some((m) => m.kind === ts.SyntaxKind.StaticKeyword) &&
-        member.initializer &&
-        ts.isStringLiteral(member.initializer)
+        member.type === 'PropertyDefinition' &&
+        staticName(member.key) === 'tagName' &&
+        member.static &&
+        member.value?.type === 'Literal' &&
+        typeof member.value.value === 'string'
       ) {
         results.push({
-          className: node.name.text,
-          tagName: member.initializer.text,
+          className: declaration.id.name,
+          tagName: member.value.value,
         });
       }
     }
-  });
+  }
 
   return results;
 }
@@ -254,34 +255,22 @@ function extractValueExports(filePath: string): string[] {
   if (!fs.existsSync(filePath)) return [];
 
   const content = fs.readFileSync(filePath, 'utf-8');
-  const sourceFile = ts.createSourceFile(filePath, content, ts.ScriptTarget.Latest, true);
+  const sourceFile = parseSource(filePath, content);
   const names: string[] = [];
 
-  ts.forEachChild(sourceFile, (node) => {
-    if (
-      ts.isFunctionDeclaration(node) &&
-      node.name &&
-      node.modifiers?.some((m) => m.kind === ts.SyntaxKind.ExportKeyword)
-    ) {
-      names.push(node.name.text);
-    }
+  for (const node of sourceFile.program.body) {
+    if (node.type !== 'ExportNamedDeclaration' || !node.declaration) continue;
 
-    if (ts.isVariableStatement(node) && node.modifiers?.some((m) => m.kind === ts.SyntaxKind.ExportKeyword)) {
-      for (const decl of node.declarationList.declarations) {
-        if (ts.isIdentifier(decl.name)) {
-          names.push(decl.name.text);
-        }
+    if (node.declaration.type === 'VariableDeclaration') {
+      for (const declaration of node.declaration.declarations) {
+        const name = staticName(declaration.id);
+
+        if (name) names.push(name);
       }
+    } else if (node.declaration.type === 'FunctionDeclaration' || node.declaration.type === 'ClassDeclaration') {
+      if (node.declaration.id) names.push(node.declaration.id.name);
     }
-
-    if (
-      ts.isClassDeclaration(node) &&
-      node.name &&
-      node.modifiers?.some((m) => m.kind === ts.SyntaxKind.ExportKeyword)
-    ) {
-      names.push(node.name.text);
-    }
-  });
+  }
 
   return names;
 }
@@ -297,20 +286,18 @@ function parseBarrelExportNames(filePath: string): string[] {
   if (!fs.existsSync(filePath)) return [];
 
   const content = fs.readFileSync(filePath, 'utf-8');
-  const sourceFile = ts.createSourceFile(filePath, content, ts.ScriptTarget.Latest, true);
+  const sourceFile = parseSource(filePath, content);
   const names: string[] = [];
 
-  ts.forEachChild(sourceFile, (node) => {
-    if (!ts.isExportDeclaration(node) || !node.moduleSpecifier) return;
+  for (const node of sourceFile.program.body) {
+    if (node.type !== 'ExportNamedDeclaration' || !node.source || node.exportKind === 'type') continue;
 
-    if (node.exportClause && ts.isNamedExports(node.exportClause)) {
-      for (const element of node.exportClause.elements) {
-        if (element.isTypeOnly) continue;
+    for (const element of node.specifiers) {
+      if (element.exportKind === 'type') continue;
 
-        names.push(element.name.text);
-      }
+      names.push(element.exported.type === 'Literal' ? String(element.exported.value) : element.exported.name);
     }
-  });
+  }
 
   return names;
 }
@@ -377,26 +364,24 @@ function parseFeatureBundles(presetsFilePath: string): Map<string, string[]> {
   if (!fs.existsSync(presetsFilePath)) return map;
 
   const content = fs.readFileSync(presetsFilePath, 'utf-8');
-  const sourceFile = ts.createSourceFile(presetsFilePath, content, ts.ScriptTarget.Latest, true);
+  const sourceFile = parseSource(presetsFilePath, content);
 
-  ts.forEachChild(sourceFile, (node) => {
-    if (!ts.isVariableStatement(node)) return;
+  for (const node of sourceFile.program.body) {
+    if (node.type !== 'ExportNamedDeclaration' || node.declaration?.type !== 'VariableDeclaration') continue;
 
-    if (!node.modifiers?.some((m) => m.kind === ts.SyntaxKind.ExportKeyword)) return;
+    for (const decl of node.declaration.declarations) {
+      const name = staticName(decl.id);
 
-    for (const decl of node.declarationList.declarations) {
-      if (!ts.isIdentifier(decl.name)) continue;
+      if (!name?.endsWith('Features') || !decl.init) continue;
 
-      const name = decl.name.text;
+      const initializer = unwrapExpression(decl.init);
 
-      if (!name.endsWith('Features')) continue;
-
-      if (decl.initializer && ts.isArrayLiteralExpression(decl.initializer)) {
+      if (initializer.type === 'ArrayExpression') {
         const features: string[] = [];
 
-        for (const element of decl.initializer.elements) {
-          if (ts.isIdentifier(element)) {
-            const featureName = element.text.replace(/Feature$/, '');
+        for (const element of initializer.elements) {
+          if (element?.type === 'Identifier') {
+            const featureName = element.name.replace(/Feature$/, '');
 
             features.push(featureName);
           }
@@ -405,7 +390,7 @@ function parseFeatureBundles(presetsFilePath: string): Map<string, string[]> {
         map.set(name, features);
       }
     }
-  });
+  }
 
   return map;
 }
@@ -416,13 +401,19 @@ function extractFileDescription(filePath: string): string | undefined {
   if (!fs.existsSync(filePath)) return undefined;
 
   const content = fs.readFileSync(filePath, 'utf-8');
-  const sourceFile = ts.createSourceFile(filePath, content, ts.ScriptTarget.Latest, true);
+  const sourceFile = parseSource(filePath, content);
 
-  const firstStatement = sourceFile.statements[0];
+  const firstStatement = sourceFile.program.body[0];
 
   if (!firstStatement) return undefined;
 
-  return getJSDocDescription(firstStatement);
+  return getJSDocDescription(sourceFile, firstStatement);
+}
+
+function parseSource(filePath: string, source: string): SourceFile {
+  const parsed = parseSync(filePath, source);
+
+  return { filePath, source, program: parsed.program, comments: parsed.comments };
 }
 
 // ─── Directory Scanning ─────────────────────────────────────────────

@@ -1449,8 +1449,8 @@ describe('Preset pipeline (end-to-end)', () => {
 //
 // Media elements are custom elements that adapt native <video>/<audio> targets
 // or embedded players. They are discovered from
-// packages/html/src/define/media/*.ts by looking for files that declare a
-// class with `static tagName`.
+// packages/html/src/define/media/*.ts and public nested index.ts barrels by
+// looking for files that declare a class with `static tagName`.
 //
 // The builder extracts:
 //   - Tag name from the element class's static tagName
@@ -1462,7 +1462,8 @@ describe('Preset pipeline (end-to-end)', () => {
 //   - JSDoc descriptions from host getter/setter pairs
 //
 // Key behaviors:
-//   - Discovery: files in define/media/ with an inline class declaration + static tagName
+//   - Discovery: files in define/media/ and public nested barrels with an inline
+//     class declaration + static tagName
 //   - Exclusion: container.ts (re-exports, no inline class), background-video.ts
 //     (no CustomMediaElement — uses MediaAttachMixin(HTMLElement) directly)
 //   - Host inheritance: child host extends parent, builder walks the chain
@@ -1492,7 +1493,15 @@ describe('Media element pipeline (end-to-end)', () => {
     it('discovers media elements from define/media/ files', () => {
       const names = results.map((r) => r.name).sort();
 
-      expect(names).toEqual(['ComplexVideo', 'EmbedVideo', 'ExtendingVideo', 'MixinVideo', 'SimpleVideo', 'SpfAudio']);
+      expect(names).toEqual([
+        'BarrelVideo',
+        'ComplexVideo',
+        'EmbedVideo',
+        'ExtendingVideo',
+        'MixinVideo',
+        'SimpleVideo',
+        'SpfAudio',
+      ]);
     });
 
     it('does not treat the UI container as a media element', () => {
@@ -1505,7 +1514,11 @@ describe('Media element pipeline (end-to-end)', () => {
     });
 
     it('produces one result per media element', () => {
-      expect(results.length).toBe(6);
+      expect(results.length).toBe(7);
+    });
+
+    it('follows nested public index barrels without including sibling implementations', () => {
+      expect(findElement('BarrelVideo')?.reference.tagName).toBe('barrel-video');
     });
 
     it('omits engineOptions for hosts with no structured source', () => {

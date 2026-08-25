@@ -760,6 +760,9 @@ importers:
       '@netlify/edge-functions':
         specifier: ^3.0.8
         version: 3.0.8
+      '@oxc-project/types':
+        specifier: 0.146.0
+        version: 0.146.0
       '@testing-library/jest-dom':
         specifier: ^6.9.1
         version: 6.9.1
@@ -799,6 +802,12 @@ importers:
       linkedom:
         specifier: ^0.18.12
         version: 0.18.12
+      oxc-parser:
+        specifier: 0.146.0
+        version: 0.146.0
+      oxc-walker:
+        specifier: ^1.1.1
+        version: 1.1.1(@oxc-project/types@0.146.0)(oxc-parser@0.146.0)(rolldown@1.2.5)
       tsx:
         specifier: ^4.23.1
         version: 4.23.1
@@ -808,9 +817,6 @@ importers:
       typescript:
         specifier: npm:@typescript/typescript6@^6.0.0
         version: '@typescript/typescript6@6.0.0'
-      typescript-api-extractor:
-        specifier: ^1.0.0-alpha.13
-        version: 1.0.0-beta.1(@typescript/typescript6@6.0.0)
       vite-plugin-svgr:
         specifier: ^4.5.0
         version: 4.5.0(@typescript/typescript6@6.0.0)(@voidzero-dev/vite-plus-core@0.2.8(@types/node@24.12.2)(@typescript/typescript6@6.0.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.1)(unrun@0.2.39)(yaml@2.9.0))(rollup@4.59.0)(supports-color@7.2.0)
@@ -9099,12 +9105,6 @@ packages:
 
   typesafe-path@0.2.2:
     resolution: {integrity: sha512-OJabfkAg1WLZSqJAJ0Z6Sdt3utnbzr/jh+NAHoyWHJe8CMSy79Gm085094M9nvTPy22KzTVn5Zq5mbapCI/hPA==}
-
-  typescript-api-extractor@1.0.0-beta.1:
-    resolution: {integrity: sha512-aaYLF5XjUd9G8HDw5bcYBELbhSiGXCYz0pGcp+5degXQPyZNIZqmPO0aAvr8x/clHki65s10HmDC1+DtoZeItA==}
-    engines: {node: '>=22'}
-    peerDependencies:
-      typescript: ^5.8
 
   typescript-auto-import-cache@0.3.6:
     resolution: {integrity: sha512-RpuHXrknHdVdK7wv/8ug3Fr0WNsNi5l5aB8MYYuXhq2UH5lnEB1htJ1smhtD5VeCsGr2p8mUDtd83LCQDFVgjQ==}
@@ -19263,11 +19263,6 @@ snapshots:
       reflect.getprototypeof: 1.0.10
 
   typesafe-path@0.2.2: {}
-
-  typescript-api-extractor@1.0.0-beta.1(@typescript/typescript6@6.0.0):
-    dependencies:
-      es-toolkit: 1.45.1
-      typescript: '@typescript/typescript6@6.0.0'
 
   typescript-auto-import-cache@0.3.6:
     dependencies:

@@ -21,9 +21,9 @@ packages/store/src/core/selector.ts      → framework: null (agnostic)
 
 Framework-agnostic entries (`framework: null`) produce JSON without a `frameworks` field, meaning they apply to all frameworks. Framework-specific entries get `frameworks: ['react']` or `frameworks: ['html']` in the JSON.
 
-**Phase 1 — Resolve local modules.** Raw TS AST reads export declarations from each index file, keeping only local paths (`./...`), skipping external packages (`@videojs/...`).
+**Phase 1 — Resolve source modules.** The cached Oxc project reads exports from each entry point and follows local and workspace-package re-exports back to authored source files. Framework-specific scans retain exports owned by that package.
 
-**Phase 2 — Filter by convention.** Each local module is parsed with TAE (typescript-api-extractor) or raw TS AST. Exports are included if they match naming conventions or have `@public`.
+**Phase 2 — Filter by convention.** Oxc syntax trees are indexed for declarations, aliases, overloads, and JSDoc. Exports are included if they match naming conventions or have `@public`.
 
 ### Adding a New Util
 
@@ -207,7 +207,7 @@ The `utilReference` collection in `site/src/content.config.ts` loads from `gener
 | Missing from sidebar | Not added to `docs.config.ts` in correct section |
 | Page 404 | MDX file missing or slug mismatch |
 | Wrong framework section | Export in wrong entry point — check which index file re-exports it |
-| TAE crash on index file | Known issue with `UniqueESSymbol` types — raw TS AST fallback handles this |
+| Source export cannot be resolved | Check the workspace package export and authored `src` entry point used by the Oxc project resolver |
 
 ## Discovery vs MDX Pages
 

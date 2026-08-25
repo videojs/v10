@@ -2,6 +2,10 @@
 
 Naming and file placement conventions required by the api-docs-builder at `site/scripts/api-docs-builder/`.
 
+The builder parses authored TypeScript and TSX with Oxc. Its cached project resolver follows relative and
+workspace-package imports, re-exports, interface inheritance, aliases, and the generic substitutions used by
+the documented API patterns; it does not invoke the TypeScript compiler.
+
 ## File Locations
 
 | File | Path | Purpose |

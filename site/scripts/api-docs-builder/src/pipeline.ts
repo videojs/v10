@@ -7,7 +7,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
-import * as ts from 'typescript';
+import { parseSync } from 'oxc-parser';
 
 import { NAME_OVERRIDES } from '../../../src/utils/api-reference-overrides.js';
 import { extractCore } from './core-handler.js';
@@ -15,6 +15,7 @@ import { extractCSSVars } from './css-vars-handler.js';
 import { extractDataAttrs } from './data-attrs-handler.js';
 import { abbreviateType } from './formatter.js';
 import { extractHtml } from './html-handler.js';
+import { getJSDocTag, OxcProject, staticName } from './oxc-project.js';
 import { extractPartDescription, extractParts, extractSubPartProps } from './parts-handler.js';
 import type {
   ComponentReference,
@@ -30,8 +31,7 @@ import type {
   PropDef,
   StateDef,
 } from './types.js';
-import { createTypeScriptProgram } from './typescript.js';
-import { getJSDocTagValue, kebabToPascal, log, partKebabFromSource, sortProps } from './utils.js';
+import { kebabToPascal, log, partKebabFromSource, sortProps } from './utils.js';
 
 // ─── Overrides ─────────────────────────────────────────────────────
 
@@ -143,19 +143,20 @@ function discoverExtraDataAttrs(componentDir: string, componentKebab: string): E
 
     const filePath = path.join(componentDir, file);
     const exportName = `${dataAttrsComponentName(file, componentKebab)}DataAttrs`;
-    const sourceFile = ts.createSourceFile(filePath, fs.readFileSync(filePath, 'utf-8'), ts.ScriptTarget.Latest, true);
-
+    const content = fs.readFileSync(filePath, 'utf-8');
+    const parsed = parseSync(filePath, content);
+    const sourceFile = { filePath, source: content, program: parsed.program, comments: parsed.comments };
     let tagValue: string | undefined;
 
-    ts.forEachChild(sourceFile, (node) => {
-      if (!ts.isVariableStatement(node)) return;
+    for (const statement of parsed.program.body) {
+      const declaration = statement.type === 'ExportNamedDeclaration' ? statement.declaration : statement;
 
-      const declaresExport = node.declarationList.declarations.some(
-        (decl) => ts.isIdentifier(decl.name) && decl.name.text === exportName
-      );
+      if (declaration?.type !== 'VariableDeclaration') continue;
 
-      if (declaresExport) tagValue = getJSDocTagValue(node, 'parts');
-    });
+      const declaresExport = declaration.declarations.some((entry) => staticName(entry.id) === exportName);
+
+      if (declaresExport) tagValue = getJSDocTag(sourceFile, declaration, 'parts');
+    }
 
     if (!tagValue) continue;
 
@@ -243,81 +244,8 @@ export function discoverComponents(monorepoRoot: string): ComponentSource[] {
 
 // ─── Program Creation ──────────────────────────────────────────────
 
-export function createComponentProgram(sources: ComponentSource[], monorepoRoot: string): ts.Program {
-  const htmlUiPath = path.join(monorepoRoot, 'packages/html/src/ui');
-  const files: string[] = [];
-
-  for (const source of sources) {
-    if (source.corePath) files.push(source.corePath);
-
-    if (source.dataAttrsPath) files.push(source.dataAttrsPath);
-
-    if (source.cssVarsPath) files.push(source.cssVarsPath);
-
-    if (source.htmlPath) files.push(source.htmlPath);
-
-    if (source.partsIndexPath) files.push(source.partsIndexPath);
-
-    if (source.extraDataAttrs) files.push(...source.extraDataAttrs.map((extra) => extra.path));
-
-    if (source.partsIndexPath) {
-      const htmlDir = path.join(htmlUiPath, source.kebab);
-
-      if (fs.existsSync(htmlDir)) {
-        const elementFiles = findFiles(htmlDir, (file) => file.endsWith('-element.ts'));
-
-        for (const fullPath of elementFiles) {
-          if (!files.includes(fullPath)) {
-            files.push(fullPath);
-          }
-        }
-      }
-
-      const reactDir = path.dirname(source.partsIndexPath);
-      const reactFiles = findFiles(reactDir, (file) => file.endsWith('.tsx'));
-
-      for (const fullPath of reactFiles) {
-        if (!files.includes(fullPath)) {
-          files.push(fullPath);
-        }
-      }
-
-      const partsSource = fs.readFileSync(source.partsIndexPath, 'utf-8');
-      const nonLocalImports = partsSource.match(/from\s+['"]([^.][^'"]*)['"]/g);
-
-      if (nonLocalImports) {
-        for (const match of nonLocalImports) {
-          const importPath = match.replace(/from\s+['"]/, '').replace(/['"]$/, '');
-          const originDir = path.resolve(path.dirname(source.partsIndexPath), importPath, '..');
-          const originKebab = path.basename(originDir);
-
-          const originHtmlDir = path.join(htmlUiPath, originKebab);
-
-          if (fs.existsSync(originHtmlDir)) {
-            const originElementFiles = findFiles(originHtmlDir, (file) => file.endsWith('-element.ts'));
-
-            for (const fullPath of originElementFiles) {
-              if (!files.includes(fullPath)) {
-                files.push(fullPath);
-              }
-            }
-          }
-
-          if (fs.existsSync(originDir)) {
-            const originReactFiles = findFiles(originDir, (file) => file.endsWith('.tsx'));
-
-            for (const fullPath of originReactFiles) {
-              if (!files.includes(fullPath)) {
-                files.push(fullPath);
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-
-  return createTypeScriptProgram(monorepoRoot, files);
+export function createComponentProgram(_sources: ComponentSource[], monorepoRoot: string): OxcProject {
+  return new OxcProject(monorepoRoot);
 }
 
 // ─── Part Discovery ────────────────────────────────────────────────
@@ -347,7 +275,7 @@ function resolvePartElement(htmlDir: string, componentKebab: string, source: str
   return path.join(htmlDir, override ? `${override}.ts` : `${relative}-element.ts`);
 }
 
-export function discoverParts(source: ComponentSource, program: ts.Program, monorepoRoot: string): PartSource[] {
+export function discoverParts(source: ComponentSource, program: OxcProject, monorepoRoot: string): PartSource[] {
   if (!source.partsIndexPath) return [];
 
   const htmlUiPath = path.join(monorepoRoot, 'packages/html/src/ui');
@@ -471,7 +399,7 @@ export function discoverParts(source: ComponentSource, program: ts.Program, mono
 
 // ─── Component Reference Building ──────────────────────────────────
 
-function buildSingleComponentReference(source: ComponentSource, program: ts.Program): ComponentReference | null {
+function buildSingleComponentReference(source: ComponentSource, program: OxcProject): ComponentReference | null {
   const coreData = source.corePath ? extractCore(source.corePath, program, source.name) : null;
 
   if (!coreData) return null;
@@ -501,7 +429,7 @@ function buildSingleComponentReference(source: ComponentSource, program: ts.Prog
 
 function buildMultiPartReference(
   source: ComponentSource,
-  program: ts.Program,
+  program: OxcProject,
   parts: PartSource[]
 ): ComponentReference | null {
   const partsRecord: Record<string, PartReference> = {};
@@ -611,7 +539,7 @@ function buildMultiPartReference(
 
 export function buildComponentReference(
   source: ComponentSource,
-  program: ts.Program,
+  program: OxcProject,
   monorepoRoot: string
 ): ComponentReference | null {
   if (source.partsIndexPath) {
