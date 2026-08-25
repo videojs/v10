@@ -14,14 +14,15 @@ export interface ComponentModulesPluginOptions {
 }
 
 /**
- * Carry a component transform query through relative runtime imports.
- * Use before component transforms when one source tree is built for multiple targets.
+ * Carry a component transform query through relative runtime imports. Use before component transforms when one source
+ * tree is built for multiple targets.
  *
- * @example An import from `entry.tsx?target=react` inherits its transform query:
- * ```diff
- * - icon.tsx
- * + icon.tsx?target=react
- * ```
+ * @example
+ *   An import from `entry.tsx?target=react` inherits its transform query:
+ *   ```diff
+ *   - icon.tsx
+ *   + icon.tsx?target=react
+ *   ```
  *
  * @param options - Controls which query-bearing modules participate.
  */
@@ -33,14 +34,12 @@ export function componentModulesPlugin(options: ComponentModulesPluginOptions = 
       async handler(id, importer, resolveOptions) {
         const selected = selectedModule(id, options.ignore);
         const inherited = importer ? selectedModule(importer, options.ignore) : null;
-
         if (!selected && (!inherited || !id.startsWith('.'))) return null;
 
         const resolved = await this.resolve(selected?.filename ?? id, importer ? moduleFilename(importer) : undefined, {
           ...resolveOptions,
           skipSelf: true,
         });
-
         if (!resolved || resolved.external || !isVjscModule(resolved.id)) return resolved;
 
         return {
@@ -51,7 +50,6 @@ export function componentModulesPlugin(options: ComponentModulesPluginOptions = 
     },
     async load(id) {
       const selected = selectedModule(id, options.ignore);
-
       if (!selected) return null;
 
       this.addWatchFile(selected.filename);
