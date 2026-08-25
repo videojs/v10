@@ -69,7 +69,6 @@ describe('generated VJSC source', () => {
     const output = modules
       .map((module) => {
         const code = transformed.get(module.key);
-
         if (!code) throw new Error(`VJSC did not transform \`${module.key}\`.`);
 
         return `// ===== ${module.key} =====\n${code.trim()}\n`;
@@ -113,7 +112,6 @@ function generatedModules(sources: readonly string[]): GeneratedModule[] {
         for (const filename of sources) {
           const name = sourceName(filename);
           const ownedSkin = /^skins\/([^/]+)\//.exec(name)?.[1];
-
           if (ownedSkin && ownedSkin !== skin) continue;
 
           const parameters = new URLSearchParams({ target, skin, style });
@@ -130,11 +128,9 @@ function generatedModules(sources: readonly string[]): GeneratedModule[] {
 
 function generatedKey(id: string, sourceNames: ReadonlyMap<string, string>): string | undefined {
   const queryIndex = id.indexOf('?');
-
   if (queryIndex < 0) return undefined;
 
   const name = sourceNames.get(id.slice(0, queryIndex));
-
   if (!name) return undefined;
 
   const parameters = new URLSearchParams(id.slice(queryIndex + 1));

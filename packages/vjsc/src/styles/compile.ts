@@ -31,7 +31,6 @@ export async function compileStyles(options: CompileStylesOptions): Promise<Map<
     if (options.ruleClassNames && !options.ruleClassNames.has(rule.className)) continue;
 
     const compiled = compileRule(rule, options.design, variants);
-
     if (compiled.candidates.length === 0) continue;
 
     const existing = byFile.get(rule.file);

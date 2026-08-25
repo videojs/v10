@@ -43,10 +43,7 @@ export async function loadStyleManifest(files: readonly string[]): Promise<Style
       const modulePath = await realpath(inputFile);
       const evaluated = await evaluateStyleModule(modulePath);
       const definition = getStyleDefinition(evaluated.module.default);
-
-      if (!definition) {
-        throw new Error(`Style module \`${inputFile}\` must default-export \`styles({...})\`.`);
-      }
+      if (!definition) throw new Error(`Style module \`${inputFile}\` must default-export \`styles({...})\`.`);
 
       return { definition, modulePath, watchFiles: evaluated.watchFiles };
     })
@@ -65,7 +62,6 @@ export function ruleForToken(
 
 export function utilityGroupsForRule(rule: StyleManifestRule, variants: readonly string[] = []): readonly string[] {
   const selected = variants.flatMap((variant) => rule.variantGroups[variant] ?? []);
-
   if (selected.length === 0) return rule.utilityGroups;
 
   return mergeUtilityGroups([...rule.utilityGroups, ...selected]);
@@ -85,11 +81,9 @@ export async function collectReferencedStyleRules(
   for (const file of files.filter((entry) => /\.(?:[cm]?ts|tsx)$/.test(entry))) {
     const sourceText = await readFile(file, 'utf8');
     const parsed = parseSync(file, sourceText);
-
     if (parsed.errors.length > 0) throw new Error(parsed.errors.map((error) => error.message).join('\n'));
 
     const bindings = styleBindings(parsed.program, file, manifest);
-
     if (bindings.size === 0) continue;
 
     walk(parsed.program, {
@@ -112,7 +106,6 @@ export async function collectReferencedStyleRules(
             const [root, ...tokenPath] = path ?? [];
             const modulePath = root ? bindings.get(root) : undefined;
             const rule = modulePath ? ruleForToken(manifest, modulePath, tokenPath) : undefined;
-
             if (!rule) return;
 
             referenced.add(rule.className);
@@ -219,7 +212,6 @@ function styleBindings(ast: Program, filename: string, manifest: StyleManifest):
     if (statement.type !== 'ImportDeclaration' || !statement.source.value.startsWith('.')) continue;
 
     const defaults = statement.specifiers.filter((specifier) => specifier.type === 'ImportDefaultSpecifier');
-
     if (defaults.length !== 1 || statement.specifiers.length !== 1) continue;
 
     const modulePath = resolveManifestStyleModule(filename, statement.source.value, manifest);
@@ -236,7 +228,6 @@ function readAccessPath(expression: Expression): string[] | undefined {
   if (expression.type !== 'MemberExpression') return undefined;
 
   const object = readAccessPath(expression.object);
-
   if (!object) return undefined;
 
   if (!expression.computed) return [...object, expression.property.name];
@@ -266,12 +257,10 @@ function mergeUtilityGroups(groups: readonly string[]): readonly string[] {
 
   for (const { index, utilities } of indexedGroups.reverse()) {
     const outputGroup = output[index];
-
     if (!outputGroup) throw new Error('Failed to preserve a style utility group.');
 
     for (const utility of utilities.reverse()) {
       const remaining = retained.get(utility) ?? 0;
-
       if (remaining === 0) continue;
 
       outputGroup.unshift(utility);

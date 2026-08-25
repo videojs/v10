@@ -72,7 +72,6 @@ describe('stylePlugin', () => {
       styles
     );
     const id = virtualCssIds(source)[0];
-
     if (!id) throw new Error('Expected a generated semantic stylesheet.');
 
     expect(await loadPlugin(styles, id)).toContain('pointer-events: none');
@@ -198,16 +197,13 @@ async function resolvePluginId(plugin: Plugin, id: string): Promise<unknown> {
 
 async function loadPlugin(plugin: Plugin, id: string): Promise<string> {
   const resolved = await resolvePluginId(plugin, id);
-
   if (typeof resolved !== 'string') throw new Error(`Could not resolve ${id}.`);
 
   const hook = plugin.load;
-
   if (!hook) throw new Error('Expected the style plugin to provide a load hook.');
 
   const handler = typeof hook === 'function' ? hook : hook.handler;
   const result = await (handler as (id: string) => unknown)(resolved);
-
   if (typeof result !== 'string') throw new Error(`Could not load ${id}.`);
 
   return result;

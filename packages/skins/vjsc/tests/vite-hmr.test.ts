@@ -25,7 +25,6 @@ describe('Skins Vite HMR', () => {
         ...vjscPlugin({
           configure(module) {
             const style = module.parameters.get('style');
-
             if (style === 'tailwind') return { targets: [], styles: { mode: 'tailwind' } };
 
             if (style !== 'css') return null;
@@ -165,7 +164,6 @@ function designSource(color: string): string {
 
 async function transformedCode(server: ViteDevServer, url: string): Promise<string> {
   const result = await server.transformRequest(url);
-
   if (!result) throw new Error(`Vite did not transform \`${url}\`.`);
 
   return result.code;
@@ -173,7 +171,6 @@ async function transformedCode(server: ViteDevServer, url: string): Promise<stri
 
 function virtualCssRequest(code: string): string {
   const request = code.match(/["'](\/@id\/__x00__virtual:vjsc\/css\/[^"']+)["']/)?.[1];
-
   if (!request) throw new Error('Expected transformed source to import virtual VJSC CSS.');
 
   return request;
@@ -182,12 +179,10 @@ function virtualCssRequest(code: string): string {
 async function loadedCss(server: ViteDevServer, request: string): Promise<string> {
   const publicId = request.replace('/@id/__x00__', '');
   const resolved = await server.pluginContainer.resolveId(publicId);
-
   if (!resolved) throw new Error(`Vite did not resolve \`${publicId}\`.`);
 
   const loaded = await server.pluginContainer.load(resolved.id);
   const code = typeof loaded === 'string' ? loaded : loaded?.code;
-
   if (!code) throw new Error(`Vite did not load \`${resolved.id}\`.`);
 
   return code;
@@ -195,7 +190,6 @@ async function loadedCss(server: ViteDevServer, request: string): Promise<string
 
 async function invalidate(server: ViteDevServer, file: string, urls: readonly string[]): Promise<void> {
   const modules = await Promise.all(urls.map((url) => server.moduleGraph.getModuleByUrl(url)));
-
   if (modules.some((module) => !module)) throw new Error(`Expected Vite modules for ${urls.join(', ')}.`);
 
   const timestamps = modules.map((module) => module!.lastInvalidationTimestamp);
