@@ -5,7 +5,9 @@
  * The DOM-free DRM model half (config contract, KEYFORMAT mapping, declared
  * keys, candidate selection) lives in `../drm.ts` and is re-exported here.
  */
-import type { MaybeResolvedPresentation } from '../types';
+
+import { toCencInitData } from '../drm';
+import type { MaybeResolvedPresentation, MediaPlaylistKey } from '../types';
 import { buildMimeCodec } from './mse/mediasource-setup';
 
 export {
@@ -52,7 +54,7 @@ export function contentTypesFromPresentation(presentation: MaybeResolvedPresenta
  * cenc-only configuration; on the MSE path its init data arrives as `sinf`.
  */
 const INIT_DATA_TYPES_BY_KEY_SYSTEM: Readonly<Record<string, readonly string[]>> = {
-  'com.apple.fps': ['sinf', 'cenc'],
+  'com.apple.fps': ['skd', 'sinf', 'cenc'],
 };
 
 /**
@@ -95,6 +97,35 @@ export function initDataFromKeyUri(uri: string): Uint8Array<ArrayBuffer> | undef
   const bytes = new Uint8Array(binary.length);
   for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
   return bytes;
+}
+
+/**
+ * The EME request a key declaration makes for one key system, or `undefined`
+ * when it carries nothing that system can open a session from.
+ *
+ * Both shapes come from the manifest rather than from an appended segment. A
+ * `data:` URI carries a Widevine PSSH or PlayReady object and becomes `cenc`
+ * init data; FairPlay's `skd://` URI is handed over as authored, under `skd`.
+ *
+ * That second case is why this exists. The `encrypted` event only ever offers
+ * `sinf` on the MSE path, which identifies the key but carries neither the
+ * content id nor the IV — and a license server that needs them can only answer
+ * with a rejection. Both sit in `EXT-X-KEY` already, so the manifest is a
+ * better source than the segment. It is also what native HLS hands the CDM.
+ */
+export function keyInitDataRequest(
+  keySystem: string,
+  key: MediaPlaylistKey
+): { initDataType: string; initData: Uint8Array<ArrayBuffer> } | undefined {
+  if (key.uri === undefined) return undefined;
+
+  if (keySystem === 'com.apple.fps' && key.uri.startsWith('skd://')) {
+    const encoded = new TextEncoder().encode(key.uri);
+    return { initDataType: 'skd', initData: new Uint8Array(encoded) as Uint8Array<ArrayBuffer> };
+  }
+
+  const inline = initDataFromKeyUri(key.uri);
+  return inline ? { initDataType: 'cenc', initData: toCencInitData(keySystem, inline) } : undefined;
 }
 
 /**
