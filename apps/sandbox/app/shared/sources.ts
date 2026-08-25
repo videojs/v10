@@ -367,12 +367,14 @@ const SOURCE_MAP = {
     // `headers` config exists for — a license URL alone cannot authenticate here.
     // {@link AXINOM_TOKEN} is paired with this asset's content key.
     //
-    // Also the source that pins FairPlay's manifest-driven path: Axinom answers
-    // `An initialization vector must be provided with every key in the
-    // entitlement message`, and the IV is in `EXT-X-KEY` — reachable only by
-    // generating the request from the `skd://` URI rather than from an appended
-    // segment's `sinf`.
-    label: 'HLS - DRM Widevine/FairPlay (Axinom)',
+    // Widevine only, though the manifest declares FairPlay too. Over MSE the SPC
+    // is generated from an appended segment's `sinf`, which carries no IV, and
+    // Axinom answers `An initialization vector must be provided with every key in
+    // the entitlement message` — its published tokens carry none either. Shaka
+    // plays this asset by letting Safari play it natively, which is not a route
+    // an MSE engine has. Naming FairPlay here would report a licensing failure
+    // that says more about the request shape than about this source.
+    label: 'HLS - DRM Widevine (Axinom)',
     type: 'hls',
     subType: 'mp4',
     drm: true,
@@ -381,11 +383,6 @@ const SOURCE_MAP = {
       drm: {
         'com.widevine.alpha': {
           licenseUrl: 'https://drm-widevine-licensing.axtest.net/AcquireLicense',
-          headers: { 'X-AxDRM-Message': AXINOM_TOKEN },
-        },
-        'com.apple.fps': {
-          licenseUrl: 'https://drm-fairplay-licensing.axtest.net/AcquireLicense',
-          serverCertificateUrl: 'https://vtb.axinom.com/FPScert/fairplay.cer',
           headers: { 'X-AxDRM-Message': AXINOM_TOKEN },
         },
       },
