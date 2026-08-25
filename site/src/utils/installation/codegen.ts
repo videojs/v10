@@ -28,6 +28,11 @@ export interface InstallationOptions {
   installMethod: InstallMethod;
 }
 
+export interface HTMLUsageCode {
+  html: string;
+  imports?: string;
+}
+
 type ValidationResult = { valid: true } | { valid: false; reason: string };
 
 export function validateInstallationOptions(opts: InstallationOptions): ValidationResult {
@@ -213,7 +218,7 @@ ${skinMediaComment}
 </${playerTag}>`;
 }
 
-function generateHTMLJSImports(useCase: UseCase, skin: Skin, renderer: Renderer): string {
+function generateHTMLImports(useCase: UseCase, skin: Skin, renderer: Renderer): string {
   if (useCase === 'background-video') {
     const mediaSubpath = getMediaSubpath(renderer);
     const mediaImport = mediaSubpath ? `\nimport '@videojs/html/media/${mediaSubpath}';` : '';
@@ -237,11 +242,12 @@ import '@videojs/html/${group}/${getSkinFile(skin)}';${mediaImport}`;
 
 export function generateHTMLUsageCode(
   opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer' | 'sourceUrl' | 'installMethod'>
-): { html: string; js?: string } {
+): HTMLUsageCode {
   const html = generateHTMLMarkup(opts.useCase, opts.skin, opts.renderer, opts.sourceUrl);
-  const js = opts.installMethod !== 'cdn' ? generateHTMLJSImports(opts.useCase, opts.skin, opts.renderer) : undefined;
+  const imports =
+    opts.installMethod !== 'cdn' ? generateHTMLImports(opts.useCase, opts.skin, opts.renderer) : undefined;
 
-  return { html, js };
+  return { html, imports };
 }
 
 // ---------------------------------------------------------------------------

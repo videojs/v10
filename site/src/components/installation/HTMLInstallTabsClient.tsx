@@ -23,7 +23,7 @@ export default function HTMLInstallTabs({ cdnMedia }: HTMLInstallTabsProps) {
   const supportsCdn = rendererSupportsCdn($renderer, cdnMedia);
 
   // Mirror the active install-method tab into the store so the usage code block
-  // can react (e.g. CDN omits the JS imports). Observing from the stable
+  // can react (e.g. CDN omits the TypeScript imports). Observing from the stable
   // wrapper rather than the tabs root means the observer survives the keyed
   // remount below, so it never needs to re-attach.
   useEffect(() => {

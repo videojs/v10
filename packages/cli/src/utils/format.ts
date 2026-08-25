@@ -31,9 +31,9 @@ function formatHTMLInstallation(opts: InstallationOptions): string {
     sections.push(`\`\`\`bash\n${install[opts.installMethod]}\n\`\`\``);
   }
 
-  if (usage.js) {
-    sections.push('\n## JavaScript imports\n');
-    sections.push(`\`\`\`javascript\n${usage.js}\n\`\`\``);
+  if (usage.imports) {
+    sections.push('\n## TypeScript imports\n');
+    sections.push(`\`\`\`ts\n${usage.imports}\n\`\`\``);
   }
 
   sections.push('\n## HTML\n');

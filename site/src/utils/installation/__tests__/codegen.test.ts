@@ -104,18 +104,18 @@ describe('generateHTMLUsageCode', () => {
     expect(result.html).toContain('playsinline');
   });
 
-  it('includes JS imports when not CDN', () => {
+  it('includes TypeScript imports when not CDN', () => {
     const result = generateHTMLUsageCode(baseHTML);
 
-    expect(result.js).toBeDefined();
-    expect(result.js).toContain("import '@videojs/html/video/player'");
-    expect(result.js).toContain("import '@videojs/html/video/skin'");
+    expect(result.imports).toBeDefined();
+    expect(result.imports).toContain("import '@videojs/html/video/player'");
+    expect(result.imports).toContain("import '@videojs/html/video/skin'");
   });
 
-  it('omits JS imports when CDN', () => {
+  it('omits TypeScript imports when CDN', () => {
     const result = generateHTMLUsageCode({ ...baseHTML, installMethod: 'cdn' });
 
-    expect(result.js).toBeUndefined();
+    expect(result.imports).toBeUndefined();
   });
 
   it('uses audio tags for audio use case', () => {
@@ -145,10 +145,10 @@ describe('generateHTMLUsageCode', () => {
     expect(result.html).toContain('<background-video-skin>');
   });
 
-  it('includes HLS media import in JS', () => {
+  it('includes the HLS media TypeScript import', () => {
     const result = generateHTMLUsageCode({ ...baseHTML, renderer: 'hls' });
 
-    expect(result.js).toContain("import '@videojs/html/media/hlsjs-video'");
+    expect(result.imports).toContain("import '@videojs/html/media/hlsjs-video'");
   });
 
   it('uses the dash-video tag, playsinline, and media import for DASH', () => {
@@ -157,7 +157,7 @@ describe('generateHTMLUsageCode', () => {
     expect(result.html).toContain('<dash-video src=');
     expect(result.html).toContain('playsinline');
     expect(result.html).toContain('.mpd');
-    expect(result.js).toContain("import '@videojs/html/media/dash-video'");
+    expect(result.imports).toContain("import '@videojs/html/media/dash-video'");
   });
 
   it('uses the mux-video tag, playsinline, and media import for Mux video', () => {
@@ -165,7 +165,7 @@ describe('generateHTMLUsageCode', () => {
 
     expect(result.html).toContain('<mux-video src=');
     expect(result.html).toContain('playsinline');
-    expect(result.js).toContain("import '@videojs/html/media/mux-video'");
+    expect(result.imports).toContain("import '@videojs/html/media/mux-video'");
   });
 
   it('uses the vimeo-video tag and media import, without playsinline (iframe)', () => {
@@ -174,7 +174,7 @@ describe('generateHTMLUsageCode', () => {
     expect(result.html).toContain('<vimeo-video src=');
     expect(result.html).not.toContain('playsinline');
     expect(result.html).toContain('vimeo.com');
-    expect(result.js).toContain("import '@videojs/html/media/vimeo-video'");
+    expect(result.imports).toContain("import '@videojs/html/media/vimeo-video'");
   });
 
   it('uses the embed-provider tags and media imports, without playsinline (iframe)', () => {
@@ -191,7 +191,7 @@ describe('generateHTMLUsageCode', () => {
       expect(result.html).toContain(`<${tag} src=`);
       expect(result.html).not.toContain('playsinline');
       expect(result.html).toContain(urlPart);
-      expect(result.js).toContain(`import '@videojs/html/media/${tag}'`);
+      expect(result.imports).toContain(`import '@videojs/html/media/${tag}'`);
     }
   });
 
@@ -206,7 +206,7 @@ describe('generateHTMLUsageCode', () => {
     expect(result.html).toContain('<spotify-audio src=');
     expect(result.html).not.toContain('playsinline');
     expect(result.html).toContain('open.spotify.com');
-    expect(result.js).toContain("import '@videojs/html/media/spotify-audio'");
+    expect(result.imports).toContain("import '@videojs/html/media/spotify-audio'");
   });
 
   it('uses the mux-audio tag without playsinline for the audio use case', () => {
@@ -219,14 +219,14 @@ describe('generateHTMLUsageCode', () => {
 
     expect(result.html).toContain('<mux-audio src=');
     expect(result.html).not.toContain('playsinline');
-    expect(result.js).toContain("import '@videojs/html/media/mux-audio'");
+    expect(result.imports).toContain("import '@videojs/html/media/mux-audio'");
   });
 
   it('uses minimal skin tag', () => {
     const result = generateHTMLUsageCode({ ...baseHTML, skin: 'minimal-video' });
 
     expect(result.html).toContain('<video-minimal-skin>');
-    expect(result.js).toContain("import '@videojs/html/video/minimal-skin'");
+    expect(result.imports).toContain("import '@videojs/html/video/minimal-skin'");
   });
 
   it('omits skin tag and skin import when skin is none', () => {
@@ -234,8 +234,8 @@ describe('generateHTMLUsageCode', () => {
 
     expect(result.html).toContain('<video-player>');
     expect(result.html).not.toContain('<video-skin>');
-    expect(result.js).toContain("import '@videojs/html/video/player'");
-    expect(result.js).not.toContain("import '@videojs/html/video/skin'");
+    expect(result.imports).toContain("import '@videojs/html/video/player'");
+    expect(result.imports).not.toContain("import '@videojs/html/video/skin'");
   });
 
   it('uses custom source URL when provided', () => {
@@ -257,9 +257,9 @@ describe('generateHTMLUsageCode', () => {
     expect(result.html).toContain('<live-video-skin>');
     expect(result.html).toContain('<hlsjs-video src=');
     expect(result.html).toContain('playsinline');
-    expect(result.js).toContain("import '@videojs/html/live-video/player'");
-    expect(result.js).toContain("import '@videojs/html/live-video/skin'");
-    expect(result.js).toContain("import '@videojs/html/media/hlsjs-video'");
+    expect(result.imports).toContain("import '@videojs/html/live-video/player'");
+    expect(result.imports).toContain("import '@videojs/html/live-video/skin'");
+    expect(result.imports).toContain("import '@videojs/html/media/hlsjs-video'");
   });
 
   it('uses the minimal live video skin tag', () => {
@@ -271,7 +271,7 @@ describe('generateHTMLUsageCode', () => {
     });
 
     expect(result.html).toContain('<live-video-minimal-skin>');
-    expect(result.js).toContain("import '@videojs/html/live-video/minimal-skin'");
+    expect(result.imports).toContain("import '@videojs/html/live-video/minimal-skin'");
   });
 
   it('omits the skin for a headless live video player', () => {
@@ -279,8 +279,8 @@ describe('generateHTMLUsageCode', () => {
 
     expect(result.html).toContain('<live-video-player>');
     expect(result.html).not.toContain('<live-video-skin>');
-    expect(result.js).toContain("import '@videojs/html/live-video/player'");
-    expect(result.js).not.toContain("import '@videojs/html/live-video/skin'");
+    expect(result.imports).toContain("import '@videojs/html/live-video/player'");
+    expect(result.imports).not.toContain("import '@videojs/html/live-video/skin'");
   });
 
   it('uses live-audio tags and imports without playsinline', () => {
@@ -295,9 +295,9 @@ describe('generateHTMLUsageCode', () => {
     expect(result.html).toContain('<live-audio-skin>');
     expect(result.html).toContain('<mux-audio src=');
     expect(result.html).not.toContain('playsinline');
-    expect(result.js).toContain("import '@videojs/html/live-audio/player'");
-    expect(result.js).toContain("import '@videojs/html/live-audio/skin'");
-    expect(result.js).toContain("import '@videojs/html/media/mux-audio'");
+    expect(result.imports).toContain("import '@videojs/html/live-audio/player'");
+    expect(result.imports).toContain("import '@videojs/html/live-audio/skin'");
+    expect(result.imports).toContain("import '@videojs/html/media/mux-audio'");
   });
 
   it('defaults live use cases to a live source URL', () => {

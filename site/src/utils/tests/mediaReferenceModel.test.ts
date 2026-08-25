@@ -1,9 +1,10 @@
-// @ts-nocheck — the model is plain JS shared with satteriConditionalHeadings
 import { describe, expect, it } from 'vite-plus/test';
+
+import type { MediaReference } from '@/types/media-reference';
 
 import { buildMediaReferenceTocHeadings, createMediaReferenceModel } from '../mediaReferenceModel';
 
-function makeRef(overrides = {}) {
+function makeRef(overrides: Partial<MediaReference> = {}): MediaReference {
   return {
     name: 'HlsJsVideo',
     tagName: 'hlsjs-video',
@@ -47,7 +48,7 @@ function makeRef(overrides = {}) {
 const ENGINE_OPTIONS = {
   hlsJs: [{ name: 'maxBufferLength', type: 'number', description: 'Buffer length.' }],
   nativeHls: [{ name: 'drmSystems', type: 'object' }],
-};
+} satisfies NonNullable<MediaReference['engineOptions']>;
 
 describe('createMediaReferenceModel', () => {
   it('returns null without a reference', () => {
@@ -113,7 +114,7 @@ describe('createMediaReferenceModel', () => {
   it('keeps the React props section when only standard native props are accepted', () => {
     const ref = makeRef();
 
-    ref.platforms.react.props = {};
+    ref.platforms.react!.props = {};
     const model = createMediaReferenceModel('HlsJsVideo', ref);
 
     expect(model.platforms.react.sections.some((section) => section.key === 'props')).toBe(true);
@@ -123,7 +124,7 @@ describe('createMediaReferenceModel', () => {
     const ref = makeRef();
 
     ref.platforms.react.acceptsNativeProps = false;
-    ref.platforms.react.props = {};
+    ref.platforms.react!.props = {};
     const model = createMediaReferenceModel('HlsJsVideo', ref);
 
     expect(model.platforms.react.sections.some((section) => section.key === 'props')).toBe(false);
@@ -150,7 +151,7 @@ describe('createMediaReferenceModel', () => {
   it('omits React events when the component does not accept native media props', () => {
     const ref = makeRef();
 
-    ref.platforms.react.acceptsNativeProps = false;
+    ref.platforms.react!.acceptsNativeProps = false;
     const model = createMediaReferenceModel('HlsJsVideo', ref);
 
     expect(model.platforms.react.sections.some((section) => section.key === 'events')).toBe(false);

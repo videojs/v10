@@ -1,9 +1,10 @@
 import rss from '@astrojs/rss';
+import type { APIRoute } from 'astro';
 import { getCollection } from 'astro:content';
 
 import { SITE_TITLE } from '@/consts';
 
-export async function GET(context) {
+export const GET: APIRoute = async (context) => {
   const entries = (await getCollection('changelog')).sort(
     (a, b) =>
       b.data.date.valueOf() - a.data.date.valueOf() ||
@@ -22,4 +23,4 @@ export async function GET(context) {
       link: `/changelog/${entry.id}`,
     })),
   });
-}
+};

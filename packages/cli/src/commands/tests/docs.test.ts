@@ -223,13 +223,14 @@ describe('handleDocs', () => {
     });
 
     describe('HTML framework', () => {
-      it('generates npm installation with JS imports and HTML sections', async () => {
+      it('generates npm installation with TypeScript imports and HTML sections', async () => {
         await handleDocs(htmlFlags(), ['how-to/installation']);
         const out = output();
 
         expect(out).toContain('## Install Video.js');
         expect(out).toContain('npm install @videojs/html');
-        expect(out).toContain('## JavaScript imports');
+        expect(out).toContain('## TypeScript imports');
+        expect(out).toContain('```ts');
         expect(out).toContain('## HTML');
         expect(out).toContain('<video-player>');
         expect(out).not.toContain('<!-- cli:replace');
@@ -239,13 +240,13 @@ describe('handleDocs', () => {
         expect(out).toContain('## Next steps');
       });
 
-      it('generates CDN installation without JS imports section', async () => {
+      it('generates CDN installation without TypeScript imports section', async () => {
         await handleDocs(htmlFlags({ 'install-method': 'cdn' }), ['how-to/installation']);
         const out = output();
 
         expect(out).toContain('## Install Video.js');
         expect(out).toContain('<script');
-        expect(out).not.toContain('## JavaScript imports');
+        expect(out).not.toContain('## TypeScript imports');
         expect(out).toContain('## HTML');
       });
 

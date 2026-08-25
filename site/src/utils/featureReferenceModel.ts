@@ -1,7 +1,7 @@
 /**
  * Centralized feature API reference subsection definitions.
  *
- * Mirrors componentReferenceModel.js for feature APIs. Produces heading/id data consumed by both FeatureReference.astro
+ * Mirrors componentReferenceModel.ts for feature APIs. Produces heading/id data consumed by both FeatureReference.astro
  * and satteriConditionalHeadings.
  *
  * Structure:
@@ -18,14 +18,37 @@
  * publishes back.
  */
 
-function hasEntries(value) {
-  return Object.keys(value ?? {}).length > 0;
+import type { FeatureReference } from '@/types/feature-reference';
+
+import type { TocHeading } from './componentReferenceModel';
+
+type FeatureReferenceSectionKey = 'config' | 'state' | 'actions';
+
+export interface FeatureReferenceSection {
+  key: FeatureReferenceSectionKey;
+  title: string;
+  id: string;
+  depth: number;
 }
 
-export function createFeatureReferenceModel(name, ref) {
+export interface FeatureReferenceModel {
+  name: string;
+  description: FeatureReference['description'];
+  heading: { id: string; depth: number; text: string };
+  sections: FeatureReferenceSection[];
+  data: FeatureReference;
+}
+
+type FeatureEntries = FeatureReference['config'] | FeatureReference['state'] | FeatureReference['actions'];
+
+function hasEntries(value: FeatureEntries): boolean {
+  return Object.keys(value).length > 0;
+}
+
+export function createFeatureReferenceModel(name: string, ref: FeatureReference | null): FeatureReferenceModel | null {
   if (!ref) return null;
 
-  const sections = [];
+  const sections: FeatureReferenceSection[] = [];
 
   if (hasEntries(ref.config)) {
     sections.push({ key: 'config', title: 'Configuration', id: 'configuration', depth: 3 });
@@ -48,7 +71,7 @@ export function createFeatureReferenceModel(name, ref) {
   };
 }
 
-export function buildFeatureReferenceTocHeadings(model) {
+export function buildFeatureReferenceTocHeadings(model: FeatureReferenceModel | null): TocHeading[] {
   if (!model) return [];
 
   const headings = [

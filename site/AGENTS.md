@@ -5,7 +5,7 @@ This file contains site-specific gotchas. Read `site/README.md`, `site/package.j
 ## Sources of truth
 
 - Commands and versions: `package.json`
-- Astro/Vite/Markdown configuration: `astro.config.mjs`
+- Astro/Vite/Markdown configuration: `astro.config.ts`
 - Content schemas: `src/content.config.ts`
 - Framework/style support and type guards: `src/types/docs.ts`
 - Sidebar and route availability: `src/docs.config.ts`
@@ -56,7 +56,7 @@ pnpm -F site astro check
 
 ## Site-specific gotchas
 
-- `astro.config.mjs` has a root `vite.optimizeDeps` block that can shadow renderer-provided includes. Keep React client dependencies in its explicit `include` list when changing renderer setup.
+- `astro.config.ts` has a root `vite.optimizeDeps` block that can shadow renderer-provided includes. Keep React client dependencies in its explicit `include` list when changing renderer setup.
 - Markdown uses Satteri MDAST plugins, not remark/rehype plugins. Add transformations with `defineMdastPlugin` and write derived frontmatter through `ctx.data.astro.frontmatter`.
 - Shiki highlighting is configured independently from the Markdown processor.
 - React context does not cross Astro islands.

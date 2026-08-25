@@ -49,6 +49,11 @@ declare module '@/utils/installation/codegen' {
     installMethod: InstallMethod;
   }
 
+  export interface HTMLUsageCode {
+    html: string;
+    imports?: string;
+  }
+
   type ValidationResult = { valid: true } | { valid: false; reason: string };
 
   export function validateInstallationOptions(opts: InstallationOptions): ValidationResult;
@@ -62,7 +67,7 @@ declare module '@/utils/installation/codegen' {
 
   export function generateHTMLUsageCode(
     opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer' | 'sourceUrl' | 'installMethod'>
-  ): { html: string; js?: string };
+  ): HTMLUsageCode;
 
   export function generateReactCreateCode(
     opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer'>

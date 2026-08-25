@@ -33,7 +33,7 @@ Mostly a standard [Astro](https://astro.build/) project.
 │  ├── content.config.ts     # Content collection schemas
 │  ├── docs.config.ts        # Docs sidebar structure
 │  └── test-setup.ts         # Vitest setup
-├── astro.config.mjs
+├── astro.config.ts
 ├── AGENTS.md                # Agent guidance and site-specific gotchas
 ├── package.json
 ├── README.md
@@ -83,7 +83,7 @@ On each release, the CD workflow force-pushes `main` to `site/v10`, keeping prod
 
 ## Environment Variables
 
-The installation page's video uploader uses OAuth + Mux. The environment schema in [`astro.config.mjs`](astro.config.mjs) is the current variable list. The site works without these variables; the uploader is simply unavailable.
+The installation page's video uploader uses OAuth + Mux. The environment schema in [`astro.config.ts`](astro.config.ts) is the current variable list. The site works without these variables; the uploader is simply unavailable.
 
 ## Technology Stack
 
@@ -174,7 +174,7 @@ See [`scripts/api-docs-builder/README.md`](scripts/api-docs-builder/README.md) f
 
 ## Markdown plugins
 
-Astro uses the Satteri Markdown processor with custom MDAST plugins configured in [`astro.config.mjs`](astro.config.mjs):
+Astro uses the Satteri Markdown processor with custom MDAST plugins configured in [`astro.config.ts`](astro.config.ts):
 
 - [`satteriConditionalHeadings`](src/utils/satteriConditionalHeadings.ts) tracks conditional headings and generated API-reference headings.
 - [`satteriReadingTime`](src/utils/satteriReadingTime.ts) derives reading-time frontmatter.

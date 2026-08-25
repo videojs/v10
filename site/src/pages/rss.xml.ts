@@ -1,10 +1,11 @@
 import rss from '@astrojs/rss';
+import type { APIRoute } from 'astro';
 import { getCollection } from 'astro:content';
 
 import { SITE_DESCRIPTION, SITE_TITLE } from '@/consts';
 
 // TODO cache idk this can be static
-export async function GET(context) {
+export const GET: APIRoute = async (context) => {
   const posts = (await getCollection('blog'))
     .filter((post) => !post.data.devOnly || import.meta.env.DEV)
     .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
@@ -19,4 +20,4 @@ export async function GET(context) {
       link: `/blog/${post.id}`,
     })),
   });
-}
+};

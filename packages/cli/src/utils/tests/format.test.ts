@@ -23,22 +23,23 @@ const baseReact: InstallationOptions = {
 };
 
 describe('formatInstallationCode', () => {
-  it('formats HTML + npm with install, JS imports, and HTML sections', () => {
+  it('formats HTML + npm with install, TypeScript imports, and HTML sections', () => {
     const result = formatInstallationCode(baseHTML);
 
     expect(result).toContain('## Install Video.js');
     expect(result).toContain('npm install @videojs/html');
-    expect(result).toContain('## JavaScript imports');
+    expect(result).toContain('## TypeScript imports');
+    expect(result).toContain('```ts');
     expect(result).toContain('## HTML');
     expect(result).toContain('<video-player>');
   });
 
-  it('formats HTML + CDN without JS imports section', () => {
+  it('formats HTML + CDN without TypeScript imports section', () => {
     const result = formatInstallationCode({ ...baseHTML, installMethod: 'cdn' });
 
     expect(result).toContain('## Install Video.js');
     expect(result).toContain('<script');
-    expect(result).not.toContain('## JavaScript imports');
+    expect(result).not.toContain('## TypeScript imports');
     expect(result).toContain('## HTML');
   });
 

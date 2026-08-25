@@ -1,5 +1,3 @@
-// @ts-check
-
 import process from 'node:process';
 
 import { satteri } from '@astrojs/markdown-satteri';
