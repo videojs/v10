@@ -28,6 +28,7 @@ function createControlsStore(): AnyPlayerStore {
       requestControlsLock: () => () => {},
       toggleControls() {
         const visible = !(get().controlsVisible as boolean);
+
         set({ userActive: visible, controlsVisible: visible });
         return visible;
       },
@@ -46,6 +47,7 @@ class TestPlayerProviderElement extends UIElement {
 
   setControlsVisible(visible: boolean): void {
     const state = this.store.state as MediaControlsState;
+
     if (state.controlsVisible === visible) return;
 
     state.toggleControls();
@@ -71,6 +73,7 @@ describe('ContainerElement', () => {
   it('reflects controls visibility on the container', async () => {
     const provider = createElement(TestPlayerProviderElement);
     const container = createElement(ContainerElement);
+
     provider.append(container);
     document.body.append(provider);
 

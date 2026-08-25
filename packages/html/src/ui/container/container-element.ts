@@ -69,6 +69,7 @@ export class ContainerElement extends UIElement implements MediaContainer {
     this.#applyLabel();
 
     const controls = this.#controls.value;
+
     if (controls) {
       this.#core.setMedia(controls);
       applyStateDataAttrs(this, this.#core.getState(), ContainerDataAttrs);
