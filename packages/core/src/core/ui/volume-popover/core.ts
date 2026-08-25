@@ -1,6 +1,6 @@
 import type { MediaFeatureAvailability, MediaVolumeState } from '@videojs/media';
 
-import { PopoverCore, type PopoverProps, type PopoverState } from '../popover/popover-core';
+import { PopoverCore, type PopoverProps, type PopoverState } from '../popover/core';
 
 export interface VolumePopoverProps extends PopoverProps {}
 
