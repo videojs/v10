@@ -57,8 +57,8 @@ export default styles({
     popup: {
       className: 'media-menu-popup',
       utilities: [
-        'm-0 min-w-48 max-w-(--media-popover-available-width) overflow-hidden! border-0 p-1',
-        'max-h-[min(var(--media-popover-available-height,14rem),14rem)] overscroll-none',
+        'm-0 min-w-48 max-w-(--media-menu-available-width) overflow-hidden! border-0 p-1',
+        'max-h-[min(var(--media-menu-available-height,14rem),14rem)] overscroll-none',
         'h-(--media-menu-height) w-(--media-menu-width)',
         '[--media-menu-transition-duration:250ms] motion-reduce:[--media-menu-transition-duration:0ms]',
         '[transition-property:opacity,filter,transform,scale,width,height]',

@@ -9,10 +9,10 @@ export default styles({
       utilities: [
         'm-0 overflow-visible border-0 text-inherit',
         'data-starting-style:opacity-0 data-starting-style:scale-95',
-        'data-[side=top]:data-starting-style:translate-y-(--popup-translate-distance)',
-        'data-[side=bottom]:data-starting-style:-translate-y-(--popup-translate-distance)',
-        'data-[side=left]:data-starting-style:translate-x-(--popup-translate-distance)',
-        'data-[side=right]:data-starting-style:-translate-x-(--popup-translate-distance)',
+        'data-[side=top]:data-starting-style:translate-y-(--media-popup-translate-distance)',
+        'data-[side=bottom]:data-starting-style:-translate-y-(--media-popup-translate-distance)',
+        'data-[side=left]:data-starting-style:translate-x-(--media-popup-translate-distance)',
+        'data-[side=right]:data-starting-style:-translate-x-(--media-popup-translate-distance)',
         'data-ending-style:opacity-0 data-ending-style:blur-xs data-ending-style:scale-95 data-ending-style:transform-none',
         'data-[side=top]:origin-bottom data-[side=bottom]:origin-top data-[side=left]:origin-right data-[side=right]:origin-left',
         'before:pointer-events-auto before:absolute',
@@ -22,8 +22,11 @@ export default styles({
         'data-[side=right]:before:inset-y-0 data-[side=right]:before:right-full',
       ],
       variants: {
-        default: ['[--popup-translate-distance:calc(var(--media-scale-unit,16px)*0.5)]', 'data-starting-style:blur-xs'],
-        minimal: '[--popup-translate-distance:--spacing(2)]',
+        default: [
+          '[--media-popup-translate-distance:calc(var(--media-scale-unit,16px)*0.5)]',
+          'data-starting-style:blur-xs',
+        ],
+        minimal: '[--media-popup-translate-distance:--spacing(2)]',
       },
     },
     transition: {

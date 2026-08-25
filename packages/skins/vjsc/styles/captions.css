@@ -1,24 +1,31 @@
 @layer videojs.components {
   @scope (.media-skin) {
+    :scope {
+      --media-caption-track-duration: var(--media-controls-transition-duration);
+      --media-caption-track-delay: 25ms;
+      --media-caption-track-y: calc(var(--media-spacing) * -2);
+    }
+
     video::-webkit-media-text-track-container {
       z-index: 1;
       font-family: inherit;
       scale: 0.98;
-      translate: 0 calc(var(--media-spacing) * -2);
-      transition: translate var(--media-controls-transition-duration) ease-out 25ms;
+      translate: 0 var(--media-caption-track-y);
+      transition: translate var(--media-caption-track-duration) ease-out;
+      transition-delay: var(--media-caption-track-delay);
     }
 
-    :scope.media-theme-default:has([data-controls][data-visible]) video::-webkit-media-text-track-container {
-      translate: 0 calc(var(--media-spacing) * -14);
+    :scope.media-theme-default:has([data-controls][data-visible]) {
+      --media-caption-track-y: calc(var(--media-spacing) * -14);
     }
 
-    :scope.media-theme-minimal:has([data-controls][data-visible]) video::-webkit-media-text-track-container {
-      translate: 0 calc(var(--media-spacing) * -18);
+    :scope.media-theme-minimal:has([data-controls][data-visible]) {
+      --media-caption-track-y: calc(var(--media-spacing) * -18);
     }
 
     @container media-root (width > 42rem) {
-      :scope.media-theme-minimal:has([data-controls][data-visible]) video::-webkit-media-text-track-container {
-        translate: 0 calc(var(--media-spacing) * -12);
+      :scope.media-theme-minimal:has([data-controls][data-visible]) {
+        --media-caption-track-y: calc(var(--media-spacing) * -12);
       }
     }
   }
