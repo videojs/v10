@@ -6,6 +6,7 @@
 
 
 
+
 import { ButtonTooltip } from './button-tooltip';
 import "virtual:vjsc/css/bedd34a0f91c/base.css";
 import "virtual:vjsc/css/b01fe420d698/buttons.css";
@@ -31,6 +32,7 @@ export function AirPlayButton({ className, ...props }: AirPlayButtonProps = {}) 
 
 // ===== react/default-video/css/components/buttons/button-tooltip.tsx =====
 /** @jsxImportSource react */
+
 
 
 
@@ -69,6 +71,7 @@ export function ButtonTooltip({ children, ...props }: ButtonTooltipProps) {
 
 
 
+
 import { ButtonTooltip } from './button-tooltip';
 import "virtual:vjsc/css/bedd34a0f91c/base.css";
 import "virtual:vjsc/css/78049068f168/buttons.css";
@@ -94,6 +97,7 @@ export function CaptionsButton({ className, ...props }: CaptionsButtonProps = {}
 
 // ===== react/default-video/css/components/buttons/cast-button.tsx =====
 /** @jsxImportSource react */
+
 
 
 
@@ -131,6 +135,7 @@ export function CastButton({ className, ...props }: CastButtonProps = {}) {
 
 
 
+
 import { ButtonTooltip } from './button-tooltip';
 import "virtual:vjsc/css/bedd34a0f91c/base.css";
 import "virtual:vjsc/css/5c8aa8853954/buttons.css";
@@ -156,6 +161,7 @@ export function FullscreenButton({ className, ...props }: FullscreenButtonProps 
 
 // ===== react/default-video/css/components/buttons/mute-button.tsx =====
 /** @jsxImportSource react */
+
 
 
 
@@ -191,6 +197,7 @@ export function MuteButton({ className, ...props }: MuteButtonProps = {}) {
 
 
 
+
 import { ButtonTooltip } from './button-tooltip';
 import "virtual:vjsc/css/bedd34a0f91c/base.css";
 import "virtual:vjsc/css/422a5636cdb5/buttons.css";
@@ -216,6 +223,7 @@ export function PiPButton({ className, ...props }: PiPButtonProps = {}) {
 
 // ===== react/default-video/css/components/buttons/play-button.tsx =====
 /** @jsxImportSource react */
+
 
 
 
@@ -254,6 +262,7 @@ export function PlayButton({ className, ...props }: PlayButtonProps = {}) {
 
 
 
+
 import { ButtonTooltip } from './button-tooltip';
 import "virtual:vjsc/css/bedd34a0f91c/base.css";
 import "virtual:vjsc/css/1cedab86c96b/buttons.css";
@@ -279,6 +288,7 @@ export function SeekButton({ className, seconds = 10, ...props }: SeekButtonProp
 
 // ===== react/default-video/css/components/controls/volume-popover.tsx =====
 /** @jsxImportSource react */
+
 
 
 
@@ -323,6 +333,7 @@ const volumeAvailability = usePlayer(state => state.volumeAvailability);
 
 
 
+
 import "virtual:vjsc/css/bedd34a0f91c/base.css";
 import "virtual:vjsc/css/d55f9ee6dba6/indicator.css";
 import { BufferingIndicator as BufferingIndicatorPrimitive } from "@videojs/react";
@@ -344,6 +355,7 @@ export function BufferingIndicator({ className, ...props }: BufferingIndicatorPr
 
 // ===== react/default-video/css/components/feedback/error-dialog.tsx =====
 /** @jsxImportSource react */
+
 
 
 
@@ -379,6 +391,7 @@ export function ErrorDialog({ className, ...props }: ErrorDialogProps = {}) {
 
 
 
+
 import "virtual:vjsc/css/bedd34a0f91c/base.css";
 import "virtual:vjsc/css/d495ce8500cd/indicator.css";
 import { SeekIndicator as SeekIndicatorPrimitive } from "@videojs/react";
@@ -406,6 +419,7 @@ export function SeekIndicator({ className, ...props }: SeekIndicatorProps = {}) 
 
 
 
+
 import "virtual:vjsc/css/bedd34a0f91c/base.css";
 import "virtual:vjsc/css/0c334683682c/indicator.css";
 import { StatusAnnouncer as StatusAnnouncerPrimitive } from "@videojs/react";
@@ -421,6 +435,7 @@ export function StatusAnnouncer({ className, ...props }: StatusAnnouncerProps = 
 
 // ===== react/default-video/css/components/feedback/status-indicator.tsx =====
 /** @jsxImportSource react */
+
 
 
 
@@ -470,6 +485,7 @@ export function PlaybackStatusIndicator({ className, ...props }: PlaybackStatusI
 /** @jsxImportSource react */
 
 
+
 import { SeekIndicator } from './seek-indicator';
 import { StatusAnnouncer } from './status-announcer';
 import { PlaybackStatusIndicator, StatusIndicator } from './status-indicator';
@@ -499,6 +515,7 @@ export function VideoStatusIndicators({ className, ...props }: VideoStatusIndica
 
 // ===== react/default-video/css/components/feedback/volume-indicator.tsx =====
 /** @jsxImportSource react */
+
 
 
 
@@ -535,8 +552,9 @@ export function VolumeIndicator({ className, ...props }: VolumeIndicatorProps = 
 
 
 
+
 import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/6b8f96f4b500/container.css";
+import "virtual:vjsc/css/7c27e75dc682/container.css";
 import { Container as ContainerPrimitive } from "@videojs/react";
 import { cn } from "@videojs/utils/style";
 
@@ -557,6 +575,7 @@ export function Container({ children, className, ...props }: ContainerProps) {
 
 
 
+
 import "virtual:vjsc/css/bedd34a0f91c/base.css";
 import "virtual:vjsc/css/291fcf126366/overlays.css";
 import type { ComponentProps } from "react";
@@ -572,6 +591,7 @@ export function Overlay({ className, ...props }: OverlayProps = {}) {
 
 // ===== react/default-video/css/components/layout/poster.tsx =====
 /** @jsxImportSource react */
+
 
 
 
@@ -598,6 +618,7 @@ import { audioText } from '@videojs/core/i18n/text/menu';
 
 
 
+
 import { AudioTrackRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
@@ -613,8 +634,10 @@ import { SpeechIcon as SpeechIconPrimitive } from "@videojs/react/icons";
 
 
 
-export interface AudioTrackMenuProps
-  extends Omit<ComponentProps<typeof Submenu>, 'children' | 'icon' | 'label' | 'selectedLabel'> {}
+export interface AudioTrackMenuProps extends Omit<
+  ComponentProps<typeof Submenu>,
+  'children' | 'icon' | 'label' | 'selectedLabel'
+> {}
 
 export function AudioTrackMenu(props: AudioTrackMenuProps = {}) {
 const audioTrack = useAudioTrackOptions();
@@ -642,6 +665,7 @@ import { captionsText } from '@videojs/core/i18n/text/menu';
 
 
 
+
 import { CaptionsRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
@@ -657,8 +681,10 @@ import { CaptionsOffIcon as CaptionsOffIconPrimitive } from "@videojs/react/icon
 
 
 
-export interface CaptionsMenuProps
-  extends Omit<ComponentProps<typeof Submenu>, 'children' | 'icon' | 'label' | 'selectedLabel'> {}
+export interface CaptionsMenuProps extends Omit<
+  ComponentProps<typeof Submenu>,
+  'children' | 'icon' | 'label' | 'selectedLabel'
+> {}
 
 export function CaptionsMenu(props: CaptionsMenuProps = {}) {
 const captions = useCaptionsOptions();
@@ -682,6 +708,7 @@ const available = captions?.state.availability === 'available';
 
 // ===== react/default-video/css/components/menus/menu-chevron.tsx =====
 /** @jsxImportSource react */
+
 
 
 
@@ -713,6 +740,7 @@ import { speedText } from '@videojs/core/i18n/text/menu';
 
 
 
+
 import { PlaybackRateRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
@@ -728,8 +756,10 @@ import { SpeedIcon as SpeedIconPrimitive } from "@videojs/react/icons";
 
 
 
-export interface PlaybackRateMenuProps
-  extends Omit<ComponentProps<typeof Submenu>, 'children' | 'icon' | 'label' | 'selectedLabel'> {}
+export interface PlaybackRateMenuProps extends Omit<
+  ComponentProps<typeof Submenu>,
+  'children' | 'icon' | 'label' | 'selectedLabel'
+> {}
 
 export function PlaybackRateMenu(props: PlaybackRateMenuProps = {}) {
 const playbackRate = usePlaybackRateOptions();
@@ -757,6 +787,7 @@ import { qualityText } from '@videojs/core/i18n/text/menu';
 
 
 
+
 import { QualityRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
@@ -772,8 +803,10 @@ import { SwitchesIcon as SwitchesIconPrimitive } from "@videojs/react/icons";
 
 
 
-export interface QualityMenuProps
-  extends Omit<ComponentProps<typeof Submenu>, 'children' | 'icon' | 'label' | 'selectedLabel'> {}
+export interface QualityMenuProps extends Omit<
+  ComponentProps<typeof Submenu>,
+  'children' | 'icon' | 'label' | 'selectedLabel'
+> {}
 
 export function QualityMenu(props: QualityMenuProps = {}) {
 const quality = useQualityOptions();
@@ -801,6 +834,7 @@ const available = quality?.state.availability === 'available';
 
 // ===== react/default-video/css/components/menus/radio-group.tsx =====
 /** @jsxImportSource react */
+
 
 
 
@@ -840,6 +874,7 @@ export function CaptionsRadioGroup({ className, ...props }: CaptionsRadioGroupPr
 
 
 
+
 import "virtual:vjsc/css/bedd34a0f91c/base.css";
 import "virtual:vjsc/css/bd55498150e6/menus.css";
 import { Menu } from "@videojs/react";
@@ -866,6 +901,7 @@ export function RadioItem({ children, className, ...props }: RadioItemProps) {
 /** @jsxImportSource react */
 
 import { settingsText } from '@videojs/core/i18n/text/menu';
+
 
 
 
@@ -911,6 +947,7 @@ export function SettingsMenu({ children, className, ...props }: SettingsMenuProp
 
 // ===== react/default-video/css/components/menus/submenu.tsx =====
 /** @jsxImportSource react */
+
 
 
 
@@ -961,6 +998,7 @@ export function Submenu({
 /** @jsxImportSource react */
 
 
+
 import { AudioTrackMenu } from './audio-track-menu';
 import { CaptionsMenu } from './captions-menu';
 import { PlaybackRateMenu } from './playback-rate-menu';
@@ -992,6 +1030,7 @@ const hasSettings = quality?.state.availability === 'available' || audioTrack?.s
 
 // ===== react/default-video/css/components/sliders/time-slider.tsx =====
 /** @jsxImportSource react */
+
 
 
 
@@ -1045,6 +1084,7 @@ export function TimeSlider({ className, ...props }: TimeSliderProps = {}) {
 
 
 
+
 import "virtual:vjsc/css/bedd34a0f91c/base.css";
 import "virtual:vjsc/css/a0635efdfb16/sliders.css";
 import { VolumeSlider as VolumeSliderPrimitive } from "@videojs/react";
@@ -1069,6 +1109,7 @@ export function VolumeSlider({ className, ...props }: VolumeSliderProps = {}) {
 /** @jsxImportSource react */
 
 
+
 import { Gesture } from "@videojs/react";
 
 
@@ -1090,6 +1131,7 @@ export function VideoGestures({ disabled = false }: VideoGesturesProps = {}) {
 
 // ===== react/default-video/css/components/video-hotkeys.tsx =====
 /** @jsxImportSource react */
+
 
 
 import { Hotkey } from "@videojs/react";
@@ -1125,6 +1167,7 @@ export function VideoHotkeys({ disabled = false }: VideoHotkeysProps = {}) {
 
 // ===== react/default-video/css/skins/default-video/skin.tsx =====
 /** @jsxImportSource react */
+
 
 
 import { AirPlayButton } from '../../components/buttons/airplay-button';
@@ -1218,6 +1261,7 @@ export function DefaultVideoSkin({ children, className, poster, ...props }: Defa
 
 
 
+
 import { ButtonTooltip } from './button-tooltip';
 import { AirPlayButton as AirPlayButtonPrimitive } from "@videojs/react";
 import { AirPlayEnterIcon as AirPlayEnterIconPrimitive, AirPlayExitIcon as AirPlayExitIconPrimitive } from "@videojs/react/icons";
@@ -1240,6 +1284,7 @@ export function AirPlayButton({ className, ...props }: AirPlayButtonProps = {}) 
 
 // ===== react/default-video/tailwind/components/buttons/button-tooltip.tsx =====
 /** @jsxImportSource react */
+
 
 
 
@@ -1275,6 +1320,7 @@ export function ButtonTooltip({ children, ...props }: ButtonTooltipProps) {
 
 
 
+
 import { ButtonTooltip } from './button-tooltip';
 import { CaptionsButton as CaptionsButtonPrimitive } from "@videojs/react";
 import { CaptionsOffIcon as CaptionsOffIconPrimitive, CaptionsOnIcon as CaptionsOnIconPrimitive } from "@videojs/react/icons";
@@ -1297,6 +1343,7 @@ export function CaptionsButton({ className, ...props }: CaptionsButtonProps = {}
 
 // ===== react/default-video/tailwind/components/buttons/cast-button.tsx =====
 /** @jsxImportSource react */
+
 
 
 
@@ -1331,6 +1378,7 @@ export function CastButton({ className, ...props }: CastButtonProps = {}) {
 
 
 
+
 import { ButtonTooltip } from './button-tooltip';
 import { FullscreenButton as FullscreenButtonPrimitive } from "@videojs/react";
 import { FullscreenEnterIcon as FullscreenEnterIconPrimitive, FullscreenExitIcon as FullscreenExitIconPrimitive } from "@videojs/react/icons";
@@ -1353,6 +1401,7 @@ export function FullscreenButton({ className, ...props }: FullscreenButtonProps 
 
 // ===== react/default-video/tailwind/components/buttons/mute-button.tsx =====
 /** @jsxImportSource react */
+
 
 
 
@@ -1385,6 +1434,7 @@ export function MuteButton({ className, ...props }: MuteButtonProps = {}) {
 
 
 
+
 import { ButtonTooltip } from './button-tooltip';
 import { PiPButton as PiPButtonPrimitive } from "@videojs/react";
 import { PipEnterIcon as PipEnterIconPrimitive, PipExitIcon as PipExitIconPrimitive } from "@videojs/react/icons";
@@ -1407,6 +1457,7 @@ export function PiPButton({ className, ...props }: PiPButtonProps = {}) {
 
 // ===== react/default-video/tailwind/components/buttons/play-button.tsx =====
 /** @jsxImportSource react */
+
 
 
 
@@ -1442,6 +1493,7 @@ export function PlayButton({ className, ...props }: PlayButtonProps = {}) {
 
 
 
+
 import { ButtonTooltip } from './button-tooltip';
 import { SeekButton as SeekButtonPrimitive } from "@videojs/react";
 import { SeekIcon as SeekIconPrimitive } from "@videojs/react/icons";
@@ -1464,6 +1516,7 @@ export function SeekButton({ className, seconds = 10, ...props }: SeekButtonProp
 
 // ===== react/default-video/tailwind/components/controls/volume-popover.tsx =====
 /** @jsxImportSource react */
+
 
 
 
@@ -1504,6 +1557,7 @@ const volumeAvailability = usePlayer(state => state.volumeAvailability);
 
 
 
+
 import { BufferingIndicator as BufferingIndicatorPrimitive } from "@videojs/react";
 import { SpinnerIcon as SpinnerIconPrimitive } from "@videojs/react/icons";
 import { cn, resolveClassName } from "@videojs/utils/style";
@@ -1523,6 +1577,7 @@ export function BufferingIndicator({ className, ...props }: BufferingIndicatorPr
 
 // ===== react/default-video/tailwind/components/feedback/error-dialog.tsx =====
 /** @jsxImportSource react */
+
 
 
 
@@ -1553,6 +1608,7 @@ export function ErrorDialog({ className, ...props }: ErrorDialogProps = {}) {
 
 
 
+
 import { SeekIndicator as SeekIndicatorPrimitive } from "@videojs/react";
 import { ChevronIcon as ChevronIconPrimitive } from "@videojs/react/icons";
 import { cn, resolveClassName } from "@videojs/utils/style";
@@ -1577,6 +1633,7 @@ export function SeekIndicator({ className, ...props }: SeekIndicatorProps = {}) 
 
 
 
+
 import { StatusAnnouncer as StatusAnnouncerPrimitive } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
@@ -1590,6 +1647,7 @@ export function StatusAnnouncer({ className, ...props }: StatusAnnouncerProps = 
 
 // ===== react/default-video/tailwind/components/feedback/status-indicator.tsx =====
 /** @jsxImportSource react */
+
 
 
 
@@ -1636,6 +1694,7 @@ export function PlaybackStatusIndicator({ className, ...props }: PlaybackStatusI
 /** @jsxImportSource react */
 
 
+
 import { SeekIndicator } from './seek-indicator';
 import { StatusAnnouncer } from './status-announcer';
 import { PlaybackStatusIndicator, StatusIndicator } from './status-indicator';
@@ -1662,6 +1721,7 @@ export function VideoStatusIndicators({ className, ...props }: VideoStatusIndica
 
 // ===== react/default-video/tailwind/components/feedback/volume-indicator.tsx =====
 /** @jsxImportSource react */
+
 
 
 
@@ -1694,6 +1754,7 @@ export function VolumeIndicator({ className, ...props }: VolumeIndicatorProps = 
 
 
 
+
 import { Container as ContainerPrimitive } from "@videojs/react";
 import { cn } from "@videojs/utils/style";
 
@@ -1713,6 +1774,7 @@ export function Container({ children, className, ...props }: ContainerProps) {
 /** @jsxImportSource react */
 
 
+
 import type { ComponentProps } from "react";
 import { cn } from "@videojs/utils/style";
 
@@ -1726,6 +1788,7 @@ export function Overlay({ className, ...props }: OverlayProps = {}) {
 
 // ===== react/default-video/tailwind/components/layout/poster.tsx =====
 /** @jsxImportSource react */
+
 
 
 
@@ -1749,6 +1812,7 @@ import { audioText } from '@videojs/core/i18n/text/menu';
 
 
 
+
 import { AudioTrackRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
@@ -1761,8 +1825,10 @@ import { SpeechIcon as SpeechIconPrimitive } from "@videojs/react/icons";
 
 
 
-export interface AudioTrackMenuProps
-  extends Omit<ComponentProps<typeof Submenu>, 'children' | 'icon' | 'label' | 'selectedLabel'> {}
+export interface AudioTrackMenuProps extends Omit<
+  ComponentProps<typeof Submenu>,
+  'children' | 'icon' | 'label' | 'selectedLabel'
+> {}
 
 export function AudioTrackMenu(props: AudioTrackMenuProps = {}) {
 const audioTrack = useAudioTrackOptions();
@@ -1790,6 +1856,7 @@ import { captionsText } from '@videojs/core/i18n/text/menu';
 
 
 
+
 import { CaptionsRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
@@ -1802,8 +1869,10 @@ import { CaptionsOffIcon as CaptionsOffIconPrimitive } from "@videojs/react/icon
 
 
 
-export interface CaptionsMenuProps
-  extends Omit<ComponentProps<typeof Submenu>, 'children' | 'icon' | 'label' | 'selectedLabel'> {}
+export interface CaptionsMenuProps extends Omit<
+  ComponentProps<typeof Submenu>,
+  'children' | 'icon' | 'label' | 'selectedLabel'
+> {}
 
 export function CaptionsMenu(props: CaptionsMenuProps = {}) {
 const captions = useCaptionsOptions();
@@ -1837,6 +1906,7 @@ import { cn } from "@videojs/utils/style";
 
 
 
+
 export interface MenuChevronProps extends Omit<IconProps, "children"> {
 flipped?: boolean
 }
@@ -1855,6 +1925,7 @@ import { speedText } from '@videojs/core/i18n/text/menu';
 
 
 
+
 import { PlaybackRateRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
@@ -1867,8 +1938,10 @@ import { SpeedIcon as SpeedIconPrimitive } from "@videojs/react/icons";
 
 
 
-export interface PlaybackRateMenuProps
-  extends Omit<ComponentProps<typeof Submenu>, 'children' | 'icon' | 'label' | 'selectedLabel'> {}
+export interface PlaybackRateMenuProps extends Omit<
+  ComponentProps<typeof Submenu>,
+  'children' | 'icon' | 'label' | 'selectedLabel'
+> {}
 
 export function PlaybackRateMenu(props: PlaybackRateMenuProps = {}) {
 const playbackRate = usePlaybackRateOptions();
@@ -1896,6 +1969,7 @@ import { qualityText } from '@videojs/core/i18n/text/menu';
 
 
 
+
 import { QualityRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
@@ -1908,8 +1982,10 @@ import { SwitchesIcon as SwitchesIconPrimitive } from "@videojs/react/icons";
 
 
 
-export interface QualityMenuProps
-  extends Omit<ComponentProps<typeof Submenu>, 'children' | 'icon' | 'label' | 'selectedLabel'> {}
+export interface QualityMenuProps extends Omit<
+  ComponentProps<typeof Submenu>,
+  'children' | 'icon' | 'label' | 'selectedLabel'
+> {}
 
 export function QualityMenu(props: QualityMenuProps = {}) {
 const quality = useQualityOptions();
@@ -1942,6 +2018,7 @@ const available = quality?.state.availability === 'available';
 
 import { QualityRadioGroup as QualityRadioGroupPrimitive, AudioTrackRadioGroup as AudioTrackRadioGroupPrimitive, PlaybackRateRadioGroup as PlaybackRateRadioGroupPrimitive, CaptionsRadioGroup as CaptionsRadioGroupPrimitive } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
+
 
 
 
@@ -1980,6 +2057,7 @@ import { cn, resolveClassName } from "@videojs/utils/style";
 
 
 
+
 export interface RadioItemProps extends Menu.RadioItem.RadioItemProps {}
 export function RadioItem({ children, className, ...props }: RadioItemProps) {
   return (
@@ -2012,6 +2090,7 @@ import { cn, resolveClassName } from "@videojs/utils/style";
 
 
 
+
 export interface SettingsMenuProps extends Menu.Root.RootProps {}
 export function SettingsMenu({ children, className, ...props }: SettingsMenuProps) {
   return (
@@ -2036,6 +2115,7 @@ export function SettingsMenu({ children, className, ...props }: SettingsMenuProp
 
 // ===== react/default-video/tailwind/components/menus/submenu.tsx =====
 /** @jsxImportSource react */
+
 
 
 
@@ -2083,6 +2163,7 @@ export function Submenu({
 /** @jsxImportSource react */
 
 
+
 import { AudioTrackMenu } from './audio-track-menu';
 import { CaptionsMenu } from './captions-menu';
 import { PlaybackRateMenu } from './playback-rate-menu';
@@ -2114,6 +2195,7 @@ const hasSettings = quality?.state.availability === 'available' || audioTrack?.s
 
 // ===== react/default-video/tailwind/components/sliders/time-slider.tsx =====
 /** @jsxImportSource react */
+
 
 
 
@@ -2162,6 +2244,7 @@ export function TimeSlider({ className, ...props }: TimeSliderProps = {}) {
 
 
 
+
 import { VolumeSlider as VolumeSliderPrimitive } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
@@ -2182,6 +2265,7 @@ export function VolumeSlider({ className, ...props }: VolumeSliderProps = {}) {
 
 // ===== react/default-video/tailwind/components/video-gestures.tsx =====
 /** @jsxImportSource react */
+
 
 
 import { Gesture } from "@videojs/react";
@@ -2205,6 +2289,7 @@ export function VideoGestures({ disabled = false }: VideoGesturesProps = {}) {
 
 // ===== react/default-video/tailwind/components/video-hotkeys.tsx =====
 /** @jsxImportSource react */
+
 
 
 import { Hotkey } from "@videojs/react";
@@ -2240,6 +2325,7 @@ export function VideoHotkeys({ disabled = false }: VideoHotkeysProps = {}) {
 
 // ===== react/default-video/tailwind/skins/default-video/skin.tsx =====
 /** @jsxImportSource react */
+
 
 
 import { AirPlayButton } from '../../components/buttons/airplay-button';
@@ -2330,6 +2416,7 @@ export function DefaultVideoSkin({ children, className, poster, ...props }: Defa
 
 
 
+
 import { ButtonTooltip } from './button-tooltip';
 import "virtual:vjsc/css/bedd34a0f91c/base.css";
 import "virtual:vjsc/css/aec2ff69d680/buttons.css";
@@ -2355,6 +2442,7 @@ export function AirPlayButton({ className, ...props }: AirPlayButtonProps = {}) 
 
 // ===== react/minimal-video/css/components/buttons/button-tooltip.tsx =====
 /** @jsxImportSource react */
+
 
 
 
@@ -2393,6 +2481,7 @@ export function ButtonTooltip({ children, ...props }: ButtonTooltipProps) {
 
 
 
+
 import { ButtonTooltip } from './button-tooltip';
 import "virtual:vjsc/css/bedd34a0f91c/base.css";
 import "virtual:vjsc/css/f124e7449d14/buttons.css";
@@ -2418,6 +2507,7 @@ export function CaptionsButton({ className, ...props }: CaptionsButtonProps = {}
 
 // ===== react/minimal-video/css/components/buttons/cast-button.tsx =====
 /** @jsxImportSource react */
+
 
 
 
@@ -2455,6 +2545,7 @@ export function CastButton({ className, ...props }: CastButtonProps = {}) {
 
 
 
+
 import { ButtonTooltip } from './button-tooltip';
 import "virtual:vjsc/css/bedd34a0f91c/base.css";
 import "virtual:vjsc/css/4a4a2bda24bc/buttons.css";
@@ -2480,6 +2571,7 @@ export function FullscreenButton({ className, ...props }: FullscreenButtonProps 
 
 // ===== react/minimal-video/css/components/buttons/mute-button.tsx =====
 /** @jsxImportSource react */
+
 
 
 
@@ -2515,6 +2607,7 @@ export function MuteButton({ className, ...props }: MuteButtonProps = {}) {
 
 
 
+
 import { ButtonTooltip } from './button-tooltip';
 import "virtual:vjsc/css/bedd34a0f91c/base.css";
 import "virtual:vjsc/css/4d520c93f82b/buttons.css";
@@ -2540,6 +2633,7 @@ export function PiPButton({ className, ...props }: PiPButtonProps = {}) {
 
 // ===== react/minimal-video/css/components/buttons/play-button.tsx =====
 /** @jsxImportSource react */
+
 
 
 
@@ -2578,6 +2672,7 @@ export function PlayButton({ className, ...props }: PlayButtonProps = {}) {
 
 
 
+
 import { ButtonTooltip } from './button-tooltip';
 import "virtual:vjsc/css/bedd34a0f91c/base.css";
 import "virtual:vjsc/css/bd10355d518c/buttons.css";
@@ -2603,6 +2698,7 @@ export function SeekButton({ className, seconds = 10, ...props }: SeekButtonProp
 
 // ===== react/minimal-video/css/components/controls/volume-popover.tsx =====
 /** @jsxImportSource react */
+
 
 
 
@@ -2647,6 +2743,7 @@ const volumeAvailability = usePlayer(state => state.volumeAvailability);
 
 
 
+
 import "virtual:vjsc/css/bedd34a0f91c/base.css";
 import "virtual:vjsc/css/38384b81e271/indicator.css";
 import { BufferingIndicator as BufferingIndicatorPrimitive } from "@videojs/react";
@@ -2668,6 +2765,7 @@ export function BufferingIndicator({ className, ...props }: BufferingIndicatorPr
 
 // ===== react/minimal-video/css/components/feedback/error-dialog.tsx =====
 /** @jsxImportSource react */
+
 
 
 
@@ -2703,6 +2801,7 @@ export function ErrorDialog({ className, ...props }: ErrorDialogProps = {}) {
 
 
 
+
 import "virtual:vjsc/css/bedd34a0f91c/base.css";
 import "virtual:vjsc/css/376ec5a88533/indicator.css";
 import { SeekIndicator as SeekIndicatorPrimitive } from "@videojs/react";
@@ -2730,6 +2829,7 @@ export function SeekIndicator({ className, ...props }: SeekIndicatorProps = {}) 
 
 
 
+
 import "virtual:vjsc/css/bedd34a0f91c/base.css";
 import "virtual:vjsc/css/badc124fbf52/indicator.css";
 import { StatusAnnouncer as StatusAnnouncerPrimitive } from "@videojs/react";
@@ -2745,6 +2845,7 @@ export function StatusAnnouncer({ className, ...props }: StatusAnnouncerProps = 
 
 // ===== react/minimal-video/css/components/feedback/status-indicator.tsx =====
 /** @jsxImportSource react */
+
 
 
 
@@ -2794,6 +2895,7 @@ export function PlaybackStatusIndicator({ className, ...props }: PlaybackStatusI
 /** @jsxImportSource react */
 
 
+
 import { SeekIndicator } from './seek-indicator';
 import { StatusAnnouncer } from './status-announcer';
 import { PlaybackStatusIndicator, StatusIndicator } from './status-indicator';
@@ -2823,6 +2925,7 @@ export function VideoStatusIndicators({ className, ...props }: VideoStatusIndica
 
 // ===== react/minimal-video/css/components/feedback/volume-indicator.tsx =====
 /** @jsxImportSource react */
+
 
 
 
@@ -2859,8 +2962,9 @@ export function VolumeIndicator({ className, ...props }: VolumeIndicatorProps = 
 
 
 
+
 import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/41be13712e86/container.css";
+import "virtual:vjsc/css/191f04562082/container.css";
 import { Container as ContainerPrimitive } from "@videojs/react";
 import { cn } from "@videojs/utils/style";
 
@@ -2881,6 +2985,7 @@ export function Container({ children, className, ...props }: ContainerProps) {
 
 
 
+
 import "virtual:vjsc/css/bedd34a0f91c/base.css";
 import "virtual:vjsc/css/aba1d0b4eb6f/overlays.css";
 import type { ComponentProps } from "react";
@@ -2896,6 +3001,7 @@ export function Overlay({ className, ...props }: OverlayProps = {}) {
 
 // ===== react/minimal-video/css/components/layout/poster.tsx =====
 /** @jsxImportSource react */
+
 
 
 
@@ -2922,6 +3028,7 @@ import { audioText } from '@videojs/core/i18n/text/menu';
 
 
 
+
 import { AudioTrackRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
@@ -2937,8 +3044,10 @@ import { SpeechIcon as SpeechIconPrimitive } from "@videojs/react/icons/minimal"
 
 
 
-export interface AudioTrackMenuProps
-  extends Omit<ComponentProps<typeof Submenu>, 'children' | 'icon' | 'label' | 'selectedLabel'> {}
+export interface AudioTrackMenuProps extends Omit<
+  ComponentProps<typeof Submenu>,
+  'children' | 'icon' | 'label' | 'selectedLabel'
+> {}
 
 export function AudioTrackMenu(props: AudioTrackMenuProps = {}) {
 const audioTrack = useAudioTrackOptions();
@@ -2966,6 +3075,7 @@ import { captionsText } from '@videojs/core/i18n/text/menu';
 
 
 
+
 import { CaptionsRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
@@ -2981,8 +3091,10 @@ import { CaptionsOffIcon as CaptionsOffIconPrimitive } from "@videojs/react/icon
 
 
 
-export interface CaptionsMenuProps
-  extends Omit<ComponentProps<typeof Submenu>, 'children' | 'icon' | 'label' | 'selectedLabel'> {}
+export interface CaptionsMenuProps extends Omit<
+  ComponentProps<typeof Submenu>,
+  'children' | 'icon' | 'label' | 'selectedLabel'
+> {}
 
 export function CaptionsMenu(props: CaptionsMenuProps = {}) {
 const captions = useCaptionsOptions();
@@ -3006,6 +3118,7 @@ const available = captions?.state.availability === 'available';
 
 // ===== react/minimal-video/css/components/menus/menu-chevron.tsx =====
 /** @jsxImportSource react */
+
 
 
 
@@ -3037,6 +3150,7 @@ import { speedText } from '@videojs/core/i18n/text/menu';
 
 
 
+
 import { PlaybackRateRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
@@ -3052,8 +3166,10 @@ import { SpeedIcon as SpeedIconPrimitive } from "@videojs/react/icons/minimal";
 
 
 
-export interface PlaybackRateMenuProps
-  extends Omit<ComponentProps<typeof Submenu>, 'children' | 'icon' | 'label' | 'selectedLabel'> {}
+export interface PlaybackRateMenuProps extends Omit<
+  ComponentProps<typeof Submenu>,
+  'children' | 'icon' | 'label' | 'selectedLabel'
+> {}
 
 export function PlaybackRateMenu(props: PlaybackRateMenuProps = {}) {
 const playbackRate = usePlaybackRateOptions();
@@ -3081,6 +3197,7 @@ import { qualityText } from '@videojs/core/i18n/text/menu';
 
 
 
+
 import { QualityRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
@@ -3096,8 +3213,10 @@ import { SwitchesIcon as SwitchesIconPrimitive } from "@videojs/react/icons/mini
 
 
 
-export interface QualityMenuProps
-  extends Omit<ComponentProps<typeof Submenu>, 'children' | 'icon' | 'label' | 'selectedLabel'> {}
+export interface QualityMenuProps extends Omit<
+  ComponentProps<typeof Submenu>,
+  'children' | 'icon' | 'label' | 'selectedLabel'
+> {}
 
 export function QualityMenu(props: QualityMenuProps = {}) {
 const quality = useQualityOptions();
@@ -3125,6 +3244,7 @@ const available = quality?.state.availability === 'available';
 
 // ===== react/minimal-video/css/components/menus/radio-group.tsx =====
 /** @jsxImportSource react */
+
 
 
 
@@ -3164,6 +3284,7 @@ export function CaptionsRadioGroup({ className, ...props }: CaptionsRadioGroupPr
 
 
 
+
 import "virtual:vjsc/css/bedd34a0f91c/base.css";
 import "virtual:vjsc/css/d8e69a8a32f8/menus.css";
 import { Menu } from "@videojs/react";
@@ -3190,6 +3311,7 @@ export function RadioItem({ children, className, ...props }: RadioItemProps) {
 /** @jsxImportSource react */
 
 import { settingsText } from '@videojs/core/i18n/text/menu';
+
 
 
 
@@ -3235,6 +3357,7 @@ export function SettingsMenu({ children, className, ...props }: SettingsMenuProp
 
 // ===== react/minimal-video/css/components/menus/submenu.tsx =====
 /** @jsxImportSource react */
+
 
 
 
@@ -3285,6 +3408,7 @@ export function Submenu({
 /** @jsxImportSource react */
 
 
+
 import { AudioTrackMenu } from './audio-track-menu';
 import { CaptionsMenu } from './captions-menu';
 import { PlaybackRateMenu } from './playback-rate-menu';
@@ -3316,6 +3440,7 @@ const hasSettings = quality?.state.availability === 'available' || audioTrack?.s
 
 // ===== react/minimal-video/css/components/sliders/time-slider.tsx =====
 /** @jsxImportSource react */
+
 
 
 
@@ -3369,6 +3494,7 @@ export function TimeSlider({ className, ...props }: TimeSliderProps = {}) {
 
 
 
+
 import "virtual:vjsc/css/bedd34a0f91c/base.css";
 import "virtual:vjsc/css/e009640592bf/sliders.css";
 import { VolumeSlider as VolumeSliderPrimitive } from "@videojs/react";
@@ -3393,6 +3519,7 @@ export function VolumeSlider({ className, ...props }: VolumeSliderProps = {}) {
 /** @jsxImportSource react */
 
 
+
 import { Gesture } from "@videojs/react";
 
 
@@ -3414,6 +3541,7 @@ export function VideoGestures({ disabled = false }: VideoGesturesProps = {}) {
 
 // ===== react/minimal-video/css/components/video-hotkeys.tsx =====
 /** @jsxImportSource react */
+
 
 
 import { Hotkey } from "@videojs/react";
@@ -3449,6 +3577,7 @@ export function VideoHotkeys({ disabled = false }: VideoHotkeysProps = {}) {
 
 // ===== react/minimal-video/css/skins/minimal-video/skin.tsx =====
 /** @jsxImportSource react */
+
 
 
 import { AirPlayButton } from '../../components/buttons/airplay-button';
@@ -3540,6 +3669,7 @@ export function MinimalVideoSkin({ children, className, poster, ...props }: Mini
 
 
 
+
 import { ButtonTooltip } from './button-tooltip';
 import { AirPlayButton as AirPlayButtonPrimitive } from "@videojs/react";
 import { AirPlayEnterIcon as AirPlayEnterIconPrimitive, AirPlayExitIcon as AirPlayExitIconPrimitive } from "@videojs/react/icons/minimal";
@@ -3562,6 +3692,7 @@ export function AirPlayButton({ className, ...props }: AirPlayButtonProps = {}) 
 
 // ===== react/minimal-video/tailwind/components/buttons/button-tooltip.tsx =====
 /** @jsxImportSource react */
+
 
 
 
@@ -3597,6 +3728,7 @@ export function ButtonTooltip({ children, ...props }: ButtonTooltipProps) {
 
 
 
+
 import { ButtonTooltip } from './button-tooltip';
 import { CaptionsButton as CaptionsButtonPrimitive } from "@videojs/react";
 import { CaptionsOffIcon as CaptionsOffIconPrimitive, CaptionsOnIcon as CaptionsOnIconPrimitive } from "@videojs/react/icons/minimal";
@@ -3619,6 +3751,7 @@ export function CaptionsButton({ className, ...props }: CaptionsButtonProps = {}
 
 // ===== react/minimal-video/tailwind/components/buttons/cast-button.tsx =====
 /** @jsxImportSource react */
+
 
 
 
@@ -3653,6 +3786,7 @@ export function CastButton({ className, ...props }: CastButtonProps = {}) {
 
 
 
+
 import { ButtonTooltip } from './button-tooltip';
 import { FullscreenButton as FullscreenButtonPrimitive } from "@videojs/react";
 import { FullscreenEnterIcon as FullscreenEnterIconPrimitive, FullscreenExitIcon as FullscreenExitIconPrimitive } from "@videojs/react/icons/minimal";
@@ -3675,6 +3809,7 @@ export function FullscreenButton({ className, ...props }: FullscreenButtonProps 
 
 // ===== react/minimal-video/tailwind/components/buttons/mute-button.tsx =====
 /** @jsxImportSource react */
+
 
 
 
@@ -3707,6 +3842,7 @@ export function MuteButton({ className, ...props }: MuteButtonProps = {}) {
 
 
 
+
 import { ButtonTooltip } from './button-tooltip';
 import { PiPButton as PiPButtonPrimitive } from "@videojs/react";
 import { PipEnterIcon as PipEnterIconPrimitive, PipExitIcon as PipExitIconPrimitive } from "@videojs/react/icons/minimal";
@@ -3729,6 +3865,7 @@ export function PiPButton({ className, ...props }: PiPButtonProps = {}) {
 
 // ===== react/minimal-video/tailwind/components/buttons/play-button.tsx =====
 /** @jsxImportSource react */
+
 
 
 
@@ -3764,6 +3901,7 @@ export function PlayButton({ className, ...props }: PlayButtonProps = {}) {
 
 
 
+
 import { ButtonTooltip } from './button-tooltip';
 import { SeekButton as SeekButtonPrimitive } from "@videojs/react";
 import { SeekIcon as SeekIconPrimitive } from "@videojs/react/icons/minimal";
@@ -3786,6 +3924,7 @@ export function SeekButton({ className, seconds = 10, ...props }: SeekButtonProp
 
 // ===== react/minimal-video/tailwind/components/controls/volume-popover.tsx =====
 /** @jsxImportSource react */
+
 
 
 
@@ -3826,6 +3965,7 @@ const volumeAvailability = usePlayer(state => state.volumeAvailability);
 
 
 
+
 import { BufferingIndicator as BufferingIndicatorPrimitive } from "@videojs/react";
 import { SpinnerIcon as SpinnerIconPrimitive } from "@videojs/react/icons/minimal";
 import { cn, resolveClassName } from "@videojs/utils/style";
@@ -3845,6 +3985,7 @@ export function BufferingIndicator({ className, ...props }: BufferingIndicatorPr
 
 // ===== react/minimal-video/tailwind/components/feedback/error-dialog.tsx =====
 /** @jsxImportSource react */
+
 
 
 
@@ -3875,6 +4016,7 @@ export function ErrorDialog({ className, ...props }: ErrorDialogProps = {}) {
 
 
 
+
 import { SeekIndicator as SeekIndicatorPrimitive } from "@videojs/react";
 import { ChevronIcon as ChevronIconPrimitive } from "@videojs/react/icons/minimal";
 import { cn, resolveClassName } from "@videojs/utils/style";
@@ -3899,6 +4041,7 @@ export function SeekIndicator({ className, ...props }: SeekIndicatorProps = {}) 
 
 
 
+
 import { StatusAnnouncer as StatusAnnouncerPrimitive } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
@@ -3912,6 +4055,7 @@ export function StatusAnnouncer({ className, ...props }: StatusAnnouncerProps = 
 
 // ===== react/minimal-video/tailwind/components/feedback/status-indicator.tsx =====
 /** @jsxImportSource react */
+
 
 
 
@@ -3958,6 +4102,7 @@ export function PlaybackStatusIndicator({ className, ...props }: PlaybackStatusI
 /** @jsxImportSource react */
 
 
+
 import { SeekIndicator } from './seek-indicator';
 import { StatusAnnouncer } from './status-announcer';
 import { PlaybackStatusIndicator, StatusIndicator } from './status-indicator';
@@ -3984,6 +4129,7 @@ export function VideoStatusIndicators({ className, ...props }: VideoStatusIndica
 
 // ===== react/minimal-video/tailwind/components/feedback/volume-indicator.tsx =====
 /** @jsxImportSource react */
+
 
 
 
@@ -4016,6 +4162,7 @@ export function VolumeIndicator({ className, ...props }: VolumeIndicatorProps = 
 
 
 
+
 import { Container as ContainerPrimitive } from "@videojs/react";
 import { cn } from "@videojs/utils/style";
 
@@ -4035,6 +4182,7 @@ export function Container({ children, className, ...props }: ContainerProps) {
 /** @jsxImportSource react */
 
 
+
 import type { ComponentProps } from "react";
 import { cn } from "@videojs/utils/style";
 
@@ -4048,6 +4196,7 @@ export function Overlay({ className, ...props }: OverlayProps = {}) {
 
 // ===== react/minimal-video/tailwind/components/layout/poster.tsx =====
 /** @jsxImportSource react */
+
 
 
 
@@ -4071,6 +4220,7 @@ import { audioText } from '@videojs/core/i18n/text/menu';
 
 
 
+
 import { AudioTrackRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
@@ -4083,8 +4233,10 @@ import { SpeechIcon as SpeechIconPrimitive } from "@videojs/react/icons/minimal"
 
 
 
-export interface AudioTrackMenuProps
-  extends Omit<ComponentProps<typeof Submenu>, 'children' | 'icon' | 'label' | 'selectedLabel'> {}
+export interface AudioTrackMenuProps extends Omit<
+  ComponentProps<typeof Submenu>,
+  'children' | 'icon' | 'label' | 'selectedLabel'
+> {}
 
 export function AudioTrackMenu(props: AudioTrackMenuProps = {}) {
 const audioTrack = useAudioTrackOptions();
@@ -4112,6 +4264,7 @@ import { captionsText } from '@videojs/core/i18n/text/menu';
 
 
 
+
 import { CaptionsRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
@@ -4124,8 +4277,10 @@ import { CaptionsOffIcon as CaptionsOffIconPrimitive } from "@videojs/react/icon
 
 
 
-export interface CaptionsMenuProps
-  extends Omit<ComponentProps<typeof Submenu>, 'children' | 'icon' | 'label' | 'selectedLabel'> {}
+export interface CaptionsMenuProps extends Omit<
+  ComponentProps<typeof Submenu>,
+  'children' | 'icon' | 'label' | 'selectedLabel'
+> {}
 
 export function CaptionsMenu(props: CaptionsMenuProps = {}) {
 const captions = useCaptionsOptions();
@@ -4159,6 +4314,7 @@ import { cn } from "@videojs/utils/style";
 
 
 
+
 export interface MenuChevronProps extends Omit<IconProps, "children"> {
 flipped?: boolean
 }
@@ -4177,6 +4333,7 @@ import { speedText } from '@videojs/core/i18n/text/menu';
 
 
 
+
 import { PlaybackRateRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
@@ -4189,8 +4346,10 @@ import { SpeedIcon as SpeedIconPrimitive } from "@videojs/react/icons/minimal";
 
 
 
-export interface PlaybackRateMenuProps
-  extends Omit<ComponentProps<typeof Submenu>, 'children' | 'icon' | 'label' | 'selectedLabel'> {}
+export interface PlaybackRateMenuProps extends Omit<
+  ComponentProps<typeof Submenu>,
+  'children' | 'icon' | 'label' | 'selectedLabel'
+> {}
 
 export function PlaybackRateMenu(props: PlaybackRateMenuProps = {}) {
 const playbackRate = usePlaybackRateOptions();
@@ -4218,6 +4377,7 @@ import { qualityText } from '@videojs/core/i18n/text/menu';
 
 
 
+
 import { QualityRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
@@ -4230,8 +4390,10 @@ import { SwitchesIcon as SwitchesIconPrimitive } from "@videojs/react/icons/mini
 
 
 
-export interface QualityMenuProps
-  extends Omit<ComponentProps<typeof Submenu>, 'children' | 'icon' | 'label' | 'selectedLabel'> {}
+export interface QualityMenuProps extends Omit<
+  ComponentProps<typeof Submenu>,
+  'children' | 'icon' | 'label' | 'selectedLabel'
+> {}
 
 export function QualityMenu(props: QualityMenuProps = {}) {
 const quality = useQualityOptions();
@@ -4264,6 +4426,7 @@ const available = quality?.state.availability === 'available';
 
 import { QualityRadioGroup as QualityRadioGroupPrimitive, AudioTrackRadioGroup as AudioTrackRadioGroupPrimitive, PlaybackRateRadioGroup as PlaybackRateRadioGroupPrimitive, CaptionsRadioGroup as CaptionsRadioGroupPrimitive } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
+
 
 
 
@@ -4302,6 +4465,7 @@ import { cn, resolveClassName } from "@videojs/utils/style";
 
 
 
+
 export interface RadioItemProps extends Menu.RadioItem.RadioItemProps {}
 export function RadioItem({ children, className, ...props }: RadioItemProps) {
   return (
@@ -4334,6 +4498,7 @@ import { cn, resolveClassName } from "@videojs/utils/style";
 
 
 
+
 export interface SettingsMenuProps extends Menu.Root.RootProps {}
 export function SettingsMenu({ children, className, ...props }: SettingsMenuProps) {
   return (
@@ -4358,6 +4523,7 @@ export function SettingsMenu({ children, className, ...props }: SettingsMenuProp
 
 // ===== react/minimal-video/tailwind/components/menus/submenu.tsx =====
 /** @jsxImportSource react */
+
 
 
 
@@ -4405,6 +4571,7 @@ export function Submenu({
 /** @jsxImportSource react */
 
 
+
 import { AudioTrackMenu } from './audio-track-menu';
 import { CaptionsMenu } from './captions-menu';
 import { PlaybackRateMenu } from './playback-rate-menu';
@@ -4436,6 +4603,7 @@ const hasSettings = quality?.state.availability === 'available' || audioTrack?.s
 
 // ===== react/minimal-video/tailwind/components/sliders/time-slider.tsx =====
 /** @jsxImportSource react */
+
 
 
 
@@ -4484,6 +4652,7 @@ export function TimeSlider({ className, ...props }: TimeSliderProps = {}) {
 
 
 
+
 import { VolumeSlider as VolumeSliderPrimitive } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
@@ -4504,6 +4673,7 @@ export function VolumeSlider({ className, ...props }: VolumeSliderProps = {}) {
 
 // ===== react/minimal-video/tailwind/components/video-gestures.tsx =====
 /** @jsxImportSource react */
+
 
 
 import { Gesture } from "@videojs/react";
@@ -4527,6 +4697,7 @@ export function VideoGestures({ disabled = false }: VideoGesturesProps = {}) {
 
 // ===== react/minimal-video/tailwind/components/video-hotkeys.tsx =====
 /** @jsxImportSource react */
+
 
 
 import { Hotkey } from "@videojs/react";
@@ -4562,6 +4733,7 @@ export function VideoHotkeys({ disabled = false }: VideoHotkeysProps = {}) {
 
 // ===== react/minimal-video/tailwind/skins/minimal-video/skin.tsx =====
 /** @jsxImportSource react */
+
 
 
 import { AirPlayButton } from '../../components/buttons/airplay-button';
@@ -4650,6 +4822,7 @@ import type { AirPlayButtonProps as CoreProps } from '@videojs/core';
 import type { Props } from 'vjsc/components';
 
 
+
 import { ButtonTooltip } from './button-tooltip';
 import "virtual:vjsc/css/bedd34a0f91c/base.css";
 import "virtual:vjsc/css/b01fe420d698/buttons.css";
@@ -4676,6 +4849,7 @@ import type { TooltipProps } from '@videojs/core';
 import type { PropsWithChildren, VjscElement } from 'vjsc/components';
 
 
+
 import "virtual:vjsc/css/bedd34a0f91c/base.css";
 import "virtual:vjsc/css/4db96e7945a7/popups.css";
 import "@videojs/html/ui/tooltip";
@@ -4685,7 +4859,7 @@ import { Host, Scope } from "vjsc/html-runtime/jsx-runtime";
 
 export function ButtonTooltip({ children, ...props }: PropsWithChildren<TooltipProps> & { children: VjscElement }) {
   return (
-    <Scope prefix="<module>-dp"><><Host id="__vjsc-id-<module>-dp-trigger">{children}</Host><media-tooltip trigger="__vjsc-id-<module>-dp-trigger" {...props} class={["media-surface", "media-tooltip"]}>
+    <Scope prefix="<module>-dq"><><Host id="__vjsc-id-<module>-dq-trigger">{children}</Host><media-tooltip trigger="__vjsc-id-<module>-dq-trigger" {...props} class={["media-surface", "media-tooltip"]}>
         <media-tooltip-label />
         <media-tooltip-shortcut className={"media-tooltip-shortcut"} />
       </media-tooltip></></Scope>
@@ -4698,6 +4872,7 @@ import type { CaptionsButtonProps as CoreProps } from '@videojs/core';
 
 
 import type { Props } from 'vjsc/components';
+
 
 
 import { ButtonTooltip } from './button-tooltip';
@@ -4727,6 +4902,7 @@ import type { CastButtonProps as CoreProps } from '@videojs/core';
 import type { Props } from 'vjsc/components';
 
 
+
 import { ButtonTooltip } from './button-tooltip';
 import "virtual:vjsc/css/bedd34a0f91c/base.css";
 import "virtual:vjsc/css/35aa67923582/buttons.css";
@@ -4752,6 +4928,7 @@ import type { FullscreenButtonProps as CoreProps } from '@videojs/core';
 
 
 import type { Props } from 'vjsc/components';
+
 
 
 import { ButtonTooltip } from './button-tooltip';
@@ -4781,6 +4958,7 @@ import type { MuteButtonProps as CoreProps } from '@videojs/core';
 import type { Props } from 'vjsc/components';
 
 
+
 import "virtual:vjsc/css/bedd34a0f91c/base.css";
 import "virtual:vjsc/css/e79d3687fca3/buttons.css";
 import "@videojs/html/icons/element";
@@ -4804,6 +4982,7 @@ import type { PiPButtonProps as CoreProps } from '@videojs/core';
 
 
 import type { Props } from 'vjsc/components';
+
 
 
 import { ButtonTooltip } from './button-tooltip';
@@ -4831,6 +5010,7 @@ import type { PlayButtonProps as CoreProps } from '@videojs/core';
 
 
 import type { Props } from 'vjsc/components';
+
 
 
 import { ButtonTooltip } from './button-tooltip';
@@ -4861,6 +5041,7 @@ import type { SeekButtonProps as CoreProps } from '@videojs/core';
 import { type Props } from "vjsc/components";
 
 
+
 import { ButtonTooltip } from './button-tooltip';
 import "virtual:vjsc/css/bedd34a0f91c/base.css";
 import "virtual:vjsc/css/1cedab86c96b/buttons.css";
@@ -4885,6 +5066,7 @@ export function SeekButton({ className, seconds = 10, ...props }: Props<CoreProp
 import type { PopoverProps as CoreProps, VolumeSliderProps as CoreVolumeSliderProps } from '@videojs/core';
 
 import type { Props } from 'vjsc/components';
+
 
 
 import { MuteButton } from '../buttons/mute-button';
@@ -4922,6 +5104,7 @@ import type { BufferingIndicatorProps as CoreProps } from '@videojs/core';
 import type { Props } from 'vjsc/components';
 
 
+
 import "virtual:vjsc/css/bedd34a0f91c/base.css";
 import "virtual:vjsc/css/d55f9ee6dba6/indicator.css";
 import "@videojs/html/icons/element";
@@ -4941,6 +5124,7 @@ export function BufferingIndicator({ className, ...props }: Props<CoreProps> = {
 /** @jsxImportSource vjsc/html-runtime */
 
 import type { Props } from 'vjsc/components';
+
 
 
 
@@ -4974,6 +5158,7 @@ import type { SeekIndicatorProps as CoreProps } from '@videojs/core';
 import type { Props } from 'vjsc/components';
 
 
+
 import "virtual:vjsc/css/bedd34a0f91c/base.css";
 import "virtual:vjsc/css/d495ce8500cd/indicator.css";
 import "@videojs/html/icons/element";
@@ -4998,6 +5183,7 @@ import type { StatusAnnouncerProps as CoreProps } from '@videojs/core';
 import type { Props } from 'vjsc/components';
 
 
+
 import "virtual:vjsc/css/bedd34a0f91c/base.css";
 import "virtual:vjsc/css/0c334683682c/indicator.css";
 import "@videojs/html/ui/status-announcer";
@@ -5014,6 +5200,7 @@ import type { StatusIndicatorProps as CoreProps } from '@videojs/core';
 
 
 import type { Props } from 'vjsc/components';
+
 
 
 import "virtual:vjsc/css/bedd34a0f91c/base.css";
@@ -5055,6 +5242,7 @@ export function PlaybackStatusIndicator({ className, ...props }: Props<Omit<Core
 /** @jsxImportSource vjsc/html-runtime */
 import { type Props } from "vjsc/components";
 
+
 import { SeekIndicator } from './seek-indicator';
 import { StatusAnnouncer } from './status-announcer';
 import { PlaybackStatusIndicator, StatusIndicator } from './status-indicator';
@@ -5085,6 +5273,7 @@ import type { VolumeIndicatorProps as CoreProps } from '@videojs/core';
 import type { Props } from 'vjsc/components';
 
 
+
 import "virtual:vjsc/css/bedd34a0f91c/base.css";
 import "virtual:vjsc/css/0307a475cee7/indicator.css";
 import "@videojs/html/icons/element";
@@ -5113,9 +5302,10 @@ export function VolumeIndicator({ className, ...props }: Props<CoreProps> = {}) 
 import type { PropsWithChildren } from 'vjsc/components';
 
 
+
 import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/6b8f96f4b500/container.css";
-import "@videojs/html/media/container";
+import "virtual:vjsc/css/7c27e75dc682/container.css";
+import "@videojs/html/ui/container";
 
 
 
@@ -5132,6 +5322,7 @@ export function Container({ children, className, ...props }: PropsWithChildren) 
 import { type Props } from "vjsc/components";
 
 
+
 import "virtual:vjsc/css/bedd34a0f91c/base.css";
 import "virtual:vjsc/css/291fcf126366/overlays.css";
 
@@ -5145,6 +5336,7 @@ export function Overlay({ className, ...props }: Props = {}) {
 import type { PosterProps as CoreProps } from '@videojs/core';
 
 import { type PropsWithChildren } from "vjsc/components";
+
 
 
 import "virtual:vjsc/css/bedd34a0f91c/base.css";
@@ -5167,6 +5359,7 @@ import { audioText } from '@videojs/core/i18n/text/menu';
 
 import { type PropsOf } from "vjsc/components";
 
+
 import { AudioTrackRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
@@ -5178,8 +5371,10 @@ import "@videojs/html/icons/element";
 
 
 
-export interface AudioTrackMenuProps
-  extends Omit<PropsOf<typeof Submenu>, 'children' | 'icon' | 'label' | 'selectedLabel'> {}
+export interface AudioTrackMenuProps extends Omit<
+  PropsOf<typeof Submenu>,
+  'children' | 'icon' | 'label' | 'selectedLabel'
+> {}
 
 export function AudioTrackMenu(props: AudioTrackMenuProps = {}) {
   return (
@@ -5206,6 +5401,7 @@ import { captionsText } from '@videojs/core/i18n/text/menu';
 
 import { type PropsOf } from "vjsc/components";
 
+
 import { CaptionsRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
@@ -5217,8 +5413,10 @@ import "@videojs/html/icons/element";
 
 
 
-export interface CaptionsMenuProps
-  extends Omit<PropsOf<typeof Submenu>, 'children' | 'icon' | 'label' | 'selectedLabel'> {}
+export interface CaptionsMenuProps extends Omit<
+  PropsOf<typeof Submenu>,
+  'children' | 'icon' | 'label' | 'selectedLabel'
+> {}
 
 export function CaptionsMenu(props: CaptionsMenuProps = {}) {
   return (
@@ -5244,6 +5442,7 @@ export function CaptionsMenu(props: CaptionsMenuProps = {}) {
 
 import type { Props } from 'vjsc/components';
 
+
 import "virtual:vjsc/css/bedd34a0f91c/base.css";
 import "virtual:vjsc/css/d1f1f5b2c83b/menus.css";
 import "@videojs/html/icons/element";
@@ -5262,6 +5461,7 @@ import { speedText } from '@videojs/core/i18n/text/menu';
 
 import { type PropsOf } from "vjsc/components";
 
+
 import { PlaybackRateRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
@@ -5273,8 +5473,10 @@ import "@videojs/html/icons/element";
 
 
 
-export interface PlaybackRateMenuProps
-  extends Omit<PropsOf<typeof Submenu>, 'children' | 'icon' | 'label' | 'selectedLabel'> {}
+export interface PlaybackRateMenuProps extends Omit<
+  PropsOf<typeof Submenu>,
+  'children' | 'icon' | 'label' | 'selectedLabel'
+> {}
 
 export function PlaybackRateMenu(props: PlaybackRateMenuProps = {}) {
   return (
@@ -5301,6 +5503,7 @@ import { qualityText } from '@videojs/core/i18n/text/menu';
 
 import { type PropsOf } from "vjsc/components";
 
+
 import { QualityRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
@@ -5312,8 +5515,10 @@ import "@videojs/html/icons/element";
 
 
 
-export interface QualityMenuProps
-  extends Omit<PropsOf<typeof Submenu>, 'children' | 'icon' | 'label' | 'selectedLabel'> {}
+export interface QualityMenuProps extends Omit<
+  PropsOf<typeof Submenu>,
+  'children' | 'icon' | 'label' | 'selectedLabel'
+> {}
 
 export function QualityMenu(props: QualityMenuProps = {}) {
   return (
@@ -5349,6 +5554,7 @@ import type {
 
 import type { PropsWithChildren } from 'vjsc/components';
 
+
 import "virtual:vjsc/css/bedd34a0f91c/base.css";
 import "virtual:vjsc/css/3254c9bd3398/menus.css";
 import "@videojs/html/ui/quality-radio-group";
@@ -5381,6 +5587,7 @@ import type { MenuItemProps } from '@videojs/core';
 
 import type { PropsWithChildren } from 'vjsc/components';
 
+
 import "virtual:vjsc/css/bedd34a0f91c/base.css";
 import "virtual:vjsc/css/bd55498150e6/menus.css";
 import "@videojs/html/icons/element";
@@ -5409,6 +5616,7 @@ import { type PropsWithChildren } from "vjsc/components";
 
 
 
+
 import "virtual:vjsc/css/bedd34a0f91c/base.css";
 import "virtual:vjsc/css/99242b010542/buttons.css";
 import "virtual:vjsc/css/c29d7fce0e53/menus.css";
@@ -5424,12 +5632,12 @@ import { Scope } from "vjsc/html-runtime/jsx-runtime";
 
 export function SettingsMenu({ children, className, ...props }: PropsWithChildren<MenuProps>) {
   return (
-    <Scope prefix="<module>-i4"><><button commandfor="__vjsc-id-<module>-i4-popup" class={["media-button", "media-settings-trigger"]}>
+    <Scope prefix="<module>-i5"><><button commandfor="__vjsc-id-<module>-i5-popup" class={["media-button", "media-settings-trigger"]}>
             <media-icon name="gear" class={["media-button-icon", "media-settings-icon"]} />
             <media-text class={"media-sr-only"} token={settingsText.key}>
               {settingsText.text}
             </media-text>
-          </button><media-menu id="__vjsc-id-<module>-i4-popup" side="top" align="center" {...props} class={["media-surface", "media-popover", "media-settings", className]}>
+          </button><media-menu id="__vjsc-id-<module>-i5-popup" side="top" align="center" {...props} class={["media-surface", "media-popover", "media-settings", className]}>
         <media-menu-content className={"media-menu-content"}>{children}</media-menu-content>
       </media-menu></></Scope>
   );
@@ -5440,6 +5648,7 @@ export function SettingsMenu({ children, className, ...props }: PropsWithChildre
 import type { MenuProps } from '@videojs/core';
 
 import { type PropsWithChildren, type VjscNode } from "vjsc/components";
+
 
 import { MenuChevron } from './menu-chevron';
 import "virtual:vjsc/css/bedd34a0f91c/base.css";
@@ -5464,14 +5673,14 @@ export function Submenu({
   }
 >) {
   return (
-    <Scope prefix="<module>-ga"><><media-menu-item commandfor="__vjsc-id-<module>-ga-content" class={["media-menu-item", "media-item"]}>
+    <Scope prefix="<module>-gb"><><media-menu-item commandfor="__vjsc-id-<module>-gb-content" class={["media-menu-item", "media-item"]}>
         {icon}
         {label}
         <span class={"media-hint"}>
           {selectedLabel}
           <MenuChevron />
         </span>
-      </media-menu-item><media-menu-content id="__vjsc-id-<module>-ga-content" class={["media-submenu-panel", className]}>
+      </media-menu-item><media-menu-content id="__vjsc-id-<module>-gb-content" class={["media-submenu-panel", className]}>
         <media-menu-item className={["media-menu-item", "media-back"]}>
           <MenuChevron flipped />
           {label}
@@ -5485,6 +5694,7 @@ export function Submenu({
 // ===== html/default-video/css/components/menus/video-settings-menu.tsx =====
 /** @jsxImportSource vjsc/html-runtime */
 import type { PropsOf } from 'vjsc/components';
+
 
 import { AudioTrackMenu } from './audio-track-menu';
 import { CaptionsMenu } from './captions-menu';
@@ -5511,6 +5721,7 @@ import type { TimeSliderProps as CoreProps } from '@videojs/core';
 
 
 import { type Props } from "vjsc/components";
+
 
 
 
@@ -5564,6 +5775,7 @@ import type { VolumeSliderProps as CoreProps } from '@videojs/core';
 import type { Props } from 'vjsc/components';
 
 
+
 import "virtual:vjsc/css/bedd34a0f91c/base.css";
 import "virtual:vjsc/css/a0635efdfb16/sliders.css";
 import "@videojs/html/ui/slider-fill";
@@ -5588,6 +5800,7 @@ export function VolumeSlider({ className, ...props }: Props<CoreProps> = {}) {
 /** @jsxImportSource vjsc/html-runtime */
 
 
+
 import "@videojs/html/ui/gesture";
 
 
@@ -5609,6 +5822,7 @@ export function VideoGestures({ disabled = false }: VideoGesturesProps = {}) {
 
 // ===== html/default-video/css/components/video-hotkeys.tsx =====
 /** @jsxImportSource vjsc/html-runtime */
+
 
 
 import "@videojs/html/ui/hotkey";
@@ -5646,6 +5860,7 @@ export function VideoHotkeys({ disabled = false }: VideoHotkeysProps = {}) {
 /** @jsxImportSource vjsc/html-runtime */
 
 import { type PropsOf, type VjscNode } from "vjsc/components";
+
 import { AirPlayButton } from '../../components/buttons/airplay-button';
 import { CaptionsButton } from '../../components/buttons/captions-button';
 import { CastButton } from '../../components/buttons/cast-button';
@@ -5736,6 +5951,7 @@ import type { AirPlayButtonProps as CoreProps } from '@videojs/core';
 import type { Props } from 'vjsc/components';
 
 
+
 import { ButtonTooltip } from './button-tooltip';
 import "@videojs/html/icons/element";
 import "@videojs/html/ui/airplay-button";
@@ -5758,6 +5974,7 @@ import type { TooltipProps } from '@videojs/core';
 
 import type { PropsWithChildren, VjscElement } from 'vjsc/components';
 
+
 import "@videojs/html/ui/tooltip";
 import { Host, Scope } from "vjsc/html-runtime/jsx-runtime";
 
@@ -5765,7 +5982,7 @@ import { Host, Scope } from "vjsc/html-runtime/jsx-runtime";
 
 export function ButtonTooltip({ children, ...props }: PropsWithChildren<TooltipProps> & { children: VjscElement }) {
   return (
-    <Scope prefix="<module>-aw"><><Host id="__vjsc-id-<module>-aw-trigger">{children}</Host><media-tooltip trigger="__vjsc-id-<module>-aw-trigger" {...props} class={["relative", "text-white backdrop-blur-lg backdrop-saturate-150", "after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit]", "after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.1),inset_0_0_0_1px_rgb(255_255_255/0.05)]", "[@media(prefers-reduced-transparency:reduce)]:bg-black [@media(prefers-reduced-transparency:reduce)]:ring-1 [@media(prefers-reduced-transparency:reduce)]:ring-transparent", "[@media(prefers-reduced-transparency:reduce)]:backdrop-filter-none", "[@media(prefers-reduced-transparency:reduce)]:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "contrast-more:bg-black contrast-more:ring-1 contrast-more:ring-transparent contrast-more:backdrop-filter-none", "contrast-more:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "forced-colors:bg-[Canvas] forced-colors:ring-1 forced-colors:ring-[CanvasText]", "forced-colors:after:shadow-[inset_0_1px_0_0_CanvasText,inset_0_0_0_1px_CanvasText]", "shadow-sm shadow-black/15 ring-1 ring-black/10", "[@media(prefers-reduced-transparency:reduce)]:shadow-sm [@media(prefers-reduced-transparency:reduce)]:shadow-black/15", "contrast-more:shadow-sm contrast-more:shadow-black/15", "forced-colors:shadow-sm forced-colors:shadow-black/15", "bg-white/10", "m-0 overflow-visible border-0 text-inherit", "transition-[opacity,filter,transform,scale] duration-100 ease-out motion-reduce:duration-0", "data-starting-style:opacity-0 data-starting-style:blur-xs data-starting-style:scale-95", "data-ending-style:opacity-0 data-ending-style:blur-xs data-ending-style:scale-95", "data-[side=top]:origin-bottom data-[side=bottom]:origin-top data-[side=left]:origin-right data-[side=right]:origin-left", "before:pointer-events-auto before:absolute", "data-[side=top]:before:inset-x-0 data-[side=top]:before:top-full", "data-[side=bottom]:before:inset-x-0 data-[side=bottom]:before:bottom-full", "data-[side=left]:before:inset-y-0 data-[side=left]:before:left-full", "data-[side=right]:before:inset-y-0 data-[side=right]:before:right-full", "m-0 whitespace-nowrap rounded-media-control border-0 px-2.5 py-[0.35rem]", "data-open:flex data-open:items-center data-open:gap-1", "data-[side=top]:before:h-(--media-tooltip-side-offset) data-[side=bottom]:before:h-(--media-tooltip-side-offset)", "data-[side=left]:before:w-(--media-tooltip-side-offset) data-[side=right]:before:w-(--media-tooltip-side-offset)"]}>
+    <Scope prefix="<module>-ax"><><Host id="__vjsc-id-<module>-ax-trigger">{children}</Host><media-tooltip trigger="__vjsc-id-<module>-ax-trigger" {...props} class={["relative", "text-white backdrop-blur-lg backdrop-saturate-150", "after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit]", "after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.1),inset_0_0_0_1px_rgb(255_255_255/0.05)]", "[@media(prefers-reduced-transparency:reduce)]:bg-black [@media(prefers-reduced-transparency:reduce)]:ring-1 [@media(prefers-reduced-transparency:reduce)]:ring-transparent", "[@media(prefers-reduced-transparency:reduce)]:backdrop-filter-none", "[@media(prefers-reduced-transparency:reduce)]:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "contrast-more:bg-black contrast-more:ring-1 contrast-more:ring-transparent contrast-more:backdrop-filter-none", "contrast-more:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "forced-colors:bg-[Canvas] forced-colors:ring-1 forced-colors:ring-[CanvasText]", "forced-colors:after:shadow-[inset_0_1px_0_0_CanvasText,inset_0_0_0_1px_CanvasText]", "shadow-sm shadow-black/15 ring-1 ring-black/10", "[@media(prefers-reduced-transparency:reduce)]:shadow-sm [@media(prefers-reduced-transparency:reduce)]:shadow-black/15", "contrast-more:shadow-sm contrast-more:shadow-black/15", "forced-colors:shadow-sm forced-colors:shadow-black/15", "bg-white/10", "m-0 overflow-visible border-0 text-inherit", "transition-[opacity,filter,transform,scale] duration-100 ease-out motion-reduce:duration-0", "data-starting-style:opacity-0 data-starting-style:blur-xs data-starting-style:scale-95", "data-ending-style:opacity-0 data-ending-style:blur-xs data-ending-style:scale-95", "data-[side=top]:origin-bottom data-[side=bottom]:origin-top data-[side=left]:origin-right data-[side=right]:origin-left", "before:pointer-events-auto before:absolute", "data-[side=top]:before:inset-x-0 data-[side=top]:before:top-full", "data-[side=bottom]:before:inset-x-0 data-[side=bottom]:before:bottom-full", "data-[side=left]:before:inset-y-0 data-[side=left]:before:left-full", "data-[side=right]:before:inset-y-0 data-[side=right]:before:right-full", "m-0 whitespace-nowrap rounded-media-control border-0 px-2.5 py-[0.35rem]", "data-open:flex data-open:items-center data-open:gap-1", "data-[side=top]:before:h-(--media-tooltip-side-offset) data-[side=bottom]:before:h-(--media-tooltip-side-offset)", "data-[side=left]:before:w-(--media-tooltip-side-offset) data-[side=right]:before:w-(--media-tooltip-side-offset)"]}>
         <media-tooltip-label />
         <media-tooltip-shortcut className={"min-w-6 rounded-sm bg-current/30 p-[0.1em] text-center text-[0.75em] font-semibold leading-tight"} />
       </media-tooltip></></Scope>
@@ -5778,6 +5995,7 @@ import type { CaptionsButtonProps as CoreProps } from '@videojs/core';
 
 
 import type { Props } from 'vjsc/components';
+
 
 
 import { ButtonTooltip } from './button-tooltip';
@@ -5804,6 +6022,7 @@ import type { CastButtonProps as CoreProps } from '@videojs/core';
 import type { Props } from 'vjsc/components';
 
 
+
 import { ButtonTooltip } from './button-tooltip';
 import "@videojs/html/icons/element";
 import "@videojs/html/ui/cast-button";
@@ -5826,6 +6045,7 @@ import type { FullscreenButtonProps as CoreProps } from '@videojs/core';
 
 
 import type { Props } from 'vjsc/components';
+
 
 
 import { ButtonTooltip } from './button-tooltip';
@@ -5851,6 +6071,7 @@ import type { MuteButtonProps as CoreProps } from '@videojs/core';
 
 import type { Props } from 'vjsc/components';
 
+
 import "@videojs/html/icons/element";
 import "@videojs/html/ui/mute-button";
 
@@ -5872,6 +6093,7 @@ import type { PiPButtonProps as CoreProps } from '@videojs/core';
 
 
 import type { Props } from 'vjsc/components';
+
 
 
 import { ButtonTooltip } from './button-tooltip';
@@ -5896,6 +6118,7 @@ import type { PlayButtonProps as CoreProps } from '@videojs/core';
 
 
 import type { Props } from 'vjsc/components';
+
 
 
 import { ButtonTooltip } from './button-tooltip';
@@ -5923,6 +6146,7 @@ import type { SeekButtonProps as CoreProps } from '@videojs/core';
 import { type Props } from "vjsc/components";
 
 
+
 import { ButtonTooltip } from './button-tooltip';
 import "@videojs/html/icons/element";
 import "@videojs/html/ui/seek-button";
@@ -5944,6 +6168,7 @@ export function SeekButton({ className, seconds = 10, ...props }: Props<CoreProp
 import type { PopoverProps as CoreProps, VolumeSliderProps as CoreVolumeSliderProps } from '@videojs/core';
 
 import type { Props } from 'vjsc/components';
+
 
 
 import { MuteButton } from '../buttons/mute-button';
@@ -5977,6 +6202,7 @@ import type { BufferingIndicatorProps as CoreProps } from '@videojs/core';
 
 import type { Props } from 'vjsc/components';
 
+
 import "@videojs/html/icons/element";
 import "@videojs/html/ui/buffering-indicator";
 
@@ -5994,6 +6220,7 @@ export function BufferingIndicator({ className, ...props }: Props<CoreProps> = {
 /** @jsxImportSource vjsc/html-runtime */
 
 import type { Props } from 'vjsc/components';
+
 
 import "@videojs/html/ui/alert-dialog-title";
 import "@videojs/html/ui/alert-dialog-description";
@@ -6022,6 +6249,7 @@ import type { SeekIndicatorProps as CoreProps } from '@videojs/core';
 
 import type { Props } from 'vjsc/components';
 
+
 import "@videojs/html/icons/element";
 import "@videojs/html/ui/seek-indicator-value";
 import "@videojs/html/ui/seek-indicator";
@@ -6043,6 +6271,7 @@ import type { StatusAnnouncerProps as CoreProps } from '@videojs/core';
 
 import type { Props } from 'vjsc/components';
 
+
 import "@videojs/html/ui/status-announcer";
 
 
@@ -6057,6 +6286,7 @@ import type { StatusIndicatorProps as CoreProps } from '@videojs/core';
 
 
 import type { Props } from 'vjsc/components';
+
 
 import "@videojs/html/icons/element";
 import "@videojs/html/ui/status-indicator-value";
@@ -6095,6 +6325,7 @@ export function PlaybackStatusIndicator({ className, ...props }: Props<Omit<Core
 /** @jsxImportSource vjsc/html-runtime */
 import { type Props } from "vjsc/components";
 
+
 import { SeekIndicator } from './seek-indicator';
 import { StatusAnnouncer } from './status-announcer';
 import { PlaybackStatusIndicator, StatusIndicator } from './status-indicator';
@@ -6121,6 +6352,7 @@ import type { VolumeIndicatorProps as CoreProps } from '@videojs/core';
 
 import type { Props } from 'vjsc/components';
 
+
 import "@videojs/html/icons/element";
 import "@videojs/html/ui/volume-indicator-value";
 import "@videojs/html/ui/volume-indicator-fill";
@@ -6146,7 +6378,8 @@ export function VolumeIndicator({ className, ...props }: Props<CoreProps> = {}) 
 
 import type { PropsWithChildren } from 'vjsc/components';
 
-import "@videojs/html/media/container";
+
+import "@videojs/html/ui/container";
 
 
 
@@ -6164,6 +6397,7 @@ import { type Props } from "vjsc/components";
 
 
 
+
 export function Overlay({ className, ...props }: Props = {}) {
   return <div className={["pointer-events-none absolute inset-0 rounded-[inherit] opacity-0", "bg-linear-to-t from-black/50 via-black/30 via-25% to-transparent", "transition-[opacity,backdrop-filter] duration-(--media-controls-transition-duration) ease-out", "peer-data-visible/controls:opacity-100", "peer-data-visible/buffering:bg-black/35 peer-data-visible/buffering:opacity-100 peer-data-visible/buffering:backdrop-blur-xs", "peer-data-open/error:opacity-100 peer-data-open/error:backdrop-blur-lg peer-data-open/error:backdrop-saturate-150", className]} {...props} />;
 }
@@ -6173,6 +6407,7 @@ export function Overlay({ className, ...props }: Props = {}) {
 import type { PosterProps as CoreProps } from '@videojs/core';
 
 import { type PropsWithChildren } from "vjsc/components";
+
 
 import "@videojs/html/ui/poster";
 
@@ -6192,6 +6427,7 @@ import { audioText } from '@videojs/core/i18n/text/menu';
 
 import { type PropsOf } from "vjsc/components";
 
+
 import { AudioTrackRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
@@ -6200,8 +6436,10 @@ import "@videojs/html/icons/element";
 
 
 
-export interface AudioTrackMenuProps
-  extends Omit<PropsOf<typeof Submenu>, 'children' | 'icon' | 'label' | 'selectedLabel'> {}
+export interface AudioTrackMenuProps extends Omit<
+  PropsOf<typeof Submenu>,
+  'children' | 'icon' | 'label' | 'selectedLabel'
+> {}
 
 export function AudioTrackMenu(props: AudioTrackMenuProps = {}) {
   return (
@@ -6228,6 +6466,7 @@ import { captionsText } from '@videojs/core/i18n/text/menu';
 
 import { type PropsOf } from "vjsc/components";
 
+
 import { CaptionsRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
@@ -6236,8 +6475,10 @@ import "@videojs/html/icons/element";
 
 
 
-export interface CaptionsMenuProps
-  extends Omit<PropsOf<typeof Submenu>, 'children' | 'icon' | 'label' | 'selectedLabel'> {}
+export interface CaptionsMenuProps extends Omit<
+  PropsOf<typeof Submenu>,
+  'children' | 'icon' | 'label' | 'selectedLabel'
+> {}
 
 export function CaptionsMenu(props: CaptionsMenuProps = {}) {
   return (
@@ -6266,6 +6507,7 @@ import "@videojs/html/icons/element";
 
 
 
+
 export function MenuChevron({ flipped = false, className, ...props }: Props<{ flipped?: boolean }> = {}) {
   return (
     <media-icon name="chevron" class={["size-media-icon shrink-0 opacity-70 group-hover/menu-item:opacity-100", "drop-shadow-[0_1px_0_rgb(0_0_0/0.15)]", "size-3.5", flipped ? "rotate-180" : undefined, className]} {...props} />
@@ -6278,6 +6520,7 @@ import { speedText } from '@videojs/core/i18n/text/menu';
 
 import { type PropsOf } from "vjsc/components";
 
+
 import { PlaybackRateRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
@@ -6286,8 +6529,10 @@ import "@videojs/html/icons/element";
 
 
 
-export interface PlaybackRateMenuProps
-  extends Omit<PropsOf<typeof Submenu>, 'children' | 'icon' | 'label' | 'selectedLabel'> {}
+export interface PlaybackRateMenuProps extends Omit<
+  PropsOf<typeof Submenu>,
+  'children' | 'icon' | 'label' | 'selectedLabel'
+> {}
 
 export function PlaybackRateMenu(props: PlaybackRateMenuProps = {}) {
   return (
@@ -6314,6 +6559,7 @@ import { qualityText } from '@videojs/core/i18n/text/menu';
 
 import { type PropsOf } from "vjsc/components";
 
+
 import { QualityRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
@@ -6322,8 +6568,10 @@ import "@videojs/html/icons/element";
 
 
 
-export interface QualityMenuProps
-  extends Omit<PropsOf<typeof Submenu>, 'children' | 'icon' | 'label' | 'selectedLabel'> {}
+export interface QualityMenuProps extends Omit<
+  PropsOf<typeof Submenu>,
+  'children' | 'icon' | 'label' | 'selectedLabel'
+> {}
 
 export function QualityMenu(props: QualityMenuProps = {}) {
   return (
@@ -6365,6 +6613,7 @@ import "@videojs/html/ui/captions-radio-group";
 
 
 
+
 export function QualityRadioGroup({ className, ...props }: PropsWithChildren<CoreQualityRadioGroupProps>) {
   return <media-quality-radio-group className={["relative flex flex-col gap-0.5 [anchor-scope:--media-menu-item-highlight-anchor]", className]} {...props} />;
 }
@@ -6389,6 +6638,7 @@ import type { MenuItemProps } from '@videojs/core';
 import type { PropsWithChildren } from 'vjsc/components';
 import "@videojs/html/icons/element";
 import "@videojs/html/ui/menu";
+
 
 
 
@@ -6421,14 +6671,15 @@ import { Scope } from "vjsc/html-runtime/jsx-runtime";
 
 
 
+
 export function SettingsMenu({ children, className, ...props }: PropsWithChildren<MenuProps>) {
   return (
-    <Scope prefix="<module>-ch"><><button commandfor="__vjsc-id-<module>-ch-popup" class={["grid min-h-0 shrink-0 touch-manipulation select-none place-items-center rounded-media-control border-0 bg-transparent p-0 text-center text-inherit", "cursor-pointer outline-2 outline-transparent -outline-offset-2", "transition-[background-color,color,outline-offset,scale] duration-150 ease-out motion-reduce:duration-50", "hover:bg-media-control-hover hover:text-media-accent-text focus-visible:bg-media-control-hover focus-visible:text-media-accent-text aria-expanded:bg-media-control-hover aria-expanded:text-media-accent-text", "focus-visible:outline-current focus-visible:outline-offset-2", "not-aria-disabled:active:scale-90", "aria-disabled:cursor-not-allowed aria-disabled:opacity-50", "size-9", "group/settings"]}>
+    <Scope prefix="<module>-ci"><><button commandfor="__vjsc-id-<module>-ci-popup" class={["grid min-h-0 shrink-0 touch-manipulation select-none place-items-center rounded-media-control border-0 bg-transparent p-0 text-center text-inherit", "cursor-pointer outline-2 outline-transparent -outline-offset-2", "transition-[background-color,color,outline-offset,scale] duration-150 ease-out motion-reduce:duration-50", "hover:bg-media-control-hover hover:text-media-accent-text focus-visible:bg-media-control-hover focus-visible:text-media-accent-text aria-expanded:bg-media-control-hover aria-expanded:text-media-accent-text", "focus-visible:outline-current focus-visible:outline-offset-2", "not-aria-disabled:active:scale-90", "aria-disabled:cursor-not-allowed aria-disabled:opacity-50", "size-9", "group/settings"]}>
             <media-icon name="gear" class={["size-media-icon", "drop-shadow-[0_1px_0_rgb(0_0_0/0.15)]", "transition-transform duration-150 ease-in-out", "group-aria-expanded/settings:rotate-90 motion-reduce:duration-0"]} />
             <media-text class={"sr-only"} token={settingsText.key}>
               {settingsText.text}
             </media-text>
-          </button><media-menu id="__vjsc-id-<module>-ch-popup" side="top" align="center" {...props} class={["relative", "text-white backdrop-blur-lg backdrop-saturate-150", "after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit]", "after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.1),inset_0_0_0_1px_rgb(255_255_255/0.05)]", "[@media(prefers-reduced-transparency:reduce)]:bg-black [@media(prefers-reduced-transparency:reduce)]:ring-1 [@media(prefers-reduced-transparency:reduce)]:ring-transparent", "[@media(prefers-reduced-transparency:reduce)]:backdrop-filter-none", "[@media(prefers-reduced-transparency:reduce)]:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "contrast-more:bg-black contrast-more:ring-1 contrast-more:ring-transparent contrast-more:backdrop-filter-none", "contrast-more:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "forced-colors:bg-[Canvas] forced-colors:ring-1 forced-colors:ring-[CanvasText]", "forced-colors:after:shadow-[inset_0_1px_0_0_CanvasText,inset_0_0_0_1px_CanvasText]", "shadow-sm shadow-black/15 ring-1 ring-black/10", "[@media(prefers-reduced-transparency:reduce)]:shadow-sm [@media(prefers-reduced-transparency:reduce)]:shadow-black/15", "contrast-more:shadow-sm contrast-more:shadow-black/15", "forced-colors:shadow-sm forced-colors:shadow-black/15", "bg-white/10", "m-0 overflow-visible border-0 text-inherit", "transition-[opacity,filter,transform,scale] duration-100 ease-out motion-reduce:duration-0", "data-starting-style:opacity-0 data-starting-style:blur-xs data-starting-style:scale-95", "data-ending-style:opacity-0 data-ending-style:blur-xs data-ending-style:scale-95", "data-[side=top]:origin-bottom data-[side=bottom]:origin-top data-[side=left]:origin-right data-[side=right]:origin-left", "before:pointer-events-auto before:absolute", "data-[side=top]:before:inset-x-0 data-[side=top]:before:top-full", "data-[side=bottom]:before:inset-x-0 data-[side=bottom]:before:bottom-full", "data-[side=left]:before:inset-y-0 data-[side=left]:before:left-full", "data-[side=right]:before:inset-y-0 data-[side=right]:before:right-full", "data-[side=top]:before:h-(--media-popover-side-offset) data-[side=bottom]:before:h-(--media-popover-side-offset)", "data-[side=left]:before:w-(--media-popover-side-offset) data-[side=right]:before:w-(--media-popover-side-offset)", "m-0 min-w-48 max-w-(--media-popover-available-width) overflow-hidden rounded-xl border-0 p-1", "max-h-[min(var(--media-popover-available-height,14rem),14rem)] overscroll-none", "h-(--media-menu-height) w-(--media-menu-width)", "transition-settings-menu", className]}>
+          </button><media-menu id="__vjsc-id-<module>-ci-popup" side="top" align="center" {...props} class={["relative", "text-white backdrop-blur-lg backdrop-saturate-150", "after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit]", "after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.1),inset_0_0_0_1px_rgb(255_255_255/0.05)]", "[@media(prefers-reduced-transparency:reduce)]:bg-black [@media(prefers-reduced-transparency:reduce)]:ring-1 [@media(prefers-reduced-transparency:reduce)]:ring-transparent", "[@media(prefers-reduced-transparency:reduce)]:backdrop-filter-none", "[@media(prefers-reduced-transparency:reduce)]:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "contrast-more:bg-black contrast-more:ring-1 contrast-more:ring-transparent contrast-more:backdrop-filter-none", "contrast-more:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "forced-colors:bg-[Canvas] forced-colors:ring-1 forced-colors:ring-[CanvasText]", "forced-colors:after:shadow-[inset_0_1px_0_0_CanvasText,inset_0_0_0_1px_CanvasText]", "shadow-sm shadow-black/15 ring-1 ring-black/10", "[@media(prefers-reduced-transparency:reduce)]:shadow-sm [@media(prefers-reduced-transparency:reduce)]:shadow-black/15", "contrast-more:shadow-sm contrast-more:shadow-black/15", "forced-colors:shadow-sm forced-colors:shadow-black/15", "bg-white/10", "m-0 overflow-visible border-0 text-inherit", "transition-[opacity,filter,transform,scale] duration-100 ease-out motion-reduce:duration-0", "data-starting-style:opacity-0 data-starting-style:blur-xs data-starting-style:scale-95", "data-ending-style:opacity-0 data-ending-style:blur-xs data-ending-style:scale-95", "data-[side=top]:origin-bottom data-[side=bottom]:origin-top data-[side=left]:origin-right data-[side=right]:origin-left", "before:pointer-events-auto before:absolute", "data-[side=top]:before:inset-x-0 data-[side=top]:before:top-full", "data-[side=bottom]:before:inset-x-0 data-[side=bottom]:before:bottom-full", "data-[side=left]:before:inset-y-0 data-[side=left]:before:left-full", "data-[side=right]:before:inset-y-0 data-[side=right]:before:right-full", "data-[side=top]:before:h-(--media-popover-side-offset) data-[side=bottom]:before:h-(--media-popover-side-offset)", "data-[side=left]:before:w-(--media-popover-side-offset) data-[side=right]:before:w-(--media-popover-side-offset)", "m-0 min-w-48 max-w-(--media-popover-available-width) overflow-hidden rounded-xl border-0 p-1", "max-h-[min(var(--media-popover-available-height,14rem),14rem)] overscroll-none", "h-(--media-menu-height) w-(--media-menu-width)", "transition-settings-menu", className]}>
         <media-menu-content className={"relative flex flex-col gap-0.5 [anchor-scope:--media-menu-item-highlight-anchor] absolute inset-x-0 top-0 max-h-[inherit] overflow-auto overscroll-none p-1 outline-none transition-[translate,filter] duration-250 ease-out data-[submenu-expanded=true]:-translate-x-full data-[submenu-expanded=true]:blur-sm"}>{children}</media-menu-content>
       </media-menu></></Scope>
   );
@@ -6439,6 +6690,7 @@ export function SettingsMenu({ children, className, ...props }: PropsWithChildre
 import type { MenuProps } from '@videojs/core';
 
 import { type PropsWithChildren, type VjscNode } from "vjsc/components";
+
 
 import { MenuChevron } from './menu-chevron';
 import "@videojs/html/ui/menu";
@@ -6460,14 +6712,14 @@ export function Submenu({
   }
 >) {
   return (
-    <Scope prefix="<module>-di"><><media-menu-item commandfor="__vjsc-id-<module>-di-content" class={["group/menu-item relative flex cursor-pointer select-none items-center gap-1.5 rounded-media-surface px-2 py-1.5 text-left", "outline-2 -outline-offset-2 outline-transparent", "hover:bg-media-control-hover hover:text-media-accent-text data-highlighted:bg-media-control-hover data-highlighted:text-media-accent-text", "focus-visible:outline-current focus-visible:outline-offset-2", "transition-[color,background-color] duration-100 ease-in-out motion-reduce:duration-50", "justify-between tabular-nums text-inherit", "data-[availability=unavailable]:hidden data-[availability=unsupported]:hidden", "aria-disabled:pointer-events-none aria-disabled:cursor-not-allowed aria-disabled:opacity-50"]}>
+    <Scope prefix="<module>-dj"><><media-menu-item commandfor="__vjsc-id-<module>-dj-content" class={["group/menu-item relative flex cursor-pointer select-none items-center gap-1.5 rounded-media-surface px-2 py-1.5 text-left", "outline-2 -outline-offset-2 outline-transparent", "hover:bg-media-control-hover hover:text-media-accent-text data-highlighted:bg-media-control-hover data-highlighted:text-media-accent-text", "focus-visible:outline-current focus-visible:outline-offset-2", "transition-[color,background-color] duration-100 ease-in-out motion-reduce:duration-50", "justify-between tabular-nums text-inherit", "data-[availability=unavailable]:hidden data-[availability=unsupported]:hidden", "aria-disabled:pointer-events-none aria-disabled:cursor-not-allowed aria-disabled:opacity-50"]}>
         {icon}
         {label}
         <span class={"ml-auto inline-flex min-w-0 items-center gap-1 pl-2 opacity-70"}>
           {selectedLabel}
           <MenuChevron />
         </span>
-      </media-menu-item><media-menu-content id="__vjsc-id-<module>-di-content" class={["absolute inset-x-0 top-0 z-10 max-h-[inherit] overflow-auto overscroll-none p-1 outline-none", "transition-[translate,filter] duration-250 ease-out", "data-starting-style:pointer-events-none data-ending-style:pointer-events-none", "data-starting-style:translate-x-full data-ending-style:translate-x-full", "data-starting-style:blur-sm data-ending-style:blur-sm", className]}>
+      </media-menu-item><media-menu-content id="__vjsc-id-<module>-dj-content" class={["absolute inset-x-0 top-0 z-10 max-h-[inherit] overflow-auto overscroll-none p-1 outline-none", "transition-[translate,filter] duration-250 ease-out", "data-starting-style:pointer-events-none data-ending-style:pointer-events-none", "data-starting-style:translate-x-full data-ending-style:translate-x-full", "data-starting-style:blur-sm data-ending-style:blur-sm", className]}>
         <media-menu-item className={["group/menu-item relative flex cursor-pointer select-none items-center gap-1.5 rounded-media-surface px-2 py-1.5 text-left", "outline-2 -outline-offset-2 outline-transparent", "hover:bg-media-control-hover hover:text-media-accent-text data-highlighted:bg-media-control-hover data-highlighted:text-media-accent-text", "focus-visible:outline-current focus-visible:outline-offset-2", "transition-[color,background-color] duration-100 ease-in-out motion-reduce:duration-50", "mb-0.5 w-full"]}>
           <MenuChevron flipped />
           {label}
@@ -6481,6 +6733,7 @@ export function Submenu({
 // ===== html/default-video/tailwind/components/menus/video-settings-menu.tsx =====
 /** @jsxImportSource vjsc/html-runtime */
 import type { PropsOf } from 'vjsc/components';
+
 
 import { AudioTrackMenu } from './audio-track-menu';
 import { CaptionsMenu } from './captions-menu';
@@ -6507,6 +6760,7 @@ import type { TimeSliderProps as CoreProps } from '@videojs/core';
 
 
 import { type Props } from "vjsc/components";
+
 
 import "@videojs/html/ui/slider-buffer";
 import "@videojs/html/ui/slider-fill";
@@ -6555,6 +6809,7 @@ import type { VolumeSliderProps as CoreProps } from '@videojs/core';
 
 import type { Props } from 'vjsc/components';
 
+
 import "@videojs/html/ui/slider-fill";
 import "@videojs/html/ui/slider-track";
 import "@videojs/html/ui/slider-thumb";
@@ -6575,6 +6830,7 @@ export function VolumeSlider({ className, ...props }: Props<CoreProps> = {}) {
 
 // ===== html/default-video/tailwind/components/video-gestures.tsx =====
 /** @jsxImportSource vjsc/html-runtime */
+
 
 
 import "@videojs/html/ui/gesture";
@@ -6598,6 +6854,7 @@ export function VideoGestures({ disabled = false }: VideoGesturesProps = {}) {
 
 // ===== html/default-video/tailwind/components/video-hotkeys.tsx =====
 /** @jsxImportSource vjsc/html-runtime */
+
 
 
 import "@videojs/html/ui/hotkey";
@@ -6635,6 +6892,7 @@ export function VideoHotkeys({ disabled = false }: VideoHotkeysProps = {}) {
 /** @jsxImportSource vjsc/html-runtime */
 
 import { type PropsOf, type VjscNode } from "vjsc/components";
+
 import { AirPlayButton } from '../../components/buttons/airplay-button';
 import { CaptionsButton } from '../../components/buttons/captions-button';
 import { CastButton } from '../../components/buttons/cast-button';
@@ -6722,6 +6980,7 @@ import type { AirPlayButtonProps as CoreProps } from '@videojs/core';
 import type { Props } from 'vjsc/components';
 
 
+
 import { ButtonTooltip } from './button-tooltip';
 import "virtual:vjsc/css/bedd34a0f91c/base.css";
 import "virtual:vjsc/css/aec2ff69d680/buttons.css";
@@ -6748,6 +7007,7 @@ import type { TooltipProps } from '@videojs/core';
 import type { PropsWithChildren, VjscElement } from 'vjsc/components';
 
 
+
 import "virtual:vjsc/css/bedd34a0f91c/base.css";
 import "virtual:vjsc/css/9bcf845d9d22/popups.css";
 import "@videojs/html/ui/tooltip";
@@ -6757,7 +7017,7 @@ import { Host, Scope } from "vjsc/html-runtime/jsx-runtime";
 
 export function ButtonTooltip({ children, ...props }: PropsWithChildren<TooltipProps> & { children: VjscElement }) {
   return (
-    <Scope prefix="<module>-dp"><><Host id="__vjsc-id-<module>-dp-trigger">{children}</Host><media-tooltip trigger="__vjsc-id-<module>-dp-trigger" {...props} class={["media-surface", "media-tooltip"]}>
+    <Scope prefix="<module>-dq"><><Host id="__vjsc-id-<module>-dq-trigger">{children}</Host><media-tooltip trigger="__vjsc-id-<module>-dq-trigger" {...props} class={["media-surface", "media-tooltip"]}>
         <media-tooltip-label />
         <media-tooltip-shortcut className={"media-tooltip-shortcut"} />
       </media-tooltip></></Scope>
@@ -6770,6 +7030,7 @@ import type { CaptionsButtonProps as CoreProps } from '@videojs/core';
 
 
 import type { Props } from 'vjsc/components';
+
 
 
 import { ButtonTooltip } from './button-tooltip';
@@ -6799,6 +7060,7 @@ import type { CastButtonProps as CoreProps } from '@videojs/core';
 import type { Props } from 'vjsc/components';
 
 
+
 import { ButtonTooltip } from './button-tooltip';
 import "virtual:vjsc/css/bedd34a0f91c/base.css";
 import "virtual:vjsc/css/dc4c6302a92e/buttons.css";
@@ -6824,6 +7086,7 @@ import type { FullscreenButtonProps as CoreProps } from '@videojs/core';
 
 
 import type { Props } from 'vjsc/components';
+
 
 
 import { ButtonTooltip } from './button-tooltip';
@@ -6853,6 +7116,7 @@ import type { MuteButtonProps as CoreProps } from '@videojs/core';
 import type { Props } from 'vjsc/components';
 
 
+
 import "virtual:vjsc/css/bedd34a0f91c/base.css";
 import "virtual:vjsc/css/550f19db015f/buttons.css";
 import "@videojs/html/icons/element/minimal";
@@ -6876,6 +7140,7 @@ import type { PiPButtonProps as CoreProps } from '@videojs/core';
 
 
 import type { Props } from 'vjsc/components';
+
 
 
 import { ButtonTooltip } from './button-tooltip';
@@ -6903,6 +7168,7 @@ import type { PlayButtonProps as CoreProps } from '@videojs/core';
 
 
 import type { Props } from 'vjsc/components';
+
 
 
 import { ButtonTooltip } from './button-tooltip';
@@ -6933,6 +7199,7 @@ import type { SeekButtonProps as CoreProps } from '@videojs/core';
 import { type Props } from "vjsc/components";
 
 
+
 import { ButtonTooltip } from './button-tooltip';
 import "virtual:vjsc/css/bedd34a0f91c/base.css";
 import "virtual:vjsc/css/bd10355d518c/buttons.css";
@@ -6957,6 +7224,7 @@ export function SeekButton({ className, seconds = 10, ...props }: Props<CoreProp
 import type { PopoverProps as CoreProps, VolumeSliderProps as CoreVolumeSliderProps } from '@videojs/core';
 
 import type { Props } from 'vjsc/components';
+
 
 
 import { MuteButton } from '../buttons/mute-button';
@@ -6994,6 +7262,7 @@ import type { BufferingIndicatorProps as CoreProps } from '@videojs/core';
 import type { Props } from 'vjsc/components';
 
 
+
 import "virtual:vjsc/css/bedd34a0f91c/base.css";
 import "virtual:vjsc/css/38384b81e271/indicator.css";
 import "@videojs/html/icons/element/minimal";
@@ -7013,6 +7282,7 @@ export function BufferingIndicator({ className, ...props }: Props<CoreProps> = {
 /** @jsxImportSource vjsc/html-runtime */
 
 import type { Props } from 'vjsc/components';
+
 
 
 
@@ -7046,6 +7316,7 @@ import type { SeekIndicatorProps as CoreProps } from '@videojs/core';
 import type { Props } from 'vjsc/components';
 
 
+
 import "virtual:vjsc/css/bedd34a0f91c/base.css";
 import "virtual:vjsc/css/376ec5a88533/indicator.css";
 import "@videojs/html/icons/element/minimal";
@@ -7070,6 +7341,7 @@ import type { StatusAnnouncerProps as CoreProps } from '@videojs/core';
 import type { Props } from 'vjsc/components';
 
 
+
 import "virtual:vjsc/css/bedd34a0f91c/base.css";
 import "virtual:vjsc/css/badc124fbf52/indicator.css";
 import "@videojs/html/ui/status-announcer";
@@ -7086,6 +7358,7 @@ import type { StatusIndicatorProps as CoreProps } from '@videojs/core';
 
 
 import type { Props } from 'vjsc/components';
+
 
 
 import "virtual:vjsc/css/bedd34a0f91c/base.css";
@@ -7127,6 +7400,7 @@ export function PlaybackStatusIndicator({ className, ...props }: Props<Omit<Core
 /** @jsxImportSource vjsc/html-runtime */
 import { type Props } from "vjsc/components";
 
+
 import { SeekIndicator } from './seek-indicator';
 import { StatusAnnouncer } from './status-announcer';
 import { PlaybackStatusIndicator, StatusIndicator } from './status-indicator';
@@ -7157,6 +7431,7 @@ import type { VolumeIndicatorProps as CoreProps } from '@videojs/core';
 import type { Props } from 'vjsc/components';
 
 
+
 import "virtual:vjsc/css/bedd34a0f91c/base.css";
 import "virtual:vjsc/css/c4bede14e8b4/indicator.css";
 import "@videojs/html/icons/element/minimal";
@@ -7185,9 +7460,10 @@ export function VolumeIndicator({ className, ...props }: Props<CoreProps> = {}) 
 import type { PropsWithChildren } from 'vjsc/components';
 
 
+
 import "virtual:vjsc/css/bedd34a0f91c/base.css";
-import "virtual:vjsc/css/41be13712e86/container.css";
-import "@videojs/html/media/container";
+import "virtual:vjsc/css/191f04562082/container.css";
+import "@videojs/html/ui/container";
 
 
 
@@ -7204,6 +7480,7 @@ export function Container({ children, className, ...props }: PropsWithChildren) 
 import { type Props } from "vjsc/components";
 
 
+
 import "virtual:vjsc/css/bedd34a0f91c/base.css";
 import "virtual:vjsc/css/aba1d0b4eb6f/overlays.css";
 
@@ -7217,6 +7494,7 @@ export function Overlay({ className, ...props }: Props = {}) {
 import type { PosterProps as CoreProps } from '@videojs/core';
 
 import { type PropsWithChildren } from "vjsc/components";
+
 
 
 import "virtual:vjsc/css/bedd34a0f91c/base.css";
@@ -7239,6 +7517,7 @@ import { audioText } from '@videojs/core/i18n/text/menu';
 
 import { type PropsOf } from "vjsc/components";
 
+
 import { AudioTrackRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
@@ -7250,8 +7529,10 @@ import "@videojs/html/icons/element/minimal";
 
 
 
-export interface AudioTrackMenuProps
-  extends Omit<PropsOf<typeof Submenu>, 'children' | 'icon' | 'label' | 'selectedLabel'> {}
+export interface AudioTrackMenuProps extends Omit<
+  PropsOf<typeof Submenu>,
+  'children' | 'icon' | 'label' | 'selectedLabel'
+> {}
 
 export function AudioTrackMenu(props: AudioTrackMenuProps = {}) {
   return (
@@ -7278,6 +7559,7 @@ import { captionsText } from '@videojs/core/i18n/text/menu';
 
 import { type PropsOf } from "vjsc/components";
 
+
 import { CaptionsRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
@@ -7289,8 +7571,10 @@ import "@videojs/html/icons/element/minimal";
 
 
 
-export interface CaptionsMenuProps
-  extends Omit<PropsOf<typeof Submenu>, 'children' | 'icon' | 'label' | 'selectedLabel'> {}
+export interface CaptionsMenuProps extends Omit<
+  PropsOf<typeof Submenu>,
+  'children' | 'icon' | 'label' | 'selectedLabel'
+> {}
 
 export function CaptionsMenu(props: CaptionsMenuProps = {}) {
   return (
@@ -7316,6 +7600,7 @@ export function CaptionsMenu(props: CaptionsMenuProps = {}) {
 
 import type { Props } from 'vjsc/components';
 
+
 import "virtual:vjsc/css/bedd34a0f91c/base.css";
 import "virtual:vjsc/css/eb2fec8addb9/menus.css";
 import "@videojs/html/icons/element/minimal";
@@ -7334,6 +7619,7 @@ import { speedText } from '@videojs/core/i18n/text/menu';
 
 import { type PropsOf } from "vjsc/components";
 
+
 import { PlaybackRateRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
@@ -7345,8 +7631,10 @@ import "@videojs/html/icons/element/minimal";
 
 
 
-export interface PlaybackRateMenuProps
-  extends Omit<PropsOf<typeof Submenu>, 'children' | 'icon' | 'label' | 'selectedLabel'> {}
+export interface PlaybackRateMenuProps extends Omit<
+  PropsOf<typeof Submenu>,
+  'children' | 'icon' | 'label' | 'selectedLabel'
+> {}
 
 export function PlaybackRateMenu(props: PlaybackRateMenuProps = {}) {
   return (
@@ -7373,6 +7661,7 @@ import { qualityText } from '@videojs/core/i18n/text/menu';
 
 import { type PropsOf } from "vjsc/components";
 
+
 import { QualityRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
@@ -7384,8 +7673,10 @@ import "@videojs/html/icons/element/minimal";
 
 
 
-export interface QualityMenuProps
-  extends Omit<PropsOf<typeof Submenu>, 'children' | 'icon' | 'label' | 'selectedLabel'> {}
+export interface QualityMenuProps extends Omit<
+  PropsOf<typeof Submenu>,
+  'children' | 'icon' | 'label' | 'selectedLabel'
+> {}
 
 export function QualityMenu(props: QualityMenuProps = {}) {
   return (
@@ -7421,6 +7712,7 @@ import type {
 
 import type { PropsWithChildren } from 'vjsc/components';
 
+
 import "virtual:vjsc/css/bedd34a0f91c/base.css";
 import "virtual:vjsc/css/a39d0b990c62/menus.css";
 import "@videojs/html/ui/quality-radio-group";
@@ -7453,6 +7745,7 @@ import type { MenuItemProps } from '@videojs/core';
 
 import type { PropsWithChildren } from 'vjsc/components';
 
+
 import "virtual:vjsc/css/bedd34a0f91c/base.css";
 import "virtual:vjsc/css/d8e69a8a32f8/menus.css";
 import "@videojs/html/icons/element/minimal";
@@ -7481,6 +7774,7 @@ import { type PropsWithChildren } from "vjsc/components";
 
 
 
+
 import "virtual:vjsc/css/bedd34a0f91c/base.css";
 import "virtual:vjsc/css/447c10d89d45/buttons.css";
 import "virtual:vjsc/css/c1eba693c971/menus.css";
@@ -7496,12 +7790,12 @@ import { Scope } from "vjsc/html-runtime/jsx-runtime";
 
 export function SettingsMenu({ children, className, ...props }: PropsWithChildren<MenuProps>) {
   return (
-    <Scope prefix="<module>-i4"><><button commandfor="__vjsc-id-<module>-i4-popup" class={["media-button", "media-settings-trigger"]}>
+    <Scope prefix="<module>-i5"><><button commandfor="__vjsc-id-<module>-i5-popup" class={["media-button", "media-settings-trigger"]}>
             <media-icon family="minimal" name="gear" class={["media-button-icon", "media-settings-icon"]} />
             <media-text class={"media-sr-only"} token={settingsText.key}>
               {settingsText.text}
             </media-text>
-          </button><media-menu id="__vjsc-id-<module>-i4-popup" side="top" align="center" {...props} class={["media-surface", "media-popover", "media-settings", className]}>
+          </button><media-menu id="__vjsc-id-<module>-i5-popup" side="top" align="center" {...props} class={["media-surface", "media-popover", "media-settings", className]}>
         <media-menu-content className={"media-menu-content"}>{children}</media-menu-content>
       </media-menu></></Scope>
   );
@@ -7512,6 +7806,7 @@ export function SettingsMenu({ children, className, ...props }: PropsWithChildre
 import type { MenuProps } from '@videojs/core';
 
 import { type PropsWithChildren, type VjscNode } from "vjsc/components";
+
 
 import { MenuChevron } from './menu-chevron';
 import "virtual:vjsc/css/bedd34a0f91c/base.css";
@@ -7536,14 +7831,14 @@ export function Submenu({
   }
 >) {
   return (
-    <Scope prefix="<module>-ga"><><media-menu-item commandfor="__vjsc-id-<module>-ga-content" class={["media-menu-item", "media-item"]}>
+    <Scope prefix="<module>-gb"><><media-menu-item commandfor="__vjsc-id-<module>-gb-content" class={["media-menu-item", "media-item"]}>
         {icon}
         {label}
         <span class={"media-hint"}>
           {selectedLabel}
           <MenuChevron />
         </span>
-      </media-menu-item><media-menu-content id="__vjsc-id-<module>-ga-content" class={["media-submenu-panel", className]}>
+      </media-menu-item><media-menu-content id="__vjsc-id-<module>-gb-content" class={["media-submenu-panel", className]}>
         <media-menu-item className={["media-menu-item", "media-back"]}>
           <MenuChevron flipped />
           {label}
@@ -7557,6 +7852,7 @@ export function Submenu({
 // ===== html/minimal-video/css/components/menus/video-settings-menu.tsx =====
 /** @jsxImportSource vjsc/html-runtime */
 import type { PropsOf } from 'vjsc/components';
+
 
 import { AudioTrackMenu } from './audio-track-menu';
 import { CaptionsMenu } from './captions-menu';
@@ -7583,6 +7879,7 @@ import type { TimeSliderProps as CoreProps } from '@videojs/core';
 
 
 import { type Props } from "vjsc/components";
+
 
 
 
@@ -7636,6 +7933,7 @@ import type { VolumeSliderProps as CoreProps } from '@videojs/core';
 import type { Props } from 'vjsc/components';
 
 
+
 import "virtual:vjsc/css/bedd34a0f91c/base.css";
 import "virtual:vjsc/css/e009640592bf/sliders.css";
 import "@videojs/html/ui/slider-fill";
@@ -7660,6 +7958,7 @@ export function VolumeSlider({ className, ...props }: Props<CoreProps> = {}) {
 /** @jsxImportSource vjsc/html-runtime */
 
 
+
 import "@videojs/html/ui/gesture";
 
 
@@ -7681,6 +7980,7 @@ export function VideoGestures({ disabled = false }: VideoGesturesProps = {}) {
 
 // ===== html/minimal-video/css/components/video-hotkeys.tsx =====
 /** @jsxImportSource vjsc/html-runtime */
+
 
 
 import "@videojs/html/ui/hotkey";
@@ -7718,6 +8018,7 @@ export function VideoHotkeys({ disabled = false }: VideoHotkeysProps = {}) {
 /** @jsxImportSource vjsc/html-runtime */
 
 import { type PropsOf, type VjscNode } from "vjsc/components";
+
 import { AirPlayButton } from '../../components/buttons/airplay-button';
 import { CaptionsButton } from '../../components/buttons/captions-button';
 import { CastButton } from '../../components/buttons/cast-button';
@@ -7808,6 +8109,7 @@ import type { AirPlayButtonProps as CoreProps } from '@videojs/core';
 import type { Props } from 'vjsc/components';
 
 
+
 import { ButtonTooltip } from './button-tooltip';
 import "@videojs/html/icons/element/minimal";
 import "@videojs/html/ui/airplay-button";
@@ -7830,6 +8132,7 @@ import type { TooltipProps } from '@videojs/core';
 
 import type { PropsWithChildren, VjscElement } from 'vjsc/components';
 
+
 import "@videojs/html/ui/tooltip";
 import { Host, Scope } from "vjsc/html-runtime/jsx-runtime";
 
@@ -7837,7 +8140,7 @@ import { Host, Scope } from "vjsc/html-runtime/jsx-runtime";
 
 export function ButtonTooltip({ children, ...props }: PropsWithChildren<TooltipProps> & { children: VjscElement }) {
   return (
-    <Scope prefix="<module>-aw"><><Host id="__vjsc-id-<module>-aw-trigger">{children}</Host><media-tooltip trigger="__vjsc-id-<module>-aw-trigger" {...props} class={["relative", "text-white backdrop-blur-lg backdrop-saturate-150", "after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit]", "after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.1),inset_0_0_0_1px_rgb(255_255_255/0.05)]", "[@media(prefers-reduced-transparency:reduce)]:bg-black [@media(prefers-reduced-transparency:reduce)]:ring-1 [@media(prefers-reduced-transparency:reduce)]:ring-transparent", "[@media(prefers-reduced-transparency:reduce)]:backdrop-filter-none", "[@media(prefers-reduced-transparency:reduce)]:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "contrast-more:bg-black contrast-more:ring-1 contrast-more:ring-transparent contrast-more:backdrop-filter-none", "contrast-more:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "forced-colors:bg-[Canvas] forced-colors:ring-1 forced-colors:ring-[CanvasText]", "forced-colors:after:shadow-[inset_0_1px_0_0_CanvasText,inset_0_0_0_1px_CanvasText]", "shadow-sm shadow-black/20 ring-1 ring-white/10", "[@media(prefers-reduced-transparency:reduce)]:shadow-sm [@media(prefers-reduced-transparency:reduce)]:shadow-black/20", "contrast-more:shadow-sm contrast-more:shadow-black/20", "forced-colors:shadow-sm forced-colors:shadow-black/20", "bg-black/50", "m-0 overflow-visible border-0 text-inherit", "transition-[opacity,filter,transform,scale] duration-100 ease-out motion-reduce:duration-0", "data-starting-style:opacity-0 data-starting-style:blur-xs data-starting-style:scale-95", "data-ending-style:opacity-0 data-ending-style:blur-xs data-ending-style:scale-95", "data-[side=top]:origin-bottom data-[side=bottom]:origin-top data-[side=left]:origin-right data-[side=right]:origin-left", "before:pointer-events-auto before:absolute", "data-[side=top]:before:inset-x-0 data-[side=top]:before:top-full", "data-[side=bottom]:before:inset-x-0 data-[side=bottom]:before:bottom-full", "data-[side=left]:before:inset-y-0 data-[side=left]:before:left-full", "data-[side=right]:before:inset-y-0 data-[side=right]:before:right-full", "m-0 whitespace-nowrap rounded-media-control border-0 px-2.5 py-[0.35rem]", "data-open:flex data-open:items-center data-open:gap-1", "data-[side=top]:before:h-(--media-tooltip-side-offset) data-[side=bottom]:before:h-(--media-tooltip-side-offset)", "data-[side=left]:before:w-(--media-tooltip-side-offset) data-[side=right]:before:w-(--media-tooltip-side-offset)"]}>
+    <Scope prefix="<module>-ax"><><Host id="__vjsc-id-<module>-ax-trigger">{children}</Host><media-tooltip trigger="__vjsc-id-<module>-ax-trigger" {...props} class={["relative", "text-white backdrop-blur-lg backdrop-saturate-150", "after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit]", "after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.1),inset_0_0_0_1px_rgb(255_255_255/0.05)]", "[@media(prefers-reduced-transparency:reduce)]:bg-black [@media(prefers-reduced-transparency:reduce)]:ring-1 [@media(prefers-reduced-transparency:reduce)]:ring-transparent", "[@media(prefers-reduced-transparency:reduce)]:backdrop-filter-none", "[@media(prefers-reduced-transparency:reduce)]:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "contrast-more:bg-black contrast-more:ring-1 contrast-more:ring-transparent contrast-more:backdrop-filter-none", "contrast-more:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "forced-colors:bg-[Canvas] forced-colors:ring-1 forced-colors:ring-[CanvasText]", "forced-colors:after:shadow-[inset_0_1px_0_0_CanvasText,inset_0_0_0_1px_CanvasText]", "shadow-sm shadow-black/20 ring-1 ring-white/10", "[@media(prefers-reduced-transparency:reduce)]:shadow-sm [@media(prefers-reduced-transparency:reduce)]:shadow-black/20", "contrast-more:shadow-sm contrast-more:shadow-black/20", "forced-colors:shadow-sm forced-colors:shadow-black/20", "bg-black/50", "m-0 overflow-visible border-0 text-inherit", "transition-[opacity,filter,transform,scale] duration-100 ease-out motion-reduce:duration-0", "data-starting-style:opacity-0 data-starting-style:blur-xs data-starting-style:scale-95", "data-ending-style:opacity-0 data-ending-style:blur-xs data-ending-style:scale-95", "data-[side=top]:origin-bottom data-[side=bottom]:origin-top data-[side=left]:origin-right data-[side=right]:origin-left", "before:pointer-events-auto before:absolute", "data-[side=top]:before:inset-x-0 data-[side=top]:before:top-full", "data-[side=bottom]:before:inset-x-0 data-[side=bottom]:before:bottom-full", "data-[side=left]:before:inset-y-0 data-[side=left]:before:left-full", "data-[side=right]:before:inset-y-0 data-[side=right]:before:right-full", "m-0 whitespace-nowrap rounded-media-control border-0 px-2.5 py-[0.35rem]", "data-open:flex data-open:items-center data-open:gap-1", "data-[side=top]:before:h-(--media-tooltip-side-offset) data-[side=bottom]:before:h-(--media-tooltip-side-offset)", "data-[side=left]:before:w-(--media-tooltip-side-offset) data-[side=right]:before:w-(--media-tooltip-side-offset)"]}>
         <media-tooltip-label />
         <media-tooltip-shortcut className={"min-w-6 rounded-sm bg-current/30 p-[0.1em] text-center text-[0.75em] font-semibold leading-tight"} />
       </media-tooltip></></Scope>
@@ -7850,6 +8153,7 @@ import type { CaptionsButtonProps as CoreProps } from '@videojs/core';
 
 
 import type { Props } from 'vjsc/components';
+
 
 
 import { ButtonTooltip } from './button-tooltip';
@@ -7876,6 +8180,7 @@ import type { CastButtonProps as CoreProps } from '@videojs/core';
 import type { Props } from 'vjsc/components';
 
 
+
 import { ButtonTooltip } from './button-tooltip';
 import "@videojs/html/icons/element/minimal";
 import "@videojs/html/ui/cast-button";
@@ -7898,6 +8203,7 @@ import type { FullscreenButtonProps as CoreProps } from '@videojs/core';
 
 
 import type { Props } from 'vjsc/components';
+
 
 
 import { ButtonTooltip } from './button-tooltip';
@@ -7923,6 +8229,7 @@ import type { MuteButtonProps as CoreProps } from '@videojs/core';
 
 import type { Props } from 'vjsc/components';
 
+
 import "@videojs/html/icons/element/minimal";
 import "@videojs/html/ui/mute-button";
 
@@ -7944,6 +8251,7 @@ import type { PiPButtonProps as CoreProps } from '@videojs/core';
 
 
 import type { Props } from 'vjsc/components';
+
 
 
 import { ButtonTooltip } from './button-tooltip';
@@ -7968,6 +8276,7 @@ import type { PlayButtonProps as CoreProps } from '@videojs/core';
 
 
 import type { Props } from 'vjsc/components';
+
 
 
 import { ButtonTooltip } from './button-tooltip';
@@ -7995,6 +8304,7 @@ import type { SeekButtonProps as CoreProps } from '@videojs/core';
 import { type Props } from "vjsc/components";
 
 
+
 import { ButtonTooltip } from './button-tooltip';
 import "@videojs/html/icons/element/minimal";
 import "@videojs/html/ui/seek-button";
@@ -8016,6 +8326,7 @@ export function SeekButton({ className, seconds = 10, ...props }: Props<CoreProp
 import type { PopoverProps as CoreProps, VolumeSliderProps as CoreVolumeSliderProps } from '@videojs/core';
 
 import type { Props } from 'vjsc/components';
+
 
 
 import { MuteButton } from '../buttons/mute-button';
@@ -8049,6 +8360,7 @@ import type { BufferingIndicatorProps as CoreProps } from '@videojs/core';
 
 import type { Props } from 'vjsc/components';
 
+
 import "@videojs/html/icons/element/minimal";
 import "@videojs/html/ui/buffering-indicator";
 
@@ -8066,6 +8378,7 @@ export function BufferingIndicator({ className, ...props }: Props<CoreProps> = {
 /** @jsxImportSource vjsc/html-runtime */
 
 import type { Props } from 'vjsc/components';
+
 
 import "@videojs/html/ui/alert-dialog-title";
 import "@videojs/html/ui/alert-dialog-description";
@@ -8094,6 +8407,7 @@ import type { SeekIndicatorProps as CoreProps } from '@videojs/core';
 
 import type { Props } from 'vjsc/components';
 
+
 import "@videojs/html/icons/element/minimal";
 import "@videojs/html/ui/seek-indicator-value";
 import "@videojs/html/ui/seek-indicator";
@@ -8115,6 +8429,7 @@ import type { StatusAnnouncerProps as CoreProps } from '@videojs/core';
 
 import type { Props } from 'vjsc/components';
 
+
 import "@videojs/html/ui/status-announcer";
 
 
@@ -8129,6 +8444,7 @@ import type { StatusIndicatorProps as CoreProps } from '@videojs/core';
 
 
 import type { Props } from 'vjsc/components';
+
 
 import "@videojs/html/icons/element/minimal";
 import "@videojs/html/ui/status-indicator-value";
@@ -8167,6 +8483,7 @@ export function PlaybackStatusIndicator({ className, ...props }: Props<Omit<Core
 /** @jsxImportSource vjsc/html-runtime */
 import { type Props } from "vjsc/components";
 
+
 import { SeekIndicator } from './seek-indicator';
 import { StatusAnnouncer } from './status-announcer';
 import { PlaybackStatusIndicator, StatusIndicator } from './status-indicator';
@@ -8193,6 +8510,7 @@ import type { VolumeIndicatorProps as CoreProps } from '@videojs/core';
 
 import type { Props } from 'vjsc/components';
 
+
 import "@videojs/html/icons/element/minimal";
 import "@videojs/html/ui/volume-indicator-value";
 import "@videojs/html/ui/volume-indicator-fill";
@@ -8218,7 +8536,8 @@ export function VolumeIndicator({ className, ...props }: Props<CoreProps> = {}) 
 
 import type { PropsWithChildren } from 'vjsc/components';
 
-import "@videojs/html/media/container";
+
+import "@videojs/html/ui/container";
 
 
 
@@ -8236,6 +8555,7 @@ import { type Props } from "vjsc/components";
 
 
 
+
 export function Overlay({ className, ...props }: Props = {}) {
   return <div className={["pointer-events-none absolute inset-0 rounded-[inherit] opacity-0", "bg-linear-to-t from-black/50 via-black/30 via-25% to-transparent", "transition-[opacity,backdrop-filter] duration-(--media-controls-transition-duration) ease-out", "peer-data-visible/controls:opacity-100", "peer-data-visible/buffering:bg-black/35 peer-data-visible/buffering:opacity-100 peer-data-visible/buffering:backdrop-blur-xs", "peer-data-open/error:opacity-100 peer-data-open/error:backdrop-blur-lg peer-data-open/error:backdrop-saturate-150", className]} {...props} />;
 }
@@ -8245,6 +8565,7 @@ export function Overlay({ className, ...props }: Props = {}) {
 import type { PosterProps as CoreProps } from '@videojs/core';
 
 import { type PropsWithChildren } from "vjsc/components";
+
 
 import "@videojs/html/ui/poster";
 
@@ -8264,6 +8585,7 @@ import { audioText } from '@videojs/core/i18n/text/menu';
 
 import { type PropsOf } from "vjsc/components";
 
+
 import { AudioTrackRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
@@ -8272,8 +8594,10 @@ import "@videojs/html/icons/element/minimal";
 
 
 
-export interface AudioTrackMenuProps
-  extends Omit<PropsOf<typeof Submenu>, 'children' | 'icon' | 'label' | 'selectedLabel'> {}
+export interface AudioTrackMenuProps extends Omit<
+  PropsOf<typeof Submenu>,
+  'children' | 'icon' | 'label' | 'selectedLabel'
+> {}
 
 export function AudioTrackMenu(props: AudioTrackMenuProps = {}) {
   return (
@@ -8300,6 +8624,7 @@ import { captionsText } from '@videojs/core/i18n/text/menu';
 
 import { type PropsOf } from "vjsc/components";
 
+
 import { CaptionsRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
@@ -8308,8 +8633,10 @@ import "@videojs/html/icons/element/minimal";
 
 
 
-export interface CaptionsMenuProps
-  extends Omit<PropsOf<typeof Submenu>, 'children' | 'icon' | 'label' | 'selectedLabel'> {}
+export interface CaptionsMenuProps extends Omit<
+  PropsOf<typeof Submenu>,
+  'children' | 'icon' | 'label' | 'selectedLabel'
+> {}
 
 export function CaptionsMenu(props: CaptionsMenuProps = {}) {
   return (
@@ -8338,6 +8665,7 @@ import "@videojs/html/icons/element/minimal";
 
 
 
+
 export function MenuChevron({ flipped = false, className, ...props }: Props<{ flipped?: boolean }> = {}) {
   return (
     <media-icon family="minimal" name="chevron" class={["size-media-icon shrink-0 opacity-70 group-hover/menu-item:opacity-100", "drop-shadow-[0_1px_0_rgb(0_0_0/0.2)]", "size-3.5", flipped ? "rotate-180" : undefined, className]} {...props} />
@@ -8350,6 +8678,7 @@ import { speedText } from '@videojs/core/i18n/text/menu';
 
 import { type PropsOf } from "vjsc/components";
 
+
 import { PlaybackRateRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
@@ -8358,8 +8687,10 @@ import "@videojs/html/icons/element/minimal";
 
 
 
-export interface PlaybackRateMenuProps
-  extends Omit<PropsOf<typeof Submenu>, 'children' | 'icon' | 'label' | 'selectedLabel'> {}
+export interface PlaybackRateMenuProps extends Omit<
+  PropsOf<typeof Submenu>,
+  'children' | 'icon' | 'label' | 'selectedLabel'
+> {}
 
 export function PlaybackRateMenu(props: PlaybackRateMenuProps = {}) {
   return (
@@ -8386,6 +8717,7 @@ import { qualityText } from '@videojs/core/i18n/text/menu';
 
 import { type PropsOf } from "vjsc/components";
 
+
 import { QualityRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
@@ -8394,8 +8726,10 @@ import "@videojs/html/icons/element/minimal";
 
 
 
-export interface QualityMenuProps
-  extends Omit<PropsOf<typeof Submenu>, 'children' | 'icon' | 'label' | 'selectedLabel'> {}
+export interface QualityMenuProps extends Omit<
+  PropsOf<typeof Submenu>,
+  'children' | 'icon' | 'label' | 'selectedLabel'
+> {}
 
 export function QualityMenu(props: QualityMenuProps = {}) {
   return (
@@ -8437,6 +8771,7 @@ import "@videojs/html/ui/captions-radio-group";
 
 
 
+
 export function QualityRadioGroup({ className, ...props }: PropsWithChildren<CoreQualityRadioGroupProps>) {
   return <media-quality-radio-group className={["relative flex flex-col gap-0.5 [anchor-scope:--media-menu-item-highlight-anchor]", className]} {...props} />;
 }
@@ -8461,6 +8796,7 @@ import type { MenuItemProps } from '@videojs/core';
 import type { PropsWithChildren } from 'vjsc/components';
 import "@videojs/html/icons/element/minimal";
 import "@videojs/html/ui/menu";
+
 
 
 
@@ -8493,14 +8829,15 @@ import { Scope } from "vjsc/html-runtime/jsx-runtime";
 
 
 
+
 export function SettingsMenu({ children, className, ...props }: PropsWithChildren<MenuProps>) {
   return (
-    <Scope prefix="<module>-ch"><><button commandfor="__vjsc-id-<module>-ch-popup" class={["grid min-h-0 shrink-0 touch-manipulation select-none place-items-center rounded-media-control border-0 bg-transparent p-0 text-center text-inherit", "cursor-pointer outline-2 outline-transparent -outline-offset-2", "transition-[background-color,color,outline-offset,scale] duration-150 ease-out motion-reduce:duration-50", "hover:bg-media-control-hover hover:text-media-accent-text focus-visible:bg-media-control-hover focus-visible:text-media-accent-text aria-expanded:bg-media-control-hover aria-expanded:text-media-accent-text", "focus-visible:outline-current focus-visible:outline-offset-2", "not-aria-disabled:active:scale-90", "aria-disabled:cursor-not-allowed aria-disabled:opacity-50", "size-9.5", "group/settings"]}>
+    <Scope prefix="<module>-ci"><><button commandfor="__vjsc-id-<module>-ci-popup" class={["grid min-h-0 shrink-0 touch-manipulation select-none place-items-center rounded-media-control border-0 bg-transparent p-0 text-center text-inherit", "cursor-pointer outline-2 outline-transparent -outline-offset-2", "transition-[background-color,color,outline-offset,scale] duration-150 ease-out motion-reduce:duration-50", "hover:bg-media-control-hover hover:text-media-accent-text focus-visible:bg-media-control-hover focus-visible:text-media-accent-text aria-expanded:bg-media-control-hover aria-expanded:text-media-accent-text", "focus-visible:outline-current focus-visible:outline-offset-2", "not-aria-disabled:active:scale-90", "aria-disabled:cursor-not-allowed aria-disabled:opacity-50", "size-9.5", "group/settings"]}>
             <media-icon family="minimal" name="gear" class={["size-media-icon", "drop-shadow-[0_1px_0_rgb(0_0_0/0.2)]", "transition-transform duration-150 ease-in-out", "group-aria-expanded/settings:rotate-90 motion-reduce:duration-0"]} />
             <media-text class={"sr-only"} token={settingsText.key}>
               {settingsText.text}
             </media-text>
-          </button><media-menu id="__vjsc-id-<module>-ch-popup" side="top" align="center" {...props} class={["relative", "text-white backdrop-blur-lg backdrop-saturate-150", "after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit]", "after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.1),inset_0_0_0_1px_rgb(255_255_255/0.05)]", "[@media(prefers-reduced-transparency:reduce)]:bg-black [@media(prefers-reduced-transparency:reduce)]:ring-1 [@media(prefers-reduced-transparency:reduce)]:ring-transparent", "[@media(prefers-reduced-transparency:reduce)]:backdrop-filter-none", "[@media(prefers-reduced-transparency:reduce)]:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "contrast-more:bg-black contrast-more:ring-1 contrast-more:ring-transparent contrast-more:backdrop-filter-none", "contrast-more:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "forced-colors:bg-[Canvas] forced-colors:ring-1 forced-colors:ring-[CanvasText]", "forced-colors:after:shadow-[inset_0_1px_0_0_CanvasText,inset_0_0_0_1px_CanvasText]", "shadow-sm shadow-black/20 ring-1 ring-white/10", "[@media(prefers-reduced-transparency:reduce)]:shadow-sm [@media(prefers-reduced-transparency:reduce)]:shadow-black/20", "contrast-more:shadow-sm contrast-more:shadow-black/20", "forced-colors:shadow-sm forced-colors:shadow-black/20", "bg-black/50", "m-0 overflow-visible border-0 text-inherit", "transition-[opacity,filter,transform,scale] duration-100 ease-out motion-reduce:duration-0", "data-starting-style:opacity-0 data-starting-style:blur-xs data-starting-style:scale-95", "data-ending-style:opacity-0 data-ending-style:blur-xs data-ending-style:scale-95", "data-[side=top]:origin-bottom data-[side=bottom]:origin-top data-[side=left]:origin-right data-[side=right]:origin-left", "before:pointer-events-auto before:absolute", "data-[side=top]:before:inset-x-0 data-[side=top]:before:top-full", "data-[side=bottom]:before:inset-x-0 data-[side=bottom]:before:bottom-full", "data-[side=left]:before:inset-y-0 data-[side=left]:before:left-full", "data-[side=right]:before:inset-y-0 data-[side=right]:before:right-full", "data-[side=top]:before:h-(--media-popover-side-offset) data-[side=bottom]:before:h-(--media-popover-side-offset)", "data-[side=left]:before:w-(--media-popover-side-offset) data-[side=right]:before:w-(--media-popover-side-offset)", "m-0 min-w-48 max-w-(--media-popover-available-width) overflow-hidden rounded-xl border-0 p-1", "max-h-[min(var(--media-popover-available-height,14rem),14rem)] overscroll-none", "h-(--media-menu-height) w-(--media-menu-width)", "transition-settings-menu", className]}>
+          </button><media-menu id="__vjsc-id-<module>-ci-popup" side="top" align="center" {...props} class={["relative", "text-white backdrop-blur-lg backdrop-saturate-150", "after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit]", "after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.1),inset_0_0_0_1px_rgb(255_255_255/0.05)]", "[@media(prefers-reduced-transparency:reduce)]:bg-black [@media(prefers-reduced-transparency:reduce)]:ring-1 [@media(prefers-reduced-transparency:reduce)]:ring-transparent", "[@media(prefers-reduced-transparency:reduce)]:backdrop-filter-none", "[@media(prefers-reduced-transparency:reduce)]:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "contrast-more:bg-black contrast-more:ring-1 contrast-more:ring-transparent contrast-more:backdrop-filter-none", "contrast-more:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "forced-colors:bg-[Canvas] forced-colors:ring-1 forced-colors:ring-[CanvasText]", "forced-colors:after:shadow-[inset_0_1px_0_0_CanvasText,inset_0_0_0_1px_CanvasText]", "shadow-sm shadow-black/20 ring-1 ring-white/10", "[@media(prefers-reduced-transparency:reduce)]:shadow-sm [@media(prefers-reduced-transparency:reduce)]:shadow-black/20", "contrast-more:shadow-sm contrast-more:shadow-black/20", "forced-colors:shadow-sm forced-colors:shadow-black/20", "bg-black/50", "m-0 overflow-visible border-0 text-inherit", "transition-[opacity,filter,transform,scale] duration-100 ease-out motion-reduce:duration-0", "data-starting-style:opacity-0 data-starting-style:blur-xs data-starting-style:scale-95", "data-ending-style:opacity-0 data-ending-style:blur-xs data-ending-style:scale-95", "data-[side=top]:origin-bottom data-[side=bottom]:origin-top data-[side=left]:origin-right data-[side=right]:origin-left", "before:pointer-events-auto before:absolute", "data-[side=top]:before:inset-x-0 data-[side=top]:before:top-full", "data-[side=bottom]:before:inset-x-0 data-[side=bottom]:before:bottom-full", "data-[side=left]:before:inset-y-0 data-[side=left]:before:left-full", "data-[side=right]:before:inset-y-0 data-[side=right]:before:right-full", "data-[side=top]:before:h-(--media-popover-side-offset) data-[side=bottom]:before:h-(--media-popover-side-offset)", "data-[side=left]:before:w-(--media-popover-side-offset) data-[side=right]:before:w-(--media-popover-side-offset)", "m-0 min-w-48 max-w-(--media-popover-available-width) overflow-hidden rounded-xl border-0 p-1", "max-h-[min(var(--media-popover-available-height,14rem),14rem)] overscroll-none", "h-(--media-menu-height) w-(--media-menu-width)", "transition-settings-menu", className]}>
         <media-menu-content className={"relative flex flex-col gap-0.5 [anchor-scope:--media-menu-item-highlight-anchor] absolute inset-x-0 top-0 max-h-[inherit] overflow-auto overscroll-none p-1 outline-none transition-[translate,filter] duration-250 ease-out data-[submenu-expanded=true]:-translate-x-full data-[submenu-expanded=true]:blur-sm"}>{children}</media-menu-content>
       </media-menu></></Scope>
   );
@@ -8511,6 +8848,7 @@ export function SettingsMenu({ children, className, ...props }: PropsWithChildre
 import type { MenuProps } from '@videojs/core';
 
 import { type PropsWithChildren, type VjscNode } from "vjsc/components";
+
 
 import { MenuChevron } from './menu-chevron';
 import "@videojs/html/ui/menu";
@@ -8532,14 +8870,14 @@ export function Submenu({
   }
 >) {
   return (
-    <Scope prefix="<module>-di"><><media-menu-item commandfor="__vjsc-id-<module>-di-content" class={["group/menu-item relative flex cursor-pointer select-none items-center gap-1.5 rounded-media-surface px-2 py-1.5 text-left", "outline-2 -outline-offset-2 outline-transparent", "hover:bg-media-control-hover hover:text-media-accent-text data-highlighted:bg-media-control-hover data-highlighted:text-media-accent-text", "focus-visible:outline-current focus-visible:outline-offset-2", "transition-[color,background-color] duration-100 ease-in-out motion-reduce:duration-50", "justify-between tabular-nums text-inherit", "data-[availability=unavailable]:hidden data-[availability=unsupported]:hidden", "aria-disabled:pointer-events-none aria-disabled:cursor-not-allowed aria-disabled:opacity-50"]}>
+    <Scope prefix="<module>-dj"><><media-menu-item commandfor="__vjsc-id-<module>-dj-content" class={["group/menu-item relative flex cursor-pointer select-none items-center gap-1.5 rounded-media-surface px-2 py-1.5 text-left", "outline-2 -outline-offset-2 outline-transparent", "hover:bg-media-control-hover hover:text-media-accent-text data-highlighted:bg-media-control-hover data-highlighted:text-media-accent-text", "focus-visible:outline-current focus-visible:outline-offset-2", "transition-[color,background-color] duration-100 ease-in-out motion-reduce:duration-50", "justify-between tabular-nums text-inherit", "data-[availability=unavailable]:hidden data-[availability=unsupported]:hidden", "aria-disabled:pointer-events-none aria-disabled:cursor-not-allowed aria-disabled:opacity-50"]}>
         {icon}
         {label}
         <span class={"ml-auto inline-flex min-w-0 items-center gap-1 pl-2 opacity-70"}>
           {selectedLabel}
           <MenuChevron />
         </span>
-      </media-menu-item><media-menu-content id="__vjsc-id-<module>-di-content" class={["absolute inset-x-0 top-0 z-10 max-h-[inherit] overflow-auto overscroll-none p-1 outline-none", "transition-[translate,filter] duration-250 ease-out", "data-starting-style:pointer-events-none data-ending-style:pointer-events-none", "data-starting-style:translate-x-full data-ending-style:translate-x-full", "data-starting-style:blur-sm data-ending-style:blur-sm", className]}>
+      </media-menu-item><media-menu-content id="__vjsc-id-<module>-dj-content" class={["absolute inset-x-0 top-0 z-10 max-h-[inherit] overflow-auto overscroll-none p-1 outline-none", "transition-[translate,filter] duration-250 ease-out", "data-starting-style:pointer-events-none data-ending-style:pointer-events-none", "data-starting-style:translate-x-full data-ending-style:translate-x-full", "data-starting-style:blur-sm data-ending-style:blur-sm", className]}>
         <media-menu-item className={["group/menu-item relative flex cursor-pointer select-none items-center gap-1.5 rounded-media-surface px-2 py-1.5 text-left", "outline-2 -outline-offset-2 outline-transparent", "hover:bg-media-control-hover hover:text-media-accent-text data-highlighted:bg-media-control-hover data-highlighted:text-media-accent-text", "focus-visible:outline-current focus-visible:outline-offset-2", "transition-[color,background-color] duration-100 ease-in-out motion-reduce:duration-50", "mb-0.5 w-full"]}>
           <MenuChevron flipped />
           {label}
@@ -8553,6 +8891,7 @@ export function Submenu({
 // ===== html/minimal-video/tailwind/components/menus/video-settings-menu.tsx =====
 /** @jsxImportSource vjsc/html-runtime */
 import type { PropsOf } from 'vjsc/components';
+
 
 import { AudioTrackMenu } from './audio-track-menu';
 import { CaptionsMenu } from './captions-menu';
@@ -8579,6 +8918,7 @@ import type { TimeSliderProps as CoreProps } from '@videojs/core';
 
 
 import { type Props } from "vjsc/components";
+
 
 import "@videojs/html/ui/slider-buffer";
 import "@videojs/html/ui/slider-fill";
@@ -8627,6 +8967,7 @@ import type { VolumeSliderProps as CoreProps } from '@videojs/core';
 
 import type { Props } from 'vjsc/components';
 
+
 import "@videojs/html/ui/slider-fill";
 import "@videojs/html/ui/slider-track";
 import "@videojs/html/ui/slider-thumb";
@@ -8647,6 +8988,7 @@ export function VolumeSlider({ className, ...props }: Props<CoreProps> = {}) {
 
 // ===== html/minimal-video/tailwind/components/video-gestures.tsx =====
 /** @jsxImportSource vjsc/html-runtime */
+
 
 
 import "@videojs/html/ui/gesture";
@@ -8670,6 +9012,7 @@ export function VideoGestures({ disabled = false }: VideoGesturesProps = {}) {
 
 // ===== html/minimal-video/tailwind/components/video-hotkeys.tsx =====
 /** @jsxImportSource vjsc/html-runtime */
+
 
 
 import "@videojs/html/ui/hotkey";
@@ -8707,6 +9050,7 @@ export function VideoHotkeys({ disabled = false }: VideoHotkeysProps = {}) {
 /** @jsxImportSource vjsc/html-runtime */
 
 import { type PropsOf, type VjscNode } from "vjsc/components";
+
 import { AirPlayButton } from '../../components/buttons/airplay-button';
 import { CaptionsButton } from '../../components/buttons/captions-button';
 import { CastButton } from '../../components/buttons/cast-button';

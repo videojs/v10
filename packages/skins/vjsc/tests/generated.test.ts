@@ -6,7 +6,7 @@ import { createLogger, createServer, type Plugin, type ViteDevServer } from 'vit
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 const packageDir = resolve(import.meta.dirname, '../..');
-const configFile = resolve(packageDir, 'vite.config.ts');
+const configFile = resolve(packageDir, 'dev/vite.config.ts');
 const sourceDir = resolve(packageDir, 'vjsc');
 const snapshotFile = resolve(import.meta.dirname, '__snapshots__/generated.tsx.snap');
 const targets = ['react', 'html'] as const;
