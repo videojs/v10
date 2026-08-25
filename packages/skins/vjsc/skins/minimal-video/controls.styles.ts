@@ -5,7 +5,7 @@ export default styles({
   layer: 'videojs.components',
   rules: {
     root: {
-      className: 'media-controls-root',
+      className: 'media-controls',
       utilities: [
         'group/controls absolute inset-x-1 bottom-1 z-20 flex flex-wrap items-center gap-x-2 rounded-xl bg-transparent text-white',
         'text-shadow-[0_1px_0_rgb(0_0_0/0.2)]',
@@ -38,8 +38,8 @@ export default styles({
       className: 'media-controls-end',
       utilities: 'flex flex-1 items-center justify-end gap-px @2xl/media-root:flex-none',
     },
-    remote: {
-      className: 'media-controls-remote',
+    trailing: {
+      className: 'media-controls-trailing',
       utilities: 'flex items-center gap-px',
     },
     timeSliderGroup: {
@@ -59,8 +59,8 @@ export default styles({
       className: 'media-time-group',
       utilities: 'flex items-center gap-1',
     },
-    currentTime: {
-      className: 'media-time-current',
+    currentValue: {
+      className: 'media-time-current-value',
       utilities: [
         'hidden cursor-pointer rounded-sm tabular-nums outline-2 -outline-offset-2 outline-transparent',
         'supports-[corner-shape:squircle]:rounded-2xl supports-[corner-shape:squircle]:[corner-shape:squircle]',
@@ -71,8 +71,8 @@ export default styles({
       className: 'media-time-separator',
       utilities: 'hidden text-current/60 @2xl/media-root:inline',
     },
-    durationTime: {
-      className: 'media-time-duration',
+    durationValue: {
+      className: 'media-time-duration-value',
       utilities: 'tabular-nums text-current/60',
     },
   },

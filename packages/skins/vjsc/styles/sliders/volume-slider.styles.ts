@@ -1,5 +1,4 @@
 import { styles } from 'vjsc/styles';
-import { sliderFill, sliderRoot, sliderThumb, sliderTrack } from '../slider';
 
 export default styles({
   file: 'sliders.css',
@@ -7,19 +6,11 @@ export default styles({
   rules: {
     root: {
       className: 'media-volume-slider',
-      ...sliderRoot,
-    },
-    track: {
-      className: 'media-volume-slider-track',
-      ...sliderTrack,
-    },
-    fill: {
-      className: 'media-volume-slider-fill',
-      ...sliderFill,
+      utilities: [],
     },
     thumb: {
       className: 'media-volume-slider-thumb',
-      utilities: [...sliderThumb.utilities, 'opacity-100'],
+      utilities: 'opacity-100',
       variants: {
         default: [
           'size-3 scale-100 outline-4 -outline-offset-4 outline-transparent',

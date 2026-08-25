@@ -1,8 +1,5 @@
 import { styles } from 'vjsc/styles';
 
-import { button } from '../button';
-import { defaultSurface } from '../surface';
-
 export default styles({
   file: 'dialog.css',
   layer: 'videojs.components',
@@ -31,7 +28,6 @@ export default styles({
       ],
       variants: {
         default: [
-          ...defaultSurface,
           'w-[calc(100%-1.5rem)] max-w-72 rounded-[1.75rem] p-3 text-white',
           'text-shadow-[0_1px_0_rgb(0_0_0/0.25)] duration-350',
         ],
@@ -60,7 +56,7 @@ export default styles({
     },
     close: {
       className: 'media-error-dialog-close',
-      utilities: [...button, 'w-full flex-1 bg-media-accent! px-4 py-2 font-medium text-media-accent-text!'],
+      utilities: 'w-full flex-1 bg-media-accent! px-4 py-2 font-medium text-media-accent-text!',
       variants: {
         default: 'h-9',
         minimal: 'h-9.5',

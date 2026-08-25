@@ -1,7 +1,5 @@
 import { styles } from 'vjsc/styles';
 
-import { defaultSurface } from '../surface';
-
 const icon = ['hidden shrink-0'] as const;
 
 const iconVariants = {
@@ -21,7 +19,6 @@ export default styles({
       ],
       variants: {
         default: [
-          ...defaultSurface,
           'top-3 rounded-[9999px] bg-black/25 font-medium',
           'data-starting-style:duration-250 data-starting-style:ease-in',
           'data-ending-style:duration-250 data-ending-style:ease-in',
@@ -58,32 +55,32 @@ export default styles({
       },
     },
     captionsOnIcon: {
-      className: 'media-status-captions-on-icon',
+      className: 'media-status-indicator-captions-on-icon',
       utilities: [...icon, 'group-data-[status=captions-on]/input-status:block'],
       variants: iconVariants,
     },
     captionsOffIcon: {
-      className: 'media-status-captions-off-icon',
+      className: 'media-status-indicator-captions-off-icon',
       utilities: [...icon, 'group-data-[status=captions-off]/input-status:block'],
       variants: iconVariants,
     },
     fullscreenEnterIcon: {
-      className: 'media-status-fullscreen-enter-icon',
+      className: 'media-status-indicator-fullscreen-enter-icon',
       utilities: [...icon, 'group-data-[status=fullscreen]/input-status:block'],
       variants: iconVariants,
     },
     fullscreenExitIcon: {
-      className: 'media-status-fullscreen-exit-icon',
+      className: 'media-status-indicator-fullscreen-exit-icon',
       utilities: [...icon, 'group-data-[status=exit-fullscreen]/input-status:block'],
       variants: iconVariants,
     },
     pipEnterIcon: {
-      className: 'media-status-pip-enter-icon',
+      className: 'media-status-indicator-pip-enter-icon',
       utilities: [...icon, 'group-data-[status=pip]/input-status:block'],
       variants: iconVariants,
     },
     pipExitIcon: {
-      className: 'media-status-pip-exit-icon',
+      className: 'media-status-indicator-pip-exit-icon',
       utilities: [...icon, 'group-data-[status=exit-pip]/input-status:block'],
       variants: iconVariants,
     },

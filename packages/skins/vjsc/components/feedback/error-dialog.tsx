@@ -2,19 +2,21 @@ import * as $ from '@videojs/core/vjsc';
 import { Box, type Props } from 'vjsc/components';
 
 import type { SkinComponentMeta } from '../../meta';
-import styles from '../../styles/components/error-dialog.styles';
+import buttonStyles from '../../styles/buttons/button.styles';
+import styles from '../../styles/popups/error-dialog.styles';
+import surfaceStyles from '../../styles/surfaces/surface.styles';
 
 export function ErrorDialog({ className, ...props }: Props = {}) {
   return (
     <$.ErrorDialog.Root>
       <$.ErrorDialog.Backdrop className={styles.backdrop} />
-      <$.ErrorDialog.Popup className={[styles.popup, className]} {...props}>
+      <$.ErrorDialog.Popup className={[surfaceStyles.feedback, styles.popup, className]} {...props}>
         <Box className={styles.content}>
           <$.ErrorDialog.Title className={styles.title} />
           <$.ErrorDialog.Description className={styles.description} />
         </Box>
         <Box className={styles.actions}>
-          <$.ErrorDialog.Close className={styles.close} />
+          <$.ErrorDialog.Close className={[buttonStyles.root, styles.close]} />
         </Box>
       </$.ErrorDialog.Popup>
     </$.ErrorDialog.Root>

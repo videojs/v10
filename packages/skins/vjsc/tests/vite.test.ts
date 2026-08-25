@@ -14,7 +14,7 @@ const settingsMenuUrl = `/../vjsc/components/menus/settings-menu.tsx${reactTarge
 const volumePopoverUrl = `/../vjsc/components/controls/volume-popover.tsx${reactTarget}`;
 const htmlPosterUrl = '/../vjsc/components/layout/poster.tsx?style=tailwind&target=html&skin=default-video';
 const reactPosterUrl = '/../vjsc/components/layout/poster.tsx?style=tailwind&target=react&skin=default-video';
-const buttonStyles = resolve(packageDir, 'vjsc/styles/button.ts');
+const buttonStyles = resolve(packageDir, 'vjsc/styles/buttons/button.styles.ts');
 const controlsStyles = resolve(packageDir, 'vjsc/skins/default-video/controls.styles.ts');
 const designStyles = resolve(packageDir, 'vjsc/styles/base.css');
 const skinConfig = resolve(packageDir, 'vjsc/config.ts');

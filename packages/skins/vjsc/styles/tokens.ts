@@ -32,10 +32,6 @@ export const tokens = {
     kind: 'public',
     description: 'Media and poster object-position value.',
   },
-  '--media-poster-placeholder-blur': {
-    kind: 'public',
-    description: 'Blur radius applied to a poster placeholder.',
-  },
   '--media-scale-unit': {
     kind: 'public',
     description: 'Base length used to scale fullscreen controls independently of the document root font size.',
@@ -127,10 +123,6 @@ export const tokens = {
   '--media-popover-available-width': {
     kind: 'runtime',
     description: 'Available floating-ui width.',
-  },
-  '--media-poster-placeholder': {
-    kind: 'runtime',
-    description: 'Poster placeholder image populated by the HTML or React target.',
   },
   '--media-slider-buffer': {
     kind: 'runtime',

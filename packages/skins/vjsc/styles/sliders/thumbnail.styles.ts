@@ -1,28 +1,23 @@
 import { styles } from 'vjsc/styles';
-import { sliderPreviewContent } from '../slider';
-import { defaultSurface, minimalSurface } from '../surface';
 
 export default styles({
   file: 'sliders.css',
   layer: 'videojs.components',
   rules: {
     root: {
-      className: 'media-thumbnail',
+      className: 'media-slider-thumbnail',
       utilities: [
-        ...sliderPreviewContent,
         'group/thumbnail pointer-events-none overflow-hidden',
         'has-[[data-loading]]:aspect-video has-[[data-loading]]:w-(--media-slider-preview-max-width)',
       ],
       variants: {
-        default: [...defaultSurface, 'left-1/2 bottom-[calc(100%+2.25rem)] rounded-xl bg-black/90'],
-        minimal: [
-          ...minimalSurface,
+        default: 'left-1/2 bottom-[calc(100%+2.25rem)] rounded-xl bg-black/90',
+        minimal:
           '[left:var(--media-preview-left,var(--media-slider-pointer))] bottom-[calc(100%+2.75rem)] rounded-lg bg-black/90',
-        ],
       },
     },
     image: {
-      className: 'media-thumbnail-image',
+      className: 'media-slider-thumbnail-image',
       utilities: [
         'relative block max-h-(--media-slider-preview-max-height) max-w-(--media-slider-preview-max-width) overflow-clip rounded-[inherit]',
         'transition-opacity duration-150 ease-out motion-reduce:duration-50',
@@ -30,7 +25,7 @@ export default styles({
       ],
     },
     spinnerIcon: {
-      className: 'media-thumbnail-spinner-icon',
+      className: 'media-slider-thumbnail-spinner-icon',
       utilities: [
         'absolute top-1/2 left-1/2 size-media-icon -translate-x-1/2 -translate-y-1/2 opacity-0',
         'group-has-[[role=img][data-loading]]/thumbnail:opacity-100',

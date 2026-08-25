@@ -6,10 +6,6 @@
 
 @source "../**/*.tsx";
 @source "../**/*.styles.ts";
-@source "./button.ts";
-@source "./popup.ts";
-@source "./slider.ts";
-@source "./surface.ts";
 
 @theme inline {
   --spacing: var(--media-spacing);

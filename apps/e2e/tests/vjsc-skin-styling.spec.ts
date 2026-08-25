@@ -7,6 +7,8 @@ const CASES = [
   { framework: 'html', skin: 'minimal-video' },
 ] as const;
 const WIDTHS = [320, 800] as const;
+const BUFFERING_INDICATOR_SELECTOR =
+  '.media-buffering-indicator, media-buffering-indicator, [class~="peer/buffering"], [class~="hidden"][class~="place-content-center"]';
 
 test.describe.configure({ mode: 'serial' });
 
@@ -552,7 +554,7 @@ async function seekFocusContract(page: Page) {
 async function seekDragContract(page: Page) {
   const thumb = page.getByRole('slider', { name: 'Seek' });
   const slider = thumb.locator(
-    'xpath=ancestor::*[contains(concat(" ", normalize-space(@class), " "), " media-slider ") or contains(@class, "group/slider")][1]'
+    'xpath=ancestor::*[contains(concat(" ", normalize-space(@class), " "), " media-slider ") or contains(concat(" ", normalize-space(@class), " "), " media-time-slider ") or contains(@class, "group/slider")][1]'
   );
   const box = await slider.boundingBox();
   if (!box) throw new Error('Expected the seek slider to have a rendered box.');
@@ -644,12 +646,12 @@ async function hideControls(root: Locator) {
 }
 
 async function showBuffering(root: Locator) {
-  const indicator = root.locator('.media-buffering-indicator, [class~="peer/buffering"]').first();
+  const indicator = root.locator(BUFFERING_INDICATOR_SELECTOR).first();
   await indicator.evaluate((element) => element.setAttribute('data-visible', ''));
   await root.page().waitForTimeout(500);
 
-  return root.evaluate((element) => {
-    const indicator = element.querySelector<HTMLElement>('.media-buffering-indicator, [class~="peer/buffering"]');
+  return root.evaluate((element, bufferingIndicatorSelector) => {
+    const indicator = element.querySelector<HTMLElement>(bufferingIndicatorSelector);
     const overlay = element.querySelector<HTMLElement>(
       '.media-overlay, [class~="peer-data-visible/buffering:bg-black/35"]'
     );
@@ -698,7 +700,7 @@ async function showBuffering(root: Locator) {
           : null,
       },
     };
-  });
+  }, BUFFERING_INDICATOR_SELECTOR);
 }
 
 async function enterFullscreen(page: Page, root: Locator) {
@@ -1088,11 +1090,16 @@ async function layoutContract(root: Locator) {
       controls: inspect('.media-controls--root, .media-controls-root, .media-controls', { includeGap: false }),
       primary: inspect('.media-controls--primary, .media-controls-primary', { includeGap: false }),
       secondary: inspect('.media-controls--secondary, .media-controls-secondary', { includeGap: false }),
-      timeline: inspect('.media-time-controls', { includeHorizontalPosition: false, includeWidth: false }),
+      timeline: inspect('.media-time-controls, .media-time-slider-group', {
+        includeHorizontalPosition: false,
+        includeWidth: false,
+      }),
       play: inspect('[role="button"][aria-label="Play"]'),
       mute: inspect('[role="button"][aria-label="Mute"]'),
       seekThumb: inspect('[role="slider"][aria-label="Seek"]', { includeHorizontalPosition: false }),
-      settings: inspect('.media-button--settings, .media-settings-trigger', { includeHorizontalPosition: false }),
+      settings: inspect('.media-button--settings, .media-settings-menu-trigger', {
+        includeHorizontalPosition: false,
+      }),
       pictureInPicture: inspect('.media-button--pip, .media-pip-button'),
       fullscreen: inspect('.media-button--fullscreen, .media-fullscreen-button'),
     };

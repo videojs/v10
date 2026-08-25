@@ -1,5 +1,4 @@
 import { styles } from 'vjsc/styles';
-import { button, buttonIcon, buttonIconVariants, buttonVariants } from '../button';
 
 export default styles({
   file: 'buttons.css',
@@ -7,18 +6,11 @@ export default styles({
   rules: {
     root: {
       className: 'media-seek-button',
-      utilities: button,
-      variants: buttonVariants,
-    },
-    icon: {
-      className: 'media-seek-button-icon',
-      utilities: buttonIcon,
-      variants: buttonIconVariants,
+      utilities: [],
     },
     backwardIcon: {
       className: 'media-seek-button-backward-icon',
-      utilities: [...buttonIcon, '-scale-x-100'],
-      variants: buttonIconVariants,
+      utilities: '-scale-x-100',
     },
     label: {
       className: 'media-seek-button-label',

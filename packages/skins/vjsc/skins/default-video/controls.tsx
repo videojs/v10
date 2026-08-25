@@ -8,6 +8,7 @@ import { PlayButton } from '../../components/buttons/play-button';
 import { VolumePopover } from '../../components/controls/volume-popover';
 import { VideoSettingsMenu } from '../../components/menus/video-settings-menu';
 import { TimeSlider } from '../../components/sliders/time-slider';
+import surfaceStyles from '../../styles/surfaces/surface.styles';
 import styles from './controls.styles';
 
 export function DefaultVideoControls() {
@@ -15,21 +16,21 @@ export function DefaultVideoControls() {
     <$.Controls.Root className={styles.root} data-controls="">
       <$.Controls.Backdrop className={styles.backdrop} />
       <$.Tooltip.Provider>
-        <$.Controls.Group className={styles.primary}>
+        <$.Controls.Group className={[surfaceStyles.root, styles.primary]}>
           <PlayButton />
           <VolumePopover />
 
           <$.Controls.Group className={styles.timeSliderGroup}>
-            <$.Time.Value className={styles.currentTime} type="current" />
+            <$.Time.Value className={styles.currentValue} type="current" />
             <TimeSlider />
-            <$.Time.Value className={styles.remainingTime} type="remaining" toggle />
+            <$.Time.Value className={styles.remainingValue} type="remaining" toggle />
           </$.Controls.Group>
 
           <CaptionsButton className={styles.captionsButton} />
           <VideoSettingsMenu />
         </$.Controls.Group>
 
-        <$.Controls.Group className={styles.secondary}>
+        <$.Controls.Group className={[surfaceStyles.root, styles.secondary]}>
           <CastButton />
           <AirPlayButton />
           <PiPButton />

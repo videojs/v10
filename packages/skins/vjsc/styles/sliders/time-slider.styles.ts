@@ -1,5 +1,4 @@
 import { styles } from 'vjsc/styles';
-import { sliderBuffer, sliderFill, sliderPreviewContent, sliderRoot, sliderThumb } from '../slider';
 
 export default styles({
   file: 'sliders.css',
@@ -7,7 +6,7 @@ export default styles({
   rules: {
     root: {
       className: 'media-time-slider',
-      ...sliderRoot,
+      utilities: [],
     },
     chapters: {
       className: 'media-time-slider-chapters',
@@ -26,79 +25,47 @@ export default styles({
     chapterTrack: {
       className: 'media-time-slider-chapter-track',
       utilities: [
-        'relative isolate overflow-hidden rounded-media-control bg-current/20 select-none',
         'motion-safe:transition-[height,width] motion-safe:duration-200 motion-safe:ease-out',
-        'data-[orientation=horizontal]:w-full',
         'data-[orientation=horizontal]:[clip-path:inset(0_calc(100%-var(--media-slider-chapter-end)+var(--media-spacing)*var(--media-chapter-inset-end))_0_calc(var(--media-slider-chapter-start)+var(--media-spacing)*var(--media-chapter-inset-start))_round_var(--media-control-radius))]',
-        'data-[orientation=vertical]:h-full',
         'data-[orientation=vertical]:[clip-path:inset(calc(100%-var(--media-slider-chapter-end)+var(--media-spacing)*var(--media-chapter-inset-end))_0_calc(var(--media-slider-chapter-start)+var(--media-spacing)*var(--media-chapter-inset-start))_0_round_var(--media-control-radius))]',
       ],
       variants: {
         default: [
-          'data-[orientation=horizontal]:h-1 data-[orientation=vertical]:w-1',
           'group-data-highlighted/chapter:data-[orientation=horizontal]:h-1.75',
           'group-data-highlighted/chapter:data-[orientation=vertical]:w-1.75',
         ],
         minimal: [
-          'data-[orientation=horizontal]:h-1 data-[orientation=vertical]:w-1',
           'group-data-highlighted/chapter:data-[orientation=horizontal]:h-1.75',
           'group-data-highlighted/chapter:data-[orientation=vertical]:w-1.75',
         ],
       },
-    },
-    buffer: {
-      className: 'media-time-slider-buffer',
-      ...sliderBuffer,
-    },
-    fill: {
-      className: 'media-time-slider-fill',
-      ...sliderFill,
     },
     thumb: {
       className: 'media-time-slider-thumb',
       utilities: [
-        ...sliderThumb.utilities,
-        'opacity-0 data-interactive:scale-100 data-interactive:opacity-100',
+        'opacity-0 data-interactive:opacity-100',
         'pointer-fine:group-hover/slider:scale-100 pointer-fine:group-hover/slider:opacity-100',
       ],
       variants: {
-        default: [...sliderThumb.variants.default, 'focus-visible:opacity-100'],
-        minimal: [...sliderThumb.variants.minimal, 'focus-visible:scale-100 focus-visible:opacity-100'],
-      },
-    },
-    preview: {
-      className: 'media-time-slider-preview',
-      utilities: [
-        'group/preview relative h-1 [--media-slider-preview-max-height:var(--media-slider-preview-max-width)]',
-        'before:pointer-events-none before:absolute before:z-1 before:-translate-1/2 before:scale-50 before:opacity-0',
-        'motion-safe:before:transition-[opacity,scale] motion-safe:before:duration-200 motion-safe:before:ease-out',
-        'data-pointing:not-data-dragging:before:scale-100 data-pointing:not-data-dragging:before:opacity-100',
-      ],
-      variants: {
         default: [
-          'min-w-(--media-slider-preview-max-width)',
-          '[--media-slider-preview-max-width:min(--spacing(36),100cqi)] @2xl/media-root:[--media-slider-preview-max-width:min(--spacing(48),100cqi)]',
-          'before:top-1/2 before:left-1/2 before:size-1 before:rounded-media-control before:bg-current',
+          'size-3 scale-80 outline-4 -outline-offset-4 outline-transparent',
+          'shadow-[0_0_0_1px_rgb(0_0_0/0.1),0_1px_3px_0_rgb(0_0_0/0.35),0_1px_2px_-1px_rgb(0_0_0/0.35)]',
+          'hover:outline-current/15 hover:outline-offset-0 focus-visible:outline-current/15 focus-visible:outline-offset-0',
+          'after:pointer-events-none after:absolute after:-inset-1 after:scale-50 after:rounded-[inherit] after:opacity-0',
+          'after:shadow-[0_0_0_2px_currentColor] motion-safe:after:transition-[opacity,scale] motion-safe:after:duration-150 motion-safe:after:ease-out',
+          'focus-visible:after:scale-100 focus-visible:after:opacity-100 focus-visible:opacity-100',
         ],
         minimal: [
-          'min-w-full',
-          '[--media-slider-preview-max-width:min(--spacing(28),100cqi)]',
-          '@lg/media-root:[--media-slider-preview-max-width:min(--spacing(36),100cqi)]',
-          '@2xl/media-root:[--media-slider-preview-max-width:min(--spacing(48),100cqi)]',
-          '[--media-preview-end-inset:calc(100cqi-100%)]',
-          '[--media-preview-left:clamp(calc(var(--media-slider-preview-max-width)/2),var(--media-slider-pointer),calc(100%-var(--media-slider-preview-max-width)/2+var(--media-preview-end-inset)))]',
-          '@2xl/media-root:[--media-preview-left:var(--media-slider-pointer)]',
-          'before:bg-current/35',
-          'data-[orientation=horizontal]:before:top-1/2 data-[orientation=horizontal]:before:left-(--media-slider-pointer)',
-          'data-[orientation=horizontal]:before:h-5 data-[orientation=horizontal]:before:w-px',
-          'data-[orientation=vertical]:before:top-[calc(100%-var(--media-slider-pointer))] data-[orientation=vertical]:before:left-1/2',
-          'data-[orientation=vertical]:before:h-px data-[orientation=vertical]:before:w-5',
+          'size-3 scale-70 outline-2 -outline-offset-2 outline-transparent',
+          'shadow-[0_0_0_1px_rgb(0_0_0/0.15),0_1px_3px_0_rgb(0_0_0/0.15),0_1px_2px_-1px_rgb(0_0_0/0.15)]',
+          'focus-visible:outline-white focus-visible:outline-offset-2',
+          'data-interactive:scale-100',
         ],
       },
     },
     previewContent: {
       className: 'media-time-slider-preview-content',
-      utilities: [...sliderPreviewContent, 'flex tabular-nums'],
+      utilities: 'flex tabular-nums',
       variants: {
         default: 'left-1/2 bottom-[calc(100%+2.625rem)] flex-col items-center',
         minimal:

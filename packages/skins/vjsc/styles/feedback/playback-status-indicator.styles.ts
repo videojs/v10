@@ -27,7 +27,7 @@ export default styles({
       variants: { default: 'rounded-[9999px] bg-black/35 backdrop-blur-sm', minimal: '' },
     },
     playIcon: {
-      className: 'media-status-play-icon',
+      className: 'media-playback-status-indicator-play-icon',
       utilities: [
         ...icon,
         'group-data-[status=play]/playback-status:scale-100 group-data-[status=play]/playback-status:opacity-100 group-data-[status=play]/playback-status:translate-x-px',
@@ -35,7 +35,7 @@ export default styles({
       variants: iconVariants,
     },
     pauseIcon: {
-      className: 'media-status-pause-icon',
+      className: 'media-playback-status-indicator-pause-icon',
       utilities: [
         ...icon,
         'group-data-[status=pause]/playback-status:scale-100 group-data-[status=pause]/playback-status:opacity-100',

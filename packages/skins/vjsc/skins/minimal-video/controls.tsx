@@ -22,9 +22,9 @@ export function MinimalVideoControls() {
 
         <$.Controls.Group className={styles.timeSliderGroup}>
           <$.Time.Group className={styles.timeGroup}>
-            <$.Time.Value className={styles.currentTime} type="current" toggle />
+            <$.Time.Value className={styles.currentValue} type="current" toggle />
             <$.Time.Separator className={styles.timeSeparator} />
-            <$.Time.Value className={styles.durationTime} type="duration" />
+            <$.Time.Value className={styles.durationValue} type="duration" />
           </$.Time.Group>
           <TimeSlider />
         </$.Controls.Group>
@@ -32,7 +32,7 @@ export function MinimalVideoControls() {
         <$.Controls.Group className={styles.end}>
           <CaptionsButton />
           <VideoSettingsMenu />
-          <$.Controls.Group className={styles.remote}>
+          <$.Controls.Group className={styles.trailing}>
             <CastButton />
             <AirPlayButton />
             <PiPButton />

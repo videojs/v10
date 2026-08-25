@@ -1,4 +1,6 @@
-const surfaceBase = [
+import { styles } from 'vjsc/styles';
+
+const base = [
   'text-white backdrop-blur-lg backdrop-saturate-150',
   'after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit]',
   'after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.1),inset_0_0_0_1px_rgb(255_255_255/0.05)]',
@@ -11,20 +13,43 @@ const surfaceBase = [
   'forced-colors:after:shadow-[inset_0_1px_0_0_CanvasText,inset_0_0_0_1px_CanvasText]',
 ] as const;
 
-const defaultSurfaceFrame = [
+const defaultVariant = [
+  ...base,
   'shadow-sm shadow-black/15 ring-1 ring-black/10',
   '[@media(prefers-reduced-transparency:reduce)]:shadow-sm [@media(prefers-reduced-transparency:reduce)]:shadow-black/15',
   'contrast-more:shadow-sm contrast-more:shadow-black/15',
   'forced-colors:shadow-sm forced-colors:shadow-black/15',
+  'bg-white/10',
 ] as const;
 
-const minimalSurfaceFrame = [
+const minimalVariant = [
+  ...base,
   'shadow-sm shadow-black/20 ring-1 ring-white/10',
   '[@media(prefers-reduced-transparency:reduce)]:shadow-sm [@media(prefers-reduced-transparency:reduce)]:shadow-black/20',
   'contrast-more:shadow-sm contrast-more:shadow-black/20',
   'forced-colors:shadow-sm forced-colors:shadow-black/20',
+  'bg-black/50',
 ] as const;
 
-export const defaultSurface = [...surfaceBase, ...defaultSurfaceFrame, 'bg-white/10'] as const;
-
-export const minimalSurface = [...surfaceBase, ...minimalSurfaceFrame, 'bg-black/50'] as const;
+export default styles({
+  file: 'common.css',
+  layer: 'videojs.components',
+  rules: {
+    root: {
+      className: 'media-surface',
+      utilities: [],
+      variants: {
+        default: defaultVariant,
+        minimal: minimalVariant,
+      },
+    },
+    feedback: {
+      className: 'media-feedback-surface',
+      utilities: [],
+      variants: {
+        default: defaultVariant,
+        minimal: [],
+      },
+    },
+  },
+});

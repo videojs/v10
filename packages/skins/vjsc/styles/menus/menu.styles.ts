@@ -1,7 +1,4 @@
 import { styles } from 'vjsc/styles';
-import { button, buttonIcon, buttonIconVariants, buttonVariants } from '../button';
-import { popoverBridge, popup, popupVariants } from '../popup';
-import { defaultSurface, minimalSurface } from '../surface';
 
 const menuItem = [
   'relative flex cursor-pointer select-none items-center gap-1.5 px-2 py-1.5 text-start',
@@ -31,8 +28,8 @@ const menuItemVariants = {
   ],
 } as const;
 
-const menuGroup = [
-  'flex [max-height:inherit] flex-col gap-0.5 [anchor-scope:--media-menu-item-highlight-anchor]',
+const menuHighlight = [
+  '[anchor-scope:--media-menu-item-highlight-anchor]',
   'supports-[top:anchor(top)]:before:absolute',
   'supports-[top:anchor(top)]:before:[position-anchor:--media-menu-item-highlight-anchor]',
   'supports-[top:anchor(top)]:before:[inset:anchor(inside)]',
@@ -43,6 +40,8 @@ const menuGroup = [
   'supports-[top:anchor(top)]:before:transition-[inset] supports-[top:anchor(top)]:before:duration-100 supports-[top:anchor(top)]:before:ease-in-out',
   'supports-[top:anchor(top)]:has-data-[highlighted=]:before:duration-0',
 ] as const;
+
+const menuGroup = ['flex [max-height:inherit] flex-col gap-0.5', ...menuHighlight] as const;
 
 const menuIcon = ['size-media-icon shrink-0'] as const;
 
@@ -58,8 +57,6 @@ export default styles({
     popup: {
       className: 'media-menu-popup',
       utilities: [
-        ...popup,
-        ...popoverBridge,
         'm-0 min-w-48 max-w-(--media-popover-available-width) overflow-hidden! border-0 p-1',
         'max-h-[min(var(--media-popover-available-height,14rem),14rem)] overscroll-none',
         'h-(--media-menu-height) w-(--media-menu-width)',
@@ -71,15 +68,16 @@ export default styles({
         'motion-reduce:[transition-duration:0ms]',
       ],
       variants: {
-        default: [...defaultSurface, ...popupVariants.default, 'rounded-[--spacing(3)]'],
-        minimal: [...minimalSurface, ...popupVariants.minimal, 'rounded-[--spacing(2.5)]'],
+        default: 'rounded-[--spacing(3)]',
+        minimal: 'rounded-[--spacing(2.5)]',
       },
     },
     content: {
       className: 'media-menu-content',
       utilities: [
-        ...menuGroup,
+        ...menuHighlight,
         'absolute max-h-[inherit] overflow-auto overscroll-none outline-none',
+        'not-data-submenu:flex not-data-submenu:flex-col not-data-submenu:gap-0.5',
         'transition-[translate,filter] duration-(--media-menu-transition-duration) ease-out',
         'not-data-submenu:inset-x-1 not-data-submenu:top-1',
         'not-data-submenu:[--media-menu-parent-translate:-100%]',
@@ -163,8 +161,8 @@ export default styles({
       ],
       variants: menuIconVariants,
     },
-    chevron: {
-      className: 'media-menu-chevron',
+    forwardChevron: {
+      className: 'media-menu-forward-chevron',
       utilities: [
         ...menuIcon,
         'size-3.5 [&:dir(rtl)]:[scale:-1_1]',
@@ -183,20 +181,14 @@ export default styles({
     },
     settingsTrigger: {
       className: 'media-settings-menu-trigger',
-      utilities: [...button, 'group/settings'],
-      variants: buttonVariants,
+      utilities: 'group/settings',
     },
-    settingsIcon: {
-      className: 'media-settings-menu-icon',
+    settingsTriggerIcon: {
+      className: 'media-settings-menu-trigger-icon',
       utilities: [
-        ...buttonIcon,
         'transition-transform duration-150 ease-in-out motion-reduce:duration-0',
         'group-aria-expanded/settings:rotate-90',
       ],
-      variants: {
-        default: [...buttonIconVariants.default],
-        minimal: [...buttonIconVariants.minimal],
-      },
     },
     triggerLabel: {
       className: 'media-settings-menu-trigger-label',

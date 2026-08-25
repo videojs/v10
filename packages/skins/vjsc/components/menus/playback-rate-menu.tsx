@@ -2,7 +2,7 @@ import { speedText } from '@videojs/core/i18n/text/menu';
 import { SpeedIcon } from '@videojs/icons/vjsc';
 import { type PropsOf, Template, Text } from 'vjsc/components';
 
-import styles from '../../styles/components/menu.styles';
+import styles from '../../styles/menus/menu.styles';
 import { PlaybackRateRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';

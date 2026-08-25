@@ -1,8 +1,8 @@
 import { ChevronIcon } from '@videojs/icons/vjsc';
 import type { Props } from 'vjsc/components';
 
-import styles from '../../styles/components/menu.styles';
+import styles from '../../styles/menus/menu.styles';
 
-export function MenuChevron({ flipped = false, className, ...props }: Props<{ flipped?: boolean }> = {}) {
-  return <ChevronIcon className={[flipped ? styles.backChevron : styles.chevron, className]} {...props} />;
+export function MenuChevron({ back = false, className, ...props }: Props<{ back?: boolean }> = {}) {
+  return <ChevronIcon className={[back ? styles.backChevron : styles.forwardChevron, className]} {...props} />;
 }

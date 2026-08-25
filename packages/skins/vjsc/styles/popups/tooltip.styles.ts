@@ -1,6 +1,4 @@
 import { styles } from 'vjsc/styles';
-import { popup, popupTransition, popupVariants, tooltipBridge } from '../popup';
-import { defaultSurface, minimalSurface } from '../surface';
 
 export default styles({
   file: 'popups.css',
@@ -9,15 +7,14 @@ export default styles({
     popup: {
       className: 'media-tooltip',
       utilities: [
-        ...popup,
-        ...popupTransition,
-        ...tooltipBridge,
-        'm-0 whitespace-nowrap border-0 text-media',
+        'data-[side=top]:before:h-(--media-tooltip-side-offset) data-[side=bottom]:before:h-(--media-tooltip-side-offset)',
+        'data-[side=left]:before:w-(--media-tooltip-side-offset) data-[side=right]:before:w-(--media-tooltip-side-offset)',
+        'whitespace-nowrap text-media',
         'data-open:flex data-open:items-center data-open:gap-1',
       ],
       variants: {
-        default: [...defaultSurface, ...popupVariants.default, 'rounded-[9999px] px-2.5 py-1'],
-        minimal: [...minimalSurface, ...popupVariants.minimal, 'rounded-[--spacing(2)] px-2 py-1 text-current'],
+        default: 'rounded-[9999px] px-2.5 py-1',
+        minimal: 'rounded-[--spacing(2)] px-2 py-1 text-current',
       },
     },
     shortcut: {

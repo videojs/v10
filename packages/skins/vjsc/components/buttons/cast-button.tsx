@@ -4,15 +4,16 @@ import { CastEnterIcon, CastExitIcon } from '@videojs/icons/vjsc';
 import type { Props } from 'vjsc/components';
 
 import type { SkinComponentMeta } from '../../meta';
-import styles from '../../styles/components/cast-button.styles';
+import buttonStyles from '../../styles/buttons/button.styles';
+import styles from '../../styles/buttons/cast-button.styles';
 import { ButtonTooltip } from './button-tooltip';
 
 export function CastButton({ className, ...props }: Props<CoreProps> = {}) {
   return (
     <ButtonTooltip side="top">
-      <$.CastButton className={[styles.root, className]} {...props}>
-        <CastEnterIcon className={styles.enterIcon} />
-        <CastExitIcon className={styles.exitIcon} />
+      <$.CastButton className={[buttonStyles.root, styles.root, className]} {...props}>
+        <CastEnterIcon className={[buttonStyles.icon, styles.enterIcon]} />
+        <CastExitIcon className={[buttonStyles.icon, styles.exitIcon]} />
       </$.CastButton>
     </ButtonTooltip>
   );

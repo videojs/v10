@@ -4,14 +4,15 @@ import { SeekIcon } from '@videojs/icons/vjsc';
 import { type Props, Text } from 'vjsc/components';
 
 import type { SkinComponentMeta } from '../../meta';
-import styles from '../../styles/components/seek-button.styles';
+import buttonStyles from '../../styles/buttons/button.styles';
+import styles from '../../styles/buttons/seek-button.styles';
 import { ButtonTooltip } from './button-tooltip';
 
 export function SeekButton({ className, seconds = 10, ...props }: Props<CoreProps> = {}) {
   return (
     <ButtonTooltip side="top">
-      <$.SeekButton className={[styles.root, className]} seconds={seconds} {...props}>
-        <SeekIcon className={seconds < 0 ? styles.backwardIcon : styles.icon} />
+      <$.SeekButton className={[buttonStyles.root, styles.root, className]} seconds={seconds} {...props}>
+        <SeekIcon className={[buttonStyles.icon, seconds < 0 && styles.backwardIcon]} />
         <Text className={styles.label}>{Math.abs(seconds)}</Text>
       </$.SeekButton>
     </ButtonTooltip>

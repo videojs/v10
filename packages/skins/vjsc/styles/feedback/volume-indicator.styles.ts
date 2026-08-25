@@ -1,7 +1,5 @@
 import { styles } from 'vjsc/styles';
 
-import { defaultSurface } from '../surface';
-
 export default styles({
   file: 'indicators.css',
   layer: 'videojs.components',
@@ -14,7 +12,6 @@ export default styles({
       ],
       variants: {
         default: [
-          ...defaultSurface,
           'top-3 w-[min(80%,12rem)] rounded-[9999px] bg-black/25 font-medium [transform:translateX(0)]',
           'data-starting-style:duration-250 data-starting-style:ease-in',
           'data-ending-style:duration-250 data-ending-style:ease-in',
@@ -70,7 +67,7 @@ export default styles({
       variants: { default: 'ml-auto mix-blend-difference', minimal: 'col-start-3 row-start-1' },
     },
     highIcon: {
-      className: 'media-volume-high-indicator-icon',
+      className: 'media-volume-indicator-high-icon',
       utilities: 'hidden shrink-0 group-data-[level=high]/volume-status:block',
       variants: {
         default: 'mix-blend-difference',
@@ -78,7 +75,7 @@ export default styles({
       },
     },
     lowIcon: {
-      className: 'media-volume-low-indicator-icon',
+      className: 'media-volume-indicator-low-icon',
       utilities: 'hidden shrink-0 group-data-[level=low]/volume-status:block',
       variants: {
         default: 'mix-blend-difference',
@@ -86,7 +83,7 @@ export default styles({
       },
     },
     offIcon: {
-      className: 'media-volume-off-indicator-icon',
+      className: 'media-volume-indicator-off-icon',
       utilities: 'hidden shrink-0 group-data-[level=off]/volume-status:block',
       variants: {
         default: 'mix-blend-difference',

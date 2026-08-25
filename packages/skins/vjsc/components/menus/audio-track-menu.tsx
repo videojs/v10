@@ -2,7 +2,7 @@ import { audioText } from '@videojs/core/i18n/text/menu';
 import { SpeechIcon } from '@videojs/icons/vjsc';
 import { type PropsOf, Template, Text } from 'vjsc/components';
 
-import styles from '../../styles/components/menu.styles';
+import styles from '../../styles/menus/menu.styles';
 import { AudioTrackRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';

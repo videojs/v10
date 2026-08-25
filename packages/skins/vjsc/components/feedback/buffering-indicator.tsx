@@ -4,7 +4,7 @@ import { SpinnerIcon } from '@videojs/icons/vjsc';
 import type { Props } from 'vjsc/components';
 
 import type { SkinComponentMeta } from '../../meta';
-import styles from '../../styles/components/buffering-indicator.styles';
+import styles from '../../styles/feedback/buffering-indicator.styles';
 
 export function BufferingIndicator({ className, ...props }: Props<CoreProps> = {}) {
   return (

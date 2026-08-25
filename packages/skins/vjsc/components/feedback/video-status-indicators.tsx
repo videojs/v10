@@ -1,6 +1,6 @@
 import { Box, type Props } from 'vjsc/components';
 
-import styles from '../../styles/components/video-status-indicators.styles';
+import styles from '../../styles/feedback/video-status-indicators.styles';
 import { SeekIndicator } from './seek-indicator';
 import { StatusAnnouncer } from './status-announcer';
 import { PlaybackStatusIndicator, StatusIndicator } from './status-indicator';

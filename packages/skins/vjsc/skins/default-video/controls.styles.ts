@@ -1,7 +1,5 @@
 import { styles } from 'vjsc/styles';
 
-import { defaultSurface } from '../../styles/surface';
-
 const defaultSurfaceAtLarge = [
   '@lg/media-root:text-white @lg/media-root:backdrop-blur-lg @lg/media-root:backdrop-saturate-150',
   '@lg/media-root:after:pointer-events-none @lg/media-root:after:absolute @lg/media-root:after:inset-0 @lg/media-root:after:z-10 @lg/media-root:after:rounded-[inherit]',
@@ -25,7 +23,7 @@ export default styles({
   layer: 'videojs.components',
   rules: {
     root: {
-      className: 'media-controls-root',
+      className: 'media-controls',
       utilities: [
         'group/controls contents p-1 text-white',
         '[--media-popover-side-offset:--spacing(3)]',
@@ -56,7 +54,6 @@ export default styles({
       className: 'media-controls-primary',
       utilities: [
         'absolute inset-x-2 bottom-2 z-10 flex origin-bottom items-center gap-px rounded-media-control',
-        ...defaultSurface,
         'p-1',
         '@lg/media-root:contents',
         '@max-lg/media-root:group-[:not([data-visible])]/controls:pointer-events-none',
@@ -70,7 +67,6 @@ export default styles({
       className: 'media-controls-secondary',
       utilities: [
         'absolute top-2 right-2 z-10 flex origin-top items-center gap-px rounded-media-control',
-        ...defaultSurface,
         'p-1',
         '@lg/media-root:contents',
         '@max-lg/media-root:group-[:not([data-visible])]/controls:pointer-events-none',
@@ -81,19 +77,19 @@ export default styles({
       ],
     },
     captionsButton: {
-      className: 'media-default-captions-button',
+      className: 'media-controls-captions-button',
       utilities: '@max-lg/media-root:hidden',
     },
     timeSliderGroup: {
       className: 'media-time-slider-group',
       utilities: ['@container/media-time flex flex-1 items-center gap-2.5 px-2 @lg/media-root:px-3'],
     },
-    currentTime: {
-      className: 'media-time-current',
+    currentValue: {
+      className: 'media-time-current-value',
       utilities: 'tabular-nums',
     },
-    remainingTime: {
-      className: 'media-time-remaining',
+    remainingValue: {
+      className: 'media-time-remaining-value',
       utilities: [
         'cursor-pointer tabular-nums rounded-sm outline-2 -outline-offset-2 outline-transparent',
         '@max-[16rem]/media-time:hidden',
