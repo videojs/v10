@@ -740,6 +740,7 @@ describe('MenuContent', () => {
 
     await waitFor(() => {
       const popup = screen.getByTestId('root-content').parentElement!;
+
       expect(popup.style.getPropertyValue('--media-menu-width')).toBe('200px');
       expect(popup.style.getPropertyValue('--media-menu-height')).toBe('150px');
     });
@@ -748,6 +749,7 @@ describe('MenuContent', () => {
 
     await waitFor(() => {
       const popup = screen.getByTestId('root-content').parentElement!;
+
       expect(popup.style.getPropertyValue('--media-menu-width')).toBe('220px');
       expect(popup.style.getPropertyValue('--media-menu-height')).toBe('240px');
     });

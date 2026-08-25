@@ -54,7 +54,9 @@ export class MenuContentElement extends UIElement {
 
   override connectedCallback(): void {
     super.connectedCallback();
+
     if (this.#normalizing) return;
+
     this.#disconnect = new AbortController();
     applyElementProps(
       this,
@@ -65,7 +67,9 @@ export class MenuContentElement extends UIElement {
 
   override disconnectedCallback(): void {
     super.disconnectedCallback();
+
     if (this.#normalizing) return;
+
     this.#cleanupMenu();
     this.#disconnect?.abort();
     this.#disconnect = null;
@@ -81,23 +85,29 @@ export class MenuContentElement extends UIElement {
 
   protected override willUpdate(changed: PropertyValues): void {
     super.willUpdate(changed);
+
     if (!this.hasUpdated && this.defaultOpen && !this.open) this.open = true;
+
     if (this.#ownsMenu && this.#menu && changed.has('open')) this.#menu.syncOpen(this.open);
   }
 
   protected override update(changed: PropertyValues): void {
     super.update(changed);
     const root = this.#root.value ?? null;
+
     if (!root) return;
+
     if (!this.id) this.id = this.#generatedId;
 
     const trigger = this.#findTrigger();
     const parentContent = trigger?.closest<MenuContentElement>(MenuContentElement.tagName) ?? null;
+
     if (parentContent && !parentContent.context) {
       this.hidden = true;
       requestAnimationFrame(() => this.requestUpdate());
       return;
     }
+
     const parentMenu = parentContent?.context?.menu ?? null;
     const isSubmenu = parentMenu !== null;
 
@@ -109,9 +119,11 @@ export class MenuContentElement extends UIElement {
     }
 
     const menu = this.#menu;
+
     if (!menu) return;
 
     const input = menu.input.current;
+
     this.#core.setInput({ ...input, isSubmenu });
     const state = this.#core.getState();
     const active = !isSubmenu || state.open || state.status === 'ending';
@@ -129,6 +141,7 @@ export class MenuContentElement extends UIElement {
     }
 
     if (isSubmenu && active && !this.#wasActive) menu.highlightFirstItem({ preventScroll: true });
+
     this.#wasActive = active;
 
     this.#context = {
@@ -159,6 +172,7 @@ export class MenuContentElement extends UIElement {
               detail: { open: nextOpen, ...details },
             })
           );
+
           if (accepted) this.open = nextOpen;
         },
         closeOnEscape: () => true,
@@ -167,7 +181,9 @@ export class MenuContentElement extends UIElement {
       this.#menu.setPopupElement(this);
       this.#cleanupParentRegistration = parentMenu.registerSubmenu(this.#menu);
       const signal = this.#disconnect?.signal;
+
       if (signal) this.#menu.input.subscribe(() => this.requestUpdate(), { signal });
+
       this.#menu.syncOpen(this.open);
     } else {
       this.#ownsMenu = false;
@@ -187,7 +203,9 @@ export class MenuContentElement extends UIElement {
     this.#cleanupParentRegistration?.();
     this.#cleanupParentRegistration = null;
     this.#clearTriggerState();
+
     if (this.#ownsMenu) this.#menu?.destroy();
+
     this.#menu = null;
     this.#context = null;
     this.#rootMenu = null;
@@ -198,7 +216,9 @@ export class MenuContentElement extends UIElement {
 
   #findTrigger(): HTMLElement | null {
     if (!this.id) return null;
+
     const root = this.getRootNode() as Document | ShadowRoot;
+
     return (
       [...root.querySelectorAll<HTMLElement>('[commandfor], media-menu-item')].find(
         (element) =>
@@ -211,6 +231,7 @@ export class MenuContentElement extends UIElement {
   /** Keep every page as a direct popup child, including authored nested pages. */
   #normalize(): void {
     const popup = this.closest('media-menu');
+
     if (!popup || this.parentElement === popup) return;
 
     this.#normalizing = true;
@@ -221,6 +242,7 @@ export class MenuContentElement extends UIElement {
   #handleKeyDown = (event: UIKeyboardEvent): void => {
     const isNavigationKey = isMenuNavigationKey(event);
     const defaultPrevented = event.defaultPrevented;
+
     this.#menu?.contentProps.onKeyDown(event);
 
     if (this.#parentMenu && (event.key === 'ArrowLeft' || event.key === 'Escape') && !defaultPrevented) {
@@ -245,26 +267,33 @@ export class MenuContentElement extends UIElement {
       this.#clearTriggerState();
       this.#stateTrigger = trigger;
     }
+
     if (!trigger) return;
 
     const disabled = this.#triggerState.disabled || isTriggerExplicitlyDisabled(trigger);
+
     applyElementProps(trigger, {
       'aria-disabled': disabled ? 'true' : undefined,
       'data-availability': this.#triggerState.availability,
     });
     const hint = trigger.querySelector<HTMLElement>('[data-part~="hint"]');
+
     if (hint && hint.textContent !== this.#triggerState.hint) hint.textContent = this.#triggerState.hint;
   }
 
   #clearTriggerState(): void {
     const trigger = this.#stateTrigger;
+
     if (!trigger) return;
+
     applyElementProps(trigger, {
       'aria-disabled': isTriggerExplicitlyDisabled(trigger) ? 'true' : undefined,
       'data-availability': undefined,
     });
     const hint = trigger.querySelector<HTMLElement>('[data-part~="hint"]');
+
     if (hint?.textContent) hint.textContent = '';
+
     this.#stateTrigger = null;
   }
 }

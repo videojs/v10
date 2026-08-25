@@ -170,6 +170,7 @@ export const htmlComponentTarget: ComponentTarget<CoreSchema> = defineComponentT
         }
 
         const content = parts.Content.one();
+
         return [
           jsx(target.Menu.Item, {
             commandfor: controlledId,
