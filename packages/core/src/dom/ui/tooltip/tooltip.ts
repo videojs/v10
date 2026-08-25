@@ -27,6 +27,7 @@ export interface TooltipOptions {
   closeDelay?: () => number;
   disableHoverablePopup?: () => boolean;
   disabled?: () => boolean;
+  sticky?: () => boolean;
   group?: () => TooltipGroupCore | undefined;
   popupGroup?: () => PopupGroup | undefined;
 }
@@ -98,6 +99,10 @@ export function createTooltip(options: TooltipOptions): TooltipApi {
     return popupGroup?.isOpenFor(popover.triggerElement) ?? false;
   }
 
+  function isSticky(): boolean {
+    return options.sticky?.() ?? false;
+  }
+
   function syncPopupGroup(): void {
     const next = options.popupGroup?.();
     if (next === popupGroup) return;
@@ -105,14 +110,14 @@ export function createTooltip(options: TooltipOptions): TooltipApi {
     unsubscribe?.();
     popupGroup = next;
     unsubscribe = popupGroup?.subscribe(() => {
-      if (isTriggerPopupOpen()) popover.close('imperative-action');
+      if (isTriggerPopupOpen() && !isSticky()) popover.close('imperative-action');
     });
   }
 
   function setTriggerElement(el: HTMLElement | null): void {
     popover.setTriggerElement(el);
     syncPopupGroup();
-    if (isTriggerPopupOpen()) popover.close('imperative-action');
+    if (isTriggerPopupOpen() && !isSticky()) popover.close('imperative-action');
   }
 
   // Spread popover trigger props, omit onClick, guard disabled/touch on open handlers.
@@ -122,19 +127,19 @@ export function createTooltip(options: TooltipOptions): TooltipApi {
     onPointerDown() {
       syncPopupGroup();
       isPointerDown = true;
-      popover.close('imperative-action');
+      if (!isSticky()) popover.close('imperative-action');
     },
     onPointerEnter(event) {
       syncPopupGroup();
       if (options.disabled?.()) return;
-      if (isTriggerPopupOpen()) return;
+      if (isTriggerPopupOpen() && !isSticky()) return;
       if (event.pointerType === 'touch') return;
       baseTriggerProps.onPointerEnter(event);
     },
     onFocusIn(event) {
       syncPopupGroup();
       if (options.disabled?.()) return;
-      if (isTriggerPopupOpen()) return;
+      if (isTriggerPopupOpen() && !isSticky()) return;
       if (isPointerDown) {
         isPointerDown = false;
         return;
@@ -162,7 +167,7 @@ export function createTooltip(options: TooltipOptions): TooltipApi {
     setTriggerElement,
     open: () => {
       syncPopupGroup();
-      if (!isTriggerPopupOpen()) popover.open('hover');
+      if (!isTriggerPopupOpen() || isSticky()) popover.open('hover');
     },
     close: (reason: TooltipOpenChangeReason = 'hover') => popover.close(reason),
     destroy() {

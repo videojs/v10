@@ -247,6 +247,25 @@ describe('createTooltip', () => {
         expect(onOpenChange).toHaveBeenCalledWith(false, { reason: 'imperative-action' });
       });
 
+      it('stays open with its trigger popup when requested', () => {
+        const group = createPopupGroup();
+        const owner = createTestPopover({ group: () => group });
+        const { tooltip, onOpenChange } = createTestTooltip({
+          popupGroup: () => group,
+          sticky: () => true,
+        });
+        const trigger = document.createElement('button');
+        owner.popover.setTriggerElement(trigger);
+        tooltip.setTriggerElement(trigger);
+        tooltip.open();
+        onOpenChange.mockClear();
+
+        owner.popover.open();
+
+        expect(onOpenChange).not.toHaveBeenCalled();
+        expect(tooltip.input.current.active).toBe(true);
+      });
+
       it('does not open via focus after pointer down (tap)', () => {
         const { tooltip, onOpenChange } = createTestTooltip();
         const pointerEvent = {

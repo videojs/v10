@@ -22,6 +22,8 @@ import { useTooltipGroup } from './group-context';
 export interface TooltipRootProps extends CoreTooltipProps {
   /** Boundary used to constrain the popup size. */
   boundary?: PositioningBoundary;
+  /** Whether the tooltip stays open when another popup opens from its trigger. */
+  sticky?: boolean;
   /** Called when the tooltip open state changes (fires immediately, before animations). */
   onOpenChange?: (open: boolean, details: TooltipChangeDetails) => void;
   /** Called after open/close animations complete. */
@@ -38,6 +40,7 @@ export function TooltipRoot({
   closeDelay = TooltipCore.defaultProps.closeDelay,
   disableHoverablePopup = TooltipCore.defaultProps.disableHoverablePopup,
   disabled = TooltipCore.defaultProps.disabled,
+  sticky = false,
   boundary = 'container',
   children,
   ...coreProps
@@ -60,6 +63,7 @@ export function TooltipRoot({
   const closeDelayRef = useLatestRef(closeDelay);
   const disableHoverablePopupRef = useLatestRef(disableHoverablePopup);
   const disabledRef = useLatestRef(disabled);
+  const stickyRef = useLatestRef(sticky);
   const groupRef = useLatestRef(groupFromContext);
   const popupGroupRef = useLatestRef(popupGroup);
 
@@ -76,6 +80,7 @@ export function TooltipRoot({
       closeDelay: () => closeDelayRef.current,
       disableHoverablePopup: () => disableHoverablePopupRef.current,
       disabled: () => disabledRef.current,
+      sticky: () => stickyRef.current,
       group: () => groupRef.current,
       popupGroup: () => popupGroupRef.current,
     });

@@ -110,7 +110,7 @@ const SliderThumb = forwardRef<HTMLDivElement, ComponentProps<'div'> & { persist
   return (
     <div
       ref={ref}
-      className={cn(slider.thumb.base, persistent ? undefined : slider.thumb.interactive, className)}
+      className={cn(slider.thumb.base, persistent ? slider.thumb.persistent : slider.thumb.interactive, className)}
       {...props}
     />
   );
@@ -127,11 +127,27 @@ function VolumePopover(): ReactNode {
     </MuteButton>
   );
 
-  if (volumeUnavailable) return muteButton;
+  if (volumeUnavailable) {
+    return (
+      <Tooltip.Root side="top" delay={0} sticky>
+        <Tooltip.Trigger render={muteButton} />
+        <Tooltip.Popup className={cn(popup.tooltip)}>
+          <Tooltip.Label />
+          <Tooltip.Shortcut className={popup.tooltipShortcut} />
+        </Tooltip.Popup>
+      </Tooltip.Root>
+    );
+  }
 
   return (
     <Popover.Root openOnHover delay={200} closeDelay={100} side="right">
-      <Popover.Trigger render={muteButton} />
+      <Tooltip.Root side="top" delay={0} sticky>
+        <Tooltip.Trigger render={<Popover.Trigger render={muteButton} />} />
+        <Tooltip.Popup className={cn(popup.tooltip)}>
+          <Tooltip.Label />
+          <Tooltip.Shortcut className={popup.tooltipShortcut} />
+        </Tooltip.Popup>
+      </Tooltip.Root>
       <Popover.Popup className={cn(popup.volume)}>
         <VolumeSlider.Root orientation="horizontal" thumbAlignment="edge" render={<SliderRoot />}>
           <VolumeSlider.Track render={<SliderTrack />}>

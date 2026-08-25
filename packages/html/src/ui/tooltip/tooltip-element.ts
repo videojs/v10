@@ -57,6 +57,7 @@ export class TooltipElement extends UIElement {
     closeDelay: { type: Number, attribute: 'close-delay' },
     disableHoverablePopup: { type: Boolean, attribute: 'disable-hoverable-popup' },
     disabled: { type: Boolean },
+    sticky: { type: Boolean },
     boundary: { type: String },
     trigger: { type: String },
   } satisfies PropertyDeclarationMap<keyof TooltipCore.Props | 'boundary' | 'trigger'>;
@@ -69,6 +70,7 @@ export class TooltipElement extends UIElement {
   closeDelay = TooltipCore.defaultProps.closeDelay;
   disableHoverablePopup = TooltipCore.defaultProps.disableHoverablePopup;
   disabled = TooltipCore.defaultProps.disabled;
+  sticky = false;
   boundary: PositioningBoundary = 'container';
   trigger = '';
 
@@ -104,6 +106,7 @@ export class TooltipElement extends UIElement {
       closeDelay: () => this.closeDelay,
       disableHoverablePopup: () => this.disableHoverablePopup,
       disabled: () => this.disabled,
+      sticky: () => this.sticky,
       // Lazy getter — group may arrive after connect via context.
       group: () => this.#groupConsumer.value,
       popupGroup: () => this.#popupGroupCtx.value,

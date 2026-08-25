@@ -89,11 +89,15 @@ function getTemplateHTML() {
           </div>
 
           <div class="media-button-group">
-            <media-mute-button commandfor="audio-volume-popover" class="media-button media-button--subtle media-button--icon media-button--mute">
+            <media-mute-button id="audio-mute-trigger" commandfor="audio-volume-popover" class="media-button media-button--subtle media-button--icon media-button--mute">
               ${renderIcon('volume-off', { class: 'media-icon media-icon--volume-off' })}
               ${renderIcon('volume-low', { class: 'media-icon media-icon--volume-low' })}
               ${renderIcon('volume-high', { class: 'media-icon media-icon--volume-high' })}
             </media-mute-button>
+            <media-tooltip trigger="audio-mute-trigger" delay="0" sticky side="top" class="media-tooltip">
+              <media-tooltip-label></media-tooltip-label>
+              <media-tooltip-shortcut class="media-tooltip__kbd"></media-tooltip-shortcut>
+            </media-tooltip>
 
             <media-popover id="audio-volume-popover" open-on-hover delay="200" close-delay="100" side="left" boundary="viewport" class="media-popover media-popover--volume">
               <media-volume-slider class="media-slider" orientation="horizontal" thumb-alignment="edge">

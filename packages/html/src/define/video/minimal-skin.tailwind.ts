@@ -75,17 +75,21 @@ function getTemplateHTML() {
                 <media-tooltip-shortcut class="${popup.tooltipShortcut}"></media-tooltip-shortcut>
               </media-tooltip>
 
-            <media-mute-button commandfor="video-volume-popover" class="${cn(button.base, button.subtle, button.icon, iconState.mute.button)}">
+            <media-mute-button id="video-mute-trigger" commandfor="video-volume-popover" class="${cn(button.base, button.subtle, button.icon, iconState.mute.button)}">
               ${renderIcon('volume-off', { class: cn(icon, iconState.mute.volumeOff) })}
               ${renderIcon('volume-low', { class: cn(icon, iconState.mute.volumeLow) })}
               ${renderIcon('volume-high', { class: cn(icon, iconState.mute.volumeHigh) })}
             </media-mute-button>
+            <media-tooltip trigger="video-mute-trigger" delay="0" sticky side="top" class="${cn(popup.tooltip)}">
+              <media-tooltip-label></media-tooltip-label>
+              <media-tooltip-shortcut class="${popup.tooltipShortcut}"></media-tooltip-shortcut>
+            </media-tooltip>
             <media-popover id="video-volume-popover" open-on-hover delay="200" close-delay="100" side="right" class="${popup.volume}">
               <media-volume-slider class="${slider.root}" orientation="horizontal" thumb-alignment="edge">
                 <media-slider-track class="${slider.track}">
                   <media-slider-fill class="${cn(slider.fill.base, slider.fill.fill)}"></media-slider-fill>
                 </media-slider-track>
-                <media-slider-thumb class="${slider.thumb.base}"></media-slider-thumb>
+                <media-slider-thumb class="${cn(slider.thumb.base, slider.thumb.persistent)}"></media-slider-thumb>
               </media-volume-slider>
             </media-popover>
           </div>
