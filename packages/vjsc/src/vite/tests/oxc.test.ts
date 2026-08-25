@@ -62,6 +62,38 @@ describe('viteOxcPlugin', () => {
     expect(sourceMap?.mappings).not.toBe('');
     expect(sourceMap?.sources.length).toBeGreaterThan(0);
   });
+
+  it('reports positioned transform errors against the authored source', async () => {
+    const transform: Plugin = {
+      name: 'vite-oxc-positioned-error',
+      transform(code, id) {
+        if (id !== ENTRY_ID) return null;
+
+        throw Object.assign(new Error('Failed to transform fixture.'), { pos: code.indexOf(`'before'`) });
+      },
+    };
+
+    await expect(
+      build({
+        configFile: false,
+        logLevel: 'silent',
+        plugins: [fixturePlugin(), viteOxcPlugin(transform)],
+        build: {
+          write: false,
+          rolldownOptions: { input: ENTRY_ID },
+        },
+      })
+    ).rejects.toMatchObject({
+      errors: [
+        expect.objectContaining({
+          plugin: 'vite-oxc-positioned-error',
+          id: ENTRY_ID,
+          loc: expect.objectContaining({ line: 1 }),
+          frame: expect.stringContaining(`globalThis.value = 'before';`),
+        }),
+      ],
+    });
+  });
 });
 
 function metadataProbe(record: (hasMetadata: boolean) => void): Plugin {

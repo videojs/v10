@@ -16,6 +16,10 @@ interface ViteTransformOptions {
   readonly ssr?: boolean | undefined;
 }
 
+interface PositionedError extends Error {
+  readonly pos: number;
+}
+
 type RolldownTransformHandler = (
   this: TransformPluginContext,
   code: string,
@@ -44,12 +48,20 @@ export function viteOxcPlugin(plugin: Plugin): ViteOxcPlugin {
     const magicString = new MagicString(code, { filename });
     const ast = this.parse(code, { lang: parserLanguage(moduleType, filename) });
 
-    const result = await handler.call(this, code, id, {
-      ...options,
-      moduleType,
-      ast,
-      magicString: magicString as unknown as RolldownMagicString,
-    });
+    let result: TransformResult;
+
+    try {
+      result = await handler.call(this, code, id, {
+        ...options,
+        moduleType,
+        ast,
+        magicString: magicString as unknown as RolldownMagicString,
+      });
+    } catch (error) {
+      if (isPositionedError(error)) this.error(error, error.pos);
+
+      throw error;
+    }
 
     if (!result || typeof result === 'string' || result.code === undefined || typeof result.code === 'string') {
       return result;
@@ -75,6 +87,10 @@ export function viteOxcPlugin(plugin: Plugin): ViteOxcPlugin {
     enforce: 'pre',
     transform: typeof transform === 'function' ? wrapped : { ...transform, handler: wrapped },
   };
+}
+
+function isPositionedError(error: unknown): error is PositionedError {
+  return error instanceof Error && 'pos' in error && typeof error.pos === 'number';
 }
 
 function scriptModuleType(filename: string): ModuleType {
