@@ -12,6 +12,7 @@ export class ControlsBackdropElement extends ContextPartElement<ControlsState> {
 
   override connectedCallback(): void {
     super.connectedCallback();
+    this.setAttribute('role', 'presentation');
     this.setAttribute('aria-hidden', 'true');
   }
 }

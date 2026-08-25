@@ -12,6 +12,7 @@ export class AlertDialogBackdropElement extends ContextPartElement<AlertDialogSt
 
   override connectedCallback(): void {
     super.connectedCallback();
+    this.setAttribute('role', 'presentation');
     this.setAttribute('aria-hidden', 'true');
   }
 }

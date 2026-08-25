@@ -25,7 +25,7 @@ export const AlertDialogBackdrop = forwardRef<HTMLDivElement, AlertDialogBackdro
       state,
       stateAttrMap,
       ref: [forwardedRef],
-      props: [{ 'aria-hidden': true }, elementProps],
+      props: [{ role: 'presentation', 'aria-hidden': true }, elementProps],
     }
   );
 });

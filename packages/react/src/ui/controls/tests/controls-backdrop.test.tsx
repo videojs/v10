@@ -23,6 +23,7 @@ describe('ControlsBackdrop', () => {
 
     const backdrop = getByTestId('backdrop');
 
+    expect(backdrop.getAttribute('role')).toBe('presentation');
     expect(backdrop.getAttribute('aria-hidden')).toBe('true');
     expect(backdrop.hasAttribute('data-visible')).toBe(true);
     expect(backdrop.hasAttribute('data-user-active')).toBe(true);

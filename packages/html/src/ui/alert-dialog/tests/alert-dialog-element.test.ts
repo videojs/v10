@@ -229,6 +229,7 @@ describe('AlertDialogBackdropElement', () => {
     await dialog.updateComplete;
 
     await vi.waitFor(() => {
+      expect(backdrop.getAttribute('role')).toBe('presentation');
       expect(backdrop.getAttribute('aria-hidden')).toBe('true');
       expect(backdrop.hasAttribute('data-open')).toBe(true);
     });

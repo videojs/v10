@@ -24,7 +24,7 @@ export const ControlsBackdrop = forwardRef<HTMLDivElement, ControlsBackdropProps
       state,
       stateAttrMap,
       ref: [forwardedRef],
-      props: [{ 'aria-hidden': true }, elementProps],
+      props: [{ role: 'presentation', 'aria-hidden': true }, elementProps],
     }
   );
 });

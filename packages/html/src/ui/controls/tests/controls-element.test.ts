@@ -202,6 +202,7 @@ describe('ControlsBackdropElement', () => {
     await controls.updateComplete;
 
     await waitForAssertion(() => {
+      expect(backdrop.getAttribute('role')).toBe('presentation');
       expect(backdrop.getAttribute('aria-hidden')).toBe('true');
       expect(backdrop.hasAttribute('data-visible')).toBe(true);
       expect(backdrop.hasAttribute('data-user-active')).toBe(true);
