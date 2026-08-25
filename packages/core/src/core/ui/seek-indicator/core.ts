@@ -10,13 +10,25 @@ import {
   isSeekIndicatorAction,
 } from './seek-indicator-status';
 
-export interface SeekIndicatorProps extends IndicatorCoreProps {}
+export interface SeekIndicatorProps extends IndicatorCoreProps {
+  /** Delay in milliseconds before the indicator closes. */
+  closeDelay?: number | undefined;
+}
 
 export interface SeekIndicatorState extends IndicatorLifecycleState {
+  /** Whether the indicator is open. */
+  open: boolean;
+  /** Increments each time a seek input action updates the indicator. */
+  generation: number;
+  /** Direction of the seek, or `null` when the target does not change the current time. */
   direction: IndicatorDirection | null;
+  /** Number of same-direction seek steps accumulated in the current display. */
   count: number;
+  /** Absolute number of seconds accumulated from seek-step actions. */
   seekTotal: number;
+  /** Accumulated seek-step label, or `null` for percentage seeks. */
   value: string | null;
+  /** Formatted current time captured when the input action occurred. */
   currentTime: string;
 }
 

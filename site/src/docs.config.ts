@@ -133,6 +133,7 @@ export const sidebar: Sidebar = [
           { slug: 'reference/poster' },
           { slug: 'reference/quality-radio-group' },
           { slug: 'reference/seek-button' },
+          { slug: 'reference/seek-indicator' },
           { slug: 'reference/slider' },
           { slug: 'reference/thumbnail' },
           { slug: 'reference/time' },
