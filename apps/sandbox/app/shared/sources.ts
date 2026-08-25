@@ -97,8 +97,8 @@ const DRM_SYSTEMS = {
  * that one asset's content key (`302f80dd-411e-4886-bca5-bb1f8018a024`) — tokens
  * and assets are paired, so it licenses nothing else.
  *
- * Unused until a license request can carry headers. Kept here so the source and
- * its credential stay together rather than the credential being rediscovered.
+ * Sent as a per-system `headers` entry, which is the only way this provider
+ * authenticates — the license URL carries no credential of its own.
  */
 export const AXINOM_TOKEN =
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ewogICJ2ZXJzaW9uIjogMSwKICAiY29tX2tleV9pZCI6ICI2OWU1NDA4OC1lOWUwLTQ1MzAtOGMxYS0xZWI2ZGNkMGQxNGUiLAogICJtZXNzYWdlIjogewogICAgInR5cGUiOiAiZW50aXRsZW1lbnRfbWVzc2FnZSIsCiAgICAidmVyc2lvbiI6IDIsCiAgICAibGljZW5zZSI6IHsKICAgICAgImFsbG93X3BlcnNpc3RlbmNlIjogdHJ1ZQogICAgfSwKICAgICJjb250ZW50X2tleXNfc291cmNlIjogewogICAgICAiaW5saW5lIjogWwogICAgICAgIHsKICAgICAgICAgICJpZCI6ICIzMDJmODBkZC00MTFlLTQ4ODYtYmNhNS1iYjFmODAxOGEwMjQiLAogICAgICAgICAgImVuY3J5cHRlZF9rZXkiOiAicm9LQWcwdDdKaTFpNDNmd3YremZ0UT09IiwKICAgICAgICAgICJ1c2FnZV9wb2xpY3kiOiAiUG9saWN5IEEiCiAgICAgICAgfQogICAgICBdCiAgICB9LAogICAgImNvbnRlbnRfa2V5X3VzYWdlX3BvbGljaWVzIjogWwogICAgICB7CiAgICAgICAgIm5hbWUiOiAiUG9saWN5IEEiLAogICAgICAgICJwbGF5cmVhZHkiOiB7CiAgICAgICAgICAibWluX2RldmljZV9zZWN1cml0eV9sZXZlbCI6IDE1MCwKICAgICAgICAgICJwbGF5X2VuYWJsZXJzIjogWwogICAgICAgICAgICAiNzg2NjI3RDgtQzJBNi00NEJFLThGODgtMDhBRTI1NUIwMUE3IgogICAgICAgICAgXQogICAgICAgIH0KICAgICAgfQogICAgXQogIH0KfQ._NfhLVY7S6k8TJDWPeMPhUawhympnrk6WAZHOVjER6M';
@@ -363,21 +363,24 @@ const SOURCE_MAP = {
     // Axinom's H.264 CMAF cbcs vector — the same packaging Mux produces, from a
     // different packager, declaring Widevine and FairPlay in one manifest.
     //
-    // Expected to FAIL today, and that is the point: Axinom authenticates with an
-    // `X-AxDRM-Message` header, and `source.drm` has nowhere to put one. It is the
-    // falsifying case for whether a per-system `headers` field earns itself.
-    // {@link AXINOM_TOKEN} is the entitlement paired with this asset's content key.
-    label: 'HLS - DRM Widevine/FairPlay (Axinom, needs header)',
+    // Licensed by the `X-AxDRM-Message` entitlement each system carries, which is
+    // what a per-system `headers` config exists for — a license URL alone cannot
+    // authenticate here. {@link AXINOM_TOKEN} is paired with this asset's key.
+    label: 'HLS - DRM Widevine/FairPlay (Axinom)',
     type: 'hls',
     subType: 'mp4',
     drm: true,
     source: {
       src: 'https://media.axprod.net/TestVectors/Cmaf/protected_1080p_h264_cbcs/manifest.m3u8',
       drm: {
-        'com.widevine.alpha': { licenseUrl: 'https://drm-widevine-licensing.axtest.net/AcquireLicense' },
+        'com.widevine.alpha': {
+          licenseUrl: 'https://drm-widevine-licensing.axtest.net/AcquireLicense',
+          headers: { 'X-AxDRM-Message': AXINOM_TOKEN },
+        },
         'com.apple.fps': {
           licenseUrl: 'https://drm-fairplay-licensing.axtest.net/AcquireLicense',
           serverCertificateUrl: 'https://vtb.axinom.com/FPScert/fairplay.cer',
+          headers: { 'X-AxDRM-Message': AXINOM_TOKEN },
         },
       },
     },
