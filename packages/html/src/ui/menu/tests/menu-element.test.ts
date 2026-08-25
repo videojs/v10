@@ -334,8 +334,14 @@ describe('MenuElement', () => {
     document.body.append(root);
 
     await Promise.all([root.updateComplete, content.updateComplete, group.updateComplete, submenu.updateComplete]);
+    trigger.click();
+    await waitForAssertion(() => expect(submenu.open).toBe(true));
     group.publish(true, 'unavailable');
-    await waitForAssertion(() => expect(hint.textContent).toBe('Auto'));
+    await waitForAssertion(() => {
+      expect(submenu.open).toBe(false);
+      expect(content.hasAttribute('inert')).toBe(false);
+      expect(hint.textContent).toBe('Auto');
+    });
 
     expect(trigger.getAttribute('data-availability')).toBe('unavailable');
     expect(trigger.getAttribute('aria-disabled')).toBe('true');

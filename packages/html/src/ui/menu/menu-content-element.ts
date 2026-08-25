@@ -256,6 +256,9 @@ export class MenuContentElement extends UIElement {
 
   #setTriggerState = (triggerState: MenuTriggerState): void => {
     this.#triggerState = triggerState;
+
+    if (triggerState.disabled && this.open && this.#parentMenu) this.close('imperative-action');
+
     this.#syncTriggerState(this.#findTrigger());
   };
 
