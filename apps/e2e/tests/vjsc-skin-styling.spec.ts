@@ -347,8 +347,8 @@ for (const variant of CASES) {
     const cssSlider = await openSeekPreview(page);
     const cssContract = await sliderContract(cssSlider);
 
-    // Flattening the default skin's legacy button groups adds three 1px gaps
-    // around the flexible timeline. Its styling should otherwise stay equal.
+    // The default controls allocate the timeline's flexible width at the region level,
+    // so compare only the slider's intrinsic styling contract.
     expect(variant.skin === 'default-video' ? withoutSliderWidths(cssContract) : cssContract).toEqual(
       variant.skin === 'default-video' ? withoutSliderWidths(legacyContract) : legacyContract
     );
@@ -364,8 +364,7 @@ for (const variant of CASES) {
 
   test(`${variant.framework} ${variant.skin} keeps error styling in sync`, async ({ page }) => {
     const name = `${variant.framework}-${variant.skin}-error.png`;
-    // React is the complete legacy error-dialog reference; the legacy HTML
-    // custom-element host flattened some of its authored dialog typography.
+    // Both generated targets share the complete React dialog typography contract.
     const reference = { framework: 'react', skin: variant.skin } as const;
     const legacyRoot = await openVariant(page, reference, 'css', 800, 'legacy');
     const legacyDialog = await triggerMediaError(page);
@@ -1249,7 +1248,7 @@ async function openSettingsSubmenu(page: Page, name: string): Promise<Locator> {
 
   await expect(submenu).toBeVisible();
   await expect(submenu).not.toHaveAttribute('data-starting-style', '');
-  await expect(await rootMenuContent(root)).toHaveAttribute('data-submenu-expanded', 'true');
+  await expect(await rootMenuContent(root)).toHaveAttribute('data-child-open', '');
   await page.waitForTimeout(300);
   return submenu;
 }
@@ -1264,7 +1263,7 @@ async function settingsSubmenuMotionContract(page: Page, name: string) {
   const submenu = root.locator('[data-submenu]:visible').first();
 
   await expect(submenu).toBeVisible();
-  await expect(await rootMenuContent(root)).toHaveAttribute('data-submenu-expanded', 'true');
+  await expect(await rootMenuContent(root)).toHaveAttribute('data-child-open', '');
 
   const motion = await root.evaluate((element) => {
     const transitionDuration = (target: Element) =>
