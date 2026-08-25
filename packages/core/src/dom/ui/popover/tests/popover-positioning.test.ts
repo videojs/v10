@@ -416,7 +416,7 @@ describe('getAnchorPositionStyle (CSS Anchor Positioning)', () => {
     expect(style.position).toBe('fixed');
   });
 
-  it('uses CSS cross-axis shifting when boundary rects are available', async () => {
+  it('anchors the cross axis while shifting inside the boundary', async () => {
     const getStyle = await importWithAnchorSupport();
     const boundary = makeDOMRect(0, 0, 300, 200);
     const trigger = makeDOMRect(20, 100, 30, 20);
@@ -428,8 +428,23 @@ describe('getAnchorPositionStyle (CSS Anchor Positioning)', () => {
 
     expect(style.positionAnchor).toBe('--my-popover');
     expect(style.bottom).toBe('calc(anchor(top) + var(--media-popover-side-offset, 0px))');
-    expect(style.left).toBe('35px');
+    expect(style.left).toBe('calc(anchor(center) + var(--media-popover-align-offset, 0px))');
     expect(style.translate).toBe('clamp(-27px, -50%, calc(257px - 100%)) 0');
+  });
+
+  it('anchors the vertical cross axis while shifting inside the boundary', async () => {
+    const getStyle = await importWithAnchorSupport();
+    const boundary = makeDOMRect(0, 0, 300, 200);
+    const trigger = makeDOMRect(100, 20, 30, 40);
+    const style = getStyle('my-popover', { side: 'left', align: 'end' }, trigger, undefined, boundary, {
+      sideOffset: 0,
+      alignOffset: 4,
+      boundaryOffset: 8,
+    });
+
+    expect(style.right).toBe('calc(anchor(left) + var(--media-popover-side-offset, 0px))');
+    expect(style.top).toBe('calc(anchor(bottom) + var(--media-popover-align-offset, 0px))');
+    expect(style.translate).toBe('0 clamp(-56px, -100%, calc(128px - 100%))');
   });
 
   it('resolves horizontal start from RTL direction', async () => {

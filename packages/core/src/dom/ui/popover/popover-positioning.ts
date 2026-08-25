@@ -78,14 +78,19 @@ function getAnchorCrossAxisShift(
   boundaryEnd: number,
   align: PopoverAlign,
   alignOffset: number,
-  boundaryOffset: number
+  boundaryOffset: number,
+  axis: 'horizontal' | 'vertical',
+  alignOffsetVar: string
 ): { base: string; translate: string } {
   const base =
     align === 'start' ? start + alignOffset : align === 'end' ? end + alignOffset : start + size / 2 + alignOffset;
+  const startAnchor = axis === 'horizontal' ? 'left' : 'top';
+  const endAnchor = OPPOSITE_SIDE[startAnchor];
+  const anchor = align === 'start' ? startAnchor : align === 'end' ? endAnchor : 'center';
   const desiredTranslate = align === 'start' ? '0px' : align === 'end' ? '-100%' : '-50%';
 
   return {
-    base: `${base}px`,
+    base: `calc(anchor(${anchor}) + ${alignOffsetVar})`,
     translate: `clamp(${boundaryStart + boundaryOffset - base}px, ${desiredTranslate}, calc(${
       boundaryEnd - boundaryOffset - base
     }px - 100%))`,
@@ -185,7 +190,9 @@ function getAnchorPositionCSS(
         boundaryRect.right,
         horizontalAlign,
         offsets.alignOffset,
-        boundaryOffset
+        boundaryOffset,
+        'horizontal',
+        ALIGN_OFFSET_VAR
       );
 
       style.left = base;
@@ -215,7 +222,9 @@ function getAnchorPositionCSS(
         boundaryRect.bottom,
         align,
         offsets.alignOffset,
-        boundaryOffset
+        boundaryOffset,
+        'vertical',
+        ALIGN_OFFSET_VAR
       );
 
       style.top = base;

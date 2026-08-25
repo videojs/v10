@@ -156,6 +156,24 @@ for (const { name, path } of UI_VIDEO_PAGES) {
       await expect.poll(() => getMediaVolume(page)).toBeLessThan(0.5);
     });
 
+    test('volume popover stays anchored after scrolling the page', async ({ page }) => {
+      await page.evaluate(() => {
+        document.body.style.minHeight = '300vh';
+        document.body.style.paddingTop = '150vh';
+        window.scrollTo(0, window.innerHeight * 1.5);
+      });
+      await player.showControls();
+      await player.muteButton.hover();
+      await expect(player.volumeSlider).toBeVisible();
+
+      const triggerBox = await player.muteButton.boundingBox();
+      const popupBox = await page.locator('.media-popover--volume').first().boundingBox();
+      if (!triggerBox || !popupBox) throw new Error('Volume popover not visible');
+
+      expect(popupBox.y + popupBox.height).toBeLessThanOrEqual(triggerBox.y);
+      expect(popupBox.y + popupBox.height).toBeGreaterThanOrEqual(triggerBox.y - 16);
+    });
+
     test('controls remain visible while the settings menu is open', async ({ page }) => {
       await player.showControls();
       await player.settingsButton.click();
