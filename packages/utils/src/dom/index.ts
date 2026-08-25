@@ -91,7 +91,7 @@ export { type CaptionOrSubtitleKind, findTrackElement, getTextTrackList, isCapti
 export { serializeTimeRanges } from './time-ranges';
 export { containsComposed } from './tree';
 export type { CustomElement, CustomElementCallbacks, EventListenerFor, EventType, QueriedElement } from './types';
-export { walkAncestors } from './walk-ancestors';
+export { type WalkAncestorsOptions, walkAncestors } from './walk-ancestors';
 export {
   isWebKitAirPlayCapable,
   supportsWebKitAirPlay,

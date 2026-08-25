@@ -1,3 +1,5 @@
+import { walkAncestors } from './walk-ancestors';
+
 const TABBABLE_SELECTOR = [
   'a[href]',
   'button:not([disabled])',
@@ -65,28 +67,18 @@ export function getTabbableElements(root: ParentNode): HTMLElement[] {
 function isTabbableElement(element: HTMLElement): boolean {
   if (!element.matches(TABBABLE_SELECTOR) || element.tabIndex < 0 || element.matches(':disabled')) return false;
 
-  let current: Element | null = element;
+  return !walkAncestors(
+    element,
+    (ancestor) => {
+      if (
+        ancestor instanceof HTMLElement &&
+        (ancestor.hidden || ancestor.hasAttribute('inert') || ancestor.getAttribute('aria-hidden') === 'true')
+      ) {
+        return true;
+      }
 
-  while (current) {
-    if (
-      current instanceof HTMLElement &&
-      (current.hidden || current.hasAttribute('inert') || current.getAttribute('aria-hidden') === 'true')
-    ) {
-      return false;
-    }
-
-    current = getComposedParent(current);
-  }
-
-  return true;
-}
-
-function getComposedParent(element: Element): Element | null {
-  if (element.assignedSlot) return element.assignedSlot;
-
-  if (element.parentElement) return element.parentElement;
-
-  const root = element.getRootNode();
-
-  return root instanceof ShadowRoot ? root.host : null;
+      return undefined;
+    },
+    { composed: true }
+  );
 }

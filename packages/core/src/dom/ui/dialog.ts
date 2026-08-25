@@ -1,5 +1,5 @@
 import type { State } from '@videojs/store';
-import { containsComposed, getDeepActiveElement, getTabbableElements, listen } from '@videojs/utils/dom';
+import { containsComposed, getDeepActiveElement, getTabbableElements, listen, walkAncestors } from '@videojs/utils/dom';
 
 import type { DialogInput } from '../../core/ui/dialog/core';
 import { createDismissLayer } from './dismiss-layer';
@@ -192,29 +192,40 @@ export function createDialog(options: DialogOptions): DialogApi {
   function isolateBackground(): void {
     if (!popupElement?.isConnected || isolatedElements.size > 0) return;
 
-    let current: Element = popupElement;
+    walkAncestors(
+      popupElement,
+      (current) => {
+        if (current === document.body) return true;
 
-    while (current !== document.body) {
-      const parent = current.parentElement;
+        if (current.assignedSlot) {
+          for (const sibling of current.assignedSlot.assignedElements({ flatten: true })) {
+            if (sibling !== current && sibling instanceof HTMLElement) makeInert(sibling);
+          }
 
-      if (parent) {
-        for (const sibling of parent.children) {
+          return undefined;
+        }
+
+        const parent = current.parentElement;
+
+        if (parent) {
+          for (const sibling of parent.children) {
+            if (sibling !== current && sibling instanceof HTMLElement) makeInert(sibling);
+          }
+
+          return undefined;
+        }
+
+        const root = current.getRootNode();
+        if (!(root instanceof ShadowRoot)) return undefined;
+
+        for (const sibling of root.children) {
           if (sibling !== current && sibling instanceof HTMLElement) makeInert(sibling);
         }
 
-        current = parent;
-        continue;
-      }
-
-      const root = current.getRootNode();
-      if (!(root instanceof ShadowRoot)) break;
-
-      for (const sibling of root.children) {
-        if (sibling !== current && sibling instanceof HTMLElement) makeInert(sibling);
-      }
-
-      current = root.host;
-    }
+        return undefined;
+      },
+      { composed: true }
+    );
   }
 
   function makeInert(element: HTMLElement): void {

@@ -26,4 +26,32 @@ describe('walkAncestors', () => {
       })
     ).toBe('middle');
   });
+
+  it('walks assigned slots and shadow hosts in composed mode', () => {
+    const outer = document.createElement('section');
+    const host = document.createElement('div');
+    const shadow = host.attachShadow({ mode: 'open' });
+    const wrapper = document.createElement('div');
+    const slot = document.createElement('slot');
+    const inner = document.createElement('span');
+
+    wrapper.append(slot);
+    shadow.append(wrapper);
+    host.append(inner);
+    outer.append(host);
+    document.body.append(outer);
+
+    const visited: Element[] = [];
+
+    walkAncestors(
+      inner,
+      (node) => {
+        visited.push(node);
+        return undefined;
+      },
+      { composed: true }
+    );
+
+    expect(visited).toEqual([inner, slot, wrapper, host, outer, document.body, document.documentElement]);
+  });
 });

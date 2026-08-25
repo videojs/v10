@@ -93,4 +93,19 @@ describe('focus', () => {
 
     expect(getTabbableElements(root)).toEqual([]);
   });
+
+  it('excludes elements hidden by an assigned slot', () => {
+    const root = document.createElement('div');
+    const host = document.createElement('div');
+    const shadow = host.attachShadow({ mode: 'open' });
+    const slot = document.createElement('slot');
+    const button = document.createElement('button');
+
+    slot.setAttribute('aria-hidden', 'true');
+    shadow.append(slot);
+    host.append(button);
+    root.append(host);
+
+    expect(getTabbableElements(root)).toEqual([]);
+  });
 });

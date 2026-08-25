@@ -151,6 +151,36 @@ describe('createDialog', () => {
     expect(trigger.hasAttribute('inert')).toBe(false);
   });
 
+  it('makes composed-tree siblings inert while open', async () => {
+    const background = document.createElement('button');
+    const host = document.createElement('div');
+    const popup = document.createElement('div');
+    const slottedSibling = document.createElement('button');
+    const shadow = host.attachShadow({ mode: 'open' });
+    const slot = document.createElement('slot');
+    const shadowSibling = document.createElement('button');
+
+    host.append(popup, slottedSibling);
+    shadow.append(slot, shadowSibling);
+    document.body.append(background, host);
+
+    const { dialog } = createTestDialog();
+
+    dialog.setPopupElement(popup);
+    dialog.open();
+
+    expect(slottedSibling.hasAttribute('inert')).toBe(true);
+    expect(shadowSibling.hasAttribute('inert')).toBe(true);
+    expect(background.hasAttribute('inert')).toBe(true);
+
+    dialog.close();
+    await vi.waitFor(() => expect(dialog.input.current.active).toBe(false));
+
+    expect(slottedSibling.hasAttribute('inert')).toBe(false);
+    expect(shadowSibling.hasAttribute('inert')).toBe(false);
+    expect(background.hasAttribute('inert')).toBe(false);
+  });
+
   it('closes on Escape', () => {
     const { dialog, onOpenChange } = createTestDialog();
 
