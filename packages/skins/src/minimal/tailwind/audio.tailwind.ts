@@ -2,7 +2,7 @@ import { cn } from '@videojs/utils/style';
 import { container as baseContainer } from './components/container';
 import { controls as baseControls } from './components/controls';
 import { error as baseError } from './components/error';
-import { popup as basePopup } from './components/popup';
+import { popup as basePopup, tooltip } from './components/popup';
 import { slider as baseSlider } from './components/slider';
 
 /* Container */
@@ -77,7 +77,7 @@ export const popup = {
 
 export const slider = {
   ...baseSlider,
-  value: cn(baseSlider.value, 'bottom-10'),
+  value: cn(baseSlider.value, tooltip, 'bottom-10'),
 };
 
 /* Error */

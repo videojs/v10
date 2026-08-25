@@ -292,6 +292,11 @@
 
 /* Slider preview */
 
+.media-minimal-skin--video .media-slider__value {
+  padding-inline: calc(var(--spacing) * 3);
+  text-shadow: 0 1px 0 var(--shadow-current-color);
+}
+
 .media-minimal-skin--video .media-slider .media-slider__preview {
   --preview-end-inset: calc(100cqi - 100%);
   --preview-left: clamp(

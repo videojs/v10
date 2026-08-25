@@ -23,6 +23,8 @@ const base = cn(
   'data-[side=right]:before:top-0 data-[side=right]:before:bottom-0 data-[side=right]:before:right-full'
 );
 
+export const tooltip = 'py-1 px-2.5 rounded-full text-(length:--font-size-base) whitespace-nowrap';
+
 export const popup = {
   popover: cn(
     base,
@@ -31,7 +33,7 @@ export const popup = {
   ),
   tooltip: cn(
     base,
-    'py-1 px-2.5 rounded-full text-(length:--font-size-base) whitespace-nowrap',
+    tooltip,
     'data-open:flex data-open:items-center data-open:gap-1',
     'data-[side=top]:before:h-(--media-tooltip-side-offset) data-[side=bottom]:before:h-(--media-tooltip-side-offset)',
     'data-[side=left]:before:w-(--media-tooltip-side-offset) data-[side=right]:before:w-(--media-tooltip-side-offset)'

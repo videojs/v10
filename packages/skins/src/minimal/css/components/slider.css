@@ -299,8 +299,6 @@
       flex-direction: row-reverse;
       gap: calc(var(--spacing) * 2);
       justify-content: center;
-      padding-inline: calc(var(--spacing) * 3);
-      text-shadow: 0 1px 0 var(--shadow-current-color);
     }
 
     .media-slider__chapter-title {

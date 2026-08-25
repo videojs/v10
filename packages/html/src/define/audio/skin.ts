@@ -78,7 +78,7 @@ function getTemplateHTML() {
               </media-slider-track>
               <media-slider-thumb class="media-slider__thumb"></media-slider-thumb>
               <media-slider-preview overflow="visible" class="media-slider__preview">
-                <media-slider-value type="pointer" class="media-slider__value media-time"></media-slider-value>
+                <media-slider-value type="pointer" class="media-surface media-tooltip media-slider__value media-time"></media-slider-value>
               </media-slider-preview>
             </media-time-slider>
             <media-time toggle type="remaining" class="media-time"></media-time>

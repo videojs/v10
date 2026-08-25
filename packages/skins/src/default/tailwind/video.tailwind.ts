@@ -171,6 +171,7 @@ export const thumbnail = {
 export const slider = {
   ...baseSlider,
   track: cn(baseSlider.track, 'bg-white/20'),
+  value: cn(baseSlider.value, 'text-shadow-2xs text-shadow-(color:--shadow-current-color)'),
 };
 
 /* Popup (with video surface) */

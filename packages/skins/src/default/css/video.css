@@ -163,6 +163,10 @@
   font-size: var(--font-size-medium);
 }
 
+.media-default-skin--video .media-slider__value {
+  text-shadow: 0 1px 0 var(--shadow-current-color);
+}
+
 /* Controls (hide/show behavior) */
 
 .media-default-skin--video .media-controls--root {

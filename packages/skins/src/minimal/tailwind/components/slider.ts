@@ -114,10 +114,6 @@ export const slider = {
     '[--thumbnail-max-width:var(--max-size)] [--thumbnail-max-height:var(--max-size)]',
     '[bottom:calc(100%+--spacing(11))]'
   ),
-  value: cn(
-    previewContent,
-    '[bottom:calc(100%+--spacing(5))] flex flex-row-reverse justify-center gap-2 px-3 tabular-nums',
-    'text-shadow-2xs text-shadow-(color:--shadow-current-color)'
-  ),
+  value: cn(previewContent, '[bottom:calc(100%+--spacing(5))] flex flex-row-reverse justify-center gap-2 tabular-nums'),
   chapterTitle: 'min-w-0 overflow-hidden text-ellipsis whitespace-nowrap empty:hidden',
 };

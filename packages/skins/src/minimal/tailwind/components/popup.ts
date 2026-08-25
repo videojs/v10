@@ -23,6 +23,13 @@ const base = cn(
   'data-[side=right]:before:top-0 data-[side=right]:before:bottom-0 data-[side=right]:before:right-full'
 );
 
+export const tooltip = cn(
+  'px-2 py-1 rounded-[--spacing(2)] text-(length:--font-size-base) whitespace-nowrap',
+  'bg-(--tooltip-background-color) [backdrop-filter:var(--tooltip-backdrop-filter)]',
+  'ring-1 ring-(color:--tooltip-border-color) shadow-md shadow-black/20',
+  'text-(--tooltip-text-color)'
+);
+
 export const popup = {
   base,
   popover: cn(
@@ -32,11 +39,8 @@ export const popup = {
   ),
   tooltip: cn(
     base,
-    'px-2 py-1 rounded-[--spacing(2)] text-(length:--font-size-base) whitespace-nowrap',
+    tooltip,
     'data-open:flex data-open:items-center data-open:gap-1',
-    'bg-(--tooltip-background-color) [backdrop-filter:var(--tooltip-backdrop-filter)]',
-    'ring-1 ring-(color:--tooltip-border-color) shadow-md shadow-black/20',
-    'text-(--tooltip-text-color)',
     'data-[side=top]:before:h-(--media-tooltip-side-offset) data-[side=bottom]:before:h-(--media-tooltip-side-offset)',
     'data-[side=left]:before:w-(--media-tooltip-side-offset) data-[side=right]:before:w-(--media-tooltip-side-offset)'
   ),

@@ -318,7 +318,6 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      text-shadow: 0 1px 0 var(--shadow-current-color);
     }
 
     .media-slider__chapter-title {

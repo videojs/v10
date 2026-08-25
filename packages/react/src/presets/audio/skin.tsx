@@ -202,7 +202,10 @@ export function AudioSkin(props: AudioSkinProps): ReactNode {
               </TimeSlider.Track>
               <TimeSlider.Thumb className="media-slider__thumb" />
               <TimeSlider.Preview overflow="visible" className="media-slider__preview">
-                <TimeSlider.Value type="pointer" className="media-slider__value media-time" />
+                <TimeSlider.Value
+                  type="pointer"
+                  className="media-surface media-tooltip media-slider__value media-time"
+                />
               </TimeSlider.Preview>
             </TimeSlider.Root>
             <Time.Value toggle type="remaining" className="media-time" />

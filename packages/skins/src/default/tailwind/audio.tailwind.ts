@@ -2,7 +2,7 @@ import { cn } from '@videojs/utils/style';
 import { container as baseContainer } from './components/container';
 import { controls as baseControls } from './components/controls';
 import { error as baseError } from './components/error';
-import { popup as basePopup } from './components/popup';
+import { popup as basePopup, tooltip } from './components/popup';
 import { slider as baseSlider } from './components/slider';
 import { surface } from './components/surface';
 import { time as baseTime } from './components/time';
@@ -73,6 +73,7 @@ export const slider = {
     '[background-color:light-dark(oklch(0_0_0/0.1),oklch(1_0_0/0.2))]',
     '[box-shadow:0_0_0_1px_light-dark(transparent,oklch(0_0_0/0.05))]'
   ),
+  value: cn(baseSlider.value, surface, tooltip, 'bottom-10'),
 };
 
 /* Popup (with audio surface) */

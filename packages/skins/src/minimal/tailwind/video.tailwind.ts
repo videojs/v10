@@ -168,6 +168,7 @@ export const thumbnail = baseThumbnail;
 export const slider = {
   ...baseSlider,
   track: cn(baseSlider.track, 'ring-1 ring-black/5'),
+  value: cn(baseSlider.value, 'px-3 text-shadow-2xs text-shadow-(color:--shadow-current-color)'),
   preview: cn(
     baseSlider.preview,
     '[--preview-end-inset:calc(100cqi-100%)]',

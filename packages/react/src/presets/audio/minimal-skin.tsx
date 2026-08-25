@@ -223,7 +223,7 @@ export function MinimalAudioSkin(props: MinimalAudioSkinProps): ReactNode {
               </TimeSlider.Track>
               <TimeSlider.Thumb className="media-slider__thumb" />
               <TimeSlider.Preview className="media-slider__preview">
-                <TimeSlider.Value type="pointer" className="media-slider__value media-time" />
+                <TimeSlider.Value type="pointer" className="media-tooltip media-slider__value media-time" />
               </TimeSlider.Preview>
             </TimeSlider.Root>
           </div>

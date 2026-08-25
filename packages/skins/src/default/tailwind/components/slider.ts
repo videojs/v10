@@ -120,10 +120,6 @@ export const slider = {
     '[--thumbnail-max-width:var(--max-size)] [--thumbnail-max-height:var(--max-size)]',
     '[bottom:calc(100%+--spacing(9))]'
   ),
-  value: cn(
-    previewContent,
-    '[bottom:calc(100%+--spacing(10.5))] flex flex-col items-center tabular-nums',
-    'text-shadow-2xs text-shadow-(color:--shadow-current-color)'
-  ),
+  value: cn(previewContent, '[bottom:calc(100%+--spacing(10.5))] flex flex-col items-center tabular-nums'),
   chapterTitle: 'min-w-0 max-w-(--max-size) px-6 overflow-hidden text-ellipsis whitespace-nowrap empty:hidden',
 };
