@@ -80,6 +80,7 @@ export const sidebar: Sidebar = [
       { slug: 'how-to/add-a-background-video' },
       { slug: 'how-to/build-your-own-component' },
       { slug: 'how-to/self-host-the-player', frameworks: ['html'] },
+      { href: 'https://github.com/videojs/v10/blob/main/CONTRIBUTING.md', sidebarLabel: 'Contribute to Video.js' },
       {
         sidebarLabel: 'Internationalization',
         defaultOpen: false,
