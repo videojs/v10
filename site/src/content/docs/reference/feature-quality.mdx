@@ -39,10 +39,10 @@ function QualityInfo() {
 import { createPlayer, UIElement, selectQuality } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
 
-const { PlayerController, context } = createPlayer({ features: videoFeatures });
+const { PlayerController } = createPlayer({ features: videoFeatures });
 
 class QualityInfo extends UIElement {
-  readonly #quality = new PlayerController(this, context, selectQuality);
+  readonly #quality = new PlayerController(this, selectQuality);
 }
 ```
 </FrameworkCase>

@@ -101,19 +101,15 @@ function Hero() {
 <FrameworkCase frameworks={["html"]}>
 ```html title="index.html"
 <script type="module">
-  import { createPlayer, playbackFeature, UIElement } from '@videojs/html';
+  import { createPlayer, playbackFeature } from '@videojs/html';
   import { backgroundFeatures } from '@videojs/html/background';
   import '@videojs/html/background/video';
   import '@videojs/html/ui/container';
   import '@videojs/html/ui/play-button';
 
-  const { ProviderMixin } = createPlayer({ // [!code focus]
+  const { PlayerElement: MyPlayer } = createPlayer({ // [!code focus]
     features: [...backgroundFeatures, playbackFeature], // [!code focus]
   }); // [!code focus]
-
-  class MyPlayer extends ProviderMixin(UIElement) {
-    static tagName = 'my-player';
-  }
 
   customElements.define('my-player', MyPlayer);
 </script>

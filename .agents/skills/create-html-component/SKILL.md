@@ -11,7 +11,7 @@ Read the relevant core contract, nearest HTML element and tests, definition entr
 
 1. Classify the request as a reusable primitive or app/skin composition before defining its contract. Then define the state owner, semantics, APIs, optional parts, styling contract, and opt-outs.
 2. Put runtime-neutral state and actions in `packages/core/src/core/ui/`; put reusable DOM interaction in `packages/core/src/dom/ui/`; keep the element an adapter.
-3. Match the nearest `MediaElement` or `MediaButtonElement` pattern. Send properties down and semantic events up; use controllers or context only across a real ownership boundary.
+3. Match the nearest `UIElement` or `MediaButtonElement` pattern. Send properties down and semantic events up; use controllers or context only across a real ownership boundary.
 4. Let `ReactiveElement` own rendered DOM updates: derive changes from reactive properties and controller state, then apply them through its update lifecycle. Avoid out-of-band mutations so scheduling, `updateComplete`, tests, and integrations remain authoritative.
 5. Add markup for semantics, focus, content, or parts consumers must place, omit, or replace. Leave purely visual structure to skins, CSS, or pseudo-elements. If the API starts coordinating independent behavior, extract another element or controller instead of adding modes and options.
 6. Expose discrete state through mapped `data-*` attributes and dynamic layout values through stable CSS custom properties. Define each token's owner, units, and fallback. Treat descendant selectors, `:has()`, and other complex selectors introduced by composition as a likely sign that the primitive boundary or styling hooks need improvement.

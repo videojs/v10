@@ -43,10 +43,10 @@ function TimeDisplay() {
 import { createPlayer, UIElement, selectTime } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
 
-const { PlayerController, context } = createPlayer({ features: videoFeatures });
+const { PlayerController } = createPlayer({ features: videoFeatures });
 
 class TimeDisplay extends UIElement {
-  readonly #time = new PlayerController(this, context, selectTime);
+  readonly #time = new PlayerController(this, selectTime);
 }
 ```
 </FrameworkCase>

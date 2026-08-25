@@ -18,12 +18,12 @@ import basicUsageHtmlTs from "@/components/docs/demos/player-controller/html/css
 The controller returned by <DocsLink slug="reference/html-create-player">`createPlayer`</DocsLink> is already bound to that player's context, so pass only the host and optional selector. The lower-level `PlayerController` exported from `@videojs/html` accepts the context as its second argument; its constructor signatures are documented below.
 
 ```ts
-import { createPlayer, MediaElement, selectPlayback } from '@videojs/html';
+import { createPlayer, UIElement, selectPlayback } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
 
 const { PlayerController } = createPlayer({ features: videoFeatures });
 
-class PlayButtonElement extends MediaElement {
+class PlayButtonElement extends UIElement {
   readonly #playback = new PlayerController(this, selectPlayback);
 }
 ```

@@ -154,7 +154,7 @@ function getRendererTag(renderer: Renderer): string {
   return map[renderer];
 }
 
-function getProviderTag(useCase: UseCase): string {
+function getPlayerTag(useCase: UseCase): string {
   return `${getInstallationPreset(useCase).tagPrefix}-player`;
 }
 
@@ -167,7 +167,7 @@ function getSkinTag(useCase: UseCase, skin: Exclude<Skin, 'none'>): string {
 }
 
 function generateHTMLMarkup(useCase: UseCase, skin: Skin, renderer: Renderer, url: string): string {
-  const providerTag = getProviderTag(useCase);
+  const playerTag = getPlayerTag(useCase);
   const tag = getRendererTag(renderer);
   const src = resolveSourceUrl(url, renderer, useCase);
   const playsInline = isVideoLikeRenderer(renderer) ? ' playsinline' : '';
@@ -184,24 +184,23 @@ function generateHTMLMarkup(useCase: UseCase, skin: Skin, renderer: Renderer, ur
         to handle different sources.
       -->`;
 
-  const providerComment = `<!--
-  The PlayerProvider passes state between the UI components
-  and Media, and makes fully custom UIs possible.
-  It does not have layout by default (display:contents)
+  const playerComment = `<!--
+  The player element owns and shares state between the UI
+  components and Media. Put layout on the skin or container.
  -->`;
 
   if (skin === 'none' && useCase !== 'background-video') {
-    return `${providerComment}
-<${providerTag}>
+    return `${playerComment}
+<${playerTag}>
 ${mediaComment}
   <${tag} src="${src}"${playsInline}></${tag}>
-</${providerTag}>`;
+</${playerTag}>`;
   }
 
   const skinTag = getSkinTag(useCase, skin as Exclude<Skin, 'none'>);
 
-  return `${providerComment}
-<${providerTag}>
+  return `${playerComment}
+<${playerTag}>
   <!--
     Skins contain the entire player UI and are easily swappable.
     They can each be "ejected" for full control and customization
@@ -211,7 +210,7 @@ ${mediaComment}
 ${skinMediaComment}
     <${tag} src="${src}"${playsInline}></${tag}>
   </${skinTag}>
-</${providerTag}>`;
+</${playerTag}>`;
 }
 
 function generateHTMLJSImports(useCase: UseCase, skin: Skin, renderer: Renderer): string {

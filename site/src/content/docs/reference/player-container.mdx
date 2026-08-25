@@ -10,10 +10,10 @@ import DocsLink from '@/components/docs/DocsLink.astro';
 import DocsLinkCard from '@/components/docs/DocsLinkCard.astro';
 
 <FrameworkCase frameworks={["react"]}>
-The `Container` is the player's physical surface. It defines the visual boundary, registers the fullscreen and activity target, and gives gesture and hotkey components a shared interaction surface. It lives inside a <DocsLink slug="reference/player-provider">`Player`</DocsLink>.
+The `Container` is the player's physical surface. It defines the visual boundary, registers the fullscreen and activity target, and gives gesture and hotkey components a shared interaction surface. It lives inside a <DocsLink slug="reference/player">`Player`</DocsLink>.
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
-The `<media-container>` is the player's physical surface. It defines the visual boundary, registers the fullscreen and activity target, and gives gesture and hotkey elements a shared interaction surface. It lives inside a <DocsLink slug="reference/player-provider">`<video-player>`</DocsLink>.
+The `<media-container>` is the player's physical surface. It defines the visual boundary, registers the fullscreen and activity target, and gives gesture and hotkey elements a shared interaction surface. It lives inside a <DocsLink slug="reference/player">`<video-player>`</DocsLink>.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
@@ -158,7 +158,7 @@ If you omit `<video-skin>` to build custom UI, render and style `<media-containe
 
 ## Inside vs. outside the container
 
-<DocsLink slug="reference/player-provider">`Player`</DocsLink> gives components access to state and actions. `Container` layers on physical behaviors — fullscreen, activity detection, and gesture handling. Components work in both places; the container just adds those extras.
+<DocsLink slug="reference/player">`Player`</DocsLink> gives components access to state and actions. `Container` layers on physical behaviors — fullscreen, activity detection, and gesture handling. Components work in both places; the container just adds those extras.
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx

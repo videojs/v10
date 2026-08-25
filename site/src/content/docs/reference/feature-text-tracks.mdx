@@ -47,10 +47,10 @@ function CaptionsButton() {
 import { createPlayer, UIElement, selectTextTrack } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
 
-const { PlayerController, context } = createPlayer({ features: videoFeatures });
+const { PlayerController } = createPlayer({ features: videoFeatures });
 
 class CaptionsButton extends UIElement {
-  readonly #textTracks = new PlayerController(this, context, selectTextTrack);
+  readonly #textTracks = new PlayerController(this, selectTextTrack);
 }
 ```
 </FrameworkCase>

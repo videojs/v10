@@ -81,22 +81,20 @@ import '@videojs/html/video/player';
 </video-player>
 ```
 
-If you need a custom feature set or tag name, use `createPlayer()` to get `ProviderMixin` and define your own state boundary. Extend `ContainerElement` separately when you need custom container behavior:
+If you need a custom feature set or tag name, use `createPlayer()` to get the configured `PlayerElement`. Extend `ContainerElement` separately when you need custom container behavior:
 
 ```ts title="my-player.ts"
-import { ContainerElement, createPlayer, UIElement } from '@videojs/html';
+import { ContainerElement, createPlayer } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
 
-const { ProviderMixin } = createPlayer({ features: videoFeatures });
+const { PlayerElement: MyPlayer } = createPlayer({ features: videoFeatures });
 
-class MyPlayer extends ProviderMixin(UIElement) {}
 class MyContainer extends ContainerElement {}
 customElements.define('my-player', MyPlayer);
 customElements.define('my-container', MyContainer);
 ```
 
 <DocsLinkCard slug="reference/html-create-player">`createPlayer` reference</DocsLinkCard>
-<DocsLinkCard slug="reference/provider-mixin">`ProviderMixin` reference</DocsLinkCard>
 </FrameworkCase>
 
 ## What lives inside it
@@ -132,7 +130,7 @@ Everything that needs player state goes inside `Player`: skins, containers, UI c
 <FrameworkCase frameworks={["html"]}>
 Packaged skins make `<video-player>` boxless with `display: contents`. Width, height, positioning, transforms, and `getBoundingClientRect()` do not describe a visible player box there. Put layout and measurements on the <DocsLink slug="reference/player-container">`<media-container>`</DocsLink> instead.
 
-If you omit `<video-skin>` and import only the player and media elements, those skin styles are not loaded. The provider still owns state, not layout, so add and style a `<media-container>` instead of relying on the provider's default display.
+If you omit `<video-skin>` and import only the player and media elements, those skin styles are not loaded. The player element still owns state, not layout, so add and style a `<media-container>` instead of using the player itself as the layout surface.
 </FrameworkCase>
 
 ## Accessing state
@@ -158,7 +156,7 @@ function PlayPauseButton() {
 <DocsLinkCard slug="reference/use-player">usePlayer reference</DocsLinkCard>
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
-Use `PlayerController` to subscribe to store state from any custom element inside the provider:
+Use `PlayerController` to subscribe to store state from any custom element inside the player:
 
 ```ts title="play-pause-button.ts"
 import { PlayerController, UIElement, playerContext, selectPlayback } from '@videojs/html';

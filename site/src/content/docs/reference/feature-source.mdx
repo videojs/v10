@@ -39,10 +39,10 @@ function SourceInfo() {
 import { createPlayer, UIElement, selectSource } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
 
-const { PlayerController, context } = createPlayer({ features: videoFeatures });
+const { PlayerController } = createPlayer({ features: videoFeatures });
 
 class SourceInfo extends UIElement {
-  readonly #source = new PlayerController(this, context, selectSource);
+  readonly #source = new PlayerController(this, selectSource);
 }
 ```
 </FrameworkCase>
