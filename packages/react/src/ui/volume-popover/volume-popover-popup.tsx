@@ -11,7 +11,6 @@ export interface VolumePopoverPopupProps extends PopoverPopupProps {}
 export const VolumePopoverPopup = forwardRef<HTMLDivElement, VolumePopoverPopupProps>(
   function VolumePopoverPopup(props, forwardedRef) {
     const { state } = useVolumePopoverContext();
-
     if (state.hidden) return null;
 
     return <PopoverPopup ref={forwardedRef} {...getStateDataAttrs(state, VolumePopoverDataAttrs)} {...props} />;

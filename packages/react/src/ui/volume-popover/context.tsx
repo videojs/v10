@@ -11,7 +11,6 @@ export const VolumePopoverContextProvider = VolumePopoverContext.Provider;
 
 export function useVolumePopoverContext(): VolumePopoverContextValue {
   const context = useContext(VolumePopoverContext);
-
   if (!context) throw new Error('VolumePopover compound components must be used within a VolumePopover.Root');
 
   return context;
