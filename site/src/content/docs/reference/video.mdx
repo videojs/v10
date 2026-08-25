@@ -1,0 +1,119 @@
+---
+title: Video
+frameworkTitle:
+  html: video
+description: Native video playback that can provide media to a Video.js player
+---
+
+import DocsLink from "@/components/docs/DocsLink.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+import StyleCase from "@/components/docs/StyleCase.astro";
+import Demo from "@/components/docs/demos/Demo.astro";
+
+{/* React demo */}
+import BasicUsageDemoReact from "@/components/docs/demos/video/react/css/BasicUsage";
+import basicUsageReactTsx from "@/components/docs/demos/video/react/css/BasicUsage.tsx?raw";
+import basicUsageReactCss from "@/components/docs/demos/video/react/css/BasicUsage.css?raw";
+
+{/* HTML demo */}
+import BasicUsageDemoHtml from "@/components/docs/demos/video/html/css/BasicUsage.astro";
+import basicUsageHtml from "@/components/docs/demos/video/html/css/BasicUsage.html?raw";
+import basicUsageHtmlCss from "@/components/docs/demos/video/html/css/BasicUsage.css?raw";
+import basicUsageHtmlTs from "@/components/docs/demos/video/html/css/BasicUsage.ts?raw";
+
+## Import
+
+<FrameworkCase frameworks={["react"]}>
+Import `Video` and the matching feature bundle from the video preset:
+
+```tsx
+import { Video, videoFeatures } from '@videojs/react/video';
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+The media element is the browser's native `<video>`. Import the video player registration when it should provide media to Video.js:
+
+```ts
+import '@videojs/html/video/player';
+```
+</FrameworkCase>
+
+## Anatomy
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<Video>
+  <source />
+  <track />
+</Video>
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```html
+<video>
+  <source />
+  <track />
+</video>
+```
+</FrameworkCase>
+
+## Player registration
+
+<FrameworkCase frameworks={["react"]}>
+Place `Video` inside the `Player` returned by `createPlayer({ features: videoFeatures })`. On mount, its composed ref registers the native `HTMLVideoElement` as that Player's media provider. Replacing or unmounting it detaches the previous element. Outside a Player, `Video` still renders a standalone native `<video>` without creating or attaching a Video.js store.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+Place a native `<video>` anywhere under `<video-player>`. The player observes its full descendant subtree and attaches the first native `<video>` or `<audio>` in document order. Adding, removing, or replacing native media causes the provider to update and detach the previous element when necessary.
+
+A registered custom media component takes precedence over a descendant native element. If the custom media unregisters, the player can fall back to the first native media element still in its subtree.
+</FrameworkCase>
+
+## Sources and tracks
+
+Use the native `src` property for one URL or add child [`<source>` elements](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/source) when the browser should choose between candidates. Browser media support determines which native sources can play; see <DocsLink slug="concepts/media-sources">Media sources</DocsLink> when you need an HLS, DASH, Mux, or other playback adapter.
+
+Add native [`<track>` elements](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/track) for captions, subtitles, chapters, descriptions, or metadata. React forwards `Video` children unchanged, so `<source>` and `<track>` use their regular React DOM props such as `srcLang` and `default`.
+
+## Native API
+
+<FrameworkCase frameworks={["react"]}>
+`VideoProps` extends React's `VideoHTMLAttributes<HTMLVideoElement>`. Native attributes, event handlers, and children pass through to the `<video>`, and `ref` resolves to its `HTMLVideoElement`. Use that ref for native properties and methods.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+The element is an ordinary `HTMLVideoElement`; Video.js does not wrap or replace its native DOM API.
+</FrameworkCase>
+
+See MDN for the complete [`<video>` element](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/video), [`HTMLVideoElement`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLVideoElement), and shared [`HTMLMediaElement`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement) APIs.
+
+## Examples
+
+### Basic Usage
+
+This native video uses a child source, captions track, and browser controls while also providing media to the surrounding Video.js player.
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
+      { title: "App.css", code: basicUsageReactCss, lang: "css" },
+    ]}>
+      <BasicUsageDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "index.html", code: basicUsageHtml, lang: "html" },
+      { title: "index.css", code: basicUsageHtmlCss, lang: "css" },
+      { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
+    ]}>
+      <BasicUsageDemoHtml />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>

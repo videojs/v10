@@ -1,0 +1,12 @@
+.html-video-basic {
+  width: 100%;
+  overflow: hidden;
+  background: black;
+  border-radius: 8px;
+}
+
+.html-video-basic__media {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+}

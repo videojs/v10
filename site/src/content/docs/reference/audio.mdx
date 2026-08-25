@@ -1,0 +1,117 @@
+---
+title: Audio
+frameworkTitle:
+  html: audio
+description: Native audio playback that can provide media to a Video.js player
+---
+
+import DocsLink from "@/components/docs/DocsLink.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+import StyleCase from "@/components/docs/StyleCase.astro";
+import Demo from "@/components/docs/demos/Demo.astro";
+
+{/* React demo */}
+import BasicUsageDemoReact from "@/components/docs/demos/audio/react/css/BasicUsage";
+import basicUsageReactTsx from "@/components/docs/demos/audio/react/css/BasicUsage.tsx?raw";
+import basicUsageReactCss from "@/components/docs/demos/audio/react/css/BasicUsage.css?raw";
+
+{/* HTML demo */}
+import BasicUsageDemoHtml from "@/components/docs/demos/audio/html/css/BasicUsage.astro";
+import basicUsageHtml from "@/components/docs/demos/audio/html/css/BasicUsage.html?raw";
+import basicUsageHtmlCss from "@/components/docs/demos/audio/html/css/BasicUsage.css?raw";
+import basicUsageHtmlTs from "@/components/docs/demos/audio/html/css/BasicUsage.ts?raw";
+
+## Import
+
+<FrameworkCase frameworks={["react"]}>
+Import `Audio` and the matching feature bundle from the audio preset:
+
+```tsx
+import { Audio, audioFeatures } from '@videojs/react/audio';
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+The media element is the browser's native `<audio>`. Import the audio player registration when it should provide media to Video.js:
+
+```ts
+import '@videojs/html/audio/player';
+```
+</FrameworkCase>
+
+## Anatomy
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<Audio>
+  <source />
+</Audio>
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```html
+<audio>
+  <source />
+</audio>
+```
+</FrameworkCase>
+
+## Player registration
+
+<FrameworkCase frameworks={["react"]}>
+Place `Audio` inside the `Player` returned by `createPlayer({ features: audioFeatures })`. On mount, its composed ref registers the native `HTMLAudioElement` as that Player's media provider. Replacing or unmounting it detaches the previous element. Outside a Player, `Audio` still renders a standalone native `<audio>` without creating or attaching a Video.js store.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+Place a native `<audio>` anywhere under `<audio-player>`. The player observes its full descendant subtree and attaches the first native `<video>` or `<audio>` in document order. Adding, removing, or replacing native media causes the provider to update and detach the previous element when necessary.
+
+A registered custom media component takes precedence over a descendant native element. If the custom media unregisters, the player can fall back to the first native media element still in its subtree.
+</FrameworkCase>
+
+## Sources and tracks
+
+Use the native `src` property for one URL or add child [`<source>` elements](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/source) when the browser should choose between candidates. Browser media support determines which native sources can play; see <DocsLink slug="concepts/media-sources">Media sources</DocsLink> when you need an HLS, Mux, Spotify, or other playback adapter.
+
+React forwards `Audio` children unchanged, so native source markup uses its regular React DOM props. In the example below, the shared demo MP4 supplies its audio track. The `<source>` intentionally omits `type` because the URL points to the full MP4 container, not an audio-only asset.
+
+## Native API
+
+<FrameworkCase frameworks={["react"]}>
+`AudioProps` extends React's `AudioHTMLAttributes<HTMLAudioElement>`. Native attributes, event handlers, and children pass through to the `<audio>`, and `ref` resolves to its `HTMLAudioElement`. Use that ref for native properties and methods.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+The element is an ordinary `HTMLAudioElement`; Video.js does not wrap or replace its native DOM API.
+</FrameworkCase>
+
+See MDN for the complete [`<audio>` element](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/audio), [`HTMLAudioElement`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLAudioElement), and shared [`HTMLMediaElement`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement) APIs.
+
+## Examples
+
+### Basic Usage
+
+This native audio element uses a child source and browser controls while also providing media to the surrounding Video.js player.
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
+      { title: "App.css", code: basicUsageReactCss, lang: "css" },
+    ]}>
+      <BasicUsageDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "index.html", code: basicUsageHtml, lang: "html" },
+      { title: "index.css", code: basicUsageHtmlCss, lang: "css" },
+      { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
+    ]}>
+      <BasicUsageDemoHtml />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>

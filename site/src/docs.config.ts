@@ -152,6 +152,7 @@ export const sidebar: Sidebar = [
         defaultOpen: false,
         llmsDescription: 'API Reference for media components that handle streaming protocols and media playback.',
         contents: [
+          { slug: 'reference/audio' },
           { slug: 'reference/background-video' },
           { slug: 'reference/cloudflare-video' },
           { slug: 'reference/dash-video' },
@@ -167,6 +168,7 @@ export const sidebar: Sidebar = [
           { slug: 'reference/spotify-audio' },
           { slug: 'reference/tiktok-video' },
           { slug: 'reference/twitch-video' },
+          { slug: 'reference/video' },
           { slug: 'reference/vimeo-video' },
           { slug: 'reference/youtube-video' },
         ],
