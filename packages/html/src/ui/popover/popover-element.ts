@@ -20,7 +20,7 @@ import { PositionController } from '../position-controller';
 import { UIElement } from '../ui-element';
 
 export class PopoverElement extends UIElement {
-  static readonly tagName = 'media-popover';
+  static readonly tagName: string = 'media-popover';
 
   static override properties = {
     open: { type: Boolean },
