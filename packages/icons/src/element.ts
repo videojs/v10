@@ -1,8 +1,10 @@
 export type IconMap = Readonly<Record<string, string>>;
 export type IconLoader = () => IconMap | Promise<IconMap>;
 
+const HTMLElementBase = globalThis.HTMLElement ?? class {};
+
 /** Renders registered SVG icon families in the light DOM. */
-export class MediaIconElement extends HTMLElement {
+export class MediaIconElement extends HTMLElementBase {
   static #families = new Map<string, Map<string, string>>();
   static #loaders = new Map<string, IconLoader>();
   static #loading = new Map<string, Promise<void>>();

@@ -7,6 +7,7 @@ interface ResolvedMeta {
 
 const cache = new WeakMap<typeof ReactiveElement, ResolvedMeta>();
 const propertyKeys = new Map<string, symbol>();
+const HTMLElementBase = globalThis.HTMLElement ?? class {};
 
 /**
  * Lightweight reactive custom element base class.
@@ -47,7 +48,7 @@ const propertyKeys = new Map<string, symbol>();
  *   }
  *   ```;
  */
-export class ReactiveElement extends HTMLElement {
+export class ReactiveElement extends HTMLElementBase {
   /**
    * User-supplied object that maps property names to {@linkcode PropertyDeclaration} objects containing options for
    * configuring reactive properties. When a reactive property is set the element will update and render.

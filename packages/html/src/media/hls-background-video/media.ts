@@ -6,10 +6,12 @@ import type { Constructor } from '@videojs/utils/types';
 import { MediaAttachMixin } from '../../store/media-attach-mixin';
 import { getTemplateHTML } from '../background-video/template';
 
+const HTMLElementBase = globalThis.HTMLElement ?? class {};
+
 // `MediaAttachMixin` is typed as returning its base, so its `disconnectedCallback`
 // isn't visible for `super` to reach. `CustomElement` declares the lifecycle
 // callbacks this element overrides.
-const HlsBackgroundVideoBase = MediaAttachMixin(HTMLElement) as unknown as Constructor<CustomElement>;
+const HlsBackgroundVideoBase = MediaAttachMixin(HTMLElementBase) as unknown as Constructor<CustomElement>;
 
 /**
  * A muted, looping, chrome-less video over the SPF background-video engine.
