@@ -337,6 +337,8 @@ function SettingsMenu(): ReactNode {
  *
  * Place a video media component in `children` and import `@videojs/react/video/minimal-skin.css` for the packaged
  * styles.
+ *
+ * @see {@link https://videojs.org/docs/framework/react/how-to/customize-skins | Customize skins}
  */
 export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
   const { children, className, renderPoster, style, ...rest } = props;

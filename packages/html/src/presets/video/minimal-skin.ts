@@ -342,6 +342,8 @@ function getTemplateHTML() {
  * Compact packaged video UI registered as `<video-minimal-skin>`.
  *
  * The shadow template includes `<media-container>`, controls, and styles. Place the media element in the default slot.
+ *
+ * @see {@link https://videojs.org/docs/framework/html/how-to/customize-skins | Customize skins}
  */
 export class MinimalVideoSkinElement extends SkinElement {
   static readonly tagName = 'video-minimal-skin';

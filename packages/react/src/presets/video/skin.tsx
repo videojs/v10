@@ -395,6 +395,8 @@ function FullscreenControl() {
  * Renders the packaged default video UI and the Container that owns player layout and fullscreen.
  *
  * Place a video media component in `children` and import `@videojs/react/video/skin.css` for the packaged styles.
+ *
+ * @see {@link https://videojs.org/docs/framework/react/how-to/customize-skins | Customize skins}
  */
 export function VideoSkin(props: VideoSkinProps): ReactNode {
   const { children, className, renderPoster, style, ...rest } = props;
