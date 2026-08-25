@@ -1,5 +1,5 @@
 [build]
-  command = "pnpm build:site"
+  command = "pnpm exec vp run --no-cache site#build"
   publish = "site/dist"
 
 # PostHog reverse proxy (ad-blocker bypass)
