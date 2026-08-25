@@ -18,7 +18,6 @@ const target = defineComponentTarget<typeof schema>()(() => ({
       name: 'fixture:target-transform',
       transform({ code, magicString }) {
         const start = code.indexOf(`'before'`);
-
         if (start < 0) return false;
 
         magicString.overwrite(start, start + 8, `'after'`);

@@ -212,7 +212,6 @@ export class MenuElement extends UIElement {
 
   #syncParentRegistration(parentCtx: MenuContextValue | null): void {
     const parentMenu = parentCtx?.menu ?? null;
-
     if (parentMenu === this.#registeredParentMenu || !this.#menu) return;
 
     this.#cleanupParentRegistration?.();
@@ -256,7 +255,6 @@ export class MenuElement extends UIElement {
     this.#cleanupSizeObserver = observeMenuSize(this, syncSize);
 
     const positionOptions = getRootPositionOptions(state.side, state.align);
-
     if (!positionOptions || !this.#currentTrigger) return;
 
     this.#position.sync({
@@ -379,7 +377,6 @@ export class MenuElement extends UIElement {
 
   #clearTriggerState(): void {
     const trigger = this.#stateTrigger;
-
     if (!trigger) return;
 
     applyElementProps(trigger, {

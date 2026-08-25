@@ -115,7 +115,6 @@ export const noUnsafeDictionaryTypeRule = defineRule({
 			if (environment === null || !shouldReportType(node, environment)) return;
 
 			const unsafe = classifyUnsafeDictionary(node, environment);
-
 			if (unsafe === null) return;
 
 			report(node, unsafe.unsafeValue);

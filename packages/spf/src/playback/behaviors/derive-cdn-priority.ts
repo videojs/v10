@@ -71,7 +71,6 @@ export const deriveCdnPriority = defineBehavior({
           effects: [
             () => {
               const presentation = state.presentation.get();
-
               if (!isResolvedPresentation(presentation)) return;
 
               const next = getOrderedCdnIds(presentation, getCdnId);

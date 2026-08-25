@@ -12,7 +12,6 @@ export const ControlsContextProvider = ControlsContext.Provider;
 
 export function useControlsContext(): ControlsContextValue {
   const ctx = useContext(ControlsContext);
-
   if (!ctx) throw new Error('Controls compound components must be used within a Controls.Root');
 
   return ctx;

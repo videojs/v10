@@ -88,7 +88,6 @@ async function transform(source: string): Promise<string> {
 
   await bundle.generate({ format: 'es' });
   const output = readComponentSource(meta);
-
   if (output === undefined) throw new Error('Fixture build did not retain editable source.');
 
   return output;

@@ -19,7 +19,6 @@ export function resolveRegion(
 
   const relativeX = clientX - containerRect.left;
   const width = containerRect.width;
-
   if (width === 0) return null;
 
   const ratio = relativeX / width;

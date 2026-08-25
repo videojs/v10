@@ -111,7 +111,6 @@ async function transform(
   await bundle.generate({ format: 'es' });
 
   const output = readComponentSource(meta);
-
   if (output === undefined) throw new Error('Fixture build did not retain editable source.');
 
   return { source: output };
@@ -123,7 +122,6 @@ function virtualCssIds(source: string): string[] {
 
 async function resolvePluginId(plugin: Plugin, id: string): Promise<unknown> {
   const hook = plugin.resolveId;
-
   if (!hook) return null;
 
   const handler = typeof hook === 'function' ? hook : hook.handler;

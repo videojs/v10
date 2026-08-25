@@ -114,10 +114,7 @@ export default function MuxUploaderPanel() {
       uploadId,
       getUploadStatus: async (id) => {
         const response = await actions.mux.getUploadStatus({ uploadId: id });
-
-        if (response.error) {
-          return { error: { message: response.error.message } };
-        }
+        if (response.error) return { error: { message: response.error.message } };
 
         return {
           data: {
@@ -128,10 +125,7 @@ export default function MuxUploaderPanel() {
       },
       getAssetStatus: async (assetId) => {
         const response = await actions.mux.getAssetStatus({ assetId });
-
-        if (response.error) {
-          return { error: { message: response.error.message } };
-        }
+        if (response.error) return { error: { message: response.error.message } };
 
         return {
           data: {

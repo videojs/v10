@@ -15,7 +15,6 @@ export const AlertDialogContextProvider = AlertDialogContext.Provider;
 
 export function useAlertDialogContext(): AlertDialogContextValue {
   const ctx = useContext(AlertDialogContext);
-
   if (!ctx) throw new Error('AlertDialog compound components must be used within an AlertDialog.Root');
 
   return ctx;

@@ -125,7 +125,6 @@ export abstract class MediaButtonElement<Core extends MediaButtonComponent> exte
   /** Resolved label for tooltips and other display surfaces. */
   getResolvedLabel(): string | undefined {
     const media = this.mediaState.value;
-
     if (!media) return undefined;
 
     this.core.setMedia(media);
@@ -170,7 +169,6 @@ export abstract class MediaButtonElement<Core extends MediaButtonComponent> exte
 
   #syncHotkeyShortcut(): void {
     const shortcut = this.getShortcut();
-
     if (shortcut === this.#lastHotkeyShortcut) return;
 
     this.#lastHotkeyShortcut = shortcut;

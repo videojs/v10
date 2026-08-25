@@ -131,7 +131,6 @@ function keepLastExactDeclaration(declarations: Declaration[]): Declaration[] {
   for (let index = declarations.length - 1; index >= 0; index--) {
     const declaration = declarations[index]!;
     const key = JSON.stringify(declaration, (name, value) => (name === 'loc' ? undefined : value));
-
     if (seen.has(key)) continue;
 
     seen.add(key);
@@ -250,10 +249,7 @@ function resolveTailwindTokens(
 
         const local = environment.get(name);
         const replacement = local ?? token.value.fallback;
-
-        if (replacement == null) {
-          throw new Error(`style emission: cannot resolve Tailwind variable '${name}'.`);
-        }
+        if (replacement == null) throw new Error(`style emission: cannot resolve Tailwind variable '${name}'.`);
 
         output.push(...resolveTailwindTokens(replacement, environment, [...stack, name]));
         continue;
@@ -370,7 +366,6 @@ function foldSimpleCalc(token: TokenOrValue): TokenOrValue {
   if (token.type !== 'function' || token.value.name !== 'calc') return token;
 
   const arguments_ = token.value.arguments.filter((argument) => !isWhitespaceToken(argument));
-
   if (arguments_.length === 0 || arguments_.length % 2 === 0) return token;
 
   let scalar = 1;
@@ -379,7 +374,6 @@ function foldSimpleCalc(token: TokenOrValue): TokenOrValue {
   for (let index = 0; index < arguments_.length; index += 2) {
     const value = arguments_[index]!;
     const operator = index === 0 ? '*' : calcOperator(arguments_[index - 1]);
-
     if (!operator) return token;
 
     if (value.type === 'token' && value.value.type === 'number') {

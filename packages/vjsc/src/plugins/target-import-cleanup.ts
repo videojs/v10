@@ -13,7 +13,6 @@ export function targetImportCleanupPlugin(options: ComponentTargetPluginOptions)
       filter: { id: SCRIPT_ID, code: 'import' },
       handler(_code, id, transform) {
         const targets = selectComponentTargets(options.targets, id);
-
         if (targets.length === 0 || !transform.ast || !transform.magicString) return null;
 
         const sourceImports = new Set(['vjsc/components', ...targets.map((target) => target.source)]);
@@ -23,7 +22,6 @@ export function targetImportCleanupPlugin(options: ComponentTargetPluginOptions)
             statement.specifiers.length > 0 &&
             (sourceImports.has(statement.source.value) || isTypeOnlyImport(statement))
         );
-
         if (declarations.length === 0) return null;
 
         const imported = new Set(declarations.flatMap((declaration) => declaration.specifiers.map(localName)));
@@ -32,7 +30,6 @@ export function targetImportCleanupPlugin(options: ComponentTargetPluginOptions)
 
         for (const declaration of declarations) {
           const kept = declaration.specifiers.filter((specifier) => referenced.has(localName(specifier)));
-
           if (kept.length === declaration.specifiers.length) continue;
 
           if (kept.length === 0) {

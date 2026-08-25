@@ -15,12 +15,10 @@ export const timeFeature = definePlayerFeature({
     async seek(time: number) {
       const { media } = target(),
         signal = signals.supersede(signalKeys.seek);
-
       if (!isMediaSeekCapable(media) || !isMediaSourceCapable(media)) return 0;
 
       if (!hasMetadata(media)) {
         const loaded = await onEvent(media, 'loadedmetadata', { signal }).catch(() => false);
-
         if (!loaded) return media.currentTime;
       }
 
@@ -37,7 +35,6 @@ export const timeFeature = definePlayerFeature({
 
   attach({ target, signal, set, get }) {
     const { media } = target;
-
     if (!isMediaSeekCapable(media)) return;
 
     // For live streams `media.duration` is `Infinity` — fall back to the end

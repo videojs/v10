@@ -16,7 +16,6 @@ export const SeekIndicatorRoot = forwardRef(function SeekIndicatorRoot(
 ) {
   const { render, className, style, closeDelay, ...elementProps } = componentProps;
   const { elementRef, present, state } = useInputIndicatorRoot(() => new SeekIndicatorCore(), { closeDelay });
-
   if (!present) return null;
 
   return (

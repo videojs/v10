@@ -23,7 +23,6 @@ test.describe('Captions', () => {
   test('captions settings lists tracks when subtitle track is added', async ({ page }) => {
     await page.evaluate(() => {
       const video = document.querySelector('video') as HTMLVideoElement;
-
       if (!video) return;
 
       const track = document.createElement('track');
@@ -46,7 +45,6 @@ test.describe('Captions', () => {
   test('captions button toggles captions', async ({ page }) => {
     await page.evaluate(() => {
       const video = document.querySelector('video') as HTMLVideoElement;
-
       if (!video) return;
 
       const track = document.createElement('track');
@@ -84,7 +82,6 @@ test.describe('Captions sideloaded before an hls.js source', () => {
     return page.evaluate(() => {
       const media = document.querySelector('hlsjs-video');
       const track = Array.from(media?.textTracks ?? []).find(({ label }) => label === 'English');
-
       if (!track) return -1;
 
       const { mode } = track;
@@ -109,7 +106,6 @@ test.describe('Captions sideloaded before an hls.js source', () => {
     return page.waitForFunction(() => {
       const media = document.querySelector('hlsjs-video');
       const track = Array.from(media?.textTracks ?? []).find(({ label }) => label === 'English');
-
       if (!track) return false;
 
       track.mode = 'showing';

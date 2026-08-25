@@ -29,7 +29,6 @@ function formatDelta(current, previous) {
   if (previous === undefined) return { bytes: '—', pct: '' };
 
   const diff = current - previous;
-
   if (diff === 0) return { bytes: '0 B', pct: '0%' };
 
   const sign = diff > 0 ? '+' : '-';
@@ -57,7 +56,6 @@ function lazyLabel(entry) {
 function lazyDelta(current, previous) {
   const currentLazy = lazySize(current);
   const previousLazy = lazySize(previous);
-
   if (currentLazy === 0 && previousLazy === 0) return '—';
 
   return formatDelta(currentLazy, previousLazy).bytes;
@@ -139,7 +137,6 @@ function generateCategoryBreakdowns(entries, pkg) {
 
   for (const entry of entries) {
     const cat = entry.category;
-
     if (!cat) continue;
 
     if (!byCategory.has(cat)) byCategory.set(cat, []);
@@ -151,7 +148,6 @@ function generateCategoryBreakdowns(entries, pkg) {
 
   for (const cat of CATEGORY_ORDER) {
     const catEntries = byCategory.get(cat);
-
     if (!catEntries || catEntries.length === 0) continue;
 
     const label = CATEGORY_LABELS[cat] ?? cat;
@@ -306,7 +302,6 @@ export function generateComparisonReport(current, base) {
     // reporting threshold would hide legitimate small improvements/regressions.
     const changed = entries.filter((e) => {
       const previousEntry = baseEntryMap[e.name];
-
       if (!previousEntry) return true;
 
       return (
@@ -484,7 +479,6 @@ function generateLocalReport(current) {
 
       for (const entry of entries) {
         const cat = entry.category;
-
         if (!cat) continue;
 
         if (!byCategory.has(cat)) byCategory.set(cat, []);
@@ -494,7 +488,6 @@ function generateLocalReport(current) {
 
       for (const cat of CATEGORY_ORDER) {
         const catEntries = byCategory.get(cat);
-
         if (!catEntries || catEntries.length === 0) continue;
 
         const label = CATEGORY_LABELS[cat] ?? cat;

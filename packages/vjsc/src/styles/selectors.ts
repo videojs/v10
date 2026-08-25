@@ -46,7 +46,6 @@ export function foldGroupDescendantSelectors(selectors: SelectorList): SelectorL
 
       return relationship ? [relationship] : [];
     });
-
     if (relationships.length === 0) return cloneSelector(selector);
 
     const owner = JSON.stringify(relationships[0]?.owner);
@@ -77,7 +76,6 @@ function groupDescendantRelationship(component: SelectorComponent): GroupDescend
   if (component.type !== 'pseudo-class' || component.kind !== 'is' || component.selectors.length !== 1) return;
 
   const selector = component.selectors[0]!;
-
   if (selector.length < 3) return;
 
   const owner = selector[0];
@@ -98,7 +96,6 @@ function groupDescendantRelationship(component: SelectorComponent): GroupDescend
   }
 
   const conditions = selector.slice(1, -2);
-
   if (conditions.some((condition) => condition.type === 'combinator' || condition.type === 'nesting')) return;
 
   return { component, owner, conditions };

@@ -29,7 +29,6 @@ function collectMenuGraph(entry: string): string[] {
 
   while (pending.length > 0) {
     const module = pending.pop();
-
     if (!module || graph.has(module)) continue;
 
     graph.add(module);
@@ -41,7 +40,6 @@ function collectMenuGraph(entry: string): string[] {
       if (!specifier.startsWith('.')) continue;
 
       const dependency = resolveImport(module, specifier);
-
       if (!dependency) continue;
 
       graph.add(dependency);

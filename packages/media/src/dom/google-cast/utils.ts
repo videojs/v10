@@ -25,7 +25,6 @@ export class IterableWeakSet<T extends WeakKey> {
 
   delete(value: T): boolean {
     const ref = this.#seen.get(value);
-
     if (!ref) return false;
 
     this.#seen.delete(value);
@@ -168,7 +167,6 @@ export async function isHls(url: string) {
   try {
     const response = await fetch(url, { method: 'HEAD' });
     const contentType = response.headers.get('Content-Type');
-
     if (!contentType) return false;
 
     const normalizedContentType = contentType.toLowerCase().split(';')[0]!.trim();

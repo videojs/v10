@@ -26,7 +26,6 @@ export const StatusIndicatorRoot = forwardRef(function StatusIndicatorRoot(
     },
     { replayOnUpdate: false }
   );
-
   if (!present) return null;
 
   return (

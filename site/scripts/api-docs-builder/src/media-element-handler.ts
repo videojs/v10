@@ -130,14 +130,12 @@ export interface MediaElementResult {
 export function generateMediaElementReferences(monorepoRoot: string): MediaElementResult[] {
   const project = new Project(monorepoRoot);
   const sources = discoverMediaElements(monorepoRoot, project);
-
   if (sources.length === 0) return [];
 
   const customMediaPath = path.join(
     monorepoRoot,
     'packages/media/src/dom/custom-media-element/custom-media-element.ts'
   );
-
   if (!fs.existsSync(customMediaPath)) return [];
 
   const staticProperties = extractStaticProperties(customMediaPath, project);
@@ -260,7 +258,6 @@ export function generateMediaElementReferences(monorepoRoot: string): MediaEleme
 
 function discoverMediaElements(monorepoRoot: string, project: OxcProject): MediaElementSource[] {
   const defineDir = path.join(monorepoRoot, 'packages/html/src/define/media');
-
   if (!fs.existsSync(defineDir)) return [];
 
   const sources: MediaElementSource[] = [];
@@ -276,7 +273,6 @@ function discoverMediaElements(monorepoRoot: string, project: OxcProject): Media
   for (const entryPath of entryPaths) {
     for (const filePath of publicImplementationFiles(entryPath, project, new Set())) {
       const file = project.source(filePath);
-
       if (!file) continue;
 
       for (const statement of file.program.body) {
@@ -286,19 +282,15 @@ function discoverMediaElements(monorepoRoot: string, project: OxcProject): Media
         const name = declaration.id?.name;
         const tagName = staticStringClassProperty(declaration, 'tagName');
         const base = declaration.superClass;
-
         if (!name || !tagName || base?.type !== 'Identifier') continue;
 
         const mediaDeclaration = project.resolveName(filePath, base.name);
-
         if (!mediaDeclaration || mediaDeclaration.declaration.type !== 'ClassDeclaration') continue;
 
         const composition = findCustomMediaComposition(mediaDeclaration.file, mediaDeclaration.declaration, project);
-
         if (!composition) continue;
 
         const host = project.resolveName(mediaDeclaration.file.filePath, composition.hostClassName);
-
         if (!host || host.declaration.type !== 'ClassDeclaration') continue;
 
         sources.push({
@@ -320,13 +312,11 @@ function discoverMediaElements(monorepoRoot: string, project: OxcProject): Media
 
 function publicImplementationFiles(entryPath: string, project: OxcProject, visited: Set<string>): string[] {
   const absolute = path.resolve(entryPath);
-
   if (visited.has(absolute)) return [];
 
   visited.add(absolute);
 
   const file = project.source(absolute);
-
   if (!file) return [];
 
   const reexports = file.program.body.flatMap((statement) => {
@@ -431,11 +421,9 @@ function walkClassSurface(
   visited: Set<string>
 ): void {
   const resolved = project.resolveName(filePath, className);
-
   if (!resolved || resolved.declaration.type !== 'ClassDeclaration') return;
 
   const key = `${resolved.file.filePath}#${className}`;
-
   if (visited.has(key)) return;
 
   visited.add(key);
@@ -483,11 +471,9 @@ function walkExtends(
 
   for (let index = mixins.length - 1; index >= 0; index--) {
     const mixin = resolveMixin(file.filePath, mixins[index]!, project);
-
     if (!mixin) continue;
 
     const key = `${mixin.file.filePath}#mixin#${mixins[index]}`;
-
     if (visited.has(key)) continue;
 
     visited.add(key);
@@ -504,7 +490,6 @@ function unwindMixinChain(call: CallExpression): { mixins: string[]; base: Expre
     mixins.push(current.callee.name);
 
     const argument = current.arguments[0];
-
     if (!argument || argument.type === 'SpreadElement') break;
 
     current = unwrapExpression(argument);
@@ -519,11 +504,9 @@ function resolveMixin(
   project: OxcProject
 ): { file: SourceFile; declaration: Class } | undefined {
   const resolved = project.resolveName(filePath, name);
-
   if (!resolved) return undefined;
 
   const fn = functionFromDeclaration(resolved.declaration);
-
   if (!fn?.body) return undefined;
 
   const parameters = new Set(fn.params.map(parameterName).filter((value): value is string => !!value));
@@ -554,10 +537,7 @@ function applyClassMembers(
     if (member.type !== 'MethodDefinition' || (member.kind !== 'get' && member.kind !== 'set')) continue;
 
     const name = staticName(member.key);
-
-    if (!name || member.key.type === 'PrivateIdentifier' || name.startsWith('_') || name === 'target') {
-      continue;
-    }
+    if (!name || member.key.type === 'PrivateIdentifier' || name.startsWith('_') || name === 'target') continue;
 
     if (member.kind === 'set') {
       setters.add(name);
@@ -610,7 +590,6 @@ function inferGetterType(declaration: Class, getter: MethodDefinition): TSType |
     const field = declaration.body.body.find(
       (member) => member.type === 'PropertyDefinition' && staticName(member.key) === propertyName
     );
-
     if (field?.type === 'PropertyDefinition') return field.typeAnnotation?.typeAnnotation;
   }
 
@@ -638,11 +617,9 @@ function extractEngineOptions(
   project: OxcProject
 ): Record<string, EngineOptionDef[]> | undefined {
   const sourceType = findAccessorType(source.hostFilePath, source.hostClassName, 'source', project);
-
   if (!sourceType) return undefined;
 
   const engineType = propertyType(project, nonNullable(sourceType), 'engine');
-
   if (!engineType) return undefined;
 
   const engines: Record<string, EngineOptionDef[]> = {};
@@ -651,7 +628,6 @@ function extractEngineOptions(
     if (engine.member.type !== 'TSPropertySignature' || !engine.member.typeAnnotation) continue;
 
     const engineName = staticName(engine.member.key);
-
     if (!engineName) continue;
 
     const configType: ResolvedType = {
@@ -665,7 +641,6 @@ function extractEngineOptions(
       if (option.member.type !== 'TSPropertySignature' || !option.member.typeAnnotation) continue;
 
       const name = staticName(option.member.key);
-
       if (!name) continue;
 
       let type = formatDetailedType(
@@ -707,11 +682,9 @@ function findAccessorType(
   visited = new Set<string>()
 ): ResolvedType | undefined {
   const resolved = project.resolveName(filePath, className);
-
   if (!resolved || resolved.declaration.type !== 'ClassDeclaration') return undefined;
 
   const key = `${resolved.file.filePath}#${className}`;
-
   if (visited.has(key)) return undefined;
 
   visited.add(key);
@@ -740,7 +713,6 @@ function findAccessorType(
     for (const mixinName of mixins) {
       const mixin = resolveMixin(resolved.file.filePath, mixinName, project);
       const accessor = mixin ? findDirectAccessorType(mixin.file, mixin.declaration, propertyName) : undefined;
-
       if (accessor) return accessor;
     }
 
@@ -792,7 +764,6 @@ function membersOf(project: OxcProject, type: ResolvedType): ResolvedMember[] {
 
 function nonNullable(type: ResolvedType): ResolvedType {
   const node = unwrapType(type.type);
-
   if (node.type !== 'TSUnionType') return type;
 
   const members = node.types.filter(
@@ -806,7 +777,6 @@ const defaultsCache = new Map<string, Map<string, string>>();
 
 function collectFileDefaults(filePath: string, project: OxcProject): Map<string, string> {
   const cached = defaultsCache.get(filePath);
-
   if (cached) return cached;
 
   const defaults = new Map<string, string>();
@@ -814,18 +784,15 @@ function collectFileDefaults(filePath: string, project: OxcProject): Map<string,
   defaultsCache.set(filePath, defaults);
 
   const file = project.source(filePath);
-
   if (!file) return defaults;
 
   for (const statement of file.program.body) {
     const declaration = statement.type === 'ExportNamedDeclaration' ? statement.declaration : statement;
-
     if (declaration?.type !== 'VariableDeclaration') continue;
 
     for (const variable of declaration.declarations) {
       const name = staticName(variable.id);
       const object = variable.init ? unwrapObjectExpression(variable.init) : undefined;
-
       if (!name?.endsWith('DefaultProps') || !object) continue;
 
       for (const [property, value] of objectEntries(object, file, project, new Set())) defaults.set(property, value);
@@ -856,11 +823,9 @@ function objectEntries(
     if (property.type !== 'SpreadElement' || property.argument.type !== 'Identifier') continue;
 
     const resolved = resolveConstObject(file.filePath, property.argument.name, project);
-
     if (!resolved) continue;
 
     const key = `${resolved.file.filePath}#${property.argument.name}`;
-
     if (visited.has(key)) continue;
 
     visited.add(key);
@@ -892,11 +857,9 @@ function objectNames(
     if (property.type !== 'SpreadElement' || property.argument.type !== 'Identifier') continue;
 
     const resolved = resolveConstObject(file.filePath, property.argument.name, project);
-
     if (!resolved) continue;
 
     const key = `${resolved.file.filePath}#${property.argument.name}`;
-
     if (visited.has(key)) continue;
 
     visited.add(key);
@@ -913,7 +876,6 @@ function resolveConstObject(
   project: OxcProject
 ): { file: SourceFile; object: ObjectExpression } | undefined {
   const resolved = project.resolveName(filePath, name);
-
   if (resolved?.declaration.type !== 'VariableDeclarator' || !resolved.declaration.init) return undefined;
 
   const object = unwrapObjectExpression(resolved.declaration.init);
@@ -959,7 +921,6 @@ function serializeDefault(expression: Expression, file: SourceFile, project: Oxc
 
 function extractStaticProperties(filePath: string, project: OxcProject): StaticMediaProperty[] {
   const file = project.source(filePath);
-
   if (!file) return [];
 
   const properties: StaticMediaProperty[] = [];
@@ -970,14 +931,12 @@ function extractStaticProperties(filePath: string, project: OxcProject): StaticM
     }
 
     const object = unwrapObjectExpression(node.value);
-
     if (!object) return;
 
     for (const property of object.properties) {
       if (property.type !== 'Property' || property.kind !== 'init') continue;
 
       const name = staticName(property.key);
-
       if (!name) continue;
 
       const config = unwrapObjectExpression(property.value);
@@ -1018,7 +977,6 @@ function extractReactReference(
     );
   })[0];
   const file = reactSource && 'file' in reactSource ? reactSource.file : reactSource;
-
   if (!file) return undefined;
 
   const filePath = file.filePath;
@@ -1086,7 +1044,6 @@ function extractReactReference(
 
 function extractPublicMethodNames(filePath: string, className: string, project: OxcProject): string[] {
   const resolved = project.resolveName(filePath, className);
-
   if (!resolved || resolved.declaration.type !== 'ClassDeclaration') return [];
 
   return resolved.declaration.body.body.flatMap((member) => {
@@ -1109,7 +1066,6 @@ function extractPublicMethodNames(filePath: string, className: string, project: 
 function extractEventsFromTypes(filePath: string, interfaceName: string, project: OxcProject): string[] {
   const declaration = project.resolveName(filePath, interfaceName);
   const name = declaration && 'id' in declaration.declaration ? staticName(declaration.declaration.id) : undefined;
-
   if (!declaration || !name) return [];
 
   const type: import('oxc-parser').TSTypeReference = {
@@ -1134,7 +1090,6 @@ function collectFires(files: readonly string[], project: OxcProject): Map<string
 
   for (const filePath of files) {
     const file = project.source(filePath);
-
     if (!file) continue;
 
     for (const comment of file.comments) {
@@ -1156,7 +1111,6 @@ function collectDispatchedEvents(files: readonly string[], project: OxcProject):
 
   for (const filePath of files) {
     const file = project.source(filePath);
-
     if (!file) continue;
 
     walkAst(file.program, (node) => {
@@ -1190,7 +1144,6 @@ function collectDispatchedEvents(files: readonly string[], project: OxcProject):
             : node.left.type === 'Identifier'
               ? node.left.name
               : undefined;
-
         if (!variable || !sourceText(file, node.body).includes(`Event(${variable})`)) return;
 
         for (const element of node.right.elements) {
@@ -1244,7 +1197,6 @@ function collectNativeMemberNames(): Set<string> {
 
 function resolveLocalExpression(file: SourceFile, expression: Expression, project: OxcProject): Expression {
   const value = unwrapExpression(expression);
-
   if (value.type !== 'Identifier') return value;
 
   const local = project.declarations(file.filePath, value.name)[0]?.declaration;

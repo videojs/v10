@@ -46,7 +46,6 @@ function run(command: string, args: string[], cwd: string): void {
 
 function sha256(path: string): string {
   const result = spawnSync('shasum', ['-a', '256', path], { encoding: 'utf8' });
-
   if (result.status !== 0) throw new Error(`Could not checksum ${path}`);
 
   return (result.stdout.split(' ')[0] as string).trim();

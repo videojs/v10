@@ -62,7 +62,6 @@ export function localeAliases<const Tags extends readonly string[]>(tags: Tags):
     if (!tag.includes('-')) continue;
 
     const [lang] = tag.split('-');
-
     if (!lang) continue;
 
     counts.set(lang, (counts.get(lang) ?? 0) + 1);

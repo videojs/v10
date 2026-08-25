@@ -202,7 +202,6 @@ for (const entry of PAGES as readonly PageEntry[]) {
       test('operates captions with Enter and Space when a track is available', async ({ page }) => {
         await page.evaluate(() => {
           const video = document.querySelector('video');
-
           if (!video) return;
 
           const track = document.createElement('track');

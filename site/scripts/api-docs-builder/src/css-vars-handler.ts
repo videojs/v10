@@ -18,11 +18,9 @@ export function extractCSSVars(
   const declaration =
     oxcProject?.declarations(filePath, `${componentName}CSSVars`)[0]?.declaration ??
     findVariable(file, `${componentName}CSSVars`);
-
   if (!file || declaration?.type !== 'VariableDeclarator' || !declaration.init) return null;
 
   const object = unwrapObjectExpression(declaration.init);
-
   if (!object) return null;
 
   const vars: CSSVarsExtraction['vars'] = [];
@@ -64,11 +62,9 @@ function findVariable(file: SourceFile | undefined, name: string): import('oxc-p
 
   for (const statement of file.program.body) {
     const declaration = statement.type === 'ExportNamedDeclaration' ? statement.declaration : statement;
-
     if (declaration?.type !== 'VariableDeclaration') continue;
 
     const variable = declaration.declarations.find((entry) => staticName(entry.id) === name);
-
     if (variable) return variable;
   }
 

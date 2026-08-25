@@ -285,7 +285,6 @@ function setup(files: Readonly<Record<string, string>>): string {
 
 function assetJson(output: RolldownOutput, filename: string): any {
   const asset = output.output.find((item) => item.type === 'asset' && item.fileName === filename);
-
   if (asset?.type !== 'asset') throw new Error(`Missing asset: ${filename}`);
 
   return JSON.parse(String(asset.source));

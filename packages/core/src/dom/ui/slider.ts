@@ -322,7 +322,6 @@ export function createSlider(options: SliderOptions): SliderApi {
 
     const rootEl = options.getElement();
     const thumbEl = options.getThumbElement?.();
-
     if (!thumbEl) return state;
 
     const isHorizontal = state.orientation === 'horizontal';

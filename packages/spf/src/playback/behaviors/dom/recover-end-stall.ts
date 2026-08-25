@@ -65,10 +65,7 @@ export function shouldForceEnded(
   nudgeWindow: number
 ): boolean {
   const { msEnded, durationFinite, paused, seeking, ended, currentTime, bufferedEnd } = input;
-
-  if (!msEnded || !durationFinite || paused || seeking || ended || bufferedEnd === undefined) {
-    return false;
-  }
+  if (!msEnded || !durationFinite || paused || seeking || ended || bufferedEnd === undefined) return false;
 
   const gap = bufferedEnd - currentTime;
 
@@ -89,7 +86,6 @@ function recoverEndStallSetup({
 
   return effect(() => {
     const mediaElement = context.mediaElement.get();
-
     if (!mediaElement) return;
 
     const onWaiting = () => {

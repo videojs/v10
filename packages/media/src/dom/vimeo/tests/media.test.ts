@@ -62,7 +62,6 @@ vi.mock('@vimeo/player', () => {
 
     off(event: string, handler?: (data: unknown) => void): void {
       const set = this.handlers.get(event);
-
       if (!set) return;
 
       if (handler) set.delete(handler);

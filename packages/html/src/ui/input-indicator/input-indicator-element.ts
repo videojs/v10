@@ -158,7 +158,6 @@ export abstract class InputIndicatorElement<IndicatorState extends IndicatorLife
     this.#visibilityUnsubscribe = null;
 
     const container = this.container.value?.container;
-
     if (!container) return;
 
     const visibility = getIndicatorVisibilityCoordinator(container);

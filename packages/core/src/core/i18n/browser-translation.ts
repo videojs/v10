@@ -64,10 +64,7 @@ function restoreNamedPlaceholders(translated: string, slots: readonly string[]):
 
 async function translateProtectingPlaceholders(translator: BrowserTranslatorInstance, value: string): Promise<string> {
   const { masked, slots } = maskNamedPlaceholders(value);
-
-  if (slots.length === 0) {
-    return translator.translate(value);
-  }
+  if (slots.length === 0) return translator.translate(value);
 
   const translated = await translator.translate(masked);
 
@@ -98,7 +95,6 @@ export function shouldAttemptBrowserTranslation(
   translations?: Partial<FlatTranslations>
 ): boolean {
   const target = resolveBrowserTranslationTarget(locale);
-
   if (!target) return false;
 
   if (loadedLazyTags.some((tag) => !isDefaultLocale(tag))) {
@@ -123,15 +119,12 @@ export async function getBrowserTranslations(
   options?: GetBrowserTranslationsOptions
 ): Promise<Partial<FlatTranslations>> {
   const target = resolveBrowserTranslationTarget(locale);
-
   if (!target) return {};
 
   const cached = cache.get(target);
-
   if (cached) return cached;
 
   const Translator = getBrowserTranslator();
-
   if (!Translator) return {};
 
   const downloadIfNeeded = options?.downloadIfNeeded ?? false;
@@ -140,7 +133,6 @@ export async function getBrowserTranslations(
     sourceLanguage: DEFAULT_LOCALE,
     targetLanguage: target,
   });
-
   if (availability === 'unavailable') return {};
 
   if (!downloadIfNeeded && availability !== 'available') return {};
@@ -177,7 +169,6 @@ export async function getBrowserTranslations(
   const entries = await Promise.all(
     keys.map(async (key) => {
       const value = english[key];
-
       if (!value) return [key, ''] as const;
 
       const translated = await translateProtectingPlaceholders(translator, value);

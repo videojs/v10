@@ -11,7 +11,6 @@ export function useAmbientLang(hasLangRoot: boolean, langRootElement: Element | 
     subscribeAmbientLang,
     () => {
       const root = hasLangRoot || typeof document === 'undefined' ? langRootElement : document.documentElement;
-
       if (!root) return undefined;
 
       return resolveLangAttr<Locale>(nearestLang(root));

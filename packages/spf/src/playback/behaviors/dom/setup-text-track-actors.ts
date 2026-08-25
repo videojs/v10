@@ -57,7 +57,6 @@ function setupTextTrackActorsSetup({
 }): () => void {
   return effect(() => {
     const mediaElement = context.mediaElement.get();
-
     if (!mediaElement) return;
 
     const textTracksActor = createTextTracksActor(mediaElement);

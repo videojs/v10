@@ -68,7 +68,6 @@ export const noUnknownReturnsRule = defineRule({
       }
 
       const name = referencedAliasName(type);
-
       if (name === null || visited.has(name) || shadowedAliases.has(name)) return false;
 
       const alias = aliases.get(name);
@@ -87,7 +86,6 @@ export const noUnknownReturnsRule = defineRule({
 
     const checkReturnType = (node: FunctionWithReturnType) => {
       const annotation = node.returnType;
-
       if (annotation === null || annotation === undefined) return;
 
       if (

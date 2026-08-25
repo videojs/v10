@@ -240,7 +240,6 @@ function setupAirPlaySetup({
           // to "receiver drops" if WebKit ever implements the disconnect.
           const disposeSourceChangeEnd = effect(() => {
             const url = state.presentation.get()?.url;
-
             // `loadingSuspended` is this behavior's own session fact; peeked so
             // clearing it below doesn't re-trigger.
             if (!peek(state.loadingSuspended) || url === sessionPresentationUrl) return;

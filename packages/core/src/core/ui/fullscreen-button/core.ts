@@ -51,7 +51,6 @@ export class FullscreenButtonCore {
 
   getLabel(state: FullscreenButtonState): Text | string {
     const label = resolveLabel(this.#props.label, state);
-
     if (label) return label;
 
     return state.fullscreen ? exitText : enterText;

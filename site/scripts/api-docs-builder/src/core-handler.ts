@@ -15,7 +15,6 @@ import type { CoreExtraction, ExtractedProp } from './types.js';
 export function extractCore(filePath: string, project: OxcProject, componentName: string): CoreExtraction | null {
   const propsDeclaration = project.resolveName(filePath, `${componentName}Props`);
   const stateDeclaration = project.resolveName(filePath, `${componentName}State`);
-
   if (!propsDeclaration && !stateDeclaration) return null;
 
   let props: ExtractedProp[] = [];
@@ -61,7 +60,6 @@ export function extractDefaultProps(
   componentName: string
 ): Record<string, string> {
   const resolved = project.classDeclaration(filePath, `${componentName}Core`);
-
   if (!resolved || resolved.declaration.type !== 'ClassDeclaration') return {};
 
   const defaultProps: Record<string, string> = {};
@@ -70,14 +68,12 @@ export function extractDefaultProps(
     if (member.type !== 'PropertyDefinition' || !member.static || staticName(member.key) !== 'defaultProps') continue;
 
     const object = unwrapObjectExpression(member.value);
-
     if (!object) continue;
 
     for (const property of object.properties) {
       if (property.type !== 'Property' || property.kind !== 'init') continue;
 
       const name = staticName(property.key);
-
       if (!name) continue;
 
       const value = getPropertyValue(property.value, resolved.file);

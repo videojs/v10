@@ -183,7 +183,6 @@ function transformStyles(
   options: StylePluginOptions
 ): boolean {
   const bindings = styleBindings(filename, ast, manifest);
-
   if (bindings.size === 0) return false;
 
   const edits: SourceEdit[] = [];
@@ -209,7 +208,6 @@ function transformStyles(
           const [root, ...tokenPath] = path ?? [];
           const binding = root ? bindings.get(root) : undefined;
           const rule = binding ? ruleForToken(manifest, binding.modulePath, tokenPath) : undefined;
-
           if (!rule) return;
 
           edits.push({
@@ -242,7 +240,6 @@ function styleBindings(filename: string, ast: Program, manifest: StyleManifest):
     if (statement.type !== 'ImportDeclaration' || !statement.source.value.startsWith('.')) continue;
 
     const modulePath = resolveManifestStyleModule(filename, statement.source.value, manifest);
-
     if (!modulePath) continue;
 
     const defaults = statement.specifiers.filter((specifier) => specifier.type === 'ImportDefaultSpecifier');
@@ -264,11 +261,9 @@ function importedStyleFiles(filename: string, ast: Program): string[] {
     if (statement.type !== 'ImportDeclaration') continue;
 
     const specifier = statement.source.value;
-
     if (!specifier.startsWith('.') || !isStyleModulePath(specifier)) continue;
 
     const file = resolveStyleModuleFile(filename, specifier);
-
     if (!file) throw new Error(`Cannot resolve style module \`${specifier}\` imported by \`${filename}\`.`);
 
     files.push(file);
@@ -283,7 +278,6 @@ function readAccessPath(expression: Expression): string[] | undefined {
   if (expression.type !== 'MemberExpression') return undefined;
 
   const object = readAccessPath(expression.object);
-
   if (!object) return undefined;
 
   if (!expression.computed) return [...object, expression.property.name];
@@ -352,7 +346,6 @@ function assertNoUntransformedReferences(
 async function cachedManifest(cache: Map<string, CachedManifest>, files: readonly string[]): Promise<StyleManifest> {
   const key = [...files].sort().join('\0');
   const cached = cache.get(key);
-
   if (cached && (await versionsMatch(cached.versions))) return cached.manifest;
 
   const manifest = await loadStyleManifest(files);
@@ -382,7 +375,6 @@ async function cachedDesignSystem(
   input: string
 ): Promise<CachedDesignSystem> {
   const cached = await cache.get(input);
-
   if (cached && (await versionsMatch(cached.versions))) return cached;
 
   const loading = loadDesignSystem(input).then(async (design) => ({

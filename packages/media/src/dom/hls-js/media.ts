@@ -258,7 +258,6 @@ export class HlsJsMedia extends HTMLVideoElementHost implements HlsMediaProps {
 
   set source(value: HlsSource | null) {
     const source = value ?? null;
-
     // Changing anything takes a new object, so handing the same one back costs
     // nothing.
     if (source === this.#source) return;
@@ -489,7 +488,6 @@ function withDrmSystems(
   drm: DrmSystemsConfig | undefined
 ): Partial<HlsJsConfig> {
   const drmSystems = hlsJs?.drmSystems ?? drm;
-
   if (!drmSystems || Object.keys(drmSystems).length === 0) return { ...hlsJs };
 
   // hls.js declares `serverCertificateUrl` without `undefined`, which an
@@ -499,7 +497,6 @@ function withDrmSystems(
 
 function inferContentType(src: string): SourceType {
   const path = src.split(/[?#]/)[0] ?? '';
-
   if (path.endsWith('.mp4')) return ContentTypes.MP4;
 
   return ContentTypes.M3U8;

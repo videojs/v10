@@ -36,7 +36,6 @@ export class TitleElement extends UIElement {
     super.update(changed);
 
     const metadata = this.#metadataState.value;
-
     if (!metadata) return;
 
     const state = this.#core.getState(metadata);

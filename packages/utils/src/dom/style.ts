@@ -14,7 +14,6 @@ function normalizeStyleProperty(property: string): string {
 
 export function getAnchorNames(element: HTMLElement): string[] {
   const value = element.style.getPropertyValue('anchor-name').trim();
-
   if (!value || value === 'none') return [];
 
   return value
@@ -114,11 +113,9 @@ export function readCSSLength(
 
 export function resolveCSSLength(el: Element, value: string): number {
   const trimmed = value.trim();
-
   if (!trimmed) return 0;
 
   const parsed = Number.parseFloat(trimmed);
-
   if (!Number.isNaN(parsed) && (/^-?\d*\.?\d+$/.test(trimmed) || trimmed.endsWith('px'))) return parsed;
 
   const doc = el.ownerDocument;
@@ -165,7 +162,6 @@ export function resolveCSSLength(el: Element, value: string): number {
   }
 
   const parent = doc.body ?? doc.documentElement;
-
   if (!parent) return Number.isNaN(parsed) ? 0 : parsed;
 
   parent.appendChild(measurementEl);

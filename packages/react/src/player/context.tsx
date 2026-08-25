@@ -33,7 +33,6 @@ export function PlayerContextProvider({
 /** Access the full player context value. Throws if used outside a Player. */
 export function usePlayerContext(): PlayerContextValue {
   const ctx = useContext(PlayerContext);
-
   if (!ctx) throw new Error('usePlayerContext must be used within a Player');
 
   return ctx;

@@ -21,7 +21,6 @@ export class TimeSliderChapterTitleElement extends UIElement {
     super.update(_changed);
 
     const slider = this.#slider.value;
-
     if (!slider) return;
 
     const duration = this.#time.value?.duration ?? 0;

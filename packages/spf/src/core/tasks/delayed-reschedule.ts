@@ -23,7 +23,6 @@ export function delayedReschedule<TValue>(
     // `task.previous` is the prior successful value (carried by the runner's
     // clone); read-only for the cadence, hence the cast off `DeepReadonly`.
     const ms = cadence(current, task.previous as TValue | undefined);
-
     if (ms === null) return false;
 
     await sleep(Math.max(0, ms - (Date.now() - startedAt)), task.signal);

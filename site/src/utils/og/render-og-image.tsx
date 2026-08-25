@@ -55,10 +55,7 @@ let fontDataPromise: Promise<ArrayBuffer> | null = null;
 
 async function fetchFont(url: string): Promise<ArrayBuffer> {
   const response = await fetch(url);
-
-  if (!response.ok) {
-    throw new Error(`Failed to load font: ${response.status}`);
-  }
+  if (!response.ok) throw new Error(`Failed to load font: ${response.status}`);
 
   return response.arrayBuffer();
 }

@@ -33,13 +33,11 @@ export function NativeHlsMediaLiveMixin<Base extends Constructor<NativeMediaHost
       if (this.#liveEdgeStartOffset === undefined) return Number.NaN;
 
       const target = this.target as HTMLVideoElement | null;
-
       if (!target) return Number.NaN;
 
       const { seekable, buffered } = target;
       // Native HLS on Chrome doesn't fill the `seekable` property, so we use the `buffered` property instead.
       const ranges = seekable.length ? seekable : buffered;
-
       if (!ranges.length) return Number.NaN;
 
       return ranges.end(ranges.length - 1) - this.#liveEdgeStartOffset;
@@ -92,7 +90,6 @@ export function NativeHlsMediaLiveMixin<Base extends Constructor<NativeMediaHost
 
     async #refresh(target: HTMLMediaElement) {
       const src = target.currentSrc || target.src;
-
       // Only inspect HLS sources. `looksLikeM3u8` is permissive: a query
       // string or path containing `.m3u8` is enough.
       if (!src || !looksLikeM3u8(src) || src === this.#currentSrc) return;

@@ -122,7 +122,6 @@ export function createStore<Target = unknown>(): StoreFactory<Target> {
       const definitions = slice.derived as
         | Record<string, (ctx: { get: () => Readonly<SourceState> }) => unknown>
         | undefined;
-
       if (!definitions) return result as DerivedState;
 
       const ctx = { get: () => source };
@@ -147,7 +146,6 @@ export function createStore<Target = unknown>(): StoreFactory<Target> {
 
     function setSource(partial: Partial<SourceState>): void {
       const patched = patchSource(sourceState, partial);
-
       if (!patched) return;
 
       // Derive before committing so a thrown formula leaves every snapshot unchanged.
@@ -254,7 +252,6 @@ function patchSource<State>(current: Readonly<State>, partial: Partial<State>): 
     if (!hasOwnProp.call(partial, key)) continue;
 
     const value = partial[key];
-
     if (Object.is(current[key], value)) continue;
 
     (next as { -readonly [Key in keyof State]: State[Key] })[key] = value!;

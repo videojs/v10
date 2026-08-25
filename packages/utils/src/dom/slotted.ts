@@ -20,12 +20,10 @@ export function getSlottedElement<T extends Element>(
   predicate: (el: Element) => Falsy<T>
 ): T | null {
   const slot = querySlot(shadowRoot, slotName);
-
   if (!slot) return null;
 
   for (const el of slot.assignedElements({ flatten: true })) {
     const result = predicate(el);
-
     if (result) return result;
   }
 

@@ -152,7 +152,6 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
     if (isSubmenu || !state.open) return;
 
     const contentElement = internalRef.current;
-
     if (!contentElement) return;
 
     const sync = () => syncMenuSizeChain(contentElement);

@@ -39,7 +39,6 @@ export const noServiceConstructorImportsRule = defineRule({
 					if (specifier.type !== "ImportSpecifier") continue;
 
 					const importedName = getImportedName(specifier);
-
 					if (!SERVICE_CONSTRUCTOR_NAME.test(importedName)) continue;
 
 					context.report({

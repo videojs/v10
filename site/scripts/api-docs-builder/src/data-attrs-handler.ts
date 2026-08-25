@@ -12,7 +12,6 @@ export function extractDataAttrs(
   componentName: string
 ): DataAttrsExtraction | null {
   const file = project.source(filePath);
-
   if (!file) return null;
 
   const possibleNames = [`${componentName}DataAttrs`, `${componentName}DataAttributes`];
@@ -23,7 +22,6 @@ export function extractDataAttrs(
       if (resolved.declaration.type !== 'VariableDeclarator' || !resolved.declaration.init) continue;
 
       const object = unwrapObjectExpression(resolved.declaration.init);
-
       if (!object) continue;
 
       const satisfiesType = extractSatisfiesType(resolved.declaration.init);
@@ -33,7 +31,6 @@ export function extractDataAttrs(
         if (property.type !== 'Property' || property.kind !== 'init') continue;
 
         const propertyName = staticName(property.key);
-
         if (!propertyName) continue;
 
         const value =
@@ -80,7 +77,6 @@ function inferStateTypes(type: TSType, file: SourceFile, project: OxcProject): M
 
   const stateType = type.typeArguments.params[0];
   const members = project.interfaceMembers({ file, type: stateType });
-
   if (members.length === 0) return undefined;
 
   const result = new Map<string, string>();
@@ -89,7 +85,6 @@ function inferStateTypes(type: TSType, file: SourceFile, project: OxcProject): M
     if (resolved.member.type !== 'TSPropertySignature' || !resolved.member.typeAnnotation) continue;
 
     const name = staticName(resolved.member.key);
-
     if (!name) continue;
 
     const formatted = formatDetailedType(
@@ -101,7 +96,6 @@ function inferStateTypes(type: TSType, file: SourceFile, project: OxcProject): M
       },
       resolved.member.optional
     );
-
     if (formatted === 'boolean' || formatted === 'false | true' || formatted === 'true | false') continue;
 
     result.set(name, formatted);

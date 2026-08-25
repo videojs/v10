@@ -265,7 +265,6 @@ export class PlayerPage {
     );
 
     const box = await this.timeSlider.boundingBox();
-
     if (!box) throw new Error('Time slider not visible');
 
     const x = box.x + box.width * (percent / 100);
@@ -280,7 +279,6 @@ export class PlayerPage {
   /** Hover over the time slider at a percentage position. */
   async hoverTimeSlider(percent: number): Promise<void> {
     const box = await this.timeSlider.boundingBox();
-
     if (!box) throw new Error('Time slider not visible');
 
     const x = box.x + box.width * (percent / 100);

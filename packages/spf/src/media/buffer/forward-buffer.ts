@@ -111,7 +111,6 @@ export function calculateForwardFlushPoint(
 
   // Find segments that start at or beyond the threshold
   const beyond = bufferedSegments.filter((seg) => seg.startTime >= threshold);
-
   if (beyond.length === 0) return Infinity;
 
   // Flush from the earliest such segment onward

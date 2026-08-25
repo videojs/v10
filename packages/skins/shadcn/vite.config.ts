@@ -91,7 +91,6 @@ export const shadcnPackConfig: PackUserConfig = {
             const skin = modules.find(
               (candidate) => candidate.meta?.type === 'skin' && candidate.meta.name === skinName
             )?.meta;
-
             if (skin?.type !== 'skin') throw new Error(`Unknown skin: \`${skinName}\`.`);
 
             const variant = skin.style.variant;

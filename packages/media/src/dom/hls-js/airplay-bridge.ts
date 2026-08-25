@@ -34,7 +34,6 @@ export function HlsJsMediaAirPlayMixin<Base extends Constructor<HlsEngineHost>>(
       this.#destroy();
 
       const target = this.target;
-
       if (!target || !isWebKitAirPlayCapable(target)) return;
 
       // Counter the `disableRemotePlayback = true` that other code paths may

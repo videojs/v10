@@ -65,7 +65,6 @@ function parseActions(actions: string | undefined): readonly InputAction[] | und
 
 function renderStatusIndicator(element: HTMLElement, state: StatusIndicatorCore.State): void {
   const value = element.querySelector('media-status-indicator-value');
-
   if (!value) return;
 
   value.textContent = getStatusIndicatorDisplayValue(state);

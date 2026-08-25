@@ -49,7 +49,6 @@ async function resolveFramework(flags: ParsedFlags): Promise<Framework> {
   }
 
   const saved = getConfigValue('framework');
-
   if (saved === 'html' || saved === 'react') return saved;
 
   return promptFramework();

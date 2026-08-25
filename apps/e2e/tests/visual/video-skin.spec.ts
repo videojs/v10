@@ -92,7 +92,6 @@ test.describe('Visual — HTML Portrait Layout', () => {
     await page.waitForFunction(() => customElements.get('video-skin'));
     await page.evaluate(() => {
       const root = document.getElementById('root');
-
       if (!root) return;
 
       root.innerHTML = `
@@ -128,7 +127,6 @@ test.describe('Visual — HTML Portrait Layout', () => {
         ?.shadowRoot?.querySelector('media-slider-thumbnail') as HTMLElement & {
         thumbnails?: Array<{ url: string; startTime: number; width: number; height: number }>;
       };
-
       if (!thumbnail) return;
 
       thumbnail.thumbnails = [{ url, startTime: 0, width: 270, height: 480 }];

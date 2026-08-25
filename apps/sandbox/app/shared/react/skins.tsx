@@ -91,7 +91,6 @@ export function VideoSkinComponent({ skin, styling, live = false, ...props }: Vi
     () => (live ? loadLiveVideoSkinComponent(skin, styling) : loadVideoSkinComponent(skin, styling)),
     [skin, styling, live]
   );
-
   if (!Component) return null;
 
   return <Component {...props} />;
@@ -101,7 +100,6 @@ type AudioSkinComponentProps = { skin: Skin; styling: Styling } & AudioSkinProps
 
 export function AudioSkinComponent({ skin, styling, ...props }: AudioSkinComponentProps) {
   const Component = useLoadedComponent(() => loadAudioSkinComponent(skin, styling), [skin, styling]);
-
   if (!Component) return null;
 
   return <Component {...props} />;

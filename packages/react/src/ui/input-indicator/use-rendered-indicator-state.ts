@@ -31,7 +31,6 @@ export function useRenderedIndicatorState<State extends IndicatorLifecycleState>
   useLayoutEffect(() => {
     if (open) {
       const nextState = currentStateRef.current;
-
       if (nextState.generation !== generation) return;
 
       snapshotRef.current = nextState;

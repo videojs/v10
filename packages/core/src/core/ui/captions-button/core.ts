@@ -61,7 +61,6 @@ export class CaptionsButtonCore {
 
   getLabel(state: CaptionsButtonState): Text | string {
     const label = resolveLabel(this.#props.label, state);
-
     if (label) return label;
 
     return state.subtitlesShowing ? disableText : enableText;

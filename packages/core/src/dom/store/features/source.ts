@@ -13,7 +13,6 @@ export const sourceFeature = definePlayerFeature({
       signals.clear();
 
       const { media } = target();
-
       if (!isMediaSourceCapable(media)) return src;
 
       media.src = src;
@@ -25,7 +24,6 @@ export const sourceFeature = definePlayerFeature({
 
   attach({ target, signal, set }) {
     const { media } = target;
-
     if (!isMediaSourceCapable(media)) return;
 
     const sync = () =>

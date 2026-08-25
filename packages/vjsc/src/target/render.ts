@@ -177,7 +177,6 @@ function renderSourceProps(token: SourcePropsToken, attributes: ComponentTarget[
     if (attribute.name.type !== 'JSXIdentifier' || token.omitted.has(attribute.name.name)) return [];
 
     const name = targetAttributeName(attribute.name.name, attributes);
-
     if (name === attribute.name.name) return [sliceSource(token.source, attribute.start, attribute.end)];
 
     if (!attribute.value) return [name];
@@ -188,7 +187,6 @@ function renderSourceProps(token: SourcePropsToken, attributes: ComponentTarget[
 
 function renderSourcePropAttribute(name: string, token: SourcePropToken): string | undefined {
   const attribute = token.attribute;
-
   if (!attribute) return undefined;
 
   if (!attribute.value) return name;
@@ -198,7 +196,6 @@ function renderSourcePropAttribute(name: string, token: SourcePropToken): string
 
 function renderSourcePropValue(token: SourcePropToken): string {
   const attribute = token.attribute;
-
   if (!attribute) return '{undefined}';
 
   if (!attribute.value) return '{true}';
@@ -212,7 +209,6 @@ function renderSourcePropValue(token: SourcePropToken): string {
 
 function renderChildrenAttribute(token: SourceChildrenToken): string {
   const value = token.value.trim();
-
   if (!value) return '{null}';
 
   if (value.startsWith('{') && value.endsWith('}')) return value;
@@ -253,7 +249,6 @@ function renderWithProps(
 
   if (children.rootOpeningEnd === undefined) {
     const host = context.target.jsx.host;
-
     if (!host) throw new Error('vjsc/target: dynamic host children require a target JSX host runtime.');
 
     const name = context.imports.reference(host);

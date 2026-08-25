@@ -136,10 +136,7 @@ export const mux = {
             video_quality: 'basic',
           },
         });
-
-        if (!upload.url || !upload.id) {
-          throw new Error('Mux did not return an upload URL and ID');
-        }
+        if (!upload.url || !upload.id) throw new Error('Mux did not return an upload URL and ID');
 
         return {
           uploadUrl: upload.url,

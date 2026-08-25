@@ -101,7 +101,6 @@ export const Poster = forwardRef(function Poster(
   // oxlint-disable-next-line react/exhaustive-deps -- reads the first source only, at mount
   useEffect(() => {
     const img = imgRef.current;
-
     if (!img) return;
 
     if (img.naturalWidth > 0) setRequest({ src, srcSet: authoredSrcSet, state: 'loaded' });

@@ -20,7 +20,6 @@ export function parseAttributeList(line: string): Map<string, string> {
 /** Parse RESOLUTION attribute value (WIDTHxHEIGHT). */
 export function parseResolution(value: string): { width: number; height: number } | null {
   const match = /^(\d+)x(\d+)$/.exec(value);
-
   if (!match) return null;
 
   const width = Number.parseInt(match[1]!, 10);
@@ -32,7 +31,6 @@ export function parseResolution(value: string): { width: number; height: number 
 /** Parse FRAME-RATE attribute to rational frame rate. */
 export function parseFrameRate(value: string): FrameRate | undefined {
   const fps = Number.parseFloat(value);
-
   if (Number.isNaN(fps) || fps <= 0) return undefined;
 
   // Common frame rates with tolerance for floating point precision
@@ -97,11 +95,9 @@ export function parseExtInfDuration(value: string): number {
  */
 export function parseByteRange(value: string, previousEnd?: number): { start: number; end: number } | null {
   const match = /^(\d+)(?:@(\d+))?$/.exec(value);
-
   if (!match) return null;
 
   const length = Number.parseInt(match[1]!, 10);
-
   if (Number.isNaN(length)) return null;
 
   let start: number;
@@ -140,7 +136,6 @@ export function createAttributeList(line: string): AttributeList {
 
     getInt(key: string, defaultValue?: number): number | undefined {
       const value = map.get(key);
-
       if (value === undefined) return defaultValue;
 
       const parsed = Number.parseInt(value, 10);
@@ -150,7 +145,6 @@ export function createAttributeList(line: string): AttributeList {
 
     getFloat(key: string, defaultValue?: number): number | undefined {
       const value = map.get(key);
-
       if (value === undefined) return defaultValue;
 
       const parsed = Number.parseFloat(value);
@@ -164,7 +158,6 @@ export function createAttributeList(line: string): AttributeList {
 
     getResolution(key: string): { width: number; height: number } | undefined {
       const value = map.get(key);
-
       if (!value) return undefined;
 
       return parseResolution(value) ?? undefined;
@@ -172,7 +165,6 @@ export function createAttributeList(line: string): AttributeList {
 
     getFrameRate(key: string): FrameRate | undefined {
       const value = map.get(key);
-
       if (!value) return undefined;
 
       return parseFrameRate(value);
@@ -183,7 +175,6 @@ export function createAttributeList(line: string): AttributeList {
 /** Match a tag and extract its attributes. Returns null if the line doesn't match the tag. */
 export function matchTag(line: string, tag: string): AttributeList | null {
   const prefix = `#${tag}:`;
-
   if (!line.startsWith(prefix)) return null;
 
   return createAttributeList(line.slice(prefix.length));

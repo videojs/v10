@@ -35,7 +35,6 @@ export const streamTypeFeature = definePlayerFeature({
 
     const detect = (): MediaStreamType => {
       const { duration } = media;
-
       if (duration === Number.POSITIVE_INFINITY) return MediaStreamTypes.LIVE;
 
       if (Number.isFinite(duration) && duration > 0) return MediaStreamTypes.ON_DEMAND;

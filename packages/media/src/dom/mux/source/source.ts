@@ -124,7 +124,6 @@ export interface MuxSourceBase {
  */
 export function createMuxQuery(params: Record<string, unknown> = {}): string {
   const { token, ...rest } = params;
-
   if (token) return `?${new URLSearchParams({ token: String(token) })}`;
 
   const search = new URLSearchParams();
@@ -172,7 +171,6 @@ export function parseMuxVideoURL(src: string): MuxSourceBase | undefined {
 
   const [, domain] = url.hostname.match(/^stream\.(.+)$/) ?? [];
   const [, playbackId] = url.pathname.match(/^\/([^/]+)\.m3u8$/) ?? [];
-
   if (!domain || !playbackId) return undefined;
 
   const source: MuxSourceBase = { playbackId };
@@ -227,7 +225,6 @@ export function createMuxPosterURL(source?: MuxSourceBase | null): string | unde
 
   const { playbackId, customDomain = MUX_VIDEO_DOMAIN, poster, playback } = source;
   const { ext = 'webp', token, ...query } = poster ?? {};
-
   // Image tokens must carry the image (`t`) audience.
   if (token && parseJwt<MuxJWT>(token)?.aud !== 't') return undefined;
 
@@ -247,7 +244,6 @@ export function createMuxStoryboardURL(source?: MuxSourceBase | null): string | 
 
   const { playbackId, customDomain = MUX_VIDEO_DOMAIN, storyboard, playback } = source;
   const { token, ...query } = storyboard ?? {};
-
   // Storyboard tokens must carry the storyboard (`s`) audience.
   if (token && parseJwt<MuxJWT>(token)?.aud !== 's') return undefined;
 

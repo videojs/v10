@@ -22,7 +22,6 @@ export const MenuContextProvider = MenuContext.Provider;
 
 export function useMenuContext(): MenuContextValue {
   const ctx = useContext(MenuContext);
-
   if (!ctx) throw new Error('Menu compound components must be used within a Menu.Root');
 
   return ctx;
@@ -63,7 +62,6 @@ export const MenuRadioGroupContextProvider = MenuRadioGroupContext.Provider;
 
 export function useMenuRadioGroupContext(): MenuRadioGroupContextValue {
   const ctx = useContext(MenuRadioGroupContext);
-
   if (!ctx) throw new Error('Menu.RadioItem must be used within a Menu.RadioGroup');
 
   return ctx;

@@ -254,7 +254,6 @@ async function transform(
   await bundle.generate({ format: 'es' });
 
   const output = readComponentSource(meta);
-
   if (output === undefined) throw new Error('Fixture build did not retain editable source.');
 
   return output;

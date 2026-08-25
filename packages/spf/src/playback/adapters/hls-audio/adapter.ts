@@ -248,10 +248,7 @@ export function HlsAudioMediaMixin<Base extends Constructor<any>>(BaseClass: Bas
 
     play(): Promise<void> {
       const mediaElement = this.#signals.context.mediaElement.get();
-
-      if (!mediaElement) {
-        return Promise.reject(new Error('HlsAudioMediaElement: no media element attached'));
-      }
+      if (!mediaElement) return Promise.reject(new Error('HlsAudioMediaElement: no media element attached'));
 
       this.#signals.state.loadActivated.set(true);
 

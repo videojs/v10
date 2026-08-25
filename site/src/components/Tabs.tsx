@@ -154,7 +154,6 @@ export function Tab({ value, children, initial, variant = 'compact' }: TabProps)
     const tabsRoot = ref.current?.closest('[data-tabs-root]');
     const allTabs = Array.from(tabsRoot?.querySelectorAll('[role="tab"]') || []) as HTMLElement[];
     const currentIndex = allTabs.indexOf(ref.current!);
-
     if (currentIndex === -1) return;
 
     let targetIndex: number | null = null;
@@ -288,7 +287,6 @@ export function TabsPanel({ value, children, initial, className, variant = 'comp
   useEffect(() => {
     const tabsRoot = ref.current?.closest('[data-tabs-root]');
     const correspondingTab = tabsRoot?.querySelector(`[role="tab"][data-value="${value}"]`);
-
     if (!correspondingTab) return;
 
     const observer = new MutationObserver((mutations) => {

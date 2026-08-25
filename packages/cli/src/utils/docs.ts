@@ -7,7 +7,6 @@ const DOCS_DIR = join(__dirname, '..', 'docs');
 
 function safePath(...segments: string[]): string | null {
   const resolved = resolve(DOCS_DIR, ...segments);
-
   if (relative(DOCS_DIR, resolved).startsWith('..')) return null;
 
   return resolved;
@@ -23,7 +22,6 @@ export function docExistsInAnyFramework(slug: string): boolean {
 
 export function readBundledDoc(framework: string, slug: string): string | null {
   const mdPath = safePath(framework, `${slug}.md`);
-
   if (!mdPath || !existsSync(mdPath)) return null;
 
   return readFileSync(mdPath, 'utf-8');
@@ -31,7 +29,6 @@ export function readBundledDoc(framework: string, slug: string): string | null {
 
 export function readLlmsTxt(framework: string): string | null {
   const txtPath = safePath(framework, 'llms.txt');
-
   if (!txtPath || !existsSync(txtPath)) return null;
 
   return readFileSync(txtPath, 'utf-8');

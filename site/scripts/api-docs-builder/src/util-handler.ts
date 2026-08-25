@@ -59,15 +59,12 @@ export function getUtilEntries(monorepoRoot: string): UtilEntry[] {
 
     for (const name of collectVisibleExportNames(indexPath, project)) {
       const resolved = project.resolveExport(indexPath, name);
-
       if (!resolved) continue;
 
       const ownerRoot = path.join(monorepoRoot, ...entryPoint.index.split('/').slice(0, 2));
-
       if (entryPoint.framework && !resolved.file.filePath.startsWith(`${ownerRoot}${path.sep}`)) continue;
 
       const key = `${entryPoint.framework}:${name}`;
-
       if (seenKeys.has(key) || !isUtil(name, resolved.file, resolved.declaration)) continue;
 
       const displayName = name.startsWith('create') && name.includes('Mixin') ? name.slice('create'.length) : name;
@@ -96,13 +93,11 @@ export function getUtilEntries(monorepoRoot: string): UtilEntry[] {
 function collectVisibleExportNames(filePath: string, project: OxcProject, visited = new Set<string>()): Set<string> {
   const names = new Set<string>();
   const absolute = path.resolve(filePath);
-
   if (visited.has(absolute)) return names;
 
   visited.add(absolute);
 
   const file = project.source(absolute);
-
   if (!file) return names;
 
   for (const statement of file.program.body) {
@@ -143,7 +138,6 @@ function isUtil(name: string, file: SourceFile, declaration: NamedDeclaration): 
     isFunctionDeclaration(declaration) ||
     variableFunction(declaration) !== undefined ||
     (name.startsWith('select') && variableCall(declaration) !== undefined);
-
   if (name.startsWith('select') && isUpper(name[6]) && functionLike) return true;
 
   if (name.startsWith('use') && isUpper(name[3]) && functionLike) return true;
@@ -225,11 +219,9 @@ function buildParameter(
   descriptions?: ReadonlyMap<string, string>
 ): { name: string; value: ParamDef } | undefined {
   const pattern = parameterPattern(parameter);
-
   if (!pattern) return undefined;
 
   const name = bindingName(pattern);
-
   if (!name) return undefined;
 
   const annotation = pattern.typeAnnotation?.typeAnnotation;
@@ -269,7 +261,6 @@ function buildTypeFields(project: OxcProject, type: ResolvedType): NonNullable<R
   for (const resolved of project.interfaceMembers(type)) {
     const member = resolved.member;
     const name = 'key' in member ? staticName(member.key) : undefined;
-
     if (!name) continue;
 
     let memberType: TSType | undefined;
@@ -352,7 +343,6 @@ function buildControllerReturn(project: OxcProject, file: SourceFile, declaratio
     if (member.static || member.accessibility === 'private' || member.accessibility === 'protected') continue;
 
     const name = staticName(member.key);
-
     if (!name || name === 'constructor' || member.key.type === 'PrivateIdentifier') continue;
 
     let type = 'unknown';
@@ -383,7 +373,6 @@ function buildControllerReturn(project: OxcProject, file: SourceFile, declaratio
 
 function parameterText(project: OxcProject, file: SourceFile, parameter: ParamPattern): string {
   const pattern = parameterPattern(parameter);
-
   if (!pattern) return '...: unknown';
 
   const name = bindingName(pattern) ?? '...';
@@ -395,12 +384,10 @@ function parameterText(project: OxcProject, file: SourceFile, parameter: ParamPa
 function inferContextReturn(project: OxcProject, file: SourceFile, declaration: NamedDeclaration): ReturnValue {
   if (declaration.type === 'VariableDeclarator') {
     const annotation = declaration.id.typeAnnotation?.typeAnnotation;
-
     if (annotation) return buildReturnValue(project, { file, type: annotation });
 
     if (declaration.init) {
       const initializer = unwrapExpression(declaration.init);
-
       if (initializer.type === 'ObjectExpression') return { type: 'object' };
 
       if (initializer.type === 'CallExpression' && initializer.typeArguments?.params[0]) {

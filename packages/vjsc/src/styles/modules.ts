@@ -26,7 +26,6 @@ export function resolveManifestStyleModule(
 
   if (file) {
     const modulePath = realpathSync(file);
-
     if (manifest.modules.has(modulePath)) return modulePath;
   }
 
@@ -44,18 +43,15 @@ const sourceExtensionSet = new Set<string>(sourceExtensions);
 
 function resolveSourceModule(importer: string, specifier: string): string | undefined {
   const candidate = resolve(dirname(importer), specifier);
-
   if (sourceExtensionSet.has(extname(candidate)) && existsSync(candidate)) return candidate;
 
   for (const extension of sourceExtensions) {
     const filename = `${candidate}${extension}`;
-
     if (existsSync(filename)) return filename;
   }
 
   for (const extension of sourceExtensions) {
     const filename = resolve(candidate, `index${extension}`);
-
     if (existsSync(filename)) return filename;
   }
 

@@ -32,7 +32,6 @@ class PlayToggle extends UIElement {
     const buttonProps = createButton({
       onActivate: () => {
         const state = this.#player.value;
-
         if (!state) return;
 
         state.paused ? state.play() : state.pause();
@@ -52,7 +51,6 @@ class PlayToggle extends UIElement {
   protected override update(changed: Map<string, unknown>): void {
     super.update(changed);
     const state = this.#player.value;
-
     if (!state) return;
 
     applyStateDataAttrs(this, state, { paused: 'data-paused', ended: 'data-ended' });

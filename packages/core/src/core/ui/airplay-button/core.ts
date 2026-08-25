@@ -55,7 +55,6 @@ export class AirPlayButtonCore {
 
   getLabel(state: AirPlayButtonState): Text | string {
     const label = resolveLabel(this.#props.label, state);
-
     if (label) return label;
 
     if (state.state === 'connected') return stopText;

@@ -121,7 +121,6 @@ function setupTrackSelection<K extends SelectedTrackKey, RuleConfig>({
   const candidateSet = computed(
     () => {
       const presentation = state.presentation.get();
-
       if (!isResolvedPresentation(presentation)) return [];
 
       return applyConstraints(constraints, getTracksByType(presentation, trackType), deps);
@@ -183,7 +182,6 @@ function setupTrackSelection<K extends SelectedTrackKey, RuleConfig>({
           () => {
             // Untracked: writing the slot below must not re-enter this reaction.
             const selectedId = peek(state[selectedKey]);
-
             if (!selectedId) return;
 
             if (candidateSet.get().some((track) => track.id === selectedId)) return;
@@ -282,7 +280,6 @@ type ScreenResolutionRuleState = {
  */
 export const screenResolutionCap: SelectTrackRule<unknown> = (tracks, { state }) => {
   const screenResolution = (state as ScreenResolutionRuleState | undefined)?.screenResolution?.get();
-
   if (!screenResolution) return [];
 
   return tracksUnderPixelArea(tracks, screenResolution.width * screenResolution.height);

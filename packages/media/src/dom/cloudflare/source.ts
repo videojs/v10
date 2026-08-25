@@ -69,7 +69,6 @@ export function parseCloudflareSource(src: string): ParsedCloudflareSource | nul
   if (!src) return null;
 
   const id = MATCH_SRC.exec(src)?.[1] ?? (MATCH_VIDEO_ID.test(src) || MATCH_SIGNED_TOKEN.test(src) ? src : null);
-
   if (!id) return null;
 
   return { id, signed: MATCH_SIGNED_TOKEN.test(id), origin: MATCH_CUSTOMER_ORIGIN.exec(src)?.[1] ?? null };
@@ -78,7 +77,6 @@ export function parseCloudflareSource(src: string): ParsedCloudflareSource | nul
 /** Build the iframe `src` URL for an initial Cloudflare Stream embed from the given props. */
 export function buildCloudflareIframeSrc(src: string, props: Partial<CloudflareMediaProps> = {}) {
   const parsed = parseCloudflareSource(src);
-
   if (!parsed) return '';
 
   // `referrerPolicy` is an attribute of the iframe hosting the embed rather than

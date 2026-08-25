@@ -64,7 +64,6 @@ export class AudioTrackRadioGroupCore {
 
   getLabel(state: AudioTrackRadioGroupState): Text | string {
     const label = resolveLabel(this.#props.label, state);
-
     if (label) return label;
 
     return audioText;
@@ -112,7 +111,6 @@ export class AudioTrackRadioGroupCore {
     if (this.#props.disabled) return;
 
     const hasValue = media.audioTrackList.some((track, index) => getTrackValue(track, index) === value);
-
     if (!hasValue) return;
 
     media.selectAudioTrack(value);

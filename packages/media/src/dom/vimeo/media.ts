@@ -228,7 +228,6 @@ export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
   // target leaves the player null and settles the load. Returns whether a player was created.
   #createPlayer(): boolean {
     const target = this.#target;
-
     if (!target || this.#player) return false;
 
     // The `src` property resolves an empty attribute to the document URL, so only the attribute spots a placeholder.
@@ -380,7 +379,6 @@ export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
   }
   set source(value: VimeoSource | null) {
     const source = value ?? null;
-
     // Changing anything takes a new object, so handing the same one back costs nothing.
     if (source === this.#source) return;
 
@@ -649,7 +647,6 @@ export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
 
   #setupTextTracks(player: VimeoPlayer) {
     const doc = globalThis.document;
-
     if (isUndefined(doc)) return;
 
     this.#teardownTextTracks();
@@ -701,7 +698,6 @@ export function parseVimeoSource(src: string): ParsedVimeoSource | null {
   if (/^\d+$/.test(src)) return { id: Number(src), kind: 'video', hash: null };
 
   const match = MATCH_SRC.exec(src);
-
   if (!match) return null;
 
   const kind = match[1] === 'event/' ? 'event' : 'video';
@@ -719,7 +715,6 @@ export function parseVimeoSource(src: string): ParsedVimeoSource | null {
 /** Build the iframe `src` URL for an initial Vimeo embed from the given props. */
 export function buildVimeoIframeSrc(src: string, props: Partial<VimeoMediaProps> = {}) {
   const parsed = parseVimeoSource(src);
-
   if (!parsed) return '';
 
   const params: Record<string, unknown> = {
@@ -756,7 +751,6 @@ const READY_STATE_HAVE_FUTURE_DATA = 3;
 
 function toLoadVideoOptions(src: string, vimeo?: VimeoEngineConfig) {
   const parsed = parseVimeoSource(src);
-
   if (!parsed) return null;
 
   const base = parsed.kind === 'event' ? `${EMBED_EVENT_BASE}/${parsed.id}/embed` : `${EMBED_VIDEO_BASE}/${parsed.id}`;

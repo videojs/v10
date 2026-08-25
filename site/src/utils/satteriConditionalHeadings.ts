@@ -55,7 +55,6 @@ export function satteriConditionalHeadings(): MdastPluginInput {
       if (published) return;
 
       const frontmatter = getAstroFrontmatter(ctx);
-
       if (!frontmatter) return;
 
       frontmatter.conditionalHeadings = headings;
@@ -144,7 +143,6 @@ function getStringAttr(node: MdxJsxFlowElement, name: string): string | null {
 /** Parse a JSX expression attribute like `frameworks={["react", "html"]}`. */
 function extractArrayAttr(node: MdxJsxFlowElement, name: string): string[] | null {
   const attr = node.attributes?.find((a) => a.type === 'mdxJsxAttribute' && a.name === name);
-
   if (!attr?.value || typeof attr.value === 'string') return null;
 
   if (attr.value.type !== 'mdxJsxAttributeValueExpression') return null;
@@ -167,11 +165,9 @@ function readRefJson(dir: string, key: string): unknown {
 
 function injectComponentReferenceHeadings(node: MdxJsxFlowElement, headings: ConditionalHeading[]) {
   const componentName = getStringAttr(node, 'component');
-
   if (!componentName) return;
 
   const json = readRefJson(COMPONENT_REF_DIR, resolveReferenceSlug(componentName));
-
   if (!json) return;
 
   const partOrder = extractArrayAttr(node, 'partOrder');
@@ -186,11 +182,9 @@ function injectComponentReferenceHeadings(node: MdxJsxFlowElement, headings: Con
 
 function injectFeatureReferenceHeadings(node: MdxJsxFlowElement, headings: ConditionalHeading[]) {
   const featureName = getStringAttr(node, 'feature');
-
   if (!featureName) return;
 
   const json = readRefJson(FEATURE_REF_DIR, featureName);
-
   if (!json) return;
 
   const model = createFeatureReferenceModel(featureName, json);
@@ -200,12 +194,10 @@ function injectFeatureReferenceHeadings(node: MdxJsxFlowElement, headings: Condi
 
 function injectUtilReferenceHeadings(node: MdxJsxFlowElement, headings: ConditionalHeading[]) {
   const utilName = getStringAttr(node, 'util');
-
   if (!utilName) return;
 
   const slug = getStringAttr(node, 'slug');
   const json = readRefJson(UTIL_REF_DIR, slug ?? kebabCase(utilName));
-
   if (!json) return;
 
   const model = createUtilReferenceModel(utilName, json as Parameters<typeof createUtilReferenceModel>[1]);
@@ -215,11 +207,9 @@ function injectUtilReferenceHeadings(node: MdxJsxFlowElement, headings: Conditio
 
 function injectMediaReferenceHeadings(node: MdxJsxFlowElement, headings: ConditionalHeading[]) {
   const mediaName = getStringAttr(node, 'media');
-
   if (!mediaName) return;
 
   const json = readRefJson(MEDIA_REF_DIR, resolveReferenceSlug(mediaName));
-
   if (!json) return;
 
   const model = createMediaReferenceModel(mediaName, json);

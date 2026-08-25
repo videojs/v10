@@ -32,7 +32,6 @@ export const liveFeature = definePlayerFeature({
   // during playback; `progress`/`canplay` cover buffer/metadata transitions.
   attach({ target, signal, set }) {
     const { media } = target;
-
     if (!isMediaLiveCapable(media)) return;
 
     const sync = () =>

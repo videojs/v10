@@ -13,7 +13,6 @@ export function createGitService(): GitService {
     async getLastModifiedDate(filePath: string): Promise<Date | null> {
       try {
         const log = await git.log({ file: filePath, maxCount: 1 });
-
         if (!log.latest) return null;
 
         return new Date(log.latest.date);

@@ -150,7 +150,6 @@ function discoverExtraDataAttrs(componentDir: string, componentKebab: string): E
 
     for (const statement of parsed.program.body) {
       const declaration = statement.type === 'ExportNamedDeclaration' ? statement.declaration : statement;
-
       if (declaration?.type !== 'VariableDeclaration') continue;
 
       const declaresExport = declaration.declarations.some((entry) => staticName(entry.id) === exportName);
@@ -164,7 +163,6 @@ function discoverExtraDataAttrs(componentDir: string, componentKebab: string): E
       .split(',')
       .map((part) => part.trim())
       .filter(Boolean);
-
     if (parts.length === 0) continue;
 
     extras.push({ path: filePath, parts });
@@ -282,12 +280,10 @@ export function discoverParts(source: ComponentSource, program: OxcProject, mono
   const coreUiPath = path.join(monorepoRoot, 'packages/core/src/core/ui');
 
   const partExports = extractParts(source.partsIndexPath, program);
-
   if (partExports.length === 0) return [];
 
   const localExports = partExports.filter((p) => p.source.startsWith('./'));
   const nonLocalExports = partExports.filter((p) => !p.source.startsWith('./'));
-
   if (localExports.length === 0 && nonLocalExports.length === 0) return [];
 
   const componentKebab = source.kebab;
@@ -336,7 +332,6 @@ export function discoverParts(source: ComponentSource, program: OxcProject, mono
 
     for (const [sourcePath, exports] of bySource) {
       const originPartsFile = path.resolve(partsDir, `${sourcePath}.ts`);
-
       if (!fs.existsSync(originPartsFile)) continue;
 
       const originKebab = path.basename(path.dirname(originPartsFile));
@@ -347,7 +342,6 @@ export function discoverParts(source: ComponentSource, program: OxcProject, mono
 
       for (const reExport of exports) {
         const originExport = originExports.find((o) => o.name === reExport.name);
-
         if (!originExport) continue;
 
         const kebab = partKebabFromSource(originExport.source, originKebab);
@@ -401,7 +395,6 @@ export function discoverParts(source: ComponentSource, program: OxcProject, mono
 
 function buildSingleComponentReference(source: ComponentSource, program: OxcProject): ComponentReference | null {
   const coreData = source.corePath ? extractCore(source.corePath, program, source.name) : null;
-
   if (!coreData) return null;
 
   const dataAttrsData = source.dataAttrsPath ? extractDataAttrs(source.dataAttrsPath, program, source.name) : null;
@@ -544,10 +537,7 @@ export function buildComponentReference(
 ): ComponentReference | null {
   if (source.partsIndexPath) {
     const parts = discoverParts(source, program, monorepoRoot);
-
-    if (parts.length > 1) {
-      return buildMultiPartReference(source, program, parts);
-    }
+    if (parts.length > 1) return buildMultiPartReference(source, program, parts);
   }
 
   if (source.extraDataAttrs?.length) {
@@ -567,7 +557,6 @@ export interface ComponentResult {
 
 export function generateComponentReferences(monorepoRoot: string): ComponentResult[] {
   const sources = discoverComponents(monorepoRoot);
-
   if (sources.length === 0) return [];
 
   const program = createComponentProgram(sources, monorepoRoot);

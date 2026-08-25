@@ -113,7 +113,6 @@ function parseType(typeText: string, context?: SourceFile): ResolvedType {
   const source = `type __Test = ${typeText};`;
   const parsed = parseSync('formatter-test.ts', source);
   const declaration = parsed.program.body[0];
-
   if (declaration?.type !== 'TSTypeAliasDeclaration') throw new Error(`Could not parse type: ${typeText}`);
 
   return {

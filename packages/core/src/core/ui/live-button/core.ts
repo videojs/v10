@@ -77,7 +77,6 @@ export class LiveButtonCore {
 
   getLabel(state: LiveButtonState): Text | string {
     const label = resolveLabel(this.#props.label, state);
-
     if (label) return label;
 
     if (state.liveEdge) return playingText;
@@ -118,7 +117,6 @@ export class LiveButtonCore {
     if (this.#isAtLiveEdge(media)) return;
 
     const target = liveEdgeTarget(media);
-
     if (target == null) return;
 
     await media.seek(target);
@@ -126,14 +124,10 @@ export class LiveButtonCore {
 
   #isAtLiveEdge(media: LiveButtonMediaState): boolean {
     const { currentTime, liveEdgeStart } = media;
-
-    if (Number.isFinite(liveEdgeStart)) {
-      return currentTime >= liveEdgeStart - LIVE_EDGE_TOLERANCE;
-    }
+    if (Number.isFinite(liveEdgeStart)) return currentTime >= liveEdgeStart - LIVE_EDGE_TOLERANCE;
 
     // Fallback: treat the trailing `LIVE_EDGE_OFFSET` window as the live edge.
     const target = liveEdgeTarget(media);
-
     if (target == null) return false;
 
     return currentTime >= target - LIVE_EDGE_OFFSET;
@@ -154,7 +148,6 @@ function isLiveMedia(media: LiveButtonMediaState): boolean {
 
 function liveEdgeTarget(media: LiveButtonMediaState): number | null {
   const { seekable } = media;
-
   if (seekable.length === 0) return null;
 
   const end = seekable[seekable.length - 1]![1];

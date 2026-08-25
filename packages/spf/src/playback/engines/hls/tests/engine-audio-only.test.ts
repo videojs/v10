@@ -43,7 +43,6 @@ describe('createHlsAudioEngine', () => {
 
     consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation((...args: unknown[]) => {
       const text = args.map((a) => (typeof a === 'string' ? a : String(a))).join(' ');
-
       if (expectedErrorPatterns.some((p) => p.test(text))) return;
 
       originalConsoleError(...args);

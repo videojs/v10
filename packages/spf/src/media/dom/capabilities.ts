@@ -57,7 +57,6 @@ export const canPlayTrack: CanPlayTrack = (track) => {
 
   const mimeCodec = buildMimeCodec({ mimeType: track.mimeType, codecs: track.codecs });
   const cached = codecSupportCache.get(mimeCodec);
-
   if (cached !== undefined) return cached;
 
   const supported = isCodecSupported(mimeCodec);

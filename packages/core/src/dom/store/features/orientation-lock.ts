@@ -57,7 +57,6 @@ export const orientationLockFeature = definePlayerFeature({
     // from re-issuing a platform request on every unrelated state change.
     const sync = () => {
       const next = isFullscreen(container, media) ? get().orientationLockType : null;
-
       if (next === synced) return;
 
       synced = next;

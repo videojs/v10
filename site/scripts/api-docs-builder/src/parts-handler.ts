@@ -12,7 +12,6 @@ export interface PartExport {
 /** Extract value re-exports from a React index.parts.ts file. */
 export function extractParts(filePath: string, project: OxcProject): PartExport[] {
   const file = project.source(filePath);
-
   if (!file) return [];
 
   const parts: PartExport[] = [];
@@ -48,7 +47,6 @@ export function extractPartDescription(filePath: string, project: OxcProject, pa
 export function extractSubPartProps(filePath: string, project: OxcProject, localName: string): Record<string, PropDef> {
   const declaration = project.resolveName(filePath, `${localName}Props`);
   const name = declaration && 'id' in declaration.declaration ? staticName(declaration.declaration.id) : undefined;
-
   if (!declaration || !name) return {};
 
   const type: import('oxc-parser').TSTypeReference = {
@@ -64,11 +62,9 @@ export function extractSubPartProps(filePath: string, project: OxcProject, local
     if (resolved.member.type !== 'TSPropertySignature' || !resolved.member.typeAnnotation) continue;
 
     const name = staticName(resolved.member.key);
-
     if (!name) continue;
 
     const documentation = getJSDoc(resolved.file, resolved.member);
-
     if (name === 'children' && !documentation?.description) continue;
 
     const formatted = formatDetailedType(

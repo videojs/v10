@@ -4,7 +4,6 @@ export function logMissingFeature(displayName: string, featureName: string): voi
   if (!__DEV__) return;
 
   const key = `${displayName}:${featureName}`;
-
   if (warned.has(key)) return;
 
   warned.add(key);

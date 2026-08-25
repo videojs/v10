@@ -117,7 +117,6 @@ function dedupe<T, K extends object>({
 
   for (const track of tracks) {
     const key = keyFn(track);
-
     if (!key || seen.some((other) => sameKey(other, key))) continue;
 
     seen.push(key);

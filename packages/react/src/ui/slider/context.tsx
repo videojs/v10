@@ -27,7 +27,6 @@ export function SliderProvider({ value, children }: SliderProviderProps) {
 
 export function useSliderContext(): SliderContextValue {
   const ctx = useContext(SliderContext);
-
   if (!ctx) throw new Error('Slider compound components must be used within a Slider.Root');
 
   return ctx;

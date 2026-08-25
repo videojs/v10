@@ -62,11 +62,9 @@ export const noUnknownParametersRule = defineRule({
     const checkParameters = (node: ParameterOwner) => {
       for (const parameter of node.params) {
         const annotation = parameterAnnotation(parameter);
-
         if (annotation?.typeAnnotation.type !== "TSUnknownKeyword") continue;
 
         const name = parameterName(parameter, context.sourceCode.getText(parameter));
-
         if (name === "cause") continue;
 
         context.report({

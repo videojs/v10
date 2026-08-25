@@ -17,7 +17,6 @@ export const MEDIA_INPUT_ACTION_OVERRIDES: Record<MediaInputActionName, MediaInp
     if (isUndefined(value)) return;
 
     const time = selectTime(store.state);
-
     if (!time) return;
 
     time.seek(time.currentTime + value);
@@ -27,7 +26,6 @@ export const MEDIA_INPUT_ACTION_OVERRIDES: Record<MediaInputActionName, MediaInp
     if (isUndefined(value)) return;
 
     const vol = selectVolume(store.state);
-
     if (!vol) return;
 
     vol.setVolume(vol.volume + value);
@@ -35,7 +33,6 @@ export const MEDIA_INPUT_ACTION_OVERRIDES: Record<MediaInputActionName, MediaInp
 
   speedUp({ store }) {
     const rate = selectPlaybackRate(store.state);
-
     if (!rate) return;
 
     const { playbackRates, playbackRate } = rate;
@@ -47,7 +44,6 @@ export const MEDIA_INPUT_ACTION_OVERRIDES: Record<MediaInputActionName, MediaInp
 
   speedDown({ store }) {
     const rate = selectPlaybackRate(store.state);
-
     if (!rate) return;
 
     const { playbackRates, playbackRate } = rate;

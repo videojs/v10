@@ -159,7 +159,6 @@ export async function promptInstallOptions(
     flags.media ??
     (await (async () => {
       const options = mediaOptionsForUseCase(useCase);
-
       // Skip prompt if there's only one valid option
       if (options.length === 1) return options[0]!.value;
 

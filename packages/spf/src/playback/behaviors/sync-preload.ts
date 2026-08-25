@@ -60,7 +60,6 @@ function syncPreloadSetup({
     // peek (not get): external writes to state.preload shouldn't re-trigger
     // this effect, only mediaElement / presentation-url changes should.
     const current = peek(state.preload);
-
     // Extended sticky: leave non-W3C values (e.g. 'canplay') alone.
     if (current !== undefined && !isStandardPreload(current)) return;
 
@@ -70,7 +69,6 @@ function syncPreloadSetup({
         : current === undefined
           ? defaultPreload
           : undefined;
-
     if (target === undefined || target === current) return;
 
     state.preload.set(target);
@@ -79,7 +77,6 @@ function syncPreloadSetup({
   const cleanupWrite = effect(() => {
     const next = state.preload.get();
     const mediaElement = context.mediaElement.get();
-
     if (!mediaElement) return;
 
     if (!isStandardPreload(next)) return;

@@ -100,7 +100,6 @@ function parseUrl(input: string): URL | null {
 function getExtension(pathname: string): string {
   const clean = pathname.split('?')[0]!.split('#')[0]!;
   const dot = clean.lastIndexOf('.');
-
   if (dot === -1) return '';
 
   return clean.slice(dot).toLowerCase();
@@ -108,11 +107,9 @@ function getExtension(pathname: string): string {
 
 export function detectRenderer(url: string, useCase: UseCase): DetectionResult | null {
   const trimmed = url.trim();
-
   if (!trimmed) return null;
 
   const parsed = parseUrl(trimmed);
-
   if (!parsed) return null;
 
   // Check domain rules first. When a host matches but its renderer isn't valid

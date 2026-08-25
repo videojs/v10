@@ -15,7 +15,6 @@ export const errorFeature = definePlayerFeature({
 
   attach({ target, signal, set }) {
     const { media } = target;
-
     if (!isMediaErrorCapable(media)) return;
 
     const syncError = () => set({ error: media.error });

@@ -63,7 +63,6 @@ async function waitForMediaMetadata(timeoutMs = 15_000): Promise<void> {
 
   while (performance.now() < deadline) {
     const video = document.querySelector('video');
-
     if (video && video.readyState >= HTMLMediaElement.HAVE_METADATA) return;
 
     await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
@@ -92,7 +91,6 @@ async function waitForCdnPlayLabel(expected: string, timeoutMs = 15_000): Promis
     }
 
     const playLabel = document.querySelector('media-play-button')?.getAttribute('aria-label');
-
     if (playLabel === expected) return playLabel;
 
     await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
@@ -107,7 +105,6 @@ async function syncCdnI18nProvider(tag: SandboxLocaleTag, seq: number): Promise<
   if (seq !== localeApplySeq) return;
 
   const provider = document.querySelector('media-i18n') as LitElementLike | null;
-
   if (!provider?.requestUpdate) return;
 
   provider.requestUpdate();
@@ -384,10 +381,7 @@ async function render() {
     await loadCdnMedia(preset);
     return true;
   });
-
-  if (!loaded) {
-    return;
-  }
+  if (!loaded) return;
 
   // Load the locale before rendering, but outside loadLatest so locale errors keep their specific message.
   await ensureCdnSandboxLocale(locale);

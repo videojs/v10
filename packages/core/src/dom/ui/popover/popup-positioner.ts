@@ -117,7 +117,6 @@ export class PopupPositioner {
 
   #startTracking(): void {
     const options = this.#options;
-
     if (!options?.trigger || !options.popup) return;
 
     this.#applyAnchorStyles(options.trigger, options.popup, options.anchorName);
@@ -145,7 +144,6 @@ export class PopupPositioner {
 
   #schedule = (event?: Event): void => {
     const popup = this.#options?.popup;
-
     if (!popup || (event && isEventWithinElement(event, popup))) return;
 
     this.#reposition();
@@ -153,7 +151,6 @@ export class PopupPositioner {
 
   #position(): void {
     const options = this.#options;
-
     if (!options?.position || !options.trigger || !options.popup) return;
 
     const trigger = options.trigger;
@@ -188,7 +185,6 @@ export class PopupPositioner {
     // Menu callbacks can constrain the popup from the available-size variables.
     // Correct fallback coordinates synchronously so alignment is stable before paint.
     const popupRect = getPopupPositionRect(options.popup, preferredPosition.side);
-
     if (popupRect.width === position.popupRect.width && popupRect.height === position.popupRect.height) return;
 
     const nextPosition = getPosition(popupRect);
@@ -240,7 +236,6 @@ export class PopupPositioner {
 
   #restoreAnchorStyles(): void {
     const options = this.#options;
-
     if (!options?.trigger || !options.popup) return;
 
     if (this.#triggerAnchorName && this.#triggerAnchorAdded) {

@@ -74,7 +74,6 @@ export class TimeSliderElement extends UIElement {
       isDisabled: () => this.disabled || !this.#timeState.value,
       getPercent: () => {
         const media = this.#timeState.value;
-
         if (!media) return 0;
 
         return this.#core.percentFromValue(media.currentTime);

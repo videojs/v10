@@ -44,15 +44,11 @@ export function componentMetaPlugin(exportName = 'meta'): Plugin {
       filter: { id: SCRIPT_ID, code: exportName },
       handler(_code, id, transform) {
         const exported = findExportedMeta(transform.ast, exportName);
-
         if (!exported?.declarator.init) return null;
 
         const componentMeta = parseComponentMeta(exported.declarator.init, id, exportName);
         const magicString = transform.magicString;
-
-        if (!magicString) {
-          throw new Error('vjsc: Rolldown did not provide MagicString to the component metadata pass.');
-        }
+        if (!magicString) throw new Error('vjsc: Rolldown did not provide MagicString to the component metadata pass.');
 
         removeDeclarator(magicString, exported);
 
@@ -70,7 +66,6 @@ export function readComponentModuleMeta(meta: unknown): ComponentModuleMeta | un
 
   const componentMeta = isComponentMeta(meta.componentMeta) ? meta.componentMeta : undefined;
   const componentSource = typeof meta.componentSource === 'string' ? meta.componentSource : undefined;
-
   if (!componentMeta && componentSource === undefined) return undefined;
 
   return { ...meta, componentMeta, componentSource };
@@ -105,7 +100,6 @@ function findExportedMeta(ast: Program | undefined, exportName: string): Exporte
     const declarator = statement.declaration.declarations.find(
       (candidate) => candidate.id.type === 'Identifier' && candidate.id.name === exportName
     );
-
     if (declarator) return { declaration: statement.declaration, declarator, statement };
   }
 
@@ -153,7 +147,6 @@ function staticValue(expression: Expression, id: string): unknown {
 
   if (value.type === 'UnaryExpression' && value.operator === '-') {
     const operand = staticValue(value.argument, id);
-
     if (typeof operand === 'number') return -operand;
   }
 
@@ -188,7 +181,6 @@ function staticObject(expression: ObjectExpression, id: string): Readonly<Record
 
 function staticPropertyName(property: ObjectProperty, id: string): string {
   const key: PropertyKey = property.key;
-
   if (!property.computed && key.type === 'Identifier') return key.name;
 
   if (key.type === 'Literal' && (typeof key.value === 'string' || typeof key.value === 'number')) {

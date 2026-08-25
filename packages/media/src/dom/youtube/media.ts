@@ -335,7 +335,6 @@ export class YouTubeMedia extends YouTubeMediaBase implements Partial<Video> {
   }
   set source(value: YouTubeSource | null) {
     const source = value ?? null;
-
     // Any change takes a new object, so handing the same one back is a no-op.
     if (source === this.#source) return;
 
@@ -397,7 +396,6 @@ export class YouTubeMedia extends YouTubeMediaBase implements Partial<Video> {
   // to an iframe that already holds an embed, so an unresolvable target settles its load and retries later.
   #createPlayer(): boolean {
     const target = this.#target;
-
     if (!target || this.#player || this.#creatingPlayer) return false;
 
     // Only the attribute tells an embed apart from a placeholder; `src` resolves empty to the document URL.
@@ -640,7 +638,6 @@ export class YouTubeMedia extends YouTubeMediaBase implements Partial<Video> {
 
   #poll() {
     const player = this.#player;
-
     if (!player) return;
 
     const time = player.getCurrentTime();
@@ -678,7 +675,6 @@ export class YouTubeMedia extends YouTubeMediaBase implements Partial<Video> {
 
   #setupTextTracks(player: YouTubePlayerApi) {
     const doc = globalThis.document;
-
     if (isUndefined(doc)) return;
 
     this.#teardownTextTracks();
@@ -700,7 +696,6 @@ export class YouTubeMedia extends YouTubeMediaBase implements Partial<Video> {
   // Caption metadata is only available once playback starts.
   #syncTextTracks(player: YouTubePlayerApi) {
     const host = this.#textTracksHost;
-
     if (!host) return;
 
     const trackList = (player.getOption('captions', 'tracklist') ?? []) as YouTubeCaptionTrack[];

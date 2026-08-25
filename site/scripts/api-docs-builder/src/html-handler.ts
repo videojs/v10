@@ -11,7 +11,6 @@ export function extractHtml(
 ): HtmlExtraction | null {
   const className = elementName ?? `${componentName}Element`;
   const hierarchy = project.classHierarchy(filePath, className);
-
   if (hierarchy.length === 0) return null;
 
   let tagName = '';
@@ -32,14 +31,12 @@ export function extractHtml(
       if (name !== 'properties') continue;
 
       const object = unwrapObjectExpression(member.value);
-
       if (!object) continue;
 
       for (const property of object.properties) {
         if (property.type !== 'Property' || property.kind !== 'init') continue;
 
         const propertyName = staticName(property.key);
-
         if (!propertyName) continue;
 
         const declaration = unwrapObjectExpression(property.value);

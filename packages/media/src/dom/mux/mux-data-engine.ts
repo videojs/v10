@@ -35,7 +35,6 @@ export function toMuxDataEngineOptions(engine: unknown): MuxDataEngineOptions {
     // falling back to `window.Hls` when it isn't given one. Take it from the
     // instance so a bundled hls.js is always found, without importing it here.
     const Hls = toHlsJsClass(engine);
-
     if (Hls) return { hlsjs: engine, Hls };
   }
 
@@ -71,7 +70,6 @@ function isDashJsEngine(engine: unknown): engine is MuxDataDashJsEngine {
 /** Hls.js's own class, the only place its event names and error details are published. */
 function toHlsJsClass(engine: object): MuxDataHlsJsClass | undefined {
   const engineClass: unknown = engine.constructor;
-
   if (!isFunction(engineClass)) return undefined;
 
   const statics = engineClass as unknown as MuxDataHlsJsClass;

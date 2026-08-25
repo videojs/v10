@@ -13,7 +13,6 @@ const loadLatest = createLatestLoader();
 
 async function render() {
   const tag = await loadLatest(() => loadVideoSkinTag(state.skin, state.styling));
-
   if (!tag) return;
 
   document.getElementById('root')!.innerHTML = html`

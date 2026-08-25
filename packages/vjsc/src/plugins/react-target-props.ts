@@ -19,7 +19,6 @@ export function reactTargetPropsPlugin(options: ComponentTargetPluginOptions): P
       filter: { id: SCRIPT_ID, code: 'className' },
       handler(code, id, transform) {
         const targets = selectComponentTargets(options.targets, id);
-
         if (!targets.some((target) => target.jsx.attributes === 'react')) return null;
 
         if (!transform.ast || !transform.magicString) return null;

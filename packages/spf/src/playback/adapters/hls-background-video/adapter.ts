@@ -249,10 +249,7 @@ export function HlsBackgroundVideoMediaMixin<Base extends Constructor<any>>(Base
 
     async play(): Promise<void> {
       const mediaElement = this.#signals.context.mediaElement.get();
-
-      if (!mediaElement) {
-        return Promise.reject(new Error('HlsBackgroundVideoMediaElement: no media element attached'));
-      }
+      if (!mediaElement) return Promise.reject(new Error('HlsBackgroundVideoMediaElement: no media element attached'));
 
       try {
         return await mediaElement.play();

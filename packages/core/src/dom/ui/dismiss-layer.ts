@@ -41,7 +41,6 @@ export function createDismissLayer(options: DismissLayerOptions): DismissLayerAp
     if (abort.signal.aborted) return null;
 
     const { active, status } = state.current;
-
     if (active && status !== 'ending') return null;
 
     if (status === 'ending') {
@@ -53,7 +52,6 @@ export function createDismissLayer(options: DismissLayerOptions): DismissLayerAp
 
   function close(element: HTMLElement | null): Promise<void> | null {
     const { active, status } = state.current;
-
     if (abort.signal.aborted || !active || status === 'ending') return null;
 
     return transition.close(element);
@@ -86,7 +84,6 @@ export function createDismissLayer(options: DismissLayerOptions): DismissLayerAp
     if (!state.current.active) return;
 
     const shouldClose = options.closeOnEscape?.() ?? true;
-
     if (!shouldClose) return;
 
     options.onEscapeDismiss(event);

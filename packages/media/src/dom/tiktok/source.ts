@@ -93,7 +93,6 @@ export function shouldBootstrapTikTokEmbed(props: Partial<TikTokMediaProps> = {}
 /** Build the iframe `src` URL for a TikTok embed from the given props. */
 export function buildTikTokIframeSrc(src: string, props: Partial<TikTokMediaProps> = {}) {
   const parsed = parseTikTokSource(src);
-
   if (!parsed) return '';
 
   // `referrerPolicy` is an attribute of the iframe hosting the embed rather than

@@ -103,7 +103,6 @@ export function TooltipRoot({
     if (isUndefined(controlledOpen)) return;
 
     const { active: inputOpen } = tooltip.input.current;
-
     if (controlledOpen === inputOpen) return;
 
     if (controlledOpen) {

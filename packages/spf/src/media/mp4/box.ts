@@ -78,7 +78,6 @@ export function findBox(view: DataView, path: readonly string[], start = 0, end 
     if (rest.length === 0) return box;
 
     const found = findBox(view, rest, box.dataStart, box.end);
-
     if (found) return found;
   }
 

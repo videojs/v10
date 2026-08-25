@@ -35,11 +35,9 @@ export function addVideoTrack(media: HTMLMediaElement, track: VideoTrack) {
 
 export function removeVideoTrack(track: VideoTrack) {
   const trackList = getPrivate(track).media?.deref()?.videoTracks as VideoTrackList | undefined;
-
   if (!trackList) return;
 
   const trackSet = getPrivate(trackList).trackSet as Set<VideoTrack>;
-
   if (!trackSet.delete(track)) return;
 
   queueMicrotask(() => {

@@ -102,7 +102,6 @@ export function toDrmError(cause: unknown, message: string, context: NativeHlsDr
  */
 export async function requestAppCertificate({ config, signal }: FairPlayContext): Promise<ArrayBuffer | null> {
   const { serverCertificateUrl } = config;
-
   if (!serverCertificateUrl) return null;
 
   const response = await fetch(serverCertificateUrl, { signal }).catch((cause) => {

@@ -55,7 +55,6 @@ export interface FeatureResult {
 export function generateFeatureReferences(monorepoRoot: string): FeatureResult[] {
   const featuresDir = path.join(monorepoRoot, 'packages/core/src/dom/store/features');
   const stateFilePath = path.join(monorepoRoot, 'packages/media/src/core/state.ts');
-
   if (!fs.existsSync(featuresDir) || !fs.existsSync(stateFilePath)) return [];
 
   const project = new Project(monorepoRoot);
@@ -107,7 +106,6 @@ function discoverFeatureSources(featuresDir: string, project: OxcProject): Featu
     if (!entry.endsWith('.ts') || SKIP_FILES.has(entry)) continue;
 
     const file = project.source(path.join(featuresDir, entry));
-
     if (!file) continue;
 
     for (const statement of file.program.body) {
@@ -116,28 +114,22 @@ function discoverFeatureSources(featuresDir: string, project: OxcProject): Featu
 
       for (const declaration of statement.declaration.declarations) {
         const exportName = staticName(declaration.id);
-
         if (!exportName?.endsWith('Feature') || exportName.endsWith('Features') || !declaration.init) continue;
 
         const initializer = unwrapExpression(declaration.init);
-
         if (initializer.type !== 'CallExpression') continue;
 
         const argument = initializer.arguments[0];
-
         if (!argument || argument.type === 'SpreadElement') continue;
 
         const feature = unwrapObjectExpression(argument);
-
         if (!feature) continue;
 
         const name = stringProperty(feature, 'name');
         const stateProperty = objectProperty(feature, 'state');
-
         if (!name || !stateProperty) continue;
 
         const stateFunction = unwrapExpression(stateProperty.value);
-
         if (stateFunction.type !== 'ArrowFunctionExpression' && stateFunction.type !== 'FunctionExpression') continue;
 
         if (!stateFunction.body) continue;
@@ -145,7 +137,6 @@ function discoverFeatureSources(featuresDir: string, project: OxcProject): Featu
         const stateType = stateFunction.returnType?.typeAnnotation;
         const stateTypeName = stateType?.type === 'TSTypeReference' ? typeNameText(stateType.typeName) : undefined;
         const silent = isEmptyState(stateFunction.body);
-
         if (!stateTypeName && !silent) continue;
 
         const derivedObject = objectProperty(feature, 'derived');
@@ -173,14 +164,12 @@ function discoverFeatureSources(featuresDir: string, project: OxcProject): Featu
 
 function parseDerived(file: SourceFile, expression: Expression | undefined): DerivedKeySource[] {
   const object = expression ? unwrapObjectExpression(expression) : undefined;
-
   if (!object) return [];
 
   return object.properties.flatMap((property) => {
     if (property.type !== 'Property') return [];
 
     const name = staticName(property.key);
-
     if (!name) return [];
 
     const description = getJSDocDescription(file, property);
@@ -191,7 +180,6 @@ function parseDerived(file: SourceFile, expression: Expression | undefined): Der
 
 function parseConfig(file: SourceFile, expression: Expression | undefined, featureName: string): FeatureConfigSource[] {
   const object = expression ? unwrapObjectExpression(expression) : undefined;
-
   if (!object) return [];
 
   const entries: FeatureConfigSource[] = [];
@@ -201,7 +189,6 @@ function parseConfig(file: SourceFile, expression: Expression | undefined, featu
 
     const name = staticName(property.key);
     const value = unwrapObjectExpression(property.value);
-
     if (!name || !value) continue;
 
     const action = objectProperty(value, 'action');
@@ -239,7 +226,6 @@ function parseStateInitialValues(
 ): Map<string, string> {
   const result = new Map<string, string>();
   const object = body.type === 'BlockStatement' ? returnedObject(body) : unwrapObjectExpression(body);
-
   if (!object) return result;
 
   const constants = literalConstants(file);
@@ -248,11 +234,9 @@ function parseStateInitialValues(
     if (property.type !== 'Property' || property.kind !== 'init') continue;
 
     const key = property.computed && property.key.type === 'Identifier' ? property.key.name : staticName(property.key);
-
     if (!key) continue;
 
     const initializer = unwrapExpression(property.value);
-
     if (initializer.type === 'Identifier' && initializer.name === 'undefined') continue;
 
     const resolved = initializer.type === 'Identifier' ? constants.get(initializer.name) : undefined;
@@ -268,13 +252,11 @@ function literalConstants(file: SourceFile): Map<string, string> {
 
   for (const statement of file.program.body) {
     const declaration = statement.type === 'ExportNamedDeclaration' ? statement.declaration : statement;
-
     if (declaration?.type !== 'VariableDeclaration' || declaration.kind !== 'const') continue;
 
     for (const item of declaration.declarations) {
       const name = staticName(item.id);
       const value = item.init ? literalValue(item.init) : undefined;
-
       if (!name || value === undefined) continue;
 
       result.set(name, typeof value === 'string' ? `'${value.replaceAll("'", "\\'")}'` : String(value));
@@ -292,7 +274,6 @@ interface PublishedShape {
 
 function extractInterface(project: OxcProject, declaration: ResolvedDeclaration): PublishedShape {
   const name = 'id' in declaration.declaration ? staticName(declaration.declaration.id) : undefined;
-
   if (!name) return { state: {}, actions: {} };
 
   const reference: import('oxc-parser').TSTypeReference = {
@@ -339,11 +320,9 @@ function extractMembers(project: OxcProject, members: readonly ResolvedMember[])
 
   for (const resolved of members) {
     const member = resolved.member;
-
     if ('computed' in member && member.computed) continue;
 
     const name = 'key' in member ? staticName(member.key) : undefined;
-
     if (!name) continue;
 
     const description = getJSDocDescription(resolved.file, member);
@@ -466,7 +445,6 @@ function firstParameterType(member: TSSignature): TSType | undefined {
       : member.type === 'TSPropertySignature' && member.typeAnnotation?.typeAnnotation.type === 'TSFunctionType'
         ? member.typeAnnotation.typeAnnotation.params[0]
         : undefined;
-
   if (!parameter) return undefined;
 
   const pattern =
@@ -531,7 +509,6 @@ function stringProperty(object: ObjectExpression, name: string): string | undefi
 
 function configKeyReference(expression: Expression): string | undefined {
   const value = unwrapExpression(expression);
-
   if (value.type === 'Identifier') return value.name;
 
   return value.type === 'Literal' && typeof value.value === 'string' ? value.value : undefined;
@@ -551,7 +528,6 @@ function isEmptyState(body: Expression | import('oxc-parser').BlockStatement): b
 
 function configUnionOrder(type: string): string {
   const members = type.split(' | ');
-
   if (!members.includes('undefined') || !members.includes('null')) return type;
 
   return ['undefined', 'null', ...members.filter((member) => member !== 'undefined' && member !== 'null')].join(' | ');

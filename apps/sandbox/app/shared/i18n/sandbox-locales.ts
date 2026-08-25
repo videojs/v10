@@ -47,10 +47,7 @@ export async function ensureSandboxLocale(tag: SandboxLocaleTag): Promise<void> 
   }
 
   const translations = all[tag as keyof typeof all];
-
-  if (!translations) {
-    throw new Error(`Unknown sandbox locale: ${tag}`);
-  }
+  if (!translations) throw new Error(`Unknown sandbox locale: ${tag}`);
 
   registerI18n(tag, translations);
   activeLocale = tag;

@@ -207,7 +207,6 @@ export function HlsVideoMediaMediaTracksMixin<Base extends Constructor<MediaTrac
       // enabled track over the one that is already playing.
       const enabled = [...this.audioTracks].filter((track) => track.enabled);
       const target = enabled.find((track) => track !== current) ?? enabled[0];
-
       if (!target) return;
 
       // Disable the rest so future change events resolve unambiguously.

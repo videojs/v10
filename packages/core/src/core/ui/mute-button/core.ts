@@ -60,7 +60,6 @@ export class MuteButtonCore {
 
   getLabel(state: MuteButtonState): Text | string {
     const label = resolveLabel(this.#props.label, state);
-
     if (label) return label;
 
     return state.muted ? unmuteText : muteText;

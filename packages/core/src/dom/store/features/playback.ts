@@ -21,7 +21,6 @@ export const playbackFeature = definePlayerFeature({
     },
     togglePaused() {
       const media = target().media;
-
       if (!isMediaPauseCapable(media)) return false;
 
       if (media.paused) {
@@ -36,7 +35,6 @@ export const playbackFeature = definePlayerFeature({
 
   attach({ target, signal, set }) {
     const { media } = target;
-
     if (!isMediaPauseCapable(media) || !isMediaSeekCapable(media) || !isMediaSourceCapable(media)) return;
 
     const sync = () =>

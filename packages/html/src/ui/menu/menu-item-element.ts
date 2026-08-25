@@ -40,7 +40,6 @@ export class MenuItemElement extends UIElement {
     super.update(_changed);
 
     const ctx = this.#ctx.value;
-
     if (!ctx || !this.#disconnect) return;
 
     if (this.#registeredMenu !== ctx.menu) {
@@ -53,7 +52,6 @@ export class MenuItemElement extends UIElement {
         {
           onClick: (event: MouseEvent) => {
             const currentCtx = this.#ctx.value;
-
             if (!currentCtx || this.#isDisabled()) return;
 
             const target = this.commandfor;
@@ -75,11 +73,9 @@ export class MenuItemElement extends UIElement {
           },
           onKeyDown: (event: KeyboardEvent) => {
             const currentCtx = this.#ctx.value;
-
             if (!currentCtx || this.#isDisabled() || event.key !== 'ArrowRight') return;
 
             const target = this.commandfor;
-
             if (!target) return;
 
             this.#openSubmenu(target);

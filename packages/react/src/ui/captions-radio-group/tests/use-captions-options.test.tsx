@@ -96,7 +96,6 @@ function CaptionsAvailability(): ReactNode {
 
 function CaptionsRadioGroup(): ReactNode {
   const captions = useCaptionsOptions();
-
   if (!captions?.showMenu) return null;
 
   const { options, selectedLabel, setValue, value } = captions;

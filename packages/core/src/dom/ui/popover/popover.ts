@@ -179,7 +179,6 @@ export function createPopover(options: PopoverOptions): PopoverApi {
     // React content can mount after this commit begins, so resolve the popup
     // element only when the transition is ready to collect animations.
     const opening = layer.open(() => popupEl);
-
     if (!opening) return;
 
     options.group?.()?.open(groupMember);
@@ -193,7 +192,6 @@ export function createPopover(options: PopoverOptions): PopoverApi {
 
   function commitClose(): void {
     const closing = layer.close(popupEl);
-
     if (!closing) return;
 
     options.group?.()?.close(groupMember);
@@ -212,7 +210,6 @@ export function createPopover(options: PopoverOptions): PopoverApi {
     if (layer.signal.aborted) return;
 
     const { active, status } = state.current;
-
     if (active && status !== 'ending') return;
 
     const details: PopoverChangeDetails = event ? { reason, event } : { reason };
@@ -226,7 +223,6 @@ export function createPopover(options: PopoverOptions): PopoverApi {
     if (layer.signal.aborted) return;
 
     const { active, status } = state.current;
-
     if (!active || status === 'ending') return;
 
     const details: PopoverChangeDetails = event ? { reason, event } : { reason };
@@ -339,11 +335,8 @@ export function createPopover(options: PopoverOptions): PopoverApi {
 
     onFocusOut(event) {
       const relatedTarget = event.relatedTarget as Node | null;
-
       // Don't close if focus moved within trigger or popup
-      if (relatedTarget && (triggerEl?.contains(relatedTarget) || popupEl?.contains(relatedTarget))) {
-        return;
-      }
+      if (relatedTarget && (triggerEl?.contains(relatedTarget) || popupEl?.contains(relatedTarget))) return;
 
       if (options.openOnHover?.()) {
         applyClose('blur');
@@ -387,10 +380,7 @@ export function createPopover(options: PopoverOptions): PopoverApi {
 
     onFocusOut(event) {
       const relatedTarget = event.relatedTarget as Node | null;
-
-      if (relatedTarget && (triggerEl?.contains(relatedTarget) || popupEl?.contains(relatedTarget))) {
-        return;
-      }
+      if (relatedTarget && (triggerEl?.contains(relatedTarget) || popupEl?.contains(relatedTarget))) return;
 
       if (consumeBlurGuard()) return;
 
@@ -406,10 +396,7 @@ export function createPopover(options: PopoverOptions): PopoverApi {
           }
 
           const active = document.activeElement;
-
-          if (active && (triggerEl?.contains(active) || popupEl?.contains(active))) {
-            return;
-          }
+          if (active && (triggerEl?.contains(active) || popupEl?.contains(active))) return;
 
           applyClose('blur');
         });

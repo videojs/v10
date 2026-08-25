@@ -180,7 +180,6 @@ function toMessage({ op, data, meta }: Frame): IndividualSourceBufferMessage {
  */
 export const fetchStep: LoadStep = async (frame, signal, deps) => {
   const { op } = frame;
-
   if (op.type === 'remove') return; // fetchStep only appears in append pipelines
 
   const { fetch } = stepWiring(deps);

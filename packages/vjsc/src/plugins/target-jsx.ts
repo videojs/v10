@@ -12,7 +12,6 @@ export function targetJsxPlugin(options: ComponentTargetPluginOptions): Plugin {
       filter: { id: SCRIPT_ID, code: '<' },
       handler(code, id, transform) {
         const targets = selectComponentTargets(options.targets, id);
-
         if (targets.length === 0 || !transform.magicString) return null;
 
         const sources = new Set(targets.map((target) => target.jsx.importSource));
@@ -22,7 +21,6 @@ export function targetJsxPlugin(options: ComponentTargetPluginOptions): Plugin {
 
         const source = [...sources][0]!;
         const declared = JSX_IMPORT_SOURCE.exec(code)?.[1];
-
         if (declared === source) return null;
 
         if (declared) throw new Error(`Module declares JSX import source \`${declared}\`, expected \`${source}\`.`);

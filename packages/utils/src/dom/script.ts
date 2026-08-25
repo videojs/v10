@@ -14,7 +14,6 @@ export function hasScript(src: string): boolean {
  */
 export function loadScript(src: string): Promise<void> {
   let promise = cache.get(src);
-
   if (promise) return promise;
 
   // Assume a tag we didn't create (e.g. added directly in HTML) has loaded or will load.

@@ -6,7 +6,6 @@ export default async (request: Request, _context: Context) => {
 
   // Fetch the pre-built .md file from static assets
   const mdResponse = await fetch(new URL(`${path}.md`, request.url));
-
   if (!mdResponse.ok) return;
 
   const body = await mdResponse.text();

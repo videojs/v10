@@ -32,11 +32,9 @@ export class MediaIconElement extends HTMLElement {
     if (MediaIconElement.#families.has(family)) return Promise.resolve();
 
     const pending = MediaIconElement.#loading.get(family);
-
     if (pending) return pending;
 
     const loader = MediaIconElement.#loaders.get(family);
-
     if (!loader) return Promise.resolve();
 
     const loading = Promise.resolve()

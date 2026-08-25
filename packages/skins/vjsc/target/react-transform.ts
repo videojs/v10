@@ -23,7 +23,6 @@ export const reactComponentTransform: ComponentTargetTransform = {
   name: 'videojs:react-components',
   transform(context) {
     const { code, ast, magicString } = context;
-
     if (!code.includes('function ')) return false;
 
     const imports = new ModuleImports(ast, magicString);
@@ -32,7 +31,6 @@ export const reactComponentTransform: ComponentTargetTransform = {
 
     for (const fn of collectFunctionDeclarations(ast)) {
       const name = fn.id?.name;
-
       if (!name || !fn.body) continue;
 
       if (name === 'VolumePopover') {
@@ -127,13 +125,9 @@ function wrapElement(
 function selectedLabelEdit(code: string, root: Node, binding: string): SourceEdit | undefined {
   const submenu = findJsxElement(root, 'Submenu');
   const selectedLabel = submenu && findJsxAttribute(submenu, 'selectedLabel');
-
-  if (selectedLabel?.value?.type !== 'JSXExpressionContainer') {
-    return undefined;
-  }
+  if (selectedLabel?.value?.type !== 'JSXExpressionContainer') return undefined;
 
   const value = selectedLabel.value.expression;
-
   if (value.type !== 'JSXElement') return undefined;
 
   const attributes = value.openingElement.attributes.map((attribute) => code.slice(attribute.start, attribute.end));

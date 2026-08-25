@@ -84,11 +84,9 @@ function deriveTargetLiveWindow(
   if (!isResolvedPresentation(presentation) || !trackId) return Number.NaN;
 
   const track = findTrackById(presentation, trackId);
-
   if (!track || !isResolvedTrack(track)) return Number.NaN;
 
   const metadata = getMediaPlaylistMetadata(track);
-
   if (!metadata) return Number.NaN;
 
   if (metadata.playlistType === 'EVENT') return Number.POSITIVE_INFINITY;
@@ -425,10 +423,7 @@ export function HlsVideoMediaMixin<Base extends Constructor<any>>(BaseClass: Bas
 
     play(): Promise<void> {
       const mediaElement = this.#signals.context.mediaElement.get();
-
-      if (!mediaElement) {
-        return Promise.reject(new Error('HlsVideoMediaElement: no media element attached'));
-      }
+      if (!mediaElement) return Promise.reject(new Error('HlsVideoMediaElement: no media element attached'));
 
       // Signal play intent — enables loading even with preload="none"
       this.#signals.state.loadActivated.set(true);
@@ -478,11 +473,9 @@ export function HlsVideoMediaMixin<Base extends Constructor<any>>(BaseClass: Bas
 
       const trackId = liveTrackId(this.#signals.state);
       const track = trackId ? findTrackById(presentation, trackId) : undefined;
-
       if (!track || !isResolvedTrack(track)) return;
 
       const metadata = getMediaPlaylistMetadata(track);
-
       if (!metadata) return;
 
       if (metadata.lowLatency && !this.#noticed.has('lowLatency')) {

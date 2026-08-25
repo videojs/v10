@@ -102,7 +102,6 @@ export class PositionController implements ReactiveController {
 
   #releaseImplicitBinding(): void {
     const binding = this.#implicitBinding;
-
     if (!binding) return;
 
     if (binding.trigger.getAttribute('commandfor') === binding.id) {

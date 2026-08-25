@@ -431,7 +431,6 @@ export class GoogleCastProvider {
     if (this.#listenersAttached) return;
 
     const controller = this.#remotePlayer?.controller;
-
     if (!controller) return;
 
     for (const [type, handler] of Object.entries(this.#remoteListeners)) {

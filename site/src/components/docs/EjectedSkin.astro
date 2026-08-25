@@ -10,7 +10,6 @@ interface Props {
 
 const { id } = Astro.props;
 const entry = await getEntry('ejectedSkins', id);
-
 if (!entry) return;
 
 const skin = entry.data;
@@ -33,7 +32,6 @@ const reactFiles = skin.tsx
   ? Object.entries(skin.tsx).sort(([a], [b]) => {
       const aIsComponent = a.endsWith('.tsx') || a.endsWith('.jsx');
       const bIsComponent = b.endsWith('.tsx') || b.endsWith('.jsx');
-
       if (aIsComponent === bIsComponent) return a.localeCompare(b);
 
       return aIsComponent ? -1 : 1;

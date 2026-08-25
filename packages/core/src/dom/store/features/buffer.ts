@@ -13,7 +13,6 @@ export const bufferFeature = definePlayerFeature({
 
   attach({ target, signal, set }) {
     const { media } = target;
-
     if (!isMediaBufferCapable(media)) return;
 
     const sync = () =>

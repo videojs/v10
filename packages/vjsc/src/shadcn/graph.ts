@@ -70,11 +70,9 @@ export function validateSourceGraph<Item extends ComponentMeta>(
       if (!sourceImport.resolvedId) continue;
 
       const dependency = graph.modules.get(sourceImport.resolvedId);
-
       if (dependency) continue;
 
       const dependencyFilename = moduleFilename(sourceImport.resolvedId);
-
       if (!isAbsolute(dependencyFilename)) continue;
 
       const dependencyPath = toPosixPath(relative(root, dependencyFilename));
@@ -105,7 +103,6 @@ export function collectOwnedModules<Item extends ComponentMeta>(
 
     for (const sourceImport of module.imports) {
       const dependency = sourceImport.resolvedId ? modules.get(sourceImport.resolvedId) : undefined;
-
       if (!dependency) continue;
 
       const dependencyItem = published.get(dependency.id);
@@ -121,7 +118,6 @@ export function collectOwnedModules<Item extends ComponentMeta>(
 
 function assertMetaRemoved(module: SourceModule): void {
   const parsed = parseSync(module.filename, module.source);
-
   if (parsed.errors.length > 0) throw new Error(parsed.errors.map((error) => error.message).join('\n'));
 
   for (const statement of parsed.program.body) {

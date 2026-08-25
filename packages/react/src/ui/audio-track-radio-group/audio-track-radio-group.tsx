@@ -59,7 +59,6 @@ export const AudioTrackRadioGroup = forwardRef<HTMLDivElement, AudioTrackRadioGr
       ...elementProps
     } = componentProps;
     const audioTrack = useAudioTrackOptions({ label, formatTrack, disabled });
-
     if (!audioTrack) return null;
 
     const { state, value, options, setValue } = audioTrack;

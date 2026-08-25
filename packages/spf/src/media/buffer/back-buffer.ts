@@ -54,20 +54,14 @@ export function calculateBackBufferFlushPoint(
 
   // Find all segments before current time (not including current segment)
   const segmentsBefore = segments.filter((seg) => seg.startTime < currentTime);
-
   // If no segments before current time, nothing to flush
-  if (segmentsBefore.length === 0) {
-    return 0;
-  }
+  if (segmentsBefore.length === 0) return 0;
 
   // Calculate how many segments to flush
   // Keep last N segments, flush the rest
   const segmentsToFlush = segmentsBefore.length - config.keepSegments;
-
   // If we don't have enough segments to flush, keep everything
-  if (segmentsToFlush <= 0) {
-    return 0;
-  }
+  if (segmentsToFlush <= 0) return 0;
 
   // If we want to flush all segments, return currentTime
   // (flush everything before current playback position)

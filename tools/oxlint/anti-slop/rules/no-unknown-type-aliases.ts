@@ -37,7 +37,6 @@ export const noUnknownTypeAliasesRule = defineRule({
 				return resolvesToUnknown(type.typeAnnotation, visited);
 
 			const name = referencedAliasName(type);
-
 			if (name === null || visited.has(name)) return false;
 
 			const alias = aliases.get(name);

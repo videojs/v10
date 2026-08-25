@@ -10,7 +10,6 @@ export function shallowEqual<T>(a: T, b: T): boolean {
 
   const keysA = Reflect.ownKeys(a);
   const keysB = Reflect.ownKeys(b);
-
   if (keysA.length !== keysB.length) return false;
 
   for (const key of keysA) {

@@ -53,7 +53,6 @@ export function createAlertDialog(options: AlertDialogOptions): AlertDialogApi {
     previousFocus = document.activeElement as HTMLElement | null;
 
     const opening = layer.open();
-
     if (!opening) return;
 
     onOpenChange(true);
@@ -74,7 +73,6 @@ export function createAlertDialog(options: AlertDialogOptions): AlertDialogApi {
 
   function applyClose(): void {
     const closing = layer.close(element);
-
     if (!closing) return;
 
     onOpenChange(false);

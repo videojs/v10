@@ -39,7 +39,6 @@ export async function loadDesignSystem(cssPath: string): Promise<DesignSystem> {
     watchFiles,
     recognizesCandidate(candidate: string): boolean {
       const cached = candidateCache.get(candidate);
-
       if (cached !== undefined) return cached;
 
       const css = design.candidatesToCss([candidate])[0];

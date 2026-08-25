@@ -52,7 +52,6 @@ const requestKeySystemAccess: MediaKeyFunc = (keySystem, supportedConfigurations
 function withHardwareRobustness(configurations: MediaKeySystemConfiguration[]): MediaKeySystemConfiguration[] {
   const hardware = configurations.map((configuration): MediaKeySystemConfiguration => {
     const { videoCapabilities } = configuration;
-
     if (!videoCapabilities) return configuration;
 
     return {

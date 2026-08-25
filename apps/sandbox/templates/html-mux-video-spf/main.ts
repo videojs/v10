@@ -40,7 +40,6 @@ async function render() {
 
   const live = isLiveSource(state.source);
   const tag = await loadLatest(() => loadVideoSkinTag(state.skin, state.styling, { live }));
-
   if (!tag) return;
 
   const poster = getPosterSrc(state.source);

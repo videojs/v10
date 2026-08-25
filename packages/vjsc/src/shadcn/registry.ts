@@ -77,7 +77,6 @@ export async function createShadcnRegistryFiles<Item extends ComponentMeta>(
         ? {
             files: item.files.map((file) => {
               const content = contents.get(file.path);
-
               if (content === undefined) throw new Error(`Shadcn registry source does not exist: ${file.path}`);
 
               return { ...file, content };
@@ -108,7 +107,6 @@ function describePublishedModules<Item extends ComponentMeta>(
 
   for (const item of options.publish.items(configurable)) {
     const module = modules.get(item.module.id);
-
     if (!module) throw new Error(`Shadcn item \`${item.name}\` references an unknown module: \`${item.module.id}\`.`);
 
     validateItemName(item.name);
@@ -465,7 +463,6 @@ function addUnique(files: Map<string, string>, path: string, content: string, ki
 
 function stripRoot(path: string, root: string): string {
   const prefix = `${normalizePath(root)}/`;
-
   if (!path.startsWith(prefix)) throw new Error(`Shadcn registry path \`${path}\` must be inside \`${root}\`.`);
 
   return path.slice(prefix.length);

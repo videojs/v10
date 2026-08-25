@@ -64,7 +64,6 @@ function hasSameSize(rendition: MediaVideoRendition, renditions: readonly MediaV
 
 function formatRenditionLabel(rendition: MediaVideoRendition): Text | string {
   const size = getRenditionSize(rendition);
-
   if (size) return `${size}p`;
 
   if (rendition.bitrate) return formatBitrate(rendition.bitrate);
@@ -83,7 +82,6 @@ function formatRenditionBadge(
 
 function formatRenditionTier(rendition: MediaVideoRendition): string | undefined {
   const size = getRenditionSize(rendition);
-
   if (!size) return undefined;
 
   if (size >= 4320) return '8K';
@@ -140,7 +138,6 @@ export class QualityRadioGroupCore {
 
   getLabel(state: QualityRadioGroupState): Text | string {
     const label = resolveLabel(this.#props.label, state);
-
     if (label) return label;
 
     return qualityText;
@@ -241,7 +238,6 @@ export class QualityRadioGroupCore {
     const hasValue = media.videoRenditionList.some(
       (rendition, index) => this.getRenditionValue(rendition, index) === value
     );
-
     if (!hasValue) return;
 
     media.selectVideoRendition(value);

@@ -60,11 +60,9 @@ export function targetTypePlugin(options: ComponentTargetPluginOptions): Plugin 
       filter: { id: SCRIPT_ID, code: 'vjsc/components' },
       handler(code, id, transform) {
         const targets = selectComponentTargets(options.targets, id);
-
         if (targets.length === 0 || !transform.ast || !transform.magicString) return null;
 
         const bindings = collectBindings(transform.ast, targets);
-
         if (bindings.sourceTypes.size === 0) return null;
 
         const imports = createTargetModuleImports(transform.ast, transform.magicString);
@@ -76,19 +74,15 @@ export function targetTypePlugin(options: ComponentTargetPluginOptions): Plugin 
             if (node.type !== 'FunctionDeclaration' || !node.id || !node.body) return;
 
             const helper = propsHelper(node.params[0]);
-
             if (!helper) return;
 
             const forwarded = forwardedBinding(node.params[0]);
-
             if (!forwarded) return;
 
             const root = forwardedTarget(node, forwarded, bindings);
-
             if (!root) return;
 
             const props = targetProps(root, imports, typeImports);
-
             if (!props) return;
 
             const interfaceName = `${node.id.name}Props`;
@@ -188,11 +182,9 @@ function transformSourceTypes(
         bindings.sourceTypes.get(node.expression.name) === 'PropsOf'
       ) {
         const query = node.typeArguments?.params[0];
-
         if (query?.type !== 'TSTypeQuery' || query.exprName.type !== 'Identifier') return;
 
         const targetType = uniqueTargetType('PropsOf', targets);
-
         if (!targetType) return;
 
         const componentProps = imports.reference(targetType);
@@ -206,16 +198,13 @@ function transformSourceTypes(
       if (node.type !== 'TSTypeReference' || node.typeName.type !== 'Identifier') return;
 
       const sourceType = bindings.sourceTypes.get(node.typeName.name);
-
       if (!sourceType) return;
 
       if (sourceType === 'PropsOf') {
         const query = node.typeArguments?.params[0];
-
         if (query?.type !== 'TSTypeQuery' || query.exprName.type !== 'Identifier') return;
 
         const targetType = uniqueTargetType('PropsOf', targets);
-
         if (!targetType) return;
 
         const componentProps = imports.reference(targetType);
@@ -229,7 +218,6 @@ function transformSourceTypes(
       if (sourceType === 'Props' || sourceType === 'PropsWithChildren') return;
 
       const targetImport = uniqueTargetType(sourceType, targets);
-
       if (!targetImport) return;
 
       magicString.overwrite(node.start, node.end, imports.reference(targetImport));
@@ -243,7 +231,6 @@ function transformSourceTypes(
 
 function uniqueTargetType(name: string, targets: readonly ComponentTarget[]): TargetImport | undefined {
   const references = targets.flatMap((target) => (target.types[name] ? [target.types[name]!] : []));
-
   if (references.length > 1) throw new Error(`More than one component target defines source type \`${name}\`.`);
 
   return references[0];
@@ -252,7 +239,6 @@ function uniqueTargetType(name: string, targets: readonly ComponentTarget[]): Ta
 function propsHelper(parameter: OxcFunction['params'][number] | undefined): PropsHelper | undefined {
   const pattern = parameter?.type === 'AssignmentPattern' ? parameter.left : parameter;
   const annotation = pattern && 'typeAnnotation' in pattern ? pattern.typeAnnotation?.typeAnnotation : undefined;
-
   if (!annotation) return undefined;
 
   const types = annotation.type === 'TSIntersectionType' ? annotation.types : [annotation];
@@ -290,11 +276,9 @@ function rewriteSourceTypeText(
       if (node.type !== 'TSTypeReference' || node.typeName.type !== 'Identifier') return;
 
       const name = bindings.sourceTypes.get(node.typeName.name);
-
       if (!name?.startsWith('Vjsc')) return;
 
       const target = uniqueTargetType(name, targets);
-
       if (!target) return;
 
       edits.push({ start: node.typeName.start, end: node.typeName.end, content: imports.reference(target) });
@@ -306,7 +290,6 @@ function rewriteSourceTypeText(
 
 function forwardedBinding(parameter: OxcFunction['params'][number] | undefined): string | undefined {
   const pattern = parameter?.type === 'AssignmentPattern' ? parameter.left : parameter;
-
   if (pattern?.type !== 'ObjectPattern') return undefined;
 
   const rest = pattern.properties.find((property) => property.type === 'RestElement');
@@ -339,7 +322,6 @@ function forwardedTarget(
   });
 
   const first = matches[0];
-
   if (!first) return undefined;
 
   return matches.every((match) => sameTargetElement(first, match)) ? first : undefined;
@@ -353,7 +335,6 @@ function openingTarget(
 
   if (path) {
     const configured = configuredRule(path);
-
     if (isTargetElement(configured)) return { target: path.target, element: configured };
 
     const resolved = path.target.resolve({ component: path.component, part: path.part });
@@ -363,7 +344,6 @@ function openingTarget(
 
   const names = jsxNamePath(opening.name);
   const primitive = names.length === 1 ? bindings.primitives.get(names[0]!) : undefined;
-
   if (!primitive) return undefined;
 
   const rule = primitiveRule(primitive.target, primitive.name);
@@ -439,7 +419,6 @@ function targetHeritage(props: ResolvedProps, includesChildren: boolean): string
 
 function canonicalPath(name: JSXElementName, bindings: CanonicalBindings): CanonicalPath | undefined {
   const path = jsxNamePath(name);
-
   if (path.length === 0) return undefined;
 
   const namespace = bindings.namespaces.get(path[0]!);
@@ -455,7 +434,6 @@ function canonicalPath(name: JSXElementName, bindings: CanonicalBindings): Canon
 
 function configuredRule(path: CanonicalPath): ComponentTargetRule<object> | undefined {
   let rule = path.target.components[path.component] as ComponentTargetRule<object> | undefined;
-
   if (!path.part || !rule) return rule;
 
   const parts = path.part.split('.');
@@ -516,7 +494,6 @@ class TargetTypeImports {
   reference(target: TargetImport): string {
     const key = `${target.from}\0${target.name}`;
     let local = this.#existing.get(key);
-
     if (local) return target.path?.length ? `${local}.${target.path.join('.')}` : local;
 
     let requested = this.#requested.get(target.from);

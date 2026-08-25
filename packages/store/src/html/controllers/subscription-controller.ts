@@ -62,10 +62,7 @@ export class SubscriptionController<Store extends AnyStore, Value> implements Re
 
   get value(): Value {
     const store = this.#accessor.value;
-
-    if (isNull(store)) {
-      throw new Error('Store not available');
-    }
+    if (isNull(store)) throw new Error('Store not available');
 
     return this.#config.getValue(store);
   }

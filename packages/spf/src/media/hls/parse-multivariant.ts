@@ -72,11 +72,8 @@ export function parseMultivariantPlaylist(text: string, unresolved: AddressableO
 
   for (const line of lines) {
     const trimmed = line.trim();
-
     // Skip empty lines and comments
-    if (!trimmed || (trimmed.startsWith('#') && !trimmed.startsWith('#EXT'))) {
-      continue;
-    }
+    if (!trimmed || (trimmed.startsWith('#') && !trimmed.startsWith('#EXT'))) continue;
 
     // Skip tags not used in Presentation model
     if (

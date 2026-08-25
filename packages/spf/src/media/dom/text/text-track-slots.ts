@@ -49,10 +49,7 @@ export function getShowingSubtitlesTrackFromMedia(mediaElement: HTMLMediaElement
 
   for (const el of elements) {
     const track = el.track;
-
-    if (track.mode === 'showing' && isCaptionOrSubtitleTrack(track)) {
-      return track;
-    }
+    if (track.mode === 'showing' && isCaptionOrSubtitleTrack(track)) return track;
   }
 
   return undefined;
@@ -78,7 +75,6 @@ export function removeAllSubtitlesTracksFromMedia(mediaElement: HTMLMediaElement
 export function syncTextTrackModes(textTracks: TextTrackList, selectedId: string | undefined): void {
   for (let i = 0; i < textTracks.length; i++) {
     const track = textTracks[i]!;
-
     if (!isCaptionOrSubtitleTrack(track)) continue;
 
     track.mode = track.id === selectedId ? 'showing' : 'disabled';

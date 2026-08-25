@@ -83,7 +83,6 @@ export function findMediaTrack(
 ): MediaTrackInfo | undefined {
   const view = toDataView(initSegment);
   const moov = findBox(view, ['moov']);
-
   if (!moov) return undefined;
 
   for (const trak of iterateBoxesOfType(view, 'trak', moov.dataStart, moov.end)) {
@@ -91,7 +90,6 @@ export function findMediaTrack(
 
     const tkhd = findBox(view, ['tkhd'], trak.dataStart, trak.end);
     const mdhd = findBox(view, ['mdia', 'mdhd'], trak.dataStart, trak.end);
-
     if (!tkhd || !mdhd) return undefined;
 
     // tkhd FullBox: version(1)+flags(3), creation/modification dates (v0: 4+4, v1:
@@ -111,7 +109,6 @@ export function findMediaTrack(
 export function readBaseMediaDecodeTime(mediaSegment: ArrayBuffer | Uint8Array, trackId: number): number | undefined {
   const view = toDataView(mediaSegment);
   const moof = findBox(view, ['moof']);
-
   if (!moof) return undefined;
 
   for (const traf of iterateBoxesOfType(view, 'traf', moof.dataStart, moof.end)) {

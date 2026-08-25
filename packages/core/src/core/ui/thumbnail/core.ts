@@ -106,7 +106,6 @@ export class ThumbnailCore {
   ): ThumbnailResizeResult | undefined {
     const tileWidth = thumbnail.width ?? imgNaturalWidth;
     const tileHeight = thumbnail.height ?? imgNaturalHeight;
-
     if (!tileWidth || !tileHeight) return undefined;
 
     const scale = this.calculateScale(tileWidth, tileHeight, constraints);

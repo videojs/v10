@@ -44,7 +44,6 @@ describe('createHlsVideoEngine', () => {
 
     consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation((...args: unknown[]) => {
       const text = args.map((a) => (typeof a === 'string' ? a : String(a))).join(' ');
-
       if (expectedErrorPatterns.some((p) => p.test(text))) return;
 
       originalConsoleError(...args);
@@ -440,7 +439,6 @@ describe('createHlsVideoEngine', () => {
     // cdn-a is down (media-playlist fetch rejects); cdn-b serves a valid playlist.
     globalThis.fetch = vi.fn(async (input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : String((input as Request).url ?? input);
-
       if (url.includes('cdn-a')) throw new TypeError('cdn-a unreachable');
 
       return new Response('#EXTM3U\n#EXT-X-TARGETDURATION:10\n#EXTINF:10.0,\nseg-1.m4s\n#EXT-X-ENDLIST');
@@ -494,7 +492,6 @@ describe('createHlsVideoEngine', () => {
 
     globalThis.fetch = vi.fn(async (input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : String((input as Request).url ?? input);
-
       if (url.includes('cdn=a')) throw new TypeError('cdn-a unreachable');
 
       return new Response('#EXTM3U\n#EXT-X-TARGETDURATION:10\n#EXTINF:10.0,\nseg-1.m4s\n#EXT-X-ENDLIST');

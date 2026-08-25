@@ -29,7 +29,6 @@ export abstract class MediaUIElement<Core extends MediaUIComponent> extends UIEl
     super.update(changed);
 
     const media = this.mediaState.value;
-
     if (!media) return;
 
     this.core.setMedia(media);

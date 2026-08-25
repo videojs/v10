@@ -41,7 +41,6 @@ function readPreload(): PreloadValue {
 
 function readResolution(name: string): MediaResolution | undefined {
   const value = params.get(name);
-
   if (!value || !RESOLUTION_PATTERN.test(value) || Number.parseInt(value, 10) <= 0) return undefined;
 
   return value as MediaResolution;
@@ -50,7 +49,6 @@ function readResolution(name: string): MediaResolution | undefined {
 /** Absent unless named, so the source default is what runs otherwise. */
 function readOptionalBoolean(name: string): boolean | undefined {
   const value = params.get(name);
-
   if (value === null) return undefined;
 
   return value !== '0' && value !== 'false';
@@ -145,10 +143,7 @@ export function onSkinChange(callback: (skin: Skin) => void): () => void {
 
 export function getInitialSource(audioOnly?: boolean): SourceId {
   const stored = currentSource;
-
-  if (audioOnly && SOURCES[stored].type !== 'mp4') {
-    return DEFAULT_AUDIO_SOURCE;
-  }
+  if (audioOnly && SOURCES[stored].type !== 'mp4') return DEFAULT_AUDIO_SOURCE;
 
   return stored;
 }

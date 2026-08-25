@@ -82,18 +82,15 @@ function discoverFiles(source: ComponentFileSet, cwd: string): FileSchemaCompone
 
 function parseComponentManifest(fileName: string): Pick<ManifestSchemaComponent, 'definition' | 'name'> {
   const parsed = parseSync(fileName, readFileSync(fileName, 'utf8'));
-
   if (parsed.errors.length > 0) throw new Error(parsed.errors.map((error) => error.message).join('\n'));
 
   const exported = parsed.program.body.find(
     (statement): statement is ExportDefaultDeclaration =>
       statement.type === 'ExportDefaultDeclaration' && isDefineComponentCall(statement.declaration)
   );
-
   if (!exported) throw new Error(`No \`export default defineComponent(...)\` found in ${fileName}`);
 
   const definition = parseComponentDefinition(exported.declaration as CallExpression, fileName);
-
   if (!definition.name) throw new Error(`defineComponent() in ${fileName} is missing a literal \`name:\` field`);
 
   return {
@@ -106,7 +103,6 @@ function isDefineComponentCall(node: unknown): node is CallExpression {
   if (!node || typeof node !== 'object') return false;
 
   const candidate = node as { readonly type?: unknown; readonly callee?: unknown };
-
   if (candidate.type !== 'CallExpression' || !candidate.callee || typeof candidate.callee !== 'object') return false;
 
   const callee = candidate.callee as { readonly type?: unknown; readonly name?: unknown };
@@ -119,7 +115,6 @@ function parseComponentDefinition(
   fileName: string
 ): ComponentDefinition<object, ComponentRecord | undefined> {
   const argument = call.arguments[0];
-
   if (!argument) return {};
 
   if (argument.type !== 'ObjectExpression') {

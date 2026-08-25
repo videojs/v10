@@ -81,7 +81,6 @@ export class OxcProject {
   source(filePath: string): SourceFile | undefined {
     const absolute = path.resolve(filePath);
     const cached = this.#files.get(absolute);
-
     if (cached) return cached;
 
     if (!fs.existsSync(absolute) || !fs.statSync(absolute).isFile()) return undefined;
@@ -113,7 +112,6 @@ export class OxcProject {
       ? specifier.split('/').slice(0, 2).join('/')
       : specifier.split('/')[0]!;
     const packageRoot = this.#packageRoots.get(packageName);
-
     if (!packageRoot) return resolveExternalModule(fromFile, specifier, this.monorepoRoot);
 
     const subpath = specifier.slice(packageName.length).replace(/^\//, '');
@@ -130,7 +128,6 @@ export class OxcProject {
 
     for (const candidate of sourceCandidates) {
       const resolved = resolveFile(candidate);
-
       if (resolved) return resolved;
     }
 
@@ -143,7 +140,6 @@ export class OxcProject {
 
       if (target) {
         const resolved = resolveFile(path.resolve(packageRoot, target));
-
         if (resolved) return resolved;
       }
     }
@@ -154,7 +150,6 @@ export class OxcProject {
 
     for (const candidate of candidates) {
       const resolved = resolveFile(candidate);
-
       if (resolved) return resolved;
     }
 
@@ -163,7 +158,6 @@ export class OxcProject {
 
   declarations(filePath: string, name: string): readonly ResolvedDeclaration[] {
     const file = this.source(filePath);
-
     if (!file) return [];
 
     return (this.#index(file).declarations.get(name) ?? []).map((declaration) => ({ file, declaration }));
@@ -171,25 +165,21 @@ export class OxcProject {
 
   resolveName(filePath: string, name: string, visited: Set<string> = new Set()): ResolvedDeclaration | undefined {
     const key = `${path.resolve(filePath)}#${name}`;
-
     if (visited.has(key)) return undefined;
 
     visited.add(key);
 
     const file = this.source(filePath);
-
     if (!file) return undefined;
 
     const index = this.#index(file);
     const local = index.declarations.get(name)?.[0];
-
     if (local) return { file, declaration: local };
 
     const imported = index.imports.get(name);
 
     if (imported) {
       const target = this.resolveModule(file.filePath, imported.source);
-
       if (target) return this.resolveExport(target, imported.imported, visited);
     }
 
@@ -197,7 +187,6 @@ export class OxcProject {
 
     if (exported?.source) {
       const target = this.resolveModule(file.filePath, exported.source);
-
       if (target) return this.resolveExport(target, exported.local, visited);
     }
 
@@ -206,13 +195,11 @@ export class OxcProject {
 
   resolveExport(filePath: string, name: string, visited: Set<string> = new Set()): ResolvedDeclaration | undefined {
     const key = `${path.resolve(filePath)}::${name}`;
-
     if (visited.has(key)) return undefined;
 
     visited.add(key);
 
     const file = this.source(filePath);
-
     if (!file) return undefined;
 
     const index = this.#index(file);
@@ -221,31 +208,26 @@ export class OxcProject {
     if (exported) {
       if (exported.source) {
         const target = this.resolveModule(file.filePath, exported.source);
-
         if (target) return this.resolveExport(target, exported.local, visited);
       } else {
         const local = index.declarations.get(exported.local)?.[0];
-
         if (local) return { file, declaration: local };
 
         const imported = index.imports.get(exported.local);
 
         if (imported) {
           const target = this.resolveModule(file.filePath, imported.source);
-
           if (target) return this.resolveExport(target, imported.imported, visited);
         }
       }
     }
 
     const direct = index.declarations.get(name)?.[0];
-
     if (direct && isDeclarationExported(file, direct)) return { file, declaration: direct };
 
     for (const specifier of index.exportAll) {
       const target = this.resolveModule(file.filePath, specifier);
       const resolved = target ? this.resolveExport(target, name, visited) : undefined;
-
       if (resolved) return resolved;
     }
 
@@ -254,20 +236,16 @@ export class OxcProject {
 
   resolveType(type: ResolvedType): ResolvedType | undefined {
     const unwrapped = unwrapType(type.type);
-
     if (unwrapped.type !== 'TSTypeReference') return undefined;
 
     const substituted =
       unwrapped.typeName.type === 'Identifier' ? type.substitutions?.get(unwrapped.typeName.name) : undefined;
-
     if (substituted) return substituted;
 
     const declaration = this.#resolveTypeDeclaration(type.file.filePath, unwrapped.typeName);
-
     if (!declaration) return undefined;
 
     const declarationType = typeFromDeclaration(declaration.declaration);
-
     if (!declarationType) return undefined;
 
     const parameters = typeParametersFromDeclaration(declaration.declaration);
@@ -292,7 +270,6 @@ export class OxcProject {
     const reference = unwrapType(type.type);
     const utilityMembers =
       reference.type === 'TSTypeReference' ? this.#utilityTypeMembers(type, reference, visited) : undefined;
-
     if (utilityMembers) return utilityMembers;
 
     const resolved = this.resolveType(type) ?? type;
@@ -301,7 +278,6 @@ export class OxcProject {
         ? typeNameText(reference.typeName)
         : sourceText(resolved.file, resolved.type);
     const key = `${resolved.file.filePath}#${name}`;
-
     if (visited.has(key)) return [];
 
     visited.add(key);
@@ -390,7 +366,6 @@ export class OxcProject {
     const parts = typeNameText(name).split('.');
     const root = parts[0]!;
     const file = this.source(filePath);
-
     if (!file) return undefined;
 
     const index = this.#index(file);
@@ -456,11 +431,9 @@ export class OxcProject {
     visited = new Set<string>()
   ): Array<{ file: SourceFile; declaration: Class }> {
     const resolved = this.resolveName(filePath, name);
-
     if (!resolved || resolved.declaration.type !== 'ClassDeclaration') return [];
 
     const key = `${resolved.file.filePath}#${name}`;
-
     if (visited.has(key)) return [];
 
     visited.add(key);
@@ -484,7 +457,6 @@ export class OxcProject {
 
   #index(file: SourceFile): ModuleIndex {
     const cached = this.#indexes.get(file.filePath);
-
     if (cached) return cached;
 
     const declarations = new Map<string, NamedDeclaration[]>();
@@ -533,7 +505,6 @@ export class OxcProject {
 
   #indexPackages(): void {
     const packagesDir = path.join(this.monorepoRoot, 'packages');
-
     if (!fs.existsSync(packagesDir)) return;
 
     for (const entry of fs.readdirSync(packagesDir, { withFileTypes: true })) {
@@ -626,7 +597,6 @@ export function expressionText(file: SourceFile, expression: Expression): string
 
 export function literalValue(expression: Expression | null | undefined): string | number | boolean | null | undefined {
   const unwrapped = expression ? unwrapExpression(expression) : undefined;
-
   if (unwrapped?.type !== 'Literal') return undefined;
 
   return typeof unwrapped.value === 'bigint' || unwrapped.value instanceof RegExp ? undefined : unwrapped.value;
@@ -652,7 +622,6 @@ export function getJSDoc(file: SourceFile, node: { readonly start: number }): JS
   if (!candidate) return undefined;
 
   const between = file.source.slice(candidate.end, node.start);
-
   if (!isJSDocBindingGap(between)) return undefined;
 
   return parseJSDoc(candidate.value);
@@ -789,7 +758,6 @@ function expressionToType(
 
   if (expression.type === 'MemberExpression' && !expression.computed && expression.property.type === 'Identifier') {
     const left = expressionToType(expression.object, null);
-
     if (left?.type !== 'TSTypeReference') return undefined;
 
     return {
@@ -852,7 +820,6 @@ function resolveExternalModule(fromFile: string, specifier: string, monorepoRoot
 
       if (target) {
         const declaration = resolveDeclarationFile(path.resolve(packageRoot, target));
-
         if (declaration) return declaration;
       }
 
@@ -860,7 +827,6 @@ function resolveExternalModule(fromFile: string, specifier: string, monorepoRoot
     }
 
     const parent = path.dirname(current);
-
     if (parent === current) break;
 
     current = parent;
@@ -888,19 +854,16 @@ function resolvePackageExport(
   if (!exports) return undefined;
 
   const exact = exports[key];
-
   if (exact) return typeof exact === 'string' ? exact : (exact.types ?? exact.development ?? exact.default);
 
   for (const [pattern, value] of Object.entries(exports)) {
     if (!pattern.includes('*')) continue;
 
     const [prefix, suffix] = pattern.split('*');
-
     if (!key.startsWith(prefix!) || !key.endsWith(suffix!)) continue;
 
     const wildcard = key.slice(prefix!.length, key.length - suffix!.length);
     const target = typeof value === 'string' ? value : (value.types ?? value.development ?? value.default);
-
     if (target) return target.replace('*', wildcard || subpath);
   }
 
@@ -974,7 +937,6 @@ function addNamespaceDeclarations(
 
   for (const statement of body.body) {
     const declaration = statement.type === 'ExportNamedDeclaration' ? statement.declaration : statement;
-
     if (!declaration || !isDeclaration(declaration)) continue;
 
     if (declaration.type === 'VariableDeclaration') {

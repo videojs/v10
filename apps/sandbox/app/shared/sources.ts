@@ -437,7 +437,6 @@ function imageQuery(id: SourceId, kind: 'poster' | 'storyboard', params?: string
 
 export function getPosterSrc(source: SourceId): string | undefined {
   const { poster } = SOURCES[source];
-
   if (poster) return poster;
 
   const id = getMuxAssetId(source);

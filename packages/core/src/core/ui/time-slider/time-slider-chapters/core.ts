@@ -41,7 +41,6 @@ export function normalizeChapterCues(
   for (const { cue, key } of sorted) {
     const start = Math.max(min, cue.startTime);
     const cueEnd = Math.min(max, cue.endTime);
-
     if (cueEnd <= start) continue;
 
     if (start > end) {
@@ -49,7 +48,6 @@ export function normalizeChapterCues(
     }
 
     const segmentStart = Math.max(start, end);
-
     if (cueEnd <= segmentStart) continue;
 
     chapters.push({ key, start: segmentStart, end: cueEnd, cue });

@@ -95,7 +95,6 @@ export async function* fetchResolvableStream(
 ): AsyncGenerator<Uint8Array> {
   const { minChunkSize, ...fetchOptions } = options ?? {};
   const response = await fetchResolvable(addressable, fetchOptions);
-
   if (!response.body) throw new Error('Response has no body');
 
   yield* new ChunkedStreamIterable(response.body, ...(minChunkSize !== undefined ? [{ minChunkSize }] : []));
@@ -151,7 +150,6 @@ export type FetchBytes = (addressable: Resource, options?: FetchOptions) => Prom
 export async function fetchStream(addressable: Resource, options?: FetchOptions): Promise<AsyncIterable<Uint8Array>> {
   const { minChunkSize, ...fetchOptions } = options ?? {};
   const response = await fetchResolvable(addressable, fetchOptions);
-
   if (!response.body) throw new Error('Response has no body');
 
   return new ChunkedStreamIterable(response.body, ...(minChunkSize !== undefined ? [{ minChunkSize }] : []));
@@ -175,7 +173,6 @@ export function createTrackedFetch(initial: BandwidthState, onSample: (next: Ban
   return async (addressable, options) => {
     const { minChunkSize, ...fetchOptions } = options ?? {};
     const response = await fetchResolvable(addressable, fetchOptions);
-
     if (!response.body) throw new Error('Response has no body');
 
     const body = response.body;

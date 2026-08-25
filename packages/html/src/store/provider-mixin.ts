@@ -99,7 +99,6 @@ export function createProviderMixin<Store extends PlayerStore>(
 
         return () => {
           const index = this.#mediaRegistrations.indexOf(registration);
-
           if (index < 0) return;
 
           this.#mediaRegistrations.splice(index, 1);
@@ -116,7 +115,6 @@ export function createProviderMixin<Store extends PlayerStore>(
 
         return () => {
           const index = this.#containerRegistrations.indexOf(registration);
-
           if (index < 0) return;
 
           this.#containerRegistrations.splice(index, 1);
@@ -194,7 +192,6 @@ export function createProviderMixin<Store extends PlayerStore>(
       #syncMedia(): void {
         const registered = this.#mediaRegistrations.at(-1)?.value ?? null;
         const media = registered ?? this.#nativeMedia;
-
         if (this.#media === media) return;
 
         this.#media = media;
@@ -204,7 +201,6 @@ export function createProviderMixin<Store extends PlayerStore>(
 
       #syncContainer(): void {
         const container = this.#containerRegistrations.at(-1)?.value ?? null;
-
         if (this.#container === container) return;
 
         this.#container = container;
@@ -214,7 +210,6 @@ export function createProviderMixin<Store extends PlayerStore>(
 
       #syncNativeMedia(): void {
         const media = this.querySelector<HTMLMediaElement>('video, audio');
-
         if (this.#nativeMedia === media) return;
 
         this.#nativeMedia = media;
@@ -234,7 +229,6 @@ export function createProviderMixin<Store extends PlayerStore>(
 
       #tryAttach(): void {
         const store = this.#store;
-
         if (!this.#connected || !store) return;
 
         if (!this.#media) {
@@ -263,7 +257,6 @@ export function createProviderMixin<Store extends PlayerStore>(
 
       #syncInitialConfig(): void {
         const store = this.store;
-
         if (this.#configuredStore === store) return;
 
         for (const { property, entry } of inputs) {

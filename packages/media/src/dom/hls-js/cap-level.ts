@@ -49,7 +49,6 @@ export function resolutionToPixelArea(resolution: MediaResolution | undefined): 
   if (resolution === undefined) return Number.POSITIVE_INFINITY;
 
   const height = Number.parseInt(resolution, 10);
-
   if (!(Number.isFinite(height) && height > 0)) return Number.POSITIVE_INFINITY;
 
   return Math.ceil((height * 16) / 9) * height;
@@ -73,7 +72,6 @@ export function levelIndexAtOrBelow(
   resolution: MediaResolution | undefined
 ): number | undefined {
   const maxPixelArea = resolutionToPixelArea(resolution);
-
   if (maxPixelArea === Number.POSITIVE_INFINITY || levels.length === 0) return undefined;
 
   const overBudget = levels.findIndex((level) => (level.width ?? 0) * (level.height ?? 0) > maxPixelArea);
@@ -101,7 +99,6 @@ export function levelIndexAtOrAbove(
   resolution: MediaResolution | undefined
 ): number | undefined {
   const minPixelArea = resolutionToPixelArea(resolution);
-
   if (minPixelArea === Number.POSITIVE_INFINITY || levels.length === 0) return undefined;
 
   const atFloor = levels.findIndex((level) => (level.width ?? 0) * (level.height ?? 0) >= minPixelArea);
@@ -269,7 +266,6 @@ export function createCapLevelController(
      */
     #applyResolutionCap() {
       const { levels } = this.#hls;
-
       if (!levels?.length) return;
 
       // `-1` is how hls.js spells "uncapped".

@@ -147,7 +147,6 @@ export function createMenu(options: MenuOptions): MenuApi {
     for (let offset = 1; offset <= items.length; offset++) {
       const index = (currentIndex + direction * offset + items.length) % items.length;
       const candidate = items[index];
-
       if (candidate && !isItemHidden(candidate)) return candidate;
     }
 
@@ -378,7 +377,6 @@ export function createMenu(options: MenuOptions): MenuApi {
 
   function handleTriggerKeyDown(event: UIKeyboardEvent): void {
     const input = popover.input.current;
-
     if (!input.active || input.status === 'ending') return;
 
     if (event.key === 'Escape') return;
@@ -407,7 +405,6 @@ export function createMenu(options: MenuOptions): MenuApi {
     if (a === b) return 0;
 
     const position = a.compareDocumentPosition(b);
-
     if (position & Node.DOCUMENT_POSITION_FOLLOWING) return -1;
 
     if (position & Node.DOCUMENT_POSITION_PRECEDING) return 1;

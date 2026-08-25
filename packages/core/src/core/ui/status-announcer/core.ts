@@ -86,7 +86,6 @@ export class StatusAnnouncerCore {
     alreadyHandled: boolean
   ): boolean {
     const label = deriveVolumeAnnouncement(previous, snapshot, labels);
-
     if (label === null || alreadyHandled || !this.#shouldAnnounce()) return false;
 
     this.#schedule(label);

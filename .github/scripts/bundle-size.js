@@ -127,20 +127,17 @@ const PRESET_EXPORTS = {
  */
 function buildPresetEntry(pkgShortName, config, distDir) {
   const table = PRESET_EXPORTS[pkgShortName];
-
   if (!table) return null;
 
   const lines = [];
 
   function addExport(key) {
     const entry = table[key];
-
     // Key not in lookup → not applicable for this package type (e.g., HTML
     // has no media/features entries). Skip without aborting.
     if (!entry) return true;
 
     const fullPath = resolve(distDir, entry.path);
-
     if (!existsSync(fullPath)) return false;
 
     lines.push(`export { ${entry.name} } from './${entry.path}';`);
@@ -333,7 +330,6 @@ function resolveDefault(exportValue) {
  */
 function categorize(name) {
   const match = name.match(/^@videojs\/([^/]+)(\/.*)?$/);
-
   if (!match) return undefined;
 
   const pkg = match[1];
@@ -355,7 +351,6 @@ function categorize(name) {
   if (subpath.startsWith('/ui/')) {
     // Skip compound component parts — only show main entries
     const uiName = subpath.slice('/ui/'.length);
-
     if (UI_PARTS.has(uiName)) return '_skip';
 
     return 'ui';
@@ -381,14 +376,12 @@ function categorize(name) {
  */
 function resolveWildcard(pkgDir, exportKey, exportValue) {
   const defaultPath = resolveDefault(exportValue);
-
   if (!defaultPath) return [];
 
   const isCSS = exportKey.endsWith('.css');
   const fullPattern = resolve(pkgDir, defaultPath);
 
   const starIdx = fullPattern.indexOf('*');
-
   if (starIdx === -1) return [];
 
   // Find the directory that contains the wildcard
@@ -445,11 +438,9 @@ function discoverPackages() {
     if (SKIP_PACKAGES.has(dirName)) continue;
 
     const pkgJsonPath = join(PACKAGES_DIR, dirName, 'package.json');
-
     if (!existsSync(pkgJsonPath)) continue;
 
     const pkgJson = JSON.parse(readFileSync(pkgJsonPath, 'utf8'));
-
     if (!pkgJson.exports) continue;
 
     const pkgName = pkgJson.name;
@@ -475,14 +466,12 @@ function discoverPackages() {
       }
 
       const defaultPath = resolveDefault(value);
-
       if (!defaultPath) continue;
 
       // Skip types-only exports (no runtime code)
       if (defaultPath.endsWith('.d.ts')) continue;
 
       const absolutePath = resolve(pkgDir, defaultPath);
-
       if (!existsSync(absolutePath)) continue;
 
       // Skip empty files (types-only exports with no runtime code)
@@ -513,11 +502,9 @@ function discoverPackages() {
           if (UI_PARTS.has(d.name)) continue;
 
           const indexPath = join(uiDir, d.name, 'index.js');
-
           if (!existsSync(indexPath)) continue;
 
           const name = `${pkgName}/ui/${d.name}`;
-
           if (existing.has(name)) continue;
 
           subpaths.push({ name, path: indexPath, isCSS: false });
@@ -555,7 +542,6 @@ async function main() {
 
     if (isRootCSS) {
       const cat = categorize(pkg.name);
-
       if (cat === '_skip') continue;
 
       results.push({
@@ -583,7 +569,6 @@ async function main() {
 
     for (const sub of pkg.subpaths) {
       const cat = categorize(sub.name);
-
       if (cat === '_skip') continue;
 
       if (sub.isCSS) {
@@ -616,7 +601,6 @@ async function main() {
 
       for (const config of PRESET_CONFIGS) {
         const code = buildPresetEntry(pkgShortName, config, distDir);
-
         if (!code) continue;
 
         const measurement = await measureVirtual(code, distDir, pkg.external);

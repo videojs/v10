@@ -62,7 +62,6 @@ const render = {
     config: { defaultText?: string };
   }) {
     const el = context.renderElement.get();
-
     if (!el) return;
 
     el.textContent = String(state.count.get() ?? config.defaultText ?? 'N/A');

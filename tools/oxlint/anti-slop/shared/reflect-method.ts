@@ -8,7 +8,6 @@ function resolveVariable(
 
   while (scope !== null) {
     const variable = scope.set.get(identifier.name);
-
     if (variable !== undefined) return variable;
 
     scope = scope.upper;

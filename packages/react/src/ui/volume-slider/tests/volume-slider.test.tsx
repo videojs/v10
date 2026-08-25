@@ -72,12 +72,10 @@ vi.mock('@videojs/store/react', () => ({
 
     // Return the mutable volume state directly for volume selectors.
     const vol = mutableVolume.current;
-
     if (!vol) return undefined;
 
     try {
       const result = selector(vol);
-
       if (result !== undefined) return result;
     } catch {
       // fall through

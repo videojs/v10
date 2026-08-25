@@ -81,10 +81,7 @@ export function abbreviateType(name: string, type: string): string | undefined {
   if (type.includes('=>')) {
     const parts = type.split(' | ');
     const nonFunctionParts = parts.filter((p) => !p.includes('=>'));
-
-    if (nonFunctionParts.length > 0) {
-      return `${nonFunctionParts.join(' | ')} | function`;
-    }
+    if (nonFunctionParts.length > 0) return `${nonFunctionParts.join(' | ')} | function`;
 
     return 'function';
   }
@@ -106,7 +103,6 @@ export function formatProperties(project: OxcProject, props: readonly ResolvedMe
     if (prop.member.type !== 'TSPropertySignature') continue;
 
     const name = staticName(prop.member.key);
-
     if (!name || !prop.member.typeAnnotation) continue;
 
     // Skip ref for components
@@ -114,7 +110,6 @@ export function formatProperties(project: OxcProject, props: readonly ResolvedMe
 
     // Skip props marked with @ignore
     const documentation = getJSDoc(prop.file, prop.member);
-
     if (documentation?.tags.has('ignore')) continue;
 
     const resolvedType: ResolvedType = {
@@ -162,7 +157,6 @@ export function formatDetailedType(
   if (node.type === 'TSTypeReference') {
     const name = typeNameText(node.typeName);
     const substituted = node.typeName.type === 'Identifier' ? type.substitutions?.get(name) : undefined;
-
     if (substituted) return formatDetailedType(project, substituted, removeUndefined, visited);
 
     const key = `${type.file.filePath}#${name}`;
@@ -231,7 +225,6 @@ function formatDeepPartialType(
       if (member.type !== 'TSPropertySignature' || !member.typeAnnotation) return [];
 
       const name = staticName(member.key);
-
       if (!name) return [];
 
       const memberType = formatDeepPartialType(
@@ -270,13 +263,11 @@ function formatDeepPartialType(
 export function formatType(type: ResolvedType, removeUndefined: boolean): string {
   const node = unwrapType(type.type);
   const keyword = keywordName(node);
-
   if (keyword) return keyword;
 
   if (node.type === 'TSTypeReference') {
     const name = typeNameText(node.typeName);
     const substituted = node.typeName.type === 'Identifier' ? type.substitutions?.get(node.typeName.name) : undefined;
-
     if (substituted) return formatType(substituted, removeUndefined);
 
     if (name === 'ReactElement' || name === 'React.ReactElement') return 'ReactElement';
@@ -321,10 +312,7 @@ export function formatType(type: ResolvedType, removeUndefined: boolean): string
   if (node.type === 'TSArrayType') {
     const formattedMemberType = formatType({ ...type, type: node.elementType }, false);
     const element = unwrapType(node.elementType);
-
-    if (element.type === 'TSUnionType' || element.type === 'TSIntersectionType') {
-      return `(${formattedMemberType})[]`;
-    }
+    if (element.type === 'TSUnionType' || element.type === 'TSIntersectionType') return `(${formattedMemberType})[]`;
 
     return `${formattedMemberType}[]`;
   }
@@ -417,7 +405,6 @@ function formatSignature(
 ): string {
   if (member.type === 'TSPropertySignature') {
     const name = staticName(member.key);
-
     if (!name || !member.typeAnnotation) return '';
 
     return `${name}${member.optional ? '?' : ''}: ${formatType({ file, type: member.typeAnnotation.typeAnnotation, substitutions }, member.optional)}`;
@@ -425,7 +412,6 @@ function formatSignature(
 
   if (member.type === 'TSMethodSignature') {
     const name = staticName(member.key);
-
     if (!name) return '';
 
     const params = member.params.map((parameter) => formatParameter(file, parameter, substitutions)).join(', ');
@@ -445,7 +431,6 @@ function formatParameter(
   substitutions?: ReadonlyMap<string, ResolvedType>
 ): string {
   const pattern = parameterPattern(parameter);
-
   if (!pattern) return '...: unknown';
 
   const name = bindingName(pattern);

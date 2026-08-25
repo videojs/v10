@@ -27,7 +27,6 @@ const highlightCache = new Map<string, Highlighted>();
 function highlight(code: string, lang: BundledLanguage, highlighter: Highlighter): Highlighted {
   const cacheKey = `${lang}\0${code}`;
   const cached = highlightCache.get(cacheKey);
-
   if (cached) return cached;
 
   const hast = highlighter.codeToHast(code, {

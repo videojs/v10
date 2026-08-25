@@ -30,10 +30,7 @@ export function inlineTemplatePlugin(options: TemplatePluginOptions = {}): Build
       if (!code.includes(HTML_MARKER) && !code.includes(CSS_MARKER)) return null;
 
       const magicString = meta?.magicString;
-
-      if (!magicString) {
-        throw new Error('inline-template requires experimental.nativeMagicString: true.');
-      }
+      if (!magicString) throw new Error('inline-template requires experimental.nativeMagicString: true.');
 
       if (!processTemplates(code, magicString)) return null;
 

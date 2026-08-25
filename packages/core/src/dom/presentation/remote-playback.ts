@@ -21,10 +21,7 @@ export function isRemotePlaybackConnecting(media: EventTarget) {
 
 export async function requestRemotePlayback(media: EventTarget) {
   const remote = resolveRemote(media);
-
-  if (!remote) {
-    throw new DOMException('Remote playback not supported', 'NotSupportedError');
-  }
+  if (!remote) throw new DOMException('Remote playback not supported', 'NotSupportedError');
 
   return remote.prompt();
 }
