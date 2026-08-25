@@ -3,7 +3,7 @@ import { readdir } from 'node:fs/promises';
 import { relative, resolve, sep } from 'node:path';
 
 import { createLogger, createServer, type Plugin, type ViteDevServer } from 'vite';
-import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
+import { afterEach, describe, it, vi } from 'vite-plus/test';
 
 const packageDir = resolve(import.meta.dirname, '../..');
 const configFile = resolve(packageDir, 'dev/vite.config.ts');
@@ -26,7 +26,7 @@ describe('generated VJSC source', () => {
     server = undefined;
   }, 30_000);
 
-  it('matches every transformed component and skin variant', async () => {
+  it('matches every transformed component and skin variant', async ({ expect }) => {
     const sources = await sourceModules();
     const modules = generatedModules(sources);
     const sourceNames = new Map(sources.map((filename) => [filename, sourceName(filename)]));

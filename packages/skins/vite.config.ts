@@ -52,6 +52,8 @@ export default defineConfig({
           name: 'skins',
           root: packageDir,
           include: ['vjsc/**/*.test.ts'],
+          // These integration tests share Vite and Rolldown package state.
+          fileParallelism: false,
         },
       },
     ],
