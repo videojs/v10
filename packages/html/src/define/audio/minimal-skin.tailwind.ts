@@ -1,4 +1,4 @@
-import { MinimalAudioSkinTailwindElement } from '../../preset/audio/minimal-skin-tailwind-element';
+import { MinimalAudioSkinTailwindElement } from '../../presets/audio/minimal-skin.tailwind';
 import { safeDefine } from '../../registration/safe-define';
 import './minimal-ui';
 

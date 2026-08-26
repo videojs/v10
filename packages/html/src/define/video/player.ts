@@ -1,4 +1,4 @@
-import { VideoPlayerElement } from '../../preset/video/player-element';
+import { VideoPlayerElement } from '../../presets/video/player';
 import { safeDefine } from '../../registration/safe-define';
 
 safeDefine(VideoPlayerElement);

@@ -1,4 +1,4 @@
-import { LiveAudioPlayerElement } from '../../preset/live-audio/player-element';
+import { LiveAudioPlayerElement } from '../../presets/live-audio/player';
 import { safeDefine } from '../../registration/safe-define';
 
 safeDefine(LiveAudioPlayerElement);

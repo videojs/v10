@@ -38,7 +38,7 @@ const defineEntries = Object.fromEntries(
 );
 
 const presetEntries = Object.fromEntries(
-  globSync('src/presets/*.ts', { cwd: packageDir }).map((file) => {
+  globSync('src/presets/*/index.ts', { cwd: packageDir }).map((file) => {
     const key = file.replace('src/', '').replace('.ts', '');
 
     return [key, file];

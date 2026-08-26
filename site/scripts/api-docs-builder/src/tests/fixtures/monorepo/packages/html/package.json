@@ -2,24 +2,24 @@
   "name": "@videojs/html",
   "exports": {
     "./video": {
-      "types": "./src/presets/video.ts",
-      "default": "./src/presets/video.ts"
+      "types": "./src/presets/video/index.ts",
+      "default": "./src/presets/video/index.ts"
     },
     "./video/*": {
       "types": "./src/define/video/*.ts",
       "default": "./src/define/video/*.ts"
     },
     "./audio": {
-      "types": "./src/presets/audio.ts",
-      "default": "./src/presets/audio.ts"
+      "types": "./src/presets/audio/index.ts",
+      "default": "./src/presets/audio/index.ts"
     },
     "./audio/*": {
       "types": "./src/define/audio/*.ts",
       "default": "./src/define/audio/*.ts"
     },
     "./background": {
-      "types": "./src/presets/background.ts",
-      "default": "./src/presets/background.ts"
+      "types": "./src/presets/background/index.ts",
+      "default": "./src/presets/background/index.ts"
     },
     "./background/*": {
       "types": "./src/define/background/*.ts",

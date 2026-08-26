@@ -3,7 +3,7 @@
  *
  * Exercises: registration-only discovery through an imported skin implementation.
  */
-import { VideoSkinElement } from '../../preset/video/skin-element';
+import { VideoSkinElement } from '../../presets/video/skin';
 import { safeDefine } from '../../registration/safe-define';
 
 safeDefine(VideoSkinElement);

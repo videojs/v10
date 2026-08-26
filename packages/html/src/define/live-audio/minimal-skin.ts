@@ -1,4 +1,4 @@
-import { MinimalLiveAudioSkinElement } from '../../preset/live-audio/minimal-skin-element';
+import { MinimalLiveAudioSkinElement } from '../../presets/live-audio/minimal-skin';
 import { safeDefine } from '../../registration/safe-define';
 import './minimal-ui';
 

@@ -1,4 +1,4 @@
-import { VideoSkinElement } from '../../preset/video/skin-element';
+import { VideoSkinElement } from '../../presets/video/skin';
 import { safeDefine } from '../../registration/safe-define';
 import './ui';
 

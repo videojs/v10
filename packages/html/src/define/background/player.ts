@@ -1,4 +1,4 @@
-import { BackgroundVideoPlayerElement } from '../../preset/background/player-element';
+import { BackgroundVideoPlayerElement } from '../../presets/background/player';
 import { safeDefine } from '../../registration/safe-define';
 
 safeDefine(BackgroundVideoPlayerElement);
