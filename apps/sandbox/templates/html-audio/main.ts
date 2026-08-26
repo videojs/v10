@@ -21,7 +21,7 @@ const loadLatest = createLatestLoader();
 async function render() {
   await prepareSandboxHtmlLocale();
 
-  const tag = await loadLatest(() => loadAudioSkinTag(state.skin));
+  const tag = await loadLatest(() => loadAudioSkinTag(state.skin, state.styling));
   if (!tag) return;
 
   const mediaAttrs = renderMediaAttrs(state);

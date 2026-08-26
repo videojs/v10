@@ -179,7 +179,7 @@ export function Navbar({
           options={stylings.map((s) => ({
             value: s,
             label: s === 'css' ? 'CSS' : 'Tailwind',
-            disabled: s === 'tailwind' && (isBackgroundVideo || isEmbedMedia || platform !== 'react'),
+            disabled: s === 'tailwind' && (isBackgroundVideo || isEmbedMedia || platform === 'cdn'),
           }))}
         />
 

@@ -214,9 +214,9 @@ export function App() {
     }
   }, [availableSources, source]);
 
-  // Only React presets have a packaged Tailwind skin variant.
+  // CDN, background video, and third-party embeds do not have a Tailwind skin variant.
   useEffect(() => {
-    if ((platform !== 'react' || backgroundPreset || embedPreset) && styling === 'tailwind') {
+    if ((platform === 'cdn' || backgroundPreset || embedPreset) && styling === 'tailwind') {
       setStyling('css');
     }
   }, [platform, backgroundPreset, embedPreset, styling]);

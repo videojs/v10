@@ -27,7 +27,7 @@ async function render() {
   await prepareSandboxHtmlLocale();
 
   const live = isLiveSource(state.source);
-  const tag = await loadLatest(() => loadVideoSkinTag(state.skin, { live }));
+  const tag = await loadLatest(() => loadVideoSkinTag(state.skin, state.styling, { live }));
   if (!tag) return;
 
   const poster = getPosterSrc(state.source);
