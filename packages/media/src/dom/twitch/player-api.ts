@@ -86,6 +86,8 @@ export interface TwitchCommandMessage {
 /** Narrow a `message` payload to something the embed sent; any page can post here, so the namespace is the filter. */
 export function isTwitchMessage(data: unknown): data is TwitchInboundMessage {
   if (!isObject(data)) return false;
+
   const { namespace, eventName } = data as { namespace?: unknown; eventName?: unknown };
+
   return isString(eventName) && (namespace === EMBED_NAMESPACE || namespace === PLAYER_PROXY_NAMESPACE);
 }

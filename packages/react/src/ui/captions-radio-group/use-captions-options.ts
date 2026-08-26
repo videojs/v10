@@ -27,9 +27,8 @@ const useCaptionsRadioOptions = createRadioOptionsHook({
 });
 
 /**
- * Create captions menu options (including an `Off` option) from the player
- * text track state. Returns `null` when the text tracks feature is not
- * configured.
+ * Create captions menu options (including an `Off` option) from the player text track state. Returns `null` when the
+ * text tracks feature is not configured.
  *
  * @param props - Optional `label`, `formatTrack`, and `disabled` overrides.
  */

@@ -15,12 +15,17 @@ export type IndicatorStatus =
   | 'pip'
   | 'exit-pip';
 
+/** Predicted display details for a supported status-indicator action. */
 export interface StatusDetails {
+  /** Visual status corresponding to the predicted post-action state. */
   status: IndicatorStatus;
+  /** Translated label for the predicted status. */
   label: string;
+  /** Predicted volume percentage for volume actions, otherwise `null`. */
   value: string | null;
 }
 
+/** Derives the predicted visual status from an input action and its pre-action media snapshot. */
 export function deriveStatus(
   event: InputActionEvent,
   snapshot: MediaSnapshot,
@@ -29,6 +34,7 @@ export function deriveStatus(
   switch (event.action) {
     case 'togglePaused': {
       const paused = snapshot.paused !== undefined ? !snapshot.paused : true;
+
       return {
         status: paused ? 'pause' : 'play',
         label: paused ? labels.paused : labels.playing,
@@ -40,7 +46,9 @@ export function deriveStatus(
       return deriveVolumeStatus(event, snapshot, labels);
     case 'toggleSubtitles': {
       if (snapshot.subtitlesAvailable === false) return null;
+
       const showing = snapshot.subtitlesShowing !== undefined ? !snapshot.subtitlesShowing : true;
+
       return {
         status: showing ? 'captions-on' : 'captions-off',
         label: showing ? labels.captionsOn : labels.captionsOff,
@@ -49,6 +57,7 @@ export function deriveStatus(
     }
     case 'toggleFullscreen': {
       const fullscreen = snapshot.fullscreen !== undefined ? !snapshot.fullscreen : true;
+
       return {
         status: fullscreen ? 'fullscreen' : 'exit-fullscreen',
         label: fullscreen ? labels.fullscreen : labels.exitFullscreen,
@@ -57,6 +66,7 @@ export function deriveStatus(
     }
     case 'togglePictureInPicture': {
       const pip = snapshot.pip !== undefined ? !snapshot.pip : true;
+
       return {
         status: pip ? 'pip' : 'exit-pip',
         label: pip ? labels.pictureInPicture : labels.exitPictureInPicture,
@@ -68,6 +78,7 @@ export function deriveStatus(
   }
 }
 
+/** Returns the volume percentage when present, then the translated status label. */
 export function getStatusIndicatorDisplayValue(state: { value: string | null; label: string | null }): string {
   return state.value ?? state.label ?? '';
 }

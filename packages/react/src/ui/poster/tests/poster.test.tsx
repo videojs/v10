@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, render } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { createPlayerWrapper } from '../../../testing/mocks';
 import { Poster } from '../poster';
@@ -8,6 +8,7 @@ afterEach(cleanup);
 
 function wrapper(state: { started?: boolean; poster?: string } = {}) {
   const { started = false, poster = '' } = state;
+
   return createPlayerWrapper({
     paused: !started,
     ended: false,
@@ -29,6 +30,7 @@ describe('Poster', () => {
     });
 
     const element = getByTestId('poster');
+
     expect(element.tagName).toBe('IMG');
     expect(element.getAttribute('src')).toBe('poster.jpg');
   });
@@ -67,6 +69,7 @@ describe('Poster', () => {
     );
 
     const element = getByTestId('poster');
+
     expect(element.getAttribute('srcset')).toBe('poster-480.jpg 480w');
     expect(element.getAttribute('sizes')).toBe('100vw');
     expect(element.getAttribute('loading')).toBe('lazy');
@@ -157,6 +160,7 @@ describe('Poster', () => {
     );
 
     const element = getByTestId('poster') as HTMLImageElement;
+
     expect(element.complete).toBe(true);
     expect(element.hasAttribute('data-loading')).toBe(true);
     expect(element.hasAttribute('data-error')).toBe(false);
@@ -199,6 +203,7 @@ describe('Poster', () => {
     const { getByTestId } = render(<Poster data-testid="poster" />, { wrapper: wrapper() });
 
     const element = getByTestId('poster');
+
     expect(element.hasAttribute('data-loading')).toBe(false);
     expect(element.hasAttribute('data-loaded')).toBe(false);
     expect(element.hasAttribute('data-error')).toBe(false);
@@ -211,6 +216,7 @@ describe('Poster', () => {
     );
 
     const element = getByTestId('custom');
+
     expect(element.getAttribute('src')).toBe('poster.jpg');
     expect(element.getAttribute('alt')).toBe('Keynote speaker');
   });

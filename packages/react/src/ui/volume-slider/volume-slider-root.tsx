@@ -47,10 +47,12 @@ export const VolumeSliderRoot = forwardRef<HTMLDivElement, VolumeSliderRootProps
     const volume = usePlayer(selectVolume);
     const translator = useTranslator();
     const locale = useLocale();
+
     const isUnavailable = volume?.volumeAvailability !== 'available';
     const isDisabled = Boolean(disabled) || isUnavailable;
 
     const [core] = useState(() => new VolumeSliderCore());
+
     core.setProps({ label, orientation, step, largeStep, wheelStep, disabled, thumbAlignment });
     core.setFormatLocale(locale);
 
@@ -99,6 +101,7 @@ export const VolumeSliderRoot = forwardRef<HTMLDivElement, VolumeSliderRootProps
       (element: HTMLDivElement | null) => {
         wheelCleanupRef.current?.();
         wheelCleanupRef.current = null;
+
         if (element) {
           wheelCleanupRef.current = listen(element, 'wheel', wheelHandler.onWheel, { passive: false });
         }
@@ -108,6 +111,7 @@ export const VolumeSliderRoot = forwardRef<HTMLDivElement, VolumeSliderRootProps
 
     if (!volume) {
       if (__DEV__) logMissingFeature('VolumeSlider', 'volume');
+
       return null;
     }
 
@@ -125,6 +129,7 @@ export const VolumeSliderRoot = forwardRef<HTMLDivElement, VolumeSliderRootProps
           stateAttrMap: VolumeSliderDataAttrs,
           getAttrs: (sliderState) => {
             const attrs = core.getAttrs(sliderState as VolumeSliderCore.State);
+
             return {
               ...attrs,
               'aria-label': translateText(attrs['aria-label'], translator),

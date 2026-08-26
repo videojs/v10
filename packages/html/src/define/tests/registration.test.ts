@@ -1,14 +1,13 @@
-import { afterAll, beforeAll, describe, expect, it, type MockInstance, vi } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, type MockInstance, vi } from 'vite-plus/test';
 
 /**
- * Tests that composite define files register all expected custom elements
- * and that provider/parent elements are defined before consumer/child elements.
+ * Tests that composite define files register all expected custom elements and that provider/parent elements are defined
+ * before consumer/child elements.
  *
- * Tests run sequentially. Each dynamically imports a composite define file and
- * checks the batch of `customElements.define()` calls that resulted. Because
- * modules are cached within a test file, shared sub-elements (e.g. slider parts)
- * are only registered by the first composite that imports them — subsequent
- * composites skip them via `safeDefine`. This is intentional and tested.
+ * Tests run sequentially. Each dynamically imports a composite define file and checks the batch of
+ * `customElements.define()` calls that resulted. Because modules are cached within a test file, shared sub-elements
+ * (e.g. slider parts) are only registered by the first composite that imports them — subsequent composites skip them
+ * via `safeDefine`. This is intentional and tested.
  */
 describe('composite define registration', () => {
   let spy: MockInstance;
@@ -29,37 +28,55 @@ describe('composite define registration', () => {
   // ── Player composites ────────────────────────────────────────────────
 
   describe('video/player', () => {
-    it('registers video-player before media-container', async () => {
+    it('registers only video-player', async () => {
       const before = spy.mock.calls.length;
+
       await import('../video/player');
       const batch = batchSince(before);
 
-      expect(batch).toContain('video-player');
-      expect(batch).toContain('media-container');
-      expect(batch.indexOf('video-player')).toBeLessThan(batch.indexOf('media-container'));
+      expect(batch).toEqual(['video-player']);
     });
   });
 
   describe('audio/player', () => {
     it('registers audio-player', async () => {
       const before = spy.mock.calls.length;
+
       await import('../audio/player');
       const batch = batchSince(before);
 
-      expect(batch).toContain('audio-player');
-      // media-container already registered by video/player — safeDefine skips it
-      expect(batch).not.toContain('media-container');
+      expect(batch).toEqual(['audio-player']);
     });
   });
 
   describe('background/player', () => {
     it('registers background-video-player', async () => {
       const before = spy.mock.calls.length;
+
       await import('../background/player');
       const batch = batchSince(before);
 
-      expect(batch).toContain('background-video-player');
-      expect(batch).not.toContain('media-container');
+      expect(batch).toEqual(['background-video-player']);
+    });
+  });
+
+  describe('live-video/player', () => {
+    it('registers only live-video-player', async () => {
+      const before = spy.mock.calls.length;
+
+      await import('../live-video/player');
+
+      expect(batchSince(before)).toEqual(['live-video-player']);
+    });
+  });
+
+  describe('live-audio/player', () => {
+    it('registers only live-audio-player', async () => {
+      const before = spy.mock.calls.length;
+
+      await import('../live-audio/player');
+
+      expect(batchSince(before)).toEqual(['live-audio-player']);
     });
   });
 
@@ -68,6 +85,7 @@ describe('composite define registration', () => {
   describe('ui/time-slider', () => {
     it('registers media-time-slider before sub-elements', async () => {
       const before = spy.mock.calls.length;
+
       await import('../ui/time-slider');
       const batch = batchSince(before);
 
@@ -88,6 +106,7 @@ describe('composite define registration', () => {
   describe('ui/time-slider-chapters', () => {
     it('registers the opt-in chapter elements', async () => {
       const before = spy.mock.calls.length;
+
       await import('../ui/time-slider-chapters');
       const batch = batchSince(before);
 
@@ -99,6 +118,7 @@ describe('composite define registration', () => {
   describe('ui/volume-slider', () => {
     it('registers media-volume-slider and skips already-defined sub-elements', async () => {
       const before = spy.mock.calls.length;
+
       await import('../ui/volume-slider');
       const batch = batchSince(before);
 
@@ -115,6 +135,7 @@ describe('composite define registration', () => {
   describe('ui/slider', () => {
     it('registers media-slider', async () => {
       const before = spy.mock.calls.length;
+
       await import('../ui/slider');
       const batch = batchSince(before);
 
@@ -127,6 +148,7 @@ describe('composite define registration', () => {
   describe('ui/time', () => {
     it('registers media-time before sub-elements', async () => {
       const before = spy.mock.calls.length;
+
       await import('../ui/time');
       const batch = batchSince(before);
 
@@ -136,13 +158,46 @@ describe('composite define registration', () => {
     });
   });
 
+  describe('ui/alert-dialog', () => {
+    it('registers media-alert-dialog before sub-elements', async () => {
+      const before = spy.mock.calls.length;
+
+      await import('../ui/alert-dialog');
+      const batch = batchSince(before);
+
+      expect(batch[0]).toBe('media-alert-dialog');
+      expect(batch).toContain('media-dialog-backdrop');
+      expect(batch).toContain('media-dialog-close');
+      expect(batch).toContain('media-dialog-description');
+      expect(batch).toContain('media-dialog-popup');
+      expect(batch).toContain('media-dialog-title');
+    });
+  });
+
+  describe('ui/error-dialog', () => {
+    it('registers media-error-dialog and reuses dialog parts', async () => {
+      const before = spy.mock.calls.length;
+
+      await import('../ui/error-dialog');
+      const batch = batchSince(before);
+
+      expect(batch).toContain('media-error-dialog');
+      expect(batch).not.toContain('media-dialog-backdrop');
+      expect(batch).not.toContain('media-dialog-close');
+      expect(batch).not.toContain('media-dialog-popup');
+    });
+  });
+
   describe('ui/controls', () => {
     it('registers media-controls before sub-elements', async () => {
       const before = spy.mock.calls.length;
+
       await import('../ui/controls');
       const batch = batchSince(before);
 
       expect(batch[0]).toBe('media-controls');
+      expect(batch).toContain('media-controls-backdrop');
+      expect(batch).toContain('media-controls-content');
       expect(batch).toContain('media-controls-group');
     });
   });
@@ -150,9 +205,11 @@ describe('composite define registration', () => {
   describe('video/ui', () => {
     it('registers the elements used by video skins', async () => {
       const before = spy.mock.calls.length;
+
       await import('../video/ui');
       const batch = batchSince(before);
 
+      expect(batch).toContain('media-container');
       expect(batch).toContain('media-text');
       expect(batch).toContain('media-menu');
       expect(batch).toContain('media-menu-item');
@@ -168,6 +225,8 @@ describe('composite define registration', () => {
         'video-player',
         'audio-player',
         'background-video-player',
+        'live-video-player',
+        'live-audio-player',
         'media-container',
         // Sliders
         'media-slider',
@@ -187,7 +246,17 @@ describe('composite define registration', () => {
         'media-time-separator',
         // Controls
         'media-controls',
+        'media-controls-backdrop',
+        'media-controls-content',
         'media-controls-group',
+        // Dialogs
+        'media-alert-dialog',
+        'media-dialog-backdrop',
+        'media-dialog-close',
+        'media-dialog-description',
+        'media-dialog-popup',
+        'media-dialog-title',
+        'media-error-dialog',
       ];
 
       for (const tagName of expected) {

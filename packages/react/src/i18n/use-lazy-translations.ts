@@ -15,7 +15,8 @@ export function useLazyTranslations(resolvedLocale: Locale, loader: LocaleLoader
   const [lazyLayer, setLazyLayer] = useState<Partial<FlatTranslations>>({});
   const lazySeqRef = useRef(0);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: rerun when `resolvedLocale` changes even though the reset callback does not reference it.
+  // rerun when `resolvedLocale` changes even though the reset callback does not reference it.
+  // oxlint-disable-next-line react/exhaustive-deps
   useLayoutEffect(() => {
     lazySeqRef.current += 1;
     setLazyLayer({});
@@ -30,15 +31,19 @@ export function useLazyTranslations(resolvedLocale: Locale, loader: LocaleLoader
     void (async () => {
       try {
         const { merged, loadedTags } = await mergeLocaleOverlays(locale, loader, findLocaleKeys);
+
         if (seq !== lazySeqRef.current) return;
 
         if (shouldAttemptBrowserTranslation(locale, loadedTags, merged)) {
           const browser = await getBrowserTranslations(locale);
+
           if (seq !== lazySeqRef.current) return;
+
           if (Object.keys(browser).length) registerI18n(locale, browser);
         }
 
         if (seq !== lazySeqRef.current) return;
+
         setLazyLayer(merged);
       } catch {
         // Registry and prop translations still work if lazy loading fails.

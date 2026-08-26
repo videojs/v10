@@ -11,7 +11,7 @@ function App() {
     <SandboxI18nProvider>
       <BackgroundVideoPlayer>
         <BackgroundVideoSkin>
-          <BackgroundVideo src={BACKGROUND_VIDEO_SRC} />
+          <BackgroundVideo src={BACKGROUND_VIDEO_SRC} crossOrigin="" />
         </BackgroundVideoSkin>
       </BackgroundVideoPlayer>
     </SandboxI18nProvider>

@@ -1,0 +1,28 @@
+---
+title: useOptionalContainer
+description: Hook to access a Player container when one is available
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+
+## Import
+
+```tsx
+import { useOptionalContainer } from "@videojs/react";
+```
+
+## Usage
+
+Use the optional hook when a component can work both inside and outside `Player`.
+
+```tsx
+function ContainerAwareStatus() {
+  const container = useOptionalContainer();
+
+  return <output>{container ? "Player container ready" : "No container"}</output>;
+}
+```
+
+It returns `null` outside `Player`, before its container mounts, or when the player has no registered container. Use `useContainer` when a missing Player should be treated as an error.
+
+<UtilReference util="useOptionalContainer" />

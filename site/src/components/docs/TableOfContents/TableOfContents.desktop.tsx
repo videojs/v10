@@ -1,6 +1,7 @@
 import type { MarkdownHeading } from 'astro';
 import clsx from 'clsx';
 import { useRef } from 'react';
+
 import { useAutoScroll } from './utils';
 
 interface TableOfContentsDesktopProps {

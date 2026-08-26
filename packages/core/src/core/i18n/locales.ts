@@ -57,11 +57,15 @@ export type LocaleAlias<Tags extends readonly string[]> = Tags[number] extends `
 
 export function localeAliases<const Tags extends readonly string[]>(tags: Tags): LocaleAlias<Tags>[] {
   const counts = new Map<string, number>();
+
   for (const tag of tags) {
     if (!tag.includes('-')) continue;
+
     const [lang] = tag.split('-');
     if (!lang) continue;
+
     counts.set(lang, (counts.get(lang) ?? 0) + 1);
   }
+
   return [...counts].filter(([, count]) => count > 1).map(([lang]) => lang) as LocaleAlias<Tags>[];
 }

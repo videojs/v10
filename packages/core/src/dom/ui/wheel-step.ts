@@ -1,4 +1,5 @@
 import { clamp } from '@videojs/utils/number';
+
 import type { UIWheelEvent } from './event';
 
 export interface WheelStepOptions {

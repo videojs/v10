@@ -1,4 +1,5 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
+
 import type { ContextSignals, StateSignals } from '../../../../core/composition/create-composition';
 import { signal } from '../../../../core/signals/primitives';
 import {
@@ -24,6 +25,7 @@ function setupTrackPlaybackRate(
   const state = makeState(initialState);
   const context = makeContext(initialContext);
   const cleanup = trackPlaybackRate.setup({ state, context, config });
+
   return { state, context, cleanup };
 }
 
@@ -81,6 +83,7 @@ describe('trackPlaybackRate', () => {
 
   it('resets to defaultPlaybackRate when mediaElement is removed', async () => {
     const mediaElement = document.createElement('video');
+
     mediaElement.playbackRate = 2;
 
     const { state, context, cleanup } = setupTrackPlaybackRate({}, { mediaElement });
@@ -100,6 +103,7 @@ describe('trackPlaybackRate', () => {
     await vi.waitFor(() => expect(state.playbackRate.get()).toBe(1.5));
 
     const mediaElement = document.createElement('video');
+
     mediaElement.playbackRate = 2;
     context.mediaElement.set(mediaElement);
 
@@ -115,6 +119,7 @@ describe('trackPlaybackRate', () => {
   it('continues tracking correctly after context updates with unchanged mediaElement', async () => {
     const mediaElement = document.createElement('video');
     const ratechangeHandler = vi.fn();
+
     mediaElement.addEventListener('ratechange', ratechangeHandler);
 
     const { state, context, cleanup } = setupTrackPlaybackRate({}, { mediaElement });
@@ -140,6 +145,7 @@ describe('trackPlaybackRate', () => {
     await vi.waitFor(() => expect(state.playbackRate.get()).toBe(1));
 
     const mediaElement = document.createElement('video');
+
     mediaElement.playbackRate = 2;
     context.mediaElement.set(mediaElement);
 
@@ -153,6 +159,7 @@ describe('trackPlaybackRate', () => {
   it('stops listening to old mediaElement when replaced', async () => {
     const element1 = document.createElement('video');
     const element2 = document.createElement('video');
+
     element2.playbackRate = 2;
 
     const { state, context, cleanup } = setupTrackPlaybackRate({}, { mediaElement: element1 });

@@ -1,36 +1,27 @@
 /**
  * **Resolve an unresolved presentation by fetching and parsing its manifest.**
  *
- * Reads `state.presentation`; when it holds `{ url }` (unresolved) and the
- * preload / load-activation gate is met, fetches the manifest, parses it via
- * the **required** `config.parsePresentation`, and writes the resolved
- * `Presentation` back to the same slot. The behavior is format-neutral: the
- * composing engine wires in its parser (e.g. the HLS engine supplies the
- * multivariant-playlist parser).
+ * Reads `state.presentation`; when it holds `{ url }` (unresolved) and the preload / load-activation gate is met,
+ * fetches the manifest, parses it via the **required** `config.parsePresentation`, and writes the resolved
+ * `Presentation` back to the same slot. The behavior is format-neutral: the composing engine wires in its parser (e.g.
+ * the HLS engine supplies the multivariant-playlist parser).
  *
  * Source-identity-driven, expressed as a 4-state machine:
  *
- * ```
- * 'preconditions-unmet' → 'idle' → 'resolving' → 'resolved'
- * ```
+ *     'preconditions-unmet' → 'idle' → 'resolving' → 'resolved'
  *
  * - `'preconditions-unmet'`: no presentation, or presentation has no URL.
- * - `'idle'`: URL present, unresolved, gate unmet (blocking preload + no
- *   load-activation). Waits for the gate to open.
- * - `'resolving'`: URL present, unresolved, gate met. Entry starts the fetch
- *   and returns the AbortController — the reactor calls `.abort()` on state
- *   exit, so source change / gate-close / destroy all cancel cleanly.
+ * - `'idle'`: URL present, unresolved, gate unmet (blocking preload + no load-activation). Waits for the gate to open.
+ * - `'resolving'`: URL present, unresolved, gate met. Entry starts the fetch and returns the AbortController — the
+ *   reactor calls `.abort()` on state exit, so source change / gate-close / destroy all cancel cleanly.
  * - `'resolved'`: `state.presentation` holds a resolved `Presentation`.
  *
- * Gate semantics: `state.preload` (or `config.defaultPreload`, default
- * `'metadata'`, when state.preload is unset) blocks resolution when its
- * value is `'none'` (see `isBlockingPreload` in `media/utils/preload`).
- * `state.loadActivated` is an override — true bypasses the preload gate
- * entirely.
+ * Gate semantics: `state.preload` (or `config.defaultPreload`, default `'metadata'`, when state.preload is unset)
+ * blocks resolution when its value is `'none'` (see `isBlockingPreload` in `media/utils/preload`).
+ * `state.loadActivated` is an override — true bypasses the preload gate entirely.
  *
- * Multi-writer with the engine adapter, which writes the initial unresolved
- * `{ url }` to `state.presentation` from src input. Different domains
- * (config-input vs. derived state via fetch) — legitimate multi-writer.
+ * Multi-writer with the engine adapter, which writes the initial unresolved `{ url }` to `state.presentation` from src
+ * input. Different domains (config-input vs. derived state via fetch) — legitimate multi-writer.
  */
 import { defineBehavior } from '../../core/composition/create-composition';
 import type { Reactor } from '../../core/reactors/create-machine-reactor';
@@ -51,15 +42,13 @@ export type ParsePresentation = (text: string, presentation: MaybeResolvedPresen
 
 export interface ResolvePresentationConfig {
   /**
-   * Parses a manifest body into a resolved `Presentation`. **Required** —
-   * the behavior is format-neutral and the composing engine supplies its
-   * own parser (HLS, DASH, etc.).
+   * Parses a manifest body into a resolved `Presentation`. **Required** — the behavior is format-neutral and the
+   * composing engine supplies its own parser (HLS, DASH, etc.).
    */
   parsePresentation: ParsePresentation;
   /**
-   * Fallback used when `state.preload` is unset (undefined / empty) for the
-   * resolution-gate decision. Defaults to `'metadata'`, matching
-   * `syncPreload`'s own `defaultPreload`.
+   * Fallback used when `state.preload` is unset (undefined / empty) for the resolution-gate decision. Defaults to
+   * `'metadata'`, matching `syncPreload`'s own `defaultPreload`.
    */
   defaultPreload?: StandardPreload;
 }
@@ -73,8 +62,11 @@ function deriveState(
   defaultPreload: StandardPreload
 ): ResolvePresentationState {
   if (!presentation?.url) return 'preconditions-unmet';
+
   if (isResolvedPresentation(presentation)) return 'resolved';
+
   const gateOpen = !!loadActivated || !isBlockingPreload(preload, defaultPreload);
+
   return gateOpen ? 'resolving' : 'idle';
 }
 
@@ -111,10 +103,12 @@ function resolvePresentationSetup({
             .then((response) => getResponseText(response))
             .then((text) => {
               const parsed = parsePresentation(text, presentation);
+
               state.presentation.set(parsed);
             })
             .catch((error) => {
               if (error instanceof Error && error.name === 'AbortError') return;
+
               // TODO(error-management): route to a state-error slot once one exists.
               console.error('[resolvePresentation] manifest fetch/parse failed:', error);
             });

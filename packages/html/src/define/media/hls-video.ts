@@ -1,6 +1,7 @@
 import { HlsVideo } from '../../media/hls-video';
-import { safeDefine } from '../safe-define';
+import { safeDefine } from '../../registration/safe-define';
 
+/** Lightweight SPF-backed HLS media element registered as `<hls-video>`. */
 export class HlsVideoElement extends HlsVideo {
   static readonly tagName = 'hls-video';
 }

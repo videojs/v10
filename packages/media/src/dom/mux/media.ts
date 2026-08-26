@@ -1,4 +1,5 @@
 import { shallowEqual } from '@videojs/utils/object';
+
 import { HlsJsMedia, type HlsSource } from '../hls-js';
 import { createMuxDrmSystems } from './drm';
 import {
@@ -12,14 +13,13 @@ import {
 } from './source';
 
 /**
- * Structured Mux source for the hls.js-backed Media: Mux identity and params
- * from {@link MuxSourceBase}, plus everything the HLS layer takes — `type`,
- * `preferPlayback`, and its `engine` config.
+ * Structured Mux source for the hls.js-backed Media: Mux identity and params from {@link MuxSourceBase}, plus everything
+ * the HLS layer takes — `type`, `preferPlayback`, and its `engine` config.
  */
 export interface MuxSource extends HlsSource, MuxSourceBase {
   /**
-   * The inherited license servers, or a Mux license `token` to derive them from.
-   * Redeclared because both halves name `drm`, and Mux's is the wider of the two.
+   * The inherited license servers, or a Mux license `token` to derive them from. Redeclared because both halves name
+   * `drm`, and Mux's is the wider of the two.
    */
   drm?: MuxDrmParams | undefined;
 }
@@ -35,7 +35,8 @@ export const muxMediaDefaultProps: MuxMediaProps = {
 };
 
 /**
- * @fires sourcechange - Fired when `source` changes, either directly or by parsing a new `src`. Read `source` for the new value.
+ * @fires sourcechange - Fired when `source` changes, either directly or by parsing a new `src`. Read `source` for the
+ *   new value.
  * @fires contentdatachange - Fired when the derived `contentData` changes. Read `contentData` for the new value.
  */
 export class MuxMedia extends HlsJsMedia implements MuxMediaProps {
@@ -43,13 +44,11 @@ export class MuxMedia extends HlsJsMedia implements MuxMediaProps {
   #contentData: MuxContentData = {};
 
   /**
-   * Media source URL. Setting a Mux stream URL
-   * (`https://stream.mux.com/<playback-id>.m3u8?...`) extracts the playback ID
-   * and query params into `source`; other URLs are kept as a plain `source.src`.
+   * Media source URL. Setting a Mux stream URL (`https://stream.mux.com/<playback-id>.m3u8?...`) extracts the playback
+   * ID and query params into `source`; other URLs are kept as a plain `source.src`.
    *
-   * Only playback options carry over. Mux identity comes from the URL, and the
-   * signed `poster`, `storyboard`, and `drm` tokens are scoped to a playback ID,
-   * so carrying them onto a different source would build rejected URLs.
+   * Only playback options carry over. Mux identity comes from the URL, and the signed `poster`, `storyboard`, and `drm`
+   * tokens are scoped to a playback ID, so carrying them onto a different source would build rejected URLs.
    */
   get src(): string {
     return super.src;
@@ -77,21 +76,18 @@ export class MuxMedia extends HlsJsMedia implements MuxMediaProps {
   }
 
   /**
-   * Structured Mux source. Setting it derives `src` from the playback ID,
-   * custom domain, and `playback` params (appended as `snake_case` query
-   * params). A `playback.token` replaces all other params — signed URLs bake
-   * them into the token. Engine options live under `engine`.
+   * Structured Mux source. Setting it derives `src` from the playback ID, custom domain, and `playback` params
+   * (appended as `snake_case` query params). A `playback.token` replaces all other params — signed URLs bake them into
+   * the token. Engine options live under `engine`.
    *
-   * A `drm.token` fills in `drm` itself: Mux's FairPlay, Widevine, and
-   * PlayReady license servers for this playback ID, so protected media plays
-   * whichever path the browser takes. License servers named alongside the token
-   * win, key by key, for content Mux does not license.
+   * A `drm.token` fills in `drm` itself: Mux's FairPlay, Widevine, and PlayReady license servers for this playback ID,
+   * so protected media plays whichever path the browser takes. License servers named alongside the token win, key by
+   * key, for content Mux does not license.
    *
-   * `playback.maxResolution` and `playback.minResolution` are server-side: they
-   * decide which renditions Mux puts in the manifest at all. The inherited
-   * `maxAutoResolution` and `minAutoResolution` only look like their pair —
-   * those are client-side and bound which of the renditions that *do* arrive
-   * adaptive selection reaches for. The two halves are independent.
+   * `playback.maxResolution` and `playback.minResolution` are server-side: they decide which renditions Mux puts in the
+   * manifest at all. The inherited `maxAutoResolution` and `minAutoResolution` only look like their pair — those are
+   * client-side and bound which of the renditions that _do_ arrive adaptive selection reaches for. The two halves are
+   * independent.
    */
   get source(): MuxSource | null {
     return this.#source;
@@ -123,14 +119,12 @@ export class MuxMedia extends HlsJsMedia implements MuxMediaProps {
   }
 
   /**
-   * Image URLs `source` describes rather than plays: `poster` from its `poster`
-   * params, `storyboard` from its `storyboard` params. A key is absent when the
-   * URL can't be built — no playback ID, or signed playback without a matching
-   * image token.
+   * Image URLs `source` describes rather than plays: `poster` from its `poster` params, `storyboard` from its
+   * `storyboard` params. A key is absent when the URL can't be built — no playback ID, or signed playback without a
+   * matching image token.
    *
-   * Derived from `source` and nothing else. The same object is handed back
-   * until one of those URLs changes, and `contentdatachange` announces it when
-   * it does. Nothing here is applied for you, apart from the thumbnail track
+   * Derived from `source` and nothing else. The same object is handed back until one of those URLs changes, and
+   * `contentdatachange` announces it when it does. Nothing here is applied for you, apart from the thumbnail track
    * `<mux-video>` adds from `storyboard` (and drops for live streams).
    */
   get contentData(): MuxContentData {
@@ -146,7 +140,6 @@ export class MuxMedia extends HlsJsMedia implements MuxMediaProps {
       ...(poster && { poster }),
       ...(storyboard && { storyboard }),
     };
-
     if (shallowEqual(this.#contentData, next)) return false;
 
     this.#contentData = next;
@@ -155,13 +148,12 @@ export class MuxMedia extends HlsJsMedia implements MuxMediaProps {
 }
 
 /**
- * Resolve Mux's DRM authoring input into the license servers the HLS layer
- * licenses from. Which engine ends up playing is decided later, and both read
- * `drm`, so a signed Mux source plays either way.
+ * Resolve Mux's DRM authoring input into the license servers the HLS layer licenses from. Which engine ends up playing
+ * is decided later, and both read `drm`, so a signed Mux source plays either way.
  *
- * `token` is Mux's own input and stops here — it names no license server, and a
- * key system is what everything downstream expects to find. Servers the caller
- * named win, key by key, so their own licensing replaces the derived URLs.
+ * `token` is Mux's own input and stops here — it names no license server, and a key system is what everything
+ * downstream expects to find. Servers the caller named win, key by key, so their own licensing replaces the derived
+ * URLs.
  */
 function withMuxDrm(source: MuxSource): Pick<HlsSource, 'drm'> {
   const { token: _token, ...systems } = source.drm ?? {};

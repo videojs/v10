@@ -16,17 +16,16 @@ import { i18nContext } from '../../i18n/context';
 import { I18nController } from '../../i18n/controller';
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
-import { MediaElement } from '../media-element';
+import { UIElement } from '../ui-element';
 
 /**
- * `<media-live-button>` — selects from `live`, `time`, and `buffer` features
- * and composes them into the `LiveButtonMediaState` consumed by
- * `LiveButtonCore`.
+ * `<media-live-button>` — selects from `live`, `time`, and `buffer` features and composes them into the
+ * `LiveButtonMediaState` consumed by `LiveButtonCore`.
  *
- * Doesn't extend `MediaButtonElement` because that base couples a button to
- * a single feature selector; the LiveButton needs three.
+ * Doesn't extend `MediaButtonElement` because that base couples a button to a single feature selector; the LiveButton
+ * needs three.
  */
-export class LiveButtonElement extends MediaElement {
+export class LiveButtonElement extends UIElement {
   static readonly tagName = 'media-live-button';
 
   static override properties: PropertyDeclarationMap = {
@@ -53,9 +52,11 @@ export class LiveButtonElement extends MediaElement {
 
   override connectedCallback(): void {
     super.connectedCallback();
+
     if (this.destroyed) return;
 
     this.#defaultContent ||= !this.textContent?.trim();
+
     if (this.#defaultContent) {
       this.textContent = translateText(LiveButtonCore.defaultText, this.#i18n.value);
     }
@@ -65,6 +66,7 @@ export class LiveButtonElement extends MediaElement {
     const buttonProps = createButton({
       onActivate: () => {
         const media = this.#getMedia();
+
         if (media) this.core.seekToLive(media);
       },
       isDisabled: () => this.disabled || !this.#getMedia(),
@@ -92,7 +94,9 @@ export class LiveButtonElement extends MediaElement {
   getResolvedLabel(): string | undefined {
     const media = this.#getMedia();
     if (!media) return undefined;
+
     const state = this.core.getState();
+
     return translateText(this.core.getLabel(state), this.#i18n.value);
   }
 
@@ -114,6 +118,7 @@ export class LiveButtonElement extends MediaElement {
     this.core.setMedia(media);
     const state = this.core.getState();
     const attrs = this.core.getAttrs(state);
+
     applyElementProps(this, {
       ...attrs,
       'aria-label': translateText(attrs['aria-label'], this.#i18n.value),
@@ -122,15 +127,15 @@ export class LiveButtonElement extends MediaElement {
   }
 
   /**
-   * Compose the LiveButton media state from the three feature slices.
-   * Returns `null` when any are missing so the button stays disabled until
-   * all three features are registered on the player.
+   * Compose the LiveButton media state from the three feature slices. Returns `null` when any are missing so the button
+   * stays disabled until all three features are registered on the player.
    */
   #getMedia(): LiveButtonMediaState | null {
     const live = this.live.value;
     const time = this.time.value;
     const buffer = this.buffer.value;
     if (!live || !time || !buffer) return null;
+
     return {
       currentTime: time.currentTime,
       seek: time.seek,

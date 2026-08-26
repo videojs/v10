@@ -76,7 +76,8 @@ function useLoadedComponent<Props>(
     return () => {
       active = false;
     };
-    // biome-ignore lint/correctness/useExhaustiveDependencies: we're proxying the deps
+    // we're proxying the deps
+    // oxlint-disable-next-line react/exhaustive-deps
   }, deps);
 
   return component;
@@ -84,16 +85,12 @@ function useLoadedComponent<Props>(
 
 type VideoSkinComponentProps = { skin: Skin; styling: Styling; live?: boolean } & VideoSkinProps;
 
-/**
- * Loads the video skin for the given skin/styling. When `live` is true,
- * the `live-video` skin variant is used instead.
- */
+/** Loads the video skin for the given skin/styling. When `live` is true, the `live-video` skin variant is used instead. */
 export function VideoSkinComponent({ skin, styling, live = false, ...props }: VideoSkinComponentProps) {
   const Component = useLoadedComponent(
     () => (live ? loadLiveVideoSkinComponent(skin, styling) : loadVideoSkinComponent(skin, styling)),
     [skin, styling, live]
   );
-
   if (!Component) return null;
 
   return <Component {...props} />;
@@ -103,7 +100,6 @@ type AudioSkinComponentProps = { skin: Skin; styling: Styling } & AudioSkinProps
 
 export function AudioSkinComponent({ skin, styling, ...props }: AudioSkinComponentProps) {
   const Component = useLoadedComponent(() => loadAudioSkinComponent(skin, styling), [skin, styling]);
-
   if (!Component) return null;
 
   return <Component {...props} />;

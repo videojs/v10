@@ -1,20 +1,15 @@
 {
   "name": "site",
-  "type": "module",
   "version": "0.0.1",
+  "type": "module",
   "scripts": {
-    "api-docs": "pnpm --workspace-root exec turbo run api-docs:generate --filter=site",
-    "api-docs:generate": "tsx scripts/api-docs-builder/src/index.ts",
-    "ejected-skins": "tsx scripts/build-ejected-skins.ts",
-    "cdn-manifest": "tsx scripts/build-cdn-manifest.ts",
-    "dev": "NETLIFY_DEV=1 astro dev",
-    "build": "astro build",
+    "api-docs": "vp run site#api-docs:generate",
     "clean": "rimraf --glob dist .netlify 'src/content/generated-*-reference' src/content/cdn-media.json src/content/ejected-skins.json",
     "astro": "astro",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:ui": "vitest --ui",
-    "test:coverage": "vitest --coverage"
+    "test": "vp test run",
+    "test:watch": "vp test",
+    "test:ui": "vp test --ui",
+    "test:coverage": "vp test --coverage"
   },
   "dependencies": {
     "@astrojs/markdown-satteri": "^0.3.4",
@@ -57,11 +52,12 @@
     "simple-git": "^3.36.0",
     "tailwind-merge": "^3.5.0",
     "tailwindcss": "^4.3.3",
-    "vite": "^8.1.5"
+    "vite": "^8.2.2"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.9",
     "@netlify/edge-functions": "^3.0.8",
+    "@oxc-project/types": "0.146.0",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
@@ -75,13 +71,13 @@
     "babel-plugin-react-compiler": "1.0.0",
     "jsdom": "^27.0.0",
     "linkedom": "^0.18.12",
-    "prettier": "^3.8.1",
-    "prettier-plugin-astro": "^0.14.1",
+    "oxc-parser": "0.146.0",
+    "oxc-walker": "^1.1.1",
     "tsx": "^4.23.1",
     "turndown": "^7.2.2",
     "typescript": "npm:@typescript/typescript6@^6.0.0",
-    "typescript-api-extractor": "^1.0.0-alpha.13",
     "vite-plugin-svgr": "^4.5.0",
-    "vitest": "^4.1.10"
+    "vite-plus": "catalog:",
+    "vitest": "catalog:"
   }
 }

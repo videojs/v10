@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 
 import { tryCatch } from '../try-catch';
 
@@ -51,6 +51,7 @@ describe('tryCatch', () => {
     };
 
     const wrapped = tryCatch(fn);
+
     wrapped?.();
 
     expect(consoleSpy).toHaveBeenCalledWith(error);
@@ -74,6 +75,7 @@ describe('tryCatch', () => {
 
     // TypeScript should infer correct types
     const result: string | undefined = wrapped?.('Alice', 30);
+
     expect(result).toBe('Alice is 30');
   });
 });

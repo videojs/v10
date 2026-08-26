@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 
 import {
   getIndicatorVisibilityCoordinator,
@@ -69,6 +69,7 @@ describe('input-action', () => {
     const second = { close: vi.fn() };
 
     const coordinator = getIndicatorVisibilityCoordinator(container);
+
     coordinator.register(first);
     coordinator.register(second);
     coordinator.show(second);
@@ -83,6 +84,7 @@ describe('input-action', () => {
     const host = document.createElement('div');
     const shadow = host.attachShadow({ mode: 'open' });
     const slider = document.createElement('button');
+
     slider.setAttribute('role', 'slider');
     shadow.append(slider);
     container.append(host);
@@ -96,6 +98,7 @@ describe('input-action', () => {
   it('ignores focused sliders outside the scoped container', () => {
     const container = document.createElement('div');
     const slider = document.createElement('button');
+
     slider.setAttribute('role', 'slider');
     document.body.append(container, slider);
 

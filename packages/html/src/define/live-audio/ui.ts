@@ -1,10 +1,18 @@
-// Registers the live audio player, container, and all audio UI custom
+// Registers the container and all live audio UI custom
 // elements without creating a skin element. Use this entry when building an
 // ejected (light DOM) player layout for live HLS / DASH streams.
 
 import { I18nProviderElement } from '../../i18n/provider-element';
-import { MediaContainerElement } from '../../media/container-element';
+import { safeDefine } from '../../registration/safe-define';
+import {
+  defineErrorDialog,
+  defineTime,
+  defineTimeSlider,
+  defineTooltip,
+  defineVolumeSlider,
+} from '../../registration/ui-compounds';
 import { BufferingIndicatorElement } from '../../ui/buffering-indicator/buffering-indicator-element';
+import { ContainerElement } from '../../ui/container/container-element';
 import { GestureElement } from '../../ui/gesture/gesture-element';
 import { HotkeyElement } from '../../ui/hotkey/hotkey-element';
 import { LiveButtonElement } from '../../ui/live-button/live-button-element';
@@ -12,16 +20,9 @@ import { MuteButtonElement } from '../../ui/mute-button/mute-button-element';
 import { PlayButtonElement } from '../../ui/play-button/play-button-element';
 import { PopoverElement } from '../../ui/popover/popover-element';
 import { TextElement } from '../../ui/text/text-element';
-import { safeDefine } from '../safe-define';
-import { defineErrorDialog, defineTime, defineTimeSlider, defineTooltip, defineVolumeSlider } from '../ui/compounds';
-
-// Value import — player.ts body runs before this module's body.
-import { LiveAudioPlayerElement } from './player';
-
 // ── Registration (providers / parents first) ────────────────────────────
 
-safeDefine(LiveAudioPlayerElement);
-safeDefine(MediaContainerElement);
+safeDefine(ContainerElement);
 safeDefine(I18nProviderElement);
 
 // Compound groups.

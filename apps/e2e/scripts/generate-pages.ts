@@ -1,10 +1,9 @@
 /**
  * Generates Vite test pages from PageEntry definitions.
  *
- * Reads the media type configs and page arrays, then writes .ts/.tsx + .html
- * files to `apps/vite/src/pages/`, which is gitignored — every page there comes
- * from this script, including the special ones (ejected skins, captions,
- * background video), which take their own templates rather than the player shell.
+ * Reads the media type configs and page arrays, then writes .ts/.tsx + .html files to `apps/vite/src/pages/`, which is
+ * gitignored — every page there comes from this script, including the special ones (ejected skins, captions, background
+ * video), which take their own templates rather than the player shell.
  *
  * Run: `pnpm --dir apps/e2e generate-pages`
  */
@@ -89,7 +88,7 @@ const MEDIA_TYPES: Record<string, MediaTypeConfig> = {
     imports: ['@videojs/html/media/shaka-video'],
     attrs: 'playsinline',
     hasStoryboard: false,
-    hasPoster: false,
+    hasPoster: true,
     isAudio: false,
   },
   audio: {
@@ -172,6 +171,10 @@ function htmlShell(title: string, scriptSrc: string): string {
 `;
 }
 
+function resourceHasPoster(resource: string): boolean {
+  return resource === 'mp4' || resource === 'hlsTs' || resource === 'hlsFmp4';
+}
+
 function htmlVideoPage(config: MediaTypeConfig, resource: string, imports: string[]): string {
   const allImports = [...imports, `import { MEDIA } from '../resources';`].join('\n');
 
@@ -179,9 +182,10 @@ function htmlVideoPage(config: MediaTypeConfig, resource: string, imports: strin
     ? `\n        <track kind="metadata" label="thumbnails" src="\${MEDIA.${resource}.storyboard}" default />`
     : '';
 
-  const poster = config.hasPoster
-    ? `\n      <img slot="poster" src="\${MEDIA.${resource}.poster}" alt="Video poster" />`
-    : '';
+  const poster =
+    config.hasPoster && resourceHasPoster(resource)
+      ? `\n      <img slot="poster" src="\${MEDIA.${resource}.poster}" alt="Video poster" />`
+      : '';
 
   const attrs = config.attrs ? ` ${config.attrs}` : '';
 
@@ -229,7 +233,7 @@ function reactVideoPage(media: string, resource: string, config: MediaTypeConfig
     ? `import { Video, VideoPlayer, VideoSkin } from '@videojs/react/video';`
     : `import { ${reactMedia.component} } from '${reactMedia.importPath}';\nimport { VideoPlayer, VideoSkin } from '@videojs/react/video';`;
 
-  const posterProp = config.hasPoster ? ` poster={MEDIA.${resource}.poster}` : '';
+  const posterProp = config.hasPoster && resourceHasPoster(resource) ? ` poster={MEDIA.${resource}.poster}` : '';
   const storyboardTrack = config.hasStoryboard
     ? `\n          <track kind="metadata" label="thumbnails" src={MEDIA.${resource}.storyboard} default />`
     : '';
@@ -287,15 +291,12 @@ createRoot(document.getElementById('root')!).render(<App />);
 // ---------------------------------------------------------------------------
 
 /**
- * The SPF background-video Media, alone rather than inside a player: the
- * composition subscribes to no store features and has no controls, so a skin
- * would only add moving parts to what the spec is measuring.
+ * The SPF background-video Media, alone rather than inside a player: the composition subscribes to no store features
+ * and has no controls, so a skin would only add moving parts to what the spec is measuring.
  *
- * `?src=` picks the source, so one page serves every shape
- * `spf-background-video.spec.ts` drives — playable, MPEG-TS, encrypted,
- * audio-only — and a test can compare two of them without a page each. Assigned
- * as a property rather than interpolated into markup, since the DRM source
- * carries a signed-URL query string.
+ * `?src=` picks the source, so one page serves every shape `spf-background-video.spec.ts` drives — playable, MPEG-TS,
+ * encrypted, audio-only — and a test can compare two of them without a page each. Assigned as a property rather than
+ * interpolated into markup, since the DRM source carries a signed-URL query string.
  */
 function backgroundVideoPage(config: MediaTypeConfig, resource: string): string {
   return `${config.imports.map((imp) => `import '${imp}';`).join('\n')}
@@ -316,11 +317,10 @@ document.getElementById('root')!.append(media);
 }
 
 /**
- * The React counterpart, and the only place `onError` can be observed: the
- * component hands out no reference to its Media, so what a consumer sees is
- * whatever React's own event plumbing delivers. Failures are counted onto
- * `window` rather than rendered — the assertion is that the prop fired at all,
- * since the condition behind it isn't reachable from here by design.
+ * The React counterpart, and the only place `onError` can be observed: the component hands out no reference to its
+ * Media, so what a consumer sees is whatever React's own event plumbing delivers. Failures are counted onto `window`
+ * rather than rendered — the assertion is that the prop fired at all, since the condition behind it isn't reachable
+ * from here by design.
  */
 function reactBackgroundVideoPage(media: string, resource: string): string {
   const reactMedia = REACT_MEDIA[media];
@@ -427,7 +427,7 @@ video.innerHTML = \`<track kind="metadata" label="thumbnails" src="\${MEDIA.${re
 poster.src = MEDIA.${resource}.poster;
 poster.alt = 'Video poster';
 
-await import('@videojs/html/video/ui');
+await import('@videojs/html/video/skin');
 `;
 }
 
@@ -445,52 +445,34 @@ createRoot(document.getElementById('root')!).render(<App />);
 }
 
 function sourceHtmlPage(resource: string): string {
-  const generatedRoot = '../../../../../../packages/html/src/__generated__/skins/default-video';
+  const source = '../../../../../../packages/skins/vjsc/skins/default-video/skin.tsx';
 
   return `import '@videojs/html/video/player';
-import { skin } from '${generatedRoot}/skin';
-import styles from '${generatedRoot}/styles/styles.css?inline';
+import { DefaultVideoSkin } from '${source}?style=css&target=html&skin=default-video';
 import { MEDIA } from '../resources';
 
-class SourceVideoSkinElement extends HTMLElement {
-  constructor() {
-    super();
-    const root = this.attachShadow({ mode: 'open' });
-    root.innerHTML = \`<style>\${styles}</style>\${skin}\`;
-  }
-}
+const skin = String(
+  DefaultVideoSkin({
+    'data-source-skin': '',
+    poster: MEDIA.${resource}.poster,
+    style: 'display: block; max-width: 800px; aspect-ratio: 16/9',
+  })
+).replace(
+  '<slot></slot>',
+  \`<video src="\${MEDIA.${resource}.url}" playsinline muted crossorigin="anonymous"></video>\`
+);
 
-customElements.define('source-video-skin', SourceVideoSkinElement);
-
-const html = String.raw;
-
-document.getElementById('root')!.innerHTML = html\`
-  <video-player poster="\${MEDIA.${resource}.poster}">
-    <source-video-skin
-      data-source-skin
-      style="display: block; max-width: 800px; aspect-ratio: 16/9"
-    >
-      <img
-        slot="poster"
-        alt=""
-        style="background: url('\${MEDIA.${resource}.poster}') var(--media-object-position, center) / contain no-repeat"
-      >
-      <video src="\${MEDIA.${resource}.url}" playsinline muted crossorigin="anonymous"></video>
-    </source-video-skin>
-  </video-player>
-\`;
+document.getElementById('root')!.innerHTML = \`<video-player poster="\${MEDIA.${resource}.poster}">\${skin}</video-player>\`;
 `;
 }
 
 function sourceReactPage(resource: string): string {
-  const generatedRoot = '../../../../../../packages/react/src/__generated__/skins/default-video';
+  const source = '../../../../../../packages/skins/vjsc/skins/default-video/skin.tsx';
 
-  return `import { createPlayer } from '@/player/create-player';
-import { Video } from '@/media/video';
-import { videoFeatures } from '@videojs/core/dom';
+  return `import { createPlayer } from '@videojs/react';
+import { Video, videoFeatures } from '@videojs/react/video';
 import { createRoot } from 'react-dom/client';
-import { DefaultVideoSkin } from '${generatedRoot}/skin';
-import '${generatedRoot}/styles/styles.css';
+import { DefaultVideoSkin } from '${source}?style=css&target=react&skin=default-video';
 import { MEDIA } from '../resources';
 
 const { Player } = createPlayer({ features: videoFeatures });
@@ -500,17 +482,7 @@ function App() {
     <Player poster={MEDIA.${resource}.poster}>
       <DefaultVideoSkin
         data-source-skin
-        renderPoster={
-          <img
-            alt=""
-            style={{
-              backgroundImage: \`url("\${MEDIA.${resource}.poster}")\`,
-              backgroundPosition: 'var(--media-object-position, center)',
-              backgroundRepeat: 'no-repeat',
-              backgroundSize: 'contain',
-            }}
-          />
-        }
+        poster={MEDIA.${resource}.poster}
         style={{ maxWidth: 800, aspectRatio: '16/9' }}
       >
         <Video src={MEDIA.${resource}.url} playsInline muted crossOrigin="anonymous" />
@@ -677,6 +649,7 @@ function getImports(page: PageDef, config: MediaTypeConfig): string[] {
   if (page.category === 'cdn') {
     const cdnImports = CDN_IMPORTS[page.media];
     if (!cdnImports) throw new Error(`No CDN imports for media type: ${page.media}`);
+
     return cdnImports.map((i) => `import '${i}';`);
   }
 
@@ -718,6 +691,7 @@ function generatePage(page: PageDef): { ts: string; html: string; ext: string } 
     ts = config.isAudio ? reactAudioPage(page.media, page.resource) : reactVideoPage(page.media, page.resource, config);
   } else {
     const imports = getImports(page, config);
+
     ts = config.isAudio ? htmlAudioPage(config, page.resource, imports) : htmlVideoPage(config, page.resource, imports);
   }
 
@@ -728,10 +702,12 @@ function generatePage(page: PageDef): { ts: string; html: string; ext: string } 
 
 function generateIndexHtml(pages: PageDef[]): string {
   const noCategory = (p: PageDef) => !p.category;
+
   const htmlVideo = pages.filter((p) => p.framework === 'html' && !MEDIA_TYPES[p.media]?.isAudio && noCategory(p));
   const htmlAudio = pages.filter((p) => p.framework === 'html' && MEDIA_TYPES[p.media]?.isAudio && noCategory(p));
   const reactVideo = pages.filter((p) => p.framework === 'react' && !MEDIA_TYPES[p.media]?.isAudio && noCategory(p));
   const reactAudio = pages.filter((p) => p.framework === 'react' && MEDIA_TYPES[p.media]?.isAudio && noCategory(p));
+
   const cdn = pages.filter((p) => p.category === 'cdn');
   const ejected = pages.filter((p) => p.category?.startsWith('ejected'));
   const captions = pages.filter((p) => p.category === 'captions');
@@ -800,6 +776,7 @@ for (const page of PAGES) {
 
 // Generate index.html in src/ (not pages/)
 const srcDir = resolve(OUT_DIR, '..');
+
 writeFileSync(resolve(srcDir, 'index.html'), generateIndexHtml(PAGES));
 
 console.log(`[generate-pages] Generated ${count} pages + index.html`);

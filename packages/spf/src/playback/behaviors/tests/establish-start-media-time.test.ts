@@ -1,4 +1,5 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
+
 import { signal } from '../../../core/signals/primitives';
 import type {
   AudioTrack,
@@ -139,6 +140,7 @@ describe('establishStartMediaTime', () => {
 
     await vi.waitFor(() => {
       const presentation = state.presentation.get();
+
       expect(trackStartDate(presentation, 'a1')).toBe(ANCHOR);
       expect(trackStartDate(presentation, 't1')).toBe(ANCHOR);
       // Unselected ABR rungs too — a track selected later resolves already anchored.
@@ -240,10 +242,12 @@ describe('establishStartMediaTime', () => {
     });
 
     const reactor = setupEstablish(state);
+
     await vi.waitFor(() => expect(trackStartDate(state.presentation.get(), 'a1')).toBe(ANCHOR));
 
     // Source change: through unresolved, then a new presentation with a new anchor.
     const newAnchor = ANCHOR + 3600;
+
     state.presentation.set(undefined);
     state.presentation.set({
       ...makePresentation({ video: [resolveVideo(videoShell('v1'), newAnchor)], audio: [audioShell] }),
@@ -261,21 +265,25 @@ describe('gateFirstParseOnAnchor', () => {
 
   it('is open for the reference track itself (its local placement IS the presentation timeline)', () => {
     const presentation = makePresentation({ video: [videoShell('v1')], audio: [audioShell] });
+
     expect(gateFirstParseOnAnchor(presentation, ctx, 'v1')).toBe(true);
   });
 
   it('is open when nothing is selected (no reference to wait for)', () => {
     const presentation = makePresentation({ video: [videoShell('v1')] });
+
     expect(gateFirstParseOnAnchor(presentation, {}, 'v1')).toBe(true);
   });
 
   it('holds a non-reference track while the reference is unresolved', () => {
     const presentation = makePresentation({ video: [videoShell('v1')], audio: [audioShell] });
+
     expect(gateFirstParseOnAnchor(presentation, ctx, 'a1')).toBe(false);
   });
 
   it('opens for a non-reference track when the reference resolved without PDT', () => {
     const presentation = makePresentation({ video: [resolveVideo(videoShell('v1'))], audio: [audioShell] });
+
     expect(gateFirstParseOnAnchor(presentation, ctx, 'a1')).toBe(true);
   });
 
@@ -284,17 +292,20 @@ describe('gateFirstParseOnAnchor', () => {
       video: [resolveVideo(videoShell('v1'), ANCHOR)],
       audio: [audioShell],
     });
+
     expect(gateFirstParseOnAnchor(unstamped, ctx, 'a1')).toBe(false);
 
     const stamped = makePresentation({
       video: [resolveVideo(videoShell('v1'), ANCHOR)],
       audio: [{ ...audioShell, startDate: ANCHOR }],
     });
+
     expect(gateFirstParseOnAnchor(stamped, ctx, 'a1')).toBe(true);
   });
 
   it('never deadlocks on a dangling reference id', () => {
     const presentation = makePresentation({ audio: [audioShell] });
+
     expect(gateFirstParseOnAnchor(presentation, { selectedVideoTrackId: 'ghost' }, 'a1')).toBe(true);
   });
 
@@ -394,6 +405,7 @@ describe('deriveSharedMinStartMediaTime', () => {
       video: { timescale: 90000, baseMediaDecodeTime: 90000 * NEAR_ZERO_ORIGIN_THRESHOLD, segmentStartTime: 0 },
       audio: { timescale: 48000, baseMediaDecodeTime: 48000 * NEAR_ZERO_ORIGIN_THRESHOLD, segmentStartTime: 0 },
     };
+
     expect(deriveSharedMinStartMediaTime(atThreshold, sel)).toEqual({
       video: NEAR_ZERO_ORIGIN_THRESHOLD,
       audio: NEAR_ZERO_ORIGIN_THRESHOLD,

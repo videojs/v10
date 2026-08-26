@@ -7,7 +7,7 @@ import FeatureReference from "@/components/docs/api-reference/FeatureReference.a
 import DocsLink from "@/components/docs/DocsLink.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 
-Tracks playback position and duration.
+Tracks playback position and duration. During live playback, the browser may report `Infinity` as the duration. The player reports the end of the last available <DocsLink slug="reference/feature-buffer">seekable range</DocsLink> instead, so the value stays finite and moves forward with the stream. This is the newest available time, not the length of the rewindable window; its first available time may be greater than zero. Use <DocsLink slug="reference/feature-live">live state</DocsLink> or <DocsLink slug="reference/feature-stream-type">stream type</DocsLink> to check whether the source is live.
 
 <FeatureReference feature="time" />
 
@@ -40,13 +40,13 @@ function TimeDisplay() {
 
 <FrameworkCase frameworks={["html"]}>
 ```ts title="time-display.ts"
-import { createPlayer, MediaElement, selectTime } from '@videojs/html';
+import { createPlayer, UIElement, selectTime } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
 
-const { PlayerController, context } = createPlayer({ features: videoFeatures });
+const { PlayerController } = createPlayer({ features: videoFeatures });
 
-class TimeDisplay extends MediaElement {
-  readonly #time = new PlayerController(this, context, selectTime);
+class TimeDisplay extends UIElement {
+  readonly #time = new PlayerController(this, selectTime);
 }
 ```
 </FrameworkCase>

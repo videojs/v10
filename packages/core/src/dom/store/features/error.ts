@@ -1,6 +1,7 @@
 import type { MediaErrorState } from '@videojs/media';
 import { isMediaErrorCapable } from '@videojs/media';
 import { listen } from '@videojs/utils/dom';
+
 import { definePlayerFeature } from '../../feature';
 
 export const errorFeature = definePlayerFeature({
@@ -14,7 +15,6 @@ export const errorFeature = definePlayerFeature({
 
   attach({ target, signal, set }) {
     const { media } = target;
-
     if (!isMediaErrorCapable(media)) return;
 
     const syncError = () => set({ error: media.error });

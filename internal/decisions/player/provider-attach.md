@@ -9,7 +9,7 @@ date: 2026-03-13
 
 The provider (`<video-player>` / React `Provider`) owns the `store.attach()` lifecycle. The container (`<media-container>` / React `Container`) no longer discovers media or calls `store.attach()` — it registers itself with the provider via context and serves only as a layout reference element.
 
-Media and container elements register themselves with the provider through attach contexts — setter callbacks that flow downward from provider to descendants. The provider calls `store.attach({ media, container })` when it has a media element. As a fallback for plain `<video>`/`<audio>` elements that can't consume context, the provider queries its subtree.
+Media and container elements register themselves with the provider through attach contexts. Each registration returns an identity-specific release callback, so an older element cannot clear a newer registration when it disconnects. The provider calls `store.attach({ media, container })` when both are available. Plain `<video>` and `<audio>` descendants are tracked with a `MutationObserver` because they cannot consume context.
 
 ## Context
 
@@ -27,7 +27,7 @@ This split created friction:
 
 - **Keep attach in the container** — Leave the current architecture. Rejected because it perpetuates the split lifecycle and forces container presence for attachment.
 
-- **Move discovery to the provider via its own DOM queries** — The provider watches its subtree for media elements. Rejected as the primary mechanism because the media element is nested deep (provider > skin > container shadow DOM), making reliable DOM queries fragile. Used only as a fallback for plain `<video>`/`<audio>`.
+- **Move all discovery to provider DOM queries** — The provider watches its subtree for every kind of media element. Rejected as the primary mechanism because custom media can be nested across component boundaries, making reliable DOM queries fragile. DOM observation is used only for plain `<video>`/`<audio>`.
 
 - **Event-based registration** — Media elements dispatch a bubbling event that the provider catches. Simpler than context but doesn't handle disconnection cleanly and requires the provider to be in the DOM path (shadow DOM boundaries block event bubbling unless composed).
 
@@ -43,6 +43,6 @@ This split created friction:
 
 ### Trade-offs
 
-- **Provider mixin grows in complexity.** It gains attach lifecycle management, fallback media discovery, and two additional context providers. This is manageable since the logic is straightforward and consolidates previously scattered responsibilities.
+- **Player element grows in complexity.** It owns attach lifecycle management, native media discovery, and two additional context providers. This is manageable because it consolidates previously scattered responsibilities in the element that already owns the store.
 
-- **Fallback query is a pragmatic compromise.** Plain `<video>` elements can't consume context, so the provider falls back to `querySelector`. This means two discovery paths exist, but the fallback is simple and predictable.
+- **DOM observation is a pragmatic compromise.** Plain `<video>` and `<audio>` elements can't consume context, so the provider observes its subtree for them. This means two discovery paths exist, but native elements continue to work when added, removed, or replaced after connection.

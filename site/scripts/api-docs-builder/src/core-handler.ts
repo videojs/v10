@@ -1,147 +1,115 @@
-import * as ts from 'typescript';
-import * as tae from 'typescript-api-extractor';
+import type { Expression } from 'oxc-parser';
+
 import { formatProperties } from './formatter.js';
+import type { OxcProject, SourceFile } from './oxc-project.js';
+import {
+  expressionText,
+  getJSDocDescription,
+  staticName,
+  unwrapExpression,
+  unwrapObjectExpression,
+} from './oxc-project.js';
 import type { CoreExtraction, ExtractedProp } from './types.js';
 
-/**
- * Extract Props, State, and defaultProps from a core component file.
- *
- * Looks for patterns like:
- * - interface PlayButtonProps { ... }
- * - interface PlayButtonState { ... }
- * - class PlayButtonCore { static defaultProps = { ... } }
- */
-export function extractCore(filePath: string, program: ts.Program, componentName: string): CoreExtraction | null {
-  const ast = tae.parseFromProgram(filePath, program);
+/** Extract Props, State, and defaultProps from a core component file. */
+export function extractCore(filePath: string, project: OxcProject, componentName: string): CoreExtraction | null {
+  const propsDeclaration = project.resolveName(filePath, `${componentName}Props`);
+  const stateDeclaration = project.resolveName(filePath, `${componentName}State`);
+  if (!propsDeclaration && !stateDeclaration) return null;
 
-  // Find the Props interface (e.g., PlayButtonProps)
-  const propsExport = ast.exports.find((exp) => exp.name === `${componentName}Props`);
-
-  // Find the State interface (e.g., PlayButtonState)
-  const stateExport = ast.exports.find((exp) => exp.name === `${componentName}State`);
-
-  if (!propsExport && !stateExport) {
-    return null;
-  }
-
-  // Extract props
   let props: ExtractedProp[] = [];
   let description: string | undefined;
 
-  if (propsExport?.type instanceof tae.ObjectNode) {
-    const formatted = formatProperties(propsExport.type.properties, ast.exports);
-    props = Object.entries(formatted).map(([name, def]) => ({
-      name,
-      ...def,
-    }));
-    description = propsExport.documentation?.description;
+  const propsName =
+    propsDeclaration && 'id' in propsDeclaration.declaration ? staticName(propsDeclaration.declaration.id) : undefined;
+
+  if (propsDeclaration && propsName) {
+    const type = referenceType(propsName, propsDeclaration.declaration.start, propsDeclaration.declaration.end);
+
+    props = Object.entries(
+      formatProperties(project, project.interfaceMembers({ file: propsDeclaration.file, type }))
+    ).map(([name, definition]) => ({ name, ...definition }));
+    description = getJSDocDescription(propsDeclaration.file, propsDeclaration.declaration);
   }
 
-  // Extract state
   let state: ExtractedProp[] = [];
-  if (stateExport?.type instanceof tae.ObjectNode) {
-    const formatted = formatProperties(stateExport.type.properties, ast.exports);
-    state = Object.entries(formatted).map(([name, def]) => ({
-      name,
-      ...def,
-    }));
-  }
 
-  // Extract defaultProps from the Core class
-  const defaultProps = extractDefaultProps(filePath, program, componentName);
+  const stateName =
+    stateDeclaration && 'id' in stateDeclaration.declaration ? staticName(stateDeclaration.declaration.id) : undefined;
+
+  if (stateDeclaration && stateName) {
+    const type = referenceType(stateName, stateDeclaration.declaration.start, stateDeclaration.declaration.end);
+
+    state = Object.entries(
+      formatProperties(project, project.interfaceMembers({ file: stateDeclaration.file, type }))
+    ).map(([name, definition]) => ({ name, ...definition }));
+  }
 
   return {
-    description,
+    ...(description ? { description } : {}),
     props,
     state,
-    defaultProps,
+    defaultProps: extractDefaultProps(filePath, project, componentName),
   };
 }
 
-/**
- * Extract defaultProps from the Core class static property.
- *
- * Looks for: static readonly defaultProps = { label: '', disabled: false }
- */
+/** Extract the authored values from a component core's static defaultProps object. */
 export function extractDefaultProps(
   filePath: string,
-  program: ts.Program,
+  project: OxcProject,
   componentName: string
 ): Record<string, string> {
-  const sourceFile = program.getSourceFile(filePath);
-  if (!sourceFile) return {};
+  const resolved = project.classDeclaration(filePath, `${componentName}Core`);
+  if (!resolved || resolved.declaration.type !== 'ClassDeclaration') return {};
 
   const defaultProps: Record<string, string> = {};
 
-  const visit = (node: ts.Node) => {
-    // Look for class declaration
-    if (ts.isClassDeclaration(node) && node.name?.text === `${componentName}Core`) {
-      for (const member of node.members) {
-        // Look for static property named defaultProps
-        if (
-          ts.isPropertyDeclaration(member) &&
-          member.name &&
-          ts.isIdentifier(member.name) &&
-          member.name.text === 'defaultProps' &&
-          member.modifiers?.some((m) => m.kind === ts.SyntaxKind.StaticKeyword) &&
-          member.initializer
-        ) {
-          // Parse the object literal
-          if (ts.isObjectLiteralExpression(member.initializer)) {
-            for (const prop of member.initializer.properties) {
-              if (ts.isPropertyAssignment(prop) && ts.isIdentifier(prop.name)) {
-                const propName = prop.name.text;
-                const propValue = getPropertyValue(prop.initializer, sourceFile);
-                if (propValue !== undefined) {
-                  defaultProps[propName] = propValue;
-                }
-              }
-            }
-          }
-        }
-      }
+  for (const member of resolved.declaration.body.body) {
+    if (member.type !== 'PropertyDefinition' || !member.static || staticName(member.key) !== 'defaultProps') continue;
+
+    const object = unwrapObjectExpression(member.value);
+    if (!object) continue;
+
+    for (const property of object.properties) {
+      if (property.type !== 'Property' || property.kind !== 'init') continue;
+
+      const name = staticName(property.key);
+      if (!name) continue;
+
+      const value = getPropertyValue(property.value, resolved.file);
+
+      if (value !== undefined) defaultProps[name] = value;
     }
-
-    ts.forEachChild(node, visit);
-  };
-
-  visit(sourceFile);
+  }
 
   return defaultProps;
 }
 
-/**
- * Get a string representation of a property value.
- */
-export function getPropertyValue(node: ts.Expression, sourceFile: ts.SourceFile): string | undefined {
-  if (ts.isStringLiteral(node)) {
-    return `'${node.text}'`;
+/** Get the display form of an authored default value. */
+export function getPropertyValue(node: Expression, file: SourceFile): string | undefined {
+  const expression = unwrapExpression(node);
+
+  if (expression.type === 'Literal') {
+    if (typeof expression.value === 'string') return `'${expression.value.replaceAll("'", "\\'")}'`;
+
+    if (expression.value === null) return 'null';
+
+    if (typeof expression.value === 'number' || typeof expression.value === 'boolean') return String(expression.value);
   }
 
-  if (ts.isNumericLiteral(node)) {
-    return node.text;
-  }
+  if (expression.type === 'ArrayExpression' && expression.elements.length === 0) return '[]';
 
-  if (node.kind === ts.SyntaxKind.TrueKeyword) {
-    return 'true';
-  }
+  if (expression.type === 'ObjectExpression' && expression.properties.length === 0) return '{}';
 
-  if (node.kind === ts.SyntaxKind.FalseKeyword) {
-    return 'false';
-  }
+  return expressionText(file, expression);
+}
 
-  if (node.kind === ts.SyntaxKind.NullKeyword) {
-    return 'null';
-  }
-
-  if (ts.isArrayLiteralExpression(node) && node.elements.length === 0) {
-    return '[]';
-  }
-
-  if (ts.isObjectLiteralExpression(node) && node.properties.length === 0) {
-    return '{}';
-  }
-
-  // For more complex expressions, get the source text
-  return node.getText(sourceFile);
+function referenceType(name: string, start: number, end: number): import('oxc-parser').TSTypeReference {
+  return {
+    type: 'TSTypeReference',
+    typeName: { type: 'Identifier', name, start, end },
+    typeArguments: null,
+    start,
+    end,
+  };
 }

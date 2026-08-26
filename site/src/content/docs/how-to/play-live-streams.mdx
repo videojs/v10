@@ -1,0 +1,176 @@
+---
+title: 'Play live streams'
+description: 'Play live streams with live-edge tracking, DVR windows, and stream-type detection.'
+---
+
+import DocsLink from '@/components/docs/DocsLink.astro';
+import CustomUiNote from '@/components/docs/CustomUiNote.astro';
+import FrameworkCase from '@/components/docs/FrameworkCase.astro';
+
+Play live streams: show a live badge, jump to the live edge, and support DVR windows when the stream allows scrubbing back.
+
+<CustomUiNote />
+
+## Recommended approach
+
+Use the live feature bundle with a streaming media element, and give users a `LiveButton`: it shows whether playback is at the live edge and seeks back to it when activated.
+
+<FrameworkCase frameworks={["react"]}>
+
+```tsx
+import { Container, LiveButton } from '@videojs/react';
+import { LiveVideoPlayer } from '@videojs/react/live-video';
+import { HlsJsVideo } from '@videojs/react/media/hlsjs-video';
+
+export default function App() {
+  return (
+    <LiveVideoPlayer>
+      <Container>
+        <HlsJsVideo src="https://your-stream.example.com/live.m3u8" autoPlay muted playsInline />
+        <LiveButton render={(props, state) => <button {...props}>{state.liveEdge ? 'LIVE' : 'Go live'}</button>} />
+      </Container>
+    </LiveVideoPlayer>
+  );
+}
+```
+
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+
+```html
+<live-video-player>
+  <media-container>
+    <hlsjs-video src="https://your-stream.example.com/live.m3u8" autoplay muted playsinline></hlsjs-video>
+    <media-live-button></media-live-button>
+  </media-container>
+</live-video-player>
+<script type="module">
+  import '@videojs/html/live-video/player';
+  import '@videojs/html/media/hlsjs-video';
+  import '@videojs/html/live-video/ui';
+</script>
+```
+
+</FrameworkCase>
+
+The `liveVideoFeatures` bundle mirrors <DocsLink slug="concepts/features">`videoFeatures`</DocsLink> but adds the live feature and drops playback rate (not meaningful for live), quality selection, and audio-track selection. The live presets also ship skins without duration and current-time displays.
+
+Both bundles are plain arrays, so extending one is a spread:
+
+<FrameworkCase frameworks={["react"]}>
+
+```tsx
+import { createPlayer, streamTypeFeature } from '@videojs/react';
+import { liveVideoFeatures } from '@videojs/react/live-video';
+
+const { Player } = createPlayer({ features: [...liveVideoFeatures, streamTypeFeature] });
+```
+
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+
+```ts
+import { createPlayer, streamTypeFeature } from '@videojs/html';
+import { liveVideoFeatures } from '@videojs/html/live-video';
+
+const { ProviderMixin } = createPlayer({ features: [...liveVideoFeatures, streamTypeFeature] });
+```
+
+</FrameworkCase>
+
+## How it works
+
+Two features describe liveness:
+
+- The <DocsLink slug="reference/feature-stream-type">stream type feature</DocsLink> reports `streamType`: `'live'`, `'on-demand'`, or `'unknown'`. Streaming media derives it from manifest metadata; plain media elements fall back to duration-based detection. `liveVideoFeatures` does not include it; add `streamTypeFeature` to the player's features when you need `streamType`.
+- The <DocsLink slug="reference/feature-live">live feature</DocsLink> reports two values:
+  - `liveEdgeStart` is where "live" begins on the timeline. When the playhead is at or past this time, the viewer is watching live; behind it, they're watching earlier moments of the stream.
+  - `targetLiveWindow` is how far back the stream lets viewers rewind. `0` means a plain live stream that stays at the edge. `Infinity` means full DVR: rewind as far as the recording goes. `NaN` means the stream isn't live, or the player doesn't know yet.
+
+The <DocsLink slug="reference/feature-time">time feature</DocsLink> adjusts for live playback: `duration` reports the live edge (the end of the seekable range) and keeps growing as the stream continues.
+
+LiveButton reads this state: it renders as an active "go to live" control while playback is behind the edge, seeks to the edge on activation, and goes inactive at the edge.
+
+## Availability and constraints
+
+- `liveEdgeStart` and `targetLiveWindow` come from media that implements the live capability — the hls.js-based media elements. With plain media elements, stream type falls back to duration-based detection and `liveEdgeStart` stays `NaN`.
+- Live playback drifts behind the edge when the network stalls or the tab is backgrounded. Always give users a path back to the edge.
+- Seeking makes sense only for DVR streams (`targetLiveWindow` of `Infinity`). For standard-latency streams, omit the time slider.
+- Playback rate control isn't meaningful for live; `liveVideoFeatures` omits it.
+
+## Common variations
+
+### DVR: let users scrub back
+
+For streams with a DVR window, keep a <DocsLink slug="reference/time-slider">TimeSlider</DocsLink> in the UI. The slider tracks the sliding window automatically because `duration` follows the live edge.
+
+### Switch UI by stream type
+
+Render live or on-demand controls from `streamType` when one player handles both kinds of content. Add `streamTypeFeature` to the player's features; `liveVideoFeatures` does not include it:
+
+<FrameworkCase frameworks={["react"]}>
+
+The preset `LiveVideoPlayer` comes with a fixed feature set. To change it, build the player yourself with <DocsLink slug="reference/create-player">`createPlayer`</DocsLink> — the escape hatch for custom feature sets:
+
+```tsx
+import { Container, createPlayer, LiveButton, streamTypeFeature } from '@videojs/react';
+import { liveVideoFeatures } from '@videojs/react/live-video';
+import { HlsJsVideo } from '@videojs/react/media/hlsjs-video';
+
+const { Player, usePlayer } = createPlayer({ features: [...liveVideoFeatures, streamTypeFeature] });
+
+function LiveBadge() {
+  const streamType = usePlayer((s) => s.streamType);
+  if (streamType !== 'live') return null;
+
+  return <LiveButton render={(props, state) => <button {...props}>{state.liveEdge ? 'LIVE' : 'Go live'}</button>} />;
+}
+
+export default function App() {
+  return (
+    <Player>
+      <Container>
+        <HlsJsVideo src="https://your-stream.example.com/live.m3u8" autoPlay muted playsInline />
+        <LiveBadge />
+      </Container>
+    </Player>
+  );
+}
+```
+
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+
+`<media-live-button>` selects from the live, time, and buffer features and reflects live state. To swap larger parts of the UI on `streamType`, build a provider with <DocsLink slug="reference/html-create-player">createPlayer</DocsLink> and add `streamTypeFeature` to its features (`<live-video-player>` uses `liveVideoFeatures`, which does not include it), then read `streamType` from the player store through the <DocsLink slug="reference/player-controller">player controller</DocsLink>.
+
+</FrameworkCase>
+
+## Troubleshooting
+
+### The live badge never activates
+
+`streamType` isn't `'live'`. Confirm the player's features include `streamTypeFeature` (`liveVideoFeatures` does not include it, so `streamType` reads as `undefined`), the source is a live manifest, and it plays through a live-capable media element such as <DocsLink slug="reference/hlsjs-video">HlsJsVideo</DocsLink>.
+
+### Playback keeps falling behind the edge
+
+Network throughput can't sustain the stream, or the tab was backgrounded. LiveButton returns users to the edge; for lower drift, review the stream's latency configuration on the encoder side.
+
+### The time slider behaves oddly on a live stream
+
+Standard-latency live streams have no meaningful seek range. Show the slider only for DVR streams (`targetLiveWindow` of `Infinity`).
+
+## Related components
+
+- <DocsLink slug="reference/time-slider">Time slider</DocsLink>
+- <DocsLink slug="reference/buffering-indicator">Buffering indicator</DocsLink>
+
+## Related API
+
+- <DocsLink slug="reference/feature-live">Live feature</DocsLink>
+- <DocsLink slug="reference/feature-stream-type">Stream type feature</DocsLink>
+- <DocsLink slug="reference/feature-time">Time feature</DocsLink>
+- <DocsLink slug="reference/hlsjs-video">HlsJsVideo</DocsLink>
+
+## Related guides
+
+- <DocsLink slug="concepts/media-sources">Media sources</DocsLink>

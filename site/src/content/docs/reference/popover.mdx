@@ -6,6 +6,8 @@ description: A popover component for displaying contextual content anchored to a
 ---
 
 import ComponentReference from "@/components/docs/api-reference/ComponentReference.astro";
+import ComponentImports from "@/components/docs/api-reference/ComponentImports.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 import StyleCase from "@/components/docs/StyleCase.astro";
 import Demo from "@/components/docs/demos/Demo.astro";
@@ -20,6 +22,10 @@ import BasicUsageDemoHtml from "@/components/docs/demos/popover/html/css/BasicUs
 import basicUsageHtml from "@/components/docs/demos/popover/html/css/BasicUsage.html?raw";
 import basicUsageHtmlCss from "@/components/docs/demos/popover/html/css/BasicUsage.css?raw";
 import basicUsageHtmlTs from "@/components/docs/demos/popover/html/css/BasicUsage.ts?raw";
+
+## Import
+
+<ComponentImports component="Popover" html="popover" />
 
 ## Anatomy
 
@@ -49,6 +55,8 @@ import basicUsageHtmlTs from "@/components/docs/demos/popover/html/css/BasicUsag
 Displays contextual content anchored to a trigger element. By default, opens on click and closes when clicking outside, pressing <kbd>Escape</kbd>, or when the trigger loses focus.
 
 Set `openOnHover` to open on pointer hover instead of click. Use `delay` and `closeDelay` to control timing for hover interactions.
+
+Popovers inside a <DocsLink slug="reference/player-container">Container</DocsLink> join its popup group. Opening one closes any other popover or root menu that is open in the same container. A popover outside the container still opens and closes normally, but it is not coordinated with that group.
 
 The `side` and `align` props control the preferred popup placement relative to the trigger. When the preferred side overflows the positioning boundary, the popup uses the opposite side if it has more space.
 

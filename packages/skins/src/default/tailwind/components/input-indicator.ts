@@ -1,8 +1,14 @@
 import { cn } from '@videojs/utils/style';
 
+export const inputIndicator = cn(
+  'absolute inset-0 pointer-events-none',
+  'grid grid-cols-3 items-center justify-items-center',
+  'text-white'
+);
+
 export const topIndicatorRoot = cn(
   'group/input-indicator',
-  '[--surface-background-color:oklch(0_0_0/0.25)]',
+  '[--media-surface-background-color:oklch(0_0_0/0.25)]',
   'absolute top-3 rounded-full origin-top pointer-events-none',
   'text-inherit font-medium',
   'duration-100 ease-out',
@@ -21,8 +27,8 @@ export const topIndicatorRoot = cn(
   'pointer-fine:motion-safe:data-ending-style:blur-sm',
   'pointer-fine:motion-safe:data-ending-style:scale-90',
   'motion-safe:data-ending-style:-translate-y-1/4',
-  '[@media(prefers-reduced-transparency:reduce)]:[--surface-background-color:oklch(0_0_0)]',
-  'contrast-more:[--surface-background-color:oklch(0_0_0)]'
+  '[@media(prefers-reduced-transparency:reduce)]:[--media-surface-background-color:oklch(0_0_0)]',
+  'contrast-more:[--media-surface-background-color:oklch(0_0_0)]'
 );
 
 export const topIndicatorContent = cn(

@@ -36,13 +36,13 @@ function AudioTrackInfo() {
 
 <FrameworkCase frameworks={["html"]}>
 ```ts title="audio-track-info.ts"
-import { createPlayer, MediaElement, selectAudioTrack } from '@videojs/html';
+import { createPlayer, UIElement, selectAudioTrack } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
 
-const { PlayerController, context } = createPlayer({ features: videoFeatures });
+const { PlayerController } = createPlayer({ features: videoFeatures });
 
-class AudioTrackInfo extends MediaElement {
-  readonly #audioTrack = new PlayerController(this, context, selectAudioTrack);
+class AudioTrackInfo extends UIElement {
+  readonly #audioTrack = new PlayerController(this, selectAudioTrack);
 }
 ```
 </FrameworkCase>

@@ -1,0 +1,32 @@
+---
+title: useAttachMedia
+description: Hook that attaches an HTML media element to a media engine host
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+
+## Import
+
+```tsx
+import { useAttachMedia } from "@videojs/react";
+```
+
+## Usage
+
+Pass a media engine host to receive a callback ref for its rendered `<video>` or `<audio>` element.
+
+```tsx
+import { HlsJsMedia } from "@videojs/media/dom/hls-js";
+import { useAttachMedia, useMediaInstance } from "@videojs/react";
+
+function CustomHlsVideo() {
+  const media = useMediaInstance(HlsJsMedia);
+  const attachRef = useAttachMedia(media);
+
+  return <video ref={attachRef} />;
+}
+```
+
+The callback attaches a non-null element and detaches the host when React clears or cleans up the ref.
+
+<UtilReference util="useAttachMedia" />

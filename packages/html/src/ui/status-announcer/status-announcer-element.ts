@@ -6,9 +6,9 @@ import { ContextConsumer } from '@videojs/element/context';
 import { i18nContext } from '../../i18n/context';
 import { I18nController } from '../../i18n/controller';
 import { containerContext, playerContext } from '../../player/context';
-import { MediaElement } from '../media-element';
+import { UIElement } from '../ui-element';
 
-export class StatusAnnouncerElement extends MediaElement {
+export class StatusAnnouncerElement extends UIElement {
   static readonly tagName = 'media-status-announcer';
 
   static override properties = {
@@ -33,6 +33,7 @@ export class StatusAnnouncerElement extends MediaElement {
 
   override connectedCallback(): void {
     super.connectedCallback();
+
     if (this.destroyed) return;
 
     this.setAttribute('role', 'status');
@@ -82,6 +83,7 @@ export class StatusAnnouncerElement extends MediaElement {
   #reconnect(store: StatusAnnouncerStore | undefined = this.#player.value): void {
     this.#storeUnsubscribe?.();
     this.#storeUnsubscribe = null;
+
     if (!store) {
       this.#core.resetSnapshot();
       return;
@@ -94,6 +96,7 @@ export class StatusAnnouncerElement extends MediaElement {
     if (this.#liveText?.isConnected) return this.#liveText;
 
     const existing = this.querySelector<HTMLElement>('[data-status-announcer-content]');
+
     this.#liveText = existing ?? document.createElement('span');
     this.#liveText.setAttribute('data-status-announcer-content', '');
 

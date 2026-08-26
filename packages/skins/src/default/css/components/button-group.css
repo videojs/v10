@@ -2,4 +2,8 @@
   display: flex;
   gap: 1px;
   align-items: center;
+
+  &:dir(rtl) {
+    flex-direction: row-reverse;
+  }
 }

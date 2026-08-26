@@ -1,6 +1,7 @@
 import type { MediaContentValue, MediaMetadataState } from '@videojs/media';
 import { isMediaContentDataCapable } from '@videojs/media';
 import { listen } from '@videojs/utils/dom';
+
 import { definePlayerFeature } from '../../feature';
 import type { PlayerFeatureConfig } from '../../player';
 
@@ -24,13 +25,13 @@ interface MetadataSourceState extends Omit<MediaMetadataState, 'title' | 'poster
 }
 
 /**
- * Resolves content metadata into player state, preferring what the author set
- * over what the media carries. Included in the standard audio, video, and live
- * presets.
+ * Resolves content metadata into player state, preferring what the author set over what the media carries. Included in
+ * the standard audio, video, and live presets.
  */
 export const metadataFeature = definePlayerFeature({
   name: 'metadata',
   config: {
+    /** The title to display. Takes precedence over the title the media carries. */
     title: {
       action: SET_USER_TITLE,
       state: USER_TITLE,
@@ -38,6 +39,7 @@ export const metadataFeature = definePlayerFeature({
       // another name there.
       html: { attribute: 'content-title' },
     },
+    /** The poster to display. Takes precedence over the poster the media carries. */
     poster: {
       action: SET_USER_POSTER,
       state: USER_POSTER,
@@ -52,12 +54,16 @@ export const metadataFeature = definePlayerFeature({
     [SET_USER_POSTER]: (value) => set({ [USER_POSTER]: value }),
   }),
   derived: {
-    title: ({ get }) => get()[USER_TITLE] ?? get()[MEDIA_TITLE] ?? DEFAULT_TITLE,
-    poster: ({ get }) => get()[USER_POSTER] ?? get()[MEDIA_POSTER] ?? DEFAULT_POSTER,
+    /** The resolved content title. Set it through the player, not through the store. */
+    title: ({ get }): string => get()[USER_TITLE] ?? get()[MEDIA_TITLE] ?? DEFAULT_TITLE,
+    /**
+     * The resolved poster URL, independent of the media element's own `poster`. Set it through the player, not through
+     * the store.
+     */
+    poster: ({ get }): string => get()[USER_POSTER] ?? get()[MEDIA_POSTER] ?? DEFAULT_POSTER,
   },
   attach({ target, signal, set }) {
     const { media } = target;
-
     if (!isMediaContentDataCapable(media)) return;
 
     const sync = () =>
@@ -65,6 +71,7 @@ export const metadataFeature = definePlayerFeature({
         [MEDIA_TITLE]: media.contentData?.title,
         [MEDIA_POSTER]: media.contentData?.poster,
       });
+
     sync();
     listen(media, 'contentdatachange', sync, { signal });
   },

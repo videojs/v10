@@ -1,4 +1,5 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
+
 import { MediaError } from '../../../core/media-error';
 import { NativeHlsMedia } from '../index';
 
@@ -9,12 +10,15 @@ afterEach(() => {
 describe('NativeHlsMedia', () => {
   it('dispatches only the enriched ErrorEvent when a native error fires', () => {
     const video = document.createElement('video');
+
     document.body.appendChild(video);
 
     const media = new NativeHlsMedia();
+
     media.attach(video);
 
     const handler = vi.fn();
+
     media.addEventListener('error', handler);
 
     Object.defineProperty(video, 'error', {
@@ -26,6 +30,7 @@ describe('NativeHlsMedia', () => {
     expect(handler).toHaveBeenCalledOnce();
 
     const event = handler.mock.calls[0]![0] as ErrorEvent;
+
     expect(event).toBeInstanceOf(ErrorEvent);
     expect(event.error).toBeInstanceOf(MediaError);
     expect(event.error.code).toBe(MediaError.MEDIA_ERR_NETWORK);

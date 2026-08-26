@@ -11,6 +11,7 @@ import { createProfilePageSchema } from '@/utils/jsonLd/schemas';
 
 export async function getStaticPaths() {
   const authors = await getCollection('authors');
+
   return authors.map((author) => ({
     params: { author: author.id },
     props: { author },

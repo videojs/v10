@@ -1,7 +1,7 @@
 import { cn } from '@videojs/utils/style';
 
 const previewContent = cn(
-  'absolute left-1/2 max-w-(--max-size)',
+  'absolute left-1/2 max-w-(--media-max-size)',
   '-translate-x-1/2 translate-y-2 scale-80 opacity-0 blur-lg origin-bottom',
   'transition-[filter,opacity,scale] duration-150 ease-out',
   'group-data-pointing/slider:scale-100 group-data-pointing/slider:opacity-100',
@@ -12,16 +12,17 @@ const previewContent = cn(
 
 export const slider = {
   root: cn(
-    'group/slider relative flex flex-1 items-center justify-center rounded-(--track-border-radius) outline-none cursor-pointer',
-    '[--track-border-radius:99px]',
-    '[--chapter-gap:calc(var(--spacing)*1)] [--chapter-inset-start:calc(var(--chapter-gap)/2)] [--chapter-inset-end:calc(var(--chapter-gap)/2)]',
+    'group/slider relative flex flex-1 items-center justify-center rounded-(--media-track-border-radius) outline-none cursor-pointer',
+    '[--media-track-border-radius:99px]',
+    '[--media-track-transition-duration:100ms]',
+    '[--media-chapter-gap:calc(var(--media-spacing)*1)] [--media-internal-chapter-inset-start:calc(var(--media-chapter-gap)/2)] [--media-internal-chapter-inset-end:calc(var(--media-chapter-gap)/2)]',
     // Horizontal
-    'data-[orientation=horizontal]:min-w-20 data-[orientation=horizontal]:w-(--slider-width,100%) data-[orientation=horizontal]:h-(--slider-height,--spacing(8))',
+    'data-[orientation=horizontal]:min-w-20 data-[orientation=horizontal]:w-(--media-slider-width,100%) data-[orientation=horizontal]:h-(--media-slider-height,--spacing(8))',
     // Vertical
-    'data-[orientation=vertical]:w-(--slider-width,--spacing(8)) data-[orientation=vertical]:h-(--slider-height,--spacing(20))'
+    'data-[orientation=vertical]:w-(--media-slider-width,--spacing(8)) data-[orientation=vertical]:h-(--media-slider-height,--spacing(20))'
   ),
   track: cn(
-    'relative isolate overflow-hidden bg-current/20 rounded-(--track-border-radius) select-none',
+    'relative isolate overflow-hidden bg-current/20 rounded-(--media-track-border-radius) select-none',
     // Horizontal
     'data-[orientation=horizontal]:w-full data-[orientation=horizontal]:h-1',
     // Vertical
@@ -31,46 +32,46 @@ export const slider = {
   chapter: {
     base: cn(
       'group/chapter absolute inset-0 flex items-center justify-center min-w-0 min-h-0',
-      'first:[--chapter-inset-start:0px] last:[--chapter-inset-end:0px]',
+      'first:[--media-internal-chapter-inset-start:0px] last:[--media-internal-chapter-inset-end:0px]',
       'data-[orientation=horizontal]:[clip-path:inset(0_calc(100%-var(--media-slider-chapter-end))_0_var(--media-slider-chapter-start))]',
       'data-[orientation=vertical]:[clip-path:inset(calc(100%-var(--media-slider-chapter-end))_0_var(--media-slider-chapter-start)_0)]'
     ),
     track: cn(
-      'relative isolate overflow-hidden bg-current/20 rounded-(--track-border-radius) select-none',
+      'relative isolate overflow-hidden bg-current/20 rounded-(--media-track-border-radius) select-none',
       'motion-safe:transition-[height,width] motion-safe:duration-200 motion-safe:ease-out',
       'data-[orientation=horizontal]:w-full data-[orientation=horizontal]:h-1',
       'group-data-highlighted/chapter:data-[orientation=horizontal]:h-1.75',
-      'data-[orientation=horizontal]:[clip-path:inset(0_calc(100%-var(--media-slider-chapter-end)+var(--chapter-inset-end))_0_calc(var(--media-slider-chapter-start)+var(--chapter-inset-start))_round_var(--track-border-radius))]',
+      'data-[orientation=horizontal]:[clip-path:inset(0_calc(100%-var(--media-slider-chapter-end)+var(--media-internal-chapter-inset-end))_0_calc(var(--media-slider-chapter-start)+var(--media-internal-chapter-inset-start))_round_var(--media-track-border-radius))]',
       'data-[orientation=vertical]:w-1 data-[orientation=vertical]:h-full',
       'group-data-highlighted/chapter:data-[orientation=vertical]:w-1.75',
-      'data-[orientation=vertical]:[clip-path:inset(calc(100%-var(--media-slider-chapter-end)+var(--chapter-inset-end))_0_calc(var(--media-slider-chapter-start)+var(--chapter-inset-start))_0_round_var(--track-border-radius))]'
+      'data-[orientation=vertical]:[clip-path:inset(calc(100%-var(--media-slider-chapter-end)+var(--media-internal-chapter-inset-end))_0_calc(var(--media-slider-chapter-start)+var(--media-internal-chapter-inset-start))_0_round_var(--media-track-border-radius))]'
     ),
   },
   fill: {
     base: cn(
       'absolute rounded-[inherit] pointer-events-none',
-      'motion-safe:transition-[clip-path] motion-safe:duration-200 motion-safe:ease-out',
-      'data-dragging:duration-0 data-seeking:duration-0'
+      'motion-safe:transition-[clip-path] motion-safe:duration-(--media-track-transition-duration) motion-safe:ease-out',
+      'group-data-dragging/slider:duration-0'
     ),
     fill: cn(
-      'bg-(--accent-color)',
+      'bg-(--media-internal-accent-color)',
       // Horizontal
       'data-[orientation=horizontal]:inset-y-0 data-[orientation=horizontal]:left-0 data-[orientation=horizontal]:w-full',
-      'data-[orientation=horizontal]:[clip-path:inset(0_calc(100%-var(--media-slider-fill))_0_0_round_var(--track-border-radius))]',
-      'group-data-dragging/slider:data-[orientation=horizontal]:[clip-path:inset(0_calc(100%-var(--media-slider-pointer))_0_0_round_var(--track-border-radius))]',
+      'data-[orientation=horizontal]:[clip-path:inset(0_calc(100%-var(--media-slider-fill))_0_0_round_var(--media-track-border-radius))]',
+      'group-data-dragging/slider:data-[orientation=horizontal]:[clip-path:inset(0_calc(100%-var(--media-slider-pointer))_0_0_round_var(--media-track-border-radius))]',
       // Vertical
       'data-[orientation=vertical]:inset-x-0 data-[orientation=vertical]:bottom-0 data-[orientation=vertical]:h-full',
-      'data-[orientation=vertical]:[clip-path:inset(calc(100%-var(--media-slider-fill))_0_0_0_round_var(--track-border-radius))]',
-      'group-data-dragging/slider:data-[orientation=vertical]:[clip-path:inset(calc(100%-var(--media-slider-pointer))_0_0_0_round_var(--track-border-radius))]'
+      'data-[orientation=vertical]:[clip-path:inset(calc(100%-var(--media-slider-fill))_0_0_0_round_var(--media-track-border-radius))]',
+      'group-data-dragging/slider:data-[orientation=vertical]:[clip-path:inset(calc(100%-var(--media-slider-pointer))_0_0_0_round_var(--media-track-border-radius))]'
     ),
     buffer: cn(
       'bg-current/20',
       // Horizontal
       'data-[orientation=horizontal]:inset-y-0 data-[orientation=horizontal]:left-0 data-[orientation=horizontal]:w-full',
-      'data-[orientation=horizontal]:[clip-path:inset(0_calc(100%-var(--media-slider-buffer))_0_0_round_var(--track-border-radius))]',
+      'data-[orientation=horizontal]:[clip-path:inset(0_calc(100%-var(--media-slider-buffer))_0_0_round_var(--media-track-border-radius))]',
       // Vertical
       'data-[orientation=vertical]:inset-x-0 data-[orientation=vertical]:bottom-0 data-[orientation=vertical]:h-full',
-      'data-[orientation=vertical]:[clip-path:inset(calc(100%-var(--media-slider-buffer))_0_0_0_round_var(--track-border-radius))]'
+      'data-[orientation=vertical]:[clip-path:inset(calc(100%-var(--media-slider-buffer))_0_0_0_round_var(--media-track-border-radius))]'
     ),
   },
   thumb: {
@@ -78,9 +79,9 @@ export const slider = {
       'z-10 absolute size-2.5 -translate-x-1/2 -translate-y-1/2',
       'bg-current rounded-full',
       'opacity-0 scale-80',
-      'shadow-[0_0_0_1px_var(--shadow-current-color,oklch(0_0_0/0.1)),0_1px_3px_0_oklch(0_0_0/0.35),0_1px_2px_-1px_oklch(0_0_0/0.35)]',
-      'transition-none motion-safe:transition-[opacity,height,width,outline-offset,left,top,scale] duration-150 ease-out select-none',
-      'data-dragging:duration-0 data-seeking:duration-0',
+      'shadow-[0_0_0_1px_var(--media-shadow-current-color,oklch(0_0_0/0.1)),0_1px_3px_0_oklch(0_0_0/0.35),0_1px_2px_-1px_oklch(0_0_0/0.35)]',
+      'transition-none motion-safe:transition-[opacity,height,width,outline-offset,left,top,scale] duration-(--media-track-transition-duration) ease-out select-none',
+      'group-data-dragging/slider:transition-[opacity,outline-offset,scale]',
       'group-active/slider:size-3',
       'outline-4 outline-transparent -outline-offset-4',
       'hover:outline-current/15 hover:outline-offset-0',
@@ -105,25 +106,21 @@ export const slider = {
     ),
   },
   preview: cn(
-    '[--max-size-factor:36]',
-    '[--max-size:min(calc(var(--spacing)*var(--max-size-factor)),100cqi)]',
-    '@2xl/media-root:[--max-size-factor:48]',
-    'min-w-(--max-size) h-1',
+    '[--media-max-size-factor:36]',
+    '[--media-max-size:min(calc(var(--media-spacing)*var(--media-max-size-factor)),100cqi)]',
+    '@2xl/media-root:[--media-max-size-factor:48]',
+    'min-w-(--media-max-size) h-1',
     'before:absolute before:z-1 before:top-1/2 before:left-1/2 before:size-1 before:bg-current before:rounded-full before:pointer-events-none',
-    'before:shadow-[0_0_0_1px_var(--shadow-current-color,oklch(0_0_0/0.15)),0_1px_2px_0_oklch(0_0_0/0.35)]',
+    'before:shadow-[0_0_0_1px_var(--media-shadow-current-color,oklch(0_0_0/0.15)),0_1px_2px_0_oklch(0_0_0/0.35)]',
     'before:-translate-1/2 before:opacity-0 before:scale-50',
     'before:transition-[opacity,scale] before:duration-200 before:ease-out',
     'data-pointing:not-data-dragging:before:opacity-100 data-pointing:not-data-dragging:before:scale-100'
   ),
   thumbnail: cn(
     previewContent,
-    '[--thumbnail-max-width:var(--max-size)] [--thumbnail-max-height:var(--max-size)]',
+    '[--media-thumbnail-max-width:var(--media-max-size)] [--media-thumbnail-max-height:var(--media-max-size)]',
     '[bottom:calc(100%+--spacing(9))]'
   ),
-  value: cn(
-    previewContent,
-    '[bottom:calc(100%+--spacing(10.5))] flex flex-col items-center tabular-nums',
-    'text-shadow-2xs text-shadow-(color:--shadow-current-color)'
-  ),
-  chapterTitle: 'min-w-0 max-w-(--max-size) px-6 overflow-hidden text-ellipsis whitespace-nowrap empty:hidden',
+  value: cn(previewContent, '[bottom:calc(100%+--spacing(10.5))] flex flex-col items-center tabular-nums'),
+  chapterTitle: 'min-w-0 max-w-(--media-max-size) px-6 overflow-hidden text-ellipsis whitespace-nowrap empty:hidden',
 };

@@ -20,8 +20,7 @@ export interface QualityRadioGroupItemProps extends Omit<MenuRadioItemProps, 're
 }
 
 export interface QualityRadioGroupProps
-  extends Omit<UIComponentProps<'div', QualityRadioGroupCore.State>, 'children'>,
-    QualityOptionsProps {
+  extends Omit<UIComponentProps<'div', QualityRadioGroupCore.State>, 'children'>, QualityOptionsProps {
   /** Render one consumer-owned menu radio item for every quality option. */
   renderItem: (props: QualityRadioGroupItemProps, state: QualityRadioGroupItemState) => ReactElement;
 }
@@ -30,17 +29,17 @@ export interface QualityRadioGroupProps
  * Renders menu radio items for the player's video renditions.
  *
  * @example
- * ```tsx
- * <QualityRadioGroup
- *   renderItem={(props, item) => (
- *     <Menu.RadioItem {...props}>
- *       {item.label}
- *       {item.tier ? <sup>{item.tier}</sup> : null}
- *       <Menu.ItemIndicator checked={item.checked} />
- *     </Menu.RadioItem>
- *   )}
- * />
- * ```
+ *   ```tsx
+ *   <QualityRadioGroup
+ *     renderItem={(props, item) => (
+ *       <Menu.RadioItem {...props}>
+ *         {item.label}
+ *         {item.tier ? <sup>{item.tier}</sup> : null}
+ *         <Menu.ItemIndicator checked={item.checked} />
+ *       </Menu.RadioItem>
+ *     )}
+ *   />;
+ *   ```;
  */
 export const QualityRadioGroup = forwardRef<HTMLDivElement, QualityRadioGroupProps>(
   function QualityRadioGroup(componentProps, forwardedRef) {

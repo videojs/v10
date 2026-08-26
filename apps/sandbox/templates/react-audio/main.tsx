@@ -19,7 +19,7 @@ function readStyling(): Styling {
 
 function App() {
   const skin = useSkin();
-  const source = useSource(true);
+  const source = useSource();
   const styling = readStyling();
   const autoplay = useAutoplay();
   const muted = useMuted();
@@ -29,8 +29,15 @@ function App() {
   return (
     <SandboxI18nProvider>
       <AudioPlayer>
-        <AudioSkinComponent skin={skin} styling={styling} className="w-full max-w-xl mx-auto">
-          <Audio src={SOURCES[source].url} autoPlay={autoplay} muted={muted} loop={loop} preload={preload} />
+        <AudioSkinComponent skin={skin} styling={styling} className="mx-auto w-full max-w-xl">
+          <Audio
+            src={SOURCES[source].url}
+            autoPlay={autoplay}
+            muted={muted}
+            loop={loop}
+            preload={preload}
+            crossOrigin=""
+          />
         </AudioSkinComponent>
       </AudioPlayer>
     </SandboxI18nProvider>

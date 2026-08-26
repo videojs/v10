@@ -6,6 +6,7 @@ description: Container component for composing and auto-hiding video player cont
 ---
 
 import ComponentReference from "@/components/docs/api-reference/ComponentReference.astro";
+import ComponentImports from "@/components/docs/api-reference/ComponentImports.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 import StyleCase from "@/components/docs/StyleCase.astro";
 import Demo from "@/components/docs/demos/Demo.astro";
@@ -21,6 +22,10 @@ import basicUsageHtml from "@/components/docs/demos/controls/html/css/BasicUsage
 import basicUsageHtmlCss from "@/components/docs/demos/controls/html/css/BasicUsage.css?raw";
 import basicUsageHtmlTs from "@/components/docs/demos/controls/html/css/BasicUsage.ts?raw";
 
+## Import
+
+<ComponentImports component="Controls" html="controls" />
+
 ## Anatomy
 
 Import the component and assemble its parts:
@@ -28,7 +33,10 @@ Import the component and assemble its parts:
 <FrameworkCase frameworks={["react"]}>
   ```tsx
   <Controls.Root>
-    <Controls.Group />
+    <Controls.Backdrop />
+    <Controls.Content>
+      <Controls.Group />
+    </Controls.Content>
   </Controls.Root>
   ```
 </FrameworkCase>
@@ -36,7 +44,10 @@ Import the component and assemble its parts:
 <FrameworkCase frameworks={["html"]}>
   ```html
   <media-controls>
-    <media-controls-group></media-controls-group>
+    <media-controls-backdrop></media-controls-backdrop>
+    <media-controls-content>
+      <media-controls-group></media-controls-group>
+    </media-controls-content>
   </media-controls>
   ```
 </FrameworkCase>
@@ -48,12 +59,17 @@ If the user is active, or if the video is paused, this component will show contr
 User activity is tracked via pointer movement, keyboard input, and focus events on the player container. On touch devices, a quick tap toggles visibility. `mouseleave` immediately sets the user as inactive.
 
 ## Styling
+
+`Controls.Root` is a state and context provider. `Controls.Content` / `<media-controls-content>` renders the interactive controls surface and receives its DOM props, ref, and controls state data attributes.
+
+`Controls.Backdrop` / `<media-controls-backdrop>` is an optional presentational sibling of Content. It receives the same controls state data attributes, allowing its styling and transitions to be authored independently from the controls surface.
+
 By default, controls have the following styles:
 
 <FrameworkCase frameworks={["html"]}>
 ```css
 /* Click-through: clicks pass through controls to video beneath */
-media-controls {
+media-controls-content {
   pointer-events: none;
 }
 
@@ -61,12 +77,22 @@ media-controls-group {
   pointer-events: auto;
 }
 
+media-controls-backdrop {
+  position: absolute;
+  inset: 0;
+  transition: opacity 0.35s;
+}
+
 /* Fade transition */
-media-controls {
+media-controls-content {
   transition: opacity 0.25s;
 }
 
-media-controls:not([data-visible]) {
+media-controls-content:not([data-visible]) {
+  opacity: 0;
+}
+
+media-controls-backdrop:not([data-visible]) {
   opacity: 0;
 }
 ```
@@ -85,6 +111,12 @@ React renders `<div>` elements. Add a `className` to style them:
   pointer-events: auto;
 }
 
+.controls-backdrop {
+  position: absolute;
+  inset: 0;
+  transition: opacity 0.35s;
+}
+
 /* Fade transition */
 .controls {
   transition: opacity 0.25s;
@@ -93,17 +125,21 @@ React renders `<div>` elements. Add a `className` to style them:
 .controls:not([data-visible]) {
   opacity: 0;
 }
+
+.controls-backdrop:not([data-visible]) {
+  opacity: 0;
+}
 ```
 </FrameworkCase>
 
 ## Accessibility
 
 <FrameworkCase frameworks={["html"]}>
-No ARIA role is applied to `<media-controls>` — it is a layout wrapper, not a landmark. `<media-controls-group>` automatically receives `role="group"` when an `aria-label` or `aria-labelledby` attribute is provided; otherwise no role is assigned.
+No ARIA role is applied to `<media-controls>` or `<media-controls-content>` — they provide state and layout, not a landmark. `<media-controls-backdrop>` is always hidden from assistive technology. `<media-controls-group>` automatically receives `role="group"` when an `aria-label` or `aria-labelledby` attribute is provided; otherwise no role is assigned.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
-No ARIA role is applied to `Controls.Root` — it is a layout wrapper, not a landmark. `Controls.Group` automatically receives `role="group"` when an `aria-label` or `aria-labelledby` attribute is provided; otherwise no role is assigned.
+`Controls.Root` renders no element. No ARIA role is applied to `Controls.Content` because it is a layout surface, not a landmark. `Controls.Backdrop` is always hidden from assistive technology. `Controls.Group` automatically receives `role="group"` when an `aria-label` or `aria-labelledby` attribute is provided; otherwise no role is assigned.
 </FrameworkCase>
 
 ## Examples

@@ -1,5 +1,7 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
+
 import type { ComponentReference } from '@/types/component-reference';
+
 import { buildComponentReferenceTocHeadings, createComponentReferenceModel } from '../componentReferenceModel';
 
 describe('createComponentReferenceModel', () => {
@@ -44,6 +46,40 @@ describe('createComponentReferenceModel', () => {
           depth: 3,
         },
       ],
+    });
+  });
+
+  it('adds an HTML-only events section', () => {
+    const apiReference = {
+      name: 'Slider',
+      props: {},
+      state: {},
+      dataAttributes: {},
+      cssCustomProperties: {},
+      platforms: {
+        html: {
+          tagName: 'media-slider',
+          events: [{ name: 'value-change', description: 'Fired when the value changes.' }],
+        },
+      },
+    } satisfies ComponentReference;
+
+    const model = createComponentReferenceModel('Slider', apiReference);
+
+    expect(model?.sections).toEqual([
+      {
+        key: 'events',
+        title: 'Events',
+        id: 'events',
+        depth: 3,
+        frameworks: ['html'],
+      },
+    ]);
+    expect(buildComponentReferenceTocHeadings(model)).toContainEqual({
+      depth: 3,
+      text: 'Events',
+      slug: 'events',
+      frameworks: ['html'],
     });
   });
 

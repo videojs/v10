@@ -1,6 +1,8 @@
 import { readFileSync } from 'node:fs';
 import { dirname, relative, resolve } from 'node:path';
+
 import { transform } from 'lightningcss';
+
 import { resolveImports } from './resolve-css-imports.ts';
 import type { BuildPlugin } from './types.ts';
 
@@ -15,9 +17,8 @@ interface InlineCssPluginOptions {
 }
 
 /**
- * Rolldown/tsdown plugin that inlines `.css?inline` imports as JavaScript
- * modules exporting the resolved CSS string. Mirrors the Vite `?inline`
- * convention so the same source works in both Vite dev and tsdown builds.
+ * Rolldown/Vite+ pack plugin that inlines `.css?inline` imports as JavaScript modules exporting the resolved CSS
+ * string. Mirrors the Vite `?inline` convention so the same source works in both Vite dev and Vite+ package builds.
  */
 export function inlineCssPlugin(options: InlineCssPluginOptions): BuildPlugin {
   const { skinsDir, rootDir = process.cwd(), minify = true } = options;

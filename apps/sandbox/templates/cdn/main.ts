@@ -6,6 +6,7 @@ import { CSS_SKIN_TAGS, LIVE_VIDEO_CSS_SKIN_TAGS } from '@app/shared/html/skin-t
 import { renderStoryboard } from '@app/shared/html/storyboard';
 import { loadAudioStylesheets, loadVideoStylesheets } from '@app/shared/html/stylesheets';
 import { ensureCdnSandboxLocale } from '@app/shared/i18n/cdn-sandbox-locales';
+import { syncDocumentLocale } from '@app/shared/i18n/document-locale';
 import type { SandboxLocaleTag } from '@app/shared/i18n/locale-meta';
 import {
   getInitialLocale,
@@ -40,7 +41,7 @@ const html = String.raw;
 const params = new URLSearchParams(location.search);
 const preset = (params.get('preset') ?? 'video') as Preset;
 
-const state = createHtmlSandboxState(preset === 'audio');
+const state = createHtmlSandboxState();
 const loadLatest = createLatestLoader();
 let locale = getInitialLocale();
 let localeApplySeq = 0;
@@ -59,9 +60,11 @@ function wrapCdnPlayerI18n(playerTag: string, inner: string): string {
 
 async function waitForMediaMetadata(timeoutMs = 15_000): Promise<void> {
   const deadline = performance.now() + timeoutMs;
+
   while (performance.now() < deadline) {
     const video = document.querySelector('video');
     if (video && video.readyState >= HTMLMediaElement.HAVE_METADATA) return;
+
     await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
   }
 }
@@ -71,14 +74,19 @@ async function waitForCdnPlayLabel(expected: string, timeoutMs = 15_000): Promis
   await waitForMediaMetadata(timeoutMs);
 
   const deadline = performance.now() + timeoutMs;
+
   while (performance.now() < deadline) {
     const provider = document.querySelector('media-i18n') as LitElementLike | null;
+
     provider?.requestUpdate?.();
+
     if (provider?.updateComplete) await provider.updateComplete;
 
     for (const button of document.querySelectorAll('media-play-button')) {
       const el = button as LitElementLike;
+
       el.requestUpdate?.();
+
       if (el.updateComplete) await el.updateComplete;
     }
 
@@ -93,6 +101,7 @@ async function waitForCdnPlayLabel(expected: string, timeoutMs = 15_000): Promis
 
 async function syncCdnI18nProvider(tag: SandboxLocaleTag, seq: number): Promise<void> {
   await ensureCdnSandboxLocale(tag);
+
   if (seq !== localeApplySeq) return;
 
   const provider = document.querySelector('media-i18n') as LitElementLike | null;
@@ -100,15 +109,18 @@ async function syncCdnI18nProvider(tag: SandboxLocaleTag, seq: number): Promise<
 
   provider.requestUpdate();
   await provider.updateComplete;
+
   if (seq !== localeApplySeq) return;
 
   // An embed plays in a cross-origin frame with no <video> of its own, so the
   // metadata gate the label check waits on never opens.
   if (!import.meta.env.DEV || tag === 'en' || isEmbedPreset(preset)) return;
+
   if (!document.querySelector('media-play-button')) return;
 
   const expected = getI18nTranslations(tag)['buttons.play'];
   const playLabel = await waitForCdnPlayLabel(expected);
+
   if (seq !== localeApplySeq) return;
 
   if (playLabel !== expected) {
@@ -120,10 +132,13 @@ async function syncCdnI18nProvider(tag: SandboxLocaleTag, seq: number): Promise<
 
 async function applyLocale(next: SandboxLocaleTag): Promise<void> {
   const seq = ++localeApplySeq;
+
   await ensureCdnSandboxLocale(next);
+
   if (seq !== localeApplySeq) return;
+
   locale = next;
-  document.documentElement.lang = locale;
+  syncDocumentLocale(locale);
   await syncCdnI18nProvider(locale, seq);
 }
 
@@ -153,6 +168,7 @@ async function loadCdnPreset(preset: Preset, skin: Skin, live: boolean) {
         if (skin === 'minimal') await import('@videojs/html/cdn/video-minimal');
         else await import('@videojs/html/cdn/video');
       }
+
       break;
     case 'audio':
     case 'mux-audio':
@@ -161,6 +177,7 @@ async function loadCdnPreset(preset: Preset, skin: Skin, live: boolean) {
     case 'spotify-audio':
       if (skin === 'minimal') await import('@videojs/html/cdn/audio-minimal');
       else await import('@videojs/html/cdn/audio');
+
       break;
     case 'background-video':
     case 'hls-background-video':
@@ -261,8 +278,8 @@ function isEmbedPreset(preset: Preset): boolean {
 /**
  * An embed fills the skin box the way `<video>` does on its own.
  *
- * TikTok's host floors itself at the portrait 325x578 its player refuses to draw
- * below, so a landscape box needs that floor cleared.
+ * TikTok's host floors itself at the portrait 325x578 its player refuses to draw below, so a landscape box needs that
+ * floor cleared.
  */
 function getEmbedMediaClass(preset: Preset): string {
   return preset === 'tiktok-video' ? 'block w-full h-full min-w-0 min-h-0' : 'block w-full h-full';
@@ -284,14 +301,19 @@ function isBackgroundPreset(preset: Preset): boolean {
 
 function getPlayerTag(preset: Preset, live: boolean): string {
   if (isBackgroundPreset(preset)) return 'background-video-player';
+
   if (isAudioPreset(preset)) return live ? 'live-audio-player' : 'audio-player';
+
   return live ? 'live-video-player' : 'video-player';
 }
 
 function getSkinTag(preset: Preset, skin: Skin, live: boolean): string {
   if (isBackgroundPreset(preset)) return 'background-video-skin';
+
   if (isAudioPreset(preset)) return CSS_SKIN_TAGS[skin].audio;
+
   if (live) return LIVE_VIDEO_CSS_SKIN_TAGS[skin];
+
   return CSS_SKIN_TAGS[skin].video;
 }
 
@@ -359,10 +381,7 @@ async function render() {
     await loadCdnMedia(preset);
     return true;
   });
-
-  if (!loaded) {
-    return;
-  }
+  if (!loaded) return;
 
   // Load the locale before rendering, but outside loadLatest so locale errors keep their specific message.
   await ensureCdnSandboxLocale(locale);
@@ -395,7 +414,7 @@ async function render() {
   // it preloads, so the settings menu has nothing to attach to — same as the
   // per-embed pages on the html and react platforms.
   const mediaAttrs = isEmbedPreset(preset) ? '' : renderMediaAttrs(state);
-  const crossoriginAttr = isEmbedPreset(preset) ? '' : 'crossorigin="anonymous"';
+  const crossoriginAttr = isEmbedPreset(preset) ? '' : 'crossorigin';
   const mediaClassAttr = isEmbedPreset(preset) ? `class="${getEmbedMediaClass(preset)}"` : '';
 
   // Background video needs viewport dimensions instead of flex centering.
@@ -419,7 +438,7 @@ async function render() {
 
   if (isAudioPreset(preset)) {
     root.innerHTML = html`
-      <div class="w-full max-w-xl mx-auto">
+      <div class="mx-auto w-full max-w-xl">
         ${wrapCdnPlayerI18n(
           playerTag,
           html`
@@ -440,7 +459,7 @@ async function render() {
         ${isVideoPreset(preset) ? renderChapters(getChapters(state.source)) : ''}
         ${renderStoryboard(storyboard)}
       </${mediaTag}>
-      ${poster ? html`<img slot="poster" src="${poster}" alt="Video poster" />` : ''}
+      ${poster ? html`<img slot="poster" src="${poster}" alt="Video poster" crossorigin />` : ''}
     </${skinTag}>
   `;
 
@@ -456,7 +475,7 @@ async function render() {
 }
 
 async function init(): Promise<void> {
-  document.documentElement.lang = locale;
+  syncDocumentLocale(locale);
   await render();
 }
 
@@ -494,17 +513,21 @@ onPreloadChange((preload) => {
 
 onLocaleChange((next) => {
   const provider = document.querySelector('media-i18n');
+
   if (provider) {
     void applyLocale(next);
     return;
   }
 
   const seq = ++localeApplySeq;
+
   void (async () => {
     await ensureCdnSandboxLocale(next);
+
     if (seq !== localeApplySeq) return;
+
     locale = next;
-    document.documentElement.lang = locale;
+    syncDocumentLocale(locale);
     await render();
   })();
 });

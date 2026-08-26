@@ -1,0 +1,160 @@
+---
+title: Add a background video
+description: Add an accessible background video from an MP4, WebM, HLS, or Mux source
+---
+
+import Demo from '@/components/docs/demos/Demo.astro';
+import DocsLink from '@/components/docs/DocsLink.astro';
+import FrameworkCase from '@/components/docs/FrameworkCase.astro';
+import StyleCase from '@/components/docs/StyleCase.astro';
+
+import BasicUsageDemoReact from '@/components/docs/demos/add-background-video/react/css/BasicUsage';
+import basicUsageReactTsx from '@/components/docs/demos/add-background-video/react/css/BasicUsage.tsx?raw';
+import basicUsageReactCss from '@/components/docs/demos/add-background-video/react/css/BasicUsage.css?raw';
+import BasicUsageDemoHtml from '@/components/docs/demos/add-background-video/html/css/BasicUsage.astro';
+import basicUsageHtml from '@/components/docs/demos/add-background-video/html/css/BasicUsage.html?raw';
+import basicUsageHtmlCss from '@/components/docs/demos/add-background-video/html/css/BasicUsage.css?raw';
+import basicUsageHtmlTs from '@/components/docs/demos/add-background-video/html/css/BasicUsage.ts?raw';
+
+Add a decorative video behind your page content. Start with an MP4 or WebM file, which browsers can play directly. If your video is delivered as HLS, use the HLS or Mux option below.
+
+## Recommended approach
+
+Use <DocsLink slug="reference/background-video">BackgroundVideo</DocsLink> with an MP4 or WebM URL. Put the video and poster inside a wrapper with `aria-hidden="true"` because both are decorative. Keep the heading, links, and other page content outside that wrapper.
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
+      { title: "App.css", code: basicUsageReactCss, lang: "css" },
+    ]}>
+      <BasicUsageDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "index.html", code: basicUsageHtml, lang: "html" },
+      { title: "index.css", code: basicUsageHtmlCss, lang: "css" },
+      { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
+    ]}>
+      <BasicUsageDemoHtml />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+## How it works
+
+BackgroundVideo renders the browser's `<video>` element and starts it muted, looped, autoplaying, and inline. The example puts that video and an empty-alt poster in the `.hero-visual` wrapper. The wrapper is hidden from assistive technology and ignores pointer input, so it does not act like a media player.
+
+The page defines the hero's size. The video fills that space with `--media-object-fit: cover`, while the poster remains visible until the video paints a frame. The reduced-motion rule hides the video and leaves the poster in place.
+
+Set the size, position, and transforms on the `.hero-visual` wrapper so the poster and video stay together.
+
+## Availability and constraints
+
+- Use a source the browser can play directly, such as MP4 or WebM.
+- Safari can play HLS URLs directly. Other browsers cannot do so reliably, so use an HLS variation below when the same `.m3u8` URL must work across browsers.
+- BackgroundVideo does not create a poster or report analytics. Keep the poster in your page and add analytics only when you need them.
+- Video.js does not apply a reduced-motion policy for you. The example stops the decoration with `prefers-reduced-motion`.
+- If the video communicates information, remove `aria-hidden`, give it an accessible name and controls, and use a regular video player.
+
+## Common variations
+
+Choose a variation based on the source you already have:
+
+| Need | Use |
+| --- | --- |
+| Cross-browser HLS with a small background-only player | <DocsLink slug="reference/hls-background-video">HlsBackgroundVideo</DocsLink> |
+| The same background-only player for a Mux HLS URL | <DocsLink slug="reference/mux-background-video">MuxBackgroundVideo</DocsLink> |
+
+### Play an HLS video
+
+HlsBackgroundVideo plays an HLS video without adding controls, audio, or captions. Pass a complete HLS URL through `src`:
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+import { HlsBackgroundVideo } from '@videojs/react/media/hls-background-video';
+
+<HlsBackgroundVideo
+  className="hero-media"
+  src="https://media.example.com/hero.m3u8"
+  crossOrigin="anonymous"
+  onError={() => console.error('The background stream could not play')}
+/>
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```html
+<script type="module">
+  import '@videojs/html/media/hls-background-video';
+</script>
+
+<hls-background-video
+  class="hero-media"
+  src="https://media.example.com/hero.m3u8"
+  crossorigin
+></hls-background-video>
+```
+</FrameworkCase>
+
+Your HLS stream must be unencrypted and use fragmented MP4 video segments, also called fMP4 or CMAF. The component chooses one video size when playback starts and does not switch sizes later. It cannot play older MPEG-TS segments.
+
+### Play a Mux HLS URL
+
+MuxBackgroundVideo is a Mux-named alias for HlsBackgroundVideo. Pass a complete Mux HLS URL, not a bare playback ID or `source` object:
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+import { MuxBackgroundVideo } from '@videojs/react/media/mux-background-video';
+
+<MuxBackgroundVideo
+  className="hero-media"
+  src="https://stream.mux.com/PLAYBACK_ID.m3u8?max_resolution=720p"
+  crossOrigin="anonymous"
+/>
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```html
+<script type="module">
+  import '@videojs/html/media/mux-background-video';
+</script>
+
+<mux-background-video
+  class="hero-media"
+  src="https://stream.mux.com/PLAYBACK_ID.m3u8?max_resolution=720p"
+  crossorigin
+></mux-background-video>
+```
+</FrameworkCase>
+
+This component does not create a Mux poster, preview thumbnails, or analytics session. Keep the poster in your page and add analytics separately when you need them.
+
+## Troubleshooting
+
+### An HLS URL works in Safari but not another browser
+
+BackgroundVideo hands its `src` to the browser's `<video>` element. Use HlsBackgroundVideo for a supported fMP4 HLS source, or MuxBackgroundVideo for a Mux HLS URL.
+
+### The video does not fill or follow transforms
+
+Set the size, transforms, and measurements on the wrapper that contains the video and poster. Size the background-video component to fill that wrapper.
+
+### No poster or Mux analytics appear
+
+The background-video components do not provide them. Render an empty-alt poster in the same wrapper as the video, and add analytics separately.
+
+## Related components
+
+- <DocsLink slug="reference/background-video">BackgroundVideo</DocsLink>
+- <DocsLink slug="reference/hls-background-video">HlsBackgroundVideo</DocsLink>
+- <DocsLink slug="reference/mux-background-video">MuxBackgroundVideo</DocsLink>
+
+## Related guides
+
+- <DocsLink slug="how-to/add-a-poster-and-loading-placeholder">Add a poster and loading placeholder</DocsLink>

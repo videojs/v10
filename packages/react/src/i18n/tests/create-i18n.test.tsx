@@ -2,7 +2,7 @@ import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import * as coreI18n from '@videojs/core/i18n';
 import { type FlatTranslations, registerI18n, resetI18nRegistry } from '@videojs/core/i18n';
 import { createRef, type ReactElement } from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { createI18n, I18nProvider as DefaultI18nProvider } from '../create-i18n';
 
@@ -20,6 +20,7 @@ describe('createI18n', () => {
 
     function Probe(): ReactElement {
       const t = useTranslator();
+
       return <span>{t('Play')}</span>;
     }
 
@@ -48,6 +49,7 @@ describe('createI18n', () => {
 
     function Probe(): ReactElement {
       const t = useTranslator();
+
       return (
         <span>
           {t('Play')}:{t('Pause')}:{t('Replay')}
@@ -73,6 +75,7 @@ describe('createI18n', () => {
 
     function Probe(): ReactElement {
       const t = useTranslator();
+
       return <span>{t('Play')}</span>;
     }
 
@@ -100,6 +103,7 @@ describe('createI18n', () => {
 
     function Probe(): ReactElement {
       const t = useTranslator();
+
       return <span>{t('Play')}</span>;
     }
 
@@ -124,6 +128,7 @@ describe('createI18n', () => {
 
     function Probe(): ReactElement {
       const t = useTranslator();
+
       return <span>{t('Play')}</span>;
     }
 
@@ -164,6 +169,7 @@ describe('createI18n', () => {
 
     function Probe(): ReactElement {
       const t = useTranslator();
+
       return <span>{t('Play')}</span>;
     }
 
@@ -193,6 +199,7 @@ describe('createI18n', () => {
 
     function Probe(): ReactElement {
       const t = useTranslator();
+
       return <span>{t('Play')}</span>;
     }
 
@@ -233,6 +240,7 @@ describe('createI18n', () => {
 
     function Probe(): ReactElement {
       const t = useTranslator();
+
       return <span>{t('Play')}</span>;
     }
 
@@ -278,6 +286,7 @@ describe('createI18n', () => {
 
     function Probe(): ReactElement {
       const t = useTranslator();
+
       return <span>{t('Play')}</span>;
     }
 
@@ -305,6 +314,7 @@ describe('createI18n', () => {
 
     function Probe(): ReactElement {
       const t = useTranslator();
+
       return <span>{t('Play')}</span>;
     }
 
@@ -335,6 +345,7 @@ describe('createI18n', () => {
 
     function Probe(): ReactElement {
       const t = useTranslator();
+
       return <span>{t('Play')}</span>;
     }
 
@@ -363,6 +374,7 @@ describe('createI18n', () => {
 
     function Probe(): ReactElement {
       const t = useTranslator();
+
       return <span>{t('Play')}</span>;
     }
 
@@ -383,8 +395,40 @@ describe('createI18n', () => {
     });
   });
 
+  it('keeps regional registry overrides above lazy parent packs and refreshes them after mount', async () => {
+    registerI18n('de-DE', { Play: 'CustomPlay' });
+    const { I18nProvider, useTranslator } = createI18n({
+      loader: async (tag) => (tag === 'de' ? { Play: 'BuiltinPlay', Pause: 'BuiltinPause' } : undefined),
+    });
+
+    function Probe(): ReactElement {
+      const t = useTranslator();
+
+      return (
+        <span>
+          {t('Play')}:{t('Pause')}
+        </span>
+      );
+    }
+
+    render(
+      <I18nProvider locale="de-DE">
+        <Probe />
+      </I18nProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.queryByText('CustomPlay:BuiltinPause')).not.toBeNull();
+    });
+
+    registerI18n('de-DE', { Pause: 'CustomPause' });
+
+    await waitFor(() => {
+      expect(screen.queryByText('CustomPlay:CustomPause')).not.toBeNull();
+    });
+  });
+
   it('drops lazy builtin overlay from the prior locale while the next locale is loading', async () => {
-    registerI18n('en', { Play: 'EnReg' });
     registerI18n('fr', { Play: 'FrReg' });
 
     let unblockFr!: () => void;
@@ -397,16 +441,19 @@ describe('createI18n', () => {
         if (tag === 'en') {
           return { Play: 'EnLazy' };
         }
+
         if (tag === 'fr') {
           await frBlocked;
           return { Play: 'FrLazy' };
         }
+
         return undefined;
       },
     });
 
     function Probe(): ReactElement {
       const t = useTranslator();
+
       return <span>{t('Play')}</span>;
     }
 
@@ -434,7 +481,7 @@ describe('createI18n', () => {
     unblockFr();
 
     await waitFor(() => {
-      expect(screen.queryByText('FrLazy')).not.toBeNull();
+      expect(screen.queryByText('FrReg')).not.toBeNull();
     });
   });
 
@@ -445,6 +492,7 @@ describe('createI18n', () => {
 
     function Probe(): ReactElement {
       const t = useTranslator();
+
       return <span>{t('Play')}</span>;
     }
 
@@ -461,6 +509,7 @@ describe('createI18n', () => {
 
   it('useLocale reflects resolved locale', async () => {
     const { I18nProvider, useLocale } = createI18n();
+
     document.documentElement.lang = 'es-MX';
 
     function Probe(): ReactElement {
@@ -489,15 +538,18 @@ describe('createI18n', () => {
         if (tag === 'de') {
           return deLoad;
         }
+
         if (tag === 'fr') {
           return { Play: 'Lecture' };
         }
+
         return undefined;
       },
     });
 
     function Probe(): ReactElement {
       const t = useTranslator();
+
       return <span>{t('Play')}</span>;
     }
 
@@ -564,6 +616,7 @@ describe('createI18n', () => {
 
   it('notifies onActiveLocaleChange when resolved locale changes', async () => {
     const onActiveLocaleChange = vi.fn();
+
     registerI18n('de', { Play: 'Los' });
     registerI18n('fr', { Play: 'Lire' });
     document.documentElement.lang = 'de';
@@ -596,6 +649,7 @@ describe('createI18n', () => {
 
   it('resolves ambient locale for a callback-only provider', async () => {
     const onActiveLocaleChange = vi.fn();
+
     registerI18n('de', { Play: 'Los' });
     registerI18n('fr', { Play: 'Lire' });
     document.documentElement.lang = 'de';
@@ -634,6 +688,7 @@ describe('createI18n', () => {
 
     function Probe(): ReactElement {
       const t = useTranslator();
+
       return <span>{t('Play')}</span>;
     }
 
@@ -646,6 +701,7 @@ describe('createI18n', () => {
 
     function Probe(): ReactElement {
       const t = useTranslator();
+
       return <span>{t('Play')}</span>;
     }
 
@@ -669,6 +725,7 @@ describe('createI18n', () => {
 
     function Probe(): ReactElement {
       const t = useTranslator();
+
       return <span>{t('Play')}</span>;
     }
 
@@ -689,11 +746,13 @@ describe('createI18n', () => {
 
     function Probe(): ReactElement {
       const t = useTranslator();
+
       return <span>{t('Play')}</span>;
     }
 
     function Shell(): ReactElement {
       const rootRef = createRef<HTMLDivElement>();
+
       return (
         <section lang="fr">
           <I18nProvider langRootRef={rootRef}>
@@ -727,6 +786,7 @@ describe('createI18n', () => {
 
     function Probe(): ReactElement {
       const t = useTranslator();
+
       return <span>{t('Play')}</span>;
     }
 
@@ -753,6 +813,7 @@ describe('createI18n', () => {
 
     function Probe(): ReactElement {
       const t = useTranslator();
+
       return <span>{t('Settings')}</span>;
     }
 
@@ -776,6 +837,7 @@ describe('createI18n', () => {
 
     function Probe(): ReactElement {
       const t = useTranslator();
+
       return <span>{t('Play')}</span>;
     }
 
@@ -854,6 +916,7 @@ describe('createI18n', () => {
     function Probe(): ReactElement {
       const t = useTranslator();
       const locale = useLocale();
+
       return (
         <span>
           {locale}:{t('Play')}:{t('Pause')}:{t('Replay')}
@@ -883,6 +946,7 @@ describe('createI18n', () => {
 
     function Probe(): ReactElement {
       const t = useTranslator();
+
       return (
         <span>
           {useLocale()}:{t('Play')}:{t('Pause')}

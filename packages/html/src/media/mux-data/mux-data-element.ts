@@ -4,28 +4,24 @@ import { MuxData, type MuxDataProps } from '@videojs/media/dom/mux';
 import { MediaComponentElement } from '../media-component-element';
 
 /**
- * Adds [Mux Data](https://www.mux.com/data) monitoring to the surrounding
- * player's media.
+ * Adds [Mux Data](https://www.mux.com/data) monitoring to the surrounding player's media.
  *
- * Renders nothing — place it inside the player as a sibling of the media
- * element and it registers a {@link MuxData} media component with the active
- * media host.
+ * Renders nothing — place it inside the player as a sibling of the media element and it registers a {@link MuxData}
+ * media component with the active media host.
  *
- * Mux-hosted playback needs no `env-key`: the view reports the Mux playback ID
- * as its `video_id`, which Mux attributes to the owning environment. Set
- * `env-key` to monitor sources Mux doesn't host.
+ * Mux-hosted playback needs no `env-key`: the view reports the Mux playback ID as its `video_id`, which Mux attributes
+ * to the owning environment. Set `env-key` to monitor sources Mux doesn't host.
  *
- * Any media element works. When the media plays through an hls.js or dash.js
- * engine, that engine is handed to the Mux Data SDK so the view also carries
- * stream-level detail such as rendition switches and request timing.
+ * Any media element works. When the media plays through an hls.js or dash.js engine, that engine is handed to the Mux
+ * Data SDK so the view also carries stream-level detail such as rendition switches and request timing.
  *
  * @example
- * ```html
- * <video-player>
+ *   ```html
+ *   <video-player>
  *   <mux-video src="https://stream.mux.com/abc123.m3u8"></mux-video>
  *   <mux-data player-software-name="mux-video"></mux-data>
- * </video-player>
- * ```
+ *   </video-player>
+ *   ```;
  */
 export class MuxDataElement extends MediaComponentElement<MuxData> {
   static readonly tagName = 'mux-data';

@@ -1,4 +1,5 @@
 import { useStore } from '@nanostores/react';
+
 import ClientCode from '@/components/Code/ClientCode';
 import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs';
 import { installMethod, renderer, skin, sourceUrl, useCase } from '@/stores/installation';
@@ -21,15 +22,15 @@ export default function HTMLUsageCodeBlock() {
 
   return (
     <>
-      {result.js && (
+      {result.imports && (
         <TabsRoot maxWidth={false}>
           <TabsList label="HTML implementation">
-            <Tab value="javascript" initial>
-              JavaScript
+            <Tab value="typescript" initial>
+              TypeScript
             </Tab>
           </TabsList>
-          <TabsPanel value="javascript" initial>
-            <ClientCode code={result.js} lang="javascript" />
+          <TabsPanel value="typescript" initial>
+            <ClientCode code={result.imports} lang="ts" />
           </TabsPanel>
         </TabsRoot>
       )}

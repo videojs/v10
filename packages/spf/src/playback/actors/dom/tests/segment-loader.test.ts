@@ -1,4 +1,5 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
+
 import { signal } from '../../../../core/signals/primitives';
 import type { AudioTrack } from '../../../../media/types';
 import { createSegmentLoaderActor } from '../segment-loader';
@@ -87,12 +88,14 @@ describe('createSegmentLoaderActor — planTasks cross-rendition switch', () => 
     const loader = createSegmentLoaderActor(bufferActor as unknown as SourceBufferActor, mockFetchBytes);
 
     const newTrack = makeAudioTrack('audio-es', { language: 'es' });
+
     // Playhead at 2s (mid-segment-0). currentSegmentStart = 0.
     loader.send({ type: 'load', track: newTrack, range: { start: 2, end: 20 } });
 
     // Wait for the loader to schedule its work (init + segments).
     await vi.waitFor(() => {
       const initCalls = bufferActor.send.mock.calls.filter((c) => (c[0] as SourceBufferMessage).type === 'append-init');
+
       expect(initCalls.length).toBeGreaterThan(0);
     });
 
@@ -123,6 +126,7 @@ describe('createSegmentLoaderActor — planTasks cross-rendition switch', () => 
     const loader = createSegmentLoaderActor(bufferActor as unknown as SourceBufferActor, mockFetchBytes);
 
     const newTrack = makeAudioTrack('audio-en-256k', { language: 'en' });
+
     loader.send({ type: 'load', track: newTrack, range: { start: 2, end: 20 } });
 
     await new Promise((resolve) => setTimeout(resolve, 50));
@@ -151,11 +155,13 @@ describe('createSegmentLoaderActor — planTasks cross-rendition switch', () => 
     const loader = createSegmentLoaderActor(bufferActor as unknown as SourceBufferActor, mockFetchBytes);
 
     const track = makeAudioTrack('audio-en', { language: 'en' });
+
     loader.send({ type: 'load', track, range: { start: 0, end: 20 } });
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     const removeCalls = bufferActor.send.mock.calls.filter((c) => (c[0] as SourceBufferMessage).type === 'remove');
+
     expect(removeCalls).toHaveLength(0);
 
     loader.destroy();
@@ -185,6 +191,7 @@ describe('createSegmentLoaderActor — planTasks cross-rendition switch', () => 
     const loader = createSegmentLoaderActor(bufferActor as unknown as SourceBufferActor, mockFetchBytes);
 
     const newTrack = makeAudioTrack('audio-es', { language: 'es' });
+
     // Playhead at 2s (mid-seg-0). currentSegmentStart = 0 → stale range
     // is [0, Infinity). All three segments overlap and must be re-scheduled.
     loader.send({ type: 'load', track: newTrack, range: { start: 2, end: 20 } });
@@ -193,6 +200,7 @@ describe('createSegmentLoaderActor — planTasks cross-rendition switch', () => 
       const appendSegmentCalls = bufferActor.send.mock.calls.filter(
         (c) => (c[0] as SourceBufferMessage).type === 'append-segment'
       );
+
       expect(appendSegmentCalls.length).toBeGreaterThan(0);
     });
 
@@ -219,10 +227,12 @@ describe('createSegmentLoaderActor — planTasks cross-rendition switch', () => 
     const loader = createSegmentLoaderActor(bufferActor as unknown as SourceBufferActor, mockFetchBytes);
 
     const track = makeAudioTrack('audio-es', { language: 'es' });
+
     loader.send({ type: 'load', track, range: { start: 0, end: 20 } });
 
     await vi.waitFor(() => {
       const initCall = bufferActor.send.mock.calls.find((c) => (c[0] as SourceBufferMessage).type === 'append-init');
+
       expect(initCall).toBeDefined();
     });
 

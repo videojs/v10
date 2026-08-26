@@ -1,0 +1,32 @@
+---
+title: useOptionalPlayer
+description: Hook to access or select Player state when a Player is available
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+
+## Import
+
+```tsx
+import { useOptionalPlayer } from "@videojs/react";
+```
+
+## Usage
+
+Without a selector, the hook returns the player store or `undefined` outside `Player`.
+
+```tsx
+const store = useOptionalPlayer();
+```
+
+With a selector, it subscribes while a player is available and returns the selected value. The selector is not called outside `Player`.
+
+```tsx
+import { selectPlayback, useOptionalPlayer } from "@videojs/react";
+
+const playback = useOptionalPlayer(selectPlayback);
+```
+
+Use `usePlayer` when the component requires a surrounding player.
+
+<UtilReference util="useOptionalPlayer" />

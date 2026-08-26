@@ -10,20 +10,17 @@ export interface Destroyable {
 /**
  * Mixin that adds a deferred destruction lifecycle to a `ReactiveElement`.
  *
- * On disconnect, schedules destruction after two animation frames.
- * If the element reconnects before the frames fire (e.g. DOM shuffling,
- * framework reconciliation), the `isConnected` check prevents destruction.
+ * On disconnect, schedules destruction after two animation frames. If the element reconnects before the frames fire
+ * (e.g. DOM shuffling, framework reconciliation), the `isConnected` check prevents destruction.
  *
- * The `keep-alive` attribute prevents automatic destruction entirely —
- * call `destroy()` manually when done.
+ * The `keep-alive` attribute prevents automatic destruction entirely — call `destroy()` manually when done.
  *
- * Subclasses override `destroyCallback()` (calling `super.destroyCallback()`)
- * to release heavy resources like stores or imperative APIs.
+ * Subclasses override `destroyCallback()` (calling `super.destroyCallback()`) to release heavy resources like stores or
+ * imperative APIs.
  *
- * Mirrors `addController`/`removeController` to track controllers
- * (needed because `ReactiveElement.#controllers` is hard-private),
- * calls `hostDestroyed()` on all tracked controllers in `destroyCallback`,
- * and guards `performUpdate()` so no updates run after destruction.
+ * Mirrors `addController`/`removeController` to track controllers (needed because `ReactiveElement.#controllers` is
+ * hard-private), calls `hostDestroyed()` on all tracked controllers in `destroyCallback`, and guards `performUpdate()`
+ * so no updates run after destruction.
  */
 export function DestroyMixin<Base extends new (...args: any[]) => ReactiveElement>(SuperClass: Base) {
   class DestroyableElement extends SuperClass {
@@ -36,6 +33,7 @@ export function DestroyMixin<Base extends new (...args: any[]) => ReactiveElemen
 
     destroy(): void {
       if (this.#destroyed) return;
+
       this.#destroyed = true;
       this.destroyCallback();
     }
@@ -58,6 +56,7 @@ export function DestroyMixin<Base extends new (...args: any[]) => ReactiveElemen
 
     connectedCallback(): void {
       if (this.#destroyed) return;
+
       super.connectedCallback();
     }
 
@@ -75,6 +74,7 @@ export function DestroyMixin<Base extends new (...args: any[]) => ReactiveElemen
 
     protected performUpdate(): void {
       if (this.#destroyed) return;
+
       super.performUpdate();
     }
   }

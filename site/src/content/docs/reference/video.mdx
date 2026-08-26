@@ -1,0 +1,115 @@
+---
+title: Video
+frameworkTitle:
+  html: video
+description: Native video playback that can provide media to a Video.js player
+---
+
+import DocsLink from "@/components/docs/DocsLink.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+import StyleCase from "@/components/docs/StyleCase.astro";
+import Demo from "@/components/docs/demos/Demo.astro";
+
+{/* React demo */}
+import BasicUsageDemoReact from "@/components/docs/demos/video/react/css/BasicUsage";
+import basicUsageReactTsx from "@/components/docs/demos/video/react/css/BasicUsage.tsx?raw";
+import basicUsageReactCss from "@/components/docs/demos/video/react/css/BasicUsage.css?raw";
+
+{/* HTML demo */}
+import BasicUsageDemoHtml from "@/components/docs/demos/video/html/css/BasicUsage.astro";
+import basicUsageHtml from "@/components/docs/demos/video/html/css/BasicUsage.html?raw";
+import basicUsageHtmlCss from "@/components/docs/demos/video/html/css/BasicUsage.css?raw";
+import basicUsageHtmlTs from "@/components/docs/demos/video/html/css/BasicUsage.ts?raw";
+
+## Import
+
+<FrameworkCase frameworks={["react"]}>
+Import `Video` from the video preset:
+
+```tsx
+import { Video } from '@videojs/react/video';
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+The media element is the browser's native `<video>`. Import the video player registration when it should provide media to Video.js:
+
+```ts
+import '@videojs/html/video/player';
+```
+</FrameworkCase>
+
+## Anatomy
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<Video>
+  <source />
+  <track />
+</Video>
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```html
+<video>
+  <source />
+  <track />
+</video>
+```
+</FrameworkCase>
+
+## Use with a player
+
+<FrameworkCase frameworks={["react"]}>
+Place `Video` anywhere inside a `VideoPlayer`, or inside another Video.js `Player` configured for video. It becomes that player's media provider automatically. Outside a player, `Video` behaves as a standalone native `<video>`.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+Place a native `<video>` anywhere inside `<video-player>`. It becomes that player's media provider automatically.
+</FrameworkCase>
+
+## Native behavior
+
+Video.js does not replace the native video API. Use `src` for one URL or add child [`<source>` elements](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/source) when the browser should choose between candidates. See <DocsLink slug="concepts/media-sources">Media sources</DocsLink> when you need an HLS, DASH, Mux, or other playback adapter.
+
+Add native [`<track>` elements](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/track) for captions, subtitles, chapters, descriptions, or metadata.
+
+<FrameworkCase frameworks={["react"]}>
+`Video` forwards native attributes, event handlers, and children to the underlying `<video>`. Its `ref` resolves to the `HTMLVideoElement`.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+`<video>` is the native element itself. Set its attributes and properties, listen for native media events, and access it through an `HTMLVideoElement` reference.
+</FrameworkCase>
+
+See MDN for the complete [`<video>` element](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/video), [`HTMLVideoElement`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLVideoElement), and shared [`HTMLMediaElement`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement) APIs.
+
+## Examples
+
+### Basic Usage
+
+This native video uses a child source, captions track, and browser controls while also providing media to the surrounding Video.js player.
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
+      { title: "App.css", code: basicUsageReactCss, lang: "css" },
+    ]}>
+      <BasicUsageDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "index.html", code: basicUsageHtml, lang: "html" },
+      { title: "index.css", code: basicUsageHtmlCss, lang: "css" },
+      { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
+    ]}>
+      <BasicUsageDemoHtml />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>

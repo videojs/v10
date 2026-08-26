@@ -1,4 +1,5 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
+
 import type { TextTrack } from '../../../../media/types';
 import { createTextTrackSegmentLoaderActor } from '../../text-track-segment-loader';
 import { createTextTracksActor } from '../text-tracks';
@@ -10,19 +11,23 @@ function createResolveVttSegment(): ReturnType<typeof vi.fn<ResolveVttSegment>> 
     if (url.includes('fail')) {
       return Promise.reject(new Error('Network error'));
     }
+
     return Promise.resolve([new VTTCue(0, 5, `Cue from ${url}`)]);
   });
 }
 
 function makeMediaElement(trackIds: string[]): HTMLMediaElement {
   const video = document.createElement('video');
+
   for (const id of trackIds) {
     const el = document.createElement('track');
+
     el.id = id;
     el.kind = 'subtitles';
     video.appendChild(el);
     el.track.mode = 'hidden';
   }
+
   return video;
 }
 
@@ -54,6 +59,7 @@ describe('TextTrackSegmentLoaderActor', () => {
     const video = makeMediaElement(['track-en']);
     const textTracksActor = createTextTracksActor(video);
     const actor = createTextTrackSegmentLoaderActor(textTracksActor, resolveVttSegment);
+
     actor.destroy();
     textTracksActor.destroy();
   });
@@ -113,6 +119,7 @@ describe('TextTrackSegmentLoaderActor', () => {
 
   it('continues loading remaining segments after a fetch error', async () => {
     const resolveVttSegment = createResolveVttSegment();
+
     vi.mocked(resolveVttSegment)
       .mockResolvedValueOnce([new VTTCue(0, 5, 'Good')])
       .mockRejectedValueOnce(new Error('Network error'))
@@ -144,6 +151,7 @@ describe('TextTrackSegmentLoaderActor', () => {
     const resolveVttSegment = createResolveVttSegment();
 
     let resolveSeg0!: (cues: VTTCue[]) => void;
+
     vi.mocked(resolveVttSegment)
       .mockImplementationOnce(
         () =>
@@ -186,6 +194,7 @@ describe('TextTrackSegmentLoaderActor', () => {
     const resolveVttSegment = createResolveVttSegment();
 
     let resolveSeg0!: (cues: VTTCue[]) => void;
+
     vi.mocked(resolveVttSegment)
       .mockImplementationOnce(
         () =>
@@ -231,6 +240,7 @@ describe('TextTrackSegmentLoaderActor', () => {
     const seg0Calls = (resolveVttSegment as ReturnType<typeof vi.fn>).mock.calls.filter(
       ([url]) => url === 'https://example.com/seg-0.vtt'
     );
+
     expect(seg0Calls).toHaveLength(1);
 
     actor.destroy();
@@ -241,6 +251,7 @@ describe('TextTrackSegmentLoaderActor', () => {
     const resolveVttSegment = createResolveVttSegment();
 
     let resolveSeg0!: (cues: VTTCue[]) => void;
+
     vi.mocked(resolveVttSegment)
       .mockImplementationOnce(
         () =>
@@ -280,10 +291,12 @@ describe('TextTrackSegmentLoaderActor', () => {
     await vi.waitFor(() => {
       const segs = textTracksActor.snapshot.get().context.segments['track-en'] ?? [];
       const ids = segs.map((s) => s.id);
+
       expect(ids).toContain('seg-4');
     });
 
     const ids = (textTracksActor.snapshot.get().context.segments['track-en'] ?? []).map((s) => s.id);
+
     // seg-0 was preempted — its cues didn't land.
     expect(ids).not.toContain('seg-0');
 

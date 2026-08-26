@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
+
 import {
   findMediaTrack,
   readBaseMediaDecodeTime,
@@ -22,6 +23,7 @@ const muxedVideoSegment = mediaSegment(
 describe('readFirstMediaTimescale', () => {
   it('reads the first mdhd timescale (single-track init)', () => {
     const audioInit = initSegment(trak({ handler: 'soun', trackId: 1, timescale: 48000 }));
+
     expect(readFirstMediaTimescale(audioInit)).toBe(48000);
   });
 
@@ -33,6 +35,7 @@ describe('readFirstMediaTimescale', () => {
 
   it('reads a v1 mdhd timescale (wider date fields)', () => {
     const init = initSegment(trak({ handler: 'vide', trackId: 1, timescale: 90000, mdhdVersion: 1 }));
+
     expect(readFirstMediaTimescale(init)).toBe(90000);
   });
 
@@ -48,11 +51,13 @@ describe('findMediaTrack', () => {
 
   it('selects an audio track by handler', () => {
     const audioInit = initSegment(trak({ handler: 'soun', trackId: 1, timescale: 48000 }));
+
     expect(findMediaTrack(audioInit, 'soun')).toEqual({ trackId: 1, timescale: 48000 });
   });
 
   it('handles v1 tkhd/mdhd (wider date fields)', () => {
     const init = initSegment(trak({ handler: 'vide', trackId: 7, timescale: 90000, mdhdVersion: 1, tkhdVersion: 1 }));
+
     expect(findMediaTrack(init, 'vide')).toEqual({ trackId: 7, timescale: 90000 });
   });
 
@@ -68,6 +73,7 @@ describe('readFirstBaseMediaDecodeTime', () => {
 
   it('reads a 64-bit v1 baseMediaDecodeTime beyond the 32-bit range', () => {
     const large = 2 ** 33 + 12345;
+
     expect(readFirstBaseMediaDecodeTime(mediaSegment({ trackId: 1, baseMediaDecodeTime: large, version: 1 }))).toBe(
       large
     );
@@ -93,11 +99,13 @@ describe('track-tied origin (cross-track mismatch guard)', () => {
   it('pairs timescale and baseMediaDecodeTime from the same track', () => {
     const track = findMediaTrack(muxedVideoInit, 'vide')!;
     const bmdt = readBaseMediaDecodeTime(muxedVideoSegment, track.trackId)!;
+
     // Correct, track-tied origin.
     expect(bmdt / track.timescale).toBe(10);
     // The bug track_id matching prevents: video timescale paired with the
     // caption track's baseMediaDecodeTime would read 50s, not 10s.
     const captionBmdt = readBaseMediaDecodeTime(muxedVideoSegment, 2)!;
+
     expect(captionBmdt / track.timescale).toBe(50);
   });
 });

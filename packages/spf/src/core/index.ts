@@ -1,3 +1,1 @@
-/**
- * Core SPF logic (runtime-agnostic)
- */
+/** Core SPF logic (runtime-agnostic) */

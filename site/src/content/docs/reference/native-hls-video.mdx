@@ -6,6 +6,7 @@ description: HLS video element using the browser's built-in HLS support
 ---
 
 import MediaReference from "@/components/docs/api-reference/MediaReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 import StyleCase from "@/components/docs/StyleCase.astro";
 import Demo from "@/components/docs/demos/Demo.astro";
@@ -50,4 +51,37 @@ HLS video element that relies on the browser's native HLS support. Works on Safa
   </StyleCase>
 </FrameworkCase>
 
-<MediaReference media="NativeHlsVideo" />
+<MediaReference media="NativeHlsVideo">
+  <Fragment slot="engine-nativeHls">
+    This element hands playback to the browser, so there's no JavaScript engine to configure. This carries the one thing native playback still needs from you. <DocsLink slug="concepts/media-sources">Media Sources</DocsLink> covers how engine options fit into a structured source.
+
+    <FrameworkCase frameworks={["react"]}>
+    ```tsx
+    <NativeHlsVideo
+      source={{
+        src: 'https://example.com/playlist.m3u8',
+        engine: {
+          nativeHls: {
+            drmSystems: { 'com.apple.fps': { licenseUrl: 'https://example.com/license' } },
+          },
+        },
+      }}
+    />
+    ```
+    </FrameworkCase>
+
+    <FrameworkCase frameworks={["html"]}>
+    ```ts
+    const video = document.querySelector('native-hls-video');
+    video.source = {
+      src: 'https://example.com/playlist.m3u8',
+      engine: {
+        nativeHls: {
+          drmSystems: { 'com.apple.fps': { licenseUrl: 'https://example.com/license' } },
+        },
+      },
+    };
+    ```
+    </FrameworkCase>
+  </Fragment>
+</MediaReference>

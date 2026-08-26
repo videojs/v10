@@ -1,13 +1,14 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { findTrackElement, isCaptionOrSubtitleTrack } from '../text-track';
 
 /**
- * jsdom does not create unique TextTrack objects per <track> element,
- * so we mock the `.track` property to simulate real browser behavior.
+ * Jsdom does not create unique TextTrack objects per <track> element, so we mock the `.track` property to simulate real
+ * browser behavior.
  */
 function mockTrackProperty(el: HTMLTrackElement): TextTrack {
   const track = {} as TextTrack;
+
   Object.defineProperty(el, 'track', { value: track, configurable: true });
   return track;
 }
@@ -30,6 +31,7 @@ describe('findTrackElement', () => {
     const video = document.createElement('video');
     const el = document.createElement('track');
     const track = mockTrackProperty(el);
+
     video.appendChild(el);
 
     expect(findTrackElement(video, track)).toBe(el);
@@ -38,6 +40,7 @@ describe('findTrackElement', () => {
   it('returns null when no track element matches', () => {
     const video = document.createElement('video');
     const el = document.createElement('track');
+
     mockTrackProperty(el);
     video.appendChild(el);
 
@@ -58,14 +61,17 @@ describe('findTrackElement', () => {
 
     const captionsEl = document.createElement('track');
     const captionsTrack = mockTrackProperty(captionsEl);
+
     video.appendChild(captionsEl);
 
     const thumbnailsEl = document.createElement('track');
     const thumbnailsTrack = mockTrackProperty(thumbnailsEl);
+
     video.appendChild(thumbnailsEl);
 
     const chaptersEl = document.createElement('track');
     const chaptersTrack = mockTrackProperty(chaptersEl);
+
     video.appendChild(chaptersEl);
 
     expect(findTrackElement(video, thumbnailsTrack)).toBe(thumbnailsEl);

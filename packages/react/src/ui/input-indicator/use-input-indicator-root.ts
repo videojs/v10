@@ -21,6 +21,7 @@ export function useInputIndicatorRoot<IndicatorState extends IndicatorLifecycleS
   options?: RenderedIndicatorOptions
 ) {
   const [core] = useState(createCore);
+
   useDestroy(core);
   core.setProps(props);
   const showIndicator = useIndicatorVisibility(() => core.close());

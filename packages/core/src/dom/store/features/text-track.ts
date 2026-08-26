@@ -5,8 +5,10 @@ import type {
   MediaTextTrackState,
   TextTrackLike,
 } from '@videojs/media';
-import { isMediaTextTrackCapable, isQuerySelectorAllCapable } from '@videojs/media';
+import { isMediaSourceCapable, isMediaTextTrackCapable, isQuerySelectorAllCapable } from '@videojs/media';
 import { findTrackElement, isCaptionOrSubtitleTrack, listen } from '@videojs/utils/dom';
+import { isNil } from '@videojs/utils/predicate';
+
 import { DEFAULT_LOCALE, findLocaleKeys, getCanonicalLocaleKey } from '../../../core/i18n';
 import { definePlayerFeature } from '../../feature';
 
@@ -20,8 +22,8 @@ function getTrackId(track: TextTrackLike, index: number): string {
 }
 
 /**
- * Caption/subtitle tracks paired with the ids exposed through `textTrackList`,
- * ordered like the captions menu so index-based fallbacks agree with the UI.
+ * Caption/subtitle tracks paired with the ids exposed through `textTrackList`, ordered like the captions menu so
+ * index-based fallbacks agree with the UI.
  */
 function getSubtitlesTracks(media: MediaTextTrackCapability): IdentifiedTrack[] {
   return Array.from(media.textTracks)
@@ -34,8 +36,19 @@ function getSubtitlesTracks(media: MediaTextTrackCapability): IdentifiedTrack[] 
 function showOnly(tracks: IdentifiedTrack[], active: TextTrackLike | null): void {
   for (const { track } of tracks) {
     const mode = track === active ? 'showing' : 'disabled';
+
     if (track.mode !== mode) track.mode = mode;
   }
+}
+
+/**
+ * Map a media element's `crossOrigin` to a CORS mode. Per the CORS-settings attribute, any value other than
+ * `use-credentials` is Anonymous — including the empty string and unknown keywords.
+ */
+function toCorsMode(value: string | null | undefined): MediaTextTrackState['thumbnailTrackCrossOrigin'] {
+  if (isNil(value)) return null;
+
+  return value.toLowerCase() === 'use-credentials' ? 'use-credentials' : 'anonymous';
 }
 
 function findLocaleTrack(tracks: IdentifiedTrack[], locale: string): IdentifiedTrack | undefined {
@@ -67,6 +80,7 @@ export const textTrackFeature = definePlayerFeature({
       chaptersCues: [],
       thumbnailCues: [],
       thumbnailTrackSrc: null,
+      thumbnailTrackCrossOrigin: null,
       textTrackList: [],
       subtitlesShowing: false,
       toggleSubtitles(forceShow?: boolean) {
@@ -93,6 +107,7 @@ export const textTrackFeature = definePlayerFeature({
           subtitlesTracks.find(({ id }) => id === lastShownId) ??
           findLocaleTrack(subtitlesTracks, globalThis.navigator?.language ?? '') ??
           subtitlesTracks[0]!;
+
         lastShownId = next.id;
         showOnly(subtitlesTracks, next.track);
 
@@ -107,7 +122,9 @@ export const textTrackFeature = definePlayerFeature({
 
         if (value === 'off') {
           const showing = subtitlesTracks.find(({ track }) => track.mode === 'showing');
+
           if (showing) lastShownId = showing.id;
+
           showOnly(subtitlesTracks, null);
           return;
         }
@@ -123,7 +140,6 @@ export const textTrackFeature = definePlayerFeature({
 
   attach({ target, signal, set }) {
     const { media } = target;
-
     if (!isMediaTextTrackCapable(media)) return;
 
     let trackCleanup: AbortController | null = null;
@@ -139,7 +155,9 @@ export const textTrackFeature = definePlayerFeature({
 
       for (let i = 0; i < media.textTracks.length; i++) {
         const track = media.textTracks[i]!;
+
         if (!chaptersTrack && track.kind === 'chapters') chaptersTrack = track;
+
         if (!thumbnailTrack && track.kind === 'metadata' && track.label === 'thumbnails') thumbnailTrack = track;
 
         textTrackList.push({
@@ -165,9 +183,15 @@ export const textTrackFeature = definePlayerFeature({
         : [];
 
       let thumbnailTrackSrc: string | null = null;
+      let thumbnailTrackCrossOrigin: MediaTextTrackState['thumbnailTrackCrossOrigin'] = null;
+
       if (thumbnailTrack) {
         const el = findTrackElement(media, thumbnailTrack);
+
         thumbnailTrackSrc = el?.src ?? null;
+        // Read the host rather than any inner native element: for a custom media
+        // element the attribute lives on the host and is forwarded inward.
+        thumbnailTrackCrossOrigin = isMediaSourceCapable(media) ? toCorsMode(media.crossOrigin) : null;
       }
 
       // Listen for <track> load events on tracks that don't have cues yet.
@@ -182,17 +206,26 @@ export const textTrackFeature = definePlayerFeature({
         }
       }
 
-      set({ chaptersCues, thumbnailCues, thumbnailTrackSrc, textTrackList, subtitlesShowing });
+      set({
+        chaptersCues,
+        thumbnailCues,
+        thumbnailTrackSrc,
+        thumbnailTrackCrossOrigin,
+        textTrackList,
+        subtitlesShowing,
+      });
     };
 
     sync();
 
     const textTracks = media.textTracks;
+
     if (textTracks instanceof EventTarget) {
       listen(textTracks, 'addtrack', sync, { signal });
       listen(textTracks, 'removetrack', sync, { signal });
       listen(textTracks, 'change', sync, { signal });
     }
+
     listen(media, 'loadstart', sync, { signal });
 
     signal.addEventListener('abort', () => trackCleanup?.abort(), { once: true });

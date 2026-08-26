@@ -1,4 +1,4 @@
-import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vite-plus/test';
 
 import { SliderElement } from '../slider-element';
 import { SliderPreviewElement } from '../slider-preview-element';
@@ -20,6 +20,7 @@ function uniqueTag(base: string): string {
 
 function createElement<Element extends HTMLElement>(Base: abstract new () => Element): Element {
   const tag = uniqueTag('test-slp');
+
   customElements.define(tag, class extends (Base as unknown as typeof HTMLElement) {});
   return document.createElement(tag) as Element;
 }
@@ -35,6 +36,7 @@ describe('SliderPreviewElement', () => {
 
   it('defaults overflow to clamp', () => {
     const el = createElement(SliderPreviewElement);
+
     expect(el.overflow).toBe('clamp');
   });
 
@@ -67,6 +69,7 @@ describe('SliderPreviewElement', () => {
     await preview.updateComplete;
 
     const leftCall = spy.mock.calls.find(([key]) => key === 'left');
+
     expect(leftCall).toBeTruthy();
     expect(leftCall![1]).toContain('min(');
     expect(leftCall![1]).toContain('max(');
@@ -75,6 +78,7 @@ describe('SliderPreviewElement', () => {
   it('applies unclamped left style when overflow is visible', async () => {
     const slider = createElement(SliderElement);
     const preview = createElement(SliderPreviewElement);
+
     preview.overflow = 'visible';
 
     const spy = vi.spyOn(preview.style, 'setProperty');
@@ -86,6 +90,7 @@ describe('SliderPreviewElement', () => {
     await preview.updateComplete;
 
     const leftCall = spy.mock.calls.find(([key]) => key === 'left');
+
     expect(leftCall).toBeTruthy();
     expect(leftCall![1]).toContain('calc(var(--media-slider-pointer)');
     expect(leftCall![1]).not.toContain('min(');

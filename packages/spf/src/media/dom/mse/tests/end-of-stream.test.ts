@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
+
 import { type AppendedSegment, isLastSegmentAppended } from '../end-of-stream';
 
 function appendedFromIds(segmentIds: string[]): AppendedSegment[] {
@@ -45,6 +46,7 @@ describe('isLastSegmentAppended', () => {
 
   it('returns false when the last segment is present but marked partial', () => {
     const appended: AppendedSegment[] = [{ id: 'seg-0' }, { id: 'seg-1', partial: true }];
+
     expect(isLastSegmentAppended([{ id: 'seg-0' }, { id: 'seg-1' }], appended)).toBe(false);
   });
 });

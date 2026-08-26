@@ -1,6 +1,8 @@
 import { Suspense, use } from 'react';
 import type { BundledLanguage } from 'shiki';
+
 import { shared } from '@/components/typography/styles';
+
 import { getClientHighlighter } from './clientHighlighter';
 import Shared from './Shared';
 
@@ -21,14 +23,12 @@ function ClientCodeInner({ code, lang }: ClientCodeProps) {
 }
 
 /**
- * Uses `use()` + Suspense instead of top-level `await` because top-level
- * `await` causes Safari hydration errors when multiple `client:idle` islands
- * on the same Astro page share the module.
+ * Uses `use()` + Suspense instead of top-level `await` because top-level `await` causes Safari hydration errors when
+ * multiple `client:idle` islands on the same Astro page share the module.
  * https://github.com/withastro/astro/issues/10055
  *
- * The unhighlighted fallback is a safety net for the brief client hydration
- * gap — Astro's SSR awaits the full React stream, so the server-rendered
- * output already contains highlighted code.
+ * The unhighlighted fallback is a safety net for the brief client hydration gap — Astro's SSR awaits the full React
+ * stream, so the server-rendered output already contains highlighted code.
  */
 export default function ClientCode({ code, lang }: ClientCodeProps) {
   return (

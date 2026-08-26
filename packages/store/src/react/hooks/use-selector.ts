@@ -1,4 +1,5 @@
 import { useRef, useSyncExternalStore } from 'react';
+
 import { type Comparator, type Selector, shallowEqual } from '../../core/shallow-equal';
 
 export type { Comparator, Selector };
@@ -23,10 +24,7 @@ export function useSelector<S, R>(
 
   const getSelectedSnapshot = () => {
     const next = selector(getSnapshot());
-
-    if (cache.current !== undefined && isEqual(cache.current, next)) {
-      return cache.current;
-    }
+    if (cache.current !== undefined && isEqual(cache.current, next)) return cache.current;
 
     cache.current = next;
 

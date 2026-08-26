@@ -1,0 +1,7 @@
+@import "tailwindcss" theme(inline);
+
+@utility child-target {
+  & > * {
+    display: block;
+  }
+}

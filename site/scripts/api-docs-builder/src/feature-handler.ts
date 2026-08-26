@@ -1,33 +1,48 @@
-/**
- * Feature reference extraction.
- *
- * Discovers features from packages/core/src/dom/store/features/ and extracts
- * state/action definitions from their state interfaces in media/state.ts.
- *
- * Uses the TypeScript checker API (not TAE) for interface extraction because
- * state interfaces use method signatures (play(): void) which TAE doesn't
- * handle — it only handles property-with-function-type syntax.
- *
- * Convention:
- *   - Feature files: *.ts in the features directory (excluding index, presets, feature.parts)
- *   - Feature exports: const matching *Feature (singular, not *Features)
- *   - State type: explicit return type annotation on the state() arrow function
- *   - Silent features: state() returns an empty object
- *   - State interfaces: exported from packages/media/src/core/state.ts
- */
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import * as ts from 'typescript';
-import type { FeatureActionDef, FeatureReference, FeatureStateDef } from './types.js';
-import { createTypeScriptProgram } from './typescript.js';
-import { getJSDocDescription } from './utils.js';
+
+import type { Expression, ObjectExpression, ObjectProperty, TSSignature, TSType } from 'oxc-parser';
+
+import { formatDetailedType } from './formatter.js';
+import type { OxcProject, ResolvedDeclaration, ResolvedMember, SourceFile } from './oxc-project.js';
+import {
+  expressionText,
+  getJSDocDescription,
+  literalValue,
+  OxcProject as Project,
+  staticName,
+  typeNameText,
+  unwrapExpression,
+  unwrapObjectExpression,
+} from './oxc-project.js';
+import type { FeatureActionDef, FeatureConfigDef, FeatureReference, FeatureStateDef } from './types.js';
+import { log } from './utils.js';
 
 const SKIP_FILES = new Set(['index.ts', 'presets.ts', 'feature.parts.ts']);
+const UNRESOLVED_TYPE = 'unknown';
 
 interface FeatureSource {
-  filePath: string;
+  file: SourceFile;
   name: string;
   stateTypeName?: string;
+  derived: DerivedKeySource[];
+  config: FeatureConfigSource[];
+  description?: string;
+}
+
+interface DerivedKeySource {
+  name: string;
+  property: ObjectProperty;
+  description?: string;
+}
+
+interface FeatureConfigSource {
+  name: string;
+  actionKey: string;
+  stateKey: string;
+  description?: string;
+  defaultValue?: string;
+  attribute?: string;
 }
 
 export interface FeatureResult {
@@ -36,197 +51,484 @@ export interface FeatureResult {
   reference: FeatureReference;
 }
 
-// ─── Discovery ────────────────────────────────────────────────────
+/** Generate feature references from authored feature and media-state declarations. */
+export function generateFeatureReferences(monorepoRoot: string): FeatureResult[] {
+  const featuresDir = path.join(monorepoRoot, 'packages/core/src/dom/store/features');
+  const stateFilePath = path.join(monorepoRoot, 'packages/media/src/core/state.ts');
+  if (!fs.existsSync(featuresDir) || !fs.existsSync(stateFilePath)) return [];
 
-function discoverFeatureSources(featuresDir: string): FeatureSource[] {
+  const project = new Project(monorepoRoot);
+  const sources = discoverFeatureSources(featuresDir, project);
+  const results: FeatureResult[] = [];
+
+  for (const source of sources) {
+    const sourceState = source.stateTypeName
+      ? project.resolveName(source.file.filePath, source.stateTypeName)
+      : undefined;
+    const publishedState = source.stateTypeName ? project.resolveName(stateFilePath, source.stateTypeName) : undefined;
+    const config = extractFeatureConfig(project, source, sourceState);
+    let shape: PublishedShape;
+
+    if (!source.stateTypeName) {
+      shape = { state: {}, actions: {} };
+    } else if (publishedState) {
+      shape = extractInterface(project, publishedState);
+    } else if (sourceState) {
+      shape = extractLocalPublishedShape(project, source, sourceState);
+      shape.description = source.description;
+    } else {
+      log.warn(
+        `feature "${source.name}": state() names "${source.stateTypeName}", which cannot be resolved — no reference generated.`
+      );
+      continue;
+    }
+
+    const reference: FeatureReference = {
+      name: source.name,
+      slug: source.name,
+      state: shape.state,
+      actions: shape.actions,
+      config,
+    };
+
+    if (shape.description) reference.description = shape.description;
+
+    results.push({ name: source.name, slug: source.name, reference });
+  }
+
+  return results;
+}
+
+function discoverFeatureSources(featuresDir: string, project: OxcProject): FeatureSource[] {
   const sources: FeatureSource[] = [];
-  const files = fs.readdirSync(featuresDir).filter((f) => f.endsWith('.ts') && !SKIP_FILES.has(f));
 
-  for (const file of files) {
-    const filePath = path.join(featuresDir, file);
-    const content = fs.readFileSync(filePath, 'utf-8');
-    const sourceFile = ts.createSourceFile(filePath, content, ts.ScriptTarget.Latest, true);
+  for (const entry of fs.readdirSync(featuresDir)) {
+    if (!entry.endsWith('.ts') || SKIP_FILES.has(entry)) continue;
 
-    ts.forEachChild(sourceFile, (node) => {
-      if (!ts.isVariableStatement(node)) return;
-      if (!node.modifiers?.some((m) => m.kind === ts.SyntaxKind.ExportKeyword)) return;
+    const file = project.source(path.join(featuresDir, entry));
+    if (!file) continue;
 
-      for (const decl of node.declarationList.declarations) {
-        if (!ts.isIdentifier(decl.name)) continue;
-        const varName = decl.name.text;
-        if (!varName.endsWith('Feature') || varName.endsWith('Features')) continue;
+    for (const statement of file.program.body) {
+      if (statement.type !== 'ExportNamedDeclaration' || statement.declaration?.type !== 'VariableDeclaration')
+        continue;
 
-        if (!decl.initializer || !ts.isCallExpression(decl.initializer)) continue;
-        const arg = decl.initializer.arguments[0];
-        if (!arg || !ts.isObjectLiteralExpression(arg)) continue;
+      for (const declaration of statement.declaration.declarations) {
+        const exportName = staticName(declaration.id);
+        if (!exportName?.endsWith('Feature') || exportName.endsWith('Features') || !declaration.init) continue;
 
-        let name: string | undefined;
-        let stateTypeName: string | undefined;
-        let silent = false;
+        const initializer = unwrapExpression(declaration.init);
+        if (initializer.type !== 'CallExpression') continue;
 
-        for (const prop of arg.properties) {
-          if (!ts.isPropertyAssignment(prop) || !ts.isIdentifier(prop.name)) continue;
+        const argument = initializer.arguments[0];
+        if (!argument || argument.type === 'SpreadElement') continue;
 
-          if (prop.name.text === 'name' && ts.isStringLiteral(prop.initializer)) {
-            name = prop.initializer.text;
-          }
+        const feature = unwrapObjectExpression(argument);
+        if (!feature) continue;
 
-          if (prop.name.text === 'state') {
-            const fn = prop.initializer;
-            if ((ts.isArrowFunction(fn) || ts.isFunctionExpression(fn)) && fn.type && ts.isTypeReferenceNode(fn.type)) {
-              stateTypeName = fn.type.typeName.getText(sourceFile);
-            } else if (isEmptyState(fn)) {
-              silent = true;
-            }
-          }
-        }
+        const name = stringProperty(feature, 'name');
+        const stateProperty = objectProperty(feature, 'state');
+        if (!name || !stateProperty) continue;
 
-        if (name && (stateTypeName || silent)) {
-          sources.push({ filePath, name, stateTypeName });
-        }
+        const stateFunction = unwrapExpression(stateProperty.value);
+        if (stateFunction.type !== 'ArrowFunctionExpression' && stateFunction.type !== 'FunctionExpression') continue;
+
+        if (!stateFunction.body) continue;
+
+        const stateType = stateFunction.returnType?.typeAnnotation;
+        const stateTypeName = stateType?.type === 'TSTypeReference' ? typeNameText(stateType.typeName) : undefined;
+        const silent = isEmptyState(stateFunction.body);
+        if (!stateTypeName && !silent) continue;
+
+        const derivedObject = objectProperty(feature, 'derived');
+        const configObject = objectProperty(feature, 'config');
+        const derived = parseDerived(file, derivedObject?.value);
+        const config = parseConfig(file, configObject?.value, name);
+        const defaults = parseStateInitialValues(file, stateFunction.body);
+
+        for (const item of config) item.defaultValue = defaults.get(item.stateKey);
+
+        sources.push({
+          file,
+          name,
+          ...(stateTypeName ? { stateTypeName } : {}),
+          derived,
+          config,
+          ...(getJSDocDescription(file, declaration) ? { description: getJSDocDescription(file, declaration) } : {}),
+        });
       }
-    });
+    }
   }
 
   return sources;
 }
 
-function isEmptyState(node: ts.Expression): boolean {
-  if (!ts.isArrowFunction(node) && !ts.isFunctionExpression(node)) return false;
-  if (ts.isBlock(node.body)) return false;
+function parseDerived(file: SourceFile, expression: Expression | undefined): DerivedKeySource[] {
+  const object = expression ? unwrapObjectExpression(expression) : undefined;
+  if (!object) return [];
 
-  const body = unwrapParentheses(node.body);
-  return ts.isObjectLiteralExpression(body) && body.properties.length === 0;
+  return object.properties.flatMap((property) => {
+    if (property.type !== 'Property') return [];
+
+    const name = staticName(property.key);
+    if (!name) return [];
+
+    const description = getJSDocDescription(file, property);
+
+    return [{ name, property, ...(description ? { description } : {}) }];
+  });
 }
 
-function unwrapParentheses(node: ts.Expression): ts.Expression {
-  let expression = node;
+function parseConfig(file: SourceFile, expression: Expression | undefined, featureName: string): FeatureConfigSource[] {
+  const object = expression ? unwrapObjectExpression(expression) : undefined;
+  if (!object) return [];
 
-  while (ts.isParenthesizedExpression(expression)) {
-    expression = expression.expression;
+  const entries: FeatureConfigSource[] = [];
+
+  for (const property of object.properties) {
+    if (property.type !== 'Property' || property.kind !== 'init') continue;
+
+    const name = staticName(property.key);
+    const value = unwrapObjectExpression(property.value);
+    if (!name || !value) continue;
+
+    const action = objectProperty(value, 'action');
+    const state = objectProperty(value, 'state');
+    const actionKey = action ? configKeyReference(action.value) : undefined;
+    const stateKey = state ? configKeyReference(state.value) : undefined;
+
+    if (!actionKey || !stateKey) {
+      log.warn(
+        `feature "${featureName}": config input "${name}" has an unreadable action or state — omitted from the reference.`
+      );
+      continue;
+    }
+
+    const html = objectProperty(value, 'html');
+    const htmlObject = html ? unwrapObjectExpression(html.value) : undefined;
+    const attribute = htmlObject ? stringProperty(htmlObject, 'attribute') : undefined;
+    const description = getJSDocDescription(file, property);
+
+    entries.push({
+      name,
+      actionKey,
+      stateKey,
+      ...(description ? { description } : {}),
+      ...(attribute ? { attribute } : {}),
+    });
   }
 
-  return expression;
+  return entries;
 }
 
-// ─── Type Formatting ──────────────────────────────────────────────
+function parseStateInitialValues(
+  file: SourceFile,
+  body: Expression | import('oxc-parser').BlockStatement
+): Map<string, string> {
+  const result = new Map<string, string>();
+  const object = body.type === 'BlockStatement' ? returnedObject(body) : unwrapObjectExpression(body);
+  if (!object) return result;
 
-function formatCheckerType(type: ts.Type, checker: ts.TypeChecker): string {
-  if (type.isUnion()) {
-    // TypeScript internally represents `boolean` as `false | true`
-    const isBooleanUnion =
-      type.types.length === 2 && type.types.every((t) => !!(t.flags & ts.TypeFlags.BooleanLiteral));
-    if (isBooleanUnion) return 'boolean';
+  const constants = literalConstants(file);
 
-    return type.types.map((t) => formatCheckerType(t, checker)).join(' | ');
+  for (const property of object.properties) {
+    if (property.type !== 'Property' || property.kind !== 'init') continue;
+
+    const key = property.computed && property.key.type === 'Identifier' ? property.key.name : staticName(property.key);
+    if (!key) continue;
+
+    const initializer = unwrapExpression(property.value);
+    if (initializer.type === 'Identifier' && initializer.name === 'undefined') continue;
+
+    const resolved = initializer.type === 'Identifier' ? constants.get(initializer.name) : undefined;
+
+    result.set(key, resolved ?? expressionText(file, initializer));
   }
-  if (type.isStringLiteral()) {
-    return `'${type.value}'`;
-  }
-  return checker.typeToString(type);
+
+  return result;
 }
 
-// ─── Interface Extraction ─────────────────────────────────────────
+function literalConstants(file: SourceFile): Map<string, string> {
+  const result = new Map<string, string>();
 
-function extractInterfaceMembers(
-  interfaceDecl: ts.InterfaceDeclaration,
-  checker: ts.TypeChecker,
-  sourceFile: ts.SourceFile
-): { state: Record<string, FeatureStateDef>; actions: Record<string, FeatureActionDef> } {
+  for (const statement of file.program.body) {
+    const declaration = statement.type === 'ExportNamedDeclaration' ? statement.declaration : statement;
+    if (declaration?.type !== 'VariableDeclaration' || declaration.kind !== 'const') continue;
+
+    for (const item of declaration.declarations) {
+      const name = staticName(item.id);
+      const value = item.init ? literalValue(item.init) : undefined;
+      if (!name || value === undefined) continue;
+
+      result.set(name, typeof value === 'string' ? `'${value.replaceAll("'", "\\'")}'` : String(value));
+    }
+  }
+
+  return result;
+}
+
+interface PublishedShape {
+  state: Record<string, FeatureStateDef>;
+  actions: Record<string, FeatureActionDef>;
+  description?: string;
+}
+
+function extractInterface(project: OxcProject, declaration: ResolvedDeclaration): PublishedShape {
+  const name = 'id' in declaration.declaration ? staticName(declaration.declaration.id) : undefined;
+  if (!name) return { state: {}, actions: {} };
+
+  const reference: import('oxc-parser').TSTypeReference = {
+    type: 'TSTypeReference',
+    typeName: { type: 'Identifier', name, start: declaration.declaration.start, end: declaration.declaration.end },
+    typeArguments: null,
+    start: declaration.declaration.start,
+    end: declaration.declaration.end,
+  };
+  const shape = extractMembers(project, project.interfaceMembers({ file: declaration.file, type: reference }));
+
+  return {
+    ...shape,
+    ...(getJSDocDescription(declaration.file, declaration.declaration)
+      ? { description: getJSDocDescription(declaration.file, declaration.declaration) }
+      : {}),
+  };
+}
+
+function extractLocalPublishedShape(
+  project: OxcProject,
+  source: FeatureSource,
+  declaration: ResolvedDeclaration
+): PublishedShape {
+  const shape = extractInterface(project, declaration);
+
+  for (const item of source.derived) {
+    const type = derivedReturnType(item.property);
+    const definition: FeatureStateDef = {
+      type: type ? formatDetailedType(project, { file: source.file, type }, false) : UNRESOLVED_TYPE,
+    };
+
+    if (item.description) definition.description = item.description;
+
+    shape.state[item.name] = definition;
+  }
+
+  return shape;
+}
+
+function extractMembers(project: OxcProject, members: readonly ResolvedMember[]): PublishedShape {
   const state: Record<string, FeatureStateDef> = {};
   const actions: Record<string, FeatureActionDef> = {};
 
-  for (const member of interfaceDecl.members) {
-    const name = member.name?.getText(sourceFile);
+  for (const resolved of members) {
+    const member = resolved.member;
+    if ('computed' in member && member.computed) continue;
+
+    const name = 'key' in member ? staticName(member.key) : undefined;
     if (!name) continue;
 
-    const description = getJSDocDescription(member);
+    const description = getJSDocDescription(resolved.file, member);
 
-    if (ts.isMethodSignature(member)) {
-      const params = member.parameters
-        .map((p) => {
-          const pName = p.name.getText(sourceFile);
-          const pType = p.type ? formatCheckerType(checker.getTypeFromTypeNode(p.type), checker) : 'unknown';
-          return `${pName}: ${pType}`;
-        })
-        .join(', ');
+    if (member.type === 'TSMethodSignature') {
+      const definition: FeatureActionDef = {
+        type: formatMethod(project, resolved.file, member, resolved.substitutions),
+      };
 
-      let returnType = 'void';
-      if (member.type) {
-        returnType = formatCheckerType(checker.getTypeFromTypeNode(member.type), checker);
-      }
+      if (description) definition.description = description;
 
-      const def: FeatureActionDef = { type: `(${params}) => ${returnType}` };
-      if (description) def.description = description;
-      actions[name] = def;
-    } else if (ts.isPropertySignature(member) && member.type) {
-      const memberType = checker.getTypeFromTypeNode(member.type);
-      const typeStr = formatCheckerType(memberType, checker);
-      const def: FeatureStateDef = { type: typeStr };
-      if (description) def.description = description;
-      state[name] = def;
+      actions[name] = definition;
+      continue;
+    }
+
+    if (member.type !== 'TSPropertySignature' || !member.typeAnnotation) continue;
+
+    if (member.typeAnnotation.typeAnnotation.type === 'TSFunctionType') {
+      const definition: FeatureActionDef = {
+        type: formatDetailedType(
+          project,
+          { file: resolved.file, type: member.typeAnnotation.typeAnnotation, substitutions: resolved.substitutions },
+          member.optional
+        ),
+      };
+
+      if (description) definition.description = description;
+
+      actions[name] = definition;
+    } else {
+      const definition: FeatureStateDef = {
+        type: formatDetailedType(
+          project,
+          { file: resolved.file, type: member.typeAnnotation.typeAnnotation, substitutions: resolved.substitutions },
+          member.optional
+        ),
+      };
+
+      if (description) definition.description = description;
+
+      state[name] = definition;
     }
   }
 
   return { state, actions };
 }
 
-// ─── Pipeline ─────────────────────────────────────────────────────
+function extractFeatureConfig(
+  project: OxcProject,
+  source: FeatureSource,
+  sourceState: ResolvedDeclaration | undefined
+): Record<string, FeatureConfigDef> {
+  const config: Record<string, FeatureConfigDef> = {};
+  const sourceStateName =
+    sourceState && 'id' in sourceState.declaration ? staticName(sourceState.declaration.id) : undefined;
+  const members =
+    sourceState && sourceStateName
+      ? project.interfaceMembers({
+          file: sourceState.file,
+          type: {
+            type: 'TSTypeReference',
+            typeName: {
+              type: 'Identifier',
+              name: sourceStateName,
+              start: sourceState.declaration.start,
+              end: sourceState.declaration.end,
+            },
+            typeArguments: null,
+            start: sourceState.declaration.start,
+            end: sourceState.declaration.end,
+          },
+        })
+      : [];
 
-export function generateFeatureReferences(monorepoRoot: string): FeatureResult[] {
-  const featuresDir = path.join(monorepoRoot, 'packages/core/src/dom/store/features');
-  const stateFilePath = path.join(monorepoRoot, 'packages/media/src/core/state.ts');
+  for (const entry of source.config) {
+    const member = members.find((resolved) => memberMatches(resolved.member, entry.actionKey));
+    const parameterType = member ? firstParameterType(member.member) : undefined;
+    let type = parameterType
+      ? formatDetailedType(
+          project,
+          { file: member!.file, type: parameterType, substitutions: member!.substitutions },
+          false
+        )
+      : UNRESOLVED_TYPE;
 
-  if (!fs.existsSync(featuresDir) || !fs.existsSync(stateFilePath)) return [];
-
-  const sources = discoverFeatureSources(featuresDir);
-  if (sources.length === 0) return [];
-
-  // Create a TS program with the state file for the checker
-  const program = createTypeScriptProgram(monorepoRoot, [stateFilePath]);
-  const checker = program.getTypeChecker();
-  const stateSourceFile = program.getSourceFile(stateFilePath);
-  if (!stateSourceFile) return [];
-
-  // Build a map of interface name → declaration
-  const interfaces = new Map<string, ts.InterfaceDeclaration>();
-  ts.forEachChild(stateSourceFile, (node) => {
-    if (ts.isInterfaceDeclaration(node)) {
-      interfaces.set(node.name.text, node);
+    if (type === UNRESOLVED_TYPE) {
+      log.warn(
+        `feature "${source.name}": config input "${entry.name}" points at action "${entry.actionKey}", which has no matching source-state member — type left as "${UNRESOLVED_TYPE}".`
+      );
+    } else {
+      type = configUnionOrder(type);
     }
-  });
 
-  const results: FeatureResult[] = [];
-  for (const source of sources) {
-    if (!source.stateTypeName) {
-      const ref: FeatureReference = {
-        name: source.name,
-        slug: source.name,
-        state: {},
-        actions: {},
-      };
+    const definition: FeatureConfigDef = { type };
 
-      results.push({ name: source.name, slug: source.name, reference: ref });
-      continue;
-    }
+    if (entry.defaultValue) definition.default = entry.defaultValue;
 
-    const interfaceDecl = interfaces.get(source.stateTypeName);
-    if (!interfaceDecl) continue;
+    if (entry.description) definition.description = entry.description;
 
-    const description = getJSDocDescription(interfaceDecl);
-    const { state, actions } = extractInterfaceMembers(interfaceDecl, checker, stateSourceFile);
+    if (entry.attribute) definition.attribute = entry.attribute;
 
-    const ref: FeatureReference = {
-      name: source.name,
-      slug: source.name,
-      state,
-      actions,
-    };
-
-    if (description) ref.description = description;
-
-    results.push({ name: source.name, slug: source.name, reference: ref });
+    config[entry.name] = definition;
   }
 
-  return results;
+  return config;
+}
+
+function memberMatches(member: TSSignature, actionKey: string): boolean {
+  if (!('key' in member)) return false;
+
+  if ('computed' in member && member.computed && member.key.type === 'Identifier') return member.key.name === actionKey;
+
+  return staticName(member.key) === actionKey;
+}
+
+function firstParameterType(member: TSSignature): TSType | undefined {
+  const parameter =
+    member.type === 'TSMethodSignature'
+      ? member.params[0]
+      : member.type === 'TSPropertySignature' && member.typeAnnotation?.typeAnnotation.type === 'TSFunctionType'
+        ? member.typeAnnotation.typeAnnotation.params[0]
+        : undefined;
+  if (!parameter) return undefined;
+
+  const pattern =
+    parameter.type === 'RestElement'
+      ? parameter.argument
+      : parameter.type === 'TSParameterProperty'
+        ? parameter.parameter
+        : parameter;
+
+  return pattern.typeAnnotation?.typeAnnotation;
+}
+
+function formatMethod(
+  project: OxcProject,
+  file: SourceFile,
+  member: Extract<TSSignature, { type: 'TSMethodSignature' }>,
+  substitutions?: ReadonlyMap<string, import('./oxc-project.js').ResolvedType>
+): string {
+  const parameters = member.params.map((parameter) => {
+    const pattern =
+      parameter.type === 'RestElement'
+        ? parameter.argument
+        : parameter.type === 'TSParameterProperty'
+          ? parameter.parameter
+          : parameter;
+    const name = pattern.type === 'Identifier' ? pattern.name.replace(/^_/, '') : '...';
+    const annotation = pattern.typeAnnotation?.typeAnnotation;
+    const type = annotation
+      ? formatDetailedType(project, { file, type: annotation, substitutions }, false)
+      : UNRESOLVED_TYPE;
+
+    return `${name}: ${type}`;
+  });
+  const returnType = member.returnType
+    ? formatDetailedType(project, { file, type: member.returnType.typeAnnotation, substitutions }, false)
+    : 'void';
+
+  return `(${parameters.join(', ')}) => ${returnType}`;
+}
+
+function derivedReturnType(property: ObjectProperty): TSType | undefined {
+  const value = unwrapExpression(property.value);
+
+  return value.type === 'ArrowFunctionExpression' || value.type === 'FunctionExpression'
+    ? value.returnType?.typeAnnotation
+    : undefined;
+}
+
+function objectProperty(object: ObjectExpression, name: string): ObjectProperty | undefined {
+  return object.properties.find(
+    (property): property is ObjectProperty =>
+      property.type === 'Property' && property.kind === 'init' && staticName(property.key) === name
+  );
+}
+
+function stringProperty(object: ObjectExpression, name: string): string | undefined {
+  const property = objectProperty(object, name);
+  const value = property ? literalValue(property.value) : undefined;
+
+  return typeof value === 'string' ? value : undefined;
+}
+
+function configKeyReference(expression: Expression): string | undefined {
+  const value = unwrapExpression(expression);
+  if (value.type === 'Identifier') return value.name;
+
+  return value.type === 'Literal' && typeof value.value === 'string' ? value.value : undefined;
+}
+
+function returnedObject(block: import('oxc-parser').BlockStatement): ObjectExpression | undefined {
+  for (const statement of block.body) {
+    if (statement.type === 'ReturnStatement' && statement.argument) return unwrapObjectExpression(statement.argument);
+  }
+
+  return undefined;
+}
+
+function isEmptyState(body: Expression | import('oxc-parser').BlockStatement): boolean {
+  return body.type !== 'BlockStatement' && unwrapObjectExpression(body)?.properties.length === 0;
+}
+
+function configUnionOrder(type: string): string {
+  const members = type.split(' | ');
+  if (!members.includes('undefined') || !members.includes('null')) return type;
+
+  return ['undefined', 'null', ...members.filter((member) => member !== 'undefined' && member !== 'null')].join(' | ');
 }

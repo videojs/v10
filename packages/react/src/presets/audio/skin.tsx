@@ -3,6 +3,7 @@
 import { playbackRateText } from '@videojs/core/i18n/text/menu';
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
+
 import { useTranslator } from '@/i18n/context';
 import {
   CheckIcon,
@@ -33,6 +34,7 @@ import { Time } from '@/ui/time';
 import { TimeSlider } from '@/ui/time-slider';
 import { Tooltip } from '@/ui/tooltip';
 import { VolumeSlider } from '@/ui/volume-slider';
+
 import type { BaseSkinProps } from '../types';
 
 const SEEK_TIME = 10;
@@ -102,10 +104,20 @@ function PlaybackRateTrigger(): ReactNode {
   if (!state) return null;
 
   return (
-    <Menu.Trigger
-      disabled={state.disabled}
-      render={<PlaybackRateButton className="media-button--playback-rate" render={<Button />} />}
-    />
+    <Tooltip.Root side="top" boundary="viewport">
+      <Tooltip.Trigger
+        render={
+          <Menu.Trigger
+            disabled={state.disabled}
+            render={<PlaybackRateButton className="media-button--playback-rate" render={<Button />} />}
+          />
+        }
+      />
+      <Tooltip.Popup className="media-surface media-tooltip">
+        <Tooltip.Label />
+        <Tooltip.Shortcut className="media-tooltip__kbd" />
+      </Tooltip.Popup>
+    </Tooltip.Root>
   );
 }
 
@@ -117,13 +129,13 @@ export function AudioSkin(props: AudioSkinProps): ReactNode {
       {children}
 
       <ErrorDialog.Root>
-        <ErrorDialog.Popup className="media-error">
-          <div className="media-error__dialog">
-            <div className="media-error__content">
-              <ErrorDialog.Title className="media-error__title"></ErrorDialog.Title>
-              <ErrorDialog.Description className="media-error__description" />
+        <ErrorDialog.Popup className="media-dialog__popup">
+          <div className="media-dialog__dialog">
+            <div className="media-dialog__content">
+              <ErrorDialog.Title className="media-dialog__title"></ErrorDialog.Title>
+              <ErrorDialog.Description className="media-dialog__description" />
             </div>
-            <div className="media-error__actions">
+            <div className="media-dialog__actions">
               <ErrorDialog.Close className="media-button media-button--subtle"></ErrorDialog.Close>
             </div>
           </div>
@@ -202,7 +214,10 @@ export function AudioSkin(props: AudioSkinProps): ReactNode {
               </TimeSlider.Track>
               <TimeSlider.Thumb className="media-slider__thumb" />
               <TimeSlider.Preview overflow="visible" className="media-slider__preview">
-                <TimeSlider.Value type="pointer" className="media-slider__value media-time" />
+                <TimeSlider.Value
+                  type="pointer"
+                  className="media-surface media-tooltip media-slider__value media-time"
+                />
               </TimeSlider.Preview>
             </TimeSlider.Root>
             <Time.Value toggle type="remaining" className="media-time" />
@@ -211,9 +226,11 @@ export function AudioSkin(props: AudioSkinProps): ReactNode {
           <div className="media-button-group">
             <Menu.Root side="top" align="center" boundary="viewport">
               <PlaybackRateTrigger />
-              <Menu.Content className="media-surface media-popover media-menu media-menu--playback-rate">
-                <PlaybackRateRadioGroup />
-              </Menu.Content>
+              <Menu.Popup className="media-surface media-popover media-menu media-menu--playback-rate">
+                <Menu.Content className="media-menu__content">
+                  <PlaybackRateRadioGroup />
+                </Menu.Content>
+              </Menu.Popup>
             </Menu.Root>
 
             <VolumePopover />

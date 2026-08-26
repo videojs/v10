@@ -13,5 +13,6 @@ export function findRangeAt<Range>(
   const range = ranges[index]!;
   const end = getEnd(range);
   const last = index === ranges.length - 1;
+
   return value < end || (last && value === end) ? range : undefined;
 }

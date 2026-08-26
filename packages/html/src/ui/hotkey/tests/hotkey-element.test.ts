@@ -1,7 +1,8 @@
 import { ContextProvider } from '@videojs/element/context';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vite-plus/test';
+
 import { containerContext } from '../../../player/context';
-import { MediaElement } from '../../media-element';
+import { UIElement } from '../../ui-element';
 import { AriaKeyShortcutsController } from '../aria-key-shortcuts-controller';
 import { HotkeyElement } from '../hotkey-element';
 
@@ -13,6 +14,7 @@ function uniqueTag(base: string): string {
 
 function createElement<Element extends HTMLElement>(Base: abstract new () => Element): Element {
   const tag = uniqueTag('test-el');
+
   customElements.define(tag, class extends (Base as unknown as typeof HTMLElement) {});
   return document.createElement(tag) as Element;
 }
@@ -38,6 +40,7 @@ describe('HotkeyElement', () => {
 
   it('is hidden when connected', () => {
     const el = createElement(HotkeyElement);
+
     document.body.appendChild(el);
 
     expect(el.style.display).toBe('none');
@@ -45,18 +48,19 @@ describe('HotkeyElement', () => {
 });
 
 describe('AriaKeyShortcutsController', () => {
-  class TestContainerProviderElement extends MediaElement {
+  class TestContainerProviderElement extends UIElement {
     readonly provider = new ContextProvider(this, {
       context: containerContext,
       initialValue: {
         container: this,
-        setContainer: () => {},
+        registerContainer: () => () => {},
       },
     });
   }
 
   it('returns undefined when no coordinator exists', () => {
     const el = createElement(HotkeyElement);
+
     document.body.appendChild(el);
 
     const controller = new AriaKeyShortcutsController(el, 'togglePaused');

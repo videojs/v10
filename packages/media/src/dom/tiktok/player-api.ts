@@ -60,7 +60,9 @@ export const ERROR_CATEGORY_END = 4000;
 /** Whether a `message` event's data is one of the embed's; every frame posts here, so the marker tells them apart. */
 export function isTikTokPlayerMessage(data: unknown): data is TikTokPlayerEventMessage {
   if (!isObject(data)) return false;
+
   const message = data as Partial<TikTokPlayerEventMessage>;
+
   return !!message[PLAYER_MESSAGE_KEY] && isString(message.type);
 }
 

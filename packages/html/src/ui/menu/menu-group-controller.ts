@@ -1,10 +1,10 @@
 import { applyElementProps } from '@videojs/core/dom';
 import { ContextProvider } from '@videojs/element/context';
 
-import type { MediaElement } from '../media-element';
+import type { UIElement } from '../ui-element';
 import { menuGroupContext } from './context';
 
-interface MenuGroupHost extends MediaElement {
+interface MenuGroupHost extends UIElement {
   requestUpdate(): void;
 }
 
@@ -55,6 +55,7 @@ export class MenuGroupController {
 
     return () => {
       if (this.#labelId !== id) return;
+
       this.#labelId = undefined;
       this.#host.requestUpdate();
     };

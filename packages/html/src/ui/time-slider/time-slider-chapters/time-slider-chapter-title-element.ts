@@ -5,11 +5,11 @@ import { ContextConsumer } from '@videojs/element/context';
 
 import { playerContext } from '../../../player/context';
 import { PlayerController } from '../../../player/player-controller';
-import { MediaElement } from '../../media-element';
 import { sliderContext } from '../../slider/context';
+import { UIElement } from '../../ui-element';
 
 /** Displays the chapter title at the current pointer or keyboard position. */
-export class TimeSliderChapterTitleElement extends MediaElement {
+export class TimeSliderChapterTitleElement extends UIElement {
   static readonly tagName = 'media-time-slider-chapter-title';
 
   readonly #core = new TimeSliderChaptersCore();
@@ -22,13 +22,16 @@ export class TimeSliderChapterTitleElement extends MediaElement {
 
     const slider = this.#slider.value;
     if (!slider) return;
+
     const duration = this.#time.value?.duration ?? 0;
     const { chapters } = this.#core.getRanges(this.#textTrack.value?.chaptersCues ?? [], 0, duration);
+
     const keyboard = slider.state.interactive && !slider.state.pointing && !slider.state.dragging;
     const value = slider.state.pointing || slider.state.dragging ? slider.pointerValue : slider.state.value;
     const chapter = this.#core.findChapter(chapters, value);
 
     this.textContent = chapter?.cue?.text ?? '';
+
     if (keyboard) {
       this.removeAttribute('aria-hidden');
       this.setAttribute('aria-live', 'polite');

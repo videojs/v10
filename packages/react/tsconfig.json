@@ -9,6 +9,6 @@
     },
     "declarationDir": "types"
   },
-  "include": ["src", "vjsc"],
-  "references": [{ "path": "../icons" }]
+  "include": ["src"],
+  "references": [{ "path": "../core" }, { "path": "../icons" }]
 }

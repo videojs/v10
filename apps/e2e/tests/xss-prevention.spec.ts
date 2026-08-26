@@ -12,9 +12,11 @@ test.describe('XSS prevention — CustomMediaElement shadow root', () => {
     const result = await page.evaluate(() => {
       (window as any).__xss = undefined;
       const container = document.createElement('div');
+
       document.body.appendChild(container);
       container.innerHTML = '<hlsjs-video crossorigin="&quot; onerror=&quot;window.__xss=1&quot;"></hlsjs-video>';
       const el = container.querySelector('hlsjs-video')!;
+
       return {
         xss: (window as any).__xss,
         hasOnerror: el.shadowRoot?.querySelector('[onerror]') !== null,
@@ -31,10 +33,12 @@ test.describe('XSS prevention — CustomMediaElement shadow root', () => {
     const result = await page.evaluate(() => {
       (window as any).__xss = undefined;
       const container = document.createElement('div');
+
       document.body.appendChild(container);
       container.innerHTML =
         '<hlsjs-video crossorigin="&quot;&gt;&lt;img src=x onerror=&quot;window.__xss=1&quot;&gt;"></hlsjs-video>';
       const el = container.querySelector('hlsjs-video')!;
+
       return {
         xss: (window as any).__xss,
         hasImg: el.shadowRoot?.querySelector('img') !== null,
@@ -50,10 +54,12 @@ test.describe('XSS prevention — CustomMediaElement shadow root', () => {
   test('safe attribute values are preserved correctly after escaping', async ({ page }) => {
     const result = await page.evaluate(() => {
       const container = document.createElement('div');
+
       document.body.appendChild(container);
       container.innerHTML = '<hlsjs-video crossorigin="anonymous"></hlsjs-video>';
       const el = container.querySelector('hlsjs-video')!;
       const video = el.shadowRoot?.querySelector('video');
+
       return { crossorigin: video?.getAttribute('crossorigin') };
     });
 

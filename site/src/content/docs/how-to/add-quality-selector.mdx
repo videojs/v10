@@ -1,0 +1,159 @@
+---
+title: 'Add a quality selector'
+description: 'Read available renditions, let the engine adapt automatically, and offer manual quality selection.'
+---
+
+import Demo from '@/components/docs/demos/Demo.astro';
+import DocsLink from '@/components/docs/DocsLink.astro';
+import CustomUiNote from '@/components/docs/CustomUiNote.astro';
+import FrameworkCase from '@/components/docs/FrameworkCase.astro';
+import StyleCase from '@/components/docs/StyleCase.astro';
+
+{/* React demos */}
+import BasicUsageDemoReact from '@/components/docs/demos/quality-radio-group/react/css/BasicUsage';
+import basicUsageReactTsx from '@/components/docs/demos/quality-radio-group/react/css/BasicUsage.tsx?raw';
+import basicUsageReactCss from '@/components/docs/demos/quality-radio-group/react/css/BasicUsage.css?raw';
+
+{/* HTML demos */}
+import BasicUsageDemoHtml from '@/components/docs/demos/quality-radio-group/html/css/BasicUsage.astro';
+import basicUsageHtml from '@/components/docs/demos/quality-radio-group/html/css/BasicUsage.html?raw';
+import basicUsageHtmlCss from '@/components/docs/demos/quality-radio-group/html/css/BasicUsage.css?raw';
+import basicUsageHtmlTs from '@/components/docs/demos/quality-radio-group/html/css/BasicUsage.ts?raw';
+
+Read the renditions a stream offers, let the streaming engine adapt quality automatically, and give users manual control when they want it.
+
+Quality selection applies to streaming sources. A progressive MP4 plays at one fixed quality and exposes no renditions; HLS and DASH streams offer several. See <DocsLink slug="concepts/media-sources">Media sources</DocsLink>.
+
+<CustomUiNote />
+
+## Recommended approach
+
+Let automatic quality selection do its job by default, and offer a quality menu for users who want to pin a rendition. Render the menu only when quality selection is available.
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
+      { title: "App.css", code: basicUsageReactCss, lang: "css" },
+    ]}>
+      <BasicUsageDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "index.html", code: basicUsageHtml, lang: "html" },
+      { title: "index.css", code: basicUsageHtmlCss, lang: "css" },
+      { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
+    ]}>
+      <BasicUsageDemoHtml />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+## How it works
+
+The <DocsLink slug="reference/feature-quality">quality feature</DocsLink> mirrors the media element's video renditions into player state:
+
+- `videoRenditionList` holds each rendition's `id`, `width`, `height`, `bitrate`, `frameRate`, `codec`, and whether it's `selected`.
+- `activeVideoRendition` is the rendition currently playing. When the engine doesn't report one directly, the player matches it from the video's current dimensions.
+- `selectVideoRendition(value)` pins one rendition; pass `'auto'` to return control to the engine's adaptive selection.
+
+<FrameworkCase frameworks={["react"]}>
+
+<DocsLink slug="reference/use-quality-options">`useQualityOptions`</DocsLink> turns this state into ready-made menu options — labels like "1080p", an "Auto" entry, and `availability` — as shown in the demo above.
+
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+
+<DocsLink slug="reference/quality-radio-group">`<media-quality-radio-group>`</DocsLink> turns this state into a ready-made radio menu with resolution labels and an "Auto" entry, as shown in the demo above.
+
+</FrameworkCase>
+
+Selecting "Auto" keeps adaptive bitrate switching active: the engine picks the best rendition for current bandwidth and viewport. Pinning a rendition disables adaptation until the user selects "Auto" again.
+
+## Availability and constraints
+
+- Quality availability is `'unavailable'` for media that doesn't offer a choice — progressive files, streams before the manifest loads, and single-rendition streams. Render quality UI conditionally; the demo's availability check does this.
+- Renditions come from the streaming engine, so the list depends on what the manifest declares. A single-rendition stream offers no meaningful selection, so availability stays `'unavailable'`.
+- Pinning a high rendition on a slow connection causes buffering: the engine can no longer step down. Keep "Auto" the default.
+- Rendition lists change on source change; selection resets with them.
+
+## Common variations
+
+### Auto quality only
+
+If you don't want to expose manual selection, do nothing: adaptive selection is on by default and needs no UI.
+
+### Cap or pin quality programmatically
+
+<FrameworkCase frameworks={["react"]}>
+
+```tsx
+import { Container } from '@videojs/react';
+import { HlsJsVideo } from '@videojs/react/media/hlsjs-video';
+import { usePlayer, VideoPlayer } from '@videojs/react/video';
+
+function PinLowestRendition() {
+  const store = usePlayer();
+  const renditions = usePlayer((s) => s.videoRenditionList);
+
+  const lowest = [...renditions].sort((a, b) => (a.height ?? 0) - (b.height ?? 0))[0];
+
+  return (
+    <button type="button" onClick={() => lowest?.id && store.selectVideoRendition(lowest.id)}>
+      Data saver
+    </button>
+  );
+}
+
+export default function App() {
+  return (
+    <VideoPlayer>
+      <Container>
+        <HlsJsVideo src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM.m3u8" muted playsInline />
+        <PinLowestRendition />
+      </Container>
+    </VideoPlayer>
+  );
+}
+```
+
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+
+Access the player store through the <DocsLink slug="reference/player-controller">player controller</DocsLink> and call `selectVideoRendition` with a rendition `id` from `videoRenditionList`, or `'auto'` to restore adaptive selection.
+
+</FrameworkCase>
+
+## Troubleshooting
+
+### The quality menu doesn't render
+
+Quality availability is `'unavailable'`. The source is progressive (no renditions), the manifest hasn't loaded yet, or the media element doesn't support renditions. Use a streaming media element such as <DocsLink slug="reference/hlsjs-video">HlsJsVideo</DocsLink>.
+
+### The menu doesn't render for a single-rendition stream
+
+The manifest declares a single rendition, so quality availability stays `'unavailable'` — one entry offers no choice. Encode the stream as a multi-rendition ladder to give the engine and users something to choose between.
+
+### Playback buffers after selecting a quality
+
+The pinned rendition exceeds available bandwidth. Selecting "Auto" lets the engine step down again.
+
+## Related components
+
+- <DocsLink slug="reference/quality-radio-group">Quality radio group</DocsLink>
+- <DocsLink slug="reference/menu">Menu</DocsLink>
+
+## Related API
+
+- <DocsLink slug="reference/feature-quality">Quality feature</DocsLink>
+- <DocsLink slug="reference/use-quality-options">useQualityOptions</DocsLink>
+- <DocsLink slug="reference/hlsjs-video">HlsJsVideo</DocsLink>
+- <DocsLink slug="reference/dash-video">DashVideo</DocsLink>
+
+## Related guides
+
+- <DocsLink slug="concepts/media-sources">Media sources</DocsLink>

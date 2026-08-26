@@ -1,8 +1,9 @@
 import type { AnyPlayerStore } from '@videojs/core/dom';
 import { ContextProvider } from '@videojs/element/context';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
+
 import { containerContext, playerContext } from '../../../player/context';
-import { MediaElement } from '../../media-element';
+import { UIElement } from '../../ui-element';
 import { StatusAnnouncerElement } from '../status-announcer-element';
 
 afterEach(() => {
@@ -32,13 +33,14 @@ function createTestStore(initialState: Record<string, unknown> = {}) {
 
   const setState = (partial: Record<string, unknown>) => {
     state = { ...state, ...partial };
+
     for (const listener of listeners) listener();
   };
 
   return { store, setState };
 }
 
-class TestStatusAnnouncerPlayerElement extends MediaElement {
+class TestStatusAnnouncerPlayerElement extends UIElement {
   readonly #provider = new ContextProvider(this, { context: playerContext });
   readonly #containerProvider = new ContextProvider(this, { context: containerContext });
   #store = createTestStore().store;
@@ -49,12 +51,13 @@ class TestStatusAnnouncerPlayerElement extends MediaElement {
 
   set store(store: AnyPlayerStore) {
     this.#store = store;
+
     if (this.isConnected) this.#provider.setValue(this.#store);
   }
 
   override connectedCallback(): void {
     this.#provider.setValue(this.#store);
-    this.#containerProvider.setValue({ container: this, setContainer: vi.fn() });
+    this.#containerProvider.setValue({ container: this, registerContainer: () => vi.fn() });
     super.connectedCallback();
   }
 }
@@ -67,6 +70,7 @@ async function renderStatusAnnouncerElement(
   markup = '<media-status-announcer></media-status-announcer>'
 ) {
   const provider = document.createElement('test-status-announcer-player') as TestStatusAnnouncerPlayerElement;
+
   provider.store = store;
   provider.innerHTML = markup;
   document.body.append(provider);
@@ -86,6 +90,7 @@ describe('StatusAnnouncerElement', () => {
   it('updates live text from store snapshots', async () => {
     const { store, setState } = createTestStore({ paused: true });
     const { announcer } = await renderStatusAnnouncerElement(store);
+
     expect(announcer.textContent).toBe('');
 
     setState({ paused: false });
@@ -125,6 +130,7 @@ describe('StatusAnnouncerElement', () => {
     const first = createTestStore({ paused: false });
     const second = createTestStore({ paused: false });
     const { announcer, provider } = await renderStatusAnnouncerElement(first.store);
+
     first.setState({ paused: true });
     await Promise.resolve();
     await (announcer as StatusAnnouncerElement).updateComplete;
@@ -178,6 +184,7 @@ describe('StatusAnnouncerElement', () => {
   it('announces volume changes when a slider outside the player is focused', async () => {
     vi.useFakeTimers();
     const slider = document.createElement('button');
+
     slider.setAttribute('role', 'slider');
     document.body.append(slider);
     slider.focus();
@@ -185,6 +192,7 @@ describe('StatusAnnouncerElement', () => {
     try {
       const { store, setState } = createTestStore({ volume: 0.5, muted: false });
       const { announcer } = await renderStatusAnnouncerElement(store);
+
       setState({ volume: 0.75 });
       await Promise.resolve();
       vi.advanceTimersByTime(200);

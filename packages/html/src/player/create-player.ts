@@ -10,68 +10,64 @@ import {
 } from '@videojs/core/dom';
 import { combine, createStore } from '@videojs/store';
 
-import { createProviderMixin, type ProviderMixin } from '../store/provider-mixin';
+import type { PlayerElementConstructor } from '../store/types';
 import { containerContext, mediaContext, type PlayerContext, playerContext } from './context';
-import { PlayerController } from './player-controller';
+import { createPlayerController, type PlayerController } from './player-controller';
+import { createPlayerElement } from './player-element';
 
 export interface CreatePlayerConfig<Features extends AnyPlayerFeature[]> {
   features: Features;
 }
 
 export interface CreatePlayerResult<Store extends PlayerStore> {
-  /** Context for consuming player in controllers. */
-  context: PlayerContext<Store>;
-
-  /** Creates a store instance for imperative access. */
-  create: () => Store;
+  /** Configured player element class that owns the store and attachment lifecycle. */
+  PlayerElement: PlayerElementConstructor<Store>;
 
   /** Player controller bound to this player's context. */
-  PlayerController: PlayerController.Constructor<Store>;
+  PlayerController: PlayerController.ConfiguredConstructor<Store>;
 
-  /** Mixin that provides player context to descendants. */
-  ProviderMixin: ProviderMixin<Store>;
+  /** Context that carries the player store to descendant elements. */
+  playerContext: PlayerContext<Store>;
 }
 
 /**
- * Creates a player factory with a typed store, provider mixin, and controller.
+ * Creates a typed HTML player class and bound controller.
  *
  * @example
- * ```ts
- * import { createPlayer, MediaElement, selectPlayback } from '@videojs/html';
- * import { videoFeatures } from '@videojs/html/video';
+ *   ```ts
+ *   import { createPlayer, UIElement, selectPlayback } from '@videojs/html';
+ *   import { videoFeatures } from '@videojs/html/video';
  *
- * const { ProviderMixin, PlayerController, context } = createPlayer({
- *   features: videoFeatures,
- * });
+ *   const { PlayerElement: VideoPlayerElement, PlayerController } = createPlayer({
+ *     features: videoFeatures,
+ *   });
  *
- * // Provider element: owns the store, provides context to descendants
- * class VideoPlayer extends ProviderMixin(MediaElement) {}
- * customElements.define('video-player', VideoPlayer);
+ *   customElements.define('video-player', VideoPlayerElement);
  *
- * // Control element with selector
- * class PlayButton extends MediaElement {
- *   #playback = new PlayerController(this, context, selectPlayback);
- * }
- * ```
+ *   // Control element with selector
+ *   class PlayButton extends UIElement {
+ *     #playback = new PlayerController(this, selectPlayback);
+ *   }
+ *   ```;
  *
- * @label Video
  * @param config - Player configuration with features.
+ * @label Video
  */
 export function createPlayer(config: CreatePlayerConfig<VideoFeatures>): CreatePlayerResult<VideoPlayerStore>;
 
 /**
- * Creates a player factory for audio media.
+ * Creates a typed HTML audio player class and bound controller.
  *
- * @label Audio
  * @param config - Player configuration with features.
+ * @label Audio
  */
 export function createPlayer(config: CreatePlayerConfig<AudioFeatures>): CreatePlayerResult<AudioPlayerStore>;
 
 /**
- * Creates a player factory with custom features.
+ * Creates a typed HTML player class with custom features.
  *
- * @label Generic
  * @param config - Player configuration with features.
+ * @label Generic
  */
 export function createPlayer<const Features extends AnyPlayerFeature[]>(
   config: CreatePlayerConfig<Features>
@@ -81,22 +77,17 @@ export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): Cr
   const slice = combine(...config.features);
   const featureConfig = combinePlayerFeatureConfigs(config.features);
 
-  function create(): PlayerStore {
-    return createStore<PlayerTarget>()(slice);
-  }
-
-  const ProviderMixin = createProviderMixin<PlayerStore>({
+  const ConfiguredPlayerElement = createPlayerElement<PlayerStore>({
     playerContext,
     mediaContext,
     containerContext,
-    factory: create,
+    factory: () => createStore<PlayerTarget>()(slice),
     config: featureConfig,
   });
 
   return {
-    context: playerContext,
-    create,
-    PlayerController,
-    ProviderMixin,
+    PlayerElement: ConfiguredPlayerElement,
+    PlayerController: createPlayerController(playerContext),
+    playerContext,
   };
 }

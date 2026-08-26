@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
+
 import { articleFor, detectRenderer, isRendererValidForUseCase } from '../detect-renderer';
 
 describe('detectRenderer', () => {
@@ -18,21 +19,96 @@ describe('detectRenderer', () => {
     });
 
     it('detects vimeo.com as Vimeo', () => {
-      expect(detectRenderer('https://vimeo.com/648359100', 'default-video')).toEqual({
+      expect(detectRenderer('https://vimeo.com/76979871', 'default-video')).toEqual({
         renderer: 'vimeo',
         label: 'Vimeo',
       });
     });
 
     it('detects player.vimeo.com as Vimeo', () => {
-      expect(detectRenderer('https://player.vimeo.com/video/648359100', 'default-video')).toEqual({
+      expect(detectRenderer('https://player.vimeo.com/video/76979871', 'default-video')).toEqual({
         renderer: 'vimeo',
         label: 'Vimeo',
       });
     });
 
     it('returns null for a Vimeo URL in an audio use case (no audio fallthrough)', () => {
-      expect(detectRenderer('https://vimeo.com/648359100', 'default-audio')).toBeNull();
+      expect(detectRenderer('https://vimeo.com/76979871', 'default-audio')).toBeNull();
+    });
+
+    it('detects youtube.com and youtu.be as YouTube', () => {
+      expect(detectRenderer('https://www.youtube.com/watch?v=aqz-KE-bpKQ', 'default-video')).toEqual({
+        renderer: 'youtube',
+        label: 'YouTube',
+      });
+      expect(detectRenderer('https://youtu.be/aqz-KE-bpKQ', 'default-video')).toEqual({
+        renderer: 'youtube',
+        label: 'YouTube',
+      });
+    });
+
+    it('detects the privacy-enhanced youtube-nocookie.com host as YouTube', () => {
+      expect(detectRenderer('https://www.youtube-nocookie.com/embed/aqz-KE-bpKQ', 'default-video')).toEqual({
+        renderer: 'youtube',
+        label: 'YouTube',
+      });
+    });
+
+    it('detects open.spotify.com as Spotify in an audio use case', () => {
+      expect(detectRenderer('https://open.spotify.com/track/1301WleyT98MSxVHPZCA6M', 'default-audio')).toEqual({
+        renderer: 'spotify',
+        label: 'Spotify',
+      });
+    });
+
+    it('returns null for a Spotify URL in a video use case (audio-only renderer)', () => {
+      expect(detectRenderer('https://open.spotify.com/track/1301WleyT98MSxVHPZCA6M', 'default-video')).toBeNull();
+    });
+
+    it('detects videodelivery.net and per-customer cloudflarestream.com hosts as Cloudflare Stream', () => {
+      expect(
+        detectRenderer('https://watch.videodelivery.net/bfbd585059e33391d67b0f1d15fe6ea4', 'default-video')
+      ).toEqual({
+        renderer: 'cloudflare',
+        label: 'Cloudflare Stream',
+      });
+      expect(
+        detectRenderer(
+          'https://customer-abc123.cloudflarestream.com/bfbd585059e33391d67b0f1d15fe6ea4/iframe',
+          'default-video'
+        )
+      ).toEqual({
+        renderer: 'cloudflare',
+        label: 'Cloudflare Stream',
+      });
+    });
+
+    it('detects tiktok.com as TikTok', () => {
+      expect(detectRenderer('https://www.tiktok.com/@_luwes/video/7527476667770522893', 'default-video')).toEqual({
+        renderer: 'tiktok',
+        label: 'TikTok',
+      });
+    });
+
+    it('returns null for vm.tiktok.com short links (no numeric video id to parse)', () => {
+      expect(detectRenderer('https://vm.tiktok.com/ZMhqBqQqQ/', 'default-video')).toBeNull();
+    });
+
+    it('detects twitch.tv as Twitch', () => {
+      expect(detectRenderer('https://www.twitch.tv/videos/106400740', 'default-video')).toEqual({
+        renderer: 'twitch',
+        label: 'Twitch',
+      });
+    });
+
+    it('returns null for clips.twitch.tv (clips are a different embed)', () => {
+      expect(detectRenderer('https://clips.twitch.tv/AwkwardHelplessSalamanderSwiftRage', 'default-video')).toBeNull();
+    });
+
+    it('returns null for the embed-provider hosts in an audio use case (no audio fallthrough)', () => {
+      expect(detectRenderer('https://youtu.be/aqz-KE-bpKQ', 'default-audio')).toBeNull();
+      expect(detectRenderer('https://www.tiktok.com/@_luwes/video/7527476667770522893', 'default-audio')).toBeNull();
+      expect(detectRenderer('https://www.twitch.tv/videos/106400740', 'default-audio')).toBeNull();
     });
   });
 
@@ -161,6 +237,30 @@ describe('detectRenderer', () => {
     it('returns null for .mp4 with default-audio use case', () => {
       expect(detectRenderer('https://example.com/video.mp4', 'default-audio')).toBeNull();
     });
+
+    it('detects .m3u8 as HLS for live-video', () => {
+      expect(detectRenderer('https://example.com/stream.m3u8', 'live-video')).toEqual({
+        renderer: 'hls',
+        label: 'HLS',
+      });
+    });
+
+    it('resolves a Mux host to mux-audio for live-audio', () => {
+      expect(detectRenderer('https://stream.mux.com/abc123.m3u8', 'live-audio')).toEqual({
+        renderer: 'mux-audio',
+        label: 'Mux',
+      });
+    });
+
+    // The live presets take streaming sources only, so a progressive file has no
+    // valid renderer to detect.
+    it('returns null for .mp4 with live-video use case', () => {
+      expect(detectRenderer('https://example.com/video.mp4', 'live-video')).toBeNull();
+    });
+
+    it('returns null for .m3u8 with live-audio use case (no HLS audio renderer)', () => {
+      expect(detectRenderer('https://example.com/stream.m3u8', 'live-audio')).toBeNull();
+    });
   });
 });
 
@@ -209,8 +309,34 @@ describe('isRendererValidForUseCase', () => {
     expect(isRendererValidForUseCase('vimeo', 'default-audio')).toBe(false);
   });
 
+  it('the embed video renderers are valid for default-video but not default-audio', () => {
+    for (const renderer of ['youtube', 'cloudflare', 'tiktok', 'twitch'] as const) {
+      expect(isRendererValidForUseCase(renderer, 'default-video')).toBe(true);
+      expect(isRendererValidForUseCase(renderer, 'default-audio')).toBe(false);
+    }
+  });
+
+  it('spotify is valid for default-audio but not default-video', () => {
+    expect(isRendererValidForUseCase('spotify', 'default-audio')).toBe(true);
+    expect(isRendererValidForUseCase('spotify', 'default-video')).toBe(false);
+  });
+
   it('mux-audio is valid for default-audio but not default-video', () => {
     expect(isRendererValidForUseCase('mux-audio', 'default-audio')).toBe(true);
     expect(isRendererValidForUseCase('mux-audio', 'default-video')).toBe(false);
+  });
+
+  it('live-video accepts live-aware renderers', () => {
+    expect(isRendererValidForUseCase('hls', 'live-video')).toBe(true);
+    expect(isRendererValidForUseCase('mux-video', 'live-video')).toBe(true);
+    expect(isRendererValidForUseCase('dash', 'live-video')).toBe(false);
+    expect(isRendererValidForUseCase('html5-video', 'live-video')).toBe(false);
+    expect(isRendererValidForUseCase('vimeo', 'live-video')).toBe(false);
+  });
+
+  it('live-audio accepts only mux-audio', () => {
+    expect(isRendererValidForUseCase('mux-audio', 'live-audio')).toBe(true);
+    expect(isRendererValidForUseCase('html5-audio', 'live-audio')).toBe(false);
+    expect(isRendererValidForUseCase('hls', 'live-audio')).toBe(false);
   });
 });

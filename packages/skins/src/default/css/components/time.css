@@ -1,9 +1,13 @@
 .media-default-skin .media-time-controls {
   display: flex;
   flex: 1;
-  gap: calc(var(--spacing) * 2.5);
+  gap: calc(var(--media-spacing) * 2.5);
   align-items: center;
   container: media-time-controls / inline-size;
+
+  &:dir(rtl) {
+    flex-direction: row-reverse;
+  }
 
   > .media-time:last-child {
     @container media-time-controls (width < 16rem) {
@@ -20,13 +24,13 @@
   cursor: pointer;
   outline: 2px solid transparent;
   outline-offset: -2px;
-  border-radius: calc(var(--spacing) * 1);
+  border-radius: calc(var(--media-spacing) * 1);
   transition-timing-function: ease-out;
   transition-duration: 100ms;
   transition-property: outline-color, outline-offset;
 
   &:focus-visible {
-    outline-color: var(--focus-ring-color);
+    outline-color: var(--media-focus-ring-color);
     outline-offset: 2px;
   }
 }

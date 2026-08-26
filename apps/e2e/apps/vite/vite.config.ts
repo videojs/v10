@@ -2,25 +2,34 @@ import { existsSync, readdirSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 import react from '@vitejs/plugin-react';
-import { defineConfig } from 'vite';
+import { defineConfig } from 'vite-plus';
+import { vjscPlugin } from 'vjsc/vite';
+
+import { configureSkinModule } from '../../../../packages/skins/vjsc/config.ts';
+
+const packageDir = import.meta.dirname;
 
 function getPageEntries(): Record<string, string> {
   const entries: Record<string, string> = {};
 
   // Hand-written pages in src/ (ejected, captions, etc.)
-  const srcDir = resolve(__dirname, 'src');
+  const srcDir = resolve(packageDir, 'src');
+
   for (const entry of readdirSync(srcDir)) {
     const file = resolve(srcDir, entry);
+
     if (entry.endsWith('.html') && entry !== 'index.html' && statSync(file).isFile()) {
       entries[entry.replace('.html', '')] = file;
     }
   }
 
   // Generated pages in src/pages/
-  const pagesDir = resolve(__dirname, 'src/pages');
+  const pagesDir = resolve(packageDir, 'src/pages');
+
   if (existsSync(pagesDir)) {
     for (const entry of readdirSync(pagesDir)) {
       const file = resolve(pagesDir, entry);
+
       if (entry.endsWith('.html') && statSync(file).isFile()) {
         entries[`pages/${entry.replace('.html', '')}`] = file;
       }
@@ -36,12 +45,9 @@ export default defineConfig({
   define: {
     __DEV__: 'true',
   },
-  plugins: [react()],
+  plugins: [vjscPlugin({ configure: configureSkinModule }), react({ jsxImportSource: 'react' })],
   resolve: {
-    alias: {
-      '@': resolve(__dirname, '../../../../packages/react/src'),
-    },
-    dedupe: ['react', 'react-dom'],
+    dedupe: ['@videojs/html', '@videojs/react', 'react', 'react-dom', 'vjsc'],
   },
   optimizeDeps: {
     exclude: [
@@ -52,14 +58,20 @@ export default defineConfig({
       '@videojs/spf',
       '@videojs/store',
       '@videojs/utils',
+      'vjsc',
+      'vjsc/styles',
     ],
   },
   build: {
-    outDir: resolve(__dirname, 'dist'),
+    outDir: resolve(packageDir, 'dist'),
     emptyOutDir: true,
-    rollupOptions: {
+    sourcemap: true,
+    rolldownOptions: {
+      experimental: {
+        nativeMagicString: true,
+      },
       input: {
-        main: resolve(__dirname, 'src/index.html'),
+        main: resolve(packageDir, 'src/index.html'),
         ...getPageEntries(),
       },
     },

@@ -1,7 +1,5 @@
 /** @jsxImportSource vjsc/components */
 
-import { describe, it } from 'vitest';
-import { Slot, Text } from 'vjsc/components';
 import {
   Controls,
   FullscreenButton,
@@ -14,27 +12,32 @@ import {
   Time,
   TimeSlider,
   Tooltip,
+  VolumePopover,
   VolumeSlider,
-} from '../schema.generated';
+} from '@videojs/core/vjsc';
+import { describe, it } from 'vite-plus/test';
+import { Slot, Text } from 'vjsc/components';
 
 describe('constrained JSX', () => {
   it('accepts typed components and nested compound parts', () => {
     void (
-      <Controls.Root className="controls">
-        <Tooltip.Provider delay={300}>
-          <Controls.Group>
-            <Tooltip.Root side="top">
-              <Tooltip.Trigger>
-                <PlayButton className={['button', undefined, false]} />
-              </Tooltip.Trigger>
-              <Tooltip.Popup>
-                <Tooltip.Label />
-                <Tooltip.Shortcut />
-              </Tooltip.Popup>
-            </Tooltip.Root>
-            <SeekButton seconds={-10} />
-          </Controls.Group>
-        </Tooltip.Provider>
+      <Controls.Root>
+        <Controls.Content className="controls">
+          <Tooltip.Provider delay={300}>
+            <Controls.Group>
+              <Tooltip.Root side="top">
+                <Tooltip.Trigger>
+                  <PlayButton className={['button', undefined, false]} />
+                </Tooltip.Trigger>
+                <Tooltip.Popup>
+                  <Tooltip.Label />
+                  <Tooltip.Shortcut />
+                </Tooltip.Popup>
+              </Tooltip.Root>
+              <SeekButton seconds={-10} />
+            </Controls.Group>
+          </Tooltip.Provider>
+        </Controls.Content>
       </Controls.Root>
     );
 
@@ -74,9 +77,22 @@ describe('constrained JSX', () => {
     );
 
     void (
+      <VolumePopover.Root openOnHover>
+        <VolumePopover.Trigger>
+          <MuteButton />
+        </VolumePopover.Trigger>
+        <VolumePopover.Popup>
+          <VolumeSlider.Root orientation="vertical" />
+        </VolumePopover.Popup>
+      </VolumePopover.Root>
+    );
+
+    void (
       <Menu.Root>
-        <Menu.SubmenuTrigger>Quality</Menu.SubmenuTrigger>
-        <Menu.Content />
+        <Menu.Trigger>Settings</Menu.Trigger>
+        <Menu.Popup>
+          <Menu.Content />
+        </Menu.Popup>
       </Menu.Root>
     );
 

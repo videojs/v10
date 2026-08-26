@@ -1,0 +1,120 @@
+.react-volume-indicator-basic {
+  position: relative;
+}
+
+.react-volume-indicator-basic:focus-visible {
+  outline: 3px solid #60a5fa;
+  outline-offset: 2px;
+}
+
+.react-volume-indicator-basic video {
+  display: block;
+  width: 100%;
+}
+
+.react-volume-indicator-basic__instructions {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  padding: 6px 10px;
+  margin: 0;
+  color: white;
+  text-align: center;
+  background: rgb(0 0 0 / 70%);
+  border-radius: 4px;
+  translate: -50%;
+}
+
+.react-volume-indicator-basic__indicator {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  min-width: 220px;
+  padding: 18px 20px 34px;
+  color: white;
+  pointer-events: none;
+  background: rgb(0 0 0 / 72%);
+  border-radius: 12px;
+  place-items: center;
+  translate: -50% -50%;
+  transition:
+    opacity 160ms ease-in-out,
+    scale 160ms ease-in-out;
+}
+
+.react-volume-indicator-basic__indicator::before {
+  margin-bottom: 12px;
+  font-size: 28px;
+  line-height: 1;
+}
+
+.react-volume-indicator-basic__indicator[data-level="off"]::before {
+  content: "🔇";
+}
+
+.react-volume-indicator-basic__indicator[data-level="low"]::before {
+  content: "🔉";
+}
+
+.react-volume-indicator-basic__indicator[data-level="high"]::before {
+  content: "🔊";
+}
+
+.react-volume-indicator-basic__fill {
+  position: relative;
+  width: 180px;
+  height: 10px;
+  background: rgb(255 255 255 / 25%);
+  border-radius: 9999px;
+}
+
+.react-volume-indicator-basic__fill::before {
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+  width: var(--media-volume-fill, 0%);
+  content: "";
+  background: currentColor;
+  border-radius: inherit;
+  transition: width 160ms linear;
+}
+
+.react-volume-indicator-basic__value {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  font-variant-numeric: tabular-nums;
+  translate: -50%;
+}
+
+.react-volume-indicator-basic__indicator[data-starting-style],
+.react-volume-indicator-basic__indicator[data-ending-style] {
+  opacity: 0;
+  scale: 0.85;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .react-volume-indicator-basic__indicator[data-min],
+  .react-volume-indicator-basic__indicator[data-max] {
+    animation: react-volume-indicator-basic-shake 300ms linear;
+  }
+}
+
+@keyframes react-volume-indicator-basic-shake {
+  20% {
+    translate: calc(-50% - 8px) -50%;
+  }
+
+  40% {
+    translate: calc(-50% + 6px) -50%;
+  }
+
+  60% {
+    translate: calc(-50% - 4px) -50%;
+  }
+
+  80% {
+    translate: calc(-50% + 2px) -50%;
+  }
+}

@@ -1,5 +1,5 @@
+import { safeDefine } from '../../registration/safe-define';
 import { PiPButtonElement } from '../../ui/pip-button/pip-button-element';
-import { safeDefine } from '../safe-define';
 
 safeDefine(PiPButtonElement);
 

@@ -2,6 +2,7 @@ import { QualityRadioGroupCore, QualityRadioGroupDataAttrs, type QualityRadioGro
 import { applyStateDataAttrs, logMissingFeature, selectQuality } from '@videojs/core/dom';
 import { type Text, translateText } from '@videojs/core/i18n';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
+
 import { i18nContext } from '../../i18n/context';
 import { I18nController } from '../../i18n/controller';
 import { playerContext } from '../../player/context';
@@ -32,12 +33,14 @@ export class QualityRadioGroupElement extends MenuRadioGroupElement {
     getOptionCacheKey: (option) => `${option.tier ?? ''}:${option.badge ?? ''}`,
     onValueChange: (value) => {
       const media = this.#mediaState.value;
+
       if (media) this.#core.selectValue(media, value);
     },
   });
 
   override connectedCallback(): void {
     super.connectedCallback();
+
     if (this.destroyed) return;
 
     if (__DEV__ && !this.#mediaState.value && this.#mediaState.displayName) {

@@ -1,0 +1,31 @@
+---
+title: useHotkey
+description: Hook that registers a keyboard shortcut for the current Player
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+
+## Import
+
+```tsx
+import { useHotkey } from "@videojs/react";
+```
+
+## Usage
+
+Call the hook inside `Player` with the accepted keys and activation callback.
+
+```tsx
+function CustomPlayHotkey() {
+  useHotkey({
+    keys: "k",
+    onActivate: (_event, key) => console.log(`Activated by ${key}`),
+  });
+
+  return null;
+}
+```
+
+Shortcuts target the player by default and accept repeated keydown events. Set `target` to `"document"`, `repeatable` to `false`, or `disabled` to change those behaviors. The hook still requires a surrounding `Player` for its coordinator.
+
+<UtilReference util="useHotkey" />

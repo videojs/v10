@@ -1,4 +1,5 @@
 import type { UnionToIntersection } from '@videojs/utils/types';
+
 import type {
   AnySlice,
   AttachContext,
@@ -70,6 +71,7 @@ function warnDuplicates(namespace: string, objects: readonly object[]): void {
           `[vjs-store] combine(): duplicate ${namespace} key "${String(key)}" — later slice overwrites earlier one`
         );
       }
+
       seen.add(key);
     }
   }

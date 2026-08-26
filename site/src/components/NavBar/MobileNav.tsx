@@ -1,9 +1,11 @@
 import { Dialog } from '@base-ui/react/dialog';
 import clsx from 'clsx';
 import { ArrowUpRight } from 'lucide-react';
+
 import Logo from '@/assets/logos/videojs.svg?react';
 import BetaPill from '@/components/BetaPill';
 import { DISCORD_INVITE_URL, GITHUB_REPO_URL } from '@/consts';
+
 import GetStartedLink from './GetStartedLink';
 
 interface NavLink {
@@ -31,7 +33,7 @@ export default function MobileNav({ navLinks, currentPath, children }: MobileNav
         aria-label="Open navigation menu"
       >
         <span
-          className="font-display tracking-normal leading-none uppercase font-bold text-manila-light bg-faded-black dark:bg-manila-light dark:text-faded-black px-4 py-2.5"
+          className="font-display text-manila-light bg-faded-black dark:bg-manila-light dark:text-faded-black px-4 py-2.5 leading-none font-bold tracking-normal uppercase"
           style={{ fontSize: '0.75rem' }}
         >
           Menu
@@ -50,7 +52,7 @@ export default function MobileNav({ navLinks, currentPath, children }: MobileNav
           {/* Header with close button */}
           <div className={clsx('flex justify-between items-center px-5 py-7')}>
             <Dialog.Title className="sr-only">Navigation</Dialog.Title>
-            <a href="/" className="flex h-7 items-center gap-3 lg:gap-4 lg:h-10">
+            <a href="/" className="flex h-7 items-center gap-3 lg:h-10 lg:gap-4">
               <Logo height="100%" />
               <span className="sr-only">Video.js video player</span>
               <BetaPill className="hidden sm:inline-flex" />
@@ -62,7 +64,7 @@ export default function MobileNav({ navLinks, currentPath, children }: MobileNav
               aria-label="Close navigation menu"
             >
               <span
-                className="font-display tracking-normal leading-none uppercase font-bold text-manila-light bg-faded-black dark:bg-manila-light dark:text-faded-black px-4 py-2.5"
+                className="font-display text-manila-light bg-faded-black dark:bg-manila-light dark:text-faded-black px-4 py-2.5 leading-none font-bold tracking-normal uppercase"
                 style={{ fontSize: '0.75rem' }}
               >
                 Close
@@ -122,7 +124,7 @@ export default function MobileNav({ navLinks, currentPath, children }: MobileNav
                 GitHub
               </a>
             </nav>
-            <p className="text-center p-6 mt-auto text-p2">The open source player for the web</p>
+            <p className="text-p2 mt-auto p-6 text-center">The open source player for the web</p>
           </div>
         </Dialog.Popup>
       </Dialog.Portal>

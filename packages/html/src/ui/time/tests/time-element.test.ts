@@ -4,11 +4,11 @@ import { ContextProvider } from '@videojs/element/context';
 import type { MediaTimeState } from '@videojs/media';
 import { createStore } from '@videojs/store';
 import { formatTimeAsPhrase } from '@videojs/utils/time';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { MediaI18nProviderElement } from '../../../i18n';
 import { playerContext } from '../../../player/context';
-import { MediaElement } from '../../media-element';
+import { UIElement } from '../../ui-element';
 import { TimeElement } from '../time-element';
 
 let tagCounter = 0;
@@ -19,6 +19,7 @@ function uniqueTag(base: string): string {
 
 function createElement<Element extends HTMLElement>(Base: abstract new () => Element): Element {
   const tag = uniqueTag('test-el');
+
   customElements.define(tag, class extends (Base as unknown as typeof HTMLElement) {});
   return document.createElement(tag) as Element;
 }
@@ -62,7 +63,7 @@ function createTimeStore(overrides: Partial<MediaTimeState> = {}): AnyPlayerStor
   }) as unknown as AnyPlayerStore;
 }
 
-class TestPlayerProviderElement extends MediaElement {
+class TestPlayerProviderElement extends UIElement {
   store: AnyPlayerStore = createTimeStore();
 
   readonly #provider = new ContextProvider(this, { context: playerContext });
@@ -90,15 +91,19 @@ async function setup(props: Partial<TimeElement> = {}, locale?: string, state?: 
   const time = createElement(TimeElement);
 
   if (state) provider.store = createTimeStore(state);
+
   Object.assign(time, props);
+
   if (locale) {
     const i18n = new MediaI18nProviderElement();
+
     i18n.setAttribute('lang', locale);
     i18n.append(provider);
     document.body.append(i18n);
   } else {
     document.body.append(provider);
   }
+
   provider.append(time);
   await time.updateComplete;
   await waitForAssertion(() => expect(time.textContent).toBeTruthy());

@@ -49,13 +49,13 @@ function VolumeSlider() {
 
 <FrameworkCase frameworks={["html"]}>
 ```ts title="volume-slider.ts"
-import { createPlayer, MediaElement, selectVolume } from '@videojs/html';
+import { createPlayer, UIElement, selectVolume } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
 
-const { PlayerController, context } = createPlayer({ features: videoFeatures });
+const { PlayerController } = createPlayer({ features: videoFeatures });
 
-class VolumeSlider extends MediaElement {
-  readonly #volume = new PlayerController(this, context, selectVolume);
+class VolumeSlider extends UIElement {
+  readonly #volume = new PlayerController(this, selectVolume);
 }
 ```
 </FrameworkCase>

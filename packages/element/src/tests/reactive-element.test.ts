@@ -1,4 +1,5 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
+
 import { ReactiveElement } from '../reactive-element';
 import type { PropertyValues, ReactiveController } from '../types';
 
@@ -10,9 +11,11 @@ function uniqueTag(base: string): string {
 
 function createElement<T extends HTMLElement>(ctor: { new (): T }): T {
   const tag = uniqueTag('test-el');
+
   if (!customElements.get(tag)) {
     customElements.define(tag, class extends (ctor as typeof HTMLElement) {} as typeof HTMLElement);
   }
+
   return document.createElement(tag) as T;
 }
 
@@ -23,6 +26,7 @@ afterEach(() => {
 describe('ReactiveElement', () => {
   it('extends HTMLElement', () => {
     const el = createElement(ReactiveElement);
+
     expect(el).toBeInstanceOf(HTMLElement);
   });
 
@@ -42,6 +46,7 @@ describe('ReactiveElement', () => {
     }
 
     const el = createElement(TestElement);
+
     document.body.appendChild(el);
     expect(connected).toHaveBeenCalledOnce();
 
@@ -65,6 +70,7 @@ describe('ReactiveElement', () => {
     }
 
     const el = createElement(TestElement);
+
     document.body.appendChild(el);
     await el.updateComplete;
 
@@ -100,6 +106,7 @@ describe('ReactiveElement properties', () => {
     }
 
     const el = createElement(TestElement);
+
     el.setAttribute('label', 'hello');
     expect(el.label).toBe('hello');
   });
@@ -151,6 +158,7 @@ describe('ReactiveElement properties', () => {
     }
 
     const el = createElement(TestElement);
+
     el.setAttribute('negative-sign', '\u2212');
     expect(el.negativeSign).toBe('\u2212');
   });
@@ -171,6 +179,7 @@ describe('ReactiveElement properties', () => {
     }
 
     const el = createElement(TestElement);
+
     document.body.appendChild(el);
     await el.updateComplete;
 
@@ -181,6 +190,7 @@ describe('ReactiveElement properties', () => {
 
     expect(update).toHaveBeenCalledOnce();
     const changed = update.mock.calls[0]![0] as PropertyValues;
+
     expect(changed.get('label')).toBe('default');
   });
 
@@ -202,6 +212,7 @@ describe('ReactiveElement properties', () => {
     }
 
     const el = createElement(TestElement);
+
     document.body.appendChild(el);
     await el.updateComplete;
 
@@ -213,8 +224,42 @@ describe('ReactiveElement properties', () => {
 
     expect(update).toHaveBeenCalledOnce();
     const changed = update.mock.calls[0]![0] as PropertyValues;
+
     expect(changed.has('label')).toBe(true);
     expect(changed.has('disabled')).toBe(true);
+  });
+
+  it('preserves the first old value when batching changes to the same property', async () => {
+    const update = vi.fn();
+
+    class TestElement extends ReactiveElement {
+      static override properties = {
+        label: { type: String },
+      };
+      label = 'default';
+
+      protected override update(changed: PropertyValues) {
+        super.update(changed);
+        update(changed);
+      }
+    }
+
+    const el = createElement(TestElement);
+
+    document.body.appendChild(el);
+    await el.updateComplete;
+
+    update.mockClear();
+
+    el.label = 'first';
+    el.label = 'second';
+    await el.updateComplete;
+
+    expect(update).toHaveBeenCalledOnce();
+    const changed = update.mock.calls[0]![0] as PropertyValues;
+
+    expect(el.label).toBe('second');
+    expect(changed.get('label')).toBe('default');
   });
 
   it('does not trigger update when value is unchanged', async () => {
@@ -232,6 +277,7 @@ describe('ReactiveElement properties', () => {
     }
 
     const el = createElement(TestElement);
+
     document.body.appendChild(el);
     await el.updateComplete;
 
@@ -254,6 +300,7 @@ describe('ReactiveElement controllers', () => {
     };
 
     const el = createElement(ReactiveElement);
+
     el.addController(controller);
 
     document.body.appendChild(el);
@@ -267,6 +314,7 @@ describe('ReactiveElement controllers', () => {
     };
 
     const el = createElement(ReactiveElement);
+
     el.addController(controller);
 
     document.body.appendChild(el);
@@ -280,6 +328,7 @@ describe('ReactiveElement controllers', () => {
     };
 
     const el = createElement(ReactiveElement);
+
     document.body.appendChild(el);
 
     el.addController(controller);
@@ -292,6 +341,7 @@ describe('ReactiveElement controllers', () => {
     };
 
     const el = createElement(ReactiveElement);
+
     el.addController(controller);
     el.removeController(controller);
 
@@ -305,6 +355,7 @@ describe('ReactiveElement controllers', () => {
     const c2: ReactiveController = { hostConnected: vi.fn() };
 
     const el = createElement(ReactiveElement);
+
     el.addController(c1);
     el.addController(c2);
 
@@ -330,6 +381,7 @@ describe('ReactiveElement lifecycle', () => {
     }
 
     const el = createElement(TestElement);
+
     document.body.appendChild(el);
     await el.updateComplete;
 
@@ -358,6 +410,7 @@ describe('ReactiveElement lifecycle', () => {
     }
 
     const el = createElement(TestElement);
+
     document.body.appendChild(el);
     await el.updateComplete;
 
@@ -370,6 +423,7 @@ describe('ReactiveElement lifecycle', () => {
 
     expect(updated).toHaveBeenCalledOnce();
     const changed = updated.mock.calls[0]![0] as PropertyValues;
+
     expect(changed.get('label')).toBe('');
   });
 
@@ -407,6 +461,7 @@ describe('ReactiveElement lifecycle', () => {
     }
 
     const el = createElement(TestElement);
+
     document.body.appendChild(el);
     await el.updateComplete;
 
@@ -430,6 +485,7 @@ describe('ReactiveElement lifecycle', () => {
     }
 
     const el = createElement(TestElement);
+
     expect(el.hasUpdated).toBe(false);
 
     document.body.appendChild(el);
@@ -453,6 +509,7 @@ describe('ReactiveElement lifecycle', () => {
     }
 
     const el = createElement(TestElement);
+
     document.body.appendChild(el);
     await el.updateComplete;
 
@@ -466,6 +523,7 @@ describe('ReactiveElement lifecycle', () => {
 describe('ReactiveElement isUpdatePending', () => {
   it('is true after requestUpdate, false after update completes', async () => {
     const el = createElement(ReactiveElement);
+
     document.body.appendChild(el);
     await el.updateComplete;
 
@@ -492,6 +550,7 @@ describe('ReactiveElement isUpdatePending', () => {
     }
 
     const el = createElement(TestElement);
+
     document.body.appendChild(el);
     await el.updateComplete;
 
@@ -523,6 +582,7 @@ describe('ReactiveElement performUpdate', () => {
     }
 
     const el = createElement(TestElement);
+
     document.body.appendChild(el);
     await el.updateComplete;
     update.mockClear();
@@ -550,6 +610,7 @@ describe('ReactiveElement performUpdate', () => {
     }
 
     const el = createElement(TestElement);
+
     document.body.appendChild(el);
     await el.updateComplete;
     update.mockClear();
@@ -562,9 +623,11 @@ describe('ReactiveElement performUpdate', () => {
 describe('ReactiveElement updateComplete', () => {
   it('resolves after first update when connected', async () => {
     const el = createElement(ReactiveElement);
+
     document.body.appendChild(el);
 
     const result = await el.updateComplete;
+
     expect(result).toBe(true);
     expect(el.hasUpdated).toBe(true);
   });
@@ -578,11 +641,13 @@ describe('ReactiveElement updateComplete', () => {
     }
 
     const el = createElement(TestElement);
+
     document.body.appendChild(el);
     await el.updateComplete;
 
     el.label = 'changed';
     const result = await el.updateComplete;
+
     expect(result).toBe(true);
   });
 });
@@ -615,7 +680,49 @@ describe('ReactiveElement property inheritance', () => {
 });
 
 describe('ReactiveElement upgrade', () => {
-  it('preserves properties set before upgrade', async () => {
+  it('restores own properties before connected lifecycle consumers run', async () => {
+    let connectedLabel: string | undefined;
+    let controllerLabel: string | undefined;
+
+    class TestElement extends ReactiveElement {
+      static override properties = {
+        label: { type: String },
+      };
+      label = 'default';
+
+      constructor() {
+        super();
+        this.addController({
+          hostConnected: () => (controllerLabel = this.label),
+        });
+      }
+
+      override connectedCallback() {
+        super.connectedCallback();
+        connectedLabel = this.label;
+      }
+    }
+
+    const tag = uniqueTag('connect-lifecycle-el');
+
+    customElements.define(tag, TestElement);
+
+    // SAFETY: The tag was registered with TestElement immediately above.
+    const el = document.createElement(tag) as TestElement;
+
+    Object.defineProperty(el, 'label', {
+      value: 'pre-connect',
+      writable: true,
+      configurable: true,
+      enumerable: true,
+    });
+    document.body.appendChild(el);
+
+    await vi.waitFor(() => expect(connectedLabel).toBe('pre-connect'));
+    expect(controllerLabel).toBe('pre-connect');
+  });
+
+  it('does not overwrite properties set after connection but before the first update', async () => {
     const update = vi.fn();
 
     class TestElement extends ReactiveElement {
@@ -630,20 +737,72 @@ describe('ReactiveElement upgrade', () => {
       }
     }
 
-    const tag = uniqueTag('upgrade-el');
+    const tag = uniqueTag('connect-el');
+
+    customElements.define(tag, TestElement);
+
+    // SAFETY: The tag was registered with TestElement immediately above.
     const el = document.createElement(tag) as TestElement;
 
-    // Set property before defining custom element
-    (el as unknown as Record<string, unknown>).label = 'pre-upgrade';
     document.body.appendChild(el);
+    el.label = 'newer';
+    await el.updateComplete;
 
-    // Define after (upgrade scenario)
-    customElements.define(tag, class extends TestElement {});
+    expect(el.label).toBe('newer');
+    expect(update).toHaveBeenLastCalledWith('newer');
 
-    // Wait for upgrade and first update
-    await new Promise((r) => setTimeout(r, 10));
+    update.mockClear();
+    el.label = 'later';
+    await el.updateComplete;
 
-    expect(el.label).toBe('pre-upgrade');
-    expect(update).toHaveBeenCalled();
+    expect(update).toHaveBeenCalledOnce();
+    expect(update).toHaveBeenCalledWith('later');
+  });
+
+  it('activates reactive accessors shadowed by native class fields', async () => {
+    const update = vi.fn();
+
+    class TestElement extends ReactiveElement {
+      static override properties = {
+        label: { type: String },
+      };
+      declare label: string;
+
+      constructor() {
+        super();
+
+        // Native class fields use DefineField semantics rather than invoking a prototype setter.
+        Object.defineProperty(this, 'label', {
+          value: 'default',
+          writable: true,
+          configurable: true,
+          enumerable: true,
+        });
+      }
+
+      protected override update() {
+        update(this.label);
+      }
+    }
+
+    const tag = uniqueTag('upgrade-class-field-el');
+
+    customElements.define(tag, TestElement);
+
+    // SAFETY: The tag was registered with TestElement immediately above.
+    const el = document.createElement(tag) as TestElement;
+
+    document.body.appendChild(el);
+    await el.updateComplete;
+
+    expect(Object.hasOwn(el, 'label')).toBe(false);
+    expect(el.label).toBe('default');
+
+    update.mockClear();
+    el.label = 'changed';
+    await el.updateComplete;
+
+    expect(update).toHaveBeenCalledOnce();
+    expect(update).toHaveBeenCalledWith('changed');
   });
 });

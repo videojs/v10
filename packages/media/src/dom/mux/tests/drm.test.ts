@@ -1,10 +1,12 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
+
 import { createMuxDrmSystems } from '../drm';
 
 // Header `{"alg":"HS256"}`, body sets `aud`, empty signature. Unpadded base64url,
 // like a real JWT, so it survives a query string untouched.
 function fakeJwt(payload: Record<string, unknown>): string {
   const encode = (obj: unknown) => btoa(JSON.stringify(obj)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+
   return `${encode({ alg: 'HS256' })}.${encode(payload)}.`;
 }
 

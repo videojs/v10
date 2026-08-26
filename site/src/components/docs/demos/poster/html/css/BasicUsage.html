@@ -1,18 +1,15 @@
-<!-- biome-ignore-all lint/a11y/useMediaCaption: TODO -->
+<!-- TODO: add a captions track to the demo. -->
 <video-player class="video-player" poster="{{VJS10_DEMO_POSTER}}">
-    <media-container>
-        <video
-            src="{{VJS10_DEMO_VIDEO_MP4}}"
-            playsinline
-        ></video>
+  <media-container>
+    <video src="{{VJS10_DEMO_VIDEO_MP4}}" playsinline></video>
 
-        <media-poster class="media-poster">
-            <img alt="" />
-        </media-poster>
+    <media-poster class="media-poster">
+      <img alt="" />
+    </media-poster>
 
-        <media-play-button class="media-play-button">
-            <span class="paused">Play</span>
-            <span class="playing">Pause</span>
-        </media-play-button>
-    </media-container>
+    <media-play-button class="media-play-button">
+      <span class="paused">Play</span>
+      <span class="playing">Pause</span>
+    </media-play-button>
+  </media-container>
 </video-player>

@@ -1,10 +1,11 @@
 import { readFileSync } from 'node:fs';
-import { describe, expect, it } from 'vitest';
+
+import { describe, expect, it } from 'vite-plus/test';
 
 const packageJson = JSON.parse(readFileSync(new URL('../../package.json', import.meta.url), 'utf8'));
 
 describe('@videojs/core package exports', () => {
-  it('keeps the VJSC component catalog workspace-only', () => {
+  it('keeps the VJSC component schema workspace-only', () => {
     const publishedExports = structuredClone(packageJson.exports);
 
     delete publishedExports['./vjsc'];

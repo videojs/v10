@@ -1,0 +1,110 @@
+---
+title: CloudflareVideo
+frameworkTitle:
+  html: cloudflare-video
+description: Video component that plays Cloudflare Stream videos through the Stream player
+---
+
+import MediaReference from "@/components/docs/api-reference/MediaReference.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+import StyleCase from "@/components/docs/StyleCase.astro";
+import Demo from "@/components/docs/demos/Demo.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+
+{/* React demos */}
+import BasicUsageDemoReact from "@/components/docs/demos/cloudflare-video/react/css/BasicUsage";
+import basicUsageReactTsx from "@/components/docs/demos/cloudflare-video/react/css/BasicUsage.tsx?raw";
+import basicUsageReactCss from "@/components/docs/demos/cloudflare-video/react/css/BasicUsage.css?raw";
+
+{/* HTML demos */}
+import BasicUsageDemoHtml from "@/components/docs/demos/cloudflare-video/html/css/BasicUsage.astro";
+import basicUsageHtml from "@/components/docs/demos/cloudflare-video/html/css/BasicUsage.html?raw";
+import basicUsageHtmlCss from "@/components/docs/demos/cloudflare-video/html/css/BasicUsage.css?raw";
+import basicUsageHtmlTs from "@/components/docs/demos/cloudflare-video/html/css/BasicUsage.ts?raw";
+
+[Cloudflare Stream](https://developers.cloudflare.com/stream/) runs in an embedded player. Its own chrome stays hidden by default, so it drops into a <DocsLink slug="concepts/skins">player skin</DocsLink> like any other media component; set `controls` to use Cloudflare's UI instead.
+
+## Load a source
+
+`src` takes a raw 32-character video UID, any `cloudflarestream.com` or `videodelivery.net` URL, or a signed token. Watch, embed, iframe, manifest, and thumbnail URLs all carry the UID in the same position, and a signed token stands in for the UID wherever one appears.
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<CloudflareVideo src="https://watch.videodelivery.net/bfbd585059e33391d67b0f1d15fe6ea4" />
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```html
+<cloudflare-video src="https://watch.videodelivery.net/bfbd585059e33391d67b0f1d15fe6ea4"></cloudflare-video>
+```
+</FrameworkCase>
+
+## Signed playback
+
+For [signed URLs](https://developers.cloudflare.com/stream/viewing-videos/securing-your-stream/), pass the signed token wherever the UID would go: as the whole `src`, or inside a Stream URL. Keep your customer subdomain when your URLs name one. Cloudflare serves signed and access-controlled videos only from `customer-<code>.cloudflarestream.com`, so the element preserves that origin instead of collapsing it onto the shared host.
+
+## Behavior
+
+A few things work differently from a native `<video>` element, because the Stream embed doesn't expose them:
+
+- The embed owns text tracks: `textTracks` stays empty, and `engine.cloudflare.defaultTextTrack` picks the track to show.
+- Picture-in-picture is unavailable, and the player reports it as unsupported.
+- Fullscreen targets the iframe, so Cloudflare's own chrome shows in fullscreen.
+- `playsInline` has no effect: the Stream embed always plays inline.
+
+## Examples
+
+### Basic Usage
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
+      { title: "App.css", code: basicUsageReactCss, lang: "css" },
+    ]}>
+      <BasicUsageDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "index.html", code: basicUsageHtml, lang: "html" },
+      { title: "index.css", code: basicUsageHtmlCss, lang: "css" },
+      { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
+    ]}>
+      <BasicUsageDemoHtml />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<MediaReference media="CloudflareVideo">
+  <Fragment slot="engine-cloudflare">
+    Pass [Stream player parameters](https://developers.cloudflare.com/stream/viewing-videos/using-the-stream-player/) under `source.engine.cloudflare`, spelled exactly as Cloudflare spells them, plus anything Cloudflare adds next. They're serialized onto the embed URL untouched, and the embed reads them once, when its URL is built. <DocsLink slug="concepts/media-sources">Media Sources</DocsLink> covers how engine options fit into a structured source.
+
+    `controls`, `autoplay`, `loop`, `muted`, `preload`, and `poster` come from the props of the same name, so they have no `engine.cloudflare` spelling.
+
+    <FrameworkCase frameworks={["react"]}>
+    ```tsx
+    <CloudflareVideo
+      source={{
+        src: 'bfbd585059e33391d67b0f1d15fe6ea4',
+        engine: { cloudflare: { primaryColor: '#f03e3e', startTime: '5m30s' } },
+      }}
+    />
+    ```
+    </FrameworkCase>
+
+    <FrameworkCase frameworks={["html"]}>
+    ```ts
+    const video = document.querySelector('cloudflare-video');
+    video.source = {
+      src: 'bfbd585059e33391d67b0f1d15fe6ea4',
+      engine: { cloudflare: { primaryColor: '#f03e3e', startTime: '5m30s' } },
+    };
+    ```
+    </FrameworkCase>
+  </Fragment>
+</MediaReference>

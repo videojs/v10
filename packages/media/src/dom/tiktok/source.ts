@@ -2,15 +2,12 @@ import { serializeEmbedParams } from '../utils';
 import type { TikTokMediaProps } from './props';
 
 /**
- * TikTok engine options, spelled exactly as TikTok spells them
- * (https://developers.tiktok.com/doc/embed-player). They are serialized onto the
- * embed URL verbatim, so what you write here is what the player reads.
+ * TikTok engine options, spelled exactly as TikTok spells them (https://developers.tiktok.com/doc/embed-player). They
+ * are serialized onto the embed URL verbatim, so what you write here is what the player reads.
  *
- * Parameters the host owns are deliberately absent: `autoplay`, `controls`,
- * `loop`, and `muted` come from the props of the same name, so configuring them
- * here would give two ways to say one thing. The index signature still carries
- * anything not listed here, so undocumented knobs and whatever TikTok adds next
- * keep working.
+ * Parameters the host owns are deliberately absent: `autoplay`, `controls`, `loop`, and `muted` come from the props of
+ * the same name, so configuring them here would give two ways to say one thing. The index signature still carries
+ * anything not listed here, so undocumented knobs and whatever TikTok adds next keep working.
  */
 export interface TikTokEngineConfig extends Record<string, unknown> {
   /** Show the closed-caption button. Defaults to `1`. */
@@ -52,8 +49,8 @@ export interface TikTokSourceEngineConfig {
 }
 
 /**
- * Parsed pieces of a TikTok source URL. TikTok embeds one thing — a video named
- * by a numeric id — so the id is all there is to take from a source.
+ * Parsed pieces of a TikTok source URL. TikTok embeds one thing — a video named by a numeric id — so the id is all
+ * there is to take from a source.
  */
 export interface ParsedTikTokSource {
   /** Numeric video id. */
@@ -66,23 +63,26 @@ export function parseTikTokVideoId(src: string) {
 }
 
 /**
- * Parse a TikTok source string. Recognizes raw numeric ids, `player/v1/` embed
- * URLs, `share/video/` links, and the `@user/video/` URLs the app hands out.
+ * Parse a TikTok source string. Recognizes raw numeric ids, `player/v1/` embed URLs, `share/video/` links, and the
+ * `@user/video/` URLs the app hands out.
  */
 export function parseTikTokSource(src: string): ParsedTikTokSource | null {
   if (!src) return null;
+
   // A bare numeric id is how the embed URL itself names a video, so it is taken
   // as one.
   if (MATCH_ID.test(src)) return { id: src };
+
   const id = MATCH_SRC.exec(src)?.[1];
+
   return id ? { id } : null;
 }
 
 /**
  * Whether the embed has to carry an `autoplay` nobody asked for. TikTok builds its player lazily: without one it
- * creates no media element, never reports `onPlayerReady`, and drops every command silently, until something is
- * clicked inside the frame — which a frame under a player skin never gets. The host parks the player as soon as it
- * is up, so this buys one that answers commands, not a video that plays.
+ * creates no media element, never reports `onPlayerReady`, and drops every command silently, until something is clicked
+ * inside the frame — which a frame under a player skin never gets. The host parks the player as soon as it is up, so
+ * this buys one that answers commands, not a video that plays.
  */
 export function shouldBootstrapTikTokEmbed(props: Partial<TikTokMediaProps> = {}) {
   // `preload="none"` trades those working controls back for an untouched network, and `controls` hands the player
@@ -94,6 +94,7 @@ export function shouldBootstrapTikTokEmbed(props: Partial<TikTokMediaProps> = {}
 export function buildTikTokIframeSrc(src: string, props: Partial<TikTokMediaProps> = {}) {
   const parsed = parseTikTokSource(src);
   if (!parsed) return '';
+
   // `referrerPolicy` is an attribute of the iframe hosting the embed rather than
   // something the player reads, so it never reaches the URL.
   const { referrerPolicy: _referrerPolicy, ...tiktok } = props.source?.engine?.tiktok ?? {};
@@ -114,6 +115,7 @@ export function buildTikTokIframeSrc(src: string, props: Partial<TikTokMediaProp
     // through here.
     ...tiktok,
   };
+
   return `${EMBED_BASE}/${parsed.id}?${serializeEmbedParams(params)}`;
 }
 

@@ -1,13 +1,16 @@
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { afterEach, describe, expect, it } from 'vitest';
+
+import { afterEach, describe, expect, it } from 'vite-plus/test';
+
 import { classifySnapshots, writeClassification } from '../api-reference-sync.ts';
 
 const temporaryDirectories: string[] = [];
 
 function createSnapshots() {
   const root = mkdtempSync(join(tmpdir(), 'api-reference-sync-'));
+
   temporaryDirectories.push(root);
 
   for (const phase of ['before', 'after']) {
@@ -36,6 +39,7 @@ afterEach(() => {
 describe('classifySnapshots', () => {
   it('classifies added, changed, unchanged, and removed references', () => {
     const root = createSnapshots();
+
     writeJson(root, 'before', 'components', 'changed.json', { value: 'before' });
     writeJson(root, 'after', 'components', 'changed.json', { value: 'after' });
     writeJson(root, 'before', 'components', 'same.json', { value: 'same' });
@@ -57,6 +61,7 @@ describe('classifySnapshots', () => {
 
   it('reports identical snapshots without changes', () => {
     const root = createSnapshots();
+
     writeJson(root, 'before', 'utils', 'same.json', { value: 'same' });
     writeJson(root, 'after', 'utils', 'same.json', { value: 'same' });
 
@@ -65,6 +70,7 @@ describe('classifySnapshots', () => {
 
   it('writes the workflow artifact contract', () => {
     const root = createSnapshots();
+
     writeJson(root, 'after', 'utils', 'new.json', { name: 'newUtil' });
     const result = classifySnapshots(root);
 
@@ -80,6 +86,7 @@ describe('classifySnapshots', () => {
 
   it('writes patches larger than the spawnSync default buffer', () => {
     const root = createSnapshots();
+
     writeJson(root, 'after', 'components', 'large.json', { value: 'x'.repeat(1024 * 1024) });
     const result = classifySnapshots(root);
 

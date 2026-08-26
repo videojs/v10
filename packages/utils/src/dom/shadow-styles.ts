@@ -6,6 +6,7 @@ export function ensureGlobalStyle(id: string, css: string): void {
   if (!doc || doc.getElementById(id)) return;
 
   const style = doc.createElement('style');
+
   style.id = id;
   style.textContent = css;
   doc.head.appendChild(style);
@@ -30,6 +31,7 @@ export function createShadowStyle(css: string): ShadowStyle {
   }
 
   const sheet = new globalThis.CSSStyleSheet();
+
   sheet.replaceSync(css);
   return sheet;
 }
@@ -42,8 +44,10 @@ export function applyShadowStyles(shadowRoot: ShadowRoot, styles: ShadowStyle[])
   }
 
   const doc = shadowRoot.ownerDocument;
+
   for (const styleText of styles.map(getStyleText)) {
     const style = doc.createElement('style');
+
     style.textContent = styleText;
     shadowRoot.appendChild(style);
   }

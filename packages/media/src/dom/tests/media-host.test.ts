@@ -1,4 +1,5 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
+
 import { HTMLAudioElementHost } from '../audio-host';
 import { addMediaComponent, type MediaComponent } from '../media-host';
 
@@ -50,6 +51,7 @@ describe('HTMLMediaElementHost', () => {
     it('returns the override value when a component exposes the property', () => {
       const host = new HTMLAudioElementHost();
       const audio = document.createElement('audio');
+
       audio.muted = false;
       host.attach(audio);
 
@@ -61,6 +63,7 @@ describe('HTMLMediaElementHost', () => {
     it('falls through to the target when the override lacks the property', () => {
       const host = new HTMLAudioElementHost();
       const audio = document.createElement('audio');
+
       audio.defaultMuted = true;
       host.attach(audio);
 
@@ -73,6 +76,7 @@ describe('HTMLMediaElementHost', () => {
     it('falls through to the target when no component overrides the property', () => {
       const host = new HTMLAudioElementHost();
       const audio = document.createElement('audio');
+
       audio.muted = true;
       host.attach(audio);
 
@@ -82,6 +86,7 @@ describe('HTMLMediaElementHost', () => {
     it('falls through to the target for properties the override does not own', () => {
       const host = new HTMLAudioElementHost();
       const audio = document.createElement('audio');
+
       audio.muted = true;
       host.attach(audio);
 
@@ -93,6 +98,7 @@ describe('HTMLMediaElementHost', () => {
 
     it('falls back to the default when nothing is attached', () => {
       const host = new HTMLAudioElementHost();
+
       expect(host.paused).toBe(true);
       expect(host.muted).toBe(false);
       expect(host.contentData).toBeUndefined();
@@ -101,6 +107,7 @@ describe('HTMLMediaElementHost', () => {
     it('reads content data independently from the legacy title property', () => {
       const host = new HTMLAudioElementHost();
       const audio = document.createElement('audio');
+
       audio.title = 'Legacy title';
       host.attach(audio);
 
@@ -115,10 +122,12 @@ describe('HTMLMediaElementHost', () => {
     it('writes setter values to the override when it owns the property', () => {
       const host = new HTMLAudioElementHost();
       const audio = document.createElement('audio');
+
       audio.muted = false;
       host.attach(audio);
 
       const component = new CastLikeOverride();
+
       addMediaComponent(host, component);
 
       host.muted = true;
@@ -130,6 +139,7 @@ describe('HTMLMediaElementHost', () => {
     it('writes setter values to the target when no override owns the property', () => {
       const host = new HTMLAudioElementHost();
       const audio = document.createElement('audio');
+
       host.attach(audio);
 
       host.muted = true;
@@ -140,9 +150,11 @@ describe('HTMLMediaElementHost', () => {
     it('attaches a late-added component to the current target', () => {
       const host = new HTMLAudioElementHost();
       const audio = document.createElement('audio');
+
       host.attach(audio);
 
       const component = new AttachTracking();
+
       addMediaComponent(host, component);
 
       expect(component.attach).toHaveBeenCalledWith(audio);
@@ -152,6 +164,7 @@ describe('HTMLMediaElementHost', () => {
       const host = new HTMLAudioElementHost();
 
       const component = new AttachTracking();
+
       addMediaComponent(host, component);
 
       expect(component.attach).not.toHaveBeenCalled();
@@ -160,10 +173,12 @@ describe('HTMLMediaElementHost', () => {
     it('detaches and unregisters components on destroy', () => {
       const host = new HTMLAudioElementHost();
       const audio = document.createElement('audio');
+
       audio.muted = false;
       host.attach(audio);
 
       const component = new AttachTracking();
+
       addMediaComponent(host, component);
       addMediaComponent(host, new MutedOverride());
 
@@ -178,9 +193,11 @@ describe('HTMLMediaElementHost', () => {
 
     it('does not destroy components it does not own on destroy', () => {
       const host = new HTMLAudioElementHost();
+
       host.attach(document.createElement('audio'));
 
       const component = new AttachTracking();
+
       addMediaComponent(host, component);
 
       host.destroy();
@@ -192,9 +209,11 @@ describe('HTMLMediaElementHost', () => {
     it('invokes the override method when it owns the property', async () => {
       const host = new HTMLAudioElementHost();
       const audio = document.createElement('audio');
+
       host.attach(audio);
 
       const component = new CastLikeOverride();
+
       addMediaComponent(host, component);
 
       await host.play();
@@ -212,6 +231,7 @@ describe('HTMLMediaElementHost', () => {
 
     it('rejects when the target lacks a play implementation', async () => {
       const host = new HTMLAudioElementHost();
+
       host.attach({} as HTMLAudioElement);
 
       await expect(host.play()).rejects.toBeInstanceOf(DOMException);
@@ -223,6 +243,7 @@ describe('HTMLMediaElementHost', () => {
     const audio = document.createElement('audio') as HTMLAudioElement & {
       contentData: Record<string, string | null>;
     };
+
     audio.contentData = { title: null };
     const listener = vi.fn();
 

@@ -7,16 +7,16 @@
 /**
  * Remove a time range from a SourceBuffer.
  *
- * Waits for the SourceBuffer to be ready (not updating), then removes
- * the specified range. Returns a promise that resolves when removal completes.
+ * Waits for the SourceBuffer to be ready (not updating), then removes the specified range. Returns a promise that
+ * resolves when removal completes.
+ *
+ * @example
+ *   await flushBuffer(videoSourceBuffer, 0, 30);
  *
  * @param sourceBuffer - The SourceBuffer to remove data from
  * @param start - Start of the time range to remove (seconds)
  * @param end - End of the time range to remove (seconds)
  * @returns Promise that resolves when removal completes
- *
- * @example
- * await flushBuffer(videoSourceBuffer, 0, 30);
  */
 export async function flushBuffer(sourceBuffer: SourceBuffer, start: number, end: number): Promise<void> {
   // Wait for SourceBuffer to be ready (not currently updating)
@@ -26,6 +26,7 @@ export async function flushBuffer(sourceBuffer: SourceBuffer, start: number, end
         sourceBuffer.removeEventListener('updateend', onUpdateEnd);
         resolve();
       };
+
       sourceBuffer.addEventListener('updateend', onUpdateEnd);
     });
   }

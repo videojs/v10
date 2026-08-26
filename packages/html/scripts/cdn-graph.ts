@@ -1,8 +1,8 @@
 /**
  * Module-graph helpers for the built CDN output.
  *
- * Shared by `check-cdn-self-contained.ts` and `build-dist-archive.ts` so the definition of
- * "reachable from an entry" stays identical between the guard and the archive it guards.
+ * Shared by `check-cdn-self-contained.ts` and `build-dist-archive.ts` so the definition of "reachable from an entry"
+ * stays identical between the guard and the archive it guards.
  */
 
 import { existsSync, readFileSync } from 'node:fs';
@@ -14,19 +14,18 @@ const SPECIFIER = /(?:\bfrom|\bimport)\s*\(?\s*["']([^"']+)["']/g;
 /**
  * JSDoc blocks, dropped before the scan.
  *
- * Their `{import('…')}` type annotations are indistinguishable from dynamic imports, and the
- * modules they name are types that no bundle ever loads — third-party dev bundles are full of
- * them. Minified production bundles carry no JSDoc, so nothing real is hidden by this.
+ * Their `{import('…')}` type annotations are indistinguishable from dynamic imports, and the modules they name are
+ * types that no bundle ever loads — third-party dev bundles are full of them. Minified production bundles carry no
+ * JSDoc, so nothing real is hidden by this.
  */
 const JSDOC_BLOCK = /\/\*\*[\s\S]*?\*\//g;
 
 /**
  * Drop matches that cannot be module specifiers.
  *
- * The scan is a regex rather than a parser, so it also sees the words `from` and `import` inside
- * prose — JSDoc retained in dev bundles, and template literals such as `` `… from "${type}"` ``.
- * Real specifiers emitted by the bundler are plain paths, so anything carrying whitespace or
- * template syntax is prose.
+ * The scan is a regex rather than a parser, so it also sees the words `from` and `import` inside prose — JSDoc retained
+ * in dev bundles, and template literals such as `` `… from "${type}"` ``. Real specifiers emitted by the bundler are
+ * plain paths, so anything carrying whitespace or template syntax is prose.
  */
 function isLikelySpecifier(value: string): boolean {
   return value.length > 0 && !/[\s{}$`]/.test(value);
@@ -45,8 +44,8 @@ function isAbsoluteSpecifier(specifier: string): boolean {
 /**
  * Every file reachable from `roots` by following relative specifiers, as paths relative to `dir`.
  *
- * The CDN build emits plain ES modules with no `import.meta.url` asset references, workers, or
- * non-JavaScript files, so the static import graph is the complete set of files an entry needs.
+ * The CDN build emits plain ES modules with no `import.meta.url` asset references, workers, or non-JavaScript files, so
+ * the static import graph is the complete set of files an entry needs.
  */
 export function resolveClosure(dir: string, roots: readonly string[]): Set<string> {
   const seen = new Set<string>();
@@ -57,14 +56,13 @@ export function resolveClosure(dir: string, roots: readonly string[]): Set<strin
     if (seen.has(file)) continue;
 
     const path = resolve(dir, file);
-    if (!existsSync(path)) {
-      throw new Error(`Expected bundle is missing from the build: ${file}`);
-    }
+    if (!existsSync(path)) throw new Error(`Expected bundle is missing from the build: ${file}`);
 
     seen.add(file);
 
     for (const specifier of collectSpecifiers(readFileSync(path, 'utf8'))) {
       if (!specifier.startsWith('.')) continue;
+
       queue.push(relative(dir, resolve(dirname(path), specifier)));
     }
   }
@@ -73,8 +71,8 @@ export function resolveClosure(dir: string, roots: readonly string[]): Set<strin
 }
 
 /**
- * Report specifiers that would break a copy of `dir` served from an arbitrary origin: anything
- * absolute, bare, or resolving outside the directory.
+ * Report specifiers that would break a copy of `dir` served from an arbitrary origin: anything absolute, bare, or
+ * resolving outside the directory.
  */
 export function findUnresolvableSpecifiers(dir: string, files: Iterable<string>): string[] {
   const problems: string[] = [];
@@ -95,6 +93,7 @@ export function findUnresolvableSpecifiers(dir: string, files: Iterable<string>)
       }
 
       const target = resolve(dirname(path), specifier);
+
       if (!existsSync(target)) {
         problems.push(`${file}: "${specifier}" resolves outside the build (${relative(dir, target)})`);
       }

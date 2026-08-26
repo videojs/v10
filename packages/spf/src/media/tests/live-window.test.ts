@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
+
 import { liveWindowFor } from '../live-window';
 import { type AudioTrack, MEDIA_PLAYLIST_METADATA_KEY, type Presentation, type VideoTrack } from '../types';
 
@@ -24,6 +25,7 @@ function makePresentation(overrides?: Partial<VideoTrack>): Presentation {
     metadata: { [MEDIA_PLAYLIST_METADATA_KEY]: { mediaSequence: 50, targetDuration: 2, endList: false } },
     ...overrides,
   };
+
   return {
     id: 'pres-1',
     url: 'https://example.com/master.m3u8',
@@ -85,6 +87,7 @@ describe('liveWindowFor', () => {
         { id: 'audio-set', type: 'audio', switchingSets: [{ id: 'as', type: 'audio', tracks: [audio] }] },
       ],
     };
+
     expect(liveWindowFor(presentation, 'a-1')).toEqual({ start: 200, end: 210 });
   });
 });

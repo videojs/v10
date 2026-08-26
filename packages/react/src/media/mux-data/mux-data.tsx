@@ -10,28 +10,24 @@ import { useSyncProps } from '../../utils/use-sync-props';
 export type MuxDataProps = Partial<MuxDataComponentProps>;
 
 /**
- * Adds [Mux Data](https://www.mux.com/data) monitoring to the surrounding
- * player's media.
+ * Adds [Mux Data](https://www.mux.com/data) monitoring to the surrounding player's media.
  *
- * Renders nothing — place it inside the Player as a sibling of the
- * media component (e.g. `<MuxVideo />`) and it registers a `MuxData` media
- * component with the active media.
+ * Renders nothing — place it inside the Player as a sibling of the media component (e.g. `<MuxVideo />`) and it
+ * registers a `MuxData` media component with the active media.
  *
- * Mux-hosted playback needs no `envKey`: the view reports the Mux playback ID
- * as its `video_id`, which Mux attributes to the owning environment. Set
- * `envKey` to monitor sources Mux doesn't host.
+ * Mux-hosted playback needs no `envKey`: the view reports the Mux playback ID as its `video_id`, which Mux attributes
+ * to the owning environment. Set `envKey` to monitor sources Mux doesn't host.
  *
- * Any media component works. When the media plays through an hls.js or dash.js
- * engine, that engine is handed to the Mux Data SDK so the view also carries
- * stream-level detail such as rendition switches and request timing.
+ * Any media component works. When the media plays through an hls.js or dash.js engine, that engine is handed to the Mux
+ * Data SDK so the view also carries stream-level detail such as rendition switches and request timing.
  *
  * @example
- * ```tsx
- * <Player>
- *   <MuxVideo source={{ playbackId: 'abc123' }} />
- *   <MuxData playerSoftwareName="mux-video" />
- * </Player>
- * ```
+ *   ```tsx
+ *   <Player>
+ *     <MuxVideo source={{ playbackId: 'abc123' }} />
+ *     <MuxData playerSoftwareName="mux-video" />
+ *   </Player>;
+ *   ```;
  */
 export function MuxData(props: MuxDataProps): ReactNode {
   const component = useMediaComponent(MuxDataComponent);
@@ -42,6 +38,7 @@ export function MuxData(props: MuxDataProps): ReactNode {
   // instead: passing the prop wins even when its value is `undefined`, and only
   // omitting it falls back to the default SDK.
   const sdk = 'MuxDataSdk' in props ? MuxDataSdk : muxDataDefaultProps.MuxDataSdk;
+
   if (component.MuxDataSdk !== sdk) component.MuxDataSdk = sdk;
 
   useSyncProps(component, rest, muxDataDefaultProps);

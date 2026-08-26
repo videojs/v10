@@ -1,4 +1,5 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
+
 import { getScreenResolution, type ScreenResolutionOptions, watchScreenResolution } from '../screen';
 
 afterEach(() => {
@@ -72,9 +73,8 @@ describe('getScreenResolution', () => {
 
 describe('watchScreenResolution', () => {
   /**
-   * A `matchMedia` stand-in whose queries can be told to fire. The real one only
-   * reports on ratios the environment actually has, so driving a ratio change
-   * means driving the query.
+   * A `matchMedia` stand-in whose queries can be told to fire. The real one only reports on ratios the environment
+   * actually has, so driving a ratio change means driving the query.
    */
   function stubMatchMedia() {
     const queries: Array<{ query: string; fire: () => void }> = [];
@@ -83,6 +83,7 @@ describe('watchScreenResolution', () => {
       // A real `EventTarget`, so `once` and `signal` come from the platform rather
       // than from a stub that could model them wrongly — the watcher leans on both.
       const target = new EventTarget();
+
       queries.push({ query, fire: () => target.dispatchEvent(new Event('change')) });
 
       return Object.assign(target, { matches: true, media: query });
@@ -92,23 +93,22 @@ describe('watchScreenResolution', () => {
   }
 
   /**
-   * A mutable screen, so a test can move it the way the environment would. An
-   * `EventTarget` because the real one is: `screen` dispatches its own `change`.
+   * A mutable screen, so a test can move it the way the environment would. An `EventTarget` because the real one is:
+   * `screen` dispatches its own `change`.
    */
   function stubScreen(width: number, height: number, ratio = 1) {
     const screen = Object.assign(new EventTarget(), { width, height, orientation: new EventTarget() });
+
     vi.stubGlobal('screen', screen);
     vi.stubGlobal('devicePixelRatio', ratio);
     return screen;
   }
 
-  /**
-   * Subscribe, then forget the call the subscribe itself makes, so a test can
-   * assert on changes alone.
-   */
+  /** Subscribe, then forget the call the subscribe itself makes, so a test can assert on changes alone. */
   function watchChanges(options?: ScreenResolutionOptions) {
     const onChange = vi.fn();
     const stop = watchScreenResolution(onChange, options);
+
     onChange.mockClear();
     return { onChange, stop };
   }
@@ -199,6 +199,7 @@ describe('watchScreenResolution', () => {
   it('reports a device pixel ratio change under a window that kept its size', () => {
     // The cross-display drag: the only coverage that case has in WebKit and Gecko.
     const queries = stubMatchMedia();
+
     stubScreen(1440, 900, 1);
     const { onChange, stop } = watchChanges();
 
@@ -215,6 +216,7 @@ describe('watchScreenResolution', () => {
     // A `dppx` query only answers about the ratio it was built for, so the old
     // one goes quiet once the ratio moves.
     const queries = stubMatchMedia();
+
     stubScreen(1440, 900, 1);
     const { onChange, stop } = watchChanges();
 
@@ -234,6 +236,7 @@ describe('watchScreenResolution', () => {
     // Only the query's own handler re-arms, so noisy signals can't accumulate
     // queries. This is what `once: true` replaces the old ratio bookkeeping with.
     const queries = stubMatchMedia();
+
     stubScreen(1440, 900, 1);
     const { stop } = watchChanges();
 
@@ -248,6 +251,7 @@ describe('watchScreenResolution', () => {
     // `once: true`, so re-firing the spent query is inert — the live one is the
     // replacement, armed against the ratio that is now current.
     const queries = stubMatchMedia();
+
     stubScreen(1440, 900, 1);
     const { onChange, stop } = watchChanges();
 

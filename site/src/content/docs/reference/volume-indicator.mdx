@@ -1,0 +1,146 @@
+---
+title: VolumeIndicator
+frameworkTitle:
+  html: media-volume-indicator
+description: Display temporary visual feedback for keyboard and gesture volume actions
+---
+
+import ComponentReference from "@/components/docs/api-reference/ComponentReference.astro";
+import ComponentImports from "@/components/docs/api-reference/ComponentImports.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+import StyleCase from "@/components/docs/StyleCase.astro";
+import Demo from "@/components/docs/demos/Demo.astro";
+
+{/* React demo */}
+import BasicUsageDemoReact from "@/components/docs/demos/volume-indicator/react/css/BasicUsage";
+import basicUsageReactTsx from "@/components/docs/demos/volume-indicator/react/css/BasicUsage.tsx?raw";
+import basicUsageReactCss from "@/components/docs/demos/volume-indicator/react/css/BasicUsage.css?raw";
+
+{/* HTML demo */}
+import BasicUsageDemoHtml from "@/components/docs/demos/volume-indicator/html/css/BasicUsage.astro";
+import basicUsageHtml from "@/components/docs/demos/volume-indicator/html/css/BasicUsage.html?raw";
+import basicUsageHtmlCss from "@/components/docs/demos/volume-indicator/html/css/BasicUsage.css?raw";
+import basicUsageHtmlTs from "@/components/docs/demos/volume-indicator/html/css/BasicUsage.ts?raw";
+
+## Import
+
+<ComponentImports component="VolumeIndicator" html="volume-indicator" />
+
+## Anatomy
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<VolumeIndicator.Root>
+  <VolumeIndicator.Fill>
+    <VolumeIndicator.Value />
+  </VolumeIndicator.Fill>
+</VolumeIndicator.Root>
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```html
+<media-volume-indicator>
+  <media-volume-indicator-fill>
+    <media-volume-indicator-value></media-volume-indicator-value>
+  </media-volume-indicator-fill>
+</media-volume-indicator>
+```
+</FrameworkCase>
+
+## Behavior
+
+`VolumeIndicator` displays feedback for `toggleMuted` and `volumeStep` actions emitted by a <DocsLink slug="reference/hotkey">`Hotkey`</DocsLink> or <DocsLink slug="reference/gesture">`Gesture`</DocsLink> in the same player `Container`. It does not react to mute buttons, volume sliders, direct player-store changes, or volume changes on their own.
+
+The input event arrives before its action is resolved. The indicator uses the media snapshot from that moment to predict the next mute state and volume. `toggleMuted` predicts the opposite mute state. `volumeStep` adds its `value` to the snapshot volume and clamps the result from 0 to 1. A step whose clamped result is above 0 also predicts that mute will clear.
+
+The Root exposes the predicted level:
+
+| `data-level` | Predicted state |
+| --- | --- |
+| `"off"` | Muted or volume is 0 |
+| `"low"` | Unmuted volume is greater than 0 and at most 0.5 |
+| `"high"` | Unmuted volume is greater than 0.5 |
+
+`Value` displays the rounded percentage from 0% through 100%. `Fill` receives the same percentage through `--media-volume-fill`. Nest `Value` inside `Fill` so the progress treatment and text form one visual unit.
+
+The indicator closes after `closeDelay`, which defaults to 800 milliseconds. Repeated handled actions update the current value and restart that close timer without replaying the entry transition. Each update uses the latest media snapshot; the component does not independently accumulate volume steps. React stops rendering the Root after its close transition. The HTML custom element remains in the document with `hidden` until the next handled action.
+
+When a nonzero `volumeStep` cannot move past an already-clamped edge, `data-min` or `data-max` is present for 300 milliseconds. Hitting the same edge again briefly clears the attribute, then restores it on the next task so a CSS boundary animation can restart. Merely reaching 0% or 100% does not trigger the boundary attribute until another step tries to move farther.
+
+## Styling
+
+| Attribute | Values | Description |
+| --- | --- | --- |
+| `data-open` | Present / absent | Present while the indicator is open |
+| `data-level` | `"off"`, `"low"`, or `"high"` | Predicted volume level |
+| `data-min` | Present / absent | Present briefly after a blocked downward step at minimum volume |
+| `data-max` | Present / absent | Present briefly after a blocked upward step at maximum volume |
+| `data-starting-style` | Present / absent | Present during the open transition |
+| `data-ending-style` | Present / absent | Present during the close transition |
+
+`--media-volume-fill` is set on the Fill part, not the Root. Read it from a Fill selector when sizing a progress treatment.
+
+<FrameworkCase frameworks={["html"]}>
+```css
+media-volume-indicator-fill::before {
+  width: var(--media-volume-fill, 0%);
+}
+
+media-volume-indicator[data-starting-style],
+media-volume-indicator[data-ending-style] {
+  opacity: 0;
+}
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+React renders standard DOM elements. Add separate `className` values to the Root and Fill:
+
+```css
+.volume-indicator__fill::before {
+  width: var(--media-volume-fill, 0%);
+}
+
+.volume-indicator[data-starting-style],
+.volume-indicator[data-ending-style] {
+  opacity: 0;
+}
+```
+</FrameworkCase>
+
+## Accessibility
+
+`VolumeIndicator` is visual feedback and does not create a live region. Keep volume and mute available through keyboard-operable controls, and pair the player with <DocsLink slug="reference/status-announcer">`StatusAnnouncer`</DocsLink> when state changes should be announced to screen readers. Do not make `VolumeIndicator.Value` a live region.
+
+## Examples
+
+### Basic Usage
+
+Focus the player, then press <kbd>M</kbd> to mute or unmute. Use <kbd>Arrow Up</kbd> and <kbd>Arrow Down</kbd> to adjust volume by 5%.
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
+      { title: "App.css", code: basicUsageReactCss, lang: "css" },
+    ]}>
+      <BasicUsageDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "index.html", code: basicUsageHtml, lang: "html" },
+      { title: "index.css", code: basicUsageHtmlCss, lang: "css" },
+      { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
+    ]}>
+      <BasicUsageDemoHtml />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<ComponentReference component="VolumeIndicator" />

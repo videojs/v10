@@ -1,6 +1,8 @@
 import type { AstroCookies } from 'astro';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
+
 import { DEFAULT_FRAMEWORK, SUPPORTED_FRAMEWORKS } from '@/types/docs';
+
 import {
   FRAMEWORK_COOKIE,
   getFrameworkPreferenceClient,
@@ -33,6 +35,7 @@ describe('preferences utilities', () => {
           if (name === FRAMEWORK_COOKIE) {
             return { value: firstFramework };
           }
+
           return null;
         }),
       } as unknown as AstroCookies;
@@ -49,6 +52,7 @@ describe('preferences utilities', () => {
           if (name === FRAMEWORK_COOKIE) {
             return { value: 'invalid-framework' };
           }
+
           return null;
         }),
       } as unknown as AstroCookies;
@@ -66,6 +70,7 @@ describe('preferences utilities', () => {
             if (name === FRAMEWORK_COOKIE) {
               return { value: framework };
             }
+
             return null;
           }),
         } as unknown as AstroCookies;
@@ -109,6 +114,7 @@ describe('preferences utilities', () => {
 
     it('should return null when document is undefined (SSR)', () => {
       const originalDocument = globalThis.document;
+
       // @ts-expect-error Testing SSR scenario
       globalThis.document = undefined;
 
@@ -122,6 +128,7 @@ describe('preferences utilities', () => {
     it('should set framework cookie', () => {
       // Mock document.cookie
       const cookies: string[] = [];
+
       Object.defineProperty(document, 'cookie', {
         get: () => cookies.join('; '),
         set: (value: string) => {
@@ -150,6 +157,7 @@ describe('preferences utilities', () => {
       for (const framework of SUPPORTED_FRAMEWORKS) {
         // Mock document.cookie
         const cookies: string[] = [];
+
         Object.defineProperty(document, 'cookie', {
           get: () => cookies.join('; '),
           set: (value: string) => {
@@ -166,6 +174,7 @@ describe('preferences utilities', () => {
 
     it('should do nothing when document is undefined (SSR)', () => {
       const originalDocument = globalThis.document;
+
       // @ts-expect-error Testing SSR scenario
       globalThis.document = undefined;
 
@@ -180,6 +189,7 @@ describe('preferences utilities', () => {
   describe('setStylePreferenceClient', () => {
     it('should set style in localStorage', () => {
       const mockStorage: Record<string, string> = {};
+
       Object.defineProperty(globalThis, 'localStorage', {
         value: {
           getItem: (key: string) => mockStorage[key] ?? null,
@@ -193,11 +203,13 @@ describe('preferences utilities', () => {
       setStylePreferenceClient(firstFramework, 'css');
 
       const expectedKey = STYLE_STORAGE_KEY_PREFIX + firstFramework;
+
       expect(mockStorage[expectedKey]).toBe('css');
     });
 
     it('should throw error for invalid style', () => {
       const mockStorage: Record<string, string> = {};
+
       Object.defineProperty(globalThis, 'localStorage', {
         value: {
           getItem: (key: string) => mockStorage[key] ?? null,

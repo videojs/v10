@@ -108,14 +108,17 @@ const hasDetail = Boolean(attributeName || detailedType || description);
     .forEach((button) => {
       button.addEventListener("click", () => {
         const expanded = button.getAttribute("aria-expanded") === "true";
+
         button.setAttribute("aria-expanded", String(!expanded));
 
         const row = button.closest<HTMLTableRowElement>("[data-apiref-row]");
+
         if (row) row.toggleAttribute("data-expanded", !expanded);
 
         const detail = document.getElementById(
           button.getAttribute("aria-controls")!,
         );
+
         if (detail) detail.hidden = expanded;
       });
     });
@@ -125,6 +128,7 @@ const hasDetail = Boolean(attributeName || detailedType || description);
     .forEach((row) => {
       row.addEventListener("click", (e) => {
         if ((e.target as Element).closest("a, button")) return;
+
         row.querySelector<HTMLButtonElement>("[data-apiref-toggle]")?.click();
       });
     });

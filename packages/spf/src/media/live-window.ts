@@ -1,19 +1,15 @@
 /**
- * Derive the live window of the track with the given id — the single source of
- * truth for "where is live," consumed (via `liveWindowFromState`) by the
- * seek-to-live-edge and live-seekable-range behaviors so neither re-derives (or
- * re-presumes) the window shape. Type-agnostic: the caller decides which track
- * bears the timeline (video when present, else audio).
+ * Derive the live window of the track with the given id — the single source of truth for "where is live," consumed (via
+ * `liveWindowFromState`) by the seek-to-live-edge and live-seekable-range behaviors so neither re-derives (or
+ * re-presumes) the window shape. Type-agnostic: the caller decides which track bears the timeline (video when present,
+ * else audio).
  *
- * The window is a **live read** over the current `segments` array — never
- * stored on the track. The anchor triple is frozen per source; per-segment
- * `startTime` values are re-derived against it on every reload, so the edge
- * here slides while the origin stays fixed (see
- * `internal/design/spf/live-presentation-timeline-model.md`).
+ * The window is a **live read** over the current `segments` array — never stored on the track. The anchor triple is
+ * frozen per source; per-segment `startTime` values are re-derived against it on every reload, so the edge here slides
+ * while the origin stays fixed (see `internal/design/spf/live-presentation-timeline-model.md`).
  *
- * Returns `null` when there is no live edge to track: an unresolved
- * presentation or track, a track with no segments, or a **complete** playlist
- * (VoD, or live that has ended — a finite `Track.duration`).
+ * Returns `null` when there is no live edge to track: an unresolved presentation or track, a track with no segments, or
+ * a **complete** playlist (VoD, or live that has ended — a finite `Track.duration`).
  */
 import { isResolvedPresentation, isResolvedTrack, type MaybeResolvedPresentation } from './types';
 import { findTrackById } from './utils/tracks';
@@ -40,6 +36,7 @@ export function liveWindowFor(
 
   const { segments } = track;
   const last = segments[segments.length - 1]!;
+
   return {
     start: segments[0]!.startTime,
     end: last.startTime + last.duration,

@@ -1,6 +1,6 @@
 import { isMacOS } from '@videojs/utils/dom';
-import type { HotkeyProps } from '../../core/ui/hotkey/hotkey-core';
 
+import type { HotkeyProps } from '../../core/ui/hotkey/core';
 import { HotkeyCoordinator } from './coordinator';
 
 export type HotkeyModifierKey = 'shift' | 'ctrl' | 'alt' | 'meta';
@@ -27,13 +27,13 @@ const MODIFIER_KEYS = new Set(['shift', 'ctrl', 'alt', 'meta']);
  * Parse a key pattern string into one or more bindings.
  *
  * @example
- * ```ts
- * parseHotkeyPattern('>');
- * // [{ modifiers: Set(), key: '>', originalKey: '>' }]
+ *   ```ts
+ *   parseHotkeyPattern('>');
+ *   // [{ modifiers: Set(), key: '>', originalKey: '>' }]
  *
- * parseHotkeyPattern('0-9');
- * // 10 bindings, one per digit
- * ```
+ *   parseHotkeyPattern('0-9');
+ *   // 10 bindings, one per digit
+ *   ```;
  */
 export function parseHotkeyPattern(pattern: string): ParsedHotkeyBinding[] {
   // Range expansion: "0-9" → individual digit bindings.
@@ -68,11 +68,10 @@ export function parseHotkeyPattern(pattern: string): ParsedHotkeyBinding[] {
 }
 
 /**
- * Single non-letter character — layout-dependent modifiers (Shift, Alt/Option)
- * were used to produce the character itself, not as deliberate modifiers
- * (e.g. Shift+. → ">", Option+Shift → ">" on some Mac layouts).
- * Letters excluded because Shift changes case intentionally (k vs K).
- * Named keys excluded because event.key.length > 1 (ArrowLeft, Tab, etc.).
+ * Single non-letter character — layout-dependent modifiers (Shift, Alt/Option) were used to produce the character
+ * itself, not as deliberate modifiers (e.g. Shift+. → ">", Option+Shift → ">" on some Mac layouts). Letters excluded
+ * because Shift changes case intentionally (k vs K). Named keys excluded because event.key.length > 1 (ArrowLeft, Tab,
+ * etc.).
  */
 function isImplicitModifierKey(key: string): boolean {
   return key.length === 1 && !/[a-z]/i.test(key);
@@ -95,8 +94,11 @@ export function matchesHotkeyEvent(binding: ParsedHotkeyBinding, event: Keyboard
 
   // Exact modifier matching — all four must agree.
   if (shiftKey !== binding.modifiers.has('shift')) return false;
+
   if (event.ctrlKey !== binding.modifiers.has('ctrl')) return false;
+
   if (altKey !== binding.modifiers.has('alt')) return false;
+
   if (event.metaKey !== binding.modifiers.has('meta')) return false;
 
   return true;
@@ -114,10 +116,12 @@ export function findHotkeyCoordinator(target: HTMLElement): HotkeyCoordinator | 
 /** Look up or create the hotkey coordinator for a target element. */
 export function getHotkeyCoordinator(target: HTMLElement): HotkeyCoordinator {
   let coordinator = coordinators.get(target);
+
   if (!coordinator) {
     coordinator = new HotkeyCoordinator(target);
     coordinators.set(target, coordinator);
   }
+
   return coordinator;
 }
 
@@ -125,19 +129,20 @@ export function getHotkeyCoordinator(target: HTMLElement): HotkeyCoordinator {
  * Register a hotkey binding on a target element.
  *
  * @example
- * ```ts
- * const cleanup = createHotkey(container, {
- *   keys: 'k',
- *   onActivate: () => store.paused ? store.play() : store.pause(),
- * });
+ *   ```ts
+ *   const cleanup = createHotkey(container, {
+ *     keys: 'k',
+ *     onActivate: () => (store.paused ? store.play() : store.pause()),
+ *   });
  *
- * // Later: remove the binding
- * cleanup();
- * ```
+ *   // Later: remove the binding
+ *   cleanup();
+ *   ```;
  *
  * @returns A cleanup function that removes the binding.
  */
 export function createHotkey(target: HTMLElement, options: HotkeyOptions): () => void {
   const coordinator = getHotkeyCoordinator(target);
+
   return coordinator.add(options);
 }

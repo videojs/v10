@@ -1,0 +1,98 @@
+---
+title: Gesture
+frameworkTitle:
+  html: media-gesture
+description: Map tap and double-tap gestures to player actions
+---
+
+import ComponentReference from "@/components/docs/api-reference/ComponentReference.astro";
+import ComponentImports from "@/components/docs/api-reference/ComponentImports.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+import StyleCase from "@/components/docs/StyleCase.astro";
+import Demo from "@/components/docs/demos/Demo.astro";
+
+{/* React demo */}
+import BasicUsageDemoReact from "@/components/docs/demos/gesture/react/css/BasicUsage";
+import basicUsageReactTsx from "@/components/docs/demos/gesture/react/css/BasicUsage.tsx?raw";
+import basicUsageReactCss from "@/components/docs/demos/gesture/react/css/BasicUsage.css?raw";
+
+{/* HTML demo */}
+import BasicUsageDemoHtml from "@/components/docs/demos/gesture/html/css/BasicUsage.astro";
+import basicUsageHtml from "@/components/docs/demos/gesture/html/css/BasicUsage.html?raw";
+import basicUsageHtmlCss from "@/components/docs/demos/gesture/html/css/BasicUsage.css?raw";
+import basicUsageHtmlTs from "@/components/docs/demos/gesture/html/css/BasicUsage.ts?raw";
+
+## Import
+
+<ComponentImports component="Gesture" html="gesture" />
+
+## Anatomy
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<Gesture type="doubletap" region="right" pointer="touch" action="seekStep" value={10} />
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```html
+<media-gesture
+  type="doubletap"
+  region="right"
+  pointer="touch"
+  action="seekStep"
+  value="10"
+></media-gesture>
+```
+</FrameworkCase>
+
+## Behavior
+
+`Gesture` is a behavior component: it renders no visible interface. Place it inside a <DocsLink slug="reference/player-container">Container</DocsLink> to map a `tap` or `doubletap` gesture to a player action. A tap must use the primary pointer and complete within 250 milliseconds. When a matching double-tap gesture exists, the first tap waits briefly to see whether a second tap follows.
+
+Use `pointer` to accept only `mouse`, `touch`, or `pen` input. Use `region` to divide the container horizontally:
+
+- Left and right regions split the container into halves.
+- Left, center, and right regions split it into thirds.
+- A center-only region covers the full container.
+- A single left or right region covers that half of the container.
+
+An unregional gesture acts as a fallback outside the active regions. When several registrations match the same gesture, the first registration wins.
+
+Choose a built-in `action` from the API reference below, or use an application-defined name to call a same-named action on the player store. Pass `value` as seconds for `seekStep` or as a volume delta such as `0.05` or `-0.05` for `volumeStep`. Unknown action names do nothing and warn in development.
+
+## Accessibility
+
+Gestures supplement visible, keyboard-operable controls; they should never be the only way to perform an action. Gestures ignore pointer activity that begins on interactive controls, links, form fields, menu items, or elements marked with `data-interactive`.
+
+## Examples
+
+### Basic Usage
+
+This example follows the common video-player pattern: click to play or pause, double-click the left or right side to seek ten seconds, and double-click the center to toggle fullscreen.
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
+      { title: "App.css", code: basicUsageReactCss, lang: "css" },
+    ]}>
+      <BasicUsageDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "index.html", code: basicUsageHtml, lang: "html" },
+      { title: "index.css", code: basicUsageHtmlCss, lang: "css" },
+      { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
+    ]}>
+      <BasicUsageDemoHtml />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<ComponentReference component="Gesture" />

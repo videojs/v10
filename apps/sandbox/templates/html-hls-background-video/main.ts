@@ -30,7 +30,7 @@ async function render() {
   document.getElementById('root')!.innerHTML = wrapSandboxHtmlI18n(html`
     <background-video-player>
       <background-video-skin>
-        <hls-background-video src="${SOURCES[source].url ?? ''}"></hls-background-video>
+        <hls-background-video src="${SOURCES[source].url ?? ''}" crossorigin></hls-background-video>
       </background-video-skin>
     </background-video-player>
   `);

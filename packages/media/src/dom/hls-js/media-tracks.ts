@@ -1,5 +1,6 @@
 import type { Constructor } from '@videojs/utils/types';
 import Hls from 'hls.js';
+
 import type {
   MediaAudioTrackCapability,
   MediaVideoRenditionCapability,
@@ -39,13 +40,11 @@ function getAudioTrackKind(audioTrack: HlsJsMediaAudioTrack): string {
 }
 
 /**
- * Mirrors hls.js manifest levels and alternate audio into the media element's
- * `videoRenditions` / `audioTracks` lists, and wires user selection back to
- * `engine.nextLevel` and `engine.audioTrack`.
+ * Mirrors hls.js manifest levels and alternate audio into the media element's `videoRenditions` / `audioTracks` lists,
+ * and wires user selection back to `engine.nextLevel` and `engine.audioTrack`.
  *
- * Requires the media-tracks mixin (track-list infrastructure) to be applied
- * earlier in the chain so the host exposes `addVideoTrack`, `videoRenditions`,
- * and friends.
+ * Requires the media-tracks mixin (track-list infrastructure) to be applied earlier in the chain so the host exposes
+ * `addVideoTrack`, `videoRenditions`, and friends.
  */
 export function HlsJsMediaMediaTracksMixin<Base extends Constructor<MediaTracksHost>>(BaseClass: Base) {
   class HlsJsMediaMediaTracks extends (BaseClass as Constructor<MediaTracksHost>) {
@@ -75,6 +74,7 @@ export function HlsJsMediaMediaTracksMixin<Base extends Constructor<MediaTracksH
       this.#levelIdMap.clear();
 
       const videoTrack = this.addVideoTrack('main');
+
       this.#currentVideoTrack = videoTrack;
       videoTrack.selected = true;
 
@@ -102,6 +102,7 @@ export function HlsJsMediaMediaTracksMixin<Base extends Constructor<MediaTracksH
 
       for (const hlsAudioTrack of data.audioTracks) {
         const audioTrack = this.addAudioTrack(getAudioTrackKind(hlsAudioTrack), hlsAudioTrack.name, hlsAudioTrack.lang);
+
         audioTrack.id = `${hlsAudioTrack.id}`;
       }
     };
@@ -125,6 +126,7 @@ export function HlsJsMediaMediaTracksMixin<Base extends Constructor<MediaTracksH
 
       return hlsAudioTracks.every((hlsAudioTrack, index) => {
         const audioTrack = currentTracks[index];
+
         return (
           audioTrack?.id === `${hlsAudioTrack.id}` &&
           audioTrack.kind === getAudioTrackKind(hlsAudioTrack) &&
@@ -182,6 +184,7 @@ export function HlsJsMediaMediaTracksMixin<Base extends Constructor<MediaTracksH
       if (!engine) return;
 
       const level = this.videoRenditions.selectedIndex;
+
       if (level !== engine.nextLevel) engine.nextLevel = level;
     };
 

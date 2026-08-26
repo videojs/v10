@@ -1,15 +1,15 @@
 import { expect, type Locator, type Page } from '@playwright/test';
+
 import { DATA_ATTRS, SELECTORS } from '../fixtures/selectors';
 
 /**
  * Page Object Model for the Video.js player.
  *
- * Uses cross-renderer selectors that work for both:
- * - HTML (Web Components): custom element tags like `media-play-button`
- * - React: standard elements with CSS classes like `.media-button--play`
+ * Uses cross-renderer selectors that work for both: - HTML (Web Components): custom element tags like
+ * `media-play-button` - React: standard elements with CSS classes like `.media-button--play`
  *
- * Both renderers share the same data attributes for state, so all
- * assertions against `data-paused`, `data-muted`, etc. are portable.
+ * Both renderers share the same data attributes for state, so all assertions against `data-paused`, `data-muted`, etc.
+ * are portable.
  *
  * Playwright auto-pierces Shadow DOM for HTML custom elements.
  */
@@ -177,6 +177,7 @@ export class PlayerPage {
       (selector) => {
         const media = document.querySelector(selector) as HTMLMediaElement | null;
         const actual = (media?.querySelector?.('video') as HTMLMediaElement) ?? media;
+
         return actual && actual.readyState >= 1;
       },
       SELECTORS.media,
@@ -190,6 +191,7 @@ export class PlayerPage {
       await this.page.evaluate((selector) => {
         const media = document.querySelector(selector) as HTMLMediaElement | null;
         const actual = (media?.querySelector?.('video') as HTMLMediaElement) ?? media;
+
         if (actual) actual.muted = true;
       }, SELECTORS.media);
     }
@@ -206,6 +208,7 @@ export class PlayerPage {
     await this.page.evaluate(async (selector) => {
       const media = document.querySelector(selector) as HTMLMediaElement | null;
       const actual = (media?.querySelector?.('video') as HTMLMediaElement) ?? media;
+
       await actual?.play();
     }, SELECTORS.media);
     await expect(this.playButton).not.toHaveAttribute(DATA_ATTRS.paused, { timeout: 5_000 });
@@ -240,6 +243,7 @@ export class PlayerPage {
     return this.page.evaluate((selector) => {
       const media = document.querySelector(selector) as HTMLMediaElement | null;
       const actual = (media?.querySelector?.('video') as HTMLMediaElement) ?? media;
+
       return actual?.playbackRate ?? 1;
     }, SELECTORS.media);
   }
@@ -253,6 +257,7 @@ export class PlayerPage {
       (selector) => {
         const media = document.querySelector(selector) as HTMLMediaElement | null;
         const actual = (media?.querySelector?.('video') as HTMLMediaElement) ?? media;
+
         return actual && actual.readyState >= 1 && actual.duration > 0 && Number.isFinite(actual.duration);
       },
       SELECTORS.media,
@@ -264,6 +269,7 @@ export class PlayerPage {
 
     const x = box.x + box.width * (percent / 100);
     const y = box.y + box.height / 2;
+
     await this.page.mouse.click(x, y);
 
     // Wait for the seek to complete
@@ -277,12 +283,13 @@ export class PlayerPage {
 
     const x = box.x + box.width * (percent / 100);
     const y = box.y + box.height / 2;
+
     await this.page.mouse.move(x, y);
   }
 
   /**
-   * Opens the playback rate menu and selects the first option that differs from the current rate.
-   * Skins expose rate via a menu (not cycle-on-trigger).
+   * Opens the playback rate menu and selects the first option that differs from the current rate. Skins expose rate via
+   * a menu (not cycle-on-trigger).
    */
   async selectAlternativePlaybackRate(): Promise<void> {
     const initialRate = await this.getPlaybackRate();
@@ -298,6 +305,7 @@ export class PlayerPage {
     const option = this.page
       .locator(usesSettingsMenu ? SELECTORS.activeMenuUncheckedOptions : SELECTORS.playbackRateUncheckedOptions)
       .first();
+
     await expect(option).toBeVisible({ timeout: 5_000 });
     // Menu popovers can intercept pointer events on nested radio items.
     await option.dispatchEvent('click');
@@ -308,6 +316,7 @@ export class PlayerPage {
   /** Signal pointer activity to show controls and reset the idle timer. */
   async showControls(): Promise<void> {
     await this.playerRoot.dispatchEvent('pointermove', { pointerType: 'mouse' });
+
     if ((await this.videoPlayer.count()) > 0) {
       await expect(this.controls).toHaveAttribute(DATA_ATTRS.visible, '');
     }

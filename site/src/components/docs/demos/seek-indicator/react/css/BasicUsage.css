@@ -1,0 +1,80 @@
+.react-seek-indicator-basic {
+  position: relative;
+}
+
+.react-seek-indicator-basic:focus-visible {
+  outline: 3px solid #60a5fa;
+  outline-offset: 2px;
+}
+
+.react-seek-indicator-basic video {
+  display: block;
+  width: 100%;
+}
+
+.react-seek-indicator-basic__instructions {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  padding: 6px 10px;
+  margin: 0;
+  color: white;
+  text-align: center;
+  background: rgb(0 0 0 / 70%);
+  border-radius: 4px;
+  translate: -50%;
+}
+
+.react-seek-indicator-basic__indicator {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  min-width: 72px;
+  padding: 16px;
+  color: white;
+  pointer-events: none;
+  background: rgb(0 0 0 / 72%);
+  border-radius: 9999px;
+  place-items: center;
+  transform: translate(-50%, -50%);
+  transition:
+    opacity 160ms ease-in-out,
+    scale 160ms ease-in-out;
+}
+
+.react-seek-indicator-basic__indicator::before {
+  font-size: 24px;
+  line-height: 1;
+  content: "↔";
+}
+
+.react-seek-indicator-basic__indicator[data-direction="backward"] {
+  right: auto;
+  left: 16px;
+  transform: translateY(-50%);
+}
+
+.react-seek-indicator-basic__indicator[data-direction="backward"]::before {
+  content: "↶";
+}
+
+.react-seek-indicator-basic__indicator[data-direction="forward"] {
+  right: 16px;
+  left: auto;
+  transform: translateY(-50%);
+}
+
+.react-seek-indicator-basic__indicator[data-direction="forward"]::before {
+  content: "↷";
+}
+
+.react-seek-indicator-basic__indicator[data-starting-style],
+.react-seek-indicator-basic__indicator[data-ending-style] {
+  opacity: 0;
+  scale: 0.85;
+}
+
+.react-seek-indicator-basic__value {
+  font-variant-numeric: tabular-nums;
+}

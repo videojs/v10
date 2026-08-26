@@ -58,9 +58,8 @@ import {
 /**
  * State shape for the audio-only HLS playback engine.
  *
- * Subset of `HlsVideoEngineState` covering only the slots written and read
- * by audio-side behaviors. Video and text-track slots are absent —
- * subtractive composition removes the behaviors that declare them.
+ * Subset of `HlsVideoEngineState` covering only the slots written and read by audio-side behaviors. Video and
+ * text-track slots are absent — subtractive composition removes the behaviors that declare them.
  */
 export interface HlsAudioEngineState {
   presentation?: MaybeResolvedPresentation;
@@ -70,58 +69,48 @@ export interface HlsAudioEngineState {
   // `establishStartMediaTime`. Remove with the composed reactor.
   mediaContainerData?: Record<string, MediaContainerData>;
   /**
-   * Consumer-driven constraint narrowing the audio candidate set. Sibling
-   * of `userVideoTrackSelection` in the default engine. Partial-track
-   * shape — `{ language: 'es' }`, `{ id: 'audio-en' }`, etc.
-   * `selectAudioTrack` reads this and re-picks when it changes.
-   * Multi-language-audio Tier 2 programmatic-write path.
+   * Consumer-driven constraint narrowing the audio candidate set. Sibling of `userVideoTrackSelection` in the default
+   * engine. Partial-track shape — `{ language: 'es' }`, `{ id: 'audio-en' }`, etc. `selectAudioTrack` reads this and
+   * re-picks when it changes. Multi-language-audio Tier 2 programmatic-write path.
    */
   userAudioTrackSelection?: Partial<AudioTrack>;
   /**
-   * The CDNs the source is served from, in manifest priority order (mirrors
-   * HLS content steering's `PATHWAY-PRIORITY`). Owned by `deriveCdnPriority`,
-   * read by `track-switching`'s `preferActiveCdn` scope. Only meaningful for
+   * The CDNs the source is served from, in manifest priority order (mirrors HLS content steering's `PATHWAY-PRIORITY`).
+   * Owned by `deriveCdnPriority`, read by `track-switching`'s `preferActiveCdn` scope. Only meaningful for
    * redundant-stream sources; a single-CDN source has one entry.
    */
   cdnPriority?: string[];
   /**
-   * CDN ids currently in failover cooldown — read by `track-switching`'s
-   * `excludeFailedCdns` constraint, which prunes their tracks so the active-CDN
-   * scope falls to the next CDN. Empty / absent means all CDNs are eligible.
+   * CDN ids currently in failover cooldown — read by `track-switching`'s `excludeFailedCdns` constraint, which prunes
+   * their tracks so the active-CDN scope falls to the next CDN. Empty / absent means all CDNs are eligible.
    */
   failedCdns?: string[];
   /**
-   * Conditions reported during playback, in order — appended by whichever
-   * behavior detects one, owned and cleared per source by `collectErrors`.
-   * Severity is decided above the engine. Audio-only makes an all-audio-pruned
-   * source unrecoverable: there's no video fallback to fall back to.
+   * Conditions reported during playback, in order — appended by whichever behavior detects one, owned and cleared per
+   * source by `collectErrors`. Severity is decided above the engine. Audio-only makes an all-audio-pruned source
+   * unrecoverable: there's no video fallback to fall back to.
    */
   errors?: SvtaError[];
   currentTime?: number;
   loadActivated?: boolean;
   /**
-   * One-shot command: start the current source at this position
-   * (presentation-timeline seconds). Written by consumers or by
-   * `setupAirPlay`'s session-end snapshot; consumed (cleared) by
-   * `applyStartPosition` once the element seeks. See
+   * One-shot command: start the current source at this position (presentation-timeline seconds). Written by consumers
+   * or by `setupAirPlay`'s session-end snapshot; consumed (cleared) by `applyStartPosition` once the element seeks. See
    * `behaviors/dom/apply-start-position.ts`.
    */
   startPosition?: number;
   /**
-   * Intent-level loading policy: initiate no new loading work while `true`.
-   * Written by `setupAirPlay` (the only behavior declaring the key) while a
-   * remote-playback session owns presentation; observed by `loadAudioSegments`
-   * (parks in `'dormant'`) and by `setupMediaSource` (a pending rebuild
-   * waits). See `SegmentLoadingState['loadingSuspended']`.
+   * Intent-level loading policy: initiate no new loading work while `true`. Written by `setupAirPlay` (the only
+   * behavior declaring the key) while a remote-playback session owns presentation; observed by `loadAudioSegments`
+   * (parks in `'dormant'`) and by `setupMediaSource` (a pending rebuild waits). See
+   * `SegmentLoadingState['loadingSuspended']`.
    */
   loadingSuspended?: boolean;
   /**
-   * Author intent for the AirPlay/remote-playback picker, written by the media
-   * adapter's `disableRemotePlayback` IDL property. `true` is an explicit
-   * opt-out: `setupAirPlay` reads it at attach and sets nothing up, leaving the
-   * element's remote playback disabled. Distinct from the underlying media
-   * element's own `disableRemotePlayback`, which stays programmatically managed
-   * (ManagedMediaSource / AirPlay).
+   * Author intent for the AirPlay/remote-playback picker, written by the media adapter's `disableRemotePlayback` IDL
+   * property. `true` is an explicit opt-out: `setupAirPlay` reads it at attach and sets nothing up, leaving the
+   * element's remote playback disabled. Distinct from the underlying media element's own `disableRemotePlayback`, which
+   * stays programmatically managed (ManagedMediaSource / AirPlay).
    */
   disableRemotePlayback?: boolean;
 }
@@ -129,8 +118,7 @@ export interface HlsAudioEngineState {
 /**
  * Context shape for the audio-only HLS playback engine.
  *
- * Subset of `HlsVideoEngineContext` covering only the platform objects and
- * actor refs managed by audio-side behaviors.
+ * Subset of `HlsVideoEngineContext` covering only the platform objects and actor refs managed by audio-side behaviors.
  */
 export interface HlsAudioEngineContext {
   mediaElement?: HTMLMediaElement | undefined;
@@ -147,25 +135,29 @@ export type HlsAudioEngineSignals = {
 /**
  * Configuration for the audio-only HLS playback engine.
  *
- * Subset of `HlsVideoEngineConfig` — video-quality, bandwidth-estimator,
- * and text-track config fields are omitted (no behavior consumes them).
+ * Subset of `HlsVideoEngineConfig` — video-quality, bandwidth-estimator, and text-track config fields are omitted (no
+ * behavior consumes them).
  */
 export interface HlsAudioEngineConfig extends ShareSignalsConfig<HlsAudioEngineState, HlsAudioEngineContext> {
   preferredAudioLanguage?: string;
   /**
-   * Codec capability probe read by `track-switching`'s `excludeUnplayableTracks`
-   * constraint. Defaults to the `MediaSource.isTypeSupported`-backed
-   * `canPlayTrack`; override to force-exclude a codec. Mirrors the default
-   * engine — without it, capability probing (and TS / raw-AAC detection) would
-   * be inert for audio-only playback.
+   * Codec capability probe read by `track-switching`'s `excludeUnplayableTracks` constraint. Defaults to the
+   * `MediaSource.isTypeSupported`-backed `canPlayTrack`; override to force-exclude a codec. Mirrors the default engine
+   * — without it, capability probing (and TS / raw-AAC detection) would be inert for audio-only playback.
    */
   canPlayTrack?: CanPlayTrack;
   /**
-   * Conditions reported about each rendition as it resolves — the *causes* behind
-   * a later verdict, and the copy a verdict reuses when they agree. Defaults to
-   * {@link reportUnsupportedTrackConditions}, which reports non-fMP4 containers
-   * and encryption; supply your own to report a different set (a provider that
-   * never ships MPEG-TS can drop that check) or `() => []` to report nothing.
+   * Codec families the initial audio pick prefers on a mixed-codec source (`preferCodecFamilies` scope) — the family it
+   * lands in is then sticky for the source's lifetime (`stickToSelectedCodecs`; SPF implements no
+   * `SourceBuffer.changeType()`). Defaults to `DEFAULT_PREFERRED_CODECS` (AAC, plus video 4CCs inert here); pass `[]`
+   * to disable.
+   */
+  preferredCodecs?: string[];
+  /**
+   * Conditions reported about each rendition as it resolves — the _causes_ behind a later verdict, and the copy a
+   * verdict reuses when they agree. Defaults to {@link reportUnsupportedTrackConditions}, which reports non-fMP4
+   * containers and encryption; supply your own to report a different set (a provider that never ships MPEG-TS can drop
+   * that check) or `() => []` to report nothing.
    */
   reportUnsupportedTrackConditions?: ReportUnsupportedTrackConditions;
   resolveDuration?: PresentationDurationResolver;
@@ -175,9 +167,8 @@ export interface HlsAudioEngineConfig extends ShareSignalsConfig<HlsAudioEngineS
   /** Multi-CDN failover monitor tuning. Defaults: `DEFAULT_FAILOVER_MONITOR_CONFIG`. */
   failover?: Partial<FailoverMonitorConfig>;
   /**
-   * Derive a CDN grouping key from a track URL (used by `cdnPriority`, the
-   * failover trip, and the track-switching CDN rules — one function read by all).
-   * Defaults to the URL origin; override to key on e.g. Mux's `cdn=` param.
+   * Derive a CDN grouping key from a track URL (used by `cdnPriority`, the failover trip, and the track-switching CDN
+   * rules — one function read by all). Defaults to the URL origin; override to key on e.g. Mux's `cdn=` param.
    */
   getCdnId?: GetCdnId;
   /** Non-zero-PTS relocation (spike): the reduce seam (tier knob); defaults to per-track own. */
@@ -201,32 +192,28 @@ const shareSignals = makeShareSignals<HlsAudioEngineState, HlsAudioEngineContext
 /**
  * Create an audio-only HLS playback engine.
  *
- * Subtractive composition variant of `createHlsVideoEngine`: omits
- * video-side behaviors (`resolveVideoTrack`, `switchVideoTrack`,
- * `setupVideoBufferActors`, `loadVideoSegments`) and text-track behaviors
- * (`switchTextTrack`, `resolveTextTrack`, `syncTextTracks`,
- * `setupTextTrackActors`, `loadTextTrackSegments`). The remaining audio
- * pipeline composes unchanged.
+ * Subtractive composition variant of `createHlsVideoEngine`: omits video-side behaviors (`resolveVideoTrack`,
+ * `switchVideoTrack`, `setupVideoBufferActors`, `loadVideoSegments`) and text-track behaviors (`switchTextTrack`,
+ * `resolveTextTrack`, `syncTextTracks`, `setupTextTrackActors`, `loadTextTrackSegments`). The remaining audio pipeline
+ * composes unchanged.
  *
- * Handles both truly audio-only HLS sources (no video stream-inf) and
- * mixed-AV HLS sources where the audio rendition is selected and video /
- * subtitle renditions are ignored at composition time. The variant decision
- * is encoded by adapter choice; this engine does not branch on source
- * shape.
+ * Handles both truly audio-only HLS sources (no video stream-inf) and mixed-AV HLS sources where the audio rendition is
+ * selected and video / subtitle renditions are ignored at composition time. The variant decision is encoded by adapter
+ * choice; this engine does not branch on source shape.
  *
  * @example
- * ```ts
- * let signals: HlsAudioEngineSignals;
- * const engine = createHlsAudioEngine({
- *   preferredAudioLanguage: 'en',
- *   onSignalsReady: (refs) => {
- *     signals = refs;
- *   },
- * });
+ *   ```ts
+ *   let signals: HlsAudioEngineSignals;
+ *   const engine = createHlsAudioEngine({
+ *     preferredAudioLanguage: 'en',
+ *     onSignalsReady: (refs) => {
+ *       signals = refs;
+ *     },
+ *   });
  *
- * signals.context.mediaElement.set(audioEl);
- * signals.state.presentation.set({ url: 'https://example.com/stream.m3u8' });
- * ```
+ *   signals.context.mediaElement.set(audioEl);
+ *   signals.state.presentation.set({ url: 'https://example.com/stream.m3u8' });
+ *   ```;
  */
 export function createHlsAudioEngine(
   config: HlsAudioEngineConfig = {}

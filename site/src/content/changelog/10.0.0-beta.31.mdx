@@ -1,0 +1,45 @@
+---
+description: "Adds right-to-left player support, live installation presets, and reference docs for the embed providers and Shaka."
+date: 2026-08-21
+version: "10.0.0-beta.31"
+prerelease: true
+breaking: false
+compareUrl: "https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.30...@videojs/core@10.0.0-beta.31"
+---
+
+Point a player at Arabic or Hebrew and it lays itself out right-to-left, without flipping the parts that shouldn't flip. Around that: live presets reach the installer, and the six embed providers that shipped with no docs at all finally have them.
+
+## Breaking changes
+
+- **Skinless CDN bundles are named `*-player`** ([#1919](https://github.com/videojs/v10/pull/1919)). The published bundle that defines the element without a skin moved from `*-headless` to `*-player`, so `video-headless` is now `video-player`. Update any CDN URL you copied that still points at a `-headless` file. The installation guide generates the new names.
+
+## Right-to-left players
+
+Text direction resolves from the BCP 47 locale and applies at the player and document boundaries ([#2281](https://github.com/videojs/v10/pull/2281)). In HTML, `<media-i18n lang>` sets the provider locale and derives direction from it, and an explicit `dir` overrides that. In React, an explicit `locale` applies the resolved `lang` and `dir` to the container. Providers without an explicit locale inherit ambient document language and direction, so `<html lang="ar" dir="rtl">` is enough on its own.
+
+What stays put matters as much as what mirrors. Playback controls keep their physical left-to-right order, and horizontal time and volume sliders keep a physical scale: Left Arrow decreases the value, Right Arrow increases it, and the minimum stays on the left. Storyboard sprite cropping stays physically left-to-right too, so an RTL thumbnail preview shows the frame you're pointing at rather than its mirror.
+
+Logical layout does mirror. Menus, submenu motion, and navigation chevrons flip across Default and Minimal in both CSS and Tailwind. Popovers resolve `start` and `end` alignment from the trigger's direction. Track labels you author are wrapped in `<bdi dir="auto">`, so a label whose direction disagrees with the player reads correctly instead of scrambling its punctuation. Tailwind direction variants are scoped to each element's computed direction, which keeps an explicit LTR player nested inside an RTL document from inheriting the document's flip. The `lang` and `dir` contract is written up in the i18n guide for [HTML](/docs/framework/html/how-to/internationalize-the-player/) and [React](/docs/framework/react/how-to/internationalize-the-player/).
+
+## Live presets in the installer
+
+The `live-video` and `live-audio` presets existed; now you can pick them ([#1919](https://github.com/videojs/v10/pull/1919)). Both appear in the installation page's picker and as `@videojs/cli` `--preset` options, and the generated snippets default to a working live HLS stream, so what you copy out plays live media rather than a VOD file wearing a live skin.
+
+The combinations are constrained on purpose. Live video accepts HLS and Mux video, live audio accepts Mux audio, and anything else fails validation before code generation instead of emitting a player that can't report live-edge state. DASH stays on-demand only for the same reason: the current integration doesn't expose Video.js live-edge state. Both preset groups get published CDN bundles and ejectable skins for HTML and React. Start from the installation guide for [HTML](/docs/framework/html/how-to/installation/) and [React](/docs/framework/react/how-to/installation/), the skin customization guide for [HTML](/docs/framework/html/how-to/customize-skins/) and [React](/docs/framework/react/how-to/customize-skins/), or the live feature for [HTML](/docs/framework/html/reference/feature-live/) and [React](/docs/framework/react/reference/feature-live/).
+
+## Embed providers get documented
+
+Six third-party providers shipped in both platform packages with no site docs and no place in the installation picker, which made them undiscoverable even though the code was done ([#2293](https://github.com/videojs/v10/pull/2293)). Each now has a reference page with live demos, and URL detection, tag names, component names, import paths, and CLI `--media` flags cover them:
+
+- YouTube for [HTML](/docs/framework/html/reference/youtube-video/) and [React](/docs/framework/react/reference/youtube-video/)
+- Vimeo for [HTML](/docs/framework/html/reference/vimeo-video/) and [React](/docs/framework/react/reference/vimeo-video/)
+- Cloudflare Stream for [HTML](/docs/framework/html/reference/cloudflare-video/) and [React](/docs/framework/react/reference/cloudflare-video/)
+- TikTok for [HTML](/docs/framework/html/reference/tiktok-video/) and [React](/docs/framework/react/reference/tiktok-video/)
+- Twitch for [HTML](/docs/framework/html/reference/twitch-video/) and [React](/docs/framework/react/reference/twitch-video/)
+- Spotify for [HTML](/docs/framework/html/reference/spotify-audio/) and [React](/docs/framework/react/reference/spotify-audio/)
+
+Shaka landed in beta.30 without a page; it has one now, covering `source.drm`, `source.type` for extensionless manifests, and the behaviors that catch people out — `abr.restrictToElementSize` on by default, `preload="none"` deferring load, `preload="metadata"` clamping buffering goals. Read it for [HTML](/docs/framework/html/reference/shaka-video/) and [React](/docs/framework/react/reference/shaka-video/). The prose on every one of these pages is derived from the element's source rather than the provider's marketing docs, so the behavior lists describe what our code does.
+
+Engine options are generated rather than hand-written now. The API reference builder follows a host's `source` type to `engine` and emits a table per engine with each member's type and JSDoc, rendered as a `source.engine.<key>` section inside the generated API Reference block. That reaches all ten media exposing a structured source, not only the new pages: Vimeo gains a table where it had none, and hls.js lists all 134 of its settable options. A wrong cell is fixed on the interface member, not in the MDX. Long types run through the builder's type abbreviation with the full string in the expandable detail row. Two builder fixes came with it and change output elsewhere: React prop defaults were dropped whenever a media kept them in a separate `props.ts` behind a barrel, and `mediaType` came only from the target tag, which documented the iframe-based `SpotifyAudio` against the video event contract. The dead Vimeo demo video that broke the demo, the picker default, the sandbox, and the Plyr migration guide is replaced.
+
+The metadata stack merged across several days last week, and a few cross-references pointed at pieces that hadn't landed when they were written ([#2294](https://github.com/videojs/v10/pull/2294)). The metadata feature's Selector section now sends you to the Title component first and frames `selectMetadata` as the build-your-own path, the Title page names the metadata feature as the owner of its resolved value, and the poster stand-in note links the guide that owns the technique instead of restating it. See the metadata feature for [HTML](/docs/framework/html/reference/feature-metadata/) and [React](/docs/framework/react/reference/feature-metadata/).

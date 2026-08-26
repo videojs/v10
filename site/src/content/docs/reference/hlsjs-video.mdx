@@ -6,6 +6,7 @@ description: HLS video element powered by hls.js for adaptive bitrate streaming
 ---
 
 import MediaReference from "@/components/docs/api-reference/MediaReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 import StyleCase from "@/components/docs/StyleCase.astro";
 import Demo from "@/components/docs/demos/Demo.astro";
@@ -50,4 +51,34 @@ HLS video element powered by [hls.js](https://github.com/video-dev/hls.js/) for 
   </StyleCase>
 </FrameworkCase>
 
-<MediaReference media="HlsJsVideo" />
+<MediaReference media="HlsJsVideo">
+  <Fragment slot="engine-hlsJs">
+    Pass hls.js's own configuration here. It's handed to hls.js untouched, so every option in its [config reference](https://github.com/video-dev/hls.js/blob/master/docs/API.md#fine-tuning) works, spelled the way hls.js spells it. <DocsLink slug="concepts/media-sources">Media Sources</DocsLink> covers how engine options fit into a structured source.
+
+    The names and types below come from hls.js's own type definitions, so they tell you what exists and what shape it takes. hls.js documents what each one does; the descriptions are theirs to write, and most are blank here because its types carry none.
+
+    <FrameworkCase frameworks={["react"]}>
+    ```tsx
+    <HlsJsVideo
+      source={{
+        src: 'https://example.com/playlist.m3u8',
+        engine: { hlsJs: { maxBufferLength: 30, lowLatencyMode: true } },
+      }}
+    />
+    ```
+    </FrameworkCase>
+
+    <FrameworkCase frameworks={["html"]}>
+    ```ts
+    const video = document.querySelector('hlsjs-video');
+    video.source = {
+      src: 'https://example.com/playlist.m3u8',
+      engine: { hlsJs: { maxBufferLength: 30, lowLatencyMode: true } },
+    };
+    ```
+    </FrameworkCase>
+  </Fragment>
+  <Fragment slot="engine-nativeHls">
+    When playback falls back to the browser's own HLS, hls.js isn't involved and its options don't apply. This configures that path instead.
+  </Fragment>
+</MediaReference>

@@ -1,6 +1,6 @@
 import { cleanup, render, renderHook, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { createI18n } from '../../i18n/create-i18n';
 import { createMockStore } from '../../testing/mocks';
@@ -22,6 +22,7 @@ import { useOptionalPopupGroup } from '../popup-group-context';
 afterEach(() => {
   cleanup();
   document.documentElement.removeAttribute('lang');
+  document.documentElement.removeAttribute('dir');
 });
 
 function createWrapper(value: PlayerContextValue) {
@@ -69,6 +70,7 @@ describe('usePlayerContext', () => {
 describe('useMediaAttach', () => {
   it('returns undefined outside a Player', () => {
     const { result } = renderHook(() => useMediaAttach());
+
     expect(result.current).toBeUndefined();
   });
 
@@ -110,6 +112,7 @@ describe('useContainer', () => {
 describe('useContainerAttach', () => {
   it('returns undefined outside a Player', () => {
     const { result } = renderHook(() => useContainerAttach());
+
     expect(result.current).toBeUndefined();
   });
 
@@ -128,6 +131,7 @@ describe('useContainerAttach', () => {
 describe('useOptionalContainer', () => {
   it('returns null outside a Player', () => {
     const { result } = renderHook(() => useOptionalContainer());
+
     expect(result.current).toBeNull();
   });
 
@@ -159,17 +163,20 @@ describe('usePlayer', () => {
 describe('useOptionalPlayer', () => {
   it('returns undefined outside a Player', () => {
     const { result } = renderHook(() => useOptionalPlayer());
+
     expect(result.current).toBeUndefined();
   });
 
   it('returns undefined outside a Player with selector', () => {
     const { result } = renderHook(() => useOptionalPlayer((state: any) => state.paused));
+
     expect(result.current).toBeUndefined();
   });
 
   it('does not run selector outside a Player', () => {
     const selector = vi.fn(() => true);
     const { result } = renderHook(() => useOptionalPlayer(selector));
+
     expect(result.current).toBeUndefined();
     expect(selector).not.toHaveBeenCalled();
   });
@@ -263,6 +270,22 @@ describe('Container', () => {
     expect(container.querySelector('span')).toBeTruthy();
   });
 
+  it.each([
+    { controlsVisible: true, expected: '' },
+    { controlsVisible: false, expected: null },
+  ])('reflects controls visibility on the container', ({ controlsVisible, expected }) => {
+    const store = createMockStore({ controlsVisible, userActive: true });
+    const value = createContextValue({ store: store as any });
+
+    const { container } = render(
+      <PlayerContextProvider value={value}>
+        <Container />
+      </PlayerContextProvider>
+    );
+
+    expect(container.firstElementChild?.getAttribute('data-controls-visible')).toBe(expected);
+  });
+
   it('provides a default accessible name', () => {
     const value = createContextValue();
 
@@ -273,6 +296,7 @@ describe('Container', () => {
     );
 
     const el = container.firstElementChild;
+
     expect(el?.getAttribute('role')).toBe('group');
     expect(el?.getAttribute('aria-label')).toBe('Media player');
   });
@@ -291,6 +315,97 @@ describe('Container', () => {
     expect(container.firstElementChild?.getAttribute('aria-label')).toBe('Lecteur multimédia');
   });
 
+  it('applies the provider locale and direction to the container', () => {
+    const value = createContextValue();
+    const { I18nProvider } = createI18n();
+    const { container } = render(
+      <I18nProvider locale="ar">
+        <PlayerContextProvider value={value}>
+          <Container />
+        </PlayerContextProvider>
+      </I18nProvider>
+    );
+
+    expect(container.firstElementChild?.getAttribute('lang')).toBe('ar');
+    expect(container.firstElementChild?.getAttribute('dir')).toBe('rtl');
+  });
+
+  it('applies an explicit locale through a translations-only provider', () => {
+    const value = createContextValue();
+    const { I18nProvider } = createI18n();
+    const { container } = render(
+      <I18nProvider locale="ar">
+        <I18nProvider translations={{}}>
+          <PlayerContextProvider value={value}>
+            <Container />
+          </PlayerContextProvider>
+        </I18nProvider>
+      </I18nProvider>
+    );
+
+    expect(container.firstElementChild?.getAttribute('lang')).toBe('ar');
+    expect(container.firstElementChild?.getAttribute('dir')).toBe('rtl');
+  });
+
+  it('inherits ambient language and direction without adding attributes', () => {
+    document.documentElement.lang = 'ar';
+    document.documentElement.dir = 'ltr';
+    const value = createContextValue();
+    const { I18nProvider } = createI18n();
+    const { container } = render(
+      <I18nProvider>
+        <PlayerContextProvider value={value}>
+          <Container />
+        </PlayerContextProvider>
+      </I18nProvider>
+    );
+
+    expect(container.firstElementChild?.hasAttribute('lang')).toBe(false);
+    expect(container.firstElementChild?.hasAttribute('dir')).toBe(false);
+  });
+
+  it('derives direction from an explicit container language', () => {
+    const value = createContextValue();
+    const { I18nProvider } = createI18n();
+    const { container } = render(
+      <I18nProvider locale="ar">
+        <PlayerContextProvider value={value}>
+          <Container lang="en" />
+        </PlayerContextProvider>
+      </I18nProvider>
+    );
+
+    expect(container.firstElementChild?.getAttribute('lang')).toBe('en');
+    expect(container.firstElementChild?.getAttribute('dir')).toBe('ltr');
+  });
+
+  it('preserves explicit container language and direction', () => {
+    const value = createContextValue();
+    const { I18nProvider } = createI18n();
+    const { container } = render(
+      <I18nProvider locale="ar">
+        <PlayerContextProvider value={value}>
+          <Container lang="en" dir="ltr" />
+        </PlayerContextProvider>
+      </I18nProvider>
+    );
+
+    expect(container.firstElementChild?.getAttribute('lang')).toBe('en');
+    expect(container.firstElementChild?.getAttribute('dir')).toBe('ltr');
+  });
+
+  it('does not add language attributes without a provider', () => {
+    const value = createContextValue();
+    const { container } = render(
+      <PlayerContextProvider value={value}>
+        <Container />
+      </PlayerContextProvider>
+    );
+
+    expect(container.firstElementChild?.hasAttribute('lang')).toBe(false);
+    expect(container.firstElementChild?.hasAttribute('dir')).toBe(false);
+  });
+
   it('preserves explicit accessible naming', () => {
     const value = createContextValue();
 
@@ -301,6 +416,7 @@ describe('Container', () => {
     );
 
     const el = container.firstElementChild;
+
     expect(el?.getAttribute('role')).toBe('region');
     expect(el?.getAttribute('aria-label')).toBe('Video player');
   });
@@ -315,6 +431,7 @@ describe('Container', () => {
     );
 
     const el = container.firstElementChild;
+
     expect(el?.getAttribute('aria-labelledby')).toBe('player-title');
     expect(el?.hasAttribute('aria-label')).toBe(false);
   });
@@ -369,6 +486,7 @@ describe('Container', () => {
 
     function Label() {
       const t = useTranslator();
+
       return <span>{t('Play')}</span>;
     }
 
@@ -396,6 +514,7 @@ describe('Container', () => {
 
     function Label() {
       const t = useTranslator();
+
       return <span>{t('Play')}</span>;
     }
 

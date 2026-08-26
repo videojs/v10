@@ -1,4 +1,5 @@
 import { isFunction } from '@videojs/utils/predicate';
+
 import type { AudioRendition } from './audio-rendition';
 import type { AudioTrack } from './audio-track';
 import { RenditionEvent } from './rendition-event';
@@ -11,6 +12,7 @@ export function addRendition(track: AudioTrack, rendition: AudioRendition) {
   getPrivate(rendition).track = track;
 
   const renditionSet = getPrivate(track).renditionSet as Set<AudioRendition>;
+
   renditionSet.add(rendition);
   const index = renditionSet.size - 1;
 
@@ -33,6 +35,7 @@ export function removeRendition(rendition: AudioRendition) {
   const renditionList = getPrivate(rendition).media?.deref()?.audioRenditions as AudioRenditionList | undefined;
   const track = getPrivate(rendition).track as AudioTrack;
   const renditionSet = getPrivate(track).renditionSet as Set<AudioRendition>;
+
   renditionSet.delete(rendition);
 
   queueMicrotask(() => {
@@ -44,9 +47,9 @@ export function removeRendition(rendition: AudioRendition) {
 
 export function selectedChanged(rendition: AudioRendition) {
   const renditionList = getPrivate(rendition).media?.deref()?.audioRenditions as AudioRenditionList | undefined;
-
   // Prevent firing a rendition list `change` event multiple times per tick.
   if (!renditionList || getPrivate(renditionList).changeRequested) return;
+
   getPrivate(renditionList).changeRequested = true;
 
   queueMicrotask(() => {
@@ -62,6 +65,7 @@ export function selectedChanged(rendition: AudioRendition) {
 function getCurrentRenditions(renditionList: AudioRenditionList): AudioRendition[] {
   const media = getPrivate(renditionList).media?.deref() as HTMLMediaElement | undefined;
   if (!media) return [];
+
   return [...media.audioTracks]
     .filter((track) => track.enabled)
     .flatMap((track) => [...(getPrivate(track).renditionSet as Set<AudioRendition>)]);
@@ -104,6 +108,7 @@ export class AudioRenditionList extends EventTarget {
       this.removeEventListener('addrendition', this.#addRenditionCallback);
       this.#addRenditionCallback = undefined;
     }
+
     if (isFunction(callback)) {
       this.#addRenditionCallback = callback;
       this.addEventListener('addrendition', callback as unknown as EventListener);
@@ -119,6 +124,7 @@ export class AudioRenditionList extends EventTarget {
       this.removeEventListener('removerendition', this.#removeRenditionCallback);
       this.#removeRenditionCallback = undefined;
     }
+
     if (isFunction(callback)) {
       this.#removeRenditionCallback = callback;
       this.addEventListener('removerendition', callback as unknown as EventListener);
@@ -134,6 +140,7 @@ export class AudioRenditionList extends EventTarget {
       this.removeEventListener('change', this.#changeCallback);
       this.#changeCallback = undefined;
     }
+
     if (isFunction(callback)) {
       this.#changeCallback = callback;
       this.addEventListener('change', callback);

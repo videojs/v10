@@ -1,5 +1,5 @@
 import { cleanup, render } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
 /** SVTA 2011 — no video track this environment can play. */
 const NO_SUPPORTED_VIDEO_TRACK = 2011;
@@ -7,14 +7,14 @@ const NO_SUPPORTED_VIDEO_TRACK = 2011;
 const MANIFEST_FEATURE_UNSUPPORTED = 2039;
 
 /**
- * The component owns its Media and hands out no reference to it, so the engine
- * is reached by tracking what it constructs. Everything else about the entry is
- * the real thing.
+ * The component owns its Media and hands out no reference to it, so the engine is reached by tracking what it
+ * constructs. Everything else about the entry is the real thing.
  */
 const instances: { engine: { state: { errors: { set(value: unknown): void } } } }[] = vi.hoisted(() => []);
 
 vi.mock('@videojs/spf/hls-background-video', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@videojs/spf/hls-background-video')>();
+
   return {
     ...actual,
     HlsBackgroundVideoMedia: class extends actual.HlsBackgroundVideoMedia {
@@ -67,6 +67,7 @@ describe('HlsBackgroundVideo', () => {
 
     it('stays quiet for a condition the Media does not treat as fatal', async () => {
       const onError = vi.fn();
+
       render(<HlsBackgroundVideo src="https://example.com/v.m3u8" onError={onError} />);
 
       // A degraded-but-playable notice must not reach the surface.

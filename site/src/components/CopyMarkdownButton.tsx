@@ -1,6 +1,7 @@
 import clsx from 'clsx';
 import { CheckIcon } from 'lucide-react';
 import { useState } from 'react';
+
 import useIsHydrated from '@/utils/useIsHydrated';
 
 export interface CopyMarkdownButtonProps {
@@ -46,6 +47,7 @@ export default function CopyMarkdownButton({ className, style }: CopyMarkdownBut
               if (!response.ok) {
                 throw new Error(`Failed to fetch markdown: ${response.status} ${response.statusText}`);
               }
+
               return response.text();
             })
             .then((text) => new Blob([text], { type: 'text/plain' }));
@@ -55,6 +57,7 @@ export default function CopyMarkdownButton({ className, style }: CopyMarkdownBut
         // Fallback for very old browsers (pre-2024)
         const blob = await markdownBlobPromise;
         const text = await blob.text();
+
         await navigator.clipboard.writeText(text);
       } else {
         // Safari requires passing async operation TO clipboard API
@@ -62,6 +65,7 @@ export default function CopyMarkdownButton({ className, style }: CopyMarkdownBut
         const clipboardItem = new ClipboardItem({
           'text/plain': markdownBlobPromise,
         });
+
         await navigator.clipboard.write([clipboardItem]);
       }
 
@@ -72,6 +76,7 @@ export default function CopyMarkdownButton({ className, style }: CopyMarkdownBut
     } catch (err) {
       console.error('Failed to copy markdown:', err);
       const message = err instanceof Error ? err.message : 'Failed to copy markdown';
+
       setState({ status: 'error', message });
       setTimeout(() => {
         setState({ status: 'idle' });
@@ -112,7 +117,7 @@ export default function CopyMarkdownButton({ className, style }: CopyMarkdownBut
             'absolute inset-0 inline-flex items-center justify-center'
           )}
         >
-          Copied <CheckIcon className="ml-1 w-4 h-4" />
+          Copied <CheckIcon className="ml-1 h-4 w-4" />
         </span>
         <span
           className={clsx(

@@ -1,5 +1,6 @@
-import { describe, expect, it, vi } from 'vitest';
-import { StatusAnnouncerCore } from '../../../core/ui/status-announcer/status-announcer-core';
+import { describe, expect, it, vi } from 'vite-plus/test';
+
+import { StatusAnnouncerCore } from '../../../core/ui/status-announcer/core';
 import { type StatusAnnouncerStore, subscribeToStatusAnnouncer } from '../status-announcer';
 
 describe('subscribeToStatusAnnouncer', () => {
@@ -28,8 +29,10 @@ describe('subscribeToStatusAnnouncer', () => {
   it('resets the snapshot baseline when the target changes', async () => {
     const core = new StatusAnnouncerCore();
     const { attach, setState, store } = createStore({ paused: true });
+
     attach({});
     const unsubscribe = subscribeToStatusAnnouncer(store, core);
+
     await Promise.resolve();
 
     setState({ paused: false });
@@ -65,6 +68,7 @@ function createStore(initialState: Record<string, unknown>) {
 
   const setState = (partial: Record<string, unknown>) => {
     state = { ...state, ...partial };
+
     for (const listener of listeners) listener();
   };
 

@@ -3,6 +3,7 @@ import debounce from 'just-debounce-it';
 import throttle from 'just-throttle';
 import type { RefObject } from 'react';
 import { useEffect, useState } from 'react';
+
 import { API_REFERENCE_SUBSECTION_TITLES } from '@/utils/componentReferenceModel';
 
 export interface RailGeometry {
@@ -10,11 +11,9 @@ export interface RailGeometry {
   gap: number;
 }
 
-/**
- * Keep the full heading map visible by reducing gaps first, then stripe height.
- */
+/** Keep the full heading map visible by reducing gaps first, then stripe height. */
 export function calculateRailGeometry(headingCount: number, availableHeight: number): RailGeometry {
-  const stripeHeight = 2;
+  const stripeHeight = 1;
   const gap = 4;
 
   if (headingCount <= 1) {
@@ -22,14 +21,10 @@ export function calculateRailGeometry(headingCount: number, availableHeight: num
   }
 
   const desiredHeight = headingCount * stripeHeight + (headingCount - 1) * gap;
-  if (desiredHeight <= availableHeight) {
-    return { stripeHeight, gap };
-  }
+  if (desiredHeight <= availableHeight) return { stripeHeight, gap };
 
   const compressedGap = (availableHeight - headingCount * stripeHeight) / (headingCount - 1);
-  if (compressedGap >= 0) {
-    return { stripeHeight, gap: compressedGap };
-  }
+  if (compressedGap >= 0) return { stripeHeight, gap: compressedGap };
 
   return {
     stripeHeight: Math.max(0, availableHeight / headingCount),
@@ -37,9 +32,7 @@ export function calculateRailGeometry(headingCount: number, availableHeight: num
   };
 }
 
-/**
- * Find the first scrollable ancestor of an element
- */
+/** Find the first scrollable ancestor of an element */
 export function getScrollParent(element: HTMLElement): HTMLElement {
   let current: HTMLElement | null = element;
 
@@ -53,14 +46,14 @@ export function getScrollParent(element: HTMLElement): HTMLElement {
         return current;
       }
     }
+
     current = current.parentElement;
   }
+
   return document.body;
 }
 
-/**
- * Check if an element is outside the visible bounds of its scroll container
- */
+/** Check if an element is outside the visible bounds of its scroll container */
 export function isElementOffscreen(element: HTMLElement, container: HTMLElement): boolean {
   const containerRect = container.getBoundingClientRect();
   const elementRect = element.getBoundingClientRect();
@@ -71,9 +64,7 @@ export function isElementOffscreen(element: HTMLElement, container: HTMLElement)
   return isAboveView || isBelowView;
 }
 
-/**
- * Include headings for docs TOC, including API-reference subsection H4s only.
- */
+/** Include headings for docs TOC, including API-reference subsection H4s only. */
 export function filterHeadingsForToc(headings: MarkdownHeading[]): MarkdownHeading[] {
   const apiReferenceSubsectionTitles = new Set(API_REFERENCE_SUBSECTION_TITLES);
   const isTocHeadingDepth = (depth: number): boolean => depth === 2 || depth === 3;
@@ -96,11 +87,10 @@ export function filterHeadingsForToc(headings: MarkdownHeading[]): MarkdownHeadi
   });
 }
 
-/**
- * Navigate to a heading by scrolling it into view and updating the URL
- */
+/** Navigate to a heading by scrolling it into view and updating the URL */
 export function navigateToHeading(slug: string): void {
   const element = document.getElementById(slug);
+
   if (element) {
     element.scrollIntoView({ behavior: 'smooth' });
     window.history.pushState({}, '', `#${slug}`);
@@ -112,9 +102,7 @@ interface UseAutoScrollOptions {
   containerRef: RefObject<HTMLElement | null>;
 }
 
-/**
- * Auto-scrolls the active link into view when it becomes active and is offscreen
- */
+/** Auto-scrolls the active link into view when it becomes active and is offscreen */
 export function useAutoScroll({ activeId, containerRef }: UseAutoScrollOptions) {
   useEffect(() => {
     if (!activeId || !containerRef.current) return;
@@ -134,9 +122,7 @@ export function useAutoScroll({ activeId, containerRef }: UseAutoScrollOptions) 
   }, [activeId, containerRef]);
 }
 
-/**
- * Tracks which heading is currently active based on scroll position
- */
+/** Tracks which heading is currently active based on scroll position */
 export function useActiveHeading(headings: MarkdownHeading[]): string {
   const [activeId, setActiveId] = useState<string>('');
 
@@ -146,23 +132,30 @@ export function useActiveHeading(headings: MarkdownHeading[]): string {
       // let's get the value of that, here
       let scrollOffset = 125; // idk, a sensible default
       const idElement = document.querySelector('main [id]');
+
       if (idElement) {
         const computedStyle = getComputedStyle(idElement);
         const scrollMarginTop = computedStyle.scrollMarginTop;
+
         if (scrollMarginTop) {
           const parsed = Number.parseFloat(scrollMarginTop);
+
           if (!Number.isNaN(parsed)) scrollOffset = parsed;
         }
       }
+
       scrollOffset = scrollOffset + 1;
       const scrollPosition = window.scrollY + scrollOffset;
 
       // Find the last heading that's above the scroll position
       let currentActiveId = '';
+
       for (const heading of headings) {
         const element = document.getElementById(heading.slug);
+
         if (element) {
           const elementTop = element.offsetTop;
+
           if (elementTop <= scrollPosition) {
             currentActiveId = heading.slug;
           } else {

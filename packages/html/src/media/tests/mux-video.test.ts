@@ -1,10 +1,12 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vite-plus/test';
+
 import { MuxVideo } from '../mux-video';
 
 customElements.define('test-mux-video', MuxVideo);
 
 function createMuxVideo() {
   const el = new MuxVideo();
+
   document.body.appendChild(el);
   return el;
 }
@@ -111,6 +113,7 @@ describe('MuxVideo', () => {
     el.source = { playbackId: 'abc123', customDomain: 'example.com', playback: { maxResolution: '1080p' } };
 
     const url = new URL(el.host.src);
+
     expect(url.host).toBe('stream.example.com');
     expect(url.searchParams.get('max_resolution')).toBe('1080p');
   });
@@ -121,6 +124,7 @@ describe('MuxVideo', () => {
     el.setAttribute('src', 'https://stream.mux.com/abc123.m3u8');
 
     const track = el.querySelector('track');
+
     expect(track?.kind).toBe('metadata');
     expect(track?.getAttribute('src')).toBe('https://image.mux.com/abc123/storyboard.vtt?format=webp');
   });
@@ -179,6 +183,7 @@ describe('MuxVideo', () => {
     el.setAttribute('src', 'https://stream.mux.com/xyz789.m3u8');
 
     const tracks = el.querySelectorAll('track');
+
     expect(tracks.length).toBe(1);
     expect(tracks[0]?.getAttribute('src')).toBe('https://image.mux.com/xyz789/storyboard.vtt?format=webp');
   });

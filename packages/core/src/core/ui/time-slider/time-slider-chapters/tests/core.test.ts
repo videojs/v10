@@ -1,7 +1,7 @@
 import type { MediaTextCue } from '@videojs/media';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
-import { SliderSegmentsCore } from '../../../slider/slider-segments-core';
+import { SliderSegmentsCore } from '../../../slider/segments-core';
 import { normalizeChapterCues, TimeSliderChaptersCore } from '../core';
 
 function cue(startTime: number, endTime: number, text: string, id = ''): MediaTextCue {

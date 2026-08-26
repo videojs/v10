@@ -11,6 +11,7 @@ export function useLangRootElement(
 
   useLayoutEffect(() => {
     if (!langRootRef) return;
+
     return parentAddLocaleRoot?.();
   }, [langRootRef, parentAddLocaleRoot]);
 
@@ -20,11 +21,13 @@ export function useLangRootElement(
         langRootElementRef.current = null;
         invalidateLangRoot();
       }
+
       return;
     }
 
     const node = langRootRef.current;
     if (node === langRootElementRef.current) return;
+
     langRootElementRef.current = node;
     invalidateLangRoot();
   });

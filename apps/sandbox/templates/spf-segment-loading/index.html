@@ -6,21 +6,87 @@
     <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
     <title>Sandbox — SPF Segment Loading POC</title>
     <style>
+      /* The page inherits `color-scheme: light dark` from `@app/styles.css`, so every color
+         resolves through a token that has both a light and a dark value. */
+      :root {
+        --bg: #fff;
+        --fg: #111;
+        --fg-muted: #555;
+        --fg-faint: #888;
+        --panel-bg: #f5f5f5;
+        --panel-border: #ddd;
+        --surface-bg: #fff;
+        --surface-border: #ccc;
+        --control-bg: #f0f0f0;
+        --control-bg-hover: #e0e0e0;
+        --control-border: #999;
+        --control-border-strong: #333;
+        --divider: #eee;
+        --accent: #0070f3;
+        --accent-bg: #e6f0ff;
+        --accent-bg-hover: #cce0ff;
+        --pinned: #d97706;
+        --pinned-bg: #fef3c7;
+        --pinned-bg-hover: #fde68a;
+        --ok: #16a34a;
+        --danger: #dc2626;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #16181d;
+          --fg: #e6e6e6;
+          --fg-muted: #9aa0a6;
+          --fg-faint: #6b7280;
+          --panel-bg: #1e2127;
+          --panel-border: #343943;
+          --surface-bg: #12141a;
+          --surface-border: #3a4049;
+          --control-bg: #272b33;
+          --control-bg-hover: #333844;
+          --control-border: #4b515c;
+          --control-border-strong: #6b7280;
+          --divider: #2a2e36;
+          --accent: #60a5fa;
+          --accent-bg: #17263b;
+          --accent-bg-hover: #1f3a5f;
+          --pinned: #fbbf24;
+          --pinned-bg: #3a2c10;
+          --pinned-bg-hover: #4a370f;
+          --ok: #4ade80;
+          --danger: #f87171;
+        }
+      }
+
       body {
         max-width: 1200px;
         padding: 20px;
         margin: 0 auto;
         font-family: monospace;
+        color: var(--fg);
+        background: var(--bg);
       }
-      h1 { margin-bottom: 6px; }
-      p { margin: 0 0 12px; }
+      h1 {
+        margin-bottom: 6px;
+      }
+      p {
+        margin: 0 0 12px;
+      }
 
+      /* Drag the bottom-right corner to exercise the player-size cap. */
+      #video-frame {
+        width: 640px;
+        max-width: 100%;
+        height: 360px;
+        margin: 12px 0 4px;
+        overflow: hidden;
+        resize: both;
+        border: 2px solid var(--control-border-strong);
+      }
       video {
         display: block;
         width: 100%;
-        max-width: 640px;
-        margin: 12px 0 4px;
-        border: 2px solid #333;
+        height: 100%;
       }
 
       /* ── Src controls ── */
@@ -36,7 +102,9 @@
         padding: 6px 10px;
         font-family: monospace;
         font-size: 12px;
-        border: 1px solid #999;
+        color: var(--fg);
+        background: var(--surface-bg);
+        border: 1px solid var(--control-border);
         border-radius: 4px;
       }
       #src-input-row {
@@ -49,7 +117,9 @@
         padding: 6px 10px;
         font-family: monospace;
         font-size: 12px;
-        border: 1px solid #999;
+        color: var(--fg);
+        background: var(--surface-bg);
+        border: 1px solid var(--control-border);
         border-radius: 4px;
       }
 
@@ -62,12 +132,19 @@
         margin-bottom: 10px;
         font-size: 12px;
       }
-      #playback-config label { display: flex; gap: 4px; align-items: center; cursor: pointer; }
+      #playback-config label {
+        display: flex;
+        gap: 4px;
+        align-items: center;
+        cursor: pointer;
+      }
       #playback-config select {
         padding: 2px 6px;
         font-family: monospace;
         font-size: 12px;
-        border: 1px solid #999;
+        color: var(--fg);
+        background: var(--surface-bg);
+        border: 1px solid var(--control-border);
         border-radius: 4px;
       }
 
@@ -84,49 +161,72 @@
         max-width: 520px;
         overflow: hidden;
         text-overflow: ellipsis;
-        color: #0070f3;
+        color: var(--accent);
         white-space: nowrap;
         text-decoration: none;
       }
-      #share-link:hover { text-decoration: underline; }
+      #share-link:hover {
+        text-decoration: underline;
+      }
 
       /* ── Main controls ── */
-      #controls { margin-bottom: 10px; }
+      #controls {
+        margin-bottom: 10px;
+      }
       button {
         padding: 8px 16px;
         margin-right: 8px;
         font-family: monospace;
         font-size: 12px;
+        color: var(--fg);
         cursor: pointer;
-        background: #f0f0f0;
-        border: 1px solid #333;
+        background: var(--control-bg);
+        border: 1px solid var(--control-border-strong);
         border-radius: 4px;
       }
-      button:hover { background: #e0e0e0; }
+      button:hover {
+        background: var(--control-bg-hover);
+      }
 
       /* ── Video info strip ── */
       #now-playing-quality {
         margin-bottom: 2px;
         font-family: monospace;
         font-size: 12px;
-        color: #555;
+        color: var(--fg-muted);
       }
-      #now-playing-quality.has-quality { font-weight: bold; color: #0070f3; }
+      #now-playing-quality.has-quality {
+        font-weight: bold;
+        color: var(--accent);
+      }
+      #player-size-display {
+        margin-bottom: 2px;
+        font-family: monospace;
+        font-size: 12px;
+        color: var(--fg-muted);
+      }
       #throughput-display {
         margin-bottom: 12px;
         font-family: monospace;
         font-size: 12px;
-        color: #555;
+        color: var(--fg-muted);
       }
-      #throughput-display.has-data { color: #16a34a; }
-      #throughput-display.warming { color: #d97706; }
+      #throughput-display.has-data {
+        color: var(--ok);
+      }
+      #throughput-display.warming {
+        color: var(--pinned);
+      }
       #live-status {
         margin-bottom: 12px;
         font-family: monospace;
         font-size: 12px;
-        color: #555;
+        color: var(--fg-muted);
       }
-      #live-status.is-live { font-weight: bold; color: #dc2626; }
+      #live-status.is-live {
+        font-weight: bold;
+        color: var(--danger);
+      }
 
       /* ── Rendition / resolution / audio panels ── */
       #rendition-picker,
@@ -135,92 +235,213 @@
         padding: 12px 15px;
         margin: 16px 0;
         font-size: 12px;
-        background: #f5f5f5;
-        border: 1px solid #ddd;
+        background: var(--panel-bg);
+        border: 1px solid var(--panel-border);
         border-radius: 4px;
       }
-      #rendition-picker h2, #audio-track-picker h2, #text-track-picker h2, #resolution-status h2 { margin-top: 0; font-size: 14px; }
+      #rendition-picker h2,
+      #audio-track-picker h2,
+      #text-track-picker h2,
+      #resolution-status h2 {
+        margin-top: 0;
+        font-size: 14px;
+      }
 
-      #audio-track-buttons, #text-track-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+      #audio-track-buttons,
+      #text-track-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
       .audio-track-btn {
         padding: 6px 12px;
         font-family: monospace;
         font-size: 11px;
+        color: var(--fg);
         cursor: pointer;
-        background: #fff;
-        border: 2px solid #999;
+        background: var(--surface-bg);
+        border: 2px solid var(--control-border);
         border-radius: 4px;
       }
-      .audio-track-btn:hover { background: #eee; border-color: #555; }
-      .audio-track-btn.selected-default { font-weight: bold; background: #e6f0ff; border-color: #0070f3; }
-      .audio-track-btn.selected-pinned  { font-weight: bold; background: #fef3c7; border-color: #d97706; }
-
-      .audio-status { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
-      .mode-default { font-weight: bold; color: #0070f3; }
-      .mode-pinned  { font-weight: bold; color: #d97706; }
-      .clear-filter-btn {
-        padding: 4px 10px; font-size: 11px; color: #d97706; cursor: pointer; background: #fef3c7;
-        border: 1px solid #d97706; border-radius: 4px;
+      .audio-track-btn:hover {
+        background: var(--control-bg-hover);
+        border-color: var(--control-border-strong);
       }
-      .clear-filter-btn:hover { background: #fde68a; }
+      .audio-track-btn.selected-default {
+        font-weight: bold;
+        color: var(--accent);
+        background: var(--accent-bg);
+        border-color: var(--accent);
+      }
+      .audio-track-btn.selected-pinned {
+        font-weight: bold;
+        color: var(--pinned);
+        background: var(--pinned-bg);
+        border-color: var(--pinned);
+      }
 
-      #rendition-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+      .audio-status {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+      .mode-default {
+        font-weight: bold;
+        color: var(--accent);
+      }
+      .mode-pinned {
+        font-weight: bold;
+        color: var(--pinned);
+      }
+      .clear-filter-btn {
+        padding: 4px 10px;
+        font-size: 11px;
+        color: var(--pinned);
+        cursor: pointer;
+        background: var(--pinned-bg);
+        border: 1px solid var(--pinned);
+        border-radius: 4px;
+      }
+      .clear-filter-btn:hover {
+        background: var(--pinned-bg-hover);
+      }
+
+      #rendition-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
       .rendition-btn {
         padding: 6px 12px;
         font-family: monospace;
         font-size: 11px;
+        color: var(--fg);
         cursor: pointer;
-        background: #fff;
-        border: 2px solid #999;
+        background: var(--surface-bg);
+        border: 2px solid var(--control-border);
         border-radius: 4px;
       }
-      .rendition-btn:hover { background: #eee; border-color: #555; }
-      .rendition-btn.selected-abr  { font-weight: bold; background: #e6f0ff; border-color: #0070f3; }
-      .rendition-btn.selected-manual { font-weight: bold; background: #fef3c7; border-color: #d97706; }
+      .rendition-btn:hover {
+        background: var(--control-bg-hover);
+        border-color: var(--control-border-strong);
+      }
+      .rendition-btn.selected-abr {
+        font-weight: bold;
+        color: var(--accent);
+        background: var(--accent-bg);
+        border-color: var(--accent);
+      }
+      .rendition-btn.selected-manual {
+        font-weight: bold;
+        color: var(--pinned);
+        background: var(--pinned-bg);
+        border-color: var(--pinned);
+      }
 
-      .abr-status { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
-      .mode-abr    { font-weight: bold; color: #0070f3; }
-      .mode-manual { font-weight: bold; color: #d97706; }
+      .abr-status {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+      .mode-abr {
+        font-weight: bold;
+        color: var(--accent);
+      }
+      .mode-manual {
+        font-weight: bold;
+        color: var(--pinned);
+      }
       .enable-abr-btn {
-        padding: 4px 10px; font-size: 11px; color: #0070f3; cursor: pointer;background: #e6f0ff; 
-        border: 1px solid #0070f3; border-radius: 4px;
+        padding: 4px 10px;
+        font-size: 11px;
+        color: var(--accent);
+        cursor: pointer;
+        background: var(--accent-bg);
+        border: 1px solid var(--accent);
+        border-radius: 4px;
       }
-      .enable-abr-btn:hover { background: #cce0ff; }
+      .enable-abr-btn:hover {
+        background: var(--accent-bg-hover);
+      }
 
-      #resolution-list { display: flex; flex-wrap: wrap; gap: 8px; }
-      .resolution-item {
-        padding: 4px 10px; 
-        font-family: monospace; font-size: 11px;border: 1px solid #ccc; border-radius: 4px;
+      #resolution-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
       }
-      .resolution-item.resolved   { color: green; border-color: green; }
-      .resolution-item.unresolved { color: #888; border-color: #aaa; }
+      .resolution-item {
+        padding: 4px 10px;
+        font-family: monospace;
+        font-size: 11px;
+        border: 1px solid var(--surface-border);
+        border-radius: 4px;
+      }
+      .resolution-item.resolved {
+        color: var(--ok);
+        border-color: var(--ok);
+      }
+      .resolution-item.unresolved {
+        color: var(--fg-faint);
+        border-color: var(--control-border);
+      }
 
       /* ── Logs ── */
-      #logs-section { margin: 16px 0; }
-      #logs-section h2 { margin-bottom: 6px; font-size: 14px; }
-      #logs {
-        max-height: 400px; padding: 10px; overflow-y: auto; font-size: 12px;
-        background: #f5f5f5; border: 1px solid #ddd; border-radius: 4px;
+      #logs-section {
+        margin: 16px 0;
       }
-      #logs div { padding: 2px 0; border-bottom: 1px solid #eee; }
+      #logs-section h2 {
+        margin-bottom: 6px;
+        font-size: 14px;
+      }
+      #logs {
+        max-height: 400px;
+        padding: 10px;
+        overflow-y: auto;
+        font-size: 12px;
+        background: var(--panel-bg);
+        border: 1px solid var(--panel-border);
+        border-radius: 4px;
+      }
+      #logs div {
+        padding: 2px 0;
+        border-bottom: 1px solid var(--divider);
+      }
 
       /* ── State inspector ── */
       #state {
-        padding: 15px; margin: 16px 0;font-size: 12px;
-        background: #f5f5f5; 
-        border: 1px solid #ddd; border-radius: 4px;
+        padding: 15px;
+        margin: 16px 0;
+        font-size: 12px;
+        background: var(--panel-bg);
+        border: 1px solid var(--panel-border);
+        border-radius: 4px;
       }
-      #state h2 { margin-top: 0; font-size: 14px; }
+      #state h2 {
+        margin-top: 0;
+        font-size: 14px;
+      }
       #state pre {
-        padding: 10px; 
-        margin: 10px 0; overflow-x: auto;background: #fff;
-        border: 1px solid #ddd; border-radius: 4px;
+        padding: 10px;
+        margin: 10px 0;
+        overflow-x: auto;
+        background: var(--surface-bg);
+        border: 1px solid var(--panel-border);
+        border-radius: 4px;
       }
 
       /* ── Log colours ── */
-      .error   { font-weight: bold; color: red; }
-      .success { color: green; }
-      .warning { color: orange; }
+      .error {
+        font-weight: bold;
+        color: var(--danger);
+      }
+      .success {
+        color: var(--ok);
+      }
+      .warning {
+        color: var(--pinned);
+      }
     </style>
   </head>
   <body>
@@ -249,11 +470,6 @@
           <option value="auto">auto</option>
         </select>
       </label>
-      <label
-        title="Filter out HEVC renditions so ABR stays within one codec family, avoiding SourceBuffer.changeType() (not yet implemented). Needed for mixed-codec sources like the Apple bipbop example."
-      >
-        <input type="checkbox" id="avc-only-toggle" /> AVC-only (avoid changeType)
-      </label>
     </div>
 
     <div id="share-url-section">
@@ -264,15 +480,26 @@
     <div id="controls">
       <button type="button" id="play">Play</button>
       <button type="button" id="pause">Pause</button>
-      <button type="button" id="seek-to-edge" title="Seek to the live edge (window end − HOLD-BACK)">Seek to Live Edge</button>
-      <button type="button" id="seek-behind-window" title="Seek 30s behind the window start — exercises the window-exit rescue">Seek Out of Window</button>
+      <button type="button" id="seek-to-edge" title="Seek to the live edge (window end − HOLD-BACK)">
+        Seek to Live Edge
+      </button>
+      <button
+        type="button"
+        id="seek-behind-window"
+        title="Seek 30s behind the window start — exercises the window-exit rescue"
+      >
+        Seek Out of Window
+      </button>
       <button type="button" id="inspect">Inspect State</button>
       <button type="button" id="clearLogs">Clear Logs</button>
     </div>
 
-    <!-- biome-ignore lint/a11y/useMediaCaption: test harness, captions managed by SPF -->
-    <video id="video" controls preload="none"></video>
+    <div id="video-frame">
+      <!-- Test harness: captions are managed by SPF. -->
+      <video id="video" controls preload="none"></video>
+    </div>
     <div id="now-playing-quality"></div>
+    <div id="player-size-display"></div>
     <div id="throughput-display"></div>
     <div id="live-status"></div>
 

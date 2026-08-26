@@ -13,7 +13,18 @@ import basicUsageHtml from "@/components/docs/demos/player-controller/html/css/B
 import basicUsageHtmlCss from "@/components/docs/demos/player-controller/html/css/BasicUsage.css?raw";
 import basicUsageHtmlTs from "@/components/docs/demos/player-controller/html/css/BasicUsage.ts?raw";
 
-`PlayerController` is a reactive controller that consumes the player store from <DocsLink slug="reference/player-context">`playerContext`</DocsLink>. Without a selector it returns the store instance directly (no subscription — use this for actions). With a selector it returns the selected value and subscribes to changes, triggering a host update on shallow-equal change. Access the current value via `.value`, which returns `undefined` until connected to a provider.
+`PlayerController` is a reactive controller that consumes the player store from <DocsLink slug="reference/player-context">`playerContext`</DocsLink>. Without a selector it returns the store instance directly (no subscription — use this for actions). With a selector it returns the selected value and subscribes to changes, triggering a host update on shallow-equal change. Access the current value via `.value`, which returns `undefined` until connected to a player.
+
+The controller exported by each preset, or returned by <DocsLink slug="reference/html-create-player">`createPlayer`</DocsLink>, is already bound to that player's context, so pass only the host and optional selector. The lower-level `PlayerController` exported from `@videojs/html` accepts the context as its second argument; its constructor signatures are documented below.
+
+```ts
+import { UIElement, selectPlayback } from '@videojs/html';
+import { PlayerController } from '@videojs/html/video';
+
+class PlayButtonElement extends UIElement {
+  readonly #playback = new PlayerController(this, selectPlayback);
+}
+```
 
 ## Examples
 

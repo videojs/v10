@@ -1,0 +1,106 @@
+---
+title: YouTubeVideo
+frameworkTitle:
+  html: youtube-video
+description: Video component that plays YouTube videos and playlists through the YouTube IFrame player
+---
+
+import MediaReference from "@/components/docs/api-reference/MediaReference.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+import StyleCase from "@/components/docs/StyleCase.astro";
+import Demo from "@/components/docs/demos/Demo.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+
+{/* React demos */}
+import BasicUsageDemoReact from "@/components/docs/demos/youtube-video/react/css/BasicUsage";
+import basicUsageReactTsx from "@/components/docs/demos/youtube-video/react/css/BasicUsage.tsx?raw";
+import basicUsageReactCss from "@/components/docs/demos/youtube-video/react/css/BasicUsage.css?raw";
+
+{/* HTML demos */}
+import BasicUsageDemoHtml from "@/components/docs/demos/youtube-video/html/css/BasicUsage.astro";
+import basicUsageHtml from "@/components/docs/demos/youtube-video/html/css/BasicUsage.html?raw";
+import basicUsageHtmlCss from "@/components/docs/demos/youtube-video/html/css/BasicUsage.css?raw";
+import basicUsageHtmlTs from "@/components/docs/demos/youtube-video/html/css/BasicUsage.ts?raw";
+
+The [YouTube IFrame player](https://developers.google.com/youtube/iframe_api_reference) keeps its own chrome hidden by default, so it drops into a <DocsLink slug="concepts/skins">player skin</DocsLink> like any other media component; set `controls` to use YouTube's UI instead.
+
+## Load a source
+
+`src` takes a YouTube URL or a raw 11-character video id. Watch, share (`youtu.be`), embed, Shorts, live, and privacy-enhanced (`youtube-nocookie.com`) URLs all work. Playlist URLs load through their `list` parameter, and a `t` parameter sets the start position.
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<YouTubeVideo src="https://www.youtube.com/watch?v=aqz-KE-bpKQ" />
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```html
+<youtube-video src="https://www.youtube.com/watch?v=aqz-KE-bpKQ"></youtube-video>
+```
+</FrameworkCase>
+
+## Behavior
+
+A few things work differently from a native `<video>` element, because the IFrame API doesn't expose them:
+
+- `loop` restarts playback when the video ends; the IFrame API has no single-video loop.
+- Fullscreen targets the iframe, so YouTube's own chrome shows in fullscreen.
+- Picture-in-picture is unavailable, and the player reports it as unsupported.
+- Caption tracks appear in `textTracks` once playback starts; YouTube reports no caption metadata before then.
+
+## Examples
+
+### Basic Usage
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
+      { title: "App.css", code: basicUsageReactCss, lang: "css" },
+    ]}>
+      <BasicUsageDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "index.html", code: basicUsageHtml, lang: "html" },
+      { title: "index.css", code: basicUsageHtmlCss, lang: "css" },
+      { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
+    ]}>
+      <BasicUsageDemoHtml />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<MediaReference media="YouTubeVideo">
+  <Fragment slot="engine-youtube">
+    Pass [YouTube player parameters](https://developers.google.com/youtube/player_parameters) under `source.engine.youtube`, spelled exactly as YouTube spells them. They're serialized onto the embed URL untouched, and the embed reads them once, when its URL is built. <DocsLink slug="concepts/media-sources">Media Sources</DocsLink> covers how engine options fit into a structured source.
+
+    `autoplay`, `controls`, and `playsinline` come from the props of the same name, so they have no `engine.youtube` spelling. Parameters YouTube has deprecated are absent as well: `modestbranding`, `showinfo`, `autohide`, `theme`, and `listType: 'search'`. Anything YouTube adds next passes through the same way.
+
+    <FrameworkCase frameworks={["react"]}>
+    ```tsx
+    <YouTubeVideo
+      source={{
+        src: 'https://www.youtube.com/watch?v=aqz-KE-bpKQ',
+        engine: { youtube: { hl: 'de', cc_load_policy: 1 } },
+      }}
+    />
+    ```
+    </FrameworkCase>
+
+    <FrameworkCase frameworks={["html"]}>
+    ```ts
+    const video = document.querySelector('youtube-video');
+    video.source = {
+      src: 'https://www.youtube.com/watch?v=aqz-KE-bpKQ',
+      engine: { youtube: { hl: 'de', cc_load_policy: 1 } },
+    };
+    ```
+    </FrameworkCase>
+  </Fragment>
+</MediaReference>

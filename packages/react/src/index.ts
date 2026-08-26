@@ -55,10 +55,7 @@ export {
   useTranslator,
 } from './i18n';
 // Media primitives
-export {
-  Container,
-  type ContainerProps,
-} from './player/container';
+export { Container, type ContainerProps } from './player/container';
 export {
   type PlayerContextValue,
   useContainer,
@@ -79,7 +76,7 @@ export {
 } from './player/create-player';
 // UI
 export { AirPlayButton, type AirPlayButtonProps } from './ui/airplay-button/airplay-button';
-export { AlertDialog, type AlertDialogContextValue, useAlertDialogContext } from './ui/alert-dialog';
+export { AlertDialog } from './ui/alert-dialog';
 export {
   type AudioTrackOption,
   type AudioTrackOptionsProps,
@@ -106,8 +103,10 @@ export {
 } from './ui/captions-radio-group';
 export { CastButton, type CastButtonProps } from './ui/cast-button/cast-button';
 export { Controls } from './ui/controls';
+export type { ControlsContentProps } from './ui/controls/controls-content';
 export type { ControlsGroupProps } from './ui/controls/controls-group';
 export type { ControlsRootProps } from './ui/controls/controls-root';
+export { Dialog, type DialogContextValue, useDialogContext } from './ui/dialog';
 export { ErrorDialog, type ErrorDialogContextValue, useErrorDialogContext } from './ui/error-dialog';
 export { FullscreenButton, type FullscreenButtonProps } from './ui/fullscreen-button/fullscreen-button';
 export { Gesture, type GestureProps, MediaGesture, type MediaGestureProps } from './ui/gesture/gesture';
@@ -184,6 +183,7 @@ export { VolumeIndicator } from './ui/volume-indicator';
 export type { VolumeIndicatorFillProps } from './ui/volume-indicator/volume-indicator-fill';
 export type { VolumeIndicatorRootProps } from './ui/volume-indicator/volume-indicator-root';
 export type { VolumeIndicatorValueProps } from './ui/volume-indicator/volume-indicator-value';
+export { VolumePopover } from './ui/volume-popover';
 export { VolumeSlider } from './ui/volume-slider';
 // Utilities
 export { mergeProps } from './utils/merge-props';

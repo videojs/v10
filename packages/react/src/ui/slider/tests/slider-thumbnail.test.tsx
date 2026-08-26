@@ -1,6 +1,6 @@
 import { cleanup, render } from '@testing-library/react';
 import { createRef } from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { SliderRoot } from '../slider-root';
 import { SliderThumbnail } from '../slider-thumbnail';
@@ -49,6 +49,7 @@ const { mockSliderApi, mockThumbnailApi } = vi.hoisted(() => ({
 
 vi.mock('@videojs/core/dom', async (importOriginal) => {
   const orig: Record<string, unknown> = await importOriginal();
+
   return {
     ...orig,
     createSlider: vi.fn(mockSliderApi),
@@ -80,6 +81,7 @@ describe('SliderThumbnail', () => {
 
   it('forwards ref', () => {
     const ref = createRef<HTMLDivElement>();
+
     render(
       <SliderRoot>
         <SliderThumbnail ref={ref} />
@@ -97,6 +99,7 @@ describe('SliderThumbnail', () => {
     );
 
     const el = container.querySelector('[data-testid="thumbnail"]');
+
     expect(el?.tagName).toBe('DIV');
     expect(el?.getAttribute('role')).toBe('img');
     expect(el?.getAttribute('aria-hidden')).toBe('true');
@@ -110,6 +113,7 @@ describe('SliderThumbnail', () => {
     );
 
     const el = container.querySelector('[data-testid="thumbnail"]');
+
     expect(el?.hasAttribute('data-hidden')).toBe(true);
   });
 
@@ -122,6 +126,7 @@ describe('SliderThumbnail', () => {
 
     const el = container.querySelector('[data-testid="thumbnail"]');
     const img = el?.querySelector('img');
+
     expect(img).toBeTruthy();
     expect(img?.getAttribute('aria-hidden')).toBe('true');
     expect(img?.getAttribute('decoding')).toBe('async');
@@ -159,6 +164,7 @@ describe('SliderThumbnail', () => {
     );
 
     const img = container.querySelector('[data-testid="thumbnail"] img');
+
     expect(img?.getAttribute('crossorigin')).toBe('anonymous');
   });
 });

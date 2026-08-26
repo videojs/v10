@@ -1,15 +1,18 @@
 import type { Constructor } from '@videojs/utils/types';
 import Hls from 'hls.js';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
+
 import { HlsJsMediaAirPlayMixin } from '../airplay-bridge';
 import type { HlsEngineHost } from '../types';
 
 function createEngine(url = ''): Hls {
   const listeners = new Map<string, Set<(...args: any[]) => void>>();
+
   return {
     url,
     on(event: string, fn: (...args: any[]) => void) {
       if (!listeners.has(event)) listeners.set(event, new Set());
+
       listeners.get(event)!.add(fn);
     },
     off(event: string, fn: (...args: any[]) => void) {
@@ -50,7 +53,7 @@ class FakeHost extends EventTarget {
   }
 }
 
-/** hls.js forces the flag on for ManagedMediaSource inside `attachMedia`. */
+/** Hls.js forces the flag on for ManagedMediaSource inside `attachMedia`. */
 function simulateHlsJsMmsAttach(video: HTMLVideoElement) {
   video.disableRemotePlayback = true;
 }
@@ -64,6 +67,7 @@ function createVideo(initialWireless = false): HTMLVideoElement & { webkitCurren
     webkitCurrentPlaybackTargetIsWireless: boolean;
   };
   let wireless = initialWireless;
+
   Object.defineProperty(video, 'webkitCurrentPlaybackTargetIsWireless', {
     configurable: true,
     get: () => wireless,
@@ -88,11 +92,13 @@ describe('HlsJsMediaAirPlayMixin', () => {
     const engine = createEngine('https://example.com/master.m3u8');
     const host = new AirPlayHost(engine);
     const video = createVideo();
+
     host.target = video;
 
     (engine as any).emit(Hls.Events.MEDIA_ATTACHED);
 
     const source = video.querySelector('source');
+
     expect(source).not.toBeNull();
     expect(source?.type).toBe('application/x-mpegURL');
     expect(source?.src).toContain('master.m3u8');
@@ -103,6 +109,7 @@ describe('HlsJsMediaAirPlayMixin', () => {
       const engine = createEngine();
       const host = new AirPlayHost(engine);
       const video = createVideo();
+
       host.attach(video);
       simulateHlsJsMmsAttach(video);
 
@@ -115,6 +122,7 @@ describe('HlsJsMediaAirPlayMixin', () => {
       const engine = createEngine();
       const host = new AirPlayHost(engine);
       const video = createVideo();
+
       host.disableRemotePlayback = true;
       host.attach(video);
       simulateHlsJsMmsAttach(video);
@@ -130,6 +138,7 @@ describe('HlsJsMediaAirPlayMixin', () => {
       const engine = createEngine();
       const host = new AirPlayHost(engine);
       const video = createVideo();
+
       host.attach(video);
       simulateHlsJsMmsAttach(video);
       host.disableRemotePlayback = true;
@@ -143,6 +152,7 @@ describe('HlsJsMediaAirPlayMixin', () => {
       const engine = createEngine();
       const host = new AirPlayHost(engine);
       const video = createVideo();
+
       host.disableRemotePlayback = true;
       host.attach(video);
       host.disableRemotePlayback = false;
@@ -159,6 +169,7 @@ describe('HlsJsMediaAirPlayMixin', () => {
       const engine = createEngine();
       const host = new AirPlayHost(engine);
       const video = createVideo();
+
       video.disableRemotePlayback = true;
       host.attach(video);
 
@@ -172,6 +183,7 @@ describe('HlsJsMediaAirPlayMixin', () => {
     const engine = createEngine('https://example.com/old.m3u8');
     const host = new AirPlayHost(engine);
     const video = createVideo();
+
     host.target = video;
 
     (engine as any).emit(Hls.Events.MEDIA_ATTACHED);
@@ -184,6 +196,7 @@ describe('HlsJsMediaAirPlayMixin', () => {
     const engine = createEngine();
     const host = new AirPlayHost(engine);
     const video = createVideo();
+
     host.target = video;
     (engine as any).emit(Hls.Events.MEDIA_ATTACHED);
     (engine.stopLoad as ReturnType<typeof vi.fn>).mockClear();
@@ -202,6 +215,7 @@ describe('HlsJsMediaAirPlayMixin', () => {
     const engine = createEngine();
     const host = new AirPlayHost(engine);
     const video = createVideo(true);
+
     host.target = video;
     (engine as any).emit(Hls.Events.MEDIA_ATTACHED);
     (engine.startLoad as ReturnType<typeof vi.fn>).mockClear();
@@ -219,6 +233,7 @@ describe('HlsJsMediaAirPlayMixin', () => {
     const engine = createEngine();
     const host = new AirPlayHost(engine);
     const video = createVideo();
+
     host.target = video;
     (engine as any).emit(Hls.Events.MEDIA_ATTACHED);
     (engine.startLoad as ReturnType<typeof vi.fn>).mockClear();
@@ -235,6 +250,7 @@ describe('HlsJsMediaAirPlayMixin', () => {
     const engine = createEngine();
     const host = new AirPlayHost(engine);
     const video = createVideo(true);
+
     host.target = video;
 
     (engine as any).emit(Hls.Events.MEDIA_ATTACHED);
@@ -246,6 +262,7 @@ describe('HlsJsMediaAirPlayMixin', () => {
     const engine = createEngine();
     const host = new AirPlayHost(engine);
     const video = createVideo();
+
     host.target = video;
     (engine as any).emit(Hls.Events.MEDIA_ATTACHED);
 
@@ -264,6 +281,7 @@ describe('HlsJsMediaAirPlayMixin', () => {
     const engine = createEngine();
     const host = new AirPlayHost(engine);
     const video = document.createElement('video');
+
     host.target = video;
 
     (engine as any).emit(Hls.Events.MEDIA_ATTACHED);

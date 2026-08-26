@@ -27,6 +27,7 @@ export function createButton(options: ButtonOptions): ButtonProps {
         event.preventDefault();
         return;
       }
+
       onActivate(event);
     },
 
@@ -43,6 +44,7 @@ export function createButton(options: ButtonOptions): ButtonProps {
 
       if (isDisabled()) {
         if (event.key !== 'Tab') event.preventDefault();
+
         return;
       }
 
@@ -56,6 +58,7 @@ export function createButton(options: ButtonOptions): ButtonProps {
 
     onKeyUp(event) {
       if (event.target !== event.currentTarget) return;
+
       if (isDisabled()) return;
 
       if (event.key === ' ') {

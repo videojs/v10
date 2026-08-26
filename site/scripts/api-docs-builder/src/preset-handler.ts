@@ -1,31 +1,38 @@
 /**
  * Preset reference extraction.
  *
- * Discovers presets from package.json exports in packages/{html,react}/ and
- * extracts feature bundles, skins, and media elements.
+ * Discovers presets from package.json exports in packages/{html,react}/ and extracts feature bundles, skins, and media
+ * elements.
  *
  * Discovery:
- *   - Reads package.json exports to find preset names and their source paths
- *   - Barrel file (./X export) → feature bundle name + file-level description
- *   - Source directory (./X/* export) → skins + media elements via directory scan
+ *
+ * - Reads package.json exports to find preset names and their source paths
+ * - Barrel file (./X export) → feature bundle name + file-level description
+ * - Source directory (./X/* export) → skins + media elements via directory scan
  *
  * Classification (positive detection only):
- *   - HTML: classes with `static readonly tagName`
- *     - *Skin*Element → skin
- *     - *Player* → skip
- *     - remaining → media element
- *   - React: exported functions/classes/consts
- *     - *Skin → skin
- *     - remaining → media element
- *   - .tailwind in filename → excluded (both frameworks)
+ *
+ * - HTML: classes with `static readonly tagName`
+ *
+ *   - _Skin_Element → skin
+ *   - _Player_ → skip
+ *   - Remaining → media element
+ * - React: exported functions/classes/consts
+ *
+ *   - *Skin → skin
+ *   - Remaining → media element
+ * - .tailwind in filename → excluded (both frameworks)
  *
  * Feature resolution: packages/core/src/dom/store/features/presets.ts
  */
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import * as ts from 'typescript';
+
+import { parseSync } from 'oxc-parser';
+
+import type { SourceFile } from './oxc-project.js';
+import { getJSDocDescription, staticName, unwrapExpression } from './oxc-project.js';
 import type { PresetFeatureRef, PresetReference, PresetSkinDef } from './types.js';
-import { getJSDocDescription } from './utils.js';
 
 // ─── Types ──────────────────────────────────────────────────────────
 
@@ -49,9 +56,8 @@ export interface PresetResult {
 // ─── Package.json Discovery ─────────────────────────────────────────
 
 /**
- * Resolve a dist output path back to its source path.
- * Handles both real packages (dist/dev/... → src/...) and test fixtures
- * (src/... → src/..., already source paths).
+ * Resolve a dist output path back to its source path. Handles both real packages (dist/dev/... → src/...) and test
+ * fixtures (src/... → src/..., already source paths).
  */
 function distToSrc(distPath: string): string {
   // Real packages: dist/(dev|default)/foo/bar.js → src/foo/bar.ts
@@ -63,23 +69,26 @@ function distToSrc(distPath: string): string {
 }
 
 /**
- * Extract the source file path from a package.json export value.
- * Handles both conditional exports ({ types, default }) and string exports.
+ * Extract the source file path from a package.json export value. Handles both conditional exports ({ types, default })
+ * and string exports.
  */
 function resolveExportPath(exportValue: unknown): string | undefined {
   if (typeof exportValue === 'string') return exportValue;
+
   if (typeof exportValue === 'object' && exportValue !== null) {
     const obj = exportValue as Record<string, unknown>;
     // Prefer types (points to source in some configs), fall back to default
     const raw = (obj.types ?? obj.default) as string | undefined;
+
     return raw;
   }
+
   return undefined;
 }
 
 /**
- * Discover presets from package.json exports for a single package.
- * Returns a map of preset name → { barrelPath, scanDir }.
+ * Discover presets from package.json exports for a single package. Returns a map of preset name → { barrelPath, scanDir
+ * }.
  */
 function discoverPresetsFromPackage(packageDir: string): Map<string, { barrelPath: string; scanDir: string }> {
   const pkgJsonPath = path.join(packageDir, 'package.json');
@@ -122,9 +131,7 @@ function discoverPresetsFromPackage(packageDir: string): Map<string, { barrelPat
   return result;
 }
 
-/**
- * Discover all presets from both HTML and React packages.
- */
+/** Discover all presets from both HTML and React packages. */
 function discoverPresets(monorepoRoot: string): PresetInfo[] {
   const htmlPkgDir = path.join(monorepoRoot, 'packages/html');
   const reactPkgDir = path.join(monorepoRoot, 'packages/react');
@@ -138,8 +145,11 @@ function discoverPresets(monorepoRoot: string): PresetInfo[] {
     const info: PresetInfo = { name };
     const html = htmlPresets.get(name);
     const react = reactPresets.get(name);
+
     if (html) info.html = html;
+
     if (react) info.react = react;
+
     return info;
   });
 }
@@ -173,44 +183,90 @@ interface ClassWithTagName {
   tagName: string;
 }
 
-function extractClassesWithTagName(filePath: string): ClassWithTagName[] {
-  if (!fs.existsSync(filePath)) return [];
+function extractClassesWithTagName(filePath: string, visited = new Set<string>()): ClassWithTagName[] {
+  const absolute = path.resolve(filePath);
+  if (!fs.existsSync(absolute) || visited.has(absolute)) return [];
 
-  const content = fs.readFileSync(filePath, 'utf-8');
-  const sourceFile = ts.createSourceFile(filePath, content, ts.ScriptTarget.Latest, true);
+  visited.add(absolute);
+
+  const content = fs.readFileSync(absolute, 'utf-8');
+  const sourceFile = parseSource(absolute, content);
   const results: ClassWithTagName[] = [];
+  const importedModules = new Map<string, string>();
+  const sideEffectImports: string[] = [];
+  const reexports: string[] = [];
+  const registeredNames = new Set<string>();
 
-  ts.forEachChild(sourceFile, (node) => {
-    // Follow `export * from './foo'` re-exports
-    if (ts.isExportDeclaration(node) && !node.exportClause && node.moduleSpecifier) {
-      const specifier = (node.moduleSpecifier as ts.StringLiteral).text;
-      const resolved = resolveModulePath(path.dirname(filePath), specifier);
-      if (resolved) {
-        results.push(...extractClassesWithTagName(resolved));
+  for (const node of sourceFile.program.body) {
+    if (node.type === 'ImportDeclaration' && node.source.value.startsWith('.')) {
+      const resolved = resolveModulePath(path.dirname(absolute), node.source.value);
+      if (!resolved) continue;
+
+      if (node.specifiers.length === 0) sideEffectImports.push(resolved);
+
+      for (const specifier of node.specifiers) {
+        importedModules.set(specifier.local.name, resolved);
       }
-      return;
+
+      continue;
     }
 
-    if (!ts.isClassDeclaration(node) || !node.name) return;
-    if (!node.modifiers?.some((m) => m.kind === ts.SyntaxKind.ExportKeyword)) return;
+    if (node.type === 'ExportAllDeclaration' && !node.exported) {
+      const specifier = node.source.value;
+      const resolved = resolveModulePath(path.dirname(absolute), specifier);
 
-    for (const member of node.members) {
+      if (resolved) reexports.push(resolved);
+
+      continue;
+    }
+
+    if (
+      node.type === 'ExpressionStatement' &&
+      node.expression.type === 'CallExpression' &&
+      node.expression.callee.type === 'Identifier' &&
+      node.expression.callee.name === 'safeDefine' &&
+      node.expression.arguments[0]?.type === 'Identifier'
+    ) {
+      registeredNames.add(node.expression.arguments[0].name);
+      continue;
+    }
+
+    if (node.type !== 'ExportNamedDeclaration' || node.declaration?.type !== 'ClassDeclaration') continue;
+
+    const declaration = node.declaration;
+    if (!declaration.id) continue;
+
+    for (const member of declaration.body.body) {
       if (
-        ts.isPropertyDeclaration(member) &&
-        member.name &&
-        ts.isIdentifier(member.name) &&
-        member.name.text === 'tagName' &&
-        member.modifiers?.some((m) => m.kind === ts.SyntaxKind.StaticKeyword) &&
-        member.initializer &&
-        ts.isStringLiteral(member.initializer)
+        member.type === 'PropertyDefinition' &&
+        staticName(member.key) === 'tagName' &&
+        member.static &&
+        member.value?.type === 'Literal' &&
+        typeof member.value.value === 'string'
       ) {
         results.push({
-          className: node.name.text,
-          tagName: member.initializer.text,
+          className: declaration.id.name,
+          tagName: member.value.value,
         });
       }
     }
-  });
+  }
+
+  for (const name of registeredNames) {
+    const imported = importedModules.get(name);
+
+    if (imported) results.push(...extractClassesWithTagName(imported, visited));
+  }
+
+  for (const reexport of reexports) {
+    results.push(...extractClassesWithTagName(reexport, visited));
+  }
+
+  if (registeredNames.size === 0) {
+    for (const sideEffectImport of sideEffectImports) {
+      results.push(...extractClassesWithTagName(sideEffectImport, visited));
+    }
+  }
 
   return results;
 }
@@ -220,11 +276,13 @@ function resolveModulePath(dir: string, specifier: string): string | undefined {
     const candidate = path.join(dir, `${specifier}${ext}`);
     if (fs.existsSync(candidate)) return candidate;
   }
+
   // Try index file in directory
   for (const ext of ['.ts', '.tsx']) {
     const candidate = path.join(dir, specifier, `index${ext}`);
     if (fs.existsSync(candidate)) return candidate;
   }
+
   return undefined;
 }
 
@@ -234,32 +292,22 @@ function extractValueExports(filePath: string): string[] {
   if (!fs.existsSync(filePath)) return [];
 
   const content = fs.readFileSync(filePath, 'utf-8');
-  const sourceFile = ts.createSourceFile(filePath, content, ts.ScriptTarget.Latest, true);
+  const sourceFile = parseSource(filePath, content);
   const names: string[] = [];
 
-  ts.forEachChild(sourceFile, (node) => {
-    if (
-      ts.isFunctionDeclaration(node) &&
-      node.name &&
-      node.modifiers?.some((m) => m.kind === ts.SyntaxKind.ExportKeyword)
-    ) {
-      names.push(node.name.text);
-    }
-    if (ts.isVariableStatement(node) && node.modifiers?.some((m) => m.kind === ts.SyntaxKind.ExportKeyword)) {
-      for (const decl of node.declarationList.declarations) {
-        if (ts.isIdentifier(decl.name)) {
-          names.push(decl.name.text);
-        }
+  for (const node of sourceFile.program.body) {
+    if (node.type !== 'ExportNamedDeclaration' || !node.declaration) continue;
+
+    if (node.declaration.type === 'VariableDeclaration') {
+      for (const declaration of node.declaration.declarations) {
+        const name = staticName(declaration.id);
+
+        if (name) names.push(name);
       }
+    } else if (node.declaration.type === 'FunctionDeclaration' || node.declaration.type === 'ClassDeclaration') {
+      if (node.declaration.id) names.push(node.declaration.id.name);
     }
-    if (
-      ts.isClassDeclaration(node) &&
-      node.name &&
-      node.modifiers?.some((m) => m.kind === ts.SyntaxKind.ExportKeyword)
-    ) {
-      names.push(node.name.text);
-    }
-  });
+  }
 
   return names;
 }
@@ -267,27 +315,25 @@ function extractValueExports(filePath: string): string[] {
 // ─── Barrel Parsing (feature bundle only) ───────────────────────────
 
 /**
- * Parse named value export names from a barrel file.
- * Only reads `export { X } from '...'` syntax — skips `export *` since
- * skins are discovered via directory scanning.
+ * Parse named value export names from a barrel file. Only reads `export { X } from '...'` syntax — skips `export *`
+ * since skins are discovered via directory scanning.
  */
 function parseBarrelExportNames(filePath: string): string[] {
   if (!fs.existsSync(filePath)) return [];
 
   const content = fs.readFileSync(filePath, 'utf-8');
-  const sourceFile = ts.createSourceFile(filePath, content, ts.ScriptTarget.Latest, true);
+  const sourceFile = parseSource(filePath, content);
   const names: string[] = [];
 
-  ts.forEachChild(sourceFile, (node) => {
-    if (!ts.isExportDeclaration(node) || !node.moduleSpecifier) return;
+  for (const node of sourceFile.program.body) {
+    if (node.type !== 'ExportNamedDeclaration' || !node.source || node.exportKind === 'type') continue;
 
-    if (node.exportClause && ts.isNamedExports(node.exportClause)) {
-      for (const element of node.exportClause.elements) {
-        if (element.isTypeOnly) continue;
-        names.push(element.name.text);
-      }
+    for (const element of node.specifiers) {
+      if (element.exportKind === 'type') continue;
+
+      names.push(element.exported.type === 'Literal' ? String(element.exported.value) : element.exported.name);
     }
-  });
+  }
 
   return names;
 }
@@ -297,25 +343,30 @@ function findFeatureBundleExport(filePath: string): string | undefined {
 }
 
 /**
- * Find the media element from a React barrel's named exports.
- * The media element is a named re-export that isn't a feature bundle or skin.
+ * Find the media element from a React barrel's named exports. The media element is a named re-export that isn't a
+ * feature bundle or skin.
  */
 function findReactMediaElement(filePath: string): string | undefined {
   const names = parseBarrelExportNames(filePath);
+
   for (const name of names) {
     if (isFeatureBundle(name)) continue;
+
     if (isReactSkin(name)) continue;
+
     if (/Tailwind$/.test(name)) continue;
+
     return name;
   }
+
   return undefined;
 }
 
 // ─── Feature Bundle Resolution ──────────────────────────────────────
 
 /**
- * Feature names whose kebab-cased form doesn't match the docs page slug.
- * Example: `textTrack` → `feature-text-tracks.mdx`.
+ * Feature names whose kebab-cased form doesn't match the docs page slug. Example: `textTrack` →
+ * `feature-text-tracks.mdx`.
  */
 const FEATURE_SLUG_OVERRIDES: Record<string, string> = {
   textTrack: 'text-tracks',
@@ -324,48 +375,56 @@ const FEATURE_SLUG_OVERRIDES: Record<string, string> = {
 function featureDocsSlug(featureName: string): string {
   const override = FEATURE_SLUG_OVERRIDES[featureName];
   if (override) return `reference/feature-${override}`;
+
   const kebab = featureName.replace(/[A-Z]/g, (m) => `-${m.toLowerCase()}`);
+
   return `reference/feature-${kebab}`;
 }
 
 function featureReferenceExists(monorepoRoot: string, slug: string): boolean {
   const mdxPath = path.join(monorepoRoot, 'site/src/content/docs', `${slug}.mdx`);
+
   return fs.existsSync(mdxPath);
 }
 
 function resolveFeatureRef(name: string, monorepoRoot: string): PresetFeatureRef {
   const slug = featureDocsSlug(name);
+
   return { name, slug, hasReference: featureReferenceExists(monorepoRoot, slug) };
 }
 
 function parseFeatureBundles(presetsFilePath: string): Map<string, string[]> {
   const map = new Map<string, string[]>();
+
   if (!fs.existsSync(presetsFilePath)) return map;
 
   const content = fs.readFileSync(presetsFilePath, 'utf-8');
-  const sourceFile = ts.createSourceFile(presetsFilePath, content, ts.ScriptTarget.Latest, true);
+  const sourceFile = parseSource(presetsFilePath, content);
 
-  ts.forEachChild(sourceFile, (node) => {
-    if (!ts.isVariableStatement(node)) return;
-    if (!node.modifiers?.some((m) => m.kind === ts.SyntaxKind.ExportKeyword)) return;
+  for (const node of sourceFile.program.body) {
+    if (node.type !== 'ExportNamedDeclaration' || node.declaration?.type !== 'VariableDeclaration') continue;
 
-    for (const decl of node.declarationList.declarations) {
-      if (!ts.isIdentifier(decl.name)) continue;
-      const name = decl.name.text;
-      if (!name.endsWith('Features')) continue;
+    for (const decl of node.declaration.declarations) {
+      const name = staticName(decl.id);
+      if (!name?.endsWith('Features') || !decl.init) continue;
 
-      if (decl.initializer && ts.isArrayLiteralExpression(decl.initializer)) {
+      const initializer = unwrapExpression(decl.init);
+
+      if (initializer.type === 'ArrayExpression') {
         const features: string[] = [];
-        for (const element of decl.initializer.elements) {
-          if (ts.isIdentifier(element)) {
-            const featureName = element.text.replace(/Feature$/, '');
+
+        for (const element of initializer.elements) {
+          if (element?.type === 'Identifier') {
+            const featureName = element.name.replace(/Feature$/, '');
+
             features.push(featureName);
           }
         }
+
         map.set(name, features);
       }
     }
-  });
+  }
 
   return map;
 }
@@ -376,12 +435,18 @@ function extractFileDescription(filePath: string): string | undefined {
   if (!fs.existsSync(filePath)) return undefined;
 
   const content = fs.readFileSync(filePath, 'utf-8');
-  const sourceFile = ts.createSourceFile(filePath, content, ts.ScriptTarget.Latest, true);
+  const sourceFile = parseSource(filePath, content);
 
-  const firstStatement = sourceFile.statements[0];
+  const firstStatement = sourceFile.program.body[0];
   if (!firstStatement) return undefined;
 
-  return getJSDocDescription(firstStatement);
+  return getJSDocDescription(sourceFile, firstStatement);
+}
+
+function parseSource(filePath: string, source: string): SourceFile {
+  const parsed = parseSync(filePath, source);
+
+  return { filePath, source, program: parsed.program, comments: parsed.comments };
 }
 
 // ─── Directory Scanning ─────────────────────────────────────────────
@@ -392,7 +457,9 @@ function scanHtmlDirectory(scanDir: string): { skins: PresetSkinDef[]; mediaElem
 
   if (!fs.existsSync(scanDir)) return { skins };
 
-  const files = fs.readdirSync(scanDir).filter((f) => f.endsWith('.ts') && !isTailwindFile(f));
+  const files = fs
+    .readdirSync(scanDir)
+    .filter((f) => f.endsWith('.ts') && !isTailwindFile(f) && f !== 'ui.ts' && f !== 'minimal-ui.ts');
 
   for (const file of files) {
     const filePath = path.join(scanDir, file);
@@ -429,9 +496,12 @@ function scanReactDirectory(scanDir: string, barrelPath: string, presetName: str
 
     for (const name of exports) {
       if (isFeatureBundle(name)) continue;
+
       if (isReactSkin(name)) {
         const skin: PresetSkinDef = { name };
+
         if (cssImport) skin.cssImport = cssImport;
+
         skins.push(skin);
       }
     }
@@ -451,7 +521,6 @@ function buildPresetReference(
   const bundleName =
     (preset.html && findFeatureBundleExport(preset.html.barrelPath)) ??
     (preset.react && findFeatureBundleExport(preset.react.barrelPath));
-
   if (!bundleName) return null;
 
   const featureNames = featureBundleMap.get(bundleName) ?? [];
@@ -480,6 +549,7 @@ function buildPresetReference(
   };
 
   if (htmlResult.mediaElement) ref.html.mediaElement = htmlResult.mediaElement;
+
   if (description) ref.description = description;
 
   return { name: preset.name, reference: ref };
@@ -495,8 +565,10 @@ export function generatePresetReferences(monorepoRoot: string): PresetResult[] {
   if (presets.length === 0) return [];
 
   const results: PresetResult[] = [];
+
   for (const preset of presets) {
     const result = buildPresetReference(preset, featureBundleMap, monorepoRoot);
+
     if (result) results.push(result);
   }
 

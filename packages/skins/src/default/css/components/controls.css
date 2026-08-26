@@ -1,13 +1,17 @@
 .media-default-skin .media-controls {
-  --media-popover-side-offset: calc(var(--spacing) * (var(--base-side-offset, 2) + 1));
+  --media-popover-side-offset: calc(var(--media-spacing) * (var(--media-base-side-offset, 2) + 1));
   --media-tooltip-side-offset: var(--media-popover-side-offset);
-  --media-popover-boundary-offset: calc(var(--spacing) * var(--base-boundary-offset, 2));
+  --media-popover-boundary-offset: calc(var(--media-spacing) * var(--media-base-boundary-offset, 2));
   --media-tooltip-boundary-offset: var(--media-popover-boundary-offset);
 
   display: flex;
   align-items: center;
-  padding: calc(var(--spacing) * 1);
+  padding: calc(var(--media-spacing) * 1);
   container: media-controls / inline-size;
-  text-shadow: 0 1px 0 var(--shadow-current-color);
+  text-shadow: 0 1px 0 var(--media-shadow-current-color);
   border-radius: calc(Infinity * 1px);
+
+  &:dir(rtl) {
+    flex-direction: row-reverse;
+  }
 }

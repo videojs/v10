@@ -1,0 +1,19 @@
+<video-player class="html-volume-popover-basic">
+  <media-container>
+    <video src="{{VJS10_DEMO_VIDEO_MP4}}" autoplay muted playsinline loop></video>
+    <div class="html-volume-popover-basic__controls">
+      <media-mute-button commandfor="volume-popover-demo" class="html-volume-popover-basic__trigger">
+        <span class="muted">Unmute</span>
+        <span class="unmuted">Mute</span>
+      </media-mute-button>
+      <media-volume-popover id="volume-popover-demo" open-on-hover side="top" class="html-volume-popover-basic__popup">
+        <media-volume-slider orientation="vertical" class="html-volume-popover-basic__slider">
+          <media-slider-track class="html-volume-popover-basic__track">
+            <media-slider-fill class="html-volume-popover-basic__fill"></media-slider-fill>
+          </media-slider-track>
+          <media-slider-thumb class="html-volume-popover-basic__thumb"></media-slider-thumb>
+        </media-volume-slider>
+      </media-volume-popover>
+    </div>
+  </media-container>
+</video-player>

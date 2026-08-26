@@ -25,6 +25,7 @@ export function useSyncProps<Props extends object, Rest extends Record<string, u
   for (const key in props) {
     if (key in defaults) {
       if (isUndefined(props[key])) continue;
+
       synced.add(key);
       sync(key, props[key]);
     } else {

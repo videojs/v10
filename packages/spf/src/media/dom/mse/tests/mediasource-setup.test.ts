@@ -1,4 +1,5 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
+
 import {
   attachMediaSource,
   attachMediaSourceAsSourceElement,
@@ -20,6 +21,7 @@ describe('supportsManagedMediaSource', () => {
   it('should detect ManagedMediaSource availability', () => {
     // Will test actual browser API
     const result = supportsManagedMediaSource();
+
     expect(typeof result).toBe('boolean');
   });
 });
@@ -27,12 +29,14 @@ describe('supportsManagedMediaSource', () => {
 describe('createMediaSource', () => {
   it('should create MediaSource instance', () => {
     const ms = createMediaSource();
+
     expect(ms).toBeInstanceOf(MediaSource);
     expect(ms.readyState).toBe('closed');
   });
 
   it('should create ManagedMediaSource when preferManaged is true and available', () => {
     const ms = createMediaSource({ preferManaged: true });
+
     expect(ms).toBeInstanceOf(MediaSource);
   });
 });
@@ -65,6 +69,7 @@ describe('attachMediaSource', () => {
     const mediaElement = document.createElement('video');
     const mediaSource = createMediaSource();
     const { url, detach } = attachMediaSource(mediaSource, mediaElement);
+
     // An unclosed attachment: the MediaSource has opened (readyState is 'closed'
     // until the browser's async attach completes).
     await new Promise<void>((resolve) => mediaSource.addEventListener('sourceopen', () => resolve(), { once: true }));
@@ -127,6 +132,7 @@ describe('attachMediaSourceAsSourceElement', () => {
 
     expect(mediaElement.getAttribute('src')).toBeNull();
     const sourceEl = mediaElement.querySelector('source');
+
     expect(sourceEl!.src).toBe(url);
     expect(sourceEl!.type).toBe('video/mp4');
     // The flag is MMS-only — a regular MediaSource must leave the standard
@@ -148,11 +154,14 @@ describe('attachMediaSourceAsSourceElement', () => {
     vi.stubGlobal('ManagedMediaSource', FakeManagedMediaSource);
     const createObjectURL = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:fake-mms');
     const revokeObjectURL = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
+
     try {
       const mediaSource = new FakeManagedMediaSource() as unknown as MediaSource;
       const mediaElement = document.createElement('video');
+
       mediaElement.setAttribute('src', 'https://example.com/old.mp4');
       const sibling = document.createElement('source');
+
       mediaElement.append(sibling);
 
       const { url, detach } = attachMediaSourceAsSourceElement(mediaSource, mediaElement);
@@ -163,6 +172,7 @@ describe('attachMediaSourceAsSourceElement', () => {
       expect(mediaElement.getAttribute('src')).toBeNull();
       expect(mediaElement.disableRemotePlayback).toBe(true);
       const sources = mediaElement.querySelectorAll('source');
+
       expect(sources).toHaveLength(2);
       expect(sources[0]!.src).toBe('blob:fake-mms');
       expect(sources[0]!.type).toBe('video/mp4');
@@ -183,12 +193,14 @@ describe('attachMediaSourceAsSourceElement', () => {
     const mediaElement = document.createElement('video');
     const mediaSource = createMediaSource();
     const { url, detach } = attachMediaSourceAsSourceElement(mediaSource, mediaElement);
+
     await new Promise<void>((resolve) => mediaSource.addEventListener('sourceopen', () => resolve(), { once: true }));
 
     // A sibling alternative owned by another behavior (setupAirPlay's
     // native-HLS fallback), removed from a signal effect — i.e. on a
     // microtask queued before detach's.
     const fallback = document.createElement('source');
+
     fallback.type = 'application/x-mpegURL';
     fallback.src = 'https://example.com/outgoing.m3u8';
     mediaElement.append(fallback);
@@ -217,6 +229,7 @@ describe('attachMediaSourceAsSourceElement', () => {
     const mediaElement = document.createElement('video');
     const mediaSource = createMediaSource();
     const { url, detach } = attachMediaSourceAsSourceElement(mediaSource, mediaElement);
+
     await new Promise<void>((resolve) => mediaSource.addEventListener('sourceopen', () => resolve(), { once: true }));
 
     Object.defineProperty(mediaElement, 'currentSrc', { value: url, configurable: true });
@@ -237,6 +250,7 @@ describe('createSourceBuffer', () => {
   it('should create SourceBuffer with codec string', async () => {
     const mediaSource = createMediaSource();
     const mediaElement = document.createElement('video');
+
     attachMediaSource(mediaSource, mediaElement);
 
     await new Promise<void>((resolve) => mediaSource.addEventListener('sourceopen', () => resolve(), { once: true }));
@@ -270,22 +284,26 @@ describe('waitForMediaSourceOpen', () => {
   it('resolves immediately when readyState is already open', async () => {
     const mediaSource = createMediaSource();
     const mediaElement = document.createElement('video');
+
     attachMediaSource(mediaSource, mediaElement);
     await new Promise<void>((resolve) => mediaSource.addEventListener('sourceopen', () => resolve(), { once: true }));
 
     expect(mediaSource.readyState).toBe('open');
     const controller = new AbortController();
+
     await waitForMediaSourceOpen(mediaSource, controller.signal);
   });
 
   it('resolves once readyState transitions out of closed via sourceopen', async () => {
     const mediaSource = createMediaSource();
+
     expect(mediaSource.readyState).toBe('closed');
 
     const controller = new AbortController();
     const ready = waitForMediaSourceOpen(mediaSource, controller.signal);
 
     const mediaElement = document.createElement('video');
+
     attachMediaSource(mediaSource, mediaElement);
 
     await ready;
@@ -297,6 +315,7 @@ describe('waitForMediaSourceOpen', () => {
     const controller = new AbortController();
 
     const ready = waitForMediaSourceOpen(mediaSource, controller.signal);
+
     controller.abort();
 
     await ready;
@@ -305,6 +324,7 @@ describe('waitForMediaSourceOpen', () => {
   it('returns an already-resolved promise when signal is pre-aborted', async () => {
     const mediaSource = createMediaSource();
     const controller = new AbortController();
+
     controller.abort();
 
     await waitForMediaSourceOpen(mediaSource, controller.signal);

@@ -1,4 +1,5 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
+
 import { MediaTracksMixin } from '../mixin';
 
 class TestMedia extends EventTarget {}
@@ -21,6 +22,7 @@ describe('MediaTracksMixin', () => {
     const media = new TestMediaWithTracks();
 
     const track = media.addAudioTrack('main');
+
     expect(media.audioTracks.length).toBe(1);
 
     media.removeAudioTrack(track);
@@ -31,11 +33,13 @@ describe('MediaTracksMixin', () => {
     const media = new TestMediaWithTracks();
 
     const selected = media.addVideoTrack('main');
+
     selected.selected = true;
     selected.addRendition('high.m3u8', 1920, 1080);
     selected.addRendition('low.m3u8', 640, 360);
 
     const hidden = media.addVideoTrack('alternative');
+
     hidden.addRendition('alt.m3u8', 1280, 720);
 
     expect(media.videoTracks.length).toBe(2);
@@ -46,9 +50,11 @@ describe('MediaTracksMixin', () => {
   it('does not dispatch removetrack when the video track is not in the list', async () => {
     const media = new TestMediaWithTracks();
     const onRemoveTrack = vi.fn();
+
     media.videoTracks.addEventListener('removetrack', onRemoveTrack);
 
     const track = media.addVideoTrack('main');
+
     media.removeVideoTrack(track);
     media.removeVideoTrack(track);
     await Promise.resolve();
@@ -59,9 +65,11 @@ describe('MediaTracksMixin', () => {
   it('does not dispatch removetrack when the audio track is not in the list', async () => {
     const media = new TestMediaWithTracks();
     const onRemoveTrack = vi.fn();
+
     media.audioTracks.addEventListener('removetrack', onRemoveTrack);
 
     const track = media.addAudioTrack('main');
+
     media.removeAudioTrack(track);
     media.removeAudioTrack(track);
     await Promise.resolve();

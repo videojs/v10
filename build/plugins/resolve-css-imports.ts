@@ -15,6 +15,7 @@ export function resolveImports(content: string, baseDir: string, skinsDir: strin
     }
 
     const nested = readFileSync(file, 'utf-8');
+
     return resolveImports(nested, dirname(file), skinsDir);
   });
 }

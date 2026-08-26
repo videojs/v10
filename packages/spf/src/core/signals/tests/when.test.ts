@@ -1,4 +1,5 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
+
 import { signal } from '../primitives';
 import { when } from '../when';
 
@@ -32,6 +33,7 @@ describe('when', () => {
     await settled;
 
     const callsWhenSettled = condition.mock.calls.length;
+
     ready.set(false);
     ready.set(true);
     await Promise.resolve();
@@ -45,6 +47,7 @@ describe('when', () => {
     const settled = when(() => ready.get(), { signal: controller.signal });
 
     const reason = new Error('source changed');
+
     controller.abort(reason);
     await expect(settled).rejects.toBe(reason);
   });
@@ -52,9 +55,11 @@ describe('when', () => {
   it('rejects immediately on an already-aborted signal without evaluating the condition', async () => {
     const controller = new AbortController();
     const reason = new Error('gone');
+
     controller.abort(reason);
 
     const condition = vi.fn(() => true);
+
     await expect(when(condition, { signal: controller.signal })).rejects.toBe(reason);
     expect(condition).not.toHaveBeenCalled();
   });

@@ -7,6 +7,11 @@
   width: var(--media-icon-size);
   height: var(--media-icon-size);
 }
-.media-default-skin .media-icon--flipped {
+.media-default-skin .media-icon--flipped,
+.media-default-skin:dir(rtl) .media-menu__chevron {
   scale: -1 1;
+}
+
+.media-default-skin:dir(rtl) .media-menu__chevron.media-icon--flipped {
+  scale: 1 1;
 }

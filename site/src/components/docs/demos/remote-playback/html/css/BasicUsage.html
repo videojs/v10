@@ -1,0 +1,16 @@
+<video-player class="video-player">
+  <media-container>
+    <hlsjs-video src="{{VJS10_DEMO_VIDEO_HLS}}" autoplay muted playsinline loop></hlsjs-video>
+    <google-cast></google-cast>
+    <div class="media-remote-buttons">
+      <media-airplay-button class="media-airplay-button">
+        <span class="connected">Stop AirPlay</span>
+        <span class="not-connected">Start AirPlay</span>
+      </media-airplay-button>
+      <media-cast-button class="media-cast-button">
+        <span class="connected">Stop casting</span>
+        <span class="disconnected">Start casting</span>
+      </media-cast-button>
+    </div>
+  </media-container>
+</video-player>

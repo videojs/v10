@@ -1,45 +1,53 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 
 import { defaults } from '../defaults';
 
 describe('defaults', () => {
   it('fills undefined values with defaults', () => {
     const result = defaults({ a: undefined, b: 2 }, { a: 1, b: 0 });
+
     expect(result).toEqual({ a: 1, b: 2 });
   });
 
   it('preserves defined values', () => {
     const result = defaults({ a: 'custom', b: 'also custom' }, { a: 'default', b: 'default' });
+
     expect(result).toEqual({ a: 'custom', b: 'also custom' });
   });
 
   it('returns all defaults for empty object', () => {
     const result = defaults({}, { a: 1, b: 2 });
+
     expect(result).toEqual({ a: 1, b: 2 });
   });
 
   it('preserves falsy values (false)', () => {
     const result = defaults({ enabled: false }, { enabled: true });
+
     expect(result).toEqual({ enabled: false });
   });
 
   it('preserves falsy values (0)', () => {
     const result = defaults({ count: 0 }, { count: 10 });
+
     expect(result).toEqual({ count: 0 });
   });
 
   it('preserves falsy values (empty string)', () => {
     const result = defaults({ label: '' }, { label: 'default' });
+
     expect(result).toEqual({ label: '' });
   });
 
   it('preserves null values', () => {
     const result = defaults<{ value: string | null }>({ value: null }, { value: 'default' });
+
     expect(result).toEqual({ value: null });
   });
 
   it('handles mixed defined and undefined values', () => {
     const result = defaults({ label: 'custom', disabled: undefined }, { label: 'default', disabled: false });
+
     expect(result).toEqual({ label: 'custom', disabled: false });
   });
 
@@ -82,6 +90,7 @@ describe('defaults', () => {
     // Mirrors ReactiveElement, which installs reactive properties as enumerable
     // accessors on the class prototype rather than as own properties.
     const proto = {};
+
     Object.defineProperty(proto, 'delay', { get: () => 900, enumerable: true });
 
     const input = Object.create(proto) as { delay?: number };
@@ -93,9 +102,11 @@ describe('defaults', () => {
   it('does not read inherited properties absent from the default values', () => {
     const inherited = vi.fn(() => 'inherited');
     const proto = {};
+
     Object.defineProperty(proto, 'inherited', { get: inherited, enumerable: true });
 
     const input = Object.create(proto) as { a?: number };
+
     input.a = 2;
 
     const result = defaults(input, { a: 1 });
@@ -107,6 +118,7 @@ describe('defaults', () => {
   it('reads each default key from the input exactly once', () => {
     const a = vi.fn(() => 2);
     const input = {};
+
     Object.defineProperty(input, 'a', { get: a, enumerable: true });
 
     defaults(input as { a?: number }, { a: 1, b: 0 });

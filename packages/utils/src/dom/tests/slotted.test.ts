@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vite-plus/test';
 
 import { getSlottedElement } from '../slotted';
 
@@ -27,6 +27,7 @@ describe('getSlottedElement', () => {
 
       customElements.define(tagName, TestHost);
       const host = document.createElement(tagName);
+
       document.body.appendChild(host);
       return host;
     }
@@ -34,6 +35,7 @@ describe('getSlottedElement', () => {
     it('finds slotted element matching predicate', () => {
       const host = createHost();
       const video = document.createElement('video');
+
       host.appendChild(video);
 
       const result = getSlottedElement(host.shadowRoot!, '', (el) => (el instanceof HTMLVideoElement ? el : null));
@@ -45,6 +47,7 @@ describe('getSlottedElement', () => {
       const host = createHost();
       const video1 = document.createElement('video');
       const video2 = document.createElement('video');
+
       host.appendChild(video1);
       host.appendChild(video2);
 
@@ -56,6 +59,7 @@ describe('getSlottedElement', () => {
     it('returns null when no match found', () => {
       const host = createHost();
       const span = document.createElement('span');
+
       host.appendChild(span);
 
       const result = getSlottedElement(host.shadowRoot!, '', (el) => (el instanceof HTMLVideoElement ? el : null));
@@ -74,6 +78,7 @@ describe('getSlottedElement', () => {
     it('supports predicates returning false', () => {
       const host = createHost();
       const div = document.createElement('div');
+
       host.appendChild(div);
 
       const result = getSlottedElement(host.shadowRoot!, '', (el) => (el instanceof HTMLVideoElement ? el : false));
@@ -84,6 +89,7 @@ describe('getSlottedElement', () => {
     it('works with type guard predicates', () => {
       const host = createHost();
       const video = document.createElement('video');
+
       host.appendChild(video);
 
       const isMedia = (el: Element): el is HTMLMediaElement => el instanceof HTMLMediaElement;
@@ -109,6 +115,7 @@ describe('getSlottedElement', () => {
 
       customElements.define(tagName, TestHost);
       const host = document.createElement(tagName);
+
       document.body.appendChild(host);
       return host;
     }
@@ -116,6 +123,7 @@ describe('getSlottedElement', () => {
     it('finds element in named slot', () => {
       const host = createHostWithNamedSlot();
       const video = document.createElement('video');
+
       video.slot = 'media';
       host.appendChild(video);
 
@@ -127,6 +135,7 @@ describe('getSlottedElement', () => {
     it('ignores elements in other slots', () => {
       const host = createHostWithNamedSlot();
       const video = document.createElement('video');
+
       // No slot attribute - goes to default slot
       host.appendChild(video);
 
@@ -138,6 +147,7 @@ describe('getSlottedElement', () => {
     it('returns null when named slot does not exist', () => {
       const host = createHostWithNamedSlot();
       const video = document.createElement('video');
+
       video.slot = 'nonexistent';
       host.appendChild(video);
 
@@ -163,9 +173,11 @@ describe('getSlottedElement', () => {
 
       customElements.define(tagName, TestHost);
       const host = document.createElement(tagName);
+
       document.body.appendChild(host);
 
       const video = document.createElement('video');
+
       host.appendChild(video);
 
       const result = getSlottedElement(host.shadowRoot!, '', (el) => (el instanceof HTMLVideoElement ? el : null));

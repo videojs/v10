@@ -1,0 +1,24 @@
+@theme inline {
+  --color-media-accent: var(--media-accent-color, oklch(1 0 0));
+  --color-media-accent-text: var(--media-accent-text-color, contrast-color(var(--media-accent-color, oklch(0 0 0))));
+  --color-media-control-hover: var(--media-accent-color, oklch(1 0 0 / 0.1));
+  --font-media: "Inter Variable", Inter, ui-sans-serif, system-ui, sans-serif;
+  --text-media-xs: 0.7em;
+  --text-media-sm: calc(var(--media-spacing) * 2.75);
+  --text-media: calc(var(--media-spacing) * 3.25);
+  --text-media-lg: calc(var(--media-spacing) * 3.75);
+  --spacing-media-icon: var(--media-icon-size, calc(var(--media-spacing) * 4.5));
+  --spacing-media-icon-lg: calc(var(--media-icon-size, calc(var(--media-spacing) * 4.5)) * 1.5);
+  --spacing-media-icon-xl: calc(var(--media-icon-size, calc(var(--media-spacing) * 4.5)) * 2);
+  --radius-media-control: var(--media-control-radius);
+  --radius-media-surface: var(--media-surface-radius);
+}
+
+@utility status-indicator-gradient {
+  background-image: linear-gradient(
+    to bottom,
+    oklch(0 0 0 / 0.35),
+    oklch(0 0 0 / 0.2) calc(var(--media-spacing) * 12),
+    transparent
+  );
+}

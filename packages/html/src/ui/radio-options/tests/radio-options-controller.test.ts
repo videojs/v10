@@ -1,7 +1,7 @@
 import type { RadioOption, RadioOptionsState } from '@videojs/core';
 import { createTranslator } from '@videojs/core/i18n';
 import type { PropertyValues } from '@videojs/element';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { MenuItemIndicatorElement } from '../../menu/menu-item-indicator-element';
 import { MenuRadioGroupElement } from '../../menu/menu-radio-group-element';
@@ -68,6 +68,7 @@ describe('RadioOptionsController', () => {
   it('renders translated options from a template and synchronizes item state', async () => {
     const element = new TestRadioOptionsElement();
     const template = document.createElement('template');
+
     template.innerHTML =
       '<media-menu-radio-item><span data-part="label"></span><media-menu-item-indicator force-mount></media-menu-item-indicator></media-menu-radio-item>';
     element.append(template);
@@ -88,6 +89,7 @@ describe('RadioOptionsController', () => {
   it('falls back to default items for an invalid template', async () => {
     const element = new TestRadioOptionsElement();
     const template = document.createElement('template');
+
     template.innerHTML = '<div class="invalid"></div><div></div>';
     element.append(template);
     document.body.append(element);
@@ -101,6 +103,7 @@ describe('RadioOptionsController', () => {
 
   it('rebuilds specialized content and applies group disabled semantics', async () => {
     const element = new TestRadioOptionsElement();
+
     document.body.append(element);
     await element.updateComplete;
 
@@ -127,6 +130,7 @@ describe('RadioOptionsController', () => {
 
   it('applies native hidden semantics to unavailable groups', async () => {
     const element = new TestRadioOptionsElement();
+
     document.body.append(element);
     await element.updateComplete;
 
@@ -143,6 +147,7 @@ describe('RadioOptionsController', () => {
 
   it('connects and cleans up value-change handling with the host lifecycle', async () => {
     const element = new TestRadioOptionsElement();
+
     document.body.append(element);
     await element.updateComplete;
 

@@ -1,5 +1,6 @@
 import { Select as BaseSelect } from '@base-ui/react/select';
 import clsx from 'clsx';
+
 import Check from '@/assets/icons/check.svg?react';
 import DropdownArrow from '@/assets/icons/dropdown-arrow.svg?react';
 import { twMerge } from '@/utils/twMerge';
@@ -39,7 +40,7 @@ export function Select<T extends string = string>({
         aria-label={ariaLabel}
         data-testid={dataTestId}
       >
-        <BaseSelect.Value className="flex-1 min-w-0 truncate" />
+        <BaseSelect.Value className="min-w-0 flex-1 truncate" />
         &nbsp;
         <BaseSelect.Icon>
           <DropdownArrow width={'1rem'} />

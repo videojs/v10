@@ -1,4 +1,5 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
+
 import {
   createMuxPosterURL,
   createMuxQuery,
@@ -11,6 +12,7 @@ import {
 // like a real JWT, so it survives a query string untouched.
 function fakeJwt(payload: Record<string, unknown>): string {
   const encode = (obj: unknown) => btoa(JSON.stringify(obj)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+
   return `${encode({ alg: 'HS256' })}.${encode(payload)}.`;
 }
 
@@ -38,6 +40,7 @@ describe('createMuxVideoURL', () => {
         playback: { maxResolution: '1080p', renditionOrder: 'desc', extraParam: 'x', skip: undefined },
       })!
     );
+
     expect(url.searchParams.get('max_resolution')).toBe('1080p');
     expect(url.searchParams.get('rendition_order')).toBe('desc');
     expect(url.searchParams.get('extra_param')).toBe('x');
@@ -60,6 +63,7 @@ describe('createMuxVideoURL', () => {
         },
       })!
     );
+
     expect(url.searchParams.get('redundant_streams')).toBe('true');
     expect(url.searchParams.get('roku_trick_play')).toBe('true');
     expect(url.searchParams.get('default_subtitles_lang')).toBe('en-US');
@@ -74,12 +78,14 @@ describe('createMuxVideoURL', () => {
     const url = new URL(
       createMuxVideoURL({ playbackId: 'abc123', playback: { token: 'jwt', maxResolution: '1080p' } })!
     );
+
     expect(url.searchParams.get('token')).toBe('jwt');
     expect(url.searchParams.has('max_resolution')).toBe(false);
   });
 
   it('warns when minResolution exceeds maxResolution', () => {
     const spy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
     createMuxVideoURL({ playbackId: 'abc123', playback: { minResolution: '1080p', maxResolution: '720p' } });
     expect(spy).toHaveBeenCalled();
     spy.mockRestore();
@@ -141,6 +147,7 @@ describe('parseMuxVideoURL', () => {
 
   it('round-trips through createMuxVideoURL', () => {
     const src = 'https://stream.example.com/abc123.m3u8?asset_start_time=3&max_resolution=1080p';
+
     expect(createMuxVideoURL(parseMuxVideoURL(src))).toBe(src);
   });
 });
@@ -188,6 +195,7 @@ describe('createMuxPosterURL', () => {
         },
       })!
     );
+
     expect(url.searchParams.get('time')).toBe('5');
     expect(url.searchParams.get('width')).toBe('640');
     expect(url.searchParams.get('height')).toBe('360');
@@ -202,6 +210,7 @@ describe('createMuxPosterURL', () => {
   it('keeps only the token when one is set', () => {
     const token = fakeJwt({ aud: 't' });
     const url = new URL(createMuxPosterURL({ playbackId: 'abc123', poster: { token, time: 5 } })!);
+
     expect(url.pathname).toBe('/abc123/thumbnail.webp');
     expect(url.searchParams.get('token')).toBe(token);
     expect(url.searchParams.has('time')).toBe(false);
@@ -243,6 +252,7 @@ describe('createMuxStoryboardURL', () => {
   it('keeps only the token when one is set', () => {
     const token = fakeJwt({ aud: 's' });
     const url = new URL(createMuxStoryboardURL({ playbackId: 'abc123', storyboard: { token } })!);
+
     expect(url.pathname).toBe('/abc123/storyboard.vtt');
     expect(url.searchParams.get('token')).toBe(token);
     expect(url.searchParams.has('format')).toBe(false);

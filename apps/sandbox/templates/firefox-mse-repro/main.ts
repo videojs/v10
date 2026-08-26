@@ -1,9 +1,8 @@
 /**
  * Firefox MSE Init Segment Order Reproduction Harness
  *
- * Tests the Firefox bug where appending a video media segment before the
- * audio SourceBuffer has received its initialization segment causes
- * mozHasAudio to be permanently false.
+ * Tests the Firefox bug where appending a video media segment before the audio SourceBuffer has received its
+ * initialization segment causes mozHasAudio to be permanently false.
  */
 
 // ---------------------------------------------------------------------------
@@ -59,6 +58,7 @@ let audioSegIdx = 0;
 
 function log(msg: string, type: 'info' | 'ok' | 'err' | 'warn' | 'sep' = 'info') {
   const el = document.createElement('div');
+
   el.className = type;
   const ts = new Date().toLocaleTimeString('en', {
     hour12: false,
@@ -66,6 +66,7 @@ function log(msg: string, type: 'info' | 'ok' | 'err' | 'warn' | 'sep' = 'info')
     minute: '2-digit',
     second: '2-digit',
   });
+
   el.textContent = `[${ts}] ${msg}`;
   logEl.appendChild(el);
   logEl.scrollTop = logEl.scrollHeight;
@@ -86,11 +87,13 @@ function updateState() {
 
   function boolRow(key: string, val: unknown) {
     if (val === undefined) return row(key, 'n/a', 'val-none');
+
     return row(key, String(val), val ? 'val-true' : 'val-false');
   }
 
   function rangeStr(r: TimeRanges | undefined) {
     if (!r || r.length === 0) return 'empty';
+
     return Array.from({ length: r.length }, (_, i) => `[${r.start(i).toFixed(2)},${r.end(i).toFixed(2)}]`).join(' ');
   }
 
@@ -119,6 +122,7 @@ for (const evt of ['loadedmetadata', 'loadeddata', 'canplay', 'playing', 'waitin
 
 function resolveUrl(url: string, base: string): string {
   if (url.startsWith('http')) return url;
+
   try {
     return new URL(url, base).href;
   } catch {
@@ -137,13 +141,17 @@ function parseMaster(text: string, baseUrl: string) {
 
     if (line.startsWith('#EXT-X-MEDIA:') && /TYPE=AUDIO/.test(line) && !audioUrl) {
       const m = line.match(/URI="([^"]+)"/);
+
       if (m) audioUrl = resolveUrl(m[1]!, baseUrl);
     }
 
     if (line.startsWith('#EXT-X-STREAM-INF:') && !videoUrl) {
       const cm = line.match(/CODECS="([^"]+)"/);
+
       if (cm) codecsAttr = cm[1]!;
+
       const next = lines[i + 1];
+
       if (next && !next.startsWith('#')) videoUrl = resolveUrl(next, baseUrl);
     }
   }
@@ -159,8 +167,10 @@ function parseMedia(text: string, baseUrl: string) {
   for (const line of lines) {
     if (line.startsWith('#EXT-X-MAP:')) {
       const m = line.match(/URI="([^"]+)"/);
+
       if (m) initUrl = resolveUrl(m[1]!, baseUrl);
     }
+
     if (line && !line.startsWith('#')) segmentUrls.push(resolveUrl(line, baseUrl));
   }
 
@@ -171,6 +181,7 @@ function splitCodecs(codecsAttr: string) {
   const parts = codecsAttr.split(',').map((c) => c.trim());
   const video = parts.filter((c) => /^(avc|hvc|vp0|av0)/i.test(c)).join(',');
   const audio = parts.filter((c) => /^(mp4a|ac-3|ec-3|opus)/i.test(c)).join(',');
+
   return { video: video || 'avc1.64001f', audio: audio || 'mp4a.40.2' };
 }
 
@@ -182,13 +193,14 @@ btnParse.addEventListener('click', async () => {
   btnParse.disabled = true;
   log('--- Parsing HLS playlist ---', 'sep');
   const url = urlInput.value.trim();
+
   log(`GET ${url}`);
 
   try {
     const masterText = await fetch(url).then((r) => r.text());
     const { videoUrl, audioUrl, codecsAttr } = parseMaster(masterText, url);
-
     if (!videoUrl) throw new Error('No video rendition found in master playlist');
+
     log(`Video playlist: ${videoUrl}`, 'ok');
     log(`Audio playlist: ${audioUrl || '(none — muxed?)'}`, audioUrl ? 'ok' : 'warn');
 
@@ -201,6 +213,7 @@ btnParse.addEventListener('click', async () => {
     const audioMedia = audioUrl ? parseMedia(audioText, audioUrl) : { initUrl: '', segmentUrls: [] };
 
     const codecs = splitCodecs(codecsAttr);
+
     log(`Video codec: ${codecs.video}`, 'ok');
     log(`Audio codec: ${codecs.audio}`, 'ok');
     log(`Video init: ${videoMedia.initUrl}`, 'ok');
@@ -244,6 +257,7 @@ btnReset.addEventListener('click', () => {
       /* ignore */
     }
   }
+
   video.src = '';
   mediaSource = null;
   videoSB = null;
@@ -252,7 +266,9 @@ btnReset.addEventListener('click', () => {
   audioSegIdx = 0;
   btnVseg.textContent = 'Append Video Seg 1';
   btnAseg.textContent = 'Append Audio Seg 1';
+
   for (const b of [btnMs, btnVsb, btnAsb, btnVinit, btnAinit, btnVseg, btnAseg, btnPlay]) b.disabled = true;
+
   btnParse.disabled = false;
   log('--- Reset ---', 'sep');
   updateState();
@@ -289,15 +305,19 @@ btnMs.addEventListener('click', () => {
 
 function addSB(type: 'video' | 'audio') {
   if (!mediaSource || !info) return;
+
   const mime = type === 'video' ? `video/mp4; codecs="${info.videoCodec}"` : `audio/mp4; codecs="${info.audioCodec}"`;
+
   try {
     const sb = mediaSource.addSourceBuffer(mime);
+
     sb.addEventListener('updateend', updateState);
     sb.addEventListener('error', (e) => {
       log(`${type} SB error: ${e}`, 'err');
       updateState();
     });
     log(`${type} SourceBuffer added: ${mime}`, 'ok');
+
     if (type === 'video') {
       videoSB = sb;
       btnVsb.disabled = true;
@@ -307,6 +327,7 @@ function addSB(type: 'video' | 'audio') {
       btnAsb.disabled = true;
       btnAinit.disabled = false;
     }
+
     updateState();
   } catch (e) {
     log(`Failed addSourceBuffer(${mime}): ${e}`, 'err');
@@ -323,6 +344,7 @@ btnAsb.addEventListener('click', () => addSB('audio'));
 async function append(sb: SourceBuffer, url: string, label: string): Promise<void> {
   log(`Fetching ${label}…`);
   const data = await fetch(url).then((r) => r.arrayBuffer());
+
   log(`${label}: ${data.byteLength} bytes`);
 
   if (sb.updating)
@@ -344,8 +366,10 @@ async function append(sb: SourceBuffer, url: string, label: string): Promise<voi
       sb.removeEventListener('updateend', onEnd);
       sb.removeEventListener('error', onErr);
     };
+
     sb.addEventListener('updateend', onEnd);
     sb.addEventListener('error', onErr);
+
     try {
       sb.appendBuffer(data);
     } catch (e) {
@@ -361,35 +385,44 @@ async function append(sb: SourceBuffer, url: string, label: string): Promise<voi
 
 btnVinit.addEventListener('click', async () => {
   if (!videoSB || !info?.videoInitUrl) return;
+
   btnVinit.disabled = true;
+
   try {
     await append(videoSB, info.videoInitUrl, 'video init');
     btnVseg.disabled = false;
   } catch (e) {
     log(`${e}`, 'err');
   }
+
   updateState();
 });
 
 btnAinit.addEventListener('click', async () => {
   if (!audioSB || !info?.audioInitUrl) return;
+
   btnAinit.disabled = true;
+
   try {
     await append(audioSB, info.audioInitUrl, 'audio init');
     btnAseg.disabled = false;
   } catch (e) {
     log(`${e}`, 'err');
   }
+
   updateState();
 });
 
 btnVseg.addEventListener('click', async () => {
   if (!videoSB || !info) return;
+
   const url = info.videoSegmentUrls[videoSegIdx];
+
   if (!url) {
     log('No more video segments', 'warn');
     return;
   }
+
   try {
     await append(videoSB, url, `video seg ${videoSegIdx + 1}`);
     videoSegIdx++;
@@ -398,16 +431,20 @@ btnVseg.addEventListener('click', async () => {
   } catch (e) {
     log(`${e}`, 'err');
   }
+
   updateState();
 });
 
 btnAseg.addEventListener('click', async () => {
   if (!audioSB || !info) return;
+
   const url = info.audioSegmentUrls[audioSegIdx];
+
   if (!url) {
     log('No more audio segments', 'warn');
     return;
   }
+
   try {
     await append(audioSB, url, `audio seg ${audioSegIdx + 1}`);
     audioSegIdx++;
@@ -416,6 +453,7 @@ btnAseg.addEventListener('click', async () => {
   } catch (e) {
     log(`${e}`, 'err');
   }
+
   updateState();
 });
 
@@ -435,6 +473,7 @@ async function freshSetup(): Promise<void> {
       /* ignore */
     }
   }
+
   video.src = '';
   videoSB = null;
   audioSB = null;
@@ -468,11 +507,14 @@ async function freshSetup(): Promise<void> {
 
 async function runTest(label: string, steps: Array<() => Promise<void>>) {
   for (const b of [btnTestOk, btnTestBad, btnParse, btnReset]) b.disabled = true;
+
   log(`--- ${label} ---`, 'sep');
 
   try {
     await freshSetup();
+
     for (const step of steps) await step();
+
     updateState();
     log(`Test complete — check mozHasAudio above`, 'ok');
     video.play().catch(() => {
@@ -483,11 +525,13 @@ async function runTest(label: string, steps: Array<() => Promise<void>>) {
   }
 
   for (const b of [btnTestOk, btnTestBad, btnParse, btnReset]) b.disabled = false;
+
   btnPlay.disabled = false;
 }
 
 btnTestOk.addEventListener('click', () => {
   if (!info) return;
+
   runTest('CORRECT ORDER: both inits → both segments', [
     () => {
       log('Step 1: append video init');
@@ -510,6 +554,7 @@ btnTestOk.addEventListener('click', () => {
 
 btnTestBad.addEventListener('click', () => {
   if (!info) return;
+
   runTest('BUG ORDER: video init → video seg → audio init → audio seg', [
     () => {
       log('Step 1: append video init');

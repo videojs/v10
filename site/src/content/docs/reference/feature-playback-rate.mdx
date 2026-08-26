@@ -36,13 +36,13 @@ function RateDisplay() {
 
 <FrameworkCase frameworks={["html"]}>
 ```ts title="rate-display.ts"
-import { createPlayer, MediaElement, selectPlaybackRate } from '@videojs/html';
+import { createPlayer, UIElement, selectPlaybackRate } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
 
-const { PlayerController, context } = createPlayer({ features: videoFeatures });
+const { PlayerController } = createPlayer({ features: videoFeatures });
 
-class RateDisplay extends MediaElement {
-  readonly #rate = new PlayerController(this, context, selectPlaybackRate);
+class RateDisplay extends UIElement {
+  readonly #rate = new PlayerController(this, selectPlaybackRate);
 }
 ```
 </FrameworkCase>

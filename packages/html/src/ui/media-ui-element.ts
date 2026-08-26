@@ -7,10 +7,10 @@ import { isFunction } from '@videojs/utils/predicate';
 import { i18nContext } from '../i18n/context';
 import { I18nController } from '../i18n/controller';
 import type { PlayerController } from '../player/player-controller';
-import { MediaElement } from './media-element';
+import { UIElement } from './ui-element';
 
 /** Abstract base for HTML custom elements that display media state with data attributes. */
-export abstract class MediaUIElement<Core extends MediaUIComponent> extends MediaElement {
+export abstract class MediaUIElement<Core extends MediaUIComponent> extends UIElement {
   readonly #i18n = new I18nController(this, i18nContext);
 
   protected abstract readonly core: Core;
@@ -29,18 +29,21 @@ export abstract class MediaUIElement<Core extends MediaUIComponent> extends Medi
     super.update(changed);
 
     const media = this.mediaState.value;
-
     if (!media) return;
 
     this.core.setMedia(media);
     const state = this.core.getState();
+
     if (isFunction(this.core.getAttrs)) {
       const attrs = this.core.getAttrs(state) as Record<string, unknown>;
+
       if (isText(attrs['aria-label'])) {
         attrs['aria-label'] = translateText(attrs['aria-label'], this.#i18n.value);
       }
+
       applyElementProps(this, attrs);
     }
+
     applyStateDataAttrs(this, state, this.stateAttrMap);
   }
 }

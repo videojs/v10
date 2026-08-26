@@ -2,8 +2,8 @@ import { getActionContext } from 'astro:actions';
 import { defineMiddleware } from 'astro:middleware';
 import type { JWTPayload } from 'jose';
 import { jwtVerify } from 'jose';
-import type { OAuthResponse } from '@/utils/auth';
 
+import type { OAuthResponse } from '@/utils/auth';
 import { getJWKS, INACTIVITY_EXPIRY, refreshToken, SESSION_COOKIE_NAME, seal, unseal } from '@/utils/auth';
 
 /** JWT payload structure from the OAuth ID token */
@@ -32,17 +32,12 @@ function isGated(actionName: string | undefined) {
 /**
  * Middleware to validate and refresh user sessions on every request
  *
- * Flow:
- * 1. Checks for session cookie and decrypts it
- * 2. Verifies access token validity using JWKS
- * 3. If expired, refreshes the token automatically
- * 4. Validates ID token and extracts user information
- * 5. Populates context.locals with user data and access token
+ * Flow: 1. Checks for session cookie and decrypts it 2. Verifies access token validity using JWKS 3. If expired,
+ * refreshes the token automatically 4. Validates ID token and extracts user information 5. Populates context.locals
+ * with user data and access token
  *
- * Security notes:
- * - Access tokens are verified against the OAuth server's JWKS
- * - Expired or invalid sessions are automatically cleared
- * - Access tokens SHOULD only be available server-side (context.locals)
+ * Security notes: - Access tokens are verified against the OAuth server's JWKS - Expired or invalid sessions are
+ * automatically cleared - Access tokens SHOULD only be available server-side (context.locals)
  */
 export const onRequest = defineMiddleware(async (context, next) => {
   // Middleware runs during build AND runtime. We only care about running this at runtime.

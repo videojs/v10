@@ -1,0 +1,31 @@
+<video-player>
+  <media-container class="html-status-announcer-basic">
+    <video src="{{VJS10_DEMO_VIDEO_MP4}}" muted playsinline></video>
+    <p class="html-status-announcer-basic__instructions">These controls announce status changes to screen readers.</p>
+    <div class="html-status-announcer-basic__controls">
+      <media-play-button class="html-status-announcer-basic__button">
+        <span class="show-when-paused">Play</span>
+        <span class="show-when-playing">Pause</span>
+        <span class="show-when-ended">Replay</span>
+      </media-play-button>
+      <media-mute-button class="html-status-announcer-basic__button">
+        <span class="show-when-muted">Unmute</span>
+        <span class="show-when-unmuted">Mute</span>
+      </media-mute-button>
+      <media-volume-slider class="html-status-announcer-basic__volume-slider">
+        <media-slider-track class="html-status-announcer-basic__track">
+          <media-slider-fill class="html-status-announcer-basic__fill"></media-slider-fill>
+        </media-slider-track>
+        <media-slider-thumb class="html-status-announcer-basic__thumb"></media-slider-thumb>
+      </media-volume-slider>
+    </div>
+    <media-time-slider class="html-status-announcer-basic__time-slider">
+      <media-slider-track class="html-status-announcer-basic__track">
+        <media-slider-buffer class="html-status-announcer-basic__buffer"></media-slider-buffer>
+        <media-slider-fill class="html-status-announcer-basic__fill"></media-slider-fill>
+      </media-slider-track>
+      <media-slider-thumb class="html-status-announcer-basic__thumb"></media-slider-thumb>
+    </media-time-slider>
+    <media-status-announcer class="html-status-announcer-basic__announcer"></media-status-announcer>
+  </media-container>
+</video-player>

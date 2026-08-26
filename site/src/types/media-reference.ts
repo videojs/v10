@@ -15,6 +15,13 @@ export const MediaEventDefSchema = z.object({
 
 const MediaTargetTagSchema = z.enum(['video', 'audio', 'iframe']);
 
+export const EngineOptionDefSchema = z.object({
+  name: z.string(),
+  type: z.string(),
+  detailedType: z.string().optional(),
+  description: z.string().optional(),
+});
+
 const HtmlMediaReferenceSchema = z.object({
   target: MediaTargetTagSchema,
   attributes: z.object({
@@ -43,12 +50,15 @@ export const MediaReferenceSchema = z.object({
   name: z.string(),
   tagName: z.string(),
   mediaType: z.enum(['video', 'audio']),
+  /** Options accepted under `source.engine`, keyed by engine name. */
+  engineOptions: z.record(z.string(), z.array(EngineOptionDefSchema)).optional(),
   platforms: z.object({
     html: HtmlMediaReferenceSchema,
     react: ReactMediaReferenceSchema.optional(),
   }),
 });
 
+export type EngineOptionDef = z.infer<typeof EngineOptionDefSchema>;
 export type HostPropertyDef = z.infer<typeof HostPropertyDefSchema>;
 export type MediaEventDef = z.infer<typeof MediaEventDefSchema>;
 export type MediaTargetTag = z.infer<typeof MediaTargetTagSchema>;

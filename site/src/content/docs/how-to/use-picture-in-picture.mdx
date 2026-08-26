@@ -1,0 +1,166 @@
+---
+title: 'Use picture-in-picture'
+description: 'Pop the video into a floating window, with availability detection and state that tracks every entry path.'
+---
+
+import Demo from '@/components/docs/demos/Demo.astro';
+import DocsLink from '@/components/docs/DocsLink.astro';
+import CustomUiNote from '@/components/docs/CustomUiNote.astro';
+import FrameworkCase from '@/components/docs/FrameworkCase.astro';
+import StyleCase from '@/components/docs/StyleCase.astro';
+
+{/* React demos */}
+import BasicUsageDemoReact from '@/components/docs/demos/pip-button/react/css/BasicUsage';
+import basicUsageReactTsx from '@/components/docs/demos/pip-button/react/css/BasicUsage.tsx?raw';
+import basicUsageReactCss from '@/components/docs/demos/pip-button/react/css/BasicUsage.css?raw';
+
+{/* HTML demos */}
+import BasicUsageDemoHtml from '@/components/docs/demos/pip-button/html/css/BasicUsage.astro';
+import basicUsageHtml from '@/components/docs/demos/pip-button/html/css/BasicUsage.html?raw';
+import basicUsageHtmlCss from '@/components/docs/demos/pip-button/html/css/BasicUsage.css?raw';
+import basicUsageHtmlTs from '@/components/docs/demos/pip-button/html/css/BasicUsage.ts?raw';
+
+Pop the video into a floating always-on-top window so it keeps playing while the user does something else.
+
+<CustomUiNote />
+
+## Recommended approach
+
+Add a <DocsLink slug="reference/pip-button">PiPButton</DocsLink>. It requests and exits picture-in-picture, reflects the current state, and renders nothing when picture-in-picture is unsupported.
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
+      { title: "App.css", code: basicUsageReactCss, lang: "css" },
+    ]}>
+      <BasicUsageDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "index.html", code: basicUsageHtml, lang: "html" },
+      { title: "index.css", code: basicUsageHtmlCss, lang: "css" },
+      { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
+    ]}>
+      <BasicUsageDemoHtml />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+## How it works
+
+The <DocsLink slug="reference/feature-pip">picture-in-picture feature</DocsLink> puts three things in player state.
+
+`pip` is `true` while the video is in a floating window. It tracks every way in and out — your button, the native controls, or a control the browser adds on its own.
+
+`pipAvailability` answers "can I offer this?" It starts as `'unavailable'`. Once the feature attaches to a media element, it settles to `'available'` or `'unsupported'`.
+
+`requestPictureInPicture()`, `exitPictureInPicture()`, and `togglePictureInPicture()` change the presentation. If the browser blocks a request, the returned promise rejects. In a browser with no picture-in-picture API, the actions resolve without changing anything.
+
+Picture-in-picture and fullscreen are exclusive: requesting one exits the other first.
+
+## Availability and constraints
+
+- Show picture-in-picture controls only when `pipAvailability` is `'available'`. PiPButton handles this for you.
+- Requests must come from a user gesture; browsers reject requests outside one.
+- Firefox 153 (July 2026) added the programmatic picture-in-picture API. Earlier versions, including Firefox ESR 140, report `'unsupported'` even though they offer their own built-in picture-in-picture toggle to users.
+- On iOS, picture-in-picture is supported on iPhone and iPad through the WebKit presentation mode; the player handles this path for you.
+- The browser owns the floating window: its size, position, and built-in controls aren't yours to style.
+- The user can close the window or return the video at any time. React to `pip` state instead of assuming your button is the only entry and exit.
+
+## Common variations
+
+### Request picture-in-picture from app logic
+
+Enter picture-in-picture when the user scrolls the player out of view or navigates within your app. This still requires a recent user gesture in most browsers, so tie it to an interaction:
+
+<FrameworkCase frameworks={["react"]}>
+
+```tsx
+import { Container } from '@videojs/react';
+import { usePlayer, Video, VideoPlayer } from '@videojs/react/video';
+
+function WatchElsewhereButton() {
+  const store = usePlayer();
+
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        store.requestPictureInPicture().catch(() => {
+          // Rejected: no video data yet, or blocked by the browser.
+        });
+      }}
+    >
+      Keep watching while you browse
+    </button>
+  );
+}
+
+export default function App() {
+  return (
+    <VideoPlayer>
+      <Container>
+        <Video src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4" muted playsInline />
+        <WatchElsewhereButton />
+      </Container>
+    </VideoPlayer>
+  );
+}
+```
+
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+
+```html
+<video-player>
+  <media-container>
+    <video src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4" muted playsinline></video>
+  </media-container>
+</video-player>
+<button type="button" id="watch-elsewhere">Keep watching while you browse</button>
+<script type="module">
+  import '@videojs/html/video/player';
+
+  document.querySelector('#watch-elsewhere').addEventListener('click', () => {
+    const video = document.querySelector('video');
+    if (typeof video.requestPictureInPicture !== 'function') return; // Unsupported.
+    video.requestPictureInPicture().catch(() => {
+      // Rejected: no video data yet, or blocked by the browser.
+    });
+  });
+</script>
+```
+
+</FrameworkCase>
+
+## Troubleshooting
+
+### The picture-in-picture button doesn't render
+
+`pipAvailability` is `'unsupported'` — the browser has no programmatic picture-in-picture API (Firefox before 153), or the media isn't a video.
+
+### The request rejects
+
+The video has no data yet (wait for it to be ready), the call wasn't tied to a user gesture, or the browser blocked it. Handle the rejection rather than assuming entry succeeded.
+
+### State is wrong after the user closes the floating window
+
+Read `pip` from player state instead of tracking entry and exit yourself; it stays in sync with every path in and out of picture-in-picture.
+
+## Related components
+
+- <DocsLink slug="reference/pip-button">PiP button</DocsLink>
+
+## Related API
+
+- <DocsLink slug="reference/feature-pip">Picture-in-picture feature</DocsLink>
+
+## Related guides
+
+- <DocsLink slug="how-to/go-fullscreen-and-lock-orientation">Go fullscreen and lock orientation</DocsLink>
+- <DocsLink slug="how-to/cast-to-airplay-and-chromecast">Cast to AirPlay and Chromecast</DocsLink>

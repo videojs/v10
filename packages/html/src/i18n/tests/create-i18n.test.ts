@@ -1,7 +1,7 @@
 import * as coreI18n from '@videojs/core/i18n';
 import { registerI18n, resetBrowserTranslationCacheForTesting, resetI18nRegistry } from '@videojs/core/i18n';
 import { ReactiveElement } from '@videojs/element';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { createI18n } from '../../i18n/create-i18n';
 import { MediaI18nProviderElement, MediaTextElement } from '../../i18n/index';
@@ -12,6 +12,7 @@ describe('createI18n (HTML)', () => {
     resetBrowserTranslationCacheForTesting();
     document.body.innerHTML = '';
     document.documentElement.removeAttribute('lang');
+    document.documentElement.removeAttribute('dir');
     await Promise.resolve();
     await Promise.resolve();
     vi.restoreAllMocks();
@@ -20,17 +21,69 @@ describe('createI18n (HTML)', () => {
   it('media-i18n uses explicit lang for registry copy', async () => {
     registerI18n('fr', { 'buttons.play': 'Lire' });
     const provider = new MediaI18nProviderElement();
+
     provider.setAttribute('lang', 'fr');
     document.body.appendChild(provider);
     await Promise.resolve();
     expect(provider.getAttribute('lang')).toBe('fr');
   });
 
+  it('derives direction from the resolved locale', async () => {
+    const provider = new MediaI18nProviderElement();
+
+    provider.lang = 'ar';
+    document.body.appendChild(provider);
+    await provider.updateComplete;
+
+    expect(provider.dir).toBe('rtl');
+
+    provider.lang = 'en';
+    await provider.updateComplete;
+    expect(provider.dir).toBe('ltr');
+  });
+
+  it('preserves an explicit direction', async () => {
+    const provider = new MediaI18nProviderElement();
+
+    provider.lang = 'ar';
+    provider.dir = 'ltr';
+    document.body.appendChild(provider);
+    await provider.updateComplete;
+
+    expect(provider.dir).toBe('ltr');
+  });
+
+  it('inherits ambient language and direction without adding a direction', async () => {
+    document.documentElement.lang = 'ar';
+    document.documentElement.dir = 'ltr';
+    const provider = new MediaI18nProviderElement();
+
+    document.body.appendChild(provider);
+    await provider.updateComplete;
+
+    expect(provider.hasAttribute('lang')).toBe(false);
+    expect(provider.hasAttribute('dir')).toBe(false);
+  });
+
+  it('clears a derived direction when its explicit language is removed', async () => {
+    const provider = new MediaI18nProviderElement();
+
+    provider.lang = 'ar';
+    document.body.appendChild(provider);
+    await provider.updateComplete;
+
+    provider.lang = '';
+    await provider.updateComplete;
+    expect(provider.dir).toBe('');
+  });
+
   it('media-text translates text content inside provider', async () => {
     registerI18n('de', { 'buttons.play': 'Los' });
     const provider = new MediaI18nProviderElement();
+
     provider.setAttribute('lang', 'de');
     const text = new MediaTextElement();
+
     text.setAttribute('token', 'buttons.play');
     text.textContent = 'Play';
     provider.appendChild(text);
@@ -43,8 +96,10 @@ describe('createI18n (HTML)', () => {
   it('media-text resolves a token with inline English fallback', async () => {
     registerI18n('de', { 'buttons.play': 'Los' });
     const provider = new MediaI18nProviderElement();
+
     provider.setAttribute('lang', 'de');
     const text = new MediaTextElement();
+
     text.setAttribute('token', 'buttons.play');
     text.textContent = 'Play';
     provider.appendChild(text);
@@ -56,6 +111,7 @@ describe('createI18n (HTML)', () => {
 
   it('media-text keeps text content when no translation exists', async () => {
     const text = new MediaTextElement();
+
     text.textContent = 'Fallback label';
     document.body.appendChild(text);
     await text.updateComplete;
@@ -65,8 +121,10 @@ describe('createI18n (HTML)', () => {
   it('media-text stores source text before translating', async () => {
     registerI18n('de', { 'buttons.play': 'Los' });
     const provider = new MediaI18nProviderElement();
+
     provider.setAttribute('lang', 'de');
     const text = new MediaTextElement();
+
     text.setAttribute('token', 'buttons.play');
     text.textContent = 'Play';
     provider.appendChild(text);
@@ -77,8 +135,10 @@ describe('createI18n (HTML)', () => {
 
   it('media-text falls back to text content when phrase is missing', async () => {
     const provider = new MediaI18nProviderElement();
+
     provider.setAttribute('lang', 'de');
     const text = new MediaTextElement();
+
     text.textContent = 'Fallback label';
     provider.appendChild(text);
     document.body.appendChild(provider);
@@ -88,6 +148,7 @@ describe('createI18n (HTML)', () => {
 
   it('media-text falls back to text content without a provider', async () => {
     const text = new MediaTextElement();
+
     text.textContent = 'Fallback label';
     document.body.appendChild(text);
     await text.updateComplete;
@@ -96,6 +157,7 @@ describe('createI18n (HTML)', () => {
 
   it('media-text is empty without text content', async () => {
     const text = new MediaTextElement();
+
     document.body.appendChild(text);
     await text.updateComplete;
     expect(text.textContent).toBe('');
@@ -106,6 +168,7 @@ describe('createI18n (HTML)', () => {
     document.documentElement.lang = 'es';
     const provider = new MediaI18nProviderElement();
     const text = new MediaTextElement();
+
     text.setAttribute('token', 'buttons.play');
     text.textContent = 'Play';
     provider.appendChild(text);
@@ -121,6 +184,7 @@ describe('createI18n (HTML)', () => {
     document.documentElement.lang = 'x-test-de';
     const provider = new MediaI18nProviderElement();
     const text = new MediaTextElement();
+
     text.setAttribute('token', 'buttons.play');
     text.textContent = 'Play';
     provider.appendChild(text);
@@ -138,10 +202,13 @@ describe('createI18n (HTML)', () => {
     const { ProviderMixin, TextMixin } = createI18n({
       loader: async (tag) => {
         if (tag === 'x-test-lazy-de') return { 'buttons.play': 'BuiltinDe' };
+
         if (tag === 'x-test-lazy-fr') return { 'buttons.play': 'BuiltinFr' };
+
         return undefined;
       },
     });
+
     class LazyAmbientProvider extends ProviderMixin(ReactiveElement) {}
     class LazyAmbientText extends TextMixin(ReactiveElement) {}
     customElements.define('i18n-lazy-ambient-provider', LazyAmbientProvider);
@@ -150,6 +217,7 @@ describe('createI18n (HTML)', () => {
     document.documentElement.lang = 'x-test-lazy-de';
     const provider = new LazyAmbientProvider();
     const text = new LazyAmbientText();
+
     text.setAttribute('token', 'buttons.play');
     text.textContent = 'Play';
     provider.appendChild(text);
@@ -168,8 +236,10 @@ describe('createI18n (HTML)', () => {
     registerI18n('de', { 'buttons.play': 'Los' });
     registerI18n('fr', { 'buttons.play': 'Lire' });
     const provider = new MediaI18nProviderElement();
+
     provider.setAttribute('lang', 'de');
     const text = new MediaTextElement();
+
     text.setAttribute('token', 'buttons.play');
     text.textContent = 'Play';
     provider.appendChild(text);
@@ -187,10 +257,13 @@ describe('createI18n (HTML)', () => {
     const { ProviderMixin, TextMixin } = createI18n({
       loader: async (tag) => {
         if (tag === 'en') return { 'buttons.play': 'BuiltinEn' };
+
         if (tag === 'de') return { 'buttons.play': 'BuiltinDe' };
+
         return undefined;
       },
     });
+
     class DriftProvider extends ProviderMixin(ReactiveElement) {}
     class DriftText extends TextMixin(ReactiveElement) {}
     customElements.define('i18n-drift-p', DriftProvider);
@@ -199,6 +272,7 @@ describe('createI18n (HTML)', () => {
     document.documentElement.lang = 'en';
     const provider = new DriftProvider();
     const text = new DriftText();
+
     text.setAttribute('token', 'buttons.play');
     text.textContent = 'Play';
     provider.appendChild(text);
@@ -213,6 +287,7 @@ describe('createI18n (HTML)', () => {
     registerI18n('de', { 'buttons.play': 'Los' });
     const { ProviderMixin: AProvider, TextMixin: AText } = createI18n();
     const { TextMixin: BText } = createI18n();
+
     class SharedProvider extends AProvider(ReactiveElement) {}
     class SharedTextA extends AText(ReactiveElement) {}
     class SharedTextB extends BText(ReactiveElement) {}
@@ -221,9 +296,11 @@ describe('createI18n (HTML)', () => {
     customElements.define('i18n-shared-text-b', SharedTextB);
 
     const provider = new SharedProvider();
+
     provider.setAttribute('lang', 'de');
     const textSame = new SharedTextA();
     const textOther = new SharedTextB();
+
     textSame.setAttribute('token', 'buttons.play');
     textOther.setAttribute('token', 'buttons.play');
     textSame.textContent = 'Play';
@@ -239,6 +316,7 @@ describe('createI18n (HTML)', () => {
 
   it('I18nController falls back to English without provider', async () => {
     const { context, I18nController: Ctor } = createI18n();
+
     class Probe extends ReactiveElement {
       readonly #i18n = new Ctor(this, context);
       override connectedCallback(): void {
@@ -248,6 +326,7 @@ describe('createI18n (HTML)', () => {
     }
     customElements.define('i18n-probe-fallback', Probe);
     const el = new Probe();
+
     document.body.appendChild(el);
     await Promise.resolve();
     expect(el.textContent).toBe('Play');
@@ -255,6 +334,7 @@ describe('createI18n (HTML)', () => {
 
   it('I18nController refreshes fallback English when the registry changes', async () => {
     const { context, I18nController: Ctor } = createI18n();
+
     class Probe extends ReactiveElement {
       readonly #i18n = new Ctor(this, context);
       protected override updated(): void {
@@ -263,6 +343,7 @@ describe('createI18n (HTML)', () => {
     }
     customElements.define('i18n-probe-fallback-registry', Probe);
     const el = new Probe();
+
     document.body.appendChild(el);
     await el.updateComplete;
     expect(el.textContent).toBe('Play');
@@ -276,22 +357,26 @@ describe('createI18n (HTML)', () => {
 
   it('I18nController keeps fallback translator stable until the registry changes', async () => {
     const { context, I18nController: Ctor } = createI18n();
+
     class Probe extends ReactiveElement {
       readonly i18n = new Ctor(this, context);
     }
     customElements.define('i18n-probe-fallback-stability', Probe);
     const el = new Probe();
+
     document.body.appendChild(el);
     await el.updateComplete;
 
     const first = el.i18n.value;
     const second = el.i18n.value;
+
     expect(second).toBe(first);
 
     registerI18n('en', { 'buttons.play': 'RegistryPlay' });
     await el.updateComplete;
 
     const third = el.i18n.value;
+
     expect(third).not.toBe(first);
     expect(third('buttons.play')).toBe('RegistryPlay');
   });
@@ -305,6 +390,7 @@ describe('createI18n (HTML)', () => {
     } = createI18n({
       loader: async (tag) => (tag === 'x-stable' ? { 'buttons.pause': 'LazyPause' } : undefined),
     });
+
     class StableProvider extends ProviderMixin(ReactiveElement) {}
     class Probe extends ReactiveElement {
       readonly i18n = new Ctor(this, context);
@@ -313,6 +399,7 @@ describe('createI18n (HTML)', () => {
     customElements.define('i18n-stable-provider-probe', Probe);
     const provider = new StableProvider();
     const probe = new Probe();
+
     provider.setAttribute('lang', 'x-stable');
     provider.appendChild(probe);
     document.body.appendChild(provider);
@@ -322,6 +409,7 @@ describe('createI18n (HTML)', () => {
     });
 
     const first = probe.i18n.value;
+
     provider.requestUpdate();
     await provider.updateComplete;
     await probe.updateComplete;
@@ -336,8 +424,47 @@ describe('createI18n (HTML)', () => {
     });
   });
 
+  it('keeps regional registry overrides above lazy parent packs and refreshes them after mount', async () => {
+    registerI18n('de-DE', { 'buttons.play': 'CustomPlay' });
+    const { ProviderMixin, TextMixin } = createI18n({
+      loader: async (tag) =>
+        tag === 'de' ? { 'buttons.play': 'BuiltinPlay', 'buttons.pause': 'BuiltinPause' } : undefined,
+    });
+
+    class RegionalProvider extends ProviderMixin(ReactiveElement) {}
+    class RegionalText extends TextMixin(ReactiveElement) {}
+    customElements.define('i18n-regional-provider', RegionalProvider);
+    customElements.define('i18n-regional-text', RegionalText);
+
+    const provider = new RegionalProvider();
+
+    provider.lang = 'de-DE';
+    const play = new RegionalText();
+
+    play.setAttribute('token', 'buttons.play');
+    play.textContent = 'Play';
+    const pause = new RegionalText();
+
+    pause.setAttribute('token', 'buttons.pause');
+    pause.textContent = 'Pause';
+    provider.append(play, pause);
+    document.body.appendChild(provider);
+
+    await vi.waitFor(() => {
+      expect(play.textContent).toBe('CustomPlay');
+      expect(pause.textContent).toBe('BuiltinPause');
+    });
+
+    registerI18n('de-DE', { 'buttons.pause': 'CustomPause' });
+
+    await vi.waitFor(() => {
+      expect(pause.textContent).toBe('CustomPause');
+    });
+  });
+
   it('keeps media-text fallback English without a provider when the registry changes', async () => {
     const text = new MediaTextElement();
+
     text.textContent = 'Play';
     document.body.appendChild(text);
     await text.updateComplete;
@@ -352,8 +479,10 @@ describe('createI18n (HTML)', () => {
     vi.spyOn(coreI18n, 'getBrowserTranslations').mockResolvedValue({ 'buttons.play': 'BrowserPlay' });
 
     const provider = new MediaI18nProviderElement();
+
     provider.setAttribute('lang', 'xx');
     const text = new MediaTextElement();
+
     text.setAttribute('token', 'buttons.play');
     text.textContent = 'Play';
     provider.appendChild(text);
@@ -369,8 +498,10 @@ describe('createI18n (HTML)', () => {
     const getBrowserTranslations = vi.spyOn(coreI18n, 'getBrowserTranslations');
 
     const provider = new MediaI18nProviderElement();
+
     provider.setAttribute('lang', 'fr');
     const text = new MediaTextElement();
+
     text.setAttribute('token', 'buttons.play');
     text.textContent = 'Play';
     provider.appendChild(text);
@@ -390,14 +521,17 @@ describe('createI18n (HTML)', () => {
     const { ProviderMixin, TextMixin } = createI18n({
       loader: async (tag) => (tag === 'fr' ? { 'buttons.play': 'Lire' } : undefined),
     });
+
     class PartialProvider extends ProviderMixin(ReactiveElement) {}
     class PartialText extends TextMixin(ReactiveElement) {}
     customElements.define('i18n-partial-provider', PartialProvider);
     customElements.define('i18n-partial-text', PartialText);
 
     const provider = new PartialProvider();
+
     provider.setAttribute('lang', 'fr');
     const text = new PartialText();
+
     text.setAttribute('token', 'menu.settings');
     text.textContent = 'Settings';
     provider.appendChild(text);
@@ -420,6 +554,7 @@ describe('createI18n (HTML)', () => {
     const registerI18nSpy = vi.spyOn(coreI18n, 'registerI18n');
 
     const provider = new MediaI18nProviderElement();
+
     provider.setAttribute('lang', 'xx');
     document.body.appendChild(provider);
 

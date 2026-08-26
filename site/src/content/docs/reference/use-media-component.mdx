@@ -1,0 +1,31 @@
+---
+title: useMediaComponent
+description: Hook that registers a media component with the current Player media host
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+
+## Import
+
+```tsx
+import { useMediaComponent } from "@videojs/react";
+```
+
+## Usage
+
+Pass a media component class from a component rendered inside `Player`.
+
+```tsx
+import { MuxData as MuxDataComponent } from "@videojs/media/dom/mux";
+import { useMediaComponent } from "@videojs/react";
+
+function CustomMuxData() {
+  useMediaComponent(MuxDataComponent);
+
+  return null;
+}
+```
+
+The hook creates one instance, follows media changes, and destroys the component on unmount. A plain `<video>` element is not a media-component host, so registration is skipped for it.
+
+<UtilReference util="useMediaComponent" />

@@ -1,8 +1,12 @@
 import { flush } from '@videojs/store';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import type { UIKeyboardEvent, UIPointerEvent } from '../event';
 import { createSlider, type SliderApi, type SliderOptions } from '../slider';
+
+afterEach(() => {
+  document.documentElement.removeAttribute('dir');
+});
 
 // --- Helpers ---
 
@@ -32,7 +36,6 @@ function createOptions(overrides: Partial<SliderOptions> = {}): SliderOptions {
   return {
     getElement: () => createMockElement(),
     getOrientation: () => 'horizontal',
-    isRTL: () => false,
     isDisabled: () => false,
     getPercent: () => 50,
     getStepPercent: () => 1,
@@ -169,6 +172,7 @@ describe('createSlider', () => {
 
     it('focuses thumb element when getThumbElement is provided', () => {
       const thumb = document.createElement('div');
+
       thumb.focus = vi.fn();
 
       const slider = createSlider(createOptions({ getThumbElement: () => thumb }));
@@ -184,6 +188,7 @@ describe('createSlider', () => {
       const slider = createSlider(createOptions());
 
       const event = pointerEvent();
+
       slider.rootProps.onPointerDown(event);
 
       expect(event.preventDefault).toHaveBeenCalled();
@@ -195,6 +200,7 @@ describe('createSlider', () => {
       const slider = createSlider(createOptions({ isDisabled: () => true }));
 
       const event = pointerEvent();
+
       slider.rootProps.onPointerDown(event);
 
       expect(event.preventDefault).not.toHaveBeenCalled();
@@ -217,12 +223,24 @@ describe('createSlider', () => {
   });
 
   describe('pointer: drag', () => {
-    it('starts drag immediately on pointerdown', () => {
+    it('starts drag after the pointer moves past the threshold', () => {
       const onDragStart = vi.fn();
       const el = createMockElement({ left: 0, width: 200 });
       const slider = createSlider(createOptions({ getElement: () => el, onDragStart }));
 
       slider.rootProps.onPointerDown(pointerEvent({ clientX: 50 }));
+      flush();
+
+      expect(slider.input.current.dragging).toBe(false);
+      expect(onDragStart).not.toHaveBeenCalled();
+
+      firePointerMove(slider, { clientX: 52 });
+      flush();
+
+      expect(slider.input.current.dragging).toBe(false);
+      expect(onDragStart).not.toHaveBeenCalled();
+
+      firePointerMove(slider, { clientX: 54 });
       flush();
 
       expect(slider.input.current.dragging).toBe(true);
@@ -345,7 +363,7 @@ describe('createSlider', () => {
       flush();
 
       expect(slider.input.current.pointing).toBe(true);
-      expect(onDragEnd).toHaveBeenCalledOnce();
+      expect(onDragEnd).not.toHaveBeenCalled();
 
       slider.destroy();
     });
@@ -371,14 +389,14 @@ describe('createSlider', () => {
       slider.destroy();
     });
 
-    it('resets dragging and pointing on lostpointercapture after pointerdown', () => {
+    it('clears pointing without ending a drag after a click', () => {
       const onDragEnd = vi.fn();
       const el = createMockElement({ left: 0, width: 200 });
       const slider = createSlider(createOptions({ getElement: () => el, onDragEnd }));
 
       slider.rootProps.onPointerDown(pointerEvent({ clientX: 50 }));
       flush();
-      expect(slider.input.current.dragging).toBe(true);
+      expect(slider.input.current.dragging).toBe(false);
       expect(slider.input.current.pointing).toBe(true);
 
       fireLostPointerCapture(slider);
@@ -386,7 +404,7 @@ describe('createSlider', () => {
 
       expect(slider.input.current.dragging).toBe(false);
       expect(slider.input.current.pointing).toBe(false);
-      expect(onDragEnd).toHaveBeenCalledOnce();
+      expect(onDragEnd).not.toHaveBeenCalled();
 
       slider.destroy();
     });
@@ -499,6 +517,7 @@ describe('createSlider', () => {
       );
 
       const event = keyboardEvent('ArrowRight');
+
       slider.thumbProps.onKeyDown(event);
 
       expect(onValueChange).toHaveBeenCalledWith(51);
@@ -635,6 +654,7 @@ describe('createSlider', () => {
       const slider = createSlider(createOptions());
 
       const event = keyboardEvent('ArrowRight');
+
       slider.thumbProps.onKeyDown(event);
 
       expect(event.preventDefault).toHaveBeenCalled();
@@ -647,6 +667,7 @@ describe('createSlider', () => {
       const slider = createSlider(createOptions({ onValueChange }));
 
       const event = keyboardEvent('Tab');
+
       slider.thumbProps.onKeyDown(event);
 
       expect(event.preventDefault).not.toHaveBeenCalled();
@@ -687,48 +708,39 @@ describe('createSlider', () => {
     });
   });
 
-  describe('keyboard: RTL', () => {
-    it('flips ArrowRight to decrement in RTL', () => {
+  describe('keyboard in an RTL document', () => {
+    it('keeps ArrowRight increasing', () => {
       const onValueChange = vi.fn();
-      const slider = createSlider(
-        createOptions({
-          isRTL: () => true,
-          getPercent: () => 50,
-          getStepPercent: () => 1,
-          onValueChange,
-        })
-      );
+
+      document.documentElement.dir = 'rtl';
+      const slider = createSlider(createOptions({ getPercent: () => 50, getStepPercent: () => 1, onValueChange }));
 
       slider.thumbProps.onKeyDown(keyboardEvent('ArrowRight'));
-
-      expect(onValueChange).toHaveBeenCalledWith(49);
-
-      slider.destroy();
-    });
-
-    it('flips ArrowLeft to increment in RTL', () => {
-      const onValueChange = vi.fn();
-      const slider = createSlider(
-        createOptions({
-          isRTL: () => true,
-          getPercent: () => 50,
-          getStepPercent: () => 1,
-          onValueChange,
-        })
-      );
-
-      slider.thumbProps.onKeyDown(keyboardEvent('ArrowLeft'));
 
       expect(onValueChange).toHaveBeenCalledWith(51);
 
       slider.destroy();
     });
 
-    it('does not flip ArrowUp/ArrowDown in RTL', () => {
+    it('keeps ArrowLeft decreasing', () => {
       const onValueChange = vi.fn();
+
+      document.documentElement.dir = 'rtl';
+      const slider = createSlider(createOptions({ getPercent: () => 50, getStepPercent: () => 1, onValueChange }));
+
+      slider.thumbProps.onKeyDown(keyboardEvent('ArrowLeft'));
+
+      expect(onValueChange).toHaveBeenCalledWith(49);
+
+      slider.destroy();
+    });
+
+    it('keeps ArrowUp and ArrowDown unchanged', () => {
+      const onValueChange = vi.fn();
+
+      document.documentElement.dir = 'rtl';
       const slider = createSlider(
         createOptions({
-          isRTL: () => true,
           getPercent: () => 50,
           getStepPercent: () => 1,
           onValueChange,
@@ -752,6 +764,7 @@ describe('createSlider', () => {
       const slider = createSlider(createOptions({ isDisabled: () => true, onValueChange }));
 
       const arrowEvent = keyboardEvent('ArrowRight');
+
       slider.thumbProps.onKeyDown(arrowEvent);
 
       expect(onValueChange).not.toHaveBeenCalled();
@@ -764,6 +777,7 @@ describe('createSlider', () => {
       const slider = createSlider(createOptions({ isDisabled: () => true }));
 
       const tabEvent = keyboardEvent('Tab');
+
       slider.thumbProps.onKeyDown(tabEvent);
 
       expect(tabEvent.preventDefault).not.toHaveBeenCalled();
@@ -824,34 +838,17 @@ describe('createSlider', () => {
     });
   });
 
-  describe('orientation: vertical + RTL', () => {
-    it('ignores RTL for vertical orientation', () => {
-      const el = createMockElement({ top: 0, height: 100 });
-      const slider = createSlider(
-        createOptions({ getElement: () => el, getOrientation: () => 'vertical', isRTL: () => true })
-      );
-
-      slider.rootProps.onPointerDown(pointerEvent({ clientY: 25 }));
-      flush();
-
-      // Same result as vertical + LTR — RTL has no effect.
-      expect(slider.input.current.pointerPercent).toBe(75);
-
-      slider.destroy();
-    });
-  });
-
-  describe('RTL pointer', () => {
-    it('flips horizontal percent for RTL', () => {
+  describe('pointer in an RTL document', () => {
+    it('keeps horizontal percent chronological', () => {
       const el = createMockElement({ left: 0, width: 200 });
-      const slider = createSlider(createOptions({ getElement: () => el, isRTL: () => true }));
 
-      // RTL: right = 0%, left = 100%
-      // clientX=50, rect.right=200 → (200-50)/200 = 75%
+      el.dir = 'rtl';
+      const slider = createSlider(createOptions({ getElement: () => el }));
+
       slider.rootProps.onPointerDown(pointerEvent({ clientX: 50 }));
       flush();
 
-      expect(slider.input.current.pointerPercent).toBe(75);
+      expect(slider.input.current.pointerPercent).toBe(25);
 
       slider.destroy();
     });

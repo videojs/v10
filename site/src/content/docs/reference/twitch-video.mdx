@@ -1,0 +1,118 @@
+---
+title: TwitchVideo
+frameworkTitle:
+  html: twitch-video
+description: Video component that plays Twitch videos and live channels through the Twitch embed player
+---
+
+import MediaReference from "@/components/docs/api-reference/MediaReference.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+import StyleCase from "@/components/docs/StyleCase.astro";
+import Demo from "@/components/docs/demos/Demo.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+
+{/* React demos */}
+import BasicUsageDemoReact from "@/components/docs/demos/twitch-video/react/css/BasicUsage";
+import basicUsageReactTsx from "@/components/docs/demos/twitch-video/react/css/BasicUsage.tsx?raw";
+import basicUsageReactCss from "@/components/docs/demos/twitch-video/react/css/BasicUsage.css?raw";
+
+{/* HTML demos */}
+import BasicUsageDemoHtml from "@/components/docs/demos/twitch-video/html/css/BasicUsage.astro";
+import basicUsageHtml from "@/components/docs/demos/twitch-video/html/css/BasicUsage.html?raw";
+import basicUsageHtmlCss from "@/components/docs/demos/twitch-video/html/css/BasicUsage.css?raw";
+import basicUsageHtmlTs from "@/components/docs/demos/twitch-video/html/css/BasicUsage.ts?raw";
+
+The [Twitch embed player](https://dev.twitch.tv/docs/embed/video-and-clips/) handles both recorded videos and live channels. Its own chrome stays hidden by default, so it drops into a <DocsLink slug="concepts/skins">player skin</DocsLink> like any other media component; set `controls` to use Twitch's UI instead.
+
+## Load a source
+
+`src` takes a video URL (`twitch.tv/videos/<id>`) or a channel URL (`twitch.tv/<channel>`), with or without the `www.` and `go.` hosts. A channel URL plays the channel's live stream. Clips (`clips.twitch.tv`) are a different embed and aren't supported.
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<TwitchVideo src="https://www.twitch.tv/videos/106400740" />
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```html
+<twitch-video src="https://www.twitch.tv/videos/106400740"></twitch-video>
+```
+</FrameworkCase>
+
+## Live channels
+
+A channel embed behaves like a live media component:
+
+- `duration` reports `Infinity` while the stream is live.
+- Seeking is unavailable: the embed exposes no DVR window.
+- The stream going away and coming back dispatch `offline` and `online` events.
+- `loop` never repeats a channel; a live stream doesn't end.
+
+## Parent hostnames
+
+Twitch checks the embedding page's ancestors against a `parent` allowlist and won't play unless the current page is on it. The element always includes your page's own hostname, so a plain embed needs no setup. When your player is itself framed by other hostnames, name each of them under `engine.twitch.parent`:
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<TwitchVideo
+  source={{
+    src: 'https://www.twitch.tv/videos/106400740',
+    engine: { twitch: { parent: ['embed.example.com'] } },
+  }}
+/>
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```ts
+const video = document.querySelector('twitch-video');
+video.source = {
+  src: 'https://www.twitch.tv/videos/106400740',
+  engine: { twitch: { parent: ['embed.example.com'] } },
+};
+```
+</FrameworkCase>
+
+## Behavior
+
+- Volume and mute both work, like a native `<video>`.
+- `playbackRate` is reported but never applied: the embed has no rate command.
+- `loop` restarts a finished video from the top; the embed has no loop parameter.
+- `controls` is read when the embed is built; changing it later doesn't take effect, since rebuilding the iframe would lose the playback session.
+- Fullscreen targets the iframe, so Twitch's own chrome shows in fullscreen.
+
+## Examples
+
+### Basic Usage
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
+      { title: "App.css", code: basicUsageReactCss, lang: "css" },
+    ]}>
+      <BasicUsageDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "index.html", code: basicUsageHtml, lang: "html" },
+      { title: "index.css", code: basicUsageHtmlCss, lang: "css" },
+      { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
+    ]}>
+      <BasicUsageDemoHtml />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<MediaReference media="TwitchVideo">
+  <Fragment slot="engine-twitch">
+    Pass [Twitch embed parameters](https://dev.twitch.tv/docs/embed/video-and-clips/) under `source.engine.twitch`, spelled exactly as Twitch spells them, plus anything Twitch adds next. <DocsLink slug="concepts/media-sources">Media Sources</DocsLink> covers how engine options fit into a structured source.
+
+    `controls`, `autoplay`, and `muted` come from the props of the same name, and the video or channel comes from `src`, so none of those have an `engine.twitch` spelling.
+  </Fragment>
+</MediaReference>

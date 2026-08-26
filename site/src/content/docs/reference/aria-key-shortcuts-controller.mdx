@@ -1,0 +1,34 @@
+---
+title: AriaKeyShortcutsController
+description: Reactive controller that exposes registered hotkey shortcut metadata
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+
+## Import
+
+```ts
+import { AriaKeyShortcutsController } from "@videojs/html";
+```
+
+## Usage
+
+Create the controller on a reactive element inside a player container. It follows the container's hotkey registrations and requests a host update when they change.
+
+```ts
+class CustomPlayButton extends UIElement {
+  readonly #shortcut = new AriaKeyShortcutsController(this, "togglePaused");
+
+  get ariaKeyShortcuts() {
+    return this.#shortcut.aria;
+  }
+
+  get shortcutLabel() {
+    return this.#shortcut.shortcut;
+  }
+}
+```
+
+Use `aria` for the element's `aria-keyshortcuts` value and `shortcut` for display text. Both are `undefined` until the matching action has a registered shortcut.
+
+<UtilReference util="AriaKeyShortcutsController" />

@@ -1,5 +1,5 @@
 import { ShakaVideo } from '../../media/shaka-video';
-import { safeDefine } from '../safe-define';
+import { safeDefine } from '../../registration/safe-define';
 
 export class ShakaVideoElement extends ShakaVideo {
   static readonly tagName = 'shaka-video';

@@ -1,0 +1,21 @@
+<video-player class="html-error-dialog-basic">
+  <media-container class="html-error-dialog-basic__container">
+    <video
+      class="html-error-dialog-basic__video"
+      src="{{VJS10_DEMO_VIDEO_MP4}}"
+      autoplay
+      muted
+      playsinline
+      loop
+    ></video>
+    <button class="html-error-dialog-basic__trigger" type="button">Trigger a playback error</button>
+    <media-error-dialog>
+      <media-dialog-backdrop class="html-error-dialog-basic__backdrop"></media-dialog-backdrop>
+      <media-dialog-popup class="html-error-dialog-basic__dialog">
+        <media-dialog-title class="html-error-dialog-basic__title"></media-dialog-title>
+        <media-dialog-description class="html-error-dialog-basic__description"></media-dialog-description>
+        <media-dialog-close class="html-error-dialog-basic__close"></media-dialog-close>
+      </media-dialog-popup>
+    </media-error-dialog>
+  </media-container>
+</video-player>

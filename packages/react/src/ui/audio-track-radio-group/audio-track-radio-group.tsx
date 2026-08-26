@@ -24,8 +24,7 @@ export interface AudioTrackRadioGroupItemProps extends Omit<MenuRadioItemProps, 
 }
 
 export interface AudioTrackRadioGroupProps
-  extends Omit<UIComponentProps<'div', AudioTrackRadioGroupCore.State>, 'children'>,
-    AudioTrackOptionsProps {
+  extends Omit<UIComponentProps<'div', AudioTrackRadioGroupCore.State>, 'children'>, AudioTrackOptionsProps {
   /** Render one consumer-owned menu radio item for every audio track. */
   renderItem: (props: AudioTrackRadioGroupItemProps, state: AudioTrackRadioGroupItemState) => ReactElement;
 }
@@ -34,16 +33,16 @@ export interface AudioTrackRadioGroupProps
  * Renders menu radio options for the player's audio tracks.
  *
  * @example
- * ```tsx
- * <AudioTrackRadioGroup
- *   renderItem={(props, item) => (
- *     <Menu.RadioItem {...props}>
- *       {item.label}
- *       <Menu.ItemIndicator checked={item.checked} />
- *     </Menu.RadioItem>
- *   )}
- * />
- * ```
+ *   ```tsx
+ *   <AudioTrackRadioGroup
+ *     renderItem={(props, item) => (
+ *       <Menu.RadioItem {...props}>
+ *         {item.label}
+ *         <Menu.ItemIndicator checked={item.checked} />
+ *       </Menu.RadioItem>
+ *     )}
+ *   />;
+ *   ```;
  */
 export const AudioTrackRadioGroup = forwardRef<HTMLDivElement, AudioTrackRadioGroupProps>(
   function AudioTrackRadioGroup(componentProps, forwardedRef) {

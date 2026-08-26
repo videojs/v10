@@ -4,9 +4,9 @@ import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
-import { MediaElement } from '../media-element';
+import { UIElement } from '../ui-element';
 
-export class BufferingIndicatorElement extends MediaElement {
+export class BufferingIndicatorElement extends UIElement {
   static readonly tagName = 'media-buffering-indicator';
 
   static override properties = {
@@ -22,6 +22,7 @@ export class BufferingIndicatorElement extends MediaElement {
 
   override connectedCallback(): void {
     super.connectedCallback();
+
     if (this.destroyed) return;
 
     this.#disconnect = new AbortController();
@@ -50,7 +51,6 @@ export class BufferingIndicatorElement extends MediaElement {
     super.update(changed);
 
     const media = this.#state.value;
-
     if (!media) return;
 
     this.#core.update(media);

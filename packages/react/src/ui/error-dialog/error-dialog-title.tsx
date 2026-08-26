@@ -1,20 +1,21 @@
-import type { AlertDialogCore } from '@videojs/core';
-import { getErrorDialogTitleText } from '@videojs/core';
+import { type DialogCore, getErrorDialogTitleText } from '@videojs/core';
 import { translateText } from '@videojs/core/i18n';
 import { forwardRef, type ReactNode } from 'react';
+
 import { useTranslator } from '../../i18n/context';
 import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
-import { useAlertDialogContext } from '../alert-dialog/context';
+import { useDialogContext } from '../dialog/context';
 
-export interface ErrorDialogTitleProps extends UIComponentProps<'h2', AlertDialogCore.State> {}
+export interface ErrorDialogTitleProps extends UIComponentProps<'h2', DialogCore.State> {}
 
+/** Renders the localized error dialog heading, or authored children when provided. */
 export const ErrorDialogTitle = forwardRef<HTMLHeadingElement, ErrorDialogTitleProps>(function ErrorDialogTitle(
   { render, className, style, children, ...elementProps },
   forwardedRef
 ) {
   const t = useTranslator();
-  const { state, stateAttrMap } = useAlertDialogContext();
+  const { state, stateAttrMap } = useDialogContext();
   const content: ReactNode = children ?? translateText(getErrorDialogTitleText(), t);
 
   return renderElement(
@@ -31,5 +32,5 @@ export const ErrorDialogTitle = forwardRef<HTMLHeadingElement, ErrorDialogTitleP
 
 export namespace ErrorDialogTitle {
   export type Props = ErrorDialogTitleProps;
-  export type State = AlertDialogCore.State;
+  export type State = DialogCore.State;
 }

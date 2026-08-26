@@ -40,13 +40,13 @@ function ControlsOverlay({ children }: { children: React.ReactNode }) {
 
 <FrameworkCase frameworks={["html"]}>
 ```ts title="controls-overlay.ts"
-import { createPlayer, MediaElement, selectControls } from '@videojs/html';
+import { createPlayer, UIElement, selectControls } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
 
-const { PlayerController, context } = createPlayer({ features: videoFeatures });
+const { PlayerController } = createPlayer({ features: videoFeatures });
 
-class ControlsOverlay extends MediaElement {
-  readonly #controls = new PlayerController(this, context, selectControls);
+class ControlsOverlay extends UIElement {
+  readonly #controls = new PlayerController(this, selectControls);
 }
 ```
 </FrameworkCase>

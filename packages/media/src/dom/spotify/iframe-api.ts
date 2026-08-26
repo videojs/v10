@@ -68,6 +68,7 @@ export function loadSpotifyIframeApi(): Promise<SpotifyIframeApi> {
     // The script exposes the API through this global as it evaluates and fires it exactly once, so the callback has to
     // be in place before the tag is added, and taking the global over means passing the API on to whoever had it.
     const hostReady = globals.onSpotifyIframeApiReady;
+
     globals.onSpotifyIframeApiReady = (api) => {
       // Resolve first: a host callback that throws must not strand this load.
       resolve(api);

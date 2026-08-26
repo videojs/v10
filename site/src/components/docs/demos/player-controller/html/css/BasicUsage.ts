@@ -2,27 +2,22 @@ import {
   applyElementProps,
   createButton,
   createPlayer,
-  MediaElement,
-  PlayerController,
   selectPlayback,
   selectTime,
   selectVolume,
+  UIElement,
 } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
-import '@videojs/html/media/container';
+import '@videojs/html/ui/container';
 
-const { ProviderMixin, context } = createPlayer({
+const { PlayerElement: DemoPlayerElement, PlayerController } = createPlayer({
   features: videoFeatures,
 });
 
-class DemoPlayer extends ProviderMixin(MediaElement) {
-  static readonly tagName = 'demo-ctrl-player';
-}
-
-class PlayerActions extends MediaElement {
+class PlayerActions extends UIElement {
   static readonly tagName = 'demo-ctrl-actions';
 
-  readonly #player = new PlayerController(this, context);
+  readonly #player = new PlayerController(this);
 
   #disconnect: AbortController | null = null;
 
@@ -37,6 +32,7 @@ class PlayerActions extends MediaElement {
 
     const bind = (el: HTMLElement, action: () => void) => {
       const props = createButton({ onActivate: action, isDisabled: () => !this.#player.value });
+
       applyElementProps(el, props, { signal });
     };
 
@@ -52,27 +48,29 @@ class PlayerActions extends MediaElement {
   }
 }
 
-class PlayerState extends MediaElement {
+class PlayerState extends UIElement {
   static readonly tagName = 'demo-ctrl-state';
 
-  readonly #playback = new PlayerController(this, context, selectPlayback);
-  readonly #time = new PlayerController(this, context, selectTime);
-  readonly #volume = new PlayerController(this, context, selectVolume);
+  readonly #playback = new PlayerController(this, selectPlayback);
+  readonly #time = new PlayerController(this, selectTime);
+  readonly #volume = new PlayerController(this, selectVolume);
 
   protected override update(changed: Map<string, unknown>): void {
     super.update(changed);
     const playback = this.#playback.value;
     const time = this.#time.value;
     const volume = this.#volume.value;
+
     if (!playback) return;
 
     const el = this.querySelector('.text');
+
     if (el) {
       el.textContent = `Paused: ${playback.paused ? 'Yes' : 'No'} | Time: ${(time?.currentTime ?? 0).toFixed(1)}s | Volume: ${Math.round((volume?.volume ?? 0) * 100)}%`;
     }
   }
 }
 
-customElements.define(DemoPlayer.tagName, DemoPlayer);
+customElements.define('demo-ctrl-player', DemoPlayerElement);
 customElements.define(PlayerActions.tagName, PlayerActions);
 customElements.define(PlayerState.tagName, PlayerState);

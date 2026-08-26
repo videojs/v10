@@ -1,5 +1,5 @@
+import { safeDefine } from '../../registration/safe-define';
 import { ThumbnailElement } from '../../ui/thumbnail/thumbnail-element';
-import { safeDefine } from '../safe-define';
 
 safeDefine(ThumbnailElement);
 

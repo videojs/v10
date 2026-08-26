@@ -1,0 +1,115 @@
+---
+title: VolumePopover
+frameworkTitle:
+  html: media-volume-popover
+description: A volume-aware popover that keeps mute available when volume level controls are unavailable
+---
+
+import ComponentReference from "@/components/docs/api-reference/ComponentReference.astro";
+import ComponentImports from "@/components/docs/api-reference/ComponentImports.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+import StyleCase from "@/components/docs/StyleCase.astro";
+import Demo from "@/components/docs/demos/Demo.astro";
+
+{/* React demos */}
+import BasicUsageDemoReact from "@/components/docs/demos/volume-popover/react/css/BasicUsage";
+import basicUsageReactTsx from "@/components/docs/demos/volume-popover/react/css/BasicUsage.tsx?raw";
+import basicUsageReactCss from "@/components/docs/demos/volume-popover/react/css/BasicUsage.css?raw";
+
+{/* HTML demos */}
+import BasicUsageDemoHtml from "@/components/docs/demos/volume-popover/html/css/BasicUsage.astro";
+import basicUsageHtml from "@/components/docs/demos/volume-popover/html/css/BasicUsage.html?raw";
+import basicUsageHtmlCss from "@/components/docs/demos/volume-popover/html/css/BasicUsage.css?raw";
+import basicUsageHtmlTs from "@/components/docs/demos/volume-popover/html/css/BasicUsage.ts?raw";
+
+## Import
+
+<ComponentImports component="VolumePopover" html="volume-popover" />
+
+## Anatomy
+
+<FrameworkCase frameworks={["react"]}>
+  ```tsx
+  <VolumePopover.Root>
+    <VolumePopover.Trigger render={<MuteButton />} />
+    <VolumePopover.Popup>
+      <VolumeSlider.Root />
+    </VolumePopover.Popup>
+  </VolumePopover.Root>
+  ```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  ```html
+  <media-mute-button commandfor="volume-popup"></media-mute-button>
+  <media-volume-popover id="volume-popup">
+    <media-volume-slider></media-volume-slider>
+  </media-volume-popover>
+  ```
+</FrameworkCase>
+
+## Behavior
+
+`VolumePopover` combines <DocsLink slug="reference/popover">popover behavior</DocsLink> with volume availability. When volume level controls are unavailable, it closes and omits the popup while keeping the mute trigger rendered. This lets media with fixed volume keep mute control without exposing a nonfunctional slider.
+
+The HTML trigger can target the popup with `commandfor`. An immediately adjacent trigger is linked automatically when neither element has an authored ID.
+
+## Styling
+
+The popup reflects `data-availability="available"` while it can render volume controls. HTML also receives native `hidden` and `data-hidden` when it cannot.
+
+<FrameworkCase frameworks={["html"]}>
+```css
+media-volume-popover[data-open] {
+  opacity: 1;
+}
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+React renders the popup as a standard `<div>`. Add a `className` to select it:
+
+```css
+.volume-popup[data-open] {
+  opacity: 1;
+}
+```
+</FrameworkCase>
+
+## Accessibility
+
+The trigger receives `aria-haspopup`, `aria-expanded`, and `aria-controls` while the volume popup is available. When only mute is available, the trigger keeps the mute button's own accessible name and behavior without popup ARIA.
+
+## Examples
+
+### Basic usage
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo
+      files={[
+        { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
+        { title: "App.css", code: basicUsageReactCss, lang: "css" },
+      ]}
+    >
+      <BasicUsageDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  <StyleCase styles={["css"]}>
+    <Demo
+      files={[
+        { title: "index.html", code: basicUsageHtml, lang: "html" },
+        { title: "index.css", code: basicUsageHtmlCss, lang: "css" },
+        { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
+      ]}
+    >
+      <BasicUsageDemoHtml />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<ComponentReference component="VolumePopover" />

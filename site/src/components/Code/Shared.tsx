@@ -1,6 +1,7 @@
 import clsx from 'clsx';
 import type { BundledLanguage, Highlighter } from 'shiki';
 import { hastToHtml } from 'shiki';
+
 import { shared } from '@/components/typography/styles';
 import { shikiNotationTransformers } from '@/utils/shikiNotationTransformers';
 
@@ -41,11 +42,14 @@ function highlight(code: string, lang: BundledLanguage, highlighter: Highlighter
   // since we want to define pre and code ourselves, let's extract the text
   let preProps: Record<string, unknown> = {};
   let codeProps: Record<string, unknown> = {};
+
   if (hast.type === 'root') {
     const pre = hast.children[0];
+
     if (pre && pre.type === 'element' && pre.tagName === 'pre') {
       preProps = pre.properties;
       const codeNode = pre.children[0];
+
       if (codeNode && codeNode.type === 'element' && codeNode.tagName === 'code') {
         codeProps = codeNode.properties;
         // everything looked as expected! Let's use the code's children as the new root
@@ -59,6 +63,7 @@ function highlight(code: string, lang: BundledLanguage, highlighter: Highlighter
     preClassName: preProps.class as string | undefined,
     codeClassName: codeProps.class as string | undefined,
   };
+
   highlightCache.set(cacheKey, result);
   return result;
 }

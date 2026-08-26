@@ -1,0 +1,125 @@
+---
+title: VimeoVideo
+frameworkTitle:
+  html: vimeo-video
+description: Video component that plays Vimeo videos and live events through the Vimeo player
+---
+
+import MediaReference from "@/components/docs/api-reference/MediaReference.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+import StyleCase from "@/components/docs/StyleCase.astro";
+import Demo from "@/components/docs/demos/Demo.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+
+{/* React demos */}
+import BasicUsageDemoReact from "@/components/docs/demos/vimeo-video/react/css/BasicUsage";
+import basicUsageReactTsx from "@/components/docs/demos/vimeo-video/react/css/BasicUsage.tsx?raw";
+import basicUsageReactCss from "@/components/docs/demos/vimeo-video/react/css/BasicUsage.css?raw";
+
+{/* HTML demos */}
+import BasicUsageDemoHtml from "@/components/docs/demos/vimeo-video/html/css/BasicUsage.astro";
+import basicUsageHtml from "@/components/docs/demos/vimeo-video/html/css/BasicUsage.html?raw";
+import basicUsageHtmlCss from "@/components/docs/demos/vimeo-video/html/css/BasicUsage.css?raw";
+import basicUsageHtmlTs from "@/components/docs/demos/vimeo-video/html/css/BasicUsage.ts?raw";
+
+Of the embed-backed media components, the [Vimeo player SDK](https://developer.vimeo.com/player/sdk) comes closest to a native `<video>`: volume, mute, playback rate, seeking, looping, and picture-in-picture all work, and the embed pushes real events instead of being polled. Vimeo's own chrome stays hidden by default, so it drops into a <DocsLink slug="concepts/skins">player skin</DocsLink> like any other media component; set `controls` to use Vimeo's UI instead.
+
+## Load a source
+
+`src` takes a numeric video id or a Vimeo URL. Watch (`vimeo.com/<id>`), embed (`player.vimeo.com/video/<id>`), and event (`vimeo.com/event/<id>`) URLs all work.
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<VimeoVideo src="https://vimeo.com/76979871" />
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```html
+<vimeo-video src="https://vimeo.com/76979871"></vimeo-video>
+```
+</FrameworkCase>
+
+Collection URLs aren't supported: channels, showcases, albums, groups, on-demand pages, and user-scoped paths carry no id the player can load. Link to a specific video instead. `#t=` fragments are ignored as well; use `engine.vimeo.start_time` to start partway in.
+
+## Unlisted videos
+
+An unlisted video needs the hash Vimeo issues alongside its id. Pass it the way Vimeo writes it, either as a trailing path segment or as an `h` parameter:
+
+```
+https://vimeo.com/76979871/abc123def
+https://vimeo.com/76979871?h=abc123def
+```
+
+Both reach the embed as its `h` parameter. When a URL carries the hash in both places, the `h` parameter wins.
+
+## Live events
+
+A `vimeo.com/event/<id>` URL plays that event through Vimeo's event embed, and its unlisted hash becomes a path segment rather than a parameter. The media reports no stream type or live window, so a player skin renders it with the same controls as an on-demand video rather than a live UI.
+
+## Behavior
+
+- Fullscreen goes through the Vimeo player, so Vimeo's own fullscreen chrome appears and the player reports the state back.
+- Captions round-trip by name only: the embed's track list appears in `textTracks` and selecting one enables it, but no cues cross over. Vimeo draws captions inside the iframe.
+- `poster` has no effect. The embed shows its own thumbnail, which `engine.vimeo.thumbnail_id` picks.
+- `playbackRate` is limited to Vimeo's supported range, 0.5 through 2.
+- `playsInline` and `preload` are read when the embed URL is built, so changing them later doesn't take effect.
+- The video's Vimeo title arrives as content data, so a player skin can show it without fetching anything yourself.
+
+## Examples
+
+### Basic Usage
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
+      { title: "App.css", code: basicUsageReactCss, lang: "css" },
+    ]}>
+      <BasicUsageDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "index.html", code: basicUsageHtml, lang: "html" },
+      { title: "index.css", code: basicUsageHtmlCss, lang: "css" },
+      { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
+    ]}>
+      <BasicUsageDemoHtml />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<MediaReference media="VimeoVideo">
+  <Fragment slot="engine-vimeo">
+    Pass [Vimeo embed parameters](https://developer.vimeo.com/player/sdk/embed) under `source.engine.vimeo`, spelled exactly as Vimeo spells them. <DocsLink slug="concepts/media-sources">Media Sources</DocsLink> covers how engine options fit into a structured source.
+
+    These options are typed from Vimeo's own SDK, so your editor completes every parameter and rejects one Vimeo doesn't have. That also means the list covers Vimeo's oEmbed API alongside the player: `id` and `url` both override the video `src` names, and `width`, `height`, `maxwidth`, `maxheight`, and `responsive` size an oEmbed response rather than this element. Pass the video through `src`, and size the element with CSS.
+
+    `autoplay`, `controls`, `loop`, `muted`, `playsinline`, and `preload` come from the props of the same name. Setting them here overrides the prop, which is worth knowing when a value seems to be ignored. The element also sends `transparent: false`, where Vimeo's default is `true`.
+
+    <FrameworkCase frameworks={["react"]}>
+    ```tsx
+    <VimeoVideo
+      source={{
+        src: 'https://vimeo.com/76979871',
+        engine: { vimeo: { color: 'f03e3e', start_time: 30, speed: true } },
+      }}
+    />
+    ```
+    </FrameworkCase>
+
+    <FrameworkCase frameworks={["html"]}>
+    ```ts
+    const video = document.querySelector('vimeo-video');
+    video.source = {
+      src: 'https://vimeo.com/76979871',
+      engine: { vimeo: { color: 'f03e3e', start_time: 30, speed: true } },
+    };
+    ```
+    </FrameworkCase>
+  </Fragment>
+</MediaReference>

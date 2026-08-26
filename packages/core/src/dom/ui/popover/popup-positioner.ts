@@ -3,6 +3,7 @@ import {
   getAnchorNames,
   getPositionedSide,
   type InlineStyleSnapshot,
+  isRTL,
   observeResize,
   rafThrottle,
   restoreInlineStyles,
@@ -10,7 +11,8 @@ import {
   supportsAnchorPositioning,
 } from '@videojs/utils/dom';
 import { kebabCase } from '@videojs/utils/string';
-import { PopoverCSSVars } from '../../../core/ui/popover/popover-css-vars';
+
+import { PopoverCSSVars } from '../../../core/ui/popover/vars';
 import { isEventWithinElement } from '../../utils/event';
 import { getPositioningBoundaryRect, type PositioningBoundary, resolvePositioningBoundary } from '../../utils/layout';
 import {
@@ -29,6 +31,8 @@ export interface PopupPositionerOptions {
   boundary?: PositioningBoundary;
   container?: Element | null;
   cssVars?: PositioningCSSVars;
+  /** Whether popup size changes should trigger repositioning. */
+  trackResize?: boolean;
   onSideChange?: (side: PositioningOptions['side']) => void;
 }
 
@@ -87,10 +91,12 @@ export class PopupPositioner {
       previous.trigger !== trigger ||
       previous.popup !== popup ||
       (previous.cssVars ?? PopoverCSSVars) !== cssVars ||
+      previous.trackResize !== options.trackResize ||
       this.#boundaryElement !== boundaryElement;
 
     if (trackingChanged) {
       if (previous?.popup) this.#restorePopupStyles(previous.popup);
+
       this.#stopTracking();
       this.#options = { ...options, cssVars };
       this.#boundaryElement = boundaryElement;
@@ -104,7 +110,9 @@ export class PopupPositioner {
 
   cleanup(): void {
     if (!this.#options) return;
+
     if (this.#options.popup) this.#restorePopupStyles(this.#options.popup);
+
     this.#stopTracking();
     this.#options = null;
     this.#boundaryElement = null;
@@ -121,8 +129,12 @@ export class PopupPositioner {
     window.addEventListener('scroll', this.#schedule, { capture: true, passive: true, signal });
     window.addEventListener('resize', this.#schedule, { signal });
 
-    const resizeTargets: Element[] = [options.trigger, options.popup];
+    const resizeTargets: Element[] = [options.trigger];
+
+    if (options.trackResize !== false) resizeTargets.push(options.popup);
+
     if (this.#boundaryElement) resizeTargets.push(this.#boundaryElement);
+
     this.#stopObservingResize = observeResize(resizeTargets, () => this.#schedule());
   }
 
@@ -146,7 +158,9 @@ export class PopupPositioner {
     const options = this.#options;
     if (!options?.position || !options.trigger || !options.popup) return;
 
-    const triggerRect = options.trigger.getBoundingClientRect();
+    const trigger = options.trigger;
+    const triggerRect = trigger.getBoundingClientRect();
+
     const boundaryRect = getPositioningBoundaryRect(this.#boundaryElement);
     const offsets = resolveOffsets(options.popup, options.cssVars);
     const preferredPosition = options.position;
@@ -155,7 +169,7 @@ export class PopupPositioner {
       const side = getPositionedSide(triggerRect, popupRect, boundaryRect, preferredPosition, offsets);
       const { positionAnchor: _, ...style } = getAnchorPositionStyle(
         options.anchorName,
-        { ...preferredPosition, side },
+        { ...preferredPosition, side, direction: isRTL(trigger) ? 'rtl' : 'ltr' },
         triggerRect,
         anchorSupported ? undefined : popupRect,
         boundaryRect,
@@ -179,7 +193,9 @@ export class PopupPositioner {
     if (popupRect.width === position.popupRect.width && popupRect.height === position.popupRect.height) return;
 
     const nextPosition = getPosition(popupRect);
+
     applyStyles(options.popup, nextPosition.style);
+
     if (nextPosition.side !== position.side) options.onSideChange(nextPosition.side);
   }
 
@@ -199,6 +215,7 @@ export class PopupPositioner {
 
   #restorePopupStyles(popup: HTMLElement): void {
     if (!this.#popupStyles) return;
+
     restoreInlineStyles(popup, this.#popupStyles);
     this.#popupStyles = null;
   }
@@ -208,11 +225,14 @@ export class PopupPositioner {
 
     const generatedName = `--${anchorName}`;
     const triggerAnchor = this.#readStyle(trigger, 'anchor-name');
+
     this.#popupAnchor = this.#readStyle(popup, 'position-anchor');
 
     const names = getAnchorNames(trigger);
+
     this.#triggerAnchorName = generatedName;
     this.#triggerAnchorAdded = !names.includes(generatedName);
+
     if (this.#triggerAnchorAdded) names.push(generatedName);
 
     trigger.style.setProperty('anchor-name', names.join(', '), triggerAnchor.priority);
@@ -226,9 +246,12 @@ export class PopupPositioner {
     if (this.#triggerAnchorName && this.#triggerAnchorAdded) {
       const current = this.#readStyle(options.trigger, 'anchor-name');
       const names = getAnchorNames(options.trigger).filter((name) => name !== this.#triggerAnchorName);
+
       this.#writeStyle(options.trigger, 'anchor-name', { value: names.join(', '), priority: current.priority });
     }
+
     if (this.#popupAnchor) this.#writeStyle(options.popup, 'position-anchor', this.#popupAnchor);
+
     this.#triggerAnchorName = null;
     this.#triggerAnchorAdded = false;
     this.#popupAnchor = null;
@@ -236,6 +259,7 @@ export class PopupPositioner {
 
   #readStyle(element: HTMLElement, prop: string): InlineStyleValue {
     const name = prop.startsWith('--') ? prop : kebabCase(prop);
+
     return {
       value: element.style.getPropertyValue(name),
       priority: element.style.getPropertyPriority(name),
@@ -244,6 +268,7 @@ export class PopupPositioner {
 
   #writeStyle(element: HTMLElement, prop: string, style: InlineStyleValue): void {
     const name = prop.startsWith('--') ? prop : kebabCase(prop);
+
     if (style.value) {
       element.style.setProperty(name, style.value, style.priority);
     } else {

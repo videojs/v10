@@ -18,6 +18,7 @@ export class AbortControllerRegistry {
     for (const controller of this.#keys.values()) {
       controller.abort();
     }
+
     this.#keys.clear();
   }
 
@@ -32,6 +33,7 @@ export class AbortControllerRegistry {
   supersede(key: SignalKey): AbortSignal {
     this.#keys.get(key)?.abort();
     const controller = new AbortController();
+
     this.#keys.set(key, controller);
     return anyAbortSignal([this.base, controller.signal]);
   }

@@ -1,6 +1,6 @@
 import { cleanup, render, screen } from '@testing-library/react';
 import { registerI18n, resetI18nRegistry } from '@videojs/core/i18n';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { createI18n, I18nProvider } from '../../../i18n';
 import { createPlayerWrapper } from '../../../testing/mocks';

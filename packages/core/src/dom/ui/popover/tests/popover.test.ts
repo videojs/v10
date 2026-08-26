@@ -1,5 +1,6 @@
 import { flush } from '@videojs/store';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
+
 import { createPopupGroup } from '../popup-group';
 import { createTestPopover } from './popover-helpers';
 
@@ -10,6 +11,7 @@ function nextFrame(): Promise<void> {
 describe('createPopover', () => {
   it('starts closed', () => {
     const { popover } = createTestPopover();
+
     expect(popover.input.current).toEqual({ active: false, status: 'idle' });
   });
 
@@ -175,6 +177,7 @@ describe('createPopover', () => {
         finishAnimation = resolve;
       });
       const getAnimations = vi.fn(() => [{ finished }] as unknown as Animation[]);
+
       Object.defineProperty(popup, 'getAnimations', { value: getAnimations });
       popover.setPopupElement(popup);
 
@@ -215,6 +218,7 @@ describe('createPopover', () => {
     it('does not open on click when trigger is aria-disabled', () => {
       const { popover, onOpenChange } = createTestPopover();
       const trigger = document.createElement('button');
+
       trigger.setAttribute('aria-disabled', 'true');
       popover.setTriggerElement(trigger);
 
@@ -256,6 +260,7 @@ describe('createPopover', () => {
       const matchMedia = vi.fn(() => ({
         matches: false,
       }));
+
       vi.stubGlobal('matchMedia', matchMedia);
 
       const { popover, onOpenChange } = createTestPopover({
@@ -274,6 +279,7 @@ describe('createPopover', () => {
       const matchMedia = vi.fn(() => ({
         matches: false,
       }));
+
       vi.stubGlobal('matchMedia', matchMedia);
 
       const { popover, onOpenChange } = createTestPopover({
@@ -291,6 +297,7 @@ describe('createPopover', () => {
       const matchMedia = vi.fn((query: string) => ({
         matches: query === '(hover: hover)',
       }));
+
       vi.stubGlobal('matchMedia', matchMedia);
 
       const { popover, onOpenChange } = createTestPopover({
@@ -308,6 +315,7 @@ describe('createPopover', () => {
       const matchMedia = vi.fn((query: string) => ({
         matches: query === '(hover: hover)' || query === '(pointer: fine)',
       }));
+
       vi.stubGlobal('matchMedia', matchMedia);
 
       const { popover, onOpenChange } = createTestPopover({
@@ -347,6 +355,7 @@ describe('createPopover', () => {
       const { popover, onOpenChange } = createTestPopover();
       const popup = document.createElement('div');
       const child = document.createElement('button');
+
       popup.appendChild(child);
       document.body.appendChild(popup);
 
@@ -367,6 +376,7 @@ describe('createPopover', () => {
       const { popover, onOpenChange } = createTestPopover();
       const popup = document.createElement('div');
       const outside = document.createElement('div');
+
       document.body.appendChild(popup);
       document.body.appendChild(outside);
 
@@ -387,6 +397,7 @@ describe('createPopover', () => {
     it('does not close when clicking inside the trigger', () => {
       const { popover, onOpenChange } = createTestPopover();
       const trigger = document.createElement('button');
+
       document.body.appendChild(trigger);
 
       popover.setTriggerElement(trigger);
@@ -408,6 +419,7 @@ describe('createPopover', () => {
       const shadow = host.attachShadow({ mode: 'open' });
       const popup = document.createElement('div');
       const child = document.createElement('button');
+
       popup.appendChild(child);
       shadow.appendChild(popup);
       document.body.appendChild(host);
@@ -433,6 +445,7 @@ describe('createPopover', () => {
       const { popover, onOpenChange } = createTestPopover();
       const popup = document.createElement('div');
       const child = document.createElement('button');
+
       popup.appendChild(child);
       document.body.appendChild(popup);
 
@@ -457,6 +470,7 @@ describe('createPopover', () => {
     it('closes after focus settles outside the popover', async () => {
       const { popover, onOpenChange } = createTestPopover();
       const popup = document.createElement('div');
+
       document.body.appendChild(popup);
 
       popover.setPopupElement(popup);
@@ -476,6 +490,38 @@ describe('createPopover', () => {
 
       popover.destroy();
       popup.remove();
+    });
+
+    it('keeps the popover open when focus settles inside a Shadow DOM popup', async () => {
+      const { popover, onOpenChange } = createTestPopover();
+      const host = document.createElement('div');
+      const shadow = host.attachShadow({ mode: 'open' });
+      const popup = document.createElement('div');
+      const child = document.createElement('button');
+
+      popup.append(child);
+      shadow.append(popup);
+      document.body.append(host);
+      popover.setPopupElement(popup);
+      popover.open();
+      flush();
+      child.focus();
+      onOpenChange.mockClear();
+
+      popover.popupProps.onFocusOut({
+        relatedTarget: null,
+        preventDefault: vi.fn(),
+        stopPropagation: vi.fn(),
+      });
+      await nextFrame();
+      await nextFrame();
+
+      expect(document.activeElement).toBe(host);
+      expect(shadow.activeElement).toBe(child);
+      expect(onOpenChange).not.toHaveBeenCalledWith(false, expect.anything());
+
+      popover.destroy();
+      host.remove();
     });
   });
 

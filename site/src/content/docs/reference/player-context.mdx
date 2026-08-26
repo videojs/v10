@@ -6,15 +6,17 @@ description: The default player context instance for consuming the player store 
 import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
 import DocsLink from "@/components/docs/DocsLink.astro";
 
-`playerContext` is a Web Components context token that carries the player store through the DOM tree. Provider elements publish the store to this context, and consumer elements (via <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> or <DocsLink slug="reference/container-mixin">`ContainerMixin`</DocsLink>) read from it.
+`playerContext` is a Web Components context token that carries the player store through the DOM tree. Player elements publish the store to this context, and consumers such as <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> read from it. Video.js contexts follow the Web Components Community Group [Context Protocol](https://github.com/webcomponents-cg/community-protocols/blob/main/proposals/context.md), so providers and consumers communicate with standard context request events instead of requiring a specific element hierarchy.
+
+`playerContext` carries player state and actions. <DocsLink slug="reference/player-container">`ContainerElement`</DocsLink> registers the player's visual container through `containerContext`, not `playerContext`; its internal `PlayerController` separately consumes `playerContext` for controls state.
 
 Pass it as the second argument to `PlayerController`:
 
 ```ts title="play-button.ts"
-import { PlayerController, MediaElement, playerContext, selectPlayback } from '@videojs/html';
+import { PlayerController, UIElement, playerContext, selectPlayback } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
 
-class PlayButton extends MediaElement {
+class PlayButton extends UIElement {
   #playback = new PlayerController(this, playerContext, selectPlayback);
 
   render() {
@@ -26,21 +28,21 @@ class PlayButton extends MediaElement {
 
 ### Import directly or destructure from createPlayer
 
-<DocsLink slug="reference/html-create-player">`createPlayer`</DocsLink> returns a `context` property that is the same `playerContext` instance. Both approaches reference the same object:
+<DocsLink slug="reference/html-create-player">`createPlayer`</DocsLink> returns a `playerContext` property that is the same `playerContext` instance exported from the package. Both approaches reference the same object:
 
 ```ts
 // Direct import
 import { playerContext } from '@videojs/html';
 
 // Destructured — identical object
-const { context } = createPlayer({ features: videoFeatures });
-context === playerContext; // true
+const { playerContext: configuredContext } = createPlayer({ features: videoFeatures });
+configuredContext === playerContext; // true
 ```
 
 Use the direct import when building reusable elements that don't depend on a specific `createPlayer` call.
 
 ### When you need this
 
-Most elements should use <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> (which accepts a context argument) rather than importing `playerContext` directly. Import it directly when you need to pass the context token to a lower-level factory such as `createContainerMixin` or `createProviderMixin`.
+Most custom-player elements should use the configured <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> returned by `createPlayer`, which is already bound to the context. Import `playerContext` directly when using the package-level controller or another lower-level context consumer.
 
 <UtilReference util="playerContext" />

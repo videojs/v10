@@ -2,25 +2,32 @@ import { cn } from '@videojs/utils/style';
 
 const base = cn(
   // Reset default popover styles
-  '[--popup-base-transition:opacity_var(--popup-transition-timing-function)_var(--popup-transition-duration),filter_var(--popup-transition-timing-function)_var(--popup-transition-duration),transform_var(--popup-transition-timing-function)_var(--popup-transition-duration),scale_var(--popup-transition-timing-function)_var(--popup-transition-duration)]',
-  '[--popup-translate-distance:--spacing(2)] m-0 border-0 text-inherit overflow-visible',
+  '[--media-popup-base-transition:opacity_var(--media-popup-transition-timing-function)_var(--media-popup-transition-duration),filter_var(--media-popup-transition-timing-function)_var(--media-popup-transition-duration),transform_var(--media-popup-transition-timing-function)_var(--media-popup-transition-duration),scale_var(--media-popup-transition-timing-function)_var(--media-popup-transition-duration)]',
+  '[--media-popup-translate-distance:--spacing(2)] m-0 border-0 text-inherit overflow-visible',
   // Animation
-  '[transition:var(--popup-transition,var(--popup-base-transition))]',
+  '[transition:var(--media-popup-transition,var(--media-popup-base-transition))]',
   // We have to use transform here for translate as the translate property is used for positioning by core.
-  'data-starting-style:opacity-0 data-starting-style:scale-95 data-starting-style:[transform:translate(var(--popup-translate-x-distance,0),var(--popup-translate-y-distance,0))]',
+  'data-starting-style:opacity-0 data-starting-style:scale-95 data-starting-style:[transform:translate(var(--media-popup-translate-x-distance,0),var(--media-popup-translate-y-distance,0))]',
   'data-ending-style:opacity-0 data-ending-style:blur-xs data-ending-style:scale-95 data-ending-style:transform-none',
   // Speed up the exit transition.
-  'data-ending-style:[transition-duration:max(0ms,calc(var(--popup-transition-duration)-50ms))]',
+  'data-ending-style:[transition-duration:max(0ms,calc(var(--media-popup-transition-duration)-50ms))]',
   // Ensure we animate from the correct origin based on the side the popover is on
   'data-[side=top]:origin-bottom data-[side=bottom]:origin-top data-[side=left]:origin-right data-[side=right]:origin-left',
-  'data-[side=top]:[--popup-translate-y-distance:var(--popup-translate-distance)] data-[side=bottom]:[--popup-translate-y-distance:calc(var(--popup-translate-distance)*-1)]',
-  'data-[side=left]:[--popup-translate-x-distance:var(--popup-translate-distance)] data-[side=right]:[--popup-translate-x-distance:calc(var(--popup-translate-distance)*-1)]',
+  'data-[side=top]:[--media-popup-translate-y-distance:var(--media-popup-translate-distance)] data-[side=bottom]:[--media-popup-translate-y-distance:calc(var(--media-popup-translate-distance)*-1)]',
+  'data-[side=left]:[--media-popup-translate-x-distance:var(--media-popup-translate-distance)] data-[side=right]:[--media-popup-translate-x-distance:calc(var(--media-popup-translate-distance)*-1)]',
   // Safe area between trigger and popup
   'before:absolute before:pointer-events-[inherit]',
   'data-[side=top]:before:left-0 data-[side=top]:before:right-0 data-[side=top]:before:top-full',
   'data-[side=bottom]:before:left-0 data-[side=bottom]:before:right-0 data-[side=bottom]:before:bottom-full',
   'data-[side=left]:before:top-0 data-[side=left]:before:bottom-0 data-[side=left]:before:left-full',
   'data-[side=right]:before:top-0 data-[side=right]:before:bottom-0 data-[side=right]:before:right-full'
+);
+
+export const tooltip = cn(
+  'px-2 py-1 rounded-[--spacing(2)] text-(length:--media-font-size-base) whitespace-nowrap',
+  'bg-(--media-tooltip-background-color) [backdrop-filter:var(--media-tooltip-backdrop-filter)]',
+  'ring-1 ring-(color:--media-tooltip-border-color) shadow-md shadow-black/20',
+  'text-(--media-tooltip-text-color)'
 );
 
 export const popup = {
@@ -32,15 +39,12 @@ export const popup = {
   ),
   tooltip: cn(
     base,
-    'px-2 py-1 rounded-[--spacing(2)] text-(length:--font-size-base) whitespace-nowrap',
+    tooltip,
     'data-open:flex data-open:items-center data-open:gap-1',
-    'bg-(--tooltip-background-color) [backdrop-filter:var(--tooltip-backdrop-filter)]',
-    'ring-1 ring-(color:--tooltip-border-color) shadow-md shadow-black/20',
-    'text-(--tooltip-text-color)',
     'data-[side=top]:before:h-(--media-tooltip-side-offset) data-[side=bottom]:before:h-(--media-tooltip-side-offset)',
     'data-[side=left]:before:w-(--media-tooltip-side-offset) data-[side=right]:before:w-(--media-tooltip-side-offset)'
   ),
   tooltipShortcut: cn(
-    'min-w-[1.5em] -mr-1 p-[0.1em] bg-current/15 text-(length:--font-size-small) font-semibold font-[inherit] leading-[1.25] text-center rounded-[--spacing(1)]'
+    'min-w-[1.5em] -mr-1 p-[0.1em] bg-current/15 text-(length:--media-font-size-small) font-semibold font-[inherit] leading-[1.25] text-center rounded-[--spacing(1)]'
   ),
 };

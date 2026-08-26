@@ -56,6 +56,7 @@ import { syncLiveSeekableRange } from '../../behaviors/dom/sync-live-seekable-ra
 import { syncTextTracks } from '../../behaviors/dom/sync-text-tracks';
 import { trackCurrentTime } from '../../behaviors/dom/track-current-time';
 import { trackLoadTriggers } from '../../behaviors/dom/track-load-triggers';
+import { type PlayerResolution, trackPlayerResolution } from '../../behaviors/dom/track-player-resolution';
 import { updateMediaSourceDuration } from '../../behaviors/dom/update-mediasource-duration';
 // Non-zero-PTS relocation (spike): remove this import, the composed reactor, the
 // `video/audio/textMessagePipelines` finalConfig entries, the `mediaContainerData`
@@ -86,14 +87,13 @@ import type { TextTrackSegmentResolver } from '../../primitives/text-segment-loa
 /**
  * State shape for the HLS playback engine.
  *
- * This is the union of all state required by the behaviors composed into
- * the HLS engine. Each behavior declares its own state interface; this
- * type satisfies all of them.
+ * This is the union of all state required by the behaviors composed into the HLS engine. Each behavior declares its own
+ * state interface; this type satisfies all of them.
  */
 export interface HlsVideoEngineState {
   /**
-   * The presentation being played. A caller writes `{ url }`;
-   * `resolvePresentation` parses the manifest and populates the rest.
+   * The presentation being played. A caller writes `{ url }`; `resolvePresentation` parses the manifest and populates
+   * the rest.
    */
   presentation?: MaybeResolvedPresentation;
   preload?: 'auto' | 'metadata' | 'none';
@@ -106,73 +106,63 @@ export interface HlsVideoEngineState {
   mediaContainerData?: Record<string, MediaContainerData>;
   userVideoTrackSelection?: Partial<VideoTrack>;
   /**
-   * Consumer-driven constraint narrowing the audio candidate set. Sibling
-   * of `userVideoTrackSelection`. Partial-track shape — `{ language: 'es' }`,
-   * `{ id: 'audio-en' }`, etc. `selectAudioTrack` reads this and re-picks
-   * when it changes. Multi-language-audio Tier 2 programmatic-write path.
+   * Consumer-driven constraint narrowing the audio candidate set. Sibling of `userVideoTrackSelection`. Partial-track
+   * shape — `{ language: 'es' }`, `{ id: 'audio-en' }`, etc. `selectAudioTrack` reads this and re-picks when it
+   * changes. Multi-language-audio Tier 2 programmatic-write path.
    */
   userAudioTrackSelection?: Partial<AudioTrack>;
   /**
-   * Consumer-driven *intent* for text selection, resolved into
-   * `selectedTextTrackId` by `switchTextTrack`. A language-based partial
-   * (`{ language: 'es' }`) selects captions, `'off'` disables them, and absence
-   * means auto (the engine's `preferredSubtitleLanguage` / DEFAULT-track policy).
-   * Also the write path for the DOM caption UI (via `syncTextTracks`); unlike the
-   * resolved id it persists across source changes (sticky preference).
+   * Consumer-driven _intent_ for text selection, resolved into `selectedTextTrackId` by `switchTextTrack`. A
+   * language-based partial (`{ language: 'es' }`) selects captions, `'off'` disables them, and absence means auto (the
+   * engine's `preferredSubtitleLanguage` / DEFAULT-track policy). Also the write path for the DOM caption UI (via
+   * `syncTextTracks`); unlike the resolved id it persists across source changes (sticky preference).
    */
   userTextTrackSelection?: Partial<TextTrack> | 'off';
   /**
-   * The CDNs the source is served from (track-URL origins), in manifest
-   * priority order — most-preferred first (mirrors HLS content steering's
-   * `PATHWAY-PRIORITY`). Owned by `deriveCdnPriority`, read by
-   * `track-switching`'s `preferActiveCdn` scope, which narrows to the
-   * highest-priority CDN with surviving tracks so video / audio / text stay on
-   * one host. Only meaningful for redundant-stream sources; a single-CDN source
-   * has one entry.
+   * The CDNs the source is served from (track-URL origins), in manifest priority order — most-preferred first (mirrors
+   * HLS content steering's `PATHWAY-PRIORITY`). Owned by `deriveCdnPriority`, read by `track-switching`'s
+   * `preferActiveCdn` scope, which narrows to the highest-priority CDN with surviving tracks so video / audio / text
+   * stay on one host. Only meaningful for redundant-stream sources; a single-CDN source has one entry.
    */
   cdnPriority?: string[];
   /**
-   * CDN ids (origins) currently in failover cooldown — written by the CDN
-   * monitor when a host fails too often, read by `track-switching`'s
-   * `excludeFailedCdns` hard constraint, which prunes their tracks so the
-   * active-CDN scope falls to the next CDN in `cdnPriority`. Empty / absent
-   * means all CDNs are eligible.
+   * CDN ids (origins) currently in failover cooldown — written by the CDN monitor when a host fails too often, read by
+   * `track-switching`'s `excludeFailedCdns` hard constraint, which prunes their tracks so the active-CDN scope falls to
+   * the next CDN in `cdnPriority`. Empty / absent means all CDNs are eligible.
    */
   failedCdns?: string[];
   /**
-   * Conditions reported during playback, in the order encountered — appended by
-   * whichever behavior detects one (`emitError`), owned and cleared per source by
-   * `collectErrors`. Carries no severity: which of these is fatal is decided
-   * above the engine, at the adapter. See
-   * `internal/design/spf/features/errors.md`.
+   * Conditions reported during playback, in the order encountered — appended by whichever behavior detects one
+   * (`emitError`), owned and cleared per source by `collectErrors`. Carries no severity: which of these is fatal is
+   * decided above the engine, at the adapter. See `internal/design/spf/features/errors.md`.
    */
   errors?: SvtaError[];
   currentTime?: number;
+  /**
+   * The player element's rendered pixel dimensions, or `undefined` where there is nothing to measure. Written by
+   * `trackPlayerResolution`, read by the `playerResolutionCap` selection rule — which treats `undefined` as "don't
+   * cap".
+   */
+  playerResolution?: PlayerResolution;
   loadActivated?: boolean;
   /**
-   * One-shot command: start the current source at this position
-   * (presentation-timeline seconds). Written by consumers or by
-   * `setupAirPlay`'s session-end snapshot; consumed (cleared) by
-   * `applyStartPosition` once the element seeks. See
+   * One-shot command: start the current source at this position (presentation-timeline seconds). Written by consumers
+   * or by `setupAirPlay`'s session-end snapshot; consumed (cleared) by `applyStartPosition` once the element seeks. See
    * `behaviors/dom/apply-start-position.ts`.
    */
   startPosition?: number;
   /**
-   * Intent-level loading policy: initiate no new loading work while `true`.
-   * Written by `setupAirPlay` (the only behavior declaring the key) while a
-   * remote-playback session owns presentation; observed by the
-   * `loadXSegments` dispatchers (park in `'dormant'`) and by
-   * `setupMediaSource` (a pending rebuild waits). See
+   * Intent-level loading policy: initiate no new loading work while `true`. Written by `setupAirPlay` (the only
+   * behavior declaring the key) while a remote-playback session owns presentation; observed by the `loadXSegments`
+   * dispatchers (park in `'dormant'`) and by `setupMediaSource` (a pending rebuild waits). See
    * `SegmentLoadingState['loadingSuspended']`.
    */
   loadingSuspended?: boolean;
   /**
-   * Author intent for the AirPlay/remote-playback picker, written by the media
-   * adapter's `disableRemotePlayback` IDL property. `true` is an explicit
-   * opt-out: `setupAirPlay` reads it at attach and sets nothing up, leaving the
-   * element's remote playback disabled. Distinct from the underlying
-   * `<video>.disableRemotePlayback`, which stays programmatically managed
-   * (ManagedMediaSource / AirPlay).
+   * Author intent for the AirPlay/remote-playback picker, written by the media adapter's `disableRemotePlayback` IDL
+   * property. `true` is an explicit opt-out: `setupAirPlay` reads it at attach and sets nothing up, leaving the
+   * element's remote playback disabled. Distinct from the underlying `<video>.disableRemotePlayback`, which stays
+   * programmatically managed (ManagedMediaSource / AirPlay).
    */
   disableRemotePlayback?: boolean;
 }
@@ -194,10 +184,8 @@ export interface HlsVideoEngineContext {
 }
 
 /**
- * The composition signal refs handed to `onSignalsReady` callers — the
- * canonical way to drive the engine externally (writes) or observe its
- * state (reads) without touching `composition.state` / `composition.context`
- * directly.
+ * The composition signal refs handed to `onSignalsReady` callers — the canonical way to drive the engine externally
+ * (writes) or observe its state (reads) without touching `composition.state` / `composition.context` directly.
  */
 export type HlsVideoEngineSignals = {
   state: StateSignals<HlsVideoEngineState>;
@@ -207,29 +195,34 @@ export type HlsVideoEngineSignals = {
 /**
  * Configuration for the HLS playback engine.
  *
- * Each option is consumed by the appropriate behavior — the engine itself
- * has no config beyond what its behaviors read.
+ * Each option is consumed by the appropriate behavior — the engine itself has no config beyond what its behaviors read.
  */
 export interface HlsVideoEngineConfig extends ShareSignalsConfig<HlsVideoEngineState, HlsVideoEngineContext> {
   /**
-   * Bandwidth estimate in bps to use before enough samples have been
-   * collected. Default: `DEFAULT_INITIAL_BANDWIDTH` (5 Mbps).
+   * Bandwidth estimate in bps to use before enough samples have been collected. Default: `DEFAULT_INITIAL_BANDWIDTH` (5
+   * Mbps).
    */
   initialBandwidth?: number;
   /**
-   * Codec capability probe injected into `track-switching`'s
-   * `excludeUnplayableTracks` constraint — drops renditions the environment
-   * can't decode before selection. Defaults to the `MediaSource.isTypeSupported`
-   * -backed `canPlayTrack`; supply your own to override (e.g. force-exclude a
-   * codec).
+   * Codec capability probe injected into `track-switching`'s `excludeUnplayableTracks` constraint — drops renditions
+   * the environment can't decode before selection. Defaults to the `MediaSource.isTypeSupported` -backed
+   * `canPlayTrack`; supply your own to override (e.g. force-exclude a codec).
    */
   canPlayTrack?: CanPlayTrack;
   /**
-   * Conditions reported about each rendition as it resolves — the *causes* behind
-   * a later verdict, and the copy a verdict reuses when they agree. Defaults to
-   * {@link reportUnsupportedTrackConditions}, which reports non-fMP4 containers
-   * and encryption; supply your own to report a different set (a provider that
-   * never ships MPEG-TS can drop that check) or `() => []` to report nothing.
+   * Codec families (RFC 6381 4CCs, e.g. `'avc1'` / `'hvc1'` / `'mp4a'`) the initial video/audio picks prefer on a
+   * mixed-codec source, read by the `preferCodecFamilies` selection scope. SPF implements no
+   * `SourceBuffer.changeType()`, so the initial pick's codec family is sticky for the source's lifetime
+   * (`stickToSelectedCodecs`); this decides which family that is. Soft — a source with no preferred-family rendition is
+   * unaffected. Defaults to `DEFAULT_PREFERRED_CODECS` (AVC + AAC, the broadest-decode pair); pass `[]` to disable and
+   * let ABR pick the initial family (it then still can't leave it mid-stream).
+   */
+  preferredCodecs?: string[];
+  /**
+   * Conditions reported about each rendition as it resolves — the _causes_ behind a later verdict, and the copy a
+   * verdict reuses when they agree. Defaults to {@link reportUnsupportedTrackConditions}, which reports non-fMP4
+   * containers and encryption; supply your own to report a different set (a provider that never ships MPEG-TS can drop
+   * that check) or `() => []` to report nothing.
    */
   reportUnsupportedTrackConditions?: ReportUnsupportedTrackConditions;
   preferredAudioLanguage?: string;
@@ -237,110 +230,97 @@ export interface HlsVideoEngineConfig extends ShareSignalsConfig<HlsVideoEngineS
   includeForcedTracks?: boolean;
   enableDefaultTrack?: boolean;
   /**
-   * Resolver that turns a text-track segment fetch into VTT cues.
-   * Defaults to the DOM-bound `resolveVttSegment` resolver, which uses an
-   * offscreen `<track>` element to parse WebVTT.
+   * Resolver that turns a text-track segment fetch into VTT cues. Defaults to the DOM-bound `resolveVttSegment`
+   * resolver, which uses an offscreen `<track>` element to parse WebVTT.
    */
   resolveTextTrackSegment?: TextTrackSegmentResolver<VTTCue>;
   /**
-   * Resolver for `presentation.duration`. Defaults to picking the first
-   * resolved selected track's duration (video preferred, audio fallback) —
-   * appropriate for VoD and audio-only. Live engines should supply a
-   * resolver that returns `Number.POSITIVE_INFINITY` once the presentation
-   * is established as live; downstream `updateMediaSourceDuration` propagates
-   * that value to `mediaSource.duration` per the MSE spec.
+   * Resolver for `presentation.duration`. Defaults to picking the first resolved selected track's duration (video
+   * preferred, audio fallback) — appropriate for VoD and audio-only. Live engines should supply a resolver that returns
+   * `Number.POSITIVE_INFINITY` once the presentation is established as live; downstream `updateMediaSourceDuration`
+   * propagates that value to `mediaSource.duration` per the MSE spec.
    */
   resolveDuration?: PresentationDurationResolver;
   /**
-   * Manifest parser handed to `resolvePresentation`. Defaults to the HLS
-   * multivariant-playlist parser; supply your own for alternate format
-   * support without forking the engine.
+   * Manifest parser handed to `resolvePresentation`. Defaults to the HLS multivariant-playlist parser; supply your own
+   * for alternate format support without forking the engine.
    */
   parsePresentation?: ParsePresentation;
   /**
-   * Allocate SPF-owned text-track slots on the media element. Defaults to
-   * the standard `<track>`-element implementation in
-   * `media/dom/text/text-track-slots`.
+   * Allocate SPF-owned text-track slots on the media element. Defaults to the standard `<track>`-element implementation
+   * in `media/dom/text/text-track-slots`.
    */
   addSubtitlesTracksToMedia?: typeof addSubtitlesTracksToMedia;
   /**
-   * Return the SPF-owned subtitle/caption `TextTrack` currently in showing
-   * mode. Defaults to the standard selector-based implementation in
-   * `media/dom/text/text-track-slots`.
+   * Return the SPF-owned subtitle/caption `TextTrack` currently in showing mode. Defaults to the standard
+   * selector-based implementation in `media/dom/text/text-track-slots`.
    */
   getShowingSubtitlesTrackFromMedia?: typeof getShowingSubtitlesTrackFromMedia;
   /**
-   * Evict all SPF-owned text-track slots from the media element. Defaults to
-   * the standard selector-based implementation in
-   * `media/dom/text/text-track-slots`.
+   * Evict all SPF-owned text-track slots from the media element. Defaults to the standard selector-based implementation
+   * in `media/dom/text/text-track-slots`.
    */
   removeAllSubtitlesTracksFromMedia?: typeof removeAllSubtitlesTracksFromMedia;
   /**
-   * Forward-buffer tuning. `bufferDuration` controls how far ahead of the
-   * playhead segments are loaded (and where forward-flush kicks in).
-   * Defaults: see `DEFAULT_FORWARD_BUFFER_CONFIG` (30 seconds). Threaded to
-   * segment-loader actors (v/a + text) at construction time and to
-   * `loadXSegments` dispatchers for the load-message range.
+   * Forward-buffer tuning. `bufferDuration` controls how far ahead of the playhead segments are loaded (and where
+   * forward-flush kicks in). Defaults: see `DEFAULT_FORWARD_BUFFER_CONFIG` (30 seconds). Threaded to segment-loader
+   * actors (v/a + text) at construction time and to `loadXSegments` dispatchers for the load-message range.
    */
   forwardBuffer?: Partial<ForwardBufferConfig>;
   /**
-   * Back-buffer tuning. `keepSegments` controls how many segments stay
-   * behind the playhead before eviction. Defaults: see
-   * `DEFAULT_BACK_BUFFER_CONFIG` (2 segments). Threaded to the v/a
-   * segment-loader actor only (text tracks don't use back-buffer eviction).
+   * Back-buffer tuning. `keepSegments` controls how many segments stay behind the playhead before eviction. Defaults:
+   * see `DEFAULT_BACK_BUFFER_CONFIG` (2 segments). Threaded to the v/a segment-loader actor only (text tracks don't use
+   * back-buffer eviction).
    */
   backBuffer?: Partial<BackBufferConfig>;
   /**
-   * Bandwidth-estimator tuning. Overrides any field of `BandwidthConfig`
-   * (`fastHalfLife`, `slowHalfLife`, `minTotalBytes`, `minBytes`,
-   * `minDuration`). `bandwidth.minTotalBytes` supersedes the flat
-   * `minTotalBytes` field above. Defaults: see `DEFAULT_BANDWIDTH_CONFIG`.
+   * Bandwidth-estimator tuning. Overrides any field of `BandwidthConfig` (`fastHalfLife`, `slowHalfLife`,
+   * `minTotalBytes`, `minBytes`, `minDuration`). `bandwidth.minTotalBytes` supersedes the flat `minTotalBytes` field
+   * above. Defaults: see `DEFAULT_BANDWIDTH_CONFIG`.
    */
   bandwidth?: Partial<BandwidthConfig>;
   /**
-   * Quality-selection tuning. `safetyMargin` is the bandwidth-headroom
-   * multiplier used by `selectQuality`; `upgradeMargin` is the hysteresis
-   * ratio gating ABR upgrades. Defaults: `DEFAULT_QUALITY_CONFIG` (0.85 / 1.15).
+   * Quality-selection tuning. `safetyMargin` is the bandwidth-headroom multiplier used by `selectQuality`;
+   * `upgradeMargin` is the hysteresis ratio gating ABR upgrades. Defaults: `DEFAULT_QUALITY_CONFIG` (0.85 / 1.15).
    */
   quality?: Partial<QualityConfig>;
   /**
-   * Multi-CDN failover monitor tuning. `cooldownMs` is how long a CDN stays
-   * excluded after a failed fetch trips it. Defaults:
-   * `DEFAULT_FAILOVER_MONITOR_CONFIG` (300s). Only meaningful for redundant-stream
-   * sources.
+   * Whether video renditions are capped to the player element's rendered size. Read by `trackPlayerResolution`; `false`
+   * measures nothing, which leaves the `playerResolutionCap` rule inert. Defaults to `true`.
+   */
+  capRenditionToPlayerSize?: boolean;
+  /** Whether `state.playerResolution` is reported in device pixels. Read by `trackPlayerResolution`; defaults to `true`. */
+  useDevicePixelRatio?: boolean;
+  /**
+   * Multi-CDN failover monitor tuning. `cooldownMs` is how long a CDN stays excluded after a failed fetch trips it.
+   * Defaults: `DEFAULT_FAILOVER_MONITOR_CONFIG` (300s). Only meaningful for redundant-stream sources.
    */
   failover?: Partial<FailoverMonitorConfig>;
   /**
-   * How to derive a CDN grouping key from a track URL — used to build
-   * `cdnPriority`, to record the failover trip in `failedCdns`, and by the
-   * track-switching CDN scope + failover constraint. One function, read by all of
-   * them, so the keys stay comparable. Defaults to the URL origin; override to
-   * key on something else (e.g. Mux's `cdn=` query param).
+   * How to derive a CDN grouping key from a track URL — used to build `cdnPriority`, to record the failover trip in
+   * `failedCdns`, and by the track-switching CDN scope + failover constraint. One function, read by all of them, so the
+   * keys stay comparable. Defaults to the URL origin; override to key on something else (e.g. Mux's `cdn=` query
+   * param).
    */
   getCdnId?: GetCdnId;
   /**
-   * Non-zero-PTS relocation (spike): the reduce seam consumed by the
-   * `establishStartMediaTime` reactor. Defaults to per-track own origin (Tier 1);
-   * a Tier-2 variant returns the shared `min` across selected A/V. Relocation is
-   * composed into the standard engine below — see the marked block — so this only
-   * needs setting to swap the tier policy. See
-   * `internal/design/spf/presentation-timeline-model.md`.
+   * Non-zero-PTS relocation (spike): the reduce seam consumed by the `establishStartMediaTime` reactor. Defaults to
+   * per-track own origin (Tier 1); a Tier-2 variant returns the shared `min` across selected A/V. Relocation is
+   * composed into the standard engine below — see the marked block — so this only needs setting to swap the tier
+   * policy. See `internal/design/spf/presentation-timeline-model.md`.
    */
   deriveStartMediaTime?: DeriveStartMediaTime;
   /**
-   * Proximity window (seconds) for the `recoverEndStall` behavior — how close the
-   * playhead must be to the reachable buffered end for a `waiting` to be treated as the
-   * end-of-stream freeze and nudged to `ended`. Defaults to `0.2`. See
-   * `behaviors/dom/recover-end-stall`.
+   * Proximity window (seconds) for the `recoverEndStall` behavior — how close the playhead must be to the reachable
+   * buffered end for a `waiting` to be treated as the end-of-stream freeze and nudged to `ended`. Defaults to `0.2`.
+   * See `behaviors/dom/recover-end-stall`.
    */
   endStallNudgeWindow?: number;
   /**
-   * Live media-playlist re-run policy for the resolve* loaders' `RecurringRunner`:
-   * returns a promise that resolves when the playlist should reload, or `null` to
-   * stop. Defaults to `mediaPlaylistReloadDelay` (target-duration cadence, half on
-   * an unchanged window, stop on `#EXT-X-ENDLIST`) composed with a cancellable
-   * `sleep`. Inert for VoD (a complete playlist stops it after the first resolve).
-   * Override to tune live reload timing.
+   * Live media-playlist re-run policy for the resolve* loaders' `RecurringRunner`: returns a promise that resolves when
+   * the playlist should reload, or `null` to stop. Defaults to `mediaPlaylistReloadDelay` (target-duration cadence,
+   * half on an unchanged window, stop on `#EXT-X-ENDLIST`) composed with a cancellable `sleep`. Inert for VoD (a
+   * complete playlist stops it after the first resolve). Override to tune live reload timing.
    */
   reschedule?: Reschedule<ResolvedTrack>;
 }
@@ -350,12 +330,10 @@ export interface HlsVideoEngineConfig extends ShareSignalsConfig<HlsVideoEngineS
 // ============================================================================
 
 /**
- * Generic `shareSignals` instantiated against the HLS engine's full state
- * and context — captures composition signal refs into the consumer's
- * `onSignalsReady` callback at setup time, and materializes input slots that no
- * composed behavior produces: `user*TrackSelection` (track-switching only reads
- * them). `failedCdns` is owned by `setupFailoverMonitor`, so it's already
- * materialized and reachable on the `onSignalsReady` refs without being listed
+ * Generic `shareSignals` instantiated against the HLS engine's full state and context — captures composition signal
+ * refs into the consumer's `onSignalsReady` callback at setup time, and materializes input slots that no composed
+ * behavior produces: `user*TrackSelection` (track-switching only reads them). `failedCdns` is owned by
+ * `setupFailoverMonitor`, so it's already materialized and reachable on the `onSignalsReady` refs without being listed
  * here.
  */
 const shareSignals = makeShareSignals<HlsVideoEngineState, HlsVideoEngineContext>([
@@ -368,28 +346,27 @@ const shareSignals = makeShareSignals<HlsVideoEngineState, HlsVideoEngineContext
 /**
  * Create an HLS playback engine.
  *
- * Composes SPF behaviors into a reactive pipeline for HLS playback over MSE:
- * manifest resolution, track selection, ABR, segment loading, and
- * end-of-stream coordination.
+ * Composes SPF behaviors into a reactive pipeline for HLS playback over MSE: manifest resolution, track selection, ABR,
+ * segment loading, and end-of-stream coordination.
  *
  * @example
- * ```ts
- * let signals: HlsVideoEngineSignals;
- * const engine = createHlsVideoEngine({
- *   initialBandwidth: 2_000_000,
- *   preferredAudioLanguage: 'en',
- *   onSignalsReady: (refs) => {
- *     signals = refs;
- *   },
- * });
+ *   ```ts
+ *   let signals: HlsVideoEngineSignals;
+ *   const engine = createHlsVideoEngine({
+ *     initialBandwidth: 2_000_000,
+ *     preferredAudioLanguage: 'en',
+ *     onSignalsReady: (refs) => {
+ *       signals = refs;
+ *     },
+ *   });
  *
- * signals.context.mediaElement.set(videoEl);
- * signals.state.presentation.set({ url: 'https://example.com/stream.m3u8' });
+ *   signals.context.mediaElement.set(videoEl);
+ *   signals.state.presentation.set({ url: 'https://example.com/stream.m3u8' });
  *
- * videoEl.play();
+ *   videoEl.play();
  *
- * await engine.destroy();
- * ```
+ *   await engine.destroy();
+ *   ```;
  */
 export function createHlsVideoEngine(
   config: HlsVideoEngineConfig = {}
@@ -506,6 +483,10 @@ export function createHlsVideoEngine(
       // After trackCurrentTime: the one-shot currentTime seed must land after
       // the mirror's attach-time sync (see apply-start-position.ts).
       applyStartPosition,
+
+      // Ordering isn't load-bearing — selection is reactive, so a measurement
+      // that lands after the first pick just re-fires it.
+      trackPlayerResolution,
       switchVideoTrack,
       switchAudioTrack,
       // Mid-stream audio-buffer flush on language switch is handled in

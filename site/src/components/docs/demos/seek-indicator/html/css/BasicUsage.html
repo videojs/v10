@@ -1,0 +1,12 @@
+<video-player>
+  <media-container class="html-seek-indicator-basic" tabindex="0">
+    <video src="{{VJS10_DEMO_VIDEO_MP4}}" autoplay muted playsinline loop></video>
+    <p class="html-seek-indicator-basic__instructions">Focus the player · ←/→: seek 10s · 0–9: seek to percent</p>
+    <media-seek-indicator class="html-seek-indicator-basic__indicator" aria-hidden="true">
+      <media-seek-indicator-value class="html-seek-indicator-basic__value"></media-seek-indicator-value>
+    </media-seek-indicator>
+    <media-hotkey keys="ArrowLeft" action="seekStep" value="-10"></media-hotkey>
+    <media-hotkey keys="ArrowRight" action="seekStep" value="10"></media-hotkey>
+    <media-hotkey keys="0-9" action="seekToPercent"></media-hotkey>
+  </media-container>
+</video-player>

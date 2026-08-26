@@ -19,7 +19,7 @@
     { "path": "packages/core" },
     { "path": "packages/core/src/dom" },
 
-    { "path": "packages/compiler" },
+    { "path": "packages/vjsc" },
 
     { "path": "packages/icons" },
 

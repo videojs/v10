@@ -1,5 +1,5 @@
+import { safeDefine } from '../../registration/safe-define';
 import { GestureElement } from '../../ui/gesture/gesture-element';
-import { safeDefine } from '../safe-define';
 
 safeDefine(GestureElement);
 

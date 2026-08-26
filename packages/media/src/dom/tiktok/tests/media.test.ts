@@ -1,8 +1,9 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
+
+import { buildTikTokIframeSrc, parseTikTokSource, parseTikTokVideoId, TikTokMedia, tiktokMediaDefaultProps } from '..';
 import { MediaError } from '../../../core/media-error';
 import { isMediaMutedCapable, isMediaVolumeCapable } from '../../../core/predicate';
 import type { Video } from '../../../core/types';
-import { buildTikTokIframeSrc, parseTikTokSource, parseTikTokVideoId, TikTokMedia, tiktokMediaDefaultProps } from '..';
 
 // https://developers.tiktok.com/doc/embed-player
 const STATE = { INIT: -1, ENDED: 0, PLAYING: 1, PAUSED: 2, BUFFERING: 3 } as const;
@@ -15,9 +16,10 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-/** jsdom only gives a connected iframe the window the embed posts from. */
+/** Jsdom only gives a connected iframe the window the embed posts from. */
 function createIframe(): HTMLIFrameElement {
   const iframe = document.createElement('iframe');
+
   document.body.append(iframe);
   return iframe;
 }
@@ -25,6 +27,7 @@ function createIframe(): HTMLIFrameElement {
 /** An iframe as React renders it before a source resolves: `src` present but empty. */
 function createEmptySrcIframe(): HTMLIFrameElement {
   const iframe = createIframe();
+
   iframe.setAttribute('src', '');
   return iframe;
 }
@@ -32,6 +35,7 @@ function createEmptySrcIframe(): HTMLIFrameElement {
 function frameOf(iframe: HTMLIFrameElement): Window {
   const frame = iframe.contentWindow;
   if (!frame) throw new Error('iframe has no window');
+
   return frame;
 }
 
@@ -62,12 +66,16 @@ async function attachAndLoad(
   // There is no embed to attach to without a source, so tests that don't care
   // which video is playing get one.
   if (!media.src) media.src = VIDEO_ID;
+
   // Opt out of the bootstrap unless a test asks for it: it posts commands of its own and swallows what the embed
   // reports, which is the subject of `TikTokMedia bootstrap` rather than of the protocol these tests check.
   if (media.preload === tiktokMediaDefaultProps.preload) media.preload = 'none';
+
   const iframe = createIframe();
+
   media.attach(iframe);
   const commands = watchCommands(iframe);
+
   report(iframe, 'onPlayerReady');
   return { iframe, commands };
 }
@@ -120,6 +128,7 @@ describe('parseTikTokSource', () => {
 describe('buildTikTokIframeSrc', () => {
   it('builds the embed URL with hidden controls and related videos kept to the author', () => {
     const src = buildTikTokIframeSrc(VIDEO_ID);
+
     expect(src).toContain(`https://www.tiktok.com/player/v1/${VIDEO_ID}?`);
     expect(src).toContain('controls=0');
     expect(src).toContain('rel=0');
@@ -127,6 +136,7 @@ describe('buildTikTokIframeSrc', () => {
 
   it('encodes autoplay, defaultMuted, and loop', () => {
     const src = buildTikTokIframeSrc(VIDEO_ID, { autoplay: true, defaultMuted: true, loop: true });
+
     expect(src).toContain('autoplay=1');
     expect(src).toContain('muted=1');
     expect(src).toContain('loop=1');
@@ -135,6 +145,7 @@ describe('buildTikTokIframeSrc', () => {
   it('leaves muted and loop out rather than turning them off', () => {
     // Off is the player's default for both, so an explicit 0 says nothing.
     const src = buildTikTokIframeSrc(VIDEO_ID, { defaultMuted: false, loop: false, preload: 'none' });
+
     expect(src).toBe(`https://www.tiktok.com/player/v1/${VIDEO_ID}?controls=0&rel=0`);
   });
 
@@ -150,6 +161,7 @@ describe('buildTikTokIframeSrc', () => {
 
   it('shows TikTok controls when controls=true', () => {
     const src = buildTikTokIframeSrc(VIDEO_ID, { controls: true });
+
     expect(src).not.toContain('controls=');
   });
 
@@ -171,6 +183,7 @@ describe('buildTikTokIframeSrc', () => {
         },
       },
     });
+
     expect(src).toContain('closed_caption=0');
     expect(src).toContain('description=0');
     expect(src).toContain('fullscreen_button=0');
@@ -184,11 +197,13 @@ describe('buildTikTokIframeSrc', () => {
 
   it('carries undeclared TikTok player parameters through', () => {
     const src = buildTikTokIframeSrc(VIDEO_ID, { source: { engine: { tiktok: { some_future_param: 'yes' } } } });
+
     expect(src).toContain('some_future_param=yes');
   });
 
   it('lets TikTok player parameters override the defaults the host sets', () => {
     const src = buildTikTokIframeSrc(VIDEO_ID, { source: { engine: { tiktok: { rel: 1 } } } });
+
     expect(src).toContain('rel=1');
   });
 
@@ -196,6 +211,7 @@ describe('buildTikTokIframeSrc', () => {
     const src = buildTikTokIframeSrc(VIDEO_ID, {
       source: { engine: { tiktok: { referrerPolicy: 'no-referrer' } } },
     });
+
     expect(src).not.toContain('referrerPolicy');
   });
 
@@ -208,6 +224,7 @@ describe('buildTikTokIframeSrc', () => {
 describe('TikTokMedia', () => {
   it('has expected default state before attach', () => {
     const media = new TikTokMedia();
+
     expect(media.engine).toBe(null);
     expect(media.target).toBe(null);
     expect(media.paused).toBe(true);
@@ -221,8 +238,10 @@ describe('TikTokMedia', () => {
 
   it('sets the initial iframe src when attached', () => {
     const media = new TikTokMedia();
+
     media.src = `https://www.tiktok.com/@videojs/video/${VIDEO_ID}`;
     const iframe = createIframe();
+
     media.attach(iframe);
 
     expect(iframe.getAttribute('src')).toContain(`https://www.tiktok.com/player/v1/${VIDEO_ID}`);
@@ -235,10 +254,12 @@ describe('TikTokMedia', () => {
   it('defers the embed until a source arrives', async () => {
     const media = new TikTokMedia();
     const loadstart = vi.fn();
+
     media.addEventListener('loadstart', loadstart);
 
     // How every framework builds the element: created first, `src` set after.
     const iframe = createIframe();
+
     media.attach(iframe);
     expect(iframe.getAttribute('src')).toBe(null);
     expect(loadstart).not.toHaveBeenCalled();
@@ -256,6 +277,7 @@ describe('TikTokMedia', () => {
     // React renders `src=""` before a source resolves. The `src` property reports
     // the document URL for it, so only the attribute says there is no embed.
     const iframe = createEmptySrcIframe();
+
     media.attach(iframe);
     expect(media.currentSrc).toBe('');
 
@@ -269,6 +291,7 @@ describe('TikTokMedia', () => {
   it('builds a deferred embed once for repeated source changes in the same task', async () => {
     const media = new TikTokMedia();
     const iframe = createIframe();
+
     media.attach(iframe);
 
     media.src = VIDEO_ID;
@@ -281,6 +304,7 @@ describe('TikTokMedia', () => {
 
   it('does not leave play() waiting while the embed is deferred', async () => {
     const media = new TikTokMedia();
+
     media.attach(createIframe());
 
     // No embed means no `onPlayerReady` is coming to report a load; waiting would hang.
@@ -289,9 +313,11 @@ describe('TikTokMedia', () => {
 
   it('waits for a deferred embed to be ready before playing', async () => {
     const media = new TikTokMedia();
+
     // This is about the play the caller asked for before the embed could take one, not the bootstrap's commands.
     media.preload = 'none';
     const iframe = createIframe();
+
     media.attach(iframe);
 
     media.src = VIDEO_ID;
@@ -305,6 +331,7 @@ describe('TikTokMedia', () => {
     // Building the embed navigates the frame, so the commands it takes are the
     // ones posted to the window it has now.
     const commands = watchCommands(iframe);
+
     // Play does not wait on the embed: it reports nothing until it is ready, so
     // a barrier only its own report can settle would strand the request.
     expect(played).toBe(true);
@@ -320,6 +347,7 @@ describe('TikTokMedia', () => {
   it('does not replay a play the listener took back before the embed was ready', async () => {
     const media = new TikTokMedia();
     const iframe = createIframe();
+
     media.attach(iframe);
 
     media.src = VIDEO_ID;
@@ -328,6 +356,7 @@ describe('TikTokMedia', () => {
     await flushLoad();
 
     const commands = watchCommands(iframe);
+
     report(iframe, 'onPlayerReady');
 
     expect(commands).not.toHaveBeenCalledWith({ 'x-tiktok-player': true, type: 'play' }, '*');
@@ -337,6 +366,7 @@ describe('TikTokMedia', () => {
   it('emits loadstart on attach and loadedmetadata/loadcomplete once the embed is ready', async () => {
     const media = new TikTokMedia();
     const events: string[] = [];
+
     for (const type of ['loadstart', 'loadedmetadata', 'loadcomplete'] as const) {
       media.addEventListener(type, () => events.push(type));
     }
@@ -354,6 +384,7 @@ describe('TikTokMedia', () => {
 
     const playSpy = vi.fn();
     const waitingSpy = vi.fn();
+
     media.addEventListener('play', playSpy);
     media.addEventListener('waiting', waitingSpy);
 
@@ -387,6 +418,7 @@ describe('TikTokMedia', () => {
     const media = new TikTokMedia();
     const { iframe } = await attachAndLoad(media);
     const events: string[] = [];
+
     for (const type of ['timeupdate', 'durationchange', 'seeking', 'seeked'] as const) {
       media.addEventListener(type, () => events.push(type));
     }
@@ -411,6 +443,7 @@ describe('TikTokMedia', () => {
     const media = new TikTokMedia();
     const { iframe } = await attachAndLoad(media);
     const volumechange = vi.fn();
+
     media.addEventListener('volumechange', volumechange);
 
     report(iframe, 'onMute', true);
@@ -428,9 +461,11 @@ describe('TikTokMedia', () => {
 
   it('builds the embed with the mute the host is already reporting', () => {
     const media = new TikTokMedia();
+
     media.src = VIDEO_ID;
     media.muted = true;
     const iframe = createIframe();
+
     media.attach(iframe);
 
     // The frame reads mute once, out of the URL it is built with.
@@ -441,9 +476,11 @@ describe('TikTokMedia', () => {
 
   it('reports the mute the embed is built with from defaultMuted', () => {
     const media = new TikTokMedia();
+
     media.src = VIDEO_ID;
     media.defaultMuted = true;
     const iframe = createIframe();
+
     media.attach(iframe);
 
     expect(iframe.getAttribute('src')).toContain('muted=1');
@@ -452,6 +489,7 @@ describe('TikTokMedia', () => {
     expect(media.muted).toBe(true);
 
     const commands = watchCommands(iframe);
+
     report(iframe, 'onPlayerReady');
 
     // The URL parameter is not always honored, so the mute is asserted again
@@ -463,6 +501,7 @@ describe('TikTokMedia', () => {
   it('leaves the mute the embed reports alone once it is loaded', async () => {
     const media = new TikTokMedia();
     const { iframe } = await attachAndLoad(media);
+
     report(iframe, 'onMute', false);
 
     // `defaultMuted` seeds the embed that gets built; it does not talk over one
@@ -475,8 +514,10 @@ describe('TikTokMedia', () => {
 
   it('carries a mute onto the embed it rebuilds', async () => {
     const media = new TikTokMedia();
+
     media.src = VIDEO_ID;
     const { iframe } = await attachAndLoad(media);
+
     // Where `<tiktok-video muted>` lands: the attribute reaches `muted`, and the
     // `src` sync behind it rebuilds the frame.
     media.muted = true;
@@ -490,6 +531,7 @@ describe('TikTokMedia', () => {
     // Building the embed navigates the frame, so the commands it takes are the
     // ones posted to the window it has now.
     const commands = watchCommands(iframe);
+
     report(iframe, 'onPlayerReady');
 
     // The URL parameter is not always honored, so the mute is asserted again
@@ -503,6 +545,7 @@ describe('TikTokMedia', () => {
     // absent rather than read-only — the player would render a slider that cannot
     // move. `mute` and `unMute` are commands it does take, so mute stays.
     const media = new TikTokMedia() as Partial<Video>;
+
     expect(media.volume).toBeUndefined();
     expect(media.muted).toBeDefined();
     expect(isMediaVolumeCapable(media)).toBe(false);
@@ -538,6 +581,7 @@ describe('TikTokMedia', () => {
     const { iframe } = await attachAndLoad(media);
     const seeking = vi.fn();
     const seeked = vi.fn();
+
     media.addEventListener('seeking', seeking);
     media.addEventListener('seeked', seeked);
 
@@ -558,6 +602,7 @@ describe('TikTokMedia', () => {
     const media = new TikTokMedia();
     const { iframe } = await attachAndLoad(media);
     const seeked = vi.fn();
+
     media.addEventListener('seeked', seeked);
 
     media.currentTime = 30;
@@ -574,6 +619,7 @@ describe('TikTokMedia', () => {
     const media = new TikTokMedia();
     const { iframe } = await attachAndLoad(media);
     const emptied = vi.fn();
+
     media.addEventListener('emptied', emptied);
 
     report(iframe, 'onCurrentTime', { currentTime: 5, duration: 15 });
@@ -587,6 +633,7 @@ describe('TikTokMedia', () => {
 
   it('replays on ended when loop is set', async () => {
     const media = new TikTokMedia();
+
     media.loop = true;
     const { iframe, commands } = await attachAndLoad(media);
 
@@ -599,8 +646,10 @@ describe('TikTokMedia', () => {
 
   it('rewrites the iframe src when the source changes', async () => {
     const media = new TikTokMedia();
+
     media.src = VIDEO_ID;
     const { iframe } = await attachAndLoad(media);
+
     report(iframe, 'onCurrentTime', { currentTime: 5, duration: 15 });
 
     media.src = OTHER_VIDEO_ID;
@@ -614,6 +663,7 @@ describe('TikTokMedia', () => {
 
     // The new frame reports itself ready, which completes the load.
     const loadcomplete = vi.fn();
+
     media.addEventListener('loadcomplete', loadcomplete);
     report(iframe, 'onPlayerReady');
     expect(loadcomplete).toHaveBeenCalledTimes(1);
@@ -625,6 +675,7 @@ describe('TikTokMedia', () => {
     const iframe = createIframe();
     // What a server-rendered element hands over: the URL these props build.
     const embedSrc = buildTikTokIframeSrc(VIDEO_ID, tiktokMediaDefaultProps);
+
     iframe.setAttribute('src', embedSrc);
     media.attach(iframe);
     report(iframe, 'onPlayerReady');
@@ -642,10 +693,12 @@ describe('TikTokMedia', () => {
   it('waits for a frame that is still fetching the embed it already points at', async () => {
     const media = new TikTokMedia();
     const iframe = createIframe();
+
     // What a server-rendered element hands over, before its embed reports ready.
     iframe.setAttribute('src', buildTikTokIframeSrc(VIDEO_ID, tiktokMediaDefaultProps));
     media.attach(iframe);
     const events: string[] = [];
+
     for (const type of ['emptied', 'loadstart'] as const) {
       media.addEventListener(type, () => events.push(type));
     }
@@ -656,6 +709,7 @@ describe('TikTokMedia', () => {
     const pending = media.play().then(() => {
       played = true;
     });
+
     await flushLoad();
 
     // Nothing was discarded and nothing restarted, so the load the frame began is
@@ -671,10 +725,13 @@ describe('TikTokMedia', () => {
 
   it('completes the load on whatever the embed reports first', async () => {
     const media = new TikTokMedia();
+
     media.src = VIDEO_ID;
     const iframe = createIframe();
+
     media.attach(iframe);
     const loadComplete = vi.fn();
+
     media.addEventListener('loadcomplete', loadComplete);
     await flushLoad();
 
@@ -690,9 +747,11 @@ describe('TikTokMedia', () => {
 
   it('errors and unblocks pending play() when src is unrecognized', async () => {
     const media = new TikTokMedia();
+
     media.src = VIDEO_ID;
     const { iframe } = await attachAndLoad(media);
     const errorSpy = vi.fn();
+
     media.addEventListener('error', errorSpy);
 
     media.src = 'https://example.com/not-a-tiktok-url';
@@ -708,8 +767,10 @@ describe('TikTokMedia', () => {
 
   it('stops the embed and ignores what it reports when src is unrecognized', async () => {
     const media = new TikTokMedia();
+
     media.src = VIDEO_ID;
     const { iframe, commands } = await attachAndLoad(media);
+
     report(iframe, 'onStateChange', STATE.PLAYING);
 
     media.src = 'https://example.com/not-a-tiktok-url';
@@ -737,6 +798,7 @@ describe('TikTokMedia', () => {
     const media = new TikTokMedia();
     const { iframe } = await attachAndLoad(media);
     const errorSpy = vi.fn();
+
     media.addEventListener('error', errorSpy);
 
     report(iframe, 'onError');
@@ -751,6 +813,7 @@ describe('TikTokMedia', () => {
     const media = new TikTokMedia();
     const { iframe } = await attachAndLoad(media);
     const errorSpy = vi.fn();
+
     media.addEventListener('error', errorSpy);
 
     report(iframe, 'onPlayerError', { errorCode: 1001, errorType: 'INVALID_VIDEO' });
@@ -778,6 +841,7 @@ describe('TikTokMedia', () => {
     const media = new TikTokMedia();
     const { iframe } = await attachAndLoad(media);
     const errorSpy = vi.fn();
+
     media.addEventListener('error', errorSpy);
 
     report(iframe, 'onPlayerError', { errorCode: 3002, errorType: 'AUTOPLAY_ERROR' });
@@ -846,10 +910,13 @@ describe('TikTokMedia', () => {
 
   it('ignores what a superseded frame reports', async () => {
     const media = new TikTokMedia();
+
     media.src = VIDEO_ID;
     const { iframe: stale } = await attachAndLoad(media);
+
     media.detach();
     const { iframe: current } = await attachAndLoad(media);
+
     expect(current).not.toBe(stale);
 
     report(stale, 'onStateChange', STATE.PLAYING);
@@ -862,11 +929,14 @@ describe('TikTokMedia', () => {
 
   it('unblocks pending play() when detached before the embed is ready', async () => {
     const media = new TikTokMedia();
+
     media.src = VIDEO_ID;
     const iframe = createIframe();
+
     media.attach(iframe);
 
     const pending = media.play();
+
     media.detach();
 
     await expect(pending).resolves.toBeUndefined();
@@ -882,6 +952,7 @@ describe('TikTokMedia', () => {
     report(iframe, 'onStateChange', STATE.PAUSED);
 
     const played = media.played;
+
     expect(played.length).toBe(1);
     expect(played.start(0)).toBe(0);
     expect(played.end(0)).toBe(0.16);
@@ -903,9 +974,12 @@ describe('TikTokMedia bootstrap', () => {
   /** Attach with the bootstrap left on, the way every preload but `none` arrives. */
   async function attachBootstrapped(media: TikTokMedia) {
     if (!media.src) media.src = VIDEO_ID;
+
     const iframe = createIframe();
+
     media.attach(iframe);
     const commands = watchCommands(iframe);
+
     return { iframe, commands };
   }
 
@@ -924,6 +998,7 @@ describe('TikTokMedia bootstrap', () => {
     const media = new TikTokMedia();
     const { iframe } = await attachBootstrapped(media);
     const events: string[] = [];
+
     for (const type of ['play', 'playing', 'pause', 'waiting', 'timeupdate', 'ended'] as const) {
       media.addEventListener(type, () => events.push(type));
     }
@@ -942,6 +1017,7 @@ describe('TikTokMedia bootstrap', () => {
     const media = new TikTokMedia();
     const { iframe } = await attachBootstrapped(media);
     const durationChange = vi.fn();
+
     media.addEventListener('durationchange', durationChange);
 
     report(iframe, 'onPlayerReady');
@@ -958,6 +1034,7 @@ describe('TikTokMedia bootstrap', () => {
     const media = new TikTokMedia();
     const { iframe } = await attachBootstrapped(media);
     const pauseSpy = vi.fn();
+
     media.addEventListener('pause', pauseSpy);
 
     report(iframe, 'onPlayerReady');
@@ -975,6 +1052,7 @@ describe('TikTokMedia bootstrap', () => {
     const media = new TikTokMedia();
     const { iframe, commands } = await attachBootstrapped(media);
     const playSpy = vi.fn();
+
     media.addEventListener('play', playSpy);
 
     report(iframe, 'onPlayerReady');
@@ -995,6 +1073,7 @@ describe('TikTokMedia bootstrap', () => {
     const media = new TikTokMedia();
     const { iframe } = await attachBootstrapped(media);
     const playSpy = vi.fn();
+
     media.addEventListener('play', playSpy);
 
     report(iframe, 'onPlayerReady');
@@ -1013,6 +1092,7 @@ describe('TikTokMedia bootstrap', () => {
     const media = new TikTokMedia();
     const { iframe, commands } = await attachBootstrapped(media);
     const volumeChange = vi.fn();
+
     media.addEventListener('volumechange', volumeChange);
 
     report(iframe, 'onPlayerReady');
@@ -1029,6 +1109,7 @@ describe('TikTokMedia bootstrap', () => {
 
   it('leaves a mute the caller did ask for alone', async () => {
     const media = new TikTokMedia();
+
     media.defaultMuted = true;
     const { iframe, commands } = await attachBootstrapped(media);
 
@@ -1058,9 +1139,11 @@ describe('TikTokMedia bootstrap', () => {
 
   it('takes an autoplay that was asked for as playback rather than a bootstrap', async () => {
     const media = new TikTokMedia();
+
     media.autoplay = true;
     const { iframe, commands } = await attachBootstrapped(media);
     const playSpy = vi.fn();
+
     media.addEventListener('play', playSpy);
 
     report(iframe, 'onPlayerReady');
@@ -1076,6 +1159,7 @@ describe('TikTokMedia bootstrap', () => {
     const media = new TikTokMedia();
     const { iframe, commands } = await attachBootstrapped(media);
     const playSpy = vi.fn();
+
     media.addEventListener('play', playSpy);
 
     report(iframe, 'onPlayerReady');
@@ -1097,6 +1181,7 @@ describe('TikTokMedia bootstrap', () => {
     const media = new TikTokMedia();
     const { iframe } = await attachBootstrapped(media);
     const seeked = vi.fn();
+
     media.addEventListener('seeked', seeked);
 
     report(iframe, 'onPlayerReady');
@@ -1113,6 +1198,7 @@ describe('TikTokMedia bootstrap', () => {
 
   it('leaves the embed to drive itself when it is showing its own controls', async () => {
     const media = new TikTokMedia();
+
     media.controls = true;
     const { iframe, commands } = await attachBootstrapped(media);
 
@@ -1143,6 +1229,7 @@ describe('TikTokMedia bootstrap', () => {
 
   it('leaves the player dormant under preload=none', async () => {
     const media = new TikTokMedia();
+
     media.preload = 'none';
     const { iframe, commands } = await attachBootstrapped(media);
 
@@ -1159,6 +1246,7 @@ describe('TikTokMedia source', () => {
   it('derives src from a structured source and announces the change', () => {
     const media = new TikTokMedia();
     const sourceChange = vi.fn();
+
     media.addEventListener('sourcechange', sourceChange);
 
     media.source = { src: `https://www.tiktok.com/@videojs/video/${VIDEO_ID}` };
@@ -1169,6 +1257,7 @@ describe('TikTokMedia source', () => {
 
   it('re-derives source from src, carrying TikTok player parameters over', () => {
     const media = new TikTokMedia();
+
     media.source = { src: VIDEO_ID, engine: { tiktok: { description: 0 } } };
 
     media.src = OTHER_VIDEO_ID;
@@ -1178,6 +1267,7 @@ describe('TikTokMedia source', () => {
 
   it('rebuilds the embed when only TikTok player parameters change', async () => {
     const media = new TikTokMedia();
+
     media.src = VIDEO_ID;
     const { iframe } = await attachAndLoad(media);
 
@@ -1191,8 +1281,10 @@ describe('TikTokMedia source', () => {
 
   it('serializes TikTok player parameters onto the initial iframe src', () => {
     const media = new TikTokMedia();
+
     media.source = { src: VIDEO_ID, engine: { tiktok: { timestamp: 0 } } };
     const iframe = createIframe();
+
     media.attach(iframe);
 
     expect(iframe.getAttribute('src')).toContain('timestamp=0');
@@ -1201,6 +1293,7 @@ describe('TikTokMedia source', () => {
 
   it('clears src when the source is set to null', () => {
     const media = new TikTokMedia();
+
     media.source = { src: VIDEO_ID };
 
     media.source = null;
@@ -1211,8 +1304,10 @@ describe('TikTokMedia source', () => {
 
   it('drops the embed and resets state when the source is cleared', async () => {
     const media = new TikTokMedia();
+
     media.src = VIDEO_ID;
     const { iframe, commands } = await attachAndLoad(media);
+
     report(iframe, 'onStateChange', STATE.PLAYING);
     report(iframe, 'onCurrentTime', { currentTime: 5, duration: 15 });
 
@@ -1231,12 +1326,15 @@ describe('TikTokMedia source', () => {
 
   it('announces the reset when the source is cleared', async () => {
     const media = new TikTokMedia();
+
     media.src = VIDEO_ID;
     const { iframe } = await attachAndLoad(media);
+
     report(iframe, 'onStateChange', STATE.PLAYING);
     report(iframe, 'onCurrentTime', { currentTime: 5, duration: 15 });
 
     const emptied = vi.fn();
+
     media.addEventListener('emptied', emptied);
     media.source = null;
     await flushLoad();

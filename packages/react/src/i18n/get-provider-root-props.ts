@@ -19,6 +19,7 @@ function mergeTranslations(
             .map((key) => {
               const parentValue = parent[key];
               const childValue = child[key];
+
               return [
                 key,
                 isRecord(parentValue) && isRecord(childValue) ? { ...parentValue, ...childValue } : childValue,
@@ -32,6 +33,7 @@ function mergeTranslations(
 export interface I18nProviderRootProps extends I18nProviderProps {
   parentLocale?: I18nContextValue['locale'];
   localeFromProp?: boolean;
+  localeFromOwnProp?: boolean;
   parentAddLocaleRoot?: AddLocaleRoot;
 }
 
@@ -46,7 +48,7 @@ export function getProviderRootProps(
 
   // Nested providers without their own locale root or overrides can use the
   // existing parent context instead of mounting another root.
-  if (parent && !hasOverrides && (!langRootOnly || parent.localeFromProp)) {
+  if (parent && !hasOverrides && (!langRootOnly || (parent.localeFromOwnProp ?? parent.localeFromProp))) {
     return undefined;
   }
 
@@ -57,11 +59,14 @@ export function getProviderRootProps(
       ? mergeTranslations(parent.translations, props.translations)
       : (props.translations ?? (langRootOnly ? parent?.translations : undefined));
   const onActiveLocaleChange = props.onActiveLocaleChange ?? parent?.onActiveLocaleChange;
+  const localeFromProp =
+    props.locale !== undefined || (props.langRootRef === undefined && parent?.localeFromProp === true);
 
   return {
     ...props,
     ...(inheritedLocale !== undefined ? { locale: inheritedLocale } : {}),
-    localeFromProp: props.locale !== undefined,
+    localeFromProp,
+    localeFromOwnProp: props.locale !== undefined,
     ...(parentLocale !== undefined ? { parentLocale } : {}),
     ...(inheritedTranslations !== undefined ? { translations: inheritedTranslations } : {}),
     ...(onActiveLocaleChange !== undefined ? { onActiveLocaleChange } : {}),

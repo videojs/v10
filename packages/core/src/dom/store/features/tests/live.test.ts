@@ -1,5 +1,6 @@
 import { createStore } from '@videojs/store';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
+
 import type { PlayerTarget } from '../../../player';
 import { createMockVideo } from '../../../tests/test-helpers';
 import { liveFeature } from '../live';
@@ -11,6 +12,7 @@ interface LiveCapableMedia extends EventTarget {
 
 function createLiveMedia(initial: Partial<LiveCapableMedia> = {}): LiveCapableMedia {
   const target = new EventTarget() as LiveCapableMedia;
+
   target.liveEdgeStart = initial.liveEdgeStart ?? Number.NaN;
   target.targetLiveWindow = initial.targetLiveWindow ?? Number.NaN;
   return target;
@@ -22,6 +24,7 @@ describe('liveFeature', () => {
       const video = createMockVideo({ duration: 120 });
 
       const store = createStore<PlayerTarget>()(liveFeature);
+
       store.attach({ media: video, container: null });
 
       expect(store.state.liveEdgeStart).toBeNaN();
@@ -34,6 +37,7 @@ describe('liveFeature', () => {
       const media = createLiveMedia({ liveEdgeStart: 42, targetLiveWindow: 0 });
 
       const store = createStore<PlayerTarget>()(liveFeature);
+
       store.attach({ media: media as unknown as PlayerTarget['media'], container: null });
 
       expect(store.state.liveEdgeStart).toBe(42);
@@ -44,6 +48,7 @@ describe('liveFeature', () => {
       const media = createLiveMedia({ liveEdgeStart: 42, targetLiveWindow: 0 });
 
       const store = createStore<PlayerTarget>()(liveFeature);
+
       store.attach({ media: media as unknown as PlayerTarget['media'], container: null });
 
       media.liveEdgeStart = 102;
@@ -58,6 +63,7 @@ describe('liveFeature', () => {
       const media = createLiveMedia({ liveEdgeStart: 42, targetLiveWindow: 0 });
 
       const store = createStore<PlayerTarget>()(liveFeature);
+
       store.attach({ media: media as unknown as PlayerTarget['media'], container: null });
 
       media.liveEdgeStart = 100;
@@ -70,6 +76,7 @@ describe('liveFeature', () => {
       const media = createLiveMedia({ liveEdgeStart: 42, targetLiveWindow: 0 });
 
       const store = createStore<PlayerTarget>()(liveFeature);
+
       store.attach({ media: media as unknown as PlayerTarget['media'], container: null });
 
       media.liveEdgeStart = 200;
@@ -82,6 +89,7 @@ describe('liveFeature', () => {
       const media = createLiveMedia({ liveEdgeStart: Number.NaN, targetLiveWindow: 0 });
 
       const store = createStore<PlayerTarget>()(liveFeature);
+
       store.attach({ media: media as unknown as PlayerTarget['media'], container: null });
 
       media.liveEdgeStart = 50;
@@ -94,6 +102,7 @@ describe('liveFeature', () => {
       const media = createLiveMedia({ liveEdgeStart: Number.NaN, targetLiveWindow: 0 });
 
       const store = createStore<PlayerTarget>()(liveFeature);
+
       store.attach({ media: media as unknown as PlayerTarget['media'], container: null });
 
       media.liveEdgeStart = 40;
@@ -106,6 +115,7 @@ describe('liveFeature', () => {
       const media = createLiveMedia({ liveEdgeStart: 42, targetLiveWindow: 0 });
 
       const store = createStore<PlayerTarget>()(liveFeature);
+
       store.attach({ media: media as unknown as PlayerTarget['media'], container: null });
 
       media.liveEdgeStart = 43;
@@ -121,6 +131,7 @@ describe('liveFeature', () => {
       const media = createLiveMedia({ liveEdgeStart: 42, targetLiveWindow: 0 });
 
       const store = createStore<PlayerTarget>()(liveFeature);
+
       store.attach({ media: media as unknown as PlayerTarget['media'], container: null });
 
       media.liveEdgeStart = Number.NaN;
@@ -133,6 +144,7 @@ describe('liveFeature', () => {
       const media = createLiveMedia({ liveEdgeStart: 42, targetLiveWindow: 0 });
 
       const store = createStore<PlayerTarget>()(liveFeature);
+
       store.attach({ media: media as unknown as PlayerTarget['media'], container: null });
 
       media.liveEdgeStart = Number.NaN;

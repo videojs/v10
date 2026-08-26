@@ -1,10 +1,11 @@
 import { registerI18n, resetI18nRegistry } from '@videojs/core/i18n';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vite-plus/test';
 
 import { MediaI18nProviderElement } from '../../../i18n';
-import { AlertDialogCloseElement } from '../../alert-dialog/alert-dialog-close-element';
-import { AlertDialogDescriptionElement } from '../../alert-dialog/alert-dialog-description-element';
-import { AlertDialogTitleElement } from '../../alert-dialog/alert-dialog-title-element';
+import { DialogCloseElement } from '../../dialog/dialog-close-element';
+import { DialogDescriptionElement } from '../../dialog/dialog-description-element';
+import { DialogPopupElement } from '../../dialog/dialog-popup-element';
+import { DialogTitleElement } from '../../dialog/dialog-title-element';
 import { ErrorDialogElement } from '../error-dialog-element';
 
 let tagCounter = 0;
@@ -15,6 +16,7 @@ function uniqueTag(base: string): string {
 
 function createElement<Element extends HTMLElement>(Base: abstract new () => Element): Element {
   const tag = uniqueTag('test-el');
+
   customElements.define(tag, class extends (Base as unknown as typeof HTMLElement) {});
   return document.createElement(tag) as Element;
 }
@@ -36,19 +38,19 @@ describe('ErrorDialogElement', () => {
     expect(ErrorDialogElement.tagName).toBe('media-error-dialog');
   });
 
-  it('provides alertDialogContext for child parts', async () => {
-    ensureDefined(AlertDialogTitleElement.tagName, AlertDialogTitleElement);
-    ensureDefined(AlertDialogDescriptionElement.tagName, AlertDialogDescriptionElement);
-    ensureDefined(AlertDialogCloseElement.tagName, AlertDialogCloseElement);
+  it('provides dialogContext for child parts', async () => {
+    ensureDefined(DialogTitleElement.tagName, DialogTitleElement);
+    ensureDefined(DialogDescriptionElement.tagName, DialogDescriptionElement);
+    ensureDefined(DialogCloseElement.tagName, DialogCloseElement);
 
     const el = createElement(ErrorDialogElement);
-    const title = document.createElement(AlertDialogTitleElement.tagName) as AlertDialogTitleElement;
-    const desc = document.createElement(AlertDialogDescriptionElement.tagName) as AlertDialogDescriptionElement;
-    const close = document.createElement(AlertDialogCloseElement.tagName) as AlertDialogCloseElement;
+    const popup = createElement(DialogPopupElement);
+    const title = document.createElement(DialogTitleElement.tagName) as DialogTitleElement;
+    const desc = document.createElement(DialogDescriptionElement.tagName) as DialogDescriptionElement;
+    const close = document.createElement(DialogCloseElement.tagName) as DialogCloseElement;
 
-    el.appendChild(title);
-    el.appendChild(desc);
-    el.appendChild(close);
+    popup.append(title, desc, close);
+    el.append(popup);
 
     document.body.appendChild(el);
     await el.updateComplete;
@@ -56,6 +58,8 @@ describe('ErrorDialogElement', () => {
     expect(title.isConnected).toBe(true);
     expect(desc.isConnected).toBe(true);
     expect(close.isConnected).toBe(true);
+    expect(popup.getAttribute('aria-labelledby')).toBe(title.id);
+    expect(popup.getAttribute('aria-describedby')).toBe(desc.id);
   });
 
   it('handles missing child elements gracefully', async () => {
@@ -74,18 +78,21 @@ describe('ErrorDialogElement', () => {
       'errors.unexpected': 'Ocurrió un error inesperado.',
     });
     ensureDefined(MediaI18nProviderElement.tagName, MediaI18nProviderElement);
-    ensureDefined(AlertDialogTitleElement.tagName, AlertDialogTitleElement);
-    ensureDefined(AlertDialogDescriptionElement.tagName, AlertDialogDescriptionElement);
-    ensureDefined(AlertDialogCloseElement.tagName, AlertDialogCloseElement);
+    ensureDefined(DialogTitleElement.tagName, DialogTitleElement);
+    ensureDefined(DialogDescriptionElement.tagName, DialogDescriptionElement);
+    ensureDefined(DialogCloseElement.tagName, DialogCloseElement);
 
     const provider = new MediaI18nProviderElement();
+
     provider.setAttribute('lang', 'es');
     const el = createElement(ErrorDialogElement);
-    const title = document.createElement(AlertDialogTitleElement.tagName) as AlertDialogTitleElement;
-    const desc = document.createElement(AlertDialogDescriptionElement.tagName) as AlertDialogDescriptionElement;
-    const close = document.createElement(AlertDialogCloseElement.tagName) as AlertDialogCloseElement;
+    const popup = createElement(DialogPopupElement);
+    const title = document.createElement(DialogTitleElement.tagName) as DialogTitleElement;
+    const desc = document.createElement(DialogDescriptionElement.tagName) as DialogDescriptionElement;
+    const close = document.createElement(DialogCloseElement.tagName) as DialogCloseElement;
 
-    el.append(title, desc, close);
+    popup.append(title, desc, close);
+    el.append(popup);
     provider.appendChild(el);
     document.body.append(provider);
     await Promise.resolve();
@@ -103,19 +110,23 @@ describe('ErrorDialogElement', () => {
       'errors.unexpected': 'Ocurrió un error inesperado.',
     });
     ensureDefined(MediaI18nProviderElement.tagName, MediaI18nProviderElement);
-    ensureDefined(AlertDialogTitleElement.tagName, AlertDialogTitleElement);
-    ensureDefined(AlertDialogDescriptionElement.tagName, AlertDialogDescriptionElement);
-    ensureDefined(AlertDialogCloseElement.tagName, AlertDialogCloseElement);
+    ensureDefined(DialogTitleElement.tagName, DialogTitleElement);
+    ensureDefined(DialogDescriptionElement.tagName, DialogDescriptionElement);
+    ensureDefined(DialogCloseElement.tagName, DialogCloseElement);
 
     const provider = new MediaI18nProviderElement();
+
     provider.setAttribute('lang', 'es');
     const el = createElement(ErrorDialogElement);
-    const title = document.createElement(AlertDialogTitleElement.tagName) as AlertDialogTitleElement;
-    const desc = document.createElement(AlertDialogDescriptionElement.tagName) as AlertDialogDescriptionElement;
-    const close = document.createElement(AlertDialogCloseElement.tagName) as AlertDialogCloseElement;
+    const popup = createElement(DialogPopupElement);
+    const title = document.createElement(DialogTitleElement.tagName) as DialogTitleElement;
+    const desc = document.createElement(DialogDescriptionElement.tagName) as DialogDescriptionElement;
+    const close = document.createElement(DialogCloseElement.tagName) as DialogCloseElement;
+
     title.textContent = 'Custom title';
 
-    el.append(title, desc, close);
+    popup.append(title, desc, close);
+    el.append(popup);
     provider.appendChild(el);
     document.body.append(provider);
     await Promise.resolve();

@@ -1,8 +1,8 @@
 /**
  * All SPF exports (public + internal) for bundle size measurement.
  *
- * This file exports everything implemented in SPF, including internal APIs.
- * Use this for accurate bundle size measurements during development.
+ * This file exports everything implemented in SPF, including internal APIs. Use this for accurate bundle size
+ * measurements during development.
  *
  * For the public API, import from './index' instead.
  */
@@ -24,10 +24,7 @@ export { resolveUrl } from './media/hls/resolve-url';
 
 export type { QualityConfig } from './media/abr/quality-selection';
 export { DEFAULT_QUALITY_CONFIG, selectQuality } from './media/abr/quality-selection';
-export type {
-  BandwidthConfig,
-  BandwidthState,
-} from './network/bandwidth-estimator';
+export type { BandwidthConfig, BandwidthState } from './network/bandwidth-estimator';
 export {
   DEFAULT_BANDWIDTH_CONFIG,
   getBandwidthEstimate,
@@ -70,10 +67,7 @@ export { hasPresentationDuration, isResolvedPresentation, isResolvedTrack } from
 // DOM APIs (P4, P12, P16)
 // =============================================================================
 
-export type {
-  AttachMediaSourceResult,
-  CreateMediaSourceOptions,
-} from './media/dom/mse/mediasource-setup';
+export type { AttachMediaSourceResult, CreateMediaSourceOptions } from './media/dom/mse/mediasource-setup';
 export {
   attachMediaSource,
   attachMediaSourceAsSourceElement,

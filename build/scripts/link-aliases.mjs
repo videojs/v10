@@ -1,14 +1,10 @@
 /**
- * Exposes the checked-in, host-neutral skill catalog through client-specific
- * discovery paths:
+ * Exposes the checked-in, host-neutral skill catalog through client-specific discovery paths:
  *
- *   .agents/skills/<skill-name>/SKILL.md  (source)
- *   .claude/skills                (generated junction)
- *   .claude/plans                 (generated junction)
- *   .opencode                     (generated junction)
+ * .agents/skills/<skill-name>/SKILL.md (source) .claude/skills (generated junction) .claude/plans (generated junction)
+ * .opencode (generated junction)
  *
- * Directory junctions work on Windows without elevated privileges. Failures
- * warn instead of breaking `pnpm install`.
+ * Directory junctions work on Windows without elevated privileges. Failures warn instead of breaking `pnpm install`.
  */
 import { lstatSync, mkdirSync, readlinkSync, symlinkSync, unlinkSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
@@ -35,6 +31,7 @@ function ensureAlias(relativePath, target) {
     } catch {
       // Replace a dangling generated link below.
     }
+
     unlinkSync(path);
   } else if (state) {
     console.warn(`warning: refusing to replace non-generated ${relativePath}`);
@@ -42,6 +39,7 @@ function ensureAlias(relativePath, target) {
   }
 
   mkdirSync(dirname(path), { recursive: true });
+
   try {
     symlinkSync(target, path, 'junction');
   } catch {

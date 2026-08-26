@@ -6,6 +6,7 @@ description: A composable menu component for settings, option selection, and act
 ---
 
 import ComponentReference from "@/components/docs/api-reference/ComponentReference.astro";
+import ComponentImports from "@/components/docs/api-reference/ComponentImports.astro";
 import DocsLink from "@/components/docs/DocsLink.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 import StyleCase from "@/components/docs/StyleCase.astro";
@@ -22,26 +23,26 @@ import basicUsageHtml from "@/components/docs/demos/menu/html/css/BasicUsage.htm
 import basicUsageHtmlCss from "@/components/docs/demos/menu/html/css/BasicUsage.css?raw";
 import basicUsageHtmlTs from "@/components/docs/demos/menu/html/css/BasicUsage.ts?raw";
 
+## Import
+
+<ComponentImports component="Menu" html="menu" />
+
 ## Anatomy
 
-A submenu is a menu inside another menu. The submenu trigger lives in the parent list, and the submenu content is the next view.
+A root menu owns one positioned Popup. Nested `Content` elements share that Popup with the root Content.
 
 <FrameworkCase frameworks={["react"]}>
   ```tsx
   <Menu.Root>
     <Menu.Trigger />
-    <Menu.Content>
-      <Menu.View>
+    <Menu.Popup>
+      <Menu.Content>
         {/* Parent menu item that opens a submenu */}
         <Menu.Root>
-          {/* Submenu trigger */}
-          <Menu.Trigger>
-            <Menu.ItemValue />
-          </Menu.Trigger>
+          <Menu.Trigger />
 
-          {/* Submenu content */}
           <Menu.Content>
-            <Menu.Back />
+            <Menu.Item>Back</Menu.Item>
             <Menu.RadioGroup>
               <Menu.GroupLabel />
               <Menu.RadioItem>
@@ -60,8 +61,8 @@ A submenu is a menu inside another menu. The submenu trigger lives in the parent
         </Menu.Group>
         <Menu.Separator />
         <Menu.Item />
-      </Menu.View>
-    </Menu.Content>
+      </Menu.Content>
+    </Menu.Popup>
   </Menu.Root>
   ```
 </FrameworkCase>
@@ -71,10 +72,10 @@ A submenu is a menu inside another menu. The submenu trigger lives in the parent
   <button type="button" commandfor="settings-menu">Settings</button>
 
   <media-menu id="settings-menu">
-    <media-menu-view>
+    <media-menu-content>
       <!-- Parent menu item that opens a submenu -->
       <media-menu-item commandfor="submenu">
-        <media-menu-item-value></media-menu-item-value>
+        Open submenu
       </media-menu-item>
 
       <!-- Other parent menu items -->
@@ -86,18 +87,18 @@ A submenu is a menu inside another menu. The submenu trigger lives in the parent
       </media-menu-group>
       <media-menu-separator></media-menu-separator>
       <media-menu-item></media-menu-item>
-    </media-menu-view>
+    </media-menu-content>
 
-    <!-- Submenu content -->
-    <media-menu id="submenu">
-      <media-menu-back></media-menu-back>
+    <!-- Sibling Content opened by the parent item -->
+    <media-menu-content id="submenu">
+      <media-menu-item>Back</media-menu-item>
       <media-menu-radio-group>
         <media-menu-group-label></media-menu-group-label>
         <media-menu-radio-item>
           <media-menu-item-indicator></media-menu-item-indicator>
         </media-menu-radio-item>
       </media-menu-radio-group>
-    </media-menu>
+    </media-menu-content>
   </media-menu>
   ```
 </FrameworkCase>
@@ -106,26 +107,39 @@ A submenu is a menu inside another menu. The submenu trigger lives in the parent
 
 Menus open from a trigger and close when you select an item, click outside, move focus away, or press <kbd>Escape</kbd>. Root menus use `side` and `align` as their preferred placement. When the preferred side overflows the positioning boundary, the menu uses the opposite side if it has more space.
 
-Create a submenu by putting another menu inside the root menu's content. Its trigger stays in the root list, and its content becomes the next view. In HTML, give the submenu a matching `id` and point the trigger at it with `commandfor`. Wrap the root list in `Menu.View` or `<media-menu-view>` when the root list and submenus share one animated viewport.
+Root menus inside a <DocsLink slug="reference/player-container">Container</DocsLink> join its popup group. Opening one closes any other root menu or popover that is open in the same container. Submenus remain part of their root menu instead of registering separately.
 
-Set `type="playback-rate"`, `type="quality"`, `type="audio-track"`, or `type="captions"` on a submenu trigger when it represents a media setting. `Menu.ItemValue` and `<media-menu-item-value>` read that setting context and display the current value, such as `1.5x`, `Auto`, `English`, or `Off`. See <DocsLink slug="reference/playback-rate-radio-group">PlaybackRateRadioGroup</DocsLink>, <DocsLink slug="reference/quality-radio-group">QualityRadioGroup</DocsLink>, <DocsLink slug="reference/audio-track-radio-group">AudioTrackRadioGroup</DocsLink>, and <DocsLink slug="reference/captions-radio-group">CaptionsRadioGroup</DocsLink> for the generated option groups.
+In React, create a submenu by nesting another `Menu.Root` in the parent `Menu.Content`; its `Menu.Trigger` behaves as a parent item and its `Menu.Content` becomes the active Content. In HTML, add another `<media-menu-content>` as a sibling, give it an `id`, and point the parent `<media-menu-item>` at it with `commandfor`.
+
+Media option groups can render the current selection beside a submenu trigger. See <DocsLink slug="reference/playback-rate-radio-group">PlaybackRateRadioGroup</DocsLink>, <DocsLink slug="reference/quality-radio-group">QualityRadioGroup</DocsLink>, <DocsLink slug="reference/audio-track-radio-group">AudioTrackRadioGroup</DocsLink>, and <DocsLink slug="reference/captions-radio-group">CaptionsRadioGroup</DocsLink>.
 
 ## Styling
 
 Use data attributes to style open state, highlighted items, selected radio items, and submenu views:
 
-`data-highlighted` is added to the current menu item. The highlighted item is the item that keyboard selection will act on. It changes when the menu opens, when the pointer moves over another item, when the user presses arrow keys, or when type-ahead search finds a match.
+`data-highlighted` identifies the current menu item. Its value is `"pointer"` when pointer movement caused the highlight and an empty string for other highlights, including keyboard navigation and type-ahead search. Use `[data-highlighted]` to match any highlighted item or `[data-highlighted=""]` to match highlights that were not caused by pointer movement.
 
-On root menu content, `data-side` reflects the rendered side and can differ from the preferred `side` prop after collision handling. Submenus do not have `data-side`.
+The root `Menu.Popup` or `<media-menu>` receives `data-open`, `data-side`, and `data-align`. Each Content receives menu state such as `data-open` and `data-submenu`; a Content with an open logical child receives `data-child-open`.
+
+Every navigable item receives `data-item`. Use `[data-item]` when one rule should target regular, radio, checkbox, and submenu-trigger items together.
 
 <FrameworkCase frameworks={["react"]}>
   ```css
-  .menu[data-open] {
+  .menu-popup[data-open] {
     opacity: 1;
+  }
+
+  .menu-content[data-child-open] {
+    translate: -100% 0;
   }
 
   .menu-item[data-highlighted] {
     background: rgba(255, 255, 255, 0.16);
+    transition: background-color 100ms ease-in-out;
+  }
+
+  .menu-item[data-highlighted=""] {
+    transition-duration: 0ms;
   }
 
   [role="menuitemradio"][aria-checked="true"] {
@@ -140,8 +154,17 @@ On root menu content, `data-side` reflects the rendered side and can differ from
     opacity: 1;
   }
 
+  media-menu-content[data-child-open] {
+    translate: -100% 0;
+  }
+
   media-menu-item[data-highlighted] {
     background: rgba(255, 255, 255, 0.16);
+    transition: background-color 100ms ease-in-out;
+  }
+
+  media-menu-item[data-highlighted=""] {
+    transition-duration: 0ms;
   }
 
   media-menu-radio-item[aria-checked="true"] {

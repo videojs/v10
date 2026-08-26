@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
+
 import { deepEqual } from '../deep-equal';
 
 describe('deepEqual', () => {
@@ -19,6 +20,7 @@ describe('deepEqual', () => {
 
   it('returns true for same reference', () => {
     const obj = { a: { b: 1 } };
+
     expect(deepEqual(obj, obj)).toBe(true);
   });
 
@@ -53,6 +55,7 @@ describe('deepEqual', () => {
 
   it('compares non-plain objects by reference only', () => {
     const date = new Date(0);
+
     expect(deepEqual(date, date)).toBe(true);
     expect(deepEqual(new Date(0), new Date(0))).toBe(false);
     expect(deepEqual(new Map(), new Map())).toBe(false);

@@ -11,6 +11,8 @@ Manages subtitles, captions, chapters, and thumbnail tracks.
 
 A default `kind="chapters"` track can also divide the <DocsLink slug="reference/time-slider">time slider</DocsLink> into chapter ranges and label the chapter at the current interaction position.
 
+When a thumbnail track is present, `thumbnailTrackCrossOrigin` reports the media element's CORS mode, or `null` when the media is not CORS-enabled. <DocsLink slug="reference/thumbnail">Thumbnail</DocsLink> reads it to fetch sprite sheets the same way the browser fetched the track.
+
 <FeatureReference feature="textTrack" />
 
 ### Selector
@@ -42,13 +44,13 @@ function CaptionsButton() {
 
 <FrameworkCase frameworks={["html"]}>
 ```ts title="captions-button.ts"
-import { createPlayer, MediaElement, selectTextTrack } from '@videojs/html';
+import { createPlayer, UIElement, selectTextTrack } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
 
-const { PlayerController, context } = createPlayer({ features: videoFeatures });
+const { PlayerController } = createPlayer({ features: videoFeatures });
 
-class CaptionsButton extends MediaElement {
-  readonly #textTracks = new PlayerController(this, context, selectTextTrack);
+class CaptionsButton extends UIElement {
+  readonly #textTracks = new PlayerController(this, selectTextTrack);
 }
 ```
 </FrameworkCase>

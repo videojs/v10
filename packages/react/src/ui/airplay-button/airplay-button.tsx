@@ -5,8 +5,7 @@ import type { UIComponentProps } from '../../utils/types';
 import { createMediaButton } from '../create-media-button';
 
 export interface AirPlayButtonProps
-  extends UIComponentProps<'button', AirPlayButtonCore.State>,
-    AirPlayButtonCore.Props {}
+  extends UIComponentProps<'button', AirPlayButtonCore.State>, AirPlayButtonCore.Props {}
 
 /** A button that toggles AirPlay to a remote device. */
 export const AirPlayButton = createMediaButton<AirPlayButtonCore, AirPlayButtonProps>({

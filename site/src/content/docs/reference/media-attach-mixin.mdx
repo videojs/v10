@@ -6,7 +6,7 @@ description: Mixin for custom media elements to register themselves with the pro
 import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
 import DocsLink from "@/components/docs/DocsLink.astro";
 
-`MediaAttachMixin` creates a class that registers itself with the <DocsLink slug="reference/provider-mixin">provider</DocsLink> on connect. Apply it to custom media elements so they automatically wire to the store.
+`MediaAttachMixin` creates a class that registers itself with the <DocsLink slug="reference/player">player</DocsLink> on connect. Apply it to custom media elements so they automatically wire to the store.
 
 Built-in elements, like `<hlsjs-video>`, `<dash-video>`, `<hls-video>`, and `<background-video>`, all use this mixin internally.
 
@@ -25,7 +25,7 @@ customElements.define('my-media', MyMedia);
 
 You only need `MediaAttachMixin` when your base class doesn't already register as a media element with the provider. For example, elements that wrap a third-party player or use a canvas renderer.
 
-For plain `<video>` and `<audio>` elements, the provider discovers them automatically via `querySelector` — no mixin needed.
+For plain `<video>` and `<audio>` elements, the player tracks them automatically as they are added, removed, or replaced — no mixin needed.
 
 ## Overriding the media target
 
@@ -43,8 +43,7 @@ export class BackgroundVideo extends MediaAttachMixin(HTMLElement) {
 
 ## Factory function
 
-{/* TODO: link mediaContext to concept page once written (https://github.com/videojs/v10/issues/1033) */}
-`MediaAttachMixin` is pre-configured with the default `mediaContext`. To use a different context, call `createMediaAttachMixin`:
+`MediaAttachMixin` is pre-configured with the default `mediaContext` published by <DocsLink slug="reference/player">`PlayerElement`</DocsLink>. Call `createMediaAttachMixin` only when a custom player publishes a matching custom `MediaContext`:
 
 ```ts
 import { createMediaAttachMixin } from '@videojs/html';

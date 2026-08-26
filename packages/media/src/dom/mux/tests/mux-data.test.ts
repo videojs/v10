@@ -1,4 +1,5 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
+
 import { MuxData } from '..';
 import type { MuxDataSdk } from '../types';
 
@@ -8,6 +9,7 @@ function createSdk() {
     monitor,
     utils: { now: () => 0, generateUUID: () => 'uuid' },
   } as unknown as MuxDataSdk;
+
   return { sdk, monitor };
 }
 
@@ -58,6 +60,7 @@ describe('MuxData', () => {
     const data = new MuxData({ MuxDataSdk: sdk, envKey: 'key', playerSoftwareName: 'mux-video' });
     const video = document.createElement('video');
     const media = new FakeMedia();
+
     media.src = 'https://stream.mux.com/abc123.m3u8';
 
     data.setMedia(media);
@@ -77,6 +80,7 @@ describe('MuxData', () => {
     const { sdk, monitor } = createSdk();
     const data = new MuxData({ MuxDataSdk: sdk });
     const media = new FakeMedia();
+
     media.src = 'https://stream.mux.com/abc123.m3u8';
 
     data.setMedia(media);
@@ -100,6 +104,7 @@ describe('MuxData', () => {
     expect(monitor).toHaveBeenCalledTimes(1);
 
     const engine = new FakeHlsJsEngine();
+
     media.engine = engine;
     media.src = 'https://stream.mux.com/abc123.m3u8';
     media.dispatchEvent(new Event('loadstart'));
@@ -122,6 +127,7 @@ describe('MuxData', () => {
     const data = new MuxData({ MuxDataSdk: sdk, envKey: 'key' });
     const video = document.createElement('video');
     const media = new FakeMedia();
+
     media.engine = new FakeDashJsEngine();
     media.src = 'https://example.com/manifest.mpd';
 
@@ -131,6 +137,7 @@ describe('MuxData', () => {
     await settle();
 
     const [, options] = monitor.mock.lastCall!;
+
     expect(options.dashjs).toBe(media.engine);
     expect(options).not.toHaveProperty('hlsjs');
     expect(options).not.toHaveProperty('Hls');
@@ -141,6 +148,7 @@ describe('MuxData', () => {
     const data = new MuxData({ MuxDataSdk: sdk, envKey: 'key' });
     const video = document.createElement('video');
     const media = new FakeMedia();
+
     media.src = 'https://example.com/video.mp4';
 
     data.setMedia(media);
@@ -149,6 +157,7 @@ describe('MuxData', () => {
     await settle();
 
     const [, options] = monitor.mock.lastCall!;
+
     expect(options).not.toHaveProperty('hlsjs');
     expect(options).not.toHaveProperty('Hls');
     expect(options).not.toHaveProperty('dashjs');
@@ -179,6 +188,7 @@ describe('MuxData', () => {
     const data = new MuxData();
     const video = document.createElement('video');
     const destroy = vi.fn();
+
     Object.defineProperty(video, 'mux', { value: { destroy }, writable: true, configurable: true });
 
     data.attach(video);
@@ -193,6 +203,7 @@ describe('MuxData', () => {
     const data = new MuxData({ MuxDataSdk: sdk, envKey: 'key' });
     const video = document.createElement('video');
     const media = new FakeMedia();
+
     media.src = 'https://stream.mux.com/abc123.m3u8';
 
     data.setMedia(media);

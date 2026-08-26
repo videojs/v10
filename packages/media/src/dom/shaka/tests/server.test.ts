@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 // The real `shaka-player` module, not the mock the other suites install:
 // evaluating it is exactly what a server runtime trips over without the shim.

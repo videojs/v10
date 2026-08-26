@@ -9,15 +9,18 @@ export default function BasicUsage() {
       <Container className="media-container">
         <Video src="{{VJS10_DEMO_VIDEO_MP4}}" autoPlay muted playsInline loop />
 
-        <Controls.Root className="media-controls">
-          <Controls.Group className="controls-group" aria-label="Playback controls">
-            <PlayButton
-              className="button"
-              render={(props, state) => <button {...props}>{state.paused ? 'Play' : 'Pause'}</button>}
-            />
+        <Controls.Root>
+          <Controls.Backdrop className="controls-backdrop" />
+          <Controls.Content className="media-controls">
+            <Controls.Group className="controls-group" aria-label="Playback controls">
+              <PlayButton
+                className="button"
+                render={(props, state) => <button {...props}>{state.paused ? 'Play' : 'Pause'}</button>}
+              />
 
-            <Time.Value type="current" className="time" />
-          </Controls.Group>
+              <Time.Value type="current" className="time" />
+            </Controls.Group>
+          </Controls.Content>
         </Controls.Root>
       </Container>
     </Player>

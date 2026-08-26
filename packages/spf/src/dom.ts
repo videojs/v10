@@ -1,9 +1,8 @@
 /**
  * DOM/Browser-specific SPF bindings
  *
- * This is a convenience aggregate of DOM-bound exports drawn from across
- * the package. The underlying pieces live alongside their DOM-free peers
- * in `behaviors/` (with `dom/` subdirs where applicable) and `media/dom/`.
+ * This is a convenience aggregate of DOM-bound exports drawn from across the package. The underlying pieces live
+ * alongside their DOM-free peers in `behaviors/` (with `dom/` subdirs where applicable) and `media/dom/`.
  */
 
 export { appendSegment } from './media/dom/mse/append-segment';

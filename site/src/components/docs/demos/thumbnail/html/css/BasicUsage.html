@@ -1,22 +1,10 @@
 <section class="demo">
-    <video-player>
-        <media-container>
-            <video
-                class="media"
-                src="{{VJS10_DEMO_VIDEO_MP4}}"
-                preload="auto"
-                muted
-                playsinline
-                crossorigin="anonymous"
-            >
-                <track
-                    kind="metadata"
-                    label="thumbnails"
-                    src="/docs/demos/thumbnail/basic.vtt"
-                    default
-                />
-            </video>
-            <media-thumbnail class="media-thumbnail" time="12"></media-thumbnail>
-        </media-container>
-    </video-player>
+  <video-player>
+    <media-container>
+      <video class="media" src="{{VJS10_DEMO_VIDEO_MP4}}" preload="auto" muted playsinline crossorigin="anonymous">
+        <track kind="metadata" label="thumbnails" src="{{VJS10_DEMO_STORYBOARD_VTT}}" default />
+      </video>
+      <media-thumbnail class="media-thumbnail" time="12"></media-thumbnail>
+    </media-container>
+  </video-player>
 </section>

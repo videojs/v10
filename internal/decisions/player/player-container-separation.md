@@ -7,7 +7,7 @@ date: 2026-02-25
 
 ## Decision
 
-The HTML player element (`<video-player>`) is a **provider only** — it owns the store and provides state context to descendants. A separate `<media-container>` element handles layout, media attachment, and acts as the fullscreen target. The `PlayerElement` no longer combines `ProviderMixin` and `ContainerMixin` by default.
+The HTML player element (`<video-player>`) is a **provider only** — it owns the store and provides state context to descendants. A separate `<media-container>` element handles layout and interaction and acts as the fullscreen target. The package exposes that concrete `ContainerElement` independently from `createPlayer()`.
 
 This mirrors the React architecture where `Player`, `Container`, and media components (`Video`, `Audio`) are distinct:
 
@@ -38,7 +38,7 @@ On the HTML side, there was temptation to combine the provider and container int
 - **Skins diverge across platforms.** In React, a skin is `Container` + UI controls — `Player` wraps outside. If the HTML player element _is_ the container, then HTML skins don't include a container (it's already baked in), while React skins do. "Skin" means different things on each platform.
 - **Features outside the fullscreen target lose state access.** The container is the fullscreen target. If it's also the provider, then anything outside it (playlist, transcript, sidebar) is also outside the player's state scope and can't use `PlayerController` or context to access player state.
 
-The current architecture exposes `ProviderMixin` through `createPlayer()` and `ContainerMixin` independently from the main package. This decision formalizes the separation as the default — `PlayerElement` becomes provider-only rather than a combined provider+container.
+The current architecture returns a configured `PlayerElement` from `createPlayer()` and exposes a concrete `ContainerElement` independently from the main package. This decision formalizes the separation as the default: the player and container remain distinct elements.
 
 ## Alternatives Considered
 
@@ -89,20 +89,7 @@ function VideoSkin() {
 
 If the container is bundled into `<video-player>`, these features must live _outside_ the player element. They lose convenient access to player state via `PlayerController` and context, and need indirect integration instead.
 
-**Separation of concerns.** The player element's job is state management — creating the store, providing context, and managing lifecycle. The container's job is layout — wrapping the media and UI, acting as the fullscreen target, and handling media attachment via `MutationObserver`. These are distinct responsibilities that belong in distinct elements.
-
-**Programmatic composition remains available.** For developers building non-declarative players who want a single combined element, `ProviderMixin` and `ContainerMixin` can still be composed together:
-
-```ts
-import { ContainerMixin, createPlayer } from '@videojs/html';
-
-const { ProviderMixin } = createPlayer({ features });
-
-// Combine into a single element if desired
-class MyPlayer extends ProviderMixin(ContainerMixin(MediaElement)) {
-  static readonly tagName = 'my-player';
-}
-```
+**Separation of concerns.** The player element's job is state management — creating the store, providing context, and managing lifecycle. The container's job is layout and interaction — wrapping the media and UI and acting as the fullscreen target. These are distinct responsibilities that belong in distinct elements. Developers can subclass `ContainerElement` when they need custom container behavior without rebuilding its context integration.
 
 ### Trade-offs
 

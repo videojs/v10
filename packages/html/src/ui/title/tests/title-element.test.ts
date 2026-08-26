@@ -2,10 +2,10 @@ import type { AnyPlayerStore, PlayerTarget } from '@videojs/core/dom';
 import { controlsFeature, metadataFeature, playbackFeature, setPlayerConfigValue } from '@videojs/core/dom';
 import { ContextProvider } from '@videojs/element/context';
 import { combine, createStore } from '@videojs/store';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vite-plus/test';
 
 import { playerContext } from '../../../player/context';
-import { MediaElement } from '../../media-element';
+import { UIElement } from '../../ui-element';
 import { TitleElement } from '../title-element';
 
 let tagCounter = 0;
@@ -16,6 +16,7 @@ function uniqueTag(base: string): string {
 
 function createElement<Element extends HTMLElement>(Base: abstract new () => Element): Element {
   const tag = uniqueTag('test-el');
+
   customElements.define(tag, class extends (Base as unknown as typeof HTMLElement) {});
   return document.createElement(tag) as Element;
 }
@@ -94,7 +95,7 @@ function setTitle(store: object, value: string | null): void {
   setPlayerConfigValue(store, titleConfig, value);
 }
 
-class TestPlayerProviderElement extends MediaElement {
+class TestPlayerProviderElement extends UIElement {
   store: AnyPlayerStore = createTitleStore() as unknown as AnyPlayerStore;
 
   readonly #provider = new ContextProvider(this, { context: playerContext });
@@ -109,6 +110,7 @@ defineElement('test-title-player', TestPlayerProviderElement);
 
 async function setup(store?: object) {
   const provider = document.createElement('test-title-player') as TestPlayerProviderElement;
+
   if (store) provider.store = store as unknown as AnyPlayerStore;
 
   const title = createElement(TitleElement);
@@ -162,6 +164,7 @@ describe('TitleElement', () => {
   it('ignores controls and playback state', async () => {
     const store: TitleStore = createTitleStore();
     const media = new FakeMedia();
+
     store.attach({ media: media as unknown as PlayerTarget['media'], container: null });
 
     const { title } = await setup(store);

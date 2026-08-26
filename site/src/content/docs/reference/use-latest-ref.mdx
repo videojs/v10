@@ -1,0 +1,38 @@
+---
+title: useLatestRef
+description: Hook that exposes the latest rendered value through a stable ref
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+
+## Import
+
+```tsx
+import { useLatestRef } from "@videojs/react";
+```
+
+## Usage
+
+Use a latest-value ref when a long-lived callback must read current props without recreating the subscription that owns it.
+
+```tsx
+import { useEffect } from "react";
+import { useLatestRef } from "@videojs/react";
+
+type SubscriberProps = {
+  onChange(value: number): void;
+  subscribe(callback: (value: number) => void): () => void;
+};
+
+function Subscriber({ onChange, subscribe }: SubscriberProps) {
+  const onChangeRef = useLatestRef(onChange);
+
+  useEffect(() => subscribe((value) => onChangeRef.current(value)), []);
+
+  return null;
+}
+```
+
+The ref object is stable across renders and its `current` property is updated during every render.
+
+<UtilReference util="useLatestRef" />

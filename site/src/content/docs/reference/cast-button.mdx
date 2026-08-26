@@ -6,6 +6,7 @@ description: Accessible Cast toggle button with state reflection and keyboard su
 ---
 
 import ComponentReference from "@/components/docs/api-reference/ComponentReference.astro";
+import ComponentImports from "@/components/docs/api-reference/ComponentImports.astro";
 import DocsLink from "@/components/docs/DocsLink.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 import StyleCase from "@/components/docs/StyleCase.astro";
@@ -21,6 +22,10 @@ import BasicUsageDemoHtml from "@/components/docs/demos/cast-button/html/css/Bas
 import basicUsageHtml from "@/components/docs/demos/cast-button/html/css/BasicUsage.html?raw";
 import basicUsageHtmlCss from "@/components/docs/demos/cast-button/html/css/BasicUsage.css?raw";
 import basicUsageHtmlTs from "@/components/docs/demos/cast-button/html/css/BasicUsage.ts?raw";
+
+## Import
+
+<ComponentImports component="CastButton" html="cast-button" />
 
 ## Anatomy
 
@@ -46,7 +51,7 @@ The button derives its presentation from `availability`:
 - **`"unavailable"`** — the button remains visible and focusable with `aria-disabled="true"` and `data-disabled`, but does not open the picker. This lets a tooltip explain that no Cast device is reachable.
 - **`"available"`** — the button is fully interactive unless the `disabled` prop is set.
 
-Cast sessions come from the <DocsLink slug="concepts/cast">Google Cast</DocsLink> component. Add it to the player next to your media element; without it the button drives the browser's native Remote Playback API instead, which offers no receiver or load-request configuration.
+Configurable Cast sessions come from the <DocsLink slug="reference/google-cast">GoogleCast</DocsLink> component. Add it to the player next to your media element; without it the button drives the browser's native Remote Playback API instead, which offers no receiver or load-request configuration. See <DocsLink slug="how-to/cast-to-airplay-and-chromecast">Cast to AirPlay and Chromecast</DocsLink> for the complete setup.
 
 ## Styling
 

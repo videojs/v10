@@ -1,8 +1,8 @@
 import { activeChanged, selectedChanged } from './video-rendition-list';
 
 /**
- * The consumer should use the `selected` setter to select one or multiple
- * renditions that the engine is allowed to play.
+ * The consumer should use the `selected` setter to select one or multiple renditions that the engine is allowed to
+ * play.
  */
 export class VideoRendition {
   src: string | undefined;
@@ -21,6 +21,7 @@ export class VideoRendition {
 
   set selected(value: boolean) {
     if (this.#selected === value) return;
+
     this.#selected = value;
 
     selectedChanged(this);
@@ -32,6 +33,7 @@ export class VideoRendition {
 
   set active(value: boolean) {
     if (this.#active === value) return;
+
     this.#active = value;
 
     activeChanged(this);

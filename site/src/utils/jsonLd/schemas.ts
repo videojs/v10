@@ -1,16 +1,13 @@
 /**
  * JSON-LD Schema Helpers
  *
- * Centralized functions for generating Schema.org JSON-LD structured data.
- * Uses schema-dts for type safety.
+ * Centralized functions for generating Schema.org JSON-LD structured data. Uses schema-dts for type safety.
  */
 
 import type { CollectionEntry } from 'astro:content';
 import type { BlogPosting, CollectionPage, Person, ProfilePage, TechArticle, WithContext } from 'schema-dts';
 
-/**
- * Create a TechArticle schema for documentation pages.
- */
+/** Create a TechArticle schema for documentation pages. */
 export function createTechArticleSchema(params: {
   title: string;
   description: string;
@@ -50,9 +47,7 @@ export function createTechArticleSchema(params: {
   };
 }
 
-/**
- * Create a BlogPosting schema for individual blog posts.
- */
+/** Create a BlogPosting schema for individual blog posts. */
 export function createBlogPostingSchema(params: {
   title: string;
   description: string;
@@ -108,9 +103,7 @@ export function createBlogPostingSchema(params: {
   };
 }
 
-/**
- * Create a CollectionPage schema for the blog index page.
- */
+/** Create a CollectionPage schema for the blog index page. */
 export function createBlogCollectionSchema(params: {
   url: string;
   posts: CollectionEntry<'blog'>[];
@@ -140,9 +133,7 @@ export function createBlogCollectionSchema(params: {
   };
 }
 
-/**
- * Create a CollectionPage schema for the blog author index page.
- */
+/** Create a CollectionPage schema for the blog author index page. */
 export function createAuthorCollectionSchema(params: {
   url: string;
   authors: CollectionEntry<'authors'>[];
@@ -188,9 +179,7 @@ export function createAuthorCollectionSchema(params: {
   };
 }
 
-/**
- * Create a ProfilePage schema for individual author pages.
- */
+/** Create a ProfilePage schema for individual author pages. */
 export function createProfilePageSchema(params: {
   url: string;
   author: CollectionEntry<'authors'>;

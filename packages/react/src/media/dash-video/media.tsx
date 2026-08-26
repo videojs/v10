@@ -4,14 +4,14 @@ import type { DashMediaProps } from '@videojs/media/dom/dash';
 import { DashMedia, dashMediaDefaultProps } from '@videojs/media/dom/dash';
 import type { ReactNode, VideoHTMLAttributes } from 'react';
 import { forwardRef } from 'react';
+
 import { useAttachMedia } from '../../utils/use-attach-media';
 import { useComposedRefs } from '../../utils/use-composed-refs';
 import { useMediaInstance } from '../../utils/use-media-instance';
 import { useSyncProps } from '../../utils/use-sync-props';
 
 export interface DashVideoProps
-  extends Omit<VideoHTMLAttributes<HTMLVideoElement>, keyof DashMediaProps>,
-    Partial<DashMediaProps> {
+  extends Omit<VideoHTMLAttributes<HTMLVideoElement>, keyof DashMediaProps>, Partial<DashMediaProps> {
   children?: ReactNode;
 }
 

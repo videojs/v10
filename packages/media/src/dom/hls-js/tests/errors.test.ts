@@ -1,5 +1,5 @@
 import Hls from 'hls.js';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 
 import { MediaError } from '../../../core/media-error';
 import { HTMLVideoElementHost } from '../../video-host';
@@ -18,9 +18,11 @@ const HlsJsMediaErrors = HlsJsMediaErrorsMixin(FakeHost);
 
 function createEngine(): Hls {
   const listeners = new Map<string, Set<(...args: any[]) => void>>();
+
   return {
     on(event: string, fn: (...args: any[]) => void) {
       if (!listeners.has(event)) listeners.set(event, new Set());
+
       listeners.get(event)!.add(fn);
     },
     off(event: string, fn: (...args: any[]) => void) {
@@ -36,6 +38,7 @@ function setup() {
   const engine = createEngine();
   const host = new HlsJsMediaErrors(engine);
   const video = document.createElement('video');
+
   host.attach(video);
   (engine as any).emit(Hls.Events.MEDIA_ATTACHED);
   return { engine, host, video };
@@ -46,6 +49,7 @@ describe('HlsJsMediaErrorsMixin', () => {
     const { engine, host } = setup();
 
     const handler = vi.fn();
+
     host.addEventListener('error', handler);
 
     (engine as any).emit(Hls.Events.ERROR, {
@@ -58,6 +62,7 @@ describe('HlsJsMediaErrorsMixin', () => {
     expect(handler).toHaveBeenCalledOnce();
 
     const event = handler.mock.calls[0]![0] as ErrorEvent;
+
     expect(event.error).toBeInstanceOf(MediaError);
     expect(event.error.code).toBe(MediaError.MEDIA_ERR_NETWORK);
     expect(event.error.fatal).toBe(true);
@@ -85,6 +90,7 @@ describe('HlsJsMediaErrorsMixin', () => {
     const { engine, host } = setup();
 
     const handler = vi.fn();
+
     host.addEventListener('error', handler);
 
     (engine as any).emit(Hls.Events.ERROR, {
@@ -102,6 +108,7 @@ describe('HlsJsMediaErrorsMixin', () => {
     const { engine, host } = setup();
 
     const handler = vi.fn();
+
     host.addEventListener('error', handler);
 
     (engine as any).emit(Hls.Events.ERROR, {
@@ -112,6 +119,7 @@ describe('HlsJsMediaErrorsMixin', () => {
     });
 
     const event = handler.mock.calls[0]![0] as ErrorEvent;
+
     expect(event.error.code).toBe(MediaError.MEDIA_ERR_DECODE);
   });
 
@@ -119,6 +127,7 @@ describe('HlsJsMediaErrorsMixin', () => {
     const { engine, host } = setup();
 
     const handler = vi.fn();
+
     host.addEventListener('error', handler);
 
     (engine as any).emit(Hls.Events.ERROR, {
@@ -129,6 +138,7 @@ describe('HlsJsMediaErrorsMixin', () => {
     });
 
     const event = handler.mock.calls[0]![0] as ErrorEvent;
+
     expect(event.error.code).toBe(MediaError.MEDIA_ERR_ENCRYPTED);
   });
 
@@ -136,6 +146,7 @@ describe('HlsJsMediaErrorsMixin', () => {
     const { engine, host } = setup();
 
     const handler = vi.fn();
+
     host.addEventListener('error', handler);
 
     (engine as any).emit(Hls.Events.MEDIA_DETACHED);
@@ -171,6 +182,7 @@ describe('HlsJsMediaErrorsMixin', () => {
     const { engine, host } = setup();
 
     const handler = vi.fn();
+
     host.addEventListener('error', handler);
 
     (engine as any).emit(Hls.Events.ERROR, {
@@ -181,6 +193,7 @@ describe('HlsJsMediaErrorsMixin', () => {
     });
 
     const event = handler.mock.calls[0]![0] as ErrorEvent;
+
     expect(event.error.code).toBe(MediaError.MEDIA_ERR_CUSTOM);
     expect(event.error.message).toContain('something broke');
   });

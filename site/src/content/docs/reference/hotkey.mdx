@@ -1,0 +1,92 @@
+---
+title: Hotkey
+frameworkTitle:
+  html: media-hotkey
+description: Register a keyboard shortcut that invokes a player action
+---
+
+import ComponentReference from "@/components/docs/api-reference/ComponentReference.astro";
+import ComponentImports from "@/components/docs/api-reference/ComponentImports.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+import StyleCase from "@/components/docs/StyleCase.astro";
+import Demo from "@/components/docs/demos/Demo.astro";
+
+{/* React demo */}
+import BasicUsageDemoReact from "@/components/docs/demos/hotkey/react/css/BasicUsage";
+import basicUsageReactTsx from "@/components/docs/demos/hotkey/react/css/BasicUsage.tsx?raw";
+import basicUsageReactCss from "@/components/docs/demos/hotkey/react/css/BasicUsage.css?raw";
+
+{/* HTML demo */}
+import BasicUsageDemoHtml from "@/components/docs/demos/hotkey/html/css/BasicUsage.astro";
+import basicUsageHtml from "@/components/docs/demos/hotkey/html/css/BasicUsage.html?raw";
+import basicUsageHtmlCss from "@/components/docs/demos/hotkey/html/css/BasicUsage.css?raw";
+import basicUsageHtmlTs from "@/components/docs/demos/hotkey/html/css/BasicUsage.ts?raw";
+
+## Import
+
+<ComponentImports component="Hotkey" html="hotkey" />
+
+## Anatomy
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<Hotkey keys="Space" action="togglePaused" />
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```html
+<media-hotkey keys="Space" action="togglePaused"></media-hotkey>
+```
+</FrameworkCase>
+
+## Behavior
+
+`Hotkey` is a behavior component: it renders no visible interface. Place it inside a <DocsLink slug="reference/player-container">Container</DocsLink> to register one key pattern and player action. By default, the shortcut responds while the player container has focus. Set `target="document"` only when the shortcut should apply across the entire document.
+
+Key patterns are case-insensitive and may use:
+
+- Named keys such as `Space`, `ArrowLeft`, and `ArrowRight`.
+- Exact modifiers such as `Ctrl+k`, `Shift+f`, `Alt+m`, and `Meta+k`.
+- `Mod` for `Meta` on macOS and `Ctrl` elsewhere.
+- The special `0-9` range for digit-based seeking.
+
+Choose an `action` from the API reference below. Pass `value` as seconds for `seekStep`, a volume delta such as `0.05` or `-0.05` for `volumeStep`, or a percentage from 0 to 100 for `seekToPercent`. When `value` is omitted from `seekToPercent` with `keys="0-9"`, the pressed digit supplies the percentage.
+
+Toggle actions ignore held-key repeats. Step, rate, and percentage actions may repeat. A matched shortcut prevents the browser's default behavior. Unmodified shortcuts are ignored in editable fields, and <kbd>Space</kbd> or <kbd>Enter</kbd> still activates focused buttons, links, and sliders normally.
+
+## Accessibility
+
+Hotkeys supplement operable controls; they should never be the only way to perform an action. Built-in buttons use matching hotkey registrations to expose `aria-keyshortcuts`, and their tooltips can display the registered shortcut.
+
+## Examples
+
+### Basic Usage
+
+This player uses <kbd>Space</kbd> to play or pause, <kbd>M</kbd> to mute, and the arrow keys to seek by five seconds. Click the player first to focus its container.
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
+      { title: "App.css", code: basicUsageReactCss, lang: "css" },
+    ]}>
+      <BasicUsageDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "index.html", code: basicUsageHtml, lang: "html" },
+      { title: "index.css", code: basicUsageHtmlCss, lang: "css" },
+      { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
+    ]}>
+      <BasicUsageDemoHtml />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<ComponentReference component="Hotkey" />

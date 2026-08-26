@@ -15,8 +15,8 @@ import { createFairPlayEme } from './fairplay-eme';
 import { createFairPlayWebKit } from './fairplay-webkit';
 
 /**
- * What the mixin needs from whatever it is composed onto: the DRM half of the
- * source, and somewhere to put an error the media element never reports.
+ * What the mixin needs from whatever it is composed onto: the DRM half of the source, and somewhere to put an error the
+ * media element never reports.
  */
 export type NativeHlsDrmHost = NativeMediaHost & {
   readonly source: {
@@ -27,22 +27,19 @@ export type NativeHlsDrmHost = NativeMediaHost & {
 };
 
 /**
- * Play DRM-protected HLS natively, configured by `source.drm` (or, where the
- * native path needs licensing of its own, `source.engine.nativeHls.drmSystems`).
+ * Play DRM-protected HLS natively, configured by `source.drm` (or, where the native path needs licensing of its own,
+ * `source.engine.nativeHls.drmSystems`).
  *
- * Native HLS has no JS engine to hand key exchange to, so this mixin does it
- * against the media element directly: it answers the element's key requests by
- * fetching an application certificate and trading the CDM's SPC for a CKC at
- * the license server. Only FairPlay is reachable this way — Widevine and
- * PlayReady content needs the hls.js (MSE) engine.
+ * Native HLS has no JS engine to hand key exchange to, so this mixin does it against the media element directly: it
+ * answers the element's key requests by fetching an application certificate and trading the CDM's SPC for a CKC at the
+ * license server. Only FairPlay is reachable this way — Widevine and PlayReady content needs the hls.js (MSE) engine.
  *
- * The configuration is read when a key request arrives rather than up front,
- * so assigning `source` and letting the element load are independent, and a
- * license server updated on a playing source is picked up without a reload;
- * state is released on `emptied`, when the element starts on a new resource.
+ * The configuration is read when a key request arrives rather than up front, so assigning `source` and letting the
+ * element load are independent, and a license server updated on a playing source is picked up without a reload; state
+ * is released on `emptied`, when the element starts on a new resource.
  *
- * Encrypted content with nothing configured fails loudly. Safari otherwise
- * stalls without explanation, which is indistinguishable from a slow network.
+ * Encrypted content with nothing configured fails loudly. Safari otherwise stalls without explanation, which is
+ * indistinguishable from a slow network.
  */
 export function NativeHlsMediaDrmMixin<Base extends Constructor<NativeHlsDrmHost>>(BaseClass: Base) {
   class NativeHlsMediaDrm extends (BaseClass as Constructor<NativeHlsDrmHost>) {
@@ -102,12 +99,12 @@ export function NativeHlsMediaDrmMixin<Base extends Constructor<NativeHlsDrmHost
     }
 
     /**
-     * The license servers in effect: `source.drm`, or the native engine's own
-     * `drmSystems` where one is named — an escape hatch replaces what it is an
-     * escape from rather than merging with it.
+     * The license servers in effect: `source.drm`, or the native engine's own `drmSystems` where one is named — an
+     * escape hatch replaces what it is an escape from rather than merging with it.
      */
     #drmSystems(): DrmSystemsConfig {
       const { drm, engine } = this.source ?? {};
+
       return engine?.nativeHls?.drmSystems ?? drm ?? {};
     }
 
@@ -117,6 +114,7 @@ export function NativeHlsMediaDrmMixin<Base extends Constructor<NativeHlsDrmHost
       const media = this.target as HTMLVideoElement | null;
       const drmSystems = this.#drmSystems();
       const config = drmSystems[KeySystems.FAIRPLAY];
+
       if (!media) return;
 
       if (!config?.licenseUrl) {
@@ -141,6 +139,7 @@ export function NativeHlsMediaDrmMixin<Base extends Constructor<NativeHlsDrmHost
         // What raised this has since been torn down, so it is about a source
         // that is no longer playing.
         if (active.disconnect.signal.aborted) return;
+
         this.setError(
           cause instanceof MediaError
             ? cause
@@ -177,19 +176,23 @@ export function NativeHlsMediaDrmMixin<Base extends Constructor<NativeHlsDrmHost
 
     #reset(): Promise<void> {
       const active = this.#active;
+
       this.#active = null;
 
       active?.disconnect.abort();
+
       return active?.keySystem.close() ?? Promise.resolve();
     }
 
     async #fallBackToWebKit(media: HTMLVideoElement): Promise<void> {
       if (this.#useWebKit) return;
+
       this.#useWebKit = true;
 
       // EME has to release the element's media keys before the legacy API can
       // claim them, so the switch waits for teardown to finish.
       await this.#reset();
+
       if (!this.#disconnect || this.#disconnect.signal.aborted) return;
 
       // WebKit does not re-issue the key request the EME session failed on, so

@@ -12,7 +12,9 @@ export function rafThrottle<Args extends unknown[]>(fn: (...args: Args) => void)
 
   const throttled = (...args: Args): void => {
     latestArgs = args;
+
     if (rafId !== null) return;
+
     rafId = requestAnimationFrame(() => {
       rafId = null;
       fn(...latestArgs);

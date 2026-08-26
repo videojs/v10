@@ -8,6 +8,7 @@ import {
 } from '@videojs/core/i18n';
 import type { ReactiveController, ReactiveControllerHost } from '@videojs/element';
 import { ContextConsumer } from '@videojs/element/context';
+
 import type { I18nContext } from './context';
 
 let fallbackTranslator: Translator | undefined;
@@ -19,11 +20,16 @@ export function getFallbackTranslator(): Translator {
   return fallbackTranslator;
 }
 
+/** Consumes an i18n context and updates its host when the translator or locale changes. */
 export class I18nController implements ReactiveController {
   readonly #host: I18nControllerHost;
   readonly #consumer: ContextConsumer<I18nContext, I18nControllerHost>;
   #unsubscribeRegistry: (() => void) | undefined;
 
+  /**
+   * @param host - Reactive host updated when the i18n value changes.
+   * @param context - I18n context to consume.
+   */
   constructor(host: I18nControllerHost, context: I18nContext) {
     this.#host = host;
     this.#consumer = new ContextConsumer(host, {
@@ -46,6 +52,7 @@ export class I18nController implements ReactiveController {
     fallbackTranslator = undefined;
     this.#unsubscribeRegistry = onI18nRegistryChange(() => {
       fallbackTranslator = undefined;
+
       if (!this.#consumer.value) {
         this.#host.requestUpdate();
       }

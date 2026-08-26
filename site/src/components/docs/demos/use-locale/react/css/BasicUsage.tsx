@@ -4,6 +4,7 @@ import { useState } from 'react';
 import './BasicUsage.css';
 
 const locales = ['en-US', 'fr-FR', 'ja-JP'] as const;
+
 type Locale = (typeof locales)[number];
 
 function LocaleDetails() {

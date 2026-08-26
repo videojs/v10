@@ -88,31 +88,34 @@ type PropertyConfigs = Record<string, PropertyConfig>;
 /**
  * The content attribute a property is driven by.
  *
- * Attributes HTML already defines are squashed lowercase
- * (`playsInline` -> `playsinline`), while the custom ones are kebab-case
- * (`streamType` -> `stream-type`) and name themselves through `attribute`.
- * Undeclared properties are this library's own, so they take kebab-case too.
+ * Attributes HTML already defines are squashed lowercase (`playsInline` -> `playsinline`), while the custom ones are
+ * kebab-case (`streamType` -> `stream-type`) and name themselves through `attribute`. Undeclared properties are this
+ * library's own, so they take kebab-case too.
  */
 function attributeName(prop: string, properties: PropertyConfigs): string {
   const config = properties[prop];
+
   return config ? (config.attribute ?? prop.toLowerCase()) : kebabCase(prop);
 }
 
 /**
  * Whether a property's declared attribute is really another property's.
  *
- * For example: `defaultMuted` declares `attribute: 'muted'`, but `muted` is a property in its
- * own right and owns that attribute, so the alias defers to it.
+ * For example: `defaultMuted` declares `attribute: 'muted'`, but `muted` is a property in its own right and owns that
+ * attribute, so the alias defers to it.
  */
 function isAttributeAlias(prop: string, properties: PropertyConfigs, hostPrototype: object): boolean {
   const { attribute } = properties[prop] ?? {};
+
   return !!attribute && attribute in hostPrototype;
 }
 
 /** Coerce an attribute string to the type the host property already holds. */
 function propertyValueFor(attrValue: string | null, current: unknown, config?: PropertyConfig): unknown {
   if (typeof current === 'boolean') return attrValue !== null;
+
   if (typeof current === 'number') return Number(attrValue);
+
   return attrValue ?? (config && 'empty' in config ? config.empty : '');
 }
 
@@ -170,16 +173,17 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
     };
 
     static get observedAttributes() {
-      // biome-ignore lint/complexity/noThisInStatic: resolves to the subclass that may override `properties`
+      // `this` resolves to the subclass, which may override `properties`.
       CustomMedia.#define(this);
       return [
-        // biome-ignore lint/complexity/noThisInStatic: intentional use of this
+        // Intentionally use `this` so subclasses can override the constructor.
         ...getAttrsFromProps(this.properties),
       ];
     }
 
     static #define(ctor: typeof CustomMedia) {
       if (isDefined) return;
+
       isDefined = true;
 
       const properties = ctor.properties as PropertyConfigs;
@@ -187,6 +191,7 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
       for (let proto = MediaHost.prototype; proto && proto !== Object.prototype; proto = Object.getPrototypeOf(proto)) {
         for (const prop of Object.getOwnPropertyNames(proto)) {
           if (prop in CustomMedia.prototype || excludedProperties.includes(prop)) continue;
+
           // An alias keeps reflecting its attribute through the `properties`
           // loop below rather than reaching the host.
           if (isAttributeAlias(prop, properties, MediaHost.prototype)) continue;
@@ -210,6 +215,7 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
 
             if (descriptor.set) {
               const attr = attributeName(prop, properties);
+
               if (ctor.observedAttributes.includes(attr)) {
                 mediaHostAttrToProp.set(attr, prop);
 
@@ -236,6 +242,7 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
         if (prop in CustomMedia.prototype) continue;
 
         const attr = attribute ?? prop.toLowerCase();
+
         Object.defineProperty(CustomMedia.prototype, prop, {
           get: function (this: CustomMedia) {
             return type === Boolean ? this.hasAttribute(attr) : this.getAttribute(attr);
@@ -263,6 +270,7 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
 
       if (!this.shadowRoot) {
         const ctor = this.constructor as typeof CustomMedia;
+
         this.attachShadow(ctor.shadowRootOptions);
 
         const allowedKeys = getAttrsFromProps(ctor.properties);
@@ -270,7 +278,9 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
         const pickedAttrs = pick(namedNodeMapToObject(this.attributes), allowedKeys);
         // Embed templates (iframe) need host-bound attrs (e.g. `src`) to build the initial URL.
         const attrs: Record<string, string> = syncTargetAttributes ? omit(pickedAttrs, disallowedKeys) : pickedAttrs;
+
         if (tag && !attrs.part) attrs.part = tag;
+
         this.shadowRoot!.innerHTML = ctor.getTemplateHTML(attrs);
       }
 
@@ -289,7 +299,9 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
     #attachToTarget(): void {
       const target = this.target;
       if (target === this.#mediaHost.target) return;
+
       if (this.#mediaHost.target) this.#mediaHost.detach();
+
       this.#mediaHost.attach(target);
     }
 
@@ -308,6 +320,7 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
 
     connectedCallback() {
       if (tag !== 'iframe') return;
+
       // Add data attribute for styling and avoiding cross-origin issues. e.g. backdrop-filter
       if (!this.hasAttribute('data-cross-origin-frame')) {
         this.setAttribute('data-cross-origin-frame', '');
@@ -316,6 +329,7 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
 
     disconnectedCallback() {
       if (this.hasAttribute('keep-alive')) return;
+
       // Defer so a synchronous reparent (remove + insert) doesn't tear down
       // the host and its registered components.
       queueMicrotask(() => {
@@ -329,6 +343,7 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
       options?: boolean | AddEventListenerOptions
     ) {
       super.addEventListener(type, listener as EventListener, options);
+
       if (!this.#bridgedEventTypes.has(type)) {
         this.#bridgedEventTypes.add(type);
         this.#mediaHost.addEventListener(type, this.#bridgeEvent);
@@ -351,11 +366,14 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
 
     attributeChangedCallback(attrName: string, oldValue: string | null, newValue: string | null): void {
       const prop = mediaHostAttrToProp.get(attrName);
+
       if (prop) {
         if (oldValue !== newValue) {
           const propConfig = (this.constructor as CustomMediaConstructor<T>).properties[prop];
+
           this.#mediaHost[prop] = propertyValueFor(newValue, this.#mediaHost[prop], propConfig);
         }
+
         return;
       }
 
@@ -397,11 +415,13 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
 
       for (const el of mediaChildren) {
         let clone = this.#childMap.get(el);
+
         if (!clone) {
           clone = el.cloneNode() as HTMLTrackElement | HTMLSourceElement;
           this.#childMap.set(el, clone);
           this.#childObserver?.observe(el, { attributes: true });
         }
+
         this.target?.append(clone);
         this.#enableDefaultTrack(clone as HTMLTrackElement);
       }
@@ -412,6 +432,7 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
         if (mutation.type === 'attributes') {
           const { target, attributeName } = mutation;
           const clone = this.#childMap.get(target as HTMLTrackElement | HTMLSourceElement);
+
           if (clone && attributeName) {
             clone.setAttribute(
               attributeName,

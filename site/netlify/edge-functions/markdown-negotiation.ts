@@ -11,6 +11,7 @@ export default async (request: Request, _context: Context) => {
   const body = await mdResponse.text();
 
   const headers = new Headers();
+
   headers.set('content-type', 'text/markdown; charset=utf-8');
   headers.set('cache-control', 'public, s-maxage=31536000');
   headers.set('vary', 'Accept');

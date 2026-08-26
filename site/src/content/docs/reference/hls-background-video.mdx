@@ -1,0 +1,79 @@
+---
+title: HlsBackgroundVideo
+frameworkTitle:
+  html: hls-background-video
+description: HLS background video without controls, audio, captions, or adaptive quality
+---
+
+import DocsLink from '@/components/docs/DocsLink.astro';
+import FrameworkCase from '@/components/docs/FrameworkCase.astro';
+
+HlsBackgroundVideo plays an HLS source through the SPF background engine. It is fixed to muted, autoplaying, inline, looped playback and omits controls, audio, text, DRM, and adaptive rendition switching.
+
+See <DocsLink slug="how-to/add-a-background-video">Add a background video</DocsLink> for layout, poster, accessibility, and source-choice guidance.
+
+## Import
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+import { HlsBackgroundVideo } from '@videojs/react/media/hls-background-video';
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```ts
+import '@videojs/html/media/hls-background-video';
+```
+</FrameworkCase>
+
+## Source behavior
+
+`src` takes a complete HLS manifest URL. The engine starts loading when it receives the URL and pins the largest rendition that fits the screen. The ladder may be video-only, but its video renditions must use fMP4/CMAF. This engine does not include MPEG-TS transmuxing or DRM playback.
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<HlsBackgroundVideo
+  src="https://media.example.com/hero.m3u8"
+  crossOrigin="anonymous"
+  onError={handleError}
+/>
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```html
+<hls-background-video
+  src="https://media.example.com/hero.m3u8"
+  crossorigin
+></hls-background-video>
+```
+</FrameworkCase>
+
+There is no `source` object, `preload` mode, or opt-out for muted, autoplay, and loop. Assigning a new `src` restarts playback from scratch.
+
+## API
+
+| Member | Platform | Description |
+| --- | --- | --- |
+| `src` | HTML and React | HLS manifest URL |
+| `error` | HTML | Fatal SPF media error for the current source, or `null` |
+| `video` | HTML | Inner native `<video>` element |
+| `onError` | React | Fires on the rendered `<video>` when SPF reports a fatal source error |
+| `ref` | React | Ref to the rendered native `<video>` element |
+
+The HTML element also fires an `error` event when `error` becomes fatal. The inner video's own `error` can remain `null` because SPF, rather than the browser, rejected the source.
+
+## Styling
+
+<FrameworkCase frameworks={["html"]}>
+| Custom property | Default | Description |
+| --- | --- | --- |
+| `--media-object-fit` | `inherit` | How the video fits its box |
+| `--media-object-position` | `50% 50%` | Position of the video within its box |
+
+Set an explicit size on the custom element or an author-owned wrapper.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+The component renders a native `<video>`. Set its size, `object-fit`, and `object-position` through `className` or `style`.
+</FrameworkCase>

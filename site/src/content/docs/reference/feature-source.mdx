@@ -36,13 +36,13 @@ function SourceInfo() {
 
 <FrameworkCase frameworks={["html"]}>
 ```ts title="source-info.ts"
-import { createPlayer, MediaElement, selectSource } from '@videojs/html';
+import { createPlayer, UIElement, selectSource } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
 
-const { PlayerController, context } = createPlayer({ features: videoFeatures });
+const { PlayerController } = createPlayer({ features: videoFeatures });
 
-class SourceInfo extends MediaElement {
-  readonly #source = new PlayerController(this, context, selectSource);
+class SourceInfo extends UIElement {
+  readonly #source = new PlayerController(this, selectSource);
 }
 ```
 </FrameworkCase>

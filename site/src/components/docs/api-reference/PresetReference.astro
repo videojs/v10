@@ -22,8 +22,11 @@ const presets: PresetReferenceType[] = entries
     const aPin = PINNED_PRESETS.indexOf(a.name);
     const bPin = PINNED_PRESETS.indexOf(b.name);
     if (aPin !== -1 && bPin !== -1) return aPin - bPin;
+
     if (aPin !== -1) return -1;
+
     if (bPin !== -1) return 1;
+
     return a.name.localeCompare(b.name);
   });
 
@@ -197,14 +200,17 @@ const listFormat = new Intl.ListFormat('en', { style: 'long', type: 'unit' });
     .forEach((button) => {
       button.addEventListener("click", () => {
         const expanded = button.getAttribute("aria-expanded") === "true";
+
         button.setAttribute("aria-expanded", String(!expanded));
 
         const row = button.closest<HTMLTableRowElement>("[data-preset-row]");
+
         if (row) row.toggleAttribute("data-expanded", !expanded);
 
         const detail = document.getElementById(
           button.getAttribute("aria-controls")!,
         );
+
         if (detail) detail.hidden = expanded;
       });
     });
@@ -214,6 +220,7 @@ const listFormat = new Intl.ListFormat('en', { style: 'long', type: 'unit' });
     .forEach((row) => {
       row.addEventListener("click", (e) => {
         if ((e.target as Element).closest("a, button")) return;
+
         row.querySelector<HTMLButtonElement>("[data-preset-toggle]")?.click();
       });
     });

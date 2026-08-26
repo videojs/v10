@@ -1,0 +1,142 @@
+---
+title: Use Video.js with Vue and Nuxt
+description: Add Video.js to a Vue or Nuxt app
+---
+
+import DocsLink from '@/components/docs/DocsLink.astro';
+
+Follow the <DocsLink slug="how-to/installation">installation guide</DocsLink> first. Keep its `@videojs/html` imports and player markup in your Vue component, then apply the Vue-specific configuration below.
+
+## Configure custom element tags
+
+If Vue warns that it cannot resolve a Video.js tag, the compiler is treating that tag as a Vue component. Use Vue's [`isCustomElement`](https://vuejs.org/guide/extras/web-components.html#skipping-component-resolution) option to identify the exact Video.js tags in your templates.
+
+For a Vue app built with Vite:
+
+```ts title="vite.config.ts"
+import vue from '@vitejs/plugin-vue';
+import { defineConfig } from 'vite';
+
+const videoJsElements = new Set(['video-player', 'video-skin', 'mux-video']);
+
+export default defineConfig({
+  plugins: [
+    vue({
+      template: {
+        compilerOptions: {
+          isCustomElement: (tag) => videoJsElements.has(tag),
+        },
+      },
+    }),
+  ],
+});
+```
+
+For Nuxt:
+
+```ts title="nuxt.config.ts"
+const videoJsElements = new Set(['video-player', 'video-skin', 'mux-video']);
+
+export default defineNuxtConfig({
+  vue: {
+    compilerOptions: {
+      isCustomElement: (tag) => videoJsElements.has(tag),
+    },
+  },
+});
+```
+
+List only the tags that appear in your templates. Avoid broad rules such as allowing every hyphenated tag or every tag with one prefix: Video.js uses several tag families, and broad rules can also hide misspelled Vue components.
+
+## Read player state
+
+If your Vue component needs to react to player state or call a player action, wait until Vue has mounted `<video-player>`. The React API's `usePlayer` hook is not part of `@videojs/html`, so use a template ref and subscribe to the element's store:
+
+```vue
+<script setup lang="ts">
+import type { VideoPlayerElement } from '@videojs/html/video';
+import { onMounted, onUnmounted, ref } from 'vue';
+
+const player = ref<VideoPlayerElement | null>(null);
+const paused = ref(true);
+let unsubscribe = () => {};
+
+onMounted(() => {
+  const store = player.value!.store;
+  const sync = () => (paused.value = store.paused);
+  sync();
+  unsubscribe = store.subscribe(sync);
+});
+
+onUnmounted(() => unsubscribe());
+</script>
+
+<template>
+  <video-player ref="player"><!-- skin and media --></video-player>
+  <p>{{ paused ? 'Paused' : 'Playing' }}</p>
+</template>
+```
+
+Use the store for player state and actions. Unsubscribe in `onUnmounted`.
+
+When you need the native event itself, attach a listener to the `<video>`, `<audio>`, or media custom element:
+
+```vue
+<script setup lang="ts">
+function handleLoadedMetadata(event: Event) {
+  const media = event.currentTarget as HTMLVideoElement;
+  console.log(`Duration: ${media.duration} seconds`);
+}
+</script>
+
+<template>
+  <video @loadedmetadata="handleLoadedMetadata"><!-- sources and tracks --></video>
+</template>
+```
+
+## Style Vue components
+
+If you want to hide an element until the browser loads it, use `:defined` in your component's scoped styles:
+
+```vue
+<style scoped>
+video-skin:not(:defined) {
+  visibility: hidden;
+}
+</style>
+```
+
+Scoped styles cannot reach controls inside a packaged skin. Use its CSS custom properties, or <DocsLink slug="how-to/customize-skins">eject the skin</DocsLink> to own its markup and CSS.
+
+## Pass objects as properties
+
+If you need to pass structured data, such as a Mux source, an HTML attribute will not work because attributes contain text. Vue's [`.prop` modifier](https://vuejs.org/api/built-in-directives.html#v-bind) assigns the value to the element's JavaScript property:
+
+```vue
+<script setup lang="ts">
+import '@videojs/html/video/player';
+import '@videojs/html/video/skin';
+import '@videojs/html/media/mux-video';
+
+const source = {
+  playbackId: 'BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM',
+  playback: { maxResolution: '1080p' },
+} as const;
+</script>
+
+<template>
+  <video-player>
+    <video-skin>
+      <mux-video :source.prop="source"></mux-video>
+    </video-skin>
+  </video-player>
+</template>
+```
+
+Use `.prop` explicitly. An ordinary binding or render-function prop can become an attribute if Vue runs before the custom element finishes loading. Video.js preserves explicitly assigned properties during that upgrade.
+
+## Use Nuxt
+
+If you use server rendering, keep the element imports from the installation guide static. Nuxt renders the custom-element markup on the server, and the browser upgrades it when the page loads.
+
+If you intentionally keep registration client-only, import the elements from a `.client.ts` plugin and wait for `customElements.whenDefined('video-player')` before reading its store or calling its methods. For custom tag or event types, follow Vue's [TypeScript guidance for non-Vue custom elements](https://vuejs.org/guide/extras/web-components.html#non-vue-web-components-and-typescript).

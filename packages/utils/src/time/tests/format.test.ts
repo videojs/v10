@@ -1,28 +1,6 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { formatTime, formatTimeAsPhrase, secondsToIsoDuration } from '../format';
-
-const hasDurationFormat = typeof (Intl as { DurationFormat?: unknown }).DurationFormat === 'function';
-
-type FormatModule = typeof import('../format');
-
-/**
- * Re-import the module with `Intl.DurationFormat` removed so the module-level capture
- * resolves to `undefined` and `getDurationFormatter` uses `createFallbackFormatter`.
- * Runs the fallback path deterministically regardless of the Node version.
- */
-async function loadWithFallback(): Promise<FormatModule> {
-  const intl = Intl as { DurationFormat?: unknown };
-  const original = intl.DurationFormat;
-  intl.DurationFormat = undefined;
-  vi.resetModules();
-  try {
-    return await import('../format');
-  } finally {
-    if (original === undefined) delete intl.DurationFormat;
-    else intl.DurationFormat = original;
-  }
-}
 
 describe('formatTime', () => {
   it('formats seconds only', () => {
@@ -79,10 +57,11 @@ describe('formatTime', () => {
 
   it('defaults to English digital formatting', () => {
     const english = formatTime(90, undefined, { locale: 'en' });
+
     expect(formatTime(90)).toBe(english);
   });
 
-  it.runIf(hasDurationFormat)('uses locale digits', () => {
+  it('uses locale digits', () => {
     expect(formatTime(90, undefined, { locale: 'fa' })).toBe('۱:۳۰');
     expect(formatTime(35, 600, { locale: 'fa' })).toBe('۰۰:۳۵');
   });
@@ -114,16 +93,24 @@ describe('formatTimeAsPhrase', () => {
 
   it('omits English remaining suffix for non-English locales without formatRemaining', () => {
     const formatted = formatTimeAsPhrase(-30, { locale: 'es' });
+
     expect(formatted).toMatch(/30/);
     expect(formatted).not.toMatch(/remaining$/i);
   });
 
-  it.runIf(hasDurationFormat)('uses Intl.DurationFormat', () => {
+  it('localizes duration units and lists', () => {
     const en = formatTimeAsPhrase(125, { locale: 'en' });
-    const de = formatTimeAsPhrase(125, { locale: 'de' });
-    expect(en.length).toBeGreaterThan(0);
-    expect(de.length).toBeGreaterThan(0);
-    expect(en).not.toBe(de);
+    const fr = formatTimeAsPhrase(125, { locale: 'fr' });
+
+    expect(formatTimeAsPhrase(125)).toBe(en);
+    expect(en).toBe('2 minutes, 5 seconds');
+    expect(fr).toContain('2 minutes');
+    expect(fr).toContain('5\u00a0secondes');
+  });
+
+  it('supports short and narrow unit styles', () => {
+    expect(formatTimeAsPhrase(125, { locale: 'en', style: 'short' })).toBe('2 min, 5 sec');
+    expect(formatTimeAsPhrase(125, { locale: 'en', style: 'narrow' })).toBe('2m 5s');
   });
 
   it('handles invalid values', () => {
@@ -131,14 +118,8 @@ describe('formatTimeAsPhrase', () => {
     expect(formatTimeAsPhrase(Infinity)).toBe('');
   });
 
-  it.runIf(hasDurationFormat)('throws when Intl.DurationFormat rejects the locale', () => {
+  it('throws when Intl formatters reject the locale', () => {
     expect(() => formatTimeAsPhrase(90, { locale: 'not-a-valid-bcp47-tag!!!' })).toThrow(RangeError);
-  });
-
-  it.skipIf(hasDurationFormat)('falls back to an English phrase without Intl.DurationFormat', () => {
-    expect(formatTimeAsPhrase(125)).toBe('2 minutes, 5 seconds');
-    expect(formatTimeAsPhrase(3661)).toBe('1 hour, 1 minute, 1 second');
-    expect(formatTimeAsPhrase(-30)).toMatch(/remaining$/i);
   });
 });
 
@@ -166,71 +147,5 @@ describe('secondsToIsoDuration', () => {
   it('handles invalid values', () => {
     expect(secondsToIsoDuration(NaN)).toBe('PT0S');
     expect(secondsToIsoDuration(Infinity)).toBe('PT0S');
-  });
-});
-
-describe('createFallbackFormatter', () => {
-  describe('digital style (via formatTime)', () => {
-    it('pads minutes and seconds', async () => {
-      const { formatTime: format } = await loadWithFallback();
-      expect(format(5)).toBe('0:05');
-      expect(format(65)).toBe('1:05');
-      expect(format(600)).toBe('10:00');
-    });
-
-    it('shows hours when present', async () => {
-      const { formatTime: format } = await loadWithFallback();
-      expect(format(3661)).toBe('1:01:01');
-      expect(format(36000)).toBe('10:00:00');
-    });
-
-    it('forces hours display when guided by an hours-long duration', async () => {
-      const { formatTime: format } = await loadWithFallback();
-      expect(format(35, 3600)).toBe('0:00:35');
-    });
-
-    it('uses locale digits', async () => {
-      const { formatTime: format } = await loadWithFallback();
-      expect(format(90, undefined, { locale: 'fa' })).toBe('۱:۳۰');
-    });
-  });
-
-  describe('text style (via formatTimeAsPhrase)', () => {
-    it('joins present units with a comma', async () => {
-      const { formatTimeAsPhrase: format } = await loadWithFallback();
-      expect(format(3661)).toBe('1 hour, 1 minute, 1 second');
-      expect(format(125)).toBe('2 minutes, 5 seconds');
-    });
-
-    it('pluralizes based on the unit value', async () => {
-      const { formatTimeAsPhrase: format } = await loadWithFallback();
-      expect(format(1)).toBe('1 second');
-      expect(format(2)).toBe('2 seconds');
-      expect(format(3600)).toBe('1 hour');
-      expect(format(7200)).toBe('2 hours');
-    });
-
-    it('omits units that are absent from the record', async () => {
-      const { formatTimeAsPhrase: format } = await loadWithFallback();
-      expect(format(30)).toBe('30 seconds');
-      expect(format(120)).toBe('2 minutes');
-      expect(format(0)).toBe('0 seconds');
-    });
-
-    it('ignores non-digital style variants (all render as long-form text)', async () => {
-      const { formatTimeAsPhrase: format } = await loadWithFallback();
-      expect(format(125, { style: 'short' })).toBe('2 minutes, 5 seconds');
-      expect(format(125, { style: 'narrow' })).toBe('2 minutes, 5 seconds');
-    });
-
-    it('wraps negative durations in the English remaining phrase', async () => {
-      const { formatTimeAsPhrase: format } = await loadWithFallback();
-      expect(format(-30)).toBe('30 seconds remaining');
-    });
-
-    it('applies formatRemaining for negative durations', async () => {
-      const { formatTimeAsPhrase: format } = await loadWithFallback();
-      expect(format(-30, { formatRemaining: (duration) => `${duration} left` })).toBe('30 seconds left');
-    });
   });
 });

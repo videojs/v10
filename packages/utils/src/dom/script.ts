@@ -4,13 +4,13 @@ export function hasScript(src: string): boolean {
   for (const script of document.scripts) {
     if (script.getAttribute('src') === src) return true;
   }
+
   return false;
 }
 
 /**
- * Load a script once. Concurrent and repeat calls for the same `src` share a
- * single promise; failed loads are evicted (and the tag removed) so they can
- * be retried.
+ * Load a script once. Concurrent and repeat calls for the same `src` share a single promise; failed loads are evicted
+ * (and the tag removed) so they can be retried.
  */
 export function loadScript(src: string): Promise<void> {
   let promise = cache.get(src);
@@ -21,6 +21,7 @@ export function loadScript(src: string): Promise<void> {
 
   promise = new Promise<void>((resolve, reject) => {
     const script = document.createElement('script');
+
     script.src = src;
     script.onload = () => resolve();
     script.onerror = () => {

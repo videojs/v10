@@ -14,7 +14,7 @@ import firefoxDefaultControls from '@/assets/docs/concepts/why-videojs/firefox-d
 
 Video.js is the open-source video player for the web. It makes web video easy, performant, accessible, and customizable. 
 
-Let's dig into when you'd want to use Video.js, starting with the the question we hear most...
+Let's dig into when you'd want to use Video.js, starting with the question we hear most...
 
 
 ## Why not `<video>`?
@@ -60,17 +60,17 @@ Chrome, Safari, and Firefox each render the default `<video>` controls different
 
 ### Video interactions
 
-Video often involves a lot more than an MP4 in `src`. Rich playback features (like thumbnail previews, adaptive bitrate, quality selection, chapters, audio track switching, control localization, error UI, live-streaming UI, analytics, ads, 360 video, Chromecast, AirPlay, DRM, and more) are _possible_ with the video element but require complex wiring and deep consideration for maintainabilty and <DocsLink slug="concepts/accessibility">accessibility</DocsLink>.
+Video often involves more than an MP4 in `src`. Features like thumbnail previews, adaptive bitrate, quality selection, chapters, audio track switching, localized controls, error UI, live-streaming UI, AirPlay, and DRM are _possible_ with the video element, but require complex wiring and careful work on maintainability and <DocsLink slug="concepts/accessibility">accessibility</DocsLink>.
 
-Video.js aims to handle this all out of the box. (Though some features are still under development. Stay tuned!)
+Video.js provides accessible, composable building blocks for these common playback and streaming features. Other integrations, including ads and emerging media formats, remain under development as version 10 matures.
 
 ### Streaming formats and sources
 
-Behind features like adaptive bitrate and quality selection are video formats like HLS or DASH -- videos broken into segments that can be selected according to bandwidth and preferences. Not every browser supports HLS, and DASH support is even more limited. Video.js closes the gap so the same `src` works everywhere.
+Behind features like adaptive bitrate and quality selection are streaming formats such as HLS and DASH. They split video into segments that a playback engine can select based on bandwidth and preferences. Choose the matching Video.js media component to play these formats across browsers while keeping the surrounding player state and UI consistent.
 
-Of course, your video might not be coming from a `src` like that. It might be provided by a service. However, services like YouTube, Vimeo, and Mux each speak their own API. Switching from a self-hosted file to a hosted service shouldn't mean switching players. Video.js abstracts the source so you can change where the video comes from without rewriting the surrounding code.
+Of course, your video might not be coming from a `src` like that. It might be provided by a service. However, services like YouTube, Vimeo, and Mux each speak their own API. Video.js gives their media components a consistent interface, so changing providers doesn't require rebuilding the player around them.
 
-Video.js even considers sources like canvas-based MoQ or animated GIFs, all with the same components.
+That boundary also gives us a path to future sources such as canvas-based MoQ playback and use cases such as animated GIF replacement without rebuilding the controls around them.
 
 ## Why Video.js?
 
@@ -95,7 +95,7 @@ const { Player } = createPlayer({
 ```ts
 import { createPlayer, playbackFeature, timeFeature } from '@videojs/html';
 
-const { ProviderMixin, PlayerController, context } = createPlayer({
+const { PlayerElement, PlayerController } = createPlayer({
   features: [playbackFeature, timeFeature], // [!code focus]
 });
 ```
@@ -109,7 +109,7 @@ Of course, you don't have to think about every feature you're going to need if y
 
 ### Framework-native
 
-Many player libraries wrap a single web component for every framework. That works, until you reach the seams: refs you can't pass through, state that doesn't reconcile, prop names that aren't quite React or HTML. Video.js ships idiomatic APIs in each framework: React components and hooks for React, custom elements and controllers for HTML. (And we plan on supporting more frameworks in the futrue!) 
+Many player libraries wrap a single web component for every framework. That works, until you reach the seams: refs you can't pass through, state that doesn't reconcile, prop names that aren't quite React or HTML. Video.js ships idiomatic APIs for its supported frameworks: React components and hooks for React, and custom elements and controllers for HTML.
 
 The player feels like the rest of your app.
 
@@ -121,6 +121,7 @@ The player feels like the rest of your app.
   <TabsPanel client:idle value="react" initial>
     ```tsx
     import { VideoPlayer, Video, VideoSkin } from '@videojs/react/video';
+    import '@videojs/react/video/skin.css';
 
     function MyPlayer() {
       return (
@@ -135,7 +136,10 @@ The player feels like the rest of your app.
   </TabsPanel>
   <TabsPanel client:idle value="html">
     ```html
-    <script type="module" src="@videojs/html/video/player"></script>
+    <script type="module">
+      import '@videojs/html/video/player';
+      import '@videojs/html/video/skin';
+    </script>
 
     <video-player>
       <video-skin>
@@ -149,6 +153,8 @@ The player feels like the rest of your app.
 ### Eject and own
 
 Most player libraries draw a line between "configurable through props" and "fork the source." Cross the line and you're on your own. Video.js lets you eject any skin and walk away with the source: components in your framework's language that you can read and change. The skin you ship is yours; the rest of the player keeps working underneath it.
+
+We don't want to cram every possible player into one configuration API. Packaged skins cover common visual changes. For everything else, eject early and compose the UI you need. Today that starts with copy and paste. A future CLI eject command will automate the copying.
 
 <DocsLinkCard slug="how-to/customize-skins">Customize skins</DocsLinkCard>
 

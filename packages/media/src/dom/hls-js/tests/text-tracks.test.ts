@@ -1,10 +1,10 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
+
 import { withPreservedTextTracks } from '../text-tracks';
 
 /**
- * jsdom has no text track implementation, so the media element and its tracks
- * are stubbed with the parts the helper touches: `cues` reads as `null` while a
- * track is disabled, exactly as the spec requires.
+ * Jsdom has no text track implementation, so the media element and its tracks are stubbed with the parts the helper
+ * touches: `cues` reads as `null` while a track is disabled, exactly as the spec requires.
  */
 class FakeTextTrack {
   mode: TextTrackMode = 'disabled';
@@ -21,8 +21,11 @@ class FakeTextTrack {
   /** Mirrors hls.js's `clearCurrentCues()`, which reads cues through `hidden`. */
   clearCues() {
     const { mode } = this;
+
     if (mode === 'disabled') this.mode = 'hidden';
+
     this.#cues = [];
+
     if (mode === 'disabled') this.mode = mode;
   }
 }
@@ -36,8 +39,11 @@ interface FakeTrackElementInit {
 
 function fakeTrackElement({ mode = 'showing', cues = [], readyState = 2, hlsOwned = false }: FakeTrackElementInit) {
   const track = new FakeTextTrack();
+
   track.mode = 'hidden';
+
   for (const id of cues) track.addCue({ id } as TextTrackCue);
+
   track.mode = mode;
 
   return {
@@ -53,8 +59,11 @@ function fakeMedia(...trackEls: ReturnType<typeof fakeTrackElement>[]) {
 
 function cueIds(track: FakeTextTrack): string[] {
   const { mode } = track;
+
   if (mode === 'disabled') track.mode = 'hidden';
+
   const ids = (track.cues ?? []).map((cue) => cue.id);
+
   track.mode = mode;
   return ids;
 }

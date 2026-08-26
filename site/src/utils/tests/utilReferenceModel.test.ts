@@ -1,5 +1,7 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
+
 import type { UtilReference } from '@/types/util-reference';
+
 import { buildUtilReferenceTocHeadings, createUtilReferenceModel } from '../utilReferenceModel';
 
 describe('createUtilReferenceModel', () => {
@@ -21,7 +23,9 @@ describe('createUtilReferenceModel', () => {
     const model = createUtilReferenceModel('useMedia', ref);
 
     expect(model).not.toBeNull();
+
     if (!model) return;
+
     if (model.isMultiOverload) return;
 
     expect(model).toMatchObject({
@@ -49,7 +53,9 @@ describe('createUtilReferenceModel', () => {
     const model = createUtilReferenceModel('useButton', ref);
 
     expect(model).not.toBeNull();
+
     if (!model) return;
+
     if (model.isMultiOverload) return;
 
     expect(model.isMultiOverload).toBe(false);
@@ -81,7 +87,9 @@ describe('createUtilReferenceModel', () => {
     const model = createUtilReferenceModel('usePlayer', ref);
 
     expect(model).not.toBeNull();
+
     if (!model) return;
+
     if (!model.isMultiOverload) return;
 
     expect(model.isMultiOverload).toBe(true);
@@ -124,7 +132,9 @@ describe('createUtilReferenceModel', () => {
     const model = createUtilReferenceModel('createPlayer', ref);
 
     expect(model).not.toBeNull();
+
     if (!model) return;
+
     if (!model.isMultiOverload) return;
 
     expect(model.isMultiOverload).toBe(true);
@@ -167,7 +177,9 @@ describe('createUtilReferenceModel', () => {
     const model = createUtilReferenceModel('useStore', ref);
 
     expect(model).not.toBeNull();
+
     if (!model) return;
+
     if (!model.isMultiOverload) return;
 
     expect(model.overloads[0]).toMatchObject({ id: 'overload-1', label: undefined });

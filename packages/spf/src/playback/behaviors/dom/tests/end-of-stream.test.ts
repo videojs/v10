@@ -1,4 +1,5 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
+
 import type { ContextSignals, StateSignals } from '../../../../core/composition/create-composition';
 import { signal } from '../../../../core/signals/primitives';
 import type { MaybeResolvedPresentation, Presentation, Segment, VideoTrack } from '../../../../media/types';
@@ -44,6 +45,7 @@ function setupEndOfStream(initialState: EndOfStreamState, initialContext: EndOfS
   // BehaviorCleanup (void | () => void | { destroy }) — the real return is
   // a () => void; cast for callable ergonomics in tests.
   const cleanup = endOfStream.setup({ state, context, config: {} }) as () => void;
+
   return { state, context, cleanup };
 }
 
@@ -52,8 +54,8 @@ function setupEndOfStream(initialState: EndOfStreamState, initialContext: EndOfS
 // ============================================================================
 
 /**
- * Back the mock with a real EventTarget so tests can dispatch sourceopen /
- * sourceended to exercise the behavior's local readyState subscription.
+ * Back the mock with a real EventTarget so tests can dispatch sourceopen / sourceended to exercise the behavior's local
+ * readyState subscription.
  */
 function makeMediaSource(
   overrides: { readyState?: MediaSource['readyState']; duration?: number; sourceBuffers?: SourceBuffer[] } = {}
@@ -67,6 +69,7 @@ function makeMediaSource(
     removeEventListener: { value: target.removeEventListener.bind(target) },
     dispatchEvent: { value: target.dispatchEvent.bind(target) },
   }) as MediaSource;
+
   ms.endOfStream = vi.fn();
   return ms;
 }
@@ -78,6 +81,7 @@ function transitionMediaSource(mediaSource: MediaSource, readyState: MediaSource
 
 function makeSourceBuffer(): SourceBuffer {
   const listeners: Record<string, EventListener[]> = {};
+
   return {
     buffered: { length: 0, start: () => 0, end: () => 0 } as TimeRanges,
     updating: false,

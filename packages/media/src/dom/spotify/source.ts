@@ -2,28 +2,22 @@ import { serializeEmbedParams } from '../utils';
 import type { SpotifyMediaProps } from './props';
 
 /**
- * Spotify engine options, spelled exactly as Spotify spells them
- * (https://developer.spotify.com/documentation/embeds). They are serialized onto
- * the embed URL verbatim, so what you write here is what the embed reads.
+ * Spotify engine options, spelled exactly as Spotify spells them (https://developer.spotify.com/documentation/embeds).
+ * They are serialized onto the embed URL verbatim, so what you write here is what the embed reads.
  *
- * Spotify publishes only a handful of them, and the ones the host owns are
- * deliberately absent: the start position comes from the `t` parameter on `src`.
- * The index signature still carries anything not listed here, so undocumented
+ * Spotify publishes only a handful of them, and the ones the host owns are deliberately absent: the start position
+ * comes from the `t` parameter on `src`. The index signature still carries anything not listed here, so undocumented
  * knobs and whatever Spotify adds next keep working.
  */
 export interface SpotifyEngineConfig extends Record<string, unknown> {
   /** Start position in seconds. */
   t?: number;
   /**
-   * `0` renders the embed in its dark theme. Defaults to the light theme. Spotify
-   * documents no other value, and the embed goes by whether the parameter is
-   * there, so leaving it out is the only way to ask for the default.
+   * `0` renders the embed in its dark theme. Defaults to the light theme. Spotify documents no other value, and the
+   * embed goes by whether the parameter is there, so leaving it out is the only way to ask for the default.
    */
   theme?: 0;
-  /**
-   * Embed the video variant of an episode when it has one. Not a URL parameter:
-   * the video embed lives at its own path.
-   */
+  /** Embed the video variant of an episode when it has one. Not a URL parameter: the video embed lives at its own path. */
   preferVideo?: boolean;
   /** `referrerpolicy` for the embed iframe. Not a Spotify embed parameter. */
   referrerPolicy?: ReferrerPolicy;
@@ -62,17 +56,18 @@ export function parseSpotifyEntityId(src: string) {
 }
 
 /**
- * Parse a Spotify source string. Recognizes `open.spotify.com` URLs for every
- * embeddable entity — including the localized (`/intl-de/`) and already-embedded
- * (`/embed/`) forms, since the entity type and id sit in the same place in all of
- * them — `spotify:<type>:<id>` URIs, and start positions via the `t` parameter.
+ * Parse a Spotify source string. Recognizes `open.spotify.com` URLs for every embeddable entity — including the
+ * localized (`/intl-de/`) and already-embedded (`/embed/`) forms, since the entity type and id sit in the same place in
+ * all of them — `spotify:<type>:<id>` URIs, and start positions via the `t` parameter.
  */
 export function parseSpotifySource(src: string): ParsedSpotifySource | null {
   if (!src) return null;
+
   const match = MATCH_URI.exec(src) ?? MATCH_SRC.exec(src);
   const type = match?.[1]?.toLowerCase() as SpotifyEntityType | undefined;
   const id = match?.[2];
   if (!type || !id) return null;
+
   return { type, id, startTime: parseStartTime(src) };
 }
 
@@ -80,6 +75,7 @@ export function parseSpotifySource(src: string): ParsedSpotifySource | null {
 export function buildSpotifyIframeSrc(src: string, props: Partial<SpotifyMediaProps> = {}) {
   const parsed = parseSpotifySource(src);
   if (!parsed) return '';
+
   // Neither of these is an embed parameter: `preferVideo` picks the path below,
   // and `referrerPolicy` is an attribute of the iframe hosting the embed.
   const { preferVideo, referrerPolicy: _referrerPolicy, ...spotify } = props.source?.engine?.spotify ?? {};
@@ -91,12 +87,14 @@ export function buildSpotifyIframeSrc(src: string, props: Partial<SpotifyMediaPr
   const videoPath = preferVideo ? '/video' : '';
   // Spotify publishes so few parameters that most embeds need none at all.
   const query = serializeEmbedParams(params);
+
   return `${EMBED_BASE}/embed/${parsed.type}/${parsed.id}${videoPath}${query ? `?${query}` : ''}`;
 }
 
 /** Parse the `t` parameter from a Spotify share URL. Spotify spells it in seconds. */
 function parseStartTime(url: string): number | null {
   const value = /[?&]t=(\d+)/.exec(url)?.[1];
+
   return value ? Number.parseInt(value, 10) : null;
 }
 

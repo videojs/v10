@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
+
 import type { Segment } from '../../types';
 import {
   calculateForwardFlushPoint,
@@ -107,6 +108,7 @@ describe('calculateForwardFlushPoint', () => {
       createSegment(18, 6),
       createSegment(24, 6),
     ];
+
     expect(calculateForwardFlushPoint(segments, 0)).toBe(Infinity);
   });
 
@@ -114,6 +116,7 @@ describe('calculateForwardFlushPoint', () => {
     // currentTime=0, bufferDuration=30 → threshold=30.
     // Segments at 30 and 36 are at/beyond threshold — flush from 30.
     const segments = [createSegment(0, 6), createSegment(6, 6), createSegment(30, 6), createSegment(36, 6)];
+
     expect(calculateForwardFlushPoint(segments, 0)).toBe(30);
   });
 
@@ -121,6 +124,7 @@ describe('calculateForwardFlushPoint', () => {
     // After playing to 10s: threshold = 10 + 30 = 40. Segment at 36 is < 40, stays.
     // Segment at 42 is >= 40, flush from 42.
     const segments = [createSegment(0, 6), createSegment(36, 6), createSegment(42, 6)];
+
     expect(calculateForwardFlushPoint(segments, 10)).toBe(42);
   });
 
@@ -128,11 +132,13 @@ describe('calculateForwardFlushPoint', () => {
     const config = { ...DEFAULT_FORWARD_BUFFER_CONFIG, bufferDuration: 12 };
     // threshold = 0 + 12 = 12. Segments at 12 and beyond should be flushed.
     const segments = [createSegment(0, 6), createSegment(6, 6), createSegment(12, 6)];
+
     expect(calculateForwardFlushPoint(segments, 0, config)).toBe(12);
   });
 
   it('returns the earliest beyond-threshold segment when multiple exist', () => {
     const segments = [createSegment(30, 6), createSegment(60, 6), createSegment(90, 6)];
+
     // All are at/beyond threshold=30. Return the earliest (30).
     expect(calculateForwardFlushPoint(segments, 0)).toBe(30);
   });
@@ -265,6 +271,7 @@ describe('getSegmentsToLoad', () => {
   describe('edge cases', () => {
     it('should handle empty segment list', () => {
       const toLoad = getSegmentsToLoad([], [], 0);
+
       expect(toLoad).toHaveLength(0);
     });
 
@@ -286,6 +293,7 @@ describe('getSegmentsToLoad', () => {
       // successor, so it stays selectable — see the exact-end / overshoot cases.
       const segments: Segment[] = [createSegment(0, 6), createSegment(6, 6)];
       const toLoad = getSegmentsToLoad(segments, [], 100);
+
       expect(toLoad.map((s) => s.id)).toEqual(['seg-6']); // only the terminal segment
     });
 
@@ -410,6 +418,7 @@ describe('getSegmentsToLoad', () => {
       const segments = [createSegment(0, 6), createSegment(6, 6), createSegment(12, 6)] as const;
       // Playhead dragged to the exact end (duration = 18), nothing buffered there.
       const toLoad = getSegmentsToLoad(segments, [], 18);
+
       expect(toLoad.map((s) => s.id)).toEqual(['seg-12']);
     });
 
@@ -423,6 +432,7 @@ describe('getSegmentsToLoad', () => {
       const segments = [createSegment(0, 6), createSegment(6, 6), createSegment(12, 6)] as const;
       // Model end = 18; duration grew to 18.03, seek lands past seg-12's endTime.
       const toLoad = getSegmentsToLoad(segments, [], 18.03);
+
       expect(toLoad.map((s) => s.id)).toEqual(['seg-12']);
     });
 
@@ -432,6 +442,7 @@ describe('getSegmentsToLoad', () => {
       // must NOT be reloaded — only the segments the playhead is entering.
       const segments = [createSegment(0, 6), createSegment(6, 6), createSegment(12, 6)] as const;
       const toLoad = getSegmentsToLoad(segments, [], 6);
+
       expect(toLoad.map((s) => s.id)).toEqual(['seg-6', 'seg-12']);
     });
   });

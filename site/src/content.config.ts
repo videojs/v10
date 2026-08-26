@@ -1,6 +1,7 @@
-import { defineCollection, reference } from 'astro:content';
 import { file, glob } from 'astro/loaders';
 import { z } from 'astro/zod';
+import { defineCollection, reference } from 'astro:content';
+
 import { ComponentReferenceSchema } from './types/component-reference';
 import { SUPPORTED_FRAMEWORKS } from './types/docs';
 import { FeatureReferenceSchema } from './types/feature-reference';
@@ -11,16 +12,15 @@ import { defaultGitService } from './utils/gitService';
 import { globWithParser } from './utils/globWithParser';
 
 /**
- * Extract date from filename in format: YYYY-MM-DD-slug.mdx
- * Throws an error if the filename doesn't match the expected pattern
+ * Extract date from filename in format: YYYY-MM-DD-slug.mdx Throws an error if the filename doesn't match the expected
+ * pattern
  */
 export function extractDateFromFilename(id: string): Date {
   const match = id.match(/^(\d{4})-(\d{2})-(\d{2})-/);
-  if (!match) {
-    throw new Error(`Filename "${id}" must follow format: YYYY-MM-DD-slug.mdx`);
-  }
+  if (!match) throw new Error(`Filename "${id}" must follow format: YYYY-MM-DD-slug.mdx`);
 
   const [, year, month, day] = match;
+
   return new Date(`${year}-${month}-${day}`);
 }
 

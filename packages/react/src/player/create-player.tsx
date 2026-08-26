@@ -23,49 +23,69 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useDestroy } from '../utils/use-destroy';
 import { PlayerContextProvider, useMedia, usePlayerContext } from './context';
 
+/** Configures the feature-backed store and provider component created by {@link createPlayer}. */
 export interface CreatePlayerConfig<Features extends AnyPlayerFeature[]> {
+  /** Features combined into the player's store, state, actions, and configuration props. */
   features: Features;
+
+  /** Name shown for the generated provider component in development tools. */
   displayName?: string;
 }
 
+/** Props accepted by a generated Player provider. */
 export type PlayerProps<Config = object> = {
   [Key in keyof Config]?: Config[Key] | undefined;
 } & {
+  /** Content placed inside the player context. The provider does not render a host element of its own. */
   children: ReactNode;
 };
 
+/** The provider component and typed hooks produced by {@link createPlayer}. */
 export interface CreatePlayerResult<Store extends PlayerStore> {
+  /** Provides a new player store to its descendants without adding a layout element. */
   Player: FC<PlayerProps<InferPlayerConfig<Store>>>;
+
+  /** Accesses the configured store, or subscribes to a selected value from it. */
   usePlayer: UsePlayerHook<Store>;
+
+  /** Returns the media currently attached beneath the generated Player, or `null` before attachment. */
   useMedia: () => Media | null;
 }
 
+/** Typed player-store hook returned by {@link createPlayer}. */
 export type UsePlayerHook<Store extends PlayerStore> = {
+  /** Returns the configured player store. */
   (): Store;
+
+  /**
+   * Subscribes to a value derived from the player state.
+   *
+   * @param selector - Derives the value consumed by the calling component.
+   */
   <R>(selector: (state: InferStoreState<Store>) => R): R;
 };
 
 /**
  * Create a player instance with a typed Player component and hooks.
  *
- * @label Video
  * @param config - Player configuration with features and optional display name.
+ * @label Video
  */
 export function createPlayer(config: CreatePlayerConfig<VideoFeatures>): CreatePlayerResult<VideoPlayerStore>;
 
 /**
  * Create a player for audio media.
  *
- * @label Audio
  * @param config - Player configuration with features and optional display name.
+ * @label Audio
  */
 export function createPlayer(config: CreatePlayerConfig<AudioFeatures>): CreatePlayerResult<AudioPlayerStore>;
 
 /**
  * Create a player with custom features.
  *
- * @label Generic
  * @param config - Player configuration with features and optional display name.
+ * @label Generic
  */
 export function createPlayer<const Features extends AnyPlayerFeature[]>(
   config: CreatePlayerConfig<Features>
@@ -78,6 +98,7 @@ export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): Cr
 
   function createConfiguredStore(values: Record<string, unknown>) {
     const store = createStore<PlayerTarget>()(slice);
+
     applyConfigValues(store, featureConfig, values);
     return store;
   }
@@ -88,6 +109,7 @@ export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): Cr
     const configValues = pick(props, configKeys);
     const [store, setStore] = useState(() => createConfiguredStore(configValues));
     const syncedValues = useRef({ store, values: configValues });
+
     const [media, setMedia] = useState<Media | null>(null);
     const [container, setContainer] = useState<HTMLElement | null>(null);
 
@@ -105,6 +127,7 @@ export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): Cr
 
       for (const key of configKeys) {
         if (Object.is(previous.values[key], configValues[key])) continue;
+
         setPlayerConfigValue(store, featureConfig[key]!, configValues[key]);
       }
 
@@ -136,6 +159,7 @@ export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): Cr
 
   function usePlayer<R>(selector?: (state: object) => R): AnyPlayerStore | R {
     const { store } = usePlayerContext();
+
     return useStore(store, selector as any);
   }
 

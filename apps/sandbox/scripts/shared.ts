@@ -1,4 +1,5 @@
 import path from 'node:path';
+
 import chalk from 'chalk';
 import { createTwoFilesPatch } from 'diff';
 import type { Result } from 'dir-compare';
@@ -37,9 +38,13 @@ function colorizePatch(patch: string): string {
     .split('\n')
     .map((line) => {
       if (line.startsWith('---') || line.startsWith('+++')) return chalk.dim(line);
+
       if (line.startsWith('-')) return chalk.red(line);
+
       if (line.startsWith('+')) return chalk.green(line);
+
       if (line.startsWith('@@')) return chalk.cyan(line);
+
       return chalk.gray(line);
     })
     .join('\n');
@@ -114,7 +119,6 @@ export async function mirrorTemplatesToSrc(): Promise<string[]> {
   for (const entry of await fs.readdir(TEMPLATES)) {
     const templatePath = path.join(TEMPLATES, entry);
     const stats = await fs.stat(templatePath);
-
     if (!stats.isDirectory()) continue;
 
     await fs.ensureDir(path.join(SRC, entry));
@@ -129,7 +133,6 @@ export async function removeGeneratedSrcFiles(): Promise<string[]> {
 
   for (const file of GENERATED_SRC_FILES) {
     const filePath = path.join(SRC, file);
-
     if (!(await fs.pathExists(filePath))) continue;
 
     await fs.remove(filePath);

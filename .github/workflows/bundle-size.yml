@@ -23,16 +23,19 @@ jobs:
           node-version-file: '.nvmrc'
           cache: pnpm
 
-      - name: Cache turbo build setup
-        uses: actions/cache@v5
-        with:
-          path: .turbo
-          key: ${{ runner.os }}-turbo-pr-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-turbo-pr-
+      - name: Install dependencies
+        run: pnpm install
 
-      - name: Install and build
-        run: pnpm install && pnpm build:packages
+      - name: Restore Vite Task cache
+        uses: actions/cache/restore@v6
+        with:
+          path: node_modules/.vite/task-cache
+          key: vite-task-${{ runner.os }}-${{ runner.arch }}-restore-only-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}
+          restore-keys: |
+            vite-task-${{ runner.os }}-${{ runner.arch }}-packages-
+
+      - name: Build packages
+        run: pnpm build:packages
 
       - name: Test bundle size reporting
         run: pnpm test:size
@@ -74,20 +77,21 @@ jobs:
             pnpm-lock.yaml
             .bundle-size-pr/pnpm-lock.yaml
 
-      - name: Cache turbo build setup
-        uses: actions/cache@v5
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Restore Vite Task cache
+        uses: actions/cache/restore@v6
         with:
-          path: .turbo
-          key: ${{ runner.os }}-turbo-base-${{ github.event.pull_request.base.sha }}
+          path: node_modules/.vite/task-cache
+          key: vite-task-${{ runner.os }}-${{ runner.arch }}-restore-only-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}
           restore-keys: |
-            ${{ runner.os }}-turbo-base-
+            vite-task-${{ runner.os }}-${{ runner.arch }}-packages-
 
-      - name: Install and build
+      - name: Build and measure base
         run: |
-          pnpm install
-
           if [ -f .bundle-size-pr/.github/scripts/bundle-size.js ]; then
-            pnpm --dir .bundle-size-pr install --frozen-lockfile --ignore-scripts --filter video.js
+            pnpm --dir .bundle-size-pr --fail-if-no-match install --frozen-lockfile --ignore-scripts --filter video.js
             pnpm build:packages
             node .bundle-size-pr/.github/scripts/bundle-size.js --root . --json base-size.json
           else

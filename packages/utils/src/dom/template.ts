@@ -4,6 +4,7 @@ export function createTemplate(html: string): HTMLTemplateElement | null {
   if (!doc) return null;
 
   const template = doc.createElement('template');
+
   template.innerHTML = html;
   return template;
 }
@@ -20,6 +21,7 @@ export function getTemplateElement(container: Element): HTMLTemplateElement | nu
 /** Return a template's only element root, or `null` when it does not contain exactly one. */
 export function getTemplateRoot(template: HTMLTemplateElement): Element | null {
   const root = template.content.firstElementChild;
+
   return root && !root.nextElementSibling ? root : null;
 }
 

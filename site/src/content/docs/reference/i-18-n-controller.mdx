@@ -1,0 +1,32 @@
+---
+title: I18nController
+description: Reactive controller for consuming translator and locale values from an HTML i18n context
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+
+## Import
+
+```ts
+import { I18nController } from "@videojs/html";
+```
+
+## Usage
+
+Create the controller with a reactive host and an i18n context. Read the translator from `value` and the active locale from `locale`.
+
+```ts
+import { I18nController, UIElement, i18nContext } from "@videojs/html";
+
+class LocalizedPlayLabel extends UIElement {
+  readonly #i18n = new I18nController(this, i18nContext);
+
+  get label() {
+    return this.#i18n.value("buttons.play", { default: "Play" });
+  }
+}
+```
+
+The controller requests a host update when its context changes. Without a provider, it falls back to the default English locale and updates when registered translations change.
+
+<UtilReference util="I18nController" />

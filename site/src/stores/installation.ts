@@ -1,4 +1,5 @@
 import { atom } from 'nanostores';
+
 import type { InstallMethod, Renderer, Skin, UseCase } from '@/utils/installation/types';
 
 export const renderer = atom<Renderer>('html5-video');

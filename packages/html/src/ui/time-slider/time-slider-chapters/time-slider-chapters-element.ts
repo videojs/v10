@@ -11,16 +11,16 @@ import { cloneTemplateRoot, getTemplateElement, getTemplateRoot } from '@videojs
 
 import { playerContext } from '../../../player/context';
 import { PlayerController } from '../../../player/player-controller';
-import { MediaElement } from '../../media-element';
 import { sliderContext } from '../../slider/context';
+import { UIElement } from '../../ui-element';
 
 /**
  * Clones a light-DOM template once per normalized chapter range.
  *
- * The required template must contain exactly one HTML root element. When no chapter cues are available, the template
- * is cloned once for a full-duration range.
+ * The required template must contain exactly one HTML root element. When no chapter cues are available, the template is
+ * cloned once for a full-duration range.
  */
-export class TimeSliderChaptersElement extends MediaElement {
+export class TimeSliderChaptersElement extends UIElement {
   static readonly tagName = 'media-time-slider-chapters';
 
   readonly #segments = new SliderSegmentsCore();
@@ -44,9 +44,11 @@ export class TimeSliderChaptersElement extends MediaElement {
     const slider = this.#slider.value;
     const duration = this.#time.value?.duration ?? 0;
     const templateRoot = this.#getTemplateRoot();
+
     if (!slider) return;
 
     applyStateDataAttrs(this, slider.state, slider.stateAttrMap);
+
     if (!templateRoot) return;
 
     const { chapters, ranges, max } = this.#core.getRanges(this.#textTrack.value?.chaptersCues ?? [], 0, duration);
@@ -57,8 +59,10 @@ export class TimeSliderChaptersElement extends MediaElement {
       max,
       orientation: slider.state.orientation,
     });
+
     const buffered = this.#buffer.value?.buffered ?? [];
     const bufferedEnd = buffered.length ? buffered[buffered.length - 1]![1] : 0;
+
     const next = new Map<string, HTMLElement>();
 
     for (const segment of geometry) {
@@ -88,12 +92,15 @@ export class TimeSliderChaptersElement extends MediaElement {
     }
 
     let before: ChildNode | null = null;
+
     for (const root of [...next.values()].reverse()) {
       if (root.parentNode !== this || root.nextSibling !== before) this.insertBefore(root, before);
+
       before = root;
     }
 
     this.#rendered.clear();
+
     for (const [key, rendered] of next) this.#rendered.set(key, rendered);
   }
 
@@ -101,20 +108,25 @@ export class TimeSliderChaptersElement extends MediaElement {
     if (this.#templateChecked) return this.#templateRoot;
 
     const template = getTemplateElement(this);
+
     if (!template) {
       for (const node of [...this.childNodes]) node.remove();
+
       return null;
     }
 
     this.#templateChecked = true;
     const root = getTemplateRoot(template);
+
     for (const node of [...this.childNodes]) {
       if (node !== template) node.remove();
     }
+
     if (root?.namespaceURI !== 'http://www.w3.org/1999/xhtml') {
       if (__DEV__) {
         console.warn(`[${this.localName}] template must contain exactly one HTML root element.`);
       }
+
       return null;
     }
 

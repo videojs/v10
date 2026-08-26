@@ -1,11 +1,20 @@
 import type { Plugin } from 'vite';
+
 import {
   VJS8_DEMO_VIDEO,
   VJS10_DEMO_BACKGROUND_VIDEO_MP4,
+  VJS10_DEMO_BACKGROUND_VIDEO_POSTER,
+  VJS10_DEMO_CLOUDFLARE,
   VJS10_DEMO_DASH,
   VJS10_DEMO_POSTER,
+  VJS10_DEMO_SPOTIFY,
   VJS10_DEMO_STORYBOARD,
+  VJS10_DEMO_STORYBOARD_VTT,
+  VJS10_DEMO_TIKTOK,
+  VJS10_DEMO_TWITCH,
   VJS10_DEMO_VIDEO,
+  VJS10_DEMO_VIMEO,
+  VJS10_DEMO_YOUTUBE,
   VJS10_MULTI_AUDIO_DEMO_VIDEO,
 } from '../src/consts.ts';
 
@@ -14,11 +23,19 @@ const DEMOS_DIRECTORY = '/src/components/docs/demos/';
 export const DEMO_PLACEHOLDERS = {
   VJS8_DEMO_VIDEO_HLS: VJS8_DEMO_VIDEO.hls,
   VJS10_DEMO_BACKGROUND_VIDEO_MP4: VJS10_DEMO_BACKGROUND_VIDEO_MP4,
+  VJS10_DEMO_BACKGROUND_VIDEO_POSTER: VJS10_DEMO_BACKGROUND_VIDEO_POSTER,
+  VJS10_DEMO_CLOUDFLARE: VJS10_DEMO_CLOUDFLARE,
   VJS10_DEMO_DASH: VJS10_DEMO_DASH,
   VJS10_DEMO_POSTER: VJS10_DEMO_POSTER,
+  VJS10_DEMO_SPOTIFY: VJS10_DEMO_SPOTIFY,
   VJS10_DEMO_STORYBOARD: VJS10_DEMO_STORYBOARD,
+  VJS10_DEMO_STORYBOARD_VTT: VJS10_DEMO_STORYBOARD_VTT,
+  VJS10_DEMO_TIKTOK: VJS10_DEMO_TIKTOK,
+  VJS10_DEMO_TWITCH: VJS10_DEMO_TWITCH,
   VJS10_DEMO_VIDEO_HLS: VJS10_DEMO_VIDEO.hls,
   VJS10_DEMO_VIDEO_MP4: VJS10_DEMO_VIDEO.mp4,
+  VJS10_DEMO_VIMEO: VJS10_DEMO_VIMEO,
+  VJS10_DEMO_YOUTUBE: VJS10_DEMO_YOUTUBE,
   VJS10_MULTI_AUDIO_DEMO_VIDEO_HLS: VJS10_MULTI_AUDIO_DEMO_VIDEO.hls,
 } as const;
 
@@ -28,10 +45,7 @@ const PLACEHOLDER_PATTERN = /{{([A-Z0-9_]+)}}/g;
 export function replaceDemoPlaceholders(source: string): string {
   return source.replace(PLACEHOLDER_PATTERN, (placeholder, name: string) => {
     const value = DEMO_PLACEHOLDERS[name as keyof typeof DEMO_PLACEHOLDERS];
-
-    if (!value) {
-      throw new Error(`Unknown demo placeholder: ${placeholder}`);
-    }
+    if (!value) throw new Error(`Unknown demo placeholder: ${placeholder}`);
 
     return value;
   });
@@ -41,10 +55,7 @@ export function transformDemoPlaceholders(source: string, id: string): string | 
   const [filePath, query = ''] = id.split('?', 2);
   const isRawHtml = filePath.endsWith('.html') && new URLSearchParams(query).has('raw');
   const isReactDemo = filePath.endsWith('.tsx');
-
-  if (!filePath.includes(DEMOS_DIRECTORY) || (!isRawHtml && !isReactDemo)) {
-    return null;
-  }
+  if (!filePath.includes(DEMOS_DIRECTORY) || (!isRawHtml && !isReactDemo)) return null;
 
   return replaceDemoPlaceholders(source);
 }

@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
+
 import {
   getMediaPlaylistMetadata,
   type PartiallyResolvedAudioTrack,
@@ -89,6 +90,7 @@ seg1.m4s
       const result = parseMediaPlaylist(playlistText, unresolvedVideo);
 
       const seg0 = result.segments[0];
+
       expect(seg0).toBeDefined();
       expect(seg0!.id).toBe('segment-0'); // Ham
       expect(seg0!.url).toBe('https://example.com/video/seg0.m4s'); // AddressableObject
@@ -339,6 +341,7 @@ segment0.ts
 #EXTINF:6.0,
 segment1.ts
 #EXT-X-ENDLIST`;
+
       expect(parseMediaPlaylist(playlist, unresolvedVideo).mimeType).toBe('video/mp2t');
     });
 
@@ -347,6 +350,7 @@ segment1.ts
 #EXTINF:6.0,
 a0.ts
 #EXT-X-ENDLIST`;
+
       expect(parseMediaPlaylist(playlist, unresolvedAudio).mimeType).toBe('video/mp2t');
     });
 
@@ -355,6 +359,7 @@ a0.ts
 #EXTINF:6.0,
 https://cdn.example.com/path/segment0.ts?token=abc123&expires=1
 #EXT-X-ENDLIST`;
+
       expect(parseMediaPlaylist(playlist, unresolvedVideo).mimeType).toBe('video/mp2t');
     });
 
@@ -364,6 +369,7 @@ https://cdn.example.com/path/segment0.ts?token=abc123&expires=1
 #EXTINF:6.0,
 segment0.ts
 #EXT-X-ENDLIST`;
+
       // EXT-X-MAP present ⇒ fMP4 by definition; never relabel.
       expect(parseMediaPlaylist(playlist, unresolvedVideo).mimeType).toBe('video/mp4');
     });
@@ -375,6 +381,7 @@ fileSequence0.aac
 #EXTINF:9.98,
 fileSequence1.aac
 #EXT-X-ENDLIST`;
+
       expect(parseMediaPlaylist(playlist, unresolvedAudio).mimeType).toBe('audio/aac');
     });
 
@@ -384,6 +391,7 @@ fileSequence1.aac
 #EXTINF:9.98,
 fileSequence0.aac
 #EXT-X-ENDLIST`;
+
       expect(parseMediaPlaylist(playlist, unresolvedAudio).mimeType).toBe('audio/mp4');
     });
 
@@ -392,6 +400,7 @@ fileSequence0.aac
 #EXTINF:6.0,
 segment0.mp4
 #EXT-X-ENDLIST`;
+
       expect(parseMediaPlaylist(playlist, unresolvedVideo).mimeType).toBe('video/mp4');
     });
   });
@@ -516,6 +525,7 @@ segment1.m4s
 #EXTINF:6.0,
 segment2.m4s`;
       const previous = parseMediaPlaylist(first, unresolvedVideo);
+
       expect(previous.duration).toBe(Number.POSITIVE_INFINITY);
 
       // Window slid past segment0/1 and the stream ended. Placement is PDT-primary
@@ -549,6 +559,7 @@ segment1.m4s
 #EXTINF:6.0,
 segment2.m4s`;
       const previous = parseMediaPlaylist(first, unresolvedVideo);
+
       expect(previous.segments.map((s) => s.startTime)).toEqual([0, 6, 12]);
 
       // Window slid by one (media sequence 0 → 1) and gained a segment.
@@ -739,6 +750,7 @@ s0.ts
 #EXTINF:4,
 s1.ts`;
       const r = parseMediaPlaylist(text, videoShell);
+
       expect(r.segments.map((s) => s.startDate)).toEqual([
         epoch('2026-01-01T00:00:00.000Z'),
         epoch('2026-01-01T00:00:04.000Z'),
@@ -756,6 +768,7 @@ s1.ts
 #EXTINF:4,
 s2.ts`;
       const r = parseMediaPlaylist(text, videoShell);
+
       expect(r.segments.map((s) => s.startDate)).toEqual([
         epoch('2026-01-01T00:00:00.000Z'),
         epoch('2026-01-01T00:00:04.000Z'),
@@ -774,6 +787,7 @@ s0.ts
 #EXTINF:4,
 s1.ts`;
       const r = parseMediaPlaylist(text, videoShell);
+
       // s1 takes the jumped absolute time, not s0 + 4s.
       expect(r.segments.map((s) => s.startDate)).toEqual([
         epoch('2026-01-01T00:00:00.000Z'),
@@ -793,6 +807,7 @@ s1.ts
 s2.ts`;
       const r = parseMediaPlaylist(text, videoShell);
       const t0 = epoch('2026-01-01T00:00:00.000Z');
+
       expect(r.segments[0]?.startDate).toBeCloseTo(t0, 6);
       expect(r.segments[1]?.startDate).toBeCloseTo(t0 + 1.9, 6);
       expect(r.segments[2]?.startDate).toBeCloseTo(t0 + 1.9 + 2.05, 6);
@@ -806,6 +821,7 @@ s0.ts
 #EXTINF:4,
 s1.ts`;
       const r = parseMediaPlaylist(text, videoShell);
+
       expect(r.segments.every((s) => s.startDate === undefined)).toBe(true);
     });
 
@@ -817,6 +833,7 @@ s1.ts`;
 s0.ts
 #EXTINF:4,
 s1.ts`;
+
       // First parse anchors startTime at 0, so the origin maps to s0's wall clock.
       expect(parseMediaPlaylist(text, videoShell).startDate).toBe(epoch('2026-01-01T00:00:10.000Z'));
     });
@@ -831,6 +848,7 @@ s0.ts
 #EXTINF:4,
 s1.ts`;
       const prev = parseMediaPlaylist(first, videoShell);
+
       expect(prev.startDate).toBe(epoch('2026-01-01T00:00:00.000Z'));
 
       // Window slid by one: s0 rolled off, s1 is now first (startTime carried to 4).
@@ -843,6 +861,7 @@ s1.ts
 #EXTINF:4,
 s2.ts`;
       const next = parseMediaPlaylist(reload, prev);
+
       expect(next.segments[0]?.startTime).toBe(4); // window advanced
       expect(next.startDate).toBe(epoch('2026-01-01T00:00:00.000Z')); // origin unchanged
     });
@@ -852,6 +871,7 @@ s2.ts`;
 #EXT-X-MEDIA-SEQUENCE:0
 #EXTINF:4,
 s0.ts`;
+
       expect(parseMediaPlaylist(text, videoShell).startDate).toBeUndefined();
     });
   });
@@ -919,6 +939,7 @@ s0.ts`;
 
       const v82 = video.segments.find((s) => s.id === 'segment-82');
       const a82 = audio.segments.find((s) => s.id === 'segment-82');
+
       expect(v82).toBeDefined();
       expect(a82).toBeDefined();
 
@@ -968,6 +989,7 @@ s6.m4s`;
 
     it('places first-resolve segments by PDT relative to the pre-applied startDate', () => {
       const r = parseMediaPlaylist(withPdt, { ...shell, startDate: anchor });
+
       // segment.startTime = segment PDT − anchor (10s and 12s past media-time 0).
       expect(r.segments.map((s) => s.startTime)).toEqual([10, 12]);
       expect(r.startTime).toBe(0); // the origin — the window edge lives on segments
@@ -977,6 +999,7 @@ s6.m4s`;
 
     it('anchors at the local base 0 when the shell carries no startDate (unchanged)', () => {
       const r = parseMediaPlaylist(withPdt, shell);
+
       expect(r.segments.map((s) => s.startTime)).toEqual([0, 2]);
       expect(r.startTime).toBe(0);
     });
@@ -990,6 +1013,7 @@ s5.m4s
 #EXTINF:2,
 s6.m4s`;
       const r = parseMediaPlaylist(noPdt, { ...shell, startDate: anchor });
+
       expect(r.segments.map((s) => s.startTime)).toEqual([0, 2]);
       expect(r.startDate).toBeUndefined();
     });
@@ -1016,11 +1040,13 @@ ${extra}
 
   it('reports no low latency for a plain live playlist', () => {
     const track = parseMediaPlaylist(playlist('#EXT-X-MEDIA-SEQUENCE:0'), shell);
+
     expect(getMediaPlaylistMetadata(track)?.lowLatency).toBe(false);
   });
 
   it('detects EXT-X-PART-INF', () => {
     const track = parseMediaPlaylist(playlist('#EXT-X-PART-INF:PART-TARGET=1.0'), shell);
+
     expect(getMediaPlaylistMetadata(track)?.lowLatency).toBe(true);
   });
 
@@ -1032,6 +1058,7 @@ ${extra}
       shell
     );
     const metadata = getMediaPlaylistMetadata(track);
+
     expect(metadata?.lowLatency).toBe(true);
     expect(metadata?.holdBack).toBe(6);
   });
@@ -1076,11 +1103,13 @@ ${keyLines}
 
   it('reports no encryption when the playlist has no EXT-X-KEY', () => {
     const track = parseMediaPlaylist(withKey(''), unresolved);
+
     expect(getMediaPlaylistMetadata(track)?.encrypted).toBe(false);
   });
 
   it('reports no encryption for METHOD=NONE', () => {
     const track = parseMediaPlaylist(withKey('#EXT-X-KEY:METHOD=NONE'), unresolved);
+
     expect(getMediaPlaylistMetadata(track)?.encrypted).toBe(false);
   });
 
@@ -1089,6 +1118,7 @@ ${keyLines}
       withKey('#EXT-X-KEY:METHOD=SAMPLE-AES,URI="skd://k",KEYFORMAT="com.apple.streamingkeydelivery"'),
       unresolved
     );
+
     expect(getMediaPlaylistMetadata(track)?.encrypted).toBe(true);
   });
 
@@ -1099,11 +1129,13 @@ ${keyLines}
       withKey('#EXT-X-KEY:METHOD=NONE\n#EXT-X-KEY:METHOD=AES-128,URI="k.bin"'),
       unresolved
     );
+
     expect(getMediaPlaylistMetadata(track)?.encrypted).toBe(true);
   });
 
   it('does not treat EXT-X-KEY as a segment tag', () => {
     const track = parseMediaPlaylist(withKey('#EXT-X-KEY:METHOD=AES-128,URI="k.bin"'), unresolved);
+
     expect(track.segments).toHaveLength(1);
   });
 

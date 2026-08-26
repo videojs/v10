@@ -8,7 +8,7 @@ export interface SliderEventMap {
   'value-change': CustomEvent<SliderValueEventDetail>;
   /** Fires when the user commits a value — on pointer up or keyboard release. */
   'value-commit': CustomEvent<SliderValueEventDetail>;
-  /** Fires when a drag interaction begins (pointer down on the slider). */
+  /** Fires when pointer movement begins a drag interaction. */
   'drag-start': CustomEvent<void>;
   /** Fires when a drag interaction ends (pointer up after dragging). */
   'drag-end': CustomEvent<void>;

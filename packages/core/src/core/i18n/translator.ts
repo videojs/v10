@@ -43,9 +43,11 @@ export function createTranslator(translations: FlatTranslations, locale: Locale)
 
     const fallback = options?.default;
     const values = options ? { ...options } : undefined;
+
     if (values) delete values.default;
 
     const raw = translation ?? (isDescriptor ? input.text : fallback) ?? String(key);
+
     return interpolate(raw, values);
   };
 

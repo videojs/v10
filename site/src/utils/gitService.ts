@@ -1,15 +1,11 @@
 import { simpleGit } from 'simple-git';
 
-/**
- * Git service interface for dependency injection (testability).
- */
+/** Git service interface for dependency injection (testability). */
 export interface GitService {
   getLastModifiedDate: (filePath: string) => Promise<Date | null>;
 }
 
-/**
- * Create a git service instance using simple-git.
- */
+/** Create a git service instance using simple-git. */
 export function createGitService(): GitService {
   const git = simpleGit();
 
@@ -27,7 +23,5 @@ export function createGitService(): GitService {
   };
 }
 
-/**
- * Default git service instance for production use.
- */
+/** Default git service instance for production use. */
 export const defaultGitService = createGitService();

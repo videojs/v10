@@ -3,9 +3,12 @@ import { observeResize } from '@videojs/utils/dom';
 import { throttle } from '@videojs/utils/function';
 import { clamp, roundToStep } from '@videojs/utils/number';
 import { isNull } from '@videojs/utils/predicate';
-import type { SliderInput, SliderState } from '../../core/ui/slider/slider-core';
+
+import type { SliderInput, SliderState } from '../../core/ui/slider/core';
 import { getPercentFromPointerEvent } from '../utils/pointer';
 import type { UIKeyboardEvent, UIPointerEvent } from './event';
+
+const DRAG_THRESHOLD = 3;
 
 export interface SliderOptions {
   /** Element reference for getBoundingClientRect() and pointer capture. */
@@ -15,7 +18,6 @@ export interface SliderOptions {
   getThumbElement?: (() => HTMLElement | null) | undefined;
 
   getOrientation: () => 'horizontal' | 'vertical';
-  isRTL: () => boolean;
   isDisabled: () => boolean;
 
   /** Current value as 0–100 percent. Used by keyboard stepping. */
@@ -26,10 +28,9 @@ export interface SliderOptions {
   getLargeStepPercent: () => number;
 
   /**
-   * Leading+trailing throttle (ms) for `onValueChange` during drag. When
-   * `> 0`, `onValueChange` fires immediately on the first drag move (leading
-   * edge), then at most once per window during subsequent moves. `0` (default)
-   * disables throttling — `onValueChange` fires on every pointermove.
+   * Leading+trailing throttle (ms) for `onValueChange` during drag. When `> 0`, `onValueChange` fires immediately on
+   * the first drag move (leading edge), then at most once per window during subsequent moves. `0` (default) disables
+   * throttling — `onValueChange` fires on every pointermove.
    */
   changeThrottle?: number | undefined;
   /** Adjust a raw 0–100 percent for thumb alignment. Enables `adjustForAlignment()`. */
@@ -69,9 +70,8 @@ export interface SliderApi {
   rootStyle: SliderRootStyle;
   thumbProps: SliderThumbProps;
   /**
-   * Adjust `fillPercent` and `pointerPercent` for edge thumb alignment using
-   * live DOM measurements from the root/thumb elements. No-op when
-   * `adjustPercent` was not provided or `thumbAlignment` is not `'edge'`.
+   * Adjust `fillPercent` and `pointerPercent` for edge thumb alignment using live DOM measurements from the root/thumb
+   * elements. No-op when `adjustPercent` was not provided or `thumbAlignment` is not `'edge'`.
    */
   adjustForAlignment: <S extends SliderState>(state: S) => S;
   destroy: () => void;
@@ -89,10 +89,11 @@ export function createSlider(options: SliderOptions): SliderApi {
   const abort = new AbortController();
   const changeThrottleMs = options.changeThrottle ?? 0;
 
-  let isDragging = false,
-    cachedRTL = false,
+  let isPointerDown = false,
     cachedRect: DOMRect | null = null,
     capturedPointerId: number | null = null,
+    pointerDownX = 0,
+    pointerDownY = 0,
     lastDragPercent = 0,
     committedOnRelease = false,
     pointingOnRelease = false;
@@ -115,6 +116,7 @@ export function createSlider(options: SliderOptions): SliderApi {
     if (isNull(capturedPointerId)) return;
 
     const id = capturedPointerId;
+
     capturedPointerId = null;
 
     try {
@@ -125,18 +127,20 @@ export function createSlider(options: SliderOptions): SliderApi {
   }
 
   function endDrag(): void {
-    if (!isDragging) return;
+    if (!isPointerDown) return;
 
     const pointing = committedOnRelease && pointingOnRelease;
+    const wasDragging = input.current.dragging;
 
     // Fire a final commit if pointerup didn't already handle it.
     if (!committedOnRelease) {
       options.onValueCommit?.(lastDragPercent);
     }
 
-    isDragging = false;
+    isPointerDown = false;
     input.patch({ dragging: false, pointing });
-    options.onDragEnd?.();
+
+    if (wasDragging) options.onDragEnd?.();
 
     committedOnRelease = false;
     pointingOnRelease = false;
@@ -167,7 +171,6 @@ export function createSlider(options: SliderOptions): SliderApi {
       const el = options.getElement();
 
       cachedRect = el.getBoundingClientRect();
-      cachedRTL = options.isRTL();
       committedOnRelease = false;
       pointingOnRelease = false;
 
@@ -175,12 +178,13 @@ export function createSlider(options: SliderOptions): SliderApi {
       capturedPointerId = event.pointerId;
       el.setPointerCapture(event.pointerId);
 
-      const percent = getPercentFromPointerEvent(event, cachedRect, options.getOrientation(), cachedRTL);
+      const percent = getPercentFromPointerEvent(event, cachedRect, options.getOrientation());
 
-      isDragging = true;
+      isPointerDown = true;
+      pointerDownX = event.clientX;
+      pointerDownY = event.clientY;
       lastDragPercent = percent;
-      input.patch({ pointing: true, dragging: true, pointerPercent: percent, dragPercent: percent });
-      options.onDragStart?.();
+      input.patch({ pointing: true, pointerPercent: percent, dragPercent: percent });
       options.onValueChange?.(percent);
 
       // Focus the thumb for keyboard follow-up and screen reader tracking.
@@ -201,10 +205,19 @@ export function createSlider(options: SliderOptions): SliderApi {
           return;
         }
 
-        const percent = getPercentFromPointerEvent(event, cachedRect!, options.getOrientation(), cachedRTL);
+        const percent = getPercentFromPointerEvent(event, cachedRect!, options.getOrientation());
+        const startingDrag = !input.current.dragging;
+
+        if (startingDrag) {
+          const distance = Math.hypot(event.clientX - pointerDownX, event.clientY - pointerDownY);
+          if (distance < DRAG_THRESHOLD) return;
+        }
 
         lastDragPercent = percent;
-        input.patch({ dragPercent: percent, pointerPercent: percent });
+        input.patch({ dragging: true, dragPercent: percent, pointerPercent: percent });
+
+        if (startingDrag) options.onDragStart?.();
+
         fireChange(percent, true);
 
         return;
@@ -213,7 +226,7 @@ export function createSlider(options: SliderOptions): SliderApi {
       // No capture — hover preview.
       const el = options.getElement();
       const rect = el.getBoundingClientRect();
-      const percent = getPercentFromPointerEvent(event, rect, options.getOrientation(), options.isRTL());
+      const percent = getPercentFromPointerEvent(event, rect, options.getOrientation());
 
       input.patch({ pointing: true, pointerPercent: percent });
     },
@@ -227,8 +240,9 @@ export function createSlider(options: SliderOptions): SliderApi {
 
       if (isNull(capturedPointerId)) return;
 
-      const percent = getPercentFromPointerEvent(event, cachedRect!, options.getOrientation(), cachedRTL);
+      const percent = getPercentFromPointerEvent(event, cachedRect!, options.getOrientation());
       const releaseRect = options.getElement().getBoundingClientRect();
+
       pointingOnRelease =
         event.pointerType !== 'touch' &&
         event.clientX >= releaseRect.left &&
@@ -245,6 +259,7 @@ export function createSlider(options: SliderOptions): SliderApi {
 
     onPointerLeave() {
       if (!isNull(capturedPointerId)) return;
+
       input.patch({ pointing: false });
     },
 
@@ -258,6 +273,7 @@ export function createSlider(options: SliderOptions): SliderApi {
     onKeyDown(event) {
       if (options.isDisabled()) {
         if (event.key !== 'Tab') event.preventDefault();
+
         return;
       }
 
@@ -268,21 +284,16 @@ export function createSlider(options: SliderOptions): SliderApi {
       // Round to nearest step before stepping to prevent drift from pointer drags.
       const rounded = roundToStep(currentPercent, stepPercent, 0);
 
-      const rtl = options.isRTL();
-
-      // Horizontal arrows flip for RTL. Vertical arrows are unaffected.
-      const horizontalSign = rtl ? -1 : 1;
-
       const step = event.shiftKey ? largeStepPercent : stepPercent;
 
       let newPercent: number | null = null;
 
       switch (event.key) {
         case 'ArrowRight':
-          newPercent = rounded + step * horizontalSign;
+          newPercent = rounded + step;
           break;
         case 'ArrowLeft':
-          newPercent = rounded - step * horizontalSign;
+          newPercent = rounded - step;
           break;
         case 'ArrowUp':
           newPercent = rounded + step;
@@ -358,6 +369,7 @@ export function createSlider(options: SliderOptions): SliderApi {
     adjustForAlignment,
     destroy() {
       if (abort.signal.aborted) return;
+
       abort.abort();
       stopObservingResize?.();
       releaseCapture();

@@ -3,12 +3,12 @@ import { createHotkey, HOTKEY_SHORTCUT_CHANGE_EVENT, playbackFeature } from '@vi
 import { registerI18n, resetI18nRegistry } from '@videojs/core/i18n';
 import { ContextProvider } from '@videojs/element/context';
 import { createStore, flush } from '@videojs/store';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { MediaI18nProviderElement } from '../../i18n';
 import { containerContext, playerContext } from '../../player/context';
-import { MediaElement } from '../media-element';
 import { PlayButtonElement } from '../play-button/play-button-element';
+import { UIElement } from '../ui-element';
 
 let tagCounter = 0;
 
@@ -18,6 +18,7 @@ function uniqueTag(base: string): string {
 
 function createElement<Element extends HTMLElement>(Base: abstract new () => Element): Element {
   const tag = uniqueTag('test-el');
+
   customElements.define(tag, class extends (Base as unknown as typeof HTMLElement) {});
   return document.createElement(tag) as Element;
 }
@@ -37,6 +38,7 @@ function defineElement(tagName: string, Base: CustomElementConstructor): void {
 function createPlaybackStore(): AnyPlayerStore {
   const store = createStore<PlayerTarget>()(playbackFeature) as unknown as AnyPlayerStore;
   const video = document.createElement('video');
+
   Object.defineProperty(video, 'paused', { value: true, configurable: true });
   Object.defineProperty(video, 'ended', { value: false, configurable: true });
   Object.defineProperty(video, 'readyState', {
@@ -47,17 +49,17 @@ function createPlaybackStore(): AnyPlayerStore {
   return store;
 }
 
-class TestContainerProviderElement extends MediaElement {
+class TestContainerProviderElement extends UIElement {
   readonly provider = new ContextProvider(this, {
     context: containerContext,
     initialValue: {
       container: this,
-      setContainer: () => {},
+      registerContainer: () => () => {},
     },
   });
 }
 
-class TestPlayerProviderElement extends MediaElement {
+class TestPlayerProviderElement extends UIElement {
   static readonly tagName = 'test-media-button-player';
 
   store = createPlaybackStore();
@@ -124,6 +126,7 @@ describe('MediaButtonElement', () => {
 
     const player = document.createElement(TestPlayerProviderElement.tagName) as TestPlayerProviderElement;
     const provider = new MediaI18nProviderElement();
+
     provider.setAttribute('lang', 'es');
     const button = document.createElement(PlayButtonElement.tagName) as PlayButtonElement;
 

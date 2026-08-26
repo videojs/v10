@@ -2,9 +2,10 @@ import type { AnyPlayerStore } from '@videojs/core/dom';
 import { ContextProvider } from '@videojs/element/context';
 import type { MediaControlsState } from '@videojs/media';
 import { createStore } from '@videojs/store';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
+
 import { playerContext } from '../../../player/context';
-import { MediaElement } from '../../media-element';
+import { UIElement } from '../../ui-element';
 import { SliderBufferElement } from '../slider-buffer-element';
 import { SliderElement } from '../slider-element';
 import { SliderFillElement } from '../slider-fill-element';
@@ -21,6 +22,7 @@ function uniqueTag(base: string): string {
 
 function createElement<Element extends HTMLElement>(Base: abstract new () => Element): Element {
   const tag = uniqueTag('test-el');
+
   customElements.define(tag, class extends (Base as unknown as typeof HTMLElement) {});
   return document.createElement(tag) as Element;
 }
@@ -37,7 +39,7 @@ function createControlsStore(requestControlsLock: MediaControlsState['requestCon
   }) as unknown as AnyPlayerStore;
 }
 
-class TestPlayerProviderElement extends MediaElement {
+class TestPlayerProviderElement extends UIElement {
   readonly releaseControlsLock = vi.fn();
   readonly requestControlsLock = vi.fn(() => this.releaseControlsLock);
   readonly store = createControlsStore(this.requestControlsLock);
@@ -58,6 +60,7 @@ describe('SliderElement', () => {
 
   it('initializes with default property values', () => {
     const slider = createElement(SliderElement);
+
     expect(slider.label).toBe('');
     expect(slider.value).toBe(0);
     expect(slider.min).toBe(0);
@@ -71,6 +74,7 @@ describe('SliderElement', () => {
 
   it('sets CSS custom properties after update', async () => {
     const slider = createElement(SliderElement);
+
     slider.value = 50;
 
     document.body.appendChild(slider);
@@ -102,6 +106,7 @@ describe('SliderElement', () => {
 
   it('reflects disabled state as data-disabled', async () => {
     const slider = createElement(SliderElement);
+
     slider.disabled = true;
 
     document.body.appendChild(slider);
@@ -122,6 +127,7 @@ describe('SliderElement', () => {
 
   it('updates CSS vars when value changes', async () => {
     const slider = createElement(SliderElement);
+
     slider.value = 25;
 
     document.body.appendChild(slider);
@@ -137,6 +143,7 @@ describe('SliderElement', () => {
 
   it('binds rootProps pointer events on connect', async () => {
     const slider = createElement(SliderElement);
+
     slider.value = 0;
 
     document.body.appendChild(slider);
@@ -147,6 +154,7 @@ describe('SliderElement', () => {
     slider.releasePointerCapture = vi.fn();
 
     const spy = vi.fn();
+
     slider.addEventListener('value-change', spy);
 
     // Simulate pointerdown on the slider element.
@@ -168,11 +176,12 @@ describe('SliderElement', () => {
     slider.releasePointerCapture = vi.fn();
 
     slider.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerId: 1, clientX: 50 }));
+    slider.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, pointerId: 1, clientX: 55, buttons: 1 }));
 
     expect(provider.requestControlsLock).toHaveBeenCalledTimes(1);
     expect(provider.releaseControlsLock).not.toHaveBeenCalled();
 
-    slider.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, pointerId: 1, clientX: 50 }));
+    slider.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, pointerId: 1, clientX: 55 }));
     slider.dispatchEvent(new PointerEvent('lostpointercapture', { bubbles: true, pointerId: 1 }));
 
     expect(provider.releaseControlsLock).toHaveBeenCalledTimes(1);
@@ -180,6 +189,7 @@ describe('SliderElement', () => {
 
   it('supports vertical orientation', async () => {
     const slider = createElement(SliderElement);
+
     slider.orientation = 'vertical';
 
     document.body.appendChild(slider);
@@ -197,6 +207,7 @@ describe('SliderElement', () => {
     // Events are dispatched by the createSlider handle during interaction.
     // We verify the element can dispatch events with the correct shape.
     const received: CustomEvent[] = [];
+
     slider.addEventListener('value-change', ((event: CustomEvent) => {
       received.push(event);
     }) as EventListener);

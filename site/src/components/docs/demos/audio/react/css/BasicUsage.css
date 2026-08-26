@@ -1,0 +1,12 @@
+.react-audio-basic {
+  display: grid;
+  width: 100%;
+  padding: 24px;
+  background: #e5e7eb;
+  border-radius: 8px;
+  place-items: center;
+}
+
+.react-audio-basic__media {
+  width: 100%;
+}

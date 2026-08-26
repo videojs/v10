@@ -1,6 +1,6 @@
 ---
 title: UI components
-description: How Video.js UI components work — one element per component, data attributes for state, and compound composition.
+description: How Video.js UI components use focused elements, data attributes for state, and compound composition.
 ---
 
 import FrameworkCase from '@/components/docs/FrameworkCase.astro';
@@ -9,11 +9,14 @@ import DocsLinkCard from '@/components/docs/DocsLinkCard.astro';
 
 UI components are controls like buttons, sliders, and time displays.
 
-Every UI component renders exactly one HTML element, taking inspiration from projects like [shadcn/ui](https://ui.shadcn.com/) and [Base UI](https://base-ui.com/). This approach gives you control over styling and behavior while handling the complex interactions for you.
+Visible UI components render at most one HTML element, taking inspiration from projects like [shadcn/ui](https://ui.shadcn.com/) and [Base UI](https://base-ui.com/). This approach gives you control over styling and behavior while handling the complex interactions for you. State-only components render no markup, and controls can skip rendering when their feature is unavailable.
+
+Individual controls provide interaction, accessible names, and state. You add their visible text or icons and CSS. Sliders also need the child elements and styles shown on their reference pages.
 
 ## Where to put your components
+
 <FrameworkCase frameworks={["react"]}>
-UI Components can go anywhere inside a <DocsLink slug="reference/player-provider">`<Player>`</DocsLink>.
+UI components can go anywhere inside a <DocsLink slug="reference/player">`<Player>`</DocsLink>.
 
 However, you should consider placing your components in `<Container>`. Components in `<Container>` will go fullscreen with the player, respond to user activity, and more.
 
@@ -21,14 +24,26 @@ However, you should consider placing your components in `<Container>`. Component
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-UI Components can go anywhere inside a <DocsLink slug="reference/player-provider">`<video-player>`</DocsLink>.
+UI components can go anywhere inside a <DocsLink slug="reference/player">`<video-player>`</DocsLink>.
 
-However, you should consider placing your components in `<player-container>`. Components in `<player-container>` will go fullscreen with the player, respond to user activity, and more.
+However, you should consider placing your components in `<media-container>`. Components in `<media-container>` will go fullscreen with the player, respond to user activity, and more.
 
-<DocsLinkCard slug="reference/player-container">Read more about `<player-container>`</DocsLinkCard>
+<DocsLinkCard slug="reference/player-container">Read more about `<media-container>`</DocsLinkCard>
 </FrameworkCase>
 
 ## Styling and customization
+
+<FrameworkCase frameworks={["react"]}>
+
+For components you add yourself, use the documented props, state `data-*` attributes, and CSS custom properties. Add your own `className` when you need a selector.
+
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+
+For components you add yourself, select them by their custom element name. Use the documented state `data-*` attributes and CSS custom properties to style them.
+
+</FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
 
@@ -37,10 +52,13 @@ However, you should consider placing your components in `<player-container>`. Co
 The `render` prop is the primary customization mechanism. It accepts a function that receives `props` and `state`, and returns your element. The `props` object includes event handlers, ARIA attributes, data attributes, and a ref — always spread `{...props}` to keep everything working:
 
 ```tsx
+import { PlayButton } from '@videojs/react';
+import { PauseIcon, PlayIcon } from '@videojs/react/icons';
+
 <PlayButton
   render={(props, state) => (
     <button {...props}>
-      {state.paused ? 'Play' : 'Pause'}
+      {state.paused ? <PlayIcon /> : <PauseIcon />}
     </button>
   )}
 />
@@ -79,24 +97,40 @@ Some components also expose **CSS custom properties** for continuous values like
 
 <FrameworkCase frameworks={["html"]}>
 
-Components reflect player state as `data-*` attributes on their element. For example, `data-paused` or `data-volume-level="high"`.
+### Add icons
 
-This lets you style state changes in pure CSS:
+Import `@videojs/html/icons/element` once in your `app.ts` to register `<media-icon>`. Choose an icon with `name`. Set `family="minimal"` to use the Minimal skin's icon designs. You can also use your own text or SVG.
+
+```ts
+import '@videojs/html/icons/element';
+```
 
 ```html
 <media-play-button class="my-play-button">
-  <span class="play-icon">Play</span>
-  <span class="pause-icon">Pause</span>
+  <media-icon class="play-icon" name="play"></media-icon>
+  <media-icon class="pause-icon" name="pause"></media-icon>
 </media-play-button>
 ```
 
-```css
-media-play-button .play-icon  { display: none; }
-media-play-button .pause-icon { display: none; }
+### Style components with state
 
-media-play-button[data-paused] .play-icon        { display: inline; }
-media-play-button:not([data-paused]) .pause-icon  { display: inline; }
+Components add `data-*` attributes to describe their current state. For example, a play button adds `data-paused` while the media is paused. Use those attributes in CSS:
+
+```css
+.my-play-button .pause-icon {
+  display: none;
+}
+
+.my-play-button:defined:not([data-paused]) .play-icon {
+  display: none;
+}
+
+.my-play-button:defined:not([data-paused]) .pause-icon {
+  display: inline-flex;
+}
 ```
+
+The browser matches `:defined` after it loads the custom element. This keeps the play icon visible while JavaScript loads.
 
 Each component's reference page documents its full set of data attributes.
 
@@ -106,7 +140,7 @@ Some components also expose **CSS custom properties** for continuous values like
 
 ## Compound components
 
-Complex interactions are split into composable parts. A parent manages shared state while children consume it. Each part is still one element.
+Complex interactions are split into composable parts. A parent manages shared state while children consume it. Each visible part owns at most one element.
 
 <FrameworkCase frameworks={["react"]}>
 

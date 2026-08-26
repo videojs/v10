@@ -1,0 +1,218 @@
+---
+title: Player
+frameworkTitle:
+  html: video-player
+description: The state boundary — creates a store and broadcasts it to all descendants.
+---
+
+import FrameworkCase from '@/components/docs/FrameworkCase.astro';
+import DocsLink from '@/components/docs/DocsLink.astro';
+import DocsLinkCard from '@/components/docs/DocsLinkCard.astro';
+import Aside from '@/components/Aside.astro';
+
+<FrameworkCase frameworks={["react"]}>
+The `Player` is the state boundary of your player. It creates a store and makes it available to every component inside it via context. Every player needs exactly one.
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+The `<video-player>` element is the state boundary of your player. It creates a store and makes it available to every element inside it via context. Every player needs exactly one.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+```tsx title="App.tsx"
+import { Video, videoFeatures } from '@videojs/react/video';
+import { Container, createPlayer } from '@videojs/react';
+
+const { Player } = createPlayer({ features: videoFeatures });
+
+function App() {
+  return (
+    <Player>
+      {/* Everything inside can access the player store */}
+      <Container>
+        <Video src="video.mp4" />
+      </Container>
+    </Player>
+  );
+}
+```
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+```html
+<video-player>
+  <!-- Everything inside can access the player store -->
+  <media-container>
+    <video src="video.mp4"></video>
+  </media-container>
+</video-player>
+```
+</FrameworkCase>
+
+## How it's created
+
+<FrameworkCase frameworks={["react"]}>
+Call `createPlayer()` with a `features` array. It returns `Player`, `usePlayer`, and `useMedia`. Import the shared `Container` separately when building a custom layout.
+
+```tsx
+import { Container, createPlayer } from '@videojs/react';
+import { videoFeatures } from '@videojs/react/video';
+
+const { Player, usePlayer, useMedia } = createPlayer({
+  features: videoFeatures,
+});
+```
+
+The <DocsLink slug="concepts/features">features</DocsLink> you pass determine what state is available in the store. `videoFeatures` is a <DocsLink slug="concepts/presets">preset</DocsLink> that includes playback, volume, fullscreen, and other standard video controls.
+
+<DocsLinkCard slug="reference/create-player">createPlayer reference</DocsLinkCard>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+For most users, importing from `@videojs/html/video/player` registers a ready-to-use `<video-player>` element with the standard video <DocsLink slug="concepts/features">features</DocsLink> (bundled as a <DocsLink slug="concepts/presets">preset</DocsLink>):
+
+```ts
+import '@videojs/html/video/player';
+```
+
+```html
+<video-player>
+  <media-container>
+    <video src="video.mp4"></video>
+  </media-container>
+</video-player>
+```
+
+If you need a custom feature set or tag name, use `createPlayer()` to get the configured `PlayerElement`. Extend `ContainerElement` separately when you need custom container behavior:
+
+```ts title="my-player.ts"
+import { ContainerElement, createPlayer } from '@videojs/html';
+import { videoFeatures } from '@videojs/html/video';
+
+const { PlayerElement: MyPlayer } = createPlayer({ features: videoFeatures });
+
+class MyContainer extends ContainerElement {}
+customElements.define('my-player', MyPlayer);
+customElements.define('my-container', MyContainer);
+```
+
+<DocsLinkCard slug="reference/html-create-player">`createPlayer` reference</DocsLinkCard>
+</FrameworkCase>
+
+## What lives inside it
+
+Everything that needs player state goes inside `Player`: skins, containers, UI components, and your own custom components. Anything inside can access the store.
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<Player>
+  <VideoSkin>           {/* skin — includes container + controls */}
+    <Video src="..." /> {/* media element */}
+  </VideoSkin>
+  <MyCustomOverlay />   {/* your own component — can use usePlayer() */}
+</Player>
+```
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+```html
+<video-player>
+  <video-skin>               <!-- skin — includes container + controls -->
+    <video src="..."></video> <!-- media element -->
+  </video-skin>
+  <my-custom-overlay></my-custom-overlay> <!-- your own element — can use PlayerController -->
+</video-player>
+```
+</FrameworkCase>
+
+## No visual presence
+
+<FrameworkCase frameworks={["react"]}>
+`Player` renders no DOM element of its own — it's purely a state wrapper. Put sizing, positioning, borders, backgrounds, and DOM measurements on the <DocsLink slug="reference/player-container">`Container`</DocsLink>, not `Player`.
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+Packaged skins make `<video-player>` boxless with `display: contents`. Width, height, positioning, transforms, and `getBoundingClientRect()` do not describe a visible player box there. Put layout and measurements on the <DocsLink slug="reference/player-container">`<media-container>`</DocsLink> instead.
+
+If you omit `<video-skin>` and import only the player and media elements, those skin styles are not loaded. The player element still owns state, not layout, so add and style a `<media-container>` instead of using the player itself as the layout surface.
+</FrameworkCase>
+
+## Accessing state
+
+<FrameworkCase frameworks={["react"]}>
+Use `usePlayer` to read state or call actions from any component inside `Player`:
+
+```tsx title="PlayPauseButton.tsx"
+import { selectPlayback, usePlayer } from '@videojs/react';
+
+function PlayPauseButton() {
+  const playback = usePlayer(selectPlayback);
+  if (!playback) return null;
+
+  return (
+    <button onClick={() => playback.togglePaused()}>
+      {playback.paused ? 'Play' : 'Pause'}
+    </button>
+  );
+}
+```
+
+<DocsLinkCard slug="reference/use-player">usePlayer reference</DocsLinkCard>
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+Use the preset's typed `PlayerController` to subscribe to store state from any custom element inside the player:
+
+```ts title="play-pause-button.ts"
+import { UIElement, selectPlayback } from '@videojs/html';
+import { PlayerController } from '@videojs/html/video';
+
+class PlayPauseButton extends UIElement {
+  readonly #playback = new PlayerController(this, selectPlayback);
+
+  connectedCallback() {
+    super.connectedCallback();
+    this.addEventListener('click', this.#togglePlayback);
+  }
+
+  disconnectedCallback() {
+    this.removeEventListener('click', this.#togglePlayback);
+    super.disconnectedCallback();
+  }
+
+  readonly #togglePlayback = () => this.#playback.value?.togglePaused();
+}
+
+customElements.define('play-pause-button', PlayPauseButton);
+```
+
+<DocsLinkCard slug="reference/player-controller">PlayerController reference</DocsLinkCard>
+</FrameworkCase>
+
+## Extended player layouts
+
+The player's scope can extend beyond the fullscreen target. Playlists, transcripts, sidebars, and other supplementary UI can live inside `Player` but outside `Container`. They still have full access to the store, but they won't go fullscreen with the video.
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<Player>
+  <Container>
+    <Video src="video.mp4" />
+    <Controls.Root>          {/* goes fullscreen with the video */}
+      <Controls.Content>{/* ... */}</Controls.Content>
+    </Controls.Root>
+  </Container>
+
+  <Transcript />          {/* outside container — still has store access */}
+  <PlaylistSidebar />     {/* outside container — still has store access */}
+</Player>
+```
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+```html
+<video-player>
+  <media-container>
+    <video src="video.mp4"></video>
+    <media-controls><media-controls-content>...</media-controls-content></media-controls>  <!-- goes fullscreen with the video -->
+  </media-container>
+
+  <media-transcript></media-transcript>     <!-- outside container — still has store access -->
+  <playlist-sidebar></playlist-sidebar>     <!-- outside container — still has store access -->
+</video-player>
+```
+</FrameworkCase>

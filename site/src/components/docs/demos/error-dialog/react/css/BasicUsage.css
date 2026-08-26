@@ -1,0 +1,67 @@
+.react-error-dialog-basic {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  border-radius: 12px;
+}
+
+.react-error-dialog-basic__video {
+  display: block;
+  width: 100%;
+}
+
+.react-error-dialog-basic__trigger,
+.react-error-dialog-basic__close {
+  padding: 8px 16px;
+  color: #111827;
+  cursor: pointer;
+  background: #fff;
+  border: 0;
+  border-radius: 9999px;
+}
+
+.react-error-dialog-basic__trigger {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+}
+
+.react-error-dialog-basic__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgb(3 7 18 / 92%);
+  transition: opacity 150ms ease;
+}
+
+.react-error-dialog-basic__dialog {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: grid;
+  gap: 12px;
+  place-content: center;
+  padding: 32px;
+  color: #fff;
+  text-align: center;
+  transition: opacity 150ms ease;
+}
+
+.react-error-dialog-basic__backdrop[data-starting-style],
+.react-error-dialog-basic__backdrop[data-ending-style],
+.react-error-dialog-basic__dialog[data-starting-style],
+.react-error-dialog-basic__dialog[data-ending-style] {
+  opacity: 0;
+}
+
+.react-error-dialog-basic__title {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.react-error-dialog-basic__description {
+  color: #d1d5db;
+}
+
+.react-error-dialog-basic__close {
+  justify-self: center;
+}

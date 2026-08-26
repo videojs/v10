@@ -1,20 +1,20 @@
-import { AlertDialogCloseElement } from '../../ui/alert-dialog/alert-dialog-close-element';
-import { AlertDialogDescriptionElement } from '../../ui/alert-dialog/alert-dialog-description-element';
+import { defineAlertDialog } from '../../registration/ui-compounds';
 import { AlertDialogElement } from '../../ui/alert-dialog/alert-dialog-element';
-import { AlertDialogTitleElement } from '../../ui/alert-dialog/alert-dialog-title-element';
-import { safeDefine } from '../safe-define';
+import { DialogBackdropElement } from '../../ui/dialog/dialog-backdrop-element';
+import { DialogCloseElement } from '../../ui/dialog/dialog-close-element';
+import { DialogDescriptionElement } from '../../ui/dialog/dialog-description-element';
+import { DialogPopupElement } from '../../ui/dialog/dialog-popup-element';
+import { DialogTitleElement } from '../../ui/dialog/dialog-title-element';
 
-// Parent first — child elements consume its context.
-safeDefine(AlertDialogElement);
-safeDefine(AlertDialogCloseElement);
-safeDefine(AlertDialogDescriptionElement);
-safeDefine(AlertDialogTitleElement);
+defineAlertDialog();
 
 declare global {
   interface HTMLElementTagNameMap {
     [AlertDialogElement.tagName]: AlertDialogElement;
-    [AlertDialogCloseElement.tagName]: AlertDialogCloseElement;
-    [AlertDialogDescriptionElement.tagName]: AlertDialogDescriptionElement;
-    [AlertDialogTitleElement.tagName]: AlertDialogTitleElement;
+    [DialogBackdropElement.tagName]: DialogBackdropElement;
+    [DialogCloseElement.tagName]: DialogCloseElement;
+    [DialogDescriptionElement.tagName]: DialogDescriptionElement;
+    [DialogPopupElement.tagName]: DialogPopupElement;
+    [DialogTitleElement.tagName]: DialogTitleElement;
   }
 }

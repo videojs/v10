@@ -1,6 +1,7 @@
 import type { MediaSourceState } from '@videojs/media';
 import { isMediaSourceCapable } from '@videojs/media';
 import { listen } from '@videojs/utils/dom';
+
 import { definePlayerFeature } from '../../feature';
 
 export const sourceFeature = definePlayerFeature({
@@ -13,6 +14,7 @@ export const sourceFeature = definePlayerFeature({
 
       const { media } = target();
       if (!isMediaSourceCapable(media)) return src;
+
       media.src = src;
       media.load();
 
@@ -22,7 +24,6 @@ export const sourceFeature = definePlayerFeature({
 
   attach({ target, signal, set }) {
     const { media } = target;
-
     if (!isMediaSourceCapable(media)) return;
 
     const sync = () =>

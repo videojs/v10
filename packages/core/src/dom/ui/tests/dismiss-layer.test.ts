@@ -1,5 +1,6 @@
 import { flush } from '@videojs/store';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
+
 import { createDismissLayer } from '../dismiss-layer';
 import { createTransition } from '../transition';
 
@@ -11,12 +12,14 @@ function createTestLayer(overrides?: Partial<Parameters<typeof createDismissLaye
     onEscapeDismiss,
     ...overrides,
   });
+
   return { layer, onEscapeDismiss, transition };
 }
 
 describe('createDismissLayer', () => {
   it('starts closed', () => {
     const { layer } = createTestLayer();
+
     expect(layer.input.current).toEqual({ active: false, status: 'idle' });
   });
 
@@ -160,8 +163,8 @@ describe('createDismissLayer', () => {
       expect(onEscapeDismiss).not.toHaveBeenCalled();
     });
 
-    it('removes document listener when inactive', () => {
-      const { layer } = createTestLayer();
+    it('removes document listener while ending', () => {
+      const { layer, onEscapeDismiss } = createTestLayer();
 
       layer.open();
       flush();
@@ -169,10 +172,10 @@ describe('createDismissLayer', () => {
       layer.close(null);
       flush();
 
-      // Wait for transition to complete (close sets status: 'ending',
-      // then after animation active: false). Simulate by patching directly.
-      // Since we can't easily await the full transition in a unit test,
-      // we test that after destroy the listener is gone.
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+
+      expect(layer.input.current).toEqual({ active: true, status: 'ending' });
+      expect(onEscapeDismiss).not.toHaveBeenCalled();
     });
   });
 
@@ -204,12 +207,6 @@ describe('createDismissLayer', () => {
       layer.close(null);
       flush();
 
-      // close starts ending animation (active stays true), but when
-      // the next open→close cycle causes a re-setup, the old signal is aborted.
-      // For a definitive test, use destroy:
-      layer.destroy();
-
-      // After destroy, any previously issued signal should be aborted.
       expect(signals[0]!.aborted).toBe(true);
     });
   });

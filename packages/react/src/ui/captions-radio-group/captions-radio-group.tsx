@@ -20,8 +20,7 @@ export interface CaptionsRadioGroupItemProps extends Omit<MenuRadioItemProps, 'r
 }
 
 export interface CaptionsRadioGroupProps
-  extends Omit<UIComponentProps<'div', CaptionsRadioGroupCore.State>, 'children'>,
-    CaptionsOptionsProps {
+  extends Omit<UIComponentProps<'div', CaptionsRadioGroupCore.State>, 'children'>, CaptionsOptionsProps {
   /** Render one consumer-owned menu radio item for every captions option. */
   renderItem: (props: CaptionsRadioGroupItemProps, state: CaptionsRadioGroupItemState) => ReactElement;
 }
@@ -30,16 +29,16 @@ export interface CaptionsRadioGroupProps
  * Renders menu radio items for the player's captions and subtitles tracks.
  *
  * @example
- * ```tsx
- * <CaptionsRadioGroup
- *   renderItem={(props, item) => (
- *     <Menu.RadioItem {...props}>
- *       {item.label}
- *       <Menu.ItemIndicator checked={item.checked} />
- *     </Menu.RadioItem>
- *   )}
- * />
- * ```
+ *   ```tsx
+ *   <CaptionsRadioGroup
+ *     renderItem={(props, item) => (
+ *       <Menu.RadioItem {...props}>
+ *         {item.label}
+ *         <Menu.ItemIndicator checked={item.checked} />
+ *       </Menu.RadioItem>
+ *     )}
+ *   />;
+ *   ```;
  */
 export const CaptionsRadioGroup = forwardRef<HTMLDivElement, CaptionsRadioGroupProps>(
   function CaptionsRadioGroup(componentProps, forwardedRef) {

@@ -28,14 +28,14 @@ function App() {
 
   return (
     <AudioPlayer>
-      <AudioSkinComponent skin={skin} styling={styling} className="w-full max-w-xl mx-auto">
+      <AudioSkinComponent skin={skin} styling={styling} className="mx-auto w-full max-w-xl">
         <HlsAudio
           src={SOURCES[source].url ?? ''}
           autoPlay={autoplay}
           muted={muted}
           loop={loop}
           preload={preload}
-          crossOrigin="anonymous"
+          crossOrigin=""
         />
       </AudioSkinComponent>
     </AudioPlayer>

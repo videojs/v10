@@ -1,5 +1,5 @@
 import { cleanup, render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { createPlayerWrapper } from '../../../testing/mocks';
 import { AirPlayButton } from '../airplay-button';
@@ -40,6 +40,7 @@ describe('AirPlayButton', () => {
     renderAirPlayButton({ hidden: true, 'aria-label': 'Custom AirPlay' });
 
     const button = screen.getByTestId('airplay');
+
     expect(button.hidden).toBe(true);
     expect(button.getAttribute('aria-label')).toBe('Custom AirPlay');
   });

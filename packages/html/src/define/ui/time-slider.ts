@@ -1,3 +1,4 @@
+import { defineTimeSlider } from '../../registration/ui-compounds';
 import { SliderBufferElement } from '../../ui/slider/slider-buffer-element';
 import { SliderFillElement } from '../../ui/slider/slider-fill-element';
 import { SliderPreviewElement } from '../../ui/slider/slider-preview-element';
@@ -6,7 +7,6 @@ import { SliderThumbnailElement } from '../../ui/slider/slider-thumbnail-element
 import { SliderTrackElement } from '../../ui/slider/slider-track-element';
 import { SliderValueElement } from '../../ui/slider/slider-value-element';
 import { TimeSliderElement } from '../../ui/time-slider/time-slider-element';
-import { defineTimeSlider } from './compounds';
 
 defineTimeSlider();
 

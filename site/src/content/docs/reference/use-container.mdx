@@ -1,0 +1,35 @@
+---
+title: useContainer
+description: Hook to access the media container from the nearest Player
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+
+`useContainer` returns the `MediaContainer` registered with the nearest `Player`. It returns `null` until the container mounts, or whenever that player has no registered container.
+
+## Import
+
+```tsx
+import { useContainer } from "@videojs/react";
+```
+
+## Usage
+
+Call `useContainer` from a component rendered inside `Player`:
+
+```tsx title="ContainerStatus.tsx"
+import { useContainer } from "@videojs/react";
+
+export function ContainerStatus() {
+  const container = useContainer();
+
+  return <output>{container ? "Player container ready" : "Mounting container"}</output>;
+}
+```
+
+Calling this hook outside `Player` throws because it reads through `usePlayerContext`. If a component can also work outside a player, use <DocsLink slug="reference/use-optional-container">`useOptionalContainer`</DocsLink> instead.
+
+`useContainer` reads the registered container. <DocsLink slug="reference/use-container-attach">`useContainerAttach`</DocsLink> returns the setter used to register a custom container and is only needed when replacing the built-in `Container`.
+
+<UtilReference util="useContainer" />

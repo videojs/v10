@@ -1,28 +1,22 @@
 /**
- * **Session-level CDN priority.** While a presentation is resolved, owns the
- * `cdnPriority` signal: the distinct CDNs the source is served from (origin of
- * each track's URL), in manifest priority order — most-preferred first. Cleared
- * on src unload. The name mirrors HLS content steering's `PATHWAY-PRIORITY`.
+ * **Session-level CDN priority.** While a presentation is resolved, owns the `cdnPriority` signal: the distinct CDNs
+ * the source is served from (origin of each track's URL), in manifest priority order — most-preferred first. Cleared on
+ * src unload. The name mirrors HLS content steering's `PATHWAY-PRIORITY`.
  *
- * Redundant-stream sources (e.g. Mux's `?redundant_streams=true`) list the same
- * content on multiple hosts, so the candidate tracks already include one variant
- * per CDN. This behavior publishes *which* CDNs exist and their priority; the
- * `preferActiveCdn` scope rule in `track-switching` reads `cdnPriority` and
- * narrows each type's candidates to the first CDN with surviving tracks — so
- * video / audio / text all resolve from one host (the shared list is the
+ * Redundant-stream sources (e.g. Mux's `?redundant_streams=true`) list the same content on multiple hosts, so the
+ * candidate tracks already include one variant per CDN. This behavior publishes _which_ CDNs exist and their priority;
+ * the `preferActiveCdn` scope rule in `track-switching` reads `cdnPriority` and narrows each type's candidates to the
+ * first CDN with surviving tracks — so video / audio / text all resolve from one host (the shared list is the
  * per-presentation coherence guarantee).
  *
- * The "active" CDN is not stored — it's derived by the scope as the
- * highest-priority entry in `cdnPriority` that still has tracks after the
- * constraints pre-pass. That makes failover a pure consequence of the (future)
- * failed-CDN constraint: when the primary's tracks are pruned during cooldown,
- * the scope falls to the next CDN; when the primary recovers, it snaps back.
- * Content steering, when it lands, reorders `cdnPriority` (pathway priority as a
- * sort key).
+ * The "active" CDN is not stored — it's derived by the scope as the highest-priority entry in `cdnPriority` that still
+ * has tracks after the constraints pre-pass. That makes failover a pure consequence of the (future) failed-CDN
+ * constraint: when the primary's tracks are pruned during cooldown, the scope falls to the next CDN; when the primary
+ * recovers, it snaps back. Content steering, when it lands, reorders `cdnPriority` (pathway priority as a sort key).
  *
- * Lifecycle: `'presentation-unresolved'` ↔ `'presentation-resolved'`, mirroring
- * `setupTrackSwitching`. The resolved state owns the signal; its entry-returned
- * cleanup clears it on exit (canonical cleanup-binds-to-setup per `reactors.md`).
+ * Lifecycle: `'presentation-unresolved'` ↔ `'presentation-resolved'`, mirroring `setupTrackSwitching`. The resolved
+ * state owns the signal; its entry-returned cleanup clears it on exit (canonical cleanup-binds-to-setup per
+ * `reactors.md`).
  */
 
 import { defineBehavior } from '../../core/composition/create-composition';
@@ -40,11 +34,10 @@ const samePriority = (a: string[] | undefined, b: string[]): boolean =>
   !!a && a.length === b.length && a.every((cdn, i) => cdn === b[i]);
 
 /**
- * Manage `cdnPriority`: publish the manifest-ordered CDN list on src load, clear
- * on src unload.
+ * Manage `cdnPriority`: publish the manifest-ordered CDN list on src load, clear on src unload.
  *
  * @example
- * const reactor = deriveCdnPriority.setup({ state });
+ *   const reactor = deriveCdnPriority.setup({ state });
  */
 export const deriveCdnPriority = defineBehavior({
   stateKeys: ['presentation', 'cdnPriority'],
@@ -79,7 +72,9 @@ export const deriveCdnPriority = defineBehavior({
             () => {
               const presentation = state.presentation.get();
               if (!isResolvedPresentation(presentation)) return;
+
               const next = getOrderedCdnIds(presentation, getCdnId);
+
               // Skip the write when the CDN set is unchanged — a live reload swaps
               // in a new presentation object with the same hosts, and re-setting a
               // fresh array would re-fire the scope for an identical result.

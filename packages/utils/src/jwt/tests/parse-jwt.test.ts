@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
+
 import { parseJwt } from '../parse-jwt';
 
 // Header `{"alg":"HS256"}`, body is the payload (UTF-8), empty signature.
@@ -7,6 +8,7 @@ function fakeJwt(payload: Record<string, unknown>): string {
     btoa(String.fromCharCode(...new TextEncoder().encode(JSON.stringify(obj))))
       .replace(/\+/g, '-')
       .replace(/\//g, '_');
+
   return `${encode({ alg: 'HS256' })}.${encode(payload)}.`;
 }
 

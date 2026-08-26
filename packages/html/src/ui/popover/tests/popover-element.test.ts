@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { PopoverElement } from '../popover-element';
 
@@ -6,6 +6,7 @@ let tagCounter = 0;
 
 function createPopover(): PopoverElement {
   const tag = `test-popover-${tagCounter++}`;
+
   customElements.define(tag, class extends PopoverElement {});
   return document.createElement(tag) as PopoverElement;
 }
@@ -44,6 +45,7 @@ describe('PopoverElement', () => {
     await firstPopover.updateComplete;
 
     const firstId = firstPopover.id;
+
     expect(trigger.getAttribute('commandfor')).toBe(firstId);
 
     firstPopover.remove();
@@ -52,6 +54,7 @@ describe('PopoverElement', () => {
     expect(trigger.hasAttribute('commandfor')).toBe(false);
 
     const replacementPopover = createPopover();
+
     document.body.append(replacementPopover);
     await replacementPopover.updateComplete;
 
@@ -79,6 +82,7 @@ describe('PopoverElement', () => {
     const warning = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const trigger = document.createElement('button');
     const popover = createPopover();
+
     trigger.setAttribute('commandfor', 'other-popup');
 
     document.body.append(trigger, popover);

@@ -1,10 +1,14 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
+
 import { kebabCase } from 'es-toolkit/string';
 import GithubSlugger from 'github-slugger';
 import type { MdastPluginInput, MdxJsxFlowElement } from 'satteri';
 import { defineMdastPlugin } from 'satteri';
+
+// Astro evaluates this module while Vite+ is still loading the task graph, so
+// the built workspace package is not available yet.
 import { resolveReferenceSlug } from './api-reference-overrides';
 import { buildComponentReferenceTocHeadings, createComponentReferenceModel } from './componentReferenceModel';
 import { buildFeatureReferenceTocHeadings, createFeatureReferenceModel } from './featureReferenceModel';
@@ -30,20 +34,16 @@ interface ConditionalHeading {
 /**
  * Builds the conditional-heading list used for the docs table of contents.
  *
- * - Tracks which `<FrameworkCase>` / `<StyleCase>` a heading lives in (walking
- *   ancestors) and attaches that context.
- * - Reads `<ComponentReference>` / `<FeatureReference>` / `<UtilReference>` /
- *   `<MediaReference>` props, loads the generated JSON, and injects heading
- *   entries so API-reference sections appear in the TOC.
+ * - Tracks which `<FrameworkCase>` / `<StyleCase>` a heading lives in (walking ancestors) and attaches that context.
+ * - Reads `<ComponentReference>` / `<FeatureReference>` / `<UtilReference>` / `<MediaReference>` props, loads the
+ *   generated JSON, and injects heading entries so API-reference sections appear in the TOC.
  *
- * Markdown headings are slugged with a plain GithubSlugger in document order so
- * the slugs match the element ids the markdown-satteri `heading-ids` plugin
- * generates (otherwise TOC anchors would not resolve). API-reference headings
+ * Markdown headings are slugged with a plain GithubSlugger in document order so the slugs match the element ids the
+ * markdown-satteri `heading-ids` plugin generates (otherwise TOC anchors would not resolve). API-reference headings
  * keep their model-generated slugs, which match the ids their components render.
  *
- * A factory resets the per-document slugger and heading list. Sätteri has no
- * end hook, so we publish the (mutated-in-place) array reference onto the
- * frontmatter once and keep pushing to it.
+ * A factory resets the per-document slugger and heading list. Sätteri has no end hook, so we publish the
+ * (mutated-in-place) array reference onto the frontmatter once and keep pushing to it.
  */
 export function satteriConditionalHeadings(): MdastPluginInput {
   return () => {
@@ -53,8 +53,10 @@ export function satteriConditionalHeadings(): MdastPluginInput {
 
     const publish = (ctx: MdastVisitorContext) => {
       if (published) return;
+
       const frontmatter = getAstroFrontmatter(ctx);
       if (!frontmatter) return;
+
       frontmatter.conditionalHeadings = headings;
       published = true;
     };
@@ -73,7 +75,9 @@ export function satteriConditionalHeadings(): MdastPluginInput {
         };
 
         const { frameworks, styles } = resolveCaseContext(node, ctx);
+
         if (frameworks) heading.frameworks = frameworks;
+
         if (styles) heading.styles = styles;
 
         headings.push(heading);
@@ -112,15 +116,18 @@ function resolveCaseContext(
   let styles: string[] | null = null;
 
   let current = ctx.parent(node);
+
   while (current) {
     if (current.type === 'mdxJsxFlowElement') {
       const el = current as MdxJsxFlowElement;
+
       if (!frameworks && el.name === 'FrameworkCase') {
         frameworks = extractArrayAttr(el, 'frameworks');
       } else if (!styles && el.name === 'StyleCase') {
         styles = extractArrayAttr(el, 'styles');
       }
     }
+
     current = ctx.parent(current);
   }
 
@@ -129,6 +136,7 @@ function resolveCaseContext(
 
 function getStringAttr(node: MdxJsxFlowElement, name: string): string | null {
   const attr = node.attributes?.find((a) => a.type === 'mdxJsxAttribute' && a.name === name);
+
   return attr && typeof attr.value === 'string' ? attr.value : null;
 }
 
@@ -136,7 +144,9 @@ function getStringAttr(node: MdxJsxFlowElement, name: string): string | null {
 function extractArrayAttr(node: MdxJsxFlowElement, name: string): string[] | null {
   const attr = node.attributes?.find((a) => a.type === 'mdxJsxAttribute' && a.name === name);
   if (!attr?.value || typeof attr.value === 'string') return null;
+
   if (attr.value.type !== 'mdxJsxAttributeValueExpression') return null;
+
   try {
     return JSON.parse(attr.value.value.trim());
   } catch (e) {
@@ -156,41 +166,55 @@ function readRefJson(dir: string, key: string): unknown {
 function injectComponentReferenceHeadings(node: MdxJsxFlowElement, headings: ConditionalHeading[]) {
   const componentName = getStringAttr(node, 'component');
   if (!componentName) return;
+
   const json = readRefJson(COMPONENT_REF_DIR, resolveReferenceSlug(componentName));
   if (!json) return;
+
   const partOrder = extractArrayAttr(node, 'partOrder');
   const model = createComponentReferenceModel(
     componentName,
     json as Parameters<typeof createComponentReferenceModel>[1],
     partOrder ?? undefined
   );
+
   headings.push(...buildComponentReferenceTocHeadings(model));
 }
 
 function injectFeatureReferenceHeadings(node: MdxJsxFlowElement, headings: ConditionalHeading[]) {
   const featureName = getStringAttr(node, 'feature');
   if (!featureName) return;
+
   const json = readRefJson(FEATURE_REF_DIR, featureName);
   if (!json) return;
-  const model = createFeatureReferenceModel(featureName, json);
+
+  // SAFETY: This JSON is emitted by the feature-reference builder with the same schema consumed by the site.
+  const model = createFeatureReferenceModel(featureName, json as Parameters<typeof createFeatureReferenceModel>[1]);
+
   headings.push(...buildFeatureReferenceTocHeadings(model));
 }
 
 function injectUtilReferenceHeadings(node: MdxJsxFlowElement, headings: ConditionalHeading[]) {
   const utilName = getStringAttr(node, 'util');
   if (!utilName) return;
+
   const slug = getStringAttr(node, 'slug');
   const json = readRefJson(UTIL_REF_DIR, slug ?? kebabCase(utilName));
   if (!json) return;
+
   const model = createUtilReferenceModel(utilName, json as Parameters<typeof createUtilReferenceModel>[1]);
+
   headings.push(...buildUtilReferenceTocHeadings(model));
 }
 
 function injectMediaReferenceHeadings(node: MdxJsxFlowElement, headings: ConditionalHeading[]) {
   const mediaName = getStringAttr(node, 'media');
   if (!mediaName) return;
+
   const json = readRefJson(MEDIA_REF_DIR, resolveReferenceSlug(mediaName));
   if (!json) return;
-  const model = createMediaReferenceModel(mediaName, json);
+
+  // SAFETY: This JSON is emitted by the media-reference builder with the same schema consumed by the site.
+  const model = createMediaReferenceModel(mediaName, json as Parameters<typeof createMediaReferenceModel>[1]);
+
   headings.push(...buildMediaReferenceTocHeadings(model));
 }

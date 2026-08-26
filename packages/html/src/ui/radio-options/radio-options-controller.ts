@@ -59,6 +59,7 @@ export class RadioOptionsController<Option extends RadioOption> implements React
     const template = getTemplateElement(this.#host);
     const templateRoot = template ? getTemplateRoot(template) : null;
     const itemRoot = templateRoot?.localName === MenuRadioItemElement.tagName ? templateRoot : null;
+
     const contentKey = `${state.options
       .map(
         (option) =>
@@ -72,6 +73,7 @@ export class RadioOptionsController<Option extends RadioOption> implements React
 
       for (const child of [...this.#host.children]) {
         if (child === template) continue;
+
         child.remove();
       }
 
@@ -79,11 +81,14 @@ export class RadioOptionsController<Option extends RadioOption> implements React
         const item = itemRoot
           ? (cloneTemplateRoot(itemRoot, this.#host.ownerDocument) as MenuRadioItemElement)
           : (this.#host.ownerDocument.createElement(MenuRadioItemElement.tagName) as MenuRadioItemElement);
+
         item.value = option.value;
         this.#config.setItemAttributes?.(item, option);
         const label = translateText(option.label, translator, option.labelParams);
+
         if (this.#config.renderItem) this.#config.renderItem(item, label, option);
         else this.#setItemLabel(item, label);
+
         return item;
       });
 
@@ -108,6 +113,7 @@ export class RadioOptionsController<Option extends RadioOption> implements React
     if (event.target !== this.#host) return;
 
     const { value } = (event as CustomEvent<{ value: string }>).detail;
+
     this.#config.onValueChange(value);
   };
 

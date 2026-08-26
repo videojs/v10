@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
+
 import { signal } from '../../../core/signals/primitives';
 import {
   type AudioSelectionSet,
@@ -53,22 +54,27 @@ function audioTrack(start: number): AudioTrack {
 
 function presentation(opts: { video?: VideoTrack; audio?: AudioTrack }): Presentation {
   const selectionSets: SelectionSet[] = [];
+
   if (opts.video) {
     const set: VideoSelectionSet = {
       id: 'v-set',
       type: 'video',
       switchingSets: [{ id: 'vss', type: 'video', tracks: [opts.video] }],
     };
+
     selectionSets.push(set);
   }
+
   if (opts.audio) {
     const set: AudioSelectionSet = {
       id: 'a-set',
       type: 'audio',
       switchingSets: [{ id: 'ass', type: 'audio', tracks: [opts.audio] }],
     };
+
     selectionSets.push(set);
   }
+
   return { id: 'pres-1', url: 'https://example.com/master.m3u8', startTime: 0, selectionSets };
 }
 
@@ -85,6 +91,7 @@ describe('liveWindowFromState', () => {
     // Publication skew: audio published one segment ahead, and its window
     // starts 2s earlier. seekable = what both types can serve.
     const pres = presentation({ video: videoTrack(100), audio: audioTrack(98) });
+
     expect(liveWindowFromState(state({ presentation: pres, videoId: 'v-1', audioId: 'a-1' }))).toEqual({
       start: 100,
       end: 108,
@@ -94,6 +101,7 @@ describe('liveWindowFromState', () => {
   it('the intersection max-clamps a non-reference track whose window precedes presentation-0 (negative startTime)', () => {
     // The audio window legitimately starts before the reference join point.
     const pres = presentation({ video: videoTrack(0), audio: audioTrack(-4) });
+
     expect(liveWindowFromState(state({ presentation: pres, videoId: 'v-1', audioId: 'a-1' }))).toEqual({
       start: 0,
       end: 6,
@@ -107,6 +115,7 @@ describe('liveWindowFromState', () => {
   // negative, which a mis-anchored source produces.
   it('does NOT clamp a negative reference-track window start (the mis-anchored case)', () => {
     const pres = presentation({ video: videoTrack(-2), audio: audioTrack(0) });
+
     expect(liveWindowFromState(state({ presentation: pres, videoId: 'v-1', audioId: 'a-1' }))).toEqual({
       start: 0,
       end: 8,
@@ -115,6 +124,7 @@ describe('liveWindowFromState', () => {
 
   it('yields a negative start when every selected window is negative (no floor at 0)', () => {
     const pres = presentation({ video: videoTrack(-2), audio: audioTrack(-2) });
+
     expect(liveWindowFromState(state({ presentation: pres, videoId: 'v-1', audioId: 'a-1' }))).toEqual({
       start: -2,
       end: 8,
@@ -123,6 +133,7 @@ describe('liveWindowFromState', () => {
 
   it('yields a negative start for a single mis-anchored track (audio-only / video-only)', () => {
     const pres = presentation({ video: videoTrack(-2) });
+
     expect(liveWindowFromState(state({ presentation: pres, videoId: 'v-1', audioId: undefined }))).toEqual({
       start: -2,
       end: 8,
@@ -131,11 +142,13 @@ describe('liveWindowFromState', () => {
 
   it('returns null on a degenerate intersection (disjoint windows — no position both types can serve)', () => {
     const pres = presentation({ video: videoTrack(100), audio: audioTrack(200) });
+
     expect(liveWindowFromState(state({ presentation: pres, videoId: 'v-1', audioId: 'a-1' }))).toBeNull();
   });
 
   it('uses the single selected window for audio-only sources', () => {
     const pres = presentation({ audio: audioTrack(200) });
+
     expect(liveWindowFromState(state({ presentation: pres, videoId: undefined, audioId: 'a-1' }))).toEqual({
       start: 200,
       end: 210,
@@ -162,11 +175,13 @@ describe('liveWindowFromState', () => {
         { id: 'v-set', type: 'video', switchingSets: [{ id: 'vss', type: 'video', tracks: [videoTrack(100), shell] }] },
       ],
     };
+
     expect(liveWindowFromState(state({ presentation: pres, videoId: 'v-2' }))).toEqual({ start: 100, end: 110 });
   });
 
   it('returns null when no track is selected', () => {
     const pres = presentation({ video: videoTrack(100) });
+
     expect(liveWindowFromState(state({ presentation: pres, videoId: undefined, audioId: undefined }))).toBeNull();
   });
 
@@ -195,11 +210,13 @@ describe('getLiveEdge', () => {
 
   it('places liveEdgeStart the resolved latency behind the edge', () => {
     const edge = getLiveEdge({ state: live(), config: { resolveLiveLatency: () => 6 } });
+
     expect(edge).toEqual({ start: 100, end: 110, liveEdgeStart: 104 });
   });
 
   it('clamps liveEdgeStart to the window start when the latency exceeds the window', () => {
     const edge = getLiveEdge({ state: live(), config: { resolveLiveLatency: () => 20 } });
+
     expect(edge?.liveEdgeStart).toBe(100);
   });
 

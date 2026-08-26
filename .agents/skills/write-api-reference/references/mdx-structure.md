@@ -24,6 +24,7 @@ description: A button component for muting and unmuting audio playback
 ```
 frontmatter
 imports (React demos, HTML demos)
+## Import
 ## Anatomy
 ## Behavior       (if applicable)
 ## Styling        (if applicable)
@@ -35,6 +36,17 @@ imports (React demos, HTML demos)
 ```
 
 ## Imports Section
+
+Every component page begins with a reader-facing import section:
+
+```mdx
+## Import
+
+<ComponentImports component="MuteButton" html="mute-button" />
+```
+
+The helper renders the named `@videojs/react` export for React readers and the
+`@videojs/html/ui/{name}` side-effect registration import for HTML readers.
 
 ### React demo imports
 
@@ -217,6 +229,7 @@ Every component reference MDX needs these at the top of the imports:
 
 ```mdx
 import ComponentReference from "@/components/docs/api-reference/ComponentReference.astro";
+import ComponentImports from "@/components/docs/api-reference/ComponentImports.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 import StyleCase from "@/components/docs/StyleCase.astro";
 import Demo from "@/components/docs/demos/Demo.astro";

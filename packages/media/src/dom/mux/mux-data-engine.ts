@@ -1,4 +1,5 @@
 import { hasMethods, isFunction, isObject, isString } from '@videojs/utils/predicate';
+
 import type { MuxDataOptions } from './types';
 
 /** The `mux-embed` monitor options that hook a playback engine's own telemetry. */
@@ -13,21 +14,18 @@ const warnedEngines = new WeakSet<object>();
 /**
  * Pick the `mux-embed` integration for a media's playback engine.
  *
- * `mux-embed` monitors the media element on its own, and an engine integration
- * is what adds engine-level data on top: rendition switches, request timing and
- * throughput, and engine errors. It ships two — hls.js and dash.js — and each
- * one is wired through a different option, so handing a dash.js player to the
- * hls.js option leaves the view with element-level data only.
+ * `mux-embed` monitors the media element on its own, and an engine integration is what adds engine-level data on top:
+ * rendition switches, request timing and throughput, and engine errors. It ships two — hls.js and dash.js — and each
+ * one is wired through a different option, so handing a dash.js player to the hls.js option leaves the view with
+ * element-level data only.
  *
- * Engines are matched by shape rather than by class so this module imports
- * neither hls.js nor dash.js. Mux Data can be registered with any media without
- * pulling an engine it will never touch into the bundle (dash.js in particular
- * reads `window` on import), and a media whose engine has no integration — a
- * raw `<video>`, native HLS, or an SPF playback engine — is monitored from the
- * element alone instead of through the wrong integration.
+ * Engines are matched by shape rather than by class so this module imports neither hls.js nor dash.js. Mux Data can be
+ * registered with any media without pulling an engine it will never touch into the bundle (dash.js in particular reads
+ * `window` on import), and a media whose engine has no integration — a raw `<video>`, native HLS, or an SPF playback
+ * engine — is monitored from the element alone instead of through the wrong integration.
  *
- * @returns Options to spread into a `Mux.monitor()` call. Empty when the engine
- *   has no integration, which leaves element-level monitoring intact.
+ * @returns Options to spread into a `Mux.monitor()` call. Empty when the engine has no integration, which leaves
+ *   element-level monitoring intact.
  */
 export function toMuxDataEngineOptions(engine: unknown): MuxDataEngineOptions {
   if (isDashJsEngine(engine)) return { dashjs: engine };
@@ -55,23 +53,26 @@ export function toMuxDataEngineOptions(engine: unknown): MuxDataEngineOptions {
 // match means the integration has everything it needs. Both monitors subscribe
 // through `on` / `off`; the rendition APIs are what tell the two engines apart.
 
-/** hls.js: its monitor reads renditions from `levels`. */
+/** Hls.js: its monitor reads renditions from `levels`. */
 function isHlsJsEngine(engine: unknown): engine is MuxDataHlsJsEngine {
   return hasMethods(engine, ['on', 'off']) && Array.isArray((engine as { levels?: unknown }).levels);
 }
 
-/** dash.js: its monitor reads renditions through the track and rendition-list getters. */
+/** Dash.js: its monitor reads renditions through the track and rendition-list getters. */
 function isDashJsEngine(engine: unknown): engine is MuxDataDashJsEngine {
   if (!hasMethods(engine, ['on', 'off', 'getCurrentTrackFor'])) return false;
+
   // dash.js v5 replaced `getBitrateInfoListFor` with `getRepresentationsByType`.
   // `mux-embed` reads whichever the player has, so either one is a match.
   return hasMethods(engine, ['getRepresentationsByType']) || hasMethods(engine, ['getBitrateInfoListFor']);
 }
 
-/** hls.js's own class, the only place its event names and error details are published. */
+/** Hls.js's own class, the only place its event names and error details are published. */
 function toHlsJsClass(engine: object): MuxDataHlsJsClass | undefined {
   const engineClass: unknown = engine.constructor;
   if (!isFunction(engineClass)) return undefined;
+
   const statics = engineClass as unknown as MuxDataHlsJsClass;
+
   return isObject(statics.Events) && isObject(statics.ErrorDetails) && isString(statics.version) ? statics : undefined;
 }

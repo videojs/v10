@@ -1,5 +1,6 @@
 import { createStore } from '@videojs/store';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
+
 import type { PlayerTarget } from '../../../player';
 import { createMockVideo, createTimeRanges } from '../../../tests/test-helpers';
 import { timeFeature } from '../time';
@@ -13,6 +14,7 @@ describe('timeFeature', () => {
       });
 
       const store = createStore<PlayerTarget>()(timeFeature);
+
       store.attach({ media: video, container: null });
 
       expect(store.state.currentTime).toBe(30);
@@ -26,6 +28,7 @@ describe('timeFeature', () => {
       });
 
       const store = createStore<PlayerTarget>()(timeFeature);
+
       store.attach({ media: video, container: null });
 
       expect(store.state.duration).toBe(0);
@@ -35,6 +38,7 @@ describe('timeFeature', () => {
       const video = createMockVideo({ currentTime: 0 });
 
       const store = createStore<PlayerTarget>()(timeFeature);
+
       store.attach({ media: video, container: null });
 
       expect(store.state.currentTime).toBe(0);
@@ -50,6 +54,7 @@ describe('timeFeature', () => {
       const video = createMockVideo({ duration: 0 });
 
       const store = createStore<PlayerTarget>()(timeFeature);
+
       store.attach({ media: video, container: null });
 
       expect(store.state.duration).toBe(0);
@@ -65,6 +70,7 @@ describe('timeFeature', () => {
       const video = createMockVideo({ currentTime: 0 });
 
       const store = createStore<PlayerTarget>()(timeFeature);
+
       store.attach({ media: video, container: null });
 
       // Update mock currentTime
@@ -82,6 +88,7 @@ describe('timeFeature', () => {
       });
 
       const store = createStore<PlayerTarget>()(timeFeature);
+
       store.attach({ media: video, container: null });
 
       expect(store.state.duration).toBe(300);
@@ -94,6 +101,7 @@ describe('timeFeature', () => {
       });
 
       const store = createStore<PlayerTarget>()(timeFeature);
+
       store.attach({ media: video, container: null });
 
       expect(store.state.duration).toBe(0);
@@ -106,6 +114,7 @@ describe('timeFeature', () => {
       });
 
       const store = createStore<PlayerTarget>()(timeFeature);
+
       store.attach({ media: video, container: null });
 
       expect(store.state.duration).toBe(300);
@@ -129,6 +138,7 @@ describe('timeFeature', () => {
       });
 
       const store = createStore<PlayerTarget>()(timeFeature);
+
       store.attach({ media: video, container: null });
 
       expect(store.state.duration).toBe(300);
@@ -141,6 +151,7 @@ describe('timeFeature', () => {
       });
 
       const store = createStore<PlayerTarget>()(timeFeature);
+
       store.attach({ media: video, container: null });
 
       // Update mock to empty state
@@ -158,6 +169,7 @@ describe('timeFeature', () => {
       it('sets currentTime on target and waits for seeked event', async () => {
         const video = createMockVideo({ readyState: HTMLMediaElement.HAVE_METADATA });
         const store = createStore<PlayerTarget>()(timeFeature);
+
         store.attach({ media: video, container: null });
 
         const resultPromise = store.seek(45);
@@ -168,6 +180,7 @@ describe('timeFeature', () => {
         video.dispatchEvent(new Event('seeked'));
 
         const result = await resultPromise;
+
         expect(result).toBe(45);
       });
 
@@ -185,12 +198,14 @@ describe('timeFeature', () => {
 
         // Should resolve with current time (seek was aborted)
         const result = await resultPromise;
+
         expect(result).toBe(45);
       });
 
       it('supersedes previous seek when new seek starts', async () => {
         const video = createMockVideo({ readyState: HTMLMediaElement.HAVE_METADATA });
         const store = createStore<PlayerTarget>()(timeFeature);
+
         store.attach({ media: video, container: null });
 
         // Start first seek
@@ -203,18 +218,21 @@ describe('timeFeature', () => {
 
         // First seek should resolve immediately (aborted)
         const result1 = await seek1Promise;
+
         expect(result1).toBe(20); // Returns current position
 
         // Fire seeked for second seek
         video.dispatchEvent(new Event('seeked'));
 
         const result2 = await seek2Promise;
+
         expect(result2).toBe(20);
       });
 
       it('optimistically updates currentTime before seeked event fires', () => {
         const video = createMockVideo({ readyState: HTMLMediaElement.HAVE_METADATA });
         const store = createStore<PlayerTarget>()(timeFeature);
+
         store.attach({ media: video, container: null });
 
         expect(store.state.currentTime).toBe(0);
@@ -229,6 +247,7 @@ describe('timeFeature', () => {
       it('optimistically sets seeking to true before seeking event fires', () => {
         const video = createMockVideo({ readyState: HTMLMediaElement.HAVE_METADATA });
         const store = createStore<PlayerTarget>()(timeFeature);
+
         store.attach({ media: video, container: null });
 
         expect(store.state.seeking).toBe(false);
@@ -241,6 +260,7 @@ describe('timeFeature', () => {
       it('optimistic seeking is corrected by seeked event', async () => {
         const video = createMockVideo({ readyState: HTMLMediaElement.HAVE_METADATA });
         const store = createStore<PlayerTarget>()(timeFeature);
+
         store.attach({ media: video, container: null });
 
         const resultPromise = store.seek(45);
@@ -265,6 +285,7 @@ describe('timeFeature', () => {
         });
 
         const store = createStore<PlayerTarget>()(timeFeature);
+
         store.attach({ media: video, container: null });
 
         expect(store.state.currentTime).toBe(10);
@@ -291,6 +312,7 @@ describe('timeFeature', () => {
         });
 
         const store = createStore<PlayerTarget>()(timeFeature);
+
         store.attach({ media: video, container: null });
 
         store.seek(60);
@@ -314,6 +336,7 @@ describe('timeFeature', () => {
         });
 
         const store = createStore<PlayerTarget>()(timeFeature);
+
         store.attach({ media: video, container: null });
 
         const resultPromise = store.seek(60);
@@ -343,6 +366,7 @@ describe('timeFeature', () => {
         });
 
         const store = createStore<PlayerTarget>()(timeFeature);
+
         store.attach({ media: video, container: null });
 
         // Simulate rapid drag: multiple seeks without waiting for seeked.

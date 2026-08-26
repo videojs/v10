@@ -1,0 +1,119 @@
+---
+title: 'Handle playback errors'
+description: 'Surface terminal playback errors and give users a useful next step.'
+---
+
+import DocsLink from '@/components/docs/DocsLink.astro';
+import CustomUiNote from '@/components/docs/CustomUiNote.astro';
+import FrameworkCase from '@/components/docs/FrameworkCase.astro';
+
+Surface terminal playback errors instead of leaving a dead player, and give users a useful next step.
+
+<CustomUiNote />
+
+## Recommended approach
+
+Render an <DocsLink slug="reference/error-dialog">ErrorDialog</DocsLink> inside the player container. It reads error state, presents the failure, and dismisses cleanly. The prebuilt skins include one.
+
+<FrameworkCase frameworks={["react"]}>
+
+```tsx
+import { Container, ErrorDialog } from '@videojs/react';
+import { Video, VideoPlayer } from '@videojs/react/video';
+
+export default function App() {
+  return (
+    <VideoPlayer>
+      <Container>
+        <Video src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4" muted playsInline />
+
+        <ErrorDialog.Root>
+          <ErrorDialog.Popup className="media-error">
+            <ErrorDialog.Title />
+            <ErrorDialog.Description />
+            <ErrorDialog.Close>Dismiss</ErrorDialog.Close>
+          </ErrorDialog.Popup>
+        </ErrorDialog.Root>
+      </Container>
+    </VideoPlayer>
+  );
+}
+```
+
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+
+```html
+<video-player>
+  <media-container>
+    <video src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4" muted playsinline></video>
+    <media-error-dialog>
+      <media-alert-dialog-title></media-alert-dialog-title>
+      <media-alert-dialog-description></media-alert-dialog-description>
+      <media-alert-dialog-close></media-alert-dialog-close>
+    </media-error-dialog>
+  </media-container>
+</video-player>
+<script type="module">
+  import '@videojs/html/video/player';
+  import '@videojs/html/ui/error-dialog';
+</script>
+```
+
+The dialog renders its text into the child parts — a title, the error description, and a dismiss button — and fills each empty part with default copy. Write your own text inside a part to replace the default. Without the child parts, the dialog opens with nothing to show.
+
+</FrameworkCase>
+
+## How it works
+
+The <DocsLink slug="reference/feature-error">error feature</DocsLink> mirrors the media element's error into player state:
+
+- `error` holds the media's `MediaError` — `code`, `message` — or `null` when there is none.
+- `dismissError()` clears the error from player state (the media element keeps its own error until a new load).
+- Loading a new source resets `error` to `null` automatically.
+
+The dialog owns presentation, not recovery. Decide the next step in your application: let the user dismiss the message, choose another item, refresh an expired URL, or contact support.
+
+## Availability and constraints
+
+- A media error is terminal for the current load: playback won't resume without loading a source again.
+- `MediaError.code` distinguishes broad classes — aborted, network, decode, and source-not-supported — not root causes. Check the network panel for the real story (404, CORS, codec).
+- Streaming engines handle recoverable segment and network failures before surfacing a terminal error. Do not layer a generic same-source retry loop on top of the engine.
+- Once the player attaches to the media element, errors land in state even before any UI renders (bad URL at mount); make sure your error surface renders regardless of playback state.
+
+## Common variations
+
+### Offer an application-specific next step
+
+Use the error code and your product context to choose the action. A live event can link to its status page, an authenticated app can refresh an expired playback URL, and a playlist can offer the next item. Keep that action outside `ErrorDialog`; the dialog can close after your application has handled it.
+
+### Report errors to monitoring
+
+Subscribe to error state and forward it to your error tracker with the source URL and `error.code`; media errors are invisible in JavaScript error monitoring unless you send them.
+
+## Troubleshooting
+
+### The player is black and silent with no error
+
+Not every dead player is a media error — autoplay blocking and an unset source produce no error. Check `error`, `source`, and `paused` in player state to tell them apart.
+
+### Error code says the source isn't supported
+
+The browser can't play the format through this media element. HLS in a plain video element outside Safari is the classic case; use the matching streaming media element. See <DocsLink slug="concepts/media-sources">Media sources</DocsLink>.
+
+### Reopening the source produces the same error
+
+The failure is probably permanent for that source, such as a 404, revoked token, unsupported codec, or CORS response. Fix or replace the source instead of repeatedly loading the same URL.
+
+## Related components
+
+- <DocsLink slug="reference/buffering-indicator">Buffering indicator</DocsLink>
+
+## Related API
+
+- <DocsLink slug="reference/feature-error">Error feature</DocsLink>
+
+## Related guides
+
+- <DocsLink slug="concepts/media-sources">Media sources</DocsLink>
+- <DocsLink slug="how-to/autoplay">Autoplay</DocsLink>

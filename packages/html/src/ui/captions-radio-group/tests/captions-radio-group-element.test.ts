@@ -3,13 +3,13 @@ import { registerI18n, resetI18nRegistry } from '@videojs/core/i18n';
 import { ContextProvider } from '@videojs/element/context';
 import type { MediaTextTrackState } from '@videojs/media';
 import { createStore } from '@videojs/store';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { MediaI18nProviderElement } from '../../../i18n/provider-element';
 import { playerContext } from '../../../player/context';
-import { MediaElement } from '../../media-element';
 import { MenuElement } from '../../menu/menu-element';
 import { MenuRadioItemElement } from '../../menu/menu-radio-item-element';
+import { UIElement } from '../../ui-element';
 import { CaptionsRadioGroupElement } from '../captions-radio-group-element';
 
 function defineElement(tagName: string, Base: CustomElementConstructor): void {
@@ -53,6 +53,7 @@ function createTextTrackStore({
       chaptersCues: [],
       thumbnailCues: [],
       thumbnailTrackSrc: null,
+      thumbnailTrackCrossOrigin: null,
       textTrackList,
       subtitlesShowing,
       toggleSubtitles: vi.fn(),
@@ -61,7 +62,7 @@ function createTextTrackStore({
   }) as unknown as AnyPlayerStore;
 }
 
-class TestPlayerProviderElement extends MediaElement {
+class TestPlayerProviderElement extends UIElement {
   readonly #provider = new ContextProvider(this, { context: playerContext });
 
   setStore(store: AnyPlayerStore): void {
@@ -111,9 +112,11 @@ describe('CaptionsRadioGroupElement', () => {
 
   it('preserves authored accessible names', async () => {
     const explicit = setup('en').options;
+
     explicit.setAttribute('aria-label', 'Subtitle tracks');
 
     const labelled = setup('en').options;
+
     labelled.setAttribute('aria-labelledby', 'captions-heading');
 
     await Promise.all([explicit.updateComplete, labelled.updateComplete]);
@@ -132,6 +135,7 @@ describe('CaptionsRadioGroupElement', () => {
 
     await waitForAssertion(() => {
       const items = [...menu.querySelectorAll<MenuRadioItemElement>(MenuRadioItemElement.tagName)];
+
       expect(items.map((item) => item.textContent)).toEqual(['Desactive', 'Legendes']);
     });
   });
@@ -140,12 +144,14 @@ describe('CaptionsRadioGroupElement', () => {
     const { menu, options } = setup('en', {
       textTrackList: [{ id: 'es', kind: 'subtitles', label: 'Spanish', language: 'es', mode: 'disabled' }],
     });
+
     options.formatTrack = (track) => `${track.language.toUpperCase()} subtitles`;
     options.requestUpdate();
 
     await options.updateComplete;
 
     const items = [...menu.querySelectorAll<MenuRadioItemElement>(MenuRadioItemElement.tagName)];
+
     expect(items.map((item) => item.textContent)).toEqual(['Off', 'ES subtitles']);
   });
 
@@ -155,6 +161,7 @@ describe('CaptionsRadioGroupElement', () => {
     await options.updateComplete;
 
     const items = [...menu.querySelectorAll<MenuRadioItemElement>(MenuRadioItemElement.tagName)];
+
     expect(options.getAttribute('aria-disabled')).toBe('true');
     expect(options.hidden).toBe(true);
     expect(options.hasAttribute('data-hidden')).toBe(true);

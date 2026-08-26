@@ -7,10 +7,9 @@ export interface Throttled<Args extends unknown[]> {
 
 export interface ThrottleOptions {
   /**
-   * When `true`, the first call invokes `fn` immediately (leading edge) and
-   * starts the cooldown window. Calls during cooldown are coalesced and fire
-   * on the trailing edge. If no calls arrive during the window the next call
-   * is treated as a fresh leading invocation.
+   * When `true`, the first call invokes `fn` immediately (leading edge) and starts the cooldown window. Calls during
+   * cooldown are coalesced and fire on the trailing edge. If no calls arrive during the window the next call is treated
+   * as a fresh leading invocation.
    */
   leading?: boolean;
 }
@@ -18,12 +17,10 @@ export interface ThrottleOptions {
 /**
  * Throttle: limits `fn` to at most once per `ms` window.
  *
- * - Default (no options): trailing-edge only — the first call schedules a
- *   timer; subsequent calls within the window update the arguments. The
- *   function fires once per window with the latest arguments.
- * - `{ leading: true }`: leading + trailing — the first call invokes
- *   immediately and opens a cooldown window. Subsequent calls within the
- *   window are coalesced to a single trailing-edge invocation.
+ * - Default (no options): trailing-edge only — the first call schedules a timer; subsequent calls within the window
+ *   update the arguments. The function fires once per window with the latest arguments.
+ * - `{ leading: true }`: leading + trailing — the first call invokes immediately and opens a cooldown window. Subsequent
+ *   calls within the window are coalesced to a single trailing-edge invocation.
  */
 export function throttle<Args extends unknown[]>(
   fn: (...args: Args) => void,
@@ -63,6 +60,7 @@ export function throttle<Args extends unknown[]>(
     } else {
       // Trailing-only (original behavior).
       if (timerId !== null) return;
+
       timerId = setTimeout(() => {
         timerId = null;
         fn(...latestArgs);
@@ -75,6 +73,7 @@ export function throttle<Args extends unknown[]>(
       clearTimeout(timerId);
       timerId = null;
     }
+
     hasPending = false;
   };
 

@@ -1,4 +1,5 @@
 import { identity, noop } from '@videojs/utils/function';
+
 import type { AnyStore, InferStoreState } from '../../core/store';
 import { type Comparator, type Selector, useSelector } from './use-selector';
 
@@ -7,22 +8,22 @@ const noopSubscribe = () => noop;
 /**
  * Access store state and actions.
  *
- * Without selector: Returns the store, does NOT subscribe to changes.
- * With selector: Returns selected state, re-renders when selected state changes (shallowEqual).
+ * Without selector: Returns the store, does NOT subscribe to changes. With selector: Returns selected state, re-renders
+ * when selected state changes (shallowEqual).
  *
  * @example
- * ```tsx
- * // Store access (no subscription) - access actions, subscribe without re-render
- * function Controls() {
- *   const { setVolume } = useStore(store);
- * }
+ *   ```tsx
+ *   // Store access (no subscription) - access actions, subscribe without re-render
+ *   function Controls() {
+ *     const { setVolume } = useStore(store);
+ *   }
  *
- * // Selector-based subscription - re-renders when paused changes
- * function PlayButton() {
- *   const paused = useStore(store, (s) => s.paused);
- *   return <button>{paused ? 'Play' : 'Pause'}</button>;
- * }
- * ```
+ *   // Selector-based subscription - re-renders when paused changes
+ *   function PlayButton() {
+ *     const paused = useStore(store, (s) => s.paused);
+ *     return <button>{paused ? 'Play' : 'Pause'}</button>;
+ *   }
+ *   ```;
  */
 /** @label Without Selector */
 export function useStore<S extends AnyStore>(store: S): S;
@@ -30,9 +31,9 @@ export function useStore<S extends AnyStore>(store: S): S;
 /**
  * Select a value from the store. Re-renders when the selected value changes (shallowEqual).
  *
- * @label With Selector
  * @param selector - Derives a value from the store state.
  * @param isEqual - Custom equality function. Defaults to `shallowEqual`.
+ * @label With Selector
  */
 export function useStore<S extends AnyStore, R>(
   store: S,

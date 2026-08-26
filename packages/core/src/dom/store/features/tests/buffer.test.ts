@@ -1,5 +1,6 @@
 import { createStore } from '@videojs/store';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
+
 import type { PlayerTarget } from '../../../player';
 import { createMockVideo, createTimeRanges } from '../../../tests/test-helpers';
 import { bufferFeature } from '../buffer';
@@ -13,6 +14,7 @@ describe('bufferFeature', () => {
       });
 
       const store = createStore<PlayerTarget>()(bufferFeature);
+
       store.attach({ media: video, container: null });
 
       expect(store.state.buffered).toEqual([[0, 60]]);
@@ -29,6 +31,7 @@ describe('bufferFeature', () => {
       });
 
       const store = createStore<PlayerTarget>()(bufferFeature);
+
       store.attach({ media: video, container: null });
 
       expect(store.state.buffered).toEqual([
@@ -44,6 +47,7 @@ describe('bufferFeature', () => {
       });
 
       const store = createStore<PlayerTarget>()(bufferFeature);
+
       store.attach({ media: video, container: null });
 
       // Update the mock video's buffered range
@@ -65,6 +69,7 @@ describe('bufferFeature', () => {
       });
 
       const store = createStore<PlayerTarget>()(bufferFeature);
+
       store.attach({ media: video, container: null });
 
       // Update the mock video to have no buffered content

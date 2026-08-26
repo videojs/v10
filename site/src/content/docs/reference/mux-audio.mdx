@@ -27,7 +27,7 @@ Audio element for playing Mux-hosted HLS streams. Built on hls.js with Mux-speci
 
 ## Analytics and casting
 
-MuxAudio plays Mux streams. It doesn't monitor them or cast them — <DocsLink slug="concepts/mux-data">Mux Data</DocsLink> and <DocsLink slug="concepts/cast">Google Cast</DocsLink> are separate components you add to the player alongside it. Mux Data needs no environment key here, since Mux attributes the views to the environment that owns the playback ID:
+MuxAudio plays Mux streams. It doesn't monitor them or cast them — <DocsLink slug="concepts/mux-data">Mux Data</DocsLink> and the <DocsLink slug="how-to/cast-to-airplay-and-chromecast">Google Cast integration</DocsLink> are separate components you add to the player alongside it. Mux Data needs no environment key here, since Mux attributes the views to the environment that owns the playback ID:
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
@@ -52,7 +52,7 @@ Register the elements by importing `@videojs/html/media/mux-data` and `@videojs/
 </FrameworkCase>
 
 <DocsLinkCard slug="concepts/mux-data">Mux Data — metadata, options, and configuration</DocsLinkCard>
-<DocsLinkCard slug="concepts/cast">Google Cast — receivers, load requests, and session state</DocsLinkCard>
+<DocsLinkCard slug="how-to/cast-to-airplay-and-chromecast">Cast to AirPlay and Chromecast</DocsLinkCard>
 
 ## Examples
 

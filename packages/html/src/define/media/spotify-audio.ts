@@ -1,5 +1,5 @@
 import { SpotifyAudio } from '../../media/spotify-audio';
-import { safeDefine } from '../safe-define';
+import { safeDefine } from '../../registration/safe-define';
 
 export class SpotifyAudioElement extends SpotifyAudio {
   static readonly tagName = 'spotify-audio';

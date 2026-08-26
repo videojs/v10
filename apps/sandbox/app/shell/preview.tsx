@@ -35,8 +35,11 @@ export const Preview = forwardRef<HTMLIFrameElement, PreviewProps>(function Prev
       preload,
       locale,
     });
+
     if (accentColor) params.set('accent', accentColor);
+
     if (bustCache) params.set('_', String(Date.now()));
+
     return `${base}?${params}`;
   };
 
@@ -48,20 +51,22 @@ export const Preview = forwardRef<HTMLIFrameElement, PreviewProps>(function Prev
   const openUrl = buildUrl(pagePath);
   const previousLocaleRef = useRef(locale);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: keep iframe `src` locale in sync; other toggles use postMessage.
+  // keep iframe `src` locale in sync; other toggles use postMessage.
+  // oxlint-disable-next-line react/exhaustive-deps
   useEffect(() => {
     if (previousLocaleRef.current === locale) return;
+
     previousLocaleRef.current = locale;
     setIframeUrl(buildUrl(pagePath, reloadOnLocale));
   }, [locale, pagePath, reloadOnLocale]);
 
   return (
-    <main className="flex-1 min-h-0 relative bg-zinc-50 dark:bg-zinc-900">
+    <main className="relative min-h-0 flex-1 bg-zinc-50 dark:bg-zinc-900">
       <a
         href={openUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className="absolute top-3 right-3 z-10 inline-flex items-center gap-1 h-7 rounded-md bg-clip-border ring ring-zinc-800/10 dark:ring-white/10 bg-white dark:bg-zinc-800 px-2.5 text-xs font-medium text-zinc-600 dark:text-zinc-300 shadow-xs shadow-black/20 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800 hover:text-zinc-950 dark:hover:text-zinc-50"
+        className="absolute top-3 right-3 z-10 inline-flex h-7 items-center gap-1 rounded-md bg-white bg-clip-border px-2.5 text-xs font-medium text-zinc-600 shadow-xs ring shadow-black/20 ring-zinc-800/10 transition-colors hover:bg-zinc-50 hover:text-zinc-950 dark:bg-zinc-800 dark:text-zinc-300 dark:ring-white/10 dark:hover:bg-zinc-800 dark:hover:text-zinc-50"
         title="Open in new tab"
       >
         Open
@@ -85,7 +90,7 @@ export const Preview = forwardRef<HTMLIFrameElement, PreviewProps>(function Prev
         ref={ref}
         src={iframeUrl}
         onLoad={onLoad}
-        className="absolute inset-0 w-full h-full border-0"
+        className="absolute inset-0 h-full w-full border-0"
         title="player demo"
       />
     </main>

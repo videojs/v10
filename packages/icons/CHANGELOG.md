@@ -1,5 +1,49 @@
 # Changelog
 
+## [10.0.0-beta.32](https://github.com/videojs/v10/compare/@videojs/icons@10.0.0-beta.31...@videojs/icons@10.0.0-beta.32) (2026-08-26)
+
+
+### Bug Fixes
+
+* **packages:** harden vjsc vite workflow ([#2355](https://github.com/videojs/v10/issues/2355)) ([8da1f84](https://github.com/videojs/v10/commit/8da1f84e22db027e447535c9f61004c7159fd142))
+* **packages:** make html entries server importable ([#2428](https://github.com/videojs/v10/issues/2428)) ([33f4de1](https://github.com/videojs/v10/commit/33f4de15b6d73fdba5f1d7aeb6b94b469f6c1487))
+* **packages:** restore vjsc skin visual parity ([#2344](https://github.com/videojs/v10/issues/2344)) ([d157a63](https://github.com/videojs/v10/commit/d157a63f0b725239752746b87bb7c41dd3af8e53))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.32
+
+## [10.0.0-beta.31](https://github.com/videojs/v10/compare/@videojs/icons@10.0.0-beta.30...@videojs/icons@10.0.0-beta.31) (2026-08-21)
+
+
+### Miscellaneous Chores
+
+* **@videojs/icons:** Synchronize videojs versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @videojs/utils bumped to 10.0.0-beta.31
+
+## [10.0.0-beta.30](https://github.com/videojs/v10/compare/@videojs/icons@10.0.0-beta.29...@videojs/icons@10.0.0-beta.30) (2026-08-20)
+
+
+### Miscellaneous Chores
+
+* **@videojs/icons:** Synchronize videojs versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @videojs/utils bumped to 10.0.0-beta.30
+
 ## [10.0.0-beta.29](https://github.com/videojs/v10/compare/@videojs/icons@10.0.0-beta.28...@videojs/icons@10.0.0-beta.29) (2026-08-19)
 
 

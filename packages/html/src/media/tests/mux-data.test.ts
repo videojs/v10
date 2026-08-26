@@ -3,19 +3,20 @@ import type { Media } from '@videojs/media/dom';
 import { getMediaComponents } from '@videojs/media/dom/media-host';
 import { MuxData } from '@videojs/media/dom/mux';
 import { HTMLVideoElementHost } from '@videojs/media/dom/video-host';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vite-plus/test';
+
 import { mediaContext } from '../../player/context';
-import { MediaElement } from '../../ui/media-element';
+import { UIElement } from '../../ui/ui-element';
 import { MuxDataElement } from '../mux-data';
 
-class TestMediaProvider extends MediaElement {
+class TestMediaProvider extends UIElement {
   readonly #provider = new ContextProvider(this, {
     context: mediaContext,
-    initialValue: { media: null, setMedia: () => {} },
+    initialValue: { media: null, registerMedia: () => () => {} },
   });
 
   setMedia(media: Media | null) {
-    this.#provider.setValue({ media, setMedia: () => {} });
+    this.#provider.setValue({ media, registerMedia: () => () => {} });
   }
 }
 
@@ -26,6 +27,7 @@ function setup() {
   const host = new HTMLVideoElementHost();
   const provider = new TestMediaProvider();
   const el = new MuxDataElement();
+
   // Prevent the real Mux SDK from initializing (and beaconing) in tests.
   el.MuxDataSdk = undefined;
 
@@ -43,6 +45,7 @@ describe('MuxDataElement', () => {
   it('registers when parsed into a connected player that already has media', () => {
     const host = new HTMLVideoElementHost();
     const provider = new TestMediaProvider();
+
     document.body.append(provider);
     provider.setMedia(host as unknown as Media);
 
@@ -67,6 +70,7 @@ describe('MuxDataElement', () => {
 
   it('forwards attributes to the component', () => {
     const { host, provider, el } = setup();
+
     provider.setMedia(host as unknown as Media);
 
     el.setAttribute('env-key', 'test-key');
@@ -76,6 +80,7 @@ describe('MuxDataElement', () => {
     el.setAttribute('disable-cookies', '');
 
     const component = getMediaComponents(host).get(MuxData)!;
+
     expect(component.envKey).toBe('test-key');
     expect(component.playerSoftwareName).toBe('mux-video');
     expect(component.playerInitTime).toBe(1234);
@@ -87,9 +92,11 @@ describe('MuxDataElement', () => {
 
   it('forwards the metadata property to the component', () => {
     const { host, provider, el } = setup();
+
     provider.setMedia(host as unknown as Media);
 
     const metadata = { video_title: 'Test' };
+
     el.metadata = metadata;
 
     expect(getMediaComponents(host).get(MuxData)!.metadata).toEqual(metadata);
@@ -97,6 +104,7 @@ describe('MuxDataElement', () => {
 
   it('removes the component when the element disconnects', () => {
     const { host, provider, el } = setup();
+
     provider.setMedia(host as unknown as Media);
 
     el.remove();

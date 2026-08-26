@@ -42,6 +42,7 @@ function registerCastFramework(): void {
     if (__DEV__) {
       console.debug('chrome.cast.isAvailable', globalThis.chrome?.cast?.isAvailable);
     }
+
     return;
   }
 

@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { animationFrame } from '../animation-frame';
 
@@ -44,6 +44,7 @@ describe('animationFrame', () => {
     const callback = vi.fn();
 
     const cancel = animationFrame(callback);
+
     cancel();
 
     await vi.runAllTimersAsync();
@@ -55,6 +56,7 @@ describe('animationFrame', () => {
     const callback = vi.fn();
 
     const cancel = animationFrame(callback);
+
     cancel();
     cancel();
     cancel();

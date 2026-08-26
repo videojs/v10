@@ -1,17 +1,26 @@
 {
   "name": "@videojs/icons",
-  "type": "module",
+  "version": "10.0.0-beta.32",
   "private": true,
-  "version": "10.0.0-beta.29",
   "description": "SVG icon library for Video.js",
+  "keywords": [
+    "icons",
+    "svg",
+    "videojs"
+  ],
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/videojs/v10",
     "directory": "packages/icons"
   },
+  "files": [
+    "dist"
+  ],
+  "type": "module",
   "sideEffects": [
-    "./dist/element/**/*.js"
+    "./dist/element/index.js",
+    "./dist/element/*/index.js"
   ],
   "exports": {
     "./vjsc": {
@@ -55,37 +64,29 @@
       "default": "./dist/element/*/index.js"
     }
   },
-  "files": [
-    "dist"
-  ],
   "scripts": {
-    "build": "node --import tsx scripts/build-icons.ts",
-    "build:watch": "pnpm run build -- --watch",
+    "build:watch": "node --import tsx scripts/build-icons.ts --watch",
     "dev": "pnpm run build:watch",
     "clean": "rimraf dist",
     "format": "node --import tsx scripts/format-icons.ts",
-    "test": "pnpm run build && vitest run"
+    "test": "pnpm run test:types && node --import tsx scripts/build-icons.ts && vp test run",
+    "test:types": "tsgo --project tsconfig.test.json"
   },
   "dependencies": {
-    "svgo": "^4.0.2"
+    "@videojs/utils": "workspace:*"
   },
   "devDependencies": {
     "@svgr/core": "^8.1.0",
     "@svgr/plugin-jsx": "^8.1.0",
     "@types/react": "^19.2.17",
-    "vjsc": "workspace:*",
-    "@videojs/utils": "workspace:*",
+    "happy-dom": "^20.11.1",
     "oxc-transform": "0.143.0",
     "react": "^19.2.8",
+    "svgo": "^4.0.2",
     "tsx": "^4.23.1",
-    "vitest": "^4.1.10"
-  },
-  "publishConfig": {
-    "access": "public"
-  },
-  "keywords": [
-    "videojs",
-    "icons",
-    "svg"
-  ]
+    "vite": "^8.2.2",
+    "vite-plus": "catalog:",
+    "vitest": "catalog:",
+    "vjsc": "workspace:*"
+  }
 }

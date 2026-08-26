@@ -2,6 +2,7 @@
 
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
+
 import { PauseIcon, PlayIcon, RestartIcon, SpinnerIcon, VolumeHighIcon, VolumeLowIcon, VolumeOffIcon } from '@/icons';
 import { Container } from '@/player/container';
 import { usePlayer } from '@/player/context';
@@ -15,6 +16,7 @@ import { Popover } from '@/ui/popover';
 import { StatusAnnouncer } from '@/ui/status-announcer';
 import { Tooltip } from '@/ui/tooltip';
 import { VolumeSlider } from '@/ui/volume-slider';
+
 import type { BaseSkinProps } from '../types';
 
 export type LiveAudioSkinProps = BaseSkinProps;
@@ -68,10 +70,9 @@ export function TooltipPopup(props: Omit<Tooltip.PopupProps, 'children' | 'class
 }
 
 /**
- * Default audio skin configured for live playback. Mirrors {@link AudioSkin}
- * but omits the time slider and the current / duration time displays. A
- * flexible spacer stretches between the play and volume controls so they
- * sit at opposite edges of the control bar.
+ * Default audio skin configured for live playback. Mirrors {@link AudioSkin} but omits the time slider and the current /
+ * duration time displays. A flexible spacer stretches between the play and volume controls so they sit at opposite
+ * edges of the control bar.
  */
 export function LiveAudioSkin(props: LiveAudioSkinProps): ReactNode {
   const { children, className, ...rest } = props;
@@ -81,13 +82,13 @@ export function LiveAudioSkin(props: LiveAudioSkinProps): ReactNode {
       {children}
 
       <ErrorDialog.Root>
-        <ErrorDialog.Popup className="media-error">
-          <div className="media-error__dialog">
-            <div className="media-error__content">
-              <ErrorDialog.Title className="media-error__title"></ErrorDialog.Title>
-              <ErrorDialog.Description className="media-error__description" />
+        <ErrorDialog.Popup className="media-dialog__popup">
+          <div className="media-dialog__dialog">
+            <div className="media-dialog__content">
+              <ErrorDialog.Title className="media-dialog__title"></ErrorDialog.Title>
+              <ErrorDialog.Description className="media-dialog__description" />
             </div>
-            <div className="media-error__actions">
+            <div className="media-dialog__actions">
               <ErrorDialog.Close className="media-button media-button--subtle"></ErrorDialog.Close>
             </div>
           </div>

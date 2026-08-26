@@ -1,12 +1,14 @@
 import { useStore } from '@nanostores/react';
 import clsx from 'clsx';
 import { useEffect, useRef } from 'react';
+
 import ClientCode from '@/components/Code/ClientCode';
 import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs';
 import { shared } from '@/components/typography/styles';
 import { installMethod, renderer } from '@/stores/installation';
 import { rendererSupportsCdn } from '@/utils/installation/cdn-code';
 import type { InstallMethod } from '@/utils/installation/types';
+
 import HTMLCdnCodeBlock from './HTMLCdnCodeBlock';
 
 interface HTMLInstallTabsProps {
@@ -21,7 +23,7 @@ export default function HTMLInstallTabs({ cdnMedia }: HTMLInstallTabsProps) {
   const supportsCdn = rendererSupportsCdn($renderer, cdnMedia);
 
   // Mirror the active install-method tab into the store so the usage code block
-  // can react (e.g. CDN omits the JS imports). Observing from the stable
+  // can react (e.g. CDN omits the TypeScript imports). Observing from the stable
   // wrapper rather than the tabs root means the observer survives the keyed
   // remount below, so it never needs to re-attach.
   useEffect(() => {
@@ -30,6 +32,7 @@ export default function HTMLInstallTabs({ cdnMedia }: HTMLInstallTabsProps) {
 
     const observer = new MutationObserver(() => {
       const value = el.querySelector('[role="tab"][data-tab-active="true"]')?.getAttribute('data-value');
+
       if (value) installMethod.set(value as InstallMethod);
     });
 

@@ -36,6 +36,7 @@ export const SESSION_COOKIE_NAME = 'session';
 
 /**
  * Refresh an expired access token using a refresh token
+ *
  * @throws {Error} If token refresh fails
  */
 export async function refreshToken(refreshToken: string): Promise<OAuthResponse> {
@@ -53,6 +54,7 @@ export async function refreshToken(refreshToken: string): Promise<OAuthResponse>
 
   if (!response.ok) {
     const error = await response.text();
+
     console.error('Token refresh failed:', error);
     throw new Error('Failed to refresh authorization token');
   }
@@ -62,6 +64,7 @@ export async function refreshToken(refreshToken: string): Promise<OAuthResponse>
 
 /**
  * Exchange an authorization code for access tokens
+ *
  * @throws {Error} If token exchange fails
  */
 export async function exchangeAuthorizationCode(code: string): Promise<OAuthResponse> {
@@ -79,6 +82,7 @@ export async function exchangeAuthorizationCode(code: string): Promise<OAuthResp
 
   if (!response.ok) {
     const error = await response.text();
+
     console.error('Token exchange failed:', error);
     throw new Error('Failed to exchange authorization code');
   }
@@ -86,14 +90,14 @@ export async function exchangeAuthorizationCode(code: string): Promise<OAuthResp
   return response.json();
 }
 
-/**
- *  JSON Web Key Set for verifying JWT tokens - lazily initialized
- */
+/** JSON Web Key Set for verifying JWT tokens - lazily initialized */
 let _jwks: ReturnType<typeof createRemoteJWKSet> | null = null;
+
 export function getJWKS() {
   if (!_jwks) {
     _jwks = createRemoteJWKSet(new URL(`${OAUTH_URL}/oauth2/jwks`));
   }
+
   return _jwks;
 }
 
@@ -101,21 +105,19 @@ export function getJWKS() {
 // Session Encryption
 // =============================================================================
 
-/**
- * Decrypt and unseal session data from an encrypted cookie value
- */
+/** Decrypt and unseal session data from an encrypted cookie value */
 export async function unseal<T>(cookieValue: string): Promise<T> {
   if (!SESSION_COOKIE_PASSWORD) throw new Error('SESSION_COOKIE_PASSWORD required');
+
   return unsealData<T>(cookieValue, {
     password: SESSION_COOKIE_PASSWORD,
   });
 }
 
-/**
- * Encrypt and seal session data for secure cookie storage
- */
+/** Encrypt and seal session data for secure cookie storage */
 export async function seal<T>(data: T): Promise<string> {
   if (!SESSION_COOKIE_PASSWORD) throw new Error('SESSION_COOKIE_PASSWORD required');
+
   return sealData(data, {
     password: SESSION_COOKIE_PASSWORD,
     ttl: INACTIVITY_EXPIRY,

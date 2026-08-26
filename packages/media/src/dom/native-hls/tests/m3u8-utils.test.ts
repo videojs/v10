@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import {
   getStreamInfoFromSrc,
@@ -14,14 +14,16 @@ function mockFetch(responses: Record<string, string | { status: number; body?: s
     vi.fn(async (input: string | URL | Request) => {
       const url = input instanceof Request ? input.url : input.toString();
       const entry = responses[url] ?? responses[Object.keys(responses).find((key) => url.endsWith(key)) ?? ''];
-      if (entry === undefined) {
-        return new Response('not found', { status: 404 });
-      }
+      if (entry === undefined) return new Response('not found', { status: 404 });
+
       if (typeof entry === 'string') {
         return new Response(entry, { status: 200 });
       }
+
       const response = new Response(entry.body ?? '', { status: entry.status });
+
       if (entry.url) Object.defineProperty(response, 'url', { value: entry.url });
+
       return response;
     })
   );
@@ -56,11 +58,13 @@ describe('looksLikeM3u8', () => {
 describe('isMultivariantPlaylist', () => {
   it('returns `true` when `#EXT-X-STREAM-INF` is present', () => {
     const playlist = ['#EXTM3U', '#EXT-X-STREAM-INF:BANDWIDTH=2000000', 'media.m3u8'].join('\n');
+
     expect(isMultivariantPlaylist(playlist)).toBe(true);
   });
 
   it('returns `false` for a media playlist', () => {
     const playlist = ['#EXTM3U', '#EXT-X-TARGETDURATION:6', '#EXTINF:6.0,', 'segment0.ts'].join('\n');
+
     expect(isMultivariantPlaylist(playlist)).toBe(false);
   });
 });
@@ -108,11 +112,13 @@ describe('resolveFirstMediaPlaylistUrl', () => {
 
   it('returns `null` when no variant URI is found', () => {
     const playlist = ['#EXTM3U', '#EXT-X-STREAM-INF:BANDWIDTH=2000000'].join('\n');
+
     expect(resolveFirstMediaPlaylistUrl(playlist, 'https://example.com/master.m3u8')).toBeNull();
   });
 
   it('returns `null` when no `#EXT-X-STREAM-INF` tag is present', () => {
     const playlist = ['#EXTM3U', '#EXT-X-TARGETDURATION:6'].join('\n');
+
     expect(resolveFirstMediaPlaylistUrl(playlist, 'https://example.com/master.m3u8')).toBeNull();
   });
 });
@@ -155,6 +161,7 @@ describe('parseStreamInfo', () => {
     ].join('\n');
 
     const info = parseStreamInfo(playlist);
+
     expect(info.targetLiveWindow).toBeNaN();
     expect(info.liveEdgeStartOffset).toBeUndefined();
   });
@@ -163,6 +170,7 @@ describe('parseStreamInfo', () => {
     const playlist = ['#EXTM3U', '#EXT-X-TARGETDURATION:6', '#EXTINF:6.0,', 'segment0.ts', '#EXT-X-ENDLIST'].join('\n');
 
     const info = parseStreamInfo(playlist);
+
     expect(info.targetLiveWindow).toBeNaN();
     expect(info.liveEdgeStartOffset).toBeUndefined();
   });
@@ -197,6 +205,7 @@ describe('parseStreamInfo', () => {
 
   it('leaves `liveEdgeStartOffset` undefined when neither tag is present', () => {
     const playlist = ['#EXTM3U', '#EXTINF:6.0,', 'segment0.ts'].join('\n');
+
     expect(parseStreamInfo(playlist).liveEdgeStartOffset).toBeUndefined();
   });
 
@@ -232,6 +241,7 @@ describe('getStreamInfoFromSrc', () => {
 
   it('follows the first variant of a multivariant playlist', async () => {
     const master = ['#EXTM3U', '#EXT-X-STREAM-INF:BANDWIDTH=2000000', 'media.m3u8'].join('\n');
+
     mockFetch({
       'https://example.com/master.m3u8': master,
       'https://example.com/media.m3u8': media,
@@ -250,6 +260,7 @@ describe('getStreamInfoFromSrc', () => {
 
   it('throws when a multivariant playlist has no variant URI', async () => {
     const master = ['#EXTM3U', '#EXT-X-STREAM-INF:BANDWIDTH=2000000'].join('\n');
+
     mockFetch({ 'https://example.com/master.m3u8': master });
 
     await expect(getStreamInfoFromSrc('https://example.com/master.m3u8')).rejects.toThrow(/No media playlist URL/);
@@ -257,9 +268,11 @@ describe('getStreamInfoFromSrc', () => {
 
   it('passes the abort signal to fetch', async () => {
     const controller = new AbortController();
+
     controller.abort();
 
     const fetchSpy = vi.fn(async () => new Response(media, { status: 200 }));
+
     vi.stubGlobal('fetch', fetchSpy);
 
     await getStreamInfoFromSrc('https://example.com/live.m3u8', controller.signal).catch(() => {});

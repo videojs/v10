@@ -1,20 +1,15 @@
 /**
  * Workspace consistency checker.
  *
- * Validates that manually-maintained lists across config files stay in sync
- * with the actual package structure. Run via `pnpm check:workspace`.
+ * Validates that manually-maintained lists across config files stay in sync with the actual package structure. Run via
+ * `pnpm check:workspace`.
  *
- * Checks:
- * 1. CI test coverage — every testable package is tested in CI
- * 2. Commitlint scopes — every package dir is a valid commit scope
- * 3. Root tsconfig references — every composite project is referenced
- * 4. Package metadata — non-private packages have required fields
- * 5. Release-please config — every versioned package is registered
- * 6. Bundled docs — package publishing wires include generated docs
- * 7. Define imports — no bare side-effect imports from relative paths
- * 8. i18n locales — tag lists match locale files and generated stubs
- * 9. Agent context — portable skill metadata, compatibility imports, and budgets
- * 10. Internal records — organized design docs, frontmatter, and lifecycle status
+ * Checks: 1. CI test coverage — every testable package is tested in CI 2. Commitlint scopes — every package dir is a
+ * valid commit scope 3. Root tsconfig references — every composite project is referenced 4. Package metadata —
+ * non-private packages have required fields 5. Release-please config — every versioned package is registered 6. Bundled
+ * docs — package publishing wires include generated docs 7. Define imports — no bare side-effect imports from relative
+ * paths 8. i18n locales — tag lists match locale files and generated stubs 9. Agent context — portable skill metadata,
+ * compatibility imports, and budgets 10. Internal records — organized design docs, frontmatter, and lifecycle status
  */
 import { existsSync, readdirSync, readFileSync, realpathSync } from 'node:fs';
 import { dirname, join, resolve, sep } from 'node:path';
@@ -33,6 +28,7 @@ function readJson(path) {
   const text = readText(path);
   // Strip single-line // comments (for tsconfig files).
   const stripped = text.replace(/^\s*\/\/.*$/gm, '');
+
   return JSON.parse(stripped);
 }
 
@@ -64,8 +60,8 @@ function checkCiTestCoverage() {
   }
 
   // Collect package names from standalone test jobs (e.g. test-spf).
-  // Match: `--filter="@videojs/xxx"` in turbo run test commands.
-  for (const m of ciText.matchAll(/turbo run test --filter="([^"]+)"/g)) {
+  // Match: `vp run @videojs/xxx#test` commands.
+  for (const m of ciText.matchAll(/vp run (@videojs\/[^#\s]+)#test/g)) {
     testedInCi.add(m[1]);
   }
 
@@ -73,6 +69,7 @@ function checkCiTestCoverage() {
   for (const dir of getPackageDirs()) {
     const pkg = readPackageJson(dir);
     if (!pkg.scripts?.test) continue;
+
     if (!testedInCi.has(pkg.name)) {
       warnings.push(`${pkg.name} has a "test" script but is not tested in CI`);
     }
@@ -83,10 +80,7 @@ function checkCiTestCoverage() {
 
 // ── Check 2: Commitlint scope-enum ──────────────────────────────────────────
 
-/**
- * Known aliases where the commit scope differs from the directory name.
- * Key: directory name, Value: expected scope.
- */
+/** Known aliases where the commit scope differs from the directory name. Key: directory name, Value: expected scope. */
 const SCOPE_ALIASES = new Map([['skins', 'skin']]);
 
 function checkCommitlintScopes() {
@@ -95,14 +89,13 @@ function checkCommitlintScopes() {
 
   // Extract the array from scope-enum rule.
   const match = text.match(/scope-enum[^[]*\[([^\]]+)\]/s);
-  if (!match) {
-    return { ok: false, warnings: ['Could not parse scope-enum from commitlint.config.js'] };
-  }
+  if (!match) return { ok: false, warnings: ['Could not parse scope-enum from commitlint.config.js'] };
 
   const scopes = new Set([...match[1].matchAll(/'([^']+)'/g)].map((m) => m[1]));
 
   for (const dir of getPackageDirs()) {
     const scope = SCOPE_ALIASES.get(dir) ?? dir;
+
     if (!scopes.has(scope)) {
       warnings.push(`Package dir "${dir}" missing from commitlint scope-enum (expected scope: "${scope}")`);
     }
@@ -114,8 +107,8 @@ function checkCommitlintScopes() {
 // ── Check 3: Root tsconfig references ───────────────────────────────────────
 
 /**
- * Intentionally excluded from root references.
- * packages/icons: private, custom build script, uses outDir/rootDir instead of declarationDir.
+ * Intentionally excluded from root references. packages/icons: private, custom build script, uses outDir/rootDir
+ * instead of declarationDir.
  */
 const TSCONFIG_EXCLUDE = new Set(['packages/icons']);
 
@@ -135,19 +128,21 @@ function checkTsconfigReferences() {
       if (entry.name === 'node_modules' || entry.name === 'dist' || entry.name === 'types') {
         continue;
       }
+
       const full = join(dir, entry.name);
+
       if (entry.isDirectory()) {
         findTsconfigs(full, results);
       } else if (entry.name === 'tsconfig.json') {
         results.push(full);
       }
     }
+
     return results;
   }
 
   for (const tsconfigPath of findTsconfigs(PACKAGES_DIR)) {
     const relative = tsconfigPath.slice(ROOT.length + 1).replace(/\/tsconfig\.json$/, '');
-
     if (TSCONFIG_EXCLUDE.has(relative)) continue;
 
     const tsconfig = readJson(tsconfigPath);
@@ -155,7 +150,6 @@ function checkTsconfigReferences() {
 
     // Composite if explicitly true, or inherited from base and not overridden.
     const isComposite = explicitComposite === true || (explicitComposite === undefined && baseComposite);
-
     if (!isComposite) continue;
 
     if (!referenced.has(relative)) {
@@ -174,10 +168,7 @@ const REQUIRED_FIELDS = ['sideEffects', 'files', 'exports'];
 /** Required only when the package has a root "." export. */
 const ROOT_EXPORT_FIELDS = ['main', 'module', 'types'];
 
-/**
- * Packages excluded from metadata checks.
- * CLI is bin-only — sideEffects/exports don't apply.
- */
+/** Packages excluded from metadata checks. CLI is bin-only — sideEffects/exports don't apply. */
 const METADATA_EXCLUDE = new Set(['cli']);
 
 function checkPackageMetadata() {
@@ -185,7 +176,6 @@ function checkPackageMetadata() {
 
   for (const dir of getPackageDirs()) {
     const pkg = readPackageJson(dir);
-
     // Skip private packages — they're internal.
     if (pkg.private) continue;
 
@@ -205,6 +195,7 @@ function checkPackageMetadata() {
 
     // main/module/types only required when there's a root "." export.
     const hasRootExport = pkg.exports?.['.'] !== undefined;
+
     if (hasRootExport) {
       for (const field of ROOT_EXPORT_FIELDS) {
         if (pkg[field] === undefined) {
@@ -233,9 +224,11 @@ function checkReleasePleaseConfig() {
     if (pkg.private || !pkg.version) continue;
 
     const pkgPath = `packages/${dir}`;
+
     if (!configPackages.has(pkgPath)) {
       warnings.push(`${pkg.name}: missing from release-please packages`);
     }
+
     if (!components.has(pkg.name)) {
       warnings.push(`${pkg.name}: missing from release-please linked-versions components`);
     }
@@ -247,21 +240,23 @@ function checkReleasePleaseConfig() {
 // ── Check 6: Bundled docs publishing ─────────────────────────────────────────
 
 /**
- * `@videojs/html` and `@videojs/react` ship the per-framework markdown docs
- * subtree inside their tarballs (see `site/scripts/copy-package-docs.ts`).
- * Both wires (the `files[]` entry and the `prepack` script) must stay in sync
- * — without one, publishing silently drops the docs.
+ * `@videojs/html` and `@videojs/react` ship the per-framework markdown docs subtree inside their tarballs (see
+ * `site/scripts/copy-package-docs.ts`). Both wires (the `files[]` entry and the `prepack` script) must stay in sync —
+ * without one, publishing silently drops the docs.
  */
 function checkBundledDocs() {
   const warnings = [];
 
   for (const dir of ['html', 'react']) {
     const pkg = readPackageJson(dir);
+
     if (!pkg.files?.includes('docs')) {
       warnings.push(`${pkg.name}: missing "docs" entry in "files" — bundled docs would not ship`);
     }
+
     const prepack = pkg.scripts?.prepack;
     const expected = `node --import tsx ../../site/scripts/copy-package-docs.ts ${dir}`;
+
     if (prepack !== expected) {
       warnings.push(`${pkg.name}: prepack script should be \`${expected}\` (got: ${prepack ?? 'missing'})`);
     }
@@ -269,6 +264,7 @@ function checkBundledDocs() {
 
   const cli = readPackageJson('cli');
   const expectedCliCopy = 'node --import tsx ../../site/scripts/copy-package-docs.ts cli';
+
   if (cli.scripts?.['copy-docs'] !== expectedCliCopy) {
     warnings.push(`${cli.name}: copy-docs script should be \`${expectedCliCopy}\``);
   }
@@ -279,17 +275,15 @@ function checkBundledDocs() {
 // ── Check 7: Define imports ──────────────────────────────────────────────────
 
 /**
- * Bare side-effect imports from relative paths in the define directory cause
- * non-deterministic registration order when loaded as native ESM in the
- * browser. All registration must go through explicit safeDefine() calls.
+ * Preset and UI define modules are side-effect-only registration entrypoints. Media define modules retain their
+ * existing element exports for compatibility. Bare side-effect imports from relative paths can cause non-deterministic
+ * registration order when loaded as native ESM in the browser, so registration must go through explicit safeDefine()
+ * calls.
  */
 function checkDefineImports() {
   const warnings = [];
   const defineDir = join(PACKAGES_DIR, 'html/src/define');
-
-  if (!existsSync(defineDir)) {
-    return { ok: true, warnings: [] };
-  }
+  if (!existsSync(defineDir)) return { ok: true, warnings: [] };
 
   // Matches: import './foo';  import "../bar";  import './foo/bar';
   // Ignores value imports: import { X } from './foo';  import X from './foo';
@@ -300,13 +294,16 @@ function checkDefineImports() {
   function findTsFiles(dir, results = []) {
     for (const entry of readdirSync(dir, { withFileTypes: true })) {
       if (entry.name === 'node_modules' || entry.name === 'tests') continue;
+
       const full = join(dir, entry.name);
+
       if (entry.isDirectory()) {
         findTsFiles(full, results);
       } else if (entry.name.endsWith('.ts') && !entry.name.endsWith('.test.ts')) {
         results.push(full);
       }
     }
+
     return results;
   }
 
@@ -314,10 +311,18 @@ function checkDefineImports() {
     const content = readText(filePath);
     const relative = filePath.slice(ROOT.length + 1);
 
+    const isMediaDefine = relative.startsWith('packages/html/src/define/media/');
+
+    if (!isMediaDefine && /^\s*export\b/m.test(content)) {
+      warnings.push(`${relative}: define modules are registration-only and must not export values or types`);
+    }
+
     const sideEffects = [];
+
     for (const match of content.matchAll(sideEffectImportRe)) {
       const specifier = match[1];
       if (cssSpecifierRe.test(specifier)) continue;
+
       sideEffects.push(specifier);
     }
 
@@ -340,19 +345,22 @@ const GENERATED_I18N_HEADER = '/** Generated by packages/core/scripts/generate-i
 
 function parseLocaleTagArray(source, exportName) {
   const match = source.match(new RegExp(`export const ${exportName} = \\[([\\s\\S]*?)\\] as const`));
-  if (!match) {
-    return undefined;
-  }
+  if (!match) return undefined;
+
   return [...match[1].matchAll(/'([^']+)'/g)].map((m) => m[1]);
 }
 
 function localeAliases(tags) {
   const counts = new Map();
+
   for (const tag of tags) {
     if (!tag.includes('-')) continue;
+
     const lang = tag.split('-')[0];
+
     counts.set(lang, (counts.get(lang) ?? 0) + 1);
   }
+
   return [...counts].filter(([, count]) => count > 1).map(([lang]) => lang);
 }
 
@@ -361,13 +369,16 @@ function checkI18nLocales() {
   const builtInPath = join(PACKAGES_DIR, 'core/src/core/i18n/locales.ts');
   const builtInSource = readText(builtInPath);
   const locales = parseLocaleTagArray(builtInSource, 'LOCALES');
+
   if (locales === undefined) {
     warnings.push('Could not parse LOCALES from packages/core/src/core/i18n/locales.ts');
     return { ok: false, warnings };
   }
+
   const localeFiles = [...locales, ...localeAliases(locales)];
 
   const coreLocalesDir = join(PACKAGES_DIR, 'core/src/core/i18n/locales');
+
   if (!existsSync(coreLocalesDir)) {
     warnings.push('Missing generated locale directory packages/core/src/core/i18n/locales');
     return { ok: false, warnings };
@@ -392,6 +403,7 @@ function checkI18nLocales() {
   }
 
   const allPath = join(coreLocalesDir, 'all.ts');
+
   if (!existsSync(allPath)) {
     warnings.push('Missing generated locale bundle packages/core/src/core/i18n/locales/all.ts');
   } else if (!readText(allPath).startsWith(GENERATED_I18N_HEADER)) {
@@ -401,10 +413,12 @@ function checkI18nLocales() {
   }
 
   const loadLocalePath = join(PACKAGES_DIR, 'core/src/core/i18n/load-locale.ts');
+
   if (!existsSync(loadLocalePath)) {
     warnings.push('Missing generated locale loader packages/core/src/core/i18n/load-locale.ts');
   } else {
     const loadLocaleSource = readText(loadLocalePath);
+
     if (!loadLocaleSource.startsWith(GENERATED_I18N_HEADER)) {
       warnings.push(
         'packages/core/src/core/i18n/load-locale.ts is not generated — run pnpm -F @videojs/core generate:locales'
@@ -437,10 +451,12 @@ function checkI18nLocales() {
 
     for (const tag of expectedPlatform) {
       const filePath = join(localesDir, `${tag}.ts`);
+
       if (!existsSync(filePath)) {
         warnings.push(`Missing generated re-export packages/${pkg}/src/i18n/locales/${tag}.ts`);
         continue;
       }
+
       if (!readText(filePath).startsWith(GENERATED_I18N_HEADER)) {
         warnings.push(
           `packages/${pkg}/src/i18n/locales/${tag}.ts is not generated — run pnpm -F @videojs/core generate:locales`
@@ -450,7 +466,9 @@ function checkI18nLocales() {
 
     for (const file of readdirSync(localesDir)) {
       if (!file.endsWith('.ts')) continue;
+
       const tag = file.slice(0, -3);
+
       if (!expectedPlatform.has(tag)) {
         warnings.push(`Unexpected locale re-export packages/${pkg}/src/i18n/locales/${file}`);
       }
@@ -468,13 +486,18 @@ function checkI18nLocales() {
 const AGENT_DOC_MAX_LINES = 200;
 const AGENT_DOC_MAX_BYTES = 12_000;
 const AGENT_CHAIN_MAX_BYTES = 24_000;
+
 const SKILL_MAX_LINES = 200;
 const SKILL_MAX_BYTES = 10_000;
+
 const SKILL_RESOURCE_MAX_LINES = 500;
 const SKILL_RESOURCE_MAX_BYTES = 20_000;
+
 const RESTORED_SPF_RESOURCE_MAX_LINES = 1_200;
 const RESTORED_SPF_RESOURCE_MAX_BYTES = 60_000;
+
 const SKILL_METADATA_MAX_BYTES = 6_000;
+
 const RESTORED_SPF_SKILLS = new Set([
   'change-spf-behavior',
   'create-spf-behavior',
@@ -488,6 +511,7 @@ const SKILL_ACTIONS = new Set([
   'build',
   'change',
   'commit',
+  'configure',
   'create',
   'design',
   'document',
@@ -496,6 +520,7 @@ const SKILL_ACTIONS = new Set([
   'maintain',
   'migrate',
   'review',
+  'transform',
   'write',
 ]);
 
@@ -516,13 +541,16 @@ function listFiles(dir, predicate, results = []) {
     if (['.git', '.agents', '.opencode', 'node_modules', 'dist', 'coverage'].includes(entry.name)) {
       continue;
     }
+
     const full = join(dir, entry.name);
+
     if (entry.isDirectory()) {
       listFiles(full, predicate, results);
     } else if (predicate(full)) {
       results.push(full);
     }
   }
+
   return results;
 }
 
@@ -535,6 +563,7 @@ function checkFileBudget(path, maxLines, maxBytes, warnings) {
   if (lines > maxLines) {
     warnings.push(`${relative}: ${lines} lines exceeds ${maxLines}`);
   }
+
   if (bytes > maxBytes) {
     warnings.push(
       `${relative}: ~${estimatedTokens(bytes)} tokens (${bytes} bytes) exceeds ~${estimatedTokens(maxBytes)} tokens`
@@ -558,6 +587,7 @@ function checkAgentContext() {
       warnings.push(`.gitignore: missing generated agent path ${rule}`);
     }
   }
+
   for (const rule of ['/.agents/skills', '/.agents/skills/', '.agents/skills', '.agents/skills/']) {
     if (gitignoreRules.has(rule)) {
       warnings.push(`.gitignore: canonical .agents/skills catalog must not be ignored by ${rule}`);
@@ -575,9 +605,11 @@ function checkAgentContext() {
     const chainBytes = agentDocs
       .filter((candidate) => {
         const candidateDirectory = dirname(candidate);
+
         return directory === candidateDirectory || directory.startsWith(`${candidateDirectory}${sep}`);
       })
       .reduce((total, candidate) => total + Buffer.byteLength(readText(candidate)), 0);
+
     if (chainBytes > AGENT_CHAIN_MAX_BYTES) {
       warnings.push(
         `${relativePath(path)} chain: ~${estimatedTokens(chainBytes)} tokens (${chainBytes} bytes) exceeds ` +
@@ -589,9 +621,11 @@ function checkAgentContext() {
   for (const path of claudeDocs) {
     const siblingAgents = join(dirname(path), 'AGENTS.md');
     const relative = relativePath(path);
+
     if (!existsSync(siblingAgents)) {
       warnings.push(`${relative}: missing sibling AGENTS.md`);
     }
+
     if (readText(path).trim() !== '@AGENTS.md') {
       warnings.push(`${relative}: must contain only \`@AGENTS.md\` to avoid duplicated instructions`);
     }
@@ -599,6 +633,7 @@ function checkAgentContext() {
 
   const agentsDir = join(ROOT, '.agents');
   const skillsDir = join(agentsDir, 'skills');
+
   for (const alias of [join(ROOT, '.claude/skills'), join(ROOT, '.opencode/skills')]) {
     if (!existsSync(alias)) {
       warnings.push(`${relativePath(alias)}: missing compatibility alias to skills`);
@@ -609,6 +644,7 @@ function checkAgentContext() {
 
   const plansDir = join(agentsDir, 'plans');
   const claudePlans = join(ROOT, '.claude/plans');
+
   if (!existsSync(claudePlans)) {
     warnings.push('.claude/plans: missing compatibility alias to .agents/plans');
   } else if (realpathSync(claudePlans) !== realpathSync(plansDir)) {
@@ -617,21 +653,26 @@ function checkAgentContext() {
 
   const canonicalSkillDirs = [];
   const skillNames = new Set();
+
   for (const entry of readdirSync(skillsDir, { withFileTypes: true })) {
     if (!entry.isDirectory()) {
       warnings.push(`.agents/skills/${entry.name}: only skill directories are allowed at the catalog root`);
       continue;
     }
+
     const skillDir = join(skillsDir, entry.name);
+
     if (!existsSync(join(skillDir, 'SKILL.md'))) {
       warnings.push(`.agents/skills/${entry.name}: missing SKILL.md`);
       continue;
     }
+
     skillNames.add(entry.name);
     canonicalSkillDirs.push(skillDir);
   }
 
   const canonicalSkillFiles = new Set(canonicalSkillDirs.map((dir) => join(dir, 'SKILL.md')));
+
   for (const path of listFiles(skillsDir, (path) => path.endsWith('/SKILL.md'))) {
     if (!canonicalSkillFiles.has(path)) {
       warnings.push(`${relativePath(path)}: skills must be direct children of .agents/skills/`);
@@ -646,14 +687,17 @@ function checkAgentContext() {
     const source = readText(path);
     const relative = relativePath(path);
     const frontmatterMatch = source.match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/);
+
     if (!frontmatterMatch) {
       warnings.push(`${relative}: missing YAML frontmatter`);
       continue;
     }
 
     const frontmatter = frontmatterMatch[1];
+
     metadataBytes += Buffer.byteLength(frontmatter);
     const fields = [...frontmatter.matchAll(/^([A-Za-z][A-Za-z0-9-]*):/gm)].map((match) => match[1]);
+
     for (const field of fields) {
       if (!PORTABLE_SKILL_FIELDS.has(field)) {
         warnings.push(`${relative}: non-portable frontmatter field "${field}"`);
@@ -665,6 +709,7 @@ function checkAgentContext() {
       .trim()
       .replace(/^['"]|['"]$/g, '');
     const directoryName = relative.split('/').at(-2);
+
     if (!name) {
       warnings.push(`${relative}: missing skill name`);
     } else if (name !== directoryName) {
@@ -676,6 +721,7 @@ function checkAgentContext() {
     }
 
     const description = frontmatter.match(/^description:\s*(.+)$/m)?.[1].trim();
+
     if (!description) {
       warnings.push(`${relative}: missing skill description`);
     } else if (description.length > 1024 || !/\bUse (?:for|when)\b/.test(description)) {
@@ -706,6 +752,7 @@ function checkAgentContext() {
 
     for (const path of listFiles(skillDir, (path) => path.endsWith('.md'))) {
       const source = readText(path);
+
       for (const name of skillNames) {
         if (name !== owner && source.includes(`\`${name}\``)) {
           warnings.push(`${relativePath(path)}: must not explicitly load or route to sibling skill "${name}"`);
@@ -726,6 +773,7 @@ const RESTORED_SPF_RECORD_MAX_LINES = 1_000;
 function recordFrontmatter(path, warnings) {
   const relative = relativePath(path);
   const match = readText(path).match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/);
+
   if (!match) {
     warnings.push(`${relative}: missing YAML frontmatter`);
     return undefined;
@@ -741,13 +789,16 @@ function checkLocalMarkdownLinks(path, warnings) {
 
   for (const match of source.matchAll(/!?\[[^\]]*\]\(([^)]+)\)/g)) {
     let target = match[1].trim();
+
     if (target.startsWith('<') && target.endsWith('>')) target = target.slice(1, -1);
+
     if (!target || target.startsWith('#') || /^[a-z][a-z0-9+.-]*:/i.test(target)) continue;
 
     target = target
       .split(/\s+["']/)[0]
       .split('#')[0]
       .split('?')[0];
+
     if (!target) continue;
 
     try {
@@ -758,6 +809,7 @@ function checkLocalMarkdownLinks(path, warnings) {
     }
 
     const resolved = target.startsWith('/') ? join(ROOT, target.slice(1)) : resolve(dirname(path), target);
+
     if (!existsSync(resolved)) {
       warnings.push(`${relativePath(path)}: broken local Markdown link "${match[1]}"`);
     }
@@ -777,16 +829,20 @@ function checkInternalRecords() {
 
   for (const path of listFiles(designDir, (path) => path.endsWith('.md'))) {
     if (path === designReadme) continue;
+
     const recordMaxLines = path.startsWith(`${join(designDir, 'spf')}${sep}`)
       ? RESTORED_SPF_RECORD_MAX_LINES
       : INTERNAL_RECORD_MAX_LINES;
+
     checkFileBudget(path, recordMaxLines, Number.POSITIVE_INFINITY, warnings);
     checkLocalMarkdownLinks(path, warnings);
     const frontmatter = recordFrontmatter(path, warnings);
     if (!frontmatter) continue;
+
     if (!DESIGN_STATUSES.has(frontmatter.status)) {
       warnings.push(`${relativePath(path)}: unknown design status "${frontmatter.status ?? 'missing'}"`);
     }
+
     if (!/^\d{4}-\d{2}-\d{2}$/.test(frontmatter.date ?? '')) {
       warnings.push(`${relativePath(path)}: date must use YYYY-MM-DD`);
     }
@@ -794,6 +850,7 @@ function checkInternalRecords() {
 
   const decisionsDir = join(ROOT, 'internal/decisions');
   const decisionsReadme = join(decisionsDir, 'README.md');
+
   for (const entry of readdirSync(decisionsDir, { withFileTypes: true })) {
     if (entry.isFile() && entry.name.endsWith('.md') && join(decisionsDir, entry.name) !== decisionsReadme) {
       warnings.push(`internal/decisions/${entry.name}: place decision records in an area directory`);
@@ -804,13 +861,16 @@ function checkInternalRecords() {
     const recordMaxLines = path.startsWith(`${join(decisionsDir, 'spf')}${sep}`)
       ? RESTORED_SPF_RECORD_MAX_LINES
       : INTERNAL_RECORD_MAX_LINES;
+
     checkFileBudget(path, recordMaxLines, Number.POSITIVE_INFINITY, warnings);
     checkLocalMarkdownLinks(path, warnings);
     const frontmatter = recordFrontmatter(path, warnings);
     if (!frontmatter) continue;
+
     if (frontmatter.status !== 'decided') {
       warnings.push(`${relativePath(path)}: tactical decisions must use status "decided"`);
     }
+
     if (!/^\d{4}-\d{2}-\d{2}$/.test(frontmatter.date ?? '')) {
       warnings.push(`${relativePath(path)}: date must use YYYY-MM-DD`);
     }
@@ -843,11 +903,13 @@ let failed = 0;
 
 for (const check of checks) {
   const result = check.fn();
+
   if (result.ok) {
     console.log(`\x1b[32m✓\x1b[0m ${check.name}`);
   } else {
     failed++;
     console.log(`\x1b[31m✗\x1b[0m ${check.name}`);
+
     for (const w of result.warnings) {
       console.log(`    ${w}`);
     }

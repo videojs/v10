@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 
 import { StoreAccessor } from '../store-accessor';
 import { createCoreTestStore, createTestHost } from './test-utils';
@@ -33,6 +33,7 @@ describe('StoreAccessor', () => {
       const onAvailable = vi.fn();
 
       const accessor = new StoreAccessor(host, store, onAvailable);
+
       accessor.hostConnected();
 
       expect(onAvailable).toHaveBeenCalledWith(store);

@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
+
 import { TikTokVideo } from '../tiktok-video/media';
 
 const SRC = 'https://www.tiktok.com/@videojs/video/7273420104193772846';
@@ -18,6 +19,7 @@ describe('TikTokVideo', () => {
     // `preload="none"` opts out of the bootstrap, so TikTok's own controls are the only thing left that can start
     // the player. The rule stops applying rather than the frame stopping taking pointer events.
     const template = TikTokVideo.getTemplateHTML({ src: SRC, preload: 'none' });
+
     expect(template).toContain(':not([preload="none"])');
   });
 

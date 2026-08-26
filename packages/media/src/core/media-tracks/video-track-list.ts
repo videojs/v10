@@ -1,10 +1,12 @@
 import { isFunction } from '@videojs/utils/predicate';
+
 import { TrackEvent } from './change-event';
 import { getPrivate } from './utils';
 import type { VideoTrack } from './video-track';
 
 export function addVideoTrack(media: HTMLMediaElement, track: VideoTrack) {
   const trackList = media.videoTracks;
+
   getPrivate(track).media = new WeakRef(media);
 
   if (!getPrivate(track).renditionSet) {
@@ -12,7 +14,9 @@ export function addVideoTrack(media: HTMLMediaElement, track: VideoTrack) {
   }
 
   const trackSet = getPrivate(trackList).trackSet as Set<VideoTrack>;
+
   trackSet.add(track);
+
   const index = trackSet.size - 1;
 
   if (!(index in VideoTrackList.prototype)) {
@@ -47,6 +51,7 @@ export function selectedChanged(selected: VideoTrack) {
 
   for (const track of trackList) {
     if (track === selected) continue;
+
     track.selected = false;
     hasUnselected = true;
   }
@@ -55,6 +60,7 @@ export function selectedChanged(selected: VideoTrack) {
 
   // Prevent firing a track list `change` event multiple times per tick.
   if (getPrivate(trackList).changeRequested) return;
+
   getPrivate(trackList).changeRequested = true;
 
   queueMicrotask(() => {
@@ -103,6 +109,7 @@ export class VideoTrackList extends EventTarget {
       this.removeEventListener('addtrack', this.#addTrackCallback);
       this.#addTrackCallback = undefined;
     }
+
     if (isFunction(callback)) {
       this.#addTrackCallback = callback;
       this.addEventListener('addtrack', callback as unknown as EventListener);
@@ -118,6 +125,7 @@ export class VideoTrackList extends EventTarget {
       this.removeEventListener('removetrack', this.#removeTrackCallback);
       this.#removeTrackCallback = undefined;
     }
+
     if (isFunction(callback)) {
       this.#removeTrackCallback = callback;
       this.addEventListener('removetrack', callback as unknown as EventListener);
@@ -133,6 +141,7 @@ export class VideoTrackList extends EventTarget {
       this.removeEventListener('change', this.#changeCallback);
       this.#changeCallback = undefined;
     }
+
     if (isFunction(callback)) {
       this.#changeCallback = callback;
       this.addEventListener('change', callback);

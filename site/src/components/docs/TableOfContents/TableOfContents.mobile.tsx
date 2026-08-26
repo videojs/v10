@@ -2,6 +2,7 @@ import { Popover } from '@base-ui/react/popover';
 import type { MarkdownHeading } from 'astro';
 import clsx from 'clsx';
 import { useEffect, useRef, useState } from 'react';
+
 import { TableOfContentsDesktop } from './TableOfContents.desktop';
 import { calculateRailGeometry } from './utils';
 
@@ -11,6 +12,8 @@ interface TableOfContentsMobileProps {
   onNavigate: (slug: string) => void;
   className?: string;
 }
+
+type RailStripeStyle = React.CSSProperties & Record<'--w' | '--lg-w', string>;
 
 export function TableOfContentsMobile({ headings, activeId, onNavigate, className }: TableOfContentsMobileProps) {
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -58,6 +61,7 @@ export function TableOfContentsMobile({ headings, activeId, onNavigate, classNam
     if (!open) return;
 
     const closeOnDocumentScroll = () => setOpen(false);
+
     window.addEventListener('scroll', closeOnDocumentScroll, { passive: true });
 
     return () => window.removeEventListener('scroll', closeOnDocumentScroll);
@@ -87,13 +91,22 @@ export function TableOfContentsMobile({ headings, activeId, onNavigate, classNam
         <span aria-hidden="true" className="flex flex-col items-start pl-1" style={{ gap: railGeometry.gap }}>
           {headings.map((heading) => {
             const isActive = activeId === heading.slug;
-            const width = heading.depth === 2 ? 12 : heading.depth === 3 ? 8 : 4;
+            const width = heading.depth === 2 ? 10 : heading.depth === 3 ? 8 : 4;
+            const largeWidth = heading.depth === 2 ? 12 : width;
+            const stripeStyle = {
+              '--w': `${width}px`,
+              '--lg-w': `${largeWidth}px`,
+              height: railGeometry.stripeHeight,
+            } satisfies RailStripeStyle;
 
             return (
               <span
                 key={heading.slug}
-                className={isActive ? 'block bg-faded-black dark:bg-manila-light' : 'block bg-current'}
-                style={{ width, height: railGeometry.stripeHeight }}
+                className={clsx(
+                  'block w-(--w) lg:w-(--lg-w)',
+                  isActive ? 'bg-faded-black dark:bg-manila-light' : 'bg-current'
+                )}
+                style={stripeStyle}
               />
             );
           })}

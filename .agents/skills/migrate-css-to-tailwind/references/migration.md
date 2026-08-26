@@ -36,15 +36,19 @@ Legacy **`tailwind.config.js`** theme spreads are not the primary path here—ex
 - `border-radius: 8px` → prefer `rounded-lg` (or a theme radius key) if equivalent/acceptable
 - `font-size`, `spacing`, `colors`, `shadow`, `z-index`, `radius` should map to **`@theme` or default v4 scales** when acceptable
 
-### 3. Use Tailwind's `--spacing` scale
+### 3. Keep Tailwind and skin spacing distinct
 
-Tailwind v4 spacing utilities are based on the `--spacing` variable. Translate spacing calculations directly to native utilities:
+Tailwind v4 spacing utilities are based on its `--spacing` variable. Translate site spacing calculations directly to native utilities:
 
 - `padding: calc(var(--spacing) * 2)` → `p-2`
 - `margin-inline: calc(var(--spacing) * 3)` → `mx-3`
 - `gap: var(--spacing)` → `gap-1`
 
-Use built-in responsive or named container variants (`md:`, `@md:`, `@md/media-root:`) for media-query behavior. If a scoped design needs to scale all spacing, overriding `--spacing` at that scope is valid because native utilities inherit it. Ignore `--scale-unit` and `--size`; resolve font and icon sizes to rem values.
+Use built-in responsive or named container variants (`md:`, `@md:`, `@md/media-root:`) for media-query behavior.
+
+In `packages/skins/src`, treat the skin container as a Tailwind theme boundary. Calculate the skin-owned `--media-spacing` from `--media-scale-unit` and `--media-scale`, then set `--spacing: var(--media-spacing)` on the container so native utilities respond to skin scaling without depending on the host's Tailwind configuration. The VJSC stylesheet performs the equivalent mapping at its isolated `@theme inline` boundary.
+
+Ignore legacy `--scale-unit` and `--size`; use the current `--media-*` tokens or resolve site font and icon sizes to rem values.
 
 For arbitrary values, Tailwind v4 also provides the build-time `--spacing(N)` function. Use it for literal spacing multipliers that do not map cleanly to a native utility:
 
@@ -52,7 +56,7 @@ For arbitrary values, Tailwind v4 also provides the build-time `--spacing(N)` fu
 - `[--max-width:calc(var(--spacing)*44)]` → `[--max-width:--spacing(44)]`
 - `[bottom:calc(100% + var(--spacing) * 4.8)]` → `[bottom:calc(100%+--spacing(4.8))]`
 
-`rounded-(--spacing(7))` is not the equivalent syntax: the parenthesized form is for a custom-property utility and would look for `var(--spacing(7))`. Keep `calc(var(--spacing) * var(...))` when the multiplier is runtime-derived because `--spacing()` only replaces literal values.
+`rounded-(--spacing(7))` is not the equivalent syntax: the parenthesized form is for a custom-property utility and would look for `var(--spacing(7))`. Keep `calc(var(--spacing) * var(...))`, or `calc(var(--media-spacing) * var(...))` in skins, when the multiplier is runtime-derived because `--spacing()` only replaces literal values.
 
 ### 4. Handle site one-offs without arbitrary-value classes
 

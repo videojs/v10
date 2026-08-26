@@ -2,6 +2,7 @@
 
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
+
 import {
   PauseIcon,
   PlayIcon,
@@ -23,6 +24,7 @@ import { Popover } from '@/ui/popover';
 import { StatusAnnouncer } from '@/ui/status-announcer';
 import { Tooltip } from '@/ui/tooltip';
 import { VolumeSlider } from '@/ui/volume-slider';
+
 import type { BaseSkinProps } from '../types';
 
 export type MinimalLiveAudioSkinProps = BaseSkinProps;
@@ -49,11 +51,27 @@ function VolumePopover(): ReactNode {
     </MuteButton>
   );
 
-  if (volumeUnavailable) return muteButton;
+  if (volumeUnavailable) {
+    return (
+      <Tooltip.Root side="top" delay={0} sticky>
+        <Tooltip.Trigger render={muteButton} />
+        <Tooltip.Popup className="media-tooltip">
+          <Tooltip.Label />
+          <Tooltip.Shortcut className="media-tooltip__kbd" />
+        </Tooltip.Popup>
+      </Tooltip.Root>
+    );
+  }
 
   return (
     <Popover.Root openOnHover delay={200} closeDelay={100} side="left" boundary="viewport">
-      <Popover.Trigger render={muteButton} />
+      <Tooltip.Root side="top" delay={0} sticky>
+        <Tooltip.Trigger render={<Popover.Trigger render={muteButton} />} />
+        <Tooltip.Popup className="media-tooltip">
+          <Tooltip.Label />
+          <Tooltip.Shortcut className="media-tooltip__kbd" />
+        </Tooltip.Popup>
+      </Tooltip.Root>
       <Popover.Popup className="media-popover media-popover--volume">
         <VolumeSlider.Root className="media-slider" orientation="horizontal" thumbAlignment="edge">
           <VolumeSlider.Track className="media-slider__track">
@@ -67,11 +85,9 @@ function VolumePopover(): ReactNode {
 }
 
 /**
- * Minimal audio skin configured for live playback. Mirrors
- * {@link MinimalAudioSkin} but omits the time slider and the current /
- * duration / remaining time displays. A flexible spacer stretches between
- * the play and volume controls so they sit at opposite edges of the
- * control bar.
+ * Minimal audio skin configured for live playback. Mirrors {@link MinimalAudioSkin} but omits the time slider and the
+ * current / duration / remaining time displays. A flexible spacer stretches between the play and volume controls so
+ * they sit at opposite edges of the control bar.
  */
 export function MinimalLiveAudioSkin(props: MinimalLiveAudioSkinProps): ReactNode {
   const { children, className, ...rest } = props;
@@ -81,13 +97,13 @@ export function MinimalLiveAudioSkin(props: MinimalLiveAudioSkinProps): ReactNod
       {children}
 
       <ErrorDialog.Root>
-        <ErrorDialog.Popup className="media-error">
-          <div className="media-error__dialog">
-            <div className="media-error__content">
-              <ErrorDialog.Title className="media-error__title"></ErrorDialog.Title>
-              <ErrorDialog.Description className="media-error__description" />
+        <ErrorDialog.Popup className="media-dialog__popup">
+          <div className="media-dialog__dialog">
+            <div className="media-dialog__content">
+              <ErrorDialog.Title className="media-dialog__title"></ErrorDialog.Title>
+              <ErrorDialog.Description className="media-dialog__description" />
             </div>
-            <div className="media-error__actions">
+            <div className="media-dialog__actions">
               <ErrorDialog.Close className="media-button media-button--subtle"></ErrorDialog.Close>
             </div>
           </div>

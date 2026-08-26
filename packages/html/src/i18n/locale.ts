@@ -11,5 +11,6 @@ export function resolveProviderLocale(host: HTMLElement & { lang?: string }): Lo
   const explicit = resolveLangAttr<Locale>(host.lang);
   const root = host.parentElement ?? (typeof document !== 'undefined' ? document.documentElement : null);
   const inherited = resolveLangAttr<Locale>(nearestLang(root));
+
   return resolvePlayerLocale(explicit, inherited);
 }

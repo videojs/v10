@@ -2,10 +2,10 @@
  * Add an event listener and return a cleanup function to remove it.
  *
  * @example
- * ```ts
- * const cleanup = listen(video, 'play', () => console.log('playing'));
- * cleanup(); // Remove listener
- * ```
+ *   ```ts
+ *   const cleanup = listen(video, 'play', () => console.log('playing'));
+ *   cleanup(); // Remove listener
+ *   ```;
  */
 export function listen<K extends keyof HTMLMediaElementEventMap>(
   target: HTMLMediaElement,

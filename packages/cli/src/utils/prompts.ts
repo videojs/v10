@@ -1,10 +1,19 @@
 import * as p from '@clack/prompts';
+
 import cdnMedia from '@/content/cdn-media.json';
 import { rendererSupportsCdn } from '@/utils/installation/cdn-code';
 import type { InstallationOptions } from '@/utils/installation/codegen';
 import { detectRenderer } from '@/utils/installation/detect-renderer';
 import { buildOptions } from '@/utils/installation/renderer-options';
-import type { InstallMethod, Renderer, Skin, UseCase } from '@/utils/installation/types';
+import {
+  getInstallationPreset,
+  type InstallMethod,
+  type Renderer,
+  type Skin,
+  USE_CASES,
+  type UseCase,
+} from '@/utils/installation/types';
+
 import type { Framework } from './config.js';
 
 const CDN_MEDIA_SUBPATHS = cdnMedia.map((entry) => entry.id);
@@ -21,16 +30,14 @@ export async function promptFramework(): Promise<Framework> {
       { value: 'react' as const, label: 'React' },
     ],
   });
+
   if (p.isCancel(value)) process.exit(0);
+
   p.note(`💡 Tip: run \`npx @videojs/cli config set framework ${value}\` to save this preference`);
   return value;
 }
 
-const PRESET_OPTIONS: Array<{ value: UseCase; label: string }> = [
-  { value: 'default-video', label: 'Video' },
-  { value: 'default-audio', label: 'Audio' },
-  { value: 'background-video', label: 'Background Video' },
-];
+const PRESET_OPTIONS = USE_CASES.map((value) => ({ value, label: getInstallationPreset(value).label }));
 
 // Reuse the installation page's option builder so labels and ordering stay in
 // lockstep with the UI.
@@ -45,7 +52,9 @@ function skinOptionsForUseCase(useCase: UseCase): Array<{ value: Skin; label: st
   if (useCase === 'background-video') {
     return [{ value: 'video', label: 'Default' }];
   }
-  const isAudio = useCase === 'default-audio';
+
+  const isAudio = getInstallationPreset(useCase).mediaType === 'audio';
+
   return [
     { value: isAudio ? 'audio' : 'video', label: 'Default' },
     { value: isAudio ? 'minimal-audio' : 'minimal-video', label: 'Minimal' },
@@ -63,11 +72,11 @@ function installMethodOptions(
     { value: 'yarn', label: 'yarn' },
     { value: 'bun', label: 'bun' },
   ];
-  // CDN is HTML-only, and only when the renderer ships a CDN build — matching
-  // the install page, which hides the CDN tab for renderers without one.
+
   if (framework === 'html' && supportsCdnInstall(renderer)) {
     options.unshift({ value: 'cdn', label: 'CDN' });
   }
+
   return options;
 }
 
@@ -81,17 +90,19 @@ export interface PartialInstallFlags {
 }
 
 export function mapRawSkin(skinFlag: string, useCase: UseCase): Skin {
-  const isAudio = useCase === 'default-audio';
+  const isAudio = getInstallationPreset(useCase).mediaType === 'audio';
   const map: Record<string, Skin> = {
     default: isAudio ? 'audio' : 'video',
     minimal: isAudio ? 'minimal-audio' : 'minimal-video',
     none: 'none',
   };
   const result = map[skinFlag];
+
   if (!result) {
     console.error(`Invalid skin: "${skinFlag}". Must be "default", "minimal", or "none".`);
     process.exit(1);
   }
+
   return result;
 }
 
@@ -106,7 +117,9 @@ export async function promptInstallOptions(
         message: 'Preset',
         options: PRESET_OPTIONS,
       });
+
       if (p.isCancel(value)) process.exit(0);
+
       return value;
     })());
 
@@ -120,7 +133,9 @@ export async function promptInstallOptions(
         message: 'Skin',
         options: skinOptionsForUseCase(useCase),
       });
+
       if (p.isCancel(value)) process.exit(0);
+
       return value;
     })());
 
@@ -131,7 +146,9 @@ export async function promptInstallOptions(
         message: 'Source URL (leave blank for demo)',
         defaultValue: '',
       });
+
       if (p.isCancel(value)) process.exit(0);
+
       return value ?? '';
     })());
 
@@ -142,7 +159,6 @@ export async function promptInstallOptions(
     flags.media ??
     (await (async () => {
       const options = mediaOptionsForUseCase(useCase);
-
       // Skip prompt if there's only one valid option
       if (options.length === 1) return options[0]!.value;
 
@@ -153,7 +169,9 @@ export async function promptInstallOptions(
         options,
         initialValue: detected?.renderer,
       });
+
       if (p.isCancel(value)) process.exit(0);
+
       return value as Renderer;
     })());
 
@@ -164,7 +182,9 @@ export async function promptInstallOptions(
         message: 'Install method',
         options: installMethodOptions(framework, media),
       });
+
       if (p.isCancel(value)) process.exit(0);
+
       return value;
     })());
 

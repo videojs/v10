@@ -4,12 +4,12 @@ import { HOTKEY_SHORTCUT_CHANGE_EVENT, playbackFeature } from '@videojs/core/dom
 import { registerI18n, resetI18nRegistry, resolveText, type Text } from '@videojs/core/i18n';
 import { ContextProvider } from '@videojs/element/context';
 import { createState, createStore } from '@videojs/store';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { MediaI18nProviderElement } from '../../../i18n';
 import { playerContext } from '../../../player/context';
-import { MediaElement } from '../../media-element';
 import { PlayButtonElement } from '../../play-button/play-button-element';
+import { UIElement } from '../../ui-element';
 import { TooltipElement } from '../tooltip-element';
 import { TooltipLabelElement } from '../tooltip-label-element';
 import { TooltipShortcutElement } from '../tooltip-shortcut-element';
@@ -22,6 +22,7 @@ function uniqueTag(base: string): string {
 
 function createElement<Element extends HTMLElement>(Base: abstract new () => Element): Element {
   const tag = uniqueTag('test-el');
+
   customElements.define(tag, class extends (Base as unknown as typeof HTMLElement) {});
   return document.createElement(tag) as Element;
 }
@@ -29,6 +30,7 @@ function createElement<Element extends HTMLElement>(Base: abstract new () => Ele
 function createPlaybackStore(): AnyPlayerStore {
   const store = createStore<PlayerTarget>()(playbackFeature) as unknown as AnyPlayerStore;
   const video = document.createElement('video');
+
   Object.defineProperty(video, 'paused', { value: true, configurable: true });
   Object.defineProperty(video, 'ended', { value: false, configurable: true });
   Object.defineProperty(video, 'readyState', {
@@ -62,7 +64,7 @@ class TestTriggerElement extends HTMLElement {
   }
 }
 
-class TestPlayerProviderElement extends MediaElement {
+class TestPlayerProviderElement extends UIElement {
   static readonly tagName = 'test-tooltip-player';
 
   store = createPlaybackStore();
@@ -107,6 +109,7 @@ describe('TooltipElement', () => {
     defineTestElements();
     const trigger = document.createElement('test-tooltip-trigger') as TestTriggerElement;
     const tooltip = createElement(TooltipElement);
+
     trigger.id = 'settings-trigger';
     trigger.setAttribute('commandfor', 'settings-menu');
     tooltip.trigger = trigger.id;
@@ -142,6 +145,7 @@ describe('TooltipElement', () => {
 
     const label = TooltipLabelElement.findIn(tooltip);
     const shortcut = TooltipShortcutElement.findIn(tooltip);
+
     expect(label?.localName).toBe(TooltipLabelElement.tagName);
     expect(label?.textContent).toBe('Play');
     expect(shortcut?.localName).toBe(TooltipShortcutElement.tagName);
@@ -153,11 +157,13 @@ describe('TooltipElement', () => {
     const { tooltip } = setup();
     const labelEl = TooltipLabelElement.create();
     const shortcutEl = TooltipShortcutElement.create();
+
     tooltip.replaceChildren(document.createTextNode('Action: '), labelEl, shortcutEl);
 
     await tooltip.updateComplete;
 
     const label = TooltipLabelElement.findIn(tooltip);
+
     expect(tooltip.textContent).toBe('Action: PlayK');
     expect(label?.textContent).toBe('Play');
     expect(TooltipShortcutElement.findIn(tooltip)?.textContent).toBe('K');
@@ -167,6 +173,7 @@ describe('TooltipElement', () => {
     const { tooltip } = setup();
     const labelEl = TooltipLabelElement.create();
     const shortcutEl = TooltipShortcutElement.create();
+
     labelEl.textContent = 'Custom label';
     tooltip.replaceChildren(labelEl, shortcutEl);
 
@@ -178,6 +185,7 @@ describe('TooltipElement', () => {
 
   it('preserves authored content without tooltip parts', async () => {
     const { tooltip } = setup();
+
     tooltip.textContent = 'Custom tooltip';
 
     await tooltip.updateComplete;
@@ -205,6 +213,7 @@ describe('TooltipElement', () => {
     trigger.dispatchEvent(new CustomEvent(HOTKEY_SHORTCUT_CHANGE_EVENT));
 
     const shortcut = TooltipShortcutElement.findIn(tooltip);
+
     expect(shortcut?.textContent).toBe('');
     expect(shortcut?.hidden).toBe(true);
   });
@@ -219,12 +228,15 @@ describe('TooltipElement', () => {
 
     const player = document.createElement(TestPlayerProviderElement.tagName) as TestPlayerProviderElement;
     const provider = new MediaI18nProviderElement();
+
     provider.setAttribute('lang', 'es');
 
     const button = document.createElement(PlayButtonElement.tagName) as PlayButtonElement;
+
     button.setAttribute('commandfor', 'tip');
 
     const tooltip = document.createElement(TooltipElement.tagName) as TooltipElement;
+
     tooltip.id = 'tip';
     tooltip.setAttribute('open', '');
 
@@ -249,12 +261,15 @@ describe('TooltipElement', () => {
 
     const player = document.createElement(TestPlayerProviderElement.tagName) as TestPlayerProviderElement;
     const provider = new MediaI18nProviderElement();
+
     provider.setAttribute('lang', 'es');
 
     const button = document.createElement(PlayButtonElement.tagName) as PlayButtonElement;
+
     button.setAttribute('commandfor', 'tip');
 
     const tooltip = document.createElement(TooltipElement.tagName) as TooltipElement;
+
     tooltip.id = 'tip';
     tooltip.setAttribute('open', '');
 
@@ -296,12 +311,15 @@ describe('TooltipElement', () => {
     ensureDefined(MediaI18nProviderElement);
 
     const provider = new MediaI18nProviderElement();
+
     provider.setAttribute('lang', 'es');
 
     const trigger = document.createElement(StubTrigger.tagName) as StubTrigger;
+
     trigger.setAttribute('commandfor', 'tip');
 
     const tooltip = document.createElement(TooltipElement.tagName) as TooltipElement;
+
     tooltip.id = 'tip';
     tooltip.setAttribute('open', '');
 

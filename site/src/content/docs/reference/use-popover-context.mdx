@@ -1,0 +1,28 @@
+---
+title: usePopoverContext
+description: Hook to access the nearest Popover compound-component context
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+
+## Import
+
+```tsx
+import { usePopoverContext } from "@videojs/react";
+```
+
+## Usage
+
+Use this hook to build a custom part rendered inside `Popover.Root`.
+
+```tsx
+function ClosePopoverButton() {
+  const { popover } = usePopoverContext();
+
+  return <button onClick={() => popover.close()}>Close popover</button>;
+}
+```
+
+The hook throws when there is no surrounding `Popover.Root`.
+
+<UtilReference util="usePopoverContext" />

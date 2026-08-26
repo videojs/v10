@@ -8,9 +8,8 @@ import '@app/styles.css';
 // Icon visibility is driven by data-* attributes set by the button elements:
 //   media-play-button: [data-paused], [data-ended]
 //   media-mute-button: [data-muted]
-
 import '@videojs/html/video/player';
-import '@videojs/html/media/container';
+import '@videojs/html/ui/container';
 import '@videojs/html/media/hls-video';
 import '@videojs/html/ui/play-button';
 import '@videojs/html/ui/mute-button';
@@ -64,18 +63,32 @@ document.getElementById('root')!.innerHTML = html`
     /* Play button icon states */
     media-play-button .icon-play,
     media-play-button .icon-pause,
-    media-play-button .icon-restart { display: none; }
+    media-play-button .icon-restart {
+      display: none;
+    }
 
-    media-play-button[data-paused]:not([data-ended]) .icon-play        { display: block; }
-    media-play-button:not([data-paused]):not([data-ended]) .icon-pause  { display: block; }
-    media-play-button[data-ended] .icon-restart                        { display: block; }
+    media-play-button[data-paused]:not([data-ended]) .icon-play {
+      display: block;
+    }
+    media-play-button:not([data-paused]):not([data-ended]) .icon-pause {
+      display: block;
+    }
+    media-play-button[data-ended] .icon-restart {
+      display: block;
+    }
 
     /* Mute button icon states */
     media-mute-button .icon-volume-high,
-    media-mute-button .icon-volume-off { display: none; }
+    media-mute-button .icon-volume-off {
+      display: none;
+    }
 
-    media-mute-button:not([data-muted]) .icon-volume-high { display: block; }
-    media-mute-button[data-muted]       .icon-volume-off  { display: block; }
+    media-mute-button:not([data-muted]) .icon-volume-high {
+      display: block;
+    }
+    media-mute-button[data-muted] .icon-volume-off {
+      display: block;
+    }
   </style>
 
   <div class="player-wrapper">
@@ -85,6 +98,7 @@ document.getElementById('root')!.innerHTML = html`
           src="https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4.m3u8"
           preload="auto"
           playsinline
+          crossorigin
         ></hls-video>
       </media-container>
 

@@ -1,0 +1,154 @@
+---
+title: Dialog
+frameworkTitle:
+  html: media-dialog
+description: A modal dialog for application content, including players opened from a thumbnail
+---
+
+import ComponentReference from "@/components/docs/api-reference/ComponentReference.astro";
+import ComponentImports from "@/components/docs/api-reference/ComponentImports.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+import StyleCase from "@/components/docs/StyleCase.astro";
+import Demo from "@/components/docs/demos/Demo.astro";
+
+{/* React demos */}
+import BasicUsageDemoReact from "@/components/docs/demos/dialog/react/css/BasicUsage";
+import basicUsageReactTsx from "@/components/docs/demos/dialog/react/css/BasicUsage.tsx?raw";
+import basicUsageReactCss from "@/components/docs/demos/dialog/react/css/BasicUsage.css?raw";
+
+{/* HTML demos */}
+import BasicUsageDemoHtml from "@/components/docs/demos/dialog/html/css/BasicUsage.astro";
+import basicUsageHtml from "@/components/docs/demos/dialog/html/css/BasicUsage.html?raw";
+import basicUsageHtmlCss from "@/components/docs/demos/dialog/html/css/BasicUsage.css?raw";
+import basicUsageHtmlTs from "@/components/docs/demos/dialog/html/css/BasicUsage.ts?raw";
+
+## Import
+
+<ComponentImports component="Dialog" html="dialog" />
+
+## Anatomy
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<Dialog.Root>
+  <Dialog.Trigger />
+  <Dialog.Backdrop />
+  <Dialog.Popup>
+    <Dialog.Title />
+    <Dialog.Description />
+    <Dialog.Close />
+  </Dialog.Popup>
+</Dialog.Root>
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```html
+<button commandfor="video-dialog">Open video</button>
+<media-dialog id="video-dialog">
+  <media-dialog-backdrop></media-dialog-backdrop>
+  <media-dialog-popup>
+    <media-dialog-title></media-dialog-title>
+    <media-dialog-description></media-dialog-description>
+    <media-dialog-close></media-dialog-close>
+  </media-dialog-popup>
+</media-dialog>
+```
+</FrameworkCase>
+
+## Behavior
+
+`Dialog` provides the modal interaction and accessibility behavior while your application supplies the content and styling. It is the general-purpose replacement for a `ModalDialog` use case such as opening a player from a thumbnail.
+
+<FrameworkCase frameworks={["react"]}>
+Use `Dialog.Trigger` to open the dialog. Use `open` with `onOpenChange` for controlled state, or `defaultOpen` for uncontrolled state. `Root` provides state without rendering an element, while `Popup` renders only while the dialog is open or closing.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+Place a button immediately before `media-dialog`, or connect them explicitly with `commandfor` and an `id`. You can also set the dialog's `open` property directly. The root provides state without creating a layout box; `media-dialog-backdrop` and `media-dialog-popup` are sibling surfaces. The element dispatches `open-change` when its state changes and `open-change-complete` after the popup transition finishes.
+</FrameworkCase>
+
+The close part and <kbd>Escape</kbd> close the dialog. Other buttons inside the dialog, including player controls, do not close it.
+
+Your application decides what opening and closing mean for the media. The example starts playback after opening and pauses it as soon as the dialog closes. Handle the promise returned by `play()`, since browsers can reject autoplay when it is not allowed.
+
+Use <DocsLink slug="reference/alert-dialog">`AlertDialog`</DocsLink> for urgent messages that require acknowledgement. <DocsLink slug="reference/error-dialog">`ErrorDialog`</DocsLink> is the player-error specialization. Both use the same dialog behavior.
+
+## Styling
+
+Use the open and transition data attributes to style the modal and its animations:
+
+| Attribute | Description |
+|-----------|-------------|
+| `data-open` | Present while the dialog is open, including its closing transition |
+| `data-starting-style` | Present at the start of the opening transition |
+| `data-ending-style` | Present during the closing transition |
+
+<FrameworkCase frameworks={["html"]}>
+```css
+media-dialog-backdrop:not([data-open]),
+media-dialog-popup:not([data-open]) {
+  display: none;
+}
+
+media-dialog-backdrop[data-starting-style],
+media-dialog-backdrop[data-ending-style],
+media-dialog-popup[data-starting-style],
+media-dialog-popup[data-ending-style] {
+  opacity: 0;
+}
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+React renders the backdrop and popup as separate DOM elements. Add a `className` to each part and style their transitions independently:
+
+```css
+.dialog-backdrop[data-starting-style],
+.dialog-backdrop[data-ending-style],
+.dialog-popup[data-starting-style],
+.dialog-popup[data-ending-style] {
+  opacity: 0;
+}
+```
+</FrameworkCase>
+
+## Accessibility
+
+The popup uses `role="dialog"` and `aria-modal="true"`. Include `Dialog.Title` so the dialog always has an accessible name. `Dialog.Description` is optional. These parts receive generated IDs connected through `aria-labelledby` and `aria-describedby`. The trigger receives `aria-haspopup`, `aria-controls`, and `aria-expanded`.
+
+When the dialog opens, focus moves to an element with `autofocus`, the first focusable element, or the popup itself. <kbd>Tab</kbd> and <kbd>Shift</kbd> + <kbd>Tab</kbd> keep focus within the dialog, and content outside the dialog becomes inert. Closing restores focus to the trigger, or to the element that was focused before the dialog opened.
+
+Dialogs inside the same player container share modal coordination. Opening one closes the current dialog and dismisses any open menu, tooltip, or popover before focus moves into the new popup.
+
+## Examples
+
+### Player modal
+
+Open the video from its thumbnail. Playback starts when the dialog opens and pauses when it closes.
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
+      { title: "App.css", code: basicUsageReactCss, lang: "css" },
+    ]}>
+      <BasicUsageDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "index.html", code: basicUsageHtml, lang: "html" },
+      { title: "index.css", code: basicUsageHtmlCss, lang: "css" },
+      { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
+    ]}>
+      <BasicUsageDemoHtml />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<ComponentReference component="Dialog" />

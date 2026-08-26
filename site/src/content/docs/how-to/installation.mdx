@@ -8,6 +8,7 @@ import RendererPicker from '@/components/installation/RendererPicker';
 import SkinPickerSection from '@/components/installation/SkinPickerSection.astro';
 import UseCasePicker from '@/components/installation/UseCasePicker';
 import HTMLInstallTabs from '@/components/installation/HTMLInstallTabs.astro';
+import NoCdnMediaNote from '@/components/installation/NoCdnMediaNote.astro';
 import HTMLUsageCodeBlock from '@/components/installation/HTMLUsageCodeBlock';
 import ReactCreateCodeBlock from '@/components/installation/ReactCreateCodeBlock';
 import ReactUsageCodeBlock from '@/components/installation/ReactUsageCodeBlock';
@@ -41,20 +42,22 @@ If you run it without flags, it will allow you to interactively configure your p
 ```bash
 npx @videojs/cli docs how-to/installation \
   --framework <html|react> \
-  --preset <video|audio|background-video> \
+  --preset <video|audio|live-video|live-audio|background-video> \
   --skin <default|minimal|none> \
-  --media <html5-video|html5-audio|hls|dash|mux-video|mux-audio|vimeo|background-video> \
+  --media <html5-video|html5-audio|hls|dash|mux-video|mux-audio|vimeo|youtube|cloudflare|tiktok|twitch|spotify|background-video> \
   --source-url <url> \
   --install-method <cdn|npm|pnpm|yarn|bun>
 ```
 
+The CLI does not currently detect non-interactive stdin. In automation, agents, and CI, include `--framework` and all five installation flags so no prompt starts. Pass `--source-url ''` to use the built-in demo without prompting.
+
 Here's what the flags mean:
 - *Framework*: Pick whether you're working in React or if you'd like to use HTML custom elements. (More to come!)
-- *Preset*: Pick a pre-built player. The default presets work well for general website playback.
+- *Preset*: Pick a pre-built player. The default presets work well for general website playback; the live presets add a Live button and drop the on-demand time displays.
 - *Skin*: Pick what your player looks like
-- *Media*: Pick what kind of media you have
-- *Source URL*: Define where your media comes from (or omit for a sample URL)
-- *Install method*: How do you want to install your package? (CDN is HTML-only)
+- *Media*: Pick what kind of media you have. The `live-video` preset supports HLS and Mux video; `live-audio` supports Mux audio.
+- *Source URL*: Define where your media comes from. In an interactive terminal, omit it to choose a sample URL. In automation, pass an empty value to choose the sample without prompting.
+- *Install method*: How do you want to install your package? (CDN is HTML-only<NoCdnMediaNote />.)
 
 If you're an agent, interview your user and offer to run the CLI for them, or offer them a precomposed CLI command. 
 </div>
@@ -79,15 +82,23 @@ Otherwise, answer the questions below to get started quickly with your first emb
 
 ## Choose your JS framework
 
-Video.js aims to provide idiomatic development experiences in your favorite JS and CSS frameworks. More to come.
+Video.js aims to provide idiomatic development experiences in React components or HTML custom elements.
 
 <ContentWidth margins="lg">
   <JSPicker />
 </ContentWidth>
 
+<FrameworkCase frameworks={["html"]}>
+  Complete the installation steps below, then visit the guide for your framework for more detailed integration information. These guides use the HTML custom elements until we add first-party Vue and Svelte packages.
+
+  <DocsLinkCard slug="how-to/use-videojs-with-vue">Vue and Nuxt</DocsLinkCard>
+
+  <DocsLinkCard slug="how-to/use-videojs-with-svelte">Svelte and SvelteKit</DocsLinkCard>
+</FrameworkCase>
+
 ## Choose your use case
 
-The default presets work well for general website playback. More pre-built players to come.
+The default presets work well for general website playback. The live presets suit streams: they add a Live button and drop the duration and current-time displays that on-demand playback relies on. More pre-built players to come.
 
 <ContentWidth margins="lg">
   <UseCasePicker client:idle />
@@ -182,18 +193,28 @@ Add it to your components folder in a new file.
 
 </div>
 
-## See also
+That's it! You now have a working Video.js player.
 
-<DocsLinkCard slug="concepts/skins" anchor="styling" description="Some skins expose CSS custom properties">Skins</DocsLinkCard>
+## Choose what to do next
 
-<DocsLinkCard slug="concepts/security" description="Configure Content Security Policy for your player">Security</DocsLinkCard>
+<DocsLinkCard slug="how-to/customize-skins" description="Customize a packaged skin or eject it for full control">Customize skins</DocsLinkCard>
+
+<DocsLinkCard slug="concepts/overview" anchor="ui-components" description="Explore the building blocks used by skins and custom controls">UI components</DocsLinkCard>
+
+<DocsLinkCard slug="how-to/build-your-own-component" description="Connect custom UI to player state and actions">Build your own component</DocsLinkCard>
+
+## Prepare for production
+
+<DocsLinkCard slug="concepts/browser-support" description="Check supported browsers and rendering environments">Browser support</DocsLinkCard>
+
+<DocsLinkCard slug="concepts/typescript" description="Configure TypeScript for Video.js packages">TypeScript</DocsLinkCard>
+
+<DocsLinkCard slug="concepts/bundlers" description="Check bundler compatibility">Bundlers</DocsLinkCard>
+
+<DocsLinkCard slug="concepts/security" description="Configure Content Security Policy for your player">Content Security Policy</DocsLinkCard>
 
 <FrameworkCase frameworks={["html"]}>
 <DocsLinkCard slug="how-to/self-host-the-player" description="Serve the player from your own origin for offline or restricted-network deployments">Self-host the player</DocsLinkCard>
 </FrameworkCase>
-
-----
-
-That's it! You now have a fully functional Video.js player. Go forth and play.
 
 Something not quite right? You can [submit an issue](https://github.com/videojs/v10/issues) and ask for help, or explore [other support options](/html5-video-support).

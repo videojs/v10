@@ -1,8 +1,8 @@
 import type { MediaTextCue } from '@videojs/media';
 import { findRangeAt } from '@videojs/utils/array';
 import { toPercent } from '@videojs/utils/number';
-import type { SliderSegmentRange, SliderSegmentState } from '../../slider/slider-segments-core';
 
+import type { SliderSegmentRange, SliderSegmentState } from '../../slider/segments-core';
 import type { TimeSliderChapterRange, TimeSliderChapterState } from './types';
 
 const cueKeys = new WeakMap<object, string>();
@@ -10,11 +10,14 @@ let cueKey = 0;
 
 function getCueKey(cue: MediaTextCue): string {
   let key = cueKeys.get(cue);
+
   if (!key) {
     const id = (cue as MediaTextCue & { id?: unknown }).id;
+
     key = `cue-${typeof id === 'string' && id ? `${id}-` : ''}${cueKey++}`;
     cueKeys.set(cue, key);
   }
+
   return key;
 }
 
@@ -53,7 +56,9 @@ export function normalizeChapterCues(
   }
 
   if (chapters.length === 0) return [{ key: 'gap-start-end', start: min, end: max, cue: null }];
+
   if (end < max) chapters.push({ key: `gap-${previousKey}-end`, start: end, end: max, cue: null });
+
   return chapters;
 }
 

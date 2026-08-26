@@ -7,9 +7,13 @@ import FeatureReference from "@/components/docs/api-reference/FeatureReference.a
 import DocsLink from "@/components/docs/DocsLink.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 
-Tracks the current stream delivery type so components can toggle live-specific UI (a live indicator, "jump to live edge" affordance, hiding the time display, etc.).
+Tracks whether the current source is live, on-demand, or not known yet. Use it to choose which controls to show.
 
-When the media exposes its own `streamType` (e.g. HLS sources derive it from the manifest), the feature syncs on `streamtypechange`. For plain media elements without that capability, it falls back to duration-based detection: an infinite `duration` reports `'live'`, a finite positive `duration` reports `'on-demand'`, and anything else reports `'unknown'`.
+`streamType` is `'live'`, `'on-demand'`, or `'unknown'`. It does not tell you how close playback is to the live edge or whether viewers can rewind.
+
+HLS media reads the stream type from the loaded playlist. If you set `streamType` yourself, your value takes priority until you set it back to `'unknown'`. Other media falls back to the browser's duration: `Infinity` means live, a finite positive value means on-demand, and any other value means unknown.
+
+The packaged presets do not include this feature. Add `streamTypeFeature` to a custom player when you need `streamType` in player state. The live presets separately include the <DocsLink slug="reference/feature-live">live feature</DocsLink>, which tracks the live edge.
 
 <FeatureReference feature="streamType" />
 
@@ -25,7 +29,12 @@ Pass `selectStreamType` to <DocsLink slug="reference/player-controller">`PlayerC
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx title="LiveIndicator.tsx"
-import { selectStreamType, usePlayer } from '@videojs/react';
+import { createPlayer, selectStreamType, streamTypeFeature } from '@videojs/react';
+import { liveVideoFeatures } from '@videojs/react/live-video';
+
+const { Player, usePlayer } = createPlayer({
+  features: [...liveVideoFeatures, streamTypeFeature],
+});
 
 function LiveIndicator() {
   const stream = usePlayer(selectStreamType);
@@ -38,13 +47,15 @@ function LiveIndicator() {
 
 <FrameworkCase frameworks={["html"]}>
 ```ts title="live-indicator.ts"
-import { createPlayer, MediaElement, selectStreamType } from '@videojs/html';
-import { videoFeatures } from '@videojs/html/video';
+import { createPlayer, selectStreamType, streamTypeFeature, UIElement } from '@videojs/html';
+import { liveVideoFeatures } from '@videojs/html/live-video';
 
-const { PlayerController, context } = createPlayer({ features: videoFeatures });
+const { PlayerController } = createPlayer({
+  features: [...liveVideoFeatures, streamTypeFeature],
+});
 
-class LiveIndicator extends MediaElement {
-  readonly #stream = new PlayerController(this, context, selectStreamType);
+class LiveIndicator extends UIElement {
+  readonly #stream = new PlayerController(this, selectStreamType);
 }
 ```
 </FrameworkCase>

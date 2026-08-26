@@ -7,14 +7,15 @@ import { useDestroy } from './use-destroy';
 /**
  * Create and manage a media instance lifecycle within a player context.
  *
- * Instantiates the media class once, attaches it to the player on mount,
- * and safely detaches on unmount using a functional updater to avoid race
- * conditions when swapping media components (e.g. DashVideo → HlsJsVideo).
+ * Instantiates the media class once, attaches it to the player on mount, and safely detaches on unmount using a
+ * functional updater to avoid race conditions when swapping media components (e.g. DashVideo → HlsJsVideo).
  *
- * An optional `setup` callback runs once on mount — e.g. to add media
- * components via `addMediaComponent`. Components registered there are destroyed
- * together with the media instance on unmount (`media.destroy()` destroys
- * all of its registered components).
+ * An optional `setup` callback runs once on mount — e.g. to add media components via `addMediaComponent`. Components
+ * registered there are destroyed together with the media instance on unmount (`media.destroy()` destroys all of its
+ * registered components).
+ *
+ * @param MediaClass - Media class to instantiate and attach to the current player.
+ * @param setup - Optional callback run once before the instance is attached.
  */
 export function useMediaInstance<Instance extends Media & { destroy(): void }>(
   MediaClass: new () => Instance,

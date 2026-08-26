@@ -18,8 +18,8 @@ function App() {
 
   return (
     <VideoPlayer>
-      <VideoSkinComponent skin={skin} styling={styling} className="aspect-video max-w-4xl mx-auto">
-        <TwitchVideo className="block w-full h-full" src={TWITCH_VIDEO_SRC} playsInline />
+      <VideoSkinComponent skin={skin} styling={styling} className="mx-auto aspect-video max-w-4xl">
+        <TwitchVideo className="block h-full w-full" src={TWITCH_VIDEO_SRC} playsInline />
       </VideoSkinComponent>
     </VideoPlayer>
   );

@@ -1,4 +1,4 @@
-import { afterAll, describe, expect, it, vi } from 'vitest';
+import { afterAll, describe, expect, it, vi } from 'vite-plus/test';
 
 class FakeNativeTrackList extends EventTarget {
   #tracks: object[] = [];
@@ -10,6 +10,7 @@ class FakeNativeTrackList extends EventTarget {
   add(track: object) {
     this.#tracks.push(track);
     const event = new Event('addtrack') as Event & { track: object };
+
     event.track = track;
     this.dispatchEvent(event);
   }
@@ -76,6 +77,7 @@ describe('MediaTracksMixin', () => {
     expect(media.videoTracks.length).toBe(1);
 
     const custom = media.addVideoTrack('main');
+
     await Promise.resolve();
 
     expect(media.videoTracks.length).toBe(1);
@@ -89,6 +91,7 @@ describe('MediaTracksMixin', () => {
     expect(media.audioTracks.length).toBe(1);
 
     const custom = media.addAudioTrack('main');
+
     await Promise.resolve();
 
     expect(media.audioTracks.length).toBe(1);

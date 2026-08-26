@@ -1,5 +1,95 @@
 # Changelog
 
+## [10.0.0-beta.32](https://github.com/videojs/v10/compare/@videojs/skins@10.0.0-beta.31...@videojs/skins@10.0.0-beta.32) (2026-08-26)
+
+
+### ⚠ BREAKING CHANGES
+
+* **packages:** separate controls content and backdrop surfaces ([#2436](https://github.com/videojs/v10/issues/2436))
+* **packages:** separate dialog popup and backdrop surfaces ([#2435](https://github.com/videojs/v10/issues/2435))
+* **html:** replace ContainerMixin with ContainerElement ([#2280](https://github.com/videojs/v10/issues/2280))
+
+### Features
+
+* **packages:** add dialog component ([#2379](https://github.com/videojs/v10/issues/2379)) ([108b8fd](https://github.com/videojs/v10/commit/108b8fda826a870bf29453289a0081ebd7df890c))
+* **packages:** add vjsc style diagnostics ([#2345](https://github.com/videojs/v10/issues/2345)) ([fa515b6](https://github.com/videojs/v10/commit/fa515b633909e6e242fef92661634b5b75943cf0))
+* **packages:** add volume popover compound ([#2378](https://github.com/videojs/v10/issues/2378)) ([a23fdd9](https://github.com/videojs/v10/commit/a23fdd93e56c07aab53cad0e66672926b1582411))
+* **packages:** expose container controls state ([#2376](https://github.com/videojs/v10/issues/2376)) ([30065dd](https://github.com/videojs/v10/commit/30065dd1980c35484b41b3a4925a6ef049aae6a0))
+* **packages:** separate controls content and backdrop surfaces ([#2436](https://github.com/videojs/v10/issues/2436)) ([7a6ccb0](https://github.com/videojs/v10/commit/7a6ccb0058c0a15fa30fd07cef3f662ac121d90c))
+* **packages:** separate dialog popup and backdrop surfaces ([#2435](https://github.com/videojs/v10/issues/2435)) ([0065e9f](https://github.com/videojs/v10/commit/0065e9f77ced3a5f9878e135c5a1bcd1825f229d))
+
+
+### Bug Fixes
+
+* **packages:** harden vjsc vite workflow ([#2355](https://github.com/videojs/v10/issues/2355)) ([8da1f84](https://github.com/videojs/v10/commit/8da1f84e22db027e447535c9f61004c7159fd142))
+* **packages:** improve menu behavior and sizing ([#2440](https://github.com/videojs/v10/issues/2440)) ([0d90572](https://github.com/videojs/v10/commit/0d9057268c59d17a4c91f1f84a60333cf082fd38))
+* **packages:** restore minimal volume controls ([#2386](https://github.com/videojs/v10/issues/2386)) ([2e9c1e2](https://github.com/videojs/v10/commit/2e9c1e221e4eca5dbc76e01718fabf82c433a483))
+* **packages:** restore vjsc skin visual parity ([#2344](https://github.com/videojs/v10/issues/2344)) ([d157a63](https://github.com/videojs/v10/commit/d157a63f0b725239752746b87bb7c41dd3af8e53))
+* **sandbox:** use fixed ports for sandbox and skins dev ([#2353](https://github.com/videojs/v10/issues/2353)) ([5664043](https://github.com/videojs/v10/commit/56640436ccaf7e754e87736ba6b828b5dc956a0a))
+
+
+### Performance Improvements
+
+* **packages:** enable native MagicString ([#2311](https://github.com/videojs/v10/issues/2311)) ([599007f](https://github.com/videojs/v10/commit/599007f72461b51eb4a4ad28049bb7bbc3e207d7))
+
+
+### Code Refactoring
+
+* **html:** replace ContainerMixin with ContainerElement ([#2280](https://github.com/videojs/v10/issues/2280)) ([76fa285](https://github.com/videojs/v10/commit/76fa285c3e91143d6776dfce4562147116036751))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.32
+  * devDependencies
+    * @videojs/core bumped to 10.0.0-beta.32
+    * @videojs/icons bumped to 10.0.0-beta.32
+
+## [10.0.0-beta.31](https://github.com/videojs/v10/compare/@videojs/skins@10.0.0-beta.30...@videojs/skins@10.0.0-beta.31) (2026-08-21)
+
+
+### Features
+
+* **packages:** add right-to-left player support ([#2281](https://github.com/videojs/v10/issues/2281)) ([caf179b](https://github.com/videojs/v10/commit/caf179b83260a242a7ff284d1d474f97a91988a9))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.31
+  * devDependencies
+    * @videojs/core bumped to 10.0.0-beta.31
+    * @videojs/icons bumped to 10.0.0-beta.31
+
+## [10.0.0-beta.30](https://github.com/videojs/v10/compare/@videojs/skins@10.0.0-beta.29...@videojs/skins@10.0.0-beta.30) (2026-08-20)
+
+
+### ⚠ BREAKING CHANGES
+
+* **packages:** remove built-in poster placeholders ([#2063](https://github.com/videojs/v10/issues/2063))
+
+### Bug Fixes
+
+* **skin:** stabilize menu sizing and motion ([#2283](https://github.com/videojs/v10/issues/2283)) ([191538e](https://github.com/videojs/v10/commit/191538e99935ffdced88e77fef55405410558562))
+
+
+### Code Refactoring
+
+* **packages:** remove built-in poster placeholders ([#2063](https://github.com/videojs/v10/issues/2063)) ([e7de7a7](https://github.com/videojs/v10/commit/e7de7a78c4806403a2416926bdbeddb171de1fed))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.30
+  * devDependencies
+    * @videojs/core bumped to 10.0.0-beta.30
+    * @videojs/icons bumped to 10.0.0-beta.30
+
 ## [10.0.0-beta.29](https://github.com/videojs/v10/compare/@videojs/skins@10.0.0-beta.28...@videojs/skins@10.0.0-beta.29) (2026-08-19)
 
 

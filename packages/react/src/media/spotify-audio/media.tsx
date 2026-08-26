@@ -4,6 +4,7 @@ import type { SpotifyMediaProps } from '@videojs/media/dom/spotify';
 import { buildSpotifyIframeSrc, SpotifyMedia, spotifyMediaDefaultProps } from '@videojs/media/dom/spotify';
 import type { CSSProperties, ReactNode } from 'react';
 import { forwardRef, useState } from 'react';
+
 import { useAttachIframe } from '../../utils/use-attach-iframe';
 import { useComposedRefs } from '../../utils/use-composed-refs';
 import { useMediaInstance } from '../../utils/use-media-instance';

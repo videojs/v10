@@ -12,6 +12,7 @@
     "noautohide",
     "noto",
     "nums",
+    "oxlint",
     "plyr",
     "prefs",
     "rahim",
@@ -19,7 +20,8 @@
     "shiki",
     "squircle",
     "videojs",
-    "vidstack"
+    "vidstack",
+    "vjsc"
   ],
   "ignoreWords": [],
   "import": []

@@ -312,7 +312,7 @@ Public re-export: `@videojs/spf/hls-audio`.
 | Export | File | Purpose |
 |---|---|---|
 | `HlsAudio` | `media/hls-audio/media.ts` | Applies `MediaAttachMixin` + `CustomMediaElement('audio', HlsAudioMedia)` |
-| `HlsAudioElement` (tag `hls-audio`) | `define/media/hls-audio.ts` | Custom-element definition; registers `<hls-audio>` via `safeDefine` |
+| `HlsAudioElement` (tag `hls-audio`) | `media/hls-audio/element.ts` | Custom-element implementation; `define/media/hls-audio.ts` registers it via `safeDefine` |
 
 CDN entry: `packages/html/src/cdn/media/hls-audio.ts` →
 `@videojs/html/cdn/media/hls-audio`.

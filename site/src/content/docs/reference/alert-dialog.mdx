@@ -1,0 +1,142 @@
+---
+title: AlertDialog
+frameworkTitle:
+  html: media-alert-dialog
+description: A modal alert dialog for urgent messages that require acknowledgement
+---
+
+import ComponentReference from "@/components/docs/api-reference/ComponentReference.astro";
+import ComponentImports from "@/components/docs/api-reference/ComponentImports.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+import StyleCase from "@/components/docs/StyleCase.astro";
+import Demo from "@/components/docs/demos/Demo.astro";
+
+{/* React demos */}
+import BasicUsageDemoReact from "@/components/docs/demos/alert-dialog/react/css/BasicUsage";
+import basicUsageReactTsx from "@/components/docs/demos/alert-dialog/react/css/BasicUsage.tsx?raw";
+import basicUsageReactCss from "@/components/docs/demos/alert-dialog/react/css/BasicUsage.css?raw";
+
+{/* HTML demos */}
+import BasicUsageDemoHtml from "@/components/docs/demos/alert-dialog/html/css/BasicUsage.astro";
+import basicUsageHtml from "@/components/docs/demos/alert-dialog/html/css/BasicUsage.html?raw";
+import basicUsageHtmlCss from "@/components/docs/demos/alert-dialog/html/css/BasicUsage.css?raw";
+import basicUsageHtmlTs from "@/components/docs/demos/alert-dialog/html/css/BasicUsage.ts?raw";
+
+## Import
+
+<ComponentImports component="AlertDialog" html="alert-dialog" />
+
+## Anatomy
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<AlertDialog.Root>
+  <AlertDialog.Backdrop />
+  <AlertDialog.Popup>
+    <AlertDialog.Title />
+    <AlertDialog.Description />
+    <AlertDialog.Close />
+  </AlertDialog.Popup>
+</AlertDialog.Root>
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```html
+<media-alert-dialog>
+  <media-dialog-backdrop></media-dialog-backdrop>
+  <media-dialog-popup>
+    <media-dialog-title></media-dialog-title>
+    <media-dialog-description></media-dialog-description>
+    <media-dialog-close></media-dialog-close>
+  </media-dialog-popup>
+</media-alert-dialog>
+```
+</FrameworkCase>
+
+## Behavior
+
+Use an alert dialog for an urgent message that interrupts the user and requires acknowledgement. Your application controls when it opens and supplies its content. `AlertDialog.Root` adds alert semantics, while the other `AlertDialog` parts are re-exported from <DocsLink slug="reference/dialog">`Dialog`</DocsLink>. For general modal content, including a player opened from a thumbnail, use `Dialog.Root` instead.
+
+<FrameworkCase frameworks={["react"]}>
+Use `open` with `onOpenChange` for controlled state, or `defaultOpen` for uncontrolled state. `Root` provides state without rendering an element, while `Popup` renders only while the dialog is open.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+Set the root's `open` property to show the dialog. The root supplies alert state while the shared `media-dialog-backdrop` and `media-dialog-popup` siblings render the visual surfaces and semantics. The root updates the property and dispatches `open-change` when the dialog closes.
+</FrameworkCase>
+
+The close part and <kbd>Escape</kbd> close the dialog. The dialog stays rendered during a closing transition, then restores focus to the element that was focused before it opened.
+
+## Styling
+
+Use the open and transition data attributes to style visibility and animations:
+
+| Attribute | Description |
+|-----------|-------------|
+| `data-open` | Present while the dialog is open, including its closing transition |
+| `data-starting-style` | Present at the start of the opening transition |
+| `data-ending-style` | Present during the closing transition |
+
+<FrameworkCase frameworks={["html"]}>
+```css
+media-dialog-backdrop:not([data-open]),
+media-dialog-popup:not([data-open]) {
+  display: none;
+}
+
+media-dialog-backdrop[data-starting-style],
+media-dialog-backdrop[data-ending-style],
+media-dialog-popup[data-starting-style],
+media-dialog-popup[data-ending-style] {
+  opacity: 0;
+}
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+React renders separate backdrop and popup elements. Add a `className` to each part and style them independently:
+
+```css
+.alert-dialog-backdrop[data-starting-style],
+.alert-dialog-backdrop[data-ending-style],
+.alert-dialog-popup[data-starting-style],
+.alert-dialog-popup[data-ending-style] {
+  opacity: 0;
+}
+```
+</FrameworkCase>
+
+## Accessibility
+
+The dialog uses `role="alertdialog"` and `aria-modal="true"`. The title and description receive generated IDs that are connected with `aria-labelledby` and `aria-describedby`. Focus moves into the dialog when it opens, stays within it while open, and returns to the previously focused element when it closes. Content outside the dialog is inert while it is open. Pressing <kbd>Escape</kbd> closes the dialog.
+
+## Examples
+
+### Basic usage
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
+      { title: "App.css", code: basicUsageReactCss, lang: "css" },
+    ]}>
+      <BasicUsageDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "index.html", code: basicUsageHtml, lang: "html" },
+      { title: "index.css", code: basicUsageHtmlCss, lang: "css" },
+      { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
+    ]}>
+      <BasicUsageDemoHtml />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<ComponentReference component="AlertDialog" />

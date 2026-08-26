@@ -1,5 +1,6 @@
-import { describe, expect, it, vi } from 'vitest';
-import { PopoverCSSVars } from '../../../../core/ui/popover/popover-css-vars';
+import { describe, expect, it, vi } from 'vite-plus/test';
+
+import { PopoverCSSVars } from '../../../../core/ui/popover/vars';
 import {
   getAnchorPositionStyle,
   getManualPositionStyle,
@@ -12,6 +13,7 @@ import {
 // Mock supportsAnchorPositioning for deterministic tests.
 vi.mock('@videojs/utils/dom', async (importOriginal) => {
   const original = (await importOriginal()) as Record<string, unknown>;
+
   return {
     ...original,
     supportsAnchorPositioning: vi.fn(() => false),
@@ -105,6 +107,14 @@ describe('getManualPositionStyle', () => {
 
     // left = trigger.right - popup.width = 220 - 200 = 20
     expect(style.left).toBe('20px');
+  });
+
+  it('resolves horizontal start and end from RTL direction', () => {
+    const start = getManualPositionStyle(trigger, popup, { side: 'top', align: 'start', direction: 'rtl' });
+    const end = getManualPositionStyle(trigger, popup, { side: 'top', align: 'end', direction: 'rtl' });
+
+    expect(start.left).toBe('20px');
+    expect(end.left).toBe('100px');
   });
 
   it('applies alignOffset from resolved CSS vars', () => {
@@ -300,8 +310,11 @@ describe('resolveOffsets', () => {
           fontSize: target === document.documentElement ? '16px' : '14px',
           getPropertyValue(name: string) {
             if (name === PopoverCSSVars.sideOffset) return '0.5rem';
+
             if (name === PopoverCSSVars.alignOffset) return '1em';
+
             if (name === PopoverCSSVars.boundaryOffset) return '2px';
+
             return '';
           },
         }) as CSSStyleDeclaration
@@ -357,6 +370,7 @@ describe('getPopupPositionRect', () => {
     ['left', 120, 60],
   ] as const)('includes overflow on the %s side axis', (side, expectedWidth, expectedHeight) => {
     const el = document.createElement('div');
+
     vi.spyOn(el, 'getBoundingClientRect').mockImplementation(() => makeDOMRect(20, 40, 100, 60));
     Object.defineProperty(el, 'offsetWidth', { configurable: true, value: 100 });
     Object.defineProperty(el, 'offsetHeight', { configurable: true, value: 60 });
@@ -364,12 +378,14 @@ describe('getPopupPositionRect', () => {
     Object.defineProperty(el, 'scrollHeight', { configurable: true, value: 80 });
 
     const rect = getPopupPositionRect(el, side);
+
     expect(rect.width).toBe(expectedWidth);
     expect(rect.height).toBe(expectedHeight);
   });
 
   it('does not change available-size styles while measuring', () => {
     const el = document.createElement('div');
+
     el.style.setProperty(PopoverCSSVars.availableHeight, '20px');
     vi.spyOn(el, 'getBoundingClientRect').mockImplementation(() => {
       expect(el.style.getPropertyValue(PopoverCSSVars.availableHeight)).toBe('20px');
@@ -394,9 +410,11 @@ describe('getAnchorPositionStyle (CSS Anchor Positioning)', () => {
     vi.resetModules();
     vi.doMock('@videojs/utils/dom', async (importOriginal) => {
       const original = (await importOriginal()) as Record<string, unknown>;
+
       return { ...original, supportsAnchorPositioning: () => true };
     });
     const mod = await import('../popover-positioning');
+
     return mod.getAnchorPositionStyle;
   }
 
@@ -408,7 +426,7 @@ describe('getAnchorPositionStyle (CSS Anchor Positioning)', () => {
     expect(style.position).toBe('fixed');
   });
 
-  it('uses CSS cross-axis shifting when boundary rects are available', async () => {
+  it('anchors the cross axis while shifting inside the boundary', async () => {
     const getStyle = await importWithAnchorSupport();
     const boundary = makeDOMRect(0, 0, 300, 200);
     const trigger = makeDOMRect(20, 100, 30, 20);
@@ -420,8 +438,31 @@ describe('getAnchorPositionStyle (CSS Anchor Positioning)', () => {
 
     expect(style.positionAnchor).toBe('--my-popover');
     expect(style.bottom).toBe('calc(anchor(top) + var(--media-popover-side-offset, 0px))');
-    expect(style.left).toBe('35px');
+    expect(style.left).toBe('calc(anchor(center) + var(--media-popover-align-offset, 0px))');
     expect(style.translate).toBe('clamp(-27px, -50%, calc(257px - 100%)) 0');
+  });
+
+  it('anchors the vertical cross axis while shifting inside the boundary', async () => {
+    const getStyle = await importWithAnchorSupport();
+    const boundary = makeDOMRect(0, 0, 300, 200);
+    const trigger = makeDOMRect(100, 20, 30, 40);
+    const style = getStyle('my-popover', { side: 'left', align: 'end' }, trigger, undefined, boundary, {
+      sideOffset: 0,
+      alignOffset: 4,
+      boundaryOffset: 8,
+    });
+
+    expect(style.right).toBe('calc(anchor(left) + var(--media-popover-side-offset, 0px))');
+    expect(style.top).toBe('calc(anchor(bottom) + var(--media-popover-align-offset, 0px))');
+    expect(style.translate).toBe('0 clamp(-56px, -100%, calc(128px - 100%))');
+  });
+
+  it('resolves horizontal start from RTL direction', async () => {
+    const getStyle = await importWithAnchorSupport();
+    const style = getStyle('a', { side: 'top', align: 'start', direction: 'rtl' });
+
+    expect(style.right).toBe(`calc(anchor(right) + ${ALIGN_VAR})`);
+    expect(style.left).toBeUndefined();
   });
 
   it('places popover above trigger for side=top using CSS var offset', async () => {

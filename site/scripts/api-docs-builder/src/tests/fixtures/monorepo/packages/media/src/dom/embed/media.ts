@@ -1,12 +1,16 @@
 /** Mock iframe-backed media host — mirrors VimeoMedia. */
+import type { EmbedSource } from './source';
+
 export const embedMediaDefaultProps = {
   src: '',
   autoplay: false,
+  source: null,
 };
 
 export class EmbedHost extends EventTarget {
   #src = embedMediaDefaultProps.src;
   #autoplay = embedMediaDefaultProps.autoplay;
+  #source: EmbedSource | null = null;
 
   get src(): string {
     return this.#src;
@@ -20,6 +24,14 @@ export class EmbedHost extends EventTarget {
   }
   set autoplay(value: boolean) {
     this.#autoplay = value;
+  }
+
+  /** Embed URL or id in `src`, plus embed parameters under `engine.embed`. */
+  get source(): EmbedSource | null {
+    return this.#source;
+  }
+  set source(value: EmbedSource | null) {
+    this.#source = value;
   }
 
   /** Start playback through the embedded player. */

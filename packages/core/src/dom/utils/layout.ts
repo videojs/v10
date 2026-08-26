@@ -41,6 +41,7 @@ export function intersectDOMRects(firstRect: DOMRect, secondRect: DOMRect): DOMR
 
 export function getPositioningBoundaryRect(boundaryElement?: Element | null): DOMRect {
   const viewportRect = document.documentElement.getBoundingClientRect();
+
   return boundaryElement ? intersectDOMRects(viewportRect, boundaryElement.getBoundingClientRect()) : viewportRect;
 }
 
@@ -49,8 +50,11 @@ export function resolvePositioningBoundary(
   options: ResolvePositioningBoundaryOptions = {}
 ): Element | null {
   if (!boundary) return null;
+
   if (!isString(boundary)) return boundary;
+
   if (boundary === 'viewport') return null;
+
   if (boundary === 'container') return options.container ?? null;
 
   try {

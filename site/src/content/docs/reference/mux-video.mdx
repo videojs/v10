@@ -48,7 +48,7 @@ If for some reason you need a bit more control, you can use the `src` param with
 />
 ```
 
-MuxVideo fires a `sourcechange` event when the source actually changes. Setting the same values again, like a fresh object on a React re-render, doesn't fire it.
+MuxVideo ignores the same source object when it is assigned again. A new object fires `sourcechange` even when its values are equal, although an equivalent playback source does not reload.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
@@ -62,7 +62,7 @@ MuxVideo takes Mux content two ways: a stream URL through `src`, or a structured
 The `source` object builds the URL for you from a playback ID, an optional custom domain, and `playback` params. Playback params are just camelCased [Mux playback query params](https://www.mux.com/docs/api-reference/stream/streaming/get-hls-manifest); for example, `max_resolution` becomes `maxResolution`.
 
 ```ts
-const video = document.querySelector('mux-video');
+const video = document.querySelector('mux-video')!;
 video.source = {
   playbackId: 'BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM',
   customDomain: 'media.example.com',
@@ -70,18 +70,71 @@ video.source = {
 };
 ```
 
-MuxVideo fires a `sourcechange` event when the source actually changes. Setting the same values again doesn't fire it.
+MuxVideo ignores the same source object when it is assigned again. A new object fires `sourcechange` even when its values are equal, although an equivalent playback source does not reload.
 </FrameworkCase>
 
-## Thumbnails and storyboards
+## Posters and storyboards
 
-`thumbnail` and `storyboard` default to URLs derived from `source`: the poster image and the storyboard VTT that drives hover previews on the time slider. MuxVideo injects the storyboard `<track>` automatically, skipping it for live streams. Set either prop to a URL to override the derived one.
+MuxVideo derives a poster image and a storyboard from the playback ID. `source.poster` and `source.storyboard` configure the generated URLs.
+
+When MuxVideo is inside a player, it supplies the poster for the skin to display. Set `poster` on the player when you want to use your own image instead.
+
+<FrameworkCase frameworks={["react"]}>
+A generated poster becomes available after MuxVideo mounts. Pass `poster` to the player when the image must appear in server-rendered HTML.
+</FrameworkCase>
+
+MuxVideo injects the derived storyboard `<track>` automatically and removes it when the media detects a live stream. Configure the derived URLs through the source object:
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<MuxVideo
+  source={{
+    playbackId: 'BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM',
+    poster: { time: 2, width: 1280 },
+    storyboard: { format: 'webp' },
+  }}
+/>
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```ts
+const video = document.querySelector('mux-video')!;
+video.source = {
+  playbackId: 'BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM',
+  poster: { time: 2, width: 1280 },
+  storyboard: { format: 'webp' },
+};
+```
+
+For declarative HTML, `poster-time="2"` reflects to `source.poster.time` after the `src` attribute is parsed.
+</FrameworkCase>
+
+The storyboard lives on a Mux domain, so MuxVideo has to be CORS-enabled for that cross-origin `<track>` to load at all. <DocsLink slug="reference/thumbnail">Thumbnail</DocsLink> then fetches the sprite sheets its cues point at the same way:
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<MuxVideo
+  source={{ playbackId: 'BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM' }}
+  crossOrigin="anonymous"
+/>
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```html
+<mux-video
+  src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM.m3u8"
+  crossorigin="anonymous"
+></mux-video>
+```
+</FrameworkCase>
 
 ## Signed playback
 
 For [signed playback](https://www.mux.com/docs/guides/secure-video-playback), put the playback token on `source.playback.token`. The token replaces every other playback param, so bake modifiers like resolution and time bounds into the token when you sign it.
 
-Thumbnail and storyboard URLs need their own audience-scoped tokens, `source.thumbnail.token` (`aud: 't'`) and `source.storyboard.token` (`aud: 's'`). Without a matching image token, MuxVideo derives no thumbnail or storyboard URL, since an unsigned request would be rejected.
+Signed playback needs a separate token for each image URL. Put the thumbnail token (`aud: 't'`) at `source.poster.token` and the storyboard token (`aud: 's'`) at `source.storyboard.token`. If either token is missing or has the wrong audience, MuxVideo does not generate the corresponding URL.
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
@@ -89,7 +142,7 @@ Thumbnail and storyboard URLs need their own audience-scoped tokens, `source.thu
   source={{
     playbackId: 'BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM',
     playback: { token: playbackToken },
-    thumbnail: { token: thumbnailToken },
+    poster: { token: posterToken },
     storyboard: { token: storyboardToken },
   }}
 />
@@ -98,11 +151,11 @@ Thumbnail and storyboard URLs need their own audience-scoped tokens, `source.thu
 
 <FrameworkCase frameworks={["html"]}>
 ```ts
-const video = document.querySelector('mux-video');
+const video = document.querySelector('mux-video')!;
 video.source = {
   playbackId: 'BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM',
   playback: { token: playbackToken },
-  thumbnail: { token: thumbnailToken },
+  poster: { token: posterToken },
   storyboard: { token: storyboardToken },
 };
 ```
@@ -110,32 +163,49 @@ video.source = {
 
 ## Analytics and casting
 
-MuxVideo plays Mux streams. It doesn't monitor them or cast them — <DocsLink slug="concepts/mux-data">Mux Data</DocsLink> and <DocsLink slug="concepts/cast">Google Cast</DocsLink> are separate components you add to the player alongside it. Mux Data needs no environment key here, since Mux attributes the views to the environment that owns the playback ID:
+MuxVideo plays Mux streams. It doesn't monitor them or cast them — <DocsLink slug="concepts/mux-data">Mux Data</DocsLink> and the <DocsLink slug="how-to/cast-to-airplay-and-chromecast">Google Cast integration</DocsLink> are separate components you add to the player alongside it. Mux Data needs no environment key here, since Mux attributes the views to the environment that owns the playback ID:
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
+import { createPlayer } from '@videojs/react';
 import { GoogleCast } from '@videojs/react/media/google-cast';
 import { MuxData } from '@videojs/react/media/mux-data';
 import { MuxVideo } from '@videojs/react/media/mux-video';
+import { videoFeatures } from '@videojs/react/video';
 
-<MuxVideo source={{ playbackId: 'BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM' }} playsInline />
-<MuxData playerSoftwareName="mux-video" />
-<GoogleCast />
+const { Player } = createPlayer({ features: videoFeatures });
+
+export function MuxPlayer() {
+  return (
+    <Player>
+      <MuxVideo source={{ playbackId: 'BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM' }} playsInline />
+      <MuxData playerSoftwareName="mux-video" />
+      <GoogleCast />
+    </Player>
+  );
+}
 ```
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
 ```html
-<mux-video src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM.m3u8" playsinline></mux-video>
-<mux-data player-software-name="mux-video"></mux-data>
-<google-cast></google-cast>
-```
+<script type="module">
+  import '@videojs/html/video/player';
+  import '@videojs/html/media/mux-video';
+  import '@videojs/html/media/mux-data';
+  import '@videojs/html/media/google-cast';
+</script>
 
-Register the elements by importing `@videojs/html/media/mux-data` and `@videojs/html/media/google-cast`.
+<video-player>
+  <mux-video src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM.m3u8" playsinline></mux-video>
+  <mux-data player-software-name="mux-video"></mux-data>
+  <google-cast></google-cast>
+</video-player>
+```
 </FrameworkCase>
 
 <DocsLinkCard slug="concepts/mux-data" description="Metadata, options, and configuration">Mux Data</DocsLinkCard>
-<DocsLinkCard slug="concepts/cast" description="Receivers, load requests, and session state">Google Cast</DocsLinkCard>
+<DocsLinkCard slug="how-to/cast-to-airplay-and-chromecast" description="Receivers, load requests, and session state">Cast to AirPlay and Chromecast</DocsLinkCard>
 
 ## Examples
 

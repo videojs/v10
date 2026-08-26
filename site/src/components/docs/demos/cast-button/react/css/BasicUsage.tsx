@@ -1,4 +1,5 @@
 import { CastButton, Container, createPlayer } from '@videojs/react';
+import { GoogleCast } from '@videojs/react/media/google-cast';
 import { HlsJsVideo } from '@videojs/react/media/hlsjs-video';
 import { videoFeatures } from '@videojs/react/video';
 
@@ -9,6 +10,7 @@ export default function BasicUsage() {
     <Player>
       <Container className="media-container">
         <HlsJsVideo src="{{VJS10_DEMO_VIDEO_HLS}}" autoPlay muted playsInline loop />
+        <GoogleCast />
         <CastButton
           className="media-cast-button"
           render={(props, state) => (

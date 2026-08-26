@@ -15,7 +15,7 @@ import { SOURCES } from '@app/shared/sources';
 
 const html = String.raw;
 
-const state = createHtmlSandboxState(true);
+const state = createHtmlSandboxState();
 const loadLatest = createLatestLoader();
 
 async function render() {
@@ -30,7 +30,7 @@ async function render() {
     <div class="w-full max-w-xl mx-auto">
       <audio-player>
         <${tag}>
-          <audio src="${SOURCES[state.source].url}" ${mediaAttrs}></audio>
+          <audio src="${SOURCES[state.source].url}" ${mediaAttrs} crossorigin></audio>
         </${tag}>
       </audio-player>
     </div>

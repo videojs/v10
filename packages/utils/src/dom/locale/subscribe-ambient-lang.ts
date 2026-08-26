@@ -4,6 +4,7 @@ let queued = false;
 
 const flush = (): void => {
   queued = false;
+
   for (const cb of subscribers) {
     cb();
   }
@@ -41,8 +42,8 @@ function stop(): void {
 }
 
 /**
- * Subscribes to DOM updates that can change inherited `lang`: any `lang` attribute edit,
- * or subtree structural changes under `<html>` (which can move nodes between labeled ancestors).
+ * Subscribes to DOM updates that can change inherited `lang`: any `lang` attribute edit, or subtree structural changes
+ * under `<html>` (which can move nodes between labeled ancestors).
  */
 export function subscribeAmbientLang(onStoreChange: () => void): () => void {
   if (typeof document === 'undefined') {

@@ -3,9 +3,12 @@ import { getEntry } from 'astro:content';
 import ContentWidth from '@/components/frames/ContentWidth.astro';
 import H2 from '@/components/typography/H2Markdown.astro';
 import H3 from '@/components/typography/H3Markdown.astro';
+import P from '@/components/typography/P.astro';
+import { isValidFramework } from '@/types/docs';
 import type { FeatureReference } from '@/types/feature-reference';
 import { createFeatureReferenceModel } from '@/utils/featureReferenceModel';
 import ApiActionsTable from './ApiActionsTable.astro';
+import ApiPropsTable from './ApiPropsTable.astro';
 import ApiStateTable from './ApiStateTable.astro';
 
 interface Props {
@@ -13,6 +16,8 @@ interface Props {
 }
 
 const { feature } = Astro.props;
+const { framework } = Astro.params;
+if (!framework || !isValidFramework(framework)) throw new Error(`Invalid or missing framework param.`);
 
 const entry = await getEntry('featureReference', feature);
 const ref: FeatureReference | null = entry?.data ?? null;
@@ -21,12 +26,35 @@ if (!ref) return;
 const model = createFeatureReferenceModel(feature, ref);
 if (!model) return;
 
+const configSection = model.sections.find((s) => s.key === 'config');
 const stateSection = model.sections.find((s) => s.key === 'state');
 const actionsSection = model.sections.find((s) => s.key === 'actions');
+
+// The runtime derives HTML attribute names from the config keys the same way.
+const isHtml = framework === 'html';
+// `<P>` renders its slot as text, so this copy carries no markdown.
+const configLead = isHtml
+  ? 'Attributes and matching properties the player element accepts. They exist only while this feature is selected.'
+  : 'Props the Player component accepts. They exist only while this feature is selected.';
 ---
 
 <ContentWidth>
   <H2 id={model.heading.id}>{model.heading.text}</H2>
+
+  {
+    configSection && (
+      <>
+        <H3 id={configSection.id}>{configSection.title}</H3>
+        <P>{configLead}</P>
+        <ApiPropsTable
+          props={model.data.config}
+          componentName={`${feature}-config`}
+          framework={framework}
+          showAttributeName={isHtml}
+        />
+      </>
+    )
+  }
 
   {
     stateSection && (

@@ -1,0 +1,146 @@
+---
+title: StatusAnnouncer
+frameworkTitle:
+  html: media-status-announcer
+description: Announce player state changes through a persistent status live region
+---
+
+import ComponentReference from "@/components/docs/api-reference/ComponentReference.astro";
+import ComponentImports from "@/components/docs/api-reference/ComponentImports.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+import StyleCase from "@/components/docs/StyleCase.astro";
+import Demo from "@/components/docs/demos/Demo.astro";
+
+{/* React demo */}
+import BasicUsageDemoReact from "@/components/docs/demos/status-announcer/react/css/BasicUsage";
+import basicUsageReactTsx from "@/components/docs/demos/status-announcer/react/css/BasicUsage.tsx?raw";
+import basicUsageReactCss from "@/components/docs/demos/status-announcer/react/css/BasicUsage.css?raw";
+
+{/* HTML demo */}
+import BasicUsageDemoHtml from "@/components/docs/demos/status-announcer/html/css/BasicUsage.astro";
+import basicUsageHtml from "@/components/docs/demos/status-announcer/html/css/BasicUsage.html?raw";
+import basicUsageHtmlCss from "@/components/docs/demos/status-announcer/html/css/BasicUsage.css?raw";
+import basicUsageHtmlTs from "@/components/docs/demos/status-announcer/html/css/BasicUsage.ts?raw";
+
+## Import
+
+<ComponentImports component="StatusAnnouncer" html="status-announcer" />
+
+## Anatomy
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<StatusAnnouncer />
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```html
+<media-status-announcer></media-status-announcer>
+```
+</FrameworkCase>
+
+## Behavior
+
+`StatusAnnouncer` watches player-store snapshots, so it reports changes made by buttons, sliders, custom controls, or direct player actions. It does not depend on <DocsLink slug="reference/hotkey">`Hotkey`</DocsLink> or <DocsLink slug="reference/gesture">`Gesture`</DocsLink> events.
+
+The first snapshot establishes a baseline without announcing it. Later changes are handled in two groups:
+
+| Timing | Changes |
+| --- | --- |
+| Immediate | Playing or paused, captions on or off, fullscreen entered or exited, picture-in-picture entered or exited, and playback rate |
+| Debounced by 200 milliseconds | The final volume or mute value and the final time after a completed seek |
+
+Regular playback-time updates are ignored. A seek announcement is queued only after `seeking` changes from `true` to `false` at a different time. When several immediate states change in one snapshot, their translated labels are combined into one announcement.
+
+The component always renders with `role="status"`. Its `[data-status-announcer-content]` child is replaced for every announcement, including repeated text, so assistive technology receives a fresh live-region change. After `closeDelay`, which defaults to 800 milliseconds, the label is cleared while the status region remains rendered.
+
+Announcements use the active Video.js locale and translations.
+
+<FrameworkCase frameworks={["react"]}>
+Use the `labels` prop to override individual translated labels for one announcer.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+The custom element receives labels from the nearest player i18n context.
+</FrameworkCase>
+
+## Styling
+
+`StatusAnnouncer` is not visually hidden by the primitive. Apply a visually-hidden class while keeping it in the accessibility tree. Do not use `display: none`, `visibility: hidden`, or the `hidden` attribute.
+
+<FrameworkCase frameworks={["html"]}>
+```css
+media-status-announcer {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  white-space: nowrap;
+  border: 0;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+}
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+Add a `className` to the component:
+
+```css
+.status-announcer {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  white-space: nowrap;
+  border: 0;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+}
+```
+</FrameworkCase>
+
+## Accessibility
+
+The `status` role provides implicit polite live-region behavior, so the component does not add an explicit `aria-live` attribute. Keep one announcer inside each player `Container` whose state changes should be reported.
+
+Debounced volume and completed-seek announcements are suppressed while an element with `role="slider"` inside the same Container has focus. The focused slider provides its own value feedback, and suppressing the separate status message avoids duplicate announcements. A focused slider outside that Container does not suppress it.
+
+Use <DocsLink slug="reference/seek-indicator">`SeekIndicator`</DocsLink> for temporary visual seek feedback. Keep that visual value out of a live region; `StatusAnnouncer` owns the accessible announcement.
+
+## Examples
+
+### Basic Usage
+
+Use the playback button for an immediate announcement and the mute button for a debounced announcement. The sliders provide their own focused value feedback, so `StatusAnnouncer` suppresses its duplicate volume and completed-seek message.
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
+      { title: "App.css", code: basicUsageReactCss, lang: "css" },
+    ]}>
+      <BasicUsageDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "index.html", code: basicUsageHtml, lang: "html" },
+      { title: "index.css", code: basicUsageHtmlCss, lang: "css" },
+      { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
+    ]}>
+      <BasicUsageDemoHtml />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<ComponentReference component="StatusAnnouncer" />

@@ -10,6 +10,7 @@ import {
 } from '@videojs/core/i18n/text/menu';
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
+
 import { useTranslator } from '@/i18n/context';
 import {
   AirPlayEnterIcon,
@@ -69,12 +70,14 @@ import { TimeSlider } from '@/ui/time-slider';
 import { Tooltip } from '@/ui/tooltip';
 import { VolumeIndicator } from '@/ui/volume-indicator';
 import { VolumeSlider } from '@/ui/volume-slider';
+
 import type { BaseVideoSkinProps } from '../types';
 
 const SEEK_TIME = 10;
 const TOP_STATUS_ACTIONS = ['toggleSubtitles', 'toggleFullscreen', 'togglePictureInPicture'] as const;
 const CENTER_STATUS_ACTIONS = ['togglePaused'] as const;
 
+/** Props for the packaged default video skin. */
 export type VideoSkinProps = BaseVideoSkinProps;
 
 const Button = forwardRef<HTMLButtonElement, ComponentProps<'button'>>(function Button({ className, ...props }, ref) {
@@ -130,7 +133,6 @@ function SettingsMenu(): ReactNode {
   const hasQuality = quality?.state.availability === 'available';
   const hasAudioTrack = audioTrack?.state.availability === 'available';
   const hasCaptions = captions?.state.availability === 'available';
-
   if (!hasPlaybackRate && !hasQuality && !hasAudioTrack && !hasCaptions) return null;
 
   return (
@@ -147,8 +149,8 @@ function SettingsMenu(): ReactNode {
           <Tooltip.Label>{t(settingsText)}</Tooltip.Label>
         </Tooltip.Popup>
       </Tooltip.Root>
-      <Menu.Content className="media-surface media-popover media-menu media-menu--settings">
-        <div className="media-menu__group">
+      <Menu.Popup className="media-surface media-popover media-menu media-menu--settings">
+        <Menu.Content className="media-menu__content">
           {hasQuality ? (
             <Menu.Root>
               <Menu.Trigger
@@ -158,7 +160,9 @@ function SettingsMenu(): ReactNode {
                     <QualityIcon className="media-icon" />
                     <span>{t(qualityText)}</span>
                     <span className="media-menu__hint">
-                      <span className="media-menu__hint-label">{quality.selectedLabel}</span>
+                      <bdi dir="auto" className="media-menu__hint-label">
+                        {quality.selectedLabel}
+                      </bdi>
                       <MenuChevron />
                     </span>
                   </div>
@@ -175,10 +179,10 @@ function SettingsMenu(): ReactNode {
                   aria-label={t(qualityText)}
                   renderItem={(props, item) => (
                     <Menu.RadioItem {...props} className="media-menu__item">
-                      <span>
+                      <bdi dir="auto">
                         {item.label}
                         {item.tier ? <sup className="media-menu__tier">{item.tier}</sup> : null}
-                      </span>
+                      </bdi>
                       {item.badge ? <span className="media-badge">{item.badge}</span> : null}
                       <Menu.ItemIndicator checked={item.checked} forceMount className="media-menu__indicator">
                         <CheckIcon className="media-icon" />
@@ -199,7 +203,9 @@ function SettingsMenu(): ReactNode {
                     <SpeechIcon className="media-icon" />
                     <span>{t(audioText)}</span>
                     <span className="media-menu__hint">
-                      <span className="media-menu__hint-label">{audioTrack.selectedLabel}</span>
+                      <bdi dir="auto" className="media-menu__hint-label">
+                        {audioTrack.selectedLabel}
+                      </bdi>
                       <MenuChevron />
                     </span>
                   </div>
@@ -216,7 +222,7 @@ function SettingsMenu(): ReactNode {
                   aria-label={t(audioText)}
                   renderItem={(props, item) => (
                     <Menu.RadioItem {...props} className="media-menu__item">
-                      <span>{item.label}</span>
+                      <bdi dir="auto">{item.label}</bdi>
                       <Menu.ItemIndicator checked={item.checked} forceMount className="media-menu__indicator">
                         <CheckIcon className="media-icon" />
                       </Menu.ItemIndicator>
@@ -236,7 +242,9 @@ function SettingsMenu(): ReactNode {
                     <SpeedIcon className="media-icon" />
                     <span>{t(speedText)}</span>
                     <span className="media-menu__hint">
-                      <span className="media-menu__hint-label">{playbackRate.selectedLabel}</span>
+                      <bdi dir="auto" className="media-menu__hint-label">
+                        {playbackRate.selectedLabel}
+                      </bdi>
                       <MenuChevron />
                     </span>
                   </div>
@@ -253,7 +261,7 @@ function SettingsMenu(): ReactNode {
                   aria-label={t(playbackRateText)}
                   renderItem={(props, item) => (
                     <Menu.RadioItem {...props} className="media-menu__item">
-                      <span>{item.label}</span>
+                      <bdi dir="auto">{item.label}</bdi>
                       <Menu.ItemIndicator checked={item.checked} forceMount className="media-menu__indicator">
                         <CheckIcon className="media-icon" />
                       </Menu.ItemIndicator>
@@ -273,7 +281,9 @@ function SettingsMenu(): ReactNode {
                     <CaptionsOffIcon className="media-icon" />
                     <span>{t(captionsText)}</span>
                     <span className="media-menu__hint">
-                      <span className="media-menu__hint-label">{captions.selectedLabel}</span>
+                      <bdi dir="auto" className="media-menu__hint-label">
+                        {captions.selectedLabel}
+                      </bdi>
                       <MenuChevron />
                     </span>
                   </div>
@@ -290,7 +300,7 @@ function SettingsMenu(): ReactNode {
                   aria-label={t(captionsText)}
                   renderItem={(props, item) => (
                     <Menu.RadioItem {...props} className="media-menu__item">
-                      <span>{item.label}</span>
+                      <bdi dir="auto">{item.label}</bdi>
                       <Menu.ItemIndicator checked={item.checked} forceMount className="media-menu__indicator">
                         <CheckIcon className="media-icon" />
                       </Menu.ItemIndicator>
@@ -300,8 +310,8 @@ function SettingsMenu(): ReactNode {
               </Menu.Content>
             </Menu.Root>
           ) : null}
-        </div>
-      </Menu.Content>
+        </Menu.Content>
+      </Menu.Popup>
     </Menu.Root>
   );
 }
@@ -381,6 +391,13 @@ function FullscreenControl() {
   );
 }
 
+/**
+ * Renders the packaged default video UI and the Container that owns player layout and fullscreen.
+ *
+ * Place a video media component in `children` and import `@videojs/react/video/skin.css` for the packaged styles.
+ *
+ * @see {@link https://videojs.org/docs/framework/react/how-to/customize-skins | Customize skins}
+ */
 export function VideoSkin(props: VideoSkinProps): ReactNode {
   const { children, className, renderPoster, style, ...rest } = props;
 
@@ -399,104 +416,104 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
       />
 
       <ErrorDialog.Root>
-        <ErrorDialog.Popup className="media-error">
-          <div className="media-error__dialog media-surface">
-            <div className="media-error__content">
-              <ErrorDialog.Title className="media-error__title"></ErrorDialog.Title>
-              <ErrorDialog.Description className="media-error__description" />
-            </div>
-            <div className="media-error__actions">
-              <ErrorDialog.Close className="media-button media-button--primary"></ErrorDialog.Close>
-            </div>
+        <ErrorDialog.Backdrop className="media-dialog__backdrop" />
+        <ErrorDialog.Popup className="media-dialog__popup media-surface">
+          <div className="media-dialog__content">
+            <ErrorDialog.Title className="media-dialog__title"></ErrorDialog.Title>
+            <ErrorDialog.Description className="media-dialog__description" />
+          </div>
+          <div className="media-dialog__actions">
+            <ErrorDialog.Close className="media-button media-button--primary"></ErrorDialog.Close>
           </div>
         </ErrorDialog.Popup>
       </ErrorDialog.Root>
 
-      <Controls.Root className="media-surface media-controls media-controls--root">
-        <Tooltip.Provider>
-          <div className="media-surface media-controls media-controls--primary">
-            <div className="media-button-group">
-              <Tooltip.Root side="top">
-                <Tooltip.Trigger
-                  render={
-                    <PlayButton className="media-button--play" render={<Button />}>
-                      <RestartIcon className="media-icon media-icon--restart" />
-                      <PlayIcon className="media-icon media-icon--play" />
-                      <PauseIcon className="media-icon media-icon--pause" />
-                    </PlayButton>
-                  }
-                />
-                <Tooltip.Popup className="media-surface media-tooltip">
-                  <Tooltip.Label />
-                  <Tooltip.Shortcut className="media-tooltip__kbd" />
-                </Tooltip.Popup>
-              </Tooltip.Root>
+      <Controls.Root>
+        <Controls.Backdrop className="media-controls__backdrop" />
+        <Controls.Content className="media-surface media-controls media-controls--root">
+          <Tooltip.Provider>
+            <Controls.Group className="media-surface media-controls media-controls--primary">
+              <div className="media-button-group">
+                <Tooltip.Root side="top">
+                  <Tooltip.Trigger
+                    render={
+                      <PlayButton className="media-button--play" render={<Button />}>
+                        <RestartIcon className="media-icon media-icon--restart" />
+                        <PlayIcon className="media-icon media-icon--play" />
+                        <PauseIcon className="media-icon media-icon--pause" />
+                      </PlayButton>
+                    }
+                  />
+                  <Tooltip.Popup className="media-surface media-tooltip">
+                    <Tooltip.Label />
+                    <Tooltip.Shortcut className="media-tooltip__kbd" />
+                  </Tooltip.Popup>
+                </Tooltip.Root>
 
-              <VolumePopover />
-            </div>
+                <VolumePopover />
+              </div>
 
-            <div className="media-time-controls">
-              <Time.Value type="current" className="media-time" />
-              <TimeSlider.Root className="media-slider">
-                <TimeSlider.Chapters
-                  className="media-slider__chapters"
-                  renderChapter={(props) => (
-                    <div {...props} className={cn(props.className, 'media-slider__chapter')}>
-                      <TimeSlider.Track className="media-slider__track media-slider__chapter-track">
-                        <TimeSlider.Buffer className="media-slider__buffer" />
-                        <TimeSlider.Fill className="media-slider__fill" />
-                      </TimeSlider.Track>
+              <div className="media-time-controls">
+                <Time.Value type="current" className="media-time" />
+                <TimeSlider.Root className="media-slider">
+                  <TimeSlider.Chapters
+                    className="media-slider__chapters"
+                    renderChapter={(props) => (
+                      <div {...props} className={cn(props.className, 'media-slider__chapter')}>
+                        <TimeSlider.Track className="media-slider__track media-slider__chapter-track">
+                          <TimeSlider.Buffer className="media-slider__buffer" />
+                          <TimeSlider.Fill className="media-slider__fill" />
+                        </TimeSlider.Track>
+                      </div>
+                    )}
+                  />
+                  <TimeSlider.Thumb className="media-slider__thumb" />
+
+                  <TimeSlider.Preview overflow="visible" className="media-slider__preview">
+                    <div className="media-surface media-thumbnail media-slider__thumbnail">
+                      <Slider.Thumbnail className="media-thumbnail__image" />
+                      <SpinnerIcon className="media-thumbnail__spinner media-icon" />
                     </div>
-                  )}
-                />
-                <TimeSlider.Thumb className="media-slider__thumb" />
+                    <div className="media-slider__value">
+                      <TimeSlider.ChapterTitle className="media-slider__chapter-title" />
+                      <TimeSlider.Value type="pointer" className="media-time" />
+                    </div>
+                  </TimeSlider.Preview>
+                </TimeSlider.Root>
+                <Time.Value toggle type="remaining" className="media-time" />
+              </div>
 
-                <TimeSlider.Preview overflow="visible" className="media-slider__preview">
-                  <div className="media-surface media-thumbnail media-slider__thumbnail">
-                    <Slider.Thumbnail className="media-thumbnail__image" />
-                    <SpinnerIcon className="media-thumbnail__spinner media-icon" />
-                  </div>
-                  <div className="media-slider__value">
-                    <TimeSlider.ChapterTitle className="media-slider__chapter-title" />
-                    <TimeSlider.Value type="pointer" className="media-time" />
-                  </div>
-                </TimeSlider.Preview>
-              </TimeSlider.Root>
-              <Time.Value toggle type="remaining" className="media-time" />
-            </div>
+              <div className="media-button-group">
+                <Tooltip.Root side="top">
+                  <Tooltip.Trigger
+                    render={
+                      <CaptionsButton className="media-button--captions" render={<Button />}>
+                        <CaptionsOffIcon className="media-icon media-icon--captions-off" />
+                        <CaptionsOnIcon className="media-icon media-icon--captions-on" />
+                      </CaptionsButton>
+                    }
+                  />
+                  <Tooltip.Popup className="media-surface media-tooltip">
+                    <Tooltip.Label />
+                    <Tooltip.Shortcut className="media-tooltip__kbd" />
+                  </Tooltip.Popup>
+                </Tooltip.Root>
 
-            <div className="media-button-group">
-              <Tooltip.Root side="top">
-                <Tooltip.Trigger
-                  render={
-                    <CaptionsButton className="media-button--captions" render={<Button />}>
-                      <CaptionsOffIcon className="media-icon media-icon--captions-off" />
-                      <CaptionsOnIcon className="media-icon media-icon--captions-on" />
-                    </CaptionsButton>
-                  }
-                />
-                <Tooltip.Popup className="media-surface media-tooltip">
-                  <Tooltip.Label />
-                  <Tooltip.Shortcut className="media-tooltip__kbd" />
-                </Tooltip.Popup>
-              </Tooltip.Root>
+                <SettingsMenu />
+              </div>
+            </Controls.Group>
 
-              <SettingsMenu />
-            </div>
-          </div>
-
-          <div className="media-surface media-controls media-controls--secondary">
-            <div className="media-button-group">
-              <CastControl />
-              <AirPlayControl />
-              <PiPControl />
-              <FullscreenControl />
-            </div>
-          </div>
-        </Tooltip.Provider>
+            <Controls.Group className="media-surface media-controls media-controls--secondary">
+              <div className="media-button-group">
+                <CastControl />
+                <AirPlayControl />
+                <PiPControl />
+                <FullscreenControl />
+              </div>
+            </Controls.Group>
+          </Tooltip.Provider>
+        </Controls.Content>
       </Controls.Root>
-
-      <div className="media-overlay" />
 
       {/* Hotkeys */}
       <Hotkey keys="Space" action="togglePaused" />
@@ -526,7 +543,7 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
 
       {/* Input Indicators */}
       <StatusAnnouncer className="media-sr-only" />
-      <div className="media-input-indicator-overlay">
+      <div className="media-input-indicator">
         <VolumeIndicator.Root className="media-surface media-volume-indicator">
           <VolumeIndicator.Fill className="media-volume-indicator__content">
             <VolumeHighIcon className="media-icon media-icon--volume-high" />

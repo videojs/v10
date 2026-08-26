@@ -36,13 +36,13 @@ function QualityInfo() {
 
 <FrameworkCase frameworks={["html"]}>
 ```ts title="quality-info.ts"
-import { createPlayer, MediaElement, selectQuality } from '@videojs/html';
+import { createPlayer, UIElement, selectQuality } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
 
-const { PlayerController, context } = createPlayer({ features: videoFeatures });
+const { PlayerController } = createPlayer({ features: videoFeatures });
 
-class QualityInfo extends MediaElement {
-  readonly #quality = new PlayerController(this, context, selectQuality);
+class QualityInfo extends UIElement {
+  readonly #quality = new PlayerController(this, selectQuality);
 }
 ```
 </FrameworkCase>

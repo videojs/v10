@@ -14,17 +14,14 @@ type MediaTracksHost = ShakaEngineHost &
   MediaVideoRenditionCapability;
 
 /**
- * Mirrors the Shaka video and audio tracks of the loaded asset into the media
- * element's `videoRenditions` / `audioTracks` lists, and wires user selection
- * back to `engine.selectVideoTrack()` and `engine.selectAudioTrack()`.
+ * Mirrors the Shaka video and audio tracks of the loaded asset into the media element's `videoRenditions` /
+ * `audioTracks` lists, and wires user selection back to `engine.selectVideoTrack()` and `engine.selectAudioTrack()`.
  *
- * Shaka video tracks are a flattened view over the manifest's variants rather
- * than a list of their own, so they are hung off a single `'main'` video track —
- * the one the renditions of the asset that is playing are read from.
+ * Shaka video tracks are a flattened view over the manifest's variants rather than a list of their own, so they are
+ * hung off a single `'main'` video track — the one the renditions of the asset that is playing are read from.
  *
- * Requires the media-tracks mixin (track-list infrastructure) to be applied
- * earlier in the chain so the host exposes `addVideoTrack`, `videoRenditions`,
- * and friends.
+ * Requires the media-tracks mixin (track-list infrastructure) to be applied earlier in the chain so the host exposes
+ * `addVideoTrack`, `videoRenditions`, and friends.
  */
 export function ShakaMediaMediaTracksMixin<Base extends Constructor<MediaTracksHost>>(BaseClass: Base) {
   class ShakaMediaMediaTracks extends (BaseClass as Constructor<MediaTracksHost>) {
@@ -83,12 +80,14 @@ export function ShakaMediaMediaTracksMixin<Base extends Constructor<MediaTracksH
       const videoTracks = engine.getVideoTracks();
       const key = videoTracksKey(videoTracks);
       if (key === this.#videoTracksKey) return;
+
       this.#videoTracksKey = key;
 
       this.#removeVideoTracks();
       this.#restoreAbr();
 
       const videoTrack = this.addVideoTrack('main');
+
       // Selecting the track is what puts its renditions in `videoRenditions`, so
       // it happens before any is added and their `addrendition` events land.
       videoTrack.selected = true;
@@ -123,6 +122,7 @@ export function ShakaMediaMediaTracksMixin<Base extends Constructor<MediaTracksH
       const audioTracks = engine.getAudioTracks();
       const key = audioTracksKey(audioTracks);
       if (key === this.#audioTracksKey) return;
+
       this.#audioTracksKey = key;
 
       this.#removeAudioTracks();
@@ -141,6 +141,7 @@ export function ShakaMediaMediaTracksMixin<Base extends Constructor<MediaTracksH
 
     #onVariantChanged = () => {
       const { engine } = this;
+
       if (engine) this.#setActiveRendition(engine.getVideoTracks());
     };
 
@@ -189,6 +190,7 @@ export function ShakaMediaMediaTracksMixin<Base extends Constructor<MediaTracksH
       if (!selectedTrack?.id) return;
 
       const audioTrack = audioTracks[Number(selectedTrack.id)];
+
       if (audioTrack && !audioTrack.active) engine.selectAudioTrack(audioTrack);
 
       // Disable the rest so future change events resolve unambiguously.
@@ -199,6 +201,7 @@ export function ShakaMediaMediaTracksMixin<Base extends Constructor<MediaTracksH
 
     #onSourceChange = () => {
       const srcChanged = this.src !== this.#src;
+
       this.#src = this.src;
 
       // A new asset announces tracks of its own, and the one that is going away
@@ -243,6 +246,7 @@ export function ShakaMediaMediaTracksMixin<Base extends Constructor<MediaTracksH
     // that disables adaptation on purpose is left as configured.
     #restoreAbr() {
       if (!this.#isAbrOff) return;
+
       this.#isAbrOff = false;
       this.engine?.configure({ abr: { enabled: true } });
     }

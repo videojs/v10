@@ -1,19 +1,19 @@
 import { cn } from '@videojs/utils/style';
 
 export const time = {
-  group: 'flex items-center gap-1',
+  group: 'flex items-center gap-1 [&:dir(rtl)]:flex-row-reverse',
   current: cn(
     'hidden tabular-nums cursor-pointer rounded-[--spacing(1)] outline-2 outline-transparent -outline-offset-2',
     'transition-[outline-color,outline-offset] duration-100 ease-out',
     'supports-[corner-shape:squircle]:rounded-[--spacing(4)]',
     'supports-[corner-shape:squircle]:[corner-shape:squircle]',
-    'focus-visible:outline-(--focus-ring-color) focus-visible:outline-offset-2',
+    'focus-visible:outline-(--media-focus-ring-color) focus-visible:outline-offset-2',
     '@2xl/media-root:inline'
   ),
   separator: cn('hidden', '@2xl/media-root:inline @2xl/media-root:text-current/60'),
   duration: cn('tabular-nums', '@2xl/media-root:text-current/60'),
   controls: cn(
-    '@container/media-time-controls flex flex-row-reverse items-center flex-1 gap-3',
-    '@2xl/media-root:flex-row'
+    '@container/media-time-controls flex flex-row-reverse items-center flex-1 gap-3 [&:dir(rtl)]:flex-row',
+    '@2xl/media-root:flex-row @2xl/media-root:[&:dir(rtl)]:flex-row-reverse'
   ),
 };

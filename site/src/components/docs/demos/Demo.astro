@@ -18,9 +18,11 @@ const { files } = Astro.props;
 
 function hash(input: string): string {
   let value = 5381;
+
   for (let i = 0; i < input.length; i++) {
     value = ((value << 5) + value) ^ input.charCodeAt(i);
   }
+
   return Math.abs(value >>> 0).toString(36);
 }
 

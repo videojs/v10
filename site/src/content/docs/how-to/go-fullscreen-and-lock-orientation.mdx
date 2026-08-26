@@ -1,0 +1,163 @@
+---
+title: 'Go fullscreen and lock orientation'
+description: 'Present the player fullscreen with custom controls intact, and lock screen orientation on mobile.'
+---
+
+import Demo from '@/components/docs/demos/Demo.astro';
+import DocsLink from '@/components/docs/DocsLink.astro';
+import CustomUiNote from '@/components/docs/CustomUiNote.astro';
+import FrameworkCase from '@/components/docs/FrameworkCase.astro';
+import StyleCase from '@/components/docs/StyleCase.astro';
+
+{/* React demos */}
+import BasicUsageDemoReact from '@/components/docs/demos/fullscreen-button/react/css/BasicUsage';
+import basicUsageReactTsx from '@/components/docs/demos/fullscreen-button/react/css/BasicUsage.tsx?raw';
+import basicUsageReactCss from '@/components/docs/demos/fullscreen-button/react/css/BasicUsage.css?raw';
+
+{/* HTML demos */}
+import BasicUsageDemoHtml from '@/components/docs/demos/fullscreen-button/html/css/BasicUsage.astro';
+import basicUsageHtml from '@/components/docs/demos/fullscreen-button/html/css/BasicUsage.html?raw';
+import basicUsageHtmlCss from '@/components/docs/demos/fullscreen-button/html/css/BasicUsage.css?raw';
+import basicUsageHtmlTs from '@/components/docs/demos/fullscreen-button/html/css/BasicUsage.ts?raw';
+
+Present the player fullscreen, with your custom controls intact, and optionally lock screen orientation while fullscreen on mobile.
+
+<CustomUiNote />
+
+## Recommended approach
+
+Add a <DocsLink slug="reference/fullscreen-button">FullscreenButton</DocsLink> inside the player container. It requests fullscreen on the container, so everything inside it — controls, captions, overlays — stays visible in the fullscreen presentation.
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
+      { title: "App.css", code: basicUsageReactCss, lang: "css" },
+    ]}>
+      <BasicUsageDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "index.html", code: basicUsageHtml, lang: "html" },
+      { title: "index.css", code: basicUsageHtmlCss, lang: "css" },
+      { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
+    ]}>
+      <BasicUsageDemoHtml />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+## How it works
+
+The <DocsLink slug="reference/feature-fullscreen">fullscreen feature</DocsLink> tracks fullscreen state and provides the actions:
+
+- `fullscreen` is `true` while the player is fullscreen, from any path — your button, native controls, or the platform presentation.
+- `fullscreenAvailability` is `'available'`, `'unavailable'`, or `'unsupported'`. It starts as `'unavailable'`, then settles to `'available'` or `'unsupported'` when the feature attaches to a media element.
+- `requestFullscreen()`, `exitFullscreen()`, and `toggleFullscreen()` change the presentation. Requests target the player container when the Fullscreen API is available, falling back to the media element's native presentation otherwise.
+
+Fullscreen and picture-in-picture are exclusive: requesting fullscreen exits an active picture-in-picture presentation first.
+
+Style fullscreen state through the container's `:fullscreen` pseudo-class, or through the `fullscreen` state in components.
+
+## Availability and constraints
+
+- Fullscreen requests must come from a user gesture; browsers reject requests outside one.
+- iPhone Safari has no element Fullscreen API. The player falls back to the video's native fullscreen presentation, which shows the system player UI instead of your custom controls. iPads support element fullscreen.
+- Orientation locking requires the Screen Orientation API with lock support — in practice, Android browsers in fullscreen. iOS doesn't support programmatic orientation lock.
+- Inside iframes, fullscreen needs `allow="fullscreen"` on the embedding iframe.
+
+## Common variations
+
+### Lock orientation while fullscreen
+
+Add `orientationLockFeature` to lock screen orientation while the player is fullscreen. It isn't part of `videoFeatures`, so the preset `VideoPlayer` doesn't include it. It locks to `landscape` by default and unlocks on exit.
+
+<FrameworkCase frameworks={["react"]}>
+
+Because the feature list changes, build the player yourself with <DocsLink slug="reference/create-player">`createPlayer`</DocsLink> — the escape hatch for custom feature sets:
+
+```tsx
+import { Container, createPlayer, orientationLockFeature } from '@videojs/react';
+import { Video, videoFeatures } from '@videojs/react/video';
+
+const { Player } = createPlayer({
+  features: [...videoFeatures, orientationLockFeature],
+});
+
+export default function App() {
+  return (
+    <Player>
+      <Container>
+        <Video src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4" muted playsInline />
+      </Container>
+    </Player>
+  );
+}
+```
+
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+
+Compose a player with `orientationLockFeature` in its feature list through <DocsLink slug="reference/html-create-player">`createPlayer`</DocsLink>; the prebuilt `<video-player>` element doesn't include it.
+
+</FrameworkCase>
+
+To lock to something other than `landscape`, set `orientationLockType` on the player (the `orientation-lock-type` attribute in HTML). See the <DocsLink slug="reference/feature-orientation-lock">orientation lock feature</DocsLink> reference for details.
+
+### Double-click to toggle
+
+Use the `Gesture` component — the default skins ship this exact binding. Keep the button as the accessible path; gestures are a pointer-only shortcut.
+
+<FrameworkCase frameworks={["react"]}>
+
+```tsx
+import { Gesture } from '@videojs/react';
+
+<Gesture type="doubletap" action="toggleFullscreen" region="center" />
+```
+
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+
+```html
+<media-gesture type="doubletap" action="toggleFullscreen" region="center"></media-gesture>
+<script type="module">
+  import '@videojs/html/ui/gesture';
+</script>
+```
+
+</FrameworkCase>
+
+`region="center"` keeps the gesture off the left and right thirds, which the default skins reserve for double-tap seeking. See <DocsLink slug="how-to/add-keyboard-shortcuts-and-gestures">Add keyboard shortcuts and gestures</DocsLink> for the full gesture surface.
+
+## Troubleshooting
+
+### The fullscreen request is rejected
+
+The request didn't come from a user gesture, fullscreen is unsupported, or an embedding iframe lacks `allow="fullscreen"`.
+
+### Custom controls disappear in fullscreen on iPhone
+
+Expected: iPhone Safari uses the native video presentation, which replaces custom UI with system controls. Design mobile controls assuming this fallback.
+
+### Orientation doesn't lock
+
+Orientation lock works in fullscreen on Android browsers; iOS doesn't support it. Confirm `orientationLockFeature` is in your feature list.
+
+## Related components
+
+- <DocsLink slug="reference/fullscreen-button">Fullscreen button</DocsLink>
+- <DocsLink slug="reference/player-container">Player container</DocsLink>
+
+## Related API
+
+- <DocsLink slug="reference/feature-fullscreen">Fullscreen feature</DocsLink>
+- <DocsLink slug="reference/feature-orientation-lock">Orientation lock feature</DocsLink>
+
+## Related guides
+
+- <DocsLink slug="how-to/use-picture-in-picture">Use picture-in-picture</DocsLink>

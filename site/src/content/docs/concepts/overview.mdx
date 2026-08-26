@@ -7,7 +7,6 @@ import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 import { TabsRoot, TabsList, TabsPanel, Tab } from '@/components/Tabs';
 import DocsLink from '@/components/docs/DocsLink.astro';
 import DocsLinkCard from '@/components/docs/DocsLinkCard.astro';
-import Aside from '@/components/Aside.astro';
 
 Video.js v10 is built around a three-part architecture that separates concerns and maximizes flexibility. Each part is designed to work independently or together, allowing you to use as much or as little of Video.js as you need.
 
@@ -51,7 +50,7 @@ You can access state and actions from anywhere within `<video-player>` with <Doc
 Use a prebuilt **skin** or build your own from the individual **UI components**.
 
 ### Skins
-Skins are complete, pre-designed player UIs that package components and styles together:
+Skins are complete, pre-designed player UIs that package components and styles together. They give you a polished starting point, with a small set of CSS custom properties for common visual changes. They don't try to cover every player with options.
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
@@ -76,7 +75,7 @@ Skins are complete, pre-designed player UIs that package components and styles t
 
 ### UI components
 
-If you want more control than skins offer you, you can build your own UI from our components.
+If you want more control than a packaged skin offers, build your own UI from our components. Add, remove, and rearrange them to build the player you need.
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
@@ -84,8 +83,10 @@ If you want more control than skins offer you, you can build your own UI from ou
   <Container> {/* [!code focus] */}
     <Video src="video.mp4" />
     <Controls.Root> {/* [!code focus] */}
-      <PlayButton /> {/* [!code focus] */}
-      {/* ... */} {/* [!code focus] */}
+      <Controls.Content> {/* [!code focus] */}
+        <PlayButton /> {/* [!code focus] */}
+        {/* ... */} {/* [!code focus] */}
+      </Controls.Content> {/* [!code focus] */}
     </Controls.Root> {/* [!code focus] */}
   </Container> {/* [!code focus] */}
 </VideoPlayer>
@@ -97,15 +98,17 @@ If you want more control than skins offer you, you can build your own UI from ou
   <media-container> <!-- [!code focus] -->
     <video src="video.mp4"></video>
     <media-controls> <!-- [!code focus] -->
-      <media-play-button></media-play-button> <!-- [!code focus] -->
-      <!-- ... --> <!-- [!code focus] -->
+      <media-controls-content> <!-- [!code focus] -->
+        <media-play-button></media-play-button> <!-- [!code focus] -->
+        <!-- ... --> <!-- [!code focus] -->
+      </media-controls-content> <!-- [!code focus] -->
     </media-controls> <!-- [!code focus] -->
   </media-container> <!-- [!code focus] -->
 </video-player>
 ```
 </FrameworkCase>
 
-To get started with UI components, you might consider <DocsLink slug="how-to/customize-skins">ejecting a skin</DocsLink> and using its pre-styled components as a foundation.
+The easiest way to get started is to <DocsLink slug="how-to/customize-skins">eject the closest skin</DocsLink> and use its pre-styled components as a foundation.
 
 <DocsLinkCard slug="concepts/ui-components">Learn more about UI components</DocsLinkCard>
 <DocsLinkCard slug="how-to/build-your-own-component">Build your own component</DocsLinkCard>
@@ -117,12 +120,8 @@ Media components are the components that actually display your media. They're es
 Media components can be format specific (HLS, DASH), service specific (YouTube, Vimeo, Mux), or use case specific (background video).
 
 <FrameworkCase frameworks={["html"]}>
-Media elements are discovered automatically. Plain `<video>` and `<audio>` elements are found via a `querySelector`, while custom media elements like `<hlsjs-video>` register themselves.
+Media elements are discovered automatically. Plain `<video>` and `<audio>` elements are found via a `querySelector`. Custom media elements like `<hlsjs-video>` register themselves after you import their registration entry point.
 </FrameworkCase>
-
-<Aside type="note">
-DASH, YouTube, Vimeo, Mux, and more media elements are currently under development.
-</Aside>
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
@@ -155,37 +154,13 @@ The default presets are `@videojs/react/video` and `@videojs/react/audio`, cover
 The default presets are `@videojs/html/video` and `@videojs/html/audio`, covering the baseline set of controls you'd expect from the HTML `<video>` and `<audio>` tags. 
 </FrameworkCase>
 
-Beyond the defaults, presets target more specific use cases. For example, `/background` includes a media element with autoplay, mute, and loop built in, a skin with no controls, and just the features needed to power it:
+Beyond the defaults, presets target more specific use cases. The `/background` preset combines a media element with autoplay, mute, and loop built in, a skin with no controls, and only the features needed to power it.
 
 <FrameworkCase frameworks={["react"]}>
-```tsx
-import { BackgroundVideo, BackgroundVideoPlayer, BackgroundVideoSkin } from '@videojs/react/background';
-
-function Hero() {
-  return (
-    <BackgroundVideoPlayer>
-      <BackgroundVideoSkin>
-        <BackgroundVideo src="hero.mp4" />
-      </BackgroundVideoSkin>
-    </BackgroundVideoPlayer>
-  );
-}
-```
+You can use it from `@videojs/react/background`.
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
-```html
-<script type="module">
-  import '@videojs/html/background/player';
-  import '@videojs/html/background/video';
-  import '@videojs/html/background/skin';
-</script>
-
-<background-video-player>
-  <background-video-skin>
-    <background-video src="hero.mp4"></background-video>
-  </background-video-skin>
-</background-video-player>
-```
+You can use it from the `@videojs/html/background/*` registration entry points.
 </FrameworkCase>
 
 <DocsLinkCard slug="concepts/presets">Learn more about presets</DocsLinkCard>

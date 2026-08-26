@@ -21,13 +21,16 @@ import { fileURLToPath } from 'node:url';
 
 function formatBytes(bytes) {
   if (bytes < 1024) return `${bytes} B`;
+
   return `${(bytes / 1024).toFixed(2)} kB`;
 }
 
 function formatDelta(current, previous) {
   if (previous === undefined) return { bytes: '—', pct: '' };
+
   const diff = current - previous;
   if (diff === 0) return { bytes: '0 B', pct: '0%' };
+
   const sign = diff > 0 ? '+' : '-';
   const pct = previous === 0 ? '∞' : Math.abs((diff / previous) * 100).toFixed(1);
   return {
@@ -38,6 +41,7 @@ function formatDelta(current, previous) {
 
 function lazySize(entry) {
   if (!entry) return 0;
+
   return (
     entry.lazySize ??
     Math.max(0, (entry.totalSize ?? entry.size) - entry.size)
@@ -53,6 +57,7 @@ function lazyDelta(current, previous) {
   const currentLazy = lazySize(current);
   const previousLazy = lazySize(previous);
   if (currentLazy === 0 && previousLazy === 0) return '—';
+
   return formatDelta(currentLazy, previousLazy).bytes;
 }
 
@@ -60,6 +65,7 @@ const HIGHLIGHT_THRESHOLD = 300;
 
 function isHighlightedChange(current, previous) {
   if (!previous) return true;
+
   const totalDelta =
     current.size + lazySize(current) - previous.size - lazySize(previous);
   return (
@@ -75,20 +81,26 @@ const PACKAGE_ORDER = ['html', 'react', 'core', 'element', 'store', 'utils'];
 /** Group entries by package: @videojs/html/ui/x → html */
 function groupByPackage(entries) {
   const groups = new Map();
+
   for (const entry of entries) {
     const match = entry.name.match(/^@videojs\/([^/]+)/);
     const pkg = match ? match[1] : 'other';
+
     if (!groups.has(pkg)) groups.set(pkg, []);
+
     groups.get(pkg).push(entry);
   }
 
   const sorted = new Map();
+
   for (const pkg of PACKAGE_ORDER) {
     if (groups.has(pkg)) sorted.set(pkg, groups.get(pkg));
   }
+
   for (const [pkg, entries] of groups) {
     if (!sorted.has(pkg)) sorted.set(pkg, entries);
   }
+
   return sorted;
 }
 
@@ -122,10 +134,13 @@ const CATEGORY_LABELS = {
 
 function generateCategoryBreakdowns(entries, pkg) {
   const byCategory = new Map();
+
   for (const entry of entries) {
     const cat = entry.category;
     if (!cat) continue;
+
     if (!byCategory.has(cat)) byCategory.set(cat, []);
+
     byCategory.get(cat).push(entry);
   }
 
@@ -160,13 +175,18 @@ function generateCategoryBreakdowns(entries, pkg) {
     for (const entry of catEntries) {
       const el = entryLabel(entry.name, pkg);
       const fmt = entry.format ?? 'js';
+
       if (isSkin) {
         const cells = [`${el}`, fmt, formatBytes(entry.size)];
+
         if (hasLazy) cells.push(lazyLabel(entry));
+
         lines.push(`| ${cells.join(' | ')} |`);
       } else {
         const cells = [`${el}`, formatBytes(entry.size)];
+
         if (hasLazy) cells.push(lazyLabel(entry));
+
         lines.push(`| ${cells.join(' | ')} |`);
       }
     }
@@ -192,7 +212,9 @@ function generateFlatBreakdown(entries, pkg) {
   for (const entry of entries) {
     const el = entryLabel(entry.name, pkg);
     const cells = [`${el}`, formatBytes(entry.size)];
+
     if (hasLazy) cells.push(lazyLabel(entry));
+
     lines.push(`| ${cells.join(' | ')} |`);
   }
 
@@ -262,9 +284,11 @@ export function generateComparisonReport(current, base) {
   // Collect all package names from both sides
   const allPackages = new Set([...groups.keys(), ...baseGroups.keys()]);
   const orderedPackages = [];
+
   for (const pkg of PACKAGE_ORDER) {
     if (allPackages.has(pkg)) orderedPackages.push(pkg);
   }
+
   for (const pkg of allPackages) {
     if (!orderedPackages.includes(pkg)) orderedPackages.push(pkg);
   }
@@ -279,6 +303,7 @@ export function generateComparisonReport(current, base) {
     const changed = entries.filter((e) => {
       const previousEntry = baseEntryMap[e.name];
       if (!previousEntry) return true;
+
       return (
         e.size !== previousEntry.size ||
         lazySize(e) !== lazySize(previousEntry)
@@ -315,6 +340,7 @@ export function generateComparisonReport(current, base) {
           baseEntryMap,
         ),
       );
+
       if (small.length > 0) {
         lines.push('<details>');
         lines.push(
@@ -325,6 +351,7 @@ export function generateComparisonReport(current, base) {
         lines.push('</details>');
         lines.push('');
       }
+
       lines.push(...breakdownLines);
     } else if (small.length > 0) {
       lines.push('<details>');
@@ -400,6 +427,7 @@ function printTable(rows) {
 
   const cols = rows[0].length;
   const widths = Array.from({ length: cols }, () => 0);
+
   for (const row of rows) {
     for (let i = 0; i < cols; i++) {
       widths[i] = Math.max(widths[i], text(row[i]).length);
@@ -419,6 +447,7 @@ function printTable(rows) {
       return r === 0 ? ansi.dim(padded) : style(cell)(padded);
     });
     out.push(` ${cells.join(ansi.dim(' │ '))} `);
+
     if (r === 0) out.push(sep);
   }
 
@@ -427,8 +456,11 @@ function printTable(rows) {
 
 function colorSize(bytes) {
   const text = formatBytes(bytes);
+
   if (bytes >= 5 * 1024) return { text, style: ansi.yellow };
+
   if (bytes >= 1024) return { text, style: ansi.white };
+
   return { text, style: ansi.green };
 }
 
@@ -444,10 +476,13 @@ function generateLocalReport(current) {
 
     if (hasCategories) {
       const byCategory = new Map();
+
       for (const entry of entries) {
         const cat = entry.category;
         if (!cat) continue;
+
         if (!byCategory.has(cat)) byCategory.set(cat, []);
+
         byCategory.get(cat).push(entry);
       }
 
@@ -475,20 +510,25 @@ function generateLocalReport(current) {
           const subpath =
             entry.name.replace(`@videojs/${pkg}`, '') || '.';
           const fmt = entry.format ?? 'js';
+
           if (isSkin) {
             const row = [
               { text: subpath, style: ansi.cyan },
               { text: fmt, style: ansi.dim },
               colorSize(entry.size),
             ];
+
             if (hasLazy) row.push(colorSize(lazySize(entry)));
+
             rows.push(row);
           } else {
             const row = [
               { text: subpath, style: ansi.cyan },
               colorSize(entry.size),
             ];
+
             if (hasLazy) row.push(colorSize(lazySize(entry)));
+
             rows.push(row);
           }
         }
@@ -500,6 +540,7 @@ function generateLocalReport(current) {
       const rows = [
         hasLazy ? ['Entry', 'Initial', 'Lazy'] : ['Entry', 'Initial'],
       ];
+
       for (const entry of entries) {
         const subpath =
           entry.name.replace(`@videojs/${pkg}`, '') || '.';
@@ -507,9 +548,12 @@ function generateLocalReport(current) {
           { text: subpath, style: ansi.cyan },
           colorSize(entry.size),
         ];
+
         if (hasLazy) row.push(colorSize(lazySize(entry)));
+
         rows.push(row);
       }
+
       lines.push(printTable(rows));
     }
   }

@@ -12,7 +12,9 @@ const componentRegistry = new WeakMap<MediaHost, MediaComponents>();
 
 export function getMediaComponents(host: MediaHost) {
   let map = componentRegistry.get(host);
+
   if (!map) componentRegistry.set(host, (map = new Map() as MediaComponents));
+
   return map;
 }
 
@@ -22,6 +24,7 @@ export function addMediaComponent<T extends MediaComponent>(host: MediaHost, com
   const ctor = component.constructor as MediaComponentConstructor<T>;
 
   const previous = components.get(ctor);
+
   if (previous && previous !== component) previous.detach?.();
 
   components.set(ctor, component);
@@ -45,15 +48,20 @@ export function getMediaProp<T extends TargetLike, K extends keyof T>(host: Medi
 
 export function setMediaProp<T extends TargetLike, K extends keyof T>(host: MediaHost<T>, prop: K, value: T[K]): void {
   const own = getMediaOwner(host, prop);
+
   if (own) (own as Record<K, T[K]>)[prop] = value;
 }
 
-/** Find the object that owns a media property: the first component `override` exposing it, otherwise the attached target. */
+/**
+ * Find the object that owns a media property: the first component `override` exposing it, otherwise the attached
+ * target.
+ */
 export function getMediaOwner<T extends TargetLike>(host: MediaHost<T>, prop: keyof T): Partial<T> | null {
   for (const component of getMediaComponents(host).values()) {
     const override = component.targetOverride as Partial<T> | null | undefined;
     if (override?.[prop] !== undefined) return override;
   }
+
   // @ts-expect-error `target` is protected, but these helpers are the host's own machinery.
   return host.target;
 }

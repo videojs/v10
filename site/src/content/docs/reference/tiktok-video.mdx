@@ -1,0 +1,114 @@
+---
+title: TikTokVideo
+frameworkTitle:
+  html: tiktok-video
+description: Video component that plays TikTok videos through the TikTok embed player
+---
+
+import MediaReference from "@/components/docs/api-reference/MediaReference.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+import StyleCase from "@/components/docs/StyleCase.astro";
+import Demo from "@/components/docs/demos/Demo.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+
+{/* React demos */}
+import BasicUsageDemoReact from "@/components/docs/demos/tiktok-video/react/css/BasicUsage";
+import basicUsageReactTsx from "@/components/docs/demos/tiktok-video/react/css/BasicUsage.tsx?raw";
+import basicUsageReactCss from "@/components/docs/demos/tiktok-video/react/css/BasicUsage.css?raw";
+
+{/* HTML demos */}
+import BasicUsageDemoHtml from "@/components/docs/demos/tiktok-video/html/css/BasicUsage.astro";
+import basicUsageHtml from "@/components/docs/demos/tiktok-video/html/css/BasicUsage.html?raw";
+import basicUsageHtmlCss from "@/components/docs/demos/tiktok-video/html/css/BasicUsage.css?raw";
+import basicUsageHtmlTs from "@/components/docs/demos/tiktok-video/html/css/BasicUsage.ts?raw";
+
+The [TikTok embed player](https://developers.tiktok.com/doc/embed-player) expects portrait video and won't draw its chrome below 325×578, so the element starts at that size rather than the usual 300×150.
+
+## Load a source
+
+`src` takes a TikTok video URL or a raw numeric video id. The `@user/video/<id>` URLs the app hands out, `share/video/<id>` links, and `player/v1/<id>` embed URLs all work.
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<TikTokVideo src="https://www.tiktok.com/@_luwes/video/7527476667770522893" />
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```html
+<tiktok-video src="https://www.tiktok.com/@_luwes/video/7527476667770522893"></tiktok-video>
+```
+</FrameworkCase>
+
+## Controls
+
+TikTok always draws part of its own chrome: the center play button, author header, and social rail are always visible. `controls` adds the progress bar and control buttons on top of those. Without `controls`, the element ignores pointer events, so a <DocsLink slug="concepts/skins">player skin</DocsLink> above it receives every click.
+
+## Deferred startup
+
+TikTok builds its player lazily: until something starts playback, the embed has no video element, reports a duration of 0, and silently drops commands. The element works around this by starting a muted autoplay and pausing it immediately, so the embed answers play, pause, and seek before the first play.
+
+Two settings opt out. `preload="none"` skips the warm-up, leaving the network untouched until the viewer presses play, and the controls inert until then. `controls` hands playback to TikTok's own chrome instead.
+
+## Behavior
+
+- Mute works, but there's no volume control: the embed reports a level but takes no command to set one.
+- No playback rate and no text tracks; captions are toggled with `engine.tiktok.closed_caption`.
+- `poster` and `playsInline` never reach the embed: it always plays inline and draws the video's own cover image.
+- Changing `controls` or `loop` after the embed is up rebuilds it; rewriting the iframe URL is the only reload TikTok allows.
+
+## Examples
+
+### Basic Usage
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
+      { title: "App.css", code: basicUsageReactCss, lang: "css" },
+    ]}>
+      <BasicUsageDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "index.html", code: basicUsageHtml, lang: "html" },
+      { title: "index.css", code: basicUsageHtmlCss, lang: "css" },
+      { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
+    ]}>
+      <BasicUsageDemoHtml />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<MediaReference media="TikTokVideo">
+  <Fragment slot="engine-tiktok">
+    Pass [TikTok player parameters](https://developers.tiktok.com/doc/embed-player) under `source.engine.tiktok`, spelled exactly as TikTok spells them, each one `0` or `1`, plus anything TikTok adds next. <DocsLink slug="concepts/media-sources">Media Sources</DocsLink> covers how engine options fit into a structured source.
+
+    `autoplay`, `controls`, `loop`, and `muted` come from the props of the same name, so they have no `engine.tiktok` spelling.
+
+    <FrameworkCase frameworks={["react"]}>
+    ```tsx
+    <TikTokVideo
+      source={{
+        src: 'https://www.tiktok.com/@_luwes/video/7527476667770522893',
+        engine: { tiktok: { closed_caption: 0, rel: 1 } },
+      }}
+    />
+    ```
+    </FrameworkCase>
+
+    <FrameworkCase frameworks={["html"]}>
+    ```ts
+    const video = document.querySelector('tiktok-video');
+    video.source = {
+      src: 'https://www.tiktok.com/@_luwes/video/7527476667770522893',
+      engine: { tiktok: { closed_caption: 0, rel: 1 } },
+    };
+    ```
+    </FrameworkCase>
+  </Fragment>
+</MediaReference>

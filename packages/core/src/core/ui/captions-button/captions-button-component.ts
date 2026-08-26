@@ -1,7 +1,7 @@
 import { defineComponent } from 'vjsc/components';
 
-import type { CaptionsButtonProps } from './captions-button-core';
-import { CaptionsButtonDataAttrs } from './captions-button-data-attrs';
+import type { CaptionsButtonProps } from './core';
+import { CaptionsButtonDataAttrs } from './data';
 
 export default defineComponent<CaptionsButtonProps>({
   name: 'CaptionsButton',

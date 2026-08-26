@@ -9,8 +9,9 @@ import Td from '@/components/typography/Td.astro';
 import Th from '@/components/typography/Th.astro';
 import Thead from '@/components/typography/Thead.astro';
 import Tr from '@/components/typography/Tr.astro';
-import type { HtmlMediaReference } from '@/types/media-reference';
+import type { EngineOptionDef, HtmlMediaReference } from '@/types/media-reference';
 import ApiCSSVarsTable from './ApiCSSVarsTable.astro';
+import ApiEngineOptionsSection from './ApiEngineOptionsSection.astro';
 import CodeChip from './CodeChip.astro';
 import MediaHostPropsTable from './MediaHostPropsTable.astro';
 
@@ -25,11 +26,15 @@ interface Props {
   mediaType: 'video' | 'audio';
   data: HtmlMediaReference;
   sections: Section[];
+  engines: { key: string; id: string; title: string }[];
+  engineOptions: Record<string, EngineOptionDef[]>;
+  engineProse: Record<string, string>;
 }
 
-const { media, mediaType, data, sections } = Astro.props;
+const { media, mediaType, data, sections, engines, engineOptions, engineProse } = Astro.props;
 const attributesSection = sections.find((section) => section.key === 'attributes');
 const propertiesSection = sections.find((section) => section.key === 'properties');
+const engineSection = sections.find((section) => section.key === 'engineOptions');
 const methodsSection = sections.find((section) => section.key === 'methods');
 const eventsSection = sections.find((section) => section.key === 'events');
 const cssSection = sections.find((section) => section.key === 'cssCustomProperties');
@@ -100,6 +105,18 @@ const standardEvents = [...data.events.standard].sort();
         </P>
       )}
     </>
+  )
+}
+
+{
+  engineSection && (
+    <ApiEngineOptionsSection
+      media={media}
+      section={engineSection}
+      engines={engines}
+      engineOptions={engineOptions}
+      prose={engineProse}
+    />
   )
 }
 

@@ -1,4 +1,5 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
+
 import { effect } from '../../../../core/signals/effect';
 import { createSourceBufferActor } from '../source-buffer';
 
@@ -9,10 +10,9 @@ import { createSourceBufferActor } from '../source-buffer';
 /**
  * Creates a minimal SourceBuffer mock.
  *
- * Pass `appendRanges` to simulate realistic buffered state: each entry is
- * added to `buffered` in sequence as `appendBuffer` is called. `remove()`
- * clips the ranges to match what a real SourceBuffer would report, enabling
- * the midpoint-based segment model logic in removeTask to be tested correctly.
+ * Pass `appendRanges` to simulate realistic buffered state: each entry is added to `buffered` in sequence as
+ * `appendBuffer` is called. `remove()` clips the ranges to match what a real SourceBuffer would report, enabling the
+ * midpoint-based segment model logic in removeTask to be tested correctly.
  */
 function makeSourceBuffer(appendRanges: Array<[number, number]> = []): SourceBuffer {
   const listeners: Record<string, EventListener[]> = {};
@@ -21,14 +21,17 @@ function makeSourceBuffer(appendRanges: Array<[number, number]> = []): SourceBuf
 
   const clipRanges = (start: number, end: number) => {
     const next: Array<[number, number]> = [];
+
     for (const [s, e] of ranges) {
       if (e <= start || s >= end) {
         next.push([s, e]);
       } else {
         if (s < start) next.push([s, start]);
+
         if (e > end) next.push([end, e]);
       }
     }
+
     ranges = next;
   };
 
@@ -45,7 +48,9 @@ function makeSourceBuffer(appendRanges: Array<[number, number]> = []): SourceBuf
     updating: false,
     appendBuffer: vi.fn(() => {
       const range = appendRanges[appendIndex++];
+
       if (range) ranges.push(range);
+
       setTimeout(() => {
         for (const listener of listeners.updateend ?? []) {
           listener(new Event('updateend'));
@@ -155,6 +160,7 @@ describe('createSourceBufferActor', () => {
     await vi.waitFor(() => expect(actor.snapshot.get().value).toBe('idle'));
 
     const ids = actor.snapshot.get().context.segments.map((s) => s.id);
+
     expect(ids).not.toContain('s1-low');
     expect(ids).toContain('s1-high');
     expect(actor.snapshot.get().context.segments).toHaveLength(1);
@@ -206,11 +212,13 @@ describe('createSourceBufferActor', () => {
     const appendMock = vi.mocked(sourceBuffer.appendBuffer);
     const origImpl = appendMock.getMockImplementation();
     let firstCall = true;
+
     appendMock.mockImplementation((data: BufferSource) => {
       if (firstCall) {
         firstCall = false;
         actor.send({ type: 'cancel' });
       }
+
       return origImpl?.(data);
     });
 
@@ -346,6 +354,7 @@ describe('createSourceBufferActor', () => {
     await vi.waitFor(() => expect(actor.snapshot.get().value).toBe('idle'));
 
     const ids = actor.snapshot.get().context.segments.map((s) => s.id);
+
     expect(ids).not.toContain('s1-low');
     expect(ids).toContain('s1-high');
     expect(actor.snapshot.get().context.segments).toHaveLength(1);
@@ -394,6 +403,7 @@ describe('createSourceBufferActor', () => {
 
     expect(sourceBuffer.remove).toHaveBeenCalledWith(0, 20);
     const ids = actor.snapshot.get().context.segments.map((s) => s.id);
+
     expect(ids).not.toContain('s1');
     expect(ids).not.toContain('s2');
     expect(ids).toContain('s3');
@@ -466,6 +476,7 @@ describe('createSourceBufferActor', () => {
     cleanup();
 
     const hadPartial = snapshots.some((s) => s.context.segments.some((seg) => seg.partial));
+
     expect(hadPartial).toBe(false);
 
     actor.destroy();
@@ -478,6 +489,7 @@ describe('createSourceBufferActor', () => {
     const snapshots: ReturnType<typeof actor.snapshot.get>[] = [];
     const cleanup = effect(() => {
       const s = actor.snapshot.get();
+
       snapshots.push({ ...s, context: { ...s.context, segments: [...s.context.segments] } });
     });
 
@@ -497,6 +509,7 @@ describe('createSourceBufferActor', () => {
     const partialSnapshot = snapshots.find((s) =>
       s.context.segments.some((seg) => seg.id === 's1' && seg.partial === true)
     );
+
     expect(partialSnapshot).toBeDefined();
 
     actor.destroy();
@@ -518,6 +531,7 @@ describe('createSourceBufferActor', () => {
     await vi.waitFor(() => expect(actor.snapshot.get().value).toBe('idle'));
 
     const seg = actor.snapshot.get().context.segments.find((s) => s.id === 's1');
+
     expect(seg).toBeDefined();
     expect(seg?.partial).toBeUndefined();
 
@@ -564,6 +578,7 @@ describe('createSourceBufferActor', () => {
 
     // partial: true entry should remain — accurately reflects data in SourceBuffer
     const seg = actor.snapshot.get().context.segments.find((s) => s.id === 's1');
+
     expect(seg).toBeDefined();
     expect(seg?.partial).toBe(true);
 
@@ -588,6 +603,7 @@ describe('createSourceBufferActor', () => {
     await vi.waitFor(() => expect(actorWithPartial.snapshot.get().value).toBe('idle'));
 
     const seg = actorWithPartial.snapshot.get().context.segments.find((s) => s.id === 's1');
+
     expect(seg).toBeDefined();
     expect(seg?.partial).toBeUndefined();
 

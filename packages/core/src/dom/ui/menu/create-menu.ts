@@ -1,8 +1,9 @@
 import type { State } from '@videojs/store';
-import type { MenuInput, MenuState } from '../../../core/ui/menu/menu-core';
-import { MenuCSSVars } from '../../../core/ui/menu/menu-css-vars';
-import { MenuItemDataAttrs } from '../../../core/ui/menu/menu-item-data-attrs';
-import { PopoverCSSVars } from '../../../core/ui/popover/popover-css-vars';
+
+import type { MenuInput, MenuState } from '../../../core/ui/menu/core';
+import { MenuItemDataAttrs } from '../../../core/ui/menu/item-data';
+import { MenuCSSVars } from '../../../core/ui/menu/vars';
+import { PopoverCSSVars } from '../../../core/ui/popover/vars';
 import { forceLayout } from '../../utils/layout';
 import type { UIFocusEvent, UIKeyboardEvent } from '../event';
 import { createPopover, type PopoverChangeDetails, type PopoverOpenChangeReason } from '../popover/popover';
@@ -73,6 +74,8 @@ export const MenuPositioningCSSVars = {
   availableHeight: MenuCSSVars.availableHeight,
 } as const satisfies PositioningCSSVars;
 
+const parents = new WeakMap<MenuApi, MenuApi>();
+
 export interface MenuApi {
   /** Reactive transition state for platforms to subscribe to. */
   input: State<MenuInput>;
@@ -84,11 +87,14 @@ export interface MenuApi {
   readonly triggerElement: HTMLElement | null;
   /** The currently registered content element, if any. */
   readonly contentElement: HTMLElement | null;
+  /** The root popup element that owns popover behavior, if any. */
+  readonly popupElement: HTMLElement | null;
   setTriggerElement: (element: HTMLElement | null) => void;
   setContentElement: (element: HTMLElement | null) => void;
+  setPopupElement: (element: HTMLElement | null) => void;
   /** Register a navigable item. Returns a cleanup function. */
   registerItem: (element: HTMLElement) => () => void;
-  /** Register a directly nested menu so it can be reset when this menu closes. */
+  /** Register a directly nested menu so parent and child interaction state stays synchronized. */
   registerSubmenu: (menu: MenuApi) => () => void;
   /** Programmatically highlight an item (or clear highlight with `null`). */
   highlight: (element: HTMLElement | null, options?: MenuHighlightOptions) => void;
@@ -114,21 +120,27 @@ export function createMenu(options: MenuOptions): MenuApi {
   let highlightedItem: HTMLElement | null = null;
   let triggerElement: HTMLElement | null = null;
   let contentElement: HTMLElement | null = null;
+  let popupElement: HTMLElement | null = null;
   const submenus = new Set<MenuApi>();
+  const submenuUnsubscribes = new Map<MenuApi, () => void>();
+
   let typeaheadBuffer = '';
   let typeaheadTimer: ReturnType<typeof setTimeout> | null = null;
+  let pendingFocusOut: UIFocusEvent | null = null;
+
   let openRafId = 0;
   let lastCloseReason: MenuOpenChangeReason | null = null;
+  let api: MenuApi;
 
   function isItemHidden(item: HTMLElement): boolean {
     const availability = item.getAttribute('data-availability');
 
     return Boolean(
       item.hidden ||
-        item.hasAttribute('data-hidden') ||
-        item.getAttribute('aria-hidden') === 'true' ||
-        availability === 'unavailable' ||
-        availability === 'unsupported'
+      item.hasAttribute('data-hidden') ||
+      item.getAttribute('aria-hidden') === 'true' ||
+      availability === 'unavailable' ||
+      availability === 'unsupported'
     );
   }
 
@@ -152,16 +164,24 @@ export function createMenu(options: MenuOptions): MenuApi {
   // --- Highlight ---
 
   function highlight(element: HTMLElement | null, highlightOptions?: MenuHighlightOptions): void {
+    if (!element && openRafId) {
+      cancelAnimationFrame(openRafId);
+      openRafId = 0;
+    }
+
     if (element && isItemHidden(element)) {
       if (element === highlightedItem) highlight(getAdjacentNavigableItem(1), highlightOptions);
+
       return;
     }
+
     if (highlightedItem === element) {
       element?.setAttribute(MenuItemDataAttrs.highlighted, highlightOptions?.pointer === true ? 'pointer' : '');
       return;
     }
 
     const previousItem = highlightedItem;
+
     if (previousItem) {
       previousItem.tabIndex = -1;
     }
@@ -177,6 +197,7 @@ export function createMenu(options: MenuOptions): MenuApi {
       if (previousItem && compareItems(element, previousItem) < 0 && highlightOptions?.pointer) {
         forceLayout(element.parentElement);
       }
+
       previousItem?.removeAttribute(MenuItemDataAttrs.highlighted);
 
       if (highlightOptions?.focus !== false) {
@@ -242,6 +263,7 @@ export function createMenu(options: MenuOptions): MenuApi {
       clearTimeout(typeaheadTimer);
       typeaheadTimer = null;
     }
+
     typeaheadBuffer = '';
   }
 
@@ -249,18 +271,22 @@ export function createMenu(options: MenuOptions): MenuApi {
     cancelAnimationFrame(openRafId);
     openRafId = requestAnimationFrame(() => {
       openRafId = 0;
+
       // Guard against close() being called before the RAF fires — active
       // stays true during the closing animation, so also check status.
       if (!popover.input.current.active || popover.input.current.status === 'ending' || highlightedItem) return;
-      highlight(getInitialHighlightItem());
+
+      highlight(getInitialHighlightItem(), { preventScroll: true });
     });
   }
 
   function handleTypeahead(char: string): void {
     const repeatedChar = typeaheadBuffer.length === 1 && typeaheadBuffer.toLowerCase() === char.toLowerCase();
+
     typeaheadBuffer = repeatedChar ? char : typeaheadBuffer + char;
 
     if (typeaheadTimer !== null) clearTimeout(typeaheadTimer);
+
     typeaheadTimer = setTimeout(clearTypeahead, 500);
 
     const navigableItems = getNavigableItems();
@@ -273,6 +299,7 @@ export function createMenu(options: MenuOptions): MenuApi {
     const needle = typeaheadBuffer.toLowerCase();
     const match = candidates.find((candidate) => {
       const text = candidate.textContent?.trim().toLowerCase() ?? '';
+
       return text.startsWith(needle);
     });
 
@@ -299,6 +326,7 @@ export function createMenu(options: MenuOptions): MenuApi {
     },
     onOpenChangeComplete(open) {
       options.onOpenChangeComplete?.(open);
+
       // Return focus to the trigger after the close animation completes
       // so screen readers hear the correct context.
       if (!open) restoreFocus();
@@ -311,7 +339,14 @@ export function createMenu(options: MenuOptions): MenuApi {
   // --- Content keyboard navigation ---
 
   const contentProps: MenuContentProps = {
-    onFocusOut: popover.popupProps.onFocusOut,
+    onFocusOut(event) {
+      if (event.relatedTarget === null && hasClosingSubmenu()) {
+        pendingFocusOut = event;
+        return;
+      }
+
+      popover.popupProps.onFocusOut(event);
+    },
     onKeyDown(event) {
       const { key } = event;
       const navigableItems = getNavigableItems();
@@ -346,7 +381,9 @@ export function createMenu(options: MenuOptions): MenuApi {
         case 'Enter':
         case ' ': {
           event.preventDefault();
+
           if (highlightedItem && navigableItems.includes(highlightedItem)) highlightedItem.click();
+
           break;
         }
         default: {
@@ -361,9 +398,10 @@ export function createMenu(options: MenuOptions): MenuApi {
 
   function handleTriggerKeyDown(event: UIKeyboardEvent): void {
     const input = popover.input.current;
-
     if (!input.active || input.status === 'ending') return;
+
     if (event.key === 'Escape') return;
+
     if (!isMenuNavigationKey(event)) return;
 
     contentProps.onKeyDown(event);
@@ -379,6 +417,10 @@ export function createMenu(options: MenuOptions): MenuApi {
 
   function setContentElement(element: HTMLElement | null): void {
     contentElement = element;
+  }
+
+  function setPopupElement(element: HTMLElement | null): void {
+    popupElement = element;
     popover.setPopupElement(element);
   }
 
@@ -388,16 +430,19 @@ export function createMenu(options: MenuOptions): MenuApi {
     if (a === b) return 0;
 
     const position = a.compareDocumentPosition(b);
-
     if (position & Node.DOCUMENT_POSITION_FOLLOWING) return -1;
+
     if (position & Node.DOCUMENT_POSITION_PRECEDING) return 1;
 
     return 0;
   }
 
   function registerItem(element: HTMLElement): () => void {
+    const onFocus = () => highlight(element, { focus: false });
+
     element.tabIndex = -1;
     element.setAttribute(MenuItemDataAttrs.item, '');
+    element.addEventListener('focus', onFocus);
     items.push(element);
     items.sort(compareItems);
 
@@ -406,19 +451,50 @@ export function createMenu(options: MenuOptions): MenuApi {
     }
 
     return () => {
+      element.removeEventListener('focus', onFocus);
       const index = items.indexOf(element);
+
       if (index !== -1) items.splice(index, 1);
+
       if (highlightedItem === element) clearHighlight();
     };
   }
 
   function registerSubmenu(menu: MenuApi): () => void {
     submenus.add(menu);
-    return () => submenus.delete(menu);
+    parents.set(menu, api);
+    const unsubscribe = menu.input.subscribe(handlePendingFocusOut);
+
+    submenuUnsubscribes.set(menu, unsubscribe);
+
+    return () => {
+      submenus.delete(menu);
+
+      if (parents.get(menu) === api) parents.delete(menu);
+
+      submenuUnsubscribes.get(menu)?.();
+      submenuUnsubscribes.delete(menu);
+      handlePendingFocusOut();
+    };
+  }
+
+  function hasClosingSubmenu(): boolean {
+    return [...submenus].some(({ input }) => input.current.status === 'ending');
+  }
+
+  function handlePendingFocusOut(): void {
+    if (!pendingFocusOut || hasClosingSubmenu()) return;
+
+    const event = pendingFocusOut;
+
+    pendingFocusOut = null;
+    popover.popupProps.onFocusOut(event);
   }
 
   function syncOpen(open: boolean): void {
-    if (!open) {
+    if (open) {
+      parents.get(api)?.highlight(null);
+    } else {
       for (const submenu of submenus) submenu.close('imperative-action');
     }
 
@@ -429,11 +505,21 @@ export function createMenu(options: MenuOptions): MenuApi {
     cancelAnimationFrame(openRafId);
     openRafId = 0;
     clearTypeahead();
+
+    for (const unsubscribe of submenuUnsubscribes.values()) unsubscribe();
+
+    for (const submenu of submenus) {
+      if (parents.get(submenu) === api) parents.delete(submenu);
+    }
+
+    submenuUnsubscribes.clear();
     submenus.clear();
+    parents.delete(api);
+    pendingFocusOut = null;
     popover.destroy();
   }
 
-  return {
+  api = {
     input: popover.input as State<MenuInput>,
     // Menus open/close on trigger click — forward the popover's click handler.
     // Hover and focus-based open are disabled (openOnHover not set).
@@ -448,8 +534,12 @@ export function createMenu(options: MenuOptions): MenuApi {
     get contentElement(): HTMLElement | null {
       return contentElement;
     },
+    get popupElement(): HTMLElement | null {
+      return popupElement;
+    },
     setTriggerElement,
     setContentElement,
+    setPopupElement,
     registerItem,
     registerSubmenu,
     highlight,
@@ -460,4 +550,6 @@ export function createMenu(options: MenuOptions): MenuApi {
     syncOpen,
     destroy,
   };
+
+  return api;
 }

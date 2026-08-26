@@ -48,6 +48,7 @@ const allStyles = [...new Set(Object.values(FRAMEWORK_STYLES).flat())];
     const framework = pathMatch?.[1];
 
     const validStyles = frameworkStyles[framework];
+
     if (framework && validStyles) {
       const storageKey = keyPrefix + framework;
 
@@ -56,6 +57,7 @@ const allStyles = [...new Set(Object.values(FRAMEWORK_STYLES).flat())];
       const queryStyle = urlParams.get("style");
 
       let style;
+
       if (queryStyle && validStyles.includes(queryStyle)) {
         // Query param overrides and persists to localStorage for this framework
         style = queryStyle;
@@ -63,6 +65,7 @@ const allStyles = [...new Set(Object.values(FRAMEWORK_STYLES).flat())];
       } else {
         // Fall back to localStorage or default
         style = localStorage.getItem(storageKey);
+
         if (!style || !validStyles.includes(style)) {
           style = defaultStyle;
           localStorage.setItem(storageKey, style);

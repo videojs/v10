@@ -7,18 +7,19 @@ import type {
   MediaTextTrackState,
 } from '@videojs/media';
 import { createStore } from '@videojs/store';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { playerContext } from '../../player/context';
 import { AudioTrackRadioGroupElement } from '../../ui/audio-track-radio-group/audio-track-radio-group-element';
 import { CaptionsRadioGroupElement } from '../../ui/captions-radio-group/captions-radio-group-element';
-import { MediaElement } from '../../ui/media-element';
+import { MenuContentElement } from '../../ui/menu/menu-content-element';
 import { MenuElement } from '../../ui/menu/menu-element';
 import { MenuItemElement } from '../../ui/menu/menu-item-element';
 import { MenuRadioGroupElement } from '../../ui/menu/menu-radio-group-element';
 import { MenuRadioItemElement } from '../../ui/menu/menu-radio-item-element';
 import { PlaybackRateRadioGroupElement } from '../../ui/playback-rate-radio-group/playback-rate-radio-group-element';
 import { QualityRadioGroupElement } from '../../ui/quality-radio-group/quality-radio-group-element';
+import { UIElement } from '../../ui/ui-element';
 
 type MenuMediaState = MediaAudioTrackState & MediaPlaybackRateState & MediaQualityState & MediaTextTrackState;
 
@@ -47,6 +48,7 @@ function createMenuStore(overrides: Partial<MenuMediaState> = {}): AnyPlayerStor
       chaptersCues: [],
       thumbnailCues: [],
       thumbnailTrackSrc: null,
+      thumbnailTrackCrossOrigin: null,
       textTrackList: [
         { kind: 'captions', label: 'English', language: 'en', mode: 'showing' },
         { kind: 'subtitles', label: 'Spanish', language: 'es', mode: 'disabled' },
@@ -59,7 +61,7 @@ function createMenuStore(overrides: Partial<MenuMediaState> = {}): AnyPlayerStor
   }) as unknown as AnyPlayerStore;
 }
 
-class TestPlayerProviderElement extends MediaElement {
+class TestPlayerProviderElement extends UIElement {
   store: AnyPlayerStore = createMenuStore();
 
   readonly #provider = new ContextProvider(this, { context: playerContext });
@@ -76,6 +78,7 @@ class TestPlayerProviderElement extends MediaElement {
 }
 
 defineElement(MenuElement.tagName, MenuElement);
+defineElement(MenuContentElement.tagName, MenuContentElement);
 defineElement(MenuItemElement.tagName, MenuItemElement);
 defineElement(MenuRadioGroupElement.tagName, MenuRadioGroupElement);
 defineElement(MenuRadioItemElement.tagName, MenuRadioItemElement);
@@ -115,6 +118,7 @@ async function waitForAssertion(assertion: () => void): Promise<void> {
 function setup(store: AnyPlayerStore): Record<keyof typeof groups, MenuItemElement> {
   const provider = document.createElement('test-video-menu-composition-player') as TestPlayerProviderElement;
   const root = document.createElement(MenuElement.tagName) as MenuElement;
+  const content = document.createElement(MenuContentElement.tagName) as MenuContentElement;
   const triggers = {} as Record<keyof typeof groups, MenuItemElement>;
 
   provider.setStore(store);
@@ -123,7 +127,7 @@ function setup(store: AnyPlayerStore): Record<keyof typeof groups, MenuItemEleme
   for (const [name, groupTag] of Object.entries(groups) as [keyof typeof groups, string][]) {
     const trigger = document.createElement(MenuItemElement.tagName) as MenuItemElement;
     const hint = document.createElement('span');
-    const submenu = document.createElement(MenuElement.tagName) as MenuElement;
+    const submenu = document.createElement(MenuContentElement.tagName) as MenuContentElement;
     const group = document.createElement(groupTag);
     const submenuId = `${name}-menu`;
 
@@ -132,10 +136,12 @@ function setup(store: AnyPlayerStore): Record<keyof typeof groups, MenuItemEleme
     submenu.id = submenuId;
     trigger.append(hint);
     submenu.append(group);
-    root.append(trigger, submenu);
+    content.append(trigger);
+    root.append(submenu);
     triggers[name] = trigger;
   }
 
+  root.prepend(content);
   provider.append(root);
   document.body.append(provider);
 

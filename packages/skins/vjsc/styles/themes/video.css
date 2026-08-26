@@ -1,0 +1,46 @@
+@layer videojs.theme.base, videojs.theme.variant, videojs.theme.preferences;
+
+@layer videojs.theme.base {
+  :is(.media-theme-default, .media-theme-minimal) {
+    --media-controls-transition-duration: 100ms;
+    --media-scale: 1;
+    --media-scrollbar-thumb-color: oklch(from currentColor l c h / 0.3);
+    --media-spacing: calc(var(--media-scale-unit, 16px) * var(--media-scale) / 4);
+
+    scrollbar-color: var(--media-scrollbar-thumb-color) transparent;
+    scrollbar-width: thin;
+  }
+
+  :is(.media-theme-default, .media-theme-minimal)::-webkit-scrollbar-thumb {
+    background: var(--media-scrollbar-thumb-color);
+    border-radius: 9999px;
+  }
+}
+
+@layer videojs.theme.preferences {
+  @media (pointer: fine) {
+    :is(.media-theme-default, .media-theme-minimal):not([data-controls-visible]) {
+      --media-controls-transition-duration: 300ms;
+    }
+  }
+
+  @media (pointer: coarse) {
+    :is(.media-theme-default, .media-theme-minimal):not([data-controls-visible]) {
+      --media-controls-transition-duration: 150ms;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :is(.media-theme-default, .media-theme-minimal) {
+      --media-controls-transition-duration: 50ms;
+    }
+  }
+
+  @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+    :is(.media-theme-default, .media-theme-minimal) {
+      --media-scrollbar-thumb-color: oklch(from currentColor l c h / 0.8);
+
+      scrollbar-width: auto;
+    }
+  }
+}

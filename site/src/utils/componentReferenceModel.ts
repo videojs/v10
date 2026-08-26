@@ -80,7 +80,7 @@ function createSections(
   source: PartReference | ComponentReference,
   options: { forPart: true; partId: string } | { forPart: false }
 ): ApiReferenceSection[] {
-  return API_REFERENCE_SUBSECTIONS.flatMap((definition) => {
+  const sections: ApiReferenceSection[] = API_REFERENCE_SUBSECTIONS.flatMap((definition) => {
     if (!hasEntries(source[definition.key])) {
       return [];
     }
@@ -116,6 +116,22 @@ function createSections(
       },
     ];
   });
+
+  if (source.platforms.html?.events?.length) {
+    const section: ApiReferenceSection = {
+      key: 'events',
+      title: 'Events',
+      id: options.forPart ? `${options.partId}-events` : 'events',
+      depth: options.forPart ? 4 : 3,
+      frameworks: ['html'],
+    };
+
+    if (options.forPart) section.tocKind = 'api-reference-subsection';
+
+    sections.push(section);
+  }
+
+  return sections;
 }
 
 export function createComponentReferenceModel(
@@ -134,9 +150,11 @@ export function createComponentReferenceModel(
 
     if (partOrder) {
       const orderMap = new Map(partOrder.map((id, i) => [id, i]));
+
       partEntries = partEntries.slice().sort((a, b) => {
         const ai = orderMap.has(a[0]) ? orderMap.get(a[0])! : Number.MAX_SAFE_INTEGER;
         const bi = orderMap.has(b[0]) ? orderMap.get(b[0])! : Number.MAX_SAFE_INTEGER;
+
         return ai - bi;
       });
     }
@@ -210,6 +228,7 @@ export function buildComponentReferenceTocHeadings(apiReferenceModel: ComponentR
           frameworks: ['react'],
         });
       }
+
       if (part.frameworks.includes('html')) {
         headings.push({
           depth: 3,
@@ -223,6 +242,7 @@ export function buildComponentReferenceTocHeadings(apiReferenceModel: ComponentR
         const frameworks = section.frameworks
           ? part.frameworks.filter((framework) => section.frameworks!.includes(framework))
           : part.frameworks;
+
         headings.push({
           depth: section.depth,
           text: section.title,

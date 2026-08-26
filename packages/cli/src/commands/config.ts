@@ -19,12 +19,14 @@ export function handleConfig(args: string[], flags?: { help?: boolean }): void {
         console.error('Usage: @videojs/cli config set <key> <value>');
         process.exit(1);
       }
+
       try {
         setConfigValue(key, value);
       } catch (error) {
         console.error((error as Error).message);
         process.exit(1);
       }
+
       console.log(`Set ${key} = ${value}`);
       break;
     }
@@ -33,8 +35,10 @@ export function handleConfig(args: string[], flags?: { help?: boolean }): void {
         console.error('Usage: @videojs/cli config get <key>');
         process.exit(1);
       }
+
       try {
         const val = getConfigValue(key);
+
         if (val !== undefined) {
           console.log(val);
         } else {
@@ -45,11 +49,13 @@ export function handleConfig(args: string[], flags?: { help?: boolean }): void {
         console.error((error as Error).message);
         process.exit(1);
       }
+
       break;
     }
     case 'list': {
       const config = listConfig();
       const entries = Object.entries(config);
+
       if (entries.length === 0) {
         console.log('No configuration set.');
       } else {
@@ -57,6 +63,7 @@ export function handleConfig(args: string[], flags?: { help?: boolean }): void {
           console.log(`${k} = ${v}`);
         }
       }
+
       break;
     }
     default:

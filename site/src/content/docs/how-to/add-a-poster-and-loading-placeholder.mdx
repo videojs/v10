@@ -1,0 +1,271 @@
+---
+title: Add a poster and loading placeholder
+description: Set the image shown before playback, then add a lightweight placeholder while it loads
+---
+
+import DocsLink from '@/components/docs/DocsLink.astro';
+import FrameworkCase from '@/components/docs/FrameworkCase.astro';
+
+A poster is the image shown before your video plays. Set one on the player. If it loads slowly, add a small placeholder so the player does not start as empty space.
+
+## Set a poster
+
+Set the player's `poster` to an image URL:
+
+<FrameworkCase frameworks={["react"]}>
+
+```tsx
+import '@videojs/react/video/skin.css';
+import { Video, VideoPlayer, VideoSkin } from '@videojs/react/video';
+
+export function MyPlayer() {
+  return (
+    <VideoPlayer poster="/poster.jpg">
+      <VideoSkin>
+        <Video src="/video.mp4" playsInline />
+      </VideoSkin>
+    </VideoPlayer>
+  );
+}
+```
+
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+
+```html
+<video-player poster="/poster.jpg">
+  <video-skin>
+    <video src="/video.mp4" playsinline></video>
+  </video-skin>
+</video-player>
+```
+
+</FrameworkCase>
+
+If you use a ready-made skin, it includes <DocsLink slug="reference/poster">Poster</DocsLink> and shows the image automatically. If you build your own UI, add Poster yourself. It hides after the user plays or seeks.
+
+Posters are decorative by default, with an empty `alt`. If the image communicates something that is not available elsewhere, add `alt` text when you customize the poster image.
+
+## Add a loading placeholder
+
+A placeholder is a tiny preview that appears while the poster downloads. Keep it small enough to include with the page, such as a short data URL.
+
+<FrameworkCase frameworks={["react"]}>
+
+### Use your framework's image component
+
+If you use `VideoSkin`, pass your framework's image component to `renderPoster`. Video.js passes the poster URL as `src`.
+
+```tsx
+import '@videojs/react/video/skin.css';
+import { Video, VideoPlayer, VideoSkin } from '@videojs/react/video';
+import NextImage from 'next/image';
+
+export function MyPlayer() {
+  return (
+    <VideoPlayer poster="/poster.jpg">
+      <VideoSkin
+        renderPoster={({ src, ...props }) =>
+          src ? (
+            <NextImage
+              {...props}
+              src={src}
+              alt=""
+              fill
+              placeholder="blur"
+              blurDataURL="data:image/webp;base64,…"
+            />
+          ) : null
+        }
+      >
+        <Video src="/video.mp4" playsInline />
+      </VideoSkin>
+    </VideoPlayer>
+  );
+}
+```
+
+Next.js generates blur data for static imports. Here, the poster URL arrives while the player runs, so provide `blurDataURL` yourself.
+
+### Use a plain image
+
+For more control, add the placeholder as a background on the image that `VideoSkin` draws:
+
+```tsx
+import '@videojs/react/video/skin.css';
+import { Video, VideoPlayer, VideoSkin } from '@videojs/react/video';
+
+export function MyPlayer() {
+  return (
+    <VideoPlayer poster="/poster.jpg">
+      <VideoSkin
+        renderPoster={(props) => (
+          <img
+            {...props}
+            style={{
+              ...props.style,
+              background:
+                "url('data:image/webp;base64,…') var(--media-object-position, center) / contain no-repeat",
+            }}
+          />
+        )}
+      >
+        <Video src="/video.mp4" playsInline />
+      </VideoSkin>
+    </VideoPlayer>
+  );
+}
+```
+
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+
+### Add an image to the poster slot
+
+If you use `<video-skin>`, add an image to its `poster` slot. Leave off `src`: Video.js adds the poster URL, while the background appears immediately.
+
+```html
+<video-player poster="/poster.jpg">
+  <video-skin>
+    <video src="/video.mp4" playsinline></video>
+    <img
+      slot="poster"
+      alt=""
+      style="background: url('data:image/webp;base64,…') var(--media-object-position, center) / contain no-repeat"
+    >
+  </video-skin>
+</video-player>
+```
+
+</FrameworkCase>
+
+The examples use `contain` for both images. Use `cover` for both when the poster should fill the player. Keeping the same size and position prevents the image from jumping when the poster appears.
+
+## Let the media choose a poster
+
+Some media components choose a poster for you. For example, `MuxVideo` creates one from its playback ID:
+
+<FrameworkCase frameworks={["react"]}>
+
+```tsx
+import '@videojs/react/video/skin.css';
+import { MuxVideo } from '@videojs/react/media/mux-video';
+import { VideoPlayer, VideoSkin } from '@videojs/react/video';
+
+export function MyPlayer() {
+  return (
+    <VideoPlayer>
+      <VideoSkin>
+        <MuxVideo
+          source={{
+            playbackId: 'BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM',
+            poster: { time: 2 },
+          }}
+          playsInline
+        />
+      </VideoSkin>
+    </VideoPlayer>
+  );
+}
+```
+
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+
+```html
+<video-player>
+  <video-skin>
+    <mux-video
+      src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM.m3u8"
+      poster-time="2"
+      playsinline
+    ></mux-video>
+  </video-skin>
+</video-player>
+```
+
+</FrameworkCase>
+
+When the player and media component both choose a poster, the player's `poster` wins. See <DocsLink slug="reference/feature-metadata">Metadata</DocsLink> for how the player combines those values.
+
+## Add a poster to your own UI
+
+<FrameworkCase frameworks={["react"]}>
+
+When your UI already includes Poster, apply the same placeholder directly:
+
+```tsx
+<Poster
+  render={(props) => (
+    <img
+      {...props}
+      style={{
+        ...props.style,
+        background:
+          "url('data:image/webp;base64,…') var(--media-object-position, center) / contain no-repeat",
+      }}
+    />
+  )}
+/>
+```
+
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+
+In an ejected skin, put the image inside `<media-poster>`:
+
+```html
+<media-poster>
+  <img
+    alt=""
+    style="background: url('data:image/webp;base64,…') var(--media-object-position, center) / contain no-repeat"
+  >
+</media-poster>
+```
+
+</FrameworkCase>
+
+## Troubleshooting
+
+### No poster appears
+
+Check that the player has a `poster` or that the media component can create one from its source.
+
+### The final poster never appears
+
+<FrameworkCase frameworks={["react"]}>
+
+Pass the `src` from `renderPoster` to your image. If your image component requires a source, return `null` until `src` is available.
+
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+
+Leave off `src`, `srcset`, and any parent `<picture>` sources when you want Video.js to add the poster URL. If you provide one of those values, Video.js leaves it unchanged.
+
+</FrameworkCase>
+
+### The placeholder and poster use different crops
+
+Use the same fit for both images: pair `background-size: contain` with `object-fit: contain`, or use `cover` for both.
+
+### The placeholder adds too much page weight
+
+Use fewer pixels and stronger compression. The placeholder only needs to suggest the poster's color and shape until the full image appears.
+
+## Related components
+
+- <DocsLink slug="reference/poster">Poster</DocsLink>
+
+## Related API
+
+- <DocsLink slug="reference/feature-metadata">Metadata</DocsLink>
+
+## Related guides
+
+- <DocsLink slug="how-to/customize-skins">Customize skins</DocsLink>
+- <DocsLink slug="how-to/build-your-own-component">Build your own UI component</DocsLink>

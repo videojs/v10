@@ -15,7 +15,7 @@ export default function TextTrackUsage() {
           playsInline
           crossOrigin="anonymous"
         >
-          <track kind="metadata" label="thumbnails" src="/docs/demos/thumbnail/basic.vtt" default />
+          <track kind="metadata" label="thumbnails" src="{{VJS10_DEMO_STORYBOARD_VTT}}" default />
         </Video>
         <Thumbnail className="media-thumbnail" time={12} />
       </Container>

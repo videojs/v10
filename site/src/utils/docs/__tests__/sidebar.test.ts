@@ -1,4 +1,5 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
+
 import type { Guide, Section, Sidebar, SidebarLink } from '../../../types/docs';
 import {
   filterSidebar,
@@ -79,6 +80,7 @@ describe('sidebar utilities', () => {
 
       expect(result).toHaveLength(2);
       const section = result[0] as Section;
+
       expect(section.contents).toHaveLength(2);
       expect(section.contents).toContainEqual(mockGuide1);
       expect(section.contents).toContainEqual(mockGuide2);
@@ -119,8 +121,10 @@ describe('sidebar utilities', () => {
 
       expect(result).toHaveLength(1);
       const parent = result[0] as Section;
+
       expect(parent.contents).toHaveLength(1);
       const child = parent.contents[0] as Section;
+
       expect(child.contents).toHaveLength(1);
       expect(child.contents[0]).toEqual(mockGuide1);
     });
@@ -268,9 +272,11 @@ describe('sidebar utilities', () => {
       ];
 
       const result = getSectionsForGuide('guide-1', nestedSidebar);
+
       expect(result).toEqual(['Parent', 'Child']);
 
       const result2 = getSectionsForGuide('guide-2', nestedSidebar);
+
       expect(result2).toEqual(['Parent']);
     });
 
@@ -299,6 +305,7 @@ describe('sidebar utilities', () => {
       ];
 
       const result = getSectionsForGuide('guide-1', deeplyNestedSidebar);
+
       expect(result).toEqual(['Level 1', 'Level 2', 'Level 3']);
     });
 
@@ -413,6 +420,7 @@ describe('sidebar utilities', () => {
       // Test each valid framework
       for (const framework of SUPPORTED_FRAMEWORKS) {
         const result = findFirstGuide(framework, realSidebar);
+
         expect(result, `findFirstGuide should return a guide for ${framework}`).toBeTruthy();
         expect(typeof result).toBe('string');
       }
@@ -475,6 +483,7 @@ describe('sidebar utilities', () => {
       // Also provide helpful error message if there are duplicates
       if (allSlugs.length !== uniqueSlugs.size) {
         const duplicates = allSlugs.filter((slug, index) => allSlugs.indexOf(slug) !== index);
+
         throw new Error(`Found duplicate slugs in sidebar config: ${[...new Set(duplicates)].join(', ')}`);
       }
     });

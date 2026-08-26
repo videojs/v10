@@ -11,25 +11,25 @@ export type PlayerControllerHost = ReactiveControllerHost & HTMLElement;
 /**
  * Reactive controller for accessing player store state.
  *
- * Without selector: Returns the store, does NOT subscribe to changes.
- * With selector: Returns selected state, subscribes with shallowEqual comparison.
+ * Without selector: Returns the store, does NOT subscribe to changes. With selector: Returns selected state, subscribes
+ * with shallowEqual comparison.
  *
  * @example
- * ```ts
- * // Store access (no subscription)
- * class Controls extends MediaElement {
- *   #player = new PlayerController(this, playerContext);
+ *   ```ts
+ *   // Store access (no subscription)
+ *   class Controls extends UIElement {
+ *     #player = new PlayerController(this, playerContext);
  *
- *   handleClick() {
- *     this.#player.value.setVolume(0.5);
+ *     handleClick() {
+ *       this.#player.value.setVolume(0.5);
+ *     }
  *   }
- * }
  *
- * // Selector-based subscription
- * class PlayButton extends MediaElement {
- *   #playback = new PlayerController(this, playerContext, selectPlayback);
- * }
- * ```
+ *   // Selector-based subscription
+ *   class PlayButton extends UIElement {
+ *     #playback = new PlayerController(this, playerContext, selectPlayback);
+ *   }
+ *   ```;
  */
 export class PlayerController<Store extends PlayerStore, Result = Store> implements ReactiveController {
   readonly #host: PlayerControllerHost;
@@ -39,16 +39,16 @@ export class PlayerController<Store extends PlayerStore, Result = Store> impleme
   #store: StoreController<Store, Result> | null = null;
 
   /**
-   * @label Without Selector
    * @param host - The host element that owns this controller.
    * @param context - Player context to resolve the store from.
+   * @label Without Selector
    */
   constructor(host: PlayerControllerHost, context: PlayerContext<Store>);
   /**
-   * @label With Selector
    * @param host - The host element that owns this controller.
    * @param context - Player context to resolve the store from.
    * @param selector - Derives a value from the player store state.
+   * @label With Selector
    */
   constructor(
     host: PlayerControllerHost,
@@ -89,6 +89,7 @@ export class PlayerController<Store extends PlayerStore, Result = Store> impleme
 
   hostConnected(): void {
     const store = this.#consumer.value;
+
     if (store) this.#connect(store);
   }
 
@@ -103,6 +104,22 @@ export class PlayerController<Store extends PlayerStore, Result = Store> impleme
   }
 }
 
+export function createPlayerController<Store extends PlayerStore>(
+  context: PlayerContext<Store>
+): PlayerController.ConfiguredConstructor<Store> {
+  class ConfiguredPlayerController<Result = Store> extends PlayerController<Store, Result> {
+    constructor(host: PlayerControllerHost, selector?: Selector<InferStoreState<Store>, Result>) {
+      if (selector) {
+        super(host, context, selector);
+      } else {
+        super(host, context);
+      }
+    }
+  }
+
+  return ConfiguredPlayerController;
+}
+
 export namespace PlayerController {
   export type Host = PlayerControllerHost;
 
@@ -110,4 +127,12 @@ export namespace PlayerController {
     Store,
     Result
   >;
+
+  export interface ConfiguredConstructor<Store extends PlayerStore> {
+    new (host: PlayerControllerHost): PlayerController<Store>;
+    new <Result>(
+      host: PlayerControllerHost,
+      selector: Selector<InferStoreState<Store>, Result>
+    ): PlayerController<Store, Result>;
+  }
 }

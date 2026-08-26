@@ -10,7 +10,7 @@ import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 
 Controls remote playback to devices like Chromecast (Chromium) and AirPlay (Safari). Exits fullscreen before initiating a remote playback session.
 
-<DocsLinkCard slug="concepts/cast">Google Cast concept guide — setup, configuration, and HLS</DocsLinkCard>
+<DocsLinkCard slug="how-to/cast-to-airplay-and-chromecast">Cast to AirPlay and Chromecast</DocsLinkCard>
 
 <FeatureReference feature="remotePlayback" />
 
@@ -43,13 +43,13 @@ function CastButton() {
 
 <FrameworkCase frameworks={["html"]}>
 ```ts title="cast-button.ts"
-import { createPlayer, MediaElement, selectRemotePlayback } from '@videojs/html';
+import { createPlayer, UIElement, selectRemotePlayback } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
 
-const { PlayerController, context } = createPlayer({ features: videoFeatures });
+const { PlayerController } = createPlayer({ features: videoFeatures });
 
-class CastButton extends MediaElement {
-  readonly #remotePlayback = new PlayerController(this, context, selectRemotePlayback);
+class CastButton extends UIElement {
+  readonly #remotePlayback = new PlayerController(this, selectRemotePlayback);
 }
 ```
 </FrameworkCase>

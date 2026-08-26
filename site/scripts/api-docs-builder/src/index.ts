@@ -1,4 +1,5 @@
 import * as path from 'node:path';
+
 import { generateFeatureReferences } from './feature-handler.js';
 import { generateMediaElementReferences } from './media-element-handler.js';
 import { type ReferenceGroup, validateReferenceGroup, writeReferenceGroup } from './output.js';
@@ -20,8 +21,10 @@ const CONTENT_ROOT = path.join(MONOREPO_ROOT, 'site/src/content');
 /** Suppress known extractor gaps without hiding warnings from the builder itself. */
 function suppressExtractorWarnings(): () => void {
   const originalWarn = console.warn;
+
   console.warn = (...args: unknown[]) => {
     if (typeof args[0] === 'string' && args[0].startsWith('Unable to handle a type with flag')) return;
+
     originalWarn.apply(console, args);
   };
   return () => {
@@ -103,6 +106,7 @@ function createReferenceGroups(): {
 
 function reportUnlinkedPresetFeatures(presetResults: ReturnType<typeof generatePresetReferences>): void {
   const unlinked = new Map<string, string>();
+
   for (const { reference } of presetResults) {
     for (const feature of reference.features) {
       if (!feature.hasReference) unlinked.set(feature.name, feature.slug);
@@ -112,6 +116,7 @@ function reportUnlinkedPresetFeatures(presetResults: ReturnType<typeof generateP
   if (unlinked.size === 0) return;
 
   log.warn(`${unlinked.size} preset feature(s) have no reference page:`);
+
   for (const [name, slug] of unlinked) {
     log.warn(`  - ${name} → site/src/content/docs/${slug}.mdx (missing)`);
   }
@@ -137,15 +142,19 @@ function main(): void {
 
     if (failures.length > 0) {
       let errorCount = 0;
+
       for (const failure of failures) {
         for (const error of failure.errors) {
           log.error(`Schema validation failed for ${failure.name} ${error.label}:`);
+
           for (const issue of error.issues) {
             log.error(`  - ${issue.path.map(String).join('.')}: ${issue.message}`);
           }
+
           errorCount++;
         }
       }
+
       log.error(`${errorCount} errors occurred. Generated files were not changed.`);
       process.exitCode = 1;
       return;
@@ -155,13 +164,17 @@ function main(): void {
       if (!validation.success) continue;
 
       const result = writeReferenceGroup(validation.group);
+
       for (const doc of validation.group.docs) {
         const detail = doc.detail ? ` (${doc.detail})` : '';
+
         log.success(`✅ Generated ${doc.fileName}${detail}`);
       }
+
       if (result.removed.length > 0) {
         log.info(`Removed ${result.removed.length} stale ${validation.group.name} file(s).`);
       }
+
       log.info(`Done! Generated ${result.written} ${validation.group.name} files.`);
     }
 

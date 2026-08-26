@@ -1,5 +1,6 @@
 import type { ReactiveController, ReactiveControllerHost } from '@videojs/element';
 import { isNull, isUndefined } from '@videojs/utils/predicate';
+
 import type { Selector } from '../../core/shallow-equal';
 import type { AnyStore, InferStoreState } from '../../core/store';
 import { StoreAccessor, type StoreSource } from '../store-accessor';
@@ -10,33 +11,33 @@ export type StoreControllerHost = ReactiveControllerHost & HTMLElement;
 /**
  * Access store state and actions.
  *
- * Without selector: Returns the store, does NOT subscribe to changes.
- * With selector: Returns selected state, triggers update when selected state changes (shallowEqual).
+ * Without selector: Returns the store, does NOT subscribe to changes. With selector: Returns selected state, triggers
+ * update when selected state changes (shallowEqual).
  *
  * @example
- * ```ts
- * // Store access (no subscription) - access actions
- * class Controls extends LitElement {
+ *   ```ts
+ *   // Store access (no subscription) - access actions
+ *   class Controls extends LitElement {
  *   #store = new StoreController(this, storeSource);
  *
  *   handleClick() {
- *     this.#store.value.setVolume(0.5);
+ *   this.#store.value.setVolume(0.5);
  *   }
- * }
+ *   }
  *
- * // Selector-based subscription - re-renders when playback changes
- * class PlayButton extends LitElement {
+ *   // Selector-based subscription - re-renders when playback changes
+ *   class PlayButton extends LitElement {
  *   #playback = new StoreController(this, storeSource, selectPlayback);
  *
  *   render() {
- *     const playback = this.#playback.value;
- *     if (!playback) return nothing;
- *     return html`<button @click=${playback.toggle}>
- *       ${playback.paused ? 'Play' : 'Pause'}
- *     </button>`;
+ *   const playback = this.#playback.value;
+ *   if (!playback) return nothing;
+ *   return html`<button @click=${playback.toggle}>
+ *   ${playback.paused ? 'Play' : 'Pause'}
+ *   </button>`;
  *   }
- * }
- * ```
+ *   }
+ *   ```
  */
 export class StoreController<Store extends AnyStore, Result = Store> implements ReactiveController {
   readonly #host: StoreControllerHost;
@@ -46,16 +47,16 @@ export class StoreController<Store extends AnyStore, Result = Store> implements 
   #snapshot: SnapshotController<object, Result> | null = null;
 
   /**
-   * @label Without Selector
    * @param host - The host element that owns this controller.
    * @param source - Store instance or context to resolve the store from.
+   * @label Without Selector
    */
   constructor(host: StoreControllerHost, source: StoreSource<Store>);
   /**
-   * @label With Selector
    * @param host - The host element that owns this controller.
    * @param source - Store instance or context to resolve the store from.
    * @param selector - Derives a value from the store state.
+   * @label With Selector
    */
   constructor(
     host: StoreControllerHost,
@@ -75,10 +76,7 @@ export class StoreController<Store extends AnyStore, Result = Store> implements 
 
   get value(): Result {
     const store = this.#accessor.value;
-
-    if (isNull(store)) {
-      throw new Error('Store not available');
-    }
+    if (isNull(store)) throw new Error('Store not available');
 
     // Without selector: return store
     if (isUndefined(this.#selector)) {

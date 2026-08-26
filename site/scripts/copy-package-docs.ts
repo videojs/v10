@@ -51,6 +51,7 @@ export function rewriteLinks(content: string, sourceSlug: string, framework: Fra
 
   return content.replace(pattern, (match, prefix: string, slug: string, extension: string | undefined) => {
     if (!slug) return match;
+
     return prefix + toRelativePath(sourceDir, `${slug}${extension === '.txt' ? '.txt' : '.md'}`);
   });
 }
@@ -64,6 +65,7 @@ export function synthesizeReadme({
 }): string {
   const packageName = PACKAGE_NAMES[framework];
   if (!packageName) throw new Error(`Unknown framework: ${framework}`);
+
   const versionSuffix = version ? ` v${version}` : '';
 
   return [
@@ -84,6 +86,7 @@ function escapeForRegex(value: string): string {
 
 function toRelativePath(sourceDir: string, targetFile: string): string {
   const relativePath = posix.relative(sourceDir === '.' || sourceDir === '' ? '.' : sourceDir, targetFile);
+
   return relativePath.startsWith('.') ? relativePath : `./${relativePath}`;
 }
 
@@ -91,7 +94,9 @@ function walkDocumentation(directory: string): string[] {
   return readdirSync(directory, { withFileTypes: true })
     .flatMap((entry) => {
       const path = join(directory, entry.name);
+
       if (entry.isDirectory()) return walkDocumentation(path);
+
       return entry.isFile() && /\.(md|txt)$/.test(entry.name) ? [path] : [];
     })
     .sort();
@@ -103,6 +108,7 @@ function sourceSlug(relativePath: string): string {
 
 function replaceDirectory(targetDirectory: string, build: (stagingDirectory: string) => void): void {
   const parentDirectory = dirname(targetDirectory);
+
   mkdirSync(parentDirectory, { recursive: true });
   const stagingDirectory = mkdtempSync(join(parentDirectory, `.${basename(targetDirectory)}-`));
 
@@ -135,7 +141,9 @@ function copyFrameworkDocumentation({
     const transformed = rewriteLocalLinks
       ? rewriteLinks(withoutFooter, sourceSlug(relativePath), framework)
       : withoutFooter;
+
     const destinationPath = join(targetDirectory, relativePath);
+
     mkdirSync(dirname(destinationPath), { recursive: true });
     writeFileSync(destinationPath, transformed, 'utf-8');
   }
@@ -168,6 +176,7 @@ export function packageDocumentation({
       const frameworkTarget = target === 'cli' ? join(stagingDirectory, framework) : stagingDirectory;
       const sourceDirectory = sources.get(framework);
       if (!sourceDirectory) throw new Error(`Missing documentation source for ${framework}`);
+
       copiedFiles += copyFrameworkDocumentation({
         sourceDirectory,
         targetDirectory: frameworkTarget,
@@ -186,6 +195,7 @@ export function packageDocumentation({
 
 function main(): void {
   const target = process.argv[2];
+
   if (!target || !isPackageDocsTarget(target)) {
     console.error('Usage: node --import tsx copy-package-docs.ts <html|react|cli>');
     process.exit(1);
@@ -200,6 +210,7 @@ function main(): void {
 
   try {
     const copiedFiles = packageDocumentation({ target, version: process.env.npm_package_version });
+
     console.log(`✓ Copied ${copiedFiles} doc files to packages/${target}/docs/`);
   } catch (error) {
     console.error(`✗ ${error instanceof Error ? error.message : String(error)}`);
@@ -208,4 +219,5 @@ function main(): void {
 }
 
 const isEntrypoint = process.argv[1] && resolve(process.argv[1]) === resolve(scriptPath);
+
 if (isEntrypoint) main();

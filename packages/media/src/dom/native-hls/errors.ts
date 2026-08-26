@@ -15,17 +15,17 @@ export function NativeHlsMediaErrorsMixin<Base extends Constructor<NativeMediaHo
     }
 
     /**
-     * Announce `error` as coming from this media, latching it as the current
-     * error when it is fatal. Non-fatal errors are announced only — playback
-     * continues, so they must not stand in for whatever fails next.
+     * Announce `error` as coming from this media, latching it as the current error when it is fatal. Non-fatal errors
+     * are announced only — playback continues, so they must not stand in for whatever fails next.
      *
-     * For siblings producing errors the media element never reports itself:
-     * DRM key exchange, notably, which fails entirely outside the element.
+     * For siblings producing errors the media element never reports itself: DRM key exchange, notably, which fails
+     * entirely outside the element.
      *
      * @internal
      */
     setError(error: MediaError): void {
       if (error.fatal) this.#error = error;
+
       this.dispatchEvent(new ErrorEvent('error', { error, message: error.message }));
     }
 
@@ -66,6 +66,7 @@ export function NativeHlsMediaErrorsMixin<Base extends Constructor<NativeMediaHo
 
           const code = native.code;
           const useCanonicalMessage = code >= MediaError.MEDIA_ERR_ABORTED && code <= MediaError.MEDIA_ERR_ENCRYPTED;
+
           this.setError(new MediaError(useCanonicalMessage ? undefined : native.message, code, true));
         },
         { signal, capture: true }

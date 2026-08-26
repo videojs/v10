@@ -1,10 +1,11 @@
 import { applyElementProps, completeMenuItemSelection } from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextConsumer } from '@videojs/element/context';
-import { MediaElement } from '../media-element';
+
+import { UIElement } from '../ui-element';
 import { type MenuContextValue, menuContext } from './context';
 
-export class MenuItemElement extends MediaElement {
+export class MenuItemElement extends UIElement {
   static readonly tagName = 'media-menu-item';
 
   static override properties = {
@@ -13,7 +14,7 @@ export class MenuItemElement extends MediaElement {
   } satisfies PropertyDeclarationMap<'disabled' | 'commandfor'>;
 
   disabled = false;
-  /** ID of a nested `<media-menu>` to open when this item is activated. */
+  /** ID of a nested `<media-menu-content>` page to open when activated. */
   commandfor: string | undefined = undefined;
   readonly #ctx = new ContextConsumer(this, { context: menuContext, subscribe: true });
 
@@ -54,16 +55,20 @@ export class MenuItemElement extends MediaElement {
             if (!currentCtx || this.#isDisabled()) return;
 
             const target = this.commandfor;
+
             if (target) {
               this.#openSubmenu(target);
             } else {
               const select = new CustomEvent('select', { bubbles: true, cancelable: true });
+
               if (!this.dispatchEvent(select)) {
                 event.preventDefault();
                 return;
               }
+
               completeMenuItemSelection(currentCtx.menu);
             }
+
             event.preventDefault();
           },
           onKeyDown: (event: KeyboardEvent) => {
@@ -78,6 +83,7 @@ export class MenuItemElement extends MediaElement {
           },
           onPointerenter: () => {
             const currentCtx = this.#ctx.value;
+
             if (!this.#isDisabled()) currentCtx?.menu.highlight(this, { focus: false, pointer: true });
           },
         },
@@ -86,6 +92,7 @@ export class MenuItemElement extends MediaElement {
     }
 
     const hasSubmenu = Boolean(this.commandfor);
+
     applyElementProps(this, {
       role: 'menuitem',
       'aria-disabled': this.#isDisabled() ? 'true' : undefined,
@@ -102,6 +109,7 @@ export class MenuItemElement extends MediaElement {
     const submenu = root.querySelector<HTMLElement>(`#${CSS.escape(id)}`) as HTMLElement & {
       openMenu?: (reason?: 'click') => void;
     };
+
     submenu?.openMenu?.('click');
   }
 

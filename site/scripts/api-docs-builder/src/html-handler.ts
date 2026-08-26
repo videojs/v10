@@ -1,113 +1,68 @@
-import * as ts from 'typescript';
+import { collectDispatchedEvents, collectFires } from './event-handler.js';
+import type { OxcProject } from './oxc-project.js';
+import { staticName, unwrapExpression, unwrapObjectExpression } from './oxc-project.js';
 import type { HtmlExtraction } from './types.js';
 
-/** Extract tagName and reactive properties from a Lit element file. */
+/** Extract tagName and reactive properties from an HTML element class. */
 export function extractHtml(
   filePath: string,
-  program: ts.Program,
+  project: OxcProject,
   componentName: string,
   elementName?: string
 ): HtmlExtraction | null {
-  const sourceFile = program.getSourceFile(filePath);
-  if (!sourceFile) return null;
-
   const className = elementName ?? `${componentName}Element`;
+  const hierarchy = project.classHierarchy(filePath, className);
+  if (hierarchy.length === 0) return null;
+
   let tagName = '';
-  let elementClass: ts.ClassDeclaration | undefined;
-
-  function visit(node: ts.Node) {
-    if (ts.isClassDeclaration(node) && node.name?.text === className) {
-      elementClass = node;
-      for (const member of node.members) {
-        if (
-          ts.isPropertyDeclaration(member) &&
-          member.name &&
-          ts.isIdentifier(member.name) &&
-          member.name.text === 'tagName' &&
-          member.modifiers?.some((m) => m.kind === ts.SyntaxKind.StaticKeyword) &&
-          member.initializer &&
-          ts.isStringLiteral(member.initializer)
-        ) {
-          tagName = member.initializer.text;
-        }
-      }
-    }
-    ts.forEachChild(node, visit);
-  }
-
-  visit(sourceFile);
-
-  if (!tagName || !elementClass) return null;
-
-  const checker = program.getTypeChecker();
   const properties = new Set<string>();
-  const seen = new Set<ts.ClassDeclaration>();
 
-  function collectProperties(classNode: ts.ClassDeclaration) {
-    if (seen.has(classNode)) return;
-    seen.add(classNode);
+  for (const resolved of hierarchy) {
+    for (const member of resolved.declaration.body.body) {
+      if (member.type !== 'PropertyDefinition' || !member.static) continue;
 
-    const type = checker.getTypeAtLocation(classNode);
-    for (const baseType of checker.getBaseTypes(type as ts.InterfaceType) ?? []) {
-      const declaration = baseType.getSymbol()?.declarations?.find(ts.isClassDeclaration);
-      if (declaration) collectProperties(declaration);
-    }
+      const name = staticName(member.key);
 
-    for (const member of classNode.members) {
-      if (
-        !ts.isPropertyDeclaration(member) ||
-        !member.modifiers?.some((modifier) => modifier.kind === ts.SyntaxKind.StaticKeyword) ||
-        !member.name ||
-        !ts.isIdentifier(member.name) ||
-        member.name.text !== 'properties' ||
-        !member.initializer
-      ) {
-        continue;
+      if (name === 'tagName' && member.value) {
+        const value = unwrapExpression(member.value);
+
+        if (value.type === 'Literal' && typeof value.value === 'string') tagName = value.value;
       }
 
-      let initializer = member.initializer;
-      while (
-        ts.isSatisfiesExpression(initializer) ||
-        ts.isAsExpression(initializer) ||
-        ts.isParenthesizedExpression(initializer)
-      ) {
-        initializer = initializer.expression;
-      }
-      if (!ts.isObjectLiteralExpression(initializer)) continue;
+      if (name !== 'properties') continue;
 
-      for (const property of initializer.properties) {
-        if (!ts.isPropertyAssignment(property) || !property.name) continue;
-        const name =
-          ts.isIdentifier(property.name) || ts.isStringLiteral(property.name) ? property.name.text : undefined;
-        if (!name) continue;
+      const object = unwrapObjectExpression(member.value);
+      if (!object) continue;
 
-        let declaration = property.initializer;
-        while (
-          ts.isSatisfiesExpression(declaration) ||
-          ts.isAsExpression(declaration) ||
-          ts.isParenthesizedExpression(declaration)
-        ) {
-          declaration = declaration.expression;
-        }
-        if (
-          ts.isObjectLiteralExpression(declaration) &&
-          declaration.properties.some(
-            (entry) =>
-              ts.isPropertyAssignment(entry) &&
-              ts.isIdentifier(entry.name) &&
-              entry.name.text === 'attribute' &&
-              entry.initializer.kind === ts.SyntaxKind.FalseKeyword
-          )
-        ) {
-          continue;
-        }
+      for (const property of object.properties) {
+        if (property.type !== 'Property' || property.kind !== 'init') continue;
 
-        properties.add(name);
+        const propertyName = staticName(property.key);
+        if (!propertyName) continue;
+
+        const declaration = unwrapObjectExpression(property.value);
+        const excludesAttribute = declaration?.properties.some((entry) => {
+          if (entry.type !== 'Property' || entry.kind !== 'init' || staticName(entry.key) !== 'attribute') return false;
+
+          const value = unwrapExpression(entry.value);
+
+          return value.type === 'Literal' && value.value === false;
+        });
+
+        if (!excludesAttribute) properties.add(propertyName);
       }
     }
   }
 
-  collectProperties(elementClass);
+  const files = [...new Set(hierarchy.map(({ file }) => file.filePath))];
+  const fires = collectFires(files, project);
+  const events = [...collectDispatchedEvents(files, project)]
+    .sort((a, b) => a.localeCompare(b))
+    .map((name) => {
+      const description = fires.get(name);
 
-  return { tagName, properties: [...properties] };
+      return description ? { name, description } : { name };
+    });
+
+  return tagName ? { tagName, properties: [...properties], events } : null;
 }

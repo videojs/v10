@@ -13,11 +13,15 @@ import {
 } from '../indicator/indicator-labels';
 
 export interface StatusAnnouncerLabels extends InputIndicatorLabels {
+  /** Formats an announcement containing the current volume value. */
   volumeWithValue: (value: string) => string;
+  /** Formats an announcement containing the completed seek time. */
   seekedTo: (time: number) => string;
+  /** Formats an announcement containing the current playback rate. */
   playbackRate: (rate: string) => string;
 }
 
+/** Default English labels used when no translated labels are provided. */
 export const DEFAULT_STATUS_ANNOUNCER_LABELS: StatusAnnouncerLabels = {
   ...DEFAULT_INPUT_INDICATOR_LABELS,
   volumeWithValue: (value) => translateText(valueText, { value }),
@@ -25,7 +29,7 @@ export const DEFAULT_STATUS_ANNOUNCER_LABELS: StatusAnnouncerLabels = {
   playbackRate: (rate) => translateText(rateText, { rate }),
 };
 
-/** Adds the parameterized labels used by status announcements. */
+/** Creates translated labels for status, volume, seek, and playback-rate announcements. */
 export function createStatusAnnouncerLabels(translator: Translator, locale = DEFAULT_LOCALE): StatusAnnouncerLabels {
   return {
     ...createInputIndicatorLabels(translator),

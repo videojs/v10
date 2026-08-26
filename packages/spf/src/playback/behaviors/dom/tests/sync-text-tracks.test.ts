@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
+
 import { signal } from '../../../../core/signals/primitives';
 import {
   addSubtitlesTracksToMedia,
@@ -66,6 +67,7 @@ function setup(initialState: State = {}, initialContext: Context = {}) {
     textTracksActor: signal<TextTracksActor<VTTCue> | undefined>(initialContext.textTracksActor),
   };
   const reactor = syncTextTracks.setup({ state, context, config: baseConfig });
+
   return { state, context, reactor };
 }
 
@@ -124,6 +126,7 @@ describe('syncTextTracks', () => {
     ]);
 
     const { state, context, reactor } = setup({ presentation });
+
     context.mediaElement.set(mediaElement);
     await new Promise((resolve) => setTimeout(resolve, 50));
 
@@ -131,6 +134,7 @@ describe('syncTextTracks', () => {
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     const [enEl, esEl] = Array.from(mediaElement.children) as HTMLTrackElement[];
+
     expect(enEl!.track.mode).toBe('showing');
     expect(esEl!.track.mode).toBe('disabled');
 
@@ -145,10 +149,12 @@ describe('syncTextTracks', () => {
     ]);
 
     const { state, context, reactor } = setup({ presentation, selectedTextTrackId: 'track-en' });
+
     context.mediaElement.set(mediaElement);
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     const [enEl, esEl] = Array.from(mediaElement.children) as HTMLTrackElement[];
+
     expect(enEl!.track.mode).toBe('showing');
     expect(esEl!.track.mode).toBe('disabled');
 
@@ -169,6 +175,7 @@ describe('syncTextTracks', () => {
     ]);
 
     const { state, context, reactor } = setup({ presentation, selectedTextTrackId: 'track-en' });
+
     context.mediaElement.set(mediaElement);
     await new Promise((resolve) => setTimeout(resolve, 50));
 
@@ -176,6 +183,7 @@ describe('syncTextTracks', () => {
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     const [enEl, esEl] = Array.from(mediaElement.children) as HTMLTrackElement[];
+
     expect(enEl!.track.mode).toBe('disabled');
     expect(esEl!.track.mode).toBe('disabled');
 
@@ -188,6 +196,7 @@ describe('syncTextTracks', () => {
 
     // Add a chapters track directly (not via presentation)
     const chaptersEl = document.createElement('track');
+
     chaptersEl.kind = 'chapters';
     chaptersEl.id = 'chapters-en';
     chaptersEl.src = 'data:text/vtt,';
@@ -195,6 +204,7 @@ describe('syncTextTracks', () => {
     chaptersEl.track.mode = 'hidden';
 
     const { context, reactor } = setup({ presentation, selectedTextTrackId: 'track-en' });
+
     context.mediaElement.set(mediaElement);
     await new Promise((resolve) => setTimeout(resolve, 50));
 
@@ -211,6 +221,7 @@ describe('syncTextTracks', () => {
     ]);
 
     const { state, context, reactor } = setup({ presentation });
+
     context.mediaElement.set(mediaElement);
     await new Promise((resolve) => setTimeout(resolve, 50));
 
@@ -218,6 +229,7 @@ describe('syncTextTracks', () => {
     const esEl = Array.from(mediaElement.children).find(
       (el) => (el as HTMLTrackElement).id === 'track-es'
     ) as HTMLTrackElement;
+
     esEl.track.mode = 'showing';
     mediaElement.textTracks.dispatchEvent(new Event('change'));
 
@@ -239,6 +251,7 @@ describe('syncTextTracks', () => {
     ]);
 
     const { state, context, reactor } = setup({ presentation, selectedTextTrackId: 'track-en' });
+
     context.mediaElement.set(mediaElement);
     await new Promise((resolve) => setTimeout(resolve, 50));
 
@@ -246,6 +259,7 @@ describe('syncTextTracks', () => {
     const enEl = Array.from(mediaElement.children).find(
       (el) => (el as HTMLTrackElement).id === 'track-en'
     ) as HTMLTrackElement;
+
     enEl.track.mode = 'disabled';
     mediaElement.textTracks.dispatchEvent(new Event('change'));
 
@@ -264,6 +278,7 @@ describe('syncTextTracks', () => {
     ]);
 
     const { state, context, reactor } = setup({ presentation, selectedTextTrackId: 'track-en' });
+
     context.mediaElement.set(mediaElement);
     await new Promise((resolve) => setTimeout(resolve, 50));
 
@@ -273,6 +288,7 @@ describe('syncTextTracks', () => {
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     const [enEl, esEl] = Array.from(mediaElement.children) as HTMLTrackElement[];
+
     expect(enEl!.track.mode).toBe('disabled');
     expect(esEl!.track.mode).toBe('showing');
     expect(state.userTextTrackSelection.get()).toBeUndefined();
@@ -288,6 +304,7 @@ describe('syncTextTracks', () => {
     ]);
 
     const { state, context, reactor } = setup({ presentation, selectedTextTrackId: 'track-en' });
+
     context.mediaElement.set(mediaElement);
     await new Promise((resolve) => setTimeout(resolve, 50));
 
@@ -310,6 +327,7 @@ describe('syncTextTracks', () => {
     ]);
 
     const { context, reactor } = setup({ presentation });
+
     context.mediaElement.set(mediaElement);
     await new Promise((resolve) => setTimeout(resolve, 50));
 
@@ -324,6 +342,7 @@ describe('syncTextTracks', () => {
     const presentation = makePresentation([{ id: 'track-en', language: 'en' }]);
 
     const { state, context, reactor } = setup({ presentation });
+
     context.mediaElement.set(mediaElement);
     await new Promise((resolve) => setTimeout(resolve, 50));
 
@@ -342,6 +361,7 @@ describe('syncTextTracks', () => {
     const presentation = makePresentation([{ id: 'track-en', language: 'en' }]);
 
     const { state, context, reactor } = setup({ presentation, selectedTextTrackId: 'track-en' });
+
     context.mediaElement.set(mediaElement);
     await new Promise((resolve) => setTimeout(resolve, 50));
 
@@ -360,10 +380,12 @@ describe('syncTextTracks', () => {
     const presentation = makePresentation([{ id: 'track-en', language: 'en' }]);
 
     const { state, context, reactor } = setup({ presentation });
+
     context.mediaElement.set(mediaElement);
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     const firstChild = mediaElement.children[0];
+
     expect(mediaElement.children.length).toBe(1);
 
     // Trigger a re-run by changing selectedTextTrackId
@@ -382,6 +404,7 @@ describe('syncTextTracks', () => {
     const presentation = makePresentation([{ id: 'track-en', language: 'en' }]);
 
     const { state, reactor } = setup({ presentation }, { mediaElement, textTracksActor });
+
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     // Simulate the segment loader having populated the actor cache for

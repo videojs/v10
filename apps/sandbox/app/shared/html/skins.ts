@@ -1,4 +1,5 @@
 import type { Skin, Styling } from '@app/types';
+
 import {
   CSS_SKIN_TAGS,
   LIVE_VIDEO_CSS_SKIN_TAGS,
@@ -33,12 +34,14 @@ async function loadAudioCssSkin(skin: Skin): Promise<string> {
 
 async function loadVideoTailwindSkin(skin: Skin): Promise<string> {
   if (skin === 'default') {
-    const { VideoSkinTailwindElement } = await import('@videojs/html/video/skin.tailwind');
+    await import('@videojs/html/video/skin.tailwind');
+    const { VideoSkinTailwindElement } = await import('@videojs/html/video');
     const { getTailwindStyles } = await import('./tailwind-setup');
 
     VideoSkinTailwindElement.styles = getTailwindStyles();
   } else {
-    const { MinimalVideoSkinTailwindElement } = await import('@videojs/html/video/minimal-skin.tailwind');
+    await import('@videojs/html/video/minimal-skin.tailwind');
+    const { MinimalVideoSkinTailwindElement } = await import('@videojs/html/video');
     const { getTailwindStyles } = await import('./tailwind-setup');
 
     MinimalVideoSkinTailwindElement.styles = getTailwindStyles();
@@ -49,12 +52,14 @@ async function loadVideoTailwindSkin(skin: Skin): Promise<string> {
 
 async function loadAudioTailwindSkin(skin: Skin): Promise<string> {
   if (skin === 'default') {
-    const { AudioSkinTailwindElement } = await import('@videojs/html/audio/skin.tailwind');
+    await import('@videojs/html/audio/skin.tailwind');
+    const { AudioSkinTailwindElement } = await import('@videojs/html/audio');
     const { getTailwindStyles } = await import('./tailwind-setup');
 
     AudioSkinTailwindElement.styles = getTailwindStyles();
   } else {
-    const { MinimalAudioSkinTailwindElement } = await import('@videojs/html/audio/minimal-skin.tailwind');
+    await import('@videojs/html/audio/minimal-skin.tailwind');
+    const { MinimalAudioSkinTailwindElement } = await import('@videojs/html/audio');
     const { getTailwindStyles } = await import('./tailwind-setup');
 
     MinimalAudioSkinTailwindElement.styles = getTailwindStyles();
@@ -77,12 +82,14 @@ async function loadLiveVideoCssSkin(skin: Skin): Promise<string> {
 
 async function loadLiveVideoTailwindSkin(skin: Skin): Promise<string> {
   if (skin === 'default') {
-    const { LiveVideoSkinTailwindElement } = await import('@videojs/html/live-video/skin.tailwind');
+    await import('@videojs/html/live-video/skin.tailwind');
+    const { LiveVideoSkinTailwindElement } = await import('@videojs/html/live-video');
     const { getTailwindStyles } = await import('./tailwind-setup');
 
     LiveVideoSkinTailwindElement.styles = getTailwindStyles();
   } else {
-    const { MinimalLiveVideoSkinTailwindElement } = await import('@videojs/html/live-video/minimal-skin.tailwind');
+    await import('@videojs/html/live-video/minimal-skin.tailwind');
+    const { MinimalLiveVideoSkinTailwindElement } = await import('@videojs/html/live-video');
     const { getTailwindStyles } = await import('./tailwind-setup');
 
     MinimalLiveVideoSkinTailwindElement.styles = getTailwindStyles();
@@ -94,9 +101,8 @@ async function loadLiveVideoTailwindSkin(skin: Skin): Promise<string> {
 type VideoSkinOptions = { live?: boolean };
 
 /**
- * Loads and registers the video skin for the given skin / styling combination
- * and returns its custom element tag name. Pass `live: true` to swap in the
- * `live-video` skin variant (same feature set, trimmed time UI).
+ * Loads and registers the video skin for the given skin / styling combination and returns its custom element tag name.
+ * Pass `live: true` to swap in the `live-video` skin variant (same feature set, trimmed time UI).
  */
 export function loadVideoSkinTag(
   skin: Skin,

@@ -1,5 +1,6 @@
 import { listen, observeResize } from '@videojs/utils/dom';
-import { ThumbnailCore } from '../../core/ui/thumbnail/thumbnail-core';
+
+import { ThumbnailCore } from '../../core/ui/thumbnail/core';
 import type { ThumbnailConstraints } from '../../core/ui/thumbnail/types';
 
 export interface CreateThumbnailOptions {
@@ -86,7 +87,6 @@ export function createThumbnail(options: CreateThumbnailOptions): ThumbnailApi {
     ensureBindings();
 
     const src = url ?? '';
-
     if (src === lastSrc) return;
 
     lastSrc = src;
@@ -148,10 +148,7 @@ export function createThumbnail(options: CreateThumbnailOptions): ThumbnailApi {
 
     readConstraints(): ThumbnailConstraints {
       const el = getContainer();
-
-      if (!el) {
-        return { minWidth: 0, maxWidth: Infinity, minHeight: 0, maxHeight: Infinity };
-      }
+      if (!el) return { minWidth: 0, maxWidth: Infinity, minHeight: 0, maxHeight: Infinity };
 
       return core.parseConstraints(getComputedStyle(el));
     },

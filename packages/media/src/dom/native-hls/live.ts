@@ -1,10 +1,9 @@
 import type { Constructor } from '@videojs/utils/types';
+
 import type { NativeMediaHost } from './errors';
 import { getStreamInfoFromSrc, looksLikeM3u8 } from './m3u8-utils';
 
-/**
- * @fires targetlivewindowchange - Fired when the target live window changes. Read `targetLiveWindow` for the new value.
- */
+/** @fires targetlivewindowchange - Fired when the target live window changes. Read `targetLiveWindow` for the new value. */
 export function NativeHlsMediaLiveMixin<Base extends Constructor<NativeMediaHost>>(BaseClass: Base) {
   // Native HLS does not expose manifest-level `HOLD-BACK` / `PART-HOLD-BACK`
   // through a JS API, so we fetch the m3u8 ourselves and parse the relevant
@@ -19,26 +18,28 @@ export function NativeHlsMediaLiveMixin<Base extends Constructor<NativeMediaHost
     #currentSrc = '';
 
     /**
-     * Seekable range size for live content. `0` for standard live, `Infinity`
-     * for DVR, `NaN` for on-demand or unknown.
+     * Describes the kind of live window available. `0` for a sliding live window, `Infinity` for a live event with
+     * playback history, and `NaN` for on-demand or unknown. This value is not a duration.
      */
     get targetLiveWindow() {
       return this.#targetLiveWindow;
     }
 
     /**
-     * Presentation time marking the start of the Live Edge Window. Derived on
-     * each read from the current `seekable.end` and cached offset; `NaN` when
-     * the stream is not live or the offset is unavailable.
+     * Playback time where the live edge begins. Calculated from the newest available time and the playlist's live-edge
+     * offset. `NaN` when the stream is not live or the offset is unavailable.
      */
     get liveEdgeStart() {
       if (this.#liveEdgeStartOffset === undefined) return Number.NaN;
+
       const target = this.target as HTMLVideoElement | null;
       if (!target) return Number.NaN;
+
       const { seekable, buffered } = target;
       // Native HLS on Chrome doesn't fill the `seekable` property, so we use the `buffered` property instead.
       const ranges = seekable.length ? seekable : buffered;
       if (!ranges.length) return Number.NaN;
+
       return ranges.end(ranges.length - 1) - this.#liveEdgeStartOffset;
     }
 
@@ -99,10 +100,13 @@ export function NativeHlsMediaLiveMixin<Base extends Constructor<NativeMediaHost
       this.#setTargetLiveWindow(Number.NaN);
 
       const signal = this.#disconnect?.signal;
+
       try {
         const info = await getStreamInfoFromSrc(src, signal);
+
         // Bail if we've been torn down or the src changed mid-fetch.
         if (signal?.aborted) return;
+
         if ((target.currentSrc || target.src) !== src) return;
 
         this.#liveEdgeStartOffset = info.liveEdgeStartOffset;
@@ -114,6 +118,7 @@ export function NativeHlsMediaLiveMixin<Base extends Constructor<NativeMediaHost
 
     #setTargetLiveWindow(value: number) {
       if (Object.is(this.#targetLiveWindow, value)) return;
+
       this.#targetLiveWindow = value;
       this.dispatchEvent(new Event('targetlivewindowchange'));
     }

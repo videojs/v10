@@ -2,6 +2,7 @@ import { defineConfig, devices } from '@playwright/test';
 
 const CI = !!process.env.CI;
 const SANDBOX_SPEC = /sandbox-(?:.*i18n|skin-styling)\.spec\.ts/;
+const VJSC_SKIN_SPEC = /vjsc-skin-styling\.spec\.ts/;
 const VALUE_OPTIONS = new Set([
   '-c',
   '-g',
@@ -34,19 +35,25 @@ const selectedProjects = args.flatMap((arg, index) => {
   if (arg === '--project' || arg === '-p') {
     return args[index + 1] ? [args[index + 1]] : [];
   }
+
   return arg.startsWith('--project=') ? [arg.slice('--project='.length)] : [];
 });
+
 const testFilters = args.filter((arg, index) => !arg.startsWith('-') && !VALUE_OPTIONS.has(args[index - 1] ?? ''));
 const selectedViteProject = selectedProjects.some((name) => name.startsWith('vite-'));
 const selectedSandboxProject = selectedProjects.some((name) => name.startsWith('sandbox-'));
+const selectedVjscProject = selectedProjects.some((name) => name.startsWith('vjsc-'));
 const selectedSandboxSpec = testFilters.some((arg) => SANDBOX_SPEC.test(arg));
+const selectedVjscSpec = testFilters.some((arg) => VJSC_SKIN_SPEC.test(arg));
 const unfilteredRun = selectedProjects.length === 0 && testFilters.length === 0;
+
 const shouldStartViteServer =
   selectedViteProject ||
   unfilteredRun ||
-  (selectedProjects.length === 0 && testFilters.some((arg) => !SANDBOX_SPEC.test(arg)));
+  (selectedProjects.length === 0 && testFilters.some((arg) => !SANDBOX_SPEC.test(arg) && !VJSC_SKIN_SPEC.test(arg)));
 const shouldStartSandboxServer =
   !process.env.SANDBOX_URL && (selectedSandboxProject || selectedSandboxSpec || unfilteredRun);
+const shouldStartVjscServer = selectedVjscProject || selectedVjscSpec || unfilteredRun;
 
 export default defineConfig({
   testDir: './tests',
@@ -80,21 +87,21 @@ export default defineConfig({
     // --- Chromium ---
     {
       name: 'vite-chromium',
-      testIgnore: SANDBOX_SPEC,
+      testIgnore: [SANDBOX_SPEC, VJSC_SKIN_SPEC],
       use: { ...devices['Desktop Chrome'], baseURL: 'http://localhost:5180' },
     },
 
     // --- WebKit ---
     {
       name: 'vite-webkit',
-      testIgnore: SANDBOX_SPEC,
+      testIgnore: [SANDBOX_SPEC, VJSC_SKIN_SPEC],
       use: { ...devices['Desktop Safari'], baseURL: 'http://localhost:5180' },
     },
 
     // --- Firefox ---
     {
       name: 'vite-firefox',
-      testIgnore: SANDBOX_SPEC,
+      testIgnore: [SANDBOX_SPEC, VJSC_SKIN_SPEC],
       use: { ...devices['Desktop Firefox'], baseURL: 'http://localhost:5180' },
     },
 
@@ -102,6 +109,12 @@ export default defineConfig({
       name: 'sandbox-chromium',
       testMatch: SANDBOX_SPEC,
       use: { ...devices['Desktop Chrome'] },
+    },
+
+    {
+      name: 'vjsc-chromium',
+      testMatch: VJSC_SKIN_SPEC,
+      use: { ...devices['Desktop Chrome'], baseURL: 'http://localhost:5190' },
     },
 
     // --- Future: Next.js ---
@@ -133,11 +146,22 @@ export default defineConfig({
       ? [
           {
             command:
-              'pnpm --dir ../.. build:cdn && node_modules/.bin/tsx scripts/setup.ts && node_modules/.bin/vite --host --port 5299',
+              'pnpm --dir ../.. build:cdn && pnpm exec tsx scripts/setup.ts && pnpm exec vp dev --host --port 5299',
             cwd: '../sandbox',
             port: 5299,
             reuseExistingServer: !CI,
             timeout: 300_000,
+          },
+        ]
+      : []),
+    ...(shouldStartVjscServer
+      ? [
+          {
+            command: 'pnpm exec vp -C dev dev --host --port 5190 --strictPort',
+            cwd: '../../packages/skins',
+            port: 5190,
+            reuseExistingServer: !CI,
+            timeout: 120_000,
           },
         ]
       : []),

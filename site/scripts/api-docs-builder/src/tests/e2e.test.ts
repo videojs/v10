@@ -1,41 +1,27 @@
 /**
- * ┌─────────────────────────────────────────────────────────────────────────────┐
- * │                    API DOCS BUILDER — END-TO-END SPEC                      │
- * │                                                                            │
- * │  This file IS the specification for the API docs builder pipeline.         │
- * │  It exercises every pattern the builder must handle, using a mock          │
- * │  monorepo under fixtures/monorepo/. If you're an agent trying to          │
- * │  understand how the builder works: read this file. The fixtures are        │
- * │  the inputs, the expected JSON objects are the outputs.                    │
- * │                                                                            │
- * │  The builder is a black box: given TypeScript source files following       │
- * │  specific conventions, it produces JSON reference objects. These tests     │
- * │  verify the contract between input conventions and output shape.           │
+ * ┌─────────────────────────────────────────────────────────────────────────────┐ │ API DOCS BUILDER — END-TO-END SPEC
+ * │ │ │ │ This file IS the specification for the API docs builder pipeline. │ │ It exercises every pattern the builder
+ * must handle, using a mock │ │ monorepo under fixtures/monorepo/. If you're an agent trying to │ │ understand how the
+ * builder works: read this file. The fixtures are │ │ the inputs, the expected JSON objects are the outputs. │ │ │ │
+ * The builder is a black box: given TypeScript source files following │ │ specific conventions, it produces JSON
+ * reference objects. These tests │ │ verify the contract between input conventions and output shape. │
  * └─────────────────────────────────────────────────────────────────────────────┘
  *
  * FIXTURE LAYOUT (under fixtures/monorepo/):
  *
- * Components (packages/core/src/core/ui/):
- *   toggle-button/  — Single-part component. Exercises: props, state, data-attrs,
- *                     CSS vars, defaultProps, HTML element, type abbreviation,
- *                     @ignore skipping, ref auto-skip, function-typed props.
- *   gauge/          — Multi-part component. Exercises: primary part detection via
- *                     Core instantiation, sub-parts with/without HTML elements,
- *                     React-only parts (no platforms.html), sub-part data-attr
- *                     inheritance (stateAttrMap heuristic), non-boolean type
- *                     inference (number, string literal union via type alias),
- *                     extra @parts-tagged data-attrs files attaching to the
- *                     listed parts (gauge-label-data-attrs.ts).
- *   slider/         — Base multi-part component. Exercises: base component whose
- *                     parts are re-exported by domain variants.
- *   volume-slider/  — Domain variant. Exercises: re-exported parts from slider,
- *                     origin-based element + data-attr resolution, re-exported
- *                     parts are never primary, always multi-part (no fallback).
+ * Components (packages/core/src/core/ui/): toggle-button/ — Single-part component. Exercises: props, state, data-attrs,
+ * CSS vars, defaultProps, HTML element, type abbreviation, @ignore skipping, ref auto-skip, function-typed props.
+ * gauge/ — Multi-part component. Exercises: primary part detection via Core instantiation, sub-parts with/without HTML
+ * elements, React-only parts (no platforms.html), sub-part data-attr inheritance (stateAttrMap heuristic), non-boolean
+ * type inference (number, string literal union via type alias), extra @parts-tagged data-attrs files attaching to the
+ * listed parts (label-data.ts). slider/ — Base multi-part component. Exercises: base component whose parts are
+ * re-exported by domain variants. volume-slider/ — Domain variant. Exercises: re-exported parts from slider,
+ * origin-based element + data-attr resolution, re-exported parts are never primary, always multi-part (no fallback).
  *
- * Utils (already existing fixtures for hooks, controllers, selectors, etc.):
- *   Exercises: hook discovery, controller discovery, @public context,
- *   create* factory, mixin display name stripping, selector discovery,
- *   @label overloads, slug collision (react vs html create-player),
+ * Utils (already existing fixtures for hooks, controllers, selectors, etc.): Exercises: hook discovery, controller
+ * discovery, @public context, create* factory, mixin display name stripping, selector discovery,
+ *
+ * @label overloads, slug collision (react vs html create-player),
  *   framework assignment.
  *   ui/rate-options/ — Hook re-exported through a directory index
  *   (entry index → ./ui/rate-options → ./use-rate-options), with a
@@ -51,13 +37,17 @@
  *   volume.ts    — Complex feature. Exercises: numeric state, type alias
  *                  (MediaFeatureAvailability), methods with params + returns,
  *                  interface-level JSDoc → feature description.
- *   presets.ts   — Feature bundles. Exercises: plural *Features naming
+ *   metadata.ts  — Resolved + configured feature. Exercises: `@state` tag
+ *                  naming the published interface when state() annotates
+ *                  private source state, and `config` inputs typed from the
+ *                  symbol-keyed private actions they forward to.
+ *   presets.ts   — Feature bundles. Exercises: plural _Features naming
  *                  (filtered out of feature discovery), array resolution
  *                  for preset feature lists.
  *   feature.parts.ts — Short aliases (playbackFeature as playback, etc.).
  *                  Exercises: namespace re-export filtering (export * as features).
  *   index.ts     — Re-export barrel. Exercises: feature discovery filtering
- *                  (singular *Feature only, not *Features or namespaces).
+ *                  (singular _Feature only, not *Features or namespaces).
  *
  * Presets:
  *   HTML (packages/html/src/presets/):
@@ -65,13 +55,13 @@
  *                  (SkinElement inheritance), tailwind skin exclusion.
  *     audio.ts   — Exercises: single skin, subset of features.
  *   React (packages/react/src/presets/):
- *     video/     — Exercises: feature bundle, React skins (*Skin naming),
+ *     video/     — Exercises: feature bundle, React skins (_Skin naming),
  *                  media element export, tailwind skin exclusion.
  *     audio/     — Exercises: single skin, different media element.
  *
  * Media elements (packages/html/src/define/media/ + packages/media/src/dom/):
  *   simple-video  — Simple media element. Exercises: discovery via static
- *                   tagName in define/media/*.ts, minimal host (src rw,
+ *                   tagName in define/media/_.ts, minimal host (src rw,
  *                   engine readonly), shared attributes/events/CSS vars
  *                   from custom-media-element.
  *   complex-video — Complex media element. Exercises: host with JSDoc
@@ -86,13 +76,15 @@
  *                   Also exercises a hoisted-const base with an `as` cast
  *                   (`extends (Base as typeof Base)`) — the builder must
  *                   unwrap the cast and resolve the local const initializer.
- *   container.ts  — Exclusion case. Not a media element — re-exports an
- *                   existing class instead of declaring one inline.
+ *   define/ui/container.ts — Container registration lives with UI elements,
+ *                   so it is outside media-element discovery.
  *   background-video.ts — Exclusion case. Uses MediaAttachMixin(HTMLElement)
  *                   without CustomMediaElement. API reference manually maintained.
  */
 import * as path from 'node:path';
-import { describe, expect, it } from 'vitest';
+
+import { describe, expect, it, vi } from 'vite-plus/test';
+
 import { type FeatureResult, generateFeatureReferences } from '../feature-handler';
 import { generateMediaElementReferences, type MediaElementResult } from '../media-element-handler';
 import { generateComponentReferences } from '../pipeline';
@@ -119,9 +111,9 @@ describe('Component pipeline (end-to-end)', () => {
   //
   // A single-part component is the simplest case. The builder merges
   // data from three source files into one flat reference object:
-  //   - Core file → Props interface, State interface, defaultProps
-  //   - Data-attrs file → data attribute names + JSDoc descriptions
-  //   - CSS-vars file → CSS custom property names + descriptions
+  //   - core.ts → Props interface, State interface, defaultProps
+  //   - data.ts → data attribute names + JSDoc descriptions
+  //   - vars.ts → CSS custom property names + descriptions
   //   - HTML element file → tagName for platforms.html
   //
   // Key behaviors tested:
@@ -138,6 +130,7 @@ describe('Component pipeline (end-to-end)', () => {
   describe('ToggleButton (single-part)', () => {
     it('produces the expected JSON reference', () => {
       const toggle = findComponent('ToggleButton');
+
       expect(toggle).toBeDefined();
 
       const ref = toggle!.reference;
@@ -210,7 +203,23 @@ describe('Component pipeline (end-to-end)', () => {
 
       // ── Platforms ──
       // HTML element exists → platforms.html with tagName
-      expect(ref.platforms.html).toEqual({ tagName: 'media-toggle-button' });
+      expect(ref.platforms.html).toEqual({
+        tagName: 'media-toggle-button',
+        events: [
+          { name: 'focus-change' },
+          { name: 'pressed-change', description: 'Emitted when the pressed state changes.' },
+        ],
+      });
+    });
+
+    it('detects literal dispatches without @fires and uses @fires only for descriptions', () => {
+      const events = findComponent('ToggleButton')!.reference.platforms.html?.events;
+
+      expect(events).toContainEqual({ name: 'focus-change' });
+      expect(events).toContainEqual({
+        name: 'pressed-change',
+        description: 'Emitted when the pressed state changes.',
+      });
     });
   });
 
@@ -243,6 +252,7 @@ describe('Component pipeline (end-to-end)', () => {
   describe('Gauge (multi-part)', () => {
     it('has empty top-level and parts record', () => {
       const gauge = findComponent('Gauge');
+
       expect(gauge).toBeDefined();
 
       const ref = gauge!.reference;
@@ -292,6 +302,7 @@ describe('Component pipeline (end-to-end)', () => {
       });
       // FillLevel type alias → expanded to string literal union
       const fillType = indicator.dataAttributes['data-fill-level']!.type;
+
       expect(fillType).toBeDefined();
       expect(fillType).toContain("'empty'");
       expect(fillType).toContain("'partial'");
@@ -341,7 +352,7 @@ describe('Component pipeline (end-to-end)', () => {
       expect(fill.state).toEqual({});
 
       // Fill's React source references `stateAttrMap`, so it gets the
-      // component's shared data-attrs from gauge-data-attrs.ts
+      // component's shared data-attrs from data.ts
       expect(Object.keys(fill.dataAttributes).length).toBeGreaterThan(0);
       expect(fill.dataAttributes['data-percentage']).toBeDefined();
       expect(fill.dataAttributes['data-fill-level']).toBeDefined();
@@ -370,11 +381,11 @@ describe('Component pipeline (end-to-end)', () => {
       expect(marker.platforms.react).toEqual({});
     });
 
-    // Extra data-attrs files ({component}-{x}-data-attrs.ts, next to the
-    // main {component}-data-attrs.ts) declare their target parts with a
+    // Extra data-attrs files ({qualifier}-data.ts, next to the main data.ts)
+    // declare their target parts with a
     // @parts JSDoc tag. This covers attrs that a DOM layer applies to
     // parts directly, invisible to the per-part stateAttrMap heuristic
-    // (e.g. menu-item-data-attrs.ts applied by create-menu.ts).
+    // (e.g. item-data.ts applied by create-menu.ts).
     it('extra @parts-tagged data-attrs file attaches to listed parts', () => {
       const parts = findComponent('Gauge')!.reference.parts!;
 
@@ -409,9 +420,11 @@ describe('Component pipeline (end-to-end)', () => {
   describe('VolumeSlider (multi-part with re-exports)', () => {
     it('has empty top-level and parts from both local and re-exported sources', () => {
       const vs = findComponent('VolumeSlider');
+
       expect(vs).toBeDefined();
 
       const ref = vs!.reference;
+
       expect(ref.props).toEqual({});
       expect(ref.state).toEqual({});
       expect(ref.parts).toBeDefined();
@@ -473,9 +486,11 @@ describe('Component pipeline (end-to-end)', () => {
   describe('Slider (base multi-part)', () => {
     it('is discovered and has parts', () => {
       const slider = findComponent('Slider');
+
       expect(slider).toBeDefined();
 
       const ref = slider!.reference;
+
       expect(ref.parts).toBeDefined();
 
       // Root is primary (instantiates SliderCore)
@@ -494,6 +509,7 @@ describe('Component pipeline (end-to-end)', () => {
   describe('Cross-cutting conventions', () => {
     it('all components are discovered from core/ui directories', () => {
       const names = results.map((r) => r.name).sort();
+
       expect(names).toEqual(expect.arrayContaining(['Gauge', 'PiPButton', 'Slider', 'ToggleButton', 'VolumeSlider']));
     });
 
@@ -509,6 +525,7 @@ describe('Component pipeline (end-to-end)', () => {
       // conversion is wrong. "pip-button" would normally become "PipButton",
       // but the override maps it to "PiPButton".
       const pip = findComponent('PiPButton');
+
       expect(pip).toBeDefined();
       expect(pip!.kebab).toBe('pip-button');
       expect(pip!.reference.name).toBe('PiPButton');
@@ -519,9 +536,11 @@ describe('Component pipeline (end-to-end)', () => {
 
     it('primary part appears first in parts record (sorted by isPrimary)', () => {
       const gaugeParts = Object.keys(findComponent('Gauge')!.reference.parts!);
+
       expect(gaugeParts[0]).toBe('indicator');
 
       const vsParts = Object.keys(findComponent('VolumeSlider')!.reference.parts!);
+
       expect(vsParts[0]).toBe('root');
     });
 
@@ -530,6 +549,7 @@ describe('Component pipeline (end-to-end)', () => {
       // so they should be purely alphabetical within the required group.
       const toggleProps = Object.keys(findComponent('ToggleButton')!.reference.props);
       const sorted = [...toggleProps].sort((a, b) => a.localeCompare(b));
+
       expect(toggleProps).toEqual(sorted);
     });
 
@@ -595,11 +615,13 @@ describe('Util pipeline (end-to-end)', () => {
     // which must not break FunctionNode detection.
     it('discovers hooks re-exported through a directory index', () => {
       const entry = findByName('useRateOptions', 'react');
+
       expect(entry).toBeDefined();
       expect(entry!.slug).toBe('use-rate-options');
       expect(entry!.data.description).toContain('Create rate menu options');
 
       const overload = entry!.data.overloads[0]!;
+
       expect(overload.parameters.props).toBeDefined();
       expect(overload.parameters.props!.description).toContain('formatRate');
     });
@@ -628,6 +650,7 @@ describe('Util pipeline (end-to-end)', () => {
     it('discovers selectors as framework-agnostic (null)', () => {
       for (const name of ['selectPlayback', 'selectVolume', 'selectTime']) {
         const entry = findByName(name, null);
+
         expect(entry, `expected ${name} to be framework-agnostic`).toBeDefined();
         expect(entry!.framework).toBeNull();
       }
@@ -663,9 +686,10 @@ describe('Util pipeline (end-to-end)', () => {
 
   describe('Display name & slug', () => {
     it('strips "create" prefix from mixin display names', () => {
-      const mixin = findByName('ContainerMixin', 'html');
+      const mixin = findByName('MediaAttachMixin', 'html');
+
       expect(mixin).toBeDefined();
-      expect(mixin!.slug).toBe('container-mixin');
+      expect(mixin!.slug).toBe('media-attach-mixin');
     });
 
     it('resolves slug collisions: React bare, HTML prefixed', () => {
@@ -688,20 +712,24 @@ describe('Util pipeline (end-to-end)', () => {
   describe('Overloads', () => {
     it('preserves multiple overload signatures', () => {
       const usePlayer = findByName('usePlayer', 'react');
+
       expect(usePlayer!.data.overloads.length).toBe(2);
 
       const useStore = findByName('useStore', 'react');
+
       expect(useStore!.data.overloads.length).toBe(2);
     });
 
     it('extracts @label from overload JSDoc', () => {
       const useFormat = findByName('useFormat', 'react');
+
       expect(useFormat!.data.overloads[0]!.label).toBe('Number');
       expect(useFormat!.data.overloads[1]!.label).toBe('String');
     });
 
     it('omits label when @label is absent', () => {
       const useStore = findByName('useStore', 'react');
+
       expect(useStore!.data.overloads[0]!.label).toBeUndefined();
     });
   });
@@ -718,18 +746,22 @@ describe('Util pipeline (end-to-end)', () => {
   describe('Extraction shape', () => {
     it('hooks have description and overloads with parameters + returnValue', () => {
       const usePlayer = findByName('usePlayer', 'react');
+
       expect(usePlayer!.data.description).toBeDefined();
 
       const overload = usePlayer!.data.overloads[0]!;
+
       expect(overload.returnValue).toBeDefined();
       expect(overload.returnValue.type).toBeDefined();
     });
 
     it('controllers have constructor params and public members as returnValue.fields', () => {
       const snapshot = findByName('SnapshotController', 'html');
+
       expect(snapshot!.data.description).toBeDefined();
 
       const overload = snapshot!.data.overloads[0]!;
+
       // Constructor parameters
       expect(overload.parameters.host).toBeDefined();
 
@@ -745,24 +777,29 @@ describe('Util pipeline (end-to-end)', () => {
     it('controller param descriptions have "- " prefix stripped', () => {
       const snapshot = findByName('SnapshotController', 'html');
       const hostParam = snapshot!.data.overloads[0]!.parameters.host;
+
       expect(hostParam!.description).toBe('The host element.');
       expect(hostParam!.description).not.toMatch(/^-\s/);
     });
 
     it('contexts (@public non-function) have empty parameters and type as returnValue', () => {
       const ctx = findByName('playerContext', 'html');
+
       expect(ctx!.data.description).toBeDefined();
 
       const overload = ctx!.data.overloads[0]!;
+
       expect(overload.parameters).toEqual({});
       expect(overload.returnValue.type).toBeDefined();
     });
 
     it('selectors have parameters and returnValue', () => {
       const sel = findByName('selectPlayback', null);
+
       expect(sel!.data.description).toBeDefined();
 
       const overload = sel!.data.overloads[0]!;
+
       expect(Object.keys(overload.parameters).length).toBeGreaterThan(0);
       expect(overload.returnValue.type).toBeDefined();
     });
@@ -782,6 +819,11 @@ describe('Util pipeline (end-to-end)', () => {
 //   - Filtering: plural *Features (feature bundles) are excluded
 //   - State extraction: interface properties → state record
 //   - Action extraction: interface methods → actions record
+//   - Published state: derived from the feature when state() annotates a
+//     local interface rather than one from media/state.ts
+//   - Config: `config` inputs → provider props, typed from the action they
+//     forward to — a symbol-keyed private one or a public setter named
+//     outright — defaulted from the state() initializer, described by JSDoc
 //   - JSDoc: member descriptions flow through, interface-level JSDoc
 //     becomes the feature description
 //   - Type aliases: expanded in the output (MediaFeatureAvailability →
@@ -802,24 +844,30 @@ describe('Feature pipeline (end-to-end)', () => {
   describe('Discovery', () => {
     it('discovers features from the features index', () => {
       const names = results.map((r) => r.name);
+
+      expect(names).toContain('captionStyle');
+      expect(names).toContain('metadata');
       expect(names).toContain('orientationLock');
       expect(names).toContain('playback');
+      expect(names).toContain('poster');
       expect(names).toContain('volume');
     });
 
     it('excludes feature bundles (plural *Features)', () => {
       const names = results.map((r) => r.name);
+
       expect(names).not.toContain('videoFeatures');
       expect(names).not.toContain('audioFeatures');
     });
 
     it('excludes namespace re-exports (export * as features)', () => {
       const names = results.map((r) => r.name);
+
       expect(names).not.toContain('features');
     });
 
     it('produces one result per feature', () => {
-      expect(results.length).toBe(3);
+      expect(results.length).toBe(6);
     });
   });
 
@@ -829,6 +877,206 @@ describe('Feature pipeline (end-to-end)', () => {
 
       expect(ref.state).toEqual({});
       expect(ref.actions).toEqual({});
+    });
+
+    it('has no configuration', () => {
+      expect(findFeature('orientationLock')!.reference.config).toEqual({});
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────
+  // METADATA FEATURE (published state + configuration)
+  // ─────────────────────────────────────────────────────────────────
+  //
+  // state() annotates MetadataSourceState, which is local to the feature, so
+  // the published shape is derived. Here the interface omits every member of
+  // the one it extends and keeps the rest behind symbols, so `derived` keys are
+  // the whole published shape and there are no actions at all. `config` maps
+  // two provider inputs onto private state keys and the symbol-keyed actions
+  // that write them.
+
+  describe('metadata (published shape derived from the feature)', () => {
+    it('publishes derived keys with their inferred type and JSDoc', () => {
+      const ref = findFeature('metadata')!.reference;
+
+      expect(ref.state.title).toEqual({
+        type: 'string',
+        description: 'The resolved content title.',
+      });
+      expect(ref.state.poster).toEqual({
+        type: 'string',
+        description: 'The resolved poster URL.',
+      });
+    });
+
+    it('publishes no actions when the source state keeps every writer private', () => {
+      const ref = findFeature('metadata')!.reference;
+
+      // An empty record, not a missing key: the model drops the section on
+      // emptiness, so the reference must say "none" rather than "unknown".
+      expect(ref.actions).toEqual({});
+    });
+
+    it('omits symbol-keyed source state as private', () => {
+      const ref = findFeature('metadata')!.reference;
+
+      expect(Object.keys(ref.state)).toEqual(['title', 'poster']);
+      expect(JSON.stringify(ref)).not.toContain('__@');
+    });
+
+    it('describes itself from the feature export JSDoc', () => {
+      const ref = findFeature('metadata')!.reference;
+
+      expect(ref.description).toBe('Resolves user and media content metadata into player state.');
+    });
+  });
+
+  describe('metadata (configuration)', () => {
+    it('emits one input per config key, in declaration order', () => {
+      const config = findFeature('metadata')!.reference.config;
+
+      expect(Object.keys(config)).toEqual(['title', 'poster']);
+    });
+
+    it('types each input from the symbol-keyed action it forwards to', () => {
+      const config = findFeature('metadata')!.reference.config;
+
+      // MediaContentValue = string | null | undefined, reached through the
+      // computed `[SET_USER_TITLE]` / `[SET_USER_POSTER]` members.
+      for (const input of Object.values(config)) {
+        expect(input.type).toContain('string');
+        expect(input.type).toContain('null');
+        expect(input.type).toContain('undefined');
+      }
+    });
+
+    it('omits the default for an input whose state key starts at undefined', () => {
+      const config = findFeature('metadata')!.reference.config;
+
+      // An unset input is what an absent default already says; printing
+      // "undefined" in the default column would be noise on every row.
+      expect(config.title!.default).toBeUndefined();
+      expect(config.poster!.default).toBeUndefined();
+    });
+
+    it('carries a declared attribute name, and leaves it off when the key is used as-is', () => {
+      const config = findFeature('metadata')!.reference.config;
+
+      // `title` is taken on an element, so the feature declares another name for
+      // markup. `poster` isn't, so it takes the kebab-cased key and the
+      // reference stays silent rather than repeating what the renderer derives.
+      expect(config.title!.attribute).toBe('content-title');
+      expect(config.poster!.attribute).toBeUndefined();
+    });
+
+    it('carries JSDoc from the config entry', () => {
+      const config = findFeature('metadata')!.reference.config;
+
+      expect(config.title!.description).toBe(
+        'The title to display. Takes precedence over the title the media carries.'
+      );
+      expect(config.poster!.description).toBe(
+        'The poster to display. Takes precedence over the poster the media carries.'
+      );
+    });
+
+    it('leaves state and actions untouched by config extraction', () => {
+      const volume = findFeature('volume')!.reference;
+
+      expect(volume.config).toEqual({});
+      expect(Object.keys(volume.state)).toContain('volume');
+      expect(Object.keys(volume.actions)).toContain('setVolume');
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────
+  // POSTER FEATURE (published-key defaults and narrow unions)
+  // ─────────────────────────────────────────────────────────────────
+  //
+  // Metadata covers an input that names its action by string. Poster covers the
+  // two steps that still have to follow a published key the rest of the way:
+  // the initial value behind it, and a value type narrower than plain text.
+
+  describe('poster (published-key defaults and narrow unions)', () => {
+    it('reads the default through a plain state key', () => {
+      const config = findFeature('poster')!.reference.config;
+
+      expect(config.poster!.default).toBe("'/poster.jpg'");
+    });
+
+    // The fixture's PlayerFeatureConfig mirrors production, so a constraint that
+    // drifted back to demanding exactly `string | null | undefined` would fail
+    // this file's own type check before it reached the assertion.
+    it('keeps a narrower union as the input type', () => {
+      const config = findFeature('poster')!.reference.config;
+
+      expect(config.posterFit!.type).toBe("undefined | null | 'contain' | 'cover'");
+      expect(config.posterFit!.default).toBe("'contain'");
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────
+  // CAPTION STYLE FEATURE (public setter + config degrade paths)
+  // ─────────────────────────────────────────────────────────────────
+  //
+  // `fontFamily` is the working named-action shape: public setters are optional
+  // on a feature, and this is the one that carries an inherited one. The two
+  // failures below produce output that looks fine and is wrong, so the warning
+  // is part of the contract, not a nicety.
+
+  describe('captionStyle (public setter and config degrade paths)', () => {
+    function generateWithWarnings(): { results: FeatureResult[]; warnings: string[] } {
+      const warnings: string[] = [];
+      const spy = vi.spyOn(console, 'warn').mockImplementation((...args: unknown[]) => {
+        warnings.push(args.map(String).join(' '));
+      });
+
+      try {
+        return { results: generateFeatureReferences(FIXTURE_ROOT), warnings };
+      } finally {
+        spy.mockRestore();
+      }
+    }
+
+    it('types an input from a public setter named outright, following inheritance', () => {
+      const config = findFeature('captionStyle')!.reference.config;
+
+      // `setFontFamily` is declared on MediaCaptionStyleState, not on the
+      // feature's own interface, so the type has to come from the resolved type
+      // rather than the declaration's members.
+      expect(config.fontFamily!.type).toContain('string');
+      expect(config.fontFamily!.type).toContain('null');
+      expect(config.fontFamily!.type).toContain('undefined');
+    });
+
+    it('resolves a named-constant initializer to its literal, not its identifier', () => {
+      const config = findFeature('captionStyle')!.reference.config;
+
+      // state() initializes this key to FALLBACK_FONT; printing that private
+      // identifier into public docs would be meaningless to a reader.
+      expect(config.fontFamily!.default).toBe("'sans-serif'");
+    });
+
+    it('falls back to an unresolved type when the action has no source-state member', () => {
+      const { results: fresh, warnings } = generateWithWarnings();
+      const config = fresh.find((r) => r.name === 'captionStyle')!.reference.config;
+
+      expect(config.fontStretch!.type).toBe('unknown');
+      expect(warnings.some((w) => w.includes('fontStretch') && w.includes('MISSING_ACTION'))).toBe(true);
+    });
+
+    it('drops an input whose action is neither an identifier nor a string, and says so', () => {
+      const { results: fresh, warnings } = generateWithWarnings();
+      const config = fresh.find((r) => r.name === 'captionStyle')!.reference.config;
+
+      expect(config.fontSize).toBeUndefined();
+      expect(warnings.some((w) => w.includes('fontSize') && w.includes('unreadable'))).toBe(true);
+    });
+
+    it('still publishes the feature state around the broken inputs', () => {
+      const ref = findFeature('captionStyle')!.reference;
+
+      expect(ref.state.fontFamily).toMatchObject({ type: 'string' });
     });
   });
 
@@ -846,6 +1094,7 @@ describe('Feature pipeline (end-to-end)', () => {
   describe('playback (simple feature)', () => {
     it('has name and slug', () => {
       const playback = findFeature('playback');
+
       expect(playback).toBeDefined();
       expect(playback!.slug).toBe('playback');
       expect(playback!.reference.name).toBe('playback');
@@ -854,11 +1103,13 @@ describe('Feature pipeline (end-to-end)', () => {
 
     it('has no description (no interface-level JSDoc)', () => {
       const ref = findFeature('playback')!.reference;
+
       expect(ref.description).toBeUndefined();
     });
 
     it('extracts boolean properties as state', () => {
       const state = findFeature('playback')!.reference.state;
+
       expect(state.paused).toEqual({
         type: 'boolean',
         description: 'Whether playback is paused.',
@@ -883,6 +1134,7 @@ describe('Feature pipeline (end-to-end)', () => {
 
     it('does not mix state and actions', () => {
       const ref = findFeature('playback')!.reference;
+
       // Methods should not appear in state
       expect(ref.state['play' as keyof typeof ref.state]).toBeUndefined();
       expect(ref.state['pause' as keyof typeof ref.state]).toBeUndefined();
@@ -906,6 +1158,7 @@ describe('Feature pipeline (end-to-end)', () => {
   describe('volume (complex feature)', () => {
     it('has description from interface-level JSDoc', () => {
       const ref = findFeature('volume')!.reference;
+
       expect(ref.description).toBe('Controls audio volume and mute state.');
     });
 
@@ -927,6 +1180,7 @@ describe('Feature pipeline (end-to-end)', () => {
       const state = findFeature('volume')!.reference.state;
       // MediaFeatureAvailability should be expanded to the union
       const avail = state.volumeAvailability!;
+
       expect(avail.type).toContain("'available'");
       expect(avail.type).toContain("'unavailable'");
       expect(avail.type).toContain("'unsupported'");
@@ -980,6 +1234,7 @@ describe('Preset pipeline (end-to-end)', () => {
   describe('Discovery', () => {
     it('discovers presets from package.json exports', () => {
       const names = results.map((r) => r.name).sort();
+
       expect(names).toEqual(['audio', 'background', 'video']);
     });
 
@@ -995,16 +1250,19 @@ describe('Preset pipeline (end-to-end)', () => {
   describe('video preset', () => {
     it('extracts description from file-level JSDoc', () => {
       const ref = findPreset('video')!.reference;
+
       expect(ref.description).toContain('Mock React video preset');
     });
 
     it('identifies the feature bundle', () => {
       const ref = findPreset('video')!.reference;
+
       expect(ref.featureBundle).toBe('videoFeatures');
     });
 
     it('resolves feature names from the bundle', () => {
       const ref = findPreset('video')!.reference;
+
       expect(ref.features.map((f) => f.name)).toEqual(expect.arrayContaining(['playback', 'volume']));
       expect(ref.features.length).toBe(2);
     });
@@ -1013,6 +1271,7 @@ describe('Preset pipeline (end-to-end)', () => {
       const ref = findPreset('video')!.reference;
       const playback = ref.features.find((f) => f.name === 'playback');
       const volume = ref.features.find((f) => f.name === 'volume');
+
       expect(playback?.slug).toBe('reference/feature-playback');
       expect(volume?.slug).toBe('reference/feature-volume');
     });
@@ -1020,17 +1279,20 @@ describe('Preset pipeline (end-to-end)', () => {
     it('flags hasReference true when the feature MDX page exists', () => {
       const ref = findPreset('video')!.reference;
       const playback = ref.features.find((f) => f.name === 'playback');
+
       expect(playback?.hasReference).toBe(true);
     });
 
     it('flags hasReference false when the feature MDX page is missing', () => {
       const ref = findPreset('video')!.reference;
       const volume = ref.features.find((f) => f.name === 'volume');
+
       expect(volume?.hasReference).toBe(false);
     });
 
     it('detects HTML skins with tagNames', () => {
       const skins = findPreset('video')!.reference.html.skins;
+
       expect(skins).toEqual(
         expect.arrayContaining([
           { name: 'VideoSkinElement', tagName: 'video-skin' },
@@ -1041,16 +1303,19 @@ describe('Preset pipeline (end-to-end)', () => {
 
     it('excludes HTML tailwind skins', () => {
       const skinNames = findPreset('video')!.reference.html.skins.map((s) => s.name);
+
       expect(skinNames).not.toContain('VideoSkinTailwindElement');
     });
 
     it('does not produce an HTML media element for native video', () => {
       const ref = findPreset('video')!.reference;
+
       expect(ref.html.mediaElement).toBeUndefined();
     });
 
     it('detects React skins with CSS imports', () => {
       const skins = findPreset('video')!.reference.react.skins;
+
       expect(skins).toEqual(
         expect.arrayContaining([
           { name: 'VideoSkin', cssImport: '@videojs/react/video/skin.css' },
@@ -1061,11 +1326,13 @@ describe('Preset pipeline (end-to-end)', () => {
 
     it('excludes React tailwind skins', () => {
       const skinNames = findPreset('video')!.reference.react.skins.map((s) => s.name);
+
       expect(skinNames).not.toContain('VideoSkinTailwind');
     });
 
     it('detects React media element', () => {
       const ref = findPreset('video')!.reference;
+
       expect(ref.react.mediaElement).toBe('Video');
     });
   });
@@ -1077,31 +1344,37 @@ describe('Preset pipeline (end-to-end)', () => {
   describe('audio preset', () => {
     it('identifies the feature bundle', () => {
       const ref = findPreset('audio')!.reference;
+
       expect(ref.featureBundle).toBe('audioFeatures');
     });
 
     it('resolves feature names (subset of video)', () => {
       const ref = findPreset('audio')!.reference;
+
       expect(ref.features.map((f) => f.name)).toEqual(['playback']);
     });
 
     it('detects single HTML skin', () => {
       const skins = findPreset('audio')!.reference.html.skins;
+
       expect(skins).toEqual([{ name: 'AudioSkinElement', tagName: 'audio-skin' }]);
     });
 
     it('does not produce an HTML media element for native audio', () => {
       const ref = findPreset('audio')!.reference;
+
       expect(ref.html.mediaElement).toBeUndefined();
     });
 
     it('detects single React skin with CSS import', () => {
       const skins = findPreset('audio')!.reference.react.skins;
+
       expect(skins).toEqual([{ name: 'AudioSkin', cssImport: '@videojs/react/audio/skin.css' }]);
     });
 
     it('detects React media element', () => {
       const ref = findPreset('audio')!.reference;
+
       expect(ref.react.mediaElement).toBe('Audio');
     });
   });
@@ -1113,36 +1386,43 @@ describe('Preset pipeline (end-to-end)', () => {
   describe('background preset', () => {
     it('identifies the feature bundle', () => {
       const ref = findPreset('background')!.reference;
+
       expect(ref.featureBundle).toBe('backgroundFeatures');
     });
 
     it('resolves empty features array', () => {
       const ref = findPreset('background')!.reference;
+
       expect(ref.features).toEqual([]);
     });
 
     it('detects HTML skin from directory scan (not in barrel)', () => {
       const skins = findPreset('background')!.reference.html.skins;
+
       expect(skins).toEqual([{ name: 'BackgroundVideoSkinElement', tagName: 'background-video-skin' }]);
     });
 
     it('detects HTML media element via export * chain', () => {
       const ref = findPreset('background')!.reference;
+
       expect(ref.html.mediaElement).toBe('background-video');
     });
 
     it('excludes player elements', () => {
       const skinNames = findPreset('background')!.reference.html.skins.map((s) => s.name);
+
       expect(skinNames).not.toContain('BackgroundVideoPlayerElement');
     });
 
     it('detects React skin without CSS import when no CSS file exists', () => {
       const skins = findPreset('background')!.reference.react.skins;
+
       expect(skins).toEqual([{ name: 'BackgroundVideoSkin' }]);
     });
 
     it('detects React media element', () => {
       const ref = findPreset('background')!.reference;
+
       expect(ref.react.mediaElement).toBe('BackgroundVideo');
     });
   });
@@ -1157,6 +1437,7 @@ describe('Preset pipeline (end-to-end)', () => {
       const featureSlugs = featureResults.map((r) => r.slug);
 
       const videoPreset = findPreset('video')!.reference;
+
       for (const feature of videoPreset.features) {
         expect(featureSlugs).toContain(feature.name);
       }
@@ -1170,8 +1451,8 @@ describe('Preset pipeline (end-to-end)', () => {
 //
 // Media elements are custom elements that adapt native <video>/<audio> targets
 // or embedded players. They are discovered from
-// packages/html/src/define/media/*.ts by looking for files that declare a
-// class with `static tagName`.
+// packages/html/src/define/media/*.ts and public nested index.ts barrels by
+// looking for files that declare a class with `static tagName`.
 //
 // The builder extracts:
 //   - Tag name from the element class's static tagName
@@ -1183,7 +1464,8 @@ describe('Preset pipeline (end-to-end)', () => {
 //   - JSDoc descriptions from host getter/setter pairs
 //
 // Key behaviors:
-//   - Discovery: files in define/media/ with an inline class declaration + static tagName
+//   - Discovery: files in define/media/ and public nested barrels with an inline
+//     class declaration + static tagName
 //   - Exclusion: container.ts (re-exports, no inline class), background-video.ts
 //     (no CustomMediaElement — uses MediaAttachMixin(HTMLElement) directly)
 //   - Host inheritance: child host extends parent, builder walks the chain
@@ -1212,12 +1494,20 @@ describe('Media element pipeline (end-to-end)', () => {
   describe('Discovery', () => {
     it('discovers media elements from define/media/ files', () => {
       const names = results.map((r) => r.name).sort();
-      expect(names).toEqual(['ComplexVideo', 'EmbedVideo', 'ExtendingVideo', 'MixinVideo', 'SimpleVideo', 'SpfAudio']);
+
+      expect(names).toEqual([
+        'BarrelVideo',
+        'ComplexVideo',
+        'EmbedVideo',
+        'ExtendingVideo',
+        'MixinVideo',
+        'SimpleVideo',
+        'SpfAudio',
+      ]);
     });
 
-    it('excludes container (re-export, not inline class declaration)', () => {
-      expect(findElement('MediaContainer')).toBeUndefined();
-      expect(findElement('MediaContainerElement')).toBeUndefined();
+    it('does not treat the UI container as a media element', () => {
+      expect(findElement('ContainerElement')).toBeUndefined();
     });
 
     it('excludes background-video (no CustomMediaElement, manually maintained)', () => {
@@ -1226,7 +1516,17 @@ describe('Media element pipeline (end-to-end)', () => {
     });
 
     it('produces one result per media element', () => {
-      expect(results.length).toBe(6);
+      expect(results.length).toBe(7);
+    });
+
+    it('follows nested public index barrels without including sibling implementations', () => {
+      expect(findElement('BarrelVideo')?.reference.tagName).toBe('barrel-video');
+    });
+
+    it('omits engineOptions for hosts with no structured source', () => {
+      // SimpleVideo exposes `engine` (the live player instance) but no `source`,
+      // so there is no engine config to document.
+      expect(findElement('SimpleVideo')!.reference.engineOptions).toBeUndefined();
     });
   });
 
@@ -1242,6 +1542,7 @@ describe('Media element pipeline (end-to-end)', () => {
   describe('SimpleVideo (minimal host)', () => {
     it('extracts the tag name', () => {
       const ref = findElement('SimpleVideo')!.reference;
+
       expect(ref.tagName).toBe('simple-video');
       expect(ref.mediaType).toBe('video');
     });
@@ -1266,6 +1567,7 @@ describe('Media element pipeline (end-to-end)', () => {
 
     it('excludes host lifecycle methods (attach, detach, destroy)', () => {
       const props = findElement('SimpleVideo')!.reference.platforms.html.properties.definitions;
+
       expect(props.attach).toBeUndefined();
       expect(props.detach).toBeUndefined();
       expect(props.destroy).toBeUndefined();
@@ -1273,6 +1575,7 @@ describe('Media element pipeline (end-to-end)', () => {
 
     it('separates standard attributes from Video.js-specific attributes', () => {
       const ref = findElement('SimpleVideo')!.reference;
+
       expect(ref.platforms.html.attributes.standard).toEqual(
         expect.arrayContaining([
           'autoplay',
@@ -1296,6 +1599,7 @@ describe('Media element pipeline (end-to-end)', () => {
 
     it('extracts native media methods from the shared base host classes', () => {
       const ref = findElement('SimpleVideo')!.reference;
+
       // Video methods = media-host methods + video-host methods, deduped + sorted.
       // Lifecycle methods (attach/detach/destroy) and accessors are excluded.
       expect(ref.platforms.html.methods).toEqual(['canPlayType', 'load', 'pause', 'play', 'requestFullscreen']);
@@ -1303,6 +1607,7 @@ describe('Media element pipeline (end-to-end)', () => {
 
     it('extracts native passthrough properties from the shared base host classes', () => {
       const ref = findElement('SimpleVideo')!.reference;
+
       // Video native properties = media-host + video-host accessors, filtered to
       // genuine native members and deduped against hostProperties. `currentTime`
       // and `volume` come from media-host; `videoWidth` is video-only.
@@ -1320,6 +1625,7 @@ describe('Media element pipeline (end-to-end)', () => {
 
     it('includes events derived from VideoEvents capability contracts', () => {
       const ref = findElement('SimpleVideo')!.reference;
+
       // Events are extracted from VideoEvents in types.ts, which extends all
       // capability event interfaces including TextTrackListEvents. Custom
       // Video.js events from MediaStreamTypeEvents/MediaLiveEvents
@@ -1361,13 +1667,16 @@ describe('Media element pipeline (end-to-end)', () => {
       // (which points readers at MDN) — with no @fires it appears in NEITHER
       // bucket. Mirrors dash-video / hls-video in the real monorepo.
       const ref = findElement('SimpleVideo')!.reference;
+
       expect(ref.platforms.html.events.standard).not.toContain('streamtypechange');
       const elementSpecificNames = ref.platforms.html.events.custom.map((e) => e.name);
+
       expect(elementSpecificNames).not.toContain('streamtypechange');
     });
 
     it('includes CSS custom properties from VideoCSSVars', () => {
       const css = findElement('SimpleVideo')!.reference.platforms.html.cssCustomProperties;
+
       expect(css['--media-object-fit']).toEqual({
         description: 'Object fit for the video.',
       });
@@ -1389,12 +1698,14 @@ describe('Media element pipeline (end-to-end)', () => {
   describe('ComplexVideo (full host, JSDoc, deduplication)', () => {
     it('extracts the tag name', () => {
       const ref = findElement('ComplexVideo')!.reference;
+
       expect(ref.tagName).toBe('complex-video');
     });
 
     it('extracts all host properties', () => {
       const props = findElement('ComplexVideo')!.reference.platforms.html.properties.definitions;
       const propNames = Object.keys(props).sort();
+
       expect(propNames).toEqual([
         'config',
         'debug',
@@ -1410,6 +1721,7 @@ describe('Media element pipeline (end-to-end)', () => {
 
     it('extracts JSDoc descriptions from host getters', () => {
       const props = findElement('ComplexVideo')!.reference.platforms.html.properties.definitions;
+
       expect(props.type.description).toBe('Explicit source type. When unset, inferred from the source URL extension.');
       expect(props.preferPlayback.description).toBe("Whether to prefer `'mse'` or `'native'` playback.");
       expect(props.debug.description).toBe('Enable debug logging.');
@@ -1418,6 +1730,7 @@ describe('Media element pipeline (end-to-end)', () => {
 
     it('marks readonly properties correctly', () => {
       const props = findElement('ComplexVideo')!.reference.platforms.html.properties.definitions;
+
       // engine: getter only → readonly
       expect(props.engine.readonly).toBe(true);
       // src: getter + setter → not readonly
@@ -1427,6 +1740,7 @@ describe('Media element pipeline (end-to-end)', () => {
 
     it('extracts property types', () => {
       const props = findElement('ComplexVideo')!.reference.platforms.html.properties.definitions;
+
       expect(props.src.type).toBe('string');
       expect(props.debug.type).toBe('boolean');
       expect(props.config.type).toContain('Record');
@@ -1434,6 +1748,7 @@ describe('Media element pipeline (end-to-end)', () => {
 
     it('keeps host-owned attributes in BOTH hostProperties and nativeAttributes', () => {
       const ref = findElement('ComplexVideo')!.reference;
+
       // src and preload are richer host properties AND genuinely settable as
       // markup attributes — the intentional content-attribute vs IDL-property
       // overlap. They appear in hostProperties...
@@ -1449,6 +1764,7 @@ describe('Media element pipeline (end-to-end)', () => {
 
     it('extracts defaults from the co-located defaultProps export', () => {
       const props = findElement('ComplexVideo')!.reference.platforms.html.properties.definitions;
+
       // Literal values are emitted as source text (strings keep their quotes).
       expect(props.src.default).toBe("''");
       expect(props.debug.default).toBe('false');
@@ -1465,16 +1781,19 @@ describe('Media element pipeline (end-to-end)', () => {
       // streamType: MediaStreamTypes.UNKNOWN — the builder resolves the member
       // access to its literal value in the imported `as const` object.
       const props = findElement('ComplexVideo')!.reference.platforms.html.properties.definitions;
+
       expect(props.streamType.default).toBe("'unknown'");
     });
 
     it('omits defaults for properties without a defaultProps entry', () => {
       const props = findElement('ComplexVideo')!.reference.platforms.html.properties.definitions;
+
       expect(props.engine.default).toBeUndefined();
     });
 
     it('extracts the matching React surface from source conventions', () => {
       const react = findElement('ComplexVideo')!.reference.platforms.react;
+
       expect(react).toMatchObject({
         target: 'video',
         acceptsNativeProps: true,
@@ -1500,12 +1819,14 @@ describe('Media element pipeline (end-to-end)', () => {
   describe('EmbedVideo (iframe-backed media)', () => {
     it('uses the target declared by CustomMediaElement', () => {
       const ref = findElement('EmbedVideo')!.reference;
+
       expect(ref.platforms.html.target).toBe('iframe');
       expect(ref.platforms.react?.target).toBe('iframe');
     });
 
     it('does not invent native video properties, methods, or CSS for an iframe target', () => {
       const html = findElement('EmbedVideo')!.reference.platforms.html;
+
       expect(html.properties.native).toEqual([]);
       expect(html.methods).toEqual(['play']);
       expect(html.cssCustomProperties).toEqual({});
@@ -1513,6 +1834,7 @@ describe('Media element pipeline (end-to-end)', () => {
 
     it('documents only attributes implemented by the synthetic media host', () => {
       const attributes = findElement('EmbedVideo')!.reference.platforms.html.attributes;
+
       expect(attributes.standard).toEqual([]);
       expect(Object.keys(attributes.custom).sort()).toEqual(['autoplay', 'src']);
       expect(attributes.custom['stream-type']).toBeUndefined();
@@ -1520,14 +1842,50 @@ describe('Media element pipeline (end-to-end)', () => {
 
     it('documents only events dispatched by the embedded media adapter', () => {
       const events = findElement('EmbedVideo')!.reference.platforms.html.events;
+
       expect(events.standard).toEqual(['play', 'waiting', 'loadedmetadata']);
       expect(events.custom).toEqual([{ name: 'adapterready' }]);
     });
 
     it('extracts custom React props without claiming native media props', () => {
       const react = findElement('EmbedVideo')!.reference.platforms.react;
+
       expect(react).toMatchObject({ target: 'iframe', acceptsNativeProps: false });
-      expect(Object.keys(react!.props).sort()).toEqual(['autoplay', 'src']);
+      expect(Object.keys(react!.props).sort()).toEqual(['autoplay', 'source', 'src']);
+    });
+
+    it('extracts engine options by following the source property type', () => {
+      const ref = findElement('EmbedVideo')!.reference;
+
+      expect(Object.keys(ref.engineOptions ?? {})).toEqual(['embed']);
+      expect(ref.engineOptions?.embed).toEqual([
+        {
+          name: 'cc_load_policy',
+          type: '0 | 1 | undefined',
+          description: 'Show captions by default. Defaults to `0`.',
+        },
+        {
+          name: 'hl',
+          type: 'string | undefined',
+          description: 'Player interface language, as a BCP 47 tag.',
+        },
+        {
+          name: 'referrerPolicy',
+          type: 'ReferrerPolicy | undefined',
+          description: '`referrerpolicy` for the embed iframe. Not an embed parameter.',
+        },
+        // Present in the API surface, so documented as existing even with no
+        // description to give it.
+        { name: 'undocumented', type: 'string | undefined' },
+      ]);
+    });
+
+    it('keeps an engine option that carries no JSDoc, without a description', () => {
+      const options = findElement('EmbedVideo')!.reference.engineOptions?.embed ?? [];
+      const undocumented = options.find((option) => option.name === 'undocumented');
+
+      expect(undocumented).toBeDefined();
+      expect(undocumented?.description).toBeUndefined();
     });
   });
 
@@ -1543,11 +1901,13 @@ describe('Media element pipeline (end-to-end)', () => {
   describe('ExtendingVideo (host inheritance)', () => {
     it('extracts the tag name', () => {
       const ref = findElement('ExtendingVideo')!.reference;
+
       expect(ref.tagName).toBe('extending-video');
     });
 
     it('includes own properties from ExtendingHost', () => {
       const props = findElement('ExtendingVideo')!.reference.platforms.html.properties.definitions;
+
       expect(props.playbackId).toMatchObject({
         type: 'string',
         readonly: false,
@@ -1562,6 +1922,7 @@ describe('Media element pipeline (end-to-end)', () => {
 
     it('includes inherited properties from ComplexHost', () => {
       const props = findElement('ExtendingVideo')!.reference.platforms.html.properties.definitions;
+
       // These are inherited from ComplexHost
       expect(props.src).toBeDefined();
       expect(props.type).toBeDefined();
@@ -1573,12 +1934,14 @@ describe('Media element pipeline (end-to-end)', () => {
 
     it('child overrides replace parent definitions', () => {
       const props = findElement('ExtendingVideo')!.reference.platforms.html.properties.definitions;
+
       // ExtendingHost overrides debug with different JSDoc
       expect(props.debug.description).toBe('Overrides parent debug — adds network logging.');
     });
 
     it('inherited readonly flags are preserved', () => {
       const props = findElement('ExtendingVideo')!.reference.platforms.html.properties.definitions;
+
       // engine is readonly in ComplexHost and not overridden
       expect(props.engine.readonly).toBe(true);
     });
@@ -1587,6 +1950,7 @@ describe('Media element pipeline (end-to-end)', () => {
       // extendingMediaDefaultProps = { ...complexMediaDefaultProps, ... } —
       // the builder must follow the spread to the imported object literal.
       const props = findElement('ExtendingVideo')!.reference.platforms.html.properties.definitions;
+
       expect(props.src.default).toBe("''");
       expect(props.debug.default).toBe('false');
       expect(props.streamType.default).toBe("'unknown'");
@@ -1594,17 +1958,20 @@ describe('Media element pipeline (end-to-end)', () => {
 
     it('extracts own defaults alongside spread defaults', () => {
       const props = findElement('ExtendingVideo')!.reference.platforms.html.properties.definitions;
+
       expect(props.playbackId.default).toBe("''");
       expect(props.maxResolution.default).toBe('1080');
     });
 
     it('abbreviates non-empty object defaults', () => {
       const props = findElement('ExtendingVideo')!.reference.platforms.html.properties.definitions;
+
       expect(props.tokens.default).toBe('{…}');
     });
 
     it('omits defaults for properties without an entry', () => {
       const props = findElement('ExtendingVideo')!.reference.platforms.html.properties.definitions;
+
       expect(props.customDomain.default).toBeUndefined();
     });
   });
@@ -1620,6 +1987,7 @@ describe('Media element pipeline (end-to-end)', () => {
   describe('Event extraction from capability contracts', () => {
     it('video elements include text track events from VideoEvents', () => {
       const ref = findElement('SimpleVideo')!.reference;
+
       expect(ref.platforms.html.events.standard).toContain('addtrack');
       expect(ref.platforms.html.events.standard).toContain('removetrack');
       expect(ref.platforms.html.events.standard).toContain('changetrack');
@@ -1630,6 +1998,7 @@ describe('Media element pipeline (end-to-end)', () => {
       const simple = findElement('SimpleVideo')!.reference.platforms.html.events.standard;
       const complex = findElement('ComplexVideo')!.reference.platforms.html.events.standard;
       const extending = findElement('ExtendingVideo')!.reference.platforms.html.events.standard;
+
       expect(complex).toEqual(simple);
       expect(extending).toEqual(simple);
     });
@@ -1656,11 +2025,13 @@ describe('Media element pipeline (end-to-end)', () => {
   describe('MixinVideo (mixin chain)', () => {
     it('extracts the tag name', () => {
       const ref = findElement('MixinVideo')!.reference;
+
       expect(ref.tagName).toBe('mixin-video');
     });
 
     it('walks function-declaration mixin (Shape A)', () => {
       const props = findElement('MixinVideo')!.reference.platforms.html.properties.definitions;
+
       expect(props.foo).toMatchObject({
         type: 'string',
         readonly: false,
@@ -1670,6 +2041,7 @@ describe('Media element pipeline (end-to-end)', () => {
 
     it('walks const-arrow mixin (Shape B)', () => {
       const props = findElement('MixinVideo')!.reference.platforms.html.properties.definitions;
+
       expect(props.volume).toBeDefined();
       expect(props.volume.type).toBe('number');
       expect(props.volume.readonly).toBe(false);
@@ -1677,6 +2049,7 @@ describe('Media element pipeline (end-to-end)', () => {
 
     it('includes leaf-class own properties', () => {
       const props = findElement('MixinVideo')!.reference.platforms.html.properties.definitions;
+
       expect(props.bar).toMatchObject({
         type: 'number',
         readonly: false,
@@ -1686,11 +2059,13 @@ describe('Media element pipeline (end-to-end)', () => {
 
     it('marks volume as overridesNative (HTMLMediaElement member)', () => {
       const props = findElement('MixinVideo')!.reference.platforms.html.properties.definitions;
+
       expect(props.volume.overridesNative).toBe(true);
     });
 
     it('does not mark non-native properties as overridesNative', () => {
       const props = findElement('MixinVideo')!.reference.platforms.html.properties.definitions;
+
       expect(props.foo.overridesNative).toBeUndefined();
       expect(props.bar.overridesNative).toBeUndefined();
     });
@@ -1699,6 +2074,7 @@ describe('Media element pipeline (end-to-end)', () => {
       // src has JSDoc on MixinBaseHost; MixinB overrides without JSDoc.
       // The description should fall through from the base.
       const props = findElement('MixinVideo')!.reference.platforms.html.properties.definitions;
+
       expect(props.src.description).toBe('Source URL of the media.');
     });
 
@@ -1708,6 +2084,7 @@ describe('Media element pipeline (end-to-end)', () => {
       // ONLY in the elementSpecific bucket (where they carry their description);
       // they are excluded from native so they are never listed twice.
       const ref = findElement('MixinVideo')!.reference;
+
       expect(ref.platforms.html.events.standard).not.toContain('streamtypechange');
       expect(ref.platforms.html.events.custom).toContainEqual({
         name: 'streamtypechange',
@@ -1720,12 +2097,14 @@ describe('Media element pipeline (end-to-end)', () => {
       // has no @fires tag, so it is not surfaced — documentation requires a tag.
       const ref = findElement('MixinVideo')!.reference;
       const elementSpecificNames = ref.platforms.html.events.custom.map((e) => e.name);
+
       expect(elementSpecificNames).not.toContain('foochange');
     });
 
     it('separates native events from element-specific events', () => {
       const ref = findElement('MixinVideo')!.reference;
       const elementSpecificNames = ref.platforms.html.events.custom.map((e) => e.name);
+
       expect(ref.platforms.html.events.standard).toContain('play');
       expect(ref.platforms.html.events.standard).not.toContain('foochange');
       expect(elementSpecificNames).not.toContain('play');
@@ -1733,6 +2112,7 @@ describe('Media element pipeline (end-to-end)', () => {
 
     it('extracts defaults declared in a mixin file', () => {
       const props = findElement('MixinVideo')!.reference.platforms.html.properties.definitions;
+
       expect(props.foo.default).toBe("''");
     });
   });
@@ -1755,12 +2135,14 @@ describe('Media element pipeline (end-to-end)', () => {
   describe('SpfAudio (cross-package mixin, audio host)', () => {
     it('extracts the tag name and audio media type', () => {
       const ref = findElement('SpfAudio')!.reference;
+
       expect(ref.tagName).toBe('spf-audio');
       expect(ref.mediaType).toBe('audio');
     });
 
     it('resolves the mixin through another package barrel', () => {
       const props = findElement('SpfAudio')!.reference.platforms.html.properties.definitions;
+
       expect(props.src).toMatchObject({
         type: 'string',
         readonly: false,
@@ -1775,18 +2157,21 @@ describe('Media element pipeline (end-to-end)', () => {
 
     it('extracts defaults declared next to the cross-package mixin', () => {
       const props = findElement('SpfAudio')!.reference.platforms.html.properties.definitions;
+
       expect(props.src.default).toBe("''");
       expect(props.preload.default).toBe("''");
     });
 
     it('uses AudioEvents for native events (no text track events)', () => {
       const ref = findElement('SpfAudio')!.reference;
+
       expect(ref.platforms.html.events.standard).toContain('play');
       expect(ref.platforms.html.events.standard).not.toContain('addtrack');
     });
 
     it('surfaces a @fires event with its tag description', () => {
       const ref = findElement('SpfAudio')!.reference;
+
       expect(ref.platforms.html.events.custom).toContainEqual({
         name: 'audiomodechange',
         description: 'Fired when the audio-only rendition changes.',
@@ -1795,6 +2180,7 @@ describe('Media element pipeline (end-to-end)', () => {
 
     it('includes @fires-declared events without a scanned dispatch site', () => {
       const ref = findElement('SpfAudio')!.reference;
+
       expect(ref.platforms.html.events.custom).toContainEqual({
         name: 'manifestparsed',
         description: 'Fired after the multivariant playlist is parsed.',
@@ -1804,16 +2190,19 @@ describe('Media element pipeline (end-to-end)', () => {
     it('sorts element-specific events by name', () => {
       const ref = findElement('SpfAudio')!.reference;
       const names = ref.platforms.html.events.custom.map((e) => e.name);
+
       expect(names).toEqual([...names].sort());
     });
 
     it('has empty AudioCSSVars', () => {
       const ref = findElement('SpfAudio')!.reference;
+
       expect(ref.platforms.html.cssCustomProperties).toEqual({});
     });
 
     it('extracts audio methods from the shared base host (no video-only methods)', () => {
       const ref = findElement('SpfAudio')!.reference;
+
       // Audio methods = media-host methods + audio-host methods. The fixture
       // audio host adds none, so video-only methods (requestFullscreen) are absent.
       expect(ref.platforms.html.methods).toEqual(['canPlayType', 'load', 'pause', 'play']);
@@ -1822,6 +2211,7 @@ describe('Media element pipeline (end-to-end)', () => {
 
     it('extracts native properties from the shared base host (no video-only props)', () => {
       const ref = findElement('SpfAudio')!.reference;
+
       // Audio native properties = media-host accessors only (audio host adds
       // none), filtered to native members and deduped against hostProperties
       // (src is re-declared by the mixin). videoWidth is video-only → absent.

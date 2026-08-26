@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import * as Popover from '../index.parts';
 
@@ -22,12 +22,14 @@ describe('Popover', () => {
     );
 
     const trigger = screen.getByTestId('trigger');
+
     expect(trigger.hasAttribute('aria-controls')).toBe(false);
 
     fireEvent.click(trigger);
 
     await waitFor(() => {
       const popup = screen.getByTestId('popup');
+
       expect(trigger.getAttribute('aria-controls')).toBe(popup.id);
     });
 
@@ -43,7 +45,9 @@ describe('Popover', () => {
     vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
       if (this.dataset.testid === 'trigger')
         return makeDOMRect(this.hasAttribute('data-remounted') ? 200 : 100, 10, 40, 20);
+
       if (this.dataset.testid === 'popup') return makeDOMRect(0, 0, 100, 60);
+
       return makeDOMRect(0, 0, 300, 200);
     });
     vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockImplementation(function (this: HTMLElement) {

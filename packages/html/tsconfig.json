@@ -1,8 +1,6 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "jsx": "react-jsx",
-    "jsxImportSource": "vjsc/registry",
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "paths": {
       "@/*": ["./src/*"]
@@ -10,7 +8,7 @@
     "declarationDir": "types",
     "useDefineForClassFields": false
   },
-  "include": ["src", "vjsc"],
+  "include": ["src"],
   "exclude": ["src/cdn/locales"],
-  "references": [{ "path": "../icons" }]
+  "references": [{ "path": "../core" }, { "path": "../icons" }]
 }

@@ -14,7 +14,6 @@ function normalizeStyleProperty(property: string): string {
 
 export function getAnchorNames(element: HTMLElement): string[] {
   const value = element.style.getPropertyValue('anchor-name').trim();
-
   if (!value || value === 'none') return [];
 
   return value
@@ -114,11 +113,9 @@ export function readCSSLength(
 
 export function resolveCSSLength(el: Element, value: string): number {
   const trimmed = value.trim();
-
   if (!trimmed) return 0;
 
   const parsed = Number.parseFloat(trimmed);
-
   if (!Number.isNaN(parsed) && (/^-?\d*\.?\d+$/.test(trimmed) || trimmed.endsWith('px'))) return parsed;
 
   const doc = el.ownerDocument;
@@ -126,17 +123,20 @@ export function resolveCSSLength(el: Element, value: string): number {
 
   if (!Number.isNaN(parsed) && trimmed.endsWith('rem')) {
     const rootFontSize = root ? Number.parseFloat(getComputedStyle(root).fontSize) || 16 : 16;
+
     return parsed * rootFontSize;
   }
 
   if (!Number.isNaN(parsed) && trimmed.endsWith('em')) {
     const fontSize = el instanceof HTMLElement ? Number.parseFloat(getComputedStyle(el).fontSize) || 16 : 16;
+
     return parsed * fontSize;
   }
 
   if (!doc) return Number.isNaN(parsed) ? 0 : parsed;
 
   const measurementEl = doc.createElement('div');
+
   measurementEl.style.position = 'absolute';
   measurementEl.style.visibility = 'hidden';
   measurementEl.style.pointerEvents = 'none';
@@ -150,6 +150,7 @@ export function resolveCSSLength(el: Element, value: string): number {
   measurementEl.style.inset = '0';
 
   const computed = getComputedStyle(el);
+
   measurementEl.style.fontSize = computed.fontSize;
 
   for (let i = 0; i < computed.length; i++) {
@@ -161,7 +162,6 @@ export function resolveCSSLength(el: Element, value: string): number {
   }
 
   const parent = doc.body ?? doc.documentElement;
-
   if (!parent) return Number.isNaN(parsed) ? 0 : parsed;
 
   parent.appendChild(measurementEl);
@@ -172,6 +172,7 @@ export function resolveCSSLength(el: Element, value: string): number {
   }
 
   const pixels = measurementEl.getBoundingClientRect().width;
+
   measurementEl.remove();
 
   if (Number.isFinite(pixels)) return pixels;

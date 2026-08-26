@@ -1,25 +1,29 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { pick } from '../pick';
 
 describe('pick', () => {
   it('picks specified keys from object', () => {
     const obj = { a: 1, b: 2, c: 3 };
+
     expect(pick(obj, ['a', 'c'])).toEqual({ a: 1, c: 3 });
   });
 
   it('picks single key', () => {
     const obj = { a: 1, b: 2, c: 3 };
+
     expect(pick(obj, ['b'])).toEqual({ b: 2 });
   });
 
   it('returns empty object for empty keys array', () => {
     const obj = { a: 1, b: 2 };
+
     expect(pick(obj, [])).toEqual({});
   });
 
   it('ignores non-existent keys', () => {
     const obj = { a: 1, b: 2 };
+
     expect(pick(obj, ['a', 'nonexistent' as keyof typeof obj])).toEqual({ a: 1 });
   });
 
@@ -33,6 +37,7 @@ describe('pick', () => {
 
   it('handles all keys', () => {
     const obj = { a: 1, b: 2 };
+
     expect(pick(obj, ['a', 'b'])).toEqual({ a: 1, b: 2 });
   });
 

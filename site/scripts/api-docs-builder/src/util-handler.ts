@@ -1,48 +1,23 @@
-/**
- * Util reference handler — TAE-based auto-discovery.
- *
- * Generates JSON reference files for hooks, controllers, mixins, factories,
- * contexts, selectors, and utilities by scanning package entry points.
- *
- * Exports are included by naming convention or `@public` JSDoc tag:
- *   select* (capital 3rd), use* (capital 3rd), *Controller (class),
- *   create* (function), or any export tagged @public.
- *
- * Extraction routing is determined by export node type:
- *   - Class / *Controller non-function → controller extraction (raw TS AST)
- *   - Non-function → context extraction (type only)
- *   - Function → function extraction (TAE call signatures)
- *
- * 4 Discovery Strategies (run per entry point, in order):
- *
- *   Strategy 1 — TAE on local modules (primary path)
- *     Parses each resolved local module with typescript-api-extractor.
- *
- *   Strategy 2 — TAE on index file (class re-exports)
- *     Parses the entry index file itself to find controllers that are
- *     re-exported but whose source module is separate.
- *
- *   Strategy 3 — Raw TS AST fallback (failed modules)
- *     When TAE fails on a module (e.g., UniqueESSymbol in HTML bundle),
- *     falls back to walking the raw TypeScript AST for exports.
- *
- *   Strategy 4 — Raw TS AST for missed classes
- *     Scans local modules for exported classes that TAE parsed but missed.
- *
- * All overloads are preserved. When a function or constructor has multiple
- * overload signatures, each becomes a separate entry in the overloads array.
- */
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import * as ts from 'typescript';
-import * as tae from 'typescript-api-extractor';
+
+import type {
+  BindingPattern,
+  CallExpression,
+  Class,
+  ArrowFunctionExpression,
+  Function as OxcFunction,
+  MethodDefinition,
+  ParamPattern,
+  TSType,
+} from 'oxc-parser';
+
 import type { ParamDef, ReturnValue, UtilOverload, UtilReference } from '../../../src/types/util-reference.js';
 import { utilReferenceSlug } from '../../../src/utils/utilReferenceSlug.js';
-import { abbreviateType, formatDetailedType, formatType } from './formatter.js';
-import { createTypeScriptProgram } from './typescript.js';
-import { getJSDocDescription, getJSDocNodes, getJSDocTagValue, hasJSDocTag, log } from './utils.js';
-
-// ─── Types ─────────────────────────────────────────────────────────
+import { abbreviateType, formatDetailedType } from './formatter.js';
+import type { NamedDeclaration, ResolvedType, SourceFile } from './oxc-project.js';
+import { getJSDoc, OxcProject, sourceText, staticName, unwrapExpression } from './oxc-project.js';
+import { log } from './utils.js';
 
 export interface UtilEntry {
   slug: string;
@@ -52,14 +27,9 @@ export interface UtilEntry {
 
 interface EntryPoint {
   index: string;
-  framework: 'react' | 'html' | null;
+  framework: UtilEntry['framework'];
 }
 
-// ─── Entry Points ──────────────────────────────────────────────────
-
-// IMPORTANT: React entries must come before HTML entries. On slug collision,
-// the first framework keeps the bare slug; later frameworks get prefixed
-// (e.g., "create-player" for React, "html-create-player" for HTML).
 const UTIL_ENTRY_POINTS: EntryPoint[] = [
   { index: 'packages/react/src/index.ts', framework: 'react' },
   { index: 'packages/react/src/i18n/index.ts', framework: 'react' },
@@ -68,1081 +38,440 @@ const UTIL_ENTRY_POINTS: EntryPoint[] = [
   { index: 'packages/store/src/html/controllers/index.ts', framework: 'html' },
   { index: 'packages/core/src/core/i18n/index.ts', framework: null },
   { index: 'packages/core/src/dom/store/selectors.ts', framework: null },
+  { index: 'packages/core/src/dom/store/features/orientation-lock.ts', framework: null },
   { index: 'packages/store/src/core/selector.ts', framework: null },
 ];
 
-// ─── Phase 1: Resolve Local Modules ───────────────────────────────
-
-function resolveModulePath(fromFile: string, specifier: string): string {
-  const dir = path.dirname(fromFile);
-  const resolved = path.resolve(dir, specifier);
-
-  // Try exact match, then with extensions. Require a file — a bare
-  // directory specifier must fall through to index resolution below.
-  const extensions = ['', '.ts', '.tsx'];
-  for (const ext of extensions) {
-    const full = resolved + ext;
-    if (fs.existsSync(full) && fs.statSync(full).isFile()) return full;
-  }
-
-  // Try index files
-  for (const ext of ['.ts', '.tsx']) {
-    const indexFile = path.join(resolved, `index${ext}`);
-    if (fs.existsSync(indexFile)) return indexFile;
-  }
-
-  return resolved;
-}
-
-function isFile(filePath: string): boolean {
-  return fs.existsSync(filePath) && fs.statSync(filePath).isFile();
-}
-
-// Memoized: getUtilEntries resolves the same entry point twice (program
-// creation + discovery), and each pass re-reads every module in the graph.
-const localModulesCache = new Map<string, string[]>();
-
-function resolveLocalModules(indexPath: string): string[] {
-  const cached = localModulesCache.get(indexPath);
-  if (cached) return cached;
-
-  const visited = new Set<string>([indexPath]);
-  const localPaths: string[] = [];
-
-  // Post-order: a module's own re-exports are pushed before the module
-  // itself, so declaring files are scanned (and win seenKeys dedup) before
-  // the directory indexes that re-export them.
-  function collect(filePath: string): void {
-    const sourceFile = ts.createSourceFile(filePath, fs.readFileSync(filePath, 'utf-8'), ts.ScriptTarget.Latest, true);
-
-    ts.forEachChild(sourceFile, (node) => {
-      if (ts.isExportDeclaration(node) && node.moduleSpecifier && ts.isStringLiteral(node.moduleSpecifier)) {
-        const specifier = node.moduleSpecifier.text;
-        if (!specifier.startsWith('.')) return;
-
-        const resolved = resolveModulePath(filePath, specifier);
-        if (visited.has(resolved)) return;
-        visited.add(resolved);
-
-        // resolveModulePath falls back to the raw path when nothing matches;
-        // skip anything that isn't a readable file (e.g. a directory with no
-        // index.ts) instead of crashing on the read.
-        if (!isFile(resolved)) return;
-
-        collect(resolved);
-        localPaths.push(resolved);
-      }
-    });
-  }
-
-  collect(indexPath);
-  localModulesCache.set(indexPath, localPaths);
-
-  return localPaths;
-}
-
-// Names actually exported from an entry point, resolving local `export *`
-// chains. External star re-exports (`@videojs/*`) are skipped — they can't
-// make a locally-declared symbol visible. Discovery scans whole modules, so
-// without this filter a deep-scanned file's internal exports (never
-// re-exported up to the entry) would be documented as public API.
-function collectVisibleExportNames(indexPath: string, visited = new Set<string>()): Set<string> {
-  const names = new Set<string>();
-  if (visited.has(indexPath) || !isFile(indexPath)) return names;
-  visited.add(indexPath);
-
-  const sourceFile = ts.createSourceFile(indexPath, fs.readFileSync(indexPath, 'utf-8'), ts.ScriptTarget.Latest, true);
-
-  ts.forEachChild(sourceFile, (node) => {
-    if (ts.isExportDeclaration(node)) {
-      if (node.exportClause && ts.isNamedExports(node.exportClause)) {
-        for (const spec of node.exportClause.elements) {
-          names.add(spec.name.text);
-          if (spec.propertyName) names.add(spec.propertyName.text);
-        }
-      } else if (node.exportClause && ts.isNamespaceExport(node.exportClause)) {
-        names.add(node.exportClause.name.text);
-      } else if (node.moduleSpecifier && ts.isStringLiteral(node.moduleSpecifier)) {
-        const specifier = node.moduleSpecifier.text;
-        if (!specifier.startsWith('.')) return;
-        for (const name of collectVisibleExportNames(resolveModulePath(indexPath, specifier), visited)) {
-          names.add(name);
-        }
-      }
-      return;
-    }
-
-    const modifiers = ts.canHaveModifiers(node) ? ts.getModifiers(node) : undefined;
-    const isExported = modifiers?.some((modifier) => modifier.kind === ts.SyntaxKind.ExportKeyword);
-    if (!isExported) return;
-
-    if (ts.isVariableStatement(node)) {
-      for (const decl of node.declarationList.declarations) {
-        if (ts.isIdentifier(decl.name)) names.add(decl.name.text);
-      }
-    } else if (
-      (ts.isFunctionDeclaration(node) ||
-        ts.isClassDeclaration(node) ||
-        ts.isInterfaceDeclaration(node) ||
-        ts.isTypeAliasDeclaration(node) ||
-        ts.isEnumDeclaration(node)) &&
-      node.name
-    ) {
-      names.add(node.name.text);
-    }
-  });
-
-  return names;
-}
-
-function collectDeclaredExportNames(modulePath: string): Set<string> {
-  const names = new Set<string>();
-  const sourceFile = ts.createSourceFile(
-    modulePath,
-    fs.readFileSync(modulePath, 'utf-8'),
-    ts.ScriptTarget.Latest,
-    true
-  );
-
-  ts.forEachChild(sourceFile, (node) => {
-    const modifiers = ts.canHaveModifiers(node) ? ts.getModifiers(node) : undefined;
-    const isExported = modifiers?.some((modifier) => modifier.kind === ts.SyntaxKind.ExportKeyword);
-    if (!isExported) return;
-
-    if (ts.isVariableStatement(node)) {
-      for (const declaration of node.declarationList.declarations) {
-        if (ts.isIdentifier(declaration.name)) names.add(declaration.name.text);
-      }
-    } else if (
-      (ts.isFunctionDeclaration(node) ||
-        ts.isClassDeclaration(node) ||
-        ts.isInterfaceDeclaration(node) ||
-        ts.isTypeAliasDeclaration(node) ||
-        ts.isEnumDeclaration(node)) &&
-      node.name
-    ) {
-      names.add(node.name.text);
-    }
-  });
-
-  return names;
-}
-
-// ─── Phase 2: Convention Matching ──────────────────────────────────
-
-function isUtilExport(exportNode: tae.ExportNode): boolean {
-  const name = exportNode.name;
-  const type = exportNode.type;
-
-  // Skip type-only exports (interfaces, type aliases without runtime value)
-  if (type instanceof tae.ObjectNode && !type.typeName) return false;
-
-  // Naming conventions (auto-included)
-  if (name.startsWith('select') && name.charAt(6) >= 'A' && name.charAt(6) <= 'Z' && type instanceof tae.FunctionNode) {
-    return true;
-  }
-  if (name.startsWith('use') && name.charAt(3) >= 'A' && name.charAt(3) <= 'Z' && type instanceof tae.FunctionNode) {
-    return true;
-  }
-  if (name.endsWith('Controller') && !(type instanceof tae.FunctionNode)) return true;
-  if (name.startsWith('create') && type instanceof tae.FunctionNode) return true;
-
-  // @public tag (for anything else — utilities, contexts, etc.)
-  if (exportNode.isPublic(true)) return true;
-
-  return false;
-}
-
-// ─── Display Name ──────────────────────────────────────────────────
-
-function getDisplayName(name: string): string {
-  if (name.startsWith('create') && name.includes('Mixin')) {
-    // createProviderMixin → ProviderMixin
-    return name.replace(/^create/, '');
-  }
-  return name;
-}
-
-function normalizeDescription(description: unknown): string | undefined {
-  if (!description) return undefined;
-  if (typeof description === 'string') return description;
-  if (Array.isArray(description)) {
-    const text = description
-      .map((part) => {
-        if (typeof part === 'string') return part;
-        if (part && typeof part === 'object' && 'text' in part && typeof part.text === 'string') {
-          return part.text;
-        }
-        return '';
-      })
-      .join('')
-      .trim();
-    return text || undefined;
-  }
-  return undefined;
-}
-
-// ─── Extraction: Functions ─────────────────────────────────────────
-
-function extractFunctionOverloads(
-  exportNode: tae.ExportNode,
-  filePath: string,
-  program: ts.Program,
-  allExports?: tae.ExportNode[]
-): UtilOverload[] {
-  const funcType = exportNode.type;
-  if (!(funcType instanceof tae.FunctionNode)) return [];
-
-  const signatures = funcType.callSignatures;
-  if (signatures.length === 0) return [];
-
-  // Get per-overload JSDoc from raw TS AST
-  const overloadDocs = getOverloadDocs(filePath, program, exportNode.name);
-
-  const overloads = signatures.map((sig, i) =>
-    buildOverload(sig, overloadDocs[i]?.description, overloadDocs[i]?.label, allExports)
-  );
-
-  fixDegradedTypes(overloads, filePath, program, exportNode.name);
-
-  return overloads;
-}
-
-function buildOverload(
-  sig: tae.CallSignature,
-  doc?: string,
-  label?: string,
-  allExports?: tae.ExportNode[]
-): UtilOverload {
-  const parameters: Record<string, ParamDef> = {};
-
-  for (const param of sig.parameters) {
-    const typeStr = allExports
-      ? formatDetailedType(param.type, allExports, param.optional)
-      : formatType(param.type, param.optional);
-    const abbreviated = abbreviateType(param.name, typeStr);
-
-    const entry: ParamDef = { type: abbreviated ?? typeStr };
-    if (abbreviated && typeStr !== abbreviated) entry.detailedType = typeStr;
-    if (param.documentation?.description) entry.description = param.documentation.description;
-    if (!param.optional) entry.required = true;
-
-    // Clean undefined fields
-    if (entry.detailedType === undefined) delete entry.detailedType;
-    if (entry.description === undefined) delete entry.description;
-    if (!entry.required) delete entry.required;
-
-    parameters[param.name] = entry;
-  }
-
-  const returnValue = buildReturnValue(sig.returnValueType, allExports);
-  const overload: UtilOverload = { parameters, returnValue };
-
-  if (label) overload.label = label;
-  if (doc) overload.description = doc;
-
-  return overload;
-}
-
-function buildReturnValue(type: tae.AnyType, allExports?: tae.ExportNode[]): ReturnValue {
-  const typeStr = allExports ? formatDetailedType(type, allExports, false) : formatType(type, false);
-  const abbreviated = abbreviateType('return', typeStr);
-
-  const result: ReturnValue = { type: abbreviated ?? typeStr };
-  if (abbreviated && typeStr !== abbreviated) result.detailedType = typeStr;
-
-  // Resolve ExternalTypeNode via allExports before checking for ObjectNode fields
-  let resolvedType = type;
-  if (allExports && type instanceof tae.ExternalTypeNode) {
-    const resolved = allExports.find((e) => e.name === type.typeName.name && e.reexportedFrom === undefined);
-    if (resolved) resolvedType = resolved.type;
-  }
-
-  // Expand object properties as fields
-  if (resolvedType instanceof tae.ObjectNode && resolvedType.properties.length > 0) {
-    const fields: Record<string, { type: string; detailedType?: string; description?: string }> = {};
-    for (const prop of resolvedType.properties) {
-      const propType = allExports
-        ? formatDetailedType(prop.type, allExports, prop.optional)
-        : formatType(prop.type, prop.optional);
-      const propAbbrev = abbreviateType(prop.name, propType);
-      const field: { type: string; detailedType?: string; description?: string } = { type: propAbbrev ?? propType };
-      if (propAbbrev && propType !== propAbbrev) field.detailedType = propType;
-      if (prop.documentation?.description) field.description = prop.documentation.description;
-      fields[prop.name] = field;
-    }
-    result.fields = fields;
-  }
-
-  return result;
-}
-
-// ─── Degraded Type Repair ───────────────────────────────────────────
-
-function isDegradedType(type: string): boolean {
-  return /\bany\b/.test(type) || type.includes('__type');
-}
-
-function fixDegradedTypes(overloads: UtilOverload[], filePath: string, program: ts.Program, funcName: string): void {
-  const sourceFile = program.getSourceFile(filePath);
-  if (!sourceFile) return;
-
-  // Collect overload declarations (no body) and implementation fallback
-  const overloadDecls: ts.FunctionDeclaration[] = [];
-  let implDecl: ts.FunctionDeclaration | undefined;
-
-  function visit(node: ts.Node) {
-    if (ts.isFunctionDeclaration(node) && node.name?.text === funcName) {
-      if (!node.body) {
-        overloadDecls.push(node);
-      } else {
-        implDecl = node;
-      }
-    }
-    ts.forEachChild(node, visit);
-  }
-  visit(sourceFile);
-
-  const decls = overloadDecls.length > 0 ? overloadDecls : implDecl ? [implDecl] : [];
-  if (decls.length === 0) return;
-
-  for (let i = 0; i < overloads.length; i++) {
-    const overload = overloads[i]!;
-    const decl = decls[i];
-    if (!decl) continue;
-
-    // Fix degraded param types
-    for (const [paramName, paramDef] of Object.entries(overload.parameters)) {
-      const effectiveType = paramDef.detailedType ?? paramDef.type;
-      if (!isDegradedType(effectiveType)) continue;
-
-      const astParam = decl.parameters.find((p) => ts.isIdentifier(p.name) && p.name.text === paramName);
-      if (!astParam?.type) continue;
-
-      const rawType = astParam.type.getText(sourceFile);
-      const abbreviated = abbreviateType(paramName, rawType);
-      paramDef.type = abbreviated ?? rawType;
-      if (abbreviated && rawType !== abbreviated) {
-        paramDef.detailedType = rawType;
-      } else {
-        delete paramDef.detailedType;
-      }
-    }
-
-    // Fix degraded return type
-    const effectiveReturn = overload.returnValue.detailedType ?? overload.returnValue.type;
-    if (isDegradedType(effectiveReturn) && decl.type) {
-      const rawReturn = decl.type.getText(sourceFile);
-      const abbreviated = abbreviateType('return', rawReturn);
-      overload.returnValue.type = abbreviated ?? rawReturn;
-      if (abbreviated && rawReturn !== abbreviated) {
-        overload.returnValue.detailedType = rawReturn;
-      } else {
-        delete overload.returnValue.detailedType;
-      }
-    }
-  }
-}
-
-// ─── Extraction: Controllers (Classes via raw TS AST) ──────────────
-
-function extractControllerOverloads(filePath: string, program: ts.Program, className: string): UtilOverload[] {
-  const sourceFile = program.getSourceFile(filePath);
-  if (!sourceFile) return [];
-
-  let classDecl: ts.ClassDeclaration | undefined;
-
-  function findClass(node: ts.Node) {
-    if (ts.isClassDeclaration(node) && node.name?.text === className) {
-      classDecl = node;
-    }
-    ts.forEachChild(node, findClass);
-  }
-  findClass(sourceFile);
-  if (!classDecl) return [];
-
-  // Get constructor overloads (declarations without body), falling back to
-  // the implementation constructor when there are no overload declarations.
-  const overloadDecls: ts.ConstructorDeclaration[] = [];
-  let implDecl: ts.ConstructorDeclaration | undefined;
-
-  for (const member of classDecl.members) {
-    if (ts.isConstructorDeclaration(member)) {
-      if (!member.body) {
-        overloadDecls.push(member);
-      } else {
-        implDecl = member;
-      }
-    }
-  }
-
-  const constructorDecls = overloadDecls.length > 0 ? overloadDecls : implDecl ? [implDecl] : [];
-  if (constructorDecls.length === 0) return [];
-
-  // Get public instance members for returnValue.fields
-  const fields = extractPublicMembers(classDecl, sourceFile);
-
-  return constructorDecls.map((decl) => {
-    const parameters: Record<string, ParamDef> = {};
-
-    for (const param of decl.parameters) {
-      const result = buildParamEntry(param, decl, sourceFile);
-      if (result) parameters[result.name] = result.entry;
-    }
-
-    // Build return value with class type and public members
-    const typeParams = getClassTypeParams(classDecl!);
-    const returnValue: ReturnValue = {
-      type: typeParams ? `${className}<${typeParams}>` : className,
-    };
-
-    if (Object.keys(fields).length > 0) {
-      returnValue.fields = fields;
-    }
-
-    const overload: UtilOverload = { parameters, returnValue };
-
-    // Get overload-specific JSDoc
-    const label = getJSDocTagValue(decl, 'label');
-    if (label) overload.label = label;
-    const jsDoc = getJSDocDescription(decl);
-    if (jsDoc) overload.description = jsDoc;
-
-    return overload;
-  });
-}
-
-function extractPublicMembers(
-  classDecl: ts.ClassDeclaration,
-  sourceFile: ts.SourceFile
-): Record<string, { type: string; detailedType?: string; description?: string }> {
-  const fields: Record<string, { type: string; detailedType?: string; description?: string }> = {};
-
-  for (const member of classDecl.members) {
-    // Skip private, protected, static, constructor
-    if (
-      ts.canHaveModifiers(member) &&
-      ts
-        .getModifiers(member)
-        ?.some(
-          (m: ts.ModifierLike) =>
-            m.kind === ts.SyntaxKind.PrivateKeyword ||
-            m.kind === ts.SyntaxKind.ProtectedKeyword ||
-            m.kind === ts.SyntaxKind.StaticKeyword
-        )
-    )
-      continue;
-
-    // Skip # private fields
-    if (ts.isPropertyDeclaration(member) && ts.isPrivateIdentifier(member.name)) continue;
-
-    // Skip lifecycle methods
-    const name = member.name && ts.isIdentifier(member.name) ? member.name.text : undefined;
-    if (!name) continue;
-    if (['hostConnected', 'hostDisconnected', 'hostUpdate', 'hostUpdated'].includes(name)) continue;
-
-    if (ts.isGetAccessorDeclaration(member)) {
-      const typeStr = member.type ? member.type.getText(sourceFile) : 'unknown';
-      const abbreviated = abbreviateType(name, typeStr);
-      const description = getJSDocDescription(member);
-
-      const field: { type: string; detailedType?: string; description?: string } = { type: abbreviated ?? typeStr };
-      if (abbreviated && typeStr !== abbreviated) field.detailedType = typeStr;
-      if (description) field.description = description;
-
-      fields[name] = field;
-    } else if (ts.isMethodDeclaration(member) && !member.body) {
-      // Public method declaration (without body = overload, but we skip those)
-    } else if (ts.isMethodDeclaration(member)) {
-      const params = member.parameters
-        .map((p) => {
-          const pName = ts.isIdentifier(p.name) ? p.name.text : '...';
-          const pType = p.type ? p.type.getText(sourceFile) : 'unknown';
-          return `${pName}: ${pType}`;
-        })
-        .join(', ');
-      const retType = member.type ? member.type.getText(sourceFile) : 'void';
-      const typeStr = `(${params}) => ${retType}`;
-      const abbreviated = abbreviateType(name, typeStr);
-      const description = getJSDocDescription(member);
-
-      const field: { type: string; detailedType?: string; description?: string } = { type: abbreviated ?? typeStr };
-      if (abbreviated && typeStr !== abbreviated) field.detailedType = typeStr;
-      if (description) field.description = description;
-
-      fields[name] = field;
-    }
-  }
-
-  return fields;
-}
-
-function getClassTypeParams(classDecl: ts.ClassDeclaration): string {
-  if (!classDecl.typeParameters || classDecl.typeParameters.length === 0) return '';
-  return classDecl.typeParameters.map((tp) => tp.name.text).join(', ');
-}
-
-// ─── Extraction: Context (non-function @public exports) ────────────
-
-function extractContextOverload(exportNode: tae.ExportNode): UtilOverload {
-  const typeStr = formatType(exportNode.type, false);
-
-  return {
-    parameters: {},
-    returnValue: { type: typeStr },
-  };
-}
-
-// ─── JSDoc Helpers ─────────────────────────────────────────────────
-
-interface OverloadDoc {
-  description?: string;
-  label?: string;
-}
-
-function getOverloadDocs(filePath: string, program: ts.Program, funcName: string): OverloadDoc[] {
-  const sourceFile = program.getSourceFile(filePath);
-  if (!sourceFile) return [];
-
-  const docs: OverloadDoc[] = [];
-
-  function visit(node: ts.Node) {
-    if (ts.isFunctionDeclaration(node) && node.name?.text === funcName && !node.body) {
-      // This is an overload declaration
-      docs.push({
-        description: getJSDocDescription(node),
-        label: getJSDocTagValue(node, 'label'),
-      });
-    }
-    ts.forEachChild(node, visit);
-  }
-  visit(sourceFile);
-
-  return docs;
-}
-
-function getJSDocParamDescription(node: ts.Node, paramName: string): string | undefined {
-  const jsDocNodes = getJSDocNodes(node);
-
-  for (const doc of jsDocNodes) {
-    if (!doc.tags) continue;
-    for (const tag of doc.tags) {
-      if (ts.isJSDocParameterTag(tag) && ts.isIdentifier(tag.name) && tag.name.text === paramName) {
-        if (!tag.comment) return undefined;
-        const raw =
-          typeof tag.comment === 'string'
-            ? tag.comment
-            : tag.comment.map((c: ts.JSDocComment) => ('text' in c ? c.text : '')).join('');
-        return raw.replace(/^\s*-\s+/, '');
-      }
-    }
-  }
-
-  return undefined;
-}
-
-// ─── Shared AST Helpers ─────────────────────────────────────────────
-
-function buildParamEntry(
-  param: ts.ParameterDeclaration,
-  decl: ts.FunctionLikeDeclaration,
-  sourceFile: ts.SourceFile
-): { name: string; entry: ParamDef } | undefined {
-  if (!ts.isIdentifier(param.name)) return undefined;
-  const name = param.name.text;
-  const isOptional = !!param.questionToken || !!param.initializer;
-
-  let typeStr = 'unknown';
-  if (param.type) {
-    typeStr = param.type.getText(sourceFile);
-  }
-
-  const abbreviated = abbreviateType(name, typeStr);
-  const description = getJSDocParamDescription(decl, name);
-
-  const entry: ParamDef = { type: abbreviated ?? typeStr };
-  if (abbreviated && typeStr !== abbreviated) entry.detailedType = typeStr;
-  if (description) entry.description = description;
-  if (!isOptional) entry.required = true;
-  if (!entry.required) delete entry.required;
-
-  return { name, entry };
-}
-
-// ─── Raw TS AST: Fallback Discovery ────────────────────────────────
-
-interface RawExportInfo {
-  name: string;
-  isFunction: boolean;
-  isClass: boolean;
-  hasPublicTag: boolean;
-  description?: string;
-  sourceFile: string;
-}
-
-function discoverExportsFromRawAST(modulePath: string, program: ts.Program): RawExportInfo[] {
-  const sourceFile = program.getSourceFile(modulePath);
-  if (!sourceFile) return [];
-
-  const results: RawExportInfo[] = [];
-
-  function visit(node: ts.Node) {
-    // Exported function declarations
-    if (
-      ts.isFunctionDeclaration(node) &&
-      node.name &&
-      node.modifiers?.some((m) => m.kind === ts.SyntaxKind.ExportKeyword) &&
-      !node.body // overload declaration
-    ) {
-      const name = node.name.text;
-      const jsDoc = getJSDocDescription(node);
-      const hasPublicTag = hasJSDocTag(node, 'public');
-
-      // Only add if not already in results (first overload wins for the name)
-      if (!results.some((r) => r.name === name)) {
-        results.push({
-          name,
-          isFunction: true,
-          isClass: false,
-          hasPublicTag,
-          description: jsDoc,
-          sourceFile: modulePath,
-        });
-      }
-    }
-
-    // Exported function with body (single signature)
-    if (
-      ts.isFunctionDeclaration(node) &&
-      node.name &&
-      node.body &&
-      node.modifiers?.some((m) => m.kind === ts.SyntaxKind.ExportKeyword) &&
-      !results.some((r) => r.name === node.name!.text)
-    ) {
-      const name = node.name.text;
-      const jsDoc = getJSDocDescription(node);
-      const hasPublicTag = hasJSDocTag(node, 'public');
-
-      results.push({
-        name,
-        isFunction: true,
-        isClass: false,
-        hasPublicTag,
-        description: jsDoc,
-        sourceFile: modulePath,
-      });
-    }
-
-    // Exported class declarations
-    if (
-      ts.isClassDeclaration(node) &&
-      node.name &&
-      node.modifiers?.some((m) => m.kind === ts.SyntaxKind.ExportKeyword)
-    ) {
-      const name = node.name.text;
-      const jsDoc = getJSDocDescription(node);
-
-      results.push({
-        name,
-        isFunction: false,
-        isClass: true,
-        hasPublicTag: false,
-        description: jsDoc,
-        sourceFile: modulePath,
-      });
-    }
-
-    // Exported const/variable declarations
-    if (ts.isVariableStatement(node) && node.modifiers?.some((m) => m.kind === ts.SyntaxKind.ExportKeyword)) {
-      for (const decl of node.declarationList.declarations) {
-        if (ts.isIdentifier(decl.name)) {
-          const jsDoc = getJSDocDescription(node);
-          const hasPublicTag = hasJSDocTag(node, 'public');
-
-          results.push({
-            name: decl.name.text,
-            isFunction: false,
-            isClass: false,
-            hasPublicTag,
-            description: jsDoc,
-            sourceFile: modulePath,
-          });
-        }
-      }
-    }
-
-    ts.forEachChild(node, visit);
-  }
-  visit(sourceFile);
-
-  return results;
-}
-
-function isRawUtilExport(info: RawExportInfo): boolean {
-  const { name, isFunction, isClass, hasPublicTag } = info;
-
-  if (name.startsWith('select') && name.charAt(6) >= 'A' && name.charAt(6) <= 'Z') return true;
-  if (name.startsWith('use') && name.charAt(3) >= 'A' && name.charAt(3) <= 'Z' && isFunction) return true;
-  if (name.endsWith('Controller') && isClass) return true;
-  if (name.startsWith('create') && isFunction) return true;
-  if (hasPublicTag) return true;
-
-  return false;
-}
-
-// ─── Raw TS AST: Function Extraction ───────────────────────────────
-
-function extractFunctionOverloadsFromAST(filePath: string, program: ts.Program, funcName: string): UtilOverload[] {
-  const sourceFile = program.getSourceFile(filePath);
-  if (!sourceFile) return [];
-
-  // Collect overload declarations (no body) and implementation (has body)
-  const overloadDecls: ts.FunctionDeclaration[] = [];
-  let implDecl: ts.FunctionDeclaration | undefined;
-
-  function visit(node: ts.Node) {
-    if (ts.isFunctionDeclaration(node) && node.name?.text === funcName) {
-      if (!node.body) {
-        overloadDecls.push(node);
-      } else {
-        implDecl = node;
-      }
-    }
-    ts.forEachChild(node, visit);
-  }
-  visit(sourceFile);
-
-  const decls = overloadDecls.length > 0 ? overloadDecls : implDecl ? [implDecl] : [];
-  if (decls.length === 0) return [];
-
-  return decls.map((d) => buildOverloadFromAST(d, sourceFile));
-}
-
-function buildOverloadFromAST(decl: ts.FunctionDeclaration, sourceFile: ts.SourceFile): UtilOverload {
-  const parameters: Record<string, ParamDef> = {};
-
-  for (const param of decl.parameters) {
-    const result = buildParamEntry(param, decl, sourceFile);
-    if (result) parameters[result.name] = result.entry;
-  }
-
-  let returnType = 'unknown';
-  if (decl.type) {
-    returnType = decl.type.getText(sourceFile);
-  }
-
-  const returnValue: ReturnValue = { type: returnType };
-
-  // Try to expand return type fields from source if it's an interface/type in the same file
-  const fields = extractReturnTypeFields(returnType, sourceFile);
-  if (fields && Object.keys(fields).length > 0) {
-    returnValue.fields = fields;
-  }
-
-  const overload: UtilOverload = { parameters, returnValue };
-
-  const label = getJSDocTagValue(decl, 'label');
-  if (label) overload.label = label;
-  const doc = getJSDocDescription(decl);
-  if (doc) overload.description = doc;
-
-  return overload;
-}
-
-function extractReturnTypeFields(
-  returnType: string,
-  sourceFile: ts.SourceFile
-): Record<string, { type: string; detailedType?: string; description?: string }> | undefined {
-  // Extract the base type name (strip generic parameters)
-  const match = returnType.match(/^(\w+)/);
-  if (!match) return undefined;
-  const typeName = match[1]!;
-
-  // Find the interface/type in the same file
-  let interfaceDecl: ts.InterfaceDeclaration | undefined;
-
-  function visit(node: ts.Node) {
-    if (ts.isInterfaceDeclaration(node) && node.name.text === typeName) {
-      interfaceDecl = node;
-    }
-    ts.forEachChild(node, visit);
-  }
-  visit(sourceFile);
-  if (!interfaceDecl) return undefined;
-
-  const fields: Record<string, { type: string; detailedType?: string; description?: string }> = {};
-  for (const member of interfaceDecl.members) {
-    if (!ts.isPropertySignature(member) || !ts.isIdentifier(member.name)) continue;
-
-    const name = member.name.text;
-    const typeStr = member.type ? member.type.getText(sourceFile) : 'unknown';
-    const abbreviated = abbreviateType(name, typeStr);
-    const description = getJSDocDescription(member);
-
-    const field: { type: string; detailedType?: string; description?: string } = { type: abbreviated ?? typeStr };
-    if (abbreviated && typeStr !== abbreviated) field.detailedType = typeStr;
-    if (description) field.description = description;
-
-    fields[name] = field;
-  }
-
-  return Object.keys(fields).length > 0 ? fields : undefined;
-}
-
-// ─── Slug Resolution ───────────────────────────────────────────────
-
-function resolveSlugCollision(slug: string, framework: EntryPoint['framework'], seenSlugs: Set<string>): string {
-  if (seenSlugs.has(slug)) {
-    if (!framework) {
-      log.error(`Framework-agnostic slug collision: ${slug}`);
-    }
-    if (framework === 'react') {
-      log.error(`Unexpected: React slug "${slug}" collided — check UTIL_ENTRY_POINTS order`);
-    }
-    slug = `${framework}-${slug}`;
-  }
-  seenSlugs.add(slug);
-  return slug;
-}
-
-// ─── Discovery Pipeline ────────────────────────────────────────────
-
-function processExport(
-  exportNode: tae.ExportNode,
-  modulePath: string,
-  entryPoint: EntryPoint,
-  program: ts.Program,
-  seenKeys: Set<string>,
-  seenSlugs: Set<string>,
-  entries: UtilEntry[],
-  allExports?: tae.ExportNode[]
-): void {
-  const key = `${entryPoint.framework}:${exportNode.name}`;
-  if (seenKeys.has(key)) return;
-  if (!isUtilExport(exportNode)) return;
-
-  const displayName = getDisplayName(exportNode.name);
-  const slug = resolveSlugCollision(utilReferenceSlug(displayName), entryPoint.framework, seenSlugs);
-
-  let overloads: UtilOverload[];
-
-  if (exportNode.name.endsWith('Controller') && !(exportNode.type instanceof tae.FunctionNode)) {
-    // Controllers use raw TS AST because TAE represents them as ObjectNode
-    overloads = extractControllerOverloads(modulePath, program, exportNode.name);
-  } else if (!(exportNode.type instanceof tae.FunctionNode)) {
-    overloads = [extractContextOverload(exportNode)];
-  } else {
-    overloads = extractFunctionOverloads(exportNode, modulePath, program, allExports);
-  }
-
-  if (overloads.length === 0) {
-    log.warn(`No overloads extracted for ${exportNode.name}, skipping`);
-    return;
-  }
-
-  const description = normalizeDescription(exportNode.documentation?.description);
-  const data: UtilReference = {
-    name: displayName,
-    overloads,
-  };
-
-  if (description) data.description = description;
-
-  entries.push({
-    slug,
-    data,
-    framework: entryPoint.framework,
-  });
-
-  seenKeys.add(key);
-}
-
-function processRawExport(
-  info: RawExportInfo,
-  entryPoint: EntryPoint,
-  program: ts.Program,
-  seenKeys: Set<string>,
-  seenSlugs: Set<string>,
-  entries: UtilEntry[]
-): void {
-  const key = `${entryPoint.framework}:${info.name}`;
-  if (seenKeys.has(key)) return;
-
-  if (!isRawUtilExport(info)) return;
-
-  const displayName = getDisplayName(info.name);
-  const slug = resolveSlugCollision(utilReferenceSlug(displayName), entryPoint.framework, seenSlugs);
-
-  let overloads: UtilOverload[];
-
-  if (info.isClass) {
-    overloads = extractControllerOverloads(info.sourceFile, program, info.name);
-  } else if (!info.isFunction && !info.isClass) {
-    overloads = [{ parameters: {}, returnValue: { type: 'unknown' } }];
-  } else {
-    overloads = extractFunctionOverloadsFromAST(info.sourceFile, program, info.name);
-  }
-
-  if (overloads.length === 0) {
-    log.warn(`No overloads extracted for ${info.name} (AST fallback), skipping`);
-    return;
-  }
-
-  const data: UtilReference = {
-    name: displayName,
-    overloads,
-  };
-
-  if (info.description) data.description = info.description;
-
-  entries.push({
-    slug,
-    data,
-    framework: entryPoint.framework,
-  });
-
-  seenKeys.add(key);
-}
-
-function discoverUtilExports(monorepoRoot: string, program: ts.Program): UtilEntry[] {
+/** Discover and extract the public utility API using Oxc syntax trees. */
+export function getUtilEntries(monorepoRoot: string): UtilEntry[] {
+  const project = new OxcProject(monorepoRoot);
   const entries: UtilEntry[] = [];
   const seenKeys = new Set<string>();
   const seenSlugs = new Set<string>();
 
   for (const entryPoint of UTIL_ENTRY_POINTS) {
     const indexPath = path.join(monorepoRoot, entryPoint.index);
+
     if (!fs.existsSync(indexPath)) {
       log.warn(`Entry point not found: ${indexPath}`);
       continue;
     }
 
-    const localModules = resolveLocalModules(indexPath);
-    // When the entry point is a leaf module (no re-exports), scan it directly
-    const modulesToScan = localModules.length > 0 ? localModules : [indexPath];
-    const visibleNames = collectVisibleExportNames(indexPath);
-    const failedModules: string[] = [];
+    for (const name of collectVisibleExportNames(indexPath, project)) {
+      const resolved = project.resolveExport(indexPath, name);
+      if (!resolved) continue;
 
-    // Collect all TAE exports for type resolution (formatDetailedType)
-    const allExports: tae.ExportNode[] = [];
+      const ownerRoot = path.join(monorepoRoot, ...entryPoint.index.split('/').slice(0, 2));
+      if (entryPoint.framework && !resolved.file.filePath.startsWith(`${ownerRoot}${path.sep}`)) continue;
 
-    // Strategy 1: TAE on local modules — primary path for hooks, factories, mixins,
-    // utilities, contexts, and selectors (e.g., usePlayer, createPlayer, selectPlayback)
-    for (const modulePath of modulesToScan) {
-      if (!fs.existsSync(modulePath)) continue;
-      const declaredNames = collectDeclaredExportNames(modulePath);
-      if (declaredNames.size === 0) continue;
+      const key = `${entryPoint.framework}:${name}`;
+      if (seenKeys.has(key) || !isUtil(name, resolved.file, resolved.declaration)) continue;
 
-      let ast: tae.ModuleNode;
-      try {
-        ast = tae.parseFromProgram(modulePath, program);
-      } catch {
-        failedModules.push(modulePath);
+      const displayName = name.startsWith('create') && name.includes('Mixin') ? name.slice('create'.length) : name;
+      const slug = resolveSlugCollision(utilReferenceSlug(displayName), entryPoint.framework, seenSlugs);
+      const overloads = extractOverloads(project, resolved.file, resolved.declaration, name);
+
+      if (overloads.length === 0) {
+        log.warn(`No overloads extracted for ${name}, skipping`);
         continue;
       }
 
-      allExports.push(...ast.exports);
+      const documentation = getJSDoc(resolved.file, resolved.declaration);
+      const description = documentation?.description || documentation?.tags.get('public')?.at(-1) || undefined;
+      const data: UtilReference = { name: displayName, overloads };
 
-      for (const exportNode of ast.exports) {
-        // Re-exported APIs are owned by their declaring module. Local
-        // declarations are scanned post-order, while external package
-        // re-exports are documented by that package's canonical entry point.
-        if (!declaredNames.has(exportNode.name)) continue;
-        // Whole modules are scanned, but only exports that are actually
-        // visible from the entry point are public API.
-        if (!visibleNames.has(exportNode.name)) continue;
-        processExport(exportNode, modulePath, entryPoint, program, seenKeys, seenSlugs, entries, allExports);
-      }
-    }
+      if (description) data.description = description;
 
-    // Strategy 2: TAE on index file — finds controllers re-exported from the entry
-    // (e.g., PlayerController re-exported from packages/html/src/index.ts)
-    try {
-      const indexAst = tae.parseFromProgram(indexPath, program);
-      allExports.push(...indexAst.exports);
-
-      for (const exportNode of indexAst.exports) {
-        // For controllers from the index, find the source module file for extraction
-        if (exportNode.name.endsWith('Controller') && !(exportNode.type instanceof tae.FunctionNode)) {
-          const sourceModule = findClassSourceModule(exportNode.name, localModules, program);
-          if (sourceModule) {
-            processExport(exportNode, sourceModule, entryPoint, program, seenKeys, seenSlugs, entries, allExports);
-          }
-        }
-      }
-    } catch {
-      // Index parsing failed (e.g., HTML index with UniqueESSymbol)
-    }
-
-    // Strategy 3: Raw TS AST fallback — when TAE fails on a module (e.g., UniqueESSymbol
-    // in HTML bundle), walks the raw TypeScript AST for exports
-    for (const modulePath of failedModules) {
-      const rawExports = discoverExportsFromRawAST(modulePath, program);
-      for (const info of rawExports) {
-        if (!visibleNames.has(info.name)) continue;
-        processRawExport(info, entryPoint, program, seenKeys, seenSlugs, entries);
-      }
-    }
-
-    // Strategy 4: Raw TS AST for missed classes — catches exported classes that TAE
-    // parsed but skipped (e.g., SnapshotController)
-    for (const modulePath of localModules) {
-      if (!fs.existsSync(modulePath)) continue;
-
-      const rawExports = discoverExportsFromRawAST(modulePath, program);
-      for (const info of rawExports) {
-        if (!info.isClass || !visibleNames.has(info.name)) continue;
-        processRawExport(info, entryPoint, program, seenKeys, seenSlugs, entries);
-      }
+      entries.push({ slug, data, framework: entryPoint.framework });
+      seenKeys.add(key);
     }
   }
 
   return entries;
 }
 
-function findClassSourceModule(className: string, localModules: string[], program: ts.Program): string | undefined {
-  for (const modulePath of localModules) {
-    const sourceFile = program.getSourceFile(modulePath);
-    if (!sourceFile) continue;
+function collectVisibleExportNames(filePath: string, project: OxcProject, visited = new Set<string>()): Set<string> {
+  const names = new Set<string>();
+  const absolute = path.resolve(filePath);
+  if (visited.has(absolute)) return names;
 
-    let found = false;
-    function visit(node: ts.Node) {
-      if (ts.isClassDeclaration(node) && node.name?.text === className) {
-        found = true;
+  visited.add(absolute);
+
+  const file = project.source(absolute);
+  if (!file) return names;
+
+  for (const statement of file.program.body) {
+    if (statement.type === 'ExportAllDeclaration') {
+      if (statement.exported) continue;
+
+      if (!statement.source.value.startsWith('.')) continue;
+
+      const target = project.resolveModule(file.filePath, statement.source.value);
+
+      if (target) {
+        for (const name of collectVisibleExportNames(target, project, visited)) names.add(name);
       }
-      if (!found) ts.forEachChild(node, visit);
-    }
-    visit(sourceFile);
 
-    if (found) return modulePath;
+      continue;
+    }
+
+    if (statement.type !== 'ExportNamedDeclaration') continue;
+
+    if (statement.declaration) {
+      for (const name of declarationNames(statement.declaration)) names.add(name);
+    }
+
+    if (statement.source && !statement.source.value.startsWith('.')) continue;
+
+    if (statement.source && !project.resolveModule(file.filePath, statement.source.value)) continue;
+
+    for (const specifier of statement.specifiers) {
+      if (specifier.exportKind !== 'type') names.add(moduleName(specifier.exported));
+    }
   }
+
+  return names;
+}
+
+function isUtil(name: string, file: SourceFile, declaration: NamedDeclaration): boolean {
+  const functionLike =
+    isFunctionDeclaration(declaration) ||
+    variableFunction(declaration) !== undefined ||
+    (name.startsWith('select') && variableCall(declaration) !== undefined);
+  if (name.startsWith('select') && isUpper(name[6]) && functionLike) return true;
+
+  if (name.startsWith('use') && isUpper(name[3]) && functionLike) return true;
+
+  if (name.endsWith('Controller') && declaration.type === 'ClassDeclaration') return true;
+
+  if (name.startsWith('create') && functionLike) return true;
+
+  return getJSDoc(file, declaration)?.tags.has('public') ?? false;
+}
+
+function extractOverloads(
+  project: OxcProject,
+  file: SourceFile,
+  declaration: NamedDeclaration,
+  exportedName: string
+): UtilOverload[] {
+  if (declaration.type === 'ClassDeclaration') return extractController(project, file, declaration);
+
+  const fn = isFunctionDeclaration(declaration) ? declaration : variableFunction(declaration);
+
+  if (fn) {
+    const declaredName = declarationName(declaration) ?? exportedName;
+    const declarations = project
+      .declarations(file.filePath, declaredName)
+      .map((entry) => entry.declaration)
+      .filter(isFunctionDeclaration);
+    const signatures = declarations.filter((entry) => !entry.body);
+
+    return (signatures.length > 0 ? signatures : declarations.length > 0 ? declarations : [fn]).map((signature) =>
+      buildFunctionOverload(project, file, signature)
+    );
+  }
+
+  if (exportedName.startsWith('select') && variableCall(declaration)) {
+    return [
+      {
+        parameters: { state: { type: 'object', required: true } },
+        returnValue: { type: 'object | undefined' },
+      },
+    ];
+  }
+
+  return [{ parameters: {}, returnValue: inferContextReturn(project, file, declaration) }];
+}
+
+function buildFunctionOverload(
+  project: OxcProject,
+  file: SourceFile,
+  fn: OxcFunction | ArrowFunctionExpression
+): UtilOverload {
+  const documentation = getJSDoc(file, fn);
+  const parameters: Record<string, ParamDef> = {};
+
+  for (const parameter of fn.params) {
+    const definition = buildParameter(project, file, parameter, documentation?.params);
+
+    if (definition) parameters[definition.name] = definition.value;
+  }
+
+  const returnType = fn.returnType?.typeAnnotation;
+  const overload: UtilOverload = {
+    parameters,
+    returnValue: returnType ? buildReturnValue(project, { file, type: returnType }) : { type: 'unknown' },
+  };
+  const label = documentation?.tags.get('label')?.at(-1);
+
+  if (label) overload.label = label;
+
+  if (documentation?.description) overload.description = documentation.description;
+
+  return overload;
+}
+
+function buildParameter(
+  project: OxcProject,
+  file: SourceFile,
+  parameter: ParamPattern,
+  descriptions?: ReadonlyMap<string, string>
+): { name: string; value: ParamDef } | undefined {
+  const pattern = parameterPattern(parameter);
+  if (!pattern) return undefined;
+
+  const name = bindingName(pattern);
+  if (!name) return undefined;
+
+  const annotation = pattern.typeAnnotation?.typeAnnotation;
+  const optional = parameter.type === 'RestElement' || ('optional' in pattern && pattern.optional);
+  const type = annotation ? formatDetailedType(project, { file, type: annotation }, !!optional) : 'unknown';
+  const abbreviated = abbreviateType(name, type);
+  const value: ParamDef = { type: abbreviated ?? type };
+
+  if (abbreviated && abbreviated !== type) value.detailedType = type;
+
+  if (!optional) value.required = true;
+
+  const description = descriptions?.get(name)?.replace(/^-\s*/, '');
+
+  if (description) value.description = description;
+
+  return { name, value };
+}
+
+function buildReturnValue(project: OxcProject, type: ResolvedType): ReturnValue {
+  const formatted = formatDetailedType(project, type, false);
+  const abbreviated = abbreviateType('return', formatted);
+  const value: ReturnValue = { type: abbreviated ?? formatted };
+
+  if (abbreviated && abbreviated !== formatted) value.detailedType = formatted;
+
+  const fields = buildTypeFields(project, type);
+
+  if (Object.keys(fields).length > 0) value.fields = fields;
+
+  return value;
+}
+
+function buildTypeFields(project: OxcProject, type: ResolvedType): NonNullable<ReturnValue['fields']> {
+  const fields: NonNullable<ReturnValue['fields']> = {};
+
+  for (const resolved of project.interfaceMembers(type)) {
+    const member = resolved.member;
+    const name = 'key' in member ? staticName(member.key) : undefined;
+    if (!name) continue;
+
+    let memberType: TSType | undefined;
+
+    if (member.type === 'TSPropertySignature') memberType = member.typeAnnotation?.typeAnnotation;
+
+    if (member.type === 'TSMethodSignature' && member.returnType) {
+      memberType = {
+        type: 'TSFunctionType',
+        typeParameters: member.typeParameters,
+        params: member.params,
+        returnType: member.returnType,
+        start: member.start,
+        end: member.end,
+      };
+    }
+
+    if (!memberType) continue;
+
+    const formatted = formatDetailedType(
+      project,
+      {
+        file: resolved.file,
+        type: memberType,
+        ...(resolved.substitutions ? { substitutions: resolved.substitutions } : {}),
+      },
+      'optional' in member && member.optional
+    );
+    const abbreviated = abbreviateType(name, formatted);
+    const field: NonNullable<ReturnValue['fields']>[string] = { type: abbreviated ?? formatted };
+
+    if (abbreviated && abbreviated !== formatted) field.detailedType = formatted;
+
+    const description = getJSDoc(resolved.file, member)?.description;
+
+    if (description) field.description = description;
+
+    fields[name] = field;
+  }
+
+  return fields;
+}
+
+function extractController(project: OxcProject, file: SourceFile, declaration: Class): UtilOverload[] {
+  const constructors = declaration.body.body.filter(
+    (member): member is MethodDefinition => member.type === 'MethodDefinition' && member.kind === 'constructor'
+  );
+  const signatures = constructors.filter((member) => !member.value.body);
+  const selected = signatures.length > 0 ? signatures : constructors.slice(0, 1);
+  const returnValue = buildControllerReturn(project, file, declaration);
+
+  if (selected.length === 0) return [{ parameters: {}, returnValue }];
+
+  return selected.map((constructor) => {
+    const documentation = getJSDoc(file, constructor);
+    const parameters: Record<string, ParamDef> = {};
+
+    for (const parameter of constructor.value.params) {
+      const definition = buildParameter(project, file, parameter, documentation?.params);
+
+      if (definition) parameters[definition.name] = definition.value;
+    }
+
+    return { parameters, returnValue };
+  });
+}
+
+function buildControllerReturn(project: OxcProject, file: SourceFile, declaration: Class): ReturnValue {
+  const typeParameters = declaration.typeParameters?.params.map((parameter) => parameter.name.name) ?? [];
+  const returnValue: ReturnValue = {
+    type: `${declaration.id?.name ?? 'Controller'}${typeParameters.length > 0 ? `<${typeParameters.join(', ')}>` : ''}`,
+  };
+  const fields: NonNullable<ReturnValue['fields']> = {};
+
+  for (const member of declaration.body.body) {
+    if (member.type !== 'PropertyDefinition' && member.type !== 'MethodDefinition') {
+      continue;
+    }
+
+    if (member.static || member.accessibility === 'private' || member.accessibility === 'protected') continue;
+
+    const name = staticName(member.key);
+    if (!name || name === 'constructor' || member.key.type === 'PrivateIdentifier') continue;
+
+    let type = 'unknown';
+
+    if (member.type === 'PropertyDefinition' && member.typeAnnotation) {
+      type = formatDetailedType(project, { file, type: member.typeAnnotation.typeAnnotation }, !!member.optional);
+    } else if (member.type === 'MethodDefinition') {
+      const params = member.value.params.map((parameter) => parameterText(project, file, parameter)).join(', ');
+      const returns = member.value.returnType
+        ? formatDetailedType(project, { file, type: member.value.returnType.typeAnnotation }, false)
+        : 'void';
+
+      type = member.kind === 'get' ? returns : `((${params}) => ${returns})`;
+    }
+
+    const field: NonNullable<ReturnValue['fields']>[string] = { type };
+    const description = getJSDoc(file, member)?.description;
+
+    if (description) field.description = description;
+
+    fields[name] = field;
+  }
+
+  if (Object.keys(fields).length > 0) returnValue.fields = fields;
+
+  return returnValue;
+}
+
+function parameterText(project: OxcProject, file: SourceFile, parameter: ParamPattern): string {
+  const pattern = parameterPattern(parameter);
+  if (!pattern) return '...: unknown';
+
+  const name = bindingName(pattern) ?? '...';
+  const annotation = pattern.typeAnnotation?.typeAnnotation;
+
+  return `${parameter.type === 'RestElement' ? '...' : ''}${name}: ${annotation ? formatDetailedType(project, { file, type: annotation }, false) : 'unknown'}`;
+}
+
+function inferContextReturn(project: OxcProject, file: SourceFile, declaration: NamedDeclaration): ReturnValue {
+  if (declaration.type === 'VariableDeclarator') {
+    const annotation = declaration.id.typeAnnotation?.typeAnnotation;
+    if (annotation) return buildReturnValue(project, { file, type: annotation });
+
+    if (declaration.init) {
+      const initializer = unwrapExpression(declaration.init);
+      if (initializer.type === 'ObjectExpression') return { type: 'object' };
+
+      if (initializer.type === 'CallExpression' && initializer.typeArguments?.params[0]) {
+        return buildReturnValue(project, { file, type: initializer.typeArguments.params[0] });
+      }
+
+      return { type: sourceText(file, initializer).replace(/\s+/g, ' ').trim() || 'unknown' };
+    }
+  }
+
+  const type = declaration.type === 'TSTypeAliasDeclaration' ? declaration.typeAnnotation : undefined;
+
+  return type ? buildReturnValue(project, { file, type }) : { type: 'unknown' };
+}
+
+function variableFunction(declaration: NamedDeclaration): OxcFunction | ArrowFunctionExpression | undefined {
+  if (declaration.type !== 'VariableDeclarator' || !declaration.init) return undefined;
+
+  const initializer = unwrapExpression(declaration.init);
+
+  return initializer.type === 'ArrowFunctionExpression' || initializer.type === 'FunctionExpression'
+    ? initializer
+    : undefined;
+}
+
+function variableCall(declaration: NamedDeclaration): CallExpression | undefined {
+  if (declaration.type !== 'VariableDeclarator' || !declaration.init) return undefined;
+
+  const initializer = unwrapExpression(declaration.init);
+
+  return initializer.type === 'CallExpression' ? initializer : undefined;
+}
+
+function isFunctionDeclaration(declaration: NamedDeclaration): declaration is OxcFunction {
+  return declaration.type === 'FunctionDeclaration' || declaration.type === 'TSDeclareFunction';
+}
+
+function parameterPattern(parameter: ParamPattern): BindingPattern | undefined {
+  if (parameter.type === 'RestElement') return parameter.argument;
+
+  if (parameter.type === 'TSParameterProperty') return parameter.parameter;
+
+  return parameter;
+}
+
+function bindingName(pattern: BindingPattern): string | undefined {
+  if (pattern.type === 'Identifier') return pattern.name.replace(/^_/, '');
+
+  if (pattern.type === 'AssignmentPattern') return bindingName(pattern.left);
+
   return undefined;
 }
 
-// ─── Program Creation ──────────────────────────────────────────────
+function declarationName(declaration: NamedDeclaration): string | undefined {
+  if (declaration.type === 'VariableDeclarator') return staticName(declaration.id);
 
-function createUtilProgram(monorepoRoot: string): ts.Program {
-  const files: string[] = [];
-
-  for (const entryPoint of UTIL_ENTRY_POINTS) {
-    const indexPath = path.join(monorepoRoot, entryPoint.index);
-    if (!fs.existsSync(indexPath)) continue;
-
-    files.push(indexPath);
-
-    const localModules = resolveLocalModules(indexPath);
-    for (const mod of localModules) {
-      if (fs.existsSync(mod) && !files.includes(mod)) {
-        files.push(mod);
-      }
-    }
-  }
-
-  return createTypeScriptProgram(monorepoRoot, files);
+  return 'id' in declaration ? staticName(declaration.id) : undefined;
 }
 
-// ─── Public API ────────────────────────────────────────────────────
+function declarationNames(declaration: import('oxc-parser').Declaration): string[] {
+  if (declaration.type === 'VariableDeclaration') {
+    return declaration.declarations.map((entry) => staticName(entry.id)).filter((name): name is string => !!name);
+  }
 
-export function getUtilEntries(monorepoRoot: string): UtilEntry[] {
-  const program = createUtilProgram(monorepoRoot);
-  return discoverUtilExports(monorepoRoot, program);
+  const name = 'id' in declaration ? staticName(declaration.id) : undefined;
+
+  return name ? [name] : [];
+}
+
+function moduleName(name: import('oxc-parser').ModuleExportName): string {
+  return name.type === 'Literal' ? String(name.value) : name.name;
+}
+
+function isUpper(value: string | undefined): boolean {
+  return !!value && value >= 'A' && value <= 'Z';
+}
+
+function resolveSlugCollision(slug: string, framework: UtilEntry['framework'], seen: Set<string>): string {
+  if (seen.has(slug)) {
+    if (!framework) log.error(`Framework-agnostic slug collision: ${slug}`);
+
+    slug = `${framework}-${slug}`;
+  }
+
+  seen.add(slug);
+  return slug;
 }

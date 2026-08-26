@@ -18,11 +18,11 @@ export interface ValueProps extends Omit<UIComponentProps<'time', TimeCore.State
  * Displays a formatted time value (current, duration, or remaining).
  *
  * @example
- * ```tsx
- * <Time.Value />
- * <Time.Value type="duration" />
- * <Time.Value type="remaining" negativeSign="−" />
- * ```
+ *   ```tsx
+ *   <Time.Value />
+ *   <Time.Value type="duration" />
+ *   <Time.Value type="remaining" negativeSign="−" />
+ *   ```;
  */
 export const Value = forwardRef(function Value(
   componentProps: ValueProps,
@@ -38,7 +38,9 @@ export const Value = forwardRef(function Value(
 
   const defaultType = type ?? TimeCore.defaultProps.type;
   const [activeType, setActiveType] = useState(defaultType);
-  // biome-ignore lint/correctness/useExhaustiveDependencies: We want to listen for changes to defaultType and toggle (so we revert to default), this just means one less useEffect.
+
+  // We want to listen for changes to defaultType and toggle (so we revert to default), this just means one less useEffect.
+  // oxlint-disable-next-line react/exhaustive-deps
   useEffect(() => {
     setActiveType(defaultType);
   }, [defaultType, toggle]);
@@ -52,6 +54,7 @@ export const Value = forwardRef(function Value(
 
   if (!time) {
     if (__DEV__) logMissingFeature('Time.Value', 'time');
+
     return null;
   }
 
@@ -87,20 +90,25 @@ export const Value = forwardRef(function Value(
       if (defaultType === 'current') {
         return value === 'remaining' ? 'current' : 'remaining';
       }
+
       return value === 'duration' ? 'remaining' : 'duration';
     });
   };
 
   const handleClick = (event: MouseEvent<HTMLTimeElement>) => {
     if (event.defaultPrevented) return;
+
     toggleType();
   };
 
   const handleKeyDown = (event: KeyboardEvent<HTMLTimeElement>) => {
     if (event.defaultPrevented || !isInteractiveActivation(event.nativeEvent)) return;
+
     // Prevent space from scrolling page.
     event.preventDefault();
+
     if (event.repeat) return;
+
     toggleType();
   };
 

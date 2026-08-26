@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { formatTimeAsPhrase } from '@videojs/utils/time';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { I18nProvider } from '../../../i18n';
 import { createPlayerWrapper } from '../../../testing/mocks';
@@ -36,6 +36,7 @@ describe('Time.Value', () => {
     setup();
 
     const time = screen.getByTestId('time');
+
     expect(time.tagName).toBe('TIME');
     expect(time.getAttribute('datetime')).toBe('PT1M30S');
     expect(time.textContent).toBe('1:30');
@@ -46,6 +47,7 @@ describe('Time.Value', () => {
     setup({ toggle: true });
 
     const time = screen.getByTestId('time');
+
     expect(time.tagName).toBe('TIME');
     expect(time.getAttribute('role')).toBe('button');
     expect(time.getAttribute('tabindex')).toBe('0');
@@ -91,6 +93,7 @@ describe('Time.Value', () => {
     );
 
     const time = screen.getByTestId('time');
+
     expect(time.getAttribute('aria-label')).toBe(
       `Afficher restant, ${formatTimeAsPhrase(90, { locale: 'fr' })} écoulé.`
     );
@@ -119,6 +122,7 @@ describe('Time.Value', () => {
 
   it('formats digital time with locale digits', () => {
     const { Wrapper } = createPlayerWrapper(timeState);
+
     render(
       <Wrapper>
         <I18nProvider locale="fa">
@@ -134,6 +138,7 @@ describe('Time.Value', () => {
     setup({ toggle: true });
 
     const time = screen.getByTestId('time');
+
     fireEvent.keyDown(time, { key: 'Enter' });
 
     expect(time.textContent).toBe('-3:30');
@@ -149,6 +154,7 @@ describe('Time.Value', () => {
     setup({ toggle: true });
 
     const time = screen.getByTestId('time');
+
     fireEvent.keyDown(time, { key: 'Enter' });
     fireEvent.keyDown(time, { key: 'Enter', repeat: true });
 
@@ -160,6 +166,7 @@ describe('Time.Value', () => {
     setup({ toggle: true, type: 'remaining' });
 
     const time = screen.getByTestId('time');
+
     expect(time.textContent).toBe('-3:30');
     expect(time.getAttribute('data-type')).toBe('remaining');
     expect(time.getAttribute('aria-label')).toBe('Show duration, 3 minutes, 30 seconds remaining.');
@@ -170,6 +177,7 @@ describe('Time.Value', () => {
     setup({ toggle: true, type: 'remaining' });
 
     const time = screen.getByTestId('time');
+
     fireEvent.click(time);
 
     expect(time.textContent).toBe('5:00');
@@ -192,6 +200,7 @@ describe('Time.Value', () => {
     );
 
     const time = screen.getByTestId('time');
+
     fireEvent.click(time);
 
     expect(time.textContent).toBe('-3:30');
@@ -223,6 +232,7 @@ describe('Time.Value', () => {
     setup({ toggle: true, type: 'duration' });
 
     const time = screen.getByTestId('time');
+
     fireEvent.click(time);
 
     expect(time.textContent).toBe('-3:30');
@@ -241,6 +251,7 @@ describe('Time.Value', () => {
     setup({ toggle: true, onClick, onKeyDown });
 
     const time = screen.getByTestId('time');
+
     fireEvent.click(time);
     fireEvent.keyDown(time, { key: 'Enter' });
 
@@ -256,6 +267,7 @@ describe('Time.Value', () => {
     });
 
     const time = screen.getByTestId('time');
+
     fireEvent.click(time);
     fireEvent.keyDown(time, { key: 'Enter' });
 

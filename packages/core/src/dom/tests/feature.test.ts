@@ -1,11 +1,7 @@
 import { createSelector, createStore, type StateContext } from '@videojs/store';
-import { assertType, describe, expect, it } from 'vitest';
-import {
-  type ConfigurablePlayerFeatureConfig,
-  combinePlayerFeatureConfigs,
-  definePlayerFeature,
-  setPlayerConfigValue,
-} from '../feature';
+import { assertType, describe, expect, it } from 'vite-plus/test';
+
+import { combinePlayerFeatureConfigs, definePlayerFeature, setPlayerConfigValue } from '../feature';
 import type { PlayerFeatureConfig, PlayerTarget } from '../player';
 
 const stateContext = {
@@ -57,8 +53,10 @@ describe('definePlayerFeature', () => {
     expect(combinePlayerFeatureConfigs([feature])).toEqual(feature.config);
 
     const store = createStore<PlayerTarget>()(feature);
+
     setPlayerConfigValue(store, feature.config!.label, 'provided');
     const detach = store.attach({} as PlayerTarget);
+
     detach();
 
     expect(store.label).toBe('provided');
@@ -94,32 +92,46 @@ describe('definePlayerFeature', () => {
     });
   });
 
-  it('defines a configurable player feature', () => {
-    const feature = definePlayerFeature(
-      {
-        name: 'configurable',
-        state: (_ctx, config: { enabled: boolean }) => ({ enabled: config.enabled }),
-      },
-      { enabled: true }
-    );
+  it('accepts config actions narrower than string', () => {
+    type Size = 'small' | 'large';
 
-    expect(feature.name).toBe('configurable');
-    expect(feature.state(stateContext).enabled).toBe(true);
-    expect(feature().state(stateContext).enabled).toBe(true);
-    expect(feature({ enabled: false }).state(stateContext).enabled).toBe(false);
-    expect(createSelector(feature).displayName).toBe('configurable');
-  });
+    interface EnumState {
+      size: Size;
+      setSize(value: Size | null | undefined): void;
+    }
 
-  it('keeps static config declarations out of the legacy feature-factory shape', () => {
-    type LegacyConfig = ConfigurablePlayerFeatureConfig<{ enabled: boolean }, { enabled: boolean }>;
-
-    assertType<LegacyConfig>({
-      state: (_ctx, config: { enabled: boolean }) => ({ enabled: config.enabled }),
+    const feature = definePlayerFeature({
+      name: 'enum',
+      config: {
+        size: {
+          action: 'setSize',
+          state: 'size',
+        },
+      } satisfies PlayerFeatureConfig<EnumState>,
+      state: ({ set }): EnumState => ({
+        size: 'small',
+        setSize: (value) => set({ size: value ?? 'small' }),
+      }),
     });
-    assertType<LegacyConfig>({
-      state: (_ctx, config: { enabled: boolean }) => ({ enabled: config.enabled }),
-      // @ts-expect-error Legacy factory config is fixed when the feature is created.
-      config: { enabled: true },
+
+    const store = createStore<PlayerTarget>()(feature);
+
+    setPlayerConfigValue(store, feature.config!.size, 'large');
+
+    expect(store.size).toBe('large');
+    expect(createSelector(feature).displayName).toBe('enum');
+
+    interface WidenedState {
+      size: Size;
+      setSize(value: Size): void;
+    }
+
+    assertType<PlayerFeatureConfig<WidenedState>>({
+      size: {
+        // @ts-expect-error Config actions must still accept null and undefined.
+        action: 'setSize',
+        state: 'size',
+      },
     });
   });
 });

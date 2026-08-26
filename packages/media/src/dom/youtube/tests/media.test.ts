@@ -1,5 +1,5 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { MediaError } from '../../../core/media-error';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
+
 import {
   buildYouTubeIframeSrc,
   parseYouTubeSource,
@@ -7,9 +7,11 @@ import {
   YouTubeMedia,
   youtubeMediaDefaultProps,
 } from '..';
+import { MediaError } from '../../../core/media-error';
 
 vi.mock(import('@videojs/utils/dom'), async (importOriginal) => {
   const mod = await importOriginal();
+
   return { ...mod, loadScript: vi.fn(async () => {}) };
 });
 
@@ -59,10 +61,12 @@ class MockPlayer {
 
   addEventListener(type: string, listener: (event: StateChangeEvent) => void): void {
     let set = this.listeners.get(type);
+
     if (!set) {
       set = new Set();
       this.listeners.set(type, set);
     }
+
     set.add(listener);
   }
 
@@ -97,6 +101,7 @@ function createIframe(): HTMLIFrameElement {
 /** An iframe as React renders it before a source resolves: `src` present but empty. */
 function createEmptySrcIframe(): HTMLIFrameElement {
   const iframe = document.createElement('iframe');
+
   iframe.setAttribute('src', '');
   return iframe;
 }
@@ -118,9 +123,12 @@ async function attachAndLoad(media: YouTubeMedia): Promise<{ iframe: HTMLIFrameE
   // There is no embed to attach to without a source, so tests that don't care
   // which video is playing get one.
   if (!media.src) media.src = 'aqz-KE-bpKQ';
+
   const iframe = createIframe();
+
   media.attach(iframe);
   const player = await waitForEngine(media);
+
   player.ready();
   return { iframe, player };
 }
@@ -184,6 +192,7 @@ describe('parseYouTubeSource', () => {
 
   it('keeps the video id when a watch URL also has a list param', () => {
     const parsed = parseYouTubeSource('https://www.youtube.com/watch?v=aqz-KE-bpKQ&list=PLv3TTBr1W_9tppikBxAE');
+
     expect(parsed?.kind).toBe('video');
     expect(parsed?.id).toBe('aqz-KE-bpKQ');
     expect(parsed?.listId).toBe('PLv3TTBr1W_9tppikBxAE');
@@ -207,6 +216,7 @@ describe('parseYouTubeSource', () => {
 describe('buildYouTubeIframeSrc', () => {
   it('builds embed URL with default playsinline, hidden controls, and jsapi enabled', () => {
     const src = buildYouTubeIframeSrc('https://www.youtube.com/watch?v=aqz-KE-bpKQ');
+
     expect(src).toContain('https://www.youtube.com/embed/aqz-KE-bpKQ');
     expect(src).toContain('playsinline=1');
     expect(src).toContain('preload=metadata');
@@ -220,6 +230,7 @@ describe('buildYouTubeIframeSrc', () => {
       defaultMuted: true,
       loop: true,
     });
+
     expect(src).toContain('autoplay=1');
     expect(src).toContain('mute=1');
     expect(src).toContain('loop=1');
@@ -227,6 +238,7 @@ describe('buildYouTubeIframeSrc', () => {
 
   it('shows YouTube controls when controls=true', () => {
     const src = buildYouTubeIframeSrc('aqz-KE-bpKQ', { controls: true });
+
     expect(src).not.toContain('controls=0');
   });
 
@@ -235,6 +247,7 @@ describe('buildYouTubeIframeSrc', () => {
       preload: 'auto',
       source: { engine: { youtube: { cc_load_policy: 1 } } },
     });
+
     expect(src).toContain('preload=auto');
     expect(src).toContain('cc_load_policy=1');
   });
@@ -257,6 +270,7 @@ describe('buildYouTubeIframeSrc', () => {
         },
       },
     });
+
     expect(src).toContain('cc_lang_pref=fr');
     expect(src).toContain('color=white');
     expect(src).toContain('disablekb=1');
@@ -273,6 +287,7 @@ describe('buildYouTubeIframeSrc', () => {
       // Undocumented knobs and whatever YouTube adds next stay usable.
       source: { engine: { youtube: { some_future_param: 'x' } } },
     });
+
     expect(src).toContain('some_future_param=x');
   });
 
@@ -280,12 +295,14 @@ describe('buildYouTubeIframeSrc', () => {
     const src = buildYouTubeIframeSrc('aqz-KE-bpKQ', {
       source: { engine: { youtube: { rel: 1, iv_load_policy: 1 } } },
     });
+
     expect(src).toContain('rel=1');
     expect(src).toContain('iv_load_policy=1');
   });
 
   it('omits parameters YouTube has deprecated', () => {
     const src = buildYouTubeIframeSrc('aqz-KE-bpKQ');
+
     expect(src).not.toContain('modestbranding');
     expect(src).not.toContain('showinfo');
   });
@@ -302,6 +319,7 @@ describe('buildYouTubeIframeSrc', () => {
 
   it('builds playlist embed URL', () => {
     const src = buildYouTubeIframeSrc('https://www.youtube.com/playlist?list=PLv3TTBr1W_9tppikBxAE');
+
     expect(src).toContain('https://www.youtube.com/embed?');
     expect(src).toContain('listType=playlist');
     expect(src).toContain('list=PLv3TTBr1W_9tppikBxAE');
@@ -309,6 +327,7 @@ describe('buildYouTubeIframeSrc', () => {
 
   it('builds playlist embed URL from a videoseries embed source', () => {
     const src = buildYouTubeIframeSrc('https://www.youtube.com/embed/videoseries?list=PLv3TTBr1W_9tppikBxAE');
+
     expect(src).toContain('https://www.youtube.com/embed?');
     expect(src).toContain('listType=playlist');
     expect(src).toContain('list=PLv3TTBr1W_9tppikBxAE');
@@ -323,6 +342,7 @@ describe('buildYouTubeIframeSrc', () => {
 describe('YouTubeMedia', () => {
   it('has expected default state before attach', () => {
     const media = new YouTubeMedia();
+
     expect(media.engine).toBe(null);
     expect(media.target).toBe(null);
     expect(media.paused).toBe(true);
@@ -336,8 +356,10 @@ describe('YouTubeMedia', () => {
 
   it('sets the initial iframe src and creates a player when attached', async () => {
     const media = new YouTubeMedia();
+
     media.src = 'https://www.youtube.com/watch?v=aqz-KE-bpKQ';
     const iframe = createIframe();
+
     media.attach(iframe);
 
     expect(iframe.src).toContain('https://www.youtube.com/embed/aqz-KE-bpKQ');
@@ -351,10 +373,12 @@ describe('YouTubeMedia', () => {
   it('defers the player until a source arrives', async () => {
     const media = new YouTubeMedia();
     const loadstart = vi.fn();
+
     media.addEventListener('loadstart', loadstart);
 
     // How every framework builds the element: created first, `src` set after.
     const iframe = createIframe();
+
     media.attach(iframe);
     expect(iframe.getAttribute('src')).toBe(null);
     expect(media.engine).toBe(null);
@@ -374,6 +398,7 @@ describe('YouTubeMedia', () => {
     // React renders `src=""` before a source resolves. The `src` property reports
     // the document URL for it, so only the attribute says there is no embed.
     const iframe = createEmptySrcIframe();
+
     media.attach(iframe);
     expect(media.engine).toBe(null);
 
@@ -388,6 +413,7 @@ describe('YouTubeMedia', () => {
   it('builds a deferred embed once for repeated source changes in the same task', async () => {
     const media = new YouTubeMedia();
     const iframe = createIframe();
+
     media.attach(iframe);
 
     media.src = 'aqz-KE-bpKQ';
@@ -401,6 +427,7 @@ describe('YouTubeMedia', () => {
 
   it('does not leave play() waiting while the embed is deferred', async () => {
     const media = new YouTubeMedia();
+
     media.attach(createIframe());
 
     // No embed means no player is coming to report a load; waiting would hang.
@@ -410,6 +437,7 @@ describe('YouTubeMedia', () => {
 
   it('waits for a deferred embed to load before playing', async () => {
     const media = new YouTubeMedia();
+
     media.attach(createIframe());
 
     media.src = 'aqz-KE-bpKQ';
@@ -421,6 +449,7 @@ describe('YouTubeMedia', () => {
     // The player the deferred embed creates has not reported readiness, so
     // playing now would run against a player that cannot accept it.
     const player = await waitForEngine(media);
+
     expect(played).toBe(false);
 
     player.ready();
@@ -434,6 +463,7 @@ describe('YouTubeMedia', () => {
   it('emits loadstart on attach and loadedmetadata/loadcomplete after ready', async () => {
     const media = new YouTubeMedia();
     const events: string[] = [];
+
     for (const type of ['loadstart', 'loadedmetadata', 'loadcomplete', 'durationchange'] as const) {
       media.addEventListener(type, () => events.push(type));
     }
@@ -454,6 +484,7 @@ describe('YouTubeMedia', () => {
 
     const playSpy = vi.fn();
     const waitingSpy = vi.fn();
+
     media.addEventListener('play', playSpy);
     media.addEventListener('waiting', waitingSpy);
 
@@ -487,6 +518,7 @@ describe('YouTubeMedia', () => {
 
   it('forwards play() and pause() to the player', async () => {
     const media = new YouTubeMedia();
+
     media.src = 'aqz-KE-bpKQ';
     const { player } = await attachAndLoad(media);
 
@@ -500,6 +532,7 @@ describe('YouTubeMedia', () => {
 
   it('replays on ended when loop is set', async () => {
     const media = new YouTubeMedia();
+
     media.src = 'aqz-KE-bpKQ';
     media.loop = true;
     const { player } = await attachAndLoad(media);
@@ -533,10 +566,13 @@ describe('YouTubeMedia', () => {
 
   it('cues the new video when src changes after attach', async () => {
     const media = new YouTubeMedia();
+
     media.src = 'https://www.youtube.com/watch?v=aqz-KE-bpKQ';
     const iframe = createIframe();
+
     media.attach(iframe);
     const player = await waitForEngine(media);
+
     player.ready();
 
     media.src = 'https://youtu.be/dQw4w9WgXcQ?t=10';
@@ -545,6 +581,7 @@ describe('YouTubeMedia', () => {
 
     // A post-load state change completes the reload.
     const loadCompleteSpy = vi.fn();
+
     media.addEventListener('loadcomplete', loadCompleteSpy);
     player.emit('onStateChange', STATE.CUED);
     expect(loadCompleteSpy).toHaveBeenCalledTimes(1);
@@ -553,8 +590,10 @@ describe('YouTubeMedia', () => {
 
   it('defers the load when src changes before the player is ready', async () => {
     const media = new YouTubeMedia();
+
     media.src = 'https://www.youtube.com/watch?v=aqz-KE-bpKQ';
     const iframe = createIframe();
+
     media.attach(iframe);
     const player = await waitForEngine(media);
 
@@ -569,6 +608,7 @@ describe('YouTubeMedia', () => {
     expect(player.cueVideoById).toHaveBeenCalledWith({ videoId: 'dQw4w9WgXcQ', startSeconds: 10 });
 
     const loadCompleteSpy = vi.fn();
+
     media.addEventListener('loadcomplete', loadCompleteSpy);
     player.emit('onStateChange', STATE.CUED);
     expect(loadCompleteSpy).toHaveBeenCalledTimes(1);
@@ -577,11 +617,14 @@ describe('YouTubeMedia', () => {
 
   it('loads (instead of cueing) the new video when autoplay is set', async () => {
     const media = new YouTubeMedia();
+
     media.autoplay = true;
     media.src = 'https://www.youtube.com/watch?v=aqz-KE-bpKQ';
     const iframe = createIframe();
+
     media.attach(iframe);
     const player = await waitForEngine(media);
+
     player.ready();
 
     media.src = 'https://youtu.be/dQw4w9WgXcQ';
@@ -592,13 +635,17 @@ describe('YouTubeMedia', () => {
 
   it('errors and unblocks pending play() when src is unrecognized', async () => {
     const media = new YouTubeMedia();
+
     media.src = 'https://www.youtube.com/watch?v=aqz-KE-bpKQ';
     const iframe = createIframe();
+
     media.attach(iframe);
     const player = await waitForEngine(media);
+
     player.ready();
 
     const errorSpy = vi.fn();
+
     media.addEventListener('error', errorSpy);
 
     media.src = 'https://example.com/not-a-youtube-url';
@@ -613,12 +660,15 @@ describe('YouTubeMedia', () => {
 
   it('surfaces player errors', async () => {
     const media = new YouTubeMedia();
+
     media.src = 'aqz-KE-bpKQ';
     const iframe = createIframe();
+
     media.attach(iframe);
     const player = await waitForEngine(media);
 
     const errorSpy = vi.fn();
+
     media.addEventListener('error', errorSpy);
     player.events?.onError?.({ data: 150 });
 
@@ -649,6 +699,7 @@ describe('YouTubeMedia', () => {
     player.emit('onStateChange', STATE.PAUSED);
 
     const played = media.played;
+
     expect(played.length).toBe(1);
     expect(played.start(0)).toBe(0);
     expect(played.end(0)).toBe(0.16);
@@ -667,12 +718,15 @@ describe('YouTubeMedia', () => {
 
   it('unblocks pending play() when detached before load completes', async () => {
     const media = new YouTubeMedia();
+
     media.src = 'aqz-KE-bpKQ';
     const iframe = createIframe();
+
     media.attach(iframe);
 
     // Await load without the player ever becoming ready.
     const pending = media.play();
+
     media.detach();
 
     await expect(pending).resolves.toBeUndefined();
@@ -681,8 +735,10 @@ describe('YouTubeMedia', () => {
 
   it('does not create a player when detached before the API resolves', async () => {
     const media = new YouTubeMedia();
+
     media.src = 'aqz-KE-bpKQ';
     const iframe = createIframe();
+
     media.attach(iframe);
     media.detach();
 
@@ -696,14 +752,17 @@ describe('YouTubeMedia', () => {
 
   it('ignores ready and state callbacks from a superseded player', async () => {
     const media = new YouTubeMedia();
+
     media.src = 'https://www.youtube.com/watch?v=aqz-KE-bpKQ';
     const { player: stale } = await attachAndLoad(media);
 
     media.detach();
     const { player: current } = await attachAndLoad(media);
+
     expect(current).not.toBe(stale);
 
     const playSpy = vi.fn();
+
     media.addEventListener('play', playSpy);
 
     // The iframe API keeps invoking callbacks it already scheduled for the
@@ -721,6 +780,7 @@ describe('YouTubeMedia', () => {
 
   it('unblocks waiters from a superseded load when a reload starts first', async () => {
     const media = new YouTubeMedia();
+
     media.src = 'https://www.youtube.com/watch?v=aqz-KE-bpKQ';
     const { player } = await attachAndLoad(media);
 
@@ -750,6 +810,7 @@ describe('YouTubeMedia source', () => {
   it('derives src from a structured source and announces the change', async () => {
     const media = new YouTubeMedia();
     const sourceChange = vi.fn();
+
     media.addEventListener('sourcechange', sourceChange);
 
     media.source = { src: 'https://www.youtube.com/watch?v=aqz-KE-bpKQ' };
@@ -760,6 +821,7 @@ describe('YouTubeMedia source', () => {
 
   it('re-derives source from src, carrying YouTube player parameters over', () => {
     const media = new YouTubeMedia();
+
     media.source = { src: 'aqz-KE-bpKQ', engine: { youtube: { cc_load_policy: 1 } } };
 
     media.src = 'dQw4w9WgXcQ';
@@ -769,8 +831,10 @@ describe('YouTubeMedia source', () => {
 
   it('reloads when only YouTube player parameters change', async () => {
     const media = new YouTubeMedia();
+
     media.src = 'aqz-KE-bpKQ';
     const { player } = await attachAndLoad(media);
+
     player.cueVideoById.mockClear();
 
     media.source = { src: 'aqz-KE-bpKQ', engine: { youtube: { cc_load_policy: 1 } } };
@@ -782,8 +846,10 @@ describe('YouTubeMedia source', () => {
 
   it('serializes YouTube player parameters onto the initial iframe src', () => {
     const media = new YouTubeMedia();
+
     media.source = { src: 'aqz-KE-bpKQ', engine: { youtube: { hl: 'fr' } } };
     const iframe = createIframe();
+
     media.attach(iframe);
 
     expect(iframe.src).toContain('hl=fr');
@@ -792,6 +858,7 @@ describe('YouTubeMedia source', () => {
 
   it('clears src when the source is set to null', () => {
     const media = new YouTubeMedia();
+
     media.source = { src: 'aqz-KE-bpKQ' };
 
     media.source = null;
@@ -802,8 +869,10 @@ describe('YouTubeMedia source', () => {
 
   it('stops the embed and resets state when the source is cleared', async () => {
     const media = new YouTubeMedia();
+
     media.src = 'aqz-KE-bpKQ';
     const { player } = await attachAndLoad(media);
+
     player.emit('onStateChange', STATE.PLAYING);
     expect(media.duration).toBe(60);
 
@@ -821,11 +890,14 @@ describe('YouTubeMedia source', () => {
 
   it('announces the reset when the source is cleared', async () => {
     const media = new YouTubeMedia();
+
     media.src = 'aqz-KE-bpKQ';
     const { player } = await attachAndLoad(media);
+
     player.emit('onStateChange', STATE.PLAYING);
 
     const emptied = vi.fn();
+
     media.addEventListener('emptied', emptied);
     media.source = null;
     await Promise.resolve();
@@ -838,8 +910,10 @@ describe('YouTubeMedia source', () => {
 
   it('does not let a cleared source come back through a state change', async () => {
     const media = new YouTubeMedia();
+
     media.src = 'aqz-KE-bpKQ';
     const { player } = await attachAndLoad(media);
+
     player.emit('onStateChange', STATE.PLAYING);
 
     media.source = null;
@@ -855,6 +929,7 @@ describe('YouTubeMedia source', () => {
 
   it('does not play a source that was cleared', async () => {
     const media = new YouTubeMedia();
+
     media.src = 'aqz-KE-bpKQ';
     const { player } = await attachAndLoad(media);
 
@@ -869,8 +944,10 @@ describe('YouTubeMedia source', () => {
 
   it('unblocks pending play() when the source is cleared before the player is ready', async () => {
     const media = new YouTubeMedia();
+
     media.src = 'aqz-KE-bpKQ';
     const iframe = createIframe();
+
     media.attach(iframe);
     const player = await waitForEngine(media);
 
@@ -880,6 +957,7 @@ describe('YouTubeMedia source', () => {
     media.src = 'dQw4w9WgXcQ';
     media.source = null;
     const pending = media.play();
+
     player.ready();
 
     await expect(pending).resolves.toBeUndefined();

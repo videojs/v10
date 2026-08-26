@@ -135,16 +135,18 @@ import { Slider } from "@videojs/react";
 ```tsx
 import { useSlider } from "@videojs/react";
 
-function CustomSlider() {
-  const { rootProps, trackProps, thumbProps, state } = useSlider({
-    defaultValue: 50,
-  });
+function CustomSlider({ options }: { options: useSlider.Options }) {
+  const { rootRef, thumbRef, rootProps, rootStyle, thumbProps, cssVars, state } =
+    useSlider(options);
 
   return (
-    <div {...rootProps}>
-      <div {...trackProps}>
-        <div {...thumbProps} />
-      </div>
+    <div
+      ref={rootRef}
+      {...rootProps}
+      style={{ ...cssVars, ...rootStyle }}
+      data-dragging={state.dragging || undefined}
+    >
+      <div ref={thumbRef} {...thumbProps} />
     </div>
   );
 }

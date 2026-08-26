@@ -1,5 +1,6 @@
 import type { ReactiveController, ReactiveControllerHost } from '@videojs/element';
 import { noop } from '@videojs/utils/function';
+
 import type { Selector } from '../../core/shallow-equal';
 import { shallowEqual } from '../../core/shallow-equal';
 import type { State } from '../../core/state';
@@ -9,13 +10,13 @@ export type SnapshotControllerHost = ReactiveControllerHost & HTMLElement;
 /**
  * Subscribe to a `State<T>` container with optional selector.
  *
- * Without selector: returns full state, re-renders on any state change.
- * With selector: returns selected slice, re-renders only when the slice changes (shallowEqual).
+ * Without selector: returns full state, re-renders on any state change. With selector: returns selected slice,
+ * re-renders only when the slice changes (shallowEqual).
  *
  * @example
- * ```ts
- * #state = new SnapshotController(this, sliderState, (s) => s.value);
- * ```
+ *   ```ts
+ *   #state = new SnapshotController(this, sliderState, (s) => s.value);
+ *   ```;
  */
 export class SnapshotController<T extends object, R = T> implements ReactiveController {
   readonly #host: ReactiveControllerHost;
@@ -26,16 +27,16 @@ export class SnapshotController<T extends object, R = T> implements ReactiveCont
   #unsubscribe = noop;
 
   /**
-   * @label Without Selector
    * @param host - The host element that owns this controller.
    * @param state - The State container to subscribe to.
+   * @label Without Selector
    */
   constructor(host: ReactiveControllerHost, state: State<T>);
   /**
-   * @label With Selector
    * @param host - The host element that owns this controller.
    * @param state - The State container to subscribe to.
    * @param selector - Derives a value from the state.
+   * @label With Selector
    */
   constructor(host: ReactiveControllerHost, state: State<T>, selector: Selector<T, R>);
   constructor(host: ReactiveControllerHost, state: State<T>, selector?: Selector<T, R>) {
@@ -79,10 +80,12 @@ export class SnapshotController<T extends object, R = T> implements ReactiveCont
     }
 
     const selector = this.#selector;
+
     this.#cached = selector(this.#state.current);
 
     this.#unsubscribe = this.#state.subscribe(() => {
       const next = selector(this.#state.current);
+
       if (!shallowEqual(this.#cached, next)) {
         this.#cached = next;
         this.#host.requestUpdate();

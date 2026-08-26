@@ -18,6 +18,11 @@ export class AriaKeyShortcutsController implements ReactiveController {
   #container: ContainerContextConsumer;
   #unsubscribe: (() => void) | null = null;
 
+  /**
+   * @param host - Host element whose nearest player container supplies hotkey registrations.
+   * @param action - Registered hotkey action to look up.
+   * @param options - Optional value resolver for value-dependent shortcuts.
+   */
   constructor(host: PlayerControllerHost, action: string, options: AriaKeyShortcutsControllerOptions = {}) {
     this.#host = host;
     this.#action = action;
@@ -45,6 +50,7 @@ export class AriaKeyShortcutsController implements ReactiveController {
   get details(): HotkeyShortcutDetails {
     const container = this.#container.value?.container;
     if (!container) return {};
+
     return getHotkeyCoordinator(container).getShortcut(this.#action, this.#getValue?.());
   }
 

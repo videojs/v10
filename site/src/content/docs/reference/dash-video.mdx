@@ -6,13 +6,13 @@ description: DASH video element powered by dash.js for adaptive bitrate streamin
 ---
 
 import MediaReference from "@/components/docs/api-reference/MediaReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 import StyleCase from "@/components/docs/StyleCase.astro";
 import Demo from "@/components/docs/demos/Demo.astro";
 
-{/* React live demo disabled until #1343 (SSR-breaking media imports) is fixed; show source instead. */}
-import { TabsRoot, TabsList, Tab, TabsPanel } from "@/components/Tabs";
-import ServerCode from "@/components/Code/ServerCode.astro";
+{/* React demos */}
+import BasicUsageDemoReact from "@/components/docs/demos/dash-video/react/css/BasicUsage";
 import basicUsageReactTsx from "@/components/docs/demos/dash-video/react/css/BasicUsage.tsx?raw";
 import basicUsageReactCss from "@/components/docs/demos/dash-video/react/css/BasicUsage.css?raw";
 
@@ -28,21 +28,14 @@ DASH video element powered by [dash.js](https://github.com/Dash-Industry-Forum/d
 
 ### Basic Usage
 
-{/* React: source-only until #1343 is fixed. Restore <Demo> with <BasicUsageDemoReact client:idle /> afterward. */}
 <FrameworkCase frameworks={["react"]}>
   <StyleCase styles={["css"]}>
-    <TabsRoot client:idle>
-      <TabsList client:idle label="Basic usage source code">
-        <Tab client:idle value="App.tsx" initial>App.tsx</Tab>
-        <Tab client:idle value="App.css">App.css</Tab>
-      </TabsList>
-      <TabsPanel client:idle value="App.tsx" initial>
-        <ServerCode code={basicUsageReactTsx} lang="tsx" />
-      </TabsPanel>
-      <TabsPanel client:idle value="App.css">
-        <ServerCode code={basicUsageReactCss} lang="css" />
-      </TabsPanel>
-    </TabsRoot>
+    <Demo files={[
+      { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
+      { title: "App.css", code: basicUsageReactCss, lang: "css" },
+    ]}>
+      <BasicUsageDemoReact client:idle />
+    </Demo>
   </StyleCase>
 </FrameworkCase>
 
@@ -58,4 +51,31 @@ DASH video element powered by [dash.js](https://github.com/Dash-Industry-Forum/d
   </StyleCase>
 </FrameworkCase>
 
-<MediaReference media="DashVideo" />
+<MediaReference media="DashVideo">
+  <Fragment slot="engine-dashJs">
+    Pass dash.js's own settings here. They're handed to dash.js untouched, so every option in its [settings reference](https://cdn.dashjs.org/latest/jsdoc/module-Settings.html) works. Replacing the object resets any settings applied before it. <DocsLink slug="concepts/media-sources">Media Sources</DocsLink> covers how engine options fit into a structured source.
+
+    Each of the three below is a group of dash.js settings rather than a single value, and dash.js documents what's inside them.
+
+    <FrameworkCase frameworks={["react"]}>
+    ```tsx
+    <DashVideo
+      source={{
+        src: 'https://example.com/manifest.mpd',
+        engine: { dashJs: { streaming: { buffer: { fastSwitchEnabled: true } } } },
+      }}
+    />
+    ```
+    </FrameworkCase>
+
+    <FrameworkCase frameworks={["html"]}>
+    ```ts
+    const video = document.querySelector('dash-video');
+    video.source = {
+      src: 'https://example.com/manifest.mpd',
+      engine: { dashJs: { streaming: { buffer: { fastSwitchEnabled: true } } } },
+    };
+    ```
+    </FrameworkCase>
+  </Fragment>
+</MediaReference>

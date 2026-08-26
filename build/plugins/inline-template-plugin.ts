@@ -1,6 +1,6 @@
 import { transform } from 'lightningcss';
-import MagicString from 'magic-string';
-import type { BuildPlugin } from './types.ts';
+
+import type { BuildMagicString, BuildPlugin } from './types.ts';
 
 const HTML_MARKER = '/*html*/';
 const CSS_MARKER = '/* css */';
@@ -10,14 +10,13 @@ interface TemplatePluginOptions {
 }
 
 /**
- * Rolldown/tsdown transform plugin that minifies tagged template literals
- * marked with {@link HTML_MARKER} or {@link CSS_MARKER}.
+ * Rolldown/Vite+ pack transform plugin that minifies tagged template literals marked with {@link HTML_MARKER} or
+ * {@link CSS_MARKER}.
  *
  * - `/*html*​/` templates: collapse inter-tag whitespace, strip HTML comments.
  * - `/* css *​/` templates: full CSS minification via lightningcss.
  *
- * Only the static parts (quasis) are processed — `${...}` expression
- * interpolations are preserved as-is.
+ * Only the static parts (quasis) are processed — `${...}` expression interpolations are preserved as-is.
  */
 export function inlineTemplatePlugin(options: TemplatePluginOptions = {}): BuildPlugin {
   const { minify = true } = options;
@@ -25,22 +24,17 @@ export function inlineTemplatePlugin(options: TemplatePluginOptions = {}): Build
   return {
     name: 'inline-template',
 
-    transform(code, id) {
+    transform(code, _id, meta) {
       if (!minify) return null;
+
       if (!code.includes(HTML_MARKER) && !code.includes(CSS_MARKER)) return null;
 
-      const result = processTemplates(code);
+      const magicString = meta?.magicString;
+      if (!magicString) throw new Error('inline-template requires experimental.nativeMagicString: true.');
 
-      if (!result) return null;
+      if (!processTemplates(code, magicString)) return null;
 
-      return {
-        code: result.toString(),
-        map: result.generateMap({
-          hires: 'boundary',
-          includeContent: true,
-          source: id,
-        }),
-      };
+      return { code: magicString };
     },
   };
 }
@@ -50,11 +44,10 @@ export function inlineTemplatePlugin(options: TemplatePluginOptions = {}): Build
 // ---------------------------------------------------------------------------
 
 /**
- * Walk `code` looking for known markers followed by a backtick template
- * literal. For each match, minify the static parts and reassemble.
+ * Walk `code` looking for known markers followed by a backtick template literal. For each match, minify the static
+ * parts and reassemble.
  */
-function processTemplates(code: string): MagicString | null {
-  const output = new MagicString(code);
+function processTemplates(code: string, output: BuildMagicString): boolean {
   let changed = false;
   let pos = 0;
 
@@ -78,6 +71,7 @@ function processTemplates(code: string): MagicString | null {
 
     // Skip marker + optional whitespace to find the opening backtick.
     let i = idx + marker.length;
+
     while (i < code.length && isWhitespace(code[i]!)) i++;
 
     if (i >= code.length || code[i] !== '`') {
@@ -90,12 +84,15 @@ function processTemplates(code: string): MagicString | null {
     const minified = marker === HTML_MARKER ? minifyHtmlQuasis(quasis) : minifyCssQuasis(quasis);
 
     let replacement = `${marker} \``;
+
     for (let q = 0; q < minified.length; q++) {
       replacement += minified[q];
+
       if (q < expressions.length) {
         replacement += `\${${expressions[q]}}`;
       }
     }
+
     replacement += '`';
 
     if (replacement !== code.slice(idx, end)) {
@@ -106,7 +103,7 @@ function processTemplates(code: string): MagicString | null {
     pos = end;
   }
 
-  return changed ? output : null;
+  return changed;
 }
 
 // ---------------------------------------------------------------------------
@@ -129,6 +126,7 @@ function minifyHtmlQuasis(quasis: string[]): string[] {
 
     // 4. Trim edges of the whole template (first / last quasi only).
     if (qIdx === 0) s = s.replace(/^\s+/, '');
+
     if (qIdx === quasis.length - 1) s = s.replace(/\s+$/, '');
 
     return s;
@@ -136,9 +134,8 @@ function minifyHtmlQuasis(quasis: string[]): string[] {
 }
 
 /**
- * Remove whitespace that sits between a closing `>` and an opening `<`,
- * while respecting quoted attribute values (so `> <` inside an attribute
- * like `title="a > <b"` is left untouched).
+ * Remove whitespace that sits between a closing `>` and an opening `<`, while respecting quoted attribute values (so `>
+ * <` inside an attribute like `title="a > <b"` is left untouched).
  */
 function collapseInterTagWhitespace(s: string): string {
   let out = '';
@@ -152,15 +149,19 @@ function collapseInterTagWhitespace(s: string): string {
 
     // At '<' — scan forward to the matching '>', skipping quoted attributes.
     let j = i + 1;
+
     while (j < s.length && s[j] !== '>') {
       if (s[j] === '"' || s[j] === "'") {
         const q = s[j++]!;
+
         while (j < s.length && s[j] !== q) j++;
+
         if (j < s.length) j++; // skip closing quote
       } else {
         j++;
       }
     }
+
     if (j < s.length) j++; // include '>'
 
     out += s.slice(i, j);
@@ -169,7 +170,9 @@ function collapseInterTagWhitespace(s: string): string {
     // After the tag's '>', skip whitespace when followed by '<'.
     if (i < s.length && (s[i] === ' ' || s[i] === '\t' || s[i] === '\n' || s[i] === '\r')) {
       let k = i;
+
       while (k < s.length && (s[k] === ' ' || s[k] === '\t' || s[k] === '\n' || s[k] === '\r')) k++;
+
       if (k < s.length && s[k] === '<') {
         i = k; // skip the whitespace
       }
@@ -189,8 +192,7 @@ const EXPR_PLACEHOLDER = '___EXPR_';
 /**
  * Minify the static parts of a CSS template literal via lightningcss.
  *
- * Expressions are replaced with safe placeholder tokens before minification,
- * then restored afterward.
+ * Expressions are replaced with safe placeholder tokens before minification, then restored afterward.
  */
 function minifyCssQuasis(quasis: string[]): string[] {
   // Fast path: single quasi (no expressions) — minify directly.
@@ -252,9 +254,8 @@ interface ParsedTemplate {
 }
 
 /**
- * Parse a backtick template literal starting at `start` (the opening `` ` ``).
- * Returns the static quasis, the raw expression source strings, and the index
- * immediately after the closing backtick.
+ * Parse a backtick template literal starting at `start` (the opening `` ` ``). Returns the static quasis, the raw
+ * expression source strings, and the index immediately after the closing backtick.
  */
 function parseTemplateLiteral(code: string, start: number): ParsedTemplate {
   const quasis: string[] = [];
@@ -307,8 +308,8 @@ interface SkipResult {
 }
 
 /**
- * Starting right after the `${`, collect everything up to the matching `}`.
- * Returns `{ src, _end }` where `_end` is the index after the closing `}`.
+ * Starting right after the `${`, collect everything up to the matching `}`. Returns `{ src, _end }` where `_end` is the
+ * index after the closing `}`.
  */
 function collectExpression(code: string, start: number): ParsedExpression {
   let i = start;
@@ -324,18 +325,22 @@ function collectExpression(code: string, start: number): ParsedExpression {
       i++;
     } else if (ch === '}') {
       depth--;
+
       if (depth === 0) {
         i++; // skip closing }
         break;
       }
+
       src += ch;
       i++;
     } else if (ch === "'" || ch === '"') {
       const consumed = skipString(code, i);
+
       src += consumed.text;
       i = consumed.end;
     } else if (ch === '`') {
       const consumed = skipNestedTemplate(code, i);
+
       src += consumed.text;
       i = consumed.end;
     } else {

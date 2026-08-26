@@ -6,15 +6,11 @@ description: Serve the Video.js HTML player from your own origin for offline, ai
 import Aside from '@/components/Aside.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
 
-By default, the <DocsLink slug="how-to/installation">installation</DocsLink> flow loads the player from a public CDN. For offline, air-gapped, or locked-down deployments, you can serve everything from your own origin instead. Pick one of the options below.
+By default, the <DocsLink slug="how-to/installation">installation</DocsLink> flow loads the player from a public CDN. For offline, air-gapped, or locked-down deployments, you can serve everything from your own origin instead.
 
-<Aside type="tip" title="Which option?">
-Bundle a single file when you already build your front end. Download the release archive when you install outside npm, like Composer or Drupal. Mirror the CDN files when you want the published layout as-is.
-</Aside>
+## Recommended approach
 
-## Bundle a single file (recommended)
-
-Install the package, put the player's imports into an entry file, then let any bundler produce one self-contained module you can host anywhere. For the default video player, that's:
+Bundle a single file: install the package, put the player's imports into an entry file, then let any bundler produce one self-contained module you can host anywhere. For the default video player, that's:
 
 ```js title="player.js"
 import '@videojs/html/video/player';
@@ -34,7 +30,15 @@ Load the output with `type="module"`:
 
 You get one file (plus a sourcemap), no runtime requests to a CDN, and only the features you import. Any bundler works (Vite, Rollup, webpack) as long as the output stays ESM.
 
-## Download the release archive
+## Availability and constraints
+
+- HLS and other non-default media need their own module on top of the player, and your self-hosted build has to include it. When bundling, add the media import to your entry file (`import '@videojs/html/media/hlsjs-video';`) and use the matching `<hlsjs-video>` element with your `.m3u8` source. When mirroring the CDN files, serve the media file too and add its script tag (`<script type="module" src="/videojs/media/hlsjs-video.js"></script>`).
+
+## Common variations
+
+Bundle a single file when you already build your front end. Download the release archive when you install outside npm, like Composer or Drupal. Mirror the CDN files when you want the published layout as-is.
+
+### Download the release archive
 
 Every [release](https://github.com/videojs/v10/releases) ships a `videojs-html-<version>.zip` (and a `.tar.gz`) holding the prebuilt player. Use it when your deployment installs dependencies outside npm, or when you want a versioned artifact to vendor into your own repository.
 
@@ -79,7 +83,7 @@ For Composer-based projects such as Drupal, declare the archive as a package:
 
 Composer strips the archive's top-level directory, so the player lands directly in your libraries path.
 
-## Mirror the prebuilt CDN files
+### Mirror the prebuilt CDN files
 
 To skip the bundler, copy the prebuilt CDN bundle to your server as-is.
 
@@ -103,11 +107,13 @@ The file name matches your player: `video.js`, `audio.js`, `background.js`, and 
 
 Hashed chunk names change between releases, so re-copy the directory whenever you upgrade `@videojs/html`.
 
-## HLS and other media types
+## Troubleshooting
 
-HLS and other non-default media need their own module on top of the player. Match it in your self-hosted build:
+### The player UI renders but the video never loads
 
-- **Bundle:** add the media import to your entry file (`import '@videojs/html/media/hlsjs-video';`) and use the matching `<hlsjs-video>` element with your `.m3u8` source.
-- **Mirror:** serve the media file too and add its script tag (`<script type="module" src="/videojs/media/hlsjs-video.js"></script>`).
+There is no console error. The media module for your format isn't part of your self-hosted build. Add the media import to your bundle entry file, or serve the media file and its script tag alongside the player, as described in [Availability and constraints](#availability-and-constraints).
 
-Without the media module the player UI renders but the video never loads, with no console error.
+## Related guides
+
+- <DocsLink slug="how-to/installation">Installation</DocsLink>
+- <DocsLink slug="concepts/media-sources">Media sources</DocsLink>

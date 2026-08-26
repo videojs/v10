@@ -9,10 +9,11 @@ import type { ThumbnailApi } from '@videojs/core/dom';
 import { applyElementProps, applyStateDataAttrs, createThumbnail, selectTextTrack } from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import type { MediaTextTrackState } from '@videojs/media';
+import { isNull, isUndefined } from '@videojs/utils/predicate';
 
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
-import { MediaElement } from '../media-element';
+import { UIElement } from '../ui-element';
 
 const SHADOW_CSS = `\
 :host {
@@ -23,7 +24,7 @@ img {
   display: block;
 }`;
 
-export class ThumbnailElement extends MediaElement {
+export class ThumbnailElement extends UIElement {
   static readonly tagName = 'media-thumbnail';
 
   static override properties = {
@@ -53,6 +54,7 @@ export class ThumbnailElement extends MediaElement {
     const shadow = this.attachShadow({ mode: 'open' });
 
     const style = document.createElement('style');
+
     style.textContent = SHADOW_CSS;
     shadow.appendChild(style);
 
@@ -64,8 +66,8 @@ export class ThumbnailElement extends MediaElement {
   }
 
   /**
-   * Set thumbnail images directly, bypassing the automatic `<track>` detection.
-   * When set, this takes priority over the text track path.
+   * Set thumbnail images directly, bypassing the automatic `<track>` detection. When set, this takes priority over the
+   * text track path.
    */
   get thumbnails(): ThumbnailImage[] | undefined {
     return this.#externalThumbnails;
@@ -78,6 +80,7 @@ export class ThumbnailElement extends MediaElement {
 
   override connectedCallback(): void {
     super.connectedCallback();
+
     if (this.destroyed) return;
 
     this.#api = createThumbnail({
@@ -99,26 +102,24 @@ export class ThumbnailElement extends MediaElement {
   protected override update(changed: PropertyValues): void {
     super.update(changed);
 
+    const textTrack = this.#textTracks.value;
+
     // Resolve thumbnails: external prop takes priority over auto <track> path.
     if (this.#externalThumbnails) {
       this.#thumbnails = this.#externalThumbnails;
-    } else {
-      const textTrack = this.#textTracks.value;
-
-      if (textTrack !== this.#lastTextTrack) {
-        this.#lastTextTrack = textTrack;
-        this.#thumbnails =
-          textTrack && textTrack.thumbnailCues.length > 0
-            ? mapCuesToThumbnails(textTrack.thumbnailCues, textTrack.thumbnailTrackSrc ?? undefined)
-            : [];
-      }
+    } else if (textTrack !== this.#lastTextTrack) {
+      this.#lastTextTrack = textTrack;
+      this.#thumbnails =
+        textTrack && textTrack.thumbnailCues.length > 0
+          ? mapCuesToThumbnails(textTrack.thumbnailCues, textTrack.thumbnailTrackSrc ?? undefined)
+          : [];
     }
 
     const thumbnail = this.#core.findActiveThumbnail(this.#thumbnails, this.time);
 
     // Sync img attributes from element properties.
     applyElementProps(this.#img, {
-      crossorigin: this.crossOrigin || undefined,
+      crossorigin: this.#resolveCrossOrigin(textTrack),
       loading: this.loading,
       fetchpriority: this.fetchPriority,
     });
@@ -131,6 +132,7 @@ export class ThumbnailElement extends MediaElement {
       this.#resetStyles();
 
       const state = this.#core.getState(false, false, undefined);
+
       applyElementProps(this, this.#core.getAttrs(state));
       applyStateDataAttrs(this, state, ThumbnailDataAttrs);
       return;
@@ -143,6 +145,7 @@ export class ThumbnailElement extends MediaElement {
 
     const api = this.#api;
     const state = this.#core.getState(api?.loading ?? false, api?.error ?? false, thumbnail);
+
     applyElementProps(this, this.#core.getAttrs(state));
     applyStateDataAttrs(this, state, ThumbnailDataAttrs);
 
@@ -156,11 +159,31 @@ export class ThumbnailElement extends MediaElement {
     }
   }
 
+  /**
+   * Leaving `crossOrigin` unset means "follow the media element", so thumbnails keep working on a CORS-enabled player
+   * without a skin having to thread an attribute through. `null` opts out and fetches the sprites no-CORS, which is
+   * also what removing the attribute produces. A bare `crossorigin` is passed straight through, since the CORS-settings
+   * attribute reads it as Anonymous.
+   *
+   * Only the `<track>` path inherits: `thumbnails` set directly may point at a host that has nothing to do with the
+   * media element.
+   */
+  #resolveCrossOrigin(textTrack: MediaTextTrackState | undefined): string | undefined {
+    if (isNull(this.crossOrigin)) return undefined;
+
+    if (!isUndefined(this.crossOrigin)) return this.crossOrigin;
+
+    if (this.#externalThumbnails) return undefined;
+
+    return textTrack?.thumbnailTrackCrossOrigin ?? undefined;
+  }
+
   #applyResize(result: ThumbnailResizeResult): void {
     this.style.width = `${result.containerWidth}px`;
     this.style.height = `${result.containerHeight}px`;
 
     const imgStyle = this.#img.style;
+
     imgStyle.width = `${result.imageWidth}px`;
     imgStyle.height = `${result.imageHeight}px`;
     imgStyle.maxWidth = 'none';
@@ -173,6 +196,7 @@ export class ThumbnailElement extends MediaElement {
     this.style.height = '';
 
     const imgStyle = this.#img.style;
+
     imgStyle.width = '';
     imgStyle.height = '';
     imgStyle.maxWidth = '';

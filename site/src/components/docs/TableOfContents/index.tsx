@@ -1,4 +1,5 @@
 import type { MarkdownHeading } from 'astro';
+
 import { TableOfContentsDesktop } from './TableOfContents.desktop';
 import { TableOfContentsMobile } from './TableOfContents.mobile';
 import { filterHeadingsForToc, navigateToHeading, useActiveHeading } from './utils';
@@ -12,7 +13,8 @@ export function TableOfContents({ headings }: TableOfContentsProps) {
   const activeId = useActiveHeading(filteredHeadings);
 
   if (filteredHeadings.length === 0) {
-    // biome-ignore lint/complexity/noUselessFragments: Astro SSR logs false "Invalid hook call" when a React component with hooks returns null. See withastro/astro#12283.
+    // Astro SSR logs false "Invalid hook call" when a React component with hooks returns null. See withastro/astro#12283.
+    // oxlint-disable-next-line react/jsx-no-useless-fragment
     return <></>;
   }
 

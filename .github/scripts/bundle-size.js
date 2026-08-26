@@ -40,7 +40,9 @@ const ROOT =
 const PACKAGES_DIR = join(ROOT, 'packages');
 
 const SKIP_PACKAGES = new Set([
+  // Base revisions measured by the PR job can predate the VJSC rename.
   'compiler',
+  'vjsc',
   'react-native',
   'skins',
   'icons',
@@ -134,16 +136,22 @@ function buildPresetEntry(pkgShortName, config, distDir) {
     // Key not in lookup → not applicable for this package type (e.g., HTML
     // has no media/features entries). Skip without aborting.
     if (!entry) return true;
+
     const fullPath = resolve(distDir, entry.path);
     if (!existsSync(fullPath)) return false;
+
     lines.push(`export { ${entry.name} } from './${entry.path}';`);
     return true;
   }
 
   if (!addExport(`${config.preset}/${config.skin}`)) return null;
+
   if (!addExport(`${config.preset}/player`)) return null;
+
   if (!addExport(`${config.preset}/media`)) return null;
+
   if (!addExport(`${config.preset}/features`)) return null;
+
   if (config.hls && !addExport('hlsjs-video')) return null;
 
   return lines.length > 0 ? lines.join('\n') : null;
@@ -186,11 +194,14 @@ function staticOutputs(metafile, entryPoint) {
 
   for (const path of queue) {
     if (outputs.has(path)) continue;
+
     outputs.add(path);
 
     const output = metafile.outputs[path];
+
     for (const link of output.imports ?? []) {
       if (link.kind === 'dynamic-import') continue;
+
       if (metafile.outputs[link.path]) queue.push(link.path);
     }
   }
@@ -238,6 +249,7 @@ async function measure(entryPoint, external = []) {
   for (const [path] of Object.entries(result.metafile.outputs)) {
     const bytes = sizeByPath.get(outputPath(path)) ?? 0;
     totalSize += bytes;
+
     if (staticPaths.has(path)) size += bytes;
   }
 
@@ -283,6 +295,7 @@ async function measureVirtual(code, resolveDir, external = []) {
   for (const [path] of Object.entries(result.metafile.outputs)) {
     const bytes = sizeByPath.get(outputPath(path)) ?? 0;
     totalSize += bytes;
+
     if (staticPaths.has(path)) size += bytes;
   }
 
@@ -300,9 +313,11 @@ async function measureVirtual(code, resolveDir, external = []) {
  */
 function resolveDefault(exportValue) {
   if (typeof exportValue === 'string') return exportValue;
+
   if (typeof exportValue === 'object' && exportValue !== null) {
     return exportValue.default ?? null;
   }
+
   return null;
 }
 
@@ -330,13 +345,17 @@ function categorize(name) {
   if (subpath === '' || /^\/(video|audio|background)$/.test(subpath)) {
     return '_skip';
   }
+
   if (subpath.startsWith('/media/')) return 'media';
+
   if (subpath.startsWith('/ui/')) {
     // Skip compound component parts — only show main entries
     const uiName = subpath.slice('/ui/'.length);
     if (UI_PARTS.has(uiName)) return '_skip';
+
     return 'ui';
   }
+
   if (subpath.startsWith('/feature/')) return 'feature';
 
   // Match skin entries but exclude internal utilities like skin-mixin
@@ -380,10 +399,12 @@ function resolveWildcard(pkgDir, exportKey, exportValue) {
   return readdirSync(scanDir, { withFileTypes: true })
     .filter((d) => {
       if (!d.name.startsWith(prefix)) return false;
+
       return isDirectoryPattern ? d.isDirectory() : d.isFile();
     })
     .filter((d) => {
       if (isDirectoryPattern) return true;
+
       // For file patterns, the filename must end with the suffix
       return d.name.endsWith(suffix);
     })
@@ -396,7 +417,9 @@ function resolveWildcard(pkgDir, exportKey, exportValue) {
     })
     .filter(({ fullPath }) => {
       if (!existsSync(fullPath)) return false;
+
       if (fullPath.includes('.test.')) return false;
+
       return readFileSync(fullPath, 'utf8').trim().length > 0;
     })
     .sort((a, b) => a.stem.localeCompare(b.stem))
@@ -438,6 +461,7 @@ function discoverPackages() {
             isCSS: r.isCSS,
           });
         }
+
         continue;
       }
 
@@ -468,15 +492,21 @@ function discoverPackages() {
     // discovered from exports (e.g., React tree-shakes UI from root).
     if (rootPath && CATEGORIZED_PACKAGES.has(dirName)) {
       const uiDir = join(dirname(rootPath), 'ui');
+
       if (existsSync(uiDir)) {
         const existing = new Set(subpaths.map((s) => s.name));
+
         for (const d of readdirSync(uiDir, { withFileTypes: true })) {
           if (!d.isDirectory()) continue;
+
           if (UI_PARTS.has(d.name)) continue;
+
           const indexPath = join(uiDir, d.name, 'index.js');
           if (!existsSync(indexPath)) continue;
+
           const name = `${pkgName}/ui/${d.name}`;
           if (existing.has(name)) continue;
+
           subpaths.push({ name, path: indexPath, isCSS: false });
         }
       }
@@ -565,6 +595,7 @@ async function main() {
 
     // Measure preset virtual bundles for categorized packages.
     const pkgShortName = pkg.name.replace('@videojs/', '');
+
     if (CATEGORIZED_PACKAGES.has(pkgShortName)) {
       const distDir = dirname(pkg.rootPath);
 

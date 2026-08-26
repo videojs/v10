@@ -1,4 +1,5 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
+
 import type { ContextSignals, StateSignals } from '../../../core/composition/create-composition';
 import { effect } from '../../../core/signals/effect';
 import { signal } from '../../../core/signals/primitives';
@@ -60,6 +61,7 @@ describe('syncPreload', () => {
       const context = makeContext({ mediaElement: { preload: 'auto' } });
 
       const cleanup = syncPreload.setup({ state, context });
+
       expect(state.preload.get()).toBe('auto');
 
       context.mediaElement.set({ preload: 'metadata' });
@@ -76,6 +78,7 @@ describe('syncPreload', () => {
       const context = makeContext({ mediaElement });
 
       const cleanup = syncPreload.setup({ state, context });
+
       expect(state.preload.get()).toBe('auto');
 
       // Host swaps source and updates the same element's preload attribute.
@@ -94,6 +97,7 @@ describe('syncPreload', () => {
       const context = makeContext();
 
       const cleanup = syncPreload.setup({ state, context });
+
       context.mediaElement.set(undefined);
 
       expect(state.preload.get()).toBe('auto');
@@ -106,6 +110,7 @@ describe('syncPreload', () => {
       const context = makeContext({ mediaElement: { preload: 'auto' } });
 
       const cleanup = syncPreload.setup({ state, context });
+
       expect(state.preload.get()).toBe('auto');
 
       const seen: PresentationState['preload'][] = [];
@@ -154,6 +159,7 @@ describe('syncPreload', () => {
       // No preload attribute on the host element — DOM has no W3C opinion,
       // so the write side wins and pushes state to the DOM.
       const mediaElement: MediaElementLike = { preload: '' };
+
       context.mediaElement.set(mediaElement);
 
       await vi.waitFor(() => {
@@ -168,6 +174,7 @@ describe('syncPreload', () => {
       const context = makeContext();
 
       const cleanup = syncPreload.setup({ state, context });
+
       state.preload.set('auto');
 
       expect(context.mediaElement.get()).toBeUndefined();
@@ -226,6 +233,7 @@ describe('syncPreload', () => {
       const context = makeContext();
 
       const cleanup = syncPreload.setup({ state, context });
+
       expect(state.preload.get()).toBe('metadata');
 
       state.preload.set(undefined);
@@ -240,6 +248,7 @@ describe('syncPreload', () => {
       const context = makeContext();
 
       const cleanup = syncPreload.setup({ state, context });
+
       expect(state.preload.get()).toBe('metadata');
 
       state.preload.set(undefined);
@@ -304,6 +313,7 @@ describe('syncPreload', () => {
       });
 
       const cleanup = syncPreload.setup({ state, context });
+
       await Promise.resolve();
 
       // Observer sees the initial read but no extra notifications from
@@ -321,6 +331,7 @@ describe('syncPreload', () => {
       const context = makeContext({ mediaElement });
 
       let writes = 0;
+
       Object.defineProperty(mediaElement, 'preload', {
         get: () => 'auto',
         set: () => {
@@ -330,6 +341,7 @@ describe('syncPreload', () => {
       });
 
       const cleanup = syncPreload.setup({ state, context });
+
       state.preload.set('auto');
       await Promise.resolve();
       expect(writes).toBe(0);
@@ -345,6 +357,7 @@ describe('syncPreload', () => {
       const context = makeContext({ mediaElement });
 
       const cleanup = syncPreload.setup({ state, context });
+
       expect(state.preload.get()).toBe('auto');
       cleanup();
 

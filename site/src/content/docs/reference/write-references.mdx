@@ -16,7 +16,7 @@ Reference pages use the portable `write-api-reference` agent skill. Invoke `/wri
 
 Before creating a reference page, the component must exist in:
 
-- **Core**: `packages/core/src/core/ui/{name}/{name}-core.ts` (props, state, behavior)
+- **Core**: `packages/core/src/core/ui/{name}/core.ts` (props, state, behavior)
 - **HTML**: `packages/html/src/ui/{name}/` (custom element)
 - **React**: `packages/react/src/ui/{name}/` (React component)
 
@@ -38,11 +38,15 @@ The builder relies on file naming conventions to discover components:
 
 | Convention | Pattern | Example |
 |------------|---------|---------|
-| Core file | `{name}-core.ts` | `play-button-core.ts` |
-| Data attrs | `{name}-data-attrs.ts` | `play-button-data-attrs.ts` |
+| Core file | `core.ts` | `packages/core/src/core/ui/play-button/core.ts` |
+| Data attrs | `data.ts` | `packages/core/src/core/ui/play-button/data.ts` |
+| CSS vars | `vars.ts` | `packages/core/src/core/ui/slider/vars.ts` |
 | HTML element | `{name}-element.ts` | `play-button-element.ts` |
 | React component | `packages/react/src/ui/{name}/` | `packages/react/src/ui/play-button/` |
 | Multi-part detection | `index.parts.ts` | `packages/react/src/ui/slider/index.parts.ts` |
+
+Qualified helpers keep their qualifier, such as `segments-core.ts`. Additional part-scoped data attribute files use
+`{qualifier}-data.ts`, such as `item-data.ts`.
 
 If the builder output is missing or incomplete, check that your files match these conventions. See `.agents/skills/write-api-reference/references/builder-conventions.md` for the full list.
 
@@ -152,6 +156,7 @@ Use `frameworkTitle` to show the HTML custom element tag name when the HTML fram
 
 ```tsx
 import ComponentReference from "@/components/docs/api-reference/ComponentReference.astro";
+import ComponentImports from "@/components/docs/api-reference/ComponentImports.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 import Demo from "@/components/docs/demos/Demo.astro";
 
@@ -183,14 +188,23 @@ import basicUsageHtmlTs from "@/components/docs/demos/{name}/html/css/BasicUsage
 
 After imports, the page follows this order:
 
-1. **Anatomy** — show part nesting with self-closing placeholders for each framework using `<FrameworkCase>`, following the [Base UI anatomy convention](https://base-ui.com/react/overview/quick-start). No hooks, state, handlers, or option mapping — working code belongs in Examples.
-2. **Prose sections** (optional, as needed):
+1. **Import** — render the public React export and HTML registration module with `<ComponentImports>`.
+2. **Anatomy** — show part nesting with self-closing placeholders for each framework using `<FrameworkCase>`, following the [Base UI anatomy convention](https://base-ui.com/react/overview/quick-start). No hooks, state, handlers, or option mapping — working code belongs in Examples.
+3. **Prose sections** (optional, as needed):
    - **Behavior** — state transitions, timing, interaction logic
    - **Styling** — data attribute CSS selectors
    - **Accessibility** — ARIA attributes, keyboard interactions
    - Other sections as appropriate
-3. **Examples** — at least BasicUsage, wrapped in `<Demo>` with `<FrameworkCase>`
-4. **`<ComponentReference />`** — renders the generated JSON as props, state, and data attribute tables
+4. **Examples** — at least BasicUsage, wrapped in `<Demo>` with `<FrameworkCase>`
+5. **`<ComponentReference />`** — renders the generated JSON as props, state, and data attribute tables
+
+```mdx
+## Import
+
+<ComponentImports component="PlayButton" html="play-button" />
+```
+
+`component` is the named export from `@videojs/react`. `html` is the suffix of the side-effect registration import from `@videojs/html/ui/`.
 
 ```mdx
 <ComponentReference component="PlayButton" />
@@ -239,7 +253,7 @@ The builder discovers utils from package entry points two ways:
 **Naming conventions** (no tag needed):
 - `use*` hooks: `usePlayer`, `useMedia`
 - `*Controller` classes: `PlayerController`, `StoreController`
-- `create*` factories and mixins: `createPlayer`, `createProviderMixin`
+- `create*` factories and mixins: `createPlayer`, `createMediaAttachMixin`
 - `select*` selectors: `selectPlayback`, `selectVolume`
 
 **`@public` JSDoc tag** (everything else):
@@ -267,10 +281,9 @@ Open `site/src/docs.config.ts` and add your page to the appropriate category und
 - **UI Components** — UI component reference pages, sorted alphabetically
 - **Media Components** — media elements that handle streaming protocols and playback
 - **Player Features** — feature modules passed to `createPlayer`
-- **Utilities** — hooks, utilities, controllers, and mixins. Commonly used entries
-  go at the top of the list; everything else follows.
+- **Utilities** — hooks, utilities, controllers, and mixins. Keep primary integration APIs at the top level and put lower-level implementation APIs in the single Advanced subgroup.
 
-The categories are flat by design, so don't nest a new subsection inside them. Mark framework-specific entries with `frameworks: ['react']` or `frameworks: ['html']` on the entry itself.
+UI Components, Media Components, and Player Features are flat by design. Do not add nested subsections to them. Mark framework-specific entries with `frameworks: ['react']` or `frameworks: ['html']` on the entry itself.
 
 ```ts
 {

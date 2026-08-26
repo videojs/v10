@@ -46,6 +46,7 @@ for (const change of changes) {
   if (change.state === 'right') continue;
 
   const dest = templatesPath(change);
+
   await fs.copy(srcPath(change), dest, { overwrite: true });
   console.log(chalk.green(`  ✔ Copied ${filePath(change)}`));
 }

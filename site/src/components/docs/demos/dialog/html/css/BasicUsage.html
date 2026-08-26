@@ -1,0 +1,23 @@
+<div class="html-dialog-basic">
+  <button class="html-dialog-basic__trigger" type="button" commandfor="html-video-dialog">
+    <img src="{{VJS10_DEMO_POSTER}}" alt="" />
+    <span>Play the video</span>
+  </button>
+  <media-dialog id="html-video-dialog">
+    <media-dialog-backdrop class="html-dialog-basic__backdrop"></media-dialog-backdrop>
+    <media-dialog-popup class="html-dialog-basic__dialog">
+      <div class="html-dialog-basic__popup">
+        <media-dialog-title class="html-dialog-basic__title">Video title</media-dialog-title>
+        <media-dialog-description class="html-dialog-basic__description">
+          A video opened from a thumbnail.
+        </media-dialog-description>
+        <media-dialog-close class="html-dialog-basic__close">Close</media-dialog-close>
+        <video-player>
+          <media-container>
+            <video src="{{VJS10_DEMO_VIDEO_MP4}}" controls muted playsinline></video>
+          </media-container>
+        </video-player>
+      </div>
+    </media-dialog-popup>
+  </media-dialog>
+</div>

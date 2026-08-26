@@ -9,6 +9,7 @@ import Blog from '@/layouts/Blog.astro';
 
 export async function getStaticPaths() {
   const entries = await getCollection('changelog');
+
   return entries.map((entry) => ({
     params: { slug: entry.id },
     props: entry,

@@ -49,7 +49,7 @@ async function render() {
     <div class="w-full max-w-xl mx-auto">
       <audio-player>
         <${tag}>
-          <mux-audio${srcAttr} ${mediaAttrs} crossorigin="anonymous"></mux-audio>
+          <mux-audio${srcAttr} ${mediaAttrs} crossorigin></mux-audio>
           <!--
             Both are opt-in media components, and no env key is needed for Mux-hosted sources.
             Mux Data monitors this flavor from the media element alone: its engine integrations are

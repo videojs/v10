@@ -6,6 +6,7 @@ description: A slider component for seeking through media playback time
 ---
 
 import ComponentReference from "@/components/docs/api-reference/ComponentReference.astro";
+import ComponentImports from "@/components/docs/api-reference/ComponentImports.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 import StyleCase from "@/components/docs/StyleCase.astro";
 import Demo from "@/components/docs/demos/Demo.astro";
@@ -27,6 +28,10 @@ import WithChaptersDemoHtml from "@/components/docs/demos/time-slider/html/css/W
 import withChaptersHtml from "@/components/docs/demos/time-slider/html/css/WithChapters.html?raw";
 import withChaptersHtmlCss from "@/components/docs/demos/time-slider/html/css/WithChapters.css?raw";
 import withChaptersHtmlTs from "@/components/docs/demos/time-slider/html/css/WithChapters.ts?raw";
+
+## Import
+
+<ComponentImports component="TimeSlider" html="time-slider" />
 
 ## Anatomy
 
@@ -62,7 +67,7 @@ import withChaptersHtmlTs from "@/components/docs/demos/time-slider/html/css/Wit
   ```
 </FrameworkCase>
 
-Add `Chapters` to progressively divide the track when a default `kind="chapters"` text track is available.
+Add `Chapters` to divide the slider track into sections. Each cue in the default `kind="chapters"` text track marks a chapter. Without chapter cues, one section covers the full slider.
 
 <FrameworkCase frameworks={["react"]}>
   ```tsx

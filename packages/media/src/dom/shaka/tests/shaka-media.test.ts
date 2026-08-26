@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 vi.mock('shaka-player/dist/shaka-player.compiled-es2021', () => {
   const CONFIG_DEFAULTS = { streaming: { bufferingGoal: 10, rebufferingGoal: 2 } };
@@ -7,8 +7,10 @@ vi.mock('shaka-player/dist/shaka-player.compiled-es2021', () => {
   function merge(target: Record<string, any>, source: Record<string, any>) {
     for (const [key, value] of Object.entries(source)) {
       const isPlainObject = typeof value === 'object' && value !== null && !Array.isArray(value);
+
       target[key] = isPlainObject ? merge({ ...target[key] }, value) : value;
     }
+
     return target;
   }
 
@@ -40,6 +42,7 @@ vi.mock('shaka-player/dist/shaka-player.compiled-es2021', () => {
       selectAudioTrack: vi.fn(),
       addEventListener: vi.fn((type: string, listener: (event: any) => void) => {
         const typeListeners = listeners.get(type) ?? new Set();
+
         typeListeners.add(listener);
         listeners.set(type, typeListeners);
       }),
@@ -119,9 +122,11 @@ type MockAudioTrack = {
 
 function setup({ preload = 'auto' as const }: { preload?: ShakaMedia['preload'] } = {}) {
   const video = document.createElement('video');
+
   document.body.appendChild(video);
 
   const media = new ShakaMedia();
+
   // Most suites exercise source, configuration, and error semantics, which
   // read clearest when every assignment reaches the engine immediately; the
   // preload suite opts back into the deferring defaults it is about.
@@ -170,6 +175,7 @@ describe('ShakaMedia', () => {
       expect(shaka.polyfill.installAll).toHaveBeenCalled();
 
       const installs = vi.mocked(shaka.polyfill.installAll).mock.calls.length;
+
       new ShakaMedia();
 
       // Installing patches globals, so it happens once however many elements there are.
@@ -180,6 +186,7 @@ describe('ShakaMedia', () => {
   describe('attach', () => {
     it('attaches the engine to the target', async () => {
       const { engine, video } = setup();
+
       await flush();
 
       expect(engine.attach).toHaveBeenCalledWith(video);
@@ -203,6 +210,7 @@ describe('ShakaMedia', () => {
 
     it('leaves the target it is already attached to alone', async () => {
       const { media, engine, video } = setup();
+
       await flush();
 
       media.attach(video);
@@ -215,6 +223,7 @@ describe('ShakaMedia', () => {
   describe('destroy', () => {
     it('detaches and destroys the engine', async () => {
       const { media, engine } = setup();
+
       await flush();
 
       media.destroy();
@@ -238,6 +247,7 @@ describe('ShakaMedia', () => {
     it('derives src and loads the manifest', async () => {
       const { media, engine } = setup();
       const sourcechange = vi.fn();
+
       media.addEventListener('sourcechange', sourcechange);
 
       media.source = { src: MANIFEST };
@@ -265,6 +275,7 @@ describe('ShakaMedia', () => {
       await flush();
 
       const sourcechange = vi.fn();
+
       media.addEventListener('sourcechange', sourcechange);
       engine.load.mockClear();
       engine.configure.mockClear();
@@ -309,6 +320,7 @@ describe('ShakaMedia', () => {
 
     it('hands a new source to shaka without waiting for the load in flight', async () => {
       const { media, engine } = setup();
+
       // A manifest that never resolves is what a new source has to cut short.
       engine.load.mockImplementation(() => new Promise(() => {}));
 
@@ -398,6 +410,7 @@ describe('ShakaMedia', () => {
     it('fires sourcechange through the source setter', async () => {
       const { media } = setup();
       const sourcechange = vi.fn();
+
       media.addEventListener('sourcechange', sourcechange);
 
       media.src = MANIFEST;
@@ -475,6 +488,7 @@ describe('ShakaMedia', () => {
 
     it('loads immediately for none when the target will autoplay', async () => {
       const { video, media, engine } = setup({ preload: 'none' });
+
       video.autoplay = true;
 
       media.source = { src: MANIFEST };
@@ -533,6 +547,7 @@ describe('ShakaMedia', () => {
   describe('videoRenditions', () => {
     it('mirrors the video tracks of the loaded asset', async () => {
       const { media, engine } = setup();
+
       loadTracks(engine);
       await flush();
 
@@ -543,6 +558,7 @@ describe('ShakaMedia', () => {
 
     it('marks the video track shaka is playing active', async () => {
       const { media, engine } = setup();
+
       loadTracks(engine);
       await flush();
 
@@ -559,10 +575,12 @@ describe('ShakaMedia', () => {
 
     it('leaves the list alone when the same tracks are announced again', async () => {
       const { media, engine } = setup();
+
       loadTracks(engine);
       await flush();
 
       const [rendition] = [...media.videoRenditions];
+
       engine.emit('trackschanged');
       await flush();
 
@@ -571,6 +589,7 @@ describe('ShakaMedia', () => {
 
     it('pins the selected track and turns shaka adaptation off', async () => {
       const { media, engine } = setup();
+
       loadTracks(engine);
       await flush();
 
@@ -583,6 +602,7 @@ describe('ShakaMedia', () => {
 
     it('hands adaptation back to shaka when the selection is cleared', async () => {
       const { media, engine } = setup();
+
       loadTracks(engine);
       await flush();
 
@@ -597,6 +617,7 @@ describe('ShakaMedia', () => {
 
     it('leaves shaka configuration alone when nothing was ever pinned', async () => {
       const { media, engine } = setup();
+
       loadTracks(engine);
       await flush();
       engine.configure.mockClear();
@@ -609,6 +630,7 @@ describe('ShakaMedia', () => {
 
     it('re-pins the selected track when shaka configuration is re-applied', async () => {
       const { media, engine } = setup();
+
       media.src = MANIFEST;
       loadTracks(engine);
       await flush();
@@ -626,6 +648,7 @@ describe('ShakaMedia', () => {
 
     it('drops renditions and restores adaptation when the source changes', async () => {
       const { media, engine } = setup();
+
       media.src = MANIFEST;
       loadTracks(engine);
       await flush();
@@ -642,6 +665,7 @@ describe('ShakaMedia', () => {
 
     it('stops mirroring tracks once destroyed', async () => {
       const { media, engine } = setup();
+
       loadTracks(engine);
       await flush();
 
@@ -658,6 +682,7 @@ describe('ShakaMedia', () => {
   describe('audioTracks', () => {
     it('mirrors the audio tracks of the loaded asset', async () => {
       const { media, engine } = setup();
+
       loadTracks(engine);
       await flush();
 
@@ -668,6 +693,7 @@ describe('ShakaMedia', () => {
 
     it('selects the enabled audio track', async () => {
       const { media, engine } = setup();
+
       loadTracks(engine);
       await flush();
 
@@ -680,6 +706,7 @@ describe('ShakaMedia', () => {
 
     it('mirrors the audio track shaka switched to', async () => {
       const { media, engine } = setup();
+
       loadTracks(engine);
       await flush();
 
@@ -698,6 +725,7 @@ describe('ShakaMedia', () => {
     it('reports a failed load', async () => {
       const { media, engine } = setup();
       const onError = vi.fn();
+
       media.addEventListener('error', onError);
 
       engine.load.mockRejectedValueOnce(shakaError());
@@ -711,6 +739,7 @@ describe('ShakaMedia', () => {
     it('reports an engine error event', async () => {
       const { media, engine } = setup();
       const onError = vi.fn();
+
       media.addEventListener('error', onError);
 
       engine.emit('error', { detail: shakaError({ category: 6, code: 6001 }) });
@@ -723,6 +752,7 @@ describe('ShakaMedia', () => {
       const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
       const { media, engine } = setup();
       const onError = vi.fn();
+
       media.addEventListener('error', onError);
 
       engine.emit('error', { detail: shakaError({ severity: 1 }) });
@@ -736,10 +766,12 @@ describe('ShakaMedia', () => {
     it('reports a failure once when shaka both rejects and announces it', async () => {
       const { media, engine } = setup();
       const onError = vi.fn();
+
       media.addEventListener('error', onError);
 
       // Shaka hands the same failure to the `error` event and to the call it broke.
       const failure = shakaError({ category: 6, code: 6001 });
+
       engine.load.mockImplementationOnce(async () => {
         engine.emit('error', { detail: failure });
         throw failure;
@@ -759,6 +791,7 @@ describe('ShakaMedia', () => {
       // The `error` event lands first; the rejection of the load it broke is
       // still in flight when the handler starts a new one.
       const failure = shakaError();
+
       engine.load.mockImplementationOnce(async () => {
         engine.emit('error', { detail: failure });
         await Promise.resolve();
@@ -781,6 +814,7 @@ describe('ShakaMedia', () => {
     it('ignores a load that a newer one replaced', async () => {
       const { media, engine } = setup();
       const onError = vi.fn();
+
       media.addEventListener('error', onError);
 
       engine.load.mockRejectedValueOnce(shakaError({ category: 7, code: 7000 }));

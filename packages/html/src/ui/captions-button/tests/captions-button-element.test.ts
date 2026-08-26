@@ -2,10 +2,10 @@ import type { AnyPlayerStore } from '@videojs/core/dom';
 import { ContextProvider } from '@videojs/element/context';
 import type { MediaTextTrackState } from '@videojs/media';
 import { createStore } from '@videojs/store';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { playerContext } from '../../../player/context';
-import { MediaElement } from '../../media-element';
+import { UIElement } from '../../ui-element';
 import { CaptionsButtonElement } from '../captions-button-element';
 
 function defineElement(tagName: string, Base: CustomElementConstructor): void {
@@ -41,6 +41,7 @@ function createTextTrackStore(textTrackList: MediaTextTrackState['textTrackList'
       chaptersCues: [],
       thumbnailCues: [],
       thumbnailTrackSrc: null,
+      thumbnailTrackCrossOrigin: null,
       textTrackList,
       subtitlesShowing: false,
       toggleSubtitles: vi.fn(),
@@ -49,7 +50,7 @@ function createTextTrackStore(textTrackList: MediaTextTrackState['textTrackList'
   }) as unknown as AnyPlayerStore;
 }
 
-class TestPlayerProviderElement extends MediaElement {
+class TestPlayerProviderElement extends UIElement {
   readonly #provider = new ContextProvider(this, { context: playerContext });
 
   setStore(store: AnyPlayerStore): void {

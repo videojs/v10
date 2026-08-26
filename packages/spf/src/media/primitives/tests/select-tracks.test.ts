@@ -1,14 +1,51 @@
 /**
  * Track geometry for the video selection rules: one filter, one comparator.
  *
- * The candidate-list policies alongside them (`pickAudioTrackFromTracks`,
- * `pickTextTrackFromTracks`) are covered through the behaviors that compose them —
- * `selectAudioTrack` in `playback/behaviors/tests/select-tracks.test.ts`, and
- * `switchTextTrack` in `playback/behaviors/tests/track-switching.test.ts` — since
- * the policy and its lifecycle are only meaningful together.
+ * The candidate-list policies alongside them (`pickAudioTrackFromTracks`, `pickTextTrackFromTracks`) are covered
+ * through the behaviors that compose them — `selectAudioTrack` in `playback/behaviors/tests/select-tracks.test.ts`, and
+ * `switchTextTrack` in `playback/behaviors/tests/track-switching.test.ts` — since the policy and its lifecycle are only
+ * meaningful together.
  */
-import { describe, expect, it } from 'vitest';
-import { byDescendingResolution, tracksUnderPixelArea } from '../select-tracks';
+import { describe, expect, it } from 'vite-plus/test';
+
+import { byDescendingResolution, smallestCoveringPixelArea, tracksUnderPixelArea } from '../select-tracks';
+
+describe('smallestCoveringPixelArea', () => {
+  const tracks = [
+    { id: '360p', width: 640, height: 360, bandwidth: 500_000 },
+    { id: '720p', width: 1280, height: 720, bandwidth: 2_000_000 },
+    { id: '1080p', width: 1920, height: 1080, bandwidth: 4_000_000 },
+  ];
+
+  it('takes the tier matching the surface exactly', () => {
+    expect(smallestCoveringPixelArea(tracks, 1280 * 720)).toBe(1280 * 720);
+  });
+
+  // The rounding this exists for: a surface between two tiers is covered by the
+  // upper one, never by the lower one it would have to upscale from.
+  it('rounds up to the covering tier for a surface between two', () => {
+    expect(smallestCoveringPixelArea(tracks, 800 * 450)).toBe(1280 * 720);
+  });
+
+  it('takes the smallest tier for a surface below the whole ladder', () => {
+    expect(smallestCoveringPixelArea(tracks, 160 * 90)).toBe(640 * 360);
+  });
+
+  it('reports nothing when no track covers the surface', () => {
+    expect(smallestCoveringPixelArea(tracks, 3840 * 2160)).toBeUndefined();
+  });
+
+  it('reports nothing for an empty list', () => {
+    expect(smallestCoveringPixelArea([], 1280 * 720)).toBeUndefined();
+  });
+
+  // Area `0` covers nothing, so a dimensionless track can't pin the cap to zero.
+  it('ignores tracks that declare no dimensions', () => {
+    const withUnsized = [{ id: 'no-resolution', bandwidth: 900_000 }, ...tracks];
+
+    expect(smallestCoveringPixelArea(withUnsized, 160 * 90)).toBe(640 * 360);
+  });
+});
 
 describe('tracksUnderPixelArea', () => {
   const tracks = [
@@ -34,6 +71,7 @@ describe('tracksUnderPixelArea', () => {
   // which tracks are admissible. Given a shuffled ladder it filters and nothing else.
   it('preserves the incoming order rather than ranking', () => {
     const shuffled = [tracks[2], tracks[0], tracks[3], tracks[1]] as typeof tracks;
+
     expect(tracksUnderPixelArea(shuffled, 1920 * 1080).map((track) => track.id)).toEqual(['1080p', '360p', '720p']);
   });
 
@@ -54,6 +92,7 @@ describe('tracksUnderPixelArea', () => {
       { id: 'wide-2160', width: 3840, height: 1714, bandwidth: 12_000_000 },
       { id: 'uhd', width: 3840, height: 2160, bandwidth: 15_000_000 },
     ];
+
     expect(tracksUnderPixelArea(anamorphic, 3456 * 2234).map((track) => track.id)).toEqual(['wide-2160']);
   });
 });

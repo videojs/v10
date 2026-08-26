@@ -1,26 +1,22 @@
 import { expect, type Page, test } from '@playwright/test';
+
 import { MEDIA } from '../fixtures/resources';
 
 /**
- * The SPF background-video composition end to end: a real manifest through the
- * engine, onto the Media's `error`, and out to whichever surface the platform
- * gives a consumer.
+ * The SPF background-video composition end to end: a real manifest through the engine, onto the Media's `error`, and
+ * out to whichever surface the platform gives a consumer.
  *
- * What only a browser can establish, and so what this file is for: **nothing
- * about an unplayable source reaches the media element here.** The unit tests
- * write `state.errors` directly and assert the promotion; they cannot show that
- * the engine derives that sequence from a real playlist, and they cannot show
- * that `HTMLMediaElement.error` stays null while it does. That claim is the
- * premise the whole surface rests on — if a browser ever starts reporting these
+ * What only a browser can establish, and so what this file is for: **nothing about an unplayable source reaches the
+ * media element here.** The unit tests write `state.errors` directly and assert the promotion; they cannot show that
+ * the engine derives that sequence from a real playlist, and they cannot show that `HTMLMediaElement.error` stays null
+ * while it does. That claim is the premise the whole surface rests on — if a browser ever starts reporting these
  * itself, this is where we find out.
  *
- * The pinned variant's own shape is the other thing pinned down here. Only the
- * *selected* rendition's playlist is ever resolved, so an unplayable pick
- * produces a **cause with no verdict behind it** — nothing prunes the renditions
- * that were never probed, so the candidate set never empties. A source offering
- * no video at all is the mirror case: a verdict with no cause. Both are fatal,
- * and asserting the sequence (not just the surfaced code) is what would catch a
- * `select-tracks` refactor quietly changing which.
+ * The pinned variant's own shape is the other thing pinned down here. Only the _selected_ rendition's playlist is ever
+ * resolved. Once that pick is identified as unplayable, capability pruning re-evaluates selection and reports the
+ * per-rendition cause followed by the terminal no-supported-track verdict. A source offering no video at all reports
+ * only the verdict. Both are fatal, and asserting the sequence (not just the surfaced code) catches a selection
+ * refactor quietly changing which conditions reach consumers.
  *
  * @see internal/design/spf/features/errors.md
  * @see internal/design/spf/features/rendition-selection-caps.md
@@ -62,6 +58,7 @@ type BackgroundVideoElement = HTMLElement & {
 /** The error the Media surfaces, or null while none has. */
 function readSurfacedError(): SurfacedError | null {
   const media = document.querySelector('hls-background-video') as BackgroundVideoElement | null;
+
   return media?.error ?? null;
 }
 
@@ -69,6 +66,7 @@ function readSurfacedError(): SurfacedError | null {
 function readReportedCodes(): number[] {
   const media = document.querySelector('hls-background-video') as BackgroundVideoElement | null;
   const errors = media?.getMediaTarget?.()?.engine?.state?.errors?.get() ?? [];
+
   return errors.map((error) => error.code);
 }
 
@@ -76,12 +74,14 @@ function readReportedCodes(): number[] {
 function readInnerVideoState(): { error: number | null; readyState: number } | null {
   const media = document.querySelector('hls-background-video') as BackgroundVideoElement | null;
   const video = media?.video;
+
   return video ? { error: video.error?.code ?? null, readyState: video.readyState } : null;
 }
 
 function readPlaybackState(): { readyState: number; currentTime: number; width: number; height: number } | null {
   const media = document.querySelector('hls-background-video') as BackgroundVideoElement | null;
   const video = media?.video;
+
   return video
     ? {
         readyState: video.readyState,
@@ -100,6 +100,7 @@ async function waitForSurfacedError(page: Page): Promise<SurfacedError> {
   );
 
   const error = await page.evaluate(readSurfacedError);
+
   expect(error).not.toBeNull();
   return error as SurfacedError;
 }
@@ -110,6 +111,7 @@ async function waitForPlayback(page: Page): Promise<void> {
     () => {
       const video = (document.querySelector('hls-background-video') as { video?: HTMLVideoElement | null } | null)
         ?.video;
+
       return !!video && video.readyState >= 3 && video.currentTime > 0;
     },
     undefined,
@@ -140,19 +142,16 @@ test.describe('SPF background video', () => {
     expect(error.message).toBe('');
   });
 
-  test('the MPEG-TS sequence holds the cause with no verdict behind it', async ({ page }) => {
+  test('the MPEG-TS sequence retains the cause before the terminal verdict', async ({ page }) => {
     await page.goto(pageFor(HTML_PAGE, MEDIA.hlsTs.url));
     await waitForSurfacedError(page);
 
     const codes = await page.evaluate(readReportedCodes);
 
-    // The pinned variant's defining asymmetry, and the reason its fatal set is
-    // wider than the other adapters'. `hls-video` reaches a 2011 verdict on this
-    // same source because its ABR path prunes and re-picks until the type
-    // empties; here the pick is dropped and never replaced, so the cause is all
-    // there is. A verdict appearing would mean selection changed shape.
-    expect(codes).toContain(SVTA_UNSUPPORTED_VIDEO_FORMAT);
-    expect(codes).not.toContain(SVTA_NO_SUPPORTED_VIDEO_TRACK);
+    // Resolution reports why the selected rendition is unusable, then the
+    // capability constraint removes it and the selector reports the terminal
+    // absence of a playable video track.
+    expect(codes).toEqual([SVTA_UNSUPPORTED_VIDEO_FORMAT, SVTA_NO_SUPPORTED_VIDEO_TRACK]);
   });
 
   test('the inner video learns nothing — no error, still at readyState 0', async ({ page }) => {
@@ -203,6 +202,7 @@ test.describe('SPF background video', () => {
 
     await page.evaluate((url) => {
       const media = document.querySelector('hls-background-video') as (HTMLElement & { src?: string }) | null;
+
       if (media) media.src = url;
     }, MEDIA.hlsFmp4.url);
 
@@ -213,6 +213,7 @@ test.describe('SPF background video', () => {
     await page.waitForFunction(
       () => {
         const media = document.querySelector('hls-background-video') as (HTMLElement & { error?: unknown }) | null;
+
         return !!media && !media.error;
       },
       undefined,
@@ -230,6 +231,7 @@ test.describe('SPF background video', () => {
     await page.waitForFunction(() => window.__backgroundVideoErrors > 0, undefined, { timeout: 20_000 });
 
     const videoError = await page.evaluate(() => document.querySelector('video')?.error?.code ?? null);
+
     expect(videoError).toBeNull();
   });
 
@@ -249,6 +251,7 @@ test.describe('SPF background video', () => {
     const readPickedSize = async (page: Page) => {
       await waitForPlayback(page);
       const state = await page.evaluate(readPlaybackState);
+
       expect(state).not.toBeNull();
       return state as NonNullable<typeof state>;
     };

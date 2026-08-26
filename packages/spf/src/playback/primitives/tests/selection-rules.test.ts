@@ -1,12 +1,12 @@
 /**
  * The rule-chain composers, tested pure — no signals, no behavior, no engine.
  *
- * The two differ in exactly three ways, and each is asserted here: a rule that
- * matches nothing falls through while a constraint's empty result stands, a rule
- * chain bails at one survivor while every constraint always runs, and constraint
- * order can't change the outcome while rule order can.
+ * The two differ in exactly three ways, and each is asserted here: a rule that matches nothing falls through while a
+ * constraint's empty result stands, a rule chain bails at one survivor while every constraint always runs, and
+ * constraint order can't change the outcome while rule order can.
  */
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
+
 import { applyConstraints, applyRules, type SelectionRule } from '../selection-rules';
 
 // ============================================================================
@@ -23,12 +23,14 @@ describe('applyRules', () => {
     const dropA: SelectionRule<{ id: string }> = (tracks) => tracks.filter((t) => t.id !== 'a');
     const reverse: SelectionRule<{ id: string }> = (tracks) => [...tracks].reverse();
     const result = applyRules([dropA, reverse], all, noDeps);
+
     expect(result.map((t) => t.id)).toEqual(['c', 'b']);
   });
 
   it('skips a rule that returns nothing (fall-through), keeping the prior set', () => {
     const matchNone: SelectionRule<{ id: string }> = () => [];
     const result = applyRules([matchNone], all, noDeps);
+
     expect(result.map((t) => t.id)).toEqual(['a', 'b', 'c']);
   });
 
@@ -40,6 +42,7 @@ describe('applyRules', () => {
       return tracks;
     };
     const result = applyRules([toA, later], all, noDeps);
+
     expect(result.map((t) => t.id)).toEqual(['a']);
     expect(laterCalled).toBe(false);
   });
@@ -54,6 +57,7 @@ describe('applyRules', () => {
       received = [tracks, ruleDeps];
       return tracks;
     };
+
     applyRules([rule], all, deps);
     expect(received).toEqual([all, deps]);
   });
@@ -81,6 +85,7 @@ describe('applyConstraints', () => {
 
   it('preserves an empty result — no fall-through, unlike applyRules', () => {
     const none: SelectionRule<{ id: string }> = () => [];
+
     expect(applyConstraints([none], all, noDeps)).toEqual([]);
   });
 
@@ -91,6 +96,7 @@ describe('applyConstraints', () => {
       laterCalled = true;
       return tracks;
     };
+
     applyConstraints([toA, later], all, noDeps);
     expect(laterCalled).toBe(true);
   });

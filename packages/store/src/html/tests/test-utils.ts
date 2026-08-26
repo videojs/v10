@@ -1,6 +1,7 @@
 import { ReactiveElement } from '@videojs/element';
 import { noop } from '@videojs/utils/function';
-import { afterEach } from 'vitest';
+import { afterEach } from 'vite-plus/test';
+
 import { defineSlice } from '../../core/slice';
 import type { Store } from '../../core/store';
 import { createStore as createCoreStore } from '../../core/store';
@@ -8,10 +9,7 @@ import { createStore as createCoreStore } from '../../core/store';
 /** Concrete base class for mixin tests (ReactiveElement is abstract). */
 export class TestBaseElement extends ReactiveElement {}
 
-/**
- * Test host element that extends ReactiveElement.
- * Tracks update calls for assertions.
- */
+/** Test host element that extends ReactiveElement. Tracks update calls for assertions. */
 export class TestHostElement extends ReactiveElement {
   updateCount = 0;
 
@@ -75,6 +73,7 @@ export function createCoreTestStore(): { store: TestStore; target: MockMedia } {
   const store = createCoreStore<MockMedia>()(audioSlice, { onError: noop });
 
   const target = new MockMedia();
+
   store.attach(target);
 
   return { store, target };
@@ -88,9 +87,11 @@ let testHostCounter = 0;
 /** Creates a test host element for controller tests. */
 export function createTestHost(): TestHost {
   const tagName = `test-host-${testHostCounter++}`;
+
   if (!customElements.get(tagName)) {
     customElements.define(tagName, class extends TestHostElement {});
   }
+
   return document.createElement(tagName) as TestHost;
 }
 

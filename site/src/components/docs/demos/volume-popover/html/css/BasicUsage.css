@@ -1,0 +1,85 @@
+.html-volume-popover-basic media-container {
+  position: relative;
+  display: block;
+}
+
+.html-volume-popover-basic video {
+  width: 100%;
+}
+
+.html-volume-popover-basic__controls {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+}
+
+.html-volume-popover-basic__trigger {
+  padding: 8px 20px;
+  color: black;
+  cursor: pointer;
+  background: rgb(255 255 255 / 70%);
+  border: 1px solid rgb(255 255 255 / 30%);
+  border-radius: 9999px;
+  backdrop-filter: blur(10px);
+}
+
+.html-volume-popover-basic__trigger .muted,
+.html-volume-popover-basic__trigger .unmuted {
+  display: none;
+}
+
+.html-volume-popover-basic__trigger[data-muted] .muted,
+.html-volume-popover-basic__trigger:not([data-muted]) .unmuted {
+  display: inline;
+}
+
+.html-volume-popover-basic__popup {
+  --media-popover-side-offset: 8px;
+  width: 40px;
+  height: 120px;
+  padding: 12px;
+  margin: 0;
+  background: rgb(0 0 0 / 85%);
+  border: 0;
+  border-radius: 8px;
+}
+
+.html-volume-popover-basic__slider {
+  position: relative;
+  display: block;
+  width: 16px;
+  height: 96px;
+  margin: auto;
+  cursor: pointer;
+}
+
+.html-volume-popover-basic__track {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 6px;
+  width: 4px;
+  background: rgb(255 255 255 / 30%);
+  border-radius: 9999px;
+}
+
+.html-volume-popover-basic__fill {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: var(--media-slider-fill);
+  background: white;
+  border-radius: inherit;
+}
+
+.html-volume-popover-basic__thumb {
+  position: absolute;
+  bottom: var(--media-slider-fill);
+  left: 1px;
+  width: 14px;
+  height: 14px;
+  background: white;
+  border-radius: 50%;
+  transform: translateY(50%);
+}

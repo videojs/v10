@@ -1,31 +1,26 @@
 /**
  * **Populate presentation duration via a config-supplied resolver.**
  *
- * Once a presentation is in place and its `duration` is still undefined,
- * calls `config.resolveDuration(state)` whenever a tracked slot changes. The
- * resolver decides what counts as "duration is now derivable" for the variant
- * in play; the behavior itself stays variant-agnostic:
+ * Once a presentation is in place and its `duration` is still undefined, calls `config.resolveDuration(state)` whenever
+ * a tracked slot changes. The resolver decides what counts as "duration is now derivable" for the variant in play; the
+ * behavior itself stays variant-agnostic:
  *
- * - **VoD** — derive from the first resolved selected track's `duration`
- *   (video preferred, audio fallback). The HLS engine wires
- *   `getResolvedSelectedTrackDuration` from `media/utils/track-selection.ts`
- *   as the default. Audio-only falls out of the same resolver naturally
- *   (no video selected → audio is the first resolved track).
- * - **Live** — return `Number.POSITIVE_INFINITY` once the presentation is
- *   established as live. This is the MSE-spec value for `mediaSource.duration`
- *   under live playback; downstream `updateMediaSourceDuration` propagates it through.
+ * - **VoD** — derive from the first resolved selected track's `duration` (video preferred, audio fallback). The HLS
+ *   engine wires `getResolvedSelectedTrackDuration` from `media/utils/track-selection.ts` as the default. Audio-only
+ *   falls out of the same resolver naturally (no video selected → audio is the first resolved track).
+ * - **Live** — return `Number.POSITIVE_INFINITY` once the presentation is established as live. This is the MSE-spec value
+ *   for `mediaSource.duration` under live playback; downstream `updateMediaSourceDuration` propagates it through.
  *
- * Validation: writes whatever the resolver returns as long as it's a positive
- * number, including `Infinity`. `undefined` / `NaN` / `<= 0` are skipped.
+ * Validation: writes whatever the resolver returns as long as it's a positive number, including `Infinity`. `undefined`
+ * / `NaN` / `<= 0` are skipped.
  *
- * Fires at most once per presentation — an already-set `duration` is never
- * overwritten, and the next reset arrives structurally when a new
- * (unresolved) presentation replaces the current one. The resolver may
- * return `undefined` while duration is still indeterminate; subsequent
- * tracked-slot changes re-run the effect until the resolver commits a value.
+ * Fires at most once per presentation — an already-set `duration` is never overwritten, and the next reset arrives
+ * structurally when a new (unresolved) presentation replaces the current one. The resolver may return `undefined` while
+ * duration is still indeterminate; subsequent tracked-slot changes re-run the effect until the resolver commits a
+ * value.
  *
- * Downstream of `resolveVideoTrack` / `resolveAudioTrack`; upstream of
- * `updateMediaSourceDuration` (which writes the value through to `mediaSource.duration`).
+ * Downstream of `resolveVideoTrack` / `resolveAudioTrack`; upstream of `updateMediaSourceDuration` (which writes the
+ * value through to `mediaSource.duration`).
  */
 import type { Behavior } from '../../core/composition/create-composition';
 import { effect } from '../../core/signals/effect';
@@ -33,11 +28,9 @@ import { type ReadonlySignal, type Signal, untrack, update } from '../../core/si
 import type { MaybeResolvedPresentation } from '../../media/types';
 
 /**
- * Input shape passed to the duration resolver. Represents the union of
- * track-selection slots the default `getResolvedSelectedTrackDuration`
- * resolver inspects to pick a representative resolved track. Variants
- * that compose neither audio nor video selection still satisfy this
- * shape — the missing fields read as `undefined` and the resolver
+ * Input shape passed to the duration resolver. Represents the union of track-selection slots the default
+ * `getResolvedSelectedTrackDuration` resolver inspects to pick a representative resolved track. Variants that compose
+ * neither audio nor video selection still satisfy this shape — the missing fields read as `undefined` and the resolver
  * falls through.
  */
 export interface PresentationDurationState {
@@ -47,9 +40,8 @@ export interface PresentationDurationState {
 }
 
 /**
- * Resolver supplied via `config.resolveDuration`. Returns the duration to
- * write to `presentation.duration`, or `undefined` when it isn't yet
- * derivable. Positive `Infinity` is the canonical live value.
+ * Resolver supplied via `config.resolveDuration`. Returns the duration to write to `presentation.duration`, or
+ * `undefined` when it isn't yet derivable. Positive `Infinity` is the canonical live value.
  */
 export type PresentationDurationResolver = (state: PresentationDurationState) => number | undefined;
 
@@ -102,14 +94,11 @@ function calculatePresentationDurationSetup({
 }
 
 /**
- * `calculatePresentationDuration` uses a manual `Behavior<>` literal
- * (rather than `defineBehavior`) so it can declare just `presentation`
- * in its stateKeys while the typed setup-param shape includes the
- * optional `selectedVideoTrackId` / `selectedAudioTrackId` reads used
- * at runtime. Mirrors the pattern in `endOfStream` for the same
- * reason: the behavior is uniform-across-tracks and reads slots
- * contributed by other behaviors, so it shouldn't leak those slot
- * declarations into variants that don't compose the contributors.
+ * `calculatePresentationDuration` uses a manual `Behavior<>` literal (rather than `defineBehavior`) so it can declare
+ * just `presentation` in its stateKeys while the typed setup-param shape includes the optional `selectedVideoTrackId` /
+ * `selectedAudioTrackId` reads used at runtime. Mirrors the pattern in `endOfStream` for the same reason: the behavior
+ * is uniform-across-tracks and reads slots contributed by other behaviors, so it shouldn't leak those slot declarations
+ * into variants that don't compose the contributors.
  */
 export const calculatePresentationDuration: Behavior<
   { presentation: Signal<PresentationDurationState['presentation']> },

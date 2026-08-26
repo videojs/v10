@@ -55,10 +55,8 @@ export const audioFeatures: AudioFeatures = [
 export const backgroundFeatures: BackgroundFeatures = [];
 
 /**
- * Features for a live video player. Mirrors {@link videoFeatures} but drops
- * {@link playbackRateFeature} (not meaningful for live) and adds
- * {@link liveFeature} so store consumers can read `liveEdgeStart` and
- * `targetLiveWindow`.
+ * Features for a live video player. Mirrors {@link videoFeatures} but drops {@link playbackRateFeature} (not meaningful
+ * for live) and adds {@link liveFeature} so store consumers can read `liveEdgeStart` and `targetLiveWindow`.
  */
 export const liveVideoFeatures: LiveVideoFeatures = [
   playbackFeature,
@@ -77,10 +75,8 @@ export const liveVideoFeatures: LiveVideoFeatures = [
 ];
 
 /**
- * Features for a live audio player. Mirrors {@link audioFeatures} but drops
- * {@link playbackRateFeature} (not meaningful for live) and adds
- * {@link liveFeature} so store consumers can read `liveEdgeStart` and
- * `targetLiveWindow`.
+ * Features for a live audio player. Mirrors {@link audioFeatures} but drops {@link playbackRateFeature} (not meaningful
+ * for live) and adds {@link liveFeature} so store consumers can read `liveEdgeStart` and `targetLiveWindow`.
  */
 export const liveAudioFeatures: LiveAudioFeatures = [
   playbackFeature,

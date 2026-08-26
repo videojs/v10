@@ -1,5 +1,5 @@
+import { safeDefine } from '../../registration/safe-define';
 import { PlayButtonElement } from '../../ui/play-button/play-button-element';
-import { safeDefine } from '../safe-define';
 
 safeDefine(PlayButtonElement);
 

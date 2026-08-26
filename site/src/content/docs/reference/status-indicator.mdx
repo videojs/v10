@@ -1,0 +1,161 @@
+---
+title: StatusIndicator
+frameworkTitle:
+  html: media-status-indicator
+description: Display temporary visual feedback for keyboard and gesture actions
+---
+
+import ComponentReference from "@/components/docs/api-reference/ComponentReference.astro";
+import ComponentImports from "@/components/docs/api-reference/ComponentImports.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+import StyleCase from "@/components/docs/StyleCase.astro";
+import Demo from "@/components/docs/demos/Demo.astro";
+
+{/* React demo */}
+import BasicUsageDemoReact from "@/components/docs/demos/status-indicator/react/css/BasicUsage";
+import basicUsageReactTsx from "@/components/docs/demos/status-indicator/react/css/BasicUsage.tsx?raw";
+import basicUsageReactCss from "@/components/docs/demos/status-indicator/react/css/BasicUsage.css?raw";
+
+{/* HTML demo */}
+import BasicUsageDemoHtml from "@/components/docs/demos/status-indicator/html/css/BasicUsage.astro";
+import basicUsageHtml from "@/components/docs/demos/status-indicator/html/css/BasicUsage.html?raw";
+import basicUsageHtmlCss from "@/components/docs/demos/status-indicator/html/css/BasicUsage.css?raw";
+import basicUsageHtmlTs from "@/components/docs/demos/status-indicator/html/css/BasicUsage.ts?raw";
+
+## Import
+
+<ComponentImports component="StatusIndicator" html="status-indicator" />
+
+## Anatomy
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<StatusIndicator.Root>
+  <StatusIndicator.Value />
+</StatusIndicator.Root>
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```html
+<media-status-indicator>
+  <media-status-indicator-value></media-status-indicator-value>
+</media-status-indicator>
+```
+</FrameworkCase>
+
+## Behavior
+
+`StatusIndicator` displays feedback for actions emitted by a <DocsLink slug="reference/hotkey">`Hotkey`</DocsLink> or <DocsLink slug="reference/gesture">`Gesture`</DocsLink> in the same player `Container`. It does not react to buttons, direct player-store changes, or media state changes on their own.
+
+The input event arrives before its action is resolved. The indicator uses the media snapshot from that moment to predict the next visual status:
+
+| Action | `data-status` | Value |
+| --- | --- | --- |
+| `togglePaused` | `"play"` or `"pause"` | Translated playing or paused label |
+| `toggleMuted` | `"volume-off"`, `"volume-low"`, or `"volume-high"` | Predicted volume percentage |
+| `volumeStep` | `"volume-off"`, `"volume-low"`, or `"volume-high"` | Predicted volume percentage |
+| `toggleSubtitles` | `"captions-on"` or `"captions-off"` | Translated captions label |
+| `toggleFullscreen` | `"fullscreen"` or `"exit-fullscreen"` | Translated fullscreen label |
+| `togglePictureInPicture` | `"pip"` or `"exit-pip"` | Translated picture-in-picture label |
+
+`toggleSubtitles` is ignored when the player reports that no captions or subtitles are available. Seek actions, `toggleControls`, playback-rate actions, and custom actions do not open this indicator.
+
+Use `actions` to allow only some of the supported actions. Omitting it allows all supported actions.
+
+<FrameworkCase frameworks={["react"]}>
+Pass a readonly array of action names:
+
+```tsx
+<StatusIndicator.Root actions={["togglePaused", "toggleMuted"]}>
+  <StatusIndicator.Value />
+</StatusIndicator.Root>
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+Set the `actions` attribute to action names separated by commas, whitespace, or both:
+
+```html
+<media-status-indicator actions="togglePaused, toggleMuted">
+  <media-status-indicator-value></media-status-indicator-value>
+</media-status-indicator>
+```
+</FrameworkCase>
+
+The indicator closes after `closeDelay`, which defaults to 800 milliseconds. A repeated handled action updates the current value and restarts that close timer without replaying the entry transition. React stops rendering the Root after its close transition. The HTML custom element remains in the document with `hidden` until the next handled action.
+
+## Styling
+
+| Attribute | Values | Description |
+| --- | --- | --- |
+| `data-open` | Present / absent | Present while the indicator is open |
+| `data-status` | `"play"`, `"pause"`, `"volume-off"`, `"volume-low"`, `"volume-high"`, `"captions-on"`, `"captions-off"`, `"fullscreen"`, `"exit-fullscreen"`, `"pip"`, or `"exit-pip"` | Predicted status for the handled action |
+| `data-starting-style` | Present / absent | Present during the open transition |
+| `data-ending-style` | Present / absent | Present during the close transition |
+
+Use `data-status` to select an icon or other visual treatment, and use the transition attributes for entry and exit styles.
+
+<FrameworkCase frameworks={["html"]}>
+```css
+media-status-indicator[data-status="play"] {
+  color: green;
+}
+
+media-status-indicator[data-starting-style],
+media-status-indicator[data-ending-style] {
+  opacity: 0;
+}
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+React renders standard DOM elements. Add a `className` to the Root:
+
+```css
+.status-indicator[data-status="play"] {
+  color: green;
+}
+
+.status-indicator[data-starting-style],
+.status-indicator[data-ending-style] {
+  opacity: 0;
+}
+```
+</FrameworkCase>
+
+## Accessibility
+
+`StatusIndicator` is visual feedback and does not create a live region. Keep every action available through keyboard-operable controls, and pair the player with <DocsLink slug="reference/status-announcer">`StatusAnnouncer`</DocsLink> when state changes should be announced to screen readers. Do not make `StatusIndicator.Value` a live region.
+
+## Examples
+
+### Basic Usage
+
+Focus the player, then press <kbd>K</kbd> to play or pause, <kbd>M</kbd> to mute, <kbd>F</kbd> for fullscreen, <kbd>C</kbd> for captions, or <kbd>I</kbd> for picture-in-picture.
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
+      { title: "App.css", code: basicUsageReactCss, lang: "css" },
+    ]}>
+      <BasicUsageDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "index.html", code: basicUsageHtml, lang: "html" },
+      { title: "index.css", code: basicUsageHtmlCss, lang: "css" },
+      { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
+    ]}>
+      <BasicUsageDemoHtml />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<ComponentReference component="StatusIndicator" />

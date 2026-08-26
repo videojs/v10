@@ -2,15 +2,15 @@ import type { AnyPlayerStore } from '@videojs/core/dom';
 import { ContextProvider } from '@videojs/element/context';
 import type { MediaPlaybackRateState } from '@videojs/media';
 import { createStore } from '@videojs/store';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { playerContext } from '../../../player/context';
-import { MediaElement } from '../../media-element';
 import { MenuElement } from '../../menu/menu-element';
 import { MenuItemIndicatorElement } from '../../menu/menu-item-indicator-element';
 import { MenuRadioGroupElement } from '../../menu/menu-radio-group-element';
 import { MenuRadioItemElement } from '../../menu/menu-radio-item-element';
 import { PlaybackRateButtonElement } from '../../playback-rate-button/playback-rate-button-element';
+import { UIElement } from '../../ui-element';
 import { PlaybackRateRadioGroupElement } from '../playback-rate-radio-group-element';
 
 let tagCounter = 0;
@@ -21,6 +21,7 @@ function uniqueTag(base: string): string {
 
 function createElement<Element extends HTMLElement>(Base: abstract new () => Element): Element {
   const tag = uniqueTag('test-el');
+
   customElements.define(tag, class extends (Base as unknown as typeof HTMLElement) {});
   return document.createElement(tag) as Element;
 }
@@ -72,7 +73,7 @@ function createPlaybackRateStore({
   }) as unknown as AnyPlayerStore;
 }
 
-class TestPlayerProviderElement extends MediaElement {
+class TestPlayerProviderElement extends UIElement {
   store: AnyPlayerStore = createPlaybackRateStore();
 
   readonly #provider = new ContextProvider(this, { context: playerContext });
@@ -119,6 +120,7 @@ function setup({
 
   if (template) {
     const templateElement = document.createElement('template');
+
     templateElement.innerHTML = template;
     options.append(templateElement);
   }
@@ -140,6 +142,7 @@ async function waitForMenu(
   await options?.updateComplete;
 
   const group = menu.querySelector<PlaybackRateRadioGroupElement>(PlaybackRateRadioGroupElement.tagName);
+
   await group?.updateComplete;
 
   const items = [...menu.querySelectorAll<MenuRadioItemElement>(MenuRadioItemElement.tagName)];

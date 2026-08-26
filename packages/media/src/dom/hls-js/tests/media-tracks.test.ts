@@ -1,5 +1,6 @@
 import Hls from 'hls.js';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
+
 import { MediaTracksMixin } from '../../../core/media-tracks';
 import { HTMLVideoElementHost } from '../../video-host';
 import { HlsJsMediaMediaTracksMixin } from '../media-tracks';
@@ -17,12 +18,14 @@ const HlsJsMediaMediaTracks = HlsJsMediaMediaTracksMixin(MediaTracksMixin(FakeHo
 
 function createEngine(): Hls {
   const listeners = new Map<string, Set<(...args: any[]) => void>>();
+
   return {
     audioTracks: [{ id: 0 }, { id: 1 }],
     audioTrack: 0,
     nextLevel: -1,
     on(event: string, fn: (...args: any[]) => void) {
       if (!listeners.has(event)) listeners.set(event, new Set());
+
       listeners.get(event)!.add(fn);
     },
     once(event: string, fn: (...args: any[]) => void) {
@@ -30,7 +33,9 @@ function createEngine(): Hls {
         listeners.get(event)?.delete(wrapped);
         fn(...args);
       };
+
       if (!listeners.has(event)) listeners.set(event, new Set());
+
       listeners.get(event)!.add(wrapped);
     },
     off(event: string, fn: (...args: any[]) => void) {
@@ -143,6 +148,7 @@ describe('HlsJsMediaMediaTracksMixin', () => {
     ]);
 
     const [english, spanish] = [...host.audioTracks];
+
     english!.enabled = false;
     spanish!.enabled = true;
     await flush();
@@ -155,6 +161,7 @@ describe('HlsJsMediaMediaTracksMixin', () => {
     const host = new HlsJsMediaMediaTracks(engine);
 
     const levels = [{ url: ['a'] }, { url: ['b'] }, { url: ['c'] }];
+
     manifestParsed(engine, levels);
     expect(host.videoRenditions.length).toBe(3);
 
@@ -168,6 +175,7 @@ describe('HlsJsMediaMediaTracksMixin', () => {
     const host = new HlsJsMediaMediaTracks(engine);
 
     const levels = [{ url: ['a'] }, { url: ['b'] }, { url: ['c'] }];
+
     manifestParsed(engine, levels);
     expect(host.videoRenditions.length).toBe(3);
 
@@ -186,6 +194,7 @@ describe('HlsJsMediaMediaTracksMixin', () => {
     ]);
 
     const [english, spanish] = [...host.audioTracks];
+
     // Enable without disabling the current track first.
     spanish!.enabled = true;
     await flush();
@@ -203,10 +212,12 @@ describe('HlsJsMediaMediaTracksMixin', () => {
       { id: 0, default: true, name: 'English', lang: 'en' },
       { id: 1, name: 'Spanish', lang: 'es' },
     ];
+
     audioTracksUpdated(engine, audioTracks);
     audioTrackSwitching(engine, audioTracks[0]!);
 
     const [english, spanish] = [...host.audioTracks];
+
     english!.enabled = false;
     spanish!.enabled = true;
     await flush();

@@ -1,4 +1,5 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
+
 import type { AssetStatusResult, UploadStatusResult } from '../polling';
 import { pollForPlaybackId } from '../polling';
 
@@ -124,6 +125,7 @@ describe('pollForPlaybackId', () => {
   describe('abort signal', () => {
     it('throws when signal is aborted before first poll', async () => {
       const controller = new AbortController();
+
       controller.abort();
 
       await expect(

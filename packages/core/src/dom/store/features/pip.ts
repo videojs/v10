@@ -1,5 +1,6 @@
 import type { MediaPictureInPictureState } from '@videojs/media';
 import { listen, type WebKitVideoElement } from '@videojs/utils/dom';
+
 import { definePlayerFeature } from '../../feature';
 import { exitFullscreen, isFullscreen } from '../../presentation/fullscreen';
 import {
@@ -29,15 +30,13 @@ export const pipFeature = definePlayerFeature({
 
     async exitPictureInPicture() {
       const { media } = target();
+
       return exitPictureInPicture(media);
     },
 
     async togglePictureInPicture() {
       const { media, container } = target();
-
-      if (isPictureInPicture(media)) {
-        return exitPictureInPicture(media);
-      }
+      if (isPictureInPicture(media)) return exitPictureInPicture(media);
 
       if (isFullscreen(container, media)) {
         await exitFullscreen(media);
@@ -70,6 +69,7 @@ export const pipFeature = definePlayerFeature({
 
     // iOS Safari presentation mode change (covers PiP)
     const video = media as WebKitVideoElement;
+
     if ('webkitPresentationMode' in video) {
       listen(media, 'webkitpresentationmodechanged', sync, { signal });
     }

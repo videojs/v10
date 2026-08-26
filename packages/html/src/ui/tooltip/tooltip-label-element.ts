@@ -1,11 +1,11 @@
-import { MediaElement } from '../media-element';
+import { UIElement } from '../ui-element';
 
 function hasAuthoredContent(host: HTMLElement): boolean {
   return Array.from(host.childNodes).some((node) => !!node.textContent?.trim());
 }
 
 /** Label region inside `media-tooltip`; parent syncs text from the trigger when linked to a media button. */
-export class TooltipLabelElement extends MediaElement {
+export class TooltipLabelElement extends UIElement {
   static readonly tagName = 'media-tooltip-label';
 
   #hasAuthoredContent = false;
@@ -25,6 +25,7 @@ export class TooltipLabelElement extends MediaElement {
 
   setSyncedText(text: string): void {
     if (this.#hasAuthoredContent) return;
+
     this.textContent = text;
   }
 }

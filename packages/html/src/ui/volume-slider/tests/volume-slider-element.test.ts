@@ -2,11 +2,11 @@ import type { AnyPlayerStore } from '@videojs/core/dom';
 import { ContextProvider } from '@videojs/element/context';
 import type { MediaVolumeState } from '@videojs/media';
 import { createStore } from '@videojs/store';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { playerContext } from '../../../player/context';
-import { MediaElement } from '../../media-element';
 import { SliderThumbElement } from '../../slider/slider-thumb-element';
+import { UIElement } from '../../ui-element';
 import { VolumeSliderElement } from '../volume-slider-element';
 
 let tagCounter = 0;
@@ -17,6 +17,7 @@ function uniqueTag(base: string): string {
 
 function createElement<Element extends HTMLElement>(Base: abstract new () => Element): Element {
   const tag = uniqueTag('test-el');
+
   customElements.define(tag, class extends (Base as unknown as typeof HTMLElement) {});
   return document.createElement(tag) as Element;
 }
@@ -37,7 +38,7 @@ function createVolumeStore(volumeAvailability: MediaVolumeState['volumeAvailabil
   }) as unknown as AnyPlayerStore;
 }
 
-class TestPlayerProviderElement extends MediaElement {
+class TestPlayerProviderElement extends UIElement {
   store: AnyPlayerStore = createVolumeStore('available');
 
   readonly #provider = new ContextProvider(this, { context: playerContext });
@@ -63,6 +64,7 @@ describe('VolumeSliderElement', () => {
 
   it('initializes with default property values', () => {
     const slider = createElement(VolumeSliderElement);
+
     expect(slider.label).toBe('');
     expect(slider.step).toBe(1);
     expect(slider.largeStep).toBe(10);
@@ -96,6 +98,7 @@ describe('VolumeSliderElement', () => {
 
   it('supports vertical orientation', () => {
     const slider = createElement(VolumeSliderElement);
+
     slider.orientation = 'vertical';
     expect(slider.orientation).toBe('vertical');
   });
@@ -125,6 +128,7 @@ describe('VolumeSliderElement', () => {
 
   it('hides and disables unavailable volume control', async () => {
     const provider = document.createElement('test-volume-slider-player') as TestPlayerProviderElement;
+
     provider.store = createVolumeStore('unsupported');
     const slider = createElement(VolumeSliderElement);
     const thumb = createElement(SliderThumbElement);

@@ -26,6 +26,7 @@ export function createBrowserSandboxPrefetch(register: RegisterI18n) {
           },
         },
       });
+
       if (Object.keys(browser).length) register(tag, browser);
     })().finally(() => {
       inflight.delete(tag);

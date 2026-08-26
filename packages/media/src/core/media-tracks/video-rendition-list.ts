@@ -1,4 +1,5 @@
 import { isFunction } from '@videojs/utils/predicate';
+
 import { RenditionEvent } from './rendition-event';
 import { getPrivate } from './utils';
 import type { VideoRendition } from './video-rendition';
@@ -11,6 +12,7 @@ export function addRendition(track: VideoTrack, rendition: VideoRendition) {
   getPrivate(rendition).track = track;
 
   const renditionSet = getPrivate(track).renditionSet as Set<VideoRendition>;
+
   renditionSet.add(rendition);
   const index = renditionSet.size - 1;
 
@@ -33,6 +35,7 @@ export function removeRendition(rendition: VideoRendition) {
   const renditionList = getPrivate(rendition).media?.deref()?.videoRenditions as VideoRenditionList | undefined;
   const track = getPrivate(rendition).track as VideoTrack;
   const renditionSet = getPrivate(track).renditionSet as Set<VideoRendition>;
+
   renditionSet.delete(rendition);
 
   queueMicrotask(() => {
@@ -44,9 +47,9 @@ export function removeRendition(rendition: VideoRendition) {
 
 export function selectedChanged(rendition: VideoRendition) {
   const renditionList = getPrivate(rendition).media?.deref()?.videoRenditions as VideoRenditionList | undefined;
-
   // Prevent firing a rendition list `change` event multiple times per tick.
   if (!renditionList || getPrivate(renditionList).changeRequested) return;
+
   getPrivate(renditionList).changeRequested = true;
 
   queueMicrotask(() => {
@@ -61,8 +64,8 @@ export function selectedChanged(rendition: VideoRendition) {
 
 export function activeChanged(rendition: VideoRendition) {
   const renditionList = getPrivate(rendition).media?.deref()?.videoRenditions as VideoRenditionList | undefined;
-
   if (!renditionList || getPrivate(renditionList).activeChangeRequested) return;
+
   getPrivate(renditionList).activeChangeRequested = true;
 
   queueMicrotask(() => {
@@ -78,6 +81,7 @@ export function activeChanged(rendition: VideoRendition) {
 function getCurrentRenditions(renditionList: VideoRenditionList): VideoRendition[] {
   const media = getPrivate(renditionList).media?.deref() as HTMLMediaElement | undefined;
   if (!media) return [];
+
   return [...media.videoTracks]
     .filter((track) => track.selected)
     .flatMap((track) => [...(getPrivate(track).renditionSet as Set<VideoRendition>)]);
@@ -120,6 +124,7 @@ export class VideoRenditionList extends EventTarget {
       this.removeEventListener('addrendition', this.#addRenditionCallback);
       this.#addRenditionCallback = undefined;
     }
+
     if (isFunction(callback)) {
       this.#addRenditionCallback = callback;
       this.addEventListener('addrendition', callback as unknown as EventListener);
@@ -135,6 +140,7 @@ export class VideoRenditionList extends EventTarget {
       this.removeEventListener('removerendition', this.#removeRenditionCallback);
       this.#removeRenditionCallback = undefined;
     }
+
     if (isFunction(callback)) {
       this.#removeRenditionCallback = callback;
       this.addEventListener('removerendition', callback as unknown as EventListener);
@@ -150,6 +156,7 @@ export class VideoRenditionList extends EventTarget {
       this.removeEventListener('change', this.#changeCallback);
       this.#changeCallback = undefined;
     }
+
     if (isFunction(callback)) {
       this.#changeCallback = callback;
       this.addEventListener('change', callback);

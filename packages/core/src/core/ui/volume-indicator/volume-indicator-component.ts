@@ -1,7 +1,7 @@
 import { defineComponent } from 'vjsc/components';
 
-import type { VolumeIndicatorProps } from './volume-indicator-core';
-import { VolumeIndicatorDataAttrs } from './volume-indicator-data-attrs';
+import type { VolumeIndicatorProps } from './core';
+import { VolumeIndicatorDataAttrs } from './data';
 
 export default defineComponent({
   name: 'VolumeIndicator',

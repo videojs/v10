@@ -1,0 +1,92 @@
+{
+  "name": "vjsc",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Video.js source transforms",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/videojs/v10",
+    "directory": "packages/vjsc"
+  },
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./ast": {
+      "types": "./dist/ast/index.d.ts",
+      "default": "./dist/ast/index.js"
+    },
+    "./components": {
+      "types": "./dist/components/index.d.ts",
+      "default": "./dist/components/index.js"
+    },
+    "./components/jsx-runtime": {
+      "types": "./dist/components/jsx-runtime.d.ts",
+      "default": "./dist/components/jsx-runtime.js"
+    },
+    "./components/jsx-dev-runtime": {
+      "types": "./dist/components/jsx-dev-runtime.d.ts",
+      "default": "./dist/components/jsx-dev-runtime.js"
+    },
+    "./target": {
+      "types": "./dist/target/index.d.ts",
+      "default": "./dist/target/index.js"
+    },
+    "./target/jsx-runtime": {
+      "types": "./dist/target/jsx-runtime.d.ts",
+      "default": "./dist/target/jsx-runtime.js"
+    },
+    "./target/jsx-dev-runtime": {
+      "types": "./dist/target/jsx-dev-runtime.d.ts",
+      "default": "./dist/target/jsx-dev-runtime.js"
+    },
+    "./shadcn": {
+      "types": "./dist/shadcn/index.d.ts",
+      "default": "./dist/shadcn/index.js"
+    },
+    "./styles": {
+      "types": "./dist/styles/index.d.ts",
+      "default": "./dist/styles/index.js"
+    },
+    "./plugins": {
+      "types": "./dist/plugins/index.d.ts",
+      "default": "./dist/plugins/index.js"
+    },
+    "./vite": {
+      "types": "./dist/vite/index.d.ts",
+      "default": "./dist/vite/index.js"
+    }
+  },
+  "scripts": {
+    "build:watch": "vp pack --watch ./src --no-clean",
+    "dev": "pnpm run build:watch",
+    "test": "vp test run",
+    "test:watch": "vp test",
+    "clean": "rimraf --glob dist types '*.tsbuildinfo'"
+  },
+  "dependencies": {
+    "@oxc-project/types": "0.146.0",
+    "@tailwindcss/node": "4.2.1",
+    "@videojs/utils": "workspace:*",
+    "lightningcss": "^1.32.0",
+    "magic-string": "^1.2.2",
+    "oxc-parser": "0.146.0",
+    "oxc-walker": "^1.1.1",
+    "rolldown": "~1.2.5",
+    "shadcn": "^4.16.2",
+    "tailwind-merge": "^3.5.0",
+    "tailwindcss": "4.2.1"
+  },
+  "devDependencies": {
+    "vite": "^8.2.2",
+    "vite-plus": "catalog:",
+    "vitest": "catalog:"
+  }
+}

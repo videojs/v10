@@ -1,58 +1,45 @@
 /**
- * **Own the MediaSource lifecycle for the current source.** When a resolved
- * presentation and a mediaElement are both in scope, creates a MediaSource,
- * attaches it to the element, waits for `'open'`, and publishes it on
- * `context.mediaSource`. On source change or behavior destroy, detaches the
- * MediaSource and clears the slot so the next source starts fresh.
+ * **Own the MediaSource lifecycle for the current source.** When a resolved presentation and a mediaElement are both in
+ * scope, creates a MediaSource, attaches it to the element, waits for `'open'`, and publishes it on
+ * `context.mediaSource`. On source change or behavior destroy, detaches the MediaSource and clears the slot so the next
+ * source starts fresh.
  *
- * Single-positive-state reactor (`'preconditions-unmet'` ↔ `'mediasource-attached'`):
- * state derivation gates on `mediaElement + isResolvedPresentation`. Riding the
- * resolver's resolved/unresolved lifecycle makes direct URL replacement
- * structural — `resolvePresentation` routes the presentation back through
- * unresolved on URL change, which drives this reactor through
- * `'preconditions-unmet'` so the entry's state-exit cleanup detaches the old
- * MediaSource before the new one is built.
+ * Single-positive-state reactor (`'preconditions-unmet'` ↔ `'mediasource-attached'`): state derivation gates on
+ * `mediaElement + isResolvedPresentation`. Riding the resolver's resolved/unresolved lifecycle makes direct URL
+ * replacement structural — `resolvePresentation` routes the presentation back through unresolved on URL change, which
+ * drives this reactor through `'preconditions-unmet'` so the entry's state-exit cleanup detaches the old MediaSource
+ * before the new one is built.
  *
  * The entry resolves preconditions in sequence before publishing:
  *
- * 1. **Create + attach** — `createMediaSource` + `attachMediaSource` run
- *    synchronously on entry. The `detach` closure returned by
- *    `attachMediaSource` is captured for state-exit cleanup, so the cleanup
- *    is always bound to its setup even if the wait below is aborted.
- * 2. **Wait for `'open'`** — `waitForMediaSourceOpen` defers until the first
- *    `sourceopen` event (or any readyState transition out of `'closed'`).
- * 3. **Publish on `'open'`** — re-check `readyState === 'open'` after the
- *    await (covers `'ended'` / `'closed'` race) before writing to
- *    `context.mediaSource`. Downstream `setupVideoBufferActors` /
- *    `setupAudioBufferActors` call `addSourceBuffer` directly, which
- *    throws on non-open, so publish-only-when-open is the load-bearing
- *    contract.
+ * 1. **Create + attach** — `createMediaSource` + `attachMediaSource` run synchronously on entry. The `detach` closure
+ *    returned by `attachMediaSource` is captured for state-exit cleanup, so the cleanup is always bound to its setup
+ *    even if the wait below is aborted.
+ * 2. **Wait for `'open'`** — `waitForMediaSourceOpen` defers until the first `sourceopen` event (or any readyState
+ *    transition out of `'closed'`).
+ * 3. **Publish on `'open'`** — re-check `readyState === 'open'` after the await (covers `'ended'` / `'closed'` race)
+ *    before writing to `context.mediaSource`. Downstream `setupVideoBufferActors` / `setupAudioBufferActors` call
+ *    `addSourceBuffer` directly, which throws on non-open, so publish-only-when-open is the load-bearing contract.
  *
- * State-exit cleanup aborts the in-flight wait, detaches the MediaSource,
- * and clears `context.mediaSource`. Order: abort first (prevents a late
- * publish racing the slot clear), then detach, then clear.
+ * State-exit cleanup aborts the in-flight wait, detaches the MediaSource, and clears `context.mediaSource`. Order:
+ * abort first (prevents a late publish racing the slot clear), then detach, then clear.
  *
  * # Sourceclose recovery
  *
- * The behavior owns one **unclosed** MediaSource per source identity. The UA can
- * close the attached MediaSource out from under the engine (Safari on an
- * AirPlay handoff — see `setupAirPlay` — or a ManagedMediaSource evicted
- * under memory pressure), and a closed MediaSource can never reopen. The
- * `sourceclose` listener tears the attachment down synchronously; every
- * teardown records a local close-fact, which holds the machine out until
- * the fact is consumed — then the re-derive comes back in with a fresh
- * MediaSource for the *same* source. Cause-agnostic. Consumption honors an
- * observed `loadingSuspended` (attaching runs `element.load()` — new loading
- * work, e.g. resource selection under an active AirPlay receiver), and
- * happens only while the machine is out, so a suspension can never tear
- * down an existing attachment.
+ * The behavior owns one **unclosed** MediaSource per source identity. The UA can close the attached MediaSource out
+ * from under the engine (Safari on an AirPlay handoff — see `setupAirPlay` — or a ManagedMediaSource evicted under
+ * memory pressure), and a closed MediaSource can never reopen. The `sourceclose` listener tears the attachment down
+ * synchronously; every teardown records a local close-fact, which holds the machine out until the fact is consumed —
+ * then the re-derive comes back in with a fresh MediaSource for the _same_ source. Cause-agnostic. Consumption honors
+ * an observed `loadingSuspended` (attaching runs `element.load()` — new loading work, e.g. resource selection under an
+ * active AirPlay receiver), and happens only while the machine is out, so a suspension can never tear down an existing
+ * attachment.
  *
- * Sole writer of `context.mediaSource`; other MSE behaviors
- * (`setupVideoBufferActors`, `setupAudioBufferActors`,
- * `updateMediaSourceDuration`, `endOfStream`, `loadVideoSegments`) only
- * read.
+ * Sole writer of `context.mediaSource`; other MSE behaviors (`setupVideoBufferActors`, `setupAudioBufferActors`,
+ * `updateMediaSourceDuration`, `endOfStream`, `loadVideoSegments`) only read.
  */
 import { listen } from '@videojs/utils/dom';
+
 import { defineBehavior } from '../../../core/composition/create-composition';
 import type { Reactor } from '../../../core/reactors/create-machine-reactor';
 import { createMachineReactor } from '../../../core/reactors/create-machine-reactor';
@@ -60,31 +47,23 @@ import { computed, type ReadonlySignal, type Signal, signal } from '../../../cor
 import { attachMediaSource, createMediaSource, waitForMediaSourceOpen } from '../../../media/dom/mse/mediasource-setup';
 import { isResolvedPresentation, type MaybeResolvedPresentation } from '../../../media/types';
 
-/**
- * State shape required for MediaSource setup.
- */
+/** State shape required for MediaSource setup. */
 export interface MediaSourceState {
   presentation?: MaybeResolvedPresentation;
 }
 
-/**
- * Context shape for MediaSource setup.
- */
+/** Context shape for MediaSource setup. */
 export interface MediaSourceContext {
   mediaElement?: HTMLMediaElement | undefined;
   mediaSource?: MediaSource;
 }
 
-/**
- * Config for MediaSource setup.
- */
+/** Config for MediaSource setup. */
 export interface MediaSourceSetupConfig {
   /**
-   * Attach strategy — a composition-supplied implementation. Defaults to
-   * `attachMediaSource` (object URL on the `src` attribute). Compositions
-   * that pair MSE with sibling `<source>` alternatives wire
-   * `attachMediaSourceAsSourceElement` (e.g. the HLS engine, for
-   * `setupAirPlay`'s native fallback source).
+   * Attach strategy — a composition-supplied implementation. Defaults to `attachMediaSource` (object URL on the `src`
+   * attribute). Compositions that pair MSE with sibling `<source>` alternatives wire `attachMediaSourceAsSourceElement`
+   * (e.g. the HLS engine, for `setupAirPlay`'s native fallback source).
    */
   attachMediaSource?: typeof attachMediaSource;
 }
@@ -97,11 +76,13 @@ function deriveState(
   mediaSourceClosed: boolean
 ): MediaSourceFsmState {
   if (!mediaElement || !isResolvedPresentation(presentation)) return 'preconditions-unmet';
+
   // The current attachment was torn down (typically a UA-fired
   // `sourceclose`). The fact stands until the `'preconditions-unmet'`
   // effects consume it (see below); the reset then re-derives into a fresh
   // attach for the same source.
   if (mediaSourceClosed) return 'preconditions-unmet';
+
   return 'mediasource-attached';
 }
 
@@ -214,7 +195,9 @@ function setupMediaSourceSetup({
 
           const publishWhenOpen = async () => {
             await waitForMediaSourceOpen(mediaSource, controller.signal);
+
             if (controller.signal.aborted) return;
+
             // `waitForMediaSourceOpen` resolves on any readyState transition
             // out of `'closed'`; if we landed in `'ended'` / `'closed'`
             // instead of `'open'`, the attach window is gone and we leave
@@ -233,6 +216,7 @@ function setupMediaSourceSetup({
               );
               return;
             }
+
             context.mediaSource.set(mediaSource);
           };
 

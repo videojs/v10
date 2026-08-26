@@ -1,4 +1,5 @@
 import { expect, type Locator, type Page, test } from '@playwright/test';
+
 import { AUDIO_PAGES, type PageEntry, VIDEO_PAGES } from '../fixtures/media';
 import { mockPresentation } from '../fixtures/presentation';
 import { DATA_ATTRS, SELECTORS } from '../fixtures/selectors';
@@ -13,6 +14,7 @@ function getMediaValue(page: Page, key: 'currentTime' | 'volume'): Promise<numbe
     ({ selector, key }) => {
       const host = document.querySelector(selector) as HTMLMediaElement | null;
       const media = (host?.querySelector?.('video, audio') as HTMLMediaElement) ?? host;
+
       return media?.[key] ?? 0;
     },
     { selector: SELECTORS.media, key }
@@ -32,6 +34,7 @@ for (const entry of PAGES as readonly PageEntry[]) {
 
     test.beforeEach(async ({ page }) => {
       if (!isAudio) await mockPresentation(page);
+
       player = new PlayerPage(page);
       await page.goto(entry.path);
       await player.waitForMediaReady();
@@ -42,6 +45,7 @@ for (const entry of PAGES as readonly PageEntry[]) {
       await player.playerRoot.evaluate((root) => {
         const before = document.createElement('button');
         const after = document.createElement('button');
+
         before.tabIndex = 0;
         after.tabIndex = 0;
         before.dataset.focusSentinel = 'before';
@@ -51,12 +55,15 @@ for (const entry of PAGES as readonly PageEntry[]) {
       });
       const before = page.locator('[data-focus-sentinel="before"]');
       const after = page.locator('[data-focus-sentinel="after"]');
+
       await before.focus();
 
       await expectTabFocus(page, player.playerRoot);
+
       if (!isAudio && browserName === 'firefox') {
         await expectTabFocus(page, page.locator('video').first());
       }
+
       await expectTabFocus(page, player.playButton);
 
       if (isAudio) {
@@ -78,6 +85,7 @@ for (const entry of PAGES as readonly PageEntry[]) {
         await expectTabFocus(page, player.volumeSliderThumb);
       } else {
         await expectTabFocus(page, player.settingsButton);
+
         for (const control of [player.castButton, player.airPlayButton, player.pipButton, player.fullscreenButton]) {
           if (await control.isVisible()) await expectTabFocus(page, control);
         }
@@ -85,7 +93,9 @@ for (const entry of PAGES as readonly PageEntry[]) {
 
       await page.keyboard.press('Tab');
       await expect(after).toBeFocused();
+
       if (isAudio) await expect(player.volumeSlider).toBeHidden();
+
       await page.keyboard.press('Shift+Tab');
       await expect(isAudio ? player.muteButton : player.fullscreenButton).toBeFocused();
     });
@@ -99,12 +109,14 @@ for (const entry of PAGES as readonly PageEntry[]) {
 
       await player.timeSliderThumb.focus();
       const timeBefore = await getMediaValue(page, 'currentTime');
+
       await page.keyboard.press('ArrowRight');
       await expect.poll(() => getMediaValue(page, 'currentTime')).toBeGreaterThan(timeBefore);
       await page.keyboard.press('Home');
       await expect.poll(() => getMediaValue(page, 'currentTime')).toBe(0);
 
       const timeType = await player.timeToggle.getAttribute('data-type');
+
       await player.timeToggle.focus();
       await page.keyboard.press('Enter');
       await expect(player.timeToggle).not.toHaveAttribute('data-type', timeType!);
@@ -127,10 +139,12 @@ for (const entry of PAGES as readonly PageEntry[]) {
       if (isAudio) {
         await player.seekTo(50);
         const middle = await getMediaValue(page, 'currentTime');
+
         await player.seekBackward.focus();
         await page.keyboard.press('Enter');
         await expect.poll(() => getMediaValue(page, 'currentTime')).toBeLessThan(middle);
         const back = await getMediaValue(page, 'currentTime');
+
         await player.seekForward.focus();
         await page.keyboard.press('Space');
         await expect.poll(() => getMediaValue(page, 'currentTime')).toBeGreaterThan(back);
@@ -170,6 +184,7 @@ for (const entry of PAGES as readonly PageEntry[]) {
         await page.keyboard.press('ArrowDown');
         await expect(focusedOption).toBeFocused();
         const nextRate = await focusedOption.getAttribute(DATA_ATTRS.rate);
+
         expect(nextRate).not.toBeNull();
 
         await page.keyboard.press('Enter');
@@ -190,6 +205,7 @@ for (const entry of PAGES as readonly PageEntry[]) {
           if (!video) return;
 
           const track = document.createElement('track');
+
           track.kind = 'subtitles';
           track.label = 'English';
           track.srclang = 'en';

@@ -1,4 +1,5 @@
 import type { Constructor } from '@videojs/utils/types';
+
 import { type MediaStreamType, MediaStreamTypes } from '../../core/types';
 import type { ShakaEngineHost } from './types';
 
@@ -66,11 +67,13 @@ export function ShakaMediaStreamTypeMixin<Base extends Constructor<ShakaEngineHo
 
     #setDetected(value: MediaStreamType): void {
       if (this.#isUserStreamType) return;
+
       this.#update(value);
     }
 
     #update(value: MediaStreamType): void {
       if (this.#streamType === value) return;
+
       this.#streamType = value;
       this.dispatchEvent(new Event('streamtypechange'));
     }

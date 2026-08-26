@@ -10,9 +10,9 @@ import { i18nContext } from '../../i18n/context';
 import { I18nController } from '../../i18n/controller';
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
-import { MediaElement } from '../media-element';
+import { UIElement } from '../ui-element';
 
-export class TimeElement extends MediaElement {
+export class TimeElement extends UIElement {
   static readonly tagName = 'media-time';
 
   static override properties = {
@@ -64,6 +64,7 @@ export class TimeElement extends MediaElement {
 
   protected override willUpdate(changed: PropertyValues): void {
     super.willUpdate(changed);
+
     if (changed.has('type') || changed.has('toggle')) {
       this.#activeType = this.type;
     }
@@ -77,6 +78,7 @@ export class TimeElement extends MediaElement {
     }
 
     const media = this.#state.value;
+
     if (!media) {
       this.#clearAttrs();
       return;
@@ -129,15 +131,20 @@ export class TimeElement extends MediaElement {
 
   #handleClick = (event: MouseEvent): void => {
     if (event.defaultPrevented || !this.toggle || !this.#state.value) return;
+
     this.#toggleType();
   };
 
   #handleKeyDown = (event: KeyboardEvent): void => {
     if (event.defaultPrevented || !isInteractiveActivation(event)) return;
+
     if (!this.toggle || !this.#state.value) return;
+
     // Prevent space from scrolling page.
     event.preventDefault();
+
     if (event.repeat) return;
+
     this.#toggleType();
   };
 

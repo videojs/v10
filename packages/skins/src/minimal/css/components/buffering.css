@@ -7,6 +7,19 @@
   color: oklch(1 0 0);
   pointer-events: none;
 
+  &::before {
+    position: absolute;
+    inset: 0;
+    content: "";
+    background: oklch(0 0 0 / 0.35);
+    backdrop-filter: blur(8px);
+  }
+
+  > * {
+    position: relative;
+    z-index: 20;
+  }
+
   &:not([data-visible]) {
     --media-spinner-animation: none;
   }

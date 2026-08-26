@@ -48,6 +48,7 @@ function App() {
             placeholder ? (
               <img
                 alt=""
+                crossOrigin=""
                 style={{
                   backgroundImage: `url("${placeholder}")`,
                   backgroundPosition: 'var(--media-object-position, center)',
@@ -60,7 +61,7 @@ function App() {
           skin={skin}
           styling={styling}
           live={live}
-          className="aspect-video max-w-4xl mx-auto"
+          className="mx-auto aspect-video max-w-4xl"
         >
           {/* The storyboard track is derived automatically from the Mux src. */}
           <MuxVideo
@@ -70,7 +71,7 @@ function App() {
             loop={loop}
             preload={preload}
             playsInline
-            crossOrigin="anonymous"
+            crossOrigin=""
           >
             <Chapters tracks={getChapters(source)} />
           </MuxVideo>

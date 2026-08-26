@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
+
 import type { PartiallyResolvedTextTrack } from '../../../types';
 import {
   addSubtitlesTracksToMedia,
@@ -25,12 +26,14 @@ function makeModelTrack(overrides: Partial<PartiallyResolvedTextTrack> = {}): Pa
 describe('addSubtitlesTracksToMedia', () => {
   it('appends one <track> child per model track, tagged with data-src-track', () => {
     const media = document.createElement('video');
+
     addSubtitlesTracksToMedia(media, [
       makeModelTrack({ id: 'track-en', language: 'en' }),
       makeModelTrack({ id: 'track-es', label: 'Spanish', language: 'es' }),
     ]);
 
     const tracks = Array.from(media.children) as HTMLTrackElement[];
+
     expect(tracks.length).toBe(2);
     expect(tracks[0]!.tagName).toBe('TRACK');
     expect(tracks[0]!.id).toBe('track-en');
@@ -48,6 +51,7 @@ describe('addSubtitlesTracksToMedia', () => {
     // which syncTextTracks would record as user intent — bypassing SPF's opt-in
     // selection policy. SPF owns selection, so slots carry no selection hint.
     const media = document.createElement('video');
+
     addSubtitlesTracksToMedia(media, [makeModelTrack({ default: true })]);
 
     expect((media.children[0] as HTMLTrackElement).default).toBe(false);
@@ -55,6 +59,7 @@ describe('addSubtitlesTracksToMedia', () => {
 
   it('omits srclang when the model has no language', () => {
     const media = document.createElement('video');
+
     addSubtitlesTracksToMedia(media, [makeModelTrack({ language: undefined })]);
 
     expect((media.children[0] as HTMLTrackElement).srclang).toBe('');
@@ -62,6 +67,7 @@ describe('addSubtitlesTracksToMedia', () => {
 
   it('is a no-op when given an empty array', () => {
     const media = document.createElement('video');
+
     addSubtitlesTracksToMedia(media, []);
 
     expect(media.children.length).toBe(0);
@@ -71,6 +77,7 @@ describe('addSubtitlesTracksToMedia', () => {
 describe('getShowingSubtitlesTrackFromMedia', () => {
   it('returns the SPF-owned subtitle track currently in showing mode', () => {
     const media = document.createElement('video');
+
     addSubtitlesTracksToMedia(media, [
       makeModelTrack({ id: 'track-en', language: 'en' }),
       makeModelTrack({ id: 'track-es', label: 'Spanish', language: 'es' }),
@@ -78,11 +85,13 @@ describe('getShowingSubtitlesTrackFromMedia', () => {
     (media.children[1] as HTMLTrackElement).track.mode = 'showing';
 
     const showing = getShowingSubtitlesTrackFromMedia(media);
+
     expect(showing?.id).toBe('track-es');
   });
 
   it('returns undefined when no SPF-owned track is showing', () => {
     const media = document.createElement('video');
+
     addSubtitlesTracksToMedia(media, [makeModelTrack()]);
 
     expect(getShowingSubtitlesTrackFromMedia(media)).toBeUndefined();
@@ -90,9 +99,11 @@ describe('getShowingSubtitlesTrackFromMedia', () => {
 
   it('ignores host-page-owned <track> children even when they are showing', () => {
     const media = document.createElement('video');
+
     addSubtitlesTracksToMedia(media, [makeModelTrack({ id: 'spf-track' })]);
 
     const hostTrack = document.createElement('track');
+
     hostTrack.id = 'host-track';
     hostTrack.kind = 'subtitles';
     hostTrack.src = 'data:text/vtt,';
@@ -105,6 +116,7 @@ describe('getShowingSubtitlesTrackFromMedia', () => {
   it('ignores non-subtitle/caption kinds even when SPF-tagged', () => {
     const media = document.createElement('video');
     const el = document.createElement('track');
+
     el.id = 'chapters';
     el.kind = 'chapters';
     el.src = 'data:text/vtt,';
@@ -119,6 +131,7 @@ describe('getShowingSubtitlesTrackFromMedia', () => {
 describe('removeAllSubtitlesTracksFromMedia', () => {
   it('removes every SPF-owned <track> child', () => {
     const media = document.createElement('video');
+
     addSubtitlesTracksToMedia(media, [
       makeModelTrack({ id: 'track-en' }),
       makeModelTrack({ id: 'track-es', label: 'Spanish', language: 'es' }),
@@ -131,9 +144,11 @@ describe('removeAllSubtitlesTracksFromMedia', () => {
 
   it('leaves host-page-owned <track> children in place', () => {
     const media = document.createElement('video');
+
     addSubtitlesTracksToMedia(media, [makeModelTrack()]);
 
     const hostTrack = document.createElement('track');
+
     hostTrack.id = 'host-track';
     hostTrack.kind = 'subtitles';
     hostTrack.src = 'data:text/vtt,';
@@ -147,6 +162,7 @@ describe('removeAllSubtitlesTracksFromMedia', () => {
 
   it('is a no-op when no SPF-owned tracks are attached', () => {
     const media = document.createElement('video');
+
     removeAllSubtitlesTracksFromMedia(media);
     expect(media.children.length).toBe(0);
   });
@@ -160,17 +176,20 @@ describe('syncTextTrackModes', () => {
     const media = document.createElement('video');
     const elements = tracks.map(({ id, kind = 'subtitles' }) => {
       const el = document.createElement('track');
+
       el.id = id;
       el.kind = kind;
       el.src = 'data:text/vtt,';
       media.appendChild(el);
       return el;
     });
+
     return { media, elements };
   }
 
   it('sets the matching track to showing and others to disabled', () => {
     const { media, elements } = setupTextTracks([{ id: 'track-en' }, { id: 'track-es' }]);
+
     syncTextTrackModes(media.textTracks, 'track-en');
 
     expect(elements[0]!.track.mode).toBe('showing');
@@ -179,6 +198,7 @@ describe('syncTextTrackModes', () => {
 
   it('disables all tracks when selectedId is undefined', () => {
     const { media, elements } = setupTextTracks([{ id: 'track-en' }, { id: 'track-es' }]);
+
     elements[0]!.track.mode = 'showing';
 
     syncTextTrackModes(media.textTracks, undefined);
@@ -193,6 +213,7 @@ describe('syncTextTrackModes', () => {
       { id: 'chapters-en', kind: 'chapters' },
       { id: 'metadata', kind: 'metadata' },
     ]);
+
     elements[1]!.track.mode = 'hidden';
     elements[2]!.track.mode = 'hidden';
 

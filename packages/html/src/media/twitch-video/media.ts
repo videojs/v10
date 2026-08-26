@@ -1,12 +1,14 @@
 import { CustomMediaElement } from '@videojs/media/dom/custom-media-element';
 import { buildTwitchIframeSrc, TwitchMedia } from '@videojs/media/dom/twitch';
 import { escapeHtml } from '@videojs/utils/string';
+
 import { MediaAttachMixin } from '../../store/media-attach-mixin';
 
 class TwitchCustomMediaElement extends CustomMediaElement('iframe', TwitchMedia) {
   static override getTemplateHTML = (attrs: Record<string, string>): string => {
     const initialSrc = buildTwitchIframeSrc(attrs.src ?? '', templateAttrsToEmbedProps(attrs));
     const srcAttr = initialSrc ? ` src="${escapeHtml(initialSrc)}"` : '';
+
     return /*html*/ `
       <style>
         :host {

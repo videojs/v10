@@ -24,10 +24,10 @@ export type HtmlSandboxState = {
   preload: PreloadValue;
 };
 
-export function createHtmlSandboxState(audioOnly?: boolean): HtmlSandboxState {
+export function createHtmlSandboxState(): HtmlSandboxState {
   return {
     skin: getInitialSkin(),
-    source: getInitialSource(audioOnly),
+    source: getInitialSource(),
     styling: getInitialStyling(),
     autoplay: getInitialAutoplay(),
     muted: getInitialMuted(),
@@ -53,8 +53,10 @@ export function createLatestLoader() {
 
   return async <Result>(load: () => Promise<Result>): Promise<Result | undefined> => {
     const version = ++loadVersion;
+
     try {
       const result = await load();
+
       return version === loadVersion ? result : undefined;
     } catch (error) {
       // Swallow load errors to avoid unhandled promise rejections in callers

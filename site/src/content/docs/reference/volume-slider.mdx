@@ -6,6 +6,7 @@ description: A slider component for controlling media playback volume
 ---
 
 import ComponentReference from "@/components/docs/api-reference/ComponentReference.astro";
+import ComponentImports from "@/components/docs/api-reference/ComponentImports.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 import StyleCase from "@/components/docs/StyleCase.astro";
 import Demo from "@/components/docs/demos/Demo.astro";
@@ -21,17 +22,37 @@ import withPartsHtml from "@/components/docs/demos/volume-slider/html/css/WithPa
 import withPartsHtmlCss from "@/components/docs/demos/volume-slider/html/css/WithParts.css?raw";
 import withPartsHtmlTs from "@/components/docs/demos/volume-slider/html/css/WithParts.ts?raw";
 
+## Import
+
+<ComponentImports component="VolumeSlider" html="volume-slider" />
+
 ## Anatomy
 
 <FrameworkCase frameworks={["react"]}>
   ```tsx
-  <VolumeSlider.Root />
+  <VolumeSlider.Root>
+    <VolumeSlider.Track>
+      <VolumeSlider.Fill />
+    </VolumeSlider.Track>
+    <VolumeSlider.Thumb />
+    <VolumeSlider.Preview>
+      <VolumeSlider.Value type="pointer" />
+    </VolumeSlider.Preview>
+  </VolumeSlider.Root>
   ```
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
   ```html
-  <media-volume-slider></media-volume-slider>
+  <media-volume-slider>
+    <media-slider-track>
+      <media-slider-fill></media-slider-fill>
+    </media-slider-track>
+    <media-slider-thumb></media-slider-thumb>
+    <media-slider-preview>
+      <media-slider-value type="pointer"></media-slider-value>
+    </media-slider-preview>
+  </media-volume-slider>
   ```
 </FrameworkCase>
 
@@ -46,7 +67,7 @@ Use [CSS custom properties](#root-css-custom-properties) to style the fill and p
 <FrameworkCase frameworks={["html"]}>
 ```css
 media-volume-slider::before {
-  width: calc(var(--media-slider-fill) * 1%);
+  width: var(--media-slider-fill);
 }
 ```
 </FrameworkCase>
@@ -56,7 +77,7 @@ React renders a `<div>` element. Add a `className` to style it:
 
 ```css
 .volume-slider::before {
-  width: calc(var(--media-slider-fill) * 1%);
+  width: var(--media-slider-fill);
 }
 ```
 </FrameworkCase>

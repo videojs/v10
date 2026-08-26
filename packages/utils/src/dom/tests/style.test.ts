@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import {
   addAnchorName,
@@ -59,6 +59,7 @@ describe('addAnchorName', () => {
 describe('inline style snapshots', () => {
   it('normalizes property names and restores values and priorities', () => {
     const element = document.createElement('div');
+
     element.style.setProperty('min-width', '20px', 'important');
     const snapshot = snapshotInlineStyles(element, ['minWidth', '--custom-size']);
 
@@ -72,6 +73,7 @@ describe('inline style snapshots', () => {
 
   it('restores styles when a synchronous callback throws', () => {
     const element = document.createElement('div');
+
     element.style.width = '20px';
 
     expect(() =>
@@ -144,6 +146,7 @@ describe('resolveCSSLength', () => {
       if (tagName === 'div') {
         vi.spyOn(node, 'getBoundingClientRect').mockImplementation(() => {
           const width = node.style.inlineSize === '10vw' ? 24 : 0;
+
           return {
             x: 0,
             y: 0,

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import {
   hasMethods,
@@ -247,11 +247,13 @@ describe('predicate', () => {
   describe('isAbortError', () => {
     it('returns true for AbortError', () => {
       const error = new DOMException('Aborted', 'AbortError');
+
       expect(isAbortError(error)).toBe(true);
     });
 
     it('returns true for custom AbortError', () => {
       const error = new Error('Aborted');
+
       error.name = 'AbortError';
       expect(isAbortError(error)).toBe(true);
     });

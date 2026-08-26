@@ -1,171 +1,146 @@
-export interface HtmlSkinDef {
+import { VJS10_HTML_CDN_BASE } from '../../src/consts';
+
+export type MediaType = 'video' | 'audio';
+export type SkinVariant = 'default' | 'minimal';
+export type SkinStyle = 'css' | 'tailwind';
+
+interface SkinMetadata {
   id: string;
   name: string;
-  platform: 'html';
-  style: 'css' | 'tailwind';
-  template: string;
-  css?: string;
-  iconSet: 'default' | 'minimal';
+  platform: 'html' | 'react';
+  style: SkinStyle;
+  mediaType: MediaType;
+  group: string;
+  variant: SkinVariant;
+  live: boolean;
 }
 
-export interface ReactSkinDef {
-  id: string;
-  name: string;
+export interface HtmlSkinDef extends SkinMetadata {
+  platform: 'html';
+  template: string;
+  css?: string;
+  iconSet: SkinVariant;
+}
+
+export interface ReactSkinDef extends SkinMetadata {
   platform: 'react';
-  style: 'css' | 'tailwind';
   source: string;
   css?: string;
 }
 
 export type SkinDef = HtmlSkinDef | ReactSkinDef;
-export type MediaType = 'video' | 'audio';
 
-export const HTML_CDN_BASE = 'https://cdn.jsdelivr.net/npm/@videojs/html/cdn';
+export const HTML_CDN_BASE = VJS10_HTML_CDN_BASE;
 export const DEMO_VIDEO_SRC = 'https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4';
 export const DEMO_POSTER_SRC = 'https://image.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/thumbnail.webp';
+export const DEMO_LIVE_SRC = 'https://stream.mux.com/v69RSHhFelSm4701snP22dYz2jICy4E4FUyk02rW4gxRM.m3u8';
+export const DEMO_LIVE_POSTER_SRC =
+  'https://image.mux.com/v69RSHhFelSm4701snP22dYz2jICy4E4FUyk02rW4gxRM/thumbnail.webp';
+
+export const LIVE_MEDIA = {
+  video: { subpath: 'hlsjs-video', tag: 'hlsjs-video', component: 'HlsJsVideo' },
+  audio: { subpath: 'mux-audio', tag: 'mux-audio', component: 'MuxAudio' },
+} as const satisfies Record<MediaType, { subpath: string; tag: string; component: string }>;
 
 export interface EjectedSkinEntry {
   id: string;
   name: string;
   platform: 'html' | 'react';
-  style: 'css' | 'tailwind';
+  style: SkinStyle;
   html?: string;
   tsx?: Record<string, string>;
   jsx?: Record<string, string>;
   css?: string;
 }
 
-export function getSkinMediaType(skin: SkinDef): MediaType {
-  return skin.id.includes('audio') ? 'audio' : 'video';
+const MEDIA_TYPES: MediaType[] = ['video', 'audio'];
+const SKIN_VARIANTS: SkinVariant[] = ['default', 'minimal'];
+const LIVE_MODES = [false, true];
+
+function titleCase(value: string): string {
+  return `${value[0]!.toUpperCase()}${value.slice(1)}`;
+}
+
+function getGroup(mediaType: MediaType, live: boolean): string {
+  return live ? `live-${mediaType}` : mediaType;
+}
+
+function getId(
+  platform: SkinDef['platform'],
+  style: SkinStyle,
+  variant: SkinVariant,
+  mediaType: MediaType,
+  live: boolean
+): string {
+  const base = `${variant}-${live ? 'live-' : ''}${mediaType}`;
+
+  if (platform === 'react') return `${base}-react${style === 'tailwind' ? '-tailwind' : ''}`;
+
+  return `${base}${style === 'tailwind' ? '-tailwind' : ''}`;
+}
+
+function getName(
+  platform: SkinDef['platform'],
+  style: SkinStyle,
+  variant: SkinVariant,
+  mediaType: MediaType,
+  live: boolean
+): string {
+  const base = `${titleCase(variant)} ${live ? 'Live ' : ''}${titleCase(mediaType)}`;
+
+  if (platform === 'react') return `${base} (React${style === 'tailwind' ? ' + Tailwind' : ''})`;
+
+  return style === 'tailwind' ? `${base} (Tailwind)` : base;
+}
+
+function createHtmlSkin(style: SkinStyle, variant: SkinVariant, mediaType: MediaType, live: boolean): HtmlSkinDef {
+  const group = getGroup(mediaType, live);
+  const file = variant === 'minimal' ? 'minimal-skin' : 'skin';
+  const styleSuffix = style === 'tailwind' ? '.tailwind' : '';
+
+  return {
+    id: getId('html', style, variant, mediaType, live),
+    name: getName('html', style, variant, mediaType, live),
+    platform: 'html',
+    style,
+    mediaType,
+    group,
+    variant,
+    live,
+    template: `packages/html/src/presets/${group}/${file}${styleSuffix}.ts`,
+    ...(style === 'css' && { css: `packages/html/src/define/${group}/${file}.css` }),
+    iconSet: variant,
+  };
+}
+
+function createReactSkin(style: SkinStyle, variant: SkinVariant, mediaType: MediaType, live: boolean): ReactSkinDef {
+  const group = getGroup(mediaType, live);
+  const file = variant === 'minimal' ? 'minimal-skin' : 'skin';
+  const styleSuffix = style === 'tailwind' ? '.tailwind' : '';
+
+  return {
+    id: getId('react', style, variant, mediaType, live),
+    name: getName('react', style, variant, mediaType, live),
+    platform: 'react',
+    style,
+    mediaType,
+    group,
+    variant,
+    live,
+    source: `packages/react/src/presets/${group}/${file}${styleSuffix}.tsx`,
+    ...(style === 'css' && { css: `packages/react/src/presets/${group}/${file}.css` }),
+  };
+}
+
+function createSkins<T extends SkinDef>(create: (variant: SkinVariant, mediaType: MediaType, live: boolean) => T): T[] {
+  return LIVE_MODES.flatMap((live) =>
+    SKIN_VARIANTS.flatMap((variant) => MEDIA_TYPES.map((mediaType) => create(variant, mediaType, live)))
+  );
 }
 
 export const SKINS: SkinDef[] = [
-  {
-    id: 'default-video',
-    name: 'Default Video',
-    platform: 'html',
-    style: 'css',
-    template: 'packages/html/src/define/video/skin.ts',
-    css: 'packages/html/src/define/video/skin.css',
-    iconSet: 'default',
-  },
-  {
-    id: 'default-audio',
-    name: 'Default Audio',
-    platform: 'html',
-    style: 'css',
-    template: 'packages/html/src/define/audio/skin.ts',
-    css: 'packages/html/src/define/audio/skin.css',
-    iconSet: 'default',
-  },
-  {
-    id: 'minimal-video',
-    name: 'Minimal Video',
-    platform: 'html',
-    style: 'css',
-    template: 'packages/html/src/define/video/minimal-skin.ts',
-    css: 'packages/html/src/define/video/minimal-skin.css',
-    iconSet: 'minimal',
-  },
-  {
-    id: 'minimal-audio',
-    name: 'Minimal Audio',
-    platform: 'html',
-    style: 'css',
-    template: 'packages/html/src/define/audio/minimal-skin.ts',
-    css: 'packages/html/src/define/audio/minimal-skin.css',
-    iconSet: 'minimal',
-  },
-  {
-    id: 'default-video-tailwind',
-    name: 'Default Video (Tailwind)',
-    platform: 'html',
-    style: 'tailwind',
-    template: 'packages/html/src/define/video/skin.tailwind.ts',
-    iconSet: 'default',
-  },
-  {
-    id: 'default-audio-tailwind',
-    name: 'Default Audio (Tailwind)',
-    platform: 'html',
-    style: 'tailwind',
-    template: 'packages/html/src/define/audio/skin.tailwind.ts',
-    iconSet: 'default',
-  },
-  {
-    id: 'minimal-video-tailwind',
-    name: 'Minimal Video (Tailwind)',
-    platform: 'html',
-    style: 'tailwind',
-    template: 'packages/html/src/define/video/minimal-skin.tailwind.ts',
-    iconSet: 'minimal',
-  },
-  {
-    id: 'minimal-audio-tailwind',
-    name: 'Minimal Audio (Tailwind)',
-    platform: 'html',
-    style: 'tailwind',
-    template: 'packages/html/src/define/audio/minimal-skin.tailwind.ts',
-    iconSet: 'minimal',
-  },
-  {
-    id: 'default-video-react',
-    name: 'Default Video (React)',
-    platform: 'react',
-    style: 'css',
-    source: 'packages/react/src/presets/video/skin.tsx',
-    css: 'packages/react/src/presets/video/skin.css',
-  },
-  {
-    id: 'default-audio-react',
-    name: 'Default Audio (React)',
-    platform: 'react',
-    style: 'css',
-    source: 'packages/react/src/presets/audio/skin.tsx',
-    css: 'packages/react/src/presets/audio/skin.css',
-  },
-  {
-    id: 'minimal-video-react',
-    name: 'Minimal Video (React)',
-    platform: 'react',
-    style: 'css',
-    source: 'packages/react/src/presets/video/minimal-skin.tsx',
-    css: 'packages/react/src/presets/video/minimal-skin.css',
-  },
-  {
-    id: 'minimal-audio-react',
-    name: 'Minimal Audio (React)',
-    platform: 'react',
-    style: 'css',
-    source: 'packages/react/src/presets/audio/minimal-skin.tsx',
-    css: 'packages/react/src/presets/audio/minimal-skin.css',
-  },
-  {
-    id: 'default-video-react-tailwind',
-    name: 'Default Video (React + Tailwind)',
-    platform: 'react',
-    style: 'tailwind',
-    source: 'packages/react/src/presets/video/skin.tailwind.tsx',
-  },
-  {
-    id: 'default-audio-react-tailwind',
-    name: 'Default Audio (React + Tailwind)',
-    platform: 'react',
-    style: 'tailwind',
-    source: 'packages/react/src/presets/audio/skin.tailwind.tsx',
-  },
-  {
-    id: 'minimal-video-react-tailwind',
-    name: 'Minimal Video (React + Tailwind)',
-    platform: 'react',
-    style: 'tailwind',
-    source: 'packages/react/src/presets/video/minimal-skin.tailwind.tsx',
-  },
-  {
-    id: 'minimal-audio-react-tailwind',
-    name: 'Minimal Audio (React + Tailwind)',
-    platform: 'react',
-    style: 'tailwind',
-    source: 'packages/react/src/presets/audio/minimal-skin.tailwind.tsx',
-  },
+  ...createSkins((variant, mediaType, live) => createHtmlSkin('css', variant, mediaType, live)),
+  ...createSkins((variant, mediaType, live) => createHtmlSkin('tailwind', variant, mediaType, live)),
+  ...createSkins((variant, mediaType, live) => createReactSkin('css', variant, mediaType, live)),
+  ...createSkins((variant, mediaType, live) => createReactSkin('tailwind', variant, mediaType, live)),
 ];

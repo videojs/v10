@@ -6,7 +6,7 @@ import {
   buttonGroup,
   container,
   controls,
-  error,
+  dialog,
   icon,
   iconContainer,
   iconFlipped,
@@ -21,6 +21,7 @@ import {
 } from '@videojs/skins/default/tailwind/audio.tailwind';
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
+
 import { useTranslator } from '@/i18n/context';
 import {
   CheckIcon,
@@ -51,6 +52,7 @@ import { Time } from '@/ui/time';
 import { TimeSlider } from '@/ui/time-slider';
 import { Tooltip } from '@/ui/tooltip';
 import { VolumeSlider } from '@/ui/volume-slider';
+
 import type { AudioSkinProps } from './skin';
 
 const SEEK_TIME = 10;
@@ -156,10 +158,20 @@ function PlaybackRateTrigger(): ReactNode {
   if (!state) return null;
 
   return (
-    <Menu.Trigger
-      disabled={state.disabled}
-      render={<PlaybackRateButton className={playbackRate.button} render={<Button />} />}
-    />
+    <Tooltip.Root side="top" boundary="viewport">
+      <Tooltip.Trigger
+        render={
+          <Menu.Trigger
+            disabled={state.disabled}
+            render={<PlaybackRateButton className={playbackRate.button} render={<Button />} />}
+          />
+        }
+      />
+      <Tooltip.Popup className={popup.tooltip}>
+        <Tooltip.Label />
+        <Tooltip.Shortcut className={popup.tooltipShortcut} />
+      </Tooltip.Popup>
+    </Tooltip.Root>
   );
 }
 
@@ -173,13 +185,13 @@ export function AudioSkinTailwind(props: AudioSkinProps): ReactNode {
       {children}
 
       <ErrorDialog.Root>
-        <ErrorDialog.Popup className={error.root}>
-          <div className={error.dialog}>
-            <div className={error.content}>
-              <ErrorDialog.Title className={error.title}></ErrorDialog.Title>
-              <ErrorDialog.Description className={error.description} />
+        <ErrorDialog.Popup className={dialog.root}>
+          <div className={dialog.dialog}>
+            <div className={dialog.content}>
+              <ErrorDialog.Title className={dialog.title}></ErrorDialog.Title>
+              <ErrorDialog.Description className={dialog.description} />
             </div>
-            <div className={error.actions}>
+            <div className={dialog.actions}>
               <ErrorDialog.Close className={cn(button.base, button.subtle)}></ErrorDialog.Close>
             </div>
           </div>
@@ -267,9 +279,11 @@ export function AudioSkinTailwind(props: AudioSkinProps): ReactNode {
           <div className={buttonGroup}>
             <Menu.Root side="top" align="center" boundary="viewport">
               <PlaybackRateTrigger />
-              <Menu.Content className={cn(popup.popover, menu.root)}>
-                <PlaybackRateRadioGroup />
-              </Menu.Content>
+              <Menu.Popup className={cn(popup.popover, menu.root)}>
+                <Menu.Content className={menu.content}>
+                  <PlaybackRateRadioGroup />
+                </Menu.Content>
+              </Menu.Popup>
             </Menu.Root>
 
             <VolumePopover />

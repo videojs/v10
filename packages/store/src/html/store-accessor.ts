@@ -2,6 +2,7 @@ import type { ReactiveController, ReactiveControllerHost } from '@videojs/elemen
 import type { Context } from '@videojs/element/context';
 import { ContextConsumer } from '@videojs/element/context';
 import { noop } from '@videojs/utils/function';
+
 import type { AnyStore } from '../core/store';
 import { isStore } from '../core/store';
 
@@ -12,20 +13,22 @@ export type StoreAccessorHost = ReactiveControllerHost & HTMLElement;
 /**
  * Resolves a store from either a direct instance or context.
  *
- * When given a direct store, provides immediate access.
- * When given a context, sets up a ContextConsumer to receive the store.
+ * When given a direct store, provides immediate access. When given a context, sets up a ContextConsumer to receive the
+ * store.
  *
- * @example Direct store
- * ```ts
- * const accessor = new StoreAccessor(host, store, (s) => console.log('available', s));
- * accessor.value; // Store (immediately available)
- * ```
+ * @example
+ *   Direct store
+ *   ```ts
+ *   const accessor = new StoreAccessor(host, store, (s) => console.log('available', s));
+ *   accessor.value; // Store (immediately available)
+ *   ```
  *
- * @example Context source
- * ```ts
- * const accessor = new StoreAccessor(host, context, (s) => console.log('available', s));
- * accessor.value; // null until context provides store
- * ```
+ * @example
+ *   Context source
+ *   ```ts
+ *   const accessor = new StoreAccessor(host, context, (s) => console.log('available', s));
+ *   accessor.value; // null until context provides store
+ *   ```
  */
 export class StoreAccessor<Store extends AnyStore> implements ReactiveController {
   readonly #onAvailable: (store: Store) => void;

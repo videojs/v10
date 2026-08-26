@@ -43,11 +43,11 @@ async function render() {
   document.getElementById('root')!.innerHTML = wrapSandboxHtmlI18n(html`
     <${playerTag}>
       <${tag} class="w-full aspect-video max-w-4xl mx-auto">
-        <native-hls-video${srcAttr} ${mediaAttrs} playsinline crossorigin="anonymous">
+        <native-hls-video${srcAttr} ${mediaAttrs} playsinline crossorigin>
           ${renderChapters(getChapters(state.source))}
           ${renderStoryboard(storyboard)}
         </native-hls-video>
-        ${poster ? html`<img slot="poster" src="${poster}" alt="Video poster" />` : ''}
+        ${poster ? html`<img slot="poster" src="${poster}" alt="Video poster" crossorigin />` : ''}
       </${tag}>
     </${playerTag}>
   `);

@@ -19,9 +19,10 @@ export function useMergedTranslations(
   return useMemo(() => {
     void registryEpoch;
     const registryLayer = getI18nTranslations(resolvedLocale);
+
     return {
-      ...registryLayer,
       ...lazyLayer,
+      ...registryLayer,
       ...flattenTranslations(translationsProp ?? {}),
     } as FlatTranslations;
   }, [resolvedLocale, lazyLayer, translationsProp, registryEpoch]);

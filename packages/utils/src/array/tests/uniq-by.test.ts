@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { uniqBy } from '../uniq-by';
 
@@ -20,6 +20,7 @@ describe('uniqBy', () => {
 
   it('returns empty array for empty input', () => {
     const result = uniqBy([], (item) => item);
+
     expect(result).toEqual([]);
   });
 

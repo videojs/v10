@@ -8,6 +8,7 @@ description: Decorative background video element with automatic muting and loopi
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 import StyleCase from "@/components/docs/StyleCase.astro";
 import Demo from "@/components/docs/demos/Demo.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
 import MarkdownCode from "@/components/typography/MarkdownCode.astro";
 import Table from "@/components/typography/Table.astro";
 import Tbody from "@/components/typography/Tbody.astro";
@@ -27,7 +28,17 @@ import basicUsageHtml from "@/components/docs/demos/background-video/html/css/Ba
 import basicUsageHtmlCss from "@/components/docs/demos/background-video/html/css/BasicUsage.css?raw";
 import basicUsageHtmlTs from "@/components/docs/demos/background-video/html/css/BasicUsage.ts?raw";
 
-Decorative background video. By default it's muted, looped, and autoplaying — use the opt-out attributes below to change that. Renders a `<video>` inside a shadow DOM, positioned to fill its container.
+Decorative background video for a source the browser can play natively. By default it's muted, looped, and autoplaying.
+
+<FrameworkCase frameworks={["react"]}>
+`BackgroundVideo` renders a native `<video>`. Override the defaults with native React props such as `muted={false}`, `loop={false}`, or `autoPlay={false}`, and size the video with `className` or `style`.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+`<background-video>` renders a `<video>` inside shadow DOM and fills the box you give the component. Use the opt-out attributes in the [API reference](#api-reference) to change its playback defaults.
+</FrameworkCase>
+
+An HLS URL only works where the browser has native HLS playback. See <DocsLink slug="how-to/add-a-background-video">Add a background video</DocsLink> to choose a cross-browser HLS or Mux path and set up layout, poster, and decorative semantics.
 
 ## Examples
 
@@ -56,6 +67,8 @@ Decorative background video. By default it's muted, looped, and autoplaying — 
   </StyleCase>
 </FrameworkCase>
 
+<FrameworkCase frameworks={["html"]}>
+
 ## API Reference
 
 ### Attributes
@@ -70,7 +83,7 @@ Decorative background video. By default it's muted, looped, and autoplaying — 
   <Tbody>
     <Tr>
       <Td><MarkdownCode>src</MarkdownCode></Td>
-      <Td>URL of the video source.</Td>
+      <Td>URL of a video the browser can play directly, such as an MP4 or WebM file.</Td>
     </Tr>
     <Tr>
       <Td><MarkdownCode>nomuted</MarkdownCode></Td>
@@ -86,6 +99,18 @@ Decorative background video. By default it's muted, looped, and autoplaying — 
     </Tr>
   </Tbody>
 </Table>
+
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+
+## Styling
+
+`BackgroundVideo` is the native `<video>` element, so size and position it with regular CSS. Use `object-fit` and `object-position` to control how the video fills its box.
+
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
 
 ### CSS Custom Properties
 
@@ -110,3 +135,5 @@ Decorative background video. By default it's muted, looped, and autoplaying — 
     </Tr>
   </Tbody>
 </Table>
+
+</FrameworkCase>

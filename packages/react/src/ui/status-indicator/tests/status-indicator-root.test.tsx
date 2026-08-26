@@ -1,6 +1,6 @@
 import { cleanup, render } from '@testing-library/react';
 import type { StatusIndicatorCore } from '@videojs/core';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
 const inputIndicatorMock = vi.hoisted(() => ({
   useInputIndicatorRoot: vi.fn(),

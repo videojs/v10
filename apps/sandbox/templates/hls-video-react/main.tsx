@@ -1,12 +1,10 @@
 import '@app/styles.css';
-
 // HlsVideo + Video.js integration sandbox — React
 // http://localhost:5173/hls-video-react/
 //
 // React equivalent of the hls-video-html sandbox: HlsVideo inside a VJS
 // player with play/mute controls. HlsVideo registers itself via
 // useMediaAttach so the store discovers it without any querySelector.
-
 import { Container, createPlayer, MuteButton, PlayButton } from '@videojs/react';
 import { PauseIcon, PlayIcon, RestartIcon, VolumeHighIcon, VolumeOffIcon } from '@videojs/react/icons';
 import { HlsVideo } from '@videojs/react/media/hls-video';
@@ -43,6 +41,7 @@ function App() {
             src="https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4.m3u8"
             preload="auto"
             playsInline
+            crossOrigin=""
             style={{ width: '640px', aspectRatio: '16/9', display: 'block' }}
           />
         </Container>

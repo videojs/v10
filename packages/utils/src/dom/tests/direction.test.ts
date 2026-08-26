@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vite-plus/test';
 
 import { isRTL } from '../direction';
 
@@ -10,6 +10,7 @@ describe('isRTL', () => {
 
   it('returns false for default LTR element', () => {
     const el = document.createElement('div');
+
     document.body.appendChild(el);
 
     expect(isRTL(el)).toBe(false);
@@ -17,8 +18,10 @@ describe('isRTL', () => {
 
   it('returns true when ancestor has dir="rtl"', () => {
     const parent = document.createElement('div');
+
     parent.setAttribute('dir', 'rtl');
     const child = document.createElement('div');
+
     parent.appendChild(child);
     document.body.appendChild(parent);
 
@@ -27,7 +30,18 @@ describe('isRTL', () => {
 
   it('returns true when element has dir="rtl"', () => {
     const el = document.createElement('div');
+
     el.setAttribute('dir', 'rtl');
+    document.body.appendChild(el);
+
+    expect(isRTL(el)).toBe(true);
+  });
+
+  it.each(['auto', 'invalid'])('uses computed direction for dir="%s"', (dir) => {
+    const el = document.createElement('div');
+
+    el.setAttribute('dir', dir);
+    el.style.direction = 'rtl';
     document.body.appendChild(el);
 
     expect(isRTL(el)).toBe(true);

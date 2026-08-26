@@ -22,16 +22,16 @@ import basicUsageHtmlTs from '@/components/docs/demos/play-button/html/css/Basic
 What is a guide? In this context, it's a document in the docs that's not an API reference. For API references, see <DocsLink slug="reference/write-references">Write reference pages</DocsLink>.
 
 <Aside type="tip">
-Oh hey by the way. A lot of this knowledge is encoded in the `docs` Claude skill. You should still read it, but, now your LLM can help you along the way, too.
+Oh hey by the way. A lot of this knowledge is encoded in the `write-docs` and `review-docs` Claude skills. You should still read it, but, now your LLM can help you along the way, too.
 </Aside>
 
 ## 1. Understand our documentation structure
 
 First, read and understand [Diátaxis](https://diataxis.fr/). We organize documentation into three modes:
 
-1. **Concept pages** (`src/content/docs/concepts/`): Explain how and why things work — design decisions, trade-offs, and context. General understanding, spanning multiple APIs, can be applied to multiple outcomes. As we write guides, what are things we need people to understand in multiple places and don’t want to duplicate the content? Diátaxis calls this mode "explanation."
-2. **How-to guides** (`src/content/docs/how-to/`): Spans multiple concepts in order to achieve a specific outcome with step-by-step instructions. Address a real user goal, assume competence, and link to concept pages instead of explaining inline.
-3. **Reference pages** (`src/content/docs/reference/`): Component API documentation. These are scaffolded using `write-api-reference` and the api-docs-builder. Again, see <DocsLink slug="reference/write-references">Write reference pages</DocsLink> for details.
+1. **Concept pages** (`src/content/docs/concepts/`): Explain a reusable mental model — design rationale, trade-offs, and context that helps readers with several tasks. Diátaxis calls this mode "explanation." If the background matters to only one outcome, keep it in that how-to instead.
+2. **How-to guides** (`src/content/docs/how-to/`): Help the reader achieve a specific outcome — one page per thing they want to do (Autoplay, Play live streams, Self-host the player). Address a real goal, assume competence, and include only the explanation needed to complete or adapt the task.
+3. **Reference pages** (`src/content/docs/reference/`): Describe the exact machinery — components, features, hooks, utilities, options, state, and behavior. These are scaffolded using `write-api-reference` and the api-docs-builder. Again, see <DocsLink slug="reference/write-references">Write reference pages</DocsLink> for details.
 
 <Aside type="note">
 Diátaxis has a fourth mode — learning-oriented **tutorials**. We don't have a tutorials section yet — something we've intentionally chosen to omit, for now. Learning-oriented content lives in the Getting started how-to guides instead.
@@ -44,18 +44,41 @@ To pick a mode, use the Diátaxis [compass](https://diataxis.fr/compass/). Ask t
 | **Serves work** | How-to guide | Reference page |
 | **Serves study** | How-to guide (Getting started) | Concept page |
 
-**When in doubt, write a concept page.** Most new documentation should be concept pages. Use this table to decide between the two:
+Start with the reader's question:
+
+- "How do I achieve this outcome?" belongs in a how-to guide.
+- "Why does Video.js work this way, and when does that matter?" belongs in a concept page when the answer applies to several tasks.
+- "What exactly does this export, prop, attribute, state field, or event do?" belongs in reference.
+
+A capability does not automatically need its own guide. Keep a small task as a section of the broader outcome it serves, and keep exhaustive option lists in reference. Use this table to decide between concepts and how-tos:
 
 | Concept page | How-to guide |
 |---|---|
-| **Preferred** — default choice | Use sparingly |
-| Reference while working | Learning from scratch |
-| One concept per page | Multi-step narrative |
-| Scannable, minimal prose | Explains "why" at each step |
+| Background shared by many guides | One specific goal |
+| One concept per page | One outcome per page |
+| Scannable, minimal prose | Working code up front |
 | No prerequisites | Has prerequisites |
-| Jump in anywhere | Sequential |
+| Jump in anywhere | Read top to bottom |
 
-Whichever mode you choose, **don't mix modes on one page**. Step-by-step instructions creeping into a concept page belong in a how-to guide; background explanation swelling a how-to step belongs in a concept page — link to it instead. Each mode serves a different reader need, and blending them dilutes both.
+Keep each page's job clear. A how-to guide leads with working code and includes only the explanation a reader needs to modify it — that's its "How it works" section. Deeper background belongs in a concept page; link to it instead of explaining inline. Step-by-step instructions creeping into a concept page belong in a how-to guide.
+
+### How-to guide template
+
+Give a topic its own guide when developers search for it by name, browser or platform rules affect it, and it takes several APIs explained together. Otherwise it stays a section of a broader guide (chapters live in Show captions and subtitles, not a guide of their own).
+
+Most how-to guides use the same sections, in this order:
+
+1. **Summary** — one or two sentences, no heading. Follow it with `<CustomUiNote />`, the shared note that tells pre-built-skin users the skin handles this and the guide is for building your own UI.
+2. **Recommended approach** — the one way we recommend building it, smallest complete example first. Primary examples are real demo files imported into MDX, not inline fences.
+3. **How it works** — only the background needed to understand or modify the code above, using exact exported names.
+4. **Availability and constraints** — browser restrictions, platform differences, permission or user-interaction requirements, expected failure modes. Said plainly, not buried in asides.
+5. **Common variations** — alternatives, kept separate so they don't blend into the recommended approach.
+6. **Troubleshooting** — symptom, likely cause, fix.
+7. **Related components**, **Related API**, **Related guides** — three link groups.
+
+A guide may skip a section that doesn't apply. Established guides may keep a topic-specific structure when it tells the story more clearly — especially broad customization workflows such as Customize skins and Build your own UI component. Do not reorganize a useful page only to satisfy the template.
+
+One goal per page. Titles are goal-oriented and in the reader's words: each completes the sentence "How to…" without the literal prefix ("Play live streams", "Show captions and subtitles" — not "Live Playback" or "Text Tracks"). Think about what someone who only knows YouTube — or their coding agent — would search for. One page should fully answer one question.
 
 ## 2. Create a guide in the correct content folder
 
@@ -155,7 +178,7 @@ Use the `<StyleCase>` component to show content only for specific styling approa
 If you see nothing, that means you probably don't have CSS selected as your style. Cool! It's working!
 </Aside>
 
-## Use Github-Flavored Markdown
+## Use GitHub-flavored Markdown
 
 ### Headings
 
@@ -231,7 +254,7 @@ When a table is really wide, it overflows nicely on mobile
 
 ### Code blocks
 
-we can use 3 backticks ``` in new line and write snippet and close with 3 backticks on new line and to highlight language specific syntax, write one word of language name after first 3 backticks, for eg. html, javascript, css, markdown, typescript, txt, bash
+Open a code block with 3 backticks ``` on a new line, write the snippet, and close with 3 backticks on a new line. To get syntax highlighting, write the language name after the first 3 backticks: for example `html`, `javascript`, `css`, `markdown`, `typescript`, `txt`, or `bash`.
 
 ````markdown
 ```html
@@ -581,7 +604,7 @@ Agent-assisted changes should follow the demo rules in `site/AGENTS.md`; all con
 
 ## Literally any other component
 
-This is just MDX, so you can import any old component and use it. To make that imported component look pretty, you might consider wrapping it in `<MinimalFrame>` or placing it inside of a `<TabsRoot>` alongside code, as shown below.
+This is just MDX, so you can import any old component and use it. To make that imported component look pretty, wrap it in `<MinimalFrame>` or place it inside of a `<TabsRoot>` alongside code, as shown below.
 
 
 ### `<MinimalFrame>` to limit max width and provide a nice border
@@ -596,9 +619,9 @@ import MinimalFrame from '@/components/frames/Minimal.astro';
 </MinimalFrame>
 ```
 
-#### Using `iframe`s in `<MinimalFrame>`
+#### Use `iframe`s in `<MinimalFrame>`
 
-Imo `<MinimalFrame>` is a great tool for laying out `iframe`s. If you go down this path, note that `<MinimalFrame>` has `position: relative;`, which means that you can (and should) absolutely position your `iframe` within it. For example...
+`<MinimalFrame>` is a great tool for laying out `iframe`s. If you go down this path, note that `<MinimalFrame>` has `position: relative;`, which means that you can (and should) absolutely position your `iframe` within it. For example...
 
 ```mdx
 <MinimalFrame class="aspect-video">

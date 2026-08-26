@@ -1,9 +1,17 @@
-// Registers the audio player, container, and all audio UI custom elements
+// Registers the container and all audio UI custom elements
 // without creating a skin element. Use this entry when building an ejected
 // (light DOM) player layout.
 import { I18nProviderElement } from '../../i18n/provider-element';
-import { MediaContainerElement } from '../../media/container-element';
+import { safeDefine } from '../../registration/safe-define';
+import {
+  defineErrorDialog,
+  defineMenu,
+  defineSliders,
+  defineTime,
+  defineTooltip,
+} from '../../registration/ui-compounds';
 import { BufferingIndicatorElement } from '../../ui/buffering-indicator/buffering-indicator-element';
+import { ContainerElement } from '../../ui/container/container-element';
 import { GestureElement } from '../../ui/gesture/gesture-element';
 import { HotkeyElement } from '../../ui/hotkey/hotkey-element';
 import { LiveButtonElement } from '../../ui/live-button/live-button-element';
@@ -14,16 +22,9 @@ import { PlaybackRateRadioGroupElement } from '../../ui/playback-rate-radio-grou
 import { PopoverElement } from '../../ui/popover/popover-element';
 import { SeekButtonElement } from '../../ui/seek-button/seek-button-element';
 import { TextElement } from '../../ui/text/text-element';
-import { safeDefine } from '../safe-define';
-import { defineErrorDialog, defineMenu, defineSliders, defineTime, defineTooltip } from '../ui/compounds';
-
-// Value import — player.ts body runs before this module's body.
-import { AudioPlayerElement } from './player';
-
 // ── Registration (providers / parents first) ────────────────────────────
 
-safeDefine(AudioPlayerElement);
-safeDefine(MediaContainerElement);
+safeDefine(ContainerElement);
 safeDefine(I18nProviderElement);
 
 // Compound groups.

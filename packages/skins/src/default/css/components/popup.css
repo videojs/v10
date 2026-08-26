@@ -1,49 +1,49 @@
 .media-default-skin {
-  --popup-transition:
-    opacity var(--popup-transition-timing-function) var(--popup-transition-duration),
-    filter var(--popup-transition-timing-function) var(--popup-transition-duration),
-    transform var(--popup-transition-timing-function) var(--popup-transition-duration),
-    scale var(--popup-transition-timing-function) var(--popup-transition-duration);
+  --media-popup-transition:
+    opacity var(--media-popup-transition-timing-function) var(--media-popup-transition-duration),
+    filter var(--media-popup-transition-timing-function) var(--media-popup-transition-duration),
+    transform var(--media-popup-transition-timing-function) var(--media-popup-transition-duration),
+    scale var(--media-popup-transition-timing-function) var(--media-popup-transition-duration);
 }
 
 .media-default-skin .media-popover,
 .media-default-skin .media-tooltip {
-  --popup-translate-distance: calc(0.5 * var(--scale-unit));
+  --media-popup-translate-distance: calc(0.5 * var(--media-internal-scale-unit));
   margin: 0;
   overflow: visible;
   color: inherit;
   border: 0;
-  transition: var(--popup-transition);
+  transition: var(--media-popup-transition);
 
   &[data-starting-style],
   &[data-ending-style] {
     opacity: 0;
     filter: blur(4px);
     /* We have to use transform here for translate as the translate property is used for positioning by core. */
-    transform: translate(var(--popup-translate-x-distance, 0), var(--popup-translate-y-distance, 0));
+    transform: translate(var(--media-popup-translate-x-distance, 0), var(--media-popup-translate-y-distance, 0));
     scale: 0.95;
   }
 
   &[data-ending-style] {
     transform: none;
     /* Speed up the exit transition. */
-    transition-duration: max(0ms, calc(var(--popup-transition-duration) - 50ms));
+    transition-duration: max(0ms, calc(var(--media-popup-transition-duration) - 50ms));
   }
 
   &[data-side="top"] {
-    --popup-translate-y-distance: var(--popup-translate-distance);
+    --media-popup-translate-y-distance: var(--media-popup-translate-distance);
     transform-origin: bottom;
   }
   &[data-side="bottom"] {
-    --popup-translate-y-distance: calc(var(--popup-translate-distance) * -1);
+    --media-popup-translate-y-distance: calc(var(--media-popup-translate-distance) * -1);
     transform-origin: top;
   }
   &[data-side="left"] {
-    --popup-translate-x-distance: var(--popup-translate-distance);
+    --media-popup-translate-x-distance: var(--media-popup-translate-distance);
     transform-origin: right;
   }
   &[data-side="right"] {
-    --popup-translate-x-distance: calc(var(--popup-translate-distance) * -1);
+    --media-popup-translate-x-distance: calc(var(--media-popup-translate-distance) * -1);
     transform-origin: left;
   }
 
@@ -90,7 +90,7 @@
   }
 }
 .media-default-skin .media-popover--volume {
-  padding: calc(var(--spacing) * 3) 0;
+  padding: calc(var(--media-spacing) * 3) 0;
   border-radius: calc(Infinity * 1px);
 
   &:has(media-volume-slider[data-hidden]) {
@@ -99,15 +99,15 @@
 }
 
 .media-default-skin .media-tooltip {
-  padding: calc(var(--spacing) * 1) calc(var(--spacing) * 2.5);
-  font-size: var(--font-size-base);
+  padding: calc(var(--media-spacing) * 1) calc(var(--media-spacing) * 2.5);
+  font-size: var(--media-font-size-base);
   white-space: nowrap;
   border-radius: calc(Infinity * 1px);
 
   /* `display: flex` must not apply while closed — it overrides UA `[popover]` hiding. */
   &[data-open] {
     display: flex;
-    column-gap: calc(var(--spacing) * 1);
+    column-gap: calc(var(--media-spacing) * 1);
     align-items: center;
   }
 
@@ -124,11 +124,11 @@
     min-width: 1.5em;
     padding: 0.1em;
     font-family: inherit;
-    font-size: var(--font-size-small);
+    font-size: var(--media-font-size-small);
     font-weight: 600;
     line-height: 1.25;
     text-align: center;
     background-color: oklch(from currentColor l c h / 0.3);
-    border-radius: calc(var(--spacing) * 1);
+    border-radius: calc(var(--media-spacing) * 1);
   }
 }

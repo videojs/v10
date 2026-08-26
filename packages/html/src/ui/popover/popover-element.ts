@@ -13,12 +13,15 @@ import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextConsumer } from '@videojs/element/context';
 import { SnapshotController } from '@videojs/store/html';
 import { tryHidePopover, tryShowPopover } from '@videojs/utils/dom';
+
 import { containerContext } from '../../player/context';
 import { popupGroupContext } from '../../player/popup-group-context';
-import { MediaElement } from '../media-element';
 import { PositionController } from '../position-controller';
-export class PopoverElement extends MediaElement {
-  static readonly tagName = 'media-popover';
+import { UIElement } from '../ui-element';
+
+/** @fires open-change - Fired when the popover's open state changes. */
+export class PopoverElement extends UIElement {
+  static readonly tagName: string = 'media-popover';
 
   static override properties = {
     open: { type: Boolean },
@@ -60,6 +63,7 @@ export class PopoverElement extends MediaElement {
 
   override connectedCallback(): void {
     super.connectedCallback();
+
     if (this.destroyed) return;
 
     this.setAttribute(POPUP_HOST_ATTR, '');
@@ -122,6 +126,10 @@ export class PopoverElement extends MediaElement {
     this.#popover?.close(reason);
   }
 
+  protected get triggerElement(): HTMLElement | null {
+    return this.#currentTrigger;
+  }
+
   protected override willUpdate(changed: PropertyValues): void {
     super.willUpdate(changed);
     this.#core.setProps(this);
@@ -129,6 +137,7 @@ export class PopoverElement extends MediaElement {
     // Sync controlled open state
     if (this.#popover && changed.has('open')) {
       const { active: interactionOpen } = this.#popover.input.current;
+
       if (this.open !== interactionOpen) {
         if (this.open) {
           this.#popover.open();
@@ -141,14 +150,17 @@ export class PopoverElement extends MediaElement {
 
   protected override update(_changed: PropertyValues): void {
     super.update(_changed);
+
     if (!this.#popover) return;
 
     // Discover trigger via commandfor linkage.
     const triggerEl = this.#position.findTrigger();
+
     this.#syncTrigger(triggerEl);
 
     // Derive state from core + input.
     const input = this.#popover.input.current;
+
     this.#core.setInput(input);
     const state = this.#core.getState();
 

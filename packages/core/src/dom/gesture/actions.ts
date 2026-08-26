@@ -1,18 +1,10 @@
 import { isFunction } from '@videojs/utils/predicate';
+
+import type { GestureActionName } from '../../core/ui/gesture/core';
 import { MEDIA_INPUT_ACTION_OVERRIDES } from '../media-actions';
 import type { AnyPlayerStore } from '../player';
 
-export type GestureActionName =
-  | 'togglePaused'
-  | 'toggleMuted'
-  | 'toggleFullscreen'
-  | 'toggleSubtitles'
-  | 'togglePictureInPicture'
-  | 'toggleControls'
-  | 'seekStep'
-  | 'volumeStep'
-  | 'speedUp'
-  | 'speedDown';
+export type { GestureActionName } from '../../core/ui/gesture/core';
 
 export interface GestureActionContext {
   store: AnyPlayerStore;
@@ -40,6 +32,7 @@ export function resolveGestureAction(name: GestureActionName | (string & {})): G
   // Direct store method call — togglePaused, toggleMuted, toggleFullscreen, etc.
   return ({ store }) => {
     const method = (store.state as Record<string, unknown>)[name];
+
     if (isFunction(method)) method();
     else if (__DEV__) console.warn(`[vjs-gesture] Unknown action: "${name}"`);
   };

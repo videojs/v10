@@ -1,4 +1,5 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vite-plus/test';
+
 import { hasScript, loadScript } from '../script';
 
 function getScript(src: string) {
@@ -15,6 +16,7 @@ describe('loadScript', () => {
     const promise = loadScript(src);
 
     const script = getScript(src);
+
     expect(script).not.toBeNull();
 
     script!.dispatchEvent(new Event('load'));
@@ -35,6 +37,7 @@ describe('loadScript', () => {
   it('reuses the cached promise after a successful load', async () => {
     const src = 'https://example.com/cached.js';
     const first = loadScript(src);
+
     getScript(src)!.dispatchEvent(new Event('load'));
     await first;
 
@@ -52,6 +55,7 @@ describe('loadScript', () => {
     expect(getScript(src)).toBeNull();
 
     const retry = loadScript(src);
+
     expect(retry).not.toBe(first);
     expect(getScript(src)).not.toBeNull();
 
@@ -62,6 +66,7 @@ describe('loadScript', () => {
   it('resolves without adding a tag when the script already exists', async () => {
     const src = 'https://example.com/existing.js';
     const script = document.createElement('script');
+
     script.setAttribute('src', src);
     document.head.appendChild(script);
 
@@ -73,6 +78,7 @@ describe('loadScript', () => {
 describe('hasScript', () => {
   it('matches scripts by their src attribute', () => {
     const script = document.createElement('script');
+
     script.setAttribute('src', 'https://example.com/has.js');
     document.head.appendChild(script);
 

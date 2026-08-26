@@ -6,6 +6,8 @@ description: A tooltip component for displaying contextual labels on hover and f
 ---
 
 import ComponentReference from "@/components/docs/api-reference/ComponentReference.astro";
+import ComponentImports from "@/components/docs/api-reference/ComponentImports.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 import StyleCase from "@/components/docs/StyleCase.astro";
 import Demo from "@/components/docs/demos/Demo.astro";
@@ -29,6 +31,10 @@ import GroupingDemoHtml from "@/components/docs/demos/tooltip/html/css/Grouping.
 import groupingHtml from "@/components/docs/demos/tooltip/html/css/Grouping.html?raw";
 import groupingHtmlCss from "@/components/docs/demos/tooltip/html/css/Grouping.css?raw";
 import groupingHtmlTs from "@/components/docs/demos/tooltip/html/css/Grouping.ts?raw";
+
+## Import
+
+<ComponentImports component="Tooltip" html="tooltip" />
 
 ## Anatomy
 
@@ -77,11 +83,13 @@ The `side` and `align` props control the preferred placement relative to the tri
 <FrameworkCase frameworks={["html"]}>
   The `<media-tooltip>` element is the popup itself. Link it to a trigger using
   the `commandfor` attribute on any button, pointing to the tooltip's `id`. The element
-  discovers its trigger automatically and manages open/close state, ARIA attributes, and
-  positioning. Wrap tooltip trigger/popup pairs in `<media-tooltip-group>` to coordinate
+  discovers its trigger automatically and manages open/close state and positioning. Wrap
+  tooltip trigger/popup pairs in `<media-tooltip-group>` to coordinate
   timing — the group's `delay`, `close-delay`, and `timeout` attributes control shared
   timing for all contained tooltips.
 </FrameworkCase>
+
+Tooltips inside a <DocsLink slug="reference/player-container">Container</DocsLink> also observe its popup group. By default, a tooltip does not open—or closes if already open—while a menu or popover attached to the same trigger is open. Set `sticky` when the tooltip should remain visible with that trigger's popup. `Tooltip.Provider` and `<media-tooltip-group>` coordinate tooltip delay timing only; they do not replace the container's popup group.
 
 ## Styling
 
@@ -153,7 +161,7 @@ media-tooltip[data-side="bottom"] {
 
 ## Accessibility
 
-The trigger receives `aria-describedby` pointing to the popup when open. The popup renders with `role="tooltip"` and `popover="manual"`. Tooltips open on focus and close when focus leaves, ensuring keyboard-only users can access the label.
+Tooltips are visual-only, supplementary labels. The popup renders with `role="presentation"` and is not referenced by the trigger with `aria-describedby`. Give the trigger its own accessible name instead of relying on tooltip content. Built-in media buttons already expose a state-aware `aria-label`, and their tooltips reuse that translated label. Tooltips still open on focus so keyboard users who can see the label receive the same visual hint.
 
 ## Examples
 

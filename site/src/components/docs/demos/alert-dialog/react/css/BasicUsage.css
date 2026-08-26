@@ -1,0 +1,59 @@
+.react-alert-dialog-basic {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 240px;
+  overflow: hidden;
+  background: #111827;
+  border-radius: 12px;
+}
+
+.react-alert-dialog-basic__trigger,
+.react-alert-dialog-basic__close {
+  padding: 8px 16px;
+  color: #111827;
+  cursor: pointer;
+  background: #fff;
+  border: 0;
+  border-radius: 9999px;
+}
+
+.react-alert-dialog-basic__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgb(3 7 18 / 92%);
+  transition: opacity 150ms ease;
+}
+
+.react-alert-dialog-basic__dialog {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: grid;
+  gap: 12px;
+  place-content: center;
+  padding: 32px;
+  color: #fff;
+  text-align: center;
+  transition: opacity 150ms ease;
+}
+
+.react-alert-dialog-basic__backdrop[data-starting-style],
+.react-alert-dialog-basic__backdrop[data-ending-style],
+.react-alert-dialog-basic__dialog[data-starting-style],
+.react-alert-dialog-basic__dialog[data-ending-style] {
+  opacity: 0;
+}
+
+.react-alert-dialog-basic__title {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.react-alert-dialog-basic__description {
+  color: #d1d5db;
+}
+
+.react-alert-dialog-basic__close {
+  justify-self: center;
+}

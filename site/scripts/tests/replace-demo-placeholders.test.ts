@@ -1,6 +1,8 @@
 import { globSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { describe, expect, it } from 'vitest';
+
+import { describe, expect, it } from 'vite-plus/test';
+
 import {
   DEMO_PLACEHOLDERS,
   demoPlaceholderPlugin,
@@ -67,6 +69,7 @@ describe('demo placeholders', () => {
     ];
     const hardcodedSources = demoFiles.filter((file) => {
       const source = readFileSync(resolve(DEMOS_DIRECTORY, file), 'utf8');
+
       return /https:\/\/(?:(?:stream|image)\.mux\.com|dash\.akamaized\.net|vimeo\.com)\//.test(source);
     });
 

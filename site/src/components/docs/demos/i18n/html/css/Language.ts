@@ -9,6 +9,7 @@ const languageNames = new Intl.DisplayNames(['en'], { type: 'language' });
 
 for (const locale of ['en', ...LOCALES]) {
   const option = document.createElement('option');
+
   option.value = locale;
   option.textContent = languageNames.of(locale) ?? locale;
   select?.append(option);

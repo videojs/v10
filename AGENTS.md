@@ -6,8 +6,8 @@ Use this file for durable repository rules. Prefer retrieval-led reasoning: insp
 
 - Setup and contributor workflow: `CONTRIBUTING.md`
 - Available commands and dependency versions: root and package `package.json` files
-- Workspace topology: `pnpm-workspace.yaml`, `turbo.json`, and package manifests
-- Formatting and static checks: `biome.json`, `tsconfig*.json`, and `build/scripts/check-workspace.mjs`
+- Workspace topology: `pnpm-workspace.yaml`, Vite+ `run` configuration, and package manifests
+- Formatting and static checks: `vite.config.ts`, `tsconfig*.json`, and `build/scripts/check-workspace.mjs`
 - Current behavior: implementation and colocated tests
 - Public package behavior: package source, exports, and README files
 - Architecture rationale: `internal/design/`, `internal/decisions/`, and `rfc/`
@@ -40,6 +40,7 @@ pnpm dev
 pnpm -F <pkg> test [path-or-pattern]
 pnpm -F <pkg> build
 pnpm typecheck
+pnpm lint
 pnpm lint:fix:file <file>
 pnpm check:workspace
 ```
@@ -50,6 +51,7 @@ Use the narrowest relevant test/build while iterating. Before handoff, run check
 
 - Match nearby code before introducing a new abstraction or naming rule.
 - Check `@videojs/utils` before adding a helper. Prefer its predicate helpers over inline type/null checks where an equivalent exists.
+- Structure function bodies as semantic paragraphs. Keep a declaration and an immediately following single-line guard for its value in the same paragraph. Treat braced or multiline guards as separate control-flow paragraphs. Otherwise, keep related declarations and operations together; separate unrelated declaration groups and changes of phase—such as setup, validation, mutation, notification, and return—with one blank line.
 - Keep types beside their implementation; do not create generic `types.ts` buckets.
 - Put package tests in a `tests/` directory beside the implementation and name them `<module>.test.ts`.
 - Use Vitest and name `describe()` after the exact export under test.
@@ -71,11 +73,14 @@ Use the narrowest relevant test/build while iterating. Before handoff, run check
 Checked-in skills are direct children of `.agents/skills/`. `pnpm install` exposes that canonical catalog through generated `.claude/skills/` and `.opencode/skills/` directory aliases. Load only the specialized workflow needed after inspecting relevant project sources.
 
 - API: `design-api`, `review-api`
+- Bundler plugins: `create-rolldown-plugin`, `create-vite-plugin`, `transform-rolldown-code`
 - UI implementation: `create-html-component`, `create-react-component`, `implement-ui-transition`, `implement-accessible-ui`
 - UI review: `review-html-component`, `review-react-component`, `review-accessibility`
 - UI design: `write-html-component-design`, `write-react-component-design`, `review-html-component-design`, `review-react-component-design`
 - Docs and records: `write-docs`, `review-docs`, `write-api-reference`, `write-design-doc`, `write-rfc`
 - Site styling: `migrate-css-to-tailwind`, `review-tailwind-migration`
+- Toolchain workflows: `configure-vite-plus`
+- Skin parity: `maintain-vjsc-skin-gaps`
 - Delivery: `investigate-issue`, `create-issue`, `review-branch`, `commit-pr`
 - SPF behaviors: `create-spf-behavior`, `change-spf-behavior`
 - SPF registry: `document-spf-feature`, `document-spf-use-case`, `implement-spf-feature`, `implement-spf-use-case`

@@ -1,5 +1,27 @@
 # Changelog
 
+## [10.0.0-beta.32](https://github.com/videojs/v10/compare/@videojs/element@10.0.0-beta.31...@videojs/element@10.0.0-beta.32) (2026-08-26)
+
+
+### Bug Fixes
+
+* **element:** preserve props across late registration ([#2400](https://github.com/videojs/v10/issues/2400)) ([8b96602](https://github.com/videojs/v10/commit/8b966029325470f49c028f8d19242ac5100373c7))
+* **packages:** make html entries server importable ([#2428](https://github.com/videojs/v10/issues/2428)) ([33f4de1](https://github.com/videojs/v10/commit/33f4de15b6d73fdba5f1d7aeb6b94b469f6c1487))
+
+## [10.0.0-beta.31](https://github.com/videojs/v10/compare/@videojs/element@10.0.0-beta.30...@videojs/element@10.0.0-beta.31) (2026-08-21)
+
+
+### Miscellaneous Chores
+
+* **@videojs/element:** Synchronize videojs versions
+
+## [10.0.0-beta.30](https://github.com/videojs/v10/compare/@videojs/element@10.0.0-beta.29...@videojs/element@10.0.0-beta.30) (2026-08-20)
+
+
+### Miscellaneous Chores
+
+* **@videojs/element:** Synchronize videojs versions
+
 ## [10.0.0-beta.29](https://github.com/videojs/v10/compare/@videojs/element@10.0.0-beta.28...@videojs/element@10.0.0-beta.29) (2026-08-19)
 
 

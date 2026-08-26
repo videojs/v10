@@ -105,12 +105,14 @@ The `.astro` wrapper is required because only Astro `<script>` tags go through V
 
 ```ts
 import '@videojs/html/video/player';
+import '@videojs/html/ui/container';
 import '@videojs/html/ui/mute-button';
 ```
 
 Import registration for:
 
 - `@videojs/html/video/player` — always needed (registers `<video-player>`)
+- `@videojs/html/ui/container` — registers the layout and fullscreen boundary
 - `@videojs/html/ui/{component}` — registers the component's custom element
 
 ## React Demo Files

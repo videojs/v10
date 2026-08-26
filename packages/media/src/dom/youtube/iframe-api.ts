@@ -3,6 +3,7 @@
 // The API arrives from a script tag, so there is no npm SDK to type against.
 
 import { loadScript } from '@videojs/utils/dom';
+
 import { MediaError } from '../../core/media-error';
 
 export interface YouTubePlayerApi {
@@ -52,9 +53,11 @@ const API_URL = 'https://www.youtube.com/iframe_api';
 export async function loadYouTubeApi(): Promise<YouTubeApi> {
   const existing = (globalThis as { YT?: YouTubeApi }).YT;
   if (existing?.Player) return existing;
+
   await loadScript(API_URL);
   const api = (globalThis as { YT?: YouTubeApi }).YT;
   if (!api) throw new Error('YouTube iframe API failed to load');
+
   // The loader stub exposes `YT.ready` before `YT.Player` is defined.
   await new Promise<void>((resolve) => api.ready(resolve));
   return api;

@@ -1,9 +1,9 @@
 /**
- * The host-bound Media, covering what binding to a host is what makes true: the
- * fixed behavior is readable back off the Media because the host forwards to the
- * element, not because the adapter keeps a parallel copy of it.
+ * The host-bound Media, covering what binding to a host is what makes true: the fixed behavior is readable back off the
+ * Media because the host forwards to the element, not because the adapter keeps a parallel copy of it.
  */
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
+
 import { HlsBackgroundVideoMedia } from '../media';
 
 describe('HlsBackgroundVideoMedia', () => {
@@ -22,6 +22,7 @@ describe('HlsBackgroundVideoMedia', () => {
   it('follows the element when it is changed underneath', () => {
     const media = new HlsBackgroundVideoMedia();
     const el = document.createElement('video');
+
     media.attach(el);
 
     el.loop = false;

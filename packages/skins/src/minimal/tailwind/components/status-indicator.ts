@@ -1,4 +1,5 @@
 import { cn } from '@videojs/utils/style';
+
 import { centeredIndicatorRoot, topIndicatorContent, topIndicatorIcon, topIndicatorRoot } from './input-indicator';
 
 export const statusIndicator = {

@@ -1,0 +1,112 @@
+---
+title: Metadata
+description: Resolved title and poster values for the player store
+---
+
+import FeatureReference from "@/components/docs/api-reference/FeatureReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+
+Resolves what is playing into two values your UI can render: `title` and `poster`.
+
+`title` and `poster` each resolve independently through the same two tiers: the value you set, then the value the media reports. The first tier that holds a value wins; when neither does, the resolved value is an empty string. Because the tiers stay separate, clearing the value you set reveals the media's, and a source that reports a poster but no title contributes to one while leaving the other empty.
+
+An empty string counts as a value and stops the chain: set `title` to `''` and the resolved title is `''`. Pass `null` to clear your value.
+
+The metadata feature is included by the `videoFeatures`, `audioFeatures`, `liveVideoFeatures`, and `liveAudioFeatures` <DocsLink slug="concepts/presets">presets</DocsLink>; apps that build a custom preset can compose it in directly.
+
+<FeatureReference feature="metadata" />
+
+### Selector
+
+To just show the name of what is playing, drop in the <DocsLink slug="reference/title">Title component</DocsLink> — it reads this feature for you. Reach for the selector when building your own UI.
+
+<FrameworkCase frameworks={["react"]}>
+Pass `selectMetadata` to <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> to subscribe to metadata state. Returns `undefined` if the metadata feature is not configured.
+
+```tsx title="ContentTitle.tsx"
+import { selectMetadata, usePlayer } from '@videojs/react';
+
+function ContentTitle() {
+  const metadata = usePlayer(selectMetadata);
+  if (!metadata?.title) return null;
+
+  return <h2 className="content-title">{metadata.title}</h2>;
+}
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+Pass `selectMetadata` to <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> to subscribe to metadata state. Returns `undefined` if the metadata feature is not configured.
+
+```ts title="content-title.ts"
+import { createPlayer, UIElement, selectMetadata } from '@videojs/html';
+import { videoFeatures } from '@videojs/html/video';
+
+const { PlayerController } = createPlayer({ features: videoFeatures });
+
+class ContentTitle extends UIElement {
+  readonly #metadata = new PlayerController(this, selectMetadata);
+}
+```
+</FrameworkCase>
+
+### Player inputs
+
+The store publishes the resolved values and takes no writes. A player input is the only way to set one.
+
+<FrameworkCase frameworks={["react"]}>
+Every input is a prop on <DocsLink slug="reference/player">`Player`</DocsLink>. A player built without the metadata feature has none of them, and none is forwarded.
+
+```tsx title="App.tsx"
+import { Container, createPlayer } from '@videojs/react';
+import { videoFeatures } from '@videojs/react/video';
+
+const { Player } = createPlayer({ features: videoFeatures });
+
+function App({ episode }: { episode: { title: string | null; art: string | null } }) {
+  return (
+    <Player title={episode.title} poster={episode.art}>
+      <Container>
+        <video src="episode.mp4" />
+      </Container>
+    </Player>
+  );
+}
+```
+
+Passing `null` clears your value, so `title={null}` falls through to the title the media reports.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+Every input is an attribute on <DocsLink slug="reference/player">`<video-player>`</DocsLink>, each with a matching property. A player built without the metadata feature observes none of them.
+
+`title` already means the tooltip on an HTML element, so the title input goes by `content-title` in markup, and by `contentTitle` as a property. The other inputs use their own names.
+
+```html
+<video-player content-title="The Pilot" poster="/episode-art.jpg">
+  <media-container>
+    <video src="episode.mp4"></video>
+  </media-container>
+</video-player>
+```
+
+Removing an attribute clears your value, so it falls through to what the media reports.
+
+```ts title="title-controls.ts"
+const player = document.querySelector('video-player');
+
+player?.setAttribute('content-title', 'The Pilot');
+player?.removeAttribute('content-title'); // falls back to the media
+```
+
+The flow between an attribute and its property runs one way: an attribute change writes the property, but setting the property leaves the attribute alone. Read the property for the current value.
+</FrameworkCase>
+
+### Media-reported values
+
+The media tier comes from media that reports content data and announces changes to it, and it covers `title` and `poster`. A media reports only the keys it can vouch for, so either may be absent while the other arrives. A key that never arrives means that tier never contributes, and the resolved value is whatever you set. Detaching the media clears its values; the values you set survive and apply to the next source.
+
+`poster` is the feature's own resolved value, not the media element's `poster` attribute. Setting one does not set the other.
+
+A low-resolution stand-in to show while the poster loads is not part of this feature. The <DocsLink slug="reference/poster">poster</DocsLink> renders an `<img>` you control, so give it a `background-image` and that shows until the poster itself paints over it. <DocsLink slug="how-to/add-a-poster-and-loading-placeholder">Add a poster and loading placeholder</DocsLink> walks through that technique for each framework.

@@ -1,6 +1,7 @@
 import { type MediaStreamType, MediaStreamTypes } from '@videojs/media';
 import { createStore } from '@videojs/store';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
+
 import type { PlayerTarget } from '../../../player';
 import { createMockVideo } from '../../../tests/test-helpers';
 import { streamTypeFeature } from '../stream-type';
@@ -11,6 +12,7 @@ describe('streamTypeFeature', () => {
       const video = createMockVideo({ duration: Number.NaN });
 
       const store = createStore<PlayerTarget>()(streamTypeFeature);
+
       store.attach({ media: video, container: null });
 
       expect(store.state.streamType).toBe(MediaStreamTypes.UNKNOWN);
@@ -20,6 +22,7 @@ describe('streamTypeFeature', () => {
       const video = createMockVideo({ duration: Number.POSITIVE_INFINITY });
 
       const store = createStore<PlayerTarget>()(streamTypeFeature);
+
       store.attach({ media: video, container: null });
 
       expect(store.state.streamType).toBe(MediaStreamTypes.LIVE);
@@ -29,6 +32,7 @@ describe('streamTypeFeature', () => {
       const video = createMockVideo({ duration: 120 });
 
       const store = createStore<PlayerTarget>()(streamTypeFeature);
+
       store.attach({ media: video, container: null });
 
       expect(store.state.streamType).toBe(MediaStreamTypes.ON_DEMAND);
@@ -38,6 +42,7 @@ describe('streamTypeFeature', () => {
       const video = createMockVideo({ duration: Number.NaN });
 
       const store = createStore<PlayerTarget>()(streamTypeFeature);
+
       store.attach({ media: video, container: null });
 
       expect(store.state.streamType).toBe(MediaStreamTypes.UNKNOWN);
@@ -52,6 +57,7 @@ describe('streamTypeFeature', () => {
       const video = createMockVideo({ duration: 120 });
 
       const store = createStore<PlayerTarget>()(streamTypeFeature);
+
       store.attach({ media: video, container: null });
 
       expect(store.state.streamType).toBe(MediaStreamTypes.ON_DEMAND);
@@ -66,9 +72,11 @@ describe('streamTypeFeature', () => {
   describe('native (media exposes `streamType`)', () => {
     it('reads `streamType` directly when available', () => {
       const media = new EventTarget() as EventTarget & { streamType: MediaStreamType };
+
       media.streamType = MediaStreamTypes.LIVE;
 
       const store = createStore<PlayerTarget>()(streamTypeFeature);
+
       // The store target accepts any `Media`-shaped object; cast for the test.
       store.attach({ media: media as unknown as PlayerTarget['media'], container: null });
 
@@ -77,9 +85,11 @@ describe('streamTypeFeature', () => {
 
     it('syncs on `streamtypechange`', () => {
       const media = new EventTarget() as EventTarget & { streamType: MediaStreamType };
+
       media.streamType = MediaStreamTypes.UNKNOWN;
 
       const store = createStore<PlayerTarget>()(streamTypeFeature);
+
       store.attach({ media: media as unknown as PlayerTarget['media'], container: null });
 
       expect(store.state.streamType).toBe(MediaStreamTypes.UNKNOWN);
@@ -104,6 +114,7 @@ describe('streamTypeFeature', () => {
       });
 
       const store = createStore<PlayerTarget>()(streamTypeFeature);
+
       store.attach({ media: media as unknown as PlayerTarget['media'], container: null });
 
       expect(store.state.streamType).toBe(MediaStreamTypes.LIVE);

@@ -21,14 +21,17 @@ function allShapesUseCurrentColor(node: XastElement, inheritedFill: string): boo
       return false;
     }
   }
+
   return true;
 }
 
 function hasShapeDescendant(node: XastElement): boolean {
   for (const child of node.children) {
     if (child.type !== 'element') continue;
+
     if (SHAPES.has(child.name) || hasShapeDescendant(child)) return true;
   }
+
   return false;
 }
 
@@ -36,18 +39,18 @@ function removeFillCurrentColor(node: XastElement): void {
   if (node.attributes.fill === 'currentColor') {
     delete node.attributes.fill;
   }
+
   for (const child of node.children) {
     if (child.type === 'element') removeFillCurrentColor(child);
   }
 }
 
 /**
- * When the root `<svg>` has `fill="none"` but every shape descendant uses
- * `fill="currentColor"` (directly or inherited from a `<g>`), hoist
- * `fill="currentColor"` to the root and strip it from descendants.
+ * When the root `<svg>` has `fill="none"` but every shape descendant uses `fill="currentColor"` (directly or inherited
+ * from a `<g>`), hoist `fill="currentColor"` to the root and strip it from descendants.
  *
- * With `multipass: true`, SVGO's `collapseGroups` will then clean up any
- * `<g>` elements left with no attributes on the next pass.
+ * With `multipass: true`, SVGO's `collapseGroups` will then clean up any `<g>` elements left with no attributes on the
+ * next pass.
  */
 const hoistCurrentColorFill: CustomPlugin = {
   name: 'hoistCurrentColorFill',
@@ -55,8 +58,11 @@ const hoistCurrentColorFill: CustomPlugin = {
     element: {
       exit(node) {
         if (node.name !== 'svg') return;
+
         if (node.attributes.fill !== 'none') return;
+
         if (!hasShapeDescendant(node)) return;
+
         if (!allShapesUseCurrentColor(node, 'none')) return;
 
         node.attributes.fill = 'currentColor';

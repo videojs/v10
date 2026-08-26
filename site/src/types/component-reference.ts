@@ -1,8 +1,8 @@
 /**
  * Zod schemas for API reference JSON files.
  *
- * This is the single source of truth for the shape of generated API reference data.
- * Both the builder (scripts/api-docs-builder) and Astro components import from here.
+ * This is the single source of truth for the shape of generated API reference data. Both the builder
+ * (scripts/api-docs-builder) and Astro components import from here.
  */
 import { z } from 'astro/zod';
 
@@ -31,6 +31,11 @@ export const CSSVarDefSchema = z.object({
   description: z.string(),
 });
 
+export const ComponentEventDefSchema = z.object({
+  name: z.string(),
+  description: z.string().optional(),
+});
+
 export const PartReferenceSchema = z.object({
   name: z.string(),
   description: z.string().optional(),
@@ -42,6 +47,7 @@ export const PartReferenceSchema = z.object({
     html: z
       .object({
         tagName: z.string(),
+        events: z.array(ComponentEventDefSchema).optional(),
       })
       .optional(),
     react: z.object({}).optional(),
@@ -56,5 +62,6 @@ export type PropDef = z.infer<typeof PropDefSchema>;
 export type StateDef = z.infer<typeof StateDefSchema>;
 export type DataAttrDef = z.infer<typeof DataAttrDefSchema>;
 export type CSSVarDef = z.infer<typeof CSSVarDefSchema>;
+export type ComponentEventDef = z.infer<typeof ComponentEventDefSchema>;
 export type PartReference = z.infer<typeof PartReferenceSchema>;
 export type ComponentReference = z.infer<typeof ComponentReferenceSchema>;

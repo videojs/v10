@@ -25,9 +25,12 @@ interface SliderSegmentsProps extends Omit<UIComponentProps<'div', SliderSegment
 export const SliderSegments = forwardRef<HTMLDivElement, SliderSegmentsProps>(
   function SliderSegments(componentProps, ref) {
     const { ranges, min, max, renderSegment, render, className, style, ...elementProps } = componentProps;
+
     const slider = useSliderContext();
     const pointerValue = useSliderPointerValue();
+
     const [core] = useState(() => new SliderSegmentsCore());
+
     const geometry = useMemo(
       () => core.getGeometry({ ranges, min, max, orientation: slider.state.orientation }),
       [core, ranges, min, max, slider.state.orientation]

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { DEFAULT_STATUS_ANNOUNCER_LABELS } from '../status-announcer-labels';
 import { deriveStatusAnnouncement, deriveVolumeAnnouncement } from '../status-announcer-status';

@@ -1,0 +1,34 @@
+.media-container {
+  position: relative;
+}
+
+.media-container video {
+  width: 100%;
+}
+
+.media-remote-buttons {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  display: flex;
+  gap: 8px;
+}
+
+.media-airplay-button,
+.media-cast-button {
+  padding-block: 8px;
+  padding-inline: 20px;
+  color: black;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 9999px;
+  backdrop-filter: blur(10px);
+}
+
+.media-airplay-button[data-disabled],
+.media-cast-button[data-disabled] {
+  cursor: not-allowed;
+  opacity: 0.5;
+  filter: grayscale(1);
+}

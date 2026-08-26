@@ -1,10 +1,11 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vite-plus/test';
 
 import { isWebKitAirPlayCapable, supportsWebKitAirPlay } from '../webkit';
 
 // jsdom lacks WebKit's AirPlay APIs, so stub the global support flag per test.
 function stubWebKit(present: boolean) {
   const key = 'WebKitPlaybackTargetAvailabilityEvent';
+
   if (present) {
     (globalThis as unknown as Record<string, unknown>)[key] = class {};
   } else {
@@ -31,12 +32,14 @@ describe('webkit', () => {
     it('returns true when supported and the media exposes the AirPlay flag', () => {
       stubWebKit(true);
       const media = { webkitCurrentPlaybackTargetIsWireless: false } as unknown as EventTarget;
+
       expect(isWebKitAirPlayCapable(media)).toBe(true);
     });
 
     it('returns false when WebKit is unsupported', () => {
       stubWebKit(false);
       const media = { webkitCurrentPlaybackTargetIsWireless: false } as unknown as EventTarget;
+
       expect(isWebKitAirPlayCapable(media)).toBe(false);
     });
 

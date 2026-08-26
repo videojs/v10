@@ -1,0 +1,14 @@
+<video-player>
+  <media-container class="html-volume-indicator-basic" tabindex="0">
+    <video src="{{VJS10_DEMO_VIDEO_MP4}}" autoplay muted playsinline loop></video>
+    <p class="html-volume-indicator-basic__instructions">Focus the player · M: mute · ↑/↓: volume ±5%</p>
+    <media-volume-indicator class="html-volume-indicator-basic__indicator" aria-hidden="true">
+      <media-volume-indicator-fill class="html-volume-indicator-basic__fill">
+        <media-volume-indicator-value class="html-volume-indicator-basic__value"></media-volume-indicator-value>
+      </media-volume-indicator-fill>
+    </media-volume-indicator>
+    <media-hotkey keys="m" action="toggleMuted"></media-hotkey>
+    <media-hotkey keys="ArrowUp" action="volumeStep" value="0.05"></media-hotkey>
+    <media-hotkey keys="ArrowDown" action="volumeStep" value="-0.05"></media-hotkey>
+  </media-container>
+</video-player>

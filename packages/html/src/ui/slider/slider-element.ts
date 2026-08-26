@@ -10,15 +10,22 @@ import {
 import { type Text, translateText } from '@videojs/core/i18n';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextProvider } from '@videojs/element/context';
-import { applyStyles, isRTL } from '@videojs/utils/dom';
+import { applyStyles } from '@videojs/utils/dom';
+
 import { i18nContext } from '../../i18n/context';
 import { I18nController } from '../../i18n/controller';
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
-import { MediaElement } from '../media-element';
+import { UIElement } from '../ui-element';
 import { sliderContext } from './context';
 
-export class SliderElement extends MediaElement {
+/**
+ * @fires value-change - Fired while the slider value changes during an interaction.
+ * @fires value-commit - Fired when an interaction commits the slider value.
+ * @fires drag-start - Fired when a pointer drag starts.
+ * @fires drag-end - Fired when a pointer drag ends.
+ */
+export class SliderElement extends UIElement {
   static readonly tagName = 'media-slider';
 
   static override properties = {
@@ -54,6 +61,7 @@ export class SliderElement extends MediaElement {
 
   override connectedCallback(): void {
     super.connectedCallback();
+
     if (this.destroyed) return;
 
     this.#disconnect = new AbortController();
@@ -63,7 +71,6 @@ export class SliderElement extends MediaElement {
       getElement: () => this,
       getThumbElement: () => this.querySelector<HTMLElement>('media-slider-thumb'),
       getOrientation: () => this.orientation,
-      isRTL: () => isRTL(this),
       isDisabled: () => this.disabled,
       getPercent: () => this.#core.percentFromValue(this.value),
       getStepPercent: () => this.#core.getStepPercent(),
@@ -118,6 +125,7 @@ export class SliderElement extends MediaElement {
 
   protected override update(_changed: PropertyValues): void {
     super.update(_changed);
+
     if (!this.#slider) return;
 
     this.#core.setInput(this.#slider.input.current);
@@ -137,6 +145,7 @@ export class SliderElement extends MediaElement {
       pointerValue: this.#core.valueFromPercent(state.pointerPercent),
       thumbAttrs: (() => {
         const attrs = this.#core.getAttrs(state);
+
         return { ...attrs, 'aria-label': translateText(attrs['aria-label'], this.#i18n.value) };
       })(),
       thumbProps: this.#slider.thumbProps,

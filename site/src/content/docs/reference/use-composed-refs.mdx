@@ -1,0 +1,32 @@
+---
+title: useComposedRefs
+description: Hook that updates multiple React refs through one stable callback ref
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+
+## Import
+
+```tsx
+import { useComposedRefs } from "@videojs/react";
+```
+
+## Usage
+
+Compose an internal ref with a forwarded ref when both need the same element.
+
+```tsx
+import { forwardRef, useRef } from "react";
+import { useComposedRefs } from "@videojs/react";
+
+const Video = forwardRef<HTMLVideoElement>(function Video(_, forwardedRef) {
+  const localRef = useRef<HTMLVideoElement>(null);
+  const ref = useComposedRefs(forwardedRef, localRef);
+
+  return <video ref={ref} />;
+});
+```
+
+The callback updates callback refs and ref objects. It also preserves cleanup functions returned by React 19 callback refs.
+
+<UtilReference util="useComposedRefs" />

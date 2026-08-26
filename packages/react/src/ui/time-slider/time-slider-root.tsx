@@ -41,10 +41,12 @@ export const TimeSliderRoot = forwardRef<HTMLDivElement, TimeSliderRootProps>(
     const time = usePlayer(selectTime);
     const buffer = usePlayer(selectBuffer);
     const playback = usePlayer(selectPlayback);
+
     const translator = useTranslator();
     const locale = useLocale();
 
     const [core] = useState(() => new TimeSliderCore());
+
     core.setProps({
       label,
       step,
@@ -73,6 +75,7 @@ export const TimeSliderRoot = forwardRef<HTMLDivElement, TimeSliderRootProps>(
       useSlider<TimeSliderCore.State>({
         computeState: (input) => {
           core.setInput(input);
+
           if (!time || !buffer) {
             core.setMedia({
               currentTime: 0,
@@ -99,6 +102,7 @@ export const TimeSliderRoot = forwardRef<HTMLDivElement, TimeSliderRootProps>(
         getCSSVars: getTimeSliderCSSVars,
         onValueCommit: (percent) => {
           const media = mediaRef.current;
+
           if (media) media.seek(core.rawValueFromPercent(percent));
         },
         onDragStart: () => {
@@ -113,6 +117,7 @@ export const TimeSliderRoot = forwardRef<HTMLDivElement, TimeSliderRootProps>(
 
     if (!time) {
       if (__DEV__) logMissingFeature('TimeSlider', 'time');
+
       return null;
     }
 
@@ -128,6 +133,7 @@ export const TimeSliderRoot = forwardRef<HTMLDivElement, TimeSliderRootProps>(
           stateAttrMap: TimeSliderDataAttrs,
           getAttrs: (sliderState) => {
             const attrs = core.getAttrs(sliderState as TimeSliderCore.State);
+
             return {
               ...attrs,
               'aria-label': translateText(attrs['aria-label'], translator),

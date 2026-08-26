@@ -1,98 +1,72 @@
 # How-to Guide Template
 
-Use for step-by-step guides that achieve a specific outcome.
-
-> **Use sparingly.** Most documentation should be concept pages. Only use how-to guides
-> when the reader needs multi-step instructions to build something specific.
-
-## Frontmatter
-
-```yaml
----
-title: 'Achieve specific outcome'
-description: 'Step-by-step guide to accomplish X'
----
-```
+Use for pages under `site/src/content/docs/how-to/` — one page per reader goal ("Autoplay", "Show captions and subtitles", "Remember user preferences"). The rules — when a topic gets its own page, the section list, and the frontmatter fields — live in `site/src/content/docs/how-to/write-guides.mdx`; read it first. Follow an existing guide (e.g., `how-to/autoplay.mdx`) for current MDX and demo patterns.
 
 ## Page structure
 
+Use this structure when it helps a reader scan the task. Established, high-value guides may keep a clearer topic-specific structure; do not rename headings mechanically when that makes the page harder to use.
+
 ```mdx
 ---
-title: 'Build a custom player'
-description: 'Step-by-step guide to building a player from scratch'
+title: 'Goal-oriented title'
+description: 'One-sentence summary for search and metadata'
 ---
 
-import FrameworkCase from '@/components/docs/FrameworkCase.astro';
-import Aside from '@/components/Aside.astro';
-import DocsLink from '@/components/docs/DocsLink.astro';
+{/* Demo, DocsLink, FrameworkCase, StyleCase imports and ?raw demo files */}
 
-Brief description of what you'll build. One sentence.
+One- or two-sentence summary. No heading.
 
-### Prerequisites
+<CustomUiNote />
+{/* Only when the guide assumes the reader is building custom UI with the
+    Video.js UI library. Skip it when the outcome works without ejecting. */}
 
-- Familiarity with <DocsLink slug="concepts/prerequisite">prerequisite concept</DocsLink>
-- Node.js 18+
 
-## Step 1: Set up
+## Recommended approach
 
-Brief intro — what we're doing and why.
+The one recommended implementation, stated directly. Smallest complete example
+first, as a <Demo> backed by real demo files per framework/style.
 
-{/* Code for this step */}
+## How it works
 
-<Aside type="note">
-Supplementary context that isn't critical to the step.
-</Aside>
+Only the background needed to understand or modify the code above, using exact
+exported names. Link deeper explanation to concept pages.
 
-## Step 2: Next action
+## Availability and constraints
 
-What we're doing and why.
+Browser restrictions, platform differences, permission or user-interaction
+requirements, expected failure modes. Stated plainly.
 
-<FrameworkCase frameworks={["react"]}>
+## Common variations
 
-{/* React-specific code */}
+### Variation name
 
-</FrameworkCase>
+Alternatives, each in its own subsection, kept separate from the recommended
+approach.
 
-<FrameworkCase frameworks={["html"]}>
+## Troubleshooting
 
-{/* HTML-specific code */}
+### Symptom as the reader sees it
 
-</FrameworkCase>
+Likely cause, then the fix.
 
-## Step 3: Final step
+## Related components
 
-Last piece of the puzzle.
+- <DocsLink slug="reference/..." />
 
-{/* Code */}
+## Related API
 
-## Complete example
+- <DocsLink slug="reference/..." />
 
-Everything together in one runnable block:
+## Related guides
 
-{/* Full working example with all imports */}
-
-## What's next?
-
-- <DocsLink slug="concepts/next-concept">Deeper concept</DocsLink>
-- <DocsLink slug="how-to/next-guide">Follow-up guide</DocsLink>
-- <DocsLink slug="reference/related-component">Component reference</DocsLink>
+- <DocsLink slug="how-to/..." />
 ```
-
-## Step structure
-
-Each step should have:
-
-1. **Heading** — clear action (`## Step N: Action`)
-2. **Intro** — why we're doing this (1-2 sentences)
-3. **Code** — the code to write
-4. **Explanation** — what the code does (only if not obvious)
 
 ## Checklist
 
-- [ ] Clear title stating what you'll build or achieve
-- [ ] Prerequisites listed
-- [ ] Numbered steps with clear actions
-- [ ] Code example at each step
-- [ ] Framework-specific content uses `<FrameworkCase>`
-- [ ] Complete working example at end
-- [ ] "What's next?" section with links
+- [ ] Goal-oriented title in the reader's words — completes "How to…" without the literal prefix; one goal per page
+- [ ] Sections present usually keep the template names and order; any exception makes the task easier to follow
+- [ ] Primary example is real demo files imported into MDX, not inline fences
+- [ ] Exact export, prop, event, and attribute names throughout
+- [ ] `<CustomUiNote />` after the summary when the guide assumes custom UI; omitted otherwise
+- [ ] Sidebar entry added in `src/docs.config.ts`

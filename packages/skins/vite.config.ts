@@ -1,60 +1,62 @@
+import { globSync } from 'node:fs';
 import { resolve } from 'node:path';
-import react from '@vitejs/plugin-react';
-import { defineConfig, normalizePath } from 'vite';
-import { resolveCatalogCompilerConfig } from 'vjsc/catalog';
-import { plugin as stylesPlugin } from 'vjsc/styles';
-import compiler from 'vjsc/vite';
 
-import { reactOutput } from './build/output/react';
+import { defineConfig } from 'vite-plus';
+import type { UserConfig as PackUserConfig } from 'vite-plus/pack';
+
+import { type PackageBuildMode, packageBuildConfig, packageBuildModes } from '../../build/pack.ts';
+import { copyCssPlugin } from '../../build/plugins/copy-css-plugin.ts';
+import { cachedTaskInputs, packageTestTask, workspaceTaskDependencies } from '../../build/task.ts';
 
 const packageDir = import.meta.dirname;
+const skinsDir = resolve(packageDir, 'src');
+const entries = Object.fromEntries(
+  globSync('src/**/*.tailwind.ts', { cwd: packageDir }).map((file) => {
+    const key = file.replace('src/', '').replace('.ts', '');
 
-const canonicalDir = normalizePath(resolve(packageDir, 'canonical'));
+    return [key, file];
+  })
+);
 
-const reactSourceDir = normalizePath(resolve(packageDir, '../react/src'));
-
-const output = resolveCatalogCompilerConfig(reactOutput());
+const createPackConfig = (mode: PackageBuildMode): PackUserConfig => ({
+  ...packageBuildConfig(mode, 'browser'),
+  name: 'skins',
+  entry: entries,
+  plugins: [copyCssPlugin({ skinsDir, outDir: `dist/${mode}`, inline: false, rebuild: false })],
+});
 
 export default defineConfig({
-  root: resolve(packageDir, 'dev'),
-  plugins: [
-    compiler({
-      include: `${canonicalDir}/**/*.tsx`,
-      config: {
-        ...output,
-        plugins: [
-          stylesPlugin({
-            mode: 'css',
-            variant: 'default',
-            emit: {
-              input: resolve(canonicalDir, 'styles/tailwind.css'),
-              scope: '.media-skin-video',
-            },
-          }),
-          ...(output.plugins ?? []),
-        ],
+  run: {
+    tasks: {
+      build: {
+        command: 'vp pack',
+        dependsOn: workspaceTaskDependencies(),
+        input: cachedTaskInputs,
+        output: ['dist/**', '!dist/registry', '!dist/registry/**'],
       },
-    }),
-    react(),
-  ],
-  resolve: {
-    alias: [
-      { find: /^@videojs\/react$/, replacement: resolve(reactSourceDir, 'index.ts') },
+      'build:shadcn': {
+        command: 'vp -C shadcn pack',
+        dependsOn: workspaceTaskDependencies(),
+        // The registry plugin compares files in its output directory before
+        // rewriting them; those reads must not turn outputs into inputs.
+        input: [...cachedTaskInputs, '!dist/registry', '!dist/registry/**'],
+        output: ['dist/registry/**'],
+      },
+      'test:ci': packageTestTask('pnpm run test:types && vp test run'),
+    },
+  },
+  test: {
+    projects: [
       {
-        find: /^@videojs\/react\/icons$/,
-        replacement: resolve(reactSourceDir, 'icons/index.ts'),
+        test: {
+          name: 'skins',
+          root: packageDir,
+          include: ['vjsc/**/*.test.ts'],
+          // These integration tests share Vite and Rolldown package state.
+          fileParallelism: false,
+        },
       },
-      {
-        find: /^@videojs\/react\/video$/,
-        replacement: resolve(reactSourceDir, 'presets/video/index.ts'),
-      },
-      { find: /^@\//, replacement: `${reactSourceDir}/` },
     ],
-    conditions: ['development', 'import', 'module', 'browser', 'default'],
-    dedupe: ['react', 'react-dom'],
   },
-  optimizeDeps: {
-    include: ['react', 'react-dom'],
-    exclude: ['vjsc', 'vjsc/styles', '@videojs/core', '@videojs/icons', '@videojs/react', '@videojs/utils'],
-  },
+  pack: packageBuildModes.map(createPackConfig),
 });

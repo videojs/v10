@@ -41,13 +41,13 @@ function ErrorDisplay() {
 
 <FrameworkCase frameworks={["html"]}>
 ```ts title="error-display.ts"
-import { createPlayer, MediaElement, selectError } from '@videojs/html';
+import { createPlayer, UIElement, selectError } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
 
-const { PlayerController, context } = createPlayer({ features: videoFeatures });
+const { PlayerController } = createPlayer({ features: videoFeatures });
 
-class ErrorDisplay extends MediaElement {
-  readonly #error = new PlayerController(this, context, selectError);
+class ErrorDisplay extends UIElement {
+  readonly #error = new PlayerController(this, selectError);
 }
 ```
 </FrameworkCase>

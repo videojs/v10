@@ -1,0 +1,94 @@
+.react-dialog-basic {
+  position: relative;
+  min-height: 320px;
+}
+
+.react-dialog-basic__trigger {
+  display: grid;
+  gap: 10px;
+  width: min(100%, 420px);
+  padding: 0 0 12px;
+  overflow: hidden;
+  color: white;
+  cursor: pointer;
+  background: #111827;
+  border: 0;
+  border-radius: 12px;
+}
+
+.react-dialog-basic__trigger img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+}
+
+.react-dialog-basic__backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: rgb(3 7 18 / 80%);
+  transition: opacity 200ms ease;
+}
+
+.react-dialog-basic__dialog {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  transition: opacity 150ms ease;
+}
+
+.react-dialog-basic__backdrop[data-starting-style],
+.react-dialog-basic__backdrop[data-ending-style],
+.react-dialog-basic__dialog[data-starting-style],
+.react-dialog-basic__dialog[data-ending-style] {
+  opacity: 0;
+}
+
+.react-dialog-basic__popup {
+  position: relative;
+  width: 100%;
+  max-width: 560px;
+  padding: 16px;
+  color: white;
+  background: #111827;
+  border-radius: 12px;
+}
+
+.react-dialog-basic__title {
+  margin: 0 0 4px;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.react-dialog-basic__description {
+  margin: 0 0 12px;
+}
+
+.react-dialog-basic__close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 6px 12px;
+  color: #111827;
+  cursor: pointer;
+  background: white;
+  border: 0;
+  border-radius: 9999px;
+}
+
+.react-dialog-basic video {
+  display: block;
+  width: 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .react-dialog-basic__backdrop,
+  .react-dialog-basic__dialog {
+    transition: none;
+  }
+}

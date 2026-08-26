@@ -1,0 +1,106 @@
+---
+title: 'Show timeline thumbnail previews'
+description: 'Preview frames along the timeline while the user scrubs, powered by a storyboard track.'
+---
+
+import Aside from '@/components/Aside.astro';
+import Demo from '@/components/docs/demos/Demo.astro';
+import DocsLink from '@/components/docs/DocsLink.astro';
+import CustomUiNote from '@/components/docs/CustomUiNote.astro';
+import FrameworkCase from '@/components/docs/FrameworkCase.astro';
+import StyleCase from '@/components/docs/StyleCase.astro';
+
+{/* React demos */}
+import BasicUsageDemoReact from '@/components/docs/demos/seek-preview/react/css/BasicUsage';
+import basicUsageReactTsx from '@/components/docs/demos/seek-preview/react/css/BasicUsage.tsx?raw';
+import basicUsageReactCss from '@/components/docs/demos/seek-preview/react/css/BasicUsage.css?raw';
+
+{/* HTML demos */}
+import BasicUsageDemoHtml from '@/components/docs/demos/seek-preview/html/css/BasicUsage.astro';
+import basicUsageHtml from '@/components/docs/demos/seek-preview/html/css/BasicUsage.html?raw';
+import basicUsageHtmlCss from '@/components/docs/demos/seek-preview/html/css/BasicUsage.css?raw';
+import basicUsageHtmlTs from '@/components/docs/demos/seek-preview/html/css/BasicUsage.ts?raw';
+
+Show preview frames along the timeline while the user scrubs, like YouTube's seek previews.
+
+<Aside type="tip" title="Using Mux?">
+With <DocsLink slug="reference/mux-video">MuxVideo</DocsLink>, the storyboard track is wired up for you — skip adding the track and go straight to the slider thumbnail. For other services, generate the storyboard on their platform and add the track yourself.
+</Aside>
+
+<CustomUiNote />
+
+## Recommended approach
+
+Add a `kind="metadata"` track labeled `thumbnails` whose cues reference storyboard images, then put a slider thumbnail inside the <DocsLink slug="reference/time-slider">TimeSlider</DocsLink>. Scrubbing shows the frame under the pointer; the thumbnail reads the pointer time from the slider, so it takes no props.
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
+      { title: "App.css", code: basicUsageReactCss, lang: "css" },
+    ]}>
+      <BasicUsageDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "index.html", code: basicUsageHtml, lang: "html" },
+      { title: "index.css", code: basicUsageHtmlCss, lang: "css" },
+      { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
+    ]}>
+      <BasicUsageDemoHtml />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+## How it works
+
+- Previews come from a storyboard: a `kind="metadata"` text track labeled `thumbnails` whose WebVTT cues map time ranges to image URLs (optionally with sprite coordinates). The <DocsLink slug="reference/feature-text-tracks">text track feature</DocsLink> exposes these as `thumbnailCues` and `thumbnailTrackSrc`.
+- The slider thumbnail renders the storyboard frame for the slider's pointer position. While the pointer is over the slider, the slider sets `data-pointing` and the `--media-slider-pointer` CSS variable; the demo's CSS uses them to reveal the preview and position it over the pointer.
+- To render a storyboard frame outside the slider — a fixed preview for a chapter list, for example — use the standalone <DocsLink slug="reference/thumbnail">Thumbnail</DocsLink> component with an explicit `time`.
+
+Each cue's text is an image URL. An optional `#xywh=x,y,w,h` fragment crops one frame out of a sprite sheet:
+
+```txt title="storyboard.vtt"
+WEBVTT
+
+00:00:00.000 --> 00:00:05.000
+storyboard.jpg#xywh=0,0,256,160
+
+00:00:05.000 --> 00:00:10.000
+storyboard.jpg#xywh=256,0,256,160
+```
+
+## Availability and constraints
+
+- Thumbnails require a storyboard asset generated alongside the media; the player doesn't extract frames from the video itself.
+- Cross-origin storyboards need CORS headers, and `crossOrigin` on the media element for the track to load.
+- Cues load asynchronously. The track appears before its cues are parsed, so previews fill in when the track finishes loading.
+- Storyboard images download on demand; oversized sprite sheets hurt seek-preview responsiveness more than they help quality.
+
+## Troubleshooting
+
+### Thumbnails don't appear while scrubbing
+
+Confirm the storyboard track is `kind="metadata"` with `label="thumbnails"` and has the `default` attribute — the browser leaves a non-default track disabled and never loads its cues. Then confirm the VTT loads (network panel) and cross-origin assets have CORS headers with `crossOrigin` set on the media element.
+
+### Thumbnails are blurry or slow
+
+Regenerate the storyboard with a larger frame size, or split giant sprite sheets into smaller images.
+
+## Related components
+
+- <DocsLink slug="reference/thumbnail">Thumbnail</DocsLink>
+- <DocsLink slug="reference/time-slider">Time slider</DocsLink>
+
+## Related API
+
+- <DocsLink slug="reference/feature-text-tracks">Text track feature</DocsLink>
+
+## Related guides
+
+- <DocsLink slug="how-to/add-a-poster-and-loading-placeholder">Add a poster and loading placeholder</DocsLink>
+- <DocsLink slug="how-to/show-captions-and-subtitles">Show captions and subtitles</DocsLink>

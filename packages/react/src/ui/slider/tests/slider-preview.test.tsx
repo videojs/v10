@@ -1,6 +1,6 @@
 import { cleanup, render } from '@testing-library/react';
 import { createRef } from 'react';
-import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vite-plus/test';
 
 import { SliderPreview } from '../slider-preview';
 import { SliderRoot } from '../slider-root';
@@ -43,6 +43,7 @@ const { mockSliderApi } = vi.hoisted(() => ({
 
 vi.mock('@videojs/core/dom', async (importOriginal) => {
   const orig: Record<string, unknown> = await importOriginal();
+
   return { ...orig, createSlider: vi.fn(mockSliderApi) };
 });
 
@@ -62,6 +63,7 @@ describe('SliderPreview', () => {
     );
 
     const el = container.querySelector('[data-testid="preview"]');
+
     expect(el).toBeTruthy();
     expect(el?.tagName).toBe('DIV');
   });
@@ -72,6 +74,7 @@ describe('SliderPreview', () => {
 
   it('forwards ref', () => {
     const ref = createRef<HTMLDivElement>();
+
     render(
       <SliderRoot>
         <SliderPreview ref={ref} />
@@ -89,6 +92,7 @@ describe('SliderPreview', () => {
     );
 
     const el = container.querySelector('[data-testid="preview"]') as HTMLElement;
+
     expect(el.style.position).toBe('absolute');
     expect(el.style.pointerEvents).toBe('none');
     expect(el.style.width).toBe('max-content');
@@ -102,6 +106,7 @@ describe('SliderPreview', () => {
     );
 
     const el = container.querySelector('[data-testid="preview"]') as HTMLElement;
+
     // Before ResizeObserver fires, width is 0 so halfWidth is 0
     expect(el.style.left).toContain('min(');
     expect(el.style.left).toContain('max(');
@@ -115,6 +120,7 @@ describe('SliderPreview', () => {
     );
 
     const el = container.querySelector('[data-testid="preview"]') as HTMLElement;
+
     expect(el.style.left).toContain('calc(var(--media-slider-pointer)');
     expect(el.style.left).not.toContain('min(');
   });
@@ -127,6 +133,7 @@ describe('SliderPreview', () => {
     );
 
     const el = container.querySelector('[data-testid="preview"]');
+
     expect(el?.getAttribute('data-orientation')).toBe('horizontal');
   });
 
@@ -138,6 +145,7 @@ describe('SliderPreview', () => {
     );
 
     const el = container.querySelector('[aria-label="Preview"]');
+
     expect(el).toBeTruthy();
   });
 
@@ -161,6 +169,7 @@ describe('SliderPreview', () => {
     );
 
     const el = container.querySelector('[data-testid="preview"]');
+
     expect(el?.className).toContain('idle');
   });
 
@@ -172,6 +181,7 @@ describe('SliderPreview', () => {
     );
 
     const el = container.querySelector('[data-testid="preview"]') as HTMLElement;
+
     expect(el.style.opacity).toBe('0.5');
   });
 

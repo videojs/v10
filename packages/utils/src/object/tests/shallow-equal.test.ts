@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
+
 import { shallowEqual } from '../shallow-equal';
 
 describe('shallowEqual', () => {
@@ -19,6 +20,7 @@ describe('shallowEqual', () => {
 
   it('returns true for same reference', () => {
     const obj = { a: 1 };
+
     expect(shallowEqual(obj, obj)).toBe(true);
   });
 
@@ -49,6 +51,7 @@ describe('shallowEqual', () => {
 
   it('returns true for nested objects with same reference', () => {
     const nested = { b: 1 };
+
     expect(shallowEqual({ a: nested }, { a: nested })).toBe(true);
   });
 

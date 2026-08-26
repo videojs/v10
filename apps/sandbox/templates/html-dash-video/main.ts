@@ -34,14 +34,14 @@ async function render() {
   document.getElementById('root')!.innerHTML = wrapSandboxHtmlI18n(html`
     <video-player>
       <${tag} class="aspect-video max-w-4xl mx-auto">
-        <dash-video src="${SOURCES[state.source].url}" ${mediaAttrs} playsinline>
+        <dash-video src="${SOURCES[state.source].url}" ${mediaAttrs} playsinline crossorigin>
           ${renderStoryboard(storyboard)}
         </dash-video>
         <!-- Mux Data is an opt-in media component. It hands the dash.js engine to the Mux Data
              SDK, so views carry stream-level detail. These streams aren't Mux-hosted, so the
              sandbox env key is what attributes the views. -->
         <mux-data player-software-name="dash-video" env-key="o9b7ge20gji31ao0rub18505f"></mux-data>
-        ${poster ? html`<img slot="poster" src="${poster}" alt="Video poster" />` : ''}
+        ${poster ? html`<img slot="poster" src="${poster}" alt="Video poster" crossorigin />` : ''}
       </${tag}>
     </video-player>
   `);

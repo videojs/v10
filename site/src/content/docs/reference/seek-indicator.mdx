@@ -1,0 +1,143 @@
+---
+title: SeekIndicator
+frameworkTitle:
+  html: media-seek-indicator
+description: A temporary visual indicator for keyboard and gesture seeking
+---
+
+import ComponentReference from "@/components/docs/api-reference/ComponentReference.astro";
+import ComponentImports from "@/components/docs/api-reference/ComponentImports.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+import StyleCase from "@/components/docs/StyleCase.astro";
+import Demo from "@/components/docs/demos/Demo.astro";
+
+{/* React demo */}
+import BasicUsageDemoReact from "@/components/docs/demos/seek-indicator/react/css/BasicUsage";
+import basicUsageReactTsx from "@/components/docs/demos/seek-indicator/react/css/BasicUsage.tsx?raw";
+import basicUsageReactCss from "@/components/docs/demos/seek-indicator/react/css/BasicUsage.css?raw";
+
+{/* HTML demo */}
+import BasicUsageDemoHtml from "@/components/docs/demos/seek-indicator/html/css/BasicUsage.astro";
+import basicUsageHtml from "@/components/docs/demos/seek-indicator/html/css/BasicUsage.html?raw";
+import basicUsageHtmlCss from "@/components/docs/demos/seek-indicator/html/css/BasicUsage.css?raw";
+import basicUsageHtmlTs from "@/components/docs/demos/seek-indicator/html/css/BasicUsage.ts?raw";
+
+## Import
+
+<ComponentImports component="SeekIndicator" html="seek-indicator" />
+
+## Anatomy
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<SeekIndicator.Root>
+  <SeekIndicator.Value />
+</SeekIndicator.Root>
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```html
+<media-seek-indicator>
+  <media-seek-indicator-value></media-seek-indicator-value>
+</media-seek-indicator>
+```
+</FrameworkCase>
+
+## Behavior
+
+`SeekIndicator` displays feedback for seek actions emitted by a <DocsLink slug="reference/hotkey">`Hotkey`</DocsLink> or <DocsLink slug="reference/gesture">`Gesture`</DocsLink> in the same player `Container`. It does not react to current-time changes or seek commands invoked directly through the player store.
+
+| Action | Direction | Value |
+| --- | --- | --- |
+| `seekStep` | The sign of `value` determines `forward` or `backward` | The absolute number of seconds, such as `10s` |
+| `seekToPercent` | The target percentage is compared with the current time | The formatted current time when the action occurred |
+
+Rapid `seekStep` actions in the same direction accumulate while the indicator is open. For example, two 10-second forward actions display `20s`. Changing direction or using `seekToPercent` starts a new display. During a rapid sequence, another full step is not added when it would pass the start or duration boundary.
+
+For `seekToPercent`, pass a percentage from 0 to 100 as `value`. A `Hotkey` with `keys="0-9"` can omit `value`; the pressed digit maps to 0%, 10%, and so on through 90%.
+
+The indicator closes after `closeDelay`, which defaults to 800 milliseconds. React stops rendering the Root after its close transition. The HTML custom element remains in the document with `hidden` until the next handled seek action.
+
+## Styling
+
+| Attribute | Values | Description |
+| --- | --- | --- |
+| `data-open` | Present / absent | Present while the indicator is open |
+| `data-direction` | `"forward"` \| `"backward"` | Direction of the handled seek |
+| `data-starting-style` | Present / absent | Present during the open transition |
+| `data-ending-style` | Present / absent | Present during the close transition |
+
+Position the Root from `data-direction` and use the transition attributes for entry and exit styles.
+
+<FrameworkCase frameworks={["html"]}>
+```css
+media-seek-indicator[data-direction="backward"] {
+  left: 1rem;
+}
+
+media-seek-indicator[data-direction="forward"] {
+  right: 1rem;
+}
+
+media-seek-indicator[data-starting-style],
+media-seek-indicator[data-ending-style] {
+  opacity: 0;
+}
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+React renders standard DOM elements. Add a `className` to the Root:
+
+```css
+.seek-indicator[data-direction="backward"] {
+  left: 1rem;
+}
+
+.seek-indicator[data-direction="forward"] {
+  right: 1rem;
+}
+
+.seek-indicator[data-starting-style],
+.seek-indicator[data-ending-style] {
+  opacity: 0;
+}
+```
+</FrameworkCase>
+
+## Accessibility
+
+`SeekIndicator` is visual feedback and does not create a live region. Keep the same seek operation available through keyboard-operable controls, and pair it with <DocsLink slug="reference/status-announcer">`StatusAnnouncer`</DocsLink> when changes should be announced to screen readers. Do not make `SeekIndicator.Value` a live region because rapid seek input would produce repeated announcements.
+
+## Examples
+
+### Basic Usage
+
+Focus the player, then press the left or right arrow key to seek by ten seconds. Press a digit from 0 through 9 to seek to a percentage of the duration.
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
+      { title: "App.css", code: basicUsageReactCss, lang: "css" },
+    ]}>
+      <BasicUsageDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "index.html", code: basicUsageHtml, lang: "html" },
+      { title: "index.css", code: basicUsageHtmlCss, lang: "css" },
+      { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
+    ]}>
+      <BasicUsageDemoHtml />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<ComponentReference component="SeekIndicator" />

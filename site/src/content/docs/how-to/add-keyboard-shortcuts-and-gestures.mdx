@@ -1,0 +1,132 @@
+---
+title: 'Add keyboard shortcuts and gestures'
+description: 'Add keyboard shortcuts, tap and double-tap gestures, and on-screen feedback for input actions.'
+---
+
+import DocsLink from '@/components/docs/DocsLink.astro';
+import CustomUiNote from '@/components/docs/CustomUiNote.astro';
+import FrameworkCase from '@/components/docs/FrameworkCase.astro';
+
+Add keyboard shortcuts and pointer gestures to the player declaratively, with on-screen feedback and screen-reader announcements.
+
+<CustomUiNote />
+
+## Recommended approach
+
+Declare shortcuts with `Hotkey` and gestures with `Gesture` inside the player container. Each maps an input to a player action; the prebuilt skins ship a full set.
+
+<FrameworkCase frameworks={["react"]}>
+
+```tsx
+import { Container, Gesture, Hotkey } from '@videojs/react';
+import { Video, VideoPlayer } from '@videojs/react/video';
+
+export default function App() {
+  return (
+    <VideoPlayer>
+      <Container>
+        <Video src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4" muted playsInline />
+
+        <Hotkey keys="Space" action="togglePaused" />
+        <Hotkey keys="m" action="toggleMuted" />
+        <Hotkey keys="f" action="toggleFullscreen" />
+        <Hotkey keys="ArrowRight" action="seekStep" value={5} />
+        <Hotkey keys="ArrowLeft" action="seekStep" value={-5} />
+
+        <Gesture type="tap" action="togglePaused" pointer="mouse" region="center" />
+        <Gesture type="tap" action="toggleControls" pointer="touch" />
+        <Gesture type="doubletap" action="seekStep" value={-10} region="left" />
+        <Gesture type="doubletap" action="seekStep" value={10} region="right" />
+      </Container>
+    </VideoPlayer>
+  );
+}
+```
+
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+
+```html
+<video-player>
+  <media-container>
+    <video src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4" muted playsinline></video>
+
+    <media-hotkey keys="Space" action="togglePaused"></media-hotkey>
+    <media-hotkey keys="m" action="toggleMuted"></media-hotkey>
+    <media-hotkey keys="f" action="toggleFullscreen"></media-hotkey>
+    <media-hotkey keys="ArrowRight" action="seekStep" value="5"></media-hotkey>
+    <media-hotkey keys="ArrowLeft" action="seekStep" value="-5"></media-hotkey>
+
+    <media-gesture type="tap" action="togglePaused" pointer="mouse" region="center"></media-gesture>
+    <media-gesture type="tap" action="toggleControls" pointer="touch"></media-gesture>
+    <media-gesture type="doubletap" action="seekStep" value="-10" region="left"></media-gesture>
+    <media-gesture type="doubletap" action="seekStep" value="10" region="right"></media-gesture>
+  </media-container>
+</video-player>
+<script type="module">
+  import '@videojs/html/video/player';
+  import '@videojs/html/ui/hotkey';
+  import { GestureElement } from '@videojs/html';
+
+  // Gesture has no standalone define entry; register the element directly.
+  customElements.define(GestureElement.tagName, GestureElement);
+</script>
+```
+
+</FrameworkCase>
+
+## How it works
+
+- `Hotkey` binds keys to player actions: `togglePaused`, `toggleMuted`, `toggleFullscreen`, `toggleSubtitles`, `togglePictureInPicture`, `seekStep` and `volumeStep` (with a `value`), `seekToPercent`, `speedUp`, and `speedDown`. The actions call the same feature state actions your components use.
+- `Gesture` binds pointer input — `tap` and `doubletap` — to the same actions, minus `seekToPercent` and plus `toggleControls`. Bindings are scoped by `pointer` (`mouse` or `touch`) and `region` (`left`, `center`, `right`) — regions split the container's width, not the rendered video's — so double-tap-left rewinds while double-tap-right skips forward.
+- `StatusAnnouncer` announces action results to screen readers, and the input indicator components render transient on-screen feedback (volume level, captions on/off) the way native players do. The prebuilt skins wire these up.
+
+The prebuilt skins bind the conventional set: Space and `k` toggle playback, `m` mutes, `f` fullscreens, `c` toggles captions, `i` toggles picture-in-picture, arrows seek and change volume, `j`/`l` seek in larger steps, `0`–`9` jump to a percentage, and `<`/`>` change speed.
+
+## Availability and constraints
+
+- Hotkeys listen on the player container by default, so multiple players on a page don't fight over keys. Pass `target="document"` on a hotkey to make it page-wide — appropriate only when one player owns the page.
+- Typing is protected: while focus is in an editable field, single-key bindings are skipped automatically. Modifier combinations (for example `Ctrl+Shift+f`) still fire.
+- Repeatable actions (seeking, volume) fire on held keys; toggle actions don't repeat.
+- Touch tap-to-toggle-controls and tap-to-pause are mutually exclusive per pointer type — the skins pause on mouse tap and toggle controls on touch tap, matching platform conventions.
+- Gestures and the built-in touch handling coordinate through one recognizer; register gestures declaratively instead of adding raw pointer listeners next to them.
+
+## Common variations
+
+### Customize a shortcut
+
+Render your own `Hotkey` set instead of a skin's: every binding is just an element, so add, remove, or re-key them freely.
+
+### Seek step size
+
+`seekStep` takes its step from `value` — match your content: 5 seconds for short clips, 15 or 30 for long-form.
+
+## Troubleshooting
+
+### Shortcuts don't fire
+
+Focus is outside the player container. Click the player first, or move focus into it; hotkeys are player-scoped by design.
+
+### Double-tap seek also toggles pause
+
+Regions overlap: keep single-tap `togglePaused` on `center` only, and double-tap seek on `left` and `right`, as in the skin defaults.
+
+### No visual feedback on keyboard actions
+
+The input indicator components render that feedback; use a prebuilt skin or add `StatusAnnouncer` and the indicator components from the skin source to a custom UI.
+
+## Related components
+
+- <DocsLink slug="reference/controls">Controls</DocsLink>
+- <DocsLink slug="reference/tooltip">Tooltip</DocsLink>
+
+## Related API
+
+- <DocsLink slug="reference/feature-playback">Playback feature</DocsLink>
+- <DocsLink slug="reference/feature-volume">Volume feature</DocsLink>
+- <DocsLink slug="reference/feature-fullscreen">Fullscreen feature</DocsLink>
+
+## Related guides
+
+- <DocsLink slug="how-to/show-and-hide-controls">Automatically show and hide controls</DocsLink>
+- <DocsLink slug="concepts/accessibility">Accessibility</DocsLink>

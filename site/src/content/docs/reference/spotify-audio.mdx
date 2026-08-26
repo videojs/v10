@@ -1,0 +1,107 @@
+---
+title: SpotifyAudio
+frameworkTitle:
+  html: spotify-audio
+description: Audio component that plays Spotify tracks, episodes, playlists, and shows through the Spotify embed
+---
+
+import MediaReference from "@/components/docs/api-reference/MediaReference.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+import StyleCase from "@/components/docs/StyleCase.astro";
+import Demo from "@/components/docs/demos/Demo.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+
+{/* React demos */}
+import BasicUsageDemoReact from "@/components/docs/demos/spotify-audio/react/css/BasicUsage";
+import basicUsageReactTsx from "@/components/docs/demos/spotify-audio/react/css/BasicUsage.tsx?raw";
+import basicUsageReactCss from "@/components/docs/demos/spotify-audio/react/css/BasicUsage.css?raw";
+
+{/* HTML demos */}
+import BasicUsageDemoHtml from "@/components/docs/demos/spotify-audio/html/css/BasicUsage.astro";
+import basicUsageHtml from "@/components/docs/demos/spotify-audio/html/css/BasicUsage.html?raw";
+import basicUsageHtmlCss from "@/components/docs/demos/spotify-audio/html/css/BasicUsage.css?raw";
+import basicUsageHtmlTs from "@/components/docs/demos/spotify-audio/html/css/BasicUsage.ts?raw";
+
+The [Spotify embed](https://developer.spotify.com/documentation/embeds) accepts tracks, episodes, albums, playlists, shows, and artists. Podcast episodes play in full for signed-out listeners; music plays as a preview until the listener logs in to Spotify.
+
+## Load a source
+
+`src` takes an `open.spotify.com` URL for any embeddable entity, including the localized (`/intl-de/`) and already-embedded (`/embed/`) forms, or a `spotify:<type>:<id>` URI. A `t` parameter sets the start position in seconds.
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<SpotifyAudio src="https://open.spotify.com/episode/7makk4oTQel546B0PZlDM5" controls />
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```html
+<spotify-audio src="https://open.spotify.com/episode/7makk4oTQel546B0PZlDM5" controls></spotify-audio>
+```
+</FrameworkCase>
+
+## Controls
+
+Spotify's own chrome is the only UI the embed offers, so `controls` decides whether the element is visible at all. With `controls`, it shows Spotify's player. Without it, the element hides itself and plays as an invisible transport: a hidden iframe still loads and plays, so a <DocsLink slug="concepts/skins">player skin</DocsLink>'s buttons drive playback while the embed takes no room on the page.
+
+## Behavior
+
+The Spotify embed exposes less than a native `<audio>` element:
+
+- No volume and no mute: the embed takes neither command and reports neither value, so a player skin shows no volume controls at all.
+- No playback rate and no text tracks.
+- `loop` replays the entity from the top when it ends; without it, the embed continues into whatever Spotify queues next.
+
+## Examples
+
+### Basic Usage
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
+      { title: "App.css", code: basicUsageReactCss, lang: "css" },
+    ]}>
+      <BasicUsageDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "index.html", code: basicUsageHtml, lang: "html" },
+      { title: "index.css", code: basicUsageHtmlCss, lang: "css" },
+      { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
+    ]}>
+      <BasicUsageDemoHtml />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<MediaReference media="SpotifyAudio">
+  <Fragment slot="engine-spotify">
+    Pass [Spotify embed options](https://developer.spotify.com/documentation/embeds) under `source.engine.spotify`, spelled exactly as Spotify spells them, plus anything Spotify adds next. <DocsLink slug="concepts/media-sources">Media Sources</DocsLink> covers how engine options fit into a structured source.
+
+    <FrameworkCase frameworks={["react"]}>
+    ```tsx
+    <SpotifyAudio
+      source={{
+        src: 'https://open.spotify.com/episode/7makk4oTQel546B0PZlDM5',
+        engine: { spotify: { t: 90, theme: 0 } },
+      }}
+    />
+    ```
+    </FrameworkCase>
+
+    <FrameworkCase frameworks={["html"]}>
+    ```ts
+    const audio = document.querySelector('spotify-audio');
+    audio.source = {
+      src: 'https://open.spotify.com/episode/7makk4oTQel546B0PZlDM5',
+      engine: { spotify: { t: 90, theme: 0 } },
+    };
+    ```
+    </FrameworkCase>
+  </Fragment>
+</MediaReference>

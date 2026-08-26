@@ -1,0 +1,30 @@
+.react-hotkey-basic {
+  position: relative;
+}
+
+.react-hotkey-basic video {
+  width: 100%;
+}
+
+.react-hotkey-basic__instructions {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  padding: 6px 10px;
+  margin: 0;
+  color: white;
+  background: rgb(0 0 0 / 70%);
+  border-radius: 4px;
+}
+
+.react-hotkey-basic__button {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  padding: 8px 20px;
+  color: black;
+  cursor: pointer;
+  background: rgb(255 255 255 / 80%);
+  border: 1px solid rgb(255 255 255 / 30%);
+  border-radius: 9999px;
+}

@@ -2,15 +2,23 @@
 
 Naming and file placement conventions required by the api-docs-builder at `site/scripts/api-docs-builder/`.
 
+The builder parses authored TypeScript and TSX with Oxc. Its cached project resolver follows relative and
+workspace-package imports, re-exports, interface inheritance, aliases, and the generic substitutions used by
+the documented API patterns; it does not invoke the TypeScript compiler.
+
 ## File Locations
 
 | File | Path | Purpose |
 |------|------|---------|
-| Core | `packages/core/src/core/ui/{name}/{name}-core.ts` | Props, State, defaultProps |
-| Data attrs | `packages/core/src/core/ui/{name}/{name}-data-attrs.ts` | Data attribute definitions |
-| CSS vars | `packages/core/src/core/ui/{name}/{name}-css-vars.ts` | CSS custom property definitions (optional) |
+| Core | `packages/core/src/core/ui/{name}/core.ts` | Props, State, defaultProps |
+| Data attrs | `packages/core/src/core/ui/{name}/data.ts` | Data attribute definitions |
+| CSS vars | `packages/core/src/core/ui/{name}/vars.ts` | CSS custom property definitions (optional) |
 | HTML element | `packages/html/src/ui/{name}/{name}-element.ts` | Custom element with `static tagName` |
 | React parts | `packages/react/src/ui/{name}/index.parts.ts` | Multi-part detection (optional) |
+
+Qualified core helpers retain the qualifier, such as `segments-core.ts`. Additional part-scoped data attribute
+files use `{qualifier}-data.ts`, such as `item-data.ts`, and export the full component-qualified name
+(`MenuItemDataAttrs`).
 
 ## Naming Requirements
 

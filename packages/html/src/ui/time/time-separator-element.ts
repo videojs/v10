@@ -1,6 +1,6 @@
-import { MediaElement } from '../media-element';
+import { UIElement } from '../ui-element';
 
-export class TimeSeparatorElement extends MediaElement {
+export class TimeSeparatorElement extends UIElement {
   static readonly tagName = 'media-time-separator';
 
   override connectedCallback(): void {

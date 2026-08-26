@@ -1,4 +1,5 @@
 import { isFunction } from '@videojs/utils/predicate';
+
 import type { Text } from '../../i18n';
 
 export function resolveLabel<State>(
@@ -8,5 +9,6 @@ export function resolveLabel<State>(
   if (isFunction(label)) {
     return label(state) || undefined;
   }
+
   return label || undefined;
 }

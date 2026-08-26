@@ -1,4 +1,5 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
+
 import { HTMLAudioElementHost } from '../../audio-host';
 import { HTMLVideoElementHost } from '../../video-host';
 import { CustomMediaElement } from '../index';
@@ -89,6 +90,7 @@ let tagCounter = 0;
 function defineVideoElement() {
   const tag = `test-video-${++tagCounter}`;
   const Ctor = CustomMediaElement('video', TestVideoHost);
+
   customElements.define(tag, Ctor);
   return { Ctor, tag };
 }
@@ -96,6 +98,7 @@ function defineVideoElement() {
 function defineVideoElementWithObjects() {
   const tag = `test-video-${++tagCounter}`;
   const Ctor = CustomMediaElement('video', TestVideoHostWithObjects);
+
   customElements.define(tag, Ctor);
   return { Ctor, tag };
 }
@@ -103,6 +106,7 @@ function defineVideoElementWithObjects() {
 function defineAudioElement() {
   const tag = `test-audio-${++tagCounter}`;
   const Ctor = CustomMediaElement('audio', TestAudioHost);
+
   customElements.define(tag, Ctor);
   return { Ctor, tag };
 }
@@ -110,12 +114,14 @@ function defineAudioElement() {
 function defineIframeElement() {
   const tag = `test-iframe-${++tagCounter}`;
   const Ctor = CustomMediaElement('iframe', TestIframeHost as never);
+
   customElements.define(tag, Ctor);
   return { Ctor, tag };
 }
 
 function create(def: { Ctor: new () => any; tag: string }) {
   const el = new def.Ctor();
+
   document.body.appendChild(el);
   return el;
 }
@@ -184,6 +190,7 @@ class TrackingVideoHost extends HTMLVideoElementHost {
 
   override set preload(value: '' | 'none' | 'metadata' | 'auto') {
     const preload = value as '' | 'none' | 'metadata' | 'auto' | null;
+
     this.calls.push(`set:preload:${preload}`);
     this.#preload = preload;
   }
@@ -194,6 +201,7 @@ class TrackingVideoHost extends HTMLVideoElementHost {
 function defineTrackingVideoElement() {
   const tag = `test-video-${++tagCounter}`;
   const Ctor = CustomMediaElement('video', TrackingVideoHost);
+
   customElements.define(tag, Ctor);
   return { Ctor, tag };
 }
@@ -202,12 +210,14 @@ describe('CustomMediaElement', () => {
   describe('shadow DOM setup', () => {
     it('creates a shadow root with a video element for video tag', () => {
       const el = create(defineVideoElement());
+
       expect(el.shadowRoot).toBeTruthy();
       expect(el.shadowRoot!.querySelector('video')).toBeTruthy();
     });
 
     it('creates a shadow root with an audio element for audio tag', () => {
       const el = create(defineAudioElement());
+
       expect(el.shadowRoot).toBeTruthy();
       expect(el.shadowRoot!.querySelector('audio')).toBeTruthy();
     });
@@ -215,6 +225,7 @@ describe('CustomMediaElement', () => {
     it('sets part attribute on the inner element', () => {
       const el = create(defineVideoElement());
       const video = el.shadowRoot!.querySelector('video')!;
+
       expect(video.getAttribute('part')).toBe('video');
     });
   });
@@ -223,12 +234,14 @@ describe('CustomMediaElement', () => {
     it('returns the shadow DOM media element by default', () => {
       const el = create(defineVideoElement());
       const video = el.shadowRoot!.querySelector('video');
+
       expect(el.target).toBe(video);
     });
 
     it('prefers a slotted element with slot=media', () => {
       const el = create(defineVideoElement());
       const slotted = document.createElement('video');
+
       slotted.slot = 'media';
       el.appendChild(slotted);
       expect(el.target).toBe(slotted);
@@ -239,11 +252,13 @@ describe('CustomMediaElement', () => {
       const shadowVideo = el.shadowRoot!.querySelector('video')!;
 
       const slottedVideo = document.createElement('video');
+
       slottedVideo.slot = 'media';
       el.appendChild(slottedVideo);
 
       // Simulate slotchange with bubbles (matches real browser behavior)
       const mediaSlot = el.shadowRoot!.querySelector('slot[name="media"]')!;
+
       mediaSlot.dispatchEvent(new Event('slotchange', { bubbles: true }));
 
       // After re-attach, property writes should go to the slotted element
@@ -258,6 +273,7 @@ describe('CustomMediaElement', () => {
 
       // Dispatch slotchange without adding a slotted element
       const mediaSlot = el.shadowRoot!.querySelector('slot[name="media"]')!;
+
       mediaSlot.dispatchEvent(new Event('slotchange', { bubbles: true }));
 
       el.volume = 0.5;
@@ -269,6 +285,7 @@ describe('CustomMediaElement', () => {
     it('includes standard attributes for video elements', () => {
       const { Ctor } = defineVideoElement();
       const observed = Ctor.observedAttributes;
+
       expect(observed).toContain('autoplay');
       expect(observed).toContain('controls');
       expect(observed).toContain('crossorigin');
@@ -286,6 +303,7 @@ describe('CustomMediaElement', () => {
     it('includes standard attributes for audio elements', () => {
       const { Ctor } = defineAudioElement();
       const observed = Ctor.observedAttributes;
+
       expect(observed).toContain('autoplay');
       expect(observed).toContain('controls');
       expect(observed).toContain('crossorigin');
@@ -301,6 +319,7 @@ describe('CustomMediaElement', () => {
     it('includes MediaHost properties that overlap with standard Attributes', () => {
       const { Ctor } = defineVideoElement();
       const observed = Ctor.observedAttributes;
+
       expect(observed).toContain('src');
       expect(observed).toContain('muted');
     });
@@ -308,6 +327,7 @@ describe('CustomMediaElement', () => {
     it('excludes MediaHost properties not in standard Attributes', () => {
       const { Ctor } = defineVideoElement();
       const observed = Ctor.observedAttributes;
+
       expect(observed).not.toContain('current-time');
       expect(observed).not.toContain('volume');
       expect(observed).not.toContain('playback-rate');
@@ -317,12 +337,14 @@ describe('CustomMediaElement', () => {
   describe('stream-type reflection', () => {
     it('sets the host streamType from the stream-type attribute', () => {
       const el = create(defineVideoElement());
+
       el.setAttribute('stream-type', 'live');
       expect(el.streamType).toBe('live');
     });
 
     it('reflects the streamType property to the stream-type attribute', () => {
       const el = create(defineVideoElement());
+
       el.streamType = 'live';
       expect(el.getAttribute('stream-type')).toBe('live');
       expect(el.streamType).toBe('live');
@@ -330,6 +352,7 @@ describe('CustomMediaElement', () => {
 
     it('does not forward stream-type to the inner media element', () => {
       const el = create(defineVideoElement());
+
       el.setAttribute('stream-type', 'live');
       expect(el.target!.hasAttribute('stream-type')).toBe(false);
     });
@@ -338,48 +361,56 @@ describe('CustomMediaElement', () => {
   describe('video attribute forwarding', () => {
     it('forwards autoplay to the target video element', () => {
       const el = create(defineVideoElement());
+
       el.setAttribute('autoplay', '');
       expect(el.target!.hasAttribute('autoplay')).toBe(true);
     });
 
     it('forwards controls to the target video element', () => {
       const el = create(defineVideoElement());
+
       el.setAttribute('controls', '');
       expect(el.target!.hasAttribute('controls')).toBe(true);
     });
 
     it('forwards crossorigin to the target video element', () => {
       const el = create(defineVideoElement());
+
       el.setAttribute('crossorigin', 'anonymous');
       expect(el.target!.getAttribute('crossorigin')).toBe('anonymous');
     });
 
     it('forwards loop to the target video element', () => {
       const el = create(defineVideoElement());
+
       el.setAttribute('loop', '');
       expect(el.target!.hasAttribute('loop')).toBe(true);
     });
 
     it('forwards playsinline to the target video element', () => {
       const el = create(defineVideoElement());
+
       el.setAttribute('playsinline', '');
       expect(el.target!.hasAttribute('playsinline')).toBe(true);
     });
 
     it('forwards preload to the target video element', () => {
       const el = create(defineVideoElement());
+
       el.setAttribute('preload', 'none');
       expect(el.target!.getAttribute('preload')).toBe('none');
     });
 
     it('forwards poster to the target video element', () => {
       const el = create(defineVideoElement());
+
       el.setAttribute('poster', 'https://example.com/poster.jpg');
       expect(el.target!.getAttribute('poster')).toBe('https://example.com/poster.jpg');
     });
 
     it('forwards controlslist to the target video element', () => {
       const el = create(defineVideoElement());
+
       el.setAttribute('controlslist', 'nodownload');
       expect(el.target!.getAttribute('controlslist')).toBe('nodownload');
     });
@@ -389,6 +420,7 @@ describe('CustomMediaElement', () => {
     // implements neither property, so only the assignment is observable here.
     it('forwards disableremoteplayback to the target video element', () => {
       const el = create(defineVideoElement());
+
       el.setAttribute('disableremoteplayback', '');
       expect(el.host.disableRemotePlayback).toBe(true);
       expect((el.target as HTMLVideoElement).disableRemotePlayback).toBe(true);
@@ -396,6 +428,7 @@ describe('CustomMediaElement', () => {
 
     it('forwards disablepictureinpicture to the target video element', () => {
       const el = create(defineVideoElement());
+
       el.setAttribute('disablepictureinpicture', '');
       expect(el.host.disablePictureInPicture).toBe(true);
       expect((el.target as HTMLVideoElement).disablePictureInPicture).toBe(true);
@@ -403,12 +436,14 @@ describe('CustomMediaElement', () => {
 
     it('forwards autopictureinpicture to the target video element', () => {
       const el = create(defineVideoElement());
+
       el.setAttribute('autopictureinpicture', '');
       expect(el.target!.hasAttribute('autopictureinpicture')).toBe(true);
     });
 
     it('forwards loading to the target video element', () => {
       const el = create(defineVideoElement());
+
       el.setAttribute('loading', 'lazy');
       expect(el.target!.getAttribute('loading')).toBe('lazy');
     });
@@ -437,6 +472,7 @@ describe('CustomMediaElement', () => {
       for (const attr of [...booleanAttrs, ...Object.keys(propertyOnlyAttrs)]) {
         el.setAttribute(attr, '');
       }
+
       for (const [attr, value] of Object.entries(valueAttrs)) {
         el.setAttribute(attr, value);
       }
@@ -444,9 +480,11 @@ describe('CustomMediaElement', () => {
       for (const attr of booleanAttrs) {
         expect(target.hasAttribute(attr), `expected ${attr} to be present on target`).toBe(true);
       }
+
       for (const [attr, prop] of Object.entries(propertyOnlyAttrs)) {
         expect((target as any)[prop], `expected ${attr} to set ${prop} on target`).toBe(true);
       }
+
       for (const [attr, value] of Object.entries(valueAttrs)) {
         expect(target.getAttribute(attr), `expected ${attr}="${value}" on target`).toBe(value);
       }
@@ -478,6 +516,7 @@ describe('CustomMediaElement', () => {
   describe('non-MediaHost attribute property accessors', () => {
     it('boolean property getter returns false when attribute is absent', () => {
       const el = create(defineVideoElement());
+
       expect(el.autoplay).toBe(false);
       expect(el.controls).toBe(false);
       expect(el.loop).toBe(false);
@@ -485,6 +524,7 @@ describe('CustomMediaElement', () => {
 
     it('boolean property getter returns true when attribute is present', () => {
       const el = create(defineVideoElement());
+
       el.setAttribute('autoplay', '');
       el.setAttribute('controls', '');
       el.setAttribute('loop', '');
@@ -496,6 +536,7 @@ describe('CustomMediaElement', () => {
 
     it('boolean property setter adds the attribute', () => {
       const el = create(defineVideoElement());
+
       el.autoplay = true;
       expect(el.hasAttribute('autoplay')).toBe(true);
       expect(el.target!.hasAttribute('autoplay')).toBe(true);
@@ -503,6 +544,7 @@ describe('CustomMediaElement', () => {
 
     it('boolean property setter removes the attribute when set to false', () => {
       const el = create(defineVideoElement());
+
       el.autoplay = true;
       el.autoplay = false;
       expect(el.hasAttribute('autoplay')).toBe(false);
@@ -511,17 +553,20 @@ describe('CustomMediaElement', () => {
 
     it('string property getter returns the attribute value', () => {
       const el = create(defineVideoElement());
+
       el.setAttribute('controlslist', 'nodownload');
       expect(el.controlsList).toBe('nodownload');
     });
 
     it('string property getter returns null when attribute is absent', () => {
       const el = create(defineVideoElement());
+
       expect(el.controlsList).toBeNull();
     });
 
     it('string property setter sets the attribute and forwards to target', () => {
       const el = create(defineVideoElement());
+
       el.controlsList = 'nodownload';
       expect(el.getAttribute('controlslist')).toBe('nodownload');
       expect(el.target!.getAttribute('controlslist')).toBe('nodownload');
@@ -529,6 +574,7 @@ describe('CustomMediaElement', () => {
 
     it('removing attribute resets string property getter to null', () => {
       const el = create(defineVideoElement());
+
       el.controlsList = 'nodownload';
       el.removeAttribute('controlslist');
       expect(el.controlsList).toBeNull();
@@ -580,6 +626,7 @@ describe('CustomMediaElement', () => {
   describe('MediaHost-backed string properties', () => {
     it('poster property reads through to the target', () => {
       const el = create(defineVideoElement());
+
       expect(el.poster).toBe('');
 
       el.setAttribute('poster', 'https://example.com/poster.jpg');
@@ -589,6 +636,7 @@ describe('CustomMediaElement', () => {
 
     it('poster setter forwards through MediaHost to the target', () => {
       const el = create(defineVideoElement());
+
       el.poster = 'https://example.com/poster.jpg';
       expect(el.getAttribute('poster')).toBe('https://example.com/poster.jpg');
       expect(el.target!.getAttribute('poster')).toBe('https://example.com/poster.jpg');
@@ -598,12 +646,14 @@ describe('CustomMediaElement', () => {
   describe('setter attributes route through MediaHost property', () => {
     it('sets muted property via attribute', () => {
       const el = create(defineVideoElement());
+
       el.setAttribute('muted', '');
       expect(el.muted).toBe(true);
     });
 
     it('unsets muted property when attribute removed', () => {
       const el = create(defineVideoElement());
+
       el.setAttribute('muted', '');
       expect(el.muted).toBe(true);
 
@@ -613,12 +663,14 @@ describe('CustomMediaElement', () => {
 
     it('sets src property via attribute', () => {
       const el = create(defineVideoElement());
+
       el.setAttribute('src', 'https://example.com/video.mp4');
       expect(el.src).toBe('https://example.com/video.mp4');
     });
 
     it('sets volume directly on MediaHost', () => {
       const el = create(defineVideoElement());
+
       el.volume = 0.5;
       expect(el.volume).toBe(0.5);
     });
@@ -627,6 +679,7 @@ describe('CustomMediaElement', () => {
   describe('MediaHost property delegation', () => {
     it('delegates getter properties to the MediaHost', () => {
       const el = create(defineVideoElement());
+
       expect(el.paused).toBe(true);
       expect(el.duration).toBeNaN();
       expect(el.currentTime).toBe(0);
@@ -634,12 +687,14 @@ describe('CustomMediaElement', () => {
 
     it('delegates setter properties to the MediaHost', () => {
       const el = create(defineVideoElement());
+
       el.volume = 0.5;
       expect(el.target!.volume).toBe(0.5);
     });
 
     it('delegates methods to the MediaHost', () => {
       const el = create(defineVideoElement());
+
       expect(typeof el.play).toBe('function');
       expect(typeof el.pause).toBe('function');
       expect(typeof el.load).toBe('function');
@@ -647,6 +702,7 @@ describe('CustomMediaElement', () => {
 
     it('excludes attach, detach, and destroy from delegation', () => {
       const { Ctor } = defineVideoElement();
+
       expect(Object.getOwnPropertyDescriptor(Ctor.prototype, 'attach')).toBeUndefined();
       expect(Object.getOwnPropertyDescriptor(Ctor.prototype, 'detach')).toBeUndefined();
       expect(Object.getOwnPropertyDescriptor(Ctor.prototype, 'destroy')).toBeUndefined();
@@ -709,11 +765,13 @@ describe('CustomMediaElement', () => {
   describe('connectedCallback', () => {
     it('marks iframe embeds with data-cross-origin-frame for cross-origin-safe styling', () => {
       const el = create(defineIframeElement());
+
       expect(el.hasAttribute('data-cross-origin-frame')).toBe(true);
     });
 
     it('does not add data-cross-origin-frame to native media elements', () => {
       const el = create(defineVideoElement());
+
       expect(el.hasAttribute('data-cross-origin-frame')).toBe(false);
     });
   });
@@ -721,6 +779,7 @@ describe('CustomMediaElement', () => {
   describe('disconnectedCallback', () => {
     it('calls destroy on the MediaHost when disconnected', async () => {
       const el = create(defineVideoElement());
+
       expect(el.destroyed).toBe(false);
 
       el.remove();
@@ -731,6 +790,7 @@ describe('CustomMediaElement', () => {
 
     it('does not destroy when keep-alive attribute is set', async () => {
       const el = create(defineVideoElement());
+
       el.setAttribute('keep-alive', '');
 
       el.remove();
@@ -741,6 +801,7 @@ describe('CustomMediaElement', () => {
     it('does not destroy when synchronously moved to a new parent', async () => {
       const el = create(defineVideoElement());
       const container = document.createElement('div');
+
       document.body.appendChild(container);
 
       // Moving fires disconnectedCallback + connectedCallback synchronously.
@@ -755,6 +816,7 @@ describe('CustomMediaElement', () => {
     it('excludes non-Attributes properties from observedAttributes', () => {
       const { Ctor } = defineVideoElementWithObjects();
       const observed = Ctor.observedAttributes;
+
       expect(observed).not.toContain('source');
       expect(observed).not.toContain('debug');
       expect(observed).toContain('src');
@@ -763,12 +825,14 @@ describe('CustomMediaElement', () => {
     it('allows object properties to be set via JS', () => {
       const el = create(defineVideoElementWithObjects());
       const newSource = { src: 'https://example.com/video.m3u8', engine: { maxBufferLength: 60 } };
+
       el.source = newSource;
       expect(el.source).toBe(newSource);
     });
 
     it('directly delegates primitive properties not in Attributes', () => {
       const el = create(defineVideoElementWithObjects());
+
       el.debug = true;
       expect(el.debug).toBe(true);
       expect(el.hasAttribute('debug')).toBe(false);
@@ -778,18 +842,21 @@ describe('CustomMediaElement', () => {
   describe('property setters set attribute and delegate to MediaHost', () => {
     it('string setter sets attribute on the custom element', () => {
       const el = create(defineTrackingVideoElement());
+
       el.src = 'https://example.com/video.mp4';
       expect(el.getAttribute('src')).toBe('https://example.com/video.mp4');
     });
 
     it('string setter delegates value to the MediaHost via attributeChangedCallback', () => {
       const el = create(defineTrackingVideoElement());
+
       el.src = 'https://example.com/video.mp4';
       expect(el.src).toBe('https://example.com/video.mp4');
     });
 
     it('preload setter delegates through the MediaHost', () => {
       const el = create(defineTrackingVideoElement());
+
       el.preload = 'metadata';
 
       expect(el.getAttribute('preload')).toBe('metadata');
@@ -799,24 +866,28 @@ describe('CustomMediaElement', () => {
 
     it('number setter delegates directly to the MediaHost', () => {
       const el = create(defineTrackingVideoElement());
+
       el.volume = 0.5;
       expect(el.volume).toBe(0.5);
     });
 
     it('number setter does not set attribute for non-Attributes properties', () => {
       const el = create(defineTrackingVideoElement());
+
       el.volume = 0.5;
       expect(el.hasAttribute('volume')).toBe(false);
     });
 
     it('boolean setter toggles attribute on the custom element', () => {
       const el = create(defineTrackingVideoElement());
+
       el.muted = true;
       expect(el.hasAttribute('muted')).toBe(true);
     });
 
     it('boolean setter removes attribute when set to false', () => {
       const el = create(defineTrackingVideoElement());
+
       el.muted = true;
       el.muted = false;
       expect(el.hasAttribute('muted')).toBe(false);
@@ -824,6 +895,7 @@ describe('CustomMediaElement', () => {
 
     it('boolean setter delegates value to the MediaHost via attributeChangedCallback', () => {
       const el = create(defineTrackingVideoElement());
+
       el.muted = true;
       expect(el.muted).toBe(true);
 
@@ -833,6 +905,7 @@ describe('CustomMediaElement', () => {
 
     it('currentTime setter delegates directly to MediaHost', () => {
       const el = create(defineTrackingVideoElement());
+
       el.currentTime = 42;
       expect(el.currentTime).toBe(42);
       expect(el.hasAttribute('current-time')).toBe(false);
@@ -840,6 +913,7 @@ describe('CustomMediaElement', () => {
 
     it('playbackRate setter delegates directly to MediaHost', () => {
       const el = create(defineTrackingVideoElement());
+
       el.playbackRate = 2;
       expect(el.playbackRate).toBe(2);
       expect(el.hasAttribute('playback-rate')).toBe(false);
@@ -848,6 +922,7 @@ describe('CustomMediaElement', () => {
     it('attribute is set before MediaHost setter is called', () => {
       const el = create(defineTrackingVideoElement());
       const spy = vi.spyOn(el, 'setAttribute');
+
       el.src = 'video.mp4';
 
       expect(spy).toHaveBeenCalledWith('src', 'video.mp4');
@@ -887,6 +962,7 @@ describe('CustomMediaElement', () => {
 
     it('defaultMuted getter reflects the muted attribute', () => {
       const el = create(defineTrackingVideoElement());
+
       expect(el.defaultMuted).toBe(false);
 
       el.setAttribute('muted', '');
@@ -898,6 +974,7 @@ describe('CustomMediaElement', () => {
 
     it('defaultMuted setter toggles the muted attribute', () => {
       const el = create(defineTrackingVideoElement());
+
       el.defaultMuted = true;
       expect(el.hasAttribute('muted')).toBe(true);
 
@@ -907,6 +984,7 @@ describe('CustomMediaElement', () => {
 
     it('defaultMuted setter triggers the MediaHost muted setter via attributeChangedCallback', () => {
       const el = create(defineTrackingVideoElement());
+
       el.defaultMuted = true;
       expect(el.muted).toBe(true);
 
@@ -916,6 +994,7 @@ describe('CustomMediaElement', () => {
 
     it('muted property setter and defaultMuted share the same attribute', () => {
       const el = create(defineTrackingVideoElement());
+
       el.muted = true;
       expect(el.defaultMuted).toBe(true);
 
@@ -926,6 +1005,7 @@ describe('CustomMediaElement', () => {
     it('object-typed properties bypass attribute and delegate directly to MediaHost', () => {
       const el = create(defineVideoElementWithObjects());
       const source = { engine: { startLevel: 2 } };
+
       el.source = source;
 
       expect(el.hasAttribute('source')).toBe(false);
@@ -938,6 +1018,7 @@ describe('CustomMediaElement', () => {
       const { tag } = defineVideoElement();
 
       const container = document.createElement('div');
+
       document.body.appendChild(container);
       container.innerHTML = `<${tag} poster="https://example.com/poster.jpg" crossorigin="anonymous"></${tag}>`;
 
@@ -952,6 +1033,7 @@ describe('CustomMediaElement', () => {
       const { tag } = defineVideoElement();
 
       const container = document.createElement('div');
+
       document.body.appendChild(container);
       container.innerHTML = `<${tag} src="video.mp4" volume="0.5" current-time="10" playback-rate="2" muted poster="poster.jpg"></${tag}>`;
 
@@ -975,6 +1057,7 @@ describe('CustomMediaElement', () => {
       const { tag } = defineVideoElement();
 
       const container = document.createElement('div');
+
       document.body.appendChild(container);
       container.innerHTML = `<${tag} class="player" data-id="123" poster="poster.jpg" autoplay></${tag}>`;
 
@@ -992,6 +1075,7 @@ describe('CustomMediaElement', () => {
   describe('subclass properties override', () => {
     it('includes subclass-added properties in observedAttributes', () => {
       const Base = CustomMediaElement('video', TestVideoHost);
+
       class Extended extends Base {
         static properties = {
           ...Base.properties,
@@ -1000,6 +1084,7 @@ describe('CustomMediaElement', () => {
       }
 
       const tag = `test-video-${++tagCounter}`;
+
       customElements.define(tag, Extended);
 
       expect(Extended.observedAttributes).toContain('playback-id');
@@ -1007,6 +1092,7 @@ describe('CustomMediaElement', () => {
 
     it('defines property accessors for subclass-added properties', () => {
       const Base = CustomMediaElement('video', TestVideoHost);
+
       class Extended extends Base {
         static properties = {
           ...Base.properties,
@@ -1015,9 +1101,11 @@ describe('CustomMediaElement', () => {
       }
 
       const tag = `test-video-${++tagCounter}`;
+
       customElements.define(tag, Extended);
 
       const el = new Extended();
+
       document.body.appendChild(el);
 
       el.setAttribute('playback-id', 'abc123');
@@ -1026,6 +1114,7 @@ describe('CustomMediaElement', () => {
 
     it('subclass property setter sets the attribute', () => {
       const Base = CustomMediaElement('video', TestVideoHost);
+
       class Extended extends Base {
         static properties = {
           ...Base.properties,
@@ -1034,9 +1123,11 @@ describe('CustomMediaElement', () => {
       }
 
       const tag = `test-video-${++tagCounter}`;
+
       customElements.define(tag, Extended);
 
       const el = new Extended();
+
       document.body.appendChild(el);
 
       (el as any).playbackId = 'xyz789';
@@ -1048,6 +1139,7 @@ describe('CustomMediaElement', () => {
     it('does not inject nodes when poster contains a quote breakout attempt', () => {
       const { tag } = defineVideoElement();
       const container = document.createElement('div');
+
       document.body.appendChild(container);
       container.innerHTML = `<${tag} poster='" onerror="window.__xss=1'></${tag}>`;
 
@@ -1065,6 +1157,7 @@ describe('CustomMediaElement', () => {
 
       // JSDOM shadow DOM has parsing quirks; test getTemplateHTML directly in a plain container.
       const container = document.createElement('div');
+
       container.innerHTML = (Ctor as any).getTemplateHTML({ crossorigin: maliciousValue });
 
       expect(container.querySelectorAll('script')).toHaveLength(0);
@@ -1078,6 +1171,7 @@ describe('CustomMediaElement', () => {
 
       // JSDOM shadow DOM has parsing quirks; test getTemplateHTML directly in a plain container.
       const container = document.createElement('div');
+
       container.innerHTML = (Ctor as any).getTemplateHTML({ poster: maliciousValue });
 
       expect(container.querySelectorAll('img')).toHaveLength(0);
@@ -1087,6 +1181,7 @@ describe('CustomMediaElement', () => {
     it('preserves the attribute value correctly after escaping', () => {
       const { tag } = defineVideoElement();
       const container = document.createElement('div');
+
       document.body.appendChild(container);
       container.innerHTML = `<${tag} poster="https://example.com/poster.jpg"></${tag}>`;
 

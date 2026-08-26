@@ -16,13 +16,13 @@ export interface GroupProps extends UIComponentProps<'span', GroupState> {
  * Container for composed time displays. Renders a `<span>` element.
  *
  * @example
- * ```tsx
- * <Time.Group>
- *   <Time.Value type="current" />
- *   <Time.Separator />
- *   <Time.Value type="duration" />
- * </Time.Group>
- * ```
+ *   ```tsx
+ *   <Time.Group>
+ *     <Time.Value type="current" />
+ *     <Time.Separator />
+ *     <Time.Value type="duration" />
+ *   </Time.Group>;
+ *   ```;
  */
 export const Group = forwardRef(function Group(
   componentProps: GroupProps,

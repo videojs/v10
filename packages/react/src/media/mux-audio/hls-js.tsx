@@ -6,6 +6,7 @@ import type { MuxMediaProps } from '@videojs/media/dom/mux';
 import { MuxMedia, muxMediaDefaultProps } from '@videojs/media/dom/mux';
 import type { AudioHTMLAttributes, ReactNode } from 'react';
 import { forwardRef } from 'react';
+
 import { useAttachMedia } from '../../utils/use-attach-media';
 import { useComposedRefs } from '../../utils/use-composed-refs';
 import { useMediaInstance } from '../../utils/use-media-instance';
@@ -14,7 +15,8 @@ import { useSyncProps } from '../../utils/use-sync-props';
 // `source` comes from `MuxMediaProps` only: `MuxSource` extends `HlsSource` with
 // Mux identity fields, so the narrower type has to win.
 export interface MuxAudioProps
-  extends Omit<AudioHTMLAttributes<HTMLAudioElement>, keyof HlsMediaProps | keyof MuxMediaProps>,
+  extends
+    Omit<AudioHTMLAttributes<HTMLAudioElement>, keyof HlsMediaProps | keyof MuxMediaProps>,
     Partial<Omit<HlsMediaProps, 'source'>>,
     Partial<MuxMediaProps> {
   children?: ReactNode;

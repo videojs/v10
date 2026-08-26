@@ -1,14 +1,13 @@
 import type { Constructor } from '@videojs/utils/types';
 import Hls from 'hls.js';
+
 import type { HlsEngineHost } from './types';
 
 /**
- * Ensures user-authored metadata and chapters `<track>` elements stay loaded
- * when hls.js is active.
+ * Ensures user-authored metadata and chapters `<track>` elements stay loaded when hls.js is active.
  *
- * hls.js forcibly clears all cues from text tracks on manifest loads and media
- * attaches. This mixin re-enables those tracks by forcing `mode = 'hidden'`
- * and reloading the track source when cues have been wiped.
+ * Hls.js forcibly clears all cues from text tracks on manifest loads and media attaches. This mixin re-enables those
+ * tracks by forcing `mode = 'hidden'` and reloading the track source when cues have been wiped.
  */
 export function HlsJsMediaMetadataTracksMixin<Base extends Constructor<HlsEngineHost>>(BaseClass: Base) {
   class HlsJsMediaMetadataTracks extends (BaseClass as Constructor<HlsEngineHost>) {
@@ -29,7 +28,9 @@ export function HlsJsMediaMetadataTracksMixin<Base extends Constructor<HlsEngine
         if (!(track.kind === 'metadata' || track.kind === 'chapters')) return;
 
         let selector = 'track';
+
         if (track.kind) selector += `[kind="${track.kind}"]`;
+
         if (track.label) selector += `[label="${track.label}"]`;
 
         const trackEl = target.querySelector(selector) as HTMLTrackElement | null;
@@ -41,11 +42,13 @@ export function HlsJsMediaMetadataTracksMixin<Base extends Constructor<HlsEngine
         // Only reset the track if it was loaded before and had no cues.
         if (src && trackEl.readyState === TRACK_LOADED && !track.cues?.length) {
           const clonedTrackEl = trackEl.cloneNode() as HTMLTrackElement;
+
           target.replaceChild(clonedTrackEl, trackEl);
         }
 
         // Force mode to 'hidden' for default tracks (independent of replacement).
         const currentTrackEl = target.querySelector(selector) as HTMLTrackElement | null;
+
         if (currentTrackEl?.default && currentTrackEl.track.mode !== 'hidden') {
           currentTrackEl.track.mode = 'hidden';
         }

@@ -2,19 +2,21 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "allowImportingTsExtensions": true,
-    "lib": ["ES2022"],
+    "jsx": "react-jsx",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "paths": {
+      "@videojs/react/video": ["../react/src/presets/video/index.ts"],
+      "vjsc/*": ["../vjsc/src/*"]
+    },
     "types": ["node"],
     "declarationDir": "types"
   },
-  "include": [
-    "src",
-    "build",
-    "scripts",
-    "canonical/catalog.ts",
-    "canonical/registry/shadcn.ts",
-    "canonical/styles/tokens.ts",
-    "vite.config.ts"
-  ],
-  "exclude": ["canonical/registry/default"],
-  "references": [{ "path": "../html" }, { "path": "../icons" }, { "path": "../react" }]
+  "include": ["src", "dev", "vjsc/*.ts", "vjsc/target"],
+  "references": [
+    { "path": "../core" },
+    { "path": "../html" },
+    { "path": "../icons" },
+    { "path": "../react" },
+    { "path": "../vjsc" }
+  ]
 }
