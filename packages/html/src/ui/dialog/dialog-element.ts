@@ -7,11 +7,9 @@ import {
   type DialogApi,
 } from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
-import { ContextConsumer, ContextProvider } from '@videojs/element/context';
+import { ContextProvider } from '@videojs/element/context';
 import { SnapshotController } from '@videojs/store/html';
 
-import { dialogGroupContext } from '../../player/dialog-group-context';
-import { popupGroupContext } from '../../player/popup-group-context';
 import { PositionController } from '../position-controller';
 import { UIElement } from '../ui-element';
 import { dialogContext } from './context';
@@ -39,8 +37,6 @@ export class DialogElementBase extends UIElement {
   readonly #core: DialogCore;
   readonly #stateAttrMap: StateAttrMap<DialogState>;
   readonly #provider = new ContextProvider(this, { context: dialogContext });
-  readonly #dialogGroup = new ContextConsumer(this, { context: dialogGroupContext });
-  readonly #popupGroup = new ContextConsumer(this, { context: popupGroupContext });
   readonly #position = new PositionController(this);
   readonly #popupId: string;
   readonly #titleId: string;
@@ -84,8 +80,6 @@ export class DialogElementBase extends UIElement {
       onOpenChangeComplete: (nextOpen: boolean) => {
         this.dispatchEvent(new CustomEvent('open-change-complete', { detail: { open: nextOpen } }));
       },
-      group: () => this.#dialogGroup.value,
-      popupGroup: () => this.#popupGroup.value,
     });
 
     if (this.#snapshot) {

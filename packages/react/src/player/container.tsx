@@ -1,6 +1,5 @@
 import { ContainerCore, ContainerDataAttrs } from '@videojs/core';
 import {
-  createDialogGroup,
   createPopupGroup,
   DEFAULT_CONTAINER_ROLE,
   DEFAULT_CONTAINER_TAB_INDEX,
@@ -24,7 +23,6 @@ import {
 import { I18nContext, useTranslator } from '../i18n/context';
 import { useComposedRefs } from '../utils/use-composed-refs';
 import { useContainerAttach, usePlayer } from './context';
-import { DialogGroupProvider } from './dialog-group-context';
 import { PopupGroupProvider } from './popup-group-context';
 
 export interface ContainerProps extends HTMLAttributes<HTMLDivElement> {
@@ -51,7 +49,6 @@ export const Container = forwardRef<HTMLDivElement, ContainerProps>(function Con
   const [core] = useState(() => new ContainerCore());
 
   const [popupGroup] = useState(() => createPopupGroup());
-  const [dialogGroup] = useState(() => createDialogGroup());
 
   const internalRef = useRef<HTMLDivElement>(null);
   const composedRef = useComposedRefs(ref, internalRef);
@@ -94,9 +91,7 @@ export const Container = forwardRef<HTMLDivElement, ContainerProps>(function Con
       {...stateAttrs}
       onPointerUp={handlePointerUp}
     >
-      <DialogGroupProvider value={dialogGroup}>
-        <PopupGroupProvider value={popupGroup}>{children}</PopupGroupProvider>
-      </DialogGroupProvider>
+      <PopupGroupProvider value={popupGroup}>{children}</PopupGroupProvider>
     </div>
   );
 });

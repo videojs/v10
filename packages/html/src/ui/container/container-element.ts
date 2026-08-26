@@ -2,7 +2,6 @@ import { ContainerCore, ContainerDataAttrs } from '@videojs/core';
 import {
   applyContainerAttrs,
   applyStateDataAttrs,
-  createDialogGroup,
   createPopupGroup,
   focusContainer,
   type MediaContainer,
@@ -16,7 +15,6 @@ import { listen } from '@videojs/utils/dom';
 import { i18nContext } from '../../i18n/context';
 import { I18nController } from '../../i18n/controller';
 import { type ContainerContextValue, containerContext, playerContext } from '../../player/context';
-import { dialogGroupContext } from '../../player/dialog-group-context';
 import { PlayerController } from '../../player/player-controller';
 import { popupGroupContext } from '../../player/popup-group-context';
 import { UIElement } from '../ui-element';
@@ -37,11 +35,6 @@ export class ContainerElement extends UIElement implements MediaContainer {
   readonly #controls = new PlayerController(this, playerContext, selectControls);
   readonly #i18n = new I18nController(this, i18nContext);
   readonly #popupGroup = createPopupGroup();
-  readonly #dialogGroup = createDialogGroup();
-  readonly #dialogGroupProvider = new ContextProvider(this, {
-    context: dialogGroupContext,
-    initialValue: this.#dialogGroup,
-  });
   readonly #popupGroupProvider = new ContextProvider(this, {
     context: popupGroupContext,
     initialValue: this.#popupGroup,
@@ -55,7 +48,6 @@ export class ContainerElement extends UIElement implements MediaContainer {
     super.connectedCallback();
 
     this.#popupGroupProvider.setValue(this.#popupGroup);
-    this.#dialogGroupProvider.setValue(this.#dialogGroup);
     this.#register(this.#container.value);
     applyContainerAttrs(this);
     this.#applyLabel();

@@ -3,8 +3,6 @@ import { createDialog, createTransition } from '@videojs/core/dom';
 import { useSnapshot } from '@videojs/store/react';
 import { useEffect, useState } from 'react';
 
-import { useOptionalDialogGroup } from '../../player/dialog-group-context';
-import { useOptionalPopupGroup } from '../../player/popup-group-context';
 import { useDestroy } from '../../utils/use-destroy';
 import { useLatestRef } from '../../utils/use-latest-ref';
 import { useSafeId } from '../../utils/use-safe-id';
@@ -28,8 +26,6 @@ export function useDialogRoot({
   stateAttrMap = DialogDataAttrs,
   idPrefix = 'dialog',
 }: UseDialogRootOptions): DialogContextValue {
-  const dialogGroup = useOptionalDialogGroup();
-  const popupGroup = useOptionalPopupGroup();
   const [core] = useState(coreFactory);
 
   core.setProps({ open: controlledOpen, defaultOpen, closeOnEscape });
@@ -45,8 +41,6 @@ export function useDialogRoot({
       onOpenChange: (nextOpen: boolean) => onOpenChangeRef.current?.(nextOpen),
       onOpenChangeComplete: (nextOpen: boolean) => onOpenChangeCompleteRef.current?.(nextOpen),
       closeOnEscape: () => closeOnEscapeRef.current,
-      group: () => dialogGroup,
-      popupGroup: () => popupGroup,
     });
 
     if (!isControlled && defaultOpen) instance.open();

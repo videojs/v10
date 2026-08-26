@@ -10,16 +10,14 @@ import {
 import { applyStateDataAttrs, createDialog, createTransition, type DialogApi, selectError } from '@videojs/core/dom';
 import { translateText } from '@videojs/core/i18n';
 import type { PropertyValues } from '@videojs/element';
-import { ContextConsumer, ContextProvider } from '@videojs/element/context';
+import { ContextProvider } from '@videojs/element/context';
 import type { ErrorLike } from '@videojs/media';
 import { SnapshotController } from '@videojs/store/html';
 
 import { i18nContext } from '../../i18n/context';
 import { I18nController } from '../../i18n/controller';
 import { playerContext } from '../../player/context';
-import { dialogGroupContext } from '../../player/dialog-group-context';
 import { PlayerController } from '../../player/player-controller';
-import { popupGroupContext } from '../../player/popup-group-context';
 import { dialogContext } from '../dialog/context';
 import { UIElement } from '../ui-element';
 
@@ -34,8 +32,6 @@ export class ErrorDialogElement extends UIElement {
 
   readonly #core = new ErrorDialogCore();
   readonly #provider = new ContextProvider(this, { context: dialogContext });
-  readonly #dialogGroup = new ContextConsumer(this, { context: dialogGroupContext });
-  readonly #popupGroup = new ContextConsumer(this, { context: popupGroupContext });
   readonly #popupId = `vjs-error-dialog-popup-${idCounter++}`;
   readonly #titleId = `vjs-error-dialog-title-${idCounter++}`;
   readonly #descriptionId = `vjs-error-dialog-desc-${idCounter++}`;
@@ -67,8 +63,6 @@ export class ErrorDialogElement extends UIElement {
           this.#errorState.value?.dismissError();
         }
       },
-      group: () => this.#dialogGroup.value,
-      popupGroup: () => this.#popupGroup.value,
     });
 
     if (this.#snapshot) {

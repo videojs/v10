@@ -2,9 +2,6 @@ import { flush } from '@videojs/store';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { createDialog, type DialogOptions } from '../dialog';
-import { createDialogGroup } from '../dialog-group';
-import { createPopover } from '../popover/popover';
-import { createPopupGroup } from '../popover/popup-group';
 import { createTransition } from '../transition';
 
 const dialogs = new Set<ReturnType<typeof createDialog>>();
@@ -223,67 +220,6 @@ describe('createDialog', () => {
 
     expect(onOpenChange).not.toHaveBeenCalled();
     expect(dialog.input.current.active).toBe(true);
-  });
-
-  describe('player-local coordination', () => {
-    it('closes the previous dialog when another dialog opens', () => {
-      const group = createDialogGroup();
-      const first = createTestDialog({ group: () => group });
-      const second = createTestDialog({ group: () => group });
-
-      first.dialog.open();
-      first.onOpenChange.mockClear();
-      second.dialog.open();
-
-      expect(first.onOpenChange).toHaveBeenCalledWith(false);
-      expect(second.dialog.input.current.active).toBe(true);
-    });
-
-    it('dismisses the current popup when a dialog opens', () => {
-      const popupGroup = createPopupGroup();
-      const onPopoverOpenChange = vi.fn();
-      const popover = createPopover({
-        transition: createTransition(),
-        onOpenChange: onPopoverOpenChange,
-        closeOnEscape: () => true,
-        closeOnOutsideClick: () => true,
-        group: () => popupGroup,
-      });
-      const { dialog } = createTestDialog({ popupGroup: () => popupGroup });
-
-      popover.open();
-      onPopoverOpenChange.mockClear();
-      dialog.open();
-
-      expect(onPopoverOpenChange).toHaveBeenCalledWith(false, { reason: 'imperative-action' });
-      popover.destroy();
-    });
-
-    it('keeps the background isolated while ownership moves to the next dialog', async () => {
-      const group = createDialogGroup();
-      const background = document.createElement('button');
-      const firstPopup = document.createElement('div');
-      const secondPopup = document.createElement('div');
-      const first = createTestDialog({ group: () => group });
-      const second = createTestDialog({ group: () => group });
-
-      document.body.append(background, firstPopup, secondPopup);
-      first.dialog.setPopupElement(firstPopup);
-      second.dialog.setPopupElement(secondPopup);
-
-      first.dialog.open();
-      second.dialog.open();
-
-      expect(background.hasAttribute('inert')).toBe(true);
-      expect(secondPopup.hasAttribute('inert')).toBe(false);
-
-      await vi.waitFor(() => expect(first.dialog.input.current.active).toBe(false));
-      expect(background.hasAttribute('inert')).toBe(true);
-
-      second.dialog.close();
-      await vi.waitFor(() => expect(second.dialog.input.current.active).toBe(false));
-      expect(background.hasAttribute('inert')).toBe(false);
-    });
   });
 
   it('restores pre-existing inert state after closing', async () => {
