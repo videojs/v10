@@ -63,6 +63,7 @@ describe('composite define registration', () => {
   describe('live-video/player', () => {
     it('registers only live-video-player', async () => {
       const before = spy.mock.calls.length;
+
       await import('../live-video/player');
 
       expect(batchSince(before)).toEqual(['live-video-player']);
@@ -72,6 +73,7 @@ describe('composite define registration', () => {
   describe('live-audio/player', () => {
     it('registers only live-audio-player', async () => {
       const before = spy.mock.calls.length;
+
       await import('../live-audio/player');
 
       expect(batchSince(before)).toEqual(['live-audio-player']);

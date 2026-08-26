@@ -2,8 +2,9 @@ import { audioText, captionsText, qualityText, settingsText, speedText } from '@
 import { renderIcon } from '@videojs/icons/render';
 import { createShadowStyle, createTemplate } from '@videojs/utils/dom';
 
-import { renderText } from '../../i18n/render-text';
 import { SkinElement } from '../../define/skin-element';
+import { renderText } from '../../i18n/render-text';
+
 import styles from '../../define/video/skin.css?inline';
 
 function getTemplateHTML() {

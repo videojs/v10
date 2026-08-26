@@ -10,6 +10,18 @@ describe('SSR-safe define imports', () => {
     await expect(import('../video/skin')).resolves.toBeDefined();
   });
 
+  it('imports preset APIs without browser-only globals', async () => {
+    await expect(
+      Promise.all([
+        import('../../presets/video'),
+        import('../../presets/audio'),
+        import('../../presets/live-video'),
+        import('../../presets/live-audio'),
+        import('../../presets/background'),
+      ])
+    ).resolves.toHaveLength(5);
+  });
+
   it('imports hls-video without browser-only globals', async () => {
     await expect(import('../media/hls-video')).resolves.toBeDefined();
   });

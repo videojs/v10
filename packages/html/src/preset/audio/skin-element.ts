@@ -2,6 +2,7 @@ import { renderIcon } from '@videojs/icons/render';
 import { createShadowStyle, createTemplate } from '@videojs/utils/dom';
 
 import { SkinElement } from '../../define/skin-element';
+
 import styles from '../../define/audio/skin.css?inline';
 
 const SEEK_TIME = 10;

@@ -8,7 +8,7 @@ import type {
 import { assertType, describe, it } from 'vitest';
 
 import type { PlayerController as PlayerControllerInstance } from '../../player/player-controller';
-import type { MediaElement } from '../../ui/media-element';
+import type { UIElement } from '../../ui/ui-element';
 import { PlayerController as AudioPlayerController } from '../audio';
 import { PlayerController as BackgroundPlayerController } from '../background';
 import { PlayerController as LiveAudioPlayerController } from '../live-audio';
@@ -17,7 +17,7 @@ import { PlayerController as VideoPlayerController } from '../video';
 
 describe('HTML preset PlayerController exports', () => {
   it('bind each controller to the preset store', () => {
-    const host = null as unknown as MediaElement;
+    const host = null as unknown as UIElement;
 
     assertType<PlayerControllerInstance<VideoPlayerStore>>(new VideoPlayerController(host));
     assertType<PlayerControllerInstance<AudioPlayerStore>>(new AudioPlayerController(host));

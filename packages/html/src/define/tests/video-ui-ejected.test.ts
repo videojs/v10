@@ -34,6 +34,7 @@ describe('video UI CDN registration', () => {
     `;
 
     const video = document.querySelector('video')!;
+
     // Happy DOM returns void here, while browsers return a promise.
     Object.defineProperty(video.remote, 'cancelWatchAvailability', {
       value: () => Promise.resolve(),

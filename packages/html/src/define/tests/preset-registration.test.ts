@@ -17,6 +17,7 @@ describe('preset registration boundaries', () => {
 
   it('video/ui registers the container and UI without the player or skin', async () => {
     const before = define.mock.calls.length;
+
     await import('../video/ui');
     const registered = registeredSince(before);
 
@@ -28,6 +29,7 @@ describe('preset registration boundaries', () => {
 
   it('video/skin adds the skin without the player', async () => {
     const before = define.mock.calls.length;
+
     await import('../video/skin');
 
     expect(registeredSince(before)).toEqual(['video-skin']);
@@ -35,8 +37,37 @@ describe('preset registration boundaries', () => {
 
   it('video/player registers only the player', async () => {
     const before = define.mock.calls.length;
+
     await import('../video/player');
 
     expect(registeredSince(before)).toEqual(['video-player']);
+  });
+
+  it.each([
+    ['audio', 'audio-skin', 'audio-player', () => import('../audio/skin')],
+    ['live-video', 'live-video-skin', 'live-video-player', () => import('../live-video/skin')],
+    ['live-audio', 'live-audio-skin', 'live-audio-player', () => import('../live-audio/skin')],
+    ['background', 'background-video-skin', 'background-video-player', () => import('../background/skin')],
+  ])('%s/skin registers the skin without the player', async (_, skinTag, playerTag, load) => {
+    const before = define.mock.calls.length;
+
+    await load();
+    const registered = registeredSince(before);
+
+    expect(registered).toContain(skinTag);
+    expect(registered).not.toContain(playerTag);
+  });
+
+  it.each([
+    ['audio', 'audio-player', () => import('../audio/player')],
+    ['live-video', 'live-video-player', () => import('../live-video/player')],
+    ['live-audio', 'live-audio-player', () => import('../live-audio/player')],
+    ['background', 'background-video-player', () => import('../background/player')],
+  ])('%s/player registers only the player', async (_, playerTag, load) => {
+    const before = define.mock.calls.length;
+
+    await load();
+
+    expect(registeredSince(before)).toEqual([playerTag]);
   });
 });
