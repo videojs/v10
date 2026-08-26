@@ -1,6 +1,4 @@
 import { AudioPlayerElement } from '../../preset/audio/player-element';
-import { safeDefine } from '../safe-define';
+import { safeDefine } from '../../registration/safe-define';
 
 safeDefine(AudioPlayerElement);
-
-export { AudioPlayerElement, PlayerController } from '../../preset/audio/player-element';

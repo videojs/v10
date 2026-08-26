@@ -183,23 +183,51 @@ interface ClassWithTagName {
   tagName: string;
 }
 
-function extractClassesWithTagName(filePath: string): ClassWithTagName[] {
-  if (!fs.existsSync(filePath)) return [];
+function extractClassesWithTagName(filePath: string, visited = new Set<string>()): ClassWithTagName[] {
+  const absolute = path.resolve(filePath);
+  if (!fs.existsSync(absolute) || visited.has(absolute)) return [];
 
-  const content = fs.readFileSync(filePath, 'utf-8');
-  const sourceFile = parseSource(filePath, content);
+  visited.add(absolute);
+
+  const content = fs.readFileSync(absolute, 'utf-8');
+  const sourceFile = parseSource(absolute, content);
   const results: ClassWithTagName[] = [];
+  const importedModules = new Map<string, string>();
+  const sideEffectImports: string[] = [];
+  const reexports: string[] = [];
+  const registeredNames = new Set<string>();
 
   for (const node of sourceFile.program.body) {
-    // Follow `export * from './foo'` re-exports
-    if (node.type === 'ExportAllDeclaration' && !node.exported) {
-      const specifier = node.source.value;
-      const resolved = resolveModulePath(path.dirname(filePath), specifier);
+    if (node.type === 'ImportDeclaration' && node.source.value.startsWith('.')) {
+      const resolved = resolveModulePath(path.dirname(absolute), node.source.value);
+      if (!resolved) continue;
 
-      if (resolved) {
-        results.push(...extractClassesWithTagName(resolved));
+      if (node.specifiers.length === 0) sideEffectImports.push(resolved);
+
+      for (const specifier of node.specifiers) {
+        importedModules.set(specifier.local.name, resolved);
       }
 
+      continue;
+    }
+
+    if (node.type === 'ExportAllDeclaration' && !node.exported) {
+      const specifier = node.source.value;
+      const resolved = resolveModulePath(path.dirname(absolute), specifier);
+
+      if (resolved) reexports.push(resolved);
+
+      continue;
+    }
+
+    if (
+      node.type === 'ExpressionStatement' &&
+      node.expression.type === 'CallExpression' &&
+      node.expression.callee.type === 'Identifier' &&
+      node.expression.callee.name === 'safeDefine' &&
+      node.expression.arguments[0]?.type === 'Identifier'
+    ) {
+      registeredNames.add(node.expression.arguments[0].name);
       continue;
     }
 
@@ -221,6 +249,22 @@ function extractClassesWithTagName(filePath: string): ClassWithTagName[] {
           tagName: member.value.value,
         });
       }
+    }
+  }
+
+  for (const name of registeredNames) {
+    const imported = importedModules.get(name);
+
+    if (imported) results.push(...extractClassesWithTagName(imported, visited));
+  }
+
+  for (const reexport of reexports) {
+    results.push(...extractClassesWithTagName(reexport, visited));
+  }
+
+  if (registeredNames.size === 0) {
+    for (const sideEffectImport of sideEffectImports) {
+      results.push(...extractClassesWithTagName(sideEffectImport, visited));
     }
   }
 
@@ -413,7 +457,9 @@ function scanHtmlDirectory(scanDir: string): { skins: PresetSkinDef[]; mediaElem
 
   if (!fs.existsSync(scanDir)) return { skins };
 
-  const files = fs.readdirSync(scanDir).filter((f) => f.endsWith('.ts') && !isTailwindFile(f));
+  const files = fs
+    .readdirSync(scanDir)
+    .filter((f) => f.endsWith('.ts') && !isTailwindFile(f) && f !== 'ui.ts' && f !== 'minimal-ui.ts');
 
   for (const file of files) {
     const filePath = path.join(scanDir, file);

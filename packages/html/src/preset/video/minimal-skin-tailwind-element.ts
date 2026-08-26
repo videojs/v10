@@ -27,8 +27,8 @@ import {
 import { createTemplate } from '@videojs/utils/dom';
 import { cn } from '@videojs/utils/style';
 
-import { SkinElement } from '../../define/skin-element';
 import { renderText } from '../../i18n/render-text';
+import { SkinElement } from '../skin-element';
 
 function getTemplateHTML() {
   return /*html*/ `

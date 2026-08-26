@@ -1,9 +1,9 @@
+import { defineErrorDialog } from '../../registration/ui-compounds';
 import { DialogBackdropElement } from '../../ui/dialog/dialog-backdrop-element';
 import { DialogCloseElement } from '../../ui/dialog/dialog-close-element';
 import { DialogDescriptionElement } from '../../ui/dialog/dialog-description-element';
 import { DialogTitleElement } from '../../ui/dialog/dialog-title-element';
 import { ErrorDialogElement } from '../../ui/error-dialog/error-dialog-element';
-import { defineErrorDialog } from './compounds';
 
 defineErrorDialog();
 

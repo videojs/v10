@@ -8,8 +8,10 @@
 import { describe, expect, it } from 'vite-plus/test';
 
 import { HlsBackgroundVideo } from '../../media/hls-background-video';
-import { HlsBackgroundVideoElement } from '../media/hls-background-video';
-import { MuxBackgroundVideoElement } from '../media/mux-background-video';
+import { HlsBackgroundVideoElement } from '../../media/hls-background-video/element';
+import { MuxBackgroundVideoElement } from '../../media/mux-background-video/element';
+import '../media/hls-background-video';
+import '../media/mux-background-video';
 
 describe('background-video alias tags', () => {
   it('registers both tags', () => {

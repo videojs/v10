@@ -319,15 +319,21 @@ function publicImplementationFiles(entryPath: string, project: OxcProject, visit
   const file = project.source(absolute);
   if (!file) return [];
 
-  const reexports = file.program.body.flatMap((statement) => {
-    if (statement.type !== 'ExportAllDeclaration') return [];
+  const dependencies = file.program.body.flatMap((statement) => {
+    const specifier =
+      statement.type === 'ImportDeclaration' || statement.type === 'ExportAllDeclaration'
+        ? statement.source.value
+        : statement.type === 'ExportNamedDeclaration' && statement.source
+          ? statement.source.value
+          : undefined;
+    if (!specifier?.startsWith('.')) return [];
 
-    const target = project.resolveModule(file.filePath, statement.source.value);
+    const target = project.resolveModule(file.filePath, specifier);
 
     return target ? publicImplementationFiles(target, project, visited) : [];
   });
 
-  return [absolute, ...reexports];
+  return [absolute, ...dependencies];
 }
 
 function findCustomMediaComposition(

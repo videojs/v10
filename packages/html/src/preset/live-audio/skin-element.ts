@@ -1,7 +1,7 @@
 import { renderIcon } from '@videojs/icons/render';
 import { createShadowStyle, createTemplate } from '@videojs/utils/dom';
 
-import { SkinElement } from '../../define/skin-element';
+import { SkinElement } from '../skin-element';
 
 import styles from '../../define/live-audio/skin.css?inline';
 

@@ -81,7 +81,8 @@ import {
 } from '@videojs/html/video';
 ```
 
-Registration is explicit, so importing a value never changes the custom element registry:
+Registration is explicit, so importing a value never changes the custom element registry. Registration entry points
+are side-effect-only; import classes, controllers, and types from the preset root:
 
 ```ts
 import '@videojs/html/video/player'; // <video-player> only

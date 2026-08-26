@@ -20,7 +20,7 @@ import {
 import { createTemplate } from '@videojs/utils/dom';
 import { cn } from '@videojs/utils/style';
 
-import { SkinElement } from '../../define/skin-element';
+import { SkinElement } from '../skin-element';
 
 const SEEK_TIME = 10;
 

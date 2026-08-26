@@ -1,9 +1,5 @@
-import { NativeHlsVideo } from '../../media/native-hls-video';
-import { safeDefine } from '../safe-define';
-
-export class NativeHlsVideoElement extends NativeHlsVideo {
-  static readonly tagName = 'native-hls-video';
-}
+import { NativeHlsVideoElement } from '../../media/native-hls-video/element';
+import { safeDefine } from '../../registration/safe-define';
 
 safeDefine(NativeHlsVideoElement);
 

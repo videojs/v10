@@ -1,9 +1,5 @@
-import { VimeoVideo } from '../../media/vimeo-video';
-import { safeDefine } from '../safe-define';
-
-export class VimeoVideoElement extends VimeoVideo {
-  static readonly tagName = 'vimeo-video';
-}
+import { VimeoVideoElement } from '../../media/vimeo-video/element';
+import { safeDefine } from '../../registration/safe-define';
 
 safeDefine(VimeoVideoElement);
 

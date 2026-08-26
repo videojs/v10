@@ -2,6 +2,17 @@
 // used by the minimal skin without creating a skin element. Use this entry
 // when building an ejected (light DOM) player layout.
 
+import { safeDefine } from '../../registration/safe-define';
+import {
+  defineControls,
+  defineErrorDialog,
+  defineInputIndicators,
+  defineMenu,
+  defineTime,
+  defineTimeSlider,
+  defineTooltip,
+  defineVolumeSlider,
+} from '../../registration/ui-compounds';
 import { AirPlayButtonElement } from '../../ui/airplay-button/airplay-button-element';
 import { AudioTrackRadioGroupElement } from '../../ui/audio-track-radio-group/audio-track-radio-group-element';
 import { BufferingIndicatorElement } from '../../ui/buffering-indicator/buffering-indicator-element';
@@ -23,17 +34,6 @@ import { QualityRadioGroupElement } from '../../ui/quality-radio-group/quality-r
 import { SeekButtonElement } from '../../ui/seek-button/seek-button-element';
 import { TimeSliderChapterTitleElement } from '../../ui/time-slider/time-slider-chapters/time-slider-chapter-title-element';
 import { TimeSliderChaptersElement } from '../../ui/time-slider/time-slider-chapters/time-slider-chapters-element';
-import { safeDefine } from '../safe-define';
-import {
-  defineControls,
-  defineErrorDialog,
-  defineInputIndicators,
-  defineMenu,
-  defineTime,
-  defineTimeSlider,
-  defineTooltip,
-  defineVolumeSlider,
-} from '../ui/compounds';
 import '../i18n';
 
 // ── Registration (providers / parents first) ────────────────────────────

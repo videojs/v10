@@ -1,5 +1,5 @@
+import { safeDefine } from '../../registration/safe-define';
 import { CastButtonElement } from '../../ui/cast-button/cast-button-element';
-import { safeDefine } from '../safe-define';
 
 safeDefine(CastButtonElement);
 

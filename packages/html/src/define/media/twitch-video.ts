@@ -1,9 +1,5 @@
-import { TwitchVideo } from '../../media/twitch-video';
-import { safeDefine } from '../safe-define';
-
-export class TwitchVideoElement extends TwitchVideo {
-  static readonly tagName = 'twitch-video';
-}
+import { TwitchVideoElement } from '../../media/twitch-video/element';
+import { safeDefine } from '../../registration/safe-define';
 
 safeDefine(TwitchVideoElement);
 

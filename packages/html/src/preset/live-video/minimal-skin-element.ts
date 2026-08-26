@@ -1,7 +1,7 @@
 import { renderIcon } from '@videojs/icons/render/minimal';
 import { createShadowStyle, createTemplate } from '@videojs/utils/dom';
 
-import { SkinElement } from '../../define/skin-element';
+import { SkinElement } from '../skin-element';
 
 import styles from '../../define/live-video/minimal-skin.css?inline';
 

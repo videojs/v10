@@ -1,1 +1,1 @@
-export * from './hls-js';
+import './hls-js';

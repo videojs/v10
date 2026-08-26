@@ -1,3 +1,12 @@
+import { safeDefine } from '../../registration/safe-define';
+import {
+  defineErrorDialog,
+  defineMenu,
+  defineTime,
+  defineTimeSlider,
+  defineTooltip,
+  defineVolumeSlider,
+} from '../../registration/ui-compounds';
 // Registers the container and all audio UI custom elements
 // used by the minimal skin without creating a skin element. Use this entry
 // when building an ejected (light DOM) player layout.
@@ -10,15 +19,6 @@ import { PlaybackRateButtonElement } from '../../ui/playback-rate-button/playbac
 import { PlaybackRateRadioGroupElement } from '../../ui/playback-rate-radio-group/playback-rate-radio-group-element';
 import { PopoverElement } from '../../ui/popover/popover-element';
 import { SeekButtonElement } from '../../ui/seek-button/seek-button-element';
-import { safeDefine } from '../safe-define';
-import {
-  defineErrorDialog,
-  defineMenu,
-  defineTime,
-  defineTimeSlider,
-  defineTooltip,
-  defineVolumeSlider,
-} from '../ui/compounds';
 // ── Registration (providers / parents first) ────────────────────────────
 
 safeDefine(ContainerElement);

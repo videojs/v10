@@ -1,7 +1,5 @@
 import { GoogleCastElement } from '../../media/google-cast';
-import { safeDefine } from '../safe-define';
-
-export { GoogleCastElement };
+import { safeDefine } from '../../registration/safe-define';
 
 safeDefine(GoogleCastElement);
 

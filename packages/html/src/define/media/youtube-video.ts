@@ -1,9 +1,5 @@
-import { YouTubeVideo } from '../../media/youtube-video';
-import { safeDefine } from '../safe-define';
-
-export class YouTubeVideoElement extends YouTubeVideo {
-  static readonly tagName = 'youtube-video';
-}
+import { YouTubeVideoElement } from '../../media/youtube-video/element';
+import { safeDefine } from '../../registration/safe-define';
 
 safeDefine(YouTubeVideoElement);
 

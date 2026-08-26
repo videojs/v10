@@ -1,9 +1,9 @@
+import { safeDefine } from '../../registration/safe-define';
 import { DialogBackdropElement } from '../../ui/dialog/dialog-backdrop-element';
 import { DialogCloseElement } from '../../ui/dialog/dialog-close-element';
 import { DialogDescriptionElement } from '../../ui/dialog/dialog-description-element';
 import { DialogElement } from '../../ui/dialog/dialog-element';
 import { DialogTitleElement } from '../../ui/dialog/dialog-title-element';
-import { safeDefine } from '../safe-define';
 
 safeDefine(DialogElement);
 safeDefine(DialogBackdropElement);

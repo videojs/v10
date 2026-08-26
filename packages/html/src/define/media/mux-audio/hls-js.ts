@@ -1,9 +1,5 @@
-import { MuxAudio } from '../../../media/mux-audio/hls-js';
-import { safeDefine } from '../../safe-define';
-
-export class MuxAudioElement extends MuxAudio {
-  static readonly tagName = 'mux-audio';
-}
+import { MuxAudioElement } from '../../../media/mux-audio/hls-js-element';
+import { safeDefine } from '../../../registration/safe-define';
 
 safeDefine(MuxAudioElement);
 

@@ -1,10 +1,9 @@
 /**
  * Mock simple video element registration — mirrors define/media/dash-video.ts.
  *
- * Exercises: element discovery via static tagName in define/media/*.ts.
+ * Exercises: registration-only discovery through an imported element implementation.
  */
-import { SimpleVideo } from '../../media/simple-video';
+import { SimpleVideoElement } from '../../media/simple-video/element';
+import { safeDefine } from '../../registration/safe-define';
 
-export class SimpleVideoElement extends SimpleVideo {
-  static readonly tagName = 'simple-video';
-}
+safeDefine(SimpleVideoElement);

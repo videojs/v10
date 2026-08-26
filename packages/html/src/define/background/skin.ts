@@ -1,7 +1,5 @@
 import { BackgroundVideoSkinElement } from '../../preset/background/skin-element';
-import { safeDefine } from '../safe-define';
+import { safeDefine } from '../../registration/safe-define';
 import '../ui/container';
 
 safeDefine(BackgroundVideoSkinElement);
-
-export { BackgroundVideoSkinElement } from '../../preset/background/skin-element';

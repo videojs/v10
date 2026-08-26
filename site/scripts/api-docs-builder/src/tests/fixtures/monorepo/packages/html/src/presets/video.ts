@@ -7,5 +7,5 @@
  */
 export { videoFeatures } from '../../../core/src/dom/store/features/presets';
 export { MinimalVideoSkinElement } from '../define/video/minimal-skin';
-export { VideoSkinElement } from '../define/video/skin';
+export { VideoSkinElement } from '../preset/video/skin-element';
 export { VideoSkinTailwindElement } from '../define/video/skin.tailwind';

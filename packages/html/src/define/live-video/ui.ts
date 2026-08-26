@@ -3,6 +3,16 @@
 // ejected (light DOM) player layout for live HLS / DASH streams.
 
 import { I18nProviderElement } from '../../i18n/provider-element';
+import { safeDefine } from '../../registration/safe-define';
+import {
+  defineControls,
+  defineErrorDialog,
+  defineInputIndicators,
+  defineMenu,
+  defineSliders,
+  defineTime,
+  defineTooltip,
+} from '../../registration/ui-compounds';
 import { AirPlayButtonElement } from '../../ui/airplay-button/airplay-button-element';
 import { BufferingIndicatorElement } from '../../ui/buffering-indicator/buffering-indicator-element';
 import { CaptionsButtonElement } from '../../ui/captions-button/captions-button-element';
@@ -19,16 +29,6 @@ import { PlayButtonElement } from '../../ui/play-button/play-button-element';
 import { PopoverElement } from '../../ui/popover/popover-element';
 import { PosterElement } from '../../ui/poster/poster-element';
 import { TextElement } from '../../ui/text/text-element';
-import { safeDefine } from '../safe-define';
-import {
-  defineControls,
-  defineErrorDialog,
-  defineInputIndicators,
-  defineMenu,
-  defineSliders,
-  defineTime,
-  defineTooltip,
-} from '../ui/compounds';
 // ── Registration (providers / parents first) ────────────────────────────
 
 safeDefine(ContainerElement);

@@ -1,5 +1,5 @@
+import { safeDefine } from '../../registration/safe-define';
 import { StatusAnnouncerElement } from '../../ui/status-announcer/status-announcer-element';
-import { safeDefine } from '../safe-define';
 
 safeDefine(StatusAnnouncerElement);
 

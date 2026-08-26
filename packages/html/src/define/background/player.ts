@@ -1,6 +1,4 @@
 import { BackgroundVideoPlayerElement } from '../../preset/background/player-element';
-import { safeDefine } from '../safe-define';
+import { safeDefine } from '../../registration/safe-define';
 
 safeDefine(BackgroundVideoPlayerElement);
-
-export { BackgroundVideoPlayerElement, PlayerController } from '../../preset/background/player-element';

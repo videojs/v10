@@ -7,8 +7,8 @@ import {
   type ShadowStyle,
 } from '@videojs/utils/dom';
 
-import globalStyles from './global.css?inline';
-import sharedStyles from './shared.css?inline';
+import globalStyles from '../define/global.css?inline';
+import sharedStyles from '../define/shared.css?inline';
 
 const STYLES_ID = '__media-styles';
 const sharedSheet = createShadowStyle(sharedStyles);

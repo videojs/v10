@@ -1,3 +1,14 @@
+import { safeDefine } from '../../registration/safe-define';
+import {
+  defineControls,
+  defineErrorDialog,
+  defineInputIndicators,
+  defineMenu,
+  defineTime,
+  defineTimeSlider,
+  defineTooltip,
+  defineVolumeSlider,
+} from '../../registration/ui-compounds';
 // Registers the container and all live video UI custom
 // elements used by the minimal skin without creating a skin element. Use
 // this entry when building an ejected (light DOM) player layout for live
@@ -17,17 +28,6 @@ import { PiPButtonElement } from '../../ui/pip-button/pip-button-element';
 import { PlayButtonElement } from '../../ui/play-button/play-button-element';
 import { PopoverElement } from '../../ui/popover/popover-element';
 import { PosterElement } from '../../ui/poster/poster-element';
-import { safeDefine } from '../safe-define';
-import {
-  defineControls,
-  defineErrorDialog,
-  defineInputIndicators,
-  defineMenu,
-  defineTime,
-  defineTimeSlider,
-  defineTooltip,
-  defineVolumeSlider,
-} from '../ui/compounds';
 // ── Registration (providers / parents first) ────────────────────────────
 
 safeDefine(ContainerElement);

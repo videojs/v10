@@ -1,5 +1,5 @@
+import { safeDefine } from '../../registration/safe-define';
 import { DialogCloseElement } from '../../ui/dialog/dialog-close-element';
-import { safeDefine } from '../safe-define';
 
 safeDefine(DialogCloseElement);
 
