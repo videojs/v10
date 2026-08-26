@@ -61,9 +61,10 @@ export default function llmsMarkdown(): AstroIntegration {
           },
         });
 
-        // Track all docs and blog pages for llms.txt index
+        // Track pages for their llms.txt indexes
         const docsPages: PageEntry[] = [];
         const blogPages: PageEntry[] = [];
+        const changelogPages: PageEntry[] = [];
         const otherPages: PageEntry[] = [];
 
         logger.info('Generating LLM-optimized markdown files...');
@@ -138,6 +139,8 @@ export default function llmsMarkdown(): AstroIntegration {
               docsPages.push({ pathname: `/${pathname}`, title, description, sort, framework });
             } else if (pathname.startsWith('blog/')) {
               blogPages.push({ pathname: `/${pathname}`, title, description, sort });
+            } else if (pathname.startsWith('changelog/')) {
+              changelogPages.push({ pathname: `/${pathname}`, title, description, sort });
             } else {
               otherPages.push({ pathname: `/${pathname}`, title, description, sort });
             }
@@ -197,16 +200,31 @@ export default function llmsMarkdown(): AstroIntegration {
           await writeFile(blogIndexPath, blogIndex, 'utf-8');
         }
 
+        // Write changelog sub-index
+        if (changelogPages.length > 0) {
+          const changelogIndex = generateChangelogIndex(changelogPages, siteUrl);
+          const changelogIndexPath = join(siteDir, 'changelog', 'llms.txt');
+
+          await mkdir(dirname(changelogIndexPath), { recursive: true });
+          await writeFile(changelogIndexPath, changelogIndex, 'utf-8');
+        }
+
         // Write root llms.txt index
-        const rootIndex = generateRootIndex(frameworks, blogPages.length > 0, otherPages, siteUrl);
+        const rootIndex = generateRootIndex(
+          frameworks,
+          blogPages.length > 0,
+          changelogPages.length > 0,
+          otherPages,
+          siteUrl
+        );
         const rootIndexPath = join(siteDir, 'llms.txt');
 
         await writeFile(rootIndexPath, rootIndex, 'utf-8');
 
-        const subIndexCount = frameworks.length + (blogPages.length > 0 ? 1 : 0);
+        const subIndexCount = frameworks.length + (blogPages.length > 0 ? 1 : 0) + (changelogPages.length > 0 ? 1 : 0);
 
         logger.info(
-          `Generated ${docsPages.length + blogPages.length + otherPages.length} markdown files, llms.txt root index, and ${subIndexCount} sub-indexes`
+          `Generated ${docsPages.length + blogPages.length + changelogPages.length + otherPages.length} markdown files, llms.txt root index, and ${subIndexCount} sub-indexes`
         );
       },
     },
@@ -225,6 +243,8 @@ function generatePageFooter(pathname: string, framework: string | undefined, sit
     lines.push(`${capitalize(framework)} documentation: ${siteUrl}/docs/framework/${framework}/llms.txt`);
   } else if (pathname.startsWith('blog/')) {
     lines.push(`All blog posts: ${siteUrl}/blog/llms.txt`);
+  } else if (pathname.startsWith('changelog/')) {
+    lines.push(`Full changelog: ${siteUrl}/changelog/llms.txt`);
   }
 
   lines.push(`All documentation: ${siteUrl}/llms.txt`);
@@ -236,7 +256,13 @@ function generateIndexFooter(siteUrl: string): string {
   return `\n---\n\nAll documentation: ${siteUrl}/llms.txt\n`;
 }
 
-function generateRootIndex(frameworks: string[], hasBlog: boolean, otherPages: PageEntry[], siteUrl: string): string {
+function generateRootIndex(
+  frameworks: string[],
+  hasBlog: boolean,
+  hasChangelog: boolean,
+  otherPages: PageEntry[],
+  siteUrl: string
+): string {
   let content = `# Video.js v10\n\n`;
 
   content += `> Modern video player framework with multi-platform support\n\n`;
@@ -252,6 +278,11 @@ function generateRootIndex(frameworks: string[], hasBlog: boolean, otherPages: P
   if (hasBlog) {
     content += `## Blog\n\n`;
     content += `- [Blog Posts](${siteUrl}/blog/llms.txt)\n\n`;
+  }
+
+  if (hasChangelog) {
+    content += `## Changelog\n\n`;
+    content += `- [Changelog](${siteUrl}/changelog/llms.txt)\n\n`;
   }
 
   if (otherPages.length > 0) {
@@ -355,7 +386,15 @@ function filterSidebarForLlms(items: Sidebar, framework: SupportedFramework): Si
 }
 
 function generateBlogIndex(pages: PageEntry[], siteUrl: string): string {
-  let content = `# Video.js v10 — Blog\n\n`;
+  return generateChronologicalIndex('Blog', pages, siteUrl);
+}
+
+function generateChangelogIndex(pages: PageEntry[], siteUrl: string): string {
+  return generateChronologicalIndex('Changelog', pages, siteUrl);
+}
+
+function generateChronologicalIndex(title: string, pages: PageEntry[], siteUrl: string): string {
+  let content = `# Video.js v10 — ${title}\n\n`;
   // Newest first
   const sorted = [...pages].sort((a, b) => {
     if (a.sort && b.sort) {

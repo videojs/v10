@@ -192,6 +192,6 @@ Search is powered by [Algolia DocSearch v4](https://docsearch.algolia.com). Conf
 
 One custom Astro integration in `integrations/`:
 
-- **llms-markdown** — Generates LLM-optimized `.md` files and `llms.txt` index from `[data-llms-content]` elements
+- **llms-markdown** — Generates LLM-optimized `.md` files and `llms.txt` indexes from `[data-llms-content]` elements
 
 Read [`integrations/llms-markdown.ts`](integrations/llms-markdown.ts) for implementation details.

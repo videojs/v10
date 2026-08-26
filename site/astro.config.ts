@@ -98,11 +98,12 @@ export default defineConfig({
       : []),
     mdx({ extendMarkdownConfig: true }),
     sitemap({
-      // llms-markdown.ts auto-generates per-framework sub-indexes, but sitemap
-      // entries are hardcoded here. Add a new line when adding a framework.
+      // llms-markdown.ts auto-generates sub-indexes, but sitemap entries are
+      // hardcoded here. Add a new line when adding an index.
       customPages: [
         `${SITE_URL}/llms.txt`,
         `${SITE_URL}/blog/llms.txt`,
+        `${SITE_URL}/changelog/llms.txt`,
         `${SITE_URL}/docs/framework/html/llms.txt`,
         `${SITE_URL}/docs/framework/react/llms.txt`,
       ],
