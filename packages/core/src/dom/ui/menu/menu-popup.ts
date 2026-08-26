@@ -134,6 +134,7 @@ export function createMenuPopup(): MenuPopupApi {
       const activeChild = getActiveChild(content.menu);
 
       if (activeChild) {
+        content.menu.highlight(null);
         content.element.setAttribute(MenuContentDataAttrs.childOpen, '');
       } else {
         content.element.removeAttribute(MenuContentDataAttrs.childOpen);

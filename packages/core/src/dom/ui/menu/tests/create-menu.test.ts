@@ -158,6 +158,20 @@ describe('createMenu', () => {
       expect(grandchild.onOpenChange).toHaveBeenCalledWith(false, { reason: 'imperative-action' });
     });
 
+    it('clears the parent highlight when a registered submenu opens', () => {
+      const parent = createTestMenu();
+      const child = createTestMenu();
+      const item = addItem('Submenu');
+
+      parent.menu.registerItem(item);
+      parent.menu.registerSubmenu(child.menu);
+      parent.menu.highlight(item, { focus: false });
+
+      child.menu.open();
+
+      expect(item.hasAttribute(MenuItemDataAttrs.highlighted)).toBe(false);
+    });
+
     it('closes the previously open grouped menu when another opens', () => {
       const group = createPopupGroup();
       const first = createTestMenu({ group: () => group });
@@ -186,6 +200,23 @@ describe('createMenu', () => {
       vi.runAllTimers();
 
       expect(a.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
+
+      vi.useRealTimers();
+    });
+
+    it('does not apply a pending initial highlight after it is cleared', () => {
+      vi.useFakeTimers();
+
+      const { menu } = createTestMenu();
+      const item = addItem('Alpha');
+
+      menu.registerItem(item);
+      menu.open();
+      menu.highlight(null);
+
+      vi.runAllTimers();
+
+      expect(item.hasAttribute(MenuItemDataAttrs.highlighted)).toBe(false);
 
       vi.useRealTimers();
     });
@@ -537,6 +568,17 @@ describe('createMenu', () => {
       menu.registerItem(element);
 
       expect(element.hasAttribute(MenuItemDataAttrs.item)).toBe(true);
+    });
+
+    it('highlights an item when it receives focus', () => {
+      const { menu } = createTestMenu();
+      const element = addItem('Alpha');
+
+      menu.registerItem(element);
+      element.focus();
+
+      expect(element.hasAttribute(MenuItemDataAttrs.highlighted)).toBe(true);
+      expect(element.tabIndex).toBe(0);
     });
 
     it('removes item from navigation on cleanup', () => {

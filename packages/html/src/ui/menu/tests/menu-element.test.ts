@@ -217,8 +217,10 @@ describe('MenuElement', () => {
     document.body.append(root);
 
     await Promise.all([root.updateComplete, content.updateComplete, submenu.updateComplete]);
+    await waitForAssertion(() => expect(trigger.hasAttribute('data-highlighted')).toBe(true));
     trigger.click();
     await waitForAssertion(() => expect(submenu.open).toBe(true));
+    expect(trigger.hasAttribute('data-highlighted')).toBe(false);
     item.click();
 
     await waitForAssertion(() => {
@@ -229,6 +231,7 @@ describe('MenuElement', () => {
     });
     expect(root.open).toBe(true);
     await waitForAssertion(() => expect(submenu.hidden).toBe(true));
+    expect(trigger.hasAttribute('data-highlighted')).toBe(true);
   });
 
   it.each(['Escape', 'ArrowLeft'])('returns to the parent Content on %s', async (key) => {

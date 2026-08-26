@@ -908,10 +908,14 @@ describe('MenuContent', () => {
   it('highlights the first item when a submenu becomes active', async () => {
     render(<SubmenuFixture />);
 
+    await waitFor(() => {
+      expect(screen.getByTestId('submenu-trigger').hasAttribute('data-highlighted')).toBe(true);
+    });
     fireEvent.click(screen.getByTestId('submenu-trigger'));
 
     await waitFor(() => {
       expect(screen.getByTestId('submenu-back').hasAttribute('data-highlighted')).toBe(true);
+      expect(screen.getByTestId('submenu-trigger').hasAttribute('data-highlighted')).toBe(false);
     });
   });
 
@@ -983,6 +987,9 @@ describe('MenuContent', () => {
       }
     });
 
+    await waitFor(() => {
+      expect(trigger.hasAttribute('data-highlighted')).toBe(true);
+    });
     fireEvent.click(trigger);
 
     await waitFor(() => {

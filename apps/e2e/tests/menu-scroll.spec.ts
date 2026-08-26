@@ -116,6 +116,31 @@ for (const { name, path } of UI_VIDEO_PAGES) {
       }
     });
 
+    test('uses the available menu space for size clamps', async () => {
+      const size = await panel.evaluate((element) => {
+        const menu = element.closest<HTMLElement>('.media-menu')!;
+        const probe = menu.cloneNode(false);
+        if (!(probe instanceof HTMLElement)) throw new Error('Menu probe is not an element');
+
+        probe.removeAttribute('id');
+        probe.removeAttribute('popover');
+        probe.style.setProperty('--media-menu-max-height', '999px');
+        probe.style.setProperty('--media-menu-available-width', '123px');
+        probe.style.setProperty('--media-menu-available-height', '123px');
+        probe.style.setProperty('--media-popover-available-width', '321px');
+        probe.style.setProperty('--media-popover-available-height', '321px');
+        menu.parentElement!.append(probe);
+
+        const style = getComputedStyle(probe);
+        const size = { maxWidth: style.maxWidth, maxHeight: style.maxHeight };
+
+        probe.remove();
+        return size;
+      });
+
+      expect(size).toEqual({ maxWidth: '123px', maxHeight: '123px' });
+    });
+
     test('keyboard navigation still scrolls the highlighted option into view', async ({ page }) => {
       await getStableBox(panel);
       // Keys only reach the menu once the opened panel owns focus.

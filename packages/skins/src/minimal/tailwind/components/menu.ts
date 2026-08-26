@@ -15,7 +15,7 @@ const submenuPanel = cn(
 
 const itemBase = cn(
   'group/menu-item relative flex cursor-pointer select-none items-center gap-1.5 rounded-(--media-menu-item-border-radius) py-1.5 px-2',
-  'text-start',
+  'text-start whitespace-nowrap',
   'text-shadow-2xs text-shadow-(color:--media-shadow-current-color)',
   'outline-2 -outline-offset-2 outline-transparent',
   'transition-colors duration-100 ease-in-out',
@@ -57,7 +57,7 @@ const group = cn(
 const menuHostShell = cn(
   popup.popover,
   menuTokens,
-  'min-w-max max-w-(--media-popover-available-width,none) max-h-[min(var(--media-popover-available-height,var(--media-menu-max-height)),var(--media-menu-max-height))]',
+  'min-w-max max-w-(--media-menu-available-width,none) max-h-[min(var(--media-menu-available-height,var(--media-menu-max-height)),var(--media-menu-max-height))]',
   'bg-(--media-popover-background-color) [backdrop-filter:var(--media-popover-backdrop-filter)]',
   'shadow-[0_0_0_1px_var(--media-popover-border-color),0_4px_6px_-1px_oklch(0_0_0/0.1),0_2px_4px_-2px_oklch(0_0_0/0.1)]',
   'box-border rounded-(--media-menu-border-radius) p-(--media-menu-padding) overscroll-none'
@@ -77,7 +77,7 @@ export const menu = {
     // Don't transition size on open/close.
     'data-starting-style:[--media-popup-transition:var(--media-popup-base-transition)]',
     'data-ending-style:[--media-popup-transition:var(--media-popup-base-transition)]',
-    'min-w-48! w-(--media-menu-width) h-(--media-menu-height)',
+    'min-w-44! w-(--media-menu-width) h-(--media-menu-height)',
     'overflow-hidden!'
   ),
   /** Root settings Content that exits when a nested Content opens. */

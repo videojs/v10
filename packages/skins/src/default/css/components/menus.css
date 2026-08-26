@@ -6,8 +6,8 @@
   --media-menu-item-border-radius: calc(var(--media-menu-border-radius) - var(--media-menu-padding));
   box-sizing: border-box;
   min-width: max-content;
-  max-width: var(--media-popover-available-width, none);
-  max-height: min(var(--media-popover-available-height, var(--media-menu-max-height)), var(--media-menu-max-height));
+  max-width: var(--media-menu-available-width, none);
+  max-height: min(var(--media-menu-available-height, var(--media-menu-max-height)), var(--media-menu-max-height));
   padding: var(--media-menu-padding);
   overflow: auto;
   overscroll-behavior: none;
@@ -88,6 +88,7 @@
     align-items: center;
     padding: calc(var(--media-spacing) * 1.5) calc(var(--media-spacing) * 2);
     text-align: start;
+    white-space: nowrap;
     text-shadow: 0 1px 0 var(--media-shadow-current-color);
     cursor: pointer;
     user-select: none;
@@ -206,7 +207,7 @@
   /* Settings menu */
   &.media-menu--settings {
     width: var(--media-menu-width);
-    min-width: calc(var(--media-spacing) * 48);
+    min-width: calc(var(--media-spacing) * 44);
     height: var(--media-menu-height);
     overflow: hidden;
     /* Only the menu size changes between panels. */

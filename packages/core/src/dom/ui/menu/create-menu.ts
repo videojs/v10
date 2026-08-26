@@ -74,6 +74,8 @@ export const MenuPositioningCSSVars = {
   availableHeight: MenuCSSVars.availableHeight,
 } as const satisfies PositioningCSSVars;
 
+const parents = new WeakMap<MenuApi, MenuApi>();
+
 export interface MenuApi {
   /** Reactive transition state for platforms to subscribe to. */
   input: State<MenuInput>;
@@ -92,7 +94,7 @@ export interface MenuApi {
   setPopupElement: (element: HTMLElement | null) => void;
   /** Register a navigable item. Returns a cleanup function. */
   registerItem: (element: HTMLElement) => () => void;
-  /** Register a directly nested menu so it can be reset when this menu closes. */
+  /** Register a directly nested menu so parent and child interaction state stays synchronized. */
   registerSubmenu: (menu: MenuApi) => () => void;
   /** Programmatically highlight an item (or clear highlight with `null`). */
   highlight: (element: HTMLElement | null, options?: MenuHighlightOptions) => void;
@@ -128,6 +130,7 @@ export function createMenu(options: MenuOptions): MenuApi {
 
   let openRafId = 0;
   let lastCloseReason: MenuOpenChangeReason | null = null;
+  let api: MenuApi;
 
   function isItemHidden(item: HTMLElement): boolean {
     const availability = item.getAttribute('data-availability');
@@ -161,6 +164,11 @@ export function createMenu(options: MenuOptions): MenuApi {
   // --- Highlight ---
 
   function highlight(element: HTMLElement | null, highlightOptions?: MenuHighlightOptions): void {
+    if (!element && openRafId) {
+      cancelAnimationFrame(openRafId);
+      openRafId = 0;
+    }
+
     if (element && isItemHidden(element)) {
       if (element === highlightedItem) highlight(getAdjacentNavigableItem(1), highlightOptions);
 
@@ -430,8 +438,11 @@ export function createMenu(options: MenuOptions): MenuApi {
   }
 
   function registerItem(element: HTMLElement): () => void {
+    const onFocus = () => highlight(element, { focus: false });
+
     element.tabIndex = -1;
     element.setAttribute(MenuItemDataAttrs.item, '');
+    element.addEventListener('focus', onFocus);
     items.push(element);
     items.sort(compareItems);
 
@@ -440,6 +451,7 @@ export function createMenu(options: MenuOptions): MenuApi {
     }
 
     return () => {
+      element.removeEventListener('focus', onFocus);
       const index = items.indexOf(element);
 
       if (index !== -1) items.splice(index, 1);
@@ -450,12 +462,16 @@ export function createMenu(options: MenuOptions): MenuApi {
 
   function registerSubmenu(menu: MenuApi): () => void {
     submenus.add(menu);
+    parents.set(menu, api);
     const unsubscribe = menu.input.subscribe(handlePendingFocusOut);
 
     submenuUnsubscribes.set(menu, unsubscribe);
 
     return () => {
       submenus.delete(menu);
+
+      if (parents.get(menu) === api) parents.delete(menu);
+
       submenuUnsubscribes.get(menu)?.();
       submenuUnsubscribes.delete(menu);
       handlePendingFocusOut();
@@ -476,7 +492,9 @@ export function createMenu(options: MenuOptions): MenuApi {
   }
 
   function syncOpen(open: boolean): void {
-    if (!open) {
+    if (open) {
+      parents.get(api)?.highlight(null);
+    } else {
       for (const submenu of submenus) submenu.close('imperative-action');
     }
 
@@ -490,13 +508,18 @@ export function createMenu(options: MenuOptions): MenuApi {
 
     for (const unsubscribe of submenuUnsubscribes.values()) unsubscribe();
 
+    for (const submenu of submenus) {
+      if (parents.get(submenu) === api) parents.delete(submenu);
+    }
+
     submenuUnsubscribes.clear();
     submenus.clear();
+    parents.delete(api);
     pendingFocusOut = null;
     popover.destroy();
   }
 
-  return {
+  api = {
     input: popover.input as State<MenuInput>,
     // Menus open/close on trigger click — forward the popover's click handler.
     // Hover and focus-based open are disabled (openOnHover not set).
@@ -527,4 +550,6 @@ export function createMenu(options: MenuOptions): MenuApi {
     syncOpen,
     destroy,
   };
+
+  return api;
 }

@@ -1,7 +1,7 @@
 import { styles } from 'vjsc/styles';
 
 const menuItem = [
-  'relative flex cursor-pointer select-none items-center gap-1.5 px-2 py-1.5 text-start',
+  'relative flex cursor-pointer select-none items-center gap-1.5 px-2 py-1.5 text-start whitespace-nowrap',
   'outline-2 -outline-offset-2 outline-transparent',
   'hover:bg-media-control-hover hover:text-media-accent-text data-highlighted:bg-media-control-hover data-highlighted:text-media-accent-text',
   'focus-visible:outline-white focus-visible:outline-offset-2',
@@ -57,7 +57,7 @@ export default styles({
     popup: {
       className: 'media-menu-popup',
       utilities: [
-        'm-0 min-w-48 max-w-(--media-menu-available-width) overflow-hidden! border-0 p-1',
+        'm-0 min-w-44 max-w-(--media-menu-available-width) overflow-hidden! border-0 p-1',
         'max-h-[min(var(--media-menu-available-height,14rem),14rem)] overscroll-none',
         'h-(--media-menu-height) w-(--media-menu-width)',
         '[--media-menu-transition-duration:250ms] motion-reduce:[--media-menu-transition-duration:0ms]',
