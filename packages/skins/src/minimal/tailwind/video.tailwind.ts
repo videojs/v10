@@ -3,7 +3,7 @@ import { cn } from '@videojs/utils/style';
 import { buttonGroup as baseButtonGroup } from './components/button-group';
 import { container as baseContainer } from './components/container';
 import { controls as baseControls } from './components/controls';
-import { error as baseError } from './components/error';
+import { error as baseError } from './components/error-dialog';
 import { menu as baseMenu } from './components/menu';
 import { popup as basePopup } from './components/popup';
 import { slider as baseSlider } from './components/slider';
@@ -69,15 +69,15 @@ export const container = (isShadowDOM: boolean) =>
     'contrast-more:[--media-controls-background-color:oklch(0_0_0)]',
     '[@media(prefers-reduced-transparency:reduce)]:[--media-tooltip-background-color:oklch(0_0_0)]',
     'contrast-more:[--media-tooltip-background-color:oklch(0_0_0)]',
-    'pointer-fine:has-[[data-controls]:not([data-visible])]:[--media-controls-transition-duration:300ms]',
-    'pointer-coarse:has-[[data-controls]:not([data-visible])]:[--media-controls-transition-duration:150ms]',
-    'motion-reduce:has-[[data-controls]:not([data-visible])]:[--media-controls-transition-duration:50ms]',
+    'pointer-fine:has-[.media-controls:not([data-visible])]:[--media-controls-transition-duration:300ms]',
+    'pointer-coarse:has-[.media-controls:not([data-visible])]:[--media-controls-transition-duration:150ms]',
+    'motion-reduce:has-[.media-controls:not([data-visible])]:[--media-controls-transition-duration:50ms]',
     // Caption track CSS variables (consumed by the native caption bridge in light DOM)
     '[--media-caption-track-y:--spacing(-2)]',
     '[--media-caption-track-delay:25ms]',
     '[--media-caption-track-duration:var(--media-controls-transition-duration)]',
-    'has-[[data-controls][data-visible]]:[--media-caption-track-y:--spacing(-18)]',
-    '@2xl/media-root:has-[[data-controls][data-visible]]:*:[--media-caption-track-y:--spacing(-12)]',
+    'has-[.media-controls[data-visible]]:[--media-caption-track-y:--spacing(-18)]',
+    '@2xl/media-root:has-[.media-controls[data-visible]]:*:[--media-caption-track-y:--spacing(-12)]',
     // Native caption track container
     !isShadowDOM
       ? [
@@ -109,7 +109,6 @@ export const controls = cn(
   '[--media-volume-mask:linear-gradient(to_right,transparent_10%,black_25%,black_100%)]',
   'gap-x-2 flex-wrap rounded-[--spacing(3)] group/controls',
   'text-white z-20',
-  'peer-data-open/error:hidden',
   'ease-(--media-controls-transition-timing-function)',
   'duration-[calc(var(--media-controls-transition-duration)/2)]',
   'not-data-visible:duration-(--media-controls-transition-duration)',
@@ -163,8 +162,7 @@ export const time = {
 
 export const error = {
   ...baseError,
-  root: cn(baseError.root, 'pointer-events-none outline-none'),
-  dialog: cn(baseError.dialog, 'pointer-events-auto w-full max-w-64 p-4 rounded-none'),
+  popup: cn(baseError.popup, 'w-full max-w-64 rounded-none outline-none'),
   content: cn(baseError.content, 'p-0 py-1.5'),
   title: 'text-(length:--media-font-size-medium)',
 };
@@ -205,13 +203,13 @@ export const menu = {
 /* Shared components (no overrides) */
 
 export { iconState } from '../../shared/tailwind/icon-state';
+export { controlsBackdrop } from './components/controls-backdrop';
 export { badge } from './components/badge';
 export { bufferingIndicator } from './components/buffering';
 export { button } from './components/button';
 export { buttonGroup } from './components/button-group';
 export { icon, iconContainer, iconFlipped, iconHidden } from './components/icon';
-export { inputIndicatorOverlay } from './components/input-indicator-overlay';
-export { overlay } from './components/overlay';
+export { inputIndicator } from './components/input-indicator';
 export { playbackRate } from './components/playback-rate';
 export { poster } from './components/poster';
 export { seek } from './components/seek';

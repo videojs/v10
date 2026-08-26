@@ -15,7 +15,7 @@ import { SOURCES } from '@app/shared/sources';
 
 const html = String.raw;
 
-const state = createHtmlSandboxState(true);
+const state = createHtmlSandboxState();
 const loadLatest = createLatestLoader();
 
 async function render() {

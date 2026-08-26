@@ -4,10 +4,9 @@ import {
   buttonGroup,
   container,
   controls,
-  error,
+  dialog,
   icon,
   iconState,
-  overlay,
   playButton,
   popup,
   slider,
@@ -26,14 +25,13 @@ function getTemplateHTML() {
       <slot></slot>
 
       <media-error-dialog>
-        <media-dialog-backdrop data-error-backdrop class="${overlay}"></media-dialog-backdrop>
-        <media-dialog-popup class="${error.root}">
-        <div class="${error.dialog}">
-          <div class="${error.content}">
-            <media-dialog-title class="${error.title}"></media-dialog-title>
-            <media-dialog-description class="${error.description}"></media-dialog-description>
+        <media-dialog-popup class="${dialog.root}">
+        <div class="${dialog.dialog}">
+          <div class="${dialog.content}">
+            <media-dialog-title class="${dialog.title}"></media-dialog-title>
+            <media-dialog-description class="${dialog.description}"></media-dialog-description>
           </div>
-          <div class="${error.actions}">
+          <div class="${dialog.actions}">
             <media-dialog-close class="${cn(button.base, button.subtle)}"></media-dialog-close>
           </div>
         </div>

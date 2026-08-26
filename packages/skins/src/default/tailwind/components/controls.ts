@@ -1,8 +1,7 @@
 import { cn } from '@videojs/utils/style';
 
 export const controls = cn(
-  // Peer marker for overlay/captions
-  'peer/controls',
+  'media-controls',
   // Layout
   '@container/media-controls',
   '[--media-popover-side-offset:calc(var(--media-spacing)*(var(--media-base-side-offset,2)+var(--media-controls-padding,1)))]',

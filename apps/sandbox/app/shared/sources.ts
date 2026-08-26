@@ -353,7 +353,6 @@ export const MUX_SPF_SOURCE_IDS = SOURCE_IDS.filter(
 );
 /** The plain HLS presets are the same engine without the Mux source, so they drop what only a playback ID reaches. */
 export const SPF_HLS_SOURCE_IDS = MUX_SPF_SOURCE_IDS.filter((id) => !isMuxSource(id));
-export const MP4_SOURCE_IDS = SOURCE_IDS.filter((id) => SOURCES[id].type === 'mp4');
 export const DASH_SOURCE_IDS = SOURCE_IDS.filter((id) => SOURCES[id].type === 'dash');
 /**
  * Shaka plays DASH and HLS from one element, so it is the only preset offered both. The DRM assets are left out until
@@ -361,7 +360,6 @@ export const DASH_SOURCE_IDS = SOURCE_IDS.filter((id) => SOURCES[id].type === 'd
  */
 export const SHAKA_SOURCE_IDS = SOURCE_IDS.filter((id) => !isDrmSource(id) && !isMuxSource(id));
 export const DEFAULT_SOURCE: SourceId = 'hls-1';
-export const DEFAULT_AUDIO_SOURCE: SourceId = 'mp4-1';
 export const DEFAULT_DASH_SOURCE: SourceId = 'dash-1';
 /**
  * Where the SPF background presets land when entered. The 4K ladder rather than {@link DEFAULT_SOURCE}, which is

@@ -176,11 +176,12 @@ describe('SliderElement', () => {
     slider.releasePointerCapture = vi.fn();
 
     slider.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerId: 1, clientX: 50 }));
+    slider.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, pointerId: 1, clientX: 55, buttons: 1 }));
 
     expect(provider.requestControlsLock).toHaveBeenCalledTimes(1);
     expect(provider.releaseControlsLock).not.toHaveBeenCalled();
 
-    slider.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, pointerId: 1, clientX: 50 }));
+    slider.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, pointerId: 1, clientX: 55 }));
     slider.dispatchEvent(new PointerEvent('lostpointercapture', { bubbles: true, pointerId: 1 }));
 
     expect(provider.releaseControlsLock).toHaveBeenCalledTimes(1);

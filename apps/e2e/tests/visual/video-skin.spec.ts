@@ -151,7 +151,7 @@ test.describe('Visual — HTML Portrait Layout', () => {
       const probe = document.createElement('div');
 
       probe.style.position = 'absolute';
-      probe.style.height = style.getPropertyValue('--thumbnail-max-height');
+      probe.style.height = style.getPropertyValue('--media-thumbnail-max-height');
       thumbnail.parentElement!.append(probe);
 
       const configuredMaxHeight = parseFloat(getComputedStyle(probe).height);

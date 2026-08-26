@@ -4,18 +4,17 @@ import { DEFAULT_PRELOAD, PRELOAD_VALUES, type PreloadValue } from '@app/shared/
 import type { SourceId } from '@app/shared/sources';
 import {
   DASH_SOURCE_IDS,
-  DEFAULT_AUDIO_SOURCE,
   DEFAULT_BACKGROUND_SOURCE,
   DEFAULT_DASH_SOURCE,
   DEFAULT_SOURCE,
   HLS_SOURCE_IDS,
   isDrmSource,
   isMuxSource,
-  MP4_SOURCE_IDS,
   MUX_SOURCE_IDS,
   MUX_SPF_SOURCE_IDS,
   NON_DASH_SOURCE_IDS,
   SHAKA_SOURCE_IDS,
+  SOURCE_IDS,
   SOURCES,
   SPF_HLS_SOURCE_IDS,
 } from '@app/shared/sources';
@@ -103,7 +102,7 @@ export function App() {
   const embedPreset = (EMBED_PRESETS as readonly Preset[]).includes(preset);
   const availableSources =
     preset === 'audio'
-      ? MP4_SOURCE_IDS
+      ? SOURCE_IDS
       : preset === 'dash-video'
         ? DASH_SOURCE_IDS
         : preset === 'shaka-video'
@@ -170,13 +169,6 @@ export function App() {
     iframeRef.current?.contentWindow?.postMessage({ type: 'accent-color-change', accentColor }, '*');
   }, [accentColor]);
 
-  // Constrain source to MP4 when switching to audio
-  useEffect(() => {
-    if (preset === 'audio' && SOURCES[source].type !== 'mp4') {
-      setSource(DEFAULT_AUDIO_SOURCE);
-    }
-  }, [preset, source]);
-
   // Constrain source to DASH when switching to dash-video
   useEffect(() => {
     if (preset === 'dash-video' && SOURCES[source].type !== 'dash') {
@@ -187,7 +179,7 @@ export function App() {
   // Constrain source away from DASH for presets that cannot play it. Shaka is
   // not one of them — it plays DASH and HLS from the same element.
   useEffect(() => {
-    if (preset !== 'dash-video' && preset !== 'shaka-video' && SOURCES[source].type === 'dash') {
+    if (preset !== 'audio' && preset !== 'dash-video' && preset !== 'shaka-video' && SOURCES[source].type === 'dash') {
       setSource(DEFAULT_SOURCE);
     }
   }, [preset, source]);

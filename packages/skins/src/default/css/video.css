@@ -2,9 +2,9 @@
 @import "./components/container.css";
 @import "./components/surface.css";
 @import "./components/media.css";
-@import "./components/overlay.css";
+@import "./components/controls-backdrop.css";
 @import "./components/buffering.css";
-@import "./components/error.css";
+@import "./components/error-dialog.css";
 @import "./components/controls.css";
 @import "./components/time.css";
 @import "./components/button.css";
@@ -17,7 +17,6 @@
 @import "./components/popup.css";
 @import "./components/menus.css";
 @import "./components/captions.css";
-@import "./components/input-indicator-overlay.css";
 @import "./components/input-indicator.css";
 @import "./components/volume-indicator.css";
 @import "./components/status-indicator.css";
@@ -56,7 +55,7 @@
     --media-error-dialog-transition-delay: 0ms;
     --media-popup-transition-duration: 0ms;
 
-    .media-error__dialog {
+    .media-error-dialog__popup {
       scale: 1;
       transition-property: opacity;
     }
@@ -117,16 +116,11 @@
 
 /* Error Dialog  */
 
-.media-default-skin--video .media-error {
+.media-default-skin--video .media-error-dialog__popup {
   position: absolute;
-  inset: 0;
+  top: 50%;
+  left: 50%;
   z-index: 20;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.media-default-skin--video .media-error__dialog {
   display: flex;
   flex-direction: column;
   gap: calc(var(--media-spacing) * 3);
@@ -136,22 +130,26 @@
   color: oklch(1 0 0);
   text-shadow: 0 1px 0 oklch(0 0 0 / 0.25);
   border-radius: calc(var(--media-spacing) * 7);
+  translate: -50% -50%;
   transition-delay: var(--media-error-dialog-transition-delay);
   transition-timing-function: var(--media-error-dialog-transition-timing-function);
   transition-duration: var(--media-error-dialog-transition-duration);
   transition-property: opacity, scale;
 }
 
-.media-default-skin--video .media-error[data-starting-style] .media-error__dialog,
-.media-default-skin--video .media-error[data-ending-style] .media-error__dialog {
+.media-default-skin--video .media-error-dialog__popup[data-starting-style],
+.media-default-skin--video .media-error-dialog__popup[data-ending-style],
+.media-default-skin--video media-error-dialog[data-starting-style] .media-error-dialog__popup,
+.media-default-skin--video media-error-dialog[data-ending-style] .media-error-dialog__popup {
   opacity: 0;
   scale: 0.95;
 }
-.media-default-skin--video .media-error[data-ending-style] .media-error__dialog {
+.media-default-skin--video .media-error-dialog__popup[data-ending-style],
+.media-default-skin--video media-error-dialog[data-ending-style] .media-error-dialog__popup {
   transition-delay: 0ms;
 }
 
-.media-default-skin--video .media-error__content {
+.media-default-skin--video .media-error-dialog__content {
   display: flex;
   flex-direction: column;
   gap: calc(var(--media-spacing) * 2);
@@ -159,7 +157,7 @@
   text-shadow: inherit;
 }
 
-.media-default-skin--video .media-error__title {
+.media-default-skin--video .media-error-dialog__title {
   font-size: var(--media-font-size-medium);
 }
 
@@ -168,7 +166,6 @@
 }
 
 /* Controls (hide/show behavior) */
-
 .media-default-skin--video .media-controls--root {
   --media-inset-factor: 2;
   --media-inset: calc(var(--media-spacing) * var(--media-inset-factor));
@@ -316,10 +313,6 @@
   @container media-root (width > 42rem) {
     --media-inset-factor: 3;
   }
-}
-
-.media-default-skin--video:has(.media-error[data-open]) .media-controls {
-  display: none;
 }
 
 /* Hide cursor when controls are hidden */

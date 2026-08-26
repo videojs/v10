@@ -2,7 +2,7 @@ import { cn } from '@videojs/utils/style';
 
 import { container as baseContainer } from './components/container';
 import { controls as baseControls } from './components/controls';
-import { error as baseError } from './components/error';
+import { error as baseError } from './components/error-dialog';
 import { popup as basePopup, tooltip } from './components/popup';
 import { slider as baseSlider } from './components/slider';
 
@@ -48,7 +48,6 @@ export const controls = cn(
   'p-1 gap-2',
   'rounded-(--media-border-radius,0.875rem)',
   '[--media-base-side-offset:2] [--media-base-boundary-offset:2]',
-  'peer-data-open/error:**:invisible',
   // Appearance
   'text-(--media-controls-text-color)',
   // Border
@@ -113,7 +112,6 @@ export { button } from './components/button';
 export { buttonGroup } from './components/button-group';
 export { icon, iconContainer, iconFlipped, iconHidden } from './components/icon';
 export { menu } from './components/menu';
-export { overlay } from './components/overlay';
 export { playbackRate } from './components/playback-rate';
 export { seek } from './components/seek';
 export { time } from './components/time';

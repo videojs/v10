@@ -22,6 +22,10 @@ export default styles({
   file: 'controls.css',
   layer: 'videojs.components',
   rules: {
+    provider: {
+      className: 'media-controls-provider',
+      utilities: 'contents',
+    },
     root: {
       className: 'media-controls',
       utilities: [
@@ -41,13 +45,11 @@ export default styles({
       ],
     },
     backdrop: {
-      className: 'media-controls-backdrop',
+      className: 'media-controls__backdrop',
       utilities: [
-        'pointer-events-none absolute inset-0 rounded-[inherit] opacity-0',
-        '@lg/media-root:inset-auto @lg/media-root:bottom-[-0.5rem] @lg/media-root:left-1/2 @lg/media-root:h-[100cqh] @lg/media-root:w-[100cqw] @lg/media-root:-translate-x-1/2',
-        '@2xl/media-root:bottom-[-0.75rem]',
+        'pointer-events-none absolute inset-0 z-10 rounded-[inherit]',
         'bg-linear-to-t from-black/50 via-black/30 via-25% to-transparent',
-        'transition-opacity duration-(--media-controls-transition-duration) ease-out data-visible:opacity-100',
+        'transition-opacity duration-(--media-controls-transition-duration) ease-out not-data-visible:opacity-0',
       ],
     },
     primary: {

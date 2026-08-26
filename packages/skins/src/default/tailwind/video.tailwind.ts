@@ -4,7 +4,7 @@ import { bufferingIndicator as baseBufferingIndicator } from './components/buffe
 import { buttonGroup as baseButtonGroup } from './components/button-group';
 import { container as baseContainer } from './components/container';
 import { controls as baseControls } from './components/controls';
-import { error as baseError } from './components/error';
+import { error as baseError } from './components/error-dialog';
 import { menu as baseMenu } from './components/menu';
 import { popup as basePopup } from './components/popup';
 import { slider as baseSlider } from './components/slider';
@@ -73,14 +73,14 @@ export const container = (isShadowDOM: boolean) =>
     'contrast-more:[--media-surface-inner-border-color:oklch(1_0_0/0.25)]',
     '[@media(prefers-reduced-transparency:reduce)]:[--media-surface-outer-border-color:transparent]',
     'contrast-more:[--media-surface-outer-border-color:transparent]',
-    'pointer-fine:has-[[data-controls]:not([data-visible])]:[--media-controls-transition-duration:300ms]',
-    'pointer-coarse:has-[[data-controls]:not([data-visible])]:[--media-controls-transition-duration:150ms]',
-    'motion-reduce:has-[[data-controls]:not([data-visible])]:[--media-controls-transition-duration:50ms]',
+    'pointer-fine:has-[.media-controls:not([data-visible])]:[--media-controls-transition-duration:300ms]',
+    'pointer-coarse:has-[.media-controls:not([data-visible])]:[--media-controls-transition-duration:150ms]',
+    'motion-reduce:has-[.media-controls:not([data-visible])]:[--media-controls-transition-duration:50ms]',
     // Caption track CSS variables (consumed by the native caption bridge in light DOM)
     '[--media-caption-track-y:--spacing(-2)]',
     '[--media-caption-track-delay:25ms]',
     '[--media-caption-track-duration:var(--media-controls-transition-duration)]',
-    'has-[[data-controls][data-visible]]:[--media-caption-track-y:--spacing(-14)]',
+    'has-[.media-controls[data-visible]]:[--media-caption-track-y:--spacing(-14)]',
     // Native caption track container
     !isShadowDOM
       ? [
@@ -108,7 +108,6 @@ const controlsBase = cn(
   baseControls,
   surface,
   'text-white z-10',
-  'peer-data-open/error:hidden!',
   'ease-(--media-controls-transition-timing-function)',
   'duration-[calc(var(--media-controls-transition-duration)/2)]',
   'pointer-fine:transition-[filter,opacity,scale,translate]',
@@ -208,7 +207,7 @@ export const bufferingIndicator = baseBufferingIndicator;
 
 export const error = {
   ...baseError,
-  dialog: cn(baseError.dialog, surface, 'w-full text-shadow-2xs text-shadow-black/25'),
+  popup: cn(baseError.popup, surface, 'w-full text-shadow-2xs text-shadow-black/25'),
   content: cn(baseError.content, 'text-shadow-inherit'),
   title: cn(baseError.title, 'text-(length:--media-font-size-medium)'),
 };
@@ -228,12 +227,12 @@ export const statusIndicator = {
 /* Shared components (no overrides) */
 
 export { iconState } from '../../shared/tailwind/icon-state';
+export { controlsBackdrop } from './components/controls-backdrop';
 export { badge } from './components/badge';
 export { button } from './components/button';
 export { buttonGroup } from './components/button-group';
 export { icon, iconContainer, iconFlipped, iconHidden } from './components/icon';
-export { inputIndicatorOverlay } from './components/input-indicator-overlay';
-export { overlay } from './components/overlay';
+export { inputIndicator } from './components/input-indicator';
 export { playbackRate } from './components/playback-rate';
 export { poster } from './components/poster';
 export { seek } from './components/seek';

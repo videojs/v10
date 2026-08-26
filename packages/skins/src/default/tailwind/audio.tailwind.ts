@@ -2,7 +2,7 @@ import { cn } from '@videojs/utils/style';
 
 import { container as baseContainer } from './components/container';
 import { controls as baseControls } from './components/controls';
-import { error as baseError } from './components/error';
+import { error as baseError } from './components/error-dialog';
 import { popup as basePopup, tooltip } from './components/popup';
 import { slider as baseSlider } from './components/slider';
 import { surface } from './components/surface';
@@ -44,13 +44,7 @@ export const container = cn(
 
 /* Controls */
 
-export const controls = cn(
-  baseControls,
-  surface,
-  '[--media-base-boundary-offset:2]',
-  'text-(--media-text-color)',
-  'peer-data-open/error:**:invisible'
-);
+export const controls = cn(baseControls, surface, '[--media-base-boundary-offset:2]', 'text-(--media-text-color)');
 
 export const spacer = 'grow';
 
@@ -118,6 +112,5 @@ export { button } from './components/button';
 export { buttonGroup } from './components/button-group';
 export { icon, iconContainer, iconFlipped, iconHidden } from './components/icon';
 export { menu } from './components/menu';
-export { overlay } from './components/overlay';
 export { playbackRate } from './components/playback-rate';
 export { seek } from './components/seek';

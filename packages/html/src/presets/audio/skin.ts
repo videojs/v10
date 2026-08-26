@@ -15,17 +15,16 @@ function getTemplateHTML() {
       <slot></slot>
 
       <media-error-dialog>
-        <media-dialog-backdrop class="media-overlay media-error-backdrop"></media-dialog-backdrop>
-        <media-dialog-popup class="media-error">
-        <div class="media-error__dialog">
-          <div class="media-error__content">
-            <media-dialog-title class="media-error__title"></media-dialog-title>
-            <media-dialog-description class="media-error__description"></media-dialog-description>
+        <media-dialog-popup class="media-dialog__popup">
+          <div class="media-dialog__dialog">
+          <div class="media-dialog__content">
+            <media-dialog-title class="media-dialog__title"></media-dialog-title>
+            <media-dialog-description class="media-dialog__description"></media-dialog-description>
           </div>
-          <div class="media-error__actions">
+          <div class="media-dialog__actions">
             <media-dialog-close class="media-button media-button--subtle"></media-dialog-close>
           </div>
-        </div>
+          </div>
         </media-dialog-popup>
       </media-error-dialog>
 

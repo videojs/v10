@@ -7,7 +7,7 @@ import { VideoSkin } from '../skin';
 afterEach(cleanup);
 
 /** Only the playback and metadata state the poster reads; the rest renders null. */
-function wrapper() {
+function wrapper(overrides: Record<string, unknown> = {}) {
   return createPlayerWrapper({
     paused: true,
     ended: false,
@@ -18,10 +18,36 @@ function wrapper() {
     togglePaused: () => true,
     title: '',
     poster: 'poster.jpg',
+    ...overrides,
   }).Wrapper;
 }
 
 describe('VideoSkin', () => {
+  it('renders component-owned backdrops', () => {
+    const { container } = render(<VideoSkin />, {
+      wrapper: wrapper({
+        controlsVisible: true,
+        userActive: true,
+        requestControlsLock: () => () => {},
+        error: { code: 2, message: 'Network error' },
+        dismissError: () => {},
+      }),
+    });
+
+    const controls = container.querySelector('.media-controls--root');
+    const controlsBackdrop = container.querySelector('.media-controls__backdrop');
+    const error = container.querySelector('.media-error-dialog__popup');
+    const errorBackdrop = container.querySelector('.media-error-dialog__backdrop');
+
+    expect(controlsBackdrop).not.toBeNull();
+    expect(controlsBackdrop?.parentElement).toBe(controls?.parentElement);
+    expect(controls?.contains(controlsBackdrop)).toBe(false);
+    expect(errorBackdrop).not.toBeNull();
+    expect(errorBackdrop?.parentElement).toBe(error?.parentElement);
+    expect(error?.contains(errorBackdrop)).toBe(false);
+    expect(container.querySelector('.media-input-indicator')).not.toBeNull();
+  });
+
   it('draws its own poster image', () => {
     const { container } = render(<VideoSkin />, { wrapper: wrapper() });
 

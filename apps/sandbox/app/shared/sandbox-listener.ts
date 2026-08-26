@@ -3,7 +3,7 @@ import { DEFAULT_SANDBOX_LOCALE, SANDBOX_LOCALE_TAGS, type SandboxLocaleTag } fr
 import type { Skin } from '@app/types';
 import type { MediaResolution } from '@videojs/media';
 
-import { DEFAULT_AUDIO_SOURCE, SOURCES, type SourceId } from './sources';
+import { SOURCES, type SourceId } from './sources';
 
 export const PRELOAD_VALUES = ['none', 'metadata', 'auto'] as const;
 export type PreloadValue = (typeof PRELOAD_VALUES)[number];
@@ -141,11 +141,8 @@ export function onSkinChange(callback: (skin: Skin) => void): () => void {
   };
 }
 
-export function getInitialSource(audioOnly?: boolean): SourceId {
-  const stored = currentSource;
-  if (audioOnly && SOURCES[stored].type !== 'mp4') return DEFAULT_AUDIO_SOURCE;
-
-  return stored;
+export function getInitialSource(): SourceId {
+  return currentSource;
 }
 
 export function onSourceChange(callback: (source: SourceId) => void): () => void {

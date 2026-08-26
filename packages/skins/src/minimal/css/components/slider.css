@@ -2,6 +2,7 @@
   --media-track-size: calc(var(--media-spacing) * 1);
   --media-track-highlighted-size: calc(var(--media-spacing) * 1.75);
   --media-track-border-radius: 99px;
+  --media-track-transition-duration: 100ms;
   --media-thumb-size: calc(var(--media-spacing) * 3);
   --media-chapter-gap: calc(var(--media-spacing) * 1);
   --media-internal-chapter-inset-start: calc(var(--media-chapter-gap) / 2);
@@ -64,11 +65,10 @@
     }
 
     @media (prefers-reduced-motion: no-preference) {
-      transition: clip-path 200ms ease-out;
+      transition: clip-path var(--media-track-transition-duration) ease-out;
     }
   }
-  &[data-dragging],
-  &[data-seeking] {
+  &[data-dragging] {
     .media-slider__fill,
     .media-slider__buffer {
       transition-duration: 0ms;
@@ -230,7 +230,7 @@
 
     @media (prefers-reduced-motion: no-preference) {
       transition-timing-function: ease-out;
-      transition-duration: 150ms;
+      transition-duration: var(--media-track-transition-duration);
       transition-property: opacity, outline-offset, left, top, scale;
     }
   }

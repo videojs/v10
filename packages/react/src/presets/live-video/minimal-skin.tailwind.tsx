@@ -2,6 +2,7 @@
 
 import { captionsText } from '@videojs/core/i18n/text/menu';
 import {
+  controlsBackdrop,
   bufferingIndicator,
   button,
   buttonGroupEnd,
@@ -11,9 +12,8 @@ import {
   error,
   icon,
   iconState,
-  inputIndicatorOverlay,
+  inputIndicator,
   menu,
-  overlay,
   popup,
   poster,
   slider,
@@ -240,26 +240,21 @@ export function MinimalLiveVideoSkinTailwind(props: MinimalLiveVideoSkinProps): 
       />
 
       <ErrorDialog.Root>
-        <ErrorDialog.Backdrop data-error-backdrop="" className={overlay} />
-        <ErrorDialog.Popup className={error.root}>
-          <div className={error.dialog}>
-            <div className={error.content}>
-              <ErrorDialog.Title className={error.title}></ErrorDialog.Title>
-              <ErrorDialog.Description className={error.description} />
-            </div>
-            <div className={error.actions}>
-              <ErrorDialog.Close className={cn(button.base, button.primary)}></ErrorDialog.Close>
-            </div>
+        <ErrorDialog.Backdrop className={error.backdrop} />
+        <ErrorDialog.Popup className={error.popup}>
+          <div className={error.content}>
+            <ErrorDialog.Title className={error.title}></ErrorDialog.Title>
+            <ErrorDialog.Description className={error.description} />
+          </div>
+          <div className={error.actions}>
+            <ErrorDialog.Close className={cn(button.base, button.primary)}></ErrorDialog.Close>
           </div>
         </ErrorDialog.Popup>
       </ErrorDialog.Root>
 
       <Controls.Root>
-        <Controls.Backdrop className={overlay} />
-        <Controls.Content
-          data-controls="" // Used as a hook for Tailwind has-[] styles
-          className={controls}
-        >
+        <Controls.Backdrop className={controlsBackdrop} />
+        <Controls.Content className={controls}>
           <Tooltip.Provider>
             <div className={buttonGroupStart}>
               <Tooltip.Root side="top">
@@ -369,7 +364,7 @@ export function MinimalLiveVideoSkinTailwind(props: MinimalLiveVideoSkinProps): 
 
       {/* Input Indicators */}
       <StatusAnnouncer className="sr-only" />
-      <div className={inputIndicatorOverlay}>
+      <div className={inputIndicator}>
         <VolumeIndicator.Root className={volumeIndicator.root}>
           <VolumeIndicator.Fill className={volumeIndicator.content}>
             <VolumeHighIcon className={cn(volumeIndicator.icon.base, volumeIndicator.icon.high)} />

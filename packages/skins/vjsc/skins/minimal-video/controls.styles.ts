@@ -4,6 +4,10 @@ export default styles({
   file: 'controls.css',
   layer: 'videojs.components',
   rules: {
+    provider: {
+      className: 'media-controls-provider',
+      utilities: 'contents',
+    },
     root: {
       className: 'media-controls',
       utilities: [
@@ -22,12 +26,11 @@ export default styles({
       ],
     },
     backdrop: {
-      className: 'media-controls-backdrop',
+      className: 'media-controls__backdrop',
       utilities: [
-        'pointer-events-none absolute bottom-[-0.25rem] left-1/2 h-[100cqh] w-[100cqw] -translate-x-1/2 rounded-[inherit] opacity-0',
-        '@2xl/media-root:bottom-[-0.5rem]',
+        'pointer-events-none absolute inset-0 z-10 rounded-[inherit]',
         'bg-linear-to-t from-black/70 via-black/50 via-[length:calc(var(--media-spacing)*30)] to-transparent',
-        'transition-opacity duration-(--media-controls-transition-duration) ease-out data-visible:opacity-100',
+        'transition-opacity duration-(--media-controls-transition-duration) ease-out not-data-visible:opacity-0',
       ],
     },
     start: {

@@ -10,7 +10,7 @@
  * Each selector uses a CSS `,` (or) to match either renderer.
  */
 
-/** Toolbar: HTML renders `<media-controls-content>`, React a `<div class="media-controls">`. */
+/** Toolbar: HTML renders `<media-controls-content>`, React renders `<div class="media-controls">`. */
 function withinControls(selector: string): string {
   return `media-controls ${selector}, .media-controls ${selector}`;
 }
@@ -91,7 +91,7 @@ export const SELECTORS = {
 
   tooltip: 'media-tooltip, .media-tooltip',
   popover: 'media-popover, .media-popover',
-  errorDialog: 'media-error-dialog, .media-error',
+  errorDialog: 'media-error-dialog, .media-error-dialog__popup',
 
   // Media element — matches all renderer custom elements and native media
   media: 'video, audio, hlsjs-video, hls-video, native-hls-video, dash-video, shaka-video, mux-video, mux-audio',

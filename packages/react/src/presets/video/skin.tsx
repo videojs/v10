@@ -408,25 +408,23 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
       />
 
       <ErrorDialog.Root>
-        <ErrorDialog.Backdrop className="media-overlay media-error-backdrop" />
-        <ErrorDialog.Popup className="media-error">
-          <div className="media-error__dialog media-surface">
-            <div className="media-error__content">
-              <ErrorDialog.Title className="media-error__title"></ErrorDialog.Title>
-              <ErrorDialog.Description className="media-error__description" />
-            </div>
-            <div className="media-error__actions">
-              <ErrorDialog.Close className="media-button media-button--primary"></ErrorDialog.Close>
-            </div>
+        <ErrorDialog.Backdrop className="media-error-dialog__backdrop" />
+        <ErrorDialog.Popup className="media-error-dialog__popup media-surface">
+          <div className="media-error-dialog__content">
+            <ErrorDialog.Title className="media-error-dialog__title"></ErrorDialog.Title>
+            <ErrorDialog.Description className="media-error-dialog__description" />
+          </div>
+          <div className="media-error-dialog__actions">
+            <ErrorDialog.Close className="media-button media-button--primary"></ErrorDialog.Close>
           </div>
         </ErrorDialog.Popup>
       </ErrorDialog.Root>
 
       <Controls.Root>
-        <Controls.Backdrop className="media-overlay" />
+        <Controls.Backdrop className="media-controls__backdrop" />
         <Controls.Content className="media-surface media-controls media-controls--root">
           <Tooltip.Provider>
-            <div className="media-surface media-controls media-controls--primary">
+            <Controls.Group className="media-surface media-controls media-controls--primary">
               <div className="media-button-group">
                 <Tooltip.Root side="top">
                   <Tooltip.Trigger
@@ -495,16 +493,16 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
 
                 <SettingsMenu />
               </div>
-            </div>
+            </Controls.Group>
 
-            <div className="media-surface media-controls media-controls--secondary">
+            <Controls.Group className="media-surface media-controls media-controls--secondary">
               <div className="media-button-group">
                 <CastControl />
                 <AirPlayControl />
                 <PiPControl />
                 <FullscreenControl />
               </div>
-            </div>
+            </Controls.Group>
           </Tooltip.Provider>
         </Controls.Content>
       </Controls.Root>
@@ -537,7 +535,7 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
 
       {/* Input Indicators */}
       <StatusAnnouncer className="media-sr-only" />
-      <div className="media-input-indicator-overlay">
+      <div className="media-input-indicator">
         <VolumeIndicator.Root className="media-surface media-volume-indicator">
           <VolumeIndicator.Fill className="media-volume-indicator__content">
             <VolumeHighIcon className="media-icon media-icon--volume-high" />

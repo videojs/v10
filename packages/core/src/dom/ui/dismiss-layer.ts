@@ -92,7 +92,7 @@ export function createDismissLayer(options: DismissLayerOptions): DismissLayerAp
   // --- Lifecycle ---
 
   const unsubscribe = state.subscribe(() => {
-    if (state.current.active) {
+    if (state.current.active && state.current.status !== 'ending') {
       setupDocumentListeners();
     } else {
       cleanupDocumentListeners();

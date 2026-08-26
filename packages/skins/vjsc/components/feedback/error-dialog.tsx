@@ -8,9 +8,12 @@ import surfaceStyles from '../../styles/surfaces/surface.styles';
 
 export function ErrorDialog({ className, ...props }: Props = {}) {
   return (
-    <$.ErrorDialog.Root>
+    <$.ErrorDialog.Root className={styles.root}>
       <$.ErrorDialog.Backdrop className={styles.backdrop} />
-      <$.ErrorDialog.Popup className={[surfaceStyles.feedback, styles.popup, className]} {...props}>
+      <$.ErrorDialog.Popup
+        className={[surfaceStyles.feedback, styles.popup, 'media-error-dialog-popup', className]}
+        {...props}
+      >
         <Box className={styles.content}>
           <$.ErrorDialog.Title className={styles.title} />
           <$.ErrorDialog.Description className={styles.description} />

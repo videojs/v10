@@ -1,7 +1,7 @@
 @import "./components/reset.css";
 @import "./components/container.css";
 @import "./components/buffering.css";
-@import "./components/error.css";
+@import "./components/error-dialog.css";
 @import "./components/controls.css";
 @import "./components/time.css";
 @import "./components/button.css";
@@ -53,14 +53,14 @@
 
 /* Error Dialog */
 
-.media-minimal-skin--audio .media-error__dialog {
+.media-minimal-skin--audio .media-error-dialog__dialog {
   position: absolute;
   inset: 0;
   z-index: 20;
   display: flex;
   gap: calc(var(--media-spacing) * 4);
   align-items: center;
-  padding-inline: calc(var(--media-spacing) * 5) calc(var(--media-spacing) * 2);
+  padding-inline: calc(var(--media-spacing) * 3) calc(var(--media-spacing) * 1);
   background-color: oklch(from var(--media-controls-background-color) l c h / 1);
   border-radius: calc(Infinity * 1px);
   transition-delay: var(--media-error-dialog-transition-delay);
@@ -69,17 +69,20 @@
   transition-property: opacity, filter, scale;
 }
 
-.media-minimal-skin--audio .media-error[data-starting-style] .media-error__dialog,
-.media-minimal-skin--audio .media-error[data-ending-style] .media-error__dialog {
+.media-minimal-skin--audio .media-error-dialog__popup[data-starting-style] .media-error-dialog__dialog,
+.media-minimal-skin--audio .media-error-dialog__popup[data-ending-style] .media-error-dialog__dialog,
+.media-minimal-skin--audio media-error-dialog[data-starting-style] .media-error-dialog__dialog,
+.media-minimal-skin--audio media-error-dialog[data-ending-style] .media-error-dialog__dialog {
   opacity: 0;
   filter: blur(4px);
   scale: 0.95;
 }
-.media-minimal-skin--audio .media-error[data-ending-style] .media-error__dialog {
+.media-minimal-skin--audio .media-error-dialog__popup[data-ending-style] .media-error-dialog__dialog,
+.media-minimal-skin--audio media-error-dialog[data-ending-style] .media-error-dialog__dialog {
   transition-delay: 0ms;
 }
 
-.media-minimal-skin--audio .media-error__content {
+.media-minimal-skin--audio .media-error-dialog__content {
   display: flex;
   flex: 1;
   gap: calc(var(--media-spacing) * 2);
@@ -98,7 +101,7 @@
   box-shadow: 0 0 0 1px var(--media-controls-border-color);
 }
 
-/* Buffering (spinner over play button — overlay only, no layout change) */
+/* Buffering (spinner over play button — backdrop only, no layout change) */
 
 .media-minimal-skin--audio .media-button--play__wrapper {
   position: relative;

@@ -25,7 +25,8 @@ for (const { framework, path } of SOURCE_SKINS) {
       await expect(skin).toBeAttached();
       await expect(page.locator('video')).toBeAttached();
       await expect(skin.locator('media-poster, img.media-poster')).toBeAttached();
-      await expect(skin.locator('[data-controls]')).toBeAttached();
+      await expect(skin.locator('media-controls-content, .media-controls')).toBeAttached();
+      await expect(skin.locator('media-controls-backdrop, .media-controls__backdrop')).toBeAttached();
       await expect(skin.locator('media-seek-button, .media-seek-button')).toHaveCount(0);
       await expect(posterImage).toHaveAttribute('src', /thumbnail/);
     });

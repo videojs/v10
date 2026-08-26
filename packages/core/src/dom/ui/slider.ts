@@ -8,6 +8,8 @@ import type { SliderInput, SliderState } from '../../core/ui/slider/core';
 import { getPercentFromPointerEvent } from '../utils/pointer';
 import type { UIKeyboardEvent, UIPointerEvent } from './event';
 
+const DRAG_THRESHOLD = 3;
+
 export interface SliderOptions {
   /** Element reference for getBoundingClientRect() and pointer capture. */
   getElement: () => HTMLElement;
@@ -87,9 +89,11 @@ export function createSlider(options: SliderOptions): SliderApi {
   const abort = new AbortController();
   const changeThrottleMs = options.changeThrottle ?? 0;
 
-  let isDragging = false,
+  let isPointerDown = false,
     cachedRect: DOMRect | null = null,
     capturedPointerId: number | null = null,
+    pointerDownX = 0,
+    pointerDownY = 0,
     lastDragPercent = 0,
     committedOnRelease = false,
     pointingOnRelease = false;
@@ -123,18 +127,20 @@ export function createSlider(options: SliderOptions): SliderApi {
   }
 
   function endDrag(): void {
-    if (!isDragging) return;
+    if (!isPointerDown) return;
 
     const pointing = committedOnRelease && pointingOnRelease;
+    const wasDragging = input.current.dragging;
 
     // Fire a final commit if pointerup didn't already handle it.
     if (!committedOnRelease) {
       options.onValueCommit?.(lastDragPercent);
     }
 
-    isDragging = false;
+    isPointerDown = false;
     input.patch({ dragging: false, pointing });
-    options.onDragEnd?.();
+
+    if (wasDragging) options.onDragEnd?.();
 
     committedOnRelease = false;
     pointingOnRelease = false;
@@ -174,10 +180,11 @@ export function createSlider(options: SliderOptions): SliderApi {
 
       const percent = getPercentFromPointerEvent(event, cachedRect, options.getOrientation());
 
-      isDragging = true;
+      isPointerDown = true;
+      pointerDownX = event.clientX;
+      pointerDownY = event.clientY;
       lastDragPercent = percent;
-      input.patch({ pointing: true, dragging: true, pointerPercent: percent, dragPercent: percent });
-      options.onDragStart?.();
+      input.patch({ pointing: true, pointerPercent: percent, dragPercent: percent });
       options.onValueChange?.(percent);
 
       // Focus the thumb for keyboard follow-up and screen reader tracking.
@@ -199,9 +206,18 @@ export function createSlider(options: SliderOptions): SliderApi {
         }
 
         const percent = getPercentFromPointerEvent(event, cachedRect!, options.getOrientation());
+        const startingDrag = !input.current.dragging;
+
+        if (startingDrag) {
+          const distance = Math.hypot(event.clientX - pointerDownX, event.clientY - pointerDownY);
+          if (distance < DRAG_THRESHOLD) return;
+        }
 
         lastDragPercent = percent;
-        input.patch({ dragPercent: percent, pointerPercent: percent });
+        input.patch({ dragging: true, dragPercent: percent, pointerPercent: percent });
+
+        if (startingDrag) options.onDragStart?.();
+
         fireChange(percent, true);
 
         return;

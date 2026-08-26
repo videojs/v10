@@ -1,0 +1,16 @@
+.media-default-skin .media-controls__backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+  background-image: linear-gradient(to top, oklch(0 0 0 / 0.5), oklch(0 0 0 / 0.3) 25%, oklch(0 0 0 / 0));
+  border-radius: inherit;
+  opacity: 0;
+  transition-timing-function: ease-out;
+  transition-duration: var(--media-controls-transition-duration);
+  transition-property: opacity;
+
+  &[data-visible] {
+    opacity: 1;
+  }
+}

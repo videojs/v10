@@ -223,12 +223,24 @@ describe('createSlider', () => {
   });
 
   describe('pointer: drag', () => {
-    it('starts drag immediately on pointerdown', () => {
+    it('starts drag after the pointer moves past the threshold', () => {
       const onDragStart = vi.fn();
       const el = createMockElement({ left: 0, width: 200 });
       const slider = createSlider(createOptions({ getElement: () => el, onDragStart }));
 
       slider.rootProps.onPointerDown(pointerEvent({ clientX: 50 }));
+      flush();
+
+      expect(slider.input.current.dragging).toBe(false);
+      expect(onDragStart).not.toHaveBeenCalled();
+
+      firePointerMove(slider, { clientX: 52 });
+      flush();
+
+      expect(slider.input.current.dragging).toBe(false);
+      expect(onDragStart).not.toHaveBeenCalled();
+
+      firePointerMove(slider, { clientX: 54 });
       flush();
 
       expect(slider.input.current.dragging).toBe(true);
@@ -351,7 +363,7 @@ describe('createSlider', () => {
       flush();
 
       expect(slider.input.current.pointing).toBe(true);
-      expect(onDragEnd).toHaveBeenCalledOnce();
+      expect(onDragEnd).not.toHaveBeenCalled();
 
       slider.destroy();
     });
@@ -377,14 +389,14 @@ describe('createSlider', () => {
       slider.destroy();
     });
 
-    it('resets dragging and pointing on lostpointercapture after pointerdown', () => {
+    it('clears pointing without ending a drag after a click', () => {
       const onDragEnd = vi.fn();
       const el = createMockElement({ left: 0, width: 200 });
       const slider = createSlider(createOptions({ getElement: () => el, onDragEnd }));
 
       slider.rootProps.onPointerDown(pointerEvent({ clientX: 50 }));
       flush();
-      expect(slider.input.current.dragging).toBe(true);
+      expect(slider.input.current.dragging).toBe(false);
       expect(slider.input.current.pointing).toBe(true);
 
       fireLostPointerCapture(slider);
@@ -392,7 +404,7 @@ describe('createSlider', () => {
 
       expect(slider.input.current.dragging).toBe(false);
       expect(slider.input.current.pointing).toBe(false);
-      expect(onDragEnd).toHaveBeenCalledOnce();
+      expect(onDragEnd).not.toHaveBeenCalled();
 
       slider.destroy();
     });

@@ -4,6 +4,10 @@ export default styles({
   file: 'dialog.css',
   layer: 'videojs.components',
   rules: {
+    root: {
+      className: 'media-error-dialog-root',
+      utilities: 'group/error absolute inset-0 z-40 hidden items-center justify-center outline-none data-[open]:flex',
+    },
     backdrop: {
       className: 'media-error-dialog-backdrop',
       utilities: [
@@ -21,9 +25,11 @@ export default styles({
       className: 'media-error-dialog-popup',
       utilities: [
         'absolute top-1/2 left-1/2 z-50 flex -translate-x-1/2 -translate-y-1/2 flex-col gap-3 outline-none',
-        'not-data-open:hidden transition-[opacity,scale] delay-100 ease-out motion-reduce:duration-50',
+        'transition-[opacity,scale] delay-100 ease-out motion-reduce:duration-50',
         'data-starting-style:scale-95 data-starting-style:opacity-0',
         'data-ending-style:scale-95 data-ending-style:opacity-0 data-ending-style:delay-0',
+        'group-data-starting-style/error:scale-95 group-data-starting-style/error:opacity-0',
+        'group-data-ending-style/error:scale-95 group-data-ending-style/error:opacity-0 group-data-ending-style/error:delay-0',
         'motion-reduce:delay-0',
       ],
       variants: {

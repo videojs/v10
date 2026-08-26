@@ -1,5 +1,11 @@
 import { cn } from '@videojs/utils/style';
 
+export const inputIndicator = cn(
+  'absolute inset-0 pointer-events-none',
+  'grid grid-cols-3 items-center justify-items-center',
+  'text-white'
+);
+
 export const topIndicatorRoot = cn(
   'group/input-indicator',
   '[--media-surface-background-color:oklch(0_0_0/0.25)]',

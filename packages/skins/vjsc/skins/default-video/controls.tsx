@@ -14,7 +14,7 @@ import styles from './controls.styles';
 
 export function DefaultVideoControls() {
   return (
-    <$.Controls.Root>
+    <$.Controls.Root className={styles.provider}>
       <$.Controls.Backdrop className={styles.backdrop} />
       <$.Controls.Content className={['media-controls', styles.root]}>
         <$.Tooltip.Provider>

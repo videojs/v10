@@ -41,7 +41,7 @@ const html = String.raw;
 const params = new URLSearchParams(location.search);
 const preset = (params.get('preset') ?? 'video') as Preset;
 
-const state = createHtmlSandboxState(preset === 'audio');
+const state = createHtmlSandboxState();
 const loadLatest = createLatestLoader();
 let locale = getInitialLocale();
 let localeApplySeq = 0;

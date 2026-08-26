@@ -19,7 +19,7 @@ function readStyling(): Styling {
 
 function App() {
   const skin = useSkin();
-  const source = useSource(true);
+  const source = useSource();
   const styling = readStyling();
   const autoplay = useAutoplay();
   const muted = useMuted();

@@ -9,7 +9,7 @@ const CASES = [
 const WIDTHS = [320, 800] as const;
 const BUFFERING_INDICATOR_SELECTOR =
   '.media-buffering-indicator, media-buffering-indicator, [class~="peer/buffering"], [class~="hidden"][class~="place-content-center"]';
-const CONTROLS_SELECTOR = '.media-controls--root, media-controls, .media-controls';
+const CONTROLS_SELECTOR = 'media-controls-content.media-controls, .media-controls';
 
 test.describe.configure({ mode: 'serial' });
 
@@ -681,6 +681,11 @@ async function hideControls(root: Locator) {
   await expect(controls).toHaveAttribute('data-visible', '');
   await controls.evaluate((element) => {
     element.removeAttribute('data-visible');
+
+    if (element.previousElementSibling?.getAttribute('aria-hidden') === 'true') {
+      element.previousElementSibling.removeAttribute('data-visible');
+    }
+
     element.querySelector(':scope > [aria-hidden="true"]')?.removeAttribute('data-visible');
     element.closest('[role="group"]')?.removeAttribute('data-controls-visible');
   });
@@ -703,22 +708,22 @@ async function hideControls(root: Locator) {
     };
 
     const controls = element.querySelector<HTMLElement>(controlsSelector);
-    const overlay = inspect(
-      element.querySelector('.media-overlay, .media-controls-backdrop') ??
+    const backdrop = inspect(
+      element.querySelector('.media-controls__backdrop') ??
         controls?.querySelector(':scope > [aria-hidden="true"]') ??
-        controls?.nextElementSibling ??
+        controls?.previousElementSibling ??
         null
     );
 
     return {
       cursor: getComputedStyle(element).cursor,
       controls: inspect(controls),
-      overlay: overlay
+      backdrop: backdrop
         ? {
-            filter: overlay.filter,
-            opacity: overlay.opacity,
-            pointerEvents: overlay.pointerEvents,
-            scale: overlay.scale,
+            filter: backdrop.filter,
+            opacity: backdrop.opacity,
+            pointerEvents: backdrop.pointerEvents,
+            scale: backdrop.scale,
           }
         : null,
     };
@@ -733,9 +738,7 @@ async function showBuffering(root: Locator) {
 
   return root.evaluate((element, bufferingIndicatorSelector) => {
     const indicator = element.querySelector<HTMLElement>(bufferingIndicatorSelector);
-    const overlay = element.querySelector<HTMLElement>(
-      '.media-overlay, [class~="peer-data-visible/buffering:bg-black/35"]'
-    );
+    const backdrop = element.querySelector<HTMLElement>('[class~="peer-data-visible/buffering:bg-black/35"]');
     const spinner = indicator?.querySelector<HTMLElement>('media-icon, svg');
     const inspect = (target: HTMLElement | null | undefined) => {
       if (!target) return null;
@@ -752,25 +755,25 @@ async function showBuffering(root: Locator) {
       };
     };
 
-    const overlayStyle = overlay
-      ? getComputedStyle(overlay)
+    const backdropStyle = backdrop
+      ? getComputedStyle(backdrop)
       : indicator
         ? getComputedStyle(indicator, '::before')
         : null;
-    const overlayRect = overlay ?? indicator;
+    const backdropRect = backdrop ?? indicator;
     const spinnerStyle = spinner ? getComputedStyle(spinner) : null;
 
     return {
       indicator: inspect(indicator),
-      overlay: {
-        backdropFilter: overlayStyle?.backdropFilter.includes('blur(8px)') ? 'blurred' : overlayStyle?.backdropFilter,
-        background: overlayStyle?.backgroundColor === 'rgba(0, 0, 0, 0)' ? 'transparent' : 'painted',
-        backgroundImage: overlayStyle?.backgroundImage === 'none' ? 'none' : 'painted',
-        opacity: overlayStyle?.opacity,
-        rect: overlayRect
+      backdrop: {
+        backdropFilter: backdropStyle?.backdropFilter.includes('blur(8px)') ? 'blurred' : backdropStyle?.backdropFilter,
+        background: backdropStyle?.backgroundColor === 'rgba(0, 0, 0, 0)' ? 'transparent' : 'painted',
+        backgroundImage: backdropStyle?.backgroundImage === 'none' ? 'none' : 'painted',
+        opacity: backdropStyle?.opacity,
+        rect: backdropRect
           ? {
-              width: Math.round(overlayRect.getBoundingClientRect().width),
-              height: Math.round(overlayRect.getBoundingClientRect().height),
+              width: Math.round(backdropRect.getBoundingClientRect().width),
+              height: Math.round(backdropRect.getBoundingClientRect().height),
             }
           : null,
       },
@@ -1088,8 +1091,7 @@ async function errorDialogContract(root: Locator, dialog: Locator) {
 
   return dialog.evaluate((element, playerRect) => {
     const surface =
-      element.querySelector<HTMLElement>('.media-error__dialog, .media-error-dialog-popup, media-error-dialog') ??
-      element;
+      element.querySelector<HTMLElement>('.media-error-dialog__popup, .media-error-dialog-popup') ?? element;
     const title = element.querySelector<HTMLElement>('h2, media-dialog-title');
     const description = element.querySelector<HTMLElement>('p, media-dialog-description');
     const close = element.querySelector<HTMLElement>('button, media-dialog-close');

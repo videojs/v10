@@ -1,9 +1,9 @@
 @import "./components/reset.css";
 @import "./components/container.css";
 @import "./components/media.css";
-@import "./components/overlay.css";
+@import "./components/controls-backdrop.css";
 @import "./components/buffering.css";
-@import "./components/error.css";
+@import "./components/error-dialog.css";
 @import "./components/controls.css";
 @import "./components/time.css";
 @import "./components/button.css";
@@ -16,7 +16,6 @@
 @import "./components/popup.css";
 @import "./components/menus.css";
 @import "./components/captions.css";
-@import "./components/input-indicator-overlay.css";
 @import "./components/input-indicator.css";
 @import "./components/volume-indicator.css";
 @import "./components/status-indicator.css";
@@ -60,7 +59,7 @@
     --media-error-dialog-transition-delay: 0ms;
     --media-popup-transition-duration: 0ms;
 
-    .media-error__dialog {
+    .media-error-dialog__popup {
       scale: 1;
       transition-property: opacity;
     }
@@ -120,18 +119,11 @@
 
 /* Error Dialog */
 
-.media-minimal-skin--video .media-error {
+.media-minimal-skin--video .media-error-dialog__popup {
   position: absolute;
-  inset: 0;
+  top: 50%;
+  left: 50%;
   z-index: 20;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-  outline: none;
-}
-
-.media-minimal-skin--video .media-error__dialog {
   display: flex;
   flex-direction: column;
   gap: calc(var(--media-spacing) * 3);
@@ -140,31 +132,34 @@
   padding: calc(var(--media-spacing) * 4);
   color: oklch(1 0 0);
   text-shadow: 0 1px 0 oklch(0 0 0 / 0.5);
-  pointer-events: auto;
+  translate: -50% -50%;
   transition-delay: var(--media-error-dialog-transition-delay);
   transition-timing-function: var(--media-error-dialog-transition-timing-function);
   transition-duration: var(--media-error-dialog-transition-duration);
   transition-property: opacity, scale;
+
+  &[data-starting-style],
+  &[data-ending-style],
+  media-error-dialog[data-starting-style] &,
+  media-error-dialog[data-ending-style] & {
+    opacity: 0;
+    scale: 0.95;
+  }
+  &[data-ending-style],
+  media-error-dialog[data-ending-style] & {
+    transition-delay: 0ms;
+  }
 }
 
-.media-minimal-skin--video .media-error__content {
+.media-minimal-skin--video .media-error-dialog__content {
   display: flex;
   flex-direction: column;
   gap: calc(var(--media-spacing) * 2);
   padding: calc(var(--media-spacing) * 1.5) 0;
 }
 
-.media-minimal-skin--video .media-error__title {
+.media-minimal-skin--video .media-error-dialog__title {
   font-size: var(--media-font-size-medium);
-}
-
-.media-minimal-skin--video .media-error[data-starting-style] .media-error__dialog,
-.media-minimal-skin--video .media-error[data-ending-style] .media-error__dialog {
-  opacity: 0;
-  scale: 0.95;
-}
-.media-minimal-skin--video .media-error[data-ending-style] .media-error__dialog {
-  transition-delay: 0ms;
 }
 
 /* Controls (hide/show behavior) */
@@ -271,10 +266,6 @@
       flex: 0 0 auto;
     }
   }
-}
-
-.media-minimal-skin--video:has(.media-error[data-open]) .media-controls {
-  display: none;
 }
 
 /* Hide cursor when controls are hidden */

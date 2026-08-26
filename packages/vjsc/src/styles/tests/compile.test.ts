@@ -62,7 +62,7 @@ describe('compileStyles', () => {
 
   it('keeps responsive overrides after each semantic rule base', async () => {
     const primary = rule('primary', 'media-controls-primary', ['flex', '@lg/media-root:contents']);
-    const root = rule('root', 'media-controls-root', ['contents', '@lg/media-root:flex']);
+    const root = rule('root', 'media-layout-root', ['contents', '@lg/media-root:flex']);
     const styles = await compileStyles({
       design: await loadDesignSystem(designPath),
       manifest: manifest([primary, root]),
@@ -70,8 +70,8 @@ describe('compileStyles', () => {
     });
 
     const css = styles.get('buttons.css') ?? '';
-    const rootBase = css.indexOf('.media-controls-root {\n      display: contents;');
-    const rootResponsive = css.indexOf('.media-controls-root {\n        display: flex;');
+    const rootBase = css.indexOf('.media-layout-root {\n      display: contents;');
+    const rootResponsive = css.indexOf('.media-layout-root {\n        display: flex;');
 
     expect(rootBase).toBeGreaterThanOrEqual(0);
     expect(rootResponsive).toBeGreaterThan(rootBase);
