@@ -86,17 +86,17 @@ describe('ejected HTML skins', () => {
     if (skin?.platform !== 'html') throw new Error('Missing HTML skin fixture');
 
     expect(prependHtmlSkinScripts('<media-controls></media-controls>', skin)).toContain(
-      '/audio-minimal-ui.js"></script>\n<link rel="stylesheet" href="./player.css">\n\n<audio-player>'
+      '/audio-minimal.js"></script>\n<link rel="stylesheet" href="./player.css">\n\n<audio-player>'
     );
   });
 
-  it('loads the media bundle alongside the UI bundle for live skins', () => {
+  it('loads the media bundle alongside the preset bundle for live skins', () => {
     const skin = SKINS.find(({ id }) => id === 'minimal-live-video');
     if (skin?.platform !== 'html') throw new Error('Missing live HTML skin fixture');
 
     const result = prependHtmlSkinScripts('<media-controls></media-controls>', skin);
 
-    expect(result).toContain('/live-video-minimal-ui.js"></script>');
+    expect(result).toContain('/live-video-minimal.js"></script>');
     expect(result).toContain('/media/hlsjs-video.js"></script>');
     expect(result).toContain('<live-video-player poster=');
   });

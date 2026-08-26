@@ -8,7 +8,7 @@ async function waitForUpdates(elements: Element[]): Promise<void> {
   }
 }
 
-describe('video UI CDN registration', () => {
+describe('video CDN registration with an ejected layout', () => {
   it('updates volume slider child parts when light DOM exists before registration', async () => {
     document.body.innerHTML = /*html*/ `
       <video-player>
@@ -40,7 +40,7 @@ describe('video UI CDN registration', () => {
       value: () => Promise.resolve(),
     });
 
-    await import('../../cdn/video-ui');
+    await import('../../cdn/video');
 
     const volumeSlider = document.querySelector('media-volume-slider')! as HTMLElement & { orientation: string };
     const volumeTrack = volumeSlider.querySelector('media-slider-track')!;
