@@ -388,14 +388,17 @@ export interface ErrorDialogProps extends Omit<ErrorDialogPrimitive.Popup.PopupP
 export function ErrorDialog({ className, ...props }: ErrorDialogProps = {}) {
   return (
     <ErrorDialogPrimitive.Root>
-      <ErrorDialogPrimitive.Backdrop className={"media-error-dialog-backdrop"} />
-      <ErrorDialogPrimitive.Popup className={state => cn("media-feedback-surface", "media-error-dialog-popup", resolveClassName(className, state))} {...props}>
-        <div className={"media-error-dialog-content"}>
-          <ErrorDialogPrimitive.Title className={"media-error-dialog-title"} />
-          <ErrorDialogPrimitive.Description className={"media-error-dialog-description"} />
+      <ErrorDialogPrimitive.Backdrop className={"media-dialog-backdrop"} />
+      <ErrorDialogPrimitive.Popup
+        className={state => cn("media-feedback-surface", "media-dialog-popup", 'media-dialog-popup', resolveClassName(className, state))}
+        {...props}
+      >
+        <div className={"media-dialog-content"}>
+          <ErrorDialogPrimitive.Title className={"media-dialog-title"} />
+          <ErrorDialogPrimitive.Description className={"media-dialog-description"} />
         </div>
-        <div className={"media-error-dialog-actions"}>
-          <ErrorDialogPrimitive.Close className={cn("media-button", "media-error-dialog-close")} />
+        <div className={"media-dialog-actions"}>
+          <ErrorDialogPrimitive.Close className={cn("media-button", "media-dialog-close")} />
         </div>
       </ErrorDialogPrimitive.Popup>
     </ErrorDialogPrimitive.Root>
@@ -1210,7 +1213,7 @@ import { cn } from "@videojs/utils/style";
 export function DefaultVideoControls() {
   return (
     <Controls.Root>
-      <Controls.Backdrop className={"media-controls-backdrop"} />
+      <Controls.Backdrop className={"media-controls__backdrop"} />
       <Controls.Content className={cn('media-controls', "media-controls")}>
         <Tooltip.Provider>
           <Controls.Group className={cn("media-surface", "media-controls-primary")}>
@@ -1632,7 +1635,10 @@ export function ErrorDialog({ className, ...props }: ErrorDialogProps = {}) {
   return (
     <ErrorDialogPrimitive.Root>
       <ErrorDialogPrimitive.Backdrop className={"absolute inset-0 z-40 bg-black/20 backdrop-blur-lg opacity-100 backdrop-saturate-150 not-data-open:hidden transition-[opacity,backdrop-filter] delay-100 ease-out motion-reduce:duration-50 data-starting-style:opacity-0 data-ending-style:opacity-0 data-ending-style:delay-0 motion-reduce:delay-0 duration-350"} />
-      <ErrorDialogPrimitive.Popup className={state => cn("text-white backdrop-blur-lg backdrop-saturate-150", "after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit]", "after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.1),inset_0_0_0_1px_rgb(255_255_255/0.05)]", "[@media(prefers-reduced-transparency:reduce)]:bg-black [@media(prefers-reduced-transparency:reduce)]:ring-1 [@media(prefers-reduced-transparency:reduce)]:ring-transparent", "[@media(prefers-reduced-transparency:reduce)]:backdrop-filter-none", "[@media(prefers-reduced-transparency:reduce)]:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "contrast-more:bg-black contrast-more:ring-1 contrast-more:ring-transparent contrast-more:backdrop-filter-none", "contrast-more:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "forced-colors:bg-[Canvas] forced-colors:ring-1 forced-colors:ring-[CanvasText]", "forced-colors:after:shadow-[inset_0_1px_0_0_CanvasText,inset_0_0_0_1px_CanvasText]", "shadow-sm shadow-black/15 ring-1 ring-black/10", "[@media(prefers-reduced-transparency:reduce)]:shadow-sm [@media(prefers-reduced-transparency:reduce)]:shadow-black/15", "contrast-more:shadow-sm contrast-more:shadow-black/15", "forced-colors:shadow-sm forced-colors:shadow-black/15", "bg-white/10", "absolute top-1/2 left-1/2 z-50 flex -translate-x-1/2 -translate-y-1/2 flex-col gap-3 outline-none", "not-data-open:hidden transition-[opacity,scale] delay-100 ease-out motion-reduce:duration-50", "data-starting-style:scale-95 data-starting-style:opacity-0", "data-ending-style:scale-95 data-ending-style:opacity-0 data-ending-style:delay-0", "motion-reduce:delay-0", "w-[calc(100%-1.5rem)] max-w-72 rounded-[1.75rem] p-3 text-white", "text-shadow-[0_1px_0_rgb(0_0_0/0.25)] duration-350", resolveClassName(className, state))} {...props}>
+      <ErrorDialogPrimitive.Popup
+        className={state => cn("text-white backdrop-blur-lg backdrop-saturate-150", "after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit]", "after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.1),inset_0_0_0_1px_rgb(255_255_255/0.05)]", "[@media(prefers-reduced-transparency:reduce)]:bg-black [@media(prefers-reduced-transparency:reduce)]:ring-1 [@media(prefers-reduced-transparency:reduce)]:ring-transparent", "[@media(prefers-reduced-transparency:reduce)]:backdrop-filter-none", "[@media(prefers-reduced-transparency:reduce)]:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "contrast-more:bg-black contrast-more:ring-1 contrast-more:ring-transparent contrast-more:backdrop-filter-none", "contrast-more:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "forced-colors:bg-[Canvas] forced-colors:ring-1 forced-colors:ring-[CanvasText]", "forced-colors:after:shadow-[inset_0_1px_0_0_CanvasText,inset_0_0_0_1px_CanvasText]", "shadow-sm shadow-black/15 ring-1 ring-black/10", "[@media(prefers-reduced-transparency:reduce)]:shadow-sm [@media(prefers-reduced-transparency:reduce)]:shadow-black/15", "contrast-more:shadow-sm contrast-more:shadow-black/15", "forced-colors:shadow-sm forced-colors:shadow-black/15", "bg-white/10", "absolute top-1/2 left-1/2 z-50 flex -translate-x-1/2 -translate-y-1/2 flex-col gap-3 outline-none", "transition-[opacity,scale] delay-100 ease-out motion-reduce:duration-50", "data-starting-style:scale-95 data-starting-style:opacity-0", "data-ending-style:scale-95 data-ending-style:opacity-0 data-ending-style:delay-0", "group-data-starting-style/dialog:scale-95 group-data-starting-style/dialog:opacity-0", "group-data-ending-style/dialog:scale-95 group-data-ending-style/dialog:opacity-0 group-data-ending-style/dialog:delay-0", "motion-reduce:delay-0", "w-[calc(100%-1.5rem)] max-w-72 rounded-[1.75rem] p-3 text-white", "text-shadow-[0_1px_0_rgb(0_0_0/0.25)] duration-350", 'media-dialog-popup', resolveClassName(className, state))}
+        {...props}
+      >
         <div className={"flex flex-col gap-2 px-2 pt-2 pb-1.5"}>
           <ErrorDialogPrimitive.Title className={"my-[0.83em] text-media-lg font-semibold leading-tight"} />
           <ErrorDialogPrimitive.Description className={"my-[1em] opacity-70 wrap-anywhere"} />
@@ -2389,7 +2395,7 @@ import { cn } from "@videojs/utils/style";
 export function DefaultVideoControls() {
   return (
     <Controls.Root>
-      <Controls.Backdrop className={"pointer-events-none absolute inset-0 rounded-[inherit] opacity-0 @lg/media-root:inset-auto @lg/media-root:bottom-[-0.5rem] @lg/media-root:left-1/2 @lg/media-root:h-[100cqh] @lg/media-root:w-[100cqw] @lg/media-root:-translate-x-1/2 @2xl/media-root:bottom-[-0.75rem] bg-linear-to-t from-black/50 via-black/30 via-25% to-transparent transition-opacity duration-(--media-controls-transition-duration) ease-out data-visible:opacity-100"} />
+      <Controls.Backdrop className={"pointer-events-none absolute inset-0 z-10 rounded-[inherit] bg-linear-to-t from-black/50 via-black/30 via-25% to-transparent transition-opacity duration-(--media-controls-transition-duration) ease-out not-data-visible:opacity-0"} />
       <Controls.Content className={cn('media-controls', "group/controls contents p-1 text-white", "[--media-popover-side-offset:--spacing(3)]", "[--media-tooltip-side-offset:var(--media-popover-side-offset)]", "[--media-popover-boundary-offset:0.75rem] [--media-tooltip-boundary-offset:var(--media-popover-boundary-offset)]", "@lg/media-root:absolute @lg/media-root:inset-x-2 @lg/media-root:bottom-2 @lg/media-root:z-10", "@lg/media-root:flex @lg/media-root:items-center @lg/media-root:gap-px @lg/media-root:rounded-media-control", "text-shadow-[0_1px_0_rgb(0_0_0/0.15)]", "@lg/media-root:text-white @lg/media-root:backdrop-blur-lg @lg/media-root:backdrop-saturate-150", "@lg/media-root:after:pointer-events-none @lg/media-root:after:absolute @lg/media-root:after:inset-0 @lg/media-root:after:z-10 @lg/media-root:after:rounded-[inherit]", "@lg/media-root:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.1),inset_0_0_0_1px_rgb(255_255_255/0.05)]", "@lg/media-root:[@media(prefers-reduced-transparency:reduce)]:bg-black @lg/media-root:[@media(prefers-reduced-transparency:reduce)]:ring-1 @lg/media-root:[@media(prefers-reduced-transparency:reduce)]:ring-transparent", "@lg/media-root:[@media(prefers-reduced-transparency:reduce)]:backdrop-filter-none", "@lg/media-root:[@media(prefers-reduced-transparency:reduce)]:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "@lg/media-root:contrast-more:bg-black @lg/media-root:contrast-more:ring-1 @lg/media-root:contrast-more:ring-transparent @lg/media-root:contrast-more:backdrop-filter-none", "@lg/media-root:contrast-more:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "@lg/media-root:forced-colors:bg-[Canvas] @lg/media-root:forced-colors:ring-1 @lg/media-root:forced-colors:ring-[CanvasText]", "@lg/media-root:forced-colors:after:shadow-[inset_0_1px_0_0_CanvasText,inset_0_0_0_1px_CanvasText]", "@lg/media-root:shadow-sm @lg/media-root:shadow-black/15 @lg/media-root:ring-1 @lg/media-root:ring-black/10", "@lg/media-root:[@media(prefers-reduced-transparency:reduce)]:shadow-sm @lg/media-root:[@media(prefers-reduced-transparency:reduce)]:shadow-black/15", "@lg/media-root:contrast-more:shadow-sm @lg/media-root:contrast-more:shadow-black/15", "@lg/media-root:forced-colors:shadow-sm @lg/media-root:forced-colors:shadow-black/15", "@lg/media-root:bg-white/10", "@2xl/media-root:inset-x-3 @2xl/media-root:bottom-3", "@lg/media-root:not-data-visible:pointer-events-none @lg/media-root:not-data-visible:opacity-0", "@lg/media-root:motion-safe:not-data-visible:scale-95 @lg/media-root:motion-safe:not-data-visible:translate-y-1", "@lg/media-root:pointer-fine:motion-safe:not-data-visible:blur-sm", "transition-[filter,opacity,scale,translate] duration-(--media-controls-transition-duration) ease-out")}>
         <Tooltip.Provider>
           <Controls.Group className={cn("text-white backdrop-blur-lg backdrop-saturate-150", "after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit]", "after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.1),inset_0_0_0_1px_rgb(255_255_255/0.05)]", "[@media(prefers-reduced-transparency:reduce)]:bg-black [@media(prefers-reduced-transparency:reduce)]:ring-1 [@media(prefers-reduced-transparency:reduce)]:ring-transparent", "[@media(prefers-reduced-transparency:reduce)]:backdrop-filter-none", "[@media(prefers-reduced-transparency:reduce)]:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "contrast-more:bg-black contrast-more:ring-1 contrast-more:ring-transparent contrast-more:backdrop-filter-none", "contrast-more:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "forced-colors:bg-[Canvas] forced-colors:ring-1 forced-colors:ring-[CanvasText]", "forced-colors:after:shadow-[inset_0_1px_0_0_CanvasText,inset_0_0_0_1px_CanvasText]", "shadow-sm shadow-black/15 ring-1 ring-black/10", "[@media(prefers-reduced-transparency:reduce)]:shadow-sm [@media(prefers-reduced-transparency:reduce)]:shadow-black/15", "contrast-more:shadow-sm contrast-more:shadow-black/15", "forced-colors:shadow-sm forced-colors:shadow-black/15", "bg-white/10", "absolute inset-x-2 bottom-2 z-10 flex origin-bottom items-center gap-px rounded-media-control", "p-1", "@lg/media-root:contents", "@max-lg/media-root:group-[:not([data-visible])]/controls:pointer-events-none", "@max-lg/media-root:group-[:not([data-visible])]/controls:opacity-0", "@max-lg/media-root:motion-safe:group-[:not([data-visible])]/controls:scale-95", "@max-lg/media-root:motion-safe:group-[:not([data-visible])]/controls:translate-y-1", "transition-[filter,opacity,scale,translate] duration-(--media-controls-transition-duration) ease-out")}>
@@ -2849,14 +2855,17 @@ export interface ErrorDialogProps extends Omit<ErrorDialogPrimitive.Popup.PopupP
 export function ErrorDialog({ className, ...props }: ErrorDialogProps = {}) {
   return (
     <ErrorDialogPrimitive.Root>
-      <ErrorDialogPrimitive.Backdrop className={"media-error-dialog-backdrop"} />
-      <ErrorDialogPrimitive.Popup className={state => cn("media-feedback-surface", "media-error-dialog-popup", resolveClassName(className, state))} {...props}>
-        <div className={"media-error-dialog-content"}>
-          <ErrorDialogPrimitive.Title className={"media-error-dialog-title"} />
-          <ErrorDialogPrimitive.Description className={"media-error-dialog-description"} />
+      <ErrorDialogPrimitive.Backdrop className={"media-dialog-backdrop"} />
+      <ErrorDialogPrimitive.Popup
+        className={state => cn("media-feedback-surface", "media-dialog-popup", 'media-dialog-popup', resolveClassName(className, state))}
+        {...props}
+      >
+        <div className={"media-dialog-content"}>
+          <ErrorDialogPrimitive.Title className={"media-dialog-title"} />
+          <ErrorDialogPrimitive.Description className={"media-dialog-description"} />
         </div>
-        <div className={"media-error-dialog-actions"}>
-          <ErrorDialogPrimitive.Close className={cn("media-button", "media-error-dialog-close")} />
+        <div className={"media-dialog-actions"}>
+          <ErrorDialogPrimitive.Close className={cn("media-button", "media-dialog-close")} />
         </div>
       </ErrorDialogPrimitive.Popup>
     </ErrorDialogPrimitive.Root>
@@ -3667,7 +3676,7 @@ import { cn } from "@videojs/utils/style";
 export function MinimalVideoControls() {
   return (
     <Controls.Root>
-      <Controls.Backdrop className={"media-controls-backdrop"} />
+      <Controls.Backdrop className={"media-controls__backdrop"} />
       <Controls.Content className={cn('media-controls', "media-controls")}>
         <Tooltip.Provider>
           <Controls.Group className={"media-controls-start"}>
@@ -4093,7 +4102,10 @@ export function ErrorDialog({ className, ...props }: ErrorDialogProps = {}) {
   return (
     <ErrorDialogPrimitive.Root>
       <ErrorDialogPrimitive.Backdrop className={"absolute inset-0 z-40 bg-black/20 backdrop-blur-lg opacity-100 not-data-open:hidden transition-[opacity,backdrop-filter] delay-100 ease-out motion-reduce:duration-50 data-starting-style:opacity-0 data-ending-style:opacity-0 data-ending-style:delay-0 motion-reduce:delay-0 backdrop-saturate-120 duration-150"} />
-      <ErrorDialogPrimitive.Popup className={state => cn("", "absolute top-1/2 left-1/2 z-50 flex -translate-x-1/2 -translate-y-1/2 flex-col gap-3 outline-none", "not-data-open:hidden transition-[opacity,scale] delay-100 ease-out motion-reduce:duration-50", "data-starting-style:scale-95 data-starting-style:opacity-0", "data-ending-style:scale-95 data-ending-style:opacity-0 data-ending-style:delay-0", "motion-reduce:delay-0", "w-full max-w-64 p-4 text-white", "text-shadow-[0_1px_0_rgb(0_0_0/0.5)] duration-150", resolveClassName(className, state))} {...props}>
+      <ErrorDialogPrimitive.Popup
+        className={state => cn("", "absolute top-1/2 left-1/2 z-50 flex -translate-x-1/2 -translate-y-1/2 flex-col gap-3 outline-none", "transition-[opacity,scale] delay-100 ease-out motion-reduce:duration-50", "data-starting-style:scale-95 data-starting-style:opacity-0", "data-ending-style:scale-95 data-ending-style:opacity-0 data-ending-style:delay-0", "group-data-starting-style/dialog:scale-95 group-data-starting-style/dialog:opacity-0", "group-data-ending-style/dialog:scale-95 group-data-ending-style/dialog:opacity-0 group-data-ending-style/dialog:delay-0", "motion-reduce:delay-0", "w-full max-w-64 p-4 text-white", "text-shadow-[0_1px_0_rgb(0_0_0/0.5)] duration-150", 'media-dialog-popup', resolveClassName(className, state))}
+        {...props}
+      >
         <div className={"flex flex-col gap-2 py-1.5"}>
           <ErrorDialogPrimitive.Title className={"my-[0.83em] text-media-lg font-semibold leading-tight"} />
           <ErrorDialogPrimitive.Description className={"my-[1em] opacity-70 wrap-anywhere"} />
@@ -4849,7 +4861,7 @@ import { cn } from "@videojs/utils/style";
 export function MinimalVideoControls() {
   return (
     <Controls.Root>
-      <Controls.Backdrop className={"pointer-events-none absolute bottom-[-0.25rem] left-1/2 h-[100cqh] w-[100cqw] -translate-x-1/2 rounded-[inherit] opacity-0 @2xl/media-root:bottom-[-0.5rem] bg-linear-to-t from-black/70 via-black/50 via-[length:calc(var(--media-spacing)*30)] to-transparent transition-opacity duration-(--media-controls-transition-duration) ease-out data-visible:opacity-100"} />
+      <Controls.Backdrop className={"pointer-events-none absolute inset-0 z-10 rounded-[inherit] bg-linear-to-t from-black/70 via-black/50 via-[length:calc(var(--media-spacing)*30)] to-transparent transition-opacity duration-(--media-controls-transition-duration) ease-out not-data-visible:opacity-0"} />
       <Controls.Content className={cn('media-controls', "group/controls absolute inset-x-1 bottom-1 z-20 flex flex-wrap items-center gap-x-2 rounded-xl bg-transparent text-white", "text-shadow-[0_1px_0_rgb(0_0_0/0.2)]", "[@media(prefers-reduced-transparency:reduce)]:bg-black contrast-more:bg-black forced-colors:bg-[Canvas]", "[--media-popover-side-offset:--spacing(5)] [--media-tooltip-side-offset:var(--media-popover-side-offset)]", "[--media-popover-boundary-offset:--spacing(2)] [--media-tooltip-boundary-offset:var(--media-popover-boundary-offset)]", "p-1 transition-[filter,opacity,translate]", "duration-[calc(var(--media-controls-transition-duration)/2)] ease-out", "not-data-visible:pointer-events-none not-data-visible:opacity-0", "not-data-visible:duration-(--media-controls-transition-duration)", "motion-safe:not-data-visible:translate-y-full pointer-fine:motion-safe:not-data-visible:blur-sm", "@2xl/media-root:inset-x-2 @2xl/media-root:bottom-2 @2xl/media-root:flex-nowrap", "@2xl/media-root:[--media-popover-side-offset:--spacing(3)]")}>
         <Tooltip.Provider>
           <Controls.Group className={"flex flex-1 items-center gap-px @2xl/media-root:flex-none"}>
@@ -5275,15 +5287,18 @@ import "@videojs/html/ui/error-dialog";
 
 export function ErrorDialog({ className, ...props }: Props = {}) {
   return (
-    <media-error-dialog>
-      <media-dialog-backdrop className={"media-error-dialog-backdrop"} />
-      <media-dialog-popup className={["media-feedback-surface", "media-error-dialog-popup", className]} {...props}>
-        <div className={"media-error-dialog-content"}>
-          <media-dialog-title className={"media-error-dialog-title"} />
-          <media-dialog-description className={"media-error-dialog-description"} />
+    <media-error-dialog className={"media-dialog-root"}>
+      <media-dialog-backdrop className={"media-dialog-backdrop"} />
+      <media-dialog-popup
+        className={["media-feedback-surface", "media-dialog-popup", 'media-dialog-popup', className]}
+        {...props}
+      >
+        <div className={"media-dialog-content"}>
+          <media-dialog-title className={"media-dialog-title"} />
+          <media-dialog-description className={"media-dialog-description"} />
         </div>
-        <div className={"media-error-dialog-actions"}>
-          <media-dialog-close className={["media-button", "media-error-dialog-close"]} />
+        <div className={"media-dialog-actions"}>
+          <media-dialog-close className={["media-button", "media-dialog-close"]} />
         </div>
       </media-dialog-popup>
     </media-error-dialog>
@@ -6022,8 +6037,8 @@ import "@videojs/html/ui/controls";
 
 export function DefaultVideoControls() {
   return (
-    <media-controls>
-      <media-controls-backdrop className={"media-controls-backdrop"} />
+    <media-controls className={"media-controls-provider"}>
+      <media-controls-backdrop className={"media-controls__backdrop"} />
       <media-controls-content className={['media-controls', "media-controls"]}>
         <media-tooltip-group>
           <media-controls-group className={["media-surface", "media-controls-primary"]}>
@@ -6401,9 +6416,12 @@ import "@videojs/html/ui/error-dialog";
 
 export function ErrorDialog({ className, ...props }: Props = {}) {
   return (
-    <media-error-dialog>
+    <media-error-dialog className={"group/dialog absolute inset-0 z-40 hidden items-center justify-center outline-none data-[open]:flex"}>
       <media-dialog-backdrop className={"absolute inset-0 z-40 bg-black/20 backdrop-blur-lg opacity-100 backdrop-saturate-150 not-data-open:hidden transition-[opacity,backdrop-filter] delay-100 ease-out motion-reduce:duration-50 data-starting-style:opacity-0 data-ending-style:opacity-0 data-ending-style:delay-0 motion-reduce:delay-0 duration-350"} />
-      <media-dialog-popup className={["text-white backdrop-blur-lg backdrop-saturate-150", "after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit]", "after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.1),inset_0_0_0_1px_rgb(255_255_255/0.05)]", "[@media(prefers-reduced-transparency:reduce)]:bg-black [@media(prefers-reduced-transparency:reduce)]:ring-1 [@media(prefers-reduced-transparency:reduce)]:ring-transparent", "[@media(prefers-reduced-transparency:reduce)]:backdrop-filter-none", "[@media(prefers-reduced-transparency:reduce)]:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "contrast-more:bg-black contrast-more:ring-1 contrast-more:ring-transparent contrast-more:backdrop-filter-none", "contrast-more:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "forced-colors:bg-[Canvas] forced-colors:ring-1 forced-colors:ring-[CanvasText]", "forced-colors:after:shadow-[inset_0_1px_0_0_CanvasText,inset_0_0_0_1px_CanvasText]", "shadow-sm shadow-black/15 ring-1 ring-black/10", "[@media(prefers-reduced-transparency:reduce)]:shadow-sm [@media(prefers-reduced-transparency:reduce)]:shadow-black/15", "contrast-more:shadow-sm contrast-more:shadow-black/15", "forced-colors:shadow-sm forced-colors:shadow-black/15", "bg-white/10", "absolute top-1/2 left-1/2 z-50 flex -translate-x-1/2 -translate-y-1/2 flex-col gap-3 outline-none", "not-data-open:hidden transition-[opacity,scale] delay-100 ease-out motion-reduce:duration-50", "data-starting-style:scale-95 data-starting-style:opacity-0", "data-ending-style:scale-95 data-ending-style:opacity-0 data-ending-style:delay-0", "motion-reduce:delay-0", "w-[calc(100%-1.5rem)] max-w-72 rounded-[1.75rem] p-3 text-white", "text-shadow-[0_1px_0_rgb(0_0_0/0.25)] duration-350", className]} {...props}>
+      <media-dialog-popup
+        className={["text-white backdrop-blur-lg backdrop-saturate-150", "after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit]", "after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.1),inset_0_0_0_1px_rgb(255_255_255/0.05)]", "[@media(prefers-reduced-transparency:reduce)]:bg-black [@media(prefers-reduced-transparency:reduce)]:ring-1 [@media(prefers-reduced-transparency:reduce)]:ring-transparent", "[@media(prefers-reduced-transparency:reduce)]:backdrop-filter-none", "[@media(prefers-reduced-transparency:reduce)]:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "contrast-more:bg-black contrast-more:ring-1 contrast-more:ring-transparent contrast-more:backdrop-filter-none", "contrast-more:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "forced-colors:bg-[Canvas] forced-colors:ring-1 forced-colors:ring-[CanvasText]", "forced-colors:after:shadow-[inset_0_1px_0_0_CanvasText,inset_0_0_0_1px_CanvasText]", "shadow-sm shadow-black/15 ring-1 ring-black/10", "[@media(prefers-reduced-transparency:reduce)]:shadow-sm [@media(prefers-reduced-transparency:reduce)]:shadow-black/15", "contrast-more:shadow-sm contrast-more:shadow-black/15", "forced-colors:shadow-sm forced-colors:shadow-black/15", "bg-white/10", "absolute top-1/2 left-1/2 z-50 flex -translate-x-1/2 -translate-y-1/2 flex-col gap-3 outline-none", "transition-[opacity,scale] delay-100 ease-out motion-reduce:duration-50", "data-starting-style:scale-95 data-starting-style:opacity-0", "data-ending-style:scale-95 data-ending-style:opacity-0 data-ending-style:delay-0", "group-data-starting-style/dialog:scale-95 group-data-starting-style/dialog:opacity-0", "group-data-ending-style/dialog:scale-95 group-data-ending-style/dialog:opacity-0 group-data-ending-style/dialog:delay-0", "motion-reduce:delay-0", "w-[calc(100%-1.5rem)] max-w-72 rounded-[1.75rem] p-3 text-white", "text-shadow-[0_1px_0_rgb(0_0_0/0.25)] duration-350", 'media-dialog-popup', className]}
+        {...props}
+      >
         <div className={"flex flex-col gap-2 px-2 pt-2 pb-1.5"}>
           <media-dialog-title className={"my-[0.83em] text-media-lg font-semibold leading-tight"} />
           <media-dialog-description className={"my-[1em] opacity-70 wrap-anywhere"} />
@@ -7084,8 +7102,8 @@ import "@videojs/html/ui/controls";
 
 export function DefaultVideoControls() {
   return (
-    <media-controls>
-      <media-controls-backdrop className={"pointer-events-none absolute inset-0 rounded-[inherit] opacity-0 @lg/media-root:inset-auto @lg/media-root:bottom-[-0.5rem] @lg/media-root:left-1/2 @lg/media-root:h-[100cqh] @lg/media-root:w-[100cqw] @lg/media-root:-translate-x-1/2 @2xl/media-root:bottom-[-0.75rem] bg-linear-to-t from-black/50 via-black/30 via-25% to-transparent transition-opacity duration-(--media-controls-transition-duration) ease-out data-visible:opacity-100"} />
+    <media-controls className={"contents"}>
+      <media-controls-backdrop className={"pointer-events-none absolute inset-0 z-10 rounded-[inherit] bg-linear-to-t from-black/50 via-black/30 via-25% to-transparent transition-opacity duration-(--media-controls-transition-duration) ease-out not-data-visible:opacity-0"} />
       <media-controls-content className={['media-controls', "group/controls contents p-1 text-white", "[--media-popover-side-offset:--spacing(3)]", "[--media-tooltip-side-offset:var(--media-popover-side-offset)]", "[--media-popover-boundary-offset:0.75rem] [--media-tooltip-boundary-offset:var(--media-popover-boundary-offset)]", "@lg/media-root:absolute @lg/media-root:inset-x-2 @lg/media-root:bottom-2 @lg/media-root:z-10", "@lg/media-root:flex @lg/media-root:items-center @lg/media-root:gap-px @lg/media-root:rounded-media-control", "text-shadow-[0_1px_0_rgb(0_0_0/0.15)]", "@lg/media-root:text-white @lg/media-root:backdrop-blur-lg @lg/media-root:backdrop-saturate-150", "@lg/media-root:after:pointer-events-none @lg/media-root:after:absolute @lg/media-root:after:inset-0 @lg/media-root:after:z-10 @lg/media-root:after:rounded-[inherit]", "@lg/media-root:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.1),inset_0_0_0_1px_rgb(255_255_255/0.05)]", "@lg/media-root:[@media(prefers-reduced-transparency:reduce)]:bg-black @lg/media-root:[@media(prefers-reduced-transparency:reduce)]:ring-1 @lg/media-root:[@media(prefers-reduced-transparency:reduce)]:ring-transparent", "@lg/media-root:[@media(prefers-reduced-transparency:reduce)]:backdrop-filter-none", "@lg/media-root:[@media(prefers-reduced-transparency:reduce)]:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "@lg/media-root:contrast-more:bg-black @lg/media-root:contrast-more:ring-1 @lg/media-root:contrast-more:ring-transparent @lg/media-root:contrast-more:backdrop-filter-none", "@lg/media-root:contrast-more:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "@lg/media-root:forced-colors:bg-[Canvas] @lg/media-root:forced-colors:ring-1 @lg/media-root:forced-colors:ring-[CanvasText]", "@lg/media-root:forced-colors:after:shadow-[inset_0_1px_0_0_CanvasText,inset_0_0_0_1px_CanvasText]", "@lg/media-root:shadow-sm @lg/media-root:shadow-black/15 @lg/media-root:ring-1 @lg/media-root:ring-black/10", "@lg/media-root:[@media(prefers-reduced-transparency:reduce)]:shadow-sm @lg/media-root:[@media(prefers-reduced-transparency:reduce)]:shadow-black/15", "@lg/media-root:contrast-more:shadow-sm @lg/media-root:contrast-more:shadow-black/15", "@lg/media-root:forced-colors:shadow-sm @lg/media-root:forced-colors:shadow-black/15", "@lg/media-root:bg-white/10", "@2xl/media-root:inset-x-3 @2xl/media-root:bottom-3", "@lg/media-root:not-data-visible:pointer-events-none @lg/media-root:not-data-visible:opacity-0", "@lg/media-root:motion-safe:not-data-visible:scale-95 @lg/media-root:motion-safe:not-data-visible:translate-y-1", "@lg/media-root:pointer-fine:motion-safe:not-data-visible:blur-sm", "transition-[filter,opacity,scale,translate] duration-(--media-controls-transition-duration) ease-out"]}>
         <media-tooltip-group>
           <media-controls-group className={["text-white backdrop-blur-lg backdrop-saturate-150", "after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit]", "after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.1),inset_0_0_0_1px_rgb(255_255_255/0.05)]", "[@media(prefers-reduced-transparency:reduce)]:bg-black [@media(prefers-reduced-transparency:reduce)]:ring-1 [@media(prefers-reduced-transparency:reduce)]:ring-transparent", "[@media(prefers-reduced-transparency:reduce)]:backdrop-filter-none", "[@media(prefers-reduced-transparency:reduce)]:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "contrast-more:bg-black contrast-more:ring-1 contrast-more:ring-transparent contrast-more:backdrop-filter-none", "contrast-more:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "forced-colors:bg-[Canvas] forced-colors:ring-1 forced-colors:ring-[CanvasText]", "forced-colors:after:shadow-[inset_0_1px_0_0_CanvasText,inset_0_0_0_1px_CanvasText]", "shadow-sm shadow-black/15 ring-1 ring-black/10", "[@media(prefers-reduced-transparency:reduce)]:shadow-sm [@media(prefers-reduced-transparency:reduce)]:shadow-black/15", "contrast-more:shadow-sm contrast-more:shadow-black/15", "forced-colors:shadow-sm forced-colors:shadow-black/15", "bg-white/10", "absolute inset-x-2 bottom-2 z-10 flex origin-bottom items-center gap-px rounded-media-control", "p-1", "@lg/media-root:contents", "@max-lg/media-root:group-[:not([data-visible])]/controls:pointer-events-none", "@max-lg/media-root:group-[:not([data-visible])]/controls:opacity-0", "@max-lg/media-root:motion-safe:group-[:not([data-visible])]/controls:scale-95", "@max-lg/media-root:motion-safe:group-[:not([data-visible])]/controls:translate-y-1", "transition-[filter,opacity,scale,translate] duration-(--media-controls-transition-duration) ease-out"]}>
@@ -7502,15 +7520,18 @@ import "@videojs/html/ui/error-dialog";
 
 export function ErrorDialog({ className, ...props }: Props = {}) {
   return (
-    <media-error-dialog>
-      <media-dialog-backdrop className={"media-error-dialog-backdrop"} />
-      <media-dialog-popup className={["media-feedback-surface", "media-error-dialog-popup", className]} {...props}>
-        <div className={"media-error-dialog-content"}>
-          <media-dialog-title className={"media-error-dialog-title"} />
-          <media-dialog-description className={"media-error-dialog-description"} />
+    <media-error-dialog className={"media-dialog-root"}>
+      <media-dialog-backdrop className={"media-dialog-backdrop"} />
+      <media-dialog-popup
+        className={["media-feedback-surface", "media-dialog-popup", 'media-dialog-popup', className]}
+        {...props}
+      >
+        <div className={"media-dialog-content"}>
+          <media-dialog-title className={"media-dialog-title"} />
+          <media-dialog-description className={"media-dialog-description"} />
         </div>
-        <div className={"media-error-dialog-actions"}>
-          <media-dialog-close className={["media-button", "media-error-dialog-close"]} />
+        <div className={"media-dialog-actions"}>
+          <media-dialog-close className={["media-button", "media-dialog-close"]} />
         </div>
       </media-dialog-popup>
     </media-error-dialog>
@@ -8247,8 +8268,8 @@ import "@videojs/html/ui/controls";
 
 export function MinimalVideoControls() {
   return (
-    <media-controls>
-      <media-controls-backdrop className={"media-controls-backdrop"} />
+    <media-controls className={"media-controls-provider"}>
+      <media-controls-backdrop className={"media-controls__backdrop"} />
       <media-controls-content className={['media-controls', "media-controls"]}>
         <media-tooltip-group>
           <media-controls-group className={"media-controls-start"}>
@@ -8630,9 +8651,12 @@ import "@videojs/html/ui/error-dialog";
 
 export function ErrorDialog({ className, ...props }: Props = {}) {
   return (
-    <media-error-dialog>
+    <media-error-dialog className={"group/dialog absolute inset-0 z-40 hidden items-center justify-center outline-none data-[open]:flex"}>
       <media-dialog-backdrop className={"absolute inset-0 z-40 bg-black/20 backdrop-blur-lg opacity-100 not-data-open:hidden transition-[opacity,backdrop-filter] delay-100 ease-out motion-reduce:duration-50 data-starting-style:opacity-0 data-ending-style:opacity-0 data-ending-style:delay-0 motion-reduce:delay-0 backdrop-saturate-120 duration-150"} />
-      <media-dialog-popup className={["", "absolute top-1/2 left-1/2 z-50 flex -translate-x-1/2 -translate-y-1/2 flex-col gap-3 outline-none", "not-data-open:hidden transition-[opacity,scale] delay-100 ease-out motion-reduce:duration-50", "data-starting-style:scale-95 data-starting-style:opacity-0", "data-ending-style:scale-95 data-ending-style:opacity-0 data-ending-style:delay-0", "motion-reduce:delay-0", "w-full max-w-64 p-4 text-white", "text-shadow-[0_1px_0_rgb(0_0_0/0.5)] duration-150", className]} {...props}>
+      <media-dialog-popup
+        className={["", "absolute top-1/2 left-1/2 z-50 flex -translate-x-1/2 -translate-y-1/2 flex-col gap-3 outline-none", "transition-[opacity,scale] delay-100 ease-out motion-reduce:duration-50", "data-starting-style:scale-95 data-starting-style:opacity-0", "data-ending-style:scale-95 data-ending-style:opacity-0 data-ending-style:delay-0", "group-data-starting-style/dialog:scale-95 group-data-starting-style/dialog:opacity-0", "group-data-ending-style/dialog:scale-95 group-data-ending-style/dialog:opacity-0 group-data-ending-style/dialog:delay-0", "motion-reduce:delay-0", "w-full max-w-64 p-4 text-white", "text-shadow-[0_1px_0_rgb(0_0_0/0.5)] duration-150", 'media-dialog-popup', className]}
+        {...props}
+      >
         <div className={"flex flex-col gap-2 py-1.5"}>
           <media-dialog-title className={"my-[0.83em] text-media-lg font-semibold leading-tight"} />
           <media-dialog-description className={"my-[1em] opacity-70 wrap-anywhere"} />
@@ -9314,8 +9338,8 @@ import "@videojs/html/ui/controls";
 
 export function MinimalVideoControls() {
   return (
-    <media-controls>
-      <media-controls-backdrop className={"pointer-events-none absolute bottom-[-0.25rem] left-1/2 h-[100cqh] w-[100cqw] -translate-x-1/2 rounded-[inherit] opacity-0 @2xl/media-root:bottom-[-0.5rem] bg-linear-to-t from-black/70 via-black/50 via-[length:calc(var(--media-spacing)*30)] to-transparent transition-opacity duration-(--media-controls-transition-duration) ease-out data-visible:opacity-100"} />
+    <media-controls className={"contents"}>
+      <media-controls-backdrop className={"pointer-events-none absolute inset-0 z-10 rounded-[inherit] bg-linear-to-t from-black/70 via-black/50 via-[length:calc(var(--media-spacing)*30)] to-transparent transition-opacity duration-(--media-controls-transition-duration) ease-out not-data-visible:opacity-0"} />
       <media-controls-content className={['media-controls', "group/controls absolute inset-x-1 bottom-1 z-20 flex flex-wrap items-center gap-x-2 rounded-xl bg-transparent text-white", "text-shadow-[0_1px_0_rgb(0_0_0/0.2)]", "[@media(prefers-reduced-transparency:reduce)]:bg-black contrast-more:bg-black forced-colors:bg-[Canvas]", "[--media-popover-side-offset:--spacing(5)] [--media-tooltip-side-offset:var(--media-popover-side-offset)]", "[--media-popover-boundary-offset:--spacing(2)] [--media-tooltip-boundary-offset:var(--media-popover-boundary-offset)]", "p-1 transition-[filter,opacity,translate]", "duration-[calc(var(--media-controls-transition-duration)/2)] ease-out", "not-data-visible:pointer-events-none not-data-visible:opacity-0", "not-data-visible:duration-(--media-controls-transition-duration)", "motion-safe:not-data-visible:translate-y-full pointer-fine:motion-safe:not-data-visible:blur-sm", "@2xl/media-root:inset-x-2 @2xl/media-root:bottom-2 @2xl/media-root:flex-nowrap", "@2xl/media-root:[--media-popover-side-offset:--spacing(3)]"]}>
         <media-tooltip-group>
           <media-controls-group className={"flex flex-1 items-center gap-px @2xl/media-root:flex-none"}>
