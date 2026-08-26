@@ -47,37 +47,33 @@ export const SVTA_UNSUPPORTED_AUDIO_FORMAT = 1005;
 export const SVTA_UNSUPPORTED_DRM_SYSTEM = 4008;
 
 /**
- * SVTA 4 [Content Protection] 004 — bad license request. Used when the license
- * server could not be reached or refused the CDM's message: from the client
- * there is one observable ("the exchange failed at the server"), and which side
- * was at fault lives in `data`, not the code.
+ * SVTA 4 [Content Protection] 004 — bad license request. Used when the license server could not be reached or refused
+ * the CDM's message: from the client there is one observable ("the exchange failed at the server"), and which side was
+ * at fault lives in `data`, not the code.
  */
 export const SVTA_BAD_LICENSE_REQUEST = 4004;
 
 /**
- * SVTA 4 [Content Protection] 010 — DRM initialization error. The key system
- * negotiated but MediaKeys could not be created or attached, so decryption
- * never became possible for this source.
+ * SVTA 4 [Content Protection] 010 — DRM initialization error. The key system negotiated but MediaKeys could not be
+ * created or attached, so decryption never became possible for this source.
  */
 export const SVTA_DRM_INITIALIZATION_ERROR = 4010;
 
 /**
- * SVTA 4 [Content Protection] 013 — DRM certificate error. The server
- * (application) certificate could not be fetched or was rejected by the CDM;
- * without it FairPlay can never produce a license request.
+ * SVTA 4 [Content Protection] 013 — DRM certificate error. The server (application) certificate could not be fetched or
+ * was rejected by the CDM; without it FairPlay can never produce a license request.
  */
 export const SVTA_DRM_CERTIFICATE_ERROR = 4013;
 
 /**
- * SVTA 4 [Content Protection] 016 — DRM license response rejected. The server
- * answered but the CDM refused the license (`MediaKeySession.update()` threw).
+ * SVTA 4 [Content Protection] 016 — DRM license response rejected. The server answered but the CDM refused the license
+ * (`MediaKeySession.update()` threw).
  */
 export const SVTA_DRM_LICENSE_REJECTED = 4016;
 
 /**
- * SVTA 4 [Content Protection] 021 — failed to generate DRM license request.
- * The CDM could not produce a license request from the init data
- * (`MediaKeySession.generateRequest()` threw); nothing ever reached the server.
+ * SVTA 4 [Content Protection] 021 — failed to generate DRM license request. The CDM could not produce a license request
+ * from the init data (`MediaKeySession.generateRequest()` threw); nothing ever reached the server.
  */
 export const SVTA_DRM_LICENSE_REQUEST_GENERATION_FAILED = 4021;
 

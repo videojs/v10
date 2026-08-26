@@ -216,9 +216,8 @@ export interface HlsVideoEngineConfig extends ShareSignalsConfig<HlsVideoEngineS
   /**
    * License servers keyed by EME key-system id — `source.drm`'s shape. Feeds `setupMediaKeys` (negotiation, MediaKeys
    * attach, license exchange) and the DRM-aware capability probe / condition reporter, so encrypted renditions a
-   * configured system can serve play instead of being pruned. Absent or empty, encrypted renditions are refused
-   * exactly as a DRM-less engine refuses them: pruned before selection, with `SVTA_UNSUPPORTED_DRM_SYSTEM` causes
-   * reported.
+   * configured system can serve play instead of being pruned. Absent or empty, encrypted renditions are refused exactly
+   * as a DRM-less engine refuses them: pruned before selection, with `SVTA_UNSUPPORTED_DRM_SYSTEM` causes reported.
    */
   drm?: DrmSystemsConfig;
   /**
