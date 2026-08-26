@@ -35,6 +35,7 @@ export interface HlsMediaProps {
   source: HlsSource | null;
   preload: PreloadType;
   streamType: StreamType;
+  disableRemotePlayback: boolean;
 }
 
 /**
@@ -152,6 +153,7 @@ export const hlsMediaDefaultProps: HlsMediaProps = {
   source: null,
   preload: 'metadata',
   streamType: MediaStreamTypes.UNKNOWN,
+  disableRemotePlayback: false,
 };
 
 class HlsMediaEvent extends Event {}
@@ -171,6 +173,12 @@ export class HlsJsMedia extends HTMLVideoElementHost implements HlsMediaProps {
   #isUserStreamType = false;
   #loadRequested?: Promise<void> | null;
   #prevEngineConfigKey?: Record<string, any> | null;
+  /**
+   * The author's `disableRemotePlayback`, not the element's current value. Tracked because
+   * engines (hls.js or SPF) may alter the value internally. Cached here for cases where this value
+   * is set before the delegate is created so it can later be forwarded.
+   */
+  #authorDisableRemotePlayback?: boolean;
 
   constructor() {
     super();
@@ -317,6 +325,7 @@ export class HlsJsMedia extends HTMLVideoElementHost implements HlsMediaProps {
   }
 
   set disableRemotePlayback(value: boolean) {
+    this.#authorDisableRemotePlayback = value;
     super.disableRemotePlayback = value;
     if (this.#delegate instanceof HlsJsOnlyMedia) {
       this.#delegate.disableRemotePlayback = value;
@@ -409,6 +418,11 @@ export class HlsJsMedia extends HTMLVideoElementHost implements HlsMediaProps {
 
       this.#delegate.preload = this.preload;
       this.#applyRenditionCaps();
+
+      // Forward the author intent to the delegate, in case it was captured before it existed.
+      if (this.#authorDisableRemotePlayback !== undefined && this.#delegate instanceof HlsJsOnlyMedia) {
+        this.#delegate.disableRemotePlayback = this.#authorDisableRemotePlayback;
+      }
 
       if (this.#mediaElement) {
         this.#delegate.attach(this.#mediaElement);
