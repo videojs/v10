@@ -60,39 +60,63 @@ const INIT_DATA_TYPES_BY_KEY_SYSTEM: Readonly<Record<string, readonly string[]>>
 };
 
 /**
+ * Video robustness preferred per key system, offered ahead of the CDM's default. Widevine's `HW_SECURE_ALL` is the L1
+ * hardware tier; naming it as a preference means a device that has L1 negotiates it while one that doesn't still gets
+ * access rather than a refusal. Mux Player does exactly this over hls.js. Audio is deliberately left at the CDM's
+ * default, as it is there — no audio tier is worth a failed negotiation.
+ */
+const PREFERRED_VIDEO_ROBUSTNESS: Readonly<Record<string, string>> = {
+  'com.widevine.alpha': 'HW_SECURE_ALL',
+};
+
+/**
  * MediaKeySystemConfigurations for one key system over the given content types, most-preferred first.
  *
- * A declared encryption scheme (see `declaredEncryptionScheme`) yields TWO configurations: one stamping the scheme on
- * every capability, then one leaving it unset. `requestMediaKeySystemAccess` takes the list and picks the first entry
- * the CDM supports, so the stamp is a preference rather than a requirement — CDMs that honour it negotiate the exact
- * scheme, and CDMs that refuse the member outright still negotiate instead of failing the request. Windows PlayReady is
- * the case in hand: it decrypts cbcs content but refuses a cbcs-stamped configuration, which is why hls.js leaves the
- * member unset altogether. The fallback keeps the preference where it is understood.
+ * `requestMediaKeySystemAccess` takes the whole list and picks the first entry the CDM supports, so every preference
+ * here is expressed by offering an extra configuration rather than by retrying — and each one can only widen what
+ * negotiation accepts.
  *
- * No robustness ladder — the CDM's default suffices until security-level constraint filtering lands (see
- * drm-support.md's security-level phase).
+ * Two preferences compose, encryption scheme outermost:
+ *
+ * - **Declared encryption scheme** (see `declaredEncryptionScheme`), stamped on every capability, then dropped. CDMs that
+ *   honour the member negotiate the exact scheme; CDMs that refuse it outright still negotiate instead of failing the
+ *   request. Windows PlayReady is the case in hand: it decrypts cbcs content but refuses a cbcs-stamped configuration,
+ *   which is why hls.js leaves the member unset altogether.
+ * - **Video robustness** (see `PREFERRED_VIDEO_ROBUSTNESS`), then unset.
+ *
+ * Scheme is the outer preference because a mismatched scheme risks failing decode outright, whereas a lower robustness
+ * tier only means weaker content protection.
  */
 export function buildKeySystemConfigurations(
   keySystem: string,
   contentTypes: { video: readonly string[]; audio: readonly string[] },
   encryptionScheme?: 'cbcs' | 'cenc'
 ): MediaKeySystemConfiguration[] {
-  const configuration = (scheme?: 'cbcs' | 'cenc'): MediaKeySystemConfiguration => {
+  const configuration = (scheme?: 'cbcs' | 'cenc', robustness?: string): MediaKeySystemConfiguration => {
     const capability = (contentType: string) => ({
       contentType,
       ...(scheme !== undefined && { encryptionScheme: scheme }),
     });
+    const videoCapability = (contentType: string) => ({
+      ...capability(contentType),
+      ...(robustness !== undefined && { robustness }),
+    });
 
     return {
       initDataTypes: [...(INIT_DATA_TYPES_BY_KEY_SYSTEM[keySystem] ?? ['cenc'])],
-      ...(contentTypes.video.length > 0 && { videoCapabilities: contentTypes.video.map(capability) }),
+      ...(contentTypes.video.length > 0 && { videoCapabilities: contentTypes.video.map(videoCapability) }),
       ...(contentTypes.audio.length > 0 && { audioCapabilities: contentTypes.audio.map(capability) }),
     };
   };
 
-  if (encryptionScheme === undefined) return [configuration()];
+  const schemes = encryptionScheme === undefined ? [undefined] : [encryptionScheme, undefined];
+  // Only worth a second entry when there are video capabilities to carry it — otherwise the two
+  // configurations would be identical.
+  const preferredRobustness = PREFERRED_VIDEO_ROBUSTNESS[keySystem];
+  const robustnessLevels =
+    preferredRobustness !== undefined && contentTypes.video.length > 0 ? [preferredRobustness, undefined] : [undefined];
 
-  return [configuration(encryptionScheme), configuration()];
+  return schemes.flatMap((scheme) => robustnessLevels.map((robustness) => configuration(scheme, robustness)));
 }
 
 /**
