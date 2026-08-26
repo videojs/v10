@@ -1,0 +1,42 @@
+---
+title: useTextCues
+description: Hook to observe every cue on a text track
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+
+`useTextCues` returns a fresh array containing every cue on a text track. It updates when cues change, a native `<track>` finishes loading, or the media starts loading a new source.
+
+## Import
+
+```tsx
+import { useTextCues } from '@videojs/react';
+```
+
+## Usage
+
+Find a track with <DocsLink slug="reference/use-active-text-track">`useActiveTextTrack`</DocsLink>, then subscribe to its full cue list. Passing `null` returns an empty array.
+
+```tsx title="ChapterList.tsx"
+import { useActiveTextTrack, useTextCues } from '@videojs/react';
+
+export function ChapterList() {
+  const track = useActiveTextTrack('chapters');
+  const cues = useTextCues(track);
+
+  return (
+    <ol>
+      {cues.map((cue) => (
+        <li key={`${cue.startTime}-${cue.endTime}`}>
+          {cue.text ?? `${cue.startTime}s`}
+        </li>
+      ))}
+    </ol>
+  );
+}
+```
+
+Use <DocsLink slug="reference/use-active-text-cues">`useActiveTextCues`</DocsLink> when you only need cues at the current playback position.
+
+<UtilReference util="useTextCues" />
