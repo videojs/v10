@@ -104,6 +104,8 @@ Import the stylesheet listed for each skin in the [preset table](#skins-features
 
 The skin registration entry point imports its styles automatically.
 
+Either way the styles travel inside the skin's JavaScript and apply when the element upgrades, so there is no stylesheet to add. The CDN publishes them as files as well, which matters when you want the player's box styled before that upgrade — see <DocsLink slug="how-to/self-host-the-player">Self-host the player</DocsLink>.
+
 </FrameworkCase>
 
 To use Tailwind or change the underlying CSS, [eject the skin](../how-to/customize-skins#ejecting) and edit its styles in your app.
