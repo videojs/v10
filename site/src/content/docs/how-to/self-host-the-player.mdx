@@ -40,12 +40,12 @@ Bundle a single file when you already build your front end. Download the release
 
 ### Download the release archive
 
-Every [release](https://github.com/videojs/v10/releases) ships a `videojs-html-<version>.zip` (and a `.tar.gz`) holding the prebuilt player. Use it when your deployment installs dependencies outside npm, or when you want a versioned artifact to vendor into your own repository.
+[Video.js releases](https://github.com/videojs/v10/releases) provide a `videojs-html-<version>.zip` (and a `.tar.gz`) holding the prebuilt player. Use it when your deployment installs dependencies outside npm, or when you want a versioned artifact to vendor into your own repository.
 
 Unpack it into whatever your server treats as static files:
 
 ```bash
-VIDEOJS_VERSION=10.0.0-beta.31
+VIDEOJS_VERSION={{VJS10_HTML_ARCHIVE_VERSION}}
 curl -fLO "https://github.com/videojs/v10/releases/download/@videojs/html@${VIDEOJS_VERSION}/videojs-html-${VIDEOJS_VERSION}.zip"
 unzip "videojs-html-${VIDEOJS_VERSION}.zip" -d public/
 ```
@@ -53,7 +53,7 @@ unzip "videojs-html-${VIDEOJS_VERSION}.zip" -d public/
 Then point a script tag at the player you want:
 
 ```html
-<script type="module" src="/videojs-html-10.0.0-beta.31/video.js"></script>
+<script type="module" src="/videojs-html-{{VJS10_HTML_ARCHIVE_VERSION}}/video.js"></script>
 ```
 
 The archive holds the same production bundles the CDN serves, minus sourcemaps and development builds. Every path inside it is relative, so it runs from any origin with no outbound requests. `SHA256SUMS` on the release verifies the download.
@@ -67,17 +67,17 @@ For Composer-based projects such as Drupal, declare the archive as a package:
       "type": "package",
       "package": {
         "name": "videojs/html",
-        "version": "10.0.0-beta.31",
+        "version": "{{VJS10_HTML_ARCHIVE_VERSION}}",
         "type": "drupal-library",
         "dist": {
           "type": "zip",
-          "url": "https://github.com/videojs/v10/releases/download/@videojs/html@10.0.0-beta.31/videojs-html-10.0.0-beta.31.zip"
+          "url": "https://github.com/videojs/v10/releases/download/@videojs/html@{{VJS10_HTML_ARCHIVE_VERSION}}/videojs-html-{{VJS10_HTML_ARCHIVE_VERSION}}.zip"
         }
       }
     }
   ],
   "require": {
-    "videojs/html": "10.0.0-beta.31"
+    "videojs/html": "{{VJS10_HTML_ARCHIVE_VERSION}}"
   }
 }
 ```
