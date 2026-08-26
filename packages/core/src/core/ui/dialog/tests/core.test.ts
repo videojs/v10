@@ -37,6 +37,15 @@ describe('DialogCore', () => {
     });
   });
 
+  it('omits aria-modal for a scoped dialog', () => {
+    const core = new DialogCore();
+
+    core.setInput(OPEN);
+    core.setDocumentModal(false);
+
+    expect(core.getPopupAttrs(core.getState())['aria-modal']).toBeUndefined();
+  });
+
   it('connects a trigger to the popup', () => {
     const core = new DialogCore();
 

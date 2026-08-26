@@ -1,6 +1,7 @@
 import { isEditableTarget, isInteractiveActivation, listen } from '@videojs/utils/dom';
 import { isUndefined } from '@videojs/utils/predicate';
 
+import { isInteractionLocked } from '../ui/interaction-lock';
 import { toAriaKeyShortcut, toDisplayKeyShortcut } from './aria';
 import type { HotkeyOptions, ParsedHotkeyBinding } from './hotkey';
 import { matchesHotkeyEvent, parseHotkeyPattern } from './hotkey';
@@ -154,6 +155,8 @@ export class HotkeyCoordinator {
   }
 
   #handleEvent = (event: KeyboardEvent): void => {
+    if (isInteractionLocked(this.#target)) return;
+
     // IME composition filtering.
     if (event.key === 'Unidentified') return;
 

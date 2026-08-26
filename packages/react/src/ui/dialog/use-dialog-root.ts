@@ -1,7 +1,7 @@
 import { DialogCore, DialogDataAttrs, type DialogProps, type DialogState, type StateAttrMap } from '@videojs/core';
 import { createDialog, createTransition } from '@videojs/core/dom';
 import { useSnapshot } from '@videojs/store/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useState } from 'react';
 
 import { useDestroy } from '../../utils/use-destroy';
 import { useLatestRef } from '../../utils/use-latest-ref';
@@ -14,6 +14,7 @@ export interface UseDialogRootOptions extends DialogProps {
   coreFactory?: () => DialogCore;
   stateAttrMap?: StateAttrMap<DialogState>;
   idPrefix?: string;
+  interactionRoot?: HTMLElement | null;
 }
 
 export function useDialogRoot({
@@ -25,6 +26,7 @@ export function useDialogRoot({
   coreFactory = createDialogCore,
   stateAttrMap = DialogDataAttrs,
   idPrefix = 'dialog',
+  interactionRoot,
 }: UseDialogRootOptions): DialogContextValue {
   const [core] = useState(coreFactory);
 
@@ -65,11 +67,17 @@ export function useDialogRoot({
     else dialog.close();
   }, [controlledOpen, dialog]);
 
+  useLayoutEffect(() => {
+    dialog.setInteractionRoot(interactionRoot ?? null);
+  }, [dialog, interactionRoot]);
+
   useDestroy(dialog);
 
   const input = useSnapshot(dialog.input);
+  const modality = useSnapshot(dialog.modality);
 
   core.setInput(input);
+  core.setDocumentModal(modality.documentModal);
 
   return {
     core,

@@ -1,11 +1,14 @@
 import { registerI18n, resetI18nRegistry } from '@videojs/core/i18n';
+import { ContextProvider } from '@videojs/element/context';
 import { afterEach, describe, expect, it } from 'vite-plus/test';
 
 import { MediaI18nProviderElement } from '../../../i18n';
+import { containerContext } from '../../../player/context';
 import { DialogCloseElement } from '../../dialog/dialog-close-element';
 import { DialogDescriptionElement } from '../../dialog/dialog-description-element';
 import { DialogPopupElement } from '../../dialog/dialog-popup-element';
 import { DialogTitleElement } from '../../dialog/dialog-title-element';
+import { UIElement } from '../../ui-element';
 import { ErrorDialogElement } from '../error-dialog-element';
 
 let tagCounter = 0;
@@ -25,6 +28,16 @@ function ensureDefined(tagName: string, Base: CustomElementConstructor): void {
   if (!customElements.get(tagName)) {
     customElements.define(tagName, Base);
   }
+}
+
+class TestContainerProviderElement extends UIElement {
+  readonly provider = new ContextProvider(this, {
+    context: containerContext,
+    initialValue: {
+      container: this,
+      registerContainer: () => () => {},
+    },
+  });
 }
 
 afterEach(() => {
@@ -60,6 +73,22 @@ describe('ErrorDialogElement', () => {
     expect(close.isConnected).toBe(true);
     expect(popup.getAttribute('aria-labelledby')).toBe(title.id);
     expect(popup.getAttribute('aria-describedby')).toBe(desc.id);
+  });
+
+  it('scopes dialog semantics to the provided container', async () => {
+    const container = createElement(TestContainerProviderElement);
+    const el = createElement(ErrorDialogElement);
+    const popup = createElement(DialogPopupElement);
+
+    el.append(popup);
+    container.append(el);
+    document.body.append(container);
+    await el.updateComplete;
+    await popup.updateComplete;
+    await el.updateComplete;
+
+    expect(popup.getAttribute('role')).toBe('alertdialog');
+    expect(popup.hasAttribute('aria-modal')).toBe(false);
   });
 
   it('handles missing child elements gracefully', async () => {

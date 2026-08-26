@@ -7,16 +7,23 @@ import {
   getErrorDialogUnexpectedText,
   resolveErrorDialogDescription,
 } from '@videojs/core';
-import { applyStateDataAttrs, createDialog, createTransition, type DialogApi, selectError } from '@videojs/core/dom';
+import {
+  applyStateDataAttrs,
+  createDialog,
+  createTransition,
+  type DialogApi,
+  type DialogModality,
+  selectError,
+} from '@videojs/core/dom';
 import { translateText } from '@videojs/core/i18n';
 import type { PropertyValues } from '@videojs/element';
-import { ContextProvider } from '@videojs/element/context';
+import { ContextConsumer, ContextProvider } from '@videojs/element/context';
 import type { ErrorLike } from '@videojs/media';
 import { SnapshotController } from '@videojs/store/html';
 
 import { i18nContext } from '../../i18n/context';
 import { I18nController } from '../../i18n/controller';
-import { playerContext } from '../../player/context';
+import { containerContext, playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
 import { dialogContext } from '../dialog/context';
 import { UIElement } from '../ui-element';
@@ -37,9 +44,11 @@ export class ErrorDialogElement extends UIElement {
   readonly #descriptionId = `vjs-error-dialog-desc-${idCounter++}`;
   readonly #errorState = new PlayerController(this, playerContext, selectError);
   readonly #i18n = new I18nController(this, i18nContext);
+  readonly #container = new ContextConsumer(this, { context: containerContext, subscribe: true });
 
   #dialog: DialogApi | null = null;
   #snapshot: SnapshotController<DialogInput> | null = null;
+  #modalitySnapshot: SnapshotController<DialogModality> | null = null;
   #lastError: ErrorLike | null = null;
   #lastDescription: ReturnType<typeof resolveErrorDialogDescription> | null = null;
   #seenCopyParts = new WeakSet<HTMLElement>();
@@ -70,6 +79,12 @@ export class ErrorDialogElement extends UIElement {
     } else {
       this.#snapshot = new SnapshotController(this, this.#dialog.input);
     }
+
+    if (this.#modalitySnapshot) {
+      this.#modalitySnapshot.track(this.#dialog.modality);
+    } else {
+      this.#modalitySnapshot = new SnapshotController(this, this.#dialog.modality);
+    }
   }
 
   override disconnectedCallback(): void {
@@ -82,6 +97,8 @@ export class ErrorDialogElement extends UIElement {
     super.willUpdate(_changed);
 
     if (!this.#dialog) return;
+
+    this.#dialog.setInteractionRoot(this.#container.value?.container ?? null);
 
     const errorState = this.#errorState.value;
     const hasError = Boolean(errorState?.error);
@@ -115,6 +132,7 @@ export class ErrorDialogElement extends UIElement {
     const input = this.#dialog.input.current;
 
     this.#core.setInput(input);
+    this.#core.setDocumentModal(this.#dialog.modality.current.documentModal);
     const state = this.#core.getState();
 
     applyStateDataAttrs(this, state, ErrorDialogDataAttrs);

@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
+import { lockInteractions } from '../../ui/interaction-lock';
 import { getGestureCoordinator } from '../coordinator';
 import { createDoubleTapGesture, createTapGesture } from '../create-tap-gesture';
 
@@ -122,6 +123,23 @@ describe('GestureCoordinator.subscribe', () => {
 
     expect(subscriber).not.toHaveBeenCalled();
   });
+
+  it('does not fire while container interactions are locked', () => {
+    const container = setup();
+    const subscriber = vi.fn();
+    const release = lockInteractions(container);
+
+    getGestureCoordinator(container).subscribe(subscriber);
+    createTapGesture(container, vi.fn(), { action: 'togglePaused' });
+
+    pointerDown(container);
+    vi.advanceTimersByTime(50);
+    pointerUp(container, { pointerType: 'mouse', clientX: 150 });
+
+    expect(subscriber).not.toHaveBeenCalled();
+
+    release();
+  });
 });
 
 describe('GestureCoordinator.claimsTap', () => {
@@ -133,6 +151,16 @@ describe('GestureCoordinator.claimsTap', () => {
     const event = pointerUp(container, { pointerType: 'touch', clientX: 150 });
 
     expect(getGestureCoordinator(container).claimsTap(event, 'toggleControls')).toBe(true);
+  });
+
+  it('claims taps while container interactions are locked', () => {
+    const container = setup();
+    const release = lockInteractions(container);
+    const event = pointerUp(container, { pointerType: 'touch', clientX: 150 });
+
+    expect(getGestureCoordinator(container).claimsTap(event, 'toggleControls')).toBe(true);
+
+    release();
   });
 
   it('does not claim a tap on an interactive target', () => {

@@ -1,8 +1,9 @@
-import type { State } from '@videojs/store';
+import { createState, type State } from '@videojs/store';
 import { containsComposed, getDeepActiveElement, getTabbableElements, listen, walkAncestors } from '@videojs/utils/dom';
 
 import type { DialogInput } from '../../core/ui/dialog/core';
 import { createDismissLayer } from './dismiss-layer';
+import { lockInteractions } from './interaction-lock';
 import type { TransitionApi } from './transition';
 
 export interface DialogOptions {
@@ -23,6 +24,8 @@ export interface DialogTriggerProps {
 export interface DialogApi {
   /** Reactive transition state that platforms subscribe to for rendering. */
   input: State<DialogInput>;
+  /** Whether the active dialog currently prevents interaction with the entire document. */
+  modality: State<DialogModality>;
   /** Props for a trigger that opens the dialog. */
   triggerProps: DialogTriggerProps;
   /** Open the dialog and save the currently focused element for restoration. */
@@ -33,8 +36,14 @@ export interface DialogApi {
   setTriggerElement(el: HTMLElement | null): void;
   /** Register the popup for focus management and transitions. */
   setPopupElement(el: HTMLElement | null): void;
+  /** Limit modal interaction to this root. Pass `null` for document-wide modality. */
+  setInteractionRoot(el: HTMLElement | null): void;
   /** Tear down all listeners and subscriptions. */
   destroy(): void;
+}
+
+export interface DialogModality {
+  documentModal: boolean;
 }
 
 /** Manages modal dialog transitions, dismissal, initial focus, focus trapping, and focus restoration. */
@@ -42,13 +51,19 @@ export function createDialog(options: DialogOptions): DialogApi {
   let popupElement: HTMLElement | null = null;
   let triggerElement: HTMLElement | null = null;
   let previousFocus: HTMLElement | null = null;
+  let requestedInteractionRoot: HTMLElement | null = null;
+  let activeInteractionRoot: HTMLElement | null = null;
+  let releaseInteractionLock: (() => void) | null = null;
   let focusFrame = 0;
   const isolatedElements = new Map<HTMLElement, boolean>();
+  const modality = createState<DialogModality>({ documentModal: true });
 
   const layer = createDismissLayer({
     transition: options.transition,
     closeOnEscape: options.closeOnEscape,
     onEscapeDismiss(event) {
+      if (!shouldHandleScopedEvent(event)) return;
+
       event.preventDefault();
       event.stopPropagation();
       applyClose();
@@ -67,6 +82,7 @@ export function createDialog(options: DialogOptions): DialogApi {
     const opening = layer.open(() => popupElement);
     if (!opening) return;
 
+    resolveInteractionRoot();
     isolateBackground();
     options.onOpenChange(true);
     scheduleInitialFocus();
@@ -89,10 +105,14 @@ export function createDialog(options: DialogOptions): DialogApi {
     closing.then(() => {
       if (layer.signal.aborted || state.current.active) return;
 
+      const active = getDeepActiveElement();
+      const focusLeftScope =
+        activeInteractionRoot && active instanceof Element && !containsComposed(activeInteractionRoot, active);
+
       restoreBackground();
       const restoreTarget = triggerElement?.isConnected ? triggerElement : previousFocus;
 
-      if (restoreTarget?.isConnected) restoreTarget.focus();
+      if (!focusLeftScope && restoreTarget?.isConnected) restoreTarget.focus();
 
       previousFocus = null;
 
@@ -115,7 +135,7 @@ export function createDialog(options: DialogOptions): DialogApi {
   }
 
   function handleDocumentKeydown(event: KeyboardEvent): void {
-    if (event.key !== 'Tab' || !state.current.active || !popupElement) return;
+    if (event.key !== 'Tab' || !state.current.active || !popupElement || !modality.current.documentModal) return;
 
     const tabbable = getTabbableElements(popupElement);
 
@@ -143,6 +163,14 @@ export function createDialog(options: DialogOptions): DialogApi {
 
     if (event.target instanceof Element && containsComposed(popupElement, event.target)) return;
 
+    if (
+      activeInteractionRoot &&
+      event.target instanceof Element &&
+      !containsComposed(activeInteractionRoot, event.target)
+    ) {
+      return;
+    }
+
     const target = getTabbableElements(popupElement)[0] ?? popupElement;
 
     target.focus();
@@ -156,6 +184,7 @@ export function createDialog(options: DialogOptions): DialogApi {
     if (popupElement !== el) restoreBackground();
 
     popupElement = el;
+    resolveInteractionRoot();
 
     if (el && state.current.active) isolateBackground();
 
@@ -166,6 +195,16 @@ export function createDialog(options: DialogOptions): DialogApi {
     }
   }
 
+  function setInteractionRoot(el: HTMLElement | null): void {
+    if (requestedInteractionRoot === el) return;
+
+    restoreBackground();
+    requestedInteractionRoot = el;
+    resolveInteractionRoot();
+
+    if (popupElement && state.current.active) isolateBackground();
+  }
+
   layer.signal.addEventListener('abort', () => {
     cancelAnimationFrame(focusFrame);
     focusFrame = 0;
@@ -173,10 +212,13 @@ export function createDialog(options: DialogOptions): DialogApi {
     popupElement = null;
     triggerElement = null;
     previousFocus = null;
+    requestedInteractionRoot = null;
+    activeInteractionRoot = null;
   });
 
   return {
     input: state,
+    modality,
     triggerProps: {
       onClick() {
         applyOpen();
@@ -186,16 +228,19 @@ export function createDialog(options: DialogOptions): DialogApi {
     close: applyClose,
     setTriggerElement,
     setPopupElement,
+    setInteractionRoot,
     destroy: layer.destroy,
   };
 
   function isolateBackground(): void {
-    if (!popupElement?.isConnected || isolatedElements.size > 0) return;
+    if (!popupElement?.isConnected || isolatedElements.size > 0 || releaseInteractionLock) return;
+
+    resolveInteractionRoot();
 
     walkAncestors(
       popupElement,
       (current) => {
-        if (current === document.body) return true;
+        if (current === activeInteractionRoot || current === popupElement?.ownerDocument.body) return true;
 
         if (current.assignedSlot) {
           for (const sibling of current.assignedSlot.assignedElements({ flatten: true })) {
@@ -226,6 +271,8 @@ export function createDialog(options: DialogOptions): DialogApi {
       },
       { composed: true }
     );
+
+    if (activeInteractionRoot) releaseInteractionLock = lockInteractions(activeInteractionRoot);
   }
 
   function makeInert(element: HTMLElement): void {
@@ -239,5 +286,24 @@ export function createDialog(options: DialogOptions): DialogApi {
     }
 
     isolatedElements.clear();
+    releaseInteractionLock?.();
+    releaseInteractionLock = null;
+  }
+
+  function resolveInteractionRoot(): void {
+    activeInteractionRoot =
+      requestedInteractionRoot && popupElement && containsComposed(requestedInteractionRoot, popupElement)
+        ? requestedInteractionRoot
+        : null;
+
+    modality.patch({ documentModal: !activeInteractionRoot });
+  }
+
+  function shouldHandleScopedEvent(event: Event): boolean {
+    if (!activeInteractionRoot) return true;
+
+    const target = event.target instanceof Element ? event.target : getDeepActiveElement();
+
+    return target instanceof Element && containsComposed(activeInteractionRoot, target);
   }
 }

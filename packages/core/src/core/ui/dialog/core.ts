@@ -38,6 +38,7 @@ export class DialogCore {
   #input: DialogInput | null = null;
   #titleId: string | undefined = undefined;
   #descriptionId: string | undefined = undefined;
+  #documentModal = true;
 
   constructor(role: DialogRole = 'dialog') {
     this.#role = role;
@@ -56,6 +57,10 @@ export class DialogCore {
 
   setDescriptionId(id: string | undefined): void {
     this.#descriptionId = id;
+  }
+
+  setDocumentModal(documentModal: boolean): void {
+    this.#documentModal = documentModal;
   }
 
   getState(): DialogState {
@@ -81,7 +86,7 @@ export class DialogCore {
   getPopupAttrs(state: DialogState) {
     return {
       role: this.#role,
-      'aria-modal': 'true' as const,
+      'aria-modal': this.#documentModal ? ('true' as const) : undefined,
       'aria-labelledby': state.titleId,
       'aria-describedby': state.descriptionId,
     };

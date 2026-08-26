@@ -49,4 +49,31 @@ test.describe('Error Dialog', () => {
     // Dialog should close
     await expect(errorDialog).not.toHaveAttribute(DATA_ATTRS.open, { timeout: 5_000 });
   });
+
+  test('keeps page content outside the player interactive', async ({ page }) => {
+    await page.evaluate(() => {
+      const button = document.createElement('button');
+
+      button.id = 'outside-player';
+      button.textContent = 'Outside action';
+      button.addEventListener('click', () => button.setAttribute('data-clicked', ''));
+      document.body.prepend(button);
+    });
+
+    await triggerError(page);
+
+    const errorDialog = page.locator(SELECTORS.errorDialog).first();
+    const popup = errorDialog.locator('media-dialog-popup');
+    const outsideButton = page.locator('#outside-player');
+
+    await expect(errorDialog).toHaveAttribute(DATA_ATTRS.open, '', { timeout: 15_000 });
+    await expect(popup).not.toHaveAttribute('aria-modal');
+    await expect(outsideButton).not.toHaveAttribute('inert');
+
+    await outsideButton.click();
+    await outsideButton.focus();
+
+    await expect(outsideButton).toHaveAttribute('data-clicked', '');
+    await expect(outsideButton).toBeFocused();
+  });
 });

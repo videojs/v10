@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import { registerI18n, resetI18nRegistry } from '@videojs/core/i18n';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
@@ -48,5 +48,31 @@ describe('ErrorDialog', () => {
     expect(screen.getByTestId('title').textContent).toBe('Algo salió mal.');
     expect(screen.getByTestId('description').textContent).toBe('Error de red.');
     expect(screen.getByTestId('close').textContent).toBe('Aceptar');
+  });
+
+  it('scopes dialog semantics to the player container', async () => {
+    const container = document.createElement('div');
+    const { Wrapper, value } = createPlayerWrapper({
+      error: { code: 4, message: 'The media could not be played.' },
+      dismissError: vi.fn(),
+    });
+
+    value.container = container;
+    document.body.append(container);
+
+    const { getByRole } = render(
+      <Wrapper>
+        <ErrorDialog.Root>
+          <ErrorDialog.Popup>
+            <ErrorDialog.Title />
+          </ErrorDialog.Popup>
+        </ErrorDialog.Root>
+      </Wrapper>,
+      { container }
+    );
+
+    const popup = await waitFor(() => getByRole('alertdialog'));
+
+    expect(popup.hasAttribute('aria-modal')).toBe(false);
   });
 });

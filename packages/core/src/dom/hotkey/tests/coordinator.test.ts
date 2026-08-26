@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
+import { lockInteractions } from '../../ui/interaction-lock';
 import { HotkeyCoordinator } from '../coordinator';
 
 function keydown(target: EventTarget, key: string, mods?: Partial<KeyboardEventInit>): KeyboardEvent {
@@ -65,6 +66,22 @@ describe('HotkeyCoordinator', () => {
       keydown(container, 'j');
 
       expect(onActivate).not.toHaveBeenCalled();
+    });
+
+    it('does not fire while container interactions are locked', () => {
+      const c = setup();
+      const onActivate = vi.fn();
+      const release = lockInteractions(container);
+
+      c.add({ keys: 'k', onActivate });
+      keydown(container, 'k');
+
+      expect(onActivate).not.toHaveBeenCalled();
+
+      release();
+      keydown(container, 'k');
+
+      expect(onActivate).toHaveBeenCalledOnce();
     });
 
     it('removes binding on cleanup', () => {

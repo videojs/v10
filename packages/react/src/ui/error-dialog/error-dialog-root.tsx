@@ -3,7 +3,7 @@ import { selectError } from '@videojs/core/dom';
 import type { ReactNode } from 'react';
 import { useRef } from 'react';
 
-import { usePlayer } from '../../player/context';
+import { useContainer, usePlayer } from '../../player/context';
 import { useLatestRef } from '../../utils/use-latest-ref';
 import { DialogContextProvider } from '../dialog/context';
 import { useDialogRoot } from '../dialog/use-dialog-root';
@@ -16,6 +16,7 @@ export interface ErrorDialogRootProps {
 /** Opens from player error state and provides it to the shared dialog parts. */
 export function ErrorDialogRoot({ children }: ErrorDialogRootProps): ReactNode {
   const errorState = usePlayer(selectError);
+  const container = useContainer();
   const lastError = useRef(errorState?.error ?? null);
 
   if (errorState?.error) lastError.current = errorState.error;
@@ -29,6 +30,7 @@ export function ErrorDialogRoot({ children }: ErrorDialogRootProps): ReactNode {
     coreFactory: createErrorDialogCore,
     stateAttrMap: ErrorDialogDataAttrs,
     idPrefix: 'error-dialog',
+    interactionRoot: container,
   });
 
   if (!errorState) return null;
