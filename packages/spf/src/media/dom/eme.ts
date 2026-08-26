@@ -115,12 +115,16 @@ export function initDataFromKeyUri(uri: string): Uint8Array<ArrayBuffer> | undef
 }
 
 /**
- * Request-string variants per configured key system, most-preferred first. Modern Edge exposes PlayReady reliably as
- * `.recommendation`; the plain id still answers on older stacks. The negotiation result reports the _configured_ base
- * id, which license-server lookup and message shaping key off.
+ * Request-string variants per configured key system, most-preferred first. The negotiation result reports the
+ * _configured_ base id, which license-server lookup and message shaping key off.
+ *
+ * PlayReady's plain id comes first. `.recommendation` selects the hardware security level, and a hardware CDM refuses a
+ * license issued against a software one — a successful `200` whose `session.update()` then throws. hls.js and Mux
+ * Player never request `.recommendation` at all and license Windows PlayReady successfully; the plain id is what is
+ * proven. It stays as a fallback for stacks that expose only the hardware variant.
  */
 const KEY_SYSTEM_VARIANTS: Readonly<Record<string, readonly string[]>> = {
-  'com.microsoft.playready': ['com.microsoft.playready.recommendation', 'com.microsoft.playready'],
+  'com.microsoft.playready': ['com.microsoft.playready', 'com.microsoft.playready.recommendation'],
 };
 
 /**
