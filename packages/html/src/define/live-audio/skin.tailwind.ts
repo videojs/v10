@@ -7,6 +7,7 @@ import {
   error,
   icon,
   iconState,
+  overlay,
   playButton,
   popup,
   slider,

@@ -11,6 +11,11 @@ import { slider as baseSlider } from './components/slider';
 export const container = cn(
   baseContainer,
   '[&:has(.media-error[data-open])_.media-controls_*]:invisible',
+  '[&_[data-error-backdrop]]:duration-(--media-error-dialog-transition-duration)',
+  '[&_[data-error-backdrop]]:delay-(--media-error-dialog-transition-delay)',
+  '[&_[data-error-backdrop][data-open]]:opacity-100',
+  '[&_[data-error-backdrop][data-open]]:backdrop-blur-lg',
+  '[&_[data-error-backdrop][data-open]]:backdrop-saturate-120',
   '[--media-default-accent-color:light-dark(oklch(0_0_0),oklch(1_0_0))]',
   '[--media-focus-ring-color:light-dark(oklch(0_0_0),oklch(1_0_0))]',
   '[--media-controls-background-color:light-dark(oklch(1_0_0),oklch(0_0_0))]',
@@ -108,6 +113,7 @@ export { button } from './components/button';
 export { buttonGroup } from './components/button-group';
 export { icon, iconContainer, iconFlipped, iconHidden } from './components/icon';
 export { menu } from './components/menu';
+export { overlay } from './components/overlay';
 export { playbackRate } from './components/playback-rate';
 export { seek } from './components/seek';
 export { time } from './components/time';

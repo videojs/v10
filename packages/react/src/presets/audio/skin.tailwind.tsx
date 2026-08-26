@@ -12,6 +12,7 @@ import {
   iconFlipped,
   iconState,
   menu,
+  overlay,
   playButton,
   playbackRate,
   popup,
