@@ -201,6 +201,7 @@ export function LiveVideoSkin(props: LiveVideoSkinProps): ReactNode {
       </ErrorDialog.Root>
 
       <Controls.Root>
+        <Controls.Backdrop className="media-overlay" />
         <Controls.Content className="media-surface media-controls media-controls--root">
           <Tooltip.Provider>
             <div className="media-surface media-controls media-controls--primary">
@@ -295,8 +296,6 @@ export function LiveVideoSkin(props: LiveVideoSkinProps): ReactNode {
           </Tooltip.Provider>
         </Controls.Content>
       </Controls.Root>
-
-      <div className="media-overlay" />
 
       {/* Hotkeys */}
       <Hotkey keys="Space" action="togglePaused" />

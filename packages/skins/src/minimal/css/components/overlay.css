@@ -21,12 +21,12 @@
   transition-duration: var(--media-error-dialog-transition-duration);
 }
 
-.media-minimal-skin .media-controls[data-visible] ~ .media-overlay,
+.media-minimal-skin .media-controls-backdrop[data-visible],
 .media-minimal-skin .media-error-backdrop[data-open] {
   opacity: 1;
 }
 
-.media-minimal-skin .media-buffering-indicator[data-visible] ~ .media-overlay {
+.media-minimal-skin:has(.media-buffering-indicator[data-visible]) .media-controls-backdrop {
   background: oklch(0 0 0 / 0.35);
   opacity: 1;
   backdrop-filter: blur(8px);

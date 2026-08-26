@@ -75,6 +75,7 @@ media-controls-group {
 media-controls-backdrop {
   position: absolute;
   inset: 0;
+  transition: opacity 0.35s;
 }
 
 /* Fade transition */
@@ -83,6 +84,10 @@ media-controls-content {
 }
 
 media-controls-content:not([data-visible]) {
+  opacity: 0;
+}
+
+media-controls-backdrop:not([data-visible]) {
   opacity: 0;
 }
 ```
@@ -104,6 +109,7 @@ React renders `<div>` elements. Add a `className` to style them:
 .controls-backdrop {
   position: absolute;
   inset: 0;
+  transition: opacity 0.35s;
 }
 
 /* Fade transition */
@@ -112,6 +118,10 @@ React renders `<div>` elements. Add a `className` to style them:
 }
 
 .controls:not([data-visible]) {
+  opacity: 0;
+}
+
+.controls-backdrop:not([data-visible]) {
   opacity: 0;
 }
 ```

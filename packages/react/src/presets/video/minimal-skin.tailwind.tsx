@@ -429,6 +429,7 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
       </ErrorDialog.Root>
 
       <Controls.Root>
+        <Controls.Backdrop className={overlay} />
         <Controls.Content
           data-controls="" // Used as a hook for Tailwind has-[] styles
           className={controls}
@@ -568,8 +569,6 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
           </Tooltip.Provider>
         </Controls.Content>
       </Controls.Root>
-
-      <div className={overlay} />
 
       {/* Hotkeys */}
       <Hotkey keys="Space" action="togglePaused" />

@@ -42,6 +42,7 @@ function getTemplateHTML() {
       </media-error-dialog>
 
       <media-controls>
+        <media-controls-backdrop class="media-overlay"></media-controls-backdrop>
         <media-controls-content class="media-controls">
         <media-tooltip-group>
           <div class="media-button-group">
@@ -142,8 +143,6 @@ function getTemplateHTML() {
         </media-tooltip-group>
         </media-controls-content>
       </media-controls>
-
-      <div class="media-overlay"></div>
 
       <!-- Hotkeys -->
       <media-hotkey keys="Space" action="togglePaused"></media-hotkey>

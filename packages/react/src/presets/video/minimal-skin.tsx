@@ -364,6 +364,7 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
       </ErrorDialog.Root>
 
       <Controls.Root>
+        <Controls.Backdrop className="media-overlay" />
         <Controls.Content className="media-controls">
           <Tooltip.Provider>
             <div className="media-button-group">
@@ -501,8 +502,6 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
           </Tooltip.Provider>
         </Controls.Content>
       </Controls.Root>
-
-      <div className="media-overlay" />
 
       {/* Hotkeys */}
       <Hotkey keys="Space" action="togglePaused" />

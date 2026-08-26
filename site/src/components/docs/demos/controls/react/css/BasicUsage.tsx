@@ -10,6 +10,7 @@ export default function BasicUsage() {
         <Video src="{{VJS10_DEMO_VIDEO_MP4}}" autoPlay muted playsInline loop />
 
         <Controls.Root>
+          <Controls.Backdrop className="controls-backdrop" />
           <Controls.Content className="media-controls">
             <Controls.Group className="controls-group" aria-label="Playback controls">
               <PlayButton
