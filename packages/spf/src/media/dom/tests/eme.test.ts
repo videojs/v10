@@ -128,15 +128,30 @@ describe('requestKeySystemAccess', () => {
     const spy = vi.spyOn(navigator, 'requestMediaKeySystemAccess');
     const access = {} as MediaKeySystemAccess;
 
-    spy.mockRejectedValueOnce(new Error('no recommendation CDM')).mockResolvedValueOnce(access);
+    spy.mockRejectedValueOnce(new Error('no plain CDM')).mockResolvedValueOnce(access);
 
     const result = await requestKeySystemAccess(['com.microsoft.playready'], { video: [], audio: [] });
 
+    // Plain first: `.recommendation` is the hardware security level, and a hardware CDM refuses a
+    // license issued against a software one. hls.js and Mux Player never request it.
     expect(spy.mock.calls.map(([keySystem]) => keySystem)).toEqual([
-      'com.microsoft.playready.recommendation',
       'com.microsoft.playready',
+      'com.microsoft.playready.recommendation',
     ]);
     expect(result).toEqual({ keySystem: 'com.microsoft.playready', access });
+    spy.mockRestore();
+  });
+
+  it('prefers the plain PlayReady id when both variants are available', async () => {
+    const spy = vi.spyOn(navigator, 'requestMediaKeySystemAccess');
+    const access = {} as MediaKeySystemAccess;
+
+    spy.mockResolvedValue(access);
+
+    await requestKeySystemAccess(['com.microsoft.playready'], { video: [], audio: [] });
+
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(spy.mock.calls[0]?.[0]).toBe('com.microsoft.playready');
     spy.mockRestore();
   });
 });
