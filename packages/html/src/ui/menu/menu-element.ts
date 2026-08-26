@@ -186,7 +186,6 @@ export class MenuElement extends UIElement {
           boundary: this.boundary,
           container: this.#containerCtx.value?.container ?? null,
           cssVars: MenuPositioningCSSVars,
-          trackResize: false,
           onSideChange: (side) => this.setAttribute(MenuPopupDataAttrs.side, side),
         });
       }

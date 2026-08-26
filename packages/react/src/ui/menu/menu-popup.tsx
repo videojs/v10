@@ -45,7 +45,6 @@ export const MenuPopup = forwardRef<HTMLDivElement, MenuPopupProps>(function Men
     boundary,
     container,
     cssVars: MenuPositioningCSSVars,
-    trackResize: false,
     onSideChange: setPositionedSide,
   });
 
