@@ -68,6 +68,13 @@ export {
   usePlayer,
   usePlayerContext,
 } from './player/context';
+export {
+  type UseTextTrackOptions,
+  useActiveTextCues,
+  useActiveTextTrack,
+  useTextCues,
+  useTextTrack,
+} from './player/text-track';
 // Player API
 export {
   type CreatePlayerConfig,

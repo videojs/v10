@@ -13,4 +13,11 @@ describe('@videojs/react player exports', () => {
     expect(ReactApi).toHaveProperty('usePlayerContext');
     expect(ReactApi).toHaveProperty('useOptionalContainer');
   });
+
+  it('exports the text track hooks', () => {
+    expect(ReactApi).toHaveProperty('useTextTrack');
+    expect(ReactApi).toHaveProperty('useActiveTextTrack');
+    expect(ReactApi).toHaveProperty('useTextCues');
+    expect(ReactApi).toHaveProperty('useActiveTextCues');
+  });
 });
