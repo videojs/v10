@@ -57,7 +57,7 @@ import {
   SVTA_BAD_LICENSE_REQUEST,
   SVTA_DRM_CERTIFICATE_ERROR,
   SVTA_DRM_INITIALIZATION_ERROR,
-  SVTA_DRM_LICENSE_REJECTED,
+  SVTA_DRM_LICENSE_RESPONSE_REJECTED,
   SVTA_DRM_LICENSE_REQUEST_GENERATION_FAILED,
   SVTA_NO_SUPPORTED_AUDIO_TRACK,
   SVTA_NO_SUPPORTED_VIDEO_TRACK,
@@ -228,7 +228,10 @@ function setupMediaKeysSetup({
               } catch (error) {
                 if (controller.signal.aborted) return;
 
-                emitError(state, { code: SVTA_DRM_LICENSE_REJECTED, data: { keySystem, reason: String(error) } });
+                emitError(state, {
+                  code: SVTA_DRM_LICENSE_RESPONSE_REJECTED,
+                  data: { keySystem, reason: String(error) },
+                });
               }
             };
             const openSession = (initDataType: string, initData: Uint8Array<ArrayBuffer>) => {
