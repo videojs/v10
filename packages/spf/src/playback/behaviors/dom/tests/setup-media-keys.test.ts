@@ -1,4 +1,5 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
+
 import { signal } from '../../../../core/signals/primitives';
 import {
   attachMediaKeys,
@@ -25,6 +26,7 @@ import { type MediaKeysContext, type MediaKeysState, setupMediaKeys } from '../s
 // is exercised against real manifest-shaped fixtures.
 vi.mock('../../../../media/dom/eme', async () => {
   const actual = await vi.importActual<typeof import('../../../../media/dom/eme')>('../../../../media/dom/eme');
+
   return {
     ...actual,
     requestKeySystemAccess: vi.fn(),
@@ -107,6 +109,7 @@ interface FakeSession extends EventTarget {
 
 function makeFakeSession(): FakeSession {
   const session = new EventTarget() as FakeSession;
+
   session.generateRequest = vi.fn(async () => {});
   session.update = vi.fn(async () => {});
   session.close = vi.fn(async () => {});
@@ -118,12 +121,14 @@ function makeFakeEme(keySystem = 'com.widevine.alpha') {
   const mediaKeys = {
     createSession: vi.fn(() => {
       const session = makeFakeSession();
+
       sessions.push(session);
       return session;
     }),
     setServerCertificate: vi.fn(async () => true),
   } as unknown as MediaKeys;
   const access = { createMediaKeys: vi.fn(async () => mediaKeys) } as unknown as MediaKeySystemAccess;
+
   return { keySystem, access, mediaKeys, sessions };
 }
 
@@ -152,6 +157,7 @@ function setupSetupMediaKeys(
   const state = makeState(initialState);
   const context = makeContext(initialContext);
   const reactor = setupMediaKeys.setup({ state, context, config: { drm } });
+
   return { state, context, reactor };
 }
 
@@ -185,6 +191,7 @@ describe('setupMediaKeys', () => {
 
   it('raises the gate, negotiates in preference order, attaches, publishes, lowers the gate', async () => {
     const eme = makeFakeEme();
+
     vi.mocked(requestKeySystemAccess).mockResolvedValue(eme);
     const video = document.createElement('video');
     const { state, context, reactor } = setupSetupMediaKeys(
@@ -212,6 +219,7 @@ describe('setupMediaKeys', () => {
 
   it('wraps a raw PlayReady Object into a PSSH box before generating the request', async () => {
     const eme = makeFakeEme('com.microsoft.playready');
+
     vi.mocked(requestKeySystemAccess).mockResolvedValue(eme);
     const { reactor } = setupSetupMediaKeys(
       { presentation: makePresentation([PLAYREADY_KEY]) },
@@ -220,6 +228,7 @@ describe('setupMediaKeys', () => {
 
     await vi.waitFor(() => expect(eme.sessions).toHaveLength(1));
     const [initDataType, initData] = eme.sessions[0]!.generateRequest.mock.calls[0]! as [string, Uint8Array];
+
     expect(initDataType).toBe('cenc');
     expect(initData.length).toBe(32 + PSSH_BYTES.length);
     expect([...initData.slice(4, 8)]).toEqual([0x70, 0x73, 0x73, 0x68]); // 'pssh'
@@ -230,6 +239,7 @@ describe('setupMediaKeys', () => {
 
   it('fetches and applies the server certificate before opening sessions', async () => {
     const eme = makeFakeEme('com.apple.fps');
+
     vi.mocked(requestKeySystemAccess).mockResolvedValue(eme);
     const { context, reactor } = setupSetupMediaKeys(
       { presentation: makePresentation([WIDEVINE_KEY, FAIRPLAY_KEY]) },
@@ -248,6 +258,7 @@ describe('setupMediaKeys', () => {
 
   it('reports 4013 and holds the gate when the certificate phase fails', async () => {
     const eme = makeFakeEme('com.apple.fps');
+
     vi.mocked(requestKeySystemAccess).mockResolvedValue(eme);
     vi.mocked(fetchServerCertificate).mockRejectedValue(new Error('appcert 403'));
     const { state, context, reactor } = setupSetupMediaKeys(
@@ -267,6 +278,7 @@ describe('setupMediaKeys', () => {
 
   it('opens event-driven sessions when the manifest carries no init data, deduped by bytes', async () => {
     const eme = makeFakeEme('com.apple.fps');
+
     vi.mocked(requestKeySystemAccess).mockResolvedValue(eme);
     const video = document.createElement('video');
     const { context, reactor } = setupSetupMediaKeys(
@@ -300,6 +312,7 @@ describe('setupMediaKeys', () => {
 
   it('ignores encrypted events when manifest-driven sessions exist', async () => {
     const eme = makeFakeEme();
+
     vi.mocked(requestKeySystemAccess).mockResolvedValue(eme);
     const video = document.createElement('video');
     const { reactor } = setupSetupMediaKeys(
@@ -319,6 +332,7 @@ describe('setupMediaKeys', () => {
 
   it('opens one session per manifest-carried init data and skips skd:// keys', async () => {
     const eme = makeFakeEme();
+
     vi.mocked(requestKeySystemAccess).mockResolvedValue(eme);
     const { reactor } = setupSetupMediaKeys(
       { presentation: makePresentation([WIDEVINE_KEY, FAIRPLAY_KEY]) },
@@ -333,8 +347,10 @@ describe('setupMediaKeys', () => {
 
   it("exchanges the chosen system's license on a session message", async () => {
     const eme = makeFakeEme();
+
     vi.mocked(requestKeySystemAccess).mockResolvedValue(eme);
     const license = new Uint8Array([9, 9, 9]);
+
     vi.mocked(fetchLicense).mockResolvedValue(license);
     const { reactor } = setupSetupMediaKeys(
       { presentation: makePresentation([WIDEVINE_KEY]) },
@@ -343,6 +359,7 @@ describe('setupMediaKeys', () => {
 
     await vi.waitFor(() => expect(eme.sessions).toHaveLength(1));
     const message = new Uint8Array([1, 2, 3]).buffer;
+
     eme.sessions[0]!.dispatchEvent(Object.assign(new Event('message'), { message }));
 
     await vi.waitFor(() => expect(eme.sessions[0]!.update).toHaveBeenCalledWith(license));
@@ -355,6 +372,7 @@ describe('setupMediaKeys', () => {
 
   it('resolves a function-valued license server when the exchange runs', async () => {
     const eme = makeFakeEme();
+
     vi.mocked(requestKeySystemAccess).mockResolvedValue(eme);
     vi.mocked(fetchLicense).mockResolvedValue(new Uint8Array([9]));
     // The Mux flavor's shape: the Media holds the source, so the URL is not
@@ -368,6 +386,7 @@ describe('setupMediaKeys', () => {
 
     await vi.waitFor(() => expect(eme.sessions).toHaveLength(1));
     const message = new Uint8Array([1, 2, 3]).buffer;
+
     eme.sessions[0]!.dispatchEvent(Object.assign(new Event('message'), { message }));
 
     await vi.waitFor(() =>
@@ -384,6 +403,7 @@ describe('setupMediaKeys', () => {
 
   it('resolves a function-valued server certificate', async () => {
     const eme = makeFakeEme('com.apple.fps');
+
     vi.mocked(requestKeySystemAccess).mockResolvedValue(eme);
     const { context, reactor } = setupSetupMediaKeys(
       { presentation: makePresentation([FAIRPLAY_KEY]) },
@@ -407,6 +427,7 @@ describe('setupMediaKeys', () => {
 
   it('skips the certificate phase when its resolver yields nothing', async () => {
     const eme = makeFakeEme('com.apple.fps');
+
     vi.mocked(requestKeySystemAccess).mockResolvedValue(eme);
     const { context, reactor } = setupSetupMediaKeys(
       { presentation: makePresentation([FAIRPLAY_KEY]) },
@@ -501,6 +522,7 @@ describe('setupMediaKeys', () => {
 
   it("sends a key system's configured headers with its license request", async () => {
     const eme = makeFakeEme();
+
     vi.mocked(requestKeySystemAccess).mockResolvedValue(eme);
     vi.mocked(fetchLicense).mockResolvedValue(new Uint8Array([9]));
     const { reactor } = setupSetupMediaKeys(
@@ -531,6 +553,7 @@ describe('setupMediaKeys', () => {
 
   it('lets the shaped request win over a configured header of the same name', async () => {
     const eme = makeFakeEme();
+
     vi.mocked(requestKeySystemAccess).mockResolvedValue(eme);
     vi.mocked(fetchLicense).mockResolvedValue(new Uint8Array([9]));
     const { reactor } = setupSetupMediaKeys(
@@ -577,6 +600,7 @@ describe('setupMediaKeys', () => {
 
   it('reports 4004 when the license request fails, without dropping the session', async () => {
     const eme = makeFakeEme();
+
     vi.mocked(requestKeySystemAccess).mockResolvedValue(eme);
     vi.mocked(fetchLicense).mockRejectedValue(new Error('license server said no'));
     const { state, reactor } = setupSetupMediaKeys(
@@ -596,6 +620,7 @@ describe('setupMediaKeys', () => {
 
   it('reports 4016 when the CDM rejects the license', async () => {
     const eme = makeFakeEme();
+
     vi.mocked(requestKeySystemAccess).mockResolvedValue(eme);
     vi.mocked(fetchLicense).mockResolvedValue(new Uint8Array([9]));
     const { state, reactor } = setupSetupMediaKeys(
@@ -614,8 +639,10 @@ describe('setupMediaKeys', () => {
 
   it('reports 4021 when the CDM cannot generate a license request', async () => {
     const eme = makeFakeEme();
+
     vi.mocked(requestKeySystemAccess).mockResolvedValue(eme);
     const failingSession = makeFakeSession();
+
     failingSession.generateRequest.mockRejectedValue(new Error('no CDM for you'));
     (eme.mediaKeys.createSession as ReturnType<typeof vi.fn>).mockReturnValue(failingSession);
     const { state, reactor } = setupSetupMediaKeys(
@@ -632,8 +659,10 @@ describe('setupMediaKeys', () => {
 
   it('reports nothing after teardown aborts in-flight license work', async () => {
     const eme = makeFakeEme();
+
     vi.mocked(requestKeySystemAccess).mockResolvedValue(eme);
     let rejectLicense!: (reason: Error) => void;
+
     vi.mocked(fetchLicense).mockImplementation(() => new Promise((_resolve, reject) => (rejectLicense = reject)));
     const { state, reactor } = setupSetupMediaKeys(
       { presentation: makePresentation([WIDEVINE_KEY]) },
@@ -656,6 +685,7 @@ describe('setupMediaKeys', () => {
 
   it('closes sessions, detaches, and clears its slots on source clear', async () => {
     const eme = makeFakeEme();
+
     vi.mocked(requestKeySystemAccess).mockResolvedValue(eme);
     const video = document.createElement('video');
     const { state, context, reactor } = setupSetupMediaKeys(
@@ -678,6 +708,7 @@ describe('setupMediaKeys', () => {
 
   it('tears down on destroy', async () => {
     const eme = makeFakeEme();
+
     vi.mocked(requestKeySystemAccess).mockResolvedValue(eme);
     const video = document.createElement('video');
     const { context, reactor } = setupSetupMediaKeys(
