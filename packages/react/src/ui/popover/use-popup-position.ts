@@ -53,7 +53,7 @@ export function usePopupPosition({
       popup: popupRef.current,
       boundary,
       container,
-      trackResize,
+      ...(trackResize !== undefined ? { trackResize } : {}),
       ...(cssVars ? { cssVars } : {}),
       ...(onSideChange ? { onSideChange } : {}),
     });
