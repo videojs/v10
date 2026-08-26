@@ -83,7 +83,7 @@ export const menu = {
   /** Root settings Content that exits when a nested Content opens. */
   settingsContent: cn(
     group,
-    'translate-none transition-[translate,filter] duration-(--media-menu-transition-duration) ease-out',
+    'translate-0 transition-[translate,filter] duration-(--media-menu-transition-duration) ease-out',
     '[--media-menu-content-exit-translate:-100%] [&:dir(rtl)]:[--media-menu-content-exit-translate:100%]',
     'data-[child-open]:[translate:var(--media-menu-content-exit-translate)_0]',
     'data-[child-open]:blur',
