@@ -1,4 +1,7 @@
-/** Live video player preset — same features as `video` with a skin that omits duration / current-time displays. */
+/**
+ * Live video player preset — `video` minus playback rate, quality selection, and audio-track selection, plus the live
+ * feature, with a skin that swaps the time slider and time displays for a Live button.
+ */
 'use client';
 
 export { liveVideoFeatures } from '@videojs/core/dom';
