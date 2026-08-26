@@ -11,7 +11,7 @@ import {
 import {
   SVTA_BAD_LICENSE_REQUEST,
   SVTA_DRM_CERTIFICATE_ERROR,
-  SVTA_DRM_LICENSE_REJECTED,
+  SVTA_DRM_LICENSE_RESPONSE_REJECTED,
   SVTA_DRM_LICENSE_REQUEST_GENERATION_FAILED,
   SVTA_NO_SUPPORTED_AUDIO_TRACK,
   SVTA_NO_SUPPORTED_VIDEO_TRACK,
@@ -632,7 +632,9 @@ describe('setupMediaKeys', () => {
     eme.sessions[0]!.update.mockRejectedValue(new TypeError('bad CKC'));
     eme.sessions[0]!.dispatchEvent(Object.assign(new Event('message'), { message: new Uint8Array([1]).buffer }));
 
-    await vi.waitFor(() => expect(state.errors.get()?.map((error) => error.code)).toEqual([SVTA_DRM_LICENSE_REJECTED]));
+    await vi.waitFor(() =>
+      expect(state.errors.get()?.map((error) => error.code)).toEqual([SVTA_DRM_LICENSE_RESPONSE_REJECTED])
+    );
 
     reactor.destroy();
   });

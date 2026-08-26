@@ -66,10 +66,13 @@ export const SVTA_DRM_INITIALIZATION_ERROR = 4010;
 export const SVTA_DRM_CERTIFICATE_ERROR = 4013;
 
 /**
- * SVTA 4 [Content Protection] 016 — DRM license response rejected. The server answered but the CDM refused the license
- * (`MediaKeySession.update()` threw).
+ * SVTA 4 [Content Protection] 016 — DRM license response rejected. The server answered **200 with a license body** and
+ * the CDM refused it (`MediaKeySession.update()` threw). Not a server-side rejection: a non-2xx license response throws
+ * inside `fetchLicense` and reports {@link SVTA_BAD_LICENSE_REQUEST} instead. So this code proves the license URL,
+ * credentials, and request shaping all worked, and narrows the fault to the license's own contents — a security-level
+ * mismatch between the challenge and the issued license, for one.
  */
-export const SVTA_DRM_LICENSE_REJECTED = 4016;
+export const SVTA_DRM_LICENSE_RESPONSE_REJECTED = 4016;
 
 /**
  * SVTA 4 [Content Protection] 021 — failed to generate DRM license request. The CDM could not produce a license request
