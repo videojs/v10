@@ -273,7 +273,7 @@
   }
 }
 
-.media-minimal-skin--video .media-error[data-open] ~ .media-controls {
+.media-minimal-skin--video:has(.media-error[data-open]) .media-controls {
   display: none;
 }
 

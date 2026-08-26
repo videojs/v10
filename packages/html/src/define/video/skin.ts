@@ -28,7 +28,9 @@ function getTemplateHTML() {
         ${renderIcon('spinner', { class: 'media-icon' })}
       </media-buffering-indicator>
 
-      <media-error-dialog class="media-error">
+      <media-error-dialog>
+        <media-dialog-backdrop class="media-overlay media-error-backdrop"></media-dialog-backdrop>
+        <media-dialog-popup class="media-error">
         <div class="media-error__dialog media-surface">
           <div class="media-error__content">
             <media-dialog-title class="media-error__title"></media-dialog-title>
@@ -38,6 +40,7 @@ function getTemplateHTML() {
             <media-dialog-close class="media-button media-button--primary"></media-dialog-close>
           </div>
         </div>
+        </media-dialog-popup>
       </media-error-dialog>
 
       <media-controls class="media-surface media-controls media-controls--root">

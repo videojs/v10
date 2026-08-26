@@ -21,6 +21,13 @@ export const container = (isShadowDOM: boolean) =>
     baseContainer,
     'group/skin',
     'bg-black overflow-clip',
+    '[&:has(.media-controls[data-visible])_.media-overlay]:opacity-100',
+    '[&_[data-error-backdrop]]:duration-(--media-error-dialog-transition-duration)',
+    '[&_[data-error-backdrop]]:delay-(--media-error-dialog-transition-delay)',
+    '[&_[data-error-backdrop][data-open]]:opacity-100',
+    '[&_[data-error-backdrop][data-open]]:backdrop-blur-lg',
+    '[&_[data-error-backdrop][data-open]]:backdrop-saturate-150',
+    '[&:has(.media-error[data-open])_.media-controls]:hidden!',
     // Inner border ring
     'after:absolute after:pointer-events-none after:rounded-[inherit] after:z-10',
     '[&:fullscreen]:after:hidden',

@@ -186,6 +186,7 @@ export function LiveVideoSkin(props: LiveVideoSkinProps): ReactNode {
       />
 
       <ErrorDialog.Root>
+        <ErrorDialog.Backdrop className="media-overlay media-error-backdrop" />
         <ErrorDialog.Popup className="media-error">
           <div className="media-error__dialog media-surface">
             <div className="media-error__content">

@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { DialogCloseElement } from '../../dialog/dialog-close-element';
 import { DialogDescriptionElement } from '../../dialog/dialog-description-element';
+import { DialogPopupElement } from '../../dialog/dialog-popup-element';
 import { DialogTitleElement } from '../../dialog/dialog-title-element';
 import { AlertDialogElement } from '../alert-dialog-element';
 
@@ -77,16 +78,22 @@ describe('AlertDialogElement', () => {
     });
   });
 
-  it('applies alertdialog role and aria-modal', async () => {
+  it('keeps dialog semantics on the popup rather than the context host', async () => {
     const el = createElement(AlertDialogElement);
+    const popup = createElement(DialogPopupElement);
 
     el.open = true;
+    el.append(popup);
 
     document.body.appendChild(el);
     await el.updateComplete;
 
-    expect(el.getAttribute('role')).toBe('alertdialog');
-    expect(el.getAttribute('aria-modal')).toBe('true');
+    await vi.waitFor(() => {
+      expect(el.hasAttribute('role')).toBe(false);
+      expect(popup.getAttribute('role')).toBe('alertdialog');
+      expect(popup.getAttribute('aria-modal')).toBe('true');
+      expect(popup.getAttribute('tabindex')).toBe('-1');
+    });
   });
 
   it('uses generic dialog parts for its accessible name, description, and close action', async () => {
@@ -95,11 +102,13 @@ describe('AlertDialogElement', () => {
     ensureDefined(DialogCloseElement.tagName, DialogCloseElement);
 
     const el = createElement(AlertDialogElement);
+    const popup = createElement(DialogPopupElement);
     const title = document.createElement(DialogTitleElement.tagName) as DialogTitleElement;
     const description = document.createElement(DialogDescriptionElement.tagName) as DialogDescriptionElement;
     const close = document.createElement(DialogCloseElement.tagName) as DialogCloseElement;
 
-    el.append(title, description, close);
+    popup.append(title, description, close);
+    el.append(popup);
     el.open = true;
 
     document.body.append(el);
@@ -107,8 +116,8 @@ describe('AlertDialogElement', () => {
     await title.updateComplete;
     await description.updateComplete;
 
-    expect(el.getAttribute('aria-labelledby')).toBe(title.id);
-    expect(el.getAttribute('aria-describedby')).toBe(description.id);
+    expect(popup.getAttribute('aria-labelledby')).toBe(title.id);
+    expect(popup.getAttribute('aria-describedby')).toBe(description.id);
 
     close.click();
     expect(el.open).toBe(false);
@@ -184,9 +193,11 @@ describe('AlertDialogElement', () => {
 
     el.open = true;
 
+    const popup = createElement(DialogPopupElement);
     const button = document.createElement('button');
 
-    el.appendChild(button);
+    popup.append(button);
+    el.append(popup);
 
     document.body.appendChild(el);
     await el.updateComplete;
@@ -202,9 +213,11 @@ describe('AlertDialogElement', () => {
 
     el.open = true;
 
+    const popup = createElement(DialogPopupElement);
     const span = document.createElement('span');
 
-    el.appendChild(span);
+    popup.append(span);
+    el.append(popup);
 
     document.body.appendChild(el);
     await el.updateComplete;

@@ -5,6 +5,7 @@ import { ControlsGroupElement } from '../../ui/controls/controls-group-element';
 import { DialogBackdropElement } from '../../ui/dialog/dialog-backdrop-element';
 import { DialogCloseElement } from '../../ui/dialog/dialog-close-element';
 import { DialogDescriptionElement } from '../../ui/dialog/dialog-description-element';
+import { DialogPopupElement } from '../../ui/dialog/dialog-popup-element';
 import { DialogTitleElement } from '../../ui/dialog/dialog-title-element';
 import { ErrorDialogElement } from '../../ui/error-dialog/error-dialog-element';
 import { MenuCheckboxItemElement } from '../../ui/menu/menu-checkbox-item-element';
@@ -68,6 +69,7 @@ export function defineControls(): void {
 
 function defineDialogParts(): void {
   safeDefine(DialogBackdropElement);
+  safeDefine(DialogPopupElement);
   safeDefine(DialogCloseElement);
   safeDefine(DialogDescriptionElement);
   safeDefine(DialogTitleElement);

@@ -11,13 +11,13 @@
   transition-property: opacity, backdrop-filter;
 }
 
-.media-default-skin .media-error ~ .media-overlay {
+.media-default-skin .media-error-backdrop {
   transition-delay: var(--media-error-dialog-transition-delay);
   transition-duration: var(--media-error-dialog-transition-duration);
 }
 
 .media-default-skin .media-controls[data-visible] ~ .media-overlay,
-.media-default-skin .media-error[data-open] ~ .media-overlay {
+.media-default-skin .media-error-backdrop[data-open] {
   opacity: 1;
 }
 
@@ -27,6 +27,6 @@
   backdrop-filter: blur(8px);
 }
 
-.media-default-skin .media-error[data-open] ~ .media-overlay {
+.media-default-skin .media-error-backdrop[data-open] {
   backdrop-filter: blur(16px) saturate(1.5);
 }

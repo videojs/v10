@@ -42,7 +42,10 @@
       height: 100%;
     }
 
-    media-tooltip-group {
+    media-tooltip-group,
+    media-dialog,
+    media-alert-dialog,
+    media-error-dialog {
       display: contents;
     }
 

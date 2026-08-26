@@ -32,6 +32,7 @@ export default function BasicUsage() {
           Trigger a playback error
         </button>
         <ErrorDialog.Root>
+          <ErrorDialog.Backdrop className="react-error-dialog-basic__backdrop" />
           <ErrorDialog.Popup className="react-error-dialog-basic__dialog">
             <ErrorDialog.Title className="react-error-dialog-basic__title" />
             <ErrorDialog.Description className="react-error-dialog-basic__description" />

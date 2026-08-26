@@ -2,7 +2,10 @@
 /* Shared styles for all HTML skins                                           */
 /* -------------------------------------------------------------------------- */
 
-media-tooltip-group {
+media-tooltip-group,
+media-dialog,
+media-alert-dialog,
+media-error-dialog {
   display: contents;
 }
 

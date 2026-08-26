@@ -204,6 +204,7 @@ export function MinimalLiveVideoSkin(props: MinimalLiveVideoSkinProps): ReactNod
       />
 
       <ErrorDialog.Root>
+        <ErrorDialog.Backdrop className="media-overlay media-error-backdrop" />
         <ErrorDialog.Popup className="media-error">
           <div className="media-error__dialog">
             <div className="media-error__content">

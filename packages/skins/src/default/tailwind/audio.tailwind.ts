@@ -12,6 +12,7 @@ import { time as baseTime } from './components/time';
 
 export const container = cn(
   baseContainer,
+  '[&:has(.media-error[data-open])_.media-controls_*]:invisible',
   '[--media-default-accent-color:light-dark(oklch(0_0_0),oklch(1_0_0))]',
   '[--media-border-color:oklch(0_0_0/0.1)]',
   '[--media-focus-ring-color:light-dark(oklch(0_0_0),oklch(1_0_0))]',

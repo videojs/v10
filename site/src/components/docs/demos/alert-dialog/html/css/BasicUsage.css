@@ -18,23 +18,33 @@
   border-radius: 9999px;
 }
 
+.html-alert-dialog-basic__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgb(3 7 18 / 92%);
+  transition: opacity 150ms ease;
+}
+
 .html-alert-dialog-basic__dialog {
   position: absolute;
   inset: 0;
+  z-index: 1;
   display: grid;
   gap: 12px;
   place-content: center;
   padding: 32px;
   color: #fff;
   text-align: center;
-  background: rgb(3 7 18 / 92%);
   transition: opacity 150ms ease;
 }
 
+.html-alert-dialog-basic__backdrop:not([data-open]),
 .html-alert-dialog-basic__dialog:not([data-open]) {
   display: none;
 }
 
+.html-alert-dialog-basic__backdrop[data-starting-style],
+.html-alert-dialog-basic__backdrop[data-ending-style],
 .html-alert-dialog-basic__dialog[data-starting-style],
 .html-alert-dialog-basic__dialog[data-ending-style] {
   opacity: 0;

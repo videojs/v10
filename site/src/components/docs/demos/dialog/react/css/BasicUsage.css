@@ -23,18 +23,27 @@
   object-fit: cover;
 }
 
-.react-dialog-basic__dialog {
+.react-dialog-basic__backdrop {
   position: absolute;
   inset: 0;
   z-index: 1;
+  background: rgb(3 7 18 / 80%);
+  transition: opacity 200ms ease;
+}
+
+.react-dialog-basic__dialog {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 20px;
-  background: rgb(3 7 18 / 80%);
   transition: opacity 150ms ease;
 }
 
+.react-dialog-basic__backdrop[data-starting-style],
+.react-dialog-basic__backdrop[data-ending-style],
 .react-dialog-basic__dialog[data-starting-style],
 .react-dialog-basic__dialog[data-ending-style] {
   opacity: 0;
@@ -78,6 +87,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .react-dialog-basic__backdrop,
   .react-dialog-basic__dialog {
     transition: none;
   }

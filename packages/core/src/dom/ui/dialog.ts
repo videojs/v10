@@ -2,7 +2,9 @@ import type { State } from '@videojs/store';
 import { containsComposed, getDeepActiveElement, getTabbableElements, listen, walkAncestors } from '@videojs/utils/dom';
 
 import type { DialogInput } from '../../core/ui/dialog/core';
+import type { DialogGroup } from './dialog-group';
 import { createDismissLayer } from './dismiss-layer';
+import type { PopupGroup } from './popover/popup-group';
 import type { TransitionApi } from './transition';
 
 export interface DialogOptions {
@@ -14,6 +16,10 @@ export interface DialogOptions {
   onOpenChangeComplete?: (open: boolean) => void;
   /** Whether pressing Escape closes the dialog. Defaults to `true`. */
   closeOnEscape?: () => boolean;
+  /** Player-local group used to keep only one dialog open at a time. */
+  group?: () => DialogGroup | undefined;
+  /** Player-local popup group to dismiss when the dialog opens. */
+  popupGroup?: () => PopupGroup | undefined;
 }
 
 export interface DialogTriggerProps {
@@ -60,13 +66,27 @@ export function createDialog(options: DialogOptions): DialogApi {
   });
 
   const state = layer.input;
+  const groupMember = {
+    closeForGroup(): HTMLElement | null {
+      const restoreTarget = getFocusRestoreTarget();
+
+      previousFocus = null;
+      restoreBackground();
+      applyClose(false);
+
+      return restoreTarget;
+    },
+  };
 
   function applyOpen(): void {
-    previousFocus = getDeepActiveElement() as HTMLElement | null;
+    const activeElement = getDeepActiveElement();
+    const focusTarget = activeElement instanceof HTMLElement ? activeElement : null;
 
     const opening = layer.open(() => popupElement);
     if (!opening) return;
 
+    options.popupGroup?.()?.dismiss();
+    previousFocus = options.group?.()?.open(groupMember) ?? focusTarget;
     isolateBackground();
     options.onOpenChange(true);
     scheduleInitialFocus();
@@ -78,10 +98,11 @@ export function createDialog(options: DialogOptions): DialogApi {
     });
   }
 
-  function applyClose(): void {
+  function applyClose(restoreFocus = true): void {
     const closing = layer.close(popupElement);
     if (!closing) return;
 
+    options.group?.()?.close(groupMember);
     cancelAnimationFrame(focusFrame);
     focusFrame = 0;
     options.onOpenChange(false);
@@ -90,7 +111,7 @@ export function createDialog(options: DialogOptions): DialogApi {
       if (layer.signal.aborted || state.current.active) return;
 
       restoreBackground();
-      const restoreTarget = triggerElement?.isConnected ? triggerElement : previousFocus;
+      const restoreTarget = restoreFocus ? getFocusRestoreTarget() : null;
 
       if (restoreTarget?.isConnected) restoreTarget.focus();
 
@@ -98,6 +119,10 @@ export function createDialog(options: DialogOptions): DialogApi {
 
       options.onOpenChangeComplete?.(false);
     });
+  }
+
+  function getFocusRestoreTarget(): HTMLElement | null {
+    return triggerElement?.isConnected ? triggerElement : previousFocus;
   }
 
   function scheduleInitialFocus(): void {
@@ -167,6 +192,7 @@ export function createDialog(options: DialogOptions): DialogApi {
   }
 
   layer.signal.addEventListener('abort', () => {
+    options.group?.()?.close(groupMember);
     cancelAnimationFrame(focusFrame);
     focusFrame = 0;
     restoreBackground();

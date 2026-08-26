@@ -25,6 +25,7 @@ export default function BasicUsage() {
           <img src="{{VJS10_DEMO_POSTER}}" alt="" />
           <span>Play the video</span>
         </Dialog.Trigger>
+        <Dialog.Backdrop className="react-dialog-basic__backdrop" />
         <Dialog.Popup className="react-dialog-basic__dialog">
           <div className="react-dialog-basic__popup">
             <Dialog.Title className="react-dialog-basic__title">Video title</Dialog.Title>

@@ -185,6 +185,7 @@ export function AudioSkinTailwind(props: AudioSkinProps): ReactNode {
       {children}
 
       <ErrorDialog.Root>
+        <ErrorDialog.Backdrop data-error-backdrop="" className={overlay} />
         <ErrorDialog.Popup className={error.root}>
           <div className={error.dialog}>
             <div className={error.content}>

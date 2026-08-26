@@ -27,6 +27,7 @@ import basicUsageHtmlTs from "@/components/docs/demos/alert-dialog/html/css/Basi
 <FrameworkCase frameworks={["react"]}>
 ```tsx
 <AlertDialog.Root>
+  <AlertDialog.Backdrop />
   <AlertDialog.Popup>
     <AlertDialog.Title />
     <AlertDialog.Description />
@@ -39,9 +40,12 @@ import basicUsageHtmlTs from "@/components/docs/demos/alert-dialog/html/css/Basi
 <FrameworkCase frameworks={["html"]}>
 ```html
 <media-alert-dialog>
-  <media-dialog-title></media-dialog-title>
-  <media-dialog-description></media-dialog-description>
-  <media-dialog-close></media-dialog-close>
+  <media-dialog-backdrop></media-dialog-backdrop>
+  <media-dialog-popup>
+    <media-dialog-title></media-dialog-title>
+    <media-dialog-description></media-dialog-description>
+    <media-dialog-close></media-dialog-close>
+  </media-dialog-popup>
 </media-alert-dialog>
 ```
 </FrameworkCase>
@@ -55,7 +59,7 @@ Use `open` with `onOpenChange` for controlled state, or `defaultOpen` for uncont
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-Set the `open` property to show the dialog. The element updates the property and dispatches `open-change` when the dialog closes.
+Set the root's `open` property to show the dialog. The root supplies alert state while the shared `media-dialog-backdrop` and `media-dialog-popup` siblings render the visual surfaces and semantics. The root updates the property and dispatches `open-change` when the dialog closes.
 </FrameworkCase>
 
 The close part and <kbd>Escape</kbd> close the dialog. The dialog stays rendered during a closing transition, then restores focus to the element that was focused before it opened.
@@ -72,23 +76,28 @@ Use the open and transition data attributes to style visibility and animations:
 
 <FrameworkCase frameworks={["html"]}>
 ```css
-media-alert-dialog:not([data-open]) {
+media-dialog-backdrop:not([data-open]),
+media-dialog-popup:not([data-open]) {
   display: none;
 }
 
-media-alert-dialog[data-starting-style],
-media-alert-dialog[data-ending-style] {
+media-dialog-backdrop[data-starting-style],
+media-dialog-backdrop[data-ending-style],
+media-dialog-popup[data-starting-style],
+media-dialog-popup[data-ending-style] {
   opacity: 0;
 }
 ```
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
-React renders standard DOM elements. Add a `className` to the popup and use it as the selector:
+React renders separate backdrop and popup elements. Add a `className` to each part and style them independently:
 
 ```css
-.alert-dialog[data-starting-style],
-.alert-dialog[data-ending-style] {
+.alert-dialog-backdrop[data-starting-style],
+.alert-dialog-backdrop[data-ending-style],
+.alert-dialog-popup[data-starting-style],
+.alert-dialog-popup[data-ending-style] {
   opacity: 0;
 }
 ```

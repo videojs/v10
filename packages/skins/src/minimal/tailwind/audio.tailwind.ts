@@ -10,6 +10,7 @@ import { slider as baseSlider } from './components/slider';
 
 export const container = cn(
   baseContainer,
+  '[&:has(.media-error[data-open])_.media-controls_*]:invisible',
   '[--media-default-accent-color:light-dark(oklch(0_0_0),oklch(1_0_0))]',
   '[--media-focus-ring-color:light-dark(oklch(0_0_0),oklch(1_0_0))]',
   '[--media-controls-background-color:light-dark(oklch(1_0_0),oklch(0_0_0))]',

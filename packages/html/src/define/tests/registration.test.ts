@@ -154,6 +154,7 @@ describe('composite define registration', () => {
       expect(batch).toContain('media-dialog-backdrop');
       expect(batch).toContain('media-dialog-close');
       expect(batch).toContain('media-dialog-description');
+      expect(batch).toContain('media-dialog-popup');
       expect(batch).toContain('media-dialog-title');
     });
   });
@@ -168,6 +169,7 @@ describe('composite define registration', () => {
       expect(batch).toContain('media-error-dialog');
       expect(batch).not.toContain('media-dialog-backdrop');
       expect(batch).not.toContain('media-dialog-close');
+      expect(batch).not.toContain('media-dialog-popup');
     });
   });
 
@@ -232,6 +234,7 @@ describe('composite define registration', () => {
         'media-dialog-backdrop',
         'media-dialog-close',
         'media-dialog-description',
+        'media-dialog-popup',
         'media-dialog-title',
         'media-error-dialog',
       ];

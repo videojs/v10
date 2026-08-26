@@ -1,9 +1,13 @@
-import type { DialogState, StateAttrMap } from '@videojs/core';
+import type { DialogCore, DialogState, StateAttrMap } from '@videojs/core';
+import type { DialogApi } from '@videojs/core/dom';
 import { createContext } from '@videojs/element/context';
 
 export interface DialogContextValue {
   state: DialogState;
   stateAttrMap: StateAttrMap<DialogState>;
+  dialog: DialogApi;
+  popupId: string;
+  popupAttrs: ReturnType<DialogCore['getPopupAttrs']>;
   close: () => void;
 }
 
