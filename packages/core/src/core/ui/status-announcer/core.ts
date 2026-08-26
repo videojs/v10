@@ -13,7 +13,7 @@ export interface StatusAnnouncerProps extends IndicatorCoreProps {
   closeDelay?: number | undefined;
   /** Overrides for the translated announcement labels. */
   labels?: Partial<StatusAnnouncerLabels> | undefined;
-  /** Internal gate used by platform adapters to suppress debounced seek and volume announcements. */
+  /** Whether debounced seek and volume changes should be announced. */
   shouldAnnounce?: (() => boolean) | undefined;
 }
 
