@@ -5,13 +5,24 @@ import { SandboxI18nProvider } from '@app/shared/react/sandbox-i18n';
 import { VideoSkinComponent } from '@app/shared/react/skins';
 import { Storyboard } from '@app/shared/react/storyboard';
 import { useSandbox } from '@app/shared/react/use-sandbox';
-import { getChapters, getPosterSrc, getStoryboardSrc, isLiveSource, SOURCES } from '@app/shared/sources';
+import {
+  getChapters,
+  getPosterSrc,
+  getStoryboardSrc,
+  isLiveSource,
+  restrictDrmSystems,
+  SOURCES,
+} from '@app/shared/sources';
 import { HlsVideo } from '@videojs/react/media/hls-video';
 import { createRoot } from 'react-dom/client';
 
 function App() {
   const { source, mediaProps } = useSandbox();
   const live = isLiveSource(source);
+  // `?drm=widevine|playready|fairplay` narrows a DRM source to one key system, so a browser with
+  // several CDMs negotiates the one under test rather than whichever it prefers.
+  const drmSource = restrictDrmSystems(SOURCES[source].source, new URLSearchParams(location.search).get('drm'));
+
   const Player = live ? LiveVideoPlayer : VideoPlayer;
 
   return (
@@ -20,7 +31,7 @@ function App() {
         {/* The skin renders its own <img> from `poster`; supplying one is what lets it carry a CORS mode. */}
         <VideoSkinComponent renderPoster={<img alt="" crossOrigin="" />} live={live}>
           <HlsVideo
-            {...(SOURCES[source].source ? { source: SOURCES[source].source } : { src: SOURCES[source].url ?? '' })}
+            {...(drmSource ? { source: drmSource } : { src: SOURCES[source].url ?? '' })}
             {...mediaProps}
             playsInline
             crossOrigin=""
