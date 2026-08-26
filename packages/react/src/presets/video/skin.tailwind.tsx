@@ -16,7 +16,7 @@ import {
   buttonGroupStart,
   container,
   controls,
-  error,
+  dialog,
   icon,
   iconFlipped,
   iconState,
@@ -400,13 +400,13 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
       />
 
       <ErrorDialog.Root>
-        <ErrorDialog.Backdrop className={error.backdrop} />
-        <ErrorDialog.Popup className={error.popup}>
-          <div className={error.content}>
-            <ErrorDialog.Title className={error.title}></ErrorDialog.Title>
-            <ErrorDialog.Description className={error.description} />
+        <ErrorDialog.Backdrop className={dialog.backdrop} />
+        <ErrorDialog.Popup className={dialog.popup}>
+          <div className={dialog.content}>
+            <ErrorDialog.Title className={dialog.title}></ErrorDialog.Title>
+            <ErrorDialog.Description className={dialog.description} />
           </div>
-          <div className={error.actions}>
+          <div className={dialog.actions}>
             <ErrorDialog.Close className={cn(button.base, button.primary)}></ErrorDialog.Close>
           </div>
         </ErrorDialog.Popup>

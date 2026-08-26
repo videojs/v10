@@ -36,8 +36,8 @@ describe('VideoSkin', () => {
 
     const controls = container.querySelector('.media-controls--root');
     const controlsBackdrop = container.querySelector('.media-controls__backdrop');
-    const error = container.querySelector('.media-error-dialog__popup');
-    const errorBackdrop = container.querySelector('.media-error-dialog__backdrop');
+    const error = container.querySelector('.media-dialog__popup');
+    const errorBackdrop = container.querySelector('.media-dialog__backdrop');
 
     expect(controlsBackdrop).not.toBeNull();
     expect(controlsBackdrop?.parentElement).toBe(controls?.parentElement);

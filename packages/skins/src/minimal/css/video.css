@@ -3,7 +3,7 @@
 @import "./components/media.css";
 @import "./components/controls-backdrop.css";
 @import "./components/buffering.css";
-@import "./components/error-dialog.css";
+@import "./components/dialog.css";
 @import "./components/controls.css";
 @import "./components/time.css";
 @import "./components/button.css";
@@ -34,9 +34,9 @@
   --media-controls-transition-duration: 100ms;
   --media-controls-transition-timing-function: ease-out;
 
-  --media-error-dialog-transition-duration: 150ms;
-  --media-error-dialog-transition-delay: 100ms;
-  --media-error-dialog-transition-timing-function: ease-out;
+  --media-dialog-transition-duration: 150ms;
+  --media-dialog-transition-delay: 100ms;
+  --media-dialog-transition-timing-function: ease-out;
 
   --media-popup-transition-duration: 100ms;
   --media-popup-transition-timing-function: ease-out;
@@ -55,11 +55,11 @@
   background: oklch(0 0 0);
 
   @media (prefers-reduced-motion: reduce) {
-    --media-error-dialog-transition-duration: 50ms;
-    --media-error-dialog-transition-delay: 0ms;
+    --media-dialog-transition-duration: 50ms;
+    --media-dialog-transition-delay: 0ms;
     --media-popup-transition-duration: 0ms;
 
-    .media-error-dialog__popup {
+    .media-dialog__popup {
       scale: 1;
       transition-property: opacity;
     }
@@ -117,9 +117,9 @@
   }
 }
 
-/* Error Dialog */
+/* Dialog */
 
-.media-minimal-skin--video .media-error-dialog__popup {
+.media-minimal-skin--video .media-dialog__popup {
   position: absolute;
   top: 50%;
   left: 50%;
@@ -133,9 +133,9 @@
   color: oklch(1 0 0);
   text-shadow: 0 1px 0 oklch(0 0 0 / 0.5);
   translate: -50% -50%;
-  transition-delay: var(--media-error-dialog-transition-delay);
-  transition-timing-function: var(--media-error-dialog-transition-timing-function);
-  transition-duration: var(--media-error-dialog-transition-duration);
+  transition-delay: var(--media-dialog-transition-delay);
+  transition-timing-function: var(--media-dialog-transition-timing-function);
+  transition-duration: var(--media-dialog-transition-duration);
   transition-property: opacity, scale;
 
   &[data-starting-style],
@@ -151,14 +151,14 @@
   }
 }
 
-.media-minimal-skin--video .media-error-dialog__content {
+.media-minimal-skin--video .media-dialog__content {
   display: flex;
   flex-direction: column;
   gap: calc(var(--media-spacing) * 2);
   padding: calc(var(--media-spacing) * 1.5) 0;
 }
 
-.media-minimal-skin--video .media-error-dialog__title {
+.media-minimal-skin--video .media-dialog__title {
   font-size: var(--media-font-size-medium);
 }
 

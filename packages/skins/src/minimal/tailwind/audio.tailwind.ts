@@ -2,7 +2,7 @@ import { cn } from '@videojs/utils/style';
 
 import { container as baseContainer } from './components/container';
 import { controls as baseControls } from './components/controls';
-import { error as baseError } from './components/error-dialog';
+import { dialog as baseDialog } from './components/dialog';
 import { popup as basePopup, tooltip } from './components/popup';
 import { slider as baseSlider } from './components/slider';
 
@@ -11,19 +11,14 @@ import { slider as baseSlider } from './components/slider';
 export const container = cn(
   baseContainer,
   '[&:has(.media-error[data-open])_.media-controls_*]:invisible',
-  '[&_[data-error-backdrop]]:duration-(--media-error-dialog-transition-duration)',
-  '[&_[data-error-backdrop]]:delay-(--media-error-dialog-transition-delay)',
-  '[&_[data-error-backdrop][data-open]]:opacity-100',
-  '[&_[data-error-backdrop][data-open]]:backdrop-blur-lg',
-  '[&_[data-error-backdrop][data-open]]:backdrop-saturate-120',
   '[--media-default-accent-color:light-dark(oklch(0_0_0),oklch(1_0_0))]',
   '[--media-focus-ring-color:light-dark(oklch(0_0_0),oklch(1_0_0))]',
   '[--media-controls-background-color:light-dark(oklch(1_0_0),oklch(0_0_0))]',
   '[--media-controls-backdrop-filter:blur(16px)_saturate(1.5)]',
   '[--media-controls-border-color:light-dark(oklch(0_0_0/0.1),oklch(1_0_0/0.1))]',
   '[--media-controls-text-color:light-dark(oklch(0_0_0),oklch(1_0_0))]',
-  '[--media-error-dialog-transition-duration:250ms]',
-  '[--media-error-dialog-transition-delay:100ms]',
+  '[--media-dialog-transition-duration:250ms]',
+  '[--media-dialog-transition-delay:100ms]',
   '[--media-popup-transition-duration:100ms]',
   '[--media-popup-transition-timing-function:ease-out]',
   '[--media-popover-backdrop-filter:blur(16px)_saturate(1.5)]',
@@ -33,8 +28,8 @@ export const container = cn(
   '[--media-tooltip-background-color:var(--media-popover-background-color)]',
   '[--media-tooltip-border-color:var(--media-popover-border-color)]',
   '[--media-tooltip-text-color:currentColor]',
-  'motion-reduce:[--media-error-dialog-transition-duration:50ms]',
-  'motion-reduce:[--media-error-dialog-transition-delay:0ms]',
+  'motion-reduce:[--media-dialog-transition-duration:50ms]',
+  'motion-reduce:[--media-dialog-transition-delay:0ms]',
   'motion-reduce:[--media-popup-transition-duration:0ms]',
   '[@media(prefers-reduced-transparency:reduce)]:[--media-tooltip-background-color:light-dark(oklch(1_0_0),oklch(0_0_0))]',
   'contrast-more:[--media-tooltip-background-color:light-dark(oklch(1_0_0),oklch(0_0_0))]'
@@ -86,19 +81,19 @@ export const slider = {
   value: cn(baseSlider.value, tooltip, 'bottom-10'),
 };
 
-/* Error */
+/* Dialog */
 
-export const error = {
-  ...baseError,
+export const dialog = {
+  ...baseDialog,
   dialog: cn(
     'absolute inset-0 z-20 flex items-center gap-4 rounded-full px-5 pr-2',
     'bg-(--media-controls-background-color)',
     'transition-[opacity,filter,scale] ease-out',
-    'duration-(--media-error-dialog-transition-duration)',
-    'delay-(--media-error-dialog-transition-delay)',
-    'group-data-starting-style/error:opacity-0 group-data-starting-style/error:blur-xs group-data-starting-style/error:scale-95',
-    'group-data-ending-style/error:opacity-0 group-data-ending-style/error:blur-xs group-data-ending-style/error:scale-95',
-    'group-data-ending-style/error:delay-0'
+    'duration-(--media-dialog-transition-duration)',
+    'delay-(--media-dialog-transition-delay)',
+    'group-data-starting-style/dialog:opacity-0 group-data-starting-style/dialog:blur-xs group-data-starting-style/dialog:scale-95',
+    'group-data-ending-style/dialog:opacity-0 group-data-ending-style/dialog:blur-xs group-data-ending-style/dialog:scale-95',
+    'group-data-ending-style/dialog:delay-0'
   ),
   content: 'flex flex-1 items-center gap-2',
 };

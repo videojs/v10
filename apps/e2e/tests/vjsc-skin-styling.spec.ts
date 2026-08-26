@@ -1090,8 +1090,7 @@ async function errorDialogContract(root: Locator, dialog: Locator) {
   if (!rootRect) throw new Error('Expected the media player to have a rendered box.');
 
   return dialog.evaluate((element, playerRect) => {
-    const surface =
-      element.querySelector<HTMLElement>('.media-error-dialog__popup, .media-error-dialog-popup') ?? element;
+    const surface = element.querySelector<HTMLElement>('.media-dialog__popup, .media-dialog-popup') ?? element;
     const title = element.querySelector<HTMLElement>('h2, media-dialog-title');
     const description = element.querySelector<HTMLElement>('p, media-dialog-description');
     const close = element.querySelector<HTMLElement>('button, media-dialog-close');

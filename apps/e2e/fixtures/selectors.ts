@@ -91,7 +91,7 @@ export const SELECTORS = {
 
   tooltip: 'media-tooltip, .media-tooltip',
   popover: 'media-popover, .media-popover',
-  errorDialog: 'media-error-dialog, .media-error-dialog__popup',
+  errorDialog: 'media-error-dialog, .media-dialog__popup',
 
   // Media element — matches all renderer custom elements and native media
   media: 'video, audio, hlsjs-video, hls-video, native-hls-video, dash-video, shaka-video, mux-video, mux-audio',

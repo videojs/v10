@@ -4,7 +4,7 @@
 @import "./components/media.css";
 @import "./components/controls-backdrop.css";
 @import "./components/buffering.css";
-@import "./components/error-dialog.css";
+@import "./components/dialog.css";
 @import "./components/controls.css";
 @import "./components/time.css";
 @import "./components/button.css";
@@ -40,9 +40,9 @@
   --media-controls-transition-duration: 100ms;
   --media-controls-transition-timing-function: ease-out;
 
-  --media-error-dialog-transition-duration: 350ms;
-  --media-error-dialog-transition-delay: 100ms;
-  --media-error-dialog-transition-timing-function: ease-out;
+  --media-dialog-transition-duration: 350ms;
+  --media-dialog-transition-delay: 100ms;
+  --media-dialog-transition-timing-function: ease-out;
 
   --media-popup-transition-duration: 100ms;
   --media-popup-transition-timing-function: ease-out;
@@ -51,11 +51,11 @@
   background: oklch(0 0 0);
 
   @media (prefers-reduced-motion: reduce) {
-    --media-error-dialog-transition-duration: 50ms;
-    --media-error-dialog-transition-delay: 0ms;
+    --media-dialog-transition-duration: 50ms;
+    --media-dialog-transition-delay: 0ms;
     --media-popup-transition-duration: 0ms;
 
-    .media-error-dialog__popup {
+    .media-dialog__popup {
       scale: 1;
       transition-property: opacity;
     }
@@ -114,9 +114,9 @@
   }
 }
 
-/* Error Dialog  */
+/* Dialog  */
 
-.media-default-skin--video .media-error-dialog__popup {
+.media-default-skin--video .media-dialog__popup {
   position: absolute;
   top: 50%;
   left: 50%;
@@ -131,25 +131,25 @@
   text-shadow: 0 1px 0 oklch(0 0 0 / 0.25);
   border-radius: calc(var(--media-spacing) * 7);
   translate: -50% -50%;
-  transition-delay: var(--media-error-dialog-transition-delay);
-  transition-timing-function: var(--media-error-dialog-transition-timing-function);
-  transition-duration: var(--media-error-dialog-transition-duration);
+  transition-delay: var(--media-dialog-transition-delay);
+  transition-timing-function: var(--media-dialog-transition-timing-function);
+  transition-duration: var(--media-dialog-transition-duration);
   transition-property: opacity, scale;
 }
 
-.media-default-skin--video .media-error-dialog__popup[data-starting-style],
-.media-default-skin--video .media-error-dialog__popup[data-ending-style],
-.media-default-skin--video media-error-dialog[data-starting-style] .media-error-dialog__popup,
-.media-default-skin--video media-error-dialog[data-ending-style] .media-error-dialog__popup {
+.media-default-skin--video .media-dialog__popup[data-starting-style],
+.media-default-skin--video .media-dialog__popup[data-ending-style],
+.media-default-skin--video media-error-dialog[data-starting-style] .media-dialog__popup,
+.media-default-skin--video media-error-dialog[data-ending-style] .media-dialog__popup {
   opacity: 0;
   scale: 0.95;
 }
-.media-default-skin--video .media-error-dialog__popup[data-ending-style],
-.media-default-skin--video media-error-dialog[data-ending-style] .media-error-dialog__popup {
+.media-default-skin--video .media-dialog__popup[data-ending-style],
+.media-default-skin--video media-error-dialog[data-ending-style] .media-dialog__popup {
   transition-delay: 0ms;
 }
 
-.media-default-skin--video .media-error-dialog__content {
+.media-default-skin--video .media-dialog__content {
   display: flex;
   flex-direction: column;
   gap: calc(var(--media-spacing) * 2);
@@ -157,7 +157,7 @@
   text-shadow: inherit;
 }
 
-.media-default-skin--video .media-error-dialog__title {
+.media-default-skin--video .media-dialog__title {
   font-size: var(--media-font-size-medium);
 }
 

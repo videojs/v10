@@ -1,7 +1,7 @@
 @import "./components/reset.css";
 @import "./components/container.css";
 @import "./components/buffering.css";
-@import "./components/error-dialog.css";
+@import "./components/dialog.css";
 @import "./components/controls.css";
 @import "./components/time.css";
 @import "./components/button.css";
@@ -24,8 +24,8 @@
   --media-controls-border-color: light-dark(oklch(0 0 0 / 0.1), oklch(1 0 0 / 0.1));
   --media-controls-text-color: light-dark(oklch(0 0 0), oklch(1 0 0));
 
-  --media-error-dialog-transition-duration: 250ms;
-  --media-error-dialog-transition-delay: 100ms;
+  --media-dialog-transition-duration: 250ms;
+  --media-dialog-transition-delay: 100ms;
 
   --media-popup-transition-duration: 100ms;
   --media-popup-transition-timing-function: ease-out;
@@ -41,8 +41,8 @@
   --media-tooltip-text-color: currentColor;
 
   @media (prefers-reduced-motion: reduce) {
-    --media-error-dialog-transition-duration: 50ms;
-    --media-error-dialog-transition-delay: 0ms;
+    --media-dialog-transition-duration: 50ms;
+    --media-dialog-transition-delay: 0ms;
     --media-popup-transition-duration: 0ms;
   }
 
@@ -51,9 +51,9 @@
   }
 }
 
-/* Error Dialog */
+/* Dialog */
 
-.media-minimal-skin--audio .media-error-dialog__dialog {
+.media-minimal-skin--audio .media-dialog__dialog {
   position: absolute;
   inset: 0;
   z-index: 20;
@@ -63,26 +63,26 @@
   padding-inline: calc(var(--media-spacing) * 3) calc(var(--media-spacing) * 1);
   background-color: oklch(from var(--media-controls-background-color) l c h / 1);
   border-radius: calc(Infinity * 1px);
-  transition-delay: var(--media-error-dialog-transition-delay);
+  transition-delay: var(--media-dialog-transition-delay);
   transition-timing-function: ease-out;
-  transition-duration: var(--media-error-dialog-transition-duration);
+  transition-duration: var(--media-dialog-transition-duration);
   transition-property: opacity, filter, scale;
 }
 
-.media-minimal-skin--audio .media-error-dialog__popup[data-starting-style] .media-error-dialog__dialog,
-.media-minimal-skin--audio .media-error-dialog__popup[data-ending-style] .media-error-dialog__dialog,
-.media-minimal-skin--audio media-error-dialog[data-starting-style] .media-error-dialog__dialog,
-.media-minimal-skin--audio media-error-dialog[data-ending-style] .media-error-dialog__dialog {
+.media-minimal-skin--audio .media-dialog__popup[data-starting-style] .media-dialog__dialog,
+.media-minimal-skin--audio .media-dialog__popup[data-ending-style] .media-dialog__dialog,
+.media-minimal-skin--audio media-error-dialog[data-starting-style] .media-dialog__dialog,
+.media-minimal-skin--audio media-error-dialog[data-ending-style] .media-dialog__dialog {
   opacity: 0;
   filter: blur(4px);
   scale: 0.95;
 }
-.media-minimal-skin--audio .media-error-dialog__popup[data-ending-style] .media-error-dialog__dialog,
-.media-minimal-skin--audio media-error-dialog[data-ending-style] .media-error-dialog__dialog {
+.media-minimal-skin--audio .media-dialog__popup[data-ending-style] .media-dialog__dialog,
+.media-minimal-skin--audio media-error-dialog[data-ending-style] .media-dialog__dialog {
   transition-delay: 0ms;
 }
 
-.media-minimal-skin--audio .media-error-dialog__content {
+.media-minimal-skin--audio .media-dialog__content {
   display: flex;
   flex: 1;
   gap: calc(var(--media-spacing) * 2);

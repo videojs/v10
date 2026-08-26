@@ -2,7 +2,7 @@
 @import "./components/container.css";
 @import "./components/surface.css";
 @import "./components/buffering.css";
-@import "./components/error-dialog.css";
+@import "./components/dialog.css";
 @import "./components/controls.css";
 @import "./components/time.css";
 @import "./components/button.css";
@@ -28,15 +28,15 @@
   --media-surface-shadow-color: oklch(0 0 0 / 0.15);
   --media-surface-backdrop-filter: blur(16px) saturate(1.5);
 
-  --media-error-dialog-transition-duration: 250ms;
-  --media-error-dialog-transition-delay: 100ms;
+  --media-dialog-transition-duration: 250ms;
+  --media-dialog-transition-delay: 100ms;
 
   --media-popup-transition-duration: 100ms;
   --media-popup-transition-timing-function: ease-out;
 
   @media (prefers-reduced-motion: reduce) {
-    --media-error-dialog-transition-duration: 50ms;
-    --media-error-dialog-transition-delay: 0ms;
+    --media-dialog-transition-duration: 50ms;
+    --media-dialog-transition-delay: 0ms;
     --media-popup-transition-duration: 0ms;
   }
 
@@ -47,9 +47,9 @@
   }
 }
 
-/* Error Dialog */
+/* Dialog */
 
-.media-default-skin--audio .media-error-dialog__dialog {
+.media-default-skin--audio .media-dialog__dialog {
   position: absolute;
   inset: 0;
   z-index: 20;
@@ -61,25 +61,25 @@
   background-color: var(--media-surface-background-color);
   border-radius: calc(infinity * 1px);
   backdrop-filter: var(--media-surface-backdrop-filter);
-  transition-delay: var(--media-error-dialog-transition-delay);
+  transition-delay: var(--media-dialog-transition-delay);
   transition-timing-function: ease-out;
-  transition-duration: var(--media-error-dialog-transition-duration);
+  transition-duration: var(--media-dialog-transition-duration);
   transition-property: opacity, filter;
 }
 
-.media-default-skin .media-error-dialog__popup[data-starting-style] .media-error-dialog__dialog,
-.media-default-skin .media-error-dialog__popup[data-ending-style] .media-error-dialog__dialog,
-.media-default-skin media-error-dialog[data-starting-style] .media-error-dialog__dialog,
-.media-default-skin media-error-dialog[data-ending-style] .media-error-dialog__dialog {
+.media-default-skin .media-dialog__popup[data-starting-style] .media-dialog__dialog,
+.media-default-skin .media-dialog__popup[data-ending-style] .media-dialog__dialog,
+.media-default-skin media-error-dialog[data-starting-style] .media-dialog__dialog,
+.media-default-skin media-error-dialog[data-ending-style] .media-dialog__dialog {
   opacity: 0;
   filter: blur(4px);
 }
-.media-default-skin .media-error-dialog__popup[data-ending-style] .media-error-dialog__dialog,
-.media-default-skin media-error-dialog[data-ending-style] .media-error-dialog__dialog {
+.media-default-skin .media-dialog__popup[data-ending-style] .media-dialog__dialog,
+.media-default-skin media-error-dialog[data-ending-style] .media-dialog__dialog {
   transition-delay: 0ms;
 }
 
-.media-default-skin--audio .media-error-dialog__content {
+.media-default-skin--audio .media-dialog__content {
   display: flex;
   flex: 1;
   gap: calc(var(--media-spacing) * 2);

@@ -4,7 +4,7 @@ import { bufferingIndicator as baseBufferingIndicator } from './components/buffe
 import { buttonGroup as baseButtonGroup } from './components/button-group';
 import { container as baseContainer } from './components/container';
 import { controls as baseControls } from './components/controls';
-import { error as baseError } from './components/error-dialog';
+import { dialog as baseDialog } from './components/dialog';
 import { menu as baseMenu } from './components/menu';
 import { popup as basePopup } from './components/popup';
 import { slider as baseSlider } from './components/slider';
@@ -24,11 +24,6 @@ export const container = (isShadowDOM: boolean) =>
     '[&:has(.media-buffering-indicator[data-visible])_.media-controls-backdrop]:bg-black/35',
     '[&:has(.media-buffering-indicator[data-visible])_.media-controls-backdrop]:opacity-100',
     '[&:has(.media-buffering-indicator[data-visible])_.media-controls-backdrop]:backdrop-blur-sm',
-    '[&_[data-error-backdrop]]:duration-(--media-error-dialog-transition-duration)',
-    '[&_[data-error-backdrop]]:delay-(--media-error-dialog-transition-delay)',
-    '[&_[data-error-backdrop][data-open]]:opacity-100',
-    '[&_[data-error-backdrop][data-open]]:backdrop-blur-lg',
-    '[&_[data-error-backdrop][data-open]]:backdrop-saturate-150',
     '[&:has(.media-error[data-open])_.media-controls]:hidden!',
     // Inner border ring
     'after:absolute after:pointer-events-none after:rounded-[inherit] after:z-10',
@@ -49,9 +44,9 @@ export const container = (isShadowDOM: boolean) =>
     '[--media-video-border-radius:var(--media-container-border-radius)]',
     '[--media-controls-transition-duration:100ms]',
     '[--media-controls-transition-timing-function:ease-out]',
-    '[--media-error-dialog-transition-duration:350ms]',
-    '[--media-error-dialog-transition-delay:100ms]',
-    '[--media-error-dialog-transition-timing-function:ease-out]',
+    '[--media-dialog-transition-duration:350ms]',
+    '[--media-dialog-transition-delay:100ms]',
+    '[--media-dialog-transition-timing-function:ease-out]',
     '[--media-popup-transition-duration:100ms]',
     '[--media-popup-transition-timing-function:ease-out]',
     '[--media-surface-background-color:oklch(1_0_0/0.1)]',
@@ -63,9 +58,9 @@ export const container = (isShadowDOM: boolean) =>
     'min-[1280px]:[&:fullscreen]:[--media-scale:1.25]',
     'min-[1536px]:[&:fullscreen]:[--media-scale:1.5]',
     'min-[1920px]:[&:fullscreen]:[--media-scale:1.75]',
-    'motion-reduce:[--media-error-dialog-transition-duration:50ms]',
-    'motion-reduce:[--media-error-dialog-transition-delay:0ms]',
-    'motion-reduce:[--media-error-dialog-transition-timing-function:ease-out]',
+    'motion-reduce:[--media-dialog-transition-duration:50ms]',
+    'motion-reduce:[--media-dialog-transition-delay:0ms]',
+    'motion-reduce:[--media-dialog-transition-timing-function:ease-out]',
     'motion-reduce:[--media-popup-transition-duration:0ms]',
     '[@media(prefers-reduced-transparency:reduce)]:[--media-surface-background-color:oklch(0_0_0)]',
     'contrast-more:[--media-surface-background-color:oklch(0_0_0)]',
@@ -203,13 +198,13 @@ export const menu = {
 
 export const bufferingIndicator = baseBufferingIndicator;
 
-/* Error (with video surface) */
+/* Dialog (with video surface) */
 
-export const error = {
-  ...baseError,
-  popup: cn(baseError.popup, surface, 'w-full text-shadow-2xs text-shadow-black/25'),
-  content: cn(baseError.content, 'text-shadow-inherit'),
-  title: cn(baseError.title, 'text-(length:--media-font-size-medium)'),
+export const dialog = {
+  ...baseDialog,
+  popup: cn(baseDialog.popup, surface, 'w-full text-shadow-2xs text-shadow-black/25'),
+  content: cn(baseDialog.content, 'text-shadow-inherit'),
+  title: cn(baseDialog.title, 'text-(length:--media-font-size-medium)'),
 };
 
 /* Input indicators (top indicators use video surface) */

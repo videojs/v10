@@ -1,4 +1,4 @@
-.media-minimal-skin {
+.media-default-skin {
   media-error-dialog {
     position: absolute;
     inset: 0;
@@ -13,18 +13,18 @@
     }
   }
 
-  .media-error-dialog__backdrop {
+  .media-dialog__backdrop {
     position: absolute;
     inset: 0;
     z-index: 10;
     pointer-events: none;
     background: oklch(0 0 0 / 0.2);
-    backdrop-filter: blur(16px) saturate(1.2);
+    backdrop-filter: blur(16px) saturate(1.5);
     opacity: 1;
-    transition-timing-function: var(--media-error-dialog-transition-timing-function);
-    transition-duration: var(--media-error-dialog-transition-duration);
+    transition-timing-function: var(--media-dialog-transition-timing-function);
+    transition-duration: var(--media-dialog-transition-duration);
     transition-property: opacity;
-    transition-delay: var(--media-error-dialog-transition-delay);
+    transition-delay: var(--media-dialog-transition-delay);
 
     &[data-starting-style],
     &[data-ending-style] {
@@ -40,21 +40,21 @@
     }
   }
 
-  .media-error-dialog__popup {
+  .media-dialog__popup {
     outline: none;
   }
 
-  .media-error-dialog__title {
+  .media-dialog__title {
     font-weight: 600;
     line-height: 1.25;
   }
 
-  .media-error-dialog__description {
+  .media-dialog__description {
     overflow-wrap: anywhere;
     opacity: 0.7;
   }
 
-  .media-error-dialog__actions {
+  .media-dialog__actions {
     display: flex;
     gap: calc(var(--media-spacing) * 2);
 

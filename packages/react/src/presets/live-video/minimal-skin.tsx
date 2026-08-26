@@ -204,13 +204,13 @@ export function MinimalLiveVideoSkin(props: MinimalLiveVideoSkinProps): ReactNod
       />
 
       <ErrorDialog.Root>
-        <ErrorDialog.Backdrop className="media-error-dialog__backdrop" />
-        <ErrorDialog.Popup className="media-error-dialog__popup media-surface">
-          <div className="media-error-dialog__content">
-            <ErrorDialog.Title className="media-error-dialog__title"></ErrorDialog.Title>
-            <ErrorDialog.Description className="media-error-dialog__description" />
+        <ErrorDialog.Backdrop className="media-dialog__backdrop" />
+        <ErrorDialog.Popup className="media-dialog__popup media-surface">
+          <div className="media-dialog__content">
+            <ErrorDialog.Title className="media-dialog__title"></ErrorDialog.Title>
+            <ErrorDialog.Description className="media-dialog__description" />
           </div>
-          <div className="media-error-dialog__actions">
+          <div className="media-dialog__actions">
             <ErrorDialog.Close className="media-button media-button--primary"></ErrorDialog.Close>
           </div>
         </ErrorDialog.Popup>
