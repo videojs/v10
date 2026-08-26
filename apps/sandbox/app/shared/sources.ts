@@ -92,13 +92,12 @@ const DRM_SYSTEMS = {
 } as const;
 
 /**
- * Axinom's entitlement message for the `hls-drm-axinom` asset, sent as the
- * `X-AxDRM-Message` request header. Published test-vector credential, scoped to
- * that one asset's content key (`302f80dd-411e-4886-bca5-bb1f8018a024`) — tokens
- * and assets are paired, so it licenses nothing else.
+ * Axinom's entitlement message for the `hls-drm-axinom` asset, sent as the `X-AxDRM-Message` request header. Published
+ * test-vector credential, scoped to that one asset's content key (`302f80dd-411e-4886-bca5-bb1f8018a024`) — tokens and
+ * assets are paired, so it licenses nothing else.
  *
- * Sent as a per-system `headers` entry, which is the only way this provider
- * authenticates — the license URL carries no credential of its own.
+ * Sent as a per-system `headers` entry, which is the only way this provider authenticates — the license URL carries no
+ * credential of its own.
  */
 export const AXINOM_TOKEN =
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ewogICJ2ZXJzaW9uIjogMSwKICAiY29tX2tleV9pZCI6ICI2OWU1NDA4OC1lOWUwLTQ1MzAtOGMxYS0xZWI2ZGNkMGQxNGUiLAogICJtZXNzYWdlIjogewogICAgInR5cGUiOiAiZW50aXRsZW1lbnRfbWVzc2FnZSIsCiAgICAidmVyc2lvbiI6IDIsCiAgICAibGljZW5zZSI6IHsKICAgICAgImFsbG93X3BlcnNpc3RlbmNlIjogdHJ1ZQogICAgfSwKICAgICJjb250ZW50X2tleXNfc291cmNlIjogewogICAgICAiaW5saW5lIjogWwogICAgICAgIHsKICAgICAgICAgICJpZCI6ICIzMDJmODBkZC00MTFlLTQ4ODYtYmNhNS1iYjFmODAxOGEwMjQiLAogICAgICAgICAgImVuY3J5cHRlZF9rZXkiOiAicm9LQWcwdDdKaTFpNDNmd3YremZ0UT09IiwKICAgICAgICAgICJ1c2FnZV9wb2xpY3kiOiAiUG9saWN5IEEiCiAgICAgICAgfQogICAgICBdCiAgICB9LAogICAgImNvbnRlbnRfa2V5X3VzYWdlX3BvbGljaWVzIjogWwogICAgICB7CiAgICAgICAgIm5hbWUiOiAiUG9saWN5IEEiLAogICAgICAgICJwbGF5cmVhZHkiOiB7CiAgICAgICAgICAibWluX2RldmljZV9zZWN1cml0eV9sZXZlbCI6IDE1MCwKICAgICAgICAgICJwbGF5X2VuYWJsZXJzIjogWwogICAgICAgICAgICAiNzg2NjI3RDgtQzJBNi00NEJFLThGODgtMDhBRTI1NUIwMUE3IgogICAgICAgICAgXQogICAgICAgIH0KICAgICAgfQogICAgXQogIH0KfQ._NfhLVY7S6k8TJDWPeMPhUawhympnrk6WAZHOVjER6M';
@@ -446,9 +445,8 @@ export const MUX_SOURCE_IDS = SOURCE_IDS.filter((id) => SOURCES[id].type !== 'da
  */
 export const MUX_SPF_SOURCE_IDS = SOURCE_IDS.filter((id) => SOURCES[id].type !== 'dash');
 /**
- * The plain HLS presets are the same engine reached through `<hls-video>`, which
- * takes a structured `source` of its own, so it licenses `source.drm` exactly as
- * the Mux flavor does. Only what a playback ID reaches is dropped.
+ * The plain HLS presets are the same engine reached through `<hls-video>`, which takes a structured `source` of its
+ * own, so it licenses `source.drm` exactly as the Mux flavor does. Only what a playback ID reaches is dropped.
  */
 export const SPF_HLS_SOURCE_IDS = SOURCE_IDS.filter((id) => SOURCES[id].type !== 'dash' && !isMuxSource(id));
 export const DASH_SOURCE_IDS = SOURCE_IDS.filter((id) => SOURCES[id].type === 'dash');

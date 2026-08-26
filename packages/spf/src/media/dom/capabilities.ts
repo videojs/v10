@@ -25,11 +25,15 @@ const codecSupportCache = new Map<string, boolean>();
 /** The container + codec half shared by both probes below. */
 const canDecodeTrack: CanPlayTrack = (track) => {
   if (track.mimeType && NON_FMP4_CONTAINER_MIMES.has(track.mimeType)) return false;
+
   if (!track.mimeType || !track.codecs?.length) return true;
+
   const mimeCodec = buildMimeCodec({ mimeType: track.mimeType, codecs: track.codecs });
   const cached = codecSupportCache.get(mimeCodec);
   if (cached !== undefined) return cached;
+
   const supported = isCodecSupported(mimeCodec);
+
   codecSupportCache.set(mimeCodec, supported);
   return supported;
 };
@@ -64,21 +68,21 @@ export const canPlayTrack: CanPlayTrack = (track) => {
   // (which `track-switching` reports). DRM-composed engines swap in
   // `makeCanPlayTrackWithDrm` instead.
   if (getMediaPlaylistMetadata(track)?.encrypted) return false;
+
   return canDecodeTrack(track);
 };
 
 /**
- * DRM-composed variant of {@link canPlayTrack}: an encrypted rendition is
- * playable when its declared keys reach a key system with a configured license
- * server (its container / codecs still have to probe as decodable); everything
- * else matches the standard probe. Encrypted renditions no configured system
- * serves stay pruned — MediaKeys could never be negotiated for them, so
- * playing them would park forever behind the `awaitingMediaKeys` gate.
+ * DRM-composed variant of {@link canPlayTrack}: an encrypted rendition is playable when its declared keys reach a key
+ * system with a configured license server (its container / codecs still have to probe as decodable); everything else
+ * matches the standard probe. Encrypted renditions no configured system serves stay pruned — MediaKeys could never be
+ * negotiated for them, so playing them would park forever behind the `awaitingMediaKeys` gate.
  */
 export function makeCanPlayTrackWithDrm(drm: DrmSystemsConfig): CanPlayTrack {
   return (track) => {
     const metadata = getMediaPlaylistMetadata(track);
     if (metadata?.encrypted && keySystemCandidates(metadata.keys ?? [], drm).length === 0) return false;
+
     return canDecodeTrack(track);
   };
 }

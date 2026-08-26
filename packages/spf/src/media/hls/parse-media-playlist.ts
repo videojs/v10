@@ -173,9 +173,8 @@ function placeOnAnchor(segments: Segment[], anchor: number): Segment[] {
 /** Seams a composition can replace when parsing a media playlist. */
 export interface ParseMediaPlaylistConfig {
   /**
-   * How an `EXT-X-KEY` URI becomes the value on the parsed key. Defaults to
-   * {@link resolveKeyUri}, which resolves relative `identity` key files and leaves
-   * opaque DRM identifiers (`data:`, `skd://`) alone.
+   * How an `EXT-X-KEY` URI becomes the value on the parsed key. Defaults to {@link resolveKeyUri}, which resolves
+   * relative `identity` key files and leaves opaque DRM identifiers (`data:`, `skd://`) alone.
    */
   resolveKeyUri?: ResolveKeyUri;
 }
@@ -256,12 +255,14 @@ export function parseMediaPlaylist<T extends PartiallyResolvedTrack>(
 
     if (key) {
       const method = key.get('METHOD');
+
       if (method !== undefined && method !== 'NONE') {
         const uri = key.get('URI');
         const keyFormat = key.get('KEYFORMAT');
         const keyId = key.get('KEYID');
         const iv = key.get('IV');
         const identity = [method, uri, keyFormat, keyId, iv].join(' ');
+
         if (!seenKeys.has(identity)) {
           seenKeys.add(identity);
           keys.push({
@@ -273,6 +274,7 @@ export function parseMediaPlaylist<T extends PartiallyResolvedTrack>(
           });
         }
       }
+
       continue;
     }
 

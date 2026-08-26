@@ -22,6 +22,7 @@ const KEY_SYSTEM_BY_PARAM: Record<string, string> = {
   fairplay: 'com.apple.fps',
 };
 const only = KEY_SYSTEM_BY_PARAM[new URLSearchParams(location.search).get('drm') ?? ''];
+
 if (only) source.drm = { [only]: source.drm[only] };
 
 let signals!: HlsVideoEngineSignals;
@@ -41,6 +42,7 @@ signals.state.presentation.set({ url: source.src });
 // Live status readout for the smoke probes (rendering, not just readyState).
 setInterval(() => {
   const quality = video.getVideoPlaybackQuality?.();
+
   statusPre.textContent = JSON.stringify(
     {
       readyState: video.readyState,

@@ -52,9 +52,8 @@ export type { HlsVideoMediaError } from './error-surface';
 /**
  * What this Media can be pointed at, beyond a bare URL.
  *
- * Deliberately narrower than `@videojs/media`'s `HlsSource`: that shape also
- * carries `preferPlayback`, `engine`, and the rendition caps, none of which this
- * engine can honour — SPF publishes no engine-shaped config, and there is no
+ * Deliberately narrower than `@videojs/media`'s `HlsSource`: that shape also carries `preferPlayback`, `engine`, and
+ * the rendition caps, none of which this engine can honour — SPF publishes no engine-shaped config, and there is no
  * native path to prefer. A value typed as the wider shape still assigns here.
  */
 export interface HlsVideoSource {
@@ -65,9 +64,8 @@ export interface HlsVideoSource {
   /**
    * License servers for protected content, keyed by EME key-system id.
    *
-   * Read per license request rather than captured, so changing the source
-   * changes what is licensed without rebuilding the engine. Accepts a resolver
-   * per URL (see `DrmUrl`) for servers only known once a source is set.
+   * Read per license request rather than captured, so changing the source changes what is licensed without rebuilding
+   * the engine. Accepts a resolver per URL (see `DrmUrl`) for servers only known once a source is set.
    */
   drm?: DrmSystemsConfig | undefined;
 }
@@ -223,6 +221,7 @@ export function HlsVideoMediaMixin<Base extends Constructor<any>>(BaseClass: Bas
           },
         ])
       );
+
       this.#config = { ...config, drm: { ...drm, ...config?.drm } };
       this.#engine = this.#createEngine();
 
@@ -466,9 +465,8 @@ export function HlsVideoMediaMixin<Base extends Constructor<any>>(BaseClass: Bas
     }
 
     /**
-     * Structured source: the manifest URL plus what a URL cannot carry, which
-     * today is the license servers for protected content. Setting it derives
-     * `src`. Assigning the same object back costs nothing — changing anything
+     * Structured source: the manifest URL plus what a URL cannot carry, which today is the license servers for
+     * protected content. Setting it derives `src`. Assigning the same object back costs nothing — changing anything
      * takes a new one.
      *
      * @fires sourcechange - Fired when `source` changes. Read `source` for the new value.
@@ -487,10 +485,9 @@ export function HlsVideoMediaMixin<Base extends Constructor<any>>(BaseClass: Bas
     }
 
     /**
-     * Point the engine at a URL. Assigning the one already playing is not a
-     * request to reload it: the presentation is set from a fresh object every
-     * time, so re-resolving an unchanged URL would restart playback — which is
-     * what changing only the licensing half of a source would otherwise cause.
+     * Point the engine at a URL. Assigning the one already playing is not a request to reload it: the presentation is
+     * set from a fresh object every time, so re-resolving an unchanged URL would restart playback — which is what
+     * changing only the licensing half of a source would otherwise cause.
      */
     #applySrc(value: string): void {
       if (value === this.src) return;

@@ -17,9 +17,9 @@
  * Four states encode the load-gating policy directly:
  *
  * - `'preconditions-unmet'` — no loader actor in context, or the selected track hasn't resolved.
- * - `'dormant'` — loading disabled by policy: an observed `loadingSuspended` or `awaitingMediaKeys` (highest
- *   precedence) or `preload === 'none' && !loadActivated`. Nothing fires; already-queued loader work drains.
- *   Auto-resumes into the derived state when the policy lifts.
+ * - `'dormant'` — loading disabled by policy: an observed `loadingSuspended` or `awaitingMediaKeys` (highest precedence)
+ *   or `preload === 'none' && !loadActivated`. Nothing fires; already-queued loader work drains. Auto-resumes into the
+ *   derived state when the policy lifts.
  * - `'metadata-only'` — `!loadActivated && preload !== 'auto' && preload !== 'none'`. Fires an init-segment-only `load`
  *   message **once on entry**. The variant's loader actor decides what to do — v/a's actor fetches the init segment;
  *   text's actor no-ops (no init concept).
@@ -76,14 +76,11 @@ export interface SegmentLoadingState {
    */
   loadingSuspended?: boolean;
   /**
-   * DRM key-readiness gate: initiate no new loading work while `true` — an
-   * encrypted source's MediaKeys aren't attached yet, and appending encrypted
-   * data before `setMediaKeys` misbehaves on Chromium. **Observed, never
-   * declared**, exactly like `loadingSuspended`: only DRM-composed variants
-   * carry a writer (`setupMediaKeys`), so an absent slot means never gated.
-   * Held separate from `loadingSuspended` because the two writers decide from
-   * different domains (remote-playback session vs key readiness) — co-writing
-   * one boolean would be a last-write-wins conflict.
+   * DRM key-readiness gate: initiate no new loading work while `true` — an encrypted source's MediaKeys aren't attached
+   * yet, and appending encrypted data before `setMediaKeys` misbehaves on Chromium. **Observed, never declared**,
+   * exactly like `loadingSuspended`: only DRM-composed variants carry a writer (`setupMediaKeys`), so an absent slot
+   * means never gated. Held separate from `loadingSuspended` because the two writers decide from different domains
+   * (remote-playback session vs key readiness) — co-writing one boolean would be a last-write-wins conflict.
    */
   awaitingMediaKeys?: boolean;
   selectedVideoTrackId?: string;

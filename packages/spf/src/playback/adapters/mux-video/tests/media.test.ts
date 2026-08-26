@@ -15,6 +15,7 @@ import { MuxVideoMedia } from '../media';
 // passes rather than what the engine then does with it.
 vi.mock('../../../engines/hls/engine', async () => {
   const actual = await vi.importActual<typeof import('../../../engines/hls/engine')>('../../../engines/hls/engine');
+
   return { ...actual, createHlsVideoEngine: vi.fn(actual.createHlsVideoEngine) };
 });
 
@@ -22,23 +23,25 @@ vi.mock('../../../engines/hls/engine', async () => {
 // base64url, so it survives a query string untouched.
 function fakeJwt(payload: Record<string, unknown>): string {
   const encode = (obj: unknown) => btoa(JSON.stringify(obj)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+
   return `${encode({ alg: 'HS256' })}.${encode(payload)}.`;
 }
 
 /**
- * Resolve one key system's license server off the `drm` config the most recently
- * constructed Media handed the engine — which is what the engine itself would do
- * when the CDM asks.
+ * Resolve one key system's license server off the `drm` config the most recently constructed Media handed the engine —
+ * which is what the engine itself would do when the CDM asks.
  */
 function licenseUrl(keySystem: string): string | undefined {
   const calls = vi.mocked(createHlsVideoEngine).mock.calls;
   const drm = calls[calls.length - 1]![0]!.drm!;
+
   return resolveDrmUrl(drm[keySystem]?.licenseUrl);
 }
 
 function serverCertificateUrl(keySystem: string): string | undefined {
   const calls = vi.mocked(createHlsVideoEngine).mock.calls;
   const drm = calls[calls.length - 1]![0]!.drm!;
+
   return resolveDrmUrl(drm[keySystem]?.serverCertificateUrl);
 }
 
@@ -264,6 +267,7 @@ describe('MuxVideoMedia DRM', () => {
 
   it('derives Mux license servers from a drm token', () => {
     const media = new MuxVideoMedia();
+
     media.source = { playbackId: 'abc123', drm: { token } };
 
     expect(licenseUrl('com.widevine.alpha')).toBe(`https://license.mux.com/license/widevine/abc123?token=${token}`);
@@ -274,6 +278,7 @@ describe('MuxVideoMedia DRM', () => {
 
   it('resolves no license server for a source carrying no DRM', () => {
     const media = new MuxVideoMedia();
+
     media.source = { playbackId: 'abc123' };
 
     // What makes an encrypted rendition prune rather than negotiate: every key
@@ -285,6 +290,7 @@ describe('MuxVideoMedia DRM', () => {
 
   it('prefers a license server the source names outright over the derived one', () => {
     const media = new MuxVideoMedia();
+
     media.source = {
       playbackId: 'abc123',
       drm: { token, 'com.widevine.alpha': { licenseUrl: 'https://license.example.com/widevine' } },
