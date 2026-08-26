@@ -55,8 +55,6 @@
       "development": "./dist/dev/presets/video.js",
       "default": "./dist/default/presets/video.js"
     },
-    "./video/ui": null,
-    "./video/minimal-ui": null,
     "./video/*.css": "./dist/default/define/video/*.css",
     "./video/*": {
       "types": "./dist/dev/define/video/*.d.ts",
@@ -68,8 +66,6 @@
       "development": "./dist/dev/presets/audio.js",
       "default": "./dist/default/presets/audio.js"
     },
-    "./audio/ui": null,
-    "./audio/minimal-ui": null,
     "./audio/*.css": "./dist/default/define/audio/*.css",
     "./audio/*": {
       "types": "./dist/dev/define/audio/*.d.ts",
@@ -92,8 +88,6 @@
       "development": "./dist/dev/presets/live-video.js",
       "default": "./dist/default/presets/live-video.js"
     },
-    "./live-video/ui": null,
-    "./live-video/minimal-ui": null,
     "./live-video/*.css": "./dist/default/define/live-video/*.css",
     "./live-video/*": {
       "types": "./dist/dev/define/live-video/*.d.ts",
@@ -105,8 +99,6 @@
       "development": "./dist/dev/presets/live-audio.js",
       "default": "./dist/default/presets/live-audio.js"
     },
-    "./live-audio/ui": null,
-    "./live-audio/minimal-ui": null,
     "./live-audio/*.css": "./dist/default/define/live-audio/*.css",
     "./live-audio/*": {
       "types": "./dist/dev/define/live-audio/*.d.ts",
