@@ -1,0 +1,99 @@
+name: Configure Codex permissions
+description: Define trusted, least-privilege permission profiles for Codex jobs.
+
+outputs:
+  codex_home:
+    description: Trusted Codex home containing the permission profiles.
+    value: ${{ steps.configure.outputs.codex_home }}
+
+runs:
+  using: composite
+  steps:
+    - name: Write permission profiles
+      id: configure
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        codex_home_path="$RUNNER_TEMP/codex-home"
+        mkdir -p "$codex_home_path"
+
+        cat > "$codex_home_path/config.toml" <<'EOF'
+        [features]
+        network_proxy = true
+
+        [permissions.github-read]
+        description = "Read-only repository access plus GitHub command access."
+        extends = ":read-only"
+
+        [permissions.github-read.network]
+        enabled = true
+
+        [permissions.github-read.network.domains]
+        "**.github.com" = "allow"
+        "**.githubusercontent.com" = "allow"
+        "**.actions.githubusercontent.com" = "allow"
+
+        [permissions.github-web]
+        description = "Read-only repository access plus GitHub and Video.js documentation."
+        extends = ":read-only"
+
+        [permissions.github-web.network]
+        enabled = true
+
+        [permissions.github-web.network.domains]
+        "**.github.com" = "allow"
+        "**.githubusercontent.com" = "allow"
+        "**.actions.githubusercontent.com" = "allow"
+        "**.videojs.org" = "allow"
+
+        [permissions.github-write]
+        description = "Workspace writes plus GitHub command access."
+        extends = ":workspace"
+
+        [permissions.github-write.network]
+        enabled = true
+
+        [permissions.github-write.network.domains]
+        "**.github.com" = "allow"
+        "**.githubusercontent.com" = "allow"
+        "**.actions.githubusercontent.com" = "allow"
+
+        [permissions.github-artifacts]
+        description = "Workspace writes plus GitHub run and artifact access."
+        extends = ":workspace"
+
+        [permissions.github-artifacts.network]
+        enabled = true
+
+        [permissions.github-artifacts.network.domains]
+        "**.github.com" = "allow"
+        "**.githubusercontent.com" = "allow"
+        "**.actions.githubusercontent.com" = "allow"
+        "**.blob.core.windows.net" = "allow"
+
+        [permissions.github-build]
+        description = "Workspace writes plus GitHub, package, documentation, and test access."
+        extends = ":workspace"
+
+        [permissions.github-build.network]
+        enabled = true
+        allow_local_binding = true
+
+        [permissions.github-build.network.domains]
+        "**.github.com" = "allow"
+        "**.githubusercontent.com" = "allow"
+        "**.actions.githubusercontent.com" = "allow"
+        "**.blob.core.windows.net" = "allow"
+        "**.npmjs.org" = "allow"
+        "**.sentry-cdn.com" = "allow"
+        "**.videojs.org" = "allow"
+        "**.mux.com" = "allow"
+        "dash.akamaized.net" = "allow"
+        "cdn.playwright.dev" = "allow"
+        "playwright.download.prss.microsoft.com" = "allow"
+        "localhost" = "allow"
+        "127.0.0.1" = "allow"
+        EOF
+
+        echo "codex_home=$codex_home_path" >> "$GITHUB_OUTPUT"

@@ -26,17 +26,23 @@ jobs:
         with:
           fetch-depth: 1
 
+      - name: Configure Codex permissions
+        id: codex_permissions
+        uses: ./.github/actions/configure-codex
+
       - name: Run Codex issue follow-up
-        uses: openai/codex-action@v1
+        uses: openai/codex-action@86365089eb2b84e0a8fb0717b304f8bdcb13b20e # v1
         env:
           GH_TOKEN: ${{ github.token }}
         with:
+          allow-bot-users: 'github-actions[bot]'
           openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          codex-version: 0.149.1
           model: gpt-5.6-terra
           effort: medium
-          sandbox: workspace-write
           safety-strategy: drop-sudo
-          codex-args: '["--config", "sandbox_workspace_write.network_access=true"]'
+          codex-home: ${{ steps.codex_permissions.outputs.codex_home }}
+          permission-profile: github-read
           prompt: |
             A pull request was merged and you are the issue follow-up agent.
 

@@ -25,18 +25,24 @@ jobs:
       - name: Checkout trusted code
         uses: actions/checkout@v5
 
+      - name: Configure Codex permissions
+        id: codex_permissions
+        uses: ./.github/actions/configure-codex
+
       - name: Diagnose E2E failure
-        uses: openai/codex-action@v1
+        uses: openai/codex-action@86365089eb2b84e0a8fb0717b304f8bdcb13b20e # v1
         env:
           GH_TOKEN: ${{ github.token }}
         with:
           allow-users: '*'
+          allow-bot-users: 'github-actions[bot]'
           openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          codex-version: 0.149.1
           model: gpt-5.6-terra
           effort: medium
-          sandbox: workspace-write
           safety-strategy: drop-sudo
-          codex-args: '["--config", "sandbox_workspace_write.network_access=true"]'
+          codex-home: ${{ steps.codex_permissions.outputs.codex_home }}
+          permission-profile: github-artifacts
           prompt: |
             You are diagnosing a failed Video.js E2E workflow for a pull request.
 
@@ -107,17 +113,23 @@ jobs:
           fetch-depth: 0
           ref: ${{ github.event.workflow_run.head_sha }}
 
+      - name: Configure Codex permissions
+        id: codex_permissions
+        uses: ./.github/actions/configure-codex
+
       - name: Diagnose E2E failure
-        uses: openai/codex-action@v1
+        uses: openai/codex-action@86365089eb2b84e0a8fb0717b304f8bdcb13b20e # v1
         env:
           GH_TOKEN: ${{ github.token }}
         with:
+          allow-bot-users: 'github-actions[bot]'
           openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          codex-version: 0.149.1
           model: gpt-5.6-sol
           effort: high
-          sandbox: workspace-write
           safety-strategy: drop-sudo
-          codex-args: '["--config", "sandbox_workspace_write.network_access=true"]'
+          codex-home: ${{ steps.codex_permissions.outputs.codex_home }}
+          permission-profile: github-build
           prompt: |
             You are diagnosing a failed Video.js E2E workflow on main.
 
