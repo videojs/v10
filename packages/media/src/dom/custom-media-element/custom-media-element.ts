@@ -441,6 +441,6 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
   return CustomMedia as any;
 }
 
-function getAttrsFromProps(props: Record<string, any>): string[] {
-  return Object.keys(props).map((prop) => props[prop]?.attribute ?? prop.toLowerCase());
+function getAttrsFromProps(props: PropertyConfigs): string[] {
+  return Object.keys(props).map((prop) => attributeName(prop, props));
 }
