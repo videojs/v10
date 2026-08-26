@@ -45,14 +45,15 @@ Every [release](https://github.com/videojs/v10/releases) ships a `videojs-html-<
 Unpack it into whatever your server treats as static files:
 
 ```bash
-curl -LO https://github.com/videojs/v10/releases/download/@videojs/html@10.0.0-beta.26/videojs-html-10.0.0-beta.26.zip
-unzip videojs-html-10.0.0-beta.26.zip -d public/
+VIDEOJS_VERSION=10.0.0-beta.31
+curl -fLO "https://github.com/videojs/v10/releases/download/@videojs/html@${VIDEOJS_VERSION}/videojs-html-${VIDEOJS_VERSION}.zip"
+unzip "videojs-html-${VIDEOJS_VERSION}.zip" -d public/
 ```
 
 Then point a script tag at the player you want:
 
 ```html
-<script type="module" src="/videojs-html-10.0.0-beta.26/video.js"></script>
+<script type="module" src="/videojs-html-10.0.0-beta.31/video.js"></script>
 ```
 
 The archive holds the same production bundles the CDN serves, minus sourcemaps and development builds. Every path inside it is relative, so it runs from any origin with no outbound requests. `SHA256SUMS` on the release verifies the download.
@@ -66,17 +67,17 @@ For Composer-based projects such as Drupal, declare the archive as a package:
       "type": "package",
       "package": {
         "name": "videojs/html",
-        "version": "10.0.0-beta.26",
+        "version": "10.0.0-beta.31",
         "type": "drupal-library",
         "dist": {
           "type": "zip",
-          "url": "https://github.com/videojs/v10/releases/download/@videojs/html@10.0.0-beta.26/videojs-html-10.0.0-beta.26.zip"
+          "url": "https://github.com/videojs/v10/releases/download/@videojs/html@10.0.0-beta.31/videojs-html-10.0.0-beta.31.zip"
         }
       }
     }
   ],
   "require": {
-    "videojs/html": "10.0.0-beta.26"
+    "videojs/html": "10.0.0-beta.31"
   }
 }
 ```
