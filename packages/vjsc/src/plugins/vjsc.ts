@@ -9,7 +9,7 @@ import { componentModulesPlugin } from './component-modules';
 import { type ComponentTargetSelection, componentTargetPlugin, primitiveTargetPlugin } from './component-target';
 import { htmlRuntimePlugin } from './html-runtime';
 import { reactTargetPropsPlugin } from './react-target-props';
-import { stylePlugin } from './style';
+import { stylePlugin, type StylePluginLifecycle } from './style';
 import { targetImportCleanupPlugin } from './target-import-cleanup';
 import { targetJsxPlugin } from './target-jsx';
 import { targetTransformPlugin } from './target-transform';
@@ -50,7 +50,7 @@ export function vjscPlugin(options: VjscPluginOptions): Plugin[] {
   return createVjscPluginPipeline(options);
 }
 
-export function createVjscPluginPipeline(options: VjscPluginOptions): Plugin[] {
+export function createVjscPluginPipeline(options: VjscPluginOptions, styleLifecycle?: StylePluginLifecycle): Plugin[] {
   const configurations = new Map<string, VjscModuleConfig | null>();
   const configure = (module: VjscModule): VjscModuleConfig | null => {
     if (configurations.has(module.id)) return configurations.get(module.id) ?? null;
@@ -75,7 +75,7 @@ export function createVjscPluginPipeline(options: VjscPluginOptions): Plugin[] {
     htmlRuntimePlugin(),
     componentMetaPlugin(),
     targetJsxPlugin({ targets }),
-    stylePlugin((module) => configure(module)?.styles ?? null, options.diagnostics),
+    stylePlugin((module) => configure(module)?.styles ?? null, options.diagnostics, styleLifecycle),
     targetTransformPlugin({ targets }),
     targetTypePlugin({ targets }),
     primitiveTargetPlugin({ targets }),

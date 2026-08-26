@@ -1,6 +1,7 @@
 import { mkdtemp, rm, utimes, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
+import { isObject, isString, isUndefined } from '@videojs/utils/predicate';
 import react from '@vitejs/plugin-react';
 import { createServer, type ViteDevServer } from 'vite';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -74,7 +75,7 @@ describe('Skins Vite HMR', () => {
     send.mockClear();
     await fixture.update(fixture.styles, styleSource('bg-preview'));
     await invalidate(server, fixture.styles, [cssUrl, tailwindUrl]);
-    await vi.waitFor(() => expect(send.mock.calls.some(isHmrCall)).toBe(true));
+    await vi.waitFor(() => expect(send.mock.calls.some(isGeneratedCssHmrCall)).toBe(true));
 
     const updatedCss = await transformedCode(server, cssUrl);
     const updatedTailwind = await transformedCode(server, tailwindUrl);
@@ -86,7 +87,20 @@ describe('Skins Vite HMR', () => {
     expect(updatedCss).not.toContain(initialCssRequest);
     expect(updatedCssRequest).not.toBe(initialCssRequest);
     expect(updatedCssModule).toContain('background-color:');
-    await expect(loadedCss(server, initialCssRequest)).rejects.toThrow();
+    expect(await loadedCssSource(server, initialCssRequest)).toBe('');
+    expect(send.mock.calls.some(isFullReloadCall)).toBe(false);
+
+    send.mockClear();
+    await fixture.update(fixture.styles, styleSource('text-preview'));
+    await invalidate(server, fixture.styles, [cssUrl, tailwindUrl]);
+    await vi.waitFor(() => expect(send.mock.calls.some(isGeneratedCssHmrCall)).toBe(true));
+
+    const restoredCss = await transformedCode(server, cssUrl);
+
+    expect(virtualCssRequest(restoredCss)).toBe(initialCssRequest);
+    expect(await loadedCssSource(server, initialCssRequest)).toContain('color:');
+    expect(await loadedCssSource(server, updatedCssRequest)).toBe('');
+    expect(send.mock.calls.some(isFullReloadCall)).toBe(false);
 
     send.mockClear();
     await fixture.update(fixture.design, designSource('#040506'));
@@ -141,7 +155,7 @@ async function createFixture() {
 }
 
 function componentSource(marker: string): string {
-  return `import styles from './fixture.styles';\nexport const marker = '${marker}';\nexport function Fixture() { return <div className={styles.root} />; }\n`;
+  return `import styles from './fixture.styles';\nexport const marker = '${marker}';\nexport function Fixture() { return <div className={styles.root} />; }\nif (import.meta.hot) import.meta.hot.accept();\n`;
 }
 
 function styleSource(utility: string): string {
@@ -173,17 +187,24 @@ function virtualCssRequest(code: string): string {
   const request = code.match(/["'](\/@id\/__x00__virtual:vjsc\/css\/[^"']+)["']/)?.[1];
   if (!request) throw new Error('Expected transformed source to import virtual VJSC CSS.');
 
-  return request;
+  return request.replace(/\?t=\d+$/, '');
 }
 
 async function loadedCss(server: ViteDevServer, request: string): Promise<string> {
+  const code = await loadedCssSource(server, request);
+  if (!code) throw new Error(`Vite loaded empty CSS for \`${request}\`.`);
+
+  return code;
+}
+
+async function loadedCssSource(server: ViteDevServer, request: string): Promise<string> {
   const publicId = request.replace('/@id/__x00__', '');
   const resolved = await server.pluginContainer.resolveId(publicId);
   if (!resolved) throw new Error(`Vite did not resolve \`${publicId}\`.`);
 
   const loaded = await server.pluginContainer.load(resolved.id);
-  const code = typeof loaded === 'string' ? loaded : loaded?.code;
-  if (!code) throw new Error(`Vite did not load \`${resolved.id}\`.`);
+  const code = isString(loaded) ? loaded : loaded?.code;
+  if (isUndefined(code)) throw new Error(`Vite did not load \`${resolved.id}\`.`);
 
   return code;
 }
@@ -206,10 +227,18 @@ async function invalidate(server: ViteDevServer, file: string, urls: readonly st
 function isHmrCall(call: readonly unknown[]): boolean {
   const payload = call[0];
 
-  return (
-    typeof payload === 'object' &&
-    payload !== null &&
-    'type' in payload &&
-    (payload.type === 'update' || payload.type === 'full-reload')
-  );
+  return isObject(payload) && 'type' in payload && (payload.type === 'update' || payload.type === 'full-reload');
+}
+
+function isGeneratedCssHmrCall(call: readonly unknown[]): boolean {
+  const payload = call[0];
+  if (!isObject(payload) || !('type' in payload) || payload.type !== 'update') return false;
+
+  return JSON.stringify(payload).includes('virtual:vjsc/css');
+}
+
+function isFullReloadCall(call: readonly unknown[]): boolean {
+  const payload = call[0];
+
+  return isObject(payload) && 'type' in payload && payload.type === 'full-reload';
 }

@@ -54,11 +54,21 @@ interface StyleBinding {
 }
 
 interface VirtualCssModule {
-  readonly source: string;
+  source: string;
   readonly owners: Set<string>;
 }
 
-export function stylePlugin(config: StylePluginConfig, diagnostics: VjscDiagnosticsOptions = {}): Plugin {
+export interface StylePluginLifecycle {
+  readonly retainReleasedCss: boolean;
+  onCssChange(id: string): void;
+  onOwnerTransform(id: string, watchFiles: readonly string[]): void;
+}
+
+export function stylePlugin(
+  config: StylePluginConfig,
+  diagnostics: VjscDiagnosticsOptions = {},
+  lifecycle?: StylePluginLifecycle
+): Plugin {
   const designs = new Map<string, Promise<CachedDesignSystem>>();
   const manifests = new Map<string, CachedManifest>();
   const cssById = new Map<string, VirtualCssModule>();
@@ -89,22 +99,26 @@ export function stylePlugin(config: StylePluginConfig, diagnostics: VjscDiagnost
         const options = typeof config === 'function' ? await config({ id, ...parseModuleId(id) }) : config;
 
         if (!options || !transform.ast || !transform.magicString) {
-          replaceVirtualCss(cssById, cssByOwner, id, []);
+          replaceVirtualCss(cssById, cssByOwner, id, [], lifecycle);
           return null;
         }
+
+        lifecycle?.onOwnerTransform(id, []);
 
         const filename = moduleFilename(id);
         const files = importedStyleFiles(filename, transform.ast);
 
         if (files.length === 0) {
-          replaceVirtualCss(cssById, cssByOwner, id, []);
+          replaceVirtualCss(cssById, cssByOwner, id, [], lifecycle);
           return null;
         }
 
         const manifest = options.manifest ?? (await cachedManifest(manifests, files));
 
+        lifecycle?.onOwnerTransform(id, manifest.watchFiles);
+
         if (manifest.rules.length === 0) {
-          replaceVirtualCss(cssById, cssByOwner, id, []);
+          replaceVirtualCss(cssById, cssByOwner, id, [], lifecycle);
           return null;
         }
 
@@ -121,7 +135,7 @@ export function stylePlugin(config: StylePluginConfig, diagnostics: VjscDiagnost
 
         if (referencedRules.size === 0) {
           report();
-          replaceVirtualCss(cssById, cssByOwner, id, []);
+          replaceVirtualCss(cssById, cssByOwner, id, [], lifecycle);
           return null;
         }
 
@@ -144,6 +158,8 @@ export function stylePlugin(config: StylePluginConfig, diagnostics: VjscDiagnost
 
           cachedDesign.versions = await fileVersions(cachedDesign.design.watchFiles);
 
+          lifecycle?.onOwnerTransform(id, [...new Set([...manifest.watchFiles, ...cachedDesign.design.watchFiles])]);
+
           for (const file of cachedDesign.design.watchFiles) this.addWatchFile(file);
 
           const imports: string[] = [];
@@ -165,11 +181,11 @@ export function stylePlugin(config: StylePluginConfig, diagnostics: VjscDiagnost
             imports.push(`import ${JSON.stringify(publicId)};`);
           }
 
-          replaceVirtualCss(cssById, cssByOwner, id, modules);
+          replaceVirtualCss(cssById, cssByOwner, id, modules, lifecycle);
           insertModuleImports(transform.ast, transform.magicString, imports);
         } else {
           report();
-          replaceVirtualCss(cssById, cssByOwner, id, []);
+          replaceVirtualCss(cssById, cssByOwner, id, [], lifecycle);
         }
 
         return { code: transform.magicString };
@@ -219,7 +235,8 @@ function replaceVirtualCss(
   cssById: Map<string, VirtualCssModule>,
   cssByOwner: Map<string, ReadonlySet<string>>,
   owner: string,
-  modules: readonly (readonly [id: string, source: string])[]
+  modules: readonly (readonly [id: string, source: string])[],
+  lifecycle?: StylePluginLifecycle
 ): void {
   const nextIds = new Set(modules.map(([id]) => id));
 
@@ -230,7 +247,16 @@ function replaceVirtualCss(
 
     module?.owners.delete(owner);
 
-    if (module?.owners.size === 0) cssById.delete(id);
+    if (module?.owners.size !== 0) continue;
+
+    if (module && lifecycle?.retainReleasedCss) {
+      if (module.source !== '') {
+        module.source = '';
+        lifecycle.onCssChange(id);
+      }
+    } else {
+      cssById.delete(id);
+    }
   }
 
   for (const [id, source] of modules) {
@@ -238,8 +264,14 @@ function replaceVirtualCss(
 
     if (module) {
       module.owners.add(owner);
+
+      if (module.source !== source) {
+        module.source = source;
+        lifecycle?.onCssChange(id);
+      }
     } else {
       cssById.set(id, { source, owners: new Set([owner]) });
+      lifecycle?.onCssChange(id);
     }
   }
 
