@@ -123,6 +123,7 @@ export const sidebar: Sidebar = [
           { slug: 'reference/gesture' },
           { slug: 'reference/google-cast' },
           { slug: 'reference/hotkey' },
+          { slug: 'reference/live-button' },
           { slug: 'reference/menu' },
           { slug: 'reference/mute-button' },
           { slug: 'reference/mux-data' },

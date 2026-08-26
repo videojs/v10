@@ -1,0 +1,47 @@
+.html-live-button-basic media-container {
+  position: relative;
+}
+
+.html-live-button-basic media-container hlsjs-video {
+  display: block;
+  width: 100%;
+}
+
+.html-live-button-basic__buttons {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  display: flex;
+  gap: 8px;
+}
+
+.html-live-button-basic__seek,
+.html-live-button-basic__live {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding-block: 8px;
+  padding-inline: 20px;
+  color: black;
+  white-space: nowrap;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 9999px;
+  backdrop-filter: blur(10px);
+}
+
+.html-live-button-basic__live[data-live-edge] {
+  cursor: default;
+}
+
+.html-live-button-basic__dot {
+  width: 8px;
+  height: 8px;
+  background: gray;
+  border-radius: 50%;
+}
+
+.html-live-button-basic__live[data-live-edge] .html-live-button-basic__dot {
+  background: red;
+}

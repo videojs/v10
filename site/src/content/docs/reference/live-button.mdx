@@ -1,0 +1,114 @@
+---
+title: LiveButton
+frameworkTitle:
+  html: media-live-button
+description: Accessible live indicator button that seeks to the live edge when pressed
+---
+
+import ComponentReference from "@/components/docs/api-reference/ComponentReference.astro";
+import ComponentImports from "@/components/docs/api-reference/ComponentImports.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+import StyleCase from "@/components/docs/StyleCase.astro";
+import Demo from "@/components/docs/demos/Demo.astro";
+
+{/* React demos */}
+import BasicUsageDemoReact from "@/components/docs/demos/live-button/react/css/BasicUsage";
+import basicUsageReactTsx from "@/components/docs/demos/live-button/react/css/BasicUsage.tsx?raw";
+import basicUsageReactCss from "@/components/docs/demos/live-button/react/css/BasicUsage.css?raw";
+
+{/* HTML demos */}
+import BasicUsageDemoHtml from "@/components/docs/demos/live-button/html/css/BasicUsage.astro";
+import basicUsageHtml from "@/components/docs/demos/live-button/html/css/BasicUsage.html?raw";
+import basicUsageHtmlCss from "@/components/docs/demos/live-button/html/css/BasicUsage.css?raw";
+import basicUsageHtmlTs from "@/components/docs/demos/live-button/html/css/BasicUsage.ts?raw";
+
+## Import
+
+<ComponentImports component="LiveButton" html="live-button" />
+
+## Anatomy
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<LiveButton />
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```html
+<media-live-button></media-live-button>
+```
+</FrameworkCase>
+
+## Behavior
+
+LiveButton indicates whether playback is at the live edge and acts as a "go to live" control. While playback is behind the edge, clicking seeks to the live edge — the end of the last `seekable` range. At the edge the button goes inactive (`aria-disabled`) and clicking is a no-op.
+
+The button combines three player features: <DocsLink slug="reference/feature-live">live</DocsLink> for `liveEdgeStart` and `targetLiveWindow`, <DocsLink slug="reference/feature-time">time</DocsLink> for `currentTime` and the `seek()` action, and <DocsLink slug="reference/feature-buffer">buffer</DocsLink> for `seekable`. All three are included in the `liveVideoFeatures` and `liveAudioFeatures` presets, and the packaged live skins include the button.
+
+Media counts as live while `targetLiveWindow` is not `NaN` (`0` for a sliding live window, `Infinity` for DVR). For on-demand media the button reports neither `live` nor `liveEdge` and stays inert. The live edge begins 5 seconds before `liveEdgeStart`; when the media does not report `liveEdgeStart`, the edge is the trailing 10 seconds of the seekable window instead.
+
+Without children, the button renders the translated "Live" badge text.
+
+See <DocsLink slug="how-to/play-live-streams">Play live streams</DocsLink> for how live state flows through the player.
+
+## Styling
+
+| Attribute | Values | Description |
+|-----------|--------|-------------|
+| `data-live` | Present / absent | Present when the stream is live (or DVR) |
+| `data-live-edge` | Present / absent | Present when playback is at the live edge |
+
+Use `data-live-edge` to color the button red at the edge and gray behind it:
+
+<FrameworkCase frameworks={["html"]}>
+```css
+media-live-button { color: gray; }
+media-live-button[data-live-edge] { color: red; }
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+React renders a `<button>` element with the same data attributes. Add a `className` and use it as the selector:
+
+```css
+.live-button { color: gray; }
+.live-button[data-live-edge] { color: red; }
+```
+</FrameworkCase>
+
+## Accessibility
+
+Renders a `<button>` with an automatic `aria-label` that updates based on state: "Playing live" at the live edge, "Seek to live edge" while behind it. Override with the `label` prop, which accepts a text descriptor, literal string, or function returning either. A text descriptor contains an opaque translation key and English fallback, for example `{ key: 'live.playing', text: 'Playing live' }`. When the button is disabled or playback is at the live edge, `aria-disabled="true"` is set. Keyboard activation: <kbd>Enter</kbd> / <kbd>Space</kbd>.
+
+## Examples
+
+### Basic Usage
+
+The demo plays a continuously running live stream. Seek backward to move behind the live edge, then press the Live button to jump back to it.
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
+      { title: "App.css", code: basicUsageReactCss, lang: "css" },
+    ]}>
+      <BasicUsageDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "index.html", code: basicUsageHtml, lang: "html" },
+      { title: "index.css", code: basicUsageHtmlCss, lang: "css" },
+      { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
+    ]}>
+      <BasicUsageDemoHtml />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<ComponentReference component="LiveButton" />
