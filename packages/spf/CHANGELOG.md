@@ -1,5 +1,20 @@
 # Changelog
 
+## [10.0.0-beta.32](https://github.com/videojs/v10/compare/@videojs/spf@10.0.0-beta.31...@videojs/spf@10.0.0-beta.32) (2026-08-26)
+
+
+### Features
+
+* **spf:** keep track selection within the initial codec family ([#2289](https://github.com/videojs/v10/issues/2289)) ([a55c539](https://github.com/videojs/v10/commit/a55c5397e12b77099694b9eef40db3b5290f47f7))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/media bumped to 10.0.0-beta.32
+    * @videojs/utils bumped to 10.0.0-beta.32
+
 ## [10.0.0-beta.31](https://github.com/videojs/v10/compare/@videojs/spf@10.0.0-beta.30...@videojs/spf@10.0.0-beta.31) (2026-08-21)
 
 

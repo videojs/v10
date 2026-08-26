@@ -1,5 +1,12 @@
 # Changelog
 
+## [10.0.0-beta.32](https://github.com/videojs/v10/compare/@videojs/utils@10.0.0-beta.31...@videojs/utils@10.0.0-beta.32) (2026-08-26)
+
+
+### Features
+
+* **packages:** add dialog component ([#2379](https://github.com/videojs/v10/issues/2379)) ([108b8fd](https://github.com/videojs/v10/commit/108b8fda826a870bf29453289a0081ebd7df890c))
+
 ## [10.0.0-beta.31](https://github.com/videojs/v10/compare/@videojs/utils@10.0.0-beta.30...@videojs/utils@10.0.0-beta.31) (2026-08-21)
 
 

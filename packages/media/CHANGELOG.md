@@ -1,5 +1,19 @@
 # Changelog
 
+## [10.0.0-beta.32](https://github.com/videojs/v10/compare/@videojs/media@10.0.0-beta.31...@videojs/media@10.0.0-beta.32) (2026-08-26)
+
+
+### Bug Fixes
+
+* **media:** make engine entries server importable ([#2429](https://github.com/videojs/v10/issues/2429)) ([38cd16c](https://github.com/videojs/v10/commit/38cd16c59b4c19042013a82c64e402e5cbbeafbb))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.32
+
 ## [10.0.0-beta.31](https://github.com/videojs/v10/compare/@videojs/media@10.0.0-beta.30...@videojs/media@10.0.0-beta.31) (2026-08-21)
 
 
