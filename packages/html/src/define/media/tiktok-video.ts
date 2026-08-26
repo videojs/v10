@@ -1,5 +1,9 @@
-import { TikTokVideoElement } from '../../media/tiktok-video/element';
+import { TikTokVideo } from '../../media/tiktok-video';
 import { safeDefine } from '../../registration/safe-define';
+
+export class TikTokVideoElement extends TikTokVideo {
+  static readonly tagName = 'tiktok-video';
+}
 
 safeDefine(TikTokVideoElement);
 

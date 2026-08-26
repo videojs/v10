@@ -1,5 +1,9 @@
-import { DashVideoElement } from '../../media/dash-video/element';
+import { DashVideo } from '../../media/dash-video';
 import { safeDefine } from '../../registration/safe-define';
+
+export class DashVideoElement extends DashVideo {
+  static readonly tagName = 'dash-video';
+}
 
 safeDefine(DashVideoElement);
 

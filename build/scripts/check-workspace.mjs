@@ -275,9 +275,10 @@ function checkBundledDocs() {
 // ── Check 7: Define imports ──────────────────────────────────────────────────
 
 /**
- * Define modules are side-effect-only registration entrypoints. They must not export values, and bare side-effect
- * imports from relative paths can cause non-deterministic registration order when loaded as native ESM in the browser.
- * All registration must go through explicit safeDefine() calls.
+ * Preset and UI define modules are side-effect-only registration entrypoints. Media define modules retain their
+ * existing element exports for compatibility. Bare side-effect imports from relative paths can cause non-deterministic
+ * registration order when loaded as native ESM in the browser, so registration must go through explicit safeDefine()
+ * calls.
  */
 function checkDefineImports() {
   const warnings = [];
@@ -310,7 +311,9 @@ function checkDefineImports() {
     const content = readText(filePath);
     const relative = filePath.slice(ROOT.length + 1);
 
-    if (/^\s*export\b/m.test(content)) {
+    const isMediaDefine = relative.startsWith('packages/html/src/define/media/');
+
+    if (!isMediaDefine && /^\s*export\b/m.test(content)) {
       warnings.push(`${relative}: define modules are registration-only and must not export values or types`);
     }
 

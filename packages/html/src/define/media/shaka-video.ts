@@ -1,5 +1,9 @@
-import { ShakaVideoElement } from '../../media/shaka-video/element';
+import { ShakaVideo } from '../../media/shaka-video';
 import { safeDefine } from '../../registration/safe-define';
+
+export class ShakaVideoElement extends ShakaVideo {
+  static readonly tagName = 'shaka-video';
+}
 
 safeDefine(ShakaVideoElement);
 

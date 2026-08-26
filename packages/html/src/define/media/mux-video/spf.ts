@@ -1,5 +1,9 @@
-import { MuxVideoElement } from '../../../media/mux-video/spf-element';
+import { MuxVideo } from '../../../media/mux-video/spf';
 import { safeDefine } from '../../../registration/safe-define';
+
+export class MuxVideoElement extends MuxVideo {
+  static readonly tagName = 'mux-video';
+}
 
 safeDefine(MuxVideoElement);
 

@@ -1,5 +1,9 @@
-import { BackgroundVideoElement } from '../../media/background-video/element';
+import { BackgroundVideo } from '../../media/background-video';
 import { safeDefine } from '../../registration/safe-define';
+
+export class BackgroundVideoElement extends BackgroundVideo {
+  static readonly tagName = 'background-video';
+}
 
 safeDefine(BackgroundVideoElement);
 

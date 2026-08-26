@@ -1,6 +1,8 @@
 import { MuxDataElement } from '../../media/mux-data';
 import { safeDefine } from '../../registration/safe-define';
 
+export { MuxDataElement };
+
 safeDefine(MuxDataElement);
 
 declare global {
