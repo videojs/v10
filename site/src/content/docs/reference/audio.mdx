@@ -71,7 +71,13 @@ Place a native `<audio>` anywhere inside `<audio-player>`. It becomes that playe
 
 Video.js does not replace the native audio API. Use `src` for one URL or add child [`<source>` elements](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/source) when the browser should choose between candidates. See <DocsLink slug="concepts/media-sources">Media sources</DocsLink> when you need an HLS, Mux, Spotify, or other playback adapter.
 
-React forwards native attributes, event handlers, and children to the `<audio>`, and its `ref` resolves to the `HTMLAudioElement`.
+<FrameworkCase frameworks={["react"]}>
+`Audio` forwards native attributes, event handlers, and children to the underlying `<audio>`. Its `ref` resolves to the `HTMLAudioElement`.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+`<audio>` is the native element itself. Set its attributes and properties, listen for native media events, and access it through an `HTMLAudioElement` reference.
+</FrameworkCase>
 
 See MDN for the complete [`<audio>` element](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/audio), [`HTMLAudioElement`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLAudioElement), and shared [`HTMLMediaElement`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement) APIs.
 

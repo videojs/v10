@@ -73,7 +73,15 @@ Place a native `<video>` anywhere inside `<video-player>`. It becomes that playe
 
 Video.js does not replace the native video API. Use `src` for one URL or add child [`<source>` elements](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/source) when the browser should choose between candidates. See <DocsLink slug="concepts/media-sources">Media sources</DocsLink> when you need an HLS, DASH, Mux, or other playback adapter.
 
-Add native [`<track>` elements](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/track) for captions, subtitles, chapters, descriptions, or metadata. React forwards native attributes, event handlers, and children to the `<video>`, and its `ref` resolves to the `HTMLVideoElement`.
+Add native [`<track>` elements](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/track) for captions, subtitles, chapters, descriptions, or metadata.
+
+<FrameworkCase frameworks={["react"]}>
+`Video` forwards native attributes, event handlers, and children to the underlying `<video>`. Its `ref` resolves to the `HTMLVideoElement`.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+`<video>` is the native element itself. Set its attributes and properties, listen for native media events, and access it through an `HTMLVideoElement` reference.
+</FrameworkCase>
 
 See MDN for the complete [`<video>` element](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/video), [`HTMLVideoElement`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLVideoElement), and shared [`HTMLMediaElement`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement) APIs.
 
