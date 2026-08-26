@@ -378,6 +378,30 @@ describe('buildKeySystemConfigurations', () => {
     ]);
   });
 
+  it('offers an unstamped fallback after the declared scheme', () => {
+    const configs = buildKeySystemConfigurations(
+      'com.microsoft.playready',
+      { video: ['video/mp4; codecs="avc1.4d401f"'], audio: ['audio/mp4; codecs="mp4a.40.2"'] },
+      'cbcs'
+    );
+
+    // `requestMediaKeySystemAccess` picks the first supported entry, so a CDM that refuses the
+    // `encryptionScheme` member still negotiates on the second.
+    expect(configs).toHaveLength(2);
+    expect(configs[1]?.videoCapabilities).toEqual([{ contentType: 'video/mp4; codecs="avc1.4d401f"' }]);
+    expect(configs[1]?.audioCapabilities).toEqual([{ contentType: 'audio/mp4; codecs="mp4a.40.2"' }]);
+    expect(configs[1]?.initDataTypes).toEqual(['cenc']);
+  });
+
+  it('offers only one configuration when no scheme is declared', () => {
+    const configs = buildKeySystemConfigurations('com.widevine.alpha', {
+      video: ['video/mp4; codecs="avc1.4d401f"'],
+      audio: [],
+    });
+
+    expect(configs).toHaveLength(1);
+  });
+
   it('omits a capability list when that type has no content types', () => {
     const [config] = buildKeySystemConfigurations('com.widevine.alpha', {
       video: ['video/mp4; codecs="avc1.4d401f"'],
