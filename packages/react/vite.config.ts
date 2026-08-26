@@ -53,6 +53,10 @@ export default defineConfig({
   },
   resolve: {
     alias: srcAlias,
+    // These tests run in a simulated browser, but Vitest transforms through the SSR pipeline, where `browser`
+    // is not a resolve condition. Without it a dependency that answers `browser` separately — `@videojs/media`
+    // does, for the medias whose engine has a server build — hands its server stand-in to a jsdom suite.
+    conditions: ['browser', 'development', 'module', 'import', 'default'],
   },
   test: {
     environment: 'jsdom',

@@ -261,6 +261,12 @@ export default defineConfig({
   define: {
     __DEV__: 'true',
   },
+  resolve: {
+    // These tests run in a simulated browser, but Vitest transforms through the SSR pipeline, where `browser`
+    // is not a resolve condition. Without it a dependency that answers `browser` separately — `@videojs/media`
+    // does, for the medias whose engine has a server build — hands its server stand-in to a happy-dom suite.
+    conditions: ['browser', 'development', 'module', 'import', 'default'],
+  },
   test: {
     passWithNoTests: true,
     onConsoleLog: (log) => !log.includes('Lit is in dev mode'),
