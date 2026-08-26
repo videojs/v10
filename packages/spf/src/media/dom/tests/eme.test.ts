@@ -1,4 +1,5 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
+
 import type { Presentation } from '../../types';
 import {
   buildKeySystemConfigurations,
@@ -89,6 +90,7 @@ describe('initDataFromKeyUri', () => {
 describe('declaredDrmKeys', () => {
   it('collects keys from resolved tracks', () => {
     const presentation = makePresentation([makeResolvedTrack([WIDEVINE_KEY, FAIRPLAY_KEY])]);
+
     expect(declaredDrmKeys(presentation)).toEqual([WIDEVINE_KEY, FAIRPLAY_KEY]);
   });
 
@@ -97,6 +99,7 @@ describe('declaredDrmKeys', () => {
       makeResolvedTrack([WIDEVINE_KEY]),
       makeResolvedTrack([WIDEVINE_KEY], { id: 'v-2', url: 'https://example.com/v2.m3u8' }),
     ]);
+
     expect(declaredDrmKeys(presentation)).toEqual([WIDEVINE_KEY]);
   });
 
@@ -124,6 +127,7 @@ describe('requestKeySystemAccess', () => {
   it('walks PlayReady variants in order and reports the configured base id', async () => {
     const spy = vi.spyOn(navigator, 'requestMediaKeySystemAccess');
     const access = {} as MediaKeySystemAccess;
+
     spy.mockRejectedValueOnce(new Error('no recommendation CDM')).mockResolvedValueOnce(access);
 
     const result = await requestKeySystemAccess(['com.microsoft.playready'], { video: [], audio: [] });
@@ -142,6 +146,7 @@ describe('toCencInitData', () => {
   const pssh = (() => {
     // A minimal well-formed v0 PSSH box wrapping `payload`.
     const box = new Uint8Array(36);
+
     new DataView(box.buffer).setUint32(0, 36);
     box.set([0x70, 0x73, 0x73, 0x68], 4); // 'pssh'
     new DataView(box.buffer).setUint32(28, 4);
@@ -174,7 +179,9 @@ describe('toCencInitData', () => {
 describe('shapeLicenseRequest', () => {
   const utf16 = (text: string) => {
     const bytes = new Uint8Array(text.length * 2);
+
     for (let i = 0; i < text.length; i++) new DataView(bytes.buffer).setUint16(i * 2, text.charCodeAt(i), true);
+
     return bytes;
   };
 
