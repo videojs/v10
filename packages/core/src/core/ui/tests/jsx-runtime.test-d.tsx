@@ -21,21 +21,23 @@ import { Slot, Text } from 'vjsc/components';
 describe('constrained JSX', () => {
   it('accepts typed components and nested compound parts', () => {
     void (
-      <Controls.Root className="controls">
-        <Tooltip.Provider delay={300}>
-          <Controls.Group>
-            <Tooltip.Root side="top">
-              <Tooltip.Trigger>
-                <PlayButton className={['button', undefined, false]} />
-              </Tooltip.Trigger>
-              <Tooltip.Popup>
-                <Tooltip.Label />
-                <Tooltip.Shortcut />
-              </Tooltip.Popup>
-            </Tooltip.Root>
-            <SeekButton seconds={-10} />
-          </Controls.Group>
-        </Tooltip.Provider>
+      <Controls.Root>
+        <Controls.Content className="controls">
+          <Tooltip.Provider delay={300}>
+            <Controls.Group>
+              <Tooltip.Root side="top">
+                <Tooltip.Trigger>
+                  <PlayButton className={['button', undefined, false]} />
+                </Tooltip.Trigger>
+                <Tooltip.Popup>
+                  <Tooltip.Label />
+                  <Tooltip.Shortcut />
+                </Tooltip.Popup>
+              </Tooltip.Root>
+              <SeekButton seconds={-10} />
+            </Controls.Group>
+          </Tooltip.Provider>
+        </Controls.Content>
       </Controls.Root>
     );
 

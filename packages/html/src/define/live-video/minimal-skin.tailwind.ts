@@ -59,7 +59,8 @@ function getTemplateHTML() {
         </media-dialog-popup>
       </media-error-dialog>
 
-      <media-controls data-controls="" class="${controls}">
+      <media-controls>
+        <media-controls-content data-controls="" class="${controls}">
         <media-tooltip-group>
           <div class="${buttonGroupStart}">
               <media-play-button commandfor="play-tooltip" class="${cn(button.base, button.subtle, button.icon, iconState.play.button)}">
@@ -153,6 +154,7 @@ function getTemplateHTML() {
               </media-tooltip>
           </div>
         </media-tooltip-group>
+        </media-controls-content>
       </media-controls>
 
       <div class="${overlay}"></div>

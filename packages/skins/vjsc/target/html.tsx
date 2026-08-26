@@ -16,6 +16,7 @@ const componentParts: Readonly<Record<string, Readonly<Record<string, string>>>>
   Controls: {
     Root: 'Controls',
     Backdrop: 'ControlsBackdrop',
+    Content: 'ControlsContent',
     Group: 'ControlsGroup',
   },
   ErrorDialog: {

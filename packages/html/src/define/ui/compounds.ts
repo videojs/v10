@@ -1,5 +1,6 @@
 import { AlertDialogElement } from '../../ui/alert-dialog/alert-dialog-element';
 import { ControlsBackdropElement } from '../../ui/controls/controls-backdrop-element';
+import { ControlsContentElement } from '../../ui/controls/controls-content-element';
 import { ControlsElement } from '../../ui/controls/controls-element';
 import { ControlsGroupElement } from '../../ui/controls/controls-group-element';
 import { DialogBackdropElement } from '../../ui/dialog/dialog-backdrop-element';
@@ -64,6 +65,7 @@ export function defineMenu(): void {
 export function defineControls(): void {
   safeDefine(ControlsElement);
   safeDefine(ControlsBackdropElement);
+  safeDefine(ControlsContentElement);
   safeDefine(ControlsGroupElement);
 }
 

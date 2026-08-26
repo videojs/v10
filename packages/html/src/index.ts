@@ -81,6 +81,7 @@ export { CastButtonElement } from './ui/cast-button/cast-button-element';
 export { ContainerElement } from './ui/container/container-element';
 export { ContextPartElement, type PartContextValue } from './ui/context-part-element';
 export { ControlsBackdropElement } from './ui/controls/controls-backdrop-element';
+export { ControlsContentElement } from './ui/controls/controls-content-element';
 export { ControlsElement } from './ui/controls/controls-element';
 export { ControlsGroupElement } from './ui/controls/controls-group-element';
 export { type DialogContextValue, dialogContext } from './ui/dialog/context';

@@ -60,7 +60,8 @@ function getTemplateHTML() {
         </media-dialog-popup>
       </media-error-dialog>
 
-      <media-controls data-controls="" class="${controls}">
+      <media-controls>
+        <media-controls-content data-controls="" class="${controls}">
         <media-tooltip-group>
           <div class="${primaryControls}">
             <div class="${buttonGroupStart}">
@@ -155,6 +156,7 @@ function getTemplateHTML() {
             </div>
           </div>
         </media-tooltip-group>
+        </media-controls-content>
       </media-controls>
 
       <div class="${overlay}"></div>

@@ -10,7 +10,7 @@
  * Each selector uses a CSS `,` (or) to match either renderer.
  */
 
-/** Toolbar: HTML wraps controls in `<media-controls>`, React in `<div class="media-controls">`. */
+/** Toolbar: HTML renders `<media-controls-content>`, React a `<div class="media-controls">`. */
 function withinControls(selector: string): string {
   return `media-controls ${selector}, .media-controls ${selector}`;
 }
@@ -40,7 +40,7 @@ export const SELECTORS = {
   container: '.media-default-skin, .media-minimal-skin',
 
   // Controls bar
-  controls: 'media-controls, .media-controls',
+  controls: 'media-controls-content, .media-controls',
 
   // Buttons
   playButton: 'media-play-button, .media-button--play',

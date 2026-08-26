@@ -45,7 +45,8 @@
     media-tooltip-group,
     media-dialog,
     media-alert-dialog,
-    media-error-dialog {
+    media-error-dialog,
+    media-controls {
       display: contents;
     }
 

@@ -41,7 +41,8 @@ function getTemplateHTML() {
         </media-dialog-popup>
       </media-error-dialog>
 
-      <media-controls class="media-controls">
+      <media-controls>
+        <media-controls-content class="media-controls">
         <media-tooltip-group>
           <div class="media-button-group">
             <media-play-button commandfor="play-tooltip" class="media-button media-button--subtle media-button--icon media-button--play">
@@ -139,6 +140,7 @@ function getTemplateHTML() {
             </media-tooltip>
           </div>
         </media-tooltip-group>
+        </media-controls-content>
       </media-controls>
 
       <div class="media-overlay"></div>

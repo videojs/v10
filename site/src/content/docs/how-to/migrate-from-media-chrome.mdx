@@ -66,10 +66,12 @@ Media Chrome wraps a slotted `<video slot="media">` in a single `<media-controll
       <media-container>
         <video src="video.mp4"></video>
         <media-controls>
-          <media-play-button class="player-play-button">
-            <media-icon class="player-play-icon" name="play"></media-icon>
-            <media-icon class="player-pause-icon" name="pause"></media-icon>
-          </media-play-button>
+          <media-controls-content>
+            <media-play-button class="player-play-button">
+              <media-icon class="player-play-icon" name="play"></media-icon>
+              <media-icon class="player-pause-icon" name="pause"></media-icon>
+            </media-play-button>
+          </media-controls-content>
         </media-controls>
       </media-container>
     </video-player>

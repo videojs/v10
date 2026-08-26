@@ -182,6 +182,7 @@ describe('composite define registration', () => {
 
       expect(batch[0]).toBe('media-controls');
       expect(batch).toContain('media-controls-backdrop');
+      expect(batch).toContain('media-controls-content');
       expect(batch).toContain('media-controls-group');
     });
   });
@@ -228,6 +229,7 @@ describe('composite define registration', () => {
         // Controls
         'media-controls',
         'media-controls-backdrop',
+        'media-controls-content',
         'media-controls-group',
         // Dialogs
         'media-alert-dialog',

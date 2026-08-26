@@ -103,6 +103,7 @@ export {
 } from './ui/captions-radio-group';
 export { CastButton, type CastButtonProps } from './ui/cast-button/cast-button';
 export { Controls } from './ui/controls';
+export type { ControlsContentProps } from './ui/controls/controls-content';
 export type { ControlsGroupProps } from './ui/controls/controls-group';
 export type { ControlsRootProps } from './ui/controls/controls-root';
 export { Dialog, type DialogContextValue, useDialogContext } from './ui/dialog';
