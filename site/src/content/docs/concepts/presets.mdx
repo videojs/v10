@@ -85,11 +85,11 @@ Registration is explicit, so importing a value never changes the custom element 
 
 ```ts
 import '@videojs/html/video/player'; // <video-player> only
-import '@videojs/html/video/ui';     // <media-container> + video UI
 import '@videojs/html/video/skin';   // <video-skin> + container + video UI
+// Import '@videojs/html/video/minimal-skin' instead for the minimal skin.
 ```
 
-A complete default player imports `video/player` and `video/skin`. Import `video/ui` instead of the skin when rendering an ejected light-DOM layout.
+A complete player imports `video/player` and one skin. Each skin registration includes its container and UI dependencies but does not register the player.
 </FrameworkCase>
 
 ## Customizing a preset

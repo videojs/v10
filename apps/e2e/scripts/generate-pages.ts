@@ -427,7 +427,7 @@ video.innerHTML = \`<track kind="metadata" label="thumbnails" src="\${MEDIA.${re
 poster.src = MEDIA.${resource}.poster;
 poster.alt = 'Video poster';
 
-await import('@videojs/html/video/ui');
+await import('@videojs/html/video/skin');
 `;
 }
 

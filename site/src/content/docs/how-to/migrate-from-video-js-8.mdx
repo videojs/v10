@@ -357,11 +357,11 @@ This is where v8's `controlBar` config and `addChild` calls end up, and honestly
 
 <FrameworkCase frameworks={["html"]}>
 
-Keep the player import and swap the skin import for `video/ui`, which registers the container and every UI element without wrapping them in a skin:
+Keep the player and skin registration imports. The skin import registers the container and UI elements that your ejected layout uses; you do not render the skin element itself:
 
 ```js
 import '@videojs/html/video/player';
-import '@videojs/html/video/ui';
+import '@videojs/html/video/skin';
 ```
 
 Then write the layout yourself:
