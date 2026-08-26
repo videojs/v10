@@ -122,6 +122,7 @@ describe('makeCanPlayTrackWithDrm', () => {
 
   it('still refuses an encrypted rendition no configured system serves', () => {
     const spy = vi.spyOn(MediaSource, 'isTypeSupported').mockReturnValue(true);
+
     expect(probe(encryptedTrack([FAIRPLAY_KEY], ['drm.codec.2']))).toBe(false);
     expect(spy).not.toHaveBeenCalled();
   });

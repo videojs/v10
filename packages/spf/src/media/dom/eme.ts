@@ -1,9 +1,8 @@
 /**
- * Browser EME helpers for DRM-composed engines: `MediaKeySystemAccess`
- * negotiation, MediaKeys attachment, manifest-carried init-data decoding, and
- * the license POST. Stateless helpers — `setupMediaKeys` owns all lifecycle.
- * The DOM-free DRM model half (config contract, KEYFORMAT mapping, declared
- * keys, candidate selection) lives in `../drm.ts` and is re-exported here.
+ * Browser EME helpers for DRM-composed engines: `MediaKeySystemAccess` negotiation, MediaKeys attachment,
+ * manifest-carried init-data decoding, and the license POST. Stateless helpers — `setupMediaKeys` owns all lifecycle.
+ * The DOM-free DRM model half (config contract, KEYFORMAT mapping, declared keys, candidate selection) lives in
+ * `../drm.ts` and is re-exported here.
  */
 import type { MaybeResolvedPresentation } from '../types';
 import { buildMimeCodec } from './mse/mediasource-setup';
@@ -24,9 +23,9 @@ export {
 } from '../drm';
 
 /**
- * The unique audio/video content types across every track that declares
- * codecs — the capability surface a `MediaKeySystemConfiguration` negotiates
- * over. Includes unresolved tracks: the multivariant already carries `CODECS`.
+ * The unique audio/video content types across every track that declares codecs — the capability surface a
+ * `MediaKeySystemConfiguration` negotiates over. Includes unresolved tracks: the multivariant already carries
+ * `CODECS`.
  */
 export function contentTypesFromPresentation(presentation: MaybeResolvedPresentation | undefined): {
   video: string[];
@@ -34,33 +33,36 @@ export function contentTypesFromPresentation(presentation: MaybeResolvedPresenta
 } {
   const video = new Set<string>();
   const audio = new Set<string>();
+
   for (const selectionSet of presentation?.selectionSets ?? []) {
     for (const switchingSet of selectionSet.switchingSets) {
       for (const track of switchingSet.tracks) {
         if (track.type !== 'video' && track.type !== 'audio') continue;
+
         if (!track.mimeType || !track.codecs?.length) continue;
+
         const bucket = track.type === 'video' ? video : audio;
+
         bucket.add(buildMimeCodec({ mimeType: track.mimeType, codecs: track.codecs }));
       }
     }
   }
+
   return { video: [...video], audio: [...audio] };
 }
 
 /**
- * Init-data types per key system. FairPlay's are its own — Safari rejects a
- * cenc-only configuration; on the MSE path its init data arrives as `sinf`.
+ * Init-data types per key system. FairPlay's are its own — Safari rejects a cenc-only configuration; on the MSE path
+ * its init data arrives as `sinf`.
  */
 const INIT_DATA_TYPES_BY_KEY_SYSTEM: Readonly<Record<string, readonly string[]>> = {
   'com.apple.fps': ['sinf', 'cenc'],
 };
 
 /**
- * A single MediaKeySystemConfiguration for one key system over the given
- * content types, each capability stamped with the declared encryption scheme
- * when there is one (see `declaredEncryptionScheme`). No robustness ladder —
- * the CDM's default suffices until security-level constraint filtering lands
- * (see drm-support.md's security-level phase).
+ * A single MediaKeySystemConfiguration for one key system over the given content types, each capability stamped with
+ * the declared encryption scheme when there is one (see `declaredEncryptionScheme`). No robustness ladder — the CDM's
+ * default suffices until security-level constraint filtering lands (see drm-support.md's security-level phase).
  */
 export function buildKeySystemConfigurations(
   keySystem: string,
@@ -71,6 +73,7 @@ export function buildKeySystemConfigurations(
     contentType,
     ...(encryptionScheme !== undefined && { encryptionScheme }),
   });
+
   return [
     {
       initDataTypes: [...(INIT_DATA_TYPES_BY_KEY_SYSTEM[keySystem] ?? ['cenc'])],
@@ -81,37 +84,36 @@ export function buildKeySystemConfigurations(
 }
 
 /**
- * Decode the init data a key declaration carries inline. Mux (and RFC 8216bis
- * practice) delivers Widevine PSSH / PlayReady PRO as a base64 `data:` URI in
- * the key's `URI` attribute. Non-`data:` URIs (FairPlay's `skd://`, an
- * AES-128 key file) carry no EME init data — those flows are event-driven or
- * not EME at all.
+ * Decode the init data a key declaration carries inline. Mux (and RFC 8216bis practice) delivers Widevine PSSH /
+ * PlayReady PRO as a base64 `data:` URI in the key's `URI` attribute. Non-`data:` URIs (FairPlay's `skd://`, an AES-128
+ * key file) carry no EME init data — those flows are event-driven or not EME at all.
  */
 export function initDataFromKeyUri(uri: string): Uint8Array<ArrayBuffer> | undefined {
   if (!uri.startsWith('data:')) return undefined;
+
   const comma = uri.indexOf(',');
   if (comma === -1 || !uri.slice(0, comma).endsWith(';base64')) return undefined;
+
   const binary = atob(uri.slice(comma + 1));
   const bytes = new Uint8Array(binary.length);
+
   for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+
   return bytes;
 }
 
 /**
- * Request-string variants per configured key system, most-preferred first.
- * Modern Edge exposes PlayReady reliably as `.recommendation`; the plain id
- * still answers on older stacks. The negotiation result reports the
- * *configured* base id, which license-server lookup and message shaping key
- * off.
+ * Request-string variants per configured key system, most-preferred first. Modern Edge exposes PlayReady reliably as
+ * `.recommendation`; the plain id still answers on older stacks. The negotiation result reports the _configured_ base
+ * id, which license-server lookup and message shaping key off.
  */
 const KEY_SYSTEM_VARIANTS: Readonly<Record<string, readonly string[]>> = {
   'com.microsoft.playready': ['com.microsoft.playready.recommendation', 'com.microsoft.playready'],
 };
 
 /**
- * Negotiate CDM access: ask for each candidate (and each of its request-string
- * variants) in order with a configuration built for that system, first success
- * wins. Resolves `undefined` when every candidate is refused (or none were
+ * Negotiate CDM access: ask for each candidate (and each of its request-string variants) in order with a configuration
+ * built for that system, first success wins. Resolves `undefined` when every candidate is refused (or none were
  * given).
  */
 export async function requestKeySystemAccess(
@@ -121,6 +123,7 @@ export async function requestKeySystemAccess(
 ): Promise<{ keySystem: string; access: MediaKeySystemAccess } | undefined> {
   for (const keySystem of keySystems) {
     const configurations = buildKeySystemConfigurations(keySystem, contentTypes, encryptionScheme);
+
     for (const variant of KEY_SYSTEM_VARIANTS[keySystem] ?? [keySystem]) {
       try {
         return { keySystem, access: await navigator.requestMediaKeySystemAccess(variant, configurations) };
@@ -129,16 +132,15 @@ export async function requestKeySystemAccess(
       }
     }
   }
+
   return undefined;
 }
 
 /**
- * Shape a CDM license message for its server. Widevine and FairPlay POST the
- * raw bytes as octet-stream (Mux's FairPlay server takes the bare SPC).
- * PlayReady is XML-shaped: classic CDMs wrap the challenge in a UTF-16
- * `PlayReadyKeyMessage` envelope whose `HttpHeaders` name the real request
- * headers and whose `Challenge` is base64 — unwrap it; modern
- * (`.recommendation`) CDMs emit the challenge directly, sent as XML.
+ * Shape a CDM license message for its server. Widevine and FairPlay POST the raw bytes as octet-stream (Mux's FairPlay
+ * server takes the bare SPC). PlayReady is XML-shaped: classic CDMs wrap the challenge in a UTF-16
+ * `PlayReadyKeyMessage` envelope whose `HttpHeaders` name the real request headers and whose `Challenge` is base64 —
+ * unwrap it; modern (`.recommendation`) CDMs emit the challenge directly, sent as XML.
  */
 export function shapeLicenseRequest(
   keySystem: string,
@@ -147,28 +149,34 @@ export function shapeLicenseRequest(
   if (keySystem !== 'com.microsoft.playready') {
     return { body: message, headers: { 'Content-Type': 'application/octet-stream' } };
   }
+
   const text = new TextDecoder('utf-16le').decode(message).replace(/^\uFEFF/, '');
+
   if (!text.includes('PlayReadyKeyMessage')) {
     return { body: message, headers: { 'Content-Type': 'text/xml; charset=utf-8' } };
   }
 
   const document_ = new DOMParser().parseFromString(text, 'application/xml');
   const headers: Record<string, string> = {};
+
   for (const header of document_.querySelectorAll('HttpHeader')) {
     const name = header.querySelector('name')?.textContent;
     const value = header.querySelector('value')?.textContent;
+
     if (name && value) headers[name] = value;
   }
+
   const binary = atob(document_.querySelector('Challenge')?.textContent ?? '');
   const body = new Uint8Array(binary.length);
+
   for (let i = 0; i < binary.length; i++) body[i] = binary.charCodeAt(i);
+
   return { body, headers };
 }
 
 /**
- * Fetch the DRM server (application) certificate. FairPlay needs it applied
- * (`MediaKeys.setServerCertificate`) before any license request can be
- * generated; Widevine and PlayReady configs simply don't name one.
+ * Fetch the DRM server (application) certificate. FairPlay needs it applied (`MediaKeys.setServerCertificate`) before
+ * any license request can be generated; Widevine and PlayReady configs simply don't name one.
  */
 export async function fetchServerCertificate(
   serverCertificateUrl: string,
@@ -176,6 +184,7 @@ export async function fetchServerCertificate(
 ): Promise<Uint8Array<ArrayBuffer>> {
   const response = await fetch(serverCertificateUrl, { signal });
   if (!response.ok) throw new Error(`Server certificate request failed with status ${response.status}`);
+
   return new Uint8Array(await response.arrayBuffer());
 }
 
@@ -185,9 +194,8 @@ export function attachMediaKeys(mediaElement: HTMLMediaElement, mediaKeys: Media
 }
 
 /**
- * Exchange a CDM license message for the server's license. Every major key
- * system POSTs the raw message bytes; per-system body shaping (PlayReady
- * challenge unwrap, FairPlay SPC forms) layers on top when those systems land.
+ * Exchange a CDM license message for the server's license. Every major key system POSTs the raw message bytes;
+ * per-system body shaping (PlayReady challenge unwrap, FairPlay SPC forms) layers on top when those systems land.
  */
 export async function fetchLicense(
   licenseUrl: string,
@@ -202,5 +210,6 @@ export async function fetchLicense(
     signal,
   });
   if (!response.ok) throw new Error(`License request failed with status ${response.status}`);
+
   return new Uint8Array(await response.arrayBuffer());
 }

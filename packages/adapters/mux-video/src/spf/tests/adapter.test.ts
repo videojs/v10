@@ -24,6 +24,7 @@ vi.mock('@videojs/spf/hls', async () => {
 // base64url, so it survives a query string untouched.
 function fakeJwt(payload: Record<string, unknown>): string {
   const encode = (obj: unknown) => btoa(JSON.stringify(obj)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+
   return `${encode({ alg: 'HS256' })}.${encode(payload)}.`;
 }
 
@@ -35,12 +36,14 @@ function fakeJwt(payload: Record<string, unknown>): string {
 function licenseUrl(keySystem: string): string | undefined {
   const calls = vi.mocked(createHlsVideoEngine).mock.calls;
   const drm = calls[calls.length - 1]![0]!.drm!;
+
   return resolveDrmUrl(drm[keySystem]?.licenseUrl);
 }
 
 function serverCertificateUrl(keySystem: string): string | undefined {
   const calls = vi.mocked(createHlsVideoEngine).mock.calls;
   const drm = calls[calls.length - 1]![0]!.drm!;
+
   return resolveDrmUrl(drm[keySystem]?.serverCertificateUrl);
 }
 

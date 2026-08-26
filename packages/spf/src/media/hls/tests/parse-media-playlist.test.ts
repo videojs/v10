@@ -1305,6 +1305,7 @@ ${keyLines}
       'com.apple.streamingkeydelivery',
     ]);
     const widevine = keys?.[0];
+
     expect(widevine?.method).toBe('SAMPLE-AES');
     expect(widevine?.uri).toMatch(/^data:text\/plain;base64,AAAAlnBzc2g/);
     expect(widevine?.keyId).toBe('0xbfd7ce06e7f24ca811498a15d29b0376');
