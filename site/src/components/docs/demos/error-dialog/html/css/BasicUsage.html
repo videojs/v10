@@ -9,10 +9,13 @@
       loop
     ></video>
     <button class="html-error-dialog-basic__trigger" type="button">Trigger a playback error</button>
-    <media-error-dialog class="html-error-dialog-basic__dialog" tabindex="-1">
-      <media-alert-dialog-title class="html-error-dialog-basic__title"></media-alert-dialog-title>
-      <media-alert-dialog-description class="html-error-dialog-basic__description"></media-alert-dialog-description>
-      <media-alert-dialog-close class="html-error-dialog-basic__close"></media-alert-dialog-close>
+    <media-error-dialog>
+      <media-dialog-backdrop class="html-error-dialog-basic__backdrop"></media-dialog-backdrop>
+      <media-dialog-popup class="html-error-dialog-basic__dialog">
+        <media-dialog-title class="html-error-dialog-basic__title"></media-dialog-title>
+        <media-dialog-description class="html-error-dialog-basic__description"></media-dialog-description>
+        <media-dialog-close class="html-error-dialog-basic__close"></media-dialog-close>
+      </media-dialog-popup>
     </media-error-dialog>
   </media-container>
 </video-player>

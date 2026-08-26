@@ -83,8 +83,10 @@ If you want more control than a packaged skin offers, build your own UI from our
   <Container> {/* [!code focus] */}
     <Video src="video.mp4" />
     <Controls.Root> {/* [!code focus] */}
-      <PlayButton /> {/* [!code focus] */}
-      {/* ... */} {/* [!code focus] */}
+      <Controls.Content> {/* [!code focus] */}
+        <PlayButton /> {/* [!code focus] */}
+        {/* ... */} {/* [!code focus] */}
+      </Controls.Content> {/* [!code focus] */}
     </Controls.Root> {/* [!code focus] */}
   </Container> {/* [!code focus] */}
 </VideoPlayer>
@@ -96,8 +98,10 @@ If you want more control than a packaged skin offers, build your own UI from our
   <media-container> <!-- [!code focus] -->
     <video src="video.mp4"></video>
     <media-controls> <!-- [!code focus] -->
-      <media-play-button></media-play-button> <!-- [!code focus] -->
-      <!-- ... --> <!-- [!code focus] -->
+      <media-controls-content> <!-- [!code focus] -->
+        <media-play-button></media-play-button> <!-- [!code focus] -->
+        <!-- ... --> <!-- [!code focus] -->
+      </media-controls-content> <!-- [!code focus] -->
     </media-controls> <!-- [!code focus] -->
   </media-container> <!-- [!code focus] -->
 </video-player>

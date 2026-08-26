@@ -52,10 +52,10 @@ function VolumeSlider() {
 import { createPlayer, UIElement, selectVolume } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
 
-const { PlayerController, context } = createPlayer({ features: videoFeatures });
+const { PlayerController } = createPlayer({ features: videoFeatures });
 
 class VolumeSlider extends UIElement {
-  readonly #volume = new PlayerController(this, context, selectVolume);
+  readonly #volume = new PlayerController(this, selectVolume);
 }
 ```
 </FrameworkCase>

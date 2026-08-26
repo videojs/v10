@@ -1,8 +1,18 @@
-// Registers the video player, container, and all video UI custom elements
+// Registers the container and all video UI custom elements
 // without creating a skin element. Use this entry when building an ejected
 // (light DOM) player layout.
 
 import { I18nProviderElement } from '../../i18n/provider-element';
+import { safeDefine } from '../../registration/safe-define';
+import {
+  defineControls,
+  defineErrorDialog,
+  defineInputIndicators,
+  defineMenu,
+  defineSliders,
+  defineTime,
+  defineTooltip,
+} from '../../registration/ui-compounds';
 import { AirPlayButtonElement } from '../../ui/airplay-button/airplay-button-element';
 import { AudioTrackRadioGroupElement } from '../../ui/audio-track-radio-group/audio-track-radio-group-element';
 import { BufferingIndicatorElement } from '../../ui/buffering-indicator/buffering-indicator-element';
@@ -26,22 +36,9 @@ import { SeekButtonElement } from '../../ui/seek-button/seek-button-element';
 import { TextElement } from '../../ui/text/text-element';
 import { TimeSliderChapterTitleElement } from '../../ui/time-slider/time-slider-chapters/time-slider-chapter-title-element';
 import { TimeSliderChaptersElement } from '../../ui/time-slider/time-slider-chapters/time-slider-chapters-element';
-import { safeDefine } from '../safe-define';
-import {
-  defineControls,
-  defineErrorDialog,
-  defineInputIndicators,
-  defineMenu,
-  defineSliders,
-  defineTime,
-  defineTooltip,
-} from '../ui/compounds';
-// Value import — player.ts body runs before this module's body.
-import { VideoPlayerElement } from './player';
 
 // ── Registration (providers / parents first) ────────────────────────────
 
-safeDefine(VideoPlayerElement);
 safeDefine(ContainerElement);
 safeDefine(I18nProviderElement);
 

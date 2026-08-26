@@ -104,6 +104,22 @@ export class PlayerController<Store extends PlayerStore, Result = Store> impleme
   }
 }
 
+export function createPlayerController<Store extends PlayerStore>(
+  context: PlayerContext<Store>
+): PlayerController.ConfiguredConstructor<Store> {
+  class ConfiguredPlayerController<Result = Store> extends PlayerController<Store, Result> {
+    constructor(host: PlayerControllerHost, selector?: Selector<InferStoreState<Store>, Result>) {
+      if (selector) {
+        super(host, context, selector);
+      } else {
+        super(host, context);
+      }
+    }
+  }
+
+  return ConfiguredPlayerController;
+}
+
 export namespace PlayerController {
   export type Host = PlayerControllerHost;
 
@@ -111,4 +127,12 @@ export namespace PlayerController {
     Store,
     Result
   >;
+
+  export interface ConfiguredConstructor<Store extends PlayerStore> {
+    new (host: PlayerControllerHost): PlayerController<Store>;
+    new <Result>(
+      host: PlayerControllerHost,
+      selector: Selector<InferStoreState<Store>, Result>
+    ): PlayerController<Store, Result>;
+  }
 }

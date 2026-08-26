@@ -1,5 +1,5 @@
 import { MuxBackgroundVideo } from '../../media/mux-background-video';
-import { safeDefine } from '../safe-define';
+import { safeDefine } from '../../registration/safe-define';
 
 /**
  * `<mux-background-video>` — the Mux-flavored tag for `<hls-background-video>`.

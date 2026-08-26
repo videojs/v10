@@ -1209,30 +1209,32 @@ import { cn } from "@videojs/utils/style";
 
 export function DefaultVideoControls() {
   return (
-    <Controls.Root className={cn('media-controls', "media-controls")}>
+    <Controls.Root>
       <Controls.Backdrop className={"media-controls-backdrop"} />
-      <Tooltip.Provider>
-        <Controls.Group className={cn("media-surface", "media-controls-primary")}>
-          <PlayButton />
-          <VolumePopover />
+      <Controls.Content className={cn('media-controls', "media-controls")}>
+        <Tooltip.Provider>
+          <Controls.Group className={cn("media-surface", "media-controls-primary")}>
+            <PlayButton />
+            <VolumePopover />
 
-          <Controls.Group className={"media-time-slider-group"}>
-            <Time.Value className={"media-time-current-value"} type="current" />
-            <TimeSlider />
-            <Time.Value className={"media-time-remaining-value"} type="remaining" toggle />
+            <Controls.Group className={"media-time-slider-group"}>
+              <Time.Value className={"media-time-current-value"} type="current" />
+              <TimeSlider />
+              <Time.Value className={"media-time-remaining-value"} type="remaining" toggle />
+            </Controls.Group>
+
+            <CaptionsButton className={"media-controls-captions-button"} />
+            <VideoSettingsMenu />
           </Controls.Group>
 
-          <CaptionsButton className={"media-controls-captions-button"} />
-          <VideoSettingsMenu />
-        </Controls.Group>
-
-        <Controls.Group className={cn("media-surface", "media-controls-secondary")}>
-          <CastButton />
-          <AirPlayButton />
-          <PiPButton />
-          <FullscreenButton />
-        </Controls.Group>
-      </Tooltip.Provider>
+          <Controls.Group className={cn("media-surface", "media-controls-secondary")}>
+            <CastButton />
+            <AirPlayButton />
+            <PiPButton />
+            <FullscreenButton />
+          </Controls.Group>
+        </Tooltip.Provider>
+      </Controls.Content>
     </Controls.Root>
   );
 }
@@ -2386,30 +2388,32 @@ import { cn } from "@videojs/utils/style";
 
 export function DefaultVideoControls() {
   return (
-    <Controls.Root className={cn('media-controls', "group/controls contents p-1 text-white", "[--media-popover-side-offset:--spacing(3)]", "[--media-tooltip-side-offset:var(--media-popover-side-offset)]", "[--media-popover-boundary-offset:0.75rem] [--media-tooltip-boundary-offset:var(--media-popover-boundary-offset)]", "@lg/media-root:absolute @lg/media-root:inset-x-2 @lg/media-root:bottom-2 @lg/media-root:z-10", "@lg/media-root:flex @lg/media-root:items-center @lg/media-root:gap-px @lg/media-root:rounded-media-control", "text-shadow-[0_1px_0_rgb(0_0_0/0.15)]", "@lg/media-root:text-white @lg/media-root:backdrop-blur-lg @lg/media-root:backdrop-saturate-150", "@lg/media-root:after:pointer-events-none @lg/media-root:after:absolute @lg/media-root:after:inset-0 @lg/media-root:after:z-10 @lg/media-root:after:rounded-[inherit]", "@lg/media-root:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.1),inset_0_0_0_1px_rgb(255_255_255/0.05)]", "@lg/media-root:[@media(prefers-reduced-transparency:reduce)]:bg-black @lg/media-root:[@media(prefers-reduced-transparency:reduce)]:ring-1 @lg/media-root:[@media(prefers-reduced-transparency:reduce)]:ring-transparent", "@lg/media-root:[@media(prefers-reduced-transparency:reduce)]:backdrop-filter-none", "@lg/media-root:[@media(prefers-reduced-transparency:reduce)]:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "@lg/media-root:contrast-more:bg-black @lg/media-root:contrast-more:ring-1 @lg/media-root:contrast-more:ring-transparent @lg/media-root:contrast-more:backdrop-filter-none", "@lg/media-root:contrast-more:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "@lg/media-root:forced-colors:bg-[Canvas] @lg/media-root:forced-colors:ring-1 @lg/media-root:forced-colors:ring-[CanvasText]", "@lg/media-root:forced-colors:after:shadow-[inset_0_1px_0_0_CanvasText,inset_0_0_0_1px_CanvasText]", "@lg/media-root:shadow-sm @lg/media-root:shadow-black/15 @lg/media-root:ring-1 @lg/media-root:ring-black/10", "@lg/media-root:[@media(prefers-reduced-transparency:reduce)]:shadow-sm @lg/media-root:[@media(prefers-reduced-transparency:reduce)]:shadow-black/15", "@lg/media-root:contrast-more:shadow-sm @lg/media-root:contrast-more:shadow-black/15", "@lg/media-root:forced-colors:shadow-sm @lg/media-root:forced-colors:shadow-black/15", "@lg/media-root:bg-white/10", "@2xl/media-root:inset-x-3 @2xl/media-root:bottom-3", "@lg/media-root:not-data-visible:pointer-events-none @lg/media-root:not-data-visible:opacity-0", "@lg/media-root:motion-safe:not-data-visible:scale-95 @lg/media-root:motion-safe:not-data-visible:translate-y-1", "@lg/media-root:pointer-fine:motion-safe:not-data-visible:blur-sm", "transition-[filter,opacity,scale,translate] duration-(--media-controls-transition-duration) ease-out")}>
+    <Controls.Root>
       <Controls.Backdrop className={"pointer-events-none absolute inset-0 rounded-[inherit] opacity-0 @lg/media-root:inset-auto @lg/media-root:bottom-[-0.5rem] @lg/media-root:left-1/2 @lg/media-root:h-[100cqh] @lg/media-root:w-[100cqw] @lg/media-root:-translate-x-1/2 @2xl/media-root:bottom-[-0.75rem] bg-linear-to-t from-black/50 via-black/30 via-25% to-transparent transition-opacity duration-(--media-controls-transition-duration) ease-out data-visible:opacity-100"} />
-      <Tooltip.Provider>
-        <Controls.Group className={cn("text-white backdrop-blur-lg backdrop-saturate-150", "after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit]", "after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.1),inset_0_0_0_1px_rgb(255_255_255/0.05)]", "[@media(prefers-reduced-transparency:reduce)]:bg-black [@media(prefers-reduced-transparency:reduce)]:ring-1 [@media(prefers-reduced-transparency:reduce)]:ring-transparent", "[@media(prefers-reduced-transparency:reduce)]:backdrop-filter-none", "[@media(prefers-reduced-transparency:reduce)]:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "contrast-more:bg-black contrast-more:ring-1 contrast-more:ring-transparent contrast-more:backdrop-filter-none", "contrast-more:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "forced-colors:bg-[Canvas] forced-colors:ring-1 forced-colors:ring-[CanvasText]", "forced-colors:after:shadow-[inset_0_1px_0_0_CanvasText,inset_0_0_0_1px_CanvasText]", "shadow-sm shadow-black/15 ring-1 ring-black/10", "[@media(prefers-reduced-transparency:reduce)]:shadow-sm [@media(prefers-reduced-transparency:reduce)]:shadow-black/15", "contrast-more:shadow-sm contrast-more:shadow-black/15", "forced-colors:shadow-sm forced-colors:shadow-black/15", "bg-white/10", "absolute inset-x-2 bottom-2 z-10 flex origin-bottom items-center gap-px rounded-media-control", "p-1", "@lg/media-root:contents", "@max-lg/media-root:group-[:not([data-visible])]/controls:pointer-events-none", "@max-lg/media-root:group-[:not([data-visible])]/controls:opacity-0", "@max-lg/media-root:motion-safe:group-[:not([data-visible])]/controls:scale-95", "@max-lg/media-root:motion-safe:group-[:not([data-visible])]/controls:translate-y-1", "transition-[filter,opacity,scale,translate] duration-(--media-controls-transition-duration) ease-out")}>
-          <PlayButton />
-          <VolumePopover />
+      <Controls.Content className={cn('media-controls', "group/controls contents p-1 text-white", "[--media-popover-side-offset:--spacing(3)]", "[--media-tooltip-side-offset:var(--media-popover-side-offset)]", "[--media-popover-boundary-offset:0.75rem] [--media-tooltip-boundary-offset:var(--media-popover-boundary-offset)]", "@lg/media-root:absolute @lg/media-root:inset-x-2 @lg/media-root:bottom-2 @lg/media-root:z-10", "@lg/media-root:flex @lg/media-root:items-center @lg/media-root:gap-px @lg/media-root:rounded-media-control", "text-shadow-[0_1px_0_rgb(0_0_0/0.15)]", "@lg/media-root:text-white @lg/media-root:backdrop-blur-lg @lg/media-root:backdrop-saturate-150", "@lg/media-root:after:pointer-events-none @lg/media-root:after:absolute @lg/media-root:after:inset-0 @lg/media-root:after:z-10 @lg/media-root:after:rounded-[inherit]", "@lg/media-root:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.1),inset_0_0_0_1px_rgb(255_255_255/0.05)]", "@lg/media-root:[@media(prefers-reduced-transparency:reduce)]:bg-black @lg/media-root:[@media(prefers-reduced-transparency:reduce)]:ring-1 @lg/media-root:[@media(prefers-reduced-transparency:reduce)]:ring-transparent", "@lg/media-root:[@media(prefers-reduced-transparency:reduce)]:backdrop-filter-none", "@lg/media-root:[@media(prefers-reduced-transparency:reduce)]:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "@lg/media-root:contrast-more:bg-black @lg/media-root:contrast-more:ring-1 @lg/media-root:contrast-more:ring-transparent @lg/media-root:contrast-more:backdrop-filter-none", "@lg/media-root:contrast-more:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "@lg/media-root:forced-colors:bg-[Canvas] @lg/media-root:forced-colors:ring-1 @lg/media-root:forced-colors:ring-[CanvasText]", "@lg/media-root:forced-colors:after:shadow-[inset_0_1px_0_0_CanvasText,inset_0_0_0_1px_CanvasText]", "@lg/media-root:shadow-sm @lg/media-root:shadow-black/15 @lg/media-root:ring-1 @lg/media-root:ring-black/10", "@lg/media-root:[@media(prefers-reduced-transparency:reduce)]:shadow-sm @lg/media-root:[@media(prefers-reduced-transparency:reduce)]:shadow-black/15", "@lg/media-root:contrast-more:shadow-sm @lg/media-root:contrast-more:shadow-black/15", "@lg/media-root:forced-colors:shadow-sm @lg/media-root:forced-colors:shadow-black/15", "@lg/media-root:bg-white/10", "@2xl/media-root:inset-x-3 @2xl/media-root:bottom-3", "@lg/media-root:not-data-visible:pointer-events-none @lg/media-root:not-data-visible:opacity-0", "@lg/media-root:motion-safe:not-data-visible:scale-95 @lg/media-root:motion-safe:not-data-visible:translate-y-1", "@lg/media-root:pointer-fine:motion-safe:not-data-visible:blur-sm", "transition-[filter,opacity,scale,translate] duration-(--media-controls-transition-duration) ease-out")}>
+        <Tooltip.Provider>
+          <Controls.Group className={cn("text-white backdrop-blur-lg backdrop-saturate-150", "after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit]", "after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.1),inset_0_0_0_1px_rgb(255_255_255/0.05)]", "[@media(prefers-reduced-transparency:reduce)]:bg-black [@media(prefers-reduced-transparency:reduce)]:ring-1 [@media(prefers-reduced-transparency:reduce)]:ring-transparent", "[@media(prefers-reduced-transparency:reduce)]:backdrop-filter-none", "[@media(prefers-reduced-transparency:reduce)]:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "contrast-more:bg-black contrast-more:ring-1 contrast-more:ring-transparent contrast-more:backdrop-filter-none", "contrast-more:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "forced-colors:bg-[Canvas] forced-colors:ring-1 forced-colors:ring-[CanvasText]", "forced-colors:after:shadow-[inset_0_1px_0_0_CanvasText,inset_0_0_0_1px_CanvasText]", "shadow-sm shadow-black/15 ring-1 ring-black/10", "[@media(prefers-reduced-transparency:reduce)]:shadow-sm [@media(prefers-reduced-transparency:reduce)]:shadow-black/15", "contrast-more:shadow-sm contrast-more:shadow-black/15", "forced-colors:shadow-sm forced-colors:shadow-black/15", "bg-white/10", "absolute inset-x-2 bottom-2 z-10 flex origin-bottom items-center gap-px rounded-media-control", "p-1", "@lg/media-root:contents", "@max-lg/media-root:group-[:not([data-visible])]/controls:pointer-events-none", "@max-lg/media-root:group-[:not([data-visible])]/controls:opacity-0", "@max-lg/media-root:motion-safe:group-[:not([data-visible])]/controls:scale-95", "@max-lg/media-root:motion-safe:group-[:not([data-visible])]/controls:translate-y-1", "transition-[filter,opacity,scale,translate] duration-(--media-controls-transition-duration) ease-out")}>
+            <PlayButton />
+            <VolumePopover />
 
-          <Controls.Group className={"@container/media-time flex flex-1 items-center gap-2.5 px-2 @lg/media-root:px-3"}>
-            <Time.Value className={"tabular-nums"} type="current" />
-            <TimeSlider />
-            <Time.Value className={"cursor-pointer tabular-nums rounded-sm outline-2 -outline-offset-2 outline-transparent @max-[16rem]/media-time:hidden focus-visible:outline-white focus-visible:outline-offset-2"} type="remaining" toggle />
+            <Controls.Group className={"@container/media-time flex flex-1 items-center gap-2.5 px-2 @lg/media-root:px-3"}>
+              <Time.Value className={"tabular-nums"} type="current" />
+              <TimeSlider />
+              <Time.Value className={"cursor-pointer tabular-nums rounded-sm outline-2 -outline-offset-2 outline-transparent @max-[16rem]/media-time:hidden focus-visible:outline-white focus-visible:outline-offset-2"} type="remaining" toggle />
+            </Controls.Group>
+
+            <CaptionsButton className={"@max-lg/media-root:hidden"} />
+            <VideoSettingsMenu />
           </Controls.Group>
 
-          <CaptionsButton className={"@max-lg/media-root:hidden"} />
-          <VideoSettingsMenu />
-        </Controls.Group>
-
-        <Controls.Group className={cn("text-white backdrop-blur-lg backdrop-saturate-150", "after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit]", "after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.1),inset_0_0_0_1px_rgb(255_255_255/0.05)]", "[@media(prefers-reduced-transparency:reduce)]:bg-black [@media(prefers-reduced-transparency:reduce)]:ring-1 [@media(prefers-reduced-transparency:reduce)]:ring-transparent", "[@media(prefers-reduced-transparency:reduce)]:backdrop-filter-none", "[@media(prefers-reduced-transparency:reduce)]:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "contrast-more:bg-black contrast-more:ring-1 contrast-more:ring-transparent contrast-more:backdrop-filter-none", "contrast-more:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "forced-colors:bg-[Canvas] forced-colors:ring-1 forced-colors:ring-[CanvasText]", "forced-colors:after:shadow-[inset_0_1px_0_0_CanvasText,inset_0_0_0_1px_CanvasText]", "shadow-sm shadow-black/15 ring-1 ring-black/10", "[@media(prefers-reduced-transparency:reduce)]:shadow-sm [@media(prefers-reduced-transparency:reduce)]:shadow-black/15", "contrast-more:shadow-sm contrast-more:shadow-black/15", "forced-colors:shadow-sm forced-colors:shadow-black/15", "bg-white/10", "absolute top-2 right-2 z-10 flex origin-top items-center gap-px rounded-media-control", "p-1", "@lg/media-root:contents", "@max-lg/media-root:group-[:not([data-visible])]/controls:pointer-events-none", "@max-lg/media-root:group-[:not([data-visible])]/controls:opacity-0", "@max-lg/media-root:motion-safe:group-[:not([data-visible])]/controls:scale-95", "@max-lg/media-root:motion-safe:group-[:not([data-visible])]/controls:-translate-y-1", "transition-[filter,opacity,scale,translate] duration-(--media-controls-transition-duration) ease-out")}>
-          <CastButton />
-          <AirPlayButton />
-          <PiPButton />
-          <FullscreenButton />
-        </Controls.Group>
-      </Tooltip.Provider>
+          <Controls.Group className={cn("text-white backdrop-blur-lg backdrop-saturate-150", "after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit]", "after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.1),inset_0_0_0_1px_rgb(255_255_255/0.05)]", "[@media(prefers-reduced-transparency:reduce)]:bg-black [@media(prefers-reduced-transparency:reduce)]:ring-1 [@media(prefers-reduced-transparency:reduce)]:ring-transparent", "[@media(prefers-reduced-transparency:reduce)]:backdrop-filter-none", "[@media(prefers-reduced-transparency:reduce)]:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "contrast-more:bg-black contrast-more:ring-1 contrast-more:ring-transparent contrast-more:backdrop-filter-none", "contrast-more:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "forced-colors:bg-[Canvas] forced-colors:ring-1 forced-colors:ring-[CanvasText]", "forced-colors:after:shadow-[inset_0_1px_0_0_CanvasText,inset_0_0_0_1px_CanvasText]", "shadow-sm shadow-black/15 ring-1 ring-black/10", "[@media(prefers-reduced-transparency:reduce)]:shadow-sm [@media(prefers-reduced-transparency:reduce)]:shadow-black/15", "contrast-more:shadow-sm contrast-more:shadow-black/15", "forced-colors:shadow-sm forced-colors:shadow-black/15", "bg-white/10", "absolute top-2 right-2 z-10 flex origin-top items-center gap-px rounded-media-control", "p-1", "@lg/media-root:contents", "@max-lg/media-root:group-[:not([data-visible])]/controls:pointer-events-none", "@max-lg/media-root:group-[:not([data-visible])]/controls:opacity-0", "@max-lg/media-root:motion-safe:group-[:not([data-visible])]/controls:scale-95", "@max-lg/media-root:motion-safe:group-[:not([data-visible])]/controls:-translate-y-1", "transition-[filter,opacity,scale,translate] duration-(--media-controls-transition-duration) ease-out")}>
+            <CastButton />
+            <AirPlayButton />
+            <PiPButton />
+            <FullscreenButton />
+          </Controls.Group>
+        </Tooltip.Provider>
+      </Controls.Content>
     </Controls.Root>
   );
 }
@@ -3662,34 +3666,36 @@ import { cn } from "@videojs/utils/style";
 
 export function MinimalVideoControls() {
   return (
-    <Controls.Root className={cn('media-controls', "media-controls")}>
+    <Controls.Root>
       <Controls.Backdrop className={"media-controls-backdrop"} />
-      <Tooltip.Provider>
-        <Controls.Group className={"media-controls-start"}>
-          <PlayButton />
-          <VolumePopover side="right" orientation="horizontal" />
-        </Controls.Group>
-
-        <Controls.Group className={"media-time-slider-group"}>
-          <Time.Group className={"media-time-group"}>
-            <Time.Value className={"media-time-current-value"} type="current" toggle />
-            <Time.Separator className={"media-time-separator"} />
-            <Time.Value className={"media-time-duration-value"} type="duration" />
-          </Time.Group>
-          <TimeSlider />
-        </Controls.Group>
-
-        <Controls.Group className={"media-controls-end"}>
-          <CaptionsButton />
-          <VideoSettingsMenu />
-          <Controls.Group className={"media-controls-trailing"}>
-            <CastButton />
-            <AirPlayButton />
-            <PiPButton />
-            <FullscreenButton />
+      <Controls.Content className={cn('media-controls', "media-controls")}>
+        <Tooltip.Provider>
+          <Controls.Group className={"media-controls-start"}>
+            <PlayButton />
+            <VolumePopover side="right" orientation="horizontal" />
           </Controls.Group>
-        </Controls.Group>
-      </Tooltip.Provider>
+
+          <Controls.Group className={"media-time-slider-group"}>
+            <Time.Group className={"media-time-group"}>
+              <Time.Value className={"media-time-current-value"} type="current" toggle />
+              <Time.Separator className={"media-time-separator"} />
+              <Time.Value className={"media-time-duration-value"} type="duration" />
+            </Time.Group>
+            <TimeSlider />
+          </Controls.Group>
+
+          <Controls.Group className={"media-controls-end"}>
+            <CaptionsButton />
+            <VideoSettingsMenu />
+            <Controls.Group className={"media-controls-trailing"}>
+              <CastButton />
+              <AirPlayButton />
+              <PiPButton />
+              <FullscreenButton />
+            </Controls.Group>
+          </Controls.Group>
+        </Tooltip.Provider>
+      </Controls.Content>
     </Controls.Root>
   );
 }
@@ -4842,34 +4848,36 @@ import { cn } from "@videojs/utils/style";
 
 export function MinimalVideoControls() {
   return (
-    <Controls.Root className={cn('media-controls', "group/controls absolute inset-x-1 bottom-1 z-20 flex flex-wrap items-center gap-x-2 rounded-xl bg-transparent text-white", "text-shadow-[0_1px_0_rgb(0_0_0/0.2)]", "[@media(prefers-reduced-transparency:reduce)]:bg-black contrast-more:bg-black forced-colors:bg-[Canvas]", "[--media-popover-side-offset:--spacing(5)] [--media-tooltip-side-offset:var(--media-popover-side-offset)]", "[--media-popover-boundary-offset:--spacing(2)] [--media-tooltip-boundary-offset:var(--media-popover-boundary-offset)]", "p-1 transition-[filter,opacity,translate]", "duration-[calc(var(--media-controls-transition-duration)/2)] ease-out", "not-data-visible:pointer-events-none not-data-visible:opacity-0", "not-data-visible:duration-(--media-controls-transition-duration)", "motion-safe:not-data-visible:translate-y-full pointer-fine:motion-safe:not-data-visible:blur-sm", "@2xl/media-root:inset-x-2 @2xl/media-root:bottom-2 @2xl/media-root:flex-nowrap", "@2xl/media-root:[--media-popover-side-offset:--spacing(3)]")}>
+    <Controls.Root>
       <Controls.Backdrop className={"pointer-events-none absolute bottom-[-0.25rem] left-1/2 h-[100cqh] w-[100cqw] -translate-x-1/2 rounded-[inherit] opacity-0 @2xl/media-root:bottom-[-0.5rem] bg-linear-to-t from-black/70 via-black/50 via-[length:calc(var(--media-spacing)*30)] to-transparent transition-opacity duration-(--media-controls-transition-duration) ease-out data-visible:opacity-100"} />
-      <Tooltip.Provider>
-        <Controls.Group className={"flex flex-1 items-center gap-px @2xl/media-root:flex-none"}>
-          <PlayButton />
-          <VolumePopover side="right" orientation="horizontal" />
-        </Controls.Group>
-
-        <Controls.Group className={"@container/media-time-controls -order-1 flex flex-none basis-full flex-row-reverse items-center gap-3 px-1.5 [--media-slider-height:--spacing(5)] @2xl/media-root:order-none @2xl/media-root:min-w-0 @2xl/media-root:flex-1 @2xl/media-root:flex-row @2xl/media-root:[--media-slider-height:--spacing(8)] @2xl/media-root:[mask-position:100%_0] @2xl/media-root:[mask-size:200%_100%] @2xl/media-root:[transition:mask-position_50ms_ease-out] group-has-[[data-volume-level][aria-expanded=true]]/controls:@2xl/media-root:[mask-image:linear-gradient(to_right,transparent_10%,black_25%,black_100%)] group-has-[[data-volume-level][aria-expanded=true]]/controls:@2xl/media-root:[mask-position:0_0]"}>
-          <Time.Group className={"flex items-center gap-1"}>
-            <Time.Value className={"hidden cursor-pointer rounded-sm tabular-nums outline-2 -outline-offset-2 outline-transparent supports-[corner-shape:squircle]:rounded-2xl supports-[corner-shape:squircle]:[corner-shape:squircle] focus-visible:outline-white focus-visible:outline-offset-2 @2xl/media-root:inline"} type="current" toggle />
-            <Time.Separator className={"hidden text-current/60 @2xl/media-root:inline"} />
-            <Time.Value className={"tabular-nums text-current/60"} type="duration" />
-          </Time.Group>
-          <TimeSlider />
-        </Controls.Group>
-
-        <Controls.Group className={"flex flex-1 items-center justify-end gap-px @2xl/media-root:flex-none"}>
-          <CaptionsButton />
-          <VideoSettingsMenu />
-          <Controls.Group className={"flex items-center gap-px"}>
-            <CastButton />
-            <AirPlayButton />
-            <PiPButton />
-            <FullscreenButton />
+      <Controls.Content className={cn('media-controls', "group/controls absolute inset-x-1 bottom-1 z-20 flex flex-wrap items-center gap-x-2 rounded-xl bg-transparent text-white", "text-shadow-[0_1px_0_rgb(0_0_0/0.2)]", "[@media(prefers-reduced-transparency:reduce)]:bg-black contrast-more:bg-black forced-colors:bg-[Canvas]", "[--media-popover-side-offset:--spacing(5)] [--media-tooltip-side-offset:var(--media-popover-side-offset)]", "[--media-popover-boundary-offset:--spacing(2)] [--media-tooltip-boundary-offset:var(--media-popover-boundary-offset)]", "p-1 transition-[filter,opacity,translate]", "duration-[calc(var(--media-controls-transition-duration)/2)] ease-out", "not-data-visible:pointer-events-none not-data-visible:opacity-0", "not-data-visible:duration-(--media-controls-transition-duration)", "motion-safe:not-data-visible:translate-y-full pointer-fine:motion-safe:not-data-visible:blur-sm", "@2xl/media-root:inset-x-2 @2xl/media-root:bottom-2 @2xl/media-root:flex-nowrap", "@2xl/media-root:[--media-popover-side-offset:--spacing(3)]")}>
+        <Tooltip.Provider>
+          <Controls.Group className={"flex flex-1 items-center gap-px @2xl/media-root:flex-none"}>
+            <PlayButton />
+            <VolumePopover side="right" orientation="horizontal" />
           </Controls.Group>
-        </Controls.Group>
-      </Tooltip.Provider>
+
+          <Controls.Group className={"@container/media-time-controls -order-1 flex flex-none basis-full flex-row-reverse items-center gap-3 px-1.5 [--media-slider-height:--spacing(5)] @2xl/media-root:order-none @2xl/media-root:min-w-0 @2xl/media-root:flex-1 @2xl/media-root:flex-row @2xl/media-root:[--media-slider-height:--spacing(8)] @2xl/media-root:[mask-position:100%_0] @2xl/media-root:[mask-size:200%_100%] @2xl/media-root:[transition:mask-position_50ms_ease-out] group-has-[[data-volume-level][aria-expanded=true]]/controls:@2xl/media-root:[mask-image:linear-gradient(to_right,transparent_10%,black_25%,black_100%)] group-has-[[data-volume-level][aria-expanded=true]]/controls:@2xl/media-root:[mask-position:0_0]"}>
+            <Time.Group className={"flex items-center gap-1"}>
+              <Time.Value className={"hidden cursor-pointer rounded-sm tabular-nums outline-2 -outline-offset-2 outline-transparent supports-[corner-shape:squircle]:rounded-2xl supports-[corner-shape:squircle]:[corner-shape:squircle] focus-visible:outline-white focus-visible:outline-offset-2 @2xl/media-root:inline"} type="current" toggle />
+              <Time.Separator className={"hidden text-current/60 @2xl/media-root:inline"} />
+              <Time.Value className={"tabular-nums text-current/60"} type="duration" />
+            </Time.Group>
+            <TimeSlider />
+          </Controls.Group>
+
+          <Controls.Group className={"flex flex-1 items-center justify-end gap-px @2xl/media-root:flex-none"}>
+            <CaptionsButton />
+            <VideoSettingsMenu />
+            <Controls.Group className={"flex items-center gap-px"}>
+              <CastButton />
+              <AirPlayButton />
+              <PiPButton />
+              <FullscreenButton />
+            </Controls.Group>
+          </Controls.Group>
+        </Tooltip.Provider>
+      </Controls.Content>
     </Controls.Root>
   );
 }
@@ -5256,11 +5264,11 @@ import "virtual:vjsc/css/<hash>/base.css";
 import "virtual:vjsc/css/<hash>/buttons.css";
 import "virtual:vjsc/css/<hash>/common.css";
 import "virtual:vjsc/css/<hash>/dialog.css";
-import "@videojs/html/ui/alert-dialog-backdrop";
-import "@videojs/html/ui/alert-dialog-title";
-import "@videojs/html/ui/alert-dialog-description";
-import "@videojs/html/ui/alert-dialog-close";
-import "@videojs/html/ui/alert-dialog-popup";
+import "@videojs/html/ui/dialog-backdrop";
+import "@videojs/html/ui/dialog-title";
+import "@videojs/html/ui/dialog-description";
+import "@videojs/html/ui/dialog-close";
+import "@videojs/html/ui/dialog-popup";
 import "@videojs/html/ui/error-dialog";
 
 
@@ -5268,16 +5276,16 @@ import "@videojs/html/ui/error-dialog";
 export function ErrorDialog({ className, ...props }: Props = {}) {
   return (
     <media-error-dialog>
-      <media-alert-dialog-backdrop className={"media-error-dialog-backdrop"} />
-      <media-alert-dialog-popup className={["media-feedback-surface", "media-error-dialog-popup", className]} {...props}>
+      <media-dialog-backdrop className={"media-error-dialog-backdrop"} />
+      <media-dialog-popup className={["media-feedback-surface", "media-error-dialog-popup", className]} {...props}>
         <div className={"media-error-dialog-content"}>
-          <media-alert-dialog-title className={"media-error-dialog-title"} />
-          <media-alert-dialog-description className={"media-error-dialog-description"} />
+          <media-dialog-title className={"media-error-dialog-title"} />
+          <media-dialog-description className={"media-error-dialog-description"} />
         </div>
         <div className={"media-error-dialog-actions"}>
-          <media-alert-dialog-close className={["media-button", "media-error-dialog-close"]} />
+          <media-dialog-close className={["media-button", "media-error-dialog-close"]} />
         </div>
-      </media-alert-dialog-popup>
+      </media-dialog-popup>
     </media-error-dialog>
   );
 }
@@ -6007,36 +6015,39 @@ import "@videojs/html/ui/controls-backdrop";
 import "@videojs/html/ui/time";
 import "@videojs/html/ui/controls-group";
 import "@videojs/html/ui/tooltip-group";
+import "@videojs/html/ui/controls-content";
 import "@videojs/html/ui/controls";
 
 
 
 export function DefaultVideoControls() {
   return (
-    <media-controls className={['media-controls', "media-controls"]}>
+    <media-controls>
       <media-controls-backdrop className={"media-controls-backdrop"} />
-      <media-tooltip-group>
-        <media-controls-group className={["media-surface", "media-controls-primary"]}>
-          <PlayButton />
-          <VolumePopover />
+      <media-controls-content className={['media-controls', "media-controls"]}>
+        <media-tooltip-group>
+          <media-controls-group className={["media-surface", "media-controls-primary"]}>
+            <PlayButton />
+            <VolumePopover />
 
-          <media-controls-group className={"media-time-slider-group"}>
-            <media-time className={"media-time-current-value"} type="current" />
-            <TimeSlider />
-            <media-time className={"media-time-remaining-value"} type="remaining" toggle />
+            <media-controls-group className={"media-time-slider-group"}>
+              <media-time className={"media-time-current-value"} type="current" />
+              <TimeSlider />
+              <media-time className={"media-time-remaining-value"} type="remaining" toggle />
+            </media-controls-group>
+
+            <CaptionsButton className={"media-controls-captions-button"} />
+            <VideoSettingsMenu />
           </media-controls-group>
 
-          <CaptionsButton className={"media-controls-captions-button"} />
-          <VideoSettingsMenu />
-        </media-controls-group>
-
-        <media-controls-group className={["media-surface", "media-controls-secondary"]}>
-          <CastButton />
-          <AirPlayButton />
-          <PiPButton />
-          <FullscreenButton />
-        </media-controls-group>
-      </media-tooltip-group>
+          <media-controls-group className={["media-surface", "media-controls-secondary"]}>
+            <CastButton />
+            <AirPlayButton />
+            <PiPButton />
+            <FullscreenButton />
+          </media-controls-group>
+        </media-tooltip-group>
+      </media-controls-content>
     </media-controls>
   );
 }
@@ -6377,11 +6388,11 @@ export function BufferingIndicator({ className, ...props }: Props<CoreProps> = {
 import { type Props } from "vjsc/components";
 
 
-import "@videojs/html/ui/alert-dialog-backdrop";
-import "@videojs/html/ui/alert-dialog-title";
-import "@videojs/html/ui/alert-dialog-description";
-import "@videojs/html/ui/alert-dialog-close";
-import "@videojs/html/ui/alert-dialog-popup";
+import "@videojs/html/ui/dialog-backdrop";
+import "@videojs/html/ui/dialog-title";
+import "@videojs/html/ui/dialog-description";
+import "@videojs/html/ui/dialog-close";
+import "@videojs/html/ui/dialog-popup";
 import "@videojs/html/ui/error-dialog";
 
 
@@ -6391,16 +6402,16 @@ import "@videojs/html/ui/error-dialog";
 export function ErrorDialog({ className, ...props }: Props = {}) {
   return (
     <media-error-dialog>
-      <media-alert-dialog-backdrop className={"absolute inset-0 z-40 bg-black/20 backdrop-blur-lg opacity-100 backdrop-saturate-150 not-data-open:hidden transition-[opacity,backdrop-filter] delay-100 ease-out motion-reduce:duration-50 data-starting-style:opacity-0 data-ending-style:opacity-0 data-ending-style:delay-0 motion-reduce:delay-0 duration-350"} />
-      <media-alert-dialog-popup className={["text-white backdrop-blur-lg backdrop-saturate-150", "after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit]", "after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.1),inset_0_0_0_1px_rgb(255_255_255/0.05)]", "[@media(prefers-reduced-transparency:reduce)]:bg-black [@media(prefers-reduced-transparency:reduce)]:ring-1 [@media(prefers-reduced-transparency:reduce)]:ring-transparent", "[@media(prefers-reduced-transparency:reduce)]:backdrop-filter-none", "[@media(prefers-reduced-transparency:reduce)]:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "contrast-more:bg-black contrast-more:ring-1 contrast-more:ring-transparent contrast-more:backdrop-filter-none", "contrast-more:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "forced-colors:bg-[Canvas] forced-colors:ring-1 forced-colors:ring-[CanvasText]", "forced-colors:after:shadow-[inset_0_1px_0_0_CanvasText,inset_0_0_0_1px_CanvasText]", "shadow-sm shadow-black/15 ring-1 ring-black/10", "[@media(prefers-reduced-transparency:reduce)]:shadow-sm [@media(prefers-reduced-transparency:reduce)]:shadow-black/15", "contrast-more:shadow-sm contrast-more:shadow-black/15", "forced-colors:shadow-sm forced-colors:shadow-black/15", "bg-white/10", "absolute top-1/2 left-1/2 z-50 flex -translate-x-1/2 -translate-y-1/2 flex-col gap-3 outline-none", "not-data-open:hidden transition-[opacity,scale] delay-100 ease-out motion-reduce:duration-50", "data-starting-style:scale-95 data-starting-style:opacity-0", "data-ending-style:scale-95 data-ending-style:opacity-0 data-ending-style:delay-0", "motion-reduce:delay-0", "w-[calc(100%-1.5rem)] max-w-72 rounded-[1.75rem] p-3 text-white", "text-shadow-[0_1px_0_rgb(0_0_0/0.25)] duration-350", className]} {...props}>
+      <media-dialog-backdrop className={"absolute inset-0 z-40 bg-black/20 backdrop-blur-lg opacity-100 backdrop-saturate-150 not-data-open:hidden transition-[opacity,backdrop-filter] delay-100 ease-out motion-reduce:duration-50 data-starting-style:opacity-0 data-ending-style:opacity-0 data-ending-style:delay-0 motion-reduce:delay-0 duration-350"} />
+      <media-dialog-popup className={["text-white backdrop-blur-lg backdrop-saturate-150", "after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit]", "after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.1),inset_0_0_0_1px_rgb(255_255_255/0.05)]", "[@media(prefers-reduced-transparency:reduce)]:bg-black [@media(prefers-reduced-transparency:reduce)]:ring-1 [@media(prefers-reduced-transparency:reduce)]:ring-transparent", "[@media(prefers-reduced-transparency:reduce)]:backdrop-filter-none", "[@media(prefers-reduced-transparency:reduce)]:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "contrast-more:bg-black contrast-more:ring-1 contrast-more:ring-transparent contrast-more:backdrop-filter-none", "contrast-more:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "forced-colors:bg-[Canvas] forced-colors:ring-1 forced-colors:ring-[CanvasText]", "forced-colors:after:shadow-[inset_0_1px_0_0_CanvasText,inset_0_0_0_1px_CanvasText]", "shadow-sm shadow-black/15 ring-1 ring-black/10", "[@media(prefers-reduced-transparency:reduce)]:shadow-sm [@media(prefers-reduced-transparency:reduce)]:shadow-black/15", "contrast-more:shadow-sm contrast-more:shadow-black/15", "forced-colors:shadow-sm forced-colors:shadow-black/15", "bg-white/10", "absolute top-1/2 left-1/2 z-50 flex -translate-x-1/2 -translate-y-1/2 flex-col gap-3 outline-none", "not-data-open:hidden transition-[opacity,scale] delay-100 ease-out motion-reduce:duration-50", "data-starting-style:scale-95 data-starting-style:opacity-0", "data-ending-style:scale-95 data-ending-style:opacity-0 data-ending-style:delay-0", "motion-reduce:delay-0", "w-[calc(100%-1.5rem)] max-w-72 rounded-[1.75rem] p-3 text-white", "text-shadow-[0_1px_0_rgb(0_0_0/0.25)] duration-350", className]} {...props}>
         <div className={"flex flex-col gap-2 px-2 pt-2 pb-1.5"}>
-          <media-alert-dialog-title className={"my-[0.83em] text-media-lg font-semibold leading-tight"} />
-          <media-alert-dialog-description className={"my-[1em] opacity-70 wrap-anywhere"} />
+          <media-dialog-title className={"my-[0.83em] text-media-lg font-semibold leading-tight"} />
+          <media-dialog-description className={"my-[1em] opacity-70 wrap-anywhere"} />
         </div>
         <div className={"flex gap-2"}>
-          <media-alert-dialog-close className={["grid min-h-0 shrink-0 touch-manipulation select-none place-items-center rounded-media-control border-0 bg-transparent p-0 text-center text-inherit", "cursor-pointer outline-2 outline-transparent -outline-offset-2", "will-change-[scale] transition-[background-color,color,outline-offset,scale] duration-150 ease-out", "not-aria-disabled:hover:bg-media-control-hover not-aria-disabled:hover:text-media-accent-text", "not-aria-disabled:focus-visible:bg-media-control-hover not-aria-disabled:focus-visible:text-media-accent-text", "not-aria-disabled:aria-expanded:bg-media-control-hover not-aria-disabled:aria-expanded:text-media-accent-text", "focus-visible:outline-white focus-visible:outline-offset-2", "not-aria-disabled:active:scale-[0.97]", "motion-reduce:scale-100 motion-reduce:transition-[background-color,color] motion-reduce:will-change-auto", "aria-disabled:cursor-not-allowed aria-disabled:opacity-50", "size-9", "w-full flex-1 bg-media-accent! px-4 py-2 font-medium text-media-accent-text!", "h-9"]} />
+          <media-dialog-close className={["grid min-h-0 shrink-0 touch-manipulation select-none place-items-center rounded-media-control border-0 bg-transparent p-0 text-center text-inherit", "cursor-pointer outline-2 outline-transparent -outline-offset-2", "will-change-[scale] transition-[background-color,color,outline-offset,scale] duration-150 ease-out", "not-aria-disabled:hover:bg-media-control-hover not-aria-disabled:hover:text-media-accent-text", "not-aria-disabled:focus-visible:bg-media-control-hover not-aria-disabled:focus-visible:text-media-accent-text", "not-aria-disabled:aria-expanded:bg-media-control-hover not-aria-disabled:aria-expanded:text-media-accent-text", "focus-visible:outline-white focus-visible:outline-offset-2", "not-aria-disabled:active:scale-[0.97]", "motion-reduce:scale-100 motion-reduce:transition-[background-color,color] motion-reduce:will-change-auto", "aria-disabled:cursor-not-allowed aria-disabled:opacity-50", "size-9", "w-full flex-1 bg-media-accent! px-4 py-2 font-medium text-media-accent-text!", "h-9"]} />
         </div>
-      </media-alert-dialog-popup>
+      </media-dialog-popup>
     </media-error-dialog>
   );
 }
@@ -7065,6 +7076,7 @@ import "@videojs/html/ui/controls-backdrop";
 import "@videojs/html/ui/time";
 import "@videojs/html/ui/controls-group";
 import "@videojs/html/ui/tooltip-group";
+import "@videojs/html/ui/controls-content";
 import "@videojs/html/ui/controls";
 
 
@@ -7072,30 +7084,32 @@ import "@videojs/html/ui/controls";
 
 export function DefaultVideoControls() {
   return (
-    <media-controls className={['media-controls', "group/controls contents p-1 text-white", "[--media-popover-side-offset:--spacing(3)]", "[--media-tooltip-side-offset:var(--media-popover-side-offset)]", "[--media-popover-boundary-offset:0.75rem] [--media-tooltip-boundary-offset:var(--media-popover-boundary-offset)]", "@lg/media-root:absolute @lg/media-root:inset-x-2 @lg/media-root:bottom-2 @lg/media-root:z-10", "@lg/media-root:flex @lg/media-root:items-center @lg/media-root:gap-px @lg/media-root:rounded-media-control", "text-shadow-[0_1px_0_rgb(0_0_0/0.15)]", "@lg/media-root:text-white @lg/media-root:backdrop-blur-lg @lg/media-root:backdrop-saturate-150", "@lg/media-root:after:pointer-events-none @lg/media-root:after:absolute @lg/media-root:after:inset-0 @lg/media-root:after:z-10 @lg/media-root:after:rounded-[inherit]", "@lg/media-root:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.1),inset_0_0_0_1px_rgb(255_255_255/0.05)]", "@lg/media-root:[@media(prefers-reduced-transparency:reduce)]:bg-black @lg/media-root:[@media(prefers-reduced-transparency:reduce)]:ring-1 @lg/media-root:[@media(prefers-reduced-transparency:reduce)]:ring-transparent", "@lg/media-root:[@media(prefers-reduced-transparency:reduce)]:backdrop-filter-none", "@lg/media-root:[@media(prefers-reduced-transparency:reduce)]:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "@lg/media-root:contrast-more:bg-black @lg/media-root:contrast-more:ring-1 @lg/media-root:contrast-more:ring-transparent @lg/media-root:contrast-more:backdrop-filter-none", "@lg/media-root:contrast-more:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "@lg/media-root:forced-colors:bg-[Canvas] @lg/media-root:forced-colors:ring-1 @lg/media-root:forced-colors:ring-[CanvasText]", "@lg/media-root:forced-colors:after:shadow-[inset_0_1px_0_0_CanvasText,inset_0_0_0_1px_CanvasText]", "@lg/media-root:shadow-sm @lg/media-root:shadow-black/15 @lg/media-root:ring-1 @lg/media-root:ring-black/10", "@lg/media-root:[@media(prefers-reduced-transparency:reduce)]:shadow-sm @lg/media-root:[@media(prefers-reduced-transparency:reduce)]:shadow-black/15", "@lg/media-root:contrast-more:shadow-sm @lg/media-root:contrast-more:shadow-black/15", "@lg/media-root:forced-colors:shadow-sm @lg/media-root:forced-colors:shadow-black/15", "@lg/media-root:bg-white/10", "@2xl/media-root:inset-x-3 @2xl/media-root:bottom-3", "@lg/media-root:not-data-visible:pointer-events-none @lg/media-root:not-data-visible:opacity-0", "@lg/media-root:motion-safe:not-data-visible:scale-95 @lg/media-root:motion-safe:not-data-visible:translate-y-1", "@lg/media-root:pointer-fine:motion-safe:not-data-visible:blur-sm", "transition-[filter,opacity,scale,translate] duration-(--media-controls-transition-duration) ease-out"]}>
+    <media-controls>
       <media-controls-backdrop className={"pointer-events-none absolute inset-0 rounded-[inherit] opacity-0 @lg/media-root:inset-auto @lg/media-root:bottom-[-0.5rem] @lg/media-root:left-1/2 @lg/media-root:h-[100cqh] @lg/media-root:w-[100cqw] @lg/media-root:-translate-x-1/2 @2xl/media-root:bottom-[-0.75rem] bg-linear-to-t from-black/50 via-black/30 via-25% to-transparent transition-opacity duration-(--media-controls-transition-duration) ease-out data-visible:opacity-100"} />
-      <media-tooltip-group>
-        <media-controls-group className={["text-white backdrop-blur-lg backdrop-saturate-150", "after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit]", "after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.1),inset_0_0_0_1px_rgb(255_255_255/0.05)]", "[@media(prefers-reduced-transparency:reduce)]:bg-black [@media(prefers-reduced-transparency:reduce)]:ring-1 [@media(prefers-reduced-transparency:reduce)]:ring-transparent", "[@media(prefers-reduced-transparency:reduce)]:backdrop-filter-none", "[@media(prefers-reduced-transparency:reduce)]:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "contrast-more:bg-black contrast-more:ring-1 contrast-more:ring-transparent contrast-more:backdrop-filter-none", "contrast-more:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "forced-colors:bg-[Canvas] forced-colors:ring-1 forced-colors:ring-[CanvasText]", "forced-colors:after:shadow-[inset_0_1px_0_0_CanvasText,inset_0_0_0_1px_CanvasText]", "shadow-sm shadow-black/15 ring-1 ring-black/10", "[@media(prefers-reduced-transparency:reduce)]:shadow-sm [@media(prefers-reduced-transparency:reduce)]:shadow-black/15", "contrast-more:shadow-sm contrast-more:shadow-black/15", "forced-colors:shadow-sm forced-colors:shadow-black/15", "bg-white/10", "absolute inset-x-2 bottom-2 z-10 flex origin-bottom items-center gap-px rounded-media-control", "p-1", "@lg/media-root:contents", "@max-lg/media-root:group-[:not([data-visible])]/controls:pointer-events-none", "@max-lg/media-root:group-[:not([data-visible])]/controls:opacity-0", "@max-lg/media-root:motion-safe:group-[:not([data-visible])]/controls:scale-95", "@max-lg/media-root:motion-safe:group-[:not([data-visible])]/controls:translate-y-1", "transition-[filter,opacity,scale,translate] duration-(--media-controls-transition-duration) ease-out"]}>
-          <PlayButton />
-          <VolumePopover />
+      <media-controls-content className={['media-controls', "group/controls contents p-1 text-white", "[--media-popover-side-offset:--spacing(3)]", "[--media-tooltip-side-offset:var(--media-popover-side-offset)]", "[--media-popover-boundary-offset:0.75rem] [--media-tooltip-boundary-offset:var(--media-popover-boundary-offset)]", "@lg/media-root:absolute @lg/media-root:inset-x-2 @lg/media-root:bottom-2 @lg/media-root:z-10", "@lg/media-root:flex @lg/media-root:items-center @lg/media-root:gap-px @lg/media-root:rounded-media-control", "text-shadow-[0_1px_0_rgb(0_0_0/0.15)]", "@lg/media-root:text-white @lg/media-root:backdrop-blur-lg @lg/media-root:backdrop-saturate-150", "@lg/media-root:after:pointer-events-none @lg/media-root:after:absolute @lg/media-root:after:inset-0 @lg/media-root:after:z-10 @lg/media-root:after:rounded-[inherit]", "@lg/media-root:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.1),inset_0_0_0_1px_rgb(255_255_255/0.05)]", "@lg/media-root:[@media(prefers-reduced-transparency:reduce)]:bg-black @lg/media-root:[@media(prefers-reduced-transparency:reduce)]:ring-1 @lg/media-root:[@media(prefers-reduced-transparency:reduce)]:ring-transparent", "@lg/media-root:[@media(prefers-reduced-transparency:reduce)]:backdrop-filter-none", "@lg/media-root:[@media(prefers-reduced-transparency:reduce)]:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "@lg/media-root:contrast-more:bg-black @lg/media-root:contrast-more:ring-1 @lg/media-root:contrast-more:ring-transparent @lg/media-root:contrast-more:backdrop-filter-none", "@lg/media-root:contrast-more:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "@lg/media-root:forced-colors:bg-[Canvas] @lg/media-root:forced-colors:ring-1 @lg/media-root:forced-colors:ring-[CanvasText]", "@lg/media-root:forced-colors:after:shadow-[inset_0_1px_0_0_CanvasText,inset_0_0_0_1px_CanvasText]", "@lg/media-root:shadow-sm @lg/media-root:shadow-black/15 @lg/media-root:ring-1 @lg/media-root:ring-black/10", "@lg/media-root:[@media(prefers-reduced-transparency:reduce)]:shadow-sm @lg/media-root:[@media(prefers-reduced-transparency:reduce)]:shadow-black/15", "@lg/media-root:contrast-more:shadow-sm @lg/media-root:contrast-more:shadow-black/15", "@lg/media-root:forced-colors:shadow-sm @lg/media-root:forced-colors:shadow-black/15", "@lg/media-root:bg-white/10", "@2xl/media-root:inset-x-3 @2xl/media-root:bottom-3", "@lg/media-root:not-data-visible:pointer-events-none @lg/media-root:not-data-visible:opacity-0", "@lg/media-root:motion-safe:not-data-visible:scale-95 @lg/media-root:motion-safe:not-data-visible:translate-y-1", "@lg/media-root:pointer-fine:motion-safe:not-data-visible:blur-sm", "transition-[filter,opacity,scale,translate] duration-(--media-controls-transition-duration) ease-out"]}>
+        <media-tooltip-group>
+          <media-controls-group className={["text-white backdrop-blur-lg backdrop-saturate-150", "after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit]", "after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.1),inset_0_0_0_1px_rgb(255_255_255/0.05)]", "[@media(prefers-reduced-transparency:reduce)]:bg-black [@media(prefers-reduced-transparency:reduce)]:ring-1 [@media(prefers-reduced-transparency:reduce)]:ring-transparent", "[@media(prefers-reduced-transparency:reduce)]:backdrop-filter-none", "[@media(prefers-reduced-transparency:reduce)]:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "contrast-more:bg-black contrast-more:ring-1 contrast-more:ring-transparent contrast-more:backdrop-filter-none", "contrast-more:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "forced-colors:bg-[Canvas] forced-colors:ring-1 forced-colors:ring-[CanvasText]", "forced-colors:after:shadow-[inset_0_1px_0_0_CanvasText,inset_0_0_0_1px_CanvasText]", "shadow-sm shadow-black/15 ring-1 ring-black/10", "[@media(prefers-reduced-transparency:reduce)]:shadow-sm [@media(prefers-reduced-transparency:reduce)]:shadow-black/15", "contrast-more:shadow-sm contrast-more:shadow-black/15", "forced-colors:shadow-sm forced-colors:shadow-black/15", "bg-white/10", "absolute inset-x-2 bottom-2 z-10 flex origin-bottom items-center gap-px rounded-media-control", "p-1", "@lg/media-root:contents", "@max-lg/media-root:group-[:not([data-visible])]/controls:pointer-events-none", "@max-lg/media-root:group-[:not([data-visible])]/controls:opacity-0", "@max-lg/media-root:motion-safe:group-[:not([data-visible])]/controls:scale-95", "@max-lg/media-root:motion-safe:group-[:not([data-visible])]/controls:translate-y-1", "transition-[filter,opacity,scale,translate] duration-(--media-controls-transition-duration) ease-out"]}>
+            <PlayButton />
+            <VolumePopover />
 
-          <media-controls-group className={"@container/media-time flex flex-1 items-center gap-2.5 px-2 @lg/media-root:px-3"}>
-            <media-time className={"tabular-nums"} type="current" />
-            <TimeSlider />
-            <media-time className={"cursor-pointer tabular-nums rounded-sm outline-2 -outline-offset-2 outline-transparent @max-[16rem]/media-time:hidden focus-visible:outline-white focus-visible:outline-offset-2"} type="remaining" toggle />
+            <media-controls-group className={"@container/media-time flex flex-1 items-center gap-2.5 px-2 @lg/media-root:px-3"}>
+              <media-time className={"tabular-nums"} type="current" />
+              <TimeSlider />
+              <media-time className={"cursor-pointer tabular-nums rounded-sm outline-2 -outline-offset-2 outline-transparent @max-[16rem]/media-time:hidden focus-visible:outline-white focus-visible:outline-offset-2"} type="remaining" toggle />
+            </media-controls-group>
+
+            <CaptionsButton className={"@max-lg/media-root:hidden"} />
+            <VideoSettingsMenu />
           </media-controls-group>
 
-          <CaptionsButton className={"@max-lg/media-root:hidden"} />
-          <VideoSettingsMenu />
-        </media-controls-group>
-
-        <media-controls-group className={["text-white backdrop-blur-lg backdrop-saturate-150", "after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit]", "after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.1),inset_0_0_0_1px_rgb(255_255_255/0.05)]", "[@media(prefers-reduced-transparency:reduce)]:bg-black [@media(prefers-reduced-transparency:reduce)]:ring-1 [@media(prefers-reduced-transparency:reduce)]:ring-transparent", "[@media(prefers-reduced-transparency:reduce)]:backdrop-filter-none", "[@media(prefers-reduced-transparency:reduce)]:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "contrast-more:bg-black contrast-more:ring-1 contrast-more:ring-transparent contrast-more:backdrop-filter-none", "contrast-more:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "forced-colors:bg-[Canvas] forced-colors:ring-1 forced-colors:ring-[CanvasText]", "forced-colors:after:shadow-[inset_0_1px_0_0_CanvasText,inset_0_0_0_1px_CanvasText]", "shadow-sm shadow-black/15 ring-1 ring-black/10", "[@media(prefers-reduced-transparency:reduce)]:shadow-sm [@media(prefers-reduced-transparency:reduce)]:shadow-black/15", "contrast-more:shadow-sm contrast-more:shadow-black/15", "forced-colors:shadow-sm forced-colors:shadow-black/15", "bg-white/10", "absolute top-2 right-2 z-10 flex origin-top items-center gap-px rounded-media-control", "p-1", "@lg/media-root:contents", "@max-lg/media-root:group-[:not([data-visible])]/controls:pointer-events-none", "@max-lg/media-root:group-[:not([data-visible])]/controls:opacity-0", "@max-lg/media-root:motion-safe:group-[:not([data-visible])]/controls:scale-95", "@max-lg/media-root:motion-safe:group-[:not([data-visible])]/controls:-translate-y-1", "transition-[filter,opacity,scale,translate] duration-(--media-controls-transition-duration) ease-out"]}>
-          <CastButton />
-          <AirPlayButton />
-          <PiPButton />
-          <FullscreenButton />
-        </media-controls-group>
-      </media-tooltip-group>
+          <media-controls-group className={["text-white backdrop-blur-lg backdrop-saturate-150", "after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit]", "after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.1),inset_0_0_0_1px_rgb(255_255_255/0.05)]", "[@media(prefers-reduced-transparency:reduce)]:bg-black [@media(prefers-reduced-transparency:reduce)]:ring-1 [@media(prefers-reduced-transparency:reduce)]:ring-transparent", "[@media(prefers-reduced-transparency:reduce)]:backdrop-filter-none", "[@media(prefers-reduced-transparency:reduce)]:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "contrast-more:bg-black contrast-more:ring-1 contrast-more:ring-transparent contrast-more:backdrop-filter-none", "contrast-more:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "forced-colors:bg-[Canvas] forced-colors:ring-1 forced-colors:ring-[CanvasText]", "forced-colors:after:shadow-[inset_0_1px_0_0_CanvasText,inset_0_0_0_1px_CanvasText]", "shadow-sm shadow-black/15 ring-1 ring-black/10", "[@media(prefers-reduced-transparency:reduce)]:shadow-sm [@media(prefers-reduced-transparency:reduce)]:shadow-black/15", "contrast-more:shadow-sm contrast-more:shadow-black/15", "forced-colors:shadow-sm forced-colors:shadow-black/15", "bg-white/10", "absolute top-2 right-2 z-10 flex origin-top items-center gap-px rounded-media-control", "p-1", "@lg/media-root:contents", "@max-lg/media-root:group-[:not([data-visible])]/controls:pointer-events-none", "@max-lg/media-root:group-[:not([data-visible])]/controls:opacity-0", "@max-lg/media-root:motion-safe:group-[:not([data-visible])]/controls:scale-95", "@max-lg/media-root:motion-safe:group-[:not([data-visible])]/controls:-translate-y-1", "transition-[filter,opacity,scale,translate] duration-(--media-controls-transition-duration) ease-out"]}>
+            <CastButton />
+            <AirPlayButton />
+            <PiPButton />
+            <FullscreenButton />
+          </media-controls-group>
+        </media-tooltip-group>
+      </media-controls-content>
     </media-controls>
   );
 }
@@ -7477,11 +7491,11 @@ import { type Props } from "vjsc/components";
 import "virtual:vjsc/css/<hash>/base.css";
 import "virtual:vjsc/css/<hash>/buttons.css";
 import "virtual:vjsc/css/<hash>/dialog.css";
-import "@videojs/html/ui/alert-dialog-backdrop";
-import "@videojs/html/ui/alert-dialog-title";
-import "@videojs/html/ui/alert-dialog-description";
-import "@videojs/html/ui/alert-dialog-close";
-import "@videojs/html/ui/alert-dialog-popup";
+import "@videojs/html/ui/dialog-backdrop";
+import "@videojs/html/ui/dialog-title";
+import "@videojs/html/ui/dialog-description";
+import "@videojs/html/ui/dialog-close";
+import "@videojs/html/ui/dialog-popup";
 import "@videojs/html/ui/error-dialog";
 
 
@@ -7489,16 +7503,16 @@ import "@videojs/html/ui/error-dialog";
 export function ErrorDialog({ className, ...props }: Props = {}) {
   return (
     <media-error-dialog>
-      <media-alert-dialog-backdrop className={"media-error-dialog-backdrop"} />
-      <media-alert-dialog-popup className={["media-feedback-surface", "media-error-dialog-popup", className]} {...props}>
+      <media-dialog-backdrop className={"media-error-dialog-backdrop"} />
+      <media-dialog-popup className={["media-feedback-surface", "media-error-dialog-popup", className]} {...props}>
         <div className={"media-error-dialog-content"}>
-          <media-alert-dialog-title className={"media-error-dialog-title"} />
-          <media-alert-dialog-description className={"media-error-dialog-description"} />
+          <media-dialog-title className={"media-error-dialog-title"} />
+          <media-dialog-description className={"media-error-dialog-description"} />
         </div>
         <div className={"media-error-dialog-actions"}>
-          <media-alert-dialog-close className={["media-button", "media-error-dialog-close"]} />
+          <media-dialog-close className={["media-button", "media-error-dialog-close"]} />
         </div>
-      </media-alert-dialog-popup>
+      </media-dialog-popup>
     </media-error-dialog>
   );
 }
@@ -8226,40 +8240,43 @@ import "@videojs/html/ui/time";
 import "@videojs/html/ui/time-separator";
 import "@videojs/html/ui/time-group";
 import "@videojs/html/ui/tooltip-group";
+import "@videojs/html/ui/controls-content";
 import "@videojs/html/ui/controls";
 
 
 
 export function MinimalVideoControls() {
   return (
-    <media-controls className={['media-controls', "media-controls"]}>
+    <media-controls>
       <media-controls-backdrop className={"media-controls-backdrop"} />
-      <media-tooltip-group>
-        <media-controls-group className={"media-controls-start"}>
-          <PlayButton />
-          <VolumePopover side="right" orientation="horizontal" />
-        </media-controls-group>
-
-        <media-controls-group className={"media-time-slider-group"}>
-          <media-time-group className={"media-time-group"}>
-            <media-time className={"media-time-current-value"} type="current" toggle />
-            <media-time-separator className={"media-time-separator"} />
-            <media-time className={"media-time-duration-value"} type="duration" />
-          </media-time-group>
-          <TimeSlider />
-        </media-controls-group>
-
-        <media-controls-group className={"media-controls-end"}>
-          <CaptionsButton />
-          <VideoSettingsMenu />
-          <media-controls-group className={"media-controls-trailing"}>
-            <CastButton />
-            <AirPlayButton />
-            <PiPButton />
-            <FullscreenButton />
+      <media-controls-content className={['media-controls', "media-controls"]}>
+        <media-tooltip-group>
+          <media-controls-group className={"media-controls-start"}>
+            <PlayButton />
+            <VolumePopover side="right" orientation="horizontal" />
           </media-controls-group>
-        </media-controls-group>
-      </media-tooltip-group>
+
+          <media-controls-group className={"media-time-slider-group"}>
+            <media-time-group className={"media-time-group"}>
+              <media-time className={"media-time-current-value"} type="current" toggle />
+              <media-time-separator className={"media-time-separator"} />
+              <media-time className={"media-time-duration-value"} type="duration" />
+            </media-time-group>
+            <TimeSlider />
+          </media-controls-group>
+
+          <media-controls-group className={"media-controls-end"}>
+            <CaptionsButton />
+            <VideoSettingsMenu />
+            <media-controls-group className={"media-controls-trailing"}>
+              <CastButton />
+              <AirPlayButton />
+              <PiPButton />
+              <FullscreenButton />
+            </media-controls-group>
+          </media-controls-group>
+        </media-tooltip-group>
+      </media-controls-content>
     </media-controls>
   );
 }
@@ -8600,11 +8617,11 @@ export function BufferingIndicator({ className, ...props }: Props<CoreProps> = {
 import { type Props } from "vjsc/components";
 
 
-import "@videojs/html/ui/alert-dialog-backdrop";
-import "@videojs/html/ui/alert-dialog-title";
-import "@videojs/html/ui/alert-dialog-description";
-import "@videojs/html/ui/alert-dialog-close";
-import "@videojs/html/ui/alert-dialog-popup";
+import "@videojs/html/ui/dialog-backdrop";
+import "@videojs/html/ui/dialog-title";
+import "@videojs/html/ui/dialog-description";
+import "@videojs/html/ui/dialog-close";
+import "@videojs/html/ui/dialog-popup";
 import "@videojs/html/ui/error-dialog";
 
 
@@ -8614,16 +8631,16 @@ import "@videojs/html/ui/error-dialog";
 export function ErrorDialog({ className, ...props }: Props = {}) {
   return (
     <media-error-dialog>
-      <media-alert-dialog-backdrop className={"absolute inset-0 z-40 bg-black/20 backdrop-blur-lg opacity-100 not-data-open:hidden transition-[opacity,backdrop-filter] delay-100 ease-out motion-reduce:duration-50 data-starting-style:opacity-0 data-ending-style:opacity-0 data-ending-style:delay-0 motion-reduce:delay-0 backdrop-saturate-120 duration-150"} />
-      <media-alert-dialog-popup className={["", "absolute top-1/2 left-1/2 z-50 flex -translate-x-1/2 -translate-y-1/2 flex-col gap-3 outline-none", "not-data-open:hidden transition-[opacity,scale] delay-100 ease-out motion-reduce:duration-50", "data-starting-style:scale-95 data-starting-style:opacity-0", "data-ending-style:scale-95 data-ending-style:opacity-0 data-ending-style:delay-0", "motion-reduce:delay-0", "w-full max-w-64 p-4 text-white", "text-shadow-[0_1px_0_rgb(0_0_0/0.5)] duration-150", className]} {...props}>
+      <media-dialog-backdrop className={"absolute inset-0 z-40 bg-black/20 backdrop-blur-lg opacity-100 not-data-open:hidden transition-[opacity,backdrop-filter] delay-100 ease-out motion-reduce:duration-50 data-starting-style:opacity-0 data-ending-style:opacity-0 data-ending-style:delay-0 motion-reduce:delay-0 backdrop-saturate-120 duration-150"} />
+      <media-dialog-popup className={["", "absolute top-1/2 left-1/2 z-50 flex -translate-x-1/2 -translate-y-1/2 flex-col gap-3 outline-none", "not-data-open:hidden transition-[opacity,scale] delay-100 ease-out motion-reduce:duration-50", "data-starting-style:scale-95 data-starting-style:opacity-0", "data-ending-style:scale-95 data-ending-style:opacity-0 data-ending-style:delay-0", "motion-reduce:delay-0", "w-full max-w-64 p-4 text-white", "text-shadow-[0_1px_0_rgb(0_0_0/0.5)] duration-150", className]} {...props}>
         <div className={"flex flex-col gap-2 py-1.5"}>
-          <media-alert-dialog-title className={"my-[0.83em] text-media-lg font-semibold leading-tight"} />
-          <media-alert-dialog-description className={"my-[1em] opacity-70 wrap-anywhere"} />
+          <media-dialog-title className={"my-[0.83em] text-media-lg font-semibold leading-tight"} />
+          <media-dialog-description className={"my-[1em] opacity-70 wrap-anywhere"} />
         </div>
         <div className={"flex gap-2"}>
-          <media-alert-dialog-close className={["grid min-h-0 shrink-0 touch-manipulation select-none place-items-center rounded-media-control border-0 bg-transparent p-0 text-center text-inherit", "cursor-pointer outline-2 outline-transparent -outline-offset-2", "will-change-[scale] transition-[background-color,color,outline-offset,scale] duration-150 ease-out", "not-aria-disabled:hover:bg-media-control-hover not-aria-disabled:hover:text-media-accent-text", "not-aria-disabled:focus-visible:bg-media-control-hover not-aria-disabled:focus-visible:text-media-accent-text", "not-aria-disabled:aria-expanded:bg-media-control-hover not-aria-disabled:aria-expanded:text-media-accent-text", "focus-visible:outline-white focus-visible:outline-offset-2", "not-aria-disabled:active:scale-[0.97]", "motion-reduce:scale-100 motion-reduce:transition-[background-color,color] motion-reduce:will-change-auto", "aria-disabled:cursor-not-allowed aria-disabled:opacity-50", "size-9.5", "supports-[corner-shape:squircle]:rounded-[--spacing(4)]", "supports-[corner-shape:squircle]:[corner-shape:squircle]", "w-full flex-1 bg-media-accent! px-4 py-2 font-medium text-media-accent-text!", "h-9.5"]} />
+          <media-dialog-close className={["grid min-h-0 shrink-0 touch-manipulation select-none place-items-center rounded-media-control border-0 bg-transparent p-0 text-center text-inherit", "cursor-pointer outline-2 outline-transparent -outline-offset-2", "will-change-[scale] transition-[background-color,color,outline-offset,scale] duration-150 ease-out", "not-aria-disabled:hover:bg-media-control-hover not-aria-disabled:hover:text-media-accent-text", "not-aria-disabled:focus-visible:bg-media-control-hover not-aria-disabled:focus-visible:text-media-accent-text", "not-aria-disabled:aria-expanded:bg-media-control-hover not-aria-disabled:aria-expanded:text-media-accent-text", "focus-visible:outline-white focus-visible:outline-offset-2", "not-aria-disabled:active:scale-[0.97]", "motion-reduce:scale-100 motion-reduce:transition-[background-color,color] motion-reduce:will-change-auto", "aria-disabled:cursor-not-allowed aria-disabled:opacity-50", "size-9.5", "supports-[corner-shape:squircle]:rounded-[--spacing(4)]", "supports-[corner-shape:squircle]:[corner-shape:squircle]", "w-full flex-1 bg-media-accent! px-4 py-2 font-medium text-media-accent-text!", "h-9.5"]} />
         </div>
-      </media-alert-dialog-popup>
+      </media-dialog-popup>
     </media-error-dialog>
   );
 }
@@ -9290,40 +9307,43 @@ import "@videojs/html/ui/time";
 import "@videojs/html/ui/time-separator";
 import "@videojs/html/ui/time-group";
 import "@videojs/html/ui/tooltip-group";
+import "@videojs/html/ui/controls-content";
 import "@videojs/html/ui/controls";
 
 
 
 export function MinimalVideoControls() {
   return (
-    <media-controls className={['media-controls', "group/controls absolute inset-x-1 bottom-1 z-20 flex flex-wrap items-center gap-x-2 rounded-xl bg-transparent text-white", "text-shadow-[0_1px_0_rgb(0_0_0/0.2)]", "[@media(prefers-reduced-transparency:reduce)]:bg-black contrast-more:bg-black forced-colors:bg-[Canvas]", "[--media-popover-side-offset:--spacing(5)] [--media-tooltip-side-offset:var(--media-popover-side-offset)]", "[--media-popover-boundary-offset:--spacing(2)] [--media-tooltip-boundary-offset:var(--media-popover-boundary-offset)]", "p-1 transition-[filter,opacity,translate]", "duration-[calc(var(--media-controls-transition-duration)/2)] ease-out", "not-data-visible:pointer-events-none not-data-visible:opacity-0", "not-data-visible:duration-(--media-controls-transition-duration)", "motion-safe:not-data-visible:translate-y-full pointer-fine:motion-safe:not-data-visible:blur-sm", "@2xl/media-root:inset-x-2 @2xl/media-root:bottom-2 @2xl/media-root:flex-nowrap", "@2xl/media-root:[--media-popover-side-offset:--spacing(3)]"]}>
+    <media-controls>
       <media-controls-backdrop className={"pointer-events-none absolute bottom-[-0.25rem] left-1/2 h-[100cqh] w-[100cqw] -translate-x-1/2 rounded-[inherit] opacity-0 @2xl/media-root:bottom-[-0.5rem] bg-linear-to-t from-black/70 via-black/50 via-[length:calc(var(--media-spacing)*30)] to-transparent transition-opacity duration-(--media-controls-transition-duration) ease-out data-visible:opacity-100"} />
-      <media-tooltip-group>
-        <media-controls-group className={"flex flex-1 items-center gap-px @2xl/media-root:flex-none"}>
-          <PlayButton />
-          <VolumePopover side="right" orientation="horizontal" />
-        </media-controls-group>
-
-        <media-controls-group className={"@container/media-time-controls -order-1 flex flex-none basis-full flex-row-reverse items-center gap-3 px-1.5 [--media-slider-height:--spacing(5)] @2xl/media-root:order-none @2xl/media-root:min-w-0 @2xl/media-root:flex-1 @2xl/media-root:flex-row @2xl/media-root:[--media-slider-height:--spacing(8)] @2xl/media-root:[mask-position:100%_0] @2xl/media-root:[mask-size:200%_100%] @2xl/media-root:[transition:mask-position_50ms_ease-out] group-has-[[data-volume-level][aria-expanded=true]]/controls:@2xl/media-root:[mask-image:linear-gradient(to_right,transparent_10%,black_25%,black_100%)] group-has-[[data-volume-level][aria-expanded=true]]/controls:@2xl/media-root:[mask-position:0_0]"}>
-          <media-time-group className={"flex items-center gap-1"}>
-            <media-time className={"hidden cursor-pointer rounded-sm tabular-nums outline-2 -outline-offset-2 outline-transparent supports-[corner-shape:squircle]:rounded-2xl supports-[corner-shape:squircle]:[corner-shape:squircle] focus-visible:outline-white focus-visible:outline-offset-2 @2xl/media-root:inline"} type="current" toggle />
-            <media-time-separator className={"hidden text-current/60 @2xl/media-root:inline"} />
-            <media-time className={"tabular-nums text-current/60"} type="duration" />
-          </media-time-group>
-          <TimeSlider />
-        </media-controls-group>
-
-        <media-controls-group className={"flex flex-1 items-center justify-end gap-px @2xl/media-root:flex-none"}>
-          <CaptionsButton />
-          <VideoSettingsMenu />
-          <media-controls-group className={"flex items-center gap-px"}>
-            <CastButton />
-            <AirPlayButton />
-            <PiPButton />
-            <FullscreenButton />
+      <media-controls-content className={['media-controls', "group/controls absolute inset-x-1 bottom-1 z-20 flex flex-wrap items-center gap-x-2 rounded-xl bg-transparent text-white", "text-shadow-[0_1px_0_rgb(0_0_0/0.2)]", "[@media(prefers-reduced-transparency:reduce)]:bg-black contrast-more:bg-black forced-colors:bg-[Canvas]", "[--media-popover-side-offset:--spacing(5)] [--media-tooltip-side-offset:var(--media-popover-side-offset)]", "[--media-popover-boundary-offset:--spacing(2)] [--media-tooltip-boundary-offset:var(--media-popover-boundary-offset)]", "p-1 transition-[filter,opacity,translate]", "duration-[calc(var(--media-controls-transition-duration)/2)] ease-out", "not-data-visible:pointer-events-none not-data-visible:opacity-0", "not-data-visible:duration-(--media-controls-transition-duration)", "motion-safe:not-data-visible:translate-y-full pointer-fine:motion-safe:not-data-visible:blur-sm", "@2xl/media-root:inset-x-2 @2xl/media-root:bottom-2 @2xl/media-root:flex-nowrap", "@2xl/media-root:[--media-popover-side-offset:--spacing(3)]"]}>
+        <media-tooltip-group>
+          <media-controls-group className={"flex flex-1 items-center gap-px @2xl/media-root:flex-none"}>
+            <PlayButton />
+            <VolumePopover side="right" orientation="horizontal" />
           </media-controls-group>
-        </media-controls-group>
-      </media-tooltip-group>
+
+          <media-controls-group className={"@container/media-time-controls -order-1 flex flex-none basis-full flex-row-reverse items-center gap-3 px-1.5 [--media-slider-height:--spacing(5)] @2xl/media-root:order-none @2xl/media-root:min-w-0 @2xl/media-root:flex-1 @2xl/media-root:flex-row @2xl/media-root:[--media-slider-height:--spacing(8)] @2xl/media-root:[mask-position:100%_0] @2xl/media-root:[mask-size:200%_100%] @2xl/media-root:[transition:mask-position_50ms_ease-out] group-has-[[data-volume-level][aria-expanded=true]]/controls:@2xl/media-root:[mask-image:linear-gradient(to_right,transparent_10%,black_25%,black_100%)] group-has-[[data-volume-level][aria-expanded=true]]/controls:@2xl/media-root:[mask-position:0_0]"}>
+            <media-time-group className={"flex items-center gap-1"}>
+              <media-time className={"hidden cursor-pointer rounded-sm tabular-nums outline-2 -outline-offset-2 outline-transparent supports-[corner-shape:squircle]:rounded-2xl supports-[corner-shape:squircle]:[corner-shape:squircle] focus-visible:outline-white focus-visible:outline-offset-2 @2xl/media-root:inline"} type="current" toggle />
+              <media-time-separator className={"hidden text-current/60 @2xl/media-root:inline"} />
+              <media-time className={"tabular-nums text-current/60"} type="duration" />
+            </media-time-group>
+            <TimeSlider />
+          </media-controls-group>
+
+          <media-controls-group className={"flex flex-1 items-center justify-end gap-px @2xl/media-root:flex-none"}>
+            <CaptionsButton />
+            <VideoSettingsMenu />
+            <media-controls-group className={"flex items-center gap-px"}>
+              <CastButton />
+              <AirPlayButton />
+              <PiPButton />
+              <FullscreenButton />
+            </media-controls-group>
+          </media-controls-group>
+        </media-tooltip-group>
+      </media-controls-content>
     </media-controls>
   );
 }

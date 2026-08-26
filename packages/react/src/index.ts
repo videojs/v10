@@ -76,7 +76,7 @@ export {
 } from './player/create-player';
 // UI
 export { AirPlayButton, type AirPlayButtonProps } from './ui/airplay-button/airplay-button';
-export { AlertDialog, type AlertDialogContextValue, useAlertDialogContext } from './ui/alert-dialog';
+export { AlertDialog } from './ui/alert-dialog';
 export {
   type AudioTrackOption,
   type AudioTrackOptionsProps,
@@ -103,8 +103,10 @@ export {
 } from './ui/captions-radio-group';
 export { CastButton, type CastButtonProps } from './ui/cast-button/cast-button';
 export { Controls } from './ui/controls';
+export type { ControlsContentProps } from './ui/controls/controls-content';
 export type { ControlsGroupProps } from './ui/controls/controls-group';
 export type { ControlsRootProps } from './ui/controls/controls-root';
+export { Dialog, type DialogContextValue, useDialogContext } from './ui/dialog';
 export { ErrorDialog, type ErrorDialogContextValue, useErrorDialogContext } from './ui/error-dialog';
 export { FullscreenButton, type FullscreenButtonProps } from './ui/fullscreen-button/fullscreen-button';
 export { Gesture, type GestureProps, MediaGesture, type MediaGestureProps } from './ui/gesture/gesture';

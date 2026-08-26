@@ -146,7 +146,7 @@ export default defineConfig({
       ? [
           {
             command:
-              'pnpm --dir ../.. build:cdn && node_modules/.bin/tsx scripts/setup.ts && node_modules/.bin/vite --host --port 5299',
+              'pnpm --dir ../.. build:cdn && pnpm exec tsx scripts/setup.ts && pnpm exec vp dev --host --port 5299',
             cwd: '../sandbox',
             port: 5299,
             reuseExistingServer: !CI,

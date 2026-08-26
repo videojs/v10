@@ -19,7 +19,7 @@
   height: 100%;
   object-fit: var(--media-object-fit, contain);
   object-position: var(--media-object-position, center);
-  border-radius: var(--container-border-radius);
+  border-radius: var(--media-container-border-radius);
 }
 .media-minimal-skin > img {
   object-fit: var(--media-object-fit, contain);

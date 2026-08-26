@@ -46,10 +46,10 @@ function CastButton() {
 import { createPlayer, UIElement, selectRemotePlayback } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
 
-const { PlayerController, context } = createPlayer({ features: videoFeatures });
+const { PlayerController } = createPlayer({ features: videoFeatures });
 
 class CastButton extends UIElement {
-  readonly #remotePlayback = new PlayerController(this, context, selectRemotePlayback);
+  readonly #remotePlayback = new PlayerController(this, selectRemotePlayback);
 }
 ```
 </FrameworkCase>

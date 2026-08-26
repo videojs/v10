@@ -88,7 +88,7 @@ const MEDIA_TYPES: Record<string, MediaTypeConfig> = {
     imports: ['@videojs/html/media/shaka-video'],
     attrs: 'playsinline',
     hasStoryboard: false,
-    hasPoster: false,
+    hasPoster: true,
     isAudio: false,
   },
   audio: {
@@ -171,6 +171,10 @@ function htmlShell(title: string, scriptSrc: string): string {
 `;
 }
 
+function resourceHasPoster(resource: string): boolean {
+  return resource === 'mp4' || resource === 'hlsTs' || resource === 'hlsFmp4';
+}
+
 function htmlVideoPage(config: MediaTypeConfig, resource: string, imports: string[]): string {
   const allImports = [...imports, `import { MEDIA } from '../resources';`].join('\n');
 
@@ -178,9 +182,10 @@ function htmlVideoPage(config: MediaTypeConfig, resource: string, imports: strin
     ? `\n        <track kind="metadata" label="thumbnails" src="\${MEDIA.${resource}.storyboard}" default />`
     : '';
 
-  const poster = config.hasPoster
-    ? `\n      <img slot="poster" src="\${MEDIA.${resource}.poster}" alt="Video poster" />`
-    : '';
+  const poster =
+    config.hasPoster && resourceHasPoster(resource)
+      ? `\n      <img slot="poster" src="\${MEDIA.${resource}.poster}" alt="Video poster" />`
+      : '';
 
   const attrs = config.attrs ? ` ${config.attrs}` : '';
 
@@ -228,7 +233,7 @@ function reactVideoPage(media: string, resource: string, config: MediaTypeConfig
     ? `import { Video, VideoPlayer, VideoSkin } from '@videojs/react/video';`
     : `import { ${reactMedia.component} } from '${reactMedia.importPath}';\nimport { VideoPlayer, VideoSkin } from '@videojs/react/video';`;
 
-  const posterProp = config.hasPoster ? ` poster={MEDIA.${resource}.poster}` : '';
+  const posterProp = config.hasPoster && resourceHasPoster(resource) ? ` poster={MEDIA.${resource}.poster}` : '';
   const storyboardTrack = config.hasStoryboard
     ? `\n          <track kind="metadata" label="thumbnails" src={MEDIA.${resource}.storyboard} default />`
     : '';
@@ -422,7 +427,7 @@ video.innerHTML = \`<track kind="metadata" label="thumbnails" src="\${MEDIA.${re
 poster.src = MEDIA.${resource}.poster;
 poster.alt = 'Video poster';
 
-await import('@videojs/html/video/ui');
+await import('@videojs/html/video/skin');
 `;
 }
 
@@ -440,52 +445,34 @@ createRoot(document.getElementById('root')!).render(<App />);
 }
 
 function sourceHtmlPage(resource: string): string {
-  const generatedRoot = '../../../../../../packages/html/src/__generated__/skins/default-video';
+  const source = '../../../../../../packages/skins/vjsc/skins/default-video/skin.tsx';
 
   return `import '@videojs/html/video/player';
-import { skin } from '${generatedRoot}/skin';
-import styles from '${generatedRoot}/styles/styles.css?inline';
+import { DefaultVideoSkin } from '${source}?style=css&target=html&skin=default-video';
 import { MEDIA } from '../resources';
 
-class SourceVideoSkinElement extends HTMLElement {
-  constructor() {
-    super();
-    const root = this.attachShadow({ mode: 'open' });
-    root.innerHTML = \`<style>\${styles}</style>\${skin}\`;
-  }
-}
+const skin = String(
+  DefaultVideoSkin({
+    'data-source-skin': '',
+    poster: MEDIA.${resource}.poster,
+    style: 'display: block; max-width: 800px; aspect-ratio: 16/9',
+  })
+).replace(
+  '<slot></slot>',
+  \`<video src="\${MEDIA.${resource}.url}" playsinline muted crossorigin="anonymous"></video>\`
+);
 
-customElements.define('source-video-skin', SourceVideoSkinElement);
-
-const html = String.raw;
-
-document.getElementById('root')!.innerHTML = html\`
-  <video-player poster="\${MEDIA.${resource}.poster}">
-    <source-video-skin
-      data-source-skin
-      style="display: block; max-width: 800px; aspect-ratio: 16/9"
-    >
-      <img
-        slot="poster"
-        alt=""
-        style="background: url('\${MEDIA.${resource}.poster}') var(--media-object-position, center) / contain no-repeat"
-      >
-      <video src="\${MEDIA.${resource}.url}" playsinline muted crossorigin="anonymous"></video>
-    </source-video-skin>
-  </video-player>
-\`;
+document.getElementById('root')!.innerHTML = \`<video-player poster="\${MEDIA.${resource}.poster}">\${skin}</video-player>\`;
 `;
 }
 
 function sourceReactPage(resource: string): string {
-  const generatedRoot = '../../../../../../packages/react/src/__generated__/skins/default-video';
+  const source = '../../../../../../packages/skins/vjsc/skins/default-video/skin.tsx';
 
-  return `import { createPlayer } from '@/player/create-player';
-import { Video } from '@/media/video';
-import { videoFeatures } from '@videojs/core/dom';
+  return `import { createPlayer } from '@videojs/react';
+import { Video, videoFeatures } from '@videojs/react/video';
 import { createRoot } from 'react-dom/client';
-import { DefaultVideoSkin } from '${generatedRoot}/skin';
-import '${generatedRoot}/styles/styles.css';
+import { DefaultVideoSkin } from '${source}?style=css&target=react&skin=default-video';
 import { MEDIA } from '../resources';
 
 const { Player } = createPlayer({ features: videoFeatures });
@@ -495,17 +482,7 @@ function App() {
     <Player poster={MEDIA.${resource}.poster}>
       <DefaultVideoSkin
         data-source-skin
-        renderPoster={
-          <img
-            alt=""
-            style={{
-              backgroundImage: \`url("\${MEDIA.${resource}.poster}")\`,
-              backgroundPosition: 'var(--media-object-position, center)',
-              backgroundRepeat: 'no-repeat',
-              backgroundSize: 'contain',
-            }}
-          />
-        }
+        poster={MEDIA.${resource}.poster}
         style={{ maxWidth: 800, aspectRatio: '16/9' }}
       >
         <Video src={MEDIA.${resource}.url} playsInline muted crossOrigin="anonymous" />

@@ -13,10 +13,10 @@ import { MEDIA } from '../fixtures/resources';
  * itself, this is where we find out.
  *
  * The pinned variant's own shape is the other thing pinned down here. Only the _selected_ rendition's playlist is ever
- * resolved, so an unplayable pick produces a **cause with no verdict behind it** — nothing prunes the renditions that
- * were never probed, so the candidate set never empties. A source offering no video at all is the mirror case: a
- * verdict with no cause. Both are fatal, and asserting the sequence (not just the surfaced code) is what would catch a
- * `select-tracks` refactor quietly changing which.
+ * resolved. Once that pick is identified as unplayable, capability pruning re-evaluates selection and reports the
+ * per-rendition cause followed by the terminal no-supported-track verdict. A source offering no video at all reports
+ * only the verdict. Both are fatal, and asserting the sequence (not just the surfaced code) catches a selection
+ * refactor quietly changing which conditions reach consumers.
  *
  * @see internal/design/spf/features/errors.md
  * @see internal/design/spf/features/rendition-selection-caps.md
@@ -142,19 +142,16 @@ test.describe('SPF background video', () => {
     expect(error.message).toBe('');
   });
 
-  test('the MPEG-TS sequence holds the cause with no verdict behind it', async ({ page }) => {
+  test('the MPEG-TS sequence retains the cause before the terminal verdict', async ({ page }) => {
     await page.goto(pageFor(HTML_PAGE, MEDIA.hlsTs.url));
     await waitForSurfacedError(page);
 
     const codes = await page.evaluate(readReportedCodes);
 
-    // The pinned variant's defining asymmetry, and the reason its fatal set is
-    // wider than the other adapters'. `hls-video` reaches a 2011 verdict on this
-    // same source because its ABR path prunes and re-picks until the type
-    // empties; here the pick is dropped and never replaced, so the cause is all
-    // there is. A verdict appearing would mean selection changed shape.
-    expect(codes).toContain(SVTA_UNSUPPORTED_VIDEO_FORMAT);
-    expect(codes).not.toContain(SVTA_NO_SUPPORTED_VIDEO_TRACK);
+    // Resolution reports why the selected rendition is unusable, then the
+    // capability constraint removes it and the selector reports the terminal
+    // absence of a playable video track.
+    expect(codes).toEqual([SVTA_UNSUPPORTED_VIDEO_FORMAT, SVTA_NO_SUPPORTED_VIDEO_TRACK]);
   });
 
   test('the inner video learns nothing — no error, still at readyState 0', async ({ page }) => {

@@ -43,10 +43,10 @@ function FullscreenButton() {
 import { createPlayer, UIElement, selectFullscreen } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
 
-const { PlayerController, context } = createPlayer({ features: videoFeatures });
+const { PlayerController } = createPlayer({ features: videoFeatures });
 
 class FullscreenButton extends UIElement {
-  readonly #fullscreen = new PlayerController(this, context, selectFullscreen);
+  readonly #fullscreen = new PlayerController(this, selectFullscreen);
 }
 ```
 </FrameworkCase>

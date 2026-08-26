@@ -7,9 +7,9 @@ export const error = {
     'text-shadow-2xs text-shadow-black/50',
     // Animation
     'transition-[opacity,scale,transform]',
-    'duration-(--error-dialog-transition-duration)',
-    'delay-(--error-dialog-transition-delay)',
-    'ease-(--error-dialog-transition-timing-function)',
+    'duration-(--media-error-dialog-transition-duration)',
+    'delay-(--media-error-dialog-transition-delay)',
+    'ease-(--media-error-dialog-transition-timing-function)',
     'group-data-starting-style/error:opacity-0 group-data-starting-style/error:scale-95',
     'group-data-ending-style/error:opacity-0 group-data-ending-style/error:scale-95',
     'motion-reduce:scale-100 motion-reduce:transition-opacity',

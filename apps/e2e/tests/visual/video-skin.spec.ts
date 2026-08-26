@@ -3,6 +3,8 @@ import { expect, test } from '@playwright/test';
 import { DATA_ATTRS, SELECTORS } from '../../fixtures/selectors';
 import { PlayerPage } from '../../page-objects/player';
 
+test.describe.configure({ mode: 'serial' });
+
 /**
  * Visual snapshot tests for the video skin.
  *

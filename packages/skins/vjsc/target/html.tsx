@@ -16,15 +16,16 @@ const componentParts: Readonly<Record<string, Readonly<Record<string, string>>>>
   Controls: {
     Root: 'Controls',
     Backdrop: 'ControlsBackdrop',
+    Content: 'ControlsContent',
     Group: 'ControlsGroup',
   },
   ErrorDialog: {
     Root: 'ErrorDialog',
-    Backdrop: 'AlertDialogBackdrop',
-    Popup: 'AlertDialogPopup',
-    Title: 'AlertDialogTitle',
-    Description: 'AlertDialogDescription',
-    Close: 'AlertDialogClose',
+    Backdrop: 'DialogBackdrop',
+    Popup: 'DialogPopup',
+    Title: 'DialogTitle',
+    Description: 'DialogDescription',
+    Close: 'DialogClose',
   },
   Menu: {
     Root: 'Menu',

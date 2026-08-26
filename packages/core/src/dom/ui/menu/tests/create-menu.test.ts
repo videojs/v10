@@ -333,6 +333,40 @@ describe('createMenu', () => {
 
       expect(onOpenChange).not.toHaveBeenCalled();
     });
+
+    it('waits for a closing submenu to restore focus before handling a null focus target', async () => {
+      const parent = createTestMenu();
+      const child = createTestMenu();
+      const content = document.createElement('div');
+      const trigger = document.createElement('button');
+      const submenu = document.createElement('div');
+
+      content.append(trigger, submenu);
+      document.body.append(content);
+      parent.menu.setContentElement(content);
+      parent.menu.setPopupElement(content);
+      child.menu.setTriggerElement(trigger);
+      child.menu.setContentElement(submenu);
+      child.menu.setPopupElement(submenu);
+      parent.menu.registerSubmenu(child.menu);
+      parent.menu.open();
+      child.menu.open();
+      parent.onOpenChange.mockClear();
+
+      child.menu.close('escape');
+      parent.menu.contentProps.onFocusOut(makeFocusEvent(null));
+
+      expect(parent.onOpenChange).not.toHaveBeenCalledWith(false, expect.anything());
+
+      await vi.waitFor(() => expect(document.activeElement).toBe(trigger));
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+
+      expect(parent.onOpenChange).not.toHaveBeenCalledWith(false, expect.anything());
+
+      parent.menu.destroy();
+      child.menu.destroy();
+      content.remove();
+    });
   });
 
   // -------------------------------------------------------------------------

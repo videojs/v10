@@ -1,5 +1,5 @@
+import { safeDefine } from '../../registration/safe-define';
 import { VolumePopoverElement } from '../../ui/volume-popover/volume-popover-element';
-import { safeDefine } from '../safe-define';
 
 safeDefine(VolumePopoverElement);
 

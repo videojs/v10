@@ -1,5 +1,5 @@
+import { safeDefine } from '../../registration/safe-define';
 import { HotkeyElement } from '../../ui/hotkey/hotkey-element';
-import { safeDefine } from '../safe-define';
 
 safeDefine(HotkeyElement);
 

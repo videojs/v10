@@ -1,4 +1,3 @@
-.html-error-dialog-basic,
 .html-error-dialog-basic__container {
   position: relative;
   display: block;
@@ -27,23 +26,33 @@
   left: 16px;
 }
 
+.html-error-dialog-basic__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgb(3 7 18 / 92%);
+  transition: opacity 150ms ease;
+}
+
 .html-error-dialog-basic__dialog {
   position: absolute;
   inset: 0;
+  z-index: 1;
   display: grid;
   gap: 12px;
   place-content: center;
   padding: 32px;
   color: #fff;
   text-align: center;
-  background: rgb(3 7 18 / 92%);
   transition: opacity 150ms ease;
 }
 
+.html-error-dialog-basic__backdrop:not([data-open]),
 .html-error-dialog-basic__dialog:not([data-open]) {
   display: none;
 }
 
+.html-error-dialog-basic__backdrop[data-starting-style],
+.html-error-dialog-basic__backdrop[data-ending-style],
 .html-error-dialog-basic__dialog[data-starting-style],
 .html-error-dialog-basic__dialog[data-ending-style] {
   opacity: 0;

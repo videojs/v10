@@ -7,7 +7,7 @@
   object-position: var(--media-object-position, center);
 }
 .media-minimal-skin ::slotted(video) {
-  border-radius: var(--container-border-radius);
+  border-radius: var(--media-container-border-radius);
 }
 .media-minimal-skin video {
   border-radius: inherit;

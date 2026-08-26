@@ -4,9 +4,9 @@
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  height: calc(var(--spacing) * 9);
+  height: calc(var(--media-spacing) * 9);
   min-height: 0;
-  padding: calc(var(--spacing) * 2) calc(var(--spacing) * 4);
+  padding: calc(var(--media-spacing) * 2) calc(var(--media-spacing) * 4);
   text-align: center;
   touch-action: manipulation;
   cursor: pointer;
@@ -22,7 +22,7 @@
   will-change: scale;
 
   &:focus-visible {
-    outline-color: var(--focus-ring-color);
+    outline-color: var(--media-focus-ring-color);
     outline-offset: 2px;
   }
 
@@ -39,9 +39,9 @@
 /* Primary button variant */
 .media-default-skin .media-button--primary {
   font-weight: 500;
-  color: var(--accent-contrast-color);
+  color: var(--media-accent-contrast-color);
   text-shadow: none;
-  background: var(--accent-color);
+  background: var(--media-internal-accent-color);
 }
 
 /* Subtle button variant */
@@ -54,9 +54,9 @@
     &:hover,
     &:focus-visible,
     &[aria-expanded="true"] {
-      color: var(--accent-text-color);
+      color: var(--media-internal-accent-text-color);
       text-decoration: none;
-      background-color: var(--accent-background-color);
+      background-color: var(--media-accent-background-color);
     }
   }
 }
@@ -77,7 +77,7 @@
 
   .media-icon {
     grid-area: 1 / 1;
-    filter: drop-shadow(0 1px 0 var(--shadow-current-color));
+    filter: drop-shadow(0 1px 0 var(--media-shadow-current-color));
     transition-timing-function: ease-out;
     transition-duration: 150ms;
     transition-property: opacity, scale;
@@ -137,12 +137,12 @@
    text content. */
 .media-default-skin .media-button--live {
   display: inline-flex;
-  gap: calc(var(--spacing) * 1.5);
+  gap: calc(var(--media-spacing) * 1.5);
   align-items: center;
   width: auto;
   aspect-ratio: auto;
-  padding: calc(var(--spacing) * 2) calc(var(--spacing) * 3);
-  font-size: var(--font-size-small);
+  padding: calc(var(--media-spacing) * 2) calc(var(--media-spacing) * 3);
+  font-size: var(--media-font-size-small);
   font-weight: 600;
   line-height: 1;
   text-transform: uppercase;
@@ -151,8 +151,8 @@
   &::before {
     display: inline-block;
     flex-shrink: 0;
-    width: calc(var(--spacing) * 2);
-    height: calc(var(--spacing) * 2);
+    width: calc(var(--media-spacing) * 2);
+    height: calc(var(--media-spacing) * 2);
     content: "";
     background-color: oklch(from currentColor l c h / 0.4);
     border-radius: 50%;

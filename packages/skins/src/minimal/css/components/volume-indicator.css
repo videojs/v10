@@ -1,16 +1,16 @@
 .media-minimal-skin .media-volume-indicator {
   .media-volume-indicator__content {
-    width: min(80%, calc(var(--spacing) * 56));
+    width: min(80%, calc(var(--media-spacing) * 56));
     transform: translateX(0);
   }
 
   .media-volume-indicator__progress {
     position: relative;
     width: 100%;
-    height: calc(var(--spacing) * 0.75);
+    height: calc(var(--media-spacing) * 0.75);
     background: oklch(from currentColor l c h / 0.2);
     border-radius: calc(Infinity * 1px);
-    box-shadow: 0 1px 0 var(--shadow-subtle-current-color);
+    box-shadow: 0 1px 0 var(--media-shadow-subtle-current-color);
 
     &::before {
       position: absolute;
@@ -18,7 +18,7 @@
       left: 0;
       width: var(--media-volume-fill, 0%);
       content: "";
-      background: var(--accent-color);
+      background: var(--media-internal-accent-color);
       border-radius: inherit;
       transition: width 200ms linear;
     }

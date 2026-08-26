@@ -1,5 +1,5 @@
+import { safeDefine } from '../../registration/safe-define';
 import { AudioTrackRadioGroupElement } from '../../ui/audio-track-radio-group/audio-track-radio-group-element';
-import { safeDefine } from '../safe-define';
 
 safeDefine(AudioTrackRadioGroupElement);
 

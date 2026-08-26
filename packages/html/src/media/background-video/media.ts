@@ -4,8 +4,10 @@ import { namedNodeMapToObject } from '@videojs/utils/dom';
 import { MediaAttachMixin } from '../../store/media-attach-mixin';
 import { getTemplateHTML } from './template';
 
+const HTMLElementBase = globalThis.HTMLElement ?? class {};
+
 // Don't extend CustomMediaMixin to save some bytes, background videos don't need the full Media API.
-export class BackgroundVideo extends MediaAttachMixin(HTMLElement) {
+export class BackgroundVideo extends MediaAttachMixin(HTMLElementBase) {
   static shadowRootOptions = { mode: 'open' as ShadowRootMode };
   static getTemplateHTML = getTemplateHTML;
   static get observedAttributes() {

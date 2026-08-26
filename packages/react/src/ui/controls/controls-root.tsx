@@ -1,26 +1,18 @@
 import { ControlsCore, ControlsDataAttrs } from '@videojs/core';
 import { logMissingFeature, selectControls } from '@videojs/core/dom';
-import type { ForwardedRef, ReactNode } from 'react';
-import { forwardRef, useState } from 'react';
+import type { ReactNode } from 'react';
+import { useState } from 'react';
 
 import { usePlayer } from '../../player/context';
-import type { UIComponentProps } from '../../utils/types';
-import { renderElement } from '../../utils/use-render';
 import { ControlsContextProvider } from './context';
 
-export interface ControlsRootProps extends UIComponentProps<'div', ControlsCore.State> {
+export interface ControlsRootProps {
   children?: ReactNode | undefined;
 }
 
-/** Root container for player controls state and rendered control content. */
-export const ControlsRoot = forwardRef(function ControlsRoot(
-  componentProps: ControlsRootProps,
-  forwardedRef: ForwardedRef<HTMLDivElement>
-) {
-  const { render, className, style, children, ...elementProps } = componentProps;
-
+/** Manages controls state and provides it to the compound parts. Does not render an element. */
+export function ControlsRoot({ children }: ControlsRootProps): ReactNode {
   const controls = usePlayer(selectControls);
-
   const [core] = useState(() => new ControlsCore());
 
   if (!controls) {
@@ -33,20 +25,9 @@ export const ControlsRoot = forwardRef(function ControlsRoot(
   const state = core.getState();
 
   return (
-    <ControlsContextProvider value={{ state, stateAttrMap: ControlsDataAttrs }}>
-      {renderElement(
-        'div',
-        { render, className, style },
-        {
-          state,
-          stateAttrMap: ControlsDataAttrs,
-          ref: [forwardedRef],
-          props: [{ children }, elementProps, { 'data-interactive': '' }],
-        }
-      )}
-    </ControlsContextProvider>
+    <ControlsContextProvider value={{ state, stateAttrMap: ControlsDataAttrs }}>{children}</ControlsContextProvider>
   );
-});
+}
 
 export namespace ControlsRoot {
   export type Props = ControlsRootProps;

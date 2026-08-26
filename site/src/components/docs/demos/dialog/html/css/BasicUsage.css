@@ -1,0 +1,101 @@
+.html-dialog-basic {
+  position: relative;
+  min-height: 320px;
+}
+
+.html-dialog-basic__trigger {
+  display: grid;
+  gap: 10px;
+  width: min(100%, 420px);
+  padding: 0 0 12px;
+  overflow: hidden;
+  color: white;
+  cursor: pointer;
+  background: #111827;
+  border: 0;
+  border-radius: 12px;
+}
+
+.html-dialog-basic__trigger img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+}
+
+.html-dialog-basic__backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: rgb(3 7 18 / 80%);
+  transition: opacity 200ms ease;
+}
+
+.html-dialog-basic__dialog {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  transition: opacity 150ms ease;
+}
+
+.html-dialog-basic__backdrop:not([data-open]),
+.html-dialog-basic__dialog:not([data-open]) {
+  display: none;
+}
+
+.html-dialog-basic__backdrop[data-starting-style],
+.html-dialog-basic__backdrop[data-ending-style],
+.html-dialog-basic__dialog[data-starting-style],
+.html-dialog-basic__dialog[data-ending-style] {
+  opacity: 0;
+}
+
+.html-dialog-basic__popup {
+  position: relative;
+  width: 100%;
+  max-width: 560px;
+  padding: 16px;
+  color: white;
+  background: #111827;
+  border-radius: 12px;
+}
+
+.html-dialog-basic__title {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.html-dialog-basic__description {
+  display: block;
+  margin-bottom: 12px;
+}
+
+.html-dialog-basic__close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 6px 12px;
+  color: #111827;
+  cursor: pointer;
+  background: white;
+  border: 0;
+  border-radius: 9999px;
+}
+
+.html-dialog-basic video {
+  display: block;
+  width: 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .html-dialog-basic__backdrop,
+  .html-dialog-basic__dialog {
+    transition: none;
+  }
+}

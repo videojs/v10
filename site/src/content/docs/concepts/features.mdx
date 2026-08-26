@@ -35,7 +35,10 @@ import { VideoPlayer, Video, VideoSkin } from '@videojs/react/video';
 For example, if you import `<video-player>` from the `/video` path, you will have playback, volume, time, fullscreen, and more already enabled.
 
 ```html
-<script type="module" src="@videojs/html/video/player"></script> <!-- [!code focus] -->
+<script type="module">
+  import '@videojs/html/video/player';
+  import '@videojs/html/video/skin';
+</script> <!-- [!code focus] -->
 <video-player> <!-- [!code focus] -->
   <video-skin>
     <video src="movie.mp4"></video>
@@ -63,15 +66,11 @@ const { Player } = createPlayer({
 
 <FrameworkCase frameworks={["html"]}>
 ```ts
-import { createPlayer, playbackFeature, volumeFeature, timeFeature, controlsFeature } from '@videojs/html';
+import { controlsFeature, createPlayer, playbackFeature, timeFeature, volumeFeature } from '@videojs/html';
 
-const { ProviderMixin, PlayerController, context } = createPlayer({ // [!code focus]
+const { PlayerElement: MyPlayer } = createPlayer({ // [!code focus]
   features: [playbackFeature, volumeFeature, timeFeature, controlsFeature], // [!code focus]
 }); // [!code focus]
-
-class MyPlayer extends ProviderMixin(UIElement) {
-  static readonly tagName = 'my-player';
-}
 
 customElements.define('my-player', MyPlayer);
 ```
@@ -95,15 +94,10 @@ const { Player } = createPlayer({
 ```ts
 import { createPlayer, playbackFeature } from '@videojs/html';
 import { backgroundFeatures } from '@videojs/html/background';
-import { UIElement } from '@videojs/html';
 
-const { ProviderMixin } = createPlayer({ // [!code focus]
+const { PlayerElement: MyPlayer } = createPlayer({ // [!code focus]
   features: [...backgroundFeatures, playbackFeature], // [!code focus]
 }); // [!code focus]
-
-class MyPlayer extends ProviderMixin(UIElement) {
-  static readonly tagName = 'my-player';
-}
 
 customElements.define('my-player', MyPlayer);
 ```
@@ -133,7 +127,7 @@ You can access feature state and actions through <DocsLink slug="reference/playe
 import { selectPlayback } from '@videojs/html';
 
 // Subscribe to feature state (triggers element updates on change)
-readonly #playback = new PlayerController(this, context, selectPlayback);
+readonly #playback = new PlayerController(this, selectPlayback);
 
 // Read state and call actions
 const media = this.#playback.value;

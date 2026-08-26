@@ -1,87 +1,31 @@
 import { AlertDialogCore, AlertDialogDataAttrs, type AlertDialogProps } from '@videojs/core';
-import { createAlertDialog, createTransition } from '@videojs/core/dom';
-import { useSnapshot } from '@videojs/store/react';
 import type { ReactNode } from 'react';
-import { useEffect, useState } from 'react';
 
-import { useDestroy } from '../../utils/use-destroy';
-import { useLatestRef } from '../../utils/use-latest-ref';
-import { useSafeId } from '../../utils/use-safe-id';
-import { AlertDialogContextProvider } from './context';
+import { DialogContextProvider } from '../dialog/context';
+import { useDialogRoot } from '../dialog/use-dialog-root';
 
 export interface AlertDialogRootProps extends AlertDialogProps {
-  /** Called when the open state changes (fires immediately, before animations). */
+  /** Called when the open state changes, before animations complete. */
   onOpenChange?: (open: boolean) => void;
-  /** Called after open/close animations complete. */
+  /** Called after open or close animations complete. */
   onOpenChangeComplete?: (open: boolean) => void;
   children?: ReactNode;
 }
 
-/** Manages alert dialog state and provides it to the compound parts. Does not render an element. */
-export function AlertDialogRoot({
-  open: controlledOpen,
-  defaultOpen = AlertDialogCore.defaultProps.defaultOpen,
-  onOpenChange: onOpenChangeProp,
-  onOpenChangeComplete: onOpenChangeCompleteProp,
-  children,
-}: AlertDialogRootProps): ReactNode {
-  const [core] = useState(() => new AlertDialogCore());
-
-  const isControlled = controlledOpen !== undefined;
-
-  const onOpenChangeRef = useLatestRef(onOpenChangeProp);
-  const onOpenChangeCompleteRef = useLatestRef(onOpenChangeCompleteProp);
-
-  const [dialog] = useState(() => {
-    const instance = createAlertDialog({
-      transition: createTransition(),
-      onOpenChange: (nextOpen: boolean) => {
-        onOpenChangeRef.current?.(nextOpen);
-      },
-      onOpenChangeComplete: (nextOpen: boolean) => {
-        onOpenChangeCompleteRef.current?.(nextOpen);
-      },
-    });
-
-    if (!isControlled && defaultOpen) {
-      instance.open();
-    }
-
-    return instance;
+/** Manages alert dialog state and provides it to the shared dialog parts. */
+export function AlertDialogRoot({ children, ...props }: AlertDialogRootProps): ReactNode {
+  const context = useDialogRoot({
+    ...props,
+    coreFactory: createAlertDialogCore,
+    stateAttrMap: AlertDialogDataAttrs,
+    idPrefix: 'alert-dialog',
   });
 
-  const titleId = useSafeId('alert-dialog-title');
-  const descriptionId = useSafeId('alert-dialog-desc');
+  return <DialogContextProvider value={context}>{children}</DialogContextProvider>;
+}
 
-  core.setTitleId(titleId);
-  core.setDescriptionId(descriptionId);
-
-  // Sync controlled open prop -> internal input state.
-  useEffect(() => {
-    if (controlledOpen === undefined) return;
-
-    const { active: inputOpen } = dialog.input.current;
-    if (controlledOpen === inputOpen) return;
-
-    if (controlledOpen) {
-      dialog.open();
-    } else {
-      dialog.close();
-    }
-  }, [controlledOpen, dialog]);
-
-  useDestroy(dialog);
-
-  const input = useSnapshot(dialog.input);
-
-  core.setInput(input);
-  const state = core.getState();
-
-  return (
-    <AlertDialogContextProvider value={{ core, dialog, state, stateAttrMap: AlertDialogDataAttrs }}>
-      {children}
-    </AlertDialogContextProvider>
-  );
+function createAlertDialogCore(): AlertDialogCore {
+  return new AlertDialogCore();
 }
 
 export namespace AlertDialogRoot {

@@ -1069,7 +1069,7 @@ async function triggerMediaError(page: Page): Promise<Locator> {
   await expect
     .poll(() =>
       dialog.evaluate((element) => {
-        const target = element.querySelector('media-alert-dialog-popup') ?? element;
+        const target = element.querySelector('media-error-dialog') ?? element;
         const rect = target.getBoundingClientRect();
         const style = getComputedStyle(target);
 
@@ -1088,11 +1088,11 @@ async function errorDialogContract(root: Locator, dialog: Locator) {
 
   return dialog.evaluate((element, playerRect) => {
     const surface =
-      element.querySelector<HTMLElement>('.media-error__dialog, .media-error-dialog-popup, media-alert-dialog-popup') ??
+      element.querySelector<HTMLElement>('.media-error__dialog, .media-error-dialog-popup, media-error-dialog') ??
       element;
-    const title = element.querySelector<HTMLElement>('h2, media-alert-dialog-title');
-    const description = element.querySelector<HTMLElement>('p, media-alert-dialog-description');
-    const close = element.querySelector<HTMLElement>('button, media-alert-dialog-close');
+    const title = element.querySelector<HTMLElement>('h2, media-dialog-title');
+    const description = element.querySelector<HTMLElement>('p, media-dialog-description');
+    const close = element.querySelector<HTMLElement>('button, media-dialog-close');
     const round = (value: number) => Math.round(value * 10) / 10;
     const inspect = (target: HTMLElement | null, includePadding = true) => {
       if (!target) return null;

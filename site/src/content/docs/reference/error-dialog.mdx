@@ -27,6 +27,7 @@ import basicUsageHtmlTs from "@/components/docs/demos/error-dialog/html/css/Basi
 <FrameworkCase frameworks={["react"]}>
 ```tsx
 <ErrorDialog.Root>
+  <ErrorDialog.Backdrop />
   <ErrorDialog.Popup>
     <ErrorDialog.Title />
     <ErrorDialog.Description />
@@ -39,16 +40,19 @@ import basicUsageHtmlTs from "@/components/docs/demos/error-dialog/html/css/Basi
 <FrameworkCase frameworks={["html"]}>
 ```html
 <media-error-dialog>
-  <media-alert-dialog-title></media-alert-dialog-title>
-  <media-alert-dialog-description></media-alert-dialog-description>
-  <media-alert-dialog-close></media-alert-dialog-close>
+  <media-dialog-backdrop></media-dialog-backdrop>
+  <media-dialog-popup>
+    <media-dialog-title></media-dialog-title>
+    <media-dialog-description></media-dialog-description>
+    <media-dialog-close></media-dialog-close>
+  </media-dialog-popup>
 </media-error-dialog>
 ```
 </FrameworkCase>
 
 ## Behavior
 
-`ErrorDialog` is a specialized alert dialog driven by the player's <DocsLink slug="reference/feature-error">error feature</DocsLink>. It opens when the attached media reports an error and stays hidden otherwise. Closing it dismisses the current error in the player store.
+`ErrorDialog` is a specialized root driven by the player's <DocsLink slug="reference/feature-error">error feature</DocsLink>. It uses alert semantics and reuses the backdrop, popup, title, description, and close parts from <DocsLink slug="reference/dialog">`Dialog`</DocsLink>; it is not nested inside `AlertDialog`. It opens when the attached media reports an error and stays hidden otherwise. Closing it dismisses the current error in the player store.
 
 The title, description, and close label use localized default text. Provide children to any of those parts to replace its default content. Known media error codes use the matching translated message, while custom error messages are shown as written.
 
@@ -60,23 +64,28 @@ Use `data-open`, `data-starting-style`, and `data-ending-style` to style visibil
 
 <FrameworkCase frameworks={["html"]}>
 ```css
-media-error-dialog:not([data-open]) {
+media-dialog-backdrop:not([data-open]),
+media-dialog-popup:not([data-open]) {
   display: none;
 }
 
-media-error-dialog[data-starting-style],
-media-error-dialog[data-ending-style] {
+media-dialog-backdrop[data-starting-style],
+media-dialog-backdrop[data-ending-style],
+media-dialog-popup[data-starting-style],
+media-dialog-popup[data-ending-style] {
   opacity: 0;
 }
 ```
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
-React renders the popup as a standard DOM element. Add a `className` and use it as the selector:
+React renders the backdrop and popup as separate DOM elements. Add a `className` to each part and style their transitions independently:
 
 ```css
-.error-dialog[data-starting-style],
-.error-dialog[data-ending-style] {
+.error-dialog-backdrop[data-starting-style],
+.error-dialog-backdrop[data-ending-style],
+.error-dialog-popup[data-starting-style],
+.error-dialog-popup[data-ending-style] {
   opacity: 0;
 }
 ```
@@ -84,7 +93,7 @@ React renders the popup as a standard DOM element. Add a `className` and use it 
 
 ## Accessibility
 
-The popup uses `role="alertdialog"` and `aria-modal="true"`. Its title and description are connected with `aria-labelledby` and `aria-describedby`. Pressing <kbd>Escape</kbd> or activating the close part dismisses the error.
+The popup uses `role="alertdialog"` and `aria-modal="true"`. Its title and description are connected with `aria-labelledby` and `aria-describedby`. Focus stays within the popup and content outside it is inert while the error is open. Pressing <kbd>Escape</kbd> or activating the close part dismisses the error.
 
 ## Examples
 

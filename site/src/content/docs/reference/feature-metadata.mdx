@@ -43,10 +43,10 @@ Pass `selectMetadata` to <DocsLink slug="reference/player-controller">`PlayerCon
 import { createPlayer, UIElement, selectMetadata } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
 
-const { PlayerController, context } = createPlayer({ features: videoFeatures });
+const { PlayerController } = createPlayer({ features: videoFeatures });
 
 class ContentTitle extends UIElement {
-  readonly #metadata = new PlayerController(this, context, selectMetadata);
+  readonly #metadata = new PlayerController(this, selectMetadata);
 }
 ```
 </FrameworkCase>
@@ -56,7 +56,7 @@ class ContentTitle extends UIElement {
 The store publishes the resolved values and takes no writes. A player input is the only way to set one.
 
 <FrameworkCase frameworks={["react"]}>
-Every input is a prop on <DocsLink slug="reference/player-provider">`Player`</DocsLink>. A player built without the metadata feature has none of them, and none is forwarded.
+Every input is a prop on <DocsLink slug="reference/player">`Player`</DocsLink>. A player built without the metadata feature has none of them, and none is forwarded.
 
 ```tsx title="App.tsx"
 import { Container, createPlayer } from '@videojs/react';
@@ -79,7 +79,7 @@ Passing `null` clears your value, so `title={null}` falls through to the title t
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-Every input is an attribute on <DocsLink slug="reference/player-provider">`<video-player>`</DocsLink>, each with a matching property. A player built without the metadata feature observes none of them.
+Every input is an attribute on <DocsLink slug="reference/player">`<video-player>`</DocsLink>, each with a matching property. A player built without the metadata feature observes none of them.
 
 `title` already means the tooltip on an HTML element, so the title input goes by `content-title` in markup, and by `contentTitle` as a property. The other inputs use their own names.
 

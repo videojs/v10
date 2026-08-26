@@ -8,6 +8,7 @@ import {
   error,
   icon,
   iconState,
+  overlay,
   playButton,
   popup,
   slider,
@@ -111,6 +112,7 @@ export function LiveAudioSkinTailwind(props: LiveAudioSkinProps): ReactNode {
       {children}
 
       <ErrorDialog.Root>
+        <ErrorDialog.Backdrop data-error-backdrop="" className={overlay} />
         <ErrorDialog.Popup className={error.root}>
           <div className={error.dialog}>
             <div className={error.content}>

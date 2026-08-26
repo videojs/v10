@@ -13,10 +13,19 @@
   align-items: flex-end;
   padding: 12px;
   pointer-events: none;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.45), transparent 45%);
   transition: opacity 0.25s;
 }
 
+.controls-backdrop {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.45), transparent 45%);
+  opacity: 1;
+  transition: opacity 0.35s;
+}
+
+.controls-backdrop:not([data-visible]),
 .media-controls:not([data-visible]) {
   opacity: 0;
 }

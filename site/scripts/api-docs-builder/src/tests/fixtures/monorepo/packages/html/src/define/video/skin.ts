@@ -1,10 +1,9 @@
 /**
  * Mock HTML video skin element.
  *
- * Exercises: skin detection via SkinElement inheritance, tagName extraction.
+ * Exercises: registration-only discovery through an imported skin implementation.
  */
-import { SkinElement } from '../skin-element';
+import { VideoSkinElement } from '../../presets/video/skin';
+import { safeDefine } from '../../registration/safe-define';
 
-export class VideoSkinElement extends SkinElement {
-  static readonly tagName = 'video-skin';
-}
+safeDefine(VideoSkinElement);

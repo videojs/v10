@@ -229,6 +229,39 @@ describe('ReactiveElement properties', () => {
     expect(changed.has('disabled')).toBe(true);
   });
 
+  it('preserves the first old value when batching changes to the same property', async () => {
+    const update = vi.fn();
+
+    class TestElement extends ReactiveElement {
+      static override properties = {
+        label: { type: String },
+      };
+      label = 'default';
+
+      protected override update(changed: PropertyValues) {
+        super.update(changed);
+        update(changed);
+      }
+    }
+
+    const el = createElement(TestElement);
+
+    document.body.appendChild(el);
+    await el.updateComplete;
+
+    update.mockClear();
+
+    el.label = 'first';
+    el.label = 'second';
+    await el.updateComplete;
+
+    expect(update).toHaveBeenCalledOnce();
+    const changed = update.mock.calls[0]![0] as PropertyValues;
+
+    expect(el.label).toBe('second');
+    expect(changed.get('label')).toBe('default');
+  });
+
   it('does not trigger update when value is unchanged', async () => {
     const update = vi.fn();
 
@@ -647,7 +680,49 @@ describe('ReactiveElement property inheritance', () => {
 });
 
 describe('ReactiveElement upgrade', () => {
-  it('preserves properties set before upgrade', async () => {
+  it('restores own properties before connected lifecycle consumers run', async () => {
+    let connectedLabel: string | undefined;
+    let controllerLabel: string | undefined;
+
+    class TestElement extends ReactiveElement {
+      static override properties = {
+        label: { type: String },
+      };
+      label = 'default';
+
+      constructor() {
+        super();
+        this.addController({
+          hostConnected: () => (controllerLabel = this.label),
+        });
+      }
+
+      override connectedCallback() {
+        super.connectedCallback();
+        connectedLabel = this.label;
+      }
+    }
+
+    const tag = uniqueTag('connect-lifecycle-el');
+
+    customElements.define(tag, TestElement);
+
+    // SAFETY: The tag was registered with TestElement immediately above.
+    const el = document.createElement(tag) as TestElement;
+
+    Object.defineProperty(el, 'label', {
+      value: 'pre-connect',
+      writable: true,
+      configurable: true,
+      enumerable: true,
+    });
+    document.body.appendChild(el);
+
+    await vi.waitFor(() => expect(connectedLabel).toBe('pre-connect'));
+    expect(controllerLabel).toBe('pre-connect');
+  });
+
+  it('does not overwrite properties set after connection but before the first update', async () => {
     const update = vi.fn();
 
     class TestElement extends ReactiveElement {
@@ -662,20 +737,72 @@ describe('ReactiveElement upgrade', () => {
       }
     }
 
-    const tag = uniqueTag('upgrade-el');
+    const tag = uniqueTag('connect-el');
+
+    customElements.define(tag, TestElement);
+
+    // SAFETY: The tag was registered with TestElement immediately above.
     const el = document.createElement(tag) as TestElement;
 
-    // Set property before defining custom element
-    (el as unknown as Record<string, unknown>).label = 'pre-upgrade';
     document.body.appendChild(el);
+    el.label = 'newer';
+    await el.updateComplete;
 
-    // Define after (upgrade scenario)
-    customElements.define(tag, class extends TestElement {});
+    expect(el.label).toBe('newer');
+    expect(update).toHaveBeenLastCalledWith('newer');
 
-    // Wait for upgrade and first update
-    await new Promise((r) => setTimeout(r, 10));
+    update.mockClear();
+    el.label = 'later';
+    await el.updateComplete;
 
-    expect(el.label).toBe('pre-upgrade');
-    expect(update).toHaveBeenCalled();
+    expect(update).toHaveBeenCalledOnce();
+    expect(update).toHaveBeenCalledWith('later');
+  });
+
+  it('activates reactive accessors shadowed by native class fields', async () => {
+    const update = vi.fn();
+
+    class TestElement extends ReactiveElement {
+      static override properties = {
+        label: { type: String },
+      };
+      declare label: string;
+
+      constructor() {
+        super();
+
+        // Native class fields use DefineField semantics rather than invoking a prototype setter.
+        Object.defineProperty(this, 'label', {
+          value: 'default',
+          writable: true,
+          configurable: true,
+          enumerable: true,
+        });
+      }
+
+      protected override update() {
+        update(this.label);
+      }
+    }
+
+    const tag = uniqueTag('upgrade-class-field-el');
+
+    customElements.define(tag, TestElement);
+
+    // SAFETY: The tag was registered with TestElement immediately above.
+    const el = document.createElement(tag) as TestElement;
+
+    document.body.appendChild(el);
+    await el.updateComplete;
+
+    expect(Object.hasOwn(el, 'label')).toBe(false);
+    expect(el.label).toBe('default');
+
+    update.mockClear();
+    el.label = 'changed';
+    await el.updateComplete;
+
+    expect(update).toHaveBeenCalledOnce();
+    expect(update).toHaveBeenCalledWith('changed');
   });
 });

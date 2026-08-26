@@ -69,6 +69,30 @@ Each HTML preset provides registration entry points for a preconfigured player e
 
 These parts aren't equally tied together. Skins depend tightly on their feature bundle — a skin expects specific features to exist. Media elements are more interchangeable — you can swap in an HLS or DASH provider without changing your skin or features.
 
+<FrameworkCase frameworks={["html"]}>
+HTML preset roots are side-effect-free modules for importing the configured classes, typed controller, and feature bundle:
+
+```ts
+import {
+  PlayerController,
+  VideoPlayerElement,
+  VideoSkinElement,
+  videoFeatures,
+} from '@videojs/html/video';
+```
+
+Registration is explicit, so importing a value never changes the custom element registry. Registration entry points
+are side-effect-only; import classes, controllers, and types from the preset root:
+
+```ts
+import '@videojs/html/video/player'; // <video-player> only
+import '@videojs/html/video/skin';   // <video-skin> + container + video UI
+// Import '@videojs/html/video/minimal-skin' instead for the minimal skin.
+```
+
+A complete player imports `video/player` and one skin. Each skin registration includes its container and UI dependencies but does not register the player.
+</FrameworkCase>
+
 ## Customizing a preset
 
 You can customize a preset in three ways: extend its feature bundle, eject its skin, or swap its media element.
@@ -101,19 +125,15 @@ function Hero() {
 <FrameworkCase frameworks={["html"]}>
 ```html title="index.html"
 <script type="module">
-  import { createPlayer, playbackFeature, UIElement } from '@videojs/html';
+  import { createPlayer, playbackFeature } from '@videojs/html';
   import { backgroundFeatures } from '@videojs/html/background';
   import '@videojs/html/background/video';
   import '@videojs/html/ui/container';
   import '@videojs/html/ui/play-button';
 
-  const { ProviderMixin } = createPlayer({ // [!code focus]
+  const { PlayerElement: MyPlayer } = createPlayer({ // [!code focus]
     features: [...backgroundFeatures, playbackFeature], // [!code focus]
   }); // [!code focus]
-
-  class MyPlayer extends ProviderMixin(UIElement) {
-    static tagName = 'my-player';
-  }
 
   customElements.define('my-player', MyPlayer);
 </script>

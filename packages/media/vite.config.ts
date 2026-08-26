@@ -17,6 +17,7 @@ const createPackConfig = (mode: PackageBuildMode): PackUserConfig => ({
     'dom/custom-media-element/index': './src/dom/custom-media-element/index.ts',
     'dom/media-played-ranges/index': './src/dom/media-played-ranges/index.ts',
     'dom/dash/index': './src/dom/dash/index.ts',
+    'dom/dash/server': './src/dom/dash/server.ts',
     'dom/hls-js/index': './src/dom/hls-js/index.ts',
     'dom/native-hls/index': './src/dom/native-hls/index.ts',
     'dom/cloudflare/index': './src/dom/cloudflare/index.ts',

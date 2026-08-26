@@ -7,6 +7,7 @@ interface ResolvedMeta {
 
 const cache = new WeakMap<typeof ReactiveElement, ResolvedMeta>();
 const propertyKeys = new Map<string, symbol>();
+const HTMLElementBase = globalThis.HTMLElement ?? class {};
 
 /**
  * Lightweight reactive custom element base class.
@@ -47,7 +48,7 @@ const propertyKeys = new Map<string, symbol>();
  *   }
  *   ```;
  */
-export class ReactiveElement extends HTMLElement {
+export class ReactiveElement extends HTMLElementBase {
   /**
    * User-supplied object that maps property names to {@linkcode PropertyDeclaration} objects containing options for
    * configuring reactive properties. When a reactive property is set the element will update and render.
@@ -64,6 +65,7 @@ export class ReactiveElement extends HTMLElement {
   #controllers: Set<ReactiveController> = new Set();
   #changedProperties: PropertyValues = new Map();
   #instanceProperties: Map<string, unknown> | undefined;
+  #propertiesUpgraded = false;
 
   /**
    * Promise that gates the first update until `connectedCallback`. Also used to serialize updates — each
@@ -135,6 +137,7 @@ export class ReactiveElement extends HTMLElement {
 
   /** On first connection, enables updating and notifies controllers. */
   connectedCallback(): void {
+    this.#upgradeProperties();
     this.enableUpdating(true);
 
     for (const c of this.#controllers) {
@@ -182,7 +185,7 @@ export class ReactiveElement extends HTMLElement {
    * any configured property options are honored.
    */
   requestUpdate(name?: string, oldValue?: unknown): void {
-    if (name !== undefined) {
+    if (name !== undefined && !this.#changedProperties.has(name)) {
       this.#changedProperties.set(name, oldValue);
     }
 
@@ -249,15 +252,6 @@ export class ReactiveElement extends HTMLElement {
     // This can happen if `performUpdate` is called early to "flush"
     // the update.
     if (!this.isUpdatePending) return;
-
-    // Restore saved instance properties on first update.
-    if (!this.hasUpdated && this.#instanceProperties) {
-      for (const [name, value] of this.#instanceProperties) {
-        (this as Record<string, unknown>)[name] = value;
-      }
-
-      this.#instanceProperties = undefined;
-    }
 
     const changed = this.#changedProperties;
 
@@ -329,6 +323,33 @@ export class ReactiveElement extends HTMLElement {
    */
   get updateComplete(): Promise<boolean> {
     return this.#updatePromise;
+  }
+
+  /**
+   * Replays properties set before registration through their reactive accessors. This runs after subclass fields have
+   * initialized but before connection lifecycle consumers, so user values win over defaults and are immediately
+   * usable.
+   */
+  #upgradeProperties(): void {
+    if (this.#propertiesUpgraded) return;
+
+    this.#propertiesUpgraded = true;
+
+    const { props } = resolve(this.constructor as typeof ReactiveElement);
+
+    for (const name of props.keys()) {
+      const hasSavedValue = this.#instanceProperties?.has(name) ?? false;
+      const hasOwnValue = Object.hasOwn(this, name);
+      if (!hasSavedValue && !hasOwnValue) continue;
+
+      const value = hasSavedValue ? this.#instanceProperties?.get(name) : Reflect.get(this, name);
+
+      if (hasOwnValue) Reflect.deleteProperty(this, name);
+
+      Reflect.set(this, name, value);
+    }
+
+    this.#instanceProperties = undefined;
   }
 }
 

@@ -120,9 +120,11 @@ export function createMenu(options: MenuOptions): MenuApi {
   let contentElement: HTMLElement | null = null;
   let popupElement: HTMLElement | null = null;
   const submenus = new Set<MenuApi>();
+  const submenuUnsubscribes = new Map<MenuApi, () => void>();
 
   let typeaheadBuffer = '';
   let typeaheadTimer: ReturnType<typeof setTimeout> | null = null;
+  let pendingFocusOut: UIFocusEvent | null = null;
 
   let openRafId = 0;
   let lastCloseReason: MenuOpenChangeReason | null = null;
@@ -329,7 +331,14 @@ export function createMenu(options: MenuOptions): MenuApi {
   // --- Content keyboard navigation ---
 
   const contentProps: MenuContentProps = {
-    onFocusOut: popover.popupProps.onFocusOut,
+    onFocusOut(event) {
+      if (event.relatedTarget === null && hasClosingSubmenu()) {
+        pendingFocusOut = event;
+        return;
+      }
+
+      popover.popupProps.onFocusOut(event);
+    },
     onKeyDown(event) {
       const { key } = event;
       const navigableItems = getNavigableItems();
@@ -441,7 +450,29 @@ export function createMenu(options: MenuOptions): MenuApi {
 
   function registerSubmenu(menu: MenuApi): () => void {
     submenus.add(menu);
-    return () => submenus.delete(menu);
+    const unsubscribe = menu.input.subscribe(handlePendingFocusOut);
+
+    submenuUnsubscribes.set(menu, unsubscribe);
+
+    return () => {
+      submenus.delete(menu);
+      submenuUnsubscribes.get(menu)?.();
+      submenuUnsubscribes.delete(menu);
+      handlePendingFocusOut();
+    };
+  }
+
+  function hasClosingSubmenu(): boolean {
+    return [...submenus].some(({ input }) => input.current.status === 'ending');
+  }
+
+  function handlePendingFocusOut(): void {
+    if (!pendingFocusOut || hasClosingSubmenu()) return;
+
+    const event = pendingFocusOut;
+
+    pendingFocusOut = null;
+    popover.popupProps.onFocusOut(event);
   }
 
   function syncOpen(open: boolean): void {
@@ -456,7 +487,12 @@ export function createMenu(options: MenuOptions): MenuApi {
     cancelAnimationFrame(openRafId);
     openRafId = 0;
     clearTypeahead();
+
+    for (const unsubscribe of submenuUnsubscribes.values()) unsubscribe();
+
+    submenuUnsubscribes.clear();
     submenus.clear();
+    pendingFocusOut = null;
     popover.destroy();
   }
 

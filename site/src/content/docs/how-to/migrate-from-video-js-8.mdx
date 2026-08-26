@@ -265,6 +265,7 @@ These are the ones that need a decision rather than a rename, so each has a sect
 | `spatialNavigation` | no equivalent; see [Known gaps](#known-gaps) |
 | `inactivityTimeout` | not configurable yet ([#1728](https://github.com/videojs/v10/issues/1728)) |
 | `errorDisplay`, `notSupportedMessage` | the skins include an error dialog |
+| `ModalDialog` | compose a <DocsLink slug="reference/dialog">Dialog</DocsLink>; your application controls media playback when it opens and closes |
 
 ## Techs become media components
 
@@ -356,10 +357,11 @@ This is where v8's `controlBar` config and `addChild` calls end up, and honestly
 
 <FrameworkCase frameworks={["html"]}>
 
-Swap the skin import for `video/ui`, which registers the player, the container, and every UI element without wrapping them in a skin:
+Keep the player and skin registration imports. The skin import registers the container and UI elements that your ejected layout uses; you do not render the skin element itself:
 
 ```js
-import '@videojs/html/video/ui';
+import '@videojs/html/video/player';
+import '@videojs/html/video/skin';
 ```
 
 Then write the layout yourself:
@@ -372,20 +374,22 @@ Then write the layout yourself:
     <media-poster><img src="/poster.jpg" alt="" decoding="async" /></media-poster>
 
     <media-controls>
-      <media-play-button></media-play-button>
-      <media-mute-button></media-mute-button>
-      <media-volume-slider></media-volume-slider>
-      <media-time type="current"></media-time>
-      <media-time-slider>
-        <media-slider-track>
-          <media-slider-fill></media-slider-fill>
-          <media-slider-buffer></media-slider-buffer>
-        </media-slider-track>
-        <media-slider-thumb></media-slider-thumb>
-      </media-time-slider>
-      <media-time type="duration"></media-time>
-      <media-fullscreen-button></media-fullscreen-button>
-      <!-- No media-pip-button, so no picture-in-picture control renders. -->
+      <media-controls-content>
+        <media-play-button></media-play-button>
+        <media-mute-button></media-mute-button>
+        <media-volume-slider></media-volume-slider>
+        <media-time type="current"></media-time>
+        <media-time-slider>
+          <media-slider-track>
+            <media-slider-fill></media-slider-fill>
+            <media-slider-buffer></media-slider-buffer>
+          </media-slider-track>
+          <media-slider-thumb></media-slider-thumb>
+        </media-time-slider>
+        <media-time type="duration"></media-time>
+        <media-fullscreen-button></media-fullscreen-button>
+        <!-- No media-pip-button, so no picture-in-picture control renders. -->
+      </media-controls-content>
     </media-controls>
 
     <media-hotkey keys="Space" action="togglePaused"></media-hotkey>
@@ -415,16 +419,18 @@ export function MyPlayer() {
         <Video src="/video.mp4" playsInline />
 
         <Controls.Root>
-          <PlayButton />
-          <MuteButton />
-          <TimeSlider.Root>
-            <TimeSlider.Track>
-              <TimeSlider.Fill />
-              <TimeSlider.Buffer />
-            </TimeSlider.Track>
-            <TimeSlider.Thumb />
-          </TimeSlider.Root>
-          {/* No PiPButton, so no picture-in-picture control renders. */}
+          <Controls.Content>
+            <PlayButton />
+            <MuteButton />
+            <TimeSlider.Root>
+              <TimeSlider.Track>
+                <TimeSlider.Fill />
+                <TimeSlider.Buffer />
+              </TimeSlider.Track>
+              <TimeSlider.Thumb />
+            </TimeSlider.Root>
+            {/* No PiPButton, so no picture-in-picture control renders. */}
+          </Controls.Content>
         </Controls.Root>
 
         <Hotkey keys="Space" action="togglePaused" />

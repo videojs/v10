@@ -38,7 +38,7 @@ const defineEntries = Object.fromEntries(
 );
 
 const presetEntries = Object.fromEntries(
-  globSync('src/presets/*.ts', { cwd: packageDir }).map((file) => {
+  globSync('src/presets/*/index.ts', { cwd: packageDir }).map((file) => {
     const key = file.replace('src/', '').replace('.ts', '');
 
     return [key, file];
@@ -99,23 +99,15 @@ const cdnPresets = [
   'video',
   'video-player',
   'video-minimal',
-  'video-ui',
-  'video-minimal-ui',
   'live-video',
   'live-video-player',
   'live-video-minimal',
-  'live-video-ui',
-  'live-video-minimal-ui',
   'audio',
   'audio-player',
   'audio-minimal',
-  'audio-ui',
-  'audio-minimal-ui',
   'live-audio',
   'live-audio-player',
   'live-audio-minimal',
-  'live-audio-ui',
-  'live-audio-minimal-ui',
   'background',
 ];
 const mediaDir = 'src/define/media';

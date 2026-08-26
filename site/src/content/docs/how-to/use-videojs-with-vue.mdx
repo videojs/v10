@@ -54,7 +54,7 @@ If your Vue component needs to react to player state or call a player action, wa
 
 ```vue
 <script setup lang="ts">
-import type { VideoPlayerElement } from '@videojs/html/video/player';
+import type { VideoPlayerElement } from '@videojs/html/video';
 import { onMounted, onUnmounted, ref } from 'vue';
 
 const player = ref<VideoPlayerElement | null>(null);

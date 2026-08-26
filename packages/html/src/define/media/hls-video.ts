@@ -1,5 +1,5 @@
 import { HlsVideo } from '../../media/hls-video';
-import { safeDefine } from '../safe-define';
+import { safeDefine } from '../../registration/safe-define';
 
 export class HlsVideoElement extends HlsVideo {
   static readonly tagName = 'hls-video';

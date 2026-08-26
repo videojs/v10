@@ -110,7 +110,7 @@ To use Tailwind or change the underlying CSS, [eject the skin](../how-to/customi
 
 ### Shared limitations
 
-- Both style systems assume a 16px root font size and use rem units for sizing.
+- Skin spacing and icons use a fixed `16px` base by default. Vanilla CSS font sizes use the same base, while Tailwind font sizes use rem units and assume a 16px root font size.
 - The default font stack includes [`Inter`](https://rsms.me/inter/), but we do not load the webfont for you. If Inter is unavailable, the skin uses system fonts.
 
 ### Ejected vanilla CSS
@@ -119,5 +119,5 @@ To use Tailwind or change the underlying CSS, [eject the skin](../how-to/customi
 
 ### Ejected Tailwind
 
-- Ejected skins currently assume the default configuration. A future CLI eject command will support custom class prefixes. For now, edit the ejected skin to use your prefix.
-- Ejected skins currently support Tailwind 4.2.x.
+- Ejected skins establish their own spacing scale but otherwise assume the default configuration. A future CLI eject command will support custom class prefixes. For now, edit the ejected skin to use your prefix.
+- Ejected skins currently support Tailwind 4.3.x.

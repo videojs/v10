@@ -1,21 +1,33 @@
-import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
+// @vitest-environment node
+import { describe, expect, it } from 'vite-plus/test';
 
 describe('SSR-safe define imports', () => {
-  afterEach(() => {
-    vi.unstubAllGlobals();
-    vi.resetModules();
+  it('imports the package API without browser-only globals', async () => {
+    await expect(import('../../index')).resolves.toBeDefined();
   });
 
   it('imports video skin without browser-only globals', async () => {
-    vi.stubGlobal('customElements', undefined);
-    vi.stubGlobal('CSSStyleSheet', undefined);
-
     await expect(import('../video/skin')).resolves.toBeDefined();
   });
 
-  it('imports hls-video without customElements', async () => {
-    vi.stubGlobal('customElements', undefined);
+  it('imports preset APIs without browser-only globals', async () => {
+    await expect(
+      Promise.all([
+        import('../../presets/video'),
+        import('../../presets/audio'),
+        import('../../presets/live-video'),
+        import('../../presets/live-audio'),
+        import('../../presets/background'),
+      ])
+    ).resolves.toHaveLength(5);
+  });
 
+  it('imports hls-video without browser-only globals', async () => {
     await expect(import('../media/hls-video')).resolves.toBeDefined();
+  });
+
+  it('imports background videos without browser-only globals', async () => {
+    await expect(import('../background/video')).resolves.toBeDefined();
+    await expect(import('../media/hls-background-video')).resolves.toBeDefined();
   });
 });

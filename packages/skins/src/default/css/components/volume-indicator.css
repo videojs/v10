@@ -1,5 +1,5 @@
 .media-default-skin .media-volume-indicator {
-  width: min(80%, calc(var(--spacing) * 48));
+  width: min(80%, calc(var(--media-spacing) * 48));
   transform: translateX(0);
 
   .media-volume-indicator__content {

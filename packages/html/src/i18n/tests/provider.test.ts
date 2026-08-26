@@ -3,7 +3,7 @@ import { type PropertyValues, ReactiveElement } from '@videojs/element';
 import { ContextProvider } from '@videojs/element/context';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
-import { SkinElement } from '../../define/skin-element';
+import { SkinElement } from '../../presets/skin';
 import { i18nContext, MediaI18nProviderElement, MediaTextElement } from '../index';
 
 const skinTemplate = document.createElement('template');

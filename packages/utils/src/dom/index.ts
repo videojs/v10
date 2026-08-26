@@ -17,7 +17,7 @@ export {
 export { getDevicePixelRatio, watchDevicePixelRatio } from './device-pixel-ratio';
 export { isRTL } from './direction';
 export { type OnEventOptions, onEvent, resolveEventTarget } from './event';
-export { getDeepActiveElement } from './focus';
+export { getDeepActiveElement, getTabbableElements } from './focus';
 export { idleCallback } from './idle-callback';
 export {
   EDITABLE_SELECTOR,
@@ -91,7 +91,7 @@ export { type CaptionOrSubtitleKind, findTrackElement, getTextTrackList, isCapti
 export { serializeTimeRanges } from './time-ranges';
 export { containsComposed } from './tree';
 export type { CustomElement, CustomElementCallbacks, EventListenerFor, EventType, QueriedElement } from './types';
-export { walkAncestors } from './walk-ancestors';
+export { type WalkAncestorsOptions, walkAncestors } from './walk-ancestors';
 export {
   isWebKitAirPlayCapable,
   supportsWebKitAirPlay,

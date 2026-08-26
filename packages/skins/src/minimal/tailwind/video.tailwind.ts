@@ -17,56 +17,65 @@ export const container = (isShadowDOM: boolean) =>
     baseContainer,
     'group/skin',
     'bg-black overflow-clip',
+    '[&:has(.media-buffering-indicator[data-visible])_.media-controls-backdrop]:bg-black/35',
+    '[&:has(.media-buffering-indicator[data-visible])_.media-controls-backdrop]:opacity-100',
+    '[&:has(.media-buffering-indicator[data-visible])_.media-controls-backdrop]:backdrop-blur-sm',
+    '[&_[data-error-backdrop]]:duration-(--media-error-dialog-transition-duration)',
+    '[&_[data-error-backdrop]]:delay-(--media-error-dialog-transition-delay)',
+    '[&_[data-error-backdrop][data-open]]:opacity-100',
+    '[&_[data-error-backdrop][data-open]]:backdrop-blur-lg',
+    '[&_[data-error-backdrop][data-open]]:backdrop-saturate-120',
+    '[&:has(.media-error[data-open])_.media-controls]:hidden',
     // Border ring (::after)
     'after:absolute after:pointer-events-none after:rounded-[inherit] after:z-10',
     '[&:fullscreen]:after:hidden',
-    'after:inset-0 after:ring-1 after:ring-inset after:ring-(color:--border-color)',
+    'after:inset-0 after:ring-1 after:ring-inset after:ring-(color:--media-border-color)',
     // Video element
     {
-      '[&_::slotted(video)]:block [&_::slotted(video)]:w-full [&_::slotted(video)]:h-full [&_::slotted(video)]:rounded-(--container-border-radius) [&_::slotted(video)]:[object-fit:var(--media-object-fit,cover)] [&_::slotted(video)]:[object-position:var(--media-object-position,center)]':
+      '[&_::slotted(video)]:block [&_::slotted(video)]:w-full [&_::slotted(video)]:h-full [&_::slotted(video)]:rounded-(--media-container-border-radius) [&_::slotted(video)]:[object-fit:var(--media-object-fit,cover)] [&_::slotted(video)]:[object-position:var(--media-object-position,center)]':
         isShadowDOM,
       '[&_video]:block [&_video]:w-full [&_video]:h-full [&_video]:rounded-[inherit] [&_video]:[object-fit:var(--media-object-fit,contain)] [&_video]:[object-position:var(--media-object-position,center)]':
         !isShadowDOM,
     },
-    '[--default-accent-color:oklch(1_0_0)]',
-    '[--border-color:light-dark(oklch(0_0_0/0.15),oklch(1_0_0/0.15))]',
-    '[--focus-ring-color:light-dark(oklch(0_0_0),oklch(1_0_0))]',
-    '**:[--focus-ring-color:oklch(1_0_0)]',
-    '[--container-border-radius:var(--media-border-radius,0.75rem)]',
-    '[--media-video-border-radius:var(--container-border-radius)]',
-    '[--controls-background-color:transparent]',
-    '[--controls-transition-duration:100ms]',
-    '[--controls-transition-timing-function:ease-out]',
-    '[--error-dialog-transition-duration:150ms]',
-    '[--error-dialog-transition-delay:100ms]',
-    '[--error-dialog-transition-timing-function:ease-out]',
-    '[--popup-transition-duration:100ms]',
-    '[--popup-transition-timing-function:ease-out]',
-    '[--popover-backdrop-filter:blur(16px)_saturate(1.5)]',
-    '[--popover-background-color:oklch(0_0_0/0.5)]',
-    '[--popover-border-color:oklch(1_0_0/0.1)]',
-    '[--tooltip-backdrop-filter:var(--popover-backdrop-filter)]',
-    '[--tooltip-background-color:var(--popover-background-color)]',
-    '[--tooltip-border-color:var(--popover-border-color)]',
-    '[--tooltip-text-color:currentColor]',
+    '[--media-default-accent-color:oklch(1_0_0)]',
+    '[--media-border-color:light-dark(oklch(0_0_0/0.15),oklch(1_0_0/0.15))]',
+    '[--media-focus-ring-color:light-dark(oklch(0_0_0),oklch(1_0_0))]',
+    '**:[--media-focus-ring-color:oklch(1_0_0)]',
+    '[--media-container-border-radius:var(--media-border-radius,0.75rem)]',
+    '[--media-video-border-radius:var(--media-container-border-radius)]',
+    '[--media-controls-background-color:transparent]',
+    '[--media-controls-transition-duration:100ms]',
+    '[--media-controls-transition-timing-function:ease-out]',
+    '[--media-error-dialog-transition-duration:150ms]',
+    '[--media-error-dialog-transition-delay:100ms]',
+    '[--media-error-dialog-transition-timing-function:ease-out]',
+    '[--media-popup-transition-duration:100ms]',
+    '[--media-popup-transition-timing-function:ease-out]',
+    '[--media-popover-backdrop-filter:blur(16px)_saturate(1.5)]',
+    '[--media-popover-background-color:oklch(0_0_0/0.5)]',
+    '[--media-popover-border-color:oklch(1_0_0/0.1)]',
+    '[--media-tooltip-backdrop-filter:var(--media-popover-backdrop-filter)]',
+    '[--media-tooltip-background-color:var(--media-popover-background-color)]',
+    '[--media-tooltip-border-color:var(--media-popover-border-color)]',
+    '[--media-tooltip-text-color:currentColor]',
     // Fullscreen scale
-    'min-[1280px]:[&:fullscreen]:[--scale:1.25]',
-    'min-[1536px]:[&:fullscreen]:[--scale:1.5]',
-    'min-[1920px]:[&:fullscreen]:[--scale:1.75]',
-    'motion-reduce:[--error-dialog-transition-duration:50ms]',
-    'motion-reduce:[--error-dialog-transition-delay:0ms]',
-    'motion-reduce:[--popup-transition-duration:0ms]',
-    '[@media(prefers-reduced-transparency:reduce)]:[--controls-background-color:oklch(0_0_0)]',
-    'contrast-more:[--controls-background-color:oklch(0_0_0)]',
-    '[@media(prefers-reduced-transparency:reduce)]:[--tooltip-background-color:oklch(0_0_0)]',
-    'contrast-more:[--tooltip-background-color:oklch(0_0_0)]',
-    'pointer-fine:has-[[data-controls]:not([data-visible])]:[--controls-transition-duration:300ms]',
-    'pointer-coarse:has-[[data-controls]:not([data-visible])]:[--controls-transition-duration:150ms]',
-    'motion-reduce:has-[[data-controls]:not([data-visible])]:[--controls-transition-duration:50ms]',
+    'min-[1280px]:[&:fullscreen]:[--media-scale:1.25]',
+    'min-[1536px]:[&:fullscreen]:[--media-scale:1.5]',
+    'min-[1920px]:[&:fullscreen]:[--media-scale:1.75]',
+    'motion-reduce:[--media-error-dialog-transition-duration:50ms]',
+    'motion-reduce:[--media-error-dialog-transition-delay:0ms]',
+    'motion-reduce:[--media-popup-transition-duration:0ms]',
+    '[@media(prefers-reduced-transparency:reduce)]:[--media-controls-background-color:oklch(0_0_0)]',
+    'contrast-more:[--media-controls-background-color:oklch(0_0_0)]',
+    '[@media(prefers-reduced-transparency:reduce)]:[--media-tooltip-background-color:oklch(0_0_0)]',
+    'contrast-more:[--media-tooltip-background-color:oklch(0_0_0)]',
+    'pointer-fine:has-[[data-controls]:not([data-visible])]:[--media-controls-transition-duration:300ms]',
+    'pointer-coarse:has-[[data-controls]:not([data-visible])]:[--media-controls-transition-duration:150ms]',
+    'motion-reduce:has-[[data-controls]:not([data-visible])]:[--media-controls-transition-duration:50ms]',
     // Caption track CSS variables (consumed by the native caption bridge in light DOM)
     '[--media-caption-track-y:--spacing(-2)]',
     '[--media-caption-track-delay:25ms]',
-    '[--media-caption-track-duration:var(--controls-transition-duration)]',
+    '[--media-caption-track-duration:var(--media-controls-transition-duration)]',
     'has-[[data-controls][data-visible]]:[--media-caption-track-y:--spacing(-18)]',
     '@2xl/media-root:has-[[data-controls][data-visible]]:*:[--media-caption-track-y:--spacing(-12)]',
     // Native caption track container
@@ -83,7 +92,7 @@ export const container = (isShadowDOM: boolean) =>
         ]
       : [],
     // Fullscreen
-    '[&:fullscreen]:[--container-border-radius:0]',
+    '[&:fullscreen]:[--media-container-border-radius:0]',
     {
       '[&:fullscreen_video]:object-contain': !isShadowDOM,
       '[&:fullscreen_::slotted(video)]:object-contain': isShadowDOM,
@@ -96,14 +105,14 @@ export const controls = cn(
   baseControls,
   // Position & wrapping layout (small)
   'absolute bottom-1 inset-x-1',
-  '[--base-side-offset:5] [--base-boundary-offset:1]',
-  '[--volume-mask:linear-gradient(to_right,transparent_10%,black_25%,black_100%)]',
+  '[--media-base-side-offset:5] [--media-base-boundary-offset:1]',
+  '[--media-volume-mask:linear-gradient(to_right,transparent_10%,black_25%,black_100%)]',
   'gap-x-2 flex-wrap rounded-[--spacing(3)] group/controls',
   'text-white z-20',
   'peer-data-open/error:hidden',
-  'ease-(--controls-transition-timing-function)',
-  'duration-[calc(var(--controls-transition-duration)/2)]',
-  'not-data-visible:duration-(--controls-transition-duration)',
+  'ease-(--media-controls-transition-timing-function)',
+  'duration-[calc(var(--media-controls-transition-duration)/2)]',
+  'not-data-visible:duration-(--media-controls-transition-duration)',
   'pointer-fine:transition-[translate,filter,opacity]',
   'pointer-coarse:transition-[translate,opacity]',
   // Hidden state
@@ -111,16 +120,16 @@ export const controls = cn(
   'motion-safe:not-data-visible:translate-y-full',
   'pointer-fine:motion-safe:not-data-visible:blur-sm',
   // Single-row layout (large)
-  '@2xl/media-root:flex-nowrap @2xl/media-root:[--controls-padding:2] @2xl/media-root:[--base-side-offset:2]'
+  '@2xl/media-root:flex-nowrap @2xl/media-root:[--media-controls-padding:2] @2xl/media-root:[--media-base-side-offset:2]'
 );
 
 /* Button groups */
 
 const volumeMaskTarget = cn(
-  '[mask-image:var(--volume-mask-image,none)]',
+  '[mask-image:var(--media-volume-mask-image,none)]',
   '[mask-repeat:no-repeat]',
-  '[mask-position:var(--volume-mask-position,100%_0)]',
-  '[mask-size:var(--volume-mask-size,200%_100%)]',
+  '[mask-position:var(--media-volume-mask-position,100%_0)]',
+  '[mask-size:var(--media-volume-mask-size,200%_100%)]',
   '[transition:mask-position_50ms_ease-out]'
 );
 
@@ -129,9 +138,9 @@ export const buttonGroupEnd = cn(
   baseButtonGroup,
   volumeMaskTarget,
   'flex-1 justify-end @2xl/media-root:flex-none',
-  'group-has-[[data-volume-level][aria-expanded=true]]/controls:@max-2xl/media-root:[--volume-mask-image:var(--volume-mask)]',
-  'group-has-[[data-volume-level][aria-expanded=true]]/controls:@max-2xl/media-root:[--volume-mask-position:0_0]',
-  'group-has-[[data-volume-level][aria-expanded=true]]/controls:@max-2xl/media-root:[--volume-mask-size:400%_100%]'
+  'group-has-[[data-volume-level][aria-expanded=true]]/controls:@max-2xl/media-root:[--media-volume-mask-image:var(--media-volume-mask)]',
+  'group-has-[[data-volume-level][aria-expanded=true]]/controls:@max-2xl/media-root:[--media-volume-mask-position:0_0]',
+  'group-has-[[data-volume-level][aria-expanded=true]]/controls:@max-2xl/media-root:[--media-volume-mask-size:400%_100%]'
 );
 
 export const spacer = 'grow';
@@ -143,10 +152,10 @@ export const time = {
   controls: cn(
     baseTime.controls,
     volumeMaskTarget,
-    '[--slider-height:--spacing(5)] grow-0 shrink-0 basis-full order-[-1] px-1.5',
-    '@2xl/media-root:[--slider-height:--spacing(8)] @2xl/media-root:grow @2xl/media-root:shrink @2xl/media-root:basis-0 @2xl/media-root:order-[unset]',
-    'group-has-[[data-volume-level][aria-expanded=true]]/controls:@2xl/media-root:[--volume-mask-image:var(--volume-mask)]',
-    'group-has-[[data-volume-level][aria-expanded=true]]/controls:@2xl/media-root:[--volume-mask-position:0_0]'
+    '[--media-slider-height:--spacing(5)] grow-0 shrink-0 basis-full order-[-1] px-1.5',
+    '@2xl/media-root:[--media-slider-height:--spacing(8)] @2xl/media-root:grow @2xl/media-root:shrink @2xl/media-root:basis-0 @2xl/media-root:order-[unset]',
+    'group-has-[[data-volume-level][aria-expanded=true]]/controls:@2xl/media-root:[--media-volume-mask-image:var(--media-volume-mask)]',
+    'group-has-[[data-volume-level][aria-expanded=true]]/controls:@2xl/media-root:[--media-volume-mask-position:0_0]'
   ),
 };
 
@@ -157,7 +166,7 @@ export const error = {
   root: cn(baseError.root, 'pointer-events-none outline-none'),
   dialog: cn(baseError.dialog, 'pointer-events-auto w-full max-w-64 p-4 rounded-none'),
   content: cn(baseError.content, 'p-0 py-1.5'),
-  title: 'text-(length:--font-size-medium)',
+  title: 'text-(length:--media-font-size-medium)',
 };
 
 /* Thumbnail */
@@ -169,12 +178,12 @@ export const thumbnail = baseThumbnail;
 export const slider = {
   ...baseSlider,
   track: cn(baseSlider.track, 'ring-1 ring-black/5'),
-  value: cn(baseSlider.value, 'px-3 text-shadow-2xs text-shadow-(color:--shadow-current-color)'),
+  value: cn(baseSlider.value, 'px-3 text-shadow-2xs text-shadow-(color:--media-shadow-current-color)'),
   preview: cn(
     baseSlider.preview,
-    '[--preview-end-inset:calc(100cqi-100%)]',
-    '[--preview-left:clamp(calc(var(--max-size)/2),var(--media-slider-pointer),calc(100%-var(--max-size)/2+var(--preview-end-inset)))]',
-    '@2xl/media-root:[--preview-left:var(--media-slider-pointer)]'
+    '[--media-preview-end-inset:calc(100cqi-100%)]',
+    '[--media-preview-left:clamp(calc(var(--media-max-size)/2),var(--media-slider-pointer),calc(100%-var(--media-max-size)/2+var(--media-preview-end-inset)))]',
+    '@2xl/media-root:[--media-preview-left:var(--media-slider-pointer)]'
   ),
 };
 

@@ -132,7 +132,7 @@ test.describe('SPF unsupported-source errors', () => {
     // resolves to, not the store's generic fallback. Distinguishing the two is
     // what proves the code travelled the whole chain — engine → adapter `error`
     // → the store's error feature → `resolveErrorDialogDescription`.
-    const description = page.locator('media-alert-dialog-description').first();
+    const description = page.locator('media-dialog-description').first();
 
     await expect(description).not.toHaveText(UNEXPECTED_COPY);
     await expect(description).toContainText(UNPLAYABLE_COPY);

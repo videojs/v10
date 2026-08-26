@@ -1,9 +1,11 @@
 import { flush } from '@videojs/store';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
-import { AlertDialogBackdropElement } from '../alert-dialog-backdrop-element';
+import { DialogCloseElement } from '../../dialog/dialog-close-element';
+import { DialogDescriptionElement } from '../../dialog/dialog-description-element';
+import { DialogPopupElement } from '../../dialog/dialog-popup-element';
+import { DialogTitleElement } from '../../dialog/dialog-title-element';
 import { AlertDialogElement } from '../alert-dialog-element';
-import { AlertDialogPopupElement } from '../alert-dialog-popup-element';
 
 let tagCounter = 0;
 
@@ -18,14 +20,8 @@ function createElement<Element extends HTMLElement>(Base: abstract new () => Ele
   return document.createElement(tag) as Element;
 }
 
-function createDefinedElement<Class extends CustomElementConstructor & { readonly tagName: string }>(
-  Constructor: Class
-): InstanceType<Class> {
-  if (!customElements.get(Constructor.tagName)) {
-    customElements.define(Constructor.tagName, Constructor);
-  }
-
-  return document.createElement(Constructor.tagName) as InstanceType<Class>;
+function ensureDefined(tagName: string, Base: CustomElementConstructor): void {
+  if (!customElements.get(tagName)) customElements.define(tagName, Base);
 }
 
 afterEach(() => {
@@ -82,16 +78,49 @@ describe('AlertDialogElement', () => {
     });
   });
 
-  it('applies alertdialog role and aria-modal', async () => {
+  it('keeps dialog semantics on the popup rather than the context host', async () => {
     const el = createElement(AlertDialogElement);
+    const popup = createElement(DialogPopupElement);
 
     el.open = true;
+    el.append(popup);
 
     document.body.appendChild(el);
     await el.updateComplete;
 
-    expect(el.getAttribute('role')).toBe('alertdialog');
-    expect(el.getAttribute('aria-modal')).toBe('true');
+    await vi.waitFor(() => {
+      expect(el.hasAttribute('role')).toBe(false);
+      expect(popup.getAttribute('role')).toBe('alertdialog');
+      expect(popup.getAttribute('aria-modal')).toBe('true');
+      expect(popup.getAttribute('tabindex')).toBe('-1');
+    });
+  });
+
+  it('uses generic dialog parts for its accessible name, description, and close action', async () => {
+    ensureDefined(DialogTitleElement.tagName, DialogTitleElement);
+    ensureDefined(DialogDescriptionElement.tagName, DialogDescriptionElement);
+    ensureDefined(DialogCloseElement.tagName, DialogCloseElement);
+
+    const el = createElement(AlertDialogElement);
+    const popup = createElement(DialogPopupElement);
+    const title = document.createElement(DialogTitleElement.tagName) as DialogTitleElement;
+    const description = document.createElement(DialogDescriptionElement.tagName) as DialogDescriptionElement;
+    const close = document.createElement(DialogCloseElement.tagName) as DialogCloseElement;
+
+    popup.append(title, description, close);
+    el.append(popup);
+    el.open = true;
+
+    document.body.append(el);
+    await el.updateComplete;
+    await title.updateComplete;
+    await description.updateComplete;
+
+    expect(popup.getAttribute('aria-labelledby')).toBe(title.id);
+    expect(popup.getAttribute('aria-describedby')).toBe(description.id);
+
+    close.click();
+    expect(el.open).toBe(false);
   });
 
   it('dispatches open-change event on close', async () => {
@@ -159,14 +188,16 @@ describe('AlertDialogElement', () => {
     expect(el.open).toBe(true);
   });
 
-  it('closes on button click within the dialog', async () => {
+  it('does not close on an arbitrary button click within the dialog', async () => {
     const el = createElement(AlertDialogElement);
 
     el.open = true;
 
+    const popup = createElement(DialogPopupElement);
     const button = document.createElement('button');
 
-    el.appendChild(button);
+    popup.append(button);
+    el.append(popup);
 
     document.body.appendChild(el);
     await el.updateComplete;
@@ -174,7 +205,7 @@ describe('AlertDialogElement', () => {
 
     button.click();
 
-    expect(el.open).toBe(false);
+    expect(el.open).toBe(true);
   });
 
   it('does not close on non-button element click', async () => {
@@ -182,9 +213,11 @@ describe('AlertDialogElement', () => {
 
     el.open = true;
 
+    const popup = createElement(DialogPopupElement);
     const span = document.createElement('span');
 
-    el.appendChild(span);
+    popup.append(span);
+    el.append(popup);
 
     document.body.appendChild(el);
     await el.updateComplete;
@@ -210,49 +243,5 @@ describe('AlertDialogElement', () => {
 
     // Dialog was destroyed on disconnect, so open should still be true.
     expect(el.open).toBe(true);
-  });
-});
-
-describe('AlertDialogBackdropElement', () => {
-  it('has the correct tag name', () => {
-    expect(AlertDialogBackdropElement.tagName).toBe('media-alert-dialog-backdrop');
-  });
-
-  it('is presentational and receives dialog state attributes', async () => {
-    const dialog = createElement(AlertDialogElement);
-    const backdrop = createDefinedElement(AlertDialogBackdropElement);
-
-    dialog.open = true;
-    dialog.append(backdrop);
-
-    document.body.append(dialog);
-    await dialog.updateComplete;
-
-    await vi.waitFor(() => {
-      expect(backdrop.getAttribute('role')).toBe('presentation');
-      expect(backdrop.getAttribute('aria-hidden')).toBe('true');
-      expect(backdrop.hasAttribute('data-open')).toBe(true);
-    });
-  });
-});
-
-describe('AlertDialogPopupElement', () => {
-  it('has the correct tag name', () => {
-    expect(AlertDialogPopupElement.tagName).toBe('media-alert-dialog-popup');
-  });
-
-  it('receives dialog state attributes', async () => {
-    const dialog = createElement(AlertDialogElement);
-    const popup = createDefinedElement(AlertDialogPopupElement);
-
-    dialog.open = true;
-    dialog.append(popup);
-
-    document.body.append(dialog);
-    await dialog.updateComplete;
-
-    await vi.waitFor(() => {
-      expect(popup.hasAttribute('data-open')).toBe(true);
-    });
   });
 });

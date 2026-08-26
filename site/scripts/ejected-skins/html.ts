@@ -93,7 +93,7 @@ export function replaceSlots(html: string, skin: Pick<SkinDef, 'mediaType' | 'li
 }
 
 export function prependHtmlSkinScripts(html: string, skin: HtmlSkinDef): string {
-  const cdnFileName = skin.variant === 'minimal' ? `${skin.group}-minimal-ui` : `${skin.group}-ui`;
+  const cdnFileName = skin.variant === 'minimal' ? `${skin.group}-minimal` : skin.group;
   const scriptTags = [`<script type="module" src="${HTML_CDN_BASE}/${cdnFileName}.js"></script>`];
 
   if (skin.live) {

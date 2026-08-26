@@ -1,4 +1,13 @@
-// Registers the audio player, container, and all audio UI custom elements
+import { safeDefine } from '../../registration/safe-define';
+import {
+  defineErrorDialog,
+  defineMenu,
+  defineTime,
+  defineTimeSlider,
+  defineTooltip,
+  defineVolumeSlider,
+} from '../../registration/ui-compounds';
+// Registers the container and all audio UI custom elements
 // used by the minimal skin without creating a skin element. Use this entry
 // when building an ejected (light DOM) player layout.
 import { BufferingIndicatorElement } from '../../ui/buffering-indicator/buffering-indicator-element';
@@ -10,21 +19,8 @@ import { PlaybackRateButtonElement } from '../../ui/playback-rate-button/playbac
 import { PlaybackRateRadioGroupElement } from '../../ui/playback-rate-radio-group/playback-rate-radio-group-element';
 import { PopoverElement } from '../../ui/popover/popover-element';
 import { SeekButtonElement } from '../../ui/seek-button/seek-button-element';
-import { safeDefine } from '../safe-define';
-import {
-  defineErrorDialog,
-  defineMenu,
-  defineTime,
-  defineTimeSlider,
-  defineTooltip,
-  defineVolumeSlider,
-} from '../ui/compounds';
-// Value import — player.ts body runs before this module's body.
-import { AudioPlayerElement } from './player';
-
 // ── Registration (providers / parents first) ────────────────────────────
 
-safeDefine(AudioPlayerElement);
 safeDefine(ContainerElement);
 
 // Compound groups.

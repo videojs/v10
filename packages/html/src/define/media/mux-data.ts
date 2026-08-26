@@ -1,5 +1,5 @@
 import { MuxDataElement } from '../../media/mux-data';
-import { safeDefine } from '../safe-define';
+import { safeDefine } from '../../registration/safe-define';
 
 export { MuxDataElement };
 

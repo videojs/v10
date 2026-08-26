@@ -1,5 +1,5 @@
+import { safeDefine } from '../../registration/safe-define';
 import { BufferingIndicatorElement } from '../../ui/buffering-indicator/buffering-indicator-element';
-import { safeDefine } from '../safe-define';
 
 safeDefine(BufferingIndicatorElement);
 

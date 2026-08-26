@@ -39,10 +39,10 @@ function AudioTrackInfo() {
 import { createPlayer, UIElement, selectAudioTrack } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
 
-const { PlayerController, context } = createPlayer({ features: videoFeatures });
+const { PlayerController } = createPlayer({ features: videoFeatures });
 
 class AudioTrackInfo extends UIElement {
-  readonly #audioTrack = new PlayerController(this, context, selectAudioTrack);
+  readonly #audioTrack = new PlayerController(this, selectAudioTrack);
 }
 ```
 </FrameworkCase>

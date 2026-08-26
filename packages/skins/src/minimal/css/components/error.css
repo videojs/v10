@@ -14,13 +14,13 @@
 
 .media-minimal-skin .media-error__actions {
   display: flex;
-  gap: calc(var(--spacing) * 2);
+  gap: calc(var(--media-spacing) * 2);
 
   > * {
     flex: 1;
   }
 }
 
-.media-minimal-skin .media-error[data-open] ~ .media-controls * {
+.media-minimal-skin:has(.media-error[data-open]) .media-controls * {
   visibility: hidden;
 }

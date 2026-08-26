@@ -8,6 +8,7 @@ export default defineComponent({
   parts: {
     Root: defineComponent(),
     Backdrop: defineComponent(),
+    Content: defineComponent(),
     Group: defineComponent(),
   },
   dataAttrs: ControlsDataAttrs,

@@ -107,7 +107,7 @@ function createHtmlSkin(style: SkinStyle, variant: SkinVariant, mediaType: Media
     group,
     variant,
     live,
-    template: `packages/html/src/define/${group}/${file}${styleSuffix}.ts`,
+    template: `packages/html/src/presets/${group}/${file}${styleSuffix}.ts`,
     ...(style === 'css' && { css: `packages/html/src/define/${group}/${file}.css` }),
     iconSet: variant,
   };

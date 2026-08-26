@@ -1,5 +1,5 @@
+import { safeDefine } from '../../registration/safe-define';
 import { ContainerElement } from '../../ui/container/container-element';
-import { safeDefine } from '../safe-define';
 
 safeDefine(ContainerElement);
 

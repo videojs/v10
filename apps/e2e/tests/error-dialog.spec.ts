@@ -42,7 +42,7 @@ test.describe('Error Dialog', () => {
     await expect(errorDialog).toHaveAttribute(DATA_ATTRS.open, '', { timeout: 15_000 });
 
     // Click the close/OK button
-    const closeButton = page.locator('media-alert-dialog-close, .media-button--primary').first();
+    const closeButton = page.locator('media-dialog-close, .media-button--primary').first();
 
     await closeButton.click();
 

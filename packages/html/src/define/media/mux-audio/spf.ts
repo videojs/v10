@@ -1,5 +1,5 @@
 import { MuxAudio } from '../../../media/mux-audio/spf';
-import { safeDefine } from '../../safe-define';
+import { safeDefine } from '../../../registration/safe-define';
 
 export class MuxAudioElement extends MuxAudio {
   static readonly tagName = 'mux-audio';

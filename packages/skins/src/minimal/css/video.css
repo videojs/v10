@@ -26,39 +26,39 @@
 /* Container */
 
 .media-minimal-skin--video {
-  --default-accent-color: oklch(1 0 0);
-  --border-color: light-dark(oklch(0 0 0 / 0.15), oklch(1 0 0 / 0.15));
-  --focus-ring-color: light-dark(oklch(0 0 0), oklch(1 0 0));
-  --media-video-border-radius: var(--container-border-radius);
+  --media-default-accent-color: oklch(1 0 0);
+  --media-border-color: light-dark(oklch(0 0 0 / 0.15), oklch(1 0 0 / 0.15));
+  --media-focus-ring-color: light-dark(oklch(0 0 0), oklch(1 0 0));
+  --media-video-border-radius: var(--media-container-border-radius);
 
-  --controls-background-color: transparent;
-  --controls-transition-duration: 100ms;
-  --controls-transition-timing-function: ease-out;
+  --media-controls-background-color: transparent;
+  --media-controls-transition-duration: 100ms;
+  --media-controls-transition-timing-function: ease-out;
 
-  --error-dialog-transition-duration: 150ms;
-  --error-dialog-transition-delay: 100ms;
-  --error-dialog-transition-timing-function: ease-out;
+  --media-error-dialog-transition-duration: 150ms;
+  --media-error-dialog-transition-delay: 100ms;
+  --media-error-dialog-transition-timing-function: ease-out;
 
-  --popup-transition-duration: 100ms;
-  --popup-transition-timing-function: ease-out;
+  --media-popup-transition-duration: 100ms;
+  --media-popup-transition-timing-function: ease-out;
 
-  --popover-backdrop-filter: blur(16px) saturate(1.5);
-  --popover-background-color: oklch(0 0 0 / 0.5);
-  --popover-border-color: oklch(1 0 0 / 0.1);
+  --media-popover-backdrop-filter: blur(16px) saturate(1.5);
+  --media-popover-background-color: oklch(0 0 0 / 0.5);
+  --media-popover-border-color: oklch(1 0 0 / 0.1);
 
-  --tooltip-backdrop-filter: var(--popover-backdrop-filter);
-  --tooltip-background-color: var(--popover-background-color);
-  --tooltip-border-color: var(--popover-border-color);
+  --media-tooltip-backdrop-filter: var(--media-popover-backdrop-filter);
+  --media-tooltip-background-color: var(--media-popover-background-color);
+  --media-tooltip-border-color: var(--media-popover-border-color);
 
-  --tooltip-text-color: currentColor;
+  --media-tooltip-text-color: currentColor;
 
   overflow: clip;
   background: oklch(0 0 0);
 
   @media (prefers-reduced-motion: reduce) {
-    --error-dialog-transition-duration: 50ms;
-    --error-dialog-transition-delay: 0ms;
-    --popup-transition-duration: 0ms;
+    --media-error-dialog-transition-duration: 50ms;
+    --media-error-dialog-transition-delay: 0ms;
+    --media-popup-transition-duration: 0ms;
 
     .media-error__dialog {
       scale: 1;
@@ -67,20 +67,20 @@
   }
 
   @media (prefers-reduced-transparency: reduce) or (prefers-contrast: more) {
-    --controls-background-color: oklch(0 0 0);
-    --tooltip-background-color: oklch(0 0 0);
+    --media-controls-background-color: oklch(0 0 0);
+    --media-tooltip-background-color: oklch(0 0 0);
   }
 
   &:has(.media-controls:not([data-visible])) {
     /* Slight delay to hide controls on non-touch devices after interaction */
     @media (pointer: fine) {
-      --controls-transition-duration: 300ms;
+      --media-controls-transition-duration: 300ms;
     }
     @media (pointer: coarse) {
-      --controls-transition-duration: 150ms;
+      --media-controls-transition-duration: 150ms;
     }
     @media (prefers-reduced-motion: reduce) {
-      --controls-transition-duration: 50ms;
+      --media-controls-transition-duration: 50ms;
     }
   }
 
@@ -92,29 +92,29 @@
     pointer-events: none;
     content: "";
     border-radius: inherit;
-    box-shadow: inset 0 0 0 1px var(--border-color);
+    box-shadow: inset 0 0 0 1px var(--media-border-color);
   }
 
   &:fullscreen {
-    --container-border-radius: 0;
+    --media-container-border-radius: 0;
 
     &::after {
       display: none;
     }
 
     @media (width >= 1280px) {
-      --scale: 1.25;
+      --media-scale: 1.25;
     }
     @media (width >= 1536px) {
-      --scale: 1.5;
+      --media-scale: 1.5;
     }
     @media (width >= 1920px) {
-      --scale: 1.75;
+      --media-scale: 1.75;
     }
   }
 
   * {
-    --focus-ring-color: oklch(1 0 0);
+    --media-focus-ring-color: oklch(1 0 0);
   }
 }
 
@@ -134,28 +134,28 @@
 .media-minimal-skin--video .media-error__dialog {
   display: flex;
   flex-direction: column;
-  gap: calc(var(--spacing) * 3);
+  gap: calc(var(--media-spacing) * 3);
   width: 100%;
-  max-width: calc(var(--spacing) * 64);
-  padding: calc(var(--spacing) * 4);
+  max-width: calc(var(--media-spacing) * 64);
+  padding: calc(var(--media-spacing) * 4);
   color: oklch(1 0 0);
   text-shadow: 0 1px 0 oklch(0 0 0 / 0.5);
   pointer-events: auto;
-  transition-delay: var(--error-dialog-transition-delay);
-  transition-timing-function: var(--error-dialog-transition-timing-function);
-  transition-duration: var(--error-dialog-transition-duration);
+  transition-delay: var(--media-error-dialog-transition-delay);
+  transition-timing-function: var(--media-error-dialog-transition-timing-function);
+  transition-duration: var(--media-error-dialog-transition-duration);
   transition-property: opacity, scale;
 }
 
 .media-minimal-skin--video .media-error__content {
   display: flex;
   flex-direction: column;
-  gap: calc(var(--spacing) * 2);
-  padding: calc(var(--spacing) * 1.5) 0;
+  gap: calc(var(--media-spacing) * 2);
+  padding: calc(var(--media-spacing) * 1.5) 0;
 }
 
 .media-minimal-skin--video .media-error__title {
-  font-size: var(--font-size-medium);
+  font-size: var(--media-font-size-medium);
 }
 
 .media-minimal-skin--video .media-error[data-starting-style] .media-error__dialog,
@@ -170,23 +170,23 @@
 /* Controls (hide/show behavior) */
 
 .media-minimal-skin--video .media-controls {
-  --base-side-offset: 5;
-  --base-boundary-offset: 1;
-  --inset-factor: 1;
-  --inset: calc(var(--spacing) * var(--inset-factor));
-  --volume-mask: linear-gradient(to right, transparent 10%, #000 25%, #000 100%);
+  --media-base-side-offset: 5;
+  --media-base-boundary-offset: 1;
+  --media-inset-factor: 1;
+  --media-inset: calc(var(--media-spacing) * var(--media-inset-factor));
+  --media-volume-mask: linear-gradient(to right, transparent 10%, #000 25%, #000 100%);
 
   position: absolute;
-  inset-inline: var(--inset);
-  bottom: var(--inset);
+  inset-inline: var(--media-inset);
+  bottom: var(--media-inset);
   z-index: 10;
   flex-wrap: wrap;
-  column-gap: calc(var(--spacing) * 2);
+  column-gap: calc(var(--media-spacing) * 2);
   color: oklch(1 0 0);
-  border-radius: calc(var(--spacing) * 3);
-  transition-timing-function: var(--controls-transition-timing-function);
+  border-radius: calc(var(--media-spacing) * 3);
+  transition-timing-function: var(--media-controls-transition-timing-function);
   /* Speed up the entry transition */
-  transition-duration: calc(var(--controls-transition-duration) / 2);
+  transition-duration: calc(var(--media-controls-transition-duration) / 2);
 
   @media (pointer: fine) {
     transition-property: translate, filter, opacity;
@@ -199,7 +199,7 @@
   &:not([data-visible]) {
     pointer-events: none;
     opacity: 0;
-    transition-duration: var(--controls-transition-duration);
+    transition-duration: var(--media-controls-transition-duration);
 
     @media (pointer: fine) and (prefers-reduced-motion: no-preference) {
       filter: blur(8px);
@@ -211,11 +211,11 @@
   }
 
   .media-time-controls {
-    --slider-height: calc(var(--spacing) * 5);
+    --media-slider-height: calc(var(--media-spacing) * 5);
 
     flex: 0 0 100%;
     order: -1;
-    padding-inline: calc(var(--spacing) * 1.5);
+    padding-inline: calc(var(--media-spacing) * 1.5);
   }
 
   .media-button-group:first-child {
@@ -229,38 +229,38 @@
   }
 
   :is(.media-time-controls, .media-button-group:last-child) {
-    mask-image: var(--volume-mask-image, none);
+    mask-image: var(--media-volume-mask-image, none);
     mask-repeat: no-repeat;
-    mask-position: var(--volume-mask-position, 100% 0);
-    mask-size: var(--volume-mask-size, 200% 100%);
+    mask-position: var(--media-volume-mask-position, 100% 0);
+    mask-size: var(--media-volume-mask-size, 200% 100%);
     transition: mask-position 50ms ease-out;
   }
 
   &:has(.media-button--mute[aria-expanded="true"]) {
     @container media-root (width <= 42rem) {
       .media-button-group:last-child {
-        --volume-mask-image: var(--volume-mask);
-        --volume-mask-position: 0 0;
-        --volume-mask-size: 400% 100%;
+        --media-volume-mask-image: var(--media-volume-mask);
+        --media-volume-mask-position: 0 0;
+        --media-volume-mask-size: 400% 100%;
       }
     }
 
     @container media-root (width > 42rem) {
       .media-time-controls {
-        --volume-mask-image: var(--volume-mask);
-        --volume-mask-position: 0 0;
+        --media-volume-mask-image: var(--media-volume-mask);
+        --media-volume-mask-position: 0 0;
       }
     }
   }
 
   @container media-root (width > 42rem) {
-    --inset-factor: 2;
-    --base-side-offset: 2;
+    --media-inset-factor: 2;
+    --media-base-side-offset: 2;
 
     flex-wrap: nowrap;
 
     .media-time-controls {
-      --slider-height: calc(var(--spacing) * 8);
+      --media-slider-height: calc(var(--media-spacing) * 8);
 
       flex: 1;
       order: unset;
@@ -273,7 +273,7 @@
   }
 }
 
-.media-minimal-skin--video .media-error[data-open] ~ .media-controls {
+.media-minimal-skin--video:has(.media-error[data-open]) .media-controls {
   display: none;
 }
 
@@ -286,26 +286,26 @@
 
 .media-minimal-skin--video .media-popover--volume {
   --media-popover-side-offset: 0rem;
-  padding: 0 calc(var(--spacing) * 3);
+  padding: 0 calc(var(--media-spacing) * 3);
   background: transparent;
 }
 
 /* Slider preview */
 
 .media-minimal-skin--video .media-slider__value {
-  padding-inline: calc(var(--spacing) * 3);
-  text-shadow: 0 1px 0 var(--shadow-current-color);
+  padding-inline: calc(var(--media-spacing) * 3);
+  text-shadow: 0 1px 0 var(--media-shadow-current-color);
 }
 
 .media-minimal-skin--video .media-slider .media-slider__preview {
-  --preview-end-inset: calc(100cqi - 100%);
-  --preview-left: clamp(
-    calc(var(--max-size) / 2),
+  --media-preview-end-inset: calc(100cqi - 100%);
+  --media-preview-left: clamp(
+    calc(var(--media-max-size) / 2),
     var(--media-slider-pointer),
-    calc(100% - var(--max-size) / 2 + var(--preview-end-inset))
+    calc(100% - var(--media-max-size) / 2 + var(--media-preview-end-inset))
   );
 
   @container media-root (width > 42rem) {
-    --preview-left: var(--media-slider-pointer);
+    --media-preview-left: var(--media-slider-pointer);
   }
 }

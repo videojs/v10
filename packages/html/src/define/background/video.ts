@@ -1,1 +1,1 @@
-export * from '../media/background-video';
+import '../media/background-video';

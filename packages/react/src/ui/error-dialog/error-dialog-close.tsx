@@ -1,14 +1,13 @@
-import type { AlertDialogCore } from '@videojs/core';
-import { getErrorDialogDismissText } from '@videojs/core';
+import { type DialogCore, getErrorDialogDismissText } from '@videojs/core';
 import { translateText } from '@videojs/core/i18n';
 import { forwardRef, type ReactNode, useCallback } from 'react';
 
 import { useTranslator } from '../../i18n/context';
 import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
-import { useAlertDialogContext } from '../alert-dialog/context';
+import { useDialogContext } from '../dialog/context';
 
-export interface ErrorDialogCloseProps extends UIComponentProps<'button', AlertDialogCore.State> {}
+export interface ErrorDialogCloseProps extends UIComponentProps<'button', DialogCore.State> {}
 
 /** Renders a localized button that closes the dialog and dismisses the player error. */
 export const ErrorDialogClose = forwardRef<HTMLButtonElement, ErrorDialogCloseProps>(function ErrorDialogClose(
@@ -16,7 +15,7 @@ export const ErrorDialogClose = forwardRef<HTMLButtonElement, ErrorDialogClosePr
   forwardedRef
 ) {
   const t = useTranslator();
-  const { dialog, state, stateAttrMap } = useAlertDialogContext();
+  const { dialog, state, stateAttrMap } = useDialogContext();
 
   const handleClick = useCallback(() => {
     if (disabled) return;
@@ -40,5 +39,5 @@ export const ErrorDialogClose = forwardRef<HTMLButtonElement, ErrorDialogClosePr
 
 export namespace ErrorDialogClose {
   export type Props = ErrorDialogCloseProps;
-  export type State = AlertDialogCore.State;
+  export type State = DialogCore.State;
 }

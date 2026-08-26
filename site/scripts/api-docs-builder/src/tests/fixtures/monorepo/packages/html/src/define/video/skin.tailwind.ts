@@ -3,7 +3,7 @@
  *
  * Exercises: tailwind skin exclusion — this should NOT appear in the output.
  */
-import { SkinElement } from '../skin-element';
+import { SkinElement } from '../../presets/skin';
 
 export class VideoSkinTailwindElement extends SkinElement {
   static readonly tagName = 'video-skin-tailwind';
