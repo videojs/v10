@@ -163,6 +163,60 @@ describe('HlsJsMediaAirPlayMixin', () => {
       expect(video.disableRemotePlayback).toBe(false);
     });
 
+    it('rebuilds the fallback source when the author opts back in after MEDIA_ATTACHED', () => {
+      const engine = createEngine('https://example.com/master.m3u8');
+      const host = new AirPlayHost(engine);
+      const video = createVideo();
+
+      host.disableRemotePlayback = true;
+      host.attach(video);
+      simulateHlsJsMmsAttach(video);
+
+      (engine as any).emit(Hls.Events.MEDIA_ATTACHED);
+
+      const before = video.querySelector('source');
+
+      expect(before).not.toBeNull();
+      expect(video.disableRemotePlayback).toBe(true);
+
+      host.disableRemotePlayback = false;
+
+      // A fresh `<source>` node, so WebKit re-reads the alternatives it decides
+      // AirPlay routes from, alongside the now-cleared flag.
+      const after = video.querySelector('source');
+
+      expect(after).not.toBeNull();
+      expect(after).not.toBe(before);
+      expect(video.disableRemotePlayback).toBe(false);
+    });
+
+    it('does not rebuild before the engine has attached', () => {
+      const engine = createEngine();
+      const host = new AirPlayHost(engine);
+      const video = createVideo();
+
+      host.attach(video);
+      host.disableRemotePlayback = true;
+
+      expect(video.querySelector('source')).toBeNull();
+    });
+
+    it('leaves the setup alone when the value is reassigned unchanged', () => {
+      const engine = createEngine('https://example.com/master.m3u8');
+      const host = new AirPlayHost(engine);
+      const video = createVideo();
+
+      host.attach(video);
+
+      (engine as any).emit(Hls.Events.MEDIA_ATTACHED);
+
+      const before = video.querySelector('source');
+
+      host.disableRemotePlayback = false;
+
+      expect(video.querySelector('source')).toBe(before);
+    });
+
     it('ignores a flag only ever set on the element', () => {
       // The binding layers convert markup and props into media API calls, so a
       // value found on the element alone is hls.js's, not the author's.

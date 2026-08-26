@@ -41,8 +41,13 @@ export function HlsJsMediaAirPlayMixin<Base extends Constructor<HlsEngineHost>>(
     }
 
     override set disableRemotePlayback(value: boolean) {
+      const changed = value !== this.#authorDisableRemotePlayback;
+
       this.#authorDisableRemotePlayback = value;
       super.disableRemotePlayback = value;
+
+      // We need to re initialize with the new value so WebKit reconsiders the source.
+      if (changed && this.#sourceEl) this.#init();
     }
 
     #init(): void {
