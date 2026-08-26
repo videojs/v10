@@ -76,3 +76,11 @@ jobs:
 
       - name: Astro check
         run: cd site && pnpm astro check --minimumSeverity warning
+
+      # No other PR workflow builds the site (only cd.yml on release and Netlify
+      # on deploy), so this job owns the build and the checks that need dist/.
+      - name: Build site
+        run: pnpm build:site
+
+      - name: Check anchors
+        run: pnpm -F site check:anchors

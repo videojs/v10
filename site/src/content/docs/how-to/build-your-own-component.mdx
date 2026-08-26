@@ -402,7 +402,7 @@ if (playback?.paused) {
 }
 ```
 
-Each selector returns both state and actions for that feature. Use separate controllers when you need multiple features (the [example above](#recommended-approach) demonstrates this).
+Each selector returns both state and actions for that feature. Use separate controllers when you need multiple features (the [full example](#full-example) demonstrates this).
 
 Without a selector, `PlayerController` returns the full store without subscribing to changes. Create the controller with the typed context that <DocsLink slug="reference/html-create-player">`createPlayer`</DocsLink> returns — the shared `playerContext` types the store's members as `unknown` — and guard the value, which stays `undefined` until a player provides the store:
 

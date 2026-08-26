@@ -6,6 +6,7 @@
     "api-docs": "vp run site#api-docs:generate",
     "clean": "rimraf --glob dist .netlify 'src/content/generated-*-reference' src/content/cdn-media.json src/content/ejected-skins.json",
     "astro": "astro",
+    "check:anchors": "tsx scripts/check-anchors.ts",
     "test": "vp test run",
     "test:watch": "vp test",
     "test:ui": "vp test --ui",

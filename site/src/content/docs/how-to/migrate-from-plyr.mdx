@@ -16,7 +16,7 @@ Start with the Minimal skin, move media settings into markup, and replace calls 
 - **The player becomes three pieces.** Player state, the media component, and the skin are separate, so you can replace one without wrapping or forking the others.
 - **Streaming behavior becomes player state.** HLS, DASH, and Mux integrations expose renditions, tracks, and live state to the UI instead of leaving that wiring to application code.
 - **React uses native components and hooks.** `@videojs/react` owns its lifecycle instead of wrapping an imperative constructor around framework-owned DOM.
-- **The UI is composable.** Buttons, sliders, menus, gestures, and hotkeys are individual accessible components. Start with the Minimal or Default skin, then [eject it](#ejecting) when you need to change the structure.
+- **The UI is composable.** Buttons, sliders, menus, gestures, and hotkeys are individual accessible components. Start with the Minimal or Default skin, then [eject it](#eject-a-skin) when you need to change the structure.
 - **Remote playback is built in.** The video skins include AirPlay and Cast controls. Follow <DocsLink slug="how-to/cast-to-airplay-and-chromecast">Cast to AirPlay and Chromecast</DocsLink> to add the Google Cast integration.
 
 <Aside type="note">
@@ -347,15 +347,15 @@ Here's a matrix for configuration options in Plyr and how each maps to Video.js 
 
 | Plyr option | Video.js v10 |
 |---|---|
-| `controls` | The <DocsLink slug="concepts/skins">skins</DocsLink> include all the common controls, laid out in a familiar way that users would expect. If you want to customize the skin beyond basic colors, you can [eject the skin](#ejecting) and change layout, styles, or icons. |
+| `controls` | The <DocsLink slug="concepts/skins">skins</DocsLink> include all the common controls, laid out in a familiar way that users would expect. If you want to customize the skin beyond basic colors, you can [eject the skin](#eject-a-skin) and change layout, styles, or icons. |
 | `settings` | Included automatically in the skins when quality, speed, audio tracks, or captions are available. |
 | `autoplay`, `muted`, `loop`, `playsinline`, `preload` | These are attributes on your media (e.g. `<video>`) component. |
 | `poster` / `data-poster` | In HTML, slot an image into the skin. In React, set `poster` on `VideoPlayer`. See [Basic migration](#basic-migration). |
 | `ratio` | Set `aspect-ratio` in CSS on the skin component. |
 | `hideControls` | Preset skins auto-hide controls based on activity. The delay is currently not configurable. |
-| `clickToPlay` | Preset video skins include click and tap gestures. [Eject the skin](#ejecting) to remove or change them. |
-| `keyboard` | Preset video skins include common hotkeys. [Eject the skin](#ejecting) to remove or change them. |
-| `tooltips` | Preset skins include tooltips for common controls. [Eject the skin](#ejecting) to customize them. |
+| `clickToPlay` | Preset video skins include click and tap gestures. [Eject the skin](#eject-a-skin) to remove or change them. |
+| `keyboard` | Preset video skins include common hotkeys. [Eject the skin](#eject-a-skin) to remove or change them. |
+| `tooltips` | Preset skins include tooltips for common controls. [Eject the skin](#eject-a-skin) to customize them. |
 | `captions` | Add `<track kind="captions">` or `<track kind="subtitles">`; preset skins show captions controls when tracks are available. |
 | `previewThumbnails` | Add `<track kind="metadata" label="thumbnails">`; preset video skins show slider thumbnails when thumbnail cues are available. |
 | `quality` | Works when the media provider exposes renditions. Plain MP4 source arrays do not currently become a quality menu automatically. |
@@ -369,7 +369,7 @@ Here's a matrix for configuration options in Plyr and how each maps to Video.js 
 
 ## Customize the controls
 
-Plyr's `controls` option chooses which controls appear. Video.js skins come with their own control set and layout. Keep the skin when that UI fits your player. To remove, reorder, or restyle its controls, [eject the skin](#ejecting) and edit the copied implementation. Adding a child to a skin does not place it inside the control bar.
+Plyr's `controls` option chooses which controls appear. Video.js skins come with their own control set and layout. Keep the skin when that UI fits your player. To remove, reorder, or restyle its controls, [eject the skin](#eject-a-skin) and edit the copied implementation. Adding a child to a skin does not place it inside the control bar.
 
 If your app already has a custom control bar, build it from individual <DocsLink slug="concepts/ui-components">UI components</DocsLink>. Video.js handles the media action, accessible name, and state. You add the visible contents, layout, and CSS.
 
@@ -439,7 +439,7 @@ class MyElapsed extends ReactiveElement {
 
 ## Rewrite styles
 
-Video.js v10 skins offer similar color customization via CSS custom properties. [Eject the skin](#ejecting) when you need deeper control over layout, control structure, icons, or interaction styling.
+Video.js v10 skins offer similar color customization via CSS custom properties. [Eject the skin](#eject-a-skin) when you need deeper control over layout, control structure, icons, or interaction styling.
 
 ```css
 /* Plyr */
