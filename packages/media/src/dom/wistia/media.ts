@@ -1,19 +1,15 @@
-// Keep this import first: it lends `@wistia/wistia-player` the browser globals a server lacks and the package
-// reads while it evaluates. See `server-shim.ts`.
-import './server-shim';
 import { WistiaPlayer } from '@wistia/wistia-player';
 
 import { normalizeWistiaPlayer } from './normalize';
 import { type WistiaMediaOptionsProps, wistiaMediaOptions } from './options';
-import { restoreWistiaGlobals } from './server-shim';
 import { type WistiaSource, wistiaPlayerStyle } from './source';
-
-restoreWistiaGlobals();
 
 /**
  * The tag Wistia registers its player element under, and it has to be declared here: this is the module whose
  * evaluation registers the element and the only thing React takes from it, so naming it somewhere that pulls none of
  * Wistia in would leave a bundler free to drop this module and React rendering an undefined tag.
+ *
+ * `server.ts` declares it too, for the runtimes that resolve there instead.
  */
 export const WISTIA_PLAYER_TAG = 'wistia-player';
 

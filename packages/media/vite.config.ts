@@ -27,6 +27,7 @@ const createPackConfig = (mode: PackageBuildMode): PackUserConfig => ({
     'dom/twitch/index': './src/dom/twitch/index.ts',
     'dom/vimeo/index': './src/dom/vimeo/index.ts',
     'dom/wistia/index': './src/dom/wistia/index.ts',
+    'dom/wistia/server': './src/dom/wistia/server.ts',
     'dom/youtube/index': './src/dom/youtube/index.ts',
     'dom/mux/index': './src/dom/mux/index.ts',
     'dom/mux/source/index': './src/dom/mux/source/index.ts',

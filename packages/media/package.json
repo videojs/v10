@@ -41,6 +41,14 @@
       },
       "default": "./dist/default/dom/dash/server.js"
     },
+    "./dom/wistia": {
+      "types": "./dist/dev/dom/wistia/index.d.ts",
+      "browser": {
+        "development": "./dist/dev/dom/wistia/index.js",
+        "default": "./dist/default/dom/wistia/index.js"
+      },
+      "default": "./dist/default/dom/wistia/server.js"
+    },
     "./dom/*": {
       "types": "./dist/dev/dom/*/index.d.ts",
       "development": "./dist/dev/dom/*/index.js",

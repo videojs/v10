@@ -1,7 +1,9 @@
 'use client';
 
 import type { WistiaMediaProps, WistiaPlayer, WistiaSource } from '@videojs/media/dom/wistia';
-// This entry is where `@wistia/wistia-player` is imported, so the tag below cannot outrun its definition.
+// In a browser this entry is where `@wistia/wistia-player` is imported, so the tag below cannot outrun its
+// definition. Off one it resolves to the server bundle, which reaches for none of it and leaves the tag to
+// render as the plain markup a client then hydrates.
 import {
   normalizeWistiaPlayer,
   parseWistiaMediaId,
