@@ -144,12 +144,18 @@ importers:
       '@videojs/html':
         specifier: workspace:*
         version: link:../../packages/html
+      '@videojs/icons':
+        specifier: workspace:*
+        version: link:../../packages/icons
       '@videojs/media':
         specifier: workspace:*
         version: link:../../packages/media
       '@videojs/react':
         specifier: workspace:*
         version: link:../../packages/react
+      '@videojs/skins':
+        specifier: workspace:*
+        version: link:../../packages/skins
       '@videojs/spf':
         specifier: workspace:*
         version: link:../../packages/spf

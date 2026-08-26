@@ -1,4 +1,4 @@
-import { renderIcon } from '@videojs/icons/render';
+import { renderIcon } from '@videojs/icons/render/minimal';
 import {
   button,
   buttonGroup,
@@ -16,15 +16,12 @@ import {
   seek,
   slider,
   time,
-} from '@videojs/skins/default/tailwind/audio.tailwind';
-import { createTemplate } from '@videojs/utils/dom';
+} from '@videojs/skins/minimal/tailwind/audio.tailwind';
 import { cn } from '@videojs/utils/style';
-
-import { SkinElement } from '../skin';
 
 const SEEK_TIME = 10;
 
-function getTemplateHTML() {
+export function getTemplateHTML() {
   return /*html*/ `
     <media-container class="${container}">
       <!-- @deprecated slot="media" is no longer required, use the default slot instead -->
@@ -63,7 +60,7 @@ function getTemplateHTML() {
               </media-tooltip>
             </span>
 
-            <media-seek-button commandfor="seek-backward-tooltip" seconds="${-SEEK_TIME}" class="${cn(button.base, button.subtle, button.icon, button.seek)}">
+            <media-seek-button commandfor="seek-backward-tooltip" seconds="${-SEEK_TIME}" class="${cn(button.base, button.subtle, button.icon)}">
               <span class="${iconContainer}">
                 ${renderIcon('seek', { class: cn(icon, iconFlipped) })}
                 <span class="${cn(seek.label, seek.labelBackward)}">${SEEK_TIME}</span>
@@ -74,7 +71,7 @@ function getTemplateHTML() {
               <media-tooltip-shortcut class="${popup.tooltipShortcut}"></media-tooltip-shortcut>
             </media-tooltip>
 
-            <media-seek-button commandfor="seek-forward-tooltip" seconds="${SEEK_TIME}" class="${cn(button.base, button.subtle, button.icon, button.seek)}">
+            <media-seek-button commandfor="seek-forward-tooltip" seconds="${SEEK_TIME}" class="${cn(button.base, button.subtle, button.icon)}">
               <span class="${iconContainer}">
                 ${renderIcon('seek', { class: icon })}
                 <span class="${cn(seek.label, seek.labelForward)}">${SEEK_TIME}</span>
@@ -86,23 +83,47 @@ function getTemplateHTML() {
             </media-tooltip>
           </div>
 
-          <div class="${time.group}">
-            <media-time type="current" class="${time.current}"></media-time>
+          <div class="${time.controls}">
+            <media-time-group class="${time.group}">
+              <media-time toggle type="current" class="${time.current}"></media-time>
+              <media-time-separator class="${time.separator}"></media-time-separator>
+              <media-time type="duration" class="${time.duration}"></media-time>
+            </media-time-group>
+
             <media-time-slider class="${slider.root}">
               <media-slider-track class="${slider.track}">
                 <media-slider-buffer class="${cn(slider.fill.base, slider.fill.buffer)}"></media-slider-buffer>
                 <media-slider-fill class="${cn(slider.fill.base, slider.fill.fill)}"></media-slider-fill>
               </media-slider-track>
               <media-slider-thumb class="${cn(slider.thumb.base, slider.thumb.interactive)}"></media-slider-thumb>
-              <media-slider-preview overflow="visible" class="${slider.preview}">
+              <media-slider-preview class="${slider.preview}">
                 <media-slider-value type="pointer" class="${slider.value}"></media-slider-value>
               </media-slider-preview>
             </media-time-slider>
-            <media-time toggle type="remaining" class="${time.duration}"></media-time>
           </div>
 
           <div class="${buttonGroup}">
-            <media-playback-rate-button id="playback-rate-trigger" commandfor="playback-rate-menu" class="${cn(button.base, button.subtle, button.icon, playbackRate.button)}"></media-playback-rate-button>
+            <media-mute-button id="audio-mute-trigger" commandfor="audio-volume-popover" class="${cn(button.base, button.subtle, button.icon, iconState.mute.button)}">
+              ${renderIcon('volume-off', { class: cn(icon, iconState.mute.volumeOff) })}
+              ${renderIcon('volume-low', { class: cn(icon, iconState.mute.volumeLow) })}
+              ${renderIcon('volume-high', { class: cn(icon, iconState.mute.volumeHigh) })}
+            </media-mute-button>
+            <media-tooltip trigger="audio-mute-trigger" delay="0" sticky side="top" class="${cn(popup.tooltip)}">
+              <media-tooltip-label></media-tooltip-label>
+              <media-tooltip-shortcut class="${popup.tooltipShortcut}"></media-tooltip-shortcut>
+            </media-tooltip>
+
+            <media-popover id="audio-volume-popover" open-on-hover delay="200" close-delay="100" side="left" boundary="viewport" class="${cn(popup.volume)}">
+              <media-volume-slider class="${slider.root}" orientation="horizontal" thumb-alignment="edge">
+                <media-slider-track class="${slider.track}">
+                  <media-slider-fill class="${cn(slider.fill.base, slider.fill.fill)}"></media-slider-fill>
+                </media-slider-track>
+                <media-slider-thumb class="${cn(slider.thumb.base, slider.thumb.persistent)}"></media-slider-thumb>
+              </media-volume-slider>
+            </media-popover>
+
+            <media-playback-rate-button id="playback-rate-trigger" commandfor="playback-rate-menu" class="${cn(button.base, button.subtle, button.icon, playbackRate.button)}">
+            </media-playback-rate-button>
             <media-menu id="playback-rate-menu" side="top" align="center" boundary="viewport" class="${cn(popup.popover, menu.root)}">
               <media-menu-content class="${menu.content}">
                 <media-playback-rate-radio-group class="${menu.group}">
@@ -122,20 +143,6 @@ function getTemplateHTML() {
               <media-tooltip-shortcut class="${popup.tooltipShortcut}"></media-tooltip-shortcut>
             </media-tooltip>
 
-            <media-mute-button commandfor="audio-volume-popover" class="${cn(button.base, button.subtle, button.icon, iconState.mute.button)}">
-              ${renderIcon('volume-off', { class: cn(icon, iconState.mute.volumeOff) })}
-              ${renderIcon('volume-low', { class: cn(icon, iconState.mute.volumeLow) })}
-              ${renderIcon('volume-high', { class: cn(icon, iconState.mute.volumeHigh) })}
-            </media-mute-button>
-
-            <media-popover id="audio-volume-popover" open-on-hover delay="200" close-delay="100" side="top" boundary="viewport" class="${cn(popup.popover, popup.volume)}">
-              <media-volume-slider class="${slider.root}" orientation="vertical" thumb-alignment="edge">
-                <media-slider-track class="${slider.track}">
-                  <media-slider-fill class="${cn(slider.fill.base, slider.fill.fill)}"></media-slider-fill>
-                </media-slider-track>
-                <media-slider-thumb class="${cn(slider.thumb.base, slider.thumb.persistent)}"></media-slider-thumb>
-              </media-volume-slider>
-            </media-popover>
           </div>
         </media-tooltip-group>
       </div>
@@ -157,15 +164,4 @@ function getTemplateHTML() {
       <media-hotkey keys="<" action="speedDown"></media-hotkey>
     </media-container>
   `;
-}
-
-export class AudioSkinTailwindElement extends SkinElement {
-  static readonly tagName = 'audio-skin-tailwind';
-  static template = createTemplate(getTemplateHTML());
-}
-
-declare global {
-  interface HTMLElementTagNameMap {
-    [AudioSkinTailwindElement.tagName]: AudioSkinTailwindElement;
-  }
 }

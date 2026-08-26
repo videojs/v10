@@ -188,7 +188,15 @@ export default defineConfig({
       ...(existsSync(cdnSandboxMainTemplate) ? { [cdnSandboxMainSrc]: cdnSandboxMainTemplate } : {}),
     },
     conditions: ['development', 'import', 'module', 'browser', 'default'],
-    dedupe: ['react', 'react-dom'],
+    dedupe: [
+      '@videojs/core',
+      '@videojs/html',
+      '@videojs/icons',
+      '@videojs/skins',
+      '@videojs/utils',
+      'react',
+      'react-dom',
+    ],
   },
   optimizeDeps: {
     include: ['@videojs/html > @videojs/element > @lit/context', 'react', 'react-dom'],

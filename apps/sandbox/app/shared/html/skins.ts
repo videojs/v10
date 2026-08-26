@@ -1,11 +1,6 @@
 import type { Skin, Styling } from '@app/types';
 
-import {
-  CSS_SKIN_TAGS,
-  LIVE_VIDEO_CSS_SKIN_TAGS,
-  LIVE_VIDEO_TAILWIND_SKIN_TAGS,
-  TAILWIND_SKIN_TAGS,
-} from './skin-tags';
+import { CSS_SKIN_TAGS, LIVE_VIDEO_CSS_SKIN_TAGS } from './skin-tags';
 import { loadAudioStylesheets, loadVideoStylesheets } from './stylesheets';
 
 async function loadVideoCssSkin(skin: Skin): Promise<string> {
@@ -33,39 +28,15 @@ async function loadAudioCssSkin(skin: Skin): Promise<string> {
 }
 
 async function loadVideoTailwindSkin(skin: Skin): Promise<string> {
-  if (skin === 'default') {
-    await import('@videojs/html/video/skin.tailwind');
-    const { VideoSkinTailwindElement } = await import('@videojs/html/video');
-    const { getTailwindStyles } = await import('./tailwind-setup');
+  const { loadSandboxVideoTailwindSkin } = await import('./tailwind-skins');
 
-    VideoSkinTailwindElement.styles = getTailwindStyles();
-  } else {
-    await import('@videojs/html/video/minimal-skin.tailwind');
-    const { MinimalVideoSkinTailwindElement } = await import('@videojs/html/video');
-    const { getTailwindStyles } = await import('./tailwind-setup');
-
-    MinimalVideoSkinTailwindElement.styles = getTailwindStyles();
-  }
-
-  return TAILWIND_SKIN_TAGS[skin].video;
+  return loadSandboxVideoTailwindSkin(skin);
 }
 
 async function loadAudioTailwindSkin(skin: Skin): Promise<string> {
-  if (skin === 'default') {
-    await import('@videojs/html/audio/skin.tailwind');
-    const { AudioSkinTailwindElement } = await import('@videojs/html/audio');
-    const { getTailwindStyles } = await import('./tailwind-setup');
+  const { loadSandboxAudioTailwindSkin } = await import('./tailwind-skins');
 
-    AudioSkinTailwindElement.styles = getTailwindStyles();
-  } else {
-    await import('@videojs/html/audio/minimal-skin.tailwind');
-    const { MinimalAudioSkinTailwindElement } = await import('@videojs/html/audio');
-    const { getTailwindStyles } = await import('./tailwind-setup');
-
-    MinimalAudioSkinTailwindElement.styles = getTailwindStyles();
-  }
-
-  return TAILWIND_SKIN_TAGS[skin].audio;
+  return loadSandboxAudioTailwindSkin(skin);
 }
 
 async function loadLiveVideoCssSkin(skin: Skin): Promise<string> {
@@ -81,21 +52,9 @@ async function loadLiveVideoCssSkin(skin: Skin): Promise<string> {
 }
 
 async function loadLiveVideoTailwindSkin(skin: Skin): Promise<string> {
-  if (skin === 'default') {
-    await import('@videojs/html/live-video/skin.tailwind');
-    const { LiveVideoSkinTailwindElement } = await import('@videojs/html/live-video');
-    const { getTailwindStyles } = await import('./tailwind-setup');
+  const { loadSandboxLiveVideoTailwindSkin } = await import('./tailwind-skins');
 
-    LiveVideoSkinTailwindElement.styles = getTailwindStyles();
-  } else {
-    await import('@videojs/html/live-video/minimal-skin.tailwind');
-    const { MinimalLiveVideoSkinTailwindElement } = await import('@videojs/html/live-video');
-    const { getTailwindStyles } = await import('./tailwind-setup');
-
-    MinimalLiveVideoSkinTailwindElement.styles = getTailwindStyles();
-  }
-
-  return LIVE_VIDEO_TAILWIND_SKIN_TAGS[skin];
+  return loadSandboxLiveVideoTailwindSkin(skin);
 }
 
 type VideoSkinOptions = { live?: boolean };

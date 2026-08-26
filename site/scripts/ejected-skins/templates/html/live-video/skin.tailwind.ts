@@ -20,12 +20,9 @@ import {
   statusIndicator,
   volumeIndicator,
 } from '@videojs/skins/default/tailwind/video.tailwind';
-import { createTemplate } from '@videojs/utils/dom';
 import { cn } from '@videojs/utils/style';
 
-import { SkinElement } from '../skin';
-
-function getTemplateHTML() {
+export function getTemplateHTML() {
   return /*html*/ `
     <media-container class="${container(true)}">
       <!-- @deprecated slot="media" is no longer required, use the default slot instead -->
@@ -203,15 +200,4 @@ function getTemplateHTML() {
       </div>
     </media-container>
   `;
-}
-
-export class LiveVideoSkinTailwindElement extends SkinElement {
-  static readonly tagName = 'live-video-skin-tailwind';
-  static template = createTemplate(getTemplateHTML());
-}
-
-declare global {
-  interface HTMLElementTagNameMap {
-    [LiveVideoSkinTailwindElement.tagName]: LiveVideoSkinTailwindElement;
-  }
 }

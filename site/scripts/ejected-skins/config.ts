@@ -96,7 +96,10 @@ function getName(
 function createHtmlSkin(style: SkinStyle, variant: SkinVariant, mediaType: MediaType, live: boolean): HtmlSkinDef {
   const group = getGroup(mediaType, live);
   const file = variant === 'minimal' ? 'minimal-skin' : 'skin';
-  const styleSuffix = style === 'tailwind' ? '.tailwind' : '';
+  const template =
+    style === 'tailwind'
+      ? `site/scripts/ejected-skins/templates/html/${group}/${file}.tailwind.ts`
+      : `packages/html/src/presets/${group}/${file}.ts`;
 
   return {
     id: getId('html', style, variant, mediaType, live),
@@ -107,7 +110,7 @@ function createHtmlSkin(style: SkinStyle, variant: SkinVariant, mediaType: Media
     group,
     variant,
     live,
-    template: `packages/html/src/presets/${group}/${file}${styleSuffix}.ts`,
+    template,
     ...(style === 'css' && { css: `packages/html/src/define/${group}/${file}.css` }),
     iconSet: variant,
   };

@@ -60,25 +60,9 @@ describe('preset registration boundaries', () => {
 
   it.each([
     ['video/minimal-skin', 'video-minimal-skin', () => import('../video/minimal-skin')],
-    ['video/skin.tailwind', 'video-skin-tailwind', () => import('../video/skin.tailwind')],
-    ['video/minimal-skin.tailwind', 'video-minimal-skin-tailwind', () => import('../video/minimal-skin.tailwind')],
     ['audio/minimal-skin', 'audio-minimal-skin', () => import('../audio/minimal-skin')],
-    ['audio/skin.tailwind', 'audio-skin-tailwind', () => import('../audio/skin.tailwind')],
-    ['audio/minimal-skin.tailwind', 'audio-minimal-skin-tailwind', () => import('../audio/minimal-skin.tailwind')],
     ['live-video/minimal-skin', 'live-video-minimal-skin', () => import('../live-video/minimal-skin')],
-    ['live-video/skin.tailwind', 'live-video-skin-tailwind', () => import('../live-video/skin.tailwind')],
-    [
-      'live-video/minimal-skin.tailwind',
-      'live-video-minimal-skin-tailwind',
-      () => import('../live-video/minimal-skin.tailwind'),
-    ],
     ['live-audio/minimal-skin', 'live-audio-minimal-skin', () => import('../live-audio/minimal-skin')],
-    ['live-audio/skin.tailwind', 'live-audio-skin-tailwind', () => import('../live-audio/skin.tailwind')],
-    [
-      'live-audio/minimal-skin.tailwind',
-      'live-audio-minimal-skin-tailwind',
-      () => import('../live-audio/minimal-skin.tailwind'),
-    ],
   ])('%s registers only its skin element', async (_, skinTag, load) => {
     const before = define.mock.calls.length;
 
