@@ -58,4 +58,25 @@ describe('wistiaAttributes', () => {
   it('leaves out an option with no attribute spelling rather than writing nonsense', () => {
     expect(wistiaAttributes({ playerColorGradient: { on: false }, poster: undefined })).toEqual({});
   });
+
+  it('hands a member Wistia keeps on its prototype the boolean its setter reads, not a truthy spelling of it', () => {
+    // React assigns these rather than writing them, and Wistia's setters branch on the value: `'false'` is a
+    // string, so spelling it out mutes a player asked to be unmuted and autoplays one asked to stay put.
+    expect(wistiaAttributes({ muted: false, autoplay: false, resumable: false, seo: false, swatch: false })).toEqual({
+      muted: false,
+      autoplay: false,
+      resumable: false,
+      seo: false,
+      swatch: false,
+    });
+  });
+
+  it('leaves the value of such a member alone whatever its type', () => {
+    expect(wistiaAttributes({ aspect: 1.78, poster: 'poster.jpg', preload: 'metadata', muted: true })).toEqual({
+      aspect: 1.78,
+      poster: 'poster.jpg',
+      preload: 'metadata',
+      muted: true,
+    });
+  });
 });

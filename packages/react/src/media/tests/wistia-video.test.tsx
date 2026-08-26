@@ -1,5 +1,6 @@
 import { render } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+
 import { WistiaVideo } from '../wistia-video';
 
 // Connecting a real player reaches for Wistia's CDN and runs an embed, where this component only renders
@@ -19,6 +20,7 @@ function renderPlayer(ui: React.ReactElement): HTMLElement {
   const { container } = render(ui);
   const player = container.querySelector('wistia-player');
   if (!player) throw new Error('no <wistia-player> rendered');
+
   return player as HTMLElement;
 }
 
@@ -45,6 +47,7 @@ describe('WistiaVideo', () => {
   it('hides Wistia chrome unless controls are asked for', () => {
     const { rerender, container } = render(<WistiaVideo src={SRC} />);
     const player = container.querySelector('wistia-player') as HTMLElement;
+
     // Spelled out rather than dropped: an absent attribute is Wistia's default, which is chrome.
     expect(player.getAttribute('big-play-button')).toBe('false');
     expect(player.getAttribute('play-bar-control')).toBe('false');
@@ -86,13 +89,20 @@ describe('WistiaVideo', () => {
   });
 
   it('sends defaultMuted as the muted state the player starts in', () => {
-    expect(renderPlayer(<WistiaVideo src={SRC} defaultMuted />).getAttribute('muted')).toBe('true');
+    // Sent as a boolean rather than a spelling of one: Wistia keeps `muted` on its prototype, so React assigns
+    // it rather than writing it, and the setter it reaches branches on the value it is handed.
+    expect(renderPlayer(<WistiaVideo src={SRC} defaultMuted />).hasAttribute('muted')).toBe(true);
+  });
+
+  it('leaves an explicitly unmuted player unmuted, where a spelled-out false would mute it', () => {
+    expect(renderPlayer(<WistiaVideo src={SRC} defaultMuted={false} />).hasAttribute('muted')).toBe(false);
   });
 
   it('does not put a mute back after the viewer cleared it', () => {
     const { rerender, container } = render(<WistiaVideo src={SRC} defaultMuted />);
     const player = container.querySelector('wistia-player') as HTMLElement;
-    expect(player.getAttribute('muted')).toBe('true');
+
+    expect(player.hasAttribute('muted')).toBe(true);
     player.removeAttribute('muted');
 
     // Unmuting drives the element, not this prop: re-sending it on any later render would re-mute the viewer.
@@ -108,6 +118,7 @@ describe('WistiaVideo', () => {
 
   it('gives a new media the start time its own URL asked for, and no other', () => {
     const { rerender, container } = render(<WistiaVideo src={`${SRC}?wtime=30`} />);
+
     expect(container.querySelector('wistia-player')?.getAttribute('current-time')).toBe('30');
 
     rerender(<WistiaVideo source={{ mediaId: 'abcde12345' }} />);
@@ -118,6 +129,7 @@ describe('WistiaVideo', () => {
   it('does not send a playing media back to its start time on a later render', () => {
     const { rerender, container } = render(<WistiaVideo src={`${SRC}?wtime=30`} />);
     const player = container.querySelector('wistia-player') as HTMLElement;
+
     player.removeAttribute('current-time');
 
     // The attribute is read fresh every render, and React writes one only when its value changed.
@@ -145,8 +157,8 @@ describe('WistiaVideo', () => {
   });
 
   it('passes unknown props through to the player', () => {
-    expect(renderPlayer(<WistiaVideo src={SRC} className="block w-full h-full" />).getAttribute('class')).toBe(
-      'block w-full h-full'
+    expect(renderPlayer(<WistiaVideo src={SRC} className="block h-full w-full" />).getAttribute('class')).toBe(
+      'block h-full w-full'
     );
   });
 

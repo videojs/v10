@@ -33,22 +33,49 @@ export function wistiaMediaOptions(props: WistiaMediaOptionsProps): WistiaSource
 }
 
 /**
- * Wistia's options as its element observes them: kebab-cased, every value a string. React's half of applying what
- * {@link wistiaMediaOptions} decides, where the custom element assigns the same options as properties.
- *
- * Attributes because they are what `<wistia-player>` watches and can read before anything of ours runs — it configures
- * itself as it connects, and React has no moment before that. Left to choose, React asks whether the camel-cased name
- * is a property of the element, and answers an option Wistia keeps off the prototype with a lowercased attribute it is
- * not watching. Booleans are spelled out for the same reason: `false` has React drop the attribute, and a dropped
- * attribute is Wistia's default instead — the difference between a chromeless player and one wearing two sets of
- * controls. Anything else has no attribute spelling at all and is left out, `playerColorGradient` being the one
- * documented option in that gap.
+ * The options whose kebab-cased spelling is also a member Wistia keeps on `<wistia-player>`'s prototype, which is what
+ * React consults before it decides to assign a prop rather than write it. Read off the package rather than reasoned
+ * about, and every one is a single word, since a name carrying a hyphen cannot be a property.
  */
-export function wistiaAttributes(options: Record<string, unknown>): Record<string, string> {
-  const attributes: Record<string, string> = {};
+const WISTIA_PLAYER_MEMBERS = new Set([
+  'aspect',
+  'autoplay',
+  'email',
+  'muted',
+  'poster',
+  'preload',
+  'resumable',
+  'seo',
+  'swatch',
+]);
+
+/**
+ * Wistia's options as its element takes them in React: kebab-cased, and each one spelled the way it has to arrive.
+ * React's half of applying what {@link wistiaMediaOptions} decides, where the custom element assigns the same options
+ * as properties.
+ *
+ * Attributes for most of them, because they are what `<wistia-player>` watches and can read before anything of ours
+ * runs — it configures itself as it connects, and React has no moment before that. Booleans are spelled out for the
+ * same reason: `false` has React drop the attribute, and a dropped attribute is Wistia's default instead — the
+ * difference between a chromeless player and one wearing two sets of controls.
+ *
+ * {@link WISTIA_PLAYER_MEMBERS} is the exception, and React is what makes it one: a prop it finds on the element is
+ * assigned rather than written, so no attribute is involved and the value lands on Wistia's own setter. That setter
+ * reads a boolean, and `'false'` is a string — a truthy one. Spelling those out is how an unmuted player mutes itself
+ * and a paused one autoplays, so they go as they are.
+ *
+ * Anything else has no attribute spelling at all and is left out, `playerColorGradient` being the one documented option
+ * in that gap.
+ */
+export function wistiaAttributes(options: Record<string, unknown>): Record<string, string | number | boolean> {
+  const attributes: Record<string, string | number | boolean> = {};
 
   for (const [key, value] of Object.entries(options)) {
-    if (isString(value) || isNumber(value) || isBoolean(value)) attributes[kebabCase(key)] = String(value);
+    if (!isString(value) && !isNumber(value) && !isBoolean(value)) continue;
+
+    const name = kebabCase(key);
+
+    attributes[name] = WISTIA_PLAYER_MEMBERS.has(name) ? value : String(value);
   }
 
   return attributes;
