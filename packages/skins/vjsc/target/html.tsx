@@ -16,11 +16,13 @@ const componentParts: Readonly<Record<string, Readonly<Record<string, string>>>>
   Controls: {
     Root: 'Controls',
     Backdrop: 'ControlsBackdrop',
+    Content: 'ControlsContent',
     Group: 'ControlsGroup',
   },
   ErrorDialog: {
     Root: 'ErrorDialog',
     Backdrop: 'DialogBackdrop',
+    Popup: 'DialogPopup',
     Title: 'DialogTitle',
     Description: 'DialogDescription',
     Close: 'DialogClose',
@@ -160,9 +162,6 @@ export const htmlComponentTarget: ComponentTarget<CoreSchema> = defineComponentT
       return name ? htmlElementTarget(name, element) : undefined;
     },
     components: {
-      ErrorDialog: {
-        Popup: Div,
-      },
       Menu: ({ props, parts, id }) => {
         const popup = parts.Popup?.one();
         const trigger = parts.Trigger.one();

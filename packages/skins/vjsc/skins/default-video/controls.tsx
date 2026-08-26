@@ -14,30 +14,32 @@ import styles from './controls.styles';
 
 export function DefaultVideoControls() {
   return (
-    <$.Controls.Root className={['media-controls', styles.root]}>
+    <$.Controls.Root>
       <$.Controls.Backdrop className={styles.backdrop} />
-      <$.Tooltip.Provider>
-        <$.Controls.Group className={[surfaceStyles.root, styles.primary]}>
-          <PlayButton />
-          <VolumePopover />
+      <$.Controls.Content className={['media-controls', styles.root]}>
+        <$.Tooltip.Provider>
+          <$.Controls.Group className={[surfaceStyles.root, styles.primary]}>
+            <PlayButton />
+            <VolumePopover />
 
-          <$.Controls.Group className={styles.timeSliderGroup}>
-            <$.Time.Value className={styles.currentValue} type="current" />
-            <TimeSlider />
-            <$.Time.Value className={styles.remainingValue} type="remaining" toggle />
+            <$.Controls.Group className={styles.timeSliderGroup}>
+              <$.Time.Value className={styles.currentValue} type="current" />
+              <TimeSlider />
+              <$.Time.Value className={styles.remainingValue} type="remaining" toggle />
+            </$.Controls.Group>
+
+            <CaptionsButton className={styles.captionsButton} />
+            <VideoSettingsMenu />
           </$.Controls.Group>
 
-          <CaptionsButton className={styles.captionsButton} />
-          <VideoSettingsMenu />
-        </$.Controls.Group>
-
-        <$.Controls.Group className={[surfaceStyles.root, styles.secondary]}>
-          <CastButton />
-          <AirPlayButton />
-          <PiPButton />
-          <FullscreenButton />
-        </$.Controls.Group>
-      </$.Tooltip.Provider>
+          <$.Controls.Group className={[surfaceStyles.root, styles.secondary]}>
+            <CastButton />
+            <AirPlayButton />
+            <PiPButton />
+            <FullscreenButton />
+          </$.Controls.Group>
+        </$.Tooltip.Provider>
+      </$.Controls.Content>
     </$.Controls.Root>
   );
 }

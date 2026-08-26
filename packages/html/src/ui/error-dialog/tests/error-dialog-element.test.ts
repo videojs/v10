@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it } from 'vite-plus/test';
 import { MediaI18nProviderElement } from '../../../i18n';
 import { DialogCloseElement } from '../../dialog/dialog-close-element';
 import { DialogDescriptionElement } from '../../dialog/dialog-description-element';
+import { DialogPopupElement } from '../../dialog/dialog-popup-element';
 import { DialogTitleElement } from '../../dialog/dialog-title-element';
 import { ErrorDialogElement } from '../error-dialog-element';
 
@@ -43,13 +44,13 @@ describe('ErrorDialogElement', () => {
     ensureDefined(DialogCloseElement.tagName, DialogCloseElement);
 
     const el = createElement(ErrorDialogElement);
+    const popup = createElement(DialogPopupElement);
     const title = document.createElement(DialogTitleElement.tagName) as DialogTitleElement;
     const desc = document.createElement(DialogDescriptionElement.tagName) as DialogDescriptionElement;
     const close = document.createElement(DialogCloseElement.tagName) as DialogCloseElement;
 
-    el.appendChild(title);
-    el.appendChild(desc);
-    el.appendChild(close);
+    popup.append(title, desc, close);
+    el.append(popup);
 
     document.body.appendChild(el);
     await el.updateComplete;
@@ -57,8 +58,8 @@ describe('ErrorDialogElement', () => {
     expect(title.isConnected).toBe(true);
     expect(desc.isConnected).toBe(true);
     expect(close.isConnected).toBe(true);
-    expect(el.getAttribute('aria-labelledby')).toBe(title.id);
-    expect(el.getAttribute('aria-describedby')).toBe(desc.id);
+    expect(popup.getAttribute('aria-labelledby')).toBe(title.id);
+    expect(popup.getAttribute('aria-describedby')).toBe(desc.id);
   });
 
   it('handles missing child elements gracefully', async () => {
@@ -85,11 +86,13 @@ describe('ErrorDialogElement', () => {
 
     provider.setAttribute('lang', 'es');
     const el = createElement(ErrorDialogElement);
+    const popup = createElement(DialogPopupElement);
     const title = document.createElement(DialogTitleElement.tagName) as DialogTitleElement;
     const desc = document.createElement(DialogDescriptionElement.tagName) as DialogDescriptionElement;
     const close = document.createElement(DialogCloseElement.tagName) as DialogCloseElement;
 
-    el.append(title, desc, close);
+    popup.append(title, desc, close);
+    el.append(popup);
     provider.appendChild(el);
     document.body.append(provider);
     await Promise.resolve();
@@ -115,13 +118,15 @@ describe('ErrorDialogElement', () => {
 
     provider.setAttribute('lang', 'es');
     const el = createElement(ErrorDialogElement);
+    const popup = createElement(DialogPopupElement);
     const title = document.createElement(DialogTitleElement.tagName) as DialogTitleElement;
     const desc = document.createElement(DialogDescriptionElement.tagName) as DialogDescriptionElement;
     const close = document.createElement(DialogCloseElement.tagName) as DialogCloseElement;
 
     title.textContent = 'Custom title';
 
-    el.append(title, desc, close);
+    popup.append(title, desc, close);
+    el.append(popup);
     provider.appendChild(el);
     document.body.append(provider);
     await Promise.resolve();

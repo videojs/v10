@@ -7,14 +7,7 @@ import {
   getErrorDialogUnexpectedText,
   resolveErrorDialogDescription,
 } from '@videojs/core';
-import {
-  applyElementProps,
-  applyStateDataAttrs,
-  createDialog,
-  createTransition,
-  type DialogApi,
-  selectError,
-} from '@videojs/core/dom';
+import { applyStateDataAttrs, createDialog, createTransition, type DialogApi, selectError } from '@videojs/core/dom';
 import { translateText } from '@videojs/core/i18n';
 import type { PropertyValues } from '@videojs/element';
 import { ContextProvider } from '@videojs/element/context';
@@ -39,6 +32,7 @@ export class ErrorDialogElement extends UIElement {
 
   readonly #core = new ErrorDialogCore();
   readonly #provider = new ContextProvider(this, { context: dialogContext });
+  readonly #popupId = `vjs-error-dialog-popup-${idCounter++}`;
   readonly #titleId = `vjs-error-dialog-title-${idCounter++}`;
   readonly #descriptionId = `vjs-error-dialog-desc-${idCounter++}`;
   readonly #errorState = new PlayerController(this, playerContext, selectError);
@@ -70,8 +64,6 @@ export class ErrorDialogElement extends UIElement {
         }
       },
     });
-
-    this.#dialog.setPopupElement(this);
 
     if (this.#snapshot) {
       this.#snapshot.track(this.#dialog.input);
@@ -125,12 +117,14 @@ export class ErrorDialogElement extends UIElement {
     this.#core.setInput(input);
     const state = this.#core.getState();
 
-    applyElementProps(this, this.#core.getPopupAttrs(state));
     applyStateDataAttrs(this, state, ErrorDialogDataAttrs);
 
     this.#provider.setValue({
       state,
       stateAttrMap: ErrorDialogDataAttrs,
+      dialog: this.#dialog,
+      popupId: this.#popupId,
+      popupAttrs: this.#core.getPopupAttrs(state),
       close: () => this.#dialog?.close(),
     });
   }

@@ -22,7 +22,7 @@ The `<media-container>` is the player's physical surface. It defines the visual 
   <Container> {/* [!code focus] */}
     <Video src="video.mp4" />
     <Controls.Root>
-      {/* ... */}
+      <Controls.Content>{/* ... */}</Controls.Content>
     </Controls.Root>
   </Container> {/* [!code focus] */}
 </Player>
@@ -33,7 +33,7 @@ The `<media-container>` is the player's physical surface. It defines the visual 
 <video-player>
   <media-container> <!-- [!code focus] -->
     <video src="video.mp4"></video>
-    <media-controls>...</media-controls>
+    <media-controls><media-controls-content>...</media-controls-content></media-controls>
   </media-container> <!-- [!code focus] -->
 </video-player>
 ```
@@ -92,7 +92,7 @@ The container is the visual box around your media and controls. Put sizing, aspe
 <Container style={{ position: 'relative', width: 640, aspectRatio: '16/9' }}>
   <Video src="video.mp4" />
   <Controls.Root>
-    {/* ... */}
+    <Controls.Content>{/* ... */}</Controls.Content>
   </Controls.Root>
 </Container>
 ```
@@ -110,7 +110,7 @@ The container is the visual box around your media and controls. Put sizing, aspe
 ```html
 <media-container class="player-surface">
   <video src="video.mp4"></video>
-  <media-controls>...</media-controls>
+  <media-controls><media-controls-content>...</media-controls-content></media-controls>
 </media-container>
 ```
 </FrameworkCase>
@@ -166,7 +166,7 @@ If you omit `<video-skin>` to build custom UI, render and style `<media-containe
   <Container>
     <Video src="video.mp4" />
     <Controls.Root>          {/* fullscreen, activity detection, gestures */}
-      {/* ... */}
+      <Controls.Content>{/* ... */}</Controls.Content>
     </Controls.Root>
   </Container>
 
@@ -180,7 +180,7 @@ If you omit `<video-skin>` to build custom UI, render and style `<media-containe
 <video-player>
   <media-container>
     <video src="video.mp4"></video>
-    <media-controls>...</media-controls>  <!-- fullscreen, activity detection, gestures -->
+    <media-controls><media-controls-content>...</media-controls-content></media-controls>  <!-- fullscreen, activity detection, gestures -->
   </media-container>
 
   <media-transcript></media-transcript>     <!-- state & actions, but no container behaviors -->

@@ -11,6 +11,7 @@ import { PopoverElement } from '../../popover/popover-element';
 import { TooltipElement } from '../../tooltip/tooltip-element';
 import { UIElement } from '../../ui-element';
 import { ControlsBackdropElement } from '../controls-backdrop-element';
+import { ControlsContentElement } from '../controls-content-element';
 import { ControlsElement } from '../controls-element';
 
 function ensureCustomElementDefined(Constructor: CustomElementConstructor & { readonly tagName: string }): void {
@@ -100,16 +101,24 @@ afterEach(() => {
 });
 
 describe('ControlsElement', () => {
-  it('marks the controls surface as interactive', async () => {
+  it('keeps interactivity on the content rather than the context host', async () => {
     const provider = document.createElement('test-controls-player-provider') as TestPlayerProviderElement;
     const controls = createDefinedElement(ControlsElement);
+    const content = createDefinedElement(ControlsContentElement);
+
+    controls.append(content);
 
     document.body.append(provider);
     provider.append(controls);
 
     await controls.updateComplete;
 
-    expect(controls.hasAttribute('data-interactive')).toBe(true);
+    await waitForAssertion(() => {
+      expect(controls.hasAttribute('data-interactive')).toBe(false);
+      expect(content.hasAttribute('data-interactive')).toBe(true);
+      expect(content.hasAttribute('data-visible')).toBe(true);
+      expect(content.hasAttribute('data-user-active')).toBe(true);
+    });
   });
 
   it('closes owned popovers, menus, and tooltips when controls hide', async () => {
@@ -207,5 +216,11 @@ describe('ControlsBackdropElement', () => {
       expect(backdrop.hasAttribute('data-visible')).toBe(true);
       expect(backdrop.hasAttribute('data-user-active')).toBe(true);
     });
+  });
+});
+
+describe('ControlsContentElement', () => {
+  it('has the correct tag name', () => {
+    expect(ControlsContentElement.tagName).toBe('media-controls-content');
   });
 });

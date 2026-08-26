@@ -4,7 +4,11 @@
 
 video-player,
 live-video-player,
-media-i18n {
+media-i18n,
+media-dialog,
+media-alert-dialog,
+media-error-dialog,
+media-controls {
   display: contents;
 }
 

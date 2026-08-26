@@ -21,6 +21,6 @@
   }
 }
 
-.media-minimal-skin .media-error[data-open] ~ .media-controls * {
+.media-minimal-skin:has(.media-error[data-open]) .media-controls * {
   visibility: hidden;
 }

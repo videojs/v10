@@ -23,22 +23,32 @@
   object-fit: cover;
 }
 
-.html-dialog-basic__dialog {
+.html-dialog-basic__backdrop {
   position: absolute;
   inset: 0;
   z-index: 1;
+  background: rgb(3 7 18 / 80%);
+  transition: opacity 200ms ease;
+}
+
+.html-dialog-basic__dialog {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 20px;
-  background: rgb(3 7 18 / 80%);
   transition: opacity 150ms ease;
 }
 
+.html-dialog-basic__backdrop:not([data-open]),
 .html-dialog-basic__dialog:not([data-open]) {
   display: none;
 }
 
+.html-dialog-basic__backdrop[data-starting-style],
+.html-dialog-basic__backdrop[data-ending-style],
 .html-dialog-basic__dialog[data-starting-style],
 .html-dialog-basic__dialog[data-ending-style] {
   opacity: 0;
@@ -84,6 +94,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .html-dialog-basic__backdrop,
   .html-dialog-basic__dialog {
     transition: none;
   }

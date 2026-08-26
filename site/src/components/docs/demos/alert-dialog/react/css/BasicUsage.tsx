@@ -10,6 +10,7 @@ export default function BasicUsage() {
         Open alert dialog
       </button>
       <AlertDialog.Root open={open} onOpenChange={setOpen}>
+        <AlertDialog.Backdrop className="react-alert-dialog-basic__backdrop" />
         <AlertDialog.Popup className="react-alert-dialog-basic__dialog">
           <AlertDialog.Title className="react-alert-dialog-basic__title">Stop playback?</AlertDialog.Title>
           <AlertDialog.Description className="react-alert-dialog-basic__description">

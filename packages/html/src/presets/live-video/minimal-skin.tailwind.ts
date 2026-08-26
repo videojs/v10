@@ -41,7 +41,9 @@ function getTemplateHTML() {
         ${renderIcon('spinner')}
       </media-buffering-indicator>
 
-      <media-error-dialog class="${error.root}">
+      <media-error-dialog>
+        <media-dialog-backdrop data-error-backdrop class="${overlay}"></media-dialog-backdrop>
+        <media-dialog-popup class="${error.root}">
         <div class="${error.dialog}">
           <div class="${error.content}">
             <media-dialog-title class="${error.title}"></media-dialog-title>
@@ -51,9 +53,12 @@ function getTemplateHTML() {
             <media-dialog-close class="${cn(button.base, button.primary)}"></media-dialog-close>
           </div>
         </div>
+        </media-dialog-popup>
       </media-error-dialog>
 
-      <media-controls data-controls="" class="${controls}">
+      <media-controls>
+        <media-controls-backdrop class="${overlay}"></media-controls-backdrop>
+        <media-controls-content data-controls="" class="${controls}">
         <media-tooltip-group>
           <div class="${buttonGroupStart}">
               <media-play-button commandfor="play-tooltip" class="${cn(button.base, button.subtle, button.icon, iconState.play.button)}">
@@ -147,9 +152,8 @@ function getTemplateHTML() {
               </media-tooltip>
           </div>
         </media-tooltip-group>
+        </media-controls-content>
       </media-controls>
-
-      <div class="${overlay}"></div>
 
       <!-- Hotkeys -->
       <media-hotkey keys="Space" action="togglePaused"></media-hotkey>

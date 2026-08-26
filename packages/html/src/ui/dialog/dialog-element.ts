@@ -38,6 +38,7 @@ export class DialogElementBase extends UIElement {
   readonly #stateAttrMap: StateAttrMap<DialogState>;
   readonly #provider = new ContextProvider(this, { context: dialogContext });
   readonly #position = new PositionController(this);
+  readonly #popupId: string;
   readonly #titleId: string;
   readonly #descriptionId: string;
   readonly #bindTrigger: boolean;
@@ -57,6 +58,7 @@ export class DialogElementBase extends UIElement {
     this.#core = core;
     this.#stateAttrMap = stateAttrMap;
     this.#bindTrigger = bindTrigger;
+    this.#popupId = `vjs-${idPrefix}-popup-${idCounter++}`;
     this.#titleId = `vjs-${idPrefix}-title-${idCounter++}`;
     this.#descriptionId = `vjs-${idPrefix}-desc-${idCounter++}`;
     this.#core.setTitleId(this.#titleId);
@@ -79,8 +81,6 @@ export class DialogElementBase extends UIElement {
         this.dispatchEvent(new CustomEvent('open-change-complete', { detail: { open: nextOpen } }));
       },
     });
-
-    this.#dialog.setPopupElement(this);
 
     if (this.#snapshot) {
       this.#snapshot.track(this.#dialog.input);
@@ -134,16 +134,18 @@ export class DialogElementBase extends UIElement {
     this.#core.setInput(input);
     const state = this.#core.getState();
 
-    applyElementProps(this, { tabIndex: -1, ...this.#core.getPopupAttrs(state) });
     applyStateDataAttrs(this, state, this.#stateAttrMap);
 
     if (this.#triggerElement) {
-      applyElementProps(this.#triggerElement, this.#core.getTriggerAttrs(state, this.id));
+      applyElementProps(this.#triggerElement, this.#core.getTriggerAttrs(state, this.#popupId));
     }
 
     this.#provider.setValue({
       state,
       stateAttrMap: this.#stateAttrMap,
+      dialog: this.#dialog,
+      popupId: this.#popupId,
+      popupAttrs: this.#core.getPopupAttrs(state),
       close: () => this.#dialog?.close(),
     });
   }

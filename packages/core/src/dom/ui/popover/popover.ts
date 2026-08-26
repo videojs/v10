@@ -5,7 +5,7 @@ import type { PopoverInput } from '../../../core/ui/popover/core';
 import { createDismissLayer } from '../dismiss-layer';
 import type { UIFocusEvent, UIPointerEvent } from '../event';
 import type { TransitionApi } from '../transition';
-import type { PopupGroup } from './popup-group';
+import type { PopupGroup, PopupGroupCloseReason } from './popup-group';
 
 export type PopoverOpenChangeReason =
   | 'click'
@@ -93,7 +93,7 @@ export function createPopover(options: PopoverOptions): PopoverApi {
 
   const state = layer.input;
   const groupMember = {
-    close(reason: 'group-open') {
+    close(reason: PopupGroupCloseReason) {
       applyClose(reason);
     },
     get triggerElement() {

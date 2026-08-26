@@ -194,7 +194,7 @@ The player's scope can extend beyond the fullscreen target. Playlists, transcrip
   <Container>
     <Video src="video.mp4" />
     <Controls.Root>          {/* goes fullscreen with the video */}
-      {/* ... */}
+      <Controls.Content>{/* ... */}</Controls.Content>
     </Controls.Root>
   </Container>
 
@@ -208,7 +208,7 @@ The player's scope can extend beyond the fullscreen target. Playlists, transcrip
 <video-player>
   <media-container>
     <video src="video.mp4"></video>
-    <media-controls>...</media-controls>  <!-- goes fullscreen with the video -->
+    <media-controls><media-controls-content>...</media-controls-content></media-controls>  <!-- goes fullscreen with the video -->
   </media-container>
 
   <media-transcript></media-transcript>     <!-- outside container — still has store access -->

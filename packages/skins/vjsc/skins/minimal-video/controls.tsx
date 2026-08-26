@@ -13,34 +13,36 @@ import styles from './controls.styles';
 
 export function MinimalVideoControls() {
   return (
-    <$.Controls.Root className={['media-controls', styles.root]}>
+    <$.Controls.Root>
       <$.Controls.Backdrop className={styles.backdrop} />
-      <$.Tooltip.Provider>
-        <$.Controls.Group className={styles.start}>
-          <PlayButton />
-          <VolumePopover side="right" orientation="horizontal" />
-        </$.Controls.Group>
-
-        <$.Controls.Group className={styles.timeSliderGroup}>
-          <$.Time.Group className={styles.timeGroup}>
-            <$.Time.Value className={styles.currentValue} type="current" toggle />
-            <$.Time.Separator className={styles.timeSeparator} />
-            <$.Time.Value className={styles.durationValue} type="duration" />
-          </$.Time.Group>
-          <TimeSlider />
-        </$.Controls.Group>
-
-        <$.Controls.Group className={styles.end}>
-          <CaptionsButton />
-          <VideoSettingsMenu />
-          <$.Controls.Group className={styles.trailing}>
-            <CastButton />
-            <AirPlayButton />
-            <PiPButton />
-            <FullscreenButton />
+      <$.Controls.Content className={['media-controls', styles.root]}>
+        <$.Tooltip.Provider>
+          <$.Controls.Group className={styles.start}>
+            <PlayButton />
+            <VolumePopover side="right" orientation="horizontal" />
           </$.Controls.Group>
-        </$.Controls.Group>
-      </$.Tooltip.Provider>
+
+          <$.Controls.Group className={styles.timeSliderGroup}>
+            <$.Time.Group className={styles.timeGroup}>
+              <$.Time.Value className={styles.currentValue} type="current" toggle />
+              <$.Time.Separator className={styles.timeSeparator} />
+              <$.Time.Value className={styles.durationValue} type="duration" />
+            </$.Time.Group>
+            <TimeSlider />
+          </$.Controls.Group>
+
+          <$.Controls.Group className={styles.end}>
+            <CaptionsButton />
+            <VideoSettingsMenu />
+            <$.Controls.Group className={styles.trailing}>
+              <CastButton />
+              <AirPlayButton />
+              <PiPButton />
+              <FullscreenButton />
+            </$.Controls.Group>
+          </$.Controls.Group>
+        </$.Tooltip.Provider>
+      </$.Controls.Content>
     </$.Controls.Root>
   );
 }

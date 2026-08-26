@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { DialogBackdropElement } from '../dialog-backdrop-element';
 import { DialogCloseElement } from '../dialog-close-element';
 import { DialogElement } from '../dialog-element';
+import { DialogPopupElement } from '../dialog-popup-element';
 
 let tagCounter = 0;
 
@@ -21,21 +22,27 @@ afterEach(() => {
 describe('DialogElement', () => {
   it('uses modal dialog semantics', async () => {
     const dialog = createElement(DialogElement);
+    const popup = createElement(DialogPopupElement);
 
     dialog.open = true;
+    dialog.append(popup);
     document.body.append(dialog);
     await dialog.updateComplete;
+    await popup.updateComplete;
 
-    expect(dialog.getAttribute('role')).toBe('dialog');
-    expect(dialog.getAttribute('aria-modal')).toBe('true');
-    expect(dialog.tabIndex).toBe(-1);
+    expect(dialog.hasAttribute('role')).toBe(false);
+    expect(popup.getAttribute('role')).toBe('dialog');
+    expect(popup.getAttribute('aria-modal')).toBe('true');
+    expect(popup.tabIndex).toBe(-1);
     expect(dialog.hasAttribute('data-open')).toBe(true);
   });
 
   it('opens from an adjacent trigger', async () => {
     const trigger = document.createElement('button');
     const dialog = createElement(DialogElement);
+    const popup = createElement(DialogPopupElement);
 
+    dialog.append(popup);
     document.body.append(trigger, dialog);
     await dialog.updateComplete;
     flush();
@@ -46,15 +53,17 @@ describe('DialogElement', () => {
     expect(dialog.open).toBe(true);
     expect(trigger.getAttribute('aria-expanded')).toBe('true');
     expect(trigger.getAttribute('aria-haspopup')).toBe('dialog');
-    expect(trigger.getAttribute('aria-controls')).toBe(dialog.id);
+    expect(trigger.getAttribute('aria-controls')).toBe(popup.id);
   });
 
   it('closes only from the explicit close part', async () => {
     const dialog = createElement(DialogElement);
+    const popup = createElement(DialogPopupElement);
     const playerControl = document.createElement('button');
     const close = createElement(DialogCloseElement);
 
-    dialog.append(playerControl, close);
+    popup.append(playerControl, close);
+    dialog.append(popup);
     dialog.open = true;
     document.body.append(dialog);
     await dialog.updateComplete;
