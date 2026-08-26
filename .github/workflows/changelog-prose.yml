@@ -81,6 +81,22 @@ jobs:
             echo "skip=true" >> "$GITHUB_OUTPUT"
           fi
 
+      # codex-action rejects sandbox_workspace_write overrides under a
+      # protected safety strategy; a named permission profile is the
+      # supported way to grant workspace writes plus network access.
+      - name: Define Codex permission profile
+        if: steps.guard.outputs.skip != 'true'
+        run: |
+          mkdir -p "$RUNNER_TEMP/codex-home"
+          cat > "$RUNNER_TEMP/codex-home/config.toml" <<'EOF'
+          [permissions.changelog-prose]
+          description = "Workspace writes plus network access for gh and git."
+          extends = ":workspace"
+
+          [permissions.changelog-prose.network]
+          enabled = true
+          EOF
+
       - name: Generate changelog prose
         if: steps.guard.outputs.skip != 'true'
         uses: openai/codex-action@v1
@@ -93,9 +109,9 @@ jobs:
           openai-api-key: ${{ secrets.OPENAI_API_KEY }}
           model: gpt-5.6-terra
           effort: high
-          sandbox: workspace-write
           safety-strategy: drop-sudo
-          codex-args: '["--config", "sandbox_workspace_write.network_access=true"]'
+          codex-home: ${{ runner.temp }}/codex-home
+          permission-profile: changelog-prose
           prompt: |
             You are the changelog prose writer for Video.js 10.
 
