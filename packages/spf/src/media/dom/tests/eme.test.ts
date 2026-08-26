@@ -359,7 +359,7 @@ describe('resolveDrmUrl', () => {
 
 describe('buildKeySystemConfigurations', () => {
   it('builds one configuration with per-type capabilities from track content types', () => {
-    const [config] = buildKeySystemConfigurations('com.widevine.alpha', {
+    const [config] = buildKeySystemConfigurations('com.microsoft.playready', {
       video: ['video/mp4; codecs="avc1.4d401f"'],
       audio: ['audio/mp4; codecs="mp4a.40.2"'],
     });
@@ -380,7 +380,7 @@ describe('buildKeySystemConfigurations', () => {
 
   it('stamps the declared encryption scheme on every capability', () => {
     const [config] = buildKeySystemConfigurations(
-      'com.widevine.alpha',
+      'com.microsoft.playready',
       { video: ['video/mp4; codecs="avc1.4d401f"'], audio: ['audio/mp4; codecs="mp4a.40.2"'] },
       'cbcs'
     );
@@ -408,8 +408,8 @@ describe('buildKeySystemConfigurations', () => {
     expect(configs[1]?.initDataTypes).toEqual(['cenc']);
   });
 
-  it('offers only one configuration when no scheme is declared', () => {
-    const configs = buildKeySystemConfigurations('com.widevine.alpha', {
+  it('offers only one configuration when neither preference applies', () => {
+    const configs = buildKeySystemConfigurations('com.microsoft.playready', {
       video: ['video/mp4; codecs="avc1.4d401f"'],
       audio: [],
     });
@@ -417,8 +417,53 @@ describe('buildKeySystemConfigurations', () => {
     expect(configs).toHaveLength(1);
   });
 
+  it('prefers L1 video robustness for Widevine, with an unrobust fallback', () => {
+    const configs = buildKeySystemConfigurations('com.widevine.alpha', {
+      video: ['video/mp4; codecs="avc1.4d401f"'],
+      audio: ['audio/mp4; codecs="mp4a.40.2"'],
+    });
+
+    expect(configs).toHaveLength(2);
+    expect(configs[0]?.videoCapabilities).toEqual([
+      { contentType: 'video/mp4; codecs="avc1.4d401f"', robustness: 'HW_SECURE_ALL' },
+    ]);
+    expect(configs[1]?.videoCapabilities).toEqual([{ contentType: 'video/mp4; codecs="avc1.4d401f"' }]);
+    // Audio stays at the CDM's default in both — no tier is worth a failed negotiation.
+    expect(configs[0]?.audioCapabilities).toEqual([{ contentType: 'audio/mp4; codecs="mp4a.40.2"' }]);
+  });
+
+  it('leaves robustness unset for key systems with no preferred tier', () => {
+    const configs = buildKeySystemConfigurations('com.microsoft.playready', {
+      video: ['video/mp4; codecs="avc1.4d401f"'],
+      audio: [],
+    });
+
+    expect(configs).toHaveLength(1);
+    expect(configs[0]?.videoCapabilities).toEqual([{ contentType: 'video/mp4; codecs="avc1.4d401f"' }]);
+  });
+
+  it('composes scheme and robustness preferences, scheme outermost', () => {
+    const configs = buildKeySystemConfigurations(
+      'com.widevine.alpha',
+      { video: ['video/mp4; codecs="avc1.4d401f"'], audio: [] },
+      'cbcs'
+    );
+
+    expect(
+      configs.map((config) => [
+        config.videoCapabilities?.[0]?.encryptionScheme,
+        config.videoCapabilities?.[0]?.robustness,
+      ])
+    ).toEqual([
+      ['cbcs', 'HW_SECURE_ALL'],
+      ['cbcs', undefined],
+      [undefined, 'HW_SECURE_ALL'],
+      [undefined, undefined],
+    ]);
+  });
+
   it('omits a capability list when that type has no content types', () => {
-    const [config] = buildKeySystemConfigurations('com.widevine.alpha', {
+    const [config] = buildKeySystemConfigurations('com.microsoft.playready', {
       video: ['video/mp4; codecs="avc1.4d401f"'],
       audio: [],
     });
