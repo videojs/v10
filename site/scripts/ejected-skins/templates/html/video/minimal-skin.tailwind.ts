@@ -1,4 +1,5 @@
 import { audioText, captionsText, qualityText, settingsText, speedText } from '@videojs/core/i18n/text/menu';
+import { renderText } from '@videojs/html/i18n';
 import { renderIcon } from '@videojs/icons/render/minimal';
 import {
   badge,
@@ -25,8 +26,6 @@ import {
   volumeIndicator,
 } from '@videojs/skins/minimal/tailwind/video.tailwind';
 import { cn } from '@videojs/utils/style';
-
-import { renderText } from '../../i18n/render-text';
 
 export function getTemplateHTML() {
   return /*html*/ `
