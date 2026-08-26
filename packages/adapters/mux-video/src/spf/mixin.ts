@@ -102,6 +102,7 @@ export function MuxMixin<Base extends Constructor<any>>(BaseClass: Base) {
       // so there is one licensing path rather than a Mux-shaped copy of it.
       const { token: _token, ...named } = source?.drm ?? {};
       const drm = { ...createMuxDrmSystems(source), ...named };
+
       super.source = source
         ? {
             src: (createMuxVideoURL(source) ?? source.src) || '',
