@@ -130,6 +130,39 @@ describe('PopupPositioner', () => {
     expect(disconnect).toHaveBeenCalledOnce();
   });
 
+  it('can skip popup resize tracking', () => {
+    const observe = vi.fn();
+
+    class MockResizeObserver {
+      observe = observe;
+      disconnect = vi.fn();
+    }
+
+    vi.stubGlobal('ResizeObserver', MockResizeObserver);
+
+    const trigger = document.createElement('button');
+    const popup = document.createElement('div');
+
+    mockRect(document.documentElement, 0, 0, 800, 600);
+    mockRect(trigger, 100, 200, 120, 40);
+    mockRect(popup, 0, 0, 200, 80);
+    Object.defineProperty(popup, 'offsetWidth', { configurable: true, value: 200 });
+    Object.defineProperty(popup, 'offsetHeight', { configurable: true, value: 80 });
+
+    const positioner = new PopupPositioner();
+
+    positioner.sync({
+      anchorName: 'settings',
+      position: { side: 'top', align: 'center' },
+      trigger,
+      popup,
+      trackResize: false,
+    });
+
+    expect(observe).toHaveBeenCalledOnce();
+    expect(observe).toHaveBeenCalledWith(trigger);
+  });
+
   it('remeasures when the position callback changes the popup size', () => {
     vi.stubGlobal('ResizeObserver', undefined);
     const trigger = document.createElement('button');

@@ -22,6 +22,7 @@ interface UsePopupPositionOptions {
   boundary: PositioningBoundary;
   container: MediaContainer | null;
   cssVars?: PositioningCSSVars;
+  trackResize?: boolean;
   onSideChange?: PopupPositionerOptions['onSideChange'];
 }
 
@@ -34,6 +35,7 @@ export function usePopupPosition({
   boundary,
   container,
   cssVars,
+  trackResize,
   onSideChange,
 }: UsePopupPositionOptions): PopupStyle {
   const [positioner] = useState(() => new PopupPositioner());
@@ -51,6 +53,7 @@ export function usePopupPosition({
       popup: popupRef.current,
       boundary,
       container,
+      trackResize,
       ...(cssVars ? { cssVars } : {}),
       ...(onSideChange ? { onSideChange } : {}),
     });
