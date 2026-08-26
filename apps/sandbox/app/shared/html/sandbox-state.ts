@@ -8,16 +8,11 @@ import {
   type PreloadValue,
 } from '@app/shared/sandbox-listener';
 import type { SourceId } from '@app/shared/sources';
-import type { Skin, Styling } from '@app/types';
-
-function getInitialStyling(): Styling {
-  return new URLSearchParams(location.search).get('styling') === 'tailwind' ? 'tailwind' : 'css';
-}
+import type { Skin } from '@app/types';
 
 export type HtmlSandboxState = {
   skin: Skin;
   source: SourceId;
-  styling: Styling;
   autoplay: boolean;
   muted: boolean;
   loop: boolean;
@@ -28,7 +23,6 @@ export function createHtmlSandboxState(audioOnly?: boolean): HtmlSandboxState {
   return {
     skin: getInitialSkin(),
     source: getInitialSource(audioOnly),
-    styling: getInitialStyling(),
     autoplay: getInitialAutoplay(),
     muted: getInitialMuted(),
     loop: getInitialLoop(),

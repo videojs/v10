@@ -17,14 +17,11 @@ import {
   slider,
   time,
 } from '@videojs/skins/default/tailwind/audio.tailwind';
-import { createTemplate } from '@videojs/utils/dom';
 import { cn } from '@videojs/utils/style';
-
-import { SkinElement } from '../../define/skin-element';
 
 const SEEK_TIME = 10;
 
-function getTemplateHTML() {
+export function getTemplateHTML() {
   return /*html*/ `
     <media-container class="${container}">
       <!-- @deprecated slot="media" is no longer required, use the default slot instead -->
@@ -155,15 +152,4 @@ function getTemplateHTML() {
       <media-hotkey keys="<" action="speedDown"></media-hotkey>
     </media-container>
   `;
-}
-
-export class AudioSkinTailwindElement extends SkinElement {
-  static readonly tagName = 'audio-skin-tailwind';
-  static template = createTemplate(getTemplateHTML());
-}
-
-declare global {
-  interface HTMLElementTagNameMap {
-    [AudioSkinTailwindElement.tagName]: AudioSkinTailwindElement;
-  }
 }

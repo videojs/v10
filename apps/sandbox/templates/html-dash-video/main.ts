@@ -24,7 +24,7 @@ const loadLatest = createLatestLoader();
 async function render() {
   await prepareSandboxHtmlLocale();
 
-  const tag = await loadLatest(() => loadVideoSkinTag(state.skin, state.styling));
+  const tag = await loadLatest(() => loadVideoSkinTag(state.skin));
   if (!tag) return;
 
   const storyboard = getStoryboardSrc(state.source);

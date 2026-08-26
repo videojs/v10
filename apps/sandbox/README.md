@@ -10,7 +10,7 @@ pnpm dev:sandbox             # sandbox + workspace package watch
 pnpm dev                     # also runs the docs site
 ```
 
-Open the printed URL. The root route renders an interactive shell — a navbar with dropdowns for platform (HTML, React, CDN), preset (`video`, `hlsjs-video`, `audio`, etc.), skin, styling (CSS or Tailwind), and source — that previews the selected combination in an iframe. Use the **Open** button to pop the preview out into its own tab.
+Open the printed URL. The root route renders an interactive shell — a navbar with dropdowns for platform (HTML, React, CDN), preset (`video`, `hlsjs-video`, `audio`, etc.), skin, styling (CSS, or Tailwind for React), and source — that previews the selected combination in an iframe. Use the **Open** button to pop the preview out into its own tab.
 
 **Language** is in **Player settings** (gear icon) for every preset (HTML, React, and CDN). **CDN** registers copy through `@videojs/html/cdn/i18n` (the same registry as the CDN player bundle), not source `@videojs/html/i18n`. After pulling template changes, restart `pnpm dev:sandbox` so `scripts/setup.ts` refreshes `src/` from `templates/`.
 

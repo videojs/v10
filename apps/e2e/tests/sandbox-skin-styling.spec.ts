@@ -5,8 +5,6 @@ const SANDBOX_BASE = process.env.SANDBOX_URL ?? 'http://localhost:5299';
 const CASES = [
   { platform: 'html', skin: 'default', styling: 'css' },
   { platform: 'html', skin: 'minimal', styling: 'css' },
-  { platform: 'html', skin: 'default', styling: 'tailwind' },
-  { platform: 'html', skin: 'minimal', styling: 'tailwind' },
   { platform: 'react', skin: 'default', styling: 'css' },
   { platform: 'react', skin: 'minimal', styling: 'css' },
   { platform: 'react', skin: 'default', styling: 'tailwind' },
@@ -34,10 +32,7 @@ for (const { platform, skin, styling } of CASES) {
 
     await expect(root).toBeVisible({ timeout: 15_000 });
 
-    const host =
-      platform === 'html'
-        ? page.locator('video-skin, video-minimal-skin, video-skin-tailwind, video-minimal-skin-tailwind').first()
-        : root;
+    const host = platform === 'html' ? page.locator('video-skin, video-minimal-skin').first() : root;
 
     await host.evaluate((element) => {
       element.style.setProperty('--media-accent-color', '#123456');
@@ -115,43 +110,41 @@ for (const { platform, skin, styling } of CASES) {
   });
 }
 
-for (const styling of ['css', 'tailwind'] as const) {
-  test(`html minimal ${styling} keeps the thumbnail inside the player`, async ({ page }) => {
-    const query = new URLSearchParams({
-      styling,
-      skin: 'minimal',
-      source: 'hls-1',
-      autoplay: '0',
-      muted: '1',
-      loop: '0',
-      preload: 'metadata',
-    });
-
-    await page.goto(`${SANDBOX_BASE}/html-video/?${query}`, { waitUntil: 'domcontentloaded' });
-
-    const root = page.getByRole('group', { name: 'Media player' }).first();
-    const slider = page.getByRole('slider', { name: 'Seek' }).first();
-
-    await expect(root).toBeVisible({ timeout: 15_000 });
-    await expect(slider).toBeVisible();
-
-    const sliderBox = await slider.boundingBox();
-    if (!sliderBox) throw new Error('Time slider is not visible');
-
-    const thumbnailImage = page.locator('media-slider-thumbnail').first();
-    const thumbnail = thumbnailImage.locator('xpath=..');
-
-    for (const x of [sliderBox.x + 1, sliderBox.x + sliderBox.width - 1]) {
-      await page.mouse.move(x, sliderBox.y + sliderBox.height / 2);
-      await expect(thumbnailImage).toBeAttached({ timeout: 15_000 });
-      await expect(thumbnailImage).not.toHaveAttribute('data-loading', { timeout: 15_000 });
-      await expect(thumbnail).toHaveCSS('scale', '1');
-
-      const [rootBox, thumbnailBox] = await Promise.all([root.boundingBox(), thumbnail.boundingBox()]);
-      if (!rootBox || !thumbnailBox) throw new Error('Player or thumbnail is not visible');
-
-      expect(thumbnailBox.x).toBeGreaterThanOrEqual(rootBox.x - 1);
-      expect(thumbnailBox.x + thumbnailBox.width).toBeLessThanOrEqual(rootBox.x + rootBox.width + 1);
-    }
+test('html minimal CSS keeps the thumbnail inside the player', async ({ page }) => {
+  const query = new URLSearchParams({
+    styling: 'css',
+    skin: 'minimal',
+    source: 'hls-1',
+    autoplay: '0',
+    muted: '1',
+    loop: '0',
+    preload: 'metadata',
   });
-}
+
+  await page.goto(`${SANDBOX_BASE}/html-video/?${query}`, { waitUntil: 'domcontentloaded' });
+
+  const root = page.getByRole('group', { name: 'Media player' }).first();
+  const slider = page.getByRole('slider', { name: 'Seek' }).first();
+
+  await expect(root).toBeVisible({ timeout: 15_000 });
+  await expect(slider).toBeVisible();
+
+  const sliderBox = await slider.boundingBox();
+  if (!sliderBox) throw new Error('Time slider is not visible');
+
+  const thumbnailImage = page.locator('media-slider-thumbnail').first();
+  const thumbnail = thumbnailImage.locator('xpath=..');
+
+  for (const x of [sliderBox.x + 1, sliderBox.x + sliderBox.width - 1]) {
+    await page.mouse.move(x, sliderBox.y + sliderBox.height / 2);
+    await expect(thumbnailImage).toBeAttached({ timeout: 15_000 });
+    await expect(thumbnailImage).not.toHaveAttribute('data-loading', { timeout: 15_000 });
+    await expect(thumbnail).toHaveCSS('scale', '1');
+
+    const [rootBox, thumbnailBox] = await Promise.all([root.boundingBox(), thumbnail.boundingBox()]);
+    if (!rootBox || !thumbnailBox) throw new Error('Player or thumbnail is not visible');
+
+    expect(thumbnailBox.x).toBeGreaterThanOrEqual(rootBox.x - 1);
+    expect(thumbnailBox.x + thumbnailBox.width).toBeLessThanOrEqual(rootBox.x + rootBox.width + 1);
+  }
+});

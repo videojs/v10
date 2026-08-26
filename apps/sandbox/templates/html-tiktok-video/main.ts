@@ -12,7 +12,7 @@ const state = createHtmlSandboxState();
 const loadLatest = createLatestLoader();
 
 async function render() {
-  const tag = await loadLatest(() => loadVideoSkinTag(state.skin, state.styling));
+  const tag = await loadLatest(() => loadVideoSkinTag(state.skin));
   if (!tag) return;
 
   document.getElementById('root')!.innerHTML = html`

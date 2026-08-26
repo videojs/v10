@@ -12,12 +12,9 @@ import {
   slider,
   spacer,
 } from '@videojs/skins/minimal/tailwind/audio.tailwind';
-import { createTemplate } from '@videojs/utils/dom';
 import { cn } from '@videojs/utils/style';
 
-import { SkinElement } from '../../define/skin-element';
-
-function getTemplateHTML() {
+export function getTemplateHTML() {
   return /*html*/ `
     <media-container class="${container}">
       <!-- @deprecated slot="media" is no longer required, use the default slot instead -->
@@ -90,15 +87,4 @@ function getTemplateHTML() {
       <media-hotkey keys="ArrowDown" action="volumeStep" value="-0.05"></media-hotkey>
     </media-container>
   `;
-}
-
-export class MinimalLiveAudioSkinTailwindElement extends SkinElement {
-  static readonly tagName = 'live-audio-minimal-skin-tailwind';
-  static template = createTemplate(getTemplateHTML());
-}
-
-declare global {
-  interface HTMLElementTagNameMap {
-    [MinimalLiveAudioSkinTailwindElement.tagName]: MinimalLiveAudioSkinTailwindElement;
-  }
 }
