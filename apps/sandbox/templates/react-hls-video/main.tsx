@@ -12,7 +12,7 @@ import { usePreload } from '@app/shared/react/use-preload';
 import { useSkin } from '@app/shared/react/use-skin';
 import { useSource } from '@app/shared/react/use-source';
 import { useStoryboard } from '@app/shared/react/use-storyboard';
-import { getChapters, isLiveSource, SOURCES } from '@app/shared/sources';
+import { getChapters, isLiveSource, restrictDrmSystems, SOURCES } from '@app/shared/sources';
 import type { Styling } from '@app/types';
 import { HlsVideo } from '@videojs/react/media/hls-video';
 import { useMemo } from 'react';
@@ -29,6 +29,9 @@ function App() {
   const poster = usePoster();
   const storyboard = useStoryboard();
   const live = isLiveSource(source);
+  // `?drm=widevine|playready|fairplay` narrows a DRM source to one key system, so a browser with
+  // several CDMs negotiates the one under test rather than whichever it prefers.
+  const drmSource = restrictDrmSystems(SOURCES[source].source, new URLSearchParams(location.search).get('drm'));
   const autoplay = useAutoplay();
   const muted = useMuted();
   const loop = useLoop();
@@ -47,7 +50,7 @@ function App() {
           className="mx-auto aspect-video max-w-4xl"
         >
           <HlsVideo
-            {...(SOURCES[source].source ? { source: SOURCES[source].source } : { src: SOURCES[source].url ?? '' })}
+            {...(drmSource ? { source: drmSource } : { src: SOURCES[source].url ?? '' })}
             autoPlay={autoplay}
             muted={muted}
             loop={loop}

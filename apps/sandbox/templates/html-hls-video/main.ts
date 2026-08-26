@@ -14,7 +14,14 @@ import {
   onSkinChange,
   onSourceChange,
 } from '@app/shared/sandbox-listener';
-import { getChapters, getPosterSrc, getStoryboardSrc, isLiveSource, SOURCES } from '@app/shared/sources';
+import {
+  getChapters,
+  getPosterSrc,
+  getStoryboardSrc,
+  isLiveSource,
+  restrictDrmSystems,
+  SOURCES,
+} from '@app/shared/sources';
 
 const html = String.raw;
 
@@ -34,8 +41,11 @@ async function render() {
   const playerTag = live ? 'live-video-player' : 'video-player';
 
   // A source carrying license servers has no room in the `src` attribute, so it
-  // is assigned as an object below instead.
-  const { source, url } = SOURCES[state.source];
+  // is assigned as an object below instead. `?drm=widevine|playready|fairplay`
+  // narrows it to one key system, so a browser with several CDMs negotiates the
+  // one under test rather than whichever it prefers.
+  const { source: declaredSource, url } = SOURCES[state.source];
+  const source = restrictDrmSystems(declaredSource, new URLSearchParams(location.search).get('drm'));
   const srcAttr = source ? '' : ` src="${url}"`;
 
   document.getElementById('root')!.innerHTML = wrapSandboxHtmlI18n(html`

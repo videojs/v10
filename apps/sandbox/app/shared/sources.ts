@@ -562,3 +562,29 @@ export function getStoryboardSrc(source: SourceId): string | undefined {
 export function getChapters(source: SourceId): readonly ChapterTrack[] {
   return SOURCES[source].chapters ?? [];
 }
+
+/** Key system per `drm=` query value, the sandbox's shorthand for the EME ids. */
+export const KEY_SYSTEM_BY_DRM_PARAM: Record<string, string> = {
+  widevine: 'com.widevine.alpha',
+  playready: 'com.microsoft.playready',
+  fairplay: 'com.apple.fps',
+};
+
+/**
+ * Narrow a source's `drm` to the one key system a `drm=` query value names, so a browser with several CDMs negotiates
+ * the one under test — Edge on Windows has Widevine AND PlayReady, and unfiltered Widevine wins, which makes the Mux
+ * source untestable for PlayReady.
+ *
+ * Returns the source untouched when the param is absent or unrecognized, or when the source names no DRM at all. Copies
+ * rather than mutating: `SOURCES` is a shared module-level object, and a template that re-renders on source change
+ * would otherwise carry the narrowed config into every later source.
+ */
+export function restrictDrmSystems<T extends { drm?: Record<string, unknown> }>(
+  source: T | undefined,
+  param: string | null
+): T | undefined {
+  const keySystem = KEY_SYSTEM_BY_DRM_PARAM[param ?? ''];
+  if (!source?.drm || !keySystem || !(keySystem in source.drm)) return source;
+
+  return { ...source, drm: { [keySystem]: source.drm[keySystem] } };
+}

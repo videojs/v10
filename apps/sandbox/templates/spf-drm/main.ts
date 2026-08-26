@@ -6,7 +6,7 @@
 //                                     its negotiation on browsers with several
 //                                     CDMs (Edge on Windows has Widevine AND
 //                                     PlayReady; unfiltered, Widevine wins).
-import { SOURCES } from '@app/shared/sources';
+import { restrictDrmSystems, SOURCES } from '@app/shared/sources';
 import type { DrmSystemsConfig, HlsVideoEngineSignals } from '@videojs/spf/hls';
 import { createHlsVideoEngine } from '@videojs/spf/hls';
 
@@ -14,16 +14,10 @@ const video = document.getElementById('video') as HTMLVideoElement;
 const statusPre = document.getElementById('status') as HTMLPreElement;
 
 // The generic license-server flavor of the shared Mux DRM asset.
-const source = SOURCES['hls-drm'].source as { src: string; drm: DrmSystemsConfig };
-
-const KEY_SYSTEM_BY_PARAM: Record<string, string> = {
-  widevine: 'com.widevine.alpha',
-  playready: 'com.microsoft.playready',
-  fairplay: 'com.apple.fps',
-};
-const only = KEY_SYSTEM_BY_PARAM[new URLSearchParams(location.search).get('drm') ?? ''];
-
-if (only) source.drm = { [only]: source.drm[only] };
+const source = restrictDrmSystems(
+  SOURCES['hls-drm'].source as { src: string; drm: DrmSystemsConfig },
+  new URLSearchParams(location.search).get('drm')
+) as { src: string; drm: DrmSystemsConfig };
 
 let signals!: HlsVideoEngineSignals;
 const engine = createHlsVideoEngine({
