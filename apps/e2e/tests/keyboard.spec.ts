@@ -163,6 +163,18 @@ for (const entry of PAGES as readonly PageEntry[]) {
       }
     });
 
+    test('keeps handled arrow keys inside the player', async ({ page }) => {
+      await page.evaluate(() => {
+        document.body.style.height = '200vh';
+        window.scrollTo(0, 100);
+      });
+      await player.playerRoot.focus();
+      const scrollBefore = await page.evaluate(() => window.scrollY);
+
+      await page.keyboard.press('ArrowDown');
+      await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(scrollBefore);
+    });
+
     if (isAudio) {
       test('navigates the playback rate menu and restores focus', async ({ page }) => {
         const trigger = player.playbackRateButton;
