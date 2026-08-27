@@ -77,6 +77,8 @@ export default styles({
       variants: {
         default: defaultSurface,
         minimal: minimalSurface,
+        'default-live-audio': defaultAudioSurface,
+        'minimal-live-audio': minimalAudioSurface,
         'default-audio': defaultAudioSurface,
         'minimal-audio': minimalAudioSurface,
       },
@@ -87,6 +89,8 @@ export default styles({
       variants: {
         default: defaultSurface,
         minimal: [],
+        'default-live-audio': defaultAudioFeedbackSurface,
+        'minimal-live-audio': minimalAudioFeedbackSurface,
         'default-audio': defaultAudioFeedbackSurface,
         'minimal-audio': minimalAudioFeedbackSurface,
       },
@@ -105,6 +109,8 @@ export default styles({
       variants: {
         default: defaultSurface,
         minimal: minimalTooltipSurface,
+        'default-live-audio': defaultAudioSurface,
+        'minimal-live-audio': minimalAudioSurface,
         'default-audio': defaultAudioSurface,
         'minimal-audio': minimalAudioSurface,
       },

@@ -1,5 +1,18 @@
 import { styles } from 'vjsc/styles';
 
+const defaultAudioPopup = [
+  'inset-0! h-full max-h-none! w-full! max-w-none! translate-none! flex-row items-center gap-3 rounded-[99px] px-5! py-0! pe-1!',
+  '[color:var(--media-audio-text-color)]! transition-[opacity,filter]! duration-250!',
+  'data-starting-style:scale-100! data-starting-style:blur-xs',
+  'data-ending-style:scale-100! data-ending-style:blur-xs',
+] as const;
+
+const minimalAudioPopup = [
+  'inset-0! h-full max-h-none! w-full! max-w-none! translate-none! flex-row items-center gap-4 rounded-[99px] px-3! py-0! pe-1!',
+  '[color:var(--media-audio-text-color)]! transition-[opacity,filter,scale]! duration-250!',
+  'data-starting-style:blur-xs data-ending-style:blur-xs',
+] as const;
+
 export default styles({
   file: 'dialog.css',
   layer: 'videojs.components',
@@ -22,6 +35,8 @@ export default styles({
           'backdrop-saturate-120 duration-150 data-ending-style:duration-50 motion-reduce:data-ending-style:duration-50',
         'default-audio': 'hidden!',
         'minimal-audio': 'hidden!',
+        'default-live-audio': 'hidden!',
+        'minimal-live-audio': 'hidden!',
       },
     },
     popup: {
@@ -42,17 +57,10 @@ export default styles({
           'w-full max-w-64 p-4 text-white',
           'text-shadow-[0_1px_0_rgb(0_0_0/0.5)] duration-150 data-ending-style:duration-50 motion-reduce:data-ending-style:duration-50',
         ],
-        'default-audio': [
-          'inset-0! h-full max-h-none! w-full! max-w-none! translate-none! flex-row items-center gap-3 rounded-[99px] px-5! py-0! pe-1!',
-          '[color:var(--media-audio-text-color)]! transition-[opacity,filter]! duration-250!',
-          'data-starting-style:scale-100! data-starting-style:blur-xs',
-          'data-ending-style:scale-100! data-ending-style:blur-xs',
-        ],
-        'minimal-audio': [
-          'inset-0! h-full max-h-none! w-full! max-w-none! translate-none! flex-row items-center gap-4 rounded-[99px] px-3! py-0! pe-1!',
-          '[color:var(--media-audio-text-color)]! transition-[opacity,filter,scale]! duration-250!',
-          'data-starting-style:blur-xs data-ending-style:blur-xs',
-        ],
+        'default-audio': defaultAudioPopup,
+        'default-live-audio': defaultAudioPopup,
+        'minimal-audio': minimalAudioPopup,
+        'minimal-live-audio': minimalAudioPopup,
       },
     },
     content: {
@@ -63,6 +71,8 @@ export default styles({
         minimal: 'py-1.5',
         'default-audio': 'flex-1 flex-row items-center gap-2 overflow-visible px-0! py-0!',
         'minimal-audio': 'flex-1 flex-row items-center gap-2 overflow-visible px-0! py-0!',
+        'default-live-audio': 'flex-1 flex-row items-center gap-2 overflow-visible px-0! py-0!',
+        'minimal-live-audio': 'flex-1 flex-row items-center gap-2 overflow-visible px-0! py-0!',
       },
     },
     title: {
@@ -85,6 +95,8 @@ export default styles({
         minimal: 'h-9.5',
         'default-audio': 'w-auto flex-none px-3',
         'minimal-audio': 'w-auto flex-none px-3',
+        'default-live-audio': 'w-auto flex-none px-3',
+        'minimal-live-audio': 'w-auto flex-none px-3',
       },
     },
   },

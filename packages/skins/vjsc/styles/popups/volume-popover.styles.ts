@@ -1,5 +1,12 @@
 import { styles } from 'vjsc/styles';
 
+const minimalAudioPopup = [
+  'data-[side=left]:rounded-none data-[side=left]:border-0 data-[side=left]:py-0 data-[side=left]:pe-16 data-[side=left]:ps-2',
+  'data-[side=left]:bg-transparent! data-[side=left]:bg-linear-to-l data-[side=left]:from-(--media-audio-controls-background-color) data-[side=left]:from-80% data-[side=left]:to-transparent',
+  'data-[side=left]:shadow-none! data-[side=left]:ring-0! data-[side=left]:backdrop-filter-none data-[side=left]:after:hidden',
+  'data-[side=left]:[--media-popover-side-offset:0rem]',
+] as const;
+
 export default styles({
   file: 'popups.css',
   layer: 'videojs.components',
@@ -12,12 +19,8 @@ export default styles({
         'data-[side=right]:[--media-popover-side-offset:0rem]',
       ],
       variants: {
-        'minimal-audio': [
-          'data-[side=left]:rounded-none data-[side=left]:border-0 data-[side=left]:py-0 data-[side=left]:pe-16 data-[side=left]:ps-2',
-          'data-[side=left]:bg-transparent! data-[side=left]:bg-linear-to-l data-[side=left]:from-(--media-audio-controls-background-color) data-[side=left]:from-80% data-[side=left]:to-transparent',
-          'data-[side=left]:shadow-none! data-[side=left]:ring-0! data-[side=left]:backdrop-filter-none data-[side=left]:after:hidden',
-          'data-[side=left]:[--media-popover-side-offset:0rem]',
-        ],
+        'minimal-audio': minimalAudioPopup,
+        'minimal-live-audio': minimalAudioPopup,
       },
     },
   },

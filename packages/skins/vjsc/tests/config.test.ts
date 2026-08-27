@@ -44,5 +44,14 @@ describe('validateSkinConfig', () => {
       'minimal-live-video',
       'shadow-dom',
     ]);
+    expect(createStyleOptions({ target: 'react', skin: 'default-live-audio', style: 'tailwind' }).variants).toEqual([
+      'default',
+      'default-live-audio',
+    ]);
+    expect(createStyleOptions({ target: 'html', skin: 'minimal-live-audio', style: 'tailwind' }).variants).toEqual([
+      'minimal',
+      'minimal-live-audio',
+      'shadow-dom',
+    ]);
   });
 });

@@ -15,6 +15,8 @@ const skins = [
   'minimal-video',
   'default-live-video',
   'minimal-live-video',
+  'default-live-audio',
+  'minimal-live-audio',
   'default-audio',
   'minimal-audio',
 ] as const;
@@ -117,6 +119,14 @@ describe('generated VJSC source', () => {
       output,
       'html/minimal-live-video/css/skins/minimal-live-video/skin.tsx'
     );
+    const reactDefaultLiveAudio = generatedSection(
+      output,
+      'react/default-live-audio/css/skins/default-live-audio/skin.tsx'
+    );
+    const htmlMinimalLiveAudio = generatedSection(
+      output,
+      'html/minimal-live-audio/css/skins/minimal-live-audio/skin.tsx'
+    );
 
     expect(htmlPlayButton).toContain('pauseIcon');
     expect(htmlPlayButton).toContain('playIcon');
@@ -148,6 +158,13 @@ describe('generated VJSC source', () => {
     expect(htmlMinimalLiveVideo).toContain('media-skin--minimal media-skin--live-video');
     expect(reactDefaultLiveVideo).not.toContain('TimeSlider');
     expect(htmlMinimalLiveVideo).not.toContain('media-time-slider');
+    expect(reactDefaultLiveAudio).toContain('export interface DefaultLiveAudioSkinProps');
+    expect(reactDefaultLiveAudio).toContain('media-skin--default media-skin--live-audio');
+    expect(htmlMinimalLiveAudio).toContain('export interface MinimalLiveAudioSkinProps');
+    expect(htmlMinimalLiveAudio).toContain('media-skin--minimal media-skin--live-audio');
+    expect(reactDefaultLiveAudio).not.toContain('AudioTimeSlider');
+    expect(htmlMinimalLiveAudio).not.toContain('media-audio-time-slider');
+    expect(reactDefaultLiveAudio).not.toContain('PlaybackRateMenu');
 
     if (process.env.UPDATE_VJSC_SNAPSHOTS) await writeFile(snapshotFile, output);
 
