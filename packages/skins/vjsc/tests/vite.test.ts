@@ -21,7 +21,13 @@ const designStyles = resolve(packageDir, 'vjsc/styles/base.css');
 const skinConfig = resolve(packageDir, 'vjsc/config.ts');
 const vjscPlayButton = resolve(packageDir, 'vjsc/components/buttons/play-button.tsx');
 const frameworks = ['react', 'html'] as const;
-const skins = ['default-video', 'minimal-video'] as const;
+const skinContracts = {
+  'default-video': { exportName: 'DefaultVideoSkin', className: 'media-skin--default' },
+  'minimal-video': { exportName: 'MinimalVideoSkin', className: 'media-skin--minimal' },
+  'default-audio': { exportName: 'DefaultAudioSkin', className: 'media-skin--default' },
+  'minimal-audio': { exportName: 'MinimalAudioSkin', className: 'media-skin--minimal' },
+} as const;
+const skins = Object.keys(skinContracts) as Array<keyof typeof skinContracts>;
 const styles = ['css', 'tailwind'] as const;
 const variants = frameworks.flatMap((framework) =>
   skins.flatMap((skin) => styles.map((style) => ({ framework, skin, style })))
@@ -59,8 +65,7 @@ describe('Skins Vite workflow', () => {
     for (const variant of variants) {
       const url = skinUrl(variant);
       const result = await server.transformRequest(url);
-      const skinExport = variant.skin === 'default-video' ? 'DefaultVideoSkin' : 'MinimalVideoSkin';
-      const skinClass = variant.skin === 'default-video' ? 'media-skin--default' : 'media-skin--minimal';
+      const { exportName: skinExport, className: skinClass } = skinContracts[variant.skin];
 
       expect(result?.code, url).toContain(skinExport);
       expect(result?.code, url).toContain(skinClass);

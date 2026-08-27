@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vite-plus/test';
 
 import { skinStyles } from '../meta';
+import { meta as defaultAudio } from '../skins/default-audio/skin';
 import { meta as defaultVideo } from '../skins/default-video/skin';
+import { meta as minimalAudio } from '../skins/minimal-audio/skin';
 import { meta as minimalVideo } from '../skins/minimal-video/skin';
 
 describe('skinStyles', () => {
@@ -9,6 +11,8 @@ describe('skinStyles', () => {
     expect(skinStyles).toEqual({
       [defaultVideo.name]: defaultVideo.style,
       [minimalVideo.name]: minimalVideo.style,
+      [defaultAudio.name]: defaultAudio.style,
+      [minimalAudio.name]: minimalAudio.style,
     });
   });
 });

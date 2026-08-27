@@ -1,7 +1,13 @@
 @theme inline {
-  --color-media-accent: var(--media-accent-color, oklch(1 0 0));
-  --color-media-accent-text: var(--media-accent-text-color, contrast-color(var(--media-accent-color, oklch(0 0 0))));
-  --color-media-control-hover: var(--media-accent-color, oklch(1 0 0 / 0.1));
+  --color-media-accent: var(--media-accent-color, var(--media-default-accent-color, oklch(1 0 0)));
+  --color-media-accent-text: var(
+    --media-accent-text-color,
+    contrast-color(var(--media-accent-color, var(--media-default-accent-color, oklch(0 0 0))))
+  );
+  --color-media-control-hover: var(
+    --media-accent-color,
+    color-mix(in oklab, var(--media-default-accent-color, white) 10%, transparent)
+  );
   --font-media: "Inter Variable", Inter, ui-sans-serif, system-ui, sans-serif;
   --text-media-xs: 0.7em;
   --text-media-sm: calc(var(--media-spacing) * 2.75);

@@ -7,9 +7,12 @@ import {
   getStoryboardSrc,
   type SandboxSource,
 } from '../../../apps/sandbox/app/shared/sources';
+import { Audio } from '../../react/src/media/audio';
 import { DashVideo } from '../../react/src/media/dash-video';
+import { MuxAudio } from '../../react/src/media/mux-audio/hls-js';
 import { MuxVideo } from '../../react/src/media/mux-video';
 import { Video } from '../../react/src/media/video';
+import { AudioPlayer } from '../../react/src/presets/audio/player';
 import { VideoPlayer } from '../../react/src/presets/video/player';
 
 import './styles.css';
@@ -36,6 +39,7 @@ const errorSource = {
 const mediaIds = [...SOURCE_IDS, 'error'] as const;
 
 type MediaId = (typeof mediaIds)[number];
+type SkinName = 'default-video' | 'minimal-video' | 'default-audio' | 'minimal-audio';
 
 const modules = {
   'react/default-video/css': () =>
@@ -46,6 +50,14 @@ const modules = {
     import('../vjsc/skins/minimal-video/skin.tsx?style=css&target=react&skin=minimal-video'),
   'react/minimal-video/tailwind': () =>
     import('../vjsc/skins/minimal-video/skin.tsx?style=tailwind&target=react&skin=minimal-video'),
+  'react/default-audio/css': () =>
+    import('../vjsc/skins/default-audio/skin.tsx?style=css&target=react&skin=default-audio'),
+  'react/default-audio/tailwind': () =>
+    import('../vjsc/skins/default-audio/skin.tsx?style=tailwind&target=react&skin=default-audio'),
+  'react/minimal-audio/css': () =>
+    import('../vjsc/skins/minimal-audio/skin.tsx?style=css&target=react&skin=minimal-audio'),
+  'react/minimal-audio/tailwind': () =>
+    import('../vjsc/skins/minimal-audio/skin.tsx?style=tailwind&target=react&skin=minimal-audio'),
   'html/default-video/css': () =>
     import('../vjsc/skins/default-video/skin.tsx?style=css&target=html&skin=default-video'),
   'html/default-video/tailwind': () =>
@@ -54,6 +66,14 @@ const modules = {
     import('../vjsc/skins/minimal-video/skin.tsx?style=css&target=html&skin=minimal-video'),
   'html/minimal-video/tailwind': () =>
     import('../vjsc/skins/minimal-video/skin.tsx?style=tailwind&target=html&skin=minimal-video'),
+  'html/default-audio/css': () =>
+    import('../vjsc/skins/default-audio/skin.tsx?style=css&target=html&skin=default-audio'),
+  'html/default-audio/tailwind': () =>
+    import('../vjsc/skins/default-audio/skin.tsx?style=tailwind&target=html&skin=default-audio'),
+  'html/minimal-audio/css': () =>
+    import('../vjsc/skins/minimal-audio/skin.tsx?style=css&target=html&skin=minimal-audio'),
+  'html/minimal-audio/tailwind': () =>
+    import('../vjsc/skins/minimal-audio/skin.tsx?style=tailwind&target=html&skin=minimal-audio'),
 } as const;
 
 type ModuleKey = keyof typeof modules;
@@ -61,7 +81,9 @@ type ModuleKey = keyof typeof modules;
 const params = new URLSearchParams(location.search);
 const source = params.get('source') === 'legacy' ? 'legacy' : 'vjsc';
 const framework = params.get('framework') === 'html' ? 'html' : 'react';
-const skin = params.get('skin') === 'minimal-video' ? 'minimal-video' : 'default-video';
+const requestedSkin = params.get('skin');
+const skin: SkinName = isSkinName(requestedSkin) ? requestedSkin : 'default-video';
+const isAudio = skin.endsWith('-audio');
 const styleMode = source === 'vjsc' && params.get('style') === 'tailwind' ? 'tailwind' : 'css';
 const key: ModuleKey = `${framework}/${skin}/${styleMode}`;
 const requestedMedia = params.get('media');
@@ -79,11 +101,9 @@ const loaded = source === 'vjsc' ? await modules[key]() : null;
 if (source === 'vjsc' && styleMode === 'tailwind') await import('../vjsc/styles/tailwind.compiler.css');
 
 function App({ Skin }: { Skin: React.ComponentType<React.PropsWithChildren<{ className?: string }>> }) {
-  return (
-    <VideoPlayer poster={poster}>
-      <Skin className="preview-player">{renderReactMedia()}</Skin>
-    </VideoPlayer>
-  );
+  const content = <Skin className="preview-player">{renderReactMedia()}</Skin>;
+
+  return isAudio ? <AudioPlayer>{content}</AudioPlayer> : <VideoPlayer poster={poster}>{content}</VideoPlayer>;
 }
 
 type PreviewRoot = HTMLElement & { __videojsSkinsReactRoot?: ReturnType<typeof createRoot> };
@@ -92,6 +112,8 @@ const rootElement = document.getElementById('root');
 if (!rootElement) throw new Error('Expected the skin preview root to exist.');
 
 const root: PreviewRoot = rootElement;
+
+root.dataset.mediaKind = isAudio ? 'audio' : 'video';
 
 root.__videojsSkinsReactRoot?.unmount();
 delete root.__videojsSkinsReactRoot;
@@ -106,12 +128,7 @@ if (source === 'legacy') {
 } else if (framework === 'react') {
   if (!loaded) throw new Error(`VJSC module \`${key}\` was not loaded.`);
 
-  const Skin =
-    'DefaultVideoSkin' in loaded
-      ? loaded.DefaultVideoSkin
-      : 'MinimalVideoSkin' in loaded
-        ? loaded.MinimalVideoSkin
-        : null;
+  const Skin = getLoadedSkin(loaded);
   if (!Skin) throw new Error(`React Skin module \`${key}\` did not export a Skin component.`);
 
   // SAFETY: VJSC transforms the selected React target into a React component before the module loads.
@@ -119,61 +136,89 @@ if (source === 'legacy') {
 } else {
   if (!loaded) throw new Error(`VJSC module \`${key}\` was not loaded.`);
 
-  const Skin =
-    'DefaultVideoSkin' in loaded
-      ? loaded.DefaultVideoSkin
-      : 'MinimalVideoSkin' in loaded
-        ? loaded.MinimalVideoSkin
-        : null;
+  const Skin = getLoadedSkin(loaded);
   if (!Skin) throw new Error(`HTML Skin module \`${key}\` did not export a Skin component.`);
 
-  await import('../../html/src/define/video/player');
+  if (isAudio) await import('../../html/src/define/audio/player');
+  else await import('../../html/src/define/video/player');
+
   await defineHtmlMedia();
 
   // SAFETY: VJSC transforms the selected HTML target into a string-rendering function before the module loads.
   const render = Skin as (props?: { className?: string }) => { toString(): string };
-  const posterAttribute = poster ? ` poster="${escapeAttribute(poster)}"` : '';
-  const skin = String(render({ className: 'preview-player' })).replace('<slot></slot>', renderHtmlMedia());
+  const posterAttribute = !isAudio && poster ? ` poster="${escapeAttribute(poster)}"` : '';
+  const output = String(render({ className: 'preview-player' })).replace('<slot></slot>', renderHtmlMedia());
+  const playerTag = isAudio ? 'audio-player' : 'video-player';
 
-  root.innerHTML = `<video-player${posterAttribute}>${skin}</video-player>`;
+  root.innerHTML = `<${playerTag}${posterAttribute}>${output}</${playerTag}>`;
   assignHtmlMediaSource();
 }
 
-async function renderLegacy(framework: 'react' | 'html', skin: 'default-video' | 'minimal-video') {
+async function renderLegacy(framework: 'react' | 'html', skin: SkinName) {
+  const minimal = skin.startsWith('minimal-');
+
   if (framework === 'react') {
-    await (skin === 'default-video' ? import('../src/default/css/video.css') : import('../src/minimal/css/video.css'));
+    if (isAudio) {
+      await (minimal ? import('../src/minimal/css/audio.css') : import('../src/default/css/audio.css'));
 
-    if (skin === 'default-video') {
-      const { VideoSkin } = await import('../../react/src/presets/video/skin');
+      if (minimal) {
+        const { MinimalAudioSkin } = await import('../../react/src/presets/audio/minimal-skin');
 
-      renderReact(
-        <VideoPlayer poster={poster}>
-          <VideoSkin className="preview-player">{renderReactMedia()}</VideoSkin>
-        </VideoPlayer>
-      );
+        renderReact(
+          <AudioPlayer>
+            <MinimalAudioSkin className="preview-player">{renderReactMedia()}</MinimalAudioSkin>
+          </AudioPlayer>
+        );
+      } else {
+        const { AudioSkin } = await import('../../react/src/presets/audio/skin');
+
+        renderReact(
+          <AudioPlayer>
+            <AudioSkin className="preview-player">{renderReactMedia()}</AudioSkin>
+          </AudioPlayer>
+        );
+      }
     } else {
-      const { MinimalVideoSkin } = await import('../../react/src/presets/video/minimal-skin');
+      await (minimal ? import('../src/minimal/css/video.css') : import('../src/default/css/video.css'));
 
-      renderReact(
-        <VideoPlayer poster={poster}>
-          <MinimalVideoSkin className="preview-player">{renderReactMedia()}</MinimalVideoSkin>
-        </VideoPlayer>
-      );
+      if (minimal) {
+        const { MinimalVideoSkin } = await import('../../react/src/presets/video/minimal-skin');
+
+        renderReact(
+          <VideoPlayer poster={poster}>
+            <MinimalVideoSkin className="preview-player">{renderReactMedia()}</MinimalVideoSkin>
+          </VideoPlayer>
+        );
+      } else {
+        const { VideoSkin } = await import('../../react/src/presets/video/skin');
+
+        renderReact(
+          <VideoPlayer poster={poster}>
+            <VideoSkin className="preview-player">{renderReactMedia()}</VideoSkin>
+          </VideoPlayer>
+        );
+      }
     }
 
     return;
   }
 
-  await import('../../html/src/define/video/player');
+  if (isAudio) await import('../../html/src/define/audio/player');
+  else await import('../../html/src/define/video/player');
+
   await defineHtmlMedia();
 
-  const tag = skin === 'default-video' ? 'video-skin' : 'video-minimal-skin';
-  const posterAttribute = poster ? ` poster="${escapeAttribute(poster)}"` : '';
+  const tag = isAudio ? (minimal ? 'audio-minimal-skin' : 'audio-skin') : minimal ? 'video-minimal-skin' : 'video-skin';
+  const playerTag = isAudio ? 'audio-player' : 'video-player';
+  const posterAttribute = !isAudio && poster ? ` poster="${escapeAttribute(poster)}"` : '';
 
-  if (skin === 'default-video') await import('../../html/src/define/video/skin');
-  else await import('../../html/src/define/video/minimal-skin');
+  if (isAudio) {
+    if (minimal) await import('../../html/src/define/audio/minimal-skin');
+    else await import('../../html/src/define/audio/skin');
+  } else if (minimal) await import('../../html/src/define/video/minimal-skin');
+  else await import('../../html/src/define/video/skin');
 
-  root.innerHTML = `<video-player${posterAttribute}><${tag} class="preview-player">${renderHtmlMedia()}</${tag}></video-player>`;
+  root.innerHTML = `<${playerTag}${posterAttribute}><${tag} class="preview-player">${renderHtmlMedia()}</${tag}></${playerTag}>`;
   assignHtmlMediaSource();
 }
 
@@ -187,6 +232,30 @@ function renderReactMedia() {
       {storyboard ? <track kind="metadata" label="thumbnails" src={storyboard} default /> : null}
     </>
   );
+
+  if (isAudio && media.source) {
+    return (
+      <MuxAudio source={media.source} crossOrigin="anonymous">
+        {tracks}
+      </MuxAudio>
+    );
+  }
+
+  if (isAudio && media.type === 'hls') {
+    return (
+      <MuxAudio src={media.url ?? ''} crossOrigin="anonymous">
+        {tracks}
+      </MuxAudio>
+    );
+  }
+
+  if (isAudio) {
+    return (
+      <Audio src={media.url ?? ''} crossOrigin="anonymous">
+        {tracks}
+      </Audio>
+    );
+  }
 
   if (media.source) {
     return (
@@ -220,6 +289,11 @@ function renderReactMedia() {
 }
 
 async function defineHtmlMedia() {
+  if (isAudio && (media.source || media.type === 'hls')) {
+    await import('../../html/src/define/media/mux-audio/hls-js');
+    return;
+  }
+
   if (media.source || media.type === 'hls') {
     await import('../../html/src/define/media/mux-video/hls-js');
   } else if (media.type === 'dash') {
@@ -228,13 +302,17 @@ async function defineHtmlMedia() {
 }
 
 function renderHtmlMedia() {
-  const tag = media.source
-    ? 'mux-video'
-    : media.type === 'dash'
-      ? 'dash-video'
-      : media.type === 'hls'
-        ? 'mux-video'
-        : 'video';
+  const tag = isAudio
+    ? media.source || media.type === 'hls'
+      ? 'mux-audio'
+      : 'audio'
+    : media.source
+      ? 'mux-video'
+      : media.type === 'dash'
+        ? 'dash-video'
+        : media.type === 'hls'
+          ? 'mux-video'
+          : 'video';
   const sourceAttribute = media.source || !media.url ? '' : ` src="${escapeAttribute(media.url)}"`;
   const chapterTracks =
     media.chapters
@@ -247,7 +325,11 @@ function renderHtmlMedia() {
     ? `<track kind="metadata" label="thumbnails" src="${escapeAttribute(storyboard)}" default>`
     : '';
 
-  return `<${tag} id="preview-media"${sourceAttribute} playsinline crossorigin="anonymous"><track kind="subtitles" label="English" src="${escapeAttribute(captions)}" srclang="en">${chapterTracks}${storyboardTrack}</${tag}>`;
+  const videoTracks = isAudio
+    ? ''
+    : `<track kind="subtitles" label="English" src="${escapeAttribute(captions)}" srclang="en">${storyboardTrack}`;
+
+  return `<${tag} id="preview-media"${sourceAttribute} playsinline crossorigin="anonymous">${videoTracks}${chapterTracks}</${tag}>`;
 }
 
 function assignHtmlMediaSource() {
@@ -276,6 +358,8 @@ function createPreviewControls() {
     createSelect('skin', 'Skin', skin, [
       ['default-video', 'Default Video'],
       ['minimal-video', 'Minimal Video'],
+      ['default-audio', 'Default Audio'],
+      ['minimal-audio', 'Minimal Audio'],
     ]),
     createSelect(
       'style',
@@ -426,6 +510,24 @@ function createSelect(
 
 function isMediaId(value: string | null): value is MediaId {
   return value === 'error' || (value !== null && Object.hasOwn(SOURCES, value));
+}
+
+function isSkinName(value: string | null): value is SkinName {
+  return (
+    value === 'default-video' || value === 'minimal-video' || value === 'default-audio' || value === 'minimal-audio'
+  );
+}
+
+function getLoadedSkin(loaded: Awaited<ReturnType<(typeof modules)[ModuleKey]>>) {
+  if ('DefaultVideoSkin' in loaded) return loaded.DefaultVideoSkin;
+
+  if ('MinimalVideoSkin' in loaded) return loaded.MinimalVideoSkin;
+
+  if ('DefaultAudioSkin' in loaded) return loaded.DefaultAudioSkin;
+
+  if ('MinimalAudioSkin' in loaded) return loaded.MinimalAudioSkin;
+
+  return null;
 }
 
 function escapeAttribute(value: string) {

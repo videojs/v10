@@ -64,6 +64,12 @@ export default styles({
         'group-data-dragging/slider:data-[orientation=horizontal]:left-(--media-slider-pointer)',
         'group-data-dragging/slider:data-[orientation=vertical]:top-[calc(100%-var(--media-slider-pointer))]',
       ],
+      variants: {
+        'default-audio':
+          'opacity-0 data-interactive:opacity-100 pointer-fine:group-hover/slider:scale-100 pointer-fine:group-hover/slider:opacity-100',
+        'minimal-audio':
+          'opacity-0 data-interactive:opacity-100 pointer-fine:group-hover/slider:scale-100 pointer-fine:group-hover/slider:opacity-100',
+      },
     },
     preview: {
       className: 'media-slider-preview',

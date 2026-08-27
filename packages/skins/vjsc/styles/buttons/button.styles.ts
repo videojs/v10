@@ -13,7 +13,7 @@ export default styles({
         'not-aria-disabled:hover:bg-media-control-hover not-aria-disabled:hover:text-media-accent-text',
         'not-aria-disabled:focus-visible:bg-media-control-hover not-aria-disabled:focus-visible:text-media-accent-text',
         'not-aria-disabled:aria-expanded:bg-media-control-hover not-aria-disabled:aria-expanded:text-media-accent-text',
-        'focus-visible:outline-white focus-visible:outline-offset-2',
+        'focus-visible:outline-[var(--media-focus-ring-color,white)] focus-visible:outline-offset-2',
         'not-aria-disabled:active:scale-[0.97]',
         'motion-reduce:scale-100 motion-reduce:will-change-auto',
         'aria-disabled:cursor-not-allowed aria-disabled:opacity-50',

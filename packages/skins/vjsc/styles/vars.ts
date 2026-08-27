@@ -44,6 +44,22 @@ export const vars = {
     kind: 'internal',
     description: 'Theme control radius.',
   },
+  '--media-audio-controls-background-color': {
+    kind: 'internal',
+    description: 'Background color shared by audio controls and their compact buffering overlay.',
+  },
+  '--media-audio-text-color': {
+    kind: 'internal',
+    description: 'Foreground color used by audio controls and popups.',
+  },
+  '--media-default-accent-color': {
+    kind: 'internal',
+    description: 'Skin fallback used when the public accent color is not configured.',
+  },
+  '--media-focus-ring-color': {
+    kind: 'internal',
+    description: 'Contrast-aware focus-ring color selected by the active Skin.',
+  },
   '--media-controls-transition-duration': {
     kind: 'internal',
     description: 'Controls visibility transition duration.',
