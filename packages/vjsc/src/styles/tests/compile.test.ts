@@ -23,19 +23,38 @@ describe('compileStyles', () => {
 
   it('rewrites named group variants to their semantic owner', async () => {
     const playButton = rule('playButton', 'media-play-button', ['group/play']);
-    const restartIcon = rule('restartIcon', 'media-restart-icon', ['hidden', 'group-data-ended/play:block']);
+    const buttonIcon = rule('buttonIcon', 'media-button-icon', ['size-4']);
+    const pauseIcon = rule('pauseIcon', 'media-pause-icon', [
+      'hidden',
+      'opacity-0',
+      'group-data-started/play:group-not-data-paused/play:group-not-data-ended/play:block',
+      'group-data-started/play:group-not-data-paused/play:group-not-data-ended/play:opacity-100',
+    ]);
+    const playIcon = rule('playIcon', 'media-play-icon', [
+      'hidden',
+      'opacity-0',
+      'group-not-data-ended/play:group-data-paused/play:block',
+      'group-not-data-ended/play:group-data-paused/play:opacity-100',
+    ]);
+    const restartIcon = rule('restartIcon', 'media-restart-icon', [
+      'hidden',
+      'opacity-0',
+      'group-data-ended/play:block',
+      'group-data-ended/play:opacity-100',
+    ]);
     const styles = await compileStyles({
       design: await loadDesignSystem(designPath),
-      manifest: manifest([playButton, restartIcon]),
+      manifest: manifest([buttonIcon, playButton, pauseIcon, playIcon, restartIcon]),
       scope: '.media-skin-video',
     });
+    const css = styles.get('buttons.css') ?? '';
 
-    expect(styles.get('buttons.css')).toContain('@scope (.media-skin-video)');
-    expect(styles.get('buttons.css')).toContain('@scope (.media-play-button)');
-    expect(styles.get('buttons.css')).toContain('&[data-ended]');
-    expect(styles.get('buttons.css')).toContain('.media-restart-icon');
-    expect(styles.get('buttons.css')).not.toContain('group\\/play');
-    expect(styles.get('buttons.css')).not.toContain(':where(');
+    expect(css).toContain('@scope (.media-skin-video)');
+    expect(css).toContain('@scope (.media-play-button)');
+    expect(css).toContain('&[data-ended]');
+    expect(css).toMatch(/\.media-restart-icon \{\s+opacity: 0;\s+display: none;/);
+    expect(css).not.toContain('group\\/play');
+    expect(css).not.toContain(':where(');
   });
 
   it('folds stacked group conditions and negative calculations into reviewable CSS', async () => {

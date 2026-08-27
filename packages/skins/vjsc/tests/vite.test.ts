@@ -1,5 +1,6 @@
 import { resolve } from 'node:path';
 
+import { isString, isUndefined } from '@videojs/utils/predicate';
 import { build, createLogger, createServer, type ViteDevServer } from 'vite';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
@@ -121,11 +122,34 @@ describe('Skins Vite workflow', () => {
     const settingsMenu = await server.transformRequest(settingsMenuUrl);
     const volumePopover = await server.transformRequest(volumePopoverUrl);
 
-    expect(settingsMenu?.code).toContain('Tooltip.Trigger, { render: /* @__PURE__ */ _jsxDEV(Menu.Trigger');
+    expect(settingsMenu?.code).toContain('children: /* @__PURE__ */ _jsxDEV(Menu.Trigger');
     expect(volumePopover?.code).toContain(
       'VolumePopoverPrimitive.Trigger, { render: /* @__PURE__ */ _jsxDEV(MuteButton'
     );
     expect([...warn.mock.calls, ...warnOnce.mock.calls].flat().join('\n')).not.toContain('emitFile() is not supported');
+  }, 30_000);
+
+  it('emits base visibility styles for stateful button icons', async () => {
+    server = await createServer({
+      configFile,
+      logLevel: 'silent',
+      optimizeDeps: { include: [], noDiscovery: true },
+      server: { middlewareMode: true },
+    });
+
+    const transformed = await server.transformRequest(playButtonUrl);
+    const cssUrls = [...(transformed?.code ?? '').matchAll(/(?:from\s+)?["']([^"']*virtual:vjsc\/css\/[^"']+)["']/g)]
+      .map((match) => match[1]!)
+      .filter((url) => url.endsWith('/buttons.css'));
+
+    expect(cssUrls).toHaveLength(1);
+
+    const resolvedId = cssUrls[0]!.replace('/@id/__x00__', '\0');
+    const loaded = await server.pluginContainer.load(resolvedId);
+    const css = isString(loaded) ? loaded : loaded?.code;
+    if (isUndefined(css)) throw new Error(`Expected Vite to load \`${resolvedId}\`.`);
+
+    expect(css).toMatch(/\.media-play-button-restart-icon \{\s+opacity: 0;\s+scale: 0;/);
   }, 30_000);
 
   it('includes Shadow DOM utilities only for HTML targets', async () => {
@@ -256,7 +280,9 @@ describe('Skins Vite workflow', () => {
     if (!resolved) throw new Error('Expected the source icon plugin to resolve the minimal family.');
 
     const loaded = await server.pluginContainer.load(resolved.id);
-    const source = typeof loaded === 'string' ? loaded : loaded?.code;
+    const source = isString(loaded) ? loaded : loaded?.code;
+    if (isUndefined(source)) throw new Error(`Expected Vite to load \`${resolved.id}\`.`);
+
     const runtime = resolve(packageDir, '../icons/src/element.ts');
     const transformed = await server.transformRequest(resolved.id);
 

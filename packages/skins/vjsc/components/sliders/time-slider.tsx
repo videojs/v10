@@ -1,4 +1,4 @@
-import type { TimeSliderProps as CoreProps } from '@videojs/core';
+import type { SliderPreviewOverflow, TimeSliderProps as CoreProps } from '@videojs/core';
 import * as $ from '@videojs/core/vjsc';
 import { SpinnerIcon } from '@videojs/icons/vjsc';
 import { Box, type Props, Template } from 'vjsc/components';
@@ -9,7 +9,11 @@ import thumbnailStyles from '../../styles/sliders/thumbnail.styles';
 import styles from '../../styles/sliders/time-slider.styles';
 import surfaceStyles from '../../styles/surfaces/surface.styles';
 
-export function TimeSlider({ className, ...props }: Props<CoreProps> = {}) {
+interface TimeSliderProps extends CoreProps {
+  previewOverflow?: SliderPreviewOverflow | undefined;
+}
+
+export function TimeSlider({ className, previewOverflow = 'visible', ...props }: Props<TimeSliderProps> = {}) {
   return (
     <$.TimeSlider.Root className={[sliderStyles.root, styles.root, className]} {...props}>
       <$.TimeSlider.Chapters className={styles.chapters}>
@@ -21,8 +25,10 @@ export function TimeSlider({ className, ...props }: Props<CoreProps> = {}) {
         </Template>
       </$.TimeSlider.Chapters>
       <$.TimeSlider.Thumb className={[sliderStyles.thumb, styles.thumb]} />
-      <$.TimeSlider.Preview className={sliderStyles.preview} overflow="visible">
-        <$.Slider.Thumbnail.Root className={[sliderStyles.previewContent, surfaceStyles.root, thumbnailStyles.root]}>
+      <$.TimeSlider.Preview className={sliderStyles.preview} overflow={previewOverflow}>
+        <$.Slider.Thumbnail.Root
+          className={[sliderStyles.previewContent, surfaceStyles.thumbnail, thumbnailStyles.root]}
+        >
           <$.Slider.Thumbnail.Image className={thumbnailStyles.image} />
           <SpinnerIcon className={thumbnailStyles.spinnerIcon} />
         </$.Slider.Thumbnail.Root>

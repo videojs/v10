@@ -6,33 +6,31 @@ import type { SkinComponentMeta } from '../../meta';
 import popupStyles from '../../styles/popups/popup.styles';
 import styles from '../../styles/popups/volume-popover.styles';
 import surfaceStyles from '../../styles/surfaces/surface.styles';
+import { ButtonTooltip } from '../buttons/button-tooltip';
 import { MuteButton } from '../buttons/mute-button';
 import { VolumeSlider } from '../sliders/volume-slider';
 
 export function VolumePopover({
   className,
+  showTooltip = false,
   side = 'top',
   orientation = 'vertical',
   ...props
 }: Props<
   CoreProps & {
     orientation?: CoreVolumeSliderProps['orientation'];
+    showTooltip?: boolean;
   }
 > = {}) {
   return (
     <$.VolumePopover.Root openOnHover delay={200} closeDelay={100} side={side} {...props}>
-      <$.VolumePopover.Trigger>
-        <MuteButton />
-      </$.VolumePopover.Trigger>
+      <ButtonTooltip delay={0} disabled={!showTooltip} sticky side="top">
+        <$.VolumePopover.Trigger>
+          <MuteButton className={className} />
+        </$.VolumePopover.Trigger>
+      </ButtonTooltip>
       <$.VolumePopover.Popup
-        className={[
-          popupStyles.root,
-          popupStyles.transition,
-          popupStyles.safeArea,
-          surfaceStyles.root,
-          styles.popup,
-          className,
-        ]}
+        className={[popupStyles.root, popupStyles.transition, popupStyles.safeArea, surfaceStyles.root, styles.popup]}
       >
         <VolumeSlider orientation={orientation} />
       </$.VolumePopover.Popup>

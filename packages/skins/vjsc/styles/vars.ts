@@ -52,6 +52,10 @@ export const vars = {
     kind: 'internal',
     description: 'Shared control icon size.',
   },
+  '--media-menu-item-border-radius': {
+    kind: 'internal',
+    description: 'Corner radius shared by menu items and the moving highlight.',
+  },
   '--media-menu-item-highlight-anchor': {
     kind: 'internal',
     description: 'Anchor name used by the menu highlight.',
@@ -68,6 +72,14 @@ export const vars = {
     kind: 'internal',
     description: 'Entry translation distance shared by popup transitions.',
   },
+  '--media-popup-translate-x-distance': {
+    kind: 'internal',
+    description: 'Direction-aware horizontal entry offset for popup transitions.',
+  },
+  '--media-popup-translate-y-distance': {
+    kind: 'internal',
+    description: 'Direction-aware vertical entry offset for popup transitions.',
+  },
   '--media-preview-end-inset': {
     kind: 'internal',
     description: 'Slider preview correction when the slider is narrower than its container.',
@@ -79,6 +91,14 @@ export const vars = {
   '--media-scale': {
     kind: 'internal',
     description: 'Theme control scale multiplier.',
+  },
+  '--media-shadow-current-color': {
+    kind: 'internal',
+    description: 'Contrast-aware shadow color for text and icons rendered over media.',
+  },
+  '--media-shadow-subtle-current-color': {
+    kind: 'internal',
+    description: 'Reduced-opacity contrast-aware shadow color for subtle media details.',
   },
   '--media-scrollbar-thumb-color': {
     kind: 'internal',

@@ -11,14 +11,12 @@ export default styles({
     enterIcon: {
       className: 'media-fullscreen-button-enter-icon',
       utilities: [
-        'hidden opacity-0 group-not-data-fullscreen/fullscreen:block group-not-data-fullscreen/fullscreen:opacity-100',
+        'opacity-0 group-not-data-fullscreen/fullscreen:scale-100 group-not-data-fullscreen/fullscreen:opacity-100',
       ],
     },
     exitIcon: {
       className: 'media-fullscreen-button-exit-icon',
-      utilities: [
-        'hidden opacity-0 group-data-fullscreen/fullscreen:block group-data-fullscreen/fullscreen:opacity-100',
-      ],
+      utilities: ['opacity-0 group-data-fullscreen/fullscreen:scale-100 group-data-fullscreen/fullscreen:opacity-100'],
     },
   },
 });

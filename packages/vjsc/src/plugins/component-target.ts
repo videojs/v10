@@ -21,7 +21,12 @@ import {
 } from '../target/definition';
 import { createTargetModuleImports } from '../target/module-imports';
 import { renderTargetElement, renderTargetOutput } from '../target/render';
-import { createSourceChildren, createSourceProps, singleJsxElementChild } from '../target/source';
+import {
+  createSourceChildren,
+  createSourceProps,
+  createTargetReplacement,
+  singleJsxElementChild,
+} from '../target/source';
 import { type ParsedModuleId, parseModuleId } from '../utils/module-id';
 
 const SCRIPT_ID = /\.[cm]?[jt]sx?(?:\?|$)/;
@@ -420,6 +425,8 @@ function createSourceParts(
 ): RuntimeSourceParts {
   const groups = new Map<string, CollectedPartGroup>();
   const rootScope = scopes.nodes.get(root);
+  const rootEdits = descendants.get(root) ?? [];
+  const claimedBranches = new Map<string, string>();
 
   walk(root, {
     enter(node) {
@@ -434,6 +441,9 @@ function createSourceParts(
       }
 
       const names = path.part.split('.');
+      const branch = root.children.find((child) => child.start <= node.start && child.end >= node.end);
+      if (!branch) throw new Error(`vjsc: <${path.component}.${path.part}> is not contained by its component root.`);
+
       let current = groups;
       let group: CollectedPartGroup | undefined;
 
@@ -460,6 +470,40 @@ function createSourceParts(
         value: {
           props: createSourceProps(source, node.openingElement, children),
           children: children as unknown as TargetOutput,
+          replaceWith(output) {
+            const branchKey = `${branch.start}:${branch.end}`;
+            const claimed = claimedBranches.get(branchKey);
+
+            if (claimed) {
+              throw new Error(
+                `vjsc: <${path.component}.${path.part}> cannot preserve the same source branch as <${path.component}.${claimed}>.\n` +
+                  'Reason: replacing both parts would duplicate their shared wrapper.\n' +
+                  'Recommendation: place each replaced part in a separate child branch of the component root.'
+              );
+            }
+
+            const enclosingEdit = rootEdits.find(
+              (edit) =>
+                edit.start < node.end && edit.end > node.start && (edit.start < node.start || edit.end > node.end)
+            );
+
+            if (enclosingEdit) {
+              throw new Error(
+                `vjsc: <${path.component}.${path.part}> cannot preserve a source branch rewritten by another component.\n` +
+                  'Reason: the enclosing rewrite already owns the part source.\n' +
+                  'Recommendation: move the wrapper into a separately compiled component or avoid overlapping compound rewrites.'
+              );
+            }
+
+            claimedBranches.set(branchKey, path.part!);
+
+            const branchSource = createSourceText(
+              code,
+              rootEdits.filter((edit) => edit.end <= node.start || edit.start >= node.end)
+            );
+
+            return createTargetReplacement(branchSource, branch.start, branch.end, node.start, node.end, output);
+          },
         },
         children: group!.children,
       });
@@ -480,6 +524,9 @@ function sourcePartCollection(name: string, group: CollectedPartGroup): RuntimeS
     },
     all() {
       return group.values.map((item) => item.value);
+    },
+    replaceWith(output: TargetOutput) {
+      return collection.one().replaceWith(output);
     },
   } as unknown as SourcePartCollection<object> & Record<string, RuntimeSourcePart>;
 

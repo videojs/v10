@@ -1,11 +1,12 @@
 import { styles } from 'vjsc/styles';
 
 const menuItem = [
-  'relative flex cursor-pointer select-none items-center gap-1.5 px-2 py-1.5 text-start whitespace-nowrap',
+  'relative flex cursor-pointer select-none items-center gap-1.5 rounded-(--media-menu-item-border-radius) px-2 py-1.5 text-start whitespace-nowrap',
   'outline-2 -outline-offset-2 outline-transparent',
   'hover:bg-media-control-hover hover:text-media-accent-text data-highlighted:bg-media-control-hover data-highlighted:text-media-accent-text',
   'focus-visible:outline-white focus-visible:outline-offset-2',
-  'transition-[color,background-color] duration-100 ease-in-out motion-reduce:duration-50',
+  'text-shadow-[0_1px_0_var(--media-shadow-current-color)]',
+  'transition-[background-color,color] duration-100 [transition-timing-function:ease-in-out] motion-reduce:duration-50',
   'supports-[top:anchor(top)]:duration-50 supports-[top:anchor(top)]:hover:duration-200 supports-[top:anchor(top)]:data-highlighted:duration-200',
 ] as const;
 
@@ -17,12 +18,10 @@ const menuItemOption = [
 
 const menuItemVariants = {
   default: [
-    'rounded-[--spacing(2)] text-shadow-[0_1px_0_rgb(0_0_0/0.15)]',
     'supports-[top:anchor(top)]:data-highlighted:[anchor-name:--media-menu-item-highlight-anchor]',
     'supports-[top:anchor(top)]:data-highlighted:bg-transparent',
   ],
   minimal: [
-    'rounded-[--spacing(1.5)] text-shadow-[0_1px_0_rgb(0_0_0/0.2)]',
     'supports-[top:anchor(top)]:data-highlighted:[anchor-name:--media-menu-item-highlight-anchor]',
     'supports-[top:anchor(top)]:data-highlighted:bg-transparent',
   ],
@@ -35,19 +34,19 @@ const menuHighlight = [
   'supports-[top:anchor(top)]:before:[inset:anchor(inside)]',
   'supports-[top:anchor(top)]:before:[overflow-anchor:none]',
   'supports-[top:anchor(top)]:before:pointer-events-none',
-  'supports-[top:anchor(top)]:before:rounded-[inherit]',
+  'supports-[top:anchor(top)]:before:rounded-(--media-menu-item-border-radius)',
   'supports-[top:anchor(top)]:before:bg-media-control-hover',
-  'supports-[top:anchor(top)]:before:transition-[inset] supports-[top:anchor(top)]:before:duration-100 supports-[top:anchor(top)]:before:ease-in-out',
+  'supports-[top:anchor(top)]:before:transition-[inset] supports-[top:anchor(top)]:before:duration-100 supports-[top:anchor(top)]:before:[transition-timing-function:ease-in-out]',
   'supports-[top:anchor(top)]:has-data-[highlighted=]:before:duration-0',
 ] as const;
 
 const menuGroup = ['flex [max-height:inherit] flex-col gap-0.5', ...menuHighlight] as const;
 
-const menuIcon = ['size-media-icon shrink-0'] as const;
+const menuIcon = ['size-media-icon shrink-0 drop-shadow-[0_1px_0_var(--media-shadow-current-color)]'] as const;
 
 const menuIconVariants = {
-  default: ['text-current/65 drop-shadow-[0_1px_0_rgb(0_0_0/0.15)]'],
-  minimal: ['text-current/50 drop-shadow-[0_1px_0_rgb(0_0_0/0.2)]'],
+  default: ['text-current/65'],
+  minimal: ['text-current/50'],
 } as const;
 
 export default styles({
@@ -58,7 +57,7 @@ export default styles({
       className: 'media-menu-popup',
       utilities: [
         'm-0 min-w-44 max-w-(--media-menu-available-width) overflow-hidden! border-0 p-1',
-        'max-h-[min(var(--media-menu-available-height,14rem),14rem)] overscroll-none',
+        'max-h-[min(var(--media-menu-available-height,--spacing(56)),--spacing(56))] overscroll-none',
         'h-(--media-menu-height) w-(--media-menu-width)',
         '[--media-menu-transition-duration:250ms] motion-reduce:[--media-menu-transition-duration:0ms]',
         '[transition-property:opacity,filter,transform,scale,width,height]',
@@ -68,8 +67,8 @@ export default styles({
         'motion-reduce:[transition-duration:0ms]',
       ],
       variants: {
-        default: 'rounded-[--spacing(3)]',
-        minimal: 'rounded-[--spacing(2.5)]',
+        default: 'rounded-[--spacing(3)] [--media-menu-item-border-radius:--spacing(2)]',
+        minimal: 'rounded-[--spacing(2.5)] [--media-menu-item-border-radius:--spacing(1.5)]',
       },
     },
     content: {
@@ -111,7 +110,6 @@ export default styles({
     backItem: {
       className: 'media-menu-back-item',
       utilities: ['group/menu-back-item', ...menuItem, 'mb-0.5 w-full'],
-      variants: menuItemVariants,
     },
     separator: {
       className: 'media-menu-separator',
@@ -186,7 +184,7 @@ export default styles({
     settingsTriggerIcon: {
       className: 'media-settings-menu-trigger-icon',
       utilities: [
-        'transition-transform duration-150 ease-in-out motion-reduce:duration-0',
+        'transition-transform duration-150 ease-in-out motion-reduce:transition-none! motion-reduce:duration-0!',
         'group-aria-expanded/settings:rotate-90',
       ],
     },

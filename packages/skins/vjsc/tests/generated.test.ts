@@ -1,5 +1,5 @@
 import type { Dirent } from 'node:fs';
-import { readFile, readdir } from 'node:fs/promises';
+import { readFile, readdir, writeFile } from 'node:fs/promises';
 import { relative, resolve, sep } from 'node:path';
 
 import { createLogger, createServer, type Plugin, type ViteDevServer } from 'vite';
@@ -78,6 +78,8 @@ describe('generated VJSC source', () => {
     expect(output).not.toContain('_jsxDEV');
     expect(output).not.toContain('/@fs/');
     expect(output).not.toMatch(/from ["']@videojs\/core\/vjsc["']/);
+
+    if (process.env.UPDATE_VJSC_SNAPSHOTS) await writeFile(snapshotFile, output);
 
     const snapshot = await readFile(snapshotFile, 'utf8');
 

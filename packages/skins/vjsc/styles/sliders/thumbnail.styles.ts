@@ -11,9 +11,9 @@ export default styles({
         'has-[[data-loading]]:aspect-video has-[[data-loading]]:w-(--media-slider-preview-max-width)',
       ],
       variants: {
-        default: 'left-1/2 bottom-[calc(100%+2.25rem)] rounded-xl bg-black/90',
+        default: 'left-1/2 bottom-[calc(100%+--spacing(9))] rounded-xl bg-black/90',
         minimal:
-          '[left:var(--media-preview-left,var(--media-slider-pointer))] bottom-[calc(100%+2.75rem)] rounded-lg bg-black/90',
+          '[left:var(--media-preview-left,var(--media-slider-pointer))] bottom-[calc(100%+--spacing(14))] rounded-lg bg-black/90',
       },
     },
     image: {
@@ -28,12 +28,12 @@ export default styles({
       className: 'media-slider-thumbnail-spinner-icon',
       utilities: [
         'absolute top-1/2 left-1/2 size-media-icon -translate-x-1/2 -translate-y-1/2 opacity-0',
+        'transition-opacity duration-150 ease-out',
+        'group-not-has-[[role=img][data-loading]]/thumbnail:[--media-spinner-animation:none]',
+        'motion-reduce:[--media-spinner-animation:none]',
         'group-has-[[role=img][data-loading]]/thumbnail:opacity-100',
+        'drop-shadow-[0_1px_0_var(--media-shadow-current-color)]',
       ],
-      variants: {
-        default: 'drop-shadow-[0_1px_0_rgb(0_0_0/0.15)]',
-        minimal: 'drop-shadow-[0_1px_0_rgb(0_0_0/0.2)]',
-      },
     },
   },
 });

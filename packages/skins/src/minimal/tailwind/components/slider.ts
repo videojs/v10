@@ -113,8 +113,8 @@ export const slider = {
   thumbnail: cn(
     previewContent,
     '[--media-thumbnail-max-width:var(--media-max-size)] [--media-thumbnail-max-height:var(--media-max-size)]',
-    '[bottom:calc(100%+--spacing(11))]'
+    '[bottom:calc(100%+--spacing(14))]'
   ),
-  value: cn(previewContent, '[bottom:calc(100%+--spacing(5))] flex flex-row-reverse justify-center gap-2 tabular-nums'),
+  value: cn(previewContent, '[bottom:calc(100%+--spacing(7))] flex flex-row-reverse justify-center gap-2 tabular-nums'),
   chapterTitle: 'min-w-0 overflow-hidden text-ellipsis whitespace-nowrap empty:hidden',
 };

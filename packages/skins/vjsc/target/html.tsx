@@ -169,36 +169,53 @@ export const htmlComponentTarget: ComponentTarget<CoreSchema> = defineComponentT
 
         if (popup) {
           return [
-            <Button commandfor={controlledId} {...trigger.props}>
-              {trigger.children}
-            </Button>,
-            <target.Menu.Popup id={controlledId} {...props.merge(popup.props)}>
-              {popup.children}
-            </target.Menu.Popup>,
+            trigger.replaceWith(
+              <Button commandfor={controlledId} {...trigger.props}>
+                {trigger.children}
+              </Button>
+            ),
+            popup.replaceWith(
+              <target.Menu.Popup id={controlledId} {...props.merge(popup.props)}>
+                {popup.children}
+              </target.Menu.Popup>
+            ),
           ];
         }
 
         const content = parts.Content.one();
 
         return [
-          <target.Menu.Item commandfor={controlledId} {...trigger.props}>
-            {trigger.children}
-          </target.Menu.Item>,
-          <target.Menu.Content id={controlledId} {...content.props}>
-            {content.children}
-          </target.Menu.Content>,
+          trigger.replaceWith(
+            <target.Menu.Item commandfor={controlledId} {...trigger.props}>
+              {trigger.children}
+            </target.Menu.Item>
+          ),
+          content.replaceWith(
+            <target.Menu.Content id={controlledId} {...content.props}>
+              {content.children}
+            </target.Menu.Content>
+          ),
         ];
       },
       Popover: ({ props, parts }) => [
         parts.Trigger.children,
         <target.Popover.Popup {...props.merge(parts.Popup.props)}>{parts.Popup.children}</target.Popover.Popup>,
       ],
-      VolumePopover: ({ props, parts }) => [
-        parts.Trigger.children,
-        <target.VolumePopover.Popup {...props.merge(parts.Popup.props)}>
-          {parts.Popup.children}
-        </target.VolumePopover.Popup>,
-      ],
+      VolumePopover: ({ props, parts, id }) => {
+        const popup = id('popup');
+        const trigger = parts.Trigger.one();
+
+        return [
+          trigger.replaceWith(
+            <Host commandfor={popup} {...trigger.props}>
+              {trigger.children}
+            </Host>
+          ),
+          <target.VolumePopover.Popup id={popup} {...props.merge(parts.Popup.props)}>
+            {parts.Popup.children}
+          </target.VolumePopover.Popup>,
+        ];
+      },
       Poster: ({ props }) => (
         <target.Poster {...props}>
           <Slot name="poster">

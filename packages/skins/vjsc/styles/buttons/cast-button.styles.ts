@@ -11,14 +11,14 @@ export default styles({
     enterIcon: {
       className: 'media-cast-button-enter-icon',
       utilities: [
-        'hidden opacity-0 group-not-data-[cast-state=connected]/cast:block',
+        'opacity-0 group-not-data-[cast-state=connected]/cast:scale-100',
         'group-not-data-[cast-state=connected]/cast:opacity-100',
       ],
     },
     exitIcon: {
       className: 'media-cast-button-exit-icon',
       utilities: [
-        'hidden opacity-0 group-data-[cast-state=connected]/cast:block',
+        'opacity-0 group-data-[cast-state=connected]/cast:scale-100',
         'group-data-[cast-state=connected]/cast:opacity-100',
       ],
     },

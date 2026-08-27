@@ -10,10 +10,7 @@ export function ErrorDialog({ className, ...props }: Props = {}) {
   return (
     <$.ErrorDialog.Root className={styles.root}>
       <$.ErrorDialog.Backdrop className={styles.backdrop} />
-      <$.ErrorDialog.Popup
-        className={[surfaceStyles.feedback, styles.popup, 'media-dialog-popup', className]}
-        {...props}
-      >
+      <$.ErrorDialog.Popup className={[surfaceStyles.feedback, styles.popup, className]} {...props}>
         <Box className={styles.content}>
           <$.ErrorDialog.Title className={styles.title} />
           <$.ErrorDialog.Description className={styles.description} />

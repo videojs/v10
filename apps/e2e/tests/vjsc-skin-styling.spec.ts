@@ -13,6 +13,25 @@ const CONTROLS_SELECTOR = 'media-controls-content.media-controls, .media-control
 
 test.describe.configure({ mode: 'serial' });
 
+test('the dev width control resizes legacy skins', async ({ page }) => {
+  const root = await openVariant(page, CASES[0], 'css', 384, 'legacy');
+  const range = page.getByRole('slider', { name: 'Player width' });
+
+  await range.fill('512');
+
+  await expect
+    .poll(() =>
+      root.evaluate((element) => {
+        const tree = element.getRootNode();
+        const sizingTarget = tree instanceof ShadowRoot ? tree.host : element;
+
+        return Math.round(sizingTarget.getBoundingClientRect().width);
+      })
+    )
+    .toBe(512);
+  await expect.poll(() => new URL(page.url()).searchParams.get('width')).toBe('512');
+});
+
 for (const variant of CASES) {
   test(`${variant.framework} ${variant.skin} matches the legacy CSS layout`, async ({ page }) => {
     for (const width of WIDTHS) {
@@ -171,44 +190,113 @@ for (const variant of CASES) {
     const legacyRoot = await openVariant(page, variant, 'css', 800, 'legacy');
     const legacyPopup = await openVolumePopover(page);
     const legacyContract = await popupSurfaceContract(legacyRoot, legacyPopup);
+    const legacySliderContract = await volumeSliderContract(legacyPopup);
+    const legacyMotion = await popupMotionContract(legacyPopup);
+    const legacyTooltipContract = await muteTooltipContract(page, legacyRoot, variant.skin);
 
     const cssRoot = await openVariant(page, variant, 'css', 800);
     const cssPopup = await openVolumePopover(page);
     const cssContract = await popupSurfaceContract(cssRoot, cssPopup);
+    const cssSliderContract = await volumeSliderContract(cssPopup);
+    const cssMotion = await popupMotionContract(cssPopup);
+    const cssTooltipContract = await muteTooltipContract(page, cssRoot, variant.skin);
 
-    if (variant.skin === 'minimal-video') {
-      // #2386 spacing parity is tracked in packages/skins/vjsc/gaps.md.
-      expect(minimalVolumeSurfaceContract(cssContract)).toEqual(minimalVolumeSurfaceContract(legacyContract));
-    } else {
-      expect(cssContract).toEqual(legacyContract);
-    }
+    expect(cssMotion).toEqual(legacyMotion);
+    expectPopupMotion(cssMotion);
+    expect(cssSliderContract).toEqual(legacySliderContract);
+    expect(cssTooltipContract).toEqual(legacyTooltipContract);
+
+    expect(cssContract).toEqual(legacyContract);
 
     const tailwindRoot = await openVariant(page, variant, 'tailwind', 800);
     const tailwindPopup = await openVolumePopover(page);
     const tailwindContract = await popupSurfaceContract(tailwindRoot, tailwindPopup);
+    const tailwindSliderContract = await volumeSliderContract(tailwindPopup);
+    const tailwindMotion = await popupMotionContract(tailwindPopup);
+    const tailwindTooltipContract = await muteTooltipContract(page, tailwindRoot, variant.skin);
 
     expect(tailwindContract).toEqual(cssContract);
+    expect(tailwindSliderContract).toEqual(cssSliderContract);
+    expect(tailwindMotion).toEqual(cssMotion);
+    expect(tailwindTooltipContract).toEqual(cssTooltipContract);
+
+    if (tailwindTooltipContract) expect(tailwindTooltipContract.shadow).toBe('painted');
+
     await expect(tailwindRoot).toHaveScreenshot(`${variant.framework}-${variant.skin}-volume-popover.png`);
   });
 
   test(`${variant.framework} ${variant.skin} keeps tooltip styling in sync`, async ({ page }) => {
     const legacyRoot = await openVariant(page, variant, 'css', 800, 'legacy');
     const legacyTooltip = await openTooltip(page, 'Play');
-    const legacyContract = await popupSurfaceContract(legacyRoot, legacyTooltip);
+    const legacyContract = await tooltipSurfaceContract(legacyRoot, legacyTooltip);
+    const legacyMotion = await popupMotionContract(legacyTooltip);
 
     const cssRoot = await openVariant(page, variant, 'css', 800);
     const cssTooltip = await openTooltip(page, 'Play');
-    const cssContract = await popupSurfaceContract(cssRoot, cssTooltip);
+    const cssContract = await tooltipSurfaceContract(cssRoot, cssTooltip);
+    const cssMotion = await popupMotionContract(cssTooltip);
 
     expect(cssContract).toEqual(legacyContract);
+    expect(cssMotion).toEqual(legacyMotion);
+    expectPopupMotion(cssMotion);
 
     const tailwindRoot = await openVariant(page, variant, 'tailwind', 800);
     const tailwindTooltip = await openTooltip(page, 'Play');
-    const tailwindContract = await popupSurfaceContract(tailwindRoot, tailwindTooltip);
+    const tailwindContract = await tooltipSurfaceContract(tailwindRoot, tailwindTooltip);
+    const tailwindMotion = await popupMotionContract(tailwindTooltip);
 
     expect(tailwindContract).toEqual(cssContract);
+    expect(tailwindMotion).toEqual(cssMotion);
     await expect(tailwindRoot).toHaveScreenshot(`${variant.framework}-${variant.skin}-play-tooltip.png`);
   });
+
+  test(`${variant.framework} ${variant.skin} keeps the settings button tooltip in sync`, async ({ page }) => {
+    const legacyRoot = await openVariant(page, variant, 'css', 800, 'legacy');
+    const legacyTooltip = await openTooltip(page, 'Settings');
+    const legacyContract = await tooltipSurfaceContract(legacyRoot, legacyTooltip);
+
+    const cssRoot = await openVariant(page, variant, 'css', 800);
+    const cssTooltip = await openTooltip(page, 'Settings');
+
+    expect(await tooltipSurfaceContract(cssRoot, cssTooltip)).toEqual(legacyContract);
+
+    const tailwindRoot = await openVariant(page, variant, 'tailwind', 800);
+    const tailwindTooltip = await openTooltip(page, 'Settings');
+
+    expect(await tooltipSurfaceContract(tailwindRoot, tailwindTooltip)).toEqual(legacyContract);
+  });
+
+  if (variant.skin === 'minimal-video') {
+    test(`${variant.framework} ${variant.skin} keeps the expanded volume mask in sync`, async ({ page }) => {
+      for (const width of WIDTHS) {
+        const legacyRoot = await openVariant(page, variant, 'css', width, 'legacy');
+
+        await openVolumePopover(page);
+        const legacyContract = await volumeMaskContract(legacyRoot, width);
+
+        const cssRoot = await openVariant(page, variant, 'css', width);
+
+        await openVolumePopover(page);
+        const cssContract = await volumeMaskContract(cssRoot, width);
+
+        expect(cssContract).toEqual(legacyContract);
+
+        const tailwindRoot = await openVariant(page, variant, 'tailwind', width);
+
+        await openVolumePopover(page);
+        const tailwindContract = await volumeMaskContract(tailwindRoot, width);
+
+        expect(tailwindContract).toEqual(cssContract);
+        expect(tailwindContract).toEqual({
+          mask: 'gradient',
+          position: '0px 0px',
+          repeat: 'no-repeat',
+          size: width <= 320 ? '400% 100%' : '200% 100%',
+          transition: 'mask-position 0.05s ease-out',
+        });
+      }
+    });
+  }
 
   test(`${variant.framework} ${variant.skin} keeps settings menu styling in sync`, async ({ page }) => {
     const legacyRoot = await openVariant(page, variant, 'css', 800, 'legacy');
@@ -261,7 +349,11 @@ for (const variant of CASES) {
     const tailwindContract = await settingsSubmenuMotionContract(page, 'Speed');
 
     expect(tailwindContract).toEqual(cssContract);
-    expect(tailwindContract).toMatchObject({ movingRootLayers: 1, submenuPersistsDuringClose: true });
+    expect(tailwindContract).toMatchObject({
+      movingRootLayers: 1,
+      popupResizeMotion: true,
+      submenuPersistsDuringClose: true,
+    });
   });
 
   test(`${variant.framework} ${variant.skin} keeps captions submenu styling in sync`, async ({ page }) => {
@@ -343,6 +435,7 @@ for (const variant of CASES) {
     const legacyContract = await sliderContract(legacySlider);
 
     await expect(legacyRoot).toHaveScreenshot(name);
+    const legacyAlignment = await sliderPreviewAlignment(legacySlider);
 
     const cssRoot = await openVariant(page, variant, 'css', 800);
     const cssSlider = await openSeekPreview(page);
@@ -354,6 +447,10 @@ for (const variant of CASES) {
       variant.skin === 'default-video' ? withoutSliderWidths(legacyContract) : legacyContract
     );
     await expect(cssRoot).toHaveScreenshot(name);
+    const cssAlignment = await sliderPreviewAlignment(cssSlider);
+
+    expect(cssAlignment).toEqual(legacyAlignment);
+    expect(cssAlignment.every((offset) => Math.abs(offset) <= 1)).toBe(true);
 
     const tailwindRoot = await openVariant(page, variant, 'tailwind', 800);
     const tailwindSlider = await openSeekPreview(page);
@@ -361,56 +458,130 @@ for (const variant of CASES) {
 
     expect(tailwindContract).toEqual(cssContract);
     await expect(tailwindRoot).toHaveScreenshot(name);
+    expect(await sliderPreviewAlignment(tailwindSlider)).toEqual(cssAlignment);
   });
 
-  test(`${variant.framework} ${variant.skin} keeps error styling in sync`, async ({ page }) => {
+  test(`${variant.framework} ${variant.skin} keeps the VJSC error dialog contained and styling in sync`, async ({
+    page,
+  }) => {
     const name = `${variant.framework}-${variant.skin}-error.png`;
-    // Both generated targets share the complete React dialog typography contract.
-    const reference = { framework: 'react', skin: variant.skin } as const;
-    const legacyRoot = await openVariant(page, reference, 'css', 800, 'legacy');
-    const legacyDialog = await triggerMediaError(page);
-    const legacyContract = await errorDialogContract(legacyRoot, legacyDialog);
+    const message = 'Test media error '.repeat(80);
+    const cssRoot = await openVariant(page, variant, 'css', 320);
 
-    await expect(legacyRoot).toHaveScreenshot(name);
+    await cssRoot.evaluate((element) => {
+      element.style.height = '180px';
+    });
+    const cssRootBox = await cssRoot.boundingBox();
+    if (!cssRootBox) throw new Error('Expected the media player to have a rendered box.');
 
-    const cssRoot = await openVariant(page, variant, 'css', 800);
-    const cssDialog = await triggerMediaError(page);
+    const cssDialog = await triggerMediaError(page, message);
     const cssContract = await errorDialogContract(cssRoot, cssDialog);
+    const cssContainment = await errorDialogContainmentContract(cssRoot, cssDialog);
 
-    expect(cssContract).toEqual(legacyContract);
-    await expect(cssRoot).toHaveScreenshot(name);
+    expect(cssContainment).toMatchObject({
+      closeInside: true,
+      controlsHidden: true,
+      descriptionMargin: '0px',
+      popupInside: true,
+      scrolls: true,
+      titleMargin: '0px',
+    });
+    expect(Math.abs(cssContainment.rootHeight - cssRootBox.height)).toBeLessThanOrEqual(1);
 
-    const tailwindRoot = await openVariant(page, variant, 'tailwind', 800);
-    const tailwindDialog = await triggerMediaError(page);
+    const tailwindRoot = await openVariant(page, variant, 'tailwind', 320);
+
+    await tailwindRoot.evaluate((element) => {
+      element.style.height = '180px';
+    });
+    const tailwindDialog = await triggerMediaError(page, message);
     const tailwindContract = await errorDialogContract(tailwindRoot, tailwindDialog);
+    const tailwindContainment = await errorDialogContainmentContract(tailwindRoot, tailwindDialog);
 
     expect(tailwindContract).toEqual(cssContract);
+    expect(tailwindContainment).toEqual(cssContainment);
     await expect(tailwindRoot).toHaveScreenshot(name);
   });
 
   test(`${variant.framework} ${variant.skin} keeps fullscreen scaling in sync`, async ({ page }) => {
     const name = `${variant.framework}-${variant.skin}-fullscreen.png`;
+    const media = variant.skin === 'minimal-video' ? 'hls-3' : 'mp4-1';
 
     await page.setViewportSize({ width: 1280, height: 720 });
 
-    const legacyRoot = await openVariant(page, variant, 'css', 800, 'legacy');
+    const legacyRoot = await openVariant(page, variant, 'css', 800, 'legacy', media);
     const legacyContract = await enterFullscreen(page, legacyRoot);
 
+    expect(legacyContract.previewValueBottomInPreviewHeights).toBe(variant.skin === 'default-video' ? 13.5 : 8);
     await expect(legacyRoot).toHaveScreenshot(name);
+    const legacyPreview = variant.skin === 'minimal-video' ? await fullscreenPreviewContract(legacyRoot) : null;
+    const legacyMenu = await fullscreenSpeedMenuContract(page);
 
-    const cssRoot = await openVariant(page, variant, 'css', 800);
+    const cssRoot = await openVariant(page, variant, 'css', 800, 'vjsc', media);
     const cssContract = await enterFullscreen(page, cssRoot);
 
     expect(cssContract).toEqual(legacyContract);
     await expect(cssRoot).toHaveScreenshot(name);
+    const cssPreview = variant.skin === 'minimal-video' ? await fullscreenPreviewContract(cssRoot) : null;
+    const cssMenu = await fullscreenSpeedMenuContract(page);
 
-    const tailwindRoot = await openVariant(page, variant, 'tailwind', 800);
+    expect(cssPreview).toEqual(legacyPreview);
+    expect(cssMenu).toEqual(legacyMenu);
+
+    const tailwindRoot = await openVariant(page, variant, 'tailwind', 800, 'vjsc', media);
     const tailwindContract = await enterFullscreen(page, tailwindRoot);
 
     expect(tailwindContract).toEqual(cssContract);
     await expect(tailwindRoot).toHaveScreenshot(name);
+    const tailwindPreview = variant.skin === 'minimal-video' ? await fullscreenPreviewContract(tailwindRoot) : null;
+    const tailwindMenu = await fullscreenSpeedMenuContract(page);
+
+    expect(tailwindPreview).toEqual(cssPreview);
+    expect(tailwindMenu).toEqual(cssMenu);
+    expect(tailwindMenu).toEqual({ heightInSpacingUnits: 56, maxHeightInSpacingUnits: 56, scrolls: true });
+
+    if (tailwindPreview) {
+      expect(tailwindPreview.timeToSliderGap).toBeGreaterThanOrEqual(24);
+      expect(tailwindPreview.timeToThumbnailGap).toBeGreaterThanOrEqual(10);
+    }
   });
 }
+
+test('minimal fullscreen geometry scales through the large breakpoints', async ({ page }) => {
+  const variant = { framework: 'react', skin: 'minimal-video' } as const;
+
+  for (const [viewportWidth, scale] of [
+    [1536, 1.5],
+    [1920, 1.75],
+  ] as const) {
+    await page.evaluate(async () => {
+      if (document.fullscreenElement) await document.exitFullscreen();
+    });
+    await page.setViewportSize({ width: viewportWidth, height: Math.round(viewportWidth * 0.5625) });
+
+    const legacyRoot = await openVariant(page, variant, 'css', 800, 'legacy', 'hls-3');
+    const legacyFullscreen = await enterFullscreen(page, legacyRoot);
+    const legacyPreview = await fullscreenPreviewContract(legacyRoot);
+    const legacyMenu = await fullscreenSpeedMenuContract(page);
+
+    expect(legacyFullscreen.scale).toBe(scale);
+
+    for (const style of ['css', 'tailwind'] as const) {
+      const root = await openVariant(page, variant, style, 800, 'vjsc', 'hls-3');
+      const fullscreen = await enterFullscreen(page, root);
+      const preview = await fullscreenPreviewContract(root);
+      const menu = await fullscreenSpeedMenuContract(page);
+
+      expect(fullscreen).toEqual(legacyFullscreen);
+      expect(preview.timeToSliderGap).toBe(legacyPreview.timeToSliderGap);
+      expect(preview.valueBottomInSpacingUnits).toBe(legacyPreview.valueBottomInSpacingUnits);
+      expect(preview.thumbnailBottomInSpacingUnits).toBe(legacyPreview.thumbnailBottomInSpacingUnits);
+      expect(menu).toEqual(legacyMenu);
+      expect(preview.timeToSliderGap).toBeGreaterThanOrEqual(30);
+      expect(preview.timeToThumbnailGap).toBeGreaterThanOrEqual(13);
+      expect(menu).toEqual({ heightInSpacingUnits: 56, maxHeightInSpacingUnits: 56, scrolls: true });
+    }
+  }
+});
 
 for (const skin of ['default-video', 'minimal-video'] as const) {
   for (const preference of ['reduced-transparency', 'contrast-more', 'forced-colors'] as const) {
@@ -464,6 +635,231 @@ test('semantic CSS stays easy to override from unlayered consumer styles', async
   await expect(play).toHaveCSS('background-color', 'rgb(18, 52, 86)');
 });
 
+test('React chapter segments match legacy and retain their generated range props', async ({ page }) => {
+  const contracts = [];
+
+  for (const variant of [
+    { source: 'legacy', style: 'css' },
+    { source: 'vjsc', style: 'css' },
+    { source: 'vjsc', style: 'tailwind' },
+  ] as const) {
+    const query = new URLSearchParams({
+      source: variant.source,
+      framework: 'react',
+      skin: 'default-video',
+      style: variant.style,
+      media: 'hls-7',
+      width: '855',
+    });
+
+    await page.goto(`/?${query}`, { waitUntil: 'domcontentloaded' });
+
+    const chapters = page.locator('.media-slider__chapter, .media-time-slider-chapter, [class~="group/chapter"]');
+
+    await expect(chapters).toHaveCount(8);
+    contracts.push(
+      await chapters.evaluateAll((elements) =>
+        elements.map((element) => {
+          if (!(element instanceof HTMLElement)) throw new Error('Expected a rendered chapter element.');
+
+          const track = element.firstElementChild;
+
+          return {
+            end: element.style.getPropertyValue('--media-slider-chapter-end'),
+            orientation: element.getAttribute('data-orientation'),
+            segment: getComputedStyle(element).clipPath,
+            start: element.style.getPropertyValue('--media-slider-chapter-start'),
+            track: track && getComputedStyle(track).clipPath !== 'none' ? 'clipped' : 'none',
+          };
+        })
+      )
+    );
+  }
+
+  expect(contracts[1]).toEqual(contracts[0]);
+  expect(contracts[2]).toEqual(contracts[1]);
+  expect(contracts[0]).toHaveLength(8);
+  expect(
+    contracts[0]?.every(
+      ({ orientation, segment, track }) => orientation === 'horizontal' && segment !== 'none' && track !== 'none'
+    )
+  ).toBe(true);
+  expect(new Set(contracts[0]?.map(({ start }) => start)).size).toBe(8);
+});
+
+test('menu item and moving-highlight styling matches legacy', async ({ page }) => {
+  for (const variant of CASES) {
+    await openVariant(page, variant, 'css', 800, 'legacy');
+    const legacyHighlight = await menuHighlightContract(await openSettingsMenu(page));
+
+    await openVariant(page, variant, 'css', 800);
+    const cssHighlight = await menuHighlightContract(await openSettingsMenu(page));
+
+    expect(cssHighlight).toEqual(legacyHighlight);
+
+    await openVariant(page, variant, 'tailwind', 800);
+    const tailwindHighlight = await menuHighlightContract(await openSettingsMenu(page));
+
+    expect(tailwindHighlight).toEqual(cssHighlight);
+    expect(tailwindHighlight).toEqual({
+      backAnchor: 'none',
+      highlight: {
+        borderRadius: variant.skin === 'default-video' ? '8px' : '6px',
+        keyboardTransition: 'inset 0s ease-in-out',
+        pointerTransition: 'inset 0.1s ease-in-out',
+        transition: 'inset 0s ease-in-out',
+      },
+      item: {
+        borderRadius: variant.skin === 'default-video' ? '8px' : '6px',
+        transition: 'background-color, color 0.2s ease-in-out',
+      },
+    });
+  }
+});
+
+test('pointer focus does not keep the slider preview visible', async ({ page }) => {
+  for (const variant of CASES) {
+    for (const style of ['css', 'tailwind'] as const) {
+      const root = await openVariant(page, variant, style, 800);
+      const thumb = root.getByRole('slider', { name: 'Seek' });
+      const slider = thumb.locator('..');
+      const previewContent = slider.locator(':scope > :last-child > :last-child');
+      const sliderRect = await slider.boundingBox();
+      const rootRect = await root.boundingBox();
+      if (!sliderRect || !rootRect) throw new Error('Expected the time slider and media player to be rendered.');
+
+      await page.mouse.click(sliderRect.x + sliderRect.width / 2, sliderRect.y + sliderRect.height / 2);
+      await expect(thumb).toBeFocused();
+      expect(await thumb.evaluate((element) => element.matches(':focus-visible'))).toBe(false);
+
+      await page.mouse.move(rootRect.x + 1, rootRect.y + 1);
+
+      await expect(slider).not.toHaveAttribute('data-pointing', '');
+      await expect(slider).toHaveAttribute('data-interactive', '');
+      await expect(previewContent).toHaveCSS('opacity', '0');
+
+      await page.keyboard.press('Tab');
+      await page.keyboard.press('Shift+Tab');
+
+      await expect(thumb).toBeFocused();
+      expect(await thumb.evaluate((element) => element.matches(':focus-visible'))).toBe(true);
+      await expect(previewContent).toHaveCSS('opacity', '1');
+    }
+  }
+});
+
+test('VJSC preserves the shared skin motion contract', async ({ page }) => {
+  for (const variant of CASES) {
+    for (const style of ['css', 'tailwind'] as const) {
+      const root = await openVariant(page, variant, style, 800);
+      const contract = await sharedMotionContract(root);
+
+      expect(contract).toEqual({
+        button: {
+          duration: '0.15s',
+          properties:
+            variant.skin === 'default-video'
+              ? ['background-color', 'color', 'outline-offset', 'scale']
+              : ['background-color', 'outline-offset', 'scale'],
+        },
+        container: { duration: '0.1s', properties: ['outline-offset', 'outline-color'] },
+        controlsBackdrop: { duration: '0.1s', properties: ['opacity'] },
+        controls: {
+          duration: '0.05s',
+          properties:
+            variant.skin === 'default-video'
+              ? ['filter', 'opacity', 'scale', 'translate']
+              : ['filter', 'opacity', 'translate'],
+        },
+        playIcons: [
+          { display: 'block', duration: '0.15s', opacity: '0', properties: ['opacity', 'scale'], scale: '0' },
+          { display: 'block', duration: '0.15s', opacity: '1', properties: ['opacity', 'scale'], scale: '1' },
+          { display: 'block', duration: '0.15s', opacity: '0', properties: ['opacity', 'scale'], scale: '0' },
+        ],
+        poster: { duration: '0.25s', properties: ['opacity'] },
+        settingsIcon: {
+          duration: '0.15s',
+          properties: ['transform', 'translate', 'scale', 'rotate'],
+        },
+        slider: {
+          buffer: { duration: '0.1s', properties: ['clip-path'] },
+          chapterTrack: { duration: '0.2s', properties: ['height', 'width'] },
+          fill: { duration: '0.1s', properties: ['clip-path'] },
+          focusRing: variant.skin === 'default-video' ? { duration: '0.15s', properties: ['opacity', 'scale'] } : null,
+          pointer: { duration: '0.2s', properties: ['opacity', 'scale'] },
+          thumb: {
+            duration: '0.1s',
+            properties: ['opacity', 'height', 'width', 'outline-offset', 'left', 'top', 'scale'],
+          },
+        },
+        preview: {
+          duration: '0.15s',
+          filter: 'blur(8px)',
+          properties: ['filter', 'opacity', 'scale'],
+        },
+        thumbnailSpinner: {
+          animation: 'none',
+          duration: '0.15s',
+          properties: ['opacity'],
+        },
+        time: {
+          duration: '0.1s',
+          properties: ['outline-color', 'outline-offset'],
+        },
+      });
+
+      const popup = await openVolumePopover(page);
+
+      expectPopupMotion(await popupMotionContract(popup));
+    }
+  }
+});
+
+test('VJSC preserves compact default controls exit motion', async ({ page }) => {
+  for (const framework of ['react', 'html'] as const) {
+    for (const style of ['css', 'tailwind'] as const) {
+      const root = await openVariant(page, { framework, skin: 'default-video' }, style, 320);
+      const contract = await compactDefaultControlsMotionContract(root);
+
+      expect(contract).toEqual({
+        primary: {
+          duration: '0.3s',
+          filter: 'blur(8px)',
+          opacity: '0',
+          properties: ['filter', 'opacity', 'scale', 'translate'],
+          scale: '0.95',
+          translate: '0px 4px',
+        },
+        secondary: {
+          duration: '0.3s',
+          filter: 'blur(8px)',
+          opacity: '0',
+          properties: ['filter', 'opacity', 'scale', 'translate'],
+          scale: '0.95',
+          translate: '0px -4px',
+        },
+      });
+    }
+  }
+});
+
+test('VJSC generates a readable contrast color from the media accent', async ({ page }) => {
+  for (const variant of CASES) {
+    for (const style of ['css', 'tailwind'] as const) {
+      const root = await openVariant(page, variant, style, 800);
+
+      expect(await accentContrastContract(root, '#fff')).toEqual({
+        background: 'rgb(255, 255, 255)',
+        color: 'rgb(0, 0, 0)',
+      });
+      expect(await accentContrastContract(root, '#000')).toEqual({
+        background: 'rgb(0, 0, 0)',
+        color: 'rgb(255, 255, 255)',
+      });
+    }
+  }
+});
+
 test('reduced motion keeps CSS and Tailwind transitions in sync', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   const variant = CASES[0];
@@ -485,7 +881,26 @@ test('reduced motion keeps CSS and Tailwind transitions in sync', async ({ page 
   const tailwindContract = await reducedMotionContract(tailwindMenuRoot, tailwindMenu, tailwindTooltipDuration);
 
   expect(tailwindContract).toEqual(cssContract);
-  expect(cssContract).toMatchObject({ menu: '0s', tooltip: '0s' });
+  expect(cssContract).toMatchObject({
+    button: { duration: '0.15s', properties: ['background-color', 'color'] },
+    container: '0.05s',
+    controls: '0.025s',
+    menu: '0s',
+    playIcons: [
+      { duration: '0.05s', properties: ['opacity'], scale: '1' },
+      { duration: '0.05s', properties: ['opacity'], scale: '1' },
+      { duration: '0.05s', properties: ['opacity'], scale: '1' },
+    ],
+    poster: { duration: '0.25s', properties: ['opacity'] },
+    settingsIcon: { duration: '0s', properties: ['none'] },
+    slider: {
+      fill: { duration: '0s' },
+      preview: { duration: '0s' },
+      thumb: { duration: '0s' },
+    },
+    thumbnailSpinner: { animation: 'none', duration: '0.15s', properties: ['opacity'] },
+    tooltip: '0s',
+  });
 });
 
 async function openVariant(
@@ -493,9 +908,10 @@ async function openVariant(
   variant: (typeof CASES)[number],
   style: 'css' | 'tailwind',
   width: number,
-  source: 'legacy' | 'vjsc' = 'vjsc'
+  source: 'legacy' | 'vjsc' = 'vjsc',
+  media = 'mp4-1'
 ): Promise<Locator> {
-  const query = new URLSearchParams({ source, ...variant, style });
+  const query = new URLSearchParams({ source, ...variant, style, media, width: String(width) });
 
   await page.goto(`/?${query}`, { waitUntil: 'domcontentloaded' });
 
@@ -510,17 +926,21 @@ async function openVariant(
 
   await expect(poster).toBeVisible();
   await expect(poster).toHaveCSS('opacity', '1');
-  await expect(root.getByRole('button', { name: /captions/i }).first()).toHaveAttribute(
+  await expect(root.getByRole('button', { name: /captions/i, includeHidden: true }).first()).toHaveAttribute(
     'data-availability',
     'available'
   );
   await root.dispatchEvent('pointermove', { pointerType: 'mouse' });
-  await root.evaluate((element, playerWidth) => {
-    const tree = element.getRootNode();
-    const sizingTarget = tree instanceof ShadowRoot ? tree.host : element;
+  await expect
+    .poll(() =>
+      root.evaluate((element) => {
+        const tree = element.getRootNode();
+        const sizingTarget = tree instanceof ShadowRoot ? tree.host : element;
 
-    if (sizingTarget instanceof HTMLElement) sizingTarget.style.width = `${playerWidth}px`;
-  }, width);
+        return Math.round(sizingTarget.getBoundingClientRect().width);
+      })
+    )
+    .toBe(width);
 
   return root;
 }
@@ -818,6 +1238,11 @@ async function enterFullscreen(page: Page, root: Locator) {
 
       return rect.width > 0 && rect.height > 0;
     });
+    const seek = element.querySelector<HTMLElement>('[role="slider"][aria-label="Seek"]');
+    const preview = seek?.parentElement?.lastElementChild;
+    const previewValue = preview?.lastElementChild;
+    const previewHeight = preview?.getBoundingClientRect().height ?? 0;
+    const previewValueBottom = previewValue ? Number.parseFloat(getComputedStyle(previewValue).bottom) : 0;
     const style = getComputedStyle(element);
     const rect = element.getBoundingClientRect();
 
@@ -828,8 +1253,63 @@ async function enterFullscreen(page: Page, root: Locator) {
         height: Math.round(rect.height),
         width: Math.round(rect.width),
       },
+      scale: Number.parseFloat(style.getPropertyValue('--media-scale')),
       play: inspect(play),
       icon: inspect(icon),
+      previewValueBottomInPreviewHeights:
+        previewHeight > 0 ? Math.round((previewValueBottom / previewHeight) * 10) / 10 : null,
+    };
+  });
+}
+
+async function fullscreenPreviewContract(root: Locator) {
+  const slider = root.getByRole('slider', { name: 'Seek' }).locator('..');
+  const box = await slider.boundingBox();
+  if (!box) throw new Error('Expected the fullscreen seek slider to have a rendered box.');
+
+  await slider.hover({ position: { x: box.width / 2, y: box.height / 2 } });
+
+  const thumbnail = slider.locator(':scope > :last-child > :first-child');
+
+  await expect.poll(() => thumbnail.evaluate((element) => element.getBoundingClientRect().height)).toBeGreaterThan(0);
+
+  return slider.evaluate((element) => {
+    const preview = element.lastElementChild;
+    const thumbnail = preview?.firstElementChild;
+    const value = preview?.lastElementChild;
+    if (!preview || !thumbnail || !value) throw new Error('Expected the fullscreen seek preview to be rendered.');
+
+    const previewRect = preview.getBoundingClientRect();
+    const thumbnailRect = thumbnail.getBoundingClientRect();
+    const valueRect = value.getBoundingClientRect();
+    const spacing = Number.parseFloat(getComputedStyle(element).getPropertyValue('--media-spacing'));
+    const round = (number: number) => Math.round(number);
+    const roundUnits = (number: number) => Math.round(number * 10) / 10;
+
+    return {
+      timeToSliderGap: round(previewRect.top - valueRect.bottom),
+      timeToThumbnailGap: round(valueRect.top - thumbnailRect.bottom),
+      valueBottomInSpacingUnits: roundUnits(Number.parseFloat(getComputedStyle(value).bottom) / spacing),
+      thumbnailBottomInSpacingUnits: roundUnits(Number.parseFloat(getComputedStyle(thumbnail).bottom) / spacing),
+    };
+  });
+}
+
+async function fullscreenSpeedMenuContract(page: Page) {
+  const submenu = await openSettingsSubmenu(page, 'Speed');
+
+  return submenu.evaluate((element) => {
+    const popup = element.closest<HTMLElement>('[popover]');
+    if (!popup) throw new Error('Expected the fullscreen speed submenu to be inside a Popup.');
+
+    const style = getComputedStyle(popup);
+    const spacing = Number.parseFloat(style.paddingTop);
+    const round = (number: number) => Math.round(number * 10) / 10;
+
+    return {
+      heightInSpacingUnits: round(popup.clientHeight / spacing),
+      maxHeightInSpacingUnits: round(Number.parseFloat(style.maxHeight) / spacing),
+      scrolls: element.scrollHeight > element.clientHeight,
     };
   });
 }
@@ -884,6 +1364,8 @@ async function triggerIndicator(page: Page, root: Locator, key: string, selector
 
 async function indicatorContract(indicator: Locator) {
   return indicator.evaluate((element) => {
+    if (!(element instanceof HTMLElement)) throw new Error('Expected an HTML status indicator.');
+
     const round = (value: number) => Math.round(value);
     const inspect = (target: Element | null) => {
       if (!(target instanceof HTMLElement || target instanceof SVGElement)) return null;
@@ -905,6 +1387,14 @@ async function indicatorContract(indicator: Locator) {
         fontWeight: style.fontWeight,
         lineHeight: style.lineHeight,
         inset: { top: style.top, right: style.right, bottom: style.bottom, left: style.left },
+        motion: {
+          animationName: style.animationName,
+          transitionDuration: style.transitionDuration,
+          transitionProperties: style.transitionProperty
+            .split(',')
+            .map((value) => value.trim())
+            .sort(),
+        },
         rect: {
           width: round(width),
           height: round(height),
@@ -930,12 +1420,17 @@ async function indicatorContract(indicator: Locator) {
       const trackRect = dimensions(trackStyle, progress);
       const fillRect = dimensions(fillStyle);
       const radius = Number.parseFloat(trackStyle.borderRadius);
+      const boxShadow = trackStyle.boxShadow
+        .split(/,(?![^()]*\))/)
+        .map((shadow) => shadow.trim())
+        .filter((shadow) => !shadow.startsWith('rgba(0, 0, 0, 0)'))
+        .join(', ');
 
       return {
         track: {
           background: trackStyle.backgroundColor === 'rgba(0, 0, 0, 0)' ? 'transparent' : 'painted',
           borderRadius: radius >= Math.min(trackRect.width, trackRect.height) / 2 ? 'round' : trackStyle.borderRadius,
-          boxShadow: trackStyle.boxShadow === 'none' ? 'none' : 'painted',
+          boxShadow: boxShadow || 'none',
           rect: trackRect,
         },
         fill: {
@@ -946,11 +1441,46 @@ async function indicatorContract(indicator: Locator) {
         },
       };
     };
-    const visibleIcon = [...element.querySelectorAll('svg')].find((icon) => {
+    const visibleIcon = [...element.querySelectorAll('media-icon, svg')].find((icon) => {
       const style = getComputedStyle(icon);
 
-      return style.display !== 'none';
+      return style.display !== 'none' && icon.getBoundingClientRect().width > 0;
     });
+    const presenceState = (attribute: 'data-starting-style' | 'data-ending-style') => {
+      const rootTransition = element.style.transition;
+      const iconTransition =
+        visibleIcon instanceof HTMLElement || visibleIcon instanceof SVGElement ? visibleIcon.style.transition : '';
+      const inspectMotion = (target: Element | undefined) => {
+        if (!target) return null;
+
+        const style = getComputedStyle(target);
+
+        return {
+          filter: style.filter,
+          opacity: style.opacity,
+          scale: style.scale,
+          translate: style.translate,
+        };
+      };
+
+      element.style.transition = 'none';
+
+      if (visibleIcon instanceof HTMLElement || visibleIcon instanceof SVGElement)
+        visibleIcon.style.transition = 'none';
+
+      element.setAttribute(attribute, '');
+
+      const state = { root: inspectMotion(element), icon: inspectMotion(visibleIcon) };
+
+      element.removeAttribute(attribute);
+      element.style.transition = rootTransition;
+
+      if (visibleIcon instanceof HTMLElement || visibleIcon instanceof SVGElement) {
+        visibleIcon.style.transition = iconTransition;
+      }
+
+      return state;
+    };
     const isTopIndicator =
       element.hasAttribute('data-level') || element.getAttribute('data-status')?.startsWith('captions');
     const content = isTopIndicator ? element.firstElementChild : null;
@@ -973,6 +1503,10 @@ async function indicatorContract(indicator: Locator) {
       content: inspect(content),
       progress: inspectProgress(content, progress),
       icon: inspect(visibleIcon ?? null),
+      presence: {
+        starting: presenceState('data-starting-style'),
+        ending: presenceState('data-ending-style'),
+      },
       value: inspect(value ?? null),
     };
   });
@@ -1015,6 +1549,26 @@ async function openSeekPreview(page: Page) {
   return slider;
 }
 
+async function sliderPreviewAlignment(slider: Locator) {
+  const offsets: number[] = [];
+
+  for (const ratio of [0.25, 0.75]) {
+    const box = await slider.boundingBox();
+    if (!box) throw new Error('Expected the seek slider to have a rendered box.');
+
+    const pointer = box.x + box.width * ratio;
+
+    await slider.hover({ position: { x: box.width * ratio, y: box.height / 2 } });
+    const previewValue = slider.locator(':scope > :last-child > :last-child');
+    const previewBox = await previewValue.boundingBox();
+    if (!previewBox) throw new Error('Expected the seek preview value to have a rendered box.');
+
+    offsets.push(Math.round((previewBox.x + previewBox.width / 2 - pointer) * 10) / 10);
+  }
+
+  return offsets;
+}
+
 async function sliderContract(slider: Locator) {
   return slider.evaluate((element) => {
     const inspect = (target: Element | null) => {
@@ -1029,6 +1583,7 @@ async function sliderContract(slider: Locator) {
         height: Math.round(target.offsetHeight),
         padding: style.padding,
         opacity: style.opacity,
+        transitionDuration: style.transitionDuration,
       };
     };
 
@@ -1051,6 +1606,200 @@ async function sliderContract(slider: Locator) {
   });
 }
 
+async function sharedMotionContract(root: Locator) {
+  const transition = (target: Locator) =>
+    target.evaluate((element) => {
+      const style = getComputedStyle(element);
+
+      return {
+        duration: style.transitionDuration,
+        properties: style.transitionProperty.split(',').map((value) => value.trim()),
+      };
+    });
+  const controls = root.locator(CONTROLS_SELECTOR).first();
+  const button = root.getByRole('button', { name: 'Play', exact: true });
+  const poster = root.locator(':scope > .media-poster, :scope > img, :scope > media-poster').first();
+  const settingsIcon = root.getByRole('button', { name: 'Settings', exact: true }).locator('svg, media-icon').first();
+  const playIconCandidates = await root
+    .getByRole('button', { name: 'Play', exact: true })
+    .locator('svg, media-icon')
+    .all();
+  const playIcons: Array<{
+    display: string;
+    duration: string;
+    opacity: string;
+    properties: string[];
+    scale: string;
+  }> = [];
+
+  for (const icon of playIconCandidates) {
+    const contract = await icon.evaluate((element) => {
+      const style = getComputedStyle(element);
+
+      return {
+        display: style.display,
+        duration: style.transitionDuration,
+        opacity: style.opacity,
+        properties: style.transitionProperty.split(',').map((value) => value.trim()),
+        scale: style.scale,
+      };
+    });
+
+    if (contract.properties.includes('opacity') && contract.properties.includes('scale')) playIcons.push(contract);
+  }
+
+  const time = root.getByRole('button', { name: /Show (?:duration|remaining time)/ }).first();
+  const thumb = root.getByRole('slider', { name: 'Seek' }).first();
+  const slider = thumb.locator('..');
+  const chapterTrack = slider
+    .locator(
+      '.media-time-slider-chapter-track, media-slider-track, :scope > :first-child > :first-child > :first-child'
+    )
+    .first();
+  const buffer = chapterTrack.locator(':scope > :first-child');
+  const fill = chapterTrack.locator(':scope > :last-child');
+  const preview = slider.locator(':scope > :last-child > :last-child');
+  const previewRoot = slider.locator(':scope > :last-child');
+  const thumbnailSpinner = slider.locator(':scope > :last-child > :first-child > :last-child');
+  const pseudoTransition = (target: Locator, pseudo: '::before' | '::after') =>
+    target.evaluate((element, pseudoElement) => {
+      const style = getComputedStyle(element, pseudoElement);
+      if (style.content === 'none') return null;
+
+      return {
+        duration: style.transitionDuration,
+        properties: style.transitionProperty.split(',').map((value) => value.trim()),
+      };
+    }, pseudo);
+
+  if (playIcons.length !== 3) {
+    throw new Error(
+      `Expected three play icons, received: ${JSON.stringify(
+        await Promise.all(
+          playIconCandidates.map((icon) =>
+            icon.evaluate((element) => ({
+              className: element.getAttribute('class'),
+              tagName: element.tagName,
+              transitionProperty: getComputedStyle(element).transitionProperty,
+            }))
+          )
+        )
+      )}`
+    );
+  }
+
+  return {
+    button: await transition(button),
+    container: await transition(root),
+    controlsBackdrop: await controls.evaluate((element) => {
+      const target = element.previousElementSibling ?? element.querySelector(':scope > [aria-hidden="true"]');
+      if (!target) throw new Error('Expected the controls backdrop to be rendered.');
+
+      const style = getComputedStyle(target);
+
+      return {
+        duration: style.transitionDuration,
+        properties: style.transitionProperty.split(',').map((value) => value.trim()),
+      };
+    }),
+    controls: await transition(controls),
+    playIcons,
+    poster: await transition(poster),
+    settingsIcon: await transition(settingsIcon),
+    slider: {
+      buffer: await transition(buffer),
+      chapterTrack: await transition(chapterTrack),
+      fill: await transition(fill),
+      focusRing: await pseudoTransition(thumb, '::after'),
+      pointer: await pseudoTransition(previewRoot, '::before'),
+      thumb: await transition(thumb),
+    },
+    preview: await preview.evaluate((element) => {
+      const style = getComputedStyle(element);
+
+      return {
+        duration: style.transitionDuration,
+        filter: style.filter,
+        properties: style.transitionProperty.split(',').map((value) => value.trim()),
+      };
+    }),
+    thumbnailSpinner: await thumbnailSpinner.evaluate((element) => {
+      const style = getComputedStyle(element);
+
+      return {
+        animation: style.getPropertyValue('--media-spinner-animation').trim(),
+        duration: style.transitionDuration,
+        properties: style.transitionProperty.split(',').map((value) => value.trim()),
+      };
+    }),
+    time: await transition(time),
+  };
+}
+
+async function compactDefaultControlsMotionContract(root: Locator) {
+  return root.evaluate(async (element) => {
+    const deepQuery = (parent: ParentNode, selector: string): HTMLElement | null => {
+      const match = parent.querySelector<HTMLElement>(selector);
+      if (match) return match;
+
+      if (parent instanceof Element && parent.shadowRoot) {
+        const shadowMatch = deepQuery(parent.shadowRoot, selector);
+        if (shadowMatch) return shadowMatch;
+      }
+
+      for (const child of parent.querySelectorAll<HTMLElement>('*')) {
+        if (!child.shadowRoot) continue;
+
+        const shadowMatch = deepQuery(child.shadowRoot, selector);
+        if (shadowMatch) return shadowMatch;
+      }
+
+      return null;
+    };
+    const controls = deepQuery(element, '.media-controls');
+    const primary = controls && deepQuery(controls, '.media-controls-primary, [class~="origin-bottom"]');
+    const secondary = controls && deepQuery(controls, '.media-controls-secondary, [class~="origin-top"]');
+    const inspect = (target: HTMLElement) => {
+      const style = getComputedStyle(target);
+
+      return {
+        duration: style.transitionDuration,
+        filter: style.filter,
+        opacity: style.opacity,
+        properties: style.transitionProperty.split(',').map((value) => value.trim()),
+        scale: style.scale,
+        translate: style.translate,
+      };
+    };
+
+    if (!controls || !primary || !secondary) throw new Error('Expected compact default controls regions.');
+
+    controls.removeAttribute('data-visible');
+    element.removeAttribute('data-controls-visible');
+    await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+
+    for (const animation of [...primary.getAnimations(), ...secondary.getAnimations()]) animation.finish();
+
+    return { primary: inspect(primary), secondary: inspect(secondary) };
+  });
+}
+
+async function accentContrastContract(root: Locator, accent: string) {
+  await root.evaluate((element, value) => {
+    element.style.setProperty('--media-accent-color', value);
+  }, accent);
+  const target = root.getByRole('button', { name: 'Play', exact: true });
+
+  await target.hover();
+  await root.page().waitForTimeout(200);
+
+  return target.evaluate((element) => {
+    const style = getComputedStyle(element);
+
+    return { background: style.backgroundColor, color: style.color };
+  });
+}
+
 function withoutSliderWidths(contract: Awaited<ReturnType<typeof sliderContract>>) {
   return {
     ...contract,
@@ -1059,20 +1808,29 @@ function withoutSliderWidths(contract: Awaited<ReturnType<typeof sliderContract>
   };
 }
 
-async function triggerMediaError(page: Page): Promise<Locator> {
+async function triggerMediaError(page: Page, message?: string): Promise<Locator> {
   await page
     .locator('video')
     .first()
-    .evaluate((element) => {
+    .evaluate((element, errorMessage) => {
+      if (errorMessage) {
+        Object.defineProperty(element, 'error', {
+          configurable: true,
+          value: { code: 4, message: errorMessage },
+        });
+        element.dispatchEvent(new Event('error'));
+        return;
+      }
+
       element.src = '/missing-video-that-does-not-exist.mp4';
       element.load();
-    });
+    }, message);
   const dialog = page.getByRole('alertdialog');
 
   await expect
     .poll(() =>
       dialog.evaluate((element) => {
-        const target = element.querySelector('media-error-dialog') ?? element;
+        const target = element.querySelector('.media-dialog__popup, .media-dialog-popup') ?? element;
         const rect = target.getBoundingClientRect();
         const style = getComputedStyle(target);
 
@@ -1085,6 +1843,35 @@ async function triggerMediaError(page: Page): Promise<Locator> {
   return dialog;
 }
 
+async function errorDialogContainmentContract(root: Locator, dialog: Locator) {
+  const close = dialog.getByRole('button').first();
+  const controls = root.locator(CONTROLS_SELECTOR).first();
+  const title = dialog.locator('h2, media-dialog-title').first();
+  const description = dialog.locator('p, media-dialog-description').first();
+  const [rootBox, popupBox, closeBox] = await Promise.all([
+    root.boundingBox(),
+    dialog.boundingBox(),
+    close.boundingBox(),
+  ]);
+
+  if (!rootBox || !popupBox || !closeBox)
+    throw new Error('Expected the error dialog to be rendered inside the player.');
+
+  return {
+    closeInside: closeBox.y >= rootBox.y && closeBox.y + closeBox.height <= rootBox.y + rootBox.height,
+    controlsHidden: await controls.evaluate((element) => getComputedStyle(element).display === 'none'),
+    descriptionMargin: await description.evaluate((element) => getComputedStyle(element).margin),
+    popupInside: popupBox.y >= rootBox.y && popupBox.y + popupBox.height <= rootBox.y + rootBox.height,
+    rootHeight: rootBox.height,
+    scrolls: await description.evaluate((element) => {
+      const content = element.parentElement;
+
+      return content !== null && content.scrollHeight > content.clientHeight;
+    }),
+    titleMargin: await title.evaluate((element) => getComputedStyle(element).margin),
+  };
+}
+
 async function errorDialogContract(root: Locator, dialog: Locator) {
   const rootRect = await root.boundingBox();
   if (!rootRect) throw new Error('Expected the media player to have a rendered box.');
@@ -1094,6 +1881,9 @@ async function errorDialogContract(root: Locator, dialog: Locator) {
     const title = element.querySelector<HTMLElement>('h2, media-dialog-title');
     const description = element.querySelector<HTMLElement>('p, media-dialog-description');
     const close = element.querySelector<HTMLElement>('button, media-dialog-close');
+    const backdrop =
+      (surface.previousElementSibling instanceof HTMLElement ? surface.previousElementSibling : null) ??
+      surface.parentElement?.querySelector<HTMLElement>('.media-dialog__backdrop, .media-dialog-backdrop');
     const round = (value: number) => Math.round(value * 10) / 10;
     const inspect = (target: HTMLElement | null, includePadding = true) => {
       if (!target) return null;
@@ -1101,8 +1891,7 @@ async function errorDialogContract(root: Locator, dialog: Locator) {
       const style = getComputedStyle(target);
       const rect = target.getBoundingClientRect();
 
-      return {
-        ...(includePadding ? { padding: style.padding } : {}),
+      const contract = {
         gap: style.gap,
         fontSize: style.fontSize,
         fontWeight: style.fontWeight,
@@ -1115,10 +1904,43 @@ async function errorDialogContract(root: Locator, dialog: Locator) {
           height: round(rect.height),
         },
       };
+
+      return includePadding ? { padding: style.padding, ...contract } : contract;
+    };
+    const motion = (target: HTMLElement | null | undefined) => {
+      if (!target) return null;
+
+      const style = getComputedStyle(target);
+      const normalizeTransitionList = (value: string) =>
+        [...new Set(value.split(',').map((part) => part.trim()))].join(', ');
+      const transition = {
+        delay: normalizeTransitionList(style.transitionDelay),
+        duration: normalizeTransitionList(style.transitionDuration),
+        property: style.transitionProperty,
+      };
+      const inlineTransition = target.style.transition;
+      const state = (attribute: 'data-starting-style' | 'data-ending-style') => {
+        target.style.transition = 'none';
+        target.setAttribute(attribute, '');
+
+        const stateStyle = getComputedStyle(target);
+        const result = { opacity: stateStyle.opacity, scale: stateStyle.scale };
+
+        target.removeAttribute(attribute);
+        target.style.transition = inlineTransition;
+        return result;
+      };
+
+      return {
+        transition,
+        starting: state('data-starting-style'),
+        ending: state('data-ending-style'),
+      };
     };
 
     return {
       surface: inspect(surface),
+      motion: { backdrop: motion(backdrop), popup: motion(surface) },
       title: inspect(title),
       description: inspect(description),
       close: inspect(close, false),
@@ -1127,17 +1949,66 @@ async function errorDialogContract(root: Locator, dialog: Locator) {
 }
 
 async function reducedMotionContract(root: Locator, menu: Locator, tooltipDuration: string) {
-  const rootDurations = await root.evaluate((element, controlsSelector) => {
-    const controls = element.querySelector<HTMLElement>(controlsSelector);
+  const inspect = (target: Locator) =>
+    target.evaluate((element) => {
+      const style = getComputedStyle(element);
 
-    return {
-      container: getComputedStyle(element).transitionDuration,
-      controls: controls ? getComputedStyle(controls).transitionDuration : null,
-    };
-  }, CONTROLS_SELECTOR);
+      return {
+        duration: style.transitionDuration,
+        properties: style.transitionProperty.split(',').map((value) => value.trim()),
+      };
+    });
+  const controls = root.locator(CONTROLS_SELECTOR).first();
+  const play = root.getByRole('button', { name: 'Play', exact: true });
+  const playIcons = await Promise.all(
+    (await play.locator('svg, media-icon').all()).map((icon) =>
+      icon.evaluate((element) => {
+        const style = getComputedStyle(element);
+
+        return {
+          duration: style.transitionDuration,
+          properties: style.transitionProperty.split(',').map((value) => value.trim()),
+          scale: style.scale,
+        };
+      })
+    )
+  );
+  const poster = root.locator(':scope > .media-poster, :scope > img, :scope > media-poster').first();
+  const settingsIcon = root.getByRole('button', { name: 'Settings', exact: true }).locator('svg, media-icon').first();
+  const seekThumb = root.getByRole('slider', { name: 'Seek' });
+  const seekSlider = seekThumb.locator('..');
+  const chapterTrack = seekSlider
+    .locator(
+      '.media-time-slider-chapter-track, media-slider-track, :scope > :first-child > :first-child > :first-child'
+    )
+    .first();
+  const fill = chapterTrack.locator(':scope > :last-child');
+  const preview = seekSlider.locator(':scope > :last-child > :last-child');
+  const thumbnailSpinner = seekSlider.locator(':scope > :last-child > :first-child > :last-child');
+  const thumbnailSpinnerMotion = await inspect(thumbnailSpinner);
+
+  const rootMotion = {
+    container: await root.evaluate((element) => getComputedStyle(element).transitionDuration),
+    controls: await controls.evaluate((element) => getComputedStyle(element).transitionDuration),
+    button: await inspect(play),
+    playIcons,
+    poster: await inspect(poster),
+    settingsIcon: await inspect(settingsIcon),
+    slider: {
+      fill: await inspect(fill),
+      preview: await inspect(preview),
+      thumb: await inspect(seekThumb),
+    },
+    thumbnailSpinner: {
+      ...thumbnailSpinnerMotion,
+      animation: await thumbnailSpinner.evaluate((element) =>
+        getComputedStyle(element).getPropertyValue('--media-spinner-animation').trim()
+      ),
+    },
+  };
   const menuDuration = await menu.evaluate((element) => getComputedStyle(element).transitionDuration);
 
-  return { ...rootDurations, menu: menuDuration, tooltip: tooltipDuration };
+  return { ...rootMotion, menu: menuDuration, tooltip: tooltipDuration };
 }
 
 async function rtlMenuContract(root: Locator, submenu: Locator) {
@@ -1176,25 +2047,31 @@ async function layoutContract(root: Locator) {
 
       const radius = Number.parseFloat(style.borderRadius);
       const isRound = radius >= Math.min(rect.width, rect.height) / 2;
-
-      return {
+      const rectContract = {
+        y: round(rect.y - rootRect.y),
+        height: round(rect.height),
+      };
+      const contract = {
         display: style.display,
         position: style.position,
         flex: style.flex,
         order: style.order,
         padding: style.padding,
-        ...(includeGap ? { gap: style.gap } : {}),
-        ...(includeRadius ? { borderRadius: isRound ? 'round' : style.borderRadius } : {}),
         fontFamily: style.fontFamily,
         fontSize: style.fontSize,
         lineHeight: style.lineHeight,
-        rect: {
-          ...(includeHorizontalPosition ? { x: round(rect.x - rootRect.x) } : {}),
-          y: round(rect.y - rootRect.y),
-          ...(includeWidth ? { width: round(rect.width) } : {}),
-          height: round(rect.height),
-        },
+        rect: rectContract,
       };
+
+      if (includeGap) Object.assign(contract, { gap: style.gap });
+
+      if (includeRadius) Object.assign(contract, { borderRadius: isRound ? 'round' : style.borderRadius });
+
+      if (includeHorizontalPosition) Object.assign(rectContract, { x: round(rect.x - rootRect.x) });
+
+      if (includeWidth) Object.assign(rectContract, { width: round(rect.width) });
+
+      return contract;
     };
 
     return {
@@ -1202,7 +2079,6 @@ async function layoutContract(root: Locator) {
       poster: inspect('img[data-loaded], media-poster[data-loaded]', { includeRadius: false }),
       controls: inspect(controlsSelector, { includeGap: false }),
       primary: inspect('.media-controls--primary, .media-controls-primary', { includeGap: false }),
-      secondary: inspect('.media-controls--secondary, .media-controls-secondary', { includeGap: false }),
       timeline: inspect('.media-time-controls, .media-time-slider-group', {
         includeHorizontalPosition: false,
         includeWidth: false,
@@ -1281,6 +2157,12 @@ async function settingsSubmenuMotionContract(page: Page, name: string) {
 
       return properties.has('translate') && properties.has('filter') && transitionDuration(target) === 0.25;
     };
+    const popupStyle = getComputedStyle(element);
+    const popupProperties = popupStyle.transitionProperty.split(',').map((value) => value.trim());
+    const popupDurations = popupStyle.transitionDuration.split(',').map((value) => Number.parseFloat(value));
+    const popupTransition = new Map(
+      popupProperties.map((property, index) => [property, popupDurations[index % popupDurations.length]])
+    );
     const movingRootLayers = [...element.children].filter(
       (child) => !child.hasAttribute('data-submenu') && hasPanelMotion(child)
     );
@@ -1288,6 +2170,7 @@ async function settingsSubmenuMotionContract(page: Page, name: string) {
 
     return {
       movingRootLayers: movingRootLayers.length,
+      popupResizeMotion: popupTransition.get('width') === 0.25 && popupTransition.get('height') === 0.25,
       rootLayerMotion: movingRootLayers.every(hasPanelMotion),
       submenuMotion: activeSubmenu ? hasPanelMotion(activeSubmenu) : false,
     };
@@ -1312,6 +2195,54 @@ async function rootMenuContent(root: Locator): Promise<Locator> {
   return (await content.count()) > 0 ? content : root;
 }
 
+async function menuHighlightContract(menu: Locator) {
+  const content = await rootMenuContent(menu);
+  const items = content.locator(':scope > [role="menuitem"]:visible');
+  const transition = () =>
+    content.evaluate((element) => {
+      const style = getComputedStyle(element, '::before');
+
+      return `${style.transitionProperty} ${style.transitionDuration} ${style.transitionTimingFunction}`;
+    });
+
+  if ((await items.count()) < 2) throw new Error('Expected at least two settings menu items.');
+
+  await items.nth(0).hover();
+  await items.nth(1).hover();
+  const pointerTransition = await transition();
+
+  await items.nth(1).focus();
+  await menu.page().keyboard.press('ArrowDown');
+  const keyboardTransition = await transition();
+
+  return content
+    .evaluate((element) => {
+      const item = element.querySelector('[role="menuitem"][data-highlighted]');
+      const back = element.parentElement?.querySelector<HTMLElement>('.media-menu__back, .media-menu-back-item');
+
+      if (!item) throw new Error('Expected the settings menu to have a highlighted item.');
+
+      const highlightStyle = getComputedStyle(element, '::before');
+      const itemStyle = getComputedStyle(item);
+
+      return {
+        backAnchor: back ? getComputedStyle(back).anchorName : 'none',
+        highlight: {
+          borderRadius: highlightStyle.borderRadius,
+          transition: `${highlightStyle.transitionProperty} ${highlightStyle.transitionDuration} ${highlightStyle.transitionTimingFunction}`,
+        },
+        item: {
+          borderRadius: itemStyle.borderRadius,
+          transition: `${itemStyle.transitionProperty} ${itemStyle.transitionDuration} ${itemStyle.transitionTimingFunction}`,
+        },
+      };
+    })
+    .then((contract) => ({
+      ...contract,
+      highlight: { ...contract.highlight, keyboardTransition, pointerTransition },
+    }));
+}
+
 async function openVolumePopover(page: Page): Promise<Locator> {
   await page.getByRole('button', { name: 'Mute' }).hover();
   const slider = page.getByRole('slider', { name: 'Volume' });
@@ -1333,6 +2264,14 @@ async function openTooltip(page: Page, name: string): Promise<Locator> {
   return tooltip;
 }
 
+async function muteTooltipContract(page: Page, root: Locator, skin: (typeof CASES)[number]['skin']) {
+  if (skin !== 'minimal-video') return null;
+
+  const tooltip = await openTooltip(page, 'Mute');
+
+  return tooltipSurfaceContract(root, tooltip);
+}
+
 async function popupSurfaceContract(root: Locator, popup: Locator) {
   const rootRect = await root.boundingBox();
   if (!rootRect) throw new Error('Expected the media player to have a rendered box.');
@@ -1343,6 +2282,17 @@ async function popupSurfaceContract(root: Locator, popup: Locator) {
     const round = (value: number) => Math.round(value * 10) / 10;
     const radius = Number.parseFloat(style.borderRadius);
     const normalizedRadius = radius >= Math.min(rect.width, rect.height) / 2 ? 'round' : style.borderRadius;
+    const hasPaintedShadow = style.boxShadow.split(/,(?![^()]*\))/).some((shadow) => {
+      const transparent =
+        shadow.includes('transparent') ||
+        /rgba\([^)]*,\s*0\)/.test(shadow) ||
+        /(?:rgb|oklab|oklch)\([^)]*\/\s*0\)/.test(shadow);
+      const hasVisibleGeometry = [...shadow.matchAll(/-?(?:\d*\.)?\d+px/g)].some(
+        ([value]) => Number.parseFloat(value) !== 0
+      );
+
+      return !transparent && hasVisibleGeometry;
+    });
 
     return {
       side: element.getAttribute('data-side'),
@@ -1350,6 +2300,8 @@ async function popupSurfaceContract(root: Locator, popup: Locator) {
       padding: style.padding,
       borderRadius: normalizedRadius,
       backdropFilter: style.backdropFilter,
+      border: Number.parseFloat(style.borderWidth) === 0 ? 'none 0px' : `${style.borderStyle} ${style.borderWidth}`,
+      boxShadow: hasPaintedShadow ? 'painted' : 'none',
       fontSize: style.fontSize,
       lineHeight: style.lineHeight,
       rect: {
@@ -1362,19 +2314,172 @@ async function popupSurfaceContract(root: Locator, popup: Locator) {
   }, rootRect);
 }
 
-function minimalVolumeSurfaceContract(contract: Awaited<ReturnType<typeof popupSurfaceContract>>) {
-  return {
-    align: contract.align,
-    backdropFilter: contract.backdropFilter,
-    borderRadius: contract.borderRadius,
-    fontSize: contract.fontSize,
-    lineHeight: contract.lineHeight,
-    rect: {
-      height: contract.rect.height,
-      y: contract.rect.y,
+async function tooltipSurfaceContract(root: Locator, tooltip: Locator) {
+  const surface = await popupSurfaceContract(root, tooltip);
+  const innerShadow = await tooltip.evaluate((element) => {
+    const shadow = getComputedStyle(element, '::after').boxShadow;
+
+    return shadow === 'none' || shadow.split(/,(?![^()]*\))/).every((part) => /(?:\/\s*0\)|,\s*0\))/.test(part))
+      ? 'none'
+      : 'painted';
+  });
+
+  return { ...surface, innerShadow, shadow: surface.boxShadow };
+}
+
+async function volumeSliderContract(popup: Locator) {
+  const slider = popup.getByRole('slider', { name: 'Volume' });
+
+  return slider.evaluate((element) => {
+    const root =
+      element.closest('.media-slider, .media-volume-slider, media-volume-slider') ?? element.parentElement ?? element;
+    const popup = root.closest('[popover]');
+    if (!popup) throw new Error('Expected the volume slider to be rendered in a popover.');
+
+    const popupRect = popup.getBoundingClientRect();
+    const round = (value: number) => Math.round(value * 10) / 10;
+    const inspect = (target: Element) => {
+      const style = getComputedStyle(target);
+      const rect = target.getBoundingClientRect();
+      const radius = Number.parseFloat(style.borderRadius);
+
+      return {
+        background: style.backgroundColor === 'rgba(0, 0, 0, 0)' ? 'transparent' : 'painted',
+        borderRadius: radius >= Math.min(rect.width, rect.height) / 2 ? 'round' : style.borderRadius,
+        boxShadow: style.boxShadow === 'none' ? 'none' : 'painted',
+        clipPath: style.clipPath,
+        opacity: style.opacity,
+        outline: `${style.outlineStyle} ${style.outlineWidth}`,
+        rect: {
+          x: round(rect.x - popupRect.x),
+          y: round(rect.y - popupRect.y),
+          width: round(rect.width),
+          height: round(rect.height),
+        },
+        scale: style.scale,
+      };
+    };
+    const track =
+      root.querySelector('.media-slider__track, .media-slider-track, media-slider-track') ?? root.firstElementChild;
+    const fill =
+      track?.querySelector('.media-slider__fill, .media-slider-fill, media-slider-fill') ?? track?.firstElementChild;
+    if (!track || !fill) throw new Error('Expected the volume slider track and fill to be rendered.');
+
+    return {
+      slider: inspect(root),
+      track: inspect(track),
+      fill: inspect(fill),
+      thumb: inspect(element),
+    };
+  });
+}
+
+async function volumeMaskContract(root: Locator, width: number) {
+  await root.page().waitForTimeout(100);
+
+  return root.evaluate((element, compact) => {
+    const descendants = [...element.querySelectorAll<HTMLElement>('*')];
+    const className = (target: HTMLElement) => target.getAttribute('class') ?? '';
+    const time = descendants.find((target) => {
+      const value = className(target);
+
+      return (
+        value.includes('media-time-controls') ||
+        value.includes('media-time-slider-group') ||
+        value.includes('@container/media-time-controls')
+      );
+    });
+    const buttonGroups = descendants.filter((target) => className(target).includes('media-button-group'));
+    const end =
+      descendants.find((target) => className(target).includes('media-controls-end')) ??
+      buttonGroups.at(-1) ??
+      descendants.find((target) => {
+        const value = className(target);
+
+        return value.includes('justify-end') && value.includes('flex-1');
+      });
+    const target = compact ? end : time;
+    if (!target) throw new Error(`Expected the ${compact ? 'ending controls' : 'time controls'} mask target.`);
+
+    const style = getComputedStyle(target);
+
+    return {
+      mask: style.maskImage === 'none' ? 'none' : 'gradient',
+      position: style.maskPosition,
+      repeat: style.maskRepeat,
+      size: style.maskSize,
+      transition: `${style.transitionProperty} ${style.transitionDuration} ${style.transitionTimingFunction}`,
+    };
+  }, width <= 320);
+}
+
+function expectPopupMotion(contract: Awaited<ReturnType<typeof popupMotionContract>>) {
+  expect(contract).toMatchObject({
+    ending: {
+      filter: 'blur(4px)',
+      opacity: '0',
+      transform: { scale: 0.95, x: 0, y: 0 },
     },
-    side: contract.side,
-  };
+    positioningPreserved: true,
+    starting: {
+      opacity: '0',
+      transform: { scale: 0.95 },
+    },
+  });
+  expect(Math.abs(contract.starting.transform.x) + Math.abs(contract.starting.transform.y)).toBeGreaterThan(0);
+  expect(new Set(contract.transitionProperty.split(',').map((value) => value.trim()))).toEqual(
+    new Set(['filter', 'opacity', 'scale', 'transform'])
+  );
+}
+
+async function popupMotionContract(popup: Locator) {
+  return popup.evaluate((element) => {
+    const visualTransform = (style: CSSStyleDeclaration) => {
+      const matrix = style.transform === 'none' ? new DOMMatrixReadOnly() : new DOMMatrixReadOnly(style.transform);
+      const independentScale = style.scale === 'none' ? 1 : Number.parseFloat(style.scale);
+
+      return {
+        scale: Math.round(matrix.a * independentScale * 100) / 100,
+        x: Math.round(matrix.e * 10) / 10,
+        y: Math.round(matrix.f * 10) / 10,
+      };
+    };
+    const visible = getComputedStyle(element);
+    const positionedTranslate = visible.translate;
+    const transitionDurations = [...new Set(visible.transitionDuration.split(',').map((value) => value.trim()))];
+    const transitionProperty = visible.transitionProperty;
+    const inlineTransition = element.style.transition;
+
+    element.style.transition = 'none';
+    element.setAttribute('data-starting-style', '');
+
+    const starting = getComputedStyle(element);
+    const startingContract = {
+      filter: starting.filter,
+      opacity: starting.opacity,
+      transform: visualTransform(starting),
+    };
+
+    element.removeAttribute('data-starting-style');
+    element.setAttribute('data-ending-style', '');
+
+    const ending = getComputedStyle(element);
+    const contract = {
+      ending: {
+        filter: ending.filter,
+        opacity: ending.opacity,
+        transform: visualTransform(ending),
+      },
+      positioningPreserved: ending.translate === positionedTranslate && starting.translate === positionedTranslate,
+      starting: startingContract,
+      transitionDurations,
+      transitionProperty,
+    };
+
+    element.removeAttribute('data-ending-style');
+    element.style.transition = inlineTransition;
+    return contract;
+  });
 }
 
 async function popupContract(root: Locator, popup: Locator) {

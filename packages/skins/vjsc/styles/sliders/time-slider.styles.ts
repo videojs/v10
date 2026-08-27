@@ -67,9 +67,9 @@ export default styles({
       className: 'media-time-slider-preview-content',
       utilities: 'flex tabular-nums',
       variants: {
-        default: 'left-1/2 bottom-[calc(100%+2.625rem)] flex-col items-center',
+        default: 'left-1/2 bottom-[calc(100%+--spacing(12.5))] flex-col items-center',
         minimal:
-          '[left:var(--media-preview-left,var(--media-slider-pointer))] bottom-[calc(100%+1.25rem)] flex-row-reverse justify-center gap-2 px-3',
+          '[left:var(--media-preview-left,var(--media-slider-pointer))] bottom-[calc(100%+--spacing(7))] flex-row-reverse justify-center gap-2 px-3',
       },
     },
     chapterTitle: {
