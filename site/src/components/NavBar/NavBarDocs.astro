@@ -6,7 +6,7 @@ import GitHub from '@/assets/logos/github.svg?react';
 import Logo from '@/assets/logos/videojs.svg?react';
 import BetaPill from '@/components/BetaPill';
 import Search from '@/components/Search';
-import { DISCORD_INVITE_URL, GITHUB_REPO_URL } from '@/consts';
+import { DISCORD_INVITE_URL, GITHUB_REPO_URL, VJS10_VERSION } from '@/consts';
 import GetStartedLink from './GetStartedLink';
 import MobileNav from './MobileNav';
 
@@ -42,7 +42,7 @@ const { class: className } = Astro.props;
   <a href="/" class="flex h-5 items-center gap-2 sm:h-6 sm:gap-3">
     <Logo height="100%" />
     <span class="sr-only">Video.js video player</span>
-    <BetaPill compact />
+    <BetaPill compact label={`v${VJS10_VERSION}`} />
   </a>
   <Search client:load className="mr-4 ml-auto sm:self-center" />
   {/* Desktop nav links */}

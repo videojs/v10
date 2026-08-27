@@ -4,9 +4,11 @@ interface BetaPillProps {
   className?: string;
   style?: React.CSSProperties;
   compact?: boolean;
+  /** Replaces the default "v10 beta" text, e.g. with the documented package version. */
+  label?: string;
 }
 
-export default function BetaPill({ className, style, compact }: BetaPillProps) {
+export default function BetaPill({ className, style, compact, label }: BetaPillProps) {
   return (
     <span
       className={twMerge(
@@ -18,7 +20,9 @@ export default function BetaPill({ className, style, compact }: BetaPillProps) {
       )}
       style={{ '--text': '0.75rem', ...style } as React.CSSProperties}
     >
-      {compact ? (
+      {label ? (
+        label
+      ) : compact ? (
         <>
           <span>v10</span>
           <span className="hidden whitespace-pre uppercase sm:inline"> beta</span>
