@@ -300,10 +300,10 @@ React skins do not use Shadow DOM. Use `render` props when you build individual 
 
 ## Control the player imperatively
 
-Media Chrome taught you to script the slotted media element directly, and that habit carries over unchanged. The media is a plain child of the player, and Video.js derives player state from the native media events, so `video.play()` or `video.currentTime = 30` never leaves the controls out of sync. What changes is where everything else lives: Media Chrome had no player object, while Video.js puts the state the browser doesn't own — fullscreen, captions, quality — on the player.
+Control everything through the player's store. Media Chrome had no player object; Video.js gives you one, with an action for every operation — `play`, `togglePaused`, `seek`, `setVolume`, `toggleFullscreen` — so one mental model covers playback and the state the browser doesn't own, such as fullscreen, captions, and quality.
 
 <FrameworkCase frameworks={["html"]}>
-Query the media element and drive it as before. Player-owned actions live on the player element's store:
+Hold a reference to the player element and call actions on its store:
 
 ```js
 const player = document.querySelector('video-player');
@@ -313,7 +313,7 @@ player.store.state.toggleFullscreen();
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
-Put a `ref` on the media component; its value is the rendered `HTMLVideoElement`, so there's no `media` slot to reach through. Player-owned actions come from the same <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> hook you read state with:
+Select an action with the same <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> hook you read state with:
 
 ```tsx
 import { usePlayer } from '@videojs/react/video';
@@ -324,8 +324,12 @@ function FullscreenShortcut() {
   return null;
 }
 ```
+</FrameworkCase>
 
-For the Video.js media object, call <DocsLink slug="reference/use-media">`useMedia`</DocsLink> from a component inside the player; media that wrap a playback engine expose it there through the `engine` escape hatch.
+The Media Chrome habit of scripting the media element directly still works, unchanged. The media is a plain child of the player, and Video.js derives player state from the native media events, so `video.play()` or `video.currentTime = 30` never leaves the controls out of sync. The media element also stays the way to swap `src`, replace the media component, and listen for native events.
+
+<FrameworkCase frameworks={["react"]}>
+Put a `ref` on the media component to reach the rendered `HTMLVideoElement`; there's no `media` slot to reach through. For the Video.js media object, call <DocsLink slug="reference/use-media">`useMedia`</DocsLink> from a component inside the player; media that wrap a playback engine expose it there through the `engine` escape hatch.
 </FrameworkCase>
 
 ## Known gaps

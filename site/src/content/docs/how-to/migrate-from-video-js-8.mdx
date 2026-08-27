@@ -517,17 +517,17 @@ Every feature has a selector (`selectPlayback`, `selectTime`, `selectVolume`, `s
 
 ### Drive playback
 
-v8 used accessor methods for everything: `player.currentTime()` to read, `player.currentTime(10)` to write. v10 splits the difference by owner. Anything the browser owns you set on the media, as a plain property. Anything it doesn't — fullscreen, captions, quality — goes through the player, because the player is what tracks it.
+v8 used accessor methods for everything: `player.currentTime()` to read, `player.currentTime(10)` to write. v10 keeps that single-object habit: control everything through the player. Its store holds the state each feature tracks and an action for each of these calls — playback, seeking, volume, rate, fullscreen, captions, and quality alike.
 
-Writing to the media directly is safe because player state derives from the native media events: set `media.currentTime` and the time slider follows. There is no wrapper to fall out of sync.
+You can also write to the media element directly. That is safe because player state derives from the native media events: set `media.currentTime` and the time slider follows. There is no wrapper to fall out of sync.
 
 | Video.js 8 | Video.js v10 |
 |---|---|
-| `player.play()`, `player.pause()` | `media.play()`, `media.pause()`, or the player's `togglePaused` |
-| `player.currentTime()` / `player.currentTime(10)` | `media.currentTime` |
-| `player.duration()` | `media.duration`, or `duration` in player state |
-| `player.volume()`, `player.muted()` | `media.volume`, `media.muted` |
-| `player.playbackRate()` | `media.playbackRate`, or the player's `setPlaybackRate` |
+| `player.play()`, `player.pause()` | the player's `play`, `pause`, `togglePaused`, or `media.play()`, `media.pause()` |
+| `player.currentTime()` / `player.currentTime(10)` | `currentTime` in player state, the player's `seek(10)`, or `media.currentTime` |
+| `player.duration()` | `duration` in player state, or `media.duration` |
+| `player.volume()`, `player.muted()` | the player's `setVolume`, `toggleMuted`, or `media.volume`, `media.muted` |
+| `player.playbackRate()` | the player's `setPlaybackRate`, or `media.playbackRate` |
 | `player.src({ src, type })` | set `src` on the media |
 | `player.requestFullscreen()`, `exitFullscreen()` | the player's `requestFullscreen`, `exitFullscreen`, `toggleFullscreen` |
 | `player.textTracks()`, `addRemoteTextTrack()` | `<track>` elements, and `textTrackList` in player state |
