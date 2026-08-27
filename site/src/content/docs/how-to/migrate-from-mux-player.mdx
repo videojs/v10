@@ -15,6 +15,16 @@ This guide moves a working Mux Player embed to those pieces, then maps the setti
 Did you use Mux Player without controls as a hero, ambient loop, or decorative video? Go to <DocsLink slug="how-to/add-a-background-video">Add a background video</DocsLink>. It starts with a browser-playable video file, then covers the HLS and Mux background components.
 </Aside>
 
+## Before you migrate
+
+A few minutes of auditing tells you which sections of this guide apply to you:
+
+- **List the Mux Player attributes and props you set.** Each one appears in a mapping table below; the list is your migration checklist.
+- **Grep your codebase for `mux-player` selectors.** CSS rules and `querySelector` calls that reach into the element — `mux-player::part(…)`, `mux-player [role="slider"]`, `player.shadowRoot` — will silently stop matching after the swap. Plan to restyle with the skin's custom properties or rebuild against Video.js components.
+- **Find your event listeners and imperative calls** (`play()`, `currentTime`, `addChapters`). Media APIs move to the media element; the rest is mapped under [Drive playback](#drive-playback).
+- **Note your theme and CSS variables.** Two skins replace Mux Player's five themes, and `--accent-color` and friends have new names.
+- **Check your catalog for DRM or TS-packaged assets.** They decide which of the two Mux media flavors you can use; see [Which Mux media should you use?](#which-mux-media-should-you-use).
+
 ## Three pieces instead of one
 
 Mux Player packs three jobs into a single element. Video.js splits them up, so it helps to learn the names before you write any code.
@@ -167,6 +177,7 @@ Mux Player monitors playback by default. Video.js sends no Mux Data beacons unle
 
 A few things worth calling out:
 
+- **`aspect-video` is a Tailwind class.** It's here because the skin has no size of its own. If you don't use Tailwind, any class that sizes the skin works: `.my-player { aspect-ratio: 16 / 9; }`. See [Move your layout styles](#move-your-layout-styles).
 - **MuxVideo supplies the poster.** It builds the image URL from the playback ID, and the skin displays it automatically. The example keeps the frame from two seconds in by configuring MuxVideo. Set `poster` on the player only when you want to use your own URL.
 - **You didn't add a storyboard track, and you get hover previews.** The Mux media adds and maintains the thumbnail track itself, and removes it for live streams, where storyboards don't exist.
 - **Analytics needs no environment key.** Mux resolves the environment from the playback ID. See <DocsLink slug="concepts/mux-data">Mux Data</DocsLink>.
@@ -292,11 +303,12 @@ Signed playback behaves the way it does in Mux Player: a token replaces every ot
 
 ## Analytics moves to its own element
 
-Mux Player's analytics attributes become attributes and properties on the <DocsLink slug="reference/mux-data">Mux Data</DocsLink> component, placed inside the player.
+Mux Player's analytics settings become attributes, properties, or props on the <DocsLink slug="reference/mux-data">Mux Data</DocsLink> component, placed inside the player.
 
+<FrameworkCase frameworks={["html"]}>
 | Mux Player | Video.js v10 |
 |---|---|
-| `metadata-*`, `metadata={…}` | the `metadata` property or prop |
+| `metadata-*`, the `metadata` property | the `metadata` property |
 | `env-key` | `env-key`, rarely needed for Mux-hosted content |
 | `disable-cookies` | `disable-cookies` |
 | `beacon-collection-domain` | `beacon-collection-domain` |
@@ -304,7 +316,22 @@ Mux Player's analytics attributes become attributes and properties on the <DocsL
 | `debug` | the `debug` property |
 | `disable-tracking` | omit the component |
 
-Your metadata keys don't change. They're the same `snake_case` names Mux Data has always taken, so the values port across untouched. `metadata` is a property rather than an attribute because an object has no sensible string form.
+`metadata` is a property rather than an attribute because an object has no sensible string form.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+| Mux Player | Video.js v10 |
+|---|---|
+| `metadata={…}` | the `metadata` prop |
+| `envKey` | `envKey`, rarely needed for Mux-hosted content |
+| `disableCookies` | `disableCookies` |
+| `beaconCollectionDomain` | `beaconCollectionDomain` |
+| `playerSoftwareName`, `playerSoftwareVersion` | `playerSoftwareName`, `playerSoftwareVersion` |
+| `debug` | `debug` |
+| `disableTracking` | omit the component |
+</FrameworkCase>
+
+Your metadata keys don't change. They're the same `snake_case` names Mux Data has always taken, so the values port across untouched.
 
 ## Titles and posters
 
@@ -508,7 +535,7 @@ Use a ref for imperative browser media APIs or for custom events that do not hav
 | `player.currentTime = 10` | `media.currentTime = 10` |
 | `player.volume`, `player.muted` | `media.volume`, `media.muted` |
 | `player.playbackRate` | `media.playbackRate`, or the player's `setPlaybackRate` |
-| `player.requestFullscreen()` | the player's `enterFullscreen`, `exitFullscreen`, `toggleFullscreen` |
+| `player.requestFullscreen()` | the player's `requestFullscreen`, `exitFullscreen`, `toggleFullscreen` |
 | `player.addChapters([…])` | a `<track kind="chapters">`, covered below |
 
 Anything that's a standard media property you set on the media. Anything the browser doesn't own — fullscreen, captions, quality — goes through the player, because the player is what tracks it.
