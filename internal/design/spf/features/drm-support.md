@@ -41,17 +41,53 @@ token-derived license URLs),
 
 ## Status
 
-- **Composition:** not implemented in `createHlsVideoEngine`. No
-  decryption pipeline: nothing sets up MediaKeys, negotiates a session,
-  or requests a license. What exists is the *refusal* —
-  `parseMediaPlaylist` recognizes `#EXT-X-KEY` well enough to flag a
-  rendition `encrypted`, `canPlayTrack` prunes those renditions, and a
-  fully-encrypted type reports `SVTA_UNSUPPORTED_DRM_SYSTEM` ("this
-  video is protected") rather than a generic unsupported-format error.
-  `#EXT-X-SESSION-KEY` is still unrecognized, which matters: Mux emits
-  no session-key tag in the multivariant playlist, so encryption is
-  undiscoverable until a media playlist is fetched — hence pruning at
-  resolve time rather than at manifest parse.
+- **Composition:** implemented in `createHlsVideoEngine`, which composes
+  `exchangeLicenses` then `setupMediaKeys` unconditionally and defaults
+  `canPlayTrack` / `reportUnsupportedTrackConditions` to their DRM-aware
+  variants over `config.drm`. Absent or empty `drm` is the degenerate
+  case: encrypted renditions refuse exactly as a DRM-less engine
+  refuses them, pruned before selection with
+  `SVTA_UNSUPPORTED_DRM_SYSTEM` causes. `parseMediaPlaylist` surfaces
+  structured `#EXT-X-KEY` metadata (`MediaPlaylistKey`; the boolean
+  `encrypted` derives from it). `#EXT-X-SESSION-KEY` is still
+  unrecognized, which matters: Mux emits no session-key tag in the
+  multivariant playlist, so encryption is undiscoverable until a media
+  playlist is fetched — hence pruning at resolve time rather than at
+  manifest parse.
+- **Behavior split:** two behaviors, not one. `setupMediaKeys`
+  negotiates a key system, applies the server certificate, attaches
+  MediaKeys, and owns the `segmentLoadingBlocked` load gate;
+  `exchangeLicenses` opens sessions and exchanges licenses. The handoff
+  is `context.mediaKeys` + `state.negotiatedKeySystem`, published
+  together only after the certificate is applied — which is what
+  carries the "certificate before `generateRequest`" ordering across
+  the boundary. `exchangeLicenses` is composed **first**:
+  `createComposition` calls cleanups in registration order, so its
+  sessions must close before the detach.
+- **Per-key-system composability:** each system is one
+  `KeySystemModule` value (`media/drm.ts` for the DOM-free contract,
+  `media/dom/key-systems.ts` for `widevineKeySystem`,
+  `playReadyKeySystem`, `fairPlayKeySystem`, `DEFAULT_KEY_SYSTEMS`),
+  carrying its `keyFormats`, request-string variants, init-data types,
+  preferred video robustness, encryption-scheme fallback, manifest
+  init-data projection, and license-message shaping. `config.keySystems`
+  narrows the list; dropping `playReadyKeySystem` removes its PSSH wrap,
+  its XML envelope unwrap, and `DOMParser` from the bundle. Replaces six
+  string-keyed lookup tables that previously split one system's facts
+  across the DOM boundary.
+- **Droppability (measured 2026-08-27):** DRM costs +2,760 B gzipped
+  over the pre-DRM engine; a composition omitting the two behaviors and
+  the two DRM-aware config defaults recovers 2,512 B of that (**91%**),
+  leaving ~248 B residue — ~130 B parser key metadata, 11 B `drm`
+  config threading, 10 B the gate read in `load-segments`, the rest
+  unrelated branch-era churn. Pinned by
+  `playback/engines/hls/tests/engine-drm-optional.test-d.ts`, which
+  asserts the DRM-free composition materializes none of the three DRM
+  slots. The DRM-free **engine variant** is not built yet; the
+  measurement patches `engine.ts` directly. A spread-based additive
+  variant (`[...BASE_PRE, setupMediaKeys, ...BASE_POST]`) typechecks
+  with inference intact, so it needs no duplicated behavior list — the
+  cost that sank the short-lived `createDrmHlsVideoEngine`.
 - **Consumer contract already landed:** `source.drm` is typed by
   `@videojs/media`'s `DrmSystemsConfig` (`packages/media/src/core/drm.ts`) —
   license servers keyed by EME key-system id, `licenseUrl` + optional
@@ -61,14 +97,19 @@ token-derived license URLs),
   error taxonomy), and the Mux token derivation (`dom/mux/drm.ts`, one DRM
   token → all three systems' URLs). The SPF `mux-video` adapter accepts
   `source.drm` but leaves it inert, steering DRM sources to the
-  hls.js-backed Media via `alternativeMediaSuggestion`. A Mux DRM CMAF
+  hls.js-backed Media via `alternativeMediaSuggestion`; the SPF
+  `hls-video` adapter does consume it, naming every composed key system
+  up front with a resolver that reads whatever source is current, so the
+  engine is never rebuilt when the source changes. A Mux DRM CMAF
   playlist fixture (Widevine PSSH + PlayReady PRO + FairPlay `skd://`, all
   `METHOD=SAMPLE-AES`) exists at
   `packages/spf/src/media/hls/tests/fixtures/drm-cmaf-video.m3u8`.
-- **Definition depth:** coarse — scope identified from GitHub issue
+- **Definition depth:** sketched — scope identified from GitHub issue
   + prior art (including a 2026-08 survey of hls.js, Shaka, dash.js,
-  and rx-player DRM architecture); SPF touchpoints sketched at the
-  cluster level; no implementation.
+  and rx-player DRM architecture), and the EME setup / license flow /
+  per-key-system phases below are implemented and tested. Still coarse:
+  `keystatuschange` reactivity, security-level probing, and the
+  FairPlay-AirPlay variant.
 - **Hard prerequisite:** [capability-probing](./capability-probing.md)'s
   "Key-system capability probing" phase. The probe must resolve
   before this feature commits to a key system, sets up MediaKeys,
@@ -164,8 +205,12 @@ Things this feature probably forces decisions on, not just additions:
     hls.js's fragment-load gate and rx-player's push-block, and
     matching the existing gate-shape convention (FSM precondition
     state with `monitor`-driven exit).
-  Lean: (c) — it keeps the non-DRM composition genuinely unchanged
-  *and* gates at the point the invariant actually protects.
+  **Resolved: (c).** Implemented as `state.segmentLoadingBlocked`, read
+  by the `load*Segments` dispatchers and deliberately *not* by
+  `setupMediaSource` — that asymmetry in what each gate forbids is why
+  it is a separate slot from `loadingSuspended` rather than folded into
+  it. The slot names the prohibition, not the domain, so
+  `load-segments` carries no DRM vocabulary.
   Beyond that gate, additional DRM gates fire downstream:
   capability-probing's key-system verdict (Tier 1 gate, fires once
   per source); per-session license obtained + `keystatuschange`
@@ -180,11 +225,25 @@ Things this feature probably forces decisions on, not just additions:
   the engine detect DRM from `#EXT-X-KEY` / `#EXT-X-SESSION-KEY`
   parser output and route accordingly — is open. Adapter-upfront
   is simpler; detect-and-route is more adaptive.
-- **State slots for DRM lifecycle.** New slots likely include:
-  `drmReady` (key system probed + MediaKeys attached + license
-  obtained), `mediaKeysReady` (intermediate gate), and possibly
-  per-session state for license-renewal scenarios. Multi-writer
-  characterization is open until the slot family solidifies.
+- **State slots for DRM lifecycle.** Resolved as three, each
+  single-writer: `state.segmentLoadingBlocked` (the load gate,
+  `setupMediaKeys`), `state.negotiatedKeySystem` (the chosen system, or
+  the `NO_KEY_SYSTEM` sentinel when negotiation was refused), and
+  `context.mediaKeys`. No `drmReady`: nothing needed the conjunction.
+  The sentinel exists because "not yet negotiated" and "refused" are
+  different facts for rendition pruning, and encoding the second as a
+  reserved string keeps the slot `string | undefined` — real key-system
+  ids are reverse-DNS, so they cannot collide.
+- **Verdict ownership.** `setupMediaKeys` reports only the *cause*
+  (`SVTA_UNSUPPORTED_DRM_SYSTEM`). The *verdict* stays
+  `track-switching`'s: publishing `NO_KEY_SYSTEM` re-fires its
+  constraint chain, where `excludeRefusedKeySystems` prunes every
+  encrypted rendition, so a type left with nothing reports
+  `SVTA_NO_SUPPORTED_{VIDEO,AUDIO}_TRACK` from its owner and a type
+  keeping a clear rendition still reports nothing. The constraint
+  reaches the chain through `switch*Track`'s append-only
+  `extraConstraints` config — an interim seam until the full constraint
+  chain is passed in.
 - **Encrypted-segment buffer behavior.** Once keys are delivered,
   the MSE pipeline appends encrypted segments unchanged. The
   encrypted-event flow happens *before* steady-state appending. No
