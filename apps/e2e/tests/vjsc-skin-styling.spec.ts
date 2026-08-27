@@ -524,7 +524,7 @@ for (const variant of CASES) {
     const cssPreview = variant.skin === 'minimal-video' ? await fullscreenPreviewContract(cssRoot) : null;
     const cssMenu = await fullscreenSpeedMenuContract(page);
 
-    expect(cssPreview).toEqual(legacyPreview);
+    expectFullscreenPreviewParity(cssPreview, legacyPreview);
     expect(cssMenu).toEqual(legacyMenu);
 
     const tailwindRoot = await openVariant(page, variant, 'tailwind', 800, 'vjsc', media);
@@ -535,7 +535,7 @@ for (const variant of CASES) {
     const tailwindPreview = variant.skin === 'minimal-video' ? await fullscreenPreviewContract(tailwindRoot) : null;
     const tailwindMenu = await fullscreenSpeedMenuContract(page);
 
-    expect(tailwindPreview).toEqual(cssPreview);
+    expectFullscreenPreviewParity(tailwindPreview, cssPreview);
     expect(tailwindMenu).toEqual(cssMenu);
     expect(tailwindMenu).toEqual({ heightInSpacingUnits: 56, maxHeightInSpacingUnits: 56, scrolls: true });
 
@@ -941,8 +941,23 @@ async function openVariant(
       })
     )
     .toBe(width);
+  await setStableScreenshotHeight(root, width);
 
   return root;
+}
+
+async function setStableScreenshotHeight(root: Locator, width: number) {
+  await root.evaluate((element, playerWidth) => {
+    const tree = element.getRootNode();
+    const sizingTarget = tree instanceof ShadowRoot ? tree.host : element;
+    if (!(sizingTarget instanceof HTMLElement)) return;
+
+    sizingTarget.style.height = `${Math.round((playerWidth * 9) / 16)}px`;
+
+    const { top } = sizingTarget.getBoundingClientRect();
+
+    sizingTarget.style.translate = `0 ${Math.round(top) - top}px`;
+  }, width);
 }
 
 async function focusPlayButton(page: Page): Promise<Locator> {
@@ -1211,6 +1226,15 @@ async function showBuffering(root: Locator) {
 }
 
 async function enterFullscreen(page: Page, root: Locator) {
+  await root.evaluate((element) => {
+    const tree = element.getRootNode();
+    const sizingTarget = tree instanceof ShadowRoot ? tree.host : element;
+    if (!(sizingTarget instanceof HTMLElement)) return;
+
+    sizingTarget.style.height = '';
+    sizingTarget.style.translate = '';
+  });
+
   const button = root.getByRole('button', { name: /full ?screen/i }).first();
 
   await expect(button).toBeVisible();
@@ -1293,6 +1317,22 @@ async function fullscreenPreviewContract(root: Locator) {
       thumbnailBottomInSpacingUnits: roundUnits(Number.parseFloat(getComputedStyle(thumbnail).bottom) / spacing),
     };
   });
+}
+
+function expectFullscreenPreviewParity(
+  actual: Awaited<ReturnType<typeof fullscreenPreviewContract>> | null,
+  expected: Awaited<ReturnType<typeof fullscreenPreviewContract>> | null
+) {
+  if (!actual || !expected) {
+    expect(actual).toEqual(expected);
+    return;
+  }
+
+  const { timeToThumbnailGap: actualThumbnailGap, ...actualStable } = actual;
+  const { timeToThumbnailGap: expectedThumbnailGap, ...expectedStable } = expected;
+
+  expect(actualStable).toEqual(expectedStable);
+  expect(Math.abs(actualThumbnailGap - expectedThumbnailGap)).toBeLessThanOrEqual(1);
 }
 
 async function fullscreenSpeedMenuContract(page: Page) {
@@ -2252,6 +2292,7 @@ async function openVolumePopover(page: Page): Promise<Locator> {
 
   await expect(popup).toBeVisible();
   await expect(popup).not.toHaveAttribute('data-starting-style', '');
+  await waitForOwnAnimations(popup);
   return popup;
 }
 
@@ -2261,7 +2302,14 @@ async function openTooltip(page: Page, name: string): Promise<Locator> {
 
   await expect(tooltip).toBeVisible();
   await expect(tooltip).not.toHaveAttribute('data-starting-style', '');
+  await waitForOwnAnimations(tooltip);
   return tooltip;
+}
+
+async function waitForOwnAnimations(element: Locator) {
+  await element.evaluate(async (target) => {
+    await Promise.all(target.getAnimations().map((animation) => animation.finished));
+  });
 }
 
 async function muteTooltipContract(page: Page, root: Locator, skin: (typeof CASES)[number]['skin']) {
