@@ -52,7 +52,6 @@ export class VolumeIndicatorCore {
 
   #props: VolumeIndicatorProps = {};
   #boundaryTimer: ReturnType<typeof setTimeout> | null = null;
-  #boundaryRestartTimer: ReturnType<typeof setTimeout> | null = null;
   #close = new IndicatorCloseController(
     () => this.state.patch({ open: false, level: null, value: null, fill: null, min: false, max: false }),
     () => getIndicatorCloseDelay(this.#props)
@@ -84,7 +83,7 @@ export class VolumeIndicatorCore {
       prediction
     );
     const boundary = getVolumeBoundary(event, prediction.snapshotVolume, prediction.nextVolume);
-    const repeatedBoundary = boundary !== null && current[boundary] === true;
+    const showBoundary = boundary !== null && !event.repeat;
 
     if (!boundary) this.#clearBoundaryTimers();
 
@@ -94,17 +93,11 @@ export class VolumeIndicatorCore {
       level: details.volumeLevel,
       value: details.value,
       fill: details.value,
-      min: boundary === 'min' && !repeatedBoundary,
-      max: boundary === 'max' && !repeatedBoundary,
+      min: boundary && event.repeat ? current.min : showBoundary && boundary === 'min',
+      max: boundary && event.repeat ? current.max : showBoundary && boundary === 'max',
     });
 
-    if (boundary) {
-      if (repeatedBoundary) {
-        this.#restartBoundary(boundary);
-      } else {
-        this.#scheduleBoundaryClear();
-      }
-    }
+    if (showBoundary) this.#scheduleBoundaryClear();
 
     this.#close.arm();
     return true;
@@ -118,16 +111,6 @@ export class VolumeIndicatorCore {
     }, BOUNDARY_CLEAR_DELAY);
   }
 
-  #restartBoundary(boundary: 'min' | 'max'): void {
-    this.#clearBoundaryTimers();
-    this.state.patch({ min: false, max: false });
-    this.#boundaryRestartTimer = setTimeout(() => {
-      this.#boundaryRestartTimer = null;
-      this.state.patch({ [boundary]: true });
-      this.#scheduleBoundaryClear();
-    }, 0);
-  }
-
   #clearBoundaryTimer(): void {
     if (this.#boundaryTimer === null) return;
 
@@ -135,16 +118,8 @@ export class VolumeIndicatorCore {
     this.#boundaryTimer = null;
   }
 
-  #clearBoundaryRestartTimer(): void {
-    if (this.#boundaryRestartTimer === null) return;
-
-    clearTimeout(this.#boundaryRestartTimer);
-    this.#boundaryRestartTimer = null;
-  }
-
   #clearBoundaryTimers(): void {
     this.#clearBoundaryTimer();
-    this.#clearBoundaryRestartTimer();
   }
 }
 

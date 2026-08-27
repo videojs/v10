@@ -48,20 +48,23 @@ describe('VolumeIndicatorCore', () => {
     expect(core.state.current.min).toBe(false);
   });
 
-  it('restarts the boundary flag when the same edge is hit repeatedly', () => {
+  it('does not restart boundary feedback for held keys', () => {
     const core = new VolumeIndicatorCore();
 
     core.processEvent({ action: 'volumeStep', value: 0.05 }, { volume: 1, muted: false });
     expect(core.state.current.max).toBe(true);
 
-    core.processEvent({ action: 'volumeStep', value: 0.05 }, { volume: 1, muted: false });
-    expect(core.state.current.max).toBe(false);
-
-    vi.advanceTimersByTime(0);
+    core.processEvent({ action: 'volumeStep', value: 0.05, repeat: true }, { volume: 1, muted: false });
     expect(core.state.current.max).toBe(true);
 
     vi.advanceTimersByTime(300);
     expect(core.state.current.max).toBe(false);
+
+    core.processEvent({ action: 'volumeStep', value: 0.05, repeat: true }, { volume: 1, muted: false });
+    expect(core.state.current.max).toBe(false);
+
+    core.processEvent({ action: 'volumeStep', value: 0.05, repeat: false }, { volume: 1, muted: false });
+    expect(core.state.current.max).toBe(true);
   });
 
   it('closes after the configured delay', () => {

@@ -19,6 +19,7 @@ export interface InputActionEvent {
   value?: number | undefined;
   source?: InputActionSource | undefined;
   key?: string | undefined;
+  repeat?: boolean | undefined;
 }
 
 export interface MediaSnapshot {

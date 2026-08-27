@@ -19,13 +19,14 @@ describe('input-action', () => {
         source: 'hotkey',
         action: 'togglePaused',
         value: 1,
-        event: new KeyboardEvent('keydown', { key: 'k' }),
+        event: new KeyboardEvent('keydown', { key: 'k', repeat: true }),
       })
     ).toEqual({
       source: 'hotkey',
       action: 'togglePaused',
       value: 1,
       key: 'k',
+      repeat: true,
     });
   });
 

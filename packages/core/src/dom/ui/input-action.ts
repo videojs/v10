@@ -28,6 +28,7 @@ export function toInputActionEvent(event: CoordinatorEvent): InputActionEvent {
     value: event.value,
     source: event.source,
     key: 'key' in event.event ? event.event.key : undefined,
+    repeat: 'repeat' in event.event ? event.event.repeat : undefined,
   };
 }
 
