@@ -1,8 +1,9 @@
 import { FullscreenButtonCore, FullscreenButtonDataAttrs } from '@videojs/core';
-import { selectFullscreen } from '@videojs/core/dom';
+import { type ButtonActivationSource, selectFullscreen, type UIEvent } from '@videojs/core/dom';
+import { ContextConsumer } from '@videojs/element/context';
 import type { MediaFullscreenState } from '@videojs/media';
 
-import { playerContext } from '../../player/context';
+import { containerContext, playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
 import { MediaButtonElement } from '../media-button-element';
 
@@ -13,8 +14,13 @@ export class FullscreenButtonElement extends MediaButtonElement<FullscreenButton
   protected readonly stateAttrMap = FullscreenButtonDataAttrs;
   protected readonly mediaState = new PlayerController(this, playerContext, selectFullscreen);
   protected override readonly hotkeyAction = 'toggleFullscreen';
+  readonly #container = new ContextConsumer(this, { context: containerContext, subscribe: true });
 
-  protected activate(state: MediaFullscreenState): Promise<void> {
+  protected activate(state: MediaFullscreenState, _event: UIEvent, source: ButtonActivationSource): Promise<void> {
+    if (source === 'pointer') {
+      this.#container.value?.container?.focus({ preventScroll: true });
+    }
+
     return this.core.toggle(state);
   }
 }

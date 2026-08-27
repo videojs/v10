@@ -8,6 +8,7 @@ import type {
 import {
   applyElementProps,
   applyStateDataAttrs,
+  type ButtonActivationSource,
   createButton,
   HOTKEY_SHORTCUT_CHANGE_EVENT,
   logMissingFeature,
@@ -50,17 +51,21 @@ export abstract class MediaButtonElement<Core extends MediaButtonComponent> exte
   protected abstract readonly stateAttrMap: StateAttrMap<InferComponentState<Core>>;
   protected abstract readonly mediaState: PlayerController<any, InferMediaState<Core> | undefined>;
 
-  protected abstract activate(state: InferMediaState<Core>, event?: UIEvent): void | Promise<void>;
+  protected abstract activate(
+    state: InferMediaState<Core>,
+    event: UIEvent,
+    source: ButtonActivationSource
+  ): void | Promise<void>;
 
   protected getIsButtonDisabled(): boolean {
     return this.disabled || !this.mediaState.value;
   }
 
-  protected handleActivate(event: UIEvent): void {
+  protected handleActivate(event: UIEvent, source: ButtonActivationSource): void {
     // `createButton` invokes `onActivate` synchronously from click/keyup
     // handlers, so any rejection here would be unhandled. Log in dev for
     // visibility but absorb the failure at this UI boundary.
-    Promise.resolve(this.activate(this.mediaState.value!, event)).catch((error) => {
+    Promise.resolve(this.activate(this.mediaState.value!, event, source)).catch((error) => {
       if (__DEV__) console.error(`[${this.localName}]`, error);
     });
   }
@@ -96,7 +101,7 @@ export abstract class MediaButtonElement<Core extends MediaButtonComponent> exte
     this.#disconnect = new AbortController();
 
     const buttonProps = createButton({
-      onActivate: (event) => this.handleActivate(event),
+      onActivate: (event, source) => this.handleActivate(event, source),
       isDisabled: () => this.getIsButtonDisabled(),
     });
 

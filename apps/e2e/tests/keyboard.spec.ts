@@ -211,6 +211,16 @@ for (const entry of PAGES as readonly PageEntry[]) {
         await expect(player.muteButton).toBeFocused();
       });
     } else {
+      test('keeps fullscreen after pointer activation followed by Space', async ({ page }) => {
+        await player.fullscreenButton.click();
+        await expect(player.fullscreenButton).toHaveAttribute(DATA_ATTRS.fullscreen, '');
+        await expect(player.playerRoot).toBeFocused();
+
+        await page.keyboard.press('Space');
+        await expect(player.fullscreenButton).toHaveAttribute(DATA_ATTRS.fullscreen, '');
+        await expect(player.playButton).not.toHaveAttribute(DATA_ATTRS.paused);
+      });
+
       test('operates captions with Enter and Space when a track is available', async ({ page }) => {
         await page.evaluate(() => {
           const video = document.querySelector('video');
