@@ -59,6 +59,10 @@
       "types": "./dist/element/index.d.ts",
       "default": "./dist/element/index.js"
     },
+    "./element/base": {
+      "types": "./dist/element/base.d.ts",
+      "default": "./dist/element/base.js"
+    },
     "./element/*": {
       "types": "./dist/element/*/index.d.ts",
       "default": "./dist/element/*/index.js"

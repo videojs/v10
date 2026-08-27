@@ -37,6 +37,19 @@ export function emitElementBase(families: readonly IconFamily[]): void {
 
   writeOutput(join(DIST_DIR, 'element', 'base.js'), result.code);
   writeOutput(
+    join(DIST_DIR, 'element', 'base.d.ts'),
+    `export type IconMap = Readonly<Record<string, string>>;
+export type IconLoader = () => IconMap | Promise<IconMap>;
+
+/** Renders registered SVG icon families in the light DOM. */
+export declare class MediaIconElement extends HTMLElement {
+  static register(family: string, icons: IconMap): void;
+  static registerLoader(family: string, load: IconLoader): void;
+  static load(family: string): Promise<void>;
+}
+`
+  );
+  writeOutput(
     join(DIST_DIR, 'element', 'index.js'),
     [
       `import { MediaIconElement } from './base.js';`,

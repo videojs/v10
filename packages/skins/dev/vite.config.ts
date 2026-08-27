@@ -13,6 +13,7 @@ const packageDir = resolve(import.meta.dirname, '..');
 const skinSourceDir = normalizePath(resolve(packageDir, 'src'));
 const reactSourceDir = normalizePath(resolve(packageDir, '../react/src'));
 const htmlDefineDir = normalizePath(resolve(packageDir, '../html/src/define'));
+const htmlIconDir = normalizePath(resolve(packageDir, '../html/src/icons'));
 const htmlIconElementDir = normalizePath(resolve(packageDir, '../html/src/icons/element'));
 
 export default defineConfig({
@@ -34,6 +35,7 @@ export default defineConfig({
       { find: /^@videojs\/skins(?=\/|$)/, replacement: skinSourceDir },
       { find: /^@videojs\/react(?=\/|$)/, replacement: reactSourceDir },
       { find: /^@videojs\/html\/icons\/element(?=\/|$)/, replacement: htmlIconElementDir },
+      { find: /^@videojs\/html\/icons(?=\/|$)/, replacement: htmlIconDir },
       { find: /^@videojs\/html(?=\/|$)/, replacement: htmlDefineDir },
     ],
     conditions: ['development', 'import', 'module', 'browser', 'default'],
