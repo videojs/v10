@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { MEDIA_PLAYLIST_METADATA_KEY } from '../../types';
 import { canPlayTrack, makeCanPlayTrackWithDrm } from '../capabilities';
+import { DEFAULT_KEY_SYSTEMS } from '../key-systems';
 
 describe('canPlayTrack', () => {
   afterEach(() => {
@@ -107,7 +108,7 @@ describe('makeCanPlayTrackWithDrm', () => {
     keyFormat: 'com.apple.streamingkeydelivery',
   };
   const drm = { 'com.widevine.alpha': { licenseUrl: 'https://license.example.com/widevine' } };
-  const probe = makeCanPlayTrackWithDrm(drm);
+  const probe = makeCanPlayTrackWithDrm(drm, DEFAULT_KEY_SYSTEMS);
 
   const encryptedTrack = (keys: object[], codecs: string[]) => ({
     mimeType: 'video/mp4',

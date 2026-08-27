@@ -3,32 +3,30 @@ import { describe, expect, it, vi } from 'vite-plus/test';
 import type { Presentation } from '../../types';
 import {
   buildKeySystemConfigurations,
-  declaredDrmKeys,
-  declaredEncryptionScheme,
-  initDataFromKeyUri,
-  KEY_SYSTEM_BY_KEY_FORMAT,
-  keySystemCandidates,
+  contentTypesFromPresentation,
+  type KeySystemModule,
   requestKeySystemAccess,
-  resolveDrmUrl,
   shapeLicenseRequest,
-  toCencInitData,
-  unplayableEncryptedTypes,
 } from '../eme';
+import { fairPlayKeySystem, playReadyKeySystem, widevineKeySystem } from '../key-systems';
 
-// "ping" in base64 — small stand-in for a PSSH payload.
-const PSSH_BASE64 = 'cGluZw==';
-const PSSH_BYTES = new Uint8Array([0x70, 0x69, 0x6e, 0x67]);
+const VIDEO_TYPE = 'video/mp4; codecs="avc1.4d401f"';
+const AUDIO_TYPE = 'audio/mp4; codecs="mp4a.40.2"';
 
-const WIDEVINE_KEY = {
-  method: 'SAMPLE-AES',
-  uri: `data:text/plain;base64,${PSSH_BASE64}`,
-  keyFormat: 'urn:uuid:edef8ba9-79d6-4ace-a3c8-27dcd51d21ed',
-};
-const FAIRPLAY_KEY = {
-  method: 'SAMPLE-AES',
-  uri: 'skd://mux?keyId=abc',
-  keyFormat: 'com.apple.streamingkeydelivery',
-};
+function makeTrack(type: 'video' | 'audio', overrides: object = {}) {
+  return {
+    type,
+    id: `${type}-1`,
+    url: `https://example.com/${type}.m3u8`,
+    bandwidth: 1000,
+    mimeType: `${type}/mp4`,
+    codecs: [type === 'video' ? 'avc1.4d401f' : 'mp4a.40.2'],
+    segments: [{ id: 's0', url: 'https://example.com/0.m4s', startTime: 0, duration: 4 }],
+    startTime: 0,
+    duration: 4,
+    ...overrides,
+  };
+}
 
 function makePresentation(tracks: object[]): Presentation {
   return {
@@ -44,410 +42,196 @@ function makePresentation(tracks: object[]): Presentation {
   } as Presentation;
 }
 
-function makeResolvedTrack(keys?: object[], overrides: object = {}) {
-  return {
-    type: 'video' as const,
-    id: 'v-1',
-    url: 'https://example.com/v.m3u8',
-    bandwidth: 1000,
-    mimeType: 'video/mp4',
-    codecs: ['avc1.4d401f'],
-    segments: [{ id: 's0', url: 'https://example.com/0.m4s', startTime: 0, duration: 4 }],
-    startTime: 0,
-    duration: 4,
-    ...(keys && { metadata: { mediaPlaylist: { targetDuration: 4, mediaSequence: 0, endList: true, keys } } }),
-    ...overrides,
-  };
-}
+describe('contentTypesFromPresentation', () => {
+  it('collects the unique audio and video content types', () => {
+    const presentation = makePresentation([makeTrack('video'), makeTrack('audio')]);
 
-describe('KEY_SYSTEM_BY_KEY_FORMAT', () => {
-  it('maps the three HLS DRM KEYFORMAT identities to EME key-system ids', () => {
-    expect(KEY_SYSTEM_BY_KEY_FORMAT['urn:uuid:edef8ba9-79d6-4ace-a3c8-27dcd51d21ed']).toBe('com.widevine.alpha');
-    expect(KEY_SYSTEM_BY_KEY_FORMAT['com.microsoft.playready']).toBe('com.microsoft.playready');
-    expect(KEY_SYSTEM_BY_KEY_FORMAT['com.apple.streamingkeydelivery']).toBe('com.apple.fps');
-  });
-});
-
-describe('initDataFromKeyUri', () => {
-  it('decodes a base64 data: URI to bytes', () => {
-    expect(initDataFromKeyUri(`data:text/plain;base64,${PSSH_BASE64}`)).toEqual(PSSH_BYTES);
+    expect(contentTypesFromPresentation(presentation)).toEqual({ video: [VIDEO_TYPE], audio: [AUDIO_TYPE] });
   });
 
-  it('decodes with media-type parameters before the base64 marker', () => {
-    expect(initDataFromKeyUri(`data:text/plain;charset=UTF-16;base64,${PSSH_BASE64}`)).toEqual(PSSH_BYTES);
+  it('dedupes renditions sharing a content type — one ladder is one capability', () => {
+    const presentation = makePresentation([makeTrack('video'), makeTrack('video', { id: 'v-2', bandwidth: 2000 })]);
+
+    expect(contentTypesFromPresentation(presentation).video).toEqual([VIDEO_TYPE]);
   });
 
-  it('carries no init data for non-data: URIs (skd://, https://)', () => {
-    expect(initDataFromKeyUri('skd://mux?keyId=abc')).toBeUndefined();
-    expect(initDataFromKeyUri('https://example.com/key.bin')).toBeUndefined();
-  });
-
-  it('carries no init data for a non-base64 data: URI', () => {
-    expect(initDataFromKeyUri('data:text/plain,hello')).toBeUndefined();
-  });
-});
-
-describe('declaredDrmKeys', () => {
-  it('collects keys from resolved tracks', () => {
-    const presentation = makePresentation([makeResolvedTrack([WIDEVINE_KEY, FAIRPLAY_KEY])]);
-
-    expect(declaredDrmKeys(presentation)).toEqual([WIDEVINE_KEY, FAIRPLAY_KEY]);
-  });
-
-  it('dedupes the same declaration across tracks', () => {
+  it('skips tracks with nothing to build a content type from, and non-a/v types', () => {
     const presentation = makePresentation([
-      makeResolvedTrack([WIDEVINE_KEY]),
-      makeResolvedTrack([WIDEVINE_KEY], { id: 'v-2', url: 'https://example.com/v2.m3u8' }),
+      makeTrack('video', { codecs: undefined }),
+      makeTrack('audio', { mimeType: undefined }),
+      makeTrack('video', { id: 'text-1', type: 'text' }),
     ]);
 
-    expect(declaredDrmKeys(presentation)).toEqual([WIDEVINE_KEY]);
+    expect(contentTypesFromPresentation(presentation)).toEqual({ video: [], audio: [] });
   });
 
-  it('is empty for unresolved presentations, clear tracks, and unresolved tracks', () => {
-    expect(declaredDrmKeys(undefined)).toEqual([]);
-    expect(declaredDrmKeys({ url: 'https://example.com/m.m3u8' })).toEqual([]);
-    expect(declaredDrmKeys(makePresentation([makeResolvedTrack()]))).toEqual([]);
-  });
-});
-
-describe('declaredEncryptionScheme', () => {
-  it('maps SAMPLE-AES to cbcs and SAMPLE-AES-CTR to cenc', () => {
-    expect(declaredEncryptionScheme([WIDEVINE_KEY])).toBe('cbcs');
-    expect(declaredEncryptionScheme([{ ...WIDEVINE_KEY, method: 'SAMPLE-AES-CTR' }])).toBe('cenc');
-  });
-
-  it('declares nothing for mixed or unrecognized methods', () => {
-    expect(declaredEncryptionScheme([WIDEVINE_KEY, { ...WIDEVINE_KEY, method: 'SAMPLE-AES-CTR' }])).toBeUndefined();
-    expect(declaredEncryptionScheme([{ method: 'AES-128', uri: 'k.bin' }])).toBeUndefined();
-    expect(declaredEncryptionScheme([])).toBeUndefined();
+  it('is empty for an absent or unresolved presentation', () => {
+    expect(contentTypesFromPresentation(undefined)).toEqual({ video: [], audio: [] });
+    expect(contentTypesFromPresentation({ url: 'https://example.com/m.m3u8' })).toEqual({ video: [], audio: [] });
   });
 });
 
 describe('requestKeySystemAccess', () => {
-  it('walks PlayReady variants in order and reports the configured base id', async () => {
+  it("walks a module's request variants in order and reports the module", async () => {
     const spy = vi.spyOn(navigator, 'requestMediaKeySystemAccess');
     const access = {} as MediaKeySystemAccess;
 
     spy.mockRejectedValueOnce(new Error('no plain CDM')).mockResolvedValueOnce(access);
 
-    const result = await requestKeySystemAccess(['com.microsoft.playready'], { video: [], audio: [] });
+    const result = await requestKeySystemAccess([playReadyKeySystem], { video: [], audio: [] });
 
-    // Plain first: `.recommendation` is the hardware security level, and a hardware CDM refuses a
-    // license issued against a software one. hls.js and Mux Player never request it.
     expect(spy.mock.calls.map(([keySystem]) => keySystem)).toEqual([
       'com.microsoft.playready',
       'com.microsoft.playready.recommendation',
     ]);
-    expect(result).toEqual({ keySystem: 'com.microsoft.playready', access });
+    // The module, not the variant that happened to win: license-server lookup
+    // and message shaping key off the configured id.
+    expect(result).toEqual({ module: playReadyKeySystem, access });
     spy.mockRestore();
   });
 
-  it('prefers the plain PlayReady id when both variants are available', async () => {
+  it('stops at the first variant a CDM accepts', async () => {
     const spy = vi.spyOn(navigator, 'requestMediaKeySystemAccess');
-    const access = {} as MediaKeySystemAccess;
 
-    spy.mockResolvedValue(access);
+    spy.mockResolvedValue({} as MediaKeySystemAccess);
 
-    await requestKeySystemAccess(['com.microsoft.playready'], { video: [], audio: [] });
+    await requestKeySystemAccess([playReadyKeySystem], { video: [], audio: [] });
 
     expect(spy).toHaveBeenCalledTimes(1);
     expect(spy.mock.calls[0]?.[0]).toBe('com.microsoft.playready');
     spy.mockRestore();
   });
-});
 
-describe('toCencInitData', () => {
-  const payload = new Uint8Array([1, 2, 3, 4]);
-  const pssh = (() => {
-    // A minimal well-formed v0 PSSH box wrapping `payload`.
-    const box = new Uint8Array(36);
+  it('falls through to the next module and defaults its request string to its key system', async () => {
+    const spy = vi.spyOn(navigator, 'requestMediaKeySystemAccess');
+    const access = {} as MediaKeySystemAccess;
 
-    new DataView(box.buffer).setUint32(0, 36);
-    box.set([0x70, 0x73, 0x73, 0x68], 4); // 'pssh'
-    new DataView(box.buffer).setUint32(28, 4);
-    box.set(payload, 32);
-    return box;
-  })();
+    spy.mockRejectedValueOnce(new Error('no FairPlay here')).mockResolvedValueOnce(access);
 
-  it('passes Widevine data through untouched — Mux ships a complete PSSH', () => {
-    expect(toCencInitData('com.widevine.alpha', pssh)).toBe(pssh);
+    const result = await requestKeySystemAccess([fairPlayKeySystem, widevineKeySystem], { video: [], audio: [] });
+
+    expect(spy.mock.calls.map(([keySystem]) => keySystem)).toEqual(['com.apple.fps', 'com.widevine.alpha']);
+    expect(result?.module).toBe(widevineKeySystem);
+    spy.mockRestore();
   });
 
-  it('wraps a raw PlayReady Object into a v0 PSSH box', () => {
-    const wrapped = toCencInitData('com.microsoft.playready', payload);
+  it('resolves undefined when every candidate is refused, or none were given', async () => {
+    const spy = vi.spyOn(navigator, 'requestMediaKeySystemAccess');
 
-    expect(wrapped.length).toBe(32 + payload.length);
-    expect(new DataView(wrapped.buffer).getUint32(0)).toBe(wrapped.length);
-    expect([...wrapped.slice(4, 8)]).toEqual([0x70, 0x73, 0x73, 0x68]); // 'pssh'
-    expect(new DataView(wrapped.buffer).getUint32(8)).toBe(0); // v0, no flags
-    // The PlayReady system id, 9a04f079-9840-4286-ab92-e65be0885f95.
-    expect([...wrapped.slice(12, 16)]).toEqual([0x9a, 0x04, 0xf0, 0x79]);
-    expect(new DataView(wrapped.buffer).getUint32(28)).toBe(payload.length);
-    expect([...wrapped.slice(32)]).toEqual([...payload]);
-  });
+    spy.mockRejectedValue(new Error('refused'));
 
-  it('leaves an already-PSSH PlayReady declaration alone', () => {
-    expect(toCencInitData('com.microsoft.playready', pssh)).toBe(pssh);
+    expect(await requestKeySystemAccess([widevineKeySystem], { video: [], audio: [] })).toBeUndefined();
+    expect(await requestKeySystemAccess([], { video: [], audio: [] })).toBeUndefined();
+    spy.mockRestore();
   });
 });
 
 describe('shapeLicenseRequest', () => {
-  const utf16 = (text: string) => {
-    const bytes = new Uint8Array(text.length * 2);
-
-    for (let i = 0; i < text.length; i++) new DataView(bytes.buffer).setUint16(i * 2, text.charCodeAt(i), true);
-
-    return bytes;
-  };
-
-  it('passes non-PlayReady messages through as octet-stream', () => {
+  it('posts raw bytes as octet-stream for a module declaring no shaping', () => {
     const message = new Uint8Array([1, 2, 3]).buffer;
-    const shaped = shapeLicenseRequest('com.widevine.alpha', message);
+    const shaped = shapeLicenseRequest(widevineKeySystem, message);
 
     expect(shaped.body).toBe(message);
     expect(shaped.headers).toEqual({ 'Content-Type': 'application/octet-stream' });
   });
 
-  it('unwraps a PlayReadyKeyMessage envelope into headers and the decoded challenge', () => {
-    // btoa('challenge!') carried inside the classic UTF-16 XML envelope.
-    const envelope = utf16(
-      '<PlayReadyKeyMessage><LicenseAcquisition Version="1">' +
-        '<Challenge encoding="base64encoded">Y2hhbGxlbmdlIQ==</Challenge>' +
-        '<HttpHeaders><HttpHeader><name>Content-Type</name><value>text/xml; charset=utf-8</value></HttpHeader>' +
-        '<HttpHeader><name>SOAPAction</name><value>AcquireLicense</value></HttpHeader></HttpHeaders>' +
-        '</LicenseAcquisition></PlayReadyKeyMessage>'
-    );
-    const shaped = shapeLicenseRequest('com.microsoft.playready', envelope.buffer);
+  it('delegates to the module when it declares its own shaping', () => {
+    const module_: KeySystemModule = {
+      keySystem: 'com.example.drm',
+      keyFormats: [],
+      shapeLicenseRequest: () => ({ body: new Uint8Array([7]), headers: { 'Content-Type': 'application/json' } }),
+    };
 
-    expect(new TextDecoder().decode(shaped.body as ArrayBuffer | Uint8Array)).toBe('challenge!');
-    expect(shaped.headers).toEqual({ 'Content-Type': 'text/xml; charset=utf-8', SOAPAction: 'AcquireLicense' });
+    expect(shapeLicenseRequest(module_, new Uint8Array([1]).buffer)).toEqual({
+      body: new Uint8Array([7]),
+      headers: { 'Content-Type': 'application/json' },
+    });
   });
 
-  it('sends an unwrapped PlayReady challenge as XML — modern CDMs skip the envelope', () => {
-    const raw = utf16('<soap:Envelope>raw challenge</soap:Envelope>');
-    const shaped = shapeLicenseRequest('com.microsoft.playready', raw.buffer);
+  it('falls back to octet-stream for an absent module', () => {
+    const message = new Uint8Array([1]).buffer;
 
-    expect(shaped.body).toBe(raw.buffer);
-    expect(shaped.headers).toEqual({ 'Content-Type': 'text/xml; charset=utf-8' });
-  });
-});
-
-describe('keySystemCandidates', () => {
-  const drm = {
-    'com.widevine.alpha': { licenseUrl: 'https://license.example.com/widevine' },
-    'com.apple.fps': { licenseUrl: 'https://license.example.com/fairplay' },
-  };
-
-  it('intersects declared key formats with configured systems, in preference order', () => {
-    // FairPlay outranks Widevine in the fixed preference order even when
-    // declared second.
-    expect(keySystemCandidates([WIDEVINE_KEY, FAIRPLAY_KEY], drm)).toEqual(['com.apple.fps', 'com.widevine.alpha']);
-  });
-
-  it('omits declared systems with no configured license server', () => {
-    expect(
-      keySystemCandidates([WIDEVINE_KEY, FAIRPLAY_KEY], { 'com.widevine.alpha': drm['com.widevine.alpha'] })
-    ).toEqual(['com.widevine.alpha']);
-  });
-
-  it('ignores keys with unrecognized or absent KEYFORMAT', () => {
-    expect(keySystemCandidates([{ method: 'AES-128', uri: 'k.bin' }], drm)).toEqual([]);
-  });
-
-  it('resolves a function-valued license server', () => {
-    expect(
-      keySystemCandidates([WIDEVINE_KEY], {
-        'com.widevine.alpha': { licenseUrl: () => 'https://license.example.com/widevine' },
-      })
-    ).toEqual(['com.widevine.alpha']);
-  });
-
-  it('omits a declared system whose license server resolves to nothing', () => {
-    // The per-source "not licensable" signal: the entry names the system, but
-    // the current source has no credentials for it, so it prunes exactly as an
-    // unnamed system does.
-    expect(
-      keySystemCandidates([WIDEVINE_KEY, FAIRPLAY_KEY], {
-        'com.widevine.alpha': { licenseUrl: undefined },
-        'com.apple.fps': { licenseUrl: () => undefined },
-      })
-    ).toEqual([]);
-  });
-
-  it('treats a throwing resolver as no configured license server', () => {
-    expect(
-      keySystemCandidates([WIDEVINE_KEY], {
-        'com.widevine.alpha': {
-          licenseUrl: () => {
-            throw new Error('no token yet');
-          },
-        },
-      })
-    ).toEqual([]);
-  });
-});
-
-describe('unplayableEncryptedTypes', () => {
-  // `encrypted` is derived and stored by `parseMediaPlaylist`, so it is set
-  // explicitly here rather than inferred from a key list.
-  const track = (type: 'video' | 'audio', encrypted: boolean) => ({
-    type,
-    id: `${type}-${encrypted}`,
-    url: `https://example.com/${type}.m3u8`,
-    bandwidth: 1000,
-    mimeType: `${type}/mp4`,
-    codecs: [type === 'video' ? 'avc1.4d401f' : 'mp4a.40.2'],
-    segments: [{ id: 's0', url: 'https://example.com/0.m4s', startTime: 0, duration: 4 }],
-    startTime: 0,
-    duration: 4,
-    metadata: { mediaPlaylist: { targetDuration: 4, mediaSequence: 0, endList: true, encrypted } },
-  });
-
-  const presentationOf = (tracks: object[]) =>
-    ({
-      id: 'p1',
-      url: 'https://example.com/multivariant.m3u8',
-      selectionSets: [
-        { id: 's', type: 'video' as const, switchingSets: [{ id: 'sw', type: 'video' as const, tracks }] },
-      ],
-    }) as never;
-
-  it('names a type whose every resolved rendition is encrypted', () => {
-    expect(unplayableEncryptedTypes(presentationOf([track('video', true), track('video', true)]))).toEqual(['video']);
-  });
-
-  it('spares a type keeping any clear rendition', () => {
-    expect(unplayableEncryptedTypes(presentationOf([track('video', true), track('video', false)]))).toEqual([]);
-  });
-
-  it('reports each type independently — Mux encrypts video and leaves audio clear', () => {
-    expect(unplayableEncryptedTypes(presentationOf([track('video', true), track('audio', false)]))).toEqual(['video']);
-  });
-
-  it('names both types when neither has anything clear', () => {
-    expect(unplayableEncryptedTypes(presentationOf([track('video', true), track('audio', true)]))).toEqual([
-      'video',
-      'audio',
-    ]);
-  });
-
-  it('names nothing when no rendition has resolved', () => {
-    expect(unplayableEncryptedTypes(presentationOf([]))).toEqual([]);
-    expect(unplayableEncryptedTypes(undefined)).toEqual([]);
-  });
-});
-
-describe('resolveDrmUrl', () => {
-  it('passes a plain value through, including undefined', () => {
-    expect(resolveDrmUrl('https://license.example.com/widevine')).toBe('https://license.example.com/widevine');
-    expect(resolveDrmUrl(undefined)).toBeUndefined();
-  });
-
-  it('calls a resolver and returns what it yields', () => {
-    expect(resolveDrmUrl(() => 'https://license.example.com/fairplay')).toBe('https://license.example.com/fairplay');
-    expect(resolveDrmUrl(() => undefined)).toBeUndefined();
-  });
-
-  it('answers undefined when the resolver throws', () => {
-    expect(
-      resolveDrmUrl(() => {
-        throw new Error('no token yet');
-      })
-    ).toBeUndefined();
+    expect(shapeLicenseRequest(undefined, message)).toEqual({
+      body: message,
+      headers: { 'Content-Type': 'application/octet-stream' },
+    });
   });
 });
 
 describe('buildKeySystemConfigurations', () => {
   it('builds one configuration with per-type capabilities from track content types', () => {
-    const [config] = buildKeySystemConfigurations('com.microsoft.playready', {
-      video: ['video/mp4; codecs="avc1.4d401f"'],
-      audio: ['audio/mp4; codecs="mp4a.40.2"'],
-    });
+    const [config] = buildKeySystemConfigurations(playReadyKeySystem, { video: [VIDEO_TYPE], audio: [AUDIO_TYPE] });
 
     expect(config?.initDataTypes).toEqual(['cenc']);
-    expect(config?.videoCapabilities).toEqual([{ contentType: 'video/mp4; codecs="avc1.4d401f"' }]);
-    expect(config?.audioCapabilities).toEqual([{ contentType: 'audio/mp4; codecs="mp4a.40.2"' }]);
+    expect(config?.videoCapabilities).toEqual([{ contentType: VIDEO_TYPE }]);
+    expect(config?.audioCapabilities).toEqual([{ contentType: AUDIO_TYPE }]);
   });
 
-  it('asks FairPlay for its own init-data types — Safari rejects cenc-only', () => {
-    const [config] = buildKeySystemConfigurations('com.apple.fps', {
-      video: ['video/mp4; codecs="avc1.4d401f"'],
-      audio: [],
-    });
+  it("uses the module's own init-data types when it declares them", () => {
+    const [config] = buildKeySystemConfigurations(fairPlayKeySystem, { video: [VIDEO_TYPE], audio: [] });
 
     expect(config?.initDataTypes).toEqual(['sinf', 'cenc']);
   });
 
   it('stamps the declared encryption scheme on every capability', () => {
     const [config] = buildKeySystemConfigurations(
-      'com.microsoft.playready',
-      { video: ['video/mp4; codecs="avc1.4d401f"'], audio: ['audio/mp4; codecs="mp4a.40.2"'] },
+      playReadyKeySystem,
+      { video: [VIDEO_TYPE], audio: [AUDIO_TYPE] },
       'cbcs'
     );
 
-    expect(config?.videoCapabilities).toEqual([
-      { contentType: 'video/mp4; codecs="avc1.4d401f"', encryptionScheme: 'cbcs' },
-    ]);
-    expect(config?.audioCapabilities).toEqual([
-      { contentType: 'audio/mp4; codecs="mp4a.40.2"', encryptionScheme: 'cbcs' },
-    ]);
+    expect(config?.videoCapabilities).toEqual([{ contentType: VIDEO_TYPE, encryptionScheme: 'cbcs' }]);
+    expect(config?.audioCapabilities).toEqual([{ contentType: AUDIO_TYPE, encryptionScheme: 'cbcs' }]);
   });
 
   it('offers an unstamped fallback after the declared scheme', () => {
     const configs = buildKeySystemConfigurations(
-      'com.microsoft.playready',
-      { video: ['video/mp4; codecs="avc1.4d401f"'], audio: ['audio/mp4; codecs="mp4a.40.2"'] },
+      playReadyKeySystem,
+      { video: [VIDEO_TYPE], audio: [AUDIO_TYPE] },
       'cbcs'
     );
 
     // `requestMediaKeySystemAccess` picks the first supported entry, so a CDM that refuses the
     // `encryptionScheme` member still negotiates on the second.
     expect(configs).toHaveLength(2);
-    expect(configs[1]?.videoCapabilities).toEqual([{ contentType: 'video/mp4; codecs="avc1.4d401f"' }]);
-    expect(configs[1]?.audioCapabilities).toEqual([{ contentType: 'audio/mp4; codecs="mp4a.40.2"' }]);
+    expect(configs[1]?.videoCapabilities).toEqual([{ contentType: VIDEO_TYPE }]);
+    expect(configs[1]?.audioCapabilities).toEqual([{ contentType: AUDIO_TYPE }]);
     expect(configs[1]?.initDataTypes).toEqual(['cenc']);
   });
 
-  it('offers only one configuration when neither preference applies', () => {
-    const configs = buildKeySystemConfigurations('com.microsoft.playready', {
-      video: ['video/mp4; codecs="avc1.4d401f"'],
-      audio: [],
-    });
+  it('offers the stamped configuration alone when the module opts out of the fallback', () => {
+    // The composable half of the scheme permutation: a system whose CDMs honour
+    // the member negotiates once instead of twice.
+    const module_: KeySystemModule = { ...playReadyKeySystem, schemeFallback: false };
+    const configs = buildKeySystemConfigurations(module_, { video: [VIDEO_TYPE], audio: [] }, 'cbcs');
 
     expect(configs).toHaveLength(1);
+    expect(configs[0]?.videoCapabilities).toEqual([{ contentType: VIDEO_TYPE, encryptionScheme: 'cbcs' }]);
   });
 
-  it('prefers L1 video robustness for Widevine, with an unrobust fallback', () => {
-    const configs = buildKeySystemConfigurations('com.widevine.alpha', {
-      video: ['video/mp4; codecs="avc1.4d401f"'],
-      audio: ['audio/mp4; codecs="mp4a.40.2"'],
-    });
+  it('offers only one configuration when neither preference applies', () => {
+    expect(buildKeySystemConfigurations(playReadyKeySystem, { video: [VIDEO_TYPE], audio: [] })).toHaveLength(1);
+  });
+
+  it("prefers the module's video robustness, with an unrobust fallback", () => {
+    const configs = buildKeySystemConfigurations(widevineKeySystem, { video: [VIDEO_TYPE], audio: [AUDIO_TYPE] });
 
     expect(configs).toHaveLength(2);
-    expect(configs[0]?.videoCapabilities).toEqual([
-      { contentType: 'video/mp4; codecs="avc1.4d401f"', robustness: 'HW_SECURE_ALL' },
-    ]);
-    expect(configs[1]?.videoCapabilities).toEqual([{ contentType: 'video/mp4; codecs="avc1.4d401f"' }]);
+    expect(configs[0]?.videoCapabilities).toEqual([{ contentType: VIDEO_TYPE, robustness: 'HW_SECURE_ALL' }]);
+    expect(configs[1]?.videoCapabilities).toEqual([{ contentType: VIDEO_TYPE }]);
     // Audio stays at the CDM's default in both — no tier is worth a failed negotiation.
-    expect(configs[0]?.audioCapabilities).toEqual([{ contentType: 'audio/mp4; codecs="mp4a.40.2"' }]);
+    expect(configs[0]?.audioCapabilities).toEqual([{ contentType: AUDIO_TYPE }]);
   });
 
-  it('leaves robustness unset for key systems with no preferred tier', () => {
-    const configs = buildKeySystemConfigurations('com.microsoft.playready', {
-      video: ['video/mp4; codecs="avc1.4d401f"'],
-      audio: [],
-    });
+  it('leaves robustness unset for a module with no preferred tier', () => {
+    const configs = buildKeySystemConfigurations(playReadyKeySystem, { video: [VIDEO_TYPE], audio: [] });
 
     expect(configs).toHaveLength(1);
-    expect(configs[0]?.videoCapabilities).toEqual([{ contentType: 'video/mp4; codecs="avc1.4d401f"' }]);
+    expect(configs[0]?.videoCapabilities).toEqual([{ contentType: VIDEO_TYPE }]);
   });
 
   it('composes scheme and robustness preferences, scheme outermost', () => {
-    const configs = buildKeySystemConfigurations(
-      'com.widevine.alpha',
-      { video: ['video/mp4; codecs="avc1.4d401f"'], audio: [] },
-      'cbcs'
-    );
+    const configs = buildKeySystemConfigurations(widevineKeySystem, { video: [VIDEO_TYPE], audio: [] }, 'cbcs');
 
     expect(
       configs.map((config) => [
@@ -463,10 +247,7 @@ describe('buildKeySystemConfigurations', () => {
   });
 
   it('omits a capability list when that type has no content types', () => {
-    const [config] = buildKeySystemConfigurations('com.microsoft.playready', {
-      video: ['video/mp4; codecs="avc1.4d401f"'],
-      audio: [],
-    });
+    const [config] = buildKeySystemConfigurations(playReadyKeySystem, { video: [VIDEO_TYPE], audio: [] });
 
     expect(config?.videoCapabilities).toHaveLength(1);
     expect(config?.audioCapabilities).toBeUndefined();

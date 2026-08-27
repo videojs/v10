@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import type { StateSignals } from '../../../core/composition/create-composition';
 import { signal } from '../../../core/signals/primitives';
+import { NO_KEY_SYSTEM } from '../../../media/drm';
 import { SVTA_NO_SUPPORTED_AUDIO_TRACK, SVTA_NO_SUPPORTED_VIDEO_TRACK, type SvtaError } from '../../../media/errors';
 import type {
   AudioSelectionSet,
@@ -15,8 +16,10 @@ import type {
   VideoSelectionSet,
   VideoTrack,
 } from '../../../media/types';
+import { MEDIA_PLAYLIST_METADATA_KEY } from '../../../media/types';
 import { applyContainerMimeType } from '../../../media/utils/tracks';
 import type { BandwidthState } from '../../../network/bandwidth-estimator';
+import { excludeRefusedKeySystems } from '../../primitives/selection-rules';
 import {
   type SwitchVideoTrackConfig,
   setupTrackSwitching,
@@ -1626,6 +1629,103 @@ describe('setupTrackSwitching (no-supported-track emission)', () => {
 // `undefined` to clear the slot. Exercised here directly via the helper rather
 // than through a variant, since no text variant exists yet.
 // ============================================================================
+
+describe('excludeRefusedKeySystems (refused-key-system constraint)', () => {
+  const drmVideoTrack = (id: string, encrypted: boolean): PartiallyResolvedVideoTrack =>
+    ({
+      type: 'video',
+      codecs: ['avc1.4d401f'],
+      id,
+      url: `https://example.com/${id}.m3u8`,
+      bandwidth: 2_400_000,
+      mimeType: 'video/mp4',
+      metadata: {
+        [MEDIA_PLAYLIST_METADATA_KEY]: { targetDuration: 4, mediaSequence: 0, endList: true, encrypted },
+      },
+    }) as PartiallyResolvedVideoTrack;
+
+  const makeState = (tracks: PartiallyResolvedVideoTrack[], negotiatedKeySystem?: string) => ({
+    presentation: signal<MaybeResolvedPresentation | undefined>(createPresentation(tracks)),
+    bandwidthState: signal<BandwidthState | undefined>(createBandwidthState(10_000_000)),
+    selectedVideoTrackId: signal<string | undefined>(undefined),
+    userVideoTrackSelection: signal<Partial<VideoTrack> | undefined>(undefined),
+    negotiatedKeySystem: signal<string | undefined>(negotiatedKeySystem),
+    errors: signal<SvtaError[] | undefined>(undefined),
+  });
+  const config = { extraConstraints: [excludeRefusedKeySystems] };
+
+  it('leaves encrypted renditions alone while negotiation has not settled', async () => {
+    // `undefined` is "not yet", not "refused" — pruning here would park a source
+    // that is about to license perfectly well.
+    const state = makeState([drmVideoTrack('720p', true)]);
+    const reactor = switchVideoTrack.setup({ state, config });
+
+    await flush();
+
+    expect(state.selectedVideoTrackId.get()).toBe('720p');
+    expect(state.errors.get()).toBeUndefined();
+    reactor.destroy();
+  });
+
+  it('prunes encrypted renditions once negotiation publishes a refusal, and the emptied type reports its own verdict', async () => {
+    const state = makeState([drmVideoTrack('720p', true)], NO_KEY_SYSTEM);
+    const reactor = switchVideoTrack.setup({ state, config });
+
+    await flush();
+
+    // The verdict comes from `track-switching`, not from `setupMediaKeys` —
+    // which reports only the 4008 cause.
+    expect(state.selectedVideoTrackId.get()).toBeUndefined();
+    expect(state.errors.get()?.map((error) => error.code)).toEqual([SVTA_NO_SUPPORTED_VIDEO_TRACK]);
+    reactor.destroy();
+  });
+
+  it('spares a type keeping a clear rendition, and reports no verdict', async () => {
+    // Mux's shape: encrypted and clear renditions side by side. The clear one
+    // still plays, so a verdict would be wrong.
+    const state = makeState([drmVideoTrack('720p-enc', true), drmVideoTrack('720p-clear', false)], NO_KEY_SYSTEM);
+    const reactor = switchVideoTrack.setup({ state, config });
+
+    await flush();
+
+    expect(state.selectedVideoTrackId.get()).toBe('720p-clear');
+    expect(state.errors.get()).toBeUndefined();
+    reactor.destroy();
+  });
+
+  it('re-prunes when the refusal arrives after the first pick', async () => {
+    // Negotiation is async, so the encrypted rendition is picked first and the
+    // refusal lands later; the chain re-derives on the slot write.
+    const state = makeState([drmVideoTrack('720p', true)]);
+    const reactor = switchVideoTrack.setup({ state, config });
+
+    await flush();
+    expect(state.selectedVideoTrackId.get()).toBe('720p');
+
+    state.negotiatedKeySystem.set(NO_KEY_SYSTEM);
+    await flush();
+
+    expect(state.selectedVideoTrackId.get()).toBeUndefined();
+    expect(state.errors.get()?.map((error) => error.code)).toEqual([SVTA_NO_SUPPORTED_VIDEO_TRACK]);
+    reactor.destroy();
+  });
+
+  it('is inert for a composition that never carries the slot', async () => {
+    const state = {
+      presentation: signal<MaybeResolvedPresentation | undefined>(createPresentation([drmVideoTrack('720p', true)])),
+      bandwidthState: signal<BandwidthState | undefined>(createBandwidthState(10_000_000)),
+      selectedVideoTrackId: signal<string | undefined>(undefined),
+      userVideoTrackSelection: signal<Partial<VideoTrack> | undefined>(undefined),
+      errors: signal<SvtaError[] | undefined>(undefined),
+    };
+    const reactor = switchVideoTrack.setup({ state, config });
+
+    await flush();
+
+    expect(state.selectedVideoTrackId.get()).toBe('720p');
+    reactor.destroy();
+  });
+});
 
 describe('setupTrackSwitching (resolveSelection)', () => {
   it('defaults to the chain head when resolveSelection is absent', async () => {

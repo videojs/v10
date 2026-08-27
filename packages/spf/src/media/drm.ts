@@ -61,6 +61,18 @@ export interface DrmSystemConfig {
   headers?: DrmHeaders;
 }
 
+/**
+ * `state.negotiatedKeySystem` when negotiation ran and every candidate was refused.
+ *
+ * A sentinel rather than `null` or a second slot, so the slot stays `string | undefined` and its three meanings read
+ * off one value: absent means negotiation hasn't settled, this means it settled on nothing, anything else is the chosen
+ * key system. Cannot collide with a real id — those are reverse-DNS (`com.widevine.alpha`).
+ *
+ * The distinction is load-bearing for pruning: "not yet" must leave encrypted renditions alone, while "refused" is the
+ * late fact that makes them unplayable (see `excludeRefusedKeySystems`).
+ */
+export const NO_KEY_SYSTEM = 'none';
+
 /** License servers keyed by EME key-system id — the shape of `source.drm`. */
 export type DrmSystemsConfig = Partial<Record<string, DrmSystemConfig>>;
 
@@ -88,20 +100,59 @@ function resolveDrmValue<T>(value: DrmValue<T>): T | undefined {
 }
 
 /**
- * EME key-system id per HLS `KEYFORMAT` identity. Widevine declares itself by its DASH system-id URN; PlayReady's
- * KEYFORMAT happens to equal its key system; FairPlay uses Apple's streaming-key-delivery name.
+ * Everything one key system needs to be negotiated and licensed, as a value a composition includes or omits.
+ *
+ * The unit of DRM composability. Per-system knowledge used to sit in six string-keyed lookup tables spread across this
+ * module and `dom/eme.ts`, which made every system's code reachable from every composition and split a single system's
+ * facts across the DOM boundary. Here each system is one value: drop `playReadyKeySystem` from an engine's `keySystems`
+ * and its request-string variants, its PSSH wrap, and its XML envelope unwrap all leave with it.
+ *
+ * Declared DOM-free so the pruning path (`keySystemCandidates`) can consume modules without a DOM dependency; the
+ * modules themselves live in `dom/key-systems.ts`, since license-message shaping needs browser APIs.
  */
-export const KEY_SYSTEM_BY_KEY_FORMAT: Readonly<Record<string, string>> = {
-  'urn:uuid:edef8ba9-79d6-4ace-a3c8-27dcd51d21ed': 'com.widevine.alpha',
-  'com.microsoft.playready': 'com.microsoft.playready',
-  'com.apple.streamingkeydelivery': 'com.apple.fps',
-};
-
-/**
- * Fixed negotiation order (hls.js's): the platform-native system first where present (FairPlay exists only on Apple
- * UAs, so it costs nothing elsewhere).
- */
-const KEY_SYSTEM_PREFERENCE = ['com.apple.fps', 'com.widevine.alpha', 'com.microsoft.playready'] as const;
+export interface KeySystemModule {
+  /** EME key-system id. What a CDM is asked for, and what `source.drm` and the negotiated-system state are keyed by. */
+  readonly keySystem: string;
+  /**
+   * The HLS `KEYFORMAT` identities that declare this system. Widevine declares itself by its DASH system-id URN;
+   * PlayReady's KEYFORMAT happens to equal its key system; FairPlay uses Apple's streaming-key-delivery name.
+   */
+  readonly keyFormats: readonly string[];
+  /**
+   * Request strings to try, most-preferred first. Defaults to `[keySystem]`. Exists because PlayReady exposes a second
+   * id (`.recommendation`) selecting the hardware security level, and the two are not interchangeable.
+   */
+  readonly requestVariants?: readonly string[];
+  /**
+   * `MediaKeySystemConfiguration.initDataTypes` for this system. Defaults to `['cenc']`. FairPlay's are its own —
+   * Safari rejects a cenc-only configuration; on the MSE path its init data arrives as `sinf`.
+   */
+  readonly initDataTypes?: readonly string[];
+  /**
+   * Video robustness offered ahead of the CDM's default. Naming it as a preference (an extra configuration, not a
+   * retry) means a device that has the tier negotiates it while one that doesn't still gets access rather than a
+   * refusal. Audio is deliberately left at the CDM's default — no audio tier is worth a failed negotiation.
+   */
+  readonly preferredVideoRobustness?: string;
+  /**
+   * Whether to offer an encryption-scheme-unstamped fallback configuration alongside the stamped one. Defaults to
+   * `true`. Windows PlayReady is why it exists: it decrypts cbcs content but refuses a cbcs-stamped configuration,
+   * which is why hls.js leaves the member unset altogether. Set `false` on a system whose CDMs are known to honour the
+   * member, to negotiate one configuration instead of two.
+   */
+  readonly schemeFallback?: boolean;
+  /**
+   * Project a manifest-carried key URI into EME init data, or `undefined` when this URI carries none. Omit the field
+   * entirely for a system whose manifest never carries init data (FairPlay's `skd://`), which routes it to the
+   * `encrypted`-event path.
+   */
+  readonly toInitData?: (uri: string) => { initDataType: string; initData: Uint8Array<ArrayBuffer> } | undefined;
+  /**
+   * Shape a CDM license message for this system's server. Defaults to POSTing the raw bytes as octet-stream, which is
+   * what Widevine and FairPlay want (Mux's FairPlay server takes the bare SPC).
+   */
+  readonly shapeLicenseRequest?: (message: BufferSource) => { body: BufferSource; headers: Record<string, string> };
+}
 
 /**
  * Every DRM key declaration across the presentation's resolved tracks, deduped by full attribute identity. Empty until
@@ -131,45 +182,6 @@ export function declaredDrmKeys(presentation: MaybeResolvedPresentation | undefi
   return keys;
 }
 
-/**
- * The track types a presentation has nothing playable left in once no key system is usable: types with at least one
- * resolved rendition, every one of them encrypted.
- *
- * Pruning decides the same question at selection time, but it runs before EME has negotiated — so a rendition naming a
- * configured license server survives it, and only negotiation later reveals the CDM is absent. This is that
- * late-arriving answer, and it is a _verdict_: with the type empty, the source cannot play. A type keeping any clear
- * rendition is unaffected and reports nothing.
- *
- * Text is excluded deliberately — it runs no capability pre-pass, so it has no verdict for a cause to be matched
- * against.
- */
-export function unplayableEncryptedTypes(
-  presentation: MaybeResolvedPresentation | undefined
-): Array<'video' | 'audio'> {
-  const unplayable: Array<'video' | 'audio'> = [];
-
-  for (const type of ['video', 'audio'] as const) {
-    let resolved = 0;
-    let encrypted = 0;
-
-    for (const selectionSet of presentation?.selectionSets ?? []) {
-      for (const switchingSet of selectionSet.switchingSets) {
-        for (const track of switchingSet.tracks) {
-          if (track.type !== type || !isResolvedTrack(track)) continue;
-
-          resolved += 1;
-
-          if (getMediaPlaylistMetadata(track)?.encrypted) encrypted += 1;
-        }
-      }
-    }
-
-    if (resolved > 0 && encrypted === resolved) unplayable.push(type);
-  }
-
-  return unplayable;
-}
-
 /** Encryption scheme per HLS `METHOD`, for the MKSA encryption-scheme query. */
 const ENCRYPTION_SCHEME_BY_METHOD: Readonly<Record<string, 'cbcs' | 'cenc'>> = {
   'SAMPLE-AES': 'cbcs',
@@ -190,48 +202,28 @@ export function declaredEncryptionScheme(keys: readonly MediaPlaylistKey[]): 'cb
   return schemes.size === 1 ? [...schemes][0] : undefined;
 }
 
-/** PlayReady's CENC system id, 9a04f079-9840-4286-ab92-e65be0885f95, as bytes. */
-const PLAYREADY_SYSTEM_ID = Uint8Array.from([
-  0x9a, 0x04, 0xf0, 0x79, 0x98, 0x40, 0x42, 0x86, 0xab, 0x92, 0xe6, 0x5b, 0xe0, 0x88, 0x5f, 0x95,
-]);
-
-function isPsshBox(bytes: Uint8Array): boolean {
-  return bytes.length >= 8 && bytes[4] === 0x70 && bytes[5] === 0x73 && bytes[6] === 0x73 && bytes[7] === 0x68;
-}
-
 /**
- * Project a manifest-carried key payload into `cenc` init data. Widevine ships a complete PSSH box in its `data:` URI;
- * PlayReady ships a raw PlayReady Object (WRMHEADER), which `generateRequest('cenc', …)` refuses — wrap it in a v0 PSSH
- * box under PlayReady's system id, as hls.js and Shaka do.
- */
-export function toCencInitData(keySystem: string, bytes: Uint8Array<ArrayBuffer>): Uint8Array<ArrayBuffer> {
-  if (keySystem !== 'com.microsoft.playready' || isPsshBox(bytes)) return bytes;
-
-  const box = new Uint8Array(32 + bytes.length);
-  const view = new DataView(box.buffer);
-
-  view.setUint32(0, box.length);
-  box.set([0x70, 0x73, 0x73, 0x68], 4); // 'pssh'; version + flags stay zeroed at offset 8
-  box.set(PLAYREADY_SYSTEM_ID, 12);
-  view.setUint32(28, bytes.length);
-  box.set(bytes, 32);
-  return box;
-}
-
-/**
- * The key systems worth asking the CDM for: declared by the presentation's keys _and_ resolving to a license server, in
- * {@link KEY_SYSTEM_PREFERENCE} order. Keys without a recognized DRM `KEYFORMAT` (e.g. `identity` AES-128) contribute
+ * The key-system modules worth asking the CDM for: declared by the presentation's keys _and_ resolving to a license
+ * server, in `keySystems` order. Keys without a `KEYFORMAT` any module claims (e.g. `identity` AES-128) contribute
  * nothing.
+ *
+ * Negotiation preference is the caller's array order rather than a table here — hls.js's order (the platform-native
+ * system first, FairPlay existing only on Apple UAs so it costs nothing elsewhere) is what `DEFAULT_KEY_SYSTEMS`
+ * encodes, and a composition that wants another just orders its own list.
  *
  * A resolved license server rather than a named entry is what counts, so a config naming every system it could ever
  * license still refuses the sources it holds no credentials for.
  */
-export function keySystemCandidates(keys: readonly MediaPlaylistKey[], drm: DrmSystemsConfig): string[] {
-  const declared = new Set(
-    keys.map((key) => (key.keyFormat === undefined ? undefined : KEY_SYSTEM_BY_KEY_FORMAT[key.keyFormat]))
-  );
+export function keySystemCandidates(
+  keys: readonly MediaPlaylistKey[],
+  drm: DrmSystemsConfig,
+  keySystems: readonly KeySystemModule[]
+): KeySystemModule[] {
+  const declared = new Set(keys.map((key) => key.keyFormat).filter((keyFormat) => keyFormat !== undefined));
 
-  return KEY_SYSTEM_PREFERENCE.filter(
-    (keySystem) => declared.has(keySystem) && resolveDrmUrl(drm[keySystem]?.licenseUrl) !== undefined
+  return keySystems.filter(
+    (module_) =>
+      module_.keyFormats.some((keyFormat) => declared.has(keyFormat)) &&
+      resolveDrmUrl(drm[module_.keySystem]?.licenseUrl) !== undefined
   );
 }
