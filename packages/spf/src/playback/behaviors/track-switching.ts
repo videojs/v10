@@ -83,7 +83,7 @@ import { getCdnId as defaultGetCdnId, type GetCdnId } from '../../media/utils/cd
 import { getCodecFamilies, getTracksByType } from '../../media/utils/tracks';
 import type { BandwidthConfig, BandwidthState } from '../../network/bandwidth-estimator';
 import { DEFAULT_BANDWIDTH_CONFIG, getBandwidthEstimate } from '../../network/bandwidth-estimator';
-import type { SelectionRule, SelectionRuleDeps } from '../primitives/selection-rules';
+import type { GenericSelectionRule, SelectionRule, SelectionRuleDeps } from '../primitives/selection-rules';
 import {
   applyConstraints,
   applyRules,
@@ -117,6 +117,16 @@ export interface TrackSwitchingState {
  * `DEFAULT_BANDWIDTH_CONFIG`, `DEFAULT_INITIAL_BANDWIDTH` (5 Mbps).
  */
 export interface SwitchVideoTrackConfig {
+  /**
+   * Extra hard constraints appended to this variant's built-in pre-pass, for a composition whose pruning depends on
+   * something the built-ins can't see — today `excludeRefusedKeySystems`, which reads a slot only DRM compositions
+   * carry.
+   *
+   * Append-only on purpose: the built-in chain (failed CDNs, capability, codec stickiness) stays this behavior's, so a
+   * composition can add to pruning without being able to silently drop a constraint playback depends on. The fuller
+   * decoupling — the whole chain passed in — is planned; this is the seam until then.
+   */
+  extraConstraints?: readonly GenericSelectionRule[];
   quality?: Partial<QualityConfig>;
   bandwidth?: Partial<BandwidthConfig>;
   initialBandwidth?: number;
@@ -150,7 +160,12 @@ export const DEFAULT_INITIAL_BANDWIDTH = 5_000_000;
 // second import; the definitions live in `../primitives/selection-rules` so the
 // simple `selectVideoTrack` variant can share them without pulling the ABR path
 // in with them. See that module's note.
-export type { CodecPreferenceConfig, SelectionRule, SelectionRuleDeps } from '../primitives/selection-rules';
+export type {
+  CodecPreferenceConfig,
+  GenericSelectionRule,
+  SelectionRule,
+  SelectionRuleDeps,
+} from '../primitives/selection-rules';
 export {
   applyConstraints,
   applyRules,
@@ -797,7 +812,12 @@ export const switchVideoTrack = defineBehavior({
         selectionKey: 'selectedVideoTrackId',
         userSelectionKey: 'userVideoTrackSelection',
         getTracks: (presentation) => getTracksByType(presentation, 'video') as readonly VideoTrackCandidate[],
-        constraints: [excludeFailedCdns, excludeUnplayableTracks, stickToSelectedCodecs],
+        constraints: [
+          excludeFailedCdns,
+          excludeUnplayableTracks,
+          stickToSelectedCodecs,
+          ...(config?.extraConstraints ?? []),
+        ],
         rules: [filterByUserSelection, preferCodecFamilies, preferActiveCdn, playerResolutionCap, rankByBandwidth],
         noSupportedTrackCode: SVTA_NO_SUPPORTED_VIDEO_TRACK,
       },
@@ -847,7 +867,12 @@ export const switchAudioTrack = defineBehavior({
         selectionKey: 'selectedAudioTrackId',
         userSelectionKey: 'userAudioTrackSelection',
         getTracks: (presentation) => getTracksByType(presentation, 'audio') as readonly AudioTrackCandidate[],
-        constraints: [excludeFailedCdns, excludeUnplayableTracks, stickToSelectedCodecs],
+        constraints: [
+          excludeFailedCdns,
+          excludeUnplayableTracks,
+          stickToSelectedCodecs,
+          ...(config?.extraConstraints ?? []),
+        ],
         rules: [filterByUserSelection, preferCodecFamilies, preferActiveCdn, rankByBandwidth],
         noSupportedTrackCode: SVTA_NO_SUPPORTED_AUDIO_TRACK,
       },
