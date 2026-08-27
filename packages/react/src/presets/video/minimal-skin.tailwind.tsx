@@ -97,6 +97,7 @@ import { VolumeSlider } from '@/ui/volume-slider';
 
 import type { MinimalVideoSkinProps } from './minimal-skin';
 
+const VOLUME_STEP = 5;
 const SEEK_TIME = 10;
 const TOP_STATUS_ACTIONS = ['toggleSubtitles', 'toggleFullscreen', 'togglePictureInPicture'] as const;
 const CENTER_STATUS_ACTIONS = ['togglePaused'] as const;
@@ -179,7 +180,7 @@ function VolumePopover(): ReactNode {
         </Tooltip.Popup>
       </Tooltip.Root>
       <Popover.Popup className={popup.volume}>
-        <VolumeSlider.Root orientation="horizontal" thumbAlignment="edge" render={<SliderRoot />}>
+        <VolumeSlider.Root step={VOLUME_STEP} orientation="horizontal" thumbAlignment="edge" render={<SliderRoot />}>
           <VolumeSlider.Track render={<SliderTrack />}>
             <VolumeSlider.Fill render={<SliderFill />} />
           </VolumeSlider.Track>
@@ -576,8 +577,8 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
       <Hotkey keys="ArrowLeft" action="seekStep" value={-(SEEK_TIME / 2)} />
       <Hotkey keys="l" action="seekStep" value={SEEK_TIME} />
       <Hotkey keys="j" action="seekStep" value={-SEEK_TIME} />
-      <Hotkey keys="ArrowUp" action="volumeStep" value={0.05} />
-      <Hotkey keys="ArrowDown" action="volumeStep" value={-0.05} />
+      <Hotkey keys="ArrowUp" action="volumeStep" value={VOLUME_STEP / 100} />
+      <Hotkey keys="ArrowDown" action="volumeStep" value={-VOLUME_STEP / 100} />
       <Hotkey keys="0-9" action="seekToPercent" />
       <Hotkey keys="Home" action="seekToPercent" value={0} />
       <Hotkey keys="End" action="seekToPercent" value={100} />

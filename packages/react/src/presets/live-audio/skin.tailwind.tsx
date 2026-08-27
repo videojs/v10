@@ -32,6 +32,8 @@ import { VolumeSlider } from '@/ui/volume-slider';
 
 import type { LiveAudioSkinProps } from './skin';
 
+const VOLUME_STEP = 5;
+
 const Button = forwardRef<HTMLButtonElement, ComponentProps<'button'>>(function Button({ className, ...props }, ref) {
   return (
     <button ref={ref} type="button" className={cn(button.base, button.subtle, button.icon, className)} {...props} />
@@ -92,7 +94,7 @@ function VolumePopover(): ReactNode {
     <Popover.Root openOnHover delay={200} closeDelay={100} side="top" boundary="viewport">
       <Popover.Trigger render={muteButton} />
       <Popover.Popup className={cn(popup.popover, popup.volume)}>
-        <VolumeSlider.Root orientation="vertical" thumbAlignment="edge" render={<SliderRoot />}>
+        <VolumeSlider.Root step={VOLUME_STEP} orientation="vertical" thumbAlignment="edge" render={<SliderRoot />}>
           <VolumeSlider.Track render={<SliderTrack />}>
             <VolumeSlider.Fill render={<SliderFill />} />
           </VolumeSlider.Track>
@@ -167,8 +169,8 @@ export function LiveAudioSkinTailwind(props: LiveAudioSkinProps): ReactNode {
       <Hotkey keys="Space" action="togglePaused" />
       <Hotkey keys="k" action="togglePaused" />
       <Hotkey keys="m" action="toggleMuted" />
-      <Hotkey keys="ArrowUp" action="volumeStep" value={0.05} />
-      <Hotkey keys="ArrowDown" action="volumeStep" value={-0.05} />
+      <Hotkey keys="ArrowUp" action="volumeStep" value={VOLUME_STEP / 100} />
+      <Hotkey keys="ArrowDown" action="volumeStep" value={-VOLUME_STEP / 100} />
 
       {/* Input Feedback */}
       <StatusAnnouncer className="sr-only" />

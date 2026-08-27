@@ -131,10 +131,14 @@ for (const entry of PAGES as readonly PageEntry[]) {
 
       await expect(player.volumeSlider).toBeVisible();
       await player.volumeSliderThumb.focus();
-      await page.keyboard.press('End');
-      await expect.poll(() => getMediaValue(page, 'volume')).toBe(1);
-      await page.keyboard.press('ArrowDown');
-      await expect.poll(() => getMediaValue(page, 'volume')).toBeLessThan(1);
+      await page.keyboard.press('Home');
+      await expect.poll(() => getMediaValue(page, 'volume')).toBe(0);
+      await expect(player.volumeSliderThumb).toHaveAttribute('aria-valuenow', '0');
+      const timeBeforeVolume = await getMediaValue(page, 'currentTime');
+
+      await page.keyboard.press('ArrowRight');
+      await expect.poll(() => getMediaValue(page, 'currentTime')).toBeCloseTo(timeBeforeVolume);
+      await expect.poll(() => getMediaValue(page, 'volume')).toBeCloseTo(0.05);
 
       if (isAudio) {
         await player.seekTo(50);

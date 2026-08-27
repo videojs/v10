@@ -27,6 +27,8 @@ import { VolumeSlider } from '@/ui/volume-slider';
 
 import type { BaseSkinProps } from '../types';
 
+const VOLUME_STEP = 5;
+
 export type MinimalLiveAudioSkinProps = BaseSkinProps;
 
 const Button = forwardRef<HTMLButtonElement, ComponentProps<'button'>>(function Button({ className, ...props }, ref) {
@@ -73,7 +75,7 @@ function VolumePopover(): ReactNode {
         </Tooltip.Popup>
       </Tooltip.Root>
       <Popover.Popup className="media-popover media-popover--volume">
-        <VolumeSlider.Root className="media-slider" orientation="horizontal" thumbAlignment="edge">
+        <VolumeSlider.Root step={VOLUME_STEP} className="media-slider" orientation="horizontal" thumbAlignment="edge">
           <VolumeSlider.Track className="media-slider__track">
             <VolumeSlider.Fill className="media-slider__fill" />
           </VolumeSlider.Track>
@@ -153,8 +155,8 @@ export function MinimalLiveAudioSkin(props: MinimalLiveAudioSkinProps): ReactNod
       <Hotkey keys="Space" action="togglePaused" />
       <Hotkey keys="k" action="togglePaused" />
       <Hotkey keys="m" action="toggleMuted" />
-      <Hotkey keys="ArrowUp" action="volumeStep" value={0.05} />
-      <Hotkey keys="ArrowDown" action="volumeStep" value={-0.05} />
+      <Hotkey keys="ArrowUp" action="volumeStep" value={VOLUME_STEP / 100} />
+      <Hotkey keys="ArrowDown" action="volumeStep" value={-VOLUME_STEP / 100} />
 
       {/* Input Feedback */}
       <StatusAnnouncer className="media-sr-only" />

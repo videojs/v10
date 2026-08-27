@@ -59,7 +59,7 @@ export interface SliderRootStyle extends Record<string, string> {
 }
 
 export interface SliderThumbProps {
-  onKeyDown: (event: UIKeyboardEvent) => void;
+  onKeyDownCapture: (event: UIKeyboardEvent) => void;
   onFocus: () => void;
   onBlur: () => void;
 }
@@ -270,7 +270,7 @@ export function createSlider(options: SliderOptions): SliderApi {
 
   // --- Thumb props ---
   const thumbProps: SliderThumbProps = {
-    onKeyDown(event) {
+    onKeyDownCapture(event) {
       if (options.isDisabled()) {
         if (event.key !== 'Tab') event.preventDefault();
 

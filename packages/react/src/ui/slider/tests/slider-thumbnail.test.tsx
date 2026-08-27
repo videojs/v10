@@ -23,7 +23,7 @@ const { mockSliderApi, mockThumbnailApi } = vi.hoisted(() => ({
       onPointerLeave: vi.fn(),
     },
     thumbProps: {
-      onKeyDown: vi.fn(),
+      onKeyDownCapture: vi.fn(),
       onFocus: vi.fn(),
       onBlur: vi.fn(),
     },

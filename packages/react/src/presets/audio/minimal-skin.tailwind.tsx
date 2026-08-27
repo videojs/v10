@@ -55,6 +55,7 @@ import { VolumeSlider } from '@/ui/volume-slider';
 
 import type { MinimalAudioSkinProps } from './minimal-skin';
 
+const VOLUME_STEP = 5;
 const SEEK_TIME = 10;
 
 /* --------------------------------------- Components ---------------------------------------- */
@@ -139,7 +140,7 @@ function VolumePopover(): ReactNode {
         </Tooltip.Popup>
       </Tooltip.Root>
       <Popover.Popup className={cn(popup.volume)}>
-        <VolumeSlider.Root orientation="horizontal" thumbAlignment="edge" render={<SliderRoot />}>
+        <VolumeSlider.Root step={VOLUME_STEP} orientation="horizontal" thumbAlignment="edge" render={<SliderRoot />}>
           <VolumeSlider.Track render={<SliderTrack />}>
             <VolumeSlider.Fill render={<SliderFill />} />
           </VolumeSlider.Track>
@@ -319,8 +320,8 @@ export function MinimalAudioSkinTailwind(props: MinimalAudioSkinProps): ReactNod
       <Hotkey keys="ArrowLeft" action="seekStep" value={-5} />
       <Hotkey keys="l" action="seekStep" value={10} />
       <Hotkey keys="j" action="seekStep" value={-10} />
-      <Hotkey keys="ArrowUp" action="volumeStep" value={0.05} />
-      <Hotkey keys="ArrowDown" action="volumeStep" value={-0.05} />
+      <Hotkey keys="ArrowUp" action="volumeStep" value={VOLUME_STEP / 100} />
+      <Hotkey keys="ArrowDown" action="volumeStep" value={-VOLUME_STEP / 100} />
       <Hotkey keys="0-9" action="seekToPercent" />
       <Hotkey keys="Home" action="seekToPercent" value={0} />
       <Hotkey keys="End" action="seekToPercent" value={100} />

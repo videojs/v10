@@ -110,7 +110,7 @@ describe('createSlider', () => {
       expect(slider.rootProps.onPointerDown).toBeTypeOf('function');
       expect(slider.rootProps.onPointerMove).toBeTypeOf('function');
       expect(slider.rootProps.onPointerLeave).toBeTypeOf('function');
-      expect(slider.thumbProps.onKeyDown).toBeTypeOf('function');
+      expect(slider.thumbProps.onKeyDownCapture).toBeTypeOf('function');
       expect(slider.thumbProps.onFocus).toBeTypeOf('function');
       expect(slider.thumbProps.onBlur).toBeTypeOf('function');
       expect(slider.destroy).toBeTypeOf('function');
@@ -518,7 +518,7 @@ describe('createSlider', () => {
 
       const event = keyboardEvent('ArrowRight');
 
-      slider.thumbProps.onKeyDown(event);
+      slider.thumbProps.onKeyDownCapture(event);
 
       expect(onValueChange).toHaveBeenCalledWith(51);
       expect(onValueCommit).toHaveBeenCalledWith(51);
@@ -531,7 +531,7 @@ describe('createSlider', () => {
       const onValueChange = vi.fn();
       const slider = createSlider(createOptions({ getPercent: () => 50, getStepPercent: () => 1, onValueChange }));
 
-      slider.thumbProps.onKeyDown(keyboardEvent('ArrowLeft'));
+      slider.thumbProps.onKeyDownCapture(keyboardEvent('ArrowLeft'));
 
       expect(onValueChange).toHaveBeenCalledWith(49);
 
@@ -542,7 +542,7 @@ describe('createSlider', () => {
       const onValueChange = vi.fn();
       const slider = createSlider(createOptions({ getPercent: () => 50, getStepPercent: () => 5, onValueChange }));
 
-      slider.thumbProps.onKeyDown(keyboardEvent('ArrowUp'));
+      slider.thumbProps.onKeyDownCapture(keyboardEvent('ArrowUp'));
 
       expect(onValueChange).toHaveBeenCalledWith(55);
 
@@ -553,7 +553,7 @@ describe('createSlider', () => {
       const onValueChange = vi.fn();
       const slider = createSlider(createOptions({ getPercent: () => 50, getStepPercent: () => 5, onValueChange }));
 
-      slider.thumbProps.onKeyDown(keyboardEvent('ArrowDown'));
+      slider.thumbProps.onKeyDownCapture(keyboardEvent('ArrowDown'));
 
       expect(onValueChange).toHaveBeenCalledWith(45);
 
@@ -571,7 +571,7 @@ describe('createSlider', () => {
         })
       );
 
-      slider.thumbProps.onKeyDown(keyboardEvent('ArrowRight', { shiftKey: true }));
+      slider.thumbProps.onKeyDownCapture(keyboardEvent('ArrowRight', { shiftKey: true }));
 
       expect(onValueChange).toHaveBeenCalledWith(60);
 
@@ -584,7 +584,7 @@ describe('createSlider', () => {
         createOptions({ getPercent: () => 50, getLargeStepPercent: () => 10, onValueChange })
       );
 
-      slider.thumbProps.onKeyDown(keyboardEvent('PageUp'));
+      slider.thumbProps.onKeyDownCapture(keyboardEvent('PageUp'));
 
       expect(onValueChange).toHaveBeenCalledWith(60);
 
@@ -597,7 +597,7 @@ describe('createSlider', () => {
         createOptions({ getPercent: () => 50, getLargeStepPercent: () => 10, onValueChange })
       );
 
-      slider.thumbProps.onKeyDown(keyboardEvent('PageDown'));
+      slider.thumbProps.onKeyDownCapture(keyboardEvent('PageDown'));
 
       expect(onValueChange).toHaveBeenCalledWith(40);
 
@@ -608,7 +608,7 @@ describe('createSlider', () => {
       const onValueChange = vi.fn();
       const slider = createSlider(createOptions({ onValueChange }));
 
-      slider.thumbProps.onKeyDown(keyboardEvent('Home'));
+      slider.thumbProps.onKeyDownCapture(keyboardEvent('Home'));
 
       expect(onValueChange).toHaveBeenCalledWith(0);
 
@@ -619,7 +619,7 @@ describe('createSlider', () => {
       const onValueChange = vi.fn();
       const slider = createSlider(createOptions({ onValueChange }));
 
-      slider.thumbProps.onKeyDown(keyboardEvent('End'));
+      slider.thumbProps.onKeyDownCapture(keyboardEvent('End'));
 
       expect(onValueChange).toHaveBeenCalledWith(100);
 
@@ -630,7 +630,7 @@ describe('createSlider', () => {
       const onValueChange = vi.fn();
       const slider = createSlider(createOptions({ getPercent: () => 99, getStepPercent: () => 5, onValueChange }));
 
-      slider.thumbProps.onKeyDown(keyboardEvent('ArrowRight'));
+      slider.thumbProps.onKeyDownCapture(keyboardEvent('ArrowRight'));
 
       expect(onValueChange).toHaveBeenCalledWith(100);
 
@@ -642,7 +642,7 @@ describe('createSlider', () => {
       const onValueCommit = vi.fn();
       const slider = createSlider(createOptions({ getPercent: () => 50, onValueChange, onValueCommit }));
 
-      slider.thumbProps.onKeyDown(keyboardEvent('ArrowRight'));
+      slider.thumbProps.onKeyDownCapture(keyboardEvent('ArrowRight'));
 
       expect(onValueChange).toHaveBeenCalledOnce();
       expect(onValueCommit).toHaveBeenCalledOnce();
@@ -655,7 +655,7 @@ describe('createSlider', () => {
 
       const event = keyboardEvent('ArrowRight');
 
-      slider.thumbProps.onKeyDown(event);
+      slider.thumbProps.onKeyDownCapture(event);
 
       expect(event.preventDefault).toHaveBeenCalled();
 
@@ -668,7 +668,7 @@ describe('createSlider', () => {
 
       const event = keyboardEvent('Tab');
 
-      slider.thumbProps.onKeyDown(event);
+      slider.thumbProps.onKeyDownCapture(event);
 
       expect(event.preventDefault).not.toHaveBeenCalled();
       expect(onValueChange).not.toHaveBeenCalled();
@@ -686,7 +686,7 @@ describe('createSlider', () => {
       flush();
       expect(slider.input.current.pointing).toBe(true);
 
-      slider.thumbProps.onKeyDown(keyboardEvent('ArrowRight'));
+      slider.thumbProps.onKeyDownCapture(keyboardEvent('ArrowRight'));
       flush();
 
       expect(slider.input.current.pointing).toBe(false);
@@ -699,7 +699,7 @@ describe('createSlider', () => {
       // Simulate a value between steps (e.g., from a drag that landed at 47.3)
       const slider = createSlider(createOptions({ getPercent: () => 47.3, getStepPercent: () => 5, onValueChange }));
 
-      slider.thumbProps.onKeyDown(keyboardEvent('ArrowRight'));
+      slider.thumbProps.onKeyDownCapture(keyboardEvent('ArrowRight'));
 
       // 47.3 rounds to 45 (nearest step of 5 from 0), then +5 = 50
       expect(onValueChange).toHaveBeenCalledWith(50);
@@ -715,7 +715,7 @@ describe('createSlider', () => {
       document.documentElement.dir = 'rtl';
       const slider = createSlider(createOptions({ getPercent: () => 50, getStepPercent: () => 1, onValueChange }));
 
-      slider.thumbProps.onKeyDown(keyboardEvent('ArrowRight'));
+      slider.thumbProps.onKeyDownCapture(keyboardEvent('ArrowRight'));
 
       expect(onValueChange).toHaveBeenCalledWith(51);
 
@@ -728,7 +728,7 @@ describe('createSlider', () => {
       document.documentElement.dir = 'rtl';
       const slider = createSlider(createOptions({ getPercent: () => 50, getStepPercent: () => 1, onValueChange }));
 
-      slider.thumbProps.onKeyDown(keyboardEvent('ArrowLeft'));
+      slider.thumbProps.onKeyDownCapture(keyboardEvent('ArrowLeft'));
 
       expect(onValueChange).toHaveBeenCalledWith(49);
 
@@ -747,11 +747,11 @@ describe('createSlider', () => {
         })
       );
 
-      slider.thumbProps.onKeyDown(keyboardEvent('ArrowUp'));
+      slider.thumbProps.onKeyDownCapture(keyboardEvent('ArrowUp'));
       expect(onValueChange).toHaveBeenCalledWith(51);
 
       onValueChange.mockClear();
-      slider.thumbProps.onKeyDown(keyboardEvent('ArrowDown'));
+      slider.thumbProps.onKeyDownCapture(keyboardEvent('ArrowDown'));
       expect(onValueChange).toHaveBeenCalledWith(49);
 
       slider.destroy();
@@ -765,7 +765,7 @@ describe('createSlider', () => {
 
       const arrowEvent = keyboardEvent('ArrowRight');
 
-      slider.thumbProps.onKeyDown(arrowEvent);
+      slider.thumbProps.onKeyDownCapture(arrowEvent);
 
       expect(onValueChange).not.toHaveBeenCalled();
       expect(arrowEvent.preventDefault).toHaveBeenCalled();
@@ -778,7 +778,7 @@ describe('createSlider', () => {
 
       const tabEvent = keyboardEvent('Tab');
 
-      slider.thumbProps.onKeyDown(tabEvent);
+      slider.thumbProps.onKeyDownCapture(tabEvent);
 
       expect(tabEvent.preventDefault).not.toHaveBeenCalled();
 
@@ -1129,7 +1129,7 @@ describe('createSlider', () => {
       const onValueChange = vi.fn();
       const slider = createSlider(createOptions({ getPercent: () => 50, onValueChange, changeThrottle: 100 }));
 
-      slider.thumbProps.onKeyDown(keyboardEvent('ArrowRight'));
+      slider.thumbProps.onKeyDownCapture(keyboardEvent('ArrowRight'));
 
       expect(onValueChange).toHaveBeenCalledOnce();
       expect(onValueChange).toHaveBeenCalledWith(51);

@@ -5,6 +5,8 @@ import { SkinElement } from '../skin';
 
 import styles from '../../define/live-video/minimal-skin.css?inline';
 
+const VOLUME_STEP = 5;
+
 function getTemplateHTML() {
   return /*html*/ `
     <media-container class="media-minimal-skin media-minimal-skin--video">
@@ -63,7 +65,7 @@ function getTemplateHTML() {
               </media-tooltip>
 
               <media-popover id="live-video-volume-popover" open-on-hover delay="200" close-delay="100" side="right" class="media-popover media-popover--volume">
-                <media-volume-slider class="media-slider" orientation="horizontal" thumb-alignment="edge">
+                <media-volume-slider step="${VOLUME_STEP}" class="media-slider" orientation="horizontal" thumb-alignment="edge">
                   <media-slider-track class="media-slider__track">
                     <media-slider-fill class="media-slider__fill"></media-slider-fill>
                   </media-slider-track>
@@ -145,8 +147,8 @@ function getTemplateHTML() {
       <media-hotkey keys="f" action="toggleFullscreen"></media-hotkey>
       <media-hotkey keys="c" action="toggleSubtitles"></media-hotkey>
       <media-hotkey keys="i" action="togglePictureInPicture"></media-hotkey>
-      <media-hotkey keys="ArrowUp" action="volumeStep" value="0.05"></media-hotkey>
-      <media-hotkey keys="ArrowDown" action="volumeStep" value="-0.05"></media-hotkey>
+      <media-hotkey keys="ArrowUp" action="volumeStep" value="${VOLUME_STEP / 100}"></media-hotkey>
+      <media-hotkey keys="ArrowDown" action="volumeStep" value="${-VOLUME_STEP / 100}"></media-hotkey>
 
       <!-- Gestures -->
       <media-gesture type="tap" action="togglePaused" pointer="mouse" region="center"></media-gesture>

@@ -1,4 +1,4 @@
-import { cleanup, render } from '@testing-library/react';
+import { cleanup, fireEvent, render } from '@testing-library/react';
 import { createRef } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
@@ -48,7 +48,7 @@ const { mockSliderApi, sliderOptionsRef } = vi.hoisted(() => {
           onPointerLeave: vi.fn(),
         },
         thumbProps: {
-          onKeyDown: vi.fn(),
+          onKeyDownCapture: (event: { preventDefault(): void }) => event.preventDefault(),
           onFocus: vi.fn(),
           onBlur: vi.fn(),
         },
@@ -249,6 +249,22 @@ describe('SliderThumb', () => {
     const thumb = container.querySelector('[data-testid="thumb"]');
 
     expect(thumb?.getAttribute('role')).toBe('slider');
+  });
+
+  it('handles keydown before native ancestor listeners', () => {
+    const { container } = render(
+      <SliderRoot>
+        <SliderThumb data-testid="thumb" />
+      </SliderRoot>
+    );
+    const root = container.firstElementChild!;
+    const thumb = container.querySelector('[data-testid="thumb"]')!;
+    const onKeyDown = vi.fn((event: Event) => event.defaultPrevented);
+
+    root.addEventListener('keydown', onKeyDown);
+    fireEvent.keyDown(thumb, { key: 'ArrowRight' });
+
+    expect(onKeyDown).toHaveReturnedWith(true);
   });
 });
 

@@ -146,7 +146,7 @@ export async function processHtmlSkin(skin: HtmlSkinDef): Promise<string> {
 
   validatePackageImports(source, skin.template);
   const templateBody = extractTemplateLiteral(source);
-  const context: Record<string, unknown> = { SEEK_TIME: 10 };
+  const context: Record<string, unknown> = { SEEK_TIME: 10, VOLUME_STEP: 5 };
 
   await loadImportedNames(source, templateBody, skin.template, context);
   context.renderIcon = createRenderMediaIcon(skin.iconSet);

@@ -47,7 +47,7 @@ function createSliderContext(state: Partial<SliderState> = {}, pointerValue = 0)
     stateAttrMap: SliderDataAttrs,
     pointerValue,
     thumbAttrs: {},
-    thumbProps: { onKeyDown: () => {}, onFocus: () => {}, onBlur: () => {} },
+    thumbProps: { onKeyDownCapture: () => {}, onFocus: () => {}, onBlur: () => {} },
   };
 }
 
