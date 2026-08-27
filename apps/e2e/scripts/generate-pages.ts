@@ -427,7 +427,10 @@ video.innerHTML = \`<track kind="metadata" label="thumbnails" src="\${MEDIA.${re
 poster.src = MEDIA.${resource}.poster;
 poster.alt = 'Video poster';
 
-await import('@videojs/html/video/skin');
+// Ejected layouts have no <video-skin>, so register the player (context owner)
+// before the light DOM UI elements that consume it.
+await import('@videojs/html/video/player');
+await import('@videojs/html/video/ui');
 `;
 }
 
