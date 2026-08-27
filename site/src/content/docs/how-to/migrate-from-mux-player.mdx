@@ -523,6 +523,8 @@ function Elapsed() {
 
 Every feature has a selector (`selectPlayback`, `selectTime`, `selectVolume`, `selectQuality`, `selectLive`, `selectTextTrack`, and so on) for when you want a whole slice rather than one value.
 
+`usePlayer` reads through context, so it only works inside `Player`. If a component that needs player state renders outside `Player`, lift `Player` above it: it's a context provider that renders no DOM, so wrapping a page or layout in it changes nothing visually and puts the store in reach of everything inside.
+
 Use a ref for imperative browser media APIs or for custom events that do not have React event props, such as `sourcechange`. The ref value is the rendered `HTMLVideoElement`.
 
 </FrameworkCase>

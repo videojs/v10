@@ -126,6 +126,8 @@ Everything that needs player state goes inside `Player`: skins, containers, UI c
 
 <FrameworkCase frameworks={["react"]}>
 `Player` renders no DOM element of its own — it's purely a state wrapper. Put sizing, positioning, borders, backgrounds, and DOM measurements on the <DocsLink slug="reference/player-container">`Container`</DocsLink>, not `Player`.
+
+Because it renders nothing, `Player` behaves like any React context provider: if a component needs player state, lift `Player` above it. Wrapping a page section, a route, or even your whole app in `Player` costs nothing visually and keeps <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> available wherever you need it.
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
 Packaged skins make `<video-player>` boxless with `display: contents`. Width, height, positioning, transforms, and `getBoundingClientRect()` do not describe a visible player box there. Put layout and measurements on the <DocsLink slug="reference/player-container">`<media-container>`</DocsLink> instead.

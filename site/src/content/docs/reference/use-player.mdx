@@ -21,6 +21,8 @@ The `usePlayer` hook returned by <DocsLink slug="reference/create-player">`creat
 const { Player, usePlayer } = createPlayer({ features: videoFeatures });
 ```
 
+`usePlayer` reads the store through context, so the calling component must render inside `Player`. You can still read state anywhere: <DocsLink slug="reference/player">`Player`</DocsLink> works like any React context provider and renders no DOM of its own, so lift it above every component that needs player state.
+
 `usePlayer` is also available as a standalone import (`import { usePlayer } from '@videojs/react'`), but the standalone version returns an untyped `UnknownStore`. Pass a premade selector to recover typing:
 
 ```tsx
