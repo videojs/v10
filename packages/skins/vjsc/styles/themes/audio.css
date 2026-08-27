@@ -1,0 +1,19 @@
+@layer videojs.theme.variant {
+  :is(.media-skin--default.media-skin--audio, .media-skin--minimal.media-skin--audio) {
+    height: auto;
+    overflow: visible;
+    background: transparent;
+
+    --media-default-accent-color: light-dark(oklch(0 0 0), oklch(1 0 0));
+    --media-focus-ring-color: light-dark(oklch(0 0 0), oklch(1 0 0));
+    --media-audio-text-color: light-dark(oklch(0 0 0), oklch(1 0 0));
+  }
+
+  .media-skin--default.media-skin--audio {
+    --media-audio-controls-background-color: light-dark(oklch(1 0 0 / 0.5), oklch(0 0 0 / 0.4));
+  }
+
+  .media-skin--minimal.media-skin--audio {
+    --media-audio-controls-background-color: light-dark(oklch(1 0 0), oklch(0 0 0));
+  }
+}

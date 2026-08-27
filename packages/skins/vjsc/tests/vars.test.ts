@@ -41,7 +41,7 @@ describe('vars', () => {
     for (const file of files) {
       const source = await readFile(file, 'utf8');
 
-      for (const match of source.matchAll(/--[a-zA-Z0-9_-]+/g)) customProperties.add(match[0]);
+      for (const match of source.matchAll(/(?<![a-zA-Z0-9_-])--[a-zA-Z0-9_-]+/g)) customProperties.add(match[0]);
     }
 
     const unprefixed = [...customProperties].filter(

@@ -4,6 +4,7 @@
 @import "./themes/video.css";
 @import "./themes/default.css";
 @import "./themes/minimal.css";
+@import "./themes/audio.css";
 
 @layer videojs.base {
   @scope (.media-skin) {

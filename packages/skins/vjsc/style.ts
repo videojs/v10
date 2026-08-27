@@ -9,7 +9,13 @@ const stylesDir = resolve(import.meta.dirname, 'styles');
 
 export function createStyleOptions(config: SkinConfig): StylePluginOptions {
   const skin = skinStyles[config.skin];
-  const variants = config.target === 'html' ? [skin.variant, 'shadow-dom'] : [skin.variant];
+  const variants: string[] = [skin.theme];
+
+  if (skin.variant !== skin.theme) variants.push(skin.variant);
+
+  if (!variants.includes(config.skin)) variants.push(config.skin);
+
+  if (config.target === 'html') variants.push('shadow-dom');
 
   return config.style === 'tailwind'
     ? {

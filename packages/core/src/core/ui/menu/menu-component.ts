@@ -3,11 +3,16 @@ import { defineComponent } from 'vjsc/components';
 import type { MenuItemIndicatorProps, MenuItemProps, MenuProps, MenuTriggerProps } from './core';
 import { MenuDataAttrs } from './data';
 
+interface MenuRootProps extends MenuProps {
+  /** Boundary used to constrain the root menu popup size. */
+  boundary?: 'viewport' | 'container' | (string & {}) | undefined;
+}
+
 export default defineComponent({
   name: 'Menu',
   root: 'Root',
   parts: {
-    Root: defineComponent<MenuProps>(),
+    Root: defineComponent<MenuRootProps>(),
     Trigger: defineComponent<MenuTriggerProps>(),
     Popup: defineComponent(),
     Content: defineComponent(),

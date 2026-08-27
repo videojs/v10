@@ -10,7 +10,7 @@ const configFile = resolve(packageDir, 'dev/vite.config.ts');
 const sourceDir = resolve(packageDir, 'vjsc');
 const snapshotFile = resolve(import.meta.dirname, '__snapshots__/generated.tsx.snap');
 const targets = ['react', 'html'] as const;
-const skins = ['default-video', 'minimal-video'] as const;
+const skins = ['default-video', 'minimal-video', 'default-audio', 'minimal-audio'] as const;
 const styles = ['css', 'tailwind'] as const;
 
 interface GeneratedModule {
@@ -85,11 +85,30 @@ describe('generated VJSC source', () => {
     expect(output).toContain('from "@videojs/html/icons/minimal"');
 
     const htmlPlayButton = generatedSection(output, 'html/default-video/css/components/buttons/play-button.tsx');
+    const reactAudioSettingsMenu = generatedSection(
+      output,
+      'react/default-audio/css/components/menus/audio-settings-menu.tsx'
+    );
+    const htmlAudioSettingsMenu = generatedSection(
+      output,
+      'html/default-audio/css/components/menus/audio-settings-menu.tsx'
+    );
+    const reactDefaultAudio = generatedSection(output, 'react/default-audio/css/skins/default-audio/skin.tsx');
+    const htmlMinimalAudio = generatedSection(output, 'html/minimal-audio/css/skins/minimal-audio/skin.tsx');
 
     expect(htmlPlayButton).toContain('pauseIcon');
     expect(htmlPlayButton).toContain('playIcon');
     expect(htmlPlayButton).toContain('restartIcon');
     expect(htmlPlayButton).not.toContain('seekIcon');
+    expect(reactAudioSettingsMenu).toContain('<Menu.Trigger className=');
+    expect(reactAudioSettingsMenu).not.toContain('keepMounted');
+    expect(reactAudioSettingsMenu).not.toContain('usePlaybackRateOptions');
+    expect(htmlAudioSettingsMenu).toContain('<button commandfor=');
+    expect(htmlAudioSettingsMenu).not.toContain('<media-playback-rate-button');
+    expect(reactDefaultAudio).toContain('export interface DefaultAudioSkinProps');
+    expect(reactDefaultAudio).toContain('media-skin--default media-skin--audio');
+    expect(htmlMinimalAudio).toContain('export interface MinimalAudioSkinProps');
+    expect(htmlMinimalAudio).toContain('media-skin--minimal media-skin--audio');
 
     if (process.env.UPDATE_VJSC_SNAPSHOTS) await writeFile(snapshotFile, output);
 

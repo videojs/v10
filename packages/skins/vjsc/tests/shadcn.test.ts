@@ -27,6 +27,8 @@ describe('Skins Shadcn registry', () => {
     const container = assetJson<BuiltItem>(assets, 'container.json');
     const poster = assetJson<BuiltItem>(assets, 'poster.json');
     const videoSettingsMenu = assetJson<BuiltItem>(assets, 'video-settings-menu.json');
+    const videoHotkeys = assetJson<BuiltItem>(assets, 'video-hotkeys.json');
+    const minimalVideoHotkeys = assetJson<BuiltItem>(assets, 'video-hotkeys-minimal.json');
     const volumePopover = assetJson<BuiltItem>(assets, 'volume-popover.json');
     const styles = assetJson<BuiltItem>(assets, 'styles.json');
     const utils = assetJson<BuiltItem>(assets, 'utils.json');
@@ -43,9 +45,16 @@ describe('Skins Shadcn registry', () => {
       file.target?.endsWith('/volume-popover.tsx')
     )?.content;
 
-    expect(registry.items).toHaveLength(50);
+    expect(registry.items).toHaveLength(52);
     expect(registry.items.map((item: { name: string }) => item.name)).toEqual(
-      expect.arrayContaining(['button-tooltip', 'minimal-video', 'play-button', 'play-button-minimal'])
+      expect.arrayContaining([
+        'button-tooltip',
+        'minimal-video',
+        'play-button',
+        'play-button-minimal',
+        'playback-hotkeys',
+        'playback-hotkeys-minimal',
+      ])
     );
     expect(playSource).toContain('export interface PlayButtonProps');
     expect(playSource).toContain('<PlayButtonPrimitive className=');
@@ -68,6 +77,8 @@ describe('Skins Shadcn registry', () => {
     expect(defaultVideo.registryDependencies).not.toContain('@videojs/seek-button');
     expect(minimalVideo.registryDependencies).toContain('@videojs/play-button-minimal');
     expect(minimalVideo.registryDependencies).not.toContain('@videojs/play-button');
+    expect(videoHotkeys.registryDependencies).toContain('@videojs/playback-hotkeys');
+    expect(minimalVideoHotkeys.registryDependencies).toContain('@videojs/playback-hotkeys-minimal');
     expect(container.dependencies).toEqual(['@videojs/react', 'react']);
     expect(container.registryDependencies).toEqual(['@videojs/styles', '@videojs/utils']);
     expect(posterSource).toContain('<PosterPrimitive render={children}');
@@ -85,6 +96,7 @@ describe('Skins Shadcn registry', () => {
       'components/videojs/styles/captions.css',
       'components/videojs/styles/tailwind.css',
       'components/videojs/styles/tailwind.shared.css',
+      'components/videojs/styles/themes/audio.css',
       'components/videojs/styles/themes/default.css',
       'components/videojs/styles/themes/minimal.css',
       'components/videojs/styles/themes/video.css',

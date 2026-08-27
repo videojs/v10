@@ -15,7 +15,7 @@ import type { ComponentTargetTransform, ComponentTargetTransformContext } from '
 const optionMenus = [
   { component: 'QualityMenu', binding: 'quality', hook: 'useQualityOptions' },
   { component: 'AudioTrackMenu', binding: 'audioTrack', hook: 'useAudioTrackOptions' },
-  { component: 'PlaybackRateMenu', binding: 'playbackRate', hook: 'usePlaybackRateOptions' },
+  { component: 'PlaybackRateSubmenu', binding: 'playbackRate', hook: 'usePlaybackRateOptions' },
   { component: 'CaptionsMenu', binding: 'captions', hook: 'useCaptionsOptions' },
 ] as const;
 

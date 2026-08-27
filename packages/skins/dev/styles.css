@@ -23,6 +23,10 @@ body {
   aspect-ratio: 16 / 9;
 }
 
+#root[data-media-kind="audio"] .preview-player {
+  aspect-ratio: auto;
+}
+
 .preview-controls {
   box-sizing: border-box;
   display: flex;

@@ -38,6 +38,35 @@ const minimalTooltipSurface = [
   'contrast-more:bg-black contrast-more:backdrop-filter-none',
 ] as const;
 
+const defaultAudioSurface = [
+  'bg-(--media-audio-controls-background-color)! [color:var(--media-audio-text-color)]!',
+  'shadow-sm shadow-black/15 ring-1 ring-black/10',
+  'backdrop-blur-lg backdrop-saturate-150',
+  '[@media(prefers-reduced-transparency:reduce)]:bg-[light-dark(white,black)]!',
+  'contrast-more:bg-[light-dark(white,black)]!',
+] as const;
+
+const minimalAudioSurface = [
+  'bg-(--media-audio-controls-background-color)! [color:var(--media-audio-text-color)]!',
+  'shadow-sm shadow-black/20 ring-1 ring-[light-dark(rgb(0_0_0/0.1),rgb(255_255_255/0.1))]',
+  'backdrop-blur-lg backdrop-saturate-150',
+  '[@media(prefers-reduced-transparency:reduce)]:backdrop-filter-none',
+  'contrast-more:backdrop-filter-none',
+] as const;
+
+const defaultAudioFeedbackSurface = [
+  'bg-(--media-audio-controls-background-color)! [color:var(--media-audio-text-color)]!',
+  'shadow-none! ring-0! after:hidden!',
+  'backdrop-blur-lg backdrop-saturate-150',
+  '[@media(prefers-reduced-transparency:reduce)]:bg-[light-dark(white,black)]!',
+  'contrast-more:bg-[light-dark(white,black)]!',
+] as const;
+
+const minimalAudioFeedbackSurface = [
+  'bg-(--media-audio-controls-background-color)! [color:var(--media-audio-text-color)]!',
+  'shadow-none! ring-0! after:hidden! backdrop-filter-none!',
+] as const;
+
 export default styles({
   file: 'common.css',
   layer: 'videojs.components',
@@ -48,6 +77,8 @@ export default styles({
       variants: {
         default: defaultSurface,
         minimal: minimalSurface,
+        'default-audio': defaultAudioSurface,
+        'minimal-audio': minimalAudioSurface,
       },
     },
     feedback: {
@@ -56,6 +87,8 @@ export default styles({
       variants: {
         default: defaultSurface,
         minimal: [],
+        'default-audio': defaultAudioFeedbackSurface,
+        'minimal-audio': minimalAudioFeedbackSurface,
       },
     },
     thumbnail: {
@@ -72,6 +105,8 @@ export default styles({
       variants: {
         default: defaultSurface,
         minimal: minimalTooltipSurface,
+        'default-audio': defaultAudioSurface,
+        'minimal-audio': minimalAudioSurface,
       },
     },
   },
