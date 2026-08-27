@@ -145,6 +145,7 @@
     scale: 0.95;
   }
   &[data-ending-style] {
+    transition-duration: max(calc(var(--media-dialog-transition-duration) - 100ms), 50ms);
     transition-delay: 0ms;
   }
 }
@@ -160,10 +161,6 @@
 
 .media-minimal-skin--video .media-dialog__title {
   font-size: var(--media-font-size-medium);
-}
-
-.media-minimal-skin--video:has([role="alertdialog"][data-open]) .media-controls {
-  display: none;
 }
 
 /* Controls (hide/show behavior) */

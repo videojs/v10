@@ -16,14 +16,12 @@ function getTemplateHTML() {
 
       <media-error-dialog>
         <media-dialog-popup class="media-dialog__popup">
-          <div class="media-dialog__dialog">
           <div class="media-dialog__content">
             <media-dialog-title class="media-dialog__title"></media-dialog-title>
             <media-dialog-description class="media-dialog__description"></media-dialog-description>
           </div>
           <div class="media-dialog__actions">
-            <media-dialog-close class="media-button media-button--subtle"></media-dialog-close>
-          </div>
+            <media-dialog-close class="media-button media-button--primary"></media-dialog-close>
           </div>
         </media-dialog-popup>
       </media-error-dialog>

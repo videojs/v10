@@ -144,6 +144,7 @@
   scale: 0.95;
 }
 .media-default-skin--video .media-dialog__popup[data-ending-style] {
+  transition-duration: max(calc(var(--media-dialog-transition-duration) - 100ms), 50ms);
   transition-delay: 0ms;
 }
 

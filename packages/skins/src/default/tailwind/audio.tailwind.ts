@@ -84,17 +84,16 @@ export const popup = {
 
 export const dialog = {
   ...baseDialog,
-  popup: 'group/dialog absolute inset-0 z-20 not-data-open:hidden outline-none',
-  dialog: cn(
-    'absolute inset-0 z-20 flex items-center gap-3 rounded-full px-5 pr-0.5',
-    'bg-(--media-surface-background-color) text-(--media-text-color)',
-    'backdrop-blur-lg backdrop-saturate-150',
+  popup: cn(
+    'absolute inset-0 z-20 flex items-center gap-3 rounded-full ps-5 pe-1 not-data-open:hidden outline-none',
+    '[background-color:oklch(from_var(--media-surface-background-color)_l_c_h/1)] text-(--media-text-color)',
+    '[backdrop-filter:var(--media-surface-backdrop-filter)]',
     'transition-[opacity,filter] ease-out',
     'duration-(--media-dialog-transition-duration)',
     'delay-(--media-dialog-transition-delay)',
-    'group-data-starting-style/dialog:opacity-0 group-data-starting-style/dialog:blur-xs',
-    'group-data-ending-style/dialog:opacity-0 group-data-ending-style/dialog:blur-xs',
-    'group-data-ending-style/dialog:delay-0'
+    'data-starting-style:opacity-0 data-starting-style:blur-xs',
+    'data-ending-style:opacity-0 data-ending-style:blur-xs',
+    'data-ending-style:duration-[max(calc(var(--media-dialog-transition-duration)-100ms),50ms)] data-ending-style:delay-0'
   ),
   content: 'flex flex-1 items-center gap-2',
 };

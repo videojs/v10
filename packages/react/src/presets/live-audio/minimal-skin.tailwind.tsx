@@ -138,14 +138,12 @@ export function MinimalLiveAudioSkinTailwind(props: MinimalLiveAudioSkinProps): 
 
       <ErrorDialog.Root>
         <ErrorDialog.Popup className={dialog.popup}>
-          <div className={dialog.dialog}>
-            <div className={dialog.content}>
-              <ErrorDialog.Title className={dialog.title}></ErrorDialog.Title>
-              <ErrorDialog.Description className={dialog.description} />
-            </div>
-            <div className={dialog.actions}>
-              <ErrorDialog.Close className={cn(button.base, button.subtle)}></ErrorDialog.Close>
-            </div>
+          <div className={dialog.content}>
+            <ErrorDialog.Title className={dialog.title}></ErrorDialog.Title>
+            <ErrorDialog.Description className={dialog.description} />
+          </div>
+          <div className={dialog.actions}>
+            <ErrorDialog.Close className={cn(button.base, button.primary)}></ErrorDialog.Close>
           </div>
         </ErrorDialog.Popup>
       </ErrorDialog.Root>
