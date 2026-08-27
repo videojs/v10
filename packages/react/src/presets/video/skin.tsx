@@ -73,8 +73,6 @@ import { VolumeSlider } from '@/ui/volume-slider';
 
 import type { BaseVideoSkinProps } from '../types';
 
-const VOLUME_STEP = 5;
-const SEEK_TIME = 10;
 const TOP_STATUS_ACTIONS = ['toggleSubtitles', 'toggleFullscreen', 'togglePictureInPicture'] as const;
 const CENTER_STATUS_ACTIONS = ['togglePaused'] as const;
 
@@ -109,7 +107,7 @@ function VolumePopover(): ReactNode {
     <Popover.Root openOnHover delay={200} closeDelay={100} side="top">
       <Popover.Trigger render={muteButton} />
       <Popover.Popup className="media-surface media-popover media-popover--volume">
-        <VolumeSlider.Root step={VOLUME_STEP} className="media-slider" orientation="vertical" thumbAlignment="edge">
+        <VolumeSlider.Root className="media-slider" orientation="vertical" thumbAlignment="edge">
           <VolumeSlider.Track className="media-slider__track">
             <VolumeSlider.Fill className="media-slider__fill" />
           </VolumeSlider.Track>
@@ -523,12 +521,12 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
       <Hotkey keys="f" action="toggleFullscreen" />
       <Hotkey keys="c" action="toggleSubtitles" />
       <Hotkey keys="i" action="togglePictureInPicture" />
-      <Hotkey keys="ArrowRight" action="seekStep" value={SEEK_TIME / 2} />
-      <Hotkey keys="ArrowLeft" action="seekStep" value={-(SEEK_TIME / 2)} />
-      <Hotkey keys="l" action="seekStep" value={SEEK_TIME} />
-      <Hotkey keys="j" action="seekStep" value={-SEEK_TIME} />
-      <Hotkey keys="ArrowUp" action="volumeStep" value={VOLUME_STEP / 100} />
-      <Hotkey keys="ArrowDown" action="volumeStep" value={-VOLUME_STEP / 100} />
+      <Hotkey keys="ArrowRight" action="seekStep" />
+      <Hotkey keys="ArrowLeft" action="seekStep" />
+      <Hotkey keys="l" action="seekStep" />
+      <Hotkey keys="j" action="seekStep" />
+      <Hotkey keys="ArrowUp" action="volumeStep" />
+      <Hotkey keys="ArrowDown" action="volumeStep" />
       <Hotkey keys="0-9" action="seekToPercent" />
       <Hotkey keys="Home" action="seekToPercent" value={0} />
       <Hotkey keys="End" action="seekToPercent" value={100} />
@@ -538,9 +536,9 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
       {/* Gestures */}
       <Gesture type="tap" action="togglePaused" pointer="mouse" region="center" />
       <Gesture type="tap" action="toggleControls" pointer="touch" />
-      <Gesture type="doubletap" action="seekStep" value={-SEEK_TIME} region="left" />
+      <Gesture type="doubletap" action="seekStep" region="left" />
       <Gesture type="doubletap" action="toggleFullscreen" region="center" />
-      <Gesture type="doubletap" action="seekStep" value={SEEK_TIME} region="right" />
+      <Gesture type="doubletap" action="seekStep" region="right" />
 
       {/* Input Indicators */}
       <StatusAnnouncer className="media-sr-only" />

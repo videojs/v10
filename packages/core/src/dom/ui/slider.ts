@@ -270,6 +270,7 @@ export function createSlider(options: SliderOptions): SliderApi {
 
   // --- Thumb props ---
   const thumbProps: SliderThumbProps = {
+    // Capture before the player hotkey coordinator handles the same key on the container.
     onKeyDownCapture(event) {
       if (options.isDisabled()) {
         if (event.key !== 'Tab') event.preventDefault();

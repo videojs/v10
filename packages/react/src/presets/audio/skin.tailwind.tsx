@@ -22,6 +22,7 @@ import {
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
 
+import { DEFAULT_SEEK_STEP } from '@/constants';
 import { useTranslator } from '@/i18n/context';
 import {
   CheckIcon,
@@ -54,9 +55,6 @@ import { Tooltip } from '@/ui/tooltip';
 import { VolumeSlider } from '@/ui/volume-slider';
 
 import type { AudioSkinProps } from './skin';
-
-const VOLUME_STEP = 5;
-const SEEK_TIME = 10;
 
 /* --------------------------------------- Components ---------------------------------------- */
 
@@ -124,7 +122,7 @@ function VolumePopover(): ReactNode {
     <Popover.Root openOnHover delay={200} closeDelay={100} side="top" boundary="viewport">
       <Popover.Trigger render={muteButton} />
       <Popover.Popup className={cn(popup.popover, popup.volume)}>
-        <VolumeSlider.Root step={VOLUME_STEP} orientation="vertical" thumbAlignment="edge" render={<SliderRoot />}>
+        <VolumeSlider.Root orientation="vertical" thumbAlignment="edge" render={<SliderRoot />}>
           <VolumeSlider.Track render={<SliderTrack />}>
             <VolumeSlider.Fill render={<SliderFill />} />
           </VolumeSlider.Track>
@@ -230,10 +228,10 @@ export function AudioSkinTailwind(props: AudioSkinProps): ReactNode {
             <Tooltip.Root side="top" boundary="viewport">
               <Tooltip.Trigger
                 render={
-                  <SeekButton seconds={-SEEK_TIME} render={<Button className={button.seek} />}>
+                  <SeekButton seconds={-DEFAULT_SEEK_STEP} render={<Button className={button.seek} />}>
                     <span className={iconContainer}>
                       <SeekIcon className={cn(icon, iconFlipped)} />
-                      <span className={cn(seek.label, seek.labelBackward)}>{SEEK_TIME}</span>
+                      <span className={cn(seek.label, seek.labelBackward)}>{DEFAULT_SEEK_STEP}</span>
                     </span>
                   </SeekButton>
                 }
@@ -247,10 +245,10 @@ export function AudioSkinTailwind(props: AudioSkinProps): ReactNode {
             <Tooltip.Root side="top" boundary="viewport">
               <Tooltip.Trigger
                 render={
-                  <SeekButton seconds={SEEK_TIME} render={<Button className={button.seek} />}>
+                  <SeekButton seconds={DEFAULT_SEEK_STEP} render={<Button className={button.seek} />}>
                     <span className={iconContainer}>
                       <SeekIcon className={icon} />
-                      <span className={cn(seek.label, seek.labelForward)}>{SEEK_TIME}</span>
+                      <span className={cn(seek.label, seek.labelForward)}>{DEFAULT_SEEK_STEP}</span>
                     </span>
                   </SeekButton>
                 }
@@ -296,12 +294,12 @@ export function AudioSkinTailwind(props: AudioSkinProps): ReactNode {
       <Hotkey keys="Space" action="togglePaused" />
       <Hotkey keys="k" action="togglePaused" />
       <Hotkey keys="m" action="toggleMuted" />
-      <Hotkey keys="ArrowRight" action="seekStep" value={5} />
-      <Hotkey keys="ArrowLeft" action="seekStep" value={-5} />
-      <Hotkey keys="l" action="seekStep" value={10} />
-      <Hotkey keys="j" action="seekStep" value={-10} />
-      <Hotkey keys="ArrowUp" action="volumeStep" value={VOLUME_STEP / 100} />
-      <Hotkey keys="ArrowDown" action="volumeStep" value={-VOLUME_STEP / 100} />
+      <Hotkey keys="ArrowRight" action="seekStep" />
+      <Hotkey keys="ArrowLeft" action="seekStep" />
+      <Hotkey keys="l" action="seekStep" />
+      <Hotkey keys="j" action="seekStep" />
+      <Hotkey keys="ArrowUp" action="volumeStep" />
+      <Hotkey keys="ArrowDown" action="volumeStep" />
       <Hotkey keys="0-9" action="seekToPercent" />
       <Hotkey keys="Home" action="seekToPercent" value={0} />
       <Hotkey keys="End" action="seekToPercent" value={100} />

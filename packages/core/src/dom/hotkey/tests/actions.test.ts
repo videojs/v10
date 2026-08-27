@@ -115,6 +115,24 @@ describe('toggleFullscreen', () => {
 });
 
 describe('seekStep', () => {
+  it('defaults ArrowRight to a ten second seek', () => {
+    const seek = vi.fn();
+    const store = mockStore({ currentTime: 10, duration: 100, seeking: false, seek });
+
+    resolveHotkeyAction('seekStep')!({ store, key: 'ArrowRight' });
+
+    expect(seek).toHaveBeenCalledWith(20);
+  });
+
+  it('defaults ArrowLeft to a negative ten second seek', () => {
+    const seek = vi.fn();
+    const store = mockStore({ currentTime: 20, duration: 100, seeking: false, seek });
+
+    resolveHotkeyAction('seekStep')!({ store, key: 'ArrowLeft' });
+
+    expect(seek).toHaveBeenCalledWith(10);
+  });
+
   it('seeks forward by value', () => {
     const seek = vi.fn();
     const store = mockStore({ currentTime: 10, duration: 100, seeking: false, seek });
@@ -133,17 +151,47 @@ describe('seekStep', () => {
     expect(seek).toHaveBeenCalledWith(5);
   });
 
-  it('no-ops without value', () => {
+  it('uses the default without a value', () => {
     const seek = vi.fn();
     const store = mockStore({ currentTime: 10, duration: 100, seeking: false, seek });
 
     resolveHotkeyAction('seekStep')!({ store, key: '' });
 
-    expect(seek).not.toHaveBeenCalled();
+    expect(seek).toHaveBeenCalledWith(20);
   });
 });
 
 describe('volumeStep', () => {
+  it('defaults ArrowUp to a five percent increase', () => {
+    const setVolume = vi.fn();
+    const store = mockStore({
+      volume: 0.5,
+      muted: false,
+      volumeAvailability: 'available',
+      setVolume,
+      toggleMuted: vi.fn(),
+    });
+
+    resolveHotkeyAction('volumeStep')!({ store, key: 'ArrowUp' });
+
+    expect(setVolume).toHaveBeenCalledWith(0.55);
+  });
+
+  it('defaults ArrowDown to a five percent decrease', () => {
+    const setVolume = vi.fn();
+    const store = mockStore({
+      volume: 0.5,
+      muted: false,
+      volumeAvailability: 'available',
+      setVolume,
+      toggleMuted: vi.fn(),
+    });
+
+    resolveHotkeyAction('volumeStep')!({ store, key: 'ArrowDown' });
+
+    expect(setVolume).toHaveBeenCalledWith(0.45);
+  });
+
   it('increases volume by value', () => {
     const setVolume = vi.fn();
     const store = mockStore({

@@ -1,5 +1,10 @@
 import type { GestureProps } from '@videojs/core';
-import { createDoubleTapGesture, createTapGesture, resolveGestureAction } from '@videojs/core/dom';
+import {
+  createDoubleTapGesture,
+  createTapGesture,
+  getGestureActionValue,
+  resolveGestureAction,
+} from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextConsumer } from '@videojs/element/context';
 
@@ -63,18 +68,19 @@ export class GestureElement extends UIElement {
     const resolver = resolveGestureAction(this.action);
     if (!resolver) return;
 
-    const { value } = this;
+    const { value, region } = this;
+    const actionValue = getGestureActionValue(this.action, region, value);
 
     const onActivate = (event: PointerEvent) => {
-      resolver({ store, value, event });
+      resolver({ store, value: actionValue, event });
     };
 
     const options = {
       pointer: this.pointer,
-      region: this.region,
+      region,
       disabled: this.disabled,
       action: this.action,
-      value: this.value,
+      value: actionValue,
     };
 
     if (this.type === 'doubletap') {

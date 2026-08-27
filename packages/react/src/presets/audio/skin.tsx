@@ -4,6 +4,7 @@ import { playbackRateText } from '@videojs/core/i18n/text/menu';
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
 
+import { DEFAULT_SEEK_STEP } from '@/constants';
 import { useTranslator } from '@/i18n/context';
 import {
   CheckIcon,
@@ -37,9 +38,6 @@ import { VolumeSlider } from '@/ui/volume-slider';
 
 import type { BaseSkinProps } from '../types';
 
-const VOLUME_STEP = 5;
-const SEEK_TIME = 10;
-
 export type AudioSkinProps = BaseSkinProps;
 
 const Button = forwardRef<HTMLButtonElement, ComponentProps<'button'>>(function Button({ className, ...props }, ref) {
@@ -70,7 +68,7 @@ function VolumePopover(): ReactNode {
     <Popover.Root openOnHover delay={200} closeDelay={100} side="top" boundary="viewport">
       <Popover.Trigger render={muteButton} />
       <Popover.Popup className="media-surface media-popover media-popover--volume">
-        <VolumeSlider.Root step={VOLUME_STEP} className="media-slider" orientation="vertical" thumbAlignment="edge">
+        <VolumeSlider.Root className="media-slider" orientation="vertical" thumbAlignment="edge">
           <VolumeSlider.Track className="media-slider__track">
             <VolumeSlider.Fill className="media-slider__fill" />
           </VolumeSlider.Track>
@@ -174,10 +172,10 @@ export function AudioSkin(props: AudioSkinProps): ReactNode {
             <Tooltip.Root side="top" boundary="viewport">
               <Tooltip.Trigger
                 render={
-                  <SeekButton seconds={-SEEK_TIME} className="media-button--seek" render={<Button />}>
+                  <SeekButton seconds={-DEFAULT_SEEK_STEP} className="media-button--seek" render={<Button />}>
                     <span className="media-icon__container">
                       <SeekIcon className="media-icon media-icon--seek media-icon--flipped" />
-                      <span className="media-icon__label">{SEEK_TIME}</span>
+                      <span className="media-icon__label">{DEFAULT_SEEK_STEP}</span>
                     </span>
                   </SeekButton>
                 }
@@ -191,10 +189,10 @@ export function AudioSkin(props: AudioSkinProps): ReactNode {
             <Tooltip.Root side="top" boundary="viewport">
               <Tooltip.Trigger
                 render={
-                  <SeekButton seconds={SEEK_TIME} className="media-button--seek" render={<Button />}>
+                  <SeekButton seconds={DEFAULT_SEEK_STEP} className="media-button--seek" render={<Button />}>
                     <span className="media-icon__container">
                       <SeekIcon className="media-icon media-icon--seek" />
-                      <span className="media-icon__label">{SEEK_TIME}</span>
+                      <span className="media-icon__label">{DEFAULT_SEEK_STEP}</span>
                     </span>
                   </SeekButton>
                 }
@@ -243,12 +241,12 @@ export function AudioSkin(props: AudioSkinProps): ReactNode {
       <Hotkey keys="Space" action="togglePaused" />
       <Hotkey keys="k" action="togglePaused" />
       <Hotkey keys="m" action="toggleMuted" />
-      <Hotkey keys="ArrowRight" action="seekStep" value={5} />
-      <Hotkey keys="ArrowLeft" action="seekStep" value={-5} />
-      <Hotkey keys="l" action="seekStep" value={10} />
-      <Hotkey keys="j" action="seekStep" value={-10} />
-      <Hotkey keys="ArrowUp" action="volumeStep" value={VOLUME_STEP / 100} />
-      <Hotkey keys="ArrowDown" action="volumeStep" value={-VOLUME_STEP / 100} />
+      <Hotkey keys="ArrowRight" action="seekStep" />
+      <Hotkey keys="ArrowLeft" action="seekStep" />
+      <Hotkey keys="l" action="seekStep" />
+      <Hotkey keys="j" action="seekStep" />
+      <Hotkey keys="ArrowUp" action="volumeStep" />
+      <Hotkey keys="ArrowDown" action="volumeStep" />
       <Hotkey keys="0-9" action="seekToPercent" />
       <Hotkey keys="Home" action="seekToPercent" value={0} />
       <Hotkey keys="End" action="seekToPercent" value={100} />

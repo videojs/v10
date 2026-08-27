@@ -1,5 +1,6 @@
 import { isUndefined } from '@videojs/utils/predicate';
 
+import { DEFAULT_SEEK_STEP, DEFAULT_VOLUME_STEP } from '../core/ui/constants';
 import type { AnyPlayerStore } from './player';
 import { selectPlaybackRate, selectTime, selectVolume } from './store/selectors';
 
@@ -8,27 +9,50 @@ export type MediaInputActionName = 'seekStep' | 'volumeStep' | 'speedUp' | 'spee
 export interface MediaInputActionContext {
   store: AnyPlayerStore;
   value?: number | undefined;
+  key?: string | undefined;
 }
 
 export type MediaInputActionResolver = (context: MediaInputActionContext) => void;
 
+export function getMediaInputActionValue(
+  action: string,
+  key: string | undefined,
+  value?: number | undefined
+): number | undefined {
+  if (!isUndefined(value)) return value;
+
+  const normalizedKey = key?.toLowerCase();
+
+  if (action === 'seekStep') {
+    return normalizedKey === 'arrowleft' || normalizedKey === 'j' ? -DEFAULT_SEEK_STEP : DEFAULT_SEEK_STEP;
+  }
+
+  if (action === 'volumeStep') {
+    const step = DEFAULT_VOLUME_STEP / 100;
+
+    return normalizedKey === 'arrowdown' ? -step : step;
+  }
+
+  return undefined;
+}
+
 export const MEDIA_INPUT_ACTION_OVERRIDES: Record<MediaInputActionName, MediaInputActionResolver> = {
-  seekStep({ store, value }) {
-    if (isUndefined(value)) return;
+  seekStep({ store, value, key }) {
+    const step = getMediaInputActionValue('seekStep', key, value)!;
 
     const time = selectTime(store.state);
     if (!time) return;
 
-    time.seek(time.currentTime + value);
+    time.seek(time.currentTime + step);
   },
 
-  volumeStep({ store, value }) {
-    if (isUndefined(value)) return;
+  volumeStep({ store, value, key }) {
+    const step = getMediaInputActionValue('volumeStep', key, value)!;
 
     const vol = selectVolume(store.state);
     if (!vol) return;
 
-    vol.setVolume(vol.volume + value);
+    vol.setVolume(vol.volume + step);
   },
 
   speedUp({ store }) {

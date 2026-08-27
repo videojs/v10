@@ -81,8 +81,8 @@ export function getTemplateHTML() {
       <media-hotkey keys="Space" action="togglePaused"></media-hotkey>
       <media-hotkey keys="k" action="togglePaused"></media-hotkey>
       <media-hotkey keys="m" action="toggleMuted"></media-hotkey>
-      <media-hotkey keys="ArrowUp" action="volumeStep" value="0.05"></media-hotkey>
-      <media-hotkey keys="ArrowDown" action="volumeStep" value="-0.05"></media-hotkey>
+      <media-hotkey keys="ArrowUp" action="volumeStep"></media-hotkey>
+      <media-hotkey keys="ArrowDown" action="volumeStep"></media-hotkey>
     </media-container>
   `;
 }

@@ -5,8 +5,6 @@ import { SkinElement } from '../skin';
 
 import styles from '../../define/live-audio/minimal-skin.css?inline';
 
-const VOLUME_STEP = 5;
-
 function getTemplateHTML() {
   return /*html*/ `
     <media-container class="media-minimal-skin media-minimal-skin--audio">
@@ -63,7 +61,7 @@ function getTemplateHTML() {
             </media-tooltip>
 
             <media-popover id="live-audio-volume-popover" open-on-hover delay="200" close-delay="100" side="left" boundary="viewport" class="media-popover media-popover--volume">
-              <media-volume-slider step="${VOLUME_STEP}" class="media-slider" orientation="horizontal" thumb-alignment="edge">
+              <media-volume-slider class="media-slider" orientation="horizontal" thumb-alignment="edge">
                 <media-slider-track class="media-slider__track">
                   <media-slider-fill class="media-slider__fill"></media-slider-fill>
                 </media-slider-track>
@@ -78,8 +76,8 @@ function getTemplateHTML() {
       <media-hotkey keys="Space" action="togglePaused"></media-hotkey>
       <media-hotkey keys="k" action="togglePaused"></media-hotkey>
       <media-hotkey keys="m" action="toggleMuted"></media-hotkey>
-      <media-hotkey keys="ArrowUp" action="volumeStep" value="${VOLUME_STEP / 100}"></media-hotkey>
-      <media-hotkey keys="ArrowDown" action="volumeStep" value="${-VOLUME_STEP / 100}"></media-hotkey>
+      <media-hotkey keys="ArrowUp" action="volumeStep"></media-hotkey>
+      <media-hotkey keys="ArrowDown" action="volumeStep"></media-hotkey>
     </media-container>
   `;
 }
