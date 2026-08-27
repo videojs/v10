@@ -345,7 +345,8 @@ Here's a matrix for configuration options in Plyr and how each maps to Video.js 
 
 | Plyr option | Video.js v10 |
 |---|---|
-| `controls` | The <DocsLink slug="concepts/skins">skins</DocsLink> include all the common controls, laid out in a familiar way that users would expect. If you want to customize the skin beyond basic colors, you can [eject the skin](#eject-a-skin) and change layout, styles, or icons. |
+| `controls` | The <DocsLink slug="concepts/skins">skins</DocsLink> include the common controls, laid out in a familiar way that users would expect. Not every Plyr control ships in every skin—the video skins do not include `rewind` and `fast-forward` buttons, for example. To change which controls appear, or to customize the skin beyond basic colors, [eject the skin](#eject-a-skin) and change controls, layout, styles, or icons. |
+| `rewind`, `fast-forward`, `seekTime` | The audio skins include 10-second skip buttons; the video skins do not. [Eject the skin](#eject-a-skin) and add a <DocsLink slug="reference/seek-button">SeekButton</DocsLink>, which skips by its `seconds` value (default `30`; negative values seek backward). |
 | `settings` | Included automatically in the skins when quality, speed, audio tracks, or captions are available. |
 | `autoplay`, `muted`, `loop`, `playsinline`, `preload` | These are attributes on your media (e.g. `<video>`) component. |
 | `poster` / `data-poster` | Set `poster` on `<video-player>` or `VideoPlayer`. See [Basic migration](#basic-migration). |
