@@ -15,7 +15,7 @@
  * predicate, since their verdict resolves asynchronously.
  */
 
-import { type DrmSystemsConfig, keySystemCandidates } from '../drm';
+import { type DrmSystemsConfig, type KeySystemModule, keySystemCandidates } from '../drm';
 import { NON_FMP4_CONTAINER_MIMES } from '../hls/parse-media-playlist';
 import { type CanPlayTrack, getMediaPlaylistMetadata } from '../types';
 import { buildMimeCodec, isCodecSupported } from './mse/mediasource-setup';
@@ -76,12 +76,12 @@ export const canPlayTrack: CanPlayTrack = (track) => {
  * DRM-composed variant of {@link canPlayTrack}: an encrypted rendition is playable when its declared keys reach a key
  * system with a configured license server (its container / codecs still have to probe as decodable); everything else
  * matches the standard probe. Encrypted renditions no configured system serves stay pruned — MediaKeys could never be
- * negotiated for them, so playing them would park forever behind the `awaitingMediaKeys` gate.
+ * negotiated for them, so playing them would park forever behind the `segmentLoadingBlocked` gate.
  */
-export function makeCanPlayTrackWithDrm(drm: DrmSystemsConfig): CanPlayTrack {
+export function makeCanPlayTrackWithDrm(drm: DrmSystemsConfig, keySystems: readonly KeySystemModule[]): CanPlayTrack {
   return (track) => {
     const metadata = getMediaPlaylistMetadata(track);
-    if (metadata?.encrypted && keySystemCandidates(metadata.keys ?? [], drm).length === 0) return false;
+    if (metadata?.encrypted && keySystemCandidates(metadata.keys ?? [], drm, keySystems).length === 0) return false;
 
     return canDecodeTrack(track);
   };

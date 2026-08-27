@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vite-plus/test';
 
+import type { KeySystemModule } from '../../../media/drm';
 import {
   SVTA_UNSUPPORTED_AUDIO_FORMAT,
   SVTA_UNSUPPORTED_DRM_SYSTEM,
@@ -120,9 +121,16 @@ describe('makeReportUnsupportedTrackConditionsWithDrm', () => {
     uri: 'skd://mux?keyId=abc',
     keyFormat: 'com.apple.streamingkeydelivery',
   };
-  const report = makeReportUnsupportedTrackConditionsWithDrm({
-    'com.widevine.alpha': { licenseUrl: 'https://license.example.com/widevine' },
-  });
+  // Stand-in modules rather than the real ones: this reporter is DOM-free, and
+  // so is its project — importing `media/dom` here would be the placement bug.
+  const keySystems: KeySystemModule[] = [
+    { keySystem: 'com.widevine.alpha', keyFormats: ['urn:uuid:edef8ba9-79d6-4ace-a3c8-27dcd51d21ed'] },
+    { keySystem: 'com.apple.fps', keyFormats: ['com.apple.streamingkeydelivery'] },
+  ];
+  const report = makeReportUnsupportedTrackConditionsWithDrm(
+    { 'com.widevine.alpha': { licenseUrl: 'https://license.example.com/widevine' } },
+    keySystems
+  );
 
   it('reports no DRM cause when the declared keys reach a configured system', () => {
     expect(report(track('video', { encrypted: true, keys: [WIDEVINE_KEY] }))).toEqual([]);

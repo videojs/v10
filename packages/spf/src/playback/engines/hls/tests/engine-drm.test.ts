@@ -14,7 +14,7 @@ describe('createHlsVideoEngine (DRM composition)', () => {
 
     expect(signals).toBeDefined();
     // `setupMediaKeys` declares both slots; nothing is set before a source.
-    expect(signals!.state.awaitingMediaKeys.get()).toBeUndefined();
+    expect(signals!.state.segmentLoadingBlocked.get()).toBeUndefined();
     expect(signals!.context.mediaKeys.get()).toBeUndefined();
 
     await engine.destroy();
@@ -30,7 +30,7 @@ describe('createHlsVideoEngine (DRM composition)', () => {
       },
     });
 
-    expect(signals!.state.awaitingMediaKeys.get()).toBeUndefined();
+    expect(signals!.state.segmentLoadingBlocked.get()).toBeUndefined();
 
     await engine.destroy();
   });

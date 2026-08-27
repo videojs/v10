@@ -24,7 +24,7 @@ function makeState(initial: SegmentLoadingState = {}): StateSignals<SegmentLoadi
     currentTime: signal<number | undefined>(initial.currentTime),
     loadActivated: signal<boolean | undefined>(initial.loadActivated),
     loadingSuspended: signal<boolean | undefined>(initial.loadingSuspended),
-    awaitingMediaKeys: signal<boolean | undefined>(initial.awaitingMediaKeys),
+    segmentLoadingBlocked: signal<boolean | undefined>(initial.segmentLoadingBlocked),
     selectedVideoTrackId: signal<string | undefined>(initial.selectedVideoTrackId),
     selectedAudioTrackId: signal<string | undefined>(initial.selectedAudioTrackId),
     selectedTextTrackId: signal<string | undefined>(initial.selectedTextTrackId),
@@ -1539,7 +1539,7 @@ describe('loadSegments orchestration (loadingSuspended)', () => {
     reactor.destroy();
   });
 
-  // awaitingMediaKeys — observed DRM key-readiness 'dormant' gate. Same
+  // segmentLoadingBlocked — observed DRM key-readiness 'dormant' gate. Same
   // observed-slot contract as loadingSuspended: only DRM-composed variants
   // declare a writer (setupMediaKeys), so every other composition is
   // structurally unchanged.
@@ -1548,7 +1548,7 @@ describe('loadSegments orchestration (loadingSuspended)', () => {
     const fakeLoader = { send } as unknown as SegmentLoaderActor;
     const state = makeState({
       preload: 'auto',
-      awaitingMediaKeys: true,
+      segmentLoadingBlocked: true,
       selectedVideoTrackId: 'track-1',
       currentTime: 0,
       presentation: makePresentation([makeSegment('s1', 0, 10)]),
@@ -1567,7 +1567,7 @@ describe('loadSegments orchestration (loadingSuspended)', () => {
     const fakeLoader = { send } as unknown as SegmentLoaderActor;
     const state = makeState({
       preload: 'auto',
-      awaitingMediaKeys: true,
+      segmentLoadingBlocked: true,
       selectedVideoTrackId: 'track-1',
       currentTime: 0,
       presentation: makePresentation([makeSegment('s1', 0, 10)]),
@@ -1578,7 +1578,7 @@ describe('loadSegments orchestration (loadingSuspended)', () => {
     await new Promise((resolve) => setTimeout(resolve, 50));
     expect(send).not.toHaveBeenCalled();
 
-    state.awaitingMediaKeys.set(false);
+    state.segmentLoadingBlocked.set(false);
     await vi.waitFor(() => expect(send).toHaveBeenCalledWith(expect.objectContaining({ type: 'load' })));
 
     reactor.destroy();

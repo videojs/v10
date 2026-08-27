@@ -12,7 +12,7 @@
  * `SVTA_NO_SUPPORTED_{VIDEO,AUDIO}_TRACK` when a type's candidates actually empty. Keeping the two apart is what lets a
  * mixed source — some renditions encrypted or MPEG-TS, others playable — log its causes and still play.
  */
-import { type DrmSystemsConfig, keySystemCandidates } from '../../media/drm';
+import { type DrmSystemsConfig, type KeySystemModule, keySystemCandidates } from '../../media/drm';
 import {
   SVTA_UNSUPPORTED_AUDIO_FORMAT,
   SVTA_UNSUPPORTED_DRM_SYSTEM,
@@ -67,10 +67,14 @@ export function reportUnsupportedTrackConditions(track: ResolvedTrack): readonly
  * system serves the rendition's declared keys — mirroring what `makeCanPlayTrackWithDrm` prunes on, so a reported cause
  * still always has a corresponding exclusion.
  */
-export function makeReportUnsupportedTrackConditionsWithDrm(drm: DrmSystemsConfig): ReportUnsupportedTrackConditions {
+export function makeReportUnsupportedTrackConditionsWithDrm(
+  drm: DrmSystemsConfig,
+  keySystems: readonly KeySystemModule[]
+): ReportUnsupportedTrackConditions {
   return (track) => {
     const metadata = getMediaPlaylistMetadata(track);
-    const unservable = Boolean(metadata?.encrypted) && keySystemCandidates(metadata?.keys ?? [], drm).length === 0;
+    const unservable =
+      Boolean(metadata?.encrypted) && keySystemCandidates(metadata?.keys ?? [], drm, keySystems).length === 0;
 
     return unsupportedTrackConditions(track, unservable);
   };

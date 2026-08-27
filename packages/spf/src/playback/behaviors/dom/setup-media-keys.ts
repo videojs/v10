@@ -1,36 +1,38 @@
 /**
- * **Own the EME lifecycle for the current source.** When a mediaElement and a resolved presentation whose tracks
- * declare DRM keys are both in scope, negotiates a key system over the configured license servers (the minimal
- * key-system probe — capability-probing's full async probe supersedes it when that lands) with per-system init-data
- * types and the declared encryption scheme, creates MediaKeys, applies the server certificate when the chosen system
- * configures one (FairPlay can't request a license without it), and attaches. Sessions open manifest-driven — one per
- * inline init data (Widevine PSSH / PlayReady PRO as `data:` URIs) — or, when the manifest carries none (FairPlay
- * `skd://`), event-driven off the element's `encrypted` events, deduped by init-data bytes. Each license message is
- * exchanged against the chosen system's server.
+ * **Negotiate a key system and attach its MediaKeys for the current source.** When a mediaElement and a resolved
+ * presentation whose tracks declare DRM keys are both in scope, negotiates a key system over the configured license
+ * servers (the minimal key-system probe — capability-probing's full async probe supersedes it when that lands) with
+ * per-system init-data types and the declared encryption scheme, creates MediaKeys, applies the server certificate when
+ * the chosen system configures one (FairPlay can't request a license without it), and attaches.
  *
- * Publishes the attached MediaKeys on `context.mediaKeys` and drives the `awaitingMediaKeys` load gate: raised
- * synchronously on entry, lowered once MediaKeys attach. Appending encrypted data with no MediaKeys attached misbehaves
- * on Chromium, so the segment-load dispatchers park while the gate is up (see `load-segments.ts`); compose this
- * behavior ahead of them so the gate is up before their first dispatch — but lowered on _attach_, not on license: the
- * appends that follow are what fire `encrypted` for the event-driven path, and browsers queue decode on missing keys.
- * Failures report onto the errors sequence via `emitError` (SVTA 4008 no usable key system, 4010 MediaKeys init, 4013
- * certificate, 4004 license request, 4016 license rejected, 4021 request generation); a refused negotiation or failed
- * certificate leaves the gate up — playback stays parked rather than failing decode, and severity is the adapter's
- * call.
+ * Licensing is `exchangeLicenses`' job, not this behavior's. The handoff is `context.mediaKeys` +
+ * `state.negotiatedKeySystem`, both published only once the certificate has been applied and the attach has resolved —
+ * which is what carries the "certificate before `generateRequest`" ordering across the boundary.
+ *
+ * Publishes the attached MediaKeys on `context.mediaKeys`, the chosen system on `state.negotiatedKeySystem`, and drives
+ * the `segmentLoadingBlocked` load gate: raised synchronously on entry, lowered once MediaKeys attach. Appending
+ * encrypted data with no MediaKeys attached misbehaves on Chromium, so the segment-load dispatchers park while the gate
+ * is up (see `load-segments.ts`); compose this behavior ahead of them so the gate is up before their first dispatch —
+ * but lowered on _attach_, not on license: the appends that follow are what fire `encrypted` for the event-driven path,
+ * and browsers queue decode on missing keys. Failures report onto the errors sequence via `emitError` (SVTA 4008 no
+ * usable key system, 4010 MediaKeys init, 4013 certificate); a refused negotiation or failed certificate leaves the
+ * gate up — playback stays parked rather than failing decode, and severity is the adapter's call. A refusal publishes
+ * {@link NO_KEY_SYSTEM}, which is what lets rendition pruning reach the verdict `track-switching` owns.
  *
  * Single-positive-state reactor riding the resolver's resolved/unresolved lifecycle, like `setupMediaSource`: source
- * replacement routes through `'preconditions-unmet'`, whose state-exit cleanup closes sessions, detaches MediaKeys
- * (`setMediaKeys(null)`), and clears both slots before the next source's setup runs. Teardown-per-source is deliberate
- * — MediaKeys re-use across sources is an optimization with prior art (see drm-support.md).
+ * replacement routes through `'preconditions-unmet'`, whose state-exit cleanup detaches MediaKeys
+ * (`setMediaKeys(null)`) and clears its slots before the next source's setup runs. Teardown-per-source is deliberate —
+ * MediaKeys re-use across sources is an optimization with prior art (see drm-support.md).
  *
- * Sole writer of `context.mediaKeys` and `state.awaitingMediaKeys`. Composed only into DRM engine variants — non-DRM
- * compositions carry neither the machinery nor the gate slot.
+ * Sole writer of `context.mediaKeys`, `state.negotiatedKeySystem`, and `state.segmentLoadingBlocked`. Composed into
+ * `createHlsVideoEngine` unconditionally today, degenerate on a clear source (the derived state never leaves
+ * `'preconditions-unmet'`). A composition that omits it — along with `exchangeLicenses` and the two DRM-aware config
+ * defaults — carries neither the machinery nor the slots, and none of this file's key-system code survives
+ * tree-shaking; the DRM-free engine variant that would do so is tracked in drm-support.md.
  *
- * Still out of scope (tracked in drm-support.md): key rotation / keys declared after entry, `keystatuschange`
- * reactivity, and per-vendor license body shaping (Mux takes the raw message as octet-stream for every system).
+ * Still out of scope (tracked in drm-support.md): key rotation / keys declared after entry, and `keystatuschange`
+ * reactivity.
  */
-import { listen } from '@videojs/utils/dom';
-
 import { defineBehavior } from '../../../core/composition/create-composition';
 import type { Reactor } from '../../../core/reactors/create-machine-reactor';
 import { createMachineReactor } from '../../../core/reactors/create-machine-reactor';
@@ -41,26 +43,16 @@ import {
   type DrmSystemsConfig,
   declaredDrmKeys,
   declaredEncryptionScheme,
-  fetchLicense,
   fetchServerCertificate,
-  initDataFromKeyUri,
-  KEY_SYSTEM_BY_KEY_FORMAT,
+  type KeySystemModule,
   keySystemCandidates,
+  NO_KEY_SYSTEM,
   requestKeySystemAccess,
-  resolveDrmHeaders,
   resolveDrmUrl,
-  shapeLicenseRequest,
-  toCencInitData,
-  unplayableEncryptedTypes,
 } from '../../../media/dom/eme';
 import {
-  SVTA_BAD_LICENSE_REQUEST,
   SVTA_DRM_CERTIFICATE_ERROR,
   SVTA_DRM_INITIALIZATION_ERROR,
-  SVTA_DRM_LICENSE_RESPONSE_REJECTED,
-  SVTA_DRM_LICENSE_REQUEST_GENERATION_FAILED,
-  SVTA_NO_SUPPORTED_AUDIO_TRACK,
-  SVTA_NO_SUPPORTED_VIDEO_TRACK,
   SVTA_UNSUPPORTED_DRM_SYSTEM,
 } from '../../../media/errors';
 import { isResolvedPresentation, type MaybeResolvedPresentation } from '../../../media/types';
@@ -69,8 +61,17 @@ import { type ErrorEmitterState, emitError } from '../collect-errors';
 /** State shape for MediaKeys setup. */
 export interface MediaKeysState {
   presentation?: MaybeResolvedPresentation;
-  /** DRM load gate; semantics on `SegmentLoadingState['awaitingMediaKeys']`. */
-  awaitingMediaKeys?: boolean;
+  /** Segment-load gate; semantics on `SegmentLoadingState['segmentLoadingBlocked']`. */
+  segmentLoadingBlocked?: boolean;
+  /**
+   * The key system negotiation settled on for the current source, or `undefined` when none has been (yet, or at all).
+   *
+   * The negotiation outcome as _state_, not just as the private detail it once was: `exchangeLicenses` keys its
+   * per-system message shaping and license-server lookup off it, and it is the late fact rendition pruning can't
+   * otherwise learn — pruning runs before the CDM has been asked, so a rendition naming a configured server survives it
+   * and only negotiation reveals the CDM is absent.
+   */
+  negotiatedKeySystem?: string;
 }
 
 /** Context shape for MediaKeys setup. */
@@ -86,6 +87,12 @@ export interface MediaKeysSetupConfig {
    * or provider-specific, so no default exists; the DRM engine variant supplies it.
    */
   drm: DrmSystemsConfig;
+  /**
+   * The key systems this composition can negotiate, most-preferred first. Required for the same reason `drm` is: which
+   * systems an engine carries is a composition decision, and each module dropped from the list drops its own
+   * negotiation, init-data, and license-shaping code with it.
+   */
+  keySystems: readonly KeySystemModule[];
 }
 
 type MediaKeysFsmState = 'preconditions-unmet' | 'media-keys-required';
@@ -97,7 +104,8 @@ function setupMediaKeysSetup({
 }: {
   state: {
     presentation: ReadonlySignal<MediaKeysState['presentation']>;
-    awaitingMediaKeys: Signal<MediaKeysState['awaitingMediaKeys']>;
+    segmentLoadingBlocked: Signal<MediaKeysState['segmentLoadingBlocked']>;
+    negotiatedKeySystem: Signal<MediaKeysState['negotiatedKeySystem']>;
   } & ErrorEmitterState;
   context: {
     mediaElement: ReadonlySignal<MediaKeysContext['mediaElement']>;
@@ -131,13 +139,12 @@ function setupMediaKeysSetup({
           const mediaElement = context.mediaElement.get()!;
           const presentation = state.presentation.get()!;
           const controller = new AbortController();
-          const sessions: MediaKeySession[] = [];
 
-          state.awaitingMediaKeys.set(true);
+          state.segmentLoadingBlocked.set(true);
 
           const negotiate = async () => {
             const keys = declaredDrmKeys(presentation);
-            const candidates = keySystemCandidates(keys, config.drm);
+            const candidates = keySystemCandidates(keys, config.drm, config.keySystems);
             const result = await requestKeySystemAccess(
               candidates,
               contentTypesFromPresentation(presentation),
@@ -149,28 +156,24 @@ function setupMediaKeysSetup({
             if (!result) {
               // Gate stays up: parked playback beats guaranteed decode
               // failure. Severity is the adapter's call, per errors.md.
-              emitError(state, { code: SVTA_UNSUPPORTED_DRM_SYSTEM, data: { keySystems: candidates } });
+              emitError(state, {
+                code: SVTA_UNSUPPORTED_DRM_SYSTEM,
+                data: { keySystems: candidates.map((module_) => module_.keySystem) },
+              });
 
-              // …but a cause alone leaves nothing fatal to surface, so a source
-              // whose every rendition needs the CDM we just failed to get would
-              // park with no reported failure at all. Pruning would have called
-              // that type empty; it only missed because it ran before
-              // negotiation. Say so now, in the same terms.
-              for (const trackType of unplayableEncryptedTypes(presentation)) {
-                emitError(state, {
-                  code: trackType === 'video' ? SVTA_NO_SUPPORTED_VIDEO_TRACK : SVTA_NO_SUPPORTED_AUDIO_TRACK,
-                  data: { trackType },
-                });
-              }
-
+              // Cause reported; the verdict is `track-switching`'s. Publishing
+              // the refusal re-fires its constraint chain, where
+              // `excludeRefusedKeySystems` prunes every encrypted rendition —
+              // so a type left with nothing reports
+              // SVTA_NO_SUPPORTED_{VIDEO,AUDIO}_TRACK from its owner, and a
+              // type keeping a clear one still reports nothing. Set after the
+              // cause so the sequence reads cause-then-verdict.
+              state.negotiatedKeySystem.set(NO_KEY_SYSTEM);
               return;
             }
 
-            const { keySystem } = result;
-            // Resolved once per negotiation. `keySystemCandidates` only offers a
-            // system whose license server resolves, so this is a string.
+            const { keySystem } = result.module;
             const entry = config.drm[keySystem]!;
-            const licenseUrl = resolveDrmUrl(entry.licenseUrl)!;
             const serverCertificateUrl = resolveDrmUrl(entry.serverCertificateUrl);
             const mediaKeys = await result.access.createMediaKeys();
 
@@ -202,95 +205,12 @@ function setupMediaKeysSetup({
               return;
             }
 
+            // Published together, before any further await: `exchangeLicenses`
+            // preconditions on both, and a reactor monitor cannot observe an
+            // intermediate write — the flush is a microtask away.
             context.mediaKeys.set(mediaKeys);
-            state.awaitingMediaKeys.set(false);
-
-            const exchange = async (session: MediaKeySession, message: BufferSource) => {
-              const { body, headers } = shapeLicenseRequest(keySystem, message);
-              let license: Uint8Array<ArrayBuffer>;
-
-              try {
-                // Configured headers first so the shaped request's own win: a
-                // classic PlayReady challenge names the headers its CDM requires.
-                license = await fetchLicense(licenseUrl, body, controller.signal, {
-                  ...resolveDrmHeaders(entry.headers),
-                  ...headers,
-                });
-              } catch (error) {
-                if (controller.signal.aborted) return;
-
-                emitError(state, { code: SVTA_BAD_LICENSE_REQUEST, data: { keySystem, reason: String(error) } });
-                return;
-              }
-
-              try {
-                await session.update(license);
-              } catch (error) {
-                if (controller.signal.aborted) return;
-
-                emitError(state, {
-                  code: SVTA_DRM_LICENSE_RESPONSE_REJECTED,
-                  data: { keySystem, reason: String(error) },
-                });
-              }
-            };
-            const openSession = (initDataType: string, initData: Uint8Array<ArrayBuffer>) => {
-              const session = mediaKeys.createSession();
-
-              sessions.push(session);
-              listen(session, 'message', (event) => void exchange(session, (event as MediaKeyMessageEvent).message), {
-                signal: controller.signal,
-              });
-              session.generateRequest(initDataType, initData).catch((error) => {
-                if (controller.signal.aborted) return;
-
-                emitError(state, {
-                  code: SVTA_DRM_LICENSE_REQUEST_GENERATION_FAILED,
-                  data: { keySystem, reason: String(error) },
-                });
-              });
-            };
-
-            // One session per manifest-carried init data of the chosen system
-            // (Widevine PSSH / PlayReady PRO as `data:` URIs).
-            for (const key of keys) {
-              if (key.keyFormat === undefined || KEY_SYSTEM_BY_KEY_FORMAT[key.keyFormat] !== keySystem) continue;
-
-              const initData = key.uri === undefined ? undefined : initDataFromKeyUri(key.uri);
-              if (!initData) continue;
-
-              openSession('cenc', toCencInitData(keySystem, initData));
-            }
-
-            // Event-driven fallback: keys without inline init data (FairPlay
-            // `skd://`) surface protection only once an appended init segment
-            // fires `encrypted` (`sinf` on the MSE path). Active only when the
-            // manifest path opened no session — on manifest-licensed sources
-            // appends re-fire `encrypted` for content already being licensed,
-            // and reacting would double-license. Deduped by init-data bytes:
-            // demuxed audio and video both fire.
-            if (sessions.length === 0) {
-              const seenInitData: Uint8Array[] = [];
-
-              listen(
-                mediaElement,
-                'encrypted',
-                (event) => {
-                  const { initDataType, initData } = event as MediaEncryptedEvent;
-                  if (!initData) return;
-
-                  const bytes = new Uint8Array(initData);
-                  const isSeen = seenInitData.some(
-                    (seen) => seen.length === bytes.length && seen.every((byte, i) => byte === bytes[i])
-                  );
-                  if (isSeen) return;
-
-                  seenInitData.push(bytes);
-                  openSession(initDataType, bytes);
-                },
-                { signal: controller.signal }
-              );
-            }
+            state.negotiatedKeySystem.set(keySystem);
+            state.segmentLoadingBlocked.set(false);
           };
 
           negotiate().catch((error) => {
@@ -300,15 +220,16 @@ function setupMediaKeysSetup({
           });
 
           // State-exit cleanup — source unload, element detach, or destroy.
-          // Order: abort first (kills the negotiation and the message
-          // listeners), close sessions, clear the slots, then detach.
+          // Order: abort first (kills the negotiation), clear the slots, then
+          // detach. Sessions opened against these MediaKeys are closed by
+          // `exchangeLicenses`, which is composed ahead of this behavior so
+          // its cleanup runs first (see its file JSDoc).
           return () => {
             controller.abort();
 
-            for (const session of sessions) session.close().catch(() => {});
-
             context.mediaKeys.set(undefined);
-            state.awaitingMediaKeys.set(false);
+            state.negotiatedKeySystem.set(undefined);
+            state.segmentLoadingBlocked.set(false);
             attachMediaKeys(mediaElement, null).catch(() => {});
           };
         },
@@ -318,7 +239,7 @@ function setupMediaKeysSetup({
 }
 
 export const setupMediaKeys = defineBehavior({
-  stateKeys: ['presentation', 'awaitingMediaKeys'],
+  stateKeys: ['presentation', 'segmentLoadingBlocked', 'negotiatedKeySystem'],
   contextKeys: ['mediaElement', 'mediaKeys'],
   // The wrapper's exact keyed map keeps `defineBehavior`'s stateKeys ≡ keyof
   // inference intact; the reporter seam (`errors`, optional per
@@ -332,7 +253,8 @@ export const setupMediaKeys = defineBehavior({
   }: {
     state: {
       presentation: ReadonlySignal<MediaKeysState['presentation']>;
-      awaitingMediaKeys: Signal<MediaKeysState['awaitingMediaKeys']>;
+      segmentLoadingBlocked: Signal<MediaKeysState['segmentLoadingBlocked']>;
+      negotiatedKeySystem: Signal<MediaKeysState['negotiatedKeySystem']>;
     };
     context: {
       mediaElement: ReadonlySignal<MediaKeysContext['mediaElement']>;

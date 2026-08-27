@@ -3,8 +3,8 @@ import type { Constructor, MixinReturn } from '@videojs/utils/types';
 
 import type { Composition } from '../../../core/composition/create-composition';
 import { effect } from '../../../core/signals/effect';
-import type { DrmSystemsConfig } from '../../../media/drm';
-import { KEY_SYSTEM_BY_KEY_FORMAT } from '../../../media/drm';
+import { DEFAULT_KEY_SYSTEMS } from '../../../media/dom/key-systems';
+import type { DrmSystemsConfig, KeySystemModule } from '../../../media/drm';
 import {
   SVTA_NO_SUPPORTED_AUDIO_TRACK,
   SVTA_NO_SUPPORTED_VIDEO_TRACK,
@@ -211,8 +211,9 @@ export function HlsVideoMediaMixin<Base extends Constructor<any>>(BaseClass: Bas
       // The resolvers close over `this` but are built before `super()` returns:
       // safe because nothing resolves a URL during engine construction, the
       // first read being a capability probe with no presentation set yet.
+      const keySystems: readonly KeySystemModule[] = config?.keySystems ?? DEFAULT_KEY_SYSTEMS;
       const drm: DrmSystemsConfig = Object.fromEntries(
-        Object.values(KEY_SYSTEM_BY_KEY_FORMAT).map((keySystem) => [
+        keySystems.map(({ keySystem }) => [
           keySystem,
           {
             licenseUrl: () => this.#source?.drm?.[keySystem]?.licenseUrl as string | undefined,
