@@ -148,15 +148,7 @@ interface PageDef {
   framework: 'html' | 'react';
   media: string;
   resource: string;
-  category?:
-    | 'cdn'
-    | 'ejected-html'
-    | 'ejected-react'
-    | 'captions'
-    | 'background'
-    | 'background-preset'
-    | 'source-html'
-    | 'source-react';
+  category?: 'cdn' | 'captions' | 'background' | 'background-preset' | 'source-html' | 'source-react';
 }
 
 // ---------------------------------------------------------------------------
@@ -438,72 +430,6 @@ document.getElementById('root')!.innerHTML = html\`
 `;
 }
 
-function ejectedHtmlPage(resource: string): string {
-  // Path from pages/ to the site content
-  const jsonPath = '../../../../../../site/src/content/ejected-skins.json';
-
-  return `import '@videojs/html/icons/element';
-import ejectedSkins from '${jsonPath}';
-import { MEDIA } from '../resources';
-
-interface EjectedSkinEntry {
-  id: string;
-  html?: string;
-  css?: string;
-}
-
-const skin = (ejectedSkins as EjectedSkinEntry[]).find((s) => s.id === 'default-video');
-
-if (!skin?.html || !skin?.css) {
-  throw new Error('Ejected skin "default-video" not found. Run \\\`pnpm -F site ejected-skins\\\` first.');
-}
-
-const style = document.createElement('style');
-style.textContent = skin.css;
-document.head.appendChild(style);
-
-const playerMatch = skin.html.match(/<video-player\\b[^>]*>[\\s\\S]*<\\/video-player>/);
-
-if (!playerMatch) {
-  throw new Error('Could not find <video-player> in ejected HTML output.');
-}
-
-const root = document.getElementById('root')!;
-root.innerHTML = \`<div style="max-width: 800px; aspect-ratio: 16/9">\${playerMatch[0]}</div>\`;
-
-const video = root.querySelector('video');
-const poster = root.querySelector('media-poster img');
-
-if (!video || !poster) {
-  throw new Error('Ejected skin "default-video" is missing video media.');
-}
-
-video.src = MEDIA.${resource}.url;
-video.crossOrigin = 'anonymous';
-video.innerHTML = \`<track kind="metadata" label="thumbnails" src="\${MEDIA.${resource}.storyboard}" default />\`;
-poster.src = MEDIA.${resource}.poster;
-poster.alt = 'Video poster';
-
-// Ejected layouts have no <video-skin>, so register the player (context owner)
-// before the light DOM UI elements that consume it.
-await import('@videojs/html/video/player');
-await import('@videojs/html/video/ui');
-`;
-}
-
-function ejectedReactPage(resource: string): string {
-  return `import { createRoot } from 'react-dom/client';
-import { VideoPlayer } from '../_generated/ejected-react-video-skin';
-import { MEDIA } from '../resources';
-
-function App() {
-  return <VideoPlayer src={MEDIA.${resource}.url} poster={MEDIA.${resource}.poster} style={{ maxWidth: 800, aspectRatio: '16/9' }} />;
-}
-
-createRoot(document.getElementById('root')!).render(<App />);
-`;
-}
-
 function sourceHtmlPage(resource: string): string {
   const source = '../../../../../../packages/skins/vjsc/skins/default-video/skin.tsx';
 
@@ -680,24 +606,6 @@ const PAGES: PageDef[] = [
     category: 'captions',
   },
 
-  // Ejected Skins
-  {
-    name: 'Ejected HTML Video MP4',
-    path: 'ejected-html-video-mp4',
-    framework: 'html',
-    media: 'video',
-    resource: 'mp4',
-    category: 'ejected-html',
-  },
-  {
-    name: 'Ejected React Video MP4',
-    path: 'ejected-react-video-mp4',
-    framework: 'react',
-    media: 'video',
-    resource: 'mp4',
-    category: 'ejected-react',
-  },
-
   // Generated canonical Skin fixtures for focused container/parity coverage.
   {
     name: 'Source HTML Video MP4',
@@ -757,10 +665,6 @@ function generatePage(page: PageDef): { ts: string; html: string; ext: string } 
     ts = backgroundPresetPage(page.framework, page.resource);
   } else if (page.category === 'captions') {
     ts = captionsPage(page.resource);
-  } else if (page.category === 'ejected-html') {
-    ts = ejectedHtmlPage(page.resource);
-  } else if (page.category === 'ejected-react') {
-    ts = ejectedReactPage(page.resource);
   } else if (page.category === 'source-html') {
     ts = sourceHtmlPage(page.resource);
   } else if (page.category === 'source-react') {

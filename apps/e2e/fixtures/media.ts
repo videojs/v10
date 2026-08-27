@@ -114,27 +114,6 @@ export const AUDIO_PAGES = [
 ] as const satisfies readonly PageEntry[];
 
 // ---------------------------------------------------------------------------
-// Ejected skin pages (generated → src/pages/)
-// ---------------------------------------------------------------------------
-
-export const EJECTED_VIDEO_PAGES = [
-  {
-    name: 'Ejected HTML Video MP4',
-    path: '/pages/ejected-html-video-mp4.html',
-    framework: 'html',
-    media: 'video',
-    resource: 'mp4',
-  },
-  {
-    name: 'Ejected React Video MP4',
-    path: '/pages/ejected-react-video-mp4.html',
-    framework: 'react',
-    media: 'video',
-    resource: 'mp4',
-  },
-] as const satisfies readonly PageEntry[];
-
-// ---------------------------------------------------------------------------
 // CDN bundle pages (generated → src/pages/)
 // ---------------------------------------------------------------------------
 
@@ -159,4 +138,4 @@ export const CDN_VIDEO_PAGES = [
 // Combined arrays for parameterized tests
 // ---------------------------------------------------------------------------
 
-export const ALL_VIDEO_PAGES = [...VIDEO_PAGES, ...EJECTED_VIDEO_PAGES, ...CDN_VIDEO_PAGES] as const;
+export const ALL_VIDEO_PAGES = [...VIDEO_PAGES, ...CDN_VIDEO_PAGES] as const;

@@ -7,7 +7,6 @@ import { resolveImports } from './resolve-css-imports.ts';
 import type { BuildPlugin } from './types.ts';
 
 interface CopyCssPluginOptions {
-  skinsDir: string;
   outDir: string;
   inline?: boolean;
   rebuild?: boolean;
@@ -26,20 +25,12 @@ function mirrorSrcTree(file: string): string {
 }
 
 export function copyCssPlugin(options: CopyCssPluginOptions): BuildPlugin {
-  const {
-    skinsDir,
-    outDir,
-    inline = true,
-    rebuild = true,
-    rename = mirrorSrcTree,
-    omitImport,
-    minify = false,
-  } = options;
+  const { outDir, inline = true, rebuild = true, rename = mirrorSrcTree, omitImport, minify = false } = options;
   let poll: ReturnType<typeof setInterval> | undefined;
   let state = new Map<string, string>();
 
   function getCssFiles() {
-    return new Set([...globSync('src/**/*.css'), ...globSync(join(skinsDir, '**/*.css'))]);
+    return new Set(globSync('src/**/*.css'));
   }
 
   function getState() {
@@ -58,7 +49,7 @@ export function copyCssPlugin(options: CopyCssPluginOptions): BuildPlugin {
       if (target === null) continue;
 
       const content = readFileSync(file, 'utf-8');
-      let output = inline ? resolveImports(content, dirname(file), skinsDir, omitImport) : content;
+      let output = inline ? resolveImports(content, dirname(file), omitImport) : content;
 
       if (minify) {
         output = transform({ filename: file, code: Buffer.from(output), minify: true }).code.toString();

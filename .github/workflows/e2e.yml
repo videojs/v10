@@ -55,14 +55,8 @@ jobs:
       - name: Build CDN bundles
         run: pnpm build:cdn
 
-      - name: Build ejected skins
-        run: pnpm exec vp run site#ejected-skins
-
       - name: Generate E2E test pages
         run: pnpm --dir apps/e2e generate-pages
-
-      - name: Sync ejected skins to E2E app
-        run: pnpm --dir apps/e2e sync-ejected-skins
 
       - name: Run E2E tests
         run: pnpm --dir apps/e2e exec playwright test --project=vite-${{ matrix.browser }}

@@ -1,13 +1,6 @@
 import type { Locator, Page } from '@playwright/test';
 
-export const VJSC_CONFIGURATIONS = [
-  { source: 'legacy', style: 'css' },
-  { source: 'vjsc', style: 'css' },
-  { source: 'vjsc', style: 'tailwind' },
-] as const;
-
-export type VjscSource = (typeof VJSC_CONFIGURATIONS)[number]['source'];
-export type VjscStyle = (typeof VJSC_CONFIGURATIONS)[number]['style'];
+export type VjscStyle = 'css' | 'tailwind';
 
 /** Reads focus, pressed, and disabled paint for one shared button host. */
 export async function buttonInteractionContract(page: Page, button: Locator) {
