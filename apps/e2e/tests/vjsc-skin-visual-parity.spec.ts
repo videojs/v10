@@ -47,22 +47,6 @@ test.describe('VJSC skin visual parity audit', () => {
 
   for (const variant of CASES) {
     for (const width of WIDTHS) {
-      test(`${variant.framework} ${variant.skin} ${width}px renders VJSC CSS like legacy`, async ({
-        page,
-      }, testInfo) => {
-        const legacyRoot = await openVariant(page, variant, 'css', width, 'legacy');
-        const legacy = await captureStableRegions(legacyRoot);
-        const cssRoot = await openVariant(page, variant, 'css', width);
-        const css = await captureStableRegions(cssRoot);
-
-        expect(css.map(({ name }) => name)).toEqual(legacy.map(({ name }) => name));
-
-        for (let index = 0; index < legacy.length; index += 1) {
-          expect.soft(css[index]!.styles, `${css[index]!.name} computed styles`).toEqual(legacy[index]!.styles);
-          await expectVisualParity(page, testInfo, legacy[index]!, css[index]!);
-        }
-      });
-
       test(`${variant.framework} ${variant.skin} ${width}px renders Tailwind like VJSC CSS`, async ({
         page,
       }, testInfo) => {
@@ -86,10 +70,9 @@ async function openVariant(
   page: Page,
   variant: (typeof CASES)[number],
   style: 'css' | 'tailwind',
-  width: number,
-  source: 'legacy' | 'vjsc' = 'vjsc'
+  width: number
 ): Promise<Locator> {
-  const query = new URLSearchParams({ source, ...variant, style });
+  const query = new URLSearchParams({ ...variant, style });
 
   await page.goto(`/?${query}`, { waitUntil: 'domcontentloaded' });
 

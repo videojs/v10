@@ -7,27 +7,15 @@ import { dirname, resolve } from 'node:path';
  * `omit` drops an imported file, by resolved absolute path, instead of inlining it. It applies at every depth, so
  * excluding a leaf removes it from every sheet that transitively pulls it in.
  */
-export function resolveImports(
-  content: string,
-  baseDir: string,
-  skinsDir: string,
-  omit?: (file: string) => boolean
-): string {
+export function resolveImports(content: string, baseDir: string, omit?: (file: string) => boolean): string {
   return content.replace(/@import\s+['"]([^'"]+)['"]\s*;/g, (match, importPath: string) => {
-    let file: string;
+    if (!importPath.startsWith('.')) return match;
 
-    if (importPath.startsWith('@videojs/skins/')) {
-      file = resolve(skinsDir, importPath.replace('@videojs/skins/', ''));
-    } else if (importPath.startsWith('.')) {
-      file = resolve(baseDir, importPath);
-    } else {
-      return match;
-    }
-
+    const file = resolve(baseDir, importPath);
     if (omit?.(file)) return '';
 
     const nested = readFileSync(file, 'utf-8');
 
-    return resolveImports(nested, dirname(file), skinsDir, omit);
+    return resolveImports(nested, dirname(file), omit);
   });
 }

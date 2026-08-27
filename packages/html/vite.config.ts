@@ -23,7 +23,6 @@ type CdnBuildMode = 'dev' | 'prod';
 
 const packageDir = dirname(fileURLToPath(import.meta.url));
 const srcDir = new URL('./src', import.meta.url).pathname;
-const skinsDir = srcDir;
 
 /** The light-DOM sheet every non-background skin pulls in. Kept out of the shadow sheets. */
 const globalCss = resolve(packageDir, 'src/define/global.css');
@@ -94,8 +93,8 @@ const createPackConfig = (mode: PackageBuildMode): PackUserConfig => ({
   },
   alias: srcAlias,
   plugins: [
-    copyCssPlugin({ skinsDir, outDir: `dist/${mode}` }),
-    inlineCssPlugin({ skinsDir, minify: !isDevBuildMode(mode) }),
+    copyCssPlugin({ outDir: `dist/${mode}` }),
+    inlineCssPlugin({ minify: !isDevBuildMode(mode) }),
     inlineTemplatePlugin({ minify: !isDevBuildMode(mode) }),
   ],
 });
@@ -259,14 +258,13 @@ for (const mode of cdnBuildModes) {
     },
     plugins: [
       cdnI18nExternalPlugin({ prod: isProd }),
-      inlineCssPlugin({ skinsDir, minify: isProd }),
+      inlineCssPlugin({ minify: isProd }),
       inlineTemplatePlugin({ minify: isProd }),
       // Stylesheets have no dev/prod variant, so they are emitted once. The prod pass runs after the dev pass, which
       // is the one that cleans `outDir`.
       ...(isProd
         ? [
             copyCssPlugin({
-              skinsDir,
               outDir: cdnOutDir,
               rename: cdnStylesheetName,
               // Skin sheets are for a shadow root, where the light-DOM rules are dead weight. `global.css` ships on

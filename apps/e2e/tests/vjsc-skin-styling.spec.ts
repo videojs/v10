@@ -13,8 +13,8 @@ const CONTROLS_SELECTOR = 'media-controls-content.media-controls, .media-control
 
 test.describe.configure({ mode: 'serial' });
 
-test('the dev width control resizes legacy skins', async ({ page }) => {
-  const root = await openVariant(page, CASES[0], 'css', 384, 'legacy');
+test('the dev width control resizes VJSC skins', async ({ page }) => {
+  const root = await openVariant(page, CASES[0], 'css', 384);
   const range = page.getByRole('slider', { name: 'Player width' });
 
   await range.fill('512');
@@ -33,24 +33,19 @@ test('the dev width control resizes legacy skins', async ({ page }) => {
 });
 
 for (const variant of CASES) {
-  test(`${variant.framework} ${variant.skin} matches the legacy CSS layout`, async ({ page }) => {
+  test(`${variant.framework} ${variant.skin} keeps CSS and Tailwind layout in sync`, async ({ page }) => {
     for (const width of WIDTHS) {
-      const legacy = await openVariant(page, variant, 'css', width, 'legacy');
-      const legacyContract = await layoutContract(legacy);
+      const css = await openVariant(page, variant, 'css', width);
+      const cssContract = await layoutContract(css);
+      const tailwind = await openVariant(page, variant, 'tailwind', width);
+      const tailwindContract = await layoutContract(tailwind);
 
-      const vjsc = await openVariant(page, variant, 'css', width);
-      const vjscContract = await layoutContract(vjsc);
-
-      expect(vjscContract).toEqual(legacyContract);
+      expect(tailwindContract).toEqual(cssContract);
     }
   });
 
-  test(`${variant.framework} ${variant.skin} keeps legacy, CSS, and Tailwind rendering in sync`, async ({ page }) => {
+  test(`${variant.framework} ${variant.skin} keeps CSS and Tailwind rendering in sync`, async ({ page }) => {
     for (const width of WIDTHS) {
-      const legacy = await openVariant(page, variant, 'css', width, 'legacy');
-
-      await expect(legacy).toHaveScreenshot(snapshotName(variant, width));
-
       const css = await openVariant(page, variant, 'css', width);
       const cssContract = await skinContract(css);
 
@@ -66,51 +61,33 @@ for (const variant of CASES) {
 
   test(`${variant.framework} ${variant.skin} keeps button interaction styling in sync`, async ({ page }) => {
     const name = `${variant.framework}-${variant.skin}-button-focus.png`;
-
-    const legacyRoot = await openVariant(page, variant, 'css', 800, 'legacy');
-    const legacyRootFocus = await focusContract(legacyRoot);
-    const legacyButton = await focusPlayButton(page);
-    const legacyFocused = await buttonStateContract(legacyButton);
-
-    await expect(legacyRoot).toHaveScreenshot(name);
-    const legacyDisabled = await disabledButtonContract(legacyButton);
-    const legacyPressed = await pressedButtonContract(page, legacyButton);
-
     const cssRoot = await openVariant(page, variant, 'css', 800);
-
-    expect(await focusContract(cssRoot)).toEqual(legacyRootFocus);
+    const cssRootFocus = await focusContract(cssRoot);
     const cssButton = await focusPlayButton(page);
     const cssFocused = await buttonStateContract(cssButton);
 
-    expect(cssFocused).toEqual(legacyFocused);
     await expect(cssRoot).toHaveScreenshot(name);
-    expect(await disabledButtonContract(cssButton)).toEqual(legacyDisabled);
-    expect(await pressedButtonContract(page, cssButton)).toEqual(legacyPressed);
+    const cssDisabled = await disabledButtonContract(cssButton);
+    const cssPressed = await pressedButtonContract(page, cssButton);
 
     const tailwindRoot = await openVariant(page, variant, 'tailwind', 800);
 
-    expect(await focusContract(tailwindRoot)).toEqual(legacyRootFocus);
+    expect(await focusContract(tailwindRoot)).toEqual(cssRootFocus);
     const tailwindButton = await focusPlayButton(page);
     const tailwindFocused = await buttonStateContract(tailwindButton);
 
     expect(tailwindFocused).toEqual(cssFocused);
     await expect(tailwindRoot).toHaveScreenshot(name);
-    expect(await disabledButtonContract(tailwindButton)).toEqual(legacyDisabled);
-    expect(await pressedButtonContract(page, tailwindButton)).toEqual(legacyPressed);
+    expect(await disabledButtonContract(tailwindButton)).toEqual(cssDisabled);
+    expect(await pressedButtonContract(page, tailwindButton)).toEqual(cssPressed);
   });
 
   test(`${variant.framework} ${variant.skin} keeps seek focus styling in sync`, async ({ page }) => {
     const name = `${variant.framework}-${variant.skin}-seek-focus.png`;
 
-    const legacyRoot = await openVariant(page, variant, 'css', 800, 'legacy');
-    const legacyContract = await seekFocusContract(page);
-
-    await expect(legacyRoot).toHaveScreenshot(name);
-
     const cssRoot = await openVariant(page, variant, 'css', 800);
     const cssContract = await seekFocusContract(page);
 
-    expect(cssContract).toEqual(legacyContract);
     await expect(cssRoot).toHaveScreenshot(name);
 
     const tailwindRoot = await openVariant(page, variant, 'tailwind', 800);
@@ -121,13 +98,10 @@ for (const variant of CASES) {
   });
 
   test(`${variant.framework} ${variant.skin} keeps seek dragging attached to the pointer`, async ({ page }) => {
-    await openVariant(page, variant, 'css', 800, 'legacy');
-    const legacyContract = await seekDragContract(page);
-
-    expect(legacyContract).toMatchObject({ fillIsImmediate: true, thumbPositionIsImmediate: true });
-
     await openVariant(page, variant, 'css', 800);
     const cssContract = await seekDragContract(page);
+
+    expect(cssContract).toMatchObject({ fillIsImmediate: true, thumbPositionIsImmediate: true });
 
     await openVariant(page, variant, 'tailwind', 800);
     const tailwindContract = await seekDragContract(page);
@@ -139,19 +113,11 @@ for (const variant of CASES) {
   test(`${variant.framework} ${variant.skin} keeps hidden controls and caption placement in sync`, async ({ page }) => {
     const name = `${variant.framework}-${variant.skin}-hidden-controls.png`;
 
-    const legacyRoot = await openVariant(page, variant, 'css', 800, 'legacy');
-
-    await enableCaptions(page, legacyRoot);
-    const legacyContract = await hideControls(legacyRoot);
-
-    await expect(legacyRoot).toHaveScreenshot(name);
-
     const cssRoot = await openVariant(page, variant, 'css', 800);
 
     await enableCaptions(page, cssRoot);
     const cssContract = await hideControls(cssRoot);
 
-    expect(cssContract).toEqual(legacyContract);
     await expect(cssRoot).toHaveScreenshot(name);
 
     const tailwindRoot = await openVariant(page, variant, 'tailwind', 800);
@@ -165,18 +131,9 @@ for (const variant of CASES) {
 
   test(`${variant.framework} ${variant.skin} keeps buffering styling in sync`, async ({ page }) => {
     const name = `${variant.framework}-${variant.skin}-buffering.png`;
-    const legacyName =
-      variant.skin === 'minimal-video' ? `${variant.framework}-${variant.skin}-buffering-legacy.png` : name;
-
-    const legacyRoot = await openVariant(page, variant, 'css', 800, 'legacy');
-    const legacyContract = await showBuffering(legacyRoot);
-
-    await expect(legacyRoot).toHaveScreenshot(legacyName);
-
     const cssRoot = await openVariant(page, variant, 'css', 800);
     const cssContract = await showBuffering(cssRoot);
 
-    expect(cssContract).toEqual(legacyContract);
     await expect(cssRoot).toHaveScreenshot(name);
 
     const tailwindRoot = await openVariant(page, variant, 'tailwind', 800);
@@ -187,13 +144,6 @@ for (const variant of CASES) {
   });
 
   test(`${variant.framework} ${variant.skin} keeps popup styling in sync`, async ({ page }) => {
-    const legacyRoot = await openVariant(page, variant, 'css', 800, 'legacy');
-    const legacyPopup = await openVolumePopover(page);
-    const legacyContract = await popupSurfaceContract(legacyRoot, legacyPopup);
-    const legacySliderContract = await volumeSliderContract(legacyPopup);
-    const legacyMotion = await popupMotionContract(legacyPopup);
-    const legacyTooltipContract = await muteTooltipContract(page, legacyRoot, variant.skin);
-
     const cssRoot = await openVariant(page, variant, 'css', 800);
     const cssPopup = await openVolumePopover(page);
     const cssContract = await popupSurfaceContract(cssRoot, cssPopup);
@@ -201,12 +151,7 @@ for (const variant of CASES) {
     const cssMotion = await popupMotionContract(cssPopup);
     const cssTooltipContract = await muteTooltipContract(page, cssRoot, variant.skin);
 
-    expect(cssMotion).toEqual(legacyMotion);
     expectPopupMotion(cssMotion);
-    expect(cssSliderContract).toEqual(legacySliderContract);
-    expect(cssTooltipContract).toEqual(legacyTooltipContract);
-
-    expect(cssContract).toEqual(legacyContract);
 
     const tailwindRoot = await openVariant(page, variant, 'tailwind', 800);
     const tailwindPopup = await openVolumePopover(page);
@@ -226,18 +171,11 @@ for (const variant of CASES) {
   });
 
   test(`${variant.framework} ${variant.skin} keeps tooltip styling in sync`, async ({ page }) => {
-    const legacyRoot = await openVariant(page, variant, 'css', 800, 'legacy');
-    const legacyTooltip = await openTooltip(page, 'Play');
-    const legacyContract = await tooltipSurfaceContract(legacyRoot, legacyTooltip);
-    const legacyMotion = await popupMotionContract(legacyTooltip);
-
     const cssRoot = await openVariant(page, variant, 'css', 800);
     const cssTooltip = await openTooltip(page, 'Play');
     const cssContract = await tooltipSurfaceContract(cssRoot, cssTooltip);
     const cssMotion = await popupMotionContract(cssTooltip);
 
-    expect(cssContract).toEqual(legacyContract);
-    expect(cssMotion).toEqual(legacyMotion);
     expectPopupMotion(cssMotion);
 
     const tailwindRoot = await openVariant(page, variant, 'tailwind', 800);
@@ -251,35 +189,23 @@ for (const variant of CASES) {
   });
 
   test(`${variant.framework} ${variant.skin} keeps the settings button tooltip in sync`, async ({ page }) => {
-    const legacyRoot = await openVariant(page, variant, 'css', 800, 'legacy');
-    const legacyTooltip = await openTooltip(page, 'Settings');
-    const legacyContract = await tooltipSurfaceContract(legacyRoot, legacyTooltip);
-
     const cssRoot = await openVariant(page, variant, 'css', 800);
     const cssTooltip = await openTooltip(page, 'Settings');
-
-    expect(await tooltipSurfaceContract(cssRoot, cssTooltip)).toEqual(legacyContract);
+    const cssContract = await tooltipSurfaceContract(cssRoot, cssTooltip);
 
     const tailwindRoot = await openVariant(page, variant, 'tailwind', 800);
     const tailwindTooltip = await openTooltip(page, 'Settings');
 
-    expect(await tooltipSurfaceContract(tailwindRoot, tailwindTooltip)).toEqual(legacyContract);
+    expect(await tooltipSurfaceContract(tailwindRoot, tailwindTooltip)).toEqual(cssContract);
   });
 
   if (variant.skin === 'minimal-video') {
     test(`${variant.framework} ${variant.skin} keeps the expanded volume mask in sync`, async ({ page }) => {
       for (const width of WIDTHS) {
-        const legacyRoot = await openVariant(page, variant, 'css', width, 'legacy');
-
-        await openVolumePopover(page);
-        const legacyContract = await volumeMaskContract(legacyRoot, width);
-
         const cssRoot = await openVariant(page, variant, 'css', width);
 
         await openVolumePopover(page);
         const cssContract = await volumeMaskContract(cssRoot, width);
-
-        expect(cssContract).toEqual(legacyContract);
 
         const tailwindRoot = await openVariant(page, variant, 'tailwind', width);
 
@@ -299,15 +225,9 @@ for (const variant of CASES) {
   }
 
   test(`${variant.framework} ${variant.skin} keeps settings menu styling in sync`, async ({ page }) => {
-    const legacyRoot = await openVariant(page, variant, 'css', 800, 'legacy');
-    const legacyMenu = await openSettingsMenu(page);
-    const legacyContract = await popupContract(legacyRoot, legacyMenu);
-
     const cssRoot = await openVariant(page, variant, 'css', 800);
     const cssMenu = await openSettingsMenu(page);
     const cssContract = await popupContract(cssRoot, cssMenu);
-
-    expect(cssContract).toEqual(legacyContract);
 
     const tailwindRoot = await openVariant(page, variant, 'tailwind', 800);
     const tailwindMenu = await openSettingsMenu(page);
@@ -318,15 +238,9 @@ for (const variant of CASES) {
   });
 
   test(`${variant.framework} ${variant.skin} keeps settings submenu styling in sync`, async ({ page }) => {
-    const legacyRoot = await openVariant(page, variant, 'css', 800, 'legacy');
-    const legacySubmenu = await openSettingsSubmenu(page, 'Speed');
-    const legacyContract = await popupContract(legacyRoot, legacySubmenu);
-
     const cssRoot = await openVariant(page, variant, 'css', 800);
     const cssSubmenu = await openSettingsSubmenu(page, 'Speed');
     const cssContract = await popupContract(cssRoot, cssSubmenu);
-
-    expect(cssContract).toEqual(legacyContract);
 
     const tailwindRoot = await openVariant(page, variant, 'tailwind', 800);
     const tailwindSubmenu = await openSettingsSubmenu(page, 'Speed');
@@ -337,13 +251,8 @@ for (const variant of CASES) {
   });
 
   test(`${variant.framework} ${variant.skin} keeps settings submenu motion coordinated`, async ({ page }) => {
-    await openVariant(page, variant, 'css', 800, 'legacy');
-    const legacyContract = await settingsSubmenuMotionContract(page, 'Speed');
-
     await openVariant(page, variant, 'css', 800);
     const cssContract = await settingsSubmenuMotionContract(page, 'Speed');
-
-    expect(cssContract).toEqual(legacyContract);
 
     await openVariant(page, variant, 'tailwind', 800);
     const tailwindContract = await settingsSubmenuMotionContract(page, 'Speed');
@@ -357,15 +266,9 @@ for (const variant of CASES) {
   });
 
   test(`${variant.framework} ${variant.skin} keeps captions submenu styling in sync`, async ({ page }) => {
-    const legacyRoot = await openVariant(page, variant, 'css', 800, 'legacy');
-    const legacySubmenu = await openSettingsSubmenu(page, 'Captions');
-    const legacyContract = await popupContract(legacyRoot, legacySubmenu);
-
     const cssRoot = await openVariant(page, variant, 'css', 800);
     const cssSubmenu = await openSettingsSubmenu(page, 'Captions');
     const cssContract = await popupContract(cssRoot, cssSubmenu);
-
-    expect(cssContract).toEqual(legacyContract);
 
     const tailwindRoot = await openVariant(page, variant, 'tailwind', 800);
     const tailwindSubmenu = await openSettingsSubmenu(page, 'Captions');
@@ -377,13 +280,8 @@ for (const variant of CASES) {
 
   test(`${variant.framework} ${variant.skin} keeps keyboard feedback styling in sync`, async ({ page }) => {
     await page.clock.install();
-    const legacyRoot = await openVariant(page, variant, 'css', 800, 'legacy');
-    const legacyContract = await keyboardFeedbackContract(page, legacyRoot);
-
     const cssRoot = await openVariant(page, variant, 'css', 800);
     const cssContract = await keyboardFeedbackContract(page, cssRoot);
-
-    expect(cssContract).toEqual(legacyContract);
 
     const tailwindRoot = await openVariant(page, variant, 'tailwind', 800);
     const tailwindContract = await keyboardFeedbackContract(page, tailwindRoot);
@@ -411,12 +309,6 @@ for (const variant of CASES) {
 
   test(`${variant.framework} ${variant.skin} keeps active captions in sync`, async ({ page }) => {
     const name = `${variant.framework}-${variant.skin}-captions-cue.png`;
-
-    const legacyRoot = await openVariant(page, variant, 'css', 800, 'legacy');
-
-    await enableCaptions(page, legacyRoot);
-    await expect(legacyRoot).toHaveScreenshot(name);
-
     const cssRoot = await openVariant(page, variant, 'css', 800);
 
     await enableCaptions(page, cssRoot);
@@ -430,26 +322,13 @@ for (const variant of CASES) {
 
   test(`${variant.framework} ${variant.skin} keeps the seek preview in sync`, async ({ page }) => {
     const name = `${variant.framework}-${variant.skin}-seek-preview.png`;
-    const legacyRoot = await openVariant(page, variant, 'css', 800, 'legacy');
-    const legacySlider = await openSeekPreview(page);
-    const legacyContract = await sliderContract(legacySlider);
-
-    await expect(legacyRoot).toHaveScreenshot(name);
-    const legacyAlignment = await sliderPreviewAlignment(legacySlider);
-
     const cssRoot = await openVariant(page, variant, 'css', 800);
     const cssSlider = await openSeekPreview(page);
     const cssContract = await sliderContract(cssSlider);
 
-    // The default controls allocate the timeline's flexible width at the region level,
-    // so compare only the slider's intrinsic styling contract.
-    expect(variant.skin === 'default-video' ? withoutSliderWidths(cssContract) : cssContract).toEqual(
-      variant.skin === 'default-video' ? withoutSliderWidths(legacyContract) : legacyContract
-    );
     await expect(cssRoot).toHaveScreenshot(name);
     const cssAlignment = await sliderPreviewAlignment(cssSlider);
 
-    expect(cssAlignment).toEqual(legacyAlignment);
     expect(cssAlignment.every((offset) => Math.abs(offset) <= 1)).toBe(true);
 
     const tailwindRoot = await openVariant(page, variant, 'tailwind', 800);
@@ -508,26 +387,15 @@ for (const variant of CASES) {
 
     await page.setViewportSize({ width: 1280, height: 720 });
 
-    const legacyRoot = await openVariant(page, variant, 'css', 800, 'legacy', media);
-    const legacyContract = await enterFullscreen(page, legacyRoot);
-
-    expect(legacyContract.previewValueBottomInPreviewHeights).toBe(variant.skin === 'default-video' ? 13.5 : 8);
-    await expect(legacyRoot).toHaveScreenshot(name);
-    const legacyPreview = variant.skin === 'minimal-video' ? await fullscreenPreviewContract(legacyRoot) : null;
-    const legacyMenu = await fullscreenSpeedMenuContract(page);
-
-    const cssRoot = await openVariant(page, variant, 'css', 800, 'vjsc', media);
+    const cssRoot = await openVariant(page, variant, 'css', 800, media);
     const cssContract = await enterFullscreen(page, cssRoot);
 
-    expect(cssContract).toEqual(legacyContract);
+    expect(cssContract.previewValueBottomInPreviewHeights).toBe(variant.skin === 'default-video' ? 13.5 : 8);
     await expect(cssRoot).toHaveScreenshot(name);
     const cssPreview = variant.skin === 'minimal-video' ? await fullscreenPreviewContract(cssRoot) : null;
     const cssMenu = await fullscreenSpeedMenuContract(page);
 
-    expectFullscreenPreviewParity(cssPreview, legacyPreview);
-    expect(cssMenu).toEqual(legacyMenu);
-
-    const tailwindRoot = await openVariant(page, variant, 'tailwind', 800, 'vjsc', media);
+    const tailwindRoot = await openVariant(page, variant, 'tailwind', 800, media);
     const tailwindContract = await enterFullscreen(page, tailwindRoot);
 
     expect(tailwindContract).toEqual(cssContract);
@@ -558,28 +426,24 @@ test('minimal fullscreen geometry scales through the large breakpoints', async (
     });
     await page.setViewportSize({ width: viewportWidth, height: Math.round(viewportWidth * 0.5625) });
 
-    const legacyRoot = await openVariant(page, variant, 'css', 800, 'legacy', 'hls-3');
-    const legacyFullscreen = await enterFullscreen(page, legacyRoot);
-    const legacyPreview = await fullscreenPreviewContract(legacyRoot);
-    const legacyMenu = await fullscreenSpeedMenuContract(page);
+    const cssRoot = await openVariant(page, variant, 'css', 800, 'hls-3');
+    const cssFullscreen = await enterFullscreen(page, cssRoot);
+    const cssPreview = await fullscreenPreviewContract(cssRoot);
+    const cssMenu = await fullscreenSpeedMenuContract(page);
 
-    expect(legacyFullscreen.scale).toBe(scale);
+    expect(cssFullscreen.scale).toBe(scale);
+    expect(cssPreview.timeToSliderGap).toBeGreaterThanOrEqual(30);
+    expect(cssPreview.timeToThumbnailGap).toBeGreaterThanOrEqual(13);
+    expect(cssMenu).toEqual({ heightInSpacingUnits: 56, maxHeightInSpacingUnits: 56, scrolls: true });
 
-    for (const style of ['css', 'tailwind'] as const) {
-      const root = await openVariant(page, variant, style, 800, 'vjsc', 'hls-3');
-      const fullscreen = await enterFullscreen(page, root);
-      const preview = await fullscreenPreviewContract(root);
-      const menu = await fullscreenSpeedMenuContract(page);
+    const tailwindRoot = await openVariant(page, variant, 'tailwind', 800, 'hls-3');
+    const tailwindFullscreen = await enterFullscreen(page, tailwindRoot);
+    const tailwindPreview = await fullscreenPreviewContract(tailwindRoot);
+    const tailwindMenu = await fullscreenSpeedMenuContract(page);
 
-      expect(fullscreen).toEqual(legacyFullscreen);
-      expect(preview.timeToSliderGap).toBe(legacyPreview.timeToSliderGap);
-      expect(preview.valueBottomInSpacingUnits).toBe(legacyPreview.valueBottomInSpacingUnits);
-      expect(preview.thumbnailBottomInSpacingUnits).toBe(legacyPreview.thumbnailBottomInSpacingUnits);
-      expect(menu).toEqual(legacyMenu);
-      expect(preview.timeToSliderGap).toBeGreaterThanOrEqual(30);
-      expect(preview.timeToThumbnailGap).toBeGreaterThanOrEqual(13);
-      expect(menu).toEqual({ heightInSpacingUnits: 56, maxHeightInSpacingUnits: 56, scrolls: true });
-    }
+    expect(tailwindFullscreen).toEqual(cssFullscreen);
+    expect(tailwindPreview).toEqual(cssPreview);
+    expect(tailwindMenu).toEqual(cssMenu);
   }
 });
 
@@ -635,19 +499,14 @@ test('semantic CSS stays easy to override from unlayered consumer styles', async
   await expect(play).toHaveCSS('background-color', 'rgb(18, 52, 86)');
 });
 
-test('React chapter segments match legacy and retain their generated range props', async ({ page }) => {
+test('React chapter segments match across styles and retain their generated range props', async ({ page }) => {
   const contracts = [];
 
-  for (const variant of [
-    { source: 'legacy', style: 'css' },
-    { source: 'vjsc', style: 'css' },
-    { source: 'vjsc', style: 'tailwind' },
-  ] as const) {
+  for (const style of ['css', 'tailwind'] as const) {
     const query = new URLSearchParams({
-      source: variant.source,
       framework: 'react',
       skin: 'default-video',
-      style: variant.style,
+      style,
       media: 'hls-7',
       width: '855',
     });
@@ -677,7 +536,6 @@ test('React chapter segments match legacy and retain their generated range props
   }
 
   expect(contracts[1]).toEqual(contracts[0]);
-  expect(contracts[2]).toEqual(contracts[1]);
   expect(contracts[0]).toHaveLength(8);
   expect(
     contracts[0]?.every(
@@ -687,15 +545,10 @@ test('React chapter segments match legacy and retain their generated range props
   expect(new Set(contracts[0]?.map(({ start }) => start)).size).toBe(8);
 });
 
-test('menu item and moving-highlight styling matches legacy', async ({ page }) => {
+test('menu item and moving-highlight styling matches across styles', async ({ page }) => {
   for (const variant of CASES) {
-    await openVariant(page, variant, 'css', 800, 'legacy');
-    const legacyHighlight = await menuHighlightContract(await openSettingsMenu(page));
-
     await openVariant(page, variant, 'css', 800);
     const cssHighlight = await menuHighlightContract(await openSettingsMenu(page));
-
-    expect(cssHighlight).toEqual(legacyHighlight);
 
     await openVariant(page, variant, 'tailwind', 800);
     const tailwindHighlight = await menuHighlightContract(await openSettingsMenu(page));
@@ -908,10 +761,9 @@ async function openVariant(
   variant: (typeof CASES)[number],
   style: 'css' | 'tailwind',
   width: number,
-  source: 'legacy' | 'vjsc' = 'vjsc',
   media = 'mp4-1'
 ): Promise<Locator> {
-  const query = new URLSearchParams({ source, ...variant, style, media, width: String(width) });
+  const query = new URLSearchParams({ ...variant, style, media, width: String(width) });
 
   await page.goto(`/?${query}`, { waitUntil: 'domcontentloaded' });
 
@@ -919,7 +771,7 @@ async function openVariant(
 
   await expect(root).toBeVisible();
 
-  if (source === 'vjsc') await expect(root).toHaveAttribute('data-controls-visible', '');
+  await expect(root).toHaveAttribute('data-controls-visible', '');
 
   await expect(page.getByRole('button', { name: 'Play' })).toBeVisible();
   const poster = root.locator('img[data-loaded], media-poster[data-loaded]').first();
@@ -1840,14 +1692,6 @@ async function accentContrastContract(root: Locator, accent: string) {
   });
 }
 
-function withoutSliderWidths(contract: Awaited<ReturnType<typeof sliderContract>>) {
-  return {
-    ...contract,
-    root: contract.root ? { ...contract.root, width: undefined } : null,
-    track: contract.track ? { ...contract.track, width: undefined } : null,
-  };
-}
-
 async function triggerMediaError(page: Page, message?: string): Promise<Locator> {
   await page
     .locator('video')
@@ -2083,11 +1927,10 @@ async function layoutContract(root: Locator) {
     const rootRect = element.getBoundingClientRect();
     const round = (value: number) => Math.round(value * 10) / 10;
     const inspect = (
-      selector: string,
+      target: Element | null,
       { includeGap = true, includeHorizontalPosition = true, includeRadius = true, includeWidth = true } = {}
     ) => {
-      const target = selector === ':scope' ? element : element.querySelector<HTMLElement>(selector);
-      if (!target) return null;
+      if (!(target instanceof HTMLElement)) return null;
 
       const style = getComputedStyle(target);
       const rect = target.getBoundingClientRect();
@@ -2122,24 +1965,33 @@ async function layoutContract(root: Locator) {
 
       return contract;
     };
+    const query = (selector: string) => element.querySelector<HTMLElement>(selector);
+    const play = query('[role="button"][aria-label="Play"]');
+    const seek = query('[role="slider"][aria-label="Seek"]');
 
     return {
-      root: inspect(':scope'),
-      poster: inspect('img[data-loaded], media-poster[data-loaded]', { includeRadius: false }),
-      controls: inspect(controlsSelector, { includeGap: false }),
-      primary: inspect('.media-controls--primary, .media-controls-primary', { includeGap: false }),
-      timeline: inspect('.media-time-controls, .media-time-slider-group', {
+      root: inspect(element),
+      poster: inspect(query('img[data-loaded], media-poster[data-loaded]'), { includeRadius: false }),
+      controls: inspect(query(controlsSelector), { includeGap: false }),
+      primary: inspect(play?.parentElement ?? null, { includeGap: false }),
+      timeline: inspect(seek?.parentElement?.parentElement ?? null, {
         includeHorizontalPosition: false,
         includeWidth: false,
       }),
-      play: inspect('[role="button"][aria-label="Play"]'),
-      mute: inspect('[role="button"][aria-label="Mute"]'),
-      seekThumb: inspect('[role="slider"][aria-label="Seek"]', { includeHorizontalPosition: false }),
-      settings: inspect('.media-button--settings, .media-settings-menu-trigger', {
+      play: inspect(play),
+      mute: inspect(query('[role="button"][aria-label="Mute"]')),
+      seekThumb: inspect(seek, { includeHorizontalPosition: false }),
+      settings: inspect(query('[role="button"][aria-label="Settings"]'), {
         includeHorizontalPosition: false,
       }),
-      pictureInPicture: inspect('.media-button--pip, .media-pip-button'),
-      fullscreen: inspect('.media-button--fullscreen, .media-fullscreen-button'),
+      pictureInPicture: inspect(
+        query(
+          '[role="button"][aria-label="Enter picture-in-picture"], [role="button"][aria-label="Exit picture-in-picture"]'
+        )
+      ),
+      fullscreen: inspect(
+        query('[role="button"][aria-label="Enter fullscreen"], [role="button"][aria-label="Exit fullscreen"]')
+      ),
     };
   }, CONTROLS_SELECTOR);
 }

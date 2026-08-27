@@ -28,7 +28,7 @@ const createPackConfig = (mode: PackageBuildMode): PackUserConfig => ({
   alias: srcAlias,
   // Pack does not yet preserve exact public CSS entry filenames, so retain the
   // focused source-to-dist copy until its CSS entry support can replace it.
-  plugins: [copyCssPlugin({ skinsDir: srcDir, outDir: `dist/${mode}`, rebuild: false })],
+  plugins: [copyCssPlugin({ outDir: `dist/${mode}`, rebuild: false })],
 });
 
 export default defineConfig({

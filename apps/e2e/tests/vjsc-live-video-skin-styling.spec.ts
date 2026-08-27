@@ -10,9 +10,7 @@ import {
   popupAncestor,
   popupContract,
   surfaceContract,
-  VJSC_CONFIGURATIONS,
   waitForStableText,
-  type VjscSource,
   type VjscStyle,
 } from './vjsc-skin-parity';
 
@@ -25,27 +23,20 @@ const CASES = [
 const STYLES = ['css', 'tailwind'] as const;
 const WIDTHS = [384, 680] as const;
 
-type Source = VjscSource;
 type Style = VjscStyle;
 type Variant = (typeof CASES)[number];
 
 test.describe.configure({ mode: 'serial' });
 
 for (const variant of CASES) {
-  test(`${variant.framework} ${variant.skin} keeps legacy, CSS, and Tailwind rendering in sync`, async ({ page }) => {
+  test(`${variant.framework} ${variant.skin} keeps CSS and Tailwind rendering in sync`, async ({ page }) => {
     const pageErrors = collectPageErrors(page);
 
     for (const width of WIDTHS) {
       const name = `${variant.framework}-${variant.skin}-${width}.png`;
-      const legacy = await openVariant(page, variant, 'css', width, 'legacy');
-      const legacyContract = await layoutContract(legacy);
-
-      await expect(legacy).toHaveScreenshot(name);
-
       const css = await openVariant(page, variant, 'css', width);
       const cssContract = await layoutContract(css);
 
-      expect(cssContract).toEqual(legacyContract);
       await expect(css).toHaveScreenshot(name);
 
       const tailwind = await openVariant(page, variant, 'tailwind', width);
@@ -61,17 +52,16 @@ for (const variant of CASES) {
   test(`${variant.framework} ${variant.skin} preserves live controls and popup motion`, async ({ page }) => {
     const contracts = [];
 
-    for (const configuration of VJSC_CONFIGURATIONS) {
-      await test.step(`${configuration.source}/${configuration.style}`, async () => {
-        const root = await openVariant(page, variant, configuration.style, 672, configuration.source);
+    for (const style of STYLES) {
+      await test.step(style, async () => {
+        const root = await openVariant(page, variant, style, 672);
 
         contracts.push(await interactionContract(page, root));
       });
     }
 
     expect(contracts[1]).toEqual(contracts[0]);
-    expect(contracts[2]).toEqual(contracts[1]);
-    expect(contracts[1]).toMatchObject({
+    expect(contracts[0]).toMatchObject({
       nestedButtons: 0,
       noPlaybackRate: true,
       noSeek: true,
@@ -81,26 +71,20 @@ for (const variant of CASES) {
   });
 
   test(`${variant.framework} ${variant.skin} exposes captions choices for one or multiple tracks`, async ({ page }) => {
-    for (const configuration of VJSC_CONFIGURATIONS) {
-      await test.step(`${configuration.source}/${configuration.style}`, async () => {
-        const single = await openVariant(page, variant, configuration.style, 672, configuration.source, 'single');
+    for (const style of STYLES) {
+      await test.step(style, async () => {
+        const single = await openVariant(page, variant, style, 672, 'single');
         const singleButton = await captionsButton(single);
 
         await singleButton.click();
+        await expect(singleButton).toHaveAttribute('aria-expanded', 'true');
 
-        if (configuration.source === 'legacy') {
-          await expect(singleButton).toHaveAttribute('data-active', '');
-          await expect(page.getByRole('menu')).toHaveCount(0);
-        } else {
-          await expect(singleButton).toHaveAttribute('aria-expanded', 'true');
+        const singleMenu = page.getByRole('menu');
 
-          const singleMenu = page.getByRole('menu');
+        await expect(singleMenu).toBeVisible();
+        await expect(singleMenu.getByRole('menuitemradio')).toHaveCount(2);
 
-          await expect(singleMenu).toBeVisible();
-          await expect(singleMenu.getByRole('menuitemradio')).toHaveCount(2);
-        }
-
-        const multiple = await openVariant(page, variant, configuration.style, 672, configuration.source, 'multiple');
+        const multiple = await openVariant(page, variant, style, 672, 'multiple');
         const multipleButton = await captionsButton(multiple);
 
         await multipleButton.click();
@@ -117,30 +101,22 @@ for (const variant of CASES) {
   test(`${variant.framework} ${variant.skin} keeps controls visibility in sync`, async ({ page }) => {
     const contracts = [];
 
-    for (const configuration of VJSC_CONFIGURATIONS) {
-      const root = await openVariant(page, variant, configuration.style, 672, configuration.source);
+    for (const style of STYLES) {
+      const root = await openVariant(page, variant, style, 672);
 
       contracts.push(await controlsVisibilityContract(root.locator('.media-controls').first()));
     }
 
     expect(contracts[1]).toEqual(contracts[0]);
-    expect(contracts[2]).toEqual(contracts[1]);
-    expect(contracts[1].hidden).toMatchObject({ pointerEvents: 'none' });
+    expect(contracts[0].hidden).toMatchObject({ pointerEvents: 'none' });
   });
 
   test(`${variant.framework} ${variant.skin} keeps fullscreen layout in sync`, async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 720 });
 
-    const legacy = await openVariant(page, variant, 'css', 800, 'legacy');
-    const legacyContract = await enterFullscreen(page, legacy);
-
-    await expect(legacy).toHaveScreenshot(`${variant.framework}-${variant.skin}-fullscreen.png`);
-    await exitFullscreen(page);
-
     const css = await openVariant(page, variant, 'css', 800);
     const cssContract = await enterFullscreen(page, css);
 
-    expect(cssContract).toEqual(legacyContract);
     await expect(css).toHaveScreenshot(`${variant.framework}-${variant.skin}-fullscreen.png`);
     await exitFullscreen(page);
 
@@ -154,18 +130,9 @@ for (const variant of CASES) {
   test(`${variant.framework} ${variant.skin} keeps error-dialog styling in sync`, async ({ page }) => {
     const contracts = [];
 
-    for (const configuration of VJSC_CONFIGURATIONS) {
-      await test.step(`${configuration.source}/${configuration.style}`, async () => {
-        const root = await openVariant(
-          page,
-          variant,
-          configuration.style,
-          672,
-          configuration.source,
-          'single',
-          'error',
-          false
-        );
+    for (const style of STYLES) {
+      await test.step(style, async () => {
+        const root = await openVariant(page, variant, style, 672, 'single', 'error', false);
         const dialog = root.getByRole('alertdialog');
 
         await expect(dialog).toBeVisible({ timeout: 20_000 });
@@ -176,7 +143,6 @@ for (const variant of CASES) {
     }
 
     expect(contracts[1]).toEqual(contracts[0]);
-    expect(contracts[2]).toEqual(contracts[1]);
   });
 
   test(`${variant.framework} ${variant.skin} keeps keyboard feedback in sync`, async ({ page }) => {
@@ -184,8 +150,8 @@ for (const variant of CASES) {
 
     const contracts = [];
 
-    for (const configuration of VJSC_CONFIGURATIONS) {
-      const root = await openVariant(page, variant, configuration.style, 672, configuration.source);
+    for (const style of STYLES) {
+      const root = await openVariant(page, variant, style, 672);
 
       contracts.push({
         captions: await feedbackContract(page, root, 'c', '[data-status="captions-on"], [data-status="captions-off"]'),
@@ -195,14 +161,13 @@ for (const variant of CASES) {
     }
 
     expect(contracts[1]).toEqual(contracts[0]);
-    expect(contracts[2]).toEqual(contracts[1]);
   });
 
   test(`${variant.framework} ${variant.skin} removes movement under reduced motion`, async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
 
     for (const style of STYLES) {
-      const root = await openVariant(page, variant, style, 672, 'vjsc', 'multiple');
+      const root = await openVariant(page, variant, style, 672, 'multiple');
       const button = await captionsButton(root);
 
       await button.click();
@@ -221,8 +186,8 @@ for (const variant of CASES) {
 
       const contracts = [];
 
-      for (const configuration of VJSC_CONFIGURATIONS) {
-        const root = await openVariant(page, variant, configuration.style, 672, configuration.source);
+      for (const style of STYLES) {
+        const root = await openVariant(page, variant, style, 672);
         const mute = root.getByRole('button', { name: /mute/i });
 
         await mute.hover();
@@ -237,7 +202,6 @@ for (const variant of CASES) {
       }
 
       expect(contracts[1]).toEqual(contracts[0]);
-      expect(contracts[2]).toEqual(contracts[1]);
     });
   }
 }
@@ -247,13 +211,11 @@ async function openVariant(
   variant: Variant,
   style: Style,
   width: number,
-  source: Source = 'vjsc',
   captions: 'single' | 'multiple' = 'single',
   media = 'hls-live',
   expectPlay = true
 ): Promise<Locator> {
   const query = new URLSearchParams({
-    source,
     ...variant,
     style,
     media,

@@ -10,7 +10,6 @@ import { vjscPlugin } from '../../vjsc/src/vite/index.ts';
 import { configureSkinModule } from '../vjsc/config.ts';
 
 const packageDir = resolve(import.meta.dirname, '..');
-const skinSourceDir = normalizePath(resolve(packageDir, 'src'));
 const reactSourceDir = normalizePath(resolve(packageDir, '../react/src'));
 const htmlDefineDir = normalizePath(resolve(packageDir, '../html/src/define'));
 const htmlIconDir = normalizePath(resolve(packageDir, '../html/src/icons'));
@@ -32,7 +31,6 @@ export default defineConfig({
   resolve: {
     alias: [
       { find: /^@\//, replacement: `${reactSourceDir}/` },
-      { find: /^@videojs\/skins(?=\/|$)/, replacement: skinSourceDir },
       { find: /^@videojs\/react(?=\/|$)/, replacement: reactSourceDir },
       { find: /^@videojs\/html\/icons\/element(?=\/|$)/, replacement: htmlIconElementDir },
       { find: /^@videojs\/html\/icons(?=\/|$)/, replacement: htmlIconDir },

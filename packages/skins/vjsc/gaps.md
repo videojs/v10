@@ -1,6 +1,6 @@
-# Legacy skin gaps
+# VJSC skin gaps
 
-This file tracks observable behavior in `packages/skins/src` that is not yet implemented in VJSC. Remove an entry once it is implemented and verified for every affected skin, target, and styling output.
+This file tracks known parity and anatomy work carried forward from the retired legacy skins. Remove an entry once it is implemented and verified for every affected skin, target, and styling output.
 
 ## RTL control layout
 
@@ -29,14 +29,14 @@ These selectors currently preserve observable parity. Keep them as known ownersh
 
 ### Poster image ownership
 
-- Source: `packages/skins/src/*/css/components/poster.css` and `packages/skins/vjsc/styles/layout/poster.styles.ts`
+- Source: `6c8472118` / #2453 and `packages/skins/vjsc/styles/layout/poster.styles.ts`
 - Gap: No observable parity gap is known, but the VJSC Poster root sizes authored `img` and Shadow DOM `::slotted(img)` descendants through structural selectors. An explicit image part would need to preserve target-specific and optional Shadow DOM rendering.
 - Affected: Default and Minimal skins; HTML and React targets; CSS and Tailwind outputs.
 - Recommendation: Hold the current selectors until Poster target markup and Shadow DOM requirements are settled. If ownership becomes a practical problem, evaluate `Poster.Image` across both targets rather than adding a styling-only wrapper.
 
 ### Thumbnail loading ownership
 
-- Source: `packages/skins/src/*/css/components/thumbnail.css` and `packages/skins/vjsc/styles/sliders/thumbnail.styles.ts`
+- Source: `e20e54255` / #2259 and `packages/skins/vjsc/styles/sliders/thumbnail.styles.ts`
 - Gap: No observable parity gap is known, but VJSC infers thumbnail loading from descendant image state with `has-*` and `group-has-*` selectors. Isolated transforms can emit these local selectors, though the styles remain coupled to rendered child markup.
 - Affected: Default and Minimal skins; HTML and React targets; CSS and Tailwind outputs.
 - Recommendation: Hold new anatomy until loading behavior or target markup needs to change. Then consider propagating loading state to the Thumbnail root or adding explicit image and spinner parts, with generated-output and matrix verification.
