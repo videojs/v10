@@ -53,6 +53,8 @@ export default function App() {
 
 </FrameworkCase>
 
+The examples use <DocsLink slug="reference/hlsjs-video">`HlsJsVideo`</DocsLink>, but any streaming media component works here, including the smaller default <DocsLink slug="reference/hls-video">`HlsVideo`</DocsLink>. Start with the default and switch engines only if your stream needs it.
+
 The `liveVideoFeatures` bundle mirrors <DocsLink slug="concepts/features">`videoFeatures`</DocsLink> but adds the live feature and drops playback rate (not meaningful for live), quality selection, and audio-track selection. The live presets also ship skins without a time slider, duration display, or current-time display.
 
 Both bundles are plain arrays, so extending one is a spread:
