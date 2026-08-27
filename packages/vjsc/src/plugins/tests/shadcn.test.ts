@@ -2,13 +2,14 @@ import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join } from 'node:path';
 
-import { type RolldownOutput, rolldown } from 'rolldown';
+import { type Plugin, type RolldownOutput, rolldown } from 'rolldown';
 import { registryItemSchema, registrySchema } from 'shadcn/schema';
 import { describe, expect, it } from 'vite-plus/test';
 
 import { shadcnPlugin, vjscPlugin } from '..';
 import type { ComponentMeta } from '../../components';
 import type { ShadcnItem, ShadcnPluginOptions } from '../../shadcn';
+import { parseModuleId } from '../../utils/module-id';
 
 interface FixtureMeta extends ComponentMeta {
   readonly type: 'block' | 'component';
@@ -123,13 +124,30 @@ describe('shadcnPlugin', () => {
       { framework: 'react', skin: 'default' },
       { framework: 'react', skin: 'minimal' },
     ];
-    const output = await build(root, {
-      styles: undefined,
-      publish: { ...baseOptions().publish, modules: publishModules },
-    });
+    const output = await build(
+      root,
+      {
+        styles: undefined,
+        publish: { ...baseOptions().publish, modules: publishModules },
+      },
+      ['vjsc', 'shadcn'],
+      [],
+      [
+        {
+          name: 'test:variant-source',
+          transform(code, id) {
+            const skin = parseModuleId(id).parameters.get('skin');
+
+            return skin ? code.replace('<main>', `<main data-skin="${skin}">`) : null;
+          },
+        },
+      ]
+    );
 
     expect(assetJson(output, 'root.json').registryDependencies).toContain('@example/child');
     expect(assetJson(output, 'root-minimal.json').registryDependencies).toContain('@example/child-minimal');
+    expect(assetJson(output, 'root.json').files[0].content).toContain('data-skin="default"');
+    expect(assetJson(output, 'root-minimal.json').files[0].content).toContain('data-skin="minimal"');
     expect(assetJson(output, 'root-minimal.json').files[0].content).toContain(
       `from '@/components/example/child-minimal/child'`
     );
@@ -195,14 +213,18 @@ async function build(
   root: string,
   overrides: Partial<FixtureOptions> = {},
   order: PluginOrder = ['vjsc', 'shadcn'],
-  input: string | readonly string[] = []
+  input: string | readonly string[] = [],
+  additions: readonly Plugin[] = []
 ): Promise<RolldownOutput> {
   const options = baseOptions(overrides);
   const transform = vjscPlugin({
     configure: ({ parameters }) => (parameters.has('framework') ? { targets: [] } : null),
   });
   const output = shadcnPlugin({ root, ...options });
-  const plugins = order.flatMap((plugin) => (plugin === 'vjsc' ? transform : plugin === 'shadcn' ? output : plugin));
+  const plugins = [
+    ...order.flatMap((plugin) => (plugin === 'vjsc' ? transform : plugin === 'shadcn' ? output : plugin)),
+    ...additions,
+  ];
   const bundle = await rolldown({
     input: typeof input === 'string' ? input : [...input],
     experimental: { nativeMagicString: true },
