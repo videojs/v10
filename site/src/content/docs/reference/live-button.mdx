@@ -47,7 +47,9 @@ LiveButton indicates whether playback is at the live edge and acts as a "go to l
 
 The button combines three player features: <DocsLink slug="reference/feature-live">live</DocsLink> for `liveEdgeStart` and `targetLiveWindow`, <DocsLink slug="reference/feature-time">time</DocsLink> for `currentTime` and the `seek()` action, and <DocsLink slug="reference/feature-buffer">buffer</DocsLink> for `seekable`. All three are included in the `liveVideoFeatures` and `liveAudioFeatures` presets, and the packaged live skins include the button.
 
-Media counts as live while `targetLiveWindow` is not `NaN` (`0` for a sliding live window, `Infinity` for DVR). For on-demand media the button reports neither `live` nor `liveEdge` and stays inert. The live edge begins 5 seconds before `liveEdgeStart`; when the media does not report `liveEdgeStart`, the edge is the trailing 10 seconds of the seekable window instead.
+Media counts as live while `targetLiveWindow` is not `NaN`. That value is how far behind the live edge viewers can seek: `0` means the stream is watchable only at the edge, and `Infinity` means the stream keeps its recording seekable so viewers can rewind and catch up, like a DVR. For on-demand media the button reports neither `live` nor `liveEdge` and stays inert.
+
+The live edge is not a single instant: it begins 5 seconds before `liveEdgeStart`, the position the media reports live playback starting at, so playback that drifts slightly behind still counts as live. When the media does not report `liveEdgeStart`, the edge is the trailing 10 seconds of the seekable window instead.
 
 Without children, the button renders the translated "Live" badge text.
 
