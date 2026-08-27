@@ -207,19 +207,23 @@ test.describe('Sandbox RTL playback control order', () => {
       source: 'hls-1',
       width: 1280,
     },
+    // The audio sandbox pages hand their source to a native media element, and
+    // Chromium's HLS demuxer crashes the renderer on the audio-only CMAF asset
+    // (reproducible with a bare `<audio src>`, no player involved). The MPEG-TS
+    // audio-only asset gives the same audio-player coverage without the crash.
     {
       name: 'HTML Default CSS audio',
       path: 'html-audio',
       skin: 'default',
       styling: 'css',
-      source: 'hls-audio-only-cmaf',
+      source: 'hls-audio-only-ts',
     },
     {
       name: 'React Minimal Tailwind audio',
       path: 'react-audio',
       skin: 'minimal',
       styling: 'tailwind',
-      source: 'hls-audio-only-cmaf',
+      source: 'hls-audio-only-ts',
     },
   ] as const;
 
