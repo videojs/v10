@@ -61,6 +61,30 @@ export default function llmsMarkdown(): AstroIntegration {
           },
         });
 
+        // Flatten docs link cards, whose block markup nests inside the <a>, into list items.
+        // Emitting a single leading/trailing newline keeps a run of adjacent cards as one tight list.
+        turndown.addRule('docs-link-card', {
+          filter: (node) => node.nodeType === 1 && hasClass(node as Element, 'docs-link-card'),
+          replacement: (_content, node) => {
+            const link = (node as Element).querySelector('a[href]');
+            if (!link) return '';
+
+            // Card body is either <span>title</span> or <div><div>title</div><div>description</div></div>,
+            // followed by a chevron icon.
+            const body = Array.from(link.children).find((child) => child.tagName.toLowerCase() !== 'svg');
+            const blocks = body ? Array.from(body.children) : [];
+            const hasDescription = blocks.length > 1;
+
+            const title = collapseWhitespace((hasDescription ? blocks[0] : body)?.textContent);
+            if (!title) return '';
+
+            const description = hasDescription ? collapseWhitespace(blocks[1]?.textContent) : '';
+            const href = link.getAttribute('href') ?? '';
+
+            return description ? `\n- [${title}](${href}): ${description}\n` : `\n- [${title}](${href})\n`;
+          },
+        });
+
         // Track pages for their llms.txt indexes
         const docsPages: PageEntry[] = [];
         const blogPages: PageEntry[] = [];
@@ -229,6 +253,15 @@ export default function llmsMarkdown(): AstroIntegration {
       },
     },
   };
+}
+
+/** Element.classList is not implemented consistently across DOM shims, so read the attribute directly. */
+function hasClass(element: Element, className: string): boolean {
+  return (element.getAttribute('class') ?? '').split(/\s+/).includes(className);
+}
+
+function collapseWhitespace(text: string | null | undefined): string {
+  return (text ?? '').replace(/\s+/g, ' ').trim();
 }
 
 function capitalize(str: string): string {
