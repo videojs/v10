@@ -10,7 +10,8 @@ Treat implementation, types, tests, schemas, and generated output as factual sou
 1. Identify the audience, intended outcome, artifact type, and owning source files.
 2. For site guides and concepts, read `site/src/content/docs/how-to/write-guides.mdx`. For generated reference pages, read `site/src/content/docs/reference/write-references.mdx`. Use neighboring docs for other artifact types.
 3. Verify claims and examples against current code before reviewing voice, structure, examples, MDX conventions, and reader outcomes against the owning guide.
-4. Render affected MDX and run examples where practical.
+4. When content seems to mix document types — steps in a concept, teaching or opinion in a reference — check it against `.agents/skills/write-docs/references/diataxis.md`.
+5. Render affected MDX and run examples where practical.
 
 Report broken or misleading content first. For each finding, give the location, reader impact, evidence, and concise fix. Keep stylistic preferences separate from correctness issues.
 

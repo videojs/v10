@@ -25,6 +25,7 @@ Treat TypeScript source and the builder E2E test as the specification. Generated
 
 - Derive props, state, data attributes, parts, tag names, and behavior from source.
 - Add prose only for non-obvious behavior, styling contracts, accessibility, or platform constraints.
+- Keep reference prose neutral and descriptive: state facts, let examples illustrate without teaching, and link how-to guides for tasks and concept pages for rationale (see `.agents/skills/write-docs/references/diataxis.md`).
 - Include basic HTML and React demos when both platforms expose the component; follow existing neighboring demos when the reference guide leaves room for judgment.
 
 ## Utility pages

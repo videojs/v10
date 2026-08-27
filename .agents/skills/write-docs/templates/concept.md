@@ -33,7 +33,6 @@ description: 'Brief description'
 ---
 
 import FrameworkCase from '@/components/docs/FrameworkCase.astro';
-import Aside from '@/components/Aside.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
 
 One-sentence description of the concept. Show code immediately:
@@ -57,23 +56,6 @@ HTML-specific explanation or code example.
 
 </FrameworkCase>
 
-## Common patterns
-
-### Pattern name
-
-When to use this pattern.
-
-{/* Code example */}
-
-<Aside type="tip">
-Helpful optimization or best practice.
-</Aside>
-
-## Common pitfalls
-
-{/* ❌ Don't — explain why */}
-{/* ✅ Do — explain the fix */}
-
 ## See also
 
 - <DocsLink slug="concepts/related-concept">Related concept</DocsLink>
@@ -86,5 +68,4 @@ Helpful optimization or best practice.
 - [ ] Code example in first 5 lines after description
 - [ ] Brief explanation (2-3 paragraphs max)
 - [ ] Framework-specific content uses `<FrameworkCase>`
-- [ ] Common pitfalls as do/don't
 - [ ] Scannable in under 2 minutes

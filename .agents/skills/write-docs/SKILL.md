@@ -21,6 +21,7 @@ Treat implementation, types, tests, and content schemas as factual sources. Read
 2. Read neighboring docs for current voice and MDX patterns.
 3. Load only what applies:
    - Voice and structure: `references/writing-style.md`
+   - Content drifting between document types, or per-type tone and sentence forms: `references/diataxis.md`
    - SEO-sensitive site content: `references/seo.md`
    - State/tooling concepts: `references/state-tooling.md`
    - Component-library comparisons: `references/component-libraries.md`
