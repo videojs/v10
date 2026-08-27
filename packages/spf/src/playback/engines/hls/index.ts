@@ -3,6 +3,18 @@
 // through without the package dependency, and additionally takes a resolver
 // per URL for license servers only known once a source is set.
 export type { DrmSystemConfig, DrmSystemsConfig, DrmUrl } from '../../../media/drm';
+// The unit of DRM composability: one value per key system, carrying that
+// system's whole contribution to negotiation, init data, and license shaping.
+// `config.keySystems` is public, so without these a consumer could neither
+// narrow the default nor reconstruct it — `[widevineKeySystem]` alone drops
+// PlayReady's and FairPlay's code from the bundle.
+export type { KeySystemModule } from '../../../media/drm';
+export {
+  DEFAULT_KEY_SYSTEMS,
+  fairPlayKeySystem,
+  playReadyKeySystem,
+  widevineKeySystem,
+} from '../../../media/dom/key-systems';
 // SVTA 2070 error vocabulary — the codes reported on `state.errors` and
 // surfaced through the adapter's `error`.
 export type { SvtaError } from '../../../media/errors';

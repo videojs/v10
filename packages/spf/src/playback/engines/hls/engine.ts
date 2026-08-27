@@ -11,6 +11,7 @@ import type { QualityConfig } from '../../../media/abr/quality-selection';
 import type { BackBufferConfig } from '../../../media/buffer/back-buffer';
 import type { ForwardBufferConfig } from '../../../media/buffer/forward-buffer';
 import { makeCanPlayTrackWithDrm } from '../../../media/dom/capabilities';
+import { DEFAULT_KEY_SYSTEMS } from '../../../media/dom/key-systems';
 import { attachMediaSourceAsSourceElement } from '../../../media/dom/mse/mediasource-setup';
 import { resolveVttSegment } from '../../../media/dom/text/resolve-vtt-segment';
 import {
@@ -18,7 +19,7 @@ import {
   getShowingSubtitlesTrackFromMedia,
   removeAllSubtitlesTracksFromMedia,
 } from '../../../media/dom/text/text-track-slots';
-import type { DrmSystemsConfig } from '../../../media/drm';
+import type { DrmSystemsConfig, KeySystemModule } from '../../../media/drm';
 import type { SvtaError } from '../../../media/errors';
 import { parseMultivariantPlaylist } from '../../../media/hls/parse-multivariant';
 import { mediaPlaylistReloadDelay, resolveLiveLatency } from '../../../media/hls/reload-policy';
@@ -47,6 +48,7 @@ import { deriveCdnPriority } from '../../behaviors/derive-cdn-priority';
 import { setupAirPlay } from '../../behaviors/dom/airplay';
 import { applyStartPosition } from '../../behaviors/dom/apply-start-position';
 import { endOfStream } from '../../behaviors/dom/end-of-stream';
+import { exchangeLicenses } from '../../behaviors/dom/exchange-licenses';
 import { loadAudioSegments, loadTextTrackSegments, loadVideoSegments } from '../../behaviors/dom/load-segments';
 import { recoverEndStall } from '../../behaviors/dom/recover-end-stall';
 import { seekToLiveEdge } from '../../behaviors/dom/seek-to-live-edge';
@@ -80,6 +82,7 @@ import {
   makeReportUnsupportedTrackConditionsWithDrm,
   type ReportUnsupportedTrackConditions,
 } from '../../primitives/report-track-conditions';
+import { excludeRefusedKeySystems } from '../../primitives/selection-rules';
 import type { TextTrackSegmentResolver } from '../../primitives/text-segment-load-pipeline';
 
 // ============================================================================
@@ -161,11 +164,16 @@ export interface HlsVideoEngineState {
    */
   loadingSuspended?: boolean;
   /**
-   * DRM key-readiness gate, owned by `setupMediaKeys`: `true` while an encrypted source's MediaKeys aren't attached
-   * yet; the `loadXSegments` dispatchers park on it. Never set for clear sources. See
-   * `SegmentLoadingState['awaitingMediaKeys']`.
+   * Segment-load gate, owned by `setupMediaKeys`: `true` while an encrypted source's MediaKeys aren't attached yet; the
+   * `loadXSegments` dispatchers park on it. Never set for clear sources. See
+   * `SegmentLoadingState['segmentLoadingBlocked']`.
    */
-  awaitingMediaKeys?: boolean;
+  segmentLoadingBlocked?: boolean;
+  /**
+   * The key system negotiation settled on for the current source, owned by `setupMediaKeys`. Read by
+   * `exchangeLicenses`. Never set for clear sources. See `MediaKeysState['negotiatedKeySystem']`.
+   */
+  negotiatedKeySystem?: string;
   /**
    * Author intent for the AirPlay/remote-playback picker, written by the media adapter's `disableRemotePlayback` IDL
    * property. `true` is an explicit opt-out: `setupAirPlay` reads it at attach and sets nothing up, leaving the
@@ -220,6 +228,12 @@ export interface HlsVideoEngineConfig extends ShareSignalsConfig<HlsVideoEngineS
    * as a DRM-less engine refuses them: pruned before selection, with `SVTA_UNSUPPORTED_DRM_SYSTEM` causes reported.
    */
   drm?: DrmSystemsConfig;
+  /**
+   * The key systems this engine can negotiate, most-preferred first. Defaults to `DEFAULT_KEY_SYSTEMS` (FairPlay,
+   * Widevine, PlayReady). Narrow it to drop the systems an engine will never see along with their code — a
+   * `[widevineKeySystem]` engine carries no PlayReady request variants, PSSH wrap, or XML envelope unwrap.
+   */
+  keySystems?: readonly KeySystemModule[];
   /**
    * Codec capability probe injected into `track-switching`'s `excludeUnplayableTracks` constraint — drops renditions
    * the environment can't decode before selection. Defaults to `makeCanPlayTrackWithDrm` over `drm` (with no `drm`,
@@ -398,17 +412,24 @@ export function createHlsVideoEngine(
   // `canPlayTrack` / `reportUnsupportedTrackConditions` pair does, and
   // `setupMediaKeys` reports SVTA 4008 for an encrypted source it can't serve.
   const drm = config.drm ?? {};
+  const keySystems = config.keySystems ?? DEFAULT_KEY_SYSTEMS;
   const finalConfig = {
     ...config,
     deriveStartMediaTime,
     drm,
+    keySystems,
     // Baked (not user-overridable): this engine composes `setupAirPlay`,
     // whose native fallback `<source>` requires the MSE attachment to keep
     // sibling source alternatives part of resource selection.
     attachMediaSource: attachMediaSourceAsSourceElement,
-    canPlayTrack: config.canPlayTrack ?? makeCanPlayTrackWithDrm(drm),
+    canPlayTrack: config.canPlayTrack ?? makeCanPlayTrackWithDrm(drm, keySystems),
+    // The late half of DRM pruning, appended to switch*Track's built-in
+    // constraint chain: once negotiation publishes a refusal, encrypted
+    // renditions prune and the emptied type reports its own verdict. Dropped
+    // with the rest of the DRM defaults by a composition that omits DRM.
+    extraConstraints: [excludeRefusedKeySystems],
     reportUnsupportedTrackConditions:
-      config.reportUnsupportedTrackConditions ?? makeReportUnsupportedTrackConditionsWithDrm(drm),
+      config.reportUnsupportedTrackConditions ?? makeReportUnsupportedTrackConditionsWithDrm(drm, keySystems),
     resolveTextTrackSegment: config.resolveTextTrackSegment ?? resolveVttSegment,
     // Non-zero-PTS relocation (spike): the text pipeline rebases cues onto the
     // relocated 0-based timeline. Remove `textMessagePipelines` to drop text relocation.
@@ -487,10 +508,17 @@ export function createHlsVideoEngine(
       setupMediaSource,
       updateMediaSourceDuration,
 
-      // EME lifecycle for encrypted sources (no-op for clear ones). Composed
-      // right after MSE setup and — load-bearing — before the `load*Segments`
-      // dispatchers, so the `awaitingMediaKeys` gate is up before their first
-      // dispatch of encrypted segments.
+      // EME for encrypted sources (no-op for clear ones). Composed right after
+      // MSE setup and — load-bearing — before the `load*Segments` dispatchers,
+      // so the `segmentLoadingBlocked` gate is up before their first dispatch of
+      // encrypted segments.
+      //
+      // `exchangeLicenses` precedes the negotiation it consumes, also
+      // load-bearing: `createComposition` calls cleanups in registration order,
+      // and the sessions it opens must close before `setupMediaKeys` detaches
+      // the MediaKeys they belong to. Setup order costs nothing in return — its
+      // precondition is reactive on `context.mediaKeys`.
+      exchangeLicenses,
       setupMediaKeys,
 
       // ── Non-zero-PTS relocation (spike) ──────────────────────────────────

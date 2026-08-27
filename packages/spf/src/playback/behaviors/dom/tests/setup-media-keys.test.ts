@@ -4,25 +4,22 @@ import { signal } from '../../../../core/signals/primitives';
 import {
   attachMediaKeys,
   type DrmSystemsConfig,
-  fetchLicense,
   fetchServerCertificate,
+  NO_KEY_SYSTEM,
   requestKeySystemAccess,
 } from '../../../../media/dom/eme';
 import {
-  SVTA_BAD_LICENSE_REQUEST,
-  SVTA_DRM_CERTIFICATE_ERROR,
-  SVTA_DRM_LICENSE_RESPONSE_REJECTED,
-  SVTA_DRM_LICENSE_REQUEST_GENERATION_FAILED,
-  SVTA_NO_SUPPORTED_AUDIO_TRACK,
-  SVTA_NO_SUPPORTED_VIDEO_TRACK,
-  SVTA_UNSUPPORTED_DRM_SYSTEM,
-  type SvtaError,
-} from '../../../../media/errors';
+  DEFAULT_KEY_SYSTEMS,
+  fairPlayKeySystem,
+  playReadyKeySystem,
+  widevineKeySystem,
+} from '../../../../media/dom/key-systems';
+import { SVTA_DRM_CERTIFICATE_ERROR, SVTA_UNSUPPORTED_DRM_SYSTEM, type SvtaError } from '../../../../media/errors';
 import type { Presentation } from '../../../../media/types';
 import { type MediaKeysContext, type MediaKeysState, setupMediaKeys } from '../setup-media-keys';
 
 // Mock the DOM-touching seams while keeping the pure helpers (candidate
-// selection, init-data decoding, declared-key collection) real — the behavior
+// selection, key-system modules, declared-key collection) real — the behavior
 // is exercised against real manifest-shaped fixtures.
 vi.mock('../../../../media/dom/eme', async () => {
   const actual = await vi.importActual<typeof import('../../../../media/dom/eme')>('../../../../media/dom/eme');
@@ -31,14 +28,12 @@ vi.mock('../../../../media/dom/eme', async () => {
     ...actual,
     requestKeySystemAccess: vi.fn(),
     attachMediaKeys: vi.fn(async () => {}),
-    fetchLicense: vi.fn(),
     fetchServerCertificate: vi.fn(),
   };
 });
 
 // "ping" in base64 — stand-in for a Widevine PSSH payload.
 const PSSH_BASE64 = 'cGluZw==';
-const PSSH_BYTES = new Uint8Array([0x70, 0x69, 0x6e, 0x67]);
 
 const WIDEVINE_KEY = {
   method: 'SAMPLE-AES',
@@ -50,12 +45,6 @@ const FAIRPLAY_KEY = {
   uri: 'skd://mux?keyId=abc',
   keyFormat: 'com.apple.streamingkeydelivery',
 };
-// A raw PlayReady Object stand-in — NOT a PSSH box, exactly as Mux authors it.
-const PLAYREADY_KEY = {
-  method: 'SAMPLE-AES',
-  uri: `data:text/plain;charset=UTF-16;base64,${PSSH_BASE64}`,
-  keyFormat: 'com.microsoft.playready',
-};
 
 const DRM_CONFIG = {
   'com.widevine.alpha': { licenseUrl: 'https://license.example.com/widevine' },
@@ -64,6 +53,12 @@ const DRM_CONFIG = {
     licenseUrl: 'https://license.example.com/fairplay',
     serverCertificateUrl: 'https://license.example.com/appcert',
   },
+};
+
+const MODULE_BY_KEY_SYSTEM = {
+  'com.widevine.alpha': widevineKeySystem,
+  'com.microsoft.playready': playReadyKeySystem,
+  'com.apple.fps': fairPlayKeySystem,
 };
 
 function makePresentation(keys?: object[]): Presentation {
@@ -101,41 +96,21 @@ function makePresentation(keys?: object[]): Presentation {
   } as Presentation;
 }
 
-interface FakeSession extends EventTarget {
-  generateRequest: ReturnType<typeof vi.fn>;
-  update: ReturnType<typeof vi.fn>;
-  close: ReturnType<typeof vi.fn>;
-}
-
-function makeFakeSession(): FakeSession {
-  const session = new EventTarget() as FakeSession;
-
-  session.generateRequest = vi.fn(async () => {});
-  session.update = vi.fn(async () => {});
-  session.close = vi.fn(async () => {});
-  return session;
-}
-
-function makeFakeEme(keySystem = 'com.widevine.alpha') {
-  const sessions: FakeSession[] = [];
+function makeFakeEme(keySystem: keyof typeof MODULE_BY_KEY_SYSTEM = 'com.widevine.alpha') {
   const mediaKeys = {
-    createSession: vi.fn(() => {
-      const session = makeFakeSession();
-
-      sessions.push(session);
-      return session;
-    }),
+    createSession: vi.fn(),
     setServerCertificate: vi.fn(async () => true),
   } as unknown as MediaKeys;
   const access = { createMediaKeys: vi.fn(async () => mediaKeys) } as unknown as MediaKeySystemAccess;
 
-  return { keySystem, access, mediaKeys, sessions };
+  return { module: MODULE_BY_KEY_SYSTEM[keySystem], access, mediaKeys };
 }
 
 function makeState(initial: MediaKeysState = {}) {
   return {
     presentation: signal<MediaKeysState['presentation']>(initial.presentation),
-    awaitingMediaKeys: signal<boolean | undefined>(initial.awaitingMediaKeys),
+    segmentLoadingBlocked: signal<boolean | undefined>(initial.segmentLoadingBlocked),
+    negotiatedKeySystem: signal<string | undefined>(initial.negotiatedKeySystem),
     // Optional reporter seam (ErrorEmitterState) — present here to simulate a
     // composition where collectErrors owns the slot.
     errors: signal<SvtaError[] | undefined>(undefined),
@@ -156,7 +131,7 @@ function setupSetupMediaKeys(
 ) {
   const state = makeState(initialState);
   const context = makeContext(initialContext);
-  const reactor = setupMediaKeys.setup({ state, context, config: { drm } });
+  const reactor = setupMediaKeys.setup({ state, context, config: { drm, keySystems: DEFAULT_KEY_SYSTEMS } });
 
   return { state, context, reactor };
 }
@@ -165,7 +140,6 @@ describe('setupMediaKeys', () => {
   beforeEach(() => {
     vi.mocked(requestKeySystemAccess).mockReset();
     vi.mocked(attachMediaKeys).mockReset().mockResolvedValue(undefined);
-    vi.mocked(fetchLicense).mockReset();
     vi.mocked(fetchServerCertificate)
       .mockReset()
       .mockResolvedValue(new Uint8Array([7, 7]));
@@ -182,8 +156,8 @@ describe('setupMediaKeys', () => {
 
     await new Promise((resolve) => setTimeout(resolve, 50));
     expect(requestKeySystemAccess).not.toHaveBeenCalled();
-    expect(noElement.state.awaitingMediaKeys.get()).toBeFalsy();
-    expect(clearSource.state.awaitingMediaKeys.get()).toBeFalsy();
+    expect(noElement.state.segmentLoadingBlocked.get()).toBeFalsy();
+    expect(clearSource.state.segmentLoadingBlocked.get()).toBeFalsy();
 
     noElement.reactor.destroy();
     clearSource.reactor.destroy();
@@ -200,44 +174,46 @@ describe('setupMediaKeys', () => {
     );
 
     // The gate is up before any async EME work resolves.
-    await vi.waitFor(() => expect(state.awaitingMediaKeys.get()).toBe(true));
+    await vi.waitFor(() => expect(state.segmentLoadingBlocked.get()).toBe(true));
 
     await vi.waitFor(() => expect(context.mediaKeys.get()).toBe(eme.mediaKeys));
-    // Declared ∩ configured, in fixed preference order (FairPlay outranks
-    // Widevine), over the presentation's content types and the encryption
-    // scheme its SAMPLE-AES keys declare.
+    // Declared ∩ configured modules, in `keySystems` order (FairPlay outranks
+    // Widevine in the default), over the presentation's content types and the
+    // encryption scheme its SAMPLE-AES keys declare.
     expect(requestKeySystemAccess).toHaveBeenCalledWith(
-      ['com.apple.fps', 'com.widevine.alpha'],
+      [fairPlayKeySystem, widevineKeySystem],
       { video: ['video/mp4; codecs="avc1.4d401f"'], audio: [] },
       'cbcs'
     );
     expect(attachMediaKeys).toHaveBeenCalledWith(video, eme.mediaKeys);
-    expect(state.awaitingMediaKeys.get()).toBe(false);
+    // The licensing handoff: both slots carry the negotiation forward.
+    expect(state.negotiatedKeySystem.get()).toBe('com.widevine.alpha');
+    expect(state.segmentLoadingBlocked.get()).toBe(false);
 
     reactor.destroy();
   });
 
-  it('wraps a raw PlayReady Object into a PSSH box before generating the request', async () => {
-    const eme = makeFakeEme('com.microsoft.playready');
+  it('negotiates only the modules the composition carries', async () => {
+    const eme = makeFakeEme();
 
     vi.mocked(requestKeySystemAccess).mockResolvedValue(eme);
-    const { reactor } = setupSetupMediaKeys(
-      { presentation: makePresentation([PLAYREADY_KEY]) },
-      { mediaElement: document.createElement('video') }
-    );
+    const state = makeState({ presentation: makePresentation([WIDEVINE_KEY, FAIRPLAY_KEY]) });
+    const context = makeContext({ mediaElement: document.createElement('video') });
+    // A Widevine-only engine: FairPlay is declared by the manifest and
+    // configured with a license server, and still never offered.
+    const reactor = setupMediaKeys.setup({
+      state,
+      context,
+      config: { drm: DRM_CONFIG, keySystems: [widevineKeySystem] },
+    });
 
-    await vi.waitFor(() => expect(eme.sessions).toHaveLength(1));
-    const [initDataType, initData] = eme.sessions[0]!.generateRequest.mock.calls[0]! as [string, Uint8Array];
-
-    expect(initDataType).toBe('cenc');
-    expect(initData.length).toBe(32 + PSSH_BYTES.length);
-    expect([...initData.slice(4, 8)]).toEqual([0x70, 0x73, 0x73, 0x68]); // 'pssh'
-    expect([...initData.slice(32)]).toEqual([...PSSH_BYTES]);
+    await vi.waitFor(() => expect(requestKeySystemAccess).toHaveBeenCalled());
+    expect(requestKeySystemAccess).toHaveBeenCalledWith([widevineKeySystem], expect.anything(), 'cbcs');
 
     reactor.destroy();
   });
 
-  it('fetches and applies the server certificate before opening sessions', async () => {
+  it('fetches and applies the server certificate before publishing the negotiation', async () => {
     const eme = makeFakeEme('com.apple.fps');
 
     vi.mocked(requestKeySystemAccess).mockResolvedValue(eme);
@@ -269,134 +245,10 @@ describe('setupMediaKeys', () => {
     await vi.waitFor(() =>
       expect(state.errors.get()?.map((error) => error.code)).toEqual([SVTA_DRM_CERTIFICATE_ERROR])
     );
-    expect(state.awaitingMediaKeys.get()).toBe(true);
+    expect(state.segmentLoadingBlocked.get()).toBe(true);
     expect(context.mediaKeys.get()).toBeUndefined();
+    expect(state.negotiatedKeySystem.get()).toBeUndefined();
     expect(attachMediaKeys).not.toHaveBeenCalled();
-
-    reactor.destroy();
-  });
-
-  it('opens event-driven sessions when the manifest carries no init data, deduped by bytes', async () => {
-    const eme = makeFakeEme('com.apple.fps');
-
-    vi.mocked(requestKeySystemAccess).mockResolvedValue(eme);
-    const video = document.createElement('video');
-    const { context, reactor } = setupSetupMediaKeys(
-      { presentation: makePresentation([FAIRPLAY_KEY]) },
-      { mediaElement: video }
-    );
-
-    // skd:// carries no inline init data, so no manifest-driven session opens.
-    await vi.waitFor(() => expect(context.mediaKeys.get()).toBe(eme.mediaKeys));
-    expect(eme.sessions).toHaveLength(0);
-
-    const sinf = new Uint8Array([5, 5, 5]);
-    const fireEncrypted = (bytes: Uint8Array) =>
-      video.dispatchEvent(Object.assign(new Event('encrypted'), { initDataType: 'sinf', initData: bytes.buffer }));
-
-    fireEncrypted(sinf);
-    await vi.waitFor(() => expect(eme.sessions).toHaveLength(1));
-    expect(eme.sessions[0]!.generateRequest).toHaveBeenCalledWith('sinf', sinf);
-
-    // The same init data again (the other track of a muxed pair, a re-append)
-    // opens nothing; different init data opens a second session.
-    fireEncrypted(sinf);
-    await new Promise((resolve) => setTimeout(resolve, 50));
-    expect(eme.sessions).toHaveLength(1);
-
-    fireEncrypted(new Uint8Array([6, 6, 6]));
-    await vi.waitFor(() => expect(eme.sessions).toHaveLength(2));
-
-    reactor.destroy();
-  });
-
-  it('ignores encrypted events when manifest-driven sessions exist', async () => {
-    const eme = makeFakeEme();
-
-    vi.mocked(requestKeySystemAccess).mockResolvedValue(eme);
-    const video = document.createElement('video');
-    const { reactor } = setupSetupMediaKeys(
-      { presentation: makePresentation([WIDEVINE_KEY]) },
-      { mediaElement: video }
-    );
-
-    await vi.waitFor(() => expect(eme.sessions).toHaveLength(1));
-    video.dispatchEvent(
-      Object.assign(new Event('encrypted'), { initDataType: 'cenc', initData: new Uint8Array([1]).buffer })
-    );
-    await new Promise((resolve) => setTimeout(resolve, 50));
-    expect(eme.sessions).toHaveLength(1);
-
-    reactor.destroy();
-  });
-
-  it('opens one session per manifest-carried init data and skips skd:// keys', async () => {
-    const eme = makeFakeEme();
-
-    vi.mocked(requestKeySystemAccess).mockResolvedValue(eme);
-    const { reactor } = setupSetupMediaKeys(
-      { presentation: makePresentation([WIDEVINE_KEY, FAIRPLAY_KEY]) },
-      { mediaElement: document.createElement('video') }
-    );
-
-    await vi.waitFor(() => expect(eme.sessions).toHaveLength(1));
-    expect(eme.sessions[0]!.generateRequest).toHaveBeenCalledWith('cenc', PSSH_BYTES);
-
-    reactor.destroy();
-  });
-
-  it("exchanges the chosen system's license on a session message", async () => {
-    const eme = makeFakeEme();
-
-    vi.mocked(requestKeySystemAccess).mockResolvedValue(eme);
-    const license = new Uint8Array([9, 9, 9]);
-
-    vi.mocked(fetchLicense).mockResolvedValue(license);
-    const { reactor } = setupSetupMediaKeys(
-      { presentation: makePresentation([WIDEVINE_KEY]) },
-      { mediaElement: document.createElement('video') }
-    );
-
-    await vi.waitFor(() => expect(eme.sessions).toHaveLength(1));
-    const message = new Uint8Array([1, 2, 3]).buffer;
-
-    eme.sessions[0]!.dispatchEvent(Object.assign(new Event('message'), { message }));
-
-    await vi.waitFor(() => expect(eme.sessions[0]!.update).toHaveBeenCalledWith(license));
-    expect(fetchLicense).toHaveBeenCalledWith(DRM_CONFIG['com.widevine.alpha'].licenseUrl, message, expect.anything(), {
-      'Content-Type': 'application/octet-stream',
-    });
-
-    reactor.destroy();
-  });
-
-  it('resolves a function-valued license server when the exchange runs', async () => {
-    const eme = makeFakeEme();
-
-    vi.mocked(requestKeySystemAccess).mockResolvedValue(eme);
-    vi.mocked(fetchLicense).mockResolvedValue(new Uint8Array([9]));
-    // The Mux flavor's shape: the Media holds the source, so the URL is not
-    // known when the engine is constructed.
-    const licenseUrl = vi.fn(() => 'https://license.example.com/minted');
-    const { reactor } = setupSetupMediaKeys(
-      { presentation: makePresentation([WIDEVINE_KEY]) },
-      { mediaElement: document.createElement('video') },
-      { 'com.widevine.alpha': { licenseUrl } }
-    );
-
-    await vi.waitFor(() => expect(eme.sessions).toHaveLength(1));
-    const message = new Uint8Array([1, 2, 3]).buffer;
-
-    eme.sessions[0]!.dispatchEvent(Object.assign(new Event('message'), { message }));
-
-    await vi.waitFor(() =>
-      expect(fetchLicense).toHaveBeenCalledWith(
-        'https://license.example.com/minted',
-        message,
-        expect.anything(),
-        expect.anything()
-      )
-    );
 
     reactor.destroy();
   });
@@ -448,134 +300,40 @@ describe('setupMediaKeys', () => {
     reactor.destroy();
   });
 
-  // `makePresentation` leaves `encrypted` unset, which is what a rendition looks
-  // like before its playlist is parsed. These two pin the verdict on a
-  // presentation that has actually resolved as encrypted.
-  function makeEncryptedPresentation(types: Array<'video' | 'audio'>, keys: object[]): Presentation {
-    return {
-      id: 'p1',
-      url: 'https://example.com/multivariant.m3u8',
-      selectionSets: types.map((type, i) => ({
-        id: `ss-${type}`,
-        type,
-        switchingSets: [
-          {
-            id: `sw-${type}`,
-            type,
-            tracks: [
-              {
-                type,
-                id: `${type}-${i}`,
-                url: `https://example.com/${type}.m3u8`,
-                bandwidth: 1000,
-                mimeType: `${type}/mp4`,
-                codecs: [type === 'video' ? 'avc1.4d401f' : 'mp4a.40.2'],
-                segments: [{ id: 's0', url: 'https://example.com/0.m4s', startTime: 0, duration: 4 }],
-                startTime: 0,
-                duration: 4,
-                metadata: {
-                  mediaPlaylist: { targetDuration: 4, mediaSequence: 0, endList: true, keys, encrypted: true },
-                },
-              },
-            ],
-          },
-        ],
-      })),
-    } as unknown as Presentation;
-  }
-
-  it('follows 4008 with a per-type verdict when every rendition needs the CDM it could not get', async () => {
+  it('publishes the refusal sentinel after reporting 4008', async () => {
     vi.mocked(requestKeySystemAccess).mockResolvedValue(undefined);
     const { state, reactor } = setupSetupMediaKeys(
-      { presentation: makeEncryptedPresentation(['video', 'audio'], [WIDEVINE_KEY]) },
+      { presentation: makePresentation([WIDEVINE_KEY]) },
       { mediaElement: document.createElement('video') }
     );
 
-    // Without the verdicts the adapter has no fatal condition and the source
-    // parks silently — the cause alone never reaches `media.error`.
-    await vi.waitFor(() =>
-      expect(state.errors.get()?.map((error) => error.code)).toEqual([
-        SVTA_UNSUPPORTED_DRM_SYSTEM,
-        SVTA_NO_SUPPORTED_VIDEO_TRACK,
-        SVTA_NO_SUPPORTED_AUDIO_TRACK,
-      ])
-    );
+    await vi.waitFor(() => expect(state.negotiatedKeySystem.get()).toBe(NO_KEY_SYSTEM));
+    // Cause here, verdict elsewhere: publishing the sentinel is what re-fires
+    // rendition pruning, where `excludeRefusedKeySystems` drops every encrypted
+    // rendition and `track-switching` reports the emptied type. Ordering is
+    // load-bearing — the cause must already be in the sequence when the verdict
+    // lands.
+    expect(state.errors.get()?.map((error) => error.code)).toEqual([SVTA_UNSUPPORTED_DRM_SYSTEM]);
 
     reactor.destroy();
   });
 
-  it('reports only the cause when a type keeps a clear rendition', async () => {
-    vi.mocked(requestKeySystemAccess).mockResolvedValue(undefined);
-    // Mux's shape: encrypted video, clear audio. Audio still plays, so a verdict
-    // for it would be wrong.
-    const presentation = makeEncryptedPresentation(['video'], [WIDEVINE_KEY]);
-    const { state, reactor } = setupSetupMediaKeys({ presentation }, { mediaElement: document.createElement('video') });
+  it('publishes no sentinel while negotiation is still in flight', async () => {
+    // The distinction the sentinel exists for: an unsettled negotiation must not
+    // read as a refusal, or pruning would park a source about to license fine.
+    let resolveAccess!: (value: undefined) => void;
 
-    await vi.waitFor(() => expect(state.errors.get()?.length).toBe(2));
-    expect(state.errors.get()?.map((error) => error.code)).toEqual([
-      SVTA_UNSUPPORTED_DRM_SYSTEM,
-      SVTA_NO_SUPPORTED_VIDEO_TRACK,
-    ]);
-
-    reactor.destroy();
-  });
-
-  it("sends a key system's configured headers with its license request", async () => {
-    const eme = makeFakeEme();
-
-    vi.mocked(requestKeySystemAccess).mockResolvedValue(eme);
-    vi.mocked(fetchLicense).mockResolvedValue(new Uint8Array([9]));
-    const { reactor } = setupSetupMediaKeys(
+    vi.mocked(requestKeySystemAccess).mockImplementation(() => new Promise((resolve) => (resolveAccess = resolve)));
+    const { state, reactor } = setupSetupMediaKeys(
       { presentation: makePresentation([WIDEVINE_KEY]) },
-      { mediaElement: document.createElement('video') },
-      {
-        'com.widevine.alpha': {
-          licenseUrl: 'https://license.example.com/widevine',
-          headers: { 'X-AxDRM-Message': 'entitlement', 'X-Extra': 'kept' },
-        },
-      }
+      { mediaElement: document.createElement('video') }
     );
 
-    await vi.waitFor(() => expect(eme.sessions).toHaveLength(1));
-    eme.sessions[0]!.dispatchEvent(Object.assign(new Event('message'), { message: new Uint8Array([1]).buffer }));
+    await vi.waitFor(() => expect(requestKeySystemAccess).toHaveBeenCalled());
+    expect(state.negotiatedKeySystem.get()).toBeUndefined();
 
-    await vi.waitFor(() =>
-      expect(fetchLicense).toHaveBeenCalledWith(expect.anything(), expect.anything(), expect.anything(), {
-        // Merged with, not replacing, the content type the request already needs.
-        'Content-Type': 'application/octet-stream',
-        'X-AxDRM-Message': 'entitlement',
-        'X-Extra': 'kept',
-      })
-    );
-
-    reactor.destroy();
-  });
-
-  it('lets the shaped request win over a configured header of the same name', async () => {
-    const eme = makeFakeEme();
-
-    vi.mocked(requestKeySystemAccess).mockResolvedValue(eme);
-    vi.mocked(fetchLicense).mockResolvedValue(new Uint8Array([9]));
-    const { reactor } = setupSetupMediaKeys(
-      { presentation: makePresentation([WIDEVINE_KEY]) },
-      { mediaElement: document.createElement('video') },
-      {
-        'com.widevine.alpha': {
-          licenseUrl: 'https://license.example.com/widevine',
-          // A CDM naming its own Content-Type is not negotiable.
-          headers: { 'Content-Type': 'application/json' },
-        },
-      }
-    );
-
-    await vi.waitFor(() => expect(eme.sessions).toHaveLength(1));
-    eme.sessions[0]!.dispatchEvent(Object.assign(new Event('message'), { message: new Uint8Array([1]).buffer }));
-
-    await vi.waitFor(() =>
-      expect(fetchLicense).toHaveBeenCalledWith(expect.anything(), expect.anything(), expect.anything(), {
-        'Content-Type': 'application/octet-stream',
-      })
-    );
+    resolveAccess(undefined);
+    await vi.waitFor(() => expect(state.negotiatedKeySystem.get()).toBe(NO_KEY_SYSTEM));
 
     reactor.destroy();
   });
@@ -589,7 +347,7 @@ describe('setupMediaKeys', () => {
 
     await vi.waitFor(() => expect(requestKeySystemAccess).toHaveBeenCalled());
     await new Promise((resolve) => setTimeout(resolve, 50));
-    expect(state.awaitingMediaKeys.get()).toBe(true);
+    expect(state.segmentLoadingBlocked.get()).toBe(true);
     expect(context.mediaKeys.get()).toBeUndefined();
     expect(state.errors.get()).toEqual([
       { code: SVTA_UNSUPPORTED_DRM_SYSTEM, data: { keySystems: ['com.widevine.alpha'] } },
@@ -598,94 +356,7 @@ describe('setupMediaKeys', () => {
     reactor.destroy();
   });
 
-  it('reports 4004 when the license request fails, without dropping the session', async () => {
-    const eme = makeFakeEme();
-
-    vi.mocked(requestKeySystemAccess).mockResolvedValue(eme);
-    vi.mocked(fetchLicense).mockRejectedValue(new Error('license server said no'));
-    const { state, reactor } = setupSetupMediaKeys(
-      { presentation: makePresentation([WIDEVINE_KEY]) },
-      { mediaElement: document.createElement('video') }
-    );
-
-    await vi.waitFor(() => expect(eme.sessions).toHaveLength(1));
-    eme.sessions[0]!.dispatchEvent(Object.assign(new Event('message'), { message: new Uint8Array([1]).buffer }));
-
-    await vi.waitFor(() => expect(state.errors.get()?.map((error) => error.code)).toEqual([SVTA_BAD_LICENSE_REQUEST]));
-    expect(state.errors.get()?.[0]?.data).toMatchObject({ keySystem: 'com.widevine.alpha' });
-    expect(eme.sessions[0]!.update).not.toHaveBeenCalled();
-
-    reactor.destroy();
-  });
-
-  it('reports 4016 when the CDM rejects the license', async () => {
-    const eme = makeFakeEme();
-
-    vi.mocked(requestKeySystemAccess).mockResolvedValue(eme);
-    vi.mocked(fetchLicense).mockResolvedValue(new Uint8Array([9]));
-    const { state, reactor } = setupSetupMediaKeys(
-      { presentation: makePresentation([WIDEVINE_KEY]) },
-      { mediaElement: document.createElement('video') }
-    );
-
-    await vi.waitFor(() => expect(eme.sessions).toHaveLength(1));
-    eme.sessions[0]!.update.mockRejectedValue(new TypeError('bad CKC'));
-    eme.sessions[0]!.dispatchEvent(Object.assign(new Event('message'), { message: new Uint8Array([1]).buffer }));
-
-    await vi.waitFor(() =>
-      expect(state.errors.get()?.map((error) => error.code)).toEqual([SVTA_DRM_LICENSE_RESPONSE_REJECTED])
-    );
-
-    reactor.destroy();
-  });
-
-  it('reports 4021 when the CDM cannot generate a license request', async () => {
-    const eme = makeFakeEme();
-
-    vi.mocked(requestKeySystemAccess).mockResolvedValue(eme);
-    const failingSession = makeFakeSession();
-
-    failingSession.generateRequest.mockRejectedValue(new Error('no CDM for you'));
-    (eme.mediaKeys.createSession as ReturnType<typeof vi.fn>).mockReturnValue(failingSession);
-    const { state, reactor } = setupSetupMediaKeys(
-      { presentation: makePresentation([WIDEVINE_KEY]) },
-      { mediaElement: document.createElement('video') }
-    );
-
-    await vi.waitFor(() =>
-      expect(state.errors.get()?.map((error) => error.code)).toEqual([SVTA_DRM_LICENSE_REQUEST_GENERATION_FAILED])
-    );
-
-    reactor.destroy();
-  });
-
-  it('reports nothing after teardown aborts in-flight license work', async () => {
-    const eme = makeFakeEme();
-
-    vi.mocked(requestKeySystemAccess).mockResolvedValue(eme);
-    let rejectLicense!: (reason: Error) => void;
-
-    vi.mocked(fetchLicense).mockImplementation(() => new Promise((_resolve, reject) => (rejectLicense = reject)));
-    const { state, reactor } = setupSetupMediaKeys(
-      { presentation: makePresentation([WIDEVINE_KEY]) },
-      { mediaElement: document.createElement('video') }
-    );
-
-    await vi.waitFor(() => expect(eme.sessions).toHaveLength(1));
-    eme.sessions[0]!.dispatchEvent(Object.assign(new Event('message'), { message: new Uint8Array([1]).buffer }));
-    await vi.waitFor(() => expect(fetchLicense).toHaveBeenCalled());
-
-    state.presentation.set(undefined);
-    await new Promise((resolve) => setTimeout(resolve, 0));
-    rejectLicense(new Error('aborted'));
-    await new Promise((resolve) => setTimeout(resolve, 50));
-
-    expect(state.errors.get() ?? []).toEqual([]);
-
-    reactor.destroy();
-  });
-
-  it('closes sessions, detaches, and clears its slots on source clear', async () => {
+  it('detaches and clears its slots on source clear', async () => {
     const eme = makeFakeEme();
 
     vi.mocked(requestKeySystemAccess).mockResolvedValue(eme);
@@ -701,9 +372,9 @@ describe('setupMediaKeys', () => {
     state.presentation.set(undefined);
 
     await vi.waitFor(() => expect(context.mediaKeys.get()).toBeUndefined());
-    expect(eme.sessions[0]!.close).toHaveBeenCalled();
     expect(attachMediaKeys).toHaveBeenCalledWith(video, null);
-    expect(state.awaitingMediaKeys.get()).toBe(false);
+    expect(state.negotiatedKeySystem.get()).toBeUndefined();
+    expect(state.segmentLoadingBlocked.get()).toBe(false);
 
     reactor.destroy();
   });
@@ -722,7 +393,6 @@ describe('setupMediaKeys', () => {
     reactor.destroy();
 
     await vi.waitFor(() => expect(context.mediaKeys.get()).toBeUndefined());
-    expect(eme.sessions[0]!.close).toHaveBeenCalled();
     expect(attachMediaKeys).toHaveBeenCalledWith(video, null);
   });
 });
