@@ -298,6 +298,36 @@ Keep the skin when its CSS variables and content slots cover your changes. Build
 React skins do not use Shadow DOM. Use `render` props when you build individual controls. Eject a ready-made skin when you need to change its control set or layout.
 </FrameworkCase>
 
+## Control the player imperatively
+
+Media Chrome taught you to script the slotted media element directly, and that habit carries over unchanged. The media is a plain child of the player, and Video.js derives player state from the native media events, so `video.play()` or `video.currentTime = 30` never leaves the controls out of sync. What changes is where everything else lives: Media Chrome had no player object, while Video.js puts the state the browser doesn't own — fullscreen, captions, quality — on the player.
+
+<FrameworkCase frameworks={["html"]}>
+Query the media element and drive it as before. Player-owned actions live on the player element's store:
+
+```js
+const player = document.querySelector('video-player');
+
+player.store.state.toggleFullscreen();
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+Put a `ref` on the media component; its value is the rendered `HTMLVideoElement`, so there's no `media` slot to reach through. Player-owned actions come from the same <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> hook you read state with:
+
+```tsx
+import { usePlayer } from '@videojs/react/video';
+
+function FullscreenShortcut() {
+  const toggleFullscreen = usePlayer((state) => state.toggleFullscreen);
+  // Call toggleFullscreen() from your own UI.
+  return null;
+}
+```
+
+For the Video.js media object, call <DocsLink slug="reference/use-media">`useMedia`</DocsLink> from a component inside the player; media that wrap a playback engine expose it there through the `engine` escape hatch.
+</FrameworkCase>
+
 ## Known gaps
 
 These Media Chrome features have no direct equivalent yet. Several can be approximated; see [Workarounds](#workarounds).

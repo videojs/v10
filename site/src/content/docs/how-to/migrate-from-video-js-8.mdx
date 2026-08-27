@@ -519,6 +519,8 @@ Every feature has a selector (`selectPlayback`, `selectTime`, `selectVolume`, `s
 
 v8 used accessor methods for everything: `player.currentTime()` to read, `player.currentTime(10)` to write. v10 splits the difference by owner. Anything the browser owns you set on the media, as a plain property. Anything it doesn't — fullscreen, captions, quality — goes through the player, because the player is what tracks it.
 
+Writing to the media directly is safe because player state derives from the native media events: set `media.currentTime` and the time slider follows. There is no wrapper to fall out of sync.
+
 | Video.js 8 | Video.js v10 |
 |---|---|
 | `player.play()`, `player.pause()` | `media.play()`, `media.pause()`, or the player's `togglePaused` |
@@ -527,13 +529,27 @@ v8 used accessor methods for everything: `player.currentTime()` to read, `player
 | `player.volume()`, `player.muted()` | `media.volume`, `media.muted` |
 | `player.playbackRate()` | `media.playbackRate`, or the player's `setPlaybackRate` |
 | `player.src({ src, type })` | set `src` on the media |
-| `player.requestFullscreen()`, `exitFullscreen()` | the player's `enterFullscreen`, `exitFullscreen`, `toggleFullscreen` |
+| `player.requestFullscreen()`, `exitFullscreen()` | the player's `requestFullscreen`, `exitFullscreen`, `toggleFullscreen` |
 | `player.textTracks()`, `addRemoteTextTrack()` | `<track>` elements, and `textTrackList` in player state |
 | `player.audioTracks()` | `audioTracks` in player state |
 | `player.error()` | `error` in player state |
 | `player.dispose()` | remove the element, or unmount the component |
 | `player.tech()` | the media component's public `engine` escape hatch, where one exists; in React, reach it through `useMedia()` |
 | `videojs.getPlayer(id)` | hold a reference to the element |
+
+<FrameworkCase frameworks={["html"]}>
+Everything the table describes as "the player's" lives on the player element's store. Hold a reference to `<video-player>` the way you held a v8 player instance, and call actions on its `store.state`:
+
+```js
+const player = document.querySelector('video-player');
+
+player.store.state.toggleFullscreen();
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+Where v8 had you keep the `videojs()` return value in a ref, put the ref on the media component instead; its value is the rendered `HTMLVideoElement`, ready for every `media.*` entry in the table. The player's actions come from the same `usePlayer` hook you read state with — select `togglePaused`, `setPlaybackRate`, or `toggleFullscreen` from state and call it. Where `player.tech()` habits linger, <DocsLink slug="reference/use-media">`useMedia`</DocsLink> returns the Video.js media object.
+</FrameworkCase>
 
 Swapping sources is the change most likely to surprise you. There's no `player.src()`; you set `src` on the media element, or replace the media element entirely, and the UI follows. Changing formats is changing tags.
 
