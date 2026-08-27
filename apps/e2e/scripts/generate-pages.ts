@@ -148,7 +148,15 @@ interface PageDef {
   framework: 'html' | 'react';
   media: string;
   resource: string;
-  category?: 'cdn' | 'ejected-html' | 'ejected-react' | 'captions' | 'background' | 'source-html' | 'source-react';
+  category?:
+    | 'cdn'
+    | 'ejected-html'
+    | 'ejected-react'
+    | 'captions'
+    | 'background'
+    | 'background-preset'
+    | 'source-html'
+    | 'source-react';
 }
 
 // ---------------------------------------------------------------------------
@@ -356,6 +364,55 @@ createRoot(document.getElementById('root')!).render(<App />);
 `;
 }
 
+/** The handwritten Background preset, kept separate from the engine-only fixtures above. */
+function backgroundPresetPage(framework: PageDef['framework'], resource: string): string {
+  if (framework === 'react') {
+    return `import {
+  BackgroundVideo,
+  BackgroundVideoPlayer,
+  BackgroundVideoSkin,
+} from '@videojs/react/background';
+import '@videojs/react/background/skin.css';
+import { createRoot } from 'react-dom/client';
+import { MEDIA } from '../resources';
+
+function App() {
+  return (
+    <BackgroundVideoPlayer>
+      <BackgroundVideoSkin
+        className="background-preset"
+        style={{ width: 640, height: 360, objectFit: 'contain' }}
+      >
+        <img alt="" data-background-poster src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" />
+        <BackgroundVideo data-background-media src={MEDIA.${resource}.url} />
+      </BackgroundVideoSkin>
+    </BackgroundVideoPlayer>
+  );
+}
+
+createRoot(document.getElementById('root')!).render(<App />);
+`;
+  }
+
+  return `import '@videojs/html/background/player';
+import '@videojs/html/background/skin';
+import '@videojs/html/background/video';
+import { MEDIA } from '../resources';
+
+document.getElementById('root')!.innerHTML = String.raw\`
+  <background-video-player>
+    <background-video-skin
+      class="background-preset"
+      style="width: 640px; height: 360px; --media-object-fit: contain"
+    >
+      <img alt="" data-background-poster src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" />
+      <background-video data-background-media src="\${MEDIA.${resource}.url}"></background-video>
+    </background-video-skin>
+  </background-video-player>
+\`;
+`;
+}
+
 function captionsPage(resource: string): string {
   const captionVtt = 'WEBVTT\\n\\n00:00:00.000 --> 00:00:30.000\\nThis is a test caption';
 
@@ -544,6 +601,22 @@ const PAGES: PageDef[] = [
     resource: 'hlsFmp4',
     category: 'background',
   },
+  {
+    name: 'HTML Background Preset',
+    path: 'html-background-preset',
+    framework: 'html',
+    media: 'hls-background-video',
+    resource: 'mp4',
+    category: 'background-preset',
+  },
+  {
+    name: 'React Background Preset',
+    path: 'react-background-preset',
+    framework: 'react',
+    media: 'hls-background-video',
+    resource: 'mp4',
+    category: 'background-preset',
+  },
   { name: 'HTML DASH Video', path: 'html-dash-video', framework: 'html', media: 'dash-video', resource: 'dash' },
   {
     name: 'HTML Shaka Video HLS',
@@ -680,6 +753,8 @@ function generatePage(page: PageDef): { ts: string; html: string; ext: string } 
       page.framework === 'react'
         ? reactBackgroundVideoPage(page.media, page.resource)
         : backgroundVideoPage(config, page.resource);
+  } else if (page.category === 'background-preset') {
+    ts = backgroundPresetPage(page.framework, page.resource);
   } else if (page.category === 'captions') {
     ts = captionsPage(page.resource);
   } else if (page.category === 'ejected-html') {

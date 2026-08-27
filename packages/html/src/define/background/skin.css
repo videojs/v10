@@ -28,12 +28,12 @@ background-video-skin > :not(img, picture) {
   inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: inherit;
+  object-fit: var(--media-object-fit);
 }
 
 background-video-skin > img,
 background-video-skin > picture {
   width: 100%;
   height: 100%;
-  object-fit: inherit;
+  object-fit: var(--media-object-fit);
 }
