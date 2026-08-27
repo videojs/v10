@@ -196,6 +196,28 @@ export function FullscreenButton({ className, ...props }: FullscreenButtonProps 
   );
 }
 
+// ===== react/default-video/css/components/buttons/live-button.tsx =====
+/** @jsxImportSource react */
+
+
+
+
+
+
+
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/buttons.css";
+import { LiveButton as LiveButtonPrimitive } from "@videojs/react";
+import { cn, resolveClassName } from "@videojs/utils/style";
+
+
+
+
+export interface LiveButtonProps extends Omit<LiveButtonPrimitive.Props, "children"> {}
+export function LiveButton({ className, ...props }: LiveButtonProps = {}) {
+  return <LiveButtonPrimitive className={state => cn("media-button", "media-live-button", resolveClassName(className, state))} {...props} />;
+}
+
 // ===== react/default-video/css/components/buttons/mute-button.tsx =====
 /** @jsxImportSource react */
 
@@ -1623,6 +1645,25 @@ export function FullscreenButton({ className, ...props }: FullscreenButtonProps 
   );
 }
 
+// ===== react/default-video/tailwind/components/buttons/live-button.tsx =====
+/** @jsxImportSource react */
+
+
+
+
+
+import { LiveButton as LiveButtonPrimitive } from "@videojs/react";
+import { cn, resolveClassName } from "@videojs/utils/style";
+
+
+
+
+
+export interface LiveButtonProps extends Omit<LiveButtonPrimitive.Props, "children"> {}
+export function LiveButton({ className, ...props }: LiveButtonProps = {}) {
+  return <LiveButtonPrimitive className={state => cn("grid min-h-0 shrink-0 touch-manipulation select-none place-items-center rounded-media-control border-0 bg-transparent p-0 text-center text-inherit [text-shadow:inherit]", "cursor-pointer outline-2 outline-transparent -outline-offset-2", "will-change-[scale] duration-150 ease-out", "not-aria-disabled:hover:bg-media-control-hover not-aria-disabled:hover:text-media-accent-text", "not-aria-disabled:focus-visible:bg-media-control-hover not-aria-disabled:focus-visible:text-media-accent-text", "not-aria-disabled:aria-expanded:bg-media-control-hover not-aria-disabled:aria-expanded:text-media-accent-text", "focus-visible:outline-[var(--media-focus-ring-color,white)] focus-visible:outline-offset-2", "not-aria-disabled:active:scale-[0.97]", "motion-reduce:scale-100 motion-reduce:will-change-auto", "aria-disabled:cursor-not-allowed aria-disabled:opacity-50", "size-9 [transition-property:background-color,color,outline-offset,scale]", "motion-reduce:[transition-property:background-color,color]", "inline-flex! w-auto! items-center gap-1.5 px-3 py-2", "text-media-sm leading-none font-semibold tracking-wider uppercase", "before:inline-block before:size-2 before:shrink-0 before:rounded-[99px]", "before:bg-current/40 before:transition-[background-color] before:duration-150 before:ease-out", "data-live-edge:before:bg-[oklch(0.65_0.22_27)]", resolveClassName(className, state))} {...props} />;
+}
+
 // ===== react/default-video/tailwind/components/buttons/mute-button.tsx =====
 /** @jsxImportSource react */
 
@@ -2969,6 +3010,28 @@ export function FullscreenButton({ className, ...props }: FullscreenButtonProps 
       </FullscreenButtonPrimitive>
     </ButtonTooltip>
   );
+}
+
+// ===== react/minimal-video/css/components/buttons/live-button.tsx =====
+/** @jsxImportSource react */
+
+
+
+
+
+
+
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/buttons.css";
+import { LiveButton as LiveButtonPrimitive } from "@videojs/react";
+import { cn, resolveClassName } from "@videojs/utils/style";
+
+
+
+
+export interface LiveButtonProps extends Omit<LiveButtonPrimitive.Props, "children"> {}
+export function LiveButton({ className, ...props }: LiveButtonProps = {}) {
+  return <LiveButtonPrimitive className={state => cn("media-button", "media-live-button", resolveClassName(className, state))} {...props} />;
 }
 
 // ===== react/minimal-video/css/components/buttons/mute-button.tsx =====
@@ -4396,6 +4459,25 @@ export function FullscreenButton({ className, ...props }: FullscreenButtonProps 
   );
 }
 
+// ===== react/minimal-video/tailwind/components/buttons/live-button.tsx =====
+/** @jsxImportSource react */
+
+
+
+
+
+import { LiveButton as LiveButtonPrimitive } from "@videojs/react";
+import { cn, resolveClassName } from "@videojs/utils/style";
+
+
+
+
+
+export interface LiveButtonProps extends Omit<LiveButtonPrimitive.Props, "children"> {}
+export function LiveButton({ className, ...props }: LiveButtonProps = {}) {
+  return <LiveButtonPrimitive className={state => cn("grid min-h-0 shrink-0 touch-manipulation select-none place-items-center rounded-media-control border-0 bg-transparent p-0 text-center text-inherit [text-shadow:inherit]", "cursor-pointer outline-2 outline-transparent -outline-offset-2", "will-change-[scale] duration-150 ease-out", "not-aria-disabled:hover:bg-media-control-hover not-aria-disabled:hover:text-media-accent-text", "not-aria-disabled:focus-visible:bg-media-control-hover not-aria-disabled:focus-visible:text-media-accent-text", "not-aria-disabled:aria-expanded:bg-media-control-hover not-aria-disabled:aria-expanded:text-media-accent-text", "focus-visible:outline-[var(--media-focus-ring-color,white)] focus-visible:outline-offset-2", "not-aria-disabled:active:scale-[0.97]", "motion-reduce:scale-100 motion-reduce:will-change-auto", "aria-disabled:cursor-not-allowed aria-disabled:opacity-50", "size-9.5 [transition-property:background-color,outline-offset,scale]", "motion-reduce:[transition-property:background-color]", "supports-[corner-shape:squircle]:rounded-[--spacing(4)]", "supports-[corner-shape:squircle]:[corner-shape:squircle]", "inline-flex! w-auto! items-center gap-1.5 px-3 py-2", "text-media-sm leading-none font-semibold tracking-wider uppercase", "before:inline-block before:size-2 before:shrink-0 before:rounded-[99px]", "before:bg-current/40 before:transition-[background-color] before:duration-150 before:ease-out", "data-live-edge:before:bg-[oklch(0.65_0.22_27)]", resolveClassName(className, state))} {...props} />;
+}
+
 // ===== react/minimal-video/tailwind/components/buttons/mute-button.tsx =====
 /** @jsxImportSource react */
 
@@ -5745,6 +5827,28 @@ export function FullscreenButton({ className, ...props }: FullscreenButtonProps 
       </FullscreenButtonPrimitive>
     </ButtonTooltip>
   );
+}
+
+// ===== react/default-audio/css/components/buttons/live-button.tsx =====
+/** @jsxImportSource react */
+
+
+
+
+
+
+
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/buttons.css";
+import { LiveButton as LiveButtonPrimitive } from "@videojs/react";
+import { cn, resolveClassName } from "@videojs/utils/style";
+
+
+
+
+export interface LiveButtonProps extends Omit<LiveButtonPrimitive.Props, "children"> {}
+export function LiveButton({ className, ...props }: LiveButtonProps = {}) {
+  return <LiveButtonPrimitive className={state => cn("media-button", "media-live-button", resolveClassName(className, state))} {...props} />;
 }
 
 // ===== react/default-audio/css/components/buttons/mute-button.tsx =====
@@ -7154,6 +7258,25 @@ export function FullscreenButton({ className, ...props }: FullscreenButtonProps 
   );
 }
 
+// ===== react/default-audio/tailwind/components/buttons/live-button.tsx =====
+/** @jsxImportSource react */
+
+
+
+
+
+import { LiveButton as LiveButtonPrimitive } from "@videojs/react";
+import { cn, resolveClassName } from "@videojs/utils/style";
+
+
+
+
+
+export interface LiveButtonProps extends Omit<LiveButtonPrimitive.Props, "children"> {}
+export function LiveButton({ className, ...props }: LiveButtonProps = {}) {
+  return <LiveButtonPrimitive className={state => cn("grid min-h-0 shrink-0 touch-manipulation select-none place-items-center rounded-media-control border-0 bg-transparent p-0 text-center text-inherit [text-shadow:inherit]", "cursor-pointer outline-2 outline-transparent -outline-offset-2", "will-change-[scale] duration-150 ease-out", "not-aria-disabled:hover:bg-media-control-hover not-aria-disabled:hover:text-media-accent-text", "not-aria-disabled:focus-visible:bg-media-control-hover not-aria-disabled:focus-visible:text-media-accent-text", "not-aria-disabled:aria-expanded:bg-media-control-hover not-aria-disabled:aria-expanded:text-media-accent-text", "focus-visible:outline-[var(--media-focus-ring-color,white)] focus-visible:outline-offset-2", "not-aria-disabled:active:scale-[0.97]", "motion-reduce:scale-100 motion-reduce:will-change-auto", "aria-disabled:cursor-not-allowed aria-disabled:opacity-50", "size-9 [transition-property:background-color,color,outline-offset,scale]", "motion-reduce:[transition-property:background-color,color]", "inline-flex! w-auto! items-center gap-1.5 px-3 py-2", "text-media-sm leading-none font-semibold tracking-wider uppercase", "before:inline-block before:size-2 before:shrink-0 before:rounded-[99px]", "before:bg-current/40 before:transition-[background-color] before:duration-150 before:ease-out", "data-live-edge:before:bg-[oklch(0.65_0.22_27)]", resolveClassName(className, state))} {...props} />;
+}
+
 // ===== react/default-audio/tailwind/components/buttons/mute-button.tsx =====
 /** @jsxImportSource react */
 
@@ -8480,6 +8603,28 @@ export function FullscreenButton({ className, ...props }: FullscreenButtonProps 
       </FullscreenButtonPrimitive>
     </ButtonTooltip>
   );
+}
+
+// ===== react/minimal-audio/css/components/buttons/live-button.tsx =====
+/** @jsxImportSource react */
+
+
+
+
+
+
+
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/buttons.css";
+import { LiveButton as LiveButtonPrimitive } from "@videojs/react";
+import { cn, resolveClassName } from "@videojs/utils/style";
+
+
+
+
+export interface LiveButtonProps extends Omit<LiveButtonPrimitive.Props, "children"> {}
+export function LiveButton({ className, ...props }: LiveButtonProps = {}) {
+  return <LiveButtonPrimitive className={state => cn("media-button", "media-live-button", resolveClassName(className, state))} {...props} />;
 }
 
 // ===== react/minimal-audio/css/components/buttons/mute-button.tsx =====
@@ -9891,6 +10036,25 @@ export function FullscreenButton({ className, ...props }: FullscreenButtonProps 
   );
 }
 
+// ===== react/minimal-audio/tailwind/components/buttons/live-button.tsx =====
+/** @jsxImportSource react */
+
+
+
+
+
+import { LiveButton as LiveButtonPrimitive } from "@videojs/react";
+import { cn, resolveClassName } from "@videojs/utils/style";
+
+
+
+
+
+export interface LiveButtonProps extends Omit<LiveButtonPrimitive.Props, "children"> {}
+export function LiveButton({ className, ...props }: LiveButtonProps = {}) {
+  return <LiveButtonPrimitive className={state => cn("grid min-h-0 shrink-0 touch-manipulation select-none place-items-center rounded-media-control border-0 bg-transparent p-0 text-center text-inherit [text-shadow:inherit]", "cursor-pointer outline-2 outline-transparent -outline-offset-2", "will-change-[scale] duration-150 ease-out", "not-aria-disabled:hover:bg-media-control-hover not-aria-disabled:hover:text-media-accent-text", "not-aria-disabled:focus-visible:bg-media-control-hover not-aria-disabled:focus-visible:text-media-accent-text", "not-aria-disabled:aria-expanded:bg-media-control-hover not-aria-disabled:aria-expanded:text-media-accent-text", "focus-visible:outline-[var(--media-focus-ring-color,white)] focus-visible:outline-offset-2", "not-aria-disabled:active:scale-[0.97]", "motion-reduce:scale-100 motion-reduce:will-change-auto", "aria-disabled:cursor-not-allowed aria-disabled:opacity-50", "size-9.5 [transition-property:background-color,outline-offset,scale]", "motion-reduce:[transition-property:background-color]", "supports-[corner-shape:squircle]:rounded-[--spacing(4)]", "supports-[corner-shape:squircle]:[corner-shape:squircle]", "inline-flex! w-auto! items-center gap-1.5 px-3 py-2", "text-media-sm leading-none font-semibold tracking-wider uppercase", "before:inline-block before:size-2 before:shrink-0 before:rounded-[99px]", "before:bg-current/40 before:transition-[background-color] before:duration-150 before:ease-out", "data-live-edge:before:bg-[oklch(0.65_0.22_27)]", resolveClassName(className, state))} {...props} />;
+}
+
 // ===== react/minimal-audio/tailwind/components/buttons/mute-button.tsx =====
 /** @jsxImportSource react */
 
@@ -11198,6 +11362,25 @@ export function FullscreenButton({ className, ...props }: Props<CoreProps> = {})
       </media-fullscreen-button>
     </ButtonTooltip>
   );
+}
+
+// ===== html/default-video/css/components/buttons/live-button.tsx =====
+/** @jsxImportSource vjsc/html-runtime */
+import type { LiveButtonProps as CoreProps } from '@videojs/core';
+
+import type { Props } from 'vjsc/components';
+
+
+
+
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/buttons.css";
+import "@videojs/html/ui/live-button";
+
+
+
+export function LiveButton({ className, ...props }: Props<CoreProps> = {}) {
+  return <media-live-button className={["media-button", "media-live-button", className]} {...props} />;
 }
 
 // ===== html/default-video/css/components/buttons/mute-button.tsx =====
@@ -12545,6 +12728,22 @@ export function FullscreenButton({ className, ...props }: Props<CoreProps> = {})
   );
 }
 
+// ===== html/default-video/tailwind/components/buttons/live-button.tsx =====
+/** @jsxImportSource vjsc/html-runtime */
+import type { LiveButtonProps as CoreProps } from '@videojs/core';
+
+import type { Props } from 'vjsc/components';
+
+
+import "@videojs/html/ui/live-button";
+
+
+
+
+export function LiveButton({ className, ...props }: Props<CoreProps> = {}) {
+  return <media-live-button className={["grid min-h-0 shrink-0 touch-manipulation select-none place-items-center rounded-media-control border-0 bg-transparent p-0 text-center text-inherit [text-shadow:inherit]", "cursor-pointer outline-2 outline-transparent -outline-offset-2", "will-change-[scale] duration-150 ease-out", "not-aria-disabled:hover:bg-media-control-hover not-aria-disabled:hover:text-media-accent-text", "not-aria-disabled:focus-visible:bg-media-control-hover not-aria-disabled:focus-visible:text-media-accent-text", "not-aria-disabled:aria-expanded:bg-media-control-hover not-aria-disabled:aria-expanded:text-media-accent-text", "focus-visible:outline-[var(--media-focus-ring-color,white)] focus-visible:outline-offset-2", "not-aria-disabled:active:scale-[0.97]", "motion-reduce:scale-100 motion-reduce:will-change-auto", "aria-disabled:cursor-not-allowed aria-disabled:opacity-50", "size-9 [transition-property:background-color,color,outline-offset,scale]", "motion-reduce:[transition-property:background-color,color]", "inline-flex! w-auto! items-center gap-1.5 px-3 py-2", "text-media-sm leading-none font-semibold tracking-wider uppercase", "before:inline-block before:size-2 before:shrink-0 before:rounded-[99px]", "before:bg-current/40 before:transition-[background-color] before:duration-150 before:ease-out", "data-live-edge:before:bg-[oklch(0.65_0.22_27)]", className]} {...props} />;
+}
+
 // ===== html/default-video/tailwind/components/buttons/mute-button.tsx =====
 /** @jsxImportSource vjsc/html-runtime */
 import type { MuteButtonProps as CoreProps } from '@videojs/core';
@@ -13813,6 +14012,25 @@ export function FullscreenButton({ className, ...props }: Props<CoreProps> = {})
       </media-fullscreen-button>
     </ButtonTooltip>
   );
+}
+
+// ===== html/minimal-video/css/components/buttons/live-button.tsx =====
+/** @jsxImportSource vjsc/html-runtime */
+import type { LiveButtonProps as CoreProps } from '@videojs/core';
+
+import type { Props } from 'vjsc/components';
+
+
+
+
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/buttons.css";
+import "@videojs/html/ui/live-button";
+
+
+
+export function LiveButton({ className, ...props }: Props<CoreProps> = {}) {
+  return <media-live-button className={["media-button", "media-live-button", className]} {...props} />;
 }
 
 // ===== html/minimal-video/css/components/buttons/mute-button.tsx =====
@@ -15181,6 +15399,22 @@ export function FullscreenButton({ className, ...props }: Props<CoreProps> = {})
   );
 }
 
+// ===== html/minimal-video/tailwind/components/buttons/live-button.tsx =====
+/** @jsxImportSource vjsc/html-runtime */
+import type { LiveButtonProps as CoreProps } from '@videojs/core';
+
+import type { Props } from 'vjsc/components';
+
+
+import "@videojs/html/ui/live-button";
+
+
+
+
+export function LiveButton({ className, ...props }: Props<CoreProps> = {}) {
+  return <media-live-button className={["grid min-h-0 shrink-0 touch-manipulation select-none place-items-center rounded-media-control border-0 bg-transparent p-0 text-center text-inherit [text-shadow:inherit]", "cursor-pointer outline-2 outline-transparent -outline-offset-2", "will-change-[scale] duration-150 ease-out", "not-aria-disabled:hover:bg-media-control-hover not-aria-disabled:hover:text-media-accent-text", "not-aria-disabled:focus-visible:bg-media-control-hover not-aria-disabled:focus-visible:text-media-accent-text", "not-aria-disabled:aria-expanded:bg-media-control-hover not-aria-disabled:aria-expanded:text-media-accent-text", "focus-visible:outline-[var(--media-focus-ring-color,white)] focus-visible:outline-offset-2", "not-aria-disabled:active:scale-[0.97]", "motion-reduce:scale-100 motion-reduce:will-change-auto", "aria-disabled:cursor-not-allowed aria-disabled:opacity-50", "size-9.5 [transition-property:background-color,outline-offset,scale]", "motion-reduce:[transition-property:background-color]", "supports-[corner-shape:squircle]:rounded-[--spacing(4)]", "supports-[corner-shape:squircle]:[corner-shape:squircle]", "inline-flex! w-auto! items-center gap-1.5 px-3 py-2", "text-media-sm leading-none font-semibold tracking-wider uppercase", "before:inline-block before:size-2 before:shrink-0 before:rounded-[99px]", "before:bg-current/40 before:transition-[background-color] before:duration-150 before:ease-out", "data-live-edge:before:bg-[oklch(0.65_0.22_27)]", className]} {...props} />;
+}
+
 // ===== html/minimal-video/tailwind/components/buttons/mute-button.tsx =====
 /** @jsxImportSource vjsc/html-runtime */
 import type { MuteButtonProps as CoreProps } from '@videojs/core';
@@ -16467,6 +16701,25 @@ export function FullscreenButton({ className, ...props }: Props<CoreProps> = {})
       </media-fullscreen-button>
     </ButtonTooltip>
   );
+}
+
+// ===== html/default-audio/css/components/buttons/live-button.tsx =====
+/** @jsxImportSource vjsc/html-runtime */
+import type { LiveButtonProps as CoreProps } from '@videojs/core';
+
+import type { Props } from 'vjsc/components';
+
+
+
+
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/buttons.css";
+import "@videojs/html/ui/live-button";
+
+
+
+export function LiveButton({ className, ...props }: Props<CoreProps> = {}) {
+  return <media-live-button className={["media-button", "media-live-button", className]} {...props} />;
 }
 
 // ===== html/default-audio/css/components/buttons/mute-button.tsx =====
@@ -17793,6 +18046,22 @@ export function FullscreenButton({ className, ...props }: Props<CoreProps> = {})
   );
 }
 
+// ===== html/default-audio/tailwind/components/buttons/live-button.tsx =====
+/** @jsxImportSource vjsc/html-runtime */
+import type { LiveButtonProps as CoreProps } from '@videojs/core';
+
+import type { Props } from 'vjsc/components';
+
+
+import "@videojs/html/ui/live-button";
+
+
+
+
+export function LiveButton({ className, ...props }: Props<CoreProps> = {}) {
+  return <media-live-button className={["grid min-h-0 shrink-0 touch-manipulation select-none place-items-center rounded-media-control border-0 bg-transparent p-0 text-center text-inherit [text-shadow:inherit]", "cursor-pointer outline-2 outline-transparent -outline-offset-2", "will-change-[scale] duration-150 ease-out", "not-aria-disabled:hover:bg-media-control-hover not-aria-disabled:hover:text-media-accent-text", "not-aria-disabled:focus-visible:bg-media-control-hover not-aria-disabled:focus-visible:text-media-accent-text", "not-aria-disabled:aria-expanded:bg-media-control-hover not-aria-disabled:aria-expanded:text-media-accent-text", "focus-visible:outline-[var(--media-focus-ring-color,white)] focus-visible:outline-offset-2", "not-aria-disabled:active:scale-[0.97]", "motion-reduce:scale-100 motion-reduce:will-change-auto", "aria-disabled:cursor-not-allowed aria-disabled:opacity-50", "size-9 [transition-property:background-color,color,outline-offset,scale]", "motion-reduce:[transition-property:background-color,color]", "inline-flex! w-auto! items-center gap-1.5 px-3 py-2", "text-media-sm leading-none font-semibold tracking-wider uppercase", "before:inline-block before:size-2 before:shrink-0 before:rounded-[99px]", "before:bg-current/40 before:transition-[background-color] before:duration-150 before:ease-out", "data-live-edge:before:bg-[oklch(0.65_0.22_27)]", className]} {...props} />;
+}
+
 // ===== html/default-audio/tailwind/components/buttons/mute-button.tsx =====
 /** @jsxImportSource vjsc/html-runtime */
 import type { MuteButtonProps as CoreProps } from '@videojs/core';
@@ -19040,6 +19309,25 @@ export function FullscreenButton({ className, ...props }: Props<CoreProps> = {})
       </media-fullscreen-button>
     </ButtonTooltip>
   );
+}
+
+// ===== html/minimal-audio/css/components/buttons/live-button.tsx =====
+/** @jsxImportSource vjsc/html-runtime */
+import type { LiveButtonProps as CoreProps } from '@videojs/core';
+
+import type { Props } from 'vjsc/components';
+
+
+
+
+import "virtual:vjsc/css/<hash>/base.css";
+import "virtual:vjsc/css/<hash>/buttons.css";
+import "@videojs/html/ui/live-button";
+
+
+
+export function LiveButton({ className, ...props }: Props<CoreProps> = {}) {
+  return <media-live-button className={["media-button", "media-live-button", className]} {...props} />;
 }
 
 // ===== html/minimal-audio/css/components/buttons/mute-button.tsx =====
@@ -20389,6 +20677,22 @@ export function FullscreenButton({ className, ...props }: Props<CoreProps> = {})
       </media-fullscreen-button>
     </ButtonTooltip>
   );
+}
+
+// ===== html/minimal-audio/tailwind/components/buttons/live-button.tsx =====
+/** @jsxImportSource vjsc/html-runtime */
+import type { LiveButtonProps as CoreProps } from '@videojs/core';
+
+import type { Props } from 'vjsc/components';
+
+
+import "@videojs/html/ui/live-button";
+
+
+
+
+export function LiveButton({ className, ...props }: Props<CoreProps> = {}) {
+  return <media-live-button className={["grid min-h-0 shrink-0 touch-manipulation select-none place-items-center rounded-media-control border-0 bg-transparent p-0 text-center text-inherit [text-shadow:inherit]", "cursor-pointer outline-2 outline-transparent -outline-offset-2", "will-change-[scale] duration-150 ease-out", "not-aria-disabled:hover:bg-media-control-hover not-aria-disabled:hover:text-media-accent-text", "not-aria-disabled:focus-visible:bg-media-control-hover not-aria-disabled:focus-visible:text-media-accent-text", "not-aria-disabled:aria-expanded:bg-media-control-hover not-aria-disabled:aria-expanded:text-media-accent-text", "focus-visible:outline-[var(--media-focus-ring-color,white)] focus-visible:outline-offset-2", "not-aria-disabled:active:scale-[0.97]", "motion-reduce:scale-100 motion-reduce:will-change-auto", "aria-disabled:cursor-not-allowed aria-disabled:opacity-50", "size-9.5 [transition-property:background-color,outline-offset,scale]", "motion-reduce:[transition-property:background-color]", "supports-[corner-shape:squircle]:rounded-[--spacing(4)]", "supports-[corner-shape:squircle]:[corner-shape:squircle]", "inline-flex! w-auto! items-center gap-1.5 px-3 py-2", "text-media-sm leading-none font-semibold tracking-wider uppercase", "before:inline-block before:size-2 before:shrink-0 before:rounded-[99px]", "before:bg-current/40 before:transition-[background-color] before:duration-150 before:ease-out", "data-live-edge:before:bg-[oklch(0.65_0.22_27)]", className]} {...props} />;
 }
 
 // ===== html/minimal-audio/tailwind/components/buttons/mute-button.tsx =====

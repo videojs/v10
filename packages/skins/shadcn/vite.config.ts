@@ -20,7 +20,7 @@ const registryPaths = {
   import: '@/components/videojs',
 } as const;
 const publishedSkins = ['default-video', 'minimal-video'] as const;
-const unpublishedAudioItems = new Set(['audio-play-button', 'audio-settings-menu', 'audio-time-slider']);
+const unpublishedItems = new Set(['audio-play-button', 'audio-settings-menu', 'audio-time-slider', 'live-button']);
 
 export const shadcnPackConfig: PackUserConfig = {
   ...baseConfig,
@@ -90,7 +90,7 @@ export const shadcnPackConfig: PackUserConfig = {
 
             if (meta.type === 'skin' && !publishedSkins.some((skin) => skin === meta.name)) return [];
 
-            if (meta.type === 'component' && unpublishedAudioItems.has(meta.name)) return [];
+            if (meta.type === 'component' && unpublishedItems.has(meta.name)) return [];
 
             const skinName = transform.skin;
             const skin = modules.find(
