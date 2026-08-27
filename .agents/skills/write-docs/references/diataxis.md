@@ -11,7 +11,7 @@ The compass (action vs. cognition, study vs. work) also works at the sentence an
 - How-to guide: no teaching and no digression. Background beyond what the reader needs to adapt the code links to a concept page. Exhaustive options, defaults, and surfaces link to reference.
 - Concept page: no step-by-step instruction and no close-up API detail. Steps that creep in belong in a how-to; exact surfaces belong in reference.
 - Reference page: no instruction, persuasion, or opinion. Describe the machinery; do not walk the reader through tasks or argue for approaches. Link how-to guides for tasks and concept pages for rationale.
-- Getting started guides (our stand-in for tutorials): no alternatives and minimal explanation. The writer carries the lesson: every step must work, produce a visible result quickly, and lead to the next. Link deeper material instead of pausing to teach it.
+- Tutorial: we deliberately publish none yet. The Getting started sidebar category is not one — it mixes essential concept and how-to pages, each following its own type's rules above. If we add true tutorials later: no alternatives and minimal explanation, and the writer carries the lesson — every step must work, produce a visible result quickly, and lead to the next.
 
 ## The language of each type
 
@@ -20,7 +20,7 @@ Each mode has characteristic sentence forms. When your sentences read like a dif
 - How-to guide: imperatives and conditional imperatives aimed at the reader's goal. "To loop playback, set…" "If you self-host, configure…"
 - Concept page: discussion of why and how things relate. "Features are split this way because…" "Compared with the native element…" Alternatives, trade-offs, and opinions are welcome here, and only here.
 - Reference page: neutral statements of fact in one consistent shape per kind of entry. "`preload` accepts…" "Defaults to…" Examples illustrate usage without teaching or advocating.
-- Getting started guide: guided steps with confirmations. "First, create…" "You should see…"
+- Tutorial (if we add them): guided steps with confirmations. "First, create…" "You should see…"
 
 ## Reference tone
 
