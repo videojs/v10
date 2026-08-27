@@ -3,6 +3,7 @@ import clsx from 'clsx';
 import { ArrowUpRight } from 'lucide-react';
 
 import Logo from '@/assets/logos/videojs.svg?react';
+import CompactLogo from '@/assets/logos/vjs.svg?react';
 import BetaPill from '@/components/BetaPill';
 import { DISCORD_INVITE_URL, GITHUB_REPO_URL } from '@/consts';
 
@@ -19,9 +20,11 @@ export interface MobileNavProps {
   navLinks: NavLink[];
   currentPath: string;
   children?: React.ReactNode;
+  compact?: boolean;
+  pill?: React.ReactNode;
 }
 
-export default function MobileNav({ navLinks, currentPath, children }: MobileNavProps) {
+export default function MobileNav({ navLinks, currentPath, children, compact, pill }: MobileNavProps) {
   return (
     <Dialog.Root modal>
       {/* Trigger button - hamburger menu */}
@@ -33,8 +36,11 @@ export default function MobileNav({ navLinks, currentPath, children }: MobileNav
         aria-label="Open navigation menu"
       >
         <span
-          className="font-display text-manila-light bg-faded-black dark:bg-manila-light dark:text-faded-black px-4 py-2.5 leading-none font-bold tracking-normal uppercase"
-          style={{ fontSize: '0.75rem' }}
+          className={clsx(
+            'font-display text-manila-light bg-faded-black dark:bg-manila-light dark:text-faded-black leading-none font-bold tracking-normal uppercase',
+            compact ? 'p-2' : 'p-2.5 sm:px-4 sm:py-2.5'
+          )}
+          style={{ fontSize: compact ? '0.625rem' : '0.75rem' }}
         >
           Menu
         </span>
@@ -50,12 +56,25 @@ export default function MobileNav({ navLinks, currentPath, children }: MobileNav
           )}
         >
           {/* Header with close button */}
-          <div className={clsx('flex justify-between items-center px-5 py-7')}>
+          <div className={clsx('flex justify-between items-center px-5', compact ? 'py-2' : 'py-7')}>
             <Dialog.Title className="sr-only">Navigation</Dialog.Title>
-            <a href="/" className="flex h-7 items-center gap-3 lg:h-10 lg:gap-4">
-              <Logo height="100%" />
+            <a
+              href="/"
+              className={clsx(
+                'flex items-center',
+                compact ? 'h-5 gap-2 sm:h-6 sm:gap-3' : 'h-7 gap-3 lg:h-10 lg:gap-4'
+              )}
+            >
+              {compact ? (
+                <>
+                  <CompactLogo height="100%" className="xs:hidden w-auto" />
+                  <Logo height="100%" className="xs:inline hidden w-auto" />
+                </>
+              ) : (
+                <Logo height="100%" className="w-auto" />
+              )}
               <span className="sr-only">Video.js video player</span>
-              <BetaPill className="hidden sm:inline-flex" />
+              {pill ? pill : <BetaPill className="hidden sm:inline-flex" />}
             </a>
             <Dialog.Close
               className={clsx(
@@ -64,8 +83,11 @@ export default function MobileNav({ navLinks, currentPath, children }: MobileNav
               aria-label="Close navigation menu"
             >
               <span
-                className="font-display text-manila-light bg-faded-black dark:bg-manila-light dark:text-faded-black px-4 py-2.5 leading-none font-bold tracking-normal uppercase"
-                style={{ fontSize: '0.75rem' }}
+                className={clsx(
+                  'font-display text-manila-light bg-faded-black dark:bg-manila-light dark:text-faded-black leading-none font-bold tracking-normal uppercase',
+                  compact ? 'p-2' : 'p-2.5 sm:px-4 sm:py-2.5'
+                )}
+                style={{ fontSize: compact ? '0.625rem' : '0.75rem' }}
               >
                 Close
               </span>

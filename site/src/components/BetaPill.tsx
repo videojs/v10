@@ -21,7 +21,7 @@ export default function BetaPill({ className, style, compact, label }: BetaPillP
       style={{ '--text': '0.75rem', ...style } as React.CSSProperties}
     >
       {label ? (
-        label
+        <span className="whitespace-nowrap">{label}</span>
       ) : compact ? (
         <>
           <span>v10</span>

@@ -83,6 +83,8 @@
 
 /* Tailwind theme namespace resets are order-sensitive. */
 @theme {
+  --breakpoint-xs: 30rem;
+
   --color-*: initial;
 
   --color-white: white;
