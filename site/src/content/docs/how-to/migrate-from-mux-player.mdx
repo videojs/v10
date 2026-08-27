@@ -84,7 +84,7 @@ From the CDN, load the video <DocsLink slug="concepts/presets">preset</DocsLink>
 <script type="module" src="{{VJS10_HTML_CDN_BASE}}/media/mux-data.js"></script>
 
 <video-player content-title="Test VOD">
-  <video-skin class="aspect-video">
+  <video-skin style="aspect-ratio: 16 / 9">
     <mux-video
       src="https://stream.mux.com/EcHgOK9coz5K….m3u8"
       poster-time="2"
@@ -149,7 +149,7 @@ import { MuxVideo } from '@videojs/react/media/mux-video';
 export function MyPlayer() {
   return (
     <VideoPlayer title="Test VOD">
-      <VideoSkin className="aspect-video">
+      <VideoSkin style={{ aspectRatio: '16 / 9' }}>
         <MuxVideo
           source={{ playbackId: 'EcHgOK9coz5K…', poster: { time: 2 } }}
           playsInline
@@ -177,7 +177,7 @@ Mux Player monitors playback by default. Video.js sends no Mux Data beacons unle
 
 A few things worth calling out:
 
-- **`aspect-video` is a Tailwind class.** It's here because the skin has no size of its own. If you don't use Tailwind, any class that sizes the skin works: `.my-player { aspect-ratio: 16 / 9; }`. See [Move your layout styles](#move-your-layout-styles).
+- **The skin has no size of its own**, so the examples give it one with an inline `aspect-ratio`. Any styling that sizes the skin works the same way, whether that's a class of yours or a Tailwind utility like `aspect-video`. See [Move your layout styles](#move-your-layout-styles).
 - **MuxVideo supplies the poster.** It builds the image URL from the playback ID, and the skin displays it automatically. The example keeps the frame from two seconds in by configuring MuxVideo. Set `poster` on the player only when you want to use your own URL.
 - **You didn't add a storyboard track, and you get hover previews.** The Mux media adds and maintains the thumbnail track itself, and removes it for live streams, where storyboards don't exist.
 - **Analytics needs no environment key.** Mux resolves the environment from the playback ID. See <DocsLink slug="concepts/mux-data">Mux Data</DocsLink>.
