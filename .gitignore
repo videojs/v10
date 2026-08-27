@@ -22,6 +22,7 @@ dist/
 lib/
 out/
 packages/*/types/
+apps/*/types/
 *.tsbuildinfo
 .vite/
 .vite-hooks/_/
