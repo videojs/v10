@@ -8,9 +8,7 @@ import {
   popupAncestor,
   popupContract,
   surfaceContract,
-  VJSC_CONFIGURATIONS,
   waitForStableText,
-  type VjscSource,
   type VjscStyle,
 } from './vjsc-skin-parity';
 
@@ -23,27 +21,20 @@ const CASES = [
 const STYLES = ['css', 'tailwind'] as const;
 const WIDTHS = [384, 672] as const;
 
-type Source = VjscSource;
 type Style = VjscStyle;
 type Variant = (typeof CASES)[number];
 
 test.describe.configure({ mode: 'serial' });
 
 for (const variant of CASES) {
-  test(`${variant.framework} ${variant.skin} keeps legacy, CSS, and Tailwind rendering in sync`, async ({ page }) => {
+  test(`${variant.framework} ${variant.skin} keeps CSS and Tailwind rendering in sync`, async ({ page }) => {
     const pageErrors = collectPageErrors(page);
 
     for (const width of WIDTHS) {
       const name = `${variant.framework}-${variant.skin}-${width}.png`;
-      const legacy = await openVariant(page, variant, 'css', width, 'legacy');
-      const legacyContract = await layoutContract(legacy);
-
-      await expect(legacy).toHaveScreenshot(name);
-
       const css = await openVariant(page, variant, 'css', width);
       const cssContract = await layoutContract(css);
 
-      expect(cssContract).toEqual(legacyContract);
       await expect(css).toHaveScreenshot(name);
 
       const tailwind = await openVariant(page, variant, 'tailwind', width);
@@ -59,20 +50,19 @@ for (const variant of CASES) {
   test(`${variant.framework} ${variant.skin} preserves audio interactions and popup styling`, async ({ page }) => {
     const contracts = [];
 
-    for (const configuration of VJSC_CONFIGURATIONS) {
-      await test.step(`${configuration.source}/${configuration.style}`, async () => {
-        const root = await openVariant(page, variant, configuration.style, 672, configuration.source);
+    for (const style of STYLES) {
+      await test.step(style, async () => {
+        const root = await openVariant(page, variant, style, 672);
 
         contracts.push(await interactionContract(page, root));
       });
     }
 
     for (const key of ['button', 'hover', 'menu', 'popover', 'tooltip'] as const) {
-      expect(contracts[1][key], `${key}: VJSC CSS matches legacy`).toEqual(contracts[0][key]);
-      expect(contracts[2][key], `${key}: VJSC Tailwind matches CSS`).toEqual(contracts[1][key]);
+      expect(contracts[1][key], `${key}: Tailwind matches CSS`).toEqual(contracts[0][key]);
     }
 
-    expect(contracts[1]).toMatchObject({
+    expect(contracts[0]).toMatchObject({
       nestedButtons: 0,
       playbackRateChanged: true,
       tooltip: { visible: true },
@@ -82,9 +72,9 @@ for (const variant of CASES) {
   test(`${variant.framework} ${variant.skin} keeps error-dialog styling in sync`, async ({ page }) => {
     const contracts = [];
 
-    for (const configuration of VJSC_CONFIGURATIONS) {
-      await test.step(`${configuration.source}/${configuration.style}`, async () => {
-        const root = await openVariant(page, variant, configuration.style, 672, configuration.source, 'error', false);
+    for (const style of STYLES) {
+      await test.step(style, async () => {
+        const root = await openVariant(page, variant, style, 672, 'error', false);
         const dialog = root.getByRole('alertdialog');
 
         await expect(dialog).toBeVisible({ timeout: 20_000 });
@@ -95,26 +85,24 @@ for (const variant of CASES) {
     }
 
     expect(contracts[1]).toEqual(contracts[0]);
-    expect(contracts[2]).toEqual(contracts[1]);
   });
 
   test(`${variant.framework} ${variant.skin} keeps seek preview and dragging in sync`, async ({ page }) => {
     const contracts = [];
 
-    for (const configuration of VJSC_CONFIGURATIONS) {
-      await test.step(`${configuration.source}/${configuration.style}`, async () => {
-        await openVariant(page, variant, configuration.style, 672, configuration.source);
+    for (const style of STYLES) {
+      await test.step(style, async () => {
+        await openVariant(page, variant, style, 672);
         contracts.push(await audioSeekContract(page));
       });
     }
 
     expect(contracts[1]).toEqual(contracts[0]);
-    expect(contracts[2]).toEqual(contracts[1]);
-    expect(contracts[1]).toMatchObject({
+    expect(contracts[0]).toMatchObject({
       dragging: { fillIsImmediate: true, lag: 0, thumbPositionIsImmediate: true },
       restingFillTransitions: true,
     });
-    expect(contracts[1].previewOffsets.every((offset) => Math.abs(offset) <= 1)).toBe(true);
+    expect(contracts[0].previewOffsets.every((offset) => Math.abs(offset) <= 1)).toBe(true);
   });
 
   test(`${variant.framework} ${variant.skin} removes movement under reduced motion`, async ({ page }) => {
@@ -150,8 +138,8 @@ for (const variant of CASES) {
 
       const contracts = [];
 
-      for (const configuration of VJSC_CONFIGURATIONS) {
-        const root = await openVariant(page, variant, configuration.style, 672, configuration.source);
+      for (const style of STYLES) {
+        const root = await openVariant(page, variant, style, 672);
         const rate = root.getByRole('button', { name: /Playback rate/i });
 
         await rate.click();
@@ -164,7 +152,6 @@ for (const variant of CASES) {
       }
 
       expect(contracts[1]).toEqual(contracts[0]);
-      expect(contracts[2]).toEqual(contracts[1]);
     });
   }
 }
@@ -174,11 +161,10 @@ async function openVariant(
   variant: Variant,
   style: Style,
   width: number,
-  source: Source = 'vjsc',
   media = 'mp4-1',
   expectPlay = true
 ): Promise<Locator> {
-  const query = new URLSearchParams({ source, ...variant, style, media, width: String(width) });
+  const query = new URLSearchParams({ ...variant, style, media, width: String(width) });
 
   await page.goto(`/?${query}`, { waitUntil: 'domcontentloaded' });
 

@@ -69,11 +69,6 @@ body {
   outline-offset: 2px;
 }
 
-.preview-control select:disabled {
-  cursor: not-allowed;
-  opacity: 0.45;
-}
-
 .preview-copy {
   align-self: end;
   min-height: 2.25rem;

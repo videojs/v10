@@ -11,7 +11,7 @@
     "types": ["node"],
     "declarationDir": "types"
   },
-  "include": ["src", "dev", "vjsc/*.ts", "vjsc/target"],
+  "include": ["dev", "vjsc/*.ts", "vjsc/target"],
   "references": [
     { "path": "../../apps/sandbox/app/shared" },
     { "path": "../core" },

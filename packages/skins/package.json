@@ -2,7 +2,7 @@
   "name": "@videojs/skins",
   "version": "10.0.0-beta.32",
   "private": true,
-  "description": "Shared skin CSS and Tailwind classname tokens for Video.js",
+  "description": "Canonical VJSC skin sources and delivery generators for Video.js",
   "keywords": [
     "css",
     "media",
@@ -16,31 +16,12 @@
     "url": "https://github.com/videojs/v10",
     "directory": "packages/skins"
   },
-  "files": [
-    "dist"
-  ],
   "type": "module",
-  "sideEffects": false,
-  "exports": {
-    "./*.css": {
-      "style": "./dist/default/*.css",
-      "default": "./dist/default/*.css"
-    },
-    "./*": {
-      "types": "./dist/dev/*.d.ts",
-      "development": "./dist/dev/*.js",
-      "default": "./dist/default/*.js"
-    }
-  },
   "scripts": {
-    "build:watch": "vp pack --filter skins --watch ./src --no-clean",
     "dev": "vp -C dev dev --host",
     "test": "pnpm run test:types && vp test run",
     "test:types": "tsgo --project ./vjsc/tsconfig.json",
     "clean": "rimraf --glob dist types '*.tsbuildinfo'"
-  },
-  "dependencies": {
-    "@videojs/utils": "workspace:*"
   },
   "devDependencies": {
     "@lit/context": "^1.1.0",
@@ -51,6 +32,7 @@
     "@types/react-dom": "^19.2.3",
     "@videojs/core": "workspace:*",
     "@videojs/icons": "workspace:*",
+    "@videojs/utils": "workspace:*",
     "@vitejs/plugin-react": "^6.0.4",
     "clsx": "^2.1.1",
     "dashjs": "^5.2.0",

@@ -16,8 +16,6 @@ test.describe.configure({ mode: 'serial' });
 const VISUAL_PAGES = [
   { name: 'HTML', path: '/pages/html-video-mp4.html' },
   { name: 'React', path: '/pages/react-video-mp4.html' },
-  { name: 'Ejected-HTML', path: '/pages/ejected-html-video-mp4.html' },
-  { name: 'Ejected-React', path: '/pages/ejected-react-video-mp4.html' },
   { name: 'CDN', path: '/pages/cdn-video-mp4.html' },
 ];
 
