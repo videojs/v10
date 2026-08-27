@@ -6,9 +6,12 @@ export const poster = (isShadowDOM: boolean) =>
     // Fade in/out with the `data-visible` attribute
     'transition-opacity duration-250',
     'not-data-visible:opacity-0',
+    '[&:is(img):not([src]):not([srcset])]:invisible',
     // In the shadow DOM, the class applies to the parent so we have to set styles on the slotted img.
     isShadowDOM
       ? [
+          '[&>slot>img:not([src]):not([srcset])]:invisible',
+          '[&_::slotted(img:not([src]):not([srcset]))]:invisible',
           '[&_::slotted(img)]:absolute',
           '[&_::slotted(img)]:inset-0',
           '[&_::slotted(img)]:w-full',

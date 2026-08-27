@@ -11,6 +11,11 @@
 .media-minimal-skin > img:not([data-visible]) {
   opacity: 0;
 }
+.media-minimal-skin media-poster > slot > img:not([src]):not([srcset]),
+.media-minimal-skin media-poster ::slotted(img:not([src]):not([srcset])),
+.media-minimal-skin > img:not([src]):not([srcset]) {
+  visibility: hidden;
+}
 .media-minimal-skin media-poster ::slotted(img),
 .media-minimal-skin media-poster img {
   position: absolute;

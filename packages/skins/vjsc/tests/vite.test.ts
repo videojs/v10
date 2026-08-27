@@ -143,6 +143,24 @@ describe('Skins Vite workflow', () => {
     expect(react?.code).not.toContain('::slotted');
   }, 30_000);
 
+  it('hides source-less poster images for both targets', async () => {
+    server = await createServer({
+      configFile,
+      logLevel: 'silent',
+      optimizeDeps: { include: [], noDiscovery: true },
+      server: { middlewareMode: true },
+    });
+
+    const html = await server.transformRequest(htmlPosterUrl);
+    const react = await server.transformRequest(reactPosterUrl);
+
+    expect(html?.code).toContain('[&:is(img):not([src]):not([srcset])]:invisible');
+    expect(html?.code).toContain('[&>slot>img:not([src]):not([srcset])]:invisible');
+    expect(html?.code).toContain('[&_::slotted(img:not([src]):not([srcset]))]:invisible');
+    expect(react?.code).toContain('[&:is(img):not([src]):not([srcset])]:invisible');
+    expect(react?.code).not.toContain('&>slot>img');
+  }, 30_000);
+
   it('invalidates transformed owners for component, style, and design changes', async () => {
     server = await createServer({
       configFile,
