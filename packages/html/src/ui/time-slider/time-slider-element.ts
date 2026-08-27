@@ -90,13 +90,15 @@ export class TimeSliderElement extends UIElement {
         if (media) media.seek(this.#core.rawValueFromPercent(percent));
       },
       changeThrottle: this.changeThrottle,
-      onDragStart: () => {
+      onPressStart: () => {
         this.#releaseControlsLock ??= this.#controlsState.value?.requestControlsLock() ?? null;
+      },
+      onPressEnd: () => this.#releaseControlsVisibilityLock(),
+      onDragStart: () => {
         this.#core.startDrag(this.#playbackState.value);
         this.dispatchEvent(new CustomEvent('drag-start', { bubbles: true }));
       },
       onDragEnd: () => {
-        this.#releaseControlsVisibilityLock();
         this.#core.endDrag(this.#playbackState.value);
         this.dispatchEvent(new CustomEvent('drag-end', { bubbles: true }));
       },

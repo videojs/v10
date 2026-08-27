@@ -85,12 +85,14 @@ export class VolumeSliderElement extends UIElement {
       getLargeStepPercent: () => this.#core.getLargeStepPercent(),
       onValueChange: setVolume,
       onValueCommit: setVolume,
-      onDragStart: () => {
+      onPressStart: () => {
         this.#releaseControlsLock ??= this.#controlsState.value?.requestControlsLock() ?? null;
+      },
+      onPressEnd: () => this.#releaseControlsVisibilityLock(),
+      onDragStart: () => {
         this.dispatchEvent(new CustomEvent('drag-start', { bubbles: true }));
       },
       onDragEnd: () => {
-        this.#releaseControlsVisibilityLock();
         this.dispatchEvent(new CustomEvent('drag-end', { bubbles: true }));
       },
       adjustPercent: (raw, thumbSize, trackSize) => this.#core.adjustPercentForAlignment(raw, thumbSize, trackSize),

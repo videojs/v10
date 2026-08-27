@@ -39,6 +39,14 @@ export interface SliderOptions {
   onValueChange?: ((percent: number) => void) | undefined;
   /** Fires once when the user commits the value (pointer release, keyboard step). */
   onValueCommit?: ((percent: number) => void) | undefined;
+  /**
+   * Fires on pointer down, before the drag threshold is crossed. Use for work that must span the whole press, such as
+   * holding controls visible while the pointer rests on the slider.
+   */
+  onPressStart?: (() => void) | undefined;
+  /** Fires when the press ends, whether or not it became a drag. */
+  onPressEnd?: (() => void) | undefined;
+  /** Fires once the pointer moves past the drag threshold. */
   onDragStart?: (() => void) | undefined;
   onDragEnd?: (() => void) | undefined;
   /** Called when the root element resizes (e.g. gains layout inside a popover). */
@@ -142,6 +150,8 @@ export function createSlider(options: SliderOptions): SliderApi {
 
     if (wasDragging) options.onDragEnd?.();
 
+    options.onPressEnd?.();
+
     committedOnRelease = false;
     pointingOnRelease = false;
     cleanup();
@@ -185,6 +195,7 @@ export function createSlider(options: SliderOptions): SliderApi {
       pointerDownY = event.clientY;
       lastDragPercent = percent;
       input.patch({ pointing: true, pointerPercent: percent, dragPercent: percent });
+      options.onPressStart?.();
       options.onValueChange?.(percent);
 
       // Focus the thumb for keyboard follow-up and screen reader tracking.

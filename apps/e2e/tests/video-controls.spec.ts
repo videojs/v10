@@ -194,7 +194,9 @@ for (const { name, path } of UI_VIDEO_PAGES) {
       await expect(player.settingsSpeedItem).toBeVisible();
     });
 
-    test('controls remain visible during a stationary time slider drag', async ({ page }) => {
+    // A stationary press never crosses the drag threshold, so the slider stays
+    // interactive without becoming `data-dragging`. Controls must still stay up.
+    test('controls remain visible during a stationary time slider press', async ({ page }) => {
       await player.play();
       await player.showControls();
 
@@ -203,6 +205,30 @@ for (const { name, path } of UI_VIDEO_PAGES) {
 
       await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
       await page.mouse.down();
+
+      try {
+        await expect(player.timeSlider).toHaveAttribute(DATA_ATTRS.interactive, '');
+        await page.waitForTimeout(2_500);
+
+        await expect(player.controls).toHaveAttribute(DATA_ATTRS.visible, '');
+        await expect(player.timeSlider).toHaveAttribute(DATA_ATTRS.interactive, '');
+      } finally {
+        await page.mouse.up();
+      }
+    });
+
+    test('controls remain visible while dragging the time slider', async ({ page }) => {
+      await player.play();
+      await player.showControls();
+
+      const box = await player.timeSlider.boundingBox();
+      if (!box) throw new Error('Time slider not visible');
+
+      const y = box.y + box.height / 2;
+
+      await page.mouse.move(box.x + box.width / 2, y);
+      await page.mouse.down();
+      await page.mouse.move(box.x + box.width * 0.6, y);
 
       try {
         await expect(player.timeSlider).toHaveAttribute(DATA_ATTRS.dragging, '');

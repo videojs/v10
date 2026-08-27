@@ -83,12 +83,14 @@ export class SliderElement extends UIElement {
         this.value = this.#core.valueFromPercent(percent);
         this.dispatchEvent(new CustomEvent('value-commit', { detail: { value: this.value }, bubbles: true }));
       },
-      onDragStart: () => {
+      onPressStart: () => {
         this.#releaseControlsLock ??= this.#controlsState.value?.requestControlsLock() ?? null;
+      },
+      onPressEnd: () => this.#releaseControlsVisibilityLock(),
+      onDragStart: () => {
         this.dispatchEvent(new CustomEvent('drag-start', { bubbles: true }));
       },
       onDragEnd: () => {
-        this.#releaseControlsVisibilityLock();
         this.dispatchEvent(new CustomEvent('drag-end', { bubbles: true }));
       },
       adjustPercent: (raw, thumbSize, trackSize) => this.#core.adjustPercentForAlignment(raw, thumbSize, trackSize),

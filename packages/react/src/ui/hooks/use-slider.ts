@@ -25,6 +25,8 @@ export interface UseSliderOptions<State extends SliderState = SliderState> exten
   | 'changeThrottle'
   | 'onValueChange'
   | 'onValueCommit'
+  | 'onPressStart'
+  | 'onPressEnd'
   | 'onDragStart'
   | 'onDragEnd'
 > {
@@ -88,14 +90,16 @@ export function useSlider<State extends SliderState = SliderState>(
       adjustPercent: optionsRef.current.adjustPercent,
       onValueChange: (percent) => optionsRef.current.onValueChange?.(percent),
       onValueCommit: (percent) => optionsRef.current.onValueCommit?.(percent),
-      onDragStart: () => {
+      onPressStart: () => {
         releaseControlsLockRef.current ??= requestControlsLock?.() ?? null;
-        optionsRef.current.onDragStart?.();
+        optionsRef.current.onPressStart?.();
       },
-      onDragEnd: () => {
+      onPressEnd: () => {
         releaseControlsLock();
-        optionsRef.current.onDragEnd?.();
+        optionsRef.current.onPressEnd?.();
       },
+      onDragStart: () => optionsRef.current.onDragStart?.(),
+      onDragEnd: () => optionsRef.current.onDragEnd?.(),
     };
 
     return createSlider(stableOptions);

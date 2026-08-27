@@ -14,6 +14,8 @@ const { mockSliderApi, sliderOptionsRef } = vi.hoisted(() => {
   const sliderOptionsRef: {
     current:
       | {
+          onPressStart?: () => void;
+          onPressEnd?: () => void;
           onDragStart?: () => void;
           onDragEnd?: () => void;
         }
@@ -26,6 +28,8 @@ const { mockSliderApi, sliderOptionsRef } = vi.hoisted(() => {
       getElement?: () => HTMLElement;
       getThumbElement?: () => HTMLElement | null;
       adjustPercent?: (raw: number, thumb: number, track: number) => number;
+      onPressStart?: () => void;
+      onPressEnd?: () => void;
       onDragStart?: () => void;
       onDragEnd?: () => void;
     }) => {
@@ -131,7 +135,7 @@ describe('SliderRoot', () => {
     expect(el.style.getPropertyValue('--media-slider-pointer')).toBeTruthy();
   });
 
-  it('holds a controls visibility lock for the duration of a drag', () => {
+  it('holds a controls visibility lock for the duration of a press', () => {
     const releaseControlsLock = vi.fn();
     const requestControlsLock = vi.fn(() => releaseControlsLock);
     const { Wrapper } = createPlayerWrapper({
@@ -143,11 +147,11 @@ describe('SliderRoot', () => {
 
     render(<SliderRoot />, { wrapper: Wrapper });
 
-    sliderOptionsRef.current?.onDragStart?.();
+    sliderOptionsRef.current?.onPressStart?.();
     expect(requestControlsLock).toHaveBeenCalledTimes(1);
     expect(releaseControlsLock).not.toHaveBeenCalled();
 
-    sliderOptionsRef.current?.onDragEnd?.();
+    sliderOptionsRef.current?.onPressEnd?.();
     expect(releaseControlsLock).toHaveBeenCalledTimes(1);
   });
 });

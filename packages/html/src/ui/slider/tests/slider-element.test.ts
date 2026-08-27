@@ -187,6 +187,28 @@ describe('SliderElement', () => {
     expect(provider.releaseControlsLock).toHaveBeenCalledTimes(1);
   });
 
+  it('holds a controls visibility lock while the pointer rests without dragging', async () => {
+    const provider = createElement(TestPlayerProviderElement);
+    const slider = createElement(SliderElement);
+
+    provider.append(slider);
+    document.body.append(provider);
+    await slider.updateComplete;
+
+    slider.setPointerCapture = vi.fn();
+    slider.releasePointerCapture = vi.fn();
+
+    slider.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerId: 1, clientX: 50 }));
+
+    expect(provider.requestControlsLock).toHaveBeenCalledTimes(1);
+    expect(provider.releaseControlsLock).not.toHaveBeenCalled();
+
+    slider.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, pointerId: 1, clientX: 50 }));
+    slider.dispatchEvent(new PointerEvent('lostpointercapture', { bubbles: true, pointerId: 1 }));
+
+    expect(provider.releaseControlsLock).toHaveBeenCalledTimes(1);
+  });
+
   it('supports vertical orientation', async () => {
     const slider = createElement(SliderElement);
 

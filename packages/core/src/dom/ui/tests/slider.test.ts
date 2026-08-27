@@ -249,6 +249,30 @@ describe('createSlider', () => {
       slider.destroy();
     });
 
+    it('brackets a stationary press with onPressStart and onPressEnd', () => {
+      const onPressStart = vi.fn();
+      const onPressEnd = vi.fn();
+      const onDragStart = vi.fn();
+      const el = createMockElement({ left: 0, width: 200 });
+      const slider = createSlider(createOptions({ getElement: () => el, onPressStart, onPressEnd, onDragStart }));
+
+      slider.rootProps.onPointerDown(pointerEvent({ clientX: 50 }));
+      flush();
+
+      expect(onPressStart).toHaveBeenCalledOnce();
+      expect(onDragStart).not.toHaveBeenCalled();
+      expect(onPressEnd).not.toHaveBeenCalled();
+
+      slider.rootProps.onPointerUp(pointerEvent({ clientX: 50 }));
+      slider.rootProps.onLostPointerCapture();
+      flush();
+
+      expect(onPressEnd).toHaveBeenCalledOnce();
+      expect(onDragStart).not.toHaveBeenCalled();
+
+      slider.destroy();
+    });
+
     it('calls onValueChange on every pointermove during drag', () => {
       const onValueChange = vi.fn();
       const el = createMockElement({ left: 0, width: 200 });
