@@ -21,6 +21,7 @@ export class ModuleImports {
   readonly #existing = new Map<string, string>();
   readonly #requested = new Map<string, Map<string, string>>();
   readonly #sideEffects = new Set<string>();
+  readonly #statements: string[] = [];
   readonly #options: ModuleImportsOptions;
 
   constructor(ast: Program, magicString: RolldownMagicString, options: ModuleImportsOptions = {}) {
@@ -63,6 +64,11 @@ export class ModuleImports {
     if (!this.#hasRuntimeImportFrom(source)) this.#sideEffects.add(source);
   }
 
+  /** Add a top-level statement after this collection's imports. */
+  statement(code: string): void {
+    this.#statements.push(code);
+  }
+
   commit(): void {
     const statements = [
       ...[...this.#sideEffects].map((source) => `import ${JSON.stringify(source)};`),
@@ -73,6 +79,7 @@ export class ModuleImports {
 
         return `import { ${specifiers.join(', ')} } from ${JSON.stringify(source)};`;
       }),
+      ...this.#statements,
     ];
 
     insertModuleImports(this.#ast, this.#magicString, statements);

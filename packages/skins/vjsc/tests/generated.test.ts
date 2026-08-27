@@ -78,6 +78,18 @@ describe('generated VJSC source', () => {
     expect(output).not.toContain('_jsxDEV');
     expect(output).not.toContain('/@fs/');
     expect(output).not.toMatch(/from ["']@videojs\/core\/vjsc["']/);
+    expect(output).not.toMatch(/import ["']@videojs\/html\/icons\/element(?:\/minimal)?["']/);
+    expect(output).not.toContain('from "@videojs/html/icons/element/register"');
+    expect(output).toMatch(/import \{[^}]*registerIcons[^}]*\} from "@videojs\/html\/icons"/);
+    expect(output).toContain('from "@videojs/html/icons"');
+    expect(output).toContain('from "@videojs/html/icons/minimal"');
+
+    const htmlPlayButton = generatedSection(output, 'html/default-video/css/components/buttons/play-button.tsx');
+
+    expect(htmlPlayButton).toContain('pauseIcon');
+    expect(htmlPlayButton).toContain('playIcon');
+    expect(htmlPlayButton).toContain('restartIcon');
+    expect(htmlPlayButton).not.toContain('seekIcon');
 
     if (process.env.UPDATE_VJSC_SNAPSHOTS) await writeFile(snapshotFile, output);
 
@@ -157,4 +169,14 @@ function normalizeGeneratedSource(code: string): string {
 
 function sourceName(filename: string): string {
   return relative(sourceDir, filename).split(sep).join('/');
+}
+
+function generatedSection(output: string, key: string): string {
+  const marker = `// ===== ${key} =====`;
+  const start = output.indexOf(marker);
+  if (start < 0) throw new Error(`Missing generated section: ${key}`);
+
+  const end = output.indexOf('// =====', start + marker.length);
+
+  return output.slice(start, end < 0 ? undefined : end);
 }

@@ -4980,8 +4980,10 @@ import type { Props } from 'vjsc/components';
 import { ButtonTooltip } from './button-tooltip';
 import "virtual:vjsc/css/<hash>/base.css";
 import "virtual:vjsc/css/<hash>/buttons.css";
-import "@videojs/html/icons/element";
+import { registerIcons, airPlayEnterIcon, airPlayExitIcon } from "@videojs/html/icons";
 import "@videojs/html/ui/airplay-button";
+
+registerIcons("default", { "airplay-enter": airPlayEnterIcon, "airplay-exit": airPlayExitIcon });
 
 
 
@@ -5040,8 +5042,10 @@ import type { Props } from 'vjsc/components';
 import { ButtonTooltip } from './button-tooltip';
 import "virtual:vjsc/css/<hash>/base.css";
 import "virtual:vjsc/css/<hash>/buttons.css";
-import "@videojs/html/icons/element";
+import { registerIcons, captionsOffIcon, captionsOnIcon } from "@videojs/html/icons";
 import "@videojs/html/ui/captions-button";
+
+registerIcons("default", { "captions-off": captionsOffIcon, "captions-on": captionsOnIcon });
 
 
 
@@ -5069,8 +5073,10 @@ import type { Props } from 'vjsc/components';
 import { ButtonTooltip } from './button-tooltip';
 import "virtual:vjsc/css/<hash>/base.css";
 import "virtual:vjsc/css/<hash>/buttons.css";
-import "@videojs/html/icons/element";
+import { registerIcons, castEnterIcon, castExitIcon } from "@videojs/html/icons";
 import "@videojs/html/ui/cast-button";
+
+registerIcons("default", { "cast-enter": castEnterIcon, "cast-exit": castExitIcon });
 
 
 
@@ -5098,8 +5104,10 @@ import type { Props } from 'vjsc/components';
 import { ButtonTooltip } from './button-tooltip';
 import "virtual:vjsc/css/<hash>/base.css";
 import "virtual:vjsc/css/<hash>/buttons.css";
-import "@videojs/html/icons/element";
+import { registerIcons, fullscreenEnterIcon, fullscreenExitIcon } from "@videojs/html/icons";
 import "@videojs/html/ui/fullscreen-button";
+
+registerIcons("default", { "fullscreen-enter": fullscreenEnterIcon, "fullscreen-exit": fullscreenExitIcon });
 
 
 
@@ -5126,8 +5134,10 @@ import type { Props } from 'vjsc/components';
 
 import "virtual:vjsc/css/<hash>/base.css";
 import "virtual:vjsc/css/<hash>/buttons.css";
-import "@videojs/html/icons/element";
+import { registerIcons, volumeHighIcon, volumeLowIcon, volumeOffIcon } from "@videojs/html/icons";
 import "@videojs/html/ui/mute-button";
+
+registerIcons("default", { "volume-high": volumeHighIcon, "volume-low": volumeLowIcon, "volume-off": volumeOffIcon });
 
 
 
@@ -5154,8 +5164,10 @@ import type { Props } from 'vjsc/components';
 import { ButtonTooltip } from './button-tooltip';
 import "virtual:vjsc/css/<hash>/base.css";
 import "virtual:vjsc/css/<hash>/buttons.css";
-import "@videojs/html/icons/element";
+import { registerIcons, pipEnterIcon, pipExitIcon } from "@videojs/html/icons";
 import "@videojs/html/ui/pip-button";
+
+registerIcons("default", { "pip-enter": pipEnterIcon, "pip-exit": pipExitIcon });
 
 
 
@@ -5183,8 +5195,10 @@ import type { Props } from 'vjsc/components';
 import { ButtonTooltip } from './button-tooltip';
 import "virtual:vjsc/css/<hash>/base.css";
 import "virtual:vjsc/css/<hash>/buttons.css";
-import "@videojs/html/icons/element";
+import { registerIcons, pauseIcon, playIcon, restartIcon } from "@videojs/html/icons";
 import "@videojs/html/ui/play-button";
+
+registerIcons("default", { "pause": pauseIcon, "play": playIcon, "restart": restartIcon });
 
 
 
@@ -5213,8 +5227,10 @@ import { type Props } from "vjsc/components";
 import { ButtonTooltip } from './button-tooltip';
 import "virtual:vjsc/css/<hash>/base.css";
 import "virtual:vjsc/css/<hash>/buttons.css";
-import "@videojs/html/icons/element";
+import { registerIcons, seekIcon } from "@videojs/html/icons";
 import "@videojs/html/ui/seek-button";
+
+registerIcons("default", { "seek": seekIcon });
 
 
 
@@ -5284,8 +5300,10 @@ import type { Props } from 'vjsc/components';
 
 import "virtual:vjsc/css/<hash>/base.css";
 import "virtual:vjsc/css/<hash>/indicators.css";
-import "@videojs/html/icons/element";
+import { registerIcons, spinnerIcon } from "@videojs/html/icons";
 import "@videojs/html/ui/buffering-indicator";
+
+registerIcons("default", { "spinner": spinnerIcon });
 
 
 
@@ -5347,9 +5365,11 @@ import type { Props } from 'vjsc/components';
 
 import "virtual:vjsc/css/<hash>/base.css";
 import "virtual:vjsc/css/<hash>/indicators.css";
-import "@videojs/html/icons/element";
+import { registerIcons, chevronIcon } from "@videojs/html/icons";
 import "@videojs/html/ui/seek-indicator-value";
 import "@videojs/html/ui/seek-indicator";
+
+registerIcons("default", { "chevron": chevronIcon });
 
 
 
@@ -5394,9 +5414,11 @@ import { type Props } from "vjsc/components";
 import "virtual:vjsc/css/<hash>/base.css";
 import "virtual:vjsc/css/<hash>/common.css";
 import "virtual:vjsc/css/<hash>/indicators.css";
-import "@videojs/html/icons/element";
+import { registerIcons, captionsOffIcon, captionsOnIcon, fullscreenEnterIcon, fullscreenExitIcon, pauseIcon, pipEnterIcon, pipExitIcon, playIcon } from "@videojs/html/icons";
 import "@videojs/html/ui/status-indicator-value";
 import "@videojs/html/ui/status-indicator";
+
+registerIcons("default", { "captions-off": captionsOffIcon, "captions-on": captionsOnIcon, "fullscreen-enter": fullscreenEnterIcon, "fullscreen-exit": fullscreenExitIcon, "pause": pauseIcon, "pip-enter": pipEnterIcon, "pip-exit": pipExitIcon, "play": playIcon });
 
 
 
@@ -5473,10 +5495,12 @@ import type { Props } from 'vjsc/components';
 import "virtual:vjsc/css/<hash>/base.css";
 import "virtual:vjsc/css/<hash>/common.css";
 import "virtual:vjsc/css/<hash>/indicators.css";
-import "@videojs/html/icons/element";
+import { registerIcons, volumeHighIcon, volumeLowIcon, volumeOffIcon } from "@videojs/html/icons";
 import "@videojs/html/ui/volume-indicator-value";
 import "@videojs/html/ui/volume-indicator-fill";
 import "@videojs/html/ui/volume-indicator";
+
+registerIcons("default", { "volume-high": volumeHighIcon, "volume-low": volumeLowIcon, "volume-off": volumeOffIcon });
 
 
 
@@ -5546,9 +5570,10 @@ import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
 import "virtual:vjsc/css/<hash>/base.css";
 import "virtual:vjsc/css/<hash>/menus.css";
+import { registerIcons, speechIcon } from "@videojs/html/icons";
 import "@videojs/html/i18n";
-import "@videojs/html/icons/element";
 
+registerIcons("default", { "speech": speechIcon });
 
 
 
@@ -5588,9 +5613,10 @@ import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
 import "virtual:vjsc/css/<hash>/base.css";
 import "virtual:vjsc/css/<hash>/menus.css";
+import { registerIcons, captionsOffIcon } from "@videojs/html/icons";
 import "@videojs/html/i18n";
-import "@videojs/html/icons/element";
 
+registerIcons("default", { "captions-off": captionsOffIcon });
 
 
 
@@ -5626,7 +5652,8 @@ import type { Props } from 'vjsc/components';
 
 import "virtual:vjsc/css/<hash>/base.css";
 import "virtual:vjsc/css/<hash>/menus.css";
-import "@videojs/html/icons/element";
+import { registerIcons, chevronIcon } from "@videojs/html/icons";
+registerIcons("default", { "chevron": chevronIcon });
 
 
 
@@ -5646,9 +5673,10 @@ import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
 import "virtual:vjsc/css/<hash>/base.css";
 import "virtual:vjsc/css/<hash>/menus.css";
+import { registerIcons, speedIcon } from "@videojs/html/icons";
 import "@videojs/html/i18n";
-import "@videojs/html/icons/element";
 
+registerIcons("default", { "speed": speedIcon });
 
 
 
@@ -5688,9 +5716,10 @@ import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
 import "virtual:vjsc/css/<hash>/base.css";
 import "virtual:vjsc/css/<hash>/menus.css";
+import { registerIcons, switchesIcon } from "@videojs/html/icons";
 import "@videojs/html/i18n";
-import "@videojs/html/icons/element";
 
+registerIcons("default", { "switches": switchesIcon });
 
 
 
@@ -5769,8 +5798,10 @@ import type { PropsWithChildren } from 'vjsc/components';
 
 import "virtual:vjsc/css/<hash>/base.css";
 import "virtual:vjsc/css/<hash>/menus.css";
-import "@videojs/html/icons/element";
+import { registerIcons, checkIcon } from "@videojs/html/icons";
 import "@videojs/html/ui/menu";
+
+registerIcons("default", { "check": checkIcon });
 
 
 
@@ -5803,24 +5834,26 @@ import "virtual:vjsc/css/<hash>/buttons.css";
 import "virtual:vjsc/css/<hash>/common.css";
 import "virtual:vjsc/css/<hash>/menus.css";
 import "virtual:vjsc/css/<hash>/popups.css";
+import { registerIcons, gearIcon } from "@videojs/html/icons";
 import "@videojs/html/i18n";
-import "@videojs/html/icons/element";
 import "@videojs/html/ui/menu";
 import { Scope } from "vjsc/html-runtime/jsx-runtime";
 
+
+registerIcons("default", { "gear": gearIcon });
 
 
 
 export function SettingsMenu({ children, className, ...props }: PropsWithChildren<MenuProps>) {
   return (
-    <Scope prefix="<module>-l8"><><ButtonTooltip label={<media-text token={settingsText.key}>{settingsText.text}</media-text>} side="top">
-        <button commandfor="__vjsc-id-<module>-l8-popup" class={["media-button", "media-settings-menu-trigger"]}>
+    <Scope prefix="<module>-oc"><><ButtonTooltip label={<media-text token={settingsText.key}>{settingsText.text}</media-text>} side="top">
+        <button commandfor="__vjsc-id-<module>-oc-popup" class={["media-button", "media-settings-menu-trigger"]}>
           <media-icon name="gear" class={["media-button-icon", "media-settings-menu-trigger-icon"]} />
           <media-text class={"media-settings-menu-trigger-label"} token={settingsText.key}>
             {settingsText.text}
           </media-text>
         </button>
-      </ButtonTooltip><media-menu id="__vjsc-id-<module>-l8-popup" side="top" align="center" {...props} class={["media-popup", "media-popup-safe-area", "media-surface", "media-menu-popup", className]}>
+      </ButtonTooltip><media-menu id="__vjsc-id-<module>-oc-popup" side="top" align="center" {...props} class={["media-popup", "media-popup-safe-area", "media-surface", "media-menu-popup", className]}>
         <media-menu-content className={"media-menu-content"}>{children}</media-menu-content>
       </media-menu></></Scope>
   );
@@ -5911,17 +5944,19 @@ import { type Props } from "vjsc/components";
 import "virtual:vjsc/css/<hash>/base.css";
 import "virtual:vjsc/css/<hash>/common.css";
 import "virtual:vjsc/css/<hash>/sliders.css";
+import { registerIcons, spinnerIcon } from "@videojs/html/icons";
 import "@videojs/html/ui/slider-buffer";
 import "@videojs/html/ui/slider-fill";
 import "@videojs/html/ui/slider-track";
 import "@videojs/html/ui/time-slider-chapters";
 import "@videojs/html/ui/slider-thumb";
 import "@videojs/html/ui/slider-thumbnail";
-import "@videojs/html/icons/element";
 import "@videojs/html/ui/time-slider-chapter-title";
 import "@videojs/html/ui/slider-value";
 import "@videojs/html/ui/slider";
 import "@videojs/html/ui/time-slider";
+
+registerIcons("default", { "spinner": spinnerIcon });
 
 
 
@@ -6157,8 +6192,10 @@ import type { Props } from 'vjsc/components';
 
 
 import { ButtonTooltip } from './button-tooltip';
-import "@videojs/html/icons/element";
+import { registerIcons, airPlayEnterIcon, airPlayExitIcon } from "@videojs/html/icons";
 import "@videojs/html/ui/airplay-button";
+
+registerIcons("default", { "airplay-enter": airPlayEnterIcon, "airplay-exit": airPlayExitIcon });
 
 
 export function AirPlayButton({ className, ...props }: Props<CoreProps> = {}) {
@@ -6210,8 +6247,10 @@ import type { Props } from 'vjsc/components';
 
 
 import { ButtonTooltip } from './button-tooltip';
-import "@videojs/html/icons/element";
+import { registerIcons, captionsOffIcon, captionsOnIcon } from "@videojs/html/icons";
 import "@videojs/html/ui/captions-button";
+
+registerIcons("default", { "captions-off": captionsOffIcon, "captions-on": captionsOnIcon });
 
 
 export function CaptionsButton({ className, ...props }: Props<CoreProps> = {}) {
@@ -6236,8 +6275,10 @@ import type { Props } from 'vjsc/components';
 
 
 import { ButtonTooltip } from './button-tooltip';
-import "@videojs/html/icons/element";
+import { registerIcons, castEnterIcon, castExitIcon } from "@videojs/html/icons";
 import "@videojs/html/ui/cast-button";
+
+registerIcons("default", { "cast-enter": castEnterIcon, "cast-exit": castExitIcon });
 
 
 export function CastButton({ className, ...props }: Props<CoreProps> = {}) {
@@ -6262,8 +6303,10 @@ import type { Props } from 'vjsc/components';
 
 
 import { ButtonTooltip } from './button-tooltip';
-import "@videojs/html/icons/element";
+import { registerIcons, fullscreenEnterIcon, fullscreenExitIcon } from "@videojs/html/icons";
 import "@videojs/html/ui/fullscreen-button";
+
+registerIcons("default", { "fullscreen-enter": fullscreenEnterIcon, "fullscreen-exit": fullscreenExitIcon });
 
 
 export function FullscreenButton({ className, ...props }: Props<CoreProps> = {}) {
@@ -6285,8 +6328,10 @@ import type { MuteButtonProps as CoreProps } from '@videojs/core';
 import type { Props } from 'vjsc/components';
 
 
-import "@videojs/html/icons/element";
+import { registerIcons, volumeHighIcon, volumeLowIcon, volumeOffIcon } from "@videojs/html/icons";
 import "@videojs/html/ui/mute-button";
+
+registerIcons("default", { "volume-high": volumeHighIcon, "volume-low": volumeLowIcon, "volume-off": volumeOffIcon });
 
 
 
@@ -6312,8 +6357,10 @@ import type { Props } from 'vjsc/components';
 
 
 import { ButtonTooltip } from './button-tooltip';
-import "@videojs/html/icons/element";
+import { registerIcons, pipEnterIcon, pipExitIcon } from "@videojs/html/icons";
 import "@videojs/html/ui/pip-button";
+
+registerIcons("default", { "pip-enter": pipEnterIcon, "pip-exit": pipExitIcon });
 
 
 export function PiPButton({ className, ...props }: Props<CoreProps> = {}) {
@@ -6338,8 +6385,10 @@ import type { Props } from 'vjsc/components';
 
 
 import { ButtonTooltip } from './button-tooltip';
-import "@videojs/html/icons/element";
+import { registerIcons, pauseIcon, playIcon, restartIcon } from "@videojs/html/icons";
 import "@videojs/html/ui/play-button";
+
+registerIcons("default", { "pause": pauseIcon, "play": playIcon, "restart": restartIcon });
 
 
 export function PlayButton({ className, ...props }: Props<CoreProps> = {}) {
@@ -6365,8 +6414,10 @@ import { type Props } from "vjsc/components";
 
 
 import { ButtonTooltip } from './button-tooltip';
-import "@videojs/html/icons/element";
+import { registerIcons, seekIcon } from "@videojs/html/icons";
 import "@videojs/html/ui/seek-button";
+
+registerIcons("default", { "seek": seekIcon });
 
 
 export function SeekButton({ className, seconds = 10, ...props }: Props<CoreProps> = {}) {
@@ -6428,8 +6479,10 @@ import type { BufferingIndicatorProps as CoreProps } from '@videojs/core';
 import type { Props } from 'vjsc/components';
 
 
-import "@videojs/html/icons/element";
+import { registerIcons, spinnerIcon } from "@videojs/html/icons";
 import "@videojs/html/ui/buffering-indicator";
+
+registerIcons("default", { "spinner": spinnerIcon });
 
 
 
@@ -6483,9 +6536,11 @@ import type { SeekIndicatorProps as CoreProps } from '@videojs/core';
 import type { Props } from 'vjsc/components';
 
 
-import "@videojs/html/icons/element";
+import { registerIcons, chevronIcon } from "@videojs/html/icons";
 import "@videojs/html/ui/seek-indicator-value";
 import "@videojs/html/ui/seek-indicator";
+
+registerIcons("default", { "chevron": chevronIcon });
 
 
 
@@ -6521,9 +6576,11 @@ import type { StatusIndicatorProps as CoreProps } from '@videojs/core';
 import { type Props } from "vjsc/components";
 
 
-import "@videojs/html/icons/element";
+import { registerIcons, captionsOffIcon, captionsOnIcon, fullscreenEnterIcon, fullscreenExitIcon, pauseIcon, pipEnterIcon, pipExitIcon, playIcon } from "@videojs/html/icons";
 import "@videojs/html/ui/status-indicator-value";
 import "@videojs/html/ui/status-indicator";
+
+registerIcons("default", { "captions-off": captionsOffIcon, "captions-on": captionsOnIcon, "fullscreen-enter": fullscreenEnterIcon, "fullscreen-exit": fullscreenExitIcon, "pause": pauseIcon, "pip-enter": pipEnterIcon, "pip-exit": pipExitIcon, "play": playIcon });
 
 
 
@@ -6594,10 +6651,12 @@ import type { VolumeIndicatorProps as CoreProps } from '@videojs/core';
 import type { Props } from 'vjsc/components';
 
 
-import "@videojs/html/icons/element";
+import { registerIcons, volumeHighIcon, volumeLowIcon, volumeOffIcon } from "@videojs/html/icons";
 import "@videojs/html/ui/volume-indicator-value";
 import "@videojs/html/ui/volume-indicator-fill";
 import "@videojs/html/ui/volume-indicator";
+
+registerIcons("default", { "volume-high": volumeHighIcon, "volume-low": volumeLowIcon, "volume-off": volumeOffIcon });
 
 
 
@@ -6660,9 +6719,10 @@ import { type PropsOf } from "vjsc/components";
 import { AudioTrackRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
+import { registerIcons, speechIcon } from "@videojs/html/icons";
 import "@videojs/html/i18n";
-import "@videojs/html/icons/element";
 
+registerIcons("default", { "speech": speechIcon });
 
 
 export interface AudioTrackMenuProps extends Omit<
@@ -6699,9 +6759,10 @@ import { type PropsOf } from "vjsc/components";
 import { CaptionsRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
+import { registerIcons, captionsOffIcon } from "@videojs/html/icons";
 import "@videojs/html/i18n";
-import "@videojs/html/icons/element";
 
+registerIcons("default", { "captions-off": captionsOffIcon });
 
 
 export interface CaptionsMenuProps extends Omit<
@@ -6732,7 +6793,8 @@ export function CaptionsMenu(props: CaptionsMenuProps = {}) {
 /** @jsxImportSource vjsc/html-runtime */
 
 import type { Props } from 'vjsc/components';
-import "@videojs/html/icons/element";
+import { registerIcons, chevronIcon } from "@videojs/html/icons";
+registerIcons("default", { "chevron": chevronIcon });
 
 
 
@@ -6751,9 +6813,10 @@ import { type PropsOf } from "vjsc/components";
 import { PlaybackRateRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
+import { registerIcons, speedIcon } from "@videojs/html/icons";
 import "@videojs/html/i18n";
-import "@videojs/html/icons/element";
 
+registerIcons("default", { "speed": speedIcon });
 
 
 export interface PlaybackRateMenuProps extends Omit<
@@ -6790,9 +6853,10 @@ import { type PropsOf } from "vjsc/components";
 import { QualityRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
+import { registerIcons, switchesIcon } from "@videojs/html/icons";
 import "@videojs/html/i18n";
-import "@videojs/html/icons/element";
 
+registerIcons("default", { "switches": switchesIcon });
 
 
 export interface QualityMenuProps extends Omit<
@@ -6863,8 +6927,10 @@ import type { MenuItemProps } from '@videojs/core';
 
 
 import type { PropsWithChildren } from 'vjsc/components';
-import "@videojs/html/icons/element";
+import { registerIcons, checkIcon } from "@videojs/html/icons";
 import "@videojs/html/ui/menu";
+
+registerIcons("default", { "check": checkIcon });
 
 
 
@@ -6893,23 +6959,25 @@ import { type PropsWithChildren } from "vjsc/components";
 
 
 import { ButtonTooltip } from '../buttons/button-tooltip';
+import { registerIcons, gearIcon } from "@videojs/html/icons";
 import "@videojs/html/i18n";
-import "@videojs/html/icons/element";
 import "@videojs/html/ui/menu";
 import { Scope } from "vjsc/html-runtime/jsx-runtime";
 
 
+registerIcons("default", { "gear": gearIcon });
+
 
 export function SettingsMenu({ children, className, ...props }: PropsWithChildren<MenuProps>) {
   return (
-    <Scope prefix="<module>-e6"><><ButtonTooltip label={<media-text token={settingsText.key}>{settingsText.text}</media-text>} side="top">
-        <button commandfor="__vjsc-id-<module>-e6-popup" class={["grid min-h-0 shrink-0 touch-manipulation select-none place-items-center rounded-media-control border-0 bg-transparent p-0 text-center text-inherit [text-shadow:inherit]", "cursor-pointer outline-2 outline-transparent -outline-offset-2", "will-change-[scale] duration-150 ease-out", "not-aria-disabled:hover:bg-media-control-hover not-aria-disabled:hover:text-media-accent-text", "not-aria-disabled:focus-visible:bg-media-control-hover not-aria-disabled:focus-visible:text-media-accent-text", "not-aria-disabled:aria-expanded:bg-media-control-hover not-aria-disabled:aria-expanded:text-media-accent-text", "focus-visible:outline-white focus-visible:outline-offset-2", "not-aria-disabled:active:scale-[0.97]", "motion-reduce:scale-100 motion-reduce:will-change-auto", "aria-disabled:cursor-not-allowed aria-disabled:opacity-50", "size-9 [transition-property:background-color,color,outline-offset,scale]", "motion-reduce:[transition-property:background-color,color]", "group/settings"]}>
+    <Scope prefix="<module>-ha"><><ButtonTooltip label={<media-text token={settingsText.key}>{settingsText.text}</media-text>} side="top">
+        <button commandfor="__vjsc-id-<module>-ha-popup" class={["grid min-h-0 shrink-0 touch-manipulation select-none place-items-center rounded-media-control border-0 bg-transparent p-0 text-center text-inherit [text-shadow:inherit]", "cursor-pointer outline-2 outline-transparent -outline-offset-2", "will-change-[scale] duration-150 ease-out", "not-aria-disabled:hover:bg-media-control-hover not-aria-disabled:hover:text-media-accent-text", "not-aria-disabled:focus-visible:bg-media-control-hover not-aria-disabled:focus-visible:text-media-accent-text", "not-aria-disabled:aria-expanded:bg-media-control-hover not-aria-disabled:aria-expanded:text-media-accent-text", "focus-visible:outline-white focus-visible:outline-offset-2", "not-aria-disabled:active:scale-[0.97]", "motion-reduce:scale-100 motion-reduce:will-change-auto", "aria-disabled:cursor-not-allowed aria-disabled:opacity-50", "size-9 [transition-property:background-color,color,outline-offset,scale]", "motion-reduce:[transition-property:background-color,color]", "group/settings"]}>
           <media-icon name="gear" class={["col-start-1 row-start-1 size-media-icon drop-shadow-[0_1px_0_var(--media-shadow-current-color)]", "transition-[opacity,scale] duration-150 ease-out", "motion-reduce:transition-opacity motion-reduce:duration-50", "transition-transform duration-150 ease-in-out motion-reduce:transition-none! motion-reduce:duration-0!", "group-aria-expanded/settings:rotate-90"]} />
           <media-text class={"sr-only"} token={settingsText.key}>
             {settingsText.text}
           </media-text>
         </button>
-      </ButtonTooltip><media-menu id="__vjsc-id-<module>-e6-popup" side="top" align="center" {...props} class={["m-0 overflow-visible border-0 text-inherit", "data-starting-style:opacity-0 data-starting-style:[transform:translate(var(--media-popup-translate-x-distance,0),var(--media-popup-translate-y-distance,0))_scale(.95)]", "data-ending-style:opacity-0 data-ending-style:blur-xs data-ending-style:[transform:scale(.95)]", "data-[side=top]:origin-bottom data-[side=bottom]:origin-top data-[side=left]:origin-right data-[side=right]:origin-left", "data-[side=top]:[--media-popup-translate-y-distance:var(--media-popup-translate-distance)]", "data-[side=bottom]:[--media-popup-translate-y-distance:calc(var(--media-popup-translate-distance)*-1)]", "data-[side=left]:[--media-popup-translate-x-distance:var(--media-popup-translate-distance)]", "data-[side=right]:[--media-popup-translate-x-distance:calc(var(--media-popup-translate-distance)*-1)]", "before:pointer-events-auto before:absolute", "data-[side=top]:before:inset-x-0 data-[side=top]:before:top-full", "data-[side=bottom]:before:inset-x-0 data-[side=bottom]:before:bottom-full", "data-[side=left]:before:inset-y-0 data-[side=left]:before:left-full", "data-[side=right]:before:inset-y-0 data-[side=right]:before:right-full", "[--media-popup-translate-distance:calc(var(--media-scale-unit,16px)*0.5)]", "data-starting-style:blur-xs", "data-[side=top]:before:h-(--media-popover-side-offset) data-[side=bottom]:before:h-(--media-popover-side-offset)", "data-[side=left]:before:w-(--media-popover-side-offset) data-[side=right]:before:w-(--media-popover-side-offset)", "text-white backdrop-blur-lg backdrop-saturate-150", "after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit]", "after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.1),inset_0_0_0_1px_rgb(255_255_255/0.05)]", "[@media(prefers-reduced-transparency:reduce)]:bg-black [@media(prefers-reduced-transparency:reduce)]:ring-1 [@media(prefers-reduced-transparency:reduce)]:ring-transparent", "[@media(prefers-reduced-transparency:reduce)]:backdrop-filter-none", "[@media(prefers-reduced-transparency:reduce)]:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "contrast-more:bg-black contrast-more:ring-1 contrast-more:ring-transparent contrast-more:backdrop-filter-none", "contrast-more:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "forced-colors:bg-[Canvas] forced-colors:ring-1 forced-colors:ring-[CanvasText]", "forced-colors:after:shadow-[inset_0_1px_0_0_CanvasText,inset_0_0_0_1px_CanvasText]", "shadow-sm shadow-black/15 ring-1 ring-black/10", "[@media(prefers-reduced-transparency:reduce)]:shadow-sm [@media(prefers-reduced-transparency:reduce)]:shadow-black/15", "contrast-more:shadow-sm contrast-more:shadow-black/15", "forced-colors:shadow-sm forced-colors:shadow-black/15", "bg-white/10", "m-0 min-w-44 max-w-(--media-menu-available-width) overflow-hidden! border-0 p-1", "max-h-[min(var(--media-menu-available-height,--spacing(56)),--spacing(56))] overscroll-none", "h-(--media-menu-height) w-(--media-menu-width)", "[--media-menu-transition-duration:250ms] motion-reduce:[--media-menu-transition-duration:0ms]", "[transition-property:opacity,filter,transform,scale,width,height]", "[transition-duration:100ms,100ms,100ms,100ms,250ms,250ms] ease-out", "data-starting-style:[transition-duration:100ms] data-starting-style:[transition-property:opacity,filter,transform,scale]", "data-ending-style:[transition-duration:100ms] data-ending-style:[transition-property:opacity,filter,transform,scale]", "motion-reduce:[transition-duration:0ms]", "rounded-[--spacing(3)] [--media-menu-item-border-radius:--spacing(2)]", className]}>
+      </ButtonTooltip><media-menu id="__vjsc-id-<module>-ha-popup" side="top" align="center" {...props} class={["m-0 overflow-visible border-0 text-inherit", "data-starting-style:opacity-0 data-starting-style:[transform:translate(var(--media-popup-translate-x-distance,0),var(--media-popup-translate-y-distance,0))_scale(.95)]", "data-ending-style:opacity-0 data-ending-style:blur-xs data-ending-style:[transform:scale(.95)]", "data-[side=top]:origin-bottom data-[side=bottom]:origin-top data-[side=left]:origin-right data-[side=right]:origin-left", "data-[side=top]:[--media-popup-translate-y-distance:var(--media-popup-translate-distance)]", "data-[side=bottom]:[--media-popup-translate-y-distance:calc(var(--media-popup-translate-distance)*-1)]", "data-[side=left]:[--media-popup-translate-x-distance:var(--media-popup-translate-distance)]", "data-[side=right]:[--media-popup-translate-x-distance:calc(var(--media-popup-translate-distance)*-1)]", "before:pointer-events-auto before:absolute", "data-[side=top]:before:inset-x-0 data-[side=top]:before:top-full", "data-[side=bottom]:before:inset-x-0 data-[side=bottom]:before:bottom-full", "data-[side=left]:before:inset-y-0 data-[side=left]:before:left-full", "data-[side=right]:before:inset-y-0 data-[side=right]:before:right-full", "[--media-popup-translate-distance:calc(var(--media-scale-unit,16px)*0.5)]", "data-starting-style:blur-xs", "data-[side=top]:before:h-(--media-popover-side-offset) data-[side=bottom]:before:h-(--media-popover-side-offset)", "data-[side=left]:before:w-(--media-popover-side-offset) data-[side=right]:before:w-(--media-popover-side-offset)", "text-white backdrop-blur-lg backdrop-saturate-150", "after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit]", "after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.1),inset_0_0_0_1px_rgb(255_255_255/0.05)]", "[@media(prefers-reduced-transparency:reduce)]:bg-black [@media(prefers-reduced-transparency:reduce)]:ring-1 [@media(prefers-reduced-transparency:reduce)]:ring-transparent", "[@media(prefers-reduced-transparency:reduce)]:backdrop-filter-none", "[@media(prefers-reduced-transparency:reduce)]:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "contrast-more:bg-black contrast-more:ring-1 contrast-more:ring-transparent contrast-more:backdrop-filter-none", "contrast-more:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "forced-colors:bg-[Canvas] forced-colors:ring-1 forced-colors:ring-[CanvasText]", "forced-colors:after:shadow-[inset_0_1px_0_0_CanvasText,inset_0_0_0_1px_CanvasText]", "shadow-sm shadow-black/15 ring-1 ring-black/10", "[@media(prefers-reduced-transparency:reduce)]:shadow-sm [@media(prefers-reduced-transparency:reduce)]:shadow-black/15", "contrast-more:shadow-sm contrast-more:shadow-black/15", "forced-colors:shadow-sm forced-colors:shadow-black/15", "bg-white/10", "m-0 min-w-44 max-w-(--media-menu-available-width) overflow-hidden! border-0 p-1", "max-h-[min(var(--media-menu-available-height,--spacing(56)),--spacing(56))] overscroll-none", "h-(--media-menu-height) w-(--media-menu-width)", "[--media-menu-transition-duration:250ms] motion-reduce:[--media-menu-transition-duration:0ms]", "[transition-property:opacity,filter,transform,scale,width,height]", "[transition-duration:100ms,100ms,100ms,100ms,250ms,250ms] ease-out", "data-starting-style:[transition-duration:100ms] data-starting-style:[transition-property:opacity,filter,transform,scale]", "data-ending-style:[transition-duration:100ms] data-ending-style:[transition-property:opacity,filter,transform,scale]", "motion-reduce:[transition-duration:0ms]", "rounded-[--spacing(3)] [--media-menu-item-border-radius:--spacing(2)]", className]}>
         <media-menu-content className={"[anchor-scope:--media-menu-item-highlight-anchor] supports-[top:anchor(top)]:before:absolute supports-[top:anchor(top)]:before:[position-anchor:--media-menu-item-highlight-anchor] supports-[top:anchor(top)]:before:[inset:anchor(inside)] supports-[top:anchor(top)]:before:[overflow-anchor:none] supports-[top:anchor(top)]:before:pointer-events-none supports-[top:anchor(top)]:before:rounded-(--media-menu-item-border-radius) supports-[top:anchor(top)]:before:bg-media-control-hover supports-[top:anchor(top)]:before:transition-[inset] supports-[top:anchor(top)]:before:duration-100 supports-[top:anchor(top)]:before:[transition-timing-function:ease-in-out] supports-[top:anchor(top)]:has-data-[highlighted=]:before:duration-0 absolute max-h-[inherit] overflow-auto overscroll-none outline-none not-data-submenu:flex not-data-submenu:flex-col not-data-submenu:gap-0.5 transition-[translate,filter] duration-(--media-menu-transition-duration) ease-out not-data-submenu:inset-x-1 not-data-submenu:top-1 not-data-submenu:[--media-menu-parent-translate:-100%] not-data-submenu:[&:dir(rtl)]:[--media-menu-parent-translate:100%] not-data-submenu:data-[child-open]:[translate:var(--media-menu-parent-translate)_0] not-data-submenu:data-[child-open]:blur-sm not-data-submenu:data-[child-open]:before:hidden data-submenu:inset-x-0 data-submenu:top-0 data-submenu:z-10 data-submenu:[max-height:inherit] data-submenu:p-1 data-submenu:[--media-submenu-translate:100%] data-submenu:[&:dir(rtl)]:[--media-submenu-translate:-100%] data-submenu:data-starting-style:pointer-events-none data-submenu:data-ending-style:pointer-events-none data-submenu:data-starting-style:overflow-hidden data-submenu:data-ending-style:overflow-hidden data-submenu:data-starting-style:[translate:var(--media-submenu-translate)_0] data-submenu:data-ending-style:[translate:var(--media-submenu-translate)_0] data-submenu:data-starting-style:blur-sm data-submenu:data-ending-style:blur-sm"}>{children}</media-menu-content>
       </media-menu></></Scope>
   );
@@ -6990,17 +7058,19 @@ import type { SliderPreviewOverflow, TimeSliderProps as CoreProps } from '@video
 import { type Props } from "vjsc/components";
 
 
+import { registerIcons, spinnerIcon } from "@videojs/html/icons";
 import "@videojs/html/ui/slider-buffer";
 import "@videojs/html/ui/slider-fill";
 import "@videojs/html/ui/slider-track";
 import "@videojs/html/ui/time-slider-chapters";
 import "@videojs/html/ui/slider-thumb";
 import "@videojs/html/ui/slider-thumbnail";
-import "@videojs/html/icons/element";
 import "@videojs/html/ui/time-slider-chapter-title";
 import "@videojs/html/ui/slider-value";
 import "@videojs/html/ui/slider";
 import "@videojs/html/ui/time-slider";
+
+registerIcons("default", { "spinner": spinnerIcon });
 
 
 
@@ -7234,8 +7304,11 @@ import type { Props } from 'vjsc/components';
 import { ButtonTooltip } from './button-tooltip';
 import "virtual:vjsc/css/<hash>/base.css";
 import "virtual:vjsc/css/<hash>/buttons.css";
-import "@videojs/html/icons/element/minimal";
+import { registerIcons } from "@videojs/html/icons";
+import { airPlayEnterIcon, airPlayExitIcon } from "@videojs/html/icons/minimal";
 import "@videojs/html/ui/airplay-button";
+
+registerIcons("minimal", { "airplay-enter": airPlayEnterIcon, "airplay-exit": airPlayExitIcon });
 
 
 
@@ -7294,8 +7367,11 @@ import type { Props } from 'vjsc/components';
 import { ButtonTooltip } from './button-tooltip';
 import "virtual:vjsc/css/<hash>/base.css";
 import "virtual:vjsc/css/<hash>/buttons.css";
-import "@videojs/html/icons/element/minimal";
+import { registerIcons } from "@videojs/html/icons";
+import { captionsOffIcon, captionsOnIcon } from "@videojs/html/icons/minimal";
 import "@videojs/html/ui/captions-button";
+
+registerIcons("minimal", { "captions-off": captionsOffIcon, "captions-on": captionsOnIcon });
 
 
 
@@ -7323,8 +7399,11 @@ import type { Props } from 'vjsc/components';
 import { ButtonTooltip } from './button-tooltip';
 import "virtual:vjsc/css/<hash>/base.css";
 import "virtual:vjsc/css/<hash>/buttons.css";
-import "@videojs/html/icons/element/minimal";
+import { registerIcons } from "@videojs/html/icons";
+import { castEnterIcon, castExitIcon } from "@videojs/html/icons/minimal";
 import "@videojs/html/ui/cast-button";
+
+registerIcons("minimal", { "cast-enter": castEnterIcon, "cast-exit": castExitIcon });
 
 
 
@@ -7352,8 +7431,11 @@ import type { Props } from 'vjsc/components';
 import { ButtonTooltip } from './button-tooltip';
 import "virtual:vjsc/css/<hash>/base.css";
 import "virtual:vjsc/css/<hash>/buttons.css";
-import "@videojs/html/icons/element/minimal";
+import { registerIcons } from "@videojs/html/icons";
+import { fullscreenEnterIcon, fullscreenExitIcon } from "@videojs/html/icons/minimal";
 import "@videojs/html/ui/fullscreen-button";
+
+registerIcons("minimal", { "fullscreen-enter": fullscreenEnterIcon, "fullscreen-exit": fullscreenExitIcon });
 
 
 
@@ -7380,8 +7462,11 @@ import type { Props } from 'vjsc/components';
 
 import "virtual:vjsc/css/<hash>/base.css";
 import "virtual:vjsc/css/<hash>/buttons.css";
-import "@videojs/html/icons/element/minimal";
+import { registerIcons } from "@videojs/html/icons";
+import { volumeHighIcon, volumeLowIcon, volumeOffIcon } from "@videojs/html/icons/minimal";
 import "@videojs/html/ui/mute-button";
+
+registerIcons("minimal", { "volume-high": volumeHighIcon, "volume-low": volumeLowIcon, "volume-off": volumeOffIcon });
 
 
 
@@ -7408,8 +7493,11 @@ import type { Props } from 'vjsc/components';
 import { ButtonTooltip } from './button-tooltip';
 import "virtual:vjsc/css/<hash>/base.css";
 import "virtual:vjsc/css/<hash>/buttons.css";
-import "@videojs/html/icons/element/minimal";
+import { registerIcons } from "@videojs/html/icons";
+import { pipEnterIcon, pipExitIcon } from "@videojs/html/icons/minimal";
 import "@videojs/html/ui/pip-button";
+
+registerIcons("minimal", { "pip-enter": pipEnterIcon, "pip-exit": pipExitIcon });
 
 
 
@@ -7437,8 +7525,11 @@ import type { Props } from 'vjsc/components';
 import { ButtonTooltip } from './button-tooltip';
 import "virtual:vjsc/css/<hash>/base.css";
 import "virtual:vjsc/css/<hash>/buttons.css";
-import "@videojs/html/icons/element/minimal";
+import { registerIcons } from "@videojs/html/icons";
+import { pauseIcon, playIcon, restartIcon } from "@videojs/html/icons/minimal";
 import "@videojs/html/ui/play-button";
+
+registerIcons("minimal", { "pause": pauseIcon, "play": playIcon, "restart": restartIcon });
 
 
 
@@ -7467,8 +7558,11 @@ import { type Props } from "vjsc/components";
 import { ButtonTooltip } from './button-tooltip';
 import "virtual:vjsc/css/<hash>/base.css";
 import "virtual:vjsc/css/<hash>/buttons.css";
-import "@videojs/html/icons/element/minimal";
+import { registerIcons } from "@videojs/html/icons";
+import { seekIcon } from "@videojs/html/icons/minimal";
 import "@videojs/html/ui/seek-button";
+
+registerIcons("minimal", { "seek": seekIcon });
 
 
 
@@ -7538,8 +7632,11 @@ import type { Props } from 'vjsc/components';
 
 import "virtual:vjsc/css/<hash>/base.css";
 import "virtual:vjsc/css/<hash>/indicators.css";
-import "@videojs/html/icons/element/minimal";
+import { registerIcons } from "@videojs/html/icons";
+import { spinnerIcon } from "@videojs/html/icons/minimal";
 import "@videojs/html/ui/buffering-indicator";
+
+registerIcons("minimal", { "spinner": spinnerIcon });
 
 
 
@@ -7600,9 +7697,12 @@ import type { Props } from 'vjsc/components';
 
 import "virtual:vjsc/css/<hash>/base.css";
 import "virtual:vjsc/css/<hash>/indicators.css";
-import "@videojs/html/icons/element/minimal";
+import { registerIcons } from "@videojs/html/icons";
+import { chevronIcon } from "@videojs/html/icons/minimal";
 import "@videojs/html/ui/seek-indicator-value";
 import "@videojs/html/ui/seek-indicator";
+
+registerIcons("minimal", { "chevron": chevronIcon });
 
 
 
@@ -7646,9 +7746,12 @@ import { type Props } from "vjsc/components";
 
 import "virtual:vjsc/css/<hash>/base.css";
 import "virtual:vjsc/css/<hash>/indicators.css";
-import "@videojs/html/icons/element/minimal";
+import { registerIcons } from "@videojs/html/icons";
+import { captionsOffIcon, captionsOnIcon, fullscreenEnterIcon, fullscreenExitIcon, pauseIcon, pipEnterIcon, pipExitIcon, playIcon } from "@videojs/html/icons/minimal";
 import "@videojs/html/ui/status-indicator-value";
 import "@videojs/html/ui/status-indicator";
+
+registerIcons("minimal", { "captions-off": captionsOffIcon, "captions-on": captionsOnIcon, "fullscreen-enter": fullscreenEnterIcon, "fullscreen-exit": fullscreenExitIcon, "pause": pauseIcon, "pip-enter": pipEnterIcon, "pip-exit": pipExitIcon, "play": playIcon });
 
 
 
@@ -7724,10 +7827,13 @@ import type { Props } from 'vjsc/components';
 
 import "virtual:vjsc/css/<hash>/base.css";
 import "virtual:vjsc/css/<hash>/indicators.css";
-import "@videojs/html/icons/element/minimal";
+import { registerIcons } from "@videojs/html/icons";
+import { volumeHighIcon, volumeLowIcon, volumeOffIcon } from "@videojs/html/icons/minimal";
 import "@videojs/html/ui/volume-indicator-value";
 import "@videojs/html/ui/volume-indicator-fill";
 import "@videojs/html/ui/volume-indicator";
+
+registerIcons("minimal", { "volume-high": volumeHighIcon, "volume-low": volumeLowIcon, "volume-off": volumeOffIcon });
 
 
 
@@ -7797,9 +7903,11 @@ import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
 import "virtual:vjsc/css/<hash>/base.css";
 import "virtual:vjsc/css/<hash>/menus.css";
+import { registerIcons } from "@videojs/html/icons";
+import { speechIcon } from "@videojs/html/icons/minimal";
 import "@videojs/html/i18n";
-import "@videojs/html/icons/element/minimal";
 
+registerIcons("minimal", { "speech": speechIcon });
 
 
 
@@ -7839,9 +7947,11 @@ import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
 import "virtual:vjsc/css/<hash>/base.css";
 import "virtual:vjsc/css/<hash>/menus.css";
+import { registerIcons } from "@videojs/html/icons";
+import { captionsOffIcon } from "@videojs/html/icons/minimal";
 import "@videojs/html/i18n";
-import "@videojs/html/icons/element/minimal";
 
+registerIcons("minimal", { "captions-off": captionsOffIcon });
 
 
 
@@ -7877,7 +7987,9 @@ import type { Props } from 'vjsc/components';
 
 import "virtual:vjsc/css/<hash>/base.css";
 import "virtual:vjsc/css/<hash>/menus.css";
-import "@videojs/html/icons/element/minimal";
+import { registerIcons } from "@videojs/html/icons";
+import { chevronIcon } from "@videojs/html/icons/minimal";
+registerIcons("minimal", { "chevron": chevronIcon });
 
 
 
@@ -7897,9 +8009,11 @@ import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
 import "virtual:vjsc/css/<hash>/base.css";
 import "virtual:vjsc/css/<hash>/menus.css";
+import { registerIcons } from "@videojs/html/icons";
+import { speedIcon } from "@videojs/html/icons/minimal";
 import "@videojs/html/i18n";
-import "@videojs/html/icons/element/minimal";
 
+registerIcons("minimal", { "speed": speedIcon });
 
 
 
@@ -7939,9 +8053,11 @@ import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
 import "virtual:vjsc/css/<hash>/base.css";
 import "virtual:vjsc/css/<hash>/menus.css";
+import { registerIcons } from "@videojs/html/icons";
+import { switchesIcon } from "@videojs/html/icons/minimal";
 import "@videojs/html/i18n";
-import "@videojs/html/icons/element/minimal";
 
+registerIcons("minimal", { "switches": switchesIcon });
 
 
 
@@ -8020,8 +8136,11 @@ import type { PropsWithChildren } from 'vjsc/components';
 
 import "virtual:vjsc/css/<hash>/base.css";
 import "virtual:vjsc/css/<hash>/menus.css";
-import "@videojs/html/icons/element/minimal";
+import { registerIcons } from "@videojs/html/icons";
+import { checkIcon } from "@videojs/html/icons/minimal";
 import "@videojs/html/ui/menu";
+
+registerIcons("minimal", { "check": checkIcon });
 
 
 
@@ -8054,24 +8173,27 @@ import "virtual:vjsc/css/<hash>/buttons.css";
 import "virtual:vjsc/css/<hash>/common.css";
 import "virtual:vjsc/css/<hash>/menus.css";
 import "virtual:vjsc/css/<hash>/popups.css";
+import { registerIcons } from "@videojs/html/icons";
+import { gearIcon } from "@videojs/html/icons/minimal";
 import "@videojs/html/i18n";
-import "@videojs/html/icons/element/minimal";
 import "@videojs/html/ui/menu";
 import { Scope } from "vjsc/html-runtime/jsx-runtime";
 
+
+registerIcons("minimal", { "gear": gearIcon });
 
 
 
 export function SettingsMenu({ children, className, ...props }: PropsWithChildren<MenuProps>) {
   return (
-    <Scope prefix="<module>-l8"><><ButtonTooltip label={<media-text token={settingsText.key}>{settingsText.text}</media-text>} side="top">
-        <button commandfor="__vjsc-id-<module>-l8-popup" class={["media-button", "media-settings-menu-trigger"]}>
+    <Scope prefix="<module>-pm"><><ButtonTooltip label={<media-text token={settingsText.key}>{settingsText.text}</media-text>} side="top">
+        <button commandfor="__vjsc-id-<module>-pm-popup" class={["media-button", "media-settings-menu-trigger"]}>
           <media-icon family="minimal" name="gear" class={["media-button-icon", "media-settings-menu-trigger-icon"]} />
           <media-text class={"media-settings-menu-trigger-label"} token={settingsText.key}>
             {settingsText.text}
           </media-text>
         </button>
-      </ButtonTooltip><media-menu id="__vjsc-id-<module>-l8-popup" side="top" align="center" {...props} class={["media-popup", "media-popup-safe-area", "media-surface", "media-menu-popup", className]}>
+      </ButtonTooltip><media-menu id="__vjsc-id-<module>-pm-popup" side="top" align="center" {...props} class={["media-popup", "media-popup-safe-area", "media-surface", "media-menu-popup", className]}>
         <media-menu-content className={"media-menu-content"}>{children}</media-menu-content>
       </media-menu></></Scope>
   );
@@ -8161,17 +8283,20 @@ import { type Props } from "vjsc/components";
 
 import "virtual:vjsc/css/<hash>/base.css";
 import "virtual:vjsc/css/<hash>/sliders.css";
+import { registerIcons } from "@videojs/html/icons";
+import { spinnerIcon } from "@videojs/html/icons/minimal";
 import "@videojs/html/ui/slider-buffer";
 import "@videojs/html/ui/slider-fill";
 import "@videojs/html/ui/slider-track";
 import "@videojs/html/ui/time-slider-chapters";
 import "@videojs/html/ui/slider-thumb";
 import "@videojs/html/ui/slider-thumbnail";
-import "@videojs/html/icons/element/minimal";
 import "@videojs/html/ui/time-slider-chapter-title";
 import "@videojs/html/ui/slider-value";
 import "@videojs/html/ui/slider";
 import "@videojs/html/ui/time-slider";
+
+registerIcons("minimal", { "spinner": spinnerIcon });
 
 
 
@@ -8411,8 +8536,11 @@ import type { Props } from 'vjsc/components';
 
 
 import { ButtonTooltip } from './button-tooltip';
-import "@videojs/html/icons/element/minimal";
+import { registerIcons } from "@videojs/html/icons";
+import { airPlayEnterIcon, airPlayExitIcon } from "@videojs/html/icons/minimal";
 import "@videojs/html/ui/airplay-button";
+
+registerIcons("minimal", { "airplay-enter": airPlayEnterIcon, "airplay-exit": airPlayExitIcon });
 
 
 export function AirPlayButton({ className, ...props }: Props<CoreProps> = {}) {
@@ -8464,8 +8592,11 @@ import type { Props } from 'vjsc/components';
 
 
 import { ButtonTooltip } from './button-tooltip';
-import "@videojs/html/icons/element/minimal";
+import { registerIcons } from "@videojs/html/icons";
+import { captionsOffIcon, captionsOnIcon } from "@videojs/html/icons/minimal";
 import "@videojs/html/ui/captions-button";
+
+registerIcons("minimal", { "captions-off": captionsOffIcon, "captions-on": captionsOnIcon });
 
 
 export function CaptionsButton({ className, ...props }: Props<CoreProps> = {}) {
@@ -8490,8 +8621,11 @@ import type { Props } from 'vjsc/components';
 
 
 import { ButtonTooltip } from './button-tooltip';
-import "@videojs/html/icons/element/minimal";
+import { registerIcons } from "@videojs/html/icons";
+import { castEnterIcon, castExitIcon } from "@videojs/html/icons/minimal";
 import "@videojs/html/ui/cast-button";
+
+registerIcons("minimal", { "cast-enter": castEnterIcon, "cast-exit": castExitIcon });
 
 
 export function CastButton({ className, ...props }: Props<CoreProps> = {}) {
@@ -8516,8 +8650,11 @@ import type { Props } from 'vjsc/components';
 
 
 import { ButtonTooltip } from './button-tooltip';
-import "@videojs/html/icons/element/minimal";
+import { registerIcons } from "@videojs/html/icons";
+import { fullscreenEnterIcon, fullscreenExitIcon } from "@videojs/html/icons/minimal";
 import "@videojs/html/ui/fullscreen-button";
+
+registerIcons("minimal", { "fullscreen-enter": fullscreenEnterIcon, "fullscreen-exit": fullscreenExitIcon });
 
 
 export function FullscreenButton({ className, ...props }: Props<CoreProps> = {}) {
@@ -8539,8 +8676,11 @@ import type { MuteButtonProps as CoreProps } from '@videojs/core';
 import type { Props } from 'vjsc/components';
 
 
-import "@videojs/html/icons/element/minimal";
+import { registerIcons } from "@videojs/html/icons";
+import { volumeHighIcon, volumeLowIcon, volumeOffIcon } from "@videojs/html/icons/minimal";
 import "@videojs/html/ui/mute-button";
+
+registerIcons("minimal", { "volume-high": volumeHighIcon, "volume-low": volumeLowIcon, "volume-off": volumeOffIcon });
 
 
 
@@ -8566,8 +8706,11 @@ import type { Props } from 'vjsc/components';
 
 
 import { ButtonTooltip } from './button-tooltip';
-import "@videojs/html/icons/element/minimal";
+import { registerIcons } from "@videojs/html/icons";
+import { pipEnterIcon, pipExitIcon } from "@videojs/html/icons/minimal";
 import "@videojs/html/ui/pip-button";
+
+registerIcons("minimal", { "pip-enter": pipEnterIcon, "pip-exit": pipExitIcon });
 
 
 export function PiPButton({ className, ...props }: Props<CoreProps> = {}) {
@@ -8592,8 +8735,11 @@ import type { Props } from 'vjsc/components';
 
 
 import { ButtonTooltip } from './button-tooltip';
-import "@videojs/html/icons/element/minimal";
+import { registerIcons } from "@videojs/html/icons";
+import { pauseIcon, playIcon, restartIcon } from "@videojs/html/icons/minimal";
 import "@videojs/html/ui/play-button";
+
+registerIcons("minimal", { "pause": pauseIcon, "play": playIcon, "restart": restartIcon });
 
 
 export function PlayButton({ className, ...props }: Props<CoreProps> = {}) {
@@ -8619,8 +8765,11 @@ import { type Props } from "vjsc/components";
 
 
 import { ButtonTooltip } from './button-tooltip';
-import "@videojs/html/icons/element/minimal";
+import { registerIcons } from "@videojs/html/icons";
+import { seekIcon } from "@videojs/html/icons/minimal";
 import "@videojs/html/ui/seek-button";
+
+registerIcons("minimal", { "seek": seekIcon });
 
 
 export function SeekButton({ className, seconds = 10, ...props }: Props<CoreProps> = {}) {
@@ -8682,8 +8831,11 @@ import type { BufferingIndicatorProps as CoreProps } from '@videojs/core';
 import type { Props } from 'vjsc/components';
 
 
-import "@videojs/html/icons/element/minimal";
+import { registerIcons } from "@videojs/html/icons";
+import { spinnerIcon } from "@videojs/html/icons/minimal";
 import "@videojs/html/ui/buffering-indicator";
+
+registerIcons("minimal", { "spinner": spinnerIcon });
 
 
 
@@ -8737,9 +8889,12 @@ import type { SeekIndicatorProps as CoreProps } from '@videojs/core';
 import type { Props } from 'vjsc/components';
 
 
-import "@videojs/html/icons/element/minimal";
+import { registerIcons } from "@videojs/html/icons";
+import { chevronIcon } from "@videojs/html/icons/minimal";
 import "@videojs/html/ui/seek-indicator-value";
 import "@videojs/html/ui/seek-indicator";
+
+registerIcons("minimal", { "chevron": chevronIcon });
 
 
 
@@ -8775,9 +8930,12 @@ import type { StatusIndicatorProps as CoreProps } from '@videojs/core';
 import { type Props } from "vjsc/components";
 
 
-import "@videojs/html/icons/element/minimal";
+import { registerIcons } from "@videojs/html/icons";
+import { captionsOffIcon, captionsOnIcon, fullscreenEnterIcon, fullscreenExitIcon, pauseIcon, pipEnterIcon, pipExitIcon, playIcon } from "@videojs/html/icons/minimal";
 import "@videojs/html/ui/status-indicator-value";
 import "@videojs/html/ui/status-indicator";
+
+registerIcons("minimal", { "captions-off": captionsOffIcon, "captions-on": captionsOnIcon, "fullscreen-enter": fullscreenEnterIcon, "fullscreen-exit": fullscreenExitIcon, "pause": pauseIcon, "pip-enter": pipEnterIcon, "pip-exit": pipExitIcon, "play": playIcon });
 
 
 
@@ -8848,10 +9006,13 @@ import type { VolumeIndicatorProps as CoreProps } from '@videojs/core';
 import type { Props } from 'vjsc/components';
 
 
-import "@videojs/html/icons/element/minimal";
+import { registerIcons } from "@videojs/html/icons";
+import { volumeHighIcon, volumeLowIcon, volumeOffIcon } from "@videojs/html/icons/minimal";
 import "@videojs/html/ui/volume-indicator-value";
 import "@videojs/html/ui/volume-indicator-fill";
 import "@videojs/html/ui/volume-indicator";
+
+registerIcons("minimal", { "volume-high": volumeHighIcon, "volume-low": volumeLowIcon, "volume-off": volumeOffIcon });
 
 
 
@@ -8914,9 +9075,11 @@ import { type PropsOf } from "vjsc/components";
 import { AudioTrackRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
+import { registerIcons } from "@videojs/html/icons";
+import { speechIcon } from "@videojs/html/icons/minimal";
 import "@videojs/html/i18n";
-import "@videojs/html/icons/element/minimal";
 
+registerIcons("minimal", { "speech": speechIcon });
 
 
 export interface AudioTrackMenuProps extends Omit<
@@ -8953,9 +9116,11 @@ import { type PropsOf } from "vjsc/components";
 import { CaptionsRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
+import { registerIcons } from "@videojs/html/icons";
+import { captionsOffIcon } from "@videojs/html/icons/minimal";
 import "@videojs/html/i18n";
-import "@videojs/html/icons/element/minimal";
 
+registerIcons("minimal", { "captions-off": captionsOffIcon });
 
 
 export interface CaptionsMenuProps extends Omit<
@@ -8986,7 +9151,9 @@ export function CaptionsMenu(props: CaptionsMenuProps = {}) {
 /** @jsxImportSource vjsc/html-runtime */
 
 import type { Props } from 'vjsc/components';
-import "@videojs/html/icons/element/minimal";
+import { registerIcons } from "@videojs/html/icons";
+import { chevronIcon } from "@videojs/html/icons/minimal";
+registerIcons("minimal", { "chevron": chevronIcon });
 
 
 
@@ -9005,9 +9172,11 @@ import { type PropsOf } from "vjsc/components";
 import { PlaybackRateRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
+import { registerIcons } from "@videojs/html/icons";
+import { speedIcon } from "@videojs/html/icons/minimal";
 import "@videojs/html/i18n";
-import "@videojs/html/icons/element/minimal";
 
+registerIcons("minimal", { "speed": speedIcon });
 
 
 export interface PlaybackRateMenuProps extends Omit<
@@ -9044,9 +9213,11 @@ import { type PropsOf } from "vjsc/components";
 import { QualityRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
+import { registerIcons } from "@videojs/html/icons";
+import { switchesIcon } from "@videojs/html/icons/minimal";
 import "@videojs/html/i18n";
-import "@videojs/html/icons/element/minimal";
 
+registerIcons("minimal", { "switches": switchesIcon });
 
 
 export interface QualityMenuProps extends Omit<
@@ -9117,8 +9288,11 @@ import type { MenuItemProps } from '@videojs/core';
 
 
 import type { PropsWithChildren } from 'vjsc/components';
-import "@videojs/html/icons/element/minimal";
+import { registerIcons } from "@videojs/html/icons";
+import { checkIcon } from "@videojs/html/icons/minimal";
 import "@videojs/html/ui/menu";
+
+registerIcons("minimal", { "check": checkIcon });
 
 
 
@@ -9147,23 +9321,26 @@ import { type PropsWithChildren } from "vjsc/components";
 
 
 import { ButtonTooltip } from '../buttons/button-tooltip';
+import { registerIcons } from "@videojs/html/icons";
+import { gearIcon } from "@videojs/html/icons/minimal";
 import "@videojs/html/i18n";
-import "@videojs/html/icons/element/minimal";
 import "@videojs/html/ui/menu";
 import { Scope } from "vjsc/html-runtime/jsx-runtime";
 
 
+registerIcons("minimal", { "gear": gearIcon });
+
 
 export function SettingsMenu({ children, className, ...props }: PropsWithChildren<MenuProps>) {
   return (
-    <Scope prefix="<module>-e6"><><ButtonTooltip label={<media-text token={settingsText.key}>{settingsText.text}</media-text>} side="top">
-        <button commandfor="__vjsc-id-<module>-e6-popup" class={["grid min-h-0 shrink-0 touch-manipulation select-none place-items-center rounded-media-control border-0 bg-transparent p-0 text-center text-inherit [text-shadow:inherit]", "cursor-pointer outline-2 outline-transparent -outline-offset-2", "will-change-[scale] duration-150 ease-out", "not-aria-disabled:hover:bg-media-control-hover not-aria-disabled:hover:text-media-accent-text", "not-aria-disabled:focus-visible:bg-media-control-hover not-aria-disabled:focus-visible:text-media-accent-text", "not-aria-disabled:aria-expanded:bg-media-control-hover not-aria-disabled:aria-expanded:text-media-accent-text", "focus-visible:outline-white focus-visible:outline-offset-2", "not-aria-disabled:active:scale-[0.97]", "motion-reduce:scale-100 motion-reduce:will-change-auto", "aria-disabled:cursor-not-allowed aria-disabled:opacity-50", "size-9.5 [transition-property:background-color,outline-offset,scale]", "motion-reduce:[transition-property:background-color]", "supports-[corner-shape:squircle]:rounded-[--spacing(4)]", "supports-[corner-shape:squircle]:[corner-shape:squircle]", "group/settings"]}>
+    <Scope prefix="<module>-ik"><><ButtonTooltip label={<media-text token={settingsText.key}>{settingsText.text}</media-text>} side="top">
+        <button commandfor="__vjsc-id-<module>-ik-popup" class={["grid min-h-0 shrink-0 touch-manipulation select-none place-items-center rounded-media-control border-0 bg-transparent p-0 text-center text-inherit [text-shadow:inherit]", "cursor-pointer outline-2 outline-transparent -outline-offset-2", "will-change-[scale] duration-150 ease-out", "not-aria-disabled:hover:bg-media-control-hover not-aria-disabled:hover:text-media-accent-text", "not-aria-disabled:focus-visible:bg-media-control-hover not-aria-disabled:focus-visible:text-media-accent-text", "not-aria-disabled:aria-expanded:bg-media-control-hover not-aria-disabled:aria-expanded:text-media-accent-text", "focus-visible:outline-white focus-visible:outline-offset-2", "not-aria-disabled:active:scale-[0.97]", "motion-reduce:scale-100 motion-reduce:will-change-auto", "aria-disabled:cursor-not-allowed aria-disabled:opacity-50", "size-9.5 [transition-property:background-color,outline-offset,scale]", "motion-reduce:[transition-property:background-color]", "supports-[corner-shape:squircle]:rounded-[--spacing(4)]", "supports-[corner-shape:squircle]:[corner-shape:squircle]", "group/settings"]}>
           <media-icon family="minimal" name="gear" class={["col-start-1 row-start-1 size-media-icon drop-shadow-[0_1px_0_var(--media-shadow-current-color)]", "transition-[opacity,scale] duration-150 ease-out", "motion-reduce:transition-opacity motion-reduce:duration-50", "transition-transform duration-150 ease-in-out motion-reduce:transition-none! motion-reduce:duration-0!", "group-aria-expanded/settings:rotate-90"]} />
           <media-text class={"sr-only"} token={settingsText.key}>
             {settingsText.text}
           </media-text>
         </button>
-      </ButtonTooltip><media-menu id="__vjsc-id-<module>-e6-popup" side="top" align="center" {...props} class={["m-0 overflow-visible border-0 text-inherit", "data-starting-style:opacity-0 data-starting-style:[transform:translate(var(--media-popup-translate-x-distance,0),var(--media-popup-translate-y-distance,0))_scale(.95)]", "data-ending-style:opacity-0 data-ending-style:blur-xs data-ending-style:[transform:scale(.95)]", "data-[side=top]:origin-bottom data-[side=bottom]:origin-top data-[side=left]:origin-right data-[side=right]:origin-left", "data-[side=top]:[--media-popup-translate-y-distance:var(--media-popup-translate-distance)]", "data-[side=bottom]:[--media-popup-translate-y-distance:calc(var(--media-popup-translate-distance)*-1)]", "data-[side=left]:[--media-popup-translate-x-distance:var(--media-popup-translate-distance)]", "data-[side=right]:[--media-popup-translate-x-distance:calc(var(--media-popup-translate-distance)*-1)]", "before:pointer-events-auto before:absolute", "data-[side=top]:before:inset-x-0 data-[side=top]:before:top-full", "data-[side=bottom]:before:inset-x-0 data-[side=bottom]:before:bottom-full", "data-[side=left]:before:inset-y-0 data-[side=left]:before:left-full", "data-[side=right]:before:inset-y-0 data-[side=right]:before:right-full", "[--media-popup-translate-distance:--spacing(2)]", "data-[side=top]:before:h-(--media-popover-side-offset) data-[side=bottom]:before:h-(--media-popover-side-offset)", "data-[side=left]:before:w-(--media-popover-side-offset) data-[side=right]:before:w-(--media-popover-side-offset)", "text-white backdrop-blur-lg backdrop-saturate-150", "after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit]", "after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.1),inset_0_0_0_1px_rgb(255_255_255/0.05)]", "[@media(prefers-reduced-transparency:reduce)]:bg-black [@media(prefers-reduced-transparency:reduce)]:ring-1 [@media(prefers-reduced-transparency:reduce)]:ring-transparent", "[@media(prefers-reduced-transparency:reduce)]:backdrop-filter-none", "[@media(prefers-reduced-transparency:reduce)]:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "contrast-more:bg-black contrast-more:ring-1 contrast-more:ring-transparent contrast-more:backdrop-filter-none", "contrast-more:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "forced-colors:bg-[Canvas] forced-colors:ring-1 forced-colors:ring-[CanvasText]", "forced-colors:after:shadow-[inset_0_1px_0_0_CanvasText,inset_0_0_0_1px_CanvasText]", "shadow-sm shadow-black/20 ring-1 ring-white/10", "[@media(prefers-reduced-transparency:reduce)]:shadow-sm [@media(prefers-reduced-transparency:reduce)]:shadow-black/20", "contrast-more:shadow-sm contrast-more:shadow-black/20", "forced-colors:shadow-sm forced-colors:shadow-black/20", "bg-black/50", "m-0 min-w-44 max-w-(--media-menu-available-width) overflow-hidden! border-0 p-1", "max-h-[min(var(--media-menu-available-height,--spacing(56)),--spacing(56))] overscroll-none", "h-(--media-menu-height) w-(--media-menu-width)", "[--media-menu-transition-duration:250ms] motion-reduce:[--media-menu-transition-duration:0ms]", "[transition-property:opacity,filter,transform,scale,width,height]", "[transition-duration:100ms,100ms,100ms,100ms,250ms,250ms] ease-out", "data-starting-style:[transition-duration:100ms] data-starting-style:[transition-property:opacity,filter,transform,scale]", "data-ending-style:[transition-duration:100ms] data-ending-style:[transition-property:opacity,filter,transform,scale]", "motion-reduce:[transition-duration:0ms]", "rounded-[--spacing(2.5)] [--media-menu-item-border-radius:--spacing(1.5)]", className]}>
+      </ButtonTooltip><media-menu id="__vjsc-id-<module>-ik-popup" side="top" align="center" {...props} class={["m-0 overflow-visible border-0 text-inherit", "data-starting-style:opacity-0 data-starting-style:[transform:translate(var(--media-popup-translate-x-distance,0),var(--media-popup-translate-y-distance,0))_scale(.95)]", "data-ending-style:opacity-0 data-ending-style:blur-xs data-ending-style:[transform:scale(.95)]", "data-[side=top]:origin-bottom data-[side=bottom]:origin-top data-[side=left]:origin-right data-[side=right]:origin-left", "data-[side=top]:[--media-popup-translate-y-distance:var(--media-popup-translate-distance)]", "data-[side=bottom]:[--media-popup-translate-y-distance:calc(var(--media-popup-translate-distance)*-1)]", "data-[side=left]:[--media-popup-translate-x-distance:var(--media-popup-translate-distance)]", "data-[side=right]:[--media-popup-translate-x-distance:calc(var(--media-popup-translate-distance)*-1)]", "before:pointer-events-auto before:absolute", "data-[side=top]:before:inset-x-0 data-[side=top]:before:top-full", "data-[side=bottom]:before:inset-x-0 data-[side=bottom]:before:bottom-full", "data-[side=left]:before:inset-y-0 data-[side=left]:before:left-full", "data-[side=right]:before:inset-y-0 data-[side=right]:before:right-full", "[--media-popup-translate-distance:--spacing(2)]", "data-[side=top]:before:h-(--media-popover-side-offset) data-[side=bottom]:before:h-(--media-popover-side-offset)", "data-[side=left]:before:w-(--media-popover-side-offset) data-[side=right]:before:w-(--media-popover-side-offset)", "text-white backdrop-blur-lg backdrop-saturate-150", "after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit]", "after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.1),inset_0_0_0_1px_rgb(255_255_255/0.05)]", "[@media(prefers-reduced-transparency:reduce)]:bg-black [@media(prefers-reduced-transparency:reduce)]:ring-1 [@media(prefers-reduced-transparency:reduce)]:ring-transparent", "[@media(prefers-reduced-transparency:reduce)]:backdrop-filter-none", "[@media(prefers-reduced-transparency:reduce)]:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "contrast-more:bg-black contrast-more:ring-1 contrast-more:ring-transparent contrast-more:backdrop-filter-none", "contrast-more:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "forced-colors:bg-[Canvas] forced-colors:ring-1 forced-colors:ring-[CanvasText]", "forced-colors:after:shadow-[inset_0_1px_0_0_CanvasText,inset_0_0_0_1px_CanvasText]", "shadow-sm shadow-black/20 ring-1 ring-white/10", "[@media(prefers-reduced-transparency:reduce)]:shadow-sm [@media(prefers-reduced-transparency:reduce)]:shadow-black/20", "contrast-more:shadow-sm contrast-more:shadow-black/20", "forced-colors:shadow-sm forced-colors:shadow-black/20", "bg-black/50", "m-0 min-w-44 max-w-(--media-menu-available-width) overflow-hidden! border-0 p-1", "max-h-[min(var(--media-menu-available-height,--spacing(56)),--spacing(56))] overscroll-none", "h-(--media-menu-height) w-(--media-menu-width)", "[--media-menu-transition-duration:250ms] motion-reduce:[--media-menu-transition-duration:0ms]", "[transition-property:opacity,filter,transform,scale,width,height]", "[transition-duration:100ms,100ms,100ms,100ms,250ms,250ms] ease-out", "data-starting-style:[transition-duration:100ms] data-starting-style:[transition-property:opacity,filter,transform,scale]", "data-ending-style:[transition-duration:100ms] data-ending-style:[transition-property:opacity,filter,transform,scale]", "motion-reduce:[transition-duration:0ms]", "rounded-[--spacing(2.5)] [--media-menu-item-border-radius:--spacing(1.5)]", className]}>
         <media-menu-content className={"[anchor-scope:--media-menu-item-highlight-anchor] supports-[top:anchor(top)]:before:absolute supports-[top:anchor(top)]:before:[position-anchor:--media-menu-item-highlight-anchor] supports-[top:anchor(top)]:before:[inset:anchor(inside)] supports-[top:anchor(top)]:before:[overflow-anchor:none] supports-[top:anchor(top)]:before:pointer-events-none supports-[top:anchor(top)]:before:rounded-(--media-menu-item-border-radius) supports-[top:anchor(top)]:before:bg-media-control-hover supports-[top:anchor(top)]:before:transition-[inset] supports-[top:anchor(top)]:before:duration-100 supports-[top:anchor(top)]:before:[transition-timing-function:ease-in-out] supports-[top:anchor(top)]:has-data-[highlighted=]:before:duration-0 absolute max-h-[inherit] overflow-auto overscroll-none outline-none not-data-submenu:flex not-data-submenu:flex-col not-data-submenu:gap-0.5 transition-[translate,filter] duration-(--media-menu-transition-duration) ease-out not-data-submenu:inset-x-1 not-data-submenu:top-1 not-data-submenu:[--media-menu-parent-translate:-100%] not-data-submenu:[&:dir(rtl)]:[--media-menu-parent-translate:100%] not-data-submenu:data-[child-open]:[translate:var(--media-menu-parent-translate)_0] not-data-submenu:data-[child-open]:blur-sm not-data-submenu:data-[child-open]:before:hidden data-submenu:inset-x-0 data-submenu:top-0 data-submenu:z-10 data-submenu:[max-height:inherit] data-submenu:p-1 data-submenu:[--media-submenu-translate:100%] data-submenu:[&:dir(rtl)]:[--media-submenu-translate:-100%] data-submenu:data-starting-style:pointer-events-none data-submenu:data-ending-style:pointer-events-none data-submenu:data-starting-style:overflow-hidden data-submenu:data-ending-style:overflow-hidden data-submenu:data-starting-style:[translate:var(--media-submenu-translate)_0] data-submenu:data-ending-style:[translate:var(--media-submenu-translate)_0] data-submenu:data-starting-style:blur-sm data-submenu:data-ending-style:blur-sm"}>{children}</media-menu-content>
       </media-menu></></Scope>
   );
@@ -9244,17 +9421,20 @@ import type { SliderPreviewOverflow, TimeSliderProps as CoreProps } from '@video
 import { type Props } from "vjsc/components";
 
 
+import { registerIcons } from "@videojs/html/icons";
+import { spinnerIcon } from "@videojs/html/icons/minimal";
 import "@videojs/html/ui/slider-buffer";
 import "@videojs/html/ui/slider-fill";
 import "@videojs/html/ui/slider-track";
 import "@videojs/html/ui/time-slider-chapters";
 import "@videojs/html/ui/slider-thumb";
 import "@videojs/html/ui/slider-thumbnail";
-import "@videojs/html/icons/element/minimal";
 import "@videojs/html/ui/time-slider-chapter-title";
 import "@videojs/html/ui/slider-value";
 import "@videojs/html/ui/slider";
 import "@videojs/html/ui/time-slider";
+
+registerIcons("minimal", { "spinner": spinnerIcon });
 
 
 
