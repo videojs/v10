@@ -85,6 +85,8 @@ describe('generated VJSC source', () => {
     expect(output).toContain('from "@videojs/html/icons/minimal"');
 
     const htmlPlayButton = generatedSection(output, 'html/default-video/css/components/buttons/play-button.tsx');
+    const reactLiveButton = generatedSection(output, 'react/default-video/tailwind/components/buttons/live-button.tsx');
+    const htmlLiveButton = generatedSection(output, 'html/minimal-video/css/components/buttons/live-button.tsx');
     const reactAudioSettingsMenu = generatedSection(
       output,
       'react/default-audio/css/components/menus/audio-settings-menu.tsx'
@@ -102,6 +104,12 @@ describe('generated VJSC source', () => {
     expect(htmlPlayButton).not.toContain('seekIcon');
     expect(reactAudioSettingsMenu).toContain('<Menu.Trigger className=');
     expect(reactAudioSettingsMenu).not.toContain('keepMounted');
+    expect(reactLiveButton).toContain('LiveButton as LiveButtonPrimitive');
+    expect(reactLiveButton).toContain('className={state => cn("grid min-h-0');
+    expect(reactLiveButton).not.toContain('render={<Button');
+    expect(reactLiveButton).toContain('data-live-edge:before:bg-[oklch(0.65_0.22_27)]');
+    expect(htmlLiveButton).toContain('import "@videojs/html/ui/live-button";');
+    expect(htmlLiveButton).toContain('<media-live-button');
     expect(reactAudioSettingsMenu).not.toContain('usePlaybackRateOptions');
     expect(htmlAudioSettingsMenu).toContain('<button commandfor=');
     expect(htmlAudioSettingsMenu).not.toContain('<media-playback-rate-button');
