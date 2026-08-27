@@ -11,17 +11,25 @@ import type { ShadcnModule, ShadcnPluginOptions } from '../shadcn/types';
 import { toArray } from '../utils/array';
 import { moduleFilename, moduleId, normalizeResolvedId } from '../utils/module-id';
 import { isInsideRoot } from '../utils/path';
-import { readComponentMeta, readComponentSource } from './component-meta';
+import { readComponentMeta } from './component-meta';
 import { componentSourcePlugin } from './component-source';
 
 export type { ShadcnPluginOptions } from '../shadcn/types';
 
 /** Discover component sources, capture their transformed graphs, and emit Shadcn JSON assets. */
 export function shadcnPlugin<Item extends ComponentMeta>(options: ShadcnPluginOptions<Item>): Plugin[] {
-  return [componentSourcePlugin(), shadcnEmitterPlugin(options)];
+  const transformedSources = new Map<string, string>();
+
+  return [
+    componentSourcePlugin((id, source) => transformedSources.set(id, source)),
+    shadcnEmitterPlugin(options, transformedSources),
+  ];
 }
 
-function shadcnEmitterPlugin<Item extends ComponentMeta>(options: ShadcnPluginOptions<Item>): Plugin {
+function shadcnEmitterPlugin<Item extends ComponentMeta>(
+  options: ShadcnPluginOptions<Item>,
+  transformedSources: Map<string, string>
+): Plugin {
   const root = resolveModulePath(options.root);
   const sources = new Map<string, ShadcnModule<Item>>();
   const sourceEntries = new Set<string>();
@@ -33,6 +41,7 @@ function shadcnEmitterPlugin<Item extends ComponentMeta>(options: ShadcnPluginOp
       graph = undefined;
       sources.clear();
       sourceEntries.clear();
+      transformedSources.clear();
 
       const files = discoverFiles(root, options.include, options.exclude);
 
@@ -72,7 +81,7 @@ function shadcnEmitterPlugin<Item extends ComponentMeta>(options: ShadcnPluginOp
 
       for (const module of sources.values()) {
         const info = this.getModuleInfo(module.id);
-        const source = readComponentSource(info?.meta);
+        const source = transformedSources.get(module.id);
 
         if (source === undefined) this.error(`Shadcn source has no captured component output: \`${module.id}\`.`);
 
