@@ -389,7 +389,10 @@ export function ErrorDialog({ className, ...props }: ErrorDialogProps = {}) {
   return (
     <ErrorDialogPrimitive.Root>
       <ErrorDialogPrimitive.Backdrop className={"media-dialog-backdrop"} />
-      <ErrorDialogPrimitive.Popup className={state => cn("media-feedback-surface", "media-dialog-popup", resolveClassName(className, state))} {...props}>
+      <ErrorDialogPrimitive.Popup
+        className={state => cn("media-feedback-surface", "media-dialog-popup", 'media-dialog-popup', resolveClassName(className, state))}
+        {...props}
+      >
         <div className={"media-dialog-content"}>
           <ErrorDialogPrimitive.Title className={"media-dialog-title"} />
           <ErrorDialogPrimitive.Description className={"media-dialog-description"} />
@@ -1632,12 +1635,15 @@ export function ErrorDialog({ className, ...props }: ErrorDialogProps = {}) {
   return (
     <ErrorDialogPrimitive.Root>
       <ErrorDialogPrimitive.Backdrop className={"absolute inset-0 z-40 bg-black/20 backdrop-blur-lg opacity-100 backdrop-saturate-150 not-data-open:hidden transition-[opacity,backdrop-filter] delay-100 ease-out motion-reduce:duration-50 data-starting-style:opacity-0 data-ending-style:opacity-0 data-ending-style:delay-0 motion-reduce:delay-0 duration-350"} />
-      <ErrorDialogPrimitive.Popup className={state => cn("text-white backdrop-blur-lg backdrop-saturate-150", "after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit]", "after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.1),inset_0_0_0_1px_rgb(255_255_255/0.05)]", "[@media(prefers-reduced-transparency:reduce)]:bg-black [@media(prefers-reduced-transparency:reduce)]:ring-1 [@media(prefers-reduced-transparency:reduce)]:ring-transparent", "[@media(prefers-reduced-transparency:reduce)]:backdrop-filter-none", "[@media(prefers-reduced-transparency:reduce)]:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "contrast-more:bg-black contrast-more:ring-1 contrast-more:ring-transparent contrast-more:backdrop-filter-none", "contrast-more:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "forced-colors:bg-[Canvas] forced-colors:ring-1 forced-colors:ring-[CanvasText]", "forced-colors:after:shadow-[inset_0_1px_0_0_CanvasText,inset_0_0_0_1px_CanvasText]", "shadow-sm shadow-black/15 ring-1 ring-black/10", "[@media(prefers-reduced-transparency:reduce)]:shadow-sm [@media(prefers-reduced-transparency:reduce)]:shadow-black/15", "contrast-more:shadow-sm contrast-more:shadow-black/15", "forced-colors:shadow-sm forced-colors:shadow-black/15", "bg-white/10", "absolute top-1/2 left-1/2 z-50 flex max-h-[calc(100%-0.5rem)] -translate-x-1/2 -translate-y-1/2 flex-col gap-3 outline-none not-data-open:hidden", "transition-[opacity,scale] delay-100 ease-out motion-reduce:duration-50", "data-starting-style:scale-95 data-starting-style:opacity-0", "data-ending-style:scale-95 data-ending-style:opacity-0 data-ending-style:delay-0", "motion-reduce:delay-0", "w-[calc(100%-1.5rem)] max-w-72 rounded-[1.75rem] p-3 text-white", "text-shadow-[0_1px_0_rgb(0_0_0/0.25)] duration-350", resolveClassName(className, state))} {...props}>
-        <div className={"flex min-h-0 flex-col gap-2 overflow-y-auto px-2 pt-2 pb-1.5"}>
-          <ErrorDialogPrimitive.Title className={"m-0 text-media-lg font-semibold leading-tight"} />
-          <ErrorDialogPrimitive.Description className={"m-0 opacity-70 wrap-anywhere"} />
+      <ErrorDialogPrimitive.Popup
+        className={state => cn("text-white backdrop-blur-lg backdrop-saturate-150", "after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit]", "after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.1),inset_0_0_0_1px_rgb(255_255_255/0.05)]", "[@media(prefers-reduced-transparency:reduce)]:bg-black [@media(prefers-reduced-transparency:reduce)]:ring-1 [@media(prefers-reduced-transparency:reduce)]:ring-transparent", "[@media(prefers-reduced-transparency:reduce)]:backdrop-filter-none", "[@media(prefers-reduced-transparency:reduce)]:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "contrast-more:bg-black contrast-more:ring-1 contrast-more:ring-transparent contrast-more:backdrop-filter-none", "contrast-more:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "forced-colors:bg-[Canvas] forced-colors:ring-1 forced-colors:ring-[CanvasText]", "forced-colors:after:shadow-[inset_0_1px_0_0_CanvasText,inset_0_0_0_1px_CanvasText]", "shadow-sm shadow-black/15 ring-1 ring-black/10", "[@media(prefers-reduced-transparency:reduce)]:shadow-sm [@media(prefers-reduced-transparency:reduce)]:shadow-black/15", "contrast-more:shadow-sm contrast-more:shadow-black/15", "forced-colors:shadow-sm forced-colors:shadow-black/15", "bg-white/10", "absolute top-1/2 left-1/2 z-50 flex -translate-x-1/2 -translate-y-1/2 flex-col gap-3 outline-none", "transition-[opacity,scale] delay-100 ease-out motion-reduce:duration-50", "data-starting-style:scale-95 data-starting-style:opacity-0", "data-ending-style:scale-95 data-ending-style:opacity-0 data-ending-style:delay-0", "group-data-starting-style/dialog:scale-95 group-data-starting-style/dialog:opacity-0", "group-data-ending-style/dialog:scale-95 group-data-ending-style/dialog:opacity-0 group-data-ending-style/dialog:delay-0", "motion-reduce:delay-0", "w-[calc(100%-1.5rem)] max-w-72 rounded-[1.75rem] p-3 text-white", "text-shadow-[0_1px_0_rgb(0_0_0/0.25)] duration-350", 'media-dialog-popup', resolveClassName(className, state))}
+        {...props}
+      >
+        <div className={"flex flex-col gap-2 px-2 pt-2 pb-1.5"}>
+          <ErrorDialogPrimitive.Title className={"my-[0.83em] text-media-lg font-semibold leading-tight"} />
+          <ErrorDialogPrimitive.Description className={"my-[1em] opacity-70 wrap-anywhere"} />
         </div>
-        <div className={"flex shrink-0 gap-2"}>
+        <div className={"flex gap-2"}>
           <ErrorDialogPrimitive.Close className={cn("grid min-h-0 shrink-0 touch-manipulation select-none place-items-center rounded-media-control border-0 bg-transparent p-0 text-center text-inherit", "cursor-pointer outline-2 outline-transparent -outline-offset-2", "will-change-[scale] transition-[background-color,color,outline-offset,scale] duration-150 ease-out", "not-aria-disabled:hover:bg-media-control-hover not-aria-disabled:hover:text-media-accent-text", "not-aria-disabled:focus-visible:bg-media-control-hover not-aria-disabled:focus-visible:text-media-accent-text", "not-aria-disabled:aria-expanded:bg-media-control-hover not-aria-disabled:aria-expanded:text-media-accent-text", "focus-visible:outline-white focus-visible:outline-offset-2", "not-aria-disabled:active:scale-[0.97]", "motion-reduce:scale-100 motion-reduce:transition-[background-color,color] motion-reduce:will-change-auto", "aria-disabled:cursor-not-allowed aria-disabled:opacity-50", "size-9", "w-full flex-1 bg-media-accent! px-4 py-2 font-medium text-media-accent-text!", "h-9")} />
         </div>
       </ErrorDialogPrimitive.Popup>
@@ -1817,7 +1823,7 @@ import { cn } from "@videojs/utils/style";
 export interface ContainerProps extends ContainerPrimitive.Props {}
 export function Container({ children, className, ...props }: ContainerProps) {
   return (
-    <ContainerPrimitive className={cn("relative isolate block h-full w-full overflow-hidden rounded-[var(--media-video-border-radius)] bg-black @container/media-root [container-type:size]", "[&:has([role=alertdialog][data-open])_.media-controls]:hidden", "[--spacing:var(--media-spacing)] font-media text-media leading-normal subpixel-antialiased", "outline-2 -outline-offset-4 outline-transparent transition-[outline-offset,outline-color] duration-100 ease-out motion-reduce:duration-50", "focus-visible:outline-[light-dark(rgb(0_0_0),rgb(255_255_255))] focus-visible:outline-offset-2 forced-colors:focus-visible:outline-[CanvasText]", "pointer-fine:not-data-controls-visible:cursor-none", "after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit]", "forced-colors:after:shadow-[inset_0_0_0_1px_CanvasText] [&:fullscreen]:after:hidden", "[&:fullscreen]:[--media-video-border-radius:0] [&:fullscreen]:[--media-object-fit:contain]", "min-[1280px]:[&:fullscreen]:[--media-scale:1.25] min-[1536px]:[&:fullscreen]:[--media-scale:1.5]", "min-[1920px]:[&:fullscreen]:[--media-scale:1.75]", "after:shadow-[inset_0_0_0_1px_light-dark(rgb(0_0_0/0.1),rgb(255_255_255/0.15))]", className)} {...props}>
+    <ContainerPrimitive className={cn("relative isolate block h-full w-full overflow-hidden rounded-[var(--media-video-border-radius)] bg-black @container/media-root [container-type:size]", "[--spacing:var(--media-spacing)] font-media text-media leading-normal subpixel-antialiased", "outline-2 -outline-offset-4 outline-transparent transition-[outline-offset,outline-color] duration-100 ease-out motion-reduce:duration-50", "focus-visible:outline-[light-dark(rgb(0_0_0),rgb(255_255_255))] focus-visible:outline-offset-2 forced-colors:focus-visible:outline-[CanvasText]", "pointer-fine:not-data-controls-visible:cursor-none", "after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit]", "forced-colors:after:shadow-[inset_0_0_0_1px_CanvasText] [&:fullscreen]:after:hidden", "[&:fullscreen]:[--media-video-border-radius:0] [&:fullscreen]:[--media-object-fit:contain]", "min-[1280px]:[&:fullscreen]:[--media-scale:1.25] min-[1536px]:[&:fullscreen]:[--media-scale:1.5]", "min-[1920px]:[&:fullscreen]:[--media-scale:1.75]", "after:shadow-[inset_0_0_0_1px_light-dark(rgb(0_0_0/0.1),rgb(255_255_255/0.15))]", className)} {...props}>
       {children}
     </ContainerPrimitive>
   );
@@ -2850,7 +2856,10 @@ export function ErrorDialog({ className, ...props }: ErrorDialogProps = {}) {
   return (
     <ErrorDialogPrimitive.Root>
       <ErrorDialogPrimitive.Backdrop className={"media-dialog-backdrop"} />
-      <ErrorDialogPrimitive.Popup className={state => cn("media-feedback-surface", "media-dialog-popup", resolveClassName(className, state))} {...props}>
+      <ErrorDialogPrimitive.Popup
+        className={state => cn("media-feedback-surface", "media-dialog-popup", 'media-dialog-popup', resolveClassName(className, state))}
+        {...props}
+      >
         <div className={"media-dialog-content"}>
           <ErrorDialogPrimitive.Title className={"media-dialog-title"} />
           <ErrorDialogPrimitive.Description className={"media-dialog-description"} />
@@ -4093,12 +4102,15 @@ export function ErrorDialog({ className, ...props }: ErrorDialogProps = {}) {
   return (
     <ErrorDialogPrimitive.Root>
       <ErrorDialogPrimitive.Backdrop className={"absolute inset-0 z-40 bg-black/20 backdrop-blur-lg opacity-100 not-data-open:hidden transition-[opacity,backdrop-filter] delay-100 ease-out motion-reduce:duration-50 data-starting-style:opacity-0 data-ending-style:opacity-0 data-ending-style:delay-0 motion-reduce:delay-0 backdrop-saturate-120 duration-150"} />
-      <ErrorDialogPrimitive.Popup className={state => cn("", "absolute top-1/2 left-1/2 z-50 flex max-h-[calc(100%-0.5rem)] -translate-x-1/2 -translate-y-1/2 flex-col gap-3 outline-none not-data-open:hidden", "transition-[opacity,scale] delay-100 ease-out motion-reduce:duration-50", "data-starting-style:scale-95 data-starting-style:opacity-0", "data-ending-style:scale-95 data-ending-style:opacity-0 data-ending-style:delay-0", "motion-reduce:delay-0", "w-full max-w-64 p-4 text-white", "text-shadow-[0_1px_0_rgb(0_0_0/0.5)] duration-150", resolveClassName(className, state))} {...props}>
-        <div className={"flex min-h-0 flex-col gap-2 overflow-y-auto py-1.5"}>
-          <ErrorDialogPrimitive.Title className={"m-0 text-media-lg font-semibold leading-tight"} />
-          <ErrorDialogPrimitive.Description className={"m-0 opacity-70 wrap-anywhere"} />
+      <ErrorDialogPrimitive.Popup
+        className={state => cn("", "absolute top-1/2 left-1/2 z-50 flex -translate-x-1/2 -translate-y-1/2 flex-col gap-3 outline-none", "transition-[opacity,scale] delay-100 ease-out motion-reduce:duration-50", "data-starting-style:scale-95 data-starting-style:opacity-0", "data-ending-style:scale-95 data-ending-style:opacity-0 data-ending-style:delay-0", "group-data-starting-style/dialog:scale-95 group-data-starting-style/dialog:opacity-0", "group-data-ending-style/dialog:scale-95 group-data-ending-style/dialog:opacity-0 group-data-ending-style/dialog:delay-0", "motion-reduce:delay-0", "w-full max-w-64 p-4 text-white", "text-shadow-[0_1px_0_rgb(0_0_0/0.5)] duration-150", 'media-dialog-popup', resolveClassName(className, state))}
+        {...props}
+      >
+        <div className={"flex flex-col gap-2 py-1.5"}>
+          <ErrorDialogPrimitive.Title className={"my-[0.83em] text-media-lg font-semibold leading-tight"} />
+          <ErrorDialogPrimitive.Description className={"my-[1em] opacity-70 wrap-anywhere"} />
         </div>
-        <div className={"flex shrink-0 gap-2"}>
+        <div className={"flex gap-2"}>
           <ErrorDialogPrimitive.Close className={cn("grid min-h-0 shrink-0 touch-manipulation select-none place-items-center rounded-media-control border-0 bg-transparent p-0 text-center text-inherit", "cursor-pointer outline-2 outline-transparent -outline-offset-2", "will-change-[scale] transition-[background-color,color,outline-offset,scale] duration-150 ease-out", "not-aria-disabled:hover:bg-media-control-hover not-aria-disabled:hover:text-media-accent-text", "not-aria-disabled:focus-visible:bg-media-control-hover not-aria-disabled:focus-visible:text-media-accent-text", "not-aria-disabled:aria-expanded:bg-media-control-hover not-aria-disabled:aria-expanded:text-media-accent-text", "focus-visible:outline-white focus-visible:outline-offset-2", "not-aria-disabled:active:scale-[0.97]", "motion-reduce:scale-100 motion-reduce:transition-[background-color,color] motion-reduce:will-change-auto", "aria-disabled:cursor-not-allowed aria-disabled:opacity-50", "size-9.5", "supports-[corner-shape:squircle]:rounded-[--spacing(4)]", "supports-[corner-shape:squircle]:[corner-shape:squircle]", "w-full flex-1 bg-media-accent! px-4 py-2 font-medium text-media-accent-text!", "h-9.5")} />
         </div>
       </ErrorDialogPrimitive.Popup>
@@ -4278,7 +4290,7 @@ import { cn } from "@videojs/utils/style";
 export interface ContainerProps extends ContainerPrimitive.Props {}
 export function Container({ children, className, ...props }: ContainerProps) {
   return (
-    <ContainerPrimitive className={cn("relative isolate block h-full w-full overflow-hidden rounded-[var(--media-video-border-radius)] bg-black @container/media-root [container-type:size]", "[&:has([role=alertdialog][data-open])_.media-controls]:hidden", "[--spacing:var(--media-spacing)] font-media text-media leading-normal subpixel-antialiased", "outline-2 -outline-offset-4 outline-transparent transition-[outline-offset,outline-color] duration-100 ease-out motion-reduce:duration-50", "focus-visible:outline-[light-dark(rgb(0_0_0),rgb(255_255_255))] focus-visible:outline-offset-2 forced-colors:focus-visible:outline-[CanvasText]", "pointer-fine:not-data-controls-visible:cursor-none", "after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit]", "forced-colors:after:shadow-[inset_0_0_0_1px_CanvasText] [&:fullscreen]:after:hidden", "[&:fullscreen]:[--media-video-border-radius:0] [&:fullscreen]:[--media-object-fit:contain]", "min-[1280px]:[&:fullscreen]:[--media-scale:1.25] min-[1536px]:[&:fullscreen]:[--media-scale:1.5]", "min-[1920px]:[&:fullscreen]:[--media-scale:1.75]", "after:shadow-[inset_0_0_0_1px_light-dark(rgb(0_0_0/0.15),rgb(255_255_255/0.15))]", className)} {...props}>
+    <ContainerPrimitive className={cn("relative isolate block h-full w-full overflow-hidden rounded-[var(--media-video-border-radius)] bg-black @container/media-root [container-type:size]", "[--spacing:var(--media-spacing)] font-media text-media leading-normal subpixel-antialiased", "outline-2 -outline-offset-4 outline-transparent transition-[outline-offset,outline-color] duration-100 ease-out motion-reduce:duration-50", "focus-visible:outline-[light-dark(rgb(0_0_0),rgb(255_255_255))] focus-visible:outline-offset-2 forced-colors:focus-visible:outline-[CanvasText]", "pointer-fine:not-data-controls-visible:cursor-none", "after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit]", "forced-colors:after:shadow-[inset_0_0_0_1px_CanvasText] [&:fullscreen]:after:hidden", "[&:fullscreen]:[--media-video-border-radius:0] [&:fullscreen]:[--media-object-fit:contain]", "min-[1280px]:[&:fullscreen]:[--media-scale:1.25] min-[1536px]:[&:fullscreen]:[--media-scale:1.5]", "min-[1920px]:[&:fullscreen]:[--media-scale:1.75]", "after:shadow-[inset_0_0_0_1px_light-dark(rgb(0_0_0/0.15),rgb(255_255_255/0.15))]", className)} {...props}>
       {children}
     </ContainerPrimitive>
   );
@@ -5277,7 +5289,10 @@ export function ErrorDialog({ className, ...props }: Props = {}) {
   return (
     <media-error-dialog className={"media-dialog-root"}>
       <media-dialog-backdrop className={"media-dialog-backdrop"} />
-      <media-dialog-popup className={["media-feedback-surface", "media-dialog-popup", className]} {...props}>
+      <media-dialog-popup
+        className={["media-feedback-surface", "media-dialog-popup", 'media-dialog-popup', className]}
+        {...props}
+      >
         <div className={"media-dialog-content"}>
           <media-dialog-title className={"media-dialog-title"} />
           <media-dialog-description className={"media-dialog-description"} />
@@ -6401,14 +6416,17 @@ import "@videojs/html/ui/error-dialog";
 
 export function ErrorDialog({ className, ...props }: Props = {}) {
   return (
-    <media-error-dialog className={""}>
+    <media-error-dialog className={"group/dialog absolute inset-0 z-40 hidden items-center justify-center outline-none data-[open]:flex"}>
       <media-dialog-backdrop className={"absolute inset-0 z-40 bg-black/20 backdrop-blur-lg opacity-100 backdrop-saturate-150 not-data-open:hidden transition-[opacity,backdrop-filter] delay-100 ease-out motion-reduce:duration-50 data-starting-style:opacity-0 data-ending-style:opacity-0 data-ending-style:delay-0 motion-reduce:delay-0 duration-350"} />
-      <media-dialog-popup className={["text-white backdrop-blur-lg backdrop-saturate-150", "after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit]", "after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.1),inset_0_0_0_1px_rgb(255_255_255/0.05)]", "[@media(prefers-reduced-transparency:reduce)]:bg-black [@media(prefers-reduced-transparency:reduce)]:ring-1 [@media(prefers-reduced-transparency:reduce)]:ring-transparent", "[@media(prefers-reduced-transparency:reduce)]:backdrop-filter-none", "[@media(prefers-reduced-transparency:reduce)]:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "contrast-more:bg-black contrast-more:ring-1 contrast-more:ring-transparent contrast-more:backdrop-filter-none", "contrast-more:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "forced-colors:bg-[Canvas] forced-colors:ring-1 forced-colors:ring-[CanvasText]", "forced-colors:after:shadow-[inset_0_1px_0_0_CanvasText,inset_0_0_0_1px_CanvasText]", "shadow-sm shadow-black/15 ring-1 ring-black/10", "[@media(prefers-reduced-transparency:reduce)]:shadow-sm [@media(prefers-reduced-transparency:reduce)]:shadow-black/15", "contrast-more:shadow-sm contrast-more:shadow-black/15", "forced-colors:shadow-sm forced-colors:shadow-black/15", "bg-white/10", "absolute top-1/2 left-1/2 z-50 flex max-h-[calc(100%-0.5rem)] -translate-x-1/2 -translate-y-1/2 flex-col gap-3 outline-none not-data-open:hidden", "transition-[opacity,scale] delay-100 ease-out motion-reduce:duration-50", "data-starting-style:scale-95 data-starting-style:opacity-0", "data-ending-style:scale-95 data-ending-style:opacity-0 data-ending-style:delay-0", "motion-reduce:delay-0", "w-[calc(100%-1.5rem)] max-w-72 rounded-[1.75rem] p-3 text-white", "text-shadow-[0_1px_0_rgb(0_0_0/0.25)] duration-350", className]} {...props}>
-        <div className={"flex min-h-0 flex-col gap-2 overflow-y-auto px-2 pt-2 pb-1.5"}>
-          <media-dialog-title className={"m-0 text-media-lg font-semibold leading-tight"} />
-          <media-dialog-description className={"m-0 opacity-70 wrap-anywhere"} />
+      <media-dialog-popup
+        className={["text-white backdrop-blur-lg backdrop-saturate-150", "after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit]", "after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.1),inset_0_0_0_1px_rgb(255_255_255/0.05)]", "[@media(prefers-reduced-transparency:reduce)]:bg-black [@media(prefers-reduced-transparency:reduce)]:ring-1 [@media(prefers-reduced-transparency:reduce)]:ring-transparent", "[@media(prefers-reduced-transparency:reduce)]:backdrop-filter-none", "[@media(prefers-reduced-transparency:reduce)]:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "contrast-more:bg-black contrast-more:ring-1 contrast-more:ring-transparent contrast-more:backdrop-filter-none", "contrast-more:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "forced-colors:bg-[Canvas] forced-colors:ring-1 forced-colors:ring-[CanvasText]", "forced-colors:after:shadow-[inset_0_1px_0_0_CanvasText,inset_0_0_0_1px_CanvasText]", "shadow-sm shadow-black/15 ring-1 ring-black/10", "[@media(prefers-reduced-transparency:reduce)]:shadow-sm [@media(prefers-reduced-transparency:reduce)]:shadow-black/15", "contrast-more:shadow-sm contrast-more:shadow-black/15", "forced-colors:shadow-sm forced-colors:shadow-black/15", "bg-white/10", "absolute top-1/2 left-1/2 z-50 flex -translate-x-1/2 -translate-y-1/2 flex-col gap-3 outline-none", "transition-[opacity,scale] delay-100 ease-out motion-reduce:duration-50", "data-starting-style:scale-95 data-starting-style:opacity-0", "data-ending-style:scale-95 data-ending-style:opacity-0 data-ending-style:delay-0", "group-data-starting-style/dialog:scale-95 group-data-starting-style/dialog:opacity-0", "group-data-ending-style/dialog:scale-95 group-data-ending-style/dialog:opacity-0 group-data-ending-style/dialog:delay-0", "motion-reduce:delay-0", "w-[calc(100%-1.5rem)] max-w-72 rounded-[1.75rem] p-3 text-white", "text-shadow-[0_1px_0_rgb(0_0_0/0.25)] duration-350", 'media-dialog-popup', className]}
+        {...props}
+      >
+        <div className={"flex flex-col gap-2 px-2 pt-2 pb-1.5"}>
+          <media-dialog-title className={"my-[0.83em] text-media-lg font-semibold leading-tight"} />
+          <media-dialog-description className={"my-[1em] opacity-70 wrap-anywhere"} />
         </div>
-        <div className={"flex shrink-0 gap-2"}>
+        <div className={"flex gap-2"}>
           <media-dialog-close className={["grid min-h-0 shrink-0 touch-manipulation select-none place-items-center rounded-media-control border-0 bg-transparent p-0 text-center text-inherit", "cursor-pointer outline-2 outline-transparent -outline-offset-2", "will-change-[scale] transition-[background-color,color,outline-offset,scale] duration-150 ease-out", "not-aria-disabled:hover:bg-media-control-hover not-aria-disabled:hover:text-media-accent-text", "not-aria-disabled:focus-visible:bg-media-control-hover not-aria-disabled:focus-visible:text-media-accent-text", "not-aria-disabled:aria-expanded:bg-media-control-hover not-aria-disabled:aria-expanded:text-media-accent-text", "focus-visible:outline-white focus-visible:outline-offset-2", "not-aria-disabled:active:scale-[0.97]", "motion-reduce:scale-100 motion-reduce:transition-[background-color,color] motion-reduce:will-change-auto", "aria-disabled:cursor-not-allowed aria-disabled:opacity-50", "size-9", "w-full flex-1 bg-media-accent! px-4 py-2 font-medium text-media-accent-text!", "h-9"]} />
         </div>
       </media-dialog-popup>
@@ -6568,7 +6586,7 @@ import "@videojs/html/ui/container";
 
 export function Container({ children, className, ...props }: PropsWithChildren) {
   return (
-    <media-container className={["relative isolate block h-full w-full overflow-hidden rounded-[var(--media-video-border-radius)] bg-black @container/media-root [container-type:size]", "[&:has([role=alertdialog][data-open])_.media-controls]:hidden", "[--spacing:var(--media-spacing)] font-media text-media leading-normal subpixel-antialiased", "outline-2 -outline-offset-4 outline-transparent transition-[outline-offset,outline-color] duration-100 ease-out motion-reduce:duration-50", "focus-visible:outline-[light-dark(rgb(0_0_0),rgb(255_255_255))] focus-visible:outline-offset-2 forced-colors:focus-visible:outline-[CanvasText]", "pointer-fine:not-data-controls-visible:cursor-none", "after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit]", "forced-colors:after:shadow-[inset_0_0_0_1px_CanvasText] [&:fullscreen]:after:hidden", "[&:fullscreen]:[--media-video-border-radius:0] [&:fullscreen]:[--media-object-fit:contain]", "min-[1280px]:[&:fullscreen]:[--media-scale:1.25] min-[1536px]:[&:fullscreen]:[--media-scale:1.5]", "min-[1920px]:[&:fullscreen]:[--media-scale:1.75]", "after:shadow-[inset_0_0_0_1px_light-dark(rgb(0_0_0/0.1),rgb(255_255_255/0.15))]", className]} {...props}>
+    <media-container className={["relative isolate block h-full w-full overflow-hidden rounded-[var(--media-video-border-radius)] bg-black @container/media-root [container-type:size]", "[--spacing:var(--media-spacing)] font-media text-media leading-normal subpixel-antialiased", "outline-2 -outline-offset-4 outline-transparent transition-[outline-offset,outline-color] duration-100 ease-out motion-reduce:duration-50", "focus-visible:outline-[light-dark(rgb(0_0_0),rgb(255_255_255))] focus-visible:outline-offset-2 forced-colors:focus-visible:outline-[CanvasText]", "pointer-fine:not-data-controls-visible:cursor-none", "after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit]", "forced-colors:after:shadow-[inset_0_0_0_1px_CanvasText] [&:fullscreen]:after:hidden", "[&:fullscreen]:[--media-video-border-radius:0] [&:fullscreen]:[--media-object-fit:contain]", "min-[1280px]:[&:fullscreen]:[--media-scale:1.25] min-[1536px]:[&:fullscreen]:[--media-scale:1.5]", "min-[1920px]:[&:fullscreen]:[--media-scale:1.75]", "after:shadow-[inset_0_0_0_1px_light-dark(rgb(0_0_0/0.1),rgb(255_255_255/0.15))]", className]} {...props}>
       {children}
     </media-container>
   );
@@ -7504,7 +7522,10 @@ export function ErrorDialog({ className, ...props }: Props = {}) {
   return (
     <media-error-dialog className={"media-dialog-root"}>
       <media-dialog-backdrop className={"media-dialog-backdrop"} />
-      <media-dialog-popup className={["media-feedback-surface", "media-dialog-popup", className]} {...props}>
+      <media-dialog-popup
+        className={["media-feedback-surface", "media-dialog-popup", 'media-dialog-popup', className]}
+        {...props}
+      >
         <div className={"media-dialog-content"}>
           <media-dialog-title className={"media-dialog-title"} />
           <media-dialog-description className={"media-dialog-description"} />
@@ -8630,14 +8651,17 @@ import "@videojs/html/ui/error-dialog";
 
 export function ErrorDialog({ className, ...props }: Props = {}) {
   return (
-    <media-error-dialog className={""}>
+    <media-error-dialog className={"group/dialog absolute inset-0 z-40 hidden items-center justify-center outline-none data-[open]:flex"}>
       <media-dialog-backdrop className={"absolute inset-0 z-40 bg-black/20 backdrop-blur-lg opacity-100 not-data-open:hidden transition-[opacity,backdrop-filter] delay-100 ease-out motion-reduce:duration-50 data-starting-style:opacity-0 data-ending-style:opacity-0 data-ending-style:delay-0 motion-reduce:delay-0 backdrop-saturate-120 duration-150"} />
-      <media-dialog-popup className={["", "absolute top-1/2 left-1/2 z-50 flex max-h-[calc(100%-0.5rem)] -translate-x-1/2 -translate-y-1/2 flex-col gap-3 outline-none not-data-open:hidden", "transition-[opacity,scale] delay-100 ease-out motion-reduce:duration-50", "data-starting-style:scale-95 data-starting-style:opacity-0", "data-ending-style:scale-95 data-ending-style:opacity-0 data-ending-style:delay-0", "motion-reduce:delay-0", "w-full max-w-64 p-4 text-white", "text-shadow-[0_1px_0_rgb(0_0_0/0.5)] duration-150", className]} {...props}>
-        <div className={"flex min-h-0 flex-col gap-2 overflow-y-auto py-1.5"}>
-          <media-dialog-title className={"m-0 text-media-lg font-semibold leading-tight"} />
-          <media-dialog-description className={"m-0 opacity-70 wrap-anywhere"} />
+      <media-dialog-popup
+        className={["", "absolute top-1/2 left-1/2 z-50 flex -translate-x-1/2 -translate-y-1/2 flex-col gap-3 outline-none", "transition-[opacity,scale] delay-100 ease-out motion-reduce:duration-50", "data-starting-style:scale-95 data-starting-style:opacity-0", "data-ending-style:scale-95 data-ending-style:opacity-0 data-ending-style:delay-0", "group-data-starting-style/dialog:scale-95 group-data-starting-style/dialog:opacity-0", "group-data-ending-style/dialog:scale-95 group-data-ending-style/dialog:opacity-0 group-data-ending-style/dialog:delay-0", "motion-reduce:delay-0", "w-full max-w-64 p-4 text-white", "text-shadow-[0_1px_0_rgb(0_0_0/0.5)] duration-150", 'media-dialog-popup', className]}
+        {...props}
+      >
+        <div className={"flex flex-col gap-2 py-1.5"}>
+          <media-dialog-title className={"my-[0.83em] text-media-lg font-semibold leading-tight"} />
+          <media-dialog-description className={"my-[1em] opacity-70 wrap-anywhere"} />
         </div>
-        <div className={"flex shrink-0 gap-2"}>
+        <div className={"flex gap-2"}>
           <media-dialog-close className={["grid min-h-0 shrink-0 touch-manipulation select-none place-items-center rounded-media-control border-0 bg-transparent p-0 text-center text-inherit", "cursor-pointer outline-2 outline-transparent -outline-offset-2", "will-change-[scale] transition-[background-color,color,outline-offset,scale] duration-150 ease-out", "not-aria-disabled:hover:bg-media-control-hover not-aria-disabled:hover:text-media-accent-text", "not-aria-disabled:focus-visible:bg-media-control-hover not-aria-disabled:focus-visible:text-media-accent-text", "not-aria-disabled:aria-expanded:bg-media-control-hover not-aria-disabled:aria-expanded:text-media-accent-text", "focus-visible:outline-white focus-visible:outline-offset-2", "not-aria-disabled:active:scale-[0.97]", "motion-reduce:scale-100 motion-reduce:transition-[background-color,color] motion-reduce:will-change-auto", "aria-disabled:cursor-not-allowed aria-disabled:opacity-50", "size-9.5", "supports-[corner-shape:squircle]:rounded-[--spacing(4)]", "supports-[corner-shape:squircle]:[corner-shape:squircle]", "w-full flex-1 bg-media-accent! px-4 py-2 font-medium text-media-accent-text!", "h-9.5"]} />
         </div>
       </media-dialog-popup>
@@ -8797,7 +8821,7 @@ import "@videojs/html/ui/container";
 
 export function Container({ children, className, ...props }: PropsWithChildren) {
   return (
-    <media-container className={["relative isolate block h-full w-full overflow-hidden rounded-[var(--media-video-border-radius)] bg-black @container/media-root [container-type:size]", "[&:has([role=alertdialog][data-open])_.media-controls]:hidden", "[--spacing:var(--media-spacing)] font-media text-media leading-normal subpixel-antialiased", "outline-2 -outline-offset-4 outline-transparent transition-[outline-offset,outline-color] duration-100 ease-out motion-reduce:duration-50", "focus-visible:outline-[light-dark(rgb(0_0_0),rgb(255_255_255))] focus-visible:outline-offset-2 forced-colors:focus-visible:outline-[CanvasText]", "pointer-fine:not-data-controls-visible:cursor-none", "after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit]", "forced-colors:after:shadow-[inset_0_0_0_1px_CanvasText] [&:fullscreen]:after:hidden", "[&:fullscreen]:[--media-video-border-radius:0] [&:fullscreen]:[--media-object-fit:contain]", "min-[1280px]:[&:fullscreen]:[--media-scale:1.25] min-[1536px]:[&:fullscreen]:[--media-scale:1.5]", "min-[1920px]:[&:fullscreen]:[--media-scale:1.75]", "after:shadow-[inset_0_0_0_1px_light-dark(rgb(0_0_0/0.15),rgb(255_255_255/0.15))]", className]} {...props}>
+    <media-container className={["relative isolate block h-full w-full overflow-hidden rounded-[var(--media-video-border-radius)] bg-black @container/media-root [container-type:size]", "[--spacing:var(--media-spacing)] font-media text-media leading-normal subpixel-antialiased", "outline-2 -outline-offset-4 outline-transparent transition-[outline-offset,outline-color] duration-100 ease-out motion-reduce:duration-50", "focus-visible:outline-[light-dark(rgb(0_0_0),rgb(255_255_255))] focus-visible:outline-offset-2 forced-colors:focus-visible:outline-[CanvasText]", "pointer-fine:not-data-controls-visible:cursor-none", "after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit]", "forced-colors:after:shadow-[inset_0_0_0_1px_CanvasText] [&:fullscreen]:after:hidden", "[&:fullscreen]:[--media-video-border-radius:0] [&:fullscreen]:[--media-object-fit:contain]", "min-[1280px]:[&:fullscreen]:[--media-scale:1.25] min-[1536px]:[&:fullscreen]:[--media-scale:1.5]", "min-[1920px]:[&:fullscreen]:[--media-scale:1.75]", "after:shadow-[inset_0_0_0_1px_light-dark(rgb(0_0_0/0.15),rgb(255_255_255/0.15))]", className]} {...props}>
       {children}
     </media-container>
   );
