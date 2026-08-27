@@ -55,14 +55,12 @@ The easiest path is the CDN:
 ```html
 <script type="module" src="{{VJS10_HTML_CDN_BASE}}/video-minimal.js"></script>
 
-<video-player>
+<video-player poster="/path/to/poster.jpg">
   <video-minimal-skin>
     <video src="/path/to/video.mp4" playsinline>
       <track kind="captions" label="English" src="/path/to/captions/en.vtt" srclang="en" default />
       <track kind="metadata" label="thumbnails" src="/path/to/storyboard.vtt" default />
     </video>
-
-    <img slot="poster" src="/path/to/poster.jpg" alt="" />
   </video-minimal-skin>
 </video-player>
 ```
@@ -77,7 +75,7 @@ import '@videojs/html/video/minimal-skin';
 ### Notes
 
 - The skin attaches its styles automatically to its shadow root.
-- The poster is a slotted `img` rather than a `poster` attribute, which gives the skin control over how it appears. That's much like Plyr's `data-poster`.
+- The poster moves from `data-poster` on the media to `poster` on `<video-player>`. The skin reads that value and controls how the poster appears. To supply your own image element, see <DocsLink slug="how-to/add-a-poster-and-loading-placeholder">Add a poster and loading placeholder</DocsLink>.
 - There's also a default skin with a modern, frosted appearance that some may prefer. Try it by removing the `-minimal` suffix from the script `src` if you're using the CDN, or the `minimal-` prefix from the imports.
 
 </FrameworkCase>
@@ -119,7 +117,7 @@ export function AppVideoPlayer({ origin }: AppVideoPlayerProps) {
 ### Notes
 
 - `@videojs/react/video` is a <DocsLink slug="concepts/presets">preset</DocsLink>: a player, a skin, and a media element that already fit together. `VideoPlayer` is the piece that owns the state, built from the standard set of <DocsLink slug="concepts/features">features</DocsLink> for video.
-- The poster URL is metadata on `VideoPlayer`. The skin reads that metadata and controls how the poster appears. To replace the rendered image, pass `renderPoster` to the skin.
+- The poster URL is metadata on `VideoPlayer`. The skin reads that metadata and controls how the poster appears. To replace the rendered image, pass `renderPoster` to the skin — see <DocsLink slug="how-to/add-a-poster-and-loading-placeholder">Add a poster and loading placeholder</DocsLink>.
 - This example assumes all your files for a given asset live in the same path, using consistent filenames. This will almost certainly need adjusting for your implementation.
 - If `origin` points somewhere other than your page's origin, add `crossOrigin="anonymous"` to `<Video>` and serve those files with CORS headers. A cross-origin thumbnail track only loads when the media element is CORS-enabled. See <DocsLink slug="reference/thumbnail">Thumbnail</DocsLink>.
 - There's also a default skin with a modern, frosted appearance that some may prefer. Try it by switching the CSS import filename to `skin.css` and the `MinimalVideoSkin` import and usage to `VideoSkin`.
@@ -350,7 +348,7 @@ Here's a matrix for configuration options in Plyr and how each maps to Video.js 
 | `controls` | The <DocsLink slug="concepts/skins">skins</DocsLink> include all the common controls, laid out in a familiar way that users would expect. If you want to customize the skin beyond basic colors, you can [eject the skin](#eject-a-skin) and change layout, styles, or icons. |
 | `settings` | Included automatically in the skins when quality, speed, audio tracks, or captions are available. |
 | `autoplay`, `muted`, `loop`, `playsinline`, `preload` | These are attributes on your media (e.g. `<video>`) component. |
-| `poster` / `data-poster` | In HTML, slot an image into the skin. In React, set `poster` on `VideoPlayer`. See [Basic migration](#basic-migration). |
+| `poster` / `data-poster` | Set `poster` on `<video-player>` or `VideoPlayer`. See [Basic migration](#basic-migration). |
 | `ratio` | Set `aspect-ratio` in CSS on the skin component. |
 | `hideControls` | Preset skins auto-hide controls based on activity. The delay is currently not configurable. |
 | `clickToPlay` | Preset video skins include click and tap gestures. [Eject the skin](#eject-a-skin) to remove or change them. |

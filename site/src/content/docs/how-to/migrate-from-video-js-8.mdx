@@ -82,14 +82,12 @@ v10 ships web components, so the migration keeps its declarative feel. One scrip
 ```html
 <script type="module" src="{{VJS10_HTML_CDN_BASE}}/video.js"></script>
 
-<video-player>
+<video-player poster="/poster.jpg">
   <video-skin class="aspect-video">
     <video src="/video.mp4" preload="auto" playsinline>
       <track kind="captions" src="/captions/en.vtt" srclang="en" label="English" default />
       <track kind="metadata" src="/storyboard.vtt" label="thumbnails" default />
     </video>
-
-    <img slot="poster" src="/poster.jpg" alt="" />
   </video-skin>
 </video-player>
 ```
@@ -105,7 +103,7 @@ Four differences worth understanding, because each one is a pattern you'll see a
 
 - **No `class="video-js"`, no `data-setup`, no `videojs()` call.** The custom elements register themselves and wire up when the browser upgrades them. Nothing scans the page looking for players.
 - **No `controls` attribute.** The skin *is* the controls. Including a skin is how you ask for them, which is also how you opt out: leave it out and you get a player with no UI.
-- **The poster is a slotted image, not an attribute.** That's what lets the skin control how it appears, rather than the browser.
+- **The poster is player metadata, not a media attribute.** Set `poster` on `<video-player>`, and the skin, not the browser, controls how it appears. To supply your own image element, see <DocsLink slug="how-to/add-a-poster-and-loading-placeholder">Add a poster and loading placeholder</DocsLink>.
 - **Your `<track>` elements don't change.** Captions, subtitles, chapters, and thumbnails are all still tracks, and the skin shows the matching controls when it finds them.
 
 There's also a minimal skin, closer to v8's control bar if the default's frosted look is too much of a change. Swap `cdn/video.js` for `cdn/video-minimal.js`.
@@ -232,7 +230,7 @@ The poster belongs to player state rather than the media, which lets the skin co
 ```
 </FrameworkCase>
 
-The packaged skins do not place the title in their default layouts. Add the <DocsLink slug="reference/title">Title</DocsLink> component as a child of the skin, or place it in an ejected or custom layout. See the <DocsLink slug="reference/poster">Poster</DocsLink> reference for poster rendering options.
+The packaged skins do not place the title in their default layouts. Add the <DocsLink slug="reference/title">Title</DocsLink> component as a child of the skin, or place it in an ejected or custom layout. For poster rendering options — including placeholders and custom image elements — see <DocsLink slug="how-to/add-a-poster-and-loading-placeholder">Add a poster and loading placeholder</DocsLink> and the <DocsLink slug="reference/poster">Poster</DocsLink> reference.
 
 ### Your CSS
 
