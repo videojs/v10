@@ -59,8 +59,6 @@ export function MyPlayer() {
 
 </FrameworkCase>
 
-When the player and media component both choose a poster, the player's `poster` wins. See <DocsLink slug="reference/feature-metadata">Metadata</DocsLink> for how the player combines those values.
-
 ## Set a poster on the player
 
 When the media has no poster of its own, set the player's `poster` to an image URL:
@@ -97,6 +95,8 @@ export function MyPlayer() {
 </FrameworkCase>
 
 If you use a ready-made skin, it includes <DocsLink slug="reference/poster">Poster</DocsLink> and shows the image automatically. If you build your own UI, add Poster yourself. It hides after the user plays or seeks.
+
+When the player and the media component both choose a poster, the player's `poster` wins. See <DocsLink slug="reference/feature-metadata">Metadata</DocsLink> for how the player combines those values.
 
 Posters are decorative by default, with an empty `alt`. If the image communicates something that is not available elsewhere, add `alt` text when you customize the poster image.
 
