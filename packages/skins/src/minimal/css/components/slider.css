@@ -292,11 +292,11 @@
     .media-slider__thumbnail {
       --media-thumbnail-max-width: var(--media-max-size);
       --media-thumbnail-max-height: var(--media-max-size);
-      bottom: calc(100% + (var(--media-spacing) * 11));
+      bottom: calc(100% + (var(--media-spacing) * 14));
     }
 
     .media-slider__value {
-      bottom: calc(100% + (var(--media-spacing) * 5));
+      bottom: calc(100% + (var(--media-spacing) * 7));
       display: flex;
       flex-direction: row-reverse;
       gap: calc(var(--media-spacing) * 2);

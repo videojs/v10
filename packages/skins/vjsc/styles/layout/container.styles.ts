@@ -8,8 +8,11 @@ export default styles({
       className: 'media-container',
       scopeRoot: true,
       utilities: [
-        'relative isolate block h-full w-full overflow-hidden rounded-[var(--media-video-border-radius)] bg-black @container/media-root [container-type:size]',
+        'relative isolate block h-full w-full overflow-clip rounded-[var(--media-video-border-radius)] bg-black @container/media-root [container-type:size]',
+        '[&:has([role=alertdialog][data-open])_.media-controls]:hidden',
         '[--spacing:var(--media-spacing)] font-media text-media leading-normal subpixel-antialiased',
+        '[--media-shadow-current-color:oklch(from_currentColor_0_0_0/clamp(0,calc((l-0.5)*0.5),0.15))]',
+        '[--media-shadow-subtle-current-color:oklch(from_var(--media-shadow-current-color)_l_c_h/calc(alpha*0.4))]',
         'outline-2 -outline-offset-4 outline-transparent transition-[outline-offset,outline-color] duration-100 ease-out motion-reduce:duration-50',
         'focus-visible:outline-[light-dark(rgb(0_0_0),rgb(255_255_255))] focus-visible:outline-offset-2 forced-colors:focus-visible:outline-[CanvasText]',
         'pointer-fine:not-data-controls-visible:cursor-none',

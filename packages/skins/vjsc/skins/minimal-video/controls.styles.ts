@@ -12,7 +12,7 @@ export default styles({
       className: 'media-controls',
       utilities: [
         'group/controls absolute inset-x-1 bottom-1 z-20 flex flex-wrap items-center gap-x-2 rounded-xl bg-transparent text-white',
-        'text-shadow-[0_1px_0_rgb(0_0_0/0.2)]',
+        'text-shadow-[0_1px_0_var(--media-shadow-current-color)]',
         '[@media(prefers-reduced-transparency:reduce)]:bg-black contrast-more:bg-black forced-colors:bg-[Canvas]',
         '[--media-popover-side-offset:--spacing(5)] [--media-tooltip-side-offset:var(--media-popover-side-offset)]',
         '[--media-popover-boundary-offset:--spacing(2)] [--media-tooltip-boundary-offset:var(--media-popover-boundary-offset)]',
@@ -39,7 +39,14 @@ export default styles({
     },
     end: {
       className: 'media-controls-end',
-      utilities: 'flex flex-1 items-center justify-end gap-px @2xl/media-root:flex-none',
+      utilities: [
+        'flex flex-1 items-center justify-end gap-px @2xl/media-root:flex-none',
+        '@max-2xl/media-root:[mask-repeat:no-repeat]',
+        '@max-2xl/media-root:[mask-position:100%_0] @max-2xl/media-root:[mask-size:400%_100%]',
+        '@max-2xl/media-root:[transition:mask-position_50ms_ease-out]',
+        'group-has-[[data-volume-level][aria-expanded=true]]/controls:@max-2xl/media-root:[mask-image:linear-gradient(to_right,transparent_10%,black_25%,black_100%)]',
+        'group-has-[[data-volume-level][aria-expanded=true]]/controls:@max-2xl/media-root:[mask-position:0_0]',
+      ],
     },
     trailing: {
       className: 'media-controls-trailing',
@@ -52,6 +59,7 @@ export default styles({
         '[--media-slider-height:--spacing(5)]',
         '@2xl/media-root:order-none @2xl/media-root:min-w-0 @2xl/media-root:flex-1 @2xl/media-root:flex-row',
         '@2xl/media-root:[--media-slider-height:--spacing(8)]',
+        '@2xl/media-root:[mask-repeat:no-repeat]',
         '@2xl/media-root:[mask-position:100%_0] @2xl/media-root:[mask-size:200%_100%]',
         '@2xl/media-root:[transition:mask-position_50ms_ease-out]',
         'group-has-[[data-volume-level][aria-expanded=true]]/controls:@2xl/media-root:[mask-image:linear-gradient(to_right,transparent_10%,black_25%,black_100%)]',
@@ -67,16 +75,17 @@ export default styles({
       utilities: [
         'hidden cursor-pointer rounded-sm tabular-nums outline-2 -outline-offset-2 outline-transparent',
         'supports-[corner-shape:squircle]:rounded-2xl supports-[corner-shape:squircle]:[corner-shape:squircle]',
+        'transition-[outline-color,outline-offset] duration-100 ease-out',
         'focus-visible:outline-white focus-visible:outline-offset-2 @2xl/media-root:inline',
       ],
     },
     timeSeparator: {
       className: 'media-time-separator',
-      utilities: 'hidden text-current/60 @2xl/media-root:inline',
+      utilities: 'hidden @2xl/media-root:inline @2xl/media-root:text-current/60',
     },
     durationValue: {
       className: 'media-time-duration-value',
-      utilities: 'tabular-nums text-current/60',
+      utilities: 'tabular-nums @2xl/media-root:text-current/60',
     },
   },
 });

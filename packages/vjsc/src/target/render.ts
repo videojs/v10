@@ -1,4 +1,4 @@
-import { type ModuleImports, sliceSource } from '../ast';
+import { createSourceText, type ModuleImports, renderSourceRange, sliceSource } from '../ast';
 import { htmlAttributeName } from './attributes';
 import {
   type ComponentTarget,
@@ -14,12 +14,14 @@ import {
   type TargetNode,
   type TargetOutput,
   type TargetReference,
+  type TargetReplacement,
 } from './definition';
 import { isTargetExpression, isTargetWithProps, readTargetExpression } from './expression';
 import {
   isSourceChildrenToken,
   isSourcePropsToken,
   isSourcePropToken,
+  isTargetReplacement,
   SOURCE_PROPS,
   type SourceChildrenToken,
   type SourcePropsToken,
@@ -51,6 +53,8 @@ export function renderTargetOutput(output: TargetOutput, context: TargetRenderCo
   if (isTargetExpression(output)) return `{${renderTargetExpression(readTargetExpression(output), context)}}`;
 
   if (isTargetWithProps(output)) return renderWithProps(output.children, output.props, context);
+
+  if (isTargetReplacement(output)) return renderTargetReplacement(output, context);
 
   if (isTargetNode(output)) return renderTargetNode(output, context);
 
@@ -121,6 +125,8 @@ function renderChildren(value: unknown, context: TargetRenderContext): string {
 
   if (isTargetWithProps(value)) return renderWithProps(value.children, value.props, context);
 
+  if (isTargetReplacement(value)) return renderTargetReplacement(value, context);
+
   if (isTargetNode(value)) return renderTargetNode(value, context);
 
   if (Array.isArray(value)) return value.map((child) => renderChildren(child, context)).join('');
@@ -132,6 +138,16 @@ function renderChildren(value: unknown, context: TargetRenderContext): string {
   }
 
   throw new Error('vjsc/target: target JSX contains an unsupported child value.');
+}
+
+function renderTargetReplacement(replacement: TargetReplacement, context: TargetRenderContext): string {
+  const output = renderTargetOutput(replacement.output, context);
+  const source = createSourceText(replacement.source.code, [
+    ...replacement.source.edits,
+    { start: replacement.partStart, end: replacement.partEnd, content: output },
+  ]);
+
+  return renderSourceRange(source, replacement.branchStart, replacement.branchEnd).value;
 }
 
 function renderAttribute(name: string, value: unknown, context: TargetRenderContext): string | undefined {

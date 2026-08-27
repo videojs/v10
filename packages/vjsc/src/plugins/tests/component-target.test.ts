@@ -90,9 +90,17 @@ const htmlTarget = defineComponentTarget<typeof schema>()(({ target, element }) 
           strokeWidth: 2,
           xlinkHref: '#icon',
         }),
-      Menu: {
-        Trigger: ({ props, children, id }) => jsx(Button, { commandfor: id('content'), ...props, children }),
-        Content: ({ props, children, id }) => jsx(target.Menu.Content, { id: id('content'), ...props, children }),
+      Menu: ({ parts, id }) => {
+        const contentId = id('content');
+        const trigger = parts.Trigger.one();
+        const content = parts.Content.one();
+
+        return [
+          trigger.replaceWith(jsx(Button, { commandfor: contentId, ...trigger.props, children: trigger.children })),
+          content.replaceWith(
+            jsx(target.Menu.Content, { id: contentId, ...content.props, children: content.children })
+          ),
+        ];
       },
     },
     jsx: {
@@ -172,6 +180,47 @@ describe('componentTargetPlugin', () => {
     expect(source).toContain('import { Scope } from "vjsc/html-runtime/jsx-runtime";');
     expect(source).toContain('import "@fixture/elements";');
     expect(source).toContain('<Scope prefix=');
+  });
+
+  it('preserves wrappers around parts replaced by a component rewrite', async () => {
+    const source = await transform(
+      `
+        import * as $ from '@fixture/components';
+        const Decorator = ({ children }) => children;
+        export const menu = (
+          <$.Menu.Root>
+            <Decorator><$.Menu.Trigger>Open</$.Menu.Trigger></Decorator>
+            <$.Menu.Content>Options</$.Menu.Content>
+          </$.Menu.Root>
+        );
+      `,
+      { targets: [htmlTarget] }
+    );
+
+    expect(source).toContain('<Decorator><button commandfor="__vjsc-id-');
+    expect(source).toContain('>Open</button></Decorator>');
+    expect(source).toContain('<media-menu id="__vjsc-id-');
+    expect(source).not.toContain('<$.');
+  });
+
+  it('rejects replacements that would duplicate one source branch', async () => {
+    await expect(
+      transform(
+        `
+          import * as $ from '@fixture/components';
+          const Decorator = ({ children }) => children;
+          export const menu = (
+            <$.Menu.Root>
+              <Decorator>
+                <$.Menu.Trigger>Open</$.Menu.Trigger>
+                <$.Menu.Content>Options</$.Menu.Content>
+              </Decorator>
+            </$.Menu.Root>
+          );
+        `,
+        { targets: [htmlTarget] }
+      )
+    ).rejects.toThrow('replacing both parts would duplicate their shared wrapper');
   });
 
   it('preserves SVG attribute spelling in HTML target output', async () => {

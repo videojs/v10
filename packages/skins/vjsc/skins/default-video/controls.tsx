@@ -20,7 +20,7 @@ export function DefaultVideoControls() {
         <$.Tooltip.Provider>
           <$.Controls.Group className={[surfaceStyles.root, styles.primary]}>
             <PlayButton />
-            <VolumePopover />
+            <VolumePopover className={styles.volumeButton} />
 
             <$.Controls.Group className={styles.timeSliderGroup}>
               <$.Time.Value className={styles.currentValue} type="current" />
@@ -29,7 +29,7 @@ export function DefaultVideoControls() {
             </$.Controls.Group>
 
             <CaptionsButton className={styles.captionsButton} />
-            <VideoSettingsMenu />
+            <VideoSettingsMenu className={styles.settingsButton} />
           </$.Controls.Group>
 
           <$.Controls.Group className={[surfaceStyles.root, styles.secondary]}>

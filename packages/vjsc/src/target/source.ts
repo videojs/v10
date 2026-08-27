@@ -1,7 +1,7 @@
 import type { JSXAttribute, JSXElement, JSXOpeningElement } from '@oxc-project/types';
 
 import { createSourceText, renderSourceRange, type SourceText } from '../ast';
-import type { SourceProps } from './definition';
+import { type SourceProps, type TargetOutput, type TargetReplacement, TARGET_REPLACEMENT } from './definition';
 
 export const SOURCE_PROPS = Symbol('vjsc/source-props');
 export const SOURCE_PROP = Symbol('vjsc/source-prop');
@@ -129,6 +129,31 @@ export function isSourcePropToken(value: unknown): value is SourcePropToken {
 export function isSourceChildrenToken(value: unknown): value is SourceChildrenToken {
   return Boolean(
     value && typeof value === 'object' && (value as Partial<SourceChildrenToken>)[SOURCE_CHILDREN] === true
+  );
+}
+
+export function createTargetReplacement(
+  source: SourceText,
+  branchStart: number,
+  branchEnd: number,
+  partStart: number,
+  partEnd: number,
+  output: TargetOutput
+): TargetReplacement {
+  return {
+    [TARGET_REPLACEMENT]: true,
+    source,
+    branchStart,
+    branchEnd,
+    partStart,
+    partEnd,
+    output,
+  };
+}
+
+export function isTargetReplacement(value: unknown): value is TargetReplacement {
+  return Boolean(
+    value && typeof value === 'object' && (value as Partial<TargetReplacement>)[TARGET_REPLACEMENT] === true
   );
 }
 

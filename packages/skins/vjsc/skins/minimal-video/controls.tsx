@@ -19,7 +19,7 @@ export function MinimalVideoControls() {
         <$.Tooltip.Provider>
           <$.Controls.Group className={styles.start}>
             <PlayButton />
-            <VolumePopover side="right" orientation="horizontal" />
+            <VolumePopover showTooltip side="right" orientation="horizontal" />
           </$.Controls.Group>
 
           <$.Controls.Group className={styles.timeSliderGroup}>
@@ -28,7 +28,7 @@ export function MinimalVideoControls() {
               <$.Time.Separator className={styles.timeSeparator} />
               <$.Time.Value className={styles.durationValue} type="duration" />
             </$.Time.Group>
-            <TimeSlider />
+            <TimeSlider previewOverflow="clamp" />
           </$.Controls.Group>
 
           <$.Controls.Group className={styles.end}>

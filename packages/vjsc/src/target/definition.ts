@@ -1,6 +1,7 @@
 import type { Program } from '@oxc-project/types';
 import type { RolldownMagicString } from 'rolldown';
 
+import type { SourceText } from '../ast';
 import type { ModuleImport } from '../ast/imports';
 import type {
   ComponentDefinition,
@@ -17,6 +18,7 @@ export const TARGET_FRAGMENT = Symbol.for('vjsc/target-fragment');
 export const TARGET_HOST = Symbol.for('vjsc/target-host');
 export const TARGET_NODE = Symbol.for('vjsc/target-node');
 export const TARGET_EXPRESSION = Symbol.for('vjsc/target-expression');
+export const TARGET_REPLACEMENT = Symbol.for('vjsc/target-replacement');
 export const TARGET_SPREAD = Symbol.for('vjsc/target-spread');
 export const TARGET_WITH_PROPS = Symbol.for('vjsc/target-with-props');
 
@@ -75,10 +77,21 @@ export interface TargetWithProps {
   readonly props: TargetExpressionNode | Readonly<Record<string, unknown>>;
 }
 
+export interface TargetReplacement {
+  readonly [TARGET_REPLACEMENT]: true;
+  readonly source: SourceText;
+  readonly branchStart: number;
+  readonly branchEnd: number;
+  readonly partStart: number;
+  readonly partEnd: number;
+  readonly output: TargetOutput;
+}
+
 export type TargetOutput =
   | TargetNode
   | TargetExpression
   | TargetWithProps
+  | TargetReplacement
   | string
   | number
   | false
@@ -120,6 +133,8 @@ export type SourceProps<Props extends object> = Props & SourcePropOperations<Pro
 export interface SourcePart<Props extends object = EmptyProps> {
   readonly props: SourceProps<Props>;
   readonly children: TargetOutput;
+  /** Replaces this part while retaining its enclosing branch within the component root. */
+  replaceWith(output: TargetOutput): TargetOutput;
 }
 
 export interface SourcePartCollection<Props extends object = EmptyProps> extends SourcePart<Props> {

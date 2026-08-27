@@ -48,6 +48,13 @@ This file tracks observable behavior in `packages/skins/src` that is not yet imp
 
 These selectors currently preserve observable parity. Keep them as known ownership concerns rather than introducing new anatomy solely to remove a diagnostic warning.
 
+### Error dialog control suppression ownership
+
+- Source: #2451 and `packages/skins/vjsc/styles/layout/container.styles.ts`
+- Gap: No observable parity gap is known, but the VJSC Container suppresses controls while an error dialog is open by locating both parts with a structural `:has()` selector.
+- Affected: Default and Minimal video skins; HTML and React targets; CSS and Tailwind outputs.
+- Recommendation: Keep the selector until shared player state can expose error-dialog presence directly on Container or Controls. Then move the visibility rule to the state-owning part and remove the structural relationship.
+
 ### Poster image ownership
 
 - Source: `packages/skins/src/*/css/components/poster.css` and `packages/skins/vjsc/styles/layout/poster.styles.ts`

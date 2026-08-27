@@ -30,9 +30,12 @@ export default styles({
       className: 'media-playback-status-indicator-play-icon',
       utilities: [
         ...icon,
-        'group-data-[status=play]/playback-status:scale-100 group-data-[status=play]/playback-status:opacity-100 group-data-[status=play]/playback-status:translate-x-px',
+        'group-data-[status=play]/playback-status:scale-100 group-data-[status=play]/playback-status:opacity-100',
       ],
-      variants: iconVariants,
+      variants: {
+        default: [...iconVariants.default, 'group-data-[status=play]/playback-status:translate-x-px'],
+        minimal: iconVariants.minimal,
+      },
     },
     pauseIcon: {
       className: 'media-playback-status-indicator-pause-icon',

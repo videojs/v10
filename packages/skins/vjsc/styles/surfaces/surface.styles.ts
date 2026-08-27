@@ -13,7 +13,7 @@ const base = [
   'forced-colors:after:shadow-[inset_0_1px_0_0_CanvasText,inset_0_0_0_1px_CanvasText]',
 ] as const;
 
-const defaultVariant = [
+const defaultSurface = [
   ...base,
   'shadow-sm shadow-black/15 ring-1 ring-black/10',
   '[@media(prefers-reduced-transparency:reduce)]:shadow-sm [@media(prefers-reduced-transparency:reduce)]:shadow-black/15',
@@ -22,13 +22,20 @@ const defaultVariant = [
   'bg-white/10',
 ] as const;
 
-const minimalVariant = [
+const minimalSurface = [
   ...base,
   'shadow-sm shadow-black/20 ring-1 ring-white/10',
   '[@media(prefers-reduced-transparency:reduce)]:shadow-sm [@media(prefers-reduced-transparency:reduce)]:shadow-black/20',
   'contrast-more:shadow-sm contrast-more:shadow-black/20',
   'forced-colors:shadow-sm forced-colors:shadow-black/20',
   'bg-black/50',
+] as const;
+
+const minimalTooltipSurface = [
+  'bg-black/50 backdrop-blur-lg backdrop-saturate-150',
+  'shadow-md shadow-black/20 ring-1 ring-white/10',
+  '[@media(prefers-reduced-transparency:reduce)]:bg-black [@media(prefers-reduced-transparency:reduce)]:backdrop-filter-none',
+  'contrast-more:bg-black contrast-more:backdrop-filter-none',
 ] as const;
 
 export default styles({
@@ -39,16 +46,32 @@ export default styles({
       className: 'media-surface',
       utilities: [],
       variants: {
-        default: defaultVariant,
-        minimal: minimalVariant,
+        default: defaultSurface,
+        minimal: minimalSurface,
       },
     },
     feedback: {
       className: 'media-feedback-surface',
       utilities: [],
       variants: {
-        default: defaultVariant,
+        default: defaultSurface,
         minimal: [],
+      },
+    },
+    thumbnail: {
+      className: 'media-thumbnail-surface',
+      utilities: [],
+      variants: {
+        default: defaultSurface,
+        minimal: [],
+      },
+    },
+    tooltip: {
+      className: 'media-tooltip-surface',
+      utilities: [],
+      variants: {
+        default: defaultSurface,
+        minimal: minimalTooltipSurface,
       },
     },
   },

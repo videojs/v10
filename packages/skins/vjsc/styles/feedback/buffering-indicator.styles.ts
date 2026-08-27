@@ -14,11 +14,7 @@ export default styles({
     },
     spinnerIcon: {
       className: 'media-buffering-indicator-spinner-icon',
-      utilities: 'relative z-30 size-media-icon',
-      variants: {
-        default: 'drop-shadow-[0_1px_0_rgb(0_0_0/0.15)]',
-        minimal: 'drop-shadow-[0_1px_0_rgb(0_0_0/0.2)]',
-      },
+      utilities: 'relative z-30 size-media-icon drop-shadow-[0_1px_0_var(--media-shadow-current-color)]',
     },
   },
 });

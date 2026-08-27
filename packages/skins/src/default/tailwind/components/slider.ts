@@ -121,6 +121,6 @@ export const slider = {
     '[--media-thumbnail-max-width:var(--media-max-size)] [--media-thumbnail-max-height:var(--media-max-size)]',
     '[bottom:calc(100%+--spacing(9))]'
   ),
-  value: cn(previewContent, '[bottom:calc(100%+--spacing(10.5))] flex flex-col items-center tabular-nums'),
+  value: cn(previewContent, '[bottom:calc(100%+--spacing(12.5))] flex flex-col items-center tabular-nums'),
   chapterTitle: 'min-w-0 max-w-(--media-max-size) px-6 overflow-hidden text-ellipsis whitespace-nowrap empty:hidden',
 };
