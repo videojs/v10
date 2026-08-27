@@ -79,7 +79,7 @@ export class GestureElement extends UIElement {
 
     if (this.type === 'doubletap') {
       this.#cleanup = createDoubleTapGesture(container, onActivate, options);
-    } else {
+    } else if (this.type === 'tap') {
       this.#cleanup = createTapGesture(container, onActivate, options);
     }
   }

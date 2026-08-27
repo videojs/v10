@@ -28,7 +28,9 @@ export function Gesture({ type, action, value, pointer, region, disabled }: Gest
       return createDoubleTapGesture(container, onActivate, options);
     }
 
-    return createTapGesture(container, onActivate, options);
+    if (type === 'tap') return createTapGesture(container, onActivate, options);
+
+    return;
   }, [container, store, type, action, value, pointer, region, disabled]);
 
   return null;
