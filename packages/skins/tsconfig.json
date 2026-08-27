@@ -13,6 +13,7 @@
   },
   "include": ["src", "dev", "vjsc/*.ts", "vjsc/target"],
   "references": [
+    { "path": "../../apps/sandbox/app/shared" },
     { "path": "../core" },
     { "path": "../html" },
     { "path": "../icons" },
