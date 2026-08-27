@@ -22,6 +22,7 @@ export const dialog = {
     'motion-reduce:scale-100 motion-reduce:transition-opacity'
   ),
   content: 'flex min-h-0 flex-col gap-2 overflow-y-auto px-2 pt-2 pb-1.5',
+  // Reset native h2/p margins so the dialog gap controls copy spacing.
   title: 'm-0 font-semibold leading-tight',
   description: 'm-0 opacity-70 wrap-anywhere',
   actions: 'flex shrink-0 gap-2 *:flex-1',
