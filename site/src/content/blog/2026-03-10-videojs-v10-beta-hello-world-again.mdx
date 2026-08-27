@@ -5,6 +5,8 @@ authors: [steve-heffernan]
 ogImage: '../../assets/blog/2026-03-10-videojs-v10-beta-hello-world-again/og.png'
 ---
 
+import Aside from '@/components/Aside.astro';
+
 Today we're excited to release the Video.js v10.0.0 beta. It's the result of a rather large ground-up rewrite, not just of Video.js ([discussion](https://github.com/videojs/video.js/discussions/9035)) but also of [Plyr](https://github.com/sampotts/plyr/discussions/2871), [Vidstack](https://github.com/vidstack/player/discussions/1747), and [Media Chrome](https://www.mux.com/blog/from-media-chrome-to-video-js-v10-the-evolution-of-html-first-video-players), through a rare teaming-up of open source projects and people who care a lot about web video, with a combined 75,000 github stars and tens of billions of video plays monthly.
 
 I built Video.js 16 years ago to help the transition from Flash to HTML5 video. It's grown a lot since then with the help of [many people](https://github.com/videojs/video.js/graphs/contributors), but the codebase and APIs have continued to reflect a different era of web development. This rebuild modernizes the player both for how developers build today and sets up the foundation for the next significant transition to AI-augmented features and development.
@@ -358,6 +360,10 @@ A few things to know:
 If you're starting something new, this is a good time to try v10. Go to [videojs.org](http://videojs.org) and check out the [installation guide](https://videojs.org/docs/).
 
 If you're running a previous version in production, sit tight. We'll have migration guides before we ask you to move.
+
+<Aside type="note" title="Update, August 2026">
+The migration guides mentioned here (and under "What's coming" below) are now available: [Video.js 8](/docs/framework/html/how-to/migrate-from-video-js-8), [Mux Player](/docs/framework/html/how-to/migrate-from-mux-player), [Plyr](/docs/framework/html/how-to/migrate-from-plyr), and [Media Chrome](/docs/framework/html/how-to/migrate-from-media-chrome).
+</Aside>
 
 ## What's coming
 
