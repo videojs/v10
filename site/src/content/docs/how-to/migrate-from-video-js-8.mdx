@@ -315,7 +315,7 @@ import { HlsVideo } from '@videojs/react/media/hls-video';
 ```
 </FrameworkCase>
 
-Two things to know when you pick between the HLS options. The default HLS component runs on SPF, Video.js's own playback engine, and it's the reason v10 can be as small as it is. The hls.js one is a much larger download but supports more, including TS-packaged media and DRM. Start with the default and move to hls.js if you hit something it doesn't handle.
+Start with the default HLS component, and move to hls.js if you hit something it doesn't handle. The default runs on SPF, Video.js's own playback engine, and it's the reason v10 can be as small as it is. The hls.js one is a much larger download but more compatible, supporting TS-packaged media and DRM.
 
 Your VHS tuning options don't have direct equivalents. Rendition capping, bandwidth hints, and the rest are engine-specific, so they belong to whichever engine you chose rather than to a shared options object.
 

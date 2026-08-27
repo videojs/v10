@@ -22,6 +22,8 @@
  *   - *Skin → skin
  *   - Remaining → media element
  * - .tailwind in filename → excluded (both frameworks)
+ * - No HTML media element found → derived from the React media element when it wraps a native tag (Video → `video`, Audio
+ *   → `audio`), so every preset framework pair reports the same default media
  *
  * Feature resolution: packages/core/src/dom/store/features/presets.ts
  */
@@ -512,6 +514,16 @@ function scanReactDirectory(scanDir: string, barrelPath: string, presetName: str
 
 // ─── Preset Reference Building ──────────────────────────────────────
 
+/**
+ * React media components that render a native element rather than a custom element. The HTML directory scan can't see
+ * these — there is no class with a `static tagName` for a plain `<video>` — so the native tag is derived from the React
+ * barrel's media re-export instead.
+ */
+const NATIVE_MEDIA_TAGS: Record<string, string> = {
+  Audio: 'audio',
+  Video: 'video',
+};
+
 function buildPresetReference(
   preset: PresetInfo,
   featureBundleMap: Map<string, string[]>,
@@ -548,7 +560,9 @@ function buildPresetReference(
     react: { skins: reactSkins, mediaElement: reactMediaElement ?? '' },
   };
 
-  if (htmlResult.mediaElement) ref.html.mediaElement = htmlResult.mediaElement;
+  const htmlMediaElement = htmlResult.mediaElement ?? (reactMediaElement && NATIVE_MEDIA_TAGS[reactMediaElement]);
+
+  if (preset.html && htmlMediaElement) ref.html.mediaElement = htmlMediaElement;
 
   if (description) ref.description = description;
 

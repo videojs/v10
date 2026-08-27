@@ -33,19 +33,6 @@ const presets: PresetReferenceType[] = entries
 const { framework } = Astro.params;
 const pkg = framework && isValidFramework(framework) ? `@videojs/${framework}` : '@videojs/html';
 
-/**
- * Native media elements used by presets that don't have a custom element.
- * The pipeline can't detect these since they're not classes with `static tagName`.
- */
-const NATIVE_MEDIA_ELEMENTS: Record<string, string> = {
-  video: 'video',
-  audio: 'audio',
-};
-
-function htmlMediaElement(preset: PresetReferenceType): string | undefined {
-  return preset.html.mediaElement ?? NATIVE_MEDIA_ELEMENTS[preset.name];
-}
-
 const listFormat = new Intl.ListFormat('en', { style: 'long', type: 'unit' });
 ---
 
@@ -62,7 +49,7 @@ const listFormat = new Intl.ListFormat('en', { style: 'long', type: 'unit' });
       {
         presets.map((preset) => {
           const id = `preset-${preset.name}`;
-          const htmlMedia = htmlMediaElement(preset);
+          const htmlMedia = preset.html.mediaElement;
           return (
             <>
               <Tr

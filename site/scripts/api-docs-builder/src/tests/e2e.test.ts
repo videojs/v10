@@ -1214,7 +1214,9 @@ describe('Feature pipeline (end-to-end)', () => {
 //   - Discovery: reads package.json exports for ./X + ./X/* pairs
 //   - Feature bundle: *Features export from barrel → resolved to feature names
 //   - HTML skins: classes with static tagName whose name matches *Skin*Element
-//   - HTML media element: classes with static tagName that aren't skins or players
+//   - HTML media element: classes with static tagName that aren't skins or
+//     players; native tags derived from the React media element (Video →
+//     video, Audio → audio) when the scan finds none
 //   - React skins: exports matching *Skin naming
 //   - React media element: remaining exports that aren't bundles or skins
 //   - Tailwind exclusion: .tailwind files are filtered out
@@ -1307,10 +1309,10 @@ describe('Preset pipeline (end-to-end)', () => {
       expect(skinNames).not.toContain('VideoSkinTailwindElement');
     });
 
-    it('does not produce an HTML media element for native video', () => {
+    it('derives the native HTML media element from the React media component', () => {
       const ref = findPreset('video')!.reference;
 
-      expect(ref.html.mediaElement).toBeUndefined();
+      expect(ref.html.mediaElement).toBe('video');
     });
 
     it('detects React skins with CSS imports', () => {
@@ -1360,10 +1362,10 @@ describe('Preset pipeline (end-to-end)', () => {
       expect(skins).toEqual([{ name: 'AudioSkinElement', tagName: 'audio-skin' }]);
     });
 
-    it('does not produce an HTML media element for native audio', () => {
+    it('derives the native HTML media element from the React media component', () => {
       const ref = findPreset('audio')!.reference;
 
-      expect(ref.html.mediaElement).toBeUndefined();
+      expect(ref.html.mediaElement).toBe('audio');
     });
 
     it('detects single React skin with CSS import', () => {
