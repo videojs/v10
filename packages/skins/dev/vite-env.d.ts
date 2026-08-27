@@ -24,6 +24,18 @@ declare module '*&skin=minimal-live-video' {
     | ((props?: { className?: string }) => { toString(): string });
 }
 
+declare module '*&skin=default-live-audio' {
+  export const DefaultLiveAudioSkin:
+    | import('react').ComponentType<import('react').PropsWithChildren<{ className?: string }>>
+    | ((props?: { className?: string }) => { toString(): string });
+}
+
+declare module '*&skin=minimal-live-audio' {
+  export const MinimalLiveAudioSkin:
+    | import('react').ComponentType<import('react').PropsWithChildren<{ className?: string }>>
+    | ((props?: { className?: string }) => { toString(): string });
+}
+
 declare module '*&skin=default-audio' {
   export const DefaultAudioSkin:
     | import('react').ComponentType<import('react').PropsWithChildren<{ className?: string }>>

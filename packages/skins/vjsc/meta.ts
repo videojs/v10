@@ -40,6 +40,16 @@ export const skinStyles = {
     theme: 'minimal',
     variant: 'minimal-live-video',
   },
+  'default-live-audio': {
+    scope: '.media-skin--default.media-skin--live-audio',
+    theme: 'default',
+    variant: 'default-live-audio',
+  },
+  'minimal-live-audio': {
+    scope: '.media-skin--minimal.media-skin--live-audio',
+    theme: 'minimal',
+    variant: 'minimal-live-audio',
+  },
   'default-audio': {
     scope: '.media-skin--default.media-skin--audio',
     theme: 'default',

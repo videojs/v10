@@ -28,6 +28,8 @@ export default styles({
         'minimal-video': '[&:has([role=alertdialog][data-open])_.media-controls]:hidden',
         'default-live-video': '[&:has([role=alertdialog][data-open])_.media-controls]:hidden',
         'minimal-live-video': '[&:has([role=alertdialog][data-open])_.media-controls]:hidden',
+        'default-live-audio': 'h-auto! overflow-visible! bg-transparent! [container-type:inline-size]! after:hidden',
+        'minimal-live-audio': 'h-auto! overflow-visible! bg-transparent! [container-type:inline-size]! after:hidden',
         'default-audio': 'h-auto! overflow-visible! bg-transparent! [container-type:inline-size]! after:hidden',
         'minimal-audio': 'h-auto! overflow-visible! bg-transparent! [container-type:inline-size]! after:hidden',
       },

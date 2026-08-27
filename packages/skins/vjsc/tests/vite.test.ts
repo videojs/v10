@@ -26,6 +26,8 @@ const skinContracts = {
   'minimal-video': { exportName: 'MinimalVideoSkin', className: 'media-skin--minimal' },
   'default-live-video': { exportName: 'DefaultLiveVideoSkin', className: 'media-skin--default' },
   'minimal-live-video': { exportName: 'MinimalLiveVideoSkin', className: 'media-skin--minimal' },
+  'default-live-audio': { exportName: 'DefaultLiveAudioSkin', className: 'media-skin--default' },
+  'minimal-live-audio': { exportName: 'MinimalLiveAudioSkin', className: 'media-skin--minimal' },
   'default-audio': { exportName: 'DefaultAudioSkin', className: 'media-skin--default' },
   'minimal-audio': { exportName: 'MinimalAudioSkin', className: 'media-skin--minimal' },
 } as const;
