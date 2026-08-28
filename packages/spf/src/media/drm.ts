@@ -178,9 +178,9 @@ export interface KeySystemModule {
    */
   readonly licenseResponse?: DrmResponseTransform;
   /**
-   * Transform the outgoing app-certificate request for this system. Defaults to identity (the plain GET
-   * `fetchServerCertificate` performs). No shipped system needs one; it exists so a system whose certificate endpoint
-   * expects a POST or its own auth can shape the request rather than forcing that onto every source.
+   * Transform the outgoing app-certificate request for this system. Defaults to identity (the plain `GET` the
+   * certificate fetch performs). No shipped system needs one; it exists so a system whose certificate endpoint expects
+   * a POST or its own auth can shape the request rather than forcing that onto every source.
    */
   readonly certificateRequest?: DrmRequestTransform;
   /**
