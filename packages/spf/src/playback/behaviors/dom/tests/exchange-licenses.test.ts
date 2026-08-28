@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { signal } from '../../../../core/signals/primitives';
-import { type DrmSystemsConfig, fetchLicense } from '../../../../media/dom/eme';
+import { type DrmSystemsConfig, fetchDrm } from '../../../../media/dom/eme';
 import { DEFAULT_KEY_SYSTEMS, widevineKeySystem } from '../../../../media/dom/key-systems';
 import {
   SVTA_BAD_LICENSE_REQUEST,
@@ -17,7 +17,7 @@ import { type ExchangeLicensesContext, type ExchangeLicensesState, exchangeLicen
 vi.mock('../../../../media/dom/eme', async () => {
   const actual = await vi.importActual<typeof import('../../../../media/dom/eme')>('../../../../media/dom/eme');
 
-  return { ...actual, fetchLicense: vi.fn() };
+  return { ...actual, fetchDrm: vi.fn() };
 });
 
 // "ping" in base64 — stand-in for a Widevine PSSH payload.
@@ -143,7 +143,7 @@ function setupExchangeLicenses({
 
 describe('exchangeLicenses', () => {
   beforeEach(() => {
-    vi.mocked(fetchLicense)
+    vi.mocked(fetchDrm)
       .mockReset()
       .mockResolvedValue(new Uint8Array([9]));
   });
@@ -275,7 +275,7 @@ describe('exchangeLicenses', () => {
   it("exchanges the chosen system's license on a session message", async () => {
     const license = new Uint8Array([9, 9, 9]);
 
-    vi.mocked(fetchLicense).mockResolvedValue(license);
+    vi.mocked(fetchDrm).mockResolvedValue(license);
     const { sessions, reactor } = setupExchangeLicenses();
 
     await vi.waitFor(() => expect(sessions).toHaveLength(1));
@@ -284,9 +284,15 @@ describe('exchangeLicenses', () => {
     sessions[0]!.dispatchEvent(Object.assign(new Event('message'), { message }));
 
     await vi.waitFor(() => expect(sessions[0]!.update).toHaveBeenCalledWith(license));
-    expect(fetchLicense).toHaveBeenCalledWith(DRM_CONFIG['com.widevine.alpha'].licenseUrl, message, expect.anything(), {
-      'Content-Type': 'application/octet-stream',
-    });
+    expect(fetchDrm).toHaveBeenCalledWith(
+      {
+        url: DRM_CONFIG['com.widevine.alpha'].licenseUrl,
+        method: 'POST',
+        headers: { 'Content-Type': 'application/octet-stream' },
+        body: message,
+      },
+      expect.anything()
+    );
 
     reactor.destroy();
   });
@@ -303,10 +309,8 @@ describe('exchangeLicenses', () => {
     sessions[0]!.dispatchEvent(Object.assign(new Event('message'), { message }));
 
     await vi.waitFor(() =>
-      expect(fetchLicense).toHaveBeenCalledWith(
-        'https://license.example.com/minted',
-        message,
-        expect.anything(),
+      expect(fetchDrm).toHaveBeenCalledWith(
+        expect.objectContaining({ url: 'https://license.example.com/minted', method: 'POST', body: message }),
         expect.anything()
       )
     );
@@ -328,12 +332,13 @@ describe('exchangeLicenses', () => {
     sessions[0]!.dispatchEvent(Object.assign(new Event('message'), { message: new Uint8Array([1]).buffer }));
 
     await vi.waitFor(() =>
-      expect(fetchLicense).toHaveBeenCalledWith(expect.anything(), expect.anything(), expect.anything(), {
-        // Merged with, not replacing, the content type the request already needs.
-        'Content-Type': 'application/octet-stream',
-        'X-AxDRM-Message': 'entitlement',
-        'X-Extra': 'kept',
-      })
+      expect(fetchDrm).toHaveBeenCalledWith(
+        expect.objectContaining({
+          // Merged with, not replacing, the content type the request already needs.
+          headers: { 'Content-Type': 'application/octet-stream', 'X-AxDRM-Message': 'entitlement', 'X-Extra': 'kept' },
+        }),
+        expect.anything()
+      )
     );
 
     reactor.destroy();
@@ -354,9 +359,10 @@ describe('exchangeLicenses', () => {
     sessions[0]!.dispatchEvent(Object.assign(new Event('message'), { message: new Uint8Array([1]).buffer }));
 
     await vi.waitFor(() =>
-      expect(fetchLicense).toHaveBeenCalledWith(expect.anything(), expect.anything(), expect.anything(), {
-        'Content-Type': 'application/octet-stream',
-      })
+      expect(fetchDrm).toHaveBeenCalledWith(
+        expect.objectContaining({ headers: { 'Content-Type': 'application/octet-stream' } }),
+        expect.anything()
+      )
     );
 
     reactor.destroy();
@@ -385,17 +391,22 @@ describe('exchangeLicenses', () => {
     sessions[0]!.dispatchEvent(Object.assign(new Event('message'), { message }));
 
     await vi.waitFor(() =>
-      expect(fetchLicense).toHaveBeenCalledWith('https://gateway.example.com/proxy', message, expect.anything(), {
-        'Content-Type': 'application/json',
-        'X-Tok': 'minted',
-      })
+      expect(fetchDrm).toHaveBeenCalledWith(
+        {
+          url: 'https://gateway.example.com/proxy',
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Tok': 'minted' },
+          body: message,
+        },
+        expect.anything()
+      )
     );
 
     reactor.destroy();
   });
 
   it('applies a per-source licenseResponse before session.update', async () => {
-    vi.mocked(fetchLicense).mockResolvedValue(new Uint8Array([1]));
+    vi.mocked(fetchDrm).mockResolvedValue(new Uint8Array([1]));
     const { sessions, reactor } = setupExchangeLicenses({
       drm: {
         'com.widevine.alpha': {
@@ -431,7 +442,7 @@ describe('exchangeLicenses', () => {
     sessions[0]!.dispatchEvent(Object.assign(new Event('message'), { message: new Uint8Array([1]).buffer }));
 
     await vi.waitFor(() => expect(state.errors.get()?.map((error) => error.code)).toEqual([SVTA_BAD_LICENSE_REQUEST]));
-    expect(fetchLicense).not.toHaveBeenCalled();
+    expect(fetchDrm).not.toHaveBeenCalled();
     expect(sessions[0]!.update).not.toHaveBeenCalled();
 
     reactor.destroy();
@@ -461,7 +472,7 @@ describe('exchangeLicenses', () => {
   });
 
   it('reports 4004 when the license request fails, without dropping the session', async () => {
-    vi.mocked(fetchLicense).mockRejectedValue(new Error('license server said no'));
+    vi.mocked(fetchDrm).mockRejectedValue(new Error('license server said no'));
     const { state, sessions, reactor } = setupExchangeLicenses();
 
     await vi.waitFor(() => expect(sessions).toHaveLength(1));
@@ -520,12 +531,12 @@ describe('exchangeLicenses', () => {
   it('reports nothing after teardown aborts in-flight license work', async () => {
     let rejectLicense!: (reason: Error) => void;
 
-    vi.mocked(fetchLicense).mockImplementation(() => new Promise((_resolve, reject) => (rejectLicense = reject)));
+    vi.mocked(fetchDrm).mockImplementation(() => new Promise((_resolve, reject) => (rejectLicense = reject)));
     const { state, sessions, reactor } = setupExchangeLicenses();
 
     await vi.waitFor(() => expect(sessions).toHaveLength(1));
     sessions[0]!.dispatchEvent(Object.assign(new Event('message'), { message: new Uint8Array([1]).buffer }));
-    await vi.waitFor(() => expect(fetchLicense).toHaveBeenCalled());
+    await vi.waitFor(() => expect(fetchDrm).toHaveBeenCalled());
 
     state.presentation.set(undefined);
     await new Promise((resolve) => setTimeout(resolve, 0));
