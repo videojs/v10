@@ -70,9 +70,9 @@ describe('widevineKeySystem', () => {
     expect(widevineKeySystem.toInitData?.('skd://mux?keyId=abc')).toBeUndefined();
   });
 
-  it('prefers the L1 hardware tier and shapes no license request of its own', () => {
+  it('prefers the L1 hardware tier and transforms no license request of its own', () => {
     expect(widevineKeySystem.preferredVideoRobustness).toBe('HW_SECURE_ALL');
-    expect(widevineKeySystem.shapeLicenseRequest).toBeUndefined();
+    expect(widevineKeySystem.licenseRequest).toBeUndefined();
   });
 });
 
@@ -109,7 +109,7 @@ describe('playReadyKeySystem', () => {
     expect(playReadyKeySystem.toInitData?.(`data:text/plain;base64,${encoded}`)?.initData).toEqual(box);
   });
 
-  it('unwraps a PlayReadyKeyMessage envelope into headers and the decoded challenge', () => {
+  it('unwraps a PlayReadyKeyMessage envelope into headers and the decoded challenge', async () => {
     // btoa('challenge!') carried inside the classic UTF-16 XML envelope.
     const envelope = utf16(
       '<PlayReadyKeyMessage><LicenseAcquisition Version="1">' +
@@ -118,18 +118,41 @@ describe('playReadyKeySystem', () => {
         '<HttpHeader><name>SOAPAction</name><value>AcquireLicense</value></HttpHeader></HttpHeaders>' +
         '</LicenseAcquisition></PlayReadyKeyMessage>'
     );
-    const shaped = playReadyKeySystem.shapeLicenseRequest!(envelope.buffer);
+    const request = await playReadyKeySystem.licenseRequest!({
+      url: 'https://lic',
+      headers: {},
+      body: envelope.buffer,
+    });
 
-    expect(new TextDecoder().decode(shaped.body as ArrayBuffer | Uint8Array)).toBe('challenge!');
-    expect(shaped.headers).toEqual({ 'Content-Type': 'text/xml; charset=utf-8', SOAPAction: 'AcquireLicense' });
+    expect(new TextDecoder().decode(request.body as ArrayBuffer | Uint8Array)).toBe('challenge!');
+    expect(request.headers).toEqual({ 'Content-Type': 'text/xml; charset=utf-8', SOAPAction: 'AcquireLicense' });
   });
 
-  it('sends an unwrapped challenge as XML — modern CDMs skip the envelope', () => {
-    const raw = utf16('<soap:Envelope>raw challenge</soap:Envelope>');
-    const shaped = playReadyKeySystem.shapeLicenseRequest!(raw.buffer);
+  it('preserves configured request headers, and its own win on collision', async () => {
+    // The widened DrmRequest carries source-configured headers in; the envelope's
+    // headers must survive alongside them and override on a name clash.
+    const envelope = utf16(
+      '<PlayReadyKeyMessage><LicenseAcquisition Version="1">' +
+        '<Challenge encoding="base64encoded">Y2hhbGxlbmdlIQ==</Challenge>' +
+        '<HttpHeaders><HttpHeader><name>Content-Type</name><value>text/xml; charset=utf-8</value></HttpHeader>' +
+        '</HttpHeaders></LicenseAcquisition></PlayReadyKeyMessage>'
+    );
+    const request = await playReadyKeySystem.licenseRequest!({
+      url: 'https://lic',
+      headers: { 'X-Auth': 'keep', 'Content-Type': 'application/octet-stream' },
+      body: envelope.buffer,
+    });
 
-    expect(shaped.body).toBe(raw.buffer);
-    expect(shaped.headers).toEqual({ 'Content-Type': 'text/xml; charset=utf-8' });
+    expect(request.headers['X-Auth']).toBe('keep');
+    expect(request.headers['Content-Type']).toBe('text/xml; charset=utf-8');
+  });
+
+  it('sends an unwrapped challenge as XML — modern CDMs skip the envelope', async () => {
+    const raw = utf16('<soap:Envelope>raw challenge</soap:Envelope>');
+    const request = await playReadyKeySystem.licenseRequest!({ url: 'https://lic', headers: {}, body: raw.buffer });
+
+    expect(request.body).toBe(raw.buffer);
+    expect(request.headers).toEqual({ 'Content-Type': 'text/xml; charset=utf-8' });
   });
 });
 

@@ -91,15 +91,17 @@ export const playReadyKeySystem: KeySystemModule = {
 
     return initData && { initDataType: 'cenc', initData: toPlayReadyPssh(initData) };
   },
-  shapeLicenseRequest: (message) => {
-    const text = new TextDecoder('utf-16le').decode(message).replace(/^\uFEFF/, '');
+  licenseRequest: (request) => {
+    const text = new TextDecoder('utf-16le').decode(request.body!).replace(/^\uFEFF/, '');
 
     if (!text.includes('PlayReadyKeyMessage')) {
-      return { body: message, headers: { 'Content-Type': 'text/xml; charset=utf-8' } };
+      return { ...request, headers: { ...request.headers, 'Content-Type': 'text/xml; charset=utf-8' } };
     }
 
     const document_ = new DOMParser().parseFromString(text, 'application/xml');
-    const headers: Record<string, string> = {};
+    // Derived headers win over the request's own \u2014 a classic PlayReady challenge
+    // names the headers its CDM requires, and those are not negotiable.
+    const headers = { ...request.headers };
 
     for (const header of document_.querySelectorAll('HttpHeader')) {
       const name = header.querySelector('name')?.textContent;
@@ -113,7 +115,7 @@ export const playReadyKeySystem: KeySystemModule = {
 
     for (let i = 0; i < binary.length; i++) body[i] = binary.charCodeAt(i);
 
-    return { body, headers };
+    return { ...request, headers, body };
   },
 };
 
