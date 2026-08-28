@@ -343,6 +343,24 @@ Things this feature probably forces decisions on, not just additions:
   the reload-loop + license-fetcher may both need re-trigger logic).
   Cross-cluster A + F open question; resolution likely after both
   clusters have implementation work.
+- **Key rotation ≠ live (current scope).** Rotation and liveness are
+  independent, and only one cell is unsupported. `exchangeLicenses`'
+  manifest loop licenses every key declared at entry, so **VOD key
+  rotation** (all `EXT-X-KEY` present at load) is covered, and
+  **FairPlay live rotation** rides the `encrypted` fallback (each key
+  licensed as its segment appends). **Single-key live** (Mux) is
+  covered. The one gap is **mid-stream rotation for Widevine /
+  PlayReady on a live reload**: the entry captures the presentation
+  once (single-positive-state reactor, for source identity), later
+  reloads' keys are never re-scanned, and the `encrypted` fallback
+  isn't armed for manifest-licensed content. The fix — a reactive
+  re-scan of `declaredDrmKeys` (dedup by manifest attribute identity,
+  reusing `toInitData` → `openSession`), or licensing on `encrypted`
+  encounter — also subsumes the eager per-key license fan-out, so the
+  two are one design question. Unverified even for VOD: no
+  temporal-rotation asset exists in the test set, and generating a
+  real-DRM one needs a license server serving rotating keys
+  (clear-key / CENC rotation wouldn't exercise the WV/PR/FP path).
 - **Output-protection-aware ABR coordination.** Renditions tagged
   with security-level / HDCP requirements interact with video-ABR
   and hevc-variant-selection. ABR's candidate set should be filtered
