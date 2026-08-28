@@ -2,7 +2,7 @@ import type { PropsOf } from 'vjsc/components';
 
 import type { SkinComponentMeta } from '../../meta';
 import { AudioTrackMenu } from './audio-track-menu';
-import { CaptionsMenu } from './captions-menu';
+import { CaptionsSubmenu } from './captions-submenu';
 import { PlaybackRateSubmenu } from './playback-rate-submenu';
 import { QualityMenu } from './quality-menu';
 import { SettingsMenu } from './settings-menu';
@@ -15,7 +15,7 @@ export function VideoSettingsMenu(props: VideoSettingsMenuProps = {}) {
       <QualityMenu />
       <AudioTrackMenu />
       <PlaybackRateSubmenu />
-      <CaptionsMenu />
+      <CaptionsSubmenu />
     </SettingsMenu>
   );
 }

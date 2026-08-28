@@ -10,7 +10,14 @@ const configFile = resolve(packageDir, 'dev/vite.config.ts');
 const sourceDir = resolve(packageDir, 'vjsc');
 const snapshotFile = resolve(import.meta.dirname, '__snapshots__/generated.tsx.snap');
 const targets = ['react', 'html'] as const;
-const skins = ['default-video', 'minimal-video', 'default-audio', 'minimal-audio'] as const;
+const skins = [
+  'default-video',
+  'minimal-video',
+  'default-live-video',
+  'minimal-live-video',
+  'default-audio',
+  'minimal-audio',
+] as const;
 const styles = ['css', 'tailwind'] as const;
 
 interface GeneratedModule {
@@ -97,6 +104,19 @@ describe('generated VJSC source', () => {
     );
     const reactDefaultAudio = generatedSection(output, 'react/default-audio/css/skins/default-audio/skin.tsx');
     const htmlMinimalAudio = generatedSection(output, 'html/minimal-audio/css/skins/minimal-audio/skin.tsx');
+    const reactCaptionsMenu = generatedSection(
+      output,
+      'react/default-live-video/css/components/menus/captions-menu.tsx'
+    );
+    const htmlCaptionsMenu = generatedSection(output, 'html/default-live-video/css/components/menus/captions-menu.tsx');
+    const reactDefaultLiveVideo = generatedSection(
+      output,
+      'react/default-live-video/css/skins/default-live-video/skin.tsx'
+    );
+    const htmlMinimalLiveVideo = generatedSection(
+      output,
+      'html/minimal-live-video/css/skins/minimal-live-video/skin.tsx'
+    );
 
     expect(htmlPlayButton).toContain('pauseIcon');
     expect(htmlPlayButton).toContain('playIcon');
@@ -117,13 +137,24 @@ describe('generated VJSC source', () => {
     expect(reactDefaultAudio).toContain('media-skin--default media-skin--audio');
     expect(htmlMinimalAudio).toContain('export interface MinimalAudioSkinProps');
     expect(htmlMinimalAudio).toContain('media-skin--minimal media-skin--audio');
+    expect(reactCaptionsMenu).toContain('<Menu.Trigger className=');
+    expect(reactCaptionsMenu).not.toContain('keepMounted');
+    expect(reactCaptionsMenu).not.toContain('useCaptionsOptions');
+    expect(htmlCaptionsMenu).toContain('<button commandfor="__vjsc-id-<module>');
+    expect(htmlCaptionsMenu).not.toContain('menu-for');
+    expect(reactDefaultLiveVideo).toContain('export interface DefaultLiveVideoSkinProps');
+    expect(reactDefaultLiveVideo).toContain('media-skin--default media-skin--live-video');
+    expect(htmlMinimalLiveVideo).toContain('export interface MinimalLiveVideoSkinProps');
+    expect(htmlMinimalLiveVideo).toContain('media-skin--minimal media-skin--live-video');
+    expect(reactDefaultLiveVideo).not.toContain('TimeSlider');
+    expect(htmlMinimalLiveVideo).not.toContain('media-time-slider');
 
     if (process.env.UPDATE_VJSC_SNAPSHOTS) await writeFile(snapshotFile, output);
 
     const snapshot = await readFile(snapshotFile, 'utf8');
 
     expect(output).toBe(snapshot);
-  }, 60_000);
+  }, 120_000);
 });
 
 async function sourceModules(): Promise<string[]> {

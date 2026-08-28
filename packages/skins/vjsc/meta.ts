@@ -30,6 +30,16 @@ export const skinStyles = {
     theme: 'minimal',
     variant: 'minimal',
   },
+  'default-live-video': {
+    scope: '.media-skin--default.media-skin--live-video',
+    theme: 'default',
+    variant: 'default-live-video',
+  },
+  'minimal-live-video': {
+    scope: '.media-skin--minimal.media-skin--live-video',
+    theme: 'minimal',
+    variant: 'minimal-live-video',
+  },
   'default-audio': {
     scope: '.media-skin--default.media-skin--audio',
     theme: 'default',

@@ -1,6 +1,6 @@
 import { styles } from 'vjsc/styles';
 
-const defaultSurfaceAtLarge = [
+const surfaceAtLarge = [
   '@lg/media-root:text-white @lg/media-root:backdrop-blur-lg @lg/media-root:backdrop-saturate-150',
   '@lg/media-root:after:pointer-events-none @lg/media-root:after:absolute @lg/media-root:after:inset-0 @lg/media-root:after:z-10 @lg/media-root:after:rounded-[inherit]',
   '@lg/media-root:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.1),inset_0_0_0_1px_rgb(255_255_255/0.05)]',
@@ -30,13 +30,12 @@ export default styles({
       className: 'media-controls',
       utilities: [
         'group/controls contents p-1 text-white',
-        '[--media-popover-side-offset:--spacing(3)]',
-        '[--media-tooltip-side-offset:var(--media-popover-side-offset)]',
+        '[--media-popover-side-offset:--spacing(3)] [--media-tooltip-side-offset:var(--media-popover-side-offset)]',
         '[--media-popover-boundary-offset:0.75rem] [--media-tooltip-boundary-offset:var(--media-popover-boundary-offset)]',
         '@lg/media-root:absolute @lg/media-root:inset-x-2 @lg/media-root:bottom-2 @lg/media-root:z-10',
         '@lg/media-root:flex @lg/media-root:items-center @lg/media-root:gap-px @lg/media-root:rounded-media-control',
         'text-shadow-[0_1px_0_var(--media-shadow-current-color)]',
-        ...defaultSurfaceAtLarge,
+        ...surfaceAtLarge,
         '@2xl/media-root:inset-x-3 @2xl/media-root:bottom-3',
         '@lg/media-root:not-data-visible:pointer-events-none @lg/media-root:not-data-visible:opacity-0',
         '@lg/media-root:motion-safe:not-data-visible:scale-95 @lg/media-root:motion-safe:not-data-visible:translate-y-1',
@@ -56,8 +55,7 @@ export default styles({
     primary: {
       className: 'media-controls-primary',
       utilities: [
-        'absolute inset-x-2 bottom-2 z-10 flex origin-bottom items-center rounded-media-control',
-        'p-1',
+        'absolute inset-x-2 bottom-2 z-10 flex origin-bottom items-center gap-px rounded-media-control p-1',
         '@lg/media-root:contents',
         '@lg/media-root:rounded-none @lg/media-root:bg-transparent @lg/media-root:shadow-none @lg/media-root:ring-0',
         '@lg/media-root:backdrop-filter-none @lg/media-root:after:hidden',
@@ -70,51 +68,9 @@ export default styles({
         '@max-lg/media-root:group-[:not([data-visible])]/controls:duration-(--media-controls-transition-duration)',
       ],
     },
-    secondary: {
-      className: 'media-controls-secondary',
-      utilities: [
-        'absolute top-2 right-2 z-10 flex origin-top items-center gap-px rounded-media-control',
-        'p-1',
-        '@lg/media-root:static @lg/media-root:flex @lg/media-root:p-0',
-        '@lg/media-root:rounded-none @lg/media-root:bg-transparent @lg/media-root:shadow-none @lg/media-root:ring-0',
-        '@lg/media-root:backdrop-filter-none @lg/media-root:after:hidden',
-        '@max-lg/media-root:group-[:not([data-visible])]/controls:pointer-events-none',
-        '@max-lg/media-root:group-[:not([data-visible])]/controls:opacity-0',
-        '@max-lg/media-root:motion-safe:group-[:not([data-visible])]/controls:scale-95',
-        '@max-lg/media-root:motion-safe:group-[:not([data-visible])]/controls:-translate-y-1',
-        '@max-lg/media-root:pointer-fine:motion-safe:group-[:not([data-visible])]/controls:blur-sm',
-        'transition-[filter,opacity,scale,translate] duration-[calc(var(--media-controls-transition-duration)/2)] ease-out',
-        '@max-lg/media-root:group-[:not([data-visible])]/controls:duration-(--media-controls-transition-duration)',
-      ],
-    },
-    captionsButton: {
-      className: 'media-controls-captions-button',
-      utilities: '@max-lg/media-root:hidden',
-    },
-    volumeButton: {
-      className: 'media-controls-volume-button',
-      utilities: 'ms-px',
-    },
-    settingsButton: {
-      className: 'media-controls-settings-button',
-      utilities: '@lg/media-root:ms-px',
-    },
-    timeSliderGroup: {
-      className: 'media-time-slider-group',
-      utilities: ['@container/media-time flex flex-1 items-center gap-2.5 px-2 @lg/media-root:px-3'],
-    },
-    currentValue: {
-      className: 'media-time-current-value',
-      utilities: 'tabular-nums',
-    },
-    remainingValue: {
-      className: 'media-time-remaining-value',
-      utilities: [
-        'cursor-pointer tabular-nums rounded-sm outline-2 -outline-offset-2 outline-transparent',
-        '@max-[16rem]/media-time:hidden',
-        'transition-[outline-color,outline-offset] duration-100 ease-out',
-        'focus-visible:outline-white focus-visible:outline-offset-2',
-      ],
+    spacer: {
+      className: 'media-controls-spacer',
+      utilities: 'flex-1',
     },
   },
 });
