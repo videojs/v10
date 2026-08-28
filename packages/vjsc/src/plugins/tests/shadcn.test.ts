@@ -30,21 +30,25 @@ describe('shadcnPlugin', () => {
     const output = await build(root);
 
     expect(output.output.map((item) => item.fileName).sort()).toEqual([
-      'public.json',
+      'react/components/files/public/public.tsx',
+      'react/components/files/root/internal/private.tsx',
+      'react/components/files/root/root.tsx',
+      'react/components/registry.json',
       'registry.json',
-      'root.json',
-      'styles.json',
-      'utils.json',
+      'shared/files/styles/tailwind.css',
+      'shared/files/styles/theme.css',
+      'shared/files/utils/utils.ts',
+      'shared/registry.json',
     ]);
     const manifest = assetJson(output, 'registry.json');
-    const rootItem = assetJson(output, 'root.json');
+    const rootItem = registryItem(output, 'react/components', 'root');
 
     registrySchema.parse(manifest);
 
-    for (const outputItem of output.output) {
-      if (outputItem.type !== 'asset' || outputItem.fileName === 'registry.json') continue;
+    for (const group of manifest.include) {
+      const registry = assetJson(output, group.replace(/^\.\//, ''));
 
-      registryItemSchema.parse(JSON.parse(String(outputItem.source)));
+      for (const item of registry.items) registryItemSchema.parse(item);
     }
 
     expect(rootItem).toMatchObject({
@@ -52,10 +56,10 @@ describe('shadcnPlugin', () => {
       registryDependencies: ['@example/public', '@example/styles', '@example/utils'],
     });
     expect(rootItem.files.map((file: { target: string }) => file.target)).toEqual([
-      'components/example/root/private.tsx',
+      'components/example/root/internal/root/private.tsx',
       'components/example/root/root.tsx',
     ]);
-    const rootSource = rootItem.files.find((file: { target: string }) => file.target.endsWith('/root.tsx')).content;
+    const rootSource = registryFile(output, 'react/components', rootItem, '/root.tsx');
 
     expect(rootSource).toContain('interface RootProps');
     expect(rootSource).toContain('<main>');
@@ -63,7 +67,7 @@ describe('shadcnPlugin', () => {
     expect(rootSource).toContain(`from '@/components/example/utils'`);
     expect(rootSource).not.toContain('const meta');
     expect(rootSource).not.toContain('jsx-runtime');
-    expect(assetJson(output, 'styles.json').files.map((file: { target: string }) => file.target)).toEqual([
+    expect(registryItem(output, 'shared', 'styles').files.map((file: { target: string }) => file.target)).toEqual([
       'components/example/styles/tailwind.css',
       'components/example/styles/theme.css',
     ]);
@@ -76,14 +80,14 @@ describe('shadcnPlugin', () => {
       'components/private.tsx': `export const Private = <aside/>;`,
     });
     const output = await build(root, { styles: undefined });
-    const item = assetJson(output, 'root.json');
-    const source = item.files.find((file: { target: string }) => file.target.endsWith('/root.tsx')).content;
+    const item = registryItem(output, 'react/components', 'root');
+    const source = registryFile(output, 'react/components', item, '/root.tsx');
 
     expect(item.files.map((file: { target: string }) => file.target)).toEqual([
-      'components/example/root/internal/components/private.tsx',
+      'components/example/root/internal/root/components/private.tsx',
       'components/example/root/root.tsx',
     ]);
-    expect(source).toContain(`from './internal/components/private'`);
+    expect(source).toContain(`from './internal/root/components/private'`);
   });
 
   it('owns type-only and dynamic relative imports without synthetic chunks', async () => {
@@ -93,12 +97,12 @@ describe('shadcnPlugin', () => {
       'components/lazy.tsx': `export const Lazy = <aside/>;`,
     });
     const output = await build(root, { styles: undefined });
-    const item = assetJson(output, 'root.json');
+    const item = registryItem(output, 'react/components', 'root');
 
     expect(item.files.map((file: { target: string }) => file.target)).toEqual([
-      'components/example/root/lazy.tsx',
+      'components/example/root/internal/root/lazy.tsx',
+      'components/example/root/internal/root/types.ts',
       'components/example/root/root.tsx',
-      'components/example/root/types.ts',
     ]);
     expect(output.output.filter((entry) => entry.type === 'chunk')).toEqual([]);
   });
@@ -112,7 +116,9 @@ describe('shadcnPlugin', () => {
 
     expect(output.output.filter((entry) => entry.type === 'chunk').map((entry) => entry.fileName)).toEqual(['app.js']);
     expect(output.output.find((entry) => entry.fileName === 'app.js')).toMatchObject({ type: 'chunk' });
-    expect(assetJson(output, 'root.json').files[0].content).toContain('<main/>');
+    const item = registryItem(output, 'react/components', 'root');
+
+    expect(registryFile(output, 'react/components', item, '/root.tsx')).toContain('<main/>');
   });
 
   it('keeps transformed module identities and dependencies transform-specific', async () => {
@@ -138,17 +144,22 @@ describe('shadcnPlugin', () => {
           transform(code, id) {
             const skin = parseModuleId(id).parameters.get('skin');
 
-            return skin ? code.replace('<main>', `<main data-skin="${skin}">`) : null;
+            return skin
+              ? code.replace('<main>', `<main data-skin="${skin}">`).replace('<aside/>', `<aside data-skin="${skin}"/>`)
+              : null;
           },
         },
       ]
     );
 
-    expect(assetJson(output, 'root.json').registryDependencies).toContain('@example/child');
-    expect(assetJson(output, 'root-minimal.json').registryDependencies).toContain('@example/child-minimal');
-    expect(assetJson(output, 'root.json').files[0].content).toContain('data-skin="default"');
-    expect(assetJson(output, 'root-minimal.json').files[0].content).toContain('data-skin="minimal"');
-    expect(assetJson(output, 'root-minimal.json').files[0].content).toContain(
+    const rootItem = registryItem(output, 'react/components', 'root');
+    const minimal = registryItem(output, 'react/components', 'root-minimal');
+
+    expect(rootItem.registryDependencies).toContain('@example/child');
+    expect(minimal.registryDependencies).toContain('@example/child-minimal');
+    expect(registryFile(output, 'react/components', rootItem, '/root.tsx')).toContain('data-skin="default"');
+    expect(registryFile(output, 'react/components', minimal, '/root.tsx')).toContain('data-skin="minimal"');
+    expect(registryFile(output, 'react/components', minimal, '/root.tsx')).toContain(
       `from '@/components/example/child-minimal/child'`
     );
   });
@@ -167,14 +178,26 @@ describe('shadcnPlugin', () => {
   });
 
   it('rejects unsafe paths and duplicate item names', async () => {
+    const unsafeRoot = setup({
+      'components/root.tsx': `${meta('root', 'block')} export const Root = <main/>;`,
+    });
     const root = setup({
       'components/first.tsx': `${meta('root', 'block')} export const First = <main/>;`,
       'components/second.tsx': `${meta('root', 'block')} export const Second = <main/>;`,
     });
 
     await expect(
-      build(root, { paths: { ...baseOptions().paths, output: '../registry' }, styles: undefined })
-    ).rejects.toThrow(/output path must be a non-empty relative path/);
+      build(unsafeRoot, {
+        styles: undefined,
+        publish: {
+          ...baseOptions().publish,
+          items: (modules) =>
+            baseOptions()
+              .publish.items(modules)
+              .map((item) => ({ ...item, group: '../registry' })),
+        },
+      })
+    ).rejects.toThrow(/group must be a non-empty relative path/);
     await expect(build(root, { styles: undefined })).rejects.toThrow(/is described by both/);
   });
 
@@ -184,7 +207,9 @@ describe('shadcnPlugin', () => {
     });
     const output = await build(root, { styles: undefined }, ['shadcn', 'vjsc']);
 
-    expect(assetJson(output, 'root.json').files[0].content).toContain('<main/>');
+    const item = registryItem(output, 'react/components', 'root');
+
+    expect(registryFile(output, 'react/components', item, '/root.tsx')).toContain('<main/>');
   });
 
   it('clears discovered and captured source before a rebuild', async () => {
@@ -200,9 +225,48 @@ describe('shadcnPlugin', () => {
     );
     const second = await build(root, { styles: undefined }, ['vjsc', plugin]);
 
-    expect(JSON.stringify(assetJson(first, 'root.json'))).toContain('first');
-    expect(JSON.stringify(assetJson(second, 'root.json'))).toContain('second');
-    expect(JSON.stringify(assetJson(second, 'root.json'))).not.toContain('first');
+    const firstItem = registryItem(first, 'react/components', 'root');
+    const secondItem = registryItem(second, 'react/components', 'root');
+
+    expect(registryFile(first, 'react/components', firstItem, '/root.tsx')).toContain('first');
+    expect(registryFile(second, 'react/components', secondItem, '/root.tsx')).toContain('second');
+    expect(registryFile(second, 'react/components', secondItem, '/root.tsx')).not.toContain('first');
+  });
+
+  it('combines source-owned items with transformed items', async () => {
+    const root = setup({
+      'components/root.tsx': `export function Root() { return <main/>; } ${meta('root', 'block')}`,
+    });
+    const output = await build(root, {
+      styles: undefined,
+      items: [
+        {
+          name: 'react-video',
+          group: 'react/players',
+          type: 'registry:block',
+          title: 'Video player',
+          description: 'A source-owned player composition.',
+          dependencies: ['@videojs/react', 'react'],
+          registryDependencies: ['@example/root'],
+          files: [
+            {
+              content: `export { VideoPlayer } from '@videojs/react/video';\n`,
+              target: 'players/video.tsx',
+              type: 'registry:component',
+            },
+          ],
+          meta: { role: 'player' },
+        },
+      ],
+    });
+    const player = registryItem(output, 'react/players', 'react-video');
+
+    expect(player).toMatchObject({
+      dependencies: ['@videojs/react', 'react'],
+      registryDependencies: ['@example/root'],
+      meta: { role: 'player' },
+    });
+    expect(registryFile(output, 'react/players', player, '/players/video.tsx')).toContain('VideoPlayer');
   });
 });
 
@@ -242,8 +306,6 @@ function baseOptions(overrides: Partial<FixtureOptions> = {}): FixtureOptions {
     homepage: 'https://example.com',
     namespace: '@example',
     paths: {
-      output: 'registry/source',
-      source: 'source',
       install: 'components/example',
       import: '@/components/example',
     },
@@ -259,10 +321,12 @@ function baseOptions(overrides: Partial<FixtureOptions> = {}): FixtureOptions {
               {
                 module,
                 name: 'utils',
+                group: 'shared',
                 type: 'registry:lib',
                 title: 'Utilities',
                 description: 'Shared utilities.',
                 filename: 'utils.ts',
+                target: 'utils.ts',
               },
             ];
           }
@@ -276,14 +340,21 @@ function baseOptions(overrides: Partial<FixtureOptions> = {}): FixtureOptions {
             {
               module,
               name,
+              group: 'react/components',
               type: itemMeta.type === 'block' ? 'registry:block' : 'registry:component',
               title: itemMeta.title,
               description: itemMeta.description,
+              target: `${name}/${basename(filename)}`,
             },
           ];
         }),
     },
-    styles: { input: './styles.css', filename: 'tailwind.css' },
+    styles: {
+      input: './styles.css',
+      filename: 'tailwind.css',
+      group: 'shared',
+      target: 'styles/tailwind.css',
+    },
     ...overrides,
   };
 }
@@ -310,4 +381,24 @@ function assetJson(output: RolldownOutput, filename: string): any {
   if (asset?.type !== 'asset') throw new Error(`Missing asset: ${filename}`);
 
   return JSON.parse(String(asset.source));
+}
+
+function registryItem(output: RolldownOutput, group: string, name: string): any {
+  const registry = assetJson(output, `${group}/registry.json`);
+  const item = registry.items.find((candidate: { name: string }) => candidate.name === name);
+  if (!item) throw new Error(`Missing registry item: ${name}`);
+
+  return item;
+}
+
+function registryFile(output: RolldownOutput, group: string, item: any, target: string): string {
+  const file = item.files.find((candidate: { target?: string }) => candidate.target?.endsWith(target));
+  if (!file) throw new Error(`Missing registry file: ${item.name}${target}`);
+
+  const asset = output.output.find(
+    (candidate) => candidate.type === 'asset' && candidate.fileName === `${group}/${file.path}`
+  );
+  if (asset?.type !== 'asset') throw new Error(`Missing registry source: ${group}/${file.path}`);
+
+  return String(asset.source);
 }

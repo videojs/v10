@@ -23,6 +23,8 @@ export interface SourceModule<Item extends ComponentMeta = ComponentMeta> {
 export interface SourceGraph<Item extends ComponentMeta = ComponentMeta> {
   readonly root: string;
   readonly modules: ReadonlyMap<string, SourceModule<Item>>;
+  readonly assets?: ReadonlyMap<string, string> | undefined;
+  readonly styles?: ReadonlyMap<string, readonly string[]> | undefined;
 }
 
 export interface RegistrySourceModule<Item extends ComponentMeta = ComponentMeta> extends SourceModule<Item> {
