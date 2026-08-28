@@ -7,6 +7,7 @@ import {
   type KeySystemModule,
   requestKeySystemAccess,
   applyLicenseRequest,
+  applyLicenseResponse,
 } from '../eme';
 import { fairPlayKeySystem, playReadyKeySystem, widevineKeySystem } from '../key-systems';
 
@@ -172,6 +173,25 @@ describe('applyLicenseRequest', () => {
       body: message,
       headers: { 'Content-Type': 'application/octet-stream' },
     });
+  });
+});
+
+describe('applyLicenseResponse', () => {
+  it('passes the response through unchanged for a module declaring no transform', async () => {
+    const license = new Uint8Array([9, 9, 9]);
+
+    expect(await applyLicenseResponse(widevineKeySystem, license)).toBe(license);
+    expect(await applyLicenseResponse(undefined, license)).toBe(license);
+  });
+
+  it('delegates to the module when it declares its own transform', async () => {
+    const module_: KeySystemModule = {
+      keySystem: 'com.example.drm',
+      keyFormats: [],
+      licenseResponse: (response) => new Uint8Array([response[0]! + 1]),
+    };
+
+    expect([...(await applyLicenseResponse(module_, new Uint8Array([4])))]).toEqual([5]);
   });
 });
 

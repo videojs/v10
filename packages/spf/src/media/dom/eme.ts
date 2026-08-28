@@ -158,6 +158,18 @@ export function applyLicenseRequest(
 }
 
 /**
+ * Apply the negotiated module's license-response transform. With no transform the response passes through unchanged
+ * (Mux and EZDRM return the raw CDM license); a module whose server wraps the license overrides it to unwrap. The
+ * per-source override composes after this, in `exchangeLicenses`.
+ */
+export function applyLicenseResponse(
+  module_: KeySystemModule | undefined,
+  response: Uint8Array<ArrayBuffer>
+): Uint8Array<ArrayBuffer> | Promise<Uint8Array<ArrayBuffer>> {
+  return module_?.licenseResponse?.(response) ?? response;
+}
+
+/**
  * Fetch the DRM server (application) certificate. FairPlay needs it applied (`MediaKeys.setServerCertificate`) before
  * any license request can be generated; Widevine and PlayReady configs simply don't name one.
  */
