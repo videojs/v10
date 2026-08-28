@@ -11,6 +11,7 @@ export type { DrmSystemConfig, DrmSystemsConfig, DrmUrl } from '../../../media/d
 export type { KeySystemModule } from '../../../media/drm';
 export {
   DEFAULT_KEY_SYSTEMS,
+  clearKeySystem,
   fairPlayKeySystem,
   playReadyKeySystem,
   widevineKeySystem,

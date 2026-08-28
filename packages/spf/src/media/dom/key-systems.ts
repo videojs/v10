@@ -131,8 +131,31 @@ export const fairPlayKeySystem: KeySystemModule = {
 };
 
 /**
+ * W3C Clear Key — the one key system the EME spec requires, so every Chromium ships it, including the bundled test
+ * browsers that carry no proprietary CDM. That makes it the full-pipeline EME test vehicle (negotiate → attach →
+ * license → decode with no Widevine/PlayReady/FairPlay available), and a legitimate choice for low-value content.
+ *
+ * HLS has no registered Clear Key KEYFORMAT, so this module adopts the W3C "common" PSSH system-id URN and expects the
+ * key URI to carry that PSSH as a `data:` URI — the same manifest-driven shape as Widevine. The license exchange is
+ * spec-fixed JSON: the CDM's message is `{"kids": […]}` and the response is a JWK set, hence the JSON content type.
+ */
+export const clearKeySystem: KeySystemModule = {
+  keySystem: 'org.w3.clearkey',
+  keyFormats: ['urn:uuid:1077efec-c0b2-4d02-ace3-3c1e52e2fb4b'],
+  toInitData: (uri) => {
+    const initData = initDataFromKeyUri(uri);
+
+    return initData && { initDataType: 'cenc', initData };
+  },
+  licenseRequest: (request) => ({
+    ...request,
+    headers: { ...request.headers, 'Content-Type': 'application/json' },
+  }),
+};
+
+/**
  * All three systems, in hls.js's negotiation order: the platform-native system first (FairPlay exists only on Apple
- * UAs, so it costs nothing elsewhere).
+ * UAs, so it costs nothing elsewhere). Clear Key stays out — a composition that wants it says so.
  *
  * The convenience default, not a requirement — an engine that only ever sees Widevine composes `[widevineKeySystem]`
  * and pays for nothing else.
