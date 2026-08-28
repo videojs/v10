@@ -442,7 +442,7 @@ test('minimal fullscreen geometry scales through the large breakpoints', async (
     const tailwindMenu = await fullscreenSpeedMenuContract(page);
 
     expect(tailwindFullscreen).toEqual(cssFullscreen);
-    expect(tailwindPreview).toEqual(cssPreview);
+    expectFullscreenPreviewParity(tailwindPreview, cssPreview);
     expect(tailwindMenu).toEqual(cssMenu);
   }
 });
