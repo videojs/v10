@@ -7,6 +7,7 @@ import { ButtonTooltip } from '../../components/buttons/button-tooltip';
 import { PlaybackRateButton } from '../../components/buttons/playback-rate-button';
 import { RadioItem } from '../../components/menus/radio-item';
 import styles from '../../styles/menus/menu.styles';
+import audioSettingsMenuStyles from './settings-menu.styles';
 
 export interface AudioSettingsMenuProps extends MenuProps {
   className?: Props<MenuProps>['className'];
@@ -19,7 +20,7 @@ export function AudioSettingsMenu({ className, ...props }: AudioSettingsMenuProp
         <ButtonTooltip label={<Text token={speedText.key}>{speedText.text}</Text>} side="top">
           <$.Menu.Trigger $render={PlaybackRateButton} />
         </ButtonTooltip>
-        <$.Menu.Popup className={[styles.popup, className]}>
+        <$.Menu.Popup className={[styles.popup, audioSettingsMenuStyles.popup, className]}>
           <$.Menu.Content className={styles.content}>
             <$.PlaybackRateRadioGroup.Options className={styles.radioGroup}>
               <Template name="playback-rate-option">

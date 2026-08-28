@@ -1,5 +1,19 @@
 import { expect, type Locator, type Page, test } from '@playwright/test';
 
+import {
+  buttonInteractionContract,
+  collectPageErrors,
+  emulatePreference,
+  normalizeErrorDialogCopy,
+  popupAncestor,
+  popupContract,
+  surfaceContract,
+  VJSC_CONFIGURATIONS,
+  waitForStableText,
+  type VjscSource,
+  type VjscStyle,
+} from './vjsc-skin-parity';
+
 const CASES = [
   { framework: 'react', skin: 'default-audio' },
   { framework: 'react', skin: 'minimal-audio' },
@@ -9,14 +23,16 @@ const CASES = [
 const STYLES = ['css', 'tailwind'] as const;
 const WIDTHS = [384, 672] as const;
 
-type Source = 'legacy' | 'vjsc';
-type Style = (typeof STYLES)[number];
+type Source = VjscSource;
+type Style = VjscStyle;
 type Variant = (typeof CASES)[number];
 
 test.describe.configure({ mode: 'serial' });
 
 for (const variant of CASES) {
   test(`${variant.framework} ${variant.skin} keeps legacy, CSS, and Tailwind rendering in sync`, async ({ page }) => {
+    const pageErrors = collectPageErrors(page);
+
     for (const width of WIDTHS) {
       const name = `${variant.framework}-${variant.skin}-${width}.png`;
       const legacy = await openVariant(page, variant, 'css', width, 'legacy');
@@ -36,12 +52,14 @@ for (const variant of CASES) {
       expect(tailwindContract).toEqual(cssContract);
       await expect(tailwind).toHaveScreenshot(name);
     }
+
+    expect(pageErrors).toEqual([]);
   });
 
   test(`${variant.framework} ${variant.skin} preserves audio interactions and popup styling`, async ({ page }) => {
     const contracts = [];
 
-    for (const configuration of configurations()) {
+    for (const configuration of VJSC_CONFIGURATIONS) {
       await test.step(`${configuration.source}/${configuration.style}`, async () => {
         const root = await openVariant(page, variant, configuration.style, 672, configuration.source);
 
@@ -49,7 +67,7 @@ for (const variant of CASES) {
       });
     }
 
-    for (const key of ['menu', 'popover', 'tooltip'] as const) {
+    for (const key of ['button', 'hover', 'menu', 'popover', 'tooltip'] as const) {
       expect(contracts[1][key], `${key}: VJSC CSS matches legacy`).toEqual(contracts[0][key]);
       expect(contracts[2][key], `${key}: VJSC Tailwind matches CSS`).toEqual(contracts[1][key]);
     }
@@ -64,18 +82,39 @@ for (const variant of CASES) {
   test(`${variant.framework} ${variant.skin} keeps error-dialog styling in sync`, async ({ page }) => {
     const contracts = [];
 
-    for (const configuration of configurations()) {
+    for (const configuration of VJSC_CONFIGURATIONS) {
       await test.step(`${configuration.source}/${configuration.style}`, async () => {
         const root = await openVariant(page, variant, configuration.style, 672, configuration.source, 'error', false);
         const dialog = root.getByRole('alertdialog');
 
         await expect(dialog).toBeVisible({ timeout: 20_000 });
+        await waitForStableText(dialog);
+        await normalizeErrorDialogCopy(dialog);
         contracts.push(await popupContract(dialog));
       });
     }
 
     expect(contracts[1]).toEqual(contracts[0]);
     expect(contracts[2]).toEqual(contracts[1]);
+  });
+
+  test(`${variant.framework} ${variant.skin} keeps seek preview and dragging in sync`, async ({ page }) => {
+    const contracts = [];
+
+    for (const configuration of VJSC_CONFIGURATIONS) {
+      await test.step(`${configuration.source}/${configuration.style}`, async () => {
+        await openVariant(page, variant, configuration.style, 672, configuration.source);
+        contracts.push(await audioSeekContract(page));
+      });
+    }
+
+    expect(contracts[1]).toEqual(contracts[0]);
+    expect(contracts[2]).toEqual(contracts[1]);
+    expect(contracts[1]).toMatchObject({
+      dragging: { fillIsImmediate: true, lag: 0, thumbPositionIsImmediate: true },
+      restingFillTransitions: true,
+    });
+    expect(contracts[1].previewOffsets.every((offset) => Math.abs(offset) <= 1)).toBe(true);
   });
 
   test(`${variant.framework} ${variant.skin} removes movement under reduced motion`, async ({ page }) => {
@@ -104,14 +143,30 @@ for (const variant of CASES) {
       expect(motion).toEqual({ animation: 'none', duration: '0s', scale: 'none' });
     }
   });
-}
 
-function configurations(): readonly { readonly source: Source; readonly style: Style }[] {
-  return [
-    { source: 'legacy', style: 'css' },
-    { source: 'vjsc', style: 'css' },
-    { source: 'vjsc', style: 'tailwind' },
-  ];
+  for (const preference of ['reduced-transparency', 'contrast-more', 'forced-colors'] as const) {
+    test(`${variant.framework} ${variant.skin} keeps ${preference} surfaces in sync`, async ({ page }) => {
+      await emulatePreference(page, preference);
+
+      const contracts = [];
+
+      for (const configuration of VJSC_CONFIGURATIONS) {
+        const root = await openVariant(page, variant, configuration.style, 672, configuration.source);
+        const rate = root.getByRole('button', { name: /Playback rate/i });
+
+        await rate.click();
+        await expect(rate).toHaveAttribute('aria-expanded', 'true');
+
+        contracts.push({
+          controls: await surfaceContract(root.locator('.media-controls').first()),
+          popup: await surfaceContract(visibleMenuPopup(page)),
+        });
+      }
+
+      expect(contracts[1]).toEqual(contracts[0]);
+      expect(contracts[2]).toEqual(contracts[1]);
+    });
+  }
 }
 
 async function openVariant(
@@ -269,6 +324,16 @@ async function interactionContract(page: Page, root: Locator) {
   const play = root.getByRole('button', { name: /^(?:Play|Pause)$/ });
 
   await play.hover();
+  await page.waitForTimeout(200);
+
+  const hover = await play.evaluate((element) => {
+    const style = getComputedStyle(element);
+
+    return {
+      background: /\/\s*0(?:\.0+)?\)/.test(style.backgroundColor) ? 'transparent' : 'painted',
+      color: style.color,
+    };
+  });
 
   const tooltip = page.locator('[popover]:visible').filter({ hasText: 'Play' }).first();
 
@@ -279,10 +344,17 @@ async function interactionContract(page: Page, root: Locator) {
   await page.mouse.move(0, 0);
   await expect(tooltip).toBeHidden();
 
+  await play.hover();
+  await expect(tooltip).toBeVisible();
+  await page.mouse.move(0, 0);
+  await expect(tooltip).toBeHidden();
+
   await play.click();
   await expect(play).toHaveAttribute('aria-label', 'Pause');
   await play.click();
   await expect(play).toHaveAttribute('aria-label', 'Play');
+
+  const button = await buttonInteractionContract(page, play);
 
   const rate = root.getByRole('button', { name: /Playback rate/i });
   const initialRate = await rate.getAttribute('data-rate');
@@ -310,12 +382,19 @@ async function interactionContract(page: Page, root: Locator) {
 
   await expect(volume).toBeVisible();
 
-  const popover = await popupAncestorContract(volume);
+  const popover = await popupContract(popupAncestor(volume));
 
   await page.mouse.move(0, 0);
   await expect(volume).toBeHidden();
 
+  await mute.hover();
+  await expect(volume).toBeVisible();
+  await page.mouse.move(0, 0);
+  await expect(volume).toBeHidden();
+
   return {
+    button,
+    hover,
     menu: menuContract,
     nestedButtons: await root.locator('button button').count(),
     playbackRateChanged,
@@ -324,57 +403,85 @@ async function interactionContract(page: Page, root: Locator) {
   };
 }
 
-async function popupContract(popup: Locator) {
-  return popup.evaluate((element) => {
+async function audioSeekContract(page: Page) {
+  const thumb = page.getByRole('slider', { name: 'Seek' });
+  const slider = thumb.locator('..');
+
+  await slider.evaluate((element) => {
+    for (const name of ['--media-slider-fill', '--media-slider-buffer', '--media-slider-pointer']) {
+      if (element instanceof HTMLElement) element.style.removeProperty(name);
+    }
+  });
+
+  const previewOffsets: number[] = [];
+
+  for (const ratio of [0.25, 0.75]) {
+    const box = await slider.boundingBox();
+    if (!box) throw new Error('Expected the audio seek slider to have a rendered box.');
+
+    const pointer = box.x + box.width * ratio;
+
+    await slider.hover({ position: { x: box.width * ratio, y: box.height / 2 } });
+    await expect(slider).toHaveAttribute('data-pointing', '');
+
+    const preview = slider.locator(':scope > :last-child > :last-child');
+    const previewBox = await preview.boundingBox();
+    if (!previewBox) throw new Error('Expected the audio seek preview to have a rendered box.');
+
+    const offset = Math.round((previewBox.x + previewBox.width / 2 - pointer) * 10) / 10;
+
+    previewOffsets.push(Math.abs(offset) < 0.1 ? 0 : offset);
+  }
+
+  const restingFillTransitions = await slider.evaluate((element) =>
+    [...element.querySelectorAll('*')]
+      .map((target) => getComputedStyle(target))
+      .filter((style) =>
+        style.transitionProperty
+          .split(',')
+          .map((value) => value.trim())
+          .includes('clip-path')
+      )
+      .every((style) => style.transitionDuration.split(',').some((duration) => Number.parseFloat(duration) > 0))
+  );
+  const box = await slider.boundingBox();
+  if (!box) throw new Error('Expected the audio seek slider to have a rendered box.');
+
+  const pointerX = box.x + box.width * 0.73;
+  const pointerY = box.y + box.height / 2;
+
+  await page.mouse.move(box.x + box.width * 0.25, pointerY);
+  await page.mouse.down();
+  await page.mouse.move(pointerX, pointerY);
+  await expect(slider).toHaveAttribute('data-dragging', '');
+
+  const dragging = await thumb.evaluate((element, expectedX) => {
     const style = getComputedStyle(element);
-    const paintedShadow = style.boxShadow
-      .split(/,(?![^()]*(?:\)|$))/)
-      .some((shadow) => !/rgba?\([^)]*(?:\/|,)\s*0(?:\.0+)?\)/.test(shadow) && /-?[1-9]\d*(?:\.\d+)?px/.test(shadow));
-    const durations = style.transitionDuration.split(',').map((value) => value.trim());
-    const properties = style.transitionProperty.split(',').map((value) => value.trim());
-    const motion = properties.flatMap((property, index) =>
-      ['opacity', 'filter', 'transform', 'scale'].includes(property)
-        ? [{ duration: durations[index % durations.length], property }]
-        : []
+    const root = element.parentElement;
+    const fills = [...(root?.querySelectorAll('*') ?? [])]
+      .map((target) => getComputedStyle(target))
+      .filter((candidate) =>
+        candidate.transitionProperty
+          .split(',')
+          .map((value) => value.trim())
+          .includes('clip-path')
+      );
+    const rect = element.getBoundingClientRect();
+    const lag = Math.abs(rect.x + rect.width / 2 - expectedX);
+    const positionProperties = new Set(style.transitionProperty.split(',').map((value) => value.trim()));
+    const fillDurations = fills.flatMap((candidate) =>
+      candidate.transitionDuration.split(',').map((value) => Number.parseFloat(value))
     );
 
     return {
-      backdropFilter: style.backdropFilter === 'none' ? 'none' : 'painted',
-      background: style.backgroundColor === 'rgba(0, 0, 0, 0)' ? 'transparent' : 'painted',
-      borderRadius: Number.parseFloat(style.borderRadius) > 50 ? 'pill' : style.borderRadius,
-      motion,
-      shadow: paintedShadow ? 'painted' : 'none',
+      fillIsImmediate: fillDurations.length > 0 && fillDurations.every((duration) => duration === 0),
+      lag: lag <= 1 ? 0 : Math.ceil(lag),
+      thumbPositionIsImmediate: !positionProperties.has('left') && !positionProperties.has('top'),
     };
-  });
-}
+  }, pointerX);
 
-async function popupAncestorContract(child: Locator) {
-  return child.evaluate((element) => {
-    const popup = element.closest(
-      '.media-popover--volume, .media-volume-popover, [popover], media-popover, media-volume-popover'
-    );
-    if (!popup) throw new Error('Expected a popup ancestor.');
-
-    const style = getComputedStyle(popup);
-    const paintedShadow = style.boxShadow
-      .split(/,(?![^()]*(?:\)|$))/)
-      .some((shadow) => !/rgba?\([^)]*(?:\/|,)\s*0(?:\.0+)?\)/.test(shadow) && /-?[1-9]\d*(?:\.\d+)?px/.test(shadow));
-    const durations = style.transitionDuration.split(',').map((value) => value.trim());
-    const properties = style.transitionProperty.split(',').map((value) => value.trim());
-    const motion = properties.flatMap((property, index) =>
-      ['opacity', 'filter', 'transform', 'scale'].includes(property)
-        ? [{ duration: durations[index % durations.length], property }]
-        : []
-    );
-
-    return {
-      backdropFilter: style.backdropFilter === 'none' ? 'none' : 'painted',
-      background: style.backgroundColor === 'rgba(0, 0, 0, 0)' ? 'transparent' : 'painted',
-      borderRadius: Number.parseFloat(style.borderRadius) > 50 ? 'pill' : style.borderRadius,
-      motion,
-      shadow: paintedShadow ? 'painted' : 'none',
-    };
-  });
+  await page.mouse.up();
+  return { dragging, previewOffsets, restingFillTransitions };
 }
 
 function visibleMenuPopup(page: Page): Locator {

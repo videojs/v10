@@ -10,11 +10,7 @@ export interface AudioTimeSliderProps extends CoreProps {
   previewOverflow?: SliderPreviewOverflow | undefined;
 }
 
-export function AudioTimeSlider({
-  className,
-  previewOverflow = 'visible',
-  ...props
-}: Props<AudioTimeSliderProps> = {}) {
+export function AudioTimeSlider({ className, previewOverflow = 'clamp', ...props }: Props<AudioTimeSliderProps> = {}) {
   return (
     <$.TimeSlider.Root className={[sliderStyles.root, styles.root, className]} {...props}>
       <$.TimeSlider.Track $render={SliderTrack}>

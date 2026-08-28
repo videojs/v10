@@ -20,7 +20,7 @@ export function DefaultAudioControls() {
 
           <$.Controls.Group className={styles.timeSliderGroup}>
             <$.Time.Value className={styles.currentValue} type="current" />
-            <AudioTimeSlider />
+            <AudioTimeSlider previewOverflow="visible" />
             <$.Time.Value className={styles.remainingValue} type="remaining" toggle />
           </$.Controls.Group>
 

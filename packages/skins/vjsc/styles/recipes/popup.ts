@@ -3,6 +3,8 @@ export const popupPosition = [
   'm-0 overflow-visible border-0 text-inherit',
   'data-starting-style:opacity-0 data-starting-style:blur-xs data-starting-style:[transform:scale(.95)]',
   'data-ending-style:opacity-0 data-ending-style:blur-xs data-ending-style:[transform:scale(.95)]',
+  'motion-reduce:data-starting-style:[transform:none]! motion-reduce:data-ending-style:[transform:none]!',
+  'motion-reduce:data-starting-style:filter-none! motion-reduce:data-ending-style:filter-none!',
   'data-[side=top]:origin-bottom data-[side=bottom]:origin-top data-[side=left]:origin-right data-[side=right]:origin-left',
   'data-[side=top]:data-starting-style:[transform:translateY(var(--media-popup-translate-distance))_scale(.95)]',
   'data-[side=bottom]:data-starting-style:[transform:translateY(calc(var(--media-popup-translate-distance)*-1))_scale(.95)]',
@@ -17,8 +19,8 @@ export const popupPosition = [
 
 /** Animate popup presence while reducing motion to opacity-only timing. */
 export const popupTransition = [
-  'transition-[opacity,filter,transform,scale] duration-100 ease-out motion-reduce:duration-0',
-  'data-ending-style:duration-50 motion-reduce:data-ending-style:duration-0',
+  'transition-[opacity,filter,transform,scale] duration-100 ease-out motion-reduce:duration-0!',
+  'data-ending-style:duration-50 motion-reduce:data-ending-style:duration-0!',
 ] as const;
 
 /** Keep pointer travel between a popover and its trigger interactive. */
