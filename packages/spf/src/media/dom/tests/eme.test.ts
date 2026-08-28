@@ -128,7 +128,12 @@ describe('requestKeySystemAccess', () => {
 });
 
 describe('applyLicenseRequest', () => {
-  const req = (body: BufferSource, headers: Record<string, string> = {}) => ({ url: 'https://lic', headers, body });
+  const req = (body: BufferSource, headers: Record<string, string> = {}) => ({
+    url: 'https://lic',
+    method: 'POST',
+    headers,
+    body,
+  });
 
   it('posts raw bytes as octet-stream for a module declaring no transform', async () => {
     const message = new Uint8Array([1, 2, 3]).buffer;
@@ -160,6 +165,7 @@ describe('applyLicenseRequest', () => {
 
     expect(await applyLicenseRequest(module_, req(new Uint8Array([1]).buffer))).toEqual({
       url: 'https://lic',
+      method: 'POST',
       body: new Uint8Array([7]),
       headers: { 'Content-Type': 'application/json' },
     });
@@ -170,6 +176,7 @@ describe('applyLicenseRequest', () => {
 
     expect(await applyLicenseRequest(undefined, req(message))).toEqual({
       url: 'https://lic',
+      method: 'POST',
       body: message,
       headers: { 'Content-Type': 'application/octet-stream' },
     });
