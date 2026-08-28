@@ -170,17 +170,23 @@ export function applyLicenseResponse(
 }
 
 /**
- * Fetch the DRM server (application) certificate. FairPlay needs it applied (`MediaKeys.setServerCertificate`) before
- * any license request can be generated; Widevine and PlayReady configs simply don't name one.
+ * Apply the negotiated module's certificate-request transform. No shipped system needs one — the default is the plain
+ * GET FairPlay's certificate endpoints answer — so this is identity unless a module declares its own. The per-source
+ * override composes after it, in `setupMediaKeys`.
  */
-export async function fetchServerCertificate(
-  serverCertificateUrl: string,
-  signal: AbortSignal
-): Promise<Uint8Array<ArrayBuffer>> {
-  const response = await fetch(serverCertificateUrl, { signal });
-  if (!response.ok) throw new Error(`Server certificate request failed with status ${response.status}`);
+export function applyCertificateRequest(
+  module_: KeySystemModule | undefined,
+  request: DrmRequest
+): DrmRequest | Promise<DrmRequest> {
+  return module_?.certificateRequest?.(request) ?? request;
+}
 
-  return new Uint8Array(await response.arrayBuffer());
+/** Apply the negotiated module's certificate-response transform. Identity unless a module unwraps its certificate. */
+export function applyCertificateResponse(
+  module_: KeySystemModule | undefined,
+  response: Uint8Array<ArrayBuffer>
+): Uint8Array<ArrayBuffer> | Promise<Uint8Array<ArrayBuffer>> {
+  return module_?.certificateResponse?.(response) ?? response;
 }
 
 /** Attach (or with `null`, detach) MediaKeys on a media element. */
