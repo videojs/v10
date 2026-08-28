@@ -19,23 +19,20 @@ export type { ShadcnPluginOptions } from '../shadcn/types';
 /** Discover component sources, capture their transformed graphs, and emit Shadcn JSON assets. */
 export function shadcnPlugin<Item extends ComponentMeta>(options: ShadcnPluginOptions<Item>): Plugin[] {
   const transformedSources = new Map<string, string>();
-  const transformedStyles = new Map<string, readonly string[]>();
   const transformedAssets = new Map<string, string>();
 
   return [
-    componentSourcePlugin((id, source, meta) => {
+    componentSourcePlugin((id, source) => {
       transformedSources.set(id, source);
-      transformedStyles.set(id, readComponentStyles(meta));
     }),
     transformedAssetPlugin(transformedAssets),
-    shadcnEmitterPlugin(options, transformedSources, transformedStyles, transformedAssets),
+    shadcnEmitterPlugin(options, transformedSources, transformedAssets),
   ];
 }
 
 function shadcnEmitterPlugin<Item extends ComponentMeta>(
   options: ShadcnPluginOptions<Item>,
   transformedSources: Map<string, string>,
-  transformedStyles: Map<string, readonly string[]>,
   transformedAssets: Map<string, string>
 ): Plugin {
   const root = resolveModulePath(options.root);
@@ -50,7 +47,6 @@ function shadcnEmitterPlugin<Item extends ComponentMeta>(
       sources.clear();
       sourceEntries.clear();
       transformedSources.clear();
-      transformedStyles.clear();
       transformedAssets.clear();
 
       const files = discoverFiles(root, options.include, options.exclude);
@@ -98,7 +94,8 @@ function shadcnEmitterPlugin<Item extends ComponentMeta>(
 
         const meta = readComponentMeta(info?.meta) as Item | undefined;
         const imports: SourceImport[] = [];
-        const styleIds = (transformedStyles.get(module.id) ?? []).map(normalizeShadcnId);
+        // Module metadata is complete only after the transform pipeline has finished.
+        const styleIds = readComponentStyles(info?.meta).map(normalizeShadcnId);
 
         if (styleIds.length > 0) styles.set(module.id, styleIds);
 
