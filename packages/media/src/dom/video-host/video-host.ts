@@ -1,46 +1,42 @@
 import type { WebKitDocument, WebKitPresentationMode, WebKitVideoElement } from '@videojs/utils/dom';
 import { isFunction } from '@videojs/utils/predicate';
+import type { Constructor } from '@videojs/utils/types';
 
 import type { Video, VideoEvents, VideoTargetLike } from '../../core/types';
-import { HTMLMediaElementHost, type HTMLMediaTargetLike, mediaPropsFor } from '../media-host';
+import {
+  createMediaHost,
+  HTMLMediaElementHost,
+  type HTMLMediaTargetLike,
+  pictureInPictureCapability,
+  playsInlineCapability,
+  posterCapability,
+  videoDimensionsCapability,
+} from '../media-host';
 
 export interface HTMLVideoTargetLike extends VideoTargetLike, HTMLMediaTargetLike {}
 
-const videoProps = mediaPropsFor<HTMLVideoTargetLike>();
+/** What a video adds to {@link htmlMediaElementCapabilities}. */
+export const htmlVideoElementCapabilities = [
+  posterCapability,
+  playsInlineCapability,
+  videoDimensionsCapability,
+  pictureInPictureCapability,
+] as const;
 
-export class HTMLVideoElementHost extends HTMLMediaElementHost<HTMLVideoTargetLike, VideoEvents> implements Video {
-  get poster() {
-    return videoProps.get(this, 'poster') ?? '';
-  }
+// The media host is generic, and a value cannot carry type arguments into a
+// composition, so the video parameterization is stated here instead.
+const HTMLVideoElementHostBase = createMediaHost(
+  htmlVideoElementCapabilities,
+  HTMLMediaElementHost as Constructor<HTMLMediaElementHost<HTMLVideoTargetLike, VideoEvents>>
+);
 
-  set poster(value: string) {
-    videoProps.set(this, 'poster', value);
-  }
-
-  get playsInline() {
-    return videoProps.get(this, 'playsInline') ?? false;
-  }
-
-  set playsInline(value: boolean) {
-    videoProps.set(this, 'playsInline', value);
-  }
-
-  get videoWidth() {
-    return videoProps.get(this, 'videoWidth') ?? 0;
-  }
-
-  get videoHeight() {
-    return videoProps.get(this, 'videoHeight') ?? 0;
-  }
-
-  get disablePictureInPicture() {
-    return videoProps.get(this, 'disablePictureInPicture') ?? false;
-  }
-
-  set disablePictureInPicture(value: boolean) {
-    videoProps.set(this, 'disablePictureInPicture', value);
-  }
-
+/**
+ * A host forwarding the full `HTMLVideoElement` surface.
+ *
+ * Presentation modes stay in the class body: entering and leaving fullscreen or picture-in-picture runs against
+ * `document` rather than the media, so there is no property to forward.
+ */
+export class HTMLVideoElementHost extends HTMLVideoElementHostBase implements Video {
   get webkitCurrentPlaybackTargetIsWireless() {
     return (this.target as WebKitVideoElement | null)?.webkitCurrentPlaybackTargetIsWireless;
   }

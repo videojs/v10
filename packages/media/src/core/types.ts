@@ -549,6 +549,11 @@ export interface MediaContentDataCapability {
   readonly contentData: MediaContentData | undefined;
 }
 
+/** Author-supplied title for the current content, separate from the media-owned `contentData.title`. */
+export interface MediaTitleCapability {
+  title: string;
+}
+
 // ----------------------------------------
 // Video dimensions (video-only)
 // ----------------------------------------
@@ -643,11 +648,10 @@ export interface MediaTargetLike
     MediaRemotePlaybackCapability,
     MediaControlsCapability,
     MediaAutoplayCapability,
+    MediaTitleCapability,
     Partial<MediaLiveCapability>,
     Partial<MediaStreamTypeCapability>,
-    Partial<MediaContentDataCapability> {
-  title: string;
-}
+    Partial<MediaContentDataCapability> {}
 
 export interface VideoTargetLike
   extends MediaTargetLike, MediaPosterCapability, MediaPlaysInlineCapability, MediaVideoDimensionsCapability {

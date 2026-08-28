@@ -1,5 +1,10 @@
-import type { MediaHostBase, HTMLMediaTargetLike as TargetLike } from '../media-host/base';
-import type { MediaComponent, MediaComponentConstructor, MediaComponents } from '../media-host/media-host';
+import type {
+  MediaComponent,
+  MediaComponentConstructor,
+  MediaComponents,
+  MediaHostBase,
+  HTMLMediaTargetLike as TargetLike,
+} from '../media-host/base';
 
 export type MediaHost = MediaHostBase;
 
@@ -59,26 +64,6 @@ export function setMediaProp<Capability extends object = TargetLike, K extends k
   const own = getMediaOwner<Capability>(host, prop);
 
   if (own) (own as Record<K, Capability[K]>)[prop] = value;
-}
-
-/**
- * Bind the forwarding helpers to one capability.
- *
- * TypeScript cannot infer `Capability` from the host once capabilities are composed rather than declared on one generic
- * class, and it will not infer `K` when `Capability` is passed explicitly. Binding it once per capability module keeps
- * every accessor a one-liner and keeps each key checked against the capability it belongs to.
- *
- * @example
- *   const volumeProps = mediaPropsFor<MediaVolumeCapability>();
- *   volumeProps.get(host, 'volume'); // number | undefined
- */
-export function mediaPropsFor<Capability extends object>() {
-  return {
-    get: <K extends keyof Capability>(host: MediaHost, prop: K): Capability[K] | undefined =>
-      getMediaProp<Capability, K>(host, prop),
-    set: <K extends keyof Capability>(host: MediaHost, prop: K, value: Capability[K]): void =>
-      setMediaProp<Capability, K>(host, prop, value),
-  };
 }
 
 /**

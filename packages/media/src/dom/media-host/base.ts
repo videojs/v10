@@ -8,6 +8,23 @@ export interface HTMLMediaTargetLike extends MediaTargetLike, EventTarget {
   querySelectorAll<E extends Element = Element>(selectors: string): NodeListOf<E> | never[];
 }
 
+export interface MediaComponent<Target extends HTMLMediaTargetLike = HTMLMediaTargetLike> {
+  readonly targetOverride?: Partial<Target> | null;
+  setMedia?(host: MediaHostBase): void;
+  attach?(target: Target): void;
+  detach?(): void;
+  destroy?(): void;
+}
+
+export interface MediaComponentConstructor<T extends MediaComponent = MediaComponent> {
+  new (...args: any[]): T;
+}
+
+export interface MediaComponents extends Map<MediaComponentConstructor, MediaComponent> {
+  get<T extends MediaComponent>(component: MediaComponentConstructor<T>): T | undefined;
+  set<T extends MediaComponent>(component: MediaComponentConstructor<T>, instance: T): this;
+}
+
 /**
  * Everything a media host does that is not a media capability: own a target, mirror its events, and hold the media
  * components registered against it.

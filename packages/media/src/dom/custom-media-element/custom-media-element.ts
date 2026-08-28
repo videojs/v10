@@ -156,24 +156,13 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
   class CustomMedia extends (globalThis.HTMLElement ?? class {}) {
     static getTemplateHTML = tag.endsWith('video') ? getVideoTemplateHTML : getCommonTemplateHTML(tag);
     static shadowRootOptions: ShadowRootInit = { mode: 'open' };
-    // Attributes the host's composed capabilities declare (e.g. `muted` from the
-    // volume capability) join the ones this element owns, so a host that skips a
-    // capability never reflects its attributes.
+    // Attributes the host's composed capabilities declare (`muted` from volume,
+    // `poster` from poster, and so on) join the few this element owns outright,
+    // so a host that skips a capability never reflects its attributes.
     static properties: PropertyConfigs = {
       autoPictureInPicture: { type: Boolean },
-      autoplay: { type: Boolean },
-      controls: { type: Boolean },
       controlsList: { type: String },
-      crossOrigin: { type: String, empty: null },
-      disablePictureInPicture: { type: Boolean },
-      disableRemotePlayback: { type: Boolean },
       loading: { type: String },
-      loop: { type: Boolean },
-      playsInline: { type: Boolean },
-      poster: { type: String, empty: '' },
-      preload: { type: String, empty: null },
-      src: { type: String, empty: '' },
-      streamType: { type: String, attribute: 'stream-type', empty: 'unknown' },
       ...getMediaCapabilityAttributes(MediaHost),
     };
 
