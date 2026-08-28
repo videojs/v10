@@ -8,17 +8,20 @@ const SCRIPT_ID = /\.[cm]?[jt]sx?(?:\?|$)/;
  * Capture final transformed component source in module metadata. Used internally by graph emitters such as
  * `shadcnPlugin`.
  */
-export function componentSourcePlugin(capture?: (id: string, source: string) => void): Plugin {
+export function componentSourcePlugin(capture?: (id: string, source: string, meta: unknown) => void): Plugin {
   return {
     name: 'vjsc:component-source',
     transform: {
       order: 'post',
       filter: { id: SCRIPT_ID },
-      handler(code, id) {
-        capture?.(id, code);
+      handler(code, id, transform) {
+        const meta = this.getModuleInfo(id)?.meta;
+        const source = transform.magicString?.toString() ?? code;
+
+        capture?.(id, source, meta);
 
         return {
-          meta: mergeComponentModuleMeta(this.getModuleInfo(id)?.meta, { componentSource: code }),
+          meta: mergeComponentModuleMeta(meta, { componentSource: source }),
         };
       },
     },
