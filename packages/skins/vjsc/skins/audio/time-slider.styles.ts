@@ -20,11 +20,12 @@ export default styles({
       utilities: [
         ...sliderPreviewContent,
         ...popupSurface,
-        'left-(--media-slider-pointer) bottom-[calc(100%+--spacing(10))] rounded-media-control px-2.5 py-1 tabular-nums',
+        'bottom-[calc(100%+--spacing(10))] rounded-media-control px-2.5 py-1 tabular-nums',
         'text-media',
       ],
       variants: {
-        minimal: 'rounded-[--spacing(2)] px-2',
+        default: 'left-1/2',
+        minimal: ['[left:var(--media-preview-left,var(--media-slider-pointer))]', 'rounded-[--spacing(2)] px-2'],
       },
     },
     value: {

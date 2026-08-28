@@ -12,7 +12,7 @@ export default styles({
       utilities: [
         'group/controls absolute inset-x-1 bottom-1 z-20 flex flex-wrap items-center gap-x-2 rounded-xl bg-transparent text-white',
         'text-shadow-[0_1px_0_var(--media-shadow-current-color)]',
-        '[@media(prefers-reduced-transparency:reduce)]:bg-black contrast-more:bg-black forced-colors:bg-[Canvas]',
+        '[@media(prefers-reduced-transparency:reduce)]:bg-black contrast-more:bg-black',
         '[--media-popover-side-offset:--spacing(5)] [--media-tooltip-side-offset:var(--media-popover-side-offset)]',
         '[--media-popover-boundary-offset:--spacing(2)] [--media-tooltip-boundary-offset:var(--media-popover-boundary-offset)]',
         'p-1 transition-[filter,opacity,translate]',

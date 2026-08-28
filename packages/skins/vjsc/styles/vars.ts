@@ -120,6 +120,10 @@ export const vars = {
     kind: 'internal',
     description: 'Skin fallback used when the public accent color is not configured.',
   },
+  '--media-internal-accent-text-base': {
+    kind: 'internal',
+    description: 'Theme color used to derive legible accent text when no public accent is configured.',
+  },
   '--media-focus-ring-color': {
     kind: 'internal',
     description: 'Contrast-aware focus-ring color selected by the active Skin.',

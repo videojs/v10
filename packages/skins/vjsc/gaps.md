@@ -16,13 +16,6 @@ This file tracks observable behavior in `packages/skins/src` that is not yet imp
 - Affected: Minimal Video skin; HTML and React targets; CSS and Tailwind outputs.
 - Recommendation: Compose a sticky button tooltip around the Minimal volume-popover trigger, use zero side offset with internal horizontal padding, and add VJSC matrix coverage for the tooltip and popover remaining visible together.
 
-## Audio hover contrast
-
-- Source: `packages/skins/src/default/css/components/container.css`, `packages/skins/src/minimal/css/components/container.css`, and the audio entry overrides alongside them
-- Gap: Legacy skins resolve the un-themed accent text color through `--media-internal-accent-text-base` (black for video surfaces, light-dark for audio surfaces), so audio hover text stays legible in browsers that support `contrast-color()`. VJSC's `tailwind.shared.css` still hardcodes `contrast-color(var(--media-accent-color, oklch(0 0 0)))`, which resolves hover text to white on the light audio surface.
-- Affected: Default and Minimal Audio skins; HTML and React targets; CSS and Tailwind outputs.
-- Recommendation: Introduce the same surface base variable in VJSC's shared accent tokens, override it in the audio themes, and add hover contrast coverage to the VJSC skin matrix.
-
 ## Deferred anatomy considerations
 
 These selectors currently preserve observable parity. Keep them as known ownership concerns rather than introducing new anatomy solely to remove a diagnostic warning.

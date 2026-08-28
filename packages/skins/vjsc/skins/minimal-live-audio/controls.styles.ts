@@ -9,6 +9,7 @@ export default styles({
       className: 'media-controls-content',
       utilities: [
         ...popupSurface,
+        'after:hidden!',
         'relative z-20 flex items-center gap-2 rounded-[--spacing(3.5)] bg-media-controls p-1 text-media-controls-foreground',
         'text-shadow-[0_1px_0_var(--media-shadow-current-color)]',
         '[--media-popover-side-offset:--spacing(3)] [--media-tooltip-side-offset:var(--media-popover-side-offset)]',
