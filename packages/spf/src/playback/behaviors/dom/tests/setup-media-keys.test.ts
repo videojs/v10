@@ -4,7 +4,7 @@ import { signal } from '../../../../core/signals/primitives';
 import {
   attachMediaKeys,
   type DrmSystemsConfig,
-  fetchServerCertificate,
+  fetchDrm,
   NO_KEY_SYSTEM,
   requestKeySystemAccess,
 } from '../../../../media/dom/eme';
@@ -28,7 +28,7 @@ vi.mock('../../../../media/dom/eme', async () => {
     ...actual,
     requestKeySystemAccess: vi.fn(),
     attachMediaKeys: vi.fn(async () => {}),
-    fetchServerCertificate: vi.fn(),
+    fetchDrm: vi.fn(),
   };
 });
 
@@ -140,7 +140,7 @@ describe('setupMediaKeys', () => {
   beforeEach(() => {
     vi.mocked(requestKeySystemAccess).mockReset();
     vi.mocked(attachMediaKeys).mockReset().mockResolvedValue(undefined);
-    vi.mocked(fetchServerCertificate)
+    vi.mocked(fetchDrm)
       .mockReset()
       .mockResolvedValue(new Uint8Array([7, 7]));
   });
@@ -223,8 +223,8 @@ describe('setupMediaKeys', () => {
     );
 
     await vi.waitFor(() => expect(context.mediaKeys.get()).toBe(eme.mediaKeys));
-    expect(fetchServerCertificate).toHaveBeenCalledWith(
-      DRM_CONFIG['com.apple.fps'].serverCertificateUrl,
+    expect(fetchDrm).toHaveBeenCalledWith(
+      { url: DRM_CONFIG['com.apple.fps'].serverCertificateUrl, method: 'GET', headers: {}, body: null },
       expect.anything()
     );
     expect(eme.mediaKeys.setServerCertificate).toHaveBeenCalledWith(new Uint8Array([7, 7]));
@@ -236,7 +236,7 @@ describe('setupMediaKeys', () => {
     const eme = makeFakeEme('com.apple.fps');
 
     vi.mocked(requestKeySystemAccess).mockResolvedValue(eme);
-    vi.mocked(fetchServerCertificate).mockRejectedValue(new Error('appcert 403'));
+    vi.mocked(fetchDrm).mockRejectedValue(new Error('appcert 403'));
     const { state, context, reactor } = setupSetupMediaKeys(
       { presentation: makePresentation([FAIRPLAY_KEY]) },
       { mediaElement: document.createElement('video') }
@@ -269,10 +269,40 @@ describe('setupMediaKeys', () => {
     );
 
     await vi.waitFor(() => expect(context.mediaKeys.get()).toBe(eme.mediaKeys));
-    expect(fetchServerCertificate).toHaveBeenCalledWith(
-      'https://license.example.com/minted-appcert',
+    expect(fetchDrm).toHaveBeenCalledWith(
+      expect.objectContaining({ url: 'https://license.example.com/minted-appcert', method: 'GET' }),
       expect.anything()
     );
+
+    reactor.destroy();
+  });
+
+  it('applies a per-source certificate request and response transform around the cert fetch', async () => {
+    const eme = makeFakeEme('com.apple.fps');
+
+    vi.mocked(requestKeySystemAccess).mockResolvedValue(eme);
+    // The cert fetch returns a wrapped certificate; the response transform unwraps it.
+    vi.mocked(fetchDrm).mockResolvedValue(new Uint8Array([1]));
+    const { context, reactor } = setupSetupMediaKeys(
+      { presentation: makePresentation([FAIRPLAY_KEY]) },
+      { mediaElement: document.createElement('video') },
+      {
+        'com.apple.fps': {
+          licenseUrl: () => 'https://license.example.com/fairplay',
+          serverCertificateUrl: () => 'https://license.example.com/appcert',
+          // A provider that gates the cert behind an entitlement header (Vualto's shape).
+          certificateRequest: (request) => ({ ...request, headers: { ...request.headers, 'x-token': 'ent' } }),
+          certificateResponse: (response) => new Uint8Array([response[0]! + 40]),
+        },
+      }
+    );
+
+    await vi.waitFor(() => expect(context.mediaKeys.get()).toBe(eme.mediaKeys));
+    expect(fetchDrm).toHaveBeenCalledWith(
+      expect.objectContaining({ url: 'https://license.example.com/appcert', headers: { 'x-token': 'ent' } }),
+      expect.anything()
+    );
+    expect(eme.mediaKeys.setServerCertificate).toHaveBeenCalledWith(new Uint8Array([41]));
 
     reactor.destroy();
   });
@@ -295,7 +325,7 @@ describe('setupMediaKeys', () => {
     // Same as naming no certificate URL at all: attachment proceeds rather than
     // parking the source.
     await vi.waitFor(() => expect(context.mediaKeys.get()).toBe(eme.mediaKeys));
-    expect(fetchServerCertificate).not.toHaveBeenCalled();
+    expect(fetchDrm).not.toHaveBeenCalled();
 
     reactor.destroy();
   });

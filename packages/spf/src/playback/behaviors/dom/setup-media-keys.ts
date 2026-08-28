@@ -38,12 +38,14 @@ import type { Reactor } from '../../../core/reactors/create-machine-reactor';
 import { createMachineReactor } from '../../../core/reactors/create-machine-reactor';
 import { computed, type ReadonlySignal, type Signal } from '../../../core/signals/primitives';
 import {
+  applyCertificateRequest,
+  applyCertificateResponse,
   attachMediaKeys,
   contentTypesFromPresentation,
   type DrmSystemsConfig,
   declaredDrmKeys,
   declaredEncryptionScheme,
-  fetchServerCertificate,
+  fetchDrm,
   type KeySystemModule,
   keySystemCandidates,
   NO_KEY_SYSTEM,
@@ -185,7 +187,21 @@ function setupMediaKeysSetup({
             // failure. Skipped entirely when no certificate URL resolves.
             if (serverCertificateUrl !== undefined) {
               try {
-                const certificate = await fetchServerCertificate(serverCertificateUrl, controller.signal);
+                // Same two-layer compose as the license exchange, module first:
+                // the module default (a plain GET today) then the per-source
+                // override — a provider that gates its certificate behind an
+                // auth header or its own URL shapes it here — around the fetch,
+                // and the response unwraps the same way before it is applied.
+                const shaped = await applyCertificateRequest(result.module, {
+                  url: serverCertificateUrl,
+                  method: 'GET',
+                  headers: {},
+                  body: null,
+                });
+                const request = entry.certificateRequest ? await entry.certificateRequest(shaped) : shaped;
+                const raw = await fetchDrm(request, controller.signal);
+                const unwrapped = await applyCertificateResponse(result.module, raw);
+                const certificate = entry.certificateResponse ? await entry.certificateResponse(unwrapped) : unwrapped;
 
                 await mediaKeys.setServerCertificate(certificate);
               } catch (error) {
