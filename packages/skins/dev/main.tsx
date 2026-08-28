@@ -13,6 +13,7 @@ import { MuxAudio } from '../../react/src/media/mux-audio/hls-js';
 import { MuxVideo } from '../../react/src/media/mux-video';
 import { Video } from '../../react/src/media/video';
 import { AudioPlayer } from '../../react/src/presets/audio/player';
+import { LiveVideoPlayer } from '../../react/src/presets/live-video/player';
 import { VideoPlayer } from '../../react/src/presets/video/player';
 
 import './styles.css';
@@ -39,7 +40,13 @@ const errorSource = {
 const mediaIds = [...SOURCE_IDS, 'error'] as const;
 
 type MediaId = (typeof mediaIds)[number];
-type SkinName = 'default-video' | 'minimal-video' | 'default-audio' | 'minimal-audio';
+type SkinName =
+  | 'default-video'
+  | 'minimal-video'
+  | 'default-live-video'
+  | 'minimal-live-video'
+  | 'default-audio'
+  | 'minimal-audio';
 
 const modules = {
   'react/default-video/css': () =>
@@ -50,6 +57,14 @@ const modules = {
     import('../vjsc/skins/minimal-video/skin.tsx?style=css&target=react&skin=minimal-video'),
   'react/minimal-video/tailwind': () =>
     import('../vjsc/skins/minimal-video/skin.tsx?style=tailwind&target=react&skin=minimal-video'),
+  'react/default-live-video/css': () =>
+    import('../vjsc/skins/default-live-video/skin.tsx?style=css&target=react&skin=default-live-video'),
+  'react/default-live-video/tailwind': () =>
+    import('../vjsc/skins/default-live-video/skin.tsx?style=tailwind&target=react&skin=default-live-video'),
+  'react/minimal-live-video/css': () =>
+    import('../vjsc/skins/minimal-live-video/skin.tsx?style=css&target=react&skin=minimal-live-video'),
+  'react/minimal-live-video/tailwind': () =>
+    import('../vjsc/skins/minimal-live-video/skin.tsx?style=tailwind&target=react&skin=minimal-live-video'),
   'react/default-audio/css': () =>
     import('../vjsc/skins/default-audio/skin.tsx?style=css&target=react&skin=default-audio'),
   'react/default-audio/tailwind': () =>
@@ -66,6 +81,14 @@ const modules = {
     import('../vjsc/skins/minimal-video/skin.tsx?style=css&target=html&skin=minimal-video'),
   'html/minimal-video/tailwind': () =>
     import('../vjsc/skins/minimal-video/skin.tsx?style=tailwind&target=html&skin=minimal-video'),
+  'html/default-live-video/css': () =>
+    import('../vjsc/skins/default-live-video/skin.tsx?style=css&target=html&skin=default-live-video'),
+  'html/default-live-video/tailwind': () =>
+    import('../vjsc/skins/default-live-video/skin.tsx?style=tailwind&target=html&skin=default-live-video'),
+  'html/minimal-live-video/css': () =>
+    import('../vjsc/skins/minimal-live-video/skin.tsx?style=css&target=html&skin=minimal-live-video'),
+  'html/minimal-live-video/tailwind': () =>
+    import('../vjsc/skins/minimal-live-video/skin.tsx?style=tailwind&target=html&skin=minimal-live-video'),
   'html/default-audio/css': () =>
     import('../vjsc/skins/default-audio/skin.tsx?style=css&target=html&skin=default-audio'),
   'html/default-audio/tailwind': () =>
@@ -84,10 +107,12 @@ const framework = params.get('framework') === 'html' ? 'html' : 'react';
 const requestedSkin = params.get('skin');
 const skin: SkinName = isSkinName(requestedSkin) ? requestedSkin : 'default-video';
 const isAudio = skin.endsWith('-audio');
+const isLive = skin.includes('-live-');
 const styleMode = source === 'vjsc' && params.get('style') === 'tailwind' ? 'tailwind' : 'css';
+const captionsMode = params.get('captions') === 'multiple' ? 'multiple' : 'single';
 const key: ModuleKey = `${framework}/${skin}/${styleMode}`;
 const requestedMedia = params.get('media');
-const mediaId = isMediaId(requestedMedia) ? requestedMedia : 'mp4-1';
+const mediaId = isMediaId(requestedMedia) ? requestedMedia : isLive ? 'hls-live' : 'mp4-1';
 const requestedWidth = Number.parseInt(params.get('width') ?? '', 10);
 const playerWidth = Number.isFinite(requestedWidth)
   ? Math.min(previewWidth.max, Math.max(previewWidth.min, requestedWidth))
@@ -103,7 +128,11 @@ if (source === 'vjsc' && styleMode === 'tailwind') await import('../vjsc/styles/
 function App({ Skin }: { Skin: React.ComponentType<React.PropsWithChildren<{ className?: string }>> }) {
   const content = <Skin className="preview-player">{renderReactMedia()}</Skin>;
 
-  return isAudio ? <AudioPlayer>{content}</AudioPlayer> : <VideoPlayer poster={poster}>{content}</VideoPlayer>;
+  if (isAudio) return <AudioPlayer>{content}</AudioPlayer>;
+
+  if (isLive) return <LiveVideoPlayer poster={poster}>{content}</LiveVideoPlayer>;
+
+  return <VideoPlayer poster={poster}>{content}</VideoPlayer>;
 }
 
 type PreviewRoot = HTMLElement & { __videojsSkinsReactRoot?: ReturnType<typeof createRoot> };
@@ -140,6 +169,7 @@ if (source === 'legacy') {
   if (!Skin) throw new Error(`HTML Skin module \`${key}\` did not export a Skin component.`);
 
   if (isAudio) await import('../../html/src/define/audio/player');
+  else if (isLive) await import('../../html/src/define/live-video/player');
   else await import('../../html/src/define/video/player');
 
   await defineHtmlMedia();
@@ -148,7 +178,7 @@ if (source === 'legacy') {
   const render = Skin as (props?: { className?: string }) => { toString(): string };
   const posterAttribute = !isAudio && poster ? ` poster="${escapeAttribute(poster)}"` : '';
   const output = String(render({ className: 'preview-player' })).replace('<slot></slot>', renderHtmlMedia());
-  const playerTag = isAudio ? 'audio-player' : 'video-player';
+  const playerTag = isAudio ? 'audio-player' : isLive ? 'live-video-player' : 'video-player';
 
   root.innerHTML = `<${playerTag}${posterAttribute}>${output}</${playerTag}>`;
   assignHtmlMediaSource();
@@ -178,6 +208,26 @@ async function renderLegacy(framework: 'react' | 'html', skin: SkinName) {
           </AudioPlayer>
         );
       }
+    } else if (isLive) {
+      await (minimal ? import('../src/minimal/css/video.css') : import('../src/default/css/video.css'));
+
+      if (minimal) {
+        const { MinimalLiveVideoSkin } = await import('../../react/src/presets/live-video/minimal-skin');
+
+        renderReact(
+          <LiveVideoPlayer poster={poster}>
+            <MinimalLiveVideoSkin className="preview-player">{renderReactMedia()}</MinimalLiveVideoSkin>
+          </LiveVideoPlayer>
+        );
+      } else {
+        const { LiveVideoSkin } = await import('../../react/src/presets/live-video/skin');
+
+        renderReact(
+          <LiveVideoPlayer poster={poster}>
+            <LiveVideoSkin className="preview-player">{renderReactMedia()}</LiveVideoSkin>
+          </LiveVideoPlayer>
+        );
+      }
     } else {
       await (minimal ? import('../src/minimal/css/video.css') : import('../src/default/css/video.css'));
 
@@ -204,18 +254,31 @@ async function renderLegacy(framework: 'react' | 'html', skin: SkinName) {
   }
 
   if (isAudio) await import('../../html/src/define/audio/player');
+  else if (isLive) await import('../../html/src/define/live-video/player');
   else await import('../../html/src/define/video/player');
 
   await defineHtmlMedia();
 
-  const tag = isAudio ? (minimal ? 'audio-minimal-skin' : 'audio-skin') : minimal ? 'video-minimal-skin' : 'video-skin';
-  const playerTag = isAudio ? 'audio-player' : 'video-player';
+  const tag = isAudio
+    ? minimal
+      ? 'audio-minimal-skin'
+      : 'audio-skin'
+    : isLive
+      ? minimal
+        ? 'live-video-minimal-skin'
+        : 'live-video-skin'
+      : minimal
+        ? 'video-minimal-skin'
+        : 'video-skin';
+  const playerTag = isAudio ? 'audio-player' : isLive ? 'live-video-player' : 'video-player';
   const posterAttribute = !isAudio && poster ? ` poster="${escapeAttribute(poster)}"` : '';
 
   if (isAudio) {
     if (minimal) await import('../../html/src/define/audio/minimal-skin');
     else await import('../../html/src/define/audio/skin');
-  } else if (minimal) await import('../../html/src/define/video/minimal-skin');
+  } else if (isLive && minimal) await import('../../html/src/define/live-video/minimal-skin');
+  else if (isLive) await import('../../html/src/define/live-video/skin');
+  else if (minimal) await import('../../html/src/define/video/minimal-skin');
   else await import('../../html/src/define/video/skin');
 
   root.innerHTML = `<${playerTag}${posterAttribute}><${tag} class="preview-player">${renderHtmlMedia()}</${tag}></${playerTag}>`;
@@ -226,6 +289,7 @@ function renderReactMedia() {
   const tracks = (
     <>
       <track kind="subtitles" label="English" src={captions} srcLang="en" />
+      {captionsMode === 'multiple' ? <track kind="subtitles" label="Spanish" src={captions} srcLang="es" /> : null}
       {media.chapters?.map(({ isDefault, label, lang, src }) => (
         <track key={lang} kind="chapters" label={label} src={src} srcLang={lang} default={isDefault} />
       ))}
@@ -327,7 +391,11 @@ function renderHtmlMedia() {
 
   const videoTracks = isAudio
     ? ''
-    : `<track kind="subtitles" label="English" src="${escapeAttribute(captions)}" srclang="en">${storyboardTrack}`;
+    : `<track kind="subtitles" label="English" src="${escapeAttribute(captions)}" srclang="en">${
+        captionsMode === 'multiple'
+          ? `<track kind="subtitles" label="Spanish" src="${escapeAttribute(captions)}" srclang="es">`
+          : ''
+      }${storyboardTrack}`;
 
   return `<${tag} id="preview-media"${sourceAttribute} playsinline crossorigin="anonymous">${videoTracks}${chapterTracks}</${tag}>`;
 }
@@ -358,6 +426,8 @@ function createPreviewControls() {
     createSelect('skin', 'Skin', skin, [
       ['default-video', 'Default Video'],
       ['minimal-video', 'Minimal Video'],
+      ['default-live-video', 'Default Live Video'],
+      ['minimal-live-video', 'Minimal Live Video'],
       ['default-audio', 'Default Audio'],
       ['minimal-audio', 'Minimal Audio'],
     ]),
@@ -377,6 +447,10 @@ function createPreviewControls() {
       mediaId,
       mediaIds.map((id) => [id, id === 'error' ? errorSource.label : SOURCES[id].label])
     ),
+    createSelect('captions', 'Captions', captionsMode, [
+      ['single', 'Single track'],
+      ['multiple', 'Multiple tracks'],
+    ]),
     createCopyButton()
   );
   form.addEventListener('change', (event) => {
@@ -467,6 +541,7 @@ function createCopyButton() {
       `skin=${skin}`,
       `style=${styleMode}`,
       `media=${mediaId} (${media.label})`,
+      `captions=${captionsMode}`,
       `width=${getPlayerWidth()}px (${formatRem(getPlayerWidth())})`,
     ].join('\n');
 
@@ -514,7 +589,12 @@ function isMediaId(value: string | null): value is MediaId {
 
 function isSkinName(value: string | null): value is SkinName {
   return (
-    value === 'default-video' || value === 'minimal-video' || value === 'default-audio' || value === 'minimal-audio'
+    value === 'default-video' ||
+    value === 'minimal-video' ||
+    value === 'default-live-video' ||
+    value === 'minimal-live-video' ||
+    value === 'default-audio' ||
+    value === 'minimal-audio'
   );
 }
 
@@ -522,6 +602,10 @@ function getLoadedSkin(loaded: Awaited<ReturnType<(typeof modules)[ModuleKey]>>)
   if ('DefaultVideoSkin' in loaded) return loaded.DefaultVideoSkin;
 
   if ('MinimalVideoSkin' in loaded) return loaded.MinimalVideoSkin;
+
+  if ('DefaultLiveVideoSkin' in loaded) return loaded.DefaultLiveVideoSkin;
+
+  if ('MinimalLiveVideoSkin' in loaded) return loaded.MinimalLiveVideoSkin;
 
   if ('DefaultAudioSkin' in loaded) return loaded.DefaultAudioSkin;
 

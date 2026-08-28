@@ -26,6 +26,8 @@ export default styles({
         minimal: 'after:shadow-[inset_0_0_0_1px_light-dark(rgb(0_0_0/0.15),rgb(255_255_255/0.15))]',
         'default-video': '[&:has([role=alertdialog][data-open])_.media-controls]:hidden',
         'minimal-video': '[&:has([role=alertdialog][data-open])_.media-controls]:hidden',
+        'default-live-video': '[&:has([role=alertdialog][data-open])_.media-controls]:hidden',
+        'minimal-live-video': '[&:has([role=alertdialog][data-open])_.media-controls]:hidden',
         'default-audio': 'h-auto! overflow-visible! bg-transparent! [container-type:inline-size]! after:hidden',
         'minimal-audio': 'h-auto! overflow-visible! bg-transparent! [container-type:inline-size]! after:hidden',
       },

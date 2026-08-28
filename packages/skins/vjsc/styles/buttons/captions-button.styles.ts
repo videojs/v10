@@ -7,6 +7,9 @@ export default styles({
     root: {
       className: 'media-captions-button',
       utilities: 'group/captions',
+      variants: {
+        'default-live-video': '@max-lg/media-root:hidden',
+      },
     },
     offIcon: {
       className: 'media-captions-button-off-icon',

@@ -1,32 +1,45 @@
-import { captionsText } from '@videojs/core/i18n/text/menu';
-import { CaptionsOffIcon } from '@videojs/icons/vjsc';
-import { type PropsOf, Template, Text } from 'vjsc/components';
+import type { MenuProps } from '@videojs/core';
+import * as $ from '@videojs/core/vjsc';
+import { CaptionsOffIcon, CaptionsOnIcon } from '@videojs/icons/vjsc';
+import { type Props, Template } from 'vjsc/components';
 
+import type { SkinComponentMeta } from '../../meta';
+import buttonStyles from '../../styles/buttons/button.styles';
+import captionsButtonStyles from '../../styles/buttons/captions-button.styles';
 import styles from '../../styles/menus/menu.styles';
+import popupStyles from '../../styles/popups/popup.styles';
+import surfaceStyles from '../../styles/surfaces/surface.styles';
+import { ButtonTooltip } from '../buttons/button-tooltip';
 import { CaptionsRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
-import { Submenu } from './submenu';
 
-export interface CaptionsMenuProps extends Omit<
-  PropsOf<typeof Submenu>,
-  'children' | 'icon' | 'label' | 'selectedLabel'
-> {}
-
-export function CaptionsMenu(props: CaptionsMenuProps = {}) {
+export function CaptionsMenu({ className, ...props }: Props<MenuProps> = {}) {
   return (
-    <Submenu
-      icon={<CaptionsOffIcon className={styles.triggerItemIcon} />}
-      label={<Text token={captionsText.key}>{captionsText.text}</Text>}
-      selectedLabel={<Text className={styles.hintLabel} data-part="hint" />}
-      {...props}
-    >
-      <CaptionsRadioGroup>
-        <Template name="captions-option">
-          <RadioItem>
-            <Template.Part name="label" />
-          </RadioItem>
-        </Template>
-      </CaptionsRadioGroup>
-    </Submenu>
+    <$.Menu.Root side="top" align="center" boundary="viewport" {...props}>
+      <ButtonTooltip side="top">
+        <$.Menu.Trigger className={[buttonStyles.root, captionsButtonStyles.root]}>
+          <CaptionsOffIcon className={[buttonStyles.icon, captionsButtonStyles.offIcon]} />
+          <CaptionsOnIcon className={[buttonStyles.icon, captionsButtonStyles.onIcon]} />
+        </$.Menu.Trigger>
+      </ButtonTooltip>
+      <$.Menu.Popup className={[popupStyles.root, popupStyles.safeArea, surfaceStyles.root, styles.popup, className]}>
+        <$.Menu.Content className={styles.content}>
+          <CaptionsRadioGroup>
+            <Template name="captions-option">
+              <RadioItem>
+                <Template.Part name="label" />
+              </RadioItem>
+            </Template>
+          </CaptionsRadioGroup>
+        </$.Menu.Content>
+      </$.Menu.Popup>
+    </$.Menu.Root>
   );
 }
+
+export const meta = {
+  name: 'captions-menu',
+  type: 'component',
+  title: 'Captions Menu',
+  description: 'A captions button and popup for selecting a text track.',
+} as const satisfies SkinComponentMeta;

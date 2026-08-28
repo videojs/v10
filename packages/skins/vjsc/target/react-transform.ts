@@ -16,7 +16,7 @@ const optionMenus = [
   { component: 'QualityMenu', binding: 'quality', hook: 'useQualityOptions' },
   { component: 'AudioTrackMenu', binding: 'audioTrack', hook: 'useAudioTrackOptions' },
   { component: 'PlaybackRateSubmenu', binding: 'playbackRate', hook: 'usePlaybackRateOptions' },
-  { component: 'CaptionsMenu', binding: 'captions', hook: 'useCaptionsOptions' },
+  { component: 'CaptionsSubmenu', binding: 'captions', hook: 'useCaptionsOptions' },
 ] as const;
 
 /** Add React player bindings and availability gates to skin menus. */
