@@ -49,11 +49,12 @@ export const reactComponentTarget: ComponentTarget<CoreSchema> = defineComponent
       return imported({
         from: '@videojs/react',
         name: component,
-        ...(path.length > 0 ? { path } : {}),
+        path: path.length > 0 ? path : undefined,
         props: {
           from: '@videojs/react',
           name: component,
           path: propsPath,
+          children: component === 'Poster' && path.length === 0 ? 'render' : undefined,
         },
       });
     },

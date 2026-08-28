@@ -9,11 +9,11 @@ import thumbnailStyles from '../../styles/sliders/thumbnail.styles';
 import styles from '../../styles/sliders/time-slider.styles';
 import { SliderBuffer, SliderFill, SliderThumb, SliderTrack } from './slider';
 
-interface TimeSliderProps extends CoreProps {
-  previewOverflow?: SliderPreviewOverflow | undefined;
-}
-
-export function TimeSlider({ className, previewOverflow = 'visible', ...props }: Props<TimeSliderProps> = {}) {
+export function TimeSlider({
+  className,
+  previewOverflow = 'visible',
+  ...props
+}: Props<CoreProps & { previewOverflow?: SliderPreviewOverflow | undefined }> = {}) {
   return (
     <$.TimeSlider.Root className={[sliderStyles.root, styles.root, className]} {...props}>
       <$.TimeSlider.Chapters className={styles.chapters}>
