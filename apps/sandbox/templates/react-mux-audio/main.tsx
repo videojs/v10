@@ -1,5 +1,5 @@
 import '@app/styles.css';
-import { AudioPlayer } from '@app/shared/react/players';
+import { AudioPlayer, LiveAudioPlayer } from '@app/shared/react/players';
 import { SandboxI18nProvider } from '@app/shared/react/sandbox-i18n';
 import { AudioSkinComponent } from '@app/shared/react/skins';
 import { useAutoplay } from '@app/shared/react/use-autoplay';
@@ -8,7 +8,7 @@ import { useMuted } from '@app/shared/react/use-muted';
 import { usePreload } from '@app/shared/react/use-preload';
 import { useSkin } from '@app/shared/react/use-skin';
 import { useSource } from '@app/shared/react/use-source';
-import { SOURCES } from '@app/shared/sources';
+import { isLiveSource, SOURCES } from '@app/shared/sources';
 import type { Styling } from '@app/types';
 import { GoogleCast } from '@videojs/react/media/google-cast';
 import { MuxAudio } from '@videojs/react/media/mux-audio';
@@ -23,11 +23,13 @@ function readStyling(): Styling {
 function App() {
   const skin = useSkin();
   const source = useSource();
-  const styling = useMemo(readStyling, []);
+  const styling = useMemo(() => readStyling(), []);
   const autoplay = useAutoplay();
   const muted = useMuted();
   const loop = useLoop();
   const preload = usePreload();
+  const live = isLiveSource(source);
+  const Player = live ? LiveAudioPlayer : AudioPlayer;
 
   // A source carrying signed tokens has no room in a plain `src`, so it is passed
   // structured instead — the same way `react-mux-video` does.
@@ -35,8 +37,8 @@ function App() {
 
   return (
     <SandboxI18nProvider>
-      <AudioPlayer>
-        <AudioSkinComponent skin={skin} styling={styling} className="mx-auto w-full max-w-xl">
+      <Player>
+        <AudioSkinComponent skin={skin} styling={styling} live={live} className="mx-auto w-full max-w-xl">
           <MuxAudio
             {...(muxSource ? { source: muxSource } : { src: url ?? '' })}
             autoPlay={autoplay}
@@ -49,7 +51,7 @@ function App() {
           <MuxData playerSoftwareName="mux-audio" />
           <GoogleCast />
         </AudioSkinComponent>
-      </AudioPlayer>
+      </Player>
     </SandboxI18nProvider>
   );
 }

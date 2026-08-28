@@ -1,5 +1,6 @@
 import '@app/styles.css';
 import '@videojs/html/audio/player';
+import '@videojs/html/live-audio/player';
 import '@videojs/html/media/hls-audio';
 import { createHtmlSandboxState, createLatestLoader, renderMediaAttrs } from '@app/shared/html/sandbox-state';
 import { loadAudioSkinTag } from '@app/shared/html/skins';
@@ -11,7 +12,7 @@ import {
   onSkinChange,
   onSourceChange,
 } from '@app/shared/sandbox-listener';
-import { SOURCES } from '@app/shared/sources';
+import { isLiveSource, SOURCES } from '@app/shared/sources';
 
 const html = String.raw;
 
@@ -19,18 +20,20 @@ const state = createHtmlSandboxState();
 const loadLatest = createLatestLoader();
 
 async function render() {
-  const tag = await loadLatest(() => loadAudioSkinTag(state.skin, state.styling));
+  const live = isLiveSource(state.source);
+  const tag = await loadLatest(() => loadAudioSkinTag(state.skin, state.styling, { live }));
   if (!tag) return;
 
   const mediaAttrs = renderMediaAttrs(state);
+  const playerTag = live ? 'live-audio-player' : 'audio-player';
 
   document.getElementById('root')!.innerHTML = html`
     <div class="w-full max-w-xl mx-auto">
-      <audio-player>
+      <${playerTag}>
         <${tag}>
           <hls-audio src="${SOURCES[state.source].url}" ${mediaAttrs} crossorigin></hls-audio>
         </${tag}>
-      </audio-player>
+      </${playerTag}>
     </div>
   `;
 }

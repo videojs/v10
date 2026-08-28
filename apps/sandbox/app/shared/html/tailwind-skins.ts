@@ -1,76 +1,153 @@
 import type { Skin } from '@app/types';
-import { createTemplate, type ShadowStyle } from '@videojs/utils/dom';
+import { ContainerElement } from '@videojs/html';
 
-import { LIVE_VIDEO_TAILWIND_SKIN_TAGS, TAILWIND_SKIN_TAGS } from './skin-tags';
-import { getTailwindStyles } from './tailwind-setup';
+import { LIVE_AUDIO_TAILWIND_SKIN_TAGS, LIVE_VIDEO_TAILWIND_SKIN_TAGS, TAILWIND_SKIN_TAGS } from './skin-tags';
 
-// Tailwind HTML skins are no longer exported by @videojs/html. Wrap the ejected source here so it remains testable
-// in the sandbox until the compiler owns this compatibility path.
-type SkinElementConstructor = CustomElementConstructor & {
-  styles?: ShadowStyle;
-  template?: HTMLTemplateElement | null;
-};
+interface TailwindSkinModule {
+  readonly default: string;
+}
 
-function defineTailwindSkin(
-  tagName: string,
-  BaseElement: SkinElementConstructor,
-  getTemplateHTML: () => string
-): string {
+type SkinLoader = () => Promise<readonly [TailwindSkinModule, unknown]>;
+
+const videoSkins = {
+  default: () =>
+    Promise.all([
+      import('@app/_generated/html/components/videojs/skins/video/skin.html?raw'),
+      import('@app/_generated/html/components/videojs/skins/video/skin'),
+    ]),
+  minimal: () =>
+    Promise.all([
+      import('@app/_generated/html/components/videojs/skins/video-minimal/skin.html?raw'),
+      import('@app/_generated/html/components/videojs/skins/video-minimal/skin'),
+    ]),
+} satisfies Record<Skin, SkinLoader>;
+
+const liveVideoSkins = {
+  default: () =>
+    Promise.all([
+      import('@app/_generated/html/components/videojs/skins/live-video/skin.html?raw'),
+      import('@app/_generated/html/components/videojs/skins/live-video/skin'),
+    ]),
+  minimal: () =>
+    Promise.all([
+      import('@app/_generated/html/components/videojs/skins/live-video-minimal/skin.html?raw'),
+      import('@app/_generated/html/components/videojs/skins/live-video-minimal/skin'),
+    ]),
+} satisfies Record<Skin, SkinLoader>;
+
+const audioSkins = {
+  default: () =>
+    Promise.all([
+      import('@app/_generated/html/components/videojs/skins/audio/skin.html?raw'),
+      import('@app/_generated/html/components/videojs/skins/audio/skin'),
+    ]),
+  minimal: () =>
+    Promise.all([
+      import('@app/_generated/html/components/videojs/skins/audio-minimal/skin.html?raw'),
+      import('@app/_generated/html/components/videojs/skins/audio-minimal/skin'),
+    ]),
+} satisfies Record<Skin, SkinLoader>;
+
+const liveAudioSkins = {
+  default: () =>
+    Promise.all([
+      import('@app/_generated/html/components/videojs/skins/live-audio/skin.html?raw'),
+      import('@app/_generated/html/components/videojs/skins/live-audio/skin'),
+    ]),
+  minimal: () =>
+    Promise.all([
+      import('@app/_generated/html/components/videojs/skins/live-audio-minimal/skin.html?raw'),
+      import('@app/_generated/html/components/videojs/skins/live-audio-minimal/skin'),
+    ]),
+} satisfies Record<Skin, SkinLoader>;
+
+function defineTailwindSkin(tagName: string, source: string): string {
   if (customElements.get(tagName)) return tagName;
 
-  class SandboxTailwindSkinElement extends BaseElement {}
+  class SandboxTailwindSkinElement extends ContainerElement {
+    #rendered = false;
 
-  SandboxTailwindSkinElement.styles = getTailwindStyles();
-  SandboxTailwindSkinElement.template = createTemplate(getTemplateHTML());
+    override connectedCallback(): void {
+      super.connectedCallback();
+      this.#render();
+    }
+
+    #render(): void {
+      if (this.#rendered || !this.isConnected) return;
+
+      this.#rendered = true;
+
+      const template = document.createElement('template');
+
+      template.innerHTML = source;
+
+      const container = template.content.firstElementChild;
+
+      if (!(container instanceof HTMLElement) || container.localName !== 'media-container') {
+        throw new Error(`Source-owned skin ${tagName} has no media-container root.`);
+      }
+
+      const marker = findMediaMarker(container);
+      if (!marker) throw new Error(`Source-owned skin ${tagName} has no media marker.`);
+
+      const poster = this.querySelector(':scope > [slot="poster"]');
+
+      for (const child of [...this.childNodes]) {
+        if (child !== poster) marker.before(child);
+      }
+
+      marker.remove();
+
+      if (poster instanceof HTMLImageElement) {
+        poster.removeAttribute('slot');
+        container.querySelector('media-poster img')?.replaceWith(poster);
+      }
+
+      container.classList.add(...this.classList);
+      container.style.cssText += this.style.cssText;
+      this.className = container.className;
+      this.style.cssText = container.style.cssText;
+      this.replaceChildren(...container.childNodes);
+    }
+  }
+
   customElements.define(tagName, SandboxTailwindSkinElement);
-
   return tagName;
 }
 
-export async function loadSandboxVideoTailwindSkin(skin: Skin): Promise<string> {
-  const tagName = TAILWIND_SKIN_TAGS[skin].video;
-  if (customElements.get(tagName)) return tagName;
+function findMediaMarker(root: HTMLElement): Comment | null {
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_COMMENT);
+  let node = walker.nextNode();
 
-  const [{ MinimalVideoSkinElement, VideoSkinElement }, template] = await Promise.all([
-    import('@videojs/html/video'),
-    skin === 'default'
-      ? import('../../../../../site/scripts/ejected-skins/templates/html/video/skin.tailwind')
-      : import('../../../../../site/scripts/ejected-skins/templates/html/video/minimal-skin.tailwind'),
-    import('@videojs/html/video/ui'),
-  ]);
-  const BaseElement = skin === 'default' ? VideoSkinElement : MinimalVideoSkinElement;
+  while (node) {
+    if (node instanceof Comment && node.textContent.includes('Add a compatible media element here')) return node;
 
-  return defineTailwindSkin(tagName, BaseElement, template.getTemplateHTML);
+    node = walker.nextNode();
+  }
+
+  return null;
 }
 
-export async function loadSandboxAudioTailwindSkin(skin: Skin): Promise<string> {
-  const tagName = TAILWIND_SKIN_TAGS[skin].audio;
+async function loadTailwindSkin(loader: SkinLoader, tagName: string): Promise<string> {
   if (customElements.get(tagName)) return tagName;
 
-  const [{ AudioSkinElement, MinimalAudioSkinElement }, template] = await Promise.all([
-    import('@videojs/html/audio'),
-    skin === 'default'
-      ? import('../../../../../site/scripts/ejected-skins/templates/html/audio/skin.tailwind')
-      : import('../../../../../site/scripts/ejected-skins/templates/html/audio/minimal-skin.tailwind'),
-    import('@videojs/html/audio/ui'),
-  ]);
-  const BaseElement = skin === 'default' ? AudioSkinElement : MinimalAudioSkinElement;
+  const [module] = await loader();
 
-  return defineTailwindSkin(tagName, BaseElement, template.getTemplateHTML);
+  return defineTailwindSkin(tagName, module.default);
 }
 
-export async function loadSandboxLiveVideoTailwindSkin(skin: Skin): Promise<string> {
-  const tagName = LIVE_VIDEO_TAILWIND_SKIN_TAGS[skin];
-  if (customElements.get(tagName)) return tagName;
+export function loadSandboxVideoTailwindSkin(skin: Skin): Promise<string> {
+  return loadTailwindSkin(videoSkins[skin], TAILWIND_SKIN_TAGS[skin].video);
+}
 
-  const [{ LiveVideoSkinElement, MinimalLiveVideoSkinElement }, template] = await Promise.all([
-    import('@videojs/html/live-video'),
-    skin === 'default'
-      ? import('../../../../../site/scripts/ejected-skins/templates/html/live-video/skin.tailwind')
-      : import('../../../../../site/scripts/ejected-skins/templates/html/live-video/minimal-skin.tailwind'),
-    import('@videojs/html/live-video/ui'),
-  ]);
-  const BaseElement = skin === 'default' ? LiveVideoSkinElement : MinimalLiveVideoSkinElement;
+export function loadSandboxAudioTailwindSkin(skin: Skin): Promise<string> {
+  return loadTailwindSkin(audioSkins[skin], TAILWIND_SKIN_TAGS[skin].audio);
+}
 
-  return defineTailwindSkin(tagName, BaseElement, template.getTemplateHTML);
+export function loadSandboxLiveVideoTailwindSkin(skin: Skin): Promise<string> {
+  return loadTailwindSkin(liveVideoSkins[skin], LIVE_VIDEO_TAILWIND_SKIN_TAGS[skin]);
+}
+
+export function loadSandboxLiveAudioTailwindSkin(skin: Skin): Promise<string> {
+  return loadTailwindSkin(liveAudioSkins[skin], LIVE_AUDIO_TAILWIND_SKIN_TAGS[skin]);
 }
