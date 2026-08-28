@@ -362,6 +362,104 @@ describe('exchangeLicenses', () => {
     reactor.destroy();
   });
 
+  it('composes a per-source licenseRequest after the module default, letting it override', async () => {
+    const { sessions, reactor } = setupExchangeLicenses({
+      drm: {
+        'com.widevine.alpha': {
+          licenseUrl: 'https://license.example.com/widevine',
+          // Runs on the module-shaped request: overrides the octet-stream
+          // Content-Type the module set and redirects the URL, which only holds
+          // if the module ran first and the source override ran over its output.
+          licenseRequest: (request) => ({
+            ...request,
+            url: 'https://gateway.example.com/proxy',
+            headers: { ...request.headers, 'Content-Type': 'application/json', 'X-Tok': 'minted' },
+          }),
+        },
+      },
+    });
+
+    await vi.waitFor(() => expect(sessions).toHaveLength(1));
+    const message = new Uint8Array([1, 2, 3]).buffer;
+
+    sessions[0]!.dispatchEvent(Object.assign(new Event('message'), { message }));
+
+    await vi.waitFor(() =>
+      expect(fetchLicense).toHaveBeenCalledWith('https://gateway.example.com/proxy', message, expect.anything(), {
+        'Content-Type': 'application/json',
+        'X-Tok': 'minted',
+      })
+    );
+
+    reactor.destroy();
+  });
+
+  it('applies a per-source licenseResponse before session.update', async () => {
+    vi.mocked(fetchLicense).mockResolvedValue(new Uint8Array([1]));
+    const { sessions, reactor } = setupExchangeLicenses({
+      drm: {
+        'com.widevine.alpha': {
+          licenseUrl: 'https://l',
+          // Unwrap a wrapped license: the CDM must see the transformed bytes.
+          licenseResponse: (response) => new Uint8Array([response[0]! + 100]),
+        },
+      },
+    });
+
+    await vi.waitFor(() => expect(sessions).toHaveLength(1));
+    sessions[0]!.dispatchEvent(Object.assign(new Event('message'), { message: new Uint8Array([1]).buffer }));
+
+    await vi.waitFor(() => expect(sessions[0]!.update).toHaveBeenCalledTimes(1));
+    expect([...(sessions[0]!.update.mock.calls[0]![0] as Uint8Array)]).toEqual([101]);
+
+    reactor.destroy();
+  });
+
+  it('reports 4004 when a per-source licenseRequest throws, before any fetch', async () => {
+    const { state, sessions, reactor } = setupExchangeLicenses({
+      drm: {
+        'com.widevine.alpha': {
+          licenseUrl: 'https://l',
+          licenseRequest: () => {
+            throw new Error('token mint failed');
+          },
+        },
+      },
+    });
+
+    await vi.waitFor(() => expect(sessions).toHaveLength(1));
+    sessions[0]!.dispatchEvent(Object.assign(new Event('message'), { message: new Uint8Array([1]).buffer }));
+
+    await vi.waitFor(() => expect(state.errors.get()?.map((error) => error.code)).toEqual([SVTA_BAD_LICENSE_REQUEST]));
+    expect(fetchLicense).not.toHaveBeenCalled();
+    expect(sessions[0]!.update).not.toHaveBeenCalled();
+
+    reactor.destroy();
+  });
+
+  it('reports 4016 when a per-source licenseResponse throws', async () => {
+    const { state, sessions, reactor } = setupExchangeLicenses({
+      drm: {
+        'com.widevine.alpha': {
+          licenseUrl: 'https://l',
+          licenseResponse: () => {
+            throw new Error('bad envelope');
+          },
+        },
+      },
+    });
+
+    await vi.waitFor(() => expect(sessions).toHaveLength(1));
+    sessions[0]!.dispatchEvent(Object.assign(new Event('message'), { message: new Uint8Array([1]).buffer }));
+
+    await vi.waitFor(() =>
+      expect(state.errors.get()?.map((error) => error.code)).toEqual([SVTA_DRM_LICENSE_RESPONSE_REJECTED])
+    );
+    expect(sessions[0]!.update).not.toHaveBeenCalled();
+
+    reactor.destroy();
+  });
+
   it('reports 4004 when the license request fails, without dropping the session', async () => {
     vi.mocked(fetchLicense).mockRejectedValue(new Error('license server said no'));
     const { state, sessions, reactor } = setupExchangeLicenses();
