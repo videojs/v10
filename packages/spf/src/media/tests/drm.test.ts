@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vite-plus/test';
 import {
   declaredDrmKeys,
   declaredEncryptionScheme,
+  firstNonDrmEncryptionKey,
   type DrmRequest,
   type DrmSystemsConfig,
   type KeySystemModule,
@@ -263,5 +264,20 @@ describe('sourceDrmSystems', () => {
 
     drm = { 'com.widevine.alpha': { licenseRequest: (r) => ({ ...r, headers: { ...r.headers, 'X-Tok': 't' } }) } };
     expect((await entry.licenseRequest!(request)).headers).toEqual({ 'X-Tok': 't' });
+  });
+});
+
+describe('firstNonDrmEncryptionKey', () => {
+  const aes = { method: 'AES-128', uri: 'https://example.com/key.bin' }; // no KEYFORMAT = identity
+  const widevine = { method: 'SAMPLE-AES', keyFormat: 'urn:uuid:edef8ba9-79d6-4ace-a3c8-27dcd51d21ed' };
+
+  it('returns the first identity-keyformat key (absent or explicit), skipping DRM keys', () => {
+    expect(firstNonDrmEncryptionKey([widevine, aes])?.method).toBe('AES-128');
+    expect(firstNonDrmEncryptionKey([{ method: 'AES-128', keyFormat: 'identity' }])?.keyFormat).toBe('identity');
+  });
+
+  it('returns undefined when every declared key names a DRM system, or there are none', () => {
+    expect(firstNonDrmEncryptionKey([widevine])).toBeUndefined();
+    expect(firstNonDrmEncryptionKey([])).toBeUndefined();
   });
 });

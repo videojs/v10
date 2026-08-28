@@ -290,6 +290,22 @@ export function keySystemCandidates(
 }
 
 /**
+ * The HLS default `KEYFORMAT`: a key file (URL key), not a DRM key system. RFC 8216 makes it the value when the
+ * attribute is absent, so an absent or `identity` keyformat marks non-DRM (clear-key) encryption — `AES-128` /
+ * `SAMPLE-AES` decrypted from a fetched key, a different subsystem from EME (see `clear-key-aes.md`).
+ */
+export const IDENTITY_KEY_FORMAT = 'identity';
+
+/**
+ * The first declared key that is non-DRM (`identity`-keyformat) encryption, or `undefined` when every declared key
+ * names a DRM key system. Distinguishes "the source is clear-key encrypted, which this engine can't decrypt" from "a
+ * DRM system was declared and refused or is unlicensable" when negotiation yields no usable key system.
+ */
+export function firstNonDrmEncryptionKey(keys: readonly MediaPlaylistKey[]): MediaPlaylistKey | undefined {
+  return keys.find((key) => key.keyFormat === undefined || key.keyFormat === IDENTITY_KEY_FORMAT);
+}
+
+/**
  * Build the engine-facing DRM config a Media hands its engine once: one entry per key system whose every field reads
  * the _current_ source (via `getDrm`) at call time, so switching source re-licenses without rebuilding the engine.
  *
