@@ -20,30 +20,29 @@ line item, whose concrete need is GA of the provider-neutral element.
 The transforms that need *functions* are key-system-specific — SPC shaping, CKC
 unwrapping, PlayReady envelope handling are properties of a system's wire
 protocol, not the deployment. (Cross-cutting, deployment-wide needs are almost
-all *data* — auth headers — already covered by `source.drm[ks].headers` as a
-resolver.) So the slots are per key system, and they live on the two
-per-key-system objects SPF already has — **no new container, no global filter
-list, no `keySystem` branching**:
+all *data* — auth headers — already covered by `source.drm[ks].headers`.) So the
+slots are per key system, and they live on the two per-key-system objects SPF
+already has — no new container, no global filter list, no `keySystem` branching:
 
 ```ts
-// Four transform slots, request and response over license and certificate.
 type DrmRequestTransform  = (req: DrmRequest) => DrmRequest | Promise<DrmRequest>;
 type DrmResponseTransform = (res: Uint8Array<ArrayBuffer>) => Uint8Array<ArrayBuffer> | Promise<Uint8Array<ArrayBuffer>>;
 interface DrmRequest { url: string; headers: Record<string, string>; body: BufferSource | null; }
 
 // Home 1 — KeySystemModule (media/drm.ts): the SHIPPED DEFAULT per system,
-// engine-composed. `shapeLicenseRequest` is renamed `licenseRequest` and
-// widened to the DrmRequest shape; three siblings join it.
+// engine-applied. `licenseRequest` (was shapeLicenseRequest) is the widened
+// slot; three siblings join it, identity when unset.
 interface KeySystemModule {
   /* …keySystem, keyFormats, requestVariants, initDataTypes, toInitData… */
-  readonly licenseRequest?:      DrmRequestTransform;    // was shapeLicenseRequest
+  readonly licenseRequest?:      DrmRequestTransform;
   readonly licenseResponse?:     DrmResponseTransform;
   readonly certificateRequest?:  DrmRequestTransform;
   readonly certificateResponse?: DrmResponseTransform;
 }
 
-// Home 2 — DrmSystemConfig (spf/media/drm.ts): the per-source OVERRIDE, on
-// source.drm[keySystem], right beside licenseUrl. Same four slots, optional.
+// Home 2 — DrmSystemConfig (spf/media/drm.ts): the per-source OVERRIDE the
+// consumer sets on source.drm[keySystem], beside licenseUrl. Same four slots,
+// optional, plain functions (NOT DrmValue — see threading below).
 interface DrmSystemConfig {
   licenseUrl: DrmUrl;
   serverCertificateUrl?: DrmUrl;
@@ -56,62 +55,98 @@ interface DrmSystemConfig {
 ```
 
 Read: `source.drm['com.apple.fps'].licenseResponse = detectFairPlayCkc`, sitting
-next to `.licenseUrl`. Resolution per slot per system, at each fetch:
-**`source.drm[ks][slot]` ?? `keySystemModule[slot]` (default) ?? identity.**
+next to `.licenseUrl`.
 
-## Why this placement is safe, and where the boundary is
+## Threading: the adapter wraps the source transform in a stable function
 
-`DrmSystemConfig` here is **SPF's own local type** (`spf/media/drm.ts`), not the
-shared `@videojs/media` `DrmSystemConfig`. It already carries functions —
-`licenseUrl` is a `DrmUrl` resolver — safely, because the SPF Media builds its
-engine **once** (`adapters/hls-video/adapter.ts:227`) and its source setter only
-re-points `#source` + updates the `src` signal; it never `deepEqual`s the source
-or rebuilds. Adding transform functions beside `licenseUrl` is consistent with
-what's already there.
+The engine never reads `source.drm`. The Media builds a stable engine-facing
+`DrmSystemsConfig` once (`hls-video/adapter.ts:215`) whose fields are resolver
+closures over the live `#source`, so the engine — built once — licenses whatever
+source is current without a rebuild. The transforms thread the same way, with one
+twist that makes the adapter-wrap **necessary, not just consistent**:
 
-The boundary, stated so it isn't crossed later: these transforms are
-**SPF-engine-local and deliberately not on the shared `@videojs/media`
-contract.** Function values there would reintroduce the hls.js/Shaka
-`deepEqual` engine-rebuild (`#engineConfigKey` compares `drm` structurally) — the
-same reason `headers` was kept plain-data for promotability. Cross-engine, each
-engine keeps its own hook surface: hls.js `drmSystems[ks].generateRequest` +
-`licenseXhrSetup`, Shaka `advanced[ks]` + request/response filters. Prior art:
-all four engines are per-key-system for request shaping; only hls.js's *global*
-`licenseXhrSetup`/`licenseResponseCallback` force `keySystem` branching, which
-per-system slots avoid.
+`licenseUrl`/`headers` are `DrmValue<T>` = `T | (() => T)`, and the engine calls
+`resolveDrmValue`, which reads `typeof value === 'function'` as "this is a
+resolver, call it." That only works because those `T`s are *data*. A transform is
+itself a function, so `typeof === 'function'` can no longer tell "a resolver
+returning a transform" from "the transform." The `DrmValue` mechanism collides on
+function-valued config.
 
-## Application (one place each, thin by design)
+So the engine-facing transform field is a **plain, stable** transform, and the
+Media builds it as a closure that *applies* the current source's transform (vs.
+*returning* a value like the URL/header resolvers do):
 
-- **License**, in `exchange-licenses`: build `DrmRequest` from `source.drm[ks]`
-  (URL + headers) → resolve+run `licenseRequest` → `fetchLicense` → resolve+run
-  `licenseResponse` → `session.update`.
-- **Certificate**, in `setup-media-keys`: build `DrmRequest` (body `null`) →
-  `certificateRequest` → `fetchServerCertificate` (which gains headers for the
-  first time) → `certificateResponse` → `setServerCertificate`.
+```ts
+// alongside the licenseUrl / serverCertificateUrl / headers resolvers:
+licenseResponse: (res) => (this.#source?.drm?.[keySystem]?.licenseResponse ?? ((r) => r))(res),
+```
 
-Two wrapper steps around the existing fetches plus config threading — not a
-framework. When network concerns move into their own sub-architecture,
-`DrmRequest` + these transforms become one typed instance of that layer's
-request pipeline, and this record is superseded rather than unwound.
+The engine calls one stable function every time and never holds the source's
+function object. Consequences:
+
+- **Source-switch correctness without rebuild** — a Mux→EZDRM swap changes the
+  CKC unwrapper exactly as it changes `licenseUrl` today.
+- **The deepEqual boundary softens.** These stay SPF-engine-local for now, but the
+  reason they were kept *off* the shared `@videojs/media` contract — function
+  values tripping the hls.js/Shaka `#engineConfigKey` structural compare and
+  rebuilding the engine — dissolves under wrap-once: the engine only ever sees
+  stable identities. A future promotion becomes a per-adapter wrap-once discipline,
+  not a contract hazard. Not promoting now; the boundary just stopped being a wall.
+
+## Composition at the fetch seam: module default, then source override
+
+Two layers meet per exchange: the module's shipped default (Home 1, engine-applied)
+and the source override (Home 2, adapter-wrapped). They **compose, module first** —
+the module shapes the wire protocol, then the override decorates the result:
+
+```
+request:  CDM message   → [module default] → [source override] → fetch
+response: fetched bytes  → [module default] → [source override] → session.update / setServerCertificate
+```
+
+Compose rather than replace because the common override is *additive* — a provider
+adds an auth header or mints a per-session token onto an otherwise-correct request
+— and replace would force it to re-implement the module's wire shaping (PlayReady's
+envelope unwrap) just to add a header. An override that wants to fully own the
+output still can: it receives the module-shaped value and may ignore its structure.
+(Judgment call; revisit if a provider ever needs the pre-module raw message —
+that's really a `KeySystemModule` concern, a new system, not a source override.)
+
+Applied one place each, thin by design:
+
+- **License**, in `exchange-licenses`: build `DrmRequest` (URL + headers from the
+  resolved `config.drm[ks]`) → module `licenseRequest` (`applyLicenseRequest`, or
+  octet default) → source `licenseRequest` → `fetchLicense` → module
+  `licenseResponse` → source `licenseResponse` → `session.update`.
+- **Certificate**, in `setup-media-keys`: build `DrmRequest` (body `null`) → module
+  then source `certificateRequest` → `fetchServerCertificate` (which gains headers
+  for the first time) → module then source `certificateResponse` →
+  `setServerCertificate`.
+
+When network concerns move into their own sub-architecture, `DrmRequest` + these
+transforms become one typed instance of that layer's request pipeline, and this
+record is superseded rather than unwound.
 
 ## Decisions (resolved)
 
 1. **Return-new, not mutate.** Transforms return the next value; immutable, and
-   consistent with today's `shapeLicenseRequest` (which already returns).
+   consistent with today's `licenseRequest` (which already returns).
 2. **Async.** `=> T | Promise<T>` — per-session token minting is real.
 3. **No auto-detect default.** Default slot is identity (raw), preserving the
    Mux/EZDRM green path. Unwrap logic ships as **exported, tree-shakable helpers**
    from `@videojs/spf` media (`detectFairPlayCkc`, `unwrapJsonLicense`, …) that a
    consumer, a test, or a reference example drops into a slot — weight only if
    imported. Shaka's library-of-named-functions model.
-4. **No full-override / cross-cutting hook now.** A "own the whole round-trip"
-   hook (rx-player `getLicense`) and any deployment-wide network hook are
-   additive later (new optional field breaks nothing); cross-cutting network
-   concerns belong to the future network sub-architecture, not here.
-5. **On the source, per system.** `source.drm[keySystem]` (SPF's local type),
-   not a separate container and not the shared contract. The hls.js Media is the
-   reference: functions live with the engine-specific config, data stays on the
-   shared `drm` shape.
+4. **Compose module→override, not replace.** See the fetch-seam section.
+5. **Adapter-wrapped, not `DrmValue`-resolved.** Engine-facing transforms are plain
+   stable functions the Media closes over `#source`; they can't ride `DrmValue`
+   (the typeof-function collision above). Consumer surface is `source.drm[keySystem]`
+   (SPF's local type), mirroring how the hls.js Media keeps functions with the
+   engine-specific config while data stays on the shared shape.
+6. **No full-override / cross-cutting hook now.** A "own the whole round-trip" hook
+   (rx-player `getLicense`) and any deployment-wide network hook are additive later
+   (new optional field breaks nothing); cross-cutting network concerns belong to the
+   future network sub-architecture, not here.
 
 ## Out of scope of this record
 
@@ -119,23 +154,28 @@ request pipeline, and this record is superseded rather than unwound.
   rx-player's declarative enums; a sibling extension point, its own record.
 - **Init-data transform / FairPlay content-id over MSE** — the Axinom analysis
   proved it can't rescue that case (session binding); tracked in drm-support.
+- **Promotion to the shared `@videojs/media` contract** — enabled by wrap-once but
+  deferred; each engine adopting the discipline is its own change.
 
 ## TDD plan
 
-1. **Rename + widen:** `KeySystemModule.shapeLicenseRequest` → `licenseRequest`,
-   signature `(message) => {body,headers}` → `(req: DrmRequest) => DrmRequest`.
-   Update PlayReady's default + the `exchange-licenses` call site + tests; suite
-   stays green (pure refactor, Mux/EZDRM/PlayReady unchanged).
+1. ✅ **Rename + widen:** `KeySystemModule.shapeLicenseRequest` → `licenseRequest`,
+   `(message) => {body,headers}` → `(req: DrmRequest) => DrmRequest | Promise`.
+   PlayReady default + `exchange-licenses` call site + tests; suite green (pure
+   refactor). *(commit `7124c2ed5`)*
 2. **Default slots:** add `licenseResponse`/`certificateRequest`/
-   `certificateResponse` to `KeySystemModule`; identity when unset.
-3. **Override slots:** add the four to SPF `DrmSystemConfig`; resolution is
-   `source ?? module ?? identity` — unit-test the precedence per slot.
-4. **Apply — response:** `licenseResponse` runs before `session.update`
-   (exchange-licenses); pin unwrap-before-update.
-5. **Apply — certificate:** `certificateRequest`/`certificateResponse` +
-   `fetchServerCertificate` gaining headers (setup-media-keys); pin headers reach
+   `certificateResponse` to `KeySystemModule` (with `DrmResponseTransform`); identity
+   when unset; no consumer yet.
+3. **Consumer slots + adapter wrap:** add the four to SPF `DrmSystemConfig` (public
+   surface); the hls-video Media wraps each as a stable closure over `#source`,
+   beside the `licenseUrl` resolvers; unit-test the wrapper derefs the live source.
+4. **Apply — license:** compose module→source over request and response in
+   `exchange-licenses`; `licenseResponse` runs before `session.update`; pin the
+   compose order and unwrap-before-update.
+5. **Apply — certificate:** module/source `certificateRequest`/`certificateResponse`
+   + `fetchServerCertificate` gaining headers (`setup-media-keys`); pin headers reach
    the cert fetch.
 6. **Helpers:** `detectFairPlayCkc` (raw/base64/`<ckc>`XML/JSON → raw) and
    `unwrapJsonLicense`, exported + unit-tested against Shaka's known shapes.
-7. **Composition invariant:** the new config still materializes only in DRM
-   engine variants — droppability test unchanged.
+7. **Composition invariant:** the new config still materializes only in DRM engine
+   variants — droppability test unchanged.
