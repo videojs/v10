@@ -233,6 +233,66 @@ describe('shadcnPlugin', () => {
     expect(registryFile(second, 'react/components', secondItem, '/root.tsx')).not.toContain('first');
   });
 
+  it('reads style metadata after the transform pipeline finishes', async () => {
+    const virtualStyle = 'virtual:vjsc/css/late/styles';
+    const root = setup({
+      'components/root.tsx': `import ${JSON.stringify(virtualStyle)}; ${meta('root', 'block')} export const Root = <main />;`,
+    });
+    const output = await build(
+      root,
+      {
+        styles: undefined,
+        publish: {
+          items: (modules) =>
+            modules.flatMap((module) =>
+              module.meta
+                ? [
+                    {
+                      module,
+                      name: 'root',
+                      group: 'react/components',
+                      type: 'registry:block',
+                      title: 'Root',
+                      description: 'Root.',
+                      target: 'root.tsx',
+                      stylesheet: { target: 'root.css' },
+                    },
+                  ]
+                : []
+            ),
+        },
+      },
+      ['vjsc', 'shadcn'],
+      [],
+      [
+        {
+          name: 'late-style-metadata',
+          buildStart() {
+            this.emitFile({ type: 'chunk', id: virtualStyle });
+          },
+          resolveId(id) {
+            return id === virtualStyle ? `\0${virtualStyle}` : null;
+          },
+          load(id) {
+            return id === `\0${virtualStyle}` ? '.late-style { color: red; }' : null;
+          },
+          transform(_code, id) {
+            if (id === `\0${virtualStyle}`) return { code: 'export {};' };
+
+            if (!id.endsWith('/components/root.tsx')) return null;
+
+            return {
+              meta: { componentStyles: [virtualStyle] },
+            };
+          },
+        },
+      ]
+    );
+    const item = registryItem(output, 'react/components', 'root');
+
+    expect(registryFile(output, 'react/components', item, '/root.css')).toContain('.late-style');
+  });
+
   it('combines source-owned items with transformed items', async () => {
     const root = setup({
       'components/root.tsx': `export function Root() { return <main/>; } ${meta('root', 'block')}`,
