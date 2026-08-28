@@ -148,11 +148,25 @@ export interface KeySystemModule {
    */
   readonly toInitData?: (uri: string) => { initDataType: string; initData: Uint8Array<ArrayBuffer> } | undefined;
   /**
-   * Shape a CDM license message for this system's server. Defaults to POSTing the raw bytes as octet-stream, which is
-   * what Widevine and FairPlay want (Mux's FairPlay server takes the bare SPC).
+   * Transform the outgoing license request for this system — its own default, before any per-source override. Defaults
+   * to identity (POST the raw CDM message as octet-stream, which is what Widevine and FairPlay want; Mux's FairPlay
+   * server takes the bare SPC). PlayReady overrides it to unwrap the challenge envelope.
    */
-  readonly shapeLicenseRequest?: (message: BufferSource) => { body: BufferSource; headers: Record<string, string> };
+  readonly licenseRequest?: DrmRequestTransform;
 }
+
+/**
+ * One DRM network request as it is about to be sent — the value a {@link DrmRequestTransform} rewrites. `body` is the
+ * CDM message for a license, `null` for the certificate GET.
+ */
+export interface DrmRequest {
+  url: string;
+  headers: Record<string, string>;
+  body: BufferSource | null;
+}
+
+/** Rewrite a DRM request (URL, headers, body) before it is sent. Async — a provider may mint a per-session token. */
+export type DrmRequestTransform = (request: DrmRequest) => DrmRequest | Promise<DrmRequest>;
 
 /**
  * Every DRM key declaration across the presentation's resolved tracks, deduped by full attribute identity. Empty until
