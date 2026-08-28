@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test';
 
+import { DATA_ATTRS } from '../fixtures/selectors';
+
 const SANDBOX_BASE = process.env.SANDBOX_URL ?? 'http://localhost:5299';
 
 const CASES = [
@@ -75,6 +77,77 @@ for (const { platform, skin, styling } of CASES) {
       fillUsesAccent: true,
       videoBorderRadius: '18px',
     });
+  });
+
+  test(`${platform} ${skin} ${styling} scales thumbnails in fullscreen`, async ({ page }) => {
+    await page.setViewportSize({ width: 1920, height: 1080 });
+
+    const query = new URLSearchParams({
+      styling,
+      skin,
+      source: 'hls-1',
+      autoplay: '0',
+      muted: '1',
+      loop: '0',
+      preload: 'metadata',
+    });
+
+    await page.goto(`${SANDBOX_BASE}/${platform}-video/?${query}`, { waitUntil: 'domcontentloaded' });
+
+    const root = page.getByRole('group', { name: 'Media player' }).first();
+    const slider = page.getByRole('slider', { name: 'Seek' }).first().locator('..');
+    // The preview is `aria-hidden`, so `role=img` is the only hook the CSS and Tailwind skins share.
+    const thumbnail = root.locator('[role="img"]').first();
+
+    await expect(root).toBeVisible({ timeout: 15_000 });
+    await slider.hover();
+    await expect(thumbnail).toBeAttached({ timeout: 15_000 });
+    await expect(thumbnail).not.toHaveAttribute(DATA_ATTRS.loading, { timeout: 15_000 });
+
+    // Layout sizes, not bounding rects: the preview scales in over 150ms and a transform would skew the comparison.
+    const measure = () =>
+      thumbnail.evaluate((element) => {
+        const image = element.shadowRoot?.querySelector('img') ?? element.querySelector('img');
+        const rect = element.getBoundingClientRect();
+        const imageRect = image!.getBoundingClientRect();
+        const host = element as HTMLElement;
+
+        return {
+          width: host.offsetWidth,
+          height: host.offsetHeight,
+          maxWidth: parseFloat(getComputedStyle(element).maxWidth),
+          rightGap: rect.right - imageRect.right,
+          bottomGap: rect.bottom - imageRect.bottom,
+        };
+      });
+
+    const before = await measure();
+
+    const fullscreenButton = root.getByRole('button', { name: /full ?screen/i }).first();
+
+    await fullscreenButton.click();
+    await expect(fullscreenButton).toHaveAttribute(DATA_ATTRS.fullscreen, '');
+    await slider.hover();
+
+    // Fullscreen widens the preview through a container query, and the tile has to grow to fill it — less the 1px
+    // anti-fringe inset on each edge.
+    await expect.poll(async () => (await measure()).maxWidth).toBeGreaterThan(before.maxWidth);
+    await expect
+      .poll(async () => {
+        const box = await measure();
+
+        return box.maxWidth - box.width;
+      })
+      .toBeLessThanOrEqual(2);
+
+    const after = await measure();
+
+    expect(after.width).toBeGreaterThan(before.width);
+    // Aspect ratio survives the resize, so the tile is neither cropped nor letterboxed.
+    expect(Math.abs(after.width / after.height - before.width / before.height)).toBeLessThan(0.02);
+    // The sprite still covers the container that clips it.
+    expect(after.rightGap).toBeLessThanOrEqual(0);
+    expect(after.bottomGap).toBeLessThanOrEqual(0);
   });
 }
 

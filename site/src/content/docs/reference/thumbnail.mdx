@@ -102,7 +102,7 @@ Supported source formats:
 
 In React, text-track mode needs `Player` because it reads track state from the player store. JSON modes (`thumbnails` prop) work without a player.
 
-The component picks the latest thumbnail whose `startTime` is less than or equal to the current `time`, then scales/clips sprite tiles to fit CSS min/max constraints while preserving aspect ratio.
+The component picks the latest thumbnail whose `startTime` is less than or equal to the current `time`, then scales/clips sprite tiles to fill CSS min/max constraints while preserving aspect ratio. Tiles scale up as well as down, so a preview whose `max-width` grows — a container query widening it in fullscreen, say — grows with it.
 
 ### Cross-origin images
 
