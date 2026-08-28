@@ -158,6 +158,13 @@ separate phases.
 - **Key-system capability probing** — owned by
   [capability-probing](./capability-probing.md). Crisp boundary:
   probing answers "can we?"; this feature answers "set it up."
+- **Full-segment clear-key AES** (`METHOD=AES-128` and the AES-256
+  family) — owned by [clear-key-aes](./clear-key-aes.md). Not DRM: a
+  segment-pipeline decrypt keyed off the `identity` keyformat, no EME.
+  The boundary is the keyformat. Such content misreports
+  `SVTA_UNSUPPORTED_DRM_SYSTEM` today; correcting that diagnosis to name
+  the real gap is this feature's error-surface concern, and lands ahead
+  of any decryptor.
 
 **Out of scope (different architectural layer):**
 - Adapter-layer customer-facing API surfaces (e.g., a Mux Player
