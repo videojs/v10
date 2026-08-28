@@ -1,8 +1,9 @@
 /**
  * Cross-renderer selectors that work for both HTML (Web Components) and React.
  *
- * HTML uses custom element tags: `media-play-button`, `media-time-slider`, etc. React uses standard elements with CSS
- * classes: `button.media-button--play`, etc.
+ * HTML uses custom element tags such as `media-play-button`. React CSS skins use the matching VJSC part classes, while
+ * source-owned Tailwind skins retain semantic roles, state attributes, and keyboard shortcuts. Legacy classes remain
+ * here only while stacked pre-cutover PRs use them.
  *
  * Both renderers apply the **same data attributes** for state (`data-paused`, `data-muted`, etc.), which is what tests
  * assert against.
@@ -43,25 +44,29 @@ export const SELECTORS = {
   controls: 'media-controls-content, .media-controls',
 
   // Buttons
-  playButton: 'media-play-button, .media-button--play',
-  seekBackward: 'media-seek-button[data-direction="backward"], .media-button--seek[data-direction="backward"]',
-  seekForward: 'media-seek-button[data-direction="forward"], .media-button--seek[data-direction="forward"]',
-  muteButton: 'media-mute-button, .media-button--mute',
-  fullscreenButton: 'media-fullscreen-button, .media-button--fullscreen',
-  pipButton: 'media-pip-button, .media-button--pip',
-  castButton: 'media-cast-button, .media-button--cast',
-  airPlayButton: 'media-airplay-button, .media-button--airplay',
-  captionsButton: 'media-captions-button, .media-button--captions',
+  playButton: 'media-play-button, .media-play-button, .media-button--play, button[aria-keyshortcuts~="Space"]',
+  seekBackward:
+    'media-seek-button[data-direction="backward"], .media-seek-button[data-direction="backward"], .media-button--seek[data-direction="backward"]',
+  seekForward:
+    'media-seek-button[data-direction="forward"], .media-seek-button[data-direction="forward"], .media-button--seek[data-direction="forward"]',
+  muteButton: 'media-mute-button, .media-mute-button, .media-button--mute',
+  fullscreenButton: 'media-fullscreen-button, .media-fullscreen-button, .media-button--fullscreen',
+  pipButton: 'media-pip-button, .media-pip-button, .media-button--pip',
+  castButton: 'media-cast-button, .media-cast-button, .media-button--cast',
+  airPlayButton: 'media-airplay-button, .media-airplay-button, .media-button--airplay',
+  captionsButton: 'media-captions-button, .media-captions-button, .media-button--captions',
   playbackRateButton: [
     withinControls('media-playback-rate-button'),
+    withinControls('.media-playback-rate-button'),
     withinControls('.media-button--playback-rate'),
     withinControls('button[aria-haspopup="menu"][aria-label^="Playback rate"]:not(.media-menu__item)'),
   ].join(', '),
   playbackRateUncheckedOptions: unchecked(playbackRateOptions),
   activeMenuOptions: `${activeSubmenu} ${option}`,
-  activeMenuPanel: `${activeSubmenu}.media-menu__panel`,
+  activeMenuPanel: `${activeSubmenu}:is(.media-menu-content, .media-menu__panel)`,
   activeMenuUncheckedOptions: unchecked(`${activeSubmenu} ${option}`),
   settingsButton: [
+    withinControls('.media-settings-menu-trigger'),
     withinControls('.media-button--settings'),
     withinControls('button[commandfor="settings-menu"]'),
     withinControls('button[aria-label="Settings"]'),
@@ -71,9 +76,9 @@ export const SELECTORS = {
 
   // Sliders
   // HTML: <media-time-slider>, React: horizontal .media-slider inside .media-time-controls
-  timeSlider: 'media-time-slider, .media-time-controls .media-slider',
-  volumeSlider: 'media-volume-slider, .media-popover--volume .media-slider',
-  sliderThumb: 'media-slider-thumb, .media-slider__thumb',
+  timeSlider: 'media-time-slider, .media-time-slider, .media-time-controls .media-slider',
+  volumeSlider: 'media-volume-slider, .media-volume-slider, .media-popover--volume .media-slider',
+  sliderThumb: 'media-slider-thumb, .media-slider-thumb, .media-slider__thumb',
 
   // Display elements
   // HTML uses attribute `type`, React uses `data-type`
@@ -87,11 +92,12 @@ export const SELECTORS = {
   timeToggle: 'media-time[toggle], time.media-time[role="button"]',
   poster: 'media-poster, img[data-loaded]',
   bufferingIndicator: 'media-buffering-indicator, .media-buffering-indicator',
-  thumbnail: 'media-slider-thumbnail, .media-thumbnail__image',
+  thumbnail:
+    'media-slider-thumbnail, .media-slider-thumbnail-image, .media-thumbnail__image, [role="img"]:has(> img[aria-hidden="true"])',
 
   tooltip: 'media-tooltip, .media-tooltip',
-  popover: 'media-popover, .media-popover',
-  errorDialog: 'media-error-dialog, .media-dialog__popup',
+  popover: 'media-popover, .media-volume-popover, .media-menu-popup, .media-popover',
+  errorDialog: 'media-error-dialog, .media-dialog-popup, .media-dialog__popup',
 
   // Media element — matches all renderer custom elements and native media
   media: 'video, audio, hlsjs-video, hls-video, native-hls-video, dash-video, shaka-video, mux-video, mux-audio',

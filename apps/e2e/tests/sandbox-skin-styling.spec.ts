@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-import { DATA_ATTRS } from '../fixtures/selectors';
+import { DATA_ATTRS, SELECTORS } from '../fixtures/selectors';
 
 const SANDBOX_BASE = process.env.SANDBOX_URL ?? 'http://localhost:5299';
 
@@ -51,10 +51,11 @@ for (const { platform, skin, styling } of CASES) {
       element.style.setProperty('--media-border-radius', '18px');
     });
 
-    const playButton = page.getByRole('button', { name: 'Play' }).first();
+    const settingsButton = page.getByRole('button', { name: 'Settings' }).first();
 
-    await playButton.hover();
-    await expect(playButton).toHaveCSS('color', 'rgb(171, 205, 239)');
+    await settingsButton.click();
+    await expect(settingsButton).toHaveAttribute('aria-expanded', 'true');
+    await expect(settingsButton).toHaveCSS('color', 'rgb(171, 205, 239)');
 
     const styles = await root.evaluate((element) => {
       const accent = 'rgb(18, 52, 86)';
@@ -94,8 +95,7 @@ for (const { platform, skin, styling } of CASES) {
 
     const root = page.getByRole('group', { name: 'Media player' }).first();
     const slider = page.getByRole('slider', { name: 'Seek' }).first().locator('..');
-    // The preview is `aria-hidden`, so `role=img` is the only hook the CSS and Tailwind skins share.
-    const thumbnail = root.locator('[role="img"]').first();
+    const thumbnail = root.locator(SELECTORS.thumbnail).first();
 
     await expect(root).toBeVisible({ timeout: 15_000 });
     await slider.hover();
@@ -141,10 +141,10 @@ for (const { platform, skin, styling } of CASES) {
         return box.maxWidth - box.width;
       })
       .toBeLessThanOrEqual(2);
+    await expect.poll(async () => (await measure()).width).toBeGreaterThan(before.width);
 
     const after = await measure();
 
-    expect(after.width).toBeGreaterThan(before.width);
     // Aspect ratio survives the resize, so the tile is neither cropped nor letterboxed.
     expect(Math.abs(after.width / after.height - before.width / before.height)).toBeLessThan(0.02);
     // The sprite still covers the container that clips it.
