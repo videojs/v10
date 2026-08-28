@@ -246,7 +246,7 @@ describe('sourceDrmSystems', () => {
     // No source transform named: the same bytes pass through untouched.
     expect(await entry.licenseResponse!(bytes)).toBe(bytes);
 
-    drm = { 'com.widevine.alpha': { licenseResponse: () => new Uint8Array([9]) } };
+    drm = { 'com.widevine.alpha': { licenseUrl: 'https://l', licenseResponse: () => new Uint8Array([9]) } };
     expect([...(await entry.licenseResponse!(bytes))]).toEqual([9]);
 
     // Swapped to a source with none again: the same stable wrapper reverts to passthrough.
@@ -262,7 +262,12 @@ describe('sourceDrmSystems', () => {
     expect(await entry.certificateRequest!(request)).toBe(request);
     expect(await entry.licenseRequest!(request)).toBe(request);
 
-    drm = { 'com.widevine.alpha': { licenseRequest: (r) => ({ ...r, headers: { ...r.headers, 'X-Tok': 't' } }) } };
+    drm = {
+      'com.widevine.alpha': {
+        licenseUrl: 'https://l',
+        licenseRequest: (r) => ({ ...r, headers: { ...r.headers, 'X-Tok': 't' } }),
+      },
+    };
     expect((await entry.licenseRequest!(request)).headers).toEqual({ 'X-Tok': 't' });
   });
 });
