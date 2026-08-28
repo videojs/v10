@@ -7,6 +7,7 @@
  * themselves, so importing these helpers never pulls a key system's code in. The DOM-free DRM model half (config
  * contract, module contract, declared keys, candidate selection) lives in `../drm.ts` and is re-exported here.
  */
+import { fetchWithRetry } from '../../network/retry';
 import { type DrmRequest, type KeySystemModule } from '../drm';
 import type { MaybeResolvedPresentation } from '../types';
 import { buildMimeCodec } from './mse/mediasource-setup';
@@ -199,15 +200,15 @@ export function attachMediaKeys(mediaElement: HTMLMediaElement, mediaKeys: Media
  * Perform one DRM network exchange — a license POST, a certificate GET — and return the raw response bytes. Method,
  * headers, and body all ride on the {@link DrmRequest} (already shaped by the module default and any per-source
  * override), so this is the single fetch seam the license and certificate paths share and the shape a future network
- * layer slots into.
+ * layer slots into. Wrapped in {@link fetchWithRetry}'s naive retry + first-byte timeout so a transient blip on the
+ * (routinely flaky, rate-limited) license server doesn't park the source on a single failure.
  */
 export async function fetchDrm(request: DrmRequest, signal: AbortSignal): Promise<Uint8Array<ArrayBuffer>> {
-  const response = await fetch(request.url, {
-    method: request.method,
-    headers: request.headers,
-    body: request.body,
-    signal,
-  });
+  const response = await fetchWithRetry(
+    request.url,
+    { method: request.method, headers: request.headers, body: request.body },
+    signal
+  );
   if (!response.ok) throw new Error(`DRM request failed with status ${response.status}`);
 
   return new Uint8Array(await response.arrayBuffer());
