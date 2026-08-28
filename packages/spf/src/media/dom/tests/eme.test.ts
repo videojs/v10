@@ -6,7 +6,7 @@ import {
   contentTypesFromPresentation,
   type KeySystemModule,
   requestKeySystemAccess,
-  shapeLicenseRequest,
+  applyLicenseRequest,
 } from '../eme';
 import { fairPlayKeySystem, playReadyKeySystem, widevineKeySystem } from '../key-systems';
 
@@ -126,32 +126,49 @@ describe('requestKeySystemAccess', () => {
   });
 });
 
-describe('shapeLicenseRequest', () => {
-  it('posts raw bytes as octet-stream for a module declaring no shaping', () => {
-    const message = new Uint8Array([1, 2, 3]).buffer;
-    const shaped = shapeLicenseRequest(widevineKeySystem, message);
+describe('applyLicenseRequest', () => {
+  const req = (body: BufferSource, headers: Record<string, string> = {}) => ({ url: 'https://lic', headers, body });
 
-    expect(shaped.body).toBe(message);
-    expect(shaped.headers).toEqual({ 'Content-Type': 'application/octet-stream' });
+  it('posts raw bytes as octet-stream for a module declaring no transform', async () => {
+    const message = new Uint8Array([1, 2, 3]).buffer;
+    const request = await applyLicenseRequest(widevineKeySystem, req(message));
+
+    expect(request.body).toBe(message);
+    expect(request.headers).toEqual({ 'Content-Type': 'application/octet-stream' });
   });
 
-  it('delegates to the module when it declares its own shaping', () => {
+  it('octet-stream default wins over a configured Content-Type', async () => {
+    const request = await applyLicenseRequest(
+      widevineKeySystem,
+      req(new Uint8Array([1]).buffer, { 'Content-Type': 'x/y' })
+    );
+
+    expect(request.headers['Content-Type']).toBe('application/octet-stream');
+  });
+
+  it('delegates to the module when it declares its own transform', async () => {
     const module_: KeySystemModule = {
       keySystem: 'com.example.drm',
       keyFormats: [],
-      shapeLicenseRequest: () => ({ body: new Uint8Array([7]), headers: { 'Content-Type': 'application/json' } }),
+      licenseRequest: (request) => ({
+        ...request,
+        body: new Uint8Array([7]),
+        headers: { 'Content-Type': 'application/json' },
+      }),
     };
 
-    expect(shapeLicenseRequest(module_, new Uint8Array([1]).buffer)).toEqual({
+    expect(await applyLicenseRequest(module_, req(new Uint8Array([1]).buffer))).toEqual({
+      url: 'https://lic',
       body: new Uint8Array([7]),
       headers: { 'Content-Type': 'application/json' },
     });
   });
 
-  it('falls back to octet-stream for an absent module', () => {
+  it('falls back to octet-stream for an absent module', async () => {
     const message = new Uint8Array([1]).buffer;
 
-    expect(shapeLicenseRequest(undefined, message)).toEqual({
+    expect(await applyLicenseRequest(undefined, req(message))).toEqual({
+      url: 'https://lic',
       body: message,
       headers: { 'Content-Type': 'application/octet-stream' },
     });

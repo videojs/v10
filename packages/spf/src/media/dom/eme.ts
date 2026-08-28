@@ -7,12 +7,14 @@
  * themselves, so importing these helpers never pulls a key system's code in. The DOM-free DRM model half (config
  * contract, module contract, declared keys, candidate selection) lives in `../drm.ts` and is re-exported here.
  */
-import { type KeySystemModule } from '../drm';
+import { type DrmRequest, type KeySystemModule } from '../drm';
 import type { MaybeResolvedPresentation } from '../types';
 import { buildMimeCodec } from './mse/mediasource-setup';
 
 export {
   type DrmHeaders,
+  type DrmRequest,
+  type DrmRequestTransform,
   type DrmSystemConfig,
   type DrmSystemsConfig,
   type DrmUrl,
@@ -137,18 +139,19 @@ export async function requestKeySystemAccess(
 }
 
 /**
- * Shape a CDM license message for its server, per the negotiated module. Widevine and FairPlay POST the raw bytes as
- * octet-stream (Mux's FairPlay server takes the bare SPC), which is the default a module opts out of by declaring
- * `shapeLicenseRequest`.
+ * Apply the negotiated module's license-request transform to a request already carrying the source's URL and headers.
+ * With no transform the default POSTs the raw message as octet-stream (Widevine and FairPlay want this; Mux's FairPlay
+ * server takes the bare SPC) — octet-stream wins over a configured `Content-Type`, matching the prior contract.
+ * PlayReady's module transform unwraps the challenge envelope instead.
  */
-export function shapeLicenseRequest(
+export function applyLicenseRequest(
   module_: KeySystemModule | undefined,
-  message: BufferSource
-): { body: BufferSource; headers: Record<string, string> } {
+  request: DrmRequest
+): DrmRequest | Promise<DrmRequest> {
   return (
-    module_?.shapeLicenseRequest?.(message) ?? {
-      body: message,
-      headers: { 'Content-Type': 'application/octet-stream' },
+    module_?.licenseRequest?.(request) ?? {
+      ...request,
+      headers: { ...request.headers, 'Content-Type': 'application/octet-stream' },
     }
   );
 }
@@ -172,7 +175,7 @@ export function attachMediaKeys(mediaElement: HTMLMediaElement, mediaKeys: Media
   return mediaElement.setMediaKeys(mediaKeys);
 }
 
-/** Exchange a CDM license message for the server's license. Body and headers come from {@link shapeLicenseRequest}. */
+/** Exchange a CDM license message for the server's license. Body and headers come from {@link applyLicenseRequest}. */
 export async function fetchLicense(
   licenseUrl: string,
   message: BufferSource,
