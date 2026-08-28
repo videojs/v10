@@ -6,9 +6,12 @@ import {
   type ComponentTarget,
   type ComponentTargetHelpers,
   defineComponentTarget,
+  type SourceProps,
   type TemplateTargetDefinition,
 } from 'vjsc/target';
 import { Host } from 'vjsc/target/jsx-runtime';
+
+import { createRenderTargetTransform, renderTargetMarker } from './render-target.ts';
 
 type CoreSchema = typeof coreSchema;
 
@@ -146,6 +149,8 @@ export const htmlComponentTarget: ComponentTarget<CoreSchema> = defineComponentT
   const I18nText = element('media-text', {
     import: { from: '@videojs/html/i18n', sideEffect: true },
   });
+  const PlaybackRateButton = htmlElementTarget('PlaybackRateButton', element);
+  const playbackRateButtonMarker = renderTargetMarker('PlaybackRateButton');
 
   const optionTemplate: TemplateTargetDefinition = {
     render: ({ children }) => <HtmlTemplate>{children}</HtmlTemplate>,
@@ -168,11 +173,21 @@ export const htmlComponentTarget: ComponentTarget<CoreSchema> = defineComponentT
         const controlledId = id(popup ? 'popup' : 'content');
 
         if (popup) {
+          const triggerProps = trigger.props as SourceProps<Record<string, unknown>>;
+          const renderPlaybackRateButton = triggerProps.has(playbackRateButtonMarker);
+          const forwardedTriggerProps = triggerProps.omit(playbackRateButtonMarker);
+
           return [
             trigger.replaceWith(
-              <Button commandfor={controlledId} {...trigger.props}>
-                {trigger.children}
-              </Button>
+              renderPlaybackRateButton ? (
+                <PlaybackRateButton commandfor={controlledId} {...forwardedTriggerProps}>
+                  {trigger.children}
+                </PlaybackRateButton>
+              ) : (
+                <Button commandfor={controlledId} {...forwardedTriggerProps}>
+                  {trigger.children}
+                </Button>
+              )
             ),
             popup.replaceWith(
               <target.Menu.Popup id={controlledId} {...props.merge(popup.props)}>
@@ -265,6 +280,19 @@ export const htmlComponentTarget: ComponentTarget<CoreSchema> = defineComponentT
         'captions-option': optionTemplate,
       },
     },
+    transforms: [
+      createRenderTargetTransform({
+        target: () => htmlComponentTarget,
+        targets: {
+          Button: { element: Button },
+          PlaybackRateButton: { element: PlaybackRateButton, kind: 'component' },
+          SliderBuffer: { element: Div },
+          SliderFill: { element: Div },
+          SliderThumb: { element: Div },
+          SliderTrack: { element: Div },
+        },
+      }),
+    ],
     jsx: {
       importSource: 'vjsc/html-runtime',
       attributes: 'html',

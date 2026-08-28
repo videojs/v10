@@ -8,6 +8,7 @@ import sliderStyles from '../../styles/sliders/slider.styles';
 import thumbnailStyles from '../../styles/sliders/thumbnail.styles';
 import styles from '../../styles/sliders/time-slider.styles';
 import surfaceStyles from '../../styles/surfaces/surface.styles';
+import { SliderBuffer, SliderFill, SliderThumb, SliderTrack } from './slider';
 
 interface TimeSliderProps extends CoreProps {
   previewOverflow?: SliderPreviewOverflow | undefined;
@@ -18,13 +19,13 @@ export function TimeSlider({ className, previewOverflow = 'visible', ...props }:
     <$.TimeSlider.Root className={[sliderStyles.root, styles.root, className]} {...props}>
       <$.TimeSlider.Chapters className={styles.chapters}>
         <Template name="chapter" className={styles.chapter}>
-          <$.TimeSlider.Track className={[sliderStyles.track, styles.chapterTrack]}>
-            <$.TimeSlider.Buffer className={sliderStyles.buffer} />
-            <$.TimeSlider.Fill className={sliderStyles.fill} />
+          <$.TimeSlider.Track $render={SliderTrack} className={styles.chapterTrack}>
+            <$.TimeSlider.Buffer $render={SliderBuffer} />
+            <$.TimeSlider.Fill $render={SliderFill} />
           </$.TimeSlider.Track>
         </Template>
       </$.TimeSlider.Chapters>
-      <$.TimeSlider.Thumb className={[sliderStyles.thumb, styles.thumb]} />
+      <$.TimeSlider.Thumb $render={SliderThumb} className={styles.thumb} />
       <$.TimeSlider.Preview className={sliderStyles.preview} overflow={previewOverflow}>
         <$.Slider.Thumbnail.Root
           className={[sliderStyles.previewContent, surfaceStyles.thumbnail, thumbnailStyles.root]}

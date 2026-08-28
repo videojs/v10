@@ -1,6 +1,22 @@
-export type { Node } from '@oxc-project/types';
+export type {
+  CallExpression,
+  ImportDeclaration,
+  JSXAttribute,
+  JSXOpeningElement,
+  Node,
+  Program,
+  VariableDeclaration,
+  VariableDeclarator,
+} from '@oxc-project/types';
+export { walk } from 'oxc-walker';
 export { type BlockBody, prependBlockBody } from './edit';
-export { type ModuleImport, ModuleImports, type ModuleImportsOptions } from './imports';
+export {
+  collectIdentifierNames,
+  insertModuleImports,
+  type ModuleImport,
+  ModuleImports,
+  type ModuleImportsOptions,
+} from './imports';
 export {
   createSourceText,
   type RenderedSourceRange,

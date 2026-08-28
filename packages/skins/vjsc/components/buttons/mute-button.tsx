@@ -6,10 +6,11 @@ import type { Props } from 'vjsc/components';
 import type { SkinComponentMeta } from '../../meta';
 import buttonStyles from '../../styles/buttons/button.styles';
 import styles from '../../styles/buttons/mute-button.styles';
+import { Button } from './button';
 
 export function MuteButton({ className, ...props }: Props<CoreProps> = {}) {
   return (
-    <$.MuteButton className={[buttonStyles.root, styles.root, className]} {...props}>
+    <$.MuteButton $render={Button} className={[styles.root, className]} {...props}>
       <VolumeOffIcon className={[buttonStyles.icon, styles.offIcon]} />
       <VolumeLowIcon className={[buttonStyles.icon, styles.lowIcon]} />
       <VolumeHighIcon className={[buttonStyles.icon, styles.highIcon]} />

@@ -3,11 +3,11 @@ import * as $ from '@videojs/core/vjsc';
 import type { Props } from 'vjsc/components';
 
 import type { SkinComponentMeta } from '../../meta';
-import buttonStyles from '../../styles/buttons/button.styles';
 import styles from '../../styles/buttons/live-button.styles';
+import { Button } from './button';
 
 export function LiveButton({ className, ...props }: Props<CoreProps> = {}) {
-  return <$.LiveButton className={[buttonStyles.root, styles.root, className]} {...props} />;
+  return <$.LiveButton $render={Button} className={[styles.root, className]} {...props} />;
 }
 
 export const meta = {

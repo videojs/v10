@@ -294,37 +294,23 @@ function transformStyles(
   const transformedRanges: Array<readonly [number, number]> = [];
 
   walk(ast, {
-    enter(node) {
-      if (
-        node.type !== 'JSXAttribute' ||
-        node.name.type !== 'JSXIdentifier' ||
-        node.name.name !== 'className' ||
-        node.value?.type !== 'JSXExpressionContainer' ||
-        node.value.expression.type === 'JSXEmptyExpression'
-      ) {
-        return;
-      }
+    enter(node, parent) {
+      if (node.type !== 'MemberExpression') return;
 
-      walk(node.value.expression, {
-        enter(expression, parent) {
-          if (expression.type !== 'MemberExpression') return;
+      const path = readAccessPath(node);
+      const [root, ...tokenPath] = path ?? [];
+      const binding = root ? bindings.get(root) : undefined;
+      const rule = binding ? ruleForToken(manifest, binding.modulePath, tokenPath) : undefined;
+      if (!rule) return;
 
-          const path = readAccessPath(expression);
-          const [root, ...tokenPath] = path ?? [];
-          const binding = root ? bindings.get(root) : undefined;
-          const rule = binding ? ruleForToken(manifest, binding.modulePath, tokenPath) : undefined;
-          if (!rule) return;
-
-          edits.push({
-            start: expression.start,
-            end: expression.end,
-            content: renderStyleRule(rule, options, isListItem(expression, parent)),
-          });
-          referencedRules.add(rule.className);
-          transformedRanges.push([expression.start, expression.end]);
-          this.skip();
-        },
+      edits.push({
+        start: node.start,
+        end: node.end,
+        content: renderStyleRule(rule, options, isListItem(node, parent)),
       });
+      referencedRules.add(rule.className);
+      transformedRanges.push([node.start, node.end]);
+      this.skip();
     },
   });
 
@@ -440,7 +426,7 @@ function assertNoUntransformedReferences(
 
   if (unresolved.size > 0) {
     throw sourceError(
-      `Styles must use static className references. Could not transform: ${[...unresolved]
+      `Styles must use static references. Could not transform: ${[...unresolved]
         .map(([name, positions]) => `${name} at ${positions.join(', ')}`)
         .join('; ')}.`,
       Math.min(...[...unresolved.values()].flat())

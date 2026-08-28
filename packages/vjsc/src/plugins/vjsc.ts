@@ -4,6 +4,7 @@ import type { VjscDiagnosticsOptions } from '../styles/diagnostics';
 import type { StylePluginOptions } from '../styles/options';
 import type { ComponentTarget } from '../target/definition';
 import type { ParsedModuleId } from '../utils/module-id';
+import { compilerDirectivePlugin } from './compiler-directive';
 import { componentMetaPlugin } from './component-meta';
 import { componentModulesPlugin } from './component-modules';
 import { type ComponentTargetSelection, componentTargetPlugin, primitiveTargetPlugin } from './component-target';
@@ -77,6 +78,7 @@ export function createVjscPluginPipeline(options: VjscPluginOptions, styleLifecy
     targetJsxPlugin({ targets }),
     stylePlugin((module) => configure(module)?.styles ?? null, options.diagnostics, styleLifecycle),
     targetTransformPlugin({ targets }),
+    compilerDirectivePlugin({ targets }),
     targetTypePlugin({ targets }),
     primitiveTargetPlugin({ targets }),
     componentTargetPlugin({ targets }),

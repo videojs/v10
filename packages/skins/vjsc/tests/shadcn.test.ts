@@ -22,6 +22,8 @@ describe('Skins Shadcn registry', () => {
     const registry = assetJson<ShadcnRegistry>(assets, 'registry.json');
     const playButton = assetJson<BuiltItem>(assets, 'play-button.json');
     const minimalPlayButton = assetJson<BuiltItem>(assets, 'play-button-minimal.json');
+    const button = assetJson<BuiltItem>(assets, 'button.json');
+    const minimalButton = assetJson<BuiltItem>(assets, 'button-minimal.json');
     const defaultVideo = assetJson<BuiltItem>(assets, 'default-video.json');
     const minimalVideo = assetJson<BuiltItem>(assets, 'minimal-video.json');
     const container = assetJson<BuiltItem>(assets, 'container.json');
@@ -34,6 +36,7 @@ describe('Skins Shadcn registry', () => {
     const utils = assetJson<BuiltItem>(assets, 'utils.json');
 
     const playSource = playButton.files.find((file) => file.target?.endsWith('/play-button.tsx'))?.content;
+    const buttonSource = button.files.find((file) => file.target?.endsWith('/button.tsx'))?.content;
     const posterSource = poster.files.find((file) => file.target?.endsWith('/poster.tsx'))?.content;
     const qualityMenuSource = videoSettingsMenu.files.find((file) =>
       file.target?.endsWith('/quality-menu.tsx')
@@ -45,7 +48,7 @@ describe('Skins Shadcn registry', () => {
       file.target?.endsWith('/volume-popover.tsx')
     )?.content;
 
-    expect(registry.items).toHaveLength(52);
+    expect(registry.items).toHaveLength(58);
     expect(registry.items.map((item: { name: string }) => item.name)).toEqual(
       expect.arrayContaining([
         'button-tooltip',
@@ -57,20 +60,27 @@ describe('Skins Shadcn registry', () => {
       ])
     );
     expect(playSource).toContain('export interface PlayButtonProps');
-    expect(playSource).toContain('<PlayButtonPrimitive className=');
-    expect(playSource).toContain('grid min-h-0');
+    expect(playSource).toContain('<PlayButtonPrimitive render={<Button />} className=');
+    expect(buttonSource).toContain('export type ButtonProps');
+    expect(buttonSource).toContain('grid min-h-0');
     expect(playSource).toContain(`from "@/components/videojs/utils"`);
     expect(playSource).not.toContain('const meta');
     expect(playSource).not.toContain('jsx-runtime');
     expect(playButton.dependencies).toEqual(['@videojs/react', 'react']);
-    expect(playButton.registryDependencies).toEqual(['@videojs/button-tooltip', '@videojs/styles', '@videojs/utils']);
+    expect(playButton.registryDependencies).toEqual([
+      '@videojs/button',
+      '@videojs/button-tooltip',
+      '@videojs/styles',
+      '@videojs/utils',
+    ]);
     expect(minimalPlayButton.registryDependencies).toEqual([
+      '@videojs/button-minimal',
       '@videojs/button-tooltip-minimal',
       '@videojs/styles',
       '@videojs/utils',
     ]);
-    expect(playSource).toContain('size-9');
-    expect(minimalPlayButton.files[0]?.content).toContain('size-9.5');
+    expect(buttonSource).toContain('size-9');
+    expect(minimalButton.files[0]?.content).toContain('size-9.5');
     expect(defaultVideo.registryDependencies).toEqual(
       expect.arrayContaining(['@videojs/container', '@videojs/play-button', '@videojs/poster'])
     );

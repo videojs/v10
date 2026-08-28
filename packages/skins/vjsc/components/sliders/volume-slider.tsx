@@ -5,14 +5,15 @@ import type { Props } from 'vjsc/components';
 import type { SkinComponentMeta } from '../../meta';
 import sliderStyles from '../../styles/sliders/slider.styles';
 import styles from '../../styles/sliders/volume-slider.styles';
+import { SliderFill, SliderThumb, SliderTrack } from './slider';
 
 export function VolumeSlider({ className, ...props }: Props<CoreProps> = {}) {
   return (
     <$.VolumeSlider.Root className={[sliderStyles.root, styles.root, className]} thumbAlignment="edge" {...props}>
-      <$.VolumeSlider.Track className={sliderStyles.track}>
-        <$.VolumeSlider.Fill className={sliderStyles.fill} />
+      <$.VolumeSlider.Track $render={SliderTrack}>
+        <$.VolumeSlider.Fill $render={SliderFill} />
       </$.VolumeSlider.Track>
-      <$.VolumeSlider.Thumb className={[sliderStyles.thumb, styles.thumb]} />
+      <$.VolumeSlider.Thumb $render={SliderThumb} className={styles.thumb} />
     </$.VolumeSlider.Root>
   );
 }

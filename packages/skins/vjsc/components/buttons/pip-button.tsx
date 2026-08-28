@@ -6,12 +6,13 @@ import type { Props } from 'vjsc/components';
 import type { SkinComponentMeta } from '../../meta';
 import buttonStyles from '../../styles/buttons/button.styles';
 import styles from '../../styles/buttons/pip-button.styles';
+import { Button } from './button';
 import { ButtonTooltip } from './button-tooltip';
 
 export function PiPButton({ className, ...props }: Props<CoreProps> = {}) {
   return (
     <ButtonTooltip side="top">
-      <$.PiPButton className={[buttonStyles.root, styles.root, className]} {...props}>
+      <$.PiPButton $render={Button} className={[styles.root, className]} {...props}>
         <PipEnterIcon className={[buttonStyles.icon, styles.enterIcon]} />
         <PipExitIcon className={[buttonStyles.icon, styles.exitIcon]} />
       </$.PiPButton>
