@@ -4,7 +4,7 @@ import type { Constructor, MixinReturn } from '@videojs/utils/types';
 import type { Composition } from '../../../core/composition/create-composition';
 import { effect } from '../../../core/signals/effect';
 import { DEFAULT_KEY_SYSTEMS } from '../../../media/dom/key-systems';
-import type { DrmSystemsConfig, KeySystemModule } from '../../../media/drm';
+import { type DrmSystemsConfig, type KeySystemModule, sourceDrmSystems } from '../../../media/drm';
 import {
   SVTA_NO_SUPPORTED_AUDIO_TRACK,
   SVTA_NO_SUPPORTED_VIDEO_TRACK,
@@ -202,26 +202,17 @@ export function HlsVideoMediaMixin<Base extends Constructor<any>>(BaseClass: Bas
 
       const { config } = args?.[0] ?? {};
 
-      // Every key system this engine knows is named up front with a resolver
-      // that reads whatever source is current, so `source.drm` licenses playback
-      // without the engine — built once, here — ever being rebuilt. A system the
-      // current source says nothing about resolves to `undefined`, which prunes
-      // its renditions exactly as naming no server at all does.
+      // Every key system this engine knows gets an entry whose fields read
+      // whatever source is current, so `source.drm` licenses playback without the
+      // engine — built once, here — ever being rebuilt. A system the current
+      // source says nothing about resolves to `undefined`, which prunes its
+      // renditions exactly as naming no server at all does.
       //
-      // The resolvers close over `this` but are built before `super()` returns:
-      // safe because nothing resolves a URL during engine construction, the
-      // first read being a capability probe with no presentation set yet.
+      // `sourceDrmSystems` closes over `this` but runs before `super()` returns:
+      // safe because nothing resolves during engine construction, the first read
+      // being a capability probe with no presentation set yet.
       const keySystems: readonly KeySystemModule[] = config?.keySystems ?? DEFAULT_KEY_SYSTEMS;
-      const drm: DrmSystemsConfig = Object.fromEntries(
-        keySystems.map(({ keySystem }) => [
-          keySystem,
-          {
-            licenseUrl: () => this.#source?.drm?.[keySystem]?.licenseUrl as string | undefined,
-            serverCertificateUrl: () => this.#source?.drm?.[keySystem]?.serverCertificateUrl as string | undefined,
-            headers: () => this.#source?.drm?.[keySystem]?.headers as Record<string, string> | undefined,
-          },
-        ])
-      );
+      const drm = sourceDrmSystems(() => this.#source?.drm, keySystems);
 
       this.#config = { ...config, drm: { ...drm, ...config?.drm } };
       this.#engine = this.#createEngine();

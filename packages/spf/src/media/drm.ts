@@ -59,6 +59,24 @@ export interface DrmSystemConfig {
    * hls.js and Shaka engines, which compare `source.drm` structurally.
    */
   headers?: DrmHeaders;
+  /**
+   * Decorate this system's license request after the key system's own shaping — add an auth header, mint a per-session
+   * token, rewrite the URL. Composed _after_ the module default (which owns the wire protocol, e.g. PlayReady's
+   * envelope), so it decorates an already-correct request rather than replacing that shaping.
+   */
+  licenseRequest?: DrmRequestTransform;
+  /**
+   * Unwrap this system's license response before the CDM sees it — a CKC out of XML or JSON, a JSON-wrapped license.
+   * Composed after the module default; must return the raw bytes `session.update` expects.
+   */
+  licenseResponse?: DrmResponseTransform;
+  /** Decorate this system's app-certificate request. Composed after the module default. */
+  certificateRequest?: DrmRequestTransform;
+  /**
+   * Unwrap this system's app-certificate response, returning the raw certificate bytes. Composed after the module
+   * default.
+   */
+  certificateResponse?: DrmResponseTransform;
 }
 
 /**
@@ -265,5 +283,40 @@ export function keySystemCandidates(
     (module_) =>
       module_.keyFormats.some((keyFormat) => declared.has(keyFormat)) &&
       resolveDrmUrl(drm[module_.keySystem]?.licenseUrl) !== undefined
+  );
+}
+
+/**
+ * Build the engine-facing DRM config a Media hands its engine once: one entry per key system whose every field reads
+ * the _current_ source (via `getDrm`) at call time, so switching source re-licenses without rebuilding the engine.
+ *
+ * URL and header fields resolve to a plain value the engine re-resolves harmlessly. The four transform fields are
+ * stable functions that apply the current source's transform, or pass the value through when it names none. Transforms
+ * cannot ride {@link DrmUrl}'s resolver union: {@link resolveDrmValue} tells a resolver from a value by `typeof ===
+ * 'function'`, which a transform — itself a function — collides with. Wrapping here is what lets a source carry
+ * transforms without the engine ever holding, or structurally comparing, the source's own function objects.
+ */
+export function sourceDrmSystems(
+  getDrm: () => DrmSystemsConfig | undefined,
+  keySystems: readonly KeySystemModule[]
+): DrmSystemsConfig {
+  return Object.fromEntries(
+    keySystems.map(({ keySystem }) => {
+      const entry = () => getDrm()?.[keySystem];
+
+      return [
+        keySystem,
+        {
+          licenseUrl: () => resolveDrmUrl(entry()?.licenseUrl),
+          serverCertificateUrl: () => resolveDrmUrl(entry()?.serverCertificateUrl),
+          headers: () => resolveDrmHeaders(entry()?.headers),
+          licenseRequest: (request: DrmRequest) => entry()?.licenseRequest?.(request) ?? request,
+          licenseResponse: (response: Uint8Array<ArrayBuffer>) => entry()?.licenseResponse?.(response) ?? response,
+          certificateRequest: (request: DrmRequest) => entry()?.certificateRequest?.(request) ?? request,
+          certificateResponse: (response: Uint8Array<ArrayBuffer>) =>
+            entry()?.certificateResponse?.(response) ?? response,
+        },
+      ];
+    })
   );
 }
