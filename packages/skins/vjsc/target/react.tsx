@@ -5,6 +5,7 @@ import { type ComponentTarget, defineComponentTarget, type TemplateTargetDefinit
 import { Host } from 'vjsc/target/jsx-runtime';
 
 import { reactComponentTransform } from './react-transform.ts';
+import { createRenderTargetTransform } from './render-target.ts';
 
 type CoreSchema = typeof coreSchema;
 
@@ -14,6 +15,13 @@ export const reactComponentTarget: ComponentTarget<CoreSchema> = defineComponent
   element,
   imported,
 }) => {
+  const Button = element('button', {
+    props: {
+      from: 'react',
+      name: 'ComponentProps',
+      intrinsic: 'button',
+    },
+  });
   const Div = element('div', {
     props: {
       from: 'react',
@@ -24,6 +32,7 @@ export const reactComponentTarget: ComponentTarget<CoreSchema> = defineComponent
   const Span = element('span');
   const Sup = element('sup');
   const I18nText = imported({ from: '@videojs/react', name: 'Text' });
+  const PlaybackRateButton = imported({ from: '@videojs/react', name: 'PlaybackRateButton' });
   const renderProps = code.param('props');
   const item = code.param<{ badge?: unknown; label: unknown; tier?: unknown }>('item');
   const optionTemplate: TemplateTargetDefinition = {
@@ -119,7 +128,20 @@ export const reactComponentTarget: ComponentTarget<CoreSchema> = defineComponent
       VjscNode: { from: 'react', name: 'ReactNode' },
       VjscElement: { from: 'react', name: 'ReactElement' },
     },
-    transforms: [reactComponentTransform],
+    transforms: [
+      createRenderTargetTransform({
+        target: () => reactComponentTarget,
+        targets: {
+          Button: { element: Button },
+          PlaybackRateButton: { element: PlaybackRateButton, kind: 'component' },
+          SliderBuffer: { element: Div },
+          SliderFill: { element: Div },
+          SliderThumb: { element: Div },
+          SliderTrack: { element: Div },
+        },
+      }),
+      reactComponentTransform,
+    ],
     jsx: { importSource: 'react', attributes: 'react' },
   };
 });

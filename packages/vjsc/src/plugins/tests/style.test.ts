@@ -38,6 +38,16 @@ describe('stylePlugin', () => {
     expect(source).toContain('className={["grid", "p-0", active && "size-4 shrink-0", \'hook\']}');
   });
 
+  it('rewrites static style references outside JSX', async () => {
+    const { source } = await transform(`
+      import styles from './fixtures/button.styles';
+      export const buttonClass = styles.button;
+    `);
+
+    expect(source).not.toContain('button.styles');
+    expect(source).toContain('buttonClass = "grid p-0"');
+  });
+
   it('combines normalized variants in selection order', async () => {
     const input = `
       import styles from './fixtures/button.styles';
@@ -77,14 +87,14 @@ describe('stylePlugin', () => {
     expect(await loadPlugin(styles, id)).toContain('pointer-events: none');
   });
 
-  it('rejects style references outside className', async () => {
-    const source = `import styles from './fixtures/button.styles'; export const value = styles.button;`;
+  it('rejects non-static style binding usage', async () => {
+    const source = `import styles from './fixtures/button.styles'; export const value = styles;`;
 
     await expect(transform(source)).rejects.toMatchObject({
       errors: [
         {
-          message: expect.stringContaining('must use static className references'),
-          pos: source.indexOf('styles.button'),
+          message: expect.stringContaining('must use static references'),
+          pos: source.lastIndexOf('styles'),
         },
       ],
     });

@@ -41,9 +41,13 @@ export type PropsWithChildren<CoreProps extends object = EmptyProps> = Props<Cor
 /** Props accepted by another VJSC component. Targets replace this with their public props export. */
 export type PropsOf<Component extends (props: never) => unknown> = NonNullable<Parameters<Component>[0]>;
 
-type ComponentAttributes<Props extends object> = Omit<PropsWithChildren<Props>, 'className'> & {
-  className?: ClassNameValue;
-};
+/** Compile-time props whose meaning is owned by the selected framework target. */
+export type CompilerDirectives = { [Name in `$${string}`]?: unknown };
+
+type ComponentAttributes<Props extends object> = Omit<PropsWithChildren<Props>, 'className'> &
+  CompilerDirectives & {
+    className?: ClassNameValue;
+  };
 
 export interface SlotProps {
   name?: string | undefined;

@@ -6,6 +6,7 @@ import type { SkinComponentMeta } from '../../meta';
 import styles from '../../styles/sliders/audio-time-slider.styles';
 import sliderStyles from '../../styles/sliders/slider.styles';
 import surfaceStyles from '../../styles/surfaces/surface.styles';
+import { SliderBuffer, SliderFill, SliderThumb, SliderTrack } from './slider';
 
 interface AudioTimeSliderProps extends CoreProps {
   previewOverflow?: SliderPreviewOverflow | undefined;
@@ -18,11 +19,11 @@ export function AudioTimeSlider({
 }: Props<AudioTimeSliderProps> = {}) {
   return (
     <$.TimeSlider.Root className={[sliderStyles.root, styles.root, className]} {...props}>
-      <$.TimeSlider.Track className={sliderStyles.track}>
-        <$.TimeSlider.Buffer className={sliderStyles.buffer} />
-        <$.TimeSlider.Fill className={sliderStyles.fill} />
+      <$.TimeSlider.Track $render={SliderTrack}>
+        <$.TimeSlider.Buffer $render={SliderBuffer} />
+        <$.TimeSlider.Fill $render={SliderFill} />
       </$.TimeSlider.Track>
-      <$.TimeSlider.Thumb className={sliderStyles.thumb} />
+      <$.TimeSlider.Thumb $render={SliderThumb} />
       <$.TimeSlider.Preview className={sliderStyles.preview} overflow={previewOverflow}>
         <Box className={[sliderStyles.previewContent, surfaceStyles.tooltip, styles.previewContent]}>
           <$.TimeSlider.Value className={styles.value} type="pointer" />

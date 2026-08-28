@@ -6,12 +6,13 @@ import { type Props, Text } from 'vjsc/components';
 import type { SkinComponentMeta } from '../../meta';
 import buttonStyles from '../../styles/buttons/button.styles';
 import styles from '../../styles/buttons/seek-button.styles';
+import { Button } from './button';
 import { ButtonTooltip } from './button-tooltip';
 
 export function SeekButton({ className, seconds = 10, ...props }: Props<CoreProps> = {}) {
   return (
     <ButtonTooltip side="top">
-      <$.SeekButton className={[buttonStyles.root, styles.root, className]} seconds={seconds} {...props}>
+      <$.SeekButton $render={Button} className={[styles.root, className]} seconds={seconds} {...props}>
         <SeekIcon className={[buttonStyles.icon, seconds < 0 && styles.backwardIcon]} />
         <Text className={[styles.label, seconds < 0 ? styles.backwardLabel : styles.forwardLabel]}>
           {Math.abs(seconds)}

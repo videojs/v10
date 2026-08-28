@@ -1,15 +1,14 @@
 import type { MenuProps } from '@videojs/core';
 import { speedText } from '@videojs/core/i18n/text/menu';
 import * as $ from '@videojs/core/vjsc';
-import { SpeedIcon } from '@videojs/icons/vjsc';
 import { type Props, Template, Text } from 'vjsc/components';
 
 import type { SkinComponentMeta } from '../../meta';
-import buttonStyles from '../../styles/buttons/button.styles';
 import styles from '../../styles/menus/menu.styles';
 import popupStyles from '../../styles/popups/popup.styles';
 import surfaceStyles from '../../styles/surfaces/surface.styles';
 import { ButtonTooltip } from '../buttons/button-tooltip';
+import { PlaybackRateButton } from '../buttons/playback-rate-button';
 import { PlaybackRateRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 
@@ -21,12 +20,7 @@ export function AudioSettingsMenu({ className, ...props }: AudioSettingsMenuProp
   return (
     <$.Menu.Root side="top" align="center" boundary="viewport" {...props}>
       <ButtonTooltip label={<Text token={speedText.key}>{speedText.text}</Text>} side="top">
-        <$.Menu.Trigger className={buttonStyles.root}>
-          <SpeedIcon className={buttonStyles.icon} />
-          <Text className={styles.triggerLabel} token={speedText.key}>
-            {speedText.text}
-          </Text>
-        </$.Menu.Trigger>
+        <$.Menu.Trigger $render={PlaybackRateButton} />
       </ButtonTooltip>
       <$.Menu.Popup className={[popupStyles.root, popupStyles.safeArea, surfaceStyles.root, styles.popup, className]}>
         <$.Menu.Content className={styles.content}>

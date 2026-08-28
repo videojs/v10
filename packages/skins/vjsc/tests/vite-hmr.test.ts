@@ -122,14 +122,14 @@ describe('Skins Vite HMR', () => {
 
     await fixture.update(
       fixture.component,
-      `import styles from './fixture.styles';\nconst unresolved = styles.root;\nexport const Fixture = <div />;\n`
+      `import styles from './fixture.styles';\nconst unresolved = styles;\nexport const Fixture = <div />;\n`
     );
 
     await expect(server.transformRequest(cssUrl)).rejects.toMatchObject({
       plugin: 'vjsc:styles',
       id: expect.stringContaining('fixture.tsx'),
       loc: expect.objectContaining({ line: 2 }),
-      frame: expect.stringContaining('const unresolved = styles.root;'),
+      frame: expect.stringContaining('const unresolved = styles;'),
     });
   }, 30_000);
 });

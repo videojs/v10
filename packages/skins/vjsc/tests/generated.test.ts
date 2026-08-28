@@ -104,6 +104,8 @@ describe('generated VJSC source', () => {
       output,
       'html/default-audio/css/components/menus/audio-settings-menu.tsx'
     );
+    const reactSubmenu = generatedSection(output, 'react/default-audio/css/components/menus/submenu.tsx');
+    const htmlSubmenu = generatedSection(output, 'html/default-audio/css/components/menus/submenu.tsx');
     const reactDefaultAudio = generatedSection(output, 'react/default-audio/css/skins/default-audio/skin.tsx');
     const htmlMinimalAudio = generatedSection(output, 'html/minimal-audio/css/skins/minimal-audio/skin.tsx');
     const reactCaptionsMenu = generatedSection(
@@ -132,22 +134,24 @@ describe('generated VJSC source', () => {
     expect(htmlPlayButton).toContain('playIcon');
     expect(htmlPlayButton).toContain('restartIcon');
     expect(htmlPlayButton).not.toContain('seekIcon');
-    expect(reactAudioSettingsMenu).toContain('<Menu.Trigger className=');
+    expect(reactAudioSettingsMenu).toContain('<Menu.Trigger render={<PlaybackRateButton />}');
     expect(reactAudioSettingsMenu).not.toContain('keepMounted');
     expect(reactLiveButton).toContain('LiveButton as LiveButtonPrimitive');
-    expect(reactLiveButton).toContain('className={state => cn("grid min-h-0');
-    expect(reactLiveButton).not.toContain('render={<Button');
+    expect(reactLiveButton).toContain('render={<Button />}');
     expect(reactLiveButton).toContain('data-live-edge:before:bg-[oklch(0.65_0.22_27)]');
     expect(htmlLiveButton).toContain('import "@videojs/html/ui/live-button";');
     expect(htmlLiveButton).toContain('<media-live-button');
     expect(reactAudioSettingsMenu).not.toContain('usePlaybackRateOptions');
-    expect(htmlAudioSettingsMenu).toContain('<button commandfor=');
-    expect(htmlAudioSettingsMenu).not.toContain('<media-playback-rate-button');
+    expect(htmlAudioSettingsMenu).toContain('<media-playback-rate-button commandfor=');
+    expect(htmlAudioSettingsMenu).not.toContain('<button commandfor=');
+    expect(reactSubmenu).toContain('<Menu.Trigger className=');
+    expect(reactSubmenu).not.toContain('<Menu.Trigger render=');
+    expect(htmlSubmenu).toContain('<media-menu-item commandfor=');
     expect(reactDefaultAudio).toContain('export interface DefaultAudioSkinProps');
     expect(reactDefaultAudio).toContain('media-skin--default media-skin--audio');
     expect(htmlMinimalAudio).toContain('export interface MinimalAudioSkinProps');
     expect(htmlMinimalAudio).toContain('media-skin--minimal media-skin--audio');
-    expect(reactCaptionsMenu).toContain('<Menu.Trigger className=');
+    expect(reactCaptionsMenu).toContain('<Menu.Trigger render={<Button />}');
     expect(reactCaptionsMenu).not.toContain('keepMounted');
     expect(reactCaptionsMenu).not.toContain('useCaptionsOptions');
     expect(htmlCaptionsMenu).toContain('<button commandfor="__vjsc-id-<module>');

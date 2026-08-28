@@ -9,6 +9,7 @@ import captionsButtonStyles from '../../styles/buttons/captions-button.styles';
 import styles from '../../styles/menus/menu.styles';
 import popupStyles from '../../styles/popups/popup.styles';
 import surfaceStyles from '../../styles/surfaces/surface.styles';
+import { Button } from '../buttons/button';
 import { ButtonTooltip } from '../buttons/button-tooltip';
 import { CaptionsRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
@@ -17,7 +18,7 @@ export function CaptionsMenu({ className, ...props }: Props<MenuProps> = {}) {
   return (
     <$.Menu.Root side="top" align="center" boundary="viewport" {...props}>
       <ButtonTooltip side="top">
-        <$.Menu.Trigger className={[buttonStyles.root, captionsButtonStyles.root]}>
+        <$.Menu.Trigger $render={Button} className={captionsButtonStyles.root}>
           <CaptionsOffIcon className={[buttonStyles.icon, captionsButtonStyles.offIcon]} />
           <CaptionsOnIcon className={[buttonStyles.icon, captionsButtonStyles.onIcon]} />
         </$.Menu.Trigger>
