@@ -1,5 +1,13 @@
 import { styles } from 'vjsc/styles';
 
+const sliderPreviewContent = [
+  'absolute max-w-(--media-slider-preview-max-width) -translate-x-1/2 translate-y-2 scale-80 opacity-0',
+  'origin-bottom blur-sm',
+  'motion-safe:transition-[filter,opacity,scale] motion-safe:duration-150 motion-safe:ease-out',
+  'group-data-pointing/preview:scale-100 group-data-pointing/preview:opacity-100 group-data-pointing/preview:filter-none',
+  'group-has-focus-visible/slider:scale-100 group-has-focus-visible/slider:opacity-100 group-has-focus-visible/slider:filter-none',
+] as const;
+
 export default styles({
   file: 'sliders.css',
   layer: 'videojs.components',
@@ -65,7 +73,7 @@ export default styles({
     },
     previewContent: {
       className: 'media-time-slider-preview-content',
-      utilities: 'flex tabular-nums',
+      utilities: [...sliderPreviewContent, 'flex tabular-nums'],
       variants: {
         default: 'left-1/2 bottom-[calc(100%+--spacing(12.5))] flex-col items-center',
         minimal:

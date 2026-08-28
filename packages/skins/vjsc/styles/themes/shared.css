@@ -1,0 +1,16 @@
+@layer videojs.theme {
+  :is(.media-theme-default, .media-theme-minimal) {
+    --media-controls-transition-duration: 100ms;
+    --media-scale: 1;
+    --media-scrollbar-thumb-color: oklch(from currentColor l c h / 0.3);
+    --media-spacing: calc(var(--media-scale-unit, 16px) * var(--media-scale) / 4);
+
+    scrollbar-color: var(--media-scrollbar-thumb-color) transparent;
+    scrollbar-width: thin;
+  }
+
+  :is(.media-theme-default, .media-theme-minimal)::-webkit-scrollbar-thumb {
+    background: var(--media-scrollbar-thumb-color);
+    border-radius: 9999px;
+  }
+}

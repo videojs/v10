@@ -114,7 +114,8 @@ describe('Skins Shadcn registry', () => {
       'components/videojs/styles/themes/audio.css',
       'components/videojs/styles/themes/default.css',
       'components/videojs/styles/themes/minimal.css',
-      'components/videojs/styles/themes/video.css',
+      'components/videojs/styles/themes/preferences.css',
+      'components/videojs/styles/themes/shared.css',
     ]);
     expect(utils).toMatchObject({
       type: 'registry:lib',

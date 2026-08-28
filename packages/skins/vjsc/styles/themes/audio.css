@@ -1,4 +1,4 @@
-@layer videojs.theme.variant {
+@layer videojs.theme {
   :is(
     .media-skin--default.media-skin--audio,
     .media-skin--minimal.media-skin--audio,

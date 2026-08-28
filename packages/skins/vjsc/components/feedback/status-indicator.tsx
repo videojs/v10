@@ -15,7 +15,6 @@ import { Box, type Props } from 'vjsc/components';
 import type { SkinComponentMeta } from '../../meta';
 import playbackStyles from '../../styles/feedback/playback-status-indicator.styles';
 import styles from '../../styles/feedback/status-indicator.styles';
-import surfaceStyles from '../../styles/surfaces/surface.styles';
 
 const TOP_STATUS_ACTIONS = ['toggleSubtitles', 'toggleFullscreen', 'togglePictureInPicture'] as const;
 
@@ -23,11 +22,7 @@ const PLAYBACK_STATUS_ACTIONS = ['togglePaused'] as const;
 
 export function StatusIndicator({ className, ...props }: Props<Omit<CoreProps, 'actions'>> = {}) {
   return (
-    <$.StatusIndicator.Root
-      actions={TOP_STATUS_ACTIONS}
-      className={[surfaceStyles.feedback, styles.root, className]}
-      {...props}
-    >
+    <$.StatusIndicator.Root actions={TOP_STATUS_ACTIONS} className={[styles.root, className]} {...props}>
       <Box className={styles.content}>
         <CaptionsOnIcon className={styles.captionsOnIcon} />
         <CaptionsOffIcon className={styles.captionsOffIcon} />

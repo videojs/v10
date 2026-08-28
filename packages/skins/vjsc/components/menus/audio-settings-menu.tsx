@@ -5,8 +5,6 @@ import { type Props, Template, Text } from 'vjsc/components';
 
 import type { SkinComponentMeta } from '../../meta';
 import styles from '../../styles/menus/menu.styles';
-import popupStyles from '../../styles/popups/popup.styles';
-import surfaceStyles from '../../styles/surfaces/surface.styles';
 import { ButtonTooltip } from '../buttons/button-tooltip';
 import { PlaybackRateButton } from '../buttons/playback-rate-button';
 import { RadioItem } from './radio-item';
@@ -22,7 +20,7 @@ export function AudioSettingsMenu({ className, ...props }: AudioSettingsMenuProp
         <ButtonTooltip label={<Text token={speedText.key}>{speedText.text}</Text>} side="top">
           <$.Menu.Trigger $render={PlaybackRateButton} />
         </ButtonTooltip>
-        <$.Menu.Popup className={[popupStyles.root, popupStyles.safeArea, surfaceStyles.root, styles.popup, className]}>
+        <$.Menu.Popup className={[styles.popup, className]}>
           <$.Menu.Content className={styles.content}>
             <$.PlaybackRateRadioGroup.Options className={styles.radioGroup}>
               <Template name="playback-rate-option">
