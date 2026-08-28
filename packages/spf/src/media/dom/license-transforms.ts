@@ -37,7 +37,7 @@ function base64ToBytes(base64: string): Uint8Array<ArrayBuffer> {
  * source.drm['com.apple.fps'] = { licenseUrl, serverCertificateUrl, licenseResponse: detectFairPlayCkc };
  * ```
  */
-export const detectFairPlayCkc: DrmResponseTransform = (response) => {
+export const detectFairPlayCkc = ((response) => {
   const text = textOrUndefined(response)?.trim();
   if (text === undefined) return response;
 
@@ -56,7 +56,7 @@ export const detectFairPlayCkc: DrmResponseTransform = (response) => {
   }
 
   return typeof payload === 'string' ? base64ToBytes(payload) : response;
-};
+}) satisfies DrmResponseTransform;
 
 /**
  * Unwrap a JSON-wrapped license into the raw bytes `session.update` expects — the shape castLabs DRMtoday returns for
@@ -67,7 +67,7 @@ export const detectFairPlayCkc: DrmResponseTransform = (response) => {
  * source.drm['com.widevine.alpha'] = { licenseUrl, headers, licenseResponse: unwrapJsonLicense };
  * ```
  */
-export const unwrapJsonLicense: DrmResponseTransform = (response) => {
+export const unwrapJsonLicense = ((response) => {
   const text = textOrUndefined(response);
   if (text === undefined) return response;
 
@@ -80,4 +80,4 @@ export const unwrapJsonLicense: DrmResponseTransform = (response) => {
   }
 
   return typeof license === 'string' ? base64ToBytes(license) : response;
-};
+}) satisfies DrmResponseTransform;
