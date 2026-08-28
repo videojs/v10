@@ -1274,7 +1274,10 @@ export function DefaultVideoSkin({ children, className, poster, ...props }: Defa
   const isPosterString = typeof poster === 'string';
 
   return (
-    <Container className={cn('media-skin media-skin-video media-theme-default', className)} {...props}>
+    <Container
+      className={cn('media-skin media-skin--default media-skin--video media-theme-default', className)}
+      {...props}
+    >
       {children}
       <Poster src={isPosterString ? poster : undefined}>{isPosterString ? undefined : poster}</Poster>
       <BufferingIndicator />
@@ -1647,8 +1650,8 @@ export interface ErrorDialogProps extends Omit<ErrorDialogPrimitive.Popup.PopupP
 export function ErrorDialog({ className, ...props }: ErrorDialogProps = {}) {
   return (
     <ErrorDialogPrimitive.Root>
-      <ErrorDialogPrimitive.Backdrop className={"absolute inset-0 z-40 bg-black/20 backdrop-blur-lg opacity-100 backdrop-saturate-150 not-data-open:hidden transition-opacity delay-100 ease-out motion-reduce:duration-50 data-starting-style:opacity-0 data-ending-style:opacity-0 data-ending-style:delay-0 motion-reduce:delay-0 duration-350"} />
-      <ErrorDialogPrimitive.Popup className={state => cn("text-white backdrop-blur-lg backdrop-saturate-150", "after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit]", "after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.1),inset_0_0_0_1px_rgb(255_255_255/0.05)]", "[@media(prefers-reduced-transparency:reduce)]:bg-black [@media(prefers-reduced-transparency:reduce)]:ring-1 [@media(prefers-reduced-transparency:reduce)]:ring-transparent", "[@media(prefers-reduced-transparency:reduce)]:backdrop-filter-none", "[@media(prefers-reduced-transparency:reduce)]:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "contrast-more:bg-black contrast-more:ring-1 contrast-more:ring-transparent contrast-more:backdrop-filter-none", "contrast-more:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "forced-colors:bg-[Canvas] forced-colors:ring-1 forced-colors:ring-[CanvasText]", "forced-colors:after:shadow-[inset_0_1px_0_0_CanvasText,inset_0_0_0_1px_CanvasText]", "shadow-sm shadow-black/15 ring-1 ring-black/10", "[@media(prefers-reduced-transparency:reduce)]:shadow-sm [@media(prefers-reduced-transparency:reduce)]:shadow-black/15", "contrast-more:shadow-sm contrast-more:shadow-black/15", "forced-colors:shadow-sm forced-colors:shadow-black/15", "bg-white/10", "absolute top-1/2 left-1/2 z-50 flex max-h-[calc(100%-0.5rem)] -translate-x-1/2 -translate-y-1/2 flex-col gap-3 outline-none not-data-open:hidden", "transition-[opacity,scale] delay-100 ease-out motion-reduce:duration-50", "data-starting-style:scale-95 data-starting-style:opacity-0", "data-ending-style:scale-95 data-ending-style:opacity-0 data-ending-style:delay-0", "motion-reduce:delay-0", "w-[calc(100%-1.5rem)] max-w-72 rounded-[1.75rem] p-3 text-white", "text-shadow-[0_1px_0_rgb(0_0_0/0.25)] duration-350", resolveClassName(className, state))} {...props}>
+      <ErrorDialogPrimitive.Backdrop className={"absolute inset-0 z-40 bg-black/20 backdrop-blur-lg opacity-100 backdrop-saturate-150 not-data-open:hidden transition-opacity delay-100 ease-out motion-reduce:duration-50 data-starting-style:opacity-0 data-ending-style:opacity-0 data-ending-style:delay-0 motion-reduce:delay-0 duration-350 data-ending-style:duration-250 motion-reduce:data-ending-style:duration-50"} />
+      <ErrorDialogPrimitive.Popup className={state => cn("text-white backdrop-blur-lg backdrop-saturate-150", "after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit]", "after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.1),inset_0_0_0_1px_rgb(255_255_255/0.05)]", "[@media(prefers-reduced-transparency:reduce)]:bg-black [@media(prefers-reduced-transparency:reduce)]:ring-1 [@media(prefers-reduced-transparency:reduce)]:ring-transparent", "[@media(prefers-reduced-transparency:reduce)]:backdrop-filter-none", "[@media(prefers-reduced-transparency:reduce)]:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "contrast-more:bg-black contrast-more:ring-1 contrast-more:ring-transparent contrast-more:backdrop-filter-none", "contrast-more:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "forced-colors:bg-[Canvas] forced-colors:ring-1 forced-colors:ring-[CanvasText]", "forced-colors:after:shadow-[inset_0_1px_0_0_CanvasText,inset_0_0_0_1px_CanvasText]", "shadow-sm shadow-black/15 ring-1 ring-black/10", "[@media(prefers-reduced-transparency:reduce)]:shadow-sm [@media(prefers-reduced-transparency:reduce)]:shadow-black/15", "contrast-more:shadow-sm contrast-more:shadow-black/15", "forced-colors:shadow-sm forced-colors:shadow-black/15", "bg-white/10", "absolute top-1/2 left-1/2 z-50 flex max-h-[calc(100%-0.5rem)] -translate-x-1/2 -translate-y-1/2 flex-col gap-3 outline-none not-data-open:hidden", "transition-[opacity,scale] delay-100 ease-out motion-reduce:duration-50", "data-starting-style:scale-95 data-starting-style:opacity-0", "data-ending-style:scale-95 data-ending-style:opacity-0 data-ending-style:delay-0", "motion-reduce:delay-0", "w-[calc(100%-1.5rem)] max-w-72 rounded-[1.75rem] p-3 text-white", "text-shadow-[0_1px_0_rgb(0_0_0/0.25)] duration-350 data-ending-style:duration-250 motion-reduce:data-ending-style:duration-50", resolveClassName(className, state))} {...props}>
         <div className={"flex min-h-0 flex-col gap-2 overflow-y-auto px-2 pt-2 pb-1.5"}>
           <ErrorDialogPrimitive.Title className={"m-0 text-media-lg font-semibold leading-tight"} />
           <ErrorDialogPrimitive.Description className={"m-0 opacity-70 wrap-anywhere"} />
@@ -2461,7 +2464,10 @@ export function DefaultVideoSkin({ children, className, poster, ...props }: Defa
   const isPosterString = typeof poster === 'string';
 
   return (
-    <Container className={cn('media-skin media-skin-video media-theme-default', className)} {...props}>
+    <Container
+      className={cn('media-skin media-skin--default media-skin--video media-theme-default', className)}
+      {...props}
+    >
       {children}
       <Poster src={isPosterString ? poster : undefined}>{isPosterString ? undefined : poster}</Poster>
       <BufferingIndicator />
@@ -3750,7 +3756,10 @@ export function MinimalVideoSkin({ children, className, poster, ...props }: Mini
   const isPosterString = typeof poster === 'string';
 
   return (
-    <Container className={cn('media-skin media-skin-video-minimal media-theme-minimal', className)} {...props}>
+    <Container
+      className={cn('media-skin media-skin--minimal media-skin--video media-theme-minimal', className)}
+      {...props}
+    >
       {children}
       <Poster src={isPosterString ? poster : undefined}>{isPosterString ? undefined : poster}</Poster>
       <BufferingIndicator />
@@ -4123,8 +4132,8 @@ export interface ErrorDialogProps extends Omit<ErrorDialogPrimitive.Popup.PopupP
 export function ErrorDialog({ className, ...props }: ErrorDialogProps = {}) {
   return (
     <ErrorDialogPrimitive.Root>
-      <ErrorDialogPrimitive.Backdrop className={"absolute inset-0 z-40 bg-black/20 backdrop-blur-lg opacity-100 not-data-open:hidden transition-opacity delay-100 ease-out motion-reduce:duration-50 data-starting-style:opacity-0 data-ending-style:opacity-0 data-ending-style:delay-0 motion-reduce:delay-0 backdrop-saturate-120 duration-150"} />
-      <ErrorDialogPrimitive.Popup className={state => cn("", "absolute top-1/2 left-1/2 z-50 flex max-h-[calc(100%-0.5rem)] -translate-x-1/2 -translate-y-1/2 flex-col gap-3 outline-none not-data-open:hidden", "transition-[opacity,scale] delay-100 ease-out motion-reduce:duration-50", "data-starting-style:scale-95 data-starting-style:opacity-0", "data-ending-style:scale-95 data-ending-style:opacity-0 data-ending-style:delay-0", "motion-reduce:delay-0", "w-full max-w-64 p-4 text-white", "text-shadow-[0_1px_0_rgb(0_0_0/0.5)] duration-150", resolveClassName(className, state))} {...props}>
+      <ErrorDialogPrimitive.Backdrop className={"absolute inset-0 z-40 bg-black/20 backdrop-blur-lg opacity-100 not-data-open:hidden transition-opacity delay-100 ease-out motion-reduce:duration-50 data-starting-style:opacity-0 data-ending-style:opacity-0 data-ending-style:delay-0 motion-reduce:delay-0 backdrop-saturate-120 duration-150 data-ending-style:duration-50 motion-reduce:data-ending-style:duration-50"} />
+      <ErrorDialogPrimitive.Popup className={state => cn("", "absolute top-1/2 left-1/2 z-50 flex max-h-[calc(100%-0.5rem)] -translate-x-1/2 -translate-y-1/2 flex-col gap-3 outline-none not-data-open:hidden", "transition-[opacity,scale] delay-100 ease-out motion-reduce:duration-50", "data-starting-style:scale-95 data-starting-style:opacity-0", "data-ending-style:scale-95 data-ending-style:opacity-0 data-ending-style:delay-0", "motion-reduce:delay-0", "w-full max-w-64 p-4 text-white", "text-shadow-[0_1px_0_rgb(0_0_0/0.5)] duration-150 data-ending-style:duration-50 motion-reduce:data-ending-style:duration-50", resolveClassName(className, state))} {...props}>
         <div className={"flex min-h-0 flex-col gap-2 overflow-y-auto py-1.5"}>
           <ErrorDialogPrimitive.Title className={"m-0 text-media-lg font-semibold leading-tight"} />
           <ErrorDialogPrimitive.Description className={"m-0 opacity-70 wrap-anywhere"} />
@@ -4940,7 +4949,10 @@ export function MinimalVideoSkin({ children, className, poster, ...props }: Mini
   const isPosterString = typeof poster === 'string';
 
   return (
-    <Container className={cn('media-skin media-skin-video-minimal media-theme-minimal', className)} {...props}>
+    <Container
+      className={cn('media-skin media-skin--minimal media-skin--video media-theme-minimal', className)}
+      {...props}
+    >
       {children}
       <Poster src={isPosterString ? poster : undefined}>{isPosterString ? undefined : poster}</Poster>
       <BufferingIndicator />
@@ -6116,7 +6128,10 @@ export function DefaultVideoSkin({ children, className, poster, ...props }: Defa
   const isPosterString = typeof poster === 'string';
 
   return (
-    <Container className={['media-skin media-skin-video media-theme-default', className]} {...props}>
+    <Container
+      className={['media-skin media-skin--default media-skin--video media-theme-default', className]}
+      {...props}
+    >
       <slot>{children}</slot>
       <Poster src={isPosterString ? poster : undefined}>{isPosterString ? undefined : poster}</Poster>
       <BufferingIndicator />
@@ -6446,8 +6461,8 @@ import "@videojs/html/ui/error-dialog";
 export function ErrorDialog({ className, ...props }: Props = {}) {
   return (
     <media-error-dialog className={""}>
-      <media-dialog-backdrop className={"absolute inset-0 z-40 bg-black/20 backdrop-blur-lg opacity-100 backdrop-saturate-150 not-data-open:hidden transition-opacity delay-100 ease-out motion-reduce:duration-50 data-starting-style:opacity-0 data-ending-style:opacity-0 data-ending-style:delay-0 motion-reduce:delay-0 duration-350"} />
-      <media-dialog-popup className={["text-white backdrop-blur-lg backdrop-saturate-150", "after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit]", "after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.1),inset_0_0_0_1px_rgb(255_255_255/0.05)]", "[@media(prefers-reduced-transparency:reduce)]:bg-black [@media(prefers-reduced-transparency:reduce)]:ring-1 [@media(prefers-reduced-transparency:reduce)]:ring-transparent", "[@media(prefers-reduced-transparency:reduce)]:backdrop-filter-none", "[@media(prefers-reduced-transparency:reduce)]:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "contrast-more:bg-black contrast-more:ring-1 contrast-more:ring-transparent contrast-more:backdrop-filter-none", "contrast-more:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "forced-colors:bg-[Canvas] forced-colors:ring-1 forced-colors:ring-[CanvasText]", "forced-colors:after:shadow-[inset_0_1px_0_0_CanvasText,inset_0_0_0_1px_CanvasText]", "shadow-sm shadow-black/15 ring-1 ring-black/10", "[@media(prefers-reduced-transparency:reduce)]:shadow-sm [@media(prefers-reduced-transparency:reduce)]:shadow-black/15", "contrast-more:shadow-sm contrast-more:shadow-black/15", "forced-colors:shadow-sm forced-colors:shadow-black/15", "bg-white/10", "absolute top-1/2 left-1/2 z-50 flex max-h-[calc(100%-0.5rem)] -translate-x-1/2 -translate-y-1/2 flex-col gap-3 outline-none not-data-open:hidden", "transition-[opacity,scale] delay-100 ease-out motion-reduce:duration-50", "data-starting-style:scale-95 data-starting-style:opacity-0", "data-ending-style:scale-95 data-ending-style:opacity-0 data-ending-style:delay-0", "motion-reduce:delay-0", "w-[calc(100%-1.5rem)] max-w-72 rounded-[1.75rem] p-3 text-white", "text-shadow-[0_1px_0_rgb(0_0_0/0.25)] duration-350", className]} {...props}>
+      <media-dialog-backdrop className={"absolute inset-0 z-40 bg-black/20 backdrop-blur-lg opacity-100 backdrop-saturate-150 not-data-open:hidden transition-opacity delay-100 ease-out motion-reduce:duration-50 data-starting-style:opacity-0 data-ending-style:opacity-0 data-ending-style:delay-0 motion-reduce:delay-0 duration-350 data-ending-style:duration-250 motion-reduce:data-ending-style:duration-50"} />
+      <media-dialog-popup className={["text-white backdrop-blur-lg backdrop-saturate-150", "after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit]", "after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.1),inset_0_0_0_1px_rgb(255_255_255/0.05)]", "[@media(prefers-reduced-transparency:reduce)]:bg-black [@media(prefers-reduced-transparency:reduce)]:ring-1 [@media(prefers-reduced-transparency:reduce)]:ring-transparent", "[@media(prefers-reduced-transparency:reduce)]:backdrop-filter-none", "[@media(prefers-reduced-transparency:reduce)]:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "contrast-more:bg-black contrast-more:ring-1 contrast-more:ring-transparent contrast-more:backdrop-filter-none", "contrast-more:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "forced-colors:bg-[Canvas] forced-colors:ring-1 forced-colors:ring-[CanvasText]", "forced-colors:after:shadow-[inset_0_1px_0_0_CanvasText,inset_0_0_0_1px_CanvasText]", "shadow-sm shadow-black/15 ring-1 ring-black/10", "[@media(prefers-reduced-transparency:reduce)]:shadow-sm [@media(prefers-reduced-transparency:reduce)]:shadow-black/15", "contrast-more:shadow-sm contrast-more:shadow-black/15", "forced-colors:shadow-sm forced-colors:shadow-black/15", "bg-white/10", "absolute top-1/2 left-1/2 z-50 flex max-h-[calc(100%-0.5rem)] -translate-x-1/2 -translate-y-1/2 flex-col gap-3 outline-none not-data-open:hidden", "transition-[opacity,scale] delay-100 ease-out motion-reduce:duration-50", "data-starting-style:scale-95 data-starting-style:opacity-0", "data-ending-style:scale-95 data-ending-style:opacity-0 data-ending-style:delay-0", "motion-reduce:delay-0", "w-[calc(100%-1.5rem)] max-w-72 rounded-[1.75rem] p-3 text-white", "text-shadow-[0_1px_0_rgb(0_0_0/0.25)] duration-350 data-ending-style:duration-250 motion-reduce:data-ending-style:duration-50", className]} {...props}>
         <div className={"flex min-h-0 flex-col gap-2 overflow-y-auto px-2 pt-2 pb-1.5"}>
           <media-dialog-title className={"m-0 text-media-lg font-semibold leading-tight"} />
           <media-dialog-description className={"m-0 opacity-70 wrap-anywhere"} />
@@ -7188,7 +7203,10 @@ export function DefaultVideoSkin({ children, className, poster, ...props }: Defa
   const isPosterString = typeof poster === 'string';
 
   return (
-    <Container className={['media-skin media-skin-video media-theme-default', className]} {...props}>
+    <Container
+      className={['media-skin media-skin--default media-skin--video media-theme-default', className]}
+      {...props}
+    >
       <slot>{children}</slot>
       <Poster src={isPosterString ? poster : undefined}>{isPosterString ? undefined : poster}</Poster>
       <BufferingIndicator />
@@ -8364,7 +8382,10 @@ export function MinimalVideoSkin({ children, className, poster, ...props }: Mini
   const isPosterString = typeof poster === 'string';
 
   return (
-    <Container className={['media-skin media-skin-video-minimal media-theme-minimal', className]} {...props}>
+    <Container
+      className={['media-skin media-skin--minimal media-skin--video media-theme-minimal', className]}
+      {...props}
+    >
       <slot>{children}</slot>
       <Poster src={isPosterString ? poster : undefined}>{isPosterString ? undefined : poster}</Poster>
       <BufferingIndicator />
@@ -8694,8 +8715,8 @@ import "@videojs/html/ui/error-dialog";
 export function ErrorDialog({ className, ...props }: Props = {}) {
   return (
     <media-error-dialog className={""}>
-      <media-dialog-backdrop className={"absolute inset-0 z-40 bg-black/20 backdrop-blur-lg opacity-100 not-data-open:hidden transition-opacity delay-100 ease-out motion-reduce:duration-50 data-starting-style:opacity-0 data-ending-style:opacity-0 data-ending-style:delay-0 motion-reduce:delay-0 backdrop-saturate-120 duration-150"} />
-      <media-dialog-popup className={["", "absolute top-1/2 left-1/2 z-50 flex max-h-[calc(100%-0.5rem)] -translate-x-1/2 -translate-y-1/2 flex-col gap-3 outline-none not-data-open:hidden", "transition-[opacity,scale] delay-100 ease-out motion-reduce:duration-50", "data-starting-style:scale-95 data-starting-style:opacity-0", "data-ending-style:scale-95 data-ending-style:opacity-0 data-ending-style:delay-0", "motion-reduce:delay-0", "w-full max-w-64 p-4 text-white", "text-shadow-[0_1px_0_rgb(0_0_0/0.5)] duration-150", className]} {...props}>
+      <media-dialog-backdrop className={"absolute inset-0 z-40 bg-black/20 backdrop-blur-lg opacity-100 not-data-open:hidden transition-opacity delay-100 ease-out motion-reduce:duration-50 data-starting-style:opacity-0 data-ending-style:opacity-0 data-ending-style:delay-0 motion-reduce:delay-0 backdrop-saturate-120 duration-150 data-ending-style:duration-50 motion-reduce:data-ending-style:duration-50"} />
+      <media-dialog-popup className={["", "absolute top-1/2 left-1/2 z-50 flex max-h-[calc(100%-0.5rem)] -translate-x-1/2 -translate-y-1/2 flex-col gap-3 outline-none not-data-open:hidden", "transition-[opacity,scale] delay-100 ease-out motion-reduce:duration-50", "data-starting-style:scale-95 data-starting-style:opacity-0", "data-ending-style:scale-95 data-ending-style:opacity-0 data-ending-style:delay-0", "motion-reduce:delay-0", "w-full max-w-64 p-4 text-white", "text-shadow-[0_1px_0_rgb(0_0_0/0.5)] duration-150 data-ending-style:duration-50 motion-reduce:data-ending-style:duration-50", className]} {...props}>
         <div className={"flex min-h-0 flex-col gap-2 overflow-y-auto py-1.5"}>
           <media-dialog-title className={"m-0 text-media-lg font-semibold leading-tight"} />
           <media-dialog-description className={"m-0 opacity-70 wrap-anywhere"} />
@@ -9441,7 +9462,10 @@ export function MinimalVideoSkin({ children, className, poster, ...props }: Mini
   const isPosterString = typeof poster === 'string';
 
   return (
-    <Container className={['media-skin media-skin-video-minimal media-theme-minimal', className]} {...props}>
+    <Container
+      className={['media-skin media-skin--minimal media-skin--video media-theme-minimal', className]}
+      {...props}
+    >
       <slot>{children}</slot>
       <Poster src={isPosterString ? poster : undefined}>{isPosterString ? undefined : poster}</Poster>
       <BufferingIndicator />

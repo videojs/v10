@@ -17,8 +17,9 @@ export default styles({
         'motion-reduce:delay-0',
       ],
       variants: {
-        default: 'duration-350',
-        minimal: 'backdrop-saturate-120 duration-150',
+        default: 'duration-350 data-ending-style:duration-250 motion-reduce:data-ending-style:duration-50',
+        minimal:
+          'backdrop-saturate-120 duration-150 data-ending-style:duration-50 motion-reduce:data-ending-style:duration-50',
       },
     },
     popup: {
@@ -33,9 +34,12 @@ export default styles({
       variants: {
         default: [
           'w-[calc(100%-1.5rem)] max-w-72 rounded-[1.75rem] p-3 text-white',
-          'text-shadow-[0_1px_0_rgb(0_0_0/0.25)] duration-350',
+          'text-shadow-[0_1px_0_rgb(0_0_0/0.25)] duration-350 data-ending-style:duration-250 motion-reduce:data-ending-style:duration-50',
         ],
-        minimal: ['w-full max-w-64 p-4 text-white', 'text-shadow-[0_1px_0_rgb(0_0_0/0.5)] duration-150'],
+        minimal: [
+          'w-full max-w-64 p-4 text-white',
+          'text-shadow-[0_1px_0_rgb(0_0_0/0.5)] duration-150 data-ending-style:duration-50 motion-reduce:data-ending-style:duration-50',
+        ],
       },
     },
     content: {

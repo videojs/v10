@@ -22,7 +22,7 @@ export function createStyleOptions(config: SkinConfig): StylePluginOptions {
         stylesheet: {
           input: resolve(stylesDir, 'tailwind.compiler.css'),
           base: resolve(stylesDir, 'base.css'),
-          scope: `.${skin.scope}`,
+          scope: skin.scope,
         },
       };
 }

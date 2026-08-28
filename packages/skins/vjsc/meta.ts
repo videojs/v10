@@ -21,12 +21,12 @@ export type SkinModuleMeta = SkinComponentMeta | SkinMeta;
 
 export const skinStyles = {
   'default-video': {
-    scope: 'media-skin-video',
+    scope: '.media-skin--default.media-skin--video',
     theme: 'default',
     variant: 'default',
   },
   'minimal-video': {
-    scope: 'media-skin-video-minimal',
+    scope: '.media-skin--minimal.media-skin--video',
     theme: 'minimal',
     variant: 'minimal',
   },

@@ -19,7 +19,10 @@ export function MinimalVideoSkin({ children, className, poster, ...props }: Mini
   const isPosterString = typeof poster === 'string';
 
   return (
-    <Container className={['media-skin media-skin-video-minimal media-theme-minimal', className]} {...props}>
+    <Container
+      className={['media-skin media-skin--minimal media-skin--video media-theme-minimal', className]}
+      {...props}
+    >
       <Slot>{children}</Slot>
       <Poster src={isPosterString ? poster : undefined}>{isPosterString ? undefined : poster}</Poster>
       <BufferingIndicator />
@@ -38,7 +41,7 @@ export const meta = {
   name: 'minimal-video',
   type: 'skin',
   style: {
-    scope: 'media-skin-video-minimal',
+    scope: '.media-skin--minimal.media-skin--video',
     theme: 'minimal',
     variant: 'minimal',
   },
