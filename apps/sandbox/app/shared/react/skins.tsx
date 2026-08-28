@@ -2,14 +2,62 @@ import type { Skin, Styling } from '@app/types';
 import type { AudioSkinProps } from '@videojs/react/audio';
 import type { VideoSkinProps } from '@videojs/react/video';
 import type { ComponentType } from 'react';
-import { useEffect, useState } from 'react';
+import { createElement, useEffect, useState } from 'react';
 
-async function loadVideoSkinComponent(skin: Skin, styling: Styling): Promise<ComponentType<VideoSkinProps>> {
-  const module = await import('@videojs/react/video');
+type GeneratedVideoSkinProps = Omit<VideoSkinProps, 'renderPoster'> & {
+  poster?: VideoSkinProps['renderPoster'];
+};
 
-  if (styling === 'tailwind') {
-    return skin === 'default' ? module.VideoSkinTailwind : module.MinimalVideoSkinTailwind;
+function adaptTailwindVideoSkin(Component: ComponentType<GeneratedVideoSkinProps>): ComponentType<VideoSkinProps> {
+  return function SandboxTailwindVideoSkin({ renderPoster, ...props }) {
+    return <Component poster={renderPoster} {...props} />;
+  };
+}
+
+async function loadTailwindVideoSkin(skin: Skin, live: boolean): Promise<ComponentType<VideoSkinProps>> {
+  if (live) {
+    if (skin === 'default') {
+      const { DefaultLiveVideoSkin } = await import('@app/_generated/components/videojs/skins/live-video/skin');
+
+      return adaptTailwindVideoSkin(DefaultLiveVideoSkin);
+    }
+
+    const { MinimalLiveVideoSkin } = await import('@app/_generated/components/videojs/skins/live-video-minimal/skin');
+
+    return adaptTailwindVideoSkin(MinimalLiveVideoSkin);
   }
+
+  if (skin === 'default') {
+    const { DefaultVideoSkin } = await import('@app/_generated/components/videojs/skins/video/skin');
+
+    return adaptTailwindVideoSkin(DefaultVideoSkin);
+  }
+
+  const { MinimalVideoSkin } = await import('@app/_generated/components/videojs/skins/video-minimal/skin');
+
+  return adaptTailwindVideoSkin(MinimalVideoSkin);
+}
+
+async function loadVideoSkinComponent(
+  skin: Skin,
+  styling: Styling,
+  live: boolean
+): Promise<ComponentType<VideoSkinProps>> {
+  if (styling === 'tailwind') return loadTailwindVideoSkin(skin, live);
+
+  if (live) {
+    const module = await import('@videojs/react/live-video');
+
+    if (skin === 'default') {
+      await import('@videojs/react/live-video/skin.css');
+      return module.LiveVideoSkin;
+    }
+
+    await import('@videojs/react/live-video/minimal-skin.css');
+    return module.MinimalLiveVideoSkin;
+  }
+
+  const module = await import('@videojs/react/video');
 
   if (skin === 'default') {
     await import('@videojs/react/video/skin.css');
@@ -20,28 +68,48 @@ async function loadVideoSkinComponent(skin: Skin, styling: Styling): Promise<Com
   return module.MinimalVideoSkin;
 }
 
-async function loadLiveVideoSkinComponent(skin: Skin, styling: Styling): Promise<ComponentType<VideoSkinProps>> {
-  const module = await import('@videojs/react/live-video');
-
+async function loadAudioSkinComponent(
+  skin: Skin,
+  styling: Styling,
+  live: boolean
+): Promise<ComponentType<AudioSkinProps>> {
   if (styling === 'tailwind') {
-    return skin === 'default' ? module.LiveVideoSkinTailwind : module.MinimalLiveVideoSkinTailwind;
+    if (live) {
+      if (skin === 'default') {
+        const { DefaultLiveAudioSkin } = await import('@app/_generated/components/videojs/skins/live-audio/skin');
+
+        return DefaultLiveAudioSkin;
+      }
+
+      const { MinimalLiveAudioSkin } = await import('@app/_generated/components/videojs/skins/live-audio-minimal/skin');
+
+      return MinimalLiveAudioSkin;
+    }
+
+    if (skin === 'default') {
+      const { DefaultAudioSkin } = await import('@app/_generated/components/videojs/skins/audio/skin');
+
+      return DefaultAudioSkin;
+    }
+
+    const { MinimalAudioSkin } = await import('@app/_generated/components/videojs/skins/audio-minimal/skin');
+
+    return MinimalAudioSkin;
   }
 
-  if (skin === 'default') {
-    await import('@videojs/react/live-video/skin.css');
-    return module.LiveVideoSkin;
+  if (live) {
+    const module = await import('@videojs/react/live-audio');
+
+    if (skin === 'default') {
+      await import('@videojs/react/live-audio/skin.css');
+      return module.LiveAudioSkin;
+    }
+
+    await import('@videojs/react/live-audio/minimal-skin.css');
+    return module.MinimalLiveAudioSkin;
   }
 
-  await import('@videojs/react/live-video/minimal-skin.css');
-  return module.MinimalLiveVideoSkin;
-}
-
-async function loadAudioSkinComponent(skin: Skin, styling: Styling): Promise<ComponentType<AudioSkinProps>> {
   const module = await import('@videojs/react/audio');
-
-  if (styling === 'tailwind') {
-    return skin === 'default' ? module.AudioSkinTailwind : module.MinimalAudioSkinTailwind;
-  }
 
   if (skin === 'default') {
     await import('@videojs/react/audio/skin.css');
@@ -87,20 +155,17 @@ type VideoSkinComponentProps = { skin: Skin; styling: Styling; live?: boolean } 
 
 /** Loads the video skin for the given skin/styling. When `live` is true, the `live-video` skin variant is used instead. */
 export function VideoSkinComponent({ skin, styling, live = false, ...props }: VideoSkinComponentProps) {
-  const Component = useLoadedComponent(
-    () => (live ? loadLiveVideoSkinComponent(skin, styling) : loadVideoSkinComponent(skin, styling)),
-    [skin, styling, live]
-  );
+  const Component = useLoadedComponent(() => loadVideoSkinComponent(skin, styling, live), [skin, styling, live]);
   if (!Component) return null;
 
-  return <Component {...props} />;
+  return createElement(Component, props);
 }
 
-type AudioSkinComponentProps = { skin: Skin; styling: Styling } & AudioSkinProps;
+type AudioSkinComponentProps = { skin: Skin; styling: Styling; live?: boolean } & AudioSkinProps;
 
-export function AudioSkinComponent({ skin, styling, ...props }: AudioSkinComponentProps) {
-  const Component = useLoadedComponent(() => loadAudioSkinComponent(skin, styling), [skin, styling]);
+export function AudioSkinComponent({ skin, styling, live = false, ...props }: AudioSkinComponentProps) {
+  const Component = useLoadedComponent(() => loadAudioSkinComponent(skin, styling, live), [skin, styling, live]);
   if (!Component) return null;
 
-  return <Component {...props} />;
+  return createElement(Component, props);
 }

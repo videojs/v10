@@ -2,7 +2,7 @@ import '@app/styles.css';
 import { EMBED_PRESETS } from '@app/constants';
 import { renderChapters } from '@app/shared/html/chapters';
 import { createHtmlSandboxState, createLatestLoader, renderMediaAttrs } from '@app/shared/html/sandbox-state';
-import { CSS_SKIN_TAGS, LIVE_VIDEO_CSS_SKIN_TAGS } from '@app/shared/html/skin-tags';
+import { CSS_SKIN_TAGS, LIVE_AUDIO_CSS_SKIN_TAGS, LIVE_VIDEO_CSS_SKIN_TAGS } from '@app/shared/html/skin-tags';
 import { renderStoryboard } from '@app/shared/html/storyboard';
 import { loadAudioStylesheets, loadVideoStylesheets } from '@app/shared/html/stylesheets';
 import { ensureCdnSandboxLocale } from '@app/shared/i18n/cdn-sandbox-locales';
@@ -177,8 +177,13 @@ async function loadCdnPreset(preset: Preset, skin: Skin, live: boolean) {
     case 'mux-audio-spf':
     case 'hls-audio':
     case 'spotify-audio':
-      if (skin === 'minimal') await import('@videojs/html/cdn/audio-minimal');
-      else await import('@videojs/html/cdn/audio');
+      if (live) {
+        if (skin === 'minimal') await import('@videojs/html/cdn/live-audio-minimal');
+        else await import('@videojs/html/cdn/live-audio');
+      } else {
+        if (skin === 'minimal') await import('@videojs/html/cdn/audio-minimal');
+        else await import('@videojs/html/cdn/audio');
+      }
 
       break;
     case 'background-video':
@@ -316,7 +321,7 @@ function getPlayerTag(preset: Preset, live: boolean): string {
 function getSkinTag(preset: Preset, skin: Skin, live: boolean): string {
   if (isBackgroundPreset(preset)) return 'background-video-skin';
 
-  if (isAudioPreset(preset)) return CSS_SKIN_TAGS[skin].audio;
+  if (isAudioPreset(preset)) return live ? LIVE_AUDIO_CSS_SKIN_TAGS[skin] : CSS_SKIN_TAGS[skin].audio;
 
   if (live) return LIVE_VIDEO_CSS_SKIN_TAGS[skin];
 
@@ -351,9 +356,9 @@ function getMediaTag(preset: Preset): string {
   return tags[preset] ?? 'video';
 }
 
-function loadStylesheets(preset: Preset, skin: Skin) {
-  if (isAudioPreset(preset)) loadAudioStylesheets(skin);
-  else if (!isBackgroundPreset(preset)) loadVideoStylesheets(skin);
+function loadStylesheets(preset: Preset, skin: Skin, live: boolean) {
+  if (isAudioPreset(preset)) loadAudioStylesheets(skin, live);
+  else if (!isBackgroundPreset(preset)) loadVideoStylesheets(skin, live);
   // Background CSS is loaded via dynamic import in loadCdnPreset.
 }
 
@@ -376,7 +381,10 @@ function canPlayLive(preset: Preset): boolean {
     preset === 'mux-video' ||
     preset === 'mux-video-spf' ||
     preset === 'native-hls-video' ||
-    preset === 'hls-video'
+    preset === 'hls-video' ||
+    preset === 'mux-audio' ||
+    preset === 'mux-audio-spf' ||
+    preset === 'hls-audio'
   );
 }
 
@@ -393,7 +401,7 @@ async function render() {
   // Load the locale before rendering, but outside loadLatest so locale errors keep their specific message.
   await ensureCdnSandboxLocale(locale);
 
-  loadStylesheets(preset, state.skin);
+  loadStylesheets(preset, state.skin, live);
 
   const root = document.getElementById('root')!;
   const playerTag = getPlayerTag(preset, live);

@@ -1,6 +1,7 @@
 import { mirrorTemplatesToSrc, removeGeneratedSrcFiles } from './shared.js';
 
 await import('./generate-cdn-locale-loaders.ts');
+await import('./sync-source-owned-skins.ts');
 
 const created = await mirrorTemplatesToSrc();
 const removed = await removeGeneratedSrcFiles();

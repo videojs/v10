@@ -1,6 +1,6 @@
 @layer base, components, utilities;
 
-@import "tailwindcss";
+@import "tailwindcss" source(none);
 @import "./base.css";
 @import "./tailwind.shared.css";
 

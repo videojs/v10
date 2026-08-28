@@ -1,6 +1,7 @@
 import '@app/styles.css';
 import { bindSandboxHtmlLocaleChange, prepareSandboxHtmlLocale, wrapSandboxHtmlI18n } from '@app/shared/html/i18n';
 import '@videojs/html/audio/player';
+import '@videojs/html/live-audio/player';
 import '@videojs/html/media/google-cast';
 import '@videojs/html/media/mux-audio';
 import '@videojs/html/media/mux-data';
@@ -14,7 +15,7 @@ import {
   onSkinChange,
   onSourceChange,
 } from '@app/shared/sandbox-listener';
-import { SOURCES } from '@app/shared/sources';
+import { isLiveSource, SOURCES } from '@app/shared/sources';
 
 const html = String.raw;
 
@@ -24,10 +25,12 @@ const loadLatest = createLatestLoader();
 async function render() {
   await prepareSandboxHtmlLocale();
 
-  const tag = await loadLatest(() => loadAudioSkinTag(state.skin, state.styling));
+  const live = isLiveSource(state.source);
+  const tag = await loadLatest(() => loadAudioSkinTag(state.skin, state.styling, { live }));
   if (!tag) return;
 
   const mediaAttrs = renderMediaAttrs(state);
+  const playerTag = live ? 'live-audio-player' : 'audio-player';
 
   // A source carrying signed tokens has no room in the `src` attribute, so it is
   // assigned as an object below instead — the same way `html-mux-video` does.
@@ -36,14 +39,14 @@ async function render() {
 
   document.getElementById('root')!.innerHTML = wrapSandboxHtmlI18n(html`
     <div class="w-full max-w-xl mx-auto">
-      <audio-player>
+      <${playerTag}>
         <${tag}>
           <mux-audio${srcAttr} ${mediaAttrs} crossorigin></mux-audio>
           <!-- Mux Data and Cast are opt-in media components; no env key is needed for Mux-hosted sources. -->
           <mux-data player-software-name="mux-audio"></mux-data>
           <google-cast></google-cast>
         </${tag}>
-      </audio-player>
+      </${playerTag}>
     </div>
   `);
 
