@@ -36,7 +36,7 @@ import {
   NO_KEY_SYSTEM,
   resolveDrmHeaders,
   resolveDrmUrl,
-  shapeLicenseRequest,
+  applyLicenseRequest,
 } from '../../../media/dom/eme';
 import {
   SVTA_BAD_LICENSE_REQUEST,
@@ -122,16 +122,22 @@ function setupExchangeLicenses({
           const module_ = config.keySystems.find((candidate) => candidate.keySystem === keySystem);
 
           const exchange = async (session: MediaKeySession, message: BufferSource) => {
-            const { body, headers } = shapeLicenseRequest(module_, message);
+            // Configured headers seed the request; the module's transform (e.g.
+            // PlayReady's envelope unwrap) runs over them and its own headers win.
+            const request = await applyLicenseRequest(module_, {
+              url: licenseUrl,
+              headers: { ...resolveDrmHeaders(entry.headers) },
+              body: message,
+            });
             let license: Uint8Array<ArrayBuffer>;
 
             try {
-              // Configured headers first so the shaped request's own win: a
-              // classic PlayReady challenge names the headers its CDM requires.
-              license = await fetchLicense(licenseUrl, body, controller.signal, {
-                ...resolveDrmHeaders(entry.headers),
-                ...headers,
-              });
+              license = await fetchLicense(
+                request.url,
+                request.body as BufferSource,
+                controller.signal,
+                request.headers
+              );
             } catch (error) {
               if (controller.signal.aborted) return;
 
