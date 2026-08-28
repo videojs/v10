@@ -27,7 +27,7 @@ already has — no new container, no global filter list, no `keySystem` branchin
 ```ts
 type DrmRequestTransform  = (req: DrmRequest) => DrmRequest | Promise<DrmRequest>;
 type DrmResponseTransform = (res: Uint8Array<ArrayBuffer>) => Uint8Array<ArrayBuffer> | Promise<Uint8Array<ArrayBuffer>>;
-interface DrmRequest { url: string; headers: Record<string, string>; body: BufferSource | null; }
+interface DrmRequest { url: string; method: string; headers: Record<string, string>; body: BufferSource | null; } // fetch RequestInit subset
 
 // Home 1 — KeySystemModule (media/drm.ts): the SHIPPED DEFAULT per system,
 // engine-applied. `licenseRequest` (was shapeLicenseRequest) is the widened
@@ -114,18 +114,21 @@ that's really a `KeySystemModule` concern, a new system, not a source override.)
 
 Applied one place each, thin by design:
 
-- **License**, in `exchange-licenses`: build `DrmRequest` (URL + headers from the
-  resolved `config.drm[ks]`) → module `licenseRequest` (`applyLicenseRequest`, or
-  octet default) → source `licenseRequest` → `fetchLicense` → module
-  `licenseResponse` → source `licenseResponse` → `session.update`.
-- **Certificate**, in `setup-media-keys`: build `DrmRequest` (body `null`) → module
-  then source `certificateRequest` → `fetchServerCertificate` (which gains headers
-  for the first time) → module then source `certificateResponse` →
-  `setServerCertificate`.
+- **License**, in `exchange-licenses`: build `DrmRequest` (`method: 'POST'`, URL +
+  headers from the resolved `config.drm[ks]`) → module `licenseRequest`
+  (`applyLicenseRequest`, or octet default) → source `licenseRequest` → `fetchDrm`
+  → module `licenseResponse` → source `licenseResponse` → `session.update`.
+- **Certificate**, in `setup-media-keys`: build `DrmRequest` (`method: 'GET'`, body
+  `null`, empty headers) → module then source `certificateRequest` → `fetchDrm` →
+  module then source `certificateResponse` → `setServerCertificate`. Cert-specific
+  auth (Vualto's `x-vudrm-token`) rides in via `certificateRequest`, not by reusing
+  the license `headers`.
 
-When network concerns move into their own sub-architecture, `DrmRequest` + these
-transforms become one typed instance of that layer's request pipeline, and this
-record is superseded rather than unwound.
+Both paths share one seam, `fetchDrm(request, signal)`, which reads `method`,
+`headers`, and `body` off the request. When network concerns move into their own
+sub-architecture, `DrmRequest` + `fetchDrm` + these transforms become one typed
+instance of that layer's request pipeline, and this record is superseded rather
+than unwound.
 
 ## Decisions (resolved)
 
@@ -147,6 +150,13 @@ record is superseded rather than unwound.
    (rx-player `getLicense`) and any deployment-wide network hook are additive later
    (new optional field breaks nothing); cross-cutting network concerns belong to the
    future network sub-architecture, not here.
+7. **Fetch-shaped, one fetch seam.** `DrmRequest` is a subset of a `fetch` request
+   (`url` + `method`/`headers`/`body`), and a single `fetchDrm(request, signal)`
+   serves both the license (POST) and certificate (GET) fetches — the shape the
+   future network layer inherits. `method` lets a transform change the verb; the
+   app-cert audit found no provider needs non-GET today (all GET a static file, the
+   only variance being auth on the GET — Vualto a header, Mux a signed query param),
+   so `method` is forward-design, not a current need.
 
 ## Out of scope of this record
 
@@ -163,18 +173,21 @@ record is superseded rather than unwound.
    `(message) => {body,headers}` → `(req: DrmRequest) => DrmRequest | Promise`.
    PlayReady default + `exchange-licenses` call site + tests; suite green (pure
    refactor). *(commit `7124c2ed5`)*
-2. **Default slots:** add `licenseResponse`/`certificateRequest`/
-   `certificateResponse` to `KeySystemModule` (with `DrmResponseTransform`); identity
-   when unset; no consumer yet.
-3. **Consumer slots + adapter wrap:** add the four to SPF `DrmSystemConfig` (public
-   surface); the hls-video Media wraps each as a stable closure over `#source`,
-   beside the `licenseUrl` resolvers; unit-test the wrapper derefs the live source.
-4. **Apply — license:** compose module→source over request and response in
-   `exchange-licenses`; `licenseResponse` runs before `session.update`; pin the
-   compose order and unwrap-before-update.
-5. **Apply — certificate:** module/source `certificateRequest`/`certificateResponse`
-   + `fetchServerCertificate` gaining headers (`setup-media-keys`); pin headers reach
-   the cert fetch.
+2. ✅ **Default slots:** `licenseResponse`/`certificateRequest`/`certificateResponse`
+   on `KeySystemModule` (with `DrmResponseTransform`); identity when unset. *(`52bab1c3e`)*
+3. ✅ **Consumer slots + adapter wrap:** the four on SPF `DrmSystemConfig` (public
+   surface); the hls-video Media wraps each as a stable closure over `#source` via
+   the new `sourceDrmSystems` helper; unit-tested for live-deref across swaps.
+   *(`94278e6f1`)*
+4. ✅ **Apply — license:** `exchange-licenses` composes module→source over request
+   and response, `licenseResponse` before `session.update`; a throwing request
+   override reports 4004, a response override 4016. *(`d3ef04d59`)*
+   - ✅ **Fetch alignment (after 4):** `DrmRequest` gained `method`; `fetchLicense`
+     and `fetchServerCertificate` collapsed into one `fetchDrm(request, signal)`.
+     *(`4c5e4c750`)*
+5. ✅ **Apply — certificate:** `setup-media-keys` composes module→source over the
+   cert request/response through `fetchDrm`; cert auth rides in via
+   `certificateRequest`. *(`fed5735e2`)*
 6. **Helpers:** `detectFairPlayCkc` (raw/base64/`<ckc>`XML/JSON → raw) and
    `unwrapJsonLicense`, exported + unit-tested against Shaka's known shapes.
 7. **Composition invariant:** the new config still materializes only in DRM engine
