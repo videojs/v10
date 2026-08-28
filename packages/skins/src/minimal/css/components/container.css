@@ -6,9 +6,11 @@
     --media-accent-color,
     oklch(from var(--media-default-accent-color) l c h / calc(alpha * 0.1))
   );
+  /* The surface behind hovered subtle controls; audio skins override it for their light-dark surface. */
+  --media-internal-accent-text-base: oklch(0 0 0);
   --media-internal-accent-text-color: var(
     --media-accent-text-color,
-    contrast-color(var(--media-accent-color, oklch(0 0 0)))
+    contrast-color(var(--media-accent-color, var(--media-internal-accent-text-base)))
   );
   --media-shadow-current-color: oklch(from currentColor 0 0 0 / clamp(0, calc((l - 0.5) * 0.5), 0.15));
   --media-shadow-subtle-current-color: oklch(from var(--media-shadow-current-color) l c h / calc(alpha * 0.4));

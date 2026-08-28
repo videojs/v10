@@ -30,6 +30,13 @@ This file tracks observable behavior in `packages/skins/src` that is not yet imp
 - Affected: Default and Minimal skins; HTML and React targets; CSS outputs only.
 - Recommendation: Extend the VJSC `@scope (.media-skin)` reset with the same button normalization and `svg[fill]` re-assertions, convert the `captions.css` breakpoint and theme radii from rem to px in the CSS output, and verify with hostile host CSS across the skin matrix.
 
+## Audio hover contrast
+
+- Source: `packages/skins/src/default/css/components/container.css`, `packages/skins/src/minimal/css/components/container.css`, and the audio entry overrides alongside them
+- Gap: Legacy skins resolve the un-themed accent text color through `--media-internal-accent-text-base` (black for video surfaces, light-dark for audio surfaces), so audio hover text stays legible in browsers that support `contrast-color()`. VJSC's `tailwind.shared.css` still hardcodes `contrast-color(var(--media-accent-color, oklch(0 0 0)))`, which resolves hover text to white on the light audio surface.
+- Affected: Default and Minimal Audio skins; HTML and React targets; CSS and Tailwind outputs.
+- Recommendation: Introduce the same surface base variable in VJSC's shared accent tokens, override it in the audio themes, and add hover contrast coverage to the VJSC skin matrix.
+
 ## Dialog exit duration
 
 - Source: `packages/skins/src/default/css/audio.css`, `packages/skins/src/default/css/video.css`, `packages/skins/src/minimal/css/audio.css`, and `packages/skins/src/minimal/css/video.css`

@@ -12,6 +12,7 @@ export const container = cn(
   baseContainer,
   '[&:has([role=alertdialog][data-open])_.media-controls_*]:invisible',
   '[--media-default-accent-color:light-dark(oklch(0_0_0),oklch(1_0_0))]',
+  '[--media-internal-accent-text-base:light-dark(oklch(1_0_0),oklch(0_0_0))]',
   '[--media-focus-ring-color:light-dark(oklch(0_0_0),oklch(1_0_0))]',
   '[--media-controls-background-color:light-dark(oklch(1_0_0),oklch(0_0_0))]',
   '[--media-controls-backdrop-filter:blur(16px)_saturate(1.5)]',

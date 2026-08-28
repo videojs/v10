@@ -19,6 +19,7 @@
 
 .media-skin--minimal:where(.media-skin--audio) {
   --media-default-accent-color: light-dark(oklch(0 0 0), oklch(1 0 0));
+  --media-internal-accent-text-base: light-dark(oklch(1 0 0), oklch(0 0 0));
   --media-focus-ring-color: light-dark(oklch(0 0 0), oklch(1 0 0));
 
   --media-controls-background-color: light-dark(oklch(1 0 0), oklch(0 0 0));
