@@ -43,6 +43,7 @@
     "@videojs/utils": "workspace:*"
   },
   "devDependencies": {
+    "@lit/context": "^1.1.0",
     "@tailwindcss/vite": "^4.3.3",
     "@types/node": "^22.18.6",
     "@types/react": "^19.2.17",
@@ -51,6 +52,9 @@
     "@videojs/icons": "workspace:*",
     "@vitejs/plugin-react": "^6.0.4",
     "clsx": "^2.1.1",
+    "dashjs": "^5.2.0",
+    "hls.js": "^1.6.7",
+    "mux-embed": "5.17.10",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "tailwind-merge": "^3.5.0",

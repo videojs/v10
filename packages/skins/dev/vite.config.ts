@@ -42,8 +42,21 @@ export default defineConfig({
     dedupe: ['react', 'react-dom'],
   },
   optimizeDeps: {
-    include: ['react', 'react-dom'],
+    // The preview imports every media adapter up front. Prebundle their runtime dependencies before serving so Vite
+    // does not hot-update the mounted player graph as each adapter is discovered.
+    include: [
+      '@lit/context',
+      'dashjs',
+      'hls.js',
+      'mux-embed',
+      'react',
+      'react-dom',
+      'react-dom/client',
+      'react/jsx-dev-runtime',
+      'react/jsx-runtime',
+    ],
     exclude: ['vjsc', 'vjsc/styles', '@videojs/core', '@videojs/icons', '@videojs/react', '@videojs/utils'],
+    noDiscovery: true,
   },
   server: {
     port: 5174,
