@@ -1,5 +1,13 @@
 import { styles } from 'vjsc/styles';
 
+const sliderPreviewContent = [
+  'absolute max-w-(--media-slider-preview-max-width) -translate-x-1/2 translate-y-2 scale-80 opacity-0',
+  'origin-bottom blur-sm',
+  'motion-safe:transition-[filter,opacity,scale] motion-safe:duration-150 motion-safe:ease-out',
+  'group-data-pointing/preview:scale-100 group-data-pointing/preview:opacity-100 group-data-pointing/preview:filter-none',
+  'group-has-focus-visible/slider:scale-100 group-has-focus-visible/slider:opacity-100 group-has-focus-visible/slider:filter-none',
+] as const;
+
 const trackLayer = [
   'pointer-events-none absolute rounded-[inherit]',
   'motion-safe:transition-[clip-path] motion-safe:duration-100 motion-safe:ease-out',
@@ -103,13 +111,7 @@ export default styles({
     },
     previewContent: {
       className: 'media-slider-preview-content',
-      utilities: [
-        'absolute max-w-(--media-slider-preview-max-width) -translate-x-1/2 translate-y-2 scale-80 opacity-0',
-        'origin-bottom blur-sm',
-        'motion-safe:transition-[filter,opacity,scale] motion-safe:duration-150 motion-safe:ease-out',
-        'group-data-pointing/preview:scale-100 group-data-pointing/preview:opacity-100 group-data-pointing/preview:filter-none',
-        'group-has-focus-visible/slider:scale-100 group-has-focus-visible/slider:opacity-100 group-has-focus-visible/slider:filter-none',
-      ],
+      utilities: sliderPreviewContent,
     },
   },
 });

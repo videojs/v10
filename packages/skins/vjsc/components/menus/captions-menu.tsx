@@ -7,8 +7,6 @@ import type { SkinComponentMeta } from '../../meta';
 import buttonStyles from '../../styles/buttons/button.styles';
 import captionsButtonStyles from '../../styles/buttons/captions-button.styles';
 import styles from '../../styles/menus/menu.styles';
-import popupStyles from '../../styles/popups/popup.styles';
-import surfaceStyles from '../../styles/surfaces/surface.styles';
 import { Button } from '../buttons/button';
 import { ButtonTooltip } from '../buttons/button-tooltip';
 import { RadioItem } from './radio-item';
@@ -23,7 +21,7 @@ export function CaptionsMenu({ className, ...props }: Props<MenuProps> = {}) {
             <CaptionsOnIcon className={[buttonStyles.icon, captionsButtonStyles.onIcon]} />
           </$.Menu.Trigger>
         </ButtonTooltip>
-        <$.Menu.Popup className={[popupStyles.root, popupStyles.safeArea, surfaceStyles.root, styles.popup, className]}>
+        <$.Menu.Popup className={[styles.popup, className]}>
           <$.Menu.Content className={styles.content}>
             <$.CaptionsRadioGroup.Options className={styles.radioGroup}>
               <Template name="captions-option">

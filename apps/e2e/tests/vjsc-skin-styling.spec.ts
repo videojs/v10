@@ -2054,15 +2054,24 @@ async function reducedMotionContract(root: Locator, menu: Locator, tooltipDurati
 async function rtlMenuContract(root: Locator, submenu: Locator) {
   const popup = await popupContract(root, submenu);
   const direction = await submenu.evaluate((element) => {
-    const style = getComputedStyle(element);
     const parentContent = [...(element.parentElement?.children ?? [])].find(
       (child) => child.getAttribute('role') === 'menu' && !child.hasAttribute('data-submenu')
     );
+    const hadStartingStyle = element.hasAttribute('data-starting-style');
+    const transition = element.style.transition;
+
+    element.style.transition = 'none';
+    element.toggleAttribute('data-starting-style', true);
+
+    const submenuTranslate = Number.parseFloat(getComputedStyle(element).translate);
+
+    element.toggleAttribute('data-starting-style', hadStartingStyle);
+    element.style.transition = transition;
 
     return {
-      direction: style.direction,
+      direction: getComputedStyle(element).direction,
       parentTranslate: parentContent ? Number.parseFloat(getComputedStyle(parentContent).translate) : Number.NaN,
-      submenuTranslate: Number.parseFloat(style.getPropertyValue('--media-submenu-translate')),
+      submenuTranslate,
     };
   });
 

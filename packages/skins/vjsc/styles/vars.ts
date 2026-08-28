@@ -76,10 +76,6 @@ export const vars = {
     kind: 'internal',
     description: 'Anchor name used by the menu highlight.',
   },
-  '--media-menu-parent-translate': {
-    kind: 'internal',
-    description: 'Direction-aware offset used while a settings menu shows a submenu.',
-  },
   '--media-menu-transition-duration': {
     kind: 'internal',
     description: 'Duration shared by settings menu panel and size transitions.',
@@ -87,14 +83,6 @@ export const vars = {
   '--media-popup-translate-distance': {
     kind: 'internal',
     description: 'Entry translation distance shared by popup transitions.',
-  },
-  '--media-popup-translate-x-distance': {
-    kind: 'internal',
-    description: 'Direction-aware horizontal entry offset for popup transitions.',
-  },
-  '--media-popup-translate-y-distance': {
-    kind: 'internal',
-    description: 'Direction-aware vertical entry offset for popup transitions.',
   },
   '--media-preview-end-inset': {
     kind: 'internal',
@@ -135,14 +123,6 @@ export const vars = {
   '--media-spacing': {
     kind: 'internal',
     description: 'Scoped Tailwind spacing unit scaled for fullscreen UI.',
-  },
-  '--media-submenu-translate': {
-    kind: 'internal',
-    description: 'Direction-aware entry offset for nested menu panels.',
-  },
-  '--media-surface-radius': {
-    kind: 'internal',
-    description: 'Theme surface radius.',
   },
   '--media-caption-track-delay': {
     kind: 'runtime',

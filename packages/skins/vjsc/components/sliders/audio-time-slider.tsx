@@ -5,7 +5,6 @@ import { Box, type Props } from 'vjsc/components';
 import type { SkinComponentMeta } from '../../meta';
 import styles from '../../styles/sliders/audio-time-slider.styles';
 import sliderStyles from '../../styles/sliders/slider.styles';
-import surfaceStyles from '../../styles/surfaces/surface.styles';
 import { SliderBuffer, SliderFill, SliderThumb, SliderTrack } from './slider';
 
 interface AudioTimeSliderProps extends CoreProps {
@@ -25,7 +24,7 @@ export function AudioTimeSlider({
       </$.TimeSlider.Track>
       <$.TimeSlider.Thumb $render={SliderThumb} />
       <$.TimeSlider.Preview className={sliderStyles.preview} overflow={previewOverflow}>
-        <Box className={[sliderStyles.previewContent, surfaceStyles.tooltip, styles.previewContent]}>
+        <Box className={styles.previewContent}>
           <$.TimeSlider.Value className={styles.value} type="pointer" />
         </Box>
       </$.TimeSlider.Preview>

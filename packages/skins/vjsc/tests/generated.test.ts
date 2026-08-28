@@ -93,6 +93,9 @@ describe('generated VJSC source', () => {
     expect(output).not.toContain('_jsxDEV');
     expect(output).not.toContain('/@fs/');
     expect(output).not.toMatch(/from ["']@videojs\/core\/vjsc["']/);
+    expect(output).not.toMatch(/media-(?:feedback-|thumbnail-|tooltip-)?surface/);
+    expect(output).not.toContain('media-popup-transition');
+    expect(output).not.toContain('media-popup-safe-area');
     expect(output).not.toMatch(/import ["']@videojs\/html\/icons\/element(?:\/minimal)?["']/);
     expect(output).not.toContain('from "@videojs/html/icons/element/register"');
     expect(output).toMatch(/import \{[^}]*registerIcons[^}]*\} from "@videojs\/html\/icons"/);

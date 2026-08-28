@@ -7,7 +7,6 @@ import type { SkinComponentMeta } from '../../meta';
 import sliderStyles from '../../styles/sliders/slider.styles';
 import thumbnailStyles from '../../styles/sliders/thumbnail.styles';
 import styles from '../../styles/sliders/time-slider.styles';
-import surfaceStyles from '../../styles/surfaces/surface.styles';
 import { SliderBuffer, SliderFill, SliderThumb, SliderTrack } from './slider';
 
 interface TimeSliderProps extends CoreProps {
@@ -27,13 +26,11 @@ export function TimeSlider({ className, previewOverflow = 'visible', ...props }:
       </$.TimeSlider.Chapters>
       <$.TimeSlider.Thumb $render={SliderThumb} className={styles.thumb} />
       <$.TimeSlider.Preview className={sliderStyles.preview} overflow={previewOverflow}>
-        <$.Slider.Thumbnail.Root
-          className={[sliderStyles.previewContent, surfaceStyles.thumbnail, thumbnailStyles.root]}
-        >
+        <$.Slider.Thumbnail.Root className={thumbnailStyles.root}>
           <$.Slider.Thumbnail.Image className={thumbnailStyles.image} />
           <SpinnerIcon className={thumbnailStyles.spinnerIcon} />
         </$.Slider.Thumbnail.Root>
-        <Box className={[sliderStyles.previewContent, styles.previewContent]}>
+        <Box className={styles.previewContent}>
           <$.TimeSlider.ChapterTitle className={styles.chapterTitle} />
           <$.TimeSlider.Value className={styles.value} type="pointer" />
         </Box>

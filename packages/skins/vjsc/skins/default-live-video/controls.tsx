@@ -9,7 +9,6 @@ import { PiPButton } from '../../components/buttons/pip-button';
 import { PlayButton } from '../../components/buttons/play-button';
 import { VolumePopover } from '../../components/controls/volume-popover';
 import { CaptionsMenu } from '../../components/menus/captions-menu';
-import surfaceStyles from '../../styles/surfaces/surface.styles';
 import styles from './controls.styles';
 
 export function DefaultLiveVideoControls() {
@@ -18,7 +17,7 @@ export function DefaultLiveVideoControls() {
       <$.Controls.Backdrop className={styles.backdrop} />
       <$.Controls.Content className={['media-controls', styles.root]}>
         <$.Tooltip.Provider>
-          <$.Controls.Group className={[surfaceStyles.root, styles.primary]}>
+          <$.Controls.Group className={styles.primary}>
             <PlayButton />
             <LiveButton />
             <Box aria-hidden="true" className={styles.spacer} />

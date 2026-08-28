@@ -9,7 +9,6 @@ import { PlayButton } from '../../components/buttons/play-button';
 import { VolumePopover } from '../../components/controls/volume-popover';
 import { VideoSettingsMenu } from '../../components/menus/video-settings-menu';
 import { TimeSlider } from '../../components/sliders/time-slider';
-import surfaceStyles from '../../styles/surfaces/surface.styles';
 import styles from './controls.styles';
 
 export function DefaultVideoControls() {
@@ -18,7 +17,7 @@ export function DefaultVideoControls() {
       <$.Controls.Backdrop className={styles.backdrop} />
       <$.Controls.Content className={['media-controls', styles.root]}>
         <$.Tooltip.Provider>
-          <$.Controls.Group className={[surfaceStyles.root, styles.primary]}>
+          <$.Controls.Group className={styles.primary}>
             <PlayButton />
             <VolumePopover className={styles.volumeButton} />
 
@@ -32,7 +31,7 @@ export function DefaultVideoControls() {
             <VideoSettingsMenu className={styles.settingsButton} />
           </$.Controls.Group>
 
-          <$.Controls.Group className={[surfaceStyles.root, styles.secondary]}>
+          <$.Controls.Group className={styles.secondary}>
             <CastButton />
             <AirPlayButton />
             <PiPButton />

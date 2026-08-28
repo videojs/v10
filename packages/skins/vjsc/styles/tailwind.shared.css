@@ -17,7 +17,6 @@
   --spacing-media-icon-lg: calc(var(--media-icon-size, calc(var(--media-spacing) * 4.5)) * 1.5);
   --spacing-media-icon-xl: calc(var(--media-icon-size, calc(var(--media-spacing) * 4.5)) * 2);
   --radius-media-control: var(--media-control-radius);
-  --radius-media-surface: var(--media-surface-radius);
 }
 
 @utility status-indicator-gradient {
