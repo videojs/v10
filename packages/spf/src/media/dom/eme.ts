@@ -21,6 +21,7 @@ export {
   type DrmUrl,
   declaredDrmKeys,
   declaredEncryptionScheme,
+  firstNonDrmEncryptionKey,
   type KeySystemModule,
   keySystemCandidates,
   NO_KEY_SYSTEM,

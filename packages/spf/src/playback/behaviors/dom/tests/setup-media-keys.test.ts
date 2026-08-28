@@ -14,7 +14,12 @@ import {
   playReadyKeySystem,
   widevineKeySystem,
 } from '../../../../media/dom/key-systems';
-import { SVTA_DRM_CERTIFICATE_ERROR, SVTA_UNSUPPORTED_DRM_SYSTEM, type SvtaError } from '../../../../media/errors';
+import {
+  SVTA_DRM_CERTIFICATE_ERROR,
+  SVTA_UNSUPPORTED_DRM_SYSTEM,
+  SVTA_UNSUPPORTED_ENCRYPTION_METHOD,
+  type SvtaError,
+} from '../../../../media/errors';
 import type { Presentation } from '../../../../media/types';
 import { type MediaKeysContext, type MediaKeysState, setupMediaKeys } from '../setup-media-keys';
 
@@ -44,6 +49,11 @@ const FAIRPLAY_KEY = {
   method: 'SAMPLE-AES',
   uri: 'skd://mux?keyId=abc',
   keyFormat: 'com.apple.streamingkeydelivery',
+};
+// AES-128 clear-key over HTTP: no KEYFORMAT means identity per RFC 8216 — not DRM.
+const AES128_KEY = {
+  method: 'AES-128',
+  uri: 'https://example.com/key.bin',
 };
 
 const DRM_CONFIG = {
@@ -382,6 +392,28 @@ describe('setupMediaKeys', () => {
     expect(state.errors.get()).toEqual([
       { code: SVTA_UNSUPPORTED_DRM_SYSTEM, data: { keySystems: ['com.widevine.alpha'] } },
     ]);
+
+    reactor.destroy();
+  });
+
+  it('reports 99408 (unsupported encryption method), not a DRM error, for clear-key AES-128', async () => {
+    // No candidate here because the source is identity-keyformat (clear-key)
+    // encrypted, not DRM — so the cause names the encryption method rather than
+    // blaming a key system that was never involved.
+    vi.mocked(requestKeySystemAccess).mockResolvedValue(undefined);
+    const { state, context, reactor } = setupSetupMediaKeys(
+      { presentation: makePresentation([AES128_KEY]) },
+      { mediaElement: document.createElement('video') }
+    );
+
+    await vi.waitFor(() => expect(state.negotiatedKeySystem.get()).toBe(NO_KEY_SYSTEM));
+    const errors = state.errors.get();
+
+    expect(errors?.map((error) => error.code)).toEqual([SVTA_UNSUPPORTED_ENCRYPTION_METHOD]);
+    expect(errors?.[0]?.data).toMatchObject({ method: 'AES-128' });
+    // Same park-and-prune outcome as the DRM refusal: gate up, no MediaKeys.
+    expect(state.segmentLoadingBlocked.get()).toBe(true);
+    expect(context.mediaKeys.get()).toBeUndefined();
 
     reactor.destroy();
   });

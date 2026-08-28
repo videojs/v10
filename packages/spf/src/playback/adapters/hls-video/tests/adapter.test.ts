@@ -19,6 +19,7 @@ import {
   SVTA_NO_SUPPORTED_VIDEO_TRACK,
   SVTA_UNSUPPORTED_AUDIO_FORMAT,
   SVTA_UNSUPPORTED_DRM_SYSTEM,
+  SVTA_UNSUPPORTED_ENCRYPTION_METHOD,
   SVTA_UNSUPPORTED_PLAYBACK_FEATURE,
   SVTA_UNSUPPORTED_VIDEO_FORMAT,
   type SvtaError,
@@ -938,6 +939,22 @@ describe('HlsVideoMediaElement', () => {
 
       // One code for both: the viewer's situation is identical either way, and
       // the specifics stay on `engine.state.errors` for a developer.
+      expect(media.error?.code).toBe(SVTA_UNSUPPORTED_PLAYBACK_FEATURE);
+      media.destroy();
+    });
+
+    it('surfaces the same code for non-DRM clear-key encryption', async () => {
+      const media = new TestMedia();
+
+      // AES-128 clear-key: the cause is the unsupported encryption method, not a
+      // DRM system, but the viewer's situation — unplayable, unfixable here — is
+      // the same, so it surfaces the same code.
+      media.engine.state.errors.set([
+        { code: SVTA_UNSUPPORTED_ENCRYPTION_METHOD, data: { method: 'AES-128' } },
+        { code: SVTA_NO_SUPPORTED_VIDEO_TRACK },
+      ]);
+      await flush();
+
       expect(media.error?.code).toBe(SVTA_UNSUPPORTED_PLAYBACK_FEATURE);
       media.destroy();
     });
