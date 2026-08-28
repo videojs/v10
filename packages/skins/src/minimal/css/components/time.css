@@ -50,7 +50,7 @@
   display: none;
 }
 
-@container media-root (width > 42rem) {
+@container media-root (width > 672px) {
   .media-minimal-skin .media-time-controls {
     flex-direction: row;
 

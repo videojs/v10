@@ -233,7 +233,7 @@
   }
 
   &:has(.media-button--mute[aria-expanded="true"]) {
-    @container media-root (width <= 42rem) {
+    @container media-root (width <= 672px) {
       .media-button-group:last-child {
         --media-volume-mask-image: var(--media-volume-mask);
         --media-volume-mask-position: 0 0;
@@ -241,7 +241,7 @@
       }
     }
 
-    @container media-root (width > 42rem) {
+    @container media-root (width > 672px) {
       .media-time-controls {
         --media-volume-mask-image: var(--media-volume-mask);
         --media-volume-mask-position: 0 0;
@@ -249,7 +249,7 @@
     }
   }
 
-  @container media-root (width > 42rem) {
+  @container media-root (width > 672px) {
     --media-inset-factor: 2;
     --media-base-side-offset: 2;
 
@@ -297,7 +297,7 @@
     calc(100% - var(--media-max-size) / 2 + var(--media-preview-end-inset))
   );
 
-  @container media-root (width > 42rem) {
+  @container media-root (width > 672px) {
     --media-preview-left: var(--media-slider-pointer);
   }
 }

@@ -186,6 +186,82 @@ for (const { platform, skin, styling } of CASES) {
   });
 }
 
+// CSS styling only: the Tailwind output runs inside the consumer's own Tailwind build, which
+// assumes a 16px root and Preflight, so host-page interference is the consumer's domain there.
+const HOST_CSS_CASES = [
+  { skin: 'default', styling: 'css', radius: '28px' },
+  { skin: 'minimal', styling: 'css', radius: '12px' },
+] as const;
+
+// Element-selector rules and a non-default root font size, as commonly found on host pages
+// embedding the light-DOM React skin.
+const HOSTILE_HOST_CSS = `
+  html { font-size: 62.5%; }
+  button {
+    margin: 7px;
+    font-family: serif;
+    text-transform: uppercase;
+    letter-spacing: 4px;
+    background: rgb(255, 0, 0);
+    border: 6px dashed rgb(0, 255, 0);
+  }
+  svg { display: inline; margin: 9px; fill: rgb(255, 0, 0); }
+  img, video { display: inline; margin: 9px; }
+`;
+
+for (const { skin, styling, radius } of HOST_CSS_CASES) {
+  test(`react ${skin} ${styling} withstands host page element styles`, async ({ page }) => {
+    const query = new URLSearchParams({
+      styling,
+      skin,
+      source: 'mp4-1',
+      autoplay: '0',
+      muted: '1',
+      loop: '0',
+      preload: 'metadata',
+    });
+
+    await page.goto(`${SANDBOX_BASE}/react-video/?${query}`, { waitUntil: 'domcontentloaded' });
+
+    const root = page.getByRole('group', { name: 'Media player' }).first();
+
+    await expect(root).toBeVisible({ timeout: 15_000 });
+    await page.addStyleTag({ content: HOSTILE_HOST_CSS });
+
+    // Container sizing must not follow the host root font size.
+    await expect(root).toHaveCSS('border-radius', radius);
+
+    const playButton = page.getByRole('button', { name: 'Play' }).first();
+
+    await expect(playButton).toHaveCSS('margin', '0px');
+    await expect(playButton).toHaveCSS('text-transform', 'none');
+    await expect(playButton).toHaveCSS('letter-spacing', 'normal');
+    await expect(playButton).toHaveCSS('border-width', '0px');
+    await expect(playButton).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+
+    const buttonStyles = await playButton.evaluate((element) => {
+      const icon = element.querySelector('svg');
+      if (!icon) throw new Error('Expected the play button to contain an icon.');
+
+      const iconStyle = getComputedStyle(icon);
+
+      return {
+        fontFamily: getComputedStyle(element).fontFamily,
+        iconDisplay: iconStyle.display,
+        iconFillMatchesColor: iconStyle.fill === iconStyle.color,
+        iconMargin: iconStyle.margin,
+      };
+    });
+
+    expect(buttonStyles.fontFamily).toContain('Inter');
+    expect(buttonStyles.iconDisplay).toBe('block');
+    expect(buttonStyles.iconFillMatchesColor).toBe(true);
+    expect(buttonStyles.iconMargin).toBe('0px');
+
+    await expect(page.locator('video').first()).toHaveCSS('display', 'block');
+  });
+}
+
 for (const styling of ['css', 'tailwind'] as const) {
   test(`html minimal ${styling} keeps the thumbnail inside the player`, async ({ page }) => {
     const query = new URLSearchParams({

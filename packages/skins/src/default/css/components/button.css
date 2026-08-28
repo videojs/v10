@@ -11,8 +11,11 @@
   touch-action: manipulation;
   cursor: pointer;
   user-select: none;
+  appearance: none;
+  color: inherit;
   outline: 2px solid transparent;
   outline-offset: -2px;
+  background: none;
   border: none;
   border-radius: calc(Infinity * 1px);
   transition-timing-function: ease-out;

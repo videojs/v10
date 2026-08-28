@@ -213,7 +213,7 @@
     padding-inline: calc(var(--media-spacing) * 2);
   }
 
-  @container media-root (width < 32rem) {
+  @container media-root (width < 512px) {
     .media-controls--primary,
     .media-controls--secondary {
       transition-timing-function: inherit;
@@ -267,7 +267,7 @@
     }
   }
 
-  @container media-root (width >= 32rem) {
+  @container media-root (width >= 512px) {
     position: absolute;
     inset-inline: var(--media-inset);
     bottom: var(--media-inset);
@@ -315,7 +315,7 @@
     transition-property: opacity, scale, translate;
   }
 
-  @container media-root (width > 42rem) {
+  @container media-root (width > 672px) {
     --media-inset-factor: 3;
   }
 }

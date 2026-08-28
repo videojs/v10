@@ -99,7 +99,7 @@
   }
 
   .media-button--seek {
-    @container media-root (width < 32rem) {
+    @container media-root (width < 512px) {
       display: none;
     }
   }

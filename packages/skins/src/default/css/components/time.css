@@ -10,7 +10,7 @@
   }
 
   > .media-time:last-child {
-    @container media-time-controls (width < 16rem) {
+    @container media-time-controls (width < 256px) {
       display: none;
     }
   }

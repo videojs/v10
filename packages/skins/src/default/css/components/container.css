@@ -30,7 +30,7 @@
   --media-icon-size: calc(1.125 * var(--media-size)); /* 18px */
 
   /* Radii */
-  --media-container-border-radius: var(--media-border-radius, 1.75rem);
+  --media-container-border-radius: var(--media-border-radius, calc(var(--media-spacing) * 7));
 
   position: relative;
   display: block;
@@ -52,7 +52,7 @@
   outline-offset: -4px;
   scrollbar-color: var(--media-scrollbar-thumb-color) transparent;
   scrollbar-width: thin;
-  border-radius: var(--media-container-border-radius, 1.75rem);
+  border-radius: var(--media-container-border-radius, calc(var(--media-spacing) * 7));
   isolation: isolate;
   transition-timing-function: ease-out;
   transition-duration: 100ms;

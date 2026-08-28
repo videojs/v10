@@ -291,7 +291,7 @@
     min-width: var(--media-max-size);
     height: calc(var(--media-spacing) * 1);
 
-    @container media-root (width > 42rem) {
+    @container media-root (width > 672px) {
       --media-max-size-factor: 48;
     }
 

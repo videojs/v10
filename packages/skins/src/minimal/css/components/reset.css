@@ -10,9 +10,23 @@
 .media-minimal-skin svg {
   display: block;
   max-width: 100%;
+  margin: 0;
 }
 .media-minimal-skin button {
+  margin: 0;
   font: inherit;
+  text-transform: none;
+  letter-spacing: inherit;
+}
+/* Icons author fill and stroke as presentational attributes, which lose to any host-page `svg` rule. */
+.media-minimal-skin svg[fill="currentColor"] {
+  fill: currentColor;
+}
+.media-minimal-skin svg[fill="none"] {
+  fill: none;
+}
+.media-minimal-skin svg[stroke="currentColor"] {
+  stroke: currentColor;
 }
 .media-minimal-skin [hidden][hidden] {
   /* Keep authored templates hidden even when component classes set display. */
