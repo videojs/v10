@@ -4,10 +4,10 @@ import type { MediaVideoRendition } from '@videojs/media';
 import { createRef } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
+import { QualityRadioGroup } from '..';
 import { I18nProvider } from '../../../i18n';
 import { createPlayerWrapper } from '../../../testing/mocks';
 import { Menu } from '../../menu';
-import { QualityRadioGroup, type QualityRadioGroupItemState } from '../quality-radio-group';
 
 afterEach(() => {
   resetI18nRegistry();
@@ -35,11 +35,13 @@ function renderQualityRadioGroup({
   const { Wrapper } = createPlayerWrapper({ videoRenditionList, activeVideoRendition, selectVideoRendition });
   const content = (
     <Menu.Root defaultOpen>
-      <Menu.Popup>
-        <Menu.Content>
-          {group ?? <QualityRadioGroup renderItem={(props) => <Menu.RadioItem {...props} />} />}
-        </Menu.Content>
-      </Menu.Popup>
+      <QualityRadioGroup.Root>
+        <Menu.Popup>
+          <Menu.Content>
+            {group ?? <QualityRadioGroup.Options renderItem={(props) => <Menu.RadioItem {...props} />} />}
+          </Menu.Content>
+        </Menu.Popup>
+      </QualityRadioGroup.Root>
     </Menu.Root>
   );
 
@@ -50,11 +52,11 @@ function renderQualityRadioGroup({
 
 describe('QualityRadioGroup', () => {
   it('renders generated radio item props and item state', () => {
-    const states: QualityRadioGroupItemState[] = [];
+    const states: QualityRadioGroup.ItemState[] = [];
 
     renderQualityRadioGroup({
       group: (
-        <QualityRadioGroup
+        <QualityRadioGroup.Options
           renderItem={(props, state) => {
             states.push(state);
             return (
@@ -89,7 +91,7 @@ describe('QualityRadioGroup', () => {
 
     renderQualityRadioGroup({
       group: (
-        <QualityRadioGroup
+        <QualityRadioGroup.Options
           ref={ref}
           data-testid="group"
           className={(state) => `quality-${state.availability}`}
@@ -122,7 +124,7 @@ describe('QualityRadioGroup', () => {
   it('supports custom group and item roots', () => {
     renderQualityRadioGroup({
       group: (
-        <QualityRadioGroup
+        <QualityRadioGroup.Options
           render={(props, state) => <section {...props} data-value={state.value} />}
           renderItem={(props, state) => (
             <Menu.RadioItem {...props}>

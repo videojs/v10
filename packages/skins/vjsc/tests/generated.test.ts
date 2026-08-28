@@ -66,7 +66,13 @@ describe('generated VJSC source', () => {
 
     await Promise.all(
       modules.map(async (module) => {
-        const result = await server!.transformRequest(module.request);
+        let result;
+
+        try {
+          result = await server!.transformRequest(module.request);
+        } catch (error) {
+          throw new Error(`Failed to transform \`${module.key}\`.`, { cause: error });
+        }
 
         expect(result, module.key).not.toBeNull();
       })
@@ -104,8 +110,14 @@ describe('generated VJSC source', () => {
       output,
       'html/default-audio/css/components/menus/audio-settings-menu.tsx'
     );
-    const reactSubmenu = generatedSection(output, 'react/default-audio/css/components/menus/submenu.tsx');
-    const htmlSubmenu = generatedSection(output, 'html/default-audio/css/components/menus/submenu.tsx');
+    const reactPlaybackRateSubmenu = generatedSection(
+      output,
+      'react/default-audio/css/components/menus/playback-rate-submenu.tsx'
+    );
+    const htmlPlaybackRateSubmenu = generatedSection(
+      output,
+      'html/default-audio/css/components/menus/playback-rate-submenu.tsx'
+    );
     const reactDefaultAudio = generatedSection(output, 'react/default-audio/css/skins/default-audio/skin.tsx');
     const htmlMinimalAudio = generatedSection(output, 'html/minimal-audio/css/skins/minimal-audio/skin.tsx');
     const reactCaptionsMenu = generatedSection(
@@ -145,9 +157,13 @@ describe('generated VJSC source', () => {
     expect(htmlAudioSettingsMenu).toContain('<media-playback-rate-button');
     expect(htmlAudioSettingsMenu).toContain('commandfor=');
     expect(htmlAudioSettingsMenu).not.toContain('<button commandfor=');
-    expect(reactSubmenu).toContain('<Menu.Trigger className=');
-    expect(reactSubmenu).not.toContain('<Menu.Trigger render=');
-    expect(htmlSubmenu).toContain('<media-menu-item commandfor=');
+    expect(reactPlaybackRateSubmenu).toContain('<PlaybackRateRadioGroup.Root>');
+    expect(reactPlaybackRateSubmenu).toContain('<PlaybackRateRadioGroup.Value');
+    expect(reactPlaybackRateSubmenu).toContain('<PlaybackRateRadioGroup.Options');
+    expect(reactPlaybackRateSubmenu).toContain('<Menu.Trigger className=');
+    expect(htmlPlaybackRateSubmenu).toContain('<media-menu-item commandfor=');
+    expect(htmlPlaybackRateSubmenu).toContain('data-part="value"');
+    expect(htmlPlaybackRateSubmenu).not.toContain('PlaybackRateRadioGroup.Root');
     expect(reactDefaultAudio).toContain('export interface DefaultAudioSkinProps');
     expect(reactDefaultAudio).toContain('media-skin--default media-skin--audio');
     expect(htmlMinimalAudio).toContain('export interface MinimalAudioSkinProps');

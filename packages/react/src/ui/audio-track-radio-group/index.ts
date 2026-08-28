@@ -1,6 +1,2 @@
-export {
-  AudioTrackRadioGroup,
-  type AudioTrackRadioGroupItemProps,
-  type AudioTrackRadioGroupItemState,
-  type AudioTrackRadioGroupProps,
-} from './audio-track-radio-group';
+export * as AudioTrackRadioGroup from './index.parts';
+export { AudioTrackRadioGroupLegacy } from './audio-track-radio-group';

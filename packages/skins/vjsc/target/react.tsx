@@ -4,7 +4,6 @@ import type coreSchema from '@videojs/core/vjsc';
 import { type ComponentTarget, defineComponentTarget, type TemplateTargetDefinition } from 'vjsc/target';
 import { Host } from 'vjsc/target/jsx-runtime';
 
-import { reactComponentTransform } from './react-transform.ts';
 import { createRenderTargetTransform } from './render-target.ts';
 
 type CoreSchema = typeof coreSchema;
@@ -142,7 +141,6 @@ export const reactComponentTarget: ComponentTarget<CoreSchema> = defineComponent
           SliderTrack: { element: Div },
         },
       }),
-      reactComponentTransform,
     ],
     jsx: { importSource: 'react', attributes: 'react' },
   };

@@ -11,6 +11,7 @@ const MODULE_ID = '\0fixture.tsx?target=react';
 const reactTarget = {
   source: '@fixture/components',
   resolve: () => undefined,
+  transparent: [],
   components: {},
   primitives: {},
   types: {},

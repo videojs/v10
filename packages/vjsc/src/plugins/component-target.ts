@@ -91,6 +91,19 @@ export function componentTargetPlugin(options: ComponentTargetPluginOptions): Pl
           const scope = scopes.nodes.get(node);
           if (!scope) throw new Error('Component target could not resolve the source component scope.');
 
+          if (isTransparentRoot(path)) {
+            const edits = [
+              ...childEdits,
+              { start: node.openingElement.start, end: node.openingElement.end, content: '' },
+            ];
+
+            if (node.closingElement) {
+              edits.push({ start: node.closingElement.start, end: node.closingElement.end, content: '' });
+            }
+
+            return edits;
+          }
+
           const rule = configuredRule(path) ?? resolveDefault(path);
 
           if (typeof rule === 'function' && !isTargetElement(rule)) {
@@ -260,7 +273,8 @@ function collectComponentScopes(ast: Program, bindings: CanonicalBindings, id: s
       if (!path) return;
 
       const isRoot = path.part === null || path.part === 'Root';
-      const owner = isRoot ? undefined : enclosingScope(stack, path);
+      const transparent = isTransparentRoot(path);
+      const owner = transparent ? stack.at(-1)?.scope : isRoot ? undefined : enclosingScope(stack, path);
       const scope: ComponentSourceScope = owner ?? {
         root: node,
         target: path.target,
@@ -270,7 +284,7 @@ function collectComponentScopes(ast: Program, bindings: CanonicalBindings, id: s
 
       nodes.set(node, scope);
 
-      if (isRoot || !owner) stack.push({ path, scope });
+      if ((isRoot && !transparent) || !owner) stack.push({ path, scope });
     },
     leave(node) {
       if (node.type !== 'JSXElement') return;
@@ -441,7 +455,7 @@ function createSourceParts(
       }
 
       const names = path.part.split('.');
-      const branch = root.children.find((child) => child.start <= node.start && child.end >= node.end);
+      const branch = findSourceBranch(root, node, bindings);
       if (!branch) throw new Error(`vjsc: <${path.component}.${path.part}> is not contained by its component root.`);
 
       let current = groups;
@@ -511,6 +525,23 @@ function createSourceParts(
   });
 
   return Object.fromEntries([...groups].map(([name, group]) => [name, sourcePartCollection(name, group)]));
+}
+
+function findSourceBranch(root: JSXElement, node: JSXElement, bindings: CanonicalBindings) {
+  let branch = root.children.find((child) => child.start <= node.start && child.end >= node.end);
+
+  while (branch?.type === 'JSXElement') {
+    const path = canonicalPath(branch.openingElement.name, bindings);
+    if (!path || !isTransparentRoot(path)) break;
+
+    branch = branch.children.find((child) => child.start <= node.start && child.end >= node.end);
+  }
+
+  return branch;
+}
+
+function isTransparentRoot(path: CanonicalPath): boolean {
+  return path.part === 'Root' && path.target.transparent.includes(path.component);
 }
 
 function sourcePartCollection(name: string, group: CollectedPartGroup): RuntimeSourcePart {

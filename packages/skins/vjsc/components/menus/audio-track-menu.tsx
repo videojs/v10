@@ -1,32 +1,44 @@
 import { audioText } from '@videojs/core/i18n/text/menu';
 import { SpeechIcon } from '@videojs/icons/vjsc';
-import { type PropsOf, Template, Text } from 'vjsc/components';
+import { type Props, Template, Text } from 'vjsc/components';
 
 import styles from '../../styles/menus/menu.styles';
-import { AudioTrackRadioGroup } from './radio-group';
+import { MenuChevron } from './menu-chevron';
 import { RadioItem } from './radio-item';
-import { Submenu } from './submenu';
 
-export interface AudioTrackMenuProps extends Omit<
-  PropsOf<typeof Submenu>,
-  'children' | 'icon' | 'label' | 'selectedLabel'
-> {}
+export interface AudioTrackMenuProps extends MenuProps {
+  className?: Props<MenuProps>['className'];
+}
 
-export function AudioTrackMenu(props: AudioTrackMenuProps = {}) {
+export function AudioTrackMenu({ className, ...props }: AudioTrackMenuProps = {}) {
   return (
-    <Submenu
-      icon={<SpeechIcon className={styles.triggerItemIcon} />}
-      label={<Text token={audioText.key}>{audioText.text}</Text>}
-      selectedLabel={<Text className={styles.hintLabel} data-part="hint" />}
-      {...props}
-    >
-      <AudioTrackRadioGroup>
-        <Template name="audio-track-option">
-          <RadioItem>
-            <Template.Part name="label" />
-          </RadioItem>
-        </Template>
-      </AudioTrackRadioGroup>
-    </Submenu>
+    <$.Menu.Root {...props}>
+      <$.AudioTrackRadioGroup.Root>
+        <$.Menu.Trigger className={styles.triggerItem}>
+          <SpeechIcon className={styles.triggerItemIcon} />
+          <Text token={audioText.key}>{audioText.text}</Text>
+          <Text className={styles.hint}>
+            <$.AudioTrackRadioGroup.Value className={styles.hintLabel} />
+            <MenuChevron />
+          </Text>
+        </$.Menu.Trigger>
+        <$.Menu.Content className={[styles.content, className]}>
+          <$.Menu.Item className={styles.backItem}>
+            <MenuChevron back />
+            <Text token={audioText.key}>{audioText.text}</Text>
+          </$.Menu.Item>
+          <$.Menu.Separator className={styles.separator} />
+          <$.AudioTrackRadioGroup.Options className={styles.radioGroup}>
+            <Template name="audio-track-option">
+              <RadioItem>
+                <Template.Part name="label" />
+              </RadioItem>
+            </Template>
+          </$.AudioTrackRadioGroup.Options>
+        </$.Menu.Content>
+      </$.AudioTrackRadioGroup.Root>
+    </$.Menu.Root>
   );
 }
+import type { MenuProps } from '@videojs/core';
+import * as $ from '@videojs/core/vjsc';

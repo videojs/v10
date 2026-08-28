@@ -9,11 +9,14 @@ import { renderElement } from '../../utils/use-render';
 import { usePopupPosition } from '../popover/use-popup-position';
 import { MenuPopupContextProvider, useMenuContext } from './context';
 
-export interface MenuPopupProps extends UIComponentProps<'div', MenuState> {}
+export interface MenuPopupProps extends UIComponentProps<'div', MenuState> {
+  /** Keep the popup mounted, hidden, and inert while closed. */
+  keepMounted?: boolean;
+}
 
 /** Positioned menu surface that contains one or more sibling Content pages. */
 export const MenuPopup = forwardRef<HTMLDivElement, MenuPopupProps>(function MenuPopup(
-  { render, className, style, onBlur, ...elementProps },
+  { render, className, style, onBlur, keepMounted = false, ...elementProps },
   forwardedRef
 ) {
   const { core, menu, parent, state, preferredSide, setPositionedSide, anchorName, boundary, container } =
@@ -51,7 +54,8 @@ export const MenuPopup = forwardRef<HTMLDivElement, MenuPopupProps>(function Men
 
   useDestroy(popup);
 
-  if (!state.open && state.status !== 'ending') return null;
+  const inactive = !state.open && state.status !== 'ending';
+  if (inactive && !keepMounted) return null;
 
   const popupNode = renderElement(
     'div',
@@ -69,6 +73,7 @@ export const MenuPopup = forwardRef<HTMLDivElement, MenuPopupProps>(function Men
           },
         },
         elementProps,
+        { hidden: inactive, inert: inactive || undefined },
       ],
     }
   );

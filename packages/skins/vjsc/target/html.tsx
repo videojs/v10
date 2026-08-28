@@ -29,6 +29,12 @@ const componentParts: Readonly<Record<string, Readonly<Record<string, string>>>>
     Description: 'DialogDescription',
     Close: 'DialogClose',
   },
+  AudioTrackRadioGroup: {
+    Options: 'AudioTrackRadioGroup',
+  },
+  CaptionsRadioGroup: {
+    Options: 'CaptionsRadioGroup',
+  },
   Menu: {
     Root: 'Menu',
     Trigger: 'MenuItem',
@@ -48,6 +54,12 @@ const componentParts: Readonly<Record<string, Readonly<Record<string, string>>>>
     Trigger: 'Popover',
     Popup: 'Popover',
     Arrow: 'Popover',
+  },
+  PlaybackRateRadioGroup: {
+    Options: 'PlaybackRateRadioGroup',
+  },
+  QualityRadioGroup: {
+    Options: 'QualityRadioGroup',
   },
   SeekIndicator: {
     Root: 'SeekIndicator',
@@ -158,12 +170,19 @@ export const htmlComponentTarget: ComponentTarget<CoreSchema> = defineComponentT
 
   return {
     source: '@videojs/core/vjsc',
+    transparent: ['AudioTrackRadioGroup', 'CaptionsRadioGroup', 'PlaybackRateRadioGroup', 'QualityRadioGroup'],
     resolve: ({ component, part }) => {
       const name = part ? componentParts[component]?.[part] : component === 'Container' ? 'MediaContainer' : component;
 
       return name ? htmlElementTarget(name, element) : undefined;
     },
     components: {
+      AudioTrackRadioGroup: {
+        Value: ({ props }) => <Span data-part="value" {...props} />,
+      },
+      CaptionsRadioGroup: {
+        Value: ({ props }) => <Span data-part="value" {...props} />,
+      },
       Menu: ({ props, parts, id }) => {
         const popup = parts.Popup?.one();
         const trigger = parts.Trigger.one();
@@ -183,7 +202,7 @@ export const htmlComponentTarget: ComponentTarget<CoreSchema> = defineComponentT
               )
             ),
             popup.replaceWith(
-              <target.Menu.Popup id={controlledId} {...props.merge(popup.props)}>
+              <target.Menu.Popup id={controlledId} {...props.merge(popup.props.omit('keepMounted'))}>
                 {popup.children}
               </target.Menu.Popup>
             ),
@@ -231,6 +250,12 @@ export const htmlComponentTarget: ComponentTarget<CoreSchema> = defineComponentT
           </Slot>
         </target.Poster>
       ),
+      PlaybackRateRadioGroup: {
+        Value: ({ props }) => <Span data-part="value" {...props} />,
+      },
+      QualityRadioGroup: {
+        Value: ({ props }) => <Span data-part="value" {...props} />,
+      },
       Slider: {
         Thumbnail: {
           Root: Div,

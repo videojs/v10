@@ -22,7 +22,10 @@ export function SettingsMenu({ children, className, ...props }: PropsWithChildre
           </Text>
         </$.Menu.Trigger>
       </ButtonTooltip>
-      <$.Menu.Popup className={[popupStyles.root, popupStyles.safeArea, surfaceStyles.root, styles.popup, className]}>
+      <$.Menu.Popup
+        keepMounted
+        className={[popupStyles.root, popupStyles.safeArea, surfaceStyles.root, styles.popup, className]}
+      >
         <$.Menu.Content className={styles.content}>{children}</$.Menu.Content>
       </$.Menu.Popup>
     </$.Menu.Root>

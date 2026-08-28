@@ -11,29 +11,30 @@ import popupStyles from '../../styles/popups/popup.styles';
 import surfaceStyles from '../../styles/surfaces/surface.styles';
 import { Button } from '../buttons/button';
 import { ButtonTooltip } from '../buttons/button-tooltip';
-import { CaptionsRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 
 export function CaptionsMenu({ className, ...props }: Props<MenuProps> = {}) {
   return (
     <$.Menu.Root side="top" align="center" boundary="viewport" {...props}>
-      <ButtonTooltip side="top">
-        <$.Menu.Trigger $render={Button} className={captionsButtonStyles.root}>
-          <CaptionsOffIcon className={[buttonStyles.icon, captionsButtonStyles.offIcon]} />
-          <CaptionsOnIcon className={[buttonStyles.icon, captionsButtonStyles.onIcon]} />
-        </$.Menu.Trigger>
-      </ButtonTooltip>
-      <$.Menu.Popup className={[popupStyles.root, popupStyles.safeArea, surfaceStyles.root, styles.popup, className]}>
-        <$.Menu.Content className={styles.content}>
-          <CaptionsRadioGroup>
-            <Template name="captions-option">
-              <RadioItem>
-                <Template.Part name="label" />
-              </RadioItem>
-            </Template>
-          </CaptionsRadioGroup>
-        </$.Menu.Content>
-      </$.Menu.Popup>
+      <$.CaptionsRadioGroup.Root>
+        <ButtonTooltip side="top">
+          <$.Menu.Trigger $render={Button} className={captionsButtonStyles.root}>
+            <CaptionsOffIcon className={[buttonStyles.icon, captionsButtonStyles.offIcon]} />
+            <CaptionsOnIcon className={[buttonStyles.icon, captionsButtonStyles.onIcon]} />
+          </$.Menu.Trigger>
+        </ButtonTooltip>
+        <$.Menu.Popup className={[popupStyles.root, popupStyles.safeArea, surfaceStyles.root, styles.popup, className]}>
+          <$.Menu.Content className={styles.content}>
+            <$.CaptionsRadioGroup.Options className={styles.radioGroup}>
+              <Template name="captions-option">
+                <RadioItem>
+                  <Template.Part name="label" />
+                </RadioItem>
+              </Template>
+            </$.CaptionsRadioGroup.Options>
+          </$.Menu.Content>
+        </$.Menu.Popup>
+      </$.CaptionsRadioGroup.Root>
     </$.Menu.Root>
   );
 }
