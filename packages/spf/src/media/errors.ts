@@ -81,6 +81,26 @@ export const SVTA_DRM_LICENSE_RESPONSE_REJECTED = 4016;
 export const SVTA_DRM_LICENSE_REQUEST_GENERATION_FAILED = 4021;
 
 /**
+ * SVTA 4 [Content Protection] 003 — license expired. A key's status transitioned to `expired` (short license windows,
+ * long sessions). Browsers queue decode on a missing key, so without this cause the expiry presents as a silent
+ * mid-playback stall; reported so the stall is diagnosable. Re-requesting is a policy decision that lives downstream.
+ */
+export const SVTA_LICENSE_EXPIRED = 4003;
+
+/**
+ * SVTA 4 [Content Protection] 007 — insufficient output protection. A key went `output-restricted`: the CDM refuses to
+ * decode onto the current output path (HDCP downgrade, an external display, screen mirroring). Presents as a black
+ * frame or stall with no media error — nothing else in the pipeline observes the restriction.
+ */
+export const SVTA_INSUFFICIENT_OUTPUT_PROTECTION = 4007;
+
+/**
+ * SVTA 4 [Content Protection] 014 — DRM session error. A key reported `internal-error`: the CDM failed in a way it does
+ * not attribute (its own defect, a corrupted key store). Reported for diagnosability; recovery is downstream.
+ */
+export const SVTA_DRM_SESSION_ERROR = 4014;
+
+/**
  * SVTA 2 [Playback] 011 — no video track the environment can play.
  *
  * Covers both ways a composition can end up with nothing to select: renditions that existed and were all excluded as
