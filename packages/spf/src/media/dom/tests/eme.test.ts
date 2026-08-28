@@ -8,6 +8,8 @@ import {
   requestKeySystemAccess,
   applyLicenseRequest,
   applyLicenseResponse,
+  applyCertificateRequest,
+  applyCertificateResponse,
 } from '../eme';
 import { fairPlayKeySystem, playReadyKeySystem, widevineKeySystem } from '../key-systems';
 
@@ -199,6 +201,31 @@ describe('applyLicenseResponse', () => {
     };
 
     expect([...(await applyLicenseResponse(module_, new Uint8Array([4])))]).toEqual([5]);
+  });
+});
+
+describe('applyCertificateRequest / applyCertificateResponse', () => {
+  const certRequest = { url: 'https://cert', method: 'GET', headers: {}, body: null };
+
+  it('are identity for a module declaring no certificate transforms', async () => {
+    const bytes = new Uint8Array([1, 2]);
+
+    expect(await applyCertificateRequest(fairPlayKeySystem, certRequest)).toBe(certRequest);
+    expect(await applyCertificateResponse(fairPlayKeySystem, bytes)).toBe(bytes);
+    expect(await applyCertificateRequest(undefined, certRequest)).toBe(certRequest);
+    expect(await applyCertificateResponse(undefined, bytes)).toBe(bytes);
+  });
+
+  it('delegate to the module when it declares them', async () => {
+    const module_: KeySystemModule = {
+      keySystem: 'com.example.drm',
+      keyFormats: [],
+      certificateRequest: (request) => ({ ...request, method: 'POST' }),
+      certificateResponse: (response) => new Uint8Array([response[0]! + 1]),
+    };
+
+    expect((await applyCertificateRequest(module_, certRequest)).method).toBe('POST');
+    expect([...(await applyCertificateResponse(module_, new Uint8Array([4])))]).toEqual([5]);
   });
 });
 
