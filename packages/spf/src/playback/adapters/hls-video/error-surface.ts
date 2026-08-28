@@ -16,6 +16,7 @@ import type { ErrorLike } from '@videojs/media';
 import {
   SVTA_UNSUPPORTED_AUDIO_FORMAT,
   SVTA_UNSUPPORTED_DRM_SYSTEM,
+  SVTA_UNSUPPORTED_ENCRYPTION_METHOD,
   SVTA_UNSUPPORTED_VIDEO_FORMAT,
   type SvtaError,
 } from '../../../media/errors';
@@ -61,12 +62,14 @@ export function firstFatal(
  *
  * What these have in common is that no retry, no other CDN, and no other rendition of the same source fixes them: the
  * source needs a capability this engine doesn't have. That's the distinction the surfaced code exists to draw, and it's
- * why the set is these three rather than "every cause".
+ * why the set is these rather than "every cause": an undecodable container (1004/1005), a DRM system with no CDM
+ * (4008), or a non-DRM encryption scheme with no decryptor (99408).
  */
 const UNSUPPORTED_FEATURE_CAUSES: ReadonlySet<number> = new Set<number>([
   SVTA_UNSUPPORTED_VIDEO_FORMAT,
   SVTA_UNSUPPORTED_AUDIO_FORMAT,
   SVTA_UNSUPPORTED_DRM_SYSTEM,
+  SVTA_UNSUPPORTED_ENCRYPTION_METHOD,
 ]);
 
 /**

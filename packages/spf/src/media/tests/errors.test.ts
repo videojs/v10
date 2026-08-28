@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vite-plus/test';
 import {
   SVTA_NO_SUPPORTED_AUDIO_TRACK,
   SVTA_NO_SUPPORTED_VIDEO_TRACK,
+  SVTA_UNSUPPORTED_ENCRYPTION_METHOD,
   SVTA_UNSUPPORTED_PLAYBACK_FEATURE,
   svtaCategory,
   svtaIndex,
@@ -25,6 +26,7 @@ describe('svtaCategory', () => {
     // branch is needed: every standard category is below 8000 and custom starts
     // at 99000, so the same division separates them.
     expect(svtaCategory(SVTA_UNSUPPORTED_PLAYBACK_FEATURE)).toBe(99);
+    expect(svtaCategory(SVTA_UNSUPPORTED_ENCRYPTION_METHOD)).toBe(99);
     expect(svtaCategory(99000)).toBe(99);
     expect(svtaCategory(99999)).toBe(99);
   });
@@ -42,6 +44,8 @@ describe('svtaIndex', () => {
 
   it('reads the embedded external code from a five-digit code', () => {
     expect(svtaIndex(3404)).toBe(404);
+    // 99408 follows the 99CII convention: category 99, index 408 (the non-DRM sibling of 4008).
+    expect(svtaIndex(SVTA_UNSUPPORTED_ENCRYPTION_METHOD)).toBe(408);
   });
 
   it('reads the index from a five-digit custom code', () => {

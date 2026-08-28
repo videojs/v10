@@ -105,12 +105,31 @@ export const SVTA_NO_SUPPORTED_AUDIO_TRACK = 2012;
  * fatal condition would make it useless for the notices it belongs on.
  *
  * Index `001`: the spec defines only `99000` (Unknown) for the custom category and leaves the rest to the publisher, so
- * this is the first code we define.
+ * this is the first code we define. Later custom codes follow the `99CII` convention (see
+ * {@link SVTA_UNSUPPORTED_ENCRYPTION_METHOD}); this cross-category "can't play this" surface stays in the general
+ * `990XX` bucket.
  *
  * Five digits, and deliberately not special-cased anywhere: {@link svtaCategory} and {@link svtaIndex} decompose it
  * correctly by arithmetic alone, because every standard category is below `8000` and custom starts at `99000`.
  */
 export const SVTA_UNSUPPORTED_PLAYBACK_FEATURE = 99001;
+
+/**
+ * SVTA 99 [Custom] 408 — the source is encrypted with a scheme this engine has no decryptor for, and it is **not** a
+ * DRM key system: HLS `METHOD=AES-128` / `SAMPLE-AES` under the `identity` keyformat (clear-key over HTTP). The non-DRM
+ * counterpart of {@link SVTA_UNSUPPORTED_DRM_SYSTEM} — reported so the diagnosis names the real gap, an unsupported
+ * encryption method, rather than blaming a DRM system that was never involved. `data` carries the HLS `method` and
+ * `keyFormat`. Actually decrypting such content is a deferred feature — see
+ * `internal/design/spf/features/clear-key-aes.md`.
+ *
+ * **The `99CII` custom-code convention.** SVTA 2070 leaves the whole `99xxx` category to the publisher (defining only
+ * `99000` Unknown). Rather than number custom codes sequentially, they mirror the standard taxonomy in their index
+ * digits: `99` + `C` (the standard category this parallels) + `II` (the index within it). So a content-protection
+ * (category 4) custom cause is `994II`, and `99408` deliberately echoes standard `4008` as its non-DRM sibling.
+ * {@link svtaCategory} / {@link svtaIndex} still decompose it by arithmetic (category `99`, index `408`); the parallel
+ * is a reading convention, not something the math needs. General, cross-category custom codes stay in `990XX`.
+ */
+export const SVTA_UNSUPPORTED_ENCRYPTION_METHOD = 99408;
 
 /**
  * The error's domain — `code / 1000`, per the spec's "divide by one thousand to obtain the error category". Works
