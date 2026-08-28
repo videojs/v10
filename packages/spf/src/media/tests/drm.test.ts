@@ -3,10 +3,13 @@ import { describe, expect, it } from 'vite-plus/test';
 import {
   declaredDrmKeys,
   declaredEncryptionScheme,
+  type DrmRequest,
+  type DrmSystemsConfig,
   type KeySystemModule,
   keySystemCandidates,
   resolveDrmHeaders,
   resolveDrmUrl,
+  sourceDrmSystems,
 } from '../drm';
 import type { Presentation } from '../types';
 
@@ -212,5 +215,53 @@ describe('resolveDrmHeaders', () => {
         throw new Error('no entitlement yet');
       })
     ).toBeUndefined();
+  });
+});
+
+describe('sourceDrmSystems', () => {
+  const widevine: KeySystemModule = { keySystem: 'com.widevine.alpha', keyFormats: [] };
+
+  it('resolves url and header fields from the current source, and reflects a source swap', () => {
+    let drm: DrmSystemsConfig | undefined = {
+      'com.widevine.alpha': { licenseUrl: 'https://a', headers: { Authorization: 'one' } },
+    };
+    // The engine holds this entry object for its whole life; a swap must show through it, not a rebuild.
+    const entry = sourceDrmSystems(() => drm, [widevine])['com.widevine.alpha']!;
+
+    expect(resolveDrmUrl(entry.licenseUrl)).toBe('https://a');
+    expect(resolveDrmHeaders(entry.headers)).toEqual({ Authorization: 'one' });
+
+    drm = { 'com.widevine.alpha': { licenseUrl: 'https://b' } };
+
+    expect(resolveDrmUrl(entry.licenseUrl)).toBe('https://b');
+    expect(resolveDrmHeaders(entry.headers)).toBeUndefined();
+  });
+
+  it('applies the current source response transform, and derefs it live across swaps', async () => {
+    let drm: DrmSystemsConfig | undefined;
+    const entry = sourceDrmSystems(() => drm, [widevine])['com.widevine.alpha']!;
+    const bytes = new Uint8Array([1, 2, 3]);
+
+    // No source transform named: the same bytes pass through untouched.
+    expect(await entry.licenseResponse!(bytes)).toBe(bytes);
+
+    drm = { 'com.widevine.alpha': { licenseResponse: () => new Uint8Array([9]) } };
+    expect([...(await entry.licenseResponse!(bytes))]).toEqual([9]);
+
+    // Swapped to a source with none again: the same stable wrapper reverts to passthrough.
+    drm = {};
+    expect(await entry.licenseResponse!(bytes)).toBe(bytes);
+  });
+
+  it('passes a request through untouched until the source names a request transform', async () => {
+    let drm: DrmSystemsConfig | undefined = {};
+    const entry = sourceDrmSystems(() => drm, [widevine])['com.widevine.alpha']!;
+    const request: DrmRequest = { url: 'https://l', headers: {}, body: null };
+
+    expect(await entry.certificateRequest!(request)).toBe(request);
+    expect(await entry.licenseRequest!(request)).toBe(request);
+
+    drm = { 'com.widevine.alpha': { licenseRequest: (r) => ({ ...r, headers: { ...r.headers, 'X-Tok': 't' } }) } };
+    expect((await entry.licenseRequest!(request)).headers).toEqual({ 'X-Tok': 't' });
   });
 });
