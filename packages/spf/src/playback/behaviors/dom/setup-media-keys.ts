@@ -15,9 +15,10 @@
  * is up (see `load-segments.ts`); compose this behavior ahead of them so the gate is up before their first dispatch —
  * but lowered on _attach_, not on license: the appends that follow are what fire `encrypted` for the event-driven path,
  * and browsers queue decode on missing keys. Failures report onto the errors sequence via `emitError` (SVTA 4008 no
- * usable key system, 4010 MediaKeys init, 4013 certificate); a refused negotiation or failed certificate leaves the
- * gate up — playback stays parked rather than failing decode, and severity is the adapter's call. A refusal publishes
- * {@link NO_KEY_SYSTEM}, which is what lets rendition pruning reach the verdict `track-switching` owns.
+ * usable key system, 99408 the source is non-DRM clear-key encryption we can't decrypt, 4010 MediaKeys init, 4013
+ * certificate); a refused negotiation or failed certificate leaves the gate up — playback stays parked rather than
+ * failing decode, and severity is the adapter's call. A refusal publishes {@link NO_KEY_SYSTEM}, which is what lets
+ * rendition pruning reach the verdict `track-switching` owns.
  *
  * Single-positive-state reactor riding the resolver's resolved/unresolved lifecycle, like `setupMediaSource`: source
  * replacement routes through `'preconditions-unmet'`, whose state-exit cleanup detaches MediaKeys
@@ -45,6 +46,7 @@ import {
   type DrmSystemsConfig,
   declaredDrmKeys,
   declaredEncryptionScheme,
+  firstNonDrmEncryptionKey,
   fetchDrm,
   type KeySystemModule,
   keySystemCandidates,
@@ -56,6 +58,7 @@ import {
   SVTA_DRM_CERTIFICATE_ERROR,
   SVTA_DRM_INITIALIZATION_ERROR,
   SVTA_UNSUPPORTED_DRM_SYSTEM,
+  SVTA_UNSUPPORTED_ENCRYPTION_METHOD,
 } from '../../../media/errors';
 import { isResolvedPresentation, type MaybeResolvedPresentation } from '../../../media/types';
 import { type ErrorEmitterState, emitError } from '../collect-errors';
@@ -158,10 +161,28 @@ function setupMediaKeysSetup({
             if (!result) {
               // Gate stays up: parked playback beats guaranteed decode
               // failure. Severity is the adapter's call, per errors.md.
-              emitError(state, {
-                code: SVTA_UNSUPPORTED_DRM_SYSTEM,
-                data: { keySystems: candidates.map((module_) => module_.keySystem) },
-              });
+              //
+              // Name the real gap. No candidate can mean the source is
+              // clear-key encrypted — an `identity`-keyformat key (AES-128 /
+              // SAMPLE-AES over HTTP), which is not EME at all and which this
+              // engine has no decryptor for (clear-key-aes.md). Report the
+              // unsupported *encryption method* for that, rather than blaming a
+              // DRM system that was never involved; a declared-but-unlicensable
+              // or refused DRM system still reports 4008.
+              const nonDrmKey = candidates.length === 0 ? firstNonDrmEncryptionKey(keys) : undefined;
+
+              emitError(
+                state,
+                nonDrmKey
+                  ? {
+                      code: SVTA_UNSUPPORTED_ENCRYPTION_METHOD,
+                      data: { method: nonDrmKey.method, keyFormat: nonDrmKey.keyFormat },
+                    }
+                  : {
+                      code: SVTA_UNSUPPORTED_DRM_SYSTEM,
+                      data: { keySystems: candidates.map((module_) => module_.keySystem) },
+                    }
+              );
 
               // Cause reported; the verdict is `track-switching`'s. Publishing
               // the refusal re-fires its constraint chain, where

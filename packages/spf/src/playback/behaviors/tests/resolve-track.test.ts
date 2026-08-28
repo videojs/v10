@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import type { StateSignals } from '../../../core/composition/create-composition';
 import { signal } from '../../../core/signals/primitives';
 import type { TaskLike } from '../../../core/tasks/task';
-import { SVTA_UNSUPPORTED_DRM_SYSTEM, type SvtaError } from '../../../media/errors';
+import { SVTA_UNSUPPORTED_DRM_SYSTEM, SVTA_UNSUPPORTED_ENCRYPTION_METHOD, type SvtaError } from '../../../media/errors';
 import type {
   MaybeResolvedPresentation,
   PartiallyResolvedAudioTrack,
@@ -845,13 +845,24 @@ http://example.com/segment1.m4s
     reactor.destroy();
   });
 
-  it('reports unsupported DRM when the playlist is encrypted', async () => {
-    const state = setup('#EXT-X-KEY:METHOD=SAMPLE-AES,URI="skd://k"');
+  it('reports unsupported DRM when the playlist is DRM-encrypted', async () => {
+    const state = setup('#EXT-X-KEY:METHOD=SAMPLE-AES,URI="skd://k",KEYFORMAT="com.apple.streamingkeydelivery"');
     const reactor = resolveVideoTrack.setup({ state, config: { reportUnsupportedTrackConditions } });
 
     await flush();
 
     expect(state.errors.get()?.map((error) => error.code)).toEqual([SVTA_UNSUPPORTED_DRM_SYSTEM]);
+    reactor.destroy();
+  });
+
+  it('reports an unsupported encryption method for a clear-key (identity) playlist', async () => {
+    // METHOD=AES-128 with no KEYFORMAT is clear-key over HTTP, not DRM.
+    const state = setup('#EXT-X-KEY:METHOD=AES-128,URI="https://example.com/key.bin"');
+    const reactor = resolveVideoTrack.setup({ state, config: { reportUnsupportedTrackConditions } });
+
+    await flush();
+
+    expect(state.errors.get()?.map((error) => error.code)).toEqual([SVTA_UNSUPPORTED_ENCRYPTION_METHOD]);
     reactor.destroy();
   });
 

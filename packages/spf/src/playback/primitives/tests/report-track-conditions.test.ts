@@ -4,6 +4,7 @@ import type { KeySystemModule } from '../../../media/drm';
 import {
   SVTA_UNSUPPORTED_AUDIO_FORMAT,
   SVTA_UNSUPPORTED_DRM_SYSTEM,
+  SVTA_UNSUPPORTED_ENCRYPTION_METHOD,
   SVTA_UNSUPPORTED_VIDEO_FORMAT,
 } from '../../../media/errors';
 import { MEDIA_PLAYLIST_METADATA_KEY, type ResolvedTrack, type TrackType } from '../../../media/types';
@@ -53,6 +54,16 @@ describe('reportUnsupportedTrackConditions', () => {
 
   it('reports unsupported DRM for an encrypted rendition', () => {
     expect(codes(track('video', { encrypted: true }))).toEqual([SVTA_UNSUPPORTED_DRM_SYSTEM]);
+  });
+
+  it('reports an unsupported encryption method for a clear-key (identity-keyformat) rendition', () => {
+    // AES-128 with no KEYFORMAT is clear-key, not DRM — the cause names the method.
+    const conditions = reportUnsupportedTrackConditions(
+      track('video', { encrypted: true, keys: [{ method: 'AES-128' }] })
+    );
+
+    expect(conditions.map((error) => error.code)).toEqual([SVTA_UNSUPPORTED_ENCRYPTION_METHOD]);
+    expect(conditions[0]?.data).toMatchObject({ trackType: 'video', trackId: 'video-1', method: 'AES-128' });
   });
 
   it('reports both causes when a rendition is encrypted MPEG-TS', () => {
