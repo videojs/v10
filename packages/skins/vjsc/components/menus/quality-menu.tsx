@@ -1,36 +1,48 @@
 import { qualityText } from '@videojs/core/i18n/text/menu';
 import { SwitchesIcon } from '@videojs/icons/vjsc';
-import { type PropsOf, Template, Text } from 'vjsc/components';
+import { type Props, Template, Text } from 'vjsc/components';
 
 import styles from '../../styles/menus/menu.styles';
-import { QualityRadioGroup } from './radio-group';
+import { MenuChevron } from './menu-chevron';
 import { RadioItem } from './radio-item';
-import { Submenu } from './submenu';
 
-export interface QualityMenuProps extends Omit<
-  PropsOf<typeof Submenu>,
-  'children' | 'icon' | 'label' | 'selectedLabel'
-> {}
+export interface QualityMenuProps extends MenuProps {
+  className?: Props<MenuProps>['className'];
+}
 
-export function QualityMenu(props: QualityMenuProps = {}) {
+export function QualityMenu({ className, ...props }: QualityMenuProps = {}) {
   return (
-    <Submenu
-      icon={<SwitchesIcon className={styles.triggerItemIcon} />}
-      label={<Text token={qualityText.key}>{qualityText.text}</Text>}
-      selectedLabel={<Text className={styles.hintLabel} data-part="hint" />}
-      {...props}
-    >
-      <QualityRadioGroup>
-        <Template name="quality-option">
-          <RadioItem>
-            <Text>
-              <Template.Part name="label" />
-              <Template.Part name="tier" className={styles.tier} />
-            </Text>
-            <Template.Part name="badge" className={styles.badge} />
-          </RadioItem>
-        </Template>
-      </QualityRadioGroup>
-    </Submenu>
+    <$.Menu.Root {...props}>
+      <$.QualityRadioGroup.Root>
+        <$.Menu.Trigger className={styles.triggerItem}>
+          <SwitchesIcon className={styles.triggerItemIcon} />
+          <Text token={qualityText.key}>{qualityText.text}</Text>
+          <Text className={styles.hint}>
+            <$.QualityRadioGroup.Value className={styles.hintLabel} />
+            <MenuChevron />
+          </Text>
+        </$.Menu.Trigger>
+        <$.Menu.Content className={[styles.content, className]}>
+          <$.Menu.Item className={styles.backItem}>
+            <MenuChevron back />
+            <Text token={qualityText.key}>{qualityText.text}</Text>
+          </$.Menu.Item>
+          <$.Menu.Separator className={styles.separator} />
+          <$.QualityRadioGroup.Options className={styles.radioGroup}>
+            <Template name="quality-option">
+              <RadioItem>
+                <Text>
+                  <Template.Part name="label" />
+                  <Template.Part name="tier" className={styles.tier} />
+                </Text>
+                <Template.Part name="badge" className={styles.badge} />
+              </RadioItem>
+            </Template>
+          </$.QualityRadioGroup.Options>
+        </$.Menu.Content>
+      </$.QualityRadioGroup.Root>
+    </$.Menu.Root>
   );
 }
+import type { MenuProps } from '@videojs/core';
+import * as $ from '@videojs/core/vjsc';

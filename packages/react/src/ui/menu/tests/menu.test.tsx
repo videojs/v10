@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { createPlayerWrapper } from '../../../testing/mocks';
 import { ControlsContextProvider } from '../../controls/context';
+import { useMenuOptionState } from '../context';
 import { MenuCheckboxItem } from '../menu-checkbox-item';
 import { MenuContent } from '../menu-content';
 import { MenuGroup } from '../menu-group';
@@ -24,6 +25,29 @@ afterEach(() => {
 
 function makeDOMRect(x: number, y: number, width: number, height: number): DOMRect {
   return new DOMRect(x, y, width, height);
+}
+
+function OptionPublisher() {
+  useMenuOptionState({ value: 'Auto', disabled: false, hidden: false, availability: 'available' });
+
+  return null;
+}
+
+function MountedOptionMenuFixture() {
+  return (
+    <MenuRoot>
+      <MenuTrigger data-testid="settings-trigger">Settings</MenuTrigger>
+      <MenuPopup keepMounted data-testid="settings-popup">
+        <MenuContent>
+          <MenuRoot>
+            <OptionPublisher />
+            <MenuTrigger data-testid="quality-trigger">Quality</MenuTrigger>
+            <MenuContent data-testid="quality-content">Auto</MenuContent>
+          </MenuRoot>
+        </MenuContent>
+      </MenuPopup>
+    </MenuRoot>
+  );
 }
 
 function SubmenuFixture({
@@ -422,6 +446,19 @@ function DynamicMenuFixture({ showCaptions }: { showCaptions: boolean }) {
 }
 
 describe('MenuContent', () => {
+  it('publishes mounted option state through submenu and root triggers', async () => {
+    render(<MountedOptionMenuFixture />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('quality-trigger').getAttribute('data-availability')).toBe('available');
+      expect(screen.getByTestId('settings-trigger').getAttribute('data-availability')).toBe('available');
+    });
+
+    expect(screen.getByTestId('settings-popup').hasAttribute('hidden')).toBe(true);
+    expect(screen.getByTestId('settings-popup').hasAttribute('inert')).toBe(true);
+    expect(screen.queryByTestId('quality-content')).toBeNull();
+  });
+
   it('includes the root trigger in sequential focus', () => {
     render(
       <MenuRoot>

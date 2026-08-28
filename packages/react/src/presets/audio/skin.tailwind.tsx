@@ -45,7 +45,7 @@ import { MuteButton } from '@/ui/mute-button';
 import { PlayButton } from '@/ui/play-button';
 import { usePlaybackRateOptions } from '@/ui/playback-rate';
 import { PlaybackRateButton } from '@/ui/playback-rate-button';
-import { PlaybackRateRadioGroup as PlaybackRateRadioGroupComponent } from '@/ui/playback-rate-radio-group';
+import { PlaybackRateRadioGroupLegacy as PlaybackRateRadioGroupComponent } from '@/ui/playback-rate-radio-group';
 import { Popover } from '@/ui/popover';
 import { SeekButton } from '@/ui/seek-button';
 import { StatusAnnouncer } from '@/ui/status-announcer';

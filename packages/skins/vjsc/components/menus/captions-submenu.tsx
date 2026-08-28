@@ -1,32 +1,44 @@
 import { captionsText } from '@videojs/core/i18n/text/menu';
 import { CaptionsOffIcon } from '@videojs/icons/vjsc';
-import { type PropsOf, Template, Text } from 'vjsc/components';
+import { type Props, Template, Text } from 'vjsc/components';
 
 import styles from '../../styles/menus/menu.styles';
-import { CaptionsRadioGroup } from './radio-group';
+import { MenuChevron } from './menu-chevron';
 import { RadioItem } from './radio-item';
-import { Submenu } from './submenu';
 
-export interface CaptionsSubmenuProps extends Omit<
-  PropsOf<typeof Submenu>,
-  'children' | 'icon' | 'label' | 'selectedLabel'
-> {}
+export interface CaptionsSubmenuProps extends MenuProps {
+  className?: Props<MenuProps>['className'];
+}
 
-export function CaptionsSubmenu(props: CaptionsSubmenuProps = {}) {
+export function CaptionsSubmenu({ className, ...props }: CaptionsSubmenuProps = {}) {
   return (
-    <Submenu
-      icon={<CaptionsOffIcon className={styles.triggerItemIcon} />}
-      label={<Text token={captionsText.key}>{captionsText.text}</Text>}
-      selectedLabel={<Text className={styles.hintLabel} data-part="hint" />}
-      {...props}
-    >
-      <CaptionsRadioGroup>
-        <Template name="captions-option">
-          <RadioItem>
-            <Template.Part name="label" />
-          </RadioItem>
-        </Template>
-      </CaptionsRadioGroup>
-    </Submenu>
+    <$.Menu.Root {...props}>
+      <$.CaptionsRadioGroup.Root>
+        <$.Menu.Trigger className={styles.triggerItem}>
+          <CaptionsOffIcon className={styles.triggerItemIcon} />
+          <Text token={captionsText.key}>{captionsText.text}</Text>
+          <Text className={styles.hint}>
+            <$.CaptionsRadioGroup.Value className={styles.hintLabel} />
+            <MenuChevron />
+          </Text>
+        </$.Menu.Trigger>
+        <$.Menu.Content className={[styles.content, className]}>
+          <$.Menu.Item className={styles.backItem}>
+            <MenuChevron back />
+            <Text token={captionsText.key}>{captionsText.text}</Text>
+          </$.Menu.Item>
+          <$.Menu.Separator className={styles.separator} />
+          <$.CaptionsRadioGroup.Options className={styles.radioGroup}>
+            <Template name="captions-option">
+              <RadioItem>
+                <Template.Part name="label" />
+              </RadioItem>
+            </Template>
+          </$.CaptionsRadioGroup.Options>
+        </$.Menu.Content>
+      </$.CaptionsRadioGroup.Root>
+    </$.Menu.Root>
   );
 }
+import type { MenuProps } from '@videojs/core';
+import * as $ from '@videojs/core/vjsc';

@@ -1,6 +1,2 @@
-export {
-  PlaybackRateRadioGroup,
-  type PlaybackRateRadioGroupItemProps,
-  type PlaybackRateRadioGroupItemState,
-  type PlaybackRateRadioGroupProps,
-} from './playback-rate-radio-group';
+export * as PlaybackRateRadioGroup from './index.parts';
+export { PlaybackRateRadioGroupLegacy } from './playback-rate-radio-group';

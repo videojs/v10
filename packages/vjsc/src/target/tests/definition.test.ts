@@ -96,6 +96,7 @@ describe('defineComponentTarget', () => {
       import: { from: '@fixture/react', name: 'Poster' },
     });
     expect(componentTarget.source).toBe('@fixture/components');
+    expect(componentTarget.transparent).toEqual([]);
     expect(componentTarget.transforms).toEqual([]);
   });
 });

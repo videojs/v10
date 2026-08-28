@@ -4,10 +4,10 @@ import type { MediaAudioTrack } from '@videojs/media';
 import { createRef } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
+import { AudioTrackRadioGroup } from '..';
 import { I18nProvider } from '../../../i18n';
 import { createPlayerWrapper } from '../../../testing/mocks';
 import { Menu } from '../../menu';
-import { AudioTrackRadioGroup, type AudioTrackRadioGroupItemState } from '../audio-track-radio-group';
 
 afterEach(() => {
   resetI18nRegistry();
@@ -33,11 +33,13 @@ function renderAudioTrackRadioGroup({
   const { Wrapper } = createPlayerWrapper({ audioTrackList, selectAudioTrack });
   const content = (
     <Menu.Root defaultOpen>
-      <Menu.Popup>
-        <Menu.Content>
-          {group ?? <AudioTrackRadioGroup renderItem={(props) => <Menu.RadioItem {...props} />} />}
-        </Menu.Content>
-      </Menu.Popup>
+      <AudioTrackRadioGroup.Root>
+        <Menu.Popup>
+          <Menu.Content>
+            {group ?? <AudioTrackRadioGroup.Options renderItem={(props) => <Menu.RadioItem {...props} />} />}
+          </Menu.Content>
+        </Menu.Popup>
+      </AudioTrackRadioGroup.Root>
     </Menu.Root>
   );
 
@@ -48,11 +50,11 @@ function renderAudioTrackRadioGroup({
 
 describe('AudioTrackRadioGroup', () => {
   it('renders generated radio item props and option state', () => {
-    const states: AudioTrackRadioGroupItemState[] = [];
+    const states: AudioTrackRadioGroup.ItemState[] = [];
 
     renderAudioTrackRadioGroup({
       group: (
-        <AudioTrackRadioGroup
+        <AudioTrackRadioGroup.Options
           renderItem={(props, state) => {
             states.push(state);
             return <Menu.RadioItem {...props} />;
@@ -89,7 +91,7 @@ describe('AudioTrackRadioGroup', () => {
 
     renderAudioTrackRadioGroup({
       group: (
-        <AudioTrackRadioGroup
+        <AudioTrackRadioGroup.Options
           ref={ref}
           data-testid="group"
           className={(state) => `audio-${state.availability}`}
@@ -125,7 +127,7 @@ describe('AudioTrackRadioGroup', () => {
   it('supports custom group and item roots', () => {
     renderAudioTrackRadioGroup({
       group: (
-        <AudioTrackRadioGroup
+        <AudioTrackRadioGroup.Options
           render={(props, state) => <section {...props} data-value={state.value} />}
           renderItem={(props, state) => (
             <Menu.RadioItem {...props}>
@@ -157,7 +159,10 @@ describe('AudioTrackRadioGroup', () => {
       group: (
         <>
           <span id="audio-label">Choose audio</span>
-          <AudioTrackRadioGroup aria-labelledby="audio-label" renderItem={(props) => <Menu.RadioItem {...props} />} />
+          <AudioTrackRadioGroup.Options
+            aria-labelledby="audio-label"
+            renderItem={(props) => <Menu.RadioItem {...props} />}
+          />
         </>
       ),
     });

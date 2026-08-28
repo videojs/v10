@@ -82,7 +82,8 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
     [isSubmenu, menu, onKeyDown]
   );
 
-  if (isSubmenu && !isActive && state.status !== 'ending') return null;
+  const inactive = isSubmenu && !isActive && state.status !== 'ending';
+  if (inactive) return null;
 
   const contentNode = renderElement(
     'div',

@@ -1,9 +1,10 @@
+import type { MenuOptionState } from '@videojs/core';
 import type { PropertyValues } from '@videojs/element';
 import { ContextConsumer } from '@videojs/element/context';
 import { findElementChild } from '@videojs/utils/dom';
 
 import { RadioGroupElement } from '../radio-group/radio-group-element';
-import { type MenuContextValue, type MenuTriggerState, menuContext } from './context';
+import { type MenuContextValue, menuContext } from './context';
 import { MenuGroupController } from './menu-group-controller';
 import { MenuRadioItemElement } from './menu-radio-item-element';
 
@@ -12,12 +13,13 @@ export class MenuRadioGroupElement extends RadioGroupElement {
 
   readonly #group = new MenuGroupController(this);
   readonly #menu = new ContextConsumer(this, { context: menuContext, subscribe: true });
+  readonly #optionSource = Symbol('menu-option');
   #ariaLabel: string | null = null;
-  #triggerMenu: MenuContextValue['menu'] | null = null;
-  #setTriggerState: ((state: MenuTriggerState) => void) | null = null;
+  #optionMenu: MenuContextValue['menu'] | null = null;
+  #setOptionState: MenuContextValue['setOptionState'] | null = null;
 
   override disconnectedCallback(): void {
-    this.#clearMenuTriggerState();
+    this.#clearMenuOptionState();
     super.disconnectedCallback();
   }
 
@@ -48,33 +50,34 @@ export class MenuRadioGroupElement extends RadioGroupElement {
     this.setAttribute('aria-label', label);
   }
 
-  protected publishMenuTriggerState(
+  protected publishMenuOptionState(
     disabled: boolean,
-    availability?: 'available' | 'unavailable' | 'unsupported'
+    hidden: boolean,
+    availability: MenuOptionState['availability']
   ): void {
     const context = this.#menu.value ?? null;
 
-    if (context?.menu !== this.#triggerMenu) {
-      this.#clearMenuTriggerState();
-      this.#triggerMenu = context?.menu ?? null;
-      this.#setTriggerState = context?.setTriggerState ?? null;
+    if (context?.menu !== this.#optionMenu) {
+      this.#clearMenuOptionState();
+      this.#optionMenu = context?.menu ?? null;
+      this.#setOptionState = context?.setOptionState ?? null;
     }
 
-    if (!this.#setTriggerState) return;
+    if (!this.#setOptionState) return;
 
     const selectedItem = findElementChild(
       this,
       (item): item is MenuRadioItemElement => item instanceof MenuRadioItemElement && item.value === this.value
     );
     const label = selectedItem?.querySelector<HTMLElement>('[data-part~="label"]')?.textContent;
-    const hint = label ?? selectedItem?.textContent?.trim() ?? '';
+    const value = label ?? selectedItem?.textContent?.trim() ?? '';
 
-    this.#setTriggerState({ hint, disabled, availability });
+    this.#setOptionState(this.#optionSource, { value, disabled, hidden, availability });
   }
 
-  #clearMenuTriggerState(): void {
-    this.#setTriggerState?.({ hint: '', disabled: false });
-    this.#triggerMenu = null;
-    this.#setTriggerState = null;
+  #clearMenuOptionState(): void {
+    this.#setOptionState?.(this.#optionSource, null);
+    this.#optionMenu = null;
+    this.#setOptionState = null;
   }
 }

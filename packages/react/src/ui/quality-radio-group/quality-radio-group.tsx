@@ -1,13 +1,15 @@
-import { type QualityRadioGroupCore, QualityRadioGroupDataAttrs } from '@videojs/core';
+import { type MenuOptionState, type QualityRadioGroupCore, QualityRadioGroupDataAttrs } from '@videojs/core';
 import { getStateDataAttrs } from '@videojs/core/dom';
 import { isFunction } from '@videojs/utils/predicate';
-import type { ReactElement } from 'react';
-import { Fragment, forwardRef } from 'react';
+import type { ReactElement, ReactNode } from 'react';
+import { createContext, Fragment, forwardRef, useContext } from 'react';
 
 import type { HTMLProps, UIComponentProps } from '../../utils/types';
+import { renderElement } from '../../utils/use-render';
+import { useMenuOptionState } from '../menu/context';
 import { MenuRadioGroup } from '../menu/menu-radio-group';
 import type { MenuRadioItemProps } from '../menu/menu-radio-item';
-import { type QualityOption, type QualityOptionsProps, useQualityOptions } from '../quality/use-quality-options';
+import { type QualityOption, type QualityOptionsProps, type QualityOptionsResult, useQualityOptions } from '../quality';
 
 export type QualityRadioGroupItemState = QualityOption & {
   /** Whether this quality option is currently selected. */
@@ -19,43 +21,60 @@ export interface QualityRadioGroupItemProps extends Omit<MenuRadioItemProps, 're
   'data-rendition': string;
 }
 
-export interface QualityRadioGroupProps
-  extends Omit<UIComponentProps<'div', QualityRadioGroupCore.State>, 'children'>, QualityOptionsProps {
+export interface QualityRadioGroupRootProps extends QualityOptionsProps {
+  children?: ReactNode;
+}
+
+export interface QualityRadioGroupOptionsProps extends Omit<
+  UIComponentProps<'div', QualityRadioGroupCore.State>,
+  'children'
+> {
   /** Render one consumer-owned menu radio item for every quality option. */
   renderItem: (props: QualityRadioGroupItemProps, state: QualityRadioGroupItemState) => ReactElement;
 }
 
-/**
- * Renders menu radio items for the player's video renditions.
- *
- * @example
- *   ```tsx
- *   <QualityRadioGroup
- *     renderItem={(props, item) => (
- *       <Menu.RadioItem {...props}>
- *         {item.label}
- *         {item.tier ? <sup>{item.tier}</sup> : null}
- *         <Menu.ItemIndicator checked={item.checked} />
- *       </Menu.RadioItem>
- *     )}
- *   />;
- *   ```;
- */
-export const QualityRadioGroup = forwardRef<HTMLDivElement, QualityRadioGroupProps>(
-  function QualityRadioGroup(componentProps, forwardedRef) {
+export type QualityRadioGroupValueProps = UIComponentProps<'span', QualityOptionsResult>;
+
+export interface QualityRadioGroupLegacyProps extends QualityRadioGroupOptionsProps, QualityOptionsProps {}
+
+const QualityRadioGroupContext = createContext<QualityOptionsResult | null | undefined>(undefined);
+
+/** Owns quality option state and shares it with an enclosing menu. Does not render a DOM element. */
+export function QualityRadioGroupRoot({ children, ...props }: QualityRadioGroupRootProps): ReactNode {
+  const quality = useQualityOptions(props);
+
+  useMenuOptionState(toMenuOptionState(quality));
+
+  return <QualityRadioGroupContext.Provider value={quality}>{children}</QualityRadioGroupContext.Provider>;
+}
+
+/** Displays the selected quality label. */
+export const QualityRadioGroupValue = forwardRef<HTMLSpanElement, QualityRadioGroupValueProps>(
+  function QualityRadioGroupValue({ render, className, style, ...elementProps }, forwardedRef) {
+    const quality = useQualityRadioGroupContext();
+    if (!quality) return null;
+
+    return renderElement(
+      'span',
+      { render, className, style },
+      { state: quality, ref: forwardedRef, props: [elementProps, { children: quality.selectedLabel }] }
+    );
+  }
+);
+
+/** Renders menu radio items for the player's video renditions. */
+export const QualityRadioGroupOptions = forwardRef<HTMLDivElement, QualityRadioGroupOptionsProps>(
+  function QualityRadioGroupOptions(componentProps, forwardedRef) {
     const {
       renderItem,
       render,
       className,
       style,
-      label,
-      formatRendition,
-      disabled,
       'aria-label': ariaLabelProp,
       'aria-labelledby': ariaLabelledBy,
       ...elementProps
     } = componentProps;
-    const quality = useQualityOptions({ label, formatRendition, disabled });
+    const quality = useQualityRadioGroupContext();
     if (!quality) return null;
 
     const { state, value, options, setValue } = quality;
@@ -98,8 +117,44 @@ export const QualityRadioGroup = forwardRef<HTMLDivElement, QualityRadioGroupPro
   }
 );
 
-export namespace QualityRadioGroup {
-  export type Props = QualityRadioGroupProps;
+/** @internal Compatibility adapter for the existing preset sources. */
+export const QualityRadioGroupLegacy = forwardRef<HTMLDivElement, QualityRadioGroupLegacyProps>(
+  function QualityRadioGroupLegacy({ label, formatRendition, disabled, ...props }, forwardedRef) {
+    return (
+      <QualityRadioGroupRoot label={label} formatRendition={formatRendition} disabled={disabled}>
+        <QualityRadioGroupOptions {...props} ref={forwardedRef} />
+      </QualityRadioGroupRoot>
+    );
+  }
+);
+
+function useQualityRadioGroupContext(): QualityOptionsResult | null {
+  const quality = useContext(QualityRadioGroupContext);
+  if (quality === undefined) throw new Error('QualityRadioGroup parts must be used within QualityRadioGroup.Root');
+
+  return quality;
+}
+
+function toMenuOptionState(quality: QualityOptionsResult | null): MenuOptionState {
+  return {
+    value: quality?.selectedLabel ?? '',
+    disabled: quality?.disabled ?? true,
+    hidden: quality?.hidden ?? true,
+    availability: quality?.state.availability ?? 'unsupported',
+  };
+}
+
+export namespace QualityRadioGroupRoot {
+  export type Props = QualityRadioGroupRootProps;
+}
+
+export namespace QualityRadioGroupValue {
+  export type Props = QualityRadioGroupValueProps;
+  export type State = QualityOptionsResult;
+}
+
+export namespace QualityRadioGroupOptions {
+  export type Props = QualityRadioGroupOptionsProps;
   export type State = QualityRadioGroupCore.State;
   export type ItemProps = QualityRadioGroupItemProps;
   export type ItemState = QualityRadioGroupItemState;

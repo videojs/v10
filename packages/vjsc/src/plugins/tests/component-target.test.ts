@@ -31,6 +31,15 @@ const schema = defineSchema('@fixture/components', {
       Content: defineComponent(),
     },
   }),
+  OptionGroup: defineComponent({
+    name: 'OptionGroup',
+    root: 'Root',
+    parts: {
+      Root: defineComponent(),
+      Value: defineComponent(),
+      Options: defineComponent(),
+    },
+  }),
   Slider: defineComponent({
     name: 'Slider',
     root: 'Root',
@@ -81,6 +90,7 @@ const htmlTarget = defineComponentTarget<typeof schema>()(({ target, element }) 
 
   return {
     source: '@fixture/components',
+    transparent: ['OptionGroup'],
     resolve: ({ component }) =>
       element(`media-${component.toLowerCase()}`, {
         import: { from: '@fixture/elements', sideEffect: true },
@@ -203,6 +213,30 @@ describe('componentTargetPlugin', () => {
     expect(source).toContain('<Decorator><button commandfor="__vjsc-id-');
     expect(source).toContain('>Open</button></Decorator>');
     expect(source).toContain('<media-menu id="__vjsc-id-');
+    expect(source).not.toContain('<$.');
+  });
+
+  it('collects compound parts through roots erased by the target', async () => {
+    const source = await transform(
+      `
+        import * as $ from '@fixture/components';
+        export const menu = (
+          <$.Menu.Root>
+            <$.OptionGroup.Root>
+              <$.Menu.Trigger>Open</$.Menu.Trigger>
+              <$.Menu.Content><$.OptionGroup.Options /></$.Menu.Content>
+            </$.OptionGroup.Root>
+          </$.Menu.Root>
+        );
+      `,
+      { targets: [htmlTarget] }
+    );
+    const commandFor = /commandfor="([^"]+)"/.exec(source)?.[1];
+    const contentId = / id="([^"]+)"/.exec(source)?.[1];
+
+    expect(commandFor).toBe(contentId);
+    expect(source).toContain('<media-optiongroup />');
+    expect(source).not.toContain('OptionGroup.Root');
     expect(source).not.toContain('<$.');
   });
 

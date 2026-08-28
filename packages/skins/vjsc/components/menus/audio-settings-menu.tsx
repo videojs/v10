@@ -9,7 +9,6 @@ import popupStyles from '../../styles/popups/popup.styles';
 import surfaceStyles from '../../styles/surfaces/surface.styles';
 import { ButtonTooltip } from '../buttons/button-tooltip';
 import { PlaybackRateButton } from '../buttons/playback-rate-button';
-import { PlaybackRateRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 
 export interface AudioSettingsMenuProps extends MenuProps {
@@ -19,20 +18,22 @@ export interface AudioSettingsMenuProps extends MenuProps {
 export function AudioSettingsMenu({ className, ...props }: AudioSettingsMenuProps = {}) {
   return (
     <$.Menu.Root side="top" align="center" boundary="viewport" {...props}>
-      <ButtonTooltip label={<Text token={speedText.key}>{speedText.text}</Text>} side="top">
-        <$.Menu.Trigger $render={PlaybackRateButton} />
-      </ButtonTooltip>
-      <$.Menu.Popup className={[popupStyles.root, popupStyles.safeArea, surfaceStyles.root, styles.popup, className]}>
-        <$.Menu.Content className={styles.content}>
-          <PlaybackRateRadioGroup>
-            <Template name="playback-rate-option">
-              <RadioItem>
-                <Template.Part name="label" />
-              </RadioItem>
-            </Template>
-          </PlaybackRateRadioGroup>
-        </$.Menu.Content>
-      </$.Menu.Popup>
+      <$.PlaybackRateRadioGroup.Root>
+        <ButtonTooltip label={<Text token={speedText.key}>{speedText.text}</Text>} side="top">
+          <$.Menu.Trigger $render={PlaybackRateButton} />
+        </ButtonTooltip>
+        <$.Menu.Popup className={[popupStyles.root, popupStyles.safeArea, surfaceStyles.root, styles.popup, className]}>
+          <$.Menu.Content className={styles.content}>
+            <$.PlaybackRateRadioGroup.Options className={styles.radioGroup}>
+              <Template name="playback-rate-option">
+                <RadioItem>
+                  <Template.Part name="label" />
+                </RadioItem>
+              </Template>
+            </$.PlaybackRateRadioGroup.Options>
+          </$.Menu.Content>
+        </$.Menu.Popup>
+      </$.PlaybackRateRadioGroup.Root>
     </$.Menu.Root>
   );
 }
