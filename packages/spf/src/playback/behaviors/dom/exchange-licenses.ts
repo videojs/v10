@@ -21,8 +21,12 @@
  * the MediaKeys they belong to. Setup order costs nothing in return — the precondition is reactive on
  * `context.mediaKeys`, so this behavior parks until the negotiation it consumes has published.
  *
- * Writes no slots — it only reads the handoff and talks to the CDM and the license server. Still out of scope (tracked
- * in drm-support.md): key rotation / keys declared after entry, and `keystatuschange` reactivity.
+ * Writes no slots — it only reads the handoff and talks to the CDM and the license server. Rotation scope (tracked in
+ * drm-support.md): the manifest loop licenses every key declared at entry, so VOD key rotation (all keys present at
+ * load) is covered, and FairPlay rotation rides the `encrypted` fallback as segments append. The one gap is mid-stream
+ * rotation for Widevine / PlayReady on a live reload — the entry captures the presentation once, later reloads' keys
+ * are never re-scanned, and the `encrypted` fallback isn't armed for manifest-licensed content. Also out of scope:
+ * `keystatuschange` reactivity.
  */
 import { listen } from '@videojs/utils/dom';
 
