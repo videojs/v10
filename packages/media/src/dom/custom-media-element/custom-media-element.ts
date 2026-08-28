@@ -3,6 +3,8 @@ import { omit, pick } from '@videojs/utils/object';
 import { kebabCase } from '@videojs/utils/string';
 import type { Constructor } from '@videojs/utils/types';
 
+import { getMediaCapabilityAttributes } from '../media-host/capability';
+
 /** CSS custom property names for video elements. */
 export const VideoCSSVars = {
   /** Border radius of the video element. */
@@ -154,13 +156,15 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
   class CustomMedia extends (globalThis.HTMLElement ?? class {}) {
     static getTemplateHTML = tag.endsWith('video') ? getVideoTemplateHTML : getCommonTemplateHTML(tag);
     static shadowRootOptions: ShadowRootInit = { mode: 'open' };
-    static properties = {
+    // Attributes the host's composed capabilities declare (e.g. `muted` from the
+    // volume capability) join the ones this element owns, so a host that skips a
+    // capability never reflects its attributes.
+    static properties: PropertyConfigs = {
       autoPictureInPicture: { type: Boolean },
       autoplay: { type: Boolean },
       controls: { type: Boolean },
       controlsList: { type: String },
       crossOrigin: { type: String, empty: null },
-      defaultMuted: { type: Boolean, attribute: 'muted' },
       disablePictureInPicture: { type: Boolean },
       disableRemotePlayback: { type: Boolean },
       loading: { type: String },
@@ -170,6 +174,7 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
       preload: { type: String, empty: null },
       src: { type: String, empty: '' },
       streamType: { type: String, attribute: 'stream-type', empty: 'unknown' },
+      ...getMediaCapabilityAttributes(MediaHost),
     };
 
     static get observedAttributes() {

@@ -1,12 +1,7 @@
-import type {
-  HTMLMediaElementHost,
-  MediaComponent,
-  MediaComponentConstructor,
-  MediaComponents,
-  HTMLMediaTargetLike as TargetLike,
-} from '../media-host';
+import type { MediaHostBase, HTMLMediaTargetLike as TargetLike } from '../media-host/base';
+import type { MediaComponent, MediaComponentConstructor, MediaComponents } from '../media-host/media-host';
 
-export type MediaHost<T extends TargetLike = any> = HTMLMediaElementHost<T, any>;
+export type MediaHost = MediaHostBase;
 
 const componentRegistry = new WeakMap<MediaHost, MediaComponents>();
 
@@ -42,23 +37,60 @@ export function addMediaComponent<T extends MediaComponent>(host: MediaHost, com
   };
 }
 
-export function getMediaProp<T extends TargetLike, K extends keyof T>(host: MediaHost<T>, prop: K): T[K] | undefined {
-  return getMediaOwner(host, prop)?.[prop];
+/**
+ * Read a forwarded media property.
+ *
+ * `Capability` names the contract the property belongs to. It defaults to the full target surface for hosts that
+ * forward the whole `HTMLMediaElement` API; a capability mixin passes its own capability instead, so the call site
+ * states exactly what it is forwarding.
+ */
+export function getMediaProp<Capability extends object = TargetLike, K extends keyof Capability = keyof Capability>(
+  host: MediaHost,
+  prop: K
+): Capability[K] | undefined {
+  return getMediaOwner<Capability>(host, prop)?.[prop];
 }
 
-export function setMediaProp<T extends TargetLike, K extends keyof T>(host: MediaHost<T>, prop: K, value: T[K]): void {
-  const own = getMediaOwner(host, prop);
+export function setMediaProp<Capability extends object = TargetLike, K extends keyof Capability = keyof Capability>(
+  host: MediaHost,
+  prop: K,
+  value: Capability[K]
+): void {
+  const own = getMediaOwner<Capability>(host, prop);
 
-  if (own) (own as Record<K, T[K]>)[prop] = value;
+  if (own) (own as Record<K, Capability[K]>)[prop] = value;
+}
+
+/**
+ * Bind the forwarding helpers to one capability.
+ *
+ * TypeScript cannot infer `Capability` from the host once capabilities are composed rather than declared on one generic
+ * class, and it will not infer `K` when `Capability` is passed explicitly. Binding it once per capability module keeps
+ * every accessor a one-liner and keeps each key checked against the capability it belongs to.
+ *
+ * @example
+ *   const volumeProps = mediaPropsFor<MediaVolumeCapability>();
+ *   volumeProps.get(host, 'volume'); // number | undefined
+ */
+export function mediaPropsFor<Capability extends object>() {
+  return {
+    get: <K extends keyof Capability>(host: MediaHost, prop: K): Capability[K] | undefined =>
+      getMediaProp<Capability, K>(host, prop),
+    set: <K extends keyof Capability>(host: MediaHost, prop: K, value: Capability[K]): void =>
+      setMediaProp<Capability, K>(host, prop, value),
+  };
 }
 
 /**
  * Find the object that owns a media property: the first component `override` exposing it, otherwise the attached
  * target.
  */
-export function getMediaOwner<T extends TargetLike>(host: MediaHost<T>, prop: keyof T): Partial<T> | null {
+export function getMediaOwner<Capability extends object = TargetLike>(
+  host: MediaHost,
+  prop: keyof Capability
+): Partial<Capability> | null {
   for (const component of getMediaComponents(host).values()) {
-    const override = component.targetOverride as Partial<T> | null | undefined;
+    const override = component.targetOverride as Partial<Capability> | null | undefined;
     if (override?.[prop] !== undefined) return override;
   }
 

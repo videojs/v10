@@ -1,4 +1,4 @@
-import type { EventListenerFor, EventType, QueriedElement } from '@videojs/utils/dom';
+import type { EventListenerFor, EventType } from '@videojs/utils/dom';
 
 import { EMPTY_REMOTE, EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES } from '../../core/constants';
 import {
@@ -6,22 +6,43 @@ import {
   type MediaFull,
   type MediaStreamType,
   MediaStreamTypes,
-  type MediaTargetLike,
   type TextTrackKind,
   type TextTrackLike,
 } from '../../core/types';
-import { getMediaComponents, getMediaOwner, getMediaProp, setMediaProp } from '../utils';
+import { getMediaOwner, getMediaProp, setMediaProp } from '../utils';
+import { MediaHostBase } from './base';
+import { volumeCapability } from './capabilities/volume';
+import { createMediaHost } from './capability';
 
-export { addMediaComponent, getMediaComponents, getMediaOwner, getMediaProp, setMediaProp } from '../utils';
+export {
+  addMediaComponent,
+  getMediaComponents,
+  getMediaOwner,
+  getMediaProp,
+  mediaPropsFor,
+  setMediaProp,
+} from '../utils';
+export { type HTMLMediaTargetLike, MediaHostBase } from './base';
+export { volumeCapability } from './capabilities/volume';
+export {
+  type ComposedMediaApi,
+  createMediaHost,
+  defineMediaCapability,
+  getMediaCapabilities,
+  getMediaCapabilityAttributes,
+  getMediaCapabilityEvents,
+  type MediaCapabilityAttribute,
+  type MediaCapabilityDescriptor,
+  type MediaCapabilityProp,
+  type MediaHostConstructor,
+  supportsMediaCapability,
+} from './capability';
 
-export interface HTMLMediaTargetLike extends MediaTargetLike, EventTarget {
-  querySelector<E extends Element = Element>(selectors: string): E | null;
-  querySelectorAll<E extends Element = Element>(selectors: string): NodeListOf<E> | never[];
-}
+import type { HTMLMediaTargetLike } from './base';
 
 export interface MediaComponent<Target extends HTMLMediaTargetLike = HTMLMediaTargetLike> {
   readonly targetOverride?: Partial<Target> | null;
-  setMedia?(host: HTMLMediaElementHost<Target, any>): void;
+  setMedia?(host: MediaHostBase): void;
   attach?(target: Target): void;
   detach?(): void;
   destroy?(): void;
@@ -36,88 +57,44 @@ export interface MediaComponents extends Map<MediaComponentConstructor, MediaCom
   set<T extends MediaComponent>(component: MediaComponentConstructor<T>, instance: T): this;
 }
 
+/**
+ * The capability manifest `HTMLMediaElementHost` is built from.
+ *
+ * Only volume has been described so far; the remaining capabilities still live in the class body below and move out one
+ * at a time.
+ */
+const HTMLMediaElementHostBase = createMediaHost([volumeCapability]);
+
 export class HTMLMediaElementHost<Target extends HTMLMediaTargetLike, Events extends { [K in keyof Events]: EventLike }>
-  extends EventTarget
+  extends HTMLMediaElementHostBase
   implements MediaFull
 {
-  #target: Target | null = null;
-  #eventTypes = new Set<string>();
   #streamType: MediaStreamType = MediaStreamTypes.UNKNOWN;
 
-  protected get target() {
-    return this.#target;
+  /** Narrows the base host's target to the shape this host was parameterized with. */
+  protected override get target(): Target | null {
+    return super.target as Target | null;
   }
 
-  attach(target: Target) {
-    if (!target || this.#target === target) return;
-
-    this.#target = target;
-
-    for (const type of this.#eventTypes) {
-      target.addEventListener(type, this.#forwardEvent);
-    }
-
-    for (const component of getMediaComponents(this).values()) {
-      component.attach?.(target);
-    }
+  override attach(target: Target): void {
+    super.attach(target);
   }
 
-  detach() {
-    if (!this.#target) return;
-
-    for (const component of getMediaComponents(this).values()) {
-      component.detach?.();
-    }
-
-    for (const type of this.#eventTypes) {
-      this.#target.removeEventListener(type, this.#forwardEvent);
-    }
-
-    this.#target = null;
-  }
-
-  destroy() {
-    this.detach();
-    this.#eventTypes.clear();
-    // Media components are owned by whoever registered them (e.g. `<mux-data>`,
-    // `<google-cast>`), which may outlive this host. `detach()` above releases
-    // them from the target, so only drop the registrations here and leave
-    // destruction to the owner.
-    getMediaComponents(this).clear();
-  }
-
-  querySelectorAll<E extends Element = Element, S extends string = string>(selectors: S) {
-    return (this.target?.querySelectorAll(selectors) ?? []) as NodeListOf<QueriedElement<S, E>> | never[];
-  }
-
-  querySelector<E extends Element = Element, S extends string = string>(selectors: S) {
-    return (this.target?.querySelector(selectors) ?? null) as QueriedElement<S, E> | null;
-  }
-
-  addEventListener<K extends EventType<Events>>(
+  override addEventListener<K extends EventType<Events>>(
     type: K,
     listener: EventListenerFor<Events, K>,
     options?: boolean | AddEventListenerOptions
   ) {
-    if (!this.#eventTypes.has(type)) {
-      this.#eventTypes.add(type);
-      this.target?.addEventListener(type, this.#forwardEvent);
-    }
-
     super.addEventListener(type, listener as EventListener, options);
   }
 
-  removeEventListener<K extends EventType<Events>>(
+  override removeEventListener<K extends EventType<Events>>(
     type: K,
     listener: EventListenerFor<Events, K>,
     options?: boolean | EventListenerOptions
   ) {
     super.removeEventListener(type, listener as EventListener, options);
   }
-
-  #forwardEvent = (event: Event) => {
-    this.dispatchEvent(new (event.constructor as typeof Event)(event.type, event));
-  };
 
   /**
    * Current stream type (`'on-demand'`, `'live'`, or `'unknown'`). Defaults to `'unknown'`; detecting hosts update it
@@ -248,27 +225,6 @@ export class HTMLMediaElementHost<Target extends HTMLMediaTargetLike, Events ext
     const owner = getMediaOwner(this, 'canPlayType');
 
     return owner?.canPlayType?.(type) ?? '';
-  }
-
-  get volume() {
-    return getMediaProp(this, 'volume') ?? 1;
-  }
-  set volume(value) {
-    setMediaProp(this, 'volume', value);
-  }
-
-  get muted() {
-    return getMediaProp(this, 'muted') ?? false;
-  }
-  set muted(value) {
-    setMediaProp(this, 'muted', value);
-  }
-
-  get defaultMuted() {
-    return getMediaProp(this, 'defaultMuted') ?? false;
-  }
-  set defaultMuted(value) {
-    setMediaProp(this, 'defaultMuted', value);
   }
 
   get playbackRate() {
