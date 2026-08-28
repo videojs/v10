@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vite-plus/test';
 
 import {
+  clearKeySystem,
   DEFAULT_KEY_SYSTEMS,
   fairPlayKeySystem,
   initDataFromKeyUri,
@@ -170,6 +171,35 @@ describe('fairPlayKeySystem', () => {
 
   it('projects no manifest init data, which routes it to the encrypted-event path', () => {
     expect(fairPlayKeySystem.toInitData).toBeUndefined();
+  });
+});
+
+describe('clearKeySystem', () => {
+  it('claims the W3C common-PSSH system-id URN KEYFORMAT', () => {
+    expect(clearKeySystem.keyFormats).toEqual(['urn:uuid:1077efec-c0b2-4d02-ace3-3c1e52e2fb4b']);
+  });
+
+  it('projects a data: URI to cenc init data untouched, like Widevine', () => {
+    const box = psshBox(new Uint8Array([9, 8, 7]));
+    const encoded = btoa(String.fromCharCode(...box));
+
+    expect(clearKeySystem.toInitData?.(`data:video/mp4;base64,${encoded}`)).toEqual({
+      initDataType: 'cenc',
+      initData: box,
+    });
+    expect(clearKeySystem.toInitData?.('skd://mux?keyId=abc')).toBeUndefined();
+  });
+
+  it('sends its license message as JSON with the body untouched', async () => {
+    const body = new TextEncoder().encode('{"kids":["AA"]}');
+    const shaped = await clearKeySystem.licenseRequest!({ url: 'https://l', method: 'POST', headers: {}, body });
+
+    expect(shaped.headers['Content-Type']).toBe('application/json');
+    expect(shaped.body).toBe(body);
+  });
+
+  it('stays out of DEFAULT_KEY_SYSTEMS', () => {
+    expect(DEFAULT_KEY_SYSTEMS.some((module_) => module_.keySystem === 'org.w3.clearkey')).toBe(false);
   });
 });
 
