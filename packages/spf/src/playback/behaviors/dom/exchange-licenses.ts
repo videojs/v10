@@ -14,7 +14,10 @@
  * Failures report onto the errors sequence via `emitError` (SVTA 4004 license request, 4016 license rejected, 4021
  * request generation). None of them raise the load gate: by the time this behavior runs the gate is already down —
  * deliberately, since the appends that follow are what fire `encrypted` for the event-driven path — and browsers queue
- * decode on missing keys, so an unlicensed source stalls rather than failing.
+ * decode on missing keys, so an unlicensed source stalls rather than failing. Post-license, each session's
+ * `keystatuschange` is observed report-only: a key transitioning to expired / output-restricted / internal-error
+ * reports 4003 / 4007 / 4014, turning the HDCP and expiry silent-stall shapes diagnosable. Exclusion or renewal policy
+ * on those transitions stays downstream.
  *
  * Single-positive-state reactor, like `setupMediaKeys`. **Compose it ahead of `setupMediaKeys`**: `createComposition`
  * calls cleanups in registration order, and the sessions opened here must be closed before `setupMediaKeys` detaches
@@ -25,8 +28,7 @@
  * drm-support.md): the manifest loop licenses every key declared at entry, so VOD key rotation (all keys present at
  * load) is covered, and FairPlay rotation rides the `encrypted` fallback as segments append. The one gap is mid-stream
  * rotation for Widevine / PlayReady on a live reload — the entry captures the presentation once, later reloads' keys
- * are never re-scanned, and the `encrypted` fallback isn't armed for manifest-licensed content. Also out of scope:
- * `keystatuschange` reactivity.
+ * are never re-scanned, and the `encrypted` fallback isn't armed for manifest-licensed content.
  */
 import { listen } from '@videojs/utils/dom';
 
@@ -49,6 +51,9 @@ import {
   SVTA_BAD_LICENSE_REQUEST,
   SVTA_DRM_LICENSE_RESPONSE_REJECTED,
   SVTA_DRM_LICENSE_REQUEST_GENERATION_FAILED,
+  SVTA_DRM_SESSION_ERROR,
+  SVTA_INSUFFICIENT_OUTPUT_PROTECTION,
+  SVTA_LICENSE_EXPIRED,
 } from '../../../media/errors';
 import { isResolvedPresentation, type MaybeResolvedPresentation } from '../../../media/types';
 import { type ErrorEmitterState, emitError } from '../collect-errors';
@@ -76,6 +81,27 @@ export interface ExchangeLicensesConfig {
 }
 
 type ExchangeLicensesFsmState = 'preconditions-unmet' | 'licensing';
+
+/**
+ * Key statuses reported as diagnosable causes, on the SVTA codes matching each status. Only statuses that stop playback
+ * report: `output-downscaled` still plays, `released` is lifecycle-normal, `usable-in-future` may resolve on its own.
+ * Report-only — exclusion or renewal policy on these transitions is a downstream decision.
+ */
+const REPORTABLE_KEY_STATUS_CODES: Partial<Record<MediaKeyStatus, number>> = {
+  expired: SVTA_LICENSE_EXPIRED,
+  'output-restricted': SVTA_INSUFFICIENT_OUTPUT_PROTECTION,
+  'internal-error': SVTA_DRM_SESSION_ERROR,
+};
+
+/** A key id as lowercase hex, so the reported `data` names which key failed. */
+function keyIdHex(keyId: BufferSource): string {
+  const bytes =
+    keyId instanceof ArrayBuffer
+      ? new Uint8Array(keyId)
+      : new Uint8Array(keyId.buffer, keyId.byteOffset, keyId.byteLength);
+
+  return [...bytes].map((byte) => byte.toString(16).padStart(2, '0')).join('');
+}
 
 function setupExchangeLicenses({
   state,
@@ -173,11 +199,35 @@ function setupExchangeLicenses({
           };
           const openSession = (initDataType: string, initData: Uint8Array<ArrayBuffer>) => {
             const session = mediaKeys.createSession();
+            const lastKeyStatuses = new Map<string, MediaKeyStatus>();
 
             sessions.push(session);
             listen(session, 'message', (event) => void exchange(session, (event as MediaKeyMessageEvent).message), {
               signal: controller.signal,
             });
+            // Post-license observation, report-only: a key turning expired /
+            // output-restricted / internal-error otherwise presents as a black
+            // frame or stall with an empty errors sequence (HDCP downgrade,
+            // long-session expiry). Tracked per key id because the CDM re-fires
+            // keystatuschange for unrelated reasons — an unchanged status is
+            // not a new observation, while recovery then re-failure is.
+            listen(
+              session,
+              'keystatuschange',
+              () => {
+                session.keyStatuses.forEach((status, rawKeyId) => {
+                  const keyId = keyIdHex(rawKeyId);
+                  const previous = lastKeyStatuses.get(keyId);
+
+                  lastKeyStatuses.set(keyId, status);
+                  const code = REPORTABLE_KEY_STATUS_CODES[status];
+                  if (status === previous || code === undefined) return;
+
+                  emitError(state, { code, data: { keySystem, status, keyId } });
+                });
+              },
+              { signal: controller.signal }
+            );
             session.generateRequest(initDataType, initData).catch((error) => {
               if (controller.signal.aborted) return;
 

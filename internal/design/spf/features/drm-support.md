@@ -107,9 +107,10 @@ token-derived license URLs),
 - **Definition depth:** sketched — scope identified from GitHub issue
   + prior art (including a 2026-08 survey of hls.js, Shaka, dash.js,
   and rx-player DRM architecture), and the EME setup / license flow /
-  per-key-system phases below are implemented and tested. Still coarse:
-  `keystatuschange` reactivity, security-level probing, and the
-  FairPlay-AirPlay variant.
+  per-key-system phases below are implemented and tested, and the
+  `keystatuschange` report-only baseline landed (see Open questions).
+  Still coarse: the key-status *policy* layer (re-request, exclusion),
+  security-level probing, and the FairPlay-AirPlay variant.
 - **Hard prerequisite:** [capability-probing](./capability-probing.md)'s
   "Key-system capability probing" phase. The probe must resolve
   before this feature commits to a key system, sets up MediaKeys,
@@ -128,7 +129,7 @@ separate phases.
 | EME setup pipeline | Capability-probing's key-system verdict drives `navigator.requestMediaKeySystemAccess(...)`, which produces a `MediaKeys` instance attached via `mediaElement.setMediaKeys(mediaKeys)`. Ordering relative to MediaSource attachment is **not** spec-constrained the way this doc once claimed: Shaka and rx-player attach MediaKeys *after* `src`/MediaSource is linked (rx-player documents that ordering), hls.js gates fragment *loads* rather than MSE setup, dash.js gates nothing. The functional invariant is only that keys exist before encrypted data must decode. Sessions start manifest-driven (`MediaKeySession.generateRequest` with playlist-derived init data), with the `encrypted` event as fallback | Shared infrastructure regardless of key system. The SPF composition question is where the readiness gate composes — see Likely cross-cutting impact; the lean is a gate on the segment-load path, leaving `setupMediaSource` untouched in every variant |
 | License flow | Per-source license-server configuration via the landed `DrmSystemsConfig` contract (`licenseUrl` + optional `serverCertificateUrl` per key system). `MediaKeySession.message` event → POST message to server → `MediaKeySession.update(licenseResponse)`. Per-key-system request/response quirks (PlayReady challenge-unwrap, FairPlay SPC/CKC bodies) live in internal adapters, as every surveyed engine does | The consumer contract is settled: `source.drm` (`packages/media/src/core/drm.ts`), already how Mux, hls.js, and native FairPlay are configured. Callback hooks (`licenseXhrSetup`-style request/response shaping) are deferred until a concrete need |
 | Per-key-system specifics | Widevine, PlayReady, FairPlay. Per-system: init-data format (PSSH for Widevine, PRO box for PlayReady, content-id derivation for FairPlay), license URL conventions, license body format, server-certificate handshake (FairPlay), browser-API quirks. **FairPlay-AirPlay is a distinct key system from standard FairPlay** (see [capability-probing](./capability-probing.md)'s four-key-system enumeration) — active when content streams via AirPlay; entering/exiting AirPlay mid-playback is a *runtime state change*, not a compose-time variant, raising an open question on runtime-switching shape (see Open questions) | The shared pipeline + license flow above handle most of the machinery; each key system adds its own init-data + license-format adapters. In-repo references: `dom/native-hls/fairplay.ts` (FairPlay SPC/CKC + certificate handshake); the Mux fixture shows Widevine/PlayReady keys arriving as complete PSSH / PRO `data:` URIs in `#EXT-X-KEY`. FairPlay-AirPlay sits as a runtime-switchable variant of FairPlay specifically |
-| Key delivery and `keystatuschange` reactivity | Browser receives keys via `MediaKeySession.update()`; encrypted segments decrypt automatically. `MediaKeySession.keystatuses` Map tracks per-key status (`usable`, `expired`, `output-restricted`, `released`, etc.); `keystatuschange` event fires on changes. Engine reacts to status transitions (e.g., expired key → re-request) | Tier 2-ish: engine can ignore non-`usable` statuses initially (key expiry surfaces as a playback failure); richer handling is consumer-policy-driven. Prior-art consensus (hls.js, Shaka, dash.js, rx-player): `output-restricted` / `internal-error` map to rendition-level exclusion, never a fatal error — SPF's constraint+filter pattern beside `excludeUnplayableTracks` |
+| Key delivery and `keystatuschange` reactivity | Browser receives keys via `MediaKeySession.update()`; encrypted segments decrypt automatically. `MediaKeySession.keystatuses` Map tracks per-key status (`usable`, `expired`, `output-restricted`, `released`, etc.); `keystatuschange` event fires on changes. Engine reacts to status transitions (e.g., expired key → re-request) | The report-only baseline is implemented in `exchangeLicenses`: `expired` / `output-restricted` / `internal-error` transitions report SVTA 4003 / 4007 / 4014 so the silent-stall shapes are diagnosable. Richer handling stays consumer-policy-driven. Prior-art consensus (hls.js, Shaka, dash.js, rx-player): `output-restricted` / `internal-error` map to rendition-level exclusion, never a fatal error — SPF's constraint+filter pattern beside `excludeUnplayableTracks` |
 | Security-level capability and constraint filtering | Probe device security level (Widevine L1 hardware-backed / L2 hybrid / L3 software-only; PlayReady SL150 / SL2000 / SL3000; FairPlay key-duration / persistent-vs-streaming model) via `MediaKeySystemAccess.getConfiguration()`. HDCP output-protection requirements similarly probed. Match against per-rendition security-level requirements (e.g., 4K HDR HEVC often requires L1 Widevine) and license-server policy. Write a `deviceSecurityLevel` constraint slot read by ABR / variant selection; renditions exceeding the device's level filter out, or the engine surfaces a failure when no compatible rendition remains | Constraint+filter pattern parallel to [rendition-selection-caps](./rendition-selection-caps.md) and [hevc-variant-selection](./hevc-variant-selection.md). Probing extends [capability-probing](./capability-probing.md)'s key-system probe with security-level configuration. Borderline classification (Media-src for "play protected content correctly"; Player for customer-policy caps) — current scope leans Media-src |
 | Parser surface for key tags | `parseMediaPlaylist` surfaces structured key metadata (METHOD / KEYFORMAT / URI / KEYID) from `#EXT-X-KEY`, replacing today's boolean `encrypted` flag; multivariant parser surfaces `#EXT-X-SESSION-KEY` at presentation resolution. For Widevine / PlayReady the key URI is a `data:` URI carrying a complete PSSH / PRO (Mux emits this), so manifest-driven init data flows from the parsed-track output to the EME pipeline | Parser-side change. Today `#EXT-X-KEY` is recognized only enough to flag a rendition `encrypted`; the structured detail is dropped and `#EXT-X-SESSION-KEY` is unrecognized |
 | Encrypted-event handling on `SourceBuffer` / mediaElement | `encrypted` event on `mediaElement` triggers session creation via init-data. Once keys are delivered, segment-append proceeds normally; the engine doesn't intervene per-segment | Cross-cluster MSE concern; segment-append flow is unchanged for encrypted streams aside from the key-readiness gate |
@@ -324,11 +325,15 @@ Things this feature probably forces decisions on, not just additions:
   videojs-contrib-eme tears down per-source. Lean: teardown-per-source
   initially (matches the resolved/unresolved cleanup cascade); re-use
   is an optimization with prior art when needed.
-- **`keystatuschange` reactivity policy.** Engine-baseline behavior on
-  key-status transitions (expired, output-restricted, released, etc.).
-  Surface as a state-error slot? Trigger automatic re-request? Defer
-  to consumer? Defaulting matters because keystatus changes can fire
-  mid-playback.
+- **`keystatuschange` reactivity policy.** The report-only baseline
+  landed in `exchangeLicenses`: each session's `keystatuschange` is
+  observed, and a key transitioning to `expired` / `output-restricted`
+  / `internal-error` reports SVTA 4003 / 4007 / 4014 with the key id,
+  deduped per key so CDM re-fires stay quiet while recovery-then-
+  re-failure re-reports. Still open is the *policy* layer: automatic
+  re-request on expiry, and rendition exclusion on output restriction
+  (prior-art consensus: exclusion, never fatal). Defaulting matters
+  because keystatus changes can fire mid-playback.
 - **Init-data extraction location.** Partially resolved by prior art +
   Mux's manifests: for Widevine and PlayReady the `#EXT-X-KEY` URI is
   a `data:` URI carrying a complete PSSH / PRO (hls.js uses it as-is),

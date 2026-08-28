@@ -7,6 +7,9 @@ import {
   SVTA_BAD_LICENSE_REQUEST,
   SVTA_DRM_LICENSE_RESPONSE_REJECTED,
   SVTA_DRM_LICENSE_REQUEST_GENERATION_FAILED,
+  SVTA_DRM_SESSION_ERROR,
+  SVTA_INSUFFICIENT_OUTPUT_PROTECTION,
+  SVTA_LICENSE_EXPIRED,
   type SvtaError,
 } from '../../../../media/errors';
 import type { Presentation } from '../../../../media/types';
@@ -86,6 +89,7 @@ interface FakeSession extends EventTarget {
   generateRequest: ReturnType<typeof vi.fn>;
   update: ReturnType<typeof vi.fn>;
   close: ReturnType<typeof vi.fn>;
+  keyStatuses: Map<BufferSource, MediaKeyStatus>;
 }
 
 function makeFakeSession(): FakeSession {
@@ -94,6 +98,8 @@ function makeFakeSession(): FakeSession {
   session.generateRequest = vi.fn(async () => {});
   session.update = vi.fn(async () => {});
   session.close = vi.fn(async () => {});
+  // Same (status, keyId) forEach signature as MediaKeyStatusMap.
+  session.keyStatuses = new Map();
   return session;
 }
 
@@ -524,6 +530,95 @@ describe('exchangeLicenses', () => {
       expect(state.errors.get()?.map((error) => error.code)).toEqual([SVTA_DRM_LICENSE_REQUEST_GENERATION_FAILED])
     );
     expect(sessions).toHaveLength(0);
+
+    reactor.destroy();
+  });
+
+  it('reports a key transitioning to expired, with the key id in the data', async () => {
+    const { state, sessions, reactor } = setupExchangeLicenses();
+
+    await vi.waitFor(() => expect(sessions).toHaveLength(1));
+    const session = sessions[0]!;
+
+    session.keyStatuses.set(new Uint8Array([0xab, 0x01]), 'expired');
+    session.dispatchEvent(new Event('keystatuschange'));
+
+    await vi.waitFor(() => expect(state.errors.get()?.map((error) => error.code)).toEqual([SVTA_LICENSE_EXPIRED]));
+    expect(state.errors.get()?.[0]?.data).toMatchObject({
+      keySystem: 'com.widevine.alpha',
+      status: 'expired',
+      keyId: 'ab01',
+    });
+
+    reactor.destroy();
+  });
+
+  it('maps output-restricted and internal-error onto their own codes', async () => {
+    const { state, sessions, reactor } = setupExchangeLicenses();
+
+    await vi.waitFor(() => expect(sessions).toHaveLength(1));
+    const session = sessions[0]!;
+
+    session.keyStatuses.set(new Uint8Array([1]), 'output-restricted');
+    session.keyStatuses.set(new Uint8Array([2]), 'internal-error');
+    session.dispatchEvent(new Event('keystatuschange'));
+
+    await vi.waitFor(() =>
+      expect(state.errors.get()?.map((error) => error.code)).toEqual([
+        SVTA_INSUFFICIENT_OUTPUT_PROTECTION,
+        SVTA_DRM_SESSION_ERROR,
+      ])
+    );
+
+    reactor.destroy();
+  });
+
+  it('stays quiet on statuses that still play or are lifecycle-normal', async () => {
+    const { state, sessions, reactor } = setupExchangeLicenses();
+
+    await vi.waitFor(() => expect(sessions).toHaveLength(1));
+    const session = sessions[0]!;
+    const statuses: MediaKeyStatus[] = [
+      'usable',
+      'output-downscaled',
+      'released',
+      'status-pending',
+      'usable-in-future',
+    ];
+
+    statuses.forEach((status, i) => session.keyStatuses.set(new Uint8Array([i]), status));
+    session.dispatchEvent(new Event('keystatuschange'));
+
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(state.errors.get() ?? []).toEqual([]);
+
+    reactor.destroy();
+  });
+
+  it('reports a transition once, and again only after the status changes away and back', async () => {
+    const { state, sessions, reactor } = setupExchangeLicenses();
+
+    await vi.waitFor(() => expect(sessions).toHaveLength(1));
+    const session = sessions[0]!;
+    const keyId = new Uint8Array([7]);
+    const fire = (status: MediaKeyStatus) => {
+      session.keyStatuses.set(keyId, status);
+      session.dispatchEvent(new Event('keystatuschange'));
+    };
+
+    fire('expired');
+    await vi.waitFor(() => expect(state.errors.get()).toHaveLength(1));
+
+    // The CDM re-fires keystatuschange for unrelated reasons; an unchanged
+    // status is not a new observation.
+    session.dispatchEvent(new Event('keystatuschange'));
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(state.errors.get()).toHaveLength(1);
+
+    // Recovery (a renewed license) then a second expiry is a real second event.
+    fire('usable');
+    fire('expired');
+    await vi.waitFor(() => expect(state.errors.get()).toHaveLength(2));
 
     reactor.destroy();
   });
