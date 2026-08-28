@@ -22,3 +22,13 @@ export const LIVE_VIDEO_TAILWIND_SKIN_TAGS: Record<Skin, string> = {
   default: 'live-video-skin-tailwind',
   minimal: 'live-video-minimal-skin-tailwind',
 };
+
+export const LIVE_AUDIO_CSS_SKIN_TAGS: Record<Skin, string> = {
+  default: 'live-audio-skin',
+  minimal: 'live-audio-minimal-skin',
+};
+
+export const LIVE_AUDIO_TAILWIND_SKIN_TAGS: Record<Skin, string> = {
+  default: 'live-audio-skin-tailwind',
+  minimal: 'live-audio-minimal-skin-tailwind',
+};

@@ -19,6 +19,7 @@ const htmlCdnSourceI18n = `${htmlPackageDir}/src/cdn/i18n.ts`;
 
 const cdnSandboxMainSrc = resolve(__dirname, 'src/cdn/main.ts');
 const cdnSandboxMainTemplate = resolve(__dirname, 'templates/cdn/main.ts');
+const hasWorkspaceSkins = existsSync(resolve(__dirname, '../../packages/skins/package.json'));
 
 /** True when the importer is one of the prebuilt @videojs/html CDN chunks. */
 function isHtmlCdnChunk(importer?: string): boolean {
@@ -161,11 +162,18 @@ export default defineConfig({
       },
       setup: {
         command: 'tsx scripts/setup.ts',
-        dependsOn: ['@videojs/core#build'],
+        dependsOn: ['@videojs/core#build', ...(hasWorkspaceSkins ? ['@videojs/skins#build:shadcn'] : [])],
         // Setup deterministically mirrors tracked templates into the gitignored
         // scratch tree. Keep that generated tree out of its own fingerprint.
-        input: ['scripts/setup.ts', 'scripts/shared.ts', 'scripts/generate-cdn-locale-loaders.ts', 'templates/**'],
-        output: ['src/**', 'app/shared/i18n/cdn-locale-loaders.generated.ts'],
+        input: [
+          'scripts/setup.ts',
+          'scripts/shared.ts',
+          'scripts/generate-cdn-locale-loaders.ts',
+          'scripts/sync-source-owned-skins.ts',
+          'templates/**',
+          { pattern: 'packages/skins/dist/registry/r/**', base: 'workspace' },
+        ],
+        output: ['src/**', 'app/_generated/**', 'app/shared/i18n/cdn-locale-loaders.generated.ts'],
       },
       build: {
         command: 'vp build',
@@ -183,20 +191,13 @@ export default defineConfig({
   plugins: [sandboxTemplateSyncPlugin(), cdnSandboxI18nPlugin(), tailwindcss(), react(), serveAppShell()],
   resolve: {
     alias: {
+      '@': resolve(__dirname, 'app/_generated'),
       '@app': resolve(__dirname, 'app'),
       '@videojs/html/cdn/i18n': htmlCdnI18nRegistry,
       ...(existsSync(cdnSandboxMainTemplate) ? { [cdnSandboxMainSrc]: cdnSandboxMainTemplate } : {}),
     },
     conditions: ['development', 'import', 'module', 'browser', 'default'],
-    dedupe: [
-      '@videojs/core',
-      '@videojs/html',
-      '@videojs/icons',
-      '@videojs/skins',
-      '@videojs/utils',
-      'react',
-      'react-dom',
-    ],
+    dedupe: ['@videojs/core', '@videojs/html', '@videojs/icons', '@videojs/utils', 'react', 'react-dom'],
   },
   optimizeDeps: {
     include: ['@videojs/html > @videojs/element > @lit/context', 'react', 'react-dom'],

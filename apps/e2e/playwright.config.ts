@@ -146,8 +146,7 @@ export default defineConfig({
     ...(shouldStartSandboxServer
       ? [
           {
-            command:
-              'pnpm --dir ../.. build:cdn && pnpm exec tsx scripts/setup.ts && pnpm exec vp dev --host --port 5299',
+            command: 'pnpm --dir ../.. dev:sandbox --port 5299',
             cwd: '../sandbox',
             port: 5299,
             reuseExistingServer: !CI,
