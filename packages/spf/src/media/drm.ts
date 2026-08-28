@@ -191,11 +191,14 @@ export interface KeySystemModule {
 }
 
 /**
- * One DRM network request as it is about to be sent — the value a {@link DrmRequestTransform} rewrites. `body` is the
- * CDM message for a license, `null` for the certificate GET.
+ * One DRM network request as it is about to be sent — the value a {@link DrmRequestTransform} rewrites. Shaped as a
+ * subset of a `fetch` request so it slots into the eventual network layer: `method` is `'POST'` for a license and
+ * `'GET'` for a certificate (a transform may change it — e.g. a provider that gates its certificate behind a POST);
+ * `body` is the CDM message for a license, `null` for the certificate GET.
  */
 export interface DrmRequest {
   url: string;
+  method: string;
   headers: Record<string, string>;
   body: BufferSource | null;
 }

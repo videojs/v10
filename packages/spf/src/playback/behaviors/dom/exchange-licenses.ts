@@ -33,7 +33,7 @@ import { computed, type ReadonlySignal } from '../../../core/signals/primitives'
 import {
   type DrmSystemsConfig,
   declaredDrmKeys,
-  fetchLicense,
+  fetchDrm,
   type KeySystemModule,
   NO_KEY_SYSTEM,
   resolveDrmHeaders,
@@ -136,17 +136,13 @@ function setupExchangeLicenses({
               // fails the request rather than escaping as an unhandled rejection.
               const shaped = await applyLicenseRequest(module_, {
                 url: licenseUrl,
+                method: 'POST',
                 headers: { ...resolveDrmHeaders(entry.headers) },
                 body: message,
               });
               const request = entry.licenseRequest ? await entry.licenseRequest(shaped) : shaped;
 
-              license = await fetchLicense(
-                request.url,
-                request.body as BufferSource,
-                controller.signal,
-                request.headers
-              );
+              license = await fetchDrm(request, controller.signal);
             } catch (error) {
               if (controller.signal.aborted) return;
 

@@ -256,7 +256,7 @@ describe('sourceDrmSystems', () => {
   it('passes a request through untouched until the source names a request transform', async () => {
     let drm: DrmSystemsConfig | undefined = {};
     const entry = sourceDrmSystems(() => drm, [widevine])['com.widevine.alpha']!;
-    const request: DrmRequest = { url: 'https://l', headers: {}, body: null };
+    const request: DrmRequest = { url: 'https://l', method: 'GET', headers: {}, body: null };
 
     expect(await entry.certificateRequest!(request)).toBe(request);
     expect(await entry.licenseRequest!(request)).toBe(request);
