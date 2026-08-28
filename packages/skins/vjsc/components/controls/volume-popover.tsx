@@ -10,6 +10,7 @@ import { VolumeSlider } from '../sliders/volume-slider';
 
 export interface VolumePopoverProps extends Props<
   CoreProps & {
+    className?: string | undefined;
     orientation?: CoreVolumeSliderProps['orientation'];
     showTooltip?: boolean;
   }

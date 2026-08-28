@@ -189,7 +189,7 @@ function transformSourceTypes(
 
         const componentProps = imports.reference(targetType);
 
-        magicString.overwrite(node.start, node.end, `${componentProps}<typeof ${query.exprName.name}>`);
+        magicString.overwrite(node.start, node.end, `NonNullable<${componentProps}<typeof ${query.exprName.name}>>`);
         changed = true;
         this.skip();
         return;
@@ -209,7 +209,7 @@ function transformSourceTypes(
 
         const componentProps = imports.reference(targetType);
 
-        magicString.overwrite(node.start, node.end, `${componentProps}<typeof ${query.exprName.name}>`);
+        magicString.overwrite(node.start, node.end, `NonNullable<${componentProps}<typeof ${query.exprName.name}>>`);
         changed = true;
         this.skip();
         return;
@@ -254,12 +254,22 @@ function propsHelper(parameter: OxcFunction['params'][number] | undefined): Prop
       includesChildren: type.typeName.name === 'PropsWithChildren',
       inlineMembers: [
         ...types.filter((candidate) => candidate.type === 'TSTypeLiteral'),
-        ...(type.typeArguments?.params[0]?.type === 'TSTypeLiteral' ? [type.typeArguments.params[0]] : []),
+        ...inlineTypeMembers(type.typeArguments?.params[0]),
       ],
     };
   }
 
   return undefined;
+}
+
+function inlineTypeMembers(type: TSType | undefined): TSType[] {
+  if (!type) return [];
+
+  if (type.type === 'TSTypeLiteral') return [type];
+
+  if (type.type === 'TSIntersectionType') return type.types.flatMap(inlineTypeMembers);
+
+  return [];
 }
 
 function rewriteSourceTypeText(
@@ -380,10 +390,9 @@ function targetReferenceProps(
 
   if (!reference.props) return undefined;
 
-  return {
-    type: renderPropsReference(reference, reference.props, imports, typeImports),
-    ...(reference.props.children ? { children: reference.props.children } : {}),
-  };
+  const type = renderPropsReference(reference, reference.props, imports, typeImports);
+
+  return reference.props.children ? { type, children: reference.props.children } : { type };
 }
 
 function renderPropsReference(
@@ -395,7 +404,10 @@ function renderPropsReference(
   let local: string;
 
   if (reference.kind === 'import' && reference.import.from === props.from && reference.import.name === props.name) {
-    local = imports.reference(reference.import);
+    // Component values and their public props commonly live on sibling paths
+    // of the same namespace (`Menu.Root` and `Menu.RootProps`). Import the
+    // namespace root once instead of appending the props path to the value path.
+    local = imports.reference({ from: reference.import.from, name: reference.import.name });
   } else {
     local = typeImports.reference(props);
   }
@@ -408,7 +420,7 @@ function renderPropsReference(
 function targetHeritage(props: ResolvedProps, includesChildren: boolean): string {
   const omitted = new Set<string>();
 
-  if (!includesChildren) omitted.add('children');
+  if (!includesChildren || (props.children && props.children !== 'children')) omitted.add('children');
 
   if (props.children && props.children !== 'children') omitted.add(props.children);
 

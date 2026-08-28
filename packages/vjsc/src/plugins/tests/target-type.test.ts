@@ -12,15 +12,22 @@ import { targetTypePlugin } from '../target-type';
 const MODULE_ID = '\0fixture.tsx?target=react';
 const schema = defineSchema('@fixture/components', {
   PlayButton: defineComponent({ name: 'PlayButton' }),
+  Tooltip: defineComponent({
+    name: 'Tooltip',
+    parts: {
+      Root: defineComponent(),
+    },
+  }),
 });
 
 const target = defineComponentTarget<typeof schema>()(({ element, imported }) => ({
   source: '@fixture/components',
-  resolve: ({ component }) =>
+  resolve: ({ component, part }) =>
     imported({
       from: '@fixture/react',
       name: component,
-      props: { from: '@fixture/react', name: component, path: ['Props'] },
+      path: part ? [part] : undefined,
+      props: { from: '@fixture/react', name: component, path: [part ? `${part}Props` : 'Props'] },
     }),
   primitives: {
     Box: element('div', {
@@ -49,12 +56,14 @@ describe('targetTypePlugin', () => {
       }
 
       export function PlayButton(
-        { custom, ...props }: Props<{
-          custom?: boolean;
-          VjscNode?: string;
-          child?: VjscNode;
-          label?: 'VjscNode';
-        }> = {}
+        { custom, ...props }: Props<
+          {
+            custom?: boolean;
+            VjscNode?: string;
+            child?: VjscNode;
+            label?: 'VjscNode';
+          } & { nested?: { value: string } }
+        > = {}
       ) {
         return <$.PlayButton {...props} />;
       }
@@ -62,20 +71,28 @@ describe('targetTypePlugin', () => {
       export function Panel({ className, ...props }: Props = {}) {
         return <Box className={className} {...props} />;
       }
+
+      export function ButtonTooltip({ ...props }: Props = {}) {
+        return <$.Tooltip.Root {...props} />;
+      }
     `);
 
-    expect(source).toContain('import { PlayButton as PlayButtonPrimitive } from "@fixture/react";');
+    expect(source).toContain('PlayButton as PlayButtonPrimitive');
+    expect(source).toContain('Tooltip } from "@fixture/react";');
     expect(source).toContain('import type { ComponentProps, ReactNode } from "react";');
-    expect(source).toContain('interface Alias extends ComponentProps<typeof Local>');
+    expect(source).toContain('interface Alias extends NonNullable<ComponentProps<typeof Local>>');
     expect(source).toContain('child?: ReactNode;');
     expect(source).toContain('export interface PlayButtonProps extends Omit<PlayButtonPrimitive.Props, "children">');
     expect(source).toContain('custom?: boolean');
     expect(source).toContain('VjscNode?: string');
     expect(source).toContain('child?: ReactNode');
     expect(source).toContain(`label?: 'VjscNode'`);
+    expect(source).toContain('nested?: { value: string }');
     expect(source).not.toContain('type VjscNode');
     expect(source).toContain('{ custom, ...props }: PlayButtonProps = {}');
     expect(source).toContain('export interface PanelProps extends Omit<ComponentProps<"div">, "children">');
+    expect(source).toContain('export interface ButtonTooltipProps extends Omit<Tooltip.RootProps, "children">');
+    expect(source).not.toContain('Tooltip.Root.RootProps');
     expect(source).not.toContain("from 'vjsc/components'");
     expect(source).not.toContain("from '@fixture/components'");
     expect(source).toContain("import { setup } from './setup';");
