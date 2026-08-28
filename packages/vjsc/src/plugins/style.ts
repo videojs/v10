@@ -27,6 +27,7 @@ import {
 import { isStyleModulePath, resolveManifestStyleModule, resolveStyleModuleFile } from '../styles/modules';
 import type { StylePluginOptions } from '../styles/options';
 import { moduleFilename, type ParsedModuleId, parseModuleId } from '../utils/module-id';
+import { mergeComponentModuleMeta } from './component-meta';
 
 const SCRIPT_ID = /\.[cm]?[jt]sx?(?:\?|$)/;
 
@@ -139,6 +140,8 @@ export function stylePlugin(
           return null;
         }
 
+        let componentStyles: readonly string[] = [];
+
         if (options.mode === 'css' && options.stylesheet) {
           const input = resolve(cwd, options.stylesheet.input);
           const base = options.stylesheet.base ? resolve(cwd, options.stylesheet.base) : undefined;
@@ -183,12 +186,16 @@ export function stylePlugin(
 
           replaceVirtualCss(cssById, cssByOwner, id, modules, lifecycle);
           insertModuleImports(transform.ast, transform.magicString, imports);
+          componentStyles = modules.map(([moduleId]) => moduleId);
         } else {
           report();
           replaceVirtualCss(cssById, cssByOwner, id, [], lifecycle);
         }
 
-        return { code: transform.magicString };
+        return {
+          code: transform.magicString,
+          meta: mergeComponentModuleMeta(this.getModuleInfo(id)?.meta, { componentStyles }),
+        };
       },
     },
   };

@@ -1,4 +1,6 @@
 export type {
+  ShadcnAuthoredFile,
+  ShadcnAuthoredItem,
   ShadcnItem,
   ShadcnModule,
   ShadcnPluginOptions,

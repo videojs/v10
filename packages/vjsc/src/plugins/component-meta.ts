@@ -16,6 +16,7 @@ const SCRIPT_ID = /\.[cm]?[jt]sx?(?:\?|$)/;
 export interface ComponentModuleMeta {
   readonly componentMeta?: ComponentMeta | undefined;
   readonly componentSource?: string | undefined;
+  readonly componentStyles?: readonly string[] | undefined;
   readonly [key: string]: unknown;
 }
 
@@ -66,9 +67,13 @@ export function readComponentModuleMeta(meta: unknown): ComponentModuleMeta | un
 
   const componentMeta = isComponentMeta(meta.componentMeta) ? meta.componentMeta : undefined;
   const componentSource = typeof meta.componentSource === 'string' ? meta.componentSource : undefined;
-  if (!componentMeta && componentSource === undefined) return undefined;
+  const componentStyles =
+    Array.isArray(meta.componentStyles) && meta.componentStyles.every((value) => typeof value === 'string')
+      ? (meta.componentStyles as string[])
+      : undefined;
+  if (!componentMeta && componentSource === undefined && componentStyles === undefined) return undefined;
 
-  return { ...meta, componentMeta, componentSource };
+  return { ...meta, componentMeta, componentSource, componentStyles };
 }
 
 export function readComponentMeta(meta: unknown): ComponentMeta | undefined {
@@ -77,6 +82,10 @@ export function readComponentMeta(meta: unknown): ComponentMeta | undefined {
 
 export function readComponentSource(meta: unknown): string | undefined {
   return readComponentModuleMeta(meta)?.componentSource;
+}
+
+export function readComponentStyles(meta: unknown): readonly string[] {
+  return readComponentModuleMeta(meta)?.componentStyles ?? [];
 }
 
 export function mergeComponentModuleMeta(

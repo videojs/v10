@@ -11,7 +11,7 @@ import type { ShadcnModule, ShadcnPluginOptions } from '../shadcn/types';
 import { toArray } from '../utils/array';
 import { moduleFilename, moduleId, normalizeResolvedId } from '../utils/module-id';
 import { isInsideRoot } from '../utils/path';
-import { readComponentMeta } from './component-meta';
+import { readComponentMeta, readComponentStyles } from './component-meta';
 import { componentSourcePlugin } from './component-source';
 
 export type { ShadcnPluginOptions } from '../shadcn/types';
@@ -19,16 +19,24 @@ export type { ShadcnPluginOptions } from '../shadcn/types';
 /** Discover component sources, capture their transformed graphs, and emit Shadcn JSON assets. */
 export function shadcnPlugin<Item extends ComponentMeta>(options: ShadcnPluginOptions<Item>): Plugin[] {
   const transformedSources = new Map<string, string>();
+  const transformedStyles = new Map<string, readonly string[]>();
+  const transformedAssets = new Map<string, string>();
 
   return [
-    componentSourcePlugin((id, source) => transformedSources.set(id, source)),
-    shadcnEmitterPlugin(options, transformedSources),
+    componentSourcePlugin((id, source, meta) => {
+      transformedSources.set(id, source);
+      transformedStyles.set(id, readComponentStyles(meta));
+    }),
+    transformedAssetPlugin(transformedAssets),
+    shadcnEmitterPlugin(options, transformedSources, transformedStyles, transformedAssets),
   ];
 }
 
 function shadcnEmitterPlugin<Item extends ComponentMeta>(
   options: ShadcnPluginOptions<Item>,
-  transformedSources: Map<string, string>
+  transformedSources: Map<string, string>,
+  transformedStyles: Map<string, readonly string[]>,
+  transformedAssets: Map<string, string>
 ): Plugin {
   const root = resolveModulePath(options.root);
   const sources = new Map<string, ShadcnModule<Item>>();
@@ -42,6 +50,8 @@ function shadcnEmitterPlugin<Item extends ComponentMeta>(
       sources.clear();
       sourceEntries.clear();
       transformedSources.clear();
+      transformedStyles.clear();
+      transformedAssets.clear();
 
       const files = discoverFiles(root, options.include, options.exclude);
 
@@ -78,6 +88,7 @@ function shadcnEmitterPlugin<Item extends ComponentMeta>(
       if (error) return;
 
       const modules: SourceModule<Item>[] = [];
+      const styles = new Map<string, readonly string[]>();
 
       for (const module of sources.values()) {
         const info = this.getModuleInfo(module.id);
@@ -87,6 +98,9 @@ function shadcnEmitterPlugin<Item extends ComponentMeta>(
 
         const meta = readComponentMeta(info?.meta) as Item | undefined;
         const imports: SourceImport[] = [];
+        const styleIds = (transformedStyles.get(module.id) ?? []).map(normalizeShadcnId);
+
+        if (styleIds.length > 0) styles.set(module.id, styleIds);
 
         for (const reference of analyzeImports(source, module.filename)) {
           const resolved = await this.resolve(reference.specifier, module.id);
@@ -115,7 +129,12 @@ function shadcnEmitterPlugin<Item extends ComponentMeta>(
         modules.push({ ...module, ...(meta ? { meta } : {}), source, imports });
       }
 
-      graph = { root, modules: new Map(modules.map((module) => [module.id, module])) };
+      graph = {
+        root,
+        modules: new Map(modules.map((module) => [module.id, module])),
+        assets: new Map(transformedAssets),
+        styles,
+      };
     },
     async generateBundle(_outputOptions, bundle) {
       if (!graph) this.error('Shadcn source graph was not collected before output generation.');
@@ -127,6 +146,26 @@ function shadcnEmitterPlugin<Item extends ComponentMeta>(
       }
     },
   };
+}
+
+function transformedAssetPlugin(assets: Map<string, string>): Plugin {
+  return {
+    name: 'vjsc:shadcn-assets',
+    transform: {
+      order: 'pre',
+      filter: { id: /(?:^|\0)virtual:vjsc\/css\// },
+      handler(code, id) {
+        assets.set(normalizeShadcnId(id), code);
+        return null;
+      },
+    },
+  };
+}
+
+function normalizeShadcnId(id: string): string {
+  const normalized = normalizeResolvedId(id);
+
+  return normalized.startsWith('\0') ? normalized.slice(1) : normalized;
 }
 
 function removeSourceEntryChunks(context: PluginContext, bundle: OutputBundle, references: ReadonlySet<string>): void {

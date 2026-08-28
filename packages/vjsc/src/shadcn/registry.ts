@@ -14,7 +14,7 @@ import {
   type SourceGraph,
   validateSourceGraph,
 } from './graph';
-import type { ShadcnItem, ShadcnPluginOptions, ShadcnRegistryFile, ShadcnStyle } from './types';
+import type { ShadcnAuthoredItem, ShadcnItem, ShadcnPluginOptions, ShadcnRegistryFile, ShadcnStyle } from './types';
 
 interface OwnedModule<Item extends ComponentMeta = ComponentMeta> extends RegistrySourceModule<Item> {
   readonly outputPath: string;
@@ -22,11 +22,16 @@ interface OwnedModule<Item extends ComponentMeta = ComponentMeta> extends Regist
 }
 
 interface BuiltItem {
+  readonly group: string;
   readonly manifest: RegistryItem;
   readonly sourceFiles: ReadonlyMap<string, string>;
 }
 
+const VIRTUAL_CSS_IMPORT = /^\s*import\s+["']virtual:vjsc\/css\/[^"']+["'];?\s*$/gm;
+const LOCAL_CSS_IMPORT = /@import\s+["'](\.[^"']+)["']\s*;/g;
+
 interface LoadedStyle {
+  readonly group: string;
   readonly manifest: RegistryItem;
   readonly files: readonly { readonly file: ShadcnRegistryFile; readonly content: string }[];
 }
@@ -36,7 +41,7 @@ export interface ShadcnOutputFile {
   readonly content: string;
 }
 
-/** Assemble schema-valid Shadcn JSON assets from the host's transformed module graph. */
+/** Prepare an included Shadcn source registry from the host's transformed module graph. */
 export async function createShadcnRegistryFiles<Item extends ComponentMeta>(
   graph: SourceGraph<Item>,
   options: ShadcnPluginOptions<Item>
@@ -45,51 +50,100 @@ export async function createShadcnRegistryFiles<Item extends ComponentMeta>(
 
   validateOptions(options);
   const published = describePublishedModules(modules, options);
+  const publications = canonicalPublishedModules(modules, published);
   const style = options.styles ? await loadStyle(graph.root, options.styles, options) : undefined;
-  const builtItems = [...published.values()]
-    .sort((left, right) => left.item.name.localeCompare(right.item.name))
-    .map((publication) => buildPublishedItem(publication, modules, published, style, options));
+  const builtItems = await Promise.all(
+    [...published.values()]
+      .sort((left, right) => left.item.name.localeCompare(right.item.name))
+      .map((publication) => buildPublishedItem(publication, modules, publications, style, graph, options))
+  );
+  const authoredItems = (options.items ?? []).map((item) => buildAuthoredItem(item, options));
+  const groups = new Map<string, RegistryItem[]>();
+
+  if (style) addGroupItem(groups, style.group, style.manifest);
+
+  for (const item of builtItems) addGroupItem(groups, item.group, item.manifest);
+
+  for (const item of authoredItems) addGroupItem(groups, item.group, item.manifest);
+
   const registry = {
     $schema: 'https://ui.shadcn.com/schema/registry.json',
     name: options.name,
     homepage: options.homepage,
-    items: [...(style ? [style.manifest] : []), ...builtItems.map((item) => item.manifest)],
+    include: [...groups.keys()].sort().map((group) => `./${normalizeGroup(group)}/registry.json`),
+    items: [],
   } satisfies ShadcnRegistry;
 
-  validateRegistryFiles(registry.items);
+  validateRegistryNames(groups);
+
+  for (const groupItems of groups.values()) validateRegistryFiles(groupItems);
+
   registrySchema.parse(registry);
 
-  const contents = new Map<string, string>();
+  const assets: ShadcnOutputFile[] = [jsonFile('registry.json', registry)];
 
-  for (const item of builtItems) {
-    for (const [path, content] of item.sourceFiles) addUnique(contents, path, content, 'source');
+  for (const [group, groupItems] of [...groups].sort(([left], [right]) => left.localeCompare(right))) {
+    for (const item of groupItems) registryItemSchema.parse(item);
+
+    assets.push(jsonFile(`${normalizeGroup(group)}/registry.json`, { items: groupItems }));
   }
 
-  for (const { file, content } of style?.files ?? []) addUnique(contents, file.path, content, 'source');
+  for (const item of builtItems) {
+    for (const [path, content] of item.sourceFiles) {
+      assets.push({ path: posix.join(normalizeGroup(item.group), path), content });
+    }
+  }
 
-  const assets: ShadcnOutputFile[] = [{ path: 'registry.json', content: JSON.stringify(registry) }];
+  for (const item of authoredItems) {
+    for (const [path, content] of item.sourceFiles) {
+      assets.push({ path: posix.join(normalizeGroup(item.group), path), content });
+    }
+  }
 
-  for (const item of registry.items) {
-    const output = {
-      $schema: 'https://ui.shadcn.com/schema/registry-item.json',
-      ...item,
-      ...(item.files
-        ? {
-            files: item.files.map((file) => {
-              const content = contents.get(file.path);
-              if (content === undefined) throw new Error(`Shadcn registry source does not exist: ${file.path}`);
-
-              return { ...file, content };
-            }),
-          }
-        : {}),
-    };
-
-    registryItemSchema.parse(output);
-    assets.push({ path: `${item.name}.json`, content: JSON.stringify(output) });
+  if (style) {
+    for (const { file, content } of style.files) {
+      assets.push({ path: posix.join(normalizeGroup(style.group), file.path), content });
+    }
   }
 
   return assets;
+}
+
+function buildAuthoredItem<Item extends ComponentMeta>(
+  item: ShadcnAuthoredItem,
+  options: ShadcnPluginOptions<Item>
+): BuiltItem {
+  validateItemName(item.name);
+  const sourceFiles = new Map<string, string>();
+  const targets = new Map<string, string>();
+  const files = item.files.map((file, index): ShadcnRegistryFile => {
+    validateRelativePath(file.target, `Shadcn item ${item.name} target`);
+    const target = posix.join(normalizePath(options.paths.install), normalizePath(file.target));
+    const previous = targets.get(target);
+    if (previous) throw new Error(`Shadcn item \`${item.name}\` installs both \`${previous}\` and \`${target}\`.`);
+
+    const path = posix.join('files', item.name, `${String(index).padStart(2, '0')}-${basename(target)}`);
+
+    targets.set(target, path);
+    addUnique(sourceFiles, path, file.content, 'source');
+
+    return { path, target, type: file.type };
+  });
+
+  return {
+    group: normalizeGroup(item.group),
+    sourceFiles,
+    manifest: {
+      name: item.name,
+      type: item.type,
+      title: item.title,
+      description: item.description,
+      files,
+      ...optionalList('dependencies', versionDependencies(new Set(item.dependencies), options)),
+      registryDependencies: [...new Set(item.registryDependencies)].sort(),
+      ...(item.meta ? { meta: item.meta } : {}),
+    },
+  };
 }
 
 function describePublishedModules<Item extends ComponentMeta>(
@@ -113,6 +167,17 @@ function describePublishedModules<Item extends ComponentMeta>(
 
     if (item.filename) validateRelativePath(item.filename, `Shadcn item ${item.name} filename`);
 
+    const equivalent =
+      item.type === 'registry:component'
+        ? [...published.values()].find(
+            (candidate) =>
+              candidate.item.type === 'registry:component' &&
+              candidate.module.filename === module.filename &&
+              candidate.module.source === module.source
+          )
+        : undefined;
+    if (equivalent) continue;
+
     const previous = names.get(item.name);
 
     if (previous) {
@@ -126,23 +191,53 @@ function describePublishedModules<Item extends ComponentMeta>(
   return published;
 }
 
-function buildPublishedItem<Item extends ComponentMeta>(
+function canonicalPublishedModules<Item extends ComponentMeta>(
+  modules: ReadonlyMap<string, RegistrySourceModule<Item>>,
+  published: ReadonlyMap<string, PublishedModule<Item>>
+): ReadonlyMap<string, PublishedModule<Item>> {
+  const canonical = new Map(published);
+  const bySource = new Map<string, PublishedModule<Item>>();
+
+  for (const publication of published.values()) {
+    bySource.set(moduleSourceKey(publication.module), publication);
+  }
+
+  for (const module of modules.values()) {
+    const publication = bySource.get(moduleSourceKey(module));
+
+    if (publication) canonical.set(module.id, publication);
+  }
+
+  return canonical;
+}
+
+function moduleSourceKey(module: RegistrySourceModule): string {
+  return `${module.filename}\0${module.source}`;
+}
+
+async function buildPublishedItem<Item extends ComponentMeta>(
   publication: PublishedModule<Item>,
   modules: ReadonlyMap<string, RegistrySourceModule<Item>>,
   published: ReadonlyMap<string, PublishedModule<Item>>,
   style: LoadedStyle | undefined,
+  graph: SourceGraph<Item>,
   options: ShadcnPluginOptions<Item>
-): BuiltItem {
+): Promise<BuiltItem> {
   const { item, module: root } = publication;
   const owned = collectOwnedModules(root, modules, published);
   const layout = createLayout(root, owned.modules, item, options);
   const registryDependencies = new Set<string>(
-    [...owned.publishedDependencies].map((dependency) => `${options.namespace}/${dependency}`)
+    [
+      ...(item.registryDependencies ?? []),
+      [...owned.publishedDependencies].map((dependency) => `${options.namespace}/${dependency}`),
+    ].flat()
   );
 
-  if (style && item.type !== 'registry:lib') registryDependencies.add(`${options.namespace}/${style.manifest.name}`);
+  if (style && item.type !== 'registry:lib' && item.styles !== false) {
+    registryDependencies.add(`${options.namespace}/${style.manifest.name}`);
+  }
 
-  const dependencies = new Set<string>();
+  const dependencies = new Set<string>(item.dependencies);
   const jsxImportSource = moduleJsxImportSource(root.source);
 
   if (jsxImportSource) dependencies.add(jsxImportSource);
@@ -155,9 +250,19 @@ function buildPublishedItem<Item extends ComponentMeta>(
 
       for (const dependency of rewritten.dependencies) dependencies.add(dependency);
 
-      const path = posix.join(normalizePath(options.paths.output), module.outputPath);
+      const path = posix.join('files', item.name, module.outputPath);
+      let source = item.stylesheet ? stripVirtualCssImports(rewritten.source) : rewritten.source;
 
-      addUnique(sourceFiles, path, rewritten.source, 'source');
+      if (module.id === root.id && item.stylesheet?.import) {
+        const stylesheetTarget = posix.join(
+          normalizePath(options.paths.install),
+          normalizePath(item.stylesheet.target)
+        );
+
+        source = addStyleImport(source, relativeImport(module.target, stylesheetTarget));
+      }
+
+      addUnique(sourceFiles, path, source, 'source');
       return {
         path,
         target: module.target,
@@ -165,7 +270,18 @@ function buildPublishedItem<Item extends ComponentMeta>(
       };
     });
 
+  if (item.stylesheet) {
+    const css = await itemStyles(root, owned.modules, graph, item.stylesheet.files ?? []);
+    const filename = basename(item.stylesheet.target);
+    const path = posix.join('files', item.name, filename);
+    const target = posix.join(normalizePath(options.paths.install), normalizePath(item.stylesheet.target));
+
+    addUnique(sourceFiles, path, css, 'source');
+    files.push({ path, target, type: 'registry:style' });
+  }
+
   return {
+    group: normalizeGroup(item.group),
     sourceFiles,
     manifest: {
       name: item.name,
@@ -173,11 +289,90 @@ function buildPublishedItem<Item extends ComponentMeta>(
       title: item.title,
       description: item.description,
       files,
-      ...optionalList('dependencies', dependencies),
+      ...optionalList('dependencies', versionDependencies(dependencies, options)),
       registryDependencies: [...registryDependencies].sort(),
       ...mergedMeta(options.meta, item.meta),
     },
   };
+}
+
+function versionDependencies<Item extends ComponentMeta>(
+  dependencies: ReadonlySet<string>,
+  options: ShadcnPluginOptions<Item>
+): Set<string> {
+  return new Set([...dependencies].map((dependency) => options.packages?.[dependency] ?? dependency));
+}
+
+async function itemStyles<Item extends ComponentMeta>(
+  root: RegistrySourceModule<Item>,
+  modules: readonly RegistrySourceModule<Item>[],
+  graph: SourceGraph<Item>,
+  supplemental: readonly string[]
+): Promise<string> {
+  const styles = new Map<string, string>();
+
+  for (const path of supplemental) {
+    validateRelativePath(path, `Shadcn item ${root.id} stylesheet file`);
+    const filename = resolve(graph.root, path);
+
+    assertInsideRoot(graph.root, filename, path);
+    addUnique(styles, path, await inlineLocalCssImports(filename, graph.root, new Set()), 'stylesheet');
+  }
+
+  for (const module of modules) {
+    for (const id of graph.styles?.get(module.id) ?? []) {
+      if (id.endsWith('/base.css')) continue;
+
+      const source = graph.assets?.get(id);
+      if (source === undefined) throw new Error(`Shadcn item \`${root.id}\` has no captured stylesheet: \`${id}\`.`);
+
+      addUnique(styles, id, source, 'stylesheet');
+    }
+  }
+
+  return `${[...styles]
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([, source]) => source.trim())
+    .filter(Boolean)
+    .join('\n\n')}\n`;
+}
+
+async function inlineLocalCssImports(filename: string, root: string, stack: Set<string>): Promise<string> {
+  if (stack.has(filename)) throw new Error(`Circular Shadcn stylesheet import: \`${filename}\`.`);
+
+  const source = await readFile(filename, 'utf8');
+  const imports = [...source.matchAll(LOCAL_CSS_IMPORT)];
+  if (imports.length === 0) return source;
+
+  stack.add(filename);
+  let output = source;
+
+  for (const match of imports.reverse()) {
+    const specifier = match[1];
+    const start = match.index;
+    if (!specifier || start === undefined) continue;
+
+    const imported = resolve(dirname(filename), specifier);
+
+    assertInsideRoot(root, imported, specifier);
+    const content = await inlineLocalCssImports(imported, root, stack);
+
+    output = output.slice(0, start) + content.trim() + output.slice(start + match[0].length);
+  }
+
+  stack.delete(filename);
+  return output;
+}
+
+function stripVirtualCssImports(source: string): string {
+  return source.replace(VIRTUAL_CSS_IMPORT, '').replace(/\n{3,}/g, '\n\n');
+}
+
+function addStyleImport(source: string, specifier: string): string {
+  const pragma = /^(\/\*\* @jsxImportSource [^*]+\*\/\s*)/;
+  const statement = `import '${specifier}';\n`;
+
+  return pragma.test(source) ? source.replace(pragma, `$1\n${statement}`) : `${statement}\n${source}`;
 }
 
 function createLayout<Item extends ComponentMeta>(
@@ -189,32 +384,16 @@ function createLayout<Item extends ComponentMeta>(
   const layout = new Map<string, OwnedModule<Item>>();
   const outputPaths = new Map<string, string>();
   const targets = new Map<string, string>();
-  const sourceRoot = normalizePath(options.paths.source);
   const rootFilename = normalizePath(item.filename ?? basename(root.sourcePath));
+  const rootTarget = posix.join(normalizePath(options.paths.install), normalizePath(item.target));
 
   for (const module of modules) {
     const relativeToEntry = toPosixPath(relative(dirname(root.filename), module.filename));
     const itemPath =
-      module.id === root.id
-        ? rootFilename
-        : escapesRoot(relativeToEntry)
-          ? posix.join('internal', module.sourcePath)
-          : relativeToEntry;
-    const outputPath =
-      item.type === 'registry:block'
-        ? posix.join(sourceRoot, item.name, itemPath)
-        : item.type === 'registry:lib'
-          ? posix.join(sourceRoot, itemPath)
-          : posix.join(sourceRoot, 'components', item.name, itemPath);
-    const relativeOutput = stripRoot(outputPath, sourceRoot);
+      module.id === root.id ? rootFilename : escapesRoot(relativeToEntry) ? module.sourcePath : relativeToEntry;
+    const outputPath = module.id === root.id ? rootFilename : posix.join('internal', itemPath);
     const target =
-      item.type === 'registry:block'
-        ? posix.join(normalizePath(options.paths.install), relativeOutput)
-        : item.type === 'registry:lib'
-          ? posix.join(normalizePath(options.paths.install), relativeOutput)
-          : relativeOutput.startsWith('components/')
-            ? posix.join(normalizePath(options.paths.install), relativeOutput.replace(/^components\//, ''))
-            : posix.join(normalizePath(options.paths.install), relativeOutput);
+      module.id === root.id ? rootTarget : posix.join(posix.dirname(rootTarget), 'internal', item.name, itemPath);
 
     assertNoCollision(outputPaths, outputPath, module.id, 'output');
     assertNoCollision(targets, target, module.id, 'installation target');
@@ -250,7 +429,7 @@ function rewriteImports<Item extends ComponentMeta>(
 
     if (replacement !== reference.specifier) replacements.push({ ...reference, replacement });
 
-    if (!dependency && !options.imports?.[reference.specifier]) {
+    if (!dependency && !options.imports?.[reference.specifier] && !reference.specifier.startsWith('virtual:')) {
       const graphId = reference.resolvedId ?? reference.specifier;
       const packageName = packageDependency(graphId) ?? packageDependency(reference.specifier);
 
@@ -265,11 +444,7 @@ function publishedImport<Item extends ComponentMeta>(
   publication: PublishedModule<Item>,
   options: ShadcnPluginOptions<Item>
 ): string {
-  const filename = publication.item.filename ?? basename(publication.module.sourcePath);
-
-  return publication.item.type === 'registry:lib'
-    ? posix.join(options.paths.import, stripScriptExtension(filename))
-    : posix.join(options.paths.import, publication.item.name, stripScriptExtension(filename));
+  return posix.join(options.paths.import, stripScriptExtension(publication.item.target));
 }
 
 function relativeImport(importerTarget: string, dependencyTarget: string): string {
@@ -290,8 +465,6 @@ async function loadStyle<Item extends ComponentMeta>(
   const input = await realpath(resolve(root, style.input)).catch(() => resolve(root, style.input));
 
   assertInsideRoot(root, input, style.input);
-  const sourceRoot = normalizePath(options.paths.source);
-  const outputRoot = normalizePath(options.paths.output);
   const installRoot = normalizePath(options.paths.install);
   const styleRoot = dirname(input);
   const visited = new Map<string, string>();
@@ -329,14 +502,18 @@ async function loadStyle<Item extends ComponentMeta>(
         throw new Error(`Shadcn style dependency must be inside the style entry directory: \`${filename}\`.`);
       }
 
-      const path = posix.join(outputRoot, sourceRoot, 'styles', relativePath);
-      const target = posix.join(installRoot, 'styles', relativePath);
+      const path = posix.join('files', nameForStyle(style), relativePath);
+      const target =
+        filename === input
+          ? posix.join(installRoot, normalizePath(style.target))
+          : posix.join(installRoot, posix.dirname(normalizePath(style.target)), relativePath);
 
       return { file: { path, target, type: 'registry:style' as const }, content };
     });
   const name = style.name ?? 'styles';
 
   return {
+    group: normalizeGroup(style.group),
     files,
     manifest: {
       name,
@@ -365,6 +542,27 @@ function validateOptions<Item extends ComponentMeta>(options: ShadcnPluginOption
   }
 }
 
+function addGroupItem(groups: Map<string, RegistryItem[]>, group: string, item: RegistryItem): void {
+  const normalized = normalizeGroup(group);
+  const items = groups.get(normalized) ?? [];
+
+  items.push(item);
+  groups.set(normalized, items);
+}
+
+function normalizeGroup(group: string): string {
+  validateRelativePath(group, 'Shadcn registry group');
+  return normalizePath(group);
+}
+
+function jsonFile(path: string, value: unknown): ShadcnOutputFile {
+  return { path, content: `${JSON.stringify(value, null, 2)}\n` };
+}
+
+function nameForStyle(style: ShadcnStyle): string {
+  return style.name ?? 'styles';
+}
+
 function validateRegistryFiles(items: readonly RegistryItem[]): void {
   const paths = new Map<string, string>();
   const targets = new Map<string, string>();
@@ -375,6 +573,14 @@ function validateRegistryFiles(items: readonly RegistryItem[]): void {
 
       if (file.target) assertNoCollision(targets, file.target, item.name, 'installation target');
     }
+  }
+}
+
+function validateRegistryNames(groups: ReadonlyMap<string, readonly RegistryItem[]>): void {
+  const names = new Map<string, string>();
+
+  for (const [group, items] of groups) {
+    for (const item of items) assertNoCollision(names, item.name, group, 'item name');
   }
 }
 
@@ -459,13 +665,6 @@ function addUnique(files: Map<string, string>, path: string, content: string, ki
     throw new Error(`Shadcn registry ${kind} collision: \`${path}\`.`);
 
   files.set(path, content);
-}
-
-function stripRoot(path: string, root: string): string {
-  const prefix = `${normalizePath(root)}/`;
-  if (!path.startsWith(prefix)) throw new Error(`Shadcn registry path \`${path}\` must be inside \`${root}\`.`);
-
-  return path.slice(prefix.length);
 }
 
 function normalizePath(path: string): string {

@@ -7,7 +7,7 @@ import { describe, expect, it } from 'vite-plus/test';
 import { compileStyles } from '../../styles/compile';
 import { loadDesignSystem } from '../../styles/design-system';
 import type { StyleManifest, StyleManifestRule } from '../../styles/manifest';
-import { readComponentSource } from '../component-meta';
+import { readComponentSource, readComponentStyles } from '../component-meta';
 import { componentSourcePlugin } from '../component-source';
 import { type StylePluginConfig, stylePlugin } from '../style';
 
@@ -73,7 +73,7 @@ describe('stylePlugin', () => {
       variants: ['compact', 'disabled'],
       stylesheet: { input: designPath },
     });
-    const { source } = await transform(
+    const { source, styleIds } = await transform(
       `
         import styles from './fixtures/button.styles';
         export const button = <button className={styles.root} />;
@@ -84,6 +84,7 @@ describe('stylePlugin', () => {
     const id = virtualCssIds(source)[0];
     if (!id) throw new Error('Expected a generated semantic stylesheet.');
 
+    expect(styleIds).toContain(id);
     expect(await loadPlugin(styles, id)).toContain('pointer-events: none');
   });
 
@@ -222,7 +223,7 @@ async function transform(
   source: string,
   config: StylePluginConfig = { manifest, mode: 'tailwind' },
   styles: Plugin = stylePlugin(config)
-): Promise<{ readonly source: string; readonly warnings: readonly string[] }> {
+): Promise<{ readonly source: string; readonly styleIds: readonly string[]; readonly warnings: readonly string[] }> {
   let meta: unknown;
   const warnings: string[] = [];
   const inspect: Plugin = {
@@ -247,7 +248,7 @@ async function transform(
   const output = readComponentSource(meta);
   if (output === undefined) throw new Error('Fixture build did not retain editable source.');
 
-  return { source: output, warnings };
+  return { source: output, styleIds: readComponentStyles(meta), warnings };
 }
 
 function virtualCssIds(source: string): string[] {
