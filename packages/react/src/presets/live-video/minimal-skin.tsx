@@ -190,7 +190,7 @@ export function MinimalLiveVideoSkin(props: MinimalLiveVideoSkinProps): ReactNod
   const { children, className, renderPoster, style, ...rest } = props;
 
   return (
-    <Container className={cn('media-minimal-skin media-minimal-skin--video', className)} style={style} {...rest}>
+    <Container className={cn('media-skin media-skin--minimal media-skin--video', className)} style={style} {...rest}>
       {children}
 
       <Poster render={renderPoster} />

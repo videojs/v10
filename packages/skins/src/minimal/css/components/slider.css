@@ -1,4 +1,4 @@
-.media-minimal-skin .media-slider {
+.media-skin--minimal .media-slider {
   --media-track-size: calc(var(--media-spacing) * 1);
   --media-track-highlighted-size: calc(var(--media-spacing) * 1.75);
   --media-track-border-radius: 99px;

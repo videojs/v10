@@ -7,7 +7,7 @@ const SOURCE_SKINS = [
 
 const POSTER_SKINS = [
   { framework: 'packaged HTML', path: '/pages/html-video-mp4.html', selector: 'img[slot="poster"]' },
-  { framework: 'packaged React', path: '/pages/react-video-mp4.html', selector: '.media-default-skin > img' },
+  { framework: 'packaged React', path: '/pages/react-video-mp4.html', selector: '.media-skin--default > img' },
   { framework: 'VJSC HTML', path: '/pages/source-html-video-mp4.html', selector: 'media-poster img' },
   { framework: 'VJSC React', path: '/pages/source-react-video-mp4.html', selector: 'img.media-poster' },
 ] as const;

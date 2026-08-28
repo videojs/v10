@@ -7,7 +7,7 @@ import styles from '../../define/live-audio/minimal-skin.css?inline';
 
 function getTemplateHTML() {
   return /*html*/ `
-    <media-container class="media-minimal-skin media-minimal-skin--audio">
+    <media-container class="media-skin media-skin--minimal media-skin--audio">
       <!-- @deprecated slot="media" is no longer required, use the default slot instead -->
       <slot name="media"></slot>
       <slot></slot>

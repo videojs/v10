@@ -172,7 +172,7 @@ export function LiveVideoSkin(props: LiveVideoSkinProps): ReactNode {
   const { children, className, renderPoster, style, ...rest } = props;
 
   return (
-    <Container className={cn('media-default-skin media-default-skin--video', className)} style={style} {...rest}>
+    <Container className={cn('media-skin media-skin--default media-skin--video', className)} style={style} {...rest}>
       {children}
 
       <Poster render={renderPoster} />

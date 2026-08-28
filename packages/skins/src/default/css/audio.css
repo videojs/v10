@@ -1,4 +1,4 @@
-@import "./components/reset.css";
+@import "../../shared/css/reset.css";
 @import "./components/container.css";
 @import "./components/surface.css";
 @import "./components/buffering.css";
@@ -15,8 +15,10 @@
 @import "../../shared/css/audio/icon-state.css";
 
 /* Container */
+/* :where() keeps the media-type class at zero specificity so component state rules (for example dialog
+   `:not([data-open])`) still outrank these entry rules as they did before the shared-class rename. */
 
-.media-default-skin--audio {
+.media-skin--default:where(.media-skin--audio) {
   --media-default-accent-color: light-dark(oklch(0 0 0), oklch(1 0 0));
   --media-text-color: light-dark(oklch(0 0 0), oklch(1 0 0));
   --media-border-color: oklch(0 0 0 / 0.1);
@@ -49,7 +51,7 @@
 
 /* Dialog */
 
-.media-default-skin--audio .media-dialog__popup {
+.media-skin--default:where(.media-skin--audio) .media-dialog__popup {
   position: absolute;
   inset: 0;
   z-index: 20;
@@ -77,20 +79,20 @@
   }
 }
 
-.media-default-skin--audio .media-dialog__content {
+.media-skin--default:where(.media-skin--audio) .media-dialog__content {
   display: flex;
   flex: 1;
   gap: calc(var(--media-spacing) * 2);
   align-items: center;
 }
 
-.media-default-skin--audio:has([role="alertdialog"][data-open]) .media-controls * {
+.media-skin--default:where(.media-skin--audio):has([role="alertdialog"][data-open]) .media-controls * {
   visibility: hidden;
 }
 
 /* Controls */
 
-.media-default-skin--audio .media-controls {
+.media-skin--default:where(.media-skin--audio) .media-controls {
   --media-base-boundary-offset: 2;
   color: var(--media-text-color);
 
@@ -107,16 +109,16 @@
 
 /* Buffering (spinner over play button — backdrop only, no layout change) */
 
-.media-default-skin--audio .media-button--play__wrapper {
+.media-skin--default:where(.media-skin--audio) .media-button--play__wrapper {
   position: relative;
   display: inline-flex;
 }
 
-.media-default-skin--audio .media-button--play__wrapper .media-buffering-indicator {
+.media-skin--default:where(.media-skin--audio) .media-button--play__wrapper .media-buffering-indicator {
   color: inherit;
 }
 
-.media-default-skin--audio
+.media-skin--default:where(.media-skin--audio)
   .media-button--play__wrapper:has(.media-buffering-indicator[data-visible])
   .media-button--play
   .media-icon {
@@ -125,11 +127,11 @@
 
 /* Sliders */
 
-.media-default-skin--audio .media-slider__track {
+.media-skin--default:where(.media-skin--audio) .media-slider__track {
   background-color: light-dark(oklch(0 0 0 / 0.1), oklch(1 0 0 / 0.2));
   box-shadow: 0 0 0 1px light-dark(transparent, oklch(0 0 0 / 0.05));
 }
 
-.media-default-skin--audio .media-slider .media-slider__preview .media-slider__value {
+.media-skin--default:where(.media-skin--audio) .media-slider .media-slider__preview .media-slider__value {
   bottom: calc(var(--media-spacing) * 10);
 }

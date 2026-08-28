@@ -9,7 +9,7 @@ import styles from '../../define/video/minimal-skin.css?inline';
 
 function getTemplateHTML() {
   return /*html*/ `
-    <media-container class="media-minimal-skin media-minimal-skin--video">
+    <media-container class="media-skin media-skin--minimal media-skin--video">
       <!-- @deprecated slot="media" is no longer required, use the default slot instead -->
       <slot name="media"></slot>
       <slot></slot>

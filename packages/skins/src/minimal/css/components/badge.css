@@ -1,4 +1,4 @@
-.media-minimal-skin .media-badge {
+.media-skin--minimal .media-badge {
   padding: calc(var(--media-spacing) * 1) calc(var(--media-spacing) * 1.5);
   font-size: var(--media-font-size-small);
   font-weight: 500;

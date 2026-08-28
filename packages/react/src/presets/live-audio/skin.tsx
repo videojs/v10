@@ -78,7 +78,7 @@ export function LiveAudioSkin(props: LiveAudioSkinProps): ReactNode {
   const { children, className, ...rest } = props;
 
   return (
-    <Container className={cn('media-default-skin media-default-skin--audio', className)} {...rest}>
+    <Container className={cn('media-skin media-skin--default media-skin--audio', className)} {...rest}>
       {children}
 
       <ErrorDialog.Root>

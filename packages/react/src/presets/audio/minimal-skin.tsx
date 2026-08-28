@@ -140,7 +140,7 @@ export function MinimalAudioSkin(props: MinimalAudioSkinProps): ReactNode {
   const { children, className, ...rest } = props;
 
   return (
-    <Container className={cn('media-minimal-skin media-minimal-skin--audio', className)} {...rest}>
+    <Container className={cn('media-skin media-skin--minimal media-skin--audio', className)} {...rest}>
       {children}
 
       <ErrorDialog.Root>

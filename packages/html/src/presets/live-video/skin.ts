@@ -7,7 +7,7 @@ import styles from '../../define/live-video/skin.css?inline';
 
 function getTemplateHTML() {
   return /*html*/ `
-    <media-container class="media-default-skin media-default-skin--video">
+    <media-container class="media-skin media-skin--default media-skin--video">
       <!-- @deprecated slot="media" is no longer required, use the default slot instead -->
       <slot name="media"></slot>
       <slot></slot>

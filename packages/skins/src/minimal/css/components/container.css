@@ -1,4 +1,4 @@
-.media-minimal-skin {
+.media-skin--minimal {
   /* Colors */
   --media-internal-accent-color: var(--media-accent-color, var(--media-default-accent-color));
   --media-accent-contrast-color: contrast-color(var(--media-internal-accent-color));
