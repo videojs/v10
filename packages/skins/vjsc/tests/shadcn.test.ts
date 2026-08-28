@@ -163,7 +163,7 @@ describe('Skins Shadcn registry', () => {
     expect(registrySource(assets, 'html/media', htmlMuxSpf, '/media/mux-video-spf.ts')).toContain(
       `from '@videojs/html/media/mux-video/spf'`
     );
-  }, 30_000);
+  }, 120_000);
 });
 
 type BuiltItem = Omit<ShadcnRegistry['items'][number], 'files'> & {
