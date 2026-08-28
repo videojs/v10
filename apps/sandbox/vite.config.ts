@@ -200,8 +200,21 @@ export default defineConfig({
     dedupe: ['@videojs/core', '@videojs/html', '@videojs/icons', '@videojs/utils', 'react', 'react-dom'],
   },
   optimizeDeps: {
-    include: ['@videojs/html > @videojs/element > @lit/context', 'react', 'react-dom'],
+    // The Sandbox can load every media adapter and generated React skin. Prebundle their runtime dependencies before
+    // serving so discovering a new route cannot hot-reload an already mounted player graph during development or E2E.
+    include: [
+      '@videojs/html > @videojs/element > @lit/context',
+      '@videojs/media > dashjs',
+      '@videojs/media > hls.js',
+      '@videojs/media > mux-embed',
+      'react',
+      'react-dom',
+      'react-dom/client',
+      'react/jsx-dev-runtime',
+      'react/jsx-runtime',
+    ],
     exclude: ['@videojs/core', '@videojs/html', '@videojs/react', '@videojs/spf', '@videojs/store', '@videojs/utils'],
+    noDiscovery: true,
   },
   server: {
     port: 5173,

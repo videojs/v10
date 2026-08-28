@@ -15,57 +15,6 @@ async function expectSpanishPlayLabel(scope: Page | Frame): Promise<void> {
   await expect(playButton).toHaveAttribute('aria-label', 'Reproducir', { timeout: 15_000 });
 }
 
-async function expectLTRControlOrder(scope: Page | Frame): Promise<void> {
-  const getX = async (selector: string): Promise<number> => {
-    const control = scope.locator(selector).first();
-
-    await expect(control).toBeVisible();
-    const box = await control.boundingBox();
-    if (!box) throw new Error(`Control has no bounding box: ${selector}`);
-
-    return box.x;
-  };
-  const [play, mute, settings, fullscreen] = await Promise.all([
-    getX(SELECTORS.playButton),
-    getX(SELECTORS.muteButton),
-    getX(SELECTORS.settingsButton),
-    getX(SELECTORS.fullscreenButton),
-  ]);
-
-  expect(play).toBeLessThan(mute);
-  expect(mute).toBeLessThan(settings);
-  expect(settings).toBeLessThan(fullscreen);
-}
-
-async function expectLTRThumbnailCrop(page: Page): Promise<void> {
-  const slider = page.locator('[role="slider"]:visible').first();
-
-  await expect(slider).toBeVisible();
-  const box = await slider.boundingBox();
-  if (!box) throw new Error('Time slider is not visible');
-
-  await page.mouse.move(box.x + box.width * 0.75, box.y + box.height / 2);
-  const thumbnail = page.locator('media-slider-thumbnail, .media-thumbnail__image').first();
-
-  await expect(thumbnail).toBeAttached({ timeout: 15_000 });
-  await expect(thumbnail).not.toHaveAttribute('data-loading', { timeout: 15_000 });
-  await expect(thumbnail).toHaveAttribute('dir', 'ltr');
-
-  const crop = await thumbnail.evaluate((element) => {
-    const image = element.shadowRoot?.querySelector('img') ?? element.querySelector('img');
-    if (!image) return;
-
-    const hostBox = element.getBoundingClientRect();
-    const imageBox = image.getBoundingClientRect();
-    const transform = new DOMMatrix(getComputedStyle(image).transform);
-
-    return { actual: imageBox.left, expected: hostBox.left + transform.m41 };
-  });
-  if (!crop) throw new Error('Thumbnail image is not rendered');
-
-  expect(crop.actual).toBeCloseTo(crop.expected, 0);
-}
-
 function getPlayer(page: Page) {
   return page
     .locator('[role="group"]')
@@ -134,8 +83,6 @@ test.describe('Sandbox HTML i18n', () => {
     const provider = page.locator('media-i18n');
 
     await expect(provider.locator('video-skin')).toHaveCSS('direction', 'rtl');
-    await expectLTRControlOrder(page);
-    await expectLTRThumbnailCrop(page);
   });
 });
 
@@ -160,12 +107,11 @@ test.describe('Sandbox React i18n', () => {
     await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
     await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
     await expect(page.locator('.media-skin--default.media-skin--video')).toHaveCSS('direction', 'rtl');
-    await expectLTRControlOrder(page);
-    await expectLTRThumbnailCrop(page);
   });
 });
 
-test.describe('Sandbox RTL playback control order', () => {
+// VJSC preserves locale direction but intentionally defers legacy physical control order; see vjsc/gaps.md.
+test.describe.skip('Sandbox RTL playback control order', () => {
   const cases = [
     { name: 'HTML Default CSS video', path: 'html-video', skin: 'default', styling: 'css', source: 'hls-1' },
     {

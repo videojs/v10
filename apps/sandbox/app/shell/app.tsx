@@ -81,6 +81,7 @@ export function App() {
   const [locale, setLocale] = useState<SandboxLocaleTag>(initial.locale);
 
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const previousPreviewState = useRef({ skin, source, autoplay, muted, loop, preload, accentColor });
 
   const pagePath = getPagePath(platform, preset);
 
@@ -137,37 +138,30 @@ export function App() {
     history.replaceState(null, '', `/?${params}`);
   }, [platform, styling, preset, skin, source, autoplay, muted, loop, preload, accentColor, locale]);
 
+  // Initial state is already present in the iframe URL. Stream only subsequent changes so HTML previews do not race
+  // several identical async renders during startup. Locale changes are URL-owned by Preview because CDN must reload.
   useEffect(() => {
-    iframeRef.current?.contentWindow?.postMessage({ type: 'skin-change', skin }, '*');
-  }, [skin]);
+    const previous = previousPreviewState.current;
+    const target = iframeRef.current?.contentWindow;
 
-  useEffect(() => {
-    iframeRef.current?.contentWindow?.postMessage({ type: 'source-change', source }, '*');
-  }, [source]);
+    if (previous.skin !== skin) target?.postMessage({ type: 'skin-change', skin }, '*');
 
-  useEffect(() => {
-    iframeRef.current?.contentWindow?.postMessage({ type: 'autoplay-change', autoplay }, '*');
-  }, [autoplay]);
+    if (previous.source !== source) target?.postMessage({ type: 'source-change', source }, '*');
 
-  useEffect(() => {
-    iframeRef.current?.contentWindow?.postMessage({ type: 'muted-change', muted }, '*');
-  }, [muted]);
+    if (previous.autoplay !== autoplay) target?.postMessage({ type: 'autoplay-change', autoplay }, '*');
 
-  useEffect(() => {
-    iframeRef.current?.contentWindow?.postMessage({ type: 'loop-change', loop }, '*');
-  }, [loop]);
+    if (previous.muted !== muted) target?.postMessage({ type: 'muted-change', muted }, '*');
 
-  useEffect(() => {
-    iframeRef.current?.contentWindow?.postMessage({ type: 'preload-change', preload }, '*');
-  }, [preload]);
+    if (previous.loop !== loop) target?.postMessage({ type: 'loop-change', loop }, '*');
 
-  useEffect(() => {
-    iframeRef.current?.contentWindow?.postMessage({ type: 'locale-change', locale }, '*');
-  }, [locale]);
+    if (previous.preload !== preload) target?.postMessage({ type: 'preload-change', preload }, '*');
 
-  useEffect(() => {
-    iframeRef.current?.contentWindow?.postMessage({ type: 'accent-color-change', accentColor }, '*');
-  }, [accentColor]);
+    if (previous.accentColor !== accentColor) {
+      target?.postMessage({ type: 'accent-color-change', accentColor }, '*');
+    }
+
+    previousPreviewState.current = { skin, source, autoplay, muted, loop, preload, accentColor };
+  }, [skin, source, autoplay, muted, loop, preload, accentColor]);
 
   // Constrain source to DASH when switching to dash-video
   useEffect(() => {
