@@ -15,9 +15,13 @@
     }
 
     button {
+      margin: 0;
       font: inherit;
       color: inherit;
+      text-transform: none;
       letter-spacing: inherit;
+      appearance: none;
+      background: none;
     }
 
     img,
@@ -25,6 +29,19 @@
     media-icon {
       display: block;
       max-width: 100%;
+      margin: 0;
+    }
+
+    svg[fill="currentColor"] {
+      fill: currentColor;
+    }
+
+    svg[fill="none"] {
+      fill: none;
+    }
+
+    svg[stroke="currentColor"] {
+      stroke: currentColor;
     }
 
     video {
@@ -50,9 +67,15 @@
       display: contents;
     }
 
-    [hidden] {
+    [hidden][hidden] {
       /* Hidden must override component display styles. */
       display: none !important;
+    }
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .media-skin {
+      interpolate-size: allow-keywords;
     }
   }
 }

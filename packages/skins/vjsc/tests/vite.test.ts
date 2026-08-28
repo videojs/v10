@@ -60,7 +60,7 @@ describe('Skins Vite workflow', () => {
       const url = skinUrl(variant);
       const result = await server.transformRequest(url);
       const skinExport = variant.skin === 'default-video' ? 'DefaultVideoSkin' : 'MinimalVideoSkin';
-      const skinClass = variant.skin === 'default-video' ? 'media-skin-video' : 'media-skin-video-minimal';
+      const skinClass = variant.skin === 'default-video' ? 'media-skin--default' : 'media-skin--minimal';
 
       expect(result?.code, url).toContain(skinExport);
       expect(result?.code, url).toContain(skinClass);
