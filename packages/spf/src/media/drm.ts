@@ -153,6 +153,23 @@ export interface KeySystemModule {
    * server takes the bare SPC). PlayReady overrides it to unwrap the challenge envelope.
    */
   readonly licenseRequest?: DrmRequestTransform;
+  /**
+   * Transform the license server's response before `session.update` — its own default, before any per-source override.
+   * Defaults to identity (the server returns the raw CDM license, which is what Mux and EZDRM do). A system whose
+   * server wraps the license — a CKC inside XML or JSON — overrides it to unwrap the bytes the CDM expects.
+   */
+  readonly licenseResponse?: DrmResponseTransform;
+  /**
+   * Transform the outgoing app-certificate request for this system. Defaults to identity (the plain GET
+   * `fetchServerCertificate` performs). No shipped system needs one; it exists so a system whose certificate endpoint
+   * expects a POST or its own auth can shape the request rather than forcing that onto every source.
+   */
+  readonly certificateRequest?: DrmRequestTransform;
+  /**
+   * Transform the app-certificate response before `setServerCertificate`. Defaults to identity (the raw certificate
+   * bytes, which is what FairPlay's `.cer` endpoints return). Exists for a system whose endpoint wraps the bytes.
+   */
+  readonly certificateResponse?: DrmResponseTransform;
 }
 
 /**
@@ -167,6 +184,15 @@ export interface DrmRequest {
 
 /** Rewrite a DRM request (URL, headers, body) before it is sent. Async — a provider may mint a per-session token. */
 export type DrmRequestTransform = (request: DrmRequest) => DrmRequest | Promise<DrmRequest>;
+
+/**
+ * Rewrite a DRM response — a license or an app certificate — before it reaches the CDM. Async, for the same reason a
+ * {@link DrmRequestTransform} is: an unwrap may need to fetch. Returns the bytes the CDM expects (`session.update` /
+ * `setServerCertificate`), unwrapping any server envelope (CKC in XML/JSON, a JSON license) the raw bytes carry.
+ */
+export type DrmResponseTransform = (
+  response: Uint8Array<ArrayBuffer>
+) => Uint8Array<ArrayBuffer> | Promise<Uint8Array<ArrayBuffer>>;
 
 /**
  * Every DRM key declaration across the presentation's resolved tracks, deduped by full attribute identity. Empty until

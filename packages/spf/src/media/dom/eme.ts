@@ -15,6 +15,7 @@ export {
   type DrmHeaders,
   type DrmRequest,
   type DrmRequestTransform,
+  type DrmResponseTransform,
   type DrmSystemConfig,
   type DrmSystemsConfig,
   type DrmUrl,
