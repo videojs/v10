@@ -31,8 +31,8 @@
  * defaults — carries neither the machinery nor the slots, and none of this file's key-system code survives
  * tree-shaking; the DRM-free engine variant that would do so is tracked in drm-support.md.
  *
- * Still out of scope (tracked in drm-support.md): key rotation / keys declared after entry, and `keystatuschange`
- * reactivity.
+ * Still out of scope (tracked in drm-support.md): mid-stream key rotation on live Widevine / PlayReady reloads (VOD
+ * rotation and FairPlay rotation are covered — see `exchangeLicenses`), and `keystatuschange` reactivity.
  */
 import { defineBehavior } from '../../../core/composition/create-composition';
 import type { Reactor } from '../../../core/reactors/create-machine-reactor';
