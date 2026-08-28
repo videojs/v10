@@ -188,20 +188,20 @@ export function attachMediaKeys(mediaElement: HTMLMediaElement, mediaKeys: Media
   return mediaElement.setMediaKeys(mediaKeys);
 }
 
-/** Exchange a CDM license message for the server's license. Body and headers come from {@link applyLicenseRequest}. */
-export async function fetchLicense(
-  licenseUrl: string,
-  message: BufferSource,
-  signal: AbortSignal,
-  headers: Record<string, string> = { 'Content-Type': 'application/octet-stream' }
-): Promise<Uint8Array<ArrayBuffer>> {
-  const response = await fetch(licenseUrl, {
-    method: 'POST',
-    headers,
-    body: message,
+/**
+ * Perform one DRM network exchange — a license POST, a certificate GET — and return the raw response bytes. Method,
+ * headers, and body all ride on the {@link DrmRequest} (already shaped by the module default and any per-source
+ * override), so this is the single fetch seam the license and certificate paths share and the shape a future network
+ * layer slots into.
+ */
+export async function fetchDrm(request: DrmRequest, signal: AbortSignal): Promise<Uint8Array<ArrayBuffer>> {
+  const response = await fetch(request.url, {
+    method: request.method,
+    headers: request.headers,
+    body: request.body,
     signal,
   });
-  if (!response.ok) throw new Error(`License request failed with status ${response.status}`);
+  if (!response.ok) throw new Error(`DRM request failed with status ${response.status}`);
 
   return new Uint8Array(await response.arrayBuffer());
 }

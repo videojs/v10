@@ -120,6 +120,7 @@ describe('playReadyKeySystem', () => {
     );
     const request = await playReadyKeySystem.licenseRequest!({
       url: 'https://lic',
+      method: 'POST',
       headers: {},
       body: envelope.buffer,
     });
@@ -139,6 +140,7 @@ describe('playReadyKeySystem', () => {
     );
     const request = await playReadyKeySystem.licenseRequest!({
       url: 'https://lic',
+      method: 'POST',
       headers: { 'X-Auth': 'keep', 'Content-Type': 'application/octet-stream' },
       body: envelope.buffer,
     });
@@ -149,7 +151,12 @@ describe('playReadyKeySystem', () => {
 
   it('sends an unwrapped challenge as XML — modern CDMs skip the envelope', async () => {
     const raw = utf16('<soap:Envelope>raw challenge</soap:Envelope>');
-    const request = await playReadyKeySystem.licenseRequest!({ url: 'https://lic', headers: {}, body: raw.buffer });
+    const request = await playReadyKeySystem.licenseRequest!({
+      url: 'https://lic',
+      method: 'POST',
+      headers: {},
+      body: raw.buffer,
+    });
 
     expect(request.body).toBe(raw.buffer);
     expect(request.headers).toEqual({ 'Content-Type': 'text/xml; charset=utf-8' });
