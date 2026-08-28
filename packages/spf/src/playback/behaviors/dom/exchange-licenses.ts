@@ -6,8 +6,10 @@
  *
  * Sessions open manifest-driven — one per inline init data the negotiated system's module can project out of a key URI
  * (Widevine PSSH / PlayReady PRO as `data:` URIs) — or, when the manifest carries none (FairPlay `skd://`),
- * event-driven off the element's `encrypted` events, deduped by init-data bytes. Each license message is shaped by the
- * negotiated system's module and exchanged against that system's configured server.
+ * event-driven off the element's `encrypted` events, deduped by init-data bytes. Each exchange composes two transform
+ * layers, module first: the negotiated system's module default (wire protocol) then the per-source override
+ * (`source.drm[ks]`, deployment decoration) — over the request outbound and the response inbound — around the fetch to
+ * that system's configured server.
  *
  * Failures report onto the errors sequence via `emitError` (SVTA 4004 license request, 4016 license rejected, 4021
  * request generation). None of them raise the load gate: by the time this behavior runs the gate is already down —
@@ -37,6 +39,7 @@ import {
   resolveDrmHeaders,
   resolveDrmUrl,
   applyLicenseRequest,
+  applyLicenseResponse,
 } from '../../../media/dom/eme';
 import {
   SVTA_BAD_LICENSE_REQUEST,
@@ -122,16 +125,22 @@ function setupExchangeLicenses({
           const module_ = config.keySystems.find((candidate) => candidate.keySystem === keySystem);
 
           const exchange = async (session: MediaKeySession, message: BufferSource) => {
-            // Configured headers seed the request; the module's transform (e.g.
-            // PlayReady's envelope unwrap) runs over them and its own headers win.
-            const request = await applyLicenseRequest(module_, {
-              url: licenseUrl,
-              headers: { ...resolveDrmHeaders(entry.headers) },
-              body: message,
-            });
             let license: Uint8Array<ArrayBuffer>;
 
             try {
+              // Two layers, module first: the module default shapes the wire
+              // protocol (PlayReady's envelope unwrap, the octet-stream default)
+              // over configured headers, then the per-source override decorates
+              // the result — an auth header, a minted token — without having to
+              // re-implement that shaping. A throw here (e.g. token minting)
+              // fails the request rather than escaping as an unhandled rejection.
+              const shaped = await applyLicenseRequest(module_, {
+                url: licenseUrl,
+                headers: { ...resolveDrmHeaders(entry.headers) },
+                body: message,
+              });
+              const request = entry.licenseRequest ? await entry.licenseRequest(shaped) : shaped;
+
               license = await fetchLicense(
                 request.url,
                 request.body as BufferSource,
@@ -146,7 +155,13 @@ function setupExchangeLicenses({
             }
 
             try {
-              await session.update(license);
+              // Same order on the way back: the module default unwraps its
+              // protocol, the source override unwraps any deployment envelope,
+              // before the CDM sees it.
+              const unwrapped = await applyLicenseResponse(module_, license);
+              const updated = entry.licenseResponse ? await entry.licenseResponse(unwrapped) : unwrapped;
+
+              await session.update(updated);
             } catch (error) {
               if (controller.signal.aborted) return;
 
