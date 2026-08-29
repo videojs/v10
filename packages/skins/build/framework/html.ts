@@ -21,11 +21,12 @@ export interface CreateHtmlPackageSkinsOptions {
   readonly baseStyles?: readonly string[] | undefined;
 }
 
-interface HtmlSkin {
+export interface RenderedHtmlSkin {
   readonly root: HtmlSkinRoot;
   readonly modules: readonly ValidatedComponentGraphModule<SkinModuleMeta>[];
   readonly preset: (typeof presets)[number];
   readonly theme: SkinMeta['style']['theme'];
+  readonly template: string;
 }
 
 type HtmlSkinRoot = ValidatedComponentGraphModule<SkinMeta & { readonly name: SkinName }> & {
@@ -37,9 +38,49 @@ export async function createHtmlPackageSkins(
   graph: ComponentGraph<SkinModuleMeta>,
   options: CreateHtmlPackageSkinsOptions
 ): Promise<GeneratedFrameworkFile[]> {
-  const skins = htmlSkins(graph);
-  const allModules = uniqueModules(skins.flatMap((skin) => skin.modules));
-  const iconModule = htmlIconModule(allModules);
+  const skins = await renderHtmlSkins(graph, { workspaceDir: options.workspaceDir, styling: 'css' });
+  const generated = new Map<string, string>();
+
+  for (const skin of skins) {
+    const name = skin.root.meta.name;
+    const root = `${internalRoot}/${name}`;
+
+    addGenerated(generated, `${root}/template.ts`, htmlTemplateModule(skin.template));
+    addGenerated(generated, `${root}/register.ts`, createHtmlSkinRegistration(skin.template, skin.modules, 'package'));
+    addGenerated(
+      generated,
+      `${root}/skin.css`,
+      await createComponentGraphStyles(graph, skin.modules, {
+        label: name,
+        files: options.baseStyles ?? ['./styles/base.css'],
+      })
+    );
+  }
+
+  for (const [source, destination] of [
+    ['packages/skins/framework/html/background/skin.ts', `${packageRoot}/presets/background/skin.ts`],
+    ['packages/skins/framework/html/background/skin.css', `${packageRoot}/define/background/skin.css`],
+  ] as const) {
+    addGenerated(generated, destination, await readFile(resolve(options.workspaceDir, source), 'utf8'));
+  }
+
+  return [...generated]
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([path, content]) => ({ path, content }));
+}
+
+export interface RenderHtmlSkinsOptions {
+  readonly workspaceDir: string;
+  readonly styling: 'css' | 'tailwind';
+}
+
+/** Render the complete static markup for every HTML Skin in one styling catalog. */
+export async function renderHtmlSkins(
+  graph: ComponentGraph<SkinModuleMeta>,
+  options: RenderHtmlSkinsOptions
+): Promise<RenderedHtmlSkin[]> {
+  const skins = htmlSkins(graph, options.styling);
+  const iconModule = htmlIconModule(uniqueModules(skins.flatMap((skin) => skin.modules)));
   const templates = await renderComponentGraphHtml(
     graph,
     skins.map((skin) => ({
@@ -64,50 +105,30 @@ export async function createHtmlPackageSkins(
       ]),
     }
   );
-  const generated = new Map<string, string>();
 
-  for (const skin of skins) {
-    const name = skin.root.meta.name;
-    const root = `${internalRoot}/${name}`;
-    const template = templates.get(name);
-    if (template === undefined) throw new Error(`HTML Skin \`${name}\` did not render a template.`);
+  return skins.map((skin) => {
+    const template = templates.get(skin.root.meta.name);
+    if (template === undefined) throw new Error(`HTML Skin \`${skin.root.meta.name}\` did not render a template.`);
 
-    addGenerated(generated, `${root}/template.ts`, htmlTemplateModule(template));
-    addGenerated(generated, `${root}/register.ts`, htmlRegistration(template, skin.modules));
-    addGenerated(
-      generated,
-      `${root}/skin.css`,
-      await createComponentGraphStyles(graph, skin.modules, {
-        label: name,
-        files: options.baseStyles ?? ['./styles/base.css'],
-      })
-    );
-  }
-
-  for (const [source, destination] of [
-    ['packages/skins/framework/html/background/skin.ts', `${packageRoot}/presets/background/skin.ts`],
-    ['packages/skins/framework/html/background/skin.css', `${packageRoot}/define/background/skin.css`],
-  ] as const) {
-    addGenerated(generated, destination, await readFile(resolve(options.workspaceDir, source), 'utf8'));
-  }
-
-  return [...generated]
-    .sort(([left], [right]) => left.localeCompare(right))
-    .map(([path, content]) => ({ path, content }));
+    return { ...skin, template };
+  });
 }
 
 export function htmlPackageSkinOwnedPaths(): string[] {
   return [internalRoot, `${packageRoot}/presets/background/skin.ts`, `${packageRoot}/define/background/skin.css`];
 }
 
-function htmlSkins(graph: ComponentGraph<SkinModuleMeta>): HtmlSkin[] {
+function htmlSkins(
+  graph: ComponentGraph<SkinModuleMeta>,
+  styling: RenderHtmlSkinsOptions['styling']
+): Array<Omit<RenderedHtmlSkin, 'template'>> {
   const modules = validateComponentGraph(graph);
   const roots = [...modules.values()].filter(
     (module): module is HtmlSkinRoot =>
       module.meta?.type === 'skin' &&
       isSkinName(module.meta.name) &&
       module.transform.target === 'html' &&
-      module.transform.style === 'css' &&
+      module.transform.style === styling &&
       module.transform.skin === module.meta.name
   );
 
@@ -135,24 +156,33 @@ export const template = createTemplate(/* html */ \`${template}\`);
 `;
 }
 
-function htmlRegistration(html: string, modules: readonly ValidatedComponentGraphModule<SkinModuleMeta>[]): string {
+/** Create the exact custom-element and icon registration closure used by one rendered HTML Skin. */
+export function createHtmlSkinRegistration(
+  html: string,
+  modules: readonly ValidatedComponentGraphModule<SkinModuleMeta>[],
+  destination: 'package' | 'registry'
+): string {
   const output: string[] = [];
   const tags = new Set<string>();
+  const define = (tag: string): string =>
+    destination === 'package' ? `../../../define/ui/${tag}` : `@videojs/html/ui/${tag}`;
+  const i18n = destination === 'package' ? '../../../define/i18n' : '@videojs/html/i18n';
+  const iconsRoot = destination === 'package' ? '../../../icons' : '@videojs/html/icons';
 
   for (const match of html.matchAll(/<media-([a-z0-9-]+)\b/g)) tags.add(match[1]!);
 
-  if (tags.delete('text')) output.push("import '../../../define/i18n';");
+  if (tags.delete('text')) output.push(`import ${quote(i18n)};`);
 
   tags.delete('icon');
-  output.push(...[...tags].map((tag) => `import '../../../define/ui/${tag}';`));
+  output.push(...[...tags].map((tag) => `import ${quote(define(tag))};`));
 
   const families = iconRegistrations(modules);
 
-  if (families.size > 0) output.push("import { registerIcons } from '../../../icons';");
+  if (families.size > 0) output.push(`import { registerIcons } from ${quote(iconsRoot)};`);
 
   for (const [family, icons] of sortedEntries(families)) {
     const bindings = [...new Set(icons.values())].sort();
-    const source = family === 'default' ? '../../../icons' : `../../../icons/${family}`;
+    const source = family === 'default' ? iconsRoot : `${iconsRoot}/${family}`;
 
     output.push(
       `import {\n${bindings
@@ -176,6 +206,19 @@ function htmlRegistration(html: string, modules: readonly ValidatedComponentGrap
   }
 
   return `${output.join('\n')}\n`;
+}
+
+/** Replace runtime slots with the editable light-DOM markers installed by the registry. */
+export function createSourceOwnedHtml(template: string): string {
+  const mediaSlot = /<slot>\s*<\/slot>/;
+  if (!mediaSlot.test(template)) throw new Error('Rendered HTML Skin has no default media slot.');
+
+  return template
+    .replace(mediaSlot, '<!-- Add a compatible media element here. -->')
+    .replace(/<slot name="poster">\s*([\s\S]*?)\s*<\/slot>/, '$1')
+    .replaceAll('&amp;', '&')
+    .replaceAll('&gt;', '>')
+    .replaceAll('&lt;', '<');
 }
 
 function htmlIconModule(modules: readonly ValidatedComponentGraphModule<SkinModuleMeta>[]): string {
@@ -235,14 +278,14 @@ function uniqueModules(
   return [...new Map(modules.map((module) => [module.id, module])).values()];
 }
 
-function presetForSkin(name: SkinName): HtmlSkin['preset'] {
+function presetForSkin(name: SkinName): RenderedHtmlSkin['preset'] {
   const preset = name.replace(/^(?:default|minimal)-/, '');
   if (!isPreset(preset)) throw new Error(`Unsupported Skin preset: \`${name}\`.`);
 
   return preset;
 }
 
-function isPreset(value: string): value is HtmlSkin['preset'] {
+function isPreset(value: string): value is RenderedHtmlSkin['preset'] {
   return presets.some((preset) => preset === value);
 }
 
