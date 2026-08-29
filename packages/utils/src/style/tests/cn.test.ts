@@ -19,6 +19,10 @@ describe('cn', () => {
     expect(cn('foo', undefined, 'bar')).toBe('foo bar');
   });
 
+  it('filters out false and null conditional values', () => {
+    expect(cn('foo', false, null, 'bar')).toBe('foo bar');
+  });
+
   it('handles all undefined values', () => {
     expect(cn(undefined, undefined)).toBe('');
   });

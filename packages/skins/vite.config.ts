@@ -34,17 +34,34 @@ export default defineConfig({
         input: cachedTaskInputs,
         output: ['dist/**', '!dist/registry', '!dist/registry/**'],
       },
-      'prepare:shadcn': {
+      generate: {
         command: ['rimraf dist/registry', 'vp -C shadcn pack'],
         dependsOn: workspaceTaskDependencies(),
         // The registry plugin compares files in its output directory before
         // rewriting them; those reads must not turn outputs into inputs.
-        input: [...cachedTaskInputs, '!dist/registry', '!dist/registry/**'],
-        output: ['dist/registry/source/**'],
+        input: [
+          ...cachedTaskInputs,
+          '!dist/registry',
+          '!dist/registry/**',
+          { pattern: '!packages/react/src/internal/skins', base: 'workspace' },
+          { pattern: '!packages/react/src/internal/skins/**', base: 'workspace' },
+          { pattern: '!packages/react/src/presets/*/skin.tsx', base: 'workspace' },
+          { pattern: '!packages/react/src/presets/*/skin.css', base: 'workspace' },
+          { pattern: '!packages/react/src/presets/*/minimal-skin.tsx', base: 'workspace' },
+          { pattern: '!packages/react/src/presets/*/minimal-skin.css', base: 'workspace' },
+        ],
+        output: [
+          'dist/registry/source/**',
+          { pattern: 'packages/react/src/internal/skins/**', base: 'workspace' },
+          { pattern: 'packages/react/src/presets/*/skin.tsx', base: 'workspace' },
+          { pattern: 'packages/react/src/presets/*/skin.css', base: 'workspace' },
+          { pattern: 'packages/react/src/presets/*/minimal-skin.tsx', base: 'workspace' },
+          { pattern: 'packages/react/src/presets/*/minimal-skin.css', base: 'workspace' },
+        ],
       },
       'build:shadcn:react': {
         command: 'shadcn build dist/registry/source/r/react/registry.json --output dist/registry/r/react',
-        dependsOn: ['prepare:shadcn'],
+        dependsOn: ['generate'],
         input: ['dist/registry/source/r/react/**', '!dist/registry/source/r/react/css/**'],
         output: ['dist/registry/r/react/**', '!dist/registry/r/react/css/**'],
       },
@@ -56,7 +73,7 @@ export default defineConfig({
       },
       'build:shadcn:html': {
         command: 'shadcn build dist/registry/source/r/html/registry.json --output dist/registry/r/html',
-        dependsOn: ['prepare:shadcn'],
+        dependsOn: ['generate'],
         input: ['dist/registry/source/r/html/**', '!dist/registry/source/r/html/css/**'],
         output: ['dist/registry/r/html/**', '!dist/registry/r/html/css/**'],
       },
@@ -83,7 +100,7 @@ export default defineConfig({
         test: {
           name: 'skins',
           root: packageDir,
-          include: ['vjsc/**/*.test.ts'],
+          include: ['build/**/*.test.ts', 'vjsc/**/*.test.ts'],
           // These integration tests share Vite and Rolldown package state.
           fileParallelism: false,
         },

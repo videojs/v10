@@ -1,5 +1,4 @@
 import { render, waitFor } from '@testing-library/react';
-import { popup } from '@videojs/skins/default/tailwind/video.tailwind';
 import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vite-plus/test';
 
@@ -38,7 +37,7 @@ describe('PlaybackRateButton', () => {
           <Tooltip.Trigger render={<PlaybackRateButton data-testid="button" />} />
           <Tooltip.Popup data-testid="popup">
             <Tooltip.Label />
-            <Tooltip.Shortcut className={popup.tooltipShortcut} />
+            <Tooltip.Shortcut className="tooltip-shortcut" />
           </Tooltip.Popup>
         </Tooltip.Root>
         <Hotkey keys=">" action="speedUp" />

@@ -15,6 +15,7 @@ import {
   vjscPlugin,
 } from '../../vjsc/src/plugins/index.ts';
 import type { VjscRegistryItem } from '../../vjsc/src/shadcn/index.ts';
+import { frameworkSkinsPlugin } from '../build/framework/plugin.ts';
 import type { VideojsRegistryMeta } from '../registry/meta.ts';
 import { configureSkinModule } from '../vjsc/config';
 import { type SkinModuleMeta, type SkinName, skinStyles } from '../vjsc/meta';
@@ -146,6 +147,7 @@ export const shadcnPackConfig: PackUserConfig = {
       })
     ),
     formatRegistrySources(),
+    frameworkSkinsPlugin(graph, { workspaceDir: resolve(packageDir, '../..') }),
     registryAssetsOnly(),
   ],
 };

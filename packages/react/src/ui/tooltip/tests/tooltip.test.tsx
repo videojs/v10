@@ -1,5 +1,4 @@
 import { render, waitFor } from '@testing-library/react';
-import { popup } from '@videojs/skins/default/tailwind/video.tailwind';
 import { useLayoutEffect } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
@@ -65,7 +64,7 @@ describe('Tooltip', () => {
         <TooltipContent label="Play" shortcut="K" />
         <Tooltip.Popup data-testid="popup">
           <Tooltip.Label />
-          <Tooltip.Shortcut className={popup.tooltipShortcut} />
+          <Tooltip.Shortcut className="tooltip-shortcut" />
         </Tooltip.Popup>
       </Tooltip.Root>
     );
@@ -86,7 +85,7 @@ describe('Tooltip', () => {
         <TooltipContent label="Play" />
         <Tooltip.Popup data-testid="popup">
           <Tooltip.Label />
-          <Tooltip.Shortcut className={popup.tooltipShortcut} />
+          <Tooltip.Shortcut className="tooltip-shortcut" />
         </Tooltip.Popup>
       </Tooltip.Root>
     );
@@ -103,7 +102,7 @@ describe('Tooltip', () => {
           render={(props, state) => (
             <div {...props} data-open={String(state.open)} data-side={state.side} data-testid="popup">
               <Tooltip.Label />
-              <Tooltip.Shortcut className={popup.tooltipShortcut} />
+              <Tooltip.Shortcut className="tooltip-shortcut" />
             </div>
           )}
         />
