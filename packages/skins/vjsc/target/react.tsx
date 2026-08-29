@@ -52,7 +52,7 @@ export const reactComponentTarget: ComponentTarget<CoreSchema> = defineComponent
     },
     components: {
       Controls: {
-        Root: ({ children }) => <target.Controls.Root>{children}</target.Controls.Root>,
+        Root: ({ props, children }) => <target.Controls.Root {...props}>{children}</target.Controls.Root>,
       },
       ErrorDialog: {
         Root: ({ children }) => <target.ErrorDialog.Root>{children}</target.ErrorDialog.Root>,

@@ -1,6 +1,6 @@
-import { ControlsCore, ControlsDataAttrs, POPUP_HOST_SELECTOR } from '@videojs/core';
+import { ControlsCore, ControlsDataAttrs, type ControlsVisibility, POPUP_HOST_SELECTOR } from '@videojs/core';
 import { applyStateDataAttrs, logMissingFeature, selectControls } from '@videojs/core/dom';
-import type { PropertyValues } from '@videojs/element';
+import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextProvider } from '@videojs/element/context';
 import { isFunction } from '@videojs/utils/predicate';
 
@@ -12,6 +12,12 @@ import { controlsContext } from './context';
 export class ControlsElement extends UIElement {
   static readonly tagName = 'media-controls';
 
+  static override properties = {
+    visibility: { type: String },
+  } satisfies PropertyDeclarationMap<'visibility'>;
+
+  visibility: ControlsVisibility = ControlsCore.defaultProps.visibility;
+
   readonly #core = new ControlsCore();
   readonly #mediaState = new PlayerController(this, playerContext, selectControls);
   readonly #provider = new ContextProvider(this, { context: controlsContext });
@@ -20,7 +26,7 @@ export class ControlsElement extends UIElement {
   override connectedCallback(): void {
     super.connectedCallback();
 
-    if (__DEV__ && !this.#mediaState.value && this.#mediaState.displayName) {
+    if (__DEV__ && this.visibility === 'auto' && !this.#mediaState.value && this.#mediaState.displayName) {
       logMissingFeature(this.localName, this.#mediaState.displayName);
     }
   }
@@ -28,11 +34,11 @@ export class ControlsElement extends UIElement {
   protected override update(_changed: PropertyValues): void {
     super.update(_changed);
 
-    const media = this.#mediaState.value;
-    if (!media) return;
+    this.#core.setProps({ visibility: this.visibility });
+    this.#core.setMedia(this.#mediaState.value ?? null);
 
-    this.#core.setMedia(media);
     const state = this.#core.getState();
+    if (!state) return;
 
     applyStateDataAttrs(this, state, ControlsDataAttrs);
 
