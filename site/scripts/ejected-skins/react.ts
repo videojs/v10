@@ -31,7 +31,6 @@ import { pkgDistUrl, toRepoPath, validatePackageImports } from './package-resolv
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '../../..');
-const SKINS_SRC = resolve(ROOT, 'packages/skins/src');
 
 function createSourceFile(filePath: string, source: string): ts.SourceFile {
   return ts.createSourceFile(filePath, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
@@ -380,7 +379,7 @@ export function resolveCss(cssPath: string): string {
   const abs = resolve(ROOT, cssPath);
   const raw = readFileSync(abs, 'utf-8');
 
-  return resolveImports(raw, dirname(abs), SKINS_SRC);
+  return resolveImports(raw, dirname(abs));
 }
 
 // React skin processing - resolve imports, produce TSX + JSX.
