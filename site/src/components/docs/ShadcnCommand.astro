@@ -1,0 +1,32 @@
+---
+import ServerCode from '@/components/Code/ServerCode.astro';
+import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs.tsx';
+
+interface Props {
+  action: string;
+}
+
+const { action } = Astro.props;
+const commands = {
+  npm: `npx shadcn@latest ${action}`,
+  pnpm: `pnpm dlx shadcn@latest ${action}`,
+  yarn: `yarn dlx shadcn@latest ${action}`,
+  bun: `bunx shadcn@latest ${action}`,
+};
+---
+
+<TabsRoot client:idle>
+  <TabsList client:idle label="Package manager">
+    <Tab client:idle value="npm" initial>npm</Tab>
+    <Tab client:idle value="pnpm">pnpm</Tab>
+    <Tab client:idle value="yarn">Yarn</Tab>
+    <Tab client:idle value="bun">Bun</Tab>
+  </TabsList>
+  {
+    Object.entries(commands).map(([manager, command], index) => (
+      <TabsPanel client:idle value={manager} initial={index === 0}>
+        <ServerCode code={command} lang="bash" />
+      </TabsPanel>
+    ))
+  }
+</TabsRoot>

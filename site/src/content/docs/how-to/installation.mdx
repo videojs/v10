@@ -8,10 +8,10 @@ import RendererPicker from '@/components/installation/RendererPicker';
 import SkinPickerSection from '@/components/installation/SkinPickerSection.astro';
 import UseCasePicker from '@/components/installation/UseCasePicker';
 import HTMLInstallTabs from '@/components/installation/HTMLInstallTabs.astro';
-import NoCdnMediaNote from '@/components/installation/NoCdnMediaNote.astro';
 import HTMLUsageCodeBlock from '@/components/installation/HTMLUsageCodeBlock';
 import ReactCreateCodeBlock from '@/components/installation/ReactCreateCodeBlock';
 import ReactUsageCodeBlock from '@/components/installation/ReactUsageCodeBlock';
+import ShadcnInstall from '@/components/installation/ShadcnInstall.astro';
 import ContentWidth from '@/components/frames/ContentWidth.astro';
 import Aside from '@/components/Aside.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
@@ -36,37 +36,14 @@ Video.js is an **HTML video player built on custom elements**: lightweight, fram
 <LLMCase>
 <div data-cli-omit="installation">
 
-This guide has code examples tailored to your use case. To generate this guide with tailored code examples, run `npx @videojs/cli docs how-to/installation`.
-If you run it without flags, it will allow you to interactively configure your player. Or, you can run it with flags:
-
-```bash
-npx @videojs/cli docs how-to/installation \
-  --framework <html|react> \
-  --preset <video|audio|live-video|live-audio|background-video> \
-  --skin <default|minimal|none> \
-  --media <html5-video|html5-audio|hls|dash|mux-video|mux-audio|vimeo|youtube|cloudflare|tiktok|twitch|spotify|background-video> \
-  --source-url <url> \
-  --install-method <cdn|npm|pnpm|yarn|bun>
-```
-
-The CLI does not currently detect non-interactive stdin. In automation, agents, and CI, include `--framework` and all five installation flags so no prompt starts. Pass `--source-url ''` to use the built-in demo without prompting.
-
-Here's what the flags mean:
-- *Framework*: Pick whether you're working in React or if you'd like to use HTML custom elements. (More to come!)
-- *Preset*: Pick a pre-built player. The default presets work well for general website playback; the live presets add a Live button and drop the on-demand time displays.
-- *Skin*: Pick what your player looks like
-- *Media*: Pick what kind of media you have. The `live-video` preset supports HLS and Mux video; `live-audio` supports Mux audio.
-- *Source URL*: Define where your media comes from. In an interactive terminal, omit it to choose a sample URL. In automation, pass an empty value to choose the sample without prompting.
-- *Install method*: How do you want to install your package? (CDN is HTML-only<NoCdnMediaNote />.)
-
-If you're an agent, interview your user and offer to run the CLI for them, or offer them a precomposed CLI command. 
+This guide has interactive examples tailored to the selected framework, preset, skin, and media implementation. Ask the user for those choices, then use the matching package imports shown below. If they need to own and edit the Skin source, configure the `@videojs` Shadcn namespace and install the matching Skin block.
 </div>
 
 <FrameworkCase frameworks={["react"]}>
-If your user's requirements can't be met by a preset/skin, [eject](/docs/framework/react/how-to/customize-skins) and customize an existing preset/skin for your needs. As you develop with Video.js, rely heavily on [llms.txt](/docs/framework/react/llms.txt) to make sure you always have the latest information.
+If your user's requirements can't be met by a packaged preset or skin, [install its editable source](/docs/framework/react/how-to/customize-skins). As you develop with Video.js, rely heavily on [llms.txt](/docs/framework/react/llms.txt) to make sure you always have the latest information.
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
-If your user's requirements can't be met by a preset/skin, [eject](/docs/framework/html/how-to/customize-skins) and customize an existing preset/skin for your needs. As you develop with Video.js, rely heavily on [llms.txt](/docs/framework/html/llms.txt) to make sure you always have the latest information.
+If your user's requirements can't be met by a packaged preset or skin, [install its editable source](/docs/framework/html/how-to/customize-skins). As you develop with Video.js, rely heavily on [llms.txt](/docs/framework/html/llms.txt) to make sure you always have the latest information.
 </FrameworkCase>
 </LLMCase>
 
@@ -195,9 +172,17 @@ Add it to your components folder in a new file.
 
 That's it! You now have a working Video.js player.
 
+## Own the skin source
+
+Packaged skins are the recommended starting point. When you need to rearrange controls, change component markup, or own every style, install the corresponding source with the standard Shadcn CLI. The command below follows the framework, preset, skin, media, and styling choices above.
+
+<ShadcnInstall />
+
+<DocsLinkCard slug="getting-started/shadcn" description="Configure the registry, inspect items, and maintain source-owned files">Install editable Video.js source</DocsLinkCard>
+
 ## Choose what to do next
 
-<DocsLinkCard slug="how-to/customize-skins" description="Customize a packaged skin or eject it for full control">Customize skins</DocsLinkCard>
+<DocsLinkCard slug="how-to/customize-skins" description="Customize a packaged skin or install its source for full control">Customize skins</DocsLinkCard>
 
 <DocsLinkCard slug="concepts/overview" anchor="ui-components" description="Explore the building blocks used by skins and custom controls">UI components</DocsLinkCard>
 

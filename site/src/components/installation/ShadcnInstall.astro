@@ -1,0 +1,10 @@
+---
+import { isValidFramework } from '@/types/docs';
+import ShadcnInstallCommand from './ShadcnInstallCommand';
+
+const framework = Astro.params.framework;
+if (!isValidFramework(framework)) throw new Error(`Unsupported framework: ${framework ?? 'missing'}.`);
+
+---
+
+<ShadcnInstallCommand client:idle {framework} />

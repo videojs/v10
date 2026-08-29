@@ -1,0 +1,127 @@
+---
+title: Shadcn registry
+description: Install editable Video.js React or HTML skins with Tailwind CSS or vanilla CSS
+---
+
+import Aside from '@/components/Aside.astro';
+import DocsLinkCard from '@/components/docs/DocsLinkCard.astro';
+import ShadcnRegistryCatalog from '@/components/docs/ShadcnRegistryCatalog.astro';
+import ServerCode from '@/components/Code/ServerCode.astro';
+
+Use the Video.js Shadcn registry when your application should own and edit its skin source. The registry provides skin blocks for React and HTML, Tailwind CSS 4 and vanilla CSS, plus individual styled React UI components.
+
+Players and media remain package imports. A skin block accepts media as children, so you can combine it with any compatible media implementation without generating every Player and media combination.
+
+<Aside type="note">
+  Packaged skins remain the quickest starting point. Install registry source when you need to rearrange controls, change markup, or own every style.
+</Aside>
+
+## Initialize Shadcn
+
+Initialize Shadcn if the project does not have a `components.json` file:
+
+<ServerCode code="pnpm dlx shadcn@latest init" lang="bash" />
+
+Add the `@videojs` namespace for your framework and styling choice:
+
+| Catalog | Namespace URL |
+| --- | --- |
+| React + Tailwind | `https://shadcn.videojs.org/r/react/{name}.json` |
+| React + CSS | `https://shadcn.videojs.org/r/react/css/{name}.json` |
+| HTML + Tailwind | `https://shadcn.videojs.org/r/html/{name}.json` |
+| HTML + CSS | `https://shadcn.videojs.org/r/html/css/{name}.json` |
+
+For example, a React + Tailwind project adds this to `components.json`:
+
+<ServerCode code={'{\n  "registries": {\n    "@videojs": "https://shadcn.videojs.org/r/react/{name}.json"\n  }\n}'} lang="json" />
+
+The public host will serve these paths when the registry launches. Repository tests exercise the same paths against a local static server.
+
+## Install a skin
+
+Install the Default Video Skin:
+
+<ServerCode code="pnpm dlx shadcn@latest add @videojs/video" lang="bash" />
+
+Install Minimal Video instead:
+
+<ServerCode code="pnpm dlx shadcn@latest add @videojs/video-minimal" lang="bash" />
+
+Default names have no suffix. Minimal is a distinct skin block because its layout differs, while shared UI components and theme primitives keep stable names and paths. Framework and styling are selected by the namespace URL, not repeated in item names.
+
+Shadcn places the installed source under `components/videojs/`. For example, Video Skin installs to `components/videojs/skins/video/`; Minimal Video Skin installs to `components/videojs/skins/video/minimal/`. Shared UI dependencies install under `components/videojs/ui/`.
+
+### React composition
+
+```tsx title="Player.tsx"
+import { HlsJsVideo } from '@videojs/react/media/hlsjs-video';
+import { VideoPlayer } from '@videojs/react/video';
+
+import { DefaultVideoSkin } from '@/components/videojs/skins/video/skin';
+
+export function Player({ src }: { src: string }) {
+  return (
+    <VideoPlayer>
+      <DefaultVideoSkin className="aspect-video w-full">
+        <HlsJsVideo src={src} />
+      </DefaultVideoSkin>
+    </VideoPlayer>
+  );
+}
+```
+
+### HTML composition
+
+```html title="index.html"
+<script type="module">
+  import '@videojs/html/video/player';
+  import '@videojs/html/media/hls-video';
+  import './components/videojs/skins/video/skin.ts';
+</script>
+
+<video-player>
+  <!-- Paste the installed skin.html markup here. -->
+  <hls-video src="https://example.com/video.m3u8"></hls-video>
+</video-player>
+```
+
+HTML skin blocks keep the copy-owned light-DOM markup explicit. They do not hide it behind a runtime skin element.
+
+## Install one React component
+
+React catalogs also publish individual styled UI components:
+
+<ServerCode code="pnpm dlx shadcn@latest add @videojs/play-button" lang="bash" />
+
+```tsx
+import { PlayButton } from '@/components/videojs/ui/play-button';
+```
+
+Each component imports its own shared component and style dependencies. CSS installs reuse stable concern files such as `styles/buttons.css`; adding another button does not install a second copy or require a global stylesheet edit. Tailwind components use the project's existing Tailwind build and the installed Video.js theme definitions.
+
+## Inspect and update source
+
+The standard Shadcn commands work with the namespace:
+
+```bash
+pnpm dlx shadcn@latest search @videojs --query volume
+pnpm dlx shadcn@latest view @videojs/volume-popover
+pnpm dlx shadcn@latest add @videojs/volume-popover --dry-run
+pnpm dlx shadcn@latest add @videojs/volume-popover --diff
+```
+
+Installed files belong to your application. Review the diff before replacing customized source. Do not use `--overwrite` without reviewing that diff.
+
+## Registry catalog
+
+The links below open the exact item JSON consumed by Shadcn.
+
+<ShadcnRegistryCatalog />
+
+## Related guides
+
+<DocsLinkCard slug="how-to/customize-skins">Customize an installed or packaged skin</DocsLinkCard>
+
+<DocsLinkCard slug="concepts/skins">Understand packaged and source-owned skins</DocsLinkCard>
+
+<DocsLinkCard slug="concepts/ui-components">Explore UI components</DocsLinkCard>

@@ -275,16 +275,16 @@ Media Chrome and Video.js both use names beginning with `--media-`, but that sha
 |---|---|---|
 | `--media-accent-color` or `--media-range-bar-color` | `--media-accent-color` | Closest match for slider fills and accented controls. |
 | `--media-primary-color` | no direct equivalent | Often colors every control icon in Media Chrome; Video.js's accent variable has narrower semantics. |
-| `--media-secondary-color` | no direct equivalent | Author CSS or eject when you need this palette role. |
-| `--media-control-background` | no direct equivalent | Author CSS or eject. |
-| `--media-control-hover-background` | no direct equivalent | Author CSS or eject. |
-| `--media-range-track-height` | no direct equivalent | Author slider CSS or eject. |
+| `--media-secondary-color` | no direct equivalent | Install the skin source and author CSS when you need this palette role. |
+| `--media-control-background` | no direct equivalent | Install the skin source and author CSS. |
+| `--media-control-hover-background` | no direct equivalent | Install the skin source and author CSS. |
+| `--media-range-track-height` | no direct equivalent | Install the skin source and author slider CSS. |
 
 The packaged Video.js skins expose `--media-accent-color`, `--media-accent-text-color`, `--media-border-radius`, and `--media-scale-unit` for broad customization. Do not assume another Media Chrome variable will work because its name starts with `--media-`.
 
 ## Themes become skins
 
-Media Chrome's `<template>`-based themes (`media-theme`) become Video.js <DocsLink slug="concepts/skins">skins</DocsLink> and <DocsLink slug="concepts/presets">presets</DocsLink>. Start from a preset, then eject and customize with <DocsLink slug="how-to/customize-skins">Customize skins</DocsLink>, rather than authoring a template.
+Media Chrome's `<template>`-based themes (`media-theme`) become Video.js <DocsLink slug="concepts/skins">skins</DocsLink> and <DocsLink slug="concepts/presets">presets</DocsLink>. Start from a preset, then install and customize its source with <DocsLink slug="how-to/customize-skins">Customize skins</DocsLink>, rather than authoring a template.
 
 <FrameworkCase frameworks={["html"]}>
 Ready-made HTML skins keep their controls inside Shadow DOM. Code outside the skin sees a click as coming from the skin, not the button inside it. Some control events also stay inside the skin. Do not use an outside listener to identify which built-in button was clicked.

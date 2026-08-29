@@ -8,7 +8,6 @@ import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
 import DocsLinkCard from '@/components/docs/DocsLinkCard.astro';
 import Aside from '@/components/Aside.astro';
-import EjectedSkin from '@/components/docs/EjectedSkin.astro';
 
 <Aside type="note" title="New in version 10">
 In prior versions of Video.js, skins were CSS-only themes applied to the same set of default controls. In version 10 the concept of skins has been expanded to include the UI components, so each skin can be completely unique and only include the UI components it needs.
@@ -16,13 +15,13 @@ In prior versions of Video.js, skins were CSS-only themes applied to the same se
 
 A skin wraps the media component and provides the player's complete interface. It combines a specific set of UI components with the styles that arrange and present them.
 
-## Packaged and ejected skins
+## Packaged and source-owned skins
 
-When you choose a skin you have two options for how you use it: **packaged** or **ejected**. It's usually easiest to start with a packaged skin and later eject its internal components into your project when you need more customization.
+When you choose a skin you have two options for how you use it: **packaged** or **source-owned**. It's usually easiest to start with a packaged skin and later install its source into your project when you need more customization.
 
-Packaged skins cover common visual changes through documented CSS custom properties. Packaged video skins also let you replace the poster. When you need more than that, eject and change the components and styles directly.
+Packaged skins cover common visual changes through documented CSS custom properties. Packaged video skins also let you replace the poster. When you need more than that, install and change the components and styles directly.
 
-| Packaged | Ejected |
+| Packaged | Source owned |
 |----------|-----------------|
 | Single component | Many UI components |
 | Documented CSS custom properties | Components and styles you own |
@@ -65,20 +64,31 @@ export function Player() {
 
 Don't depend on elements, class names, or undocumented custom properties inside a packaged skin. They may change between releases.
 
-### Ejected skin
+### Source-owned skin
 
-An ejected skin exposes its UI components and styles as app code that you own. You can add, remove, rearrange, or restyle any part of it.
+The hosted Video.js registry installs a skin's UI components and styles as app code that you own. You can add, remove, rearrange, or restyle any part of it.
 
 <FrameworkCase frameworks={["html"]}>
-  <EjectedSkin id="default-video" />
+
+```bash
+pnpm dlx shadcn@latest add https://shadcn.videojs.org/r/html/video.json
+```
+
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
-  <EjectedSkin id="default-video-react" />
+
+```bash
+pnpm dlx shadcn@latest add https://shadcn.videojs.org/r/react/video.json
+```
+
 </FrameworkCase>
 
-<DocsLinkCard slug="how-to/customize-skins">Read more about ejecting skins</DocsLinkCard>
-<DocsLinkCard slug="concepts/ui-components">Read more about UI components</DocsLinkCard>
+The <DocsLink slug="getting-started/shadcn">Video.js Shadcn registry</DocsLink> supports React and HTML, Tailwind and vanilla CSS, editable Skin blocks, and individual styled React UI components. Players and media remain package imports.
+
+<DocsLinkCard slug="how-to/customize-skins">Own and customize a skin</DocsLinkCard>
+
+<DocsLinkCard slug="concepts/ui-components">Explore UI components</DocsLinkCard>
 
 ## Skins, features, and presets
 
@@ -108,18 +118,18 @@ Either way the styles travel inside the skin's JavaScript and apply when the ele
 
 </FrameworkCase>
 
-To use Tailwind or change the underlying CSS, [eject the skin](../how-to/customize-skins#eject-a-skin) and edit its styles in your app.
+To use Tailwind or change the underlying CSS, [install the skin source](../how-to/customize-skins#install-an-editable-skin) and edit its styles in your app.
 
 ### Shared limitations
 
 - Skin spacing and icons use a fixed `16px` base by default. Vanilla CSS font sizes use the same base, while Tailwind font sizes use rem units and assume a 16px root font size.
 - The default font stack includes [`Inter`](https://rsms.me/inter/), but we do not load the webfont for you. If Inter is unavailable, the skin uses system fonts.
 
-### Ejected vanilla CSS
+### Source-owned vanilla CSS
 
 - We use a [BEM](https://en.bem.info/methodology/quick-start/) classname structure and every component classname is scoped with a `media-` prefix.
 
-### Ejected Tailwind
+### Source-owned Tailwind
 
-- Ejected skins establish their own spacing scale but otherwise assume the default configuration. A future CLI eject command will support custom class prefixes. For now, edit the ejected skin to use your prefix.
-- Ejected skins currently support Tailwind 4.3.x.
+- Source-owned skins establish their own spacing scale but otherwise assume the default configuration.
+- Source-owned skins currently support Tailwind 4.3.x.

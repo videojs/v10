@@ -230,7 +230,7 @@ The poster belongs to player state rather than the media, which lets the skin co
 ```
 </FrameworkCase>
 
-The packaged skins do not place the title in their default layouts. Add the <DocsLink slug="reference/title">Title</DocsLink> component as a child of the skin, or place it in an ejected or custom layout. For poster rendering options — including placeholders and custom image elements — see <DocsLink slug="how-to/add-a-poster-and-loading-placeholder">Add a poster and loading placeholder</DocsLink> and the <DocsLink slug="reference/poster">Poster</DocsLink> reference.
+The packaged skins do not place the title in their default layouts. Add the <DocsLink slug="reference/title">Title</DocsLink> component as a child of the skin, or place it in a source-owned or custom layout. For poster rendering options — including placeholders and custom image elements — see <DocsLink slug="how-to/add-a-poster-and-loading-placeholder">Add a poster and loading placeholder</DocsLink> and the <DocsLink slug="reference/poster">Poster</DocsLink> reference.
 
 ### Your CSS
 
@@ -347,15 +347,15 @@ video-player {
 
 `--media-accent-color` reaches the sliders, the active buttons, and the accent surfaces at once. Video.js derives a readable text color to sit on top of it; override that with `--media-accent-text-color` if you'd rather choose. `--media-border-radius` rounds the player, and `--media-scale-unit` scales the whole control bar, which is the closest thing to v8's `font-size` trick for sizing controls. <DocsLink slug="how-to/customize-skins">Customize skins</DocsLink> has the full list.
 
-### Level 3: eject
+### Level 3: own the source
 
-**Ejecting** means copying the skin's source into your project and editing it, the way you would a shadcn component. The packaged skin isn't compiled magic; it's a tree of components, so ejecting starts as copy and paste. <DocsLink slug="how-to/customize-skins">Customize skins</DocsLink> has copy-paste-ready implementations for every packaged skin.
+Install the closest Player or skin block from the hosted Video.js Shadcn registry, then edit its ordinary application files. <DocsLink slug="how-to/customize-skins">Customize skins</DocsLink> explains the available React and HTML, Tailwind and vanilla CSS variants.
 
 This is where v8's `controlBar` config and `addChild` calls end up, and honestly it's the better trade. Instead of `controlBar: { pictureInPictureToggle: false }`, you delete a line. Instead of subclassing a component to change its behavior, you edit the markup.
 
 <FrameworkCase frameworks={["html"]}>
 
-Keep the player and skin registration imports. The skin import registers the container and UI elements that your ejected layout uses; you do not render the skin element itself:
+Keep the generated player and UI registration imports. The installed HTML block registers the elements its source-owned layout uses; you do not render the packaged skin element itself:
 
 ```js
 import '@videojs/html/video/player';
@@ -443,18 +443,18 @@ export function MyPlayer() {
 
 Those hotkey and gesture declarations are where `userActions` went. v8's `userActions.hotkeys` was a function you wrote; here each shortcut is a component with a key and an action, and `userActions.click` and `doubleClick` become gestures with a region. The packaged skins already include a sensible set of both, which is why you don't see them in the earlier examples.
 
-Ejecting is also where you take on the skin's CSS. The packaged skins ship styles for everything above; a bare layout renders unstyled until you bring those along, which is why <DocsLink slug="how-to/customize-skins">Customize skins</DocsLink> hands you the CSS next to the markup.
+Owning the source also means owning its styles. The registry installs Tailwind or generated vanilla CSS beside the markup; a bare layout renders unstyled until you bring those styles along.
 
 ## Plugins
 
 v10 has no plugin system. There's no `videojs.registerPlugin`, no `player.myPlugin()`, and no plugin lifecycle.
 
-That's a deliberate choice rather than a missing feature. v8 plugins existed largely because there was no other way in: to add a control, change a behavior, or support a format, you had to reach into player internals through the one door the plugin API provided. v10 gives you the front door instead: components you can add, skins you can eject, media elements you can swap. Most of what plugins did is now ordinary composition.
+That's a deliberate choice rather than a missing feature. v8 plugins existed largely because there was no other way in: to add a control, change a behavior, or support a format, you had to reach into player internals through the one door the plugin API provided. v10 gives you the front door instead: components you can add, skin source you can own, and media elements you can swap. Most of what plugins did is now ordinary composition.
 
 Audit your plugins and sort them into four piles:
 
 - **Formats and techs** (`videojs-contrib-*`, YouTube, Vimeo, Mux). Replace with the matching media component. See [Techs become media components](#techs-become-media-components).
-- **UI additions** (extra buttons, overlays, custom control bars). Rebuild as components in an ejected skin, or with <DocsLink slug="how-to/build-your-own-component">your own component</DocsLink>. This is usually less code than the plugin was.
+- **UI additions** (extra buttons, overlays, custom control bars). Rebuild them in a source-owned skin, or with <DocsLink slug="how-to/build-your-own-component">your own component</DocsLink>. This is usually less code than the plugin was.
 - **Workarounds** for v8 limitations. Check whether the limitation still exists before you port anything.
 - **Genuinely missing features** (ads, playlists). These need real work, and some have no home yet. Get them on the list early, because they'll drive your timeline.
 

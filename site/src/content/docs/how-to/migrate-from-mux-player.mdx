@@ -347,7 +347,7 @@ For display, use `content-title` on the player.
 For display, use `title` on the player.
 </FrameworkCase>
 
-The title reaches player state, but the packaged skins don't place it in their layouts. Add the <DocsLink slug="reference/title">Title</DocsLink> component as a child of a packaged skin, or place it in an ejected or custom layout, when you want viewers to see it:
+The title reaches player state, but the packaged skins don't place it in their layouts. Add the <DocsLink slug="reference/title">Title</DocsLink> component as a child of a packaged skin, or place it in a source-owned or custom layout, when you want viewers to see it:
 
 <FrameworkCase frameworks={["html"]}>
 ```js
@@ -462,11 +462,11 @@ Give the skin a class you own:
 
 `--media-accent-color` reaches the sliders, the active buttons, and the accent surfaces. Video.js derives a readable text color to sit on top of it; override that with `--media-accent-text-color` if you'd rather choose. `--media-border-radius` rounds the player, and `--media-scale-unit` scales the whole control bar at once. <DocsLink slug="how-to/customize-skins">Customize skins</DocsLink> has the full list.
 
-The skins use a different visual design, so you may not need to replace Mux Player's `primaryColor` and `secondaryColor` directly. Start with `--media-accent-color`. Restyle individual surfaces, or eject the skin, only when you need a closer palette match.
+The skins use a different visual design, so you may not need to replace Mux Player's `primaryColor` and `secondaryColor` directly. Start with `--media-accent-color`. Install and restyle the skin source only when you need a closer palette match.
 
-### Level 3: eject
+### Level 3: own the source
 
-**Ejecting** means copying the skin's source into your project and editing it, the way you would a shadcn component. The packaged skin isn't compiled magic; it's a tree of components, so ejecting starts as copy and paste. <DocsLink slug="how-to/customize-skins">Customize skins</DocsLink> has copy-paste-ready implementations for every packaged skin.
+Install the closest Player or skin block from the hosted Video.js Shadcn registry, then edit its ordinary application files. <DocsLink slug="how-to/customize-skins">Customize skins</DocsLink> explains the available framework and styling variants.
 
 This is the level that per-control tweaks need, and it's a genuine step up in effort from a Mux Player attribute. `forward-seek-offset="30"` was one character. In Video.js, the skins bake their seek step into their keyboard shortcuts and gestures, so changing it means editing those lines:
 
@@ -791,7 +791,7 @@ Program Date Time has no convenience surface: no `getStartDate()`, no `currentPd
 
 Ordered roughly by how many migrations they'll touch.
 
-- Two skins, against Mux Player's five themes, and no runtime theme switch. That's a deliberate trade, fewer looks each of which you can eject, but it's a real difference if you shipped `theme="classic"`.
+- Two skins, against Mux Player's five themes, and no runtime theme switch. That's a deliberate trade—fewer looks, each available as editable source—but it's a real difference if you shipped `theme="classic"`.
 - Lazy loading (`loading="viewport|page"`) has no equivalent.
 - The controls auto-hide delay isn't configurable, and there's no disabled state for the controls ([#1728](https://github.com/videojs/v10/issues/1728)).
 - Nothing persists between sessions: volume, captions language, speed, quality. That's out of scope for GA ([#944](https://github.com/videojs/v10/issues/944)). Default subtitle language is tracked at [#1423](https://github.com/videojs/v10/issues/1423), though Mux users can set `source.playback.defaultSubtitlesLang` and let the HLS playlist decide.

@@ -11,7 +11,7 @@ A poster is the image shown before your video plays. There are several places to
 1. **Let the media provide it.** Some media components create a poster from the source, so there is nothing extra to host or keep in sync.
 2. **Set `poster` on the player.** With a packaged skin, that is all a static image needs.
 3. **Take control of the image** when you need a framework image component, a `<picture>` element, or a loading placeholder. The skin renders your image instead of its own.
-4. **Keep it working in an <DocsLink slug="how-to/customize-skins">ejected skin</DocsLink>.** The player's `poster` still reaches the Poster component your skin renders, or you can set the image's source yourself.
+4. **Keep it working in a <DocsLink slug="how-to/customize-skins">source-owned skin</DocsLink>.** The player's `poster` still reaches the Poster component your skin renders, or you can set the image's source yourself.
 
 ## Let the media provide a poster
 
@@ -244,9 +244,9 @@ Add an image to the skin's `poster` slot with the placeholder as its background.
 
 The examples use `contain` for both images. Use `cover` for both when the poster should fill the player. Keeping the same size and position prevents the image from jumping when the poster appears.
 
-## Set the poster in an ejected skin
+## Set the poster in a source-owned skin
 
-Ejecting a skin changes nothing about the first two approaches: the player's `poster`, or the poster the media provides, still reaches the <DocsLink slug="reference/poster">Poster</DocsLink> component your skin renders.
+Installing a skin's source changes nothing about the first two approaches: the player's `poster`, or the poster the media provides, still reaches the <DocsLink slug="reference/poster">Poster</DocsLink> component your skin renders.
 
 <FrameworkCase frameworks={["react"]}>
 
