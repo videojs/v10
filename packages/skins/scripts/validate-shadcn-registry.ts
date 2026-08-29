@@ -152,11 +152,18 @@ async function validateNextFixture(config: {
   await writeNextFixture(config);
   await runCommand('pnpm', ['install', '--no-frozen-lockfile'], config.root);
 
+  if (config.styling === 'tailwind') {
+    await runShadcn(['init', '--defaults', '--yes', '--silent', '--cwd', config.root], config.root);
+  }
+
+  await configureRegistryNamespace(config);
+
   await add(config.root, ['@videojs/video']);
   await assertInstalled(config.root, [
     'components/videojs/skins/video/skin.tsx',
     'components/videojs/ui/play-button.tsx',
     'components/videojs/styles/theme.css',
+    'lib/utils.ts',
   ]);
 
   if (config.styling === 'css') {
@@ -295,10 +302,17 @@ async function writeNextFixture(config: {
   };
 
   await mkdir(resolve(config.root, 'app'), { recursive: true });
-  await mkdir(resolve(config.root, 'lib'), { recursive: true });
   await writeFile(resolve(config.root, 'package.json'), `${JSON.stringify(packageJson, null, 2)}\n`);
-  await writeFile(resolve(config.root, 'components.json'), `${JSON.stringify(components, null, 2)}\n`);
+
+  if (config.styling === 'css') {
+    await writeFile(resolve(config.root, 'components.json'), `${JSON.stringify(components, null, 2)}\n`);
+  }
+
   await writeFile(resolve(config.root, 'tsconfig.json'), `${JSON.stringify(tsconfig, null, 2)}\n`);
+  await writeFile(
+    resolve(config.root, 'next.config.ts'),
+    `import type { NextConfig } from 'next';\n\nexport default {} satisfies NextConfig;\n`
+  );
   await writeFile(resolve(config.root, 'pnpm-workspace.yaml'), workspaceConfig(overrides));
   await writeFile(
     resolve(config.root, 'next-env.d.ts'),
@@ -355,16 +369,6 @@ export default function Page() {
       ? '@import "tailwindcss";\n'
       : 'html { color-scheme: dark; }\nbody { margin: 0; background: #111; color: #fff; font-family: sans-serif; }\n'
   );
-  await writeFile(
-    resolve(config.root, 'lib/utils.ts'),
-    `import { clsx, type ClassValue } from 'clsx';
-import { twMerge } from 'tailwind-merge';
-
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
-`
-  );
 
   if (config.styling === 'tailwind') {
     await writeFile(
@@ -372,6 +376,156 @@ export function cn(...inputs: ClassValue[]) {
       `export default { plugins: { '@tailwindcss/postcss': {} } };\n`
     );
   }
+}
+
+async function configureRegistryNamespace(config: {
+  address: string;
+  root: string;
+  styling: 'tailwind' | 'css';
+}): Promise<void> {
+  const filename = resolve(config.root, 'components.json');
+  const components = JSON.parse(await readFile(filename, 'utf8'));
+
+  components.registries = {
+    ...components.registries,
+    '@videojs': `${config.address}/r/react${config.styling === 'css' ? '/css' : ''}/{name}.json`,
+  };
+
+  await writeFile(filename, `${JSON.stringify(components, null, 2)}\n`);
+}
+
+async function writeHtmlFixture(config: {
+  address: string;
+  root: string;
+  styling: 'tailwind' | 'css';
+  tarballs: ReadonlyMap<string, string>;
+}): Promise<void> {
+  const overrides = Object.fromEntries(config.tarballs);
+  const htmlTarball = requiredTarball(config.tarballs, '@videojs/html');
+  const packageJson = {
+    name: `videojs-shadcn-html-${config.styling}-validation`,
+    private: true,
+    version: '0.0.0',
+    packageManager: 'pnpm@11.17.0',
+    scripts: {
+      build: 'vite build',
+      check: 'tsc --noEmit',
+      start: 'vite preview',
+    },
+    dependencies: {
+      '@videojs/html': htmlTarball,
+    },
+    devDependencies: {
+      '@tailwindcss/vite': config.styling === 'tailwind' ? '4.3.3' : undefined,
+      tailwindcss: config.styling === 'tailwind' ? '4.3.3' : undefined,
+      typescript: '5.9.3',
+      vite: '8.2.2',
+    },
+  };
+  const components = {
+    $schema: 'https://ui.shadcn.com/schema.json',
+    style: 'new-york',
+    rsc: false,
+    tsx: true,
+    tailwind: {
+      config: '',
+      css: 'src/app.css',
+      baseColor: 'neutral',
+      cssVariables: true,
+      prefix: '',
+    },
+    iconLibrary: 'lucide',
+    aliases: {
+      components: '@/components',
+      ui: '@/components/ui',
+      utils: '@/lib/utils',
+      lib: '@/lib',
+      hooks: '@/hooks',
+    },
+    registries: {
+      '@videojs': `${config.address}/r/html${config.styling === 'css' ? '/css' : ''}/{name}.json`,
+    },
+  };
+  const tsconfig = {
+    compilerOptions: {
+      target: 'ES2022',
+      useDefineForClassFields: true,
+      lib: ['ES2022', 'DOM', 'DOM.Iterable'],
+      allowJs: false,
+      skipLibCheck: true,
+      strict: true,
+      noEmit: true,
+      module: 'ESNext',
+      moduleResolution: 'Bundler',
+      resolveJsonModule: true,
+      isolatedModules: true,
+      paths: { '@/*': ['./src/*'] },
+      types: ['vite/client'],
+    },
+    include: ['src', 'vite.config.ts'],
+  };
+  const viteConfig =
+    config.styling === 'tailwind'
+      ? `import tailwindcss from '@tailwindcss/vite';
+import { defineConfig } from 'vite';
+
+export default defineConfig({ plugins: [tailwindcss()] });
+`
+      : `import { defineConfig } from 'vite';
+
+export default defineConfig({});
+`;
+
+  await mkdir(resolve(config.root, 'src'), { recursive: true });
+  await writeFile(resolve(config.root, 'package.json'), `${JSON.stringify(packageJson, null, 2)}\n`);
+  await writeFile(resolve(config.root, 'components.json'), `${JSON.stringify(components, null, 2)}\n`);
+  await writeFile(resolve(config.root, 'tsconfig.json'), `${JSON.stringify(tsconfig, null, 2)}\n`);
+  await writeFile(resolve(config.root, 'pnpm-workspace.yaml'), workspaceConfig(overrides));
+  await writeFile(resolve(config.root, 'vite.config.ts'), viteConfig);
+  await writeFile(
+    resolve(config.root, 'src/app.css'),
+    config.styling === 'tailwind'
+      ? '@import "tailwindcss";\n'
+      : 'html { color-scheme: dark; }\nbody { margin: 0; background: #111; color: #fff; font-family: sans-serif; }\n'
+  );
+}
+
+async function writeHtmlComposition(root: string): Promise<void> {
+  const skin = await readFile(resolve(root, 'src/components/videojs/skins/video/skin.html'), 'utf8');
+  const composition = skin
+    .replace('<media-container', '<media-container style="aspect-ratio: 16 / 9; width: min(90vw, 48rem)"')
+    .replace(
+      '<!-- Add a compatible media element here. -->',
+      '<hlsjs-video aria-label="Validation video"></hlsjs-video>'
+    );
+
+  await writeFile(
+    resolve(root, 'index.html'),
+    `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Video.js registry validation</title>
+  </head>
+  <body>
+    <main style="display: grid; min-height: 100vh; place-items: center">
+      <video-player>${composition}</video-player>
+    </main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
+`
+  );
+  await writeFile(
+    resolve(root, 'src/main.ts'),
+    `import '@videojs/html/video/player';
+import '@videojs/html/media/hlsjs-video';
+
+import './app.css';
+import './components/videojs/skins/video/skin';
+`
+  );
 }
 
 function requiredTarball(tarballs: ReadonlyMap<string, string>, name: string): string {
