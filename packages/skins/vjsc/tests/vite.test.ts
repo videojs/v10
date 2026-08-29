@@ -2,7 +2,7 @@ import { resolve } from 'node:path';
 
 import { isString, isUndefined } from '@videojs/utils/predicate';
 import { build, createLogger, createServer, type ViteDevServer } from 'vite';
-import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
 const packageDir = resolve(import.meta.dirname, '../..');
 const configFile = resolve(packageDir, 'dev/vite.config.ts');
@@ -21,6 +21,16 @@ const designStyles = resolve(packageDir, 'vjsc/styles/base.css');
 const skinConfig = resolve(packageDir, 'vjsc/config.ts');
 const vjscPlayButton = resolve(packageDir, 'vjsc/components/buttons/play-button.tsx');
 const frameworks = ['react', 'html'] as const;
+const skins = [
+  'default-video',
+  'minimal-video',
+  'default-live-video',
+  'minimal-live-video',
+  'default-live-audio',
+  'minimal-live-audio',
+  'default-audio',
+  'minimal-audio',
+] as const;
 const skinContracts = {
   'default-video': { exportName: 'DefaultVideoSkin', className: 'media-skin--video' },
   'minimal-video': { exportName: 'MinimalVideoSkin', className: 'media-skin--minimal' },
@@ -30,42 +40,53 @@ const skinContracts = {
   'minimal-live-audio': { exportName: 'MinimalLiveAudioSkin', className: 'media-skin--minimal' },
   'default-audio': { exportName: 'DefaultAudioSkin', className: 'media-skin--audio' },
   'minimal-audio': { exportName: 'MinimalAudioSkin', className: 'media-skin--minimal' },
-} as const;
-const skins = Object.keys(skinContracts) as Array<keyof typeof skinContracts>;
+} as const satisfies Record<(typeof skins)[number], { exportName: string; className: string }>;
 const styles = ['css', 'tailwind'] as const;
 const variants = frameworks.flatMap((framework) =>
   skins.flatMap((skin) => styles.map((style) => ({ framework, skin, style })))
 );
+const logger = createLogger('silent');
+const warn = vi.spyOn(logger, 'warn').mockImplementation(() => {});
+const warnOnce = vi.spyOn(logger, 'warnOnce').mockImplementation(() => {});
 
 describe('Skins Vite workflow', () => {
-  let server: ViteDevServer | undefined;
+  let server: ViteDevServer;
 
-  afterEach(async () => {
-    await server?.close();
-    server = undefined;
+  beforeAll(async () => {
+    server = await createServer({
+      configFile,
+      customLogger: logger,
+      logLevel: 'silent',
+      optimizeDeps: { include: [], noDiscovery: true },
+      server: { middlewareMode: true },
+    });
+  }, 30_000);
+
+  beforeEach(() => {
+    warn.mockClear();
+    warnOnce.mockClear();
+  });
+
+  afterAll(async () => {
+    await server.close();
   }, 30_000);
 
   it('resolves queried skin source directly', async () => {
-    server = await createServer({
-      configFile,
-      logLevel: 'silent',
-      server: { middlewareMode: true },
-    });
-
-    await server.environments.client.depsOptimizer?.scanProcessing;
     const resolved = await server.pluginContainer.resolveId(defaultSkinUrl);
 
     expect(resolved?.id).toContain('/vjsc/skins/default-video/skin.tsx?skin=default-video&style=css&target=react');
   }, 30_000);
 
-  it('serves every framework, Skin, and style combination', async () => {
-    server = await createServer({
-      configFile,
-      logLevel: 'silent',
-      optimizeDeps: { include: [], noDiscovery: true },
-      server: { middlewareMode: true },
-    });
+  it('reports VJSC style diagnostics through the Vite logger', async () => {
+    await server.transformRequest(`${reactPosterUrl}&diagnostics=1`);
+    const warnings = [...warn.mock.calls, ...warnOnce.mock.calls].flat().join('\n');
 
+    expect(warnings).toContain('[VJSC_STYLE_COMPLEX_SELECTOR]');
+    expect(warnings).toContain('Reason:');
+    expect(warnings).toContain('Recommendation:');
+  }, 30_000);
+
+  it('serves every framework, Skin, and style combination', async () => {
     for (const variant of variants) {
       const url = skinUrl(variant);
       const result = await server.transformRequest(url);
@@ -94,40 +115,7 @@ describe('Skins Vite workflow', () => {
     expect(htmlContainer?.code).toContain('/src/define/ui/container.ts');
   }, 30_000);
 
-  it('reports VJSC style diagnostics through the Vite logger', async () => {
-    const logger = createLogger('warn');
-    const warn = vi.spyOn(logger, 'warn').mockImplementation(() => {});
-    const warnOnce = vi.spyOn(logger, 'warnOnce').mockImplementation(() => {});
-
-    server = await createServer({
-      configFile,
-      customLogger: logger,
-      logLevel: 'warn',
-      optimizeDeps: { include: [], noDiscovery: true },
-      server: { middlewareMode: true },
-    });
-
-    await server.transformRequest(reactPosterUrl);
-    const warnings = [...warn.mock.calls, ...warnOnce.mock.calls].flat().join('\n');
-
-    expect(warnings).toContain('[VJSC_STYLE_COMPLEX_SELECTOR]');
-    expect(warnings).toContain('Reason:');
-    expect(warnings).toContain('Recommendation:');
-  }, 30_000);
-
   it('passes trigger props to the concrete React render element', async () => {
-    const logger = createLogger('silent');
-    const warn = vi.spyOn(logger, 'warn');
-    const warnOnce = vi.spyOn(logger, 'warnOnce');
-
-    server = await createServer({
-      configFile,
-      customLogger: logger,
-      logLevel: 'silent',
-      optimizeDeps: { include: [], noDiscovery: true },
-      server: { middlewareMode: true },
-    });
-
     const settingsMenu = await server.transformRequest(settingsMenuUrl);
     const volumePopover = await server.transformRequest(volumePopoverUrl);
 
@@ -139,13 +127,6 @@ describe('Skins Vite workflow', () => {
   }, 30_000);
 
   it('emits base visibility styles for stateful button icons', async () => {
-    server = await createServer({
-      configFile,
-      logLevel: 'silent',
-      optimizeDeps: { include: [], noDiscovery: true },
-      server: { middlewareMode: true },
-    });
-
     const transformed = await server.transformRequest(playButtonUrl);
     const cssUrls = [...(transformed?.code ?? '').matchAll(/(?:from\s+)?["']([^"']*virtual:vjsc\/css\/[^"']+)["']/g)]
       .map((match) => match[1]!)
@@ -162,13 +143,6 @@ describe('Skins Vite workflow', () => {
   }, 30_000);
 
   it('includes Shadow DOM utilities only for HTML targets', async () => {
-    server = await createServer({
-      configFile,
-      logLevel: 'silent',
-      optimizeDeps: { include: [], noDiscovery: true },
-      server: { middlewareMode: true },
-    });
-
     const html = await server.transformRequest(htmlPosterUrl);
     const react = await server.transformRequest(reactPosterUrl);
 
@@ -177,13 +151,6 @@ describe('Skins Vite workflow', () => {
   }, 30_000);
 
   it('hides source-less poster images for both targets', async () => {
-    server = await createServer({
-      configFile,
-      logLevel: 'silent',
-      optimizeDeps: { include: [], noDiscovery: true },
-      server: { middlewareMode: true },
-    });
-
     const html = await server.transformRequest(htmlPosterUrl);
     const react = await server.transformRequest(reactPosterUrl);
 
@@ -195,13 +162,6 @@ describe('Skins Vite workflow', () => {
   }, 30_000);
 
   it('invalidates transformed owners for component, style, and design changes', async () => {
-    server = await createServer({
-      configFile,
-      logLevel: 'silent',
-      optimizeDeps: { include: [], noDiscovery: true },
-      server: { middlewareMode: true },
-    });
-
     await server.transformRequest(defaultSkinUrl);
     const resolved = await server.pluginContainer.resolveId(defaultSkinUrl);
 
@@ -263,28 +223,15 @@ describe('Skins Vite workflow', () => {
   }, 30_000);
 
   it('restarts when compiler configuration changes', async () => {
-    server = await createServer({
-      configFile,
-      logLevel: 'silent',
-      optimizeDeps: { include: [], noDiscovery: true },
-      server: { middlewareMode: true },
-    });
-
     expect(server.config.configFileDependencies).toContain(skinConfig);
     const restart = vi.spyOn(server, 'restart').mockResolvedValue();
 
     server.watcher.emit('change', skinConfig);
     await vi.waitFor(() => expect(restart).toHaveBeenCalledOnce());
+    restart.mockRestore();
   }, 30_000);
 
   it('serves optimized icon families with the authored element runtime', async () => {
-    server = await createServer({
-      configFile,
-      logLevel: 'silent',
-      optimizeDeps: { include: [], noDiscovery: true },
-      server: { middlewareMode: true },
-    });
-
     const resolved = await server.pluginContainer.resolveId('@videojs/icons/element/minimal');
     if (!resolved) throw new Error('Expected the source icon plugin to resolve the minimal family.');
 
@@ -328,12 +275,6 @@ describe('Skins Vite workflow', () => {
   }, 120_000);
 
   it('does not configure Shadcn output while serving', async () => {
-    server = await createServer({
-      configFile,
-      logLevel: 'silent',
-      server: { middlewareMode: true },
-    });
-
     expect(server.config.plugins.some((plugin) => plugin.name === 'vjsc:shadcn')).toBe(false);
   }, 30_000);
 });
