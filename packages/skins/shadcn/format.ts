@@ -1,9 +1,14 @@
 import { isString } from '@videojs/utils/predicate';
 import type { Plugin } from 'vite';
 
-import { formatGeneratedSource } from '../build/format.ts';
+import { type FormattedSource, formatGeneratedSource } from '../build/format.ts';
 
 const sourceFile = /\.(?:css|[cm]?[jt]sx?)$/;
+
+/** Format one editable registry source file with the shared generated-source settings. */
+export function formatRegistrySource(filename: string, source: string): Promise<FormattedSource> {
+  return formatGeneratedSource(filename, source);
+}
 
 /** Format editable registry source before Shadcn embeds it in installable item JSON. */
 export function formatRegistrySources(): Plugin {
@@ -14,7 +19,7 @@ export function formatRegistrySources(): Plugin {
         Object.values(bundle).map(async (asset) => {
           if (asset.type !== 'asset' || !isString(asset.source) || !sourceFile.test(asset.fileName)) return;
 
-          const result = await formatGeneratedSource(asset.fileName, asset.source);
+          const result = await formatRegistrySource(asset.fileName, asset.source);
 
           if (result.errors.length > 0) {
             const messages = result.errors.map((error) => error.message).join('\n');
