@@ -118,6 +118,20 @@ function setupMediaKeysSetup({
   };
   config: MediaKeysSetupConfig;
 }): Reactor<MediaKeysFsmState | 'destroying' | 'destroyed'> {
+  if (__DEV__) {
+    // A config entry for a system whose module isn't composed can never be
+    // negotiated — `keySystemCandidates` intersects the two — and the miss is
+    // otherwise silent: the source just refuses as if unlicensed.
+    for (const keySystem of Object.keys(config.drm)) {
+      if (config.keySystems.some((module_) => module_.keySystem === keySystem)) continue;
+
+      console.warn(
+        `[spf] drm config names "${keySystem}" but no composed key-system module claims it, so it will never be ` +
+          `negotiated. Composed: ${config.keySystems.map((module_) => module_.keySystem).join(', ') || '(none)'}.`
+      );
+    }
+  }
+
   const derivedStateSignal = computed<MediaKeysFsmState>(() => {
     const presentation = state.presentation.get();
     if (!context.mediaElement.get() || !isResolvedPresentation(presentation)) return 'preconditions-unmet';
