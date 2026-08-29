@@ -14,5 +14,10 @@ export {
   rewriteComponentGraphImports,
   stripComponentGraphStyleImports,
 } from './modules';
+export {
+  type ComponentGraphHtmlEntry,
+  renderComponentGraphHtml,
+  type RenderComponentGraphHtmlOptions,
+} from './render-html';
 export { createComponentGraphStyles, type ComponentGraphStylesOptions } from './styles';
 export { type ValidatedComponentGraphModule, validateComponentGraph } from './validate';
