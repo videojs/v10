@@ -63,3 +63,7 @@ export const skinStyles = {
 } as const satisfies Record<string, SkinMeta['style']>;
 
 export type SkinName = keyof typeof skinStyles;
+
+export function isSkinName(value: string): value is SkinName {
+  return value in skinStyles;
+}

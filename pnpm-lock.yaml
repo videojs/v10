@@ -443,9 +443,6 @@ importers:
       '@videojs/icons':
         specifier: workspace:*
         version: link:../icons
-      '@videojs/skins':
-        specifier: workspace:*
-        version: link:../skins
       '@wistia/wistia-player':
         specifier: ^0.7.12
         version: 0.7.13(webpack@5.109.2(csso@5.0.5)(esbuild@0.28.1)(lightningcss@1.33.0)(postcss@8.5.26))
