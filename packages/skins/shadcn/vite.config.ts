@@ -70,7 +70,7 @@ const tailwindRegistryCss = {
   },
 } as const;
 const registryPaths = {
-  install: 'components/videojs',
+  install: '@components/videojs',
   import: '@/components/videojs',
 } as const;
 const publishedSkins = Object.keys(skinStyles).filter(isSkinName);
@@ -242,7 +242,7 @@ function skinItem(
     title: meta.title,
     description: meta.description,
     categories: ['media', 'skins', preset],
-    docs: `Install this editable ${meta.title} source, then render it inside a compatible Video.js ${preset} Player.`,
+    docs: skinDocs(module, meta, skin, target, directory),
     registryDependencies: [...reactHelperDependency(target), '@videojs/_style-theme'],
     meta: registryMeta,
     $vjsc: {
@@ -283,7 +283,7 @@ function componentItem(
     title: meta.title,
     description: meta.description,
     categories: ['media', category],
-    docs: `Import \`${meta.title}\` from \`@/components/videojs/ui/${meta.name}\` after installation.`,
+    docs: componentDocs(module, meta),
     registryDependencies: [...reactHelperDependency(target), ...styles.dependencies],
     meta: registryMeta,
     $vjsc: {
@@ -499,6 +499,71 @@ function componentCategory(filename: string): string {
   const match = /\/components\/([^/]+)\//.exec(filename);
 
   return match?.[1] ?? 'shared';
+}
+
+function componentDocs(
+  module: ComponentGraphModule<SkinModuleMeta>,
+  meta: Extract<SkinModuleMeta, { type: 'component' }>
+): string {
+  const component = exportedComponentName(module);
+
+  return `Installs \`${registryPaths.import}/ui/${meta.name}.tsx\` for use inside a compatible Video.js Player or Skin.
+
+\`\`\`tsx
+import { ${component} } from '${registryPaths.import}/ui/${meta.name}';
+
+export function Controls() {
+  return <${component} />;
+}
+\`\`\``;
+}
+
+function skinDocs(
+  module: ComponentGraphModule<SkinModuleMeta>,
+  meta: Extract<SkinModuleMeta, { type: 'skin' }>,
+  skin: SkinName,
+  target: RegistryTarget,
+  directory: string
+): string {
+  const component = exportedComponentName(module);
+  const preset = presetForSkin(skin);
+  const player = `${pascalCase(preset)}Player`;
+  const media = preset.endsWith('audio') ? 'HlsAudio' : 'HlsJsVideo';
+  const mediaEntry = preset.endsWith('audio') ? 'hls-audio' : 'hlsjs-video';
+
+  if (target.framework === 'html') {
+    return `Installs editable ${meta.title} source under \`${registryPaths.install}/${directory}\`. Requires \`@videojs/html@10.0.0-beta.32\`; import the matching Player and media registrations before using the installed light-DOM template.`;
+  }
+
+  return `Requires \`@videojs/react@10.0.0-beta.32\`, which is installed with this item.
+
+\`\`\`tsx
+import { ${media} } from '@videojs/react/media/${mediaEntry}';
+import { ${player} } from '@videojs/react/${preset}';
+
+import { ${component} } from '${registryPaths.import}/${directory}/skin';
+
+export function Player({ src }: { src: string }) {
+  return (
+    <${player}>
+      <${component} className="aspect-video w-full">
+        <${media} src={src} />
+      </${component}>
+    </${player}>
+  );
+}
+\`\`\``;
+}
+
+function exportedComponentName(module: ComponentGraphModule<SkinModuleMeta>): string {
+  const match = /\bexport\s+(?:const|function)\s+([A-Z][A-Za-z0-9]*)/.exec(module.source);
+  if (!match) throw new Error(`Registry component has no exported component: \`${module.sourcePath}\`.`);
+
+  return match[1]!;
+}
+
+function pascalCase(value: string): string {
+  return value.replace(/(?:^|-)([a-z])/g, (_match, letter: string) => letter.toUpperCase());
 }
 
 function skinDirectory(skin: SkinName): string {

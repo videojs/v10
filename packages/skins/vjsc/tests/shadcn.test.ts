@@ -96,7 +96,7 @@ describe('Skins Shadcn registry', () => {
     const playSource = registrySource(assets, 'r/react/ui', playButton, '/play-button.tsx');
     const minimalVideo = registryItem(tailwind, 'video-minimal');
 
-    expect(playButton.files.map((file) => file.target)).toEqual(['components/videojs/ui/play-button.tsx']);
+    expect(playButton.files.map((file) => file.target)).toEqual(['@components/videojs/ui/play-button.tsx']);
     expect(playButton.registryDependencies).toEqual([
       '@videojs/_button-tooltip',
       '@videojs/_resolve-class-name',
@@ -108,9 +108,12 @@ describe('Skins Shadcn registry', () => {
     expect(playSource).toContain('@videojs/react/icons/minimal');
     expect(playSource).toContain('export type PlayButtonProps =');
     expect(playSource).not.toContain('interface PlayButtonProps extends');
-    expect(minimalVideo.files.some((file) => file.target === 'components/videojs/skins/video/minimal/skin.tsx')).toBe(
+    expect(minimalVideo.files.some((file) => file.target === '@components/videojs/skins/video/minimal/skin.tsx')).toBe(
       true
     );
+    expect(playButton.docs).toContain(`import { PlayButton } from '@/components/videojs/ui/play-button';`);
+    expect(minimalVideo.docs).toContain(`import { MinimalVideoSkin }`);
+    expect(minimalVideo.docs).toContain(`import { VideoPlayer } from '@videojs/react/video';`);
     expect(minimalVideo.registryDependencies).toContain('@videojs/play-button');
     expect(
       (minimalVideo.registryDependencies ?? []).some((dependency) => dependency.includes('play-button-minimal'))
@@ -134,7 +137,7 @@ describe('Skins Shadcn registry', () => {
     const helper = registryItem(tailwind, '_resolve-class-name');
     const helperSource = registrySource(assets, 'r/react/support', helper, '/resolve-class-name.ts');
 
-    expect(helper.files[0]?.target).toBe('components/videojs/lib/resolve-class-name.ts');
+    expect(helper.files[0]?.target).toBe('@components/videojs/lib/resolve-class-name.ts');
     expect(helper.dependencies).toBeUndefined();
     expect(helperSource).toContain(`export { cn } from '@/lib/utils';`);
   }, 120_000);
