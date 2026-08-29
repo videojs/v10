@@ -340,6 +340,7 @@ function utilsItem(
     title: 'Video.js Utilities',
     description: 'Resolves state-aware class names used by editable Video.js React components.',
     docs: 'Installed automatically with React components and composed with the project Shadcn `cn` utility.',
+    registryDependencies: ['utils'],
     meta: {
       role: 'support',
       framework: 'react',

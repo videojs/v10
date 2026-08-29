@@ -138,7 +138,8 @@ describe('Skins Shadcn registry', () => {
     const helperSource = registrySource(assets, 'r/react/support', helper, '/resolve-class-name.ts');
 
     expect(helper.files[0]?.target).toBe('@components/videojs/lib/resolve-class-name.ts');
-    expect(helper.dependencies).toBeUndefined();
+    expect(helper.dependencies).toEqual(['clsx']);
+    expect(helper.registryDependencies).toEqual(['utils']);
     expect(helperSource).toContain(`export { cn } from '@/lib/utils';`);
   }, 120_000);
 
@@ -161,7 +162,6 @@ describe('Skins Shadcn registry', () => {
 
 type BuiltItem = Omit<ShadcnRegistry['items'][number], 'files'> & {
   files: Array<{ type: string; path: string; target?: string | undefined }>;
-  meta?: Record<string, unknown> | undefined;
 };
 
 function catalogItems(assets: ReadonlyMap<string, string>, root: string): BuiltItem[] {
@@ -172,6 +172,7 @@ function assetJson<Value>(assets: ReadonlyMap<string, string>, fileName: string)
   const source = assets.get(fileName);
   if (!source) throw new Error(`Missing registry asset: ${fileName}`);
 
+  // SAFETY: registry output is generated from and validated against the requested Shadcn schema type.
   return JSON.parse(source) as Value;
 }
 
