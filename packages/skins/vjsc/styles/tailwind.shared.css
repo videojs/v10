@@ -1,3 +1,6 @@
+@custom-variant theme-default (&:where(.media-skin:not(.media-skin--minimal), .media-skin:not(.media-skin--minimal) *));
+@custom-variant theme-minimal (&:where(.media-skin--minimal, .media-skin--minimal *));
+
 @theme inline {
   --color-media-accent: var(--media-primary);
   --color-media-accent-text: var(--media-primary-foreground);

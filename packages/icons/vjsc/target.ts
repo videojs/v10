@@ -11,6 +11,7 @@ import { iconNames } from './icon-names.ts';
 
 export interface IconTargetOptions {
   readonly family?: string | undefined;
+  readonly families?: readonly string[] | undefined;
 }
 
 const htmlIconNames: Readonly<Record<string, string>> = {
@@ -19,22 +20,28 @@ const htmlIconNames: Readonly<Record<string, string>> = {
 };
 
 export function createHtmlIconTarget(options: IconTargetOptions = {}): ComponentTarget<ComponentSchema> {
-  const family = options.family ?? 'default';
+  const families = iconFamilies(options);
 
   return defineComponentTarget<ComponentSchema>()(({ element }) => {
     const Icon = element('media-icon');
+    const Span = element('span');
 
     return {
       source: '@videojs/icons/vjsc',
       resolve:
         ({ component }) =>
         ({ props }: { props: SourceProps<Record<string, unknown>> }) =>
-          jsx(Icon, {
-            ...props,
-            ...(family === 'default' ? {} : { family }),
-            name: htmlIconName(component),
-          }),
-      transforms: [iconRegistration(family)],
+          families.map((family) =>
+            jsx(Span, {
+              className: iconThemeClass(family, families),
+              children: jsx(Icon, {
+                ...props,
+                ...(family === 'default' ? {} : { family }),
+                name: htmlIconName(component),
+              }),
+            })
+          ),
+      transforms: [iconRegistration(families)],
       jsx: {
         importSource: 'vjsc/html-runtime',
         attributes: 'html',
@@ -52,17 +59,34 @@ export function createHtmlIconTarget(options: IconTargetOptions = {}): Component
 }
 
 export function createReactIconTarget(options: IconTargetOptions = {}): ComponentTarget<ComponentSchema> {
-  const family = options.family ?? 'default';
-  const source = family === 'default' ? '@videojs/react/icons' : `@videojs/react/icons/${family}`;
+  const families = iconFamilies(options);
 
-  return defineComponentTarget<ComponentSchema>()(({ imported }) => ({
+  return defineComponentTarget<ComponentSchema>()(({ element, imported }) => ({
     source: '@videojs/icons/vjsc',
-    resolve: ({ component }) =>
-      imported({
-        from: source,
-        name: component,
-        props: { from: source, name: 'IconProps' },
-      }),
+    resolve: ({ component }) => {
+      const icons = families.map((family) => {
+        const source = family === 'default' ? '@videojs/react/icons' : `@videojs/react/icons/${family}`;
+
+        return {
+          family,
+          target: imported({
+            from: source,
+            name: component,
+            props: { from: source, name: 'IconProps' },
+          }),
+        };
+      });
+
+      const Span = element('span');
+
+      return ({ props }: { props: SourceProps<Record<string, unknown>> }) =>
+        icons.map(({ family, target: Icon }) =>
+          jsx(Span, {
+            className: iconThemeClass(family, families),
+            children: jsx(Icon, { ...props }),
+          })
+        );
+    },
     jsx: {
       importSource: 'react',
       attributes: 'react',
@@ -70,9 +94,9 @@ export function createReactIconTarget(options: IconTargetOptions = {}): Componen
   }));
 }
 
-function iconRegistration(family: string): ComponentTargetTransform {
+function iconRegistration(families: readonly string[]): ComponentTargetTransform {
   return {
-    name: `videojs:html-icons:${family}`,
+    name: `videojs:html-icons:${families.join(',')}`,
     transform(context) {
       const declaration = context.ast.body.find(
         (statement) => statement.type === 'ImportDeclaration' && statement.source.value === '@videojs/icons/vjsc'
@@ -88,25 +112,38 @@ function iconRegistration(family: string): ComponentTargetTransform {
 
       const imports = new ModuleImports(context.ast, context.magicString, { collisionSuffix: 'Primitive' });
       const registerIcons = imports.reference({ from: '@videojs/html/icons', name: 'registerIcons' });
-      const source = family === 'default' ? '@videojs/html/icons' : `@videojs/html/icons/${family}`;
 
-      const entries = components.map((component) => {
-        const name = htmlIconName(component);
+      for (const family of families) {
+        const source = family === 'default' ? '@videojs/html/icons' : `@videojs/html/icons/${family}`;
+        const entries = components.map((component) => {
+          const name = htmlIconName(component);
 
-        const imported = imports.reference({
-          from: source,
-          name: `${iconNames(name).camel}Icon`,
+          const imported = imports.reference({
+            from: source,
+            name: `${iconNames(name).camel}Icon`,
+          });
+
+          return `${JSON.stringify(name)}: ${imported}`;
         });
 
-        return `${JSON.stringify(name)}: ${imported}`;
-      });
+        imports.statement(`${registerIcons}(${JSON.stringify(family)}, { ${entries.join(', ')} });`);
+      }
 
-      imports.statement(`${registerIcons}(${JSON.stringify(family)}, { ${entries.join(', ')} });`);
       imports.commit();
 
       return true;
     },
   };
+}
+
+function iconFamilies(options: IconTargetOptions): readonly string[] {
+  return options.families ?? [options.family ?? 'default'];
+}
+
+function iconThemeClass(family: string, families: readonly string[]): string | undefined {
+  if (families.length === 1) return undefined;
+
+  return family === 'default' ? 'contents theme-minimal:hidden' : 'hidden theme-minimal:contents';
 }
 
 function htmlIconName(component: string): string {

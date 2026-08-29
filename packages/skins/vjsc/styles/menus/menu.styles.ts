@@ -1,6 +1,7 @@
 import { styles } from 'vjsc/styles';
 
 import { popoverSafeArea, popupPosition, popupSurface } from '../recipes/popup';
+import { themeRecipe } from '../recipes/theme';
 
 const menuItem = [
   'relative flex cursor-pointer select-none items-center gap-1.5 rounded-(--media-menu-item-border-radius) px-2 py-1.5 text-start whitespace-nowrap',
@@ -58,11 +59,8 @@ export default styles({
         'data-starting-style:[transition-duration:100ms] data-starting-style:[transition-property:opacity,filter,transform,scale]',
         'data-ending-style:[transition-duration:100ms] data-ending-style:[transition-property:opacity,filter,transform,scale]',
         'motion-reduce:[transition-duration:0ms]',
+        ...themeRecipe('rounded-[--spacing(3)]', 'rounded-[--spacing(2.5)]'),
       ],
-      variants: {
-        default: 'rounded-[--spacing(3)]',
-        minimal: 'rounded-[--spacing(2.5)]',
-      },
     },
     content: {
       className: 'media-menu-content',

@@ -1,6 +1,6 @@
 import type { VolumePopoverProps as CoreProps, VolumeSliderProps as CoreVolumeSliderProps } from '@videojs/core';
 import * as $ from '@videojs/core/vjsc';
-import type { Props } from 'vjsc/components';
+import type { ClassNameValue, Props } from 'vjsc/components';
 
 import type { SkinComponentMeta } from '../../meta';
 import styles from '../../styles/popups/volume-popover.styles';
@@ -8,18 +8,23 @@ import { ButtonTooltip } from '../buttons/button-tooltip';
 import { MuteButton } from '../buttons/mute-button';
 import { VolumeSlider } from '../sliders/volume-slider';
 
-export function VolumePopover({
-  className,
-  showTooltip = false,
-  side = 'top',
-  orientation = 'vertical',
-  ...props
-}: Props<
+export interface VolumePopoverProps extends Props<
   CoreProps & {
     orientation?: CoreVolumeSliderProps['orientation'];
     showTooltip?: boolean;
   }
-> = {}) {
+> {
+  popupClassName?: ClassNameValue;
+}
+
+export function VolumePopover({
+  className,
+  popupClassName,
+  showTooltip = false,
+  side = 'top',
+  orientation = 'vertical',
+  ...props
+}: VolumePopoverProps = {}) {
   return (
     <$.VolumePopover.Root openOnHover delay={200} closeDelay={100} side={side} {...props}>
       <ButtonTooltip delay={0} disabled={!showTooltip} sticky side="top">
@@ -27,7 +32,7 @@ export function VolumePopover({
           <MuteButton className={className} />
         </$.VolumePopover.Trigger>
       </ButtonTooltip>
-      <$.VolumePopover.Popup className={styles.popup}>
+      <$.VolumePopover.Popup className={[styles.popup, popupClassName]}>
         <VolumeSlider orientation={orientation} />
       </$.VolumePopover.Popup>
     </$.VolumePopover.Root>

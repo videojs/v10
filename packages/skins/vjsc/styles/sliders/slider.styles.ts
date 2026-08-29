@@ -1,6 +1,7 @@
 import { styles } from 'vjsc/styles';
 
 import { sliderPreviewContent } from '../recipes/slider';
+import { themeRecipe } from '../recipes/theme';
 
 const trackLayer = [
   'pointer-events-none absolute rounded-[inherit]',
@@ -70,28 +71,28 @@ export default styles({
         'before:pointer-events-none before:absolute before:z-1 before:-translate-1/2 before:scale-50 before:opacity-0',
         'motion-safe:before:transition-[opacity,scale] motion-safe:before:duration-200 motion-safe:before:ease-out',
         'data-pointing:not-data-dragging:before:scale-100 data-pointing:not-data-dragging:before:opacity-100',
+        ...themeRecipe(
+          [
+            'min-w-(--media-slider-preview-max-width)',
+            '[--media-slider-preview-max-width:min(--spacing(36),100cqi)] @2xl/media-root:[--media-slider-preview-max-width:min(--spacing(48),100cqi)]',
+            'before:top-1/2 before:left-1/2 before:size-1 before:rounded-media-control before:bg-current',
+          ],
+          [
+            'min-w-full',
+            '[--media-slider-preview-max-width:min(--spacing(28),100cqi)]',
+            '@lg/media-root:[--media-slider-preview-max-width:min(--spacing(36),100cqi)]',
+            '@2xl/media-root:[--media-slider-preview-max-width:min(--spacing(48),100cqi)]',
+            '[--media-preview-end-inset:calc(100cqi-100%)]',
+            '[--media-preview-left:clamp(calc(var(--media-slider-preview-max-width)/2),var(--media-slider-pointer),calc(100%-var(--media-slider-preview-max-width)/2+var(--media-preview-end-inset)))]',
+            '@2xl/media-root:[--media-preview-left:var(--media-slider-pointer)]',
+            'before:bg-current/35',
+            'data-[orientation=horizontal]:before:top-1/2 data-[orientation=horizontal]:before:left-(--media-slider-pointer)',
+            'data-[orientation=horizontal]:before:h-5 data-[orientation=horizontal]:before:w-px',
+            'data-[orientation=vertical]:before:top-[calc(100%-var(--media-slider-pointer))] data-[orientation=vertical]:before:left-1/2',
+            'data-[orientation=vertical]:before:h-px data-[orientation=vertical]:before:w-5',
+          ]
+        ),
       ],
-      variants: {
-        default: [
-          'min-w-(--media-slider-preview-max-width)',
-          '[--media-slider-preview-max-width:min(--spacing(36),100cqi)] @2xl/media-root:[--media-slider-preview-max-width:min(--spacing(48),100cqi)]',
-          'before:top-1/2 before:left-1/2 before:size-1 before:rounded-media-control before:bg-current',
-        ],
-        minimal: [
-          'min-w-full',
-          '[--media-slider-preview-max-width:min(--spacing(28),100cqi)]',
-          '@lg/media-root:[--media-slider-preview-max-width:min(--spacing(36),100cqi)]',
-          '@2xl/media-root:[--media-slider-preview-max-width:min(--spacing(48),100cqi)]',
-          '[--media-preview-end-inset:calc(100cqi-100%)]',
-          '[--media-preview-left:clamp(calc(var(--media-slider-preview-max-width)/2),var(--media-slider-pointer),calc(100%-var(--media-slider-preview-max-width)/2+var(--media-preview-end-inset)))]',
-          '@2xl/media-root:[--media-preview-left:var(--media-slider-pointer)]',
-          'before:bg-current/35',
-          'data-[orientation=horizontal]:before:top-1/2 data-[orientation=horizontal]:before:left-(--media-slider-pointer)',
-          'data-[orientation=horizontal]:before:h-5 data-[orientation=horizontal]:before:w-px',
-          'data-[orientation=vertical]:before:top-[calc(100%-var(--media-slider-pointer))] data-[orientation=vertical]:before:left-1/2',
-          'data-[orientation=vertical]:before:h-px data-[orientation=vertical]:before:w-5',
-        ],
-      },
     },
     previewContent: {
       className: 'media-slider-preview-content',
