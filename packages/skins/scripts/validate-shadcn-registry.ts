@@ -588,7 +588,7 @@ async function packVideojsPackages(directory: string): Promise<ReadonlyMap<strin
       'pnpm',
       ['--dir', resolve(workspaceDir, 'packages', name), 'pack', '--pack-destination', directory, '--json'],
       workspaceDir,
-      { npm_config_ignore_scripts: 'true' }
+      { PNPM_CONFIG_IGNORE_SCRIPTS: 'true' }
     );
     const jsonStart = result.stdout.indexOf('{');
     const packed = JSON.parse(result.stdout.slice(jsonStart));
