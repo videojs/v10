@@ -22,7 +22,7 @@ async function loadTailwindVideoSkin(skin: Skin, live: boolean): Promise<Compone
       return adaptTailwindVideoSkin(DefaultLiveVideoSkin);
     }
 
-    const { MinimalLiveVideoSkin } = await import('@app/_generated/components/videojs/skins/live-video-minimal/skin');
+    const { MinimalLiveVideoSkin } = await import('@app/_generated/components/videojs/skins/live-video/minimal/skin');
 
     return adaptTailwindVideoSkin(MinimalLiveVideoSkin);
   }
@@ -33,7 +33,7 @@ async function loadTailwindVideoSkin(skin: Skin, live: boolean): Promise<Compone
     return adaptTailwindVideoSkin(DefaultVideoSkin);
   }
 
-  const { MinimalVideoSkin } = await import('@app/_generated/components/videojs/skins/video-minimal/skin');
+  const { MinimalVideoSkin } = await import('@app/_generated/components/videojs/skins/video/minimal/skin');
 
   return adaptTailwindVideoSkin(MinimalVideoSkin);
 }
@@ -81,7 +81,7 @@ async function loadAudioSkinComponent(
         return DefaultLiveAudioSkin;
       }
 
-      const { MinimalLiveAudioSkin } = await import('@app/_generated/components/videojs/skins/live-audio-minimal/skin');
+      const { MinimalLiveAudioSkin } = await import('@app/_generated/components/videojs/skins/live-audio/minimal/skin');
 
       return MinimalLiveAudioSkin;
     }
@@ -92,7 +92,7 @@ async function loadAudioSkinComponent(
       return DefaultAudioSkin;
     }
 
-    const { MinimalAudioSkin } = await import('@app/_generated/components/videojs/skins/audio-minimal/skin');
+    const { MinimalAudioSkin } = await import('@app/_generated/components/videojs/skins/audio/minimal/skin');
 
     return MinimalAudioSkin;
   }
