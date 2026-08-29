@@ -1,17 +1,16 @@
-import { readFile } from 'node:fs/promises';
-import { basename, dirname, isAbsolute, posix, relative, resolve } from 'node:path';
+import { basename, dirname, isAbsolute, posix, relative } from 'node:path';
 
-import { type ReturnedRule, transform as transformCss } from 'lightningcss';
 import { type RegistryItem, registryItemSchema, registrySchema, type Registry as ShadcnRegistry } from 'shadcn/schema';
 
 import type { ComponentMeta } from '../components/meta';
 import {
   type ComponentGraph,
   type ComponentGraphModule,
+  createComponentGraphStyles,
   type ValidatedComponentGraphModule,
   validateComponentGraph,
 } from '../graph';
-import { escapesRoot, isInsideRoot, toPosixPath } from '../utils/path';
+import { escapesRoot, toPosixPath } from '../utils/path';
 import { type ImportReplacement, replaceImportSpecifiers } from './analyze';
 import type {
   ShadcnRegistryFile,
@@ -51,7 +50,6 @@ type ManifestRegistryItem<Item extends ComponentMeta = ComponentMeta> = VjscRegi
 };
 
 const VIRTUAL_CSS_IMPORT = /import\s+["']virtual:vjsc\/css\/[^"']+["'];?\s*/g;
-const LOCAL_CSS_IMPORT = /@import\s+["'](\.[^"']+)["']\s*;/g;
 
 export interface ShadcnOutputFile {
   readonly path: string;
@@ -251,7 +249,7 @@ async function buildPublishedItem<Item extends ComponentMeta>(
     });
 
   if (item.$vjsc.stylesheet) {
-    const css = await itemStyles(item.name, owned.modules, graph, item.$vjsc.stylesheet.files ?? []);
+    const css = await componentGraphStyles(item.name, owned.modules, graph, item.$vjsc.stylesheet.files ?? []);
     const filename = basename(item.$vjsc.stylesheet.target);
     const path = posix.join('files', item.name, filename);
     const target = posix.join(normalizePath(options.paths.install), normalizePath(item.$vjsc.stylesheet.target));
@@ -280,7 +278,7 @@ async function buildStyleItem<Item extends ComponentMeta>(
     return module;
   });
   const target = posix.join(normalizePath(options.paths.install), normalizePath(item.$vjsc.target));
-  const css = await itemStyles(
+  const css = await componentGraphStyles(
     item.name,
     selected,
     graph,
@@ -339,7 +337,7 @@ function versionDependencies<Item extends ComponentMeta>(
   return new Set([...dependencies].map((dependency) => options.packages?.[dependency] ?? dependency));
 }
 
-async function itemStyles<Item extends ComponentMeta>(
+async function componentGraphStyles<Item extends ComponentMeta>(
   label: string,
   modules: readonly ValidatedComponentGraphModule<Item>[],
   graph: ComponentGraph<Item>,
@@ -347,116 +345,16 @@ async function itemStyles<Item extends ComponentMeta>(
   asset?: string,
   includeAssets = true
 ): Promise<string> {
-  const styles = new Map<string, string>();
-
   for (const path of supplemental) {
     validateRelativePath(path, `Shadcn item ${label} stylesheet file`);
-    const filename = resolve(graph.root, path);
-
-    assertInsideRoot(graph.root, filename, path);
-    addUnique(styles, path, await inlineLocalCssImports(filename, graph.root, new Set()), 'stylesheet');
   }
 
-  for (const module of modules) {
-    if (!includeAssets) continue;
-
-    for (const id of graph.styles?.get(module.id) ?? []) {
-      if (id.endsWith('/base.css')) continue;
-
-      if (asset && virtualStyleFilename(id) !== asset) continue;
-
-      const source = graph.assets?.get(id);
-      if (source === undefined) throw new Error(`Shadcn item \`${label}\` has no captured stylesheet: \`${id}\`.`);
-
-      addUnique(styles, id, source, 'stylesheet');
-    }
-  }
-
-  const source = `${[...styles]
-    .sort(([left], [right]) => left.localeCompare(right))
-    .map(([, source]) => source.trim())
-    .filter(Boolean)
-    .join('\n\n')}\n`;
-
-  return mergeStyles(source, `${label}.css`);
-}
-
-function mergeStyles(source: string, filename: string): string {
-  const context: string[] = [];
-  const rules = new Set<string>();
-  const result = transformCss({
-    filename,
-    code: new TextEncoder().encode(source),
-    minify: false,
-    visitor: {
-      Rule(rule) {
-        const nested = hasNestedRules(rule);
-
-        if (rule.type === 'style' || !nested) {
-          const key = JSON.stringify([context, rule], omitRuleDetails);
-          if (rules.has(key)) return [];
-
-          rules.add(key);
-        }
-
-        if (rule.type !== 'style' && nested) context.push(JSON.stringify(rule, omitRuleDetails));
-
-        return undefined;
-      },
-      RuleExit(rule) {
-        if (rule.type !== 'style' && hasNestedRules(rule)) context.pop();
-      },
-    },
+  return createComponentGraphStyles(graph, modules, {
+    label,
+    files: supplemental,
+    asset,
+    includeAssets,
   });
-
-  return new TextDecoder().decode(result.code);
-}
-
-function hasNestedRules(rule: ReturnedRule): boolean {
-  if (!('value' in rule)) return false;
-
-  const value = rule.value;
-
-  return Boolean(value && typeof value === 'object' && 'rules' in value && Array.isArray(value.rules));
-}
-
-function omitRuleDetails(key: string, value: unknown): unknown {
-  return key === 'loc' || key === 'rules' ? undefined : value;
-}
-
-function virtualStyleFilename(id: string): string | undefined {
-  if (!id.startsWith('virtual:vjsc/css/')) return undefined;
-
-  const filename = id.slice(id.lastIndexOf('/') + 1);
-
-  return decodeURIComponent(filename);
-}
-
-async function inlineLocalCssImports(filename: string, root: string, stack: Set<string>): Promise<string> {
-  if (stack.has(filename)) throw new Error(`Circular Shadcn stylesheet import: \`${filename}\`.`);
-
-  const source = await readFile(filename, 'utf8');
-  const imports = [...source.matchAll(LOCAL_CSS_IMPORT)];
-  if (imports.length === 0) return source;
-
-  stack.add(filename);
-  let output = source;
-
-  for (const match of imports.reverse()) {
-    const specifier = match[1];
-    const start = match.index;
-    if (!specifier || start === undefined) continue;
-
-    const imported = resolve(dirname(filename), specifier);
-
-    assertInsideRoot(root, imported, specifier);
-    const content = await inlineLocalCssImports(imported, root, stack);
-
-    output = output.slice(0, start) + content.trim() + output.slice(start + match[0].length);
-  }
-
-  stack.delete(filename);
-  return output;
 }
 
 function stripVirtualCssImports(source: string): string {
@@ -749,10 +647,6 @@ function validateItemName(name: string): void {
   if (!name || name === '.' || name === '..' || name.includes('/') || name.includes('\\')) {
     throw new Error(`Shadcn registry item has an invalid name: \`${name}\`.`);
   }
-}
-
-function assertInsideRoot(root: string, filename: string, source: string): void {
-  if (!isInsideRoot(root, filename)) throw new Error(`Shadcn source must be inside the graph root: \`${source}\`.`);
 }
 
 function assertNoCollision(paths: Map<string, string>, path: string, id: string, kind: string): void {

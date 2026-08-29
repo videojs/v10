@@ -9,7 +9,7 @@ import { chromium } from '@playwright/test';
 import { isPlainObject, isString } from '@videojs/utils/predicate';
 import { registryItemSchema, registrySchema, type RegistryItem } from 'shadcn/schema';
 
-import { formatRegistrySource } from '../shadcn/format';
+import { formatGeneratedSource } from '../build/format';
 
 const packageDir = resolve(import.meta.dirname, '..');
 const workspaceDir = resolve(packageDir, '../..');
@@ -102,7 +102,7 @@ async function validateCatalog(catalog: (typeof catalogs)[number]): Promise<Regi
       for (const file of item.files ?? []) {
         if (!file.content || !generatedSource.test(file.target ?? file.path)) continue;
 
-        const formatted = await formatRegistrySource(file.target ?? file.path, file.content);
+        const formatted = await formatGeneratedSource(file.target ?? file.path, file.content);
 
         if (formatted.errors.length > 0 || formatted.code !== file.content) {
           throw new Error(`${catalog.name} source is not formatted: ${item.name}/${file.path}.`);

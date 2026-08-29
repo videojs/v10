@@ -36,6 +36,11 @@ export interface ComponentGraphPluginApi<Item extends ComponentMeta = ComponentM
   getGraph(): ComponentGraph<Item>;
 }
 
+/** Plugin-like graph owner passed explicitly to downstream build adapters. */
+export interface ComponentGraphProvider<Item extends ComponentMeta = ComponentMeta> {
+  readonly api?: ComponentGraphPluginApi<Item> | undefined;
+}
+
 export interface ComponentGraphPluginOptions {
   readonly root: string;
   readonly include: string | readonly string[];

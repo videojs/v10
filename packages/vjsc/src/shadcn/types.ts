@@ -1,7 +1,8 @@
 import type { Registry, RegistryItem } from 'shadcn/schema';
 
 import type { ComponentMeta } from '../components/meta';
-import type { ComponentGraph, ComponentGraphModule, ComponentGraphPluginApi } from '../graph';
+import type { ComponentGraph, ComponentGraphModule } from '../graph';
+export type { ComponentGraphProvider } from '../graph';
 
 export type ShadcnRegistry = Registry;
 export type ShadcnRegistryFile = NonNullable<RegistryItem['files']>[number];
@@ -78,8 +79,4 @@ export interface ShadcnRegistryPluginOptions<Item extends ComponentMeta = Compon
   /** Describe registry ownership after every requested graph transformation is complete. */
   readonly items: (graph: ComponentGraph<Item>) => readonly VjscRegistryItem<Item>[];
   readonly meta?: RegistryItem['meta'];
-}
-
-export interface ComponentGraphProvider<Item extends ComponentMeta = ComponentMeta> {
-  readonly api?: ComponentGraphPluginApi<Item> | undefined;
 }
