@@ -62,6 +62,13 @@ try {
 
   await validateNextFixture({ address, root: resolve(fixtureRoot, 'tailwind'), styling: 'tailwind', tarballs });
   await validateNextFixture({ address, root: resolve(fixtureRoot, 'css'), styling: 'css', tarballs });
+  await validateHtmlFixture({
+    address,
+    root: resolve(fixtureRoot, 'html-tailwind'),
+    styling: 'tailwind',
+    tarballs,
+  });
+  await validateHtmlFixture({ address, root: resolve(fixtureRoot, 'html-css'), styling: 'css', tarballs });
 } finally {
   await close(server);
 
@@ -72,7 +79,7 @@ try {
   }
 }
 
-console.log('Validated all hosted catalogs and clean Next.js installs for React Tailwind and CSS.');
+console.log('Validated all hosted catalogs and clean React/Next.js and HTML/Vite installs for Tailwind and CSS.');
 
 async function validateCatalog(catalog: (typeof catalogs)[number]): Promise<RegistryItem[]> {
   const sourceRegistry = resolve(sourceDir, 'r', catalog.path, 'registry.json');
@@ -122,7 +129,7 @@ async function validateDiscovery(address: string): Promise<void> {
   for (const catalog of catalogs) {
     const registryUrl = `${address}/r/${catalog.path}/registry.json`;
     const search = await runShadcn(
-      ['search', registryUrl, '--query', '_style-theme', '--limit', '5', '--json', '--cwd', root],
+      ['search', registryUrl, '--query', 'video', '--limit', '5', '--json', '--cwd', root],
       root
     );
     const result = JSON.parse(search.stdout);
@@ -132,14 +139,10 @@ async function validateDiscovery(address: string): Promise<void> {
     }
 
     const names = result.items.flatMap((item) => (isPlainObject(item) && isString(item.name) ? [item.name] : []));
-    if (!names.includes('_style-theme')) throw new Error(`${catalog.name} search did not return \`_style-theme\`.`);
+    if (!names.includes('video')) throw new Error(`${catalog.name} search did not return \`video\`.`);
 
-    const view = await runShadcn(['view', `${address}/r/${catalog.path}/_style-theme.json`, '--cwd', root], root);
-    const viewed = registryItemSchema.array().parse(JSON.parse(view.stdout));
-
-    if (!viewed.some((item) => item.name === '_style-theme')) {
-      throw new Error(`${catalog.name} view did not return \`_style-theme\`.`);
-    }
+    const view = await runShadcn(['view', `${address}/r/${catalog.path}/video.json`, '--cwd', root], root);
+    if (!view.stdout.includes('"name": "video"')) throw new Error(`${catalog.name} view did not return \`video\`.`);
   }
 }
 
@@ -184,14 +187,45 @@ async function validateNextFixture(config: {
     throw new Error(`${config.styling} minimal install changed shared component source.`);
   }
 
-  await installPackedDependencies(config.root, config.tarballs);
+  await installPackedDependencies(config.root, config.tarballs, 'react');
   await writePlayer(config.root, config.styling);
   await runCommand('pnpm', ['build'], config.root);
   await runCommand('pnpm', ['lint'], config.root);
   await validateRuntime(config.root, config.styling);
 }
 
-async function installPackedDependencies(root: string, tarballs: ReadonlyMap<string, string>): Promise<void> {
+async function validateHtmlFixture(config: {
+  address: string;
+  root: string;
+  styling: 'tailwind' | 'css';
+  tarballs: ReadonlyMap<string, string>;
+}): Promise<void> {
+  await writeHtmlFixture(config);
+  await runCommand('pnpm', ['install', '--no-frozen-lockfile'], config.root);
+  await add(config.root, ['@videojs/video']);
+  await assertInstalled(config.root, [
+    'src/components/videojs/skins/video/skin.html',
+    'src/components/videojs/skins/video/skin.ts',
+  ]);
+
+  if (config.styling === 'tailwind') {
+    await assertInstalled(config.root, ['src/components/videojs/styles/theme.css']);
+  } else {
+    await assertInstalled(config.root, ['src/components/videojs/skins/video/skin.css']);
+  }
+
+  await installPackedDependencies(config.root, config.tarballs, 'html');
+  await writeHtmlComposition(config.root);
+  await runCommand('pnpm', ['check'], config.root);
+  await runCommand('pnpm', ['build'], config.root);
+  await validateHtmlRuntime(config.root, config.styling);
+}
+
+async function installPackedDependencies(
+  root: string,
+  tarballs: ReadonlyMap<string, string>,
+  framework: 'html' | 'react'
+): Promise<void> {
   const filename = resolve(root, 'package.json');
   const manifest = JSON.parse(await readFile(filename, 'utf8'));
 
@@ -204,13 +238,24 @@ async function installPackedDependencies(root: string, tarballs: ReadonlyMap<str
   await writeFile(filename, `${JSON.stringify(manifest, null, 2)}\n`);
   await runCommand('pnpm', ['install', '--no-frozen-lockfile'], root);
 
-  const compoundTypes = await readFile(
-    resolve(root, 'node_modules/@videojs/react/dist/dev/ui/audio-track-radio-group/index.parts.d.ts'),
-    'utf8'
-  );
+  if (framework === 'react') {
+    const compoundTypes = await readFile(
+      resolve(root, 'node_modules/@videojs/react/dist/dev/ui/audio-track-radio-group/index.parts.d.ts'),
+      'utf8'
+    );
 
-  if (!compoundTypes.includes('Options')) {
-    throw new Error('The Next.js fixture did not install the packed @videojs/react artifact.');
+    if (!compoundTypes.includes('Options')) {
+      throw new Error('The Next.js fixture did not install the packed @videojs/react artifact.');
+    }
+  } else {
+    const skinTypes = await readFile(
+      resolve(root, 'node_modules/@videojs/html/dist/dev/define/video/skin.d.ts'),
+      'utf8'
+    );
+
+    if (!skinTypes.includes('internal/skins/default-video/register.js')) {
+      throw new Error('The Vite fixture did not install the packed @videojs/html artifact.');
+    }
   }
 }
 
@@ -582,7 +627,7 @@ async function packVideojsPackages(directory: string): Promise<ReadonlyMap<strin
 
   const tarballs = new Map<string, string>();
 
-  for (const name of videojsPackages) {
+  for (const name of registryPackages) {
     const manifest = JSON.parse(await readFile(resolve(workspaceDir, 'packages', name, 'package.json'), 'utf8'));
     const result = await runCommand(
       'pnpm',
@@ -672,6 +717,55 @@ async function validateRuntime(root: string, styling: string): Promise<void> {
 
       if (errors.length > 0) {
         throw new Error(`${styling} runtime emitted browser errors:\n${errors.join('\n')}`);
+      }
+    } finally {
+      await browser.close();
+    }
+  } finally {
+    await stopCommand(child);
+  }
+}
+
+async function validateHtmlRuntime(root: string, styling: string): Promise<void> {
+  const port = await availablePort();
+  const child = startCommand('pnpm', ['start', '--host', '127.0.0.1', '--port', String(port)], root);
+
+  try {
+    await waitForServer(`http://127.0.0.1:${port}`);
+
+    const browser = await chromium.launch({ headless: true });
+
+    try {
+      const page = await browser.newPage();
+      const errors: string[] = [];
+
+      page.on('console', (message) => {
+        if (message.type() === 'error') errors.push(message.text());
+      });
+      page.on('pageerror', (error) => errors.push(error.message));
+
+      await page.goto(`http://127.0.0.1:${port}`, { waitUntil: 'domcontentloaded' });
+      await page.locator('video-player').waitFor();
+      await page.locator('hlsjs-video').waitFor({ state: 'attached' });
+      await page.locator('video').waitFor();
+      await page.locator('media-play-button[data-paused]').waitFor();
+
+      const skin = page.locator('.media-skin').first();
+      const box = await skin.boundingBox();
+      const display = await skin.evaluate((element) => getComputedStyle(element).display);
+      const definitions = await page.evaluate(() =>
+        ['video-player', 'hlsjs-video', 'media-container', 'media-play-button'].every((name) =>
+          Boolean(customElements.get(name))
+        )
+      );
+      if (!definitions) throw new Error(`${styling} HTML player did not register its custom elements.`);
+
+      if (!box || box.width < 100 || box.height < 50 || display === 'none') {
+        throw new Error(`${styling} HTML player did not receive usable skin styles.`);
+      }
+
+      if (errors.length > 0) {
+        throw new Error(`${styling} HTML runtime emitted browser errors:\n${errors.join('\n')}`);
       }
     } finally {
       await browser.close();
