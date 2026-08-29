@@ -128,6 +128,10 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --prefer-offline
 
+      - name: Install Chromium for registry validation
+        if: matrix.package == '@videojs/skins'
+        run: pnpm -F @videojs/skins exec playwright install --with-deps chromium
+
       - name: Restore Vite Task cache
         uses: actions/cache/restore@v6
         with:
