@@ -164,6 +164,41 @@ function getLocalDeclarationTexts(sourceFile: ts.SourceFile): Map<string, string
   return declarations;
 }
 
+function getForwardedExportImport(
+  sourceFile: ts.SourceFile,
+  exportName: string,
+  localName: string,
+  isTypeOnly: boolean
+): string | null {
+  for (const statement of sourceFile.statements) {
+    if (!ts.isExportDeclaration(statement) || !statement.moduleSpecifier) continue;
+
+    if (!ts.isStringLiteralLike(statement.moduleSpecifier)) continue;
+
+    const source = statement.moduleSpecifier.text;
+    if (isRelativeImport(source)) continue;
+
+    let importedName = exportName;
+
+    if (statement.exportClause) {
+      if (!ts.isNamedExports(statement.exportClause)) continue;
+
+      const specifier = statement.exportClause.elements.find((element) => element.name.text === exportName);
+      if (!specifier) continue;
+
+      importedName = specifier.propertyName?.text ?? exportName;
+      isTypeOnly ||= statement.isTypeOnly || specifier.isTypeOnly;
+    }
+
+    const binding = importedName === localName ? importedName : `${importedName} as ${localName}`;
+    const typeKeyword = isTypeOnly ? 'type ' : '';
+
+    return `import ${typeKeyword}{ ${binding} } from '${source}';`;
+  }
+
+  return null;
+}
+
 function collectDeclarationClosure(
   sourceFile: ts.SourceFile,
   declarationName: string,
@@ -205,6 +240,12 @@ function inlineModuleExport(
   isTypeOnly: boolean
 ): string {
   const declarations = getLocalDeclarationTexts(sourceFile);
+
+  if (!declarations.has(importName) && !getNamedExportText(sourceFile, importName)) {
+    const forwardedImport = getForwardedExportImport(sourceFile, importName, localName, isTypeOnly);
+    if (forwardedImport) return forwardedImport;
+  }
+
   const exportTexts = collectDeclarationClosure(sourceFile, importName, declarations);
   const exportText = exportTexts.join('\n\n');
 
@@ -217,8 +258,12 @@ function inlineModuleExport(
   return `${exportText}\n\n${aliasKeyword} ${localName} = ${importName};`;
 }
 
-function inlineRelativeImports(source: string, sourcePath: string, rewriteSource = (value: string) => value): string {
-  source = rewriteSource(source);
+function inlineRelativeImports(
+  source: string,
+  sourcePath: string,
+  rewriteSource = (value: string, _path: string) => value
+): string {
+  source = rewriteSource(source, sourcePath);
   const sourceFile = createSourceFile(sourcePath, source);
 
   const declarationsToInline: string[] = [];
@@ -241,7 +286,7 @@ function inlineRelativeImports(source: string, sourcePath: string, rewriteSource
     }
 
     const targetPath = resolveRelativeModulePath(sourcePath, specifier);
-    const targetSource = rewriteSource(readFileSync(targetPath, 'utf-8'));
+    const targetSource = rewriteSource(readFileSync(targetPath, 'utf-8'), targetPath);
 
     validatePackageImports(targetSource, toRepoPath(targetPath));
     const transformedTargetSource = inlineRelativeImports(targetSource, targetPath, rewriteSource);
@@ -494,6 +539,20 @@ function rewriteReactIconImports(source: string): string {
     .replace(/from\s+['"]@\/icons\/minimal['"]/g, "from '@videojs/react/icons/minimal'")
     .replace(/from\s+['"]\.\.\/\.\.\/icons['"]/g, "from '@videojs/react/icons'")
     .replace(/from\s+['"]\.\.\/\.\.\/icons\/minimal['"]/g, "from '@videojs/react/icons/minimal'");
+}
+
+function rewriteEjectedModule(source: string, sourcePath: string): string {
+  source = rewriteReactIconImports(source);
+
+  const skinPrimitivesPath = resolve(ROOT, 'packages/react/src/internal/skin-primitives.ts');
+  if (sourcePath !== skinPrimitivesPath) return source;
+
+  // Generated package skins use a private acyclic facade. Ejected source should
+  // consume the same components through the package's public entry point.
+  return source.replace(
+    /export (type )?(\{[^}]+\}) from '\.\.\/[^']+';/g,
+    (_, typeKeyword = '', bindings: string) => `export ${typeKeyword}${bindings} from '@videojs/react';`
+  );
 }
 
 /**
@@ -1046,7 +1105,7 @@ export async function processReactSkin(
   const postImport: string[] = [];
 
   // 1. Inline relative imports recursively so the output is self-contained.
-  source = inlineRelativeImports(source, absPath, rewriteReactIconImports);
+  source = inlineRelativeImports(source, absPath, rewriteEjectedModule);
 
   // 2. Resolve @videojs/skins/* tokens (Tailwind skins only, private package)
   source = await inlineSkinTokens(source, postImport);
