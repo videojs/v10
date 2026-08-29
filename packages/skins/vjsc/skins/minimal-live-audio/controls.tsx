@@ -1,9 +1,9 @@
 import * as $ from '@videojs/core/vjsc';
 import { Box } from 'vjsc/components';
 
-import { AudioPlayButton } from '../../components/buttons/audio-play-button';
 import { LiveButton } from '../../components/buttons/live-button';
 import { VolumePopover } from '../../components/controls/volume-popover';
+import { AudioPlayButton } from '../audio/play-button';
 import styles from './controls.styles';
 
 export function MinimalLiveAudioControls() {

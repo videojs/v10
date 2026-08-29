@@ -21,7 +21,7 @@ export type SkinModuleMeta = SkinComponentMeta | SkinMeta;
 
 export const skinStyles = {
   'default-video': {
-    scope: '.media-skin--default.media-skin--video',
+    scope: '.media-skin--video',
     theme: 'default',
     variant: 'default',
   },
@@ -31,7 +31,7 @@ export const skinStyles = {
     variant: 'minimal',
   },
   'default-live-video': {
-    scope: '.media-skin--default.media-skin--live-video',
+    scope: '.media-skin--live-video',
     theme: 'default',
     variant: 'default-live-video',
   },
@@ -41,7 +41,7 @@ export const skinStyles = {
     variant: 'minimal-live-video',
   },
   'default-live-audio': {
-    scope: '.media-skin--default.media-skin--live-audio',
+    scope: '.media-skin--live-audio',
     theme: 'default',
     variant: 'default-live-audio',
   },
@@ -51,7 +51,7 @@ export const skinStyles = {
     variant: 'minimal-live-audio',
   },
   'default-audio': {
-    scope: '.media-skin--default.media-skin--audio',
+    scope: '.media-skin--audio',
     theme: 'default',
     variant: 'default-audio',
   },

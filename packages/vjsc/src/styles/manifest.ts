@@ -137,15 +137,14 @@ function createStyleManifest(
 
     validateStyleDefinition(definition);
 
+    const layer = definition.layer ?? 'components';
     const previousLayer = files.get(definition.file);
 
-    if (previousLayer && previousLayer !== definition.layer) {
-      throw new Error(
-        `Style output \`${definition.file}\` is assigned to both \`${previousLayer}\` and \`${definition.layer}\`.`
-      );
+    if (previousLayer && previousLayer !== layer) {
+      throw new Error(`Style output \`${definition.file}\` is assigned to both \`${previousLayer}\` and \`${layer}\`.`);
     }
 
-    files.set(definition.file, definition.layer);
+    files.set(definition.file, layer);
 
     const moduleRules = new Map<string, StyleManifestRule>();
 
@@ -159,7 +158,7 @@ function createStyleManifest(
         tokenPath: Object.freeze(tokenPath),
         className: rule.className,
         file: definition.file,
-        layer: definition.layer,
+        layer,
         scopeRoot: rule.scopeRoot ?? false,
         utilityGroups: Object.freeze(utilityGroups),
         utilities: Object.freeze(utilityGroups.flatMap(splitClassNames)),

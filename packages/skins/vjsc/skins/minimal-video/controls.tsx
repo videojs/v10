@@ -7,8 +7,8 @@ import { FullscreenButton } from '../../components/buttons/fullscreen-button';
 import { PiPButton } from '../../components/buttons/pip-button';
 import { PlayButton } from '../../components/buttons/play-button';
 import { VolumePopover } from '../../components/controls/volume-popover';
-import { VideoSettingsMenu } from '../../components/menus/video-settings-menu';
 import { TimeSlider } from '../../components/sliders/time-slider';
+import { VideoSettingsMenu } from '../video/settings-menu';
 import styles from './controls.styles';
 
 export function MinimalVideoControls() {

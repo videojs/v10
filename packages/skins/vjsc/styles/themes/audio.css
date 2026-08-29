@@ -1,24 +1,30 @@
-@layer videojs.theme {
-  :is(
-    .media-skin--default.media-skin--audio,
-    .media-skin--minimal.media-skin--audio,
-    .media-skin--default.media-skin--live-audio,
-    .media-skin--minimal.media-skin--live-audio
-  ) {
+@layer base {
+  :is(.media-skin--audio, .media-skin--live-audio) {
     height: auto;
     overflow: visible;
     background: transparent;
+    container-type: inline-size;
 
+    --media-background: light-dark(oklch(1 0 0), oklch(0 0 0));
+    --media-foreground: light-dark(oklch(0 0 0), oklch(1 0 0));
+    --media-controls: light-dark(oklch(1 0 0 / 0.5), oklch(0 0 0 / 0.4));
+    --media-controls-foreground: var(--media-foreground);
+    --media-popover: var(--media-controls);
+    --media-popover-foreground: var(--media-foreground);
+    --media-primary: var(--media-accent-color, var(--media-foreground));
+    --media-primary-foreground: var(--media-accent-text-color, contrast-color(var(--media-primary)));
+    --media-border: light-dark(oklch(0 0 0 / 0.1), oklch(1 0 0 / 0.1));
+    --media-ring: var(--media-foreground);
     --media-default-accent-color: light-dark(oklch(0 0 0), oklch(1 0 0));
     --media-focus-ring-color: light-dark(oklch(0 0 0), oklch(1 0 0));
-    --media-audio-text-color: light-dark(oklch(0 0 0), oklch(1 0 0));
   }
 
-  :is(.media-skin--default.media-skin--audio, .media-skin--default.media-skin--live-audio) {
-    --media-audio-controls-background-color: light-dark(oklch(1 0 0 / 0.5), oklch(0 0 0 / 0.4));
+  :is(.media-skin--audio, .media-skin--live-audio)::after {
+    display: none;
   }
 
-  :is(.media-skin--minimal.media-skin--audio, .media-skin--minimal.media-skin--live-audio) {
-    --media-audio-controls-background-color: light-dark(oklch(1 0 0), oklch(0 0 0));
+  :is(.media-skin--audio, .media-skin--live-audio).media-skin--minimal {
+    --media-controls: var(--media-background);
+    --media-popover: var(--media-background);
   }
 }

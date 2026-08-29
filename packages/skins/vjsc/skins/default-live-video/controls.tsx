@@ -22,7 +22,7 @@ export function DefaultLiveVideoControls() {
             <LiveButton />
             <Box aria-hidden="true" className={styles.spacer} />
             <VolumePopover />
-            <CaptionsMenu />
+            <CaptionsMenu triggerClassName={styles.captionsMenu} />
             <CastButton />
             <AirPlayButton />
             <PiPButton />

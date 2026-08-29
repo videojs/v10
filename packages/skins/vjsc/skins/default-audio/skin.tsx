@@ -1,10 +1,10 @@
 import { type PropsOf, Slot, type VjscNode } from 'vjsc/components';
 
-import { ErrorDialog } from '../../components/feedback/error-dialog';
 import { StatusAnnouncer } from '../../components/feedback/status-announcer';
 import { Container } from '../../components/layout/container';
-import { PlaybackHotkeys } from '../../components/playback-hotkeys';
 import type { SkinMeta } from '../../meta';
+import { AudioErrorDialog } from '../audio/error-dialog';
+import { PlaybackHotkeys } from '../shared/playback-hotkeys';
 import { DefaultAudioControls } from './controls';
 
 export interface DefaultAudioSkinProps extends Omit<PropsOf<typeof Container>, 'children'> {
@@ -13,12 +13,9 @@ export interface DefaultAudioSkinProps extends Omit<PropsOf<typeof Container>, '
 
 export function DefaultAudioSkin({ children, className, ...props }: DefaultAudioSkinProps = {}) {
   return (
-    <Container
-      className={['media-skin media-skin--default media-skin--audio media-theme-default', className]}
-      {...props}
-    >
+    <Container className={['media-skin media-skin--audio', className]} {...props}>
       <Slot>{children}</Slot>
-      <ErrorDialog />
+      <AudioErrorDialog />
       <DefaultAudioControls />
       <PlaybackHotkeys />
       <StatusAnnouncer />
@@ -30,7 +27,7 @@ export const meta = {
   name: 'default-audio',
   type: 'skin',
   style: {
-    scope: '.media-skin--default.media-skin--audio',
+    scope: '.media-skin--audio',
     theme: 'default',
     variant: 'default-audio',
   },

@@ -1,7 +1,5 @@
 import * as $ from '@videojs/core/vjsc';
 
-import type { SkinComponentMeta } from '../meta';
-
 export interface LiveVideoGesturesProps {
   disabled?: boolean | undefined;
 }
@@ -15,10 +13,3 @@ export function LiveVideoGestures({ disabled = false }: LiveVideoGesturesProps =
     </>
   );
 }
-
-export const meta = {
-  name: 'live-video-gestures',
-  type: 'component',
-  title: 'Live Video Gestures',
-  description: 'Pointer gestures for live video playback, controls, and fullscreen without seek gestures.',
-} as const satisfies SkinComponentMeta;

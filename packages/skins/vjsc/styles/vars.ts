@@ -44,13 +44,77 @@ export const vars = {
     kind: 'internal',
     description: 'Theme control radius.',
   },
-  '--media-audio-controls-background-color': {
+  '--media-control-size': {
     kind: 'internal',
-    description: 'Background color shared by audio controls and their compact buffering overlay.',
+    description: 'Theme control size.',
   },
-  '--media-audio-text-color': {
+  '--media-control-corner-shape': {
     kind: 'internal',
-    description: 'Foreground color used by audio controls and popups.',
+    description: 'Theme control corner treatment.',
+  },
+  '--media-background': {
+    kind: 'internal',
+    description: 'Scoped Skin background color.',
+  },
+  '--media-foreground': {
+    kind: 'internal',
+    description: 'Scoped Skin foreground color.',
+  },
+  '--media-controls': {
+    kind: 'internal',
+    description: 'Scoped controls surface color.',
+  },
+  '--media-controls-foreground': {
+    kind: 'internal',
+    description: 'Scoped controls foreground color.',
+  },
+  '--media-popover': {
+    kind: 'internal',
+    description: 'Scoped popup surface color.',
+  },
+  '--media-popover-foreground': {
+    kind: 'internal',
+    description: 'Scoped popup foreground color.',
+  },
+  '--media-primary': {
+    kind: 'internal',
+    description: 'Resolved primary color for active controls and slider fills.',
+  },
+  '--media-primary-foreground': {
+    kind: 'internal',
+    description: 'Resolved foreground color rendered on the primary color.',
+  },
+  '--media-accent': {
+    kind: 'internal',
+    description: 'Scoped hover and highlighted-item color.',
+  },
+  '--media-accent-foreground': {
+    kind: 'internal',
+    description: 'Scoped foreground color rendered on the accent color.',
+  },
+  '--media-muted': {
+    kind: 'internal',
+    description: 'Scoped muted surface color.',
+  },
+  '--media-muted-foreground': {
+    kind: 'internal',
+    description: 'Scoped muted foreground color.',
+  },
+  '--media-border': {
+    kind: 'internal',
+    description: 'Scoped border color.',
+  },
+  '--media-ring': {
+    kind: 'internal',
+    description: 'Scoped focus-ring color.',
+  },
+  '--media-shadow-sm': {
+    kind: 'internal',
+    description: 'Scoped small surface shadow.',
+  },
+  '--media-caption-controls-y': {
+    kind: 'internal',
+    description: 'Caption offset while controls are visible.',
   },
   '--media-default-accent-color': {
     kind: 'internal',

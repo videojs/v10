@@ -1,0 +1,45 @@
+@layer base {
+  .media-skin {
+    --media-background: oklch(0 0 0);
+    --media-foreground: oklch(1 0 0);
+    --media-controls: oklch(0 0 0 / 0.35);
+    --media-controls-foreground: var(--media-foreground);
+    --media-popover: oklch(1 0 0 / 0.1);
+    --media-popover-foreground: var(--media-foreground);
+    --media-primary: var(--media-accent-color, var(--media-default-accent-color));
+    --media-primary-foreground: var(
+      --media-accent-text-color,
+      contrast-color(var(--media-accent-color, var(--media-default-accent-color)))
+    );
+    --media-accent: var(--media-accent-color, color-mix(in oklab, var(--media-default-accent-color) 10%, transparent));
+    --media-accent-foreground: var(--media-primary-foreground);
+    --media-muted: oklch(1 0 0 / 0.15);
+    --media-muted-foreground: oklch(1 0 0 / 0.65);
+    --media-border: oklch(0 0 0 / 0.1);
+    --media-ring: var(--media-focus-ring-color, oklch(1 0 0));
+    --media-shadow-sm: 0 1px 2px oklch(0 0 0 / 0.15);
+
+    --media-caption-controls-y: calc(var(--media-spacing) * -14);
+    --media-control-corner-shape: round;
+    --media-control-radius: calc(infinity * 1px);
+    --media-control-size: calc(var(--media-spacing) * 9);
+    --media-controls-transition-duration: 100ms;
+    --media-default-accent-color: oklch(1 0 0);
+    --media-focus-ring-color: oklch(1 0 0);
+    --media-menu-item-border-radius: calc(var(--media-spacing) * 2);
+    --media-menu-transition-duration: 250ms;
+    --media-popup-translate-distance: calc(var(--media-scale-unit, 16px) * 0.5);
+    --media-video-border-radius: var(--media-border-radius, 28px);
+    --media-scale: 1;
+    --media-scrollbar-thumb-color: oklch(from currentColor l c h / 0.3);
+    --media-spacing: calc(var(--media-scale-unit, 16px) * var(--media-scale) / 4);
+
+    scrollbar-color: var(--media-scrollbar-thumb-color) transparent;
+    scrollbar-width: thin;
+  }
+
+  .media-skin::-webkit-scrollbar-thumb {
+    background: var(--media-scrollbar-thumb-color);
+    border-radius: 9999px;
+  }
+}

@@ -1,7 +1,5 @@
 import * as $ from '@videojs/core/vjsc';
 
-import type { SkinComponentMeta } from '../meta';
-
 export interface PlaybackHotkeysProps {
   disabled?: boolean | undefined;
 }
@@ -26,10 +24,3 @@ export function PlaybackHotkeys({ disabled = false }: PlaybackHotkeysProps = {})
     </>
   );
 }
-
-export const meta = {
-  name: 'playback-hotkeys',
-  type: 'component',
-  title: 'Playback Hotkeys',
-  description: 'The standard keyboard controls for on-demand playback, seeking, volume, and speed.',
-} as const satisfies SkinComponentMeta;

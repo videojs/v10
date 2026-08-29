@@ -1,7 +1,6 @@
 import * as $ from '@videojs/core/vjsc';
 
-import type { SkinComponentMeta } from '../meta';
-import { LivePlaybackHotkeys } from './live-playback-hotkeys';
+import { LivePlaybackHotkeys } from '../shared/live-playback-hotkeys';
 
 export interface LiveVideoHotkeysProps {
   disabled?: boolean | undefined;
@@ -17,10 +16,3 @@ export function LiveVideoHotkeys({ disabled = false }: LiveVideoHotkeysProps = {
     </>
   );
 }
-
-export const meta = {
-  name: 'live-video-hotkeys',
-  type: 'component',
-  title: 'Live Video Hotkeys',
-  description: 'Keyboard controls for live video playback, volume, captions, fullscreen, and picture-in-picture.',
-} as const satisfies SkinComponentMeta;

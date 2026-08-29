@@ -1,72 +1,6 @@
 import { styles } from 'vjsc/styles';
 
-const popup = [
-  'm-0 overflow-visible border-0 text-inherit',
-  'data-starting-style:opacity-0 data-starting-style:[transform:scale(.95)]',
-  'data-ending-style:opacity-0 data-ending-style:blur-xs data-ending-style:[transform:scale(.95)]',
-  'data-[side=top]:origin-bottom data-[side=bottom]:origin-top data-[side=left]:origin-right data-[side=right]:origin-left',
-  'data-[side=top]:data-starting-style:[transform:translateY(var(--media-popup-translate-distance))_scale(.95)]',
-  'data-[side=bottom]:data-starting-style:[transform:translateY(calc(var(--media-popup-translate-distance)*-1))_scale(.95)]',
-  'data-[side=left]:data-starting-style:[transform:translateX(var(--media-popup-translate-distance))_scale(.95)]',
-  'data-[side=right]:data-starting-style:[transform:translateX(calc(var(--media-popup-translate-distance)*-1))_scale(.95)]',
-  'before:pointer-events-auto before:absolute',
-  'data-[side=top]:before:inset-x-0 data-[side=top]:before:top-full',
-  'data-[side=bottom]:before:inset-x-0 data-[side=bottom]:before:bottom-full',
-  'data-[side=left]:before:inset-y-0 data-[side=left]:before:left-full',
-  'data-[side=right]:before:inset-y-0 data-[side=right]:before:right-full',
-] as const;
-
-const popupSafeArea = [
-  'data-[side=top]:before:h-(--media-popover-side-offset) data-[side=bottom]:before:h-(--media-popover-side-offset)',
-  'data-[side=left]:before:w-(--media-popover-side-offset) data-[side=right]:before:w-(--media-popover-side-offset)',
-] as const;
-
-const surfaceBase = [
-  'text-white backdrop-blur-lg backdrop-saturate-150',
-  'after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit]',
-  'after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.1),inset_0_0_0_1px_rgb(255_255_255/0.05)]',
-  '[@media(prefers-reduced-transparency:reduce)]:bg-black [@media(prefers-reduced-transparency:reduce)]:ring-1 [@media(prefers-reduced-transparency:reduce)]:ring-transparent',
-  '[@media(prefers-reduced-transparency:reduce)]:backdrop-filter-none',
-  '[@media(prefers-reduced-transparency:reduce)]:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]',
-  'contrast-more:bg-black contrast-more:ring-1 contrast-more:ring-transparent contrast-more:backdrop-filter-none',
-  'contrast-more:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]',
-  'forced-colors:bg-[Canvas] forced-colors:ring-1 forced-colors:ring-[CanvasText]',
-  'forced-colors:after:shadow-[inset_0_1px_0_0_CanvasText,inset_0_0_0_1px_CanvasText]',
-] as const;
-
-const defaultSurface = [
-  ...surfaceBase,
-  'shadow-sm shadow-black/15 ring-1 ring-black/10',
-  '[@media(prefers-reduced-transparency:reduce)]:shadow-sm [@media(prefers-reduced-transparency:reduce)]:shadow-black/15',
-  'contrast-more:shadow-sm contrast-more:shadow-black/15',
-  'forced-colors:shadow-sm forced-colors:shadow-black/15',
-  'bg-white/10',
-] as const;
-
-const minimalSurface = [
-  ...surfaceBase,
-  'shadow-sm shadow-black/20 ring-1 ring-white/10',
-  '[@media(prefers-reduced-transparency:reduce)]:shadow-sm [@media(prefers-reduced-transparency:reduce)]:shadow-black/20',
-  'contrast-more:shadow-sm contrast-more:shadow-black/20',
-  'forced-colors:shadow-sm forced-colors:shadow-black/20',
-  'bg-black/50',
-] as const;
-
-const defaultAudioSurface = [
-  'bg-(--media-audio-controls-background-color)! [color:var(--media-audio-text-color)]!',
-  'shadow-sm shadow-black/15 ring-1 ring-black/10',
-  'backdrop-blur-lg backdrop-saturate-150',
-  '[@media(prefers-reduced-transparency:reduce)]:bg-[light-dark(white,black)]!',
-  'contrast-more:bg-[light-dark(white,black)]!',
-] as const;
-
-const minimalAudioSurface = [
-  'bg-(--media-audio-controls-background-color)! [color:var(--media-audio-text-color)]!',
-  'shadow-sm shadow-black/20 ring-1 ring-[light-dark(rgb(0_0_0/0.1),rgb(255_255_255/0.1))]',
-  'backdrop-blur-lg backdrop-saturate-150',
-  '[@media(prefers-reduced-transparency:reduce)]:backdrop-filter-none',
-  'contrast-more:backdrop-filter-none',
-] as const;
+import { popoverSafeArea, popupPosition, popupSurface } from '../recipes/popup';
 
 const menuItem = [
   'relative flex cursor-pointer select-none items-center gap-1.5 rounded-(--media-menu-item-border-radius) px-2 py-1.5 text-start whitespace-nowrap',
@@ -84,16 +18,10 @@ const menuItemOption = [
   'aria-disabled:pointer-events-none aria-disabled:cursor-not-allowed aria-disabled:opacity-50',
 ] as const;
 
-const menuItemVariants = {
-  default: [
-    'supports-[top:anchor(top)]:data-highlighted:[anchor-name:--media-menu-item-highlight-anchor]',
-    'supports-[top:anchor(top)]:data-highlighted:bg-transparent',
-  ],
-  minimal: [
-    'supports-[top:anchor(top)]:data-highlighted:[anchor-name:--media-menu-item-highlight-anchor]',
-    'supports-[top:anchor(top)]:data-highlighted:bg-transparent',
-  ],
-} as const;
+const menuItemHighlight = [
+  'supports-[top:anchor(top)]:data-highlighted:[anchor-name:--media-menu-item-highlight-anchor]',
+  'supports-[top:anchor(top)]:data-highlighted:bg-transparent',
+] as const;
 
 const menuHighlight = [
   '[anchor-scope:--media-menu-item-highlight-anchor]',
@@ -112,24 +40,19 @@ const menuGroup = ['flex [max-height:inherit] flex-col gap-0.5', ...menuHighligh
 
 const menuIcon = ['size-media-icon shrink-0 drop-shadow-[0_1px_0_var(--media-shadow-current-color)]'] as const;
 
-const menuIconVariants = {
-  default: ['text-current/65'],
-  minimal: ['text-current/50'],
-} as const;
-
 export default styles({
   file: 'menus.css',
-  layer: 'videojs.components',
   rules: {
     popup: {
       className: 'media-menu-popup',
       utilities: [
-        ...popup,
-        ...popupSafeArea,
+        ...popupPosition,
+        ...popoverSafeArea,
+        ...popupSurface,
         'm-0 min-w-44 max-w-(--media-menu-available-width) overflow-hidden! border-0 p-1',
         'max-h-[min(var(--media-menu-available-height,--spacing(56)),--spacing(56))] overscroll-none',
         'h-(--media-menu-height) w-(--media-menu-width)',
-        '[--media-menu-transition-duration:250ms] motion-reduce:[--media-menu-transition-duration:0ms]',
+        'motion-reduce:[--media-menu-transition-duration:0ms]',
         '[transition-property:opacity,filter,transform,scale,width,height]',
         '[transition-duration:100ms,100ms,100ms,100ms,250ms,250ms] ease-out',
         'data-starting-style:[transition-duration:100ms] data-starting-style:[transition-property:opacity,filter,transform,scale]',
@@ -137,21 +60,8 @@ export default styles({
         'motion-reduce:[transition-duration:0ms]',
       ],
       variants: {
-        default: [
-          '[--media-popup-translate-distance:calc(var(--media-scale-unit,16px)*0.5)]',
-          'data-starting-style:blur-xs',
-          ...defaultSurface,
-          'rounded-[--spacing(3)] [--media-menu-item-border-radius:--spacing(2)]',
-        ],
-        minimal: [
-          '[--media-popup-translate-distance:--spacing(2)]',
-          ...minimalSurface,
-          'rounded-[--spacing(2.5)] [--media-menu-item-border-radius:--spacing(1.5)]',
-        ],
-        'default-audio': defaultAudioSurface,
-        'default-live-audio': defaultAudioSurface,
-        'minimal-audio': minimalAudioSurface,
-        'minimal-live-audio': minimalAudioSurface,
+        default: 'rounded-[--spacing(3)]',
+        minimal: 'rounded-[--spacing(2.5)]',
       },
     },
     content: {
@@ -180,13 +90,11 @@ export default styles({
     },
     radioItem: {
       className: 'media-menu-radio-item',
-      utilities: ['group/menu-radio-item', ...menuItem, ...menuItemOption],
-      variants: menuItemVariants,
+      utilities: ['group/menu-radio-item', ...menuItem, ...menuItemOption, ...menuItemHighlight],
     },
     triggerItem: {
       className: 'media-menu-trigger-item',
-      utilities: ['group/menu-trigger-item', ...menuItem, ...menuItemOption],
-      variants: menuItemVariants,
+      utilities: ['group/menu-trigger-item', ...menuItem, ...menuItemOption, ...menuItemHighlight],
     },
     backItem: {
       className: 'media-menu-back-item',
@@ -195,14 +103,10 @@ export default styles({
     separator: {
       className: 'media-menu-separator',
       utilities: [
-        'block',
+        'my-1 block border-b border-media-border',
         '[@media(prefers-reduced-transparency:reduce)]:border-white/25 contrast-more:border-white/25',
         'forced-colors:border-[CanvasText]',
       ],
-      variants: {
-        default: 'my-1 border-b border-black/10 shadow-[0_1px_0_0_rgb(255_255_255/0.075)]',
-        minimal: 'my-1 border-b border-white/10',
-      },
     },
     hint: {
       className: 'media-menu-hint',
@@ -228,35 +132,33 @@ export default styles({
       className: 'media-menu-trigger-item-icon',
       utilities: [
         ...menuIcon,
+        'text-media-muted-foreground',
         'group-hover/menu-trigger-item:text-inherit group-data-highlighted/menu-trigger-item:text-inherit',
       ],
-      variants: menuIconVariants,
     },
     radioItemIcon: {
       className: 'media-menu-radio-item-icon',
       utilities: [
         ...menuIcon,
+        'text-media-muted-foreground',
         'group-hover/menu-radio-item:text-inherit group-data-highlighted/menu-radio-item:text-inherit',
       ],
-      variants: menuIconVariants,
     },
     forwardChevron: {
       className: 'media-menu-forward-chevron',
       utilities: [
         ...menuIcon,
-        'size-3.5 [&:dir(rtl)]:[scale:-1_1]',
+        'size-3.5 text-media-muted-foreground [&:dir(rtl)]:[scale:-1_1]',
         'group-hover/menu-trigger-item:text-inherit group-data-highlighted/menu-trigger-item:text-inherit',
       ],
-      variants: menuIconVariants,
     },
     backChevron: {
       className: 'media-menu-back-chevron',
       utilities: [
         ...menuIcon,
-        'size-3.5 rotate-180 [&:dir(rtl)]:rotate-0 [&:dir(rtl)]:[scale:1_1]',
+        'size-3.5 rotate-180 text-media-muted-foreground [&:dir(rtl)]:rotate-0 [&:dir(rtl)]:[scale:1_1]',
         'group-hover/menu-back-item:text-inherit group-data-highlighted/menu-back-item:text-inherit',
       ],
-      variants: menuIconVariants,
     },
     settingsTrigger: {
       className: 'media-settings-menu-trigger',

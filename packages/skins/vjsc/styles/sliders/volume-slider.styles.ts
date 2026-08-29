@@ -2,7 +2,6 @@ import { styles } from 'vjsc/styles';
 
 export default styles({
   file: 'sliders.css',
-  layer: 'videojs.components',
   rules: {
     root: {
       className: 'media-volume-slider',
