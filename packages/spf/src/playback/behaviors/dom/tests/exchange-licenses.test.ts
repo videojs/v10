@@ -534,6 +534,83 @@ describe('exchangeLicenses', () => {
     reactor.destroy();
   });
 
+  it('licenses every declared key eagerly — one session per distinct key, selection never consulted', async () => {
+    // The studio-policy multi-key shape (Axinom's MultiKey vector, per-tier
+    // keys): the manifest loop opens a session — and with it a license
+    // request — for every distinct declared key at entry, including tiers
+    // that will never be selected; nothing here reads selection state.
+    // Pinned so a move to on-demand licensing (license the selected
+    // renditions first) surfaces as this expectation changing rather than
+    // as a silent scope shift. Duplicate declarations across tracks stay
+    // one session: `declaredDrmKeys` dedupes by attribute identity.
+    const keyFor = (payload: string) => ({
+      method: 'SAMPLE-AES',
+      uri: `data:text/plain;base64,${btoa(payload)}`,
+      keyFormat: 'urn:uuid:edef8ba9-79d6-4ace-a3c8-27dcd51d21ed',
+    });
+    // Loosely typed like makePresentation's track literal, so the
+    // `as Presentation` cast below stays a plain widening.
+    const track = (id: string, keys: object[]): object => ({
+      type: 'video' as const,
+      id,
+      url: `https://example.com/${id}.m3u8`,
+      bandwidth: 1000,
+      mimeType: 'video/mp4',
+      codecs: ['avc1.4d401f'],
+      segments: [{ id: 's0', url: `https://example.com/${id}-0.m4s`, startTime: 0, duration: 4 }],
+      startTime: 0,
+      duration: 4,
+      metadata: { mediaPlaylist: { targetDuration: 4, mediaSequence: 0, endList: true, keys } },
+    });
+    const presentation = {
+      id: 'p1',
+      url: 'https://example.com/multivariant.m3u8',
+      selectionSets: [
+        {
+          id: 'ss1',
+          type: 'video' as const,
+          switchingSets: [
+            {
+              id: 'sw1',
+              type: 'video' as const,
+              tracks: [
+                track('v-sd', [keyFor('sd')]),
+                track('v-hd', [keyFor('hd')]),
+                track('v-uhd', [keyFor('uhd')]),
+                // A second rendition under the hd key — a repeat, not a new key.
+                track('v-hd-2', [keyFor('hd')]),
+              ],
+            },
+          ],
+        },
+      ],
+    } as Presentation;
+    const { mediaKeys, sessions } = makeFakeMediaKeys();
+    const state = {
+      presentation: signal<ExchangeLicensesState['presentation']>(presentation),
+      negotiatedKeySystem: signal<string | undefined>('com.widevine.alpha'),
+      errors: signal<SvtaError[] | undefined>(undefined),
+    };
+    const context = {
+      mediaElement: signal<ExchangeLicensesContext['mediaElement']>(document.createElement('video')),
+      mediaKeys: signal<MediaKeys | undefined>(mediaKeys),
+    };
+    const reactor = exchangeLicenses.setup({
+      state,
+      context,
+      config: { drm: DRM_CONFIG, keySystems: DEFAULT_KEY_SYSTEMS },
+    });
+
+    await vi.waitFor(() => expect(sessions).toHaveLength(3));
+    const initDatas = sessions.map((session) =>
+      new TextDecoder().decode(session.generateRequest.mock.calls[0]![1] as Uint8Array)
+    );
+
+    expect(initDatas.sort()).toEqual(['hd', 'sd', 'uhd']);
+
+    reactor.destroy();
+  });
+
   it('reports a key transitioning to expired, with the key id in the data', async () => {
     const { state, sessions, reactor } = setupExchangeLicenses();
 
