@@ -80,17 +80,25 @@ for (const variant of CASES) {
     });
   });
 
-  test(`${variant.framework} ${variant.skin} toggles one captions track and opens a menu for multiple`, async ({
-    page,
-  }) => {
+  test(`${variant.framework} ${variant.skin} exposes captions choices for one or multiple tracks`, async ({ page }) => {
     for (const configuration of VJSC_CONFIGURATIONS) {
       await test.step(`${configuration.source}/${configuration.style}`, async () => {
         const single = await openVariant(page, variant, configuration.style, 672, configuration.source, 'single');
         const singleButton = await captionsButton(single);
 
         await singleButton.click();
-        await expect(singleButton).toHaveAttribute('data-active', '');
-        await expect(page.getByRole('menu')).toHaveCount(0);
+
+        if (configuration.source === 'legacy') {
+          await expect(singleButton).toHaveAttribute('data-active', '');
+          await expect(page.getByRole('menu')).toHaveCount(0);
+        } else {
+          await expect(singleButton).toHaveAttribute('aria-expanded', 'true');
+
+          const singleMenu = page.getByRole('menu');
+
+          await expect(singleMenu).toBeVisible();
+          await expect(singleMenu.getByRole('menuitemradio')).toHaveCount(2);
+        }
 
         const multiple = await openVariant(page, variant, configuration.style, 672, configuration.source, 'multiple');
         const multipleButton = await captionsButton(multiple);
@@ -262,6 +270,7 @@ async function openVariant(
   if (expectPlay) {
     await expect(root.getByRole('button', { name: 'Play', exact: true })).toBeVisible();
     await expect(root.getByRole('button', { name: /live/i })).toBeVisible({ timeout: 20_000 });
+    await captionsButton(root);
   }
 
   await root.dispatchEvent('pointermove', { pointerType: 'mouse' });
@@ -309,7 +318,7 @@ async function openVariant(
 }
 
 async function captionsButton(root: Locator): Promise<Locator> {
-  const button = root.getByRole('button', { name: /captions/i }).first();
+  const button = root.getByRole('button', { name: /captions/i, includeHidden: true }).first();
 
   await expect(button).toHaveAttribute('data-availability', 'available');
 
@@ -347,7 +356,7 @@ async function layoutContract(root: Locator) {
 
     const liveStyle = getComputedStyle(live);
     const liveBefore = getComputedStyle(live, '::before');
-    const buttons = [...element.querySelectorAll<HTMLElement>('[role=button]')]
+    const buttons = [...element.querySelectorAll<HTMLElement>('button, [role=button]')]
       .filter((button) => {
         const rect = button.getBoundingClientRect();
 

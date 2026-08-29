@@ -59,7 +59,10 @@ export default styles({
         'data-starting-style:[transition-duration:100ms] data-starting-style:[transition-property:opacity,filter,transform,scale]',
         'data-ending-style:[transition-duration:100ms] data-ending-style:[transition-property:opacity,filter,transform,scale]',
         'motion-reduce:[transition-duration:0ms]!',
-        ...themeRecipe('rounded-[--spacing(3)]', 'rounded-[--spacing(2.5)]'),
+        ...themeRecipe(
+          'rounded-[--spacing(3)]',
+          'rounded-[--spacing(2.5)] data-starting-style:filter-none after:hidden'
+        ),
       ],
     },
     content: {

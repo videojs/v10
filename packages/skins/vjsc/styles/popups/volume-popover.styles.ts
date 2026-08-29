@@ -1,6 +1,7 @@
 import { styles } from 'vjsc/styles';
 
 import { popoverSafeArea, popupPosition, popupSurface, popupTransition } from '../recipes/popup';
+import { themeRecipe } from '../recipes/theme';
 
 export default styles({
   file: 'popups.css',
@@ -15,6 +16,7 @@ export default styles({
         'rounded-media-control px-0 py-3',
         'data-[side=right]:rounded-none data-[side=right]:bg-transparent data-[side=right]:p-0 data-[side=right]:px-3 data-[side=right]:shadow-none! data-[side=right]:ring-0! data-[side=right]:backdrop-filter-none data-[side=right]:after:hidden',
         'data-[side=right]:[--media-popover-side-offset:0rem]',
+        ...themeRecipe('', 'data-starting-style:filter-none after:hidden'),
       ],
     },
   },

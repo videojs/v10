@@ -1,7 +1,5 @@
 import { styles } from 'vjsc/styles';
 
-import { popupSurface } from '../../styles/recipes/popup';
-
 export default styles({
   file: 'dialog.css',
   rules: {
@@ -16,15 +14,18 @@ export default styles({
     popup: {
       className: 'media-audio-dialog-popup',
       utilities: [
-        ...popupSurface,
         'absolute inset-0 z-50 flex h-full max-h-none w-full translate-none flex-row items-center rounded-[99px] outline-none not-data-open:hidden',
-        'text-media-controls-foreground transition-[opacity,filter,scale] duration-250 ease-out',
+        'bg-media-background text-media-controls-foreground backdrop-blur-lg backdrop-saturate-150',
+        'transition-[opacity,filter] duration-250 ease-out',
         'data-starting-style:blur-xs data-starting-style:opacity-0',
         'data-ending-style:blur-xs data-ending-style:opacity-0',
       ],
       variants: {
-        default: 'gap-3 px-5 py-0 pe-1 data-starting-style:scale-100 data-ending-style:scale-100',
-        minimal: 'gap-4 px-3 py-0 pe-1',
+        default: 'gap-3 px-5 py-0 pe-1',
+        minimal: [
+          'gap-4 px-3 py-0 pe-1 backdrop-filter-none transition-[opacity,filter,scale]',
+          '[&:is([data-starting-style],[data-ending-style])]:[scale:.95]',
+        ],
       },
     },
     content: {

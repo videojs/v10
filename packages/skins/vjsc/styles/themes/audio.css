@@ -1,10 +1,5 @@
 @layer base {
   :is(.media-skin--audio, .media-skin--live-audio) {
-    height: auto;
-    overflow: visible;
-    background: transparent;
-    container-type: inline-size;
-
     --media-background: light-dark(oklch(1 0 0), oklch(0 0 0));
     --media-foreground: light-dark(oklch(0 0 0), oklch(1 0 0));
     --media-controls: light-dark(oklch(1 0 0 / 0.5), oklch(0 0 0 / 0.4));
@@ -18,10 +13,6 @@
     --media-default-accent-color: light-dark(oklch(0 0 0), oklch(1 0 0));
     --media-internal-accent-text-base: light-dark(oklch(1 0 0), oklch(0 0 0));
     --media-focus-ring-color: light-dark(oklch(0 0 0), oklch(1 0 0));
-  }
-
-  :is(.media-skin--audio, .media-skin--live-audio)::after {
-    display: none;
   }
 
   :is(.media-skin--audio, .media-skin--live-audio).media-skin--minimal {

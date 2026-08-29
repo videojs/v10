@@ -6,6 +6,7 @@
 
 @source "../**/*.tsx";
 @source "../**/*.styles.ts";
+@source "./recipes/*.ts";
 
 @theme inline {
   --spacing: var(--media-spacing);

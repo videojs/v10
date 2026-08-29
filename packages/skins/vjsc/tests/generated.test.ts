@@ -185,7 +185,8 @@ describe('generated VJSC source', () => {
     expect(reactDefaultAudio).toContain('media-skin media-skin--audio');
     expect(htmlMinimalAudio).toContain('export interface MinimalAudioSkinProps');
     expect(htmlMinimalAudio).toContain('media-skin--minimal media-skin--audio');
-    expect(reactCaptionsMenu).toContain('<Menu.Trigger render={<Button />}');
+    expect(reactCaptionsMenu).toContain('render={<Button />}');
+    expect(reactCaptionsMenu).toContain('aria-label="Enable captions"');
     expect(reactCaptionsMenu).not.toContain('keepMounted');
     expect(reactCaptionsMenu).not.toContain('useCaptionsOptions');
     expect(htmlCaptionsMenu).toContain('<button commandfor="__vjsc-id-<module>');
