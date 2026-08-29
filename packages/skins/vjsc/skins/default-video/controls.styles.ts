@@ -5,10 +5,6 @@ import { popupSurface, popupSurfaceAtLarge } from '../../styles/recipes/popup';
 export default styles({
   file: 'controls.css',
   rules: {
-    provider: {
-      className: 'media-controls-provider',
-      utilities: 'contents',
-    },
     root: {
       className: 'media-controls',
       utilities: [
