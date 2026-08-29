@@ -148,11 +148,21 @@ function setupExchangeLicenses({
           const controller = new AbortController();
           const sessions: MediaKeySession[] = [];
 
-          // Resolved once per negotiation. `keySystemCandidates` only offers a
-          // system whose license server resolves, so this is a string.
+          // Resolved once per negotiation. `keySystemCandidates` only offered
+          // this system because its license server resolved — but the resolver
+          // re-runs here, and a source mutated between the two reads can answer
+          // nothing. Report that instead of POSTing to a literal "undefined".
           const entry = config.drm[keySystem]!;
-          const licenseUrl = resolveDrmUrl(entry.licenseUrl)!;
+          const licenseUrl = resolveDrmUrl(entry.licenseUrl);
           const module_ = config.keySystems.find((candidate) => candidate.keySystem === keySystem);
+
+          if (licenseUrl === undefined) {
+            emitError(state, {
+              code: SVTA_BAD_LICENSE_REQUEST,
+              data: { keySystem, reason: 'license server resolved to nothing after negotiation' },
+            });
+            return;
+          }
 
           const exchange = async (session: MediaKeySession, message: BufferSource) => {
             let license: Uint8Array<ArrayBuffer>;

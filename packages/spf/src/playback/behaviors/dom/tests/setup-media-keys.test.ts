@@ -441,6 +441,24 @@ describe('setupMediaKeys', () => {
     reactor.destroy();
   });
 
+  it('warns in dev when the config names a system no composed module claims', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    // A typo'd or uncomposed system is otherwise a silent miss: negotiation
+    // intersects config with composed modules, so the entry never surfaces.
+    const { reactor } = setupSetupMediaKeys({}, {}, { 'com.example.notreal': { licenseUrl: 'https://l' } });
+
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('com.example.notreal'));
+
+    const clean = setupSetupMediaKeys({}, {}, DRM_CONFIG);
+
+    expect(warn).toHaveBeenCalledTimes(1);
+
+    warn.mockRestore();
+    reactor.destroy();
+    clean.reactor.destroy();
+  });
+
   it('tears down on destroy', async () => {
     const eme = makeFakeEme();
 
