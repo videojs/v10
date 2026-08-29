@@ -84,8 +84,8 @@ describe('shadcnRegistryPlugin', () => {
     const output = await build(
       root,
       {
-        items: (modules) =>
-          describeItems(modules).map((item) =>
+        items: (graph) =>
+          describeItems([...graph.modules.values()]).map((item) =>
             item.name === 'root'
               ? { ...item, $vjsc: { ...item.$vjsc, stylesheet: { target: 'styles/root.css', import: true } } }
               : item
@@ -115,7 +115,7 @@ describe('shadcnRegistryPlugin', () => {
     );
     const item = registryItem(output, 'items', 'root');
 
-    expect(registryFile(output, 'items', item, '/root.css')).toContain('.root { color: red; }');
+    expect(registryFile(output, 'items', item, '/root.css')).toMatch(/\.root\s*\{\s*color:\s*red;/);
     expect(registryFile(output, 'items', item, '/root.tsx')).toContain(`import '../styles/root.css';`);
     expect(registryFile(output, 'items', item, '/root.tsx')).not.toContain('virtual:vjsc/css');
   });
@@ -175,7 +175,7 @@ function baseOptions(overrides: Partial<FixtureOptions> = {}): FixtureOptions {
     namespace: '@example',
     paths: { install: 'components/example', import: '@/components/example' },
     meta: { framework: 'react', style: 'tailwind' },
-    items: describeItems,
+    items: (graph) => describeItems([...graph.modules.values()]),
     ...overrides,
   };
 }

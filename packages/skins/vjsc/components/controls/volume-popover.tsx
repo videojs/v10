@@ -8,16 +8,6 @@ import { ButtonTooltip } from '../buttons/button-tooltip';
 import { MuteButton } from '../buttons/mute-button';
 import { VolumeSlider } from '../sliders/volume-slider';
 
-export interface VolumePopoverProps extends Props<
-  CoreProps & {
-    className?: string | undefined;
-    orientation?: CoreVolumeSliderProps['orientation'];
-    showTooltip?: boolean;
-  }
-> {
-  popupClassName?: ClassNameValue;
-}
-
 export function VolumePopover({
   className,
   popupClassName,
@@ -25,7 +15,14 @@ export function VolumePopover({
   side = 'top',
   orientation = 'vertical',
   ...props
-}: VolumePopoverProps = {}) {
+}: Props<
+  CoreProps & {
+    className?: string | undefined;
+    orientation?: CoreVolumeSliderProps['orientation'];
+    showTooltip?: boolean;
+    popupClassName?: ClassNameValue;
+  }
+> = {}) {
   return (
     <$.VolumePopover.Root openOnHover delay={200} closeDelay={100} side={side} {...props}>
       <ButtonTooltip delay={0} disabled={!showTooltip} sticky side="top">

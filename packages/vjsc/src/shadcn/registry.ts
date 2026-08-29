@@ -1,13 +1,26 @@
 import { readFile } from 'node:fs/promises';
 import { basename, dirname, isAbsolute, posix, relative, resolve } from 'node:path';
 
+import { type ReturnedRule, transform as transformCss } from 'lightningcss';
 import { type RegistryItem, registryItemSchema, registrySchema, type Registry as ShadcnRegistry } from 'shadcn/schema';
 
 import type { ComponentMeta } from '../components/meta';
-import { type ComponentGraph, type ValidatedComponentGraphModule, validateComponentGraph } from '../graph';
+import {
+  type ComponentGraph,
+  type ComponentGraphModule,
+  type ValidatedComponentGraphModule,
+  validateComponentGraph,
+} from '../graph';
 import { escapesRoot, isInsideRoot, toPosixPath } from '../utils/path';
 import { type ImportReplacement, replaceImportSpecifiers } from './analyze';
-import type { ShadcnRegistryFile, ShadcnRegistryPluginOptions, VjscRegistryItem } from './types';
+import type {
+  ShadcnRegistryFile,
+  ShadcnRegistryPluginOptions,
+  VjscRegistryItem,
+  VjscRegistryManifestItemMeta,
+  VjscRegistrySourceItemMeta,
+  VjscRegistryStyleItemMeta,
+} from './types';
 
 interface OwnedModule<Item extends ComponentMeta = ComponentMeta> extends ValidatedComponentGraphModule<Item> {
   readonly outputPath: string;
@@ -22,8 +35,20 @@ interface BuiltItem {
 
 interface PublishedModule<Item extends ComponentMeta = ComponentMeta> {
   readonly module: ValidatedComponentGraphModule<Item>;
-  readonly item: VjscRegistryItem<Item>;
+  readonly item: SourceRegistryItem<Item>;
 }
+
+type SourceRegistryItem<Item extends ComponentMeta = ComponentMeta> = VjscRegistryItem<Item> & {
+  readonly $vjsc: VjscRegistrySourceItemMeta<Item>;
+};
+
+type StyleRegistryItem<Item extends ComponentMeta = ComponentMeta> = VjscRegistryItem<Item> & {
+  readonly $vjsc: VjscRegistryStyleItemMeta<Item>;
+};
+
+type ManifestRegistryItem<Item extends ComponentMeta = ComponentMeta> = VjscRegistryItem<Item> & {
+  readonly $vjsc: VjscRegistryManifestItemMeta;
+};
 
 const VIRTUAL_CSS_IMPORT = /import\s+["']virtual:vjsc\/css\/[^"']+["'];?\s*/g;
 const LOCAL_CSS_IMPORT = /@import\s+["'](\.[^"']+)["']\s*;/g;
@@ -41,16 +66,25 @@ export async function createShadcnRegistryFiles<Item extends ComponentMeta>(
   const modules = validateComponentGraph(graph);
 
   validateOptions(options);
-  const published = describePublishedModules(modules, options);
+  const described = [...options.items(graph)];
+
+  validateItems(described);
+
+  const sourceItems = described.filter(isSourceItem);
+  const published = describePublishedModules(modules, sourceItems);
   const publications = canonicalPublishedModules(modules, published);
-  const builtItems = await Promise.all(
-    [...published.values()]
-      .sort((left, right) => left.item.name.localeCompare(right.item.name))
-      .map((publication) => buildPublishedItem(publication, modules, publications, graph, options))
-  );
+  const builtItems = await Promise.all([
+    ...[...published.values()].map((publication) =>
+      buildPublishedItem(publication, modules, publications, graph, options)
+    ),
+    ...described.filter(isStyleItem).map((item) => buildStyleItem(item, modules, graph, options)),
+    ...described.filter(isManifestItem).map((item) => buildManifestItem(item, options)),
+  ]);
   const groups = new Map<string, RegistryItem[]>();
 
-  for (const item of builtItems) addGroupItem(groups, item.group, item.manifest);
+  for (const item of builtItems.sort((left, right) => left.manifest.name.localeCompare(right.manifest.name))) {
+    addGroupItem(groups, item.group, item.manifest);
+  }
 
   const registry = {
     $schema: 'https://ui.shadcn.com/schema/registry.json',
@@ -85,29 +119,19 @@ export async function createShadcnRegistryFiles<Item extends ComponentMeta>(
 
 function describePublishedModules<Item extends ComponentMeta>(
   modules: ReadonlyMap<string, ValidatedComponentGraphModule<Item>>,
-  options: ShadcnRegistryPluginOptions<Item>
+  items: readonly SourceRegistryItem<Item>[]
 ): ReadonlyMap<string, PublishedModule<Item>> {
   const published = new Map<string, PublishedModule<Item>>();
-  const names = new Map<string, string>();
 
-  for (const item of options.items([...modules.values()])) {
+  for (const item of items) {
     const module = modules.get(item.$vjsc.module.id);
 
     if (!module) {
       throw new Error(`Shadcn item \`${item.name}\` references an unknown module: \`${item.$vjsc.module.id}\`.`);
     }
 
-    validateItemName(item.name);
-
     if (item.$vjsc.filename) validateRelativePath(item.$vjsc.filename, `Shadcn item ${item.name} filename`);
 
-    const previous = names.get(item.name);
-
-    if (previous) {
-      throw new Error(`Shadcn item \`${item.name}\` is described by both \`${previous}\` and \`${module.id}\`.`);
-    }
-
-    names.set(item.name, module.id);
     published.set(module.id, { module, item });
   }
 
@@ -142,7 +166,7 @@ function canonicalPublishedModules<Item extends ComponentMeta>(
 }
 
 function moduleSourceKey(module: ValidatedComponentGraphModule): string {
-  return `${module.filename}\0${module.source}`;
+  return `${module.filename}\0${stripVirtualCssImports(module.source)}`;
 }
 
 function collectOwnedModules<Item extends ComponentMeta>(
@@ -199,20 +223,23 @@ async function buildPublishedItem<Item extends ComponentMeta>(
   const files = [...layout.values()]
     .sort((left, right) => left.outputPath.localeCompare(right.outputPath))
     .map((module): ShadcnRegistryFile => {
-      const rewritten = rewriteImports(module, layout, modules, published, options);
+      const rewritten = rewriteImports(module, layout, modules, published, item, options);
 
       for (const dependency of rewritten.dependencies) dependencies.add(dependency);
 
       const path = posix.join('files', item.name, module.outputPath);
-      let source = item.$vjsc.stylesheet ? stripVirtualCssImports(rewritten.source) : rewritten.source;
+      let source = stripVirtualCssImports(rewritten.source);
 
-      if (module.id === root.id && item.$vjsc.stylesheet?.import) {
-        const stylesheetTarget = posix.join(
-          normalizePath(options.paths.install),
-          normalizePath(item.$vjsc.stylesheet.target)
-        );
+      if (module.id === root.id) {
+        const styleTargets = new Set(item.$vjsc.styleImports ?? []);
 
-        source = addStyleImport(source, relativeImport(module.target, stylesheetTarget));
+        if (item.$vjsc.stylesheet?.import) styleTargets.add(item.$vjsc.stylesheet.target);
+
+        for (const styleTarget of [...styleTargets].sort().reverse()) {
+          const stylesheetTarget = posix.join(normalizePath(options.paths.install), normalizePath(styleTarget));
+
+          source = addStyleImport(source, relativeImport(module.target, stylesheetTarget));
+        }
       }
 
       addUnique(sourceFiles, path, source, 'source');
@@ -224,7 +251,7 @@ async function buildPublishedItem<Item extends ComponentMeta>(
     });
 
   if (item.$vjsc.stylesheet) {
-    const css = await itemStyles(root, owned.modules, graph, item.$vjsc.stylesheet.files ?? []);
+    const css = await itemStyles(item.name, owned.modules, graph, item.$vjsc.stylesheet.files ?? []);
     const filename = basename(item.$vjsc.stylesheet.target);
     const path = posix.join('files', item.name, filename);
     const target = posix.join(normalizePath(options.paths.install), normalizePath(item.$vjsc.stylesheet.target));
@@ -236,13 +263,66 @@ async function buildPublishedItem<Item extends ComponentMeta>(
   return {
     group: normalizeGroup(item.$vjsc.group),
     sourceFiles,
-    manifest: {
-      ...publicRegistryItem(item),
-      files,
-      ...optionalList('dependencies', versionDependencies(dependencies, options)),
-      registryDependencies: [...registryDependencies].sort(),
-      ...mergedMeta(options.meta, item.meta),
-    },
+    manifest: buildManifest(item, options, files, dependencies, registryDependencies),
+  };
+}
+
+async function buildStyleItem<Item extends ComponentMeta>(
+  item: StyleRegistryItem<Item>,
+  modules: ReadonlyMap<string, ValidatedComponentGraphModule<Item>>,
+  graph: ComponentGraph<Item>,
+  options: ShadcnRegistryPluginOptions<Item>
+): Promise<BuiltItem> {
+  const selected = item.$vjsc.modules.map((candidate) => {
+    const module = modules.get(candidate.id);
+    if (!module) throw new Error(`Shadcn item \`${item.name}\` references an unknown module: \`${candidate.id}\`.`);
+
+    return module;
+  });
+  const target = posix.join(normalizePath(options.paths.install), normalizePath(item.$vjsc.target));
+  const css = await itemStyles(
+    item.name,
+    selected,
+    graph,
+    item.$vjsc.files ?? [],
+    item.$vjsc.asset,
+    item.$vjsc.asset !== undefined
+  );
+  const path = posix.join('files', item.name, basename(item.$vjsc.target));
+  const sourceFiles = new Map([[path, css]]);
+  const files: ShadcnRegistryFile[] = [{ path, target, type: 'registry:style' }];
+
+  return {
+    group: normalizeGroup(item.$vjsc.group),
+    sourceFiles,
+    manifest: buildManifest(item, options, files),
+  };
+}
+
+function buildManifestItem<Item extends ComponentMeta>(
+  item: ManifestRegistryItem<Item>,
+  options: ShadcnRegistryPluginOptions<Item>
+): BuiltItem {
+  return {
+    group: normalizeGroup(item.$vjsc.group),
+    sourceFiles: new Map(),
+    manifest: buildManifest(item, options, []),
+  };
+}
+
+function buildManifest<Item extends ComponentMeta>(
+  item: VjscRegistryItem<Item>,
+  options: ShadcnRegistryPluginOptions<Item>,
+  files: readonly ShadcnRegistryFile[],
+  dependencies: ReadonlySet<string> = new Set(item.dependencies),
+  registryDependencies: ReadonlySet<string> = new Set(item.registryDependencies)
+): RegistryItem {
+  return {
+    ...publicRegistryItem(item),
+    ...(files.length ? { files: [...files] } : {}),
+    ...optionalList('dependencies', versionDependencies(dependencies, options)),
+    ...optionalList('registryDependencies', registryDependencies),
+    ...mergedMeta(options.meta, item.meta),
   };
 }
 
@@ -260,15 +340,17 @@ function versionDependencies<Item extends ComponentMeta>(
 }
 
 async function itemStyles<Item extends ComponentMeta>(
-  root: ValidatedComponentGraphModule<Item>,
+  label: string,
   modules: readonly ValidatedComponentGraphModule<Item>[],
   graph: ComponentGraph<Item>,
-  supplemental: readonly string[]
+  supplemental: readonly string[],
+  asset?: string,
+  includeAssets = true
 ): Promise<string> {
   const styles = new Map<string, string>();
 
   for (const path of supplemental) {
-    validateRelativePath(path, `Shadcn item ${root.id} stylesheet file`);
+    validateRelativePath(path, `Shadcn item ${label} stylesheet file`);
     const filename = resolve(graph.root, path);
 
     assertInsideRoot(graph.root, filename, path);
@@ -276,21 +358,78 @@ async function itemStyles<Item extends ComponentMeta>(
   }
 
   for (const module of modules) {
+    if (!includeAssets) continue;
+
     for (const id of graph.styles?.get(module.id) ?? []) {
       if (id.endsWith('/base.css')) continue;
 
+      if (asset && virtualStyleFilename(id) !== asset) continue;
+
       const source = graph.assets?.get(id);
-      if (source === undefined) throw new Error(`Shadcn item \`${root.id}\` has no captured stylesheet: \`${id}\`.`);
+      if (source === undefined) throw new Error(`Shadcn item \`${label}\` has no captured stylesheet: \`${id}\`.`);
 
       addUnique(styles, id, source, 'stylesheet');
     }
   }
 
-  return `${[...styles]
+  const source = `${[...styles]
     .sort(([left], [right]) => left.localeCompare(right))
     .map(([, source]) => source.trim())
     .filter(Boolean)
     .join('\n\n')}\n`;
+
+  return mergeStyles(source, `${label}.css`);
+}
+
+function mergeStyles(source: string, filename: string): string {
+  const context: string[] = [];
+  const rules = new Set<string>();
+  const result = transformCss({
+    filename,
+    code: new TextEncoder().encode(source),
+    minify: false,
+    visitor: {
+      Rule(rule) {
+        const nested = hasNestedRules(rule);
+
+        if (rule.type === 'style' || !nested) {
+          const key = JSON.stringify([context, rule], omitRuleDetails);
+          if (rules.has(key)) return [];
+
+          rules.add(key);
+        }
+
+        if (rule.type !== 'style' && nested) context.push(JSON.stringify(rule, omitRuleDetails));
+
+        return undefined;
+      },
+      RuleExit(rule) {
+        if (rule.type !== 'style' && hasNestedRules(rule)) context.pop();
+      },
+    },
+  });
+
+  return new TextDecoder().decode(result.code);
+}
+
+function hasNestedRules(rule: ReturnedRule): boolean {
+  if (!('value' in rule)) return false;
+
+  const value = rule.value;
+
+  return Boolean(value && typeof value === 'object' && 'rules' in value && Array.isArray(value.rules));
+}
+
+function omitRuleDetails(key: string, value: unknown): unknown {
+  return key === 'loc' || key === 'rules' ? undefined : value;
+}
+
+function virtualStyleFilename(id: string): string | undefined {
+  if (!id.startsWith('virtual:vjsc/css/')) return undefined;
+
+  const filename = id.slice(id.lastIndexOf('/') + 1);
+
+  return decodeURIComponent(filename);
 }
 
 async function inlineLocalCssImports(filename: string, root: string, stack: Set<string>): Promise<string> {
@@ -334,19 +473,20 @@ function addStyleImport(source: string, specifier: string): string {
 function createLayout<Item extends ComponentMeta>(
   root: ValidatedComponentGraphModule<Item>,
   modules: readonly ValidatedComponentGraphModule<Item>[],
-  item: VjscRegistryItem<Item>,
+  item: SourceRegistryItem<Item>,
   options: ShadcnRegistryPluginOptions<Item>
 ): ReadonlyMap<string, OwnedModule<Item>> {
   const layout = new Map<string, OwnedModule<Item>>();
   const outputPaths = new Map<string, string>();
   const targets = new Map<string, string>();
   const rootFilename = normalizePath(item.$vjsc.filename ?? basename(root.sourcePath));
-  const rootTarget = posix.join(normalizePath(options.paths.install), normalizePath(item.$vjsc.target));
+  const installRoot = normalizePath(options.paths.install);
+  const rootTarget = installedTarget(item, root, root, options);
 
   for (const module of modules) {
     const relativeToEntry = toPosixPath(relative(dirname(root.filename), module.filename));
 
-    if (module.id !== root.id && escapesRoot(relativeToEntry)) {
+    if (typeof item.$vjsc.target !== 'function' && module.id !== root.id && escapesRoot(relativeToEntry)) {
       throw new Error(
         `Shadcn item \`${item.name}\` reaches unowned module \`${module.sourcePath}\`. ` +
           `Reason: registry output cannot hide shared modules under compiler-shaped internal paths. ` +
@@ -354,8 +494,19 @@ function createLayout<Item extends ComponentMeta>(
       );
     }
 
-    const outputPath = module.id === root.id ? rootFilename : relativeToEntry;
-    const target = module.id === root.id ? rootTarget : posix.join(posix.dirname(rootTarget), relativeToEntry);
+    const configuredTarget = installedTarget(item, module, root, options);
+    const target =
+      typeof item.$vjsc.target === 'function'
+        ? configuredTarget
+        : module.id === root.id
+          ? rootTarget
+          : posix.join(posix.dirname(rootTarget), relativeToEntry);
+    const outputPath =
+      typeof item.$vjsc.target === 'function'
+        ? posix.relative(installRoot, target)
+        : module.id === root.id
+          ? rootFilename
+          : relativeToEntry;
 
     assertNoCollision(outputPaths, outputPath, module.id, 'output');
     assertNoCollision(targets, target, module.id, 'installation target');
@@ -370,6 +521,7 @@ function rewriteImports<Item extends ComponentMeta>(
   layout: ReadonlyMap<string, OwnedModule<Item>>,
   modules: ReadonlyMap<string, ValidatedComponentGraphModule<Item>>,
   published: ReadonlyMap<string, PublishedModule<Item>>,
+  item: SourceRegistryItem<Item>,
   options: ShadcnRegistryPluginOptions<Item>
 ): { source: string; dependencies: string[] } {
   const replacements: ImportReplacement[] = [];
@@ -377,7 +529,7 @@ function rewriteImports<Item extends ComponentMeta>(
 
   for (const reference of module.imports) {
     const dependency = reference.resolvedId ? modules.get(reference.resolvedId) : undefined;
-    let replacement = options.imports?.[reference.specifier];
+    let replacement = item.$vjsc.imports?.[reference.specifier] ?? options.imports?.[reference.specifier];
 
     if (!replacement && dependency) {
       const ownedDependency = layout.get(dependency.id);
@@ -391,7 +543,12 @@ function rewriteImports<Item extends ComponentMeta>(
 
     if (replacement !== reference.specifier) replacements.push({ ...reference, replacement });
 
-    if (!dependency && !options.imports?.[reference.specifier] && !reference.specifier.startsWith('virtual:')) {
+    if (
+      !dependency &&
+      !item.$vjsc.imports?.[reference.specifier] &&
+      !options.imports?.[reference.specifier] &&
+      !reference.specifier.startsWith('virtual:')
+    ) {
       const graphId = reference.resolvedId ?? reference.specifier;
       const packageName = packageDependency(graphId) ?? packageDependency(reference.specifier);
 
@@ -406,7 +563,29 @@ function publishedImport<Item extends ComponentMeta>(
   publication: PublishedModule<Item>,
   options: ShadcnRegistryPluginOptions<Item>
 ): string {
-  return posix.join(options.paths.import, stripScriptExtension(publication.item.$vjsc.target));
+  const target = targetForModule(publication.item, publication.module, publication.module);
+
+  return posix.join(options.paths.import, stripScriptExtension(target));
+}
+
+function installedTarget<Item extends ComponentMeta>(
+  item: SourceRegistryItem<Item>,
+  module: ComponentGraphModule<Item>,
+  root: ComponentGraphModule<Item>,
+  options: ShadcnRegistryPluginOptions<Item>
+): string {
+  return posix.join(normalizePath(options.paths.install), normalizePath(targetForModule(item, module, root)));
+}
+
+function targetForModule<Item extends ComponentMeta>(
+  item: SourceRegistryItem<Item>,
+  module: ComponentGraphModule<Item>,
+  root: ComponentGraphModule<Item>
+): string {
+  const target = typeof item.$vjsc.target === 'function' ? item.$vjsc.target(module, root) : item.$vjsc.target;
+
+  validateRelativePath(target, `Shadcn item ${item.name} target`);
+  return target;
 }
 
 function relativeImport(importerTarget: string, dependencyTarget: string): string {
@@ -431,6 +610,39 @@ function validateOptions<Item extends ComponentMeta>(options: ShadcnRegistryPlug
   }
 }
 
+function validateItems<Item extends ComponentMeta>(items: readonly VjscRegistryItem<Item>[]): void {
+  const names = new Map<string, string>();
+  const modules = new Map<string, string>();
+
+  for (const item of items) {
+    validateItemName(item.name);
+
+    const owner = isSourceItem(item) ? item.$vjsc.module.id : String(item.$vjsc.kind);
+
+    assertNoCollision(names, item.name, owner, 'item name');
+
+    if (isSourceItem(item)) {
+      assertNoCollision(modules, item.$vjsc.module.id, item.name, 'module publication');
+    } else if (isStyleItem(item)) {
+      validateRelativePath(item.$vjsc.target, `Shadcn item ${item.name} target`);
+
+      if (item.$vjsc.asset) validateRelativePath(item.$vjsc.asset, `Shadcn item ${item.name} asset`);
+    }
+  }
+}
+
+function isSourceItem<Item extends ComponentMeta>(item: VjscRegistryItem<Item>): item is SourceRegistryItem<Item> {
+  return item.$vjsc.kind === undefined || item.$vjsc.kind === 'source';
+}
+
+function isStyleItem<Item extends ComponentMeta>(item: VjscRegistryItem<Item>): item is StyleRegistryItem<Item> {
+  return item.$vjsc.kind === 'style';
+}
+
+function isManifestItem<Item extends ComponentMeta>(item: VjscRegistryItem<Item>): item is ManifestRegistryItem<Item> {
+  return item.$vjsc.kind === 'manifest';
+}
+
 function addGroupItem(groups: Map<string, RegistryItem[]>, group: string, item: RegistryItem): void {
   const normalized = normalizeGroup(group);
   const items = groups.get(normalized) ?? [];
@@ -449,14 +661,24 @@ function jsonFile(path: string, value: unknown): ShadcnOutputFile {
 }
 
 function validateRegistryFiles(items: readonly RegistryItem[]): void {
-  const paths = new Map<string, string>();
-  const targets = new Map<string, string>();
-
   for (const item of items) {
-    for (const file of item.files ?? []) {
-      assertNoCollision(paths, file.path, item.name, 'source path');
+    const paths = new Set<string>();
+    const targets = new Set<string>();
 
-      if (file.target) assertNoCollision(targets, file.target, item.name, 'installation target');
+    for (const file of item.files ?? []) {
+      if (paths.has(file.path)) {
+        throw new Error(`Shadcn registry item \`${item.name}\` contains duplicate source path \`${file.path}\`.`);
+      }
+
+      paths.add(file.path);
+
+      if (file.target && targets.has(file.target)) {
+        throw new Error(
+          `Shadcn registry item \`${item.name}\` contains duplicate installation target \`${file.target}\`.`
+        );
+      }
+
+      if (file.target) targets.add(file.target);
     }
   }
 }

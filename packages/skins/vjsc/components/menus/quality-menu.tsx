@@ -1,13 +1,14 @@
 import { qualityText } from '@videojs/core/i18n/text/menu';
 import { SwitchesIcon } from '@videojs/icons/vjsc';
-import { type Props, Template, Text } from 'vjsc/components';
+import { type ClassNameValue, Template, Text } from 'vjsc/components';
 
+import type { SkinComponentMeta } from '../../meta';
 import styles from '../../styles/menus/menu.styles';
 import { MenuChevron } from './menu-chevron';
 import { RadioItem } from './radio-item';
 
 export interface QualityMenuProps extends MenuProps {
-  className?: Props<MenuProps>['className'];
+  className?: ClassNameValue;
 }
 
 export function QualityMenu({ className, ...props }: QualityMenuProps = {}) {
@@ -46,3 +47,10 @@ export function QualityMenu({ className, ...props }: QualityMenuProps = {}) {
 }
 import type { MenuProps } from '@videojs/core';
 import * as $ from '@videojs/core/vjsc';
+
+export const meta = {
+  name: 'quality-menu',
+  type: 'component',
+  title: 'Quality Menu',
+  description: 'A submenu for selecting the playback quality.',
+} as const satisfies SkinComponentMeta;

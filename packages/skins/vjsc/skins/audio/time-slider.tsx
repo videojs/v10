@@ -6,11 +6,11 @@ import { SliderBuffer, SliderFill, SliderThumb, SliderTrack } from '../../compon
 import sliderStyles from '../../styles/sliders/slider.styles';
 import styles from './time-slider.styles';
 
-export interface AudioTimeSliderProps extends CoreProps {
-  previewOverflow?: SliderPreviewOverflow | undefined;
-}
-
-export function AudioTimeSlider({ className, previewOverflow = 'clamp', ...props }: Props<AudioTimeSliderProps> = {}) {
+export function AudioTimeSlider({
+  className,
+  previewOverflow = 'clamp',
+  ...props
+}: Props<CoreProps & { previewOverflow?: SliderPreviewOverflow | undefined }> = {}) {
   return (
     <$.TimeSlider.Root className={[sliderStyles.root, styles.root, className]} {...props}>
       <$.TimeSlider.Track $render={SliderTrack}>

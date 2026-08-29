@@ -16,6 +16,18 @@ describe('validateSkinConfig', () => {
     expect(validateSkinConfig(new URLSearchParams('target=react&skin=default-video&style=vanilla'))).toBeNull();
   });
 
+  it('accepts skin-independent React component transforms', () => {
+    expect(validateSkinConfig(new URLSearchParams('target=react&style=css'))).toEqual({
+      target: 'react',
+      style: 'css',
+    });
+    expect(createStyleOptions({ target: 'react', style: 'css' })).toMatchObject({
+      variants: [],
+      stylesheet: { scope: '.media-skin' },
+    });
+    expect(validateSkinConfig(new URLSearchParams('target=html&style=css'))).toBeNull();
+  });
+
   it('adds the Shadow DOM variant only to HTML targets', () => {
     expect(createStyleOptions({ target: 'react', skin: 'default-video', style: 'tailwind' }).variants).toEqual([
       'default',
