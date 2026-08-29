@@ -1,7 +1,7 @@
 import type { MenuProps } from '@videojs/core';
 import { speedText } from '@videojs/core/i18n/text/menu';
 import * as $ from '@videojs/core/vjsc';
-import { type Props, Template, Text } from 'vjsc/components';
+import { type ClassNameValue, Template, Text } from 'vjsc/components';
 
 import { ButtonTooltip } from '../../components/buttons/button-tooltip';
 import { PlaybackRateButton } from '../../components/buttons/playback-rate-button';
@@ -10,7 +10,7 @@ import styles from '../../styles/menus/menu.styles';
 import audioSettingsMenuStyles from './settings-menu.styles';
 
 export interface AudioSettingsMenuProps extends MenuProps {
-  className?: Props<MenuProps>['className'];
+  className?: ClassNameValue;
 }
 
 export function AudioSettingsMenu({ className, ...props }: AudioSettingsMenuProps = {}) {

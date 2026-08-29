@@ -8,12 +8,12 @@ import { skinStyles } from './meta.ts';
 const stylesDir = resolve(import.meta.dirname, 'styles');
 
 export function createStyleOptions(config: SkinConfig): StylePluginOptions {
-  const skin = skinStyles[config.skin];
-  const variants: string[] = [skin.theme];
+  const skin = config.skin ? skinStyles[config.skin] : undefined;
+  const variants: string[] = skin ? [skin.theme] : [];
 
-  if (skin.variant !== skin.theme) variants.push(skin.variant);
+  if (skin && skin.variant !== skin.theme) variants.push(skin.variant);
 
-  if (!variants.includes(config.skin)) variants.push(config.skin);
+  if (config.skin && !variants.includes(config.skin)) variants.push(config.skin);
 
   if (config.target === 'html') variants.push('shadow-dom');
 
@@ -28,7 +28,7 @@ export function createStyleOptions(config: SkinConfig): StylePluginOptions {
         stylesheet: {
           input: resolve(stylesDir, 'tailwind.compiler.css'),
           base: resolve(stylesDir, 'base.css'),
-          scope: skin.scope,
+          scope: skin?.scope ?? '.media-skin',
         },
       };
 }

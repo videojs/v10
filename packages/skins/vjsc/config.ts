@@ -6,7 +6,7 @@ import { createComponentTargets } from './target/index.ts';
 
 export interface SkinConfig {
   readonly target: 'html' | 'react';
-  readonly skin: SkinName;
+  readonly skin?: SkinName | undefined;
   readonly style: 'tailwind' | 'css';
 }
 
@@ -24,19 +24,15 @@ export function validateSkinConfig(parameters: URLSearchParams): SkinConfig | nu
   const target = parameters.get('target');
   const skin = parameters.get('skin');
   const style = parameters.get('style');
+  if ((target !== 'react' && target !== 'html') || (style !== 'tailwind' && style !== 'css')) return null;
 
-  if (
-    (target !== 'react' && target !== 'html') ||
-    !skin ||
-    !(skin in skinStyles) ||
-    (style !== 'tailwind' && style !== 'css')
-  ) {
-    return null;
-  }
+  if (skin && !(skin in skinStyles)) return null;
+
+  if (!skin && target !== 'react') return null;
 
   return {
     target,
-    skin: skin as SkinName,
+    ...(skin ? { skin: skin as SkinName } : {}),
     style,
   };
 }

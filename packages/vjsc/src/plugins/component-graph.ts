@@ -16,7 +16,7 @@ import { analyzeImports } from '../shadcn/analyze';
 import { toArray } from '../utils/array';
 import { moduleFilename, moduleId, normalizeResolvedId, parseModuleId } from '../utils/module-id';
 import { isInsideRoot } from '../utils/path';
-import { readComponentMeta, readComponentStyles } from './component-meta';
+import { readComponentMeta } from './component-meta';
 
 export type { ComponentGraphPluginOptions } from '../graph';
 
@@ -115,12 +115,15 @@ export function componentGraphPlugin<Item extends ComponentMeta>(
           this.error(`Component graph has no transformed output for \`${id}\`.`);
 
         const meta = readComponentMeta(info?.meta) as Item | undefined;
-        const styleIds = readComponentStyles(info?.meta).map(normalizeGraphId);
+        const references = analyzeImports(source, entry.filename);
+        const styleIds = references
+          .filter((reference) => VIRTUAL_STYLE_ID.test(reference.specifier))
+          .map((reference) => normalizeGraphId(reference.specifier));
         const imports: ComponentGraphImport[] = [];
 
         if (styleIds.length > 0) styles.set(id, styleIds);
 
-        for (const reference of analyzeImports(source, entry.filename)) {
+        for (const reference of references) {
           const resolved = await this.resolve(reference.specifier, id);
           const resolvedId = resolved ? normalizeResolvedId(resolved.id) : undefined;
 
