@@ -48,24 +48,24 @@ export async function createReactPackageSkins(
 
   const generated = new Map<string, string>();
 
+  for (const module of uniqueModules(skins.flatMap((skin) => skin.modules))) {
+    const destination = destinations.get(module.id)!;
+    const source = rewriteComponentGraphImports(graph, module, ({ dependency, reference }) => {
+      const frameworkImport = reactFrameworkImport(reference.specifier);
+      if (frameworkImport) return relativeComponentGraphImport(destination, frameworkImport);
+
+      if (!dependency) return undefined;
+
+      const target = destinations.get(dependency.id);
+      if (!target) throw new Error(`React Skin dependency has no generated target: \`${dependency.sourcePath}\`.`);
+
+      return relativeComponentGraphImport(destination, target);
+    });
+
+    addGenerated(generated, destination, stripComponentGraphStyleImports(source));
+  }
+
   for (const skin of skins) {
-    for (const module of skin.modules) {
-      const destination = destinations.get(module.id)!;
-      const source = rewriteComponentGraphImports(graph, module, ({ dependency, reference }) => {
-        const frameworkImport = reactFrameworkImport(reference.specifier);
-        if (frameworkImport) return relativeComponentGraphImport(destination, frameworkImport);
-
-        if (!dependency) return undefined;
-
-        const target = destinations.get(dependency.id);
-        if (!target) throw new Error(`React Skin dependency has no generated target: \`${dependency.sourcePath}\`.`);
-
-        return relativeComponentGraphImport(destination, target);
-      });
-
-      addGenerated(generated, destination, stripComponentGraphStyleImports(source));
-    }
-
     const publicRoot = `${packageRoot}/presets/${skin.preset}`;
     const publicName = skin.theme === 'minimal' ? 'minimal-skin' : 'skin';
     const component = `${skin.theme === 'minimal' ? 'Minimal' : ''}${pascalCase(skin.preset)}Skin`;
@@ -206,6 +206,12 @@ function presetForSkin(name: SkinName): ReactSkin['preset'] {
 
 function isPreset(value: string): value is ReactSkin['preset'] {
   return presets.some((preset) => preset === value);
+}
+
+function uniqueModules(
+  modules: readonly ValidatedComponentGraphModule<SkinModuleMeta>[]
+): ValidatedComponentGraphModule<SkinModuleMeta>[] {
+  return [...new Map(modules.map((module) => [module.id, module])).values()];
 }
 
 function pascalCase(value: string): string {
