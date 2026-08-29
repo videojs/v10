@@ -120,6 +120,37 @@ describe('shadcnRegistryPlugin', () => {
     expect(registryFile(output, 'items', item, '/root.tsx')).not.toContain('virtual:vjsc/css');
   });
 
+  it('emits asynchronously prepared source-owned files', async () => {
+    const root = setup({
+      'components/root.tsx': `export const Root = <main />; ${meta('root', 'block')}`,
+    });
+    const output = await build(root, {
+      async items() {
+        return [
+          {
+            name: 'template',
+            type: 'registry:block',
+            title: 'Template',
+            description: 'Template.',
+            files: [
+              {
+                path: 'skin.html',
+                target: 'components/example/skins/template/skin.html',
+                type: 'registry:file',
+                content: '<main></main>',
+              },
+            ],
+            $vjsc: { kind: 'files', group: 'items' },
+          },
+        ];
+      },
+    });
+    const item = registryItem(output, 'items', 'template');
+
+    expect(item.files[0].content).toBeUndefined();
+    expect(registryFile(output, 'items', item, '/skin.html')).toBe('<main></main>');
+  });
+
   it('reuses one graph plugin safely across rebuilds', async () => {
     const root = setup({
       'components/root.tsx': `export const Root = <main>first</main>; ${meta('root', 'block')}`,
