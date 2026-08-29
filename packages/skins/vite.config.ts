@@ -34,13 +34,37 @@ export default defineConfig({
         input: cachedTaskInputs,
         output: ['dist/**', '!dist/registry', '!dist/registry/**'],
       },
-      'build:shadcn': {
-        command: 'vp -C shadcn pack',
+      'prepare:shadcn': {
+        command: ['rimraf dist/registry', 'vp -C shadcn pack'],
         dependsOn: workspaceTaskDependencies(),
         // The registry plugin compares files in its output directory before
         // rewriting them; those reads must not turn outputs into inputs.
         input: [...cachedTaskInputs, '!dist/registry', '!dist/registry/**'],
-        output: ['dist/registry/**'],
+        output: ['dist/registry/source/**'],
+      },
+      'build:shadcn:react': {
+        command: 'shadcn build dist/registry/source/r/react/registry.json --output dist/registry/r/react',
+        dependsOn: ['prepare:shadcn'],
+        input: ['dist/registry/source/r/react/**', '!dist/registry/source/r/react/css/**'],
+        output: ['dist/registry/r/react/**', '!dist/registry/r/react/css/**'],
+      },
+      'build:shadcn:react-css': {
+        command: 'shadcn build dist/registry/source/r/react/css/registry.json --output dist/registry/r/react/css',
+        dependsOn: ['build:shadcn:react'],
+        input: ['dist/registry/source/r/react/css/**'],
+        output: ['dist/registry/r/react/css/**'],
+      },
+      'build:shadcn:html': {
+        command: 'shadcn build dist/registry/source/r/html/registry.json --output dist/registry/r/html',
+        dependsOn: ['prepare:shadcn'],
+        input: ['dist/registry/source/r/html/**', '!dist/registry/source/r/html/css/**'],
+        output: ['dist/registry/r/html/**', '!dist/registry/r/html/css/**'],
+      },
+      'build:shadcn': {
+        command: 'shadcn build dist/registry/source/r/html/css/registry.json --output dist/registry/r/html/css',
+        dependsOn: ['build:shadcn:html', 'build:shadcn:react-css'],
+        input: ['dist/registry/source/r/html/css/**'],
+        output: ['dist/registry/r/html/css/**'],
       },
       'test:ci': packageTestTask('pnpm run test:types && vp test run'),
     },

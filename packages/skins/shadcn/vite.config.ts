@@ -18,6 +18,7 @@ import type { VjscRegistryItem } from '../../vjsc/src/shadcn/index.ts';
 import type { VideojsRegistryMeta } from '../registry/meta.ts';
 import { configureSkinModule } from '../vjsc/config';
 import { type SkinModuleMeta, type SkinName, skinStyles } from '../vjsc/meta';
+import { formatRegistrySources } from './format';
 
 const packageDir = resolve(import.meta.dirname, '..');
 const vjscDir = resolve(packageDir, 'vjsc');
@@ -112,7 +113,7 @@ export const shadcnPackConfig: PackUserConfig = {
   name: 'skins-shadcn-registry',
   cwd: packageDir,
   entry: { registry: registryUtils },
-  outDir: 'dist/registry',
+  outDir: 'dist/registry/source',
   clean: true,
   dts: false,
   sourcemap: false,
@@ -144,6 +145,7 @@ export const shadcnPackConfig: PackUserConfig = {
         items: registryItems(target),
       })
     ),
+    formatRegistrySources(),
     registryAssetsOnly(),
   ],
 };
