@@ -1,6 +1,6 @@
 import { format } from 'oxfmt';
 
-interface FormattedSource {
+export interface FormattedSource {
   readonly code: string;
   readonly errors: readonly { readonly message: string }[];
 }
