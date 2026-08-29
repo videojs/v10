@@ -67,32 +67,40 @@ export default defineConfig({
         ],
       },
       'build:shadcn:react': {
-        command: 'shadcn build dist/registry/source/r/react/registry.json --output dist/registry/r/react',
+        command: [
+          'rimraf dist/registry/r/react',
+          'shadcn build dist/registry/source/r/react/registry.json --output dist/registry/r/react',
+        ],
         dependsOn: ['generate'],
-        input: ['dist/registry/source/r/react/**', '!dist/registry/source/r/react/css/**'],
-        output: ['dist/registry/r/react/**', '!dist/registry/r/react/css/**'],
+        cache: false,
       },
       'build:shadcn:react-css': {
-        command: 'shadcn build dist/registry/source/r/react/css/registry.json --output dist/registry/r/react/css',
+        command: [
+          'rimraf dist/registry/r/react/css',
+          'shadcn build dist/registry/source/r/react/css/registry.json --output dist/registry/r/react/css',
+        ],
         dependsOn: ['build:shadcn:react'],
-        input: ['dist/registry/source/r/react/css/**'],
-        output: ['dist/registry/r/react/css/**'],
+        cache: false,
       },
       'build:shadcn:html': {
-        command: 'shadcn build dist/registry/source/r/html/registry.json --output dist/registry/r/html',
+        command: [
+          'rimraf dist/registry/r/html',
+          'shadcn build dist/registry/source/r/html/registry.json --output dist/registry/r/html',
+        ],
         dependsOn: ['generate'],
-        input: ['dist/registry/source/r/html/**', '!dist/registry/source/r/html/css/**'],
-        output: ['dist/registry/r/html/**', '!dist/registry/r/html/css/**'],
+        cache: false,
       },
       'build:shadcn': {
-        command: 'shadcn build dist/registry/source/r/html/css/registry.json --output dist/registry/r/html/css',
+        command: [
+          'rimraf dist/registry/r/html/css',
+          'shadcn build dist/registry/source/r/html/css/registry.json --output dist/registry/r/html/css',
+        ],
         dependsOn: ['build:shadcn:html', 'build:shadcn:react-css'],
-        input: ['dist/registry/source/r/html/css/**'],
-        output: ['dist/registry/r/html/css/**'],
+        cache: false,
       },
       'validate:shadcn': {
         command: 'node --import tsx scripts/validate-shadcn-registry.ts',
-        dependsOn: ['build:shadcn', '@videojs/react#build'],
+        dependsOn: ['build:shadcn', '@videojs/html#build', '@videojs/react#build'],
         cache: false,
       },
       'test:ci': {
