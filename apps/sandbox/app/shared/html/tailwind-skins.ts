@@ -17,8 +17,8 @@ const videoSkins = {
     ]),
   minimal: () =>
     Promise.all([
-      import('@app/_generated/html/components/videojs/skins/video-minimal/skin.html?raw'),
-      import('@app/_generated/html/components/videojs/skins/video-minimal/skin'),
+      import('@app/_generated/html/components/videojs/skins/video/minimal/skin.html?raw'),
+      import('@app/_generated/html/components/videojs/skins/video/minimal/skin'),
     ]),
 } satisfies Record<Skin, SkinLoader>;
 
@@ -30,8 +30,8 @@ const liveVideoSkins = {
     ]),
   minimal: () =>
     Promise.all([
-      import('@app/_generated/html/components/videojs/skins/live-video-minimal/skin.html?raw'),
-      import('@app/_generated/html/components/videojs/skins/live-video-minimal/skin'),
+      import('@app/_generated/html/components/videojs/skins/live-video/minimal/skin.html?raw'),
+      import('@app/_generated/html/components/videojs/skins/live-video/minimal/skin'),
     ]),
 } satisfies Record<Skin, SkinLoader>;
 
@@ -43,8 +43,8 @@ const audioSkins = {
     ]),
   minimal: () =>
     Promise.all([
-      import('@app/_generated/html/components/videojs/skins/audio-minimal/skin.html?raw'),
-      import('@app/_generated/html/components/videojs/skins/audio-minimal/skin'),
+      import('@app/_generated/html/components/videojs/skins/audio/minimal/skin.html?raw'),
+      import('@app/_generated/html/components/videojs/skins/audio/minimal/skin'),
     ]),
 } satisfies Record<Skin, SkinLoader>;
 
@@ -56,8 +56,8 @@ const liveAudioSkins = {
     ]),
   minimal: () =>
     Promise.all([
-      import('@app/_generated/html/components/videojs/skins/live-audio-minimal/skin.html?raw'),
-      import('@app/_generated/html/components/videojs/skins/live-audio-minimal/skin'),
+      import('@app/_generated/html/components/videojs/skins/live-audio/minimal/skin.html?raw'),
+      import('@app/_generated/html/components/videojs/skins/live-audio/minimal/skin'),
     ]),
 } satisfies Record<Skin, SkinLoader>;
 

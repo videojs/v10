@@ -105,9 +105,6 @@ importers:
       '@videojs/react':
         specifier: workspace:*
         version: link:../../packages/react
-      '@videojs/skins':
-        specifier: workspace:*
-        version: link:../../packages/skins
       '@videojs/spf':
         specifier: workspace:*
         version: link:../../packages/spf
@@ -153,9 +150,6 @@ importers:
       '@videojs/react':
         specifier: workspace:*
         version: link:../../packages/react
-      '@videojs/skins':
-        specifier: workspace:*
-        version: link:../../packages/skins
       '@videojs/spf':
         specifier: workspace:*
         version: link:../../packages/spf
@@ -165,6 +159,12 @@ importers:
       '@videojs/utils':
         specifier: workspace:*
         version: link:../../packages/utils
+      clsx:
+        specifier: ^2.1.1
+        version: 2.1.1
+      tailwind-merge:
+        specifier: ^3.5.0
+        version: 3.5.0
     devDependencies:
       '@tailwindcss/vite':
         specifier: ^4.3.3
@@ -208,6 +208,9 @@ importers:
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
+      shadcn:
+        specifier: ^4.16.2
+        version: 4.19.0(supports-color@8.1.1)(typescript@6.0.2)
       tailwindcss:
         specifier: ^4.3.3
         version: 4.3.3

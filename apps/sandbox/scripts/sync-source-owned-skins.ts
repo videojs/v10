@@ -19,7 +19,7 @@ const generatedDir = resolve(projectDir, 'app/_generated');
 const presets = ['video', 'audio', 'live-video', 'live-audio'] as const;
 const variants = ['', '-minimal'] as const;
 
-const localRegistry = existsSync(resolve(registryDir, 'registry.json'));
+const localRegistry = existsSync(resolve(registryDir, 'react/registry.json'));
 const server = localRegistry ? createServer() : undefined;
 const address = server
   ? await listen(server)
@@ -61,20 +61,18 @@ async function installFramework(framework: 'react' | 'html', destination: string
   const root = await mkdtemp(resolve(tmpdir(), `videojs-sandbox-${framework}-`));
 
   try {
-    await writeFixture(root, address);
+    await writeFixture(root, `${address}/${framework}`);
 
-    const items = presets.flatMap((preset) =>
-      variants.map((variant) => `@videojs/${framework}-${preset}-skin${variant}`)
-    );
+    const items = presets.flatMap((preset) => variants.map((variant) => `@videojs/${preset}${variant}`));
 
-    await runCommand(
-      process.execPath,
-      [shadcnBin, 'add', ...items, '--cwd', root, '--yes', '--overwrite', '--silent'],
-      root
-    );
+    await runCommand(process.execPath, [shadcnBin, 'add', ...items, '--cwd', root, '--yes', '--silent'], root);
 
     await mkdir(destination, { recursive: true });
     await cp(resolve(root, 'src/components/videojs'), destination, { recursive: true });
+
+    if (framework === 'react') {
+      await cp(resolve(root, 'src/lib'), resolve(destination, '../../lib'), { recursive: true });
+    }
   } finally {
     await rm(root, { recursive: true, force: true });
   }
@@ -132,11 +130,15 @@ async function writeFixture(root: string, address: string): Promise<void> {
     include: ['src'],
   };
 
-  await mkdir(resolve(root, 'src'), { recursive: true });
+  await mkdir(resolve(root, 'src/lib'), { recursive: true });
   await writeFile(resolve(root, 'package.json'), `${JSON.stringify(packageJson, null, 2)}\n`);
   await writeFile(resolve(root, 'components.json'), `${JSON.stringify(components, null, 2)}\n`);
   await writeFile(resolve(root, 'tsconfig.json'), `${JSON.stringify(tsconfig, null, 2)}\n`);
-  await writeFile(resolve(root, 'src/index.css'), '@import "./components/videojs/styles/tailwind.css";\n');
+  await writeFile(resolve(root, 'src/index.css'), '@import "./components/videojs/styles/theme.css";\n');
+  await writeFile(
+    resolve(root, 'src/lib/utils.ts'),
+    `import { clsx, type ClassValue } from 'clsx';\nimport { twMerge } from 'tailwind-merge';\n\nexport function cn(...inputs: ClassValue[]) {\n  return twMerge(clsx(inputs));\n}\n`
+  );
 }
 
 async function runCommand(
