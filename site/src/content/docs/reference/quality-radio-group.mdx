@@ -33,14 +33,17 @@ Creates radio items from the player video rendition state and selects automatic 
 
 <FrameworkCase frameworks={["react"]}>
   ```tsx
-  <QualityRadioGroup
-    renderItem={(props, item) => (
-      <Menu.RadioItem {...props}>
-        {item.label}
-        <Menu.ItemIndicator checked={item.checked} />
-      </Menu.RadioItem>
-    )}
-  />
+  <QualityRadioGroup.Root>
+    <QualityRadioGroup.Value />
+    <QualityRadioGroup.Options
+      renderItem={(props, item) => (
+        <Menu.RadioItem {...props}>
+          {item.label}
+          <Menu.ItemIndicator checked={item.checked} />
+        </Menu.RadioItem>
+      )}
+    />
+  </QualityRadioGroup.Root>
   ```
 </FrameworkCase>
 
@@ -64,7 +67,7 @@ Creates radio items from the player video rendition state and selects automatic 
 The group is available when the configured media exposes more than one video rendition. The first generated option is `Auto`; selecting it returns control to adaptive bitrate selection. Pass `formatRendition` to customize visible rendition labels.
 
 <FrameworkCase frameworks={["react"]}>
-`QualityRadioGroup` uses <DocsLink slug="reference/use-quality-options">`useQualityOptions`</DocsLink> to own selection and generate each item. Its required `renderItem` callback renders the <DocsLink slug="reference/menu">`Menu.RadioItem`</DocsLink> root and receives item state containing the translated `label`, optional `tier` and `badge`, and current `checked` value. It returns `null` when the <DocsLink slug="reference/feature-quality">quality feature</DocsLink> is not configured.
+`QualityRadioGroup.Root` owns selection and publishes option state to an enclosing Menu. `Value` displays the selected label. `Options` generates each item and returns `null` when the <DocsLink slug="reference/feature-quality">quality feature</DocsLink> is not configured.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>

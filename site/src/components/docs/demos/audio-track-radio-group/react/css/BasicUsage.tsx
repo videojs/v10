@@ -14,17 +14,19 @@ function AudioMenu(): ReactNode {
       </Menu.Trigger>
       <Menu.Popup className="menu">
         <Menu.Content>
-          <AudioTrackRadioGroup
-            className="menu-group"
-            renderItem={(props, item) => (
-              <Menu.RadioItem {...props} className="menu-item">
-                {item.label}
-                <Menu.ItemIndicator checked={item.checked} forceMount className="menu-indicator">
-                  ✓
-                </Menu.ItemIndicator>
-              </Menu.RadioItem>
-            )}
-          />
+          <AudioTrackRadioGroup.Root>
+            <AudioTrackRadioGroup.Options
+              className="menu-group"
+              renderItem={(props, item) => (
+                <Menu.RadioItem {...props} className="menu-item">
+                  {item.label}
+                  <Menu.ItemIndicator checked={item.checked} forceMount className="menu-indicator">
+                    ✓
+                  </Menu.ItemIndicator>
+                </Menu.RadioItem>
+              )}
+            />
+          </AudioTrackRadioGroup.Root>
         </Menu.Content>
       </Menu.Popup>
     </Menu.Root>

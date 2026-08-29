@@ -14,21 +14,23 @@ function QualityMenu(): ReactNode {
       </Menu.Trigger>
       <Menu.Popup className="menu">
         <Menu.Content>
-          <QualityRadioGroup
-            className="menu-group"
-            renderItem={(props, item) => (
-              <Menu.RadioItem {...props} className="menu-item">
-                <span>
-                  {item.label}
-                  {item.tier ? <sup className="menu-tier">{item.tier}</sup> : null}
-                </span>
-                {item.badge ? <span className="menu-badge">{item.badge}</span> : null}
-                <Menu.ItemIndicator checked={item.checked} forceMount className="menu-indicator">
-                  ✓
-                </Menu.ItemIndicator>
-              </Menu.RadioItem>
-            )}
-          />
+          <QualityRadioGroup.Root>
+            <QualityRadioGroup.Options
+              className="menu-group"
+              renderItem={(props, item) => (
+                <Menu.RadioItem {...props} className="menu-item">
+                  <span>
+                    {item.label}
+                    {item.tier ? <sup className="menu-tier">{item.tier}</sup> : null}
+                  </span>
+                  {item.badge ? <span className="menu-badge">{item.badge}</span> : null}
+                  <Menu.ItemIndicator checked={item.checked} forceMount className="menu-indicator">
+                    ✓
+                  </Menu.ItemIndicator>
+                </Menu.RadioItem>
+              )}
+            />
+          </QualityRadioGroup.Root>
         </Menu.Content>
       </Menu.Popup>
     </Menu.Root>
