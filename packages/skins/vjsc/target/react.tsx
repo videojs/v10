@@ -32,7 +32,6 @@ export const reactComponentTarget: ComponentTarget<CoreSchema> = defineComponent
   const Span = element('span');
   const Sup = element('sup');
   const I18nText = imported({ from: '@videojs/react', name: 'Text' });
-  const PlaybackRateButton = imported({ from: '@videojs/react', name: 'PlaybackRateButton' });
   const renderProps = code.param('props');
   const item = code.param<{ badge?: unknown; label: unknown; tier?: unknown }>('item');
   const optionTemplate: TemplateTargetDefinition = {
@@ -65,6 +64,9 @@ export const reactComponentTarget: ComponentTarget<CoreSchema> = defineComponent
       },
       ErrorDialog: {
         Root: ({ children }) => <target.ErrorDialog.Root>{children}</target.ErrorDialog.Root>,
+      },
+      Menu: {
+        Trigger: ({ props, children }) => <target.Menu.Trigger {...props}>{children}</target.Menu.Trigger>,
       },
       Popover: {
         Trigger: ({ props, children }) => <target.Popover.Trigger render={children} {...props} />,
@@ -133,7 +135,7 @@ export const reactComponentTarget: ComponentTarget<CoreSchema> = defineComponent
         target: () => reactComponentTarget,
         targets: {
           Button: { element: Button },
-          PlaybackRateButton: { element: PlaybackRateButton, kind: 'component' },
+          PlaybackRateButton: { element: Button, kind: 'component' },
           SliderBuffer: { element: Div },
           SliderFill: { element: Div },
           SliderThumb: { element: Div },

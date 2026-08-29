@@ -6,12 +6,11 @@ import {
   type ComponentTarget,
   type ComponentTargetHelpers,
   defineComponentTarget,
-  type SourceProps,
   type TemplateTargetDefinition,
 } from 'vjsc/target';
 import { Host } from 'vjsc/target/jsx-runtime';
 
-import { createRenderTargetTransform, renderTargetMarker } from './render-target.ts';
+import { createRenderTargetTransform, renderTargetProps } from './render-target.ts';
 
 type CoreSchema = typeof coreSchema;
 
@@ -145,13 +144,11 @@ export const htmlComponentTarget: ComponentTarget<CoreSchema> = defineComponentT
   const Span = element('span');
   const Sup = element('sup');
   const HtmlTemplate = element('template');
+  const PlaybackRateButton = htmlElementTarget('PlaybackRateButton', element);
 
   const I18nText = element('media-text', {
     import: { from: '@videojs/html/i18n', sideEffect: true },
   });
-  const PlaybackRateButton = htmlElementTarget('PlaybackRateButton', element);
-  const playbackRateButtonMarker = renderTargetMarker('PlaybackRateButton');
-
   const optionTemplate: TemplateTargetDefinition = {
     render: ({ children }) => <HtmlTemplate>{children}</HtmlTemplate>,
     parts: {
@@ -173,18 +170,14 @@ export const htmlComponentTarget: ComponentTarget<CoreSchema> = defineComponentT
         const controlledId = id(popup ? 'popup' : 'content');
 
         if (popup) {
-          const triggerProps = trigger.props as SourceProps<Record<string, unknown>>;
-          const renderPlaybackRateButton = triggerProps.has(playbackRateButtonMarker);
-          const forwardedTriggerProps = triggerProps.omit(playbackRateButtonMarker);
+          const playbackRateButtonProps = renderTargetProps(trigger.props, 'PlaybackRateButton');
 
           return [
             trigger.replaceWith(
-              renderPlaybackRateButton ? (
-                <PlaybackRateButton commandfor={controlledId} {...forwardedTriggerProps}>
-                  {trigger.children}
-                </PlaybackRateButton>
+              playbackRateButtonProps ? (
+                <PlaybackRateButton commandfor={controlledId} {...playbackRateButtonProps} />
               ) : (
-                <Button commandfor={controlledId} {...forwardedTriggerProps}>
+                <Button commandfor={controlledId} {...trigger.props}>
                   {trigger.children}
                 </Button>
               )
