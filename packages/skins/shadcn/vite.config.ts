@@ -557,7 +557,7 @@ export function Player({ src }: { src: string }) {
 
 function exportedComponentName(module: ComponentGraphModule<SkinModuleMeta>): string {
   const match = /\bexport\s+(?:const|function)\s+([A-Z][A-Za-z0-9]*)/.exec(module.source);
-  if (!match) throw new Error(`Registry component has no exported component: \`${module.sourcePath}\`.`);
+  if (!match) throw new Error(`Registry component has no exported component: \`${moduleSourcePath(module)}\`.`);
 
   return match[1]!;
 }
