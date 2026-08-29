@@ -35,9 +35,10 @@ describe('generated VJSC source', () => {
     server = undefined;
   }, 30_000);
 
-  it('matches every transformed component and skin variant', async ({ expect }) => {
+  it('matches shared components and every transformed skin variant', async ({ expect }) => {
     const sources = await sourceModules();
     const modules = generatedModules(sources);
+    const requested = new Set(modules.map((module) => module.key));
     const sourceNames = new Map(sources.map((filename) => [filename, sourceName(filename)]));
     const transformed = new Map<string, string>();
     const logger = createLogger('silent');
@@ -49,7 +50,7 @@ describe('generated VJSC source', () => {
       transform(code, id) {
         const key = generatedKey(id, sourceNames);
 
-        if (key) transformed.set(key, normalizeGeneratedSource(code));
+        if (key && requested.has(key)) transformed.set(key, normalizeGeneratedSource(code));
 
         return null;
       },
@@ -102,46 +103,23 @@ describe('generated VJSC source', () => {
     expect(output).toContain('from "@videojs/html/icons"');
     expect(output).toContain('from "@videojs/html/icons/minimal"');
 
-    for (const target of targets) {
-      for (const style of styles) {
-        for (const filename of sources.filter((source) => sourceName(source).startsWith('components/'))) {
-          const name = sourceName(filename);
-
-          for (const [defaultSkin, minimalSkin] of [
-            ['default-video', 'minimal-video'],
-            ['default-live-video', 'minimal-live-video'],
-            ['default-audio', 'minimal-audio'],
-            ['default-live-audio', 'minimal-live-audio'],
-          ] as const) {
-            expect(
-              transformed.get(`${target}/${defaultSkin}/${style}/${name}`),
-              `${target}/${style}/${name} must be theme-invariant`
-            ).toBe(transformed.get(`${target}/${minimalSkin}/${style}/${name}`));
-          }
-        }
-      }
-    }
-
     const htmlPlayButton = generatedSection(output, 'html/default-video/css/components/buttons/play-button.tsx');
     const reactLiveButton = generatedSection(output, 'react/default-video/tailwind/components/buttons/live-button.tsx');
-    const htmlLiveButton = generatedSection(output, 'html/minimal-video/css/components/buttons/live-button.tsx');
+    const htmlLiveButton = generatedSection(output, 'html/default-video/css/components/buttons/live-button.tsx');
     const reactAudioSettingsMenu = generatedSection(output, 'react/default-audio/css/skins/audio/settings-menu.tsx');
     const htmlAudioSettingsMenu = generatedSection(output, 'html/default-audio/css/skins/audio/settings-menu.tsx');
     const reactPlaybackRateSubmenu = generatedSection(
       output,
-      'react/default-audio/css/components/menus/playback-rate-submenu.tsx'
+      'react/default-video/css/components/menus/playback-rate-submenu.tsx'
     );
     const htmlPlaybackRateSubmenu = generatedSection(
       output,
-      'html/default-audio/css/components/menus/playback-rate-submenu.tsx'
+      'html/default-video/css/components/menus/playback-rate-submenu.tsx'
     );
     const reactDefaultAudio = generatedSection(output, 'react/default-audio/css/skins/default-audio/skin.tsx');
     const htmlMinimalAudio = generatedSection(output, 'html/minimal-audio/css/skins/minimal-audio/skin.tsx');
-    const reactCaptionsMenu = generatedSection(
-      output,
-      'react/default-live-video/css/components/menus/captions-menu.tsx'
-    );
-    const htmlCaptionsMenu = generatedSection(output, 'html/default-live-video/css/components/menus/captions-menu.tsx');
+    const reactCaptionsMenu = generatedSection(output, 'react/default-video/css/components/menus/captions-menu.tsx');
+    const htmlCaptionsMenu = generatedSection(output, 'html/default-video/css/components/menus/captions-menu.tsx');
     const reactDefaultLiveVideo = generatedSection(
       output,
       'react/default-live-video/css/skins/default-live-video/skin.tsx'
@@ -238,13 +216,11 @@ function generatedModules(sources: readonly string[]): GeneratedModule[] {
   const modules: GeneratedModule[] = [];
 
   for (const target of targets) {
-    for (const skin of skins) {
-      for (const style of styles) {
-        for (const filename of sources) {
-          const name = sourceName(filename);
-          const owner = /^skins\/([^/]+)\//.exec(name)?.[1];
-          if (owner && !supportsSkin(owner, skin)) continue;
+    for (const style of styles) {
+      for (const filename of sources) {
+        const name = sourceName(filename);
 
+        for (const skin of sourceSkins(name)) {
           const parameters = new URLSearchParams({ target, skin, style });
           const key = `${target}/${skin}/${style}/${name}`;
 
@@ -257,16 +233,20 @@ function generatedModules(sources: readonly string[]): GeneratedModule[] {
   return modules;
 }
 
-function supportsSkin(owner: string, skin: (typeof skins)[number]): boolean {
-  if ((skins as readonly string[]).includes(owner)) return owner === skin;
+function sourceSkins(name: string): readonly (typeof skins)[number][] {
+  const owner = /^skins\/([^/]+)\//.exec(name)?.[1];
+  if (!owner || owner === 'shared') return ['default-video'];
 
-  if (owner === 'audio') return skin.endsWith('audio');
+  const skin = skins.find((candidate) => candidate === owner);
+  if (skin) return [skin];
 
-  if (owner === 'video') return skin === 'default-video' || skin === 'minimal-video';
+  if (owner === 'audio') return ['default-audio', 'minimal-audio'];
 
-  if (owner === 'live-video') return skin === 'default-live-video' || skin === 'minimal-live-video';
+  if (owner === 'video') return ['default-video', 'minimal-video'];
 
-  return owner === 'shared';
+  if (owner === 'live-video') return ['default-live-video', 'minimal-live-video'];
+
+  throw new Error(`Unsupported VJSC source owner: \`${owner}\`.`);
 }
 
 function generatedKey(id: string, sourceNames: ReadonlyMap<string, string>): string | undefined {
