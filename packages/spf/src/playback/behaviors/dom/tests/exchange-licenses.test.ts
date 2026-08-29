@@ -611,6 +611,22 @@ describe('exchangeLicenses', () => {
     reactor.destroy();
   });
 
+  it('reports 4004 and opens nothing when the license server resolves to nothing after negotiation', async () => {
+    // The resolver answered a URL when negotiation offered the system, then
+    // the source mutated underneath it — the re-read at entry answers
+    // nothing, and the failure must be a report, not a POST to "undefined".
+    const { state, sessions, reactor } = setupExchangeLicenses({
+      drm: { 'com.widevine.alpha': { licenseUrl: () => undefined } },
+    });
+
+    await vi.waitFor(() => expect(state.errors.get()?.map((error) => error.code)).toEqual([SVTA_BAD_LICENSE_REQUEST]));
+    expect(state.errors.get()?.[0]?.data).toMatchObject({ keySystem: 'com.widevine.alpha' });
+    expect(sessions).toHaveLength(0);
+    expect(fetchDrm).not.toHaveBeenCalled();
+
+    reactor.destroy();
+  });
+
   it('reports a key transitioning to expired, with the key id in the data', async () => {
     const { state, sessions, reactor } = setupExchangeLicenses();
 
