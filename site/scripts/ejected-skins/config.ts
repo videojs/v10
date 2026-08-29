@@ -99,7 +99,7 @@ function createHtmlSkin(style: SkinStyle, variant: SkinVariant, mediaType: Media
   const template =
     style === 'tailwind'
       ? `site/scripts/ejected-skins/templates/html/${group}/${file}.tailwind.ts`
-      : `packages/html/src/presets/${group}/${file}.ts`;
+      : `packages/html/src/internal/skins/${variant}-${group}/template.ts`;
 
   return {
     id: getId('html', style, variant, mediaType, live),
