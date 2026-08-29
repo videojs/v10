@@ -35,6 +35,10 @@
       "types": "./dist/components/jsx-dev-runtime.d.ts",
       "default": "./dist/components/jsx-dev-runtime.js"
     },
+    "./graph": {
+      "types": "./dist/graph/index.d.ts",
+      "default": "./dist/graph/index.js"
+    },
     "./target": {
       "types": "./dist/target/index.d.ts",
       "default": "./dist/target/index.js"
