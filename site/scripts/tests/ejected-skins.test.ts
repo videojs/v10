@@ -41,6 +41,12 @@ describe('ejected HTML skins', () => {
     expect(evaluateTemplate(extractTemplateLiteral(source), { label: 'Play' })).toBe('<button>Play</button>');
   });
 
+  it('extracts a generated skin template', () => {
+    const source = 'export const template = createTemplate(/* html */ `<button>Play</button>`);';
+
+    expect(extractTemplateLiteral(source)).toBe('<button>Play</button>');
+  });
+
   it('collects imported names and aliases', () => {
     const imports = parseImportedNames("import { playText, pauseText as pause } from '@videojs/core';");
 
