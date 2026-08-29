@@ -138,7 +138,7 @@ describe('Skins Shadcn registry', () => {
     const helperSource = registrySource(assets, 'r/react/support', helper, '/resolve-class-name.ts');
 
     expect(helper.files[0]?.target).toBe('@components/videojs/lib/resolve-class-name.ts');
-    expect(helper.dependencies).toBeUndefined();
+    expect(helper.dependencies).toEqual(['clsx']);
     expect(helperSource).toContain(`export { cn } from '@/lib/utils';`);
   }, 120_000);
 
