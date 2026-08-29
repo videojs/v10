@@ -3,10 +3,6 @@ import { styles } from 'vjsc/styles';
 export default styles({
   file: 'controls.css',
   rules: {
-    provider: {
-      className: 'media-controls-provider',
-      utilities: 'contents',
-    },
     root: {
       className: 'media-controls',
       utilities: [
