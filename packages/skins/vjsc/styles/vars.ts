@@ -152,6 +152,14 @@ export const vars = {
     kind: 'internal',
     description: 'Entry translation distance shared by popup transitions.',
   },
+  '--media-popup-translate-x-distance': {
+    kind: 'internal',
+    description: 'Resolved horizontal entry translation for a positioned popup.',
+  },
+  '--media-popup-translate-y-distance': {
+    kind: 'internal',
+    description: 'Resolved vertical entry translation for a positioned popup.',
+  },
   '--media-preview-end-inset': {
     kind: 'internal',
     description: 'Slider preview correction when the slider is narrower than its container.',
