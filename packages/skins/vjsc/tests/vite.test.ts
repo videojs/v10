@@ -22,13 +22,13 @@ const skinConfig = resolve(packageDir, 'vjsc/config.ts');
 const vjscPlayButton = resolve(packageDir, 'vjsc/components/buttons/play-button.tsx');
 const frameworks = ['react', 'html'] as const;
 const skinContracts = {
-  'default-video': { exportName: 'DefaultVideoSkin', className: 'media-skin--default' },
+  'default-video': { exportName: 'DefaultVideoSkin', className: 'media-skin--video' },
   'minimal-video': { exportName: 'MinimalVideoSkin', className: 'media-skin--minimal' },
-  'default-live-video': { exportName: 'DefaultLiveVideoSkin', className: 'media-skin--default' },
+  'default-live-video': { exportName: 'DefaultLiveVideoSkin', className: 'media-skin--live-video' },
   'minimal-live-video': { exportName: 'MinimalLiveVideoSkin', className: 'media-skin--minimal' },
-  'default-live-audio': { exportName: 'DefaultLiveAudioSkin', className: 'media-skin--default' },
+  'default-live-audio': { exportName: 'DefaultLiveAudioSkin', className: 'media-skin--live-audio' },
   'minimal-live-audio': { exportName: 'MinimalLiveAudioSkin', className: 'media-skin--minimal' },
-  'default-audio': { exportName: 'DefaultAudioSkin', className: 'media-skin--default' },
+  'default-audio': { exportName: 'DefaultAudioSkin', className: 'media-skin--audio' },
   'minimal-audio': { exportName: 'MinimalAudioSkin', className: 'media-skin--minimal' },
 } as const;
 const skins = Object.keys(skinContracts) as Array<keyof typeof skinContracts>;

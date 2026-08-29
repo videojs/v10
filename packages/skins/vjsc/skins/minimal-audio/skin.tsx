@@ -1,10 +1,10 @@
 import { type PropsOf, Slot, type VjscNode } from 'vjsc/components';
 
-import { ErrorDialog } from '../../components/feedback/error-dialog';
 import { StatusAnnouncer } from '../../components/feedback/status-announcer';
 import { Container } from '../../components/layout/container';
-import { PlaybackHotkeys } from '../../components/playback-hotkeys';
 import type { SkinMeta } from '../../meta';
+import { AudioErrorDialog } from '../audio/error-dialog';
+import { PlaybackHotkeys } from '../shared/playback-hotkeys';
 import { MinimalAudioControls } from './controls';
 
 export interface MinimalAudioSkinProps extends Omit<PropsOf<typeof Container>, 'children'> {
@@ -13,12 +13,9 @@ export interface MinimalAudioSkinProps extends Omit<PropsOf<typeof Container>, '
 
 export function MinimalAudioSkin({ children, className, ...props }: MinimalAudioSkinProps = {}) {
   return (
-    <Container
-      className={['media-skin media-skin--minimal media-skin--audio media-theme-minimal', className]}
-      {...props}
-    >
+    <Container className={['media-skin media-skin--minimal media-skin--audio', className]} {...props}>
       <Slot>{children}</Slot>
-      <ErrorDialog />
+      <AudioErrorDialog />
       <MinimalAudioControls />
       <PlaybackHotkeys />
       <StatusAnnouncer />

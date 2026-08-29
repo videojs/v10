@@ -1,4 +1,4 @@
-@layer videojs.components {
+@layer components {
   @scope (.media-skin) {
     :scope {
       --media-caption-track-duration: var(--media-controls-transition-duration);
@@ -15,16 +15,12 @@
       transition-delay: var(--media-caption-track-delay);
     }
 
-    :scope.media-theme-default[data-controls-visible] {
-      --media-caption-track-y: calc(var(--media-spacing) * -14);
-    }
-
-    :scope.media-theme-minimal[data-controls-visible] {
-      --media-caption-track-y: calc(var(--media-spacing) * -18);
+    :scope[data-controls-visible] {
+      --media-caption-track-y: var(--media-caption-controls-y);
     }
 
     @container media-root (width > 672px) {
-      :scope.media-theme-minimal[data-controls-visible] {
+      :scope.media-skin--minimal[data-controls-visible] {
         --media-caption-track-y: calc(var(--media-spacing) * -12);
       }
     }

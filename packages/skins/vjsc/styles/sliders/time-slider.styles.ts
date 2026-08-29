@@ -1,16 +1,9 @@
 import { styles } from 'vjsc/styles';
 
-const sliderPreviewContent = [
-  'absolute max-w-(--media-slider-preview-max-width) -translate-x-1/2 translate-y-2 scale-80 opacity-0',
-  'origin-bottom blur-sm',
-  'motion-safe:transition-[filter,opacity,scale] motion-safe:duration-150 motion-safe:ease-out',
-  'group-data-pointing/preview:scale-100 group-data-pointing/preview:opacity-100 group-data-pointing/preview:filter-none',
-  'group-has-focus-visible/slider:scale-100 group-has-focus-visible/slider:opacity-100 group-has-focus-visible/slider:filter-none',
-] as const;
+import { sliderPreviewContent } from '../recipes/slider';
 
 export default styles({
   file: 'sliders.css',
-  layer: 'videojs.components',
   rules: {
     root: {
       className: 'media-time-slider',
@@ -36,17 +29,9 @@ export default styles({
         'motion-safe:transition-[height,width] motion-safe:duration-200 motion-safe:ease-out',
         'data-[orientation=horizontal]:[clip-path:inset(0_calc(100%-var(--media-slider-chapter-end)+var(--media-spacing)*var(--media-chapter-inset-end))_0_calc(var(--media-slider-chapter-start)+var(--media-spacing)*var(--media-chapter-inset-start))_round_var(--media-control-radius))]',
         'data-[orientation=vertical]:[clip-path:inset(calc(100%-var(--media-slider-chapter-end)+var(--media-spacing)*var(--media-chapter-inset-end))_0_calc(var(--media-slider-chapter-start)+var(--media-spacing)*var(--media-chapter-inset-start))_0_round_var(--media-control-radius))]',
+        'group-data-highlighted/chapter:data-[orientation=horizontal]:h-1.75',
+        'group-data-highlighted/chapter:data-[orientation=vertical]:w-1.75',
       ],
-      variants: {
-        default: [
-          'group-data-highlighted/chapter:data-[orientation=horizontal]:h-1.75',
-          'group-data-highlighted/chapter:data-[orientation=vertical]:w-1.75',
-        ],
-        minimal: [
-          'group-data-highlighted/chapter:data-[orientation=horizontal]:h-1.75',
-          'group-data-highlighted/chapter:data-[orientation=vertical]:w-1.75',
-        ],
-      },
     },
     thumb: {
       className: 'media-time-slider-thumb',

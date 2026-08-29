@@ -2,14 +2,10 @@ import { styles } from 'vjsc/styles';
 
 export default styles({
   file: 'buttons.css',
-  layer: 'videojs.components',
   rules: {
     root: {
       className: 'media-captions-button',
       utilities: 'group/captions',
-      variants: {
-        'default-live-video': '@max-lg/media-root:hidden',
-      },
     },
     offIcon: {
       className: 'media-captions-button-off-icon',

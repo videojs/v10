@@ -28,9 +28,6 @@ describe('Skins Shadcn registry', () => {
     const minimalVideo = assetJson<BuiltItem>(assets, 'minimal-video.json');
     const container = assetJson<BuiltItem>(assets, 'container.json');
     const poster = assetJson<BuiltItem>(assets, 'poster.json');
-    const videoSettingsMenu = assetJson<BuiltItem>(assets, 'video-settings-menu.json');
-    const videoHotkeys = assetJson<BuiltItem>(assets, 'video-hotkeys.json');
-    const minimalVideoHotkeys = assetJson<BuiltItem>(assets, 'video-hotkeys-minimal.json');
     const volumePopover = assetJson<BuiltItem>(assets, 'volume-popover.json');
     const styles = assetJson<BuiltItem>(assets, 'styles.json');
     const utils = assetJson<BuiltItem>(assets, 'utils.json');
@@ -38,34 +35,23 @@ describe('Skins Shadcn registry', () => {
     const playSource = playButton.files.find((file) => file.target?.endsWith('/play-button.tsx'))?.content;
     const buttonSource = button.files.find((file) => file.target?.endsWith('/button.tsx'))?.content;
     const posterSource = poster.files.find((file) => file.target?.endsWith('/poster.tsx'))?.content;
-    const qualityMenuSource = videoSettingsMenu.files.find((file) =>
-      file.target?.endsWith('/quality-menu.tsx')
+    const qualityMenuSource = defaultVideo.files.find((file) => file.target?.endsWith('/quality-menu.tsx'))?.content;
+    const videoSettingsMenuSource = defaultVideo.files.find((file) =>
+      file.target?.endsWith('/skins/video/settings-menu.tsx')
     )?.content;
-    const videoSettingsMenuSource = videoSettingsMenu.files.find((file) =>
-      file.target?.endsWith('/video-settings-menu.tsx')
-    )?.content;
-    const settingsMenuSource = videoSettingsMenu.files.find((file) =>
-      file.target?.endsWith('/settings-menu.tsx')
-    )?.content;
+    const settingsMenuSource = defaultVideo.files.find((file) => file.target?.endsWith('/settings-menu.tsx'))?.content;
     const volumePopoverSource = volumePopover.files.find((file) =>
       file.target?.endsWith('/volume-popover.tsx')
     )?.content;
 
-    expect(registry.items).toHaveLength(58);
+    expect(registry.items).toHaveLength(50);
     expect(registry.items.map((item: { name: string }) => item.name)).toEqual(
-      expect.arrayContaining([
-        'button-tooltip',
-        'minimal-video',
-        'play-button',
-        'play-button-minimal',
-        'playback-hotkeys',
-        'playback-hotkeys-minimal',
-      ])
+      expect.arrayContaining(['button-tooltip', 'minimal-video', 'play-button', 'play-button-minimal'])
     );
     expect(playSource).toContain('export interface PlayButtonProps');
     expect(playSource).toContain('<PlayButtonPrimitive render={<Button />} className=');
     expect(buttonSource).toContain('export type ButtonProps');
-    expect(buttonSource).toContain('grid min-h-0');
+    expect(buttonSource).toContain('grid size-media-control min-h-0');
     expect(playSource).toContain(`from "@/components/videojs/utils"`);
     expect(playSource).not.toContain('const meta');
     expect(playSource).not.toContain('jsx-runtime');
@@ -82,16 +68,16 @@ describe('Skins Shadcn registry', () => {
       '@videojs/styles',
       '@videojs/utils',
     ]);
-    expect(buttonSource).toContain('size-9');
-    expect(minimalButton.files[0]?.content).toContain('size-9.5');
+    expect(buttonSource).toContain('rounded-media-control');
+    expect(minimalButton.files[0]?.content).toContain('size-media-control');
     expect(defaultVideo.registryDependencies).toEqual(
       expect.arrayContaining(['@videojs/container', '@videojs/play-button', '@videojs/poster'])
     );
     expect(defaultVideo.registryDependencies).not.toContain('@videojs/seek-button');
     expect(minimalVideo.registryDependencies).toContain('@videojs/play-button-minimal');
     expect(minimalVideo.registryDependencies).not.toContain('@videojs/play-button');
-    expect(videoHotkeys.registryDependencies).toContain('@videojs/playback-hotkeys');
-    expect(minimalVideoHotkeys.registryDependencies).toContain('@videojs/playback-hotkeys-minimal');
+    expect(defaultVideo.files.some((file) => file.target?.endsWith('/playback-hotkeys.tsx'))).toBe(true);
+    expect(minimalVideo.files.some((file) => file.target?.endsWith('/playback-hotkeys.tsx'))).toBe(true);
     expect(container.dependencies).toEqual(['@videojs/react', 'react']);
     expect(container.registryDependencies).toEqual(['@videojs/styles', '@videojs/utils']);
     expect(posterSource).toContain('<PosterPrimitive render={children}');
@@ -112,10 +98,9 @@ describe('Skins Shadcn registry', () => {
       'components/videojs/styles/tailwind.css',
       'components/videojs/styles/tailwind.shared.css',
       'components/videojs/styles/themes/audio.css',
-      'components/videojs/styles/themes/default.css',
       'components/videojs/styles/themes/minimal.css',
       'components/videojs/styles/themes/preferences.css',
-      'components/videojs/styles/themes/shared.css',
+      'components/videojs/styles/themes/theme.css',
     ]);
     expect(utils).toMatchObject({
       type: 'registry:lib',

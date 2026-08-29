@@ -2,7 +2,6 @@ import { styles } from 'vjsc/styles';
 
 export default styles({
   file: 'controls.css',
-  layer: 'videojs.components',
   rules: {
     provider: {
       className: 'media-controls-provider',

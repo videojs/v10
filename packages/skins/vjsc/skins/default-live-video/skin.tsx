@@ -2,12 +2,12 @@ import { type PropsOf, Slot, type VjscNode } from 'vjsc/components';
 
 import { BufferingIndicator } from '../../components/feedback/buffering-indicator';
 import { ErrorDialog } from '../../components/feedback/error-dialog';
-import { LiveVideoStatusIndicators } from '../../components/feedback/live-video-status-indicators';
 import { Container } from '../../components/layout/container';
 import { Poster } from '../../components/layout/poster';
-import { LiveVideoGestures } from '../../components/live-video-gestures';
-import { LiveVideoHotkeys } from '../../components/live-video-hotkeys';
 import type { SkinMeta } from '../../meta';
+import { LiveVideoGestures } from '../live-video/gestures';
+import { LiveVideoHotkeys } from '../live-video/hotkeys';
+import { LiveVideoStatusIndicators } from '../live-video/status-indicators';
 import { DefaultLiveVideoControls } from './controls';
 
 export interface DefaultLiveVideoSkinProps extends Omit<PropsOf<typeof Container>, 'children'> {
@@ -19,10 +19,7 @@ export function DefaultLiveVideoSkin({ children, className, poster, ...props }: 
   const isPosterString = typeof poster === 'string';
 
   return (
-    <Container
-      className={['media-skin media-skin--default media-skin--live-video media-theme-default', className]}
-      {...props}
-    >
+    <Container className={['media-skin media-skin--live-video', className]} {...props}>
       <Slot>{children}</Slot>
       <Poster src={isPosterString ? poster : undefined}>{isPosterString ? undefined : poster}</Poster>
       <BufferingIndicator />
@@ -39,7 +36,7 @@ export const meta = {
   name: 'default-live-video',
   type: 'skin',
   style: {
-    scope: '.media-skin--default.media-skin--live-video',
+    scope: '.media-skin--live-video',
     theme: 'default',
     variant: 'default-live-video',
   },

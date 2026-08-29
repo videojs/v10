@@ -1,6 +1,14 @@
-@layer videojs.theme {
-  .media-theme-minimal {
-    --media-video-border-radius: var(--media-border-radius, 12px);
+@layer base {
+  .media-skin--minimal {
+    --media-caption-controls-y: calc(var(--media-spacing) * -18);
+    --media-control-corner-shape: squircle;
     --media-control-radius: calc(var(--media-spacing) * 2);
+    --media-control-size: calc(var(--media-spacing) * 9.5);
+    --media-popover: oklch(0 0 0 / 0.5);
+    --media-border: oklch(1 0 0 / 0.1);
+    --media-shadow-sm: 0 1px 2px oklch(0 0 0 / 0.2);
+    --media-menu-item-border-radius: calc(var(--media-spacing) * 1.5);
+    --media-popup-translate-distance: calc(var(--media-spacing) * 2);
+    --media-video-border-radius: var(--media-border-radius, 12px);
   }
 }

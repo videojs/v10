@@ -1,9 +1,9 @@
 import { Box, type Props } from 'vjsc/components';
 
-import styles from '../../styles/feedback/video-status-indicators.styles';
-import { StatusAnnouncer } from './status-announcer';
-import { PlaybackStatusIndicator, StatusIndicator } from './status-indicator';
-import { VolumeIndicator } from './volume-indicator';
+import { StatusAnnouncer } from '../../components/feedback/status-announcer';
+import { PlaybackStatusIndicator, StatusIndicator } from '../../components/feedback/status-indicator';
+import { VolumeIndicator } from '../../components/feedback/volume-indicator';
+import styles from '../shared/status-indicators.styles';
 
 export function LiveVideoStatusIndicators({ className, ...props }: Props = {}) {
   return (

@@ -22,8 +22,8 @@ export type StyleTree = {
 export interface StyleDefinition<Rules extends StyleTree = StyleTree> {
   /** CSS asset path used when the style transform emits CSS. */
   readonly file: string;
-  /** Cascade layer containing the emitted rules. */
-  readonly layer: string;
+  /** Cascade layer containing the emitted rules. Defaults to `components`. */
+  readonly layer?: string | undefined;
   readonly description?: string | undefined;
   readonly rules: Rules;
 }
@@ -98,8 +98,10 @@ export function validateStyleDefinition(definition: StyleDefinition): void {
     throw new Error(`Style output file \`${definition.file}\` must be a relative CSS asset path.`);
   }
 
-  if (!/^[-_a-zA-Z][-_a-zA-Z0-9]*(?:\.[-_a-zA-Z][-_a-zA-Z0-9]*)*$/.test(definition.layer)) {
-    throw new Error(`Style layer \`${definition.layer}\` must be a CSS layer name.`);
+  const layer = definition.layer ?? 'components';
+
+  if (!/^[-_a-zA-Z][-_a-zA-Z0-9]*(?:\.[-_a-zA-Z][-_a-zA-Z0-9]*)*$/.test(layer)) {
+    throw new Error(`Style layer \`${layer}\` must be a CSS layer name.`);
   }
 
   visitStyleRules(definition.rules, (path, rule) => {

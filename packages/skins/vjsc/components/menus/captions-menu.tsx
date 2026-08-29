@@ -11,12 +11,17 @@ import { Button } from '../buttons/button';
 import { ButtonTooltip } from '../buttons/button-tooltip';
 import { RadioItem } from './radio-item';
 
-export function CaptionsMenu({ className, ...props }: Props<MenuProps> = {}) {
+export interface CaptionsMenuProps extends MenuProps {
+  className?: Props<MenuProps>['className'];
+  triggerClassName?: Props<MenuProps>['className'];
+}
+
+export function CaptionsMenu({ className, triggerClassName, ...props }: CaptionsMenuProps = {}) {
   return (
     <$.Menu.Root side="top" align="center" boundary="viewport" {...props}>
       <$.CaptionsRadioGroup.Root>
         <ButtonTooltip side="top">
-          <$.Menu.Trigger $render={Button} className={captionsButtonStyles.root}>
+          <$.Menu.Trigger $render={Button} className={[captionsButtonStyles.root, triggerClassName]}>
             <CaptionsOffIcon className={[buttonStyles.icon, captionsButtonStyles.offIcon]} />
             <CaptionsOnIcon className={[buttonStyles.icon, captionsButtonStyles.onIcon]} />
           </$.Menu.Trigger>

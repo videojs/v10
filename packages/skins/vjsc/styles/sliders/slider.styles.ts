@@ -1,12 +1,6 @@
 import { styles } from 'vjsc/styles';
 
-const sliderPreviewContent = [
-  'absolute max-w-(--media-slider-preview-max-width) -translate-x-1/2 translate-y-2 scale-80 opacity-0',
-  'origin-bottom blur-sm',
-  'motion-safe:transition-[filter,opacity,scale] motion-safe:duration-150 motion-safe:ease-out',
-  'group-data-pointing/preview:scale-100 group-data-pointing/preview:opacity-100 group-data-pointing/preview:filter-none',
-  'group-has-focus-visible/slider:scale-100 group-has-focus-visible/slider:opacity-100 group-has-focus-visible/slider:filter-none',
-] as const;
+import { sliderPreviewContent } from '../recipes/slider';
 
 const trackLayer = [
   'pointer-events-none absolute rounded-[inherit]',
@@ -16,19 +10,15 @@ const trackLayer = [
 
 export default styles({
   file: 'sliders.css',
-  layer: 'videojs.components',
   rules: {
     root: {
       className: 'media-slider',
       utilities: [
         'group/slider relative flex flex-1 cursor-pointer items-center justify-center outline-none',
+        'rounded-[99px]',
         'data-[orientation=horizontal]:[height:var(--media-slider-height,--spacing(8))] data-[orientation=horizontal]:min-w-20',
         'data-[orientation=vertical]:h-20 data-[orientation=vertical]:w-8 data-[orientation=vertical]:min-w-0',
       ],
-      variants: {
-        default: '',
-        minimal: 'rounded-[99px]',
-      },
     },
     track: {
       className: 'media-slider-track',
@@ -72,12 +62,6 @@ export default styles({
         'group-data-dragging/slider:data-[orientation=horizontal]:left-(--media-slider-pointer)',
         'group-data-dragging/slider:data-[orientation=vertical]:top-[calc(100%-var(--media-slider-pointer))]',
       ],
-      variants: {
-        'default-audio':
-          'opacity-0 data-interactive:opacity-100 pointer-fine:group-hover/slider:scale-100 pointer-fine:group-hover/slider:opacity-100',
-        'minimal-audio':
-          'opacity-0 data-interactive:opacity-100 pointer-fine:group-hover/slider:scale-100 pointer-fine:group-hover/slider:opacity-100',
-      },
     },
     preview: {
       className: 'media-slider-preview',

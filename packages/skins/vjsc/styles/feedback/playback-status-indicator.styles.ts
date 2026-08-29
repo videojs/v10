@@ -13,7 +13,6 @@ const iconVariants = {
 
 export default styles({
   file: 'indicators.css',
-  layer: 'videojs.components',
   rules: {
     root: {
       className: 'media-playback-status-indicator',

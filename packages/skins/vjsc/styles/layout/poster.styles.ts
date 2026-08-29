@@ -2,7 +2,6 @@ import { styles } from 'vjsc/styles';
 
 export default styles({
   file: 'poster.css',
-  layer: 'videojs.components',
   rules: {
     root: {
       className: 'media-poster',

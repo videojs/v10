@@ -1,10 +1,10 @@
 import * as $ from '@videojs/core/vjsc';
 
-import { AudioPlayButton } from '../../components/buttons/audio-play-button';
 import { SeekButton } from '../../components/buttons/seek-button';
 import { VolumePopover } from '../../components/controls/volume-popover';
-import { AudioSettingsMenu } from '../../components/menus/audio-settings-menu';
-import { AudioTimeSlider } from '../../components/sliders/audio-time-slider';
+import { AudioPlayButton } from '../audio/play-button';
+import { AudioSettingsMenu } from '../audio/settings-menu';
+import { AudioTimeSlider } from '../audio/time-slider';
 import styles from './controls.styles';
 
 export function DefaultAudioControls() {
