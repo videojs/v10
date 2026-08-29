@@ -52,9 +52,16 @@ export interface VjscRegistryManifestItemMeta {
   readonly group: string;
 }
 
+export interface VjscRegistryFilesItemMeta {
+  readonly kind: 'files';
+  /** Included registry path, such as `skins`. */
+  readonly group: string;
+}
+
 export type VjscRegistryItemMeta<Item extends ComponentMeta = ComponentMeta> =
   | VjscRegistrySourceItemMeta<Item>
   | VjscRegistryStyleItemMeta<Item>
+  | VjscRegistryFilesItemMeta
   | VjscRegistryManifestItemMeta;
 
 /** Official Shadcn item fields plus compiler-only VJSC build metadata. */
@@ -77,6 +84,8 @@ export interface ShadcnRegistryPluginOptions<Item extends ComponentMeta = Compon
   /** Exact package requirements used instead of bare discovered dependency names. */
   readonly packages?: Readonly<Record<string, string>> | undefined;
   /** Describe registry ownership after every requested graph transformation is complete. */
-  readonly items: (graph: ComponentGraph<Item>) => readonly VjscRegistryItem<Item>[];
+  readonly items: (
+    graph: ComponentGraph<Item>
+  ) => readonly VjscRegistryItem<Item>[] | Promise<readonly VjscRegistryItem<Item>[]>;
   readonly meta?: RegistryItem['meta'];
 }

@@ -16,6 +16,7 @@ import type {
   ShadcnRegistryFile,
   ShadcnRegistryPluginOptions,
   VjscRegistryItem,
+  VjscRegistryFilesItemMeta,
   VjscRegistryManifestItemMeta,
   VjscRegistrySourceItemMeta,
   VjscRegistryStyleItemMeta,
@@ -49,6 +50,10 @@ type ManifestRegistryItem<Item extends ComponentMeta = ComponentMeta> = VjscRegi
   readonly $vjsc: VjscRegistryManifestItemMeta;
 };
 
+type FilesRegistryItem<Item extends ComponentMeta = ComponentMeta> = VjscRegistryItem<Item> & {
+  readonly $vjsc: VjscRegistryFilesItemMeta;
+};
+
 const VIRTUAL_CSS_IMPORT = /import\s+["']virtual:vjsc\/css\/[^"']+["'];?\s*/g;
 
 export interface ShadcnOutputFile {
@@ -64,7 +69,7 @@ export async function createShadcnRegistryFiles<Item extends ComponentMeta>(
   const modules = validateComponentGraph(graph);
 
   validateOptions(options);
-  const described = [...options.items(graph)];
+  const described = [...(await options.items(graph))];
 
   validateItems(described);
 
@@ -76,6 +81,7 @@ export async function createShadcnRegistryFiles<Item extends ComponentMeta>(
       buildPublishedItem(publication, modules, publications, graph, options)
     ),
     ...described.filter(isStyleItem).map((item) => buildStyleItem(item, modules, graph, options)),
+    ...described.filter(isFilesItem).map((item) => buildFilesItem(item, options)),
     ...described.filter(isManifestItem).map((item) => buildManifestItem(item, options)),
   ]);
   const groups = new Map<string, RegistryItem[]>();
@@ -113,6 +119,28 @@ export async function createShadcnRegistryFiles<Item extends ComponentMeta>(
   }
 
   return assets;
+}
+
+function buildFilesItem<Item extends ComponentMeta>(
+  item: FilesRegistryItem<Item>,
+  options: ShadcnRegistryPluginOptions<Item>
+): BuiltItem {
+  const sourceFiles = new Map<string, string>();
+  const files = (item.files ?? []).map((file): ShadcnRegistryFile => {
+    if (!file.content) throw new Error(`Shadcn file item \`${item.name}\` has no content for \`${file.path}\`.`);
+
+    validateRelativePath(file.path, `Shadcn item ${item.name} file path`);
+    const path = posix.join('files', item.name, normalizePath(file.path));
+
+    addUnique(sourceFiles, path, file.content, 'source');
+    return { ...file, path, content: undefined };
+  });
+
+  return {
+    group: normalizeGroup(item.$vjsc.group),
+    sourceFiles,
+    manifest: buildManifest(item, options, files),
+  };
 }
 
 function describePublishedModules<Item extends ComponentMeta>(
@@ -535,6 +563,10 @@ function isSourceItem<Item extends ComponentMeta>(item: VjscRegistryItem<Item>):
 
 function isStyleItem<Item extends ComponentMeta>(item: VjscRegistryItem<Item>): item is StyleRegistryItem<Item> {
   return item.$vjsc.kind === 'style';
+}
+
+function isFilesItem<Item extends ComponentMeta>(item: VjscRegistryItem<Item>): item is FilesRegistryItem<Item> {
+  return item.$vjsc.kind === 'files';
 }
 
 function isManifestItem<Item extends ComponentMeta>(item: VjscRegistryItem<Item>): item is ManifestRegistryItem<Item> {
