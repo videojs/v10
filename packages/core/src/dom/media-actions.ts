@@ -1,10 +1,10 @@
-import { isUndefined } from '@videojs/utils/predicate';
-
-import { DEFAULT_SEEK_STEP, DEFAULT_VOLUME_STEP } from '../core/ui/constants';
+import { getMediaInputActionValue } from './input-action-value';
+import type { MediaInputActionName } from './input-action-value';
 import type { AnyPlayerStore } from './player';
 import { selectPlaybackRate, selectTime, selectVolume } from './store/selectors';
 
-export type MediaInputActionName = 'seekStep' | 'volumeStep' | 'speedUp' | 'speedDown';
+export { getMediaInputActionValue } from './input-action-value';
+export type { MediaInputActionName } from './input-action-value';
 
 export interface MediaInputActionContext {
   store: AnyPlayerStore;
@@ -13,28 +13,6 @@ export interface MediaInputActionContext {
 }
 
 export type MediaInputActionResolver = (context: MediaInputActionContext) => void;
-
-export function getMediaInputActionValue(
-  action: string,
-  key: string | undefined,
-  value?: number | undefined
-): number | undefined {
-  if (!isUndefined(value)) return value;
-
-  const normalizedKey = key?.toLowerCase();
-
-  if (action === 'seekStep') {
-    return normalizedKey === 'arrowleft' || normalizedKey === 'j' ? -DEFAULT_SEEK_STEP : DEFAULT_SEEK_STEP;
-  }
-
-  if (action === 'volumeStep') {
-    const step = DEFAULT_VOLUME_STEP / 100;
-
-    return normalizedKey === 'arrowdown' ? -step : step;
-  }
-
-  return undefined;
-}
 
 export const MEDIA_INPUT_ACTION_OVERRIDES: Record<MediaInputActionName, MediaInputActionResolver> = {
   seekStep({ store, value, key }) {
