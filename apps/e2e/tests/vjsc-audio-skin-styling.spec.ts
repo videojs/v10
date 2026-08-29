@@ -186,7 +186,10 @@ async function openVariant(
 
   await expect(root).toBeVisible();
 
-  if (expectPlay) await expect(root.getByRole('button', { name: 'Play', exact: true })).toBeVisible();
+  if (expectPlay) {
+    await expect(root.getByRole('button', { name: 'Play', exact: true })).toBeVisible();
+    await expect(root.getByRole('button', { name: /Playback rate/i })).toBeVisible();
+  }
 
   await expect.poll(() => root.evaluate((element) => Math.round(element.getBoundingClientRect().width))).toBe(width);
   await root.evaluate((element) => {

@@ -15,7 +15,10 @@ export default styles({
         ...popupSurface,
         'whitespace-nowrap text-media',
         'data-open:flex data-open:items-center data-open:gap-1',
-        ...themeRecipe('rounded-[9999px] px-2.5 py-1', 'rounded-[--spacing(2)] px-2 py-1'),
+        ...themeRecipe(
+          'rounded-[9999px] px-2.5 py-1',
+          'rounded-[--spacing(2)] px-2 py-1 data-starting-style:filter-none after:hidden'
+        ),
       ],
     },
     shortcut: {

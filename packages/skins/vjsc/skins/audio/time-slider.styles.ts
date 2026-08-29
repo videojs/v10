@@ -25,7 +25,10 @@ export default styles({
       ],
       variants: {
         default: 'left-1/2',
-        minimal: ['[left:var(--media-preview-left,var(--media-slider-pointer))]', 'rounded-[--spacing(2)] px-2'],
+        minimal: [
+          '[left:var(--media-preview-left,var(--media-slider-pointer))]',
+          'rounded-[--spacing(2)] px-2 after:hidden',
+        ],
       },
     },
     value: {

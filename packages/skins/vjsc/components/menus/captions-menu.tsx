@@ -21,7 +21,11 @@ export function CaptionsMenu({ className, triggerClassName, ...props }: Captions
     <$.Menu.Root side="top" align="center" boundary="viewport" {...props}>
       <$.CaptionsRadioGroup.Root>
         <ButtonTooltip side="top">
-          <$.Menu.Trigger $render={Button} className={[captionsButtonStyles.root, triggerClassName]}>
+          <$.Menu.Trigger
+            $render={Button}
+            aria-label="Enable captions"
+            className={[captionsButtonStyles.root, triggerClassName]}
+          >
             <CaptionsOffIcon className={[buttonStyles.icon, captionsButtonStyles.offIcon]} />
             <CaptionsOnIcon className={[buttonStyles.icon, captionsButtonStyles.onIcon]} />
           </$.Menu.Trigger>

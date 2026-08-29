@@ -4,6 +4,7 @@ import { StatusAnnouncer } from '../../components/feedback/status-announcer';
 import { Container } from '../../components/layout/container';
 import type { SkinMeta } from '../../meta';
 import { AudioErrorDialog } from '../audio/error-dialog';
+import audioSkinStyles from '../audio/skin.styles';
 import { PlaybackHotkeys } from '../shared/playback-hotkeys';
 import { DefaultAudioControls } from './controls';
 
@@ -13,7 +14,7 @@ export interface DefaultAudioSkinProps extends Omit<PropsOf<typeof Container>, '
 
 export function DefaultAudioSkin({ children, className, ...props }: DefaultAudioSkinProps = {}) {
   return (
-    <Container className={['media-skin media-skin--audio', className]} {...props}>
+    <Container className={['media-skin media-skin--audio', audioSkinStyles.root, className]} {...props}>
       <Slot>{children}</Slot>
       <AudioErrorDialog />
       <DefaultAudioControls />

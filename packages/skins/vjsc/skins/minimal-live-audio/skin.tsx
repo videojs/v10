@@ -4,6 +4,7 @@ import { StatusAnnouncer } from '../../components/feedback/status-announcer';
 import { Container } from '../../components/layout/container';
 import type { SkinMeta } from '../../meta';
 import { AudioErrorDialog } from '../audio/error-dialog';
+import audioSkinStyles from '../audio/skin.styles';
 import { LivePlaybackHotkeys } from '../shared/live-playback-hotkeys';
 import { MinimalLiveAudioControls } from './controls';
 
@@ -13,7 +14,10 @@ export interface MinimalLiveAudioSkinProps extends Omit<PropsOf<typeof Container
 
 export function MinimalLiveAudioSkin({ children, className, ...props }: MinimalLiveAudioSkinProps = {}) {
   return (
-    <Container className={['media-skin media-skin--minimal media-skin--live-audio', className]} {...props}>
+    <Container
+      className={['media-skin media-skin--minimal media-skin--live-audio', audioSkinStyles.root, className]}
+      {...props}
+    >
       <Slot>{children}</Slot>
       <AudioErrorDialog />
       <MinimalLiveAudioControls />

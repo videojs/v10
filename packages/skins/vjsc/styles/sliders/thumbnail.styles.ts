@@ -16,7 +16,7 @@ export default styles({
         'has-[[data-loading]]:aspect-video has-[[data-loading]]:w-(--media-slider-preview-max-width)',
         ...themeRecipe(
           'left-1/2 bottom-[calc(100%+--spacing(9))] rounded-xl bg-black/90',
-          '[left:var(--media-preview-left,var(--media-slider-pointer))] bottom-[calc(100%+--spacing(14))] rounded-lg bg-black/90'
+          '[left:var(--media-preview-left,var(--media-slider-pointer))] bottom-[calc(100%+--spacing(14))] rounded-lg bg-black/90 after:hidden'
         ),
       ],
     },

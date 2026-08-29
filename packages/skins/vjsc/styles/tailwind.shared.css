@@ -3,7 +3,7 @@
 
 @theme inline {
   --color-media-accent: var(--media-primary);
-  --color-media-accent-text: var(--media-primary-foreground);
+  --color-media-accent-text: var(--media-accent-foreground);
   --color-media-background: var(--media-background);
   --color-media-border: var(--media-border);
   --color-media-control-hover: var(--media-accent);
@@ -27,4 +27,8 @@
   --spacing-media-icon-xl: calc(var(--media-icon-size, calc(var(--media-spacing) * 4.5)) * 2);
   --spacing-media-control: var(--media-control-size);
   --radius-media-control: var(--media-control-radius);
+}
+
+@utility shadow-media-sm {
+  box-shadow: var(--media-shadow-sm);
 }
