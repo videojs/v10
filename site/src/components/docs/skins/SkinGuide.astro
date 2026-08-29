@@ -2,6 +2,7 @@
 import ServerCode from '@/components/Code/ServerCode.astro';
 import Aside from '@/components/Aside.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
+import RegistryInstall from '@/components/docs/RegistryInstall.astro';
 import MinimalFrame from '@/components/frames/Minimal.astro';
 import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs.tsx';
 import H2 from '@/components/typography/H2.astro';
@@ -9,6 +10,7 @@ import Li from '@/components/typography/Li.astro';
 import MarkdownCode from '@/components/typography/MarkdownCode.astro';
 import P from '@/components/typography/P.astro';
 import Ul from '@/components/typography/Ul.astro';
+import { isValidFramework } from '@/types/docs';
 import SkinPreview from './SkinPreview';
 import SkinPreviewHtml from './SkinPreviewHtml.astro';
 import type { SkinGuideDefinition } from './skinGuides';
@@ -19,6 +21,8 @@ interface Props {
 
 const { definition } = Astro.props;
 const framework = Astro.params.framework;
+if (!isValidFramework(framework)) throw new Error(`Unsupported framework: ${framework ?? 'missing'}.`);
+
 const live = definition.preset.startsWith('live-');
 const packageName = `@videojs/${framework}/${definition.preset}`;
 const stylesheet = `${packageName}/${definition.htmlRegistration}.css`;
@@ -80,6 +84,7 @@ const usage = definition.preset === 'background'
   : framework === 'react'
     ? reactUsage
     : htmlUsage;
+const registryItem = `${definition.preset}${definition.variant === 'minimal' ? '-minimal' : ''}`;
 ---
 
 <P>{definition.when}</P>
@@ -104,6 +109,18 @@ const usage = definition.preset === 'background'
     <ServerCode code={usage} lang={framework === "react" ? "tsx" : "html"} />
   </TabsPanel>
 </TabsRoot>
+
+{
+  definition.preset !== "background" ? (
+    <>
+      <H2 id="install-editable-source">Install editable source</H2>
+      <P>
+        Install this Skin and its exact dependencies with Shadcn, or copy the same generated files manually. The Player and media remain package imports.
+      </P>
+      <RegistryInstall framework={framework} item={registryItem} />
+    </>
+  ) : null
+}
 
 <H2 id="customize-the-skin">Customize the skin</H2>
 

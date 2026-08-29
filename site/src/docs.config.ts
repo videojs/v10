@@ -63,22 +63,6 @@ export const sidebar: Sidebar = [
     ],
   },
   {
-    sidebarLabel: 'Skins',
-    llmsDescription:
-      'Packaged player skins, including previews, supported targets, usage, behavior, and customization.',
-    contents: [
-      { slug: 'skins/default-video' },
-      { slug: 'skins/minimal-video' },
-      { slug: 'skins/default-audio' },
-      { slug: 'skins/minimal-audio' },
-      { slug: 'skins/default-live-video' },
-      { slug: 'skins/minimal-live-video' },
-      { slug: 'skins/default-live-audio' },
-      { slug: 'skins/minimal-live-audio' },
-      { slug: 'skins/background-video' },
-    ],
-  },
-  {
     sidebarLabel: 'How to',
     llmsDescription:
       "Task-oriented guides that each answer one goal in the reader's words. Some cover custom player UI; others configure a preset, skin, media component, or integration. Guides lead with the recommended path, then the constraints and variations needed to apply it.",
@@ -117,6 +101,22 @@ export const sidebar: Sidebar = [
     llmsDescription:
       'Reference for every public export, grouped by what it is: UI components, media components, player features, and utilities.',
     contents: [
+      {
+        sidebarLabel: 'Skins',
+        defaultOpen: false,
+        llmsDescription: 'Packaged and source-owned player Skin API references.',
+        contents: [
+          { slug: 'reference/video-skin' },
+          { slug: 'reference/minimal-video-skin' },
+          { slug: 'reference/audio-skin' },
+          { slug: 'reference/minimal-audio-skin' },
+          { slug: 'reference/live-video-skin' },
+          { slug: 'reference/minimal-live-video-skin' },
+          { slug: 'reference/live-audio-skin' },
+          { slug: 'reference/minimal-live-audio-skin' },
+          { slug: 'reference/background-video-skin' },
+        ],
+      },
       {
         sidebarLabel: 'UI Components',
         defaultOpen: false,

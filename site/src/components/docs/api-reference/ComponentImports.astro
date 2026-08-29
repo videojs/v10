@@ -2,7 +2,10 @@
 import type { BundledLanguage } from 'shiki';
 
 import ServerCode from '@/components/Code/ServerCode.astro';
+import RegistryInstall from '@/components/docs/RegistryInstall.astro';
 import CodeFrame from '@/components/typography/CodeFrame.astro';
+import { isValidFramework } from '@/types/docs';
+import { registryItemForComponent } from '@/utils/installation/shadcn-registry';
 import FrameworkCase from '../FrameworkCase.astro';
 
 interface Props {
@@ -11,6 +14,10 @@ interface Props {
 }
 
 const { component, html } = Astro.props;
+const framework = Astro.params.framework;
+if (!isValidFramework(framework)) throw new Error(`Unsupported framework: ${framework ?? 'missing'}.`);
+
+const registryItem = framework === 'react' ? await registryItemForComponent(component) : null;
 
 const imports: Array<{ code: string; framework: 'react' | 'html'; lang: BundledLanguage }> = [
   {
@@ -34,4 +41,16 @@ const imports: Array<{ code: string; framework: 'react' | 'html'; lang: BundledL
       </CodeFrame>
     </FrameworkCase>
   ))
+}
+
+{
+  registryItem ? (
+    <>
+      <h3 id="editable-source">Editable styled source</h3>
+      <p>
+        Install the styled component and its exact dependencies with Shadcn, or copy the same generated files manually.
+      </p>
+      <RegistryInstall framework="react" item={registryItem} />
+    </>
+  ) : null
 }
