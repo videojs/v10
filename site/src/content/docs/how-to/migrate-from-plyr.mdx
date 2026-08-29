@@ -16,7 +16,7 @@ Start with the Minimal skin, move media settings into markup, and replace calls 
 - **The player becomes three pieces.** Player state, the media component, and the skin are separate, so you can replace one without wrapping or forking the others.
 - **Streaming behavior becomes player state.** HLS, DASH, and Mux integrations expose renditions, tracks, and live state to the UI instead of leaving that wiring to application code.
 - **React uses native components and hooks.** `@videojs/react` owns its lifecycle instead of wrapping an imperative constructor around framework-owned DOM.
-- **The UI is composable.** Buttons, sliders, menus, gestures, and hotkeys are individual accessible components. Start with the Minimal or Default skin, then [eject it](#eject-a-skin) when you need to change the structure.
+- **The UI is composable.** Buttons, sliders, menus, gestures, and hotkeys are individual accessible components. Start with the Minimal or Default skin, then [install its source](#install-the-skin-source) when you need to change the structure.
 - **Remote playback is built in.** The video skins include AirPlay and Cast controls. Follow <DocsLink slug="how-to/cast-to-airplay-and-chromecast">Cast to AirPlay and Chromecast</DocsLink> to add the Google Cast integration.
 
 <Aside type="note">
@@ -345,16 +345,16 @@ Here's a matrix for configuration options in Plyr and how each maps to Video.js 
 
 | Plyr option | Video.js v10 |
 |---|---|
-| `controls` | The <DocsLink slug="concepts/skins">skins</DocsLink> include the common controls, laid out in a familiar way that users would expect. Not every Plyr control ships in every skin—the video skins do not include `rewind` and `fast-forward` buttons, for example. To change which controls appear, or to customize the skin beyond basic colors, [eject the skin](#eject-a-skin) and change controls, layout, styles, or icons. |
-| `rewind`, `fast-forward`, `seekTime` | The audio skins include 10-second skip buttons; the video skins do not. [Eject the skin](#eject-a-skin) and add a <DocsLink slug="reference/seek-button">SeekButton</DocsLink>, which skips by its `seconds` value (default `30`; negative values seek backward). |
+| `controls` | The <DocsLink slug="concepts/skins">skins</DocsLink> include the common controls, laid out in a familiar way that users would expect. Not every Plyr control ships in every skin—the video skins do not include `rewind` and `fast-forward` buttons, for example. To change which controls appear, or to customize the skin beyond basic colors, [install the skin source](#install-the-skin-source) and change controls, layout, styles, or icons. |
+| `rewind`, `fast-forward`, `seekTime` | The audio skins include 10-second skip buttons; the video skins do not. [Install the skin source](#install-the-skin-source) and add a <DocsLink slug="reference/seek-button">SeekButton</DocsLink>, which skips by its `seconds` value (default `30`; negative values seek backward). |
 | `settings` | Included automatically in the skins when quality, speed, audio tracks, or captions are available. |
 | `autoplay`, `muted`, `loop`, `playsinline`, `preload` | These are attributes on your media (e.g. `<video>`) component. |
 | `poster` / `data-poster` | Set `poster` on `<video-player>` or `VideoPlayer`. See [Basic migration](#basic-migration). |
 | `ratio` | Set `aspect-ratio` in CSS on the skin component. |
 | `hideControls` | Preset skins auto-hide controls based on activity. The delay is currently not configurable. |
-| `clickToPlay` | Preset video skins include click and tap gestures. [Eject the skin](#eject-a-skin) to remove or change them. |
-| `keyboard` | Preset video skins include common hotkeys. [Eject the skin](#eject-a-skin) to remove or change them. |
-| `tooltips` | Preset skins include tooltips for common controls. [Eject the skin](#eject-a-skin) to customize them. |
+| `clickToPlay` | Preset video skins include click and tap gestures. [Install the skin source](#install-the-skin-source) to remove or change them. |
+| `keyboard` | Preset video skins include common hotkeys. [Install the skin source](#install-the-skin-source) to remove or change them. |
+| `tooltips` | Preset skins include tooltips for common controls. [Install the skin source](#install-the-skin-source) to customize them. |
 | `captions` | Add `<track kind="captions">` or `<track kind="subtitles">`; preset skins show captions controls when tracks are available. |
 | `previewThumbnails` | Add `<track kind="metadata" label="thumbnails">`; preset video skins show slider thumbnails when thumbnail cues are available. |
 | `quality` | Works when the media provider exposes renditions. Plain MP4 source arrays do not currently become a quality menu automatically. |
@@ -368,16 +368,16 @@ Here's a matrix for configuration options in Plyr and how each maps to Video.js 
 
 ## Customize the controls
 
-Plyr's `controls` option chooses which controls appear. Video.js skins come with their own control set and layout. Keep the skin when that UI fits your player. To remove, reorder, or restyle its controls, [eject the skin](#eject-a-skin) and edit the copied implementation. Adding a child to a skin does not place it inside the control bar.
+Plyr's `controls` option chooses which controls appear. Video.js skins come with their own control set and layout. Keep the skin when that UI fits your player. To remove, reorder, or restyle its controls, [install the skin source](#install-the-skin-source) and edit the owned implementation. Adding a child to a skin does not place it inside the control bar.
 
 If your app already has a custom control bar, build it from individual <DocsLink slug="concepts/ui-components">UI components</DocsLink>. Video.js handles the media action, accessible name, and state. You add the visible contents, layout, and CSS.
 
 <FrameworkCase frameworks={["html"]}>
-Individual HTML buttons include no text, icon, or finished styling. Add your own content, or import `@videojs/html/icons/element` and place a `<media-icon>` inside the button. Attach click handlers directly to controls you add, and keep playback event handlers on the `<video>` or `<audio>`. To change or listen to a button inside a ready-made skin, eject the skin first.
+Individual HTML buttons include no text, icon, or finished styling. Add your own content, or import `@videojs/html/icons/element` and place a `<media-icon>` inside the button. Attach click handlers directly to controls you add, and keep playback event handlers on the `<video>` or `<audio>`. To change or listen to a button inside a ready-made skin, install the skin source first.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
-Individual React buttons do not include visible content. Use their `render` props to add an icon or text and style the element you return. Eject a ready-made skin when you need to change its control set or layout.
+Individual React buttons do not include visible content. Use their `render` props to add an icon or text and style the element you return. Install a ready-made skin's source when you need to change its control set or layout.
 </FrameworkCase>
 
 ## Use the imperative API
@@ -439,7 +439,7 @@ class MyElapsed extends ReactiveElement {
 
 ## Rewrite styles
 
-Video.js v10 skins offer similar color customization via CSS custom properties. [Eject the skin](#eject-a-skin) when you need deeper control over layout, control structure, icons, or interaction styling.
+Video.js v10 skins offer similar color customization via CSS custom properties. [Install the skin source](#install-the-skin-source) when you need deeper control over layout, control structure, icons, or interaction styling.
 
 ```css
 /* Plyr */
@@ -468,9 +468,9 @@ video-player {
 
 `--media-accent-color` reaches the sliders, active buttons, and accent surfaces, so it's the closest match for Plyr's `--plyr-color-main`. Video.js picks a readable text color to sit on top of it; set `--media-accent-text-color` to choose that yourself. `--media-border-radius` and `--media-scale-unit` cover rounding and control sizing. See <DocsLink slug="how-to/customize-skins">Customize skins</DocsLink> for the full list.
 
-## Eject a skin
+## Install the skin source
 
-If you need extra customization of layout, styles, or icons, you can "eject" the skin into your application, much like a shadcn installation. Copy the skin and its CSS into your project, then modify the components and styles directly. <DocsLink slug="how-to/customize-skins">Customize skins</DocsLink> has copy-paste-ready implementations for every packaged skin.
+If you need extra customization of layout, styles, or icons, install the closest Player or skin block from the hosted Video.js Shadcn registry. It resolves the complete component and style dependency graph, then writes ordinary files you can modify directly. See <DocsLink slug="how-to/customize-skins">Customize skins</DocsLink>.
 
 ## Known gaps
 

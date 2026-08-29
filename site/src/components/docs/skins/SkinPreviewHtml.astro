@@ -1,0 +1,28 @@
+---
+import { VJS10_DEMO_LIVE, VJS10_DEMO_VIDEO } from '@/consts';
+import type { SkinPreviewName } from './SkinPreview';
+
+interface Props {
+  skin: SkinPreviewName;
+}
+
+const { skin } = Astro.props;
+const minimal = skin.startsWith('minimal-');
+const preset = minimal ? skin.slice('minimal-'.length) : skin;
+const live = preset.startsWith('live-');
+const video = preset.endsWith('video');
+const background = preset === 'background';
+const playerTag = background ? 'background-video-player' : `${preset}-player`;
+const skinTag = background ? 'background-video-skin' : `${preset}-${minimal ? 'minimal-' : ''}skin`;
+const mediaTag = background ? 'background-video' : live ? `hls-${video ? 'video' : 'audio'}` : video ? 'video' : 'audio';
+const source = live ? VJS10_DEMO_LIVE.hls : VJS10_DEMO_VIDEO.mp4;
+const poster = video || background ? `<img ${background ? '' : 'slot="poster"'} src="${VJS10_DEMO_VIDEO.poster}" alt="" />` : '';
+const skinStyle = video || background ? 'display:block;aspect-ratio:16/9;--media-object-fit:cover' : 'display:block';
+const markup = `<${playerTag}><${skinTag} style="${skinStyle}">${poster}<${mediaTag} src="${source}" ${video ? 'playsinline ' : ''}${live ? 'crossorigin="anonymous"' : ''}></${mediaTag}></${skinTag}></${playerTag}>`;
+---
+
+<div set:html={markup} />
+
+<script>
+  import "./SkinPreviewHtml.ts";
+</script>

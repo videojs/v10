@@ -151,16 +151,15 @@ export default defineConfig({
         cache: false,
         dependsOn: [
           'site#api-docs:generate',
-          'site#ejected-skins',
           'site#cdn-manifest',
           '@videojs/sandbox#setup',
-          '@videojs/skins#generate',
+          '@videojs/skins#build:shadcn',
         ],
       },
       'typecheck:workspace': {
         command: 'tsgo --build',
         cache: false,
-        dependsOn: ['@videojs/skins#generate'],
+        dependsOn: ['@videojs/skins#build:shadcn'],
       },
     },
   },

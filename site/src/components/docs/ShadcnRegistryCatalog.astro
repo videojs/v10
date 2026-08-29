@@ -1,0 +1,81 @@
+---
+import MarkdownCode from '@/components/typography/MarkdownCode.astro';
+import Table from '@/components/typography/Table.astro';
+import Tbody from '@/components/typography/Tbody.astro';
+import Td from '@/components/typography/Td.astro';
+import Th from '@/components/typography/Th.astro';
+import Thead from '@/components/typography/Thead.astro';
+import Tr from '@/components/typography/Tr.astro';
+import { shadcnItemUrl, type ShadcnCatalogItem } from '@/utils/installation/shadcn';
+import { readRegistryCatalog } from '@/utils/installation/shadcn-registry';
+
+interface ItemMeta {
+  public?: boolean;
+  role?: 'component' | 'skin';
+}
+
+const [reactTailwind, reactCss, htmlTailwind, htmlCss] = await Promise.all([
+  readRegistryCatalog('react', 'tailwind'),
+  readRegistryCatalog('react', 'css'),
+  readRegistryCatalog('html', 'tailwind'),
+  readRegistryCatalog('html', 'css'),
+]);
+const isPublicRole = (item: ShadcnCatalogItem, role: ItemMeta['role']) => {
+  // SAFETY: the local registry catalog is generated with this owned metadata shape and schema-validated before site tasks run.
+  const meta = item.meta as ItemMeta | undefined;
+
+  return meta?.public === true && meta.role === role;
+};
+const skinRows = reactTailwind.items.filter((item) => isPublicRole(item, 'skin'));
+const componentRows = reactTailwind.items.filter((item) => isPublicRole(item, 'component'));
+const hasItem = (catalog: { readonly items: readonly ShadcnCatalogItem[] }, name: string) =>
+  catalog.items.some((item) => item.name === name);
+---
+
+<h3 id="skin-blocks">Skin blocks</h3>
+
+<p>
+  Skin blocks install editable UI source. Players and media remain direct <MarkdownCode>@videojs/react</MarkdownCode> or
+  <MarkdownCode>@videojs/html</MarkdownCode> imports.
+</p>
+
+<Table>
+  <Thead>
+    <Tr><Th>Skin</Th><Th>React + Tailwind</Th><Th>React + CSS</Th><Th>HTML + Tailwind</Th><Th>HTML + CSS</Th></Tr>
+  </Thead>
+  <Tbody>
+    {
+      skinRows.map((item) => (
+        <Tr>
+          <Td>{item.title}</Td>
+          <Td><a href={shadcnItemUrl('react', 'tailwind', item.name)}><MarkdownCode>{item.name}</MarkdownCode></a></Td>
+          <Td>{hasItem(reactCss, item.name) ? <a href={shadcnItemUrl('react', 'css', item.name)}><MarkdownCode>{item.name}</MarkdownCode></a> : null}</Td>
+          <Td>{hasItem(htmlTailwind, item.name) ? <a href={shadcnItemUrl('html', 'tailwind', item.name)}><MarkdownCode>{item.name}</MarkdownCode></a> : null}</Td>
+          <Td>{hasItem(htmlCss, item.name) ? <a href={shadcnItemUrl('html', 'css', item.name)}><MarkdownCode>{item.name}</MarkdownCode></a> : null}</Td>
+        </Tr>
+      ))
+    }
+  </Tbody>
+</Table>
+
+<h3 id="react-component-items">React UI components</h3>
+
+<p>
+  Individual React UI components install to stable paths under <MarkdownCode>components/videojs/ui</MarkdownCode>.
+  Tailwind and CSS catalogs expose the same item names.
+</p>
+
+<Table>
+  <Thead><Tr><Th>Component</Th><Th>Tailwind</Th><Th>CSS</Th></Tr></Thead>
+  <Tbody>
+    {
+      componentRows.map((item) => (
+        <Tr>
+          <Td>{item.title}</Td>
+          <Td><a href={shadcnItemUrl('react', 'tailwind', item.name)}><MarkdownCode>{item.name}</MarkdownCode></a></Td>
+          <Td>{hasItem(reactCss, item.name) ? <a href={shadcnItemUrl('react', 'css', item.name)}><MarkdownCode>{item.name}</MarkdownCode></a> : null}</Td>
+        </Tr>
+      ))
+    }
+  </Tbody>
+</Table>

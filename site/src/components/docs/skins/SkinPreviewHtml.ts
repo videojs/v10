@@ -1,0 +1,17 @@
+import '@videojs/html/audio/minimal-skin';
+import '@videojs/html/audio/player';
+import '@videojs/html/audio/skin';
+import '@videojs/html/background/player';
+import '@videojs/html/background/skin';
+import '@videojs/html/background/video';
+import '@videojs/html/live-audio/minimal-skin';
+import '@videojs/html/live-audio/player';
+import '@videojs/html/live-audio/skin';
+import '@videojs/html/live-video/minimal-skin';
+import '@videojs/html/live-video/player';
+import '@videojs/html/live-video/skin';
+import '@videojs/html/media/hls-audio';
+import '@videojs/html/media/hls-video';
+import '@videojs/html/video/minimal-skin';
+import '@videojs/html/video/player';
+import '@videojs/html/video/skin';

@@ -1,0 +1,141 @@
+---
+import ServerCode from '@/components/Code/ServerCode.astro';
+import Aside from '@/components/Aside.astro';
+import DocsLink from '@/components/docs/DocsLink.astro';
+import MinimalFrame from '@/components/frames/Minimal.astro';
+import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs.tsx';
+import SkinPreview from './SkinPreview';
+import SkinPreviewHtml from './SkinPreviewHtml.astro';
+import type { SkinGuideDefinition } from './skinGuides';
+
+interface Props {
+  definition: SkinGuideDefinition;
+}
+
+const { definition } = Astro.props;
+const framework = Astro.params.framework;
+const live = definition.preset.startsWith('live-');
+const packageName = `@videojs/${framework}/${definition.preset}`;
+const stylesheet = `${packageName}/${definition.htmlRegistration}.css`;
+const reactMedia = live ? (definition.media === 'video' ? 'HlsVideo' : 'HlsAudio') : definition.media === 'video' ? 'Video' : 'Audio';
+const reactMediaPackage = live ? `@videojs/react/media/hls-${definition.media}` : packageName;
+const htmlMedia = live ? `hls-${definition.media}` : definition.media;
+const htmlMediaImport = live ? `import '@videojs/html/media/hls-${definition.media}';\n` : '';
+const source = live ? 'https://example.com/live.m3u8' : `${definition.media}.${definition.media === 'video' ? 'mp4' : 'mp3'}`;
+const reactUsage = `import { ${definition.reactPlayer}, ${definition.reactSkin} } from '${packageName}';
+import { ${reactMedia} } from '${reactMediaPackage}';
+import '${stylesheet}';
+
+export function Player() {
+  return (
+    <${definition.reactPlayer}>
+      <${definition.reactSkin}>
+        <${reactMedia} src="${source}"${live ? ' crossOrigin="anonymous"' : ''} />
+      </${definition.reactSkin}>
+    </${definition.reactPlayer}>
+  );
+}`;
+const htmlUsage = `<script type="module">
+  import '@videojs/html/${definition.preset}/player';
+  import '@videojs/html/${definition.preset}/${definition.htmlRegistration}';
+${htmlMediaImport ? `  ${htmlMediaImport.trim()}\n` : ''}</script>
+
+<${definition.preset}-player>
+  <${definition.htmlSkin}>
+    <${htmlMedia} src="${source}"${live ? ' crossorigin="anonymous"' : ''}></${htmlMedia}>
+  </${definition.htmlSkin}>
+</${definition.preset}-player>`;
+const backgroundReact = `import {
+  BackgroundVideo,
+  BackgroundVideoPlayer,
+  BackgroundVideoSkin,
+} from '@videojs/react/background';
+import '@videojs/react/background/skin.css';
+
+<BackgroundVideoPlayer>
+  <BackgroundVideoSkin>
+    <BackgroundVideo src="background.mp4" />
+  </BackgroundVideoSkin>
+</BackgroundVideoPlayer>`;
+const backgroundHtml = `<script type="module">
+  import '@videojs/html/background/player';
+  import '@videojs/html/background/video';
+  import '@videojs/html/background/skin';
+</script>
+
+<background-video-player>
+  <background-video-skin>
+    <background-video src="background.mp4"></background-video>
+  </background-video-skin>
+</background-video-player>`;
+const usage = definition.preset === 'background'
+  ? framework === 'react'
+    ? backgroundReact
+    : backgroundHtml
+  : framework === 'react'
+    ? reactUsage
+    : htmlUsage;
+---
+
+<p>{definition.when}</p>
+
+<MinimalFrame>
+  {
+    framework === "react" ? (
+      <SkinPreview client:idle skin={definition.name} />
+    ) : (
+      <SkinPreviewHtml skin={definition.name} />
+    )
+  }
+</MinimalFrame>
+
+<h2 id="use-the-packaged-preset">Use the packaged preset</h2>
+
+<TabsRoot client:idle>
+  <TabsList client:idle label={`${definition.title} usage`}>
+    <Tab client:idle value="usage" initial>{framework === "react" ? "App.tsx" : "index.html"}</Tab>
+  </TabsList>
+  <TabsPanel client:idle value="usage" initial>
+    <ServerCode code={usage} lang={framework === "react" ? "tsx" : "html"} />
+  </TabsPanel>
+</TabsRoot>
+
+<h2 id="customize-the-skin">Customize the skin</h2>
+
+<p>
+  Packaged skins support <code>--media-accent-color</code>, <code>--media-accent-text-color</code>, <code>--media-border-radius</code>, and <code>--media-scale-unit</code>. Add your own class name and <code>style</code> values to the skin root.
+</p>
+
+{definition.media === "video" && definition.preset !== "background" ? (
+  framework === "react" ? (
+    <p>Use the skin's <code>renderPoster</code> prop to replace its poster.</p>
+  ) : (
+    <p>Place an image in the <code>poster</code> slot to replace the poster.</p>
+  )
+) : null}
+
+<p>
+  See <DocsLink slug="how-to/customize-skins">Customize skins</DocsLink> for the complete styling and ownership workflow.
+</p>
+
+{
+  definition.preset === "background" ? (
+    <Aside type="note" title="Background stays packaged">
+      Background is a small, control-free preset with separate React and HTML implementations rather than a VJSC-generated control skin.
+    </Aside>
+  ) : null
+}
+
+<h2 id="behavior-and-api">Behavior and API</h2>
+
+<ul>
+  <li>
+    The packaged export is <code>{definition.reactSkin}</code> in React and <code>&lt;{definition.htmlSkin}&gt;</code> in HTML.
+  </li>
+  <li>{live ? "The live preset replaces on-demand time controls with live-edge state." : "The on-demand preset includes duration and seeking behavior."}</li>
+  <li>{definition.variant === "minimal" ? "Minimal keeps the same feature family in a smaller responsive layout." : "Default exposes the full primary and secondary control regions."}</li>
+</ul>
+
+<p>
+  For player state and feature details, see <DocsLink slug="concepts/presets">Presets</DocsLink>. For the UI building blocks, see <DocsLink slug="concepts/ui-components">UI components</DocsLink>.
+</p>

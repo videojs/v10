@@ -1,0 +1,15 @@
+---
+import type { RegistrySourceFile } from '@/utils/installation/shadcn-registry';
+import SourceExplorerClient from './SourceExplorerClient';
+
+interface Props {
+  files: readonly RegistrySourceFile[];
+  initialPath?: string;
+}
+
+const { files, initialPath } = Astro.props;
+---
+
+<SourceExplorerClient client:only="react" {files} {initialPath}>
+  <div slot="fallback" class="border-manila-75 bg-manila-light dark:border-warm-gray dark:bg-soot my-6 min-h-80 animate-pulse rounded-xs border"></div>
+</SourceExplorerClient>

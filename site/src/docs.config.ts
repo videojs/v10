@@ -23,6 +23,7 @@ export const sidebar: Sidebar = [
     llmsDescription: 'Installation, project setup, and introductory guides.',
     contents: [
       { slug: 'how-to/installation' },
+      { slug: 'getting-started/shadcn' },
       {
         sidebarLabel: 'Migrate to Video.js 10',
         llmsDescription:
@@ -59,6 +60,22 @@ export const sidebar: Sidebar = [
       { slug: 'concepts/mux-data' },
       { slug: 'concepts/security' },
       { slug: 'concepts/custom-element-lifecycle', frameworks: ['html'] },
+    ],
+  },
+  {
+    sidebarLabel: 'Skins',
+    llmsDescription:
+      'Packaged player skins, including previews, supported targets, usage, behavior, and customization.',
+    contents: [
+      { slug: 'skins/default-video' },
+      { slug: 'skins/minimal-video' },
+      { slug: 'skins/default-audio' },
+      { slug: 'skins/minimal-audio' },
+      { slug: 'skins/default-live-video' },
+      { slug: 'skins/minimal-live-video' },
+      { slug: 'skins/default-live-audio' },
+      { slug: 'skins/minimal-live-audio' },
+      { slug: 'skins/background-video' },
     ],
   },
   {

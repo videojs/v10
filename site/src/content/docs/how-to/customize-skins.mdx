@@ -1,13 +1,14 @@
 ---
 title: Customize skins
-description: Learn the public customization surface for packaged Video.js skins and when to eject
+description: Learn the public customization surface for packaged and source-owned Video.js skins
 ---
 
-import FrameworkCase from '@/components/docs/FrameworkCase.astro';
-import EjectedSkin from '@/components/docs/EjectedSkin.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
+import DocsLinkCard from '@/components/docs/DocsLinkCard.astro';
+import FrameworkCase from '@/components/docs/FrameworkCase.astro';
+import ShadcnCommand from '@/components/docs/ShadcnCommand.astro';
 
-Video.js v10 comes with two pre-built skins: Default and Minimal. Start with their public CSS custom properties. When you need to change controls, layout, or interactions, eject the closest skin by copying its code into your project and making it your own.
+Video.js v10 comes with Default and Minimal skins. Start with their public CSS custom properties. When you need to change controls, layout, or interactions, install the closest skin's source into your project and make it your own.
 
 ## Basic customization
 
@@ -91,105 +92,28 @@ Packaged video skins also let you replace the poster through the `renderPoster` 
 
 See <DocsLink slug="reference/poster">Poster</DocsLink>.
 
-For anything deeper, eject instead of reaching into the packaged skin. There are no packaged-skin options for adding, removing, or rearranging controls, or replacing its built-in feedback and interactions. Seek buttons are a common example: the audio skins include 10-second skip-back and skip-forward buttons, but the video skins ship without them. To add rewind and fast-forward controls to a video skin, eject it and place a <DocsLink slug="reference/seek-button">SeekButton</DocsLink> in the control bar.
+For anything deeper, install the source instead of reaching into the packaged skin. There are no packaged-skin options for adding, removing, or rearranging controls, or replacing its built-in feedback and interactions. Seek buttons are a common example: the audio skins include 10-second skip-back and skip-forward buttons, but the video skins ship without them. To add rewind and fast-forward controls to a video skin, install it and place a <DocsLink slug="reference/seek-button">SeekButton</DocsLink> in the control bar.
 
-## Eject a skin
+## Install an editable skin
 
-Eject as soon as the packaged skin no longer matches the player you need. Once ejected, removing a control is removing a component, and changing an overlay or interaction is editing code you own.
+The hosted Video.js registry installs a complete skin and its dependencies into your project. The installed files are ordinary app code, so their markup, class names, and styles are yours to change. <DocsLink slug="getting-started/shadcn">Configure the `@videojs` registry namespace</DocsLink> for your framework and styling choice first.
 
-An ejected skin is app code, so its markup, class names, and styles are yours to change. If none of the packaged skins is a useful starting point, build a custom UI from the player, container, and individual <DocsLink slug="concepts/ui-components">UI components</DocsLink> instead.
+<ShadcnCommand action="add @videojs/video" />
 
-Soon, we'll have a CLI that ejects skins in your preferred framework and style. For now, we invite you to try these copy-paste-ready implementations.
+The same item name works for React or HTML and Tailwind or CSS; the configured namespace URL chooses the catalog. Add `-minimal` for the Minimal layout, for example `@videojs/video-minimal`. Audio and live presets follow the same pattern.
 
-To eject a skin:
+- <DocsLink slug="skins/default-video">VideoSkin</DocsLink>
+- <DocsLink slug="skins/minimal-video">MinimalVideoSkin</DocsLink>
+- <DocsLink slug="skins/default-audio">AudioSkin</DocsLink>
+- <DocsLink slug="skins/minimal-audio">MinimalAudioSkin</DocsLink>
+- <DocsLink slug="skins/default-live-video">LiveVideoSkin</DocsLink>
+- <DocsLink slug="skins/minimal-live-video">MinimalLiveVideoSkin</DocsLink>
+- <DocsLink slug="skins/default-live-audio">LiveAudioSkin</DocsLink>
+- <DocsLink slug="skins/minimal-live-audio">MinimalLiveAudioSkin</DocsLink>
 
-1. Choose the closest implementation below.
-2. Copy every file shown for your framework into your project.
-3. Replace the packaged skin with the copied component or player markup, then edit the files you own.
+If none of the provided skins is a useful starting point, build a custom UI from the player, container, and individual <DocsLink slug="concepts/ui-components">UI components</DocsLink> instead.
 
-{/*TODO: Add StyleCase for tailwind variants once tailwind is a supported style (see #840)*/}
-
-#### Default video skin
-
-<FrameworkCase frameworks={["react"]}>
-  <EjectedSkin id="default-video-react" />
-</FrameworkCase>
-
-<FrameworkCase frameworks={["html"]}>
-  <EjectedSkin id="default-video" />
-</FrameworkCase>
-
-#### Default audio skin
-
-<FrameworkCase frameworks={["react"]}>
-  <EjectedSkin id="default-audio-react" />
-</FrameworkCase>
-
-<FrameworkCase frameworks={["html"]}>
-  <EjectedSkin id="default-audio" />
-</FrameworkCase>
-
-#### Minimal video skin
-
-<FrameworkCase frameworks={["react"]}>
-  <EjectedSkin id="minimal-video-react" />
-</FrameworkCase>
-
-<FrameworkCase frameworks={["html"]}>
-  <EjectedSkin id="minimal-video" />
-</FrameworkCase>
-
-#### Minimal audio skin
-
-<FrameworkCase frameworks={["react"]}>
-  <EjectedSkin id="minimal-audio-react" />
-</FrameworkCase>
-
-<FrameworkCase frameworks={["html"]}>
-  <EjectedSkin id="minimal-audio" />
-</FrameworkCase>
-
-#### Default live video skin
-
-The live skins swap the duration and current-time displays for a Live button. They build on the live presets, so the player reports live-edge state.
-
-<FrameworkCase frameworks={["react"]}>
-  <EjectedSkin id="default-live-video-react" />
-</FrameworkCase>
-
-<FrameworkCase frameworks={["html"]}>
-  <EjectedSkin id="default-live-video" />
-</FrameworkCase>
-
-#### Default live audio skin
-
-<FrameworkCase frameworks={["react"]}>
-  <EjectedSkin id="default-live-audio-react" />
-</FrameworkCase>
-
-<FrameworkCase frameworks={["html"]}>
-  <EjectedSkin id="default-live-audio" />
-</FrameworkCase>
-
-#### Minimal live video skin
-
-<FrameworkCase frameworks={["react"]}>
-  <EjectedSkin id="minimal-live-video-react" />
-</FrameworkCase>
-
-<FrameworkCase frameworks={["html"]}>
-  <EjectedSkin id="minimal-live-video" />
-</FrameworkCase>
-
-#### Minimal live audio skin
-
-<FrameworkCase frameworks={["react"]}>
-  <EjectedSkin id="minimal-live-audio-react" />
-</FrameworkCase>
-
-<FrameworkCase frameworks={["html"]}>
-  <EjectedSkin id="minimal-live-audio" />
-</FrameworkCase>
+<DocsLinkCard slug="getting-started/shadcn">Install editable Video.js source with Shadcn</DocsLinkCard>
 
 ## Related guides
 
