@@ -69,7 +69,15 @@ jobs:
             vite-task-${{ runner.os }}-${{ runner.arch }}-packages-
 
       - name: Build packages
-        run: pnpm build:packages
+        run: |
+          build_log="$RUNNER_TEMP/videojs-build-packages.log"
+
+          if pnpm build:packages >"$build_log" 2>&1; then
+            tail -n 20 "$build_log"
+          else
+            tail -n 500 "$build_log"
+            exit 1
+          fi
 
       - name: Generate site content
         run: pnpm exec vp run site#api-docs:generate && pnpm exec vp run site#cdn-manifest && pnpm exec vp run @videojs/skins#build:shadcn
@@ -80,7 +88,15 @@ jobs:
       # No other PR workflow builds the site (only cd.yml on release and Netlify
       # on deploy), so this job owns the build and the checks that need dist/.
       - name: Build site
-        run: pnpm build:site
+        run: |
+          build_log="$RUNNER_TEMP/videojs-site-build.log"
+
+          if pnpm build:site >"$build_log" 2>&1; then
+            tail -n 20 "$build_log"
+          else
+            tail -n 500 "$build_log"
+            exit 1
+          fi
 
       - name: Check anchors
         run: pnpm -F site check:anchors

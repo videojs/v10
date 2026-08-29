@@ -1,5 +1,5 @@
 [build]
-  command = "pnpm exec vp run --no-cache site#build"
+  command = "if pnpm exec vp run --no-cache site#build > /tmp/videojs-site-build.log 2>&1; then tail -n 20 /tmp/videojs-site-build.log; else tail -n 500 /tmp/videojs-site-build.log; exit 1; fi"
   publish = "site/dist"
 
 # PostHog reverse proxy (ad-blocker bypass)
