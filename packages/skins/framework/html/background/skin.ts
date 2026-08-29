@@ -17,7 +17,7 @@ function getTemplateHTML() {
 
 export class BackgroundVideoSkinElement extends ReactiveElement {
   static readonly tagName = 'background-video-skin';
-  static shadowRootOptions = { mode: 'open' as ShadowRootMode };
+  static shadowRootOptions: ShadowRootInit = { mode: 'open' };
   static getTemplateHTML = getTemplateHTML;
 
   constructor() {
@@ -26,7 +26,7 @@ export class BackgroundVideoSkinElement extends ReactiveElement {
     ensureGlobalStyle(STYLES_ID, styles);
 
     if (!this.shadowRoot) {
-      this.attachShadow((this.constructor as typeof BackgroundVideoSkinElement).shadowRootOptions);
+      this.attachShadow(BackgroundVideoSkinElement.shadowRootOptions);
       this.shadowRoot!.innerHTML = getTemplateHTML();
     }
   }

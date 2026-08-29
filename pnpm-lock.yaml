@@ -311,9 +311,6 @@ importers:
       '@videojs/icons':
         specifier: workspace:*
         version: link:../icons
-      '@videojs/skins':
-        specifier: workspace:*
-        version: link:../skins
       happy-dom:
         specifier: ^20.11.1
         version: 20.11.1
