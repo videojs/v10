@@ -143,6 +143,5 @@ function createSkins<T extends SkinDef>(create: (variant: SkinVariant, mediaType
 
 export const SKINS: SkinDef[] = [
   ...createSkins((variant, mediaType, live) => createHtmlSkin('css', variant, mediaType, live)),
-  ...createSkins((variant, mediaType, live) => createHtmlSkin('tailwind', variant, mediaType, live)),
   ...createSkins((variant, mediaType, live) => createReactSkin('css', variant, mediaType, live)),
 ];

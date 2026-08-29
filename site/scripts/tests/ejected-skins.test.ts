@@ -23,15 +23,14 @@ describe('ejected skin configuration', () => {
     expect(new Set(SKINS.map(({ id }) => id)).size).toBe(SKINS.length);
   });
 
-  it('defines both platforms and styling modes', () => {
+  it('defines both platforms using the remaining CSS sources', () => {
     expect(new Set(SKINS.map(({ platform }) => platform))).toEqual(new Set(['html', 'react']));
-    expect(new Set(SKINS.map(({ style }) => style))).toEqual(new Set(['css', 'tailwind']));
+    expect(new Set(SKINS.map(({ style }) => style))).toEqual(new Set(['css']));
   });
 
   it('only defines source-backed combinations', () => {
-    expect(SKINS).toHaveLength(24);
-    expect(SKINS.filter(({ live }) => live)).toHaveLength(12);
-    expect(SKINS.filter(({ platform }) => platform === 'react').every(({ style }) => style === 'css')).toBe(true);
+    expect(SKINS).toHaveLength(16);
+    expect(SKINS.filter(({ live }) => live)).toHaveLength(8);
   });
 });
 
@@ -124,13 +123,6 @@ describe('ejected HTML skins', () => {
     expect(prependHtmlSkinScripts('<media-poster></media-poster>', skin)).toContain(
       `<live-video-player poster="${DEMO_LIVE_POSTER_SRC}">`
     );
-  });
-
-  it('does not link a generated stylesheet for Tailwind skins', () => {
-    const skin = SKINS.find(({ id }) => id === 'minimal-live-video-tailwind');
-    if (skin?.platform !== 'html') throw new Error('Missing live Tailwind HTML skin fixture');
-
-    expect(prependHtmlSkinScripts('<media-controls></media-controls>', skin)).not.toContain('player.css');
   });
 });
 
