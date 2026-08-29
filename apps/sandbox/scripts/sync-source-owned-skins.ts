@@ -65,7 +65,11 @@ async function installFramework(framework: 'react' | 'html', destination: string
 
     const items = presets.flatMap((preset) => variants.map((variant) => `@videojs/${preset}${variant}`));
 
-    await runCommand(process.execPath, [shadcnBin, 'add', ...items, '--cwd', root, '--yes', '--silent'], root);
+    await runCommand(
+      process.execPath,
+      [shadcnBin, 'add', ...items, '--cwd', root, '--yes', '--overwrite', '--silent'],
+      root
+    );
 
     await mkdir(destination, { recursive: true });
     await cp(resolve(root, 'src/components/videojs'), destination, { recursive: true });
