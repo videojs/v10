@@ -1,174 +1,169 @@
 import { build } from 'vite-plus/pack';
-import { describe, expect, it } from 'vite-plus/test';
+import { beforeAll, describe, expect, it } from 'vite-plus/test';
 import type { ShadcnRegistry } from 'vjsc/shadcn';
 
 import { shadcnPackConfig } from '../../shadcn/vite.config';
 
+const registryRoots = ['r/react', 'r/react/css', 'r/html', 'r/html/css'] as const;
+const skinNames = [
+  'audio',
+  'audio-minimal',
+  'live-audio',
+  'live-audio-minimal',
+  'live-video',
+  'live-video-minimal',
+  'video',
+  'video-minimal',
+] as const;
+let buildOutput: Awaited<ReturnType<typeof build>>[number];
+let builtAssets: Map<string, string>;
+
 describe('Skins Shadcn registry', () => {
-  it('emits editable React and Tailwind JSON without a synthetic runtime chunk', async () => {
-    const [result] = await build({
+  beforeAll(async () => {
+    const [output] = await build({
       ...shadcnPackConfig,
       logLevel: 'silent',
       write: false,
     });
-    if (!result) throw new Error('Expected one registry build output.');
+    if (!output) throw new Error('Expected one registry build output.');
 
-    const output = result.chunks;
+    buildOutput = output;
 
-    expect(output.some((item) => item.type === 'chunk')).toBe(false);
-    const assets = new Map<string, string>(
-      output.filter((item) => item.type === 'asset').map((item) => [item.fileName, String(item.source)] as const)
+    builtAssets = new Map(
+      buildOutput.chunks
+        .filter((item) => item.type === 'asset')
+        .map((item) => [item.fileName, String(item.source)] as const)
     );
-    const registry = assetJson<ShadcnRegistry>(assets, 'registry.json');
-    const items = registryItems(assets, registry);
-    const playButton = registryItem(items, 'react-play-button');
-    const minimalPlayButton = registryItem(items, 'react-play-button-minimal');
-    const button = registryItem(items, 'react-button');
-    const minimalButton = registryItem(items, 'react-button-minimal');
-    const defaultVideo = registryItem(items, 'react-video-skin');
-    const minimalVideo = registryItem(items, 'react-video-skin-minimal');
-    const defaultAudio = registryItem(items, 'react-audio-skin');
-    const audioPlayButton = registryItem(items, 'react-audio-play-button');
-    const defaultVideoCss = registryItem(items, 'react-video-skin-css');
-    const htmlVideo = registryItem(items, 'html-video-skin');
-    const htmlMinimalVideoCss = registryItem(items, 'html-video-skin-minimal-css');
-    const container = registryItem(items, 'react-container');
-    const poster = registryItem(items, 'react-poster');
-    const videoSettingsMenu = registryItem(items, 'react-video-settings-menu');
-    const videoHotkeys = registryItem(items, 'react-video-hotkeys');
-    const volumePopover = registryItem(items, 'react-volume-popover');
-    const styles = registryItem(items, 'tailwind-styles');
-    const utils = registryItem(items, 'react-utils');
-    const reactLiveVideoPlayer = registryItem(items, 'react-live-video-minimal-css');
-    const htmlAudioPlayer = registryItem(items, 'html-audio');
-    const reactHlsJsVideo = registryItem(items, 'react-hlsjs-video');
-    const htmlMuxSpf = registryItem(items, 'html-mux-video-spf');
+  }, 120_000);
 
-    const playSource = registrySource(assets, 'react/components', playButton, '/play-button.tsx');
-    const buttonSource = registrySource(assets, 'react/components', button, '/button.tsx');
-    const minimalButtonSource = registrySource(assets, 'react/components', minimalButton, '/button-minimal.tsx');
-    const posterSource = registrySource(assets, 'react/components', poster, '/poster.tsx');
-    const qualityMenuSource = registrySource(assets, 'react/components', videoSettingsMenu, '/quality-menu.tsx');
-    const videoSettingsMenuSource = registrySource(
-      assets,
-      'react/components',
-      videoSettingsMenu,
-      '/video-settings-menu.tsx'
+  it('emits four static source registries without runtime artifacts', async () => {
+    expect(buildOutput.chunks.some((item) => item.type === 'chunk')).toBe(false);
+    const assets = builtAssets;
+
+    expect([...assets.keys()].every((filename) => filename.startsWith('r/'))).toBe(true);
+
+    for (const root of registryRoots) {
+      const registry = assetJson<ShadcnRegistry>(assets, `${root}/registry.json`);
+
+      expect(registry.include?.length).toBeGreaterThan(0);
+
+      for (const item of registryItems(assets, root, registry)) {
+        expect(item).not.toHaveProperty('$vjsc');
+
+        if (root.startsWith('r/react')) expect(item.dependencies ?? []).not.toContain('vjsc');
+
+        for (const dependency of item.dependencies ?? []) {
+          if (dependency.startsWith('@videojs/')) expect(dependency).toMatch(/@10\.0\.0-beta\.32$/);
+        }
+      }
+    }
+
+    expect([...assets.keys()]).not.toEqual(
+      expect.arrayContaining([expect.stringMatching(/(?:^|\/)tailwind\.css$/), expect.stringMatching(/\.js$/)])
     );
-    const settingsMenuSource = registrySource(assets, 'react/components', videoSettingsMenu, '/settings-menu.tsx');
-    const volumePopoverSource = registrySource(assets, 'react/components', volumePopover, '/volume-popover.tsx');
+  }, 120_000);
 
-    expect(items).toHaveLength(166);
-    expect(new Set(items.map((item) => item.name)).size).toBe(items.length);
-    expect(items.every((item) => item.meta?.role && typeof item.meta.public === 'boolean')).toBe(true);
-    expect(items.map((item) => item.name)).toEqual(
+  it('keeps public React UI stable across themes and styling modes', async () => {
+    const assets = builtAssets;
+    const tailwind = catalogItems(assets, 'r/react');
+    const css = catalogItems(assets, 'r/react/css');
+    const tailwindPublic = publicItems(tailwind);
+    const cssPublic = publicItems(css);
+
+    expect(tailwindPublic.map((item) => item.name).sort()).toEqual(cssPublic.map((item) => item.name).sort());
+    expect(
+      tailwindPublic
+        .filter((item) => item.meta?.role === 'skin')
+        .map((item) => item.name)
+        .sort()
+    ).toEqual([...skinNames]);
+    expect(tailwindPublic.some((item) => item.name === 'button-tooltip')).toBe(false);
+    expect(tailwindPublic.some((item) => /(?:-css|-default)$/.test(item.name))).toBe(false);
+    expect(tailwindPublic.some((item) => item.meta?.role === 'media' || item.meta?.role === 'player')).toBe(false);
+    expect(tailwindPublic.map((item) => item.name)).toEqual(
       expect.arrayContaining([
-        'react-video-skin-minimal',
-        'react-play-button',
-        'react-play-button-minimal',
-        'react-playback-hotkeys',
+        'audio-track-menu',
+        'captions-menu',
+        'captions-submenu',
+        'playback-rate-submenu',
+        'quality-menu',
+        'radio-item',
+        'settings-menu',
       ])
     );
-    expect(items.some((item) => item.name === 'react-button-tooltip')).toBe(false);
-    expect(playSource).toContain('export interface PlayButtonProps');
-    expect(playSource).toContain('<PlayButtonPrimitive render={<Button />} className=');
-    expect(buttonSource).toContain('export type ButtonProps');
-    expect(buttonSource).toContain('grid min-h-0');
-    expect(playSource).toContain(`from "@/components/videojs/utils"`);
-    expect(playSource).not.toContain('const meta');
-    expect(playSource).not.toContain('jsx-runtime');
-    expect(playButton.dependencies).toEqual(['@videojs/react@10.0.0-beta.32', 'react']);
-    expect(playButton.registryDependencies).toEqual([
-      '@videojs/react-button',
-      '@videojs/react-utils',
-      '@videojs/tailwind-styles',
-    ]);
-    expect(minimalPlayButton.registryDependencies).toEqual([
-      '@videojs/react-button-minimal',
-      '@videojs/react-utils',
-      '@videojs/tailwind-styles',
-    ]);
-    expect(buttonSource).toContain('size-9');
-    expect(minimalButtonSource).toContain('size-9.5');
-    expect(defaultVideo.registryDependencies).toEqual(
-      expect.arrayContaining(['@videojs/react-container', '@videojs/react-play-button', '@videojs/react-poster'])
-    );
-    expect(defaultVideo.registryDependencies).not.toContain('@videojs/react-seek-button');
-    expect(minimalVideo.registryDependencies).toContain('@videojs/react-play-button-minimal');
-    expect(minimalVideo.registryDependencies).not.toContain('@videojs/react-play-button');
-    expect(defaultAudio.registryDependencies).toContain('@videojs/react-audio-play-button');
-    expect(audioPlayButton.registryDependencies).toContain('@videojs/react-play-button');
-    expect(defaultVideoCss.registryDependencies).not.toContain('@videojs/tailwind-styles');
-    expect(htmlVideo.registryDependencies).toContain('@videojs/tailwind-styles');
-    expect(htmlMinimalVideoCss.registryDependencies).not.toContain('@videojs/tailwind-styles');
-    const defaultVideoCssSource = registrySource(assets, 'react/skins', defaultVideoCss, '/skin.tsx');
-    const defaultVideoCssPlaySource = registrySource(
-      assets,
-      'react/skins',
-      defaultVideoCss,
-      '/buttons/play-button.tsx'
-    );
-    const defaultVideoStyles = registrySource(assets, 'react/skins', defaultVideoCss, '/skin.css');
 
-    expect(defaultVideoCssSource).toContain(`import './skin.css';`);
-    expect(defaultVideoCssSource).not.toContain('virtual:vjsc/css');
-    expect(defaultVideoCssPlaySource).toContain('media-play-button');
-    expect(defaultVideoStyles).toContain('.media-button {');
-    expect(defaultVideoStyles).toContain('@layer videojs.base');
-    expect(videoHotkeys.registryDependencies).toContain('@videojs/react-playback-hotkeys');
-    expect(items.some((item) => item.name === 'react-playback-hotkeys-minimal')).toBe(false);
-    expect(container.dependencies).toEqual(['@videojs/react@10.0.0-beta.32', 'react']);
-    expect(container.registryDependencies).toEqual(['@videojs/react-utils', '@videojs/tailwind-styles']);
-    expect(posterSource).toContain('<PosterPrimitive render={children}');
-    expect(posterSource).not.toContain('@videojs/core/vjsc');
-    expect(qualityMenuSource).not.toContain('useQualityOptions');
-    expect(qualityMenuSource).toContain('<QualityRadioGroup.Root>');
-    expect(qualityMenuSource).toContain('<QualityRadioGroup.Value');
-    expect(qualityMenuSource).toContain('<QualityRadioGroup.Options');
-    expect(qualityMenuSource).not.toContain('<Menu.Content keepMounted');
-    expect(settingsMenuSource).toMatch(/<Menu\.Popup\s+keepMounted/);
-    expect(videoSettingsMenuSource).not.toContain('const hasSettings =');
-    expect(volumePopoverSource).toContain('VolumePopoverPrimitive.Root');
-    expect(volumePopoverSource).toContain('VolumePopoverPrimitive.Trigger');
-    expect(volumePopoverSource).not.toContain('usePlayer');
-    expect(styles.files.map((file) => file.target)).toEqual([
-      'components/videojs/styles/base.css',
-      'components/videojs/styles/captions.css',
-      'components/videojs/styles/tailwind.css',
-      'components/videojs/styles/tailwind.shared.css',
-      'components/videojs/styles/themes/audio.css',
-      'components/videojs/styles/themes/default.css',
-      'components/videojs/styles/themes/minimal.css',
-      'components/videojs/styles/themes/preferences.css',
-      'components/videojs/styles/themes/shared.css',
+    const playButton = registryItem(tailwind, 'play-button');
+    const playSource = registrySource(assets, 'r/react/ui', playButton, '/play-button.tsx');
+    const minimalVideo = registryItem(tailwind, 'video-minimal');
+
+    expect(playButton.files.map((file) => file.target)).toEqual(['components/videojs/ui/play-button.tsx']);
+    expect(playButton.registryDependencies).toEqual([
+      '@videojs/_button-tooltip',
+      '@videojs/_resolve-class-name',
+      '@videojs/_style-theme',
+      '@videojs/button',
     ]);
-    expect(utils).toMatchObject({
-      type: 'registry:lib',
-      dependencies: ['clsx', 'tailwind-merge'],
-    });
-    expect(utils.files[0]).toMatchObject({
-      type: 'registry:lib',
-      target: 'components/videojs/utils.ts',
-    });
-    expect(registrySource(assets, 'shared', utils, '/utils.ts')).toContain('export function resolveClassName');
-    expect(reactLiveVideoPlayer.registryDependencies).toEqual(['@videojs/react-live-video-skin-minimal-css']);
+    expect(playSource).toContain(`@/components/videojs/lib/resolve-class-name`);
+    expect(playSource).toContain(`from '@/components/videojs/ui/button-tooltip'`);
+    expect(playSource).toContain('@videojs/react/icons/minimal');
+    expect(playSource).toContain('export type PlayButtonProps =');
+    expect(playSource).not.toContain('interface PlayButtonProps extends');
+    expect(minimalVideo.files.some((file) => file.target === 'components/videojs/skins/video/minimal/skin.tsx')).toBe(
+      true
+    );
+    expect(minimalVideo.registryDependencies).toContain('@videojs/play-button');
     expect(
-      registrySource(assets, 'react/players', reactLiveVideoPlayer, '/players/live-video-minimal-css.tsx')
-    ).toContain('interface LiveVideoProps extends LiveVideoPlayerProps');
-    expect(htmlAudioPlayer.registryDependencies).toEqual(['@videojs/html-audio-skin']);
-    expect(registrySource(assets, 'html/players', htmlAudioPlayer, '/players/audio.html')).toContain('<audio-player>');
-    expect(registrySource(assets, 'react/media', reactHlsJsVideo, '/media/hlsjs-video.ts')).toContain(
-      `from '@videojs/react/media/hlsjs-video'`
+      (minimalVideo.registryDependencies ?? []).some((dependency) => dependency.includes('play-button-minimal'))
+    ).toBe(false);
+
+    const cssPlayButton = registryItem(css, 'play-button');
+    const cssPlaySource = registrySource(assets, 'r/react/css/ui', cssPlayButton, '/play-button.tsx');
+    const cssButtonStyles = registrySource(
+      assets,
+      'r/react/css/support',
+      registryItem(css, '_style-button'),
+      '/button.css'
     );
-    expect(registrySource(assets, 'html/media', htmlMuxSpf, '/media/mux-video-spf.ts')).toContain(
-      `from '@videojs/html/media/mux-video/spf'`
-    );
+
+    expect(cssPlaySource).toContain(`import '../styles/button.css';`);
+    expect(cssPlaySource).toContain(`import '../styles/theme.css';`);
+    expect(cssPlaySource).not.toContain('virtual:vjsc/css');
+    expect(cssButtonStyles).toContain('@scope (.media-skin)');
+    expect(cssButtonStyles).toContain('.media-play-button');
+
+    const helper = registryItem(tailwind, '_resolve-class-name');
+    const helperSource = registrySource(assets, 'r/react/support', helper, '/resolve-class-name.ts');
+
+    expect(helper.files[0]?.target).toBe('components/videojs/lib/resolve-class-name.ts');
+    expect(helper.dependencies).toBeUndefined();
+    expect(helperSource).toContain(`export { cn } from '@/lib/utils';`);
+  }, 120_000);
+
+  it('publishes only complete skin blocks for HTML', async () => {
+    const assets = builtAssets;
+
+    for (const root of ['r/html', 'r/html/css'] as const) {
+      const items = catalogItems(assets, root);
+      const published = publicItems(items);
+
+      expect(published.map((item) => item.name).sort()).toEqual([...skinNames]);
+      expect(published.every((item) => item.type === 'registry:block' && item.meta?.role === 'skin')).toBe(true);
+      expect(published.some((item) => item.meta?.role === 'component')).toBe(false);
+      expect(
+        published.flatMap((item) => item.files).some((file) => /(?:^|\/)(?:players|media)\//.test(file.target ?? ''))
+      ).toBe(false);
+    }
   }, 120_000);
 });
 
 type BuiltItem = Omit<ShadcnRegistry['items'][number], 'files'> & {
   files: Array<{ type: string; path: string; target?: string | undefined }>;
+  meta?: Record<string, unknown> | undefined;
 };
+
+function catalogItems(assets: ReadonlyMap<string, string>, root: string): BuiltItem[] {
+  return registryItems(assets, root, assetJson<ShadcnRegistry>(assets, `${root}/registry.json`));
+}
 
 function assetJson<Value>(assets: ReadonlyMap<string, string>, fileName: string): Value {
   const source = assets.get(fileName);
@@ -177,10 +172,16 @@ function assetJson<Value>(assets: ReadonlyMap<string, string>, fileName: string)
   return JSON.parse(source) as Value;
 }
 
-function registryItems(assets: ReadonlyMap<string, string>, registry: ShadcnRegistry): BuiltItem[] {
-  return (registry.include ?? []).flatMap(
-    (path) => assetJson<{ items: BuiltItem[] }>(assets, path.replace(/^\.\//, '')).items
-  );
+function registryItems(assets: ReadonlyMap<string, string>, root: string, registry: ShadcnRegistry): BuiltItem[] {
+  return (registry.include ?? []).flatMap((path) => {
+    const filename = `${root}/${path.replace(/^\.\//, '')}`;
+
+    return assetJson<{ items: BuiltItem[] }>(assets, filename).items;
+  });
+}
+
+function publicItems(items: readonly BuiltItem[]): BuiltItem[] {
+  return items.filter((item) => item.meta?.public === true);
 }
 
 function registryItem(items: readonly BuiltItem[], name: string): BuiltItem {

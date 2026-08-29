@@ -1,13 +1,14 @@
 import { speedText } from '@videojs/core/i18n/text/menu';
 import { SpeedIcon } from '@videojs/icons/vjsc';
-import { type Props, Template, Text } from 'vjsc/components';
+import { type ClassNameValue, Template, Text } from 'vjsc/components';
 
+import type { SkinComponentMeta } from '../../meta';
 import styles from '../../styles/menus/menu.styles';
 import { MenuChevron } from './menu-chevron';
 import { RadioItem } from './radio-item';
 
 export interface PlaybackRateSubmenuProps extends MenuProps {
-  className?: Props<MenuProps>['className'];
+  className?: ClassNameValue;
 }
 
 export function PlaybackRateSubmenu({ className, ...props }: PlaybackRateSubmenuProps = {}) {
@@ -42,3 +43,10 @@ export function PlaybackRateSubmenu({ className, ...props }: PlaybackRateSubmenu
 }
 import type { MenuProps } from '@videojs/core';
 import * as $ from '@videojs/core/vjsc';
+
+export const meta = {
+  name: 'playback-rate-submenu',
+  type: 'component',
+  title: 'Playback Rate Submenu',
+  description: 'A submenu for selecting the playback speed.',
+} as const satisfies SkinComponentMeta;

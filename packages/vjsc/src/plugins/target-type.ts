@@ -96,11 +96,11 @@ export function targetTypePlugin(options: ComponentTargetPluginOptions): Plugin 
             }
 
             const insertion = parent?.type === 'ExportNamedDeclaration' ? parent.start : node.start;
+            const declaration = members.length
+              ? `export interface ${interfaceName} extends ${heritage} {\n${members.join('\n')}\n}\n`
+              : `export type ${interfaceName} = ${heritage};\n`;
 
-            transform.magicString!.appendLeft(
-              insertion,
-              `export interface ${interfaceName} extends ${heritage} {${members.length ? `\n${members.join('\n')}\n` : ''}}\n`
-            );
+            transform.magicString!.appendLeft(insertion, declaration);
             transform.magicString!.overwrite(helper.annotation.start, helper.annotation.end, interfaceName);
             changed = true;
             this.skip();
@@ -149,7 +149,13 @@ function collectBindings(ast: Program, targets: readonly ComponentTarget[]): Can
 
       const name = importedName(specifier);
 
-      if (name === 'Props' || name === 'PropsWithChildren' || name === 'PropsOf' || name.startsWith('Vjsc')) {
+      if (
+        name === 'ClassNameValue' ||
+        name === 'Props' ||
+        name === 'PropsWithChildren' ||
+        name === 'PropsOf' ||
+        name.startsWith('Vjsc')
+      ) {
         sourceTypes.set(specifier.local.name, name);
       }
 
@@ -286,7 +292,7 @@ function rewriteSourceTypeText(
       if (node.type !== 'TSTypeReference' || node.typeName.type !== 'Identifier') return;
 
       const name = bindings.sourceTypes.get(node.typeName.name);
-      if (!name?.startsWith('Vjsc')) return;
+      if (name !== 'ClassNameValue' && !name?.startsWith('Vjsc')) return;
 
       const target = uniqueTargetType(name, targets);
       if (!target) return;

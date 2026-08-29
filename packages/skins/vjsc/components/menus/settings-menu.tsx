@@ -4,6 +4,7 @@ import * as $ from '@videojs/core/vjsc';
 import { GearIcon } from '@videojs/icons/vjsc';
 import { type PropsWithChildren, Text } from 'vjsc/components';
 
+import type { SkinComponentMeta } from '../../meta';
 import buttonStyles from '../../styles/buttons/button.styles';
 import styles from '../../styles/menus/menu.styles';
 import { Button } from '../buttons/button';
@@ -30,3 +31,10 @@ export function SettingsMenu({
     </$.Menu.Root>
   );
 }
+
+export const meta = {
+  name: 'settings-menu',
+  type: 'component',
+  title: 'Settings Menu',
+  description: 'A settings button and popup for composing playback option submenus.',
+} as const satisfies SkinComponentMeta;

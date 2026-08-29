@@ -35,6 +35,7 @@ const target = defineComponentTarget<typeof schema>()(({ element, imported }) =>
     }),
   },
   types: {
+    ClassNameValue: { from: 'clsx', name: 'ClassValue' },
     PropsOf: { from: 'react', name: 'ComponentProps' },
     VjscNode: { from: 'react', name: 'ReactNode' },
   },
@@ -46,7 +47,7 @@ describe('targetTypePlugin', () => {
     const source = await transform(`
       'use client';
       import * as $ from '@fixture/components';
-      import { Box, type Props, type PropsOf, type VjscNode } from 'vjsc/components';
+      import { Box, type ClassNameValue, type Props, type PropsOf, type VjscNode } from 'vjsc/components';
       import { Local } from './local';
       import { setup } from './setup';
       import type { BuildOnly } from './build-only';
@@ -61,6 +62,7 @@ describe('targetTypePlugin', () => {
             custom?: boolean;
             VjscNode?: string;
             child?: VjscNode;
+            popupClassName?: ClassNameValue;
             label?: 'VjscNode';
           } & { nested?: { value: string } }
         > = {}
@@ -79,6 +81,7 @@ describe('targetTypePlugin', () => {
 
     expect(source).toContain('PlayButton as PlayButtonPrimitive');
     expect(source).toContain('Tooltip } from "@fixture/react";');
+    expect(source).toContain('import type { ClassValue } from "clsx";');
     expect(source).toContain('import type { ComponentProps, ReactNode } from "react";');
     expect(source).toContain('interface Alias extends NonNullable<ComponentProps<typeof Local>>');
     expect(source).toContain('child?: ReactNode;');
@@ -86,12 +89,13 @@ describe('targetTypePlugin', () => {
     expect(source).toContain('custom?: boolean');
     expect(source).toContain('VjscNode?: string');
     expect(source).toContain('child?: ReactNode');
+    expect(source).toContain('popupClassName?: ClassValue');
     expect(source).toContain(`label?: 'VjscNode'`);
     expect(source).toContain('nested?: { value: string }');
     expect(source).not.toContain('type VjscNode');
     expect(source).toContain('{ custom, ...props }: PlayButtonProps = {}');
-    expect(source).toContain('export interface PanelProps extends Omit<ComponentProps<"div">, "children">');
-    expect(source).toContain('export interface ButtonTooltipProps extends Omit<Tooltip.RootProps, "children">');
+    expect(source).toContain('export type PanelProps = Omit<ComponentProps<"div">, "children">');
+    expect(source).toContain('export type ButtonTooltipProps = Omit<Tooltip.RootProps, "children">');
     expect(source).not.toContain('Tooltip.Root.RootProps');
     expect(source).not.toContain("from 'vjsc/components'");
     expect(source).not.toContain("from '@fixture/components'");
