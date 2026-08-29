@@ -102,6 +102,26 @@ describe('generated VJSC source', () => {
     expect(output).toContain('from "@videojs/html/icons"');
     expect(output).toContain('from "@videojs/html/icons/minimal"');
 
+    for (const target of targets) {
+      for (const style of styles) {
+        for (const filename of sources.filter((source) => sourceName(source).startsWith('components/'))) {
+          const name = sourceName(filename);
+
+          for (const [defaultSkin, minimalSkin] of [
+            ['default-video', 'minimal-video'],
+            ['default-live-video', 'minimal-live-video'],
+            ['default-audio', 'minimal-audio'],
+            ['default-live-audio', 'minimal-live-audio'],
+          ] as const) {
+            expect(
+              transformed.get(`${target}/${defaultSkin}/${style}/${name}`),
+              `${target}/${style}/${name} must be theme-invariant`
+            ).toBe(transformed.get(`${target}/${minimalSkin}/${style}/${name}`));
+          }
+        }
+      }
+    }
+
     const htmlPlayButton = generatedSection(output, 'html/default-video/css/components/buttons/play-button.tsx');
     const reactLiveButton = generatedSection(output, 'react/default-video/tailwind/components/buttons/live-button.tsx');
     const htmlLiveButton = generatedSection(output, 'html/minimal-video/css/components/buttons/live-button.tsx');
