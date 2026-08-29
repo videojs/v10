@@ -6,6 +6,7 @@ import type { ComponentGraphProvider } from 'vjsc/graph';
 import type { SkinModuleMeta } from '../../vjsc/meta.ts';
 import { formatGeneratedSource } from '../format.ts';
 import { syncGeneratedFiles } from './files.ts';
+import { createHtmlPackageSkins, htmlPackageSkinOwnedPaths } from './html.ts';
 import { createReactPackageSkins, reactPackageSkinOwnedPaths } from './react.ts';
 
 export interface FrameworkSkinsPluginOptions {
@@ -20,8 +21,14 @@ export function frameworkSkinsPlugin(
   return {
     name: 'skins:framework-packages',
     buildStart() {
-      this.addWatchFile(resolve(options.workspaceDir, 'packages/skins/framework/react/background/skin.tsx'));
-      this.addWatchFile(resolve(options.workspaceDir, 'packages/skins/framework/react/background/skin.css'));
+      for (const path of [
+        'packages/skins/framework/react/background/skin.tsx',
+        'packages/skins/framework/react/background/skin.css',
+        'packages/skins/framework/html/background/skin.ts',
+        'packages/skins/framework/html/background/skin.css',
+      ]) {
+        this.addWatchFile(resolve(options.workspaceDir, path));
+      }
     },
     async generateBundle() {
       if (!graph.api) this.error('Framework Skin generation requires a VJSC component graph plugin.');
@@ -29,8 +36,12 @@ export function frameworkSkinsPlugin(
       const graphApi = graph.api;
       if (!graphApi) return;
 
+      const generated = await Promise.all([
+        createReactPackageSkins(graphApi.getGraph(), options),
+        createHtmlPackageSkins(graphApi.getGraph(), options),
+      ]);
       const files = await Promise.all(
-        (await createReactPackageSkins(graphApi.getGraph(), options)).map(async (file) => {
+        generated.flat().map(async (file) => {
           if (!/\.[cm]?[jt]sx?$/.test(file.path)) return file;
 
           const formatted = await formatGeneratedSource(file.path, file.content);
@@ -44,9 +55,12 @@ export function frameworkSkinsPlugin(
           return { ...file, content: formatted.code };
         })
       );
-      const changed = await syncGeneratedFiles(options.workspaceDir, files, reactPackageSkinOwnedPaths());
+      const changed = await syncGeneratedFiles(options.workspaceDir, files, [
+        ...reactPackageSkinOwnedPaths(),
+        ...htmlPackageSkinOwnedPaths(),
+      ]);
 
-      if (changed > 0) this.info(`Generated ${changed} changed React package Skin file${changed === 1 ? '' : 's'}.`);
+      if (changed > 0) this.info(`Generated ${changed} changed framework Skin file${changed === 1 ? '' : 's'}.`);
     },
   };
 }

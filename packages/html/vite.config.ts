@@ -22,13 +22,14 @@ import { LOCALES, localeAliases } from '../core/src/core/i18n/locales.ts';
 type CdnBuildMode = 'dev' | 'prod';
 
 const packageDir = dirname(fileURLToPath(import.meta.url));
-const skinsDir = resolve(packageDir, '../skins/src');
+const srcDir = new URL('./src', import.meta.url).pathname;
+const skinsDir = srcDir;
 
 /** The light-DOM sheet every non-background skin pulls in. Kept out of the shadow sheets. */
 const globalCss = resolve(packageDir, 'src/define/global.css');
 
-const srcDir = new URL('./src', import.meta.url).pathname;
 const srcAlias = { '@': srcDir };
+const generatedSkinRegistration = /\/internal\/skins\/.+\/register\.[cm]?[jt]s$/;
 const localeTags = [...LOCALES, ...localeAliases(LOCALES)];
 
 const defineEntries = Object.fromEntries(
@@ -82,13 +83,14 @@ const createPackConfig = (mode: PackageBuildMode): PackUserConfig => ({
     // runs against source. Ensure define/* modules (which register custom
     // elements as a side effect) are never tree-shaken from skin bundles.
     moduleSideEffects: [
+      { test: generatedSkinRegistration, sideEffects: true },
       { test: /\/define\//, sideEffects: true },
       { test: /\/icons\/(?:dist\/)?element\//, sideEffects: true },
       { test: /\/i18n\/locales\/.+\/register/, sideEffects: true },
     ],
   },
   deps: {
-    alwaysBundle: [/^@videojs\/icons/, /^@videojs\/skins/],
+    alwaysBundle: [/^@videojs\/icons/],
   },
   alias: srcAlias,
   plugins: [
@@ -245,6 +247,7 @@ for (const mode of cdnBuildModes) {
     },
     treeshake: {
       moduleSideEffects: [
+        { test: generatedSkinRegistration, sideEffects: true },
         { test: /\/define\//, sideEffects: true },
         { test: /\/icons\/(?:dist\/)?element\//, sideEffects: true },
       ],
