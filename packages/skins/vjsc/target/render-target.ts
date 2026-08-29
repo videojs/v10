@@ -19,6 +19,7 @@ import {
   type TargetElement,
   type TargetPropsReference,
   type TargetReference,
+  type SourceProps,
 } from '../../../vjsc/src/target/definition';
 import { createTargetModuleImports } from '../../../vjsc/src/target/module-imports';
 import { renderTargetElement } from '../../../vjsc/src/target/render';
@@ -477,6 +478,16 @@ function lowerRenderDirective(
 
 export function renderTargetMarker(name: string): string {
   return `data-vjsc-render-${name.replaceAll(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase()}`;
+}
+
+/** Consume one target-owned render marker from canonical component props. */
+export function renderTargetProps<Props extends object>(
+  props: SourceProps<Props>,
+  name: string
+): SourceProps<Props> | undefined {
+  const marker = renderTargetMarker(name) as keyof Props & string;
+
+  return props.has(marker) ? (props.omit(marker) as SourceProps<Props>) : undefined;
 }
 
 function attributeWhitespaceStart(code: string, opening: JSXOpeningElement, attribute: JSXAttribute): number {

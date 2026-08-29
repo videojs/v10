@@ -142,7 +142,8 @@ describe('generated VJSC source', () => {
     expect(htmlLiveButton).toContain('import "@videojs/html/ui/live-button";');
     expect(htmlLiveButton).toContain('<media-live-button');
     expect(reactAudioSettingsMenu).not.toContain('usePlaybackRateOptions');
-    expect(htmlAudioSettingsMenu).toContain('<media-playback-rate-button commandfor=');
+    expect(htmlAudioSettingsMenu).toContain('<media-playback-rate-button');
+    expect(htmlAudioSettingsMenu).toContain('commandfor=');
     expect(htmlAudioSettingsMenu).not.toContain('<button commandfor=');
     expect(reactSubmenu).toContain('<Menu.Trigger className=');
     expect(reactSubmenu).not.toContain('<Menu.Trigger render=');

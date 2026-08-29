@@ -55,6 +55,9 @@ const reactTarget = defineComponentTarget<typeof schema>()(({ target, element, i
       ...(part ? { path: part.split('.') } : {}),
     }),
   components: {
+    Menu: {
+      Trigger: ({ props, children }) => jsx(target.Menu.Trigger, { ...props, children }),
+    },
     Poster: ({ props, children }) => jsx(target.Poster, { render: children, ...props }),
     Popover: ({ props, parts }) => [
       parts.Trigger.children,
@@ -257,6 +260,17 @@ describe('componentTargetPlugin', () => {
     expect(source).toContain('<Poster render={<>');
     expect(source).toContain('<PlayButton />');
     expect(source).toContain('<span>Caption</span>');
+  });
+
+  it('does not infer host delegation from trigger children', async () => {
+    const source = await transform(`
+      import * as $ from '@fixture/components';
+      export const elementTrigger = <$.Menu.Root><$.Menu.Trigger><$.PlayButton /></$.Menu.Trigger></$.Menu.Root>;
+      export const textTrigger = <$.Menu.Root><$.Menu.Trigger>Open</$.Menu.Trigger></$.Menu.Root>;
+    `);
+
+    expect(source).toContain('<Menu.Trigger><PlayButton /></Menu.Trigger>');
+    expect(source).toContain('<Menu.Trigger>Open</Menu.Trigger>');
   });
 
   it('keeps nested component roots out of the parent part collection', async () => {

@@ -5,7 +5,7 @@ import { type SourceProps, type TargetOutput, type TargetReplacement, TARGET_REP
 
 export const SOURCE_PROPS = Symbol('vjsc/source-props');
 export const SOURCE_PROP = Symbol('vjsc/source-prop');
-export const SOURCE_CHILDREN = Symbol('vjsc/source-children');
+export const SOURCE_CHILDREN = Symbol.for('vjsc/source-children');
 
 export interface SourcePropsToken {
   readonly [SOURCE_PROPS]: true;
