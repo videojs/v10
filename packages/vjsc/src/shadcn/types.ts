@@ -2,7 +2,6 @@ import type { Registry, RegistryItem } from 'shadcn/schema';
 
 import type { ComponentMeta } from '../components/meta';
 import type { ComponentGraph, ComponentGraphModule } from '../graph';
-import type { SourceFormatter } from '../output';
 export type { ComponentGraphProvider } from '../graph';
 
 export type ShadcnRegistry = Registry;
@@ -81,7 +80,9 @@ export interface ShadcnRegistryPluginOptions<Item extends ComponentMeta = Compon
   /** Directory below the Rolldown output root where this catalog is emitted. */
   readonly output?: string | undefined;
   /** Format each editable source before it is emitted. */
-  readonly format?: SourceFormatter | undefined;
+  readonly format?:
+    | ((source: { readonly path: string; readonly content: string }) => string | Promise<string>)
+    | undefined;
   /** Editable-source import strings whose installation specifier is exceptional. */
   readonly imports?: Readonly<Record<string, string>> | undefined;
   /** Exact package requirements used instead of bare discovered dependency names. */

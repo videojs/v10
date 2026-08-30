@@ -4,30 +4,12 @@ import { defineConfig } from 'vite-plus';
 import type { UserConfig as PackUserConfig } from 'vite-plus/pack';
 
 import { baseConfig } from '../../../build/pack.ts';
-// Vite+ loads this config before it can schedule builds, so bootstrap the private compiler from source.
-import { createOxfmtSourceFormatter } from '../../vjsc/src/output/index.ts';
 import { shadcnRegistryPlugin, vjscPlugin } from '../../vjsc/src/plugins/index.ts';
 import { packageSkinsPlugin } from '../build/packages/plugin.ts';
 import { configureRegistryModule, packageDir, registryAssetsOnly, registryGraph, registryUtils } from './configure.ts';
+import { formatSource } from './format.ts';
 import { registryItems } from './items/index.ts';
 import { registryPackages, registryPaths, registryTargets } from './targets.ts';
-
-const formatSource = createOxfmtSourceFormatter({
-  configure: (path) =>
-    path.endsWith('.html')
-      ? null
-      : {
-          arrowParens: 'always',
-          bracketSpacing: true,
-          jsdoc: true,
-          printWidth: 120,
-          semi: true,
-          singleQuote: !path.endsWith('.css'),
-          sortImports: true,
-          tabWidth: 2,
-          trailingComma: 'es5',
-        },
-});
 
 export const registryPackConfig: PackUserConfig = {
   ...baseConfig,
