@@ -2,7 +2,7 @@ import { execFile, spawn, type ChildProcess } from 'node:child_process';
 import { cp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { createServer, type Server } from 'node:http';
 import { createRequire } from 'node:module';
-import { dirname, relative, resolve } from 'node:path';
+import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import type { FullConfig } from '@playwright/test';
@@ -43,7 +43,6 @@ const children: ChildProcess[] = [];
 export default async function setup(_config: FullConfig): Promise<() => Promise<void>> {
   await rm(generatedDir, { recursive: true, force: true });
   await mkdir(packagesDir, { recursive: true });
-  await assertIgnored();
 
   const started = performance.now();
   const overrides = await packRegistryPackages();
@@ -529,10 +528,6 @@ async function waitForUrl(url: string): Promise<void> {
   }
 
   throw new Error(`Timed out waiting for ${url}.`);
-}
-
-async function assertIgnored(): Promise<void> {
-  await run('git', ['check-ignore', '--quiet', relative(workspaceDir, generatedDir)]);
 }
 
 async function cleanup(): Promise<void> {

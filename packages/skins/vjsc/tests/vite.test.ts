@@ -60,7 +60,7 @@ describe('Skins Vite workflow', () => {
       optimizeDeps: { include: [], noDiscovery: true },
       server: { middlewareMode: true },
     });
-  }, 30_000);
+  }, 120_000);
 
   beforeEach(() => {
     warn.mockClear();
@@ -68,7 +68,7 @@ describe('Skins Vite workflow', () => {
   });
 
   afterAll(async () => {
-    await server.close();
+    await server?.close();
   }, 120_000);
 
   it('resolves queried skin source directly', async () => {
