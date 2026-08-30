@@ -6,7 +6,7 @@ import styles from '../../define/background/skin.css?inline';
 const STYLES_ID = '__media-background-styles';
 
 function getTemplateHTML() {
-  return /*html*/ `
+  return /* html */ `
     <media-container>
       <!-- @deprecated slot="media" is no longer required, use the default slot instead -->
       <slot name="media"></slot>

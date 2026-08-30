@@ -2,37 +2,37 @@ import { resolve } from 'node:path';
 
 import type { Plugin } from 'vite';
 import type { ComponentGraphProvider } from 'vjsc/graph';
-import type { SourceFormatter } from 'vjsc/output';
 
 import type { SkinModuleMeta } from '../../vjsc/meta.ts';
+import type { GeneratedPackageFile } from './files.ts';
 import { syncGeneratedFiles } from './files.ts';
 import { createHtmlPackageSkins, htmlPackageSkinOwnedPaths } from './html.ts';
 import { createReactPackageSkins, reactPackageSkinOwnedPaths } from './react.ts';
 
-export interface FrameworkSkinsPluginOptions {
+export interface PackageSkinsPluginOptions {
   readonly workspaceDir: string;
-  readonly format?: SourceFormatter | undefined;
+  readonly format?: ((source: GeneratedPackageFile) => string | Promise<string>) | undefined;
 }
 
-/** Generate ignored framework-package Skin inputs from the finalized VJSC component graph. */
-export function frameworkSkinsPlugin(
+/** Generate ignored React and HTML package Skin inputs from the finalized VJSC component graph. */
+export function packageSkinsPlugin(
   graph: ComponentGraphProvider<SkinModuleMeta>,
-  options: FrameworkSkinsPluginOptions
+  options: PackageSkinsPluginOptions
 ): Plugin {
   return {
-    name: 'skins:framework-packages',
+    name: 'skins:packages',
     buildStart() {
       for (const path of [
-        'packages/skins/framework/react/background/skin.tsx',
-        'packages/skins/framework/react/background/skin.css',
-        'packages/skins/framework/html/background/skin.ts',
-        'packages/skins/framework/html/background/skin.css',
+        'packages/skins/presets/background/react.tsx',
+        'packages/skins/presets/background/react.css',
+        'packages/skins/presets/background/html.ts',
+        'packages/skins/presets/background/html.css',
       ]) {
         this.addWatchFile(resolve(options.workspaceDir, path));
       }
     },
     async generateBundle() {
-      if (!graph.api) this.error('Framework Skin generation requires a VJSC component graph plugin.');
+      if (!graph.api) this.error('Package Skin generation requires a VJSC component graph plugin.');
 
       const graphApi = graph.api;
       if (!graphApi) return;
@@ -71,7 +71,7 @@ export function frameworkSkinsPlugin(
         );
       }
 
-      if (changed > 0) this.info(`Generated ${changed} changed framework Skin file${changed === 1 ? '' : 's'}.`);
+      if (changed > 0) this.info(`Generated ${changed} changed package Skin file${changed === 1 ? '' : 's'}.`);
     },
   };
 }

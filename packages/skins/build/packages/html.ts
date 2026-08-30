@@ -11,7 +11,7 @@ import {
 
 import { isSkinName, type SkinMeta, type SkinModuleMeta, type SkinName } from '../../vjsc/meta.ts';
 import { skinPreset, skinPresets, type SkinPreset } from '../skin.ts';
-import type { GeneratedFrameworkFile } from './files.ts';
+import type { GeneratedPackageFile } from './files.ts';
 
 const packageRoot = 'packages/html/src';
 const internalRoot = `${packageRoot}/internal/skins`;
@@ -37,7 +37,7 @@ type HtmlSkinRoot = ValidatedComponentGraphModule<SkinMeta & { readonly name: Sk
 export async function createHtmlPackageSkins(
   graph: ComponentGraph<SkinModuleMeta>,
   options: CreateHtmlPackageSkinsOptions
-): Promise<GeneratedFrameworkFile[]> {
+): Promise<GeneratedPackageFile[]> {
   const skins = await renderHtmlSkins(graph, { workspaceDir: options.workspaceDir, styling: 'css' });
   const generated = new Map<string, string>();
 
@@ -58,8 +58,8 @@ export async function createHtmlPackageSkins(
   }
 
   for (const [source, destination] of [
-    ['packages/skins/framework/html/background/skin.ts', `${packageRoot}/presets/background/skin.ts`],
-    ['packages/skins/framework/html/background/skin.css', `${packageRoot}/define/background/skin.css`],
+    ['packages/skins/presets/background/html.ts', `${packageRoot}/presets/background/skin.ts`],
+    ['packages/skins/presets/background/html.css', `${packageRoot}/define/background/skin.css`],
   ] as const) {
     addGenerated(generated, destination, await readFile(resolve(options.workspaceDir, source), 'utf8'));
   }

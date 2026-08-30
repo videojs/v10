@@ -6,11 +6,7 @@ import {
   createComponentGraphStyles,
 } from '../../../vjsc/src/graph/index.ts';
 import type { VjscRegistryItem } from '../../../vjsc/src/shadcn/index.ts';
-import {
-  createHtmlSkinRegistration,
-  createSourceOwnedHtml,
-  type RenderedHtmlSkin,
-} from '../../build/framework/html.ts';
+import { createHtmlSkinRegistration, createSourceOwnedHtml, type RenderedHtmlSkin } from '../../build/packages/html.ts';
 import { skinDirectory, skinPreset } from '../../build/skin.ts';
 import { isSkinName, type SkinModuleMeta, type SkinName } from '../../vjsc/meta.ts';
 import type { VideojsRegistryMeta } from '../meta.ts';

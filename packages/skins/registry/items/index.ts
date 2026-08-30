@@ -1,6 +1,6 @@
 import type { ComponentGraph } from '../../../vjsc/src/graph/index.ts';
 import type { VjscRegistryItem } from '../../../vjsc/src/shadcn/index.ts';
-import { renderHtmlSkins } from '../../build/framework/html.ts';
+import { renderHtmlSkins } from '../../build/packages/html.ts';
 import type { SkinModuleMeta } from '../../vjsc/meta.ts';
 import { packageDir, registryUtils } from '../configure.ts';
 import type { RegistryTarget } from '../targets.ts';

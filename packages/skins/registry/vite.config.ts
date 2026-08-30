@@ -7,7 +7,7 @@ import { baseConfig } from '../../../build/pack.ts';
 // Vite+ loads this config before it can schedule builds, so bootstrap the private compiler from source.
 import { createOxfmtSourceFormatter } from '../../vjsc/src/output/index.ts';
 import { shadcnRegistryPlugin, vjscPlugin } from '../../vjsc/src/plugins/index.ts';
-import { frameworkSkinsPlugin } from '../build/framework/plugin.ts';
+import { packageSkinsPlugin } from '../build/packages/plugin.ts';
 import { configureRegistryModule, packageDir, registryAssetsOnly, registryGraph, registryUtils } from './configure.ts';
 import { registryItems } from './items/index.ts';
 import { registryPackages, registryPaths, registryTargets } from './targets.ts';
@@ -63,7 +63,7 @@ export const registryPackConfig: PackUserConfig = {
         items: registryItems(target),
       })
     ),
-    frameworkSkinsPlugin(registryGraph, {
+    packageSkinsPlugin(registryGraph, {
       workspaceDir: resolve(packageDir, '../..'),
       format: formatSource,
     }),

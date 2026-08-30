@@ -7,7 +7,7 @@ import type { SkinModuleMeta } from '../../../vjsc/meta.ts';
 import { createReactPackageSkins } from '../react.ts';
 
 describe('createReactPackageSkins', () => {
-  it('relocates one finalized graph into stable package sources', async () => {
+  it('writes one finalized graph to stable package sources', async () => {
     const root = resolve(import.meta.dirname, 'fixture');
     const graph = fixtureGraph(root);
     const files = new Map(

@@ -3,7 +3,7 @@ import { defineConfig } from 'vite-plus';
 import { cachedTaskInputs, packageTestTask, workspaceTaskDependencies } from '../../build/task.ts';
 
 const packageDir = import.meta.dirname;
-const generatedFrameworkOutputs = [
+const generatedPackageOutputs = [
   { pattern: 'packages/html/src/presets/background/skin.ts', base: 'workspace' as const },
   { pattern: 'packages/html/src/define/background/skin.css', base: 'workspace' as const },
   { pattern: 'packages/html/src/internal/skins/**', base: 'workspace' as const },
@@ -27,9 +27,9 @@ export default defineConfig({
           ...cachedTaskInputs,
           '!dist/registry',
           '!dist/registry/**',
-          ...generatedFrameworkOutputs.map(({ pattern, base }) => ({ pattern: `!${pattern}`, base })),
+          ...generatedPackageOutputs.map(({ pattern, base }) => ({ pattern: `!${pattern}`, base })),
         ],
-        output: ['dist/registry/source/**', ...generatedFrameworkOutputs],
+        output: ['dist/registry/source/**', ...generatedPackageOutputs],
       },
       'build:shadcn': {
         command: 'node --import tsx registry/build-hosted.ts',

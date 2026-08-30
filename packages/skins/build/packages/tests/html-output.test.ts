@@ -17,7 +17,7 @@ const skins = [
   'minimal-live-audio',
 ] as const;
 
-describe('generated HTML skins', () => {
+describe('generated HTML package skins', () => {
   it.each(skins)('%s has a complete template, exact registration, and stylesheet', (skin) => {
     const root = resolve(outputRoot, skin);
     const template = readFileSync(resolve(root, 'template.ts'), 'utf8');

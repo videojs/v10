@@ -2,7 +2,7 @@ import type { Dirent } from 'node:fs';
 import { mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { dirname, posix, resolve } from 'node:path';
 
-export interface GeneratedFrameworkFile {
+export interface GeneratedPackageFile {
   /** Workspace-relative generated path. */
   readonly path: string;
   readonly content: string;
@@ -11,7 +11,7 @@ export interface GeneratedFrameworkFile {
 /** Synchronize generated framework inputs and remove stale files from their explicitly owned roots. */
 export async function syncGeneratedFiles(
   workspaceDir: string,
-  files: readonly GeneratedFrameworkFile[],
+  files: readonly GeneratedPackageFile[],
   ownedPaths: readonly string[]
 ): Promise<number> {
   const expected = new Map(files.map((file) => [file.path, file.content]));
