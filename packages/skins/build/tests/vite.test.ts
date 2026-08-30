@@ -18,7 +18,7 @@ const reactPosterUrl = '/../src/components/layout/poster.tsx?style=tailwind&targ
 const buttonStyles = resolve(packageDir, 'src/styles/buttons/button.styles.ts');
 const controlsStyles = resolve(packageDir, 'src/skins/default-video/controls.styles.ts');
 const designStyles = resolve(packageDir, 'src/styles/base.css');
-const skinConfig = resolve(packageDir, 'src/config.ts');
+const skinConfig = resolve(packageDir, 'build/transform.ts');
 const vjscPlayButton = resolve(packageDir, 'src/components/buttons/play-button.tsx');
 const frameworks = ['react', 'html'] as const;
 const skins = [

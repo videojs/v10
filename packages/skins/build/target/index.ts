@@ -1,7 +1,7 @@
 import type { ComponentTarget } from 'vjsc/target';
 
 import { createHtmlIconTarget, createReactIconTarget } from '../../../icons/vjsc/target.ts';
-import type { SkinConfig } from '../config.ts';
+import type { SkinTransformConfig } from '../transform.ts';
 import { htmlComponentTarget } from './html.tsx';
 import { reactComponentTarget } from './react.tsx';
 
@@ -9,7 +9,7 @@ const iconFamilies = ['default', 'minimal'] as const;
 let reactIcons: ComponentTarget | undefined;
 let htmlIcons: ComponentTarget | undefined;
 
-export function createComponentTargets(config: SkinConfig): readonly ComponentTarget[] {
+export function createComponentTargets(config: SkinTransformConfig): readonly ComponentTarget[] {
   let icons = config.target === 'react' ? reactIcons : htmlIcons;
 
   if (!icons) {

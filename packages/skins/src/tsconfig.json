@@ -7,13 +7,13 @@
     "isolatedDeclarations": false,
     "jsx": "react-jsx",
     "jsxImportSource": "vjsc/components",
-    "lib": ["ES2022"],
+    "lib": ["ES2024"],
     "paths": {
       "vjsc/*": ["../../vjsc/src/*"]
     },
     "types": ["node"],
     "noEmit": true
   },
-  "include": ["**/*.ts", "**/*.tsx", "../vite.config.ts"],
+  "include": ["**/*.ts", "**/*.tsx", "../build/**/*.ts", "../build/**/*.tsx", "../vite.config.ts"],
   "exclude": ["presets"]
 }

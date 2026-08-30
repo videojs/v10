@@ -1,5 +1,5 @@
 import type { SkinComponentMeta } from '../../meta';
-import { defineRenderTarget } from '../../render-target';
+import { defineRenderTarget } from '../../render';
 import styles from '../../styles/buttons/button.styles';
 
 /** Shared button carrying the base interactive styles used by media controls. */

@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vite-plus/test';
 
-import { validateSkinConfig } from '../config';
-import { createStyleOptions } from '../style';
+import { createStyleOptions, validateSkinConfig } from '../transform';
 
 describe('validateSkinConfig', () => {
   it('accepts css style output', () => {

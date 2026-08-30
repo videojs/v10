@@ -26,7 +26,7 @@ import { renderTargetElement } from '../../../vjsc/src/target/render';
 
 type MagicString = TargetTransformContext['magicString'];
 
-const RENDER_TARGET_SOURCE = /(?:^|\/)render-target$/;
+const RENDER_TARGET_SOURCE = /(?:^|\/)render$/;
 
 interface RenderTargetDefinition {
   readonly exported: boolean;

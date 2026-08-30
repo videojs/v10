@@ -5,7 +5,7 @@ import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite-plus';
 import { vjscPlugin } from 'vjsc/vite';
 
-import { resolveSkinComponents, resolveSkinStyles } from '../../../../../packages/skins/src/config.ts';
+import { resolveSkinComponents, resolveSkinStyles } from '../../../../../packages/skins/build/transform.ts';
 
 const packageDir = import.meta.dirname;
 

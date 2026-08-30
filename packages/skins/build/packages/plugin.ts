@@ -35,14 +35,16 @@ export function packageSkinsPlugin(options: PackageSkinsPluginOptions): Plugin {
       }
     },
     async generateBundle() {
-      if (!graph) this.error('Package Skin generation requires vjscPlugin in the same build.');
+      const currentGraph = graph;
+
+      if (!currentGraph) this.error('Package Skin generation requires vjscPlugin in the same build.');
 
       const profile = process.env.VIDEOJS_PROFILE_SKINS === '1';
       const generateStarted = performance.now();
 
       const [react, html] = await Promise.all([
-        timed(() => createReactPackageSkins(graph, options)),
-        timed(() => createHtmlPackageSkins(graph, options)),
+        timed(() => createReactPackageSkins(currentGraph, options)),
+        timed(() => createHtmlPackageSkins(currentGraph, options)),
       ]);
 
       const generated = [react.value, html.value];

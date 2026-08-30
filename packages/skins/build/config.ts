@@ -1,9 +1,9 @@
 import { relative, resolve } from 'node:path';
 
 import type { EntriesOptions, TransformModule } from '../../vjsc/src/plugins/index.ts';
-import { resolveSkinComponents, resolveSkinStyles } from '../src/config.ts';
 import { isSkinName, skinStyles } from '../src/meta.ts';
 import { registryTargets } from './registry/targets.ts';
+import { resolveSkinComponents, resolveSkinStyles } from './transform.ts';
 
 export const packageDir = resolve(import.meta.dirname, '..');
 export const sourceDir = resolve(packageDir, 'src');
