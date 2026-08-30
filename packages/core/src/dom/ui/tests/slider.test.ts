@@ -111,7 +111,6 @@ describe('createSlider', () => {
       expect(slider.rootProps.onPointerMove).toBeTypeOf('function');
       expect(slider.rootProps.onPointerLeave).toBeTypeOf('function');
       expect(slider.thumbProps.onKeyDownCapture).toBeTypeOf('function');
-      expect(slider.thumbProps.onKeyUpCapture).toBeTypeOf('function');
       expect(slider.thumbProps.onFocus).toBeTypeOf('function');
       expect(slider.thumbProps.onBlur).toBeTypeOf('function');
       expect(slider.destroy).toBeTypeOf('function');
@@ -749,38 +748,7 @@ describe('createSlider', () => {
 
       expect(onValueChange.mock.calls.map(([percent]) => percent)).toEqual([55, 80, 60, 65]);
 
-      slider.thumbProps.onKeyUpCapture(keyboardEvent('ArrowRight'));
       firePointerUp(slider, { clientX: 120 });
-      slider.destroy();
-    });
-
-    it('brackets repeated keyboard steps with one press', () => {
-      const onPressStart = vi.fn();
-      const onPressEnd = vi.fn();
-      const slider = createSlider(createOptions({ onPressStart, onPressEnd }));
-
-      slider.thumbProps.onKeyDownCapture(keyboardEvent('ArrowDown'));
-      slider.thumbProps.onKeyDownCapture(keyboardEvent('ArrowDown', { repeat: true }));
-
-      expect(onPressStart).toHaveBeenCalledOnce();
-      expect(onPressEnd).not.toHaveBeenCalled();
-
-      slider.thumbProps.onKeyUpCapture(keyboardEvent('ArrowDown'));
-
-      expect(onPressEnd).toHaveBeenCalledOnce();
-
-      slider.destroy();
-    });
-
-    it('ends a keyboard press when focus is lost', () => {
-      const onPressEnd = vi.fn();
-      const slider = createSlider(createOptions({ onPressEnd }));
-
-      slider.thumbProps.onKeyDownCapture(keyboardEvent('ArrowDown'));
-      slider.thumbProps.onBlur();
-
-      expect(onPressEnd).toHaveBeenCalledOnce();
-
       slider.destroy();
     });
 

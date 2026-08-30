@@ -246,10 +246,13 @@ test('react volume slider keeps controls visible while a key is held', async ({ 
   await expect(volumeThumb).toBeVisible();
   await volumeThumb.focus();
   await page.keyboard.down('ArrowDown');
-  await player.dispatchEvent('mouseleave');
 
   try {
-    await page.waitForTimeout(2_500);
+    for (let index = 0; index < 8; index++) {
+      await page.waitForTimeout(500);
+      await page.keyboard.down('ArrowDown');
+    }
+
     await expect(controls).toHaveAttribute(DATA_ATTRS.visible, '');
   } finally {
     await page.keyboard.up('ArrowDown');

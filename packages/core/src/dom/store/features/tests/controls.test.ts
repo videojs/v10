@@ -93,6 +93,26 @@ describe('controlsFeature', () => {
       expect(store.state.controlsVisible).toBe(true);
     });
 
+    it('keeps controls active while keydown repeats', () => {
+      const video = createMockVideo({ paused: false });
+      const { store, container } = createPlayerStore(video);
+
+      for (let index = 0; index < 3; index++) {
+        vi.advanceTimersByTime(IDLE_DELAY - 500);
+        container!.dispatchEvent(new Event('keydown'));
+        flush();
+      }
+
+      expect(store.state.userActive).toBe(true);
+      expect(store.state.controlsVisible).toBe(true);
+
+      vi.advanceTimersByTime(IDLE_DELAY);
+      flush();
+
+      expect(store.state.userActive).toBe(false);
+      expect(store.state.controlsVisible).toBe(false);
+    });
+
     it('reactivates on pointermove after idle', () => {
       const video = createMockVideo({ paused: false });
       const { store, container } = createPlayerStore(video);
