@@ -16,16 +16,20 @@ export async function htmlSkinItem(
   target: RegistryTarget
 ): Promise<VjscRegistryCreatedItem> {
   const meta = skin.root.meta;
+
   const name = meta.style.theme === 'minimal' ? `${skin.preset}-minimal` : skin.preset;
   const directory = meta.style.theme === 'minimal' ? `skins/${skin.preset}/minimal` : `skins/${skin.preset}`;
   const template = createSourceOwnedHtml(skin.template);
+
   const styleTarget = target.styling === 'css' ? `${directory}/skin.css` : 'styles/theme.css';
   const styleImport = relativeRegistryImport(`${directory}/skin.ts`, styleTarget);
+
   const registration = `${`import '${styleImport}';`}\n\n${createHtmlSkinRegistration(
     template,
     skin.modules,
     'registry'
   )}`;
+
   const files: NonNullable<VjscRegistryCreatedItem['files']> = [
     {
       path: 'skin.html',
