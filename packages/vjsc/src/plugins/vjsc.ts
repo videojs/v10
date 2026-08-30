@@ -1,6 +1,5 @@
 import type { Plugin } from 'rolldown';
 
-import type { VjscDiagnosticsOptions } from '../styles/diagnostics';
 import type { StylePluginOptions } from '../styles/options';
 import type { ComponentTarget } from '../target/definition';
 import type { ParsedModuleId } from '../utils/module-id';
@@ -10,7 +9,7 @@ import { componentModulesPlugin } from './component-modules';
 import { type ComponentTargetSelection, componentTargetPlugin, primitiveTargetPlugin } from './component-target';
 import { htmlRuntimePlugin } from './html-runtime';
 import { reactTargetPropsPlugin } from './react-target-props';
-import { stylePlugin, type StylePluginLifecycle } from './style';
+import { stylePlugin, type StylePluginDiagnostics, type StylePluginLifecycle } from './style';
 import { targetImportCleanupPlugin } from './target-import-cleanup';
 import { targetJsxPlugin } from './target-jsx';
 import { targetTransformPlugin } from './target-transform';
@@ -27,8 +26,6 @@ export interface VjscModuleConfig {
 }
 
 export interface VjscPluginOptions {
-  /** Controls compiler warnings. Unsafe isolated-transform relationships always throw. */
-  readonly diagnostics?: VjscDiagnosticsOptions | undefined;
   configure(module: VjscModule): VjscModuleConfig | null;
 }
 
@@ -36,22 +33,17 @@ export interface VjscPluginOptions {
  * Create the ordered compiler passes for query-selected component modules. Use this as the default VJSC integration for
  * Rolldown-compatible builds.
  *
- * @example
- *   Promote suspicious structural selectors to build errors.
- *   ```ts
- *   vjscPlugin({
- *   diagnostics: { complexSelectors: 'error' },
- *   configure,
- *   });
- *   ```
- *
  * @param options - Resolves targets and styles once for each module identity.
  */
 export function vjscPlugin(options: VjscPluginOptions): Plugin[] {
   return createVjscPluginPipeline(options);
 }
 
-export function createVjscPluginPipeline(options: VjscPluginOptions, styleLifecycle?: StylePluginLifecycle): Plugin[] {
+export function createVjscPluginPipeline(
+  options: VjscPluginOptions,
+  styleLifecycle?: StylePluginLifecycle,
+  diagnostics: StylePluginDiagnostics = false
+): Plugin[] {
   const configurations = new Map<string, VjscModuleConfig | null>();
   const configure = (module: VjscModule): VjscModuleConfig | null => {
     if (configurations.has(module.id)) return configurations.get(module.id) ?? null;
@@ -76,7 +68,7 @@ export function createVjscPluginPipeline(options: VjscPluginOptions, styleLifecy
     htmlRuntimePlugin(),
     componentMetaPlugin(),
     targetJsxPlugin({ targets }),
-    stylePlugin((module) => configure(module)?.styles ?? null, options.diagnostics, styleLifecycle),
+    stylePlugin((module) => configure(module)?.styles ?? null, diagnostics, styleLifecycle),
     targetTransformPlugin({ targets }),
     compilerDirectivePlugin({ targets }),
     targetTypePlugin({ targets }),

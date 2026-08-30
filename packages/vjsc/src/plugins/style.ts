@@ -3,6 +3,7 @@ import { stat } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
 import type { Expression, ImportDeclaration, Node, Program } from '@oxc-project/types';
+import { isFunction } from '@videojs/utils/predicate';
 import { walk } from 'oxc-walker';
 import type { Plugin, RolldownMagicString } from 'rolldown';
 
@@ -65,9 +66,11 @@ export interface StylePluginLifecycle {
   onOwnerTransform(id: string, watchFiles: readonly string[]): void;
 }
 
+export type StylePluginDiagnostics = VjscDiagnosticsOptions | false | (() => VjscDiagnosticsOptions | false);
+
 export function stylePlugin(
   config: StylePluginConfig,
-  diagnostics: VjscDiagnosticsOptions = {},
+  diagnostics: StylePluginDiagnostics = {},
   lifecycle?: StylePluginLifecycle
 ): Plugin {
   const designs = new Map<string, Promise<CachedDesignSystem>>();
@@ -97,7 +100,7 @@ export function stylePlugin(
     transform: {
       filter: { id: SCRIPT_ID, code: '.styles' },
       async handler(_code, id, transform) {
-        const options = typeof config === 'function' ? await config({ id, ...parseModuleId(id) }) : config;
+        const options = isFunction(config) ? await config({ id, ...parseModuleId(id) }) : config;
 
         if (!options || !transform.ast || !transform.magicString) {
           replaceVirtualCss(cssById, cssByOwner, id, [], lifecycle);
@@ -125,10 +128,13 @@ export function stylePlugin(
 
         for (const file of manifest.watchFiles) this.addWatchFile(file);
 
-        const styleDiagnostics = [...diagnoseStyleManifest(manifest, options.variants)];
+        const diagnosticOptions = isFunction(diagnostics) ? diagnostics() : diagnostics;
+        const styleDiagnostics = diagnosticOptions ? [...diagnoseStyleManifest(manifest, options.variants)] : [];
         const report = () => {
+          if (!diagnosticOptions) return;
+
           for (const diagnostic of mergeStyleDiagnostics(styleDiagnostics)) {
-            reportStyleDiagnostic(diagnostic, diagnostics, reportedWarnings, (message) => this.warn(message));
+            reportStyleDiagnostic(diagnostic, diagnosticOptions, reportedWarnings, (message) => this.warn(message));
           }
         };
 
@@ -147,9 +153,12 @@ export function stylePlugin(
           const base = options.stylesheet.base ? resolve(cwd, options.stylesheet.base) : undefined;
           const cachedDesign = await cachedDesignSystem(designs, input);
 
-          styleDiagnostics.push(
-            ...diagnoseCompiledStyles(manifest, cachedDesign.design, referencedRules, options.variants)
-          );
+          if (diagnosticOptions) {
+            styleDiagnostics.push(
+              ...diagnoseCompiledStyles(manifest, cachedDesign.design, referencedRules, options.variants)
+            );
+          }
+
           report();
           const assets = await compileStyles({
             design: cachedDesign.design,

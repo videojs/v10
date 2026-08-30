@@ -1,4 +1,3 @@
-export type { ComplexSelectorDiagnosticLevel, VjscDiagnosticsOptions } from '../styles/diagnostics';
 export { type ComponentGraphPluginOptions, componentGraphPlugin } from './component-graph';
 export { type ComponentSchemaPluginOptions, componentSchemaPlugin } from './component-schema';
 export { type ShadcnRegistryPluginOptions, shadcnRegistryPlugin } from './shadcn';
