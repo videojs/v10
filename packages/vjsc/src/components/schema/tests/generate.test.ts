@@ -96,7 +96,7 @@ describe('createComponentSchema', () => {
     ).toThrow('Duplicate component name: Slider');
   });
 
-  it('supports generated components derived from non-manifest files', () => {
+  it('supports generated components derived from named source files', () => {
     const { dir, output } = setup();
 
     mkdirSync(join(dir, 'icons'));

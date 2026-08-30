@@ -18,7 +18,7 @@ export interface VjscComponentSchemaOptions extends Omit<ComponentSchemaOptions,
  * @example
  *   ```ts
  *   vjscComponentSchemaPlugin({
- *     source: '@videojs/core/vjsc',
+ *     source: '@example/components',
  *     include: ['./src/components/*-component.ts'],
  *   });
  *   ```;

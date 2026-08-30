@@ -118,17 +118,17 @@ export const Template = Object.assign(createRuntimeComponentPart<TemplateProps>(
 export const Text = createRuntimeComponentPart<TextProps>('Text', null);
 
 export function createComponent<Props extends object>(
-  manifest: NamedComponentDefinition<Props, undefined>
+  definition: NamedComponentDefinition<Props, undefined>
 ): Component<Props>;
 export function createComponent<const Parts extends ComponentDefinitions>(
-  manifest: NamedComponentDefinition<object, Parts>
+  definition: NamedComponentDefinition<object, Parts>
 ): CompoundComponent<Parts>;
-export function createComponent(manifest: NamedComponentDefinition): Component<object> | Record<string, unknown> {
-  if (!hasParts(manifest)) {
-    return createRuntimeComponentPart(manifest.name, null);
+export function createComponent(definition: NamedComponentDefinition): Component<object> | Record<string, unknown> {
+  if (!hasParts(definition)) {
+    return createRuntimeComponentPart(definition.name, null);
   }
 
-  return createComponentParts(manifest.name, manifest.parts);
+  return createComponentParts(definition.name, definition.parts);
 }
 
 function createComponentParts(name: string, parts: ComponentDefinitions, prefix = ''): Record<string, unknown> {

@@ -21,8 +21,8 @@ export interface DiscoverSchemaOptions {
   readonly exclude?: string | readonly string[] | undefined;
 }
 
-export interface ManifestSchemaComponent {
-  readonly kind: 'manifest';
+export interface DefinedSchemaComponent {
+  readonly kind: 'definition';
   readonly fileName: string;
   readonly name: string;
   readonly definition: ComponentDefinition<object, ComponentDefinitions | undefined>;
@@ -35,7 +35,7 @@ export interface FileSchemaComponent {
   readonly definition: ComponentDefinition<object, undefined>;
 }
 
-export type SchemaComponent = ManifestSchemaComponent | FileSchemaComponent;
+export type SchemaComponent = DefinedSchemaComponent | FileSchemaComponent;
 
 export interface DiscoveredSchema {
   readonly components: readonly SchemaComponent[];
@@ -46,7 +46,7 @@ export interface DiscoveredSchema {
 export function discoverSchema(options: DiscoverSchemaOptions): DiscoveredSchema {
   const components = options.include.flatMap<SchemaComponent>((source) =>
     typeof source === 'string'
-      ? discoverManifests(source, options.exclude, options.cwd)
+      ? discoverDefinitions(source, options.exclude, options.cwd)
       : discoverFiles(source, options.cwd)
   );
 
@@ -56,15 +56,15 @@ export function discoverSchema(options: DiscoverSchemaOptions): DiscoveredSchema
   };
 }
 
-function discoverManifests(
+function discoverDefinitions(
   pattern: string,
   exclude: string | readonly string[] | undefined,
   cwd: string
-): ManifestSchemaComponent[] {
+): DefinedSchemaComponent[] {
   return globSync(pattern, { cwd, ...(exclude ? { exclude: toArray(exclude) } : {}) }).map((path) => {
     const fileName = absolutePath(cwd, path);
 
-    return { kind: 'manifest', fileName, ...parseComponentManifest(fileName) };
+    return { kind: 'definition', fileName, ...parseComponentDefinitionFile(fileName) };
   });
 }
 
@@ -80,7 +80,7 @@ function discoverFiles(source: ComponentFileSet, cwd: string): FileSchemaCompone
   });
 }
 
-function parseComponentManifest(fileName: string): Pick<ManifestSchemaComponent, 'definition' | 'name'> {
+function parseComponentDefinitionFile(fileName: string): Pick<DefinedSchemaComponent, 'definition' | 'name'> {
   const parsed = parseSync(fileName, readFileSync(fileName, 'utf8'));
   if (parsed.errors.length > 0) throw new Error(parsed.errors.map((error) => error.message).join('\n'));
 
