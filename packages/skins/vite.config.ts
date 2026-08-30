@@ -3,82 +3,75 @@ import { defineConfig } from 'vite-plus';
 import { cachedTaskInputs, packageTestTask, workspaceTaskDependencies } from '../../build/task.ts';
 
 const packageDir = import.meta.dirname;
+const generatedFrameworkOutputs = [
+  { pattern: 'packages/html/src/presets/background/skin.ts', base: 'workspace' as const },
+  { pattern: 'packages/html/src/define/background/skin.css', base: 'workspace' as const },
+  { pattern: 'packages/html/src/internal/skins/**', base: 'workspace' as const },
+  { pattern: 'packages/react/src/internal/skins/**', base: 'workspace' as const },
+  { pattern: 'packages/react/src/presets/*/skin.tsx', base: 'workspace' as const },
+  { pattern: 'packages/react/src/presets/*/skin.css', base: 'workspace' as const },
+  { pattern: 'packages/react/src/presets/*/minimal-skin.tsx', base: 'workspace' as const },
+  { pattern: 'packages/react/src/presets/*/minimal-skin.css', base: 'workspace' as const },
+] as const;
 
 export default defineConfig({
   run: {
     tasks: {
       generate: {
-        command: ['rimraf dist/registry', 'vp -C shadcn pack'],
+        command: 'vp -C registry pack',
         dependsOn: workspaceTaskDependencies(),
-        // The registry plugin compares files in its output directory before
-        // rewriting them; those reads must not turn outputs into inputs.
+        untrackedEnv: ['VIDEOJS_PROFILE_SKINS'],
+        // Generated package files and registry output are restored by this task,
+        // so they must not participate in its own fingerprint.
         input: [
           ...cachedTaskInputs,
           '!dist/registry',
           '!dist/registry/**',
-          { pattern: '!packages/html/src/presets/background/skin.ts', base: 'workspace' },
-          { pattern: '!packages/html/src/define/background/skin.css', base: 'workspace' },
-          { pattern: '!packages/html/src/internal/skins', base: 'workspace' },
-          { pattern: '!packages/html/src/internal/skins/**', base: 'workspace' },
-          { pattern: '!packages/react/src/internal/skins', base: 'workspace' },
-          { pattern: '!packages/react/src/internal/skins/**', base: 'workspace' },
-          { pattern: '!packages/react/src/presets/*/skin.tsx', base: 'workspace' },
-          { pattern: '!packages/react/src/presets/*/skin.css', base: 'workspace' },
-          { pattern: '!packages/react/src/presets/*/minimal-skin.tsx', base: 'workspace' },
-          { pattern: '!packages/react/src/presets/*/minimal-skin.css', base: 'workspace' },
+          ...generatedFrameworkOutputs.map(({ pattern, base }) => ({ pattern: `!${pattern}`, base })),
         ],
-        output: [
-          'dist/registry/source/**',
-          { pattern: 'packages/html/src/presets/background/skin.ts', base: 'workspace' },
-          { pattern: 'packages/html/src/define/background/skin.css', base: 'workspace' },
-          { pattern: 'packages/html/src/internal/skins/**', base: 'workspace' },
-          { pattern: 'packages/react/src/internal/skins/**', base: 'workspace' },
-          { pattern: 'packages/react/src/presets/*/skin.tsx', base: 'workspace' },
-          { pattern: 'packages/react/src/presets/*/skin.css', base: 'workspace' },
-          { pattern: 'packages/react/src/presets/*/minimal-skin.tsx', base: 'workspace' },
-          { pattern: 'packages/react/src/presets/*/minimal-skin.css', base: 'workspace' },
-        ],
-      },
-      'build:shadcn:react': {
-        command: [
-          'rimraf dist/registry/r/react',
-          'shadcn build dist/registry/source/r/react/registry.json --output dist/registry/r/react',
-        ],
-        dependsOn: ['generate'],
-        cache: false,
-      },
-      'build:shadcn:react-css': {
-        command: [
-          'rimraf dist/registry/r/react/css',
-          'shadcn build dist/registry/source/r/react/css/registry.json --output dist/registry/r/react/css',
-        ],
-        dependsOn: ['build:shadcn:react'],
-        cache: false,
-      },
-      'build:shadcn:html': {
-        command: [
-          'rimraf dist/registry/r/html',
-          'shadcn build dist/registry/source/r/html/registry.json --output dist/registry/r/html',
-        ],
-        dependsOn: ['generate'],
-        cache: false,
+        output: ['dist/registry/source/**', ...generatedFrameworkOutputs],
       },
       'build:shadcn': {
-        command: [
-          'rimraf dist/registry/r/html/css',
-          'shadcn build dist/registry/source/r/html/css/registry.json --output dist/registry/r/html/css',
+        command: 'node --import tsx registry/build-hosted.ts',
+        dependsOn: ['generate'],
+        input: [
+          'dist/registry/source/r/**',
+          'registry/build-hosted.ts',
+          'package.json',
+          { pattern: 'pnpm-lock.yaml', base: 'workspace' },
         ],
-        dependsOn: ['build:shadcn:html', 'build:shadcn:react-css'],
-        cache: false,
+        output: ['dist/registry/r/**'],
+      },
+      'validate:shadcn:schema': {
+        command: [
+          'shadcn registry validate dist/registry/source/r/react/registry.json --cwd .',
+          'shadcn registry validate dist/registry/source/r/react/css/registry.json --cwd .',
+          'shadcn registry validate dist/registry/source/r/html/registry.json --cwd .',
+          'shadcn registry validate dist/registry/source/r/html/css/registry.json --cwd .',
+        ],
+        dependsOn: ['generate'],
+        input: ['dist/registry/source/r/**', 'package.json', { pattern: 'pnpm-lock.yaml', base: 'workspace' }],
+        output: [],
+      },
+      'validate:shadcn:policy': {
+        command: 'node --import tsx registry/validate-policy.ts',
+        dependsOn: ['build:shadcn'],
+        input: [
+          'registry/validate-policy.ts',
+          'dist/registry/source/r/**',
+          'dist/registry/r/**',
+          { pattern: 'packages/*/package.json', base: 'workspace' },
+        ],
+        output: [],
       },
       'validate:shadcn': {
-        command: 'node --import tsx scripts/validate-shadcn-registry.ts',
-        dependsOn: ['build:shadcn', '@videojs/html#build', '@videojs/react#build'],
-        cache: false,
+        command: 'node -e "" --',
+        dependsOn: ['validate:shadcn:schema', 'validate:shadcn:policy'],
+        output: [],
       },
       'test:ci': {
         ...packageTestTask('pnpm run test:types && vp test run'),
-        dependsOn: ['validate:shadcn'],
+        dependsOn: workspaceTaskDependencies(),
       },
     },
   },

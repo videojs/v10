@@ -12,11 +12,11 @@ import {
 } from 'vjsc/graph';
 
 import { isSkinName, type SkinMeta, type SkinModuleMeta, type SkinName } from '../../vjsc/meta.ts';
+import { skinPreset, skinPresets, type SkinPreset } from '../skin.ts';
 import type { GeneratedFrameworkFile } from './files.ts';
 
 const packageRoot = 'packages/react/src';
 const internalRoot = `${packageRoot}/internal/skins`;
-const presets = ['audio', 'live-audio', 'live-video', 'video'] as const;
 const radioGroupImports = new Set([
   '@videojs/react/ui/audio-track-radio-group',
   '@videojs/react/ui/captions-radio-group',
@@ -32,7 +32,7 @@ export interface CreateReactPackageSkinsOptions {
 interface ReactSkin {
   readonly root: ReactSkinRoot;
   readonly modules: readonly ValidatedComponentGraphModule<SkinModuleMeta>[];
-  readonly preset: (typeof presets)[number];
+  readonly preset: SkinPreset;
   readonly theme: SkinMeta['style']['theme'];
 }
 
@@ -54,21 +54,25 @@ export async function createReactPackageSkins(
 
   const generated = new Map<string, string>();
 
-  for (const module of uniqueModules(skins.flatMap((skin) => skin.modules))) {
-    const destination = destinations.get(module.id)!;
-    const source = rewriteComponentGraphImports(graph, module, ({ dependency, reference }) => {
-      const frameworkImport = reactFrameworkImport(reference.specifier);
-      if (frameworkImport) return relativeComponentGraphImport(destination, frameworkImport);
+  for (const [destination, modules] of modulesByDestination(skins, destinations)) {
+    const stripped = new Set(modules.map((module) => stripComponentGraphStyleImports(module.source)));
+    const candidates = stripped.size === 1 ? [modules[0]!] : modules;
 
-      if (!dependency) return undefined;
+    for (const module of candidates) {
+      const source = rewriteComponentGraphImports(graph, module, ({ dependency, reference }) => {
+        const frameworkImport = reactFrameworkImport(reference.specifier);
+        if (frameworkImport) return relativeComponentGraphImport(destination, frameworkImport);
 
-      const target = destinations.get(dependency.id);
-      if (!target) throw new Error(`React Skin dependency has no generated target: \`${dependency.sourcePath}\`.`);
+        if (!dependency) return undefined;
 
-      return relativeComponentGraphImport(destination, target);
-    });
+        const target = destinations.get(dependency.id);
+        if (!target) throw new Error(`React Skin dependency has no generated target: \`${dependency.sourcePath}\`.`);
 
-    addGenerated(generated, destination, stripComponentGraphStyleImports(source));
+        return relativeComponentGraphImport(destination, target);
+      });
+
+      addGenerated(generated, destination, stripComponentGraphStyleImports(source));
+    }
   }
 
   for (const skin of skins) {
@@ -115,7 +119,7 @@ export async function createReactPackageSkins(
 }
 
 export function reactPackageSkinOwnedPaths(): string[] {
-  const publicPaths = presets.flatMap((preset) =>
+  const publicPaths = skinPresets.flatMap((preset) =>
     ['skin.tsx', 'skin.css', 'minimal-skin.tsx', 'minimal-skin.css'].map(
       (filename) => `${packageRoot}/presets/${preset}/${filename}`
     )
@@ -140,13 +144,13 @@ function reactSkins(graph: ComponentGraph<SkinModuleMeta>): ReactSkin[] {
       module.transform.skin === module.meta.name
   );
 
-  if (roots.length !== presets.length * 2) {
-    throw new Error(`Expected ${presets.length * 2} React CSS Skin roots, received ${roots.length}.`);
+  if (roots.length !== skinPresets.length * 2) {
+    throw new Error(`Expected ${skinPresets.length * 2} React CSS Skin roots, received ${roots.length}.`);
   }
 
   return roots
     .map((root) => {
-      const preset = presetForSkin(root.meta.name);
+      const preset = skinPreset(root.meta.name);
 
       return {
         root,
@@ -203,21 +207,25 @@ export function ${options.component}(${parameters}) {
 `;
 }
 
-function presetForSkin(name: SkinName): ReactSkin['preset'] {
-  const preset = name.replace(/^(?:default|minimal)-/, '');
-  if (!isPreset(preset)) throw new Error(`Unsupported Skin preset: \`${name}\`.`);
+function modulesByDestination(
+  skins: readonly ReactSkin[],
+  destinations: ReadonlyMap<string, string>
+): Array<readonly [string, readonly ValidatedComponentGraphModule<SkinModuleMeta>[]]> {
+  const grouped = new Map<string, Map<string, ValidatedComponentGraphModule<SkinModuleMeta>>>();
 
-  return preset;
-}
+  for (const skin of skins) {
+    for (const module of skin.modules) {
+      const destination = destinations.get(module.id)!;
+      const modules = grouped.get(destination) ?? new Map();
 
-function isPreset(value: string): value is ReactSkin['preset'] {
-  return presets.some((preset) => preset === value);
-}
+      modules.set(module.id, module);
+      grouped.set(destination, modules);
+    }
+  }
 
-function uniqueModules(
-  modules: readonly ValidatedComponentGraphModule<SkinModuleMeta>[]
-): ValidatedComponentGraphModule<SkinModuleMeta>[] {
-  return [...new Map(modules.map((module) => [module.id, module])).values()];
+  return [...grouped]
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([destination, modules]) => [destination, [...modules.values()]] as const);
 }
 
 function pascalCase(value: string): string {

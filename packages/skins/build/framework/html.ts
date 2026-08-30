@@ -10,11 +10,11 @@ import {
 } from 'vjsc/graph';
 
 import { isSkinName, type SkinMeta, type SkinModuleMeta, type SkinName } from '../../vjsc/meta.ts';
+import { skinPreset, skinPresets, type SkinPreset } from '../skin.ts';
 import type { GeneratedFrameworkFile } from './files.ts';
 
 const packageRoot = 'packages/html/src';
 const internalRoot = `${packageRoot}/internal/skins`;
-const presets = ['audio', 'live-audio', 'live-video', 'video'] as const;
 
 export interface CreateHtmlPackageSkinsOptions {
   readonly workspaceDir: string;
@@ -24,7 +24,7 @@ export interface CreateHtmlPackageSkinsOptions {
 export interface RenderedHtmlSkin {
   readonly root: HtmlSkinRoot;
   readonly modules: readonly ValidatedComponentGraphModule<SkinModuleMeta>[];
-  readonly preset: (typeof presets)[number];
+  readonly preset: SkinPreset;
   readonly theme: SkinMeta['style']['theme'];
   readonly template: string;
 }
@@ -132,15 +132,15 @@ function htmlSkins(
       module.transform.skin === module.meta.name
   );
 
-  if (roots.length !== presets.length * 2) {
-    throw new Error(`Expected ${presets.length * 2} HTML CSS Skin roots, received ${roots.length}.`);
+  if (roots.length !== skinPresets.length * 2) {
+    throw new Error(`Expected ${skinPresets.length * 2} HTML CSS Skin roots, received ${roots.length}.`);
   }
 
   return roots
     .map((root) => ({
       root,
       modules: collectComponentGraphModules(graph, root.id),
-      preset: presetForSkin(root.meta.name),
+      preset: skinPreset(root.meta.name),
       theme: root.meta.style.theme,
     }))
     .sort((left, right) => left.root.meta.name.localeCompare(right.root.meta.name));
@@ -276,17 +276,6 @@ function uniqueModules(
   modules: readonly ValidatedComponentGraphModule<SkinModuleMeta>[]
 ): ValidatedComponentGraphModule<SkinModuleMeta>[] {
   return [...new Map(modules.map((module) => [module.id, module])).values()];
-}
-
-function presetForSkin(name: SkinName): RenderedHtmlSkin['preset'] {
-  const preset = name.replace(/^(?:default|minimal)-/, '');
-  if (!isPreset(preset)) throw new Error(`Unsupported Skin preset: \`${name}\`.`);
-
-  return preset;
-}
-
-function isPreset(value: string): value is RenderedHtmlSkin['preset'] {
-  return presets.some((preset) => preset === value);
 }
 
 function pascalCase(value: string): string {

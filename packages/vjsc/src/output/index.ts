@@ -1,6 +1,6 @@
 export {
   createOxfmtSourceFormatter,
   type EditableSource,
-  type OxfmtSourceConfig,
+  type OxfmtSourceFormatterOptions,
   type SourceFormatter,
 } from './format';

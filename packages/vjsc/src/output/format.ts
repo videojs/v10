@@ -7,12 +7,18 @@ export interface EditableSource {
 
 export type SourceFormatter = (source: EditableSource) => string | Promise<string>;
 
-export type OxfmtSourceConfig = FormatConfig | ((path: string) => FormatConfig);
+export interface OxfmtSourceFormatterOptions {
+  readonly config?: FormatConfig | undefined;
+  readonly configure?: ((path: string) => FormatConfig | null) | undefined;
+}
 
 /** Create a formatter for editable compiler output using Oxfmt. */
-export function createOxfmtSourceFormatter(config: OxfmtSourceConfig = {}): SourceFormatter {
+export function createOxfmtSourceFormatter(options: OxfmtSourceFormatterOptions = {}): SourceFormatter {
   return async ({ path, content }) => {
-    const result = await format(path, content, typeof config === 'function' ? config(path) : config);
+    const resolved = options.configure ? options.configure(path) : (options.config ?? {});
+    if (resolved === null) return content;
+
+    const result = await format(path, content, resolved);
 
     if (result.errors.length > 0) {
       const messages = result.errors.map((error) => error.message).join('\n');
