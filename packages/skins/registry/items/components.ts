@@ -1,4 +1,4 @@
-import type { ComponentGraph, ComponentGraphModule } from '../../../vjsc/src/graph/index.ts';
+import type { VjscGraph, GraphModule } from '../../../vjsc/src/graph/index.ts';
 import type { VjscRegistryItem } from '../../../vjsc/src/shadcn/index.ts';
 import type { SkinModuleMeta } from '../../vjsc/meta.ts';
 import { registryModuleSourcePath } from '../configure.ts';
@@ -8,10 +8,10 @@ import { sourceStyles } from './styles.ts';
 import { reactHelperDependency } from './support.ts';
 
 export function componentItem(
-  module: ComponentGraphModule<SkinModuleMeta>,
+  module: GraphModule<SkinModuleMeta>,
   meta: Extract<SkinModuleMeta, { type: 'component' }>,
   target: RegistryTarget,
-  graph: ComponentGraph<SkinModuleMeta>
+  graph: VjscGraph<SkinModuleMeta>
 ): VjscRegistryItem<SkinModuleMeta> {
   const category = componentCategory(module.filename);
   const styles = sourceStyles(module, target, graph);
@@ -40,7 +40,7 @@ export function componentItem(
   };
 }
 
-export function exportedComponentName(module: ComponentGraphModule<SkinModuleMeta>): string {
+export function exportedComponentName(module: GraphModule<SkinModuleMeta>): string {
   const match = /\bexport\s+(?:const|function)\s+([A-Z][A-Za-z0-9]*)/.exec(module.source);
 
   if (!match) {
@@ -57,7 +57,7 @@ function componentCategory(filename: string): string {
 }
 
 function componentDocs(
-  module: ComponentGraphModule<SkinModuleMeta>,
+  module: GraphModule<SkinModuleMeta>,
   meta: Extract<SkinModuleMeta, { type: 'component' }>
 ): string {
   const component = exportedComponentName(module);

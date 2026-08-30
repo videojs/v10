@@ -1,4 +1,4 @@
-import type { ComponentGraph } from '../../../vjsc/src/graph/index.ts';
+import type { VjscGraph } from '../../../vjsc/src/graph/index.ts';
 import type { VjscRegistryItem } from '../../../vjsc/src/shadcn/index.ts';
 import { renderHtmlSkins } from '../../build/packages/html.ts';
 import type { SkinModuleMeta } from '../../vjsc/meta.ts';
@@ -18,7 +18,7 @@ import {
 export function registryItems(
   target: RegistryTarget
 ): (
-  graph: ComponentGraph<SkinModuleMeta>
+  graph: VjscGraph<SkinModuleMeta>
 ) => readonly VjscRegistryItem<SkinModuleMeta>[] | Promise<readonly VjscRegistryItem<SkinModuleMeta>[]> {
   return async (graph) => {
     if (target.framework === 'html') {
@@ -37,20 +37,20 @@ export function registryItems(
     const items = modules.flatMap((module) => {
       if (module.filename === registryUtils) return [utilsItem(module, target)];
 
-      if (module.transform.target !== target.framework || module.transform.style !== target.styling) return [];
+      if (module.params.target !== target.framework || module.params.style !== target.styling) return [];
 
       const meta = module.meta;
-      if (meta?.type === 'skin') return module.transform.skin === meta.name ? [skinItem(module, meta, target)] : [];
+      if (meta?.type === 'skin') return module.params.skin === meta.name ? [skinItem(module, meta, target)] : [];
 
       if (meta?.type === 'component') {
-        if (module.transform.skin !== undefined) return [];
+        if (module.params.skin !== undefined) return [];
 
         return isPrivateComponent(meta.name)
           ? [privateComponentItem(module, meta, target, graph)]
           : [componentItem(module, meta, target, graph)];
       }
 
-      if (module.transform.skin === undefined) {
+      if (module.params.skin === undefined) {
         const name = privateModuleName(module);
 
         return name ? [privateModuleItem(module, name, target, graph)] : [];

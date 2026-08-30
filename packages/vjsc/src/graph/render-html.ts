@@ -1,17 +1,16 @@
 import { rolldown } from 'rolldown';
 
-import type { NamedModuleMeta } from '../components/meta';
+import type { ModuleMeta } from '../components/meta';
 import { HTML_RUNTIME } from '../plugins/html-runtime';
-import type { ComponentGraph } from './types';
-import { validateComponentGraph } from './validate';
+import type { VjscGraph } from './types';
 
 const entryId = '\0vjsc:component-graph-html-entry';
 const emptyId = '\0vjsc:component-graph-html-empty';
 const runtimeId = '\0vjsc:component-graph-html-runtime';
 
-type ComponentGraphHtmlRenderProps = Readonly<Record<never, never>>;
+type HtmlRenderProps = Readonly<Record<never, never>>;
 
-export interface ComponentGraphHtmlEntry {
+export interface HtmlEntry {
   /** Stable key used for the rendered result. */
   readonly name: string;
   /** Component graph module containing the renderer export. */
@@ -20,7 +19,7 @@ export interface ComponentGraphHtmlEntry {
   readonly exportName: string;
 }
 
-export interface RenderComponentGraphHtmlOptions {
+export interface RenderHtmlOptions {
   /** Redirect an external import to a concrete source module. */
   readonly aliases?: ReadonlyMap<string, string> | undefined;
   /** Replace imports that have no effect while rendering static markup. */
@@ -30,12 +29,12 @@ export interface RenderComponentGraphHtmlOptions {
 }
 
 /** Render named HTML component exports directly from one finalized component graph. */
-export async function renderComponentGraphHtml<Item extends NamedModuleMeta>(
-  graph: ComponentGraph<Item>,
-  entries: readonly ComponentGraphHtmlEntry[],
-  options: RenderComponentGraphHtmlOptions = {}
+export async function renderHtml<Meta extends ModuleMeta>(
+  graph: VjscGraph<Meta>,
+  entries: readonly HtmlEntry[],
+  options: RenderHtmlOptions = {}
 ): Promise<ReadonlyMap<string, string>> {
-  const modules = validateComponentGraph(graph);
+  const modules = graph.modules;
   const importResolutions = new Map<string, string>();
   const virtualModules = new Map<string, string>();
 
@@ -117,7 +116,7 @@ export async function renderComponentGraphHtml<Item extends NamedModuleMeta>(
 
     // SAFETY: The module is assembled from the finalized component graph and explicit render-only dependencies above.
     const rendered = (await import(url)) as Readonly<
-      Record<string, (props?: ComponentGraphHtmlRenderProps) => { toString(): string }>
+      Record<string, (props?: HtmlRenderProps) => { toString(): string }>
     >;
 
     return new Map(

@@ -1,23 +1,5 @@
-export type {
-  ComponentGraph,
-  ComponentGraphImport,
-  ComponentGraphInput,
-  ComponentGraphModule,
-  ComponentGraphPluginApi,
-  ComponentGraphPluginOptions,
-  ComponentGraphProvider,
-} from './types';
-export {
-  collectComponentGraphModules,
-  type ComponentGraphImportContext,
-  relativeComponentGraphImport,
-  rewriteComponentGraphImports,
-  stripComponentGraphStyleImports,
-} from './modules';
-export {
-  type ComponentGraphHtmlEntry,
-  renderComponentGraphHtml,
-  type RenderComponentGraphHtmlOptions,
-} from './render-html';
-export { createComponentGraphStyles, type ComponentGraphStylesOptions } from './styles';
-export { type ValidatedComponentGraphModule, validateComponentGraph } from './validate';
+export type { GraphImport, GraphModule, GraphModuleStyles, VjscGraph } from './types';
+export { findVjscGraph } from './plugin';
+export { collectModules, type GraphImportContext, relativeImport, rewriteImports, stripStyleImports } from './modules';
+export { type HtmlEntry, renderHtml, type RenderHtmlOptions } from './render-html';
+export { bundleStyles, type BundleStylesOptions } from './styles';

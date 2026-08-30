@@ -1,7 +1,7 @@
 import { resolve } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
-import type { ComponentGraph } from 'vjsc/graph';
+import type { VjscGraph } from 'vjsc/graph';
 
 import type { SkinModuleMeta } from '../../../vjsc/meta.ts';
 import { createReactPackageSkins } from '../react.ts';
@@ -33,7 +33,7 @@ describe('createReactPackageSkins', () => {
   });
 });
 
-function fixtureGraph(root: string): ComponentGraph<SkinModuleMeta> {
+function fixtureGraph(root: string): VjscGraph<SkinModuleMeta> {
   const modules = new Map();
 
   for (const theme of ['default', 'minimal'] as const) {
@@ -48,9 +48,11 @@ function fixtureGraph(root: string): ComponentGraph<SkinModuleMeta> {
       modules.set(rootId, {
         id: rootId,
         filename: `${root}/skins/${skin}/skin.tsx`,
-        transform: { skin, style: 'css', target: 'react' },
+        sourcePath: `skins/${skin}/skin.tsx`,
+        params: { skin, style: 'css', target: 'react' },
         source: rootSource,
         imports: [{ ...importReference(rootSource, '../../components/button'), resolvedId: buttonId }],
+        styles: { files: [], assets: [] },
         meta: {
           type: 'skin',
           name: skin,
@@ -62,17 +64,19 @@ function fixtureGraph(root: string): ComponentGraph<SkinModuleMeta> {
       modules.set(buttonId, {
         id: buttonId,
         filename: `${root}/components/button.tsx`,
-        transform: { skin, style: 'css', target: 'react' },
+        sourcePath: 'components/button.tsx',
+        params: { skin, style: 'css', target: 'react' },
         source: buttonSource,
         imports: [
           importReference(buttonSource, '@videojs/react'),
           importReference(buttonSource, '@videojs/react/ui/playback-rate-radio-group'),
         ],
+        styles: { files: [], assets: [] },
       });
     }
   }
 
-  return { root, modules, assets: new Map(), styles: new Map() };
+  return { root, modules, assets: new Map() };
 }
 
 function importReference(source: string, specifier: string) {

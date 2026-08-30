@@ -1,7 +1,7 @@
 import { resolve } from 'node:path';
 
 import type { Plugin } from 'vite';
-import type { ComponentGraphProvider } from 'vjsc/graph';
+import { findVjscGraph, type VjscGraph } from 'vjsc/graph';
 
 import type { SkinModuleMeta } from '../../vjsc/meta.ts';
 import type { GeneratedPackageFile } from './files.ts';
@@ -15,13 +15,16 @@ export interface PackageSkinsPluginOptions {
 }
 
 /** Generate ignored React and HTML package Skin inputs from the finalized VJSC component graph. */
-export function packageSkinsPlugin(
-  graph: ComponentGraphProvider<SkinModuleMeta>,
-  options: PackageSkinsPluginOptions
-): Plugin {
+export function packageSkinsPlugin(options: PackageSkinsPluginOptions): Plugin {
+  let graph: VjscGraph<SkinModuleMeta> | undefined;
+
   return {
     name: 'skins:packages',
-    buildStart() {
+    buildStart(inputOptions) {
+      graph = findVjscGraph<SkinModuleMeta>(inputOptions.plugins);
+
+      if (!graph) this.error('Package Skin generation requires vjscPlugin in the same build.');
+
       for (const path of [
         'packages/skins/presets/background/react.tsx',
         'packages/skins/presets/background/react.css',
@@ -32,17 +35,14 @@ export function packageSkinsPlugin(
       }
     },
     async generateBundle() {
-      if (!graph.api) this.error('Package Skin generation requires a VJSC component graph plugin.');
-
-      const graphApi = graph.api;
-      if (!graphApi) return;
+      if (!graph) this.error('Package Skin generation requires vjscPlugin in the same build.');
 
       const profile = process.env.VIDEOJS_PROFILE_SKINS === '1';
       const generateStarted = performance.now();
 
       const [react, html] = await Promise.all([
-        timed(() => createReactPackageSkins(graphApi.getGraph(), options)),
-        timed(() => createHtmlPackageSkins(graphApi.getGraph(), options)),
+        timed(() => createReactPackageSkins(graph, options)),
+        timed(() => createHtmlPackageSkins(graph, options)),
       ]);
 
       const generated = [react.value, html.value];

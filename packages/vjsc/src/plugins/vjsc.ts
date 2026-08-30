@@ -1,9 +1,12 @@
 import type { Plugin } from 'rolldown';
 
+import type { ModuleMeta } from '../components/meta';
+import type { VjscGraph } from '../graph/types';
 import type { StyleTransformOptions } from '../styles/options';
 import type { ComponentTarget } from '../target/definition';
 import type { VjscModule } from '../utils/module-id';
 import { compilerDirectivePlugin } from './compiler-directive';
+import { createVjscGraphCapability, vjscGraphPlugin } from './component-graph';
 import { componentMetaPlugin } from './component-meta';
 import { componentModulesPlugin } from './component-modules';
 import { type ComponentTargetSelection, componentTargetPlugin, primitiveTargetPlugin } from './component-target';
@@ -47,15 +50,16 @@ export interface VjscPluginOptions {
  *
  * @param options - Resolves targets and styles once for each module identity.
  */
-export function vjscPlugin(options: VjscPluginOptions): Plugin[] {
-  return createVjscPluginPipeline(options);
+export function vjscPlugin<Meta extends ModuleMeta = ModuleMeta>(options: VjscPluginOptions): Plugin[] {
+  return createVjscPluginPipeline<Meta>(options);
 }
 
-export function createVjscPluginPipeline(
+export function createVjscPluginPipeline<Meta extends ModuleMeta = ModuleMeta>(
   options: VjscPluginOptions,
   styleLifecycle?: StylePluginLifecycle,
   diagnostics: StylePluginDiagnostics = false
 ): Plugin[] {
+  const graph = createVjscGraphCapability<Meta>();
   const componentTransforms = new Map<string, readonly ComponentTarget[] | null>();
   const styleTransforms = new Map<string, Promise<StyleTransformOptions | null>>();
   const components = (module: VjscModule): readonly ComponentTarget[] | null => {
@@ -80,6 +84,7 @@ export function createVjscPluginPipeline(
   return [
     {
       name: 'vjsc',
+      api: graph.api as VjscGraph,
       buildStart() {
         componentTransforms.clear();
         styleTransforms.clear();
@@ -100,5 +105,6 @@ export function createVjscPluginPipeline(
     reactTargetPropsPlugin({ targets }),
     templateTargetPlugin({ targets }),
     targetImportCleanupPlugin({ targets }),
+    ...(options.entries ? [vjscGraphPlugin(options.entries, graph)] : []),
   ];
 }

@@ -1,6 +1,6 @@
 import type { Plugin } from 'rolldown';
 
-import { mergeComponentModuleMeta } from './component-meta';
+import { mergeVjscModuleMeta } from './component-meta';
 
 const SCRIPT_ID = /\.[cm]?[jt]sx?(?:\?|$)/;
 
@@ -18,7 +18,7 @@ export function componentSourcePlugin(capture?: (id: string, source: string, met
         capture?.(id, source, meta);
 
         return {
-          meta: mergeComponentModuleMeta(meta, { componentSource: source }),
+          meta: mergeVjscModuleMeta(meta, { moduleSource: source }),
         };
       },
     },

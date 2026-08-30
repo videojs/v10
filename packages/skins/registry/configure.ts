@@ -2,9 +2,9 @@ import { relative, resolve } from 'node:path';
 
 import type { Plugin } from 'vite';
 
-import { componentGraphPlugin, type VjscModule } from '../../vjsc/src/plugins/index.ts';
+import type { VjscEntriesOptions, VjscModule } from '../../vjsc/src/plugins/index.ts';
 import { resolveSkinComponents, resolveSkinStyles } from '../vjsc/config.ts';
-import { isSkinName, type SkinModuleMeta, skinStyles } from '../vjsc/meta.ts';
+import { isSkinName, skinStyles } from '../vjsc/meta.ts';
 import { registryTargets } from './targets.ts';
 
 export const packageDir = resolve(import.meta.dirname, '..');
@@ -13,25 +13,31 @@ export const registryUtils = resolve(vjscDir, 'utils.ts');
 
 const publishedSkins = Object.keys(skinStyles).filter(isSkinName);
 
-export const registryGraph = componentGraphPlugin<SkinModuleMeta>({
+export const registryEntries: VjscEntriesOptions = {
   root: vjscDir,
   include: ['./components/**/*.tsx', './skins/**/skin.tsx', './utils.ts'],
-  transformations(module) {
-    if (module.filename === registryUtils) return [{}];
+  resolve: {
+    params(entry) {
+      if (entry.filename === registryUtils) return [{}];
 
-    const ownedSkin = publishedSkins.find((name) => module.filename.includes(`/skins/${name}/`));
+      const ownedSkin = publishedSkins.find((name) => entry.filename.includes(`/skins/${name}/`));
 
-    if (ownedSkin) {
-      return registryTargets.map(({ framework, styling }) => ({ target: framework, skin: ownedSkin, style: styling }));
-    }
+      if (ownedSkin) {
+        return registryTargets.map(({ framework, styling }) => ({
+          target: framework,
+          skin: ownedSkin,
+          style: styling,
+        }));
+      }
 
-    return registryTargets.map(({ framework, styling }) =>
-      framework === 'html'
-        ? { target: framework, skin: 'default-video', style: styling }
-        : { target: framework, style: styling }
-    );
+      return registryTargets.map(({ framework, styling }) =>
+        framework === 'html'
+          ? { target: framework, skin: 'default-video', style: styling }
+          : { target: framework, style: styling }
+      );
+    },
   },
-});
+};
 
 export function resolveRegistryComponents(module: VjscModule) {
   return module.filename === registryUtils ? null : resolveSkinComponents(module);

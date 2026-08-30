@@ -1,4 +1,3 @@
-export { type ComponentGraphPluginOptions, componentGraphPlugin } from './component-graph';
 export { type VjscComponentSchemaOptions, vjscComponentSchemaPlugin } from './component-schema';
 export { type ShadcnRegistryPluginOptions, shadcnRegistryPlugin } from './shadcn';
 export {

@@ -65,7 +65,7 @@ describe('Skins Vite HMR', () => {
     expect(initialTailwind).toContain('text-preview');
     expect(initialCssModule).toContain('color:');
 
-    await fixture.update(fixture.component, componentSource('after'));
+    await fixture.update(fixture.component, moduleSource('after'));
     await invalidate(server, fixture.component, [cssUrl, tailwindUrl]);
     await vi.waitFor(() => expect(send.mock.calls.some(isHmrCall)).toBe(true));
 
@@ -147,14 +147,14 @@ async function createFixture() {
     await utimes(file, modified, modified);
   };
 
-  await update(component, componentSource('before'));
+  await update(component, moduleSource('before'));
   await update(styles, styleSource('text-preview'));
   await update(design, designSource('#010203'));
 
   return { root, component, styles, design, update };
 }
 
-function componentSource(marker: string): string {
+function moduleSource(marker: string): string {
   return `import styles from './fixture.styles';\nexport const marker = '${marker}';\nexport function Fixture() { return <div className={styles.root} />; }\nif (import.meta.hot) import.meta.hot.accept();\n`;
 }
 

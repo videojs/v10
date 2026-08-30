@@ -7,7 +7,7 @@ import { describe, expect, it } from 'vite-plus/test';
 import { compileStyles } from '../../styles/compile';
 import { loadDesignSystem } from '../../styles/design-system';
 import type { StyleIndex, StyleIndexRule } from '../../styles/style-index';
-import { readComponentSource, readComponentStyles } from '../component-meta';
+import { readComponentSource, readModuleStyles } from '../component-meta';
 import { componentSourcePlugin } from '../component-source';
 import { type StylePluginConfig, stylePlugin } from '../style';
 
@@ -244,7 +244,7 @@ async function transform(
   const output = readComponentSource(meta);
   if (output === undefined) throw new Error('Fixture build did not retain editable source.');
 
-  return { source: output, styleIds: readComponentStyles(meta), warnings };
+  return { source: output, styleIds: readModuleStyles(meta)?.assets ?? [], warnings };
 }
 
 function virtualCssIds(source: string): string[] {

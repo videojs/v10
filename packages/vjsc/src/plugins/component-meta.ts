@@ -13,10 +13,15 @@ import type { NamedModuleMeta } from '../components/meta';
 
 const SCRIPT_ID = /\.[cm]?[jt]sx?(?:\?|$)/;
 
-export interface ComponentModuleMeta {
-  readonly componentMeta?: NamedModuleMeta | undefined;
-  readonly componentSource?: string | undefined;
-  readonly componentStyles?: readonly string[] | undefined;
+export interface VjscModuleBuildMeta {
+  readonly moduleMeta?: NamedModuleMeta | undefined;
+  readonly moduleSource?: string | undefined;
+  readonly moduleStyles?:
+    | {
+        readonly files: readonly string[];
+        readonly assets: readonly string[];
+      }
+    | undefined;
   readonly [key: string]: unknown;
 }
 
@@ -47,7 +52,7 @@ export function componentMetaPlugin(exportName = 'meta'): Plugin {
         const exported = findExportedMeta(transform.ast, exportName);
         if (!exported?.declarator.init) return null;
 
-        const componentMeta = parseComponentMeta(exported.declarator.init, id, exportName);
+        const moduleMeta = parseComponentMeta(exported.declarator.init, id, exportName);
         const magicString = transform.magicString;
         if (!magicString) throw new Error('vjsc: Rolldown did not provide MagicString to the component metadata pass.');
 
@@ -55,47 +60,55 @@ export function componentMetaPlugin(exportName = 'meta'): Plugin {
 
         return {
           code: magicString,
-          meta: mergeComponentModuleMeta(this.getModuleInfo(id)?.meta, { componentMeta }),
+          meta: mergeVjscModuleMeta(this.getModuleInfo(id)?.meta, { moduleMeta }),
         };
       },
     },
   };
 }
 
-export function readComponentModuleMeta(meta: unknown): ComponentModuleMeta | undefined {
+export function readVjscModuleMeta(meta: unknown): VjscModuleBuildMeta | undefined {
   if (!isRecord(meta)) return undefined;
 
-  const componentMeta = isComponentMeta(meta.componentMeta) ? meta.componentMeta : undefined;
-  const componentSource = typeof meta.componentSource === 'string' ? meta.componentSource : undefined;
-  const componentStyles =
-    Array.isArray(meta.componentStyles) && meta.componentStyles.every((value) => typeof value === 'string')
-      ? (meta.componentStyles as string[])
-      : undefined;
-  if (!componentMeta && componentSource === undefined && componentStyles === undefined) return undefined;
+  const moduleMeta = isComponentMeta(meta.moduleMeta) ? meta.moduleMeta : undefined;
+  const moduleSource = typeof meta.moduleSource === 'string' ? meta.moduleSource : undefined;
+  const moduleStyles = readModuleStyles(meta.moduleStyles);
+  if (!moduleMeta && moduleSource === undefined && moduleStyles === undefined) return undefined;
 
-  return { ...meta, componentMeta, componentSource, componentStyles };
+  return { ...meta, moduleMeta, moduleSource, moduleStyles };
 }
 
 export function readComponentMeta(meta: unknown): NamedModuleMeta | undefined {
-  return readComponentModuleMeta(meta)?.componentMeta;
+  return readVjscModuleMeta(meta)?.moduleMeta;
 }
 
 export function readComponentSource(meta: unknown): string | undefined {
-  return readComponentModuleMeta(meta)?.componentSource;
+  return readVjscModuleMeta(meta)?.moduleSource;
 }
 
-export function readComponentStyles(meta: unknown): readonly string[] {
-  return readComponentModuleMeta(meta)?.componentStyles ?? [];
+export function readModuleStyles(meta: unknown): VjscModuleBuildMeta['moduleStyles'] {
+  if (!isRecord(meta)) return undefined;
+
+  const value = isRecord(meta.moduleStyles) ? meta.moduleStyles : meta;
+
+  const files = readStringArray(value.files);
+  const assets = readStringArray(value.assets);
+
+  return files && assets ? { files, assets } : undefined;
 }
 
-export function mergeComponentModuleMeta(
+export function mergeVjscModuleMeta(
   meta: unknown,
-  update: Partial<ComponentModuleMeta>
+  update: Partial<VjscModuleBuildMeta>
 ): Readonly<Record<string, unknown>> {
   return {
     ...(isRecord(meta) ? meta : {}),
     ...update,
   };
+}
+
+function readStringArray(value: unknown): readonly string[] | undefined {
+  return Array.isArray(value) && value.every((entry) => typeof entry === 'string') ? value : undefined;
 }
 
 function findExportedMeta(ast: Program | undefined, exportName: string): ExportedMeta | undefined {

@@ -1,15 +1,8 @@
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
-import type { ComponentGraph, ValidatedComponentGraphModule } from 'vjsc/graph';
-import {
-  collectComponentGraphModules,
-  createComponentGraphStyles,
-  relativeComponentGraphImport,
-  rewriteComponentGraphImports,
-  stripComponentGraphStyleImports,
-  validateComponentGraph,
-} from 'vjsc/graph';
+import type { VjscGraph, GraphModule } from 'vjsc/graph';
+import { bundleStyles, collectModules, relativeImport, rewriteImports, stripStyleImports } from 'vjsc/graph';
 
 import { isSkinName, type SkinMeta, type SkinModuleMeta, type SkinName } from '../../vjsc/meta.ts';
 import { skinPreset, skinPresets, type SkinPreset } from '../skin.ts';
@@ -31,18 +24,18 @@ export interface CreateReactPackageSkinsOptions {
 
 interface ReactSkin {
   readonly root: ReactSkinRoot;
-  readonly modules: readonly ValidatedComponentGraphModule<SkinModuleMeta>[];
+  readonly modules: readonly GraphModule<SkinModuleMeta>[];
   readonly preset: SkinPreset;
   readonly theme: SkinMeta['style']['theme'];
 }
 
-type ReactSkinRoot = ValidatedComponentGraphModule<SkinMeta & { readonly name: SkinName }> & {
+type ReactSkinRoot = GraphModule<SkinMeta & { readonly name: SkinName }> & {
   readonly meta: SkinMeta & { readonly name: SkinName };
 };
 
 /** Generate package-local React Skin implementations from one finalized VJSC component graph. */
 export async function createReactPackageSkins(
-  graph: ComponentGraph<SkinModuleMeta>,
+  graph: VjscGraph<SkinModuleMeta>,
   options: CreateReactPackageSkinsOptions
 ): Promise<GeneratedPackageFile[]> {
   const skins = reactSkins(graph);
@@ -55,23 +48,23 @@ export async function createReactPackageSkins(
   const generated = new Map<string, string>();
 
   for (const [destination, modules] of modulesByDestination(skins, destinations)) {
-    const stripped = new Set(modules.map((module) => stripComponentGraphStyleImports(module.source)));
+    const stripped = new Set(modules.map((module) => stripStyleImports(module.source)));
     const candidates = stripped.size === 1 ? [modules[0]!] : modules;
 
     for (const module of candidates) {
-      const source = rewriteComponentGraphImports(graph, module, ({ dependency, reference }) => {
+      const source = rewriteImports(graph, module, ({ dependency, reference }) => {
         const frameworkImport = reactFrameworkImport(reference.specifier);
-        if (frameworkImport) return relativeComponentGraphImport(destination, frameworkImport);
+        if (frameworkImport) return relativeImport(destination, frameworkImport);
 
         if (!dependency) return undefined;
 
         const target = destinations.get(dependency.id);
         if (!target) throw new Error(`React Skin dependency has no generated target: \`${dependency.sourcePath}\`.`);
 
-        return relativeComponentGraphImport(destination, target);
+        return relativeImport(destination, target);
       });
 
-      addGenerated(generated, destination, stripComponentGraphStyleImports(source));
+      addGenerated(generated, destination, stripStyleImports(source));
     }
   }
 
@@ -88,14 +81,14 @@ export async function createReactPackageSkins(
       reactSkinWrapper({
         component,
         generatedComponent,
-        importSource: relativeComponentGraphImport(`${publicRoot}/${publicName}.tsx`, generatedRoot),
+        importSource: relativeImport(`${publicRoot}/${publicName}.tsx`, generatedRoot),
         video: skin.preset.endsWith('video'),
       })
     );
     addGenerated(
       generated,
       `${publicRoot}/${publicName}.css`,
-      await createComponentGraphStyles(graph, skin.modules, {
+      await bundleStyles(graph, skin.modules, {
         label: `${skin.theme}-${skin.preset}`,
         files: options.baseStyles ?? ['./styles/base.css'],
       })
@@ -129,15 +122,14 @@ export function reactPackageSkinOwnedPaths(): string[] {
   ];
 }
 
-function reactSkins(graph: ComponentGraph<SkinModuleMeta>): ReactSkin[] {
-  const modules = validateComponentGraph(graph);
-  const roots = [...modules.values()].filter(
+function reactSkins(graph: VjscGraph<SkinModuleMeta>): ReactSkin[] {
+  const roots = [...graph.modules.values()].filter(
     (module): module is ReactSkinRoot =>
       module.meta?.type === 'skin' &&
       isSkinName(module.meta.name) &&
-      module.transform.target === 'react' &&
-      module.transform.style === 'css' &&
-      module.transform.skin === module.meta.name
+      module.params.target === 'react' &&
+      module.params.style === 'css' &&
+      module.params.skin === module.meta.name
   );
 
   if (roots.length !== skinPresets.length * 2) {
@@ -150,7 +142,7 @@ function reactSkins(graph: ComponentGraph<SkinModuleMeta>): ReactSkin[] {
 
       return {
         root,
-        modules: collectComponentGraphModules(graph, root.id),
+        modules: collectModules(graph, root.id),
         preset,
         theme: root.meta.style.theme,
       };
@@ -158,7 +150,7 @@ function reactSkins(graph: ComponentGraph<SkinModuleMeta>): ReactSkin[] {
     .sort((left, right) => left.root.meta.name.localeCompare(right.root.meta.name));
 }
 
-function reactModulePath(skin: ReactSkin, module: ValidatedComponentGraphModule<SkinModuleMeta>): string {
+function reactModulePath(skin: ReactSkin, module: GraphModule<SkinModuleMeta>): string {
   const ownedPrefix = `skins/${skin.root.meta.name}/`;
 
   return module.sourcePath.startsWith(ownedPrefix)
@@ -206,8 +198,8 @@ export function ${options.component}(${parameters}) {
 function modulesByDestination(
   skins: readonly ReactSkin[],
   destinations: ReadonlyMap<string, string>
-): Array<readonly [string, readonly ValidatedComponentGraphModule<SkinModuleMeta>[]]> {
-  const grouped = new Map<string, Map<string, ValidatedComponentGraphModule<SkinModuleMeta>>>();
+): Array<readonly [string, readonly GraphModule<SkinModuleMeta>[]]> {
+  const grouped = new Map<string, Map<string, GraphModule<SkinModuleMeta>>>();
 
   for (const skin of skins) {
     for (const module of skin.modules) {

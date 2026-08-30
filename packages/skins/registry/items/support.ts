@@ -1,4 +1,4 @@
-import type { ComponentGraph, ComponentGraphModule } from '../../../vjsc/src/graph/index.ts';
+import type { VjscGraph, GraphModule } from '../../../vjsc/src/graph/index.ts';
 import type { VjscRegistryItem } from '../../../vjsc/src/shadcn/index.ts';
 import type { SkinModuleMeta } from '../../vjsc/meta.ts';
 import { registryModuleSourcePath } from '../configure.ts';
@@ -13,15 +13,15 @@ export function isPrivateComponent(name: string): boolean {
   return privateComponents.has(name);
 }
 
-export function privateModuleName(module: ComponentGraphModule<SkinModuleMeta>): string | undefined {
+export function privateModuleName(module: GraphModule<SkinModuleMeta>): string | undefined {
   return privateModules.get(registryModuleSourcePath(module.filename));
 }
 
 export function privateComponentItem(
-  module: ComponentGraphModule<SkinModuleMeta>,
+  module: GraphModule<SkinModuleMeta>,
   meta: Extract<SkinModuleMeta, { type: 'component' }>,
   target: RegistryTarget,
-  graph: ComponentGraph<SkinModuleMeta>
+  graph: VjscGraph<SkinModuleMeta>
 ): VjscRegistryItem<SkinModuleMeta> {
   const styles = sourceStyles(module, target, graph);
 
@@ -48,10 +48,10 @@ export function privateComponentItem(
 }
 
 export function privateModuleItem(
-  module: ComponentGraphModule<SkinModuleMeta>,
+  module: GraphModule<SkinModuleMeta>,
   name: string,
   target: RegistryTarget,
-  graph: ComponentGraph<SkinModuleMeta>
+  graph: VjscGraph<SkinModuleMeta>
 ): VjscRegistryItem<SkinModuleMeta> {
   const sourcePath = registryModuleSourcePath(module.filename);
   const output = sourcePath.slice('components/'.length);
@@ -81,7 +81,7 @@ export function privateModuleItem(
 }
 
 export function utilsItem(
-  module: ComponentGraphModule<SkinModuleMeta>,
+  module: GraphModule<SkinModuleMeta>,
   target: RegistryTarget
 ): VjscRegistryItem<SkinModuleMeta> {
   return {

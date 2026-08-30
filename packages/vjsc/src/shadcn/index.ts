@@ -1,5 +1,4 @@
 export type {
-  ComponentGraphProvider,
   ShadcnRegistry,
   ShadcnRegistryFile,
   ShadcnRegistryFileType,

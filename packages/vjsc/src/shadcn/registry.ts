@@ -3,13 +3,7 @@ import { basename, dirname, isAbsolute, posix, relative } from 'node:path';
 import { type RegistryItem, registryItemSchema, registrySchema, type Registry as ShadcnRegistry } from 'shadcn/schema';
 
 import type { NamedModuleMeta } from '../components/meta';
-import {
-  type ComponentGraph,
-  type ComponentGraphModule,
-  createComponentGraphStyles,
-  type ValidatedComponentGraphModule,
-  validateComponentGraph,
-} from '../graph';
+import { bundleStyles, type GraphModule, type VjscGraph } from '../graph';
 import { escapesRoot, toPosixPath } from '../utils/path';
 import { type ImportReplacement, replaceImportSpecifiers } from './analyze';
 import type {
@@ -22,7 +16,7 @@ import type {
   VjscRegistryStyleItemMeta,
 } from './types';
 
-interface OwnedModule<Item extends NamedModuleMeta = NamedModuleMeta> extends ValidatedComponentGraphModule<Item> {
+interface OwnedModule<Item extends NamedModuleMeta = NamedModuleMeta> extends GraphModule<Item> {
   readonly outputPath: string;
   readonly target: string;
 }
@@ -34,7 +28,7 @@ interface BuiltItem {
 }
 
 interface PublishedModule<Item extends NamedModuleMeta = NamedModuleMeta> {
-  readonly module: ValidatedComponentGraphModule<Item>;
+  readonly module: GraphModule<Item>;
   readonly item: SourceRegistryItem<Item>;
 }
 
@@ -64,10 +58,10 @@ export interface ShadcnOutputFile {
 
 /** Prepare an included Shadcn source registry from the host's transformed module graph. */
 export async function createShadcnRegistryFiles<Item extends NamedModuleMeta>(
-  graph: ComponentGraph<Item>,
+  graph: VjscGraph<Item>,
   options: ShadcnRegistryPluginOptions<Item>
 ): Promise<ShadcnOutputFile[]> {
-  const modules = validateComponentGraph(graph);
+  const modules = graph.modules;
 
   validateOptions(options);
   const described = [...(await options.items(graph))];
@@ -145,7 +139,7 @@ function buildFilesItem<Item extends NamedModuleMeta>(
 }
 
 function describePublishedModules<Item extends NamedModuleMeta>(
-  modules: ReadonlyMap<string, ValidatedComponentGraphModule<Item>>,
+  modules: ReadonlyMap<string, GraphModule<Item>>,
   items: readonly SourceRegistryItem<Item>[]
 ): ReadonlyMap<string, PublishedModule<Item>> {
   const published = new Map<string, PublishedModule<Item>>();
@@ -166,7 +160,7 @@ function describePublishedModules<Item extends NamedModuleMeta>(
 }
 
 function canonicalPublishedModules<Item extends NamedModuleMeta>(
-  modules: ReadonlyMap<string, ValidatedComponentGraphModule<Item>>,
+  modules: ReadonlyMap<string, GraphModule<Item>>,
   published: ReadonlyMap<string, PublishedModule<Item>>
 ): ReadonlyMap<string, PublishedModule<Item>> {
   const canonical = new Map(published);
@@ -192,19 +186,19 @@ function canonicalPublishedModules<Item extends NamedModuleMeta>(
   return canonical;
 }
 
-function moduleSourceKey(module: ValidatedComponentGraphModule): string {
+function moduleSourceKey(module: GraphModule): string {
   return `${module.filename}\0${stripVirtualCssImports(module.source)}`;
 }
 
 function collectOwnedModules<Item extends NamedModuleMeta>(
-  root: ValidatedComponentGraphModule<Item>,
-  modules: ReadonlyMap<string, ValidatedComponentGraphModule<Item>>,
+  root: GraphModule<Item>,
+  modules: ReadonlyMap<string, GraphModule<Item>>,
   published: ReadonlyMap<string, PublishedModule<Item>>
-): { modules: ValidatedComponentGraphModule<Item>[]; publishedDependencies: Set<string> } {
-  const owned = new Map<string, ValidatedComponentGraphModule<Item>>();
+): { modules: GraphModule<Item>[]; publishedDependencies: Set<string> } {
+  const owned = new Map<string, GraphModule<Item>>();
   const publishedDependencies = new Set<string>();
 
-  const visit = (module: ValidatedComponentGraphModule<Item>): void => {
+  const visit = (module: GraphModule<Item>): void => {
     if (owned.has(module.id)) return;
 
     owned.set(module.id, module);
@@ -226,9 +220,9 @@ function collectOwnedModules<Item extends NamedModuleMeta>(
 
 async function buildPublishedItem<Item extends NamedModuleMeta>(
   publication: PublishedModule<Item>,
-  modules: ReadonlyMap<string, ValidatedComponentGraphModule<Item>>,
+  modules: ReadonlyMap<string, GraphModule<Item>>,
   published: ReadonlyMap<string, PublishedModule<Item>>,
-  graph: ComponentGraph<Item>,
+  graph: VjscGraph<Item>,
   options: ShadcnRegistryPluginOptions<Item>
 ): Promise<BuiltItem> {
   const { item, module: root } = publication;
@@ -296,8 +290,8 @@ async function buildPublishedItem<Item extends NamedModuleMeta>(
 
 async function buildStyleItem<Item extends NamedModuleMeta>(
   item: StyleRegistryItem<Item>,
-  modules: ReadonlyMap<string, ValidatedComponentGraphModule<Item>>,
-  graph: ComponentGraph<Item>,
+  modules: ReadonlyMap<string, GraphModule<Item>>,
+  graph: VjscGraph<Item>,
   options: ShadcnRegistryPluginOptions<Item>
 ): Promise<BuiltItem> {
   const selected = item.$vjsc.modules.map((candidate) => {
@@ -368,8 +362,8 @@ function versionDependencies<Item extends NamedModuleMeta>(
 
 async function componentGraphStyles<Item extends NamedModuleMeta>(
   label: string,
-  modules: readonly ValidatedComponentGraphModule<Item>[],
-  graph: ComponentGraph<Item>,
+  modules: readonly GraphModule<Item>[],
+  graph: VjscGraph<Item>,
   supplemental: readonly string[],
   asset?: string,
   includeAssets = true
@@ -378,7 +372,7 @@ async function componentGraphStyles<Item extends NamedModuleMeta>(
     validateRelativePath(path, `Shadcn item ${label} stylesheet file`);
   }
 
-  return createComponentGraphStyles(graph, modules, {
+  return bundleStyles(graph, modules, {
     label,
     files: supplemental,
     asset,
@@ -398,8 +392,8 @@ function addStyleImport(source: string, specifier: string): string {
 }
 
 function createLayout<Item extends NamedModuleMeta>(
-  root: ValidatedComponentGraphModule<Item>,
-  modules: readonly ValidatedComponentGraphModule<Item>[],
+  root: GraphModule<Item>,
+  modules: readonly GraphModule<Item>[],
   item: SourceRegistryItem<Item>,
   options: ShadcnRegistryPluginOptions<Item>
 ): ReadonlyMap<string, OwnedModule<Item>> {
@@ -446,7 +440,7 @@ function createLayout<Item extends NamedModuleMeta>(
 function rewriteImports<Item extends NamedModuleMeta>(
   module: OwnedModule<Item>,
   layout: ReadonlyMap<string, OwnedModule<Item>>,
-  modules: ReadonlyMap<string, ValidatedComponentGraphModule<Item>>,
+  modules: ReadonlyMap<string, GraphModule<Item>>,
   published: ReadonlyMap<string, PublishedModule<Item>>,
   item: SourceRegistryItem<Item>,
   options: ShadcnRegistryPluginOptions<Item>
@@ -497,8 +491,8 @@ function publishedImport<Item extends NamedModuleMeta>(
 
 function installedTarget<Item extends NamedModuleMeta>(
   item: SourceRegistryItem<Item>,
-  module: ComponentGraphModule<Item>,
-  root: ComponentGraphModule<Item>,
+  module: GraphModule<Item>,
+  root: GraphModule<Item>,
   options: ShadcnRegistryPluginOptions<Item>
 ): string {
   return posix.join(normalizePath(options.paths.install), normalizePath(targetForModule(item, module, root)));
@@ -506,8 +500,8 @@ function installedTarget<Item extends NamedModuleMeta>(
 
 function targetForModule<Item extends NamedModuleMeta>(
   item: SourceRegistryItem<Item>,
-  module: ComponentGraphModule<Item>,
-  root: ComponentGraphModule<Item>
+  module: GraphModule<Item>,
+  root: GraphModule<Item>
 ): string {
   const target = typeof item.$vjsc.target === 'function' ? item.$vjsc.target(module, root) : item.$vjsc.target;
 

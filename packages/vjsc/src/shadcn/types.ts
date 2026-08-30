@@ -1,8 +1,7 @@
 import type { Registry, RegistryItem } from 'shadcn/schema';
 
 import type { NamedModuleMeta } from '../components/meta';
-import type { ComponentGraph, ComponentGraphModule } from '../graph';
-export type { ComponentGraphProvider } from '../graph';
+import type { VjscGraph, GraphModule } from '../graph';
 
 export type ShadcnRegistry = Registry;
 export type ShadcnRegistryFile = NonNullable<RegistryItem['files']>[number];
@@ -10,11 +9,11 @@ export type ShadcnRegistryFileType = ShadcnRegistryFile['type'];
 
 export interface VjscRegistrySourceItemMeta<Item extends NamedModuleMeta = NamedModuleMeta> {
   readonly kind?: 'source' | undefined;
-  readonly module: ComponentGraphModule<Item>;
+  readonly module: GraphModule<Item>;
   /** Included registry path, such as `components` or `skins`. */
   readonly group: string;
   /** Root-module target relative to the configured installation directory. */
-  readonly target: string | ((module: ComponentGraphModule<Item>, root: ComponentGraphModule<Item>) => string);
+  readonly target: string | ((module: GraphModule<Item>, root: GraphModule<Item>) => string);
   /** Installed filename for the item's root module. Defaults to its source filename. */
   readonly filename?: string | undefined;
   /** Import replacements applied while packaging this item. */
@@ -37,7 +36,7 @@ export interface VjscRegistryStyleItemMeta<Item extends NamedModuleMeta = NamedM
   /** Included registry path, such as `support` or `styles`. */
   readonly group: string;
   /** Modules whose finalized style assets are aggregated into this item. */
-  readonly modules: readonly ComponentGraphModule<Item>[];
+  readonly modules: readonly GraphModule<Item>[];
   /** Compiled VJSC style output filename, such as `buttons.css`. */
   readonly asset?: string | undefined;
   /** Stable stylesheet target relative to the configured installation directory. */
@@ -89,7 +88,7 @@ export interface ShadcnRegistryPluginOptions<Item extends NamedModuleMeta = Name
   readonly packages?: Readonly<Record<string, string>> | undefined;
   /** Describe registry ownership after every requested graph transformation is complete. */
   readonly items: (
-    graph: ComponentGraph<Item>
+    graph: VjscGraph<Item>
   ) => readonly VjscRegistryItem<Item>[] | Promise<readonly VjscRegistryItem<Item>[]>;
   readonly meta?: RegistryItem['meta'];
 }

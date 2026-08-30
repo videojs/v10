@@ -28,7 +28,7 @@ import {
   utilityGroupsForRule,
 } from '../styles/style-index';
 import { moduleFilename, parseModuleId, type VjscModule } from '../utils/module-id';
-import { mergeComponentModuleMeta } from './component-meta';
+import { mergeVjscModuleMeta } from './component-meta';
 
 const SCRIPT_ID = /\.[cm]?[jt]sx?(?:\?|$)/;
 
@@ -146,7 +146,10 @@ export function stylePlugin(
           return null;
         }
 
-        let componentStyles: readonly string[] = [];
+        const styleFiles = [
+          ...new Set(index.rules.filter((rule) => referencedRules.has(rule.className)).map((rule) => rule.file)),
+        ].sort();
+        let styleAssets: readonly string[] = [];
 
         if (options.mode === 'css' && options.css) {
           const input = resolve(cwd, options.css.input);
@@ -195,7 +198,7 @@ export function stylePlugin(
 
           replaceVirtualCss(cssById, cssByOwner, id, modules, lifecycle);
           insertModuleImports(transform.ast, transform.magicString, imports);
-          componentStyles = modules.map(([moduleId]) => moduleId);
+          styleAssets = modules.map(([moduleId]) => moduleId);
         } else {
           report();
           replaceVirtualCss(cssById, cssByOwner, id, [], lifecycle);
@@ -203,7 +206,9 @@ export function stylePlugin(
 
         return {
           code: transform.magicString,
-          meta: mergeComponentModuleMeta(this.getModuleInfo(id)?.meta, { componentStyles }),
+          meta: mergeVjscModuleMeta(this.getModuleInfo(id)?.meta, {
+            moduleStyles: { files: styleFiles, assets: styleAssets },
+          }),
         };
       },
     },

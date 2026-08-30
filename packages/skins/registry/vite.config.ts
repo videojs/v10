@@ -9,7 +9,7 @@ import { packageSkinsPlugin } from '../build/packages/plugin.ts';
 import {
   packageDir,
   registryAssetsOnly,
-  registryGraph,
+  registryEntries,
   registryUtils,
   resolveRegistryComponents,
   resolveRegistryStyles,
@@ -35,14 +35,14 @@ export const registryPackConfig: PackUserConfig = {
   },
   plugins: [
     vjscPlugin({
+      entries: registryEntries,
       transform: {
         components: resolveRegistryComponents,
         styles: resolveRegistryStyles,
       },
     }),
-    registryGraph,
     ...registryTargets.map((target) =>
-      shadcnRegistryPlugin(registryGraph, {
+      shadcnRegistryPlugin({
         name: 'videojs',
         homepage: 'https://videojs.org',
         namespace: '@videojs',
@@ -60,7 +60,7 @@ export const registryPackConfig: PackUserConfig = {
         items: registryItems(target),
       })
     ),
-    packageSkinsPlugin(registryGraph, {
+    packageSkinsPlugin({
       workspaceDir: resolve(packageDir, '../..'),
       format: formatSource,
     }),

@@ -1,6 +1,6 @@
 import { basename } from 'node:path';
 
-import type { ComponentGraph, ComponentGraphModule } from '../../../vjsc/src/graph/index.ts';
+import type { VjscGraph, GraphModule } from '../../../vjsc/src/graph/index.ts';
 import type { VjscRegistryItem } from '../../../vjsc/src/shadcn/index.ts';
 import type { SkinModuleMeta } from '../../vjsc/meta.ts';
 import type { VideojsRegistryMeta } from '../meta.ts';
@@ -60,15 +60,14 @@ export interface SourceStyles {
 }
 
 export function sourceStyles(
-  module: ComponentGraphModule<SkinModuleMeta>,
+  module: GraphModule<SkinModuleMeta>,
   target: RegistryTarget,
-  graph: ComponentGraph<SkinModuleMeta>
+  graph: VjscGraph<SkinModuleMeta>
 ): SourceStyles {
   const targets = new Set<string>(['styles/theme.css']);
 
   if (target.styling === 'css') {
-    for (const id of graph.styles.get(module.id) ?? []) {
-      const filename = virtualStyleFilename(id);
+    for (const filename of module.styles.files) {
       const styleTarget = isStyleTarget(filename) ? styleTargets[filename] : undefined;
 
       if (styleTarget) targets.add(styleTarget);
@@ -84,21 +83,21 @@ export function sourceStyles(
 }
 
 export function concernStyleItems(
-  modules: readonly ComponentGraphModule<SkinModuleMeta>[],
+  modules: readonly GraphModule<SkinModuleMeta>[],
   target: RegistryTarget
 ): VjscRegistryItem<SkinModuleMeta>[] {
   if (target.framework !== 'react' || target.styling !== 'css') return [];
 
   const shared = modules.filter(
     (module) =>
-      module.transform.target === 'react' &&
-      module.transform.style === 'css' &&
-      module.transform.skin === undefined &&
+      module.params.target === 'react' &&
+      module.params.style === 'css' &&
+      module.params.skin === undefined &&
       module.filename.includes('/components/')
   );
 
   return Object.entries(styleTargets).flatMap(([asset, styleTarget]) => {
-    const owners = shared.filter((module) => (moduleStyles(module) ?? []).some((filename) => filename === asset));
+    const owners = shared.filter((module) => module.styles.files.includes(asset));
     if (owners.length === 0) return [];
 
     const concern = basename(styleTarget, '.css');
@@ -150,19 +149,6 @@ function privateStyleMeta(target: RegistryTarget): VideojsRegistryMeta {
     styling: target.styling,
     public: false,
   };
-}
-
-function moduleStyles(module: ComponentGraphModule<SkinModuleMeta>): string[] | undefined {
-  const matches = [...module.source.matchAll(/virtual:vjsc\/css\/[^"']+\/([^"']+)/g)];
-  const filenames = matches.map((match) => decodeURIComponent(match[1]!));
-
-  return filenames.length ? filenames : undefined;
-}
-
-function virtualStyleFilename(id: string): string | undefined {
-  if (!id.startsWith('virtual:vjsc/css/')) return undefined;
-
-  return decodeURIComponent(id.slice(id.lastIndexOf('/') + 1));
 }
 
 function isStyleTarget(value: string | undefined): value is keyof typeof styleTargets {

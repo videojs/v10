@@ -1,10 +1,6 @@
 import { posix } from 'node:path';
 
-import {
-  type ComponentGraph,
-  type ComponentGraphModule,
-  createComponentGraphStyles,
-} from '../../../vjsc/src/graph/index.ts';
+import { type VjscGraph, type GraphModule, bundleStyles } from '../../../vjsc/src/graph/index.ts';
 import type { VjscRegistryItem } from '../../../vjsc/src/shadcn/index.ts';
 import { createHtmlSkinRegistration, createSourceOwnedHtml, type RenderedHtmlSkin } from '../../build/packages/html.ts';
 import { skinDirectory, skinPreset } from '../../build/skin.ts';
@@ -16,7 +12,7 @@ import { reactHelperDependency } from './support.ts';
 
 export async function htmlSkinItem(
   skin: RenderedHtmlSkin,
-  graph: ComponentGraph<SkinModuleMeta>,
+  graph: VjscGraph<SkinModuleMeta>,
   target: RegistryTarget
 ): Promise<VjscRegistryItem<SkinModuleMeta>> {
   const meta = skin.root.meta;
@@ -50,7 +46,7 @@ export async function htmlSkinItem(
       path: 'skin.css',
       target: `${registryPaths.install}/${directory}/skin.css`,
       type: 'registry:style',
-      content: await createComponentGraphStyles(graph, skin.modules, {
+      content: await bundleStyles(graph, skin.modules, {
         label: name,
         files: ['./styles/base.css'],
       }),
@@ -81,7 +77,7 @@ export async function htmlSkinItem(
 }
 
 export function skinItem(
-  module: ComponentGraphModule<SkinModuleMeta>,
+  module: GraphModule<SkinModuleMeta>,
   meta: Extract<SkinModuleMeta, { type: 'skin' }>,
   target: RegistryTarget
 ): VjscRegistryItem<SkinModuleMeta> {
@@ -127,8 +123,8 @@ function relativeRegistryImport(importer: string, target: string): string {
 }
 
 function skinModuleTarget(
-  module: ComponentGraphModule<SkinModuleMeta>,
-  root: ComponentGraphModule<SkinModuleMeta>,
+  module: GraphModule<SkinModuleMeta>,
+  root: GraphModule<SkinModuleMeta>,
   skin: SkinName,
   framework: RegistryTarget['framework']
 ): string {
@@ -152,7 +148,7 @@ function skinModuleTarget(
 }
 
 function skinDocs(
-  module: ComponentGraphModule<SkinModuleMeta>,
+  module: GraphModule<SkinModuleMeta>,
   meta: Extract<SkinModuleMeta, { type: 'skin' }>,
   skin: SkinName,
   target: RegistryTarget,

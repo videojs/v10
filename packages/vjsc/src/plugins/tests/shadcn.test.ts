@@ -6,9 +6,9 @@ import { type Plugin, type RolldownOutput, rolldown } from 'rolldown';
 import { registryItemSchema, registrySchema } from 'shadcn/schema';
 import { describe, expect, it } from 'vite-plus/test';
 
-import { componentGraphPlugin, shadcnRegistryPlugin, vjscPlugin } from '..';
+import { shadcnRegistryPlugin, vjscPlugin } from '..';
 import type { NamedModuleMeta } from '../../components';
-import type { ComponentGraphModule } from '../../graph';
+import type { GraphModule } from '../../graph';
 import type { ShadcnRegistryPluginOptions, VjscRegistryItem } from '../../shadcn';
 
 interface FixtureMeta extends NamedModuleMeta {
@@ -108,7 +108,7 @@ describe('shadcnRegistryPlugin', () => {
 
             if (!id.endsWith('/components/root.tsx')) return null;
 
-            return { meta: { componentStyles: [virtualStyle] } };
+            return { meta: { moduleStyles: { files: [], assets: [virtualStyle] } } };
           },
         },
       ]
@@ -173,14 +173,14 @@ describe('shadcnRegistryPlugin', () => {
     const root = setup({
       'components/root.tsx': `export const Root = <main>first</main>; ${meta('root', 'block')}`,
     });
-    const graph = componentGraphPlugin<FixtureMeta>({ root, include: './components/**/*.{ts,tsx}' });
-    const first = await build(root, {}, [], graph);
+    const transform = fixtureTransform(root);
+    const first = await build(root, {}, [], transform);
 
     writeFileSync(
       join(root, 'components/root.tsx'),
       `export const Root = <main>second</main>; ${meta('root', 'block')}`
     );
-    const second = await build(root, {}, [], graph);
+    const second = await build(root, {}, [], transform);
     const firstItem = registryItem(first, 'items', 'root');
     const secondItem = registryItem(second, 'items', 'root');
 
@@ -195,31 +195,33 @@ async function build(
   root: string,
   overrides: Partial<FixtureOptions & { transformations: () => readonly Readonly<Record<string, string>>[] }> = {},
   additions: readonly Plugin[] = [],
-  existingGraph?: ReturnType<typeof componentGraphPlugin<FixtureMeta>>
+  existingTransform?: Plugin[]
 ): Promise<RolldownOutput> {
   const { transformations, ...registryOverrides } = overrides;
-  const graph =
-    existingGraph ??
-    componentGraphPlugin<FixtureMeta>({
+  const transform = existingTransform ?? fixtureTransform(root, transformations);
+  const registry = shadcnRegistryPlugin(baseOptions(registryOverrides));
+  const bundle = await rolldown({
+    input: [],
+    experimental: { nativeMagicString: true },
+    external: (id) => !id.startsWith('.') && !id.startsWith('/') && !id.startsWith('\0'),
+    plugins: [...transform, ...additions, registry],
+  });
+
+  return bundle.generate({ format: 'es', entryFileNames: '[name].js' });
+}
+
+function fixtureTransform(root: string, transformations?: () => readonly Readonly<Record<string, string>>[]): Plugin[] {
+  return vjscPlugin<FixtureMeta>({
+    entries: {
       root,
       include: './components/**/*.{ts,tsx}',
-      ...(transformations ? { transformations } : {}),
-    });
-  const transform = vjscPlugin({
+      ...(transformations ? { resolve: { params: transformations } } : {}),
+    },
     transform: {
       components: () => [],
       styles: () => null,
     },
   });
-  const registry = shadcnRegistryPlugin(graph, baseOptions(registryOverrides));
-  const bundle = await rolldown({
-    input: [],
-    experimental: { nativeMagicString: true },
-    external: (id) => !id.startsWith('.') && !id.startsWith('/') && !id.startsWith('\0'),
-    plugins: [...transform, ...additions, graph, registry],
-  });
-
-  return bundle.generate({ format: 'es', entryFileNames: '[name].js' });
 }
 
 function baseOptions(overrides: Partial<FixtureOptions> = {}): FixtureOptions {
@@ -234,12 +236,12 @@ function baseOptions(overrides: Partial<FixtureOptions> = {}): FixtureOptions {
   };
 }
 
-function describeItems(modules: readonly ComponentGraphModule<FixtureMeta>[]): VjscRegistryItem<FixtureMeta>[] {
+function describeItems(modules: readonly GraphModule<FixtureMeta>[]): VjscRegistryItem<FixtureMeta>[] {
   return modules.flatMap((module) => {
     const itemMeta = module.meta;
     if (!itemMeta) return [];
 
-    const theme = module.transform.theme;
+    const theme = module.params.theme;
     const name = theme === 'minimal' ? `${itemMeta.name}-minimal` : itemMeta.name;
     const support = itemMeta.type === 'support';
 

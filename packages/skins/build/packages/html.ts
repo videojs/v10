@@ -1,13 +1,8 @@
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
-import type { ComponentGraph, ValidatedComponentGraphModule } from 'vjsc/graph';
-import {
-  collectComponentGraphModules,
-  createComponentGraphStyles,
-  renderComponentGraphHtml,
-  validateComponentGraph,
-} from 'vjsc/graph';
+import type { VjscGraph, GraphModule } from 'vjsc/graph';
+import { bundleStyles, collectModules, renderHtml } from 'vjsc/graph';
 
 import { isSkinName, type SkinMeta, type SkinModuleMeta, type SkinName } from '../../vjsc/meta.ts';
 import { skinPreset, skinPresets, type SkinPreset } from '../skin.ts';
@@ -23,19 +18,19 @@ export interface CreateHtmlPackageSkinsOptions {
 
 export interface RenderedHtmlSkin {
   readonly root: HtmlSkinRoot;
-  readonly modules: readonly ValidatedComponentGraphModule<SkinModuleMeta>[];
+  readonly modules: readonly GraphModule<SkinModuleMeta>[];
   readonly preset: SkinPreset;
   readonly theme: SkinMeta['style']['theme'];
   readonly template: string;
 }
 
-type HtmlSkinRoot = ValidatedComponentGraphModule<SkinMeta & { readonly name: SkinName }> & {
+type HtmlSkinRoot = GraphModule<SkinMeta & { readonly name: SkinName }> & {
   readonly meta: SkinMeta & { readonly name: SkinName };
 };
 
 /** Generate package-local HTML Skin templates, registrations, and styles from one finalized VJSC component graph. */
 export async function createHtmlPackageSkins(
-  graph: ComponentGraph<SkinModuleMeta>,
+  graph: VjscGraph<SkinModuleMeta>,
   options: CreateHtmlPackageSkinsOptions
 ): Promise<GeneratedPackageFile[]> {
   const skins = await renderHtmlSkins(graph, { workspaceDir: options.workspaceDir, styling: 'css' });
@@ -50,7 +45,7 @@ export async function createHtmlPackageSkins(
     addGenerated(
       generated,
       `${root}/skin.css`,
-      await createComponentGraphStyles(graph, skin.modules, {
+      await bundleStyles(graph, skin.modules, {
         label: name,
         files: options.baseStyles ?? ['./styles/base.css'],
       })
@@ -76,13 +71,13 @@ export interface RenderHtmlSkinsOptions {
 
 /** Render the complete static markup for every HTML Skin in one styling catalog. */
 export async function renderHtmlSkins(
-  graph: ComponentGraph<SkinModuleMeta>,
+  graph: VjscGraph<SkinModuleMeta>,
   options: RenderHtmlSkinsOptions
 ): Promise<RenderedHtmlSkin[]> {
   const skins = htmlSkins(graph, options.styling);
   const iconModule = htmlIconModule(uniqueModules(skins.flatMap((skin) => skin.modules)));
 
-  const templates = await renderComponentGraphHtml(
+  const templates = await renderHtml(
     graph,
     skins.map((skin) => ({
       name: skin.root.meta.name,
@@ -120,18 +115,16 @@ export function htmlPackageSkinOwnedPaths(): string[] {
 }
 
 function htmlSkins(
-  graph: ComponentGraph<SkinModuleMeta>,
+  graph: VjscGraph<SkinModuleMeta>,
   styling: RenderHtmlSkinsOptions['styling']
 ): Array<Omit<RenderedHtmlSkin, 'template'>> {
-  const modules = validateComponentGraph(graph);
-
-  const roots = [...modules.values()].filter(
+  const roots = [...graph.modules.values()].filter(
     (module): module is HtmlSkinRoot =>
       module.meta?.type === 'skin' &&
       isSkinName(module.meta.name) &&
-      module.transform.target === 'html' &&
-      module.transform.style === styling &&
-      module.transform.skin === module.meta.name
+      module.params.target === 'html' &&
+      module.params.style === styling &&
+      module.params.skin === module.meta.name
   );
 
   if (roots.length !== skinPresets.length * 2) {
@@ -141,7 +134,7 @@ function htmlSkins(
   return roots
     .map((root) => ({
       root,
-      modules: collectComponentGraphModules(graph, root.id),
+      modules: collectModules(graph, root.id),
       preset: skinPreset(root.meta.name),
       theme: root.meta.style.theme,
     }))
@@ -161,7 +154,7 @@ export const template = createTemplate(/* html */ \`${template}\`);
 /** Create the exact custom-element and icon registration closure used by one rendered HTML Skin. */
 export function createHtmlSkinRegistration(
   html: string,
-  modules: readonly ValidatedComponentGraphModule<SkinModuleMeta>[],
+  modules: readonly GraphModule<SkinModuleMeta>[],
   destination: 'package' | 'registry'
 ): string {
   const output: string[] = [];
@@ -223,7 +216,7 @@ export function createSourceOwnedHtml(template: string): string {
     .replaceAll('&lt;', '<');
 }
 
-function htmlIconModule(modules: readonly ValidatedComponentGraphModule<SkinModuleMeta>[]): string {
+function htmlIconModule(modules: readonly GraphModule<SkinModuleMeta>[]): string {
   const bindings = new Set<string>(['registerIcons']);
 
   for (const module of modules) {
@@ -237,7 +230,7 @@ function htmlIconModule(modules: readonly ValidatedComponentGraphModule<SkinModu
 }
 
 function iconRegistrations(
-  modules: readonly ValidatedComponentGraphModule<SkinModuleMeta>[]
+  modules: readonly GraphModule<SkinModuleMeta>[]
 ): ReadonlyMap<string, ReadonlyMap<string, string>> {
   const families = new Map<string, Map<string, string>>();
 
@@ -274,9 +267,7 @@ function iconImports(source: string): ReadonlyMap<string, string> {
   return imports;
 }
 
-function uniqueModules(
-  modules: readonly ValidatedComponentGraphModule<SkinModuleMeta>[]
-): ValidatedComponentGraphModule<SkinModuleMeta>[] {
+function uniqueModules(modules: readonly GraphModule<SkinModuleMeta>[]): GraphModule<SkinModuleMeta>[] {
   return [...new Map(modules.map((module) => [module.id, module])).values()];
 }
 
