@@ -27,6 +27,8 @@ export const volumeFeature = definePlayerFeature({
 
       media.volume = clamped;
 
+      // `volumechange` can be asynchronous. Sync immediately so controlled sliders do not render a stale value
+      // between keyboard repeats.
       set({ volume: media.volume, muted: media.muted });
 
       return media.volume;
