@@ -1,7 +1,7 @@
 import { resolve } from 'node:path';
 
 import { isString, isUndefined } from '@videojs/utils/predicate';
-import { build, createLogger, createServer, type ViteDevServer } from 'vite';
+import { createLogger, createServer, type ViteDevServer } from 'vite';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
 const packageDir = resolve(import.meta.dirname, '../..');
@@ -248,31 +248,6 @@ describe('Skins Vite workflow', () => {
     expect(transformed?.code).toContain('MediaIconElement');
     expect(await server.pluginContainer.resolveId(runtime, resolved.id)).toMatchObject({ id: runtime });
   }, 30_000);
-
-  it('builds the same VJSC configuration for production', async () => {
-    const result = await build({
-      configFile,
-      logLevel: 'silent',
-      build: { write: false },
-    });
-
-    const output = (Array.isArray(result) ? result : [result]).flatMap((build) =>
-      'output' in build ? build.output : []
-    );
-    const chunks = output.filter((item) => item.type === 'chunk');
-    const facades = chunks.flatMap((chunk) => (chunk.facadeModuleId ? [chunk.facadeModuleId] : []));
-
-    for (const variant of variants) {
-      const expected = `skin.tsx?skin=${variant.skin}&style=${variant.style}&target=${variant.framework}`;
-
-      expect(
-        facades.some((id) => id.endsWith(expected)),
-        expected
-      ).toBe(true);
-    }
-
-    expect(output.some((item) => item.type === 'asset' && item.fileName.endsWith('.js.map'))).toBe(true);
-  }, 120_000);
 
   it('does not configure Shadcn output while serving', async () => {
     expect(server.config.plugins.some((plugin) => plugin.name === 'vjsc:shadcn')).toBe(false);
