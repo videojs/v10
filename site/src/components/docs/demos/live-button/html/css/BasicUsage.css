@@ -7,7 +7,7 @@
   width: 100%;
 }
 
-.html-live-button-basic__buttons {
+.html-live-button-basic-buttons {
   position: absolute;
   bottom: 10px;
   left: 10px;
@@ -15,8 +15,8 @@
   gap: 8px;
 }
 
-.html-live-button-basic__seek,
-.html-live-button-basic__live {
+.html-live-button-basic-seek,
+.html-live-button-basic-live {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -31,17 +31,17 @@
   backdrop-filter: blur(10px);
 }
 
-.html-live-button-basic__live[data-live-edge] {
+.html-live-button-basic-live[data-live-edge] {
   cursor: default;
 }
 
-.html-live-button-basic__dot {
+.html-live-button-basic-dot {
   width: 8px;
   height: 8px;
   background: gray;
   border-radius: 50%;
 }
 
-.html-live-button-basic__live[data-live-edge] .html-live-button-basic__dot {
+.html-live-button-basic-live[data-live-edge] .html-live-button-basic-dot {
   background: red;
 }

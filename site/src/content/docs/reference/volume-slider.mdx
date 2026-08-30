@@ -66,18 +66,20 @@ Use [CSS custom properties](#root-css-custom-properties) to style the fill and p
 
 <FrameworkCase frameworks={["html"]}>
 ```css
-media-volume-slider::before {
-  width: var(--media-slider-fill);
+media-slider-fill {
+  width: 100%;
+  clip-path: inset(0 calc(100% - var(--media-slider-fill)) 0 0);
 }
 ```
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
-React renders a `<div>` element. Add a `className` to style it:
+Add a `className` to `VolumeSlider.Fill`, which renders a `<div>` element:
 
 ```css
-.volume-slider::before {
-  width: var(--media-slider-fill);
+.volume-slider-fill {
+  width: 100%;
+  clip-path: inset(0 calc(100% - var(--media-slider-fill)) 0 0);
 }
 ```
 </FrameworkCase>

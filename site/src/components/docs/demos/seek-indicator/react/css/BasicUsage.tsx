@@ -10,11 +10,11 @@ export default function BasicUsage() {
     <Player>
       <Container className="react-seek-indicator-basic" tabIndex={0}>
         <Video src="{{VJS10_DEMO_VIDEO_MP4}}" autoPlay muted playsInline loop />
-        <p className="react-seek-indicator-basic__instructions">
+        <p className="react-seek-indicator-basic-instructions">
           Focus the player · ←/→: seek 10s · 0–9: seek to percent
         </p>
-        <SeekIndicator.Root className="react-seek-indicator-basic__indicator" aria-hidden="true">
-          <SeekIndicator.Value className="react-seek-indicator-basic__value" />
+        <SeekIndicator.Root className="react-seek-indicator-basic-indicator" aria-hidden="true">
+          <SeekIndicator.Value className="react-seek-indicator-basic-value" />
         </SeekIndicator.Root>
         <Hotkey keys="ArrowLeft" action="seekStep" value={-10} />
         <Hotkey keys="ArrowRight" action="seekStep" value={10} />

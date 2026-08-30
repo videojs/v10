@@ -8,20 +8,20 @@ export default function BasicUsage() {
     <Player>
       <Container className="react-volume-popover-basic">
         <Video src="{{VJS10_DEMO_VIDEO_MP4}}" autoPlay muted playsInline loop />
-        <div className="react-volume-popover-basic__controls">
+        <div className="react-volume-popover-basic-controls">
           <VolumePopover.Root openOnHover side="top">
             <VolumePopover.Trigger
-              className="react-volume-popover-basic__trigger"
+              className="react-volume-popover-basic-trigger"
               render={
                 <MuteButton render={(props, state) => <button {...props}>{state.muted ? 'Unmute' : 'Mute'}</button>} />
               }
             />
-            <VolumePopover.Popup className="react-volume-popover-basic__popup">
-              <VolumeSlider.Root orientation="vertical" className="react-volume-popover-basic__slider">
-                <VolumeSlider.Track className="react-volume-popover-basic__track">
-                  <VolumeSlider.Fill className="react-volume-popover-basic__fill" />
+            <VolumePopover.Popup className="react-volume-popover-basic-popup">
+              <VolumeSlider.Root orientation="vertical" className="react-volume-popover-basic-slider">
+                <VolumeSlider.Track className="react-volume-popover-basic-track">
+                  <VolumeSlider.Fill className="react-volume-popover-basic-fill" />
                 </VolumeSlider.Track>
-                <VolumeSlider.Thumb className="react-volume-popover-basic__thumb" />
+                <VolumeSlider.Thumb className="react-volume-popover-basic-thumb" />
               </VolumeSlider.Root>
             </VolumePopover.Popup>
           </VolumePopover.Root>

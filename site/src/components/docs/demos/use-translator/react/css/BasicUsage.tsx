@@ -20,7 +20,7 @@ function Labels() {
   const t = useTranslator();
 
   return (
-    <dl className="react-use-translator-basic__output">
+    <dl className="react-use-translator-basic-output">
       <div>
         <dt>Button</dt>
         <dd>{t('buttons.play', { default: 'Play' })}</dd>

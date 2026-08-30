@@ -9,12 +9,12 @@ export default function BasicUsage() {
     <Player>
       <Container className="react-live-button-basic">
         <HlsJsVideo src="{{VJS10_DEMO_LIVE_HLS}}" autoPlay muted playsInline />
-        <div className="react-live-button-basic__buttons">
-          <SeekButton seconds={-30} className="react-live-button-basic__seek">
+        <div className="react-live-button-basic-buttons">
+          <SeekButton seconds={-30} className="react-live-button-basic-seek">
             {'⏪'} 30s
           </SeekButton>
-          <LiveButton className="react-live-button-basic__live">
-            <span className="react-live-button-basic__dot" />
+          <LiveButton className="react-live-button-basic-live">
+            <span className="react-live-button-basic-dot" />
             Live
           </LiveButton>
         </div>

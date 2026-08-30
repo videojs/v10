@@ -3,7 +3,7 @@
   min-height: 320px;
 }
 
-.react-dialog-basic__trigger {
+.react-dialog-basic-trigger {
   display: grid;
   gap: 10px;
   width: min(100%, 420px);
@@ -16,14 +16,14 @@
   border-radius: 12px;
 }
 
-.react-dialog-basic__trigger img {
+.react-dialog-basic-trigger img {
   display: block;
   width: 100%;
   aspect-ratio: 16 / 9;
   object-fit: cover;
 }
 
-.react-dialog-basic__backdrop {
+.react-dialog-basic-backdrop {
   position: absolute;
   inset: 0;
   z-index: 1;
@@ -31,7 +31,7 @@
   transition: opacity 200ms ease;
 }
 
-.react-dialog-basic__dialog {
+.react-dialog-basic-dialog {
   position: absolute;
   inset: 0;
   z-index: 2;
@@ -42,14 +42,14 @@
   transition: opacity 150ms ease;
 }
 
-.react-dialog-basic__backdrop[data-starting-style],
-.react-dialog-basic__backdrop[data-ending-style],
-.react-dialog-basic__dialog[data-starting-style],
-.react-dialog-basic__dialog[data-ending-style] {
+.react-dialog-basic-backdrop[data-starting-style],
+.react-dialog-basic-backdrop[data-ending-style],
+.react-dialog-basic-dialog[data-starting-style],
+.react-dialog-basic-dialog[data-ending-style] {
   opacity: 0;
 }
 
-.react-dialog-basic__popup {
+.react-dialog-basic-popup {
   position: relative;
   width: 100%;
   max-width: 560px;
@@ -59,17 +59,17 @@
   border-radius: 12px;
 }
 
-.react-dialog-basic__title {
+.react-dialog-basic-title {
   margin: 0 0 4px;
   font-size: 1.125rem;
   font-weight: 600;
 }
 
-.react-dialog-basic__description {
+.react-dialog-basic-description {
   margin: 0 0 12px;
 }
 
-.react-dialog-basic__close {
+.react-dialog-basic-close {
   position: absolute;
   top: 12px;
   right: 12px;
@@ -87,8 +87,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .react-dialog-basic__backdrop,
-  .react-dialog-basic__dialog {
+  .react-dialog-basic-backdrop,
+  .react-dialog-basic-dialog {
     transition: none;
   }
 }

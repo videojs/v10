@@ -14,7 +14,9 @@ export default function WithParts() {
             <TimeSlider.Fill className="media-slider-fill" />
           </TimeSlider.Track>
           <TimeSlider.Thumb className="media-slider-thumb" />
-          <TimeSlider.Value type="pointer" className="media-slider-value" />
+          <TimeSlider.Preview className="media-slider-preview">
+            <TimeSlider.Value type="pointer" className="media-slider-value" />
+          </TimeSlider.Preview>
         </TimeSlider.Root>
       </Container>
     </Player>

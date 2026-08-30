@@ -5,7 +5,7 @@ const brokenSource = 'data:video/mp4;base64,AAAA';
 
 document.querySelectorAll<HTMLElement>('.html-error-dialog-basic').forEach((demo) => {
   const video = demo.querySelector('video');
-  const trigger = demo.querySelector<HTMLButtonElement>('.html-error-dialog-basic__trigger');
+  const trigger = demo.querySelector<HTMLButtonElement>('.html-error-dialog-basic-trigger');
 
   trigger?.addEventListener('click', () => {
     if (!video) return;

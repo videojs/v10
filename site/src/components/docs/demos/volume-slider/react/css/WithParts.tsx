@@ -17,7 +17,9 @@ export default function WithParts() {
             <VolumeSlider.Fill className="media-slider-fill" />
           </VolumeSlider.Track>
           <VolumeSlider.Thumb className="media-slider-thumb" />
-          <VolumeSlider.Value type="pointer" className="media-slider-value" />
+          <VolumeSlider.Preview className="media-slider-preview">
+            <VolumeSlider.Value type="pointer" className="media-slider-value" />
+          </VolumeSlider.Preview>
         </VolumeSlider.Root>
       </Container>
     </Player>

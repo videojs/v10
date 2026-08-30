@@ -6,7 +6,7 @@
   width: 100%;
 }
 
-.react-live-button-basic__buttons {
+.react-live-button-basic-buttons {
   position: absolute;
   bottom: 10px;
   left: 10px;
@@ -14,8 +14,8 @@
   gap: 8px;
 }
 
-.react-live-button-basic__seek,
-.react-live-button-basic__live {
+.react-live-button-basic-seek,
+.react-live-button-basic-live {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -30,17 +30,17 @@
   backdrop-filter: blur(10px);
 }
 
-.react-live-button-basic__live[data-live-edge] {
+.react-live-button-basic-live[data-live-edge] {
   cursor: default;
 }
 
-.react-live-button-basic__dot {
+.react-live-button-basic-dot {
   width: 8px;
   height: 8px;
   background: gray;
   border-radius: 50%;
 }
 
-.react-live-button-basic__live[data-live-edge] .react-live-button-basic__dot {
+.react-live-button-basic-live[data-live-edge] .react-live-button-basic-dot {
   background: red;
 }

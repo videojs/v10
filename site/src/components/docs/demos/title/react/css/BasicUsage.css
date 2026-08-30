@@ -10,7 +10,7 @@
 
 /* React renders nothing until a title resolves, so the gradient never sits
    over empty space without this demo doing anything. */
-.react-title-basic__title {
+.react-title-basic-title {
   position: absolute;
   inset-inline: 0;
   top: 0;
@@ -23,7 +23,7 @@
   background: linear-gradient(to bottom, rgba(0, 0, 0, 0.7), transparent);
 }
 
-.react-title-basic__button {
+.react-title-basic-button {
   position: absolute;
   bottom: 10px;
   left: 10px;

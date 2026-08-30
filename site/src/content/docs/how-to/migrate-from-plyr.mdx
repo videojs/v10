@@ -9,14 +9,14 @@ import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 
 Video.js v10 is not a drop-in replacement for Plyr. Plyr wraps one media element with a constructor and options object. Video.js composes a player, media component, and skin in markup, then exposes behavior through <DocsLink slug="concepts/features">player state</DocsLink>.
 
-Start with the Minimal skin, move media settings into markup, and replace calls to the Plyr instance with native media APIs or Video.js state actions.
+Start with the <DocsLink slug="reference/minimal-video-skin">Minimal Video Skin</DocsLink>, move media settings into markup, and replace calls to the Plyr instance with native media APIs or Video.js state actions.
 
 ## What changes
 
 - **The player becomes three pieces.** Player state, the media component, and the skin are separate, so you can replace one without wrapping or forking the others.
 - **Streaming behavior becomes player state.** HLS, DASH, and Mux integrations expose renditions, tracks, and live state to the UI instead of leaving that wiring to application code.
 - **React uses native components and hooks.** `@videojs/react` owns its lifecycle instead of wrapping an imperative constructor around framework-owned DOM.
-- **The UI is composable.** Buttons, sliders, menus, gestures, and hotkeys are individual accessible components. Start with the Minimal or Default skin, then [install its source](#install-the-skin-source) when you need to change the structure.
+- **The UI is composable.** Buttons, sliders, menus, gestures, and hotkeys are individual accessible components. Start with the <DocsLink slug="reference/minimal-video-skin">Minimal Video Skin</DocsLink> or <DocsLink slug="reference/video-skin">Default Video Skin</DocsLink>, then [install its source](#install-the-skin-source) when you need to change the structure.
 - **Remote playback is built in.** The video skins include AirPlay and Cast controls. Follow <DocsLink slug="how-to/cast-to-airplay-and-chromecast">Cast to AirPlay and Chromecast</DocsLink> to add the Google Cast integration.
 
 <Aside type="note">
@@ -46,7 +46,7 @@ const player = new Plyr('#player', {
 </script>
 ```
 
-The Minimal skin is the closest built-in starting point for this migration.
+The <DocsLink slug="reference/minimal-video-skin">Minimal Video Skin</DocsLink> is the closest built-in starting point for this migration.
 
 <FrameworkCase frameworks={["html"]}>
 
@@ -76,7 +76,7 @@ import '@videojs/html/video/minimal-skin';
 
 - The skin attaches its styles automatically to its shadow root.
 - The poster moves from `data-poster` on the media to `poster` on `<video-player>`. The skin reads that value and controls how the poster appears. For more advanced control (like supplying your own image element), see <DocsLink slug="how-to/add-a-poster-and-loading-placeholder">Add a poster and loading placeholder</DocsLink>.
-- There's also a default skin with a modern, frosted appearance that some may prefer. Try it by removing the `-minimal` suffix from the script `src` if you're using the CDN, or the `minimal-` prefix from the imports.
+- There's also a <DocsLink slug="reference/video-skin">Default Video Skin</DocsLink> with a modern, frosted appearance that some may prefer. Try it by removing the `-minimal` suffix from the script `src` if you're using the CDN, or the `minimal-` prefix from the imports.
 
 </FrameworkCase>
 
@@ -120,7 +120,7 @@ export function AppVideoPlayer({ origin }: AppVideoPlayerProps) {
 - The poster URL is metadata on `VideoPlayer`. The skin reads that metadata and controls how the poster appears. To replace the rendered image, pass `renderPoster` to the skin — see <DocsLink slug="how-to/add-a-poster-and-loading-placeholder">Add a poster and loading placeholder</DocsLink>.
 - This example assumes all your files for a given asset live in the same path, using consistent filenames. This will almost certainly need adjusting for your implementation.
 - If `origin` points somewhere other than your page's origin, add `crossOrigin="anonymous"` to `<Video>` and serve those files with CORS headers. A cross-origin thumbnail track only loads when the media element is CORS-enabled. See <DocsLink slug="reference/thumbnail">Thumbnail</DocsLink>.
-- There's also a default skin with a modern, frosted appearance that some may prefer. Try it by switching the CSS import filename to `skin.css` and the `MinimalVideoSkin` import and usage to `VideoSkin`.
+- There's also a <DocsLink slug="reference/video-skin">Default Video Skin</DocsLink> with a modern, frosted appearance that some may prefer. Try it by switching the CSS import filename to `skin.css` and the `MinimalVideoSkin` import and usage to `VideoSkin`.
 
 </FrameworkCase>
 
@@ -470,7 +470,7 @@ video-player {
 
 ## Install the skin source
 
-If you need extra customization of layout, styles, or icons, install the closest Player or skin block from the hosted Video.js Shadcn registry. It resolves the complete component and style dependency graph, then writes ordinary files you can modify directly. See <DocsLink slug="how-to/customize-skins">Customize skins</DocsLink>.
+If you need extra customization of layout, styles, or icons, install the closest Player or skin block from the hosted Video.js Shadcn registry. It resolves the complete component and style dependency graph, then writes ordinary files you can modify directly. See <DocsLink slug="getting-started/shadcn">Install from the Shadcn registry</DocsLink>.
 
 ## Known gaps
 

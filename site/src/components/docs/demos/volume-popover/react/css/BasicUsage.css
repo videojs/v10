@@ -6,13 +6,13 @@
   width: 100%;
 }
 
-.react-volume-popover-basic__controls {
+.react-volume-popover-basic-controls {
   position: absolute;
   bottom: 10px;
   left: 10px;
 }
 
-.react-volume-popover-basic__trigger {
+.react-volume-popover-basic-trigger {
   padding: 8px 20px;
   color: black;
   cursor: pointer;
@@ -22,7 +22,7 @@
   backdrop-filter: blur(10px);
 }
 
-.react-volume-popover-basic__popup {
+.react-volume-popover-basic-popup {
   --media-popover-side-offset: 8px;
   width: 40px;
   height: 120px;
@@ -33,7 +33,7 @@
   border-radius: 8px;
 }
 
-.react-volume-popover-basic__slider {
+.react-volume-popover-basic-slider {
   position: relative;
   width: 16px;
   height: 96px;
@@ -41,7 +41,7 @@
   cursor: pointer;
 }
 
-.react-volume-popover-basic__track {
+.react-volume-popover-basic-track {
   position: absolute;
   top: 0;
   bottom: 0;
@@ -51,7 +51,7 @@
   border-radius: 9999px;
 }
 
-.react-volume-popover-basic__fill {
+.react-volume-popover-basic-fill {
   position: absolute;
   right: 0;
   bottom: 0;
@@ -61,7 +61,7 @@
   border-radius: inherit;
 }
 
-.react-volume-popover-basic__thumb {
+.react-volume-popover-basic-thumb {
   position: absolute;
   bottom: var(--media-slider-fill);
   left: 1px;

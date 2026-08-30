@@ -106,7 +106,7 @@ Four differences worth understanding, because each one is a pattern you'll see a
 - **The poster is player metadata, not a media attribute.** Set `poster` on `<video-player>`, and the skin, not the browser, controls how it appears. For more advanced control (like supplying your own image element), see <DocsLink slug="how-to/add-a-poster-and-loading-placeholder">Add a poster and loading placeholder</DocsLink>.
 - **Your `<track>` elements don't change.** Captions, subtitles, chapters, and thumbnails are all still tracks, and the skin shows the matching controls when it finds them.
 
-There's also a minimal skin, closer to v8's control bar if the default's frosted look is too much of a change. Swap `cdn/video.js` for `cdn/video-minimal.js`.
+There's also a <DocsLink slug="reference/minimal-video-skin">Minimal Video Skin</DocsLink>, closer to v8's control bar if the default's frosted look is too much of a change. Swap `cdn/video.js` for `cdn/video-minimal.js`.
 
 </FrameworkCase>
 
@@ -177,7 +177,7 @@ Three differences worth understanding, because each one is a pattern you'll see 
 - **No `controls` prop.** The skin *is* the controls. Rendering a skin is how you ask for them, which is also how you opt out.
 - **The poster is player metadata, not a media attribute.** Pass it to `VideoPlayer`, and the skin controls how it appears.
 
-The `'use client'` directive is there because the player owns browser state. There's also a minimal skin, closer to v8's control bar, if the default's frosted look is too much of a change.
+The `'use client'` directive is there because the player owns browser state. There's also a <DocsLink slug="reference/minimal-video-skin">Minimal Video Skin</DocsLink>, closer to v8's control bar, if the default's frosted look is too much of a change.
 
 </FrameworkCase>
 
@@ -325,7 +325,7 @@ In v8, customizing meant three different techniques depending on what you wanted
 
 ### Level 1: pick a skin
 
-The default skin is a modern, frosted look. The minimal skin is closer to v8's control bar. Both bring controls, tooltips, captions, keyboard shortcuts, touch gestures, and a settings menu that appears when there's something to put in it. See <DocsLink slug="concepts/skins">Skins</DocsLink>.
+The <DocsLink slug="reference/video-skin">Default Video Skin</DocsLink> is a modern, frosted look. The <DocsLink slug="reference/minimal-video-skin">Minimal Video Skin</DocsLink> is closer to v8's control bar. Both bring controls, tooltips, captions, keyboard shortcuts, touch gestures, and a settings menu that appears when there's something to put in it. See <DocsLink slug="concepts/skins">Skins</DocsLink> for the underlying model.
 
 Both also include AirPlay and Cast buttons, which v8 had no answer for. Follow <DocsLink slug="how-to/cast-to-airplay-and-chromecast">Cast to AirPlay and Chromecast</DocsLink> to add the Google Cast integration. Remote playback is a feature you compose in rather than a plugin you install.
 
@@ -349,7 +349,7 @@ video-player {
 
 ### Level 3: own the source
 
-Install the closest Player or skin block from the hosted Video.js Shadcn registry, then edit its ordinary application files. <DocsLink slug="how-to/customize-skins">Customize skins</DocsLink> explains the available React and HTML, Tailwind and vanilla CSS variants.
+Install the closest Player or skin block from the hosted Video.js Shadcn registry, then edit its ordinary application files. <DocsLink slug="getting-started/shadcn">Install from the Shadcn registry</DocsLink> explains the available React and HTML, Tailwind and vanilla CSS variants.
 
 This is where v8's `controlBar` config and `addChild` calls end up, and honestly it's the better trade. Instead of `controlBar: { pictureInPictureToggle: false }`, you delete a line. Instead of subclassing a component to change its behavior, you edit the markup.
 

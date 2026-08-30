@@ -12,7 +12,7 @@
   width: 100%;
 }
 
-.html-volume-indicator-basic__instructions {
+.html-volume-indicator-basic-instructions {
   position: absolute;
   top: 10px;
   left: 50%;
@@ -25,7 +25,7 @@
   translate: -50%;
 }
 
-.html-volume-indicator-basic__indicator {
+.html-volume-indicator-basic-indicator {
   position: absolute;
   top: 50%;
   left: 50%;
@@ -43,25 +43,25 @@
     scale 160ms ease-in-out;
 }
 
-.html-volume-indicator-basic__indicator::before {
+.html-volume-indicator-basic-indicator::before {
   margin-bottom: 12px;
   font-size: 28px;
   line-height: 1;
 }
 
-.html-volume-indicator-basic__indicator[data-level="off"]::before {
+.html-volume-indicator-basic-indicator[data-level="off"]::before {
   content: "🔇";
 }
 
-.html-volume-indicator-basic__indicator[data-level="low"]::before {
+.html-volume-indicator-basic-indicator[data-level="low"]::before {
   content: "🔉";
 }
 
-.html-volume-indicator-basic__indicator[data-level="high"]::before {
+.html-volume-indicator-basic-indicator[data-level="high"]::before {
   content: "🔊";
 }
 
-.html-volume-indicator-basic__fill {
+.html-volume-indicator-basic-fill {
   position: relative;
   width: 180px;
   height: 10px;
@@ -69,7 +69,7 @@
   border-radius: 9999px;
 }
 
-.html-volume-indicator-basic__fill::before {
+.html-volume-indicator-basic-fill::before {
   position: absolute;
   inset-block: 0;
   left: 0;
@@ -80,7 +80,7 @@
   transition: width 160ms linear;
 }
 
-.html-volume-indicator-basic__value {
+.html-volume-indicator-basic-value {
   position: absolute;
   top: calc(100% + 6px);
   left: 50%;
@@ -88,15 +88,15 @@
   translate: -50%;
 }
 
-.html-volume-indicator-basic__indicator[data-starting-style],
-.html-volume-indicator-basic__indicator[data-ending-style] {
+.html-volume-indicator-basic-indicator[data-starting-style],
+.html-volume-indicator-basic-indicator[data-ending-style] {
   opacity: 0;
   scale: 0.85;
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .html-volume-indicator-basic__indicator[data-min],
-  .html-volume-indicator-basic__indicator[data-max] {
+  .html-volume-indicator-basic-indicator[data-min],
+  .html-volume-indicator-basic-indicator[data-max] {
     animation: html-volume-indicator-basic-shake 300ms linear;
   }
 }

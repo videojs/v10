@@ -7,7 +7,7 @@
   width: 100%;
 }
 
-.html-status-announcer-basic__instructions {
+.html-status-announcer-basic-instructions {
   position: absolute;
   top: 10px;
   left: 10px;
@@ -18,7 +18,7 @@
   border-radius: 4px;
 }
 
-.html-status-announcer-basic__controls {
+.html-status-announcer-basic-controls {
   position: absolute;
   right: 12px;
   bottom: 36px;
@@ -28,7 +28,7 @@
   align-items: center;
 }
 
-.html-status-announcer-basic__button {
+.html-status-announcer-basic-button {
   padding: 7px 14px;
   color: black;
   cursor: pointer;
@@ -37,24 +37,24 @@
   border-radius: 9999px;
 }
 
-.html-status-announcer-basic__button .show-when-paused,
-.html-status-announcer-basic__button .show-when-playing,
-.html-status-announcer-basic__button .show-when-ended,
-.html-status-announcer-basic__button .show-when-muted,
-.html-status-announcer-basic__button .show-when-unmuted {
+.html-status-announcer-basic-button .show-when-paused,
+.html-status-announcer-basic-button .show-when-playing,
+.html-status-announcer-basic-button .show-when-ended,
+.html-status-announcer-basic-button .show-when-muted,
+.html-status-announcer-basic-button .show-when-unmuted {
   display: none;
 }
 
-.html-status-announcer-basic__button[data-paused]:not([data-ended]) .show-when-paused,
-.html-status-announcer-basic__button:not([data-paused]) .show-when-playing,
-.html-status-announcer-basic__button[data-ended] .show-when-ended,
-.html-status-announcer-basic__button[data-muted] .show-when-muted,
-.html-status-announcer-basic__button:not([data-muted]) .show-when-unmuted {
+.html-status-announcer-basic-button[data-paused]:not([data-ended]) .show-when-paused,
+.html-status-announcer-basic-button:not([data-paused]) .show-when-playing,
+.html-status-announcer-basic-button[data-ended] .show-when-ended,
+.html-status-announcer-basic-button[data-muted] .show-when-muted,
+.html-status-announcer-basic-button:not([data-muted]) .show-when-unmuted {
   display: inline;
 }
 
-.html-status-announcer-basic__volume-slider,
-.html-status-announcer-basic__time-slider {
+.html-status-announcer-basic-volume-slider,
+.html-status-announcer-basic-time-slider {
   position: relative;
   display: flex;
   align-items: center;
@@ -62,18 +62,18 @@
   cursor: pointer;
 }
 
-.html-status-announcer-basic__volume-slider {
+.html-status-announcer-basic-volume-slider {
   width: 100px;
 }
 
-.html-status-announcer-basic__time-slider {
+.html-status-announcer-basic-time-slider {
   position: absolute;
   right: 12px;
   bottom: 8px;
   left: 12px;
 }
 
-.html-status-announcer-basic__track {
+.html-status-announcer-basic-track {
   position: absolute;
   right: 0;
   left: 0;
@@ -83,8 +83,8 @@
   border-radius: 9999px;
 }
 
-.html-status-announcer-basic__buffer,
-.html-status-announcer-basic__fill {
+.html-status-announcer-basic-buffer,
+.html-status-announcer-basic-fill {
   position: absolute;
   top: 0;
   left: 0;
@@ -92,17 +92,17 @@
   border-radius: inherit;
 }
 
-.html-status-announcer-basic__buffer {
+.html-status-announcer-basic-buffer {
   width: var(--media-slider-buffer);
   background: rgb(255 255 255 / 30%);
 }
 
-.html-status-announcer-basic__fill {
+.html-status-announcer-basic-fill {
   width: var(--media-slider-fill);
   background: white;
 }
 
-.html-status-announcer-basic__thumb {
+.html-status-announcer-basic-thumb {
   position: absolute;
   left: var(--media-slider-fill);
   width: 14px;
@@ -113,7 +113,7 @@
   translate: -50%;
 }
 
-.html-status-announcer-basic__announcer {
+.html-status-announcer-basic-announcer {
   position: absolute;
   width: 1px;
   height: 1px;

@@ -12,7 +12,7 @@
   width: 100%;
 }
 
-.react-volume-indicator-basic__instructions {
+.react-volume-indicator-basic-instructions {
   position: absolute;
   top: 10px;
   left: 50%;
@@ -25,7 +25,7 @@
   translate: -50%;
 }
 
-.react-volume-indicator-basic__indicator {
+.react-volume-indicator-basic-indicator {
   position: absolute;
   top: 50%;
   left: 50%;
@@ -43,25 +43,25 @@
     scale 160ms ease-in-out;
 }
 
-.react-volume-indicator-basic__indicator::before {
+.react-volume-indicator-basic-indicator::before {
   margin-bottom: 12px;
   font-size: 28px;
   line-height: 1;
 }
 
-.react-volume-indicator-basic__indicator[data-level="off"]::before {
+.react-volume-indicator-basic-indicator[data-level="off"]::before {
   content: "🔇";
 }
 
-.react-volume-indicator-basic__indicator[data-level="low"]::before {
+.react-volume-indicator-basic-indicator[data-level="low"]::before {
   content: "🔉";
 }
 
-.react-volume-indicator-basic__indicator[data-level="high"]::before {
+.react-volume-indicator-basic-indicator[data-level="high"]::before {
   content: "🔊";
 }
 
-.react-volume-indicator-basic__fill {
+.react-volume-indicator-basic-fill {
   position: relative;
   width: 180px;
   height: 10px;
@@ -69,7 +69,7 @@
   border-radius: 9999px;
 }
 
-.react-volume-indicator-basic__fill::before {
+.react-volume-indicator-basic-fill::before {
   position: absolute;
   inset-block: 0;
   left: 0;
@@ -80,7 +80,7 @@
   transition: width 160ms linear;
 }
 
-.react-volume-indicator-basic__value {
+.react-volume-indicator-basic-value {
   position: absolute;
   top: calc(100% + 6px);
   left: 50%;
@@ -88,15 +88,15 @@
   translate: -50%;
 }
 
-.react-volume-indicator-basic__indicator[data-starting-style],
-.react-volume-indicator-basic__indicator[data-ending-style] {
+.react-volume-indicator-basic-indicator[data-starting-style],
+.react-volume-indicator-basic-indicator[data-ending-style] {
   opacity: 0;
   scale: 0.85;
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .react-volume-indicator-basic__indicator[data-min],
-  .react-volume-indicator-basic__indicator[data-max] {
+  .react-volume-indicator-basic-indicator[data-min],
+  .react-volume-indicator-basic-indicator[data-max] {
     animation: react-volume-indicator-basic-shake 300ms linear;
   }
 }

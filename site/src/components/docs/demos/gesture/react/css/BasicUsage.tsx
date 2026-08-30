@@ -8,9 +8,9 @@ export default function BasicUsage() {
     <Player>
       <Container className="react-gesture-basic">
         <Video src="{{VJS10_DEMO_VIDEO_MP4}}" muted playsInline />
-        <p className="react-gesture-basic__instructions">Click: play/pause · Double-click: −10s · fullscreen · +10s</p>
+        <p className="react-gesture-basic-instructions">Click: play/pause · Double-click: −10s · fullscreen · +10s</p>
         <PlayButton
-          className="react-gesture-basic__button"
+          className="react-gesture-basic-button"
           render={(props, state) => (
             <button {...props}>{state.ended ? 'Replay' : state.paused ? 'Play' : 'Pause'}</button>
           )}

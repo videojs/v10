@@ -7,13 +7,13 @@
   width: 100%;
 }
 
-.html-volume-popover-basic__controls {
+.html-volume-popover-basic-controls {
   position: absolute;
   bottom: 10px;
   left: 10px;
 }
 
-.html-volume-popover-basic__trigger {
+.html-volume-popover-basic-trigger {
   padding: 8px 20px;
   color: black;
   cursor: pointer;
@@ -23,17 +23,17 @@
   backdrop-filter: blur(10px);
 }
 
-.html-volume-popover-basic__trigger .muted,
-.html-volume-popover-basic__trigger .unmuted {
+.html-volume-popover-basic-trigger .muted,
+.html-volume-popover-basic-trigger .unmuted {
   display: none;
 }
 
-.html-volume-popover-basic__trigger[data-muted] .muted,
-.html-volume-popover-basic__trigger:not([data-muted]) .unmuted {
+.html-volume-popover-basic-trigger[data-muted] .muted,
+.html-volume-popover-basic-trigger:not([data-muted]) .unmuted {
   display: inline;
 }
 
-.html-volume-popover-basic__popup {
+.html-volume-popover-basic-popup {
   --media-popover-side-offset: 8px;
   width: 40px;
   height: 120px;
@@ -44,7 +44,7 @@
   border-radius: 8px;
 }
 
-.html-volume-popover-basic__slider {
+.html-volume-popover-basic-slider {
   position: relative;
   display: block;
   width: 16px;
@@ -53,7 +53,7 @@
   cursor: pointer;
 }
 
-.html-volume-popover-basic__track {
+.html-volume-popover-basic-track {
   position: absolute;
   top: 0;
   bottom: 0;
@@ -63,7 +63,7 @@
   border-radius: 9999px;
 }
 
-.html-volume-popover-basic__fill {
+.html-volume-popover-basic-fill {
   position: absolute;
   right: 0;
   bottom: 0;
@@ -73,7 +73,7 @@
   border-radius: inherit;
 }
 
-.html-volume-popover-basic__thumb {
+.html-volume-popover-basic-thumb {
   position: absolute;
   bottom: var(--media-slider-fill);
   left: 1px;

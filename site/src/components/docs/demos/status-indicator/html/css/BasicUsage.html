@@ -3,15 +3,15 @@
     <video src="{{VJS10_DEMO_VIDEO_MP4}}" autoplay muted playsinline loop>
       <track kind="captions" src="/docs/demos/captions-button/captions.vtt" srclang="en" label="English" />
     </video>
-    <p class="html-status-indicator-basic__instructions">
+    <p class="html-status-indicator-basic-instructions">
       Focus the player · K: play/pause · M: mute · F: fullscreen · C: captions · I: picture-in-picture
     </p>
     <media-status-indicator
-      class="html-status-indicator-basic__indicator"
+      class="html-status-indicator-basic-indicator"
       actions="togglePaused toggleMuted toggleSubtitles toggleFullscreen togglePictureInPicture"
       aria-hidden="true"
     >
-      <media-status-indicator-value class="html-status-indicator-basic__value"></media-status-indicator-value>
+      <media-status-indicator-value class="html-status-indicator-basic-value"></media-status-indicator-value>
     </media-status-indicator>
     <media-hotkey keys="k" action="togglePaused"></media-hotkey>
     <media-hotkey keys="m" action="toggleMuted"></media-hotkey>

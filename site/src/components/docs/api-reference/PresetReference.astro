@@ -12,6 +12,7 @@ import { isValidFramework } from '@/types/docs';
 import type { PresetReference as PresetReferenceType } from '@/types/preset-reference';
 import DocsLink from '../DocsLink.astro';
 import FrameworkCase from '../FrameworkCase.astro';
+import { skinGuides } from '../skins/skinGuides';
 import InlineMarkdown from './InlineMarkdown.astro';
 
 const entries = await getCollection('presetReference');
@@ -34,6 +35,17 @@ const { framework } = Astro.params;
 const pkg = framework && isValidFramework(framework) ? `@videojs/${framework}` : '@videojs/html';
 
 const listFormat = new Intl.ListFormat('en', { style: 'long', type: 'unit' });
+
+function getSkinReferenceSlug(name: string): string | undefined {
+  const entry = Object.entries(skinGuides).find(([, skin]) =>
+    skin.reactSkin === name || skin.htmlSkin === name
+  );
+  if (!entry) return;
+
+  return entry[0] === 'background'
+    ? 'reference/background-video-skin'
+    : `reference/${entry[0]}-skin`;
+}
 ---
 
 <ContentWidth>
@@ -125,16 +137,27 @@ const listFormat = new Intl.ListFormat('en', { style: 'long', type: 'unit' });
                       <dd>
                         <FrameworkCase frameworks={["react"]}>
                           {preset.react.skins.length > 0
-                            ? preset.react.skins.map((skin) => (
-                                <div class="mb-2 last:mb-0">
+                            ? preset.react.skins.map((skin) => {
+                                const slug = getSkinReferenceSlug(skin.name);
+                                const component = (
                                   <MarkdownCode class="inline-block whitespace-nowrap">{`<${skin.name}>`}</MarkdownCode>
-                                  {skin.cssImport && (
-                                    <div class="mt-0.5">
-                                      <MarkdownCode class="inline-block text-code whitespace-nowrap">{`import '${skin.cssImport}';`}</MarkdownCode>
-                                    </div>
-                                  )}
-                                </div>
-                              ))
+                                );
+
+                                return (
+                                  <div class="mb-2 last:mb-0">
+                                    {slug ? (
+                                      <DocsLink slug={slug}>{component}</DocsLink>
+                                    ) : (
+                                      component
+                                    )}
+                                    {skin.cssImport && (
+                                      <div class="mt-0.5">
+                                        <MarkdownCode class="inline-block text-code whitespace-nowrap">{`import '${skin.cssImport}';`}</MarkdownCode>
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })
                             : "–"}
                         </FrameworkCase>
                         <FrameworkCase frameworks={["html"]}>
@@ -145,13 +168,22 @@ const listFormat = new Intl.ListFormat('en', { style: 'long', type: 'unit' });
                                     (s) => s.tagName ?? s.name,
                                   ),
                                 )
-                                .map((part) =>
-                                  part.type === "element" ? (
+                                .map((part) => {
+                                  if (part.type !== "element") {
+                                    return <span>{part.value}</span>;
+                                  }
+
+                                  const slug = getSkinReferenceSlug(part.value);
+                                  const element = (
                                     <MarkdownCode class="inline-block whitespace-nowrap">{`<${part.value}>`}</MarkdownCode>
+                                  );
+
+                                  return slug ? (
+                                    <DocsLink slug={slug}>{element}</DocsLink>
                                   ) : (
-                                    <span>{part.value}</span>
-                                  ),
-                                )
+                                    element
+                                  );
+                                })
                             : "–"}
                         </FrameworkCase>
                       </dd>

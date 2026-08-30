@@ -6,7 +6,7 @@
   width: 100%;
 }
 
-.html-hotkey-basic__instructions {
+.html-hotkey-basic-instructions {
   position: absolute;
   top: 10px;
   left: 10px;
@@ -17,7 +17,7 @@
   border-radius: 4px;
 }
 
-.html-hotkey-basic__button {
+.html-hotkey-basic-button {
   position: absolute;
   bottom: 10px;
   left: 10px;
@@ -29,14 +29,14 @@
   border-radius: 9999px;
 }
 
-.html-hotkey-basic__button .show-when-paused,
-.html-hotkey-basic__button .show-when-playing,
-.html-hotkey-basic__button .show-when-ended {
+.html-hotkey-basic-button .show-when-paused,
+.html-hotkey-basic-button .show-when-playing,
+.html-hotkey-basic-button .show-when-ended {
   display: none;
 }
 
-.html-hotkey-basic__button[data-paused]:not([data-ended]) .show-when-paused,
-.html-hotkey-basic__button:not([data-paused]) .show-when-playing,
-.html-hotkey-basic__button[data-ended] .show-when-ended {
+.html-hotkey-basic-button[data-paused]:not([data-ended]) .show-when-paused,
+.html-hotkey-basic-button:not([data-paused]) .show-when-playing,
+.html-hotkey-basic-button[data-ended] .show-when-ended {
   display: inline;
 }

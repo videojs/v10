@@ -8,8 +8,8 @@
   border-radius: 12px;
 }
 
-.react-alert-dialog-basic__trigger,
-.react-alert-dialog-basic__close {
+.react-alert-dialog-basic-trigger,
+.react-alert-dialog-basic-close {
   padding: 8px 16px;
   color: #111827;
   cursor: pointer;
@@ -18,14 +18,14 @@
   border-radius: 9999px;
 }
 
-.react-alert-dialog-basic__backdrop {
+.react-alert-dialog-basic-backdrop {
   position: absolute;
   inset: 0;
   background: rgb(3 7 18 / 92%);
   transition: opacity 150ms ease;
 }
 
-.react-alert-dialog-basic__dialog {
+.react-alert-dialog-basic-dialog {
   position: absolute;
   inset: 0;
   z-index: 1;
@@ -38,22 +38,22 @@
   transition: opacity 150ms ease;
 }
 
-.react-alert-dialog-basic__backdrop[data-starting-style],
-.react-alert-dialog-basic__backdrop[data-ending-style],
-.react-alert-dialog-basic__dialog[data-starting-style],
-.react-alert-dialog-basic__dialog[data-ending-style] {
+.react-alert-dialog-basic-backdrop[data-starting-style],
+.react-alert-dialog-basic-backdrop[data-ending-style],
+.react-alert-dialog-basic-dialog[data-starting-style],
+.react-alert-dialog-basic-dialog[data-ending-style] {
   opacity: 0;
 }
 
-.react-alert-dialog-basic__title {
+.react-alert-dialog-basic-title {
   font-size: 20px;
   font-weight: 600;
 }
 
-.react-alert-dialog-basic__description {
+.react-alert-dialog-basic-description {
   color: #d1d5db;
 }
 
-.react-alert-dialog-basic__close {
+.react-alert-dialog-basic-close {
   justify-self: center;
 }

@@ -15,7 +15,7 @@ function LocaleDetails() {
   }).format(new Date('2026-01-15T12:00:00Z'));
 
   return (
-    <dl className="react-use-locale-basic__output">
+    <dl className="react-use-locale-basic-output">
       <div>
         <dt>Active locale</dt>
         <dd>{locale}</dd>

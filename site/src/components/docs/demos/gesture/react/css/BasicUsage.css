@@ -6,7 +6,7 @@
   width: 100%;
 }
 
-.react-gesture-basic__instructions {
+.react-gesture-basic-instructions {
   position: absolute;
   top: 10px;
   left: 10px;
@@ -18,7 +18,7 @@
   border-radius: 4px;
 }
 
-.react-gesture-basic__button {
+.react-gesture-basic-button {
   position: absolute;
   bottom: 10px;
   left: 10px;

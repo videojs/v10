@@ -21,18 +21,18 @@ export default function BasicUsage() {
   return (
     <div className="react-dialog-basic">
       <Dialog.Root open={open} onOpenChange={setOpen}>
-        <Dialog.Trigger className="react-dialog-basic__trigger">
+        <Dialog.Trigger className="react-dialog-basic-trigger">
           <img src="{{VJS10_DEMO_POSTER}}" alt="" />
           <span>Play the video</span>
         </Dialog.Trigger>
-        <Dialog.Backdrop className="react-dialog-basic__backdrop" />
-        <Dialog.Popup className="react-dialog-basic__dialog">
-          <div className="react-dialog-basic__popup">
-            <Dialog.Title className="react-dialog-basic__title">Video title</Dialog.Title>
-            <Dialog.Description className="react-dialog-basic__description">
+        <Dialog.Backdrop className="react-dialog-basic-backdrop" />
+        <Dialog.Popup className="react-dialog-basic-dialog">
+          <div className="react-dialog-basic-popup">
+            <Dialog.Title className="react-dialog-basic-title">Video title</Dialog.Title>
+            <Dialog.Description className="react-dialog-basic-description">
               A video opened from a thumbnail.
             </Dialog.Description>
-            <Dialog.Close className="react-dialog-basic__close">Close</Dialog.Close>
+            <Dialog.Close className="react-dialog-basic-close">Close</Dialog.Close>
             <Player>
               <Container>
                 <Video ref={videoRef} src="{{VJS10_DEMO_VIDEO_MP4}}" controls muted playsInline />

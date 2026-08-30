@@ -6,7 +6,7 @@
   width: 100%;
 }
 
-.html-gesture-basic__instructions {
+.html-gesture-basic-instructions {
   position: absolute;
   top: 10px;
   left: 10px;
@@ -18,7 +18,7 @@
   border-radius: 4px;
 }
 
-.html-gesture-basic__button {
+.html-gesture-basic-button {
   position: absolute;
   bottom: 10px;
   left: 10px;
@@ -30,14 +30,14 @@
   border-radius: 9999px;
 }
 
-.html-gesture-basic__button .show-when-paused,
-.html-gesture-basic__button .show-when-playing,
-.html-gesture-basic__button .show-when-ended {
+.html-gesture-basic-button .show-when-paused,
+.html-gesture-basic-button .show-when-playing,
+.html-gesture-basic-button .show-when-ended {
   display: none;
 }
 
-.html-gesture-basic__button[data-paused]:not([data-ended]) .show-when-paused,
-.html-gesture-basic__button:not([data-paused]) .show-when-playing,
-.html-gesture-basic__button[data-ended] .show-when-ended {
+.html-gesture-basic-button[data-paused]:not([data-ended]) .show-when-paused,
+.html-gesture-basic-button:not([data-paused]) .show-when-playing,
+.html-gesture-basic-button[data-ended] .show-when-ended {
   display: inline;
 }

@@ -29,7 +29,7 @@ export default function Language() {
       </label>
       <Player>
         <I18nProvider locale={locale}>
-          <VideoSkin className="react-i18n-language__player">
+          <VideoSkin className="react-i18n-language-player">
             <Video src="{{VJS10_DEMO_VIDEO_MP4}}" muted playsInline />
           </VideoSkin>
         </I18nProvider>

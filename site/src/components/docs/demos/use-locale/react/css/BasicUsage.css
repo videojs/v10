@@ -5,7 +5,7 @@
 }
 
 .react-use-locale-basic label,
-.react-use-locale-basic__output div {
+.react-use-locale-basic-output div {
   display: flex;
   gap: 8px;
   align-items: center;
@@ -15,16 +15,16 @@
   padding: 4px 8px;
 }
 
-.react-use-locale-basic__output {
+.react-use-locale-basic-output {
   display: grid;
   gap: 8px;
   margin: 0;
 }
 
-.react-use-locale-basic__output dt {
+.react-use-locale-basic-output dt {
   color: #6b7280;
 }
 
-.react-use-locale-basic__output dd {
+.react-use-locale-basic-output dd {
   margin: 0;
 }

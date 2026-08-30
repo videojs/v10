@@ -21,22 +21,22 @@ export default function BasicUsage() {
       <Container className="react-error-dialog-basic">
         <Video
           ref={videoRef}
-          className="react-error-dialog-basic__video"
+          className="react-error-dialog-basic-video"
           src="{{VJS10_DEMO_VIDEO_MP4}}"
           autoPlay
           muted
           playsInline
           loop
         />
-        <button className="react-error-dialog-basic__trigger" type="button" onClick={triggerError}>
+        <button className="react-error-dialog-basic-trigger" type="button" onClick={triggerError}>
           Trigger a playback error
         </button>
         <ErrorDialog.Root>
-          <ErrorDialog.Backdrop className="react-error-dialog-basic__backdrop" />
-          <ErrorDialog.Popup className="react-error-dialog-basic__dialog">
-            <ErrorDialog.Title className="react-error-dialog-basic__title" />
-            <ErrorDialog.Description className="react-error-dialog-basic__description" />
-            <ErrorDialog.Close className="react-error-dialog-basic__close" />
+          <ErrorDialog.Backdrop className="react-error-dialog-basic-backdrop" />
+          <ErrorDialog.Popup className="react-error-dialog-basic-dialog">
+            <ErrorDialog.Title className="react-error-dialog-basic-title" />
+            <ErrorDialog.Description className="react-error-dialog-basic-description" />
+            <ErrorDialog.Close className="react-error-dialog-basic-close" />
           </ErrorDialog.Popup>
         </ErrorDialog.Root>
       </Container>

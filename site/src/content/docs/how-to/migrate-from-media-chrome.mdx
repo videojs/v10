@@ -284,7 +284,7 @@ The packaged Video.js skins expose `--media-accent-color`, `--media-accent-text-
 
 ## Themes become skins
 
-Media Chrome's `<template>`-based themes (`media-theme`) become Video.js <DocsLink slug="concepts/skins">skins</DocsLink> and <DocsLink slug="concepts/presets">presets</DocsLink>. Start from a preset, then install and customize its source with <DocsLink slug="how-to/customize-skins">Customize skins</DocsLink>, rather than authoring a template.
+Media Chrome's `<template>`-based themes (`media-theme`) become Video.js <DocsLink slug="concepts/skins">skins</DocsLink> and <DocsLink slug="concepts/presets">presets</DocsLink>. Start from a preset, then <DocsLink slug="getting-started/shadcn">install its source from the Shadcn registry</DocsLink> and customize it, rather than authoring a template.
 
 <FrameworkCase frameworks={["html"]}>
 Ready-made HTML skins keep their controls inside Shadow DOM. Code outside the skin sees a click as coming from the skin, not the button inside it. Some control events also stay inside the skin. Do not use an outside listener to identify which built-in button was clicked.

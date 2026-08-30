@@ -6,7 +6,7 @@
   width: 100%;
 }
 
-.react-hotkey-basic__instructions {
+.react-hotkey-basic-instructions {
   position: absolute;
   top: 10px;
   left: 10px;
@@ -17,7 +17,7 @@
   border-radius: 4px;
 }
 
-.react-hotkey-basic__button {
+.react-hotkey-basic-button {
   position: absolute;
   bottom: 10px;
   left: 10px;

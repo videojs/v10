@@ -9,38 +9,38 @@
   isolation: isolate;
 }
 
-.add-background-video-html-demo__visual,
-.add-background-video-html-demo__poster,
-.add-background-video-html-demo__media {
+.add-background-video-html-demo-visual,
+.add-background-video-html-demo-poster,
+.add-background-video-html-demo-media {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
 }
 
-.add-background-video-html-demo__visual {
+.add-background-video-html-demo-visual {
   pointer-events: none;
 }
 
-.add-background-video-html-demo__visual::after {
+.add-background-video-html-demo-visual::after {
   position: absolute;
   inset: 0;
   content: "";
   background: linear-gradient(90deg, rgb(0 0 0 / 85%), rgb(0 0 0 / 55%));
 }
 
-.add-background-video-html-demo__poster,
-.add-background-video-html-demo__media {
+.add-background-video-html-demo-poster,
+.add-background-video-html-demo-media {
   display: block;
   object-fit: cover;
 }
 
-.add-background-video-html-demo__media {
+.add-background-video-html-demo-media {
   --media-object-fit: cover;
   --media-object-position: center;
 }
 
-.add-background-video-html-demo__content {
+.add-background-video-html-demo-content {
   position: relative;
   z-index: 1;
   display: grid;
@@ -50,13 +50,13 @@
   padding: 2rem;
 }
 
-.add-background-video-html-demo__content h3 {
+.add-background-video-html-demo-content h3 {
   margin: 0;
   font-size: 1.75rem;
   line-height: 1.1;
 }
 
-.add-background-video-html-demo__content a {
+.add-background-video-html-demo-content a {
   width: fit-content;
   padding: 0.625rem 1rem;
   color: black;
@@ -65,13 +65,13 @@
   border-radius: 0.25rem;
 }
 
-.add-background-video-html-demo__content a:focus-visible {
+.add-background-video-html-demo-content a:focus-visible {
   outline: 0.2rem solid white;
   outline-offset: 0.2rem;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .add-background-video-html-demo__media {
+  .add-background-video-html-demo-media {
     display: none;
   }
 }

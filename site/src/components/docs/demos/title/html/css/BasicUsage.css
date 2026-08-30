@@ -10,7 +10,7 @@
 
 /* The element sets native `hidden` until a title resolves, so the gradient
    never sits over empty space without this demo doing anything. */
-.html-title-basic__title {
+.html-title-basic-title {
   position: absolute;
   inset-inline: 0;
   top: 0;
@@ -23,7 +23,7 @@
   background: linear-gradient(to bottom, rgba(0, 0, 0, 0.7), transparent);
 }
 
-.html-title-basic__button {
+.html-title-basic-button {
   position: absolute;
   bottom: 10px;
   left: 10px;
@@ -37,18 +37,18 @@
   backdrop-filter: blur(10px);
 }
 
-.html-title-basic__button .show-when-paused {
+.html-title-basic-button .show-when-paused {
   display: none;
 }
 
-.html-title-basic__button .show-when-playing {
+.html-title-basic-button .show-when-playing {
   display: none;
 }
 
-.html-title-basic__button[data-paused] .show-when-paused {
+.html-title-basic-button[data-paused] .show-when-paused {
   display: inline;
 }
 
-.html-title-basic__button:not([data-paused]) .show-when-playing {
+.html-title-basic-button:not([data-paused]) .show-when-playing {
   display: inline;
 }

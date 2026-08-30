@@ -19,10 +19,10 @@ export default function BasicUsage() {
           playsInline
           loop
         />
-        <p className="react-volume-indicator-basic__instructions">Focus the player · M: mute · ↑/↓: volume ±5%</p>
-        <VolumeIndicator.Root className="react-volume-indicator-basic__indicator" aria-hidden="true">
-          <VolumeIndicator.Fill className="react-volume-indicator-basic__fill">
-            <VolumeIndicator.Value className="react-volume-indicator-basic__value" />
+        <p className="react-volume-indicator-basic-instructions">Focus the player · M: mute · ↑/↓: volume ±5%</p>
+        <VolumeIndicator.Root className="react-volume-indicator-basic-indicator" aria-hidden="true">
+          <VolumeIndicator.Fill className="react-volume-indicator-basic-fill">
+            <VolumeIndicator.Value className="react-volume-indicator-basic-value" />
           </VolumeIndicator.Fill>
         </VolumeIndicator.Root>
         <Hotkey keys="m" action="toggleMuted" />

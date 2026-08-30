@@ -7,7 +7,7 @@
   width: 100%;
 }
 
-.react-status-announcer-basic__instructions {
+.react-status-announcer-basic-instructions {
   position: absolute;
   top: 10px;
   left: 10px;
@@ -18,7 +18,7 @@
   border-radius: 4px;
 }
 
-.react-status-announcer-basic__controls {
+.react-status-announcer-basic-controls {
   position: absolute;
   right: 12px;
   bottom: 36px;
@@ -28,7 +28,7 @@
   align-items: center;
 }
 
-.react-status-announcer-basic__button {
+.react-status-announcer-basic-button {
   padding: 7px 14px;
   color: black;
   cursor: pointer;
@@ -37,8 +37,8 @@
   border-radius: 9999px;
 }
 
-.react-status-announcer-basic__volume-slider,
-.react-status-announcer-basic__time-slider {
+.react-status-announcer-basic-volume-slider,
+.react-status-announcer-basic-time-slider {
   position: relative;
   display: flex;
   align-items: center;
@@ -46,18 +46,18 @@
   cursor: pointer;
 }
 
-.react-status-announcer-basic__volume-slider {
+.react-status-announcer-basic-volume-slider {
   width: 100px;
 }
 
-.react-status-announcer-basic__time-slider {
+.react-status-announcer-basic-time-slider {
   position: absolute;
   right: 12px;
   bottom: 8px;
   left: 12px;
 }
 
-.react-status-announcer-basic__track {
+.react-status-announcer-basic-track {
   position: absolute;
   right: 0;
   left: 0;
@@ -67,8 +67,8 @@
   border-radius: 9999px;
 }
 
-.react-status-announcer-basic__buffer,
-.react-status-announcer-basic__fill {
+.react-status-announcer-basic-buffer,
+.react-status-announcer-basic-fill {
   position: absolute;
   top: 0;
   left: 0;
@@ -76,17 +76,17 @@
   border-radius: inherit;
 }
 
-.react-status-announcer-basic__buffer {
+.react-status-announcer-basic-buffer {
   width: var(--media-slider-buffer);
   background: rgb(255 255 255 / 30%);
 }
 
-.react-status-announcer-basic__fill {
+.react-status-announcer-basic-fill {
   width: var(--media-slider-fill);
   background: white;
 }
 
-.react-status-announcer-basic__thumb {
+.react-status-announcer-basic-thumb {
   position: absolute;
   left: var(--media-slider-fill);
   width: 14px;
@@ -97,7 +97,7 @@
   translate: -50%;
 }
 
-.react-status-announcer-basic__announcer {
+.react-status-announcer-basic-announcer {
   position: absolute;
   width: 1px;
   height: 1px;

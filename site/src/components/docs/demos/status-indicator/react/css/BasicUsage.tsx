@@ -20,15 +20,15 @@ export default function BasicUsage() {
         <Video src="{{VJS10_DEMO_VIDEO_MP4}}" autoPlay muted playsInline loop>
           <track kind="captions" src="/docs/demos/captions-button/captions.vtt" srcLang="en" label="English" />
         </Video>
-        <p className="react-status-indicator-basic__instructions">
+        <p className="react-status-indicator-basic-instructions">
           Focus the player · K: play/pause · M: mute · F: fullscreen · C: captions · I: picture-in-picture
         </p>
         <StatusIndicator.Root
-          className="react-status-indicator-basic__indicator"
+          className="react-status-indicator-basic-indicator"
           actions={statusActions}
           aria-hidden="true"
         >
-          <StatusIndicator.Value className="react-status-indicator-basic__value" />
+          <StatusIndicator.Value className="react-status-indicator-basic-value" />
         </StatusIndicator.Root>
         <Hotkey keys="k" action="togglePaused" />
         <Hotkey keys="m" action="toggleMuted" />

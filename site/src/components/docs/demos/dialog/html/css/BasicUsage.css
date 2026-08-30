@@ -3,7 +3,7 @@
   min-height: 320px;
 }
 
-.html-dialog-basic__trigger {
+.html-dialog-basic-trigger {
   display: grid;
   gap: 10px;
   width: min(100%, 420px);
@@ -16,14 +16,14 @@
   border-radius: 12px;
 }
 
-.html-dialog-basic__trigger img {
+.html-dialog-basic-trigger img {
   display: block;
   width: 100%;
   aspect-ratio: 16 / 9;
   object-fit: cover;
 }
 
-.html-dialog-basic__backdrop {
+.html-dialog-basic-backdrop {
   position: absolute;
   inset: 0;
   z-index: 1;
@@ -31,7 +31,7 @@
   transition: opacity 200ms ease;
 }
 
-.html-dialog-basic__dialog {
+.html-dialog-basic-dialog {
   position: absolute;
   inset: 0;
   z-index: 2;
@@ -42,19 +42,19 @@
   transition: opacity 150ms ease;
 }
 
-.html-dialog-basic__backdrop:not([data-open]),
-.html-dialog-basic__dialog:not([data-open]) {
+.html-dialog-basic-backdrop:not([data-open]),
+.html-dialog-basic-dialog:not([data-open]) {
   display: none;
 }
 
-.html-dialog-basic__backdrop[data-starting-style],
-.html-dialog-basic__backdrop[data-ending-style],
-.html-dialog-basic__dialog[data-starting-style],
-.html-dialog-basic__dialog[data-ending-style] {
+.html-dialog-basic-backdrop[data-starting-style],
+.html-dialog-basic-backdrop[data-ending-style],
+.html-dialog-basic-dialog[data-starting-style],
+.html-dialog-basic-dialog[data-ending-style] {
   opacity: 0;
 }
 
-.html-dialog-basic__popup {
+.html-dialog-basic-popup {
   position: relative;
   width: 100%;
   max-width: 560px;
@@ -64,19 +64,19 @@
   border-radius: 12px;
 }
 
-.html-dialog-basic__title {
+.html-dialog-basic-title {
   display: block;
   margin-bottom: 4px;
   font-size: 1.125rem;
   font-weight: 600;
 }
 
-.html-dialog-basic__description {
+.html-dialog-basic-description {
   display: block;
   margin-bottom: 12px;
 }
 
-.html-dialog-basic__close {
+.html-dialog-basic-close {
   position: absolute;
   top: 12px;
   right: 12px;
@@ -94,8 +94,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .html-dialog-basic__backdrop,
-  .html-dialog-basic__dialog {
+  .html-dialog-basic-backdrop,
+  .html-dialog-basic-dialog {
     transition: none;
   }
 }

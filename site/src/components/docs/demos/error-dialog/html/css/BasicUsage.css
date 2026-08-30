@@ -1,17 +1,17 @@
-.html-error-dialog-basic__container {
+.html-error-dialog-basic-container {
   position: relative;
   display: block;
   overflow: hidden;
   border-radius: 12px;
 }
 
-.html-error-dialog-basic__video {
+.html-error-dialog-basic-video {
   display: block;
   width: 100%;
 }
 
-.html-error-dialog-basic__trigger,
-.html-error-dialog-basic__close {
+.html-error-dialog-basic-trigger,
+.html-error-dialog-basic-close {
   padding: 8px 16px;
   color: #111827;
   cursor: pointer;
@@ -20,20 +20,20 @@
   border-radius: 9999px;
 }
 
-.html-error-dialog-basic__trigger {
+.html-error-dialog-basic-trigger {
   position: absolute;
   bottom: 16px;
   left: 16px;
 }
 
-.html-error-dialog-basic__backdrop {
+.html-error-dialog-basic-backdrop {
   position: absolute;
   inset: 0;
   background: rgb(3 7 18 / 92%);
   transition: opacity 150ms ease;
 }
 
-.html-error-dialog-basic__dialog {
+.html-error-dialog-basic-dialog {
   position: absolute;
   inset: 0;
   z-index: 1;
@@ -46,32 +46,32 @@
   transition: opacity 150ms ease;
 }
 
-.html-error-dialog-basic__backdrop:not([data-open]),
-.html-error-dialog-basic__dialog:not([data-open]) {
+.html-error-dialog-basic-backdrop:not([data-open]),
+.html-error-dialog-basic-dialog:not([data-open]) {
   display: none;
 }
 
-.html-error-dialog-basic__backdrop[data-starting-style],
-.html-error-dialog-basic__backdrop[data-ending-style],
-.html-error-dialog-basic__dialog[data-starting-style],
-.html-error-dialog-basic__dialog[data-ending-style] {
+.html-error-dialog-basic-backdrop[data-starting-style],
+.html-error-dialog-basic-backdrop[data-ending-style],
+.html-error-dialog-basic-dialog[data-starting-style],
+.html-error-dialog-basic-dialog[data-ending-style] {
   opacity: 0;
 }
 
-.html-error-dialog-basic__title,
-.html-error-dialog-basic__description {
+.html-error-dialog-basic-title,
+.html-error-dialog-basic-description {
   display: block;
 }
 
-.html-error-dialog-basic__title {
+.html-error-dialog-basic-title {
   font-size: 20px;
   font-weight: 600;
 }
 
-.html-error-dialog-basic__description {
+.html-error-dialog-basic-description {
   color: #d1d5db;
 }
 
-.html-error-dialog-basic__close {
+.html-error-dialog-basic-close {
   justify-self: center;
 }

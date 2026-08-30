@@ -86,19 +86,21 @@ src/components/docs/demos/{name}/react/css/
 └── BasicUsage.css      # Styles
 ```
 
-### BEM naming
+### CSS scoping
 
-Use BEM class names for CSS scoping. The block name follows the pattern `{framework}-{component}-{variant}`:
+Give every demo a unique root class using `{framework}-{component}-{variant}`. Use flat, semantic names for any
+additional component or part hooks:
 
 ```css
 /* HTML demo */
-.html-play-button-basic__button { /* ... */ }
+.html-play-button-basic-button { /* ... */ }
 
 /* React demo */
-.react-play-button-basic__button { /* ... */ }
+.react-play-button-basic-button { /* ... */ }
 ```
 
-React and HTML demos for the same variant should use matching BEM structures.
+React and HTML demos for the same variant should use matching semantic hooks. Keep every selector specific to its demo
+so hidden examples cannot affect the visible one.
 
 ### Video and poster sources
 
