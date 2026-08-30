@@ -16,9 +16,17 @@ export const vars = {
     kind: 'public',
     description: 'Optional foreground color rendered on the configured accent color.',
   },
+  '--media-border-color': {
+    kind: 'public',
+    description: 'Video container hairline border color.',
+  },
   '--media-border-radius': {
     kind: 'public',
     description: 'Outer player border radius.',
+  },
+  '--media-font-family': {
+    kind: 'public',
+    description: 'Font family used by the player interface.',
   },
   '--media-object-fit': {
     kind: 'public',

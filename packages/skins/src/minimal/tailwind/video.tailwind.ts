@@ -22,7 +22,7 @@ export const container = (isShadowDOM: boolean) =>
     // Border ring (::after)
     'after:absolute after:pointer-events-none after:rounded-[inherit] after:z-10',
     '[&:fullscreen]:after:hidden',
-    'after:inset-0 after:ring-1 after:ring-inset after:ring-(color:--media-border-color)',
+    'after:inset-0 after:ring-1 after:ring-inset after:ring-(color:--media-container-border-color)',
     // Video element
     {
       '[&_::slotted(video)]:block [&_::slotted(video)]:w-full [&_::slotted(video)]:h-full [&_::slotted(video)]:rounded-(--media-container-border-radius) [&_::slotted(video)]:[object-fit:var(--media-object-fit,cover)] [&_::slotted(video)]:[object-position:var(--media-object-position,center)]':
@@ -31,7 +31,7 @@ export const container = (isShadowDOM: boolean) =>
         !isShadowDOM,
     },
     '[--media-default-accent-color:oklch(1_0_0)]',
-    '[--media-border-color:light-dark(oklch(0_0_0/0.15),oklch(1_0_0/0.15))]',
+    '[--media-container-border-color:var(--media-border-color,light-dark(oklch(0_0_0/0.15),oklch(1_0_0/0.15)))]',
     '[--media-focus-ring-color:light-dark(oklch(0_0_0),oklch(1_0_0))]',
     '**:[--media-focus-ring-color:oklch(1_0_0)]',
     '[--media-container-border-radius:var(--media-border-radius,0.75rem)]',
@@ -169,7 +169,7 @@ export const slider = {
   preview: cn(
     baseSlider.preview,
     '[--media-preview-end-inset:calc(100cqi-100%)]',
-    '[--media-preview-left:clamp(calc(var(--media-max-size)/2),var(--media-slider-pointer),calc(100%-var(--media-max-size)/2+var(--media-preview-end-inset)))]',
+    '[--media-preview-left:clamp(calc(var(--media-preview-max-size)/2),var(--media-slider-pointer),calc(100%-var(--media-preview-max-size)/2+var(--media-preview-end-inset)))]',
     '@2xl/media-root:[--media-preview-left:var(--media-slider-pointer)]'
   ),
 };

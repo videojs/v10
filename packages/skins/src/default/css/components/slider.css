@@ -18,12 +18,12 @@
 
   &[data-orientation="horizontal"] {
     width: var(--media-slider-width, 100%);
-    min-width: calc(var(--media-spacing) * 20);
+    min-width: calc(var(--media-spacing) * 18);
     height: var(--media-slider-height, calc(var(--media-spacing) * 8));
   }
   &[data-orientation="vertical"] {
     width: var(--media-slider-width, calc(var(--media-spacing) * 8));
-    height: var(--media-slider-height, calc(var(--media-spacing) * 20));
+    height: var(--media-slider-height, calc(var(--media-spacing) * 18));
   }
 
   /* Track */
@@ -285,21 +285,25 @@
 
   /* Preview */
   .media-slider__preview {
-    --media-max-size-factor: 36;
-    --media-max-size: min(calc(var(--media-spacing) * var(--media-max-size-factor)), 100cqi);
+    --media-preview-max-size-factor: 32;
+    --media-preview-max-size: calc(var(--media-spacing) * var(--media-preview-max-size-factor));
 
-    min-width: var(--media-max-size);
+    min-width: var(--media-preview-max-size);
     height: calc(var(--media-spacing) * 1);
 
+    @container media-root (width > 480px) {
+      --media-preview-max-size-factor: 40;
+    }
+
     @container media-root (width > 672px) {
-      --media-max-size-factor: 48;
+      --media-preview-max-size-factor: 48;
     }
 
     .media-slider__thumbnail,
     .media-slider__value {
       position: absolute;
       left: 50%;
-      max-width: var(--media-max-size);
+      max-width: var(--media-preview-max-size);
       opacity: 0;
       filter: blur(8px);
       transform-origin: bottom;
@@ -310,8 +314,8 @@
     }
 
     .media-slider__thumbnail {
-      --media-thumbnail-max-width: var(--media-max-size);
-      --media-thumbnail-max-height: var(--media-max-size);
+      --media-thumbnail-max-width: var(--media-preview-max-size);
+      --media-thumbnail-max-height: var(--media-preview-max-size);
       bottom: calc(100% + (var(--media-spacing) * 9));
     }
 
@@ -324,7 +328,7 @@
 
     .media-slider__chapter-title {
       min-width: 0;
-      max-width: var(--media-max-size);
+      max-width: var(--media-preview-max-size);
       padding-inline: calc(var(--media-spacing) * 6);
       overflow: hidden;
       text-overflow: ellipsis;

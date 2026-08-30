@@ -20,8 +20,10 @@ export default styles({
         'min-[1920px]:[&:fullscreen]:[--media-scale:1.75]',
       ],
       variants: {
-        default: 'after:shadow-[inset_0_0_0_1px_light-dark(rgb(0_0_0/0.1),rgb(255_255_255/0.15))]',
-        minimal: 'after:shadow-[inset_0_0_0_1px_light-dark(rgb(0_0_0/0.15),rgb(255_255_255/0.15))]',
+        default:
+          'after:shadow-[inset_0_0_0_1px_var(--media-border-color,light-dark(rgb(0_0_0/0.1),rgb(255_255_255/0.15)))]',
+        minimal:
+          'after:shadow-[inset_0_0_0_1px_var(--media-border-color,light-dark(rgb(0_0_0/0.15),rgb(255_255_255/0.15)))]',
       },
     },
   },

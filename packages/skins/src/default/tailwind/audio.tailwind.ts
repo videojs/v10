@@ -14,8 +14,7 @@ export const container = cn(
   baseContainer,
   '[&:has([role=alertdialog][data-open])_.media-controls_*]:invisible',
   '[--media-default-accent-color:light-dark(oklch(0_0_0),oklch(1_0_0))]',
-  '[--media-internal-accent-text-base:light-dark(oklch(1_0_0),oklch(0_0_0))]',
-  '[--media-border-color:oklch(0_0_0/0.1)]',
+  '[--media-internal-accent-text-fallback:light-dark(oklch(1_0_0),oklch(0_0_0))]',
   '[--media-focus-ring-color:light-dark(oklch(0_0_0),oklch(1_0_0))]',
   '[--media-text-color:light-dark(oklch(0_0_0),oklch(1_0_0))]',
   '[--media-surface-background-color:light-dark(oklch(1_0_0/0.5),oklch(0_0_0/0.4))]',
@@ -86,7 +85,7 @@ export const popup = {
 export const dialog = {
   ...baseDialog,
   popup: cn(
-    'absolute inset-0 z-20 flex items-center gap-3 rounded-full ps-5 pe-1 not-data-open:hidden outline-none',
+    'absolute inset-0 z-50 flex items-center gap-3 rounded-full ps-5 pe-1 not-data-open:hidden outline-none',
     '[background-color:oklch(from_var(--media-surface-background-color)_l_c_h/1)] text-(--media-text-color)',
     '[backdrop-filter:var(--media-surface-backdrop-filter)]',
     'transition-[opacity,filter] ease-out',
