@@ -3,14 +3,10 @@ import { extname } from 'node:path';
 
 import type { ModuleType, Plugin } from 'rolldown';
 
-import { isVjscModule, moduleFilename, moduleId, type ParsedModuleId, parseModuleId } from '../utils/module-id';
-
-export interface ComponentModuleContext extends ParsedModuleId {
-  readonly id: string;
-}
+import { isVjscModule, moduleFilename, moduleId, parseModuleId, type VjscModule } from '../utils/module-id';
 
 export interface ComponentModulesPluginOptions {
-  readonly ignore?: ((module: ComponentModuleContext) => boolean) | undefined;
+  readonly select?: ((module: VjscModule) => boolean | Promise<boolean>) | undefined;
 }
 
 /**
@@ -32,8 +28,8 @@ export function componentModulesPlugin(options: ComponentModulesPluginOptions = 
     resolveId: {
       order: 'pre',
       async handler(id, importer, resolveOptions) {
-        const selected = selectedModule(id, options.ignore);
-        const inherited = importer ? selectedModule(importer, options.ignore) : null;
+        const selected = await selectedModule(id, options.select);
+        const inherited = importer ? await selectedModule(importer, options.select) : null;
         if (!selected && (!inherited || !id.startsWith('.'))) return null;
 
         const resolved = await this.resolve(selected?.filename ?? id, importer ? moduleFilename(importer) : undefined, {
@@ -44,12 +40,12 @@ export function componentModulesPlugin(options: ComponentModulesPluginOptions = 
 
         return {
           ...resolved,
-          id: moduleId(moduleFilename(resolved.id), selected?.parameters ?? inherited!.parameters),
+          id: moduleId(moduleFilename(resolved.id), selected?.params ?? inherited!.params),
         };
       },
     },
     async load(id) {
-      const selected = selectedModule(id, options.ignore);
+      const selected = await selectedModule(id, options.select);
       if (!selected) return null;
 
       this.addWatchFile(selected.filename);
@@ -63,14 +59,10 @@ export function componentModulesPlugin(options: ComponentModulesPluginOptions = 
   };
 }
 
-function selectedModule(
-  id: string,
-  ignore: ComponentModulesPluginOptions['ignore']
-): (ComponentModuleContext & ParsedModuleId) | null {
+async function selectedModule(id: string, select: ComponentModulesPluginOptions['select']): Promise<VjscModule | null> {
   const parsed = parseModuleId(id);
-  const module = { id, ...parsed };
 
-  return parsed.parameters.size > 0 && isVjscModule(id) && !(ignore?.(module) ?? false) ? module : null;
+  return parsed.params.size > 0 && isVjscModule(id) && (select ? await select(parsed) : true) ? parsed : null;
 }
 
 function scriptModuleType(filename: string): ModuleType {

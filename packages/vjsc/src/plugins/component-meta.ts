@@ -9,12 +9,12 @@ import type {
 } from '@oxc-project/types';
 import type { Plugin, RolldownMagicString } from 'rolldown';
 
-import type { ComponentMeta } from '../components/meta';
+import type { NamedModuleMeta } from '../components/meta';
 
 const SCRIPT_ID = /\.[cm]?[jt]sx?(?:\?|$)/;
 
 export interface ComponentModuleMeta {
-  readonly componentMeta?: ComponentMeta | undefined;
+  readonly componentMeta?: NamedModuleMeta | undefined;
   readonly componentSource?: string | undefined;
   readonly componentStyles?: readonly string[] | undefined;
   readonly [key: string]: unknown;
@@ -76,7 +76,7 @@ export function readComponentModuleMeta(meta: unknown): ComponentModuleMeta | un
   return { ...meta, componentMeta, componentSource, componentStyles };
 }
 
-export function readComponentMeta(meta: unknown): ComponentMeta | undefined {
+export function readComponentMeta(meta: unknown): NamedModuleMeta | undefined {
   return readComponentModuleMeta(meta)?.componentMeta;
 }
 
@@ -128,14 +128,14 @@ function removeDeclarator(magicString: RolldownMagicString, exported: ExportedMe
   }
 }
 
-function parseComponentMeta(expression: Expression, id: string, exportName: string): ComponentMeta {
+function parseComponentMeta(expression: Expression, id: string, exportName: string): NamedModuleMeta {
   const value = staticValue(expression, id);
 
   if (!isRecord(value) || typeof value.name !== 'string' || value.name.length === 0) {
     throw new Error(`Component metadata \`${exportName}\` in ${id} must contain a non-empty literal \`name\`.`);
   }
 
-  return value as ComponentMeta;
+  return value as NamedModuleMeta;
 }
 
 function staticValue(expression: Expression, id: string): unknown {
@@ -220,6 +220,6 @@ function isRecord(value: unknown): value is Readonly<Record<string, unknown>> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-function isComponentMeta(value: unknown): value is ComponentMeta {
+function isComponentMeta(value: unknown): value is NamedModuleMeta {
   return isRecord(value) && typeof value.name === 'string';
 }

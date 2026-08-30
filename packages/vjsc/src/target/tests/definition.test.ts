@@ -53,7 +53,7 @@ const schema = defineSchema('@fixture/components', {
 
 describe('defineComponentTarget', () => {
   it('binds typed rewrites and structural rules to a component source', () => {
-    const Div = createTarget().components.Slider;
+    const Div = createTarget().components.rules.Slider;
 
     expect(Div).toBeDefined();
   });
@@ -70,13 +70,15 @@ describe('defineComponentTarget', () => {
 
       return {
         source: '@fixture/components',
-        resolve: () => ImportedPoster,
         components: {
-          Slider: {
-            Root: Div,
-            Thumbnail: {
-              Root: target.Slider.Thumbnail.Root,
-              Image: target.Slider.Thumbnail.Image,
+          resolve: () => ImportedPoster,
+          rules: {
+            Slider: {
+              Root: Div,
+              Thumbnail: {
+                Root: target.Slider.Thumbnail.Root,
+                Image: target.Slider.Thumbnail.Image,
+              },
             },
           },
         },
@@ -96,7 +98,6 @@ describe('defineComponentTarget', () => {
       import: { from: '@fixture/react', name: 'Poster' },
     });
     expect(componentTarget.source).toBe('@fixture/components');
-    expect(componentTarget.transparent).toEqual([]);
     expect(componentTarget.transforms).toEqual([]);
   });
 });
@@ -110,39 +111,41 @@ function createTarget() {
 
     return {
       source: '@fixture/components',
-      resolve: ({ component, part }) =>
-        imported({
-          from: '@fixture/react',
-          name: component,
-          ...(part ? { path: part.split('.') } : {}),
-        }),
       components: {
-        Poster: ({ props, children }) => {
-          expectTypeOf(props.src).toEqualTypeOf<string | undefined>();
-
-          return jsx(target.Poster, { ...props, children });
-        },
-        Popover: ({ props, children, parts, id }) => {
-          expectTypeOf(props.open).toEqualTypeOf<boolean | undefined>();
-          expectTypeOf(parts.Trigger.props.disabled).toEqualTypeOf<boolean | undefined>();
-          expectTypeOf(parts.Popup.one().props.placement).toEqualTypeOf<'top' | 'bottom' | undefined>();
-
-          return jsx(target.Popover.Root, {
-            ...props,
-            id: id('root'),
-            children: [children, parts.Trigger, parts.Popup],
-          });
-        },
-        Slider: {
-          Root: Div,
-          Thumbnail: ({ props, parts }) => {
+        resolve: ({ component, part }) =>
+          imported({
+            from: '@fixture/react',
+            name: component,
+            ...(part ? { path: part.split('.') } : {}),
+          }),
+        rules: {
+          Poster: ({ props, children }) => {
             expectTypeOf(props.src).toEqualTypeOf<string | undefined>();
-            expectTypeOf(parts.Image.props.alt).toEqualTypeOf<string | undefined>();
 
-            return jsx(target.Slider.Thumbnail.Root, {
+            return jsx(target.Poster, { ...props, children });
+          },
+          Popover: ({ props, children, parts, id }) => {
+            expectTypeOf(props.open).toEqualTypeOf<boolean | undefined>();
+            expectTypeOf(parts.Trigger.props.disabled).toEqualTypeOf<boolean | undefined>();
+            expectTypeOf(parts.Popup.one().props.placement).toEqualTypeOf<'top' | 'bottom' | undefined>();
+
+            return jsx(target.Popover.Root, {
               ...props,
-              children: parts.Image,
+              id: id('root'),
+              children: [children, parts.Trigger, parts.Popup],
             });
+          },
+          Slider: {
+            Root: Div,
+            Thumbnail: ({ props, parts }) => {
+              expectTypeOf(props.src).toEqualTypeOf<string | undefined>();
+              expectTypeOf(parts.Image.props.alt).toEqualTypeOf<string | undefined>();
+
+              return jsx(target.Slider.Thumbnail.Root, {
+                ...props,
+                children: parts.Image,
+              });
+            },
           },
         },
       },

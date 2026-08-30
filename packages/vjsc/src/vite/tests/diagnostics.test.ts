@@ -49,7 +49,7 @@ describe('vjscPlugin style diagnostics', () => {
       logLevel: 'silent',
       root,
       optimizeDeps: { include: [], noDiscovery: true },
-      plugins: vjscPlugin({ configure }),
+      plugins: vjscPlugin({ transform: transforms }),
       server: { middlewareMode: true },
     });
 
@@ -68,7 +68,7 @@ describe('vjscPlugin style diagnostics', () => {
       configFile: false,
       customLogger: logger,
       logLevel: 'silent',
-      plugins: vjscPlugin({ configure }),
+      plugins: vjscPlugin({ transform: transforms }),
       build: {
         write: false,
         rolldownOptions: { input: entry },
@@ -79,9 +79,10 @@ describe('vjscPlugin style diagnostics', () => {
   });
 });
 
-function configure() {
-  return { targets: [], styles: { mode: 'tailwind' as const } };
-}
+const transforms = {
+  components: () => [],
+  styles: () => ({ mode: 'tailwind' as const }),
+};
 
 function warnings(warn: ReturnType<typeof vi.spyOn>, warnOnce: ReturnType<typeof vi.spyOn>): string {
   return [...warn.mock.calls, ...warnOnce.mock.calls].flat().join('\n');

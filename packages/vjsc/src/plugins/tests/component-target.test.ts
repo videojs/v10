@@ -57,63 +57,67 @@ const schema = defineSchema('@fixture/components', {
 
 const reactTarget = defineComponentTarget<typeof schema>()(({ target, element, imported }) => ({
   source: '@fixture/components',
-  resolve: ({ component, part }) =>
-    imported({
-      from: '@fixture/react',
-      name: component,
-      ...(part ? { path: part.split('.') } : {}),
-    }),
   components: {
-    Menu: {
-      Trigger: ({ props, children }) => jsx(target.Menu.Trigger, { ...props, children }),
-    },
-    Poster: ({ props, children }) => jsx(target.Poster, { render: children, ...props }),
-    Popover: ({ props, parts }) => [
-      parts.Trigger.children,
-      jsx(target.Popover.Popup, {
-        ...props.merge(parts.Popup.props),
-        children: parts.Popup.children,
+    resolve: ({ component, part }) =>
+      imported({
+        from: '@fixture/react',
+        name: component,
+        ...(part ? { path: part.split('.') } : {}),
       }),
-    ],
-    Slider: {
-      Thumbnail: {
-        Root: element('div'),
+    rules: {
+      Menu: {
+        Trigger: ({ props, children }) => jsx(target.Menu.Trigger, { ...props, children }),
+      },
+      Poster: ({ props, children }) => jsx(target.Poster, { render: children, ...props }),
+      Popover: ({ props, parts }) => [
+        parts.Trigger.children,
+        jsx(target.Popover.Popup, {
+          ...props.merge(parts.Popup.props),
+          children: parts.Popup.children,
+        }),
+      ],
+      Slider: {
+        Thumbnail: {
+          Root: element('div'),
+        },
       },
     },
   },
   jsx: { importSource: 'react', attributes: 'react' },
 }));
 
-const htmlTarget = defineComponentTarget<typeof schema>()(({ target, element }) => {
+const htmlTarget = defineComponentTarget<typeof schema>()(({ target, element, unwrap }) => {
   const Button = element('button');
   const Svg = element('svg');
 
   return {
     source: '@fixture/components',
-    transparent: ['OptionGroup'],
-    resolve: ({ component }) =>
-      element(`media-${component.toLowerCase()}`, {
-        import: { from: '@fixture/elements', sideEffect: true },
-      }),
     components: {
-      PlayButton: () =>
-        jsx(Svg, {
-          viewBox: '0 0 18 18',
-          preserveAspectRatio: 'xMidYMid meet',
-          strokeWidth: 2,
-          xlinkHref: '#icon',
+      resolve: ({ component }) =>
+        element(`media-${component.toLowerCase()}`, {
+          import: { from: '@fixture/elements', sideEffect: true },
         }),
-      Menu: ({ parts, id }) => {
-        const contentId = id('content');
-        const trigger = parts.Trigger.one();
-        const content = parts.Content.one();
+      rules: {
+        OptionGroup: { Root: unwrap() },
+        PlayButton: () =>
+          jsx(Svg, {
+            viewBox: '0 0 18 18',
+            preserveAspectRatio: 'xMidYMid meet',
+            strokeWidth: 2,
+            xlinkHref: '#icon',
+          }),
+        Menu: ({ parts, id }) => {
+          const contentId = id('content');
+          const trigger = parts.Trigger.one();
+          const content = parts.Content.one();
 
-        return [
-          trigger.replaceWith(jsx(Button, { commandfor: contentId, ...trigger.props, children: trigger.children })),
-          content.replaceWith(
-            jsx(target.Menu.Content, { id: contentId, ...content.props, children: content.children })
-          ),
-        ];
+          return [
+            trigger.replaceWith(jsx(Button, { commandfor: contentId, ...trigger.props, children: trigger.children })),
+            content.replaceWith(
+              jsx(target.Menu.Content, { id: contentId, ...content.props, children: content.children })
+            ),
+          ];
+        },
       },
     },
     jsx: {
@@ -161,7 +165,7 @@ describe('componentTargetPlugin', () => {
       {
         targets: (module) => {
           selectedId = module.id;
-          return module.parameters.get('target') === 'react' ? [reactTarget] : [];
+          return module.params.get('target') === 'react' ? [reactTarget] : [];
         },
       }
     );

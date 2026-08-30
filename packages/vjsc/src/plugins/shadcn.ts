@@ -2,14 +2,14 @@ import { posix } from 'node:path';
 
 import type { Plugin } from 'rolldown';
 
-import type { ComponentMeta } from '../components/meta';
+import type { NamedModuleMeta } from '../components/meta';
 import { createShadcnRegistryFiles } from '../shadcn/registry';
 import type { ComponentGraphProvider, ShadcnRegistryPluginOptions } from '../shadcn/types';
 
 export type { ShadcnRegistryPluginOptions } from '../shadcn/types';
 
 /** Emit a Shadcn registry from a completed VJSC component graph. */
-export function shadcnRegistryPlugin<Item extends ComponentMeta>(
+export function shadcnRegistryPlugin<Item extends NamedModuleMeta>(
   graph: ComponentGraphProvider<Item>,
   options: ShadcnRegistryPluginOptions<Item>
 ): Plugin {

@@ -13,8 +13,8 @@ import {
 } from '../../../vjsc/src/ast';
 import {
   type ComponentTarget,
-  type ComponentTargetTransform,
-  type ComponentTargetTransformContext,
+  type TargetTransform,
+  type TargetTransformContext,
   TARGET_ELEMENT,
   type TargetElement,
   type TargetPropsReference,
@@ -24,7 +24,7 @@ import {
 import { createTargetModuleImports } from '../../../vjsc/src/target/module-imports';
 import { renderTargetElement } from '../../../vjsc/src/target/render';
 
-type MagicString = ComponentTargetTransformContext['magicString'];
+type MagicString = TargetTransformContext['magicString'];
 
 const RENDER_TARGET_SOURCE = /(?:^|\/)render-target$/;
 
@@ -52,7 +52,7 @@ interface RenderTargetTransformOptions {
 }
 
 /** Lower Skin-owned shared components and `$render` directives for one framework target. */
-export function createRenderTargetTransform(options: RenderTargetTransformOptions): ComponentTargetTransform {
+export function createRenderTargetTransform(options: RenderTargetTransformOptions): TargetTransform {
   return {
     name: 'videojs:render-targets',
     transform(context) {

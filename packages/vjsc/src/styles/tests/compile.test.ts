@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vite-plus/test';
 
 import { compileStyles } from '../compile';
 import { loadDesignSystem } from '../design-system';
-import type { StyleManifest, StyleManifestRule } from '../manifest';
+import type { StyleIndex, StyleIndexRule } from '../style-index';
 
 const designPath = resolve(import.meta.dirname, 'fixtures/tailwind.css');
 
@@ -13,7 +13,7 @@ describe('compileStyles', () => {
     const container = { ...rule('root', 'media-container', ['block']), scopeRoot: true };
     const styles = await compileStyles({
       design: await loadDesignSystem(designPath),
-      manifest: manifest([container]),
+      index: index([container]),
       scope: '.media-skin-video',
     });
 
@@ -44,7 +44,7 @@ describe('compileStyles', () => {
     ]);
     const styles = await compileStyles({
       design: await loadDesignSystem(designPath),
-      manifest: manifest([buttonIcon, playButton, pauseIcon, playIcon, restartIcon]),
+      index: index([buttonIcon, playButton, pauseIcon, playIcon, restartIcon]),
       scope: '.media-skin-video',
     });
     const css = styles.get('buttons.css') ?? '';
@@ -66,7 +66,7 @@ describe('compileStyles', () => {
     ]);
     const styles = await compileStyles({
       design: await loadDesignSystem(designPath),
-      manifest: manifest([muteButton, highIcon]),
+      index: index([muteButton, highIcon]),
       scope: '.media-skin-video',
     });
 
@@ -84,7 +84,7 @@ describe('compileStyles', () => {
     const root = rule('root', 'media-layout-root', ['contents', '@lg/media-root:flex']);
     const styles = await compileStyles({
       design: await loadDesignSystem(designPath),
-      manifest: manifest([primary, root]),
+      index: index([primary, root]),
       scope: '.media-skin-video',
     });
 
@@ -103,7 +103,7 @@ describe('compileStyles', () => {
     const icon = rule('icon', 'media-icon', ['size-4'], { interactive: ['pointer-events-none'] });
     const styles = await compileStyles({
       design: await loadDesignSystem(designPath),
-      manifest: manifest([button, icon]),
+      index: index([button, icon]),
       variants: ['compact', 'interactive', 'spacious'],
     });
 
@@ -112,10 +112,10 @@ describe('compileStyles', () => {
     expect(styles.get('buttons.css')).toContain('pointer-events: none');
   });
 
-  it('ignores selected variants absent from an isolated manifest', async () => {
+  it('ignores selected variants absent from an isolated index', async () => {
     const styles = await compileStyles({
       design: await loadDesignSystem(designPath),
-      manifest: manifest([rule('root', 'media-button', ['grid'])]),
+      index: index([rule('root', 'media-button', ['grid'])]),
       variants: ['shadow-dom'],
     });
 
@@ -128,7 +128,7 @@ function rule(
   className: string,
   utilities: readonly string[],
   variantGroups: Readonly<Record<string, readonly string[]>> = {}
-): StyleManifestRule {
+): StyleIndexRule {
   return {
     modulePath: 'test.styles.ts',
     tokenPath: token.split('.'),
@@ -143,6 +143,6 @@ function rule(
   };
 }
 
-function manifest(rules: readonly StyleManifestRule[]): StyleManifest {
+function index(rules: readonly StyleIndexRule[]): StyleIndex {
   return { modules: new Map(), rules, watchFiles: [] };
 }

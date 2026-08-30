@@ -22,13 +22,15 @@ const schema = defineSchema('@fixture/components', {
 
 const target = defineComponentTarget<typeof schema>()(({ element, imported }) => ({
   source: '@fixture/components',
-  resolve: ({ component, part }) =>
-    imported({
-      from: '@fixture/react',
-      name: component,
-      path: part ? [part] : undefined,
-      props: { from: '@fixture/react', name: component, path: [part ? `${part}Props` : 'Props'] },
-    }),
+  components: {
+    resolve: ({ component, part }) =>
+      imported({
+        from: '@fixture/react',
+        name: component,
+        path: part ? [part] : undefined,
+        props: { from: '@fixture/react', name: component, path: [part ? `${part}Props` : 'Props'] },
+      }),
+  },
   primitives: {
     Box: element('div', {
       props: { from: 'react', name: 'ComponentProps', intrinsic: 'div' },

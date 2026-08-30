@@ -2,9 +2,9 @@ import { ModuleImports } from '../../vjsc/src/ast/imports.ts';
 import type { ComponentSchema } from '../../vjsc/src/components/index.ts';
 import {
   type ComponentTarget,
-  type ComponentTargetTransform,
   defineComponentTarget,
   type SourceProps,
+  type TargetTransform,
 } from '../../vjsc/src/target/index.ts';
 import { jsx } from '../../vjsc/src/target/jsx-runtime.ts';
 import { iconNames } from './icon-names.ts';
@@ -28,19 +28,21 @@ export function createHtmlIconTarget(options: IconTargetOptions = {}): Component
 
     return {
       source: '@videojs/icons/vjsc',
-      resolve:
-        ({ component }) =>
-        ({ props }: { props: SourceProps<Record<string, unknown>> }) =>
-          families.map((family) =>
-            jsx(Span, {
-              className: iconThemeClass(family, families),
-              children: jsx(Icon, {
-                ...props,
-                ...(family === 'default' ? {} : { family }),
-                name: htmlIconName(component),
-              }),
-            })
-          ),
+      components: {
+        resolve:
+          ({ component }) =>
+          ({ props }: { props: SourceProps<Record<string, unknown>> }) =>
+            families.map((family) =>
+              jsx(Span, {
+                className: iconThemeClass(family, families),
+                children: jsx(Icon, {
+                  ...props,
+                  ...(family === 'default' ? {} : { family }),
+                  name: htmlIconName(component),
+                }),
+              })
+            ),
+      },
       transforms: [iconRegistration(families)],
       jsx: {
         importSource: 'vjsc/html-runtime',
@@ -63,29 +65,31 @@ export function createReactIconTarget(options: IconTargetOptions = {}): Componen
 
   return defineComponentTarget<ComponentSchema>()(({ element, imported }) => ({
     source: '@videojs/icons/vjsc',
-    resolve: ({ component }) => {
-      const icons = families.map((family) => {
-        const source = family === 'default' ? '@videojs/react/icons' : `@videojs/react/icons/${family}`;
+    components: {
+      resolve: ({ component }) => {
+        const icons = families.map((family) => {
+          const source = family === 'default' ? '@videojs/react/icons' : `@videojs/react/icons/${family}`;
 
-        return {
-          family,
-          target: imported({
-            from: source,
-            name: component,
-            props: { from: source, name: 'IconProps' },
-          }),
-        };
-      });
+          return {
+            family,
+            target: imported({
+              from: source,
+              name: component,
+              props: { from: source, name: 'IconProps' },
+            }),
+          };
+        });
 
-      const Span = element('span');
+        const Span = element('span');
 
-      return ({ props }: { props: SourceProps<Record<string, unknown>> }) =>
-        icons.map(({ family, target: Icon }) =>
-          jsx(Span, {
-            className: iconThemeClass(family, families),
-            children: jsx(Icon, { ...props }),
-          })
-        );
+        return ({ props }: { props: SourceProps<Record<string, unknown>> }) =>
+          icons.map(({ family, target: Icon }) =>
+            jsx(Span, {
+              className: iconThemeClass(family, families),
+              children: jsx(Icon, { ...props }),
+            })
+          );
+      },
     },
     jsx: {
       importSource: 'react',
@@ -94,7 +98,7 @@ export function createReactIconTarget(options: IconTargetOptions = {}): Componen
   }));
 }
 
-function iconRegistration(families: readonly string[]): ComponentTargetTransform {
+function iconRegistration(families: readonly string[]): TargetTransform {
   return {
     name: `videojs:html-icons:${families.join(',')}`,
     transform(context) {

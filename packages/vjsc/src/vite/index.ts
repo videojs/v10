@@ -3,7 +3,8 @@ import type { VjscDiagnosticsOptions } from '../styles/diagnostics';
 import { type ViteOxcPlugin, viteOxcPlugin } from './oxc';
 import { createViteStyleHmr } from './style-hmr';
 
-export type { VjscModule, VjscModuleConfig } from '../plugins/vjsc';
+export type { VjscEntriesOptions, VjscEntry, VjscTransformOptions } from '../plugins/vjsc';
+export type { VjscModule } from '../utils/module-id';
 export type { ComplexSelectorDiagnosticLevel, VjscDiagnosticsOptions } from '../styles/diagnostics';
 
 interface ViteDiagnosticsPlugin extends ViteOxcPlugin {

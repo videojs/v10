@@ -1,18 +1,18 @@
 import { extname, posix } from 'node:path';
 
-import type { ComponentMeta } from '../components/meta';
+import type { NamedModuleMeta } from '../components/meta';
 import { replaceImportSpecifiers } from '../shadcn/analyze';
 import type { ComponentGraph, ComponentGraphImport } from './types';
 import { type ValidatedComponentGraphModule, validateComponentGraph } from './validate';
 
-export interface ComponentGraphImportContext<Item extends ComponentMeta = ComponentMeta> {
+export interface ComponentGraphImportContext<Item extends NamedModuleMeta = NamedModuleMeta> {
   readonly dependency?: ValidatedComponentGraphModule<Item> | undefined;
   readonly importer: ValidatedComponentGraphModule<Item>;
   readonly reference: ComponentGraphImport;
 }
 
 /** Collect one root module and every captured graph dependency reachable from it. */
-export function collectComponentGraphModules<Item extends ComponentMeta>(
+export function collectComponentGraphModules<Item extends NamedModuleMeta>(
   graph: ComponentGraph<Item>,
   rootId: string
 ): ValidatedComponentGraphModule<Item>[] {
@@ -39,7 +39,7 @@ export function collectComponentGraphModules<Item extends ComponentMeta>(
 }
 
 /** Rewrite imports from the references already captured in a finalized component graph. */
-export function rewriteComponentGraphImports<Item extends ComponentMeta>(
+export function rewriteComponentGraphImports<Item extends NamedModuleMeta>(
   graph: ComponentGraph<Item>,
   module: ValidatedComponentGraphModule<Item>,
   resolveImport: (context: ComponentGraphImportContext<Item>) => string | undefined

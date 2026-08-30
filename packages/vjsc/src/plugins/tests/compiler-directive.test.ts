@@ -12,7 +12,7 @@ const schema = defineSchema('@fixture/components', {
 });
 const target = defineComponentTarget<typeof schema>()(({ element }) => ({
   source: '@fixture/components',
-  resolve: () => element('button'),
+  components: { resolve: () => element('button') },
   jsx: { importSource: 'react', attributes: 'react' },
 }));
 

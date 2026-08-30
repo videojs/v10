@@ -1,12 +1,12 @@
-import type { ComponentMeta } from 'vjsc/components';
+import type { NamedModuleMeta } from 'vjsc/components';
 
-export interface SkinComponentMeta extends ComponentMeta {
+export interface SkinComponentMeta extends NamedModuleMeta {
   readonly type: 'component';
   readonly title: string;
   readonly description: string;
 }
 
-export interface SkinMeta extends ComponentMeta {
+export interface SkinMeta extends NamedModuleMeta {
   readonly type: 'skin';
   readonly title: string;
   readonly description: string;

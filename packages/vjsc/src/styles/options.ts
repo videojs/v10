@@ -1,6 +1,4 @@
-import type { StyleManifest } from './manifest';
-
-export interface StylesheetOptions {
+export interface CssTransformOptions {
   /** Tailwind CSS entry used to resolve utilities, theme tokens, and variants. */
   readonly input: string;
   /** Runtime base CSS entry imported before generated semantic styles. */
@@ -9,21 +7,19 @@ export interface StylesheetOptions {
   readonly scope?: string | undefined;
 }
 
-interface StylePluginBaseOptions {
+interface StyleTransformBaseOptions {
   /** Ordered variant utilities to append to each rule's base utilities when defined. */
   readonly variants?: readonly string[] | undefined;
-  /** Preloaded definitions for programmatic builds; imports are discovered by default. */
-  readonly manifest?: StyleManifest | undefined;
 }
 
-export type StylePluginOptions =
-  | (StylePluginBaseOptions & {
+export type StyleTransformOptions =
+  | (StyleTransformBaseOptions & {
       /** Project style references to editable Tailwind utility groups. */
       readonly mode: 'tailwind';
-      readonly stylesheet?: never;
+      readonly css?: never;
     })
-  | (StylePluginBaseOptions & {
+  | (StyleTransformBaseOptions & {
       readonly mode: 'css';
       /** Create CSS modules in addition to transforming semantic class names. */
-      readonly stylesheet?: StylesheetOptions | undefined;
+      readonly css?: CssTransformOptions | undefined;
     });

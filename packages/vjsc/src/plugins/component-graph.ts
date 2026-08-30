@@ -3,7 +3,7 @@ import { isAbsolute, resolve } from 'node:path';
 
 import type { OutputBundle, Plugin, PluginContext } from 'rolldown';
 
-import type { ComponentMeta } from '../components/meta';
+import type { NamedModuleMeta } from '../components/meta';
 import type {
   ComponentGraph,
   ComponentGraphImport,
@@ -24,7 +24,7 @@ const SCRIPT_ID = /\.[cm]?[jt]sx?(?:\?|$)/;
 const VIRTUAL_STYLE_ID = /(?:^|\0)virtual:vjsc\/css\//;
 
 /** Capture final VJSC modules, imports, styles, and assets for downstream build adapters. */
-export function componentGraphPlugin<Item extends ComponentMeta>(
+export function componentGraphPlugin<Item extends NamedModuleMeta>(
   options: ComponentGraphPluginOptions
 ): Plugin<ComponentGraphPluginApi<Item>> {
   const root = resolveModulePath(options.root);
@@ -72,7 +72,7 @@ export function componentGraphPlugin<Item extends ComponentMeta>(
       if (!importer || !source.startsWith('.')) return null;
 
       const selection = parseModuleId(importer);
-      if ([...selection.parameters].length === 0) return null;
+      if ([...selection.params].length === 0) return null;
 
       const resolved = await this.resolve(source, selection.filename, { skipSelf: true });
       if (!resolved || resolved.external) return resolved;
@@ -80,7 +80,7 @@ export function componentGraphPlugin<Item extends ComponentMeta>(
       const filename = moduleFilename(normalizeResolvedId(resolved.id));
       if (!isAbsolute(filename) || !SCRIPT_ID.test(filename) || !isInsideRoot(root, filename)) return resolved;
 
-      return { ...resolved, id: moduleId(filename, selection.parameters) };
+      return { ...resolved, id: moduleId(filename, selection.params) };
     },
     transform: {
       order: 'pre',
@@ -106,7 +106,7 @@ export function componentGraphPlugin<Item extends ComponentMeta>(
         const entry = entries.get(id) ?? {
           id,
           filename: parsed.filename,
-          transform: Object.fromEntries(parsed.parameters),
+          transform: Object.fromEntries(parsed.params),
         };
         const info = this.getModuleInfo(hostId);
         const source = info?.code;

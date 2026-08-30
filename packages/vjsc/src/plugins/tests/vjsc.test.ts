@@ -12,7 +12,7 @@ import { defineComponentTarget } from '../../target/definition';
 const schema = defineSchema('@fixture/components', {});
 const target = defineComponentTarget<typeof schema>()(() => ({
   source: '@fixture/components',
-  resolve: () => undefined,
+  components: { resolve: () => undefined },
   transforms: [
     {
       name: 'fixture:target-transform',
@@ -41,9 +41,14 @@ describe('vjscPlugin', () => {
       input: id,
       experimental: { nativeMagicString: true },
       plugins: vjscPlugin({
-        configure(module) {
-          configurations.set(module.id, (configurations.get(module.id) ?? 0) + 1);
-          return module.parameters.get('target') === 'react' ? { targets: [target] } : null;
+        transform: {
+          components(module) {
+            configurations.set(module.id, (configurations.get(module.id) ?? 0) + 1);
+            return module.params.get('target') === 'react' ? [target] : null;
+          },
+          styles() {
+            return null;
+          },
         },
       }),
     });

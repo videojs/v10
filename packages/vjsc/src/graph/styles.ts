@@ -3,7 +3,7 @@ import { dirname, resolve } from 'node:path';
 
 import { type ReturnedRule, transform as transformCss } from 'lightningcss';
 
-import type { ComponentMeta } from '../components/meta';
+import type { NamedModuleMeta } from '../components/meta';
 import { isInsideRoot } from '../utils/path';
 import type { ComponentGraph } from './types';
 import type { ValidatedComponentGraphModule } from './validate';
@@ -22,7 +22,7 @@ export interface ComponentGraphStylesOptions {
 }
 
 /** Merge exact authored and transformed styles used by a set of component graph modules. */
-export async function createComponentGraphStyles<Item extends ComponentMeta>(
+export async function createComponentGraphStyles<Item extends NamedModuleMeta>(
   graph: ComponentGraph<Item>,
   modules: readonly ValidatedComponentGraphModule<Item>[],
   options: ComponentGraphStylesOptions

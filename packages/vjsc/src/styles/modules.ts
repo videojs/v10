@@ -1,7 +1,7 @@
 import { existsSync, realpathSync } from 'node:fs';
 import { dirname, extname, resolve } from 'node:path';
 
-import type { StyleManifest } from './manifest';
+import type { StyleIndex } from './style-index';
 
 export function isStyleModulePath(path: string): boolean {
   return /\.styles(?:\.[cm]?[jt]sx?)?$/.test(path);
@@ -15,23 +15,19 @@ export function resolveStyleModuleFile(importer: string, specifier: string): str
   return file && isStyleModulePath(file) ? file : undefined;
 }
 
-export function resolveManifestStyleModule(
-  importer: string,
-  specifier: string,
-  manifest: StyleManifest
-): string | undefined {
+export function resolveStyleIndexModule(importer: string, specifier: string, index: StyleIndex): string | undefined {
   if (!specifier.startsWith('.')) return undefined;
 
   const file = resolveStyleModuleFile(importer, specifier);
 
   if (file) {
     const modulePath = realpathSync(file);
-    if (manifest.modules.has(modulePath)) return modulePath;
+    if (index.modules.has(modulePath)) return modulePath;
   }
 
   const imported = resolve(dirname(importer), specifier);
 
-  for (const modulePath of manifest.modules.keys()) {
+  for (const modulePath of index.modules.keys()) {
     if (modulePath === imported || stripScriptExtension(modulePath) === imported) return modulePath;
   }
 

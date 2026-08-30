@@ -7,11 +7,11 @@ import { registryItemSchema, registrySchema } from 'shadcn/schema';
 import { describe, expect, it } from 'vite-plus/test';
 
 import { componentGraphPlugin, shadcnRegistryPlugin, vjscPlugin } from '..';
-import type { ComponentMeta } from '../../components';
+import type { NamedModuleMeta } from '../../components';
 import type { ComponentGraphModule } from '../../graph';
 import type { ShadcnRegistryPluginOptions, VjscRegistryItem } from '../../shadcn';
 
-interface FixtureMeta extends ComponentMeta {
+interface FixtureMeta extends NamedModuleMeta {
   readonly type: 'block' | 'component' | 'support';
   readonly title: string;
   readonly description: string;
@@ -205,7 +205,12 @@ async function build(
       include: './components/**/*.{ts,tsx}',
       ...(transformations ? { transformations } : {}),
     });
-  const transform = vjscPlugin({ configure: () => ({ targets: [] }) });
+  const transform = vjscPlugin({
+    transform: {
+      components: () => [],
+      styles: () => null,
+    },
+  });
   const registry = shadcnRegistryPlugin(graph, baseOptions(registryOverrides));
   const bundle = await rolldown({
     input: [],

@@ -2,7 +2,7 @@ import { basename, dirname, isAbsolute, posix, relative } from 'node:path';
 
 import { type RegistryItem, registryItemSchema, registrySchema, type Registry as ShadcnRegistry } from 'shadcn/schema';
 
-import type { ComponentMeta } from '../components/meta';
+import type { NamedModuleMeta } from '../components/meta';
 import {
   type ComponentGraph,
   type ComponentGraphModule,
@@ -22,7 +22,7 @@ import type {
   VjscRegistryStyleItemMeta,
 } from './types';
 
-interface OwnedModule<Item extends ComponentMeta = ComponentMeta> extends ValidatedComponentGraphModule<Item> {
+interface OwnedModule<Item extends NamedModuleMeta = NamedModuleMeta> extends ValidatedComponentGraphModule<Item> {
   readonly outputPath: string;
   readonly target: string;
 }
@@ -33,24 +33,24 @@ interface BuiltItem {
   readonly sourceFiles: ReadonlyMap<string, string>;
 }
 
-interface PublishedModule<Item extends ComponentMeta = ComponentMeta> {
+interface PublishedModule<Item extends NamedModuleMeta = NamedModuleMeta> {
   readonly module: ValidatedComponentGraphModule<Item>;
   readonly item: SourceRegistryItem<Item>;
 }
 
-type SourceRegistryItem<Item extends ComponentMeta = ComponentMeta> = VjscRegistryItem<Item> & {
+type SourceRegistryItem<Item extends NamedModuleMeta = NamedModuleMeta> = VjscRegistryItem<Item> & {
   readonly $vjsc: VjscRegistrySourceItemMeta<Item>;
 };
 
-type StyleRegistryItem<Item extends ComponentMeta = ComponentMeta> = VjscRegistryItem<Item> & {
+type StyleRegistryItem<Item extends NamedModuleMeta = NamedModuleMeta> = VjscRegistryItem<Item> & {
   readonly $vjsc: VjscRegistryStyleItemMeta<Item>;
 };
 
-type ManifestRegistryItem<Item extends ComponentMeta = ComponentMeta> = VjscRegistryItem<Item> & {
+type ManifestRegistryItem<Item extends NamedModuleMeta = NamedModuleMeta> = VjscRegistryItem<Item> & {
   readonly $vjsc: VjscRegistryManifestItemMeta;
 };
 
-type FilesRegistryItem<Item extends ComponentMeta = ComponentMeta> = VjscRegistryItem<Item> & {
+type FilesRegistryItem<Item extends NamedModuleMeta = NamedModuleMeta> = VjscRegistryItem<Item> & {
   readonly $vjsc: VjscRegistryFilesItemMeta;
 };
 
@@ -63,7 +63,7 @@ export interface ShadcnOutputFile {
 }
 
 /** Prepare an included Shadcn source registry from the host's transformed module graph. */
-export async function createShadcnRegistryFiles<Item extends ComponentMeta>(
+export async function createShadcnRegistryFiles<Item extends NamedModuleMeta>(
   graph: ComponentGraph<Item>,
   options: ShadcnRegistryPluginOptions<Item>
 ): Promise<ShadcnOutputFile[]> {
@@ -122,7 +122,7 @@ export async function createShadcnRegistryFiles<Item extends ComponentMeta>(
   return assets;
 }
 
-function buildFilesItem<Item extends ComponentMeta>(
+function buildFilesItem<Item extends NamedModuleMeta>(
   item: FilesRegistryItem<Item>,
   options: ShadcnRegistryPluginOptions<Item>
 ): BuiltItem {
@@ -144,7 +144,7 @@ function buildFilesItem<Item extends ComponentMeta>(
   };
 }
 
-function describePublishedModules<Item extends ComponentMeta>(
+function describePublishedModules<Item extends NamedModuleMeta>(
   modules: ReadonlyMap<string, ValidatedComponentGraphModule<Item>>,
   items: readonly SourceRegistryItem<Item>[]
 ): ReadonlyMap<string, PublishedModule<Item>> {
@@ -165,7 +165,7 @@ function describePublishedModules<Item extends ComponentMeta>(
   return published;
 }
 
-function canonicalPublishedModules<Item extends ComponentMeta>(
+function canonicalPublishedModules<Item extends NamedModuleMeta>(
   modules: ReadonlyMap<string, ValidatedComponentGraphModule<Item>>,
   published: ReadonlyMap<string, PublishedModule<Item>>
 ): ReadonlyMap<string, PublishedModule<Item>> {
@@ -196,7 +196,7 @@ function moduleSourceKey(module: ValidatedComponentGraphModule): string {
   return `${module.filename}\0${stripVirtualCssImports(module.source)}`;
 }
 
-function collectOwnedModules<Item extends ComponentMeta>(
+function collectOwnedModules<Item extends NamedModuleMeta>(
   root: ValidatedComponentGraphModule<Item>,
   modules: ReadonlyMap<string, ValidatedComponentGraphModule<Item>>,
   published: ReadonlyMap<string, PublishedModule<Item>>
@@ -224,7 +224,7 @@ function collectOwnedModules<Item extends ComponentMeta>(
   return { modules: [...owned.values()], publishedDependencies };
 }
 
-async function buildPublishedItem<Item extends ComponentMeta>(
+async function buildPublishedItem<Item extends NamedModuleMeta>(
   publication: PublishedModule<Item>,
   modules: ReadonlyMap<string, ValidatedComponentGraphModule<Item>>,
   published: ReadonlyMap<string, PublishedModule<Item>>,
@@ -294,7 +294,7 @@ async function buildPublishedItem<Item extends ComponentMeta>(
   };
 }
 
-async function buildStyleItem<Item extends ComponentMeta>(
+async function buildStyleItem<Item extends NamedModuleMeta>(
   item: StyleRegistryItem<Item>,
   modules: ReadonlyMap<string, ValidatedComponentGraphModule<Item>>,
   graph: ComponentGraph<Item>,
@@ -326,7 +326,7 @@ async function buildStyleItem<Item extends ComponentMeta>(
   };
 }
 
-function buildManifestItem<Item extends ComponentMeta>(
+function buildManifestItem<Item extends NamedModuleMeta>(
   item: ManifestRegistryItem<Item>,
   options: ShadcnRegistryPluginOptions<Item>
 ): BuiltItem {
@@ -337,7 +337,7 @@ function buildManifestItem<Item extends ComponentMeta>(
   };
 }
 
-function buildManifest<Item extends ComponentMeta>(
+function buildManifest<Item extends NamedModuleMeta>(
   item: VjscRegistryItem<Item>,
   options: ShadcnRegistryPluginOptions<Item>,
   files: readonly ShadcnRegistryFile[],
@@ -353,20 +353,20 @@ function buildManifest<Item extends ComponentMeta>(
   };
 }
 
-function publicRegistryItem<Item extends ComponentMeta>(item: VjscRegistryItem<Item>): RegistryItem {
+function publicRegistryItem<Item extends NamedModuleMeta>(item: VjscRegistryItem<Item>): RegistryItem {
   const { $vjsc: _vjsc, ...manifest } = item;
 
   return manifest;
 }
 
-function versionDependencies<Item extends ComponentMeta>(
+function versionDependencies<Item extends NamedModuleMeta>(
   dependencies: ReadonlySet<string>,
   options: ShadcnRegistryPluginOptions<Item>
 ): Set<string> {
   return new Set([...dependencies].map((dependency) => options.packages?.[dependency] ?? dependency));
 }
 
-async function componentGraphStyles<Item extends ComponentMeta>(
+async function componentGraphStyles<Item extends NamedModuleMeta>(
   label: string,
   modules: readonly ValidatedComponentGraphModule<Item>[],
   graph: ComponentGraph<Item>,
@@ -397,7 +397,7 @@ function addStyleImport(source: string, specifier: string): string {
   return pragma.test(source) ? source.replace(pragma, `$1\n${statement}`) : `${statement}\n${source}`;
 }
 
-function createLayout<Item extends ComponentMeta>(
+function createLayout<Item extends NamedModuleMeta>(
   root: ValidatedComponentGraphModule<Item>,
   modules: readonly ValidatedComponentGraphModule<Item>[],
   item: SourceRegistryItem<Item>,
@@ -443,7 +443,7 @@ function createLayout<Item extends ComponentMeta>(
   return layout;
 }
 
-function rewriteImports<Item extends ComponentMeta>(
+function rewriteImports<Item extends NamedModuleMeta>(
   module: OwnedModule<Item>,
   layout: ReadonlyMap<string, OwnedModule<Item>>,
   modules: ReadonlyMap<string, ValidatedComponentGraphModule<Item>>,
@@ -486,7 +486,7 @@ function rewriteImports<Item extends ComponentMeta>(
   return { source: replaceImportSpecifiers(module.source, replacements), dependencies: [...dependencies].sort() };
 }
 
-function publishedImport<Item extends ComponentMeta>(
+function publishedImport<Item extends NamedModuleMeta>(
   publication: PublishedModule<Item>,
   options: ShadcnRegistryPluginOptions<Item>
 ): string {
@@ -495,7 +495,7 @@ function publishedImport<Item extends ComponentMeta>(
   return posix.join(options.paths.import, stripScriptExtension(target));
 }
 
-function installedTarget<Item extends ComponentMeta>(
+function installedTarget<Item extends NamedModuleMeta>(
   item: SourceRegistryItem<Item>,
   module: ComponentGraphModule<Item>,
   root: ComponentGraphModule<Item>,
@@ -504,7 +504,7 @@ function installedTarget<Item extends ComponentMeta>(
   return posix.join(normalizePath(options.paths.install), normalizePath(targetForModule(item, module, root)));
 }
 
-function targetForModule<Item extends ComponentMeta>(
+function targetForModule<Item extends NamedModuleMeta>(
   item: SourceRegistryItem<Item>,
   module: ComponentGraphModule<Item>,
   root: ComponentGraphModule<Item>
@@ -525,7 +525,7 @@ function stripScriptExtension(path: string): string {
   return path.replace(/\.(?:[cm]?[jt]sx?)$/, '');
 }
 
-function validateOptions<Item extends ComponentMeta>(options: ShadcnRegistryPluginOptions<Item>): void {
+function validateOptions<Item extends NamedModuleMeta>(options: ShadcnRegistryPluginOptions<Item>): void {
   for (const [name, value] of Object.entries(options.paths)) {
     if (name === 'import') continue;
 
@@ -537,7 +537,7 @@ function validateOptions<Item extends ComponentMeta>(options: ShadcnRegistryPlug
   }
 }
 
-function validateItems<Item extends ComponentMeta>(items: readonly VjscRegistryItem<Item>[]): void {
+function validateItems<Item extends NamedModuleMeta>(items: readonly VjscRegistryItem<Item>[]): void {
   const names = new Map<string, string>();
   const modules = new Map<string, string>();
 
@@ -558,19 +558,21 @@ function validateItems<Item extends ComponentMeta>(items: readonly VjscRegistryI
   }
 }
 
-function isSourceItem<Item extends ComponentMeta>(item: VjscRegistryItem<Item>): item is SourceRegistryItem<Item> {
+function isSourceItem<Item extends NamedModuleMeta>(item: VjscRegistryItem<Item>): item is SourceRegistryItem<Item> {
   return item.$vjsc.kind === undefined || item.$vjsc.kind === 'source';
 }
 
-function isStyleItem<Item extends ComponentMeta>(item: VjscRegistryItem<Item>): item is StyleRegistryItem<Item> {
+function isStyleItem<Item extends NamedModuleMeta>(item: VjscRegistryItem<Item>): item is StyleRegistryItem<Item> {
   return item.$vjsc.kind === 'style';
 }
 
-function isFilesItem<Item extends ComponentMeta>(item: VjscRegistryItem<Item>): item is FilesRegistryItem<Item> {
+function isFilesItem<Item extends NamedModuleMeta>(item: VjscRegistryItem<Item>): item is FilesRegistryItem<Item> {
   return item.$vjsc.kind === 'files';
 }
 
-function isManifestItem<Item extends ComponentMeta>(item: VjscRegistryItem<Item>): item is ManifestRegistryItem<Item> {
+function isManifestItem<Item extends NamedModuleMeta>(
+  item: VjscRegistryItem<Item>
+): item is ManifestRegistryItem<Item> {
   return item.$vjsc.kind === 'manifest';
 }
 

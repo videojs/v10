@@ -2,7 +2,7 @@ import { isAbsolute, relative, resolve } from 'node:path';
 
 import { parseSync } from 'oxc-parser';
 
-import type { ComponentMeta } from '../components/meta';
+import type { NamedModuleMeta } from '../components/meta';
 import { moduleFilename } from '../utils/module-id';
 import { escapesRoot, toPosixPath } from '../utils/path';
 import type { ComponentGraph, ComponentGraphModule } from './types';
@@ -10,12 +10,12 @@ import type { ComponentGraph, ComponentGraphModule } from './types';
 const validatedGraphs = new WeakMap<ComponentGraph, ReadonlyMap<string, ValidatedComponentGraphModule>>();
 
 export interface ValidatedComponentGraphModule<
-  Item extends ComponentMeta = ComponentMeta,
+  Item extends NamedModuleMeta = NamedModuleMeta,
 > extends ComponentGraphModule<Item> {
   readonly sourcePath: string;
 }
 
-export function validateComponentGraph<Item extends ComponentMeta>(
+export function validateComponentGraph<Item extends NamedModuleMeta>(
   graph: ComponentGraph<Item>
 ): ReadonlyMap<string, ValidatedComponentGraphModule<Item>> {
   const cached = validatedGraphs.get(graph);

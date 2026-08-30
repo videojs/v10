@@ -5,13 +5,14 @@ import { walk } from 'oxc-walker';
 import type { Plugin } from 'rolldown';
 
 import { createSourceText, jsxNamePath, type ModuleImports, renderSourceRange, type SourceEdit } from '../ast';
-import type { ComponentDefinition, ComponentRecord } from '../components/definition';
+import type { ComponentDefinition, ComponentDefinitions } from '../components/definition';
 import {
   type ComponentRewrite,
   type ComponentRewriteContext,
   type ComponentTarget,
-  type ComponentTargetPath,
-  type ComponentTargetRule,
+  type ComponentPath,
+  type ComponentRule,
+  isTargetUnwrap,
   isTargetElement,
   type PrimitiveTargetRule,
   type SourcePart,
@@ -27,17 +28,13 @@ import {
   createTargetReplacement,
   singleJsxElementChild,
 } from '../target/source';
-import { type ParsedModuleId, parseModuleId } from '../utils/module-id';
+import { parseModuleId, type VjscModule } from '../utils/module-id';
 
 const SCRIPT_ID = /\.[cm]?[jt]sx?(?:\?|$)/;
 
-export interface ComponentTargetModule extends ParsedModuleId {
-  readonly id: string;
-}
-
 export type ComponentTargetSelection =
   | readonly ComponentTarget[]
-  | ((module: ComponentTargetModule) => readonly ComponentTarget[] | null | undefined);
+  | ((module: VjscModule) => readonly ComponentTarget[] | null | undefined);
 
 export interface ComponentTargetPluginOptions {
   readonly targets: ComponentTargetSelection;
@@ -65,7 +62,7 @@ interface ComponentSourceScopes {
   readonly nodes: ReadonlyMap<JSXElement, ComponentSourceScope>;
 }
 
-type RuntimeComponentDefinition = ComponentDefinition<object, ComponentRecord | undefined>;
+type RuntimeComponentDefinition = ComponentDefinition<object, ComponentDefinitions | undefined>;
 type RuntimeSourceParts = ComponentRewriteContext<RuntimeComponentDefinition>['parts'];
 type RuntimeSourcePart = SourcePartFor<RuntimeComponentDefinition>;
 
@@ -91,7 +88,7 @@ export function componentTargetPlugin(options: ComponentTargetPluginOptions): Pl
           const scope = scopes.nodes.get(node);
           if (!scope) throw new Error('Component target could not resolve the source component scope.');
 
-          if (isTransparentRoot(path)) {
+          if (isUnwrappedRoot(path)) {
             const edits = [
               ...childEdits,
               { start: node.openingElement.start, end: node.openingElement.end, content: '' },
@@ -233,9 +230,7 @@ export function primitiveTargetPlugin(options: ComponentTargetPluginOptions): Pl
 export function selectComponentTargets(selection: ComponentTargetSelection, id: string): readonly ComponentTarget[] {
   if (typeof selection !== 'function') return selection;
 
-  const parsed = parseModuleId(id);
-
-  return selection({ id, ...parsed }) ?? [];
+  return selection(parseModuleId(id)) ?? [];
 }
 
 function collectCanonicalBindings(ast: Program, targets: readonly ComponentTarget[]): CanonicalBindings {
@@ -273,8 +268,8 @@ function collectComponentScopes(ast: Program, bindings: CanonicalBindings, id: s
       if (!path) return;
 
       const isRoot = path.part === null || path.part === 'Root';
-      const transparent = isTransparentRoot(path);
-      const owner = transparent ? stack.at(-1)?.scope : isRoot ? undefined : enclosingScope(stack, path);
+      const unwrapped = isUnwrappedRoot(path);
+      const owner = unwrapped ? stack.at(-1)?.scope : isRoot ? undefined : enclosingScope(stack, path);
       const scope: ComponentSourceScope = owner ?? {
         root: node,
         target: path.target,
@@ -284,7 +279,7 @@ function collectComponentScopes(ast: Program, bindings: CanonicalBindings, id: s
 
       nodes.set(node, scope);
 
-      if ((isRoot && !transparent) || !owner) stack.push({ path, scope });
+      if ((isRoot && !unwrapped) || !owner) stack.push({ path, scope });
     },
     leave(node) {
       if (node.type !== 'JSXElement') return;
@@ -394,8 +389,8 @@ function canonicalPath(name: JSXElementName, bindings: CanonicalBindings): Canon
   };
 }
 
-function configuredRule(path: CanonicalPath): ComponentTargetRule<object> | undefined {
-  let rule = path.target.components[path.component] as ComponentTargetRule<object> | undefined;
+function configuredRule(path: CanonicalPath): ComponentRule<object> | undefined {
+  let rule = path.target.components.rules[path.component] as ComponentRule<object> | undefined;
   if (!path.part || !rule) return rule;
 
   const parts = path.part.split('.');
@@ -407,16 +402,16 @@ function configuredRule(path: CanonicalPath): ComponentTargetRule<object> | unde
       return part === 'Root' && index === parts.length - 1 ? rule : undefined;
     }
 
-    rule = (rule as Readonly<Record<string, ComponentTargetRule<object> | undefined>>)[part];
+    rule = (rule as Readonly<Record<string, ComponentRule<object> | undefined>>)[part];
   }
 
   return rule;
 }
 
-function resolveDefault(path: CanonicalPath): ComponentTargetRule<object> | undefined {
-  const targetPath: ComponentTargetPath = { component: path.component, part: path.part };
+function resolveDefault(path: CanonicalPath): ComponentRule<object> | undefined {
+  const targetPath: ComponentPath = { component: path.component, part: path.part };
 
-  return path.target.resolve(targetPath) as ComponentTargetRule<object> | undefined;
+  return path.target.components.resolve(targetPath) as ComponentRule<object> | undefined;
 }
 
 interface CollectedPart {
@@ -532,7 +527,7 @@ function findSourceBranch(root: JSXElement, node: JSXElement, bindings: Canonica
 
   while (branch?.type === 'JSXElement') {
     const path = canonicalPath(branch.openingElement.name, bindings);
-    if (!path || !isTransparentRoot(path)) break;
+    if (!path || !isUnwrappedRoot(path)) break;
 
     branch = branch.children.find((child) => child.start <= node.start && child.end >= node.end);
   }
@@ -540,8 +535,8 @@ function findSourceBranch(root: JSXElement, node: JSXElement, bindings: Canonica
   return branch;
 }
 
-function isTransparentRoot(path: CanonicalPath): boolean {
-  return path.part === 'Root' && path.target.transparent.includes(path.component);
+function isUnwrappedRoot(path: CanonicalPath): boolean {
+  return path.part === 'Root' && isTargetUnwrap(configuredRule(path));
 }
 
 function sourcePartCollection(name: string, group: CollectedPartGroup): RuntimeSourcePart {

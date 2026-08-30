@@ -1,11 +1,11 @@
-import type { ComponentMeta } from '../components/meta';
+import type { NamedModuleMeta } from '../components/meta';
 import type { ImportReference } from '../shadcn/analyze';
 
 export interface ComponentGraphImport extends ImportReference {
   readonly resolvedId?: string | undefined;
 }
 
-export interface ComponentGraphModule<Item extends ComponentMeta = ComponentMeta> {
+export interface ComponentGraphModule<Item extends NamedModuleMeta = NamedModuleMeta> {
   /** Full host module ID, including its VJSC transform query. */
   readonly id: string;
   /** Absolute physical source filename. */
@@ -18,7 +18,7 @@ export interface ComponentGraphModule<Item extends ComponentMeta = ComponentMeta
   readonly meta?: Item | undefined;
 }
 
-export interface ComponentGraph<Item extends ComponentMeta = ComponentMeta> {
+export interface ComponentGraph<Item extends NamedModuleMeta = NamedModuleMeta> {
   readonly root: string;
   readonly modules: ReadonlyMap<string, ComponentGraphModule<Item>>;
   readonly assets: ReadonlyMap<string, string>;
@@ -31,13 +31,13 @@ export interface ComponentGraphInput {
   readonly transform: Readonly<Record<string, string>>;
 }
 
-export interface ComponentGraphPluginApi<Item extends ComponentMeta = ComponentMeta> {
+export interface ComponentGraphPluginApi<Item extends NamedModuleMeta = NamedModuleMeta> {
   /** Read the graph after Rolldown has completed its transform pipeline. */
   getGraph(): ComponentGraph<Item>;
 }
 
 /** Plugin-like graph owner passed explicitly to downstream build adapters. */
-export interface ComponentGraphProvider<Item extends ComponentMeta = ComponentMeta> {
+export interface ComponentGraphProvider<Item extends NamedModuleMeta = NamedModuleMeta> {
   readonly api?: ComponentGraphPluginApi<Item> | undefined;
 }
 

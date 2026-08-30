@@ -10,9 +10,7 @@ import { reactTargetPropsPlugin } from '../react-target-props';
 const MODULE_ID = '\0fixture.tsx?target=react';
 const reactTarget = {
   source: '@fixture/components',
-  resolve: () => undefined,
-  transparent: [],
-  components: {},
+  components: { resolve: () => undefined, rules: {} },
   primitives: {},
   types: {},
   transforms: [],

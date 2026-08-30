@@ -1,4 +1,6 @@
-import type { VjscModule, VjscModuleConfig } from 'vjsc/plugins';
+import type { VjscModule } from 'vjsc/plugins';
+import type { StyleTransformOptions } from 'vjsc/styles';
+import type { ComponentTarget } from 'vjsc/target';
 
 import { type SkinName, skinStyles } from './meta.ts';
 import { createStyleOptions } from './style.ts';
@@ -10,14 +12,16 @@ export interface SkinConfig {
   readonly style: 'tailwind' | 'css';
 }
 
-export function configureSkinModule({ parameters }: VjscModule): VjscModuleConfig | null {
-  const config = validateSkinConfig(parameters);
-  if (!config) return null;
+export function resolveSkinComponents(module: VjscModule): readonly ComponentTarget[] | null {
+  const config = validateSkinConfig(module.params);
 
-  return {
-    targets: createComponentTargets(config),
-    styles: createStyleOptions(config),
-  };
+  return config ? createComponentTargets(config) : null;
+}
+
+export function resolveSkinStyles(module: VjscModule): StyleTransformOptions | null {
+  const config = validateSkinConfig(module.params);
+
+  return config ? createStyleOptions(config) : null;
 }
 
 export function validateSkinConfig(parameters: URLSearchParams): SkinConfig | null {

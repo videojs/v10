@@ -1,6 +1,6 @@
 import { rolldown } from 'rolldown';
 
-import type { ComponentMeta } from '../components/meta';
+import type { NamedModuleMeta } from '../components/meta';
 import { HTML_RUNTIME } from '../plugins/html-runtime';
 import type { ComponentGraph } from './types';
 import { validateComponentGraph } from './validate';
@@ -30,7 +30,7 @@ export interface RenderComponentGraphHtmlOptions {
 }
 
 /** Render named HTML component exports directly from one finalized component graph. */
-export async function renderComponentGraphHtml<Item extends ComponentMeta>(
+export async function renderComponentGraphHtml<Item extends NamedModuleMeta>(
   graph: ComponentGraph<Item>,
   entries: readonly ComponentGraphHtmlEntry[],
   options: RenderComponentGraphHtmlOptions = {}

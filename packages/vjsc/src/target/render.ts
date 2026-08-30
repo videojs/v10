@@ -2,7 +2,7 @@ import { createSourceText, type ModuleImports, renderSourceRange, sliceSource } 
 import { htmlAttributeName } from './attributes';
 import {
   type ComponentTarget,
-  type ComponentTargetPath,
+  type ComponentPath,
   isTargetElement,
   TARGET_ELEMENT,
   TARGET_FRAGMENT,
@@ -302,8 +302,8 @@ function renderTargetReference(
 
   if (reference.kind === 'import') return context.imports.reference(reference.import);
 
-  const path: ComponentTargetPath = { component: reference.component, part: reference.part };
-  const resolved = context.target.resolve(path);
+  const path: ComponentPath = { component: reference.component, part: reference.part };
+  const resolved = context.target.components.resolve(path);
 
   if (!resolved || !isTargetElement(resolved)) {
     throw new Error(

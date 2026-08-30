@@ -24,19 +24,19 @@ describe('Skins Vite HMR', () => {
       optimizeDeps: { include: [], noDiscovery: true },
       plugins: [
         ...vjscPlugin({
-          configure(module) {
-            const style = module.parameters.get('style');
-            if (style === 'tailwind') return { targets: [], styles: { mode: 'tailwind' } };
+          transform: {
+            components: () => [],
+            styles(module) {
+              const style = module.params.get('style');
+              if (style === 'tailwind') return { mode: 'tailwind' };
 
-            if (style !== 'css') return null;
+              if (style !== 'css') return null;
 
-            return {
-              targets: [],
-              styles: {
+              return {
                 mode: 'css',
-                stylesheet: { input: fixture.design },
-              },
-            };
+                css: { input: fixture.design },
+              };
+            },
           },
         }),
         react(),

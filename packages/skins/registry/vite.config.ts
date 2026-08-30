@@ -6,7 +6,14 @@ import type { UserConfig as PackUserConfig } from 'vite-plus/pack';
 import { baseConfig } from '../../../build/pack.ts';
 import { shadcnRegistryPlugin, vjscPlugin } from '../../vjsc/src/plugins/index.ts';
 import { packageSkinsPlugin } from '../build/packages/plugin.ts';
-import { configureRegistryModule, packageDir, registryAssetsOnly, registryGraph, registryUtils } from './configure.ts';
+import {
+  packageDir,
+  registryAssetsOnly,
+  registryGraph,
+  registryUtils,
+  resolveRegistryComponents,
+  resolveRegistryStyles,
+} from './configure.ts';
 import { formatSource } from './format.ts';
 import { registryItems } from './items/index.ts';
 import { registryPackages, registryPaths, registryTargets } from './targets.ts';
@@ -27,7 +34,12 @@ export const registryPackConfig: PackUserConfig = {
     onlyBundle: false,
   },
   plugins: [
-    vjscPlugin({ configure: configureRegistryModule }),
+    vjscPlugin({
+      transform: {
+        components: resolveRegistryComponents,
+        styles: resolveRegistryStyles,
+      },
+    }),
     registryGraph,
     ...registryTargets.map((target) =>
       shadcnRegistryPlugin(registryGraph, {
@@ -41,7 +53,10 @@ export const registryPackConfig: PackUserConfig = {
           '@videojs/utils/style': `${registryPaths.import}/lib/resolve-class-name`,
         },
         packages: registryPackages,
-        meta: { framework: target.framework, style: target.styling },
+        meta: {
+          framework: target.framework,
+          style: target.styling,
+        },
         items: registryItems(target),
       })
     ),

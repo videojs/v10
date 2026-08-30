@@ -3,8 +3,9 @@
 
 import type coreSchema from '@videojs/core/vjsc';
 import {
+  type ComponentRules,
   type ComponentTarget,
-  type ComponentTargetHelpers,
+  type TargetHelpers,
   defineComponentTarget,
   type TemplateTargetDefinition,
 } from 'vjsc/target';
@@ -141,6 +142,7 @@ const publicNames: PublicNameMap = {
 export const htmlComponentTarget: ComponentTarget<CoreSchema> = defineComponentTarget<CoreSchema>()(({
   target,
   element,
+  unwrap,
 }) => {
   const Button = element('button');
   const Div = element('div');
@@ -163,107 +165,116 @@ export const htmlComponentTarget: ComponentTarget<CoreSchema> = defineComponentT
 
   return {
     source: '@videojs/core/vjsc',
-    transparent: ['AudioTrackRadioGroup', 'CaptionsRadioGroup', 'PlaybackRateRadioGroup', 'QualityRadioGroup'],
-    resolve: ({ component, part }) => {
-      const name = part ? componentParts[component]?.[part] : component === 'Container' ? 'MediaContainer' : component;
-
-      return name ? htmlElementTarget(name, element) : undefined;
-    },
     components: {
-      AudioTrackRadioGroup: {
-        Value: ({ props }) => <Span data-part="value" {...props} />,
-      },
-      CaptionsRadioGroup: {
-        Value: ({ props }) => <Span data-part="value" {...props} />,
-      },
-      Menu: ({ props, parts, id }) => {
-        const popup = parts.Popup?.one();
-        const trigger = parts.Trigger.one();
-        const controlledId = id(popup ? 'popup' : 'content');
+      resolve: ({ component, part }) => {
+        const name = part
+          ? componentParts[component]?.[part]
+          : component === 'Container'
+            ? 'MediaContainer'
+            : component;
 
-        if (popup) {
-          const playbackRateButtonProps = renderTargetProps(trigger.props, 'PlaybackRateButton');
+        return name ? htmlElementTarget(name, element) : undefined;
+      },
+      rules: {
+        AudioTrackRadioGroup: {
+          Root: unwrap(),
+          Value: ({ props }) => <Span data-part="value" {...props} />,
+        },
+        CaptionsRadioGroup: {
+          Root: unwrap(),
+          Value: ({ props }) => <Span data-part="value" {...props} />,
+        },
+        Menu: ({ props, parts, id }) => {
+          const popup = parts.Popup?.one();
+          const trigger = parts.Trigger.one();
+          const controlledId = id(popup ? 'popup' : 'content');
+
+          if (popup) {
+            const playbackRateButtonProps = renderTargetProps(trigger.props, 'PlaybackRateButton');
+
+            return [
+              trigger.replaceWith(
+                playbackRateButtonProps ? (
+                  <PlaybackRateButton commandfor={controlledId} {...playbackRateButtonProps} />
+                ) : (
+                  <Button commandfor={controlledId} {...trigger.props}>
+                    {trigger.children}
+                  </Button>
+                )
+              ),
+              popup.replaceWith(
+                <target.Menu.Popup id={controlledId} {...props.merge(popup.props.omit('keepMounted'))}>
+                  {popup.children}
+                </target.Menu.Popup>
+              ),
+            ];
+          }
+
+          const content = parts.Content.one();
 
           return [
             trigger.replaceWith(
-              playbackRateButtonProps ? (
-                <PlaybackRateButton commandfor={controlledId} {...playbackRateButtonProps} />
-              ) : (
-                <Button commandfor={controlledId} {...trigger.props}>
-                  {trigger.children}
-                </Button>
-              )
+              <target.Menu.Item commandfor={controlledId} {...trigger.props}>
+                {trigger.children}
+              </target.Menu.Item>
             ),
-            popup.replaceWith(
-              <target.Menu.Popup id={controlledId} {...props.merge(popup.props.omit('keepMounted'))}>
-                {popup.children}
-              </target.Menu.Popup>
+            content.replaceWith(
+              <target.Menu.Content id={controlledId} {...content.props}>
+                {content.children}
+              </target.Menu.Content>
             ),
           ];
-        }
-
-        const content = parts.Content.one();
-
-        return [
-          trigger.replaceWith(
-            <target.Menu.Item commandfor={controlledId} {...trigger.props}>
-              {trigger.children}
-            </target.Menu.Item>
-          ),
-          content.replaceWith(
-            <target.Menu.Content id={controlledId} {...content.props}>
-              {content.children}
-            </target.Menu.Content>
-          ),
-        ];
-      },
-      Popover: ({ props, parts }) => [
-        parts.Trigger.children,
-        <target.Popover.Popup {...props.merge(parts.Popup.props)}>{parts.Popup.children}</target.Popover.Popup>,
-      ],
-      VolumePopover: ({ props, parts, id }) => {
-        const popup = id('popup');
-        const trigger = parts.Trigger.one();
-
-        return [
-          trigger.replaceWith(
-            <Host commandfor={popup} {...trigger.props}>
-              {trigger.children}
-            </Host>
-          ),
-          <target.VolumePopover.Popup id={popup} {...props.merge(parts.Popup.props)}>
-            {parts.Popup.children}
-          </target.VolumePopover.Popup>,
-        ];
-      },
-      Poster: ({ props }) => (
-        <target.Poster {...props}>
-          <Slot name="poster">
-            <Img alt="" decoding="async" />
-          </Slot>
-        </target.Poster>
-      ),
-      PlaybackRateRadioGroup: {
-        Value: ({ props }) => <Span data-part="value" {...props} />,
-      },
-      QualityRadioGroup: {
-        Value: ({ props }) => <Span data-part="value" {...props} />,
-      },
-      Slider: {
-        Thumbnail: {
-          Root: Div,
         },
-      },
-      Tooltip: ({ props, parts, id }) => {
-        const trigger = id('trigger');
+        Popover: ({ props, parts }) => [
+          parts.Trigger.children,
+          <target.Popover.Popup {...props.merge(parts.Popup.props)}>{parts.Popup.children}</target.Popover.Popup>,
+        ],
+        VolumePopover: ({ props, parts, id }) => {
+          const popup = id('popup');
+          const trigger = parts.Trigger.one();
 
-        return [
-          <Host id={trigger}>{parts.Trigger.children}</Host>,
-          <target.Tooltip.Popup trigger={trigger} {...props.merge(parts.Popup.props)}>
-            {parts.Popup.children}
-          </target.Tooltip.Popup>,
-        ];
-      },
+          return [
+            trigger.replaceWith(
+              <Host commandfor={popup} {...trigger.props}>
+                {trigger.children}
+              </Host>
+            ),
+            <target.VolumePopover.Popup id={popup} {...props.merge(parts.Popup.props)}>
+              {parts.Popup.children}
+            </target.VolumePopover.Popup>,
+          ];
+        },
+        Poster: ({ props }) => (
+          <target.Poster {...props}>
+            <Slot name="poster">
+              <Img alt="" decoding="async" />
+            </Slot>
+          </target.Poster>
+        ),
+        PlaybackRateRadioGroup: {
+          Root: unwrap(),
+          Value: ({ props }) => <Span data-part="value" {...props} />,
+        },
+        QualityRadioGroup: {
+          Root: unwrap(),
+          Value: ({ props }) => <Span data-part="value" {...props} />,
+        },
+        Slider: {
+          Thumbnail: {
+            Root: Div,
+          },
+        },
+        Tooltip: ({ props, parts, id }) => {
+          const trigger = id('trigger');
+
+          return [
+            <Host id={trigger}>{parts.Trigger.children}</Host>,
+            <target.Tooltip.Popup trigger={trigger} {...props.merge(parts.Popup.props)}>
+              {parts.Popup.children}
+            </target.Tooltip.Popup>,
+          ];
+        },
+      } satisfies ComponentRules<CoreSchema['definitions']>,
     },
     primitives: {
       Box: Div,
@@ -313,7 +324,7 @@ export const htmlComponentTarget: ComponentTarget<CoreSchema> = defineComponentT
   };
 });
 
-function htmlElementTarget(name: string, element: ComponentTargetHelpers<CoreSchema>['element']) {
+function htmlElementTarget(name: string, element: TargetHelpers<CoreSchema>['element']) {
   const publicName = publicNames[name] ?? kebabCase(name === 'MediaContainer' ? 'container' : name);
   const source = `@videojs/html/ui/${publicName}`;
 

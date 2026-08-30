@@ -2,8 +2,8 @@ import { relative, resolve } from 'node:path';
 
 import type { Plugin } from 'vite';
 
-import { componentGraphPlugin, type VjscModule, type VjscModuleConfig } from '../../vjsc/src/plugins/index.ts';
-import { configureSkinModule } from '../vjsc/config.ts';
+import { componentGraphPlugin, type VjscModule } from '../../vjsc/src/plugins/index.ts';
+import { resolveSkinComponents, resolveSkinStyles } from '../vjsc/config.ts';
 import { isSkinName, type SkinModuleMeta, skinStyles } from '../vjsc/meta.ts';
 import { registryTargets } from './targets.ts';
 
@@ -33,8 +33,12 @@ export const registryGraph = componentGraphPlugin<SkinModuleMeta>({
   },
 });
 
-export function configureRegistryModule(module: VjscModule): VjscModuleConfig | null {
-  return module.filename === registryUtils ? null : configureSkinModule(module);
+export function resolveRegistryComponents(module: VjscModule) {
+  return module.filename === registryUtils ? null : resolveSkinComponents(module);
+}
+
+export function resolveRegistryStyles(module: VjscModule) {
+  return module.filename === registryUtils ? null : resolveSkinStyles(module);
 }
 
 export function registryModuleSourcePath(filename: string): string {

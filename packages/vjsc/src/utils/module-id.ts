@@ -1,18 +1,19 @@
 import { realpathSync } from 'node:fs';
 import { isAbsolute, resolve } from 'node:path';
 
-export interface ParsedModuleId {
+export interface VjscModule {
+  readonly id: string;
   readonly filename: string;
-  readonly parameters: URLSearchParams;
+  readonly params: URLSearchParams;
 }
 
 /** Split a host module ID into its physical filename and query parameters. */
-export function parseModuleId(id: string): ParsedModuleId {
+export function parseModuleId(id: string): VjscModule {
   const queryIndex = id.indexOf('?');
 
   return queryIndex === -1
-    ? { filename: id, parameters: new URLSearchParams() }
-    : { filename: id.slice(0, queryIndex), parameters: new URLSearchParams(id.slice(queryIndex + 1)) };
+    ? { id, filename: id, params: new URLSearchParams() }
+    : { id, filename: id.slice(0, queryIndex), params: new URLSearchParams(id.slice(queryIndex + 1)) };
 }
 
 /** Return the physical filename portion of a host module ID. */
@@ -37,7 +38,7 @@ export function normalizeModuleId(id: string): string {
   const parsed = parseModuleId(id);
   const filename = isAbsolute(parsed.filename) ? resolveModuleFilename(parsed.filename) : parsed.filename;
 
-  return moduleId(filename, parsed.parameters);
+  return moduleId(filename, parsed.params);
 }
 
 /** Normalize a resolved filesystem module ID while leaving package and virtual IDs untouched. */

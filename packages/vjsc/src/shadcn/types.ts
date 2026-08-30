@@ -1,6 +1,6 @@
 import type { Registry, RegistryItem } from 'shadcn/schema';
 
-import type { ComponentMeta } from '../components/meta';
+import type { NamedModuleMeta } from '../components/meta';
 import type { ComponentGraph, ComponentGraphModule } from '../graph';
 export type { ComponentGraphProvider } from '../graph';
 
@@ -8,7 +8,7 @@ export type ShadcnRegistry = Registry;
 export type ShadcnRegistryFile = NonNullable<RegistryItem['files']>[number];
 export type ShadcnRegistryFileType = ShadcnRegistryFile['type'];
 
-export interface VjscRegistrySourceItemMeta<Item extends ComponentMeta = ComponentMeta> {
+export interface VjscRegistrySourceItemMeta<Item extends NamedModuleMeta = NamedModuleMeta> {
   readonly kind?: 'source' | undefined;
   readonly module: ComponentGraphModule<Item>;
   /** Included registry path, such as `components` or `skins`. */
@@ -32,7 +32,7 @@ export interface VjscRegistrySourceItemMeta<Item extends ComponentMeta = Compone
     | undefined;
 }
 
-export interface VjscRegistryStyleItemMeta<Item extends ComponentMeta = ComponentMeta> {
+export interface VjscRegistryStyleItemMeta<Item extends NamedModuleMeta = NamedModuleMeta> {
   readonly kind: 'style';
   /** Included registry path, such as `support` or `styles`. */
   readonly group: string;
@@ -58,18 +58,18 @@ export interface VjscRegistryFilesItemMeta {
   readonly group: string;
 }
 
-export type VjscRegistryItemMeta<Item extends ComponentMeta = ComponentMeta> =
+export type VjscRegistryItemMeta<Item extends NamedModuleMeta = NamedModuleMeta> =
   | VjscRegistrySourceItemMeta<Item>
   | VjscRegistryStyleItemMeta<Item>
   | VjscRegistryFilesItemMeta
   | VjscRegistryManifestItemMeta;
 
 /** Official Shadcn item fields plus compiler-only VJSC build metadata. */
-export type VjscRegistryItem<Item extends ComponentMeta = ComponentMeta> = RegistryItem & {
+export type VjscRegistryItem<Item extends NamedModuleMeta = NamedModuleMeta> = RegistryItem & {
   readonly $vjsc: VjscRegistryItemMeta<Item>;
 };
 
-export interface ShadcnRegistryPluginOptions<Item extends ComponentMeta = ComponentMeta> {
+export interface ShadcnRegistryPluginOptions<Item extends NamedModuleMeta = NamedModuleMeta> {
   readonly name: string;
   readonly homepage: string;
   readonly namespace: string;

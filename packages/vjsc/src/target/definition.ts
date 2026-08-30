@@ -5,7 +5,7 @@ import type { SourceText } from '../ast';
 import type { ModuleImport } from '../ast/imports';
 import type {
   ComponentDefinition,
-  ComponentRecord,
+  ComponentDefinitions,
   ComponentSchema,
   EmptyProps,
   InferProps,
@@ -21,6 +21,7 @@ export const TARGET_EXPRESSION = Symbol.for('vjsc/target-expression');
 export const TARGET_REPLACEMENT = Symbol.for('vjsc/target-replacement');
 export const TARGET_SPREAD = Symbol.for('vjsc/target-spread');
 export const TARGET_WITH_PROPS = Symbol.for('vjsc/target-with-props');
+export const TARGET_UNWRAP = Symbol.for('vjsc/target-unwrap');
 
 export type TargetImport = ModuleImport;
 
@@ -103,6 +104,11 @@ export interface TargetReferenceValue {
   readonly [TARGET_ELEMENT]: TargetReference;
 }
 
+export interface TargetUnwrap {
+  (): undefined;
+  readonly [TARGET_UNWRAP]: true;
+}
+
 export interface TargetElement<Props extends object = Record<string, unknown>> extends TargetReferenceValue {
   (props: Props & { readonly children?: unknown }): TargetNode;
 }
@@ -116,7 +122,7 @@ export interface TargetCode {
   withProps(children: TargetOutput, props: TargetExpression | Readonly<Record<string, unknown>>): TargetWithProps;
 }
 
-export interface ComponentTargetPath<Schema extends ComponentSchema = ComponentSchema> {
+export interface ComponentPath<Schema extends ComponentSchema = ComponentSchema> {
   readonly component: keyof Schema['definitions'] & string;
   readonly part: string | null;
 }
@@ -145,7 +151,7 @@ export interface SourcePartCollection<Props extends object = EmptyProps> extends
 type DefinedParts<Definition> =
   Definition extends ComponentDefinition<object, infer Parts> ? Exclude<Parts, undefined> : never;
 
-type DefinedRoot<Definition, Parts extends ComponentRecord> = Definition extends {
+type DefinedRoot<Definition, Parts extends ComponentDefinitions> = Definition extends {
   readonly root: infer Root;
 }
   ? Extract<Root, keyof Parts>
@@ -153,7 +159,7 @@ type DefinedRoot<Definition, Parts extends ComponentRecord> = Definition extends
 
 type RootProps<Definition> = [DefinedParts<Definition>] extends [never]
   ? InferProps<Definition>
-  : DefinedParts<Definition> extends infer Parts extends ComponentRecord
+  : DefinedParts<Definition> extends infer Parts extends ComponentDefinitions
     ? [DefinedRoot<Definition, Parts>] extends [never]
       ? InferProps<Definition>
       : InferProps<Parts[DefinedRoot<Definition, Parts>]>
@@ -161,7 +167,7 @@ type RootProps<Definition> = [DefinedParts<Definition>] extends [never]
 
 type SourceParts<Definition> = [DefinedParts<Definition>] extends [never]
   ? Record<never, never>
-  : DefinedParts<Definition> extends infer Parts extends ComponentRecord
+  : DefinedParts<Definition> extends infer Parts extends ComponentDefinitions
     ? {
         readonly [Part in Exclude<keyof Parts, DefinedRoot<Definition, Parts>>]: SourcePartFor<Parts[Part]>;
       }
@@ -195,7 +201,7 @@ export interface TemplateTargetDefinition {
 
 export type TemplateTargetRule = PrimitiveTargetRule<Omit<TemplateProps, 'name'>> | TemplateTargetDefinition;
 
-export interface ComponentTargetPrimitives {
+export interface PrimitiveRules {
   readonly Box?: PrimitiveTargetRule<BoxProps> | undefined;
   readonly Slot?: PrimitiveTargetRule<SlotProps> | undefined;
   readonly Text?: PrimitiveTargetRule<TextProps> | undefined;
@@ -205,36 +211,36 @@ export interface ComponentTargetPrimitives {
 type TargetTree<Definition> = TargetElement &
   ([DefinedParts<Definition>] extends [never]
     ? object
-    : DefinedParts<Definition> extends infer Parts extends ComponentRecord
+    : DefinedParts<Definition> extends infer Parts extends ComponentDefinitions
       ? {
           readonly [Part in keyof Parts]: TargetTree<Parts[Part]>;
         }
       : object);
 
-export type ComponentTargetNamespace<Schema extends ComponentSchema> = {
+export type ComponentReferences<Schema extends ComponentSchema> = {
   readonly [Name in keyof Schema['definitions']]: TargetTree<Schema['definitions'][Name]>;
 };
 
-export type ComponentTargetRule<Definition> =
+export type ComponentRule<Definition> =
   | TargetReferenceValue
   | ComponentRewrite<Definition>
   | ([DefinedParts<Definition>] extends [never]
       ? never
-      : DefinedParts<Definition> extends infer Parts extends ComponentRecord
+      : DefinedParts<Definition> extends infer Parts extends ComponentDefinitions
         ? {
-            readonly [Part in keyof Parts]?: ComponentTargetRule<Parts[Part]> | undefined;
+            readonly [Part in keyof Parts]?: ComponentRule<Parts[Part]> | undefined;
           }
         : never);
 
-export type ComponentTargetRules<Definitions extends ComponentRecord> = {
-  readonly [Name in keyof Definitions]?: ComponentTargetRule<Definitions[Name]> | undefined;
+export type ComponentRules<Definitions extends ComponentDefinitions> = {
+  readonly [Name in keyof Definitions]?: ComponentRule<Definitions[Name]> | undefined;
 };
 
-export type ComponentTargetResolver<Schema extends ComponentSchema> = (
-  path: ComponentTargetPath<Schema>
+export type ComponentResolver<Schema extends ComponentSchema> = (
+  path: ComponentPath<Schema>
 ) => TargetElement | ComponentRewrite<unknown> | undefined;
 
-export interface ComponentTargetJsx {
+export interface JsxOptions {
   readonly importSource: string;
   readonly attributes: 'html' | 'react';
   /** Runtime fallback used when host props target a dynamic child expression. */
@@ -243,66 +249,71 @@ export interface ComponentTargetJsx {
   readonly scope?: TargetImport | undefined;
 }
 
-export interface ComponentTargetTypes {
+export interface TypeMappings {
   readonly [sourceType: string]: TargetImport | undefined;
 }
 
-export interface ComponentTargetTransformContext {
+export interface TargetTransformContext {
   readonly code: string;
   readonly id: string;
   readonly ast: Program;
   readonly magicString: RolldownMagicString;
 }
 
-export interface ComponentTargetTransform {
+export interface TargetTransform {
   readonly name: string;
-  transform(context: ComponentTargetTransformContext): boolean;
+  transform(context: TargetTransformContext): boolean;
 }
 
-export interface ComponentTargetDefinition<Schema extends ComponentSchema> {
+export interface ComponentTargetOptions<Schema extends ComponentSchema> {
   readonly source: Schema['source'];
-  readonly resolve: ComponentTargetResolver<Schema>;
-  /** Component roots erased by this target so enclosing compound rewrites can collect through them. */
-  readonly transparent?: readonly (keyof Schema['definitions'] & string)[] | undefined;
-  readonly components?: ComponentTargetRules<NoInfer<Schema['definitions']>> | undefined;
-  readonly primitives?: ComponentTargetPrimitives | undefined;
-  readonly types?: ComponentTargetTypes | undefined;
-  readonly transforms?: readonly ComponentTargetTransform[] | undefined;
-  readonly jsx: ComponentTargetJsx;
+  readonly components: {
+    /** Resolve the conventional target for a component or part when no explicit rule matches. */
+    resolve: ComponentResolver<Schema>;
+    /** Explicit component and part rewrites checked before `resolve`. */
+    readonly rules?: ComponentRules<Schema['definitions']> | undefined;
+  };
+  readonly primitives?: PrimitiveRules | undefined;
+  readonly types?: TypeMappings | undefined;
+  readonly transforms?: readonly TargetTransform[] | undefined;
+  readonly jsx: JsxOptions;
 }
 
 export interface ComponentTarget<Schema extends ComponentSchema = ComponentSchema> {
   readonly source: Schema['source'];
-  readonly resolve: ComponentTargetResolver<Schema>;
-  readonly transparent: readonly string[];
-  readonly components: ComponentTargetRules<Schema['definitions']>;
-  readonly primitives: ComponentTargetPrimitives;
-  readonly types: ComponentTargetTypes;
-  readonly transforms: readonly ComponentTargetTransform[];
-  readonly jsx: ComponentTargetJsx;
+  readonly components: {
+    readonly resolve: ComponentResolver<Schema>;
+    readonly rules: ComponentRules<Schema['definitions']>;
+  };
+  readonly primitives: PrimitiveRules;
+  readonly types: TypeMappings;
+  readonly transforms: readonly TargetTransform[];
+  readonly jsx: JsxOptions;
 }
 
-export interface ElementTargetOptions {
+export interface TargetElementOptions {
   readonly import?: TargetSideEffectImport | undefined;
   readonly props?: TargetPropsReference | undefined;
 }
 
-export interface ImportedTargetOptions extends TargetImport {
+export interface TargetImportOptions extends TargetImport {
   readonly props?: TargetPropsReference | undefined;
 }
 
-export interface ComponentTargetHelpers<Schema extends ComponentSchema> {
-  readonly target: ComponentTargetNamespace<Schema>;
+export interface TargetHelpers<Schema extends ComponentSchema> {
+  readonly target: ComponentReferences<Schema>;
   readonly code: TargetCode;
   element<Props extends object = Record<string, unknown>>(
     tagName: string,
-    options?: ElementTargetOptions
+    options?: TargetElementOptions
   ): TargetElement<Props>;
-  imported<Props extends object = Record<string, unknown>>(options: ImportedTargetOptions): TargetElement<Props>;
+  imported<Props extends object = Record<string, unknown>>(options: TargetImportOptions): TargetElement<Props>;
+  /** Remove a component part from emitted markup while retaining its children and enclosing source scope. */
+  unwrap(): TargetUnwrap;
 }
 
 export function defineComponentTarget<const Schema extends ComponentSchema>(): (
-  create: (helpers: ComponentTargetHelpers<Schema>) => ComponentTargetDefinition<Schema>
+  create: (helpers: TargetHelpers<Schema>) => ComponentTargetOptions<Schema>
 ) => ComponentTarget<Schema> {
   return (create) => {
     const definition = create({
@@ -310,13 +321,15 @@ export function defineComponentTarget<const Schema extends ComponentSchema>(): (
       code: createTargetCode(),
       element: createElementTarget,
       imported: createImportedTarget,
+      unwrap: createUnwrapTarget,
     });
 
     return {
       source: definition.source,
-      resolve: definition.resolve,
-      transparent: definition.transparent ?? [],
-      components: definition.components ?? {},
+      components: {
+        resolve: definition.components.resolve,
+        rules: definition.components.rules ?? {},
+      },
       primitives: definition.primitives ?? {},
       types: definition.types ?? {},
       transforms: definition.transforms ?? [],
@@ -325,15 +338,23 @@ export function defineComponentTarget<const Schema extends ComponentSchema>(): (
   };
 }
 
+export function createUnwrapTarget(): TargetUnwrap {
+  return Object.assign(() => undefined, { [TARGET_UNWRAP]: true as const });
+}
+
+export function isTargetUnwrap(value: unknown): value is TargetUnwrap {
+  return typeof value === 'function' && TARGET_UNWRAP in value;
+}
+
 export function createElementTarget<Props extends object = Record<string, unknown>>(
   tagName: string,
-  options: ElementTargetOptions = {}
+  options: TargetElementOptions = {}
 ): TargetElement<Props> {
   return createTargetElement({ kind: 'element', tagName, ...options });
 }
 
 export function createImportedTarget<Props extends object = Record<string, unknown>>(
-  options: ImportedTargetOptions
+  options: TargetImportOptions
 ): TargetElement<Props> {
   const { props, ...targetImport } = options;
 
@@ -358,8 +379,8 @@ export function isTargetElement(value: unknown): value is TargetElement {
   return typeof value === 'function' && TARGET_ELEMENT in value;
 }
 
-function createTargetNamespace<Schema extends ComponentSchema>(): ComponentTargetNamespace<Schema> {
-  return createComponentTargetReference([]) as ComponentTargetNamespace<Schema>;
+function createTargetNamespace<Schema extends ComponentSchema>(): ComponentReferences<Schema> {
+  return createComponentTargetReference([]) as ComponentReferences<Schema>;
 }
 
 function createComponentTargetReference(path: readonly string[]): TargetElement {

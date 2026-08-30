@@ -4,7 +4,7 @@ import { join } from 'node:path';
 
 import { describe, expect, it } from 'vite-plus/test';
 
-import { createSchemaModule } from '../generate';
+import { createComponentSchema } from '../generate';
 
 const STUB = 'const defineComponent: any = (manifest?: any) => manifest ?? {};';
 
@@ -31,10 +31,10 @@ function setup(): { dir: string; output: string; pattern: string } {
   return { dir, output: join(dir, 'out.ts'), pattern: join(dir, '*/*-component.ts') };
 }
 
-describe('createSchemaModule', () => {
+describe('createComponentSchema', () => {
   it('produces schema source and watch files without writing output', () => {
     const { dir, output, pattern } = setup();
-    const generated = createSchemaModule({ cwd: dir, source: '@fixture/components', include: [pattern], output });
+    const generated = createComponentSchema({ cwd: dir, source: '@fixture/components', include: [pattern], output });
 
     expect(generated.code).toContain('export const PlayButton');
     expect(generated.schema).toMatchObject({
@@ -57,12 +57,12 @@ describe('createSchemaModule', () => {
   it('emits deterministic component exports and metadata from manifests', () => {
     const { dir, output, pattern } = setup();
     const config = { cwd: dir, source: '@fixture/components', include: [pattern], output };
-    const module = createSchemaModule(config);
+    const module = createComponentSchema(config);
 
     expect(module.code).toContain("import PlayButtonDef from './play-button/play-button-component';");
     expect(module.code).toContain("import SliderDef from './slider/slider-component';");
-    expect(module.code).toContain("export const PlayButton: CreateComponentResult<(typeof DEFINITIONS)['PlayButton']>");
-    expect(module.code).toContain("export const Slider: CreateComponentResult<(typeof DEFINITIONS)['Slider']>");
+    expect(module.code).toContain("export const PlayButton: ComponentFrom<(typeof DEFINITIONS)['PlayButton']>");
+    expect(module.code).toContain("export const Slider: ComponentFrom<(typeof DEFINITIONS)['Slider']>");
     expect(module.code).toContain('PlayButton: PlayButtonDef,');
     expect(module.code).toContain('Slider: SliderDef,');
     expect(module.code).toContain('defineSchema("@fixture/components", DEFINITIONS)');
@@ -70,7 +70,7 @@ describe('createSchemaModule', () => {
 
   it('excludes matching component sources', () => {
     const { dir, output, pattern } = setup();
-    const generated = createSchemaModule({
+    const generated = createComponentSchema({
       cwd: dir,
       source: '@fixture/components',
       include: [pattern],
@@ -91,9 +91,9 @@ describe('createSchemaModule', () => {
       `${STUB} export default defineComponent({ name: 'Slider' });`
     );
 
-    expect(() => createSchemaModule({ cwd: dir, source: '@fixture/components', include: [pattern], output })).toThrow(
-      'Duplicate component name: Slider'
-    );
+    expect(() =>
+      createComponentSchema({ cwd: dir, source: '@fixture/components', include: [pattern], output })
+    ).toThrow('Duplicate component name: Slider');
   });
 
   it('supports generated components derived from non-manifest files', () => {
@@ -103,7 +103,7 @@ describe('createSchemaModule', () => {
     writeFileSync(join(dir, 'icons', 'play.svg'), '<svg/>');
     writeFileSync(join(dir, 'icons', 'pause.svg'), '<svg/>');
 
-    const result = createSchemaModule({
+    const result = createComponentSchema({
       cwd: dir,
       source: '@fixture/icons',
       include: [

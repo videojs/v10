@@ -13,35 +13,33 @@ import { compileStyles } from '../styles/compile';
 import { type DesignSystem, loadDesignSystem } from '../styles/design-system';
 import {
   diagnoseCompiledStyles,
-  diagnoseStyleManifest,
+  diagnoseStyleIndex,
   formatStyleDiagnostic,
   type StyleDiagnostic,
   type VjscDiagnosticsOptions,
 } from '../styles/diagnostics';
+import { isStyleModulePath, resolveStyleIndexModule, resolveStyleModuleFile } from '../styles/modules';
+import type { StyleTransformOptions } from '../styles/options';
 import {
-  loadStyleManifest,
+  loadStyleIndex,
   ruleForToken,
-  type StyleManifest,
-  type StyleManifestRule,
+  type StyleIndex,
+  type StyleIndexRule,
   utilityGroupsForRule,
-} from '../styles/manifest';
-import { isStyleModulePath, resolveManifestStyleModule, resolveStyleModuleFile } from '../styles/modules';
-import type { StylePluginOptions } from '../styles/options';
-import { moduleFilename, type ParsedModuleId, parseModuleId } from '../utils/module-id';
+} from '../styles/style-index';
+import { moduleFilename, parseModuleId, type VjscModule } from '../utils/module-id';
 import { mergeComponentModuleMeta } from './component-meta';
 
 const SCRIPT_ID = /\.[cm]?[jt]sx?(?:\?|$)/;
 
-export interface StyleModule extends ParsedModuleId {
-  readonly id: string;
-}
+type InternalStyleTransformOptions = StyleTransformOptions & { readonly index?: StyleIndex | undefined };
 
 export type StylePluginConfig =
-  | StylePluginOptions
-  | ((module: StyleModule) => StylePluginOptions | null | Promise<StylePluginOptions | null>);
+  | InternalStyleTransformOptions
+  | ((module: VjscModule) => StyleTransformOptions | null | Promise<StyleTransformOptions | null>);
 
-interface CachedManifest {
-  readonly manifest: StyleManifest;
+interface CachedStyleIndex {
+  readonly index: StyleIndex;
   readonly versions: ReadonlyMap<string, number>;
 }
 
@@ -74,7 +72,7 @@ export function stylePlugin(
   lifecycle?: StylePluginLifecycle
 ): Plugin {
   const designs = new Map<string, Promise<CachedDesignSystem>>();
-  const manifests = new Map<string, CachedManifest>();
+  const indexes = new Map<string, CachedStyleIndex>();
   const cssById = new Map<string, VirtualCssModule>();
   const cssByOwner = new Map<string, ReadonlySet<string>>();
   const reportedWarnings = new Set<string>();
@@ -100,7 +98,9 @@ export function stylePlugin(
     transform: {
       filter: { id: SCRIPT_ID, code: '.styles' },
       async handler(_code, id, transform) {
-        const options = isFunction(config) ? await config({ id, ...parseModuleId(id) }) : config;
+        const options: InternalStyleTransformOptions | null = isFunction(config)
+          ? await config(parseModuleId(id))
+          : config;
 
         if (!options || !transform.ast || !transform.magicString) {
           replaceVirtualCss(cssById, cssByOwner, id, [], lifecycle);
@@ -117,19 +117,19 @@ export function stylePlugin(
           return null;
         }
 
-        const manifest = options.manifest ?? (await cachedManifest(manifests, files));
+        const index = options.index ?? (await cachedStyleIndex(indexes, files));
 
-        lifecycle?.onOwnerTransform(id, manifest.watchFiles);
+        lifecycle?.onOwnerTransform(id, index.watchFiles);
 
-        if (manifest.rules.length === 0) {
+        if (index.rules.length === 0) {
           replaceVirtualCss(cssById, cssByOwner, id, [], lifecycle);
           return null;
         }
 
-        for (const file of manifest.watchFiles) this.addWatchFile(file);
+        for (const file of index.watchFiles) this.addWatchFile(file);
 
         const diagnosticOptions = isFunction(diagnostics) ? diagnostics() : diagnostics;
-        const styleDiagnostics = diagnosticOptions ? [...diagnoseStyleManifest(manifest, options.variants)] : [];
+        const styleDiagnostics = diagnosticOptions ? [...diagnoseStyleIndex(index, options.variants)] : [];
         const report = () => {
           if (!diagnosticOptions) return;
 
@@ -138,7 +138,7 @@ export function stylePlugin(
           }
         };
 
-        const referencedRules = transformStyles(filename, transform.ast, transform.magicString, manifest, options);
+        const referencedRules = transformStyles(filename, transform.ast, transform.magicString, index, options);
 
         if (referencedRules.size === 0) {
           report();
@@ -148,29 +148,29 @@ export function stylePlugin(
 
         let componentStyles: readonly string[] = [];
 
-        if (options.mode === 'css' && options.stylesheet) {
-          const input = resolve(cwd, options.stylesheet.input);
-          const base = options.stylesheet.base ? resolve(cwd, options.stylesheet.base) : undefined;
+        if (options.mode === 'css' && options.css) {
+          const input = resolve(cwd, options.css.input);
+          const base = options.css.base ? resolve(cwd, options.css.base) : undefined;
           const cachedDesign = await cachedDesignSystem(designs, input);
 
           if (diagnosticOptions) {
             styleDiagnostics.push(
-              ...diagnoseCompiledStyles(manifest, cachedDesign.design, referencedRules, options.variants)
+              ...diagnoseCompiledStyles(index, cachedDesign.design, referencedRules, options.variants)
             );
           }
 
           report();
           const assets = await compileStyles({
             design: cachedDesign.design,
-            manifest,
-            ...(options.stylesheet.scope ? { scope: options.stylesheet.scope } : {}),
+            index,
+            ...(options.css.scope ? { scope: options.css.scope } : {}),
             ...(options.variants ? { variants: options.variants } : {}),
             ruleClassNames: referencedRules,
           });
 
           cachedDesign.versions = await fileVersions(cachedDesign.design.watchFiles);
 
-          lifecycle?.onOwnerTransform(id, [...new Set([...manifest.watchFiles, ...cachedDesign.design.watchFiles])]);
+          lifecycle?.onOwnerTransform(id, [...new Set([...index.watchFiles, ...cachedDesign.design.watchFiles])]);
 
           for (const file of cachedDesign.design.watchFiles) this.addWatchFile(file);
 
@@ -299,10 +299,10 @@ function transformStyles(
   filename: string,
   ast: Program,
   magicString: RolldownMagicString,
-  manifest: StyleManifest,
-  options: StylePluginOptions
+  index: StyleIndex,
+  options: StyleTransformOptions
 ): ReadonlySet<string> {
-  const bindings = styleBindings(filename, ast, manifest);
+  const bindings = styleBindings(filename, ast, index);
   if (bindings.size === 0) return new Set();
 
   const edits: SourceEdit[] = [];
@@ -316,7 +316,7 @@ function transformStyles(
       const path = readAccessPath(node);
       const [root, ...tokenPath] = path ?? [];
       const binding = root ? bindings.get(root) : undefined;
-      const rule = binding ? ruleForToken(manifest, binding.modulePath, tokenPath) : undefined;
+      const rule = binding ? ruleForToken(index, binding.modulePath, tokenPath) : undefined;
       if (!rule) return;
 
       edits.push({
@@ -341,13 +341,13 @@ function transformStyles(
   return referencedRules;
 }
 
-function styleBindings(filename: string, ast: Program, manifest: StyleManifest): ReadonlyMap<string, StyleBinding> {
+function styleBindings(filename: string, ast: Program, index: StyleIndex): ReadonlyMap<string, StyleBinding> {
   const bindings = new Map<string, StyleBinding>();
 
   for (const statement of ast.body) {
     if (statement.type !== 'ImportDeclaration' || !statement.source.value.startsWith('.')) continue;
 
-    const modulePath = resolveManifestStyleModule(filename, statement.source.value, manifest);
+    const modulePath = resolveStyleIndexModule(filename, statement.source.value, index);
     if (!modulePath) continue;
 
     const defaults = statement.specifiers.filter((specifier) => specifier.type === 'ImportDefaultSpecifier');
@@ -400,7 +400,7 @@ function readAccessPath(expression: Expression): string[] | undefined {
   return undefined;
 }
 
-function renderStyleRule(rule: StyleManifestRule, options: StylePluginOptions, listItem: boolean): string {
+function renderStyleRule(rule: StyleIndexRule, options: StyleTransformOptions, listItem: boolean): string {
   const groups = options.mode === 'css' ? [rule.className] : utilityGroupsForRule(rule, options.variants);
   const values = groups.filter(Boolean);
 
@@ -454,15 +454,15 @@ function sourceError(message: string, pos: number): Error {
   return Object.assign(new Error(message), { pos });
 }
 
-async function cachedManifest(cache: Map<string, CachedManifest>, files: readonly string[]): Promise<StyleManifest> {
+async function cachedStyleIndex(cache: Map<string, CachedStyleIndex>, files: readonly string[]): Promise<StyleIndex> {
   const key = [...files].sort().join('\0');
   const cached = cache.get(key);
-  if (cached && (await versionsMatch(cached.versions))) return cached.manifest;
+  if (cached && (await versionsMatch(cached.versions))) return cached.index;
 
-  const manifest = await loadStyleManifest(files);
+  const index = await loadStyleIndex(files);
 
-  cache.set(key, { manifest, versions: await fileVersions(manifest.watchFiles) });
-  return manifest;
+  cache.set(key, { index, versions: await fileVersions(index.watchFiles) });
+  return index;
 }
 
 async function fileVersions(files: Iterable<string>): Promise<ReadonlyMap<string, number>> {

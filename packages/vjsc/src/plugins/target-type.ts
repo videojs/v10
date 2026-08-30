@@ -14,7 +14,7 @@ import { createSourceText, jsxNamePath, type ModuleImports, renderSourceRange, t
 import { collectIdentifierNames, insertModuleImports } from '../ast/imports';
 import {
   type ComponentTarget,
-  type ComponentTargetRule,
+  type ComponentRule,
   isTargetElement,
   TARGET_ELEMENT,
   type TargetElement,
@@ -353,7 +353,7 @@ function openingTarget(
     const configured = configuredRule(path);
     if (isTargetElement(configured)) return { target: path.target, element: configured };
 
-    const resolved = path.target.resolve({ component: path.component, part: path.part });
+    const resolved = path.target.components.resolve({ component: path.component, part: path.part });
 
     return isTargetElement(resolved) ? { target: path.target, element: resolved } : undefined;
   }
@@ -387,7 +387,7 @@ function targetReferenceProps(
   seen.add(reference);
 
   if (reference.kind === 'component') {
-    const resolved = target.resolve({ component: reference.component, part: reference.part });
+    const resolved = target.components.resolve({ component: reference.component, part: reference.part });
 
     return isTargetElement(resolved)
       ? targetReferenceProps(resolved[TARGET_ELEMENT], target, imports, typeImports, seen)
@@ -450,8 +450,8 @@ function canonicalPath(name: JSXElementName, bindings: CanonicalBindings): Canon
   return named ? { ...named, part: path.length > 1 ? path.slice(1).join('.') : null } : undefined;
 }
 
-function configuredRule(path: CanonicalPath): ComponentTargetRule<object> | undefined {
-  let rule = path.target.components[path.component] as ComponentTargetRule<object> | undefined;
+function configuredRule(path: CanonicalPath): ComponentRule<object> | undefined {
+  let rule = path.target.components.rules[path.component] as ComponentRule<object> | undefined;
   if (!path.part || !rule) return rule;
 
   const parts = path.part.split('.');
@@ -463,7 +463,7 @@ function configuredRule(path: CanonicalPath): ComponentTargetRule<object> | unde
       return part === 'Root' && index === parts.length - 1 ? rule : undefined;
     }
 
-    rule = (rule as Readonly<Record<string, ComponentTargetRule<object> | undefined>>)[part];
+    rule = (rule as Readonly<Record<string, ComponentRule<object> | undefined>>)[part];
   }
 
   return rule;

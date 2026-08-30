@@ -21,7 +21,7 @@ const target = defineComponentTarget<typeof schema>()(({ code, element }) => {
 
   return {
     source: '@fixture/components',
-    resolve: () => undefined,
+    components: { resolve: () => undefined },
     primitives: {
       Template: {
         item: {

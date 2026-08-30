@@ -1,7 +1,7 @@
 import {
   type ComponentDefinition,
-  type ComponentManifest,
-  type ComponentRecord,
+  type NamedComponentDefinition,
+  type ComponentDefinitions,
   type EmptyProps,
   hasParts,
   type InferProps,
@@ -79,23 +79,23 @@ export interface Component<Props extends object> {
 }
 
 type InferComponentProps<Node> =
-  Node extends ComponentDefinition<infer Props, ComponentRecord | undefined> ? Props : never;
+  Node extends ComponentDefinition<infer Props, ComponentDefinitions | undefined> ? Props : never;
 
 type ResolvedComponentProps<Node> = [NonNullable<InferComponentProps<Node>>] extends [never]
   ? EmptyProps
   : NonNullable<InferComponentProps<Node>>;
 
-type CompoundComponent<Parts extends ComponentRecord> = {
+type CompoundComponent<Parts extends ComponentDefinitions> = {
   [K in keyof Parts & string]: Parts[K] extends ComponentDefinition<object, infer ChildParts>
-    ? ChildParts extends ComponentRecord
+    ? ChildParts extends ComponentDefinitions
       ? CompoundComponent<ChildParts>
       : Component<ResolvedComponentProps<Parts[K]>>
     : Component<ResolvedComponentProps<Parts[K]>>;
 };
 
-export type CreateComponentResult<M> =
+export type ComponentFrom<M> =
   M extends ComponentDefinition<object, infer Parts>
-    ? Parts extends ComponentRecord
+    ? Parts extends ComponentDefinitions
       ? CompoundComponent<Parts>
       : Component<InferProps<M>>
     : Component<InferProps<M>>;
@@ -117,11 +117,13 @@ export const Template = Object.assign(createRuntimeComponentPart<TemplateProps>(
 });
 export const Text = createRuntimeComponentPart<TextProps>('Text', null);
 
-export function createComponent<Props extends object>(manifest: ComponentManifest<Props, undefined>): Component<Props>;
-export function createComponent<const Parts extends ComponentRecord>(
-  manifest: ComponentManifest<object, Parts>
+export function createComponent<Props extends object>(
+  manifest: NamedComponentDefinition<Props, undefined>
+): Component<Props>;
+export function createComponent<const Parts extends ComponentDefinitions>(
+  manifest: NamedComponentDefinition<object, Parts>
 ): CompoundComponent<Parts>;
-export function createComponent(manifest: ComponentManifest): Component<object> | Record<string, unknown> {
+export function createComponent(manifest: NamedComponentDefinition): Component<object> | Record<string, unknown> {
   if (!hasParts(manifest)) {
     return createRuntimeComponentPart(manifest.name, null);
   }
@@ -129,7 +131,7 @@ export function createComponent(manifest: ComponentManifest): Component<object> 
   return createComponentParts(manifest.name, manifest.parts);
 }
 
-function createComponentParts(name: string, parts: ComponentRecord, prefix = ''): Record<string, unknown> {
+function createComponentParts(name: string, parts: ComponentDefinitions, prefix = ''): Record<string, unknown> {
   const compound: Record<string, unknown> = {};
 
   for (const part of Object.keys(parts)) {

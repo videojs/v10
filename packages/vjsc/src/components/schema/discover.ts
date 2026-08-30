@@ -5,7 +5,7 @@ import { parseSync } from 'oxc-parser';
 
 import { toArray } from '../../utils/array';
 import { absolutePath, fileStem } from '../../utils/path';
-import type { ComponentDefinition, ComponentRecord } from '../definition';
+import type { ComponentDefinition, ComponentDefinitions } from '../definition';
 
 export interface ComponentFileSet {
   readonly include: string;
@@ -13,11 +13,11 @@ export interface ComponentFileSet {
   readonly name: (filename: string) => string;
 }
 
-export type ComponentSource = string | ComponentFileSet;
+export type ComponentInput = string | ComponentFileSet;
 
 export interface DiscoverSchemaOptions {
   readonly cwd: string;
-  readonly include: readonly ComponentSource[];
+  readonly include: readonly ComponentInput[];
   readonly exclude?: string | readonly string[] | undefined;
 }
 
@@ -25,7 +25,7 @@ export interface ManifestSchemaComponent {
   readonly kind: 'manifest';
   readonly fileName: string;
   readonly name: string;
-  readonly definition: ComponentDefinition<object, ComponentRecord | undefined>;
+  readonly definition: ComponentDefinition<object, ComponentDefinitions | undefined>;
 }
 
 export interface FileSchemaComponent {
@@ -113,7 +113,7 @@ function isDefineComponentCall(node: unknown): node is CallExpression {
 function parseComponentDefinition(
   call: CallExpression,
   fileName: string
-): ComponentDefinition<object, ComponentRecord | undefined> {
+): ComponentDefinition<object, ComponentDefinitions | undefined> {
   const argument = call.arguments[0];
   if (!argument) return {};
 
@@ -124,7 +124,7 @@ function parseComponentDefinition(
   const definition: {
     name?: string;
     root?: string;
-    parts?: Record<string, ComponentDefinition<object, ComponentRecord | undefined>>;
+    parts?: Record<string, ComponentDefinition<object, ComponentDefinitions | undefined>>;
   } = {};
 
   for (const property of argument.properties) {
@@ -158,7 +158,7 @@ function parseComponentDefinition(
     );
   }
 
-  return definition as ComponentDefinition<object, ComponentRecord | undefined>;
+  return definition as ComponentDefinition<object, ComponentDefinitions | undefined>;
 }
 
 function staticPropertyName(name: PropertyKey): string {

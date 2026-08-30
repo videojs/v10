@@ -1,7 +1,12 @@
 /** @jsxImportSource vjsc/target */
 
 import type coreSchema from '@videojs/core/vjsc';
-import { type ComponentTarget, defineComponentTarget, type TemplateTargetDefinition } from 'vjsc/target';
+import {
+  type ComponentRules,
+  type ComponentTarget,
+  defineComponentTarget,
+  type TemplateTargetDefinition,
+} from 'vjsc/target';
 import { Host } from 'vjsc/target/jsx-runtime';
 
 import { createRenderTargetTransform } from './render-target.ts';
@@ -49,58 +54,60 @@ export const reactComponentTarget: ComponentTarget<CoreSchema> = defineComponent
 
   return {
     source: '@videojs/core/vjsc',
-    resolve: ({ component, part }) => {
-      const path = part ? part.split('.') : [];
-      const propsPath = path.length === 0 ? ['Props'] : [...path.slice(0, -1), `${path.at(-1)}Props`];
-      const source = componentSources[component as keyof typeof componentSources] ?? '@videojs/react';
+    components: {
+      resolve: ({ component, part }) => {
+        const path = part ? part.split('.') : [];
+        const propsPath = path.length === 0 ? ['Props'] : [...path.slice(0, -1), `${path.at(-1)}Props`];
+        const source = componentSources[component as keyof typeof componentSources] ?? '@videojs/react';
 
-      return imported({
-        from: source,
-        name: component,
-        path: path.length > 0 ? path : undefined,
-        props: {
+        return imported({
           from: source,
           name: component,
-          path: propsPath,
-          children: component === 'Poster' && path.length === 0 ? 'render' : undefined,
+          path: path.length > 0 ? path : undefined,
+          props: {
+            from: source,
+            name: component,
+            path: propsPath,
+            children: component === 'Poster' && path.length === 0 ? 'render' : undefined,
+          },
+        });
+      },
+      rules: {
+        Controls: {
+          Root: ({ props, children }) => <target.Controls.Root {...props}>{children}</target.Controls.Root>,
         },
-      });
-    },
-    components: {
-      Controls: {
-        Root: ({ props, children }) => <target.Controls.Root {...props}>{children}</target.Controls.Root>,
-      },
-      ErrorDialog: {
-        Root: ({ children }) => <target.ErrorDialog.Root>{children}</target.ErrorDialog.Root>,
-      },
-      Menu: {
-        Trigger: ({ props, children }) => <target.Menu.Trigger {...props}>{children}</target.Menu.Trigger>,
-      },
-      Popover: {
-        Trigger: ({ props, children }) => <target.Popover.Trigger render={children} {...props} />,
-      },
-      VolumePopover: {
-        Trigger: ({ props, children }) => <target.VolumePopover.Trigger render={children} {...props} />,
-      },
-      Poster: ({ props, children }) => <target.Poster render={children} {...props} />,
-      Slider: {
-        Thumbnail: {
-          Root: Div,
-          Image: imported({
-            from: '@videojs/react',
-            name: 'Slider',
-            path: ['Thumbnail'],
-            props: {
+        ErrorDialog: {
+          Root: ({ children }) => <target.ErrorDialog.Root>{children}</target.ErrorDialog.Root>,
+        },
+        Menu: {
+          Trigger: ({ props, children }) => <target.Menu.Trigger {...props}>{children}</target.Menu.Trigger>,
+        },
+        Popover: {
+          Trigger: ({ props, children }) => <target.Popover.Trigger render={children} {...props} />,
+        },
+        VolumePopover: {
+          Trigger: ({ props, children }) => <target.VolumePopover.Trigger render={children} {...props} />,
+        },
+        Poster: ({ props, children }) => <target.Poster render={children} {...props} />,
+        Slider: {
+          Thumbnail: {
+            Root: Div,
+            Image: imported({
               from: '@videojs/react',
               name: 'Slider',
-              path: ['ThumbnailProps'],
-            },
-          }),
+              path: ['Thumbnail'],
+              props: {
+                from: '@videojs/react',
+                name: 'Slider',
+                path: ['ThumbnailProps'],
+              },
+            }),
+          },
         },
-      },
-      Tooltip: {
-        Trigger: ({ props, children }) => <target.Tooltip.Trigger render={children} {...props} />,
-      },
+        Tooltip: {
+          Trigger: ({ props, children }) => <target.Tooltip.Trigger render={children} {...props} />,
+        },
+      } satisfies ComponentRules<CoreSchema['definitions']>,
     },
     primitives: {
       Box: Div,
