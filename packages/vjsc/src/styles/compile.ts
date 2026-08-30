@@ -1,11 +1,11 @@
 import type { DesignSystem } from './design-system';
 import type { StyleOutputFile, StyleOutputRule } from './output';
 import { renderStylesheets } from './render';
-import { isGroupMarker, type StyleIndex, type StyleIndexRule, utilitiesForRule } from './style-index';
+import { isGroupMarker, type ResolvedStyles, type ResolvedStyleRule, utilitiesForRule } from './resolved';
 
 export interface CompileStylesOptions {
   readonly design: DesignSystem;
-  readonly index: StyleIndex;
+  readonly styles: ResolvedStyles;
   readonly scope?: string | undefined;
   /** Ordered variant utilities to append to each rule's base utilities when defined. */
   readonly variants?: readonly string[] | undefined;
@@ -16,11 +16,11 @@ export interface CompileStylesOptions {
 /** Compile semantic rules and group the resulting CSS by each definition's explicit output file. */
 export async function compileStyles(options: CompileStylesOptions): Promise<Map<string, string>> {
   const variants = options.variants ?? [];
-  const groupOwners = collectGroupOwners(options.index.rules, variants);
+  const groupOwners = collectGroupOwners(options.styles.rules, variants);
 
   const byFile = new Map<string, StyleOutputFile & { rules: StyleOutputRule[] }>();
 
-  for (const rule of [...options.index.rules].sort((a, b) => a.className.localeCompare(b.className))) {
+  for (const rule of [...options.styles.rules].sort((a, b) => a.className.localeCompare(b.className))) {
     if (options.ruleClassNames && !options.ruleClassNames.has(rule.className)) continue;
 
     const compiled = compileRule(rule, options.design, variants);
@@ -49,12 +49,12 @@ export async function compileStyles(options: CompileStylesOptions): Promise<Map<
 
   const outputFiles = options.ruleClassNames
     ? new Set([...byFile.keys()])
-    : new Set(options.index.rules.map((rule) => rule.file));
+    : new Set(options.styles.rules.map((rule) => rule.file));
 
   return new Map([...outputFiles].sort().map((file) => [file, rendered.get(file) ?? '']));
 }
 
-function compileRule(rule: StyleIndexRule, design: DesignSystem, variants: readonly string[]): StyleOutputRule {
+function compileRule(rule: ResolvedStyleRule, design: DesignSystem, variants: readonly string[]): StyleOutputRule {
   const candidates: string[] = [];
   const unsupported: string[] = [];
 
@@ -82,7 +82,7 @@ function compileRule(rule: StyleIndexRule, design: DesignSystem, variants: reado
 }
 
 function collectGroupOwners(
-  rules: readonly StyleIndexRule[],
+  rules: readonly ResolvedStyleRule[],
   variants: readonly string[]
 ): ReadonlyMap<string, string> {
   const groupOwners = new Map<string, string>();
@@ -98,7 +98,7 @@ function collectGroupOwners(
   return groupOwners;
 }
 
-function registerRelationshipOwner(owners: Map<string, string>, utility: string, rule: StyleIndexRule): void {
+function registerRelationshipOwner(owners: Map<string, string>, utility: string, rule: ResolvedStyleRule): void {
   const previous = owners.get(utility);
 
   if (previous && previous !== rule.className) {

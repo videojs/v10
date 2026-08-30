@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vite-plus/test';
 
 import { compileStyles } from '../compile';
 import { loadDesignSystem } from '../design-system';
-import type { StyleIndex, StyleIndexRule } from '../style-index';
+import type { ResolvedStyles, ResolvedStyleRule } from '../resolved';
 
 const designPath = resolve(import.meta.dirname, 'fixtures/tailwind.css');
 
@@ -13,7 +13,7 @@ describe('compileStyles', () => {
     const container = { ...rule('root', 'media-container', ['block']), scopeRoot: true };
     const styles = await compileStyles({
       design: await loadDesignSystem(designPath),
-      index: index([container]),
+      styles: resolvedStyles([container]),
       scope: '.media-skin-video',
     });
 
@@ -44,7 +44,7 @@ describe('compileStyles', () => {
     ]);
     const styles = await compileStyles({
       design: await loadDesignSystem(designPath),
-      index: index([buttonIcon, playButton, pauseIcon, playIcon, restartIcon]),
+      styles: resolvedStyles([buttonIcon, playButton, pauseIcon, playIcon, restartIcon]),
       scope: '.media-skin-video',
     });
     const css = styles.get('buttons.css') ?? '';
@@ -66,7 +66,7 @@ describe('compileStyles', () => {
     ]);
     const styles = await compileStyles({
       design: await loadDesignSystem(designPath),
-      index: index([muteButton, highIcon]),
+      styles: resolvedStyles([muteButton, highIcon]),
       scope: '.media-skin-video',
     });
 
@@ -84,7 +84,7 @@ describe('compileStyles', () => {
     const root = rule('root', 'media-layout-root', ['contents', '@lg/media-root:flex']);
     const styles = await compileStyles({
       design: await loadDesignSystem(designPath),
-      index: index([primary, root]),
+      styles: resolvedStyles([primary, root]),
       scope: '.media-skin-video',
     });
 
@@ -103,7 +103,7 @@ describe('compileStyles', () => {
     const icon = rule('icon', 'media-icon', ['size-4'], { interactive: ['pointer-events-none'] });
     const styles = await compileStyles({
       design: await loadDesignSystem(designPath),
-      index: index([button, icon]),
+      styles: resolvedStyles([button, icon]),
       variants: ['compact', 'interactive', 'spacious'],
     });
 
@@ -112,10 +112,10 @@ describe('compileStyles', () => {
     expect(styles.get('buttons.css')).toContain('pointer-events: none');
   });
 
-  it('ignores selected variants absent from an isolated index', async () => {
+  it('ignores selected variants absent from the resolved styles', async () => {
     const styles = await compileStyles({
       design: await loadDesignSystem(designPath),
-      index: index([rule('root', 'media-button', ['grid'])]),
+      styles: resolvedStyles([rule('root', 'media-button', ['grid'])]),
       variants: ['shadow-dom'],
     });
 
@@ -128,7 +128,7 @@ function rule(
   className: string,
   utilities: readonly string[],
   variantGroups: Readonly<Record<string, readonly string[]>> = {}
-): StyleIndexRule {
+): ResolvedStyleRule {
   return {
     modulePath: 'test.styles.ts',
     tokenPath: token.split('.'),
@@ -143,6 +143,6 @@ function rule(
   };
 }
 
-function index(rules: readonly StyleIndexRule[]): StyleIndex {
+function resolvedStyles(rules: readonly ResolvedStyleRule[]): ResolvedStyles {
   return { modules: new Map(), rules, watchFiles: [] };
 }

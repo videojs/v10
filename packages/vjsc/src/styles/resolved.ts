@@ -10,12 +10,12 @@ import { twMerge } from 'tailwind-merge';
 import { toArray } from '../utils/array';
 import { splitClassNames } from './class-names';
 import { getStyleDefinition, type StyleDefinition, type StyleValue, validateStyleDefinition } from './define';
-import { resolveStyleIndexModule } from './modules';
+import { resolveStyleModule } from './modules';
 import { visitStyleRules } from './tree';
 
 const STYLE_RUNTIME_ID = '\0vjsc:styles-runtime';
 
-export interface StyleIndexRule {
+export interface ResolvedStyleRule {
   readonly modulePath: string;
   readonly tokenPath: readonly string[];
   readonly className: string;
@@ -28,14 +28,14 @@ export interface StyleIndexRule {
   readonly variants: Readonly<Record<string, readonly string[]>>;
 }
 
-export interface StyleIndex {
-  readonly modules: ReadonlyMap<string, ReadonlyMap<string, StyleIndexRule>>;
-  readonly rules: readonly StyleIndexRule[];
+export interface ResolvedStyles {
+  readonly modules: ReadonlyMap<string, ReadonlyMap<string, ResolvedStyleRule>>;
+  readonly rules: readonly ResolvedStyleRule[];
   readonly watchFiles: readonly string[];
 }
 
 /** Evaluate controlled style modules and normalize their explicit definitions. */
-export async function loadStyleIndex(files: readonly string[]): Promise<StyleIndex> {
+export async function resolveStyles(files: readonly string[]): Promise<ResolvedStyles> {
   const moduleFiles = [...new Set(files.map((file) => resolve(file)))].sort();
 
   const loaded = await Promise.all(
@@ -49,32 +49,32 @@ export async function loadStyleIndex(files: readonly string[]): Promise<StyleInd
     })
   );
 
-  return createStyleIndex(loaded);
+  return createResolvedStyles(loaded);
 }
 
 export function ruleForToken(
-  index: StyleIndex,
+  styles: ResolvedStyles,
   modulePath: string,
   tokenPath: readonly string[]
-): StyleIndexRule | undefined {
-  return index.modules.get(modulePath)?.get(tokenKey(tokenPath));
+): ResolvedStyleRule | undefined {
+  return styles.modules.get(modulePath)?.get(tokenKey(tokenPath));
 }
 
-export function utilityGroupsForRule(rule: StyleIndexRule, variants: readonly string[] = []): readonly string[] {
+export function utilityGroupsForRule(rule: ResolvedStyleRule, variants: readonly string[] = []): readonly string[] {
   const selected = variants.flatMap((variant) => rule.variantGroups[variant] ?? []);
   if (selected.length === 0) return rule.utilityGroups;
 
   return mergeUtilityGroups([...rule.utilityGroups, ...selected]);
 }
 
-export function utilitiesForRule(rule: StyleIndexRule, variants: readonly string[] = []): readonly string[] {
+export function utilitiesForRule(rule: ResolvedStyleRule, variants: readonly string[] = []): readonly string[] {
   return utilityGroupsForRule(rule, variants).flatMap(splitClassNames);
 }
 
 /** Collect the exact semantic rules referenced by JSX source. */
 export async function collectReferencedStyleRules(
   files: readonly string[],
-  index: StyleIndex
+  styles: ResolvedStyles
 ): Promise<ReadonlySet<string>> {
   const referenced = new Set<string>();
 
@@ -83,7 +83,7 @@ export async function collectReferencedStyleRules(
     const parsed = parseSync(file, sourceText);
     if (parsed.errors.length > 0) throw new Error(parsed.errors.map((error) => error.message).join('\n'));
 
-    const bindings = styleBindings(parsed.program, file, index);
+    const bindings = styleBindings(parsed.program, file, styles);
     if (bindings.size === 0) continue;
 
     walk(parsed.program, {
@@ -105,7 +105,7 @@ export async function collectReferencedStyleRules(
             const path = readAccessPath(expression);
             const [root, ...tokenPath] = path ?? [];
             const modulePath = root ? bindings.get(root) : undefined;
-            const rule = modulePath ? ruleForToken(index, modulePath, tokenPath) : undefined;
+            const rule = modulePath ? ruleForToken(styles, modulePath, tokenPath) : undefined;
             if (!rule) return;
 
             referenced.add(rule.className);
@@ -123,12 +123,12 @@ export function isGroupMarker(value: string): boolean {
   return value === 'group' || value.startsWith('group/');
 }
 
-function createStyleIndex(
+function createResolvedStyles(
   loaded: readonly { definition: StyleDefinition; modulePath: string; watchFiles: readonly string[] }[]
-): StyleIndex {
-  const modules = new Map<string, ReadonlyMap<string, StyleIndexRule>>();
-  const rules: StyleIndexRule[] = [];
-  const classes = new Map<string, StyleIndexRule>();
+): ResolvedStyles {
+  const modules = new Map<string, ReadonlyMap<string, ResolvedStyleRule>>();
+  const rules: ResolvedStyleRule[] = [];
+  const classes = new Map<string, ResolvedStyleRule>();
   const files = new Map<string, string>();
   const watchFiles = new Set<string>();
 
@@ -146,14 +146,14 @@ function createStyleIndex(
 
     files.set(definition.file, layer);
 
-    const moduleRules = new Map<string, StyleIndexRule>();
+    const moduleRules = new Map<string, ResolvedStyleRule>();
 
     visitStyleRules(definition.rules, (tokenPath, rule) => {
       const utilityGroups = splitUtilityGroups(rule.utilities);
       const variantGroups = Object.fromEntries(
         Object.entries(rule.variants ?? {}).map(([name, value]) => [name, Object.freeze(splitUtilityGroups(value))])
       );
-      const indexRule: StyleIndexRule = Object.freeze({
+      const resolvedRule: ResolvedStyleRule = Object.freeze({
         modulePath,
         tokenPath: Object.freeze(tokenPath),
         className: rule.className,
@@ -173,17 +173,17 @@ function createStyleIndex(
         ),
       });
 
-      const previous = classes.get(indexRule.className);
+      const previous = classes.get(resolvedRule.className);
 
       if (previous) {
         throw new Error(
-          `Style class \`${indexRule.className}\` is defined by both \`${displayRule(previous)}\` and \`${displayRule(indexRule)}\`.`
+          `Style class \`${resolvedRule.className}\` is defined by both \`${displayRule(previous)}\` and \`${displayRule(resolvedRule)}\`.`
         );
       }
 
-      classes.set(indexRule.className, indexRule);
-      moduleRules.set(tokenKey(tokenPath), indexRule);
-      rules.push(indexRule);
+      classes.set(resolvedRule.className, resolvedRule);
+      moduleRules.set(tokenKey(tokenPath), resolvedRule);
+      rules.push(resolvedRule);
     });
 
     modules.set(modulePath, moduleRules);
@@ -196,7 +196,7 @@ function createStyleIndex(
   });
 }
 
-function styleBindings(ast: Program, filename: string, index: StyleIndex): ReadonlyMap<string, string> {
+function styleBindings(ast: Program, filename: string, styles: ResolvedStyles): ReadonlyMap<string, string> {
   const bindings = new Map<string, string>();
 
   for (const statement of ast.body) {
@@ -205,7 +205,7 @@ function styleBindings(ast: Program, filename: string, index: StyleIndex): Reado
     const defaults = statement.specifiers.filter((specifier) => specifier.type === 'ImportDefaultSpecifier');
     if (defaults.length !== 1 || statement.specifiers.length !== 1) continue;
 
-    const modulePath = resolveStyleIndexModule(filename, statement.source.value, index);
+    const modulePath = resolveStyleModule(filename, statement.source.value, styles);
 
     if (modulePath) bindings.set(defaults[0]!.local.name, modulePath);
   }
@@ -266,7 +266,7 @@ function tokenKey(path: readonly string[]): string {
   return path.join('.');
 }
 
-function displayRule(rule: StyleIndexRule): string {
+function displayRule(rule: ResolvedStyleRule): string {
   return `${rule.modulePath}#${rule.tokenPath.join('.')}`;
 }
 

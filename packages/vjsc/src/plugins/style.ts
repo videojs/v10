@@ -13,33 +13,33 @@ import { compileStyles } from '../styles/compile';
 import { type DesignSystem, loadDesignSystem } from '../styles/design-system';
 import {
   diagnoseCompiledStyles,
-  diagnoseStyleIndex,
+  diagnoseStyles,
   formatStyleDiagnostic,
   type StyleDiagnostic,
   type VjscDiagnosticsOptions,
 } from '../styles/diagnostics';
-import { isStyleModulePath, resolveStyleIndexModule, resolveStyleModuleFile } from '../styles/modules';
+import { isStyleModulePath, resolveStyleModule, resolveStyleModuleFile } from '../styles/modules';
 import type { StyleTransformOptions } from '../styles/options';
 import {
-  loadStyleIndex,
+  resolveStyles,
   ruleForToken,
-  type StyleIndex,
-  type StyleIndexRule,
+  type ResolvedStyles,
+  type ResolvedStyleRule,
   utilityGroupsForRule,
-} from '../styles/style-index';
+} from '../styles/resolved';
 import { moduleFilename, parseModuleId, type VjscModule } from '../utils/module-id';
 import { mergeVjscModuleMeta } from './component-meta';
 
 const SCRIPT_ID = /\.[cm]?[jt]sx?(?:\?|$)/;
 
-type InternalStyleTransformOptions = StyleTransformOptions & { readonly index?: StyleIndex | undefined };
+type InternalStyleTransformOptions = StyleTransformOptions & { readonly resolvedStyles?: ResolvedStyles | undefined };
 
 export type StylePluginConfig =
   | InternalStyleTransformOptions
   | ((module: VjscModule) => StyleTransformOptions | null | Promise<StyleTransformOptions | null>);
 
-interface CachedStyleIndex {
-  readonly index: StyleIndex;
+interface CachedStyles {
+  readonly styles: ResolvedStyles;
   readonly versions: ReadonlyMap<string, number>;
 }
 
@@ -72,7 +72,7 @@ export function stylePlugin(
   lifecycle?: StylePluginLifecycle
 ): Plugin {
   const designs = new Map<string, Promise<CachedDesignSystem>>();
-  const indexes = new Map<string, CachedStyleIndex>();
+  const styleCache = new Map<string, CachedStyles>();
   const cssById = new Map<string, VirtualCssModule>();
   const cssByOwner = new Map<string, ReadonlySet<string>>();
   const reportedWarnings = new Set<string>();
@@ -117,19 +117,19 @@ export function stylePlugin(
           return null;
         }
 
-        const index = options.index ?? (await cachedStyleIndex(indexes, files));
+        const styles = options.resolvedStyles ?? (await cachedStyles(styleCache, files));
 
-        lifecycle?.onOwnerTransform(id, index.watchFiles);
+        lifecycle?.onOwnerTransform(id, styles.watchFiles);
 
-        if (index.rules.length === 0) {
+        if (styles.rules.length === 0) {
           replaceVirtualCss(cssById, cssByOwner, id, [], lifecycle);
           return null;
         }
 
-        for (const file of index.watchFiles) this.addWatchFile(file);
+        for (const file of styles.watchFiles) this.addWatchFile(file);
 
         const diagnosticOptions = isFunction(diagnostics) ? diagnostics() : diagnostics;
-        const styleDiagnostics = diagnosticOptions ? [...diagnoseStyleIndex(index, options.variants)] : [];
+        const styleDiagnostics = diagnosticOptions ? [...diagnoseStyles(styles, options.variants)] : [];
         const report = () => {
           if (!diagnosticOptions) return;
 
@@ -138,7 +138,7 @@ export function stylePlugin(
           }
         };
 
-        const referencedRules = transformStyles(filename, transform.ast, transform.magicString, index, options);
+        const referencedRules = transformStyles(filename, transform.ast, transform.magicString, styles, options);
 
         if (referencedRules.size === 0) {
           report();
@@ -147,7 +147,7 @@ export function stylePlugin(
         }
 
         const styleFiles = [
-          ...new Set(index.rules.filter((rule) => referencedRules.has(rule.className)).map((rule) => rule.file)),
+          ...new Set(styles.rules.filter((rule) => referencedRules.has(rule.className)).map((rule) => rule.file)),
         ].sort();
         let styleAssets: readonly string[] = [];
 
@@ -158,14 +158,14 @@ export function stylePlugin(
 
           if (diagnosticOptions) {
             styleDiagnostics.push(
-              ...diagnoseCompiledStyles(index, cachedDesign.design, referencedRules, options.variants)
+              ...diagnoseCompiledStyles(styles, cachedDesign.design, referencedRules, options.variants)
             );
           }
 
           report();
           const assets = await compileStyles({
             design: cachedDesign.design,
-            index,
+            styles,
             ...(options.stylesheet.scope ? { scope: options.stylesheet.scope } : {}),
             ...(options.variants ? { variants: options.variants } : {}),
             ruleClassNames: referencedRules,
@@ -173,7 +173,7 @@ export function stylePlugin(
 
           cachedDesign.versions = await fileVersions(cachedDesign.design.watchFiles);
 
-          lifecycle?.onOwnerTransform(id, [...new Set([...index.watchFiles, ...cachedDesign.design.watchFiles])]);
+          lifecycle?.onOwnerTransform(id, [...new Set([...styles.watchFiles, ...cachedDesign.design.watchFiles])]);
 
           for (const file of cachedDesign.design.watchFiles) this.addWatchFile(file);
 
@@ -304,10 +304,10 @@ function transformStyles(
   filename: string,
   ast: Program,
   magicString: RolldownMagicString,
-  index: StyleIndex,
+  styles: ResolvedStyles,
   options: StyleTransformOptions
 ): ReadonlySet<string> {
-  const bindings = styleBindings(filename, ast, index);
+  const bindings = styleBindings(filename, ast, styles);
   if (bindings.size === 0) return new Set();
 
   const edits: SourceEdit[] = [];
@@ -321,7 +321,7 @@ function transformStyles(
       const path = readAccessPath(node);
       const [root, ...tokenPath] = path ?? [];
       const binding = root ? bindings.get(root) : undefined;
-      const rule = binding ? ruleForToken(index, binding.modulePath, tokenPath) : undefined;
+      const rule = binding ? ruleForToken(styles, binding.modulePath, tokenPath) : undefined;
       if (!rule) return;
 
       edits.push({
@@ -346,13 +346,13 @@ function transformStyles(
   return referencedRules;
 }
 
-function styleBindings(filename: string, ast: Program, index: StyleIndex): ReadonlyMap<string, StyleBinding> {
+function styleBindings(filename: string, ast: Program, styles: ResolvedStyles): ReadonlyMap<string, StyleBinding> {
   const bindings = new Map<string, StyleBinding>();
 
   for (const statement of ast.body) {
     if (statement.type !== 'ImportDeclaration' || !statement.source.value.startsWith('.')) continue;
 
-    const modulePath = resolveStyleIndexModule(filename, statement.source.value, index);
+    const modulePath = resolveStyleModule(filename, statement.source.value, styles);
     if (!modulePath) continue;
 
     const defaults = statement.specifiers.filter((specifier) => specifier.type === 'ImportDefaultSpecifier');
@@ -405,7 +405,7 @@ function readAccessPath(expression: Expression): string[] | undefined {
   return undefined;
 }
 
-function renderStyleRule(rule: StyleIndexRule, options: StyleTransformOptions, listItem: boolean): string {
+function renderStyleRule(rule: ResolvedStyleRule, options: StyleTransformOptions, listItem: boolean): string {
   const groups = options.mode === 'css' ? [rule.className] : utilityGroupsForRule(rule, options.variants);
   const values = groups.filter(Boolean);
 
@@ -459,15 +459,15 @@ function sourceError(message: string, pos: number): Error {
   return Object.assign(new Error(message), { pos });
 }
 
-async function cachedStyleIndex(cache: Map<string, CachedStyleIndex>, files: readonly string[]): Promise<StyleIndex> {
+async function cachedStyles(cache: Map<string, CachedStyles>, files: readonly string[]): Promise<ResolvedStyles> {
   const key = [...files].sort().join('\0');
   const cached = cache.get(key);
-  if (cached && (await versionsMatch(cached.versions))) return cached.index;
+  if (cached && (await versionsMatch(cached.versions))) return cached.styles;
 
-  const index = await loadStyleIndex(files);
+  const styles = await resolveStyles(files);
 
-  cache.set(key, { index, versions: await fileVersions(index.watchFiles) });
-  return index;
+  cache.set(key, { styles, versions: await fileVersions(styles.watchFiles) });
+  return styles;
 }
 
 async function fileVersions(files: Iterable<string>): Promise<ReadonlyMap<string, number>> {
