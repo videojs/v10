@@ -15,8 +15,7 @@ describe('vars', () => {
           entry.isFile() &&
           /\.(?:css|ts|tsx)$/.test(entry.name) &&
           entry.name !== 'vars.ts' &&
-          !entry.parentPath.includes('/vjsc/registry') &&
-          !entry.parentPath.includes('/vjsc/tests')
+          !entry.parentPath.includes('/src/tests')
       )
       .map((entry) => resolve(entry.parentPath, entry.name));
     const referenced = new Set<string>();

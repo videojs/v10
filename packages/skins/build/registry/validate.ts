@@ -6,7 +6,7 @@ import { registryItemSchema, registrySchema, type RegistryItem } from 'shadcn/sc
 
 import { registryTargets } from './targets.ts';
 
-const packageDir = resolve(import.meta.dirname, '..');
+const packageDir = resolve(import.meta.dirname, '../..');
 const workspaceDir = resolve(packageDir, '../..');
 const hostedDir = resolve(packageDir, 'dist/registry/r');
 const catalogs = registryTargets.map((target) => target.output.replace(/^r\//, ''));

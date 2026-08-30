@@ -20,7 +20,7 @@
   "scripts": {
     "dev": "vp -C dev dev --host",
     "test": "pnpm run test:types && vp test run",
-    "test:types": "tsgo --project ./vjsc/tsconfig.json",
+    "test:types": "tsgo --project ./src/tsconfig.json",
     "clean": "rimraf --glob dist types '*.tsbuildinfo'"
   },
   "devDependencies": {

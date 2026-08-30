@@ -1,6 +1,6 @@
-import corePackage from '../../core/package.json' with { type: 'json' };
-import htmlPackage from '../../html/package.json' with { type: 'json' };
-import reactPackage from '../../react/package.json' with { type: 'json' };
+import corePackage from '../../../core/package.json' with { type: 'json' };
+import htmlPackage from '../../../html/package.json' with { type: 'json' };
+import reactPackage from '../../../react/package.json' with { type: 'json' };
 
 export interface RegistryTarget {
   readonly framework: 'html' | 'react';

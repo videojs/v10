@@ -1,4 +1,4 @@
-import type { VjscModule } from 'vjsc/plugins';
+import type { TransformModule } from 'vjsc/plugins';
 import type { StyleTransformOptions } from 'vjsc/styles';
 import type { ComponentTarget } from 'vjsc/target';
 
@@ -12,13 +12,13 @@ export interface SkinConfig {
   readonly style: 'tailwind' | 'css';
 }
 
-export function resolveSkinComponents(module: VjscModule): readonly ComponentTarget[] | null {
+export function resolveSkinComponents(module: TransformModule): readonly ComponentTarget[] | null {
   const config = validateSkinConfig(module.params);
 
   return config ? createComponentTargets(config) : null;
 }
 
-export function resolveSkinStyles(module: VjscModule): StyleTransformOptions | null {
+export function resolveSkinStyles(module: TransformModule): StyleTransformOptions | null {
   const config = validateSkinConfig(module.params);
 
   return config ? createStyleOptions(config) : null;

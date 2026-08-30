@@ -1,12 +1,12 @@
-import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
-import type { VjscGraph, GraphModule } from 'vjsc/graph';
+import type { Graph, GraphModule } from 'vjsc/graph';
 import { bundleStyles, collectModules, renderHtml } from 'vjsc/graph';
 
-import { isSkinName, type SkinMeta, type SkinModuleMeta, type SkinName } from '../../vjsc/meta.ts';
+import { isSkinName, type SkinMeta, type SkinModuleMeta, type SkinName } from '../../src/meta.ts';
 import { skinPreset, skinPresets, type SkinPreset } from '../skin.ts';
 import type { GeneratedPackageFile } from './files.ts';
+import { addCopiedFiles, addGenerated, generatedFiles, pascalCase } from './utils.ts';
 
 const packageRoot = 'packages/html/src';
 const internalRoot = `${packageRoot}/internal/skins`;
@@ -30,7 +30,7 @@ type HtmlSkinRoot = GraphModule<SkinMeta & { readonly name: SkinName }> & {
 
 /** Generate package-local HTML Skin templates, registrations, and styles from one finalized VJSC module graph. */
 export async function createHtmlPackageSkins(
-  graph: VjscGraph<SkinModuleMeta>,
+  graph: Graph<SkinModuleMeta>,
   options: CreateHtmlPackageSkinsOptions
 ): Promise<GeneratedPackageFile[]> {
   const skins = await renderHtmlSkins(graph, { workspaceDir: options.workspaceDir, styling: 'css' });
@@ -52,16 +52,12 @@ export async function createHtmlPackageSkins(
     );
   }
 
-  for (const [source, destination] of [
-    ['packages/skins/presets/background/html.ts', `${packageRoot}/presets/background/skin.ts`],
-    ['packages/skins/presets/background/html.css', `${packageRoot}/define/background/skin.css`],
-  ] as const) {
-    addGenerated(generated, destination, await readFile(resolve(options.workspaceDir, source), 'utf8'));
-  }
+  await addCopiedFiles(generated, options.workspaceDir, [
+    ['packages/skins/src/presets/background/html/skin.ts', `${packageRoot}/presets/background/skin.ts`],
+    ['packages/skins/src/presets/background/html/skin.css', `${packageRoot}/define/background/skin.css`],
+  ]);
 
-  return [...generated]
-    .sort(([left], [right]) => left.localeCompare(right))
-    .map(([path, content]) => ({ path, content }));
+  return generatedFiles(generated);
 }
 
 export interface RenderHtmlSkinsOptions {
@@ -71,7 +67,7 @@ export interface RenderHtmlSkinsOptions {
 
 /** Render the complete static markup for every HTML Skin in one styling catalog. */
 export async function renderHtmlSkins(
-  graph: VjscGraph<SkinModuleMeta>,
+  graph: Graph<SkinModuleMeta>,
   options: RenderHtmlSkinsOptions
 ): Promise<RenderedHtmlSkin[]> {
   const skins = htmlSkins(graph, options.styling);
@@ -115,7 +111,7 @@ export function htmlPackageSkinOwnedPaths(): string[] {
 }
 
 function htmlSkins(
-  graph: VjscGraph<SkinModuleMeta>,
+  graph: Graph<SkinModuleMeta>,
   styling: RenderHtmlSkinsOptions['styling']
 ): Array<Omit<RenderedHtmlSkin, 'template'>> {
   const roots = [...graph.modules.values()].filter(
@@ -271,10 +267,6 @@ function uniqueModules(modules: readonly GraphModule<SkinModuleMeta>[]): GraphMo
   return [...new Map(modules.map((module) => [module.id, module])).values()];
 }
 
-function pascalCase(value: string): string {
-  return value.replace(/(?:^|-)([a-z])/g, (_match, letter: string) => letter.toUpperCase());
-}
-
 function sortedEntries<Key extends string, Value>(map: ReadonlyMap<Key, Value>): [Key, Value][] {
   return [...map].sort(([left], [right]) => left.localeCompare(right));
 }
@@ -285,14 +277,4 @@ function quote(value: string): string {
 
 function iconLocalBinding(family: string, binding: string): string {
   return family === 'default' ? binding : `${binding}${pascalCase(family)}`;
-}
-
-function addGenerated(files: Map<string, string>, path: string, content: string): void {
-  const previous = files.get(path);
-
-  if (previous !== undefined && previous !== content) {
-    throw new Error(`HTML package Skin output collision: \`${path}\`.`);
-  }
-
-  files.set(path, content);
 }

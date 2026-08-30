@@ -1,17 +1,6 @@
-import type { VjscRegistryStylesOptions } from '../../../vjsc/src/shadcn/index.ts';
+import type { RegistryStylesOptions } from '../../../../vjsc/src/shadcn/index.ts';
 import type { VideojsRegistryMeta } from '../meta.ts';
 import type { RegistryTarget } from '../targets.ts';
-
-const styleFiles = {
-  'buttons.css': 'styles/button.css',
-  'container.css': 'styles/container.css',
-  'dialog.css': 'styles/dialog.css',
-  'indicators.css': 'styles/indicator.css',
-  'menus.css': 'styles/menu.css',
-  'popups.css': 'styles/popup.css',
-  'poster.css': 'styles/poster.css',
-  'sliders.css': 'styles/slider.css',
-} as const;
 
 const tailwindThemeVariables = {
   'color-media-accent': 'var(--media-primary)',
@@ -50,7 +39,7 @@ const tailwindRegistryCss = {
   },
 } as const;
 
-export function registryStyles(target: RegistryTarget): VjscRegistryStylesOptions | undefined {
+export function registryStyles(target: RegistryTarget): RegistryStylesOptions | undefined {
   if (target.framework === 'html' && target.styling === 'css') return undefined;
 
   const meta = {
@@ -71,6 +60,6 @@ export function registryStyles(target: RegistryTarget): VjscRegistryStylesOption
       css: target.styling === 'tailwind' ? tailwindRegistryCss : undefined,
       meta,
     },
-    files: target.framework === 'react' && target.styling === 'css' ? styleFiles : undefined,
+    files: target.framework === 'react' && target.styling === 'css' ? 'styles' : undefined,
   };
 }

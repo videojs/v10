@@ -1,4 +1,4 @@
-import type { SkinMeta, SkinName } from '../vjsc/meta.ts';
+import type { SkinMeta, SkinName } from '../src/meta.ts';
 
 export const skinPresets = ['audio', 'live-audio', 'live-video', 'video'] as const;
 

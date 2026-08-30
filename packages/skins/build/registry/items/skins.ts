@@ -1,10 +1,10 @@
 import { posix } from 'node:path';
 
-import { type VjscGraph, type GraphModule, bundleStyles } from '../../../vjsc/src/graph/index.ts';
-import type { VjscRegistryCreatedItem, VjscRegistryResolvedItem } from '../../../vjsc/src/shadcn/index.ts';
-import { createHtmlSkinRegistration, createSourceOwnedHtml, type RenderedHtmlSkin } from '../../build/packages/html.ts';
-import { skinDirectory, skinPreset } from '../../build/skin.ts';
-import { isSkinName, type SkinModuleMeta, type SkinName } from '../../vjsc/meta.ts';
+import { type Graph, type GraphModule, bundleStyles } from '../../../../vjsc/src/graph/index.ts';
+import type { RegistryCreatedItem, RegistryModuleItem } from '../../../../vjsc/src/shadcn/index.ts';
+import { isSkinName, type SkinModuleMeta, type SkinName } from '../../../src/meta.ts';
+import { createHtmlSkinRegistration, createSourceOwnedHtml, type RenderedHtmlSkin } from '../../packages/html.ts';
+import { skinDirectory, skinPreset } from '../../skin.ts';
 import type { VideojsRegistryMeta } from '../meta.ts';
 import { packageRequirements, registryPaths, type RegistryTarget } from '../targets.ts';
 import { exportedComponentName } from './components.ts';
@@ -12,9 +12,9 @@ import { reactHelperDependency } from './support.ts';
 
 export async function htmlSkinItem(
   skin: RenderedHtmlSkin,
-  graph: VjscGraph<SkinModuleMeta>,
+  graph: Graph<SkinModuleMeta>,
   target: RegistryTarget
-): Promise<VjscRegistryCreatedItem> {
+): Promise<RegistryCreatedItem> {
   const meta = skin.root.meta;
 
   const name = meta.style.theme === 'minimal' ? `${skin.preset}-minimal` : skin.preset;
@@ -30,7 +30,7 @@ export async function htmlSkinItem(
     'registry'
   )}`;
 
-  const files: NonNullable<VjscRegistryCreatedItem['files']> = [
+  const files: NonNullable<RegistryCreatedItem['files']> = [
     {
       path: 'skin.html',
       target: `${registryPaths.install}/${directory}/skin.html`,
@@ -84,7 +84,7 @@ export function skinItem(
   module: GraphModule<SkinModuleMeta>,
   meta: Extract<SkinModuleMeta, { type: 'skin' }>,
   target: RegistryTarget
-): VjscRegistryResolvedItem<SkinModuleMeta> {
+): RegistryModuleItem<SkinModuleMeta> {
   const skin = meta.name;
   if (!isSkinName(skin)) throw new Error(`Unknown Skin registry module: \`${skin}\`.`);
 

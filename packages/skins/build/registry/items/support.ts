@@ -1,7 +1,7 @@
-import type { GraphModule } from '../../../vjsc/src/graph/index.ts';
-import type { VjscRegistryResolvedItem } from '../../../vjsc/src/shadcn/index.ts';
-import { skinModuleSourcePath } from '../../build/config.ts';
-import type { SkinModuleMeta } from '../../vjsc/meta.ts';
+import type { GraphModule } from '../../../../vjsc/src/graph/index.ts';
+import type { RegistryModuleItem } from '../../../../vjsc/src/shadcn/index.ts';
+import type { SkinModuleMeta } from '../../../src/meta.ts';
+import { skinModuleSourcePath } from '../../config.ts';
 import type { VideojsRegistryMeta } from '../meta.ts';
 import type { RegistryTarget } from '../targets.ts';
 
@@ -19,7 +19,7 @@ export function privateModuleName(module: GraphModule<SkinModuleMeta>): string |
 export function privateComponentItem(
   meta: Extract<SkinModuleMeta, { type: 'component' }>,
   target: RegistryTarget
-): VjscRegistryResolvedItem<SkinModuleMeta> {
+): RegistryModuleItem<SkinModuleMeta> {
   return {
     name: `_${meta.name}`,
     type: 'registry:lib',
@@ -42,7 +42,7 @@ export function privateModuleItem(
   module: GraphModule<SkinModuleMeta>,
   name: string,
   target: RegistryTarget
-): VjscRegistryResolvedItem<SkinModuleMeta> {
+): RegistryModuleItem<SkinModuleMeta> {
   const sourcePath = skinModuleSourcePath(module.filename);
   const output = sourcePath.slice('components/'.length);
   const registryMeta = {
@@ -65,7 +65,7 @@ export function privateModuleItem(
   };
 }
 
-export function utilsItem(target: RegistryTarget): VjscRegistryResolvedItem<SkinModuleMeta> {
+export function utilsItem(target: RegistryTarget): RegistryModuleItem<SkinModuleMeta> {
   return {
     name: '_resolve-class-name',
     type: 'registry:lib',

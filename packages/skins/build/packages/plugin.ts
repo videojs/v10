@@ -1,9 +1,9 @@
 import { resolve } from 'node:path';
 
 import type { Plugin } from 'vite';
-import { findVjscGraph, type VjscGraph } from 'vjsc/graph';
+import { findGraph, type Graph } from 'vjsc/graph';
 
-import type { SkinModuleMeta } from '../../vjsc/meta.ts';
+import type { SkinModuleMeta } from '../../src/meta.ts';
 import type { GeneratedPackageFile } from './files.ts';
 import { syncGeneratedFiles } from './files.ts';
 import { createHtmlPackageSkins, htmlPackageSkinOwnedPaths } from './html.ts';
@@ -16,20 +16,20 @@ export interface PackageSkinsPluginOptions {
 
 /** Generate ignored React and HTML package Skin inputs from the finalized VJSC module graph. */
 export function packageSkinsPlugin(options: PackageSkinsPluginOptions): Plugin {
-  let graph: VjscGraph<SkinModuleMeta> | undefined;
+  let graph: Graph<SkinModuleMeta> | undefined;
 
   return {
     name: 'skins:packages',
     buildStart(inputOptions) {
-      graph = findVjscGraph<SkinModuleMeta>(inputOptions.plugins);
+      graph = findGraph<SkinModuleMeta>(inputOptions.plugins);
 
       if (!graph) this.error('Package Skin generation requires vjscPlugin in the same build.');
 
       for (const path of [
-        'packages/skins/presets/background/react.tsx',
-        'packages/skins/presets/background/react.css',
-        'packages/skins/presets/background/html.ts',
-        'packages/skins/presets/background/html.css',
+        'packages/skins/src/presets/background/react/skin.tsx',
+        'packages/skins/src/presets/background/react/skin.css',
+        'packages/skins/src/presets/background/html/skin.ts',
+        'packages/skins/src/presets/background/html/skin.css',
       ]) {
         this.addWatchFile(resolve(options.workspaceDir, path));
       }

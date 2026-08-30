@@ -4,7 +4,7 @@ import { resolve } from 'node:path';
 
 import { registryTargets } from './targets.ts';
 
-const packageDir = resolve(import.meta.dirname, '..');
+const packageDir = resolve(import.meta.dirname, '../..');
 const sourceDir = resolve(packageDir, 'dist/registry/source');
 const hostedDir = resolve(packageDir, 'dist/registry/r');
 const shadcnBin = resolve(packageDir, 'node_modules/shadcn/dist/index.js');

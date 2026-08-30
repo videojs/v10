@@ -431,7 +431,7 @@ document.getElementById('root')!.innerHTML = html\`
 }
 
 function sourceHtmlPage(resource: string): string {
-  const source = '../../../../../../../../packages/skins/vjsc/skins/default-video/skin.tsx';
+  const source = '../../../../../../../../packages/skins/src/skins/default-video/skin.tsx';
 
   return `import '@videojs/html/video/player';
 import { DefaultVideoSkin } from '${source}?style=css&target=html&skin=default-video';
@@ -453,7 +453,7 @@ document.getElementById('root')!.innerHTML = \`<video-player poster="\${MEDIA.${
 }
 
 function sourceReactPage(resource: string): string {
-  const source = '../../../../../../../../packages/skins/vjsc/skins/default-video/skin.tsx';
+  const source = '../../../../../../../../packages/skins/src/skins/default-video/skin.tsx';
 
   return `import { createPlayer } from '@videojs/react';
 import { Video, videoFeatures } from '@videojs/react/video';

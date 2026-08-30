@@ -7,19 +7,19 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vite-
 const packageDir = resolve(import.meta.dirname, '../..');
 const configFile = resolve(packageDir, 'dev/vite.config.ts');
 const reactTarget = '?style=css&target=react&skin=default-video';
-const defaultSkinUrl = `/../vjsc/skins/default-video/skin.tsx${reactTarget}`;
-const defaultControlsUrl = `/../vjsc/skins/default-video/controls.tsx${reactTarget}`;
-const htmlContainerUrl = '/../vjsc/components/layout/container.tsx?style=tailwind&target=html&skin=minimal-video';
-const playButtonUrl = `/../vjsc/components/buttons/play-button.tsx${reactTarget}`;
-const settingsMenuUrl = `/../vjsc/components/menus/settings-menu.tsx${reactTarget}`;
-const volumePopoverUrl = `/../vjsc/components/controls/volume-popover.tsx${reactTarget}`;
-const htmlPosterUrl = '/../vjsc/components/layout/poster.tsx?style=tailwind&target=html&skin=default-video';
-const reactPosterUrl = '/../vjsc/components/layout/poster.tsx?style=tailwind&target=react&skin=default-video';
-const buttonStyles = resolve(packageDir, 'vjsc/styles/buttons/button.styles.ts');
-const controlsStyles = resolve(packageDir, 'vjsc/skins/default-video/controls.styles.ts');
-const designStyles = resolve(packageDir, 'vjsc/styles/base.css');
-const skinConfig = resolve(packageDir, 'vjsc/config.ts');
-const vjscPlayButton = resolve(packageDir, 'vjsc/components/buttons/play-button.tsx');
+const defaultSkinUrl = `/../src/skins/default-video/skin.tsx${reactTarget}`;
+const defaultControlsUrl = `/../src/skins/default-video/controls.tsx${reactTarget}`;
+const htmlContainerUrl = '/../src/components/layout/container.tsx?style=tailwind&target=html&skin=minimal-video';
+const playButtonUrl = `/../src/components/buttons/play-button.tsx${reactTarget}`;
+const settingsMenuUrl = `/../src/components/menus/settings-menu.tsx${reactTarget}`;
+const volumePopoverUrl = `/../src/components/controls/volume-popover.tsx${reactTarget}`;
+const htmlPosterUrl = '/../src/components/layout/poster.tsx?style=tailwind&target=html&skin=default-video';
+const reactPosterUrl = '/../src/components/layout/poster.tsx?style=tailwind&target=react&skin=default-video';
+const buttonStyles = resolve(packageDir, 'src/styles/buttons/button.styles.ts');
+const controlsStyles = resolve(packageDir, 'src/skins/default-video/controls.styles.ts');
+const designStyles = resolve(packageDir, 'src/styles/base.css');
+const skinConfig = resolve(packageDir, 'src/config.ts');
+const vjscPlayButton = resolve(packageDir, 'src/components/buttons/play-button.tsx');
 const frameworks = ['react', 'html'] as const;
 const skins = [
   'default-video',
@@ -74,7 +74,7 @@ describe('Skins Vite workflow', () => {
   it('resolves queried skin source directly', async () => {
     const resolved = await server.pluginContainer.resolveId(defaultSkinUrl);
 
-    expect(resolved?.id).toContain('/vjsc/skins/default-video/skin.tsx?skin=default-video&style=css&target=react');
+    expect(resolved?.id).toContain('/src/skins/default-video/skin.tsx?skin=default-video&style=css&target=react');
   }, 30_000);
 
   it('reports VJSC style diagnostics through the Vite logger', async () => {
@@ -165,7 +165,7 @@ describe('Skins Vite workflow', () => {
     await server.transformRequest(defaultSkinUrl);
     const resolved = await server.pluginContainer.resolveId(defaultSkinUrl);
 
-    expect(resolved?.id).toContain('/vjsc/skins/default-video/skin.tsx');
+    expect(resolved?.id).toContain('/src/skins/default-video/skin.tsx');
     const skinModule = resolved && server.moduleGraph.getModuleById(resolved.id);
 
     expect(skinModule?.transformResult).not.toBeNull();
@@ -255,9 +255,9 @@ describe('Skins Vite workflow', () => {
 });
 
 function skinUrl(variant: (typeof variants)[number]): string {
-  return `/../vjsc/skins/${variant.skin}/skin.tsx?style=${variant.style}&target=${variant.framework}&skin=${variant.skin}`;
+  return `/../src/skins/${variant.skin}/skin.tsx?style=${variant.style}&target=${variant.framework}&skin=${variant.skin}`;
 }
 
 function controlsUrl(variant: (typeof variants)[number]): string {
-  return `/../vjsc/skins/${variant.skin}/controls.tsx?style=${variant.style}&target=${variant.framework}&skin=${variant.skin}`;
+  return `/../src/skins/${variant.skin}/controls.tsx?style=${variant.style}&target=${variant.framework}&skin=${variant.skin}`;
 }

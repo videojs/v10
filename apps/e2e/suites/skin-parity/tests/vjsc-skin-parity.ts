@@ -1,6 +1,6 @@
 import type { Locator, Page } from '@playwright/test';
 
-export type VjscStyle = 'css' | 'tailwind';
+export type SkinStyle = 'css' | 'tailwind';
 
 /** Reads focus, pressed, and disabled paint for one shared button host. */
 export async function buttonInteractionContract(page: Page, button: Locator) {

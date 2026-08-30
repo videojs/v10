@@ -5,7 +5,7 @@ import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite-plus';
 import { vjscPlugin } from 'vjsc/vite';
 
-import { configureSkinModule } from '../../../../../packages/skins/vjsc/config.ts';
+import { resolveSkinComponents, resolveSkinStyles } from '../../../../../packages/skins/src/config.ts';
 
 const packageDir = import.meta.dirname;
 
@@ -45,7 +45,10 @@ export default defineConfig({
   define: {
     __DEV__: 'true',
   },
-  plugins: [vjscPlugin({ configure: configureSkinModule }), react({ jsxImportSource: 'react' })],
+  plugins: [
+    vjscPlugin({ transform: { components: resolveSkinComponents, styles: resolveSkinStyles } }),
+    react({ jsxImportSource: 'react' }),
+  ],
   resolve: {
     dedupe: ['@videojs/html', '@videojs/react', 'react', 'react-dom', 'vjsc'],
   },

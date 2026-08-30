@@ -5,12 +5,12 @@ import type { UserConfig as PackUserConfig } from 'vite-plus/pack';
 
 import { baseConfig } from '../../../build/pack.ts';
 import { vjscPlugin, vjscRegistryPlugin } from '../../vjsc/src/plugins/index.ts';
-import { formatSource } from '../registry/format.ts';
-import { registryItems } from '../registry/items/index.ts';
-import { registryStyles } from '../registry/items/styles.ts';
-import { registryPackages, registryPaths, registryTargets } from '../registry/targets.ts';
 import { packageDir, resolveBuildComponents, resolveBuildStyles, skinEntries, skinUtils } from './config.ts';
 import { packageSkinsPlugin } from './packages/plugin.ts';
+import { formatSource } from './registry/format.ts';
+import { registryItems } from './registry/items/index.ts';
+import { registryStyles } from './registry/items/styles.ts';
+import { registryPackages, registryPaths, registryTargets } from './registry/targets.ts';
 
 export const skinBuildConfig: PackUserConfig = {
   ...baseConfig,

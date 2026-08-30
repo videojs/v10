@@ -14,5 +14,6 @@
     "types": ["node"],
     "noEmit": true
   },
-  "include": ["**/*.ts", "**/*.tsx", "../vite.config.ts"]
+  "include": ["**/*.ts", "**/*.tsx", "../vite.config.ts"],
+  "exclude": ["presets"]
 }

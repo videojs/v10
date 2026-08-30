@@ -1,12 +1,10 @@
-import { readFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
-
-import type { VjscGraph, GraphModule } from 'vjsc/graph';
+import type { Graph, GraphModule } from 'vjsc/graph';
 import { bundleStyles, collectModules, relativeImport, rewriteImports, stripStyleImports } from 'vjsc/graph';
 
-import { isSkinName, type SkinMeta, type SkinModuleMeta, type SkinName } from '../../vjsc/meta.ts';
+import { isSkinName, type SkinMeta, type SkinModuleMeta, type SkinName } from '../../src/meta.ts';
 import { skinPreset, skinPresets, type SkinPreset } from '../skin.ts';
 import type { GeneratedPackageFile } from './files.ts';
+import { addCopiedFiles, addGenerated, generatedFiles, pascalCase } from './utils.ts';
 
 const packageRoot = 'packages/react/src';
 const internalRoot = `${packageRoot}/internal/skins`;
@@ -35,7 +33,7 @@ type ReactSkinRoot = GraphModule<SkinMeta & { readonly name: SkinName }> & {
 
 /** Generate package-local React Skin implementations from one finalized VJSC module graph. */
 export async function createReactPackageSkins(
-  graph: VjscGraph<SkinModuleMeta>,
+  graph: Graph<SkinModuleMeta>,
   options: CreateReactPackageSkinsOptions
 ): Promise<GeneratedPackageFile[]> {
   const skins = reactSkins(graph);
@@ -95,16 +93,12 @@ export async function createReactPackageSkins(
     );
   }
 
-  for (const [source, destination] of [
-    ['packages/skins/presets/background/react.tsx', `${packageRoot}/presets/background/skin.tsx`],
-    ['packages/skins/presets/background/react.css', `${packageRoot}/presets/background/skin.css`],
-  ] as const) {
-    addGenerated(generated, destination, await readFile(resolve(options.workspaceDir, source), 'utf8'));
-  }
+  await addCopiedFiles(generated, options.workspaceDir, [
+    ['packages/skins/src/presets/background/react/skin.tsx', `${packageRoot}/presets/background/skin.tsx`],
+    ['packages/skins/src/presets/background/react/skin.css', `${packageRoot}/presets/background/skin.css`],
+  ]);
 
-  return [...generated]
-    .sort(([left], [right]) => left.localeCompare(right))
-    .map(([path, content]) => ({ path, content }));
+  return generatedFiles(generated);
 }
 
 export function reactPackageSkinOwnedPaths(): string[] {
@@ -122,7 +116,7 @@ export function reactPackageSkinOwnedPaths(): string[] {
   ];
 }
 
-function reactSkins(graph: VjscGraph<SkinModuleMeta>): ReactSkin[] {
+function reactSkins(graph: Graph<SkinModuleMeta>): ReactSkin[] {
   const roots = [...graph.modules.values()].filter(
     (module): module is ReactSkinRoot =>
       module.meta?.type === 'skin' &&
@@ -214,18 +208,4 @@ function modulesByDestination(
   return [...grouped]
     .sort(([left], [right]) => left.localeCompare(right))
     .map(([destination, modules]) => [destination, [...modules.values()]] as const);
-}
-
-function pascalCase(value: string): string {
-  return value.replace(/(?:^|-)([a-z])/g, (_match, letter: string) => letter.toUpperCase());
-}
-
-function addGenerated(files: Map<string, string>, path: string, content: string): void {
-  const previous = files.get(path);
-
-  if (previous !== undefined && previous !== content) {
-    throw new Error(`React package Skin output collision: \`${path}\`.`);
-  }
-
-  files.set(path, content);
 }

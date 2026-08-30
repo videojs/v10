@@ -1,7 +1,7 @@
-import type { GraphModule } from '../../../vjsc/src/graph/index.ts';
-import type { VjscRegistryResolvedItem } from '../../../vjsc/src/shadcn/index.ts';
-import { skinModuleSourcePath } from '../../build/config.ts';
-import type { SkinModuleMeta } from '../../vjsc/meta.ts';
+import type { GraphModule } from '../../../../vjsc/src/graph/index.ts';
+import type { RegistryModuleItem } from '../../../../vjsc/src/shadcn/index.ts';
+import type { SkinModuleMeta } from '../../../src/meta.ts';
+import { skinModuleSourcePath } from '../../config.ts';
 import type { VideojsRegistryMeta } from '../meta.ts';
 import { registryPaths, type RegistryTarget } from '../targets.ts';
 import { reactHelperDependency } from './support.ts';
@@ -10,7 +10,7 @@ export function componentItem(
   module: GraphModule<SkinModuleMeta>,
   meta: Extract<SkinModuleMeta, { type: 'component' }>,
   target: RegistryTarget
-): VjscRegistryResolvedItem<SkinModuleMeta> {
+): RegistryModuleItem<SkinModuleMeta> {
   const category = componentCategory(module.filename);
   const registryMeta = {
     role: 'component',

@@ -1,18 +1,18 @@
 import { relative, resolve } from 'node:path';
 
-import type { VjscEntriesOptions, VjscModule } from '../../vjsc/src/plugins/index.ts';
-import { registryTargets } from '../registry/targets.ts';
-import { resolveSkinComponents, resolveSkinStyles } from '../vjsc/config.ts';
-import { isSkinName, skinStyles } from '../vjsc/meta.ts';
+import type { EntriesOptions, TransformModule } from '../../vjsc/src/plugins/index.ts';
+import { resolveSkinComponents, resolveSkinStyles } from '../src/config.ts';
+import { isSkinName, skinStyles } from '../src/meta.ts';
+import { registryTargets } from './registry/targets.ts';
 
 export const packageDir = resolve(import.meta.dirname, '..');
-export const vjscDir = resolve(packageDir, 'vjsc');
-export const skinUtils = resolve(vjscDir, 'utils.ts');
+export const sourceDir = resolve(packageDir, 'src');
+export const skinUtils = resolve(sourceDir, 'utils.ts');
 
 const publishedSkins = Object.keys(skinStyles).filter(isSkinName);
 
-export const skinEntries: VjscEntriesOptions = {
-  root: vjscDir,
+export const skinEntries: EntriesOptions = {
+  root: sourceDir,
   include: ['./components/**/*.tsx', './skins/**/skin.tsx', './utils.ts'],
   resolve: {
     params(entry) {
@@ -37,14 +37,14 @@ export const skinEntries: VjscEntriesOptions = {
   },
 };
 
-export function resolveBuildComponents(module: VjscModule) {
+export function resolveBuildComponents(module: TransformModule) {
   return module.filename === skinUtils ? null : resolveSkinComponents(module);
 }
 
-export function resolveBuildStyles(module: VjscModule) {
+export function resolveBuildStyles(module: TransformModule) {
   return module.filename === skinUtils ? null : resolveSkinStyles(module);
 }
 
 export function skinModuleSourcePath(filename: string): string {
-  return relative(vjscDir, filename).replaceAll('\\', '/');
+  return relative(sourceDir, filename).replaceAll('\\', '/');
 }

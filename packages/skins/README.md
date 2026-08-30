@@ -8,7 +8,7 @@ The package is private (`"private": true` in `package.json`) and is not publishe
 
 ## Structure
 
-- `vjsc/` — target-neutral skin components, styles, target transforms, and contract tests.
+- `src/` — target-neutral skin components, styles, target transforms, and contract tests.
 - `build/` — shared Skin and framework-package output helpers.
 - `registry/` — Shadcn catalog items, build configuration, and focused policy validation.
 - `dev/` — the VJSC React/HTML and CSS/Tailwind development matrix.

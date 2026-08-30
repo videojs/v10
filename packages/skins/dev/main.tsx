@@ -16,7 +16,7 @@ const captions = new URL('./captions.vtt', import.meta.url).href;
 const preview = readPreviewOptions();
 const Skin = await loadSkin(preview);
 
-if (preview.styleMode === 'tailwind') await import('../vjsc/styles/tailwind.compiler.css');
+if (preview.styleMode === 'tailwind') await import('../src/styles/tailwind.compiler.css');
 
 type PreviewRoot = HTMLElement & { __videojsSkinsReactRoot?: ReturnType<typeof createRoot> };
 

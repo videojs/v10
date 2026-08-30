@@ -22,21 +22,21 @@ These selectors currently preserve observable parity. Keep them as known ownersh
 
 ### Error dialog control suppression ownership
 
-- Source: #2451 and `packages/skins/vjsc/styles/layout/container.styles.ts`
+- Source: #2451 and `packages/skins/src/styles/layout/container.styles.ts`
 - Gap: No observable parity gap is known, but the VJSC Container suppresses controls while an error dialog is open by locating both parts with a structural `:has()` selector.
 - Affected: Default and Minimal video skins; HTML and React targets; CSS and Tailwind outputs.
 - Recommendation: Keep the selector until shared player state can expose error-dialog presence directly on Container or Controls. Then move the visibility rule to the state-owning part and remove the structural relationship.
 
 ### Poster image ownership
 
-- Source: `6c8472118` / #2453 and `packages/skins/vjsc/styles/layout/poster.styles.ts`
+- Source: `6c8472118` / #2453 and `packages/skins/src/styles/layout/poster.styles.ts`
 - Gap: No observable parity gap is known, but the VJSC Poster root sizes authored `img` and Shadow DOM `::slotted(img)` descendants through structural selectors. An explicit image part would need to preserve target-specific and optional Shadow DOM rendering.
 - Affected: Default and Minimal skins; HTML and React targets; CSS and Tailwind outputs.
 - Recommendation: Hold the current selectors until Poster target markup and Shadow DOM requirements are settled. If ownership becomes a practical problem, evaluate `Poster.Image` across both targets rather than adding a styling-only wrapper.
 
 ### Thumbnail loading ownership
 
-- Source: `e20e54255` / #2259 and `packages/skins/vjsc/styles/sliders/thumbnail.styles.ts`
+- Source: `e20e54255` / #2259 and `packages/skins/src/styles/sliders/thumbnail.styles.ts`
 - Gap: No observable parity gap is known, but VJSC infers thumbnail loading from descendant image state with `has-*` and `group-has-*` selectors. Isolated transforms can emit these local selectors, though the styles remain coupled to rendered child markup.
 - Affected: Default and Minimal skins; HTML and React targets; CSS and Tailwind outputs.
 - Recommendation: Hold new anatomy until loading behavior or target markup needs to change. Then consider propagating loading state to the Thumbnail root or adding explicit image and spinner parts, with generated-output and matrix verification.

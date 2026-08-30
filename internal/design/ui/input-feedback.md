@@ -30,4 +30,4 @@ Skins can arrange and animate independent feedback surfaces without duplicating 
 - Shared HTML indicator adapters: `packages/html/src/ui/input-indicator/`
 - Shared React indicator hooks: `packages/react/src/ui/input-indicator/`
 - HTML and React components: their `status-indicator/`, `status-announcer/`, `volume-indicator/`, and `seek-indicator/` directories
-- Preset composition and component-named styles: package preset facades and `packages/skins/vjsc/{skins,styles}/`
+- Preset composition and component-named styles: package preset facades and `packages/skins/src/{skins,styles}/`

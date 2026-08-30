@@ -1,9 +1,9 @@
 import { resolve } from 'node:path';
 
-import type { VjscRegistryOptions } from '../../../vjsc/src/shadcn/index.ts';
-import { packageDir, skinUtils } from '../../build/config.ts';
-import { renderHtmlSkins } from '../../build/packages/html.ts';
-import type { SkinModuleMeta } from '../../vjsc/meta.ts';
+import type { VjscRegistryOptions } from '../../../../vjsc/src/shadcn/index.ts';
+import type { SkinModuleMeta } from '../../../src/meta.ts';
+import { packageDir, skinUtils } from '../../config.ts';
+import { renderHtmlSkins } from '../../packages/html.ts';
 import type { RegistryTarget } from '../targets.ts';
 import { componentItem } from './components.ts';
 import { htmlSkinItem, skinItem } from './skins.ts';

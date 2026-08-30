@@ -9,7 +9,7 @@ import {
   popupContract,
   surfaceContract,
   waitForStableText,
-  type VjscStyle,
+  type SkinStyle,
 } from './vjsc-skin-parity';
 
 const CASES = [
@@ -21,7 +21,7 @@ const CASES = [
 const STYLES = ['css', 'tailwind'] as const;
 const WIDTHS = [384, 672] as const;
 
-type Style = VjscStyle;
+type Style = SkinStyle;
 type Variant = (typeof CASES)[number];
 
 test.describe.configure({ mode: 'serial' });

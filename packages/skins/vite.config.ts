@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite-plus';
 
 import { cachedTaskInputs, packageTestTask, workspaceTaskDependencies } from '../../build/task.ts';
-import { registryTargets } from './registry/targets.ts';
+import { registryTargets } from './build/registry/targets.ts';
 
 const packageDir = import.meta.dirname;
 const generatedPackageOutputs = [
@@ -33,11 +33,11 @@ export default defineConfig({
         output: ['dist/registry/source/**', ...generatedPackageOutputs],
       },
       'build:shadcn': {
-        command: 'node --import tsx registry/build.ts',
+        command: 'node --import tsx build/registry/build.ts',
         dependsOn: ['generate'],
         input: [
           'dist/registry/source/r/**',
-          'registry/build.ts',
+          'build/registry/build.ts',
           'package.json',
           { pattern: 'pnpm-lock.yaml', base: 'workspace' },
         ],
@@ -52,10 +52,10 @@ export default defineConfig({
         output: [],
       },
       'validate:shadcn:policy': {
-        command: 'node --import tsx registry/validate.ts',
+        command: 'node --import tsx build/registry/validate.ts',
         dependsOn: ['build:shadcn'],
         input: [
-          'registry/validate.ts',
+          'build/registry/validate.ts',
           'dist/registry/source/r/**',
           'dist/registry/r/**',
           { pattern: 'packages/*/package.json', base: 'workspace' },
@@ -79,7 +79,7 @@ export default defineConfig({
         test: {
           name: 'skins',
           root: packageDir,
-          include: ['build/**/*.test.ts', 'vjsc/**/*.test.ts'],
+          include: ['build/**/*.test.ts', 'src/**/*.test.ts'],
           // These integration tests share Vite and Rolldown package state.
           fileParallelism: false,
         },

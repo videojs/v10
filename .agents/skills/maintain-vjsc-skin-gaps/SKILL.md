@@ -1,32 +1,33 @@
 ---
 name: maintain-vjsc-skin-gaps
-description: Maintain VJSC parity gaps. Use when changing legacy skins under packages/skins/src.
+description: Maintain deferred VJSC parity gaps. Use when work under packages/skins/src adds, closes, or explicitly defers a parity gap.
 ---
 
 # Track VJSC skin parity
 
-Keep `packages/skins/vjsc/gaps.md` synchronized with observable changes to the legacy skins.
+Keep `packages/skins/src/gaps.md` synchronized with observable differences from the previously published skins.
 
 ## Triggers
 
-- Changing behavior, markup, selectors, data attributes, tokens, responsive rules, motion, or styles under `packages/skins/src`.
-- Fixing a legacy skin issue whose equivalent VJSC output may need the same fix.
+- Discovering missing behavior, markup, selectors, data attributes, tokens, responsive rules, motion, or styles while
+  working under `packages/skins/src`.
+- Implementing or deliberately deferring a documented parity gap.
 
-Do not use this workflow for VJSC-only work, documentation-only edits, or generated-output changes that do not alter legacy skin behavior.
+Do not use this workflow for documentation-only edits or generated-output changes that do not alter observable skin behavior.
 
 ## Workflow
 
-1. Describe the observable legacy behavior being added or changed and identify the affected Default or Minimal skin.
-2. Inspect the equivalent VJSC component, style rule, and generated HTML and React output. Similar names or classes are not evidence of parity.
-3. If the same change implements VJSC parity, verify all affected targets and CSS or Tailwind outputs, then remove any obsolete gap.
-4. Otherwise, add or update one entry in `packages/skins/vjsc/gaps.md` with `Source`, `Gap`, `Affected`, and `Recommendation` fields. Use the PR or commit when known; otherwise cite the changed legacy paths.
+1. Describe the observable published behavior and identify the affected Default or Minimal skin.
+2. Inspect the equivalent source component, style rule, and generated HTML and React output. Similar names or classes are not evidence of parity.
+3. If the change implements parity, verify all affected targets and CSS or Tailwind outputs, then remove any obsolete gap.
+4. Otherwise, add or update one entry in `packages/skins/src/gaps.md` with `Source`, `Gap`, `Affected`, and `Recommendation` fields. Use the PR or commit when known; otherwise cite the relevant source or test.
 5. Avoid duplicates. Describe user-visible behavior rather than copying a raw diff, and remove the entry only after implementation and verification.
 
 ## Example
 
-Input: A legacy skin change adds RTL control ordering without the equivalent VJSC rules.
+Input: Testing shows the previously published skin has RTL control ordering without equivalent source rules.
 
-Output: Add or update this entry in `packages/skins/vjsc/gaps.md`:
+Output: Add or update this entry in `packages/skins/src/gaps.md`:
 
 ```md
 ## RTL control layout

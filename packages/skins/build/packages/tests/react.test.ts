@@ -1,9 +1,9 @@
 import { resolve } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
-import type { VjscGraph } from 'vjsc/graph';
+import type { Graph } from 'vjsc/graph';
 
-import type { SkinModuleMeta } from '../../../vjsc/meta.ts';
+import type { SkinModuleMeta } from '../../../src/meta.ts';
 import { createReactPackageSkins } from '../react.ts';
 
 describe('createReactPackageSkins', () => {
@@ -33,7 +33,7 @@ describe('createReactPackageSkins', () => {
   });
 });
 
-function fixtureGraph(root: string): VjscGraph<SkinModuleMeta> {
+function fixtureGraph(root: string): Graph<SkinModuleMeta> {
   const modules = new Map();
 
   for (const theme of ['default', 'minimal'] as const) {
