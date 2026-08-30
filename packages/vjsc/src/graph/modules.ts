@@ -2,7 +2,7 @@ import { extname, posix } from 'node:path';
 
 import type { ModuleMeta } from '../components/meta';
 import { replaceImportSpecifiers } from '../shadcn/analyze';
-import type { GraphImport, GraphModule, VjscGraph } from './types';
+import type { GraphImport, GraphModule, Graph } from './types';
 
 export interface GraphImportContext<Node extends ModuleMeta = ModuleMeta> {
   readonly dependency?: GraphModule<Node> | undefined;
@@ -11,7 +11,7 @@ export interface GraphImportContext<Node extends ModuleMeta = ModuleMeta> {
 }
 
 /** Collect one root module and every captured graph dependency reachable from it. */
-export function collectModules<Node extends ModuleMeta>(graph: VjscGraph<Node>, rootId: string): GraphModule<Node>[] {
+export function collectModules<Node extends ModuleMeta>(graph: Graph<Node>, rootId: string): GraphModule<Node>[] {
   const root = graph.modules.get(rootId);
   if (!root) throw new Error(`VJSC graph root module is missing: \`${rootId}\`.`);
 
@@ -35,7 +35,7 @@ export function collectModules<Node extends ModuleMeta>(graph: VjscGraph<Node>, 
 
 /** Rewrite imports from the references already captured in a finalized module graph. */
 export function rewriteImports<Node extends ModuleMeta>(
-  graph: VjscGraph<Node>,
+  graph: Graph<Node>,
   module: GraphModule<Node>,
   resolveImport: (context: GraphImportContext<Node>) => string | undefined
 ): string {

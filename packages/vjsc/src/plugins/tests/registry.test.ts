@@ -9,7 +9,7 @@ import { describe, expect, it } from 'vite-plus/test';
 import { vjscPlugin, vjscRegistryPlugin } from '..';
 import type { ComponentMeta } from '../../components';
 import type { GraphModule } from '../../graph';
-import type { VjscRegistryOptions, VjscRegistryResolvedItem } from '../../shadcn';
+import type { VjscRegistryOptions, RegistryModuleItem } from '../../shadcn';
 
 interface FixtureMeta extends ComponentMeta {
   readonly type: 'block' | 'component' | 'support';
@@ -84,6 +84,7 @@ describe('vjscRegistryPlugin', () => {
     const output = await build(
       root,
       {
+        styles: { files: 'styles' },
         items: {
           resolve({ module }) {
             const item = describeItem(module);
@@ -109,7 +110,7 @@ describe('vjscRegistryPlugin', () => {
 
             if (!id.endsWith('/components/root.tsx')) return null;
 
-            return { meta: { moduleStyles: { files: [], assets: [virtualStyle] } } };
+            return { meta: { moduleStyles: { files: ['buttons.css'], assets: [virtualStyle] } } };
           },
         },
       ]
@@ -119,6 +120,7 @@ describe('vjscRegistryPlugin', () => {
     expect(registryFile(output, 'items', item, '/root.css')).toMatch(/\.root\s*\{\s*color:\s*red;/);
     expect(registryFile(output, 'items', item, '/root.tsx')).toContain(`import '../styles/root.css';`);
     expect(registryFile(output, 'items', item, '/root.tsx')).not.toContain('virtual:vjsc/css');
+    expect(output.output.some((asset) => asset.fileName === 'support/registry.json')).toBe(false);
   });
 
   it('derives shared style items, dependencies, and imports from graph ownership', async () => {
@@ -137,7 +139,7 @@ describe('vjscRegistryPlugin', () => {
             title: 'Theme',
             description: 'Shared theme.',
           },
-          files: { 'buttons.css': 'styles/button.css' },
+          files: 'styles',
         },
       },
       [
@@ -163,14 +165,14 @@ describe('vjscRegistryPlugin', () => {
       ]
     );
     const item = registryItem(output, 'items', 'root');
-    const style = registryItem(output, 'support', '_style-button');
+    const style = registryItem(output, 'support', '_style-buttons');
     const theme = registryItem(output, 'support', '_style-theme');
     const source = registryFile(output, 'items', item, '/root.tsx');
 
-    expect(item.registryDependencies).toEqual(['@example/_style-button', '@example/_style-theme']);
-    expect(source).toContain(`import '../styles/button.css';`);
+    expect(item.registryDependencies).toEqual(['@example/_style-buttons', '@example/_style-theme']);
+    expect(source).toContain(`import '../styles/buttons.css';`);
     expect(source).toContain(`import '../styles/theme.css';`);
-    expect(registryFile(output, 'support', style, '/button.css')).toContain('color: var(--accent)');
+    expect(registryFile(output, 'support', style, '/buttons.css')).toContain('color: var(--accent)');
     expect(registryFile(output, 'support', theme, '/theme.css')).toContain('--accent: red');
   });
 
@@ -295,7 +297,7 @@ function baseOptions(overrides: Partial<FixtureOptions> = {}): FixtureOptions {
   };
 }
 
-function describeItem(module: GraphModule<FixtureMeta>): VjscRegistryResolvedItem<FixtureMeta> | null {
+function describeItem(module: GraphModule<FixtureMeta>): RegistryModuleItem<FixtureMeta> | null {
   const itemMeta = module.meta;
   if (!itemMeta) return null;
 

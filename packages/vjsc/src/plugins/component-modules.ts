@@ -3,10 +3,10 @@ import { extname } from 'node:path';
 
 import type { ModuleType, Plugin } from 'rolldown';
 
-import { isVjscModule, moduleFilename, moduleId, parseModuleId, type VjscModule } from '../utils/module-id';
+import { isScriptModule, moduleFilename, moduleId, parseModuleId, type TransformModule } from '../utils/module-id';
 
 export interface ComponentModulesPluginOptions {
-  readonly select?: ((module: VjscModule) => boolean | Promise<boolean>) | undefined;
+  readonly select?: ((module: TransformModule) => boolean | Promise<boolean>) | undefined;
 }
 
 /**
@@ -36,7 +36,7 @@ export function componentModulesPlugin(options: ComponentModulesPluginOptions = 
           ...resolveOptions,
           skipSelf: true,
         });
-        if (!resolved || resolved.external || !isVjscModule(resolved.id)) return resolved;
+        if (!resolved || resolved.external || !isScriptModule(resolved.id)) return resolved;
 
         return {
           ...resolved,
@@ -59,10 +59,13 @@ export function componentModulesPlugin(options: ComponentModulesPluginOptions = 
   };
 }
 
-async function selectedModule(id: string, select: ComponentModulesPluginOptions['select']): Promise<VjscModule | null> {
+async function selectedModule(
+  id: string,
+  select: ComponentModulesPluginOptions['select']
+): Promise<TransformModule | null> {
   const parsed = parseModuleId(id);
 
-  return parsed.params.size > 0 && isVjscModule(id) && (select ? await select(parsed) : true) ? parsed : null;
+  return parsed.params.size > 0 && isScriptModule(id) && (select ? await select(parsed) : true) ? parsed : null;
 }
 
 function scriptModuleType(filename: string): ModuleType {

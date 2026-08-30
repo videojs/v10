@@ -1,8 +1,3 @@
 export type { Registry, RegistryItem } from 'shadcn/schema';
 
-export type {
-  VjscRegistryCreatedItem,
-  VjscRegistryOptions,
-  VjscRegistryResolvedItem,
-  VjscRegistryStylesOptions,
-} from './types';
+export type { RegistryCreatedItem, VjscRegistryOptions, RegistryModuleItem, RegistryStylesOptions } from './types';

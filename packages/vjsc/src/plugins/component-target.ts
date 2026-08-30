@@ -28,13 +28,13 @@ import {
   createTargetReplacement,
   singleJsxElementChild,
 } from '../target/source';
-import { parseModuleId, type VjscModule } from '../utils/module-id';
+import { parseModuleId, type TransformModule } from '../utils/module-id';
 
 const SCRIPT_ID = /\.[cm]?[jt]sx?(?:\?|$)/;
 
 export type ComponentTargetSelection =
   | readonly ComponentTarget[]
-  | ((module: VjscModule) => readonly ComponentTarget[] | null | undefined);
+  | ((module: TransformModule) => readonly ComponentTarget[] | null | undefined);
 
 export interface ComponentTargetPluginOptions {
   readonly targets: ComponentTargetSelection;

@@ -3,10 +3,15 @@ import { basename, dirname, isAbsolute, posix, relative } from 'node:path';
 import { type Registry, type RegistryItem, registryItemSchema, registrySchema } from 'shadcn/schema';
 
 import type { ModuleMeta } from '../components/meta';
-import { bundleStyles, type GraphModule, type VjscGraph } from '../graph';
+import { bundleStyles, type GraphModule, type Graph } from '../graph';
 import { escapesRoot, toPosixPath } from '../utils/path';
 import { type ImportReplacement, replaceImportSpecifiers } from './analyze';
-import type { RegistryModuleTarget, RegistryStylesheetOutput, VjscRegistryOptions } from './types';
+import type {
+  RegistryModuleTarget,
+  RegistryStylesheetOutput,
+  RegistryStylesOptions,
+  VjscRegistryOptions,
+} from './types';
 
 type RegistryFile = NonNullable<RegistryItem['files']>[number];
 
@@ -62,7 +67,7 @@ export interface ShadcnOutputFile {
 
 /** Prepare an included Shadcn source registry from a finalized transformed-module graph. */
 export async function createShadcnRegistryFiles<Meta extends ModuleMeta>(
-  graph: VjscGraph<Meta>,
+  graph: Graph<Meta>,
   options: VjscRegistryOptions<Meta>
 ): Promise<ShadcnOutputFile[]> {
   validateOptions(options);
@@ -120,7 +125,7 @@ export async function createShadcnRegistryFiles<Meta extends ModuleMeta>(
 }
 
 async function resolveSourceItems<Meta extends ModuleMeta>(
-  graph: VjscGraph<Meta>,
+  graph: Graph<Meta>,
   options: VjscRegistryOptions<Meta>
 ): Promise<SourceItem<Meta>[]> {
   const items: SourceItem<Meta>[] = [];
@@ -147,7 +152,7 @@ async function resolveSourceItems<Meta extends ModuleMeta>(
 }
 
 async function createFileItems<Meta extends ModuleMeta>(
-  graph: VjscGraph<Meta>,
+  graph: Graph<Meta>,
   options: VjscRegistryOptions<Meta>
 ): Promise<CreatedItem[]> {
   const items = (await options.items.create?.({ graph })) ?? [];
@@ -160,7 +165,7 @@ async function createFileItems<Meta extends ModuleMeta>(
 }
 
 function describeStyleItems<Meta extends ModuleMeta>(
-  graph: VjscGraph<Meta>,
+  graph: Graph<Meta>,
   sourceItems: readonly SourceItem<Meta>[],
   options: VjscRegistryOptions<Meta>
 ): StyleItem<Meta>[] {
@@ -171,6 +176,8 @@ function describeStyleItems<Meta extends ModuleMeta>(
   const relevantModules = new Map<string, GraphModule<Meta>>();
 
   for (const item of sourceItems) {
+    if (item.build.stylesheet) continue;
+
     for (const module of collectReachableModules(graph.modules, item.build.module)) {
       relevantModules.set(module.id, module);
     }
@@ -187,7 +194,7 @@ function describeStyleItems<Meta extends ModuleMeta>(
     });
   }
 
-  for (const [asset, target] of Object.entries(styles.files ?? {})) {
+  for (const [asset, target] of styleFileEntries(relevantModules.values(), styles.files)) {
     const modules = [...relevantModules.values()].filter((module) => module.styles.files.includes(asset));
     if (modules.length === 0) continue;
 
@@ -312,7 +319,7 @@ async function buildPublishedItem<Meta extends ModuleMeta>(
   publication: PublishedModule<Meta>,
   modules: ReadonlyMap<string, GraphModule<Meta>>,
   published: ReadonlyMap<string, PublishedModule<Meta>>,
-  graph: VjscGraph<Meta>,
+  graph: Graph<Meta>,
   options: VjscRegistryOptions<Meta>
 ): Promise<BuiltItem> {
   const { item, module: root } = publication;
@@ -391,7 +398,7 @@ function sourceStyleOutputs<Meta extends ModuleMeta>(
   } else {
     for (const module of modules) {
       for (const filename of module.styles.files) {
-        const target = styles?.files?.[filename];
+        const target = styleFileTarget(styles?.files, filename);
 
         if (target) targets.add(target);
       }
@@ -406,9 +413,32 @@ function sourceStyleOutputs<Meta extends ModuleMeta>(
   return { dependencies, imports };
 }
 
+function styleFileEntries<Meta extends ModuleMeta>(
+  modules: Iterable<GraphModule<Meta>>,
+  files: RegistryStylesOptions['files']
+): Array<readonly [string, string]> {
+  if (!files) return [];
+
+  if (typeof files !== 'string') return Object.entries(files);
+
+  const filenames = new Set<string>();
+
+  for (const module of modules) {
+    for (const filename of module.styles.files) filenames.add(filename);
+  }
+
+  return [...filenames].sort().map((filename) => [filename, styleFileTarget(files, filename)!]);
+}
+
+function styleFileTarget(files: RegistryStylesOptions['files'], filename: string): string | undefined {
+  if (!files) return undefined;
+
+  return typeof files === 'string' ? posix.join(files, filename) : files[filename];
+}
+
 async function buildStyleItem<Meta extends ModuleMeta>(
   item: StyleItem<Meta>,
-  graph: VjscGraph<Meta>,
+  graph: Graph<Meta>,
   options: VjscRegistryOptions<Meta>
 ): Promise<BuiltItem> {
   const css = await registryStyles(
@@ -484,7 +514,7 @@ function versionDependencies<Meta extends ModuleMeta>(
 async function registryStyles<Meta extends ModuleMeta>(
   label: string,
   modules: readonly GraphModule<Meta>[],
-  graph: VjscGraph<Meta>,
+  graph: Graph<Meta>,
   supplemental: readonly string[],
   asset?: string,
   includeAssets = true

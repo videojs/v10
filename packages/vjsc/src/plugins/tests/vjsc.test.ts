@@ -7,7 +7,7 @@ import { describe, expect, it } from 'vite-plus/test';
 
 import { vjscPlugin } from '..';
 import { defineSchema } from '../../components/definition';
-import type { VjscGraph } from '../../graph';
+import type { Graph } from '../../graph';
 import { defineComponentTarget } from '../../target/definition';
 
 const schema = defineSchema('@fixture/components', {});
@@ -61,7 +61,7 @@ describe('vjscPlugin', () => {
     expect([...new Set(configurations.values())]).toEqual([1]);
     expect([...configurations.keys()].some((moduleId) => moduleId.endsWith('?target=react'))).toBe(true);
     expect(chunk?.code).toContain('after');
-    expect([...(plugins[0]!.api as VjscGraph).modules.values()].map((module) => module.source)).toEqual([
+    expect([...(plugins[0]!.api as Graph).modules.values()].map((module) => module.source)).toEqual([
       expect.stringContaining('after'),
     ]);
   });

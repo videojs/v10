@@ -3,7 +3,7 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { renderHtml } from '../render-html';
-import type { VjscGraph } from '../types';
+import type { Graph } from '../types';
 
 describe('renderHtml', () => {
   it('renders a component and its captured dependencies from the finalized graph', async () => {
@@ -15,7 +15,7 @@ import { Button } from './button';
 export function Example() { return <section><Button /></section>; }`;
     const buttonSource = `/** @jsxImportSource vjsc/html-runtime */
 export function Button() { return <button>Play</button>; }`;
-    const graph: VjscGraph = {
+    const graph: Graph = {
       root,
       modules: new Map([
         [

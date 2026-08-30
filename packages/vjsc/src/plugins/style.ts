@@ -16,7 +16,7 @@ import {
   diagnoseStyles,
   formatStyleDiagnostic,
   type StyleDiagnostic,
-  type VjscDiagnosticsOptions,
+  type StyleDiagnosticsOptions,
 } from '../styles/diagnostics';
 import { isStyleModulePath, resolveStyleModule, resolveStyleModuleFile } from '../styles/modules';
 import type { StyleTransformOptions } from '../styles/options';
@@ -27,8 +27,8 @@ import {
   type ResolvedStyleRule,
   utilityGroupsForRule,
 } from '../styles/resolved';
-import { moduleFilename, parseModuleId, type VjscModule } from '../utils/module-id';
-import { mergeVjscModuleMeta } from './component-meta';
+import { moduleFilename, parseModuleId, type TransformModule } from '../utils/module-id';
+import { mergeModuleBuildMeta } from './component-meta';
 
 const SCRIPT_ID = /\.[cm]?[jt]sx?(?:\?|$)/;
 
@@ -36,7 +36,7 @@ type InternalStyleTransformOptions = StyleTransformOptions & { readonly resolved
 
 export type StylePluginConfig =
   | InternalStyleTransformOptions
-  | ((module: VjscModule) => StyleTransformOptions | null | Promise<StyleTransformOptions | null>);
+  | ((module: TransformModule) => StyleTransformOptions | null | Promise<StyleTransformOptions | null>);
 
 interface CachedStyles {
   readonly styles: ResolvedStyles;
@@ -64,7 +64,7 @@ export interface StylePluginLifecycle {
   onOwnerTransform(id: string, watchFiles: readonly string[]): void;
 }
 
-export type StylePluginDiagnostics = VjscDiagnosticsOptions | false | (() => VjscDiagnosticsOptions | false);
+export type StylePluginDiagnostics = StyleDiagnosticsOptions | false | (() => StyleDiagnosticsOptions | false);
 
 export function stylePlugin(
   config: StylePluginConfig,
@@ -206,7 +206,7 @@ export function stylePlugin(
 
         return {
           code: transform.magicString,
-          meta: mergeVjscModuleMeta(this.getModuleInfo(id)?.meta, {
+          meta: mergeModuleBuildMeta(this.getModuleInfo(id)?.meta, {
             moduleStyles: { files: styleFiles, assets: styleAssets },
           }),
         };
@@ -238,7 +238,7 @@ function mergeStyleDiagnostics(diagnostics: readonly StyleDiagnostic[]): readonl
 
 function reportStyleDiagnostic(
   diagnostic: StyleDiagnostic,
-  options: VjscDiagnosticsOptions,
+  options: StyleDiagnosticsOptions,
   reportedWarnings: Set<string>,
   warn: (message: string) => void
 ): void {

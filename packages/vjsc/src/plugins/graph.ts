@@ -5,27 +5,27 @@ import type { OutputBundle, Plugin, PluginContext } from 'rolldown';
 
 import type { ModuleMeta } from '../components/meta';
 import { type GraphModuleInput, finalizeGraph } from '../graph/finalize';
-import type { GraphImport, VjscGraph } from '../graph/types';
+import type { GraphImport, Graph } from '../graph/types';
 import { analyzeImports } from '../shadcn/analyze';
 import { toArray } from '../utils/array';
 import { moduleFilename, moduleId, normalizeResolvedId, parseModuleId } from '../utils/module-id';
 import { isInsideRoot } from '../utils/path';
-import { readVjscModuleMeta } from './component-meta';
-import type { VjscEntriesOptions } from './vjsc';
+import { readModuleBuildMeta } from './component-meta';
+import type { EntriesOptions } from './vjsc';
 
 const SCRIPT_ID = /\.[cm]?[jt]sx?(?:\?|$)/;
 const VIRTUAL_STYLE_ID = /(?:^|\0)virtual:vjsc\/css\//;
 
-export interface VjscGraphCapability<Node extends ModuleMeta = ModuleMeta> {
-  readonly api: VjscGraph<Node>;
+export interface GraphCapability<Node extends ModuleMeta = ModuleMeta> {
+  readonly api: Graph<Node>;
   clear(): void;
-  finalize(graph: VjscGraph<Node>): void;
+  finalize(graph: Graph<Node>): void;
 }
 
 /** Create the stable plugin API object whose properties become available after `buildEnd`. */
-export function createVjscGraphCapability<Node extends ModuleMeta>(): VjscGraphCapability<Node> {
-  let graph: VjscGraph<Node> | undefined;
-  const current = (): VjscGraph<Node> => {
+export function createGraphCapability<Node extends ModuleMeta>(): GraphCapability<Node> {
+  let graph: Graph<Node> | undefined;
+  const current = (): Graph<Node> => {
     if (!graph) throw new Error('The VJSC graph is not available before buildEnd.');
 
     return graph;
@@ -53,9 +53,9 @@ export function createVjscGraphCapability<Node extends ModuleMeta>(): VjscGraphC
 }
 
 /** Capture selected entries and their finalized transformed dependencies for the `vjscPlugin` API. */
-export function vjscGraphPlugin<Node extends ModuleMeta>(
-  entriesOptions: VjscEntriesOptions | undefined,
-  capability: VjscGraphCapability<Node>
+export function graphPlugin<Node extends ModuleMeta>(
+  entriesOptions: EntriesOptions | undefined,
+  capability: GraphCapability<Node>
 ): Plugin {
   let root = resolveModulePath(entriesOptions?.root ?? process.cwd());
   const entries = new Map<string, { readonly filename: string; readonly params: Readonly<Record<string, string>> }>();
@@ -134,7 +134,7 @@ export function vjscGraphPlugin<Node extends ModuleMeta>(
 
         if (source === null || source === undefined) this.error(`VJSC graph has no transformed output for \`${id}\`.`);
 
-        const buildMeta = readVjscModuleMeta(info?.meta);
+        const buildMeta = readModuleBuildMeta(info?.meta);
         const references = analyzeImports(source, entry.filename);
         const imports: GraphImport[] = [];
 

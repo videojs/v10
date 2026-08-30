@@ -29,7 +29,7 @@ export interface GraphModule<Node extends ModuleMeta = ModuleMeta> {
 }
 
 /** Finalized transformed-module graph exposed by `vjscPlugin`. */
-export interface VjscGraph<Node extends ModuleMeta = ModuleMeta> {
+export interface Graph<Node extends ModuleMeta = ModuleMeta> {
   readonly root: string;
   readonly modules: ReadonlyMap<string, GraphModule<Node>>;
   readonly assets: ReadonlyMap<string, string>;

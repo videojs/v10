@@ -5,7 +5,7 @@ import { type ReturnedRule, transform as transformCss } from 'lightningcss';
 
 import type { ModuleMeta } from '../components/meta';
 import { isInsideRoot } from '../utils/path';
-import type { GraphModule, VjscGraph } from './types';
+import type { GraphModule, Graph } from './types';
 
 const LOCAL_CSS_IMPORT = /@import\s+["'](\.[^"']+)["']\s*;/g;
 
@@ -22,7 +22,7 @@ export interface BundleStylesOptions {
 
 /** Merge exact authored and transformed styles used by a set of module graph modules. */
 export async function bundleStyles<Node extends ModuleMeta>(
-  graph: VjscGraph<Node>,
+  graph: Graph<Node>,
   modules: readonly GraphModule<Node>[],
   options: BundleStylesOptions
 ): Promise<string> {

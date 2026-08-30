@@ -3,7 +3,7 @@ import { posix } from 'node:path';
 import type { Plugin } from 'rolldown';
 
 import type { ModuleMeta } from '../components/meta';
-import { findVjscGraph, type VjscGraph } from '../graph';
+import { findGraph, type Graph } from '../graph';
 import { createShadcnRegistryFiles } from '../shadcn/registry';
 import type { VjscRegistryOptions } from '../shadcn/types';
 
@@ -11,12 +11,12 @@ export type { VjscRegistryOptions } from '../shadcn/types';
 
 /** Emit a Shadcn registry from the finalized graph exposed by `vjscPlugin`. */
 export function vjscRegistryPlugin<Node extends ModuleMeta>(options: VjscRegistryOptions<Node>): Plugin {
-  let graph: VjscGraph<Node> | undefined;
+  let graph: Graph<Node> | undefined;
 
   return {
     name: 'vjsc:registry',
     buildStart(inputOptions) {
-      graph = findVjscGraph<Node>(inputOptions.plugins);
+      graph = findGraph<Node>(inputOptions.plugins);
 
       if (!graph) this.error('The Shadcn registry requires vjscPlugin in the same build.');
     },

@@ -2,7 +2,7 @@ import { rolldown } from 'rolldown';
 
 import type { ModuleMeta } from '../components/meta';
 import { HTML_RUNTIME } from '../plugins/html-runtime';
-import type { VjscGraph } from './types';
+import type { Graph } from './types';
 
 const entryId = '\0vjsc:module-graph-html-entry';
 const emptyId = '\0vjsc:module-graph-html-empty';
@@ -30,7 +30,7 @@ export interface RenderHtmlOptions {
 
 /** Render named HTML component exports directly from one finalized module graph. */
 export async function renderHtml<Node extends ModuleMeta>(
-  graph: VjscGraph<Node>,
+  graph: Graph<Node>,
   entries: readonly HtmlEntry[],
   options: RenderHtmlOptions = {}
 ): Promise<ReadonlyMap<string, string>> {

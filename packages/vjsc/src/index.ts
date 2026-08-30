@@ -1,12 +1,12 @@
 export {
   type VjscComponentSchemaOptions,
   vjscComponentSchemaPlugin,
-  type VjscEntriesOptions,
-  type VjscEntry,
-  type VjscModule,
+  type EntriesOptions,
+  type SourceEntry,
+  type TransformModule,
   type VjscPluginOptions,
   vjscPlugin,
   type VjscRegistryOptions,
   vjscRegistryPlugin,
-  type VjscTransformOptions,
+  type TransformOptions,
 } from './plugins/index';

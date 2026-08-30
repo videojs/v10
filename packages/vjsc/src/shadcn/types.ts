@@ -1,7 +1,7 @@
 import type { RegistryItem } from 'shadcn/schema';
 
 import type { ModuleMeta } from '../components/meta';
-import type { GraphModule, VjscGraph } from '../graph';
+import type { GraphModule, Graph } from '../graph';
 
 type DistributiveOmit<Value, Key extends PropertyKey> = Value extends unknown ? Omit<Value, Key> : never;
 
@@ -17,7 +17,7 @@ export interface RegistryStylesheetOutput {
 }
 
 /** Public Shadcn fields and installation policy for one transformed graph module. */
-export type VjscRegistryResolvedItem<Meta extends ModuleMeta = ModuleMeta> = DistributiveOmit<RegistryItem, 'files'> & {
+export type RegistryModuleItem<Meta extends ModuleMeta = ModuleMeta> = DistributiveOmit<RegistryItem, 'files'> & {
   /** Included registry path, such as `components` or `blocks`. */
   readonly group: string;
   /** Root-module target relative to the configured installation directory. */
@@ -31,40 +31,40 @@ export type VjscRegistryResolvedItem<Meta extends ModuleMeta = ModuleMeta> = Dis
 };
 
 /** A file-backed Shadcn item which is not owned by one transformed graph module. */
-export type VjscRegistryCreatedItem = RegistryItem & {
+export type RegistryCreatedItem = RegistryItem & {
   /** Included registry path, such as `components` or `blocks`. */
   readonly group: string;
 };
 
-export interface VjscRegistryItemContext<Meta extends ModuleMeta = ModuleMeta> {
-  readonly graph: VjscGraph<Meta>;
+export interface RegistryItemContext<Meta extends ModuleMeta = ModuleMeta> {
+  readonly graph: Graph<Meta>;
   readonly module: GraphModule<Meta>;
 }
 
-export interface VjscRegistryCreateContext<Meta extends ModuleMeta = ModuleMeta> {
-  readonly graph: VjscGraph<Meta>;
+export interface RegistryCreateContext<Meta extends ModuleMeta = ModuleMeta> {
+  readonly graph: Graph<Meta>;
 }
 
-export interface VjscRegistryItemsOptions<Meta extends ModuleMeta = ModuleMeta> {
+export interface RegistryItemsOptions<Meta extends ModuleMeta = ModuleMeta> {
   resolve(
-    context: VjscRegistryItemContext<Meta>
-  ): VjscRegistryResolvedItem<Meta> | null | Promise<VjscRegistryResolvedItem<Meta> | null>;
+    context: RegistryItemContext<Meta>
+  ): RegistryModuleItem<Meta> | null | Promise<RegistryModuleItem<Meta> | null>;
   create?(
-    context: VjscRegistryCreateContext<Meta>
-  ): readonly VjscRegistryCreatedItem[] | Promise<readonly VjscRegistryCreatedItem[]>;
+    context: RegistryCreateContext<Meta>
+  ): readonly RegistryCreatedItem[] | Promise<readonly RegistryCreatedItem[]>;
 }
 
-export type VjscRegistryThemeOptions = DistributiveOmit<RegistryItem, 'files' | 'name' | 'type'> & {
+export type RegistryThemeOptions = DistributiveOmit<RegistryItem, 'files' | 'name' | 'type'> & {
   /** Installed path of the shared theme stylesheet. */
   readonly target: string;
   /** Authored CSS files relative to the VJSC graph root. */
   readonly include?: readonly string[] | undefined;
 };
 
-export interface VjscRegistryStylesOptions {
-  readonly theme?: VjscRegistryThemeOptions | undefined;
-  /** Compiled VJSC style file to stable installed stylesheet path. */
-  readonly files?: Readonly<Record<string, string>> | undefined;
+export interface RegistryStylesOptions {
+  readonly theme?: RegistryThemeOptions | undefined;
+  /** Directory that receives compiled VJSC style files, or explicit installed paths by filename. */
+  readonly files?: string | Readonly<Record<string, string>> | undefined;
 }
 
 export interface VjscRegistryOptions<Meta extends ModuleMeta = ModuleMeta> {
@@ -85,7 +85,7 @@ export interface VjscRegistryOptions<Meta extends ModuleMeta = ModuleMeta> {
   readonly imports?: Readonly<Record<string, string>> | undefined;
   /** Exact package requirements used instead of bare discovered dependency names. */
   readonly packages?: Readonly<Record<string, string>> | undefined;
-  readonly items: VjscRegistryItemsOptions<Meta>;
-  readonly styles?: VjscRegistryStylesOptions | undefined;
+  readonly items: RegistryItemsOptions<Meta>;
+  readonly styles?: RegistryStylesOptions | undefined;
   readonly meta?: RegistryItem['meta'];
 }

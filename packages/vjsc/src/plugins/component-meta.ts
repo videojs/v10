@@ -13,7 +13,7 @@ import type { ComponentMeta } from '../components/meta';
 
 const SCRIPT_ID = /\.[cm]?[jt]sx?(?:\?|$)/;
 
-export interface VjscModuleBuildMeta {
+export interface ModuleBuildMeta {
   readonly moduleMeta?: ComponentMeta | undefined;
   readonly moduleSource?: string | undefined;
   readonly moduleStyles?:
@@ -60,14 +60,14 @@ export function componentMetaPlugin(exportName = 'meta'): Plugin {
 
         return {
           code: magicString,
-          meta: mergeVjscModuleMeta(this.getModuleInfo(id)?.meta, { moduleMeta }),
+          meta: mergeModuleBuildMeta(this.getModuleInfo(id)?.meta, { moduleMeta }),
         };
       },
     },
   };
 }
 
-export function readVjscModuleMeta(meta: unknown): VjscModuleBuildMeta | undefined {
+export function readModuleBuildMeta(meta: unknown): ModuleBuildMeta | undefined {
   if (!isRecord(meta)) return undefined;
 
   const moduleMeta = isComponentMeta(meta.moduleMeta) ? meta.moduleMeta : undefined;
@@ -79,14 +79,14 @@ export function readVjscModuleMeta(meta: unknown): VjscModuleBuildMeta | undefin
 }
 
 export function readComponentMeta(meta: unknown): ComponentMeta | undefined {
-  return readVjscModuleMeta(meta)?.moduleMeta;
+  return readModuleBuildMeta(meta)?.moduleMeta;
 }
 
 export function readComponentSource(meta: unknown): string | undefined {
-  return readVjscModuleMeta(meta)?.moduleSource;
+  return readModuleBuildMeta(meta)?.moduleSource;
 }
 
-export function readModuleStyles(meta: unknown): VjscModuleBuildMeta['moduleStyles'] {
+export function readModuleStyles(meta: unknown): ModuleBuildMeta['moduleStyles'] {
   if (!isRecord(meta)) return undefined;
 
   const value = isRecord(meta.moduleStyles) ? meta.moduleStyles : meta;
@@ -97,9 +97,9 @@ export function readModuleStyles(meta: unknown): VjscModuleBuildMeta['moduleStyl
   return files && assets ? { files, assets } : undefined;
 }
 
-export function mergeVjscModuleMeta(
+export function mergeModuleBuildMeta(
   meta: unknown,
-  update: Partial<VjscModuleBuildMeta>
+  update: Partial<ModuleBuildMeta>
 ): Readonly<Record<string, unknown>> {
   return {
     ...(isRecord(meta) ? meta : {}),

@@ -7,7 +7,7 @@ const encoder = new TextEncoder();
 
 export type ComplexSelectorDiagnosticLevel = 'warn' | 'error' | 'off';
 
-export interface VjscDiagnosticsOptions {
+export interface StyleDiagnosticsOptions {
   /** How suspicious structural selectors are reported. Hard isolation errors always throw. @default 'warn' */
   readonly complexSelectors?: ComplexSelectorDiagnosticLevel | undefined;
 }

@@ -5,7 +5,7 @@ import { parseSync } from 'oxc-parser';
 import type { ModuleMeta } from '../components/meta';
 import { moduleFilename } from '../utils/module-id';
 import { escapesRoot, toPosixPath } from '../utils/path';
-import type { GraphModule, VjscGraph } from './types';
+import type { GraphModule, Graph } from './types';
 
 export type GraphModuleInput<Node extends ModuleMeta = ModuleMeta> = Omit<GraphModule<Node>, 'sourcePath'>;
 
@@ -14,7 +14,7 @@ export function finalizeGraph<Node extends ModuleMeta>(
   graphRoot: string,
   inputs: readonly GraphModuleInput<Node>[],
   graphAssets: ReadonlyMap<string, string>
-): VjscGraph<Node> {
+): Graph<Node> {
   if (!isAbsolute(graphRoot)) throw new Error(`VJSC graph root must be absolute: \`${graphRoot}\`.`);
 
   const root = resolve(graphRoot);

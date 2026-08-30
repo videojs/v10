@@ -1,14 +1,14 @@
 import { realpathSync } from 'node:fs';
 import { isAbsolute, resolve } from 'node:path';
 
-export interface VjscModule {
+export interface TransformModule {
   readonly id: string;
   readonly filename: string;
   readonly params: URLSearchParams;
 }
 
 /** Split a host module ID into its physical filename and query parameters. */
-export function parseModuleId(id: string): VjscModule {
+export function parseModuleId(id: string): TransformModule {
   const queryIndex = id.indexOf('?');
 
   return queryIndex === -1
@@ -46,7 +46,7 @@ export function normalizeResolvedId(id: string): string {
   return isAbsolute(moduleFilename(id)) ? normalizeModuleId(id) : id;
 }
 
-export function isVjscModule(id: string): boolean {
+export function isScriptModule(id: string): boolean {
   return /\.(?:[cm]?[jt]s|[jt]sx)$/.test(moduleFilename(id));
 }
 
