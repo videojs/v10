@@ -34,7 +34,7 @@ describe('Skins Vite HMR', () => {
 
               return {
                 mode: 'css',
-                css: { input: fixture.design },
+                stylesheet: { input: fixture.design },
               };
             },
           },

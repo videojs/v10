@@ -23,7 +23,7 @@ describe('validateSkinConfig', () => {
     });
     expect(createStyleOptions({ target: 'react', style: 'css' })).toMatchObject({
       variants: [],
-      css: { scope: '.media-skin' },
+      stylesheet: { scope: '.media-skin' },
     });
     expect(validateSkinConfig(new URLSearchParams('target=html&style=css'))).toBeNull();
   });

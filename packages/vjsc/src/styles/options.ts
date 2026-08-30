@@ -1,4 +1,5 @@
-export interface CssTransformOptions {
+/** CSS compilation inputs used when `mode` is `css`. */
+export interface StylesheetOptions {
   /** Tailwind CSS entry used to resolve utilities, theme tokens, and variants. */
   readonly input: string;
   /** Runtime base CSS entry imported before generated semantic styles. */
@@ -12,14 +13,17 @@ interface StyleTransformBaseOptions {
   readonly variants?: readonly string[] | undefined;
 }
 
-export type StyleTransformOptions =
-  | (StyleTransformBaseOptions & {
-      /** Project style references to editable Tailwind utility groups. */
-      readonly mode: 'tailwind';
-      readonly css?: never;
-    })
-  | (StyleTransformBaseOptions & {
-      readonly mode: 'css';
-      /** Create CSS modules in addition to transforming semantic class names. */
-      readonly css?: CssTransformOptions | undefined;
-    });
+/** Replace style references with their Tailwind utility classes. */
+export interface TailwindTransformOptions extends StyleTransformBaseOptions {
+  readonly mode: 'tailwind';
+  readonly stylesheet?: never;
+}
+
+/** Replace style references with semantic class names and optionally emit their CSS. */
+export interface CssTransformOptions extends StyleTransformBaseOptions {
+  readonly mode: 'css';
+  /** Compile referenced styles using this stylesheet environment. */
+  readonly stylesheet?: StylesheetOptions | undefined;
+}
+
+export type StyleTransformOptions = TailwindTransformOptions | CssTransformOptions;

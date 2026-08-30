@@ -151,9 +151,9 @@ export function stylePlugin(
         ].sort();
         let styleAssets: readonly string[] = [];
 
-        if (options.mode === 'css' && options.css) {
-          const input = resolve(cwd, options.css.input);
-          const base = options.css.base ? resolve(cwd, options.css.base) : undefined;
+        if (options.mode === 'css' && options.stylesheet) {
+          const input = resolve(cwd, options.stylesheet.input);
+          const base = options.stylesheet.base ? resolve(cwd, options.stylesheet.base) : undefined;
           const cachedDesign = await cachedDesignSystem(designs, input);
 
           if (diagnosticOptions) {
@@ -166,7 +166,7 @@ export function stylePlugin(
           const assets = await compileStyles({
             design: cachedDesign.design,
             index,
-            ...(options.css.scope ? { scope: options.css.scope } : {}),
+            ...(options.stylesheet.scope ? { scope: options.stylesheet.scope } : {}),
             ...(options.variants ? { variants: options.variants } : {}),
             ruleClassNames: referencedRules,
           });

@@ -71,7 +71,7 @@ describe('stylePlugin', () => {
     const styles = stylePlugin({
       mode: 'css',
       variants: ['compact', 'disabled'],
-      css: { input: designPath },
+      stylesheet: { input: designPath },
     });
     const { source, styleIds } = await transform(
       `
@@ -111,7 +111,7 @@ describe('stylePlugin', () => {
         import styles from './fixtures/button.styles';
         export const button = <button className={styles.button} />;
       `,
-      { index, mode: 'css', css: { input: designPath } }
+      { index, mode: 'css', stylesheet: { input: designPath } }
     );
 
     expect(design.watchFiles).toContain(designDependency);
@@ -127,7 +127,7 @@ describe('stylePlugin', () => {
       {
         index,
         mode: 'css',
-        css: { input: designPath, base: designDependency },
+        stylesheet: { input: designPath, base: designDependency },
       }
     );
 
@@ -143,7 +143,7 @@ describe('stylePlugin', () => {
     const styles = stylePlugin(() => ({
       index,
       mode: 'css',
-      css: { input: designPath, scope },
+      stylesheet: { input: designPath, scope },
     }));
     const input = `
       import styles from './fixtures/button.styles';
@@ -169,7 +169,7 @@ describe('stylePlugin', () => {
     const styles = stylePlugin({
       index: complexManifest,
       mode: 'css',
-      css: { input: designPath },
+      stylesheet: { input: designPath },
     });
     const { warnings } = await transform(
       `import styles from './fixtures/button.styles'; export const root = <div className={styles.root} />;`,

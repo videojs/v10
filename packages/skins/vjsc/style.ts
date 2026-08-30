@@ -25,7 +25,7 @@ export function createStyleOptions(config: SkinConfig): StyleTransformOptions {
     : {
         mode: 'css',
         variants,
-        css: {
+        stylesheet: {
           input: resolve(stylesDir, 'tailwind.compiler.css'),
           base: resolve(stylesDir, 'base.css'),
           scope: skin?.scope ?? '.media-skin',
