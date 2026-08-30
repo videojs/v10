@@ -1,9 +1,9 @@
 /**
  * Generates Vite test pages from PageEntry definitions.
  *
- * Reads the media type configs and page arrays, then writes .ts/.tsx + .html files to `apps/vite/src/pages/`, which is
- * gitignored — every page there comes from this script, including the special ones (ejected skins, captions, background
- * video), which take their own templates rather than the player shell.
+ * Reads the media type configs and page arrays, then writes .ts/.tsx + .html files to `suites/player/app/src/pages/`,
+ * which is gitignored — every page there comes from this script, including the special ones (ejected skins, captions,
+ * background video), which take their own templates rather than the player shell.
  *
  * Run: `pnpm --dir apps/e2e generate-pages`
  */
@@ -13,7 +13,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const OUT_DIR = resolve(__dirname, '../apps/vite/src/pages');
+const OUT_DIR = resolve(__dirname, '../suites/player/app/src/pages');
 
 // ---------------------------------------------------------------------------
 // Media type config — maps media element name to its import + attributes
@@ -431,7 +431,7 @@ document.getElementById('root')!.innerHTML = html\`
 }
 
 function sourceHtmlPage(resource: string): string {
-  const source = '../../../../../../packages/skins/vjsc/skins/default-video/skin.tsx';
+  const source = '../../../../../../../../packages/skins/vjsc/skins/default-video/skin.tsx';
 
   return `import '@videojs/html/video/player';
 import { DefaultVideoSkin } from '${source}?style=css&target=html&skin=default-video';
@@ -453,7 +453,7 @@ document.getElementById('root')!.innerHTML = \`<video-player poster="\${MEDIA.${
 }
 
 function sourceReactPage(resource: string): string {
-  const source = '../../../../../../packages/skins/vjsc/skins/default-video/skin.tsx';
+  const source = '../../../../../../../../packages/skins/vjsc/skins/default-video/skin.tsx';
 
   return `import { createPlayer } from '@videojs/react';
 import { Video, videoFeatures } from '@videojs/react/video';

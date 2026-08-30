@@ -1,0 +1,10 @@
+body {
+  margin: 0;
+  padding: 2rem;
+  font-family: system-ui, sans-serif;
+}
+
+media-container {
+  width: 640px;
+  aspect-ratio: 16 / 9;
+}
