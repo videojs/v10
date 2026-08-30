@@ -44,8 +44,10 @@ export function frameworkSkinsPlugin(
         timed(() => createReactPackageSkins(graphApi.getGraph(), options)),
         timed(() => createHtmlPackageSkins(graphApi.getGraph(), options)),
       ]);
+
       const generated = [react.value, html.value];
       const generateEnded = performance.now();
+
       const files = await Promise.all(
         generated.flat().map(async (file) => {
           if (!options.format || !/\.(?:css|html|[cm]?[jt]sx?)$/.test(file.path)) return file;
@@ -53,11 +55,14 @@ export function frameworkSkinsPlugin(
           return { ...file, content: await options.format(file) };
         })
       );
+
       const formatEnded = performance.now();
+
       const changed = await syncGeneratedFiles(options.workspaceDir, files, [
         ...reactPackageSkinOwnedPaths(),
         ...htmlPackageSkinOwnedPaths(),
       ]);
+
       const syncEnded = performance.now();
 
       if (profile) {

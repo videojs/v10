@@ -81,6 +81,7 @@ export async function renderHtmlSkins(
 ): Promise<RenderedHtmlSkin[]> {
   const skins = htmlSkins(graph, options.styling);
   const iconModule = htmlIconModule(uniqueModules(skins.flatMap((skin) => skin.modules)));
+
   const templates = await renderComponentGraphHtml(
     graph,
     skins.map((skin) => ({
@@ -123,6 +124,7 @@ function htmlSkins(
   styling: RenderHtmlSkinsOptions['styling']
 ): Array<Omit<RenderedHtmlSkin, 'template'>> {
   const modules = validateComponentGraph(graph);
+
   const roots = [...modules.values()].filter(
     (module): module is HtmlSkinRoot =>
       module.meta?.type === 'skin' &&

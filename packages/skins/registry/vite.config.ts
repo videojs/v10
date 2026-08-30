@@ -63,7 +63,10 @@ export const registryPackConfig: PackUserConfig = {
         items: registryItems(target),
       })
     ),
-    frameworkSkinsPlugin(registryGraph, { workspaceDir: resolve(packageDir, '../..'), format: formatSource }),
+    frameworkSkinsPlugin(registryGraph, {
+      workspaceDir: resolve(packageDir, '../..'),
+      format: formatSource,
+    }),
     registryAssetsOnly(),
   ],
 };
