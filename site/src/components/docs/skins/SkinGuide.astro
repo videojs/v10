@@ -4,6 +4,11 @@ import Aside from '@/components/Aside.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
 import MinimalFrame from '@/components/frames/Minimal.astro';
 import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs.tsx';
+import H2 from '@/components/typography/H2.astro';
+import Li from '@/components/typography/Li.astro';
+import MarkdownCode from '@/components/typography/MarkdownCode.astro';
+import P from '@/components/typography/P.astro';
+import Ul from '@/components/typography/Ul.astro';
 import SkinPreview from './SkinPreview';
 import SkinPreviewHtml from './SkinPreviewHtml.astro';
 import type { SkinGuideDefinition } from './skinGuides';
@@ -77,7 +82,7 @@ const usage = definition.preset === 'background'
     : htmlUsage;
 ---
 
-<p>{definition.when}</p>
+<P>{definition.when}</P>
 
 <MinimalFrame>
   {
@@ -89,7 +94,7 @@ const usage = definition.preset === 'background'
   }
 </MinimalFrame>
 
-<h2 id="use-the-packaged-preset">Use the packaged preset</h2>
+<H2 id="use-the-packaged-preset">Use the packaged preset</H2>
 
 <TabsRoot client:idle>
   <TabsList client:idle label={`${definition.title} usage`}>
@@ -100,23 +105,25 @@ const usage = definition.preset === 'background'
   </TabsPanel>
 </TabsRoot>
 
-<h2 id="customize-the-skin">Customize the skin</h2>
+<H2 id="customize-the-skin">Customize the skin</H2>
 
-<p>
-  Packaged skins support <code>--media-accent-color</code>, <code>--media-accent-text-color</code>, <code>--media-border-radius</code>, and <code>--media-scale-unit</code>. Add your own class name and <code>style</code> values to the skin root.
-</p>
+<P>
+  Packaged skins support <MarkdownCode>--media-accent-color</MarkdownCode>, <MarkdownCode>--media-accent-text-color</MarkdownCode>,
+  <MarkdownCode>--media-border-radius</MarkdownCode>, and <MarkdownCode>--media-scale-unit</MarkdownCode>. Add your own
+  class name and <MarkdownCode>style</MarkdownCode> values to the skin root.
+</P>
 
 {definition.media === "video" && definition.preset !== "background" ? (
   framework === "react" ? (
-    <p>Use the skin's <code>renderPoster</code> prop to replace its poster.</p>
+    <P>Use the skin's <MarkdownCode>renderPoster</MarkdownCode> prop to replace its poster.</P>
   ) : (
-    <p>Place an image in the <code>poster</code> slot to replace the poster.</p>
+    <P>Place an image in the <MarkdownCode>poster</MarkdownCode> slot to replace the poster.</P>
   )
 ) : null}
 
-<p>
+<P>
   See <DocsLink slug="how-to/customize-skins">Customize skins</DocsLink> for the complete styling and ownership workflow.
-</p>
+</P>
 
 {
   definition.preset === "background" ? (
@@ -126,16 +133,17 @@ const usage = definition.preset === 'background'
   ) : null
 }
 
-<h2 id="behavior-and-api">Behavior and API</h2>
+<H2 id="behavior-and-api">Behavior and API</H2>
 
-<ul>
-  <li>
-    The packaged export is <code>{definition.reactSkin}</code> in React and <code>&lt;{definition.htmlSkin}&gt;</code> in HTML.
-  </li>
-  <li>{live ? "The live preset replaces on-demand time controls with live-edge state." : "The on-demand preset includes duration and seeking behavior."}</li>
-  <li>{definition.variant === "minimal" ? "Minimal keeps the same feature family in a smaller responsive layout." : "Default exposes the full primary and secondary control regions."}</li>
-</ul>
+<Ul>
+  <Li>
+    The packaged export is <MarkdownCode>{definition.reactSkin}</MarkdownCode> in React and
+    <MarkdownCode>&lt;{definition.htmlSkin}&gt;</MarkdownCode> in HTML.
+  </Li>
+  <Li>{live ? "The live preset replaces on-demand time controls with live-edge state." : "The on-demand preset includes duration and seeking behavior."}</Li>
+  <Li>{definition.variant === "minimal" ? "Minimal keeps the same feature family in a smaller responsive layout." : "Default exposes the full primary and secondary control regions."}</Li>
+</Ul>
 
-<p>
+<P>
   For player state and feature details, see <DocsLink slug="concepts/presets">Presets</DocsLink>. For the UI building blocks, see <DocsLink slug="concepts/ui-components">UI components</DocsLink>.
-</p>
+</P>

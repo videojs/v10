@@ -1,12 +1,20 @@
 ---
+import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs.tsx';
+import H3 from '@/components/typography/H3.astro';
 import MarkdownCode from '@/components/typography/MarkdownCode.astro';
+import P from '@/components/typography/P.astro';
 import Table from '@/components/typography/Table.astro';
 import Tbody from '@/components/typography/Tbody.astro';
 import Td from '@/components/typography/Td.astro';
 import Th from '@/components/typography/Th.astro';
 import Thead from '@/components/typography/Thead.astro';
 import Tr from '@/components/typography/Tr.astro';
-import { shadcnItemUrl, type ShadcnCatalogItem } from '@/utils/installation/shadcn';
+import {
+  shadcnItemUrl,
+  type ShadcnCatalogItem,
+  type ShadcnFramework,
+  type ShadcnStyling,
+} from '@/utils/installation/shadcn';
 import { readRegistryCatalog } from '@/utils/installation/shadcn-registry';
 
 interface ItemMeta {
@@ -14,68 +22,90 @@ interface ItemMeta {
   role?: 'component' | 'skin';
 }
 
-const [reactTailwind, reactCss, htmlTailwind, htmlCss] = await Promise.all([
-  readRegistryCatalog('react', 'tailwind'),
-  readRegistryCatalog('react', 'css'),
-  readRegistryCatalog('html', 'tailwind'),
-  readRegistryCatalog('html', 'css'),
-]);
+const framework: ShadcnFramework = Astro.params.framework === 'html' ? 'html' : 'react';
+const styles = ['tailwind', 'css'] as const satisfies readonly ShadcnStyling[];
+const catalogs = await Promise.all(
+  styles.map(async (styling) => ({
+    catalog: await readRegistryCatalog(framework, styling),
+    styling,
+  }))
+);
 const isPublicRole = (item: ShadcnCatalogItem, role: ItemMeta['role']) => {
   // SAFETY: the local registry catalog is generated with this owned metadata shape and schema-validated before site tasks run.
   const meta = item.meta as ItemMeta | undefined;
 
   return meta?.public === true && meta.role === role;
 };
-const skinRows = reactTailwind.items.filter((item) => isPublicRole(item, 'skin'));
-const componentRows = reactTailwind.items.filter((item) => isPublicRole(item, 'component'));
-const hasItem = (catalog: { readonly items: readonly ShadcnCatalogItem[] }, name: string) =>
-  catalog.items.some((item) => item.name === name);
 ---
 
-<h3 id="skin-blocks">Skin blocks</h3>
+<H3 id="skin-blocks">Skin blocks</H3>
 
-<p>
-  Skin blocks install editable UI source. Players and media remain direct <MarkdownCode>@videojs/react</MarkdownCode> or
-  <MarkdownCode>@videojs/html</MarkdownCode> imports.
-</p>
+<P>
+  Skin blocks install editable UI source for the current {framework === 'react' ? 'React' : 'HTML'} docs. Players and
+  media remain direct package imports.
+</P>
 
-<Table>
-  <Thead>
-    <Tr><Th>Skin</Th><Th>React + Tailwind</Th><Th>React + CSS</Th><Th>HTML + Tailwind</Th><Th>HTML + CSS</Th></Tr>
-  </Thead>
-  <Tbody>
-    {
-      skinRows.map((item) => (
-        <Tr>
-          <Td>{item.title}</Td>
-          <Td><a href={shadcnItemUrl('react', 'tailwind', item.name)}><MarkdownCode>{item.name}</MarkdownCode></a></Td>
-          <Td>{hasItem(reactCss, item.name) ? <a href={shadcnItemUrl('react', 'css', item.name)}><MarkdownCode>{item.name}</MarkdownCode></a> : null}</Td>
-          <Td>{hasItem(htmlTailwind, item.name) ? <a href={shadcnItemUrl('html', 'tailwind', item.name)}><MarkdownCode>{item.name}</MarkdownCode></a> : null}</Td>
-          <Td>{hasItem(htmlCss, item.name) ? <a href={shadcnItemUrl('html', 'css', item.name)}><MarkdownCode>{item.name}</MarkdownCode></a> : null}</Td>
-        </Tr>
-      ))
-    }
-  </Tbody>
-</Table>
+<TabsRoot client:idle className="my-6">
+  <TabsList client:idle label="Skin styling">
+    <Tab client:idle value="skin-tailwind" initial>Tailwind</Tab>
+    <Tab client:idle value="skin-css">CSS</Tab>
+  </TabsList>
+  {
+    catalogs.map(({ catalog, styling }, styleIndex) => (
+      <TabsPanel client:idle value={`skin-${styling}`} initial={styleIndex === 0} className="bg-transparent">
+        <Table maxWidth={false} outerClass="my-0">
+          <Thead><Tr><Th>Item</Th><Th><span class="sr-only">Registry</span></Th></Tr></Thead>
+          <Tbody>
+            {catalog.items.filter((item) => isPublicRole(item, 'skin')).map((item) => (
+              <Tr>
+                <Td>
+                  <div>{item.title}</div>
+                  <MarkdownCode>@videojs/{item.name}</MarkdownCode>
+                </Td>
+                <Td class="text-right"><a href={shadcnItemUrl(framework, styling, item.name)}>View JSON</a></Td>
+              </Tr>
+            ))}
+          </Tbody>
+        </Table>
+      </TabsPanel>
+    ))
+  }
+</TabsRoot>
 
-<h3 id="react-component-items">React UI components</h3>
+{
+  framework === 'react' ? (
+    <>
+      <H3 id="react-component-items">React UI components</H3>
 
-<p>
-  Individual React UI components install to stable paths under <MarkdownCode>components/videojs/ui</MarkdownCode>.
-  Tailwind and CSS catalogs expose the same item names.
-</p>
+      <P>
+        Individual React UI components install to stable paths under <MarkdownCode>components/videojs/ui</MarkdownCode>.
+        Choose the styling catalog used by your project.
+      </P>
 
-<Table>
-  <Thead><Tr><Th>Component</Th><Th>Tailwind</Th><Th>CSS</Th></Tr></Thead>
-  <Tbody>
-    {
-      componentRows.map((item) => (
-        <Tr>
-          <Td>{item.title}</Td>
-          <Td><a href={shadcnItemUrl('react', 'tailwind', item.name)}><MarkdownCode>{item.name}</MarkdownCode></a></Td>
-          <Td>{hasItem(reactCss, item.name) ? <a href={shadcnItemUrl('react', 'css', item.name)}><MarkdownCode>{item.name}</MarkdownCode></a> : null}</Td>
-        </Tr>
-      ))
-    }
-  </Tbody>
-</Table>
+      <TabsRoot client:idle className="my-6">
+        <TabsList client:idle label="Component styling">
+          <Tab client:idle value="component-tailwind" initial>Tailwind</Tab>
+          <Tab client:idle value="component-css">CSS</Tab>
+        </TabsList>
+        {catalogs.map(({ catalog, styling }, styleIndex) => (
+          <TabsPanel client:idle value={`component-${styling}`} initial={styleIndex === 0} className="bg-transparent">
+            <Table maxWidth={false} outerClass="my-0">
+              <Thead><Tr><Th>Item</Th><Th><span class="sr-only">Registry</span></Th></Tr></Thead>
+              <Tbody>
+                {catalog.items.filter((item) => isPublicRole(item, 'component')).map((item) => (
+                  <Tr>
+                    <Td>
+                      <div>{item.title}</div>
+                      <MarkdownCode>@videojs/{item.name}</MarkdownCode>
+                    </Td>
+                    <Td class="text-right"><a href={shadcnItemUrl(framework, styling, item.name)}>View JSON</a></Td>
+                  </Tr>
+                ))}
+              </Tbody>
+            </Table>
+          </TabsPanel>
+        ))}
+      </TabsRoot>
+    </>
+  ) : null
+}

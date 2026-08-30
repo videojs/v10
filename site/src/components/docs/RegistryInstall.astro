@@ -1,6 +1,8 @@
 ---
 import ServerCode from '@/components/Code/ServerCode.astro';
 import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs.tsx';
+import MarkdownCode from '@/components/typography/MarkdownCode.astro';
+import P from '@/components/typography/P.astro';
 import {
   shadcnAddCommand,
   shadcnItemUrl,
@@ -26,7 +28,7 @@ const installations = await Promise.all(
 const command = shadcnAddCommand(item)!;
 ---
 
-<TabsRoot client:idle className="my-6" maxWidth={false}>
+<TabsRoot client:idle className="my-6">
   <TabsList client:idle label="Installation method">
     <Tab client:idle value="tailwind-cli" initial>Tailwind CLI</Tab>
     <Tab client:idle value="tailwind-manual">Tailwind manual</Tab>
@@ -37,30 +39,30 @@ const command = shadcnAddCommand(item)!;
     installations.map(({ model, styling }, styleIndex) => (
       <>
         <TabsPanel client:idle value={`${styling}-cli`} initial={styleIndex === 0} className="bg-transparent text-faded-black dark:text-manila-light">
-          <p class="mt-0">Add the <code>@videojs</code> namespace for the {framework} {styling} catalog, then install the editable source.</p>
+          <P class="mt-0">Add the <MarkdownCode>@videojs</MarkdownCode> namespace for the {framework} {styling} catalog, then install the editable source.</P>
           <ServerCode
             code={JSON.stringify({ registries: { '@videojs': shadcnItemUrl(framework, styling, '{name}') } }, null, 2)}
             lang="json"
           />
           <ServerCode code={command} lang="bash" />
-          {model.item.docs ? <p class="mb-0 whitespace-pre-line">{model.item.docs.split('```')[0]?.trim()}</p> : null}
+          {model.item.docs ? <P class="mb-0 whitespace-pre-line">{model.item.docs.split('```')[0]?.trim()}</P> : null}
         </TabsPanel>
         <TabsPanel client:idle value={`${styling}-manual`} className="max-h-none overflow-visible bg-transparent p-4 text-faded-black dark:text-manila-light">
-          <p class="mt-0">
-            Copy the exact files below and install these packages: <code>{model.dependencies.join(' ')}</code>.
-          </p>
+          <P class="mt-0">
+            Copy the exact files below and install these packages: <MarkdownCode>{model.dependencies.join(' ')}</MarkdownCode>.
+          </P>
           {model.externalRegistryDependencies.length > 0 ? (
-            <p>
-              Also install the Shadcn dependencies <code>{model.externalRegistryDependencies.join(' ')}</code>.
-            </p>
+            <P>
+              Also install the Shadcn dependencies <MarkdownCode>{model.externalRegistryDependencies.join(' ')}</MarkdownCode>.
+            </P>
           ) : null}
           <SourceExplorer
             files={model.files}
             initialPath={model.entryPaths.find((path) => /\/skin\.(?:html|tsx)$/.test(path)) ?? model.entryPaths[0]}
           />
-          <p class="mb-0 text-code">
+          <P class="mb-0 text-code">
             <a href={shadcnItemUrl(framework, styling, item)}>View the registry item JSON</a>
-          </p>
+          </P>
         </TabsPanel>
       </>
     ))
