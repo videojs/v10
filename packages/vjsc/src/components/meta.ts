@@ -2,6 +2,7 @@ export interface ModuleMeta {
   readonly [key: string]: unknown;
 }
 
-export interface NamedModuleMeta extends ModuleMeta {
+/** Static metadata associated with a named component module. */
+export interface ComponentMeta extends ModuleMeta {
   readonly name: string;
 }

@@ -1,7 +1,7 @@
 import {
   type ComponentDefinition,
-  type NamedComponentDefinition,
-  type ComponentDefinitions,
+  type ComponentPartDefinition,
+  type ComponentParts,
   type EmptyProps,
   hasParts,
   type InferProps,
@@ -79,23 +79,23 @@ export interface Component<Props extends object> {
 }
 
 type InferComponentProps<Node> =
-  Node extends ComponentDefinition<infer Props, ComponentDefinitions | undefined> ? Props : never;
+  Node extends ComponentPartDefinition<infer Props, ComponentParts | undefined> ? Props : never;
 
 type ResolvedComponentProps<Node> = [NonNullable<InferComponentProps<Node>>] extends [never]
   ? EmptyProps
   : NonNullable<InferComponentProps<Node>>;
 
-type CompoundComponent<Parts extends ComponentDefinitions> = {
-  [K in keyof Parts & string]: Parts[K] extends ComponentDefinition<object, infer ChildParts>
-    ? ChildParts extends ComponentDefinitions
+type CompoundComponent<Parts extends ComponentParts> = {
+  [K in keyof Parts & string]: Parts[K] extends ComponentPartDefinition<object, infer ChildParts>
+    ? ChildParts extends ComponentParts
       ? CompoundComponent<ChildParts>
       : Component<ResolvedComponentProps<Parts[K]>>
     : Component<ResolvedComponentProps<Parts[K]>>;
 };
 
 export type ComponentFrom<M> =
-  M extends ComponentDefinition<object, infer Parts>
-    ? Parts extends ComponentDefinitions
+  M extends ComponentPartDefinition<object, infer Parts>
+    ? Parts extends ComponentParts
       ? CompoundComponent<Parts>
       : Component<InferProps<M>>
     : Component<InferProps<M>>;
@@ -118,12 +118,14 @@ export const Template = Object.assign(createRuntimeComponentPart<TemplateProps>(
 export const Text = createRuntimeComponentPart<TextProps>('Text', null);
 
 export function createComponent<Props extends object>(
-  definition: NamedComponentDefinition<Props, undefined>
+  definition: ComponentDefinition<Props, undefined>
 ): Component<Props>;
-export function createComponent<const Parts extends ComponentDefinitions>(
-  definition: NamedComponentDefinition<object, Parts>
+export function createComponent<const Parts extends ComponentParts>(
+  definition: ComponentDefinition<object, Parts>
 ): CompoundComponent<Parts>;
-export function createComponent(definition: NamedComponentDefinition): Component<object> | Record<string, unknown> {
+export function createComponent(
+  definition: ComponentDefinition<object, ComponentParts | undefined>
+): Component<object> | Record<string, unknown> {
   if (!hasParts(definition)) {
     return createRuntimeComponentPart(definition.name, null);
   }
@@ -131,7 +133,7 @@ export function createComponent(definition: NamedComponentDefinition): Component
   return createComponentParts(definition.name, definition.parts);
 }
 
-function createComponentParts(name: string, parts: ComponentDefinitions, prefix = ''): Record<string, unknown> {
+function createComponentParts(name: string, parts: ComponentParts, prefix = ''): Record<string, unknown> {
   const compound: Record<string, unknown> = {};
 
   for (const part of Object.keys(parts)) {

@@ -5,7 +5,7 @@ import { walk } from 'oxc-walker';
 import type { Plugin } from 'rolldown';
 
 import { createSourceText, jsxNamePath, type ModuleImports, renderSourceRange, type SourceEdit } from '../ast';
-import type { ComponentDefinition, ComponentDefinitions } from '../components/definition';
+import type { ComponentPartDefinition, ComponentParts } from '../components/definition';
 import {
   type ComponentRewrite,
   type ComponentRewriteContext,
@@ -62,7 +62,7 @@ interface ComponentSourceScopes {
   readonly nodes: ReadonlyMap<JSXElement, ComponentSourceScope>;
 }
 
-type RuntimeComponentDefinition = ComponentDefinition<object, ComponentDefinitions | undefined>;
+type RuntimeComponentDefinition = ComponentPartDefinition<object, ComponentParts | undefined>;
 type RuntimeSourceParts = ComponentRewriteContext<RuntimeComponentDefinition>['parts'];
 type RuntimeSourcePart = SourcePartFor<RuntimeComponentDefinition>;
 

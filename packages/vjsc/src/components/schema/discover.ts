@@ -5,7 +5,7 @@ import { parseSync } from 'oxc-parser';
 
 import { toArray } from '../../utils/array';
 import { absolutePath, fileStem } from '../../utils/path';
-import type { ComponentDefinition, ComponentDefinitions } from '../definition';
+import type { ComponentDefinition, ComponentPartDefinition, ComponentParts } from '../definition';
 
 export interface ComponentFileSet {
   readonly include: string;
@@ -25,7 +25,7 @@ export interface DefinedSchemaComponent {
   readonly kind: 'definition';
   readonly fileName: string;
   readonly name: string;
-  readonly definition: ComponentDefinition<object, ComponentDefinitions | undefined>;
+  readonly definition: ComponentDefinition<object, ComponentParts | undefined>;
 }
 
 export interface FileSchemaComponent {
@@ -95,7 +95,7 @@ function parseComponentDefinitionFile(fileName: string): Pick<DefinedSchemaCompo
 
   return {
     name: definition.name,
-    definition,
+    definition: definition as ComponentDefinition<object, ComponentParts | undefined>,
   };
 }
 
@@ -110,10 +110,7 @@ function isDefineComponentCall(node: unknown): node is CallExpression {
   return callee.type === 'Identifier' && callee.name === 'defineComponent';
 }
 
-function parseComponentDefinition(
-  call: CallExpression,
-  fileName: string
-): ComponentDefinition<object, ComponentDefinitions | undefined> {
+function parseComponentDefinition(call: CallExpression, fileName: string): ParsedComponentDefinition {
   const argument = call.arguments[0];
   if (!argument) return {};
 
@@ -124,7 +121,7 @@ function parseComponentDefinition(
   const definition: {
     name?: string;
     root?: string;
-    parts?: Record<string, ComponentDefinition<object, ComponentDefinitions | undefined>>;
+    parts?: ComponentParts;
   } = {};
 
   for (const property of argument.properties) {
@@ -158,8 +155,12 @@ function parseComponentDefinition(
     );
   }
 
-  return definition as ComponentDefinition<object, ComponentDefinitions | undefined>;
+  return definition as ParsedComponentDefinition;
 }
+
+type ParsedComponentDefinition = ComponentPartDefinition<object, ComponentParts | undefined> & {
+  readonly name?: string | undefined;
+};
 
 function staticPropertyName(name: PropertyKey): string {
   if (name.type === 'Identifier') return name.name;

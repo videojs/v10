@@ -7,11 +7,11 @@ import { registryItemSchema, registrySchema } from 'shadcn/schema';
 import { describe, expect, it } from 'vite-plus/test';
 
 import { vjscPlugin, vjscRegistryPlugin } from '..';
-import type { NamedModuleMeta } from '../../components';
+import type { ComponentMeta } from '../../components';
 import type { GraphModule } from '../../graph';
 import type { VjscRegistryOptions, VjscRegistryResolvedItem } from '../../shadcn';
 
-interface FixtureMeta extends NamedModuleMeta {
+interface FixtureMeta extends ComponentMeta {
   readonly type: 'block' | 'component' | 'support';
   readonly title: string;
   readonly description: string;

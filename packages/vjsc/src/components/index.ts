@@ -1,11 +1,12 @@
 export {
   type ComponentDefinition,
   type ComponentDefinitions,
+  type ComponentPartDefinition,
+  type ComponentParts,
   type ComponentSchema,
   defineComponent,
   defineSchema,
   type EmptyProps,
-  type NamedComponentDefinition,
 } from './definition';
 export {
   type BaseProps,
@@ -34,4 +35,4 @@ export {
   type VjscElement,
   type VjscNode,
 } from './jsx-runtime';
-export type { ModuleMeta, NamedModuleMeta } from './meta';
+export type { ComponentMeta, ModuleMeta } from './meta';

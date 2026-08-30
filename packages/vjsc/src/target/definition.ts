@@ -4,8 +4,9 @@ import type { RolldownMagicString } from 'rolldown';
 import type { SourceText } from '../ast';
 import type { ModuleImport } from '../ast/imports';
 import type {
-  ComponentDefinition,
   ComponentDefinitions,
+  ComponentPartDefinition,
+  ComponentParts,
   ComponentSchema,
   EmptyProps,
   InferProps,
@@ -149,9 +150,9 @@ export interface SourcePartCollection<Props extends object = EmptyProps> extends
 }
 
 type DefinedParts<Definition> =
-  Definition extends ComponentDefinition<object, infer Parts> ? Exclude<Parts, undefined> : never;
+  Definition extends ComponentPartDefinition<object, infer Parts> ? Exclude<Parts, undefined> : never;
 
-type DefinedRoot<Definition, Parts extends ComponentDefinitions> = Definition extends {
+type DefinedRoot<Definition, Parts extends ComponentParts> = Definition extends {
   readonly root: infer Root;
 }
   ? Extract<Root, keyof Parts>
@@ -159,7 +160,7 @@ type DefinedRoot<Definition, Parts extends ComponentDefinitions> = Definition ex
 
 type RootProps<Definition> = [DefinedParts<Definition>] extends [never]
   ? InferProps<Definition>
-  : DefinedParts<Definition> extends infer Parts extends ComponentDefinitions
+  : DefinedParts<Definition> extends infer Parts extends ComponentParts
     ? [DefinedRoot<Definition, Parts>] extends [never]
       ? InferProps<Definition>
       : InferProps<Parts[DefinedRoot<Definition, Parts>]>
@@ -167,7 +168,7 @@ type RootProps<Definition> = [DefinedParts<Definition>] extends [never]
 
 type SourceParts<Definition> = [DefinedParts<Definition>] extends [never]
   ? Record<never, never>
-  : DefinedParts<Definition> extends infer Parts extends ComponentDefinitions
+  : DefinedParts<Definition> extends infer Parts extends ComponentParts
     ? {
         readonly [Part in Exclude<keyof Parts, DefinedRoot<Definition, Parts>>]: SourcePartFor<Parts[Part]>;
       }
@@ -211,7 +212,7 @@ export interface PrimitiveRules {
 type TargetTree<Definition> = TargetElement &
   ([DefinedParts<Definition>] extends [never]
     ? object
-    : DefinedParts<Definition> extends infer Parts extends ComponentDefinitions
+    : DefinedParts<Definition> extends infer Parts extends ComponentParts
       ? {
           readonly [Part in keyof Parts]: TargetTree<Parts[Part]>;
         }
@@ -226,7 +227,7 @@ export type ComponentRule<Definition> =
   | ComponentRewrite<Definition>
   | ([DefinedParts<Definition>] extends [never]
       ? never
-      : DefinedParts<Definition> extends infer Parts extends ComponentDefinitions
+      : DefinedParts<Definition> extends infer Parts extends ComponentParts
         ? {
             readonly [Part in keyof Parts]?: ComponentRule<Parts[Part]> | undefined;
           }
