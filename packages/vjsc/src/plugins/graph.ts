@@ -16,16 +16,16 @@ import type { VjscEntriesOptions } from './vjsc';
 const SCRIPT_ID = /\.[cm]?[jt]sx?(?:\?|$)/;
 const VIRTUAL_STYLE_ID = /(?:^|\0)virtual:vjsc\/css\//;
 
-export interface VjscGraphCapability<Meta extends ModuleMeta = ModuleMeta> {
-  readonly api: VjscGraph<Meta>;
+export interface VjscGraphCapability<Node extends ModuleMeta = ModuleMeta> {
+  readonly api: VjscGraph<Node>;
   clear(): void;
-  finalize(graph: VjscGraph<Meta>): void;
+  finalize(graph: VjscGraph<Node>): void;
 }
 
 /** Create the stable plugin API object whose properties become available after `buildEnd`. */
-export function createVjscGraphCapability<Meta extends ModuleMeta>(): VjscGraphCapability<Meta> {
-  let graph: VjscGraph<Meta> | undefined;
-  const current = (): VjscGraph<Meta> => {
+export function createVjscGraphCapability<Node extends ModuleMeta>(): VjscGraphCapability<Node> {
+  let graph: VjscGraph<Node> | undefined;
+  const current = (): VjscGraph<Node> => {
     if (!graph) throw new Error('The VJSC graph is not available before buildEnd.');
 
     return graph;
@@ -53,9 +53,9 @@ export function createVjscGraphCapability<Meta extends ModuleMeta>(): VjscGraphC
 }
 
 /** Capture selected entries and their finalized transformed dependencies for the `vjscPlugin` API. */
-export function vjscGraphPlugin<Meta extends ModuleMeta>(
+export function vjscGraphPlugin<Node extends ModuleMeta>(
   entriesOptions: VjscEntriesOptions | undefined,
-  capability: VjscGraphCapability<Meta>
+  capability: VjscGraphCapability<Node>
 ): Plugin {
   let root = resolveModulePath(entriesOptions?.root ?? process.cwd());
   const entries = new Map<string, { readonly filename: string; readonly params: Readonly<Record<string, string>> }>();
@@ -103,7 +103,7 @@ export function vjscGraphPlugin<Meta extends ModuleMeta>(
     async buildEnd(error) {
       if (error) return;
 
-      const modules: GraphModuleInput<Meta>[] = [];
+      const modules: GraphModuleInput<Node>[] = [];
 
       for (const hostId of this.getModuleIds()) {
         const id = normalizeResolvedId(hostId);
@@ -168,7 +168,7 @@ export function vjscGraphPlugin<Meta extends ModuleMeta>(
           source,
           imports,
           styles: buildMeta?.moduleStyles ?? { files: [], assets: [] },
-          ...(buildMeta?.moduleMeta ? { meta: buildMeta.moduleMeta as unknown as Meta } : {}),
+          ...(buildMeta?.moduleMeta ? { meta: buildMeta.moduleMeta as unknown as Node } : {}),
         });
       }
 

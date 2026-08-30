@@ -4,20 +4,20 @@ import type { ModuleMeta } from '../components/meta';
 import { replaceImportSpecifiers } from '../shadcn/analyze';
 import type { GraphImport, GraphModule, VjscGraph } from './types';
 
-export interface GraphImportContext<Meta extends ModuleMeta = ModuleMeta> {
-  readonly dependency?: GraphModule<Meta> | undefined;
-  readonly importer: GraphModule<Meta>;
+export interface GraphImportContext<Node extends ModuleMeta = ModuleMeta> {
+  readonly dependency?: GraphModule<Node> | undefined;
+  readonly importer: GraphModule<Node>;
   readonly reference: GraphImport;
 }
 
 /** Collect one root module and every captured graph dependency reachable from it. */
-export function collectModules<Meta extends ModuleMeta>(graph: VjscGraph<Meta>, rootId: string): GraphModule<Meta>[] {
+export function collectModules<Node extends ModuleMeta>(graph: VjscGraph<Node>, rootId: string): GraphModule<Node>[] {
   const root = graph.modules.get(rootId);
   if (!root) throw new Error(`VJSC graph root module is missing: \`${rootId}\`.`);
 
-  const collected = new Map<string, GraphModule<Meta>>();
+  const collected = new Map<string, GraphModule<Node>>();
 
-  const visit = (module: GraphModule<Meta>): void => {
+  const visit = (module: GraphModule<Node>): void => {
     if (collected.has(module.id)) return;
 
     collected.set(module.id, module);
@@ -34,10 +34,10 @@ export function collectModules<Meta extends ModuleMeta>(graph: VjscGraph<Meta>, 
 }
 
 /** Rewrite imports from the references already captured in a finalized module graph. */
-export function rewriteImports<Meta extends ModuleMeta>(
-  graph: VjscGraph<Meta>,
-  module: GraphModule<Meta>,
-  resolveImport: (context: GraphImportContext<Meta>) => string | undefined
+export function rewriteImports<Node extends ModuleMeta>(
+  graph: VjscGraph<Node>,
+  module: GraphModule<Node>,
+  resolveImport: (context: GraphImportContext<Node>) => string | undefined
 ): string {
   const replacements = module.imports.flatMap((reference) => {
     const dependency = reference.resolvedId ? graph.modules.get(reference.resolvedId) : undefined;

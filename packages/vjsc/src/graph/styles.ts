@@ -21,9 +21,9 @@ export interface BundleStylesOptions {
 }
 
 /** Merge exact authored and transformed styles used by a set of module graph modules. */
-export async function bundleStyles<Meta extends ModuleMeta>(
-  graph: VjscGraph<Meta>,
-  modules: readonly GraphModule<Meta>[],
+export async function bundleStyles<Node extends ModuleMeta>(
+  graph: VjscGraph<Node>,
+  modules: readonly GraphModule<Node>[],
   options: BundleStylesOptions
 ): Promise<string> {
   const styles = new Map<string, string>();

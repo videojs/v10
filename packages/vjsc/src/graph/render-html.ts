@@ -29,8 +29,8 @@ export interface RenderHtmlOptions {
 }
 
 /** Render named HTML component exports directly from one finalized module graph. */
-export async function renderHtml<Meta extends ModuleMeta>(
-  graph: VjscGraph<Meta>,
+export async function renderHtml<Node extends ModuleMeta>(
+  graph: VjscGraph<Node>,
   entries: readonly HtmlEntry[],
   options: RenderHtmlOptions = {}
 ): Promise<ReadonlyMap<string, string>> {

@@ -10,13 +10,13 @@ import type { VjscRegistryOptions } from '../shadcn/types';
 export type { VjscRegistryOptions } from '../shadcn/types';
 
 /** Emit a Shadcn registry from the finalized graph exposed by `vjscPlugin`. */
-export function vjscRegistryPlugin<Meta extends ModuleMeta>(options: VjscRegistryOptions<Meta>): Plugin {
-  let graph: VjscGraph<Meta> | undefined;
+export function vjscRegistryPlugin<Node extends ModuleMeta>(options: VjscRegistryOptions<Node>): Plugin {
+  let graph: VjscGraph<Node> | undefined;
 
   return {
     name: 'vjsc:registry',
     buildStart(inputOptions) {
-      graph = findVjscGraph<Meta>(inputOptions.plugins);
+      graph = findVjscGraph<Node>(inputOptions.plugins);
 
       if (!graph) this.error('The Shadcn registry requires vjscPlugin in the same build.');
     },

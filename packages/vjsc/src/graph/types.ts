@@ -12,7 +12,7 @@ export interface GraphModuleStyles {
   readonly assets: readonly string[];
 }
 
-export interface GraphModule<Meta extends ModuleMeta = ModuleMeta> {
+export interface GraphModule<Node extends ModuleMeta = ModuleMeta> {
   /** Full host module ID, including its VJSC transform query. */
   readonly id: string;
   /** Absolute physical source filename. */
@@ -25,12 +25,12 @@ export interface GraphModule<Meta extends ModuleMeta = ModuleMeta> {
   readonly source: string;
   readonly imports: readonly GraphImport[];
   readonly styles: GraphModuleStyles;
-  readonly meta?: Meta | undefined;
+  readonly meta?: Node | undefined;
 }
 
 /** Finalized transformed-module graph exposed by `vjscPlugin`. */
-export interface VjscGraph<Meta extends ModuleMeta = ModuleMeta> {
+export interface VjscGraph<Node extends ModuleMeta = ModuleMeta> {
   readonly root: string;
-  readonly modules: ReadonlyMap<string, GraphModule<Meta>>;
+  readonly modules: ReadonlyMap<string, GraphModule<Node>>;
   readonly assets: ReadonlyMap<string, string>;
 }

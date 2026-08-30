@@ -7,18 +7,18 @@ import { moduleFilename } from '../utils/module-id';
 import { escapesRoot, toPosixPath } from '../utils/path';
 import type { GraphModule, VjscGraph } from './types';
 
-export type GraphModuleInput<Meta extends ModuleMeta = ModuleMeta> = Omit<GraphModule<Meta>, 'sourcePath'>;
+export type GraphModuleInput<Node extends ModuleMeta = ModuleMeta> = Omit<GraphModule<Node>, 'sourcePath'>;
 
 /** Normalize and validate the immutable graph exposed after the build has completed. */
-export function finalizeGraph<Meta extends ModuleMeta>(
+export function finalizeGraph<Node extends ModuleMeta>(
   graphRoot: string,
-  inputs: readonly GraphModuleInput<Meta>[],
+  inputs: readonly GraphModuleInput<Node>[],
   graphAssets: ReadonlyMap<string, string>
-): VjscGraph<Meta> {
+): VjscGraph<Node> {
   if (!isAbsolute(graphRoot)) throw new Error(`VJSC graph root must be absolute: \`${graphRoot}\`.`);
 
   const root = resolve(graphRoot);
-  const modules = new Map<string, GraphModule<Meta>>();
+  const modules = new Map<string, GraphModule<Node>>();
 
   for (const input of inputs) {
     if (modules.has(input.id)) throw new Error(`VJSC graph module is captured twice: \`${input.id}\`.`);

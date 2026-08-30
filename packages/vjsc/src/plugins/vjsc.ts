@@ -50,16 +50,16 @@ export interface VjscPluginOptions {
  *
  * @param options - Resolves targets and styles once for each module identity.
  */
-export function vjscPlugin<Meta extends ModuleMeta = ModuleMeta>(options: VjscPluginOptions): Plugin[] {
-  return createVjscPluginPipeline<Meta>(options);
+export function vjscPlugin<Node extends ModuleMeta = ModuleMeta>(options: VjscPluginOptions): Plugin[] {
+  return createVjscPluginPipeline<Node>(options);
 }
 
-export function createVjscPluginPipeline<Meta extends ModuleMeta = ModuleMeta>(
+export function createVjscPluginPipeline<Node extends ModuleMeta = ModuleMeta>(
   options: VjscPluginOptions,
   styleLifecycle?: StylePluginLifecycle,
   diagnostics: StylePluginDiagnostics = false
 ): Plugin[] {
-  const graph = createVjscGraphCapability<Meta>();
+  const graph = createVjscGraphCapability<Node>();
   const componentTransforms = new Map<string, readonly ComponentTarget[] | null>();
   const styleTransforms = new Map<string, Promise<StyleTransformOptions | null>>();
   const components = (module: VjscModule): readonly ComponentTarget[] | null => {
