@@ -7,6 +7,8 @@ import { moduleFilename } from '../utils/module-id';
 import { escapesRoot, toPosixPath } from '../utils/path';
 import type { ComponentGraph, ComponentGraphModule } from './types';
 
+const validatedGraphs = new WeakMap<ComponentGraph, ReadonlyMap<string, ValidatedComponentGraphModule>>();
+
 export interface ValidatedComponentGraphModule<
   Item extends ComponentMeta = ComponentMeta,
 > extends ComponentGraphModule<Item> {
@@ -16,6 +18,13 @@ export interface ValidatedComponentGraphModule<
 export function validateComponentGraph<Item extends ComponentMeta>(
   graph: ComponentGraph<Item>
 ): ReadonlyMap<string, ValidatedComponentGraphModule<Item>> {
+  const cached = validatedGraphs.get(graph);
+
+  if (cached) {
+    // SAFETY: ComponentGraph is a readonly finalized build artifact, so validation is stable for its lifetime.
+    return cached as ReadonlyMap<string, ValidatedComponentGraphModule<Item>>;
+  }
+
   if (!isAbsolute(graph.root)) throw new Error(`Component graph root must be absolute: \`${graph.root}\`.`);
 
   const root = resolve(graph.root);
@@ -61,6 +70,9 @@ export function validateComponentGraph<Item extends ComponentMeta>(
       }
     }
   }
+
+  // SAFETY: the cache erases only the graph's metadata subtype and returns it through the same graph identity.
+  validatedGraphs.set(graph, modules as ReadonlyMap<string, ValidatedComponentGraphModule>);
 
   return modules;
 }
