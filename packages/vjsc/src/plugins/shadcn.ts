@@ -21,10 +21,12 @@ export function shadcnRegistryPlugin<Item extends ComponentMeta>(
       const output = options.output ? normalizeOutput(options.output) : '';
 
       for (const file of await createShadcnRegistryFiles(graph.api.getGraph(), options)) {
+        const source = file.editable && options.format ? await options.format(file) : file.content;
+
         this.emitFile({
           type: 'asset',
           fileName: output ? posix.join(output, file.path) : file.path,
-          source: file.content,
+          source,
         });
       }
     },

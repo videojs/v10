@@ -39,6 +39,10 @@
       "types": "./dist/graph/index.d.ts",
       "default": "./dist/graph/index.js"
     },
+    "./output": {
+      "types": "./dist/output/index.d.ts",
+      "default": "./dist/output/index.js"
+    },
     "./target": {
       "types": "./dist/target/index.d.ts",
       "default": "./dist/target/index.js"
@@ -83,6 +87,7 @@
     "magic-string": "^1.2.2",
     "oxc-parser": "0.146.0",
     "oxc-walker": "^1.1.1",
+    "oxfmt": "0.61.0",
     "rolldown": "~1.2.5",
     "shadcn": "^4.16.2",
     "tailwind-merge": "^3.5.0",

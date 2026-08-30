@@ -151,6 +151,24 @@ describe('shadcnRegistryPlugin', () => {
     expect(registryFile(output, 'items', item, '/skin.html')).toBe('<main></main>');
   });
 
+  it('formats editable sources without passing manifests to the formatter', async () => {
+    const root = setup({
+      'components/root.tsx': `export const Root = <main />; ${meta('root', 'block')}`,
+    });
+    const formatted: string[] = [];
+    const output = await build(root, {
+      format(source) {
+        formatted.push(source.path);
+
+        return source.content.replace('<main />', '<main data-formatted />');
+      },
+    });
+    const item = registryItem(output, 'items', 'root');
+
+    expect(formatted).toEqual(['items/files/root/root.tsx']);
+    expect(registryFile(output, 'items', item, '/root.tsx')).toContain('<main data-formatted />');
+  });
+
   it('reuses one graph plugin safely across rebuilds', async () => {
     const root = setup({
       'components/root.tsx': `export const Root = <main>first</main>; ${meta('root', 'block')}`,

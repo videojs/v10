@@ -59,6 +59,7 @@ const VIRTUAL_CSS_IMPORT = /import\s+["']virtual:vjsc\/css\/[^"']+["'];?\s*/g;
 export interface ShadcnOutputFile {
   readonly path: string;
   readonly content: string;
+  readonly editable: boolean;
 }
 
 /** Prepare an included Shadcn source registry from the host's transformed module graph. */
@@ -114,7 +115,7 @@ export async function createShadcnRegistryFiles<Item extends ComponentMeta>(
 
   for (const item of builtItems) {
     for (const [path, content] of item.sourceFiles) {
-      assets.push({ path: posix.join(normalizeGroup(item.group), path), content });
+      assets.push({ path: posix.join(normalizeGroup(item.group), path), content, editable: true });
     }
   }
 
@@ -587,7 +588,7 @@ function normalizeGroup(group: string): string {
 }
 
 function jsonFile(path: string, value: unknown): ShadcnOutputFile {
-  return { path, content: `${JSON.stringify(value, null, 2)}\n` };
+  return { path, content: `${JSON.stringify(value, null, 2)}\n`, editable: false };
 }
 
 function validateRegistryFiles(items: readonly RegistryItem[]): void {
