@@ -28,7 +28,7 @@ type HtmlSkinRoot = GraphModule<SkinMeta & { readonly name: SkinName }> & {
   readonly meta: SkinMeta & { readonly name: SkinName };
 };
 
-/** Generate package-local HTML Skin templates, registrations, and styles from one finalized VJSC component graph. */
+/** Generate package-local HTML Skin templates, registrations, and styles from one finalized VJSC module graph. */
 export async function createHtmlPackageSkins(
   graph: VjscGraph<SkinModuleMeta>,
   options: CreateHtmlPackageSkinsOptions
@@ -146,7 +146,7 @@ function htmlTemplateModule(html: string): string {
 
   return `import { createTemplate } from '@videojs/utils/dom';
 
-/** Static template rendered from the finalized VJSC component graph. */
+/** Static template rendered from the finalized VJSC module graph. */
 export const template = createTemplate(/* html */ \`${template}\`);
 `;
 }

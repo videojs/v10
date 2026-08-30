@@ -4,16 +4,16 @@ import type { ModuleMeta } from '../components/meta';
 import { HTML_RUNTIME } from '../plugins/html-runtime';
 import type { VjscGraph } from './types';
 
-const entryId = '\0vjsc:component-graph-html-entry';
-const emptyId = '\0vjsc:component-graph-html-empty';
-const runtimeId = '\0vjsc:component-graph-html-runtime';
+const entryId = '\0vjsc:module-graph-html-entry';
+const emptyId = '\0vjsc:module-graph-html-empty';
+const runtimeId = '\0vjsc:module-graph-html-runtime';
 
 type HtmlRenderProps = Readonly<Record<never, never>>;
 
 export interface HtmlEntry {
   /** Stable key used for the rendered result. */
   readonly name: string;
-  /** Component graph module containing the renderer export. */
+  /** VJSC graph module containing the renderer export. */
   readonly moduleId: string;
   /** Named component export to render. */
   readonly exportName: string;
@@ -28,7 +28,7 @@ export interface RenderHtmlOptions {
   readonly modules?: ReadonlyMap<string, string> | undefined;
 }
 
-/** Render named HTML component exports directly from one finalized component graph. */
+/** Render named HTML component exports directly from one finalized module graph. */
 export async function renderHtml<Meta extends ModuleMeta>(
   graph: VjscGraph<Meta>,
   entries: readonly HtmlEntry[],
@@ -51,7 +51,7 @@ export async function renderHtml<Meta extends ModuleMeta>(
   const entrySource = entries
     .map((entry, index) => {
       if (!modules.has(entry.moduleId)) {
-        throw new Error(`HTML component graph entry is missing: \`${entry.moduleId}\`.`);
+        throw new Error(`HTML module graph entry is missing: \`${entry.moduleId}\`.`);
       }
 
       return `export { ${entry.exportName} as render${index} } from ${JSON.stringify(entry.moduleId)};`;
@@ -63,7 +63,7 @@ export async function renderHtml<Meta extends ModuleMeta>(
     treeshake: true,
     plugins: [
       {
-        name: 'vjsc:render-component-graph-html',
+        name: 'vjsc:render-module-graph-html',
         resolveId(id, importer) {
           if (id === entryId || id === emptyId || id === runtimeId || modules.has(id) || virtualModules.has(id)) {
             return id;
@@ -109,12 +109,12 @@ export async function renderHtml<Meta extends ModuleMeta>(
     const chunks = output.output.filter((value) => value.type === 'chunk');
 
     if (chunks.length !== 1 || chunks[0]!.imports.length > 0) {
-      throw new Error('HTML component graph renderer did not produce one self-contained module.');
+      throw new Error('HTML module graph renderer did not produce one self-contained module.');
     }
 
     const url = `data:text/javascript;base64,${Buffer.from(chunks[0]!.code).toString('base64')}`;
 
-    // SAFETY: The module is assembled from the finalized component graph and explicit render-only dependencies above.
+    // SAFETY: The module is assembled from the finalized module graph and explicit render-only dependencies above.
     const rendered = (await import(url)) as Readonly<
       Record<string, (props?: HtmlRenderProps) => { toString(): string }>
     >;
@@ -122,7 +122,7 @@ export async function renderHtml<Meta extends ModuleMeta>(
     return new Map(
       entries.map((entry, index) => {
         const render = rendered[`render${index}`];
-        if (!render) throw new Error(`HTML component graph entry \`${entry.name}\` has no renderer export.`);
+        if (!render) throw new Error(`HTML module graph entry \`${entry.name}\` has no renderer export.`);
 
         return [entry.name, formatHtml(String(render({})))] as const;
       })
@@ -137,7 +137,7 @@ function importKey(importer: string, specifier: string): string {
 }
 
 function virtualId(specifier: string): string {
-  return `\0vjsc:component-graph-html-module:${specifier}`;
+  return `\0vjsc:module-graph-html-module:${specifier}`;
 }
 
 function moduleType(filename: string): 'js' | 'jsx' | 'ts' | 'tsx' {

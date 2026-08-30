@@ -14,7 +14,7 @@ export interface PackageSkinsPluginOptions {
   readonly format?: ((source: GeneratedPackageFile) => string | Promise<string>) | undefined;
 }
 
-/** Generate ignored React and HTML package Skin inputs from the finalized VJSC component graph. */
+/** Generate ignored React and HTML package Skin inputs from the finalized VJSC module graph. */
 export function packageSkinsPlugin(options: PackageSkinsPluginOptions): Plugin {
   let graph: VjscGraph<SkinModuleMeta> | undefined;
 

@@ -33,7 +33,7 @@ export function collectModules<Meta extends ModuleMeta>(graph: VjscGraph<Meta>, 
   return [...collected.values()];
 }
 
-/** Rewrite imports from the references already captured in a finalized component graph. */
+/** Rewrite imports from the references already captured in a finalized module graph. */
 export function rewriteImports<Meta extends ModuleMeta>(
   graph: VjscGraph<Meta>,
   module: GraphModule<Meta>,

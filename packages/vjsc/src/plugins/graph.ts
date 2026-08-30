@@ -54,30 +54,32 @@ export function createVjscGraphCapability<Meta extends ModuleMeta>(): VjscGraphC
 
 /** Capture selected entries and their finalized transformed dependencies for the `vjscPlugin` API. */
 export function vjscGraphPlugin<Meta extends ModuleMeta>(
-  options: VjscEntriesOptions,
+  entriesOptions: VjscEntriesOptions | undefined,
   capability: VjscGraphCapability<Meta>
 ): Plugin {
-  const root = resolveModulePath(options.root);
+  let root = resolveModulePath(entriesOptions?.root ?? process.cwd());
   const entries = new Map<string, { readonly filename: string; readonly params: Readonly<Record<string, string>> }>();
   const references = new Set<string>();
   const assets = new Map<string, string>();
 
   return {
     name: 'vjsc:graph',
+    options(options) {
+      root = resolveModulePath(resolve(options.cwd ?? process.cwd(), entriesOptions?.root ?? '.'));
+      return null;
+    },
     buildStart() {
       capability.clear();
       entries.clear();
       references.clear();
       assets.clear();
 
-      const files = discoverFiles(root, options.include, options.exclude);
-
-      this.addWatchFile(root);
+      const files = entriesOptions ? discoverFiles(root, entriesOptions.include, entriesOptions.exclude) : [];
 
       for (const filename of files) {
         this.addWatchFile(filename);
 
-        const params = options.resolve?.params({ filename }) ?? [{}];
+        const params = entriesOptions?.resolve?.params({ filename }) ?? [{}];
 
         for (const selection of params) {
           const id = moduleId(filename, selection);
@@ -108,6 +110,8 @@ export function vjscGraphPlugin<Meta extends ModuleMeta>(
 
         const parsed = parseModuleId(id);
         if (!isAbsolute(parsed.filename) || !isInsideRoot(root, parsed.filename)) continue;
+
+        if (!entriesOptions && parsed.params.size === 0) continue;
 
         const entry = entries.get(id) ?? {
           filename: parsed.filename,

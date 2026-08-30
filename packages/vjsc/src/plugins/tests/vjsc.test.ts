@@ -7,6 +7,7 @@ import { describe, expect, it } from 'vite-plus/test';
 
 import { vjscPlugin } from '..';
 import { defineSchema } from '../../components/definition';
+import type { VjscGraph } from '../../graph';
 import { defineComponentTarget } from '../../target/definition';
 
 const schema = defineSchema('@fixture/components', {});
@@ -37,20 +38,22 @@ describe('vjscPlugin', () => {
 
     writeFileSync(filename, `export const value = 'before';`);
 
+    const plugins = vjscPlugin({
+      transform: {
+        components(module) {
+          configurations.set(module.id, (configurations.get(module.id) ?? 0) + 1);
+          return module.params.get('target') === 'react' ? [target] : null;
+        },
+        styles() {
+          return null;
+        },
+      },
+    });
     const bundle = await rolldown({
+      cwd: root,
       input: id,
       experimental: { nativeMagicString: true },
-      plugins: vjscPlugin({
-        transform: {
-          components(module) {
-            configurations.set(module.id, (configurations.get(module.id) ?? 0) + 1);
-            return module.params.get('target') === 'react' ? [target] : null;
-          },
-          styles() {
-            return null;
-          },
-        },
-      }),
+      plugins,
     });
     const output = await bundle.generate({ format: 'es' });
     const chunk = output.output.find((item) => item.type === 'chunk');
@@ -58,5 +61,8 @@ describe('vjscPlugin', () => {
     expect([...new Set(configurations.values())]).toEqual([1]);
     expect([...configurations.keys()].some((moduleId) => moduleId.endsWith('?target=react'))).toBe(true);
     expect(chunk?.code).toContain('after');
+    expect([...(plugins[0]!.api as VjscGraph).modules.values()].map((module) => module.source)).toEqual([
+      expect.stringContaining('after'),
+    ]);
   });
 });

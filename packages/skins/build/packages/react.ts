@@ -33,7 +33,7 @@ type ReactSkinRoot = GraphModule<SkinMeta & { readonly name: SkinName }> & {
   readonly meta: SkinMeta & { readonly name: SkinName };
 };
 
-/** Generate package-local React Skin implementations from one finalized VJSC component graph. */
+/** Generate package-local React Skin implementations from one finalized VJSC module graph. */
 export async function createReactPackageSkins(
   graph: VjscGraph<SkinModuleMeta>,
   options: CreateReactPackageSkinsOptions

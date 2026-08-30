@@ -12,7 +12,7 @@ const LOCAL_CSS_IMPORT = /@import\s+["'](\.[^"']+)["']\s*;/g;
 export interface BundleStylesOptions {
   /** Human-readable owner used in diagnostics and the generated CSS filename. */
   readonly label: string;
-  /** Additional authored CSS files relative to the component graph root. */
+  /** Additional authored CSS files relative to the module graph root. */
   readonly files?: readonly string[] | undefined;
   /** Include only the virtual stylesheet asset with this decoded filename. */
   readonly asset?: string | undefined;
@@ -20,7 +20,7 @@ export interface BundleStylesOptions {
   readonly includeAssets?: boolean | undefined;
 }
 
-/** Merge exact authored and transformed styles used by a set of component graph modules. */
+/** Merge exact authored and transformed styles used by a set of module graph modules. */
 export async function bundleStyles<Meta extends ModuleMeta>(
   graph: VjscGraph<Meta>,
   modules: readonly GraphModule<Meta>[],
@@ -45,7 +45,7 @@ export async function bundleStyles<Meta extends ModuleMeta>(
         const source = graph.assets.get(id);
 
         if (source === undefined) {
-          throw new Error(`Component graph style \`${options.label}\` has no captured asset: \`${id}\`.`);
+          throw new Error(`VJSC graph style \`${options.label}\` has no captured asset: \`${id}\`.`);
         }
 
         addUnique(styles, id, source, options.label);
@@ -113,7 +113,7 @@ function virtualStyleFilename(id: string): string | undefined {
 }
 
 async function inlineLocalCssImports(filename: string, root: string, stack: Set<string>): Promise<string> {
-  if (stack.has(filename)) throw new Error(`Circular component graph stylesheet import: \`${filename}\`.`);
+  if (stack.has(filename)) throw new Error(`Circular module graph stylesheet import: \`${filename}\`.`);
 
   const source = await readFile(filename, 'utf8');
   const imports = [...source.matchAll(LOCAL_CSS_IMPORT)];
@@ -140,14 +140,14 @@ async function inlineLocalCssImports(filename: string, root: string, stack: Set<
 }
 
 function assertInsideRoot(root: string, filename: string, source: string): void {
-  if (!isInsideRoot(root, filename)) throw new Error(`Component graph style is outside its root: \`${source}\`.`);
+  if (!isInsideRoot(root, filename)) throw new Error(`VJSC graph style is outside its root: \`${source}\`.`);
 }
 
 function addUnique(files: Map<string, string>, path: string, content: string, label: string): void {
   const previous = files.get(path);
 
   if (previous !== undefined && previous !== content) {
-    throw new Error(`Component graph style \`${label}\` has conflicting contents for \`${path}\`.`);
+    throw new Error(`VJSC graph style \`${label}\` has conflicting contents for \`${path}\`.`);
   }
 
   files.set(path, content);

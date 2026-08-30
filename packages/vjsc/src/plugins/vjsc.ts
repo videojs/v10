@@ -6,10 +6,10 @@ import type { StyleTransformOptions } from '../styles/options';
 import type { ComponentTarget } from '../target/definition';
 import type { VjscModule } from '../utils/module-id';
 import { compilerDirectivePlugin } from './compiler-directive';
-import { createVjscGraphCapability, vjscGraphPlugin } from './component-graph';
 import { componentMetaPlugin } from './component-meta';
 import { componentModulesPlugin } from './component-modules';
 import { type ComponentTargetSelection, componentTargetPlugin, primitiveTargetPlugin } from './component-target';
+import { createVjscGraphCapability, vjscGraphPlugin } from './graph';
 import { htmlRuntimePlugin } from './html-runtime';
 import { reactTargetPropsPlugin } from './react-target-props';
 import { stylePlugin, type StylePluginDiagnostics, type StylePluginLifecycle } from './style';
@@ -105,6 +105,6 @@ export function createVjscPluginPipeline<Meta extends ModuleMeta = ModuleMeta>(
     reactTargetPropsPlugin({ targets }),
     templateTargetPlugin({ targets }),
     targetImportCleanupPlugin({ targets }),
-    ...(options.entries ? [vjscGraphPlugin(options.entries, graph)] : []),
+    vjscGraphPlugin(options.entries, graph),
   ];
 }
