@@ -6,10 +6,10 @@ import { type Plugin, type RolldownOutput, rolldown } from 'rolldown';
 import { registryItemSchema, registrySchema } from 'shadcn/schema';
 import { describe, expect, it } from 'vite-plus/test';
 
-import { shadcnRegistryPlugin, vjscPlugin } from '..';
+import { vjscPlugin, vjscRegistryPlugin } from '..';
 import type { NamedModuleMeta } from '../../components';
 import type { GraphModule } from '../../graph';
-import type { ShadcnRegistryPluginOptions, VjscRegistryItem } from '../../shadcn';
+import type { VjscRegistryOptions, VjscRegistryResolvedItem } from '../../shadcn';
 
 interface FixtureMeta extends NamedModuleMeta {
   readonly type: 'block' | 'component' | 'support';
@@ -17,8 +17,8 @@ interface FixtureMeta extends NamedModuleMeta {
   readonly description: string;
 }
 
-describe('shadcnRegistryPlugin', () => {
-  it('emits schema-valid items from the shared component graph', async () => {
+describe('vjscRegistryPlugin', () => {
+  it('emits schema-valid items from the shared module graph', async () => {
     const root = setup({
       'components/root.tsx': `import { Public } from './public'; import { Helper } from './helper'; import value from 'private-package/subpath'; export function Root() { return <main>{Public}{Helper}{value}</main>; } ${meta('root', 'block')}`,
       'components/public.tsx': `export function Public() { return <span/>; } ${meta('public')}`,
@@ -84,12 +84,13 @@ describe('shadcnRegistryPlugin', () => {
     const output = await build(
       root,
       {
-        items: (graph) =>
-          describeItems([...graph.modules.values()]).map((item) =>
-            item.name === 'root'
-              ? { ...item, $vjsc: { ...item.$vjsc, stylesheet: { target: 'styles/root.css', import: true } } }
-              : item
-          ),
+        items: {
+          resolve({ module }) {
+            const item = describeItem(module);
+
+            return item?.name === 'root' ? { ...item, stylesheet: { target: 'styles/root.css' } } : item;
+          },
+        },
       },
       [
         {
@@ -120,29 +121,87 @@ describe('shadcnRegistryPlugin', () => {
     expect(registryFile(output, 'items', item, '/root.tsx')).not.toContain('virtual:vjsc/css');
   });
 
+  it('derives shared style items, dependencies, and imports from graph ownership', async () => {
+    const virtualStyle = 'virtual:vjsc/css/buttons.css';
+    const root = setup({
+      'components/root.tsx': `import ${JSON.stringify(virtualStyle)}; export const Root = <main />; ${meta('root', 'block')}`,
+      'styles/base.css': ':root { --accent: red; }',
+    });
+    const output = await build(
+      root,
+      {
+        styles: {
+          theme: {
+            target: 'styles/theme.css',
+            include: ['./styles/base.css'],
+            title: 'Theme',
+            description: 'Shared theme.',
+          },
+          files: { 'buttons.css': 'styles/button.css' },
+        },
+      },
+      [
+        {
+          name: 'test:shared-style',
+          buildStart() {
+            this.emitFile({ type: 'chunk', id: virtualStyle });
+          },
+          resolveId(id) {
+            return id === virtualStyle ? `\0${virtualStyle}` : null;
+          },
+          load(id) {
+            return id === `\0${virtualStyle}` ? { code: '.button { color: var(--accent); }', moduleType: 'js' } : null;
+          },
+          transform(_code, id) {
+            if (id === `\0${virtualStyle}`) return { code: 'export {};' };
+
+            if (!id.endsWith('/components/root.tsx')) return null;
+
+            return { meta: { moduleStyles: { files: ['buttons.css'], assets: [virtualStyle] } } };
+          },
+        },
+      ]
+    );
+    const item = registryItem(output, 'items', 'root');
+    const style = registryItem(output, 'support', '_style-button');
+    const theme = registryItem(output, 'support', '_style-theme');
+    const source = registryFile(output, 'items', item, '/root.tsx');
+
+    expect(item.registryDependencies).toEqual(['@example/_style-button', '@example/_style-theme']);
+    expect(source).toContain(`import '../styles/button.css';`);
+    expect(source).toContain(`import '../styles/theme.css';`);
+    expect(registryFile(output, 'support', style, '/button.css')).toContain('color: var(--accent)');
+    expect(registryFile(output, 'support', theme, '/theme.css')).toContain('--accent: red');
+  });
+
   it('emits asynchronously prepared source-owned files', async () => {
     const root = setup({
       'components/root.tsx': `export const Root = <main />; ${meta('root', 'block')}`,
     });
     const output = await build(root, {
-      async items() {
-        return [
-          {
-            name: 'template',
-            type: 'registry:block',
-            title: 'Template',
-            description: 'Template.',
-            files: [
-              {
-                path: 'skin.html',
-                target: 'components/example/skins/template/skin.html',
-                type: 'registry:file',
-                content: '<main></main>',
-              },
-            ],
-            $vjsc: { kind: 'files', group: 'items' },
-          },
-        ];
+      items: {
+        resolve() {
+          return null;
+        },
+        async create() {
+          return [
+            {
+              name: 'template',
+              type: 'registry:block',
+              title: 'Template',
+              description: 'Template.',
+              files: [
+                {
+                  path: 'skin.html',
+                  target: 'components/example/skins/template/skin.html',
+                  type: 'registry:file',
+                  content: '<main></main>',
+                },
+              ],
+              group: 'items',
+            },
+          ];
+        },
       },
     });
     const item = registryItem(output, 'items', 'template');
@@ -189,7 +248,7 @@ describe('shadcnRegistryPlugin', () => {
   });
 });
 
-type FixtureOptions = ShadcnRegistryPluginOptions<FixtureMeta>;
+type FixtureOptions = VjscRegistryOptions<FixtureMeta>;
 
 async function build(
   root: string,
@@ -199,7 +258,7 @@ async function build(
 ): Promise<RolldownOutput> {
   const { transformations, ...registryOverrides } = overrides;
   const transform = existingTransform ?? fixtureTransform(root, transformations);
-  const registry = shadcnRegistryPlugin(baseOptions(registryOverrides));
+  const registry = vjscRegistryPlugin(baseOptions(registryOverrides));
   const bundle = await rolldown({
     input: [],
     experimental: { nativeMagicString: true },
@@ -231,36 +290,29 @@ function baseOptions(overrides: Partial<FixtureOptions> = {}): FixtureOptions {
     namespace: '@example',
     paths: { install: 'components/example', import: '@/components/example' },
     meta: { framework: 'react', style: 'tailwind' },
-    items: (graph) => describeItems([...graph.modules.values()]),
+    items: { resolve: ({ module }) => describeItem(module) },
     ...overrides,
   };
 }
 
-function describeItems(modules: readonly GraphModule<FixtureMeta>[]): VjscRegistryItem<FixtureMeta>[] {
-  return modules.flatMap((module) => {
-    const itemMeta = module.meta;
-    if (!itemMeta) return [];
+function describeItem(module: GraphModule<FixtureMeta>): VjscRegistryResolvedItem<FixtureMeta> | null {
+  const itemMeta = module.meta;
+  if (!itemMeta) return null;
 
-    const theme = module.params.theme;
-    const name = theme === 'minimal' ? `${itemMeta.name}-minimal` : itemMeta.name;
-    const support = itemMeta.type === 'support';
+  const theme = module.params.theme;
+  const name = theme === 'minimal' ? `${itemMeta.name}-minimal` : itemMeta.name;
+  const support = itemMeta.type === 'support';
 
-    return [
-      {
-        name,
-        type: support ? 'registry:lib' : itemMeta.type === 'block' ? 'registry:block' : 'registry:ui',
-        title: itemMeta.title,
-        description: itemMeta.description,
-        categories: support ? ['support'] : ['media'],
-        meta: { public: !support },
-        $vjsc: {
-          module,
-          group: 'items',
-          target: `${itemMeta.type === 'block' ? 'skins' : 'ui'}/${name}.tsx`,
-        },
-      },
-    ];
-  });
+  return {
+    name,
+    type: support ? 'registry:lib' : itemMeta.type === 'block' ? 'registry:block' : 'registry:ui',
+    title: itemMeta.title,
+    description: itemMeta.description,
+    categories: support ? ['support'] : ['media'],
+    meta: { public: !support },
+    group: 'items',
+    target: `${itemMeta.type === 'block' ? 'skins' : 'ui'}/${name}.tsx`,
+  };
 }
 
 function meta(name: string, type: FixtureMeta['type'] = 'component'): string {

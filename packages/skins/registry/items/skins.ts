@@ -1,7 +1,7 @@
 import { posix } from 'node:path';
 
 import { type VjscGraph, type GraphModule, bundleStyles } from '../../../vjsc/src/graph/index.ts';
-import type { VjscRegistryItem } from '../../../vjsc/src/shadcn/index.ts';
+import type { VjscRegistryCreatedItem, VjscRegistryResolvedItem } from '../../../vjsc/src/shadcn/index.ts';
 import { createHtmlSkinRegistration, createSourceOwnedHtml, type RenderedHtmlSkin } from '../../build/packages/html.ts';
 import { skinDirectory, skinPreset } from '../../build/skin.ts';
 import { isSkinName, type SkinModuleMeta, type SkinName } from '../../vjsc/meta.ts';
@@ -14,7 +14,7 @@ export async function htmlSkinItem(
   skin: RenderedHtmlSkin,
   graph: VjscGraph<SkinModuleMeta>,
   target: RegistryTarget
-): Promise<VjscRegistryItem<SkinModuleMeta>> {
+): Promise<VjscRegistryCreatedItem> {
   const meta = skin.root.meta;
   const name = meta.style.theme === 'minimal' ? `${skin.preset}-minimal` : skin.preset;
   const directory = meta.style.theme === 'minimal' ? `skins/${skin.preset}/minimal` : `skins/${skin.preset}`;
@@ -26,7 +26,7 @@ export async function htmlSkinItem(
     skin.modules,
     'registry'
   )}`;
-  const files: NonNullable<VjscRegistryItem<SkinModuleMeta>['files']> = [
+  const files: NonNullable<VjscRegistryCreatedItem['files']> = [
     {
       path: 'skin.html',
       target: `${registryPaths.install}/${directory}/skin.html`,
@@ -72,7 +72,7 @@ export async function htmlSkinItem(
       theme: meta.style.theme,
       public: true,
     } satisfies VideojsRegistryMeta,
-    $vjsc: { kind: 'files', group: 'skins' },
+    group: 'skins',
   };
 }
 
@@ -80,7 +80,7 @@ export function skinItem(
   module: GraphModule<SkinModuleMeta>,
   meta: Extract<SkinModuleMeta, { type: 'skin' }>,
   target: RegistryTarget
-): VjscRegistryItem<SkinModuleMeta> {
+): VjscRegistryResolvedItem<SkinModuleMeta> {
   const skin = meta.name;
   if (!isSkinName(skin)) throw new Error(`Unknown Skin registry module: \`${skin}\`.`);
 
@@ -106,13 +106,9 @@ export function skinItem(
     docs: skinDocs(module, meta, skin, target, directory),
     registryDependencies: [...reactHelperDependency(target), '@videojs/_style-theme'],
     meta: registryMeta,
-    $vjsc: {
-      module,
-      group: 'skins',
-      target: (candidate, root) => skinModuleTarget(candidate, root, skin, target.framework),
-      styleImports: ['styles/theme.css'],
-      stylesheet: target.styling === 'css' ? { target: `${directory}/skin.css`, import: true } : undefined,
-    },
+    group: 'skins',
+    target: (candidate, root) => skinModuleTarget(candidate, root, skin, target.framework),
+    stylesheet: target.styling === 'css' ? { target: `${directory}/skin.css` } : undefined,
   };
 }
 

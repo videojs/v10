@@ -1,12 +1,8 @@
-import { basename } from 'node:path';
-
-import type { VjscGraph, GraphModule } from '../../../vjsc/src/graph/index.ts';
-import type { VjscRegistryItem } from '../../../vjsc/src/shadcn/index.ts';
-import type { SkinModuleMeta } from '../../vjsc/meta.ts';
+import type { VjscRegistryStylesOptions } from '../../../vjsc/src/shadcn/index.ts';
 import type { VideojsRegistryMeta } from '../meta.ts';
 import type { RegistryTarget } from '../targets.ts';
 
-const styleTargets = {
+const styleFiles = {
   'buttons.css': 'styles/button.css',
   'container.css': 'styles/container.css',
   'dialog.css': 'styles/dialog.css',
@@ -54,103 +50,27 @@ const tailwindRegistryCss = {
   },
 } as const;
 
-export interface SourceStyles {
-  readonly dependencies: string[];
-  readonly imports: string[];
-}
+export function registryStyles(target: RegistryTarget): VjscRegistryStylesOptions | undefined {
+  if (target.framework === 'html' && target.styling === 'css') return undefined;
 
-export function sourceStyles(
-  module: GraphModule<SkinModuleMeta>,
-  target: RegistryTarget,
-  graph: VjscGraph<SkinModuleMeta>
-): SourceStyles {
-  const targets = new Set<string>(['styles/theme.css']);
-
-  if (target.styling === 'css') {
-    for (const filename of module.styles.files) {
-      const styleTarget = isStyleTarget(filename) ? styleTargets[filename] : undefined;
-
-      if (styleTarget) targets.add(styleTarget);
-    }
-  }
-
-  const imports = [...targets].sort();
-
-  return {
-    imports,
-    dependencies: imports.map((path) => `@videojs/_style-${basename(path, '.css')}`),
-  };
-}
-
-export function concernStyleItems(
-  modules: readonly GraphModule<SkinModuleMeta>[],
-  target: RegistryTarget
-): VjscRegistryItem<SkinModuleMeta>[] {
-  if (target.framework !== 'react' || target.styling !== 'css') return [];
-
-  const shared = modules.filter(
-    (module) =>
-      module.params.target === 'react' &&
-      module.params.style === 'css' &&
-      module.params.skin === undefined &&
-      module.filename.includes('/components/')
-  );
-
-  return Object.entries(styleTargets).flatMap(([asset, styleTarget]) => {
-    const owners = shared.filter((module) => module.styles.files.includes(asset));
-    if (owners.length === 0) return [];
-
-    const concern = basename(styleTarget, '.css');
-
-    return [
-      {
-        name: `_style-${concern}`,
-        type: 'registry:style',
-        title: `Video.js ${concern} styles`,
-        description: `Shared ${concern} styles used by editable Video.js UI components.`,
-        docs: 'Installed automatically with the Video.js components that use these styles.',
-        meta: privateStyleMeta(target),
-        $vjsc: {
-          kind: 'style',
-          group: 'support',
-          modules: owners,
-          asset,
-          target: styleTarget,
-        },
-      },
-    ];
-  });
-}
-
-export function themeStyleItem(target: RegistryTarget): VjscRegistryItem<SkinModuleMeta> {
-  return {
-    name: '_style-theme',
-    type: 'registry:style',
-    title: 'Video.js media theme',
-    description: 'Scoped media tokens, resets, preferences, and Tailwind compiler integration.',
-    docs: 'Installed automatically with Video.js skins and UI components.',
-    cssVars: target.styling === 'tailwind' ? { theme: tailwindThemeVariables } : undefined,
-    css: target.styling === 'tailwind' ? tailwindRegistryCss : undefined,
-    meta: privateStyleMeta(target),
-    $vjsc: {
-      kind: 'style',
-      group: 'support',
-      modules: [],
-      target: 'styles/theme.css',
-      files: ['./styles/base.css'],
-    },
-  };
-}
-
-function privateStyleMeta(target: RegistryTarget): VideojsRegistryMeta {
-  return {
+  const meta = {
     role: 'support',
     framework: target.framework,
     styling: target.styling,
     public: false,
-  };
-}
+  } satisfies VideojsRegistryMeta;
 
-function isStyleTarget(value: string | undefined): value is keyof typeof styleTargets {
-  return Boolean(value && value in styleTargets);
+  return {
+    theme: {
+      target: 'styles/theme.css',
+      include: ['./styles/base.css'],
+      title: 'Video.js media theme',
+      description: 'Scoped media tokens, resets, preferences, and Tailwind compiler integration.',
+      docs: 'Installed automatically with Video.js skins and UI components.',
+      cssVars: target.styling === 'tailwind' ? { theme: tailwindThemeVariables } : undefined,
+      css: target.styling === 'tailwind' ? tailwindRegistryCss : undefined,
+      meta,
+    },
+    files: target.framework === 'react' && target.styling === 'css' ? styleFiles : undefined,
+  };
 }

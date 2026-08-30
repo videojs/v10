@@ -2,27 +2,27 @@ import { spawn } from 'node:child_process';
 import { rm } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
+import { registryTargets } from './targets.ts';
+
 const packageDir = resolve(import.meta.dirname, '..');
 const sourceDir = resolve(packageDir, 'dist/registry/source');
 const hostedDir = resolve(packageDir, 'dist/registry/r');
 const shadcnBin = resolve(packageDir, 'node_modules/shadcn/dist/index.js');
-const catalogs = [
-  [
-    { source: 'r/react/registry.json', output: 'react' },
-    { source: 'r/react/css/registry.json', output: 'react/css' },
-  ],
-  [
-    { source: 'r/html/registry.json', output: 'html' },
-    { source: 'r/html/css/registry.json', output: 'html/css' },
-  ],
-] as const;
+const catalogs = Object.groupBy(registryTargets, ({ framework }) => framework);
 
 await rm(hostedDir, { recursive: true, force: true });
-await Promise.all(catalogs.map(buildCatalogs));
+await Promise.all(Object.values(catalogs).map((targets) => buildCatalogs(targets ?? [])));
 
-async function buildCatalogs(catalogs: (typeof catalogs)[number]): Promise<void> {
-  for (const catalog of catalogs) {
-    await runShadcn(['build', resolve(sourceDir, catalog.source), '--output', resolve(hostedDir, catalog.output)]);
+async function buildCatalogs(targets: readonly (typeof registryTargets)[number][]): Promise<void> {
+  for (const target of targets) {
+    const output = target.output.replace(/^r\//, '');
+
+    await runShadcn([
+      'build',
+      resolve(sourceDir, target.output, 'registry.json'),
+      '--output',
+      resolve(hostedDir, output),
+    ]);
   }
 }
 

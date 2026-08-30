@@ -1,10 +1,9 @@
-import type { VjscGraph, GraphModule } from '../../../vjsc/src/graph/index.ts';
-import type { VjscRegistryItem } from '../../../vjsc/src/shadcn/index.ts';
+import type { GraphModule } from '../../../vjsc/src/graph/index.ts';
+import type { VjscRegistryResolvedItem } from '../../../vjsc/src/shadcn/index.ts';
+import { skinModuleSourcePath } from '../../build/config.ts';
 import type { SkinModuleMeta } from '../../vjsc/meta.ts';
-import { registryModuleSourcePath } from '../configure.ts';
 import type { VideojsRegistryMeta } from '../meta.ts';
 import type { RegistryTarget } from '../targets.ts';
-import { sourceStyles } from './styles.ts';
 
 const privateComponents = new Set(['button-tooltip']);
 const privateModules = new Map([['components/menus/menu-chevron.tsx', '_menu-chevron']]);
@@ -14,48 +13,38 @@ export function isPrivateComponent(name: string): boolean {
 }
 
 export function privateModuleName(module: GraphModule<SkinModuleMeta>): string | undefined {
-  return privateModules.get(registryModuleSourcePath(module.filename));
+  return privateModules.get(skinModuleSourcePath(module.filename));
 }
 
 export function privateComponentItem(
-  module: GraphModule<SkinModuleMeta>,
   meta: Extract<SkinModuleMeta, { type: 'component' }>,
-  target: RegistryTarget,
-  graph: VjscGraph<SkinModuleMeta>
-): VjscRegistryItem<SkinModuleMeta> {
-  const styles = sourceStyles(module, target, graph);
-
+  target: RegistryTarget
+): VjscRegistryResolvedItem<SkinModuleMeta> {
   return {
     name: `_${meta.name}`,
     type: 'registry:lib',
     title: meta.title,
     description: `Private ${meta.description.charAt(0).toLowerCase()}${meta.description.slice(1)}`,
     docs: 'Installed automatically by the Video.js controls that use it.',
-    registryDependencies: [...reactHelperDependency(target), ...styles.dependencies],
+    registryDependencies: reactHelperDependency(target),
     meta: {
       role: 'support',
       framework: 'react',
       styling: target.styling,
       public: false,
     } satisfies VideojsRegistryMeta,
-    $vjsc: {
-      module,
-      group: 'support',
-      target: `ui/${meta.name}.tsx`,
-      styleImports: styles.imports,
-    },
+    group: 'support',
+    target: `ui/${meta.name}.tsx`,
   };
 }
 
 export function privateModuleItem(
   module: GraphModule<SkinModuleMeta>,
   name: string,
-  target: RegistryTarget,
-  graph: VjscGraph<SkinModuleMeta>
-): VjscRegistryItem<SkinModuleMeta> {
-  const sourcePath = registryModuleSourcePath(module.filename);
+  target: RegistryTarget
+): VjscRegistryResolvedItem<SkinModuleMeta> {
+  const sourcePath = skinModuleSourcePath(module.filename);
   const output = sourcePath.slice('components/'.length);
-  const styles = sourceStyles(module, target, graph);
   const registryMeta = {
     role: 'support',
     framework: target.framework,
@@ -69,21 +58,14 @@ export function privateModuleItem(
     title: 'Video.js Menu Chevron',
     description: 'Private menu direction indicator shared by editable Video.js menu components.',
     docs: 'Installed automatically by the Video.js menu components that use it.',
-    registryDependencies: [...reactHelperDependency(target), ...styles.dependencies],
+    registryDependencies: reactHelperDependency(target),
     meta: registryMeta,
-    $vjsc: {
-      module,
-      group: 'support',
-      target: `ui/${output.slice(output.lastIndexOf('/') + 1)}`,
-      styleImports: styles.imports,
-    },
+    group: 'support',
+    target: `ui/${output.slice(output.lastIndexOf('/') + 1)}`,
   };
 }
 
-export function utilsItem(
-  module: GraphModule<SkinModuleMeta>,
-  target: RegistryTarget
-): VjscRegistryItem<SkinModuleMeta> {
+export function utilsItem(target: RegistryTarget): VjscRegistryResolvedItem<SkinModuleMeta> {
   return {
     name: '_resolve-class-name',
     type: 'registry:lib',
@@ -97,14 +79,11 @@ export function utilsItem(
       styling: target.styling,
       public: false,
     } satisfies VideojsRegistryMeta,
-    $vjsc: {
-      module,
-      group: 'support',
-      filename: 'resolve-class-name.ts',
-      target: 'lib/resolve-class-name.ts',
-      imports: {
-        '@videojs/utils/style': '@/lib/utils',
-      },
+    group: 'support',
+    filename: 'resolve-class-name.ts',
+    target: 'lib/resolve-class-name.ts',
+    imports: {
+      '@videojs/utils/style': '@/lib/utils',
     },
   };
 }

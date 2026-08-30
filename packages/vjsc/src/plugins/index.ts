@@ -1,5 +1,5 @@
 export { type VjscComponentSchemaOptions, vjscComponentSchemaPlugin } from './component-schema';
-export { type ShadcnRegistryPluginOptions, shadcnRegistryPlugin } from './shadcn';
+export { type VjscRegistryOptions, vjscRegistryPlugin } from './registry';
 export {
   type VjscEntriesOptions,
   type VjscEntry,

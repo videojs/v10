@@ -2,21 +2,21 @@ import { posix } from 'node:path';
 
 import type { Plugin } from 'rolldown';
 
-import type { NamedModuleMeta } from '../components/meta';
+import type { ModuleMeta } from '../components/meta';
 import { findVjscGraph, type VjscGraph } from '../graph';
 import { createShadcnRegistryFiles } from '../shadcn/registry';
-import type { ShadcnRegistryPluginOptions } from '../shadcn/types';
+import type { VjscRegistryOptions } from '../shadcn/types';
 
-export type { ShadcnRegistryPluginOptions } from '../shadcn/types';
+export type { VjscRegistryOptions } from '../shadcn/types';
 
-/** Emit a Shadcn registry from a completed VJSC component graph. */
-export function shadcnRegistryPlugin<Item extends NamedModuleMeta>(options: ShadcnRegistryPluginOptions<Item>): Plugin {
-  let graph: VjscGraph<Item> | undefined;
+/** Emit a Shadcn registry from the finalized graph exposed by `vjscPlugin`. */
+export function vjscRegistryPlugin<Meta extends ModuleMeta>(options: VjscRegistryOptions<Meta>): Plugin {
+  let graph: VjscGraph<Meta> | undefined;
 
   return {
-    name: 'vjsc:shadcn-registry',
+    name: 'vjsc:registry',
     buildStart(inputOptions) {
-      graph = findVjscGraph<Item>(inputOptions.plugins);
+      graph = findVjscGraph<Meta>(inputOptions.plugins);
 
       if (!graph) this.error('The Shadcn registry requires vjscPlugin in the same build.');
     },

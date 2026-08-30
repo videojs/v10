@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite-plus';
 
 import { cachedTaskInputs, packageTestTask, workspaceTaskDependencies } from '../../build/task.ts';
+import { registryTargets } from './registry/targets.ts';
 
 const packageDir = import.meta.dirname;
 const generatedPackageOutputs = [
@@ -18,7 +19,7 @@ export default defineConfig({
   run: {
     tasks: {
       generate: {
-        command: 'vp -C registry pack',
+        command: 'vp -C build pack',
         dependsOn: workspaceTaskDependencies(),
         untrackedEnv: ['VIDEOJS_PROFILE_SKINS'],
         // Generated package files and registry output are restored by this task,
@@ -43,12 +44,9 @@ export default defineConfig({
         output: ['dist/registry/r/**'],
       },
       'validate:shadcn:schema': {
-        command: [
-          'shadcn registry validate dist/registry/source/r/react/registry.json --cwd .',
-          'shadcn registry validate dist/registry/source/r/react/css/registry.json --cwd .',
-          'shadcn registry validate dist/registry/source/r/html/registry.json --cwd .',
-          'shadcn registry validate dist/registry/source/r/html/css/registry.json --cwd .',
-        ],
+        command: registryTargets.map(
+          ({ output }) => `shadcn registry validate dist/registry/source/${output}/registry.json --cwd .`
+        ),
         dependsOn: ['generate'],
         input: ['dist/registry/source/r/**', 'package.json', { pattern: 'pnpm-lock.yaml', base: 'workspace' }],
         output: [],

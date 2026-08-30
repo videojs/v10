@@ -1,20 +1,17 @@
-import type { VjscGraph, GraphModule } from '../../../vjsc/src/graph/index.ts';
-import type { VjscRegistryItem } from '../../../vjsc/src/shadcn/index.ts';
+import type { GraphModule } from '../../../vjsc/src/graph/index.ts';
+import type { VjscRegistryResolvedItem } from '../../../vjsc/src/shadcn/index.ts';
+import { skinModuleSourcePath } from '../../build/config.ts';
 import type { SkinModuleMeta } from '../../vjsc/meta.ts';
-import { registryModuleSourcePath } from '../configure.ts';
 import type { VideojsRegistryMeta } from '../meta.ts';
 import { registryPaths, type RegistryTarget } from '../targets.ts';
-import { sourceStyles } from './styles.ts';
 import { reactHelperDependency } from './support.ts';
 
 export function componentItem(
   module: GraphModule<SkinModuleMeta>,
   meta: Extract<SkinModuleMeta, { type: 'component' }>,
-  target: RegistryTarget,
-  graph: VjscGraph<SkinModuleMeta>
-): VjscRegistryItem<SkinModuleMeta> {
+  target: RegistryTarget
+): VjscRegistryResolvedItem<SkinModuleMeta> {
   const category = componentCategory(module.filename);
-  const styles = sourceStyles(module, target, graph);
   const registryMeta = {
     role: 'component',
     framework: 'react',
@@ -29,14 +26,10 @@ export function componentItem(
     description: meta.description,
     categories: ['media', category],
     docs: componentDocs(module, meta),
-    registryDependencies: [...reactHelperDependency(target), ...styles.dependencies],
+    registryDependencies: reactHelperDependency(target),
     meta: registryMeta,
-    $vjsc: {
-      module,
-      group: 'ui',
-      target: `ui/${meta.name}.tsx`,
-      styleImports: styles.imports,
-    },
+    group: 'ui',
+    target: `ui/${meta.name}.tsx`,
   };
 }
 
@@ -44,7 +37,7 @@ export function exportedComponentName(module: GraphModule<SkinModuleMeta>): stri
   const match = /\bexport\s+(?:const|function)\s+([A-Z][A-Za-z0-9]*)/.exec(module.source);
 
   if (!match) {
-    throw new Error(`Registry component has no exported component: \`${registryModuleSourcePath(module.filename)}\`.`);
+    throw new Error(`Registry component has no exported component: \`${skinModuleSourcePath(module.filename)}\`.`);
   }
 
   return match[1]!;

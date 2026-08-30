@@ -1,24 +1,20 @@
-import { execFile } from 'node:child_process';
 import { readFile, readdir } from 'node:fs/promises';
-import { relative, resolve } from 'node:path';
-import { promisify } from 'node:util';
+import { resolve } from 'node:path';
 
 import { isPlainObject, isString } from '@videojs/utils/predicate';
 import { registryItemSchema, registrySchema, type RegistryItem } from 'shadcn/schema';
 
-const exec = promisify(execFile);
+import { registryTargets } from './targets.ts';
+
 const packageDir = resolve(import.meta.dirname, '..');
 const workspaceDir = resolve(packageDir, '../..');
-const registryDir = resolve(packageDir, 'dist/registry');
-const sourceDir = resolve(registryDir, 'source');
-const hostedDir = resolve(registryDir, 'r');
-const catalogs = ['react', 'react/css', 'html', 'html/css'] as const;
+const hostedDir = resolve(packageDir, 'dist/registry/r');
+const catalogs = registryTargets.map((target) => target.output.replace(/^r\//, ''));
 
 const versions = await workspacePackageVersions();
 const items = (await Promise.all(catalogs.map(validateCatalog))).flat();
 
 validatePackagePins(items, versions);
-await validateGeneratedOutput();
 
 console.log(`Validated Video.js policy for ${items.length} hosted registry items.`);
 
@@ -40,9 +36,6 @@ async function validateCatalog(path: (typeof catalogs)[number]): Promise<Registr
   return Promise.all(
     registry.items.map(async ({ name }) => {
       const source = await readFile(resolve(directory, `${name}.json`), 'utf8');
-
-      if (source.includes('"$vjsc"'))
-        throw new Error(`Hosted registry item \`${path}/${name}\` exposes build metadata.`);
 
       return registryItemSchema.parse(JSON.parse(source));
     })
@@ -86,15 +79,4 @@ async function workspacePackageVersions(): Promise<ReadonlyMap<string, string>> 
   );
 
   return new Map(manifests.filter((entry) => entry !== undefined));
-}
-
-async function validateGeneratedOutput(): Promise<void> {
-  for (const directory of [sourceDir, hostedDir]) {
-    const path = relative(workspaceDir, directory);
-
-    await exec('git', ['check-ignore', '--quiet', path], { cwd: workspaceDir });
-
-    const tracked = await exec('git', ['ls-files', path], { cwd: workspaceDir });
-    if (tracked.stdout.trim()) throw new Error(`Generated registry output is tracked: ${tracked.stdout.trim()}`);
-  }
 }

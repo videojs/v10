@@ -1,24 +1,22 @@
 import { relative, resolve } from 'node:path';
 
-import type { Plugin } from 'vite';
-
 import type { VjscEntriesOptions, VjscModule } from '../../vjsc/src/plugins/index.ts';
+import { registryTargets } from '../registry/targets.ts';
 import { resolveSkinComponents, resolveSkinStyles } from '../vjsc/config.ts';
 import { isSkinName, skinStyles } from '../vjsc/meta.ts';
-import { registryTargets } from './targets.ts';
 
 export const packageDir = resolve(import.meta.dirname, '..');
 export const vjscDir = resolve(packageDir, 'vjsc');
-export const registryUtils = resolve(vjscDir, 'utils.ts');
+export const skinUtils = resolve(vjscDir, 'utils.ts');
 
 const publishedSkins = Object.keys(skinStyles).filter(isSkinName);
 
-export const registryEntries: VjscEntriesOptions = {
+export const skinEntries: VjscEntriesOptions = {
   root: vjscDir,
   include: ['./components/**/*.tsx', './skins/**/skin.tsx', './utils.ts'],
   resolve: {
     params(entry) {
-      if (entry.filename === registryUtils) return [{}];
+      if (entry.filename === skinUtils) return [{}];
 
       const ownedSkin = publishedSkins.find((name) => entry.filename.includes(`/skins/${name}/`));
 
@@ -39,29 +37,14 @@ export const registryEntries: VjscEntriesOptions = {
   },
 };
 
-export function resolveRegistryComponents(module: VjscModule) {
-  return module.filename === registryUtils ? null : resolveSkinComponents(module);
+export function resolveBuildComponents(module: VjscModule) {
+  return module.filename === skinUtils ? null : resolveSkinComponents(module);
 }
 
-export function resolveRegistryStyles(module: VjscModule) {
-  return module.filename === registryUtils ? null : resolveSkinStyles(module);
+export function resolveBuildStyles(module: VjscModule) {
+  return module.filename === skinUtils ? null : resolveSkinStyles(module);
 }
 
-export function registryModuleSourcePath(filename: string): string {
+export function skinModuleSourcePath(filename: string): string {
   return relative(vjscDir, filename).replaceAll('\\', '/');
-}
-
-/** Keep the source build limited to static Shadcn registry assets. */
-export function registryAssetsOnly(): Plugin {
-  return {
-    name: 'skins:registry-assets-only',
-    generateBundle: {
-      order: 'post',
-      handler(_options, bundle) {
-        for (const filename of Object.keys(bundle)) {
-          if (!filename.startsWith('r/')) delete bundle[filename];
-        }
-      },
-    },
-  };
 }
