@@ -64,6 +64,7 @@ export function vjscGraphPlugin<Meta extends ModuleMeta>(
 
   return {
     name: 'vjsc:graph',
+    apply: 'build',
     options(options) {
       root = resolveModulePath(resolve(options.cwd ?? process.cwd(), entriesOptions?.root ?? '.'));
       return null;
@@ -106,6 +107,17 @@ export function vjscGraphPlugin<Meta extends ModuleMeta>(
 
       for (const hostId of this.getModuleIds()) {
         const id = normalizeResolvedId(hostId);
+
+        if (VIRTUAL_STYLE_ID.test(id)) {
+          const source = this.getModuleInfo(hostId)?.code;
+
+          if (source !== null && source !== undefined && !assets.has(normalizeGraphId(id))) {
+            assets.set(normalizeGraphId(id), source);
+          }
+
+          continue;
+        }
+
         if (!SCRIPT_ID.test(id)) continue;
 
         const parsed = parseModuleId(id);
@@ -165,7 +177,7 @@ export function vjscGraphPlugin<Meta extends ModuleMeta>(
     generateBundle(_options, bundle) {
       removeEntryChunks(this, bundle, references);
     },
-  };
+  } as Plugin & { readonly apply: 'build' };
 }
 
 function discoverFiles(
