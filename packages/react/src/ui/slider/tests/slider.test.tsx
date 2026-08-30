@@ -53,6 +53,7 @@ const { mockSliderApi, sliderOptionsRef } = vi.hoisted(() => {
         },
         thumbProps: {
           onKeyDownCapture: (event: { preventDefault(): void }) => event.preventDefault(),
+          onKeyUpCapture: vi.fn(),
           onFocus: vi.fn(),
           onBlur: vi.fn(),
         },

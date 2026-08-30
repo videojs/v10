@@ -9,7 +9,7 @@ const UNMUTE_VOLUME = 0.25;
 
 export const volumeFeature = definePlayerFeature({
   name: 'volume',
-  state: ({ target }): MediaVolumeState => ({
+  state: ({ target, set }): MediaVolumeState => ({
     volume: 1,
     muted: false,
     volumeAvailability: 'unavailable',
@@ -26,6 +26,9 @@ export const volumeFeature = definePlayerFeature({
       }
 
       media.volume = clamped;
+
+      set({ volume: media.volume, muted: media.muted });
+
       return media.volume;
     },
 
