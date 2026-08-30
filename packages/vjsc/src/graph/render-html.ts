@@ -58,6 +58,7 @@ export async function renderComponentGraphHtml<Item extends ComponentMeta>(
       return `export { ${entry.exportName} as render${index} } from ${JSON.stringify(entry.moduleId)};`;
     })
     .join('\n');
+
   const build = await rolldown({
     input: entryId,
     treeshake: true,
@@ -113,6 +114,7 @@ export async function renderComponentGraphHtml<Item extends ComponentMeta>(
     }
 
     const url = `data:text/javascript;base64,${Buffer.from(chunks[0]!.code).toString('base64')}`;
+
     // SAFETY: The module is assembled from the finalized component graph and explicit render-only dependencies above.
     const rendered = (await import(url)) as Readonly<
       Record<string, (props?: ComponentGraphHtmlRenderProps) => { toString(): string }>

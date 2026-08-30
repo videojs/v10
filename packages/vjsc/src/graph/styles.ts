@@ -66,6 +66,7 @@ export async function createComponentGraphStyles<Item extends ComponentMeta>(
 function mergeStyles(source: string, filename: string): string {
   const context: string[] = [];
   const rules = new Set<string>();
+
   const result = transformCss({
     filename,
     code: new TextEncoder().encode(source),
