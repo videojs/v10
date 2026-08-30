@@ -199,6 +199,7 @@ export function createSlider(options: SliderOptions): SliderApi {
       pointerDownX = event.clientX;
       pointerDownY = event.clientY;
       lastDragPercent = percent;
+      lastKeyPercent = percent;
       input.patch({
         pointing: true,
         pointerPercent: percent,
@@ -236,6 +237,7 @@ export function createSlider(options: SliderOptions): SliderApi {
         }
 
         lastDragPercent = percent;
+        lastKeyPercent = percent;
         input.patch({
           dragging: true,
           dragPercent: percent,

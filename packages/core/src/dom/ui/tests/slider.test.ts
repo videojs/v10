@@ -730,6 +730,30 @@ describe('createSlider', () => {
       slider.destroy();
     });
 
+    it('steps from the latest pointer value while a key repeats', () => {
+      const onValueChange = vi.fn();
+      const el = createMockElement({ left: 0, width: 200 });
+      const slider = createSlider(
+        createOptions({
+          getElement: () => el,
+          getPercent: () => 50,
+          getStepPercent: () => 5,
+          onValueChange,
+        })
+      );
+
+      slider.thumbProps.onKeyDownCapture(keyboardEvent('ArrowRight'));
+      slider.rootProps.onPointerDown(pointerEvent({ clientX: 160 }));
+      firePointerMove(slider, { clientX: 120 });
+      slider.thumbProps.onKeyDownCapture(keyboardEvent('ArrowRight', { repeat: true }));
+
+      expect(onValueChange.mock.calls.map(([percent]) => percent)).toEqual([55, 80, 60, 65]);
+
+      slider.thumbProps.onKeyUpCapture(keyboardEvent('ArrowRight'));
+      firePointerUp(slider, { clientX: 120 });
+      slider.destroy();
+    });
+
     it('brackets repeated keyboard steps with one press', () => {
       const onPressStart = vi.fn();
       const onPressEnd = vi.fn();
