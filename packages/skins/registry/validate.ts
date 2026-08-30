@@ -21,10 +21,12 @@ console.log(`Validated Video.js policy for ${items.length} hosted registry items
 async function validateCatalog(path: (typeof catalogs)[number]): Promise<RegistryItem[]> {
   const directory = resolve(hostedDir, path);
   const registry = registrySchema.parse(JSON.parse(await readFile(resolve(directory, 'registry.json'), 'utf8')));
+
   const files = (await readdir(directory, { withFileTypes: true }))
     .filter((entry) => entry.isFile() && entry.name.endsWith('.json'))
     .map((entry) => entry.name)
     .sort();
+
   const expected = ['registry.json', ...registry.items.map((item) => `${item.name}.json`)].sort();
 
   if (files.join('\n') !== expected.join('\n')) {
@@ -64,6 +66,7 @@ function validatePackagePins(items: readonly RegistryItem[], versions: ReadonlyM
 async function workspacePackageVersions(): Promise<ReadonlyMap<string, string>> {
   const packagesDir = resolve(workspaceDir, 'packages');
   const entries = await readdir(packagesDir, { withFileTypes: true });
+
   const manifests = await Promise.all(
     entries
       .filter((entry) => entry.isDirectory())

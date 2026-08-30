@@ -33,11 +33,11 @@ export default defineConfig({
         output: ['dist/registry/source/**', ...generatedPackageOutputs],
       },
       'build:shadcn': {
-        command: 'node --import tsx registry/build-hosted.ts',
+        command: 'node --import tsx registry/build.ts',
         dependsOn: ['generate'],
         input: [
           'dist/registry/source/r/**',
-          'registry/build-hosted.ts',
+          'registry/build.ts',
           'package.json',
           { pattern: 'pnpm-lock.yaml', base: 'workspace' },
         ],
@@ -52,10 +52,10 @@ export default defineConfig({
         output: [],
       },
       'validate:shadcn:policy': {
-        command: 'node --import tsx registry/validate-policy.ts',
+        command: 'node --import tsx registry/validate.ts',
         dependsOn: ['build:shadcn'],
         input: [
-          'registry/validate-policy.ts',
+          'registry/validate.ts',
           'dist/registry/source/r/**',
           'dist/registry/r/**',
           { pattern: 'packages/*/package.json', base: 'workspace' },
