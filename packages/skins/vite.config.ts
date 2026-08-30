@@ -71,7 +71,7 @@ export default defineConfig({
       },
       'test:ci': {
         ...packageTestTask('pnpm run test:types && vp test run'),
-        dependsOn: workspaceTaskDependencies(),
+        dependsOn: ['generate'],
       },
     },
   },
