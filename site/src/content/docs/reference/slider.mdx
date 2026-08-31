@@ -63,6 +63,9 @@ import withPreviewHtmlTs from "@/components/docs/demos/slider/html/css/WithPrevi
     </media-slider-track>
     <media-slider-thumb></media-slider-thumb>
     <media-slider-preview>
+      <media-slider-thumbnail>
+        <img alt="" decoding="async" />
+      </media-slider-thumbnail>
       <media-slider-value type="pointer"></media-slider-value>
     </media-slider-preview>
   </media-slider>
@@ -73,7 +76,13 @@ import withPreviewHtmlTs from "@/components/docs/demos/slider/html/css/WithPrevi
 
 The base Slider provides a generic range input. It manages value, pointer tracking, and drag interactions. Domain-specific sliders like <DocsLink slug="reference/time-slider">TimeSlider</DocsLink> and <DocsLink slug="reference/volume-slider">VolumeSlider</DocsLink> extend this with media-specific bindings. TimeSlider also provides parts for rendering chapter ranges and the chapter at the current interaction position.
 
+<FrameworkCase frameworks={["react"]}>
 `Slider.Thumbnail.Root` supplies the pointer value to the thumbnail. Render `Slider.Thumbnail.Image` inside it for the controlled image; other children can provide loading indicators or overlays.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+`media-slider-thumbnail` supplies the pointer value and draws the image in its shadow DOM. Supply an `<img>` child to replace it: the element controls `src` and `srcset` on your image, and other children can provide loading indicators or overlays.
+</FrameworkCase>
 
 The slider supports vertical orientation via the `orientation` prop (defaults to `"horizontal"`).
 

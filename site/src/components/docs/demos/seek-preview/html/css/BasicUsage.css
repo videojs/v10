@@ -49,6 +49,7 @@
   left: var(--media-slider-pointer);
   max-width: 160px;
   margin-bottom: 8px;
+  overflow: hidden;
   pointer-events: none;
   border-radius: 4px;
   opacity: 0;
@@ -62,4 +63,8 @@
 
 .media-slider-thumbnail[data-hidden] {
   display: none;
+}
+
+.media-slider-thumbnail-img {
+  display: block;
 }
