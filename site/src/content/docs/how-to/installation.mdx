@@ -70,15 +70,21 @@ Here's what the flags mean:
 If you're an agent, interview your user and offer to run the CLI for them, or offer them a precomposed CLI command. 
 
 <FrameworkCase frameworks={["vue", "svelte"]}>
-The `--framework` flag takes `html` or `react`. Pass `--framework html`: it generates the `@videojs/html` custom elements, which are the ones this framework uses. Move the generated imports and markup into a component, as shown below.
+The `--framework` flag takes `html` or `react`. Vue and Svelte projects pass `--framework html`, which generates the `@videojs/html` custom elements they use, then move the generated imports and markup into a component as shown below.
 </FrameworkCase>
 </div>
 
 <FrameworkCase frameworks={["react"]}>
 If your user's requirements can't be met by a preset/skin, [eject](/docs/framework/react/how-to/customize-skins) and customize an existing preset/skin for your needs. As you develop with Video.js, rely heavily on [llms.txt](/docs/framework/react/llms.txt) to make sure you always have the latest information.
 </FrameworkCase>
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html"]} exclude={["vue", "svelte"]}>
 If your user's requirements can't be met by a preset/skin, [eject](/docs/framework/html/how-to/customize-skins) and customize an existing preset/skin for your needs. As you develop with Video.js, rely heavily on [llms.txt](/docs/framework/html/llms.txt) to make sure you always have the latest information.
+</FrameworkCase>
+<FrameworkCase frameworks={["vue"]}>
+If your user's requirements can't be met by a preset/skin, [eject](/docs/framework/vue/how-to/customize-skins) and customize an existing preset/skin for your needs. As you develop with Video.js, rely heavily on [llms.txt](/docs/framework/vue/llms.txt) to make sure you always have the latest information.
+</FrameworkCase>
+<FrameworkCase frameworks={["svelte"]}>
+If your user's requirements can't be met by a preset/skin, [eject](/docs/framework/svelte/how-to/customize-skins) and customize an existing preset/skin for your needs. As you develop with Video.js, rely heavily on [llms.txt](/docs/framework/svelte/llms.txt) to make sure you always have the latest information.
 </FrameworkCase>
 </LLMCase>
 
@@ -94,16 +100,28 @@ Otherwise, answer the questions below to get started quickly with your first emb
 
 ## Choose your JS framework
 
-Video.js aims to provide idiomatic development experiences in React components or HTML custom elements.
+Video.js aims to provide idiomatic development experiences: React components, or HTML custom elements that belong just as naturally in a Vue or Svelte template.
 
 <ContentWidth margins="lg">
   <JSPicker />
 </ContentWidth>
 
-<FrameworkCase frameworks={["html"]}>
-  Complete the installation steps below, then visit the guide for your framework for more detailed integration information. These guides use the HTML custom elements until we add first-party Vue and Svelte packages.
+<FrameworkCase frameworks={["html"]} exclude={["vue", "svelte"]}>
+  Building in Vue or Svelte? Pick it above. You'll install the same `@videojs/html` custom elements, and these guides will show them in your framework's components.
 
   <DocsLinkCard slug="how-to/use-videojs-with-vue">Vue and Nuxt</DocsLinkCard>
+
+  <DocsLinkCard slug="how-to/use-videojs-with-svelte">Svelte and SvelteKit</DocsLinkCard>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["vue"]}>
+  In Vue, you'll install the `@videojs/html` custom elements and write them in your templates. They're first-class there: Vue binds their attributes, properties, and events like any other element. Complete the installation steps below, then read the Vue guide for compiler configuration, player state, and Nuxt.
+
+  <DocsLinkCard slug="how-to/use-videojs-with-vue">Vue and Nuxt</DocsLinkCard>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["svelte"]}>
+  In Svelte, you'll install the `@videojs/html` custom elements and write them in your markup. They're first-class there: Svelte compiles unknown tags to real elements and passes objects straight through as properties. Complete the installation steps below, then read the Svelte guide for player state, styling, and SvelteKit.
 
   <DocsLinkCard slug="how-to/use-videojs-with-svelte">Svelte and SvelteKit</DocsLinkCard>
 </FrameworkCase>
