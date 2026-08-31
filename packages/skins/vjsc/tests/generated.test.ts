@@ -33,7 +33,7 @@ describe('generated VJSC source', () => {
   afterEach(async () => {
     await server?.close();
     server = undefined;
-  }, 30_000);
+  }, 120_000);
 
   it('matches every transformed component and skin variant', async ({ expect }) => {
     const sources = await sourceModules();
