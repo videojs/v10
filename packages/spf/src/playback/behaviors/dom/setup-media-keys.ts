@@ -53,6 +53,7 @@ import {
   NO_KEY_SYSTEM,
   requestKeySystemAccess,
   resolveDrmCredentials,
+  resolveDrmHeaders,
   resolveDrmUrl,
 } from '../../../media/dom/eme';
 import {
@@ -231,7 +232,7 @@ function setupMediaKeysSetup({
                 const shaped = await applyCertificateRequest(result.module, {
                   url: serverCertificateUrl,
                   method: 'GET',
-                  headers: {},
+                  headers: { ...resolveDrmHeaders(entry.certificateHeaders) },
                   body: null,
                   credentials: resolveDrmCredentials(entry.credentials),
                 });
