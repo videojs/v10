@@ -6,6 +6,7 @@ import {
   generateReactCreateCode,
   generateReactInstallCode,
   generateReactUsageCode,
+  generateVueUsageCode,
   type InstallationOptions,
   validateInstallationOptions,
 } from '../codegen';
