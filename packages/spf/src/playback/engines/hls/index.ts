@@ -16,11 +16,17 @@ export {
   playReadyKeySystem,
   widevineKeySystem,
 } from '../../../media/dom/key-systems';
-// Opt-in, tree-shakable `licenseResponse` transforms for providers that wrap the
-// raw CDM license: a FairPlay CKC unwrapper (XML/JSON envelopes) and a JSON
-// license unwrapper. Imported only when dropped into a `source.drm[ks]` slot, so
-// a composition that needs neither pays for neither.
-export { detectFairPlayCkc, unwrapJsonLicense } from '../../../media/dom/license-transforms';
+// Opt-in, tree-shakable transforms for providers off the raw-wire default: a
+// form-encoding `licenseRequest` factory (the `spc=` FairPlay dialect), plus
+// `licenseResponse` unwrappers — a FairPlay CKC unwrapper (XML/JSON envelopes)
+// and a JSON license unwrapper. Imported only when dropped into a
+// `source.drm[ks]` slot, so a composition that needs none pays for none.
+export {
+  detectFairPlayCkc,
+  formEncodeLicenseRequest,
+  type FormEncodeLicenseRequestOptions,
+  unwrapJsonLicense,
+} from '../../../media/dom/license-transforms';
 // SVTA 2070 error vocabulary — the codes reported on `state.errors` and
 // surfaced through the adapter's `error`.
 export type { SvtaError } from '../../../media/errors';
