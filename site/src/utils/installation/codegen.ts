@@ -9,6 +9,7 @@ import {
   VJS10_DEMO_VIMEO,
   VJS10_DEMO_YOUTUBE,
 } from '@/consts';
+import type { SupportedFramework } from '@/types/docs';
 import { generateCdnCode } from '@/utils/installation/cdn-code';
 import {
   getInstallationPreset,
@@ -20,7 +21,14 @@ import {
 } from '@/utils/installation/types';
 
 export interface InstallationOptions {
-  framework: 'html' | 'react';
+  /**
+   * The framework the reader picked. Frameworks without an adapter package — Vue and Svelte — install `@videojs/html`
+   * and reuse the HTML generators below through their own single-file component shells.
+   *
+   * `@videojs/cli` bundles this module and mirrors its signatures in `packages/cli/src/site-modules.d.ts`, where the
+   * field stays narrowed to the frameworks the CLI's `--framework` flag accepts.
+   */
+  framework: SupportedFramework;
   useCase: UseCase;
   skin: Skin;
   renderer: Renderer;
@@ -248,6 +256,45 @@ export function generateHTMLUsageCode(
     opts.installMethod !== 'cdn' ? generateHTMLImports(opts.useCase, opts.skin, opts.renderer) : undefined;
 
   return { html, imports };
+}
+
+// ---------------------------------------------------------------------------
+// Vue and Svelte Usage
+// ---------------------------------------------------------------------------
+
+/**
+ * Vue and Svelte have no adapter package: they install `@videojs/html` and write the same custom elements in their own
+ * component files. Both generators below reuse `generateHTMLUsageCode` for the markup and imports and only add the
+ * single-file component shell, so the player configuration has exactly one source.
+ */
+function indent(code: string, spaces: number): string {
+  const padding = ' '.repeat(spaces);
+
+  return code
+    .split('\n')
+    .map((line) => (line.trim() ? `${padding}${line}` : line))
+    .join('\n');
+}
+
+export function generateVueUsageCode(
+  opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer' | 'sourceUrl' | 'installMethod'>
+): Record<'MyPlayer.vue', string> {
+  const { html, imports } = generateHTMLUsageCode(opts);
+
+  // A CDN install registers the elements from the app's HTML shell, so the component is template-only.
+  const script = imports ? `<script setup lang="ts">\n${imports}\n</script>\n\n` : '';
+
+  return { 'MyPlayer.vue': `${script}<template>\n${indent(html, 2)}\n</template>` };
+}
+
+export function generateSvelteUsageCode(
+  opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer' | 'sourceUrl' | 'installMethod'>
+): Record<'MyPlayer.svelte', string> {
+  const { html, imports } = generateHTMLUsageCode(opts);
+
+  const script = imports ? `<script lang="ts">\n${indent(imports, 2)}\n</script>\n\n` : '';
+
+  return { 'MyPlayer.svelte': `${script}${html}` };
 }
 
 // ---------------------------------------------------------------------------
