@@ -40,6 +40,10 @@ jobs:
         if: ${{ steps.release.outputs.releases_created == 'true' }}
         with:
           fetch-depth: 0 # Fetch all history for all tags and branches
+          # release-please creates the tags while this job is running, so the
+          # triggering SHA is still the commit before the release PR. Build the
+          # exact commit tagged for @videojs/html instead.
+          ref: ${{ steps.release.outputs['packages/html--sha'] }}
 
       - name: Setup pnpm
         if: ${{ steps.release.outputs.releases_created == 'true' }}
@@ -54,6 +58,12 @@ jobs:
       - name: Install
         if: ${{ steps.release.outputs.releases_created == 'true' }}
         run: pnpm i --frozen-lockfile
+
+      - name: Verify release checkout
+        if: ${{ steps.release.outputs.releases_created == 'true' }}
+        run: node -e "process.exit(require('./packages/html/package.json').version === process.env.VERSION ? 0 : 1)"
+        env:
+          VERSION: ${{ steps.release.outputs['packages/html--version'] }}
 
       - name: Restore Vite Task cache
         if: ${{ steps.release.outputs.releases_created == 'true' }}
@@ -105,19 +115,25 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       # Attach the archive to the @videojs/html release so installers outside npm
-      # (Composer, Drupal) have a stable, versioned download. The version comes from
-      # the manifest release-please just bumped, matching release-pr.yml.
+      # (Composer, Drupal) have a stable, versioned download. Use the outputs from
+      # the release that this run created, matching the SHA checked out above.
       - name: Upload distribution archive to the release
         if: ${{ steps.release.outputs.releases_created == 'true' }}
         run: |
-          VERSION=$(jq -r '."packages/html"' .github/release-please/.release-please-manifest.json)
-          gh release upload "@videojs/html@${VERSION}" \
+          gh release upload "$RELEASE_TAG" \
             "packages/html/archive/videojs-html-${VERSION}.zip" \
             "packages/html/archive/videojs-html-${VERSION}.tar.gz" \
             packages/html/archive/SHA256SUMS \
             --clobber
+
+          ASSETS=$(gh release view "$RELEASE_TAG" --json assets --jq '.assets[].name')
+          grep -Fx "videojs-html-${VERSION}.zip" <<< "$ASSETS"
+          grep -Fx "videojs-html-${VERSION}.tar.gz" <<< "$ASSETS"
+          grep -Fx "SHA256SUMS" <<< "$ASSETS"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ steps.release.outputs['packages/html--tag_name'] }}
+          VERSION: ${{ steps.release.outputs['packages/html--version'] }}
 
       - name: Update site/v10 branch
         if: ${{ steps.release.outputs.releases_created == 'true' }}

@@ -40,8 +40,6 @@ import { VolumeSlider } from '@/ui/volume-slider';
 
 import type { MinimalLiveAudioSkinProps } from './minimal-skin';
 
-const VOLUME_STEP = 5;
-
 const Button = forwardRef<HTMLButtonElement, ComponentProps<'button'>>(function Button({ className, ...props }, ref) {
   return (
     <button ref={ref} type="button" className={cn(button.base, button.subtle, button.icon, className)} {...props} />
@@ -118,7 +116,7 @@ function VolumePopover(): ReactNode {
         </Tooltip.Popup>
       </Tooltip.Root>
       <Popover.Popup className={cn(popup.volume)}>
-        <VolumeSlider.Root step={VOLUME_STEP} orientation="horizontal" thumbAlignment="edge" render={<SliderRoot />}>
+        <VolumeSlider.Root orientation="horizontal" thumbAlignment="edge" render={<SliderRoot />}>
           <VolumeSlider.Track render={<SliderTrack />}>
             <VolumeSlider.Fill render={<SliderFill />} />
           </VolumeSlider.Track>
@@ -138,14 +136,12 @@ export function MinimalLiveAudioSkinTailwind(props: MinimalLiveAudioSkinProps): 
 
       <ErrorDialog.Root>
         <ErrorDialog.Popup className={dialog.popup}>
-          <div className={dialog.dialog}>
-            <div className={dialog.content}>
-              <ErrorDialog.Title className={dialog.title}></ErrorDialog.Title>
-              <ErrorDialog.Description className={dialog.description} />
-            </div>
-            <div className={dialog.actions}>
-              <ErrorDialog.Close className={cn(button.base, button.subtle)}></ErrorDialog.Close>
-            </div>
+          <div className={dialog.content}>
+            <ErrorDialog.Title className={dialog.title}></ErrorDialog.Title>
+            <ErrorDialog.Description className={dialog.description} />
+          </div>
+          <div className={dialog.actions}>
+            <ErrorDialog.Close className={cn(button.base, button.primary)}></ErrorDialog.Close>
           </div>
         </ErrorDialog.Popup>
       </ErrorDialog.Root>
@@ -193,8 +189,8 @@ export function MinimalLiveAudioSkinTailwind(props: MinimalLiveAudioSkinProps): 
       <Hotkey keys="Space" action="togglePaused" />
       <Hotkey keys="k" action="togglePaused" />
       <Hotkey keys="m" action="toggleMuted" />
-      <Hotkey keys="ArrowUp" action="volumeStep" value={VOLUME_STEP / 100} />
-      <Hotkey keys="ArrowDown" action="volumeStep" value={-VOLUME_STEP / 100} />
+      <Hotkey keys="ArrowUp" action="volumeStep" />
+      <Hotkey keys="ArrowDown" action="volumeStep" />
 
       {/* Input Feedback */}
       <StatusAnnouncer className="sr-only" />

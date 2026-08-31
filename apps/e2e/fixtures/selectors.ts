@@ -34,10 +34,10 @@ const playbackRateOptions = [
 export const SELECTORS = {
   // Player containers
   // HTML: <video-player>, React: wrapper div around VideoSkin
-  videoPlayer: 'video-player, .media-default-skin--video, .media-minimal-skin--video',
-  audioPlayer: 'audio-player, .media-default-skin--audio, .media-minimal-skin--audio',
+  videoPlayer: 'video-player, .media-skin--video',
+  audioPlayer: 'audio-player, .media-skin--audio',
   // The visible container with dimensions — used for screenshots
-  container: '.media-default-skin, .media-minimal-skin',
+  container: '.media-skin',
 
   // Controls bar
   controls: 'media-controls-content, .media-controls',

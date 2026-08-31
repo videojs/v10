@@ -1,4 +1,4 @@
-.media-minimal-skin .media-status-indicator--state {
+.media-skin--minimal .media-status-indicator--state {
   &[data-status="captions-on"] .media-icon--captions-on,
   &[data-status="captions-off"] .media-icon--captions-off,
   &[data-status="fullscreen"] .media-icon--fullscreen-enter,
@@ -9,7 +9,7 @@
   }
 }
 
-.media-minimal-skin .media-status-indicator--playback {
+.media-skin--minimal .media-status-indicator--playback {
   transition-timing-function: ease-out;
   transition-duration: 200ms;
   transition-property: opacity, scale;

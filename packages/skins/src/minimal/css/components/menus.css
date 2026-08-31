@@ -1,4 +1,4 @@
-.media-minimal-skin .media-menu {
+.media-skin--minimal .media-menu {
   --media-menu-transition-duration: 250ms;
   --media-menu-max-height: calc(var(--media-spacing) * 56);
   --media-menu-padding: calc(var(--media-spacing) * 1);

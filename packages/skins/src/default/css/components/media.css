@@ -1,19 +1,19 @@
-.media-default-skin ::slotted(video),
-.media-default-skin video {
+.media-skin--default ::slotted(video),
+.media-skin--default video {
   display: block;
   width: 100%;
   height: 100%;
   object-fit: var(--media-object-fit, contain);
   object-position: var(--media-object-position, center);
 }
-.media-default-skin ::slotted(video) {
+.media-skin--default ::slotted(video) {
   border-radius: var(--media-container-border-radius);
 }
-.media-default-skin video {
+.media-skin--default video {
   border-radius: inherit;
 }
 
-.media-default-skin:fullscreen ::slotted(video),
-.media-default-skin:fullscreen video {
+.media-skin--default:fullscreen ::slotted(video),
+.media-skin--default:fullscreen video {
   object-fit: contain;
 }

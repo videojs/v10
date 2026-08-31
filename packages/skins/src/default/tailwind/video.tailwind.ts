@@ -1,6 +1,5 @@
 import { cn } from '@videojs/utils/style';
 
-import { bufferingIndicator as baseBufferingIndicator } from './components/buffering';
 import { buttonGroup as baseButtonGroup } from './components/button-group';
 import { container as baseContainer } from './components/container';
 import { controls as baseControls } from './components/controls';
@@ -194,10 +193,6 @@ export const menu = {
   settings: baseMenu.settings,
 };
 
-/* Buffering */
-
-export const bufferingIndicator = baseBufferingIndicator;
-
 /* Dialog (with video surface) */
 
 export const dialog = {
@@ -221,12 +216,13 @@ export const statusIndicator = {
 
 /* Shared components (no overrides) */
 
-export { iconState } from '../../shared/tailwind/icon-state';
-export { controlsBackdrop } from './components/controls-backdrop';
+export { bufferingIndicator } from './components/buffering';
 export { badge } from './components/badge';
 export { button } from './components/button';
 export { buttonGroup } from './components/button-group';
+export { controlsBackdrop } from './components/controls-backdrop';
 export { icon, iconContainer, iconFlipped, iconHidden } from './components/icon';
+export { iconState } from '../../shared/tailwind/icon-state';
 export { inputIndicator } from './components/input-indicator';
 export { playbackRate } from './components/playback-rate';
 export { poster } from './components/poster';

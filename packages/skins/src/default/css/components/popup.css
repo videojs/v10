@@ -1,4 +1,4 @@
-.media-default-skin {
+.media-skin--default {
   --media-popup-transition:
     opacity var(--media-popup-transition-timing-function) var(--media-popup-transition-duration),
     filter var(--media-popup-transition-timing-function) var(--media-popup-transition-duration),
@@ -6,8 +6,8 @@
     scale var(--media-popup-transition-timing-function) var(--media-popup-transition-duration);
 }
 
-.media-default-skin .media-popover,
-.media-default-skin .media-tooltip {
+.media-skin--default .media-popover,
+.media-skin--default .media-tooltip {
   --media-popup-translate-distance: calc(0.5 * var(--media-internal-scale-unit));
   margin: 0;
   overflow: visible;
@@ -79,7 +79,7 @@
   }
 }
 
-.media-default-skin .media-popover {
+.media-skin--default .media-popover {
   &[data-side="top"]::before,
   &[data-side="bottom"]::before {
     height: var(--media-popover-side-offset);
@@ -89,7 +89,7 @@
     width: var(--media-popover-side-offset);
   }
 }
-.media-default-skin .media-popover--volume {
+.media-skin--default .media-popover--volume {
   padding: calc(var(--media-spacing) * 3) 0;
   border-radius: calc(Infinity * 1px);
 
@@ -98,7 +98,7 @@
   }
 }
 
-.media-default-skin .media-tooltip {
+.media-skin--default .media-tooltip {
   padding: calc(var(--media-spacing) * 1) calc(var(--media-spacing) * 2.5);
   font-size: var(--media-font-size-base);
   white-space: nowrap;

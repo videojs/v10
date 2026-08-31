@@ -1,5 +1,5 @@
 /* Base button */
-.media-default-skin .media-button {
+.media-skin--default .media-button {
   display: flex;
   flex-shrink: 0;
   align-items: center;
@@ -11,8 +11,11 @@
   touch-action: manipulation;
   cursor: pointer;
   user-select: none;
+  appearance: none;
+  color: inherit;
   outline: 2px solid transparent;
   outline-offset: -2px;
+  background: none;
   border: none;
   border-radius: calc(Infinity * 1px);
   transition-timing-function: ease-out;
@@ -37,7 +40,7 @@
 }
 
 /* Primary button variant */
-.media-default-skin .media-button--primary {
+.media-skin--default .media-button--primary {
   font-weight: 500;
   color: var(--media-accent-contrast-color);
   text-shadow: none;
@@ -45,7 +48,7 @@
 }
 
 /* Subtle button variant */
-.media-default-skin .media-button--subtle {
+.media-skin--default .media-button--subtle {
   color: inherit;
   text-shadow: inherit;
   background: transparent;
@@ -62,7 +65,7 @@
 }
 
 /* Icon button variant */
-.media-default-skin .media-button--icon {
+.media-skin--default .media-button--icon {
   display: grid;
   aspect-ratio: 1;
   padding: 0;
@@ -85,7 +88,7 @@
 }
 
 /* Seek button */
-.media-default-skin .media-button--seek {
+.media-skin--default .media-button--seek {
   .media-icon__label {
     position: absolute;
     right: -1px;
@@ -103,7 +106,7 @@
 }
 
 /* Playback rate button */
-.media-default-skin .media-button--playback-rate {
+.media-skin--default .media-button--playback-rate {
   padding: 0;
   font-variant-numeric: tabular-nums;
 
@@ -118,7 +121,7 @@
 }
 
 /* Settings button */
-.media-default-skin .media-button--settings {
+.media-skin--default .media-button--settings {
   .media-icon--settings {
     transition: transform 150ms ease-in-out;
 
@@ -135,7 +138,7 @@
 /* Live button — wide pill button with a status dot (gray → red at the live
    edge) rendered via ::before, and "LIVE" text rendered as the button's own
    text content. */
-.media-default-skin .media-button--live {
+.media-skin--default .media-button--live {
   display: inline-flex;
   gap: calc(var(--media-spacing) * 1.5);
   align-items: center;
@@ -165,7 +168,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .media-default-skin .media-button {
+  .media-skin--default .media-button {
     scale: 1;
     transition-property: background-color, color;
     will-change: auto;

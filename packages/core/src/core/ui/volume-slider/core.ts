@@ -5,6 +5,7 @@ import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { Text } from '../../i18n';
 import { labelText, mutedValueText } from '../../i18n/text/volume';
+import { DEFAULT_VOLUME_STEP } from '../constants';
 import { SliderCore, type SliderProps, type SliderState } from '../slider/core';
 
 export interface VolumeSliderProps extends SliderProps {
@@ -28,7 +29,8 @@ export class VolumeSliderCore extends SliderCore {
   static override readonly defaultProps: NonNullableObject<VolumeSliderProps> = {
     ...SliderCore.defaultProps,
     label: '',
-    wheelStep: 5,
+    step: DEFAULT_VOLUME_STEP,
+    wheelStep: DEFAULT_VOLUME_STEP,
   };
 
   #media: MediaVolumeState | null = null;

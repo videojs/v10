@@ -1,3 +1,4 @@
+import { DEFAULT_SEEK_STEP } from '@videojs/core';
 import { type AnyPlayerStore, getGestureCoordinator } from '@videojs/core/dom';
 import { ContextProvider } from '@videojs/element/context';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vite-plus/test';
@@ -72,5 +73,21 @@ describe('GestureElement', () => {
     document.body.append(provider);
 
     expect(getGestureCoordinator(provider).bindings).toHaveLength(0);
+  });
+
+  it('defaults a left seek gesture to the backward step', async () => {
+    const provider = document.createElement('test-gesture-provider');
+    const el = document.createElement('media-gesture') as GestureElement;
+
+    el.type = 'doubletap';
+    el.action = 'seekStep';
+    el.region = 'left';
+    provider.append(el);
+    document.body.append(provider);
+    await el.updateComplete;
+
+    expect(getGestureCoordinator(provider).bindings).toEqual([
+      expect.objectContaining({ action: 'seekStep', region: 'left', value: -DEFAULT_SEEK_STEP }),
+    ]);
   });
 });

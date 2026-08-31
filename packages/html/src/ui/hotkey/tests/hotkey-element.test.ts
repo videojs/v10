@@ -1,7 +1,8 @@
+import { type AnyPlayerStore, findHotkeyCoordinator } from '@videojs/core/dom';
 import { ContextProvider } from '@videojs/element/context';
 import { afterEach, describe, expect, it } from 'vite-plus/test';
 
-import { containerContext } from '../../../player/context';
+import { containerContext, playerContext } from '../../../player/context';
 import { UIElement } from '../../ui-element';
 import { AriaKeyShortcutsController } from '../aria-key-shortcuts-controller';
 import { HotkeyElement } from '../hotkey-element';
@@ -22,6 +23,19 @@ function createElement<Element extends HTMLElement>(Base: abstract new () => Ele
 afterEach(() => {
   document.body.innerHTML = '';
 });
+
+class TestHotkeyProviderElement extends UIElement {
+  readonly #store = { state: {}, subscribe: () => () => {} } as unknown as AnyPlayerStore;
+  readonly containerProvider = new ContextProvider(this, {
+    context: containerContext,
+    initialValue: { container: this, registerContainer: () => () => {} },
+  });
+  readonly playerProvider = new ContextProvider(this, { context: playerContext, initialValue: this.#store });
+}
+
+if (!customElements.get('test-hotkey-provider')) {
+  customElements.define('test-hotkey-provider', TestHotkeyProviderElement);
+}
 
 describe('HotkeyElement', () => {
   it('has the correct tag name', () => {
@@ -44,6 +58,26 @@ describe('HotkeyElement', () => {
     document.body.appendChild(el);
 
     expect(el.style.display).toBe('none');
+  });
+
+  it('registers the default ArrowDown volume step', () => {
+    const provider = document.createElement('test-hotkey-provider');
+    const el = createElement(HotkeyElement);
+
+    el.keys = 'ArrowDown';
+    el.action = 'volumeStep';
+    provider.append(el);
+    document.body.append(provider);
+
+    const coordinator = findHotkeyCoordinator(provider)!;
+    let value: number | undefined;
+
+    coordinator.subscribe((event) => {
+      value = event.value;
+    });
+    provider.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+
+    expect(value).toBe(-0.05);
   });
 });
 

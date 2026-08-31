@@ -7,7 +7,6 @@ import { dialog as baseDialog } from './components/dialog';
 import { menu as baseMenu } from './components/menu';
 import { popup as basePopup } from './components/popup';
 import { slider as baseSlider } from './components/slider';
-import { thumbnail as baseThumbnail } from './components/thumbnail';
 import { time as baseTime } from './components/time';
 
 /* Container */
@@ -20,7 +19,6 @@ export const container = (isShadowDOM: boolean) =>
     '[&:has(.media-buffering-indicator[data-visible])_.media-controls-backdrop]:bg-black/35',
     '[&:has(.media-buffering-indicator[data-visible])_.media-controls-backdrop]:opacity-100',
     '[&:has(.media-buffering-indicator[data-visible])_.media-controls-backdrop]:backdrop-blur-sm',
-    '[&:has([role=alertdialog][data-open])_.media-controls]:hidden',
     // Border ring (::after)
     'after:absolute after:pointer-events-none after:rounded-[inherit] after:z-10',
     '[&:fullscreen]:after:hidden',
@@ -162,10 +160,6 @@ export const dialog = {
   title: 'text-(length:--media-font-size-medium)',
 };
 
-/* Thumbnail */
-
-export const thumbnail = baseThumbnail;
-
 /* Sliders */
 
 export const slider = {
@@ -198,11 +192,11 @@ export const menu = {
 /* Shared components (no overrides) */
 
 export { iconState } from '../../shared/tailwind/icon-state';
-export { controlsBackdrop } from './components/controls-backdrop';
 export { badge } from './components/badge';
 export { bufferingIndicator } from './components/buffering';
 export { button } from './components/button';
 export { buttonGroup } from './components/button-group';
+export { controlsBackdrop } from './components/controls-backdrop';
 export { icon, iconContainer, iconFlipped, iconHidden } from './components/icon';
 export { inputIndicator } from './components/input-indicator';
 export { playbackRate } from './components/playback-rate';
@@ -210,4 +204,5 @@ export { poster } from './components/poster';
 export { seek } from './components/seek';
 export { seekIndicator } from './components/seek-indicator';
 export { statusIndicator } from './components/status-indicator';
+export { thumbnail } from './components/thumbnail';
 export { volumeIndicator } from './components/volume-indicator';

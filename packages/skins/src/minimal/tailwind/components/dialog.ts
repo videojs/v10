@@ -3,7 +3,7 @@ import { cn } from '@videojs/utils/style';
 export const dialog = {
   root: '',
   backdrop: cn(
-    'absolute inset-0 z-10 pointer-events-none bg-black/20 backdrop-blur-lg backdrop-saturate-120 opacity-100 not-data-open:hidden',
+    'absolute inset-0 z-20 pointer-events-none bg-black/20 backdrop-blur-lg backdrop-saturate-120 opacity-100 not-data-open:hidden',
     'transition-opacity',
     'duration-(--media-dialog-transition-duration)',
     'delay-(--media-dialog-transition-delay)',
@@ -19,7 +19,8 @@ export const dialog = {
     'delay-(--media-dialog-transition-delay)',
     'ease-(--media-dialog-transition-timing-function)',
     'data-starting-style:scale-95 data-starting-style:opacity-0',
-    'data-ending-style:scale-95 data-ending-style:opacity-0 data-ending-style:delay-0',
+    'data-ending-style:scale-95 data-ending-style:opacity-0',
+    'data-ending-style:duration-[max(calc(var(--media-dialog-transition-duration)-100ms),50ms)] data-ending-style:delay-0',
     'motion-reduce:scale-100 motion-reduce:transition-opacity'
   ),
   content: 'flex min-h-0 flex-col gap-2 overflow-y-auto py-1.5',
