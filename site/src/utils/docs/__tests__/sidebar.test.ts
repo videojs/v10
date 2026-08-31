@@ -67,6 +67,42 @@ describe('sidebar utilities', () => {
 
   const mockSidebar: Sidebar = [mockSection, mockGuide3];
 
+  describe('isItemVisible', () => {
+    it('should show unrestricted items to every framework', () => {
+      expect(isItemVisible(mockGuide3, 'react')).toBe(true);
+      expect(isItemVisible(mockGuide3, 'vue')).toBe(true);
+    });
+
+    it('should show html-only items to frameworks that read html content', () => {
+      const htmlOnly: Guide = { slug: 'html-only', frameworks: ['html'] satisfies MockFramework[] };
+
+      expect(isItemVisible(htmlOnly, 'html')).toBe(true);
+      expect(isItemVisible(htmlOnly, 'vue')).toBe(true);
+      expect(isItemVisible(htmlOnly, 'svelte')).toBe(true);
+      expect(isItemVisible(htmlOnly, 'react')).toBe(false);
+    });
+
+    it('should hide items from frameworks listed in excludeFrameworks', () => {
+      const vueOnlyIntegration: Guide = {
+        slug: 'how-to/use-with-vue',
+        frameworks: ['html'] satisfies MockFramework[],
+        excludeFrameworks: ['svelte'] satisfies MockFramework[],
+      };
+
+      expect(isItemVisible(vueOnlyIntegration, 'html')).toBe(true);
+      expect(isItemVisible(vueOnlyIntegration, 'vue')).toBe(true);
+      expect(isItemVisible(vueOnlyIntegration, 'svelte')).toBe(false);
+      expect(isItemVisible(vueOnlyIntegration, 'react')).toBe(false);
+    });
+
+    it('should hide dev-only items in production regardless of framework', () => {
+      const devGuide: Guide = { slug: 'dev-guide', devOnly: true };
+
+      expect(isItemVisible(devGuide, 'vue', false)).toBe(false);
+      expect(isItemVisible(devGuide, 'vue', true)).toBe(true);
+    });
+  });
+
   describe('filterSidebar', () => {
     it('should filter guides based on framework', () => {
       const result = filterSidebar('html', mockSidebar);
@@ -108,6 +144,37 @@ describe('sidebar utilities', () => {
 
       expect(result).toHaveLength(1);
       expect(result[0]).toEqual(mockGuide3);
+    });
+
+    it('should keep html-only guides for frameworks that fall back to html', () => {
+      const htmlOnly: Guide = { slug: 'html-only', frameworks: ['html'] satisfies MockFramework[] };
+
+      expect(filterSidebar('vue', [htmlOnly])).toEqual([htmlOnly]);
+      expect(filterSidebar('svelte', [htmlOnly])).toEqual([htmlOnly]);
+      expect(filterSidebar('react', [htmlOnly])).toEqual([]);
+    });
+
+    it('should drop guides that exclude the current framework', () => {
+      const vueIntegration: Guide = {
+        slug: 'how-to/use-with-vue',
+        frameworks: ['html'] satisfies MockFramework[],
+        excludeFrameworks: ['svelte'] satisfies MockFramework[],
+      };
+
+      expect(filterSidebar('vue', [vueIntegration])).toEqual([vueIntegration]);
+      expect(filterSidebar('svelte', [vueIntegration])).toEqual([]);
+    });
+
+    it('should drop a section that excludes the current framework', () => {
+      const section: Section = {
+        sidebarLabel: 'HTML only, not for Vue',
+        frameworks: ['html'] satisfies MockFramework[],
+        excludeFrameworks: ['vue'] satisfies MockFramework[],
+        contents: [mockGuide3],
+      };
+
+      expect(filterSidebar('vue', [section])).toEqual([]);
+      expect(filterSidebar('svelte', [section])).toHaveLength(1);
     });
 
     it('should recursively filter nested sections', () => {
@@ -158,6 +225,26 @@ describe('sidebar utilities', () => {
       const result = findFirstGuide('html', nestedSidebar);
 
       expect(result).toBe('guide-1');
+    });
+
+    it('should resolve an html guide for frameworks that fall back to html', () => {
+      const htmlOnly: Guide = { slug: 'html-only', frameworks: ['html'] satisfies MockFramework[] };
+      const sidebar: Sidebar = [mockGuide2, htmlOnly]; // guide-2 is react-only
+
+      expect(findFirstGuide('vue', sidebar)).toBe('html-only');
+      expect(findFirstGuide('svelte', sidebar)).toBe('html-only');
+    });
+
+    it('should skip a guide that excludes the framework', () => {
+      const vueIntegration: Guide = {
+        slug: 'how-to/use-with-vue',
+        frameworks: ['html'] satisfies MockFramework[],
+        excludeFrameworks: ['svelte'] satisfies MockFramework[],
+      };
+      const sidebar: Sidebar = [vueIntegration, mockGuide3];
+
+      expect(findFirstGuide('vue', sidebar)).toBe('how-to/use-with-vue');
+      expect(findFirstGuide('svelte', sidebar)).toBe('guide-3');
     });
 
     it('should throw error if no guide matches', () => {
@@ -405,6 +492,42 @@ describe('sidebar utilities', () => {
       const result = getValidFrameworksForGuide(deepGuide, sidebar);
 
       expect(result).toEqual(['react']);
+    });
+
+    it('should treat html-only guides as valid for the frameworks that read html content', () => {
+      const htmlOnly: Guide = { slug: 'html-only', frameworks: ['html'] satisfies MockFramework[] };
+
+      const result = getValidFrameworksForGuide(htmlOnly, [htmlOnly]);
+
+      expect(result).toEqual(['html', 'vue', 'svelte']);
+    });
+
+    it('should drop frameworks the guide excludes', () => {
+      const vueIntegration: Guide = {
+        slug: 'how-to/use-with-vue',
+        frameworks: ['html'] satisfies MockFramework[],
+        excludeFrameworks: ['svelte'] satisfies MockFramework[],
+      };
+
+      const result = getValidFrameworksForGuide(vueIntegration, [vueIntegration]);
+
+      expect(result).toEqual(['html', 'vue']);
+    });
+
+    it('should drop frameworks an ancestor section excludes', () => {
+      const guide: Guide = { slug: 'nested-guide' };
+      const sidebar: Sidebar = [
+        {
+          sidebarLabel: 'HTML only, not for Vue',
+          frameworks: ['html'] satisfies MockFramework[],
+          excludeFrameworks: ['vue'] satisfies MockFramework[],
+          contents: [guide],
+        },
+      ];
+
+      const result = getValidFrameworksForGuide(guide, sidebar);
+
+      expect(result).toEqual(['html', 'svelte']);
     });
 
     it('should return all frameworks when guide is not found in sidebar', () => {
