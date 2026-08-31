@@ -86,7 +86,7 @@ feature</DocsLink>, which the video and audio presets include.
   ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html"]} exclude={["vue", "svelte"]}>
 `title` already means the tooltip on an element, so the player takes the title as
 `content-title`, reflected by the `contentTitle` property:
 
@@ -94,6 +94,48 @@ feature</DocsLink>, which the video and audio presets include.
   const player = document.querySelector("video-player");
 
   player.contentTitle = "Sintel";
+  ```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["vue"]}>
+`title` already means the tooltip on an element, so the player takes the title as
+`content-title`, reflected by the `contentTitle` property. Set it through a template ref:
+
+  ```vue
+  <script setup lang="ts">
+  import type { VideoPlayerElement } from "@videojs/html/video";
+  import { onMounted, ref } from "vue";
+
+  const player = ref<VideoPlayerElement | null>(null);
+
+  onMounted(() => {
+    player.value!.contentTitle = "Sintel";
+  });
+  </script>
+
+  <template>
+    <video-player ref="player"><!-- skin and media --></video-player>
+  </template>
+  ```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["svelte"]}>
+`title` already means the tooltip on an element, so the player takes the title as
+`content-title`, reflected by the `contentTitle` property. Set it through a bound element:
+
+  ```svelte
+  <script lang="ts">
+    import type { VideoPlayerElement } from "@videojs/html/video";
+    import { onMount } from "svelte";
+
+    let player: VideoPlayerElement;
+
+    onMount(() => {
+      player.contentTitle = "Sintel";
+    });
+  </script>
+
+  <video-player bind:this={player}><!-- skin and media --></video-player>
   ```
 </FrameworkCase>
 
