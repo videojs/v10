@@ -104,6 +104,17 @@ export function getInstallationPreset(useCase: UseCase): InstallationPreset {
   return INSTALLATION_PRESETS[useCase];
 }
 
+// The Mux Data media subpath. Mux Data is a separate media component the
+// installation examples pair with Mux media by default, so it is imported and
+// registered alongside the Mux media rather than merged into it.
+export const MUX_DATA_MEDIA_SUBPATH = 'mux-data';
+
+// Whether a renderer plays Mux-hosted media. The installation examples add the
+// Mux Data monitoring component by default for these, as a sibling of the media.
+export function isMuxRenderer(renderer: Renderer): boolean {
+  return renderer === 'mux-video' || renderer === 'mux-audio';
+}
+
 // Renderer → media subpath name, independent of whether a CDN build exists.
 // Preset renderers (html5-video/audio, background-video) are covered by their
 // preset bundle and have no separate media script, so they map to null.

@@ -7,8 +7,9 @@ import { generateCdnCode, rendererSupportsCdn } from '../cdn-code';
 
 describe('generateCdnCode', () => {
   // Media subpaths that ship a CDN build. The media script is emitted only for
-  // renderers whose subpath is in this set.
-  const manifest = ['hlsjs-video', 'dash-video', 'mux-video', 'mux-audio'];
+  // renderers whose subpath is in this set. Mux media also register the separate
+  // Mux Data component, so its subpath ships a build too.
+  const manifest = ['hlsjs-video', 'dash-video', 'mux-video', 'mux-audio', 'mux-data'];
 
   it('pins generated URLs to the current @videojs/html package version', () => {
     expect(VJS10_HTML_CDN_BASE).toBe(`https://cdn.jsdelivr.net/npm/@videojs/html@${htmlPackage.version}/cdn`);
@@ -34,11 +35,23 @@ describe('generateCdnCode', () => {
     );
   });
 
-  it('includes the mux media bundle when renderer is mux-video', () => {
+  it('includes the mux media bundle and the Mux Data bundle when renderer is mux-video', () => {
     expect(generateCdnCode('default-video', 'video', 'mux-video', manifest)).toEqual(
+      `<script type="module" src="${VJS10_HTML_CDN_BASE}/video.js"></script>
+<script type="module" src="${VJS10_HTML_CDN_BASE}/media/mux-video.js"></script>
+<script type="module" src="${VJS10_HTML_CDN_BASE}/media/mux-data.js"></script>`
+    );
+  });
+
+  it('omits the Mux Data script when the manifest has no Mux Data build', () => {
+    expect(generateCdnCode('default-video', 'video', 'mux-video', ['mux-video'])).toEqual(
       `<script type="module" src="${VJS10_HTML_CDN_BASE}/video.js"></script>
 <script type="module" src="${VJS10_HTML_CDN_BASE}/media/mux-video.js"></script>`
     );
+  });
+
+  it('does not add a Mux Data script for non-Mux media', () => {
+    expect(generateCdnCode('default-video', 'video', 'dash', manifest)).not.toContain('mux-data');
   });
 
   it('omits the media script for a media renderer absent from the manifest', () => {
@@ -75,7 +88,8 @@ describe('generateCdnCode', () => {
   it('generates the minimal live video CDN tag', () => {
     expect(generateCdnCode('live-video', 'minimal-video', 'mux-video', manifest)).toEqual(
       `<script type="module" src="${VJS10_HTML_CDN_BASE}/live-video-minimal.js"></script>
-<script type="module" src="${VJS10_HTML_CDN_BASE}/media/mux-video.js"></script>`
+<script type="module" src="${VJS10_HTML_CDN_BASE}/media/mux-video.js"></script>
+<script type="module" src="${VJS10_HTML_CDN_BASE}/media/mux-data.js"></script>`
     );
   });
 
@@ -89,7 +103,8 @@ describe('generateCdnCode', () => {
   it('generates live audio CDN tags for each skin variant', () => {
     expect(generateCdnCode('live-audio', 'audio', 'mux-audio', manifest)).toEqual(
       `<script type="module" src="${VJS10_HTML_CDN_BASE}/live-audio.js"></script>
-<script type="module" src="${VJS10_HTML_CDN_BASE}/media/mux-audio.js"></script>`
+<script type="module" src="${VJS10_HTML_CDN_BASE}/media/mux-audio.js"></script>
+<script type="module" src="${VJS10_HTML_CDN_BASE}/media/mux-data.js"></script>`
     );
     expect(generateCdnCode('live-audio', 'minimal-audio', 'mux-audio', manifest)).toContain(
       'cdn/live-audio-minimal.js'

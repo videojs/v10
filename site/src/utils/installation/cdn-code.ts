@@ -2,6 +2,8 @@ import { VJS10_HTML_CDN_BASE } from '@/consts';
 import {
   getInstallationPreset,
   getMediaSubpath,
+  isMuxRenderer,
+  MUX_DATA_MEDIA_SUBPATH,
   RENDERERS,
   type Renderer,
   type Skin,
@@ -57,6 +59,13 @@ export function generateCdnCode(
   // this starts emitting automatically — no code change needed.
   if (mediaSubpath !== null && cdnMediaSubpaths.includes(mediaSubpath)) {
     scriptLines.push(`<script type="module" src="${VJS10_HTML_CDN_BASE}/media/${mediaSubpath}.js"></script>`);
+  }
+
+  // Mux media default to the separate Mux Data component, so register its script
+  // too. Gated on the manifest like any other media build, so it drops out
+  // automatically if Mux Data ever stops shipping a CDN bundle.
+  if (isMuxRenderer(renderer) && cdnMediaSubpaths.includes(MUX_DATA_MEDIA_SUBPATH)) {
+    scriptLines.push(`<script type="module" src="${VJS10_HTML_CDN_BASE}/media/${MUX_DATA_MEDIA_SUBPATH}.js"></script>`);
   }
 
   return scriptLines.join('\n');
