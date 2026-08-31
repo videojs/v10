@@ -6,6 +6,7 @@ import {
   generateReactCreateCode,
   generateReactInstallCode,
   generateReactUsageCode,
+  generateSvelteUsageCode,
   generateVueUsageCode,
   type InstallationOptions,
   validateInstallationOptions,
