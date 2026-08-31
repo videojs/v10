@@ -161,13 +161,21 @@ Use the `<FrameworkCase>` and `<StyleCase>` components to conditionally show con
 If you see nothing, that means you probably don't have React selected as your framework. Cool! It's working!
 </Aside>
 
-#### Vue and Svelte fall back to HTML content
+#### Vue and Svelte read the HTML API
 
-Vue and Svelte have no first-party Video.js package — those readers install `@videojs/html` and write custom elements. So `frameworks={["html"]}` content also renders for Vue and Svelte readers by default; you don't need to list all three.
+Vue and Svelte have no first-party Video.js package — those readers install `@videojs/html` and write custom elements. They read the same custom-element content HTML readers do, but framework lists are matched exactly, so name all three:
 
-Write a Vue- or Svelte-specific replacement only when the shared HTML content would mislead that reader — imperative wiring, lifecycle, or setup code (template refs and `onMounted`/`onUnmounted` in Vue, `bind:this` and `onMount` in Svelte). Markup-only and CSS examples stay shared, since Vue and Svelte both render the same custom elements.
+```mdx
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
+  Custom-element content, shared by every framework that uses `@videojs/html`
+</FrameworkCase>
+```
 
-When you do author a variant, exclude Vue and Svelte from the HTML block so they don't render both:
+<Aside type="caution">
+An html-API block that lists only `["html"]` is invisible to Vue and Svelte readers. Start from the full triple and narrow it deliberately.
+</Aside>
+
+Narrow the list when the content actually diverges. Write a Vue- or Svelte-specific replacement only where the shared content would mislead that reader — imperative wiring, lifecycle, or setup code (template refs and `onMounted`/`onUnmounted` in Vue, `bind:this` and `onMount` in Svelte). Markup-only and CSS examples stay shared, since all three render the same custom elements.
 
 ```mdx
 <FrameworkCase frameworks={["html"]}>
@@ -181,7 +189,9 @@ When you do author a variant, exclude Vue and Svelte from the HTML block so they
 </FrameworkCase>
 ```
 
-The same fallback applies to sidebar entries: a guide with `frameworks: ['html']` in `docs.config.ts` is already visible to Vue and Svelte readers. Add `excludeFrameworks` when a guide needs the opposite — for example, the framework-specific integration guides (<DocsLink slug="how-to/use-videojs-with-vue">Use Video.js with Vue and Nuxt</DocsLink>, <DocsLink slug="how-to/use-videojs-with-svelte">Use Video.js with Svelte and SvelteKit</DocsLink>) each set `excludeFrameworks` for the other framework so Vue readers don't see the Svelte guide in their sidebar, and vice versa.
+Sidebar entries in `docs.config.ts` work the same way: a guide about the custom-element API takes `frameworks: ['html', 'vue', 'svelte']`, and a guide about one integration takes just the frameworks it covers — <DocsLink slug="how-to/use-videojs-with-vue">Use Video.js with Vue and Nuxt</DocsLink> is `['html', 'vue']`, <DocsLink slug="how-to/use-videojs-with-svelte">Use Video.js with Svelte and SvelteKit</DocsLink> is `['html', 'svelte']`, so neither shows up in the other's sidebar.
+
+The one place the fallback survives is display: a page whose `frameworkTitle` has no Vue or Svelte entry falls back to its `html` title rather than the generic one. That is a title default, not a visibility rule.
 
 Use the `<StyleCase>` component to show content only for specific styling approaches. For example,
 
