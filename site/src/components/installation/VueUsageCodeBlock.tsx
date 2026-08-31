@@ -6,10 +6,11 @@ import { installMethod, renderer, skin, sourceUrl, useCase } from '@/stores/inst
 import { generateVueUsageCode } from '@/utils/installation/codegen';
 
 /**
- * The same player the HTML block generates, wrapped in a Vue single-file component.
+ * The player the HTML block generates, written as a Vue single-file component: the source becomes a prop, and the Vite
+ * config registers exactly the custom-element tags this player renders.
  *
- * Highlighted as `html` rather than `vue`: the client highlighter only carries the grammars the docs need, and the HTML
- * grammar already highlights an SFC's `<script>` block as JavaScript and its template as markup.
+ * The components are highlighted as `html` rather than `vue`: the client highlighter only carries the grammars the docs
+ * need, and the HTML grammar already highlights an SFC's `<script>` block as JavaScript and its template as markup.
  */
 export default function VueUsageCodeBlock() {
   const $useCase = useStore(useCase);
@@ -29,12 +30,20 @@ export default function VueUsageCodeBlock() {
   return (
     <TabsRoot maxWidth={false}>
       <TabsList label="Vue implementation">
-        <Tab value="vue" initial>
+        <Tab value="component" initial>
           ./components/MyPlayer.vue
         </Tab>
+        <Tab value="usage">./App.vue</Tab>
+        <Tab value="config">./vite.config.ts</Tab>
       </TabsList>
-      <TabsPanel value="vue" initial>
-        <ClientCode code={result['MyPlayer.vue']} lang="html" />
+      <TabsPanel value="component" initial>
+        <ClientCode code={result.component} lang="html" />
+      </TabsPanel>
+      <TabsPanel value="usage">
+        <ClientCode code={result.usage} lang="html" />
+      </TabsPanel>
+      <TabsPanel value="config">
+        <ClientCode code={result.viteConfig} lang="ts" />
       </TabsPanel>
     </TabsRoot>
   );

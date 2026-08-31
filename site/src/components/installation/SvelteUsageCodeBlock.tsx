@@ -6,10 +6,12 @@ import { installMethod, renderer, skin, sourceUrl, useCase } from '@/stores/inst
 import { generateSvelteUsageCode } from '@/utils/installation/codegen';
 
 /**
- * The same player the HTML block generates, wrapped in a Svelte component.
+ * The player the HTML block generates, written as a Svelte component: the source becomes a rune prop bound on the media
+ * element.
  *
- * Highlighted as `html` rather than `svelte`: the client highlighter only carries the grammars the docs need, and the
- * HTML grammar already highlights the component's `<script>` block as JavaScript and its markup as markup.
+ * The components are highlighted as `html` rather than `svelte`: the client highlighter only carries the grammars the
+ * docs need, and the HTML grammar already highlights the component's `<script>` block as JavaScript and its markup as
+ * markup.
  */
 export default function SvelteUsageCodeBlock() {
   const $useCase = useStore(useCase);
@@ -29,12 +31,16 @@ export default function SvelteUsageCodeBlock() {
   return (
     <TabsRoot maxWidth={false}>
       <TabsList label="Svelte implementation">
-        <Tab value="svelte" initial>
+        <Tab value="component" initial>
           ./lib/MyPlayer.svelte
         </Tab>
+        <Tab value="usage">./App.svelte</Tab>
       </TabsList>
-      <TabsPanel value="svelte" initial>
-        <ClientCode code={result['MyPlayer.svelte']} lang="html" />
+      <TabsPanel value="component" initial>
+        <ClientCode code={result.component} lang="html" />
+      </TabsPanel>
+      <TabsPanel value="usage">
+        <ClientCode code={result.usage} lang="html" />
       </TabsPanel>
     </TabsRoot>
   );
