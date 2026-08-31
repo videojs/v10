@@ -34,7 +34,7 @@ The [Twitch embed player](https://dev.twitch.tv/docs/embed/video-and-clips/) han
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```html
 <twitch-video src="https://www.twitch.tv/videos/106400740"></twitch-video>
 ```
@@ -64,7 +64,7 @@ Twitch checks the embedding page's ancestors against a `parent` allowlist and wo
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```ts
 const video = document.querySelector('twitch-video');
 video.source = {
@@ -97,7 +97,7 @@ video.source = {
   </StyleCase>
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   <StyleCase styles={["css"]}>
     <Demo files={[
       { title: "index.html", code: basicUsageHtml, lang: "html" },

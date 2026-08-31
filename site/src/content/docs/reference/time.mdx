@@ -70,7 +70,7 @@ import customNegativeSignHtmlTs from "@/components/docs/demos/time/html/css/Cust
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```html
 <media-time-group>
   <media-time type="current"></media-time>
@@ -101,7 +101,7 @@ Use `toggle` to let current displays switch between elapsed and remaining time, 
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 
 ```html
 <media-time toggle></media-time>
@@ -122,7 +122,7 @@ The negative sign is rendered inside `<span aria-hidden="true">` and can be hidd
 
 ## Accessibility
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 Each `<media-time>` has:
 - `role="time"` and `datetime` for machine-readable time semantics
 - `aria-label` for the static role label ("Current time", "Duration", "Remaining")
@@ -153,7 +153,7 @@ Toggleable time displays receive `role="button"`, `tabindex="0"`, and keyboard s
   </StyleCase>
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   <StyleCase styles={["css"]}>
     <Demo files={[
       { title: "index.html", code: currentTimeHtml, lang: "html" },
@@ -178,7 +178,7 @@ Toggleable time displays receive `role="button"`, `tabindex="0"`, and keyboard s
   </StyleCase>
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   <StyleCase styles={["css"]}>
     <Demo files={[
       { title: "index.html", code: currentDurationHtml, lang: "html" },
@@ -203,7 +203,7 @@ Toggleable time displays receive `role="button"`, `tabindex="0"`, and keyboard s
   </StyleCase>
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   <StyleCase styles={["css"]}>
     <Demo files={[
       { title: "index.html", code: remainingHtml, lang: "html" },
@@ -228,7 +228,7 @@ Toggleable time displays receive `role="button"`, `tabindex="0"`, and keyboard s
   </StyleCase>
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   <StyleCase styles={["css"]}>
     <Demo files={[
       { title: "index.html", code: customSeparatorHtml, lang: "html" },
@@ -253,7 +253,7 @@ Toggleable time displays receive `role="button"`, `tabindex="0"`, and keyboard s
   </StyleCase>
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   <StyleCase styles={["css"]}>
     <Demo files={[
       { title: "index.html", code: customNegativeSignHtml, lang: "html" },

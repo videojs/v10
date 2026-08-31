@@ -17,7 +17,7 @@ Controls fullscreen mode. Tries the container element first, falls back to the m
 Pass `selectFullscreen` to <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> to subscribe to fullscreen state. Returns `undefined` if the fullscreen feature is not configured.
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 Pass `selectFullscreen` to <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> to subscribe to fullscreen state. Returns `undefined` if the fullscreen feature is not configured.
 </FrameworkCase>
 
@@ -38,7 +38,7 @@ function FullscreenButton() {
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```ts title="fullscreen-button.ts"
 import { createPlayer, UIElement, selectFullscreen } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
@@ -67,7 +67,7 @@ The feature locks to `landscape` unless the provider sets another Screen Orienta
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```html
 <my-player orientation-lock-type="portrait">
   <video src="/video.mp4"></video>

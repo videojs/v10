@@ -17,7 +17,7 @@ Tracks video renditions and selects a manual rendition or automatic adaptive bit
 Pass `selectQuality` to <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> to subscribe to quality state. Returns `undefined` if the quality feature is not configured.
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 Pass `selectQuality` to <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> to subscribe to quality state. Returns `undefined` if the quality feature is not configured.
 </FrameworkCase>
 
@@ -34,7 +34,7 @@ function QualityInfo() {
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```ts title="quality-info.ts"
 import { createPlayer, UIElement, selectQuality } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';

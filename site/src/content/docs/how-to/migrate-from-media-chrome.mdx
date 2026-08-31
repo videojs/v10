@@ -18,7 +18,7 @@ Scoped to apps that compose their own player from Media Chrome elements. If you 
 
 Install Video.js and choose a <DocsLink slug="concepts/presets">preset</DocsLink> (see <DocsLink slug="how-to/installation">Installation</DocsLink>). Start with its ready-made skin if those controls fit your player. If you need to keep a custom control bar, build it from the individual Video.js UI components instead.
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```bash
 npm install @videojs/html
 ```
@@ -44,7 +44,7 @@ Media Chrome wraps a slotted `<video slot="media">` in a single `<media-controll
 </media-controller>
 ```
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 <TabsRoot client:idle>
   <TabsList client:idle label="Video.js HTML player source">
     <Tab client:idle value="javascript" initial>JavaScript</Tab>
@@ -210,7 +210,7 @@ Matching tag names do not mean matching appearance. Media Chrome buttons include
 
 Video.js sliders use `media-slider-track`, `media-slider-fill`, and `media-slider-thumb`. See <DocsLink slug="reference/time-slider">`media-time-slider`</DocsLink> and <DocsLink slug="reference/volume-slider">`media-volume-slider`</DocsLink> for copy-paste markup and CSS.
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 Media Chrome's named icon slots do not carry over. Remove attributes such as `slot="play"` and put the icon directly inside the Video.js button. Import `@videojs/html/icons/element` to use `<media-icon>`, as shown in [Map the controller](#map-the-controller). Set `family="minimal"` to use the Minimal skin's icon designs. You can also use your own text or SVG.
 </FrameworkCase>
 
@@ -218,7 +218,7 @@ Media Chrome's named icon slots do not carry over. Remove attributes such as `sl
 React buttons do not include visible content either. Use a button's `render` prop to add it, as shown in [Map the controller](#map-the-controller). Build sliders from parts such as `TimeSlider.Track`, `TimeSlider.Fill`, and `TimeSlider.Thumb`, then add your own CSS.
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 `media-poster` is the one rename that changes shape. Where `media-poster-image` took its own `src`, `media-poster` wraps the image you bring:
 
 ```html
@@ -251,7 +251,7 @@ Media Chrome reflects state as `media*` attributes such as `mediapaused`; Video.
 media-play-button[mediapaused] .play-icon { display: inline; }
 ```
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```css
 /* Video.js HTML */
 media-play-button[data-paused] .play-icon { display: inline; }
@@ -286,7 +286,7 @@ The packaged Video.js skins expose `--media-accent-color`, `--media-accent-text-
 
 Media Chrome's `<template>`-based themes (`media-theme`) become Video.js <DocsLink slug="concepts/skins">skins</DocsLink> and <DocsLink slug="concepts/presets">presets</DocsLink>. Start from a preset, then eject and customize with <DocsLink slug="how-to/customize-skins">Customize skins</DocsLink>, rather than authoring a template.
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 Ready-made HTML skins keep their controls inside Shadow DOM. Code outside the skin sees a click as coming from the skin, not the button inside it. Some control events also stay inside the skin. Do not use an outside listener to identify which built-in button was clicked.
 
 Keep playback event handlers on your `<video>` or `<audio>`. When you build a custom control bar, attach click and input handlers directly to those controls. With a ready-made skin, read media or player state instead of listening for clicks inside the skin.
@@ -302,7 +302,7 @@ React skins do not use Shadow DOM. Use `render` props when you build individual 
 
 Control everything through the player's store. Media Chrome had no player object; Video.js gives you one, with an action for every operation — `play`, `togglePaused`, `seek`, `setVolume`, `toggleFullscreen` — so one mental model covers playback and the state the browser doesn't own, such as fullscreen, captions, and quality.
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 Hold a reference to the player element and call actions on its store:
 
 ```js
@@ -398,7 +398,7 @@ function PersistVolume() {
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 Work against the store directly: `selectVolume(store.state).setVolume(…)` on init, and `store.subscribe(…)` to save on change.
 </FrameworkCase>
 

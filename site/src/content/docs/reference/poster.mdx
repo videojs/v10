@@ -34,7 +34,7 @@ import basicUsageHtmlTs from "@/components/docs/demos/poster/html/css/BasicUsage
   ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   ```html
   <media-poster>
     <img alt="" />
@@ -54,7 +54,7 @@ You can set the poster URL on the player. This is useful when you want to change
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```html
 <video-player poster="poster.jpg"></video-player>
 ```
@@ -94,7 +94,7 @@ Inside a skin, pass the same function as `renderPoster`. The skin draws your ima
 A skin styles the `<img>` it draws directly. Render something that is not an `<img>` and its sizing is yours.
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 `<media-poster>` renders no image of its own. It fills in the `src` of the image you put inside it:
 
 ```html
@@ -134,7 +134,7 @@ A skin can only style an `<img>` you slot directly. Wrap one in a `<picture>` or
 
 The three load attributes track the image on screen, including one you supplied yourself.
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```css
 media-poster:not([data-visible]) {
   opacity: 0;
@@ -174,7 +174,7 @@ The image is decorative by default (`alt=""`), since a URL says nothing about wh
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```html
 <media-poster>
   <img src="poster.jpg" alt="Keynote speaker at a conference" />
@@ -201,7 +201,7 @@ Whether a poster is informative or decorative is your judgment, per the [WAI gui
   </StyleCase>
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   <StyleCase styles={["css"]}>
     <Demo
       files={[

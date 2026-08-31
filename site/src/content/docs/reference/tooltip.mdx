@@ -53,7 +53,7 @@ import groupingHtmlTs from "@/components/docs/demos/tooltip/html/css/Grouping.ts
   ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   ```html
   <media-tooltip-group>
     <button commandfor="my-tooltip">Hover me</button>
@@ -80,7 +80,7 @@ The `side` and `align` props control the preferred placement relative to the tri
   tooltips open instantly within the `timeout` window, skipping the normal `delay`.
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   The `<media-tooltip>` element is the popup itself. Link it to a trigger using
   the `commandfor` attribute on any button, pointing to the tooltip's `id`. The element
   discovers its trigger automatically and manages open/close state and positioning. Wrap
@@ -95,7 +95,7 @@ Tooltips inside a <DocsLink slug="reference/player-container">Container</DocsLin
 
 Use [CSS custom properties](#root-css-custom-properties) for positioning offsets:
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```css
 media-tooltip {
   --media-tooltip-side-offset: 8px;
@@ -119,7 +119,7 @@ React renders standard DOM elements. Add a `className` to style them:
 
 Style based on open state, rendered side, and transition phases. `data-side` reflects the rendered side and can differ from the preferred `side` prop after collision handling:
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```css
 media-tooltip[data-open] {
   display: block;
@@ -180,7 +180,7 @@ Tooltips are visual-only, supplementary labels. The popup renders with `role="pr
   </StyleCase>
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   <StyleCase styles={["css"]}>
     <Demo
       files={[
@@ -213,7 +213,7 @@ Tooltips are visual-only, supplementary labels. The popup renders with `role="pr
   </StyleCase>
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   Wrap tooltip trigger/popup pairs in `<media-tooltip-group>` to coordinate timing. The
   group's `delay`, `close-delay`, and `timeout` attributes control shared timing for all
   contained tooltips.

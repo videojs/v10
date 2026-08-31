@@ -34,7 +34,7 @@ The [Spotify embed](https://developer.spotify.com/documentation/embeds) accepts 
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```html
 <spotify-audio src="https://open.spotify.com/episode/7makk4oTQel546B0PZlDM5" controls></spotify-audio>
 ```
@@ -67,7 +67,7 @@ The Spotify embed exposes less than a native `<audio>` element:
   </StyleCase>
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   <StyleCase styles={["css"]}>
     <Demo files={[
       { title: "index.html", code: basicUsageHtml, lang: "html" },
@@ -94,7 +94,7 @@ The Spotify embed exposes less than a native `<audio>` element:
     ```
     </FrameworkCase>
 
-    <FrameworkCase frameworks={["html"]}>
+    <FrameworkCase frameworks={["html", "vue", "svelte"]}>
     ```ts
     const audio = document.querySelector('spotify-audio');
     audio.source = {

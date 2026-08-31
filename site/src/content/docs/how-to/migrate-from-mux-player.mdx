@@ -37,7 +37,7 @@ Mux Player packs three jobs into a single element. Video.js splits them up, so i
 
 So a Mux Player embed becomes a player wrapped around a skin wrapped around a media:
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```html
 <video-player>
   <video-skin>
@@ -63,7 +63,7 @@ Everything else in this guide is about which of those three a given Mux Player a
 
 Here's a typical Mux Player embed. A playback ID, a title and viewer ID for analytics, and a poster pulled from two seconds in.
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 
 ```html
 <script src="https://cdn.jsdelivr.net/npm/@mux/mux-player" defer></script>
@@ -204,7 +204,7 @@ import { Container } from '@videojs/react';
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 If you use `<video-skin>`, put width, height, aspect ratio, positioning, and DOM measurements on `<video-skin>`. Importing the skin registers the styles that make the media, controls, poster, and overlays fill and layer within it. The skin also makes `<video-player>` boxless.
 
 If you leave out `<video-skin>` to build your own UI, add a <DocsLink slug="reference/player-container">`<media-container>`</DocsLink>. Style and measure that element, and put overlays inside it:
@@ -250,7 +250,7 @@ Mux Player has an attribute for every Mux stream parameter: `max-resolution`, `a
 
 The groups map to the three URLs Mux serves. `playback` modifies the video stream, `poster` modifies the still image, and `storyboard` modifies the hover-preview track. Video.js builds all three URLs and converts your camel-case keys to the `snake_case` query parameters Mux expects, so `assetStartTime` goes out as `asset_start_time`.
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 Assign it as a property, since an object has no attribute form:
 
 ```ts
@@ -305,7 +305,7 @@ Signed playback behaves the way it does in Mux Player: a token replaces every ot
 
 Mux Player's analytics settings become attributes, properties, or props on the <DocsLink slug="reference/mux-data">Mux Data</DocsLink> component, placed inside the player.
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 | Mux Player | Video.js v10 |
 |---|---|
 | `metadata-*`, the `metadata` property | the `metadata` property |
@@ -339,7 +339,7 @@ Mux Player used the same title for analytics and on-screen display. Video.js sep
 
 For analytics, use `metadata.video_title` on the Mux Data component.
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 For display, use `content-title` on the player.
 </FrameworkCase>
 
@@ -349,7 +349,7 @@ For display, use `title` on the player.
 
 The title reaches player state, but the packaged skins don't place it in their layouts. Add the <DocsLink slug="reference/title">Title</DocsLink> component as a child of a packaged skin, or place it in an ejected or custom layout, when you want viewers to see it:
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```js
 import '@videojs/html/ui/title';
 ```
@@ -382,7 +382,7 @@ import { VideoPlayer, VideoSkin } from '@videojs/react/video';
 A generated poster becomes available after `MuxVideo` mounts. Pass `poster` to `VideoPlayer` when the image must appear in server-rendered HTML.
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```html
 <video-player poster="https://image.mux.com/EcHgOK9coz5K…/thumbnail.webp?time=2">
   <video-skin>
@@ -432,7 +432,7 @@ Two are packaged. The default skin is a modern, frosted look. The minimal skin i
 
 Set custom properties on the skin. The common case is a brand color:
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```css
 /* Mux Player */
 mux-player {
@@ -470,7 +470,7 @@ The skins use a different visual design, so you may not need to replace Mux Play
 
 This is the level that per-control tweaks need, and it's a genuine step up in effort from a Mux Player attribute. `forward-seek-offset="30"` was one character. In Video.js, the skins bake their seek step into their keyboard shortcuts and gestures, so changing it means editing those lines:
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```html
 <media-hotkey keys="ArrowRight" action="seekStep" value="30"></media-hotkey>
 <media-hotkey keys="ArrowLeft" action="seekStep" value="-30"></media-hotkey>
@@ -492,7 +492,7 @@ Removing a control is removing a line. That's the trade you get for the extra se
 
 ## Read player state
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 
 `<mux-video>` is a real media element, so every media event you already listen for still fires on it: `play`, `timeupdate`, `ended`, `error`, and the rest. Mux Player listeners port directly. There are a few extras: `streamtypechange`, `targetlivewindowchange`, `sourcechange`, and `contentdatachange`.
 
@@ -569,7 +569,7 @@ The Mux audio component follows the same three paths, and pairs with the audio p
 
 Unlike Mux Player, you'll have to pick a live preset yourself; it won't switch automatically for you.
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 Register the live preset and Mux media. From the CDN:
 
 ```html
@@ -610,7 +610,7 @@ You get `targetLiveWindow` and `liveEdgeStart` in player state, plus a live butt
 
 The live composition is narrower than the video one on purpose: it leaves out quality, audio-track, and playback-rate state. A live skin's settings menu therefore holds captions and nothing else. If you need one of the omitted features on a live player, build your own player from a feature list rather than taking the preset's.
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 Use <DocsLink slug="reference/html-create-player">`createPlayer`</DocsLink> to build a player element from that list.
 </FrameworkCase>
 
@@ -622,7 +622,7 @@ Use <DocsLink slug="reference/create-player">`createPlayer`</DocsLink> to create
 
 The live skin already includes a live button. If you build your own controls, use that same component and style it to match your app. It keeps track of whether playback is live and returns viewers to the newest available point in the stream.
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```html
 <script type="module">
   import '@videojs/html/ui/live-button';
@@ -691,7 +691,7 @@ Caption *styling* is limited to the positioning custom properties the skins expo
 
 Chapters are content, not an API call. Add a chapters track inside your media and the skins segment the <DocsLink slug="reference/time-slider">time slider</DocsLink> and show the chapter title on hover:
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```html
 <mux-video src="https://stream.mux.com/EcHgOK9coz5K….m3u8">
   <track kind="chapters" src="/chapters.vtt" default />
@@ -744,7 +744,7 @@ The SPF flavor doesn't license DRM ([#1776](https://github.com/videojs/v10/issue
 
 ## Access the media and playback engine
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 | Mux Player | Video.js v10 |
 |---|---|
 | `media.nativeEl` | the `<mux-video>` element itself for standard media properties and methods |

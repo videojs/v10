@@ -7,7 +7,7 @@ import H4 from '@/components/typography/H4Markdown.astro';
 import MarkdownCode from '@/components/typography/MarkdownCode.astro';
 import P from '@/components/typography/P.astro';
 import type { ComponentReference } from '@/types/component-reference';
-import { isValidFramework } from '@/types/docs';
+import { frameworkMatches, HTML_API_FRAMEWORKS, isValidFramework, resolveContentFramework } from '@/types/docs';
 import { resolveReferenceSlug } from '@/utils/api-reference-overrides';
 import { createComponentReferenceModel } from '@/utils/componentReferenceModel';
 import FrameworkCase from '../FrameworkCase.astro';
@@ -34,7 +34,8 @@ if (!apiRef) return;
 const apiReferenceModel = createComponentReferenceModel(component, apiRef, partOrder);
 if (!apiReferenceModel) return;
 
-const showAttributeName = framework === 'html';
+// Vue and Svelte read the HTML API, so they see attribute names too.
+const showAttributeName = resolveContentFramework(framework) === 'html';
 
 const singlePropsSection = !apiReferenceModel.hasParts
   ? apiReferenceModel.sections.find((section) => section.key === 'props')
@@ -81,7 +82,7 @@ const singleEventsSection = !apiReferenceModel.hasParts
               <FrameworkCase frameworks={["react"]}>
                 {part.labelByFramework.react}
               </FrameworkCase>
-              <FrameworkCase frameworks={["html"]}>
+              <FrameworkCase frameworks={HTML_API_FRAMEWORKS}>
                 {part.labelByFramework.html}
               </FrameworkCase>
             </H3>
@@ -93,8 +94,7 @@ const singleEventsSection = !apiReferenceModel.hasParts
             )}
 
             {partPropsSection &&
-              (!partPropsSection.frameworks ||
-                partPropsSection.frameworks.includes(framework)) && (
+              frameworkMatches(framework, partPropsSection.frameworks) && (
                 <>
                   <H4 id={partPropsSection.id}>{partPropsSection.title}</H4>
                   <ApiPropsTable
@@ -116,7 +116,7 @@ const singleEventsSection = !apiReferenceModel.hasParts
                     <MarkdownCode>className</MarkdownCode>, and{" "}
                     <MarkdownCode>style</MarkdownCode> props.
                   </FrameworkCase>
-                  <FrameworkCase frameworks={["html"]}>
+                  <FrameworkCase frameworks={HTML_API_FRAMEWORKS}>
                     State is reflected as data attributes for CSS styling.
                   </FrameworkCase>
                 </P>
@@ -152,7 +152,7 @@ const singleEventsSection = !apiReferenceModel.hasParts
             )}
 
             {partEventsSection && part.data.platforms.html?.events && (
-              <FrameworkCase frameworks={["html"]}>
+              <FrameworkCase frameworks={HTML_API_FRAMEWORKS}>
                 <H4 id={partEventsSection.id}>{partEventsSection.title}</H4>
                 <ApiEventsTable events={part.data.platforms.html.events} />
               </FrameworkCase>
@@ -163,8 +163,7 @@ const singleEventsSection = !apiReferenceModel.hasParts
     ) : (
       <>
         {singlePropsSection &&
-          (!singlePropsSection.frameworks ||
-            singlePropsSection.frameworks.includes(framework)) && (
+          frameworkMatches(framework, singlePropsSection.frameworks) && (
             <>
               <H3 id={singlePropsSection.id}>{singlePropsSection.title}</H3>
               <ApiPropsTable
@@ -185,7 +184,7 @@ const singleEventsSection = !apiReferenceModel.hasParts
                 <MarkdownCode>className</MarkdownCode>, and{" "}
                 <MarkdownCode>style</MarkdownCode> props.
               </FrameworkCase>
-              <FrameworkCase frameworks={["html"]}>
+              <FrameworkCase frameworks={HTML_API_FRAMEWORKS}>
                 State is reflected as data attributes for CSS styling.
               </FrameworkCase>
             </P>
@@ -221,7 +220,7 @@ const singleEventsSection = !apiReferenceModel.hasParts
         )}
 
         {singleEventsSection && apiReferenceModel.data.platforms.html?.events && (
-          <FrameworkCase frameworks={["html"]}>
+          <FrameworkCase frameworks={HTML_API_FRAMEWORKS}>
             <H3 id={singleEventsSection.id}>{singleEventsSection.title}</H3>
             <ApiEventsTable events={apiReferenceModel.data.platforms.html.events} />
           </FrameworkCase>

@@ -9,6 +9,7 @@ import {
   VJS10_DEMO_VIMEO,
   VJS10_DEMO_YOUTUBE,
 } from '@/consts';
+import type { SupportedFramework } from '@/types/docs';
 import { generateCdnCode } from '@/utils/installation/cdn-code';
 import {
   getInstallationPreset,
@@ -20,7 +21,14 @@ import {
 } from '@/utils/installation/types';
 
 export interface InstallationOptions {
-  framework: 'html' | 'react';
+  /**
+   * The framework the reader picked. Frameworks without an adapter package — Vue and Svelte — install `@videojs/html`
+   * and reuse the HTML generators below through their own single-file component shells.
+   *
+   * `@videojs/cli` bundles this module and mirrors its signatures in `packages/cli/src/site-modules.d.ts`, where the
+   * field stays narrowed to the frameworks the CLI's `--framework` flag accepts.
+   */
+  framework: SupportedFramework;
   useCase: UseCase;
   skin: Skin;
   renderer: Renderer;
@@ -248,6 +256,139 @@ export function generateHTMLUsageCode(
     opts.installMethod !== 'cdn' ? generateHTMLImports(opts.useCase, opts.skin, opts.renderer) : undefined;
 
   return { html, imports };
+}
+
+// ---------------------------------------------------------------------------
+// Vue and Svelte Usage
+// ---------------------------------------------------------------------------
+
+// Vue and Svelte have no adapter package: they install `@videojs/html` and write the same custom elements in their own
+// components. Both generators below reuse `generateHTMLUsageCode` for the player configuration and then transform that
+// markup — binding its source attribute to a prop, reading its tag list — so the configuration has one source.
+
+export interface VueUsageCode {
+  /** `MyPlayer.vue`: the element imports, a `src` prop, and the generated markup with `src` bound. */
+  component: string;
+  /** `App.vue`: the component rendered with the source the reader picked. */
+  usage: string;
+  /** `vite.config.ts`: `isCustomElement` for exactly the tags this player renders. */
+  viteConfig: string;
+}
+
+export interface SvelteUsageCode {
+  /** `MyPlayer.svelte`: the element imports, a `src` prop, and the generated markup with `src` bound. */
+  component: string;
+  /** `App.svelte`: the component rendered with the source the reader picked. */
+  usage: string;
+}
+
+function indent(code: string, spaces: number): string {
+  const padding = ' '.repeat(spaces);
+
+  return code
+    .split('\n')
+    .map((line) => (line.trim() ? `${padding}${line}` : line))
+    .join('\n');
+}
+
+/**
+ * Custom-element tags in the generated markup, in document order.
+ *
+ * Only hyphenated tags qualify, so a preset built on plain `<video>` or `<audio>` contributes nothing — which is what
+ * Vue's `isCustomElement` needs, since it must not claim built-in elements.
+ */
+function getCustomElementTags(html: string): string[] {
+  const tags = new Set<string>();
+
+  for (const [, tag] of html.matchAll(/<([a-z][a-z\d]*-[a-z\d-]*)/g)) {
+    tags.add(tag);
+  }
+
+  return [...tags];
+}
+
+/**
+ * Swap the media element's literal `src` for a framework binding.
+ *
+ * Every media the picker offers takes its source through a single `src` attribute, so the one replacement covers all of
+ * them. Other attributes the markup carries — `playsinline`, for instance — are static configuration and stay literal.
+ */
+function bindSourceAttribute(html: string, source: string, binding: string): string {
+  return html.replace(`src="${source}"`, binding);
+}
+
+export function generateVueUsageCode(
+  opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer' | 'sourceUrl' | 'installMethod'>
+): VueUsageCode {
+  const { html, imports } = generateHTMLUsageCode(opts);
+  const source = resolveSourceUrl(opts.sourceUrl, opts.renderer, opts.useCase);
+
+  // A CDN install registers the elements from the app's HTML shell, so only a bundled install imports them.
+  const importLines = imports ? `${imports}\n\n` : '';
+  const template = indent(bindSourceAttribute(html, source, ':src="src"'), 2);
+
+  const component = `<script setup lang="ts">
+${importLines}defineProps<{ src: string }>();
+</script>
+
+<template>
+${template}
+</template>`;
+
+  const usage = `<script setup lang="ts">
+import MyPlayer from './components/MyPlayer.vue';
+</script>
+
+<template>
+  <MyPlayer src="${source}" />
+</template>`;
+
+  const tagList = getCustomElementTags(html)
+    .map((tag) => `'${tag}'`)
+    .join(', ');
+
+  const viteConfig = `import vue from '@vitejs/plugin-vue';
+import { defineConfig } from 'vite';
+
+const videoJsElements = new Set([${tagList}]);
+
+export default defineConfig({
+  plugins: [
+    vue({
+      template: {
+        compilerOptions: {
+          isCustomElement: (tag) => videoJsElements.has(tag),
+        },
+      },
+    }),
+  ],
+});`;
+
+  return { component, usage, viteConfig };
+}
+
+export function generateSvelteUsageCode(
+  opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer' | 'sourceUrl' | 'installMethod'>
+): SvelteUsageCode {
+  const { html, imports } = generateHTMLUsageCode(opts);
+  const source = resolveSourceUrl(opts.sourceUrl, opts.renderer, opts.useCase);
+
+  const importLines = imports ? `${indent(imports, 2)}\n\n` : '';
+  const markup = bindSourceAttribute(html, source, '{src}');
+
+  const component = `<script lang="ts">
+${importLines}  let { src }: { src: string } = $props();
+</script>
+
+${markup}`;
+
+  const usage = `<script lang="ts">
+  import MyPlayer from './lib/MyPlayer.svelte';
+</script>
+
+<MyPlayer src="${source}" />`;
+
+  return { component, usage };
 }
 
 // ---------------------------------------------------------------------------

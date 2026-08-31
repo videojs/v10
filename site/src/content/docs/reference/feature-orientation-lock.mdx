@@ -26,7 +26,7 @@ export const { Player } = createPlayer({
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```ts title="player.ts"
 import { createPlayer, features } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
@@ -53,7 +53,7 @@ The feature locks to `landscape` unless the provider sets another Screen Orienta
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```html
 <my-player orientation-lock-type="portrait">
   <video src="/video.mp4"></video>
@@ -72,7 +72,7 @@ Clearing the value restores `landscape`.
 Pass `selectOrientationLock` to <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> to subscribe to the lock state. Returns `undefined` if the orientation lock feature is not configured.
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 Pass `selectOrientationLock` to <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> to subscribe to the lock state. Returns `undefined` if the orientation lock feature is not configured.
 </FrameworkCase>
 
@@ -93,7 +93,7 @@ function OrientationToggle() {
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```ts title="orientation-toggle.ts"
 import { createPlayer, features, UIElement, selectOrientationLock } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';

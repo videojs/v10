@@ -35,7 +35,7 @@ import basicUsageHtmlTs from "@/components/docs/demos/live-button/html/css/Basic
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```html
 <media-live-button></media-live-button>
 ```
@@ -64,7 +64,7 @@ See <DocsLink slug="how-to/play-live-streams">Play live streams</DocsLink> for h
 
 Use `data-live-edge` to color the button red at the edge and gray behind it:
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```css
 media-live-button { color: gray; }
 media-live-button[data-live-edge] { color: red; }
@@ -101,7 +101,7 @@ The demo plays a continuously running live stream. Seek backward to move behind 
   </StyleCase>
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   <StyleCase styles={["css"]}>
     <Demo files={[
       { title: "index.html", code: basicUsageHtml, lang: "html" },

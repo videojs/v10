@@ -31,7 +31,7 @@ v10 splits those jobs up. Learning the three names first makes the rest of this 
 
 So a v8 embed becomes a player wrapped around a skin wrapped around a media:
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```html
 <video-player>
   <video-skin>
@@ -55,7 +55,7 @@ Most of this guide is about which of those three a given v8 option now belongs t
 
 ## Your first player
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 
 Here's a standard v8 setup: one file, captions, a poster, and the default skin.
 
@@ -210,7 +210,7 @@ Port these across untouched. They're native attributes and always were.
 
 The poster belongs to player state rather than the media, which lets the skin control how it appears:
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```html
 <video-player poster="/poster.jpg">
   <video-skin>
@@ -283,7 +283,7 @@ v10 replaces the whole mechanism with a choice you make in markup. You pick the 
 
 Each needs its own import.
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 For HLS from the CDN:
 
 ```html
@@ -353,7 +353,7 @@ video-player {
 
 This is where v8's `controlBar` config and `addChild` calls end up, and honestly it's the better trade. Instead of `controlBar: { pictureInPictureToggle: false }`, you delete a line. Instead of subclassing a component to change its behavior, you edit the markup.
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 
 Keep the player and skin registration imports. The skin import registers the container and UI elements that your ejected layout uses; you do not render the skin element itself:
 
@@ -478,7 +478,7 @@ video.addEventListener('timeupdate', () => console.log(video.currentTime));
 
 One category doesn't survive that translation, because those were never media events. v8's UI events (`useractive`, `userinactive`, `playerresize`, `texttrackchange`) were the player's own. Read the equivalent from player state instead.
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 
 ### Player state
 
@@ -535,7 +535,7 @@ You can also write to the media element directly. That is safe because player st
 | `player.tech()` | the media component's public `engine` escape hatch, where one exists; in React, reach it through `useMedia()` |
 | `videojs.getPlayer(id)` | hold a reference to the element |
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 Everything the table describes as "the player's" lives on the player element's store. Hold a reference to `<video-player>` the way you held a v8 player instance, and call actions on its `store.state`:
 
 ```js
@@ -555,7 +555,7 @@ Swapping sources is the change most likely to surprise you. There's no `player.s
 
 v8 shipped one language and asked you to register more with `videojs.addLanguage`. v10 ships locale packs for around 50 languages, so most apps need no setup at all. See <DocsLink slug="how-to/internationalize-the-player">Internationalize the player</DocsLink>.
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 To override individual strings:
 
 ```js
@@ -588,7 +588,7 @@ See <DocsLink slug="how-to/internationalize-the-player">Internationalize the pla
 
 v8 turned live UI on with a `liveui` flag, and audio-only on with `audioOnlyMode`. In v10 these are different players with different skins, because live and audio-only have different state and a genuinely different UI. See <DocsLink slug="concepts/presets">Presets</DocsLink>.
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```html
 <live-video-player>
   <live-video-skin>
@@ -620,7 +620,7 @@ You get `targetLiveWindow` and `liveEdgeStart` in state, plus a live button that
 
 The live composition is deliberately narrower than the video one. It leaves out playback rate, quality, and audio-track state, so those controls don't appear in a live skin's settings menu. If you need an omitted feature on a live player, build your own player from a feature list rather than taking the preset's.
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 That's what <DocsLink slug="reference/html-create-player">`createPlayer`</DocsLink> is for. Hand it a feature list and you get back the mixins to define your own player element.
 </FrameworkCase>
 

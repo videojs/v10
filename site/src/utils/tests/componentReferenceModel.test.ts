@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vite-plus/test';
 
 import type { ComponentReference } from '@/types/component-reference';
+import { HTML_API_FRAMEWORKS } from '@/types/docs';
 
 import { buildComponentReferenceTocHeadings, createComponentReferenceModel } from '../componentReferenceModel';
 
@@ -72,14 +73,14 @@ describe('createComponentReferenceModel', () => {
         title: 'Events',
         id: 'events',
         depth: 3,
-        frameworks: ['html'],
+        frameworks: HTML_API_FRAMEWORKS,
       },
     ]);
     expect(buildComponentReferenceTocHeadings(model)).toContainEqual({
       depth: 3,
       text: 'Events',
       slug: 'events',
-      frameworks: ['html'],
+      frameworks: HTML_API_FRAMEWORKS,
     });
   });
 
@@ -143,7 +144,7 @@ describe('createComponentReferenceModel', () => {
             react: 'Root',
             html: 'media-controls',
           },
-          frameworks: ['html', 'react'],
+          frameworks: [...HTML_API_FRAMEWORKS, 'react'],
           componentName: 'Controls.Root',
           sections: [
             {
@@ -230,7 +231,7 @@ describe('buildComponentReferenceTocHeadings', () => {
         depth: 3,
         text: 'media-controls',
         slug: 'root',
-        frameworks: ['html'],
+        frameworks: HTML_API_FRAMEWORKS,
       },
       {
         depth: 4,
@@ -335,6 +336,83 @@ describe('buildComponentReferenceTocHeadings', () => {
       slug: 'chapters-props',
       tocKind: 'api-reference-subsection',
       frameworks: ['react'],
+    });
+  });
+
+  it('opens an html-only props section to every framework reading that API', () => {
+    const apiReference = {
+      name: 'Thumbnail',
+      props: {},
+      state: {},
+      dataAttributes: {},
+      cssCustomProperties: {},
+      platforms: {},
+      parts: {
+        image: {
+          name: 'Image',
+          props: {
+            src: { type: 'string', frameworks: ['html'] },
+          },
+          state: {},
+          dataAttributes: {},
+          cssCustomProperties: {},
+          platforms: {
+            html: { tagName: 'media-thumbnail-image' },
+            react: {},
+          },
+        },
+      },
+    } satisfies ComponentReference;
+
+    const model = createComponentReferenceModel('Thumbnail', apiReference);
+
+    expect(model?.parts[0]?.sections).toMatchObject([
+      {
+        key: 'props',
+        frameworks: HTML_API_FRAMEWORKS,
+      },
+    ]);
+    expect(buildComponentReferenceTocHeadings(model)).toContainEqual({
+      depth: 4,
+      text: 'Props',
+      slug: 'image-props',
+      tocKind: 'api-reference-subsection',
+      frameworks: HTML_API_FRAMEWORKS,
+    });
+  });
+
+  it('leaves a section shared by both API platforms unrestricted', () => {
+    const apiReference = {
+      name: 'Slider',
+      props: {},
+      state: {},
+      dataAttributes: {},
+      cssCustomProperties: {},
+      platforms: {},
+      parts: {
+        root: {
+          name: 'Root',
+          props: {
+            disabled: { type: 'boolean' },
+          },
+          state: {},
+          dataAttributes: {},
+          cssCustomProperties: {},
+          platforms: {
+            html: { tagName: 'media-slider' },
+            react: {},
+          },
+        },
+      },
+    } satisfies ComponentReference;
+
+    const model = createComponentReferenceModel('Slider', apiReference);
+
+    expect(buildComponentReferenceTocHeadings(model)).toContainEqual({
+      depth: 4,
+      text: 'Props',
+      slug: 'root-props',
+      tocKind: 'api-reference-subsection',
     });
   });
 });

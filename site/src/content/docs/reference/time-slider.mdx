@@ -51,7 +51,7 @@ import withChaptersHtmlTs from "@/components/docs/demos/time-slider/html/css/Wit
   ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   ```html
   <media-time-slider>
     <media-slider-track>
@@ -86,7 +86,7 @@ Add `Chapters` to divide the slider track into sections. Each cue in the default
   `renderChapter` receives the attributes, styles, and state for each normalized chapter range. When no chapter cues are available, it renders once as a full-width, cue-less range.
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   ```html
   <media-time-slider-chapters>
     <template>
@@ -115,7 +115,7 @@ Chapter cues are normalized into contiguous ranges. Any uncovered time becomes a
 
 Use [CSS custom properties](#root-css-custom-properties) to style the fill, pointer, and buffer levels:
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```css
 media-time-slider::before {
   width: var(--media-slider-fill);
@@ -135,7 +135,7 @@ React renders a `<div>` element. Add a `className` to style it:
 
 Use `data-seeking` to style during active seek operations:
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```css
 media-time-slider[data-seeking] {
   opacity: 0.8;
@@ -189,7 +189,7 @@ Nest sub-components for full control over the slider's DOM structure. This examp
   </StyleCase>
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   <StyleCase styles={["css"]}>
     <Demo
       files={[
@@ -220,7 +220,7 @@ Add a default chapters track, then provide the markup used for each chapter. The
   </StyleCase>
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   <StyleCase styles={["css"]}>
     <Demo
       files={[

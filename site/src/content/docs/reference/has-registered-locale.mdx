@@ -9,7 +9,7 @@ import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 
 `hasRegisteredLocale` returns whether a normalized locale tag has an explicit registry layer from <DocsLink slug="reference/register-i18n">`registerI18n`</DocsLink>. It does **not** indicate whether a lazy built-in pack exists. Only registry entries count.
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 
 ```ts
 import { hasRegisteredLocale, registerI18n } from '@videojs/html/i18n';

@@ -12,7 +12,7 @@ import DocsLinkCard from '@/components/docs/DocsLinkCard.astro';
 <FrameworkCase frameworks={["react"]}>
 The `Container` is the player's physical surface. It defines the visual boundary, registers the fullscreen and activity target, and gives gesture and hotkey components a shared interaction surface. It lives inside a <DocsLink slug="reference/player">`Player`</DocsLink>.
 </FrameworkCase>
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 The `<media-container>` is the player's physical surface. It defines the visual boundary, registers the fullscreen and activity target, and gives gesture and hotkey elements a shared interaction surface. It lives inside a <DocsLink slug="reference/player">`<video-player>`</DocsLink>.
 </FrameworkCase>
 
@@ -28,7 +28,7 @@ The `<media-container>` is the player's physical surface. It defines the visual 
 </Player>
 ```
 </FrameworkCase>
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```html
 <video-player>
   <media-container> <!-- [!code focus] -->
@@ -54,7 +54,7 @@ const { Player } = createPlayer({ features: videoFeatures });
 <DocsLinkCard slug="reference/create-player">`createPlayer` reference</DocsLinkCard>
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 Import the standard player entry point. It registers both `<video-player>` and `<media-container>`:
 
 ```ts
@@ -99,7 +99,7 @@ The container is the visual box around your media and controls. Put sizing, aspe
 </Container>
 ```
 </FrameworkCase>
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```css
 .player-surface {
   position: relative;
@@ -119,7 +119,7 @@ The container is the visual box around your media and controls. Put sizing, aspe
 
 When the user goes fullscreen, the **container** goes fullscreen — not the video element. This keeps controls and other UI visible on top of the video, since they're children of the container.
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 Custom video elements such as `<mux-video>` and `<hlsjs-video>` do not create their own layout boxes: their inner `<video>` fills the parent. Size and measure `<media-container>`, not `<mux-video>` or `<hlsjs-video>`. Native `<video>` and `<audio>` elements still render their own boxes.
 </FrameworkCase>
 <FrameworkCase frameworks={["react"]}>
@@ -131,7 +131,7 @@ React media components such as `MuxVideo` render a native media element, so the 
 <FrameworkCase frameworks={["react"]}>
 Media discovery is handled by `Player`, not `Container`. When a media component like `<Video>` registers itself via context, `Player` wires it to the store and all of the player's features.
 </FrameworkCase>
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 Media discovery is handled by the player provider, not the container. Custom media elements like `<hlsjs-video>` register themselves via context when they connect. Plain `<video>` and `<audio>` elements are tracked automatically, including when they are added, removed, or replaced after connection. No `slot="media"` attribute is needed.
 </FrameworkCase>
 
@@ -156,7 +156,7 @@ Style `VideoSkin` for the player's outer size and aspect ratio. Its `skin.css` i
 
 If you omit `VideoSkin` to build custom UI, render and style `Container` yourself. See [Layout and fullscreen](#layout-and-fullscreen) for the complete layout example.
 </FrameworkCase>
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 Style `<video-skin>` for the player's outer size and aspect ratio. Importing the skin registers the styles that make the built-in container fill that space and position the media, controls, poster, and overlays.
 
 If you omit `<video-skin>` to build custom UI, render and style `<media-container>` yourself. See [Layout and fullscreen](#layout-and-fullscreen) for the complete layout example.
@@ -181,7 +181,7 @@ If you omit `<video-skin>` to build custom UI, render and style `<media-containe
 </Player>
 ```
 </FrameworkCase>
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```html
 <video-player>
   <media-container>

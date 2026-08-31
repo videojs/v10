@@ -48,7 +48,7 @@ const player = new Plyr('#player', {
 
 The Minimal skin is the closest built-in starting point for this migration.
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 
 The easiest path is the CDN:
 
@@ -132,7 +132,7 @@ If you're using HLS or DASH to stream your media, you're in luck; we have prebui
 
 #### HLS
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 
 Replace `<video>` with `<hls-video>`. If you're using the CDN, add an additional script:
 
@@ -164,7 +164,7 @@ Set the `src` to the URL for the m3u8 manifest.
 
 Very similar to HLS in that we have a drop-in component.
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 
 Replace `<video>` with `<dash-video>`. If you're using the CDN, add an additional script:
 
@@ -196,7 +196,7 @@ Set the `src` to the URL for the mpd manifest.
 
 Vimeo is supported through a prebuilt component.
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 
 Replace `<video>` with `<vimeo-video>` and add the module import:
 
@@ -222,7 +222,7 @@ Set the `src` to the URL for the Vimeo video, for example `https://vimeo.com/769
 
 YouTube is supported through a first-class media component.
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 
 Replace `<video>` with `<youtube-video>` and add the module import:
 
@@ -268,7 +268,7 @@ Video.js v10 ships with English labels by default and includes locale packs for:
 
 The shorthand tags `pt` and `zh` are also available as aliases. See <DocsLink slug="how-to/internationalize-the-player">Internationalize the player</DocsLink> for the full picture.
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 
 For CDN users:
 
@@ -372,7 +372,7 @@ Plyr's `controls` option chooses which controls appear. Video.js skins come with
 
 If your app already has a custom control bar, build it from individual <DocsLink slug="concepts/ui-components">UI components</DocsLink>. Video.js handles the media action, accessible name, and state. You add the visible contents, layout, and CSS.
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 Individual HTML buttons include no text, icon, or finished styling. Add your own content, or import `@videojs/html/icons/element` and place a `<media-icon>` inside the button. Attach click handlers directly to controls you add, and keep playback event handlers on the `<video>` or `<audio>`. To change or listen to a button inside a ready-made skin, eject the skin first.
 </FrameworkCase>
 
@@ -425,7 +425,7 @@ The same hook selects actions: `usePlayer((state) => state.togglePaused)` return
 When you need the element itself, put a `ref` on the media component; its value is the rendered `HTMLVideoElement`, so `ref.current.play()` works the way Plyr's underlying element did. For the Video.js media object, call <DocsLink slug="reference/use-media">`useMedia`</DocsLink> from a component inside the player; media that wrap a playback engine expose it there through the `engine` escape hatch.
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 The store's actions live on the player element's `store.state`: query `<video-player>` and call `player.store.state.togglePaused()`. Your media element is also a plain child in your markup, so you can query and drive it directly. To keep a custom element in sync with player state, use <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink>:
 
 ```js
@@ -448,7 +448,7 @@ Video.js v10 skins offer similar color customization via CSS custom properties. 
 }
 ```
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```css
 /* Video.js HTML */
 video-player {

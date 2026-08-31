@@ -40,7 +40,7 @@ import basicUsageHtmlTs from "@/components/docs/demos/volume-popover/html/css/Ba
   ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   ```html
   <media-mute-button commandfor="volume-popup"></media-mute-button>
   <media-volume-popover id="volume-popup">
@@ -59,7 +59,7 @@ The HTML trigger can target the popup with `commandfor`. An immediately adjacent
 
 The popup reflects `data-availability="available"` while it can render volume controls. HTML also receives native `hidden` and `data-hidden` when it cannot.
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```css
 media-volume-popover[data-open] {
   opacity: 1;
@@ -98,7 +98,7 @@ The trigger receives `aria-haspopup`, `aria-expanded`, and `aria-controls` while
   </StyleCase>
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   <StyleCase styles={["css"]}>
     <Demo
       files={[

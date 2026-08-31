@@ -60,7 +60,7 @@ Pick a language and every label follows — no remount:
 </StyleCase>
 
 </FrameworkCase>
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 
 ```html
 <media-i18n lang="ja">
@@ -121,7 +121,7 @@ function StartButton() {
 The `default` is the English text — English ships inside component descriptors, not as a pack, so a bare `t(key)` renders the key itself under `en`. The key selects the translation once a pack is active.
 
 </FrameworkCase>
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 
 ```html
 <media-text token="buttons.play">Play</media-text>
@@ -165,7 +165,7 @@ Pass `translations` on <DocsLink slug="reference/i18n-provider">`I18nProvider`</
 Nested providers inherit the parent locale when you only pass `translations`. For global overrides, call `registerI18n` instead — it merges, so only the keys you pass change.
 
 </FrameworkCase>
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 
 ```js
 import '@videojs/html/i18n/locales/ja/register';
@@ -200,7 +200,7 @@ registerI18n('es', es);
 ```
 
 </FrameworkCase>
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 
 ```ts
 import { registerI18n, type Translations } from '@videojs/html/i18n';
@@ -230,7 +230,7 @@ import '@videojs/react/i18n/locales/ja/register';
 ```
 
 </FrameworkCase>
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 
 ```ts
 import '@videojs/html/i18n/locales/ja/register';
@@ -238,7 +238,7 @@ import '@videojs/html/i18n/locales/ja/register';
 
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 
 ### Load locales from the CDN
 
@@ -307,7 +307,7 @@ async function switchTo(next: keyof typeof loaders) {
 ```
 
 </FrameworkCase>
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 
 Ambient switching only applies when `<media-i18n>` has no explicit `lang` attribute. To switch explicitly, set the provider's `lang`:
 
@@ -340,7 +340,7 @@ Set `dir` back to `ltr` when you switch to a left-to-right language. This preven
 When `I18nProvider` has an explicit `locale`, the player applies its resolved `lang` and `dir` to the container. A `lang` or `dir` passed to that container overrides the rendered DOM boundary only; translations still come from `I18nProvider locale`.
 
 </FrameworkCase>
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 
 `<media-i18n lang>` sets the provider locale and derives its direction. An explicit `dir` on `<media-i18n>` overrides that derived direction.
 
@@ -369,7 +369,7 @@ import { LiveButton } from '@videojs/react';
 Authored children are literal; use `useTranslator` when custom children also need localization. For state-dependent text, render one element per state and show or hide them with the component's `data-*` state attributes (the same pattern used for icons).
 
 </FrameworkCase>
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 
 ```html
 <media-live-button>
@@ -413,7 +413,7 @@ export async function Player({ locale }: { locale: string }) {
 Pass `locale` explicitly on the server — there's no DOM to resolve `lang` from, and an explicit value avoids hydration mismatches. With app routers, pass the tag your framework negotiates (for next-intl, `await getLocale()`); Video.js doesn't replace framework i18n, it consumes the tag you give it.
 
 </FrameworkCase>
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 
 Emit `lang`, wrap the player with `<media-i18n>`, and register packs in the entry module loaded before custom elements upgrade:
 

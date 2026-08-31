@@ -34,7 +34,7 @@ import basicUsageHtmlTs from "@/components/docs/demos/pip-button/html/css/BasicU
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```html
 <media-pip-button></media-pip-button>
 ```
@@ -51,7 +51,7 @@ Toggles picture-in-picture (PiP) mode. The button derives two state hooks from `
 
 You can style the button based on PiP state:
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```css
 /* In PiP mode */
 media-pip-button[data-pip] {
@@ -104,7 +104,7 @@ Renders a `<button>` with an automatic `aria-label`: "Enter PiP" or "Exit PiP". 
   </StyleCase>
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   <StyleCase styles={["css"]}>
     <Demo files={[
       { title: "index.html", code: basicUsageHtml, lang: "html" },

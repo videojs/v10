@@ -43,7 +43,7 @@ export function MyPlayer() {
 
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 
 ```html
 <video-player>
@@ -82,7 +82,7 @@ export function MyPlayer() {
 
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 
 ```html
 <video-player poster="/poster.jpg">
@@ -130,7 +130,7 @@ export function MyPlayer() {
 
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 
 Add your image to the skin's `poster` slot. Leave off `src` and Video.js fills in the player's poster. Provide a `src`, a `srcset`, or `<picture>` sources and Video.js leaves the image alone:
 
@@ -221,7 +221,7 @@ export function MyPlayer() {
 
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 
 ### Add an image to the poster slot
 
@@ -271,7 +271,7 @@ When your UI already includes Poster, apply a placeholder through its `render` p
 
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 
 `<media-poster>` fills the `src` of the image inside it. Give that image a `src`, a `srcset`, or `<picture>` sources instead and Video.js leaves it untouched — set the source at this level when the poster should bypass player state entirely.
 
@@ -302,7 +302,7 @@ Pass the `src` from `renderPoster` to your image. If your image component requir
 
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 
 Leave off `src`, `srcset`, and any parent `<picture>` sources when you want Video.js to add the poster URL. If you provide one of those values, Video.js leaves it unchanged.
 

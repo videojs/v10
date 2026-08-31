@@ -56,7 +56,7 @@ That track is cross-origin, and a cross-origin `<track>` only loads when the med
   ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   ```html
   <video src="video.mp4" crossorigin="anonymous">
     <track
@@ -84,7 +84,7 @@ A same-origin track needs none of this.
   ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   ```html
   <media-thumbnail time="12"></media-thumbnail>
   ```
@@ -116,7 +116,7 @@ Opt out to fetch them without CORS:
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```ts
 const thumbnail = document.querySelector('media-thumbnail');
 thumbnail.crossOrigin = null;
@@ -133,7 +133,7 @@ Thumbnails you supply through `thumbnails` never inherit, since they need not be
 
 Use state data attributes for pure CSS styling:
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```css
 media-thumbnail[data-hidden] {
   display: none;
@@ -188,7 +188,7 @@ React renders a `<div>` element. Add a `className` to style it:
   </StyleCase>
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   <StyleCase styles={["css"]}>
     <Demo
       files={[
@@ -216,7 +216,7 @@ React renders a `<div>` element. Add a `className` to style it:
   </StyleCase>
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   <StyleCase styles={["css"]}>
     <Demo
       files={[
@@ -243,7 +243,7 @@ React renders a `<div>` element. Add a `className` to style it:
   </StyleCase>
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   <StyleCase styles={["css"]}>
     <Demo
       files={[

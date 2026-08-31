@@ -39,7 +39,7 @@ import basicUsageHtmlTs from "@/components/docs/demos/volume-indicator/html/css/
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```html
 <media-volume-indicator>
   <media-volume-indicator-fill>
@@ -82,7 +82,7 @@ When a nonzero `volumeStep` cannot move past an already-clamped edge, `data-min`
 
 `--media-volume-fill` is set on the Fill part, not the Root. Read it from a Fill selector when sizing a progress treatment.
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```css
 media-volume-indicator-fill::before {
   width: var(--media-volume-fill, 0%);
@@ -131,7 +131,7 @@ Focus the player, then press <kbd>M</kbd> to mute or unmute. Use <kbd>Arrow Up</
   </StyleCase>
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   <StyleCase styles={["css"]}>
     <Demo files={[
       { title: "index.html", code: basicUsageHtml, lang: "html" },

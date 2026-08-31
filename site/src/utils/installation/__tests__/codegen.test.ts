@@ -6,6 +6,8 @@ import {
   generateReactCreateCode,
   generateReactInstallCode,
   generateReactUsageCode,
+  generateSvelteUsageCode,
+  generateVueUsageCode,
   type InstallationOptions,
   validateInstallationOptions,
 } from '../codegen';
@@ -28,6 +30,10 @@ const baseReact: InstallationOptions = {
   installMethod: 'npm',
 };
 
+const baseVue: InstallationOptions = { ...baseHTML, framework: 'vue' };
+
+const baseSvelte: InstallationOptions = { ...baseHTML, framework: 'svelte' };
+
 describe('validateInstallationOptions', () => {
   it('accepts valid HTML + npm combo', () => {
     expect(validateInstallationOptions(baseHTML)).toEqual({ valid: true });
@@ -35,6 +41,11 @@ describe('validateInstallationOptions', () => {
 
   it('accepts valid React + npm combo', () => {
     expect(validateInstallationOptions(baseReact)).toEqual({ valid: true });
+  });
+
+  it('accepts Vue and Svelte, which install the CDN or package builds of @videojs/html', () => {
+    expect(validateInstallationOptions(baseVue)).toEqual({ valid: true });
+    expect(validateInstallationOptions({ ...baseSvelte, installMethod: 'cdn' })).toEqual({ valid: true });
   });
 
   it('rejects React + CDN', () => {
@@ -308,6 +319,104 @@ describe('generateHTMLUsageCode', () => {
     // A distinct asset from the on-demand demo, so the live player actually
     // reports live-edge state.
     expect(live.html).not.toEqual(onDemand.html);
+  });
+});
+
+describe('generateVueUsageCode', () => {
+  it('takes the source as a prop and binds it on the media element', () => {
+    const { component } = generateVueUsageCode(baseVue);
+
+    expect(component).toContain('<script setup lang="ts">');
+    expect(component).toContain('defineProps<{ src: string }>();');
+    expect(component).toContain('<video :src="src" playsinline></video>');
+    expect(component).not.toContain('stream.mux.com');
+  });
+
+  it('keeps the generated player markup, indented into the template', () => {
+    const { html } = generateHTMLUsageCode(baseVue);
+    const { component } = generateVueUsageCode(baseVue);
+    const expectedTemplate = html
+      .replace(/src="[^"]*"/, ':src="src"')
+      .split('\n')
+      .map((line) => (line.trim() ? `  ${line}` : line))
+      .join('\n');
+
+    expect(component).toContain(`<template>\n${expectedTemplate}\n</template>`);
+  });
+
+  it('imports the elements a bundled install needs, and none for a CDN install', () => {
+    const bundled = generateVueUsageCode({ ...baseVue, renderer: 'hls' }).component;
+    const cdn = generateVueUsageCode({ ...baseVue, renderer: 'hls', installMethod: 'cdn' }).component;
+
+    expect(bundled).toContain("import '@videojs/html/video/player';");
+    expect(bundled).toContain("import '@videojs/html/media/hlsjs-video';");
+    expect(cdn).not.toContain('import ');
+    // The prop stays: only the element registration moves to the app's HTML shell.
+    expect(cdn).toContain('defineProps<{ src: string }>();');
+  });
+
+  it('renders the component with the picked source', () => {
+    const { usage } = generateVueUsageCode({ ...baseVue, sourceUrl: 'https://example.com/video.mp4' });
+
+    expect(usage).toContain("import MyPlayer from './components/MyPlayer.vue';");
+    expect(usage).toContain('<MyPlayer src="https://example.com/video.mp4" />');
+  });
+
+  it('lists exactly the custom-element tags the player renders in isCustomElement', () => {
+    const { viteConfig } = generateVueUsageCode({ ...baseVue, renderer: 'hls' });
+
+    expect(viteConfig).toContain("const videoJsElements = new Set(['video-player', 'video-skin', 'hlsjs-video']);");
+    expect(viteConfig).toContain('isCustomElement: (tag) => videoJsElements.has(tag),');
+  });
+
+  it('leaves built-in media tags out of isCustomElement', () => {
+    const { viteConfig } = generateVueUsageCode(baseVue);
+
+    expect(viteConfig).toContain("new Set(['video-player', 'video-skin']);");
+  });
+
+  it('lists the tags a skinless background player renders', () => {
+    const { viteConfig } = generateVueUsageCode({
+      ...baseVue,
+      useCase: 'background-video',
+      renderer: 'background-video',
+    });
+
+    expect(viteConfig).toContain("new Set(['background-video-player', 'background-video-skin', 'background-video']);");
+  });
+});
+
+describe('generateSvelteUsageCode', () => {
+  it('takes the source as a rune prop and binds it on the media element', () => {
+    const { component } = generateSvelteUsageCode(baseSvelte);
+
+    expect(component).toContain('<script lang="ts">');
+    expect(component).toContain('  let { src }: { src: string } = $props();');
+    expect(component).toContain('<video {src} playsinline></video>');
+    expect(component).not.toContain('stream.mux.com');
+  });
+
+  it('keeps the generated player markup below the script block', () => {
+    const { html } = generateHTMLUsageCode(baseSvelte);
+    const { component } = generateSvelteUsageCode(baseSvelte);
+
+    expect(component).toContain(`</script>\n\n${html.replace(/src="[^"]*"/, '{src}')}`);
+  });
+
+  it('imports the elements a bundled install needs, and none for a CDN install', () => {
+    const bundled = generateSvelteUsageCode({ ...baseSvelte, renderer: 'hls' }).component;
+    const cdn = generateSvelteUsageCode({ ...baseSvelte, renderer: 'hls', installMethod: 'cdn' }).component;
+
+    expect(bundled).toContain("  import '@videojs/html/media/hlsjs-video';");
+    expect(cdn).not.toContain('import ');
+    expect(cdn).toContain('  let { src }: { src: string } = $props();');
+  });
+
+  it('renders the component with the picked source', () => {
+    const { usage } = generateSvelteUsageCode({ ...baseSvelte, sourceUrl: 'https://example.com/video.mp4' });
+
+    expect(usage).toContain("import MyPlayer from './lib/MyPlayer.svelte';");
+    expect(usage).toContain('<MyPlayer src="https://example.com/video.mp4" />');
   });
 });
 

@@ -1,6 +1,19 @@
 ---
-
+/**
+ * Conditionally shows content based on the reader's selected framework.
+ *
+ * `frameworks` is an exact list: omit it to show the content everywhere, otherwise name every framework that should see
+ * it. Content documenting the `@videojs/html` custom-element API lists all three of its readers, because Vue and Svelte
+ * consume that API too.
+ *
+ * @example
+ * <!-- Shared html-API content, then the Vue-specific variant that replaces it -->
+ * <FrameworkCase frameworks={["html", "vue", "svelte"]}>Custom-element content</FrameworkCase>
+ * <FrameworkCase frameworks={["html"]}>HTML-only content Vue and Svelte should not see</FrameworkCase>
+ * <FrameworkCase frameworks={["vue"]}>Vue-specific content</FrameworkCase>
+ */
 import type { SupportedFramework } from '@/types/docs';
+import { frameworkMatches } from '@/types/docs';
 
 interface Props {
   frameworks?: SupportedFramework[];
@@ -9,8 +22,8 @@ interface Props {
 const { frameworks } = Astro.props;
 const { framework } = Astro.params;
 
-// Only render if current framework matches, or if no frameworks specified (all frameworks)
-const shouldRender = !frameworks || frameworks.includes(framework as SupportedFramework);
+// Only render if the current framework is listed, or if no frameworks specified (all frameworks)
+const shouldRender = frameworkMatches(framework as SupportedFramework, frameworks);
 ---
 
 {

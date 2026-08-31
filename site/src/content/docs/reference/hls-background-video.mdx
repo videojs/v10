@@ -20,7 +20,7 @@ import { HlsBackgroundVideo } from '@videojs/react/media/hls-background-video';
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```ts
 import '@videojs/html/media/hls-background-video';
 ```
@@ -40,7 +40,7 @@ import '@videojs/html/media/hls-background-video';
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```html
 <hls-background-video
   src="https://media.example.com/hero.m3u8"
@@ -65,7 +65,7 @@ The HTML element also fires an `error` event when `error` becomes fatal. The inn
 
 ## Styling
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 | Custom property | Default | Description |
 | --- | --- | --- |
 | `--media-object-fit` | `inherit` | How the video fits its box |

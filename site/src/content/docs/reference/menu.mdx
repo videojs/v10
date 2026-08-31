@@ -67,7 +67,7 @@ A root menu owns one positioned Popup. Nested `Content` elements share that Popu
   ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   ```html
   <button type="button" commandfor="settings-menu">Settings</button>
 
@@ -148,7 +148,7 @@ Every navigable item receives `data-item`. Use `[data-item]` when one rule shoul
   ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   ```css
   media-menu[data-open] {
     opacity: 1;
@@ -202,7 +202,7 @@ Use `Menu.GroupLabel` or `<media-menu-group-label>` inside grouped choices so th
   </StyleCase>
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   <StyleCase styles={["css"]}>
     <Demo files={[
       { title: "index.html", code: basicUsageHtml, lang: "html" },

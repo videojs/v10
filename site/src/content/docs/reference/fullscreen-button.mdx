@@ -34,7 +34,7 @@ import basicUsageHtmlTs from "@/components/docs/demos/fullscreen-button/html/css
   ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   ```html
   <media-fullscreen-button></media-fullscreen-button>
   ```
@@ -51,7 +51,7 @@ Toggles fullscreen mode. The button derives two state hooks from `availability`:
 
 You can style the button based on fullscreen state:
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```css
 /* In fullscreen */
 media-fullscreen-button[data-fullscreen] {
@@ -106,7 +106,7 @@ Renders a `<button>` with an automatic `aria-label`: "Enter fullscreen" or "Exit
   </StyleCase>
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   <StyleCase styles={["css"]}>
     <Demo
       files={[

@@ -42,7 +42,7 @@ import withPartsHtmlTs from "@/components/docs/demos/volume-slider/html/css/With
   ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   ```html
   <media-volume-slider>
     <media-slider-track>
@@ -64,7 +64,7 @@ Controls the media volume level. The slider maps its 0–100 internal range to t
 
 Use [CSS custom properties](#root-css-custom-properties) to style the fill and pointer levels:
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```css
 media-volume-slider::before {
   width: var(--media-slider-fill);
@@ -112,7 +112,7 @@ Nest sub-components for full control over the slider's DOM structure. This examp
   </StyleCase>
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   <StyleCase styles={["css"]}>
     <Demo
       files={[

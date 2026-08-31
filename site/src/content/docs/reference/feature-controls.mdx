@@ -17,7 +17,7 @@ Read-only — tracks user activity for showing and hiding controls.
 Pass `selectControls` to <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> to subscribe to controls state. Returns `undefined` if the controls feature is not configured.
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 Pass `selectControls` to <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> to subscribe to controls state. Returns `undefined` if the controls feature is not configured.
 </FrameworkCase>
 
@@ -38,7 +38,7 @@ function ControlsOverlay({ children }: { children: React.ReactNode }) {
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```ts title="controls-overlay.ts"
 import { createPlayer, UIElement, selectControls } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';

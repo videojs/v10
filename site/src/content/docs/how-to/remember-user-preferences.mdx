@@ -153,6 +153,164 @@ export default function App() {
 ```
 
 </FrameworkCase>
+<FrameworkCase frameworks={["vue"]}>
+
+This assumes `isCustomElement` is already configured, as described in <DocsLink slug="how-to/use-videojs-with-vue">Use Video.js with Vue and Nuxt</DocsLink>.
+
+```vue title="VolumePersistence.vue"
+<script setup lang="ts">
+import '@videojs/html/video/player';
+import type { VideoPlayerElement } from '@videojs/html/video';
+import { selectVolume } from '@videojs/html';
+import { onMounted, onUnmounted, ref } from 'vue';
+
+const STORAGE_KEY = 'player:volume';
+const player = ref<VideoPlayerElement | null>(null);
+
+// Local storage can be unavailable (private modes), so guard reads and writes.
+function readSaved() {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? 'null');
+  } catch {
+    return null;
+  }
+}
+
+function save(prefs: { volume: number; muted: boolean }) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs));
+  } catch {
+    // Storage unavailable; skip persistence.
+  }
+}
+
+let unsubscribeRestore = () => {};
+let unsubscribeSave = () => {};
+
+onMounted(() => {
+  const store = player.value!.store;
+  const saved = readSaved();
+
+  // Restore once the store attaches to the media; actions throw before that.
+  if (saved) {
+    const restore = () => {
+      if (!store.target) return false;
+      const v = selectVolume(store.state);
+      v?.setVolume(saved.volume);
+      // setVolume above zero unmutes, so mute again if that's the saved preference.
+      // At volume zero the player already counts as muted, and toggling would unmute.
+      if (v && saved.muted && saved.volume > 0) v.toggleMuted();
+      return true;
+    };
+    if (!restore()) {
+      unsubscribeRestore = store.subscribe(() => {
+        if (restore()) unsubscribeRestore();
+      });
+    }
+  }
+
+  // Save on change. subscribe() fires on any state change, so diff what you care about.
+  let last = saved ?? {};
+  unsubscribeSave = store.subscribe(() => {
+    const v = selectVolume(store.state);
+    if (!v || (v.volume === last.volume && v.muted === last.muted)) return;
+    last = { volume: v.volume, muted: v.muted };
+    save(last);
+  });
+});
+
+onUnmounted(() => {
+  unsubscribeRestore();
+  unsubscribeSave();
+});
+</script>
+
+<template>
+  <video-player ref="player">
+    <media-container>
+      <video src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4" playsinline></video>
+    </media-container>
+  </video-player>
+</template>
+```
+
+</FrameworkCase>
+<FrameworkCase frameworks={["svelte"]}>
+
+```svelte title="VolumePersistence.svelte"
+<script lang="ts">
+  import '@videojs/html/video/player';
+  import type { VideoPlayerElement } from '@videojs/html/video';
+  import { selectVolume } from '@videojs/html';
+  import { onMount } from 'svelte';
+
+  const STORAGE_KEY = 'player:volume';
+  let player: VideoPlayerElement;
+
+  // Local storage can be unavailable (private modes), so guard reads and writes.
+  function readSaved() {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? 'null');
+    } catch {
+      return null;
+    }
+  }
+
+  function save(prefs: { volume: number; muted: boolean }) {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs));
+    } catch {
+      // Storage unavailable; skip persistence.
+    }
+  }
+
+  onMount(() => {
+    const store = player.store;
+    const saved = readSaved();
+    let unsubscribeRestore = () => {};
+
+    // Restore once the store attaches to the media; actions throw before that.
+    if (saved) {
+      const restore = () => {
+        if (!store.target) return false;
+        const v = selectVolume(store.state);
+        v?.setVolume(saved.volume);
+        // setVolume above zero unmutes, so mute again if that's the saved preference.
+        // At volume zero the player already counts as muted, and toggling would unmute.
+        if (v && saved.muted && saved.volume > 0) v.toggleMuted();
+        return true;
+      };
+      if (!restore()) {
+        unsubscribeRestore = store.subscribe(() => {
+          if (restore()) unsubscribeRestore();
+        });
+      }
+    }
+
+    // Save on change. subscribe() fires on any state change, so diff what you care about.
+    let last = saved ?? {};
+    const unsubscribeSave = store.subscribe(() => {
+      const v = selectVolume(store.state);
+      if (!v || (v.volume === last.volume && v.muted === last.muted)) return;
+      last = { volume: v.volume, muted: v.muted };
+      save(last);
+    });
+
+    return () => {
+      unsubscribeRestore();
+      unsubscribeSave();
+    };
+  });
+</script>
+
+<video-player bind:this={player}>
+  <media-container>
+    <video src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4" playsinline></video>
+  </media-container>
+</video-player>
+```
+
+</FrameworkCase>
 
 ## How it works
 
@@ -214,7 +372,7 @@ function CaptionsPersistence() {
 ```
 
 </FrameworkCase>
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 
 Apply the same pattern with `selectTextTrack(store.state)` inside `store.subscribe`: until `canPlay` is true, re-apply the saved preference by passing the matching track's `id` (or `'off'`) to `selectSubtitlesTrack` whenever the modes drift; afterward, save the showing track's `language`, or `'off'` when none is showing, on every change.
 

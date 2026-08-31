@@ -17,7 +17,7 @@ Tracks playback position and duration. During live playback, the browser may rep
 Pass `selectTime` to <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> to subscribe to time state. Returns `undefined` if the time feature is not configured.
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 Pass `selectTime` to <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> to subscribe to time state. Returns `undefined` if the time feature is not configured.
 </FrameworkCase>
 
@@ -38,7 +38,7 @@ function TimeDisplay() {
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```ts title="time-display.ts"
 import { createPlayer, UIElement, selectTime } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';

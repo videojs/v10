@@ -1,11 +1,12 @@
 import type { Guide, Sidebar, SidebarItem, SupportedFramework } from '@/types/docs';
-import { FRAMEWORK_STYLES, isLink, isSection } from '@/types/docs';
+import { frameworkMatches, FRAMEWORK_STYLES, isLink, isSection } from '@/types/docs';
 
 import { sidebar } from '../../docs.config';
 
 /**
  * Check if an item (Guide or Section) should be shown based on framework. If no frameworks are specified, the item is
- * visible to all frameworks.
+ * visible to all frameworks. Otherwise matching is exact: an item whose page documents the `@videojs/html` API lists
+ * `html`, `vue`, and `svelte`.
  *
  * @param item - The guide or section to check
  * @param framework - The currently selected framework
@@ -22,7 +23,7 @@ export function isItemVisible(
     return false;
   }
 
-  return !item.frameworks || item.frameworks.includes(framework);
+  return frameworkMatches(framework, item.frameworks);
 }
 
 /**
@@ -179,27 +180,32 @@ export function getSectionsForGuide(slug: string, sidebarToSearch: Sidebar = sid
 
 /**
  * Get all valid frameworks for a guide, accounting for ancestor section restrictions. Walks the sidebar tree to find
- * the guide and intersects `frameworks` from every ancestor section along the path, then applies the guide's own
- * restriction on top.
+ * the guide, then keeps every framework that matches the guide and each of its ancestor sections.
+ *
+ * Matching is exact, the same as the sidebar itself: a guide is valid for the frameworks it lists, intersected with
+ * whatever each ancestor section lists.
  */
 export function getValidFrameworksForGuide(guide: Guide, sidebarToSearch: Sidebar = sidebar): SupportedFramework[] {
   const allFrameworks = Object.keys(FRAMEWORK_STYLES) as SupportedFramework[];
 
-  function findWithRestrictions(items: Sidebar, inherited: SupportedFramework[]): SupportedFramework[] | null {
+  /** Ancestor sections plus the guide itself, outermost first, or null when the guide is not in this sidebar. */
+  function findRestrictionPath(items: Sidebar, ancestors: SidebarItem[]): SidebarItem[] | null {
     for (const item of items) {
       if (isSection(item)) {
-        const sectionFrameworks = item.frameworks ? inherited.filter((f) => item.frameworks!.includes(f)) : inherited;
-        const result = findWithRestrictions(item.contents, sectionFrameworks);
+        const result = findRestrictionPath(item.contents, [...ancestors, item]);
         if (result) return result;
       } else if (!isLink(item) && item.slug === guide.slug) {
-        return item.frameworks ? inherited.filter((f) => item.frameworks!.includes(f)) : inherited;
+        return [...ancestors, item];
       }
     }
 
     return null;
   }
 
-  return findWithRestrictions(sidebarToSearch, allFrameworks) ?? allFrameworks;
+  const path = findRestrictionPath(sidebarToSearch, []);
+  if (!path) return allFrameworks;
+
+  return allFrameworks.filter((framework) => path.every((item) => frameworkMatches(framework, item.frameworks)));
 }
 
 /**

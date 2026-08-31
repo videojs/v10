@@ -42,7 +42,7 @@ import basicUsageHtmlTs from "@/components/docs/demos/alert-dialog/html/css/Basi
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```html
 <media-alert-dialog>
   <media-dialog-backdrop></media-dialog-backdrop>
@@ -63,7 +63,7 @@ Use an alert dialog for an urgent message that interrupts the user and requires 
 Use `open` with `onOpenChange` for controlled state, or `defaultOpen` for uncontrolled state. `Root` provides state without rendering an element, while `Popup` renders only while the dialog is open.
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 Set the root's `open` property to show the dialog. The root supplies alert state while the shared `media-dialog-backdrop` and `media-dialog-popup` siblings render the visual surfaces and semantics. The root updates the property and dispatches `open-change` when the dialog closes.
 </FrameworkCase>
 
@@ -79,7 +79,7 @@ Use the open and transition data attributes to style visibility and animations:
 | `data-starting-style` | Present at the start of the opening transition |
 | `data-ending-style` | Present during the closing transition |
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```css
 media-dialog-backdrop:not([data-open]),
 media-dialog-popup:not([data-open]) {
@@ -127,7 +127,7 @@ The dialog uses `role="alertdialog"` and `aria-modal="true"`. The title and desc
   </StyleCase>
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   <StyleCase styles={["css"]}>
     <Demo files={[
       { title: "index.html", code: basicUsageHtml, lang: "html" },

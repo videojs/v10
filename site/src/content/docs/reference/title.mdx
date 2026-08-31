@@ -35,7 +35,7 @@ import basicUsageHtmlTs from "@/components/docs/demos/title/html/css/BasicUsage.
   ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   ```html
   <media-title></media-title>
   ```
@@ -57,7 +57,7 @@ title on the player instead of passing children.
   ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   ```html
   <video-player content-title="Big Buck Bunny">
     <video src="video.mp4"></video>
@@ -97,6 +97,48 @@ feature</DocsLink>, which the video and audio presets include.
   ```
 </FrameworkCase>
 
+<FrameworkCase frameworks={["vue"]}>
+`title` already means the tooltip on an element, so the player takes the title as
+`content-title`, reflected by the `contentTitle` property. Set it through a template ref:
+
+  ```vue
+  <script setup lang="ts">
+  import type { VideoPlayerElement } from "@videojs/html/video";
+  import { onMounted, ref } from "vue";
+
+  const player = ref<VideoPlayerElement | null>(null);
+
+  onMounted(() => {
+    player.value!.contentTitle = "Sintel";
+  });
+  </script>
+
+  <template>
+    <video-player ref="player"><!-- skin and media --></video-player>
+  </template>
+  ```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["svelte"]}>
+`title` already means the tooltip on an element, so the player takes the title as
+`content-title`, reflected by the `contentTitle` property. Set it through a bound element:
+
+  ```svelte
+  <script lang="ts">
+    import type { VideoPlayerElement } from "@videojs/html/video";
+    import { onMount } from "svelte";
+
+    let player: VideoPlayerElement;
+
+    onMount(() => {
+      player.contentTitle = "Sintel";
+    });
+  </script>
+
+  <video-player bind:this={player}><!-- skin and media --></video-player>
+  ```
+</FrameworkCase>
+
 Set it to `null` to hand the title back to the media.
 
 The title shows whenever there is a title to show. It does not follow the controls or
@@ -105,7 +147,7 @@ the controls in your own layout, the same way you would any other piece of chrom
 
 ## Styling
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 When no title resolves, the element sets the native `hidden` attribute and `data-hidden`,
 so it takes up no space and a background or gradient never sits over empty space.
 
@@ -182,7 +224,7 @@ set `aria-label` or `aria-labelledby` on the container yourself.
   </StyleCase>
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   <StyleCase styles={["css"]}>
     <Demo
       files={[

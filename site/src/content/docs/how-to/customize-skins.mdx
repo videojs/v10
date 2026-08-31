@@ -13,7 +13,7 @@ Video.js v10 comes with two pre-built skins: Default and Minimal. Start with the
 
 Set these CSS custom properties directly on the skin:
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 
 ```html
 <video-skin style="--media-accent-color: #f5c518; --media-border-radius: 1rem">
@@ -77,7 +77,7 @@ You can also add your own class names to the skins.
 
 The four properties above are the public styling controls for packaged skins. Don't depend on the elements, classnames, or other custom properties inside a packaged skin. They may change between releases.
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 
 Packaged video skins also let you replace the poster through the `poster` slot.
 
@@ -115,7 +115,7 @@ To eject a skin:
   <EjectedSkin id="default-video-react" />
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   <EjectedSkin id="default-video" />
 </FrameworkCase>
 
@@ -125,7 +125,7 @@ To eject a skin:
   <EjectedSkin id="default-audio-react" />
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   <EjectedSkin id="default-audio" />
 </FrameworkCase>
 
@@ -135,7 +135,7 @@ To eject a skin:
   <EjectedSkin id="minimal-video-react" />
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   <EjectedSkin id="minimal-video" />
 </FrameworkCase>
 
@@ -145,7 +145,7 @@ To eject a skin:
   <EjectedSkin id="minimal-audio-react" />
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   <EjectedSkin id="minimal-audio" />
 </FrameworkCase>
 
@@ -157,7 +157,7 @@ The live skins swap the duration and current-time displays for a Live button. Th
   <EjectedSkin id="default-live-video-react" />
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   <EjectedSkin id="default-live-video" />
 </FrameworkCase>
 
@@ -167,7 +167,7 @@ The live skins swap the duration and current-time displays for a Live button. Th
   <EjectedSkin id="default-live-audio-react" />
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   <EjectedSkin id="default-live-audio" />
 </FrameworkCase>
 
@@ -177,7 +177,7 @@ The live skins swap the duration and current-time displays for a Live button. Th
   <EjectedSkin id="minimal-live-video-react" />
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   <EjectedSkin id="minimal-live-video" />
 </FrameworkCase>
 
@@ -187,7 +187,7 @@ The live skins swap the duration and current-time displays for a Live button. Th
   <EjectedSkin id="minimal-live-audio-react" />
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   <EjectedSkin id="minimal-live-audio" />
 </FrameworkCase>
 

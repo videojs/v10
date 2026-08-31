@@ -27,7 +27,7 @@ function Hero() {
 }
 ```
 </FrameworkCase>
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 For example, the `@videojs/html/background` preset includes a media element with autoplay, mute, and loop built in, a skin with no controls, and just the features needed to power them:
 
 ```html title="index.html"
@@ -63,13 +63,13 @@ Each React preset exports a named, preconfigured player component and typed `use
 - **Media element** — A media component suited to the use case. For example, the background video element bakes in autoplay, mute, and loop.
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 Each HTML preset provides registration entry points for a preconfigured player element, its skins, and any preset-specific media element, plus the feature bundle needed to compose your own player. For example, `@videojs/html/video/player` registers `<video-player>`, while `@videojs/html/video/skin` registers `<video-skin>`.
 </FrameworkCase>
 
 These parts aren't equally tied together. Skins depend tightly on their feature bundle — a skin expects specific features to exist. Media elements are more interchangeable — you can swap in an HLS or DASH provider without changing your skin or features.
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 HTML preset roots are side-effect-free modules for importing the configured classes, typed controller, and feature bundle:
 
 ```ts
@@ -122,7 +122,7 @@ function Hero() {
 }
 ```
 </FrameworkCase>
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```html title="index.html"
 <script type="module">
   import { createPlayer, playbackFeature } from '@videojs/html';
@@ -164,7 +164,7 @@ A preset's default media element is just the starting point. You can replace it 
 </VideoPlayer>
 ```
 </FrameworkCase>
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```html
 <video-player>
   <video-skin>

@@ -44,7 +44,7 @@ Creates radio items from the player playback rate state and selects the playback
   ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   ```html
   <media-playback-rate-radio-group>
     <template>
@@ -65,7 +65,7 @@ The group is available when the configured media exposes playback rates. Option 
 `PlaybackRateRadioGroup` uses <DocsLink slug="reference/use-playback-rate-options">`usePlaybackRateOptions`</DocsLink> to own selection and generate each item. Its required `renderItem` callback renders the <DocsLink slug="reference/menu">`Menu.RadioItem`</DocsLink> root and receives item state containing the translated `label` and current `checked` value. It returns `null` when the <DocsLink slug="reference/feature-playback-rate">playback rate feature</DocsLink> is not configured.
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 `<media-playback-rate-radio-group>` generates `<media-menu-radio-item>` children. Add an optional `<template>` with a single `<media-menu-radio-item>` to customize each generated item.
 </FrameworkCase>
 
@@ -88,7 +88,7 @@ The group uses the menu radio group pattern.
 The component receives an accessible label from the `label` prop or defaults to `Playback rate`. Override it with `aria-label` or `aria-labelledby`.
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 The element receives an accessible label from the `label` property or defaults to `Playback rate`. Override it with `aria-label` or `aria-labelledby`.
 </FrameworkCase>
 
@@ -107,7 +107,7 @@ The element receives an accessible label from the `label` property or defaults t
   </StyleCase>
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   <StyleCase styles={["css"]}>
     <Demo files={[
       { title: "index.html", code: basicUsageHtml, lang: "html" },

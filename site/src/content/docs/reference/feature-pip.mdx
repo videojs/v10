@@ -17,7 +17,7 @@ Controls picture-in-picture mode.
 Pass `selectPiP` to <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> to subscribe to picture-in-picture state. Returns `undefined` if the PiP feature is not configured.
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 Pass `selectPiP` to <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> to subscribe to picture-in-picture state. Returns `undefined` if the PiP feature is not configured.
 </FrameworkCase>
 
@@ -38,7 +38,7 @@ function PiPButton() {
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```ts title="pip-button.ts"
 import { createPlayer, UIElement, selectPiP } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';

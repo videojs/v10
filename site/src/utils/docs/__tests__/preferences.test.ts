@@ -103,6 +103,17 @@ describe('preferences utilities', () => {
       }
     });
 
+    it('should accept the frameworks that have no adapter package', () => {
+      for (const framework of ['vue', 'svelte'] as const) {
+        Object.defineProperty(document, 'cookie', {
+          get: () => `${FRAMEWORK_COOKIE}=${framework}`,
+          configurable: true,
+        });
+
+        expect(getFrameworkPreferenceClient()).toBe(framework);
+      }
+    });
+
     it('should return DEFAULT_FRAMEWORK when cookie has invalid value', () => {
       Object.defineProperty(document, 'cookie', {
         get: () => `${FRAMEWORK_COOKIE}=invalid-framework`,
@@ -205,6 +216,26 @@ describe('preferences utilities', () => {
       const expectedKey = STYLE_STORAGE_KEY_PREFIX + firstFramework;
 
       expect(mockStorage[expectedKey]).toBe('css');
+    });
+
+    it('should store a style for every supported framework', () => {
+      const mockStorage: Record<string, string> = {};
+
+      Object.defineProperty(globalThis, 'localStorage', {
+        value: {
+          getItem: (key: string) => mockStorage[key] ?? null,
+          setItem: (key: string, value: string) => {
+            mockStorage[key] = value;
+          },
+        },
+        configurable: true,
+      });
+
+      for (const framework of SUPPORTED_FRAMEWORKS) {
+        setStylePreferenceClient(framework, 'css');
+
+        expect(mockStorage[STYLE_STORAGE_KEY_PREFIX + framework]).toBe('css');
+      }
     });
 
     it('should throw error for invalid style', () => {

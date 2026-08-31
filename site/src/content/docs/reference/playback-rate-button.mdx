@@ -34,7 +34,7 @@ import basicUsageHtmlTs from "@/components/docs/demos/playback-rate-button/html/
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```html
 <media-playback-rate-button></media-playback-rate-button>
 ```
@@ -50,7 +50,7 @@ When `menuTrigger` is enabled, activation opens the linked playback-rate menu in
 
 Display the current rate using the `data-rate` attribute:
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```css
 media-playback-rate-button::after {
   content: attr(data-rate) "\00D7";
@@ -89,7 +89,7 @@ In menu-trigger mode, the button behaves as a menu trigger and reflects menu sta
   </StyleCase>
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   <StyleCase styles={["css"]}>
     <Demo files={[
       { title: "index.html", code: basicUsageHtml, lang: "html" },
