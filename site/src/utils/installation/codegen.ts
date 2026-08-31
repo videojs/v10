@@ -14,6 +14,9 @@ import {
   getInstallationPreset,
   getMediaSubpath,
   type InstallMethod,
+  isMuxRenderer,
+  MUX_DATA_EXTENSION_SUBPATH,
+  MUX_DATA_PACKAGE,
   type Renderer,
   type Skin,
   type UseCase,
@@ -131,8 +134,15 @@ function getAdapterPackage(renderer: Renderer): string | null {
 
 function installPackages(framework: '@videojs/html' | '@videojs/react', renderer: Renderer): string {
   const adapter = getAdapterPackage(renderer);
+  const packages: string[] = [framework];
 
-  return adapter === null ? framework : `${framework} ${adapter}`;
+  if (adapter !== null) packages.push(adapter);
+
+  // Mux media pair with the separate Mux Data extension by default, so the
+  // install command pulls in its package as well.
+  if (isMuxRenderer(renderer)) packages.push(MUX_DATA_PACKAGE);
+
+  return packages.join(' ');
 }
 
 // ---------------------------------------------------------------------------
@@ -207,6 +217,28 @@ function getSkinTag(useCase: UseCase, skin: Exclude<Skin, 'none'>): string {
   return getSkinFile(skin) === 'minimal-skin' ? `${prefix}-minimal-skin` : `${prefix}-skin`;
 }
 
+// The media element line, plus the Mux Data extension for Mux media. Mux Data is
+// a separate, opt-in extension included here by default for Mux-hosted playback —
+// no environment key required — placed as a sibling of the media element.
+function generateMediaMarkup(
+  tag: string,
+  src: string,
+  playsInline: string,
+  renderer: Renderer,
+  indent: string
+): string {
+  const mediaEl = `${indent}<${tag} src="${src}"${playsInline}></${tag}>`;
+
+  if (!isMuxRenderer(renderer)) return mediaEl;
+
+  return `${mediaEl}
+${indent}<!--
+${indent}    Mux Data monitors playback quality. It is a separate,
+${indent}    opt-in component, included by default for Mux-hosted playback.
+${indent}  -->
+${indent}<mux-data></mux-data>`;
+}
+
 function generateHTMLMarkup(useCase: UseCase, skin: Skin, renderer: Renderer, url: string): string {
   const playerTag = getPlayerTag(useCase);
   const tag = getRendererTag(renderer);
@@ -234,7 +266,7 @@ function generateHTMLMarkup(useCase: UseCase, skin: Skin, renderer: Renderer, ur
     return `${playerComment}
 <${playerTag}>
 ${mediaComment}
-  <${tag} src="${src}"${playsInline}></${tag}>
+${generateMediaMarkup(tag, src, playsInline, renderer, '  ')}
 </${playerTag}>`;
   }
 
@@ -249,7 +281,7 @@ ${mediaComment}
    -->
   <${skinTag}>
 ${skinMediaComment}
-    <${tag} src="${src}"${playsInline}></${tag}>
+${generateMediaMarkup(tag, src, playsInline, renderer, '    ')}
   </${skinTag}>
 </${playerTag}>`;
 }
@@ -268,12 +300,18 @@ import '@videojs/html/background/video';${mediaImport}`;
   const mediaSubpath = getMediaSubpath(renderer);
   const mediaImport = mediaSubpath ? `\nimport '@videojs/html/media/${mediaSubpath}';` : '';
 
+  // Mux media pair with the separate Mux Data extension by default; register it
+  // alongside the Mux media import.
+  const muxDataImport = isMuxRenderer(renderer)
+    ? `\nimport '@videojs/html/extensions/${MUX_DATA_EXTENSION_SUBPATH}';`
+    : '';
+
   if (skin === 'none') {
-    return `import '@videojs/html/${group}/player';${mediaImport}`;
+    return `import '@videojs/html/${group}/player';${mediaImport}${muxDataImport}`;
   }
 
   return `import '@videojs/html/${group}/player';
-import '@videojs/html/${group}/${getSkinFile(skin)}';${mediaImport}`;
+import '@videojs/html/${group}/${getSkinFile(skin)}';${mediaImport}${muxDataImport}`;
 }
 
 export function generateHTMLUsageCode(
@@ -324,6 +362,18 @@ function isPresetRenderer(renderer: Renderer): boolean {
   return renderer === 'html5-video' || renderer === 'html5-audio' || renderer === 'background-video';
 }
 
+// The media JSX, plus the Mux Data extension for Mux media. Mux Data is a
+// separate, opt-in extension rendered here by default for Mux-hosted playback —
+// no environment key required — as a sibling of the media component.
+function generateReactMediaJsx(rendererJsx: string, renderer: Renderer, indent: string): string {
+  if (!isMuxRenderer(renderer)) return rendererJsx;
+
+  return `${rendererJsx}
+${indent}{/* Mux Data monitors playback quality. It is a separate, opt-in
+${indent}    component, rendered by default for Mux-hosted playback. */}
+${indent}<MuxData />`;
+}
+
 export function generateReactCreateCode(
   opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer'>
 ): Record<'MyPlayer.tsx', string> {
@@ -366,20 +416,27 @@ export function generateReactCreateCode(
     }
   }
 
+  // Mux media pair with the separate Mux Data extension by default; render it
+  // alongside the Mux media and import it beside the media import.
+  const muxDataImport = isMuxRenderer(renderer)
+    ? `import { MuxData } from '@videojs/react/extensions/${MUX_DATA_EXTENSION_SUBPATH}';`
+    : null;
+
   const playerJsx = skinComponent
     ? `    <${playerComponent}>
       <${skinComponent}>
-        ${rendererJsx}
+        ${generateReactMediaJsx(rendererJsx, renderer, '        ')}
       </${skinComponent}>
     </${playerComponent}>`
     : `    <${playerComponent}>
-      ${rendererJsx}
+      ${generateReactMediaJsx(rendererJsx, renderer, '      ')}
     </${playerComponent}>`;
 
   const imports = [
     ...(skinCssImport ? [`import '${skinCssImport}';`] : []),
     presetImport,
     ...(mediaImport ? [mediaImport] : []),
+    ...(muxDataImport ? [muxDataImport] : []),
   ].join('\n');
 
   return {

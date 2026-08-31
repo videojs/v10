@@ -2,6 +2,8 @@ import { VJS10_CDN_BASE } from '@/consts';
 import {
   getInstallationPreset,
   getMediaSubpath,
+  isMuxRenderer,
+  MUX_DATA_EXTENSION_SUBPATH,
   RENDERERS,
   type Renderer,
   type Skin,
@@ -57,6 +59,15 @@ export function generateCdnCode(
   // this starts emitting automatically — no code change needed.
   if (mediaSubpath !== null && cdnMediaSubpaths.includes(mediaSubpath)) {
     scriptLines.push(`<script type="module" src="${VJS10_CDN_BASE}/media/${mediaSubpath}.js"></script>`);
+  }
+
+  // Mux media default to the separate Mux Data extension, so register its script
+  // too. Extensions live outside the media manifest and `@videojs/cdn` always
+  // ships them, so this is not manifest-gated.
+  if (isMuxRenderer(renderer)) {
+    scriptLines.push(
+      `<script type="module" src="${VJS10_CDN_BASE}/extensions/${MUX_DATA_EXTENSION_SUBPATH}.js"></script>`
+    );
   }
 
   return scriptLines.join('\n');

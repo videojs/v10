@@ -308,6 +308,8 @@ describe('handleDocs', () => {
 
         expect(out).toContain('<mux-video src=');
         expect(out).toContain("import '@videojs/html/media/mux-video'");
+        expect(out).toContain('<mux-data></mux-data>');
+        expect(out).toContain("import '@videojs/html/extensions/mux-data'");
       });
 
       it('generates Vimeo media variant via npm', async () => {
@@ -340,6 +342,7 @@ describe('handleDocs', () => {
 
         expect(out).toContain('<script');
         expect(out).toContain('media/mux-video.js');
+        expect(out).toContain('extensions/mux-data.js');
       });
 
       it('errors when requesting CDN for a renderer without a CDN build (vimeo)', async () => {
