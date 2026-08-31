@@ -2,9 +2,9 @@
 
 import type { HtmlMediaReference, MediaReference, ReactMediaReference } from '@/types/media-reference';
 
-import { apiPlatformFrameworks } from '../types/docs';
 // Astro evaluates this module through `satteriConditionalHeadings` while Vite+ is still loading the task graph, so the
 // `@/` alias is not resolvable yet for value imports.
+import { apiPlatformFrameworks } from '../types/docs';
 import type { TocHeading } from './componentReferenceModel';
 
 type MediaReferenceSectionKey =

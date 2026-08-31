@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vite-plus/test';
 
 import type { ComponentReference } from '@/types/component-reference';
+import { HTML_API_FRAMEWORKS } from '@/types/docs';
 
 import { buildComponentReferenceTocHeadings, createComponentReferenceModel } from '../componentReferenceModel';
 
@@ -72,14 +73,14 @@ describe('createComponentReferenceModel', () => {
         title: 'Events',
         id: 'events',
         depth: 3,
-        frameworks: ['html'],
+        frameworks: HTML_API_FRAMEWORKS,
       },
     ]);
     expect(buildComponentReferenceTocHeadings(model)).toContainEqual({
       depth: 3,
       text: 'Events',
       slug: 'events',
-      frameworks: ['html'],
+      frameworks: HTML_API_FRAMEWORKS,
     });
   });
 
@@ -143,7 +144,7 @@ describe('createComponentReferenceModel', () => {
             react: 'Root',
             html: 'media-controls',
           },
-          frameworks: ['html', 'react'],
+          frameworks: [...HTML_API_FRAMEWORKS, 'react'],
           componentName: 'Controls.Root',
           sections: [
             {
@@ -230,7 +231,7 @@ describe('buildComponentReferenceTocHeadings', () => {
         depth: 3,
         text: 'media-controls',
         slug: 'root',
-        frameworks: ['html'],
+        frameworks: HTML_API_FRAMEWORKS,
       },
       {
         depth: 4,

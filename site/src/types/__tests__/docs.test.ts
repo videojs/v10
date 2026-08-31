@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vite-plus/test';
 
 import {
+  apiPlatformFrameworks,
   CONTENT_FRAMEWORK_FALLBACK,
   DEFAULT_FRAMEWORK,
   frameworkMatches,
+  HTML_API_FRAMEWORKS,
   isValidFramework,
   resolveContentFramework,
   SUPPORTED_FRAMEWORKS,
@@ -22,6 +24,40 @@ describe('SUPPORTED_FRAMEWORKS', () => {
     expect(isValidFramework('vue')).toBe(true);
     expect(isValidFramework('svelte')).toBe(true);
     expect(isValidFramework('angular')).toBe(false);
+  });
+});
+
+describe('HTML_API_FRAMEWORKS', () => {
+  it('lists every framework that reads the custom-element API', () => {
+    expect(HTML_API_FRAMEWORKS).toEqual(['html', 'vue', 'svelte']);
+  });
+
+  it('only names supported frameworks', () => {
+    for (const framework of HTML_API_FRAMEWORKS) {
+      expect(SUPPORTED_FRAMEWORKS).toContain(framework);
+    }
+  });
+
+  it('makes html-API content visible to each of its readers', () => {
+    for (const framework of HTML_API_FRAMEWORKS) {
+      expect(frameworkMatches(framework, HTML_API_FRAMEWORKS)).toBe(true);
+    }
+
+    expect(frameworkMatches('react', HTML_API_FRAMEWORKS)).toBe(false);
+  });
+});
+
+describe('apiPlatformFrameworks', () => {
+  it('expands the html platform to every framework reading that API', () => {
+    expect(apiPlatformFrameworks('html')).toEqual(['html', 'vue', 'svelte']);
+  });
+
+  it('leaves a platform with its own adapter alone', () => {
+    expect(apiPlatformFrameworks('react')).toEqual(['react']);
+  });
+
+  it('returns a fresh array rather than the shared constant', () => {
+    expect(apiPlatformFrameworks('html')).not.toBe(HTML_API_FRAMEWORKS);
   });
 });
 
@@ -53,34 +89,22 @@ describe('frameworkMatches', () => {
   it('matches the listed framework exactly', () => {
     expect(frameworkMatches('react', ['react'])).toBe(true);
     expect(frameworkMatches('html', ['html'])).toBe(true);
+    expect(frameworkMatches('vue', ['html', 'vue'])).toBe(true);
   });
 
   it('does not match an unlisted framework', () => {
     expect(frameworkMatches('html', ['react'])).toBe(false);
     expect(frameworkMatches('vue', ['react'])).toBe(false);
+    expect(frameworkMatches('svelte', ['html', 'vue'])).toBe(false);
   });
 
-  it('matches html content for frameworks that read the HTML API', () => {
-    expect(frameworkMatches('vue', ['html'])).toBe(true);
-    expect(frameworkMatches('svelte', ['html'])).toBe(true);
+  it('hides html-only content from the frameworks it leaves out', () => {
+    expect(frameworkMatches('vue', ['html'])).toBe(false);
+    expect(frameworkMatches('svelte', ['html'])).toBe(false);
   });
 
-  it('matches framework-specific content ahead of the fallback', () => {
-    expect(frameworkMatches('vue', ['vue'])).toBe(true);
-    expect(frameworkMatches('svelte', ['vue'])).toBe(false);
-  });
-
-  it('hides content the framework is excluded from', () => {
-    expect(frameworkMatches('vue', ['html'], ['vue'])).toBe(false);
-    expect(frameworkMatches('svelte', ['html'], ['vue'])).toBe(true);
-  });
-
-  it('applies exclusions to unrestricted content too', () => {
-    expect(frameworkMatches('vue', undefined, ['vue'])).toBe(false);
-    expect(frameworkMatches('html', undefined, ['vue'])).toBe(true);
-  });
-
-  it('lets an exclusion override an exact match', () => {
-    expect(frameworkMatches('html', ['html'], ['html'])).toBe(false);
+  it('ignores the content-framework fallback, which is a display default only', () => {
+    expect(resolveContentFramework('vue')).toBe('html');
+    expect(frameworkMatches('vue', ['html'])).toBe(false);
   });
 });
