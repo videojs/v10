@@ -81,8 +81,17 @@ function getCommonTemplateHTML(tag: string) {
 
 const excludedProperties = ['attach', 'detach', 'destroy'];
 
-/** How a property declares the content attribute that drives it. */
-type PropertyConfig = { type: any; attribute?: string; empty?: unknown };
+/**
+ * How a property declares the content attribute that drives it.
+ *
+ * `source` names which side holds the truth for property writes. `'attribute'` (the default, and the status quo)
+ * routes property writes through the attribute, so the host only ever sees what survives the attribute round-trip — a
+ * write the attribute cannot represent (assigning `false` while the attribute is already absent) never reaches the
+ * host setter at all. `'host'` sends property writes straight to the media host, typed and un-coalesced, for
+ * properties whose host implementation carries its own semantics; the attribute remains an input channel for markup
+ * but is never written back.
+ */
+type PropertyConfig = { type: any; attribute?: string; empty?: unknown; source?: 'attribute' | 'host' };
 type PropertyConfigs = Record<string, PropertyConfig>;
 
 /**
@@ -134,7 +143,7 @@ type CustomMediaConstructor<T extends Constructor<MediaHost>> = Constructor<
       attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null): void;
     }
 > & {
-  properties: Record<string, { type: any; attribute?: string; empty?: unknown }>;
+  properties: Record<string, { type: any; attribute?: string; empty?: unknown; source?: 'attribute' | 'host' }>;
   getTemplateHTML: (attrs: Record<string, string>) => string;
   shadowRootOptions: ShadowRootInit;
   readonly observedAttributes: string[];
@@ -219,13 +228,22 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
               if (ctor.observedAttributes.includes(attr)) {
                 mediaHostAttrToProp.set(attr, prop);
 
-                config.set = function (this: CustomMedia, val: any) {
-                  if (val === true || val === false || val == null) {
-                    this.toggleAttribute(attr, Boolean(val));
-                  } else {
-                    this.setAttribute(attr, String(val));
-                  }
-                };
+                // EXPLORATION: the attribute is the store by default; `source: 'host'` opts a property out so writes
+                // reach the host setter directly — typed and un-coalesced — while the attribute stays an input
+                // channel for markup and is never written back.
+                if (properties[prop]?.source === 'host') {
+                  config.set = function (this: CustomMedia, val: any) {
+                    this.#mediaHost[prop] = val;
+                  };
+                } else {
+                  config.set = function (this: CustomMedia, val: any) {
+                    if (val === true || val === false || val == null) {
+                      this.toggleAttribute(attr, Boolean(val));
+                    } else {
+                      this.setAttribute(attr, String(val));
+                    }
+                  };
+                }
               } else {
                 config.set = function (this: CustomMedia, val: any) {
                   this.#mediaHost[prop] = val;
