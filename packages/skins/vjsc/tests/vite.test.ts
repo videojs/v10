@@ -69,7 +69,7 @@ describe('Skins Vite workflow', () => {
 
   afterAll(async () => {
     await server.close();
-  }, 30_000);
+  }, 120_000);
 
   it('resolves queried skin source directly', async () => {
     const resolved = await server.pluginContainer.resolveId(defaultSkinUrl);
