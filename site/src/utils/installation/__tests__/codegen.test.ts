@@ -29,6 +29,10 @@ const baseReact: InstallationOptions = {
   installMethod: 'npm',
 };
 
+const baseVue: InstallationOptions = { ...baseHTML, framework: 'vue' };
+
+const baseSvelte: InstallationOptions = { ...baseHTML, framework: 'svelte' };
+
 describe('validateInstallationOptions', () => {
   it('accepts valid HTML + npm combo', () => {
     expect(validateInstallationOptions(baseHTML)).toEqual({ valid: true });
@@ -36,6 +40,11 @@ describe('validateInstallationOptions', () => {
 
   it('accepts valid React + npm combo', () => {
     expect(validateInstallationOptions(baseReact)).toEqual({ valid: true });
+  });
+
+  it('accepts Vue and Svelte, which install the CDN or package builds of @videojs/html', () => {
+    expect(validateInstallationOptions(baseVue)).toEqual({ valid: true });
+    expect(validateInstallationOptions({ ...baseSvelte, installMethod: 'cdn' })).toEqual({ valid: true });
   });
 
   it('rejects React + CDN', () => {
@@ -309,6 +318,62 @@ describe('generateHTMLUsageCode', () => {
     // A distinct asset from the on-demand demo, so the live player actually
     // reports live-edge state.
     expect(live.html).not.toEqual(onDemand.html);
+  });
+});
+
+describe('generateVueUsageCode', () => {
+  it('wraps the generated HTML markup and imports in a single-file component', () => {
+    const { html, imports } = generateHTMLUsageCode(baseVue);
+    const code = generateVueUsageCode(baseVue)['MyPlayer.vue'];
+    const indentedHtml = html
+      .split('\n')
+      .map((line) => (line.trim() ? `  ${line}` : line))
+      .join('\n');
+
+    expect(code).toContain('<script setup lang="ts">');
+    expect(code).toContain(imports!);
+    expect(code).toContain(`<template>\n${indentedHtml}\n</template>`);
+  });
+
+  it('carries the media import for a media that needs one', () => {
+    const code = generateVueUsageCode({ ...baseVue, renderer: 'hls' })['MyPlayer.vue'];
+
+    expect(code).toContain("import '@videojs/html/media/hlsjs-video';");
+    expect(code).toContain('<hlsjs-video src=');
+  });
+
+  it('omits the script block when the CDN registers the elements', () => {
+    const code = generateVueUsageCode({ ...baseVue, installMethod: 'cdn' })['MyPlayer.vue'];
+
+    expect(code).not.toContain('<script');
+    expect(code.startsWith('<template>')).toBe(true);
+    expect(code).toContain('  <video-player>');
+  });
+});
+
+describe('generateSvelteUsageCode', () => {
+  it('puts the generated imports in a script block above the markup', () => {
+    const { html, imports } = generateHTMLUsageCode(baseSvelte);
+    const code = generateSvelteUsageCode(baseSvelte)['MyPlayer.svelte'];
+
+    expect(code).toContain('<script lang="ts">');
+    expect(code).toContain(`  ${imports!.split('\n')[0]}`);
+    expect(code).toContain(`</script>\n\n${html}`);
+  });
+
+  it('carries the media import for a media that needs one', () => {
+    const code = generateSvelteUsageCode({ ...baseSvelte, renderer: 'hls' })['MyPlayer.svelte'];
+
+    expect(code).toContain("  import '@videojs/html/media/hlsjs-video';");
+    expect(code).toContain('<hlsjs-video src=');
+  });
+
+  it('omits the script block when the CDN registers the elements', () => {
+    const { html } = generateHTMLUsageCode({ ...baseSvelte, installMethod: 'cdn' });
+    const code = generateSvelteUsageCode({ ...baseSvelte, installMethod: 'cdn' })['MyPlayer.svelte'];
+
+    expect(code).not.toContain('<script');
+    expect(code).toBe(html);
   });
 });
 
