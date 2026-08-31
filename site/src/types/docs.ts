@@ -53,11 +53,32 @@ export function isValidStyleForFramework(
 }
 
 /**
- * Frameworks without a first-class adapter package consume another framework's content. Vue and Svelte users install
- * `@videojs/html` and write custom elements, so their picker selections resolve to the HTML API content.
+ * The frameworks whose readers use the `@videojs/html` custom-element API. Vue and Svelte have no adapter package of
+ * their own: those readers install `@videojs/html` and write custom elements, so they read the same API content HTML
+ * readers do.
  *
- * A framework only appears here while it has no adapter of its own. Give it one, drop its entry, and every fallback
- * below turns back into an exact match with no other change.
+ * List this on content that documents that API — `frameworks={["html", "vue", "svelte"]}` in MDX, or this constant in
+ * TypeScript. Gating is an exact match, so html-API content that omits Vue and Svelte is invisible to them.
+ *
+ * When a framework gains an adapter of its own, drop it from this list and give its content its own entries.
+ */
+export const HTML_API_FRAMEWORKS: SupportedFramework[] = ['html', 'vue', 'svelte'];
+
+/**
+ * The frameworks that read a given API platform's generated reference content. Reference data is authored per platform
+ * (`html` or `react`), while gating compares against the reader's own framework, so the `html` platform expands to
+ * every framework that consumes the `@videojs/html` API.
+ */
+export function apiPlatformFrameworks(platform: SupportedFramework): SupportedFramework[] {
+  return platform === 'html' ? [...HTML_API_FRAMEWORKS] : [platform];
+}
+
+/**
+ * Frameworks without a first-class adapter package borrow another framework's API surface for _display defaults_ —
+ * which import statement to print, whether to show attribute names beside prop names, which package to name.
+ *
+ * Never use this for content gating. Visibility is an exact match against an explicitly authored framework list; see
+ * `HTML_API_FRAMEWORKS` and `frameworkMatches`.
  */
 export const CONTENT_FRAMEWORK_FALLBACK: Partial<Record<SupportedFramework, SupportedFramework>> = {
   vue: 'html',
@@ -65,54 +86,37 @@ export const CONTENT_FRAMEWORK_FALLBACK: Partial<Record<SupportedFramework, Supp
 };
 
 /**
- * Resolve which framework's authored content a picker selection reads. Vue and Svelte resolve to `html`; every other
+ * Resolve which framework's API surface a picker selection displays. Vue and Svelte resolve to `html`; every other
  * framework resolves to itself.
  *
  * Use this wherever a comparison decides which API variant to render (import statements, attribute vs. prop naming,
  * package names). Keep the raw framework wherever the value is the user's own framework identity — the picker value, a
- * URL segment, or a label naming the framework.
+ * URL segment, a label naming the framework, or any content-visibility decision.
  */
 export function resolveContentFramework(framework: SupportedFramework): SupportedFramework {
   return CONTENT_FRAMEWORK_FALLBACK[framework] ?? framework;
 }
 
 /**
- * Decide whether content tagged for a set of frameworks is visible to the current framework.
+ * Decide whether content tagged for a set of frameworks is visible to the current framework. Content with no
+ * `frameworks` restriction is visible everywhere; otherwise the current framework must be listed.
  *
- * Rules, in order:
- *
- * - No `frameworks` restriction: visible to every framework that is not excluded.
- * - Listed in `exclude`: hidden, even when `frameworks` matches. This is the escape hatch for content that a fallback
- *   framework should not inherit, for example HTML content sitting next to a Vue-specific variant.
- * - Listed in `frameworks`: visible (exact match).
- * - The framework's content framework is listed in `frameworks`: visible (fallback match, so `['html']` content reaches
- *   Vue and Svelte).
- * - Otherwise hidden.
+ * Matching is exact. Content documenting the `@videojs/html` API has to list Vue and Svelte alongside `html` —
+ * `HTML_API_FRAMEWORKS` is that list — or those readers never see it.
  *
  * @param current - The framework currently selected in the docs picker
  * @param frameworks - Frameworks the content is authored for; omit for "all frameworks"
- * @param exclude - Frameworks that must not see this content, overriding both match kinds
  */
-export function frameworkMatches(
-  current: SupportedFramework,
-  frameworks?: SupportedFramework[],
-  exclude?: SupportedFramework[]
-): boolean {
-  if (exclude?.includes(current)) return false;
-
+export function frameworkMatches(current: SupportedFramework, frameworks?: SupportedFramework[]): boolean {
   if (!frameworks) return true;
 
-  if (frameworks.includes(current)) return true;
-
-  return frameworks.includes(resolveContentFramework(current));
+  return frameworks.includes(current);
 }
 
 export interface Guide {
   slug: string;
   sidebarLabel?: string; // defaults to guide title
   frameworks?: SupportedFramework[];
-  /** Frameworks hidden from this guide even when `frameworks` matches them through a content-framework fallback. */
-  excludeFrameworks?: SupportedFramework[];
   devOnly?: boolean; // only visible in development mode
 }
 
@@ -122,8 +126,6 @@ export interface SidebarLink {
   href: string;
   sidebarLabel: string;
   frameworks?: SupportedFramework[];
-  /** Frameworks hidden from this link even when `frameworks` matches them through a content-framework fallback. */
-  excludeFrameworks?: SupportedFramework[];
   devOnly?: boolean; // only visible in development mode
 }
 
@@ -131,8 +133,6 @@ export interface Section {
   sidebarLabel: string;
   llmsDescription?: string;
   frameworks?: SupportedFramework[];
-  /** Frameworks hidden from this section even when `frameworks` matches them through a content-framework fallback. */
-  excludeFrameworks?: SupportedFramework[];
   devOnly?: boolean; // only visible in development mode
   defaultOpen?: boolean;
   contents: Array<Guide | Section | SidebarLink>;

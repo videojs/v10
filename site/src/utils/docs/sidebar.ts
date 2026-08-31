@@ -5,8 +5,8 @@ import { sidebar } from '../../docs.config';
 
 /**
  * Check if an item (Guide or Section) should be shown based on framework. If no frameworks are specified, the item is
- * visible to all frameworks. Matching goes through the content-framework fallback, so an item restricted to `html` is
- * also visible to Vue and Svelte unless it lists them in `excludeFrameworks`.
+ * visible to all frameworks. Otherwise matching is exact: an item whose page documents the `@videojs/html` API lists
+ * `html`, `vue`, and `svelte`.
  *
  * @param item - The guide or section to check
  * @param framework - The currently selected framework
@@ -23,7 +23,7 @@ export function isItemVisible(
     return false;
   }
 
-  return frameworkMatches(framework, item.frameworks, item.excludeFrameworks);
+  return frameworkMatches(framework, item.frameworks);
 }
 
 /**
@@ -182,9 +182,8 @@ export function getSectionsForGuide(slug: string, sidebarToSearch: Sidebar = sid
  * Get all valid frameworks for a guide, accounting for ancestor section restrictions. Walks the sidebar tree to find
  * the guide, then keeps every framework that matches the guide and each of its ancestor sections.
  *
- * Matching uses the same fallback and exclude semantics as the sidebar itself, so a guide restricted to `html` is valid
- * for `html`, `vue`, and `svelte` — the frameworks that read HTML API content — minus anything an ancestor or the guide
- * excludes.
+ * Matching is exact, the same as the sidebar itself: a guide is valid for the frameworks it lists, intersected with
+ * whatever each ancestor section lists.
  */
 export function getValidFrameworksForGuide(guide: Guide, sidebarToSearch: Sidebar = sidebar): SupportedFramework[] {
   const allFrameworks = Object.keys(FRAMEWORK_STYLES) as SupportedFramework[];
@@ -206,9 +205,7 @@ export function getValidFrameworksForGuide(guide: Guide, sidebarToSearch: Sideba
   const path = findRestrictionPath(sidebarToSearch, []);
   if (!path) return allFrameworks;
 
-  return allFrameworks.filter((framework) =>
-    path.every((item) => frameworkMatches(framework, item.frameworks, item.excludeFrameworks))
-  );
+  return allFrameworks.filter((framework) => path.every((item) => frameworkMatches(framework, item.frameworks)));
 }
 
 /**
