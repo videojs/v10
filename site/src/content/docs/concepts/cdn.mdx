@@ -57,7 +57,7 @@ Each path mirrors its npm subpath. Elements with more than one playback engine k
 
 ## Locales
 
-English ships inside the skin bundles. Each other locale is a bundle under `locales/` that registers its translations on import, so load it before the player script:
+English ships inside the skin bundles. Each other locale is a bundle under `locales/` that registers its translations on import. Load it before the player script to avoid a flash of English:
 
 ```html
 <script type="module" src="{{VJS10_HTML_CDN_BASE}}/locales/es.js"></script>
@@ -68,10 +68,11 @@ One bundle exists per locale pack, plus bare-language aliases such as `pt`. For 
 
 ## Stylesheets
 
-The skin bundles inline their CSS, so no `<link>` is required to render. The separate `.css` files do the two jobs a bundle cannot:
+The skin bundles inline their CSS, so no `<link>` is required to render. The separate `.css` files do the jobs a bundle cannot:
 
 - `global.css` holds the light-DOM rules. Link it in `<head>` and the player reserves its space before the elements upgrade. The background preset uses `background.css` instead.
 - The skin sheets, such as `video.css` beside `video.js`, style declaratively rendered skins.
+- `shared.css` is the base that hand-written shadow skins build on.
 
 <DocsLink slug="how-to/self-host-the-player">Self-host the player</DocsLink> shows both in use.
 
