@@ -243,6 +243,16 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
 
         const attr = attribute ?? prop.toLowerCase();
 
+        // EXPLORATION: an attribute declared here without a backing media member silently degrades to plain
+        // reflection — the historical shape of the disableRemotePlayback precedence bug. Composed hosts carry a
+        // capability manifest, so the gap is now detectable at element-definition time.
+        if (__DEV__) {
+          console.warn(
+            `[CustomMediaElement] '${tag}' declares attribute '${attr}' but its media host has no '${prop}' member; ` +
+              `the property will only reflect the attribute and never reach the media.`
+          );
+        }
+
         Object.defineProperty(CustomMedia.prototype, prop, {
           get: function (this: CustomMedia) {
             return type === Boolean ? this.hasAttribute(attr) : this.getAttribute(attr);
