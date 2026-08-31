@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vite-plus/test';
 
 import { playbackCapability, sourceCapability } from '../../../core';
 import { createMediaHost, MediaHostBase } from '../../media-host';
-import { CustomMediaElement } from '../index';
+import { CustomMediaElement, defaultCustomMediaProperties } from '../index';
 
 /** An adapter-shaped host: its setter carries semantics, so every explicit write matters. */
 class SemanticsHost extends MediaHostBase {
@@ -106,5 +106,55 @@ describe('CustomMediaElement', () => {
     // Markup remains an input: an attribute change still drives the host.
     el.setAttribute('disableremoteplayback', '');
     expect(el.host.writes).toEqual([false, true, true]);
+  });
+
+  it('pins the static-override hazard: the first subclass to be defined freezes the config for its siblings', () => {
+    const Base = CustomMediaElement('video', SemanticsHost as never);
+
+    class HostSourced extends Base {
+      static override properties = {
+        ...Base.properties,
+        disableRemotePlayback: { type: Boolean, source: 'host' as const },
+      };
+    }
+
+    class AttributeSourced extends Base {
+      static override properties = { ...Base.properties };
+    }
+
+    // HostSourced touches observedAttributes first, so #define latches its config onto the shared factory prototype.
+    customElements.define(`test-semantics-${++semanticsTagCounter}`, HostSourced);
+    customElements.define(`test-semantics-${++semanticsTagCounter}`, AttributeSourced);
+
+    const el = new AttributeSourced() as InstanceType<typeof AttributeSourced> & { host: SemanticsHost };
+
+    // AttributeSourced declared the default attribute-sourced behavior, but inherits HostSourced's direct-write
+    // wiring anyway: this write would be coalesced away under its own declared config.
+    el.disableRemotePlayback = false;
+    expect(el.host.writes).toEqual([false]);
+  });
+
+  it('injected properties are deterministic and independent per factory call', () => {
+    const HostSourced = CustomMediaElement('video', SemanticsHost as never, {
+      properties: {
+        ...defaultCustomMediaProperties,
+        disableRemotePlayback: { type: Boolean, source: 'host' },
+      },
+    });
+    const AttributeSourced = CustomMediaElement('video', SemanticsHost as never);
+
+    customElements.define(`test-semantics-${++semanticsTagCounter}`, HostSourced);
+    customElements.define(`test-semantics-${++semanticsTagCounter}`, AttributeSourced);
+
+    const hostSourced = new HostSourced() as InstanceType<typeof HostSourced> & { host: SemanticsHost };
+    const attributeSourced = new AttributeSourced() as InstanceType<typeof AttributeSourced> & { host: SemanticsHost };
+
+    // Each factory call closes over its own config: direct writes here…
+    hostSourced.disableRemotePlayback = false;
+    expect(hostSourced.host.writes).toEqual([false]);
+
+    // …attribute-coalesced writes there, no cross-contamination.
+    attributeSourced.disableRemotePlayback = false;
+    expect(attributeSourced.host.writes).toEqual([]);
   });
 });

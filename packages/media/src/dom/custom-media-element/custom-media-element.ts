@@ -91,8 +91,45 @@ const excludedProperties = ['attach', 'detach', 'destroy'];
  * properties whose host implementation carries its own semantics; the attribute remains an input channel for markup
  * but is never written back.
  */
-type PropertyConfig = { type: any; attribute?: string; empty?: unknown; source?: 'attribute' | 'host' };
-type PropertyConfigs = Record<string, PropertyConfig>;
+export type PropertyConfig = { type: any; attribute?: string; empty?: unknown; source?: 'attribute' | 'host' };
+export type PropertyConfigs = Record<string, PropertyConfig>;
+
+/**
+ * The default property/attribute table every media element starts from.
+ *
+ * Exported so a call site injecting its own table (see {@link CustomMediaElementOptions}) can spread-extend this
+ * instead of restating it.
+ */
+export const defaultCustomMediaProperties: PropertyConfigs = {
+  autoPictureInPicture: { type: Boolean },
+  autoplay: { type: Boolean },
+  controls: { type: Boolean },
+  controlsList: { type: String },
+  crossOrigin: { type: String, empty: null },
+  defaultMuted: { type: Boolean, attribute: 'muted' },
+  disablePictureInPicture: { type: Boolean },
+  disableRemotePlayback: { type: Boolean },
+  loading: { type: String },
+  loop: { type: Boolean },
+  playsInline: { type: Boolean },
+  poster: { type: String, empty: '' },
+  preload: { type: String, empty: null },
+  src: { type: String, empty: '' },
+  streamType: { type: String, attribute: 'stream-type', empty: 'unknown' },
+};
+
+/**
+ * EXPLORATION: inject the element's configuration instead of relying on `static properties` overrides.
+ *
+ * Subclass overrides of `static properties` are order-sensitive IoC-by-inheritance: `#define` latches on the first
+ * `observedAttributes` access and installs accessors on the shared factory class's prototype, so two subclasses of one
+ * factory result cannot differ, and any early read of the base's `observedAttributes` silently freezes the base
+ * config. An injected table is closed over before anything can touch the class, so each call site's config is
+ * deterministic and independent.
+ */
+export interface CustomMediaElementOptions {
+  properties?: PropertyConfigs;
+}
 
 /**
  * The content attribute a property is driven by.
@@ -151,7 +188,8 @@ type CustomMediaConstructor<T extends Constructor<MediaHost>> = Constructor<
 
 export function CustomMediaElement<T extends Constructor<MediaHost>>(
   tag: string,
-  MediaHost: T
+  MediaHost: T,
+  options?: CustomMediaElementOptions
 ): CustomMediaConstructor<T> {
   // Embed hosts (iframe) drive an external player rather than a native media
   // element, so attribute changes are not mirrored onto the iframe target and
@@ -163,23 +201,7 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
   class CustomMedia extends (globalThis.HTMLElement ?? class {}) {
     static getTemplateHTML = tag.endsWith('video') ? getVideoTemplateHTML : getCommonTemplateHTML(tag);
     static shadowRootOptions: ShadowRootInit = { mode: 'open' };
-    static properties = {
-      autoPictureInPicture: { type: Boolean },
-      autoplay: { type: Boolean },
-      controls: { type: Boolean },
-      controlsList: { type: String },
-      crossOrigin: { type: String, empty: null },
-      defaultMuted: { type: Boolean, attribute: 'muted' },
-      disablePictureInPicture: { type: Boolean },
-      disableRemotePlayback: { type: Boolean },
-      loading: { type: String },
-      loop: { type: Boolean },
-      playsInline: { type: Boolean },
-      poster: { type: String, empty: '' },
-      preload: { type: String, empty: null },
-      src: { type: String, empty: '' },
-      streamType: { type: String, attribute: 'stream-type', empty: 'unknown' },
-    };
+    static properties = options?.properties ?? defaultCustomMediaProperties;
 
     static get observedAttributes() {
       // `this` resolves to the subclass, which may override `properties`.
