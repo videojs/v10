@@ -1,17 +1,21 @@
 import type { CollectionEntry } from 'astro:content';
 
 import type { SupportedFramework } from '@/types/docs';
+import { resolveContentFramework } from '@/types/docs';
 
 /**
- * Get the title for a document, using framework-specific title if available, otherwise falling back to the default
- * title.
+ * Get the title for a document, using the framework-specific title if available. Frameworks that read another
+ * framework's content fall back to that framework's title — a Vue reader sees the HTML title `media-play-button`, not
+ * the default `PlayButton` — before falling back to the default title.
  *
  * @param doc - The document from the docs collection
- * @param framework - The framework context (react or html)
+ * @param framework - The framework context
  * @returns The framework-specific title or default title
  */
 export function getDocTitle(doc: CollectionEntry<'docs'>, framework: SupportedFramework): string {
-  return doc.data.frameworkTitle?.[framework] ?? doc.data.title;
+  const frameworkTitle = doc.data.frameworkTitle;
+
+  return frameworkTitle?.[framework] ?? frameworkTitle?.[resolveContentFramework(framework)] ?? doc.data.title;
 }
 
 const CAMEL_OR_PASCAL_CASE = /[a-z][A-Z]/;

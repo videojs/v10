@@ -8,7 +8,7 @@ import Td from '@/components/typography/Td.astro';
 import Th from '@/components/typography/Th.astro';
 import Thead from '@/components/typography/Thead.astro';
 import Tr from '@/components/typography/Tr.astro';
-import { isValidFramework } from '@/types/docs';
+import { isValidFramework, resolveContentFramework } from '@/types/docs';
 import type { PresetReference as PresetReferenceType } from '@/types/preset-reference';
 import DocsLink from '../DocsLink.astro';
 import FrameworkCase from '../FrameworkCase.astro';
@@ -31,7 +31,8 @@ const presets: PresetReferenceType[] = entries
   });
 
 const { framework } = Astro.params;
-const pkg = framework && isValidFramework(framework) ? `@videojs/${framework}` : '@videojs/html';
+// Only frameworks with an adapter package have their own import path; the rest install `@videojs/html`.
+const pkg = framework && isValidFramework(framework) ? `@videojs/${resolveContentFramework(framework)}` : '@videojs/html';
 
 const listFormat = new Intl.ListFormat('en', { style: 'long', type: 'unit' });
 ---

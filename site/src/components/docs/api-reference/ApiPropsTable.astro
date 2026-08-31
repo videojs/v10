@@ -11,6 +11,7 @@ import Thead from '@/components/typography/Thead.astro';
 import Tr from '@/components/typography/Tr.astro';
 import type { PropDef } from '@/types/component-reference';
 import type { SupportedFramework } from '@/types/docs';
+import { frameworkMatches } from '@/types/docs';
 import type { FeatureConfigDef } from '@/types/feature-reference';
 import PropRow from './PropRow.astro';
 
@@ -36,9 +37,7 @@ const { props, componentName, framework, showAttributeName } = Astro.props;
   <Tbody>
     {
       Object.entries(props)
-        .filter(
-          ([, prop]) => !prop.frameworks || prop.frameworks.includes(framework),
-        )
+        .filter(([, prop]) => frameworkMatches(framework, prop.frameworks))
         .map(([name, prop]) => (
           <PropRow
             name={name}

@@ -1,7 +1,7 @@
 import { getCollection } from 'astro:content';
 
 import { BLOG_PAGE_SIZE } from '@/consts';
-import { SUPPORTED_FRAMEWORKS, type SupportedFramework } from '@/types/docs';
+import { resolveContentFramework, SUPPORTED_FRAMEWORKS, type SupportedFramework } from '@/types/docs';
 import { filterSidebar, getAllGuideSlugs } from '@/utils/docs/sidebar';
 import { getDocTitle } from '@/utils/docs/title';
 import { normalizeSitePath } from '@/utils/og/normalize-site-path';
@@ -112,7 +112,9 @@ export async function listOgTitleEntries(): Promise<OgTitleEntry[]> {
         continue;
       }
 
-      const frameworkTitle = doc.data.frameworkTitle?.[framework];
+      // Mirrors getDocTitle: frameworks without their own content fall back to the framework whose content they read.
+      const frameworkTitle =
+        doc.data.frameworkTitle?.[framework] ?? doc.data.frameworkTitle?.[resolveContentFramework(framework)];
 
       entries.push({
         kind: 'docs',

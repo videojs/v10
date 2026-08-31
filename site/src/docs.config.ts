@@ -73,8 +73,18 @@ export const sidebar: Sidebar = [
         sidebarLabel: 'Integrate with a framework',
         defaultOpen: false,
         contents: [
-          { slug: 'how-to/use-videojs-with-vue', sidebarLabel: 'Vue and Nuxt', frameworks: ['html'] },
-          { slug: 'how-to/use-videojs-with-svelte', sidebarLabel: 'Svelte and SvelteKit', frameworks: ['html'] },
+          {
+            slug: 'how-to/use-videojs-with-vue',
+            sidebarLabel: 'Vue and Nuxt',
+            frameworks: ['html'],
+            excludeFrameworks: ['svelte'],
+          },
+          {
+            slug: 'how-to/use-videojs-with-svelte',
+            sidebarLabel: 'Svelte and SvelteKit',
+            frameworks: ['html'],
+            excludeFrameworks: ['vue'],
+          },
         ],
       },
       { slug: 'how-to/autoplay' },

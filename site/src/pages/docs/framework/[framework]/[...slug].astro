@@ -13,7 +13,7 @@ import H2Markdown from '@/components/typography/H2Markdown.astro';
 import { PRODUCTION_URL } from '@/consts';
 import DocsLayout from '@/layouts/Docs.astro';
 import type { SupportedFramework } from '@/types/docs';
-import { SUPPORTED_FRAMEWORKS } from '@/types/docs';
+import { frameworkMatches, SUPPORTED_FRAMEWORKS } from '@/types/docs';
 import { filterSidebar, getAdjacentGuides, getAllGuideSlugs, getSectionsForGuide } from '@/utils/docs/sidebar';
 import { getDocTitle, isCodeIdentifier } from '@/utils/docs/title';
 import { createTechArticleSchema } from '@/utils/jsonLd/schemas';
@@ -66,11 +66,7 @@ const { Content, headings, remarkPluginFrontmatter } = await render(doc);
 // Use conditional headings from our remark plugin if available, otherwise fallback to default headings
 const conditionalHeadings = remarkPluginFrontmatter?.conditionalHeadings;
 const filteredHeadings = conditionalHeadings
-  ? conditionalHeadings.filter((h: any) => {
-      const matchesFramework = !h.frameworks || h.frameworks.includes(framework);
-
-      return matchesFramework;
-    })
+  ? conditionalHeadings.filter((h: any) => frameworkMatches(framework, h.frameworks, h.excludeFrameworks))
   : headings;
 
 // Get adjacent guides for navigation
