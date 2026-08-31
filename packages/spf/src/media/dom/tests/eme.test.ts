@@ -4,6 +4,7 @@ import type { Presentation } from '../../types';
 import {
   buildKeySystemConfigurations,
   contentTypesFromPresentation,
+  fetchDrm,
   type KeySystemModule,
   requestKeySystemAccess,
   applyLicenseRequest,
@@ -322,5 +323,25 @@ describe('buildKeySystemConfigurations', () => {
 
     expect(config?.videoCapabilities).toHaveLength(1);
     expect(config?.audioCapabilities).toBeUndefined();
+  });
+});
+
+describe('fetchDrm', () => {
+  it('forwards the request credentials mode to fetch', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(new Uint8Array([1])));
+
+    try {
+      await fetchDrm(
+        { url: 'https://license.example.com/wv', method: 'POST', headers: {}, body: null, credentials: 'include' },
+        new AbortController().signal
+      );
+
+      expect(fetchSpy).toHaveBeenCalledWith(
+        'https://license.example.com/wv',
+        expect.objectContaining({ credentials: 'include' })
+      );
+    } finally {
+      fetchSpy.mockRestore();
+    }
   });
 });

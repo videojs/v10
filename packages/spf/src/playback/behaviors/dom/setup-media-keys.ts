@@ -52,6 +52,7 @@ import {
   keySystemCandidates,
   NO_KEY_SYSTEM,
   requestKeySystemAccess,
+  resolveDrmCredentials,
   resolveDrmUrl,
 } from '../../../media/dom/eme';
 import {
@@ -232,6 +233,7 @@ function setupMediaKeysSetup({
                   method: 'GET',
                   headers: {},
                   body: null,
+                  credentials: resolveDrmCredentials(entry.credentials),
                 });
                 const request = entry.certificateRequest ? await entry.certificateRequest(shaped) : shaped;
                 const raw = await fetchDrm(request, controller.signal);
