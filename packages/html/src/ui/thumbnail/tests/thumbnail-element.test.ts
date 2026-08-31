@@ -57,9 +57,11 @@ async function renderCrossOrigin(
 ): Promise<string | null> {
   const provider = document.createElement('test-thumbnail-player') as TestPlayerProviderElement;
   const thumbnail = document.createElement(ThumbnailElement.tagName) as ThumbnailElement;
+  const img = document.createElement('img');
 
   configure?.(thumbnail);
   provider.setStore(createTextTrackStore(mediaCrossOrigin));
+  thumbnail.append(img);
   provider.append(thumbnail);
   document.body.append(provider);
 
@@ -68,12 +70,98 @@ async function renderCrossOrigin(
     await nextFrame();
   }
 
-  return thumbnail.shadowRoot!.querySelector('img')!.getAttribute('crossorigin');
+  return img.getAttribute('crossorigin');
 }
 
 describe('ThumbnailElement', () => {
   afterEach(() => {
     document.body.innerHTML = '';
+  });
+
+  it('renders nothing of its own and uses a supplied light-DOM image', async () => {
+    const thumbnail = document.createElement(ThumbnailElement.tagName) as ThumbnailElement;
+    const img = document.createElement('img');
+
+    Object.defineProperty(img, 'complete', { value: false, configurable: true });
+    thumbnail.thumbnails = [{ url: 'thumb.jpg', startTime: 0 }];
+    thumbnail.append(img);
+    document.body.append(thumbnail);
+    await thumbnail.updateComplete;
+
+    expect(thumbnail.shadowRoot).toBeNull();
+    expect(img.getAttribute('src')).toBe('thumb.jpg');
+  });
+
+  it('owns src and srcset on the supplied image', async () => {
+    const thumbnail = document.createElement(ThumbnailElement.tagName) as ThumbnailElement;
+    const img = document.createElement('img');
+
+    Object.defineProperty(img, 'complete', { value: false, configurable: true });
+    img.setAttribute('src', 'authored.jpg');
+    img.setAttribute('srcset', 'authored-2x.jpg 2x');
+    thumbnail.thumbnails = [{ url: 'thumb.jpg', startTime: 0 }];
+    thumbnail.append(img);
+    document.body.append(thumbnail);
+    await thumbnail.updateComplete;
+
+    expect(img.getAttribute('src')).toBe('thumb.jpg');
+    expect(img.hasAttribute('srcset')).toBe(false);
+
+    img.setAttribute('srcset', 'late-authored-2x.jpg 2x');
+    await vi.waitFor(() => expect(img.hasAttribute('srcset')).toBe(false));
+
+    thumbnail.thumbnails = [];
+    await thumbnail.updateComplete;
+
+    expect(img.hasAttribute('src')).toBe(false);
+    expect(img.hasAttribute('srcset')).toBe(false);
+  });
+
+  it('adopts an image added after mount', async () => {
+    const thumbnail = document.createElement(ThumbnailElement.tagName) as ThumbnailElement;
+
+    thumbnail.thumbnails = [{ url: 'thumb.jpg', startTime: 0 }];
+    document.body.append(thumbnail);
+    await thumbnail.updateComplete;
+
+    const img = document.createElement('img');
+
+    Object.defineProperty(img, 'complete', { value: false, configurable: true });
+    thumbnail.append(img);
+
+    await vi.waitFor(() => expect(img.getAttribute('src')).toBe('thumb.jpg'));
+  });
+
+  it('moves source ownership to a replacement image', async () => {
+    const thumbnail = document.createElement(ThumbnailElement.tagName) as ThumbnailElement;
+    const first = document.createElement('img');
+
+    Object.defineProperty(first, 'complete', { value: false, configurable: true });
+    thumbnail.thumbnails = [{ url: 'thumb.jpg', startTime: 0 }];
+    thumbnail.append(first);
+    document.body.append(thumbnail);
+    await thumbnail.updateComplete;
+
+    const second = document.createElement('img');
+
+    Object.defineProperty(second, 'complete', { value: false, configurable: true });
+    first.replaceWith(second);
+
+    await vi.waitFor(() => expect(second.getAttribute('src')).toBe('thumb.jpg'));
+    expect(first.hasAttribute('src')).toBe(false);
+  });
+
+  it('warns when a thumbnail resolves without an image', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const thumbnail = document.createElement(ThumbnailElement.tagName) as ThumbnailElement;
+
+    thumbnail.thumbnails = [{ url: 'thumb.jpg', startTime: 0 }];
+    document.body.append(thumbnail);
+    await thumbnail.updateComplete;
+
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('has no image to put it in'));
+
+    warn.mockRestore();
   });
 
   describe('crossorigin', () => {

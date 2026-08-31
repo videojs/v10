@@ -14,15 +14,34 @@ import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
 import { UIElement } from '../ui-element';
 
-const SHADOW_CSS = `\
-:host {
-  display: inline-block;
-  overflow: hidden;
-}
-img {
-  display: block;
-}`;
+/** What an element composes: whatever fills a slot, or the element's own children. */
+function composedChildren(element: Element): Element[] {
+  if (element instanceof HTMLSlotElement) {
+    const assigned = element.assignedElements();
+    if (assigned.length > 0) return assigned;
+  }
 
+  return [...element.children];
+}
+
+/** Find the first image composed inside the thumbnail, including through a forwarding slot. */
+function findImage(element: Element): HTMLImageElement | null {
+  for (const child of composedChildren(element)) {
+    if (child instanceof HTMLImageElement) return child;
+
+    const nested = findImage(child);
+    if (nested) return nested;
+  }
+
+  return null;
+}
+
+/**
+ * `<media-thumbnail>` — resolves and sizes a time-based thumbnail into an image supplied as a child.
+ *
+ * The element owns `src` and `srcset` on the active image. It renders no image of its own, so include one:
+ * `<media-thumbnail time="12"><img alt=""></media-thumbnail>`.
+ */
 export class ThumbnailElement extends UIElement {
   static readonly tagName = 'media-thumbnail';
 
@@ -39,30 +58,15 @@ export class ThumbnailElement extends UIElement {
   fetchPriority: ThumbnailCore.Props['fetchPriority'];
 
   readonly #core = new ThumbnailCore();
-  readonly #img = document.createElement('img');
+  readonly #children = new MutationObserver(() => this.requestUpdate());
   readonly #textTracks = new PlayerController(this, playerContext, selectTextTrack);
 
+  #img: HTMLImageElement | null = null;
   #thumbnails: ThumbnailImage[] = [];
   #externalThumbnails: ThumbnailImage[] | undefined;
   #lastTextTrack: MediaTextTrackState | undefined;
   #api: ThumbnailApi | null = null;
-
-  constructor() {
-    super();
-
-    const shadow = this.attachShadow({ mode: 'open' });
-
-    const style = document.createElement('style');
-
-    style.textContent = SHADOW_CSS;
-    shadow.appendChild(style);
-
-    this.#img.alt = '';
-    this.#img.setAttribute('part', 'img');
-    this.#img.setAttribute('aria-hidden', 'true');
-    this.#img.setAttribute('decoding', 'async');
-    shadow.appendChild(this.#img);
-  }
+  #warnedMissingImage = false;
 
   /**
    * Set thumbnail images directly, bypassing the automatic `<track>` detection. When set, this takes priority over the
@@ -87,10 +91,21 @@ export class ThumbnailElement extends UIElement {
       getImg: () => this.#img,
       onStateChange: () => this.requestUpdate(),
     });
+    this.#children.observe(this, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['src', 'srcset'],
+    });
   }
 
   override disconnectedCallback(): void {
     super.disconnectedCallback();
+
+    this.#adopt(null);
+    this.#children.disconnect();
+    this.#api?.destroy();
+    this.#api = null;
   }
 
   override destroyCallback(): void {
@@ -115,19 +130,25 @@ export class ThumbnailElement extends UIElement {
     }
 
     const thumbnail = this.#core.findActiveThumbnail(this.#thumbnails, this.time);
+    const img = findImage(this);
+
+    this.#adopt(img);
 
     // Sync img attributes from element properties.
-    applyElementProps(this.#img, {
-      crossorigin: this.#core.resolveCrossOrigin(this.crossOrigin, this.#inheritedCrossOrigin(textTrack)),
-      loading: this.loading,
-      fetchpriority: this.fetchPriority,
-    });
+    if (img) {
+      applyElementProps(img, {
+        crossorigin: this.#core.resolveCrossOrigin(this.crossOrigin, this.#inheritedCrossOrigin(textTrack)),
+        loading: this.loading,
+        fetchpriority: this.fetchPriority,
+      });
+    }
 
     // Track src changes via the thumbnail API.
-    this.#api?.updateSrc(thumbnail?.url);
+    this.#api?.updateSrc(img ? thumbnail?.url : undefined);
+    this.#applySource(thumbnail?.url);
+    this.#api?.connect();
 
     if (!thumbnail) {
-      this.#img.removeAttribute('src');
       this.#resetStyles();
 
       const state = this.#core.getState(false, false, undefined);
@@ -135,11 +156,6 @@ export class ThumbnailElement extends UIElement {
       applyElementProps(this, this.#core.getAttrs(state));
       applyStateDataAttrs(this, state, ThumbnailDataAttrs);
       return;
-    }
-
-    // Set the img src directly (imperative DOM).
-    if (this.#img.getAttribute('src') !== thumbnail.url) {
-      this.#img.src = thumbnail.url;
     }
 
     const api = this.#api;
@@ -171,7 +187,8 @@ export class ThumbnailElement extends UIElement {
     this.style.width = `${result.containerWidth}px`;
     this.style.height = `${result.containerHeight}px`;
 
-    const imgStyle = this.#img.style;
+    const imgStyle = this.#img?.style;
+    if (!imgStyle) return;
 
     imgStyle.width = `${result.imageWidth}px`;
     imgStyle.height = `${result.imageHeight}px`;
@@ -184,11 +201,54 @@ export class ThumbnailElement extends UIElement {
     this.style.width = '';
     this.style.height = '';
 
-    const imgStyle = this.#img.style;
+    const imgStyle = this.#img?.style;
+    if (!imgStyle) return;
 
     imgStyle.width = '';
     imgStyle.height = '';
     imgStyle.maxWidth = '';
     imgStyle.transform = '';
+  }
+
+  #adopt(next: HTMLImageElement | null): void {
+    if (next === this.#img) return;
+
+    const previous = this.#img;
+
+    if (previous) {
+      this.#api?.disconnectImg(previous);
+      this.#resetStyles();
+      previous.removeAttribute('src');
+      previous.removeAttribute('srcset');
+    }
+
+    this.#img = next;
+
+    // Reset the request even when the next image will receive the same URL. A
+    // replacement image is a new download with its own lifecycle.
+    this.#api?.updateSrc(undefined);
+  }
+
+  #applySource(src: string | undefined): void {
+    const img = this.#img;
+
+    if (!img) {
+      if (__DEV__ && src && !this.#warnedMissingImage) {
+        this.#warnedMissingImage = true;
+        console.warn(
+          `<${this.localName}> resolved a thumbnail but has no image to put it in. ` +
+            `Add one as a child: <${this.localName}><img alt=""></${this.localName}>`
+        );
+      }
+
+      return;
+    }
+
+    // A srcset candidate wins over src, so the root has to clear both parts of
+    // the source contract before applying the selected thumbnail URL.
+    img.removeAttribute('srcset');
+
+    if (!src) img.removeAttribute('src');
+    else if (img.getAttribute('src') !== src) img.setAttribute('src', src);
   }
 }
