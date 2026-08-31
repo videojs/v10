@@ -8,6 +8,7 @@ import {
   type DrmSystemsConfig,
   type KeySystemModule,
   keySystemCandidates,
+  resolveDrmCredentials,
   resolveDrmHeaders,
   resolveDrmUrl,
   sourceDrmSystems,
@@ -222,20 +223,22 @@ describe('resolveDrmHeaders', () => {
 describe('sourceDrmSystems', () => {
   const widevine: KeySystemModule = { keySystem: 'com.widevine.alpha', keyFormats: [] };
 
-  it('resolves url and header fields from the current source, and reflects a source swap', () => {
+  it('resolves url, header, and credentials fields from the current source, and reflects a source swap', () => {
     let drm: DrmSystemsConfig | undefined = {
-      'com.widevine.alpha': { licenseUrl: 'https://a', headers: { Authorization: 'one' } },
+      'com.widevine.alpha': { licenseUrl: 'https://a', headers: { Authorization: 'one' }, credentials: 'include' },
     };
     // The engine holds this entry object for its whole life; a swap must show through it, not a rebuild.
     const entry = sourceDrmSystems(() => drm, [widevine])['com.widevine.alpha']!;
 
     expect(resolveDrmUrl(entry.licenseUrl)).toBe('https://a');
     expect(resolveDrmHeaders(entry.headers)).toEqual({ Authorization: 'one' });
+    expect(resolveDrmCredentials(entry.credentials)).toBe('include');
 
     drm = { 'com.widevine.alpha': { licenseUrl: 'https://b' } };
 
     expect(resolveDrmUrl(entry.licenseUrl)).toBe('https://b');
     expect(resolveDrmHeaders(entry.headers)).toBeUndefined();
+    expect(resolveDrmCredentials(entry.credentials)).toBeUndefined();
   });
 
   it('applies the current source response transform, and derefs it live across swaps', async () => {
