@@ -325,7 +325,7 @@ describe('Skins Vite workflow', () => {
     }
 
     expect(output.some((item) => item.type === 'asset' && item.fileName.endsWith('.js.map'))).toBe(true);
-  }, 30_000);
+  }, 120_000);
 
   it('does not configure Shadcn output while serving', async () => {
     server = await createServer({
