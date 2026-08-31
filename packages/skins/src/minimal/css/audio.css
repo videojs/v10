@@ -1,4 +1,4 @@
-@import "./components/reset.css";
+@import "../../shared/css/reset.css";
 @import "./components/container.css";
 @import "./components/buffering.css";
 @import "./components/dialog.css";
@@ -14,9 +14,12 @@
 @import "../../shared/css/audio/icon-state.css";
 
 /* Container */
+/* :where() keeps the media-type class at zero specificity so component state rules (for example dialog
+   `:not([data-open])`) still outrank these entry rules as they did before the shared-class rename. */
 
-.media-minimal-skin--audio {
+.media-skin--minimal:where(.media-skin--audio) {
   --media-default-accent-color: light-dark(oklch(0 0 0), oklch(1 0 0));
+  --media-internal-accent-text-base: light-dark(oklch(1 0 0), oklch(0 0 0));
   --media-focus-ring-color: light-dark(oklch(0 0 0), oklch(1 0 0));
 
   --media-controls-background-color: light-dark(oklch(1 0 0), oklch(0 0 0));
@@ -53,13 +56,7 @@
 
 /* Dialog */
 
-.media-minimal-skin--audio .media-dialog__popup {
-  position: absolute;
-  inset: 0;
-  z-index: 20;
-}
-
-.media-minimal-skin--audio .media-dialog__dialog {
+.media-skin--minimal:where(.media-skin--audio) .media-dialog__popup {
   position: absolute;
   inset: 0;
   z-index: 20;
@@ -73,32 +70,33 @@
   transition-timing-function: ease-out;
   transition-duration: var(--media-dialog-transition-duration);
   transition-property: opacity, filter, scale;
+
+  &[data-starting-style],
+  &[data-ending-style] {
+    opacity: 0;
+    filter: blur(4px);
+    scale: 0.95;
+  }
+  &[data-ending-style] {
+    transition-duration: max(calc(var(--media-dialog-transition-duration) - 100ms), 50ms);
+    transition-delay: 0ms;
+  }
 }
 
-.media-minimal-skin--audio .media-dialog__popup[data-starting-style] .media-dialog__dialog,
-.media-minimal-skin--audio .media-dialog__popup[data-ending-style] .media-dialog__dialog {
-  opacity: 0;
-  filter: blur(4px);
-  scale: 0.95;
-}
-.media-minimal-skin--audio .media-dialog__popup[data-ending-style] .media-dialog__dialog {
-  transition-delay: 0ms;
-}
-
-.media-minimal-skin--audio .media-dialog__content {
+.media-skin--minimal:where(.media-skin--audio) .media-dialog__content {
   display: flex;
   flex: 1;
   gap: calc(var(--media-spacing) * 2);
   align-items: center;
 }
 
-.media-minimal-skin--audio:has([role="alertdialog"][data-open]) .media-controls * {
+.media-skin--minimal:where(.media-skin--audio):has([role="alertdialog"][data-open]) .media-controls * {
   visibility: hidden;
 }
 
 /* Controls */
 
-.media-minimal-skin--audio .media-controls {
+.media-skin--minimal:where(.media-skin--audio) .media-controls {
   --media-base-side-offset: 2;
   --media-base-boundary-offset: 2;
 
@@ -110,16 +108,16 @@
 
 /* Buffering (spinner over play button — backdrop only, no layout change) */
 
-.media-minimal-skin--audio .media-button--play__wrapper {
+.media-skin--minimal:where(.media-skin--audio) .media-button--play__wrapper {
   position: relative;
   display: inline-flex;
 }
 
-.media-minimal-skin--audio .media-button--play__wrapper .media-buffering-indicator {
+.media-skin--minimal:where(.media-skin--audio) .media-button--play__wrapper .media-buffering-indicator {
   color: inherit;
 }
 
-.media-minimal-skin--audio
+.media-skin--minimal:where(.media-skin--audio)
   .media-button--play__wrapper:has(.media-buffering-indicator[data-visible])
   .media-button--play
   .media-icon {
@@ -128,12 +126,12 @@
 
 /* Popups & Animations */
 
-.media-minimal-skin--audio .media-popover--volume {
+.media-skin--minimal:where(.media-skin--audio) .media-popover--volume {
   --media-popover-side-offset: 0rem;
   padding: 0 calc(var(--media-spacing) * 2) 0 calc(var(--media-spacing) * 16);
   background: linear-gradient(to left, var(--media-controls-background-color) 80%, transparent 100%);
 }
 
-.media-minimal-skin--audio .media-slider .media-slider__preview .media-slider__value {
+.media-skin--minimal:where(.media-skin--audio) .media-slider .media-slider__preview .media-slider__value {
   bottom: calc(var(--media-spacing) * 10);
 }

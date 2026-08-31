@@ -1,4 +1,4 @@
-.media-default-skin .media-time-controls {
+.media-skin--default .media-time-controls {
   display: flex;
   flex: 1;
   gap: calc(var(--media-spacing) * 2.5);
@@ -10,17 +10,17 @@
   }
 
   > .media-time:last-child {
-    @container media-time-controls (width < 16rem) {
+    @container media-time-controls (width < 256px) {
       display: none;
     }
   }
 }
 
-.media-default-skin .media-time {
+.media-skin--default .media-time {
   font-variant-numeric: tabular-nums;
 }
 
-.media-default-skin .media-time[role="button"] {
+.media-skin--default .media-time[role="button"] {
   cursor: pointer;
   outline: 2px solid transparent;
   outline-offset: -2px;

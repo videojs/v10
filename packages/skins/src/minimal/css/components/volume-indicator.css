@@ -1,4 +1,4 @@
-.media-minimal-skin .media-volume-indicator {
+.media-skin--minimal .media-volume-indicator {
   .media-volume-indicator__content {
     width: min(80%, calc(var(--media-spacing) * 56));
     transform: translateX(0);

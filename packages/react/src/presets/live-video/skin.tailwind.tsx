@@ -73,7 +73,6 @@ import { VolumeSlider } from '@/ui/volume-slider';
 
 import type { LiveVideoSkinProps } from './skin';
 
-const VOLUME_STEP = 5;
 const TOP_STATUS_ACTIONS = ['toggleSubtitles', 'toggleFullscreen', 'togglePictureInPicture'] as const;
 const CENTER_STATUS_ACTIONS = ['togglePaused'] as const;
 
@@ -137,7 +136,7 @@ function VolumePopover(): ReactNode {
     <Popover.Root openOnHover delay={200} closeDelay={100} side="top">
       <Popover.Trigger render={muteButton} />
       <Popover.Popup className={cn(popup.popover, popup.volume)}>
-        <VolumeSlider.Root step={VOLUME_STEP} orientation="vertical" thumbAlignment="edge" render={<SliderRoot />}>
+        <VolumeSlider.Root orientation="vertical" thumbAlignment="edge" render={<SliderRoot />}>
           <VolumeSlider.Track render={<SliderTrack />}>
             <VolumeSlider.Fill render={<SliderFill />} />
           </VolumeSlider.Track>
@@ -342,8 +341,8 @@ export function LiveVideoSkinTailwind(props: LiveVideoSkinProps): ReactNode {
       <Hotkey keys="f" action="toggleFullscreen" />
       <Hotkey keys="c" action="toggleSubtitles" />
       <Hotkey keys="i" action="togglePictureInPicture" />
-      <Hotkey keys="ArrowUp" action="volumeStep" value={VOLUME_STEP / 100} />
-      <Hotkey keys="ArrowDown" action="volumeStep" value={-VOLUME_STEP / 100} />
+      <Hotkey keys="ArrowUp" action="volumeStep" />
+      <Hotkey keys="ArrowDown" action="volumeStep" />
 
       {/* Gestures */}
       <Gesture type="tap" action="togglePaused" pointer="mouse" region="center" />

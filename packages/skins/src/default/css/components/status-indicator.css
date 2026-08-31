@@ -1,4 +1,4 @@
-.media-default-skin .media-status-indicator--state {
+.media-skin--default .media-status-indicator--state {
   &[data-status="captions-on"] .media-icon--captions-on,
   &[data-status="captions-off"] .media-icon--captions-off,
   &[data-status="fullscreen"] .media-icon--fullscreen-enter,
@@ -9,7 +9,7 @@
   }
 }
 
-.media-default-skin .media-status-indicator--playback {
+.media-skin--default .media-status-indicator--playback {
   background: oklch(0 0 0 / 0.35);
   border-radius: 100%;
   backdrop-filter: blur(8px);

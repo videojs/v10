@@ -1,6 +1,7 @@
 'use client';
 
 export type { IndicatorStatus, InputAction, InputIndicatorLabels } from '@videojs/core';
+export * from './constants';
 // Core
 export * from '@videojs/core/dom';
 // Media predicates

@@ -1,4 +1,5 @@
 // Core
+export * from './constants';
 export * from '@videojs/core/dom';
 export type {
   Destroyable,
