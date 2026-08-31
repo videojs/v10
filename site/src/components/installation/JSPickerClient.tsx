@@ -1,4 +1,4 @@
-import { Atom, Globe } from 'lucide-react';
+import { Atom, Flame, Globe, Triangle } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 import ImageRadioGroup from '@/components/ImageRadioGroup';
@@ -9,6 +9,8 @@ import { resolveFrameworkChange } from '@/utils/docs/routing';
 const FRAMEWORK_IMAGES: Record<SupportedFramework, ReactNode> = {
   react: <Atom size={32} />,
   html: <Globe size={32} />,
+  vue: <Triangle size={32} />,
+  svelte: <Flame size={32} />,
 };
 
 interface Props {
