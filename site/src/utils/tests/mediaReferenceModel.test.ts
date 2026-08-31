@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vite-plus/test';
 
+import { HTML_API_FRAMEWORKS } from '@/types/docs';
 import type { MediaReference } from '@/types/media-reference';
 
 import { buildMediaReferenceTocHeadings, createMediaReferenceModel } from '../mediaReferenceModel';
@@ -172,9 +173,19 @@ describe('buildMediaReferenceTocHeadings', () => {
       depth: 3,
       text: 'Attributes',
       slug: 'attributes',
-      frameworks: ['html'],
+      frameworks: HTML_API_FRAMEWORKS,
     });
     expect(headings).toContainEqual({ depth: 3, text: 'Props', slug: 'props', frameworks: ['react'] });
+  });
+
+  it('keeps html platform headings visible to Vue and Svelte readers', () => {
+    const model = createMediaReferenceModel('HlsJsVideo', makeRef());
+    const headings = buildMediaReferenceTocHeadings(model);
+    const attributes = headings.find((heading) => heading.slug === 'attributes');
+
+    expect(attributes?.frameworks).toContain('vue');
+    expect(attributes?.frameworks).toContain('svelte');
+    expect(attributes?.frameworks).not.toContain('react');
   });
 
   it('nests each engine under the engine options heading', () => {
@@ -196,7 +207,7 @@ describe('buildMediaReferenceTocHeadings', () => {
       depth: 4,
       text: 'source.engine.hlsJs',
       slug: 'engine-options-hlsjs',
-      frameworks: ['html'],
+      frameworks: HTML_API_FRAMEWORKS,
     });
   });
 });

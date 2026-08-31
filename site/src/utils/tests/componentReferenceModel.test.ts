@@ -338,4 +338,81 @@ describe('buildComponentReferenceTocHeadings', () => {
       frameworks: ['react'],
     });
   });
+
+  it('opens an html-only props section to every framework reading that API', () => {
+    const apiReference = {
+      name: 'Thumbnail',
+      props: {},
+      state: {},
+      dataAttributes: {},
+      cssCustomProperties: {},
+      platforms: {},
+      parts: {
+        image: {
+          name: 'Image',
+          props: {
+            src: { type: 'string', frameworks: ['html'] },
+          },
+          state: {},
+          dataAttributes: {},
+          cssCustomProperties: {},
+          platforms: {
+            html: { tagName: 'media-thumbnail-image' },
+            react: {},
+          },
+        },
+      },
+    } satisfies ComponentReference;
+
+    const model = createComponentReferenceModel('Thumbnail', apiReference);
+
+    expect(model?.parts[0]?.sections).toMatchObject([
+      {
+        key: 'props',
+        frameworks: HTML_API_FRAMEWORKS,
+      },
+    ]);
+    expect(buildComponentReferenceTocHeadings(model)).toContainEqual({
+      depth: 4,
+      text: 'Props',
+      slug: 'image-props',
+      tocKind: 'api-reference-subsection',
+      frameworks: HTML_API_FRAMEWORKS,
+    });
+  });
+
+  it('leaves a section shared by both API platforms unrestricted', () => {
+    const apiReference = {
+      name: 'Slider',
+      props: {},
+      state: {},
+      dataAttributes: {},
+      cssCustomProperties: {},
+      platforms: {},
+      parts: {
+        root: {
+          name: 'Root',
+          props: {
+            disabled: { type: 'boolean' },
+          },
+          state: {},
+          dataAttributes: {},
+          cssCustomProperties: {},
+          platforms: {
+            html: { tagName: 'media-slider' },
+            react: {},
+          },
+        },
+      },
+    } satisfies ComponentReference;
+
+    const model = createComponentReferenceModel('Slider', apiReference);
+
+    expect(buildComponentReferenceTocHeadings(model)).toContainEqual({
+      depth: 4,
+      text: 'Props',
+      slug: 'root-props',
+      tocKind: 'api-reference-subsection',
+    });
+  });
 });
