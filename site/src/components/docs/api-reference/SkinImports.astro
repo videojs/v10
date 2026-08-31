@@ -20,22 +20,7 @@ interface Props {
 const { preset, react, minimal = false } = Astro.props;
 const module = minimal ? 'minimal-skin' : 'skin';
 const bundle = preset === 'background' ? 'background' : `${preset}${minimal ? '-minimal' : ''}`;
-
-// The background preset names its elements after its `<background-video>` media element.
-const elementPrefix = preset === 'background' ? 'background-video' : preset;
-const playerTag = `${elementPrefix}-player`;
-const skinTag = `${elementPrefix}-${minimal ? 'minimal-' : ''}skin`;
-const mediaTag = preset === 'background' ? 'background-video' : preset.endsWith('audio') ? 'audio' : 'video';
-const mediaSrc = preset.startsWith('live-') ? 'live.m3u8' : mediaTag === 'audio' ? 'audio.mp3' : 'video.mp4';
-const cdnCode = [
-  `<script type="module" src="${VJS10_HTML_CDN_BASE}/${bundle}.js"></script>`,
-  '',
-  `<${playerTag}>`,
-  `  <${skinTag}>`,
-  `    <${mediaTag} src="${mediaSrc}"></${mediaTag}>`,
-  `  </${skinTag}>`,
-  `</${playerTag}>`,
-].join('\n');
+const cdnCode = `<script type="module" src="${VJS10_HTML_CDN_BASE}/${bundle}.js"></script>`;
 
 const imports: Array<{ code: string; framework: 'react' | 'html'; lang: BundledLanguage }> = [
   {
@@ -64,7 +49,7 @@ const imports: Array<{ code: string; framework: 'react' | 'html'; lang: BundledL
 <FrameworkCase frameworks={['html']}>
   <P>
     The import registers the skin and every UI element it composes. The <DocsLink slug="concepts/cdn">CDN</DocsLink>{' '}
-    player bundle registers this skin together with its player, so one script tag serves the whole markup:
+    player bundle registers this skin together with its player:
   </P>
   <CodeFrame lang="html">
     <ServerCode code={cdnCode} lang="html" />
