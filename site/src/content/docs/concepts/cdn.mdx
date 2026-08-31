@@ -4,10 +4,9 @@ description: The files the Video.js CDN serves and the layout rules behind their
 ---
 
 import Aside from '@/components/Aside.astro';
-import CdnMediaList from '@/components/docs/CdnMediaList.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
 
-Video.js can run straight from `<script>` tags: no npm, no bundler. The CDN serves `@videojs/html` prebuilt into browser-ready bundles which register custom elements. For many pages, it takes only one script tag:
+Video.js can run straight from `<script>` tags. Our CDN serves `@videojs/html` in prebuilt, browser-ready bundles which register custom elements. For many pages, it takes only one script tag:
 
 ```html title="index.html"
 <script type="module" src="{{VJS10_HTML_CDN_BASE}}/video.js"></script>
@@ -20,6 +19,8 @@ Video.js can run straight from `<script>` tags: no npm, no bundler. The CDN serv
 ```
 
 ## URLs
+
+Every file the CDN serves follows one URL pattern:
 
 ```
 https://cdn.jsdelivr.net/npm/@videojs/html@<version>/cdn/<file>
@@ -52,11 +53,7 @@ The default presets play through the browser's own `<video>` and `<audio>`. Ever
 <script type="module" src="{{VJS10_HTML_CDN_BASE}}/media/hlsjs-video.js"></script>
 ```
 
-Each path mirrors its npm subpath. The current release ships:
-
-<CdnMediaList />
-
-Elements with more than one playback engine keep the extra flavors in a directory named for the element, such as `media/mux-video/spf.js`. Load one flavor per page: every flavor claims the same tag name, and the first registration wins.
+Each path mirrors its npm subpath. Elements with more than one playback engine keep the extra flavors in a directory named for the element, such as `media/mux-video/spf.js`. Load one flavor per page: every flavor claims the same tag name, and the first registration wins.
 
 ## Locales
 
