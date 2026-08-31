@@ -317,6 +317,29 @@ describe('setupMediaKeys', () => {
     reactor.destroy();
   });
 
+  it('sends the configured credentials mode with the certificate fetch', async () => {
+    const eme = makeFakeEme('com.apple.fps');
+
+    vi.mocked(requestKeySystemAccess).mockResolvedValue(eme);
+    vi.mocked(fetchDrm).mockResolvedValue(new Uint8Array([1]));
+    const { context, reactor } = setupSetupMediaKeys(
+      { presentation: makePresentation([FAIRPLAY_KEY]) },
+      { mediaElement: document.createElement('video') },
+      {
+        'com.apple.fps': {
+          licenseUrl: 'https://license.example.com/fairplay',
+          serverCertificateUrl: 'https://license.example.com/appcert',
+          credentials: 'include',
+        },
+      }
+    );
+
+    await vi.waitFor(() => expect(context.mediaKeys.get()).toBe(eme.mediaKeys));
+    expect(fetchDrm).toHaveBeenCalledWith(expect.objectContaining({ credentials: 'include' }), expect.anything());
+
+    reactor.destroy();
+  });
+
   it('skips the certificate phase when its resolver yields nothing', async () => {
     const eme = makeFakeEme('com.apple.fps');
 

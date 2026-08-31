@@ -13,6 +13,7 @@ import type { MaybeResolvedPresentation } from '../types';
 import { buildMimeCodec } from './mse/mediasource-setup';
 
 export {
+  type DrmCredentials,
   type DrmHeaders,
   type DrmRequest,
   type DrmRequestTransform,
@@ -26,6 +27,7 @@ export {
   type KeySystemModule,
   keySystemCandidates,
   NO_KEY_SYSTEM,
+  resolveDrmCredentials,
   resolveDrmHeaders,
   resolveDrmUrl,
 } from '../drm';
@@ -206,7 +208,7 @@ export function attachMediaKeys(mediaElement: HTMLMediaElement, mediaKeys: Media
 export async function fetchDrm(request: DrmRequest, signal: AbortSignal): Promise<Uint8Array<ArrayBuffer>> {
   const response = await fetchWithRetry(
     request.url,
-    { method: request.method, headers: request.headers, body: request.body },
+    { method: request.method, headers: request.headers, body: request.body, credentials: request.credentials },
     signal
   );
   if (!response.ok) throw new Error(`DRM request failed with status ${response.status}`);

@@ -350,6 +350,24 @@ describe('exchangeLicenses', () => {
     reactor.destroy();
   });
 
+  it("sends a key system's configured credentials mode with its license request", async () => {
+    // A cookie-credentialed license server — the escape hatch Shaka calls allowCrossSiteCredentials.
+    const { sessions, reactor } = setupExchangeLicenses({
+      drm: {
+        'com.widevine.alpha': { licenseUrl: 'https://license.example.com/widevine', credentials: 'include' },
+      },
+    });
+
+    await vi.waitFor(() => expect(sessions).toHaveLength(1));
+    sessions[0]!.dispatchEvent(Object.assign(new Event('message'), { message: new Uint8Array([1]).buffer }));
+
+    await vi.waitFor(() =>
+      expect(fetchDrm).toHaveBeenCalledWith(expect.objectContaining({ credentials: 'include' }), expect.anything())
+    );
+
+    reactor.destroy();
+  });
+
   it('lets the shaped request win over a configured header of the same name', async () => {
     const { sessions, reactor } = setupExchangeLicenses({
       drm: {
