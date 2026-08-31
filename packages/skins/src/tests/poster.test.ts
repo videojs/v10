@@ -15,6 +15,6 @@ describe('poster styles', () => {
     const source = await readFile(posterStyles, 'utf8');
 
     expect(source).toContain('[&>slot>img:not([src]):not([srcset])]:invisible');
-    expect(source).toContain('[&_::slotted(img:not([src]):not([srcset]))]:invisible');
+    expect(source).toContain('[&>slot::slotted(img:not([src]):not([srcset]))]:invisible');
   });
 });

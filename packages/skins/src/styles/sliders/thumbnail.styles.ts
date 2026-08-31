@@ -1,24 +1,19 @@
 import { styles } from 'vjsc/styles';
 
-import { popupSurface } from '../recipes/popup';
-import { sliderPreviewContent } from '../recipes/slider';
-import { themeRecipe } from '../recipes/theme';
-
 export default styles({
   file: 'sliders.css',
   rules: {
     root: {
       className: 'media-slider-thumbnail',
       utilities: [
-        ...sliderPreviewContent,
-        ...popupSurface,
-        'group/thumbnail pointer-events-none overflow-hidden',
+        'group/thumbnail pointer-events-none overflow-hidden bg-black/90',
         'has-[[data-loading]]:aspect-video has-[[data-loading]]:w-(--media-slider-preview-max-width)',
-        ...themeRecipe(
-          'left-1/2 bottom-[calc(100%+--spacing(9))] rounded-xl bg-black/90',
-          '[left:var(--media-preview-left,var(--media-slider-pointer))] bottom-[calc(100%+--spacing(14))] rounded-lg bg-black/90 after:hidden'
-        ),
       ],
+      variants: {
+        default: 'left-1/2 bottom-[calc(100%+--spacing(9))] rounded-xl',
+        minimal:
+          '[left:var(--media-preview-left,var(--media-slider-pointer))] bottom-[calc(100%+--spacing(14))] rounded-lg after:hidden',
+      },
     },
     image: {
       className: 'media-slider-thumbnail-image',
@@ -36,7 +31,7 @@ export default styles({
         'group-not-has-[[role=img][data-loading]]/thumbnail:[--media-spinner-animation:none]',
         'motion-reduce:[--media-spinner-animation:none]',
         'group-has-[[role=img][data-loading]]/thumbnail:opacity-100',
-        'drop-shadow-[0_1px_0_var(--media-shadow-current-color)]',
+        'drop-shadow-media-icon',
       ],
     },
   },

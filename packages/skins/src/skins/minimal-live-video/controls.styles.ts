@@ -7,8 +7,7 @@ export default styles({
       className: 'media-controls',
       utilities: [
         'group/controls absolute inset-x-1 bottom-1 z-20 flex items-center gap-x-2 rounded-xl bg-transparent p-1 text-white',
-        'text-shadow-[0_1px_0_var(--media-shadow-current-color)]',
-        '[@media(prefers-reduced-transparency:reduce)]:bg-black contrast-more:bg-black',
+        'text-shadow-media opaque:bg-black',
         '[--media-popover-side-offset:--spacing(5)] [--media-tooltip-side-offset:var(--media-popover-side-offset)]',
         '[--media-popover-boundary-offset:--spacing(2)] [--media-tooltip-boundary-offset:var(--media-popover-boundary-offset)]',
         'transition-[filter,opacity,translate] duration-[calc(var(--media-controls-transition-duration)/2)] ease-out',
@@ -20,7 +19,7 @@ export default styles({
       ],
     },
     backdrop: {
-      className: 'media-controls__backdrop',
+      className: 'media-controls-backdrop',
       utilities: [
         'pointer-events-none absolute inset-0 z-10 rounded-[inherit]',
         'bg-linear-to-t from-black/70 via-black/50 via-[length:calc(var(--media-spacing)*30)] to-transparent',

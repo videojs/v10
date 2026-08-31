@@ -19,7 +19,7 @@ export function DefaultVideoSkin({ children, className, poster, ...props }: Defa
   const isPosterString = typeof poster === 'string';
 
   return (
-    <Container className={['media-skin media-skin--video', className]} {...props}>
+    <Container className={['media-skin', className]} data-theme="default" data-preset="video" {...props}>
       <Slot>{children}</Slot>
       <Poster src={isPosterString ? poster : undefined}>{isPosterString ? undefined : poster}</Poster>
       <BufferingIndicator />
@@ -38,9 +38,9 @@ export const meta = {
   name: 'default-video',
   type: 'skin',
   style: {
-    scope: '.media-skin--video',
+    scope: '.media-skin[data-theme="default"][data-preset="video"]',
     theme: 'default',
-    variant: 'default',
+    preset: 'video',
   },
   title: 'Default Video Skin',
   description: 'A complete on-demand video skin with responsive controls, settings, feedback, and input controls.',

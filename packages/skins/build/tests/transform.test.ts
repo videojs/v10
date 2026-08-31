@@ -21,7 +21,7 @@ describe('validateSkinConfig', () => {
       style: 'css',
     });
     expect(createStyleOptions({ target: 'react', style: 'css' })).toMatchObject({
-      variants: [],
+      variants: ['default'],
       stylesheet: { scope: '.media-skin' },
     });
     expect(validateSkinConfig(new URLSearchParams('target=html&style=css'))).toBeNull();
@@ -30,38 +30,38 @@ describe('validateSkinConfig', () => {
   it('adds the Shadow DOM variant only to HTML targets', () => {
     expect(createStyleOptions({ target: 'react', skin: 'default-video', style: 'tailwind' }).variants).toEqual([
       'default',
-      'default-video',
+      'video',
     ]);
     expect(createStyleOptions({ target: 'html', skin: 'minimal-video', style: 'tailwind' }).variants).toEqual([
       'minimal',
-      'minimal-video',
+      'video',
       'shadow-dom',
     ]);
     expect(createStyleOptions({ target: 'react', skin: 'default-audio', style: 'tailwind' }).variants).toEqual([
       'default',
-      'default-audio',
+      'audio',
     ]);
     expect(createStyleOptions({ target: 'html', skin: 'minimal-audio', style: 'tailwind' }).variants).toEqual([
       'minimal',
-      'minimal-audio',
+      'audio',
       'shadow-dom',
     ]);
     expect(createStyleOptions({ target: 'react', skin: 'default-live-video', style: 'tailwind' }).variants).toEqual([
       'default',
-      'default-live-video',
+      'live-video',
     ]);
     expect(createStyleOptions({ target: 'html', skin: 'minimal-live-video', style: 'tailwind' }).variants).toEqual([
       'minimal',
-      'minimal-live-video',
+      'live-video',
       'shadow-dom',
     ]);
     expect(createStyleOptions({ target: 'react', skin: 'default-live-audio', style: 'tailwind' }).variants).toEqual([
       'default',
-      'default-live-audio',
+      'live-audio',
     ]);
     expect(createStyleOptions({ target: 'html', skin: 'minimal-live-audio', style: 'tailwind' }).variants).toEqual([
       'minimal',
-      'minimal-live-audio',
+      'live-audio',
       'shadow-dom',
     ]);
   });

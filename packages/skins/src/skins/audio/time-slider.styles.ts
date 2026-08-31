@@ -1,8 +1,5 @@
 import { styles } from 'vjsc/styles';
 
-import { popupSurface } from '../../styles/recipes/popup';
-import { sliderPreviewContent } from '../../styles/recipes/slider';
-
 export default styles({
   file: 'sliders.css',
   rules: {
@@ -17,12 +14,7 @@ export default styles({
     },
     previewContent: {
       className: 'media-audio-time-slider-preview-content',
-      utilities: [
-        ...sliderPreviewContent,
-        ...popupSurface,
-        'bottom-[calc(100%+--spacing(10))] rounded-media-control px-2.5 py-1 tabular-nums',
-        'text-media',
-      ],
+      utilities: ['bottom-[calc(100%+--spacing(10))] rounded-media-control px-2.5 py-1 tabular-nums', 'text-media'],
       variants: {
         default: 'left-1/2',
         minimal: [

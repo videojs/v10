@@ -1,4 +1,5 @@
-@import "./_generated/components/videojs/styles/theme.css";
+@import "tailwindcss" source(none);
+@import "./_generated/styles.css";
 
 @source "../app";
 @source "../templates";

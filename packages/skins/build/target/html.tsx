@@ -195,7 +195,9 @@ export const htmlComponentTarget: ComponentTarget<CoreSchema> = defineComponentT
             return [
               trigger.replaceWith(
                 playbackRateButtonProps ? (
-                  <PlaybackRateButton commandfor={controlledId} {...playbackRateButtonProps} />
+                  <Host commandfor={controlledId} {...playbackRateButtonProps}>
+                    {trigger.children}
+                  </Host>
                 ) : (
                   <Button commandfor={controlledId} {...trigger.props}>
                     {trigger.children}

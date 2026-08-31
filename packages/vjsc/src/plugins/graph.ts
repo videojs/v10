@@ -134,8 +134,9 @@ export function graphPlugin<Node extends ModuleMeta>(
 
         if (source === null || source === undefined) this.error(`VJSC graph has no transformed output for \`${id}\`.`);
 
-        const buildMeta = readModuleBuildMeta(info?.meta);
         const references = analyzeImports(source, entry.filename);
+        const buildMeta = readModuleBuildMeta(info?.meta);
+        const styles = importedModuleStyles(references);
         const imports: GraphImport[] = [];
 
         for (const reference of references) {
@@ -167,7 +168,7 @@ export function graphPlugin<Node extends ModuleMeta>(
           ...entry,
           source,
           imports,
-          styles: buildMeta?.moduleStyles ?? { files: [], assets: [] },
+          styles,
           ...(buildMeta?.moduleMeta ? { meta: buildMeta.moduleMeta as unknown as Node } : {}),
         });
       }
@@ -203,6 +204,21 @@ function normalizeGraphId(id: string): string {
   const normalized = normalizeResolvedId(id);
 
   return normalized.startsWith('\0') ? normalized.slice(1) : normalized;
+}
+
+/** Read exact generated stylesheet ownership from the final transformed imports. */
+function importedModuleStyles(references: readonly GraphImport[]): GraphModuleInput['styles'] {
+  const assets = references
+    .map(({ specifier }) => normalizeGraphId(specifier))
+    .filter((specifier) => specifier.startsWith('virtual:vjsc/css/'));
+  const files = assets
+    .map((asset) => decodeURIComponent(asset.slice(asset.lastIndexOf('/') + 1)))
+    .filter((file) => file !== 'base.css');
+
+  return {
+    files: [...new Set(files)].sort(),
+    assets: [...new Set(assets)].sort(),
+  };
 }
 
 function removeEntryChunks(context: PluginContext, bundle: OutputBundle, references: ReadonlySet<string>): void {

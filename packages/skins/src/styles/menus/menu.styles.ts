@@ -1,14 +1,11 @@
 import { styles } from 'vjsc/styles';
 
-import { popoverSafeArea, popupPosition, popupSurface } from '../recipes/popup';
-import { themeRecipe } from '../recipes/theme';
-
 const menuItem = [
   'relative flex cursor-pointer select-none items-center gap-1.5 rounded-(--media-menu-item-border-radius) px-2 py-1.5 text-start whitespace-nowrap',
   'outline-2 -outline-offset-2 outline-transparent',
   'hover:bg-media-control-hover hover:text-media-accent-text data-highlighted:bg-media-control-hover data-highlighted:text-media-accent-text',
   'focus-visible:outline-white focus-visible:outline-offset-2',
-  'text-shadow-[0_1px_0_var(--media-shadow-current-color)]',
+  'text-shadow-media',
   'transition-[background-color,color] duration-100 [transition-timing-function:ease-in-out] motion-reduce:duration-50',
   'supports-[top:anchor(top)]:duration-50 supports-[top:anchor(top)]:hover:duration-200 supports-[top:anchor(top)]:data-highlighted:duration-200',
 ] as const;
@@ -39,7 +36,7 @@ const menuHighlight = [
 
 const menuGroup = ['flex [max-height:inherit] flex-col gap-0.5', ...menuHighlight] as const;
 
-const menuIcon = ['size-media-icon shrink-0 drop-shadow-[0_1px_0_var(--media-shadow-current-color)]'] as const;
+const menuIcon = ['size-media-icon shrink-0 drop-shadow-media-icon'] as const;
 
 export default styles({
   file: 'menus.css',
@@ -47,10 +44,7 @@ export default styles({
     popup: {
       className: 'media-menu-popup',
       utilities: [
-        ...popupPosition,
-        ...popoverSafeArea,
-        ...popupSurface,
-        'm-0 min-w-44 max-w-(--media-menu-available-width) overflow-hidden! border-0 p-1',
+        'm-0 min-w-44 max-w-(--media-menu-available-width) overflow-hidden! border-0 p-1 [--media-popup-side-offset:var(--media-popover-side-offset)]',
         'max-h-[min(var(--media-menu-available-height,--spacing(56)),--spacing(56))] overscroll-none',
         'h-(--media-menu-height) w-(--media-menu-width)',
         'motion-reduce:[--media-menu-transition-duration:0ms]',
@@ -59,17 +53,17 @@ export default styles({
         'data-starting-style:[transition-duration:100ms] data-starting-style:[transition-property:opacity,filter,transform,scale]',
         'data-ending-style:[transition-duration:100ms] data-ending-style:[transition-property:opacity,filter,transform,scale]',
         'motion-reduce:[transition-duration:0ms]!',
-        ...themeRecipe(
-          'rounded-[--spacing(3)]',
-          'rounded-[--spacing(2.5)] data-starting-style:filter-none after:hidden'
-        ),
       ],
+      variants: {
+        default: 'rounded-[--spacing(3)]',
+        minimal: 'rounded-[--spacing(2.5)]',
+      },
     },
     content: {
       className: 'media-menu-content',
       utilities: [
         ...menuHighlight,
-        'absolute max-h-[inherit] overflow-auto overscroll-none outline-none',
+        'absolute max-h-[inherit] overflow-auto overscroll-none outline-hidden',
         'not-data-submenu:flex not-data-submenu:flex-col not-data-submenu:gap-0.5',
         'transition-[translate,filter] duration-(--media-menu-transition-duration) ease-out',
         'not-data-submenu:inset-x-1 not-data-submenu:top-1',
@@ -105,7 +99,7 @@ export default styles({
       className: 'media-menu-separator',
       utilities: [
         'my-1 block border-b border-media-border',
-        '[@media(prefers-reduced-transparency:reduce)]:border-white/25 contrast-more:border-white/25',
+        'opaque:border-white/25',
         'forced-colors:border-[CanvasText]',
       ],
     },

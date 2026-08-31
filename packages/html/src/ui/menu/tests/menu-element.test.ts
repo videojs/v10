@@ -354,6 +354,37 @@ describe('MenuElement', () => {
     expect(settingsTrigger.getAttribute('data-availability')).toBe('unavailable');
   });
 
+  it('keeps the root open when nested option contexts refresh', async () => {
+    const { root, content } = createMenu();
+    const settingsTrigger = document.createElement('button');
+    const trigger = createItem('Quality');
+    const submenu = document.createElement(MenuContentElement.tagName) as MenuContentElement;
+    const group = document.createElement(MenuRadioGroupElement.tagName) as MenuRadioGroupElement;
+    const selected = document.createElement(MenuRadioItemElement.tagName) as MenuRadioItemElement;
+
+    root.id = 'settings-menu-refresh';
+    settingsTrigger.setAttribute('commandfor', root.id);
+    submenu.id = 'quality-menu-refresh';
+    trigger.commandfor = submenu.id;
+    group.value = 'auto';
+    selected.value = 'auto';
+    selected.textContent = 'Auto';
+    group.append(selected);
+    submenu.append(group);
+    content.append(trigger, submenu);
+    document.body.append(settingsTrigger, root);
+
+    await Promise.all([root.updateComplete, content.updateComplete, group.updateComplete, submenu.updateComplete]);
+    settingsTrigger.click();
+    await waitForAssertion(() => expect(root.open).toBe(true));
+
+    root.requestUpdate();
+    await Promise.all([root.updateComplete, content.updateComplete, submenu.updateComplete]);
+
+    expect(root.open).toBe(true);
+    expect(settingsTrigger.getAttribute('aria-expanded')).toBe('true');
+  });
+
   it('requests open changes before committing them', async () => {
     const { root } = createMenu();
     const onOpenChange = vi.fn((event: Event) => event.preventDefault());

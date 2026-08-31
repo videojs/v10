@@ -14,7 +14,12 @@ export interface DefaultLiveAudioSkinProps extends Omit<PropsOf<typeof Container
 
 export function DefaultLiveAudioSkin({ children, className, ...props }: DefaultLiveAudioSkinProps = {}) {
   return (
-    <Container className={['media-skin media-skin--live-audio', audioSkinStyles.root, className]} {...props}>
+    <Container
+      className={['media-skin', audioSkinStyles.root, className]}
+      data-theme="default"
+      data-preset="live-audio"
+      {...props}
+    >
       <Slot>{children}</Slot>
       <AudioErrorDialog />
       <DefaultLiveAudioControls />
@@ -28,9 +33,9 @@ export const meta = {
   name: 'default-live-audio',
   type: 'skin',
   style: {
-    scope: '.media-skin--live-audio',
+    scope: '.media-skin[data-theme="default"][data-preset="live-audio"]',
     theme: 'default',
-    variant: 'default-live-audio',
+    preset: 'live-audio',
   },
   title: 'Default Live Audio Skin',
   description: 'A complete live audio skin with play, live-edge, volume, error, and keyboard feedback controls.',

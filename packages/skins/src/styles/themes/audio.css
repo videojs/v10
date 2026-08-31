@@ -1,5 +1,5 @@
 @layer base {
-  :is(.media-skin--audio, .media-skin--live-audio) {
+  .media-skin:is([data-preset="audio"], [data-preset="live-audio"]) {
     --media-background: light-dark(oklch(1 0 0), oklch(0 0 0));
     --media-foreground: light-dark(oklch(0 0 0), oklch(1 0 0));
     --media-controls: light-dark(oklch(1 0 0 / 0.5), oklch(0 0 0 / 0.4));
@@ -11,12 +11,19 @@
     --media-border: light-dark(oklch(0 0 0 / 0.1), oklch(1 0 0 / 0.1));
     --media-ring: var(--media-foreground);
     --media-default-accent-color: light-dark(oklch(0 0 0), oklch(1 0 0));
-    --media-internal-accent-text-base: light-dark(oklch(1 0 0), oklch(0 0 0));
+    --media-internal-accent-text-fallback: light-dark(oklch(1 0 0), oklch(0 0 0));
     --media-focus-ring-color: light-dark(oklch(0 0 0), oklch(1 0 0));
   }
 
-  :is(.media-skin--audio, .media-skin--live-audio).media-skin--minimal {
+  .media-skin:is([data-preset="audio"], [data-preset="live-audio"])[data-theme="minimal"] {
     --media-controls: var(--media-background);
     --media-popover: var(--media-background);
+  }
+
+  @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+    .media-skin:is([data-preset="audio"], [data-preset="live-audio"]) {
+      --media-controls: var(--media-background);
+      --media-popover: var(--media-background);
+    }
   }
 }

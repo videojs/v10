@@ -16,9 +16,17 @@ export const vars = {
     kind: 'public',
     description: 'Optional foreground color rendered on the configured accent color.',
   },
+  '--media-border-color': {
+    kind: 'public',
+    description: 'Player hairline border color.',
+  },
   '--media-border-radius': {
     kind: 'public',
     description: 'Outer player border radius.',
+  },
+  '--media-font-family': {
+    kind: 'public',
+    description: 'Font family used by the player interface.',
   },
   '--media-object-fit': {
     kind: 'public',
@@ -120,7 +128,7 @@ export const vars = {
     kind: 'internal',
     description: 'Skin fallback used when the public accent color is not configured.',
   },
-  '--media-internal-accent-text-base': {
+  '--media-internal-accent-text-fallback': {
     kind: 'internal',
     description: 'Theme color used to derive legible accent text when no public accent is configured.',
   },
@@ -147,6 +155,10 @@ export const vars = {
   '--media-menu-transition-duration': {
     kind: 'internal',
     description: 'Duration shared by settings menu panel and size transitions.',
+  },
+  '--media-popup-side-offset': {
+    kind: 'internal',
+    description: 'Resolved safe-area distance for a positioned popup.',
   },
   '--media-popup-translate-distance': {
     kind: 'internal',

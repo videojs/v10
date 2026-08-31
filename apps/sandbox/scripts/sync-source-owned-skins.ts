@@ -75,6 +75,7 @@ async function installFramework(framework: 'react' | 'html', destination: string
     await cp(resolve(root, 'src/components/videojs'), destination, { recursive: true });
 
     if (framework === 'react') {
+      await cp(resolve(root, 'src/index.css'), resolve(generatedDir, 'styles.css'));
       await cp(resolve(root, 'src/lib'), resolve(destination, '../../lib'), { recursive: true });
     }
   } finally {

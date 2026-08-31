@@ -1,7 +1,5 @@
 import { styles } from 'vjsc/styles';
 
-import { popupSurface, popupSurfaceAtLarge } from '../../styles/recipes/popup';
-
 export default styles({
   file: 'controls.css',
   rules: {
@@ -14,8 +12,7 @@ export default styles({
         '[--media-popover-boundary-offset:0.75rem] [--media-tooltip-boundary-offset:var(--media-popover-boundary-offset)]',
         '@lg/media-root:absolute @lg/media-root:inset-x-2 @lg/media-root:bottom-2 @lg/media-root:z-10',
         '@lg/media-root:flex @lg/media-root:items-center @lg/media-root:rounded-media-control',
-        'text-shadow-[0_1px_0_var(--media-shadow-current-color)]',
-        ...popupSurfaceAtLarge,
+        'text-shadow-media',
         '@2xl/media-root:inset-x-3 @2xl/media-root:bottom-3',
         '@lg/media-root:not-data-visible:pointer-events-none @lg/media-root:not-data-visible:opacity-0',
         '@lg/media-root:motion-safe:not-data-visible:scale-95 @lg/media-root:motion-safe:not-data-visible:translate-y-1',
@@ -25,7 +22,7 @@ export default styles({
       ],
     },
     backdrop: {
-      className: 'media-controls__backdrop',
+      className: 'media-controls-backdrop',
       utilities: [
         'pointer-events-none absolute inset-0 z-10 rounded-[inherit]',
         'bg-linear-to-t from-black/50 via-black/30 via-25% to-transparent',
@@ -35,7 +32,6 @@ export default styles({
     primary: {
       className: 'media-controls-primary',
       utilities: [
-        ...popupSurface,
         'absolute inset-x-2 bottom-2 z-10 flex origin-bottom items-center rounded-media-control',
         'p-1',
         '@lg/media-root:contents',
@@ -53,7 +49,6 @@ export default styles({
     secondary: {
       className: 'media-controls-secondary',
       utilities: [
-        ...popupSurface,
         'absolute top-2 right-2 z-10 flex origin-top items-center gap-px rounded-media-control',
         'p-1',
         '@lg/media-root:static @lg/media-root:flex @lg/media-root:p-0',
@@ -86,7 +81,7 @@ export default styles({
     },
     currentValue: {
       className: 'media-time-current-value',
-      utilities: 'tabular-nums',
+      utilities: 'tabular-nums @max-[16rem]/media-time:hidden',
     },
     remainingValue: {
       className: 'media-time-remaining-value',

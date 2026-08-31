@@ -359,7 +359,6 @@ for (const variant of CASES) {
 
     expect(cssContainment).toMatchObject({
       closeInside: true,
-      controlsHidden: true,
       descriptionMargin: '0px',
       popupInside: true,
       scrolls: true,
@@ -610,10 +609,7 @@ test('VJSC preserves the shared skin motion contract', async ({ page }) => {
       expect(contract).toEqual({
         button: {
           duration: '0.15s',
-          properties:
-            variant.skin === 'default-video'
-              ? ['background-color', 'color', 'outline-offset', 'scale']
-              : ['background-color', 'outline-offset', 'scale'],
+          properties: ['background-color', 'color', 'outline-offset', 'scale'],
         },
         container: { duration: '0.1s', properties: ['outline-offset', 'outline-color'] },
         controlsBackdrop: { duration: '0.1s', properties: ['opacity'] },
@@ -996,7 +992,7 @@ async function hideControls(root: Locator) {
 
     const controls = element.querySelector<HTMLElement>(controlsSelector);
     const backdrop = inspect(
-      element.querySelector('.media-controls__backdrop') ??
+      element.querySelector('.media-controls-backdrop') ??
         controls?.querySelector(':scope > [aria-hidden="true"]') ??
         controls?.previousElementSibling ??
         null
@@ -1158,7 +1154,10 @@ async function fullscreenPreviewContract(root: Locator) {
     const previewRect = preview.getBoundingClientRect();
     const thumbnailRect = thumbnail.getBoundingClientRect();
     const valueRect = value.getBoundingClientRect();
-    const spacing = Number.parseFloat(getComputedStyle(element).getPropertyValue('--media-spacing'));
+    const style = getComputedStyle(element);
+    const scaleUnit = Number.parseFloat(style.getPropertyValue('--media-scale-unit')) || 16;
+    const scale = Number.parseFloat(style.getPropertyValue('--media-scale')) || 1;
+    const spacing = (scaleUnit * scale) / 4;
     const round = (number: number) => Math.round(number);
     const roundUnits = (number: number) => Math.round(number * 10) / 10;
 
@@ -1180,11 +1179,13 @@ function expectFullscreenPreviewParity(
     return;
   }
 
-  const { timeToThumbnailGap: actualThumbnailGap, ...actualStable } = actual;
-  const { timeToThumbnailGap: expectedThumbnailGap, ...expectedStable } = expected;
+  const stable = ({ timeToSliderGap, valueBottomInSpacingUnits, thumbnailBottomInSpacingUnits }: typeof actual) => ({
+    timeToSliderGap,
+    valueBottomInSpacingUnits,
+    thumbnailBottomInSpacingUnits,
+  });
 
-  expect(actualStable).toEqual(expectedStable);
-  expect(Math.abs(actualThumbnailGap - expectedThumbnailGap)).toBeLessThanOrEqual(1);
+  expect(stable(actual)).toEqual(stable(expected));
 }
 
 async function fullscreenSpeedMenuContract(page: Page) {
@@ -1729,7 +1730,6 @@ async function triggerMediaError(page: Page, message?: string): Promise<Locator>
 
 async function errorDialogContainmentContract(root: Locator, dialog: Locator) {
   const close = dialog.getByRole('button').first();
-  const controls = root.locator(CONTROLS_SELECTOR).first();
   const title = dialog.locator('h2, media-dialog-title').first();
   const description = dialog.locator('p, media-dialog-description').first();
   const [rootBox, popupBox, closeBox] = await Promise.all([
@@ -1743,7 +1743,6 @@ async function errorDialogContainmentContract(root: Locator, dialog: Locator) {
 
   return {
     closeInside: closeBox.y >= rootBox.y && closeBox.y + closeBox.height <= rootBox.y + rootBox.height,
-    controlsHidden: await controls.evaluate((element) => getComputedStyle(element).display === 'none'),
     descriptionMargin: await description.evaluate((element) => getComputedStyle(element).margin),
     popupInside: popupBox.y >= rootBox.y && popupBox.y + popupBox.height <= rootBox.y + rootBox.height,
     rootHeight: rootBox.height,

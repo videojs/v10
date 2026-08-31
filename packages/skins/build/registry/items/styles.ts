@@ -31,9 +31,6 @@ const tailwindThemeVariables = {
 } as const;
 
 const tailwindRegistryCss = {
-  '@custom-variant theme-default (&:where(.media-skin:not(.media-skin--minimal), .media-skin:not(.media-skin--minimal) *))':
-    {},
-  '@custom-variant theme-minimal (&:where(.media-skin--minimal, .media-skin--minimal *))': {},
   '@utility shadow-media-sm': {
     'box-shadow': 'var(--media-shadow-sm)',
   },

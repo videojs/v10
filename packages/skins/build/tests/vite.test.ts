@@ -12,6 +12,7 @@ const defaultControlsUrl = `/../src/skins/default-video/controls.tsx${reactTarge
 const htmlContainerUrl = '/../src/components/layout/container.tsx?style=tailwind&target=html&skin=minimal-video';
 const playButtonUrl = `/../src/components/buttons/play-button.tsx${reactTarget}`;
 const settingsMenuUrl = `/../src/components/menus/settings-menu.tsx${reactTarget}`;
+const htmlAudioSettingsMenuUrl = '/../src/skins/audio/settings-menu.tsx?style=css&target=html&skin=default-audio';
 const volumePopoverUrl = `/../src/components/controls/volume-popover.tsx${reactTarget}`;
 const htmlPosterUrl = '/../src/components/layout/poster.tsx?style=tailwind&target=html&skin=default-video';
 const reactPosterUrl = '/../src/components/layout/poster.tsx?style=tailwind&target=react&skin=default-video';
@@ -32,15 +33,15 @@ const skins = [
   'minimal-audio',
 ] as const;
 const skinContracts = {
-  'default-video': { exportName: 'DefaultVideoSkin', className: 'media-skin--video' },
-  'minimal-video': { exportName: 'MinimalVideoSkin', className: 'media-skin--minimal' },
-  'default-live-video': { exportName: 'DefaultLiveVideoSkin', className: 'media-skin--live-video' },
-  'minimal-live-video': { exportName: 'MinimalLiveVideoSkin', className: 'media-skin--minimal' },
-  'default-live-audio': { exportName: 'DefaultLiveAudioSkin', className: 'media-skin--live-audio' },
-  'minimal-live-audio': { exportName: 'MinimalLiveAudioSkin', className: 'media-skin--minimal' },
-  'default-audio': { exportName: 'DefaultAudioSkin', className: 'media-skin--audio' },
-  'minimal-audio': { exportName: 'MinimalAudioSkin', className: 'media-skin--minimal' },
-} as const satisfies Record<(typeof skins)[number], { exportName: string; className: string }>;
+  'default-video': { exportName: 'DefaultVideoSkin', theme: 'default', preset: 'video' },
+  'minimal-video': { exportName: 'MinimalVideoSkin', theme: 'minimal', preset: 'video' },
+  'default-live-video': { exportName: 'DefaultLiveVideoSkin', theme: 'default', preset: 'live-video' },
+  'minimal-live-video': { exportName: 'MinimalLiveVideoSkin', theme: 'minimal', preset: 'live-video' },
+  'default-live-audio': { exportName: 'DefaultLiveAudioSkin', theme: 'default', preset: 'live-audio' },
+  'minimal-live-audio': { exportName: 'MinimalLiveAudioSkin', theme: 'minimal', preset: 'live-audio' },
+  'default-audio': { exportName: 'DefaultAudioSkin', theme: 'default', preset: 'audio' },
+  'minimal-audio': { exportName: 'MinimalAudioSkin', theme: 'minimal', preset: 'audio' },
+} as const satisfies Record<(typeof skins)[number], { exportName: string; theme: string; preset: string }>;
 const styles = ['css', 'tailwind'] as const;
 const variants = frameworks.flatMap((framework) =>
   skins.flatMap((skin) => styles.map((style) => ({ framework, skin, style })))
@@ -90,10 +91,13 @@ describe('Skins Vite workflow', () => {
     for (const variant of variants) {
       const url = skinUrl(variant);
       const result = await server.transformRequest(url);
-      const { exportName: skinExport, className: skinClass } = skinContracts[variant.skin];
+      const { exportName: skinExport, theme, preset } = skinContracts[variant.skin];
 
       expect(result?.code, url).toContain(skinExport);
-      expect(result?.code, url).toContain(skinClass);
+      expect(result?.code, url).toContain('data-theme');
+      expect(result?.code, url).toContain(theme);
+      expect(result?.code, url).toContain('data-preset');
+      expect(result?.code, url).toContain(preset);
       expect(result?.code, url).not.toContain('vjsc/dist/components/jsx-dev-runtime');
       expect(result?.code, url).not.toContain('@videojs/core/vjsc');
 
@@ -126,6 +130,14 @@ describe('Skins Vite workflow', () => {
     expect([...warn.mock.calls, ...warnOnce.mock.calls].flat().join('\n')).not.toContain('emitFile() is not supported');
   }, 30_000);
 
+  it('passes HTML trigger props through the shared component', async () => {
+    const settingsMenu = await server.transformRequest(htmlAudioSettingsMenuUrl);
+    const code = settingsMenu?.code ?? '';
+
+    expect(code).toContain('/components/buttons/playback-rate-button.tsx?skin=default-audio&style=css&target=html');
+    expect(code).toContain('_jsxDEV(PlaybackRateButton, { commandfor:');
+  }, 30_000);
+
   it('emits base visibility styles for stateful button icons', async () => {
     const transformed = await server.transformRequest(playButtonUrl);
     const cssUrls = [...(transformed?.code ?? '').matchAll(/(?:from\s+)?["']([^"']*virtual:vjsc\/css\/[^"']+)["']/g)]
@@ -146,7 +158,7 @@ describe('Skins Vite workflow', () => {
     const html = await server.transformRequest(htmlPosterUrl);
     const react = await server.transformRequest(reactPosterUrl);
 
-    expect(html?.code).toContain('[&_::slotted(img)]:absolute');
+    expect(html?.code).toContain('[&>slot::slotted(img)]:absolute');
     expect(react?.code).not.toContain('::slotted');
   }, 30_000);
 
@@ -156,7 +168,7 @@ describe('Skins Vite workflow', () => {
 
     expect(html?.code).toContain('[&:is(img):not([src]):not([srcset])]:invisible');
     expect(html?.code).toContain('[&>slot>img:not([src]):not([srcset])]:invisible');
-    expect(html?.code).toContain('[&_::slotted(img:not([src]):not([srcset]))]:invisible');
+    expect(html?.code).toContain('[&>slot::slotted(img:not([src]):not([srcset]))]:invisible');
     expect(react?.code).toContain('[&:is(img):not([src]):not([srcset])]:invisible');
     expect(react?.code).not.toContain('&>slot>img');
   }, 30_000);

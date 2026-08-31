@@ -15,7 +15,9 @@ export interface MinimalLiveAudioSkinProps extends Omit<PropsOf<typeof Container
 export function MinimalLiveAudioSkin({ children, className, ...props }: MinimalLiveAudioSkinProps = {}) {
   return (
     <Container
-      className={['media-skin media-skin--minimal media-skin--live-audio', audioSkinStyles.root, className]}
+      className={['media-skin', audioSkinStyles.root, className]}
+      data-theme="minimal"
+      data-preset="live-audio"
       {...props}
     >
       <Slot>{children}</Slot>
@@ -31,9 +33,9 @@ export const meta = {
   name: 'minimal-live-audio',
   type: 'skin',
   style: {
-    scope: '.media-skin--minimal.media-skin--live-audio',
+    scope: '.media-skin[data-theme="minimal"][data-preset="live-audio"]',
     theme: 'minimal',
-    variant: 'minimal-live-audio',
+    preset: 'live-audio',
   },
   title: 'Minimal Live Audio Skin',
   description: 'A compact live audio skin with play, live-edge, volume, error, and keyboard feedback controls.',

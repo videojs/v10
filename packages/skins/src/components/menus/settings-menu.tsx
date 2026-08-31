@@ -7,6 +7,7 @@ import { type PropsWithChildren, Text } from 'vjsc/components';
 import type { SkinComponentMeta } from '../../meta';
 import buttonStyles from '../../styles/buttons/button.styles';
 import styles from '../../styles/menus/menu.styles';
+import popupStyles from '../../styles/popups/popup.styles';
 import { Button } from '../buttons/button';
 import { ButtonTooltip } from '../buttons/button-tooltip';
 
@@ -25,7 +26,7 @@ export function SettingsMenu({
           </Text>
         </$.Menu.Trigger>
       </ButtonTooltip>
-      <$.Menu.Popup keepMounted className={[styles.popup, className]}>
+      <$.Menu.Popup keepMounted className={[popupStyles.popup, popupStyles.surface, styles.popup, className]}>
         <$.Menu.Content className={styles.content}>{children}</$.Menu.Content>
       </$.Menu.Popup>
     </$.Menu.Root>

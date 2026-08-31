@@ -21,7 +21,7 @@ export default styles({
     icon: {
       className: 'media-button-icon',
       utilities: [
-        'col-start-1 row-start-1 size-media-icon drop-shadow-[0_1px_0_var(--media-shadow-current-color)]',
+        'col-start-1 row-start-1 size-media-icon drop-shadow-media-icon',
         'transition-[opacity,scale] duration-150 ease-out',
         'motion-reduce:transition-opacity motion-reduce:duration-50',
       ],

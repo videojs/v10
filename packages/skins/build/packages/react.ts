@@ -37,10 +37,13 @@ export async function createReactPackageSkins(
   options: CreateReactPackageSkinsOptions
 ): Promise<GeneratedPackageFile[]> {
   const skins = reactSkins(graph);
+  const sharedSourcePaths = collectSharedSourcePaths(skins);
   const destinations = new Map<string, string>();
 
   for (const skin of skins) {
-    for (const module of skin.modules) destinations.set(module.id, reactModulePath(skin, module));
+    for (const module of skin.modules) {
+      destinations.set(module.id, reactModulePath(skin, module, sharedSourcePaths));
+    }
   }
 
   const generated = new Map<string, string>();
@@ -144,12 +147,35 @@ function reactSkins(graph: Graph<SkinModuleMeta>): ReactSkin[] {
     .sort((left, right) => left.root.meta.name.localeCompare(right.root.meta.name));
 }
 
-function reactModulePath(skin: ReactSkin, module: GraphModule<SkinModuleMeta>): string {
+function reactModulePath(
+  skin: ReactSkin,
+  module: GraphModule<SkinModuleMeta>,
+  sharedSourcePaths: ReadonlySet<string>
+): string {
   const ownedPrefix = `skins/${skin.root.meta.name}/`;
 
-  return module.sourcePath.startsWith(ownedPrefix)
-    ? `${internalRoot}/${skin.root.meta.name}/${module.sourcePath.slice(ownedPrefix.length)}`
-    : `${internalRoot}/shared/${module.sourcePath}`;
+  if (module.sourcePath.startsWith(ownedPrefix)) {
+    return `${internalRoot}/${skin.root.meta.name}/${module.sourcePath.slice(ownedPrefix.length)}`;
+  }
+
+  return sharedSourcePaths.has(module.sourcePath)
+    ? `${internalRoot}/shared/${module.sourcePath}`
+    : `${internalRoot}/${skin.root.meta.name}/${module.sourcePath}`;
+}
+
+function collectSharedSourcePaths(skins: readonly ReactSkin[]): ReadonlySet<string> {
+  const sources = new Map<string, Set<string>>();
+
+  for (const skin of skins) {
+    for (const module of skin.modules) {
+      const variants = sources.get(module.sourcePath) ?? new Set<string>();
+
+      variants.add(stripStyleImports(module.source));
+      sources.set(module.sourcePath, variants);
+    }
+  }
+
+  return new Set([...sources].filter(([, variants]) => variants.size === 1).map(([sourcePath]) => sourcePath));
 }
 
 function reactFrameworkImport(specifier: string): string | undefined {

@@ -64,7 +64,6 @@ export function createRenderTargetTransform(options: RenderTargetTransformOption
       const canonical = collectCanonicalRoots(context.ast, [target]);
       const runtimeImports = createTargetModuleImports(context.ast, context.magicString);
       const typeImports = new TypeImports(context.ast, context.magicString);
-      const consumedComponentImports = new Set<string>();
       let changed = false;
 
       for (const definition of definitions.values()) {
@@ -105,10 +104,6 @@ export function createRenderTargetTransform(options: RenderTargetTransformOption
 
           lowerRenderDirective(context.code, parent, node, local, resolved, context.magicString);
 
-          if (target.jsx.attributes === 'html' && resolved.kind === 'component') {
-            consumedComponentImports.add(local);
-          }
-
           changed = true;
           this.skip();
         },
@@ -116,7 +111,6 @@ export function createRenderTargetTransform(options: RenderTargetTransformOption
 
       if (changed) {
         removeFactoryImports(context.ast, context.magicString);
-        removeConsumedComponentImports(context.ast, context.magicString, consumedComponentImports);
         runtimeImports.commit();
         typeImports.commit();
       }
@@ -146,31 +140,6 @@ function removeFactoryImports(ast: Program, magicString: MagicString): void {
         'defineRenderTarget() must use a dedicated import declaration.\n' +
           'Reason: the compiler removes this build-only import after lowering the shared component.\n' +
           'Recommendation: import defineRenderTarget() separately from other render-target helpers.',
-        statement.start
-      );
-    }
-
-    magicString.remove(statement.start, statement.end);
-  }
-}
-
-function removeConsumedComponentImports(ast: Program, magicString: MagicString, consumed: ReadonlySet<string>): void {
-  if (consumed.size === 0) return;
-
-  for (const statement of ast.body) {
-    if (statement.type !== 'ImportDeclaration' || !statement.source.value.startsWith('.')) continue;
-
-    const values = statement.specifiers.filter(
-      (specifier) => specifier.type !== 'ImportSpecifier' || specifier.importKind !== 'type'
-    );
-    const selected = values.filter((specifier) => consumed.has(specifier.local.name));
-    if (selected.length === 0) continue;
-
-    if (selected.length !== values.length || values.length !== statement.specifiers.length) {
-      throw sourceError(
-        'An HTML `$render` component must use a dedicated import declaration.\n' +
-          'Reason: HTML lowers the binding to its semantic custom element and removes the source-only import.\n' +
-          'Recommendation: import the shared component separately from other values and types.',
         statement.start
       );
     }
@@ -457,6 +426,7 @@ function lowerRenderDirective(
 
   if (resolved.kind === 'component') {
     magicString.overwrite(directive.start, directive.end, renderTargetMarker(resolved.name));
+    wrapRenderComponent(code, opening, local, magicString);
     return;
   }
 
@@ -474,6 +444,24 @@ function lowerRenderDirective(
 
   magicString.remove(attributeWhitespaceStart(code, opening, directive), directive.end);
   magicString.overwrite(className.start, className.end, `className={[${local}, ${existing}]}`);
+}
+
+function wrapRenderComponent(code: string, opening: JSXOpeningElement, local: string, magicString: MagicString): void {
+  if (!opening.selfClosing) {
+    throw sourceError(
+      'An HTML component `$render` host must be self-closing.\n' +
+        'Reason: the selected component owns the delegated host and its children.\n' +
+        'Recommendation: move children into the shared component and use a self-closing `$render` host.',
+      opening.start
+    );
+  }
+
+  const close = code.lastIndexOf('/>', opening.end);
+  const name = code.slice(opening.name.start, opening.name.end);
+
+  if (close < opening.name.end) throw sourceError('VJSC could not expand the `$render` host.', opening.start);
+
+  magicString.overwrite(close, opening.end, `><${local} /></${name}>`);
 }
 
 export function renderTargetMarker(name: string): string {

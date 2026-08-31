@@ -13,7 +13,7 @@ export default styles({
     },
     spinnerIcon: {
       className: 'media-buffering-indicator-spinner-icon',
-      utilities: 'relative z-30 size-media-icon drop-shadow-[0_1px_0_var(--media-shadow-current-color)]',
+      utilities: 'relative z-30 size-media-icon drop-shadow-media-icon',
     },
   },
 });

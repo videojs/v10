@@ -111,7 +111,7 @@ export function skinItem(
     registryDependencies: [...reactHelperDependency(target), '@videojs/_style-theme'],
     meta: registryMeta,
     group: 'skins',
-    target: (candidate, root) => skinModuleTarget(candidate, root, skin, target.framework),
+    target: (candidate, root) => skinModuleTarget(candidate, root, skin),
     stylesheet: target.styling === 'css' ? { target: `${directory}/skin.css` } : undefined,
   };
 }
@@ -125,8 +125,7 @@ function relativeRegistryImport(importer: string, target: string): string {
 function skinModuleTarget(
   module: GraphModule<SkinModuleMeta>,
   root: GraphModule<SkinModuleMeta>,
-  skin: SkinName,
-  framework: RegistryTarget['framework']
+  skin: SkinName
 ): string {
   if (module.id === root.id) return `${skinDirectory(skin)}/skin.tsx`;
 
@@ -135,7 +134,7 @@ function skinModuleTarget(
   if (sourcePath.startsWith('components/')) {
     const component = sourcePath.slice('components/'.length);
 
-    return framework === 'html' ? `${skinDirectory(skin)}/ui/${component}` : `ui/${component}`;
+    return `${skinDirectory(skin)}/ui/${component}`;
   }
 
   const match = /^skins\/([^/]+)\/(.+)$/.exec(sourcePath);

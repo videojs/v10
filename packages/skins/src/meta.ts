@@ -13,7 +13,7 @@ export interface SkinMeta extends ComponentMeta {
   readonly style: {
     readonly scope: string;
     readonly theme: 'default' | 'minimal';
-    readonly variant: string;
+    readonly preset: 'video' | 'audio' | 'live-video' | 'live-audio';
   };
 }
 
@@ -21,44 +21,44 @@ export type SkinModuleMeta = SkinComponentMeta | SkinMeta;
 
 export const skinStyles = {
   'default-video': {
-    scope: '.media-skin--video',
+    scope: '.media-skin[data-theme="default"][data-preset="video"]',
     theme: 'default',
-    variant: 'default',
+    preset: 'video',
   },
   'minimal-video': {
-    scope: '.media-skin--minimal.media-skin--video',
+    scope: '.media-skin[data-theme="minimal"][data-preset="video"]',
     theme: 'minimal',
-    variant: 'minimal',
+    preset: 'video',
   },
   'default-live-video': {
-    scope: '.media-skin--live-video',
+    scope: '.media-skin[data-theme="default"][data-preset="live-video"]',
     theme: 'default',
-    variant: 'default-live-video',
+    preset: 'live-video',
   },
   'minimal-live-video': {
-    scope: '.media-skin--minimal.media-skin--live-video',
+    scope: '.media-skin[data-theme="minimal"][data-preset="live-video"]',
     theme: 'minimal',
-    variant: 'minimal-live-video',
+    preset: 'live-video',
   },
   'default-live-audio': {
-    scope: '.media-skin--live-audio',
+    scope: '.media-skin[data-theme="default"][data-preset="live-audio"]',
     theme: 'default',
-    variant: 'default-live-audio',
+    preset: 'live-audio',
   },
   'minimal-live-audio': {
-    scope: '.media-skin--minimal.media-skin--live-audio',
+    scope: '.media-skin[data-theme="minimal"][data-preset="live-audio"]',
     theme: 'minimal',
-    variant: 'minimal-live-audio',
+    preset: 'live-audio',
   },
   'default-audio': {
-    scope: '.media-skin--audio',
+    scope: '.media-skin[data-theme="default"][data-preset="audio"]',
     theme: 'default',
-    variant: 'default-audio',
+    preset: 'audio',
   },
   'minimal-audio': {
-    scope: '.media-skin--minimal.media-skin--audio',
+    scope: '.media-skin[data-theme="minimal"][data-preset="audio"]',
     theme: 'minimal',
-    variant: 'minimal-audio',
+    preset: 'audio',
   },
 } as const satisfies Record<string, SkinMeta['style']>;
 

@@ -19,7 +19,7 @@ export function DefaultLiveVideoSkin({ children, className, poster, ...props }: 
   const isPosterString = typeof poster === 'string';
 
   return (
-    <Container className={['media-skin media-skin--live-video', className]} {...props}>
+    <Container className={['media-skin', className]} data-theme="default" data-preset="live-video" {...props}>
       <Slot>{children}</Slot>
       <Poster src={isPosterString ? poster : undefined}>{isPosterString ? undefined : poster}</Poster>
       <BufferingIndicator />
@@ -36,9 +36,9 @@ export const meta = {
   name: 'default-live-video',
   type: 'skin',
   style: {
-    scope: '.media-skin--live-video',
+    scope: '.media-skin[data-theme="default"][data-preset="live-video"]',
     theme: 'default',
-    variant: 'default-live-video',
+    preset: 'live-video',
   },
   title: 'Default Live Video Skin',
   description: 'A complete live video skin with live-edge, captions, remote playback, feedback, and input controls.',

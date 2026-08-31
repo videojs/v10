@@ -1,8 +1,5 @@
 import { styles } from 'vjsc/styles';
 
-import { sliderPreviewContent, sliderThumbTheme } from '../recipes/slider';
-import { themeRecipe } from '../recipes/theme';
-
 export default styles({
   file: 'sliders.css',
   rules: {
@@ -39,27 +36,23 @@ export default styles({
       utilities: [
         'size-3 opacity-0 data-interactive:opacity-100 focus-visible:opacity-100',
         'pointer-fine:group-hover/slider:scale-100 pointer-fine:group-hover/slider:opacity-100',
-        ...sliderThumbTheme,
-        ...themeRecipe('scale-80', 'scale-70 data-interactive:scale-100'),
       ],
+      variants: { default: 'scale-80', minimal: 'scale-70 data-interactive:scale-100' },
     },
     previewContent: {
       className: 'media-time-slider-preview-content',
-      utilities: [
-        ...sliderPreviewContent,
-        'flex tabular-nums',
-        ...themeRecipe(
-          'left-1/2 bottom-[calc(100%+--spacing(12.5))] flex-col items-center',
-          '[left:var(--media-preview-left,var(--media-slider-pointer))] bottom-[calc(100%+--spacing(7))] flex-row-reverse justify-center gap-2 px-3'
-        ),
-      ],
+      utilities: 'flex tabular-nums',
+      variants: {
+        default: 'left-1/2 bottom-[calc(100%+--spacing(12.5))] flex-col items-center',
+        minimal:
+          '[left:var(--media-preview-left,var(--media-slider-pointer))] bottom-[calc(100%+--spacing(7))] flex-row-reverse justify-center gap-2 px-3',
+      },
     },
     chapterTitle: {
       className: 'media-time-slider-chapter-title',
-      utilities: [
+      utilities:
         'max-w-(--media-slider-preview-max-width) min-w-0 overflow-hidden text-ellipsis whitespace-nowrap empty:hidden',
-        ...themeRecipe('px-6', ''),
-      ],
+      variants: { default: 'px-6' },
     },
     value: {
       className: 'media-time-slider-value',

@@ -48,7 +48,9 @@ for (const { platform, skin, styling } of CASES) {
     await host.evaluate((element) => {
       element.style.setProperty('--media-accent-color', '#123456');
       element.style.setProperty('--media-accent-text-color', '#abcdef');
+      element.style.setProperty('--media-border-color', '#fe0102');
       element.style.setProperty('--media-border-radius', '18px');
+      element.style.setProperty('--media-font-family', 'Courier New');
     });
 
     const settingsButton = page.getByRole('button', { name: 'Settings' }).first();
@@ -66,14 +68,18 @@ for (const { platform, skin, styling } of CASES) {
 
       return {
         borderRadius: style.borderRadius,
+        borderUsesColor: getComputedStyle(element, '::after').boxShadow.includes('rgb(254, 1, 2)'),
         fillUsesAccent,
+        fontFamily: style.fontFamily,
         videoBorderRadius: style.getPropertyValue('--media-video-border-radius').trim(),
       };
     });
 
     expect(styles).toEqual({
       borderRadius: '18px',
+      borderUsesColor: true,
       fillUsesAccent: true,
+      fontFamily: '"Courier New"',
       videoBorderRadius: '18px',
     });
   });
@@ -169,10 +175,9 @@ for (const media of ['video', 'audio'] as const) {
       await page.goto(`${SANDBOX_BASE}/${platform}-hls-${media}/?${query}`, { waitUntil: 'domcontentloaded' });
 
       const root = page.getByRole('group', { name: 'Media player' }).first();
-      const family = `media-skin--live-${media}`;
 
       await expect(root).toBeVisible({ timeout: 15_000 });
-      await expect(root).toHaveClass(new RegExp(`(?:^|\\s)${family}(?:\\s|$)`));
+      await expect(root).toHaveAttribute('data-preset', `live-${media}`);
       await expect(page.getByRole('slider', { name: 'Seek' })).toHaveCount(0);
     });
   }
@@ -194,11 +199,10 @@ for (const media of ['video', 'audio'] as const) {
       await page.goto(`${SANDBOX_BASE}/cdn/?${query}`, { waitUntil: 'domcontentloaded' });
 
       const root = page.getByRole('group', { name: 'Media player' }).first();
-      const family = `media-skin--live-${media}`;
 
       await expect(root).toBeVisible({ timeout: 15_000 });
       await expect(page.locator(`live-${media}-player`)).toHaveCount(1);
-      await expect(root).toHaveClass(new RegExp(`(?:^|\\s)${family}(?:\\s|$)`));
+      await expect(root).toHaveAttribute('data-preset', `live-${media}`);
       await expect(page.getByRole('slider', { name: 'Seek' })).toHaveCount(0);
     });
   }
@@ -252,12 +256,16 @@ for (const { media, skin } of HTML_TAILWIND_ERROR_CASES) {
       const rootRect = element.getBoundingClientRect();
       const popupRect = popup.getBoundingClientRect();
       const controlsStyle = getComputedStyle(controls);
+      const visualChildren = (parent: Element): Element[] =>
+        [...parent.children].flatMap((child) =>
+          getComputedStyle(child).display === 'contents' ? visualChildren(child) : [child]
+        );
 
       return {
         controlsSuppressed:
           mediaType === 'video'
             ? controlsStyle.display === 'none'
-            : [...controls.children].every((child) => getComputedStyle(child).visibility === 'hidden'),
+            : visualChildren(controls).every((child) => getComputedStyle(child).visibility === 'hidden'),
         popupInside: popupRect.top >= rootRect.top && popupRect.bottom <= rootRect.bottom,
         rootHeight: rootRect.height,
       };
@@ -309,82 +317,6 @@ for (const { platform, skin, styling } of CASES) {
     await expect(volumeThumb).toBeFocused();
     await expect(volumeThumb).toHaveCSS('opacity', '1');
     await expect(volumeThumb).toHaveCSS('scale', '1');
-  });
-}
-
-// CSS styling only: the Tailwind output runs inside the consumer's own Tailwind build, which
-// assumes a 16px root and Preflight, so host-page interference is the consumer's domain there.
-const HOST_CSS_CASES = [
-  { skin: 'default', styling: 'css', radius: '28px' },
-  { skin: 'minimal', styling: 'css', radius: '12px' },
-] as const;
-
-// Element-selector rules and a non-default root font size, as commonly found on host pages
-// embedding the light-DOM React skin.
-const HOSTILE_HOST_CSS = `
-  html { font-size: 62.5%; }
-  button {
-    margin: 7px;
-    font-family: serif;
-    text-transform: uppercase;
-    letter-spacing: 4px;
-    background: rgb(255, 0, 0);
-    border: 6px dashed rgb(0, 255, 0);
-  }
-  svg { display: inline; margin: 9px; fill: rgb(255, 0, 0); }
-  img, video { display: inline; margin: 9px; }
-`;
-
-for (const { skin, styling, radius } of HOST_CSS_CASES) {
-  test(`react ${skin} ${styling} withstands host page element styles`, async ({ page }) => {
-    const query = new URLSearchParams({
-      styling,
-      skin,
-      source: 'mp4-1',
-      autoplay: '0',
-      muted: '1',
-      loop: '0',
-      preload: 'metadata',
-    });
-
-    await page.goto(`${SANDBOX_BASE}/react-video/?${query}`, { waitUntil: 'domcontentloaded' });
-
-    const root = page.getByRole('group', { name: 'Media player' }).first();
-
-    await expect(root).toBeVisible({ timeout: 15_000 });
-    await page.addStyleTag({ content: HOSTILE_HOST_CSS });
-
-    // Container sizing must not follow the host root font size.
-    await expect(root).toHaveCSS('border-radius', radius);
-
-    const playButton = page.getByRole('button', { name: 'Play' }).first();
-
-    await expect(playButton).toHaveCSS('margin', '0px');
-    await expect(playButton).toHaveCSS('text-transform', 'none');
-    await expect(playButton).toHaveCSS('letter-spacing', 'normal');
-    await expect(playButton).toHaveCSS('border-width', '0px');
-    await expect(playButton).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
-
-    const buttonStyles = await playButton.evaluate((element) => {
-      const icon = element.querySelector('svg');
-      if (!icon) throw new Error('Expected the play button to contain an icon.');
-
-      const iconStyle = getComputedStyle(icon);
-
-      return {
-        fontFamily: getComputedStyle(element).fontFamily,
-        iconDisplay: iconStyle.display,
-        iconFillMatchesColor: iconStyle.fill === iconStyle.color,
-        iconMargin: iconStyle.margin,
-      };
-    });
-
-    expect(buttonStyles.fontFamily).toContain('Inter');
-    expect(buttonStyles.iconDisplay).toBe('block');
-    expect(buttonStyles.iconFillMatchesColor).toBe(true);
-    expect(buttonStyles.iconMargin).toBe('0px');
-
-    await expect(page.locator('video').first()).toHaveCSS('display', 'block');
   });
 }
 

@@ -14,7 +14,7 @@
     --media-accent: var(--media-accent-color, color-mix(in oklab, var(--media-default-accent-color) 10%, transparent));
     --media-accent-foreground: var(
       --media-accent-text-color,
-      contrast-color(var(--media-accent-color, var(--media-internal-accent-text-base, oklch(0 0 0))))
+      contrast-color(var(--media-accent-color, var(--media-internal-accent-text-fallback, oklch(0 0 0))))
     );
     --media-muted: oklch(1 0 0 / 0.15);
     --media-muted-foreground: oklch(1 0 0 / 0.65);

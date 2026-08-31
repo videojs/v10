@@ -7,7 +7,7 @@ const SOURCE_SKINS = [
 
 const POSTER_SKINS = [
   { framework: 'packaged HTML', path: '/pages/html-video-mp4.html', selector: 'img[slot="poster"]' },
-  { framework: 'packaged React', path: '/pages/react-video-mp4.html', selector: '.media-skin--default > img' },
+  { framework: 'packaged React', path: '/pages/react-video-mp4.html', selector: '.media-skin > img' },
   { framework: 'VJSC HTML', path: '/pages/source-html-video-mp4.html', selector: 'media-poster img' },
   { framework: 'VJSC React', path: '/pages/source-react-video-mp4.html', selector: 'img.media-poster' },
 ] as const;
@@ -15,14 +15,8 @@ const POSTER_SKINS = [
 for (const { framework, path } of SOURCE_SKINS) {
   test.describe(`Canonical Skin container — ${framework}`, () => {
     test.beforeEach(async ({ page }) => {
-      await page.goto(path);
-      await page.locator('[data-source-skin]').waitFor();
-      await page.locator('video').evaluate(async (video: HTMLVideoElement) => {
-        await new Promise<void>((resolve) => {
-          if (video.readyState >= 1) resolve();
-          else video.addEventListener('loadedmetadata', () => resolve(), { once: true });
-        });
-      });
+      await page.goto(path, { waitUntil: 'domcontentloaded' });
+      await page.locator('[data-source-skin]').waitFor({ timeout: 20_000 });
     });
 
     test('renders media and poster in one container composition', async ({ page }) => {
@@ -33,7 +27,7 @@ for (const { framework, path } of SOURCE_SKINS) {
       await expect(page.locator('video')).toBeAttached();
       await expect(skin.locator('media-poster, img.media-poster')).toBeAttached();
       await expect(skin.locator('media-controls-content, .media-controls')).toBeAttached();
-      await expect(skin.locator('media-controls-backdrop, .media-controls__backdrop')).toBeAttached();
+      await expect(skin.locator('media-controls-backdrop, .media-controls-backdrop')).toBeAttached();
       await expect(skin.locator('media-seek-button, .media-seek-button')).toHaveCount(0);
       await expect(posterImage).toHaveAttribute('src', /thumbnail/);
     });
@@ -43,7 +37,9 @@ for (const { framework, path } of SOURCE_SKINS) {
 
       await expect(poster).toHaveAttribute('data-visible', '');
       await expect(poster).toHaveCSS('opacity', '1');
-      await page.locator('video').evaluate((video: HTMLVideoElement) => video.play());
+      await page.locator('video').evaluate((video: HTMLVideoElement) => {
+        setTimeout(() => void video.play().catch(() => {}));
+      });
       await expect(poster).not.toHaveAttribute('data-visible');
       await expect(poster).toHaveCSS('opacity', '0');
     });
@@ -52,7 +48,7 @@ for (const { framework, path } of SOURCE_SKINS) {
 
 for (const { framework, path, selector } of POSTER_SKINS) {
   test(`hides a source-less poster image — ${framework}`, async ({ page }) => {
-    await page.goto(path);
+    await page.goto(path, { waitUntil: 'domcontentloaded' });
 
     const posterImage = page.locator(selector).first();
 

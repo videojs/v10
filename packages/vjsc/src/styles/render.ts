@@ -50,8 +50,9 @@ export async function renderStylesheets(options: RenderStylesheetsOptions): Prom
 function wrapFileCss(css: string, scope: string | undefined, file: StyleOutputFile): string {
   const relationshipOwners = new Set(file.groupOwners.values());
   const scopeRootClasses = new Set(file.rules.filter((rule) => rule.scopeRoot).map((rule) => rule.className));
-  const scoped = scope ? `@scope (${scope}) {\n${css}\n}` : css;
-  const wrapped = `@layer ${file.layer} {\n${scoped}\n}`;
+  const split = scope ? splitSlottedRules(css) : { scoped: css, unscoped: '' };
+  const scoped = scope ? `@scope (${scope}) {\n${split.scoped}\n}` : split.scoped;
+  const wrapped = `@layer ${file.layer} {\n${scoped}\n${split.unscoped}\n}`;
 
   return optimizeSemanticCss(
     decoder.decode(
@@ -77,6 +78,49 @@ function wrapFileCss(css: string, scope: string | undefined, file: StyleOutputFi
           },
         },
       }).code
+    )
+  );
+}
+
+/** Slotted nodes sit outside a shadow tree's CSS scope, so keep their anchored selectors outside the outer scope. */
+function splitSlottedRules(css: string): { scoped: string; unscoped: string } {
+  let hasSlottedRules = false;
+  const scoped = filterTopLevelRules(css, (rule) => {
+    const slotted = isSlottedStyleRule(rule);
+
+    hasSlottedRules ||= slotted;
+
+    return !slotted;
+  });
+
+  return {
+    scoped,
+    unscoped: hasSlottedRules ? filterTopLevelRules(css, isSlottedStyleRule) : '',
+  };
+}
+
+function filterTopLevelRules(css: string, include: (rule: Rule) => boolean): string {
+  return decoder.decode(
+    transform({
+      filename: 'semantic.css',
+      code: encoder.encode(css),
+      visitor: {
+        StyleSheet(stylesheet) {
+          return withoutNullValues({
+            ...cloneCssAst(stylesheet),
+            rules: stylesheet.rules.filter(include).map((rule) => cloneCssAst(rule)),
+          });
+        },
+      },
+    }).code
+  );
+}
+
+function isSlottedStyleRule(rule: Rule): boolean {
+  return (
+    rule.type === 'style' &&
+    rule.value.selectors.some((selector) =>
+      selector.some((component) => component.type === 'pseudo-element' && component.kind === 'slotted')
     )
   );
 }

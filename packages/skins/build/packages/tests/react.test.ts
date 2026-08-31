@@ -30,6 +30,8 @@ describe('createReactPackageSkins', () => {
     expect(files.get('packages/react/src/internal/skins/shared/components/button.tsx')).not.toContain(
       '@videojs/react/ui/playback-rate-radio-group'
     );
+    expect(files.get('packages/react/src/internal/skins/default-video/components/themed.tsx')).toContain('default');
+    expect(files.get('packages/react/src/internal/skins/minimal-video/components/themed.tsx')).toContain('minimal');
   });
 });
 
@@ -41,7 +43,8 @@ function fixtureGraph(root: string): Graph<SkinModuleMeta> {
       const skin = `${theme}-${preset}`;
       const rootId = `${root}/skins/${skin}/skin.tsx?skin=${skin}&style=css&target=react`;
       const buttonId = `${root}/components/button.tsx?skin=${skin}&style=css&target=react`;
-      const rootSource = `import { Button } from '../../components/button';\nexport function ${pascalCase(theme)}${pascalCase(preset)}Skin() { return <Button />; }`;
+      const themedId = `${root}/components/themed.tsx?skin=${skin}&style=css&target=react`;
+      const rootSource = `import { Button } from '../../components/button';\nimport { Themed } from '../../components/themed';\nexport function ${pascalCase(theme)}${pascalCase(preset)}Skin() { return <><Button />{Themed}</>; }`;
       const buttonSource =
         "import { PlayButton } from '@videojs/react';\nimport { PlaybackRateRadioGroup } from '@videojs/react/ui/playback-rate-radio-group';\nexport function Button() { return <PlaybackRateRadioGroup.Root><PlayButton /></PlaybackRateRadioGroup.Root>; }";
 
@@ -51,14 +54,17 @@ function fixtureGraph(root: string): Graph<SkinModuleMeta> {
         sourcePath: `skins/${skin}/skin.tsx`,
         params: { skin, style: 'css', target: 'react' },
         source: rootSource,
-        imports: [{ ...importReference(rootSource, '../../components/button'), resolvedId: buttonId }],
+        imports: [
+          { ...importReference(rootSource, '../../components/button'), resolvedId: buttonId },
+          { ...importReference(rootSource, '../../components/themed'), resolvedId: themedId },
+        ],
         styles: { files: [], assets: [] },
         meta: {
           type: 'skin',
           name: skin,
           title: skin,
           description: skin,
-          style: { scope: '.media-skin', theme, variant: theme },
+          style: { scope: '.media-skin', theme, preset },
         },
       });
       modules.set(buttonId, {
@@ -71,6 +77,15 @@ function fixtureGraph(root: string): Graph<SkinModuleMeta> {
           importReference(buttonSource, '@videojs/react'),
           importReference(buttonSource, '@videojs/react/ui/playback-rate-radio-group'),
         ],
+        styles: { files: [], assets: [] },
+      });
+      modules.set(themedId, {
+        id: themedId,
+        filename: `${root}/components/themed.tsx`,
+        sourcePath: 'components/themed.tsx',
+        params: { skin, style: 'css', target: 'react' },
+        source: `export const Themed = '${theme}';`,
+        imports: [],
         styles: { files: [], assets: [] },
       });
     }

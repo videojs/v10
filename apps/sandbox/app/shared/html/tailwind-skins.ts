@@ -107,6 +107,13 @@ function defineTailwindSkin(tagName: string, source: string): string {
       container.style.cssText += this.style.cssText;
       this.className = container.className;
       this.style.cssText = container.style.cssText;
+
+      for (const attribute of ['data-theme', 'data-preset']) {
+        const value = container.getAttribute(attribute);
+
+        if (value !== null) this.setAttribute(attribute, value);
+      }
+
       this.replaceChildren(...container.childNodes);
     }
   }

@@ -7,6 +7,8 @@ import { suiteConfig } from '../../shared/playwright.ts';
 export default defineConfig({
   ...suiteConfig('skin-parity'),
   testDir: resolve(import.meta.dirname, 'tests'),
+  // Every case shares one transform-heavy development server. Bound cold browser graphs so they cannot exhaust it.
+  workers: 2,
   projects: [
     {
       name: 'vjsc-chromium',

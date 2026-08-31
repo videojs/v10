@@ -78,7 +78,7 @@ export async function createShadcnRegistryFiles<Meta extends ModuleMeta>(
   validateItems([...sourceItems, ...createdItems]);
 
   const published = describePublishedModules(graph.modules, sourceItems);
-  const publications = canonicalPublishedModules(graph.modules, published);
+  const publications = canonicalPublishedModules(graph, published);
   const styleItems = describeStyleItems(graph, sourceItems, options);
   const builtItems = await Promise.all([
     ...[...published.values()].map((publication) =>
@@ -235,24 +235,24 @@ function describePublishedModules<Meta extends ModuleMeta>(
 }
 
 function canonicalPublishedModules<Meta extends ModuleMeta>(
-  modules: ReadonlyMap<string, GraphModule<Meta>>,
+  graph: Graph<Meta>,
   published: ReadonlyMap<string, PublishedModule<Meta>>
 ): ReadonlyMap<string, PublishedModule<Meta>> {
   const canonical = new Map(published);
   const bySource = new Map<string, PublishedModule<Meta>[]>();
 
   for (const publication of published.values()) {
-    const key = moduleSourceKey(publication.module);
+    const key = moduleSourceKey(publication.module, graph.assets);
     const candidates = bySource.get(key) ?? [];
 
     candidates.push(publication);
     bySource.set(key, candidates);
   }
 
-  for (const module of modules.values()) {
+  for (const module of graph.modules.values()) {
     if (canonical.has(module.id)) continue;
 
-    const candidates = bySource.get(moduleSourceKey(module));
+    const candidates = bySource.get(moduleSourceKey(module, graph.assets));
     const publication = candidates?.length === 1 ? candidates[0] : undefined;
 
     if (publication) canonical.set(module.id, publication);
@@ -261,8 +261,10 @@ function canonicalPublishedModules<Meta extends ModuleMeta>(
   return canonical;
 }
 
-function moduleSourceKey(module: GraphModule): string {
-  return `${module.filename}\0${stripVirtualCssImports(module.source)}`;
+function moduleSourceKey(module: GraphModule, assets: ReadonlyMap<string, string>): string {
+  const styles = module.styles.assets.map((id) => assets.get(id) ?? id).sort();
+
+  return `${module.filename}\0${stripVirtualCssImports(module.source)}\0${styles.join('\0')}`;
 }
 
 function collectReachableModules<Meta extends ModuleMeta>(

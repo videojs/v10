@@ -282,7 +282,10 @@ export class MenuContentElement extends UIElement {
   };
 
   #setOptionParent(parent: MenuContextValue | null): void {
-    if (parent === this.#optionParent) return;
+    if (parent?.menu === this.#optionParent?.menu) {
+      this.#optionParent = parent;
+      return;
+    }
 
     this.#optionParent?.setOptionState(this.#optionSource, null);
     this.#optionParent = parent;

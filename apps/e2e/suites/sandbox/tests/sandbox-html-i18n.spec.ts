@@ -106,7 +106,7 @@ test.describe('Sandbox React i18n', () => {
 
     await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
     await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
-    await expect(page.locator('.media-skin--default.media-skin--video')).toHaveCSS('direction', 'rtl');
+    await expect(page.locator('.media-skin[data-theme="default"][data-preset="video"]')).toHaveCSS('direction', 'rtl');
   });
 });
 

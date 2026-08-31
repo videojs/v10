@@ -46,11 +46,9 @@ export function validateSkinConfig(parameters: URLSearchParams): SkinTransformCo
 
 export function createStyleOptions(config: SkinTransformConfig): StyleTransformOptions {
   const skin = config.skin ? skinStyles[config.skin] : undefined;
-  const variants: string[] = skin ? [skin.theme] : [];
+  const variants: string[] = skin ? [skin.theme] : ['default'];
 
-  if (skin && skin.variant !== skin.theme) variants.push(skin.variant);
-
-  if (config.skin && !variants.includes(config.skin)) variants.push(config.skin);
+  if (skin) variants.push(skin.preset);
 
   if (config.target === 'html') variants.push('shadow-dom');
 

@@ -121,6 +121,23 @@ describe('compileStyles', () => {
 
     expect(styles.get('buttons.css')).toContain('display: grid');
   });
+
+  it('emits slotted shadow selectors outside the incompatible outer scope', async () => {
+    const poster = rule('root', 'media-poster', ['relative'], {
+      'shadow-dom': ['[&>slot::slotted(img:not([src]))]:invisible'],
+    });
+    const styles = await compileStyles({
+      design: await loadDesignSystem(designPath),
+      styles: resolvedStyles([poster]),
+      scope: '.media-skin-video',
+      variants: ['shadow-dom'],
+    });
+    const css = styles.get('buttons.css') ?? '';
+
+    expect(css).toContain('@scope (.media-skin-video)');
+    expect(css).toContain('.media-poster > slot::slotted(img:not([src]))');
+    expect(css).toMatch(/}\s*\.media-poster > slot::slotted/);
+  });
 });
 
 function rule(

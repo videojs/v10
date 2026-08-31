@@ -8,6 +8,8 @@ import { PiPButton } from '../../components/buttons/pip-button';
 import { PlayButton } from '../../components/buttons/play-button';
 import { VolumePopover } from '../../components/controls/volume-popover';
 import { TimeSlider } from '../../components/sliders/time-slider';
+import controlsStyles from '../../styles/layout/controls.styles';
+import popupStyles from '../../styles/popups/popup.styles';
 import { VideoSettingsMenu } from '../video/settings-menu';
 import styles from './controls.styles';
 
@@ -15,9 +17,9 @@ export function DefaultVideoControls() {
   return (
     <$.Controls.Root>
       <$.Controls.Backdrop className={styles.backdrop} />
-      <$.Controls.Content className={['media-controls', styles.root]}>
+      <$.Controls.Content className={['media-controls', controlsStyles.surface, styles.root]}>
         <$.Tooltip.Provider>
-          <$.Controls.Group className={styles.primary}>
+          <$.Controls.Group className={[popupStyles.surface, styles.primary]}>
             <PlayButton />
             <VolumePopover className={styles.volumeButton} />
 
@@ -31,7 +33,7 @@ export function DefaultVideoControls() {
             <VideoSettingsMenu className={styles.settingsButton} />
           </$.Controls.Group>
 
-          <$.Controls.Group className={styles.secondary}>
+          <$.Controls.Group className={[popupStyles.surface, styles.secondary]}>
             <CastButton />
             <AirPlayButton />
             <PiPButton />

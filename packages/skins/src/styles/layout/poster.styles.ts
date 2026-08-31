@@ -17,11 +17,11 @@ export default styles({
       variants: {
         'shadow-dom': [
           '[&>slot>img:not([src]):not([srcset])]:invisible',
-          '[&_::slotted(img:not([src]):not([srcset]))]:invisible',
-          '[&_::slotted(img)]:absolute [&_::slotted(img)]:inset-0',
-          '[&_::slotted(img)]:h-full [&_::slotted(img)]:w-full [&_::slotted(img)]:rounded-[inherit]',
-          '[&_::slotted(img)]:[object-fit:var(--media-object-fit,contain)]',
-          '[&_::slotted(img)]:[object-position:var(--media-object-position,center)]',
+          '[&>slot::slotted(img:not([src]):not([srcset]))]:invisible',
+          '[&>slot::slotted(img)]:absolute [&>slot::slotted(img)]:inset-0',
+          '[&>slot::slotted(img)]:h-full [&>slot::slotted(img)]:w-full [&>slot::slotted(img)]:rounded-[inherit]',
+          '[&>slot::slotted(img)]:[object-fit:var(--media-object-fit,contain)]',
+          '[&>slot::slotted(img)]:[object-position:var(--media-object-position,center)]',
         ],
       },
     },

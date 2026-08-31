@@ -9,11 +9,15 @@
  */
 
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
+import { dirname, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const OUT_DIR = resolve(__dirname, '../suites/player/app/src/pages');
+const SOURCE_VIDEO_SKIN = relative(
+  OUT_DIR,
+  resolve(__dirname, '../../../packages/skins/src/skins/default-video/skin.tsx')
+).replaceAll('\\', '/');
 
 // ---------------------------------------------------------------------------
 // Media type config — maps media element name to its import + attributes
@@ -431,10 +435,8 @@ document.getElementById('root')!.innerHTML = html\`
 }
 
 function sourceHtmlPage(resource: string): string {
-  const source = '../../../../../../../../packages/skins/src/skins/default-video/skin.tsx';
-
   return `import '@videojs/html/video/player';
-import { DefaultVideoSkin } from '${source}?style=css&target=html&skin=default-video';
+import { DefaultVideoSkin } from '${SOURCE_VIDEO_SKIN}?style=css&target=html&skin=default-video';
 import { MEDIA } from '../resources';
 
 const skin = String(
@@ -453,12 +455,10 @@ document.getElementById('root')!.innerHTML = \`<video-player poster="\${MEDIA.${
 }
 
 function sourceReactPage(resource: string): string {
-  const source = '../../../../../../../../packages/skins/src/skins/default-video/skin.tsx';
-
   return `import { createPlayer } from '@videojs/react';
 import { Video, videoFeatures } from '@videojs/react/video';
 import { createRoot } from 'react-dom/client';
-import { DefaultVideoSkin } from '${source}?style=css&target=react&skin=default-video';
+import { DefaultVideoSkin } from '${SOURCE_VIDEO_SKIN}?style=css&target=react&skin=default-video';
 import { MEDIA } from '../resources';
 
 const { Player } = createPlayer({ features: videoFeatures });

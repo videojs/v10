@@ -47,7 +47,7 @@ describe('vars', () => {
       (property) =>
         !property.startsWith('--media-') &&
         property !== '--spacing' &&
-        !/^--(?:color|drop-shadow|ease|font|radius|shadow|spacing|text)-media(?:-|$)/.test(property)
+        !/^--(?:color|drop-shadow|ease|font|radius|shadow|spacing|text|text-shadow)-media(?:-|$)/.test(property)
     );
 
     expect(unprefixed).toEqual([]);
