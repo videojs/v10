@@ -59,9 +59,10 @@ describe('routing utilities', () => {
     frameworks: ['react'] satisfies MockFramework[],
   };
 
-  const guideHtmlOnly: Guide = {
-    slug: 'how-to/html-only',
-    frameworks: ['html'] satisfies MockFramework[],
+  // Content documenting the custom-element API lists every framework that reads it
+  const guideHtmlApi: Guide = {
+    slug: 'how-to/html-api',
+    frameworks: ['html', 'vue', 'svelte'] satisfies MockFramework[],
   };
 
   // Guide with no own restrictions, but lives inside a react-only section
@@ -69,16 +70,15 @@ describe('routing utilities', () => {
     slug: 'reference/react-hook',
   };
 
-  // Guide with no own restrictions, but lives inside an html-only section
+  // Guide with no own restrictions, but lives inside an html-API section
   const guideInHtmlSection: Guide = {
     slug: 'reference/html-controller',
   };
 
-  // Html content authored for one fallback framework only: Vue sees it, Svelte does not
+  // Integration guide scoped to the frameworks it is actually about
   const guideVueIntegration: Guide = {
     slug: 'how-to/use-with-vue',
-    frameworks: ['html'] satisfies MockFramework[],
-    excludeFrameworks: ['svelte'] satisfies MockFramework[],
+    frameworks: ['html', 'vue'] satisfies MockFramework[],
   };
 
   const mockSidebar: Sidebar = [
@@ -97,10 +97,10 @@ describe('routing utilities', () => {
     },
     {
       sidebarLabel: 'Controllers',
-      frameworks: ['html'] satisfies MockFramework[],
+      frameworks: ['html', 'vue', 'svelte'] satisfies MockFramework[],
       contents: [guideInHtmlSection],
     },
-    guideHtmlOnly,
+    guideHtmlApi,
     guideVueIntegration,
   ];
 
@@ -223,35 +223,35 @@ describe('routing utilities', () => {
         const result = resolveFrameworkChange(
           {
             currentFramework: 'html',
-            currentSlug: 'how-to/html-only',
+            currentSlug: 'how-to/html-api',
             newFramework: 'react',
           },
           mockSidebar
         );
 
-        expect(result.selectedSlug).not.toBe('how-to/html-only');
+        expect(result.selectedSlug).not.toBe('how-to/html-api');
         expect(result.slugChanged).toBe(true);
         expect(result.shouldReplace).toBe(false);
         expect(result.reason).toContain('changed slug');
       });
 
-      it('should keep an html-only slug when switching to a framework that reads html content', () => {
+      it('should keep an html-API slug when switching to another framework that reads it', () => {
         const result = resolveFrameworkChange(
           {
             currentFramework: 'html',
-            currentSlug: 'how-to/html-only',
+            currentSlug: 'how-to/html-api',
             newFramework: 'vue',
           },
           mockSidebar
         );
 
-        expect(result.selectedSlug).toBe('how-to/html-only');
+        expect(result.selectedSlug).toBe('how-to/html-api');
         expect(result.slugChanged).toBe(false);
         expect(result.shouldReplace).toBe(true);
-        expect(result.url).toBe('/docs/framework/vue/how-to/html-only');
+        expect(result.url).toBe('/docs/framework/vue/how-to/html-api');
       });
 
-      it('should change slug when the new framework is excluded from the current guide', () => {
+      it('should change slug when the new framework is not on the guide list', () => {
         const result = resolveFrameworkChange(
           {
             currentFramework: 'vue',
@@ -343,22 +343,22 @@ describe('routing utilities', () => {
     });
 
     describe('priority 1: content-framework fallback', () => {
-      it('should stay on vue when the target guide only has html content', () => {
+      it('should stay on vue when the target guide lists vue among its html-API frameworks', () => {
         const result = resolveDocsLinkUrl(
           {
-            targetSlug: 'how-to/html-only',
+            targetSlug: 'how-to/html-api',
             contextFramework: 'vue',
           },
           mockSidebar
         );
 
         expect(result.selectedFramework).toBe('vue');
-        expect(result.selectedSlug).toBe('how-to/html-only');
+        expect(result.selectedSlug).toBe('how-to/html-api');
         expect(result.priorityLevel).toBe(1);
-        expect(result.url).toBe('/docs/framework/vue/how-to/html-only');
+        expect(result.url).toBe('/docs/framework/vue/how-to/html-api');
       });
 
-      it('should stay on vue for a guide inside an html-only section', () => {
+      it('should stay on svelte for a guide inside an html-API section', () => {
         const result = resolveDocsLinkUrl(
           {
             targetSlug: 'reference/html-controller',
@@ -388,7 +388,7 @@ describe('routing utilities', () => {
         expect(result.reason).toContain('Priority 2');
       });
 
-      it('should leave a framework the guide excludes', () => {
+      it('should leave a framework the guide leaves out', () => {
         const result = resolveDocsLinkUrl(
           {
             targetSlug: 'how-to/use-with-vue',
