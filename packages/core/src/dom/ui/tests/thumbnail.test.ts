@@ -187,6 +187,35 @@ describe('createThumbnail', () => {
       handle.destroy();
     });
 
+    it('moves event handling to a replacement image', () => {
+      const first = createMockImg();
+      const second = createMockImg();
+      const onStateChange = vi.fn();
+      let img = first;
+
+      const handle = createThumbnail(
+        createOptions({
+          getImg: () => img,
+          onStateChange,
+        })
+      );
+
+      handle.updateSrc('sprite.jpg');
+
+      img = second;
+      handle.connect();
+      onStateChange.mockClear();
+
+      first.dispatchEvent(new Event('error'));
+      expect(onStateChange).not.toHaveBeenCalled();
+
+      second.dispatchEvent(new Event('load'));
+      expect(handle.loading).toBe(false);
+      expect(onStateChange).toHaveBeenCalledOnce();
+
+      handle.destroy();
+    });
+
     it('sets error on img error', () => {
       const img = createMockImg();
       const onStateChange = vi.fn();

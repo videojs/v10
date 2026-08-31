@@ -32,7 +32,7 @@ export class ThumbnailElement extends UIElement {
     crossOrigin: { type: String, attribute: 'crossorigin' },
     loading: { type: String },
     fetchPriority: { type: String, attribute: 'fetchpriority' },
-  } satisfies PropertyDeclarationMap<keyof ThumbnailCore.Props>;
+  } satisfies PropertyDeclarationMap<Exclude<keyof ThumbnailCore.Props, 'thumbnails'>>;
 
   time = 0;
   crossOrigin: ThumbnailCore.Props['crossOrigin'];

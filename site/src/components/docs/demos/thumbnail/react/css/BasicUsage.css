@@ -18,6 +18,10 @@
   max-width: 240px;
 }
 
+.media-thumbnail-img {
+  display: block;
+}
+
 .media-thumbnail[data-hidden] {
   display: none;
 }

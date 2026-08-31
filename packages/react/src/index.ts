@@ -148,7 +148,9 @@ export { StatusAnnouncer, type StatusAnnouncerProps } from './ui/status-announce
 export { StatusIndicator } from './ui/status-indicator';
 export type { StatusIndicatorRootProps } from './ui/status-indicator/status-indicator-root';
 export type { StatusIndicatorValueProps } from './ui/status-indicator/status-indicator-value';
-export { Thumbnail, type ThumbnailProps } from './ui/thumbnail/thumbnail';
+export { Thumbnail } from './ui/thumbnail';
+export type { ThumbnailImgProps } from './ui/thumbnail/thumbnail-img';
+export type { ThumbnailRootProps } from './ui/thumbnail/thumbnail-root';
 export { Time } from './ui/time';
 export { TimeSlider } from './ui/time-slider';
 export type {

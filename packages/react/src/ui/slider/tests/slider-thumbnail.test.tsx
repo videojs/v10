@@ -43,6 +43,7 @@ const { mockSliderApi, mockThumbnailApi } = vi.hoisted(() => ({
     })),
     updateSrc: vi.fn(),
     connect: vi.fn(),
+    disconnectImg: vi.fn(),
     destroy: vi.fn(),
   }),
 }));

@@ -12,6 +12,11 @@ import type {
 export interface ThumbnailProps {
   /** Time in seconds to display the thumbnail for. */
   time?: number | undefined;
+  /** Pre-parsed thumbnail images — bypasses the automatic `<track>` detection. */
+  thumbnails?: ThumbnailImage[] | undefined;
+}
+
+export interface ThumbnailImageProps {
   /**
    * CORS setting forwarded to the inner `<img>`.
    *
@@ -146,6 +151,8 @@ export class ThumbnailCore {
 }
 
 export namespace ThumbnailCore {
-  export type Props = ThumbnailProps;
+  export type Props = ThumbnailProps & ThumbnailImageProps;
+  export type RootProps = ThumbnailProps;
+  export type ImageProps = ThumbnailImageProps;
   export type State = ThumbnailState;
 }
