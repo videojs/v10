@@ -9,17 +9,17 @@ import type { MediaCapabilityDescriptor } from '@videojs/media';
  * adapters declared that surface as descriptors, this derivation would replace the shadow — and the preload drift the
  * test pins could not exist.
  */
-export function deriveMediaDefaultProps(
+export function deriveMediaDefaultProps<Defaults extends object = Record<string, unknown>>(
   capabilities: readonly MediaCapabilityDescriptor<any>[],
-  keys: readonly string[]
-): Record<string, unknown> {
-  const defaults: Record<string, unknown> = {};
+  keys: readonly (keyof Defaults & string)[]
+): Defaults {
+  const defaults = {} as Defaults;
 
   for (const capability of capabilities) {
     for (const [name, prop] of Object.entries(capability.props) as [string, { fallback: unknown; readonly?: true }][]) {
-      if (!keys.includes(name) || prop.readonly) continue;
+      if (!keys.includes(name as keyof Defaults & string) || prop.readonly) continue;
 
-      defaults[name] = prop.fallback;
+      (defaults as Record<string, unknown>)[name] = prop.fallback;
     }
   }
 
