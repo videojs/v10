@@ -42,6 +42,7 @@ import {
   fetchDrm,
   type KeySystemModule,
   NO_KEY_SYSTEM,
+  resolveDrmCredentials,
   resolveDrmHeaders,
   resolveDrmUrl,
   applyLicenseRequest,
@@ -179,6 +180,7 @@ function setupExchangeLicenses({
                 method: 'POST',
                 headers: { ...resolveDrmHeaders(entry.headers) },
                 body: message,
+                credentials: resolveDrmCredentials(entry.credentials),
               });
               const request = entry.licenseRequest ? await entry.licenseRequest(shaped) : shaped;
 

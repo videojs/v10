@@ -32,6 +32,9 @@ export type DrmValue<T> = T | undefined | (() => T | undefined);
 /** Extra license-request headers, or a resolver asked for them. */
 export type DrmHeaders = DrmValue<Record<string, string>>;
 
+/** A fetch credentials mode for the DRM exchanges, or a resolver asked for it. */
+export type DrmCredentials = DrmValue<RequestCredentials>;
+
 /**
  * Where one key system's licenses come from. Accepts `@videojs/media`'s `DrmSystemConfig` — a `source.drm` entry passes
  * through adapters unchanged — and additionally takes a resolver per URL. Defined locally so driving an engine directly
@@ -59,6 +62,13 @@ export interface DrmSystemConfig {
    * hls.js and Shaka engines, which compare `source.drm` structurally.
    */
   headers?: DrmHeaders;
+  /**
+   * Fetch credentials mode for this system's license and certificate exchanges. `'include'` sends cookies on a
+   * cross-origin exchange (the server must answer CORS with `Access-Control-Allow-Credentials`) — the escape hatch
+   * other engines expose as Shaka's `allowCrossSiteCredentials` or dash.js's `withCredentials`. Unset leaves fetch's
+   * `same-origin` default, so a cross-origin license POST carries no cookies.
+   */
+  credentials?: DrmCredentials;
   /**
    * Decorate this system's license request after the key system's own shaping — add an auth header, mint a per-session
    * token, rewrite the URL. Composed _after_ the module default (which owns the wire protocol, e.g. PlayReady's
@@ -105,6 +115,11 @@ export function resolveDrmUrl(url: DrmUrl): string | undefined {
 /** Resolve configured license-request headers. See {@link resolveDrmUrl}. */
 export function resolveDrmHeaders(headers: DrmHeaders): Record<string, string> | undefined {
   return resolveDrmValue(headers);
+}
+
+/** Resolve a configured fetch credentials mode. See {@link resolveDrmUrl}. */
+export function resolveDrmCredentials(credentials: DrmCredentials): RequestCredentials | undefined {
+  return resolveDrmValue(credentials);
 }
 
 function resolveDrmValue<T>(value: DrmValue<T>): T | undefined {
@@ -201,9 +216,14 @@ export interface DrmRequest {
   method: string;
   headers: Record<string, string>;
   body: BufferSource | null;
+  /** Fetch credentials mode; unset leaves fetch's `same-origin` default. */
+  credentials?: RequestCredentials;
 }
 
-/** Rewrite a DRM request (URL, headers, body) before it is sent. Async — a provider may mint a per-session token. */
+/**
+ * Rewrite a DRM request (URL, headers, body, credentials) before it is sent. Async — a provider may mint a per-session
+ * token.
+ */
 export type DrmRequestTransform = (request: DrmRequest) => DrmRequest | Promise<DrmRequest>;
 
 /**
@@ -329,6 +349,7 @@ export function sourceDrmSystems(
           licenseUrl: () => resolveDrmUrl(entry()?.licenseUrl),
           serverCertificateUrl: () => resolveDrmUrl(entry()?.serverCertificateUrl),
           headers: () => resolveDrmHeaders(entry()?.headers),
+          credentials: () => resolveDrmCredentials(entry()?.credentials),
           licenseRequest: (request: DrmRequest) => entry()?.licenseRequest?.(request) ?? request,
           licenseResponse: (response: Uint8Array<ArrayBuffer>) => entry()?.licenseResponse?.(response) ?? response,
           certificateRequest: (request: DrmRequest) => entry()?.certificateRequest?.(request) ?? request,
