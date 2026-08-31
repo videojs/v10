@@ -262,11 +262,10 @@ export function generateHTMLUsageCode(
 // Vue and Svelte Usage
 // ---------------------------------------------------------------------------
 
-/**
- * Vue and Svelte have no adapter package: they install `@videojs/html` and write the same custom elements in their own
- * components. Both generators below reuse `generateHTMLUsageCode` for the player configuration and then transform that
- * markup — binding its source attribute to a prop and reading its tag list — so the configuration has one source.
- */
+// Vue and Svelte have no adapter package: they install `@videojs/html` and write the same custom elements in their own
+// components. Both generators below reuse `generateHTMLUsageCode` for the player configuration and then transform that
+// markup — binding its source attribute to a prop, reading its tag list — so the configuration has one source.
+
 export interface VueUsageCode {
   /** `MyPlayer.vue`: the element imports, a `src` prop, and the generated markup with `src` bound. */
   component: string;
