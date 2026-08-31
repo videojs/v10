@@ -28,7 +28,7 @@ State is handled by a preset player component, which creates a central state sto
 You can access state and actions from anywhere within `VideoPlayer` with the <DocsLink slug="reference/use-player">`usePlayer` hook</DocsLink>.
 
 </FrameworkCase>
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 State is handled by a `video-player` element, which creates a central state store that all components can access. Child components can automatically connect to the state of the `video-player` element.
 
 ```html
@@ -61,7 +61,7 @@ Skins are complete, pre-designed player UIs that package components and styles t
 </VideoPlayer>
 ```
 </FrameworkCase>
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```html
 <video-player>
   <video-skin> <!-- [!code focus] -->
@@ -92,7 +92,7 @@ If you want more control than a packaged skin offers, build your own UI from our
 </VideoPlayer>
 ```
 </FrameworkCase>
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```html
 <video-player>
   <media-container> <!-- [!code focus] -->
@@ -119,7 +119,7 @@ Media components are the components that actually display your media. They're es
 
 Media components can be format specific (HLS, DASH), service specific (YouTube, Vimeo, Mux), or use case specific (background video).
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 Media elements are discovered automatically. Plain `<video>` and `<audio>` elements are found via a `querySelector`. Custom media elements like `<hlsjs-video>` register themselves after you import their registration entry point.
 </FrameworkCase>
 
@@ -132,7 +132,7 @@ Media elements are discovered automatically. Plain `<video>` and `<audio>` eleme
 </VideoPlayer>
 ```
 </FrameworkCase>
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```html
 <video-player>
   <video-skin>
@@ -150,7 +150,7 @@ Media elements are discovered automatically. Plain `<video>` and `<audio>` eleme
 The default presets are `@videojs/react/video` and `@videojs/react/audio`, covering the baseline set of controls you'd expect from the HTML `<video>` and `<audio>` tags. 
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 The default presets are `@videojs/html/video` and `@videojs/html/audio`, covering the baseline set of controls you'd expect from the HTML `<video>` and `<audio>` tags. 
 </FrameworkCase>
 
@@ -159,7 +159,7 @@ Beyond the defaults, presets target more specific use cases. The `/background` p
 <FrameworkCase frameworks={["react"]}>
 You can use it from `@videojs/react/background`.
 </FrameworkCase>
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 You can use it from the `@videojs/html/background/*` registration entry points.
 </FrameworkCase>
 

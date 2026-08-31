@@ -35,7 +35,7 @@ import basicUsageHtmlTs from "@/components/docs/demos/cast-button/html/css/Basic
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```html
 <media-cast-button></media-cast-button>
 ```
@@ -57,7 +57,7 @@ Configurable Cast sessions come from the <DocsLink slug="reference/google-cast">
 
 Style based on cast and disabled state:
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```css
 /* During an active session */
 media-cast-button[data-cast-state="connected"] {
@@ -118,7 +118,7 @@ Override with the `label` prop. Keyboard activation: <kbd>Enter</kbd> / <kbd>Spa
   </StyleCase>
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   <StyleCase styles={["css"]}>
     <Demo files={[
       { title: "index.html", code: basicUsageHtml, lang: "html" },

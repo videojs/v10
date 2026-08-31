@@ -2,6 +2,9 @@
 
 import type { HtmlMediaReference, MediaReference, ReactMediaReference } from '@/types/media-reference';
 
+import { apiPlatformFrameworks } from '../types/docs';
+// Astro evaluates this module through `satteriConditionalHeadings` while Vite+ is still loading the task graph, so the
+// `@/` alias is not resolvable yet for value imports.
 import type { TocHeading } from './componentReferenceModel';
 
 type MediaReferenceSectionKey =
@@ -194,16 +197,19 @@ export function buildMediaReferenceTocHeadings(model: MediaReferenceModel | null
     },
   ];
 
-  for (const framework of ['html', 'react'] as const) {
-    const platform = model.platforms[framework];
+  for (const platformKey of ['html', 'react'] as const) {
+    const platform = model.platforms[platformKey];
     if (!platform) continue;
+
+    // Every framework reading this platform's API sees its sections, so the TOC lists them all.
+    const frameworks = apiPlatformFrameworks(platformKey);
 
     for (const section of platform.sections) {
       headings.push({
         depth: section.depth,
         text: section.title,
         slug: section.id,
-        frameworks: [framework],
+        frameworks,
       });
 
       if (section.key === 'engineOptions') {
@@ -212,7 +218,7 @@ export function buildMediaReferenceTocHeadings(model: MediaReferenceModel | null
             depth: section.depth + 1,
             text: engine.title,
             slug: engine.id,
-            frameworks: [framework],
+            frameworks,
           });
         }
       }

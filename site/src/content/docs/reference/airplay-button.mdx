@@ -35,7 +35,7 @@ import basicUsageHtmlTs from "@/components/docs/demos/airplay-button/html/css/Ba
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```html
 <media-airplay-button></media-airplay-button>
 ```
@@ -62,7 +62,7 @@ WebKit does not expose a `"connecting"` intermediate state — the `state` slice
 
 Use `data-airplay-state` to swap icons or labels based on the session state:
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```css
 /* AirPlay active */
 media-airplay-button[data-airplay-state="connected"] {
@@ -84,7 +84,7 @@ React renders a `<button>` element. Add a `className` and use it as the selector
 
 Use `data-disabled` to style an explicitly disabled, available button:
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```css
 media-airplay-button[data-disabled] {
   cursor: not-allowed;
@@ -123,7 +123,7 @@ Renders a `<button>` with an automatic `aria-label`: "Start AirPlay" when discon
   </StyleCase>
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   <StyleCase styles={["css"]}>
     <Demo files={[
       { title: "index.html", code: basicUsageHtml, lang: "html" },

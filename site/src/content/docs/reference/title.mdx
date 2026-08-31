@@ -35,7 +35,7 @@ import basicUsageHtmlTs from "@/components/docs/demos/title/html/css/BasicUsage.
   ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   ```html
   <media-title></media-title>
   ```
@@ -57,7 +57,7 @@ title on the player instead of passing children.
   ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   ```html
   <video-player content-title="Big Buck Bunny">
     <video src="video.mp4"></video>
@@ -86,7 +86,7 @@ feature</DocsLink>, which the video and audio presets include.
   ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]} exclude={["vue", "svelte"]}>
+<FrameworkCase frameworks={["html"]}>
 `title` already means the tooltip on an element, so the player takes the title as
 `content-title`, reflected by the `contentTitle` property:
 
@@ -147,7 +147,7 @@ the controls in your own layout, the same way you would any other piece of chrom
 
 ## Styling
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 When no title resolves, the element sets the native `hidden` attribute and `data-hidden`,
 so it takes up no space and a background or gradient never sits over empty space.
 
@@ -224,7 +224,7 @@ set `aria-label` or `aria-labelledby` on the container yourself.
   </StyleCase>
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   <StyleCase styles={["css"]}>
     <Demo
       files={[

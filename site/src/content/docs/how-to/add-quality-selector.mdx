@@ -41,7 +41,7 @@ Let automatic quality selection do its job by default, and offer a quality menu 
   </StyleCase>
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   <StyleCase styles={["css"]}>
     <Demo files={[
       { title: "index.html", code: basicUsageHtml, lang: "html" },
@@ -66,7 +66,7 @@ The <DocsLink slug="reference/feature-quality">quality feature</DocsLink> mirror
 <DocsLink slug="reference/use-quality-options">`useQualityOptions`</DocsLink> turns this state into ready-made menu options — labels like "1080p", an "Auto" entry, and `availability` — as shown in the demo above.
 
 </FrameworkCase>
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 
 <DocsLink slug="reference/quality-radio-group">`<media-quality-radio-group>`</DocsLink> turns this state into a ready-made radio menu with resolution labels and an "Auto" entry, as shown in the demo above.
 
@@ -122,7 +122,7 @@ export default function App() {
 ```
 
 </FrameworkCase>
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 
 Access the player store through the <DocsLink slug="reference/player-controller">player controller</DocsLink> and call `selectVideoRendition` with a rendition `id` from `videoRenditionList`, or `'auto'` to restore adaptive selection.
 

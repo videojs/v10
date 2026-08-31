@@ -35,7 +35,7 @@ import basicUsageHtmlTs from "@/components/docs/demos/status-announcer/html/css/
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```html
 <media-status-announcer></media-status-announcer>
 ```
@@ -62,7 +62,7 @@ Announcements use the active Video.js locale and translations.
 Use the `labels` prop to override individual translated labels for one announcer.
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 The custom element receives labels from the nearest player i18n context.
 </FrameworkCase>
 
@@ -70,7 +70,7 @@ The custom element receives labels from the nearest player i18n context.
 
 `StatusAnnouncer` is not visually hidden by the primitive. Apply a visually-hidden class while keeping it in the accessibility tree. Do not use `display: none`, `visibility: hidden`, or the `hidden` attribute.
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```css
 media-status-announcer {
   position: absolute;
@@ -131,7 +131,7 @@ Use the playback button for an immediate announcement and the mute button for a 
   </StyleCase>
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   <StyleCase styles={["css"]}>
     <Demo files={[
       { title: "index.html", code: basicUsageHtml, lang: "html" },

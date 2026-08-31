@@ -34,7 +34,7 @@ Of the embed-backed media components, the [Vimeo player SDK](https://developer.v
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```html
 <vimeo-video src="https://vimeo.com/76979871"></vimeo-video>
 ```
@@ -81,7 +81,7 @@ A `vimeo.com/event/<id>` URL plays that event through Vimeo's event embed, and i
   </StyleCase>
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   <StyleCase styles={["css"]}>
     <Demo files={[
       { title: "index.html", code: basicUsageHtml, lang: "html" },
@@ -112,7 +112,7 @@ A `vimeo.com/event/<id>` URL plays that event through Vimeo's event embed, and i
     ```
     </FrameworkCase>
 
-    <FrameworkCase frameworks={["html"]}>
+    <FrameworkCase frameworks={["html", "vue", "svelte"]}>
     ```ts
     const video = document.querySelector('vimeo-video');
     video.source = {

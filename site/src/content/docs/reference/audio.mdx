@@ -31,7 +31,7 @@ import { Audio } from '@videojs/react/audio';
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 The media element is the browser's native `<audio>`. Import the audio player registration when it should provide media to Video.js:
 
 ```ts
@@ -49,7 +49,7 @@ import '@videojs/html/audio/player';
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```html
 <audio>
   <source />
@@ -63,7 +63,7 @@ import '@videojs/html/audio/player';
 Place `Audio` anywhere inside an `AudioPlayer`, or inside another Video.js `Player` configured for audio. It becomes that player's media provider automatically. Outside a player, `Audio` behaves as a standalone native `<audio>`.
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 Place a native `<audio>` anywhere inside `<audio-player>`. It becomes that player's media provider automatically.
 </FrameworkCase>
 
@@ -75,7 +75,7 @@ Video.js does not replace the native audio API. Use `src` for one URL or add chi
 `Audio` forwards native attributes, event handlers, and children to the underlying `<audio>`. Its `ref` resolves to the `HTMLAudioElement`.
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 `<audio>` is the native element itself. Set its attributes and properties, listen for native media events, and access it through an `HTMLAudioElement` reference.
 </FrameworkCase>
 
@@ -98,7 +98,7 @@ This native audio element uses a child source and browser controls while providi
   </StyleCase>
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   <StyleCase styles={["css"]}>
     <Demo files={[
       { title: "index.html", code: basicUsageHtml, lang: "html" },

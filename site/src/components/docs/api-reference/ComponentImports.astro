@@ -3,6 +3,8 @@ import type { BundledLanguage } from 'shiki';
 
 import ServerCode from '@/components/Code/ServerCode.astro';
 import CodeFrame from '@/components/typography/CodeFrame.astro';
+import type { SupportedFramework } from '@/types/docs';
+import { HTML_API_FRAMEWORKS } from '@/types/docs';
 import FrameworkCase from '../FrameworkCase.astro';
 
 interface Props {
@@ -12,23 +14,24 @@ interface Props {
 
 const { component, html } = Astro.props;
 
-const imports: Array<{ code: string; framework: 'react' | 'html'; lang: BundledLanguage }> = [
+// Vue and Svelte read the custom-element API, so they get the `@videojs/html` import too.
+const imports: Array<{ code: string; frameworks: SupportedFramework[]; lang: BundledLanguage }> = [
   {
     code: `import { ${component} } from '@videojs/react';`,
-    framework: 'react',
+    frameworks: ['react'],
     lang: 'tsx',
   },
   {
     code: `import '@videojs/html/ui/${html}';`,
-    framework: 'html',
+    frameworks: HTML_API_FRAMEWORKS,
     lang: 'ts',
   },
 ];
 ---
 
 {
-  imports.map(({ code, framework, lang }) => (
-    <FrameworkCase frameworks={[framework]}>
+  imports.map(({ code, frameworks, lang }) => (
+    <FrameworkCase frameworks={frameworks}>
       <CodeFrame lang={lang}>
         <ServerCode code={code} lang={lang} />
       </CodeFrame>

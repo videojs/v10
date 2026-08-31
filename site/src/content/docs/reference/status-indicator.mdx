@@ -37,7 +37,7 @@ import basicUsageHtmlTs from "@/components/docs/demos/status-indicator/html/css/
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```html
 <media-status-indicator>
   <media-status-indicator-value></media-status-indicator-value>
@@ -74,7 +74,7 @@ Pass a readonly array of action names:
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 Set the `actions` attribute to action names separated by commas, whitespace, or both:
 
 ```html
@@ -97,7 +97,7 @@ The indicator closes after `closeDelay`, which defaults to 800 milliseconds. A r
 
 Use `data-status` to select an icon or other visual treatment, and use the transition attributes for entry and exit styles.
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```css
 media-status-indicator[data-status="play"] {
   color: green;
@@ -146,7 +146,7 @@ Focus the player, then press <kbd>K</kbd> to play or pause, <kbd>M</kbd> to mute
   </StyleCase>
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   <StyleCase styles={["css"]}>
     <Demo files={[
       { title: "index.html", code: basicUsageHtml, lang: "html" },

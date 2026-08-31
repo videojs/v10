@@ -22,7 +22,7 @@ Every media element takes a `src`. Elements that drive a playback engine also ta
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```ts
 const video = document.querySelector('hlsjs-video');
 
@@ -54,7 +54,7 @@ The shape answers one question: does this option describe the source, or how to 
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```ts
 video.source = { src: 'https://example.com/asset?id=42', type: 'application/vnd.apple.mpegurl' };
 ```
@@ -70,7 +70,7 @@ They are two views of the same thing, and writing either updates the other. Sett
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```ts
 video.source = { src: 'https://example.com/a.m3u8', preferPlayback: 'native' };
 
@@ -96,7 +96,7 @@ A `sourcechange` event fires whenever `source` changes, from either direction.
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```ts
 video.source = { src, type: 'video/mp4', preferPlayback: 'native' };
 
@@ -118,7 +118,7 @@ Sources are compared **structurally**, not by reference. Reassigning an object w
 This is why you can write `source` inline. React hands the element a brand new object every render, and the element recognizes it as the same source. There's no need to memoize it or spread the previous value to avoid clobbering anything.
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```ts
 video.source = { src, engine: { hlsJs: { maxBufferLength: 60 } } };
 video.source = { src, engine: { hlsJs: { maxBufferLength: 60 } } }; // no-op
@@ -162,7 +162,7 @@ hls.js reads its options when the engine is constructed, so changing them tears 
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```ts
 video.source = {
   src: 'https://example.com/stream.m3u8',
@@ -184,7 +184,7 @@ dash.js takes settings on a running player, so `engine.dashJs` is applied in pla
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```ts
 const video = document.querySelector('dash-video');
 
@@ -209,7 +209,7 @@ Where an option means the same thing across engines, it sits on `source` itself 
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```ts
 video.source = { src: 'https://example.com/stream.m3u8', preferPlayback: 'native' };
 ```
@@ -225,7 +225,7 @@ It's a preference, not a demand — Video.js falls back to whichever path can ac
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```ts
 video.source = { src: 'https://example.com/stream.m3u8', maxAutoResolution: '720p' };
 ```
@@ -247,7 +247,7 @@ A 400px-wide player has no use for a 4K rendition, so `capRenditionToPlayerSize`
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```ts
 video.source = { src: 'https://example.com/stream.m3u8', capRenditionToPlayerSize: false };
 ```
@@ -263,7 +263,7 @@ The element is measured in device pixels, so a `2` device pixel ratio asks for t
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```ts
 video.source = { src: 'https://example.com/stream.m3u8', minAutoResolution: '480p' };
 ```
@@ -308,7 +308,7 @@ Protected content is licensed through `source.drm`, keyed by EME key system id �
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```ts
 video.source = {
   src: 'https://example.com/protected.m3u8',
@@ -343,7 +343,7 @@ For Widevine on hls.js, Video.js asks for a hardware-backed CDM first, falling b
 
 An engine's own `drmSystems` **replaces** `source.drm`, for that engine alone. Reach for it when one path licenses differently, or when you need more of [hls.js's DRM configuration](https://github.com/video-dev/hls.js/blob/master/docs/API.md#drmsystems) than `drm` covers:
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```ts
 video.source = {
   src: 'https://example.com/protected.m3u8',
@@ -375,7 +375,7 @@ It replaces rather than merges, so the FairPlay server above is gone as far as h
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```ts
 const video = document.querySelector('mux-video');
 
@@ -401,7 +401,7 @@ Two more source params describe images rather than playback. `source.storyboard`
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```ts
 video.source = { playbackId, storyboard: { format: 'jpg' }, poster: { time: 12 } };
 ```
@@ -426,7 +426,7 @@ Mux serves FairPlay, Widevine, and PlayReady from URLs derived from a single lic
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```ts
 video.source = {
   playbackId,
@@ -440,7 +440,7 @@ DRM playback is always signed, so a `playback.token` belongs alongside it — an
 
 A `drm.token` that isn't scoped to DRM is ignored rather than sent, since the license request would be rejected. License servers named alongside the token win, key by key, for the systems Mux doesn't license:
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```ts
 video.source = {
   playbackId,
@@ -453,7 +453,7 @@ video.source = {
 
 `source.poster` gets no such treatment — it's only data, and nothing applies it to the media. Both URLs are readable from `contentData`, keyed by what each one describes:
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```ts
 video.contentData;
 // {
@@ -486,13 +486,13 @@ It's read-only and derived from `source`, so read it again after `sourcechange`.
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```ts
 video.source = { ...video.source, poster: { width: 320 } };
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 Because `source` has no attribute, the poster frame has one of its own. `poster-time` reflects to `source.poster.time`, letting you set it from markup:
 
 ```html
@@ -532,7 +532,7 @@ The engine keys keep their names, so their contents move across unchanged — wh
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```ts
 // Before
 video.config = { preferPlayback: 'native', hlsJs: { maxBufferLength: 60 } };

@@ -35,7 +35,7 @@ export default function App() {
 ```
 
 </FrameworkCase>
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 
 ```html
 <live-video-player>
@@ -69,7 +69,7 @@ const { Player } = createPlayer({ features: [...liveVideoFeatures, streamTypeFea
 ```
 
 </FrameworkCase>
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 
 ```ts
 import { createPlayer, streamTypeFeature } from '@videojs/html';
@@ -141,7 +141,7 @@ export default function App() {
 ```
 
 </FrameworkCase>
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 
 `<media-live-button>` selects from the live, time, and buffer features and reflects live state. To swap larger parts of the UI on `streamType`, build a provider with <DocsLink slug="reference/html-create-player">createPlayer</DocsLink> and add `streamTypeFeature` to its features (`<live-video-player>` uses `liveVideoFeatures`, which does not include it), then read `streamType` from the player store through the <DocsLink slug="reference/player-controller">player controller</DocsLink>.
 

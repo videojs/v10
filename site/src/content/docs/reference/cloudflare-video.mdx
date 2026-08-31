@@ -34,7 +34,7 @@ import basicUsageHtmlTs from "@/components/docs/demos/cloudflare-video/html/css/
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```html
 <cloudflare-video src="https://watch.videodelivery.net/bfbd585059e33391d67b0f1d15fe6ea4"></cloudflare-video>
 ```
@@ -68,7 +68,7 @@ A few things work differently from a native `<video>` element, because the Strea
   </StyleCase>
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   <StyleCase styles={["css"]}>
     <Demo files={[
       { title: "index.html", code: basicUsageHtml, lang: "html" },
@@ -97,7 +97,7 @@ A few things work differently from a native `<video>` element, because the Strea
     ```
     </FrameworkCase>
 
-    <FrameworkCase frameworks={["html"]}>
+    <FrameworkCase frameworks={["html", "vue", "svelte"]}>
     ```ts
     const video = document.querySelector('cloudflare-video');
     video.source = {

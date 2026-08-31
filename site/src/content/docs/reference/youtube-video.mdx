@@ -34,7 +34,7 @@ The [YouTube IFrame player](https://developers.google.com/youtube/iframe_api_ref
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```html
 <youtube-video src="https://www.youtube.com/watch?v=aqz-KE-bpKQ"></youtube-video>
 ```
@@ -64,7 +64,7 @@ A few things work differently from a native `<video>` element, because the IFram
   </StyleCase>
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   <StyleCase styles={["css"]}>
     <Demo files={[
       { title: "index.html", code: basicUsageHtml, lang: "html" },
@@ -93,7 +93,7 @@ A few things work differently from a native `<video>` element, because the IFram
     ```
     </FrameworkCase>
 
-    <FrameworkCase frameworks={["html"]}>
+    <FrameworkCase frameworks={["html", "vue", "svelte"]}>
     ```ts
     const video = document.querySelector('youtube-video');
     video.source = {

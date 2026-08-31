@@ -32,7 +32,7 @@ export default function App() {
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```html title="index.html"
 <video-player>
   <media-container>
@@ -64,7 +64,7 @@ Set `envKey` when you monitor a source Mux doesn't host, like a self-hosted HLS 
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```html
 <hlsjs-video src="https://example.com/stream.m3u8"></hlsjs-video>
 <mux-data env-key="YOUR_ENV_KEY"></mux-data> <!-- [!code focus] -->
@@ -91,7 +91,7 @@ Pass Mux Data [metadata](https://www.mux.com/docs/guides/make-your-data-actionab
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```ts
 const muxData = document.querySelector('mux-data');
 muxData.metadata = { video_title: 'Big Buck Bunny', viewer_user_id: 'u_789' }; // [!code focus]

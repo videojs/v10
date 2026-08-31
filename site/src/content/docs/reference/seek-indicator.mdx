@@ -37,7 +37,7 @@ import basicUsageHtmlTs from "@/components/docs/demos/seek-indicator/html/css/Ba
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```html
 <media-seek-indicator>
   <media-seek-indicator-value></media-seek-indicator-value>
@@ -71,7 +71,7 @@ The indicator closes after `closeDelay`, which defaults to 800 milliseconds. Rea
 
 Position the Root from `data-direction` and use the transition attributes for entry and exit styles.
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```css
 media-seek-indicator[data-direction="backward"] {
   left: 1rem;
@@ -128,7 +128,7 @@ Focus the player, then press the left or right arrow key to seek by ten seconds.
   </StyleCase>
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   <StyleCase styles={["css"]}>
     <Demo files={[
       { title: "index.html", code: basicUsageHtml, lang: "html" },

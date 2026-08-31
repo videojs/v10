@@ -38,7 +38,7 @@ Set autoplay, muted, and inline playback on the media element, and keep a manual
   </StyleCase>
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   <StyleCase styles={["css"]}>
     <Demo files={[
       { title: "index.html", code: basicUsageHtml, lang: "html" },
@@ -57,7 +57,7 @@ Set autoplay, muted, and inline playback on the media element, and keep a manual
 The `autoPlay`, `muted`, and `playsInline` props on <DocsLink slug="reference/create-player">`Video`</DocsLink> and similar media components pass through to the underlying media element. When the media element supports them, they're applied, and playback is requested as soon as the media has enough data.
 
 </FrameworkCase>
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 
 The `autoplay`, `muted`, and `playsinline` attributes on `<video>` and similar media components pass through to the underlying media element. When the media element supports them, they're applied, and playback is requested as soon as the media has enough data.
 
@@ -93,7 +93,7 @@ export default function Hero() {
 ```
 
 </FrameworkCase>
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 
 ```html
 <hls-background-video src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM.m3u8"></hls-background-video>
@@ -141,7 +141,7 @@ export default function App() {
 ```
 
 </FrameworkCase>
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 
 Call `play()` on the media element from a click handler:
 
@@ -185,7 +185,7 @@ If autoplay is blocked, the player stays paused and the Play button remains in i
 Enable inline playback with the `playsInline` prop on the media component.
 
 </FrameworkCase>
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 
 Enable inline playback with the `playsinline` attribute on the media element.
 

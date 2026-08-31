@@ -170,7 +170,7 @@ Write a Vue- or Svelte-specific replacement only when the shared HTML content wo
 When you do author a variant, exclude Vue and Svelte from the HTML block so they don't render both:
 
 ```mdx
-<FrameworkCase frameworks={["html"]} exclude={["vue", "svelte"]}>
+<FrameworkCase frameworks={["html"]}>
   HTML-specific content
 </FrameworkCase>
 <FrameworkCase frameworks={["vue"]}>
@@ -610,7 +610,7 @@ Which renders as:
   </StyleCase>
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   <StyleCase styles={["css"]}>
     <Demo files={[
       { title: "index.html", code: basicUsageHtml, lang: "html" },

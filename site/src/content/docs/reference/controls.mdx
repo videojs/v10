@@ -41,7 +41,7 @@ Import the component and assemble its parts:
   ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   ```html
   <media-controls>
     <media-controls-backdrop></media-controls-backdrop>
@@ -66,7 +66,7 @@ User activity is tracked via pointer movement, keyboard input, and focus events 
 
 By default, controls have the following styles:
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```css
 /* Click-through: clicks pass through controls to video beneath */
 media-controls-content {
@@ -134,7 +134,7 @@ React renders `<div>` elements. Add a `className` to style them:
 
 ## Accessibility
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 No ARIA role is applied to `<media-controls>` or `<media-controls-content>` — they provide state and layout, not a landmark. `<media-controls-backdrop>` is always hidden from assistive technology. `<media-controls-group>` automatically receives `role="group"` when an `aria-label` or `aria-labelledby` attribute is provided; otherwise no role is assigned.
 </FrameworkCase>
 
@@ -159,7 +159,7 @@ No ARIA role is applied to `<media-controls>` or `<media-controls-content>` — 
   </StyleCase>
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   <StyleCase styles={["css"]}>
     <Demo
       files={[

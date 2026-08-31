@@ -20,7 +20,7 @@ Before building from scratch, check if an existing approach covers your use case
 - **Rearrange or remove controls**: eject a skin and modify it. See <DocsLink slug="how-to/customize-skins">Customize skins</DocsLink>.
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 - **Restyle a control**: use CSS custom properties and data attributes. See <DocsLink slug="concepts/ui-components">UI components</DocsLink>.
 - **Rearrange or remove controls**: eject a skin and modify it. See <DocsLink slug="how-to/customize-skins">Customize skins</DocsLink>.
 </FrameworkCase>
@@ -63,7 +63,7 @@ store.seek(30);
 
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 
 Access state and actions with <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> and a feature selector:
 
@@ -115,7 +115,7 @@ import { Container } from '@videojs/react';
 
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 
 Your element needs to be inside <DocsLink slug="reference/player">`<video-player>`</DocsLink> to access state. Place it inside <DocsLink slug="reference/player-container">`<media-container>`</DocsLink> if it should also participate in fullscreen and respond to user activity. `<video-skin>` slots its children into `<media-container>`, so a child of the skin works:
 
@@ -233,7 +233,7 @@ export default function App() {
 
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 
 <TabsRoot client:idle>
   <TabsList client:idle label="HTML skip intro example">
@@ -385,7 +385,7 @@ store.seek(30);
 
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 
 Extend `MediaElement` from `@videojs/html` so <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> can schedule DOM updates when state changes, and access state and actions with a feature selector:
 

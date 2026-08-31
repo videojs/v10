@@ -66,7 +66,7 @@ const { Content, headings, remarkPluginFrontmatter } = await render(doc);
 // Use conditional headings from our remark plugin if available, otherwise fallback to default headings
 const conditionalHeadings = remarkPluginFrontmatter?.conditionalHeadings;
 const filteredHeadings = conditionalHeadings
-  ? conditionalHeadings.filter((h: any) => frameworkMatches(framework, h.frameworks, h.excludeFrameworks))
+  ? conditionalHeadings.filter((h: any) => frameworkMatches(framework, h.frameworks))
   : headings;
 
 // Get adjacent guides for navigation

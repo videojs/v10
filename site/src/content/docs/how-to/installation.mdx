@@ -31,7 +31,7 @@ Video.js v10 is currently in _beta_. The API may evolve with [feedback&#x1F64F;]
 <FrameworkCase frameworks={["react"]}>
 Video.js is a **React video player component library**: composable primitives, hooks, and TypeScript types for building accessible, customizable players with minimal bundle sizes, advanced features, and consistency across browsers.
 </FrameworkCase>
-<FrameworkCase frameworks={["html"]} exclude={["vue", "svelte"]}>
+<FrameworkCase frameworks={["html"]}>
 Video.js is an **HTML video player built on custom elements**: lightweight, framework-free components for building accessible, customizable players with minimal bundle sizes, advanced features, and consistency across browsers.
 </FrameworkCase>
 <FrameworkCase frameworks={["vue"]}>
@@ -77,7 +77,7 @@ The `--framework` flag takes `html` or `react`. For a Vue or Svelte project, pas
 <FrameworkCase frameworks={["react"]}>
 If your user's requirements can't be met by a preset/skin, [eject](/docs/framework/react/how-to/customize-skins) and customize an existing preset/skin for your needs. As you develop with Video.js, rely heavily on [llms.txt](/docs/framework/react/llms.txt) to make sure you always have the latest information.
 </FrameworkCase>
-<FrameworkCase frameworks={["html"]} exclude={["vue", "svelte"]}>
+<FrameworkCase frameworks={["html"]}>
 If your user's requirements can't be met by a preset/skin, [eject](/docs/framework/html/how-to/customize-skins) and customize an existing preset/skin for your needs. As you develop with Video.js, rely heavily on [llms.txt](/docs/framework/html/llms.txt) to make sure you always have the latest information.
 </FrameworkCase>
 <FrameworkCase frameworks={["vue"]}>
@@ -106,7 +106,7 @@ Video.js aims to provide idiomatic development experiences: React components, or
   <JSPicker />
 </ContentWidth>
 
-<FrameworkCase frameworks={["html"]} exclude={["vue", "svelte"]}>
+<FrameworkCase frameworks={["html"]}>
   Building in Vue or Svelte? Pick it above. You'll install the same `@videojs/html` custom elements, and these guides will show them in your framework's components.
 
   <DocsLinkCard slug="how-to/use-videojs-with-vue">Vue and Nuxt</DocsLinkCard>
@@ -152,7 +152,7 @@ Video.js supports a wide range of file types and hosting services. It's easy to 
 
 ## Install Video.js
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   <HTMLInstallTabs />
 </FrameworkCase>
 <FrameworkCase frameworks={["vue", "svelte"]}>
@@ -189,7 +189,7 @@ Video.js supports a wide range of file types and hosting services. It's easy to 
   </TabsRoot>
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]} exclude={["vue", "svelte"]}>
+<FrameworkCase frameworks={["html"]}>
 
 ## Use your player
 
@@ -276,7 +276,7 @@ That's it! You now have a working Video.js player.
 
 <DocsLinkCard slug="concepts/security" description="Configure Content Security Policy for your player">Content Security Policy</DocsLinkCard>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 <DocsLinkCard slug="how-to/self-host-the-player" description="Serve the player from your own origin for offline or restricted-network deployments">Self-host the player</DocsLinkCard>
 </FrameworkCase>
 

@@ -20,7 +20,7 @@ Controls remote playback to devices like Chromecast (Chromium) and AirPlay (Safa
 Pass `selectRemotePlayback` to <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> to subscribe to remote playback state. Returns `undefined` if the remote playback feature is not configured.
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 Pass `selectRemotePlayback` to <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> to subscribe to remote playback state. Returns `undefined` if the remote playback feature is not configured.
 </FrameworkCase>
 
@@ -41,7 +41,7 @@ function CastButton() {
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```ts title="cast-button.ts"
 import { createPlayer, UIElement, selectRemotePlayback } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';

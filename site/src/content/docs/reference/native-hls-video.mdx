@@ -39,7 +39,7 @@ HLS video element that relies on the browser's native HLS support. Works on Safa
   </StyleCase>
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   <StyleCase styles={["css"]}>
     <Demo files={[
       { title: "index.html", code: basicUsageHtml, lang: "html" },
@@ -70,7 +70,7 @@ HLS video element that relies on the browser's native HLS support. Works on Safa
     ```
     </FrameworkCase>
 
-    <FrameworkCase frameworks={["html"]}>
+    <FrameworkCase frameworks={["html", "vue", "svelte"]}>
     ```ts
     const video = document.querySelector('native-hls-video');
     video.source = {

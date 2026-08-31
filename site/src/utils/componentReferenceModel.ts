@@ -1,6 +1,10 @@
 import type { ComponentReference, PartReference } from '@/types/component-reference';
 import type { SupportedFramework } from '@/types/docs';
 
+// Astro evaluates this module through `satteriConditionalHeadings` while Vite+ is still loading the task graph, so the
+// `@/` alias is not resolvable yet for value imports.
+import { apiPlatformFrameworks, HTML_API_FRAMEWORKS, SUPPORTED_FRAMEWORKS } from '../types/docs';
+
 export interface ApiReferenceSection {
   key: string;
   title: string;
@@ -16,6 +20,7 @@ export interface PartModel {
   description: string | undefined;
   componentName: string;
   labelByFramework: { react: string; html: string };
+  /** Frameworks this part is visible to — the `html` platform expands to every framework reading that API. */
   frameworks: SupportedFramework[];
   sections: ApiReferenceSection[];
   data: PartReference;
@@ -85,13 +90,14 @@ function createSections(
       return [];
     }
 
-    const frameworks: SupportedFramework[] | undefined =
+    /** The API platforms (`html`, `react`) this subsection's props are authored for. */
+    const platforms: SupportedFramework[] | undefined =
       definition.key === 'props'
         ? ([
             ...new Set(Object.values(source.props).flatMap((prop) => prop.frameworks ?? (['html', 'react'] as const))),
           ] as SupportedFramework[])
         : undefined;
-    const frameworkRestriction = frameworks?.length === 1 ? { frameworks } : {};
+    const frameworkRestriction = platforms?.length === 1 ? { frameworks: apiPlatformFrameworks(platforms[0]) } : {};
 
     if (options.forPart) {
       return [
@@ -123,7 +129,7 @@ function createSections(
       title: 'Events',
       id: options.forPart ? `${options.partId}-events` : 'events',
       depth: options.forPart ? 4 : 3,
-      frameworks: ['html'],
+      frameworks: HTML_API_FRAMEWORKS,
     };
 
     if (options.forPart) section.tocKind = 'api-reference-subsection';
@@ -169,8 +175,8 @@ export function createComponentReferenceModel(
         html: part.platforms?.html?.tagName ?? part.name,
       },
       frameworks: [
-        ...(part.platforms?.html ? ['html' as const] : []),
-        ...(part.platforms?.react ? ['react' as const] : []),
+        ...(part.platforms?.html ? HTML_API_FRAMEWORKS : []),
+        ...(part.platforms?.react ? (['react'] as const) : []),
       ],
       sections: createSections(part, { forPart: true, partId }),
       data: part,
@@ -234,7 +240,7 @@ export function buildComponentReferenceTocHeadings(apiReferenceModel: ComponentR
           depth: 3,
           text: part.labelByFramework.html,
           slug: part.id,
-          frameworks: ['html'],
+          frameworks: HTML_API_FRAMEWORKS,
         });
       }
 
@@ -248,7 +254,7 @@ export function buildComponentReferenceTocHeadings(apiReferenceModel: ComponentR
           text: section.title,
           slug: section.id,
           tocKind: section.tocKind,
-          ...(frameworks.length < 2 ? { frameworks } : {}),
+          ...(frameworks.length < SUPPORTED_FRAMEWORKS.length ? { frameworks } : {}),
         });
       }
     }

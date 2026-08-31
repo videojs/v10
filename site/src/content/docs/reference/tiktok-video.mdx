@@ -34,7 +34,7 @@ The [TikTok embed player](https://developers.tiktok.com/doc/embed-player) expect
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```html
 <tiktok-video src="https://www.tiktok.com/@_luwes/video/7527476667770522893"></tiktok-video>
 ```
@@ -72,7 +72,7 @@ Two settings opt out. `preload="none"` skips the warm-up, leaving the network un
   </StyleCase>
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   <StyleCase styles={["css"]}>
     <Demo files={[
       { title: "index.html", code: basicUsageHtml, lang: "html" },
@@ -101,7 +101,7 @@ Two settings opt out. `preload="none"` skips the warm-up, leaving the network un
     ```
     </FrameworkCase>
 
-    <FrameworkCase frameworks={["html"]}>
+    <FrameworkCase frameworks={["html", "vue", "svelte"]}>
     ```ts
     const video = document.querySelector('tiktok-video');
     video.source = {

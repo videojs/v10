@@ -52,7 +52,7 @@ import withPreviewHtmlTs from "@/components/docs/demos/slider/html/css/WithPrevi
   ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   ```html
   <media-slider>
     <media-slider-track>
@@ -77,7 +77,7 @@ The slider supports vertical orientation via the `orientation` prop (defaults to
 
 Use [CSS custom properties](#root-css-custom-properties) to position fill, thumb, and preview elements:
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```css
 media-slider-fill {
   width: var(--media-slider-fill);
@@ -105,7 +105,7 @@ React renders standard DOM elements. Add a `className` to style them:
 
 Style based on [interaction state](#root-data-attributes):
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```css
 media-slider[data-interactive] media-slider-track {
   height: 6px;
@@ -155,7 +155,7 @@ A slider with track, fill, and thumb.
   </StyleCase>
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   <StyleCase styles={["css"]}>
     <Demo
       files={[
@@ -186,7 +186,7 @@ A slider with a pointer-tracking preview that displays the value at the current 
   </StyleCase>
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   <StyleCase styles={["css"]}>
     <Demo
       files={[

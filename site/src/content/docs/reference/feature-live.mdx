@@ -28,7 +28,7 @@ The <DocsLink slug="reference/feature-time">time feature</DocsLink> reports the 
 Pass `selectLive` to <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> to subscribe to live state. Returns `undefined` if the live feature is not configured.
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 Pass `selectLive` to <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> to subscribe to live state. Returns `undefined` if the live feature is not configured.
 </FrameworkCase>
 
@@ -47,7 +47,7 @@ function LiveEdgeIndicator() {
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```ts title="live-edge-button.ts"
 import { createPlayer, UIElement, selectLive } from '@videojs/html';
 import { liveVideoFeatures } from '@videojs/html/live-video';
@@ -74,7 +74,7 @@ export function StationLiveButton() {
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```html title="index.html"
 <script type="module">
   import '@videojs/html/ui/live-button';
@@ -118,6 +118,6 @@ export function CustomLiveButton() {
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 Read the same three selectors with <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink>. Call `selectTime`'s `seek()` action with the last end time from `selectBuffer` when `selectLive` reports a live source.
 </FrameworkCase>

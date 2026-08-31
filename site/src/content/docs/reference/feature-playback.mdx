@@ -17,7 +17,7 @@ Controls play/pause state and tracks whether playback has started or is stalled.
 Pass `selectPlayback` to <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> to subscribe to playback state. Returns `undefined` if the playback feature is not configured.
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 Pass `selectPlayback` to <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> to subscribe to playback state. Returns `undefined` if the playback feature is not configured.
 </FrameworkCase>
 
@@ -33,7 +33,7 @@ function PlayButton() {
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```ts title="play-button.ts"
 import { createPlayer, UIElement, selectPlayback } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';

@@ -17,7 +17,7 @@ Tracks available audio tracks and selects the enabled track.
 Pass `selectAudioTrack` to <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> to subscribe to audio track state. Returns `undefined` if the audio track feature is not configured.
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 Pass `selectAudioTrack` to <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> to subscribe to audio track state. Returns `undefined` if the audio track feature is not configured.
 </FrameworkCase>
 
@@ -34,7 +34,7 @@ function AudioTrackInfo() {
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```ts title="audio-track-info.ts"
 import { createPlayer, UIElement, selectAudioTrack } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';

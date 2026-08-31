@@ -27,7 +27,6 @@ interface ConditionalHeading {
   text: string;
   slug: string;
   frameworks?: string[];
-  excludeFrameworks?: string[];
   styles?: string[];
   tocKind?: string;
 }
@@ -75,11 +74,9 @@ export function satteriConditionalHeadings(): MdastPluginInput {
           slug: slugger.slug(text),
         };
 
-        const { frameworks, excludeFrameworks, styles } = resolveCaseContext(node, ctx);
+        const { frameworks, styles } = resolveCaseContext(node, ctx);
 
         if (frameworks) heading.frameworks = frameworks;
-
-        if (excludeFrameworks) heading.excludeFrameworks = excludeFrameworks;
 
         if (styles) heading.styles = styles;
 
@@ -114,9 +111,8 @@ export function satteriConditionalHeadings(): MdastPluginInput {
 function resolveCaseContext(
   node: Parameters<MdastVisitorContext['parent']>[0],
   ctx: MdastVisitorContext
-): { frameworks: string[] | null; excludeFrameworks: string[] | null; styles: string[] | null } {
+): { frameworks: string[] | null; styles: string[] | null } {
   let frameworks: string[] | null = null;
-  let excludeFrameworks: string[] | null = null;
   let styles: string[] | null = null;
 
   let current = ctx.parent(node);
@@ -125,9 +121,8 @@ function resolveCaseContext(
     if (current.type === 'mdxJsxFlowElement') {
       const el = current as MdxJsxFlowElement;
 
-      if (!frameworks && !excludeFrameworks && el.name === 'FrameworkCase') {
+      if (!frameworks && el.name === 'FrameworkCase') {
         frameworks = extractArrayAttr(el, 'frameworks');
-        excludeFrameworks = extractArrayAttr(el, 'exclude');
       } else if (!styles && el.name === 'StyleCase') {
         styles = extractArrayAttr(el, 'styles');
       }
@@ -136,7 +131,7 @@ function resolveCaseContext(
     current = ctx.parent(current);
   }
 
-  return { frameworks, excludeFrameworks, styles };
+  return { frameworks, styles };
 }
 
 function getStringAttr(node: MdxJsxFlowElement, name: string): string | null {

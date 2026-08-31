@@ -13,7 +13,7 @@ import Aside from '@/components/Aside.astro';
 <FrameworkCase frameworks={["react"]}>
 The `Player` is the state boundary of your player. It creates a store and makes it available to every component inside it via context. Every player needs exactly one.
 </FrameworkCase>
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 The `<video-player>` element is the state boundary of your player. It creates a store and makes it available to every element inside it via context. Every player needs exactly one.
 </FrameworkCase>
 
@@ -36,7 +36,7 @@ function App() {
 }
 ```
 </FrameworkCase>
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```html
 <video-player>
   <!-- Everything inside can access the player store -->
@@ -66,7 +66,7 @@ The <DocsLink slug="concepts/features">features</DocsLink> you pass determine wh
 <DocsLinkCard slug="reference/create-player">createPlayer reference</DocsLinkCard>
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 For most users, importing from `@videojs/html/video/player` registers a ready-to-use `<video-player>` element with the standard video <DocsLink slug="concepts/features">features</DocsLink> (bundled as a <DocsLink slug="concepts/presets">preset</DocsLink>):
 
 ```ts
@@ -111,7 +111,7 @@ Everything that needs player state goes inside `Player`: skins, containers, UI c
 </Player>
 ```
 </FrameworkCase>
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```html
 <video-player>
   <video-skin>               <!-- skin — includes container + controls -->
@@ -129,7 +129,7 @@ Everything that needs player state goes inside `Player`: skins, containers, UI c
 
 `Player` is the Provider half of a React Context pair, with <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> as its consumer, and it renders nothing. If a component needs player state, lift `Player` above it the way you'd lift any Provider: wrapping a page section, a route, or even your whole app in `Player` costs nothing visually and keeps `usePlayer` available wherever you need it.
 </FrameworkCase>
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 Packaged skins make `<video-player>` boxless with `display: contents`. Width, height, positioning, transforms, and `getBoundingClientRect()` do not describe a visible player box there. Put layout and measurements on the <DocsLink slug="reference/player-container">`<media-container>`</DocsLink> instead.
 
 If you omit `<video-skin>` and import only the player and media elements, those skin styles are not loaded. The player element still owns state, not layout, so add and style a `<media-container>` instead of using the player itself as the layout surface.
@@ -157,7 +157,7 @@ function PlayPauseButton() {
 
 <DocsLinkCard slug="reference/use-player">usePlayer reference</DocsLinkCard>
 </FrameworkCase>
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 Use the preset's typed `PlayerController` to subscribe to store state from any custom element inside the player:
 
 ```ts title="play-pause-button.ts"
@@ -205,7 +205,7 @@ The player's scope can extend beyond the fullscreen target. Playlists, transcrip
 </Player>
 ```
 </FrameworkCase>
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```html
 <video-player>
   <media-container>

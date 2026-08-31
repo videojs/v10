@@ -17,7 +17,7 @@ Controls speed of playback.
 Pass `selectPlaybackRate` to <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> to subscribe to playback rate state. Returns `undefined` if the playback rate feature is not configured.
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 Pass `selectPlaybackRate` to <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> to subscribe to playback rate state. Returns `undefined` if the playback rate feature is not configured.
 </FrameworkCase>
 
@@ -34,7 +34,7 @@ function RateDisplay() {
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```ts title="rate-display.ts"
 import { createPlayer, UIElement, selectPlaybackRate } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';

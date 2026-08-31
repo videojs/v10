@@ -43,7 +43,7 @@ import basicUsageHtmlTs from "@/components/docs/demos/dialog/html/css/BasicUsage
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```html
 <button commandfor="video-dialog">Open video</button>
 <media-dialog id="video-dialog">
@@ -65,7 +65,7 @@ import basicUsageHtmlTs from "@/components/docs/demos/dialog/html/css/BasicUsage
 Use `Dialog.Trigger` to open the dialog. Use `open` with `onOpenChange` for controlled state, or `defaultOpen` for uncontrolled state. `Root` provides state without rendering an element, while `Popup` renders only while the dialog is open or closing.
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 Place a button immediately before `media-dialog`, or connect them explicitly with `commandfor` and an `id`. You can also set the dialog's `open` property directly. The root provides state without creating a layout box; `media-dialog-backdrop` and `media-dialog-popup` are sibling surfaces. The element dispatches `open-change` when its state changes and `open-change-complete` after the popup transition finishes.
 </FrameworkCase>
 
@@ -85,7 +85,7 @@ Use the open and transition data attributes to style the modal and its animation
 | `data-starting-style` | Present at the start of the opening transition |
 | `data-ending-style` | Present during the closing transition |
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```css
 media-dialog-backdrop:not([data-open]),
 media-dialog-popup:not([data-open]) {
@@ -139,7 +139,7 @@ Open the video from its thumbnail. Playback starts when the dialog opens and pau
   </StyleCase>
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   <StyleCase styles={["css"]}>
     <Demo files={[
       { title: "index.html", code: basicUsageHtml, lang: "html" },

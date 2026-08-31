@@ -21,7 +21,7 @@ When a thumbnail track is present, `thumbnailTrackCrossOrigin` reports the media
 Pass `selectTextTrack` to <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> to subscribe to text track state. Returns `undefined` if the text tracks feature is not configured.
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 Pass `selectTextTrack` to <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> to subscribe to text track state. Returns `undefined` if the text tracks feature is not configured.
 </FrameworkCase>
 
@@ -42,7 +42,7 @@ function CaptionsButton() {
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```ts title="captions-button.ts"
 import { createPlayer, UIElement, selectTextTrack } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';

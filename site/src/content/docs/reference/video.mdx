@@ -31,7 +31,7 @@ import { Video } from '@videojs/react/video';
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 The media element is the browser's native `<video>`. Import the video player registration when it should provide media to Video.js:
 
 ```ts
@@ -50,7 +50,7 @@ import '@videojs/html/video/player';
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```html
 <video>
   <source />
@@ -65,7 +65,7 @@ import '@videojs/html/video/player';
 Place `Video` anywhere inside a `VideoPlayer`, or inside another Video.js `Player` configured for video. It becomes that player's media provider automatically. Outside a player, `Video` behaves as a standalone native `<video>`.
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 Place a native `<video>` anywhere inside `<video-player>`. It becomes that player's media provider automatically.
 </FrameworkCase>
 
@@ -79,7 +79,7 @@ Add native [`<track>` elements](https://developer.mozilla.org/en-US/docs/Web/HTM
 `Video` forwards native attributes, event handlers, and children to the underlying `<video>`. Its `ref` resolves to the `HTMLVideoElement`.
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 `<video>` is the native element itself. Set its attributes and properties, listen for native media events, and access it through an `HTMLVideoElement` reference.
 </FrameworkCase>
 
@@ -102,7 +102,7 @@ This native video uses a child source, captions track, and browser controls whil
   </StyleCase>
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   <StyleCase styles={["css"]}>
     <Demo files={[
       { title: "index.html", code: basicUsageHtml, lang: "html" },

@@ -30,7 +30,7 @@ import { VideoPlayer, Video, VideoSkin } from '@videojs/react/video';
 ```
 
 </FrameworkCase>
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 
 For example, if you import `<video-player>` from the `/video` path, you will have playback, volume, time, fullscreen, and more already enabled.
 
@@ -64,7 +64,7 @@ const { Player } = createPlayer({
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```ts
 import { controlsFeature, createPlayer, playbackFeature, timeFeature, volumeFeature } from '@videojs/html';
 
@@ -90,7 +90,7 @@ const { Player } = createPlayer({
 });
 ```
 </FrameworkCase>
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```ts
 import { createPlayer, playbackFeature } from '@videojs/html';
 import { backgroundFeatures } from '@videojs/html/background';
@@ -121,7 +121,7 @@ store.setVolume(0.8);
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 You can access feature state and actions through <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> and pre-built feature selectors (e.g. <DocsLink slug="reference/feature-playback">`selectPlayback`</DocsLink>, <DocsLink slug="reference/feature-volume">`selectVolume`</DocsLink>):
 ```ts
 import { selectPlayback } from '@videojs/html';
@@ -166,7 +166,7 @@ Components that depend on availability (like <DocsLink slug="reference/mute-butt
 
 Use `data-disabled` to style the non-interactive state:
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```css
 media-pip-button[data-disabled] {
   opacity: 0.5;
@@ -196,7 +196,7 @@ function PiPControl() {
 }
 ```
 </FrameworkCase>
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```ts
 const media = this.#pip.value;
 

@@ -23,7 +23,7 @@ The packaged presets do not include this feature. Add `streamTypeFeature` to a c
 Pass `selectStreamType` to <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> to subscribe to stream type state. Returns `undefined` if the stream type feature is not configured.
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 Pass `selectStreamType` to <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> to subscribe to stream type state. Returns `undefined` if the stream type feature is not configured.
 </FrameworkCase>
 
@@ -45,7 +45,7 @@ function LiveIndicator() {
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```ts title="live-indicator.ts"
 import { createPlayer, selectStreamType, streamTypeFeature, UIElement } from '@videojs/html';
 import { liveVideoFeatures } from '@videojs/html/live-video';

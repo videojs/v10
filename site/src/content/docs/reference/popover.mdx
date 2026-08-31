@@ -41,7 +41,7 @@ import basicUsageHtmlTs from "@/components/docs/demos/popover/html/css/BasicUsag
   ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   ```html
   <media-popover>
     <button>Open</button>
@@ -66,7 +66,7 @@ The `side` and `align` props control the preferred popup placement relative to t
   renders a directional arrow.
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   In HTML, the `media-popover` element wraps a trigger (first child button) and
   popup content (second child). The element manages open/close state and
   positioning automatically.
@@ -76,7 +76,7 @@ The `side` and `align` props control the preferred popup placement relative to t
 
 Use [CSS custom properties](#root-css-custom-properties) for positioning offsets:
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```css
 media-popover {
   --media-popover-side-offset: 8px;
@@ -100,7 +100,7 @@ React renders standard DOM elements. Add a `className` to style them:
 
 Style based on open state, rendered side, and transition phases. `data-side` reflects the rendered side and can differ from the preferred `side` prop after collision handling:
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```css
 media-popover[data-open] .popup {
   display: block;
@@ -161,7 +161,7 @@ The trigger receives `aria-expanded` reflecting the open state. When `modal` is 
   </StyleCase>
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   <StyleCase styles={["css"]}>
     <Demo
       files={[

@@ -17,7 +17,7 @@ Tracks media errors.
 Pass `selectError` to <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> to subscribe to error state. Returns `undefined` if the error feature is not configured.
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 Pass `selectError` to <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> to subscribe to error state. Returns `undefined` if the error feature is not configured.
 </FrameworkCase>
 
@@ -39,7 +39,7 @@ function ErrorDisplay() {
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```ts title="error-display.ts"
 import { createPlayer, UIElement, selectError } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';

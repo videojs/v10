@@ -19,7 +19,7 @@ Pass `selectVolume` to <DocsLink slug="reference/use-player">`usePlayer`</DocsLi
 Check `volumeAvailability` before showing a volume-level control, and check `mutedAvailability` before showing a mute control.
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 Pass `selectVolume` to <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> to subscribe to volume state. Returns `undefined` if the volume feature is not configured.
 
 Check `volumeAvailability` before showing a volume-level control, and check `mutedAvailability` before showing a mute control.
@@ -47,7 +47,7 @@ function VolumeSlider() {
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```ts title="volume-slider.ts"
 import { createPlayer, UIElement, selectVolume } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';

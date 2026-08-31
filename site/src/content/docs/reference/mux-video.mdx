@@ -51,7 +51,7 @@ If for some reason you need a bit more control, you can use the `src` param with
 MuxVideo ignores the same source object when it is assigned again. A new object fires `sourcechange` even when its values are equal, although an equivalent playback source does not reload.
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 
 MuxVideo takes Mux content two ways: a stream URL through `src`, or a structured `source` object.
 
@@ -97,7 +97,7 @@ MuxVideo injects the derived storyboard `<track>` automatically and removes it w
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```ts
 const video = document.querySelector('mux-video')!;
 video.source = {
@@ -121,7 +121,7 @@ The storyboard lives on a Mux domain, so MuxVideo has to be CORS-enabled for tha
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```html
 <mux-video
   src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM.m3u8"
@@ -149,7 +149,7 @@ Signed playback needs a separate token for each image URL. Put the thumbnail tok
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```ts
 const video = document.querySelector('mux-video')!;
 video.source = {
@@ -187,7 +187,7 @@ export function MuxPlayer() {
 ```
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
 ```html
 <script type="module">
   import '@videojs/html/video/player';
@@ -222,7 +222,7 @@ export function MuxPlayer() {
   </StyleCase>
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html", "vue", "svelte"]}>
   <StyleCase styles={["css"]}>
     <Demo files={[
       { title: "index.html", code: basicUsageHtml, lang: "html" },
