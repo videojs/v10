@@ -17,8 +17,16 @@ import { createMediaHost } from '@videojs/media/dom/media-host';
  * finer-grained descriptor form is what would close that gap — and the same "fixed by attach, read by nobody" logic
  * that removed volume arguably applies to the `loop`/`autoplay`/`preload` read-backs too.
  */
-export const BackgroundVideoHost = createMediaHost([
-  seekCapability,
-  autoplayCapability,
-  sourceCapability,
-] as const);
+const BackgroundVideoHostBase = createMediaHost([seekCapability, autoplayCapability, sourceCapability] as const);
+
+export class BackgroundVideoHost extends BackgroundVideoHostBase {
+  /**
+   * The background player's only event is self-dispatched (`error`, promoted from the engine's fatal condition), and
+   * the React component re-fires it on the `<video>` node — bridging target events back onto the media would turn
+   * that into a feedback loop, so this host opts out (the hand-rolled host never bridged at all).
+   *
+   * No `override` modifier: `MediaHostConstructor` erases the base's statics, so TypeScript cannot see the member
+   * being overridden — a #2535 typing gap in its own right.
+   */
+  protected static readonly bridgesTargetEvents = false;
+}
