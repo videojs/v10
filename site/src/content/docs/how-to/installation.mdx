@@ -70,7 +70,7 @@ Here's what the flags mean:
 If you're an agent, interview your user and offer to run the CLI for them, or offer them a precomposed CLI command. 
 
 <FrameworkCase frameworks={["vue", "svelte"]}>
-The `--framework` flag takes `html` or `react`. Vue and Svelte projects pass `--framework html`, which generates the `@videojs/html` custom elements they use, then move the generated imports and markup into a component as shown below.
+The `--framework` flag takes `html` or `react`. For a Vue or Svelte project, pass `--framework html`: it generates the `@videojs/html` custom elements those projects use. Move the generated imports and markup into a component, as shown below.
 </FrameworkCase>
 </div>
 
@@ -100,7 +100,7 @@ Otherwise, answer the questions below to get started quickly with your first emb
 
 ## Choose your JS framework
 
-Video.js aims to provide idiomatic development experiences: React components, or HTML custom elements that belong just as naturally in a Vue or Svelte template.
+Video.js aims to provide idiomatic development experiences: React components, or HTML custom elements you write in a plain page, a Vue template, or a Svelte component.
 
 <ContentWidth margins="lg">
   <JSPicker />
@@ -115,13 +115,13 @@ Video.js aims to provide idiomatic development experiences: React components, or
 </FrameworkCase>
 
 <FrameworkCase frameworks={["vue"]}>
-  In Vue, you'll install the `@videojs/html` custom elements and write them in your templates. They're first-class there: Vue binds their attributes, properties, and events like any other element. Complete the installation steps below, then read the Vue guide for compiler configuration, player state, and Nuxt.
+  In Vue, you'll install the `@videojs/html` custom elements and write them in your templates. They're first-class there: Vue binds their attributes and listens to their events like any other element. Complete the installation steps below, then read the Vue guide for compiler configuration, player state, and Nuxt.
 
   <DocsLinkCard slug="how-to/use-videojs-with-vue">Vue and Nuxt</DocsLinkCard>
 </FrameworkCase>
 
 <FrameworkCase frameworks={["svelte"]}>
-  In Svelte, you'll install the `@videojs/html` custom elements and write them in your markup. They're first-class there: Svelte compiles unknown tags to real elements and passes objects straight through as properties. Complete the installation steps below, then read the Svelte guide for player state, styling, and SvelteKit.
+  In Svelte, you'll install the `@videojs/html` custom elements and write them in your markup. They're first-class there: Svelte renders them as real elements and assigns object values to their properties. Complete the installation steps below, then read the Svelte guide for player state, styling, and SvelteKit.
 
   <DocsLinkCard slug="how-to/use-videojs-with-svelte">Svelte and SvelteKit</DocsLinkCard>
 </FrameworkCase>
