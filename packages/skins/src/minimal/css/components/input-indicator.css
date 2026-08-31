@@ -1,4 +1,4 @@
-.media-minimal-skin .media-input-indicator {
+.media-skin--minimal .media-input-indicator {
   position: absolute;
   inset: 0;
   display: grid;
@@ -11,7 +11,7 @@
   border-radius: inherit;
 }
 
-.media-minimal-skin {
+.media-skin--minimal {
   .media-volume-indicator,
   .media-status-indicator--state {
     position: absolute;

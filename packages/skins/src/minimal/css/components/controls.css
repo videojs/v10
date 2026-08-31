@@ -1,4 +1,4 @@
-.media-minimal-skin .media-controls {
+.media-skin--minimal .media-controls {
   --media-popover-side-offset: calc(var(--media-spacing) * (var(--media-base-side-offset, 2) + 1));
   --media-tooltip-side-offset: var(--media-popover-side-offset);
   --media-popover-boundary-offset: calc(var(--media-spacing) * (var(--media-base-boundary-offset, 0) + 1));

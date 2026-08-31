@@ -12,7 +12,7 @@ export const container = cn(
   '[--media-internal-accent-color:var(--media-accent-color,var(--media-default-accent-color))]',
   '[--media-accent-contrast-color:contrast-color(var(--media-internal-accent-color))]',
   '[--media-accent-background-color:var(--media-accent-color,oklch(from_var(--media-default-accent-color)_l_c_h/calc(alpha*0.1)))]',
-  '[--media-internal-accent-text-color:var(--media-accent-text-color,contrast-color(var(--media-accent-color,oklch(0_0_0))))]',
+  '[--media-internal-accent-text-color:var(--media-accent-text-color,contrast-color(var(--media-accent-color,var(--media-internal-accent-text-base,oklch(0_0_0)))))]',
   '[--media-container-border-radius:var(--media-border-radius,1.75rem)]',
   // Focus ring
   'outline-2 outline-transparent -outline-offset-4',

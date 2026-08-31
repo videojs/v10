@@ -5,25 +5,21 @@ import { SkinElement } from '../skin';
 
 import styles from '../../define/live-audio/skin.css?inline';
 
-const VOLUME_STEP = 5;
-
 function getTemplateHTML() {
   return /*html*/ `
-    <media-container class="media-default-skin media-default-skin--audio">
+    <media-container class="media-skin media-skin--default media-skin--audio">
       <!-- @deprecated slot="media" is no longer required, use the default slot instead -->
       <slot name="media"></slot>
       <slot></slot>
 
       <media-error-dialog>
         <media-dialog-popup class="media-dialog__popup">
-          <div class="media-dialog__dialog">
           <div class="media-dialog__content">
             <media-dialog-title class="media-dialog__title"></media-dialog-title>
             <media-dialog-description class="media-dialog__description"></media-dialog-description>
           </div>
           <div class="media-dialog__actions">
-            <media-dialog-close class="media-button media-button--subtle"></media-dialog-close>
-          </div>
+            <media-dialog-close class="media-button media-button--primary"></media-dialog-close>
           </div>
         </media-dialog-popup>
       </media-error-dialog>
@@ -59,7 +55,7 @@ function getTemplateHTML() {
             </media-mute-button>
 
             <media-popover id="live-audio-volume-popover" open-on-hover delay="200" close-delay="100" side="top" boundary="viewport" class="media-surface media-popover media-popover--volume">
-              <media-volume-slider step="${VOLUME_STEP}" class="media-slider" orientation="vertical" thumb-alignment="edge">
+              <media-volume-slider class="media-slider" orientation="vertical" thumb-alignment="edge">
                 <media-slider-track class="media-slider__track">
                   <media-slider-fill class="media-slider__fill"></media-slider-fill>
                 </media-slider-track>
@@ -74,8 +70,8 @@ function getTemplateHTML() {
       <media-hotkey keys="Space" action="togglePaused"></media-hotkey>
       <media-hotkey keys="k" action="togglePaused"></media-hotkey>
       <media-hotkey keys="m" action="toggleMuted"></media-hotkey>
-      <media-hotkey keys="ArrowUp" action="volumeStep" value="${VOLUME_STEP / 100}"></media-hotkey>
-      <media-hotkey keys="ArrowDown" action="volumeStep" value="${-VOLUME_STEP / 100}"></media-hotkey>
+      <media-hotkey keys="ArrowUp" action="volumeStep"></media-hotkey>
+      <media-hotkey keys="ArrowDown" action="volumeStep"></media-hotkey>
     </media-container>
   `;
 }

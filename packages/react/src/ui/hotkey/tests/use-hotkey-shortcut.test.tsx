@@ -1,4 +1,5 @@
 import { render, waitFor } from '@testing-library/react';
+import { findHotkeyCoordinator } from '@videojs/core/dom';
 import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vite-plus/test';
 
@@ -54,5 +55,27 @@ describe('useHotkeyShortcut', () => {
 
     await waitFor(() => expect(document.querySelector('[data-testid="shortcut"]')?.textContent).toBe('P'));
     expect(document.querySelector('[data-testid="aria"]')?.textContent).toBe('p');
+  });
+});
+
+describe('Hotkey', () => {
+  it('registers the default ArrowUp volume step', async () => {
+    const container = document.createElement('div');
+    const value = createContextValue(container);
+
+    render(
+      <Wrapper value={value}>
+        <Hotkey keys="ArrowUp" action="volumeStep" />
+      </Wrapper>
+    );
+
+    await waitFor(() => expect(findHotkeyCoordinator(container)).toBeDefined());
+
+    const activate = vi.fn();
+
+    findHotkeyCoordinator(container)!.subscribe(activate);
+    container.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true }));
+
+    expect(activate).toHaveBeenCalledWith(expect.objectContaining({ value: 0.05 }));
   });
 });

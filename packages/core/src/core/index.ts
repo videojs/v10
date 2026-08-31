@@ -16,6 +16,7 @@ export * from './ui/container/core';
 export * from './ui/container/data';
 export * from './ui/controls/core';
 export * from './ui/controls/data';
+export * from './ui/constants';
 export * from './ui/dialog/core';
 export * from './ui/dialog/data';
 export * from './ui/error-dialog/core';

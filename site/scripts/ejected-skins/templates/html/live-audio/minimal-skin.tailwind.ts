@@ -23,15 +23,13 @@ export function getTemplateHTML() {
 
       <media-error-dialog>
         <media-dialog-popup class="${dialog.popup}">
-        <div class="${dialog.dialog}">
           <div class="${dialog.content}">
             <media-dialog-title class="${dialog.title}"></media-dialog-title>
             <media-dialog-description class="${dialog.description}"></media-dialog-description>
           </div>
           <div class="${dialog.actions}">
-            <media-dialog-close class="${cn(button.base, button.subtle)}"></media-dialog-close>
+            <media-dialog-close class="${cn(button.base, button.primary)}"></media-dialog-close>
           </div>
-        </div>
         </media-dialog-popup>
       </media-error-dialog>
 
@@ -85,8 +83,8 @@ export function getTemplateHTML() {
       <media-hotkey keys="Space" action="togglePaused"></media-hotkey>
       <media-hotkey keys="k" action="togglePaused"></media-hotkey>
       <media-hotkey keys="m" action="toggleMuted"></media-hotkey>
-      <media-hotkey keys="ArrowUp" action="volumeStep" value="0.05"></media-hotkey>
-      <media-hotkey keys="ArrowDown" action="volumeStep" value="-0.05"></media-hotkey>
+      <media-hotkey keys="ArrowUp" action="volumeStep"></media-hotkey>
+      <media-hotkey keys="ArrowDown" action="volumeStep"></media-hotkey>
     </media-container>
   `;
 }

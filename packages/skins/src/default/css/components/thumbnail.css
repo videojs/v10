@@ -1,4 +1,4 @@
-.media-default-skin .media-thumbnail {
+.media-skin--default .media-thumbnail {
   position: relative;
   pointer-events: none;
   background-color: oklch(0 0 0 / 0.9);

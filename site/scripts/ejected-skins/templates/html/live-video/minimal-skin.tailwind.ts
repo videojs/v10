@@ -157,8 +157,8 @@ export function getTemplateHTML() {
       <media-hotkey keys="f" action="toggleFullscreen"></media-hotkey>
       <media-hotkey keys="c" action="toggleSubtitles"></media-hotkey>
       <media-hotkey keys="i" action="togglePictureInPicture"></media-hotkey>
-      <media-hotkey keys="ArrowUp" action="volumeStep" value="0.05"></media-hotkey>
-      <media-hotkey keys="ArrowDown" action="volumeStep" value="-0.05"></media-hotkey>
+      <media-hotkey keys="ArrowUp" action="volumeStep"></media-hotkey>
+      <media-hotkey keys="ArrowDown" action="volumeStep"></media-hotkey>
 
       <!-- Gestures -->
       <media-gesture type="tap" action="togglePaused" pointer="mouse" region="center"></media-gesture>

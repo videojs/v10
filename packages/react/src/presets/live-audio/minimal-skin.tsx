@@ -27,8 +27,6 @@ import { VolumeSlider } from '@/ui/volume-slider';
 
 import type { BaseSkinProps } from '../types';
 
-const VOLUME_STEP = 5;
-
 export type MinimalLiveAudioSkinProps = BaseSkinProps;
 
 const Button = forwardRef<HTMLButtonElement, ComponentProps<'button'>>(function Button({ className, ...props }, ref) {
@@ -75,7 +73,7 @@ function VolumePopover(): ReactNode {
         </Tooltip.Popup>
       </Tooltip.Root>
       <Popover.Popup className="media-popover media-popover--volume">
-        <VolumeSlider.Root step={VOLUME_STEP} className="media-slider" orientation="horizontal" thumbAlignment="edge">
+        <VolumeSlider.Root className="media-slider" orientation="horizontal" thumbAlignment="edge">
           <VolumeSlider.Track className="media-slider__track">
             <VolumeSlider.Fill className="media-slider__fill" />
           </VolumeSlider.Track>
@@ -95,19 +93,17 @@ export function MinimalLiveAudioSkin(props: MinimalLiveAudioSkinProps): ReactNod
   const { children, className, ...rest } = props;
 
   return (
-    <Container className={cn('media-minimal-skin media-minimal-skin--audio', className)} {...rest}>
+    <Container className={cn('media-skin media-skin--minimal media-skin--audio', className)} {...rest}>
       {children}
 
       <ErrorDialog.Root>
         <ErrorDialog.Popup className="media-dialog__popup">
-          <div className="media-dialog__dialog">
-            <div className="media-dialog__content">
-              <ErrorDialog.Title className="media-dialog__title"></ErrorDialog.Title>
-              <ErrorDialog.Description className="media-dialog__description" />
-            </div>
-            <div className="media-dialog__actions">
-              <ErrorDialog.Close className="media-button media-button--subtle"></ErrorDialog.Close>
-            </div>
+          <div className="media-dialog__content">
+            <ErrorDialog.Title className="media-dialog__title"></ErrorDialog.Title>
+            <ErrorDialog.Description className="media-dialog__description" />
+          </div>
+          <div className="media-dialog__actions">
+            <ErrorDialog.Close className="media-button media-button--primary"></ErrorDialog.Close>
           </div>
         </ErrorDialog.Popup>
       </ErrorDialog.Root>
@@ -155,8 +151,8 @@ export function MinimalLiveAudioSkin(props: MinimalLiveAudioSkinProps): ReactNod
       <Hotkey keys="Space" action="togglePaused" />
       <Hotkey keys="k" action="togglePaused" />
       <Hotkey keys="m" action="toggleMuted" />
-      <Hotkey keys="ArrowUp" action="volumeStep" value={VOLUME_STEP / 100} />
-      <Hotkey keys="ArrowDown" action="volumeStep" value={-VOLUME_STEP / 100} />
+      <Hotkey keys="ArrowUp" action="volumeStep" />
+      <Hotkey keys="ArrowDown" action="volumeStep" />
 
       {/* Input Feedback */}
       <StatusAnnouncer className="media-sr-only" />

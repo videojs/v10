@@ -20,6 +20,13 @@ export const BLOG_PAGE_SIZE = 10;
 export const VJS10_VERSION = htmlPackage.version;
 export const VJS10_HTML_CDN_BASE = `https://cdn.jsdelivr.net/npm/@videojs/html@${VJS10_VERSION}/cdn`;
 
+// The beta.32 release job checked out the commit before its version bump, so its
+// archive upload rebuilt beta.31 instead. Future releases use the current package
+// version; keep the latest available archive in docs until beta.32 is backfilled.
+const VJS10_HTML_ARCHIVE_VERSION_OVERRIDES = new Map([['10.0.0-beta.32', '10.0.0-beta.31']]);
+
+export const VJS10_HTML_ARCHIVE_VERSION = VJS10_HTML_ARCHIVE_VERSION_OVERRIDES.get(VJS10_VERSION) ?? VJS10_VERSION;
+
 export function isPrereleaseSite(siteUrl: URL | undefined): boolean {
   return siteUrl?.origin === PRERELEASE_URL.origin;
 }

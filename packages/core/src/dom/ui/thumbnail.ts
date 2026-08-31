@@ -34,6 +34,9 @@ export function createThumbnail(options: CreateThumbnailOptions): ThumbnailApi {
   let imgBound = false;
   let stopObservingResize: (() => void) | null = null;
 
+  // Sprite sheets that have already failed, so re-entering one does not restart the loading state.
+  const failedSrcs = new Set<string>();
+
   // --- img event listeners ---
 
   function onImgLoad() {
@@ -44,14 +47,22 @@ export function createThumbnail(options: CreateThumbnailOptions): ThumbnailApi {
       naturalHeight = img.naturalHeight;
     }
 
+    // A sheet that succeeds on a later attempt stops counting as failed.
+    failedSrcs.delete(lastSrc);
+
     loading = false;
     error = false;
     onStateChange();
   }
 
-  function onImgError() {
+  function markFailed(): void {
+    failedSrcs.add(lastSrc);
     loading = false;
     error = true;
+  }
+
+  function onImgError() {
+    markFailed();
     onStateChange();
   }
 
@@ -92,8 +103,13 @@ export function createThumbnail(options: CreateThumbnailOptions): ThumbnailApi {
     lastSrc = src;
 
     if (src) {
-      loading = true;
-      error = false;
+      // Returning to a sheet already known to fail goes straight back to the error state. Restarting the loading
+      // state would flash the skin's spinner shell under the pointer every time scrubbing crosses that boundary. The
+      // renderer assigns the src either way, so a sheet that recovers still clears itself on load.
+      const failed = failedSrcs.has(src);
+
+      loading = !failed;
+      error = failed;
     } else {
       loading = false;
       error = false;
@@ -118,8 +134,7 @@ export function createThumbnail(options: CreateThumbnailOptions): ThumbnailApi {
         loading = false;
         error = false;
       } else {
-        loading = false;
-        error = true;
+        markFailed();
       }
 
       onStateChange();
