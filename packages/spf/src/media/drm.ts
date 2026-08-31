@@ -63,6 +63,14 @@ export interface DrmSystemConfig {
    */
   headers?: DrmHeaders;
   /**
+   * Extra headers for this system's certificate request.
+   *
+   * Deliberately separate from {@link headers}: a custom header forces a CORS preflight, and most certificate endpoints
+   * are public hosts that would refuse one — so license auth never rides the certificate GET implicitly. A deployment
+   * that gates its certificate behind the same token (Vualto's shape) names it in both fields.
+   */
+  certificateHeaders?: DrmHeaders;
+  /**
    * Fetch credentials mode for this system's license and certificate exchanges. `'include'` sends cookies on a
    * cross-origin exchange (the server must answer CORS with `Access-Control-Allow-Credentials`) — the escape hatch
    * other engines expose as Shaka's `allowCrossSiteCredentials` or dash.js's `withCredentials`. Unset leaves fetch's
@@ -349,6 +357,7 @@ export function sourceDrmSystems(
           licenseUrl: () => resolveDrmUrl(entry()?.licenseUrl),
           serverCertificateUrl: () => resolveDrmUrl(entry()?.serverCertificateUrl),
           headers: () => resolveDrmHeaders(entry()?.headers),
+          certificateHeaders: () => resolveDrmHeaders(entry()?.certificateHeaders),
           credentials: () => resolveDrmCredentials(entry()?.credentials),
           licenseRequest: (request: DrmRequest) => entry()?.licenseRequest?.(request) ?? request,
           licenseResponse: (response: Uint8Array<ArrayBuffer>) => entry()?.licenseResponse?.(response) ?? response,
