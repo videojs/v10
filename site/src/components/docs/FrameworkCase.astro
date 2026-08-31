@@ -1,16 +1,29 @@
 ---
-
+/**
+ * Conditionally shows content based on the reader's selected framework.
+ *
+ * `frameworks` matches through the content-framework fallback, so `frameworks={["html"]}` also reaches Vue and Svelte
+ * readers, who consume the HTML API. Use `exclude` to keep a fallback framework out of that inherited content when a
+ * framework-specific variant sits beside it.
+ *
+ * @example
+ * <!-- Vue-specific variant, and the HTML content Vue should not also see -->
+ * <FrameworkCase frameworks={['vue']}>Vue-specific content</FrameworkCase>
+ * <FrameworkCase frameworks={['html']} exclude={['vue']}>HTML content</FrameworkCase>
+ */
 import type { SupportedFramework } from '@/types/docs';
+import { frameworkMatches } from '@/types/docs';
 
 interface Props {
   frameworks?: SupportedFramework[];
+  exclude?: SupportedFramework[];
 }
 
-const { frameworks } = Astro.props;
+const { frameworks, exclude } = Astro.props;
 const { framework } = Astro.params;
 
-// Only render if current framework matches, or if no frameworks specified (all frameworks)
-const shouldRender = !frameworks || frameworks.includes(framework as SupportedFramework);
+// Only render if the current framework matches, or if no frameworks specified (all frameworks)
+const shouldRender = frameworkMatches(framework as SupportedFramework, frameworks, exclude);
 ---
 
 {

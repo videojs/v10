@@ -1,6 +1,8 @@
 export const FRAMEWORK_STYLES = {
   react: ['css'],
   html: ['css'],
+  vue: ['css'],
+  svelte: ['css'],
 } as const;
 
 export type SupportedFramework = keyof typeof FRAMEWORK_STYLES;
@@ -10,6 +12,8 @@ export type AnySupportedStyle = SupportedStyle<SupportedFramework>;
 export const FRAMEWORK_LABELS: Record<SupportedFramework, string> = {
   react: 'React',
   html: 'HTML',
+  vue: 'Vue',
+  svelte: 'Svelte',
 };
 
 export const STYLE_LABELS: Record<AnySupportedStyle, string> = {
@@ -48,10 +52,67 @@ export function isValidStyleForFramework(
   return FRAMEWORK_STYLES[framework].includes(style as any);
 }
 
+/**
+ * Frameworks without a first-class adapter package consume another framework's content. Vue and Svelte users install
+ * `@videojs/html` and write custom elements, so their picker selections resolve to the HTML API content.
+ *
+ * A framework only appears here while it has no adapter of its own. Give it one, drop its entry, and every fallback
+ * below turns back into an exact match with no other change.
+ */
+export const CONTENT_FRAMEWORK_FALLBACK: Partial<Record<SupportedFramework, SupportedFramework>> = {
+  vue: 'html',
+  svelte: 'html',
+};
+
+/**
+ * Resolve which framework's authored content a picker selection reads. Vue and Svelte resolve to `html`; every other
+ * framework resolves to itself.
+ *
+ * Use this wherever a comparison decides which API variant to render (import statements, attribute vs. prop naming,
+ * package names). Keep the raw framework wherever the value is the user's own framework identity — the picker value, a
+ * URL segment, or a label naming the framework.
+ */
+export function resolveContentFramework(framework: SupportedFramework): SupportedFramework {
+  return CONTENT_FRAMEWORK_FALLBACK[framework] ?? framework;
+}
+
+/**
+ * Decide whether content tagged for a set of frameworks is visible to the current framework.
+ *
+ * Rules, in order:
+ *
+ * - No `frameworks` restriction: visible to every framework that is not excluded.
+ * - Listed in `exclude`: hidden, even when `frameworks` matches. This is the escape hatch for content that a fallback
+ *   framework should not inherit, for example HTML content sitting next to a Vue-specific variant.
+ * - Listed in `frameworks`: visible (exact match).
+ * - The framework's content framework is listed in `frameworks`: visible (fallback match, so `['html']` content reaches
+ *   Vue and Svelte).
+ * - Otherwise hidden.
+ *
+ * @param current - The framework currently selected in the docs picker
+ * @param frameworks - Frameworks the content is authored for; omit for "all frameworks"
+ * @param exclude - Frameworks that must not see this content, overriding both match kinds
+ */
+export function frameworkMatches(
+  current: SupportedFramework,
+  frameworks?: SupportedFramework[],
+  exclude?: SupportedFramework[]
+): boolean {
+  if (exclude?.includes(current)) return false;
+
+  if (!frameworks) return true;
+
+  if (frameworks.includes(current)) return true;
+
+  return frameworks.includes(resolveContentFramework(current));
+}
+
 export interface Guide {
   slug: string;
   sidebarLabel?: string; // defaults to guide title
   frameworks?: SupportedFramework[];
+  /** Frameworks hidden from this guide even when `frameworks` matches them through a content-framework fallback. */
+  excludeFrameworks?: SupportedFramework[];
   devOnly?: boolean; // only visible in development mode
 }
 
@@ -61,6 +122,8 @@ export interface SidebarLink {
   href: string;
   sidebarLabel: string;
   frameworks?: SupportedFramework[];
+  /** Frameworks hidden from this link even when `frameworks` matches them through a content-framework fallback. */
+  excludeFrameworks?: SupportedFramework[];
   devOnly?: boolean; // only visible in development mode
 }
 
@@ -68,6 +131,8 @@ export interface Section {
   sidebarLabel: string;
   llmsDescription?: string;
   frameworks?: SupportedFramework[];
+  /** Frameworks hidden from this section even when `frameworks` matches them through a content-framework fallback. */
+  excludeFrameworks?: SupportedFramework[];
   devOnly?: boolean; // only visible in development mode
   defaultOpen?: boolean;
   contents: Array<Guide | Section | SidebarLink>;
