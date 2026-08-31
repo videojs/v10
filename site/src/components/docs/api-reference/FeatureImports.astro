@@ -62,12 +62,12 @@ const imports: Array<{ code: string; framework: 'react' | 'html'; lang: BundledL
             <MarkdownCode>{bundle}</MarkdownCode>
           </>
         ))}{' '}
-        <DocsLink slug="concepts/presets">preset {bundles.length === 1 ? 'bundle' : 'bundles'}</DocsLink>{' '}
+        <DocsLink slug="concepts/presets">feature {bundles.length === 1 ? 'bundle' : 'bundles'}</DocsLink>{' '}
         {bundles.length === 1 ? 'includes' : 'include'} this feature.
       </>
     ) : (
       <>
-        No packaged <DocsLink slug="concepts/presets">preset bundle</DocsLink> includes this feature — add it to your{' '}
+        No packaged <DocsLink slug="concepts/presets">feature bundle</DocsLink> includes this feature — add it to your{' '}
         <DocsLink slug={createPlayerSlug}>
           <MarkdownCode>createPlayer</MarkdownCode>
         </DocsLink>{' '}
