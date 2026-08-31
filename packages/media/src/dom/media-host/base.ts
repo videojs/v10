@@ -40,6 +40,15 @@ export interface MediaComponents extends Map<MediaComponentConstructor, MediaCom
  * narrower surface (an animated image, say) composes its own.
  */
 export class MediaHostBase extends EventTarget {
+  /**
+   * EXPLORATION: whether subscribing to an event on the host also bridges that event type from the attached target.
+   *
+   * Bridging assumes a subscribed event originates on the target — but a media whose events are all self-dispatched
+   * (background video's engine-reported `error`) has nothing to bridge, and a consumer that re-fires a media event
+   * onto the target node turns the bridge into a feedback loop. Such a host opts out.
+   */
+  protected static readonly bridgesTargetEvents: boolean = true;
+
   #target: HTMLMediaTargetLike | null = null;
   #eventTypes = new Set<string>();
 
@@ -98,7 +107,9 @@ export class MediaHostBase extends EventTarget {
     listener: EventListenerOrEventListenerObject | null,
     options?: boolean | AddEventListenerOptions
   ): void {
-    if (!this.#eventTypes.has(type)) {
+    const bridges = (this.constructor as typeof MediaHostBase).bridgesTargetEvents;
+
+    if (bridges && !this.#eventTypes.has(type)) {
       this.#eventTypes.add(type);
       this.target?.addEventListener(type, this.#forwardEvent);
     }

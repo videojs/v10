@@ -1,6 +1,9 @@
 import { type MediaStreamType, MediaStreamTypes } from '@videojs/media';
 import type { Constructor, MixinReturn } from '@videojs/utils/types';
 
+import { hlsVideoMediaCapabilities } from './capabilities';
+import { deriveMediaDefaultProps } from './derived-defaults';
+
 import type { Composition } from '../../../core/composition/create-composition';
 import { effect } from '../../../core/signals/effect';
 import {
@@ -54,12 +57,15 @@ export interface HlsVideoMediaProps {
   streamType: HlsVideoMediaStreamType;
 }
 
-export const hlsVideoMediaDefaultProps: HlsVideoMediaProps = {
-  src: '',
-  preload: '',
-  disableRemotePlayback: false,
-  streamType: MediaStreamTypes.UNKNOWN,
-};
+// EXPLORATION (see #2573): derived from the adapter's declared capabilities instead of hand-maintained, so the
+// defaults and the declared surface cannot drift. The key list is the remaining hand-written piece, checked against
+// the props interface.
+export const hlsVideoMediaDefaultProps = deriveMediaDefaultProps<HlsVideoMediaProps>(hlsVideoMediaCapabilities, [
+  'src',
+  'preload',
+  'disableRemotePlayback',
+  'streamType',
+]);
 
 export interface HlsVideoMediaAPI extends HlsVideoMediaProps {
   readonly engine: Composition<HlsVideoEngineState, HlsVideoEngineContext>;

@@ -1,65 +1,32 @@
+import { autoplayCapability, seekCapability, sourceCapability } from '@videojs/media';
+import { createMediaHost } from '@videojs/media/dom/media-host';
+
 /**
- * The `<video>` binding a background video uses: somewhere to keep the attached element, and the four properties the
- * Media fixes on it.
+ * EXPLORATION (replaces the hand-rolled host — see #2573): the background-video host built from capability
+ * descriptors instead of a bespoke `EventTarget` subclass.
  *
- * That is the whole surface anything here reaches. The engine drives playback, the element exposes `src` and nothing
- * else, and the background player subscribes to no store features, so nothing asks a background video for
- * `currentTime`, `play()`, picture-in-picture, fullscreen, forwarded events, or media components. Holding the host to
- * what is reachable is what keeps this entry free of `@videojs/media`, and small enough to suit a component whose whole
- * pitch is its size.
+ * No volume capability: background video is video-only by design — the engine composes no audio, and `muted` on the
+ * element is the autoplay-policy workaround the adapter writes directly onto the target during `attach` (alongside
+ * `loop`, `autoplay`, `preload`). The hand-rolled host exposed `muted` only as read-back of that element state, and
+ * nothing consumes it, so the media API drops it — a worked example of "aren't ever" API subtraction.
  *
- * An `EventTarget`, because a Media is one: the store and the element layers take anything they attach as an event
- * source, and inheriting the three methods satisfies that for free rather than by stubbing them.
- *
- * ⚠️ It still implements too little to carry the rest of the media surface, which bounds what may consume it: a store
- * feature reading a property outside this set gets `undefined` rather than an error. A Media needing more of that
- * surface belongs on a host that provides it.
+ * The remaining granularity cost stands: capabilities are contract-sized, so `loop` arrives inside seek (with
+ * `currentTime`, `duration`, `seeking`) and `preload` inside source (with `src`, `currentSrc`, `readyState`,
+ * `crossOrigin`, `load()`, `canPlayType()`), plus `MediaHostBase`'s event mirroring and media-component registry in
+ * place of a bare `EventTarget`, and a `@videojs/media` dependency this entry used to avoid. A member-pick or
+ * finer-grained descriptor form is what would close that gap — and the same "fixed by attach, read by nobody" logic
+ * that removed volume arguably applies to the `loop`/`autoplay`/`preload` read-backs too.
  */
-export class BackgroundVideoHost extends EventTarget {
-  #target: HTMLVideoElement | null = null;
+const BackgroundVideoHostBase = createMediaHost([seekCapability, autoplayCapability, sourceCapability] as const);
 
-  attach(target: HTMLVideoElement): void {
-    if (!target || this.#target === target) return;
-
-    this.#target = target;
-  }
-
-  detach(): void {
-    this.#target = null;
-  }
-
-  // Read back off the element rather than stored, so they describe what is
-  // playing instead of what was asked for — see the adapter's note on why the
-  // Media declares none of these itself.
-  get loop(): boolean {
-    return this.#target?.loop ?? false;
-  }
-
-  set loop(value: boolean) {
-    if (this.#target) this.#target.loop = value;
-  }
-
-  get muted(): boolean {
-    return this.#target?.muted ?? false;
-  }
-
-  set muted(value: boolean) {
-    if (this.#target) this.#target.muted = value;
-  }
-
-  get autoplay(): boolean {
-    return this.#target?.autoplay ?? false;
-  }
-
-  set autoplay(value: boolean) {
-    if (this.#target) this.#target.autoplay = value;
-  }
-
-  get preload(): HTMLVideoElement['preload'] {
-    return this.#target?.preload ?? 'metadata';
-  }
-
-  set preload(value: HTMLVideoElement['preload']) {
-    if (this.#target) this.#target.preload = value;
-  }
+export class BackgroundVideoHost extends BackgroundVideoHostBase {
+  /**
+   * The background player's only event is self-dispatched (`error`, promoted from the engine's fatal condition), and
+   * the React component re-fires it on the `<video>` node — bridging target events back onto the media would turn
+   * that into a feedback loop, so this host opts out (the hand-rolled host never bridged at all).
+   *
+   * No `override` modifier: `MediaHostConstructor` erases the base's statics, so TypeScript cannot see the member
+   * being overridden — a #2535 typing gap in its own right.
+   */
+  protected static readonly bridgesTargetEvents = false;
 }
