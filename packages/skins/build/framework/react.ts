@@ -17,6 +17,12 @@ import type { GeneratedFrameworkFile } from './files.ts';
 const packageRoot = 'packages/react/src';
 const internalRoot = `${packageRoot}/internal/skins`;
 const presets = ['audio', 'live-audio', 'live-video', 'video'] as const;
+const radioGroupImports = new Set([
+  '@videojs/react/ui/audio-track-radio-group',
+  '@videojs/react/ui/captions-radio-group',
+  '@videojs/react/ui/playback-rate-radio-group',
+  '@videojs/react/ui/quality-radio-group',
+]);
 
 export interface CreateReactPackageSkinsOptions {
   readonly workspaceDir: string;
@@ -161,7 +167,7 @@ function reactModulePath(skin: ReactSkin, module: ValidatedComponentGraphModule<
 }
 
 function reactFrameworkImport(specifier: string): string | undefined {
-  if (specifier === '@videojs/react' || specifier === 'clsx') {
+  if (specifier === '@videojs/react' || radioGroupImports.has(specifier) || specifier === 'clsx') {
     return `${packageRoot}/internal/skin-primitives.ts`;
   }
 

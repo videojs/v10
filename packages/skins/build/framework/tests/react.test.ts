@@ -27,6 +27,9 @@ describe('createReactPackageSkins', () => {
     expect(files.get('packages/react/src/internal/skins/shared/components/button.tsx')).toContain(
       "from '../../../skin-primitives'"
     );
+    expect(files.get('packages/react/src/internal/skins/shared/components/button.tsx')).not.toContain(
+      '@videojs/react/ui/playback-rate-radio-group'
+    );
   });
 });
 
@@ -40,7 +43,7 @@ function fixtureGraph(root: string): ComponentGraph<SkinModuleMeta> {
       const buttonId = `${root}/components/button.tsx?skin=${skin}&style=css&target=react`;
       const rootSource = `import { Button } from '../../components/button';\nexport function ${pascalCase(theme)}${pascalCase(preset)}Skin() { return <Button />; }`;
       const buttonSource =
-        "import { PlayButton } from '@videojs/react';\nexport function Button() { return <PlayButton />; }";
+        "import { PlayButton } from '@videojs/react';\nimport { PlaybackRateRadioGroup } from '@videojs/react/ui/playback-rate-radio-group';\nexport function Button() { return <PlaybackRateRadioGroup.Root><PlayButton /></PlaybackRateRadioGroup.Root>; }";
 
       modules.set(rootId, {
         id: rootId,
@@ -61,7 +64,10 @@ function fixtureGraph(root: string): ComponentGraph<SkinModuleMeta> {
         filename: `${root}/components/button.tsx`,
         transform: { skin, style: 'css', target: 'react' },
         source: buttonSource,
-        imports: [importReference(buttonSource, '@videojs/react')],
+        imports: [
+          importReference(buttonSource, '@videojs/react'),
+          importReference(buttonSource, '@videojs/react/ui/playback-rate-radio-group'),
+        ],
       });
     }
   }
