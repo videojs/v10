@@ -1,7 +1,7 @@
 import { HlsBackgroundVideoMediaMixin } from './adapter';
-import { BackgroundVideoHost } from './host';
+import { BackgroundVideoHostComposed } from './host-composed';
 
-const HlsBackgroundVideoMediaBase = HlsBackgroundVideoMediaMixin(BackgroundVideoHost);
+const HlsBackgroundVideoMediaBase = HlsBackgroundVideoMediaMixin(BackgroundVideoHostComposed);
 
 /**
  * The background-video Media, bound to a `<video>` through {@link BackgroundVideoHost}.
