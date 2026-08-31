@@ -8,6 +8,7 @@ import {
   getAllGuideSlugs,
   getSectionsForGuide,
   getValidFrameworksForGuide,
+  isItemVisible,
 } from '../sidebar';
 
 // Mock FRAMEWORK_STYLES from @/types/docs to use our test config
