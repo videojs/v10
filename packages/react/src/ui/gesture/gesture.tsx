@@ -1,6 +1,11 @@
 import type { GestureProps as CoreGestureProps } from '@videojs/core';
 import type { AnyPlayerStore } from '@videojs/core/dom';
-import { createDoubleTapGesture, createTapGesture, resolveGestureAction } from '@videojs/core/dom';
+import {
+  createDoubleTapGesture,
+  createTapGesture,
+  getGestureActionValue,
+  resolveGestureAction,
+} from '@videojs/core/dom';
 import type { ReactNode } from 'react';
 import { useEffect } from 'react';
 
@@ -18,11 +23,13 @@ export function Gesture({ type, action, value, pointer, region, disabled }: Gest
     const resolver = resolveGestureAction(action);
     if (!resolver) return;
 
+    const actionValue = getGestureActionValue(action, region, value);
+
     const onActivate = (event: PointerEvent) => {
-      resolver({ store, value, event });
+      resolver({ store, value: actionValue, event });
     };
 
-    const options = { pointer, region, action, value };
+    const options = { pointer, region, action, value: actionValue };
 
     if (type === 'doubletap') {
       return createDoubleTapGesture(container, onActivate, options);

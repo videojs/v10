@@ -22,6 +22,7 @@ import {
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
 
+import { DEFAULT_SEEK_STEP } from '@/constants';
 import { useTranslator } from '@/i18n/context';
 import {
   CheckIcon,
@@ -54,9 +55,6 @@ import { Tooltip } from '@/ui/tooltip';
 import { VolumeSlider } from '@/ui/volume-slider';
 
 import type { MinimalAudioSkinProps } from './minimal-skin';
-
-const VOLUME_STEP = 5;
-const SEEK_TIME = 10;
 
 /* --------------------------------------- Components ---------------------------------------- */
 
@@ -140,7 +138,7 @@ function VolumePopover(): ReactNode {
         </Tooltip.Popup>
       </Tooltip.Root>
       <Popover.Popup className={cn(popup.volume)}>
-        <VolumeSlider.Root step={VOLUME_STEP} orientation="horizontal" thumbAlignment="edge" render={<SliderRoot />}>
+        <VolumeSlider.Root orientation="horizontal" thumbAlignment="edge" render={<SliderRoot />}>
           <VolumeSlider.Track render={<SliderTrack />}>
             <VolumeSlider.Fill render={<SliderFill />} />
           </VolumeSlider.Track>
@@ -203,14 +201,12 @@ export function MinimalAudioSkinTailwind(props: MinimalAudioSkinProps): ReactNod
 
       <ErrorDialog.Root>
         <ErrorDialog.Popup className={dialog.popup}>
-          <div className={dialog.dialog}>
-            <div className={dialog.content}>
-              <ErrorDialog.Title className={dialog.title}></ErrorDialog.Title>
-              <ErrorDialog.Description className={dialog.description} />
-            </div>
-            <div className={dialog.actions}>
-              <ErrorDialog.Close className={cn(button.base, button.subtle)}></ErrorDialog.Close>
-            </div>
+          <div className={dialog.content}>
+            <ErrorDialog.Title className={dialog.title}></ErrorDialog.Title>
+            <ErrorDialog.Description className={dialog.description} />
+          </div>
+          <div className={dialog.actions}>
+            <ErrorDialog.Close className={cn(button.base, button.primary)}></ErrorDialog.Close>
           </div>
         </ErrorDialog.Popup>
       </ErrorDialog.Root>
@@ -246,10 +242,10 @@ export function MinimalAudioSkinTailwind(props: MinimalAudioSkinProps): ReactNod
             <Tooltip.Root side="top" boundary="viewport">
               <Tooltip.Trigger
                 render={
-                  <SeekButton seconds={-SEEK_TIME} render={<Button />}>
+                  <SeekButton seconds={-DEFAULT_SEEK_STEP} render={<Button />}>
                     <span className={iconContainer}>
                       <SeekIcon className={cn(icon, iconFlipped)} />
-                      <span className={cn(seek.label, seek.labelBackward)}>{SEEK_TIME}</span>
+                      <span className={cn(seek.label, seek.labelBackward)}>{DEFAULT_SEEK_STEP}</span>
                     </span>
                   </SeekButton>
                 }
@@ -263,10 +259,10 @@ export function MinimalAudioSkinTailwind(props: MinimalAudioSkinProps): ReactNod
             <Tooltip.Root side="top" boundary="viewport">
               <Tooltip.Trigger
                 render={
-                  <SeekButton seconds={SEEK_TIME} render={<Button />}>
+                  <SeekButton seconds={DEFAULT_SEEK_STEP} render={<Button />}>
                     <span className={iconContainer}>
                       <SeekIcon className={icon} />
-                      <span className={cn(seek.label, seek.labelForward)}>{SEEK_TIME}</span>
+                      <span className={cn(seek.label, seek.labelForward)}>{DEFAULT_SEEK_STEP}</span>
                     </span>
                   </SeekButton>
                 }
@@ -316,12 +312,12 @@ export function MinimalAudioSkinTailwind(props: MinimalAudioSkinProps): ReactNod
       <Hotkey keys="Space" action="togglePaused" />
       <Hotkey keys="k" action="togglePaused" />
       <Hotkey keys="m" action="toggleMuted" />
-      <Hotkey keys="ArrowRight" action="seekStep" value={5} />
-      <Hotkey keys="ArrowLeft" action="seekStep" value={-5} />
-      <Hotkey keys="l" action="seekStep" value={10} />
-      <Hotkey keys="j" action="seekStep" value={-10} />
-      <Hotkey keys="ArrowUp" action="volumeStep" value={VOLUME_STEP / 100} />
-      <Hotkey keys="ArrowDown" action="volumeStep" value={-VOLUME_STEP / 100} />
+      <Hotkey keys="ArrowRight" action="seekStep" />
+      <Hotkey keys="ArrowLeft" action="seekStep" />
+      <Hotkey keys="l" action="seekStep" />
+      <Hotkey keys="j" action="seekStep" />
+      <Hotkey keys="ArrowUp" action="volumeStep" />
+      <Hotkey keys="ArrowDown" action="volumeStep" />
       <Hotkey keys="0-9" action="seekToPercent" />
       <Hotkey keys="Home" action="seekToPercent" value={0} />
       <Hotkey keys="End" action="seekToPercent" value={100} />

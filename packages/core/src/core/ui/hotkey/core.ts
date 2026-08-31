@@ -15,7 +15,10 @@ export interface HotkeyProps {
   keys: string;
   /** Player action to run when the key pattern matches. */
   action: HotkeyActionName;
-  /** Numeric value passed to actions such as `seekStep`, `volumeStep`, and `seekToPercent`. */
+  /**
+   * Numeric value passed to actions such as `seekStep`, `volumeStep`, and `seekToPercent`. Arrow-key seek and volume
+   * actions use their shared input-action step when omitted.
+   */
   value?: number | undefined;
   /** Whether the hotkey is disabled. */
   disabled?: boolean | undefined;

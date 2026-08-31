@@ -1,8 +1,8 @@
-.media-default-skin {
+.media-skin--default {
   .media-dialog__backdrop {
     position: absolute;
     inset: 0;
-    z-index: 10;
+    z-index: 20;
     pointer-events: none;
     background: oklch(0 0 0 / 0.2);
     backdrop-filter: blur(16px) saturate(1.5);

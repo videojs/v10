@@ -85,15 +85,24 @@ describe('seekStep', () => {
     expect(seek).toHaveBeenCalledWith(15);
   });
 
-  it('does nothing without value', () => {
+  it('uses the default without value', () => {
     const seek = vi.fn();
 
     resolveGestureAction('seekStep')!(ctx({ currentTime: 10, duration: 60, seeking: false, seek }));
-    expect(seek).not.toHaveBeenCalled();
+    expect(seek).toHaveBeenCalledWith(20);
   });
 });
 
 describe('volumeStep', () => {
+  it('uses the default without value', () => {
+    const setVolume = vi.fn();
+
+    resolveGestureAction('volumeStep')!(
+      ctx({ volume: 0.5, muted: false, volumeAvailability: 'available', setVolume, toggleMuted: vi.fn() })
+    );
+    expect(setVolume).toHaveBeenCalledWith(0.55);
+  });
+
   it('adjusts volume by value offset', () => {
     const setVolume = vi.fn();
 

@@ -1,6 +1,7 @@
 import { isInteractiveTarget, listen } from '@videojs/utils/dom';
 
 import { isInteractionLocked } from '../ui/interaction-lock';
+import { getGestureActionValue } from './action-value';
 import type {
   GestureActivateEvent,
   GestureBinding,
@@ -50,15 +51,17 @@ export class GestureCoordinator {
   }
 
   add(binding: GestureBinding): () => void {
+    const value = getGestureActionValue(binding.action ?? '', binding.region, binding.value);
     const wrapped: GestureBinding = {
       ...binding,
+      value,
       onActivate: (event) => {
         if (this.#subscribers.size > 0) {
           const activateEvent: GestureActivateEvent = {
             type: binding.type,
             source: 'gesture',
             action: binding.action,
-            value: binding.value,
+            value,
             region: binding.region,
             pointer: binding.pointer,
             event,

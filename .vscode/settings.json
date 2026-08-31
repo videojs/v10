@@ -1,6 +1,7 @@
 {
   // Vite+ provides linting and formatting through Oxc.
   "eslint.enable": false,
+  "biome.enabled": false,
   "editor.formatOnSave": true,
   "editor.formatOnSaveMode": "file",
 

@@ -1,5 +1,5 @@
 /* Base button */
-.media-minimal-skin .media-button {
+.media-skin--minimal .media-button {
   display: flex;
   flex-shrink: 0;
   align-items: center;
@@ -11,8 +11,11 @@
   touch-action: manipulation;
   cursor: pointer;
   user-select: none;
+  appearance: none;
+  color: inherit;
   outline: 2px solid transparent;
   outline-offset: -2px;
+  background: none;
   border: none;
   border-radius: calc(var(--media-spacing) * 2);
   transition-timing-function: ease-out;
@@ -37,14 +40,14 @@
 }
 
 @supports (corner-shape: squircle) {
-  .media-minimal-skin .media-button {
+  .media-skin--minimal .media-button {
     border-radius: calc(var(--media-spacing) * 4);
     corner-shape: squircle;
   }
 }
 
 /* Primary button variant */
-.media-minimal-skin .media-button--primary {
+.media-skin--minimal .media-button--primary {
   font-weight: 500;
   color: var(--media-accent-contrast-color);
   text-shadow: none;
@@ -52,7 +55,7 @@
 }
 
 /* Subtle button variant */
-.media-minimal-skin .media-button--subtle {
+.media-skin--minimal .media-button--subtle {
   color: inherit;
   text-shadow: inherit;
   background: transparent;
@@ -69,7 +72,7 @@
 }
 
 /* Icon button variant */
-.media-minimal-skin .media-button--icon {
+.media-skin--minimal .media-button--icon {
   display: grid;
   aspect-ratio: 1;
   padding: 0;
@@ -92,7 +95,7 @@
 }
 
 /* Seek button */
-.media-minimal-skin .media-button--seek {
+.media-skin--minimal .media-button--seek {
   .media-icon__label {
     position: absolute;
     right: -1px;
@@ -110,7 +113,7 @@
 }
 
 /* Playback rate button */
-.media-minimal-skin .media-button--playback-rate {
+.media-skin--minimal .media-button--playback-rate {
   padding: 0;
   font-variant-numeric: tabular-nums;
 
@@ -125,7 +128,7 @@
 }
 
 /* Settings button */
-.media-minimal-skin .media-button--settings {
+.media-skin--minimal .media-button--settings {
   .media-icon--settings {
     transition: transform 150ms ease-in-out;
 
@@ -142,7 +145,7 @@
 /* Live button — wide pill button with a status dot (gray → red at the live
    edge) rendered via ::before, and "LIVE" text rendered as the button's own
    text content. */
-.media-minimal-skin .media-button--live {
+.media-skin--minimal .media-button--live {
   display: inline-flex;
   gap: calc(var(--media-spacing) * 1.5);
   align-items: center;
@@ -172,7 +175,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .media-minimal-skin .media-button {
+  .media-skin--minimal .media-button {
     scale: 1;
     transition-property: background-color;
     will-change: auto;

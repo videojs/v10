@@ -1,4 +1,4 @@
-@import "./components/reset.css";
+@import "../../shared/css/reset.css";
 @import "./components/container.css";
 @import "./components/media.css";
 @import "./components/controls-backdrop.css";
@@ -23,8 +23,10 @@
 @import "../../shared/css/video/icon-state.css";
 
 /* Container */
+/* :where() keeps the media-type class at zero specificity so component state rules (for example dialog
+   `:not([data-open])`) still outrank these entry rules as they did before the shared-class rename. */
 
-.media-minimal-skin--video {
+.media-skin--minimal:where(.media-skin--video) {
   --media-default-accent-color: oklch(1 0 0);
   --media-border-color: light-dark(oklch(0 0 0 / 0.15), oklch(1 0 0 / 0.15));
   --media-focus-ring-color: light-dark(oklch(0 0 0), oklch(1 0 0));
@@ -119,7 +121,7 @@
 
 /* Dialog */
 
-.media-minimal-skin--video .media-dialog__popup {
+.media-skin--minimal:where(.media-skin--video) .media-dialog__popup {
   position: absolute;
   top: 50%;
   left: 50%;
@@ -145,11 +147,12 @@
     scale: 0.95;
   }
   &[data-ending-style] {
+    transition-duration: max(calc(var(--media-dialog-transition-duration) - 100ms), 50ms);
     transition-delay: 0ms;
   }
 }
 
-.media-minimal-skin--video .media-dialog__content {
+.media-skin--minimal:where(.media-skin--video) .media-dialog__content {
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -158,17 +161,13 @@
   overflow-y: auto;
 }
 
-.media-minimal-skin--video .media-dialog__title {
+.media-skin--minimal:where(.media-skin--video) .media-dialog__title {
   font-size: var(--media-font-size-medium);
-}
-
-.media-minimal-skin--video:has([role="alertdialog"][data-open]) .media-controls {
-  display: none;
 }
 
 /* Controls (hide/show behavior) */
 
-.media-minimal-skin--video .media-controls {
+.media-skin--minimal:where(.media-skin--video) .media-controls {
   --media-base-side-offset: 5;
   --media-base-boundary-offset: 1;
   --media-inset-factor: 1;
@@ -236,7 +235,7 @@
   }
 
   &:has(.media-button--mute[aria-expanded="true"]) {
-    @container media-root (width <= 42rem) {
+    @container media-root (width <= 672px) {
       .media-button-group:last-child {
         --media-volume-mask-image: var(--media-volume-mask);
         --media-volume-mask-position: 0 0;
@@ -244,7 +243,7 @@
       }
     }
 
-    @container media-root (width > 42rem) {
+    @container media-root (width > 672px) {
       .media-time-controls {
         --media-volume-mask-image: var(--media-volume-mask);
         --media-volume-mask-position: 0 0;
@@ -252,7 +251,7 @@
     }
   }
 
-  @container media-root (width > 42rem) {
+  @container media-root (width > 672px) {
     --media-inset-factor: 2;
     --media-base-side-offset: 2;
 
@@ -273,13 +272,13 @@
 }
 
 /* Hide cursor when controls are hidden */
-.media-minimal-skin--video:has(.media-controls:not([data-visible])) {
+.media-skin--minimal:where(.media-skin--video):has(.media-controls:not([data-visible])) {
   cursor: none;
 }
 
 /* Popups & Animations */
 
-.media-minimal-skin--video .media-popover--volume {
+.media-skin--minimal:where(.media-skin--video) .media-popover--volume {
   --media-popover-side-offset: 0rem;
   padding: 0 calc(var(--media-spacing) * 3);
   background: transparent;
@@ -287,12 +286,12 @@
 
 /* Slider preview */
 
-.media-minimal-skin--video .media-slider__value {
+.media-skin--minimal:where(.media-skin--video) .media-slider__value {
   padding-inline: calc(var(--media-spacing) * 3);
   text-shadow: 0 1px 0 var(--media-shadow-current-color);
 }
 
-.media-minimal-skin--video .media-slider .media-slider__preview {
+.media-skin--minimal:where(.media-skin--video) .media-slider .media-slider__preview {
   --media-preview-end-inset: calc(100cqi - 100%);
   --media-preview-left: clamp(
     calc(var(--media-max-size) / 2),
@@ -300,7 +299,7 @@
     calc(100% - var(--media-max-size) / 2 + var(--media-preview-end-inset))
   );
 
-  @container media-root (width > 42rem) {
+  @container media-root (width > 672px) {
     --media-preview-left: var(--media-slider-pointer);
   }
 }

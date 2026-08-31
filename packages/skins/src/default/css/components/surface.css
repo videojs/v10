@@ -1,4 +1,4 @@
-.media-default-skin .media-surface {
+.media-skin--default .media-surface {
   background-color: var(--media-surface-background-color);
   box-shadow:
     0 0 0 1px var(--media-surface-outer-border-color),

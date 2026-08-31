@@ -1,4 +1,4 @@
-.media-default-skin .media-input-indicator {
+.media-skin--default .media-input-indicator {
   position: absolute;
   inset: 0;
   display: grid;
@@ -9,7 +9,7 @@
   pointer-events: none;
 }
 
-.media-default-skin {
+.media-skin--default {
   .media-volume-indicator,
   .media-status-indicator--state {
     --media-surface-background-color: oklch(0 0 0 / 0.25);

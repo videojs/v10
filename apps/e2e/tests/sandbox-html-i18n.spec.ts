@@ -159,7 +159,7 @@ test.describe('Sandbox React i18n', () => {
 
     await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
     await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
-    await expect(page.locator('.media-default-skin--video')).toHaveCSS('direction', 'rtl');
+    await expect(page.locator('.media-skin--default.media-skin--video')).toHaveCSS('direction', 'rtl');
     await expectLTRControlOrder(page);
     await expectLTRThumbnailCrop(page);
   });

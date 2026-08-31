@@ -1,30 +1,26 @@
 import { renderIcon } from '@videojs/icons/render';
 import { createShadowStyle, createTemplate } from '@videojs/utils/dom';
 
+import { DEFAULT_SEEK_STEP } from '../../constants';
 import { SkinElement } from '../skin';
 
 import styles from '../../define/audio/skin.css?inline';
 
-const VOLUME_STEP = 5;
-const SEEK_TIME = 10;
-
 function getTemplateHTML() {
   return /*html*/ `
-    <media-container class="media-default-skin media-default-skin--audio">
+    <media-container class="media-skin media-skin--default media-skin--audio">
       <!-- @deprecated slot="media" is no longer required, use the default slot instead -->
       <slot name="media"></slot>
       <slot></slot>
 
       <media-error-dialog>
         <media-dialog-popup class="media-dialog__popup">
-          <div class="media-dialog__dialog">
           <div class="media-dialog__content">
             <media-dialog-title class="media-dialog__title"></media-dialog-title>
             <media-dialog-description class="media-dialog__description"></media-dialog-description>
           </div>
           <div class="media-dialog__actions">
-            <media-dialog-close class="media-button media-button--subtle"></media-dialog-close>
-          </div>
+            <media-dialog-close class="media-button media-button--primary"></media-dialog-close>
           </div>
         </media-dialog-popup>
       </media-error-dialog>
@@ -47,10 +43,10 @@ function getTemplateHTML() {
               </media-tooltip>
             </span>
 
-            <media-seek-button commandfor="seek-backward-tooltip" seconds="${-SEEK_TIME}" class="media-button media-button--subtle media-button--icon media-button--seek">
+            <media-seek-button commandfor="seek-backward-tooltip" seconds="${-DEFAULT_SEEK_STEP}" class="media-button media-button--subtle media-button--icon media-button--seek">
               <span class="media-icon__container">
                 ${renderIcon('seek', { class: 'media-icon media-icon--seek media-icon--flipped' })}
-                <span class="media-icon__label">${SEEK_TIME}</span>
+                <span class="media-icon__label">${DEFAULT_SEEK_STEP}</span>
               </span>
             </media-seek-button>
             <media-tooltip id="seek-backward-tooltip" side="top" boundary="viewport" class="media-surface media-tooltip">
@@ -58,10 +54,10 @@ function getTemplateHTML() {
               <media-tooltip-shortcut class="media-tooltip__kbd"></media-tooltip-shortcut>
             </media-tooltip>
 
-            <media-seek-button commandfor="seek-forward-tooltip" seconds="${SEEK_TIME}" class="media-button media-button--subtle media-button--icon media-button--seek">
+            <media-seek-button commandfor="seek-forward-tooltip" seconds="${DEFAULT_SEEK_STEP}" class="media-button media-button--subtle media-button--icon media-button--seek">
               <span class="media-icon__container">
                 ${renderIcon('seek', { class: 'media-icon media-icon--seek' })}
-                <span class="media-icon__label">${SEEK_TIME}</span>
+                <span class="media-icon__label">${DEFAULT_SEEK_STEP}</span>
               </span>
             </media-seek-button>
             <media-tooltip id="seek-forward-tooltip" side="top" boundary="viewport" class="media-surface media-tooltip">
@@ -113,7 +109,7 @@ function getTemplateHTML() {
             </media-mute-button>
 
             <media-popover id="audio-volume-popover" open-on-hover delay="200" close-delay="100" side="top" boundary="viewport" class="media-surface media-popover media-popover--volume">
-              <media-volume-slider step="${VOLUME_STEP}" class="media-slider" orientation="vertical" thumb-alignment="edge">
+              <media-volume-slider class="media-slider" orientation="vertical" thumb-alignment="edge">
                 <media-slider-track class="media-slider__track">
                   <media-slider-fill class="media-slider__fill"></media-slider-fill>
                 </media-slider-track>
@@ -128,12 +124,12 @@ function getTemplateHTML() {
       <media-hotkey keys="Space" action="togglePaused"></media-hotkey>
       <media-hotkey keys="k" action="togglePaused"></media-hotkey>
       <media-hotkey keys="m" action="toggleMuted"></media-hotkey>
-      <media-hotkey keys="ArrowRight" action="seekStep" value="5"></media-hotkey>
-      <media-hotkey keys="ArrowLeft" action="seekStep" value="-5"></media-hotkey>
-      <media-hotkey keys="l" action="seekStep" value="10"></media-hotkey>
-      <media-hotkey keys="j" action="seekStep" value="-10"></media-hotkey>
-      <media-hotkey keys="ArrowUp" action="volumeStep" value="${VOLUME_STEP / 100}"></media-hotkey>
-      <media-hotkey keys="ArrowDown" action="volumeStep" value="${-VOLUME_STEP / 100}"></media-hotkey>
+      <media-hotkey keys="ArrowRight" action="seekStep"></media-hotkey>
+      <media-hotkey keys="ArrowLeft" action="seekStep"></media-hotkey>
+      <media-hotkey keys="l" action="seekStep"></media-hotkey>
+      <media-hotkey keys="j" action="seekStep"></media-hotkey>
+      <media-hotkey keys="ArrowUp" action="volumeStep"></media-hotkey>
+      <media-hotkey keys="ArrowDown" action="volumeStep"></media-hotkey>
       <media-hotkey keys="0-9" action="seekToPercent"></media-hotkey>
       <media-hotkey keys="Home" action="seekToPercent" value="0"></media-hotkey>
       <media-hotkey keys="End" action="seekToPercent" value="100"></media-hotkey>

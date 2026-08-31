@@ -1,5 +1,5 @@
-.media-minimal-skin media-poster,
-.media-minimal-skin > img {
+.media-skin--minimal media-poster,
+.media-skin--minimal > img {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -7,17 +7,17 @@
   pointer-events: none;
   transition: opacity 0.25s;
 }
-.media-minimal-skin media-poster:not([data-visible]),
-.media-minimal-skin > img:not([data-visible]) {
+.media-skin--minimal media-poster:not([data-visible]),
+.media-skin--minimal > img:not([data-visible]) {
   opacity: 0;
 }
-.media-minimal-skin media-poster > slot > img:not([src]):not([srcset]),
-.media-minimal-skin media-poster ::slotted(img:not([src]):not([srcset])),
-.media-minimal-skin > img:not([src]):not([srcset]) {
+.media-skin--minimal media-poster > slot > img:not([src]):not([srcset]),
+.media-skin--minimal media-poster ::slotted(img:not([src]):not([srcset])),
+.media-skin--minimal > img:not([src]):not([srcset]) {
   visibility: hidden;
 }
-.media-minimal-skin media-poster ::slotted(img),
-.media-minimal-skin media-poster img {
+.media-skin--minimal media-poster ::slotted(img),
+.media-skin--minimal media-poster img {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -26,14 +26,14 @@
   object-position: var(--media-object-position, center);
   border-radius: var(--media-container-border-radius);
 }
-.media-minimal-skin > img {
+.media-skin--minimal > img {
   object-fit: var(--media-object-fit, contain);
   object-position: var(--media-object-position, center);
   border-radius: inherit;
 }
 
-.media-minimal-skin:fullscreen media-poster ::slotted(img),
-.media-minimal-skin:fullscreen media-poster img,
-.media-minimal-skin:fullscreen > img {
+.media-skin--minimal:fullscreen media-poster ::slotted(img),
+.media-skin--minimal:fullscreen media-poster img,
+.media-skin--minimal:fullscreen > img {
   object-fit: contain;
 }

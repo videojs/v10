@@ -7,11 +7,9 @@ import { SkinElement } from '../skin';
 
 import styles from '../../define/video/skin.css?inline';
 
-const VOLUME_STEP = 5;
-
 function getTemplateHTML() {
   return /*html*/ `
-    <media-container class="media-default-skin media-default-skin--video">
+    <media-container class="media-skin media-skin--default media-skin--video">
       <!-- @deprecated slot="media" is no longer required, use the default slot instead -->
       <slot name="media"></slot>
       <slot></slot>
@@ -62,7 +60,7 @@ function getTemplateHTML() {
                 </media-mute-button>
 
                 <media-popover id="video-volume-popover" open-on-hover delay="200" close-delay="100" side="top" class="media-surface media-popover media-popover--volume">
-                  <media-volume-slider step="${VOLUME_STEP}" class="media-slider" orientation="vertical" thumb-alignment="edge">
+                  <media-volume-slider class="media-slider" orientation="vertical" thumb-alignment="edge">
                     <media-slider-track class="media-slider__track">
                       <media-slider-fill class="media-slider__fill"></media-slider-fill>
                     </media-slider-track>
@@ -278,12 +276,12 @@ function getTemplateHTML() {
       <media-hotkey keys="f" action="toggleFullscreen"></media-hotkey>
       <media-hotkey keys="c" action="toggleSubtitles"></media-hotkey>
       <media-hotkey keys="i" action="togglePictureInPicture"></media-hotkey>
-      <media-hotkey keys="ArrowRight" action="seekStep" value="5"></media-hotkey>
-      <media-hotkey keys="ArrowLeft" action="seekStep" value="-5"></media-hotkey>
-      <media-hotkey keys="l" action="seekStep" value="10"></media-hotkey>
-      <media-hotkey keys="j" action="seekStep" value="-10"></media-hotkey>
-      <media-hotkey keys="ArrowUp" action="volumeStep" value="${VOLUME_STEP / 100}"></media-hotkey>
-      <media-hotkey keys="ArrowDown" action="volumeStep" value="${-VOLUME_STEP / 100}"></media-hotkey>
+      <media-hotkey keys="ArrowRight" action="seekStep"></media-hotkey>
+      <media-hotkey keys="ArrowLeft" action="seekStep"></media-hotkey>
+      <media-hotkey keys="l" action="seekStep"></media-hotkey>
+      <media-hotkey keys="j" action="seekStep"></media-hotkey>
+      <media-hotkey keys="ArrowUp" action="volumeStep"></media-hotkey>
+      <media-hotkey keys="ArrowDown" action="volumeStep"></media-hotkey>
       <media-hotkey keys="0-9" action="seekToPercent"></media-hotkey>
       <media-hotkey keys="Home" action="seekToPercent" value="0"></media-hotkey>
       <media-hotkey keys="End" action="seekToPercent" value="100"></media-hotkey>
@@ -293,9 +291,9 @@ function getTemplateHTML() {
       <!-- Gestures -->
       <media-gesture type="tap" action="togglePaused" pointer="mouse" region="center"></media-gesture>
       <media-gesture type="tap" action="toggleControls" pointer="touch"></media-gesture>
-      <media-gesture type="doubletap" action="seekStep" value="-10" region="left"></media-gesture>
+      <media-gesture type="doubletap" action="seekStep" region="left"></media-gesture>
       <media-gesture type="doubletap" action="toggleFullscreen" region="center"></media-gesture>
-      <media-gesture type="doubletap" action="seekStep" value="10" region="right"></media-gesture>
+      <media-gesture type="doubletap" action="seekStep" region="right"></media-gesture>
 
       <!-- Input Indicators -->
       <media-status-announcer class="media-sr-only"></media-status-announcer>

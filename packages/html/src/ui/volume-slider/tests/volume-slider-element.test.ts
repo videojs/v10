@@ -66,7 +66,7 @@ describe('VolumeSliderElement', () => {
     const slider = createElement(VolumeSliderElement);
 
     expect(slider.label).toBe('');
-    expect(slider.step).toBe(1);
+    expect(slider.step).toBe(5);
     expect(slider.largeStep).toBe(10);
     expect(slider.orientation).toBe('horizontal');
     expect(slider.disabled).toBe(false);
