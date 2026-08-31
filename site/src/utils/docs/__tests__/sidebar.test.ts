@@ -20,6 +20,8 @@ vi.mock('@/types/docs', async () => {
   const MOCK_FRAMEWORK_STYLES = {
     html: ['css', 'tailwind'],
     react: ['css', 'tailwind'],
+    vue: ['css', 'tailwind'],
+    svelte: ['css', 'tailwind'],
   } as const;
 
   return {
@@ -34,6 +36,8 @@ vi.mock('@/types/docs', async () => {
 const _MOCK_FRAMEWORK_STYLES = {
   html: ['css', 'tailwind'],
   react: ['css', 'tailwind'],
+  vue: ['css', 'tailwind'],
+  svelte: ['css', 'tailwind'],
 } as const;
 
 type MockFramework = keyof typeof _MOCK_FRAMEWORK_STYLES;
@@ -379,7 +383,8 @@ describe('sidebar utilities', () => {
 
       const result = getValidFrameworksForGuide(guideWithOwn, sidebar);
 
-      expect(result).toEqual(['html']);
+      // html content also reaches the frameworks that fall back to it
+      expect(result).toEqual(['html', 'vue', 'svelte']);
     });
 
     it('should inherit restrictions through deeply nested sections', () => {
