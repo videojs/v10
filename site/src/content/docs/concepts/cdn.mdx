@@ -3,10 +3,11 @@ title: CDN
 description: The files the Video.js CDN serves and the layout rules behind their URLs
 ---
 
+import Aside from '@/components/Aside.astro';
 import CdnMediaList from '@/components/docs/CdnMediaList.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
 
-Video.js can run straight from `<script>` tags: no npm, no bundler. The CDN serves `@videojs/html` prebuilt into browser-ready bundles, and loading a bundle registers its custom elements. For many pages, one script tag is the whole install:
+Video.js can run straight from `<script>` tags: no npm, no bundler. The CDN serves `@videojs/html` prebuilt into browser-ready bundles which register custom elements. For many pages, it takes only one script tag:
 
 ```html title="index.html"
 <script type="module" src="{{VJS10_HTML_CDN_BASE}}/video.js"></script>
@@ -22,19 +23,17 @@ The npm package splits the player into one small module per component and lets y
 
 ## URLs
 
-`@videojs/html` publishes a `cdn/` directory of prebuilt, self-contained ES modules, and [jsDelivr](https://www.jsdelivr.com) serves the published package as-is. There is no separate CDN deploy. The filename inside `cdn/` is the public URL:
-
 ```
 https://cdn.jsdelivr.net/npm/@videojs/html@<version>/cdn/<file>
 ```
 
-For the current release, that base is `{{VJS10_HTML_CDN_BASE}}`.
-
-Pin every URL to one exact version, and the same version across all of them. Bundles share content-hashed chunks that change between releases. A floating tag like `@latest` re-resolves over time, so two unpinned files can come from different releases and load duplicate modules that no longer share state.
+<Aside type="caution" title="Pin all your CDN URLs to the same version.">
+Bundles share content-hashed chunks that change between releases. A tag like `@latest` re-resolves over time, so two files might come from different releases and load duplicate modules that no longer share state.
+</Aside>
 
 ## Player bundles
 
-Each installation preset ships three bundles at the root of `cdn/`, one per skin choice. For the video preset:
+Each installation <DocsLink slug="concepts/presets">preset</DocsLink> ships its bundles at the root of `cdn/`: one per skin choice, plus a player-only bundle. For the video preset:
 
 | File | Registers |
 | --- | --- |
@@ -42,7 +41,7 @@ Each installation preset ships three bundles at the root of `cdn/`, one per skin
 | `video-minimal.js` | `<video-player>`, `<video-minimal-skin>`, and the UI elements the minimal skin composes |
 | `video-player.js` | `<video-player>` alone, for markup without a packaged skin |
 
-The same trio exists for `audio`, `live-video`, and `live-audio`. Background video is the exception: one bundle, `background.js`, registers the player, the skin, and the `<background-video>` media element.
+The same pattern covers `audio`, `live-video`, and `live-audio`. Background video is the exception: one bundle, `background.js`, registers the player, the skin, and the `<background-video>` media element.
 
 A skin bundle registers every UI element its skin is built from. That means an <DocsLink slug="how-to/customize-skins">ejected layout</DocsLink> composed of those elements runs against the same script. The CDN publishes no per-component bundles, though: `import '@videojs/html/ui/play-button'` exists on npm, but there is no matching `ui/play-button.js`. When a custom layout needs elements beyond what its bundle registers, install from npm and bundle.
 
