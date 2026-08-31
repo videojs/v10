@@ -3,8 +3,6 @@ import type { BundledLanguage } from 'shiki';
 
 import ServerCode from '@/components/Code/ServerCode.astro';
 import CodeFrame from '@/components/typography/CodeFrame.astro';
-import P from '@/components/typography/P.astro';
-import DocsLink from '../DocsLink.astro';
 import FrameworkCase from '../FrameworkCase.astro';
 
 interface Props {
@@ -37,10 +35,3 @@ const imports: Array<{ code: string; framework: 'react' | 'html'; lang: BundledL
     </FrameworkCase>
   ))
 }
-
-<FrameworkCase frameworks={['html']}>
-  <P>
-    UI components have no per-component CDN bundle. On a CDN page, the skin bundles register the elements their skin
-    composes — see <DocsLink slug="concepts/cdn">CDN</DocsLink>.
-  </P>
-</FrameworkCase>

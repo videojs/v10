@@ -19,8 +19,6 @@ Video.js can run straight from `<script>` tags: no npm, no bundler. The CDN serv
 </video-player>
 ```
 
-The npm package splits the player into one small module per component and lets your bundler assemble them. The CDN regroups the same source into complete players, whole skins, and one media element per file. This page maps those files and the rules that keep their URLs working. <DocsLink slug="how-to/installation">Installation</DocsLink> generates the tags for your player; <DocsLink slug="how-to/self-host-the-player">Self-host the player</DocsLink> covers serving the same files from your own origin.
-
 ## URLs
 
 ```
@@ -43,7 +41,7 @@ Each installation <DocsLink slug="concepts/presets">preset</DocsLink> ships its 
 
 The same pattern covers `audio`, `live-video`, and `live-audio`. Background video is the exception: one bundle, `background.js`, registers the player, the skin, and the `<background-video>` media element.
 
-A skin bundle registers every UI element its skin is built from. That means an <DocsLink slug="how-to/customize-skins">ejected layout</DocsLink> composed of those elements runs against the same script. The CDN publishes no per-component bundles, though: `import '@videojs/html/ui/play-button'` exists on npm, but there is no matching `ui/play-button.js`. When a custom layout needs elements beyond what its bundle registers, install from npm and bundle.
+A skin bundle registers every UI element its skin is built from. The CDN publishes no per-component bundles, though. If you've <DocsLink slug="how-to/customize-skins">ejected the skin</DocsLink> and need to add new components, install from npm instead of from the CDN.
 
 ## Media bundles
 
