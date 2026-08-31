@@ -10,6 +10,8 @@ import UseCasePicker from '@/components/installation/UseCasePicker';
 import HTMLInstallTabs from '@/components/installation/HTMLInstallTabs.astro';
 import NoCdnMediaNote from '@/components/installation/NoCdnMediaNote.astro';
 import HTMLUsageCodeBlock from '@/components/installation/HTMLUsageCodeBlock';
+import VueUsageCodeBlock from '@/components/installation/VueUsageCodeBlock';
+import SvelteUsageCodeBlock from '@/components/installation/SvelteUsageCodeBlock';
 import ReactCreateCodeBlock from '@/components/installation/ReactCreateCodeBlock';
 import ReactUsageCodeBlock from '@/components/installation/ReactUsageCodeBlock';
 import ContentWidth from '@/components/frames/ContentWidth.astro';
@@ -29,8 +31,14 @@ Video.js v10 is currently in _beta_. The API may evolve with [feedback&#x1F64F;]
 <FrameworkCase frameworks={["react"]}>
 Video.js is a **React video player component library**: composable primitives, hooks, and TypeScript types for building accessible, customizable players with minimal bundle sizes, advanced features, and consistency across browsers.
 </FrameworkCase>
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html"]} exclude={["vue", "svelte"]}>
 Video.js is an **HTML video player built on custom elements**: lightweight, framework-free components for building accessible, customizable players with minimal bundle sizes, advanced features, and consistency across browsers.
+</FrameworkCase>
+<FrameworkCase frameworks={["vue"]}>
+Video.js is a **video player built on custom elements**: lightweight components that work in any framework, Vue included, for building accessible, customizable players with minimal bundle sizes, advanced features, and consistency across browsers.
+</FrameworkCase>
+<FrameworkCase frameworks={["svelte"]}>
+Video.js is a **video player built on custom elements**: lightweight components that work in any framework, Svelte included, for building accessible, customizable players with minimal bundle sizes, advanced features, and consistency across browsers.
 </FrameworkCase>
 
 <LLMCase>
@@ -60,6 +68,10 @@ Here's what the flags mean:
 - *Install method*: How do you want to install your package? (CDN is HTML-only<NoCdnMediaNote />.)
 
 If you're an agent, interview your user and offer to run the CLI for them, or offer them a precomposed CLI command. 
+
+<FrameworkCase frameworks={["vue", "svelte"]}>
+The `--framework` flag takes `html` or `react`. Pass `--framework html`: it generates the `@videojs/html` custom elements, which are the ones this framework uses. Move the generated imports and markup into a component, as shown below.
+</FrameworkCase>
 </div>
 
 <FrameworkCase frameworks={["react"]}>
