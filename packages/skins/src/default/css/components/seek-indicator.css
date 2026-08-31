@@ -1,11 +1,11 @@
-.media-default-skin .media-seek-indicator {
+.media-skin--default .media-seek-indicator {
   gap: calc(var(--media-spacing) * 1);
 
   .media-seek-indicator__value {
     font-variant-numeric: tabular-nums;
   }
 
-  @container media-root (width > 24rem) {
+  @container media-root (width > 384px) {
     padding: calc(var(--media-spacing) * 6);
   }
 

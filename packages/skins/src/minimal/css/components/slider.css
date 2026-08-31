@@ -1,4 +1,4 @@
-.media-minimal-skin .media-slider {
+.media-skin--minimal .media-slider {
   --media-track-size: calc(var(--media-spacing) * 1);
   --media-track-highlighted-size: calc(var(--media-spacing) * 1.75);
   --media-track-border-radius: 99px;
@@ -266,11 +266,11 @@
     min-width: 100%;
     height: calc(var(--media-spacing) * 1);
 
-    @container media-root (width > 32rem) {
+    @container media-root (width > 512px) {
       --media-max-size-factor: 36;
     }
 
-    @container media-root (width > 42rem) {
+    @container media-root (width > 672px) {
       --media-max-size-factor: 48;
     }
 

@@ -1,3 +1,4 @@
+import { DEFAULT_SEEK_STEP } from '@videojs/html';
 import { renderIcon } from '@videojs/icons/render/minimal';
 import {
   button,
@@ -19,8 +20,6 @@ import {
 } from '@videojs/skins/minimal/tailwind/audio.tailwind';
 import { cn } from '@videojs/utils/style';
 
-const SEEK_TIME = 10;
-
 export function getTemplateHTML() {
   return /*html*/ `
     <media-container class="${container}">
@@ -30,15 +29,13 @@ export function getTemplateHTML() {
 
       <media-error-dialog>
         <media-dialog-popup class="${dialog.popup}">
-        <div class="${dialog.dialog}">
           <div class="${dialog.content}">
             <media-dialog-title class="${dialog.title}"></media-dialog-title>
             <media-dialog-description class="${dialog.description}"></media-dialog-description>
           </div>
           <div class="${dialog.actions}">
-            <media-dialog-close class="${cn(button.base, button.subtle)}"></media-dialog-close>
+            <media-dialog-close class="${cn(button.base, button.primary)}"></media-dialog-close>
           </div>
-        </div>
         </media-dialog-popup>
       </media-error-dialog>
 
@@ -60,10 +57,10 @@ export function getTemplateHTML() {
               </media-tooltip>
             </span>
 
-            <media-seek-button commandfor="seek-backward-tooltip" seconds="${-SEEK_TIME}" class="${cn(button.base, button.subtle, button.icon)}">
+            <media-seek-button commandfor="seek-backward-tooltip" seconds="${-DEFAULT_SEEK_STEP}" class="${cn(button.base, button.subtle, button.icon)}">
               <span class="${iconContainer}">
                 ${renderIcon('seek', { class: cn(icon, iconFlipped) })}
-                <span class="${cn(seek.label, seek.labelBackward)}">${SEEK_TIME}</span>
+                <span class="${cn(seek.label, seek.labelBackward)}">${DEFAULT_SEEK_STEP}</span>
               </span>
             </media-seek-button>
             <media-tooltip id="seek-backward-tooltip" side="top" boundary="viewport" class="${cn(popup.tooltip)}">
@@ -71,10 +68,10 @@ export function getTemplateHTML() {
               <media-tooltip-shortcut class="${popup.tooltipShortcut}"></media-tooltip-shortcut>
             </media-tooltip>
 
-            <media-seek-button commandfor="seek-forward-tooltip" seconds="${SEEK_TIME}" class="${cn(button.base, button.subtle, button.icon)}">
+            <media-seek-button commandfor="seek-forward-tooltip" seconds="${DEFAULT_SEEK_STEP}" class="${cn(button.base, button.subtle, button.icon)}">
               <span class="${iconContainer}">
                 ${renderIcon('seek', { class: icon })}
-                <span class="${cn(seek.label, seek.labelForward)}">${SEEK_TIME}</span>
+                <span class="${cn(seek.label, seek.labelForward)}">${DEFAULT_SEEK_STEP}</span>
               </span>
             </media-seek-button>
             <media-tooltip id="seek-forward-tooltip" side="top" boundary="viewport" class="${cn(popup.tooltip)}">
@@ -151,12 +148,12 @@ export function getTemplateHTML() {
       <media-hotkey keys="Space" action="togglePaused"></media-hotkey>
       <media-hotkey keys="k" action="togglePaused"></media-hotkey>
       <media-hotkey keys="m" action="toggleMuted"></media-hotkey>
-      <media-hotkey keys="ArrowRight" action="seekStep" value="5"></media-hotkey>
-      <media-hotkey keys="ArrowLeft" action="seekStep" value="-5"></media-hotkey>
-      <media-hotkey keys="l" action="seekStep" value="10"></media-hotkey>
-      <media-hotkey keys="j" action="seekStep" value="-10"></media-hotkey>
-      <media-hotkey keys="ArrowUp" action="volumeStep" value="0.05"></media-hotkey>
-      <media-hotkey keys="ArrowDown" action="volumeStep" value="-0.05"></media-hotkey>
+      <media-hotkey keys="ArrowRight" action="seekStep"></media-hotkey>
+      <media-hotkey keys="ArrowLeft" action="seekStep"></media-hotkey>
+      <media-hotkey keys="l" action="seekStep"></media-hotkey>
+      <media-hotkey keys="j" action="seekStep"></media-hotkey>
+      <media-hotkey keys="ArrowUp" action="volumeStep"></media-hotkey>
+      <media-hotkey keys="ArrowDown" action="volumeStep"></media-hotkey>
       <media-hotkey keys="0-9" action="seekToPercent"></media-hotkey>
       <media-hotkey keys="Home" action="seekToPercent" value="0"></media-hotkey>
       <media-hotkey keys="End" action="seekToPercent" value="100"></media-hotkey>

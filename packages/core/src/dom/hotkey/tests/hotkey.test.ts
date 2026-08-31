@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
-import { createHotkey, matchesHotkeyEvent, parseHotkeyPattern } from '../hotkey';
+import { DEFAULT_SEEK_STEP } from '../../../core/ui/constants';
+import { createHotkey, findHotkeyCoordinator, matchesHotkeyEvent, parseHotkeyPattern } from '../hotkey';
 
 describe('parseHotkeyPattern', () => {
   it('parses a single key with no modifiers', () => {
@@ -308,6 +309,19 @@ describe('createHotkey', () => {
     el.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
 
     expect(onActivate).toHaveBeenCalledWith(expect.any(KeyboardEvent), 'ArrowRight');
+
+    cleanup();
+  });
+
+  it('uses the parsed key to resolve the default action value', () => {
+    const el = setup();
+    const cleanup = createHotkey(el, {
+      keys: 'Shift+ArrowLeft',
+      action: 'seekStep',
+      onActivate: vi.fn(),
+    });
+
+    expect(findHotkeyCoordinator(el)!.getShortcut('seekStep', -DEFAULT_SEEK_STEP).shortcut).toBe('Shift+ArrowLeft');
 
     cleanup();
   });

@@ -1,17 +1,17 @@
-.media-minimal-skin .media-icon__container {
+.media-skin--minimal .media-icon__container {
   position: relative;
 }
 
-.media-minimal-skin .media-icon {
+.media-skin--minimal .media-icon {
   flex-shrink: 0;
   width: var(--media-icon-size);
   height: var(--media-icon-size);
 }
-.media-minimal-skin .media-icon--flipped,
-.media-minimal-skin:dir(rtl) .media-menu__chevron {
+.media-skin--minimal .media-icon--flipped,
+.media-skin--minimal:dir(rtl) .media-menu__chevron {
   scale: -1 1;
 }
 
-.media-minimal-skin:dir(rtl) .media-menu__chevron.media-icon--flipped {
+.media-skin--minimal:dir(rtl) .media-menu__chevron.media-icon--flipped {
   scale: 1 1;
 }

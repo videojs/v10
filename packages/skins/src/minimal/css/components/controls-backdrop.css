@@ -1,4 +1,4 @@
-.media-minimal-skin .media-controls__backdrop {
+.media-skin--minimal .media-controls__backdrop {
   position: absolute;
   inset: 0;
   z-index: 10;

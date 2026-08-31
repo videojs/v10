@@ -169,7 +169,7 @@ describe('ThumbnailCore', () => {
       expect(scale).toBe(2);
     });
 
-    it('does not scale when tile already fits within constraints', () => {
+    it('scales up to fill the max box', () => {
       const core = new ThumbnailCore();
 
       const scale = core.calculateScale(256, 160, {
@@ -179,7 +179,21 @@ describe('ThumbnailCore', () => {
         maxHeight: 320,
       });
 
-      expect(scale).toBe(1);
+      expect(scale).toBe(2);
+    });
+
+    it('lets min constraints win over max', () => {
+      const core = new ThumbnailCore();
+
+      const scale = core.calculateScale(100, 50, {
+        minWidth: 400,
+        maxWidth: 200,
+        minHeight: 0,
+        maxHeight: Infinity,
+      });
+
+      // Filling max-width alone gives 200/100 = 2; min-width raises it to 400/100 = 4.
+      expect(scale).toBe(4);
     });
   });
 

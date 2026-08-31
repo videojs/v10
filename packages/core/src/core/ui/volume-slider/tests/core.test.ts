@@ -33,7 +33,7 @@ describe('VolumeSliderCore', () => {
     it('has expected defaults', () => {
       expect(VolumeSliderCore.defaultProps).toEqual({
         label: '',
-        step: 1,
+        step: 5,
         largeStep: 10,
         wheelStep: 5,
         orientation: 'horizontal',
