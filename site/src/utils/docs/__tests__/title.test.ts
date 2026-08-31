@@ -109,6 +109,35 @@ describe('getDocTitle', () => {
     });
   });
 
+  describe('content-framework fallback', () => {
+    it('should use the html title for frameworks that read html content', () => {
+      expect(getDocTitle(mockDocWithFrameworkTitle, 'vue')).toBe('play-button');
+      expect(getDocTitle(mockDocWithFrameworkTitle, 'svelte')).toBe('play-button');
+    });
+
+    it('should prefer a framework-specific title over the fallback title', () => {
+      const docWithVueTitle: CollectionEntry<'docs'> = {
+        ...mockDocWithFrameworkTitle,
+        data: {
+          ...mockDocWithFrameworkTitle.data,
+          frameworkTitle: {
+            react: 'PlayButton',
+            html: 'play-button',
+            vue: 'VjsPlayButton',
+          },
+        },
+      } as CollectionEntry<'docs'>;
+
+      expect(getDocTitle(docWithVueTitle, 'vue')).toBe('VjsPlayButton');
+      expect(getDocTitle(docWithVueTitle, 'svelte')).toBe('play-button');
+    });
+
+    it('should fall back to the default title when neither framework has one', () => {
+      expect(getDocTitle(mockDocWithPartialFrameworkTitle, 'vue')).toBe('MuteButton');
+      expect(getDocTitle(mockDocWithoutFrameworkTitle, 'vue')).toBe('Basic Concepts');
+    });
+  });
+
   describe('edge cases', () => {
     it('should handle empty frameworkTitle object', () => {
       const docWithEmptyFrameworkTitle: CollectionEntry<'docs'> = {
