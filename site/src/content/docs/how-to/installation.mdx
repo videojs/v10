@@ -155,6 +155,9 @@ Video.js supports a wide range of file types and hosting services. It's easy to 
 <FrameworkCase frameworks={["html"]}>
   <HTMLInstallTabs />
 </FrameworkCase>
+<FrameworkCase frameworks={["vue", "svelte"]}>
+  Most Vue and Svelte apps install with a package manager and import the elements in the component that renders the player. If you pick the CDN tab instead, its script tags belong in your app's HTML shell — `index.html`, or `app.html` in SvelteKit — and your component needs no imports.
+</FrameworkCase>
 <FrameworkCase frameworks={["react"]}>
   <TabsRoot client:idle>
     <TabsList client:idle label="Installation">
@@ -186,7 +189,7 @@ Video.js supports a wide range of file types and hosting services. It's easy to 
   </TabsRoot>
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
+<FrameworkCase frameworks={["html"]} exclude={["vue", "svelte"]}>
 
 ## Use your player
 
@@ -202,6 +205,36 @@ When using a bundler (npm, pnpm, yarn, bun), load the resulting bundle with `typ
 ```
 
 Some bundlers default to an IIFE output format. Loading that bundle without `type="module"` will cause a `StoreError: NO_TARGET` error when interacting with the player. The CDN install path already uses `type="module"` — bundled installs need the same.
+</Aside>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["vue"]}>
+
+## Use your player
+
+Import the elements and write them in a single-file component. Vue renders them as-is, so the markup matches the custom-element API exactly.
+
+<ContentWidth>
+  <VueUsageCodeBlock client:idle />
+</ContentWidth>
+
+<Aside type="caution" title="Tell the Vue compiler about these tags">
+Vue resolves hyphenated tags as components and warns when it can't find one. List the Video.js tags your templates use in the `isCustomElement` compiler option — <DocsLink slug="how-to/use-videojs-with-vue">Use Video.js with Vue and Nuxt</DocsLink> has the Vite and Nuxt configuration, plus how to read player state and pass objects as properties.
+</Aside>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["svelte"]}>
+
+## Use your player
+
+Import the elements and write them in a component. Svelte compiles them to real custom elements, so the markup matches the custom-element API exactly.
+
+<ContentWidth>
+  <SvelteUsageCodeBlock client:idle />
+</ContentWidth>
+
+<Aside type="note" title="Rendering on the server">
+Keep the imports static: SvelteKit renders this markup on the server, and the browser upgrades the elements once they load. <DocsLink slug="how-to/use-videojs-with-svelte">Use Video.js with Svelte and SvelteKit</DocsLink> covers that, reading player state in `onMount`, and styling runtime state.
 </Aside>
 </FrameworkCase>
 
