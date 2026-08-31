@@ -23,7 +23,7 @@ The skin goes between the player and the media element. It renders its controls 
 ```tsx
 <LiveAudioPlayer>
   <LiveAudioSkin>
-    <HlsAudio src="live.m3u8" />
+    <MuxAudio src="live.m3u8" />
   </LiveAudioSkin>
 </LiveAudioPlayer>
 ```
@@ -33,13 +33,13 @@ The skin goes between the player and the media element. It renders its controls 
 ```html
 <live-audio-player>
   <live-audio-skin>
-    <hls-audio src="live.m3u8"></hls-audio>
+    <mux-audio src="live.m3u8"></mux-audio>
   </live-audio-skin>
 </live-audio-player>
 ```
 </FrameworkCase>
 
-The examples use the default <DocsLink slug="reference/hls-audio">HLS audio element</DocsLink> because most browsers can't play HLS streams with a plain `<audio>`. See <DocsLink slug="how-to/play-live-streams">Play live streams</DocsLink>.
+The examples use the <DocsLink slug="reference/mux-audio">Mux audio element</DocsLink>: a plain `<audio>` can't play HLS in most browsers, and this element reports the live playback state the skin's Live button needs. See <DocsLink slug="how-to/play-live-streams">Play live streams</DocsLink>.
 
 ## Styling
 
