@@ -845,7 +845,8 @@ import "virtual:vjsc/css/<hash>/common.css";
 import "virtual:vjsc/css/<hash>/menus.css";
 import "virtual:vjsc/css/<hash>/popups.css";
 import { Text as TextPrimitive } from "@videojs/react";
-import { Menu, PlaybackRateRadioGroup } from "@videojs/react";
+import { Menu } from "@videojs/react";
+import { PlaybackRateRadioGroup } from "@videojs/react/ui/playback-rate-radio-group";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -890,7 +891,8 @@ import "virtual:vjsc/css/<hash>/base.css";
 import "virtual:vjsc/css/<hash>/menus.css";
 import { Text as TextPrimitive } from "@videojs/react";
 import { SpeechIcon as SpeechIconPrimitive } from "@videojs/react/icons";
-import { AudioTrackRadioGroup, Menu } from "@videojs/react";
+import { AudioTrackRadioGroup } from "@videojs/react/ui/audio-track-radio-group";
+import { Menu } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -954,7 +956,7 @@ import "virtual:vjsc/css/<hash>/menus.css";
 import "virtual:vjsc/css/<hash>/popups.css";
 import { Menu } from "@videojs/react";
 import { CaptionsOffIcon as CaptionsOffIconPrimitive, CaptionsOnIcon as CaptionsOnIconPrimitive } from "@videojs/react/icons";
-import { CaptionsRadioGroup } from "@videojs/react";
+import { CaptionsRadioGroup } from "@videojs/react/ui/captions-radio-group";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -999,7 +1001,8 @@ import "virtual:vjsc/css/<hash>/base.css";
 import "virtual:vjsc/css/<hash>/menus.css";
 import { Text as TextPrimitive } from "@videojs/react";
 import { CaptionsOffIcon as CaptionsOffIconPrimitive } from "@videojs/react/icons";
-import { CaptionsRadioGroup, Menu } from "@videojs/react";
+import { CaptionsRadioGroup } from "@videojs/react/ui/captions-radio-group";
+import { Menu } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -1076,7 +1079,8 @@ import "virtual:vjsc/css/<hash>/base.css";
 import "virtual:vjsc/css/<hash>/menus.css";
 import { Text as TextPrimitive } from "@videojs/react";
 import { SpeedIcon as SpeedIconPrimitive } from "@videojs/react/icons";
-import { PlaybackRateRadioGroup, Menu } from "@videojs/react";
+import { PlaybackRateRadioGroup } from "@videojs/react/ui/playback-rate-radio-group";
+import { Menu } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -1130,7 +1134,8 @@ import "virtual:vjsc/css/<hash>/base.css";
 import "virtual:vjsc/css/<hash>/menus.css";
 import { Text as TextPrimitive } from "@videojs/react";
 import { SwitchesIcon as SwitchesIconPrimitive } from "@videojs/react/icons";
-import { QualityRadioGroup, Menu } from "@videojs/react";
+import { QualityRadioGroup } from "@videojs/react/ui/quality-radio-group";
+import { Menu } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -2402,7 +2407,8 @@ import { ButtonTooltip } from '../buttons/button-tooltip';
 import { PlaybackRateButton } from '../buttons/playback-rate-button';
 import { RadioItem } from './radio-item';
 import { Text as TextPrimitive } from "@videojs/react";
-import { Menu, PlaybackRateRadioGroup } from "@videojs/react";
+import { Menu } from "@videojs/react";
+import { PlaybackRateRadioGroup } from "@videojs/react/ui/playback-rate-radio-group";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -2444,7 +2450,8 @@ import { MenuChevron } from './menu-chevron';
 import { RadioItem } from './radio-item';
 import { Text as TextPrimitive } from "@videojs/react";
 import { SpeechIcon as SpeechIconPrimitive } from "@videojs/react/icons";
-import { AudioTrackRadioGroup, Menu } from "@videojs/react";
+import { AudioTrackRadioGroup } from "@videojs/react/ui/audio-track-radio-group";
+import { Menu } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -2502,7 +2509,7 @@ import { ButtonTooltip } from '../buttons/button-tooltip';
 import { RadioItem } from './radio-item';
 import { Menu } from "@videojs/react";
 import { CaptionsOffIcon as CaptionsOffIconPrimitive, CaptionsOnIcon as CaptionsOnIconPrimitive } from "@videojs/react/icons";
-import { CaptionsRadioGroup } from "@videojs/react";
+import { CaptionsRadioGroup } from "@videojs/react/ui/captions-radio-group";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -2544,7 +2551,8 @@ import { MenuChevron } from './menu-chevron';
 import { RadioItem } from './radio-item';
 import { Text as TextPrimitive } from "@videojs/react";
 import { CaptionsOffIcon as CaptionsOffIconPrimitive } from "@videojs/react/icons";
-import { CaptionsRadioGroup, Menu } from "@videojs/react";
+import { CaptionsRadioGroup } from "@videojs/react/ui/captions-radio-group";
+import { Menu } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -2615,7 +2623,8 @@ import { MenuChevron } from './menu-chevron';
 import { RadioItem } from './radio-item';
 import { Text as TextPrimitive } from "@videojs/react";
 import { SpeedIcon as SpeedIconPrimitive } from "@videojs/react/icons";
-import { PlaybackRateRadioGroup, Menu } from "@videojs/react";
+import { PlaybackRateRadioGroup } from "@videojs/react/ui/playback-rate-radio-group";
+import { Menu } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -2666,7 +2675,8 @@ import { MenuChevron } from './menu-chevron';
 import { RadioItem } from './radio-item';
 import { Text as TextPrimitive } from "@videojs/react";
 import { SwitchesIcon as SwitchesIconPrimitive } from "@videojs/react/icons";
-import { QualityRadioGroup, Menu } from "@videojs/react";
+import { QualityRadioGroup } from "@videojs/react/ui/quality-radio-group";
+import { Menu } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -3988,7 +3998,8 @@ import "virtual:vjsc/css/<hash>/common.css";
 import "virtual:vjsc/css/<hash>/menus.css";
 import "virtual:vjsc/css/<hash>/popups.css";
 import { Text as TextPrimitive } from "@videojs/react";
-import { Menu, PlaybackRateRadioGroup } from "@videojs/react";
+import { Menu } from "@videojs/react";
+import { PlaybackRateRadioGroup } from "@videojs/react/ui/playback-rate-radio-group";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -4033,7 +4044,8 @@ import "virtual:vjsc/css/<hash>/base.css";
 import "virtual:vjsc/css/<hash>/menus.css";
 import { Text as TextPrimitive } from "@videojs/react";
 import { SpeechIcon as SpeechIconPrimitive } from "@videojs/react/icons/minimal";
-import { AudioTrackRadioGroup, Menu } from "@videojs/react";
+import { AudioTrackRadioGroup } from "@videojs/react/ui/audio-track-radio-group";
+import { Menu } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -4097,7 +4109,7 @@ import "virtual:vjsc/css/<hash>/menus.css";
 import "virtual:vjsc/css/<hash>/popups.css";
 import { Menu } from "@videojs/react";
 import { CaptionsOffIcon as CaptionsOffIconPrimitive, CaptionsOnIcon as CaptionsOnIconPrimitive } from "@videojs/react/icons/minimal";
-import { CaptionsRadioGroup } from "@videojs/react";
+import { CaptionsRadioGroup } from "@videojs/react/ui/captions-radio-group";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -4142,7 +4154,8 @@ import "virtual:vjsc/css/<hash>/base.css";
 import "virtual:vjsc/css/<hash>/menus.css";
 import { Text as TextPrimitive } from "@videojs/react";
 import { CaptionsOffIcon as CaptionsOffIconPrimitive } from "@videojs/react/icons/minimal";
-import { CaptionsRadioGroup, Menu } from "@videojs/react";
+import { CaptionsRadioGroup } from "@videojs/react/ui/captions-radio-group";
+import { Menu } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -4219,7 +4232,8 @@ import "virtual:vjsc/css/<hash>/base.css";
 import "virtual:vjsc/css/<hash>/menus.css";
 import { Text as TextPrimitive } from "@videojs/react";
 import { SpeedIcon as SpeedIconPrimitive } from "@videojs/react/icons/minimal";
-import { PlaybackRateRadioGroup, Menu } from "@videojs/react";
+import { PlaybackRateRadioGroup } from "@videojs/react/ui/playback-rate-radio-group";
+import { Menu } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -4273,7 +4287,8 @@ import "virtual:vjsc/css/<hash>/base.css";
 import "virtual:vjsc/css/<hash>/menus.css";
 import { Text as TextPrimitive } from "@videojs/react";
 import { SwitchesIcon as SwitchesIconPrimitive } from "@videojs/react/icons/minimal";
-import { QualityRadioGroup, Menu } from "@videojs/react";
+import { QualityRadioGroup } from "@videojs/react/ui/quality-radio-group";
+import { Menu } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -5546,7 +5561,8 @@ import { ButtonTooltip } from '../buttons/button-tooltip';
 import { PlaybackRateButton } from '../buttons/playback-rate-button';
 import { RadioItem } from './radio-item';
 import { Text as TextPrimitive } from "@videojs/react";
-import { Menu, PlaybackRateRadioGroup } from "@videojs/react";
+import { Menu } from "@videojs/react";
+import { PlaybackRateRadioGroup } from "@videojs/react/ui/playback-rate-radio-group";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -5588,7 +5604,8 @@ import { MenuChevron } from './menu-chevron';
 import { RadioItem } from './radio-item';
 import { Text as TextPrimitive } from "@videojs/react";
 import { SpeechIcon as SpeechIconPrimitive } from "@videojs/react/icons/minimal";
-import { AudioTrackRadioGroup, Menu } from "@videojs/react";
+import { AudioTrackRadioGroup } from "@videojs/react/ui/audio-track-radio-group";
+import { Menu } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -5646,7 +5663,7 @@ import { ButtonTooltip } from '../buttons/button-tooltip';
 import { RadioItem } from './radio-item';
 import { Menu } from "@videojs/react";
 import { CaptionsOffIcon as CaptionsOffIconPrimitive, CaptionsOnIcon as CaptionsOnIconPrimitive } from "@videojs/react/icons/minimal";
-import { CaptionsRadioGroup } from "@videojs/react";
+import { CaptionsRadioGroup } from "@videojs/react/ui/captions-radio-group";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -5688,7 +5705,8 @@ import { MenuChevron } from './menu-chevron';
 import { RadioItem } from './radio-item';
 import { Text as TextPrimitive } from "@videojs/react";
 import { CaptionsOffIcon as CaptionsOffIconPrimitive } from "@videojs/react/icons/minimal";
-import { CaptionsRadioGroup, Menu } from "@videojs/react";
+import { CaptionsRadioGroup } from "@videojs/react/ui/captions-radio-group";
+import { Menu } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -5759,7 +5777,8 @@ import { MenuChevron } from './menu-chevron';
 import { RadioItem } from './radio-item';
 import { Text as TextPrimitive } from "@videojs/react";
 import { SpeedIcon as SpeedIconPrimitive } from "@videojs/react/icons/minimal";
-import { PlaybackRateRadioGroup, Menu } from "@videojs/react";
+import { PlaybackRateRadioGroup } from "@videojs/react/ui/playback-rate-radio-group";
+import { Menu } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -5810,7 +5829,8 @@ import { MenuChevron } from './menu-chevron';
 import { RadioItem } from './radio-item';
 import { Text as TextPrimitive } from "@videojs/react";
 import { SwitchesIcon as SwitchesIconPrimitive } from "@videojs/react/icons/minimal";
-import { QualityRadioGroup, Menu } from "@videojs/react";
+import { QualityRadioGroup } from "@videojs/react/ui/quality-radio-group";
+import { Menu } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -7138,7 +7158,8 @@ import "virtual:vjsc/css/<hash>/common.css";
 import "virtual:vjsc/css/<hash>/menus.css";
 import "virtual:vjsc/css/<hash>/popups.css";
 import { Text as TextPrimitive } from "@videojs/react";
-import { Menu, PlaybackRateRadioGroup } from "@videojs/react";
+import { Menu } from "@videojs/react";
+import { PlaybackRateRadioGroup } from "@videojs/react/ui/playback-rate-radio-group";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -7183,7 +7204,8 @@ import "virtual:vjsc/css/<hash>/base.css";
 import "virtual:vjsc/css/<hash>/menus.css";
 import { Text as TextPrimitive } from "@videojs/react";
 import { SpeechIcon as SpeechIconPrimitive } from "@videojs/react/icons";
-import { AudioTrackRadioGroup, Menu } from "@videojs/react";
+import { AudioTrackRadioGroup } from "@videojs/react/ui/audio-track-radio-group";
+import { Menu } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -7247,7 +7269,7 @@ import "virtual:vjsc/css/<hash>/menus.css";
 import "virtual:vjsc/css/<hash>/popups.css";
 import { Menu } from "@videojs/react";
 import { CaptionsOffIcon as CaptionsOffIconPrimitive, CaptionsOnIcon as CaptionsOnIconPrimitive } from "@videojs/react/icons";
-import { CaptionsRadioGroup } from "@videojs/react";
+import { CaptionsRadioGroup } from "@videojs/react/ui/captions-radio-group";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -7292,7 +7314,8 @@ import "virtual:vjsc/css/<hash>/base.css";
 import "virtual:vjsc/css/<hash>/menus.css";
 import { Text as TextPrimitive } from "@videojs/react";
 import { CaptionsOffIcon as CaptionsOffIconPrimitive } from "@videojs/react/icons";
-import { CaptionsRadioGroup, Menu } from "@videojs/react";
+import { CaptionsRadioGroup } from "@videojs/react/ui/captions-radio-group";
+import { Menu } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -7369,7 +7392,8 @@ import "virtual:vjsc/css/<hash>/base.css";
 import "virtual:vjsc/css/<hash>/menus.css";
 import { Text as TextPrimitive } from "@videojs/react";
 import { SpeedIcon as SpeedIconPrimitive } from "@videojs/react/icons";
-import { PlaybackRateRadioGroup, Menu } from "@videojs/react";
+import { PlaybackRateRadioGroup } from "@videojs/react/ui/playback-rate-radio-group";
+import { Menu } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -7423,7 +7447,8 @@ import "virtual:vjsc/css/<hash>/base.css";
 import "virtual:vjsc/css/<hash>/menus.css";
 import { Text as TextPrimitive } from "@videojs/react";
 import { SwitchesIcon as SwitchesIconPrimitive } from "@videojs/react/icons";
-import { QualityRadioGroup, Menu } from "@videojs/react";
+import { QualityRadioGroup } from "@videojs/react/ui/quality-radio-group";
+import { Menu } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -8684,7 +8709,8 @@ import { ButtonTooltip } from '../buttons/button-tooltip';
 import { PlaybackRateButton } from '../buttons/playback-rate-button';
 import { RadioItem } from './radio-item';
 import { Text as TextPrimitive } from "@videojs/react";
-import { Menu, PlaybackRateRadioGroup } from "@videojs/react";
+import { Menu } from "@videojs/react";
+import { PlaybackRateRadioGroup } from "@videojs/react/ui/playback-rate-radio-group";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -8726,7 +8752,8 @@ import { MenuChevron } from './menu-chevron';
 import { RadioItem } from './radio-item';
 import { Text as TextPrimitive } from "@videojs/react";
 import { SpeechIcon as SpeechIconPrimitive } from "@videojs/react/icons";
-import { AudioTrackRadioGroup, Menu } from "@videojs/react";
+import { AudioTrackRadioGroup } from "@videojs/react/ui/audio-track-radio-group";
+import { Menu } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -8784,7 +8811,7 @@ import { ButtonTooltip } from '../buttons/button-tooltip';
 import { RadioItem } from './radio-item';
 import { Menu } from "@videojs/react";
 import { CaptionsOffIcon as CaptionsOffIconPrimitive, CaptionsOnIcon as CaptionsOnIconPrimitive } from "@videojs/react/icons";
-import { CaptionsRadioGroup } from "@videojs/react";
+import { CaptionsRadioGroup } from "@videojs/react/ui/captions-radio-group";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -8826,7 +8853,8 @@ import { MenuChevron } from './menu-chevron';
 import { RadioItem } from './radio-item';
 import { Text as TextPrimitive } from "@videojs/react";
 import { CaptionsOffIcon as CaptionsOffIconPrimitive } from "@videojs/react/icons";
-import { CaptionsRadioGroup, Menu } from "@videojs/react";
+import { CaptionsRadioGroup } from "@videojs/react/ui/captions-radio-group";
+import { Menu } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -8897,7 +8925,8 @@ import { MenuChevron } from './menu-chevron';
 import { RadioItem } from './radio-item';
 import { Text as TextPrimitive } from "@videojs/react";
 import { SpeedIcon as SpeedIconPrimitive } from "@videojs/react/icons";
-import { PlaybackRateRadioGroup, Menu } from "@videojs/react";
+import { PlaybackRateRadioGroup } from "@videojs/react/ui/playback-rate-radio-group";
+import { Menu } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -8948,7 +8977,8 @@ import { MenuChevron } from './menu-chevron';
 import { RadioItem } from './radio-item';
 import { Text as TextPrimitive } from "@videojs/react";
 import { SwitchesIcon as SwitchesIconPrimitive } from "@videojs/react/icons";
-import { QualityRadioGroup, Menu } from "@videojs/react";
+import { QualityRadioGroup } from "@videojs/react/ui/quality-radio-group";
+import { Menu } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -10259,7 +10289,8 @@ import "virtual:vjsc/css/<hash>/common.css";
 import "virtual:vjsc/css/<hash>/menus.css";
 import "virtual:vjsc/css/<hash>/popups.css";
 import { Text as TextPrimitive } from "@videojs/react";
-import { Menu, PlaybackRateRadioGroup } from "@videojs/react";
+import { Menu } from "@videojs/react";
+import { PlaybackRateRadioGroup } from "@videojs/react/ui/playback-rate-radio-group";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -10304,7 +10335,8 @@ import "virtual:vjsc/css/<hash>/base.css";
 import "virtual:vjsc/css/<hash>/menus.css";
 import { Text as TextPrimitive } from "@videojs/react";
 import { SpeechIcon as SpeechIconPrimitive } from "@videojs/react/icons/minimal";
-import { AudioTrackRadioGroup, Menu } from "@videojs/react";
+import { AudioTrackRadioGroup } from "@videojs/react/ui/audio-track-radio-group";
+import { Menu } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -10368,7 +10400,7 @@ import "virtual:vjsc/css/<hash>/menus.css";
 import "virtual:vjsc/css/<hash>/popups.css";
 import { Menu } from "@videojs/react";
 import { CaptionsOffIcon as CaptionsOffIconPrimitive, CaptionsOnIcon as CaptionsOnIconPrimitive } from "@videojs/react/icons/minimal";
-import { CaptionsRadioGroup } from "@videojs/react";
+import { CaptionsRadioGroup } from "@videojs/react/ui/captions-radio-group";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -10413,7 +10445,8 @@ import "virtual:vjsc/css/<hash>/base.css";
 import "virtual:vjsc/css/<hash>/menus.css";
 import { Text as TextPrimitive } from "@videojs/react";
 import { CaptionsOffIcon as CaptionsOffIconPrimitive } from "@videojs/react/icons/minimal";
-import { CaptionsRadioGroup, Menu } from "@videojs/react";
+import { CaptionsRadioGroup } from "@videojs/react/ui/captions-radio-group";
+import { Menu } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -10490,7 +10523,8 @@ import "virtual:vjsc/css/<hash>/base.css";
 import "virtual:vjsc/css/<hash>/menus.css";
 import { Text as TextPrimitive } from "@videojs/react";
 import { SpeedIcon as SpeedIconPrimitive } from "@videojs/react/icons/minimal";
-import { PlaybackRateRadioGroup, Menu } from "@videojs/react";
+import { PlaybackRateRadioGroup } from "@videojs/react/ui/playback-rate-radio-group";
+import { Menu } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -10544,7 +10578,8 @@ import "virtual:vjsc/css/<hash>/base.css";
 import "virtual:vjsc/css/<hash>/menus.css";
 import { Text as TextPrimitive } from "@videojs/react";
 import { SwitchesIcon as SwitchesIconPrimitive } from "@videojs/react/icons/minimal";
-import { QualityRadioGroup, Menu } from "@videojs/react";
+import { QualityRadioGroup } from "@videojs/react/ui/quality-radio-group";
+import { Menu } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -11806,7 +11841,8 @@ import { ButtonTooltip } from '../buttons/button-tooltip';
 import { PlaybackRateButton } from '../buttons/playback-rate-button';
 import { RadioItem } from './radio-item';
 import { Text as TextPrimitive } from "@videojs/react";
-import { Menu, PlaybackRateRadioGroup } from "@videojs/react";
+import { Menu } from "@videojs/react";
+import { PlaybackRateRadioGroup } from "@videojs/react/ui/playback-rate-radio-group";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -11848,7 +11884,8 @@ import { MenuChevron } from './menu-chevron';
 import { RadioItem } from './radio-item';
 import { Text as TextPrimitive } from "@videojs/react";
 import { SpeechIcon as SpeechIconPrimitive } from "@videojs/react/icons/minimal";
-import { AudioTrackRadioGroup, Menu } from "@videojs/react";
+import { AudioTrackRadioGroup } from "@videojs/react/ui/audio-track-radio-group";
+import { Menu } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -11906,7 +11943,7 @@ import { ButtonTooltip } from '../buttons/button-tooltip';
 import { RadioItem } from './radio-item';
 import { Menu } from "@videojs/react";
 import { CaptionsOffIcon as CaptionsOffIconPrimitive, CaptionsOnIcon as CaptionsOnIconPrimitive } from "@videojs/react/icons/minimal";
-import { CaptionsRadioGroup } from "@videojs/react";
+import { CaptionsRadioGroup } from "@videojs/react/ui/captions-radio-group";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -11948,7 +11985,8 @@ import { MenuChevron } from './menu-chevron';
 import { RadioItem } from './radio-item';
 import { Text as TextPrimitive } from "@videojs/react";
 import { CaptionsOffIcon as CaptionsOffIconPrimitive } from "@videojs/react/icons/minimal";
-import { CaptionsRadioGroup, Menu } from "@videojs/react";
+import { CaptionsRadioGroup } from "@videojs/react/ui/captions-radio-group";
+import { Menu } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -12019,7 +12057,8 @@ import { MenuChevron } from './menu-chevron';
 import { RadioItem } from './radio-item';
 import { Text as TextPrimitive } from "@videojs/react";
 import { SpeedIcon as SpeedIconPrimitive } from "@videojs/react/icons/minimal";
-import { PlaybackRateRadioGroup, Menu } from "@videojs/react";
+import { PlaybackRateRadioGroup } from "@videojs/react/ui/playback-rate-radio-group";
+import { Menu } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -12070,7 +12109,8 @@ import { MenuChevron } from './menu-chevron';
 import { RadioItem } from './radio-item';
 import { Text as TextPrimitive } from "@videojs/react";
 import { SwitchesIcon as SwitchesIconPrimitive } from "@videojs/react/icons/minimal";
-import { QualityRadioGroup, Menu } from "@videojs/react";
+import { QualityRadioGroup } from "@videojs/react/ui/quality-radio-group";
+import { Menu } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -13387,7 +13427,8 @@ import "virtual:vjsc/css/<hash>/common.css";
 import "virtual:vjsc/css/<hash>/menus.css";
 import "virtual:vjsc/css/<hash>/popups.css";
 import { Text as TextPrimitive } from "@videojs/react";
-import { Menu, PlaybackRateRadioGroup } from "@videojs/react";
+import { Menu } from "@videojs/react";
+import { PlaybackRateRadioGroup } from "@videojs/react/ui/playback-rate-radio-group";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -13432,7 +13473,8 @@ import "virtual:vjsc/css/<hash>/base.css";
 import "virtual:vjsc/css/<hash>/menus.css";
 import { Text as TextPrimitive } from "@videojs/react";
 import { SpeechIcon as SpeechIconPrimitive } from "@videojs/react/icons";
-import { AudioTrackRadioGroup, Menu } from "@videojs/react";
+import { AudioTrackRadioGroup } from "@videojs/react/ui/audio-track-radio-group";
+import { Menu } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -13496,7 +13538,7 @@ import "virtual:vjsc/css/<hash>/menus.css";
 import "virtual:vjsc/css/<hash>/popups.css";
 import { Menu } from "@videojs/react";
 import { CaptionsOffIcon as CaptionsOffIconPrimitive, CaptionsOnIcon as CaptionsOnIconPrimitive } from "@videojs/react/icons";
-import { CaptionsRadioGroup } from "@videojs/react";
+import { CaptionsRadioGroup } from "@videojs/react/ui/captions-radio-group";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -13541,7 +13583,8 @@ import "virtual:vjsc/css/<hash>/base.css";
 import "virtual:vjsc/css/<hash>/menus.css";
 import { Text as TextPrimitive } from "@videojs/react";
 import { CaptionsOffIcon as CaptionsOffIconPrimitive } from "@videojs/react/icons";
-import { CaptionsRadioGroup, Menu } from "@videojs/react";
+import { CaptionsRadioGroup } from "@videojs/react/ui/captions-radio-group";
+import { Menu } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -13618,7 +13661,8 @@ import "virtual:vjsc/css/<hash>/base.css";
 import "virtual:vjsc/css/<hash>/menus.css";
 import { Text as TextPrimitive } from "@videojs/react";
 import { SpeedIcon as SpeedIconPrimitive } from "@videojs/react/icons";
-import { PlaybackRateRadioGroup, Menu } from "@videojs/react";
+import { PlaybackRateRadioGroup } from "@videojs/react/ui/playback-rate-radio-group";
+import { Menu } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -13672,7 +13716,8 @@ import "virtual:vjsc/css/<hash>/base.css";
 import "virtual:vjsc/css/<hash>/menus.css";
 import { Text as TextPrimitive } from "@videojs/react";
 import { SwitchesIcon as SwitchesIconPrimitive } from "@videojs/react/icons";
-import { QualityRadioGroup, Menu } from "@videojs/react";
+import { QualityRadioGroup } from "@videojs/react/ui/quality-radio-group";
+import { Menu } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -14917,7 +14962,8 @@ import { ButtonTooltip } from '../buttons/button-tooltip';
 import { PlaybackRateButton } from '../buttons/playback-rate-button';
 import { RadioItem } from './radio-item';
 import { Text as TextPrimitive } from "@videojs/react";
-import { Menu, PlaybackRateRadioGroup } from "@videojs/react";
+import { Menu } from "@videojs/react";
+import { PlaybackRateRadioGroup } from "@videojs/react/ui/playback-rate-radio-group";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -14959,7 +15005,8 @@ import { MenuChevron } from './menu-chevron';
 import { RadioItem } from './radio-item';
 import { Text as TextPrimitive } from "@videojs/react";
 import { SpeechIcon as SpeechIconPrimitive } from "@videojs/react/icons";
-import { AudioTrackRadioGroup, Menu } from "@videojs/react";
+import { AudioTrackRadioGroup } from "@videojs/react/ui/audio-track-radio-group";
+import { Menu } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -15017,7 +15064,7 @@ import { ButtonTooltip } from '../buttons/button-tooltip';
 import { RadioItem } from './radio-item';
 import { Menu } from "@videojs/react";
 import { CaptionsOffIcon as CaptionsOffIconPrimitive, CaptionsOnIcon as CaptionsOnIconPrimitive } from "@videojs/react/icons";
-import { CaptionsRadioGroup } from "@videojs/react";
+import { CaptionsRadioGroup } from "@videojs/react/ui/captions-radio-group";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -15059,7 +15106,8 @@ import { MenuChevron } from './menu-chevron';
 import { RadioItem } from './radio-item';
 import { Text as TextPrimitive } from "@videojs/react";
 import { CaptionsOffIcon as CaptionsOffIconPrimitive } from "@videojs/react/icons";
-import { CaptionsRadioGroup, Menu } from "@videojs/react";
+import { CaptionsRadioGroup } from "@videojs/react/ui/captions-radio-group";
+import { Menu } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -15130,7 +15178,8 @@ import { MenuChevron } from './menu-chevron';
 import { RadioItem } from './radio-item';
 import { Text as TextPrimitive } from "@videojs/react";
 import { SpeedIcon as SpeedIconPrimitive } from "@videojs/react/icons";
-import { PlaybackRateRadioGroup, Menu } from "@videojs/react";
+import { PlaybackRateRadioGroup } from "@videojs/react/ui/playback-rate-radio-group";
+import { Menu } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -15181,7 +15230,8 @@ import { MenuChevron } from './menu-chevron';
 import { RadioItem } from './radio-item';
 import { Text as TextPrimitive } from "@videojs/react";
 import { SwitchesIcon as SwitchesIconPrimitive } from "@videojs/react/icons";
-import { QualityRadioGroup, Menu } from "@videojs/react";
+import { QualityRadioGroup } from "@videojs/react/ui/quality-radio-group";
+import { Menu } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -16479,7 +16529,8 @@ import "virtual:vjsc/css/<hash>/common.css";
 import "virtual:vjsc/css/<hash>/menus.css";
 import "virtual:vjsc/css/<hash>/popups.css";
 import { Text as TextPrimitive } from "@videojs/react";
-import { Menu, PlaybackRateRadioGroup } from "@videojs/react";
+import { Menu } from "@videojs/react";
+import { PlaybackRateRadioGroup } from "@videojs/react/ui/playback-rate-radio-group";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -16524,7 +16575,8 @@ import "virtual:vjsc/css/<hash>/base.css";
 import "virtual:vjsc/css/<hash>/menus.css";
 import { Text as TextPrimitive } from "@videojs/react";
 import { SpeechIcon as SpeechIconPrimitive } from "@videojs/react/icons/minimal";
-import { AudioTrackRadioGroup, Menu } from "@videojs/react";
+import { AudioTrackRadioGroup } from "@videojs/react/ui/audio-track-radio-group";
+import { Menu } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -16588,7 +16640,7 @@ import "virtual:vjsc/css/<hash>/menus.css";
 import "virtual:vjsc/css/<hash>/popups.css";
 import { Menu } from "@videojs/react";
 import { CaptionsOffIcon as CaptionsOffIconPrimitive, CaptionsOnIcon as CaptionsOnIconPrimitive } from "@videojs/react/icons/minimal";
-import { CaptionsRadioGroup } from "@videojs/react";
+import { CaptionsRadioGroup } from "@videojs/react/ui/captions-radio-group";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -16633,7 +16685,8 @@ import "virtual:vjsc/css/<hash>/base.css";
 import "virtual:vjsc/css/<hash>/menus.css";
 import { Text as TextPrimitive } from "@videojs/react";
 import { CaptionsOffIcon as CaptionsOffIconPrimitive } from "@videojs/react/icons/minimal";
-import { CaptionsRadioGroup, Menu } from "@videojs/react";
+import { CaptionsRadioGroup } from "@videojs/react/ui/captions-radio-group";
+import { Menu } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -16710,7 +16763,8 @@ import "virtual:vjsc/css/<hash>/base.css";
 import "virtual:vjsc/css/<hash>/menus.css";
 import { Text as TextPrimitive } from "@videojs/react";
 import { SpeedIcon as SpeedIconPrimitive } from "@videojs/react/icons/minimal";
-import { PlaybackRateRadioGroup, Menu } from "@videojs/react";
+import { PlaybackRateRadioGroup } from "@videojs/react/ui/playback-rate-radio-group";
+import { Menu } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -16764,7 +16818,8 @@ import "virtual:vjsc/css/<hash>/base.css";
 import "virtual:vjsc/css/<hash>/menus.css";
 import { Text as TextPrimitive } from "@videojs/react";
 import { SwitchesIcon as SwitchesIconPrimitive } from "@videojs/react/icons/minimal";
-import { QualityRadioGroup, Menu } from "@videojs/react";
+import { QualityRadioGroup } from "@videojs/react/ui/quality-radio-group";
+import { Menu } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -18008,7 +18063,8 @@ import { ButtonTooltip } from '../buttons/button-tooltip';
 import { PlaybackRateButton } from '../buttons/playback-rate-button';
 import { RadioItem } from './radio-item';
 import { Text as TextPrimitive } from "@videojs/react";
-import { Menu, PlaybackRateRadioGroup } from "@videojs/react";
+import { Menu } from "@videojs/react";
+import { PlaybackRateRadioGroup } from "@videojs/react/ui/playback-rate-radio-group";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -18050,7 +18106,8 @@ import { MenuChevron } from './menu-chevron';
 import { RadioItem } from './radio-item';
 import { Text as TextPrimitive } from "@videojs/react";
 import { SpeechIcon as SpeechIconPrimitive } from "@videojs/react/icons/minimal";
-import { AudioTrackRadioGroup, Menu } from "@videojs/react";
+import { AudioTrackRadioGroup } from "@videojs/react/ui/audio-track-radio-group";
+import { Menu } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -18108,7 +18165,7 @@ import { ButtonTooltip } from '../buttons/button-tooltip';
 import { RadioItem } from './radio-item';
 import { Menu } from "@videojs/react";
 import { CaptionsOffIcon as CaptionsOffIconPrimitive, CaptionsOnIcon as CaptionsOnIconPrimitive } from "@videojs/react/icons/minimal";
-import { CaptionsRadioGroup } from "@videojs/react";
+import { CaptionsRadioGroup } from "@videojs/react/ui/captions-radio-group";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -18150,7 +18207,8 @@ import { MenuChevron } from './menu-chevron';
 import { RadioItem } from './radio-item';
 import { Text as TextPrimitive } from "@videojs/react";
 import { CaptionsOffIcon as CaptionsOffIconPrimitive } from "@videojs/react/icons/minimal";
-import { CaptionsRadioGroup, Menu } from "@videojs/react";
+import { CaptionsRadioGroup } from "@videojs/react/ui/captions-radio-group";
+import { Menu } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -18221,7 +18279,8 @@ import { MenuChevron } from './menu-chevron';
 import { RadioItem } from './radio-item';
 import { Text as TextPrimitive } from "@videojs/react";
 import { SpeedIcon as SpeedIconPrimitive } from "@videojs/react/icons/minimal";
-import { PlaybackRateRadioGroup, Menu } from "@videojs/react";
+import { PlaybackRateRadioGroup } from "@videojs/react/ui/playback-rate-radio-group";
+import { Menu } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -18272,7 +18331,8 @@ import { MenuChevron } from './menu-chevron';
 import { RadioItem } from './radio-item';
 import { Text as TextPrimitive } from "@videojs/react";
 import { SwitchesIcon as SwitchesIconPrimitive } from "@videojs/react/icons/minimal";
-import { QualityRadioGroup, Menu } from "@videojs/react";
+import { QualityRadioGroup } from "@videojs/react/ui/quality-radio-group";
+import { Menu } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -19570,7 +19630,8 @@ import "virtual:vjsc/css/<hash>/common.css";
 import "virtual:vjsc/css/<hash>/menus.css";
 import "virtual:vjsc/css/<hash>/popups.css";
 import { Text as TextPrimitive } from "@videojs/react";
-import { Menu, PlaybackRateRadioGroup } from "@videojs/react";
+import { Menu } from "@videojs/react";
+import { PlaybackRateRadioGroup } from "@videojs/react/ui/playback-rate-radio-group";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -19615,7 +19676,8 @@ import "virtual:vjsc/css/<hash>/base.css";
 import "virtual:vjsc/css/<hash>/menus.css";
 import { Text as TextPrimitive } from "@videojs/react";
 import { SpeechIcon as SpeechIconPrimitive } from "@videojs/react/icons";
-import { AudioTrackRadioGroup, Menu } from "@videojs/react";
+import { AudioTrackRadioGroup } from "@videojs/react/ui/audio-track-radio-group";
+import { Menu } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -19679,7 +19741,7 @@ import "virtual:vjsc/css/<hash>/menus.css";
 import "virtual:vjsc/css/<hash>/popups.css";
 import { Menu } from "@videojs/react";
 import { CaptionsOffIcon as CaptionsOffIconPrimitive, CaptionsOnIcon as CaptionsOnIconPrimitive } from "@videojs/react/icons";
-import { CaptionsRadioGroup } from "@videojs/react";
+import { CaptionsRadioGroup } from "@videojs/react/ui/captions-radio-group";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -19724,7 +19786,8 @@ import "virtual:vjsc/css/<hash>/base.css";
 import "virtual:vjsc/css/<hash>/menus.css";
 import { Text as TextPrimitive } from "@videojs/react";
 import { CaptionsOffIcon as CaptionsOffIconPrimitive } from "@videojs/react/icons";
-import { CaptionsRadioGroup, Menu } from "@videojs/react";
+import { CaptionsRadioGroup } from "@videojs/react/ui/captions-radio-group";
+import { Menu } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -19801,7 +19864,8 @@ import "virtual:vjsc/css/<hash>/base.css";
 import "virtual:vjsc/css/<hash>/menus.css";
 import { Text as TextPrimitive } from "@videojs/react";
 import { SpeedIcon as SpeedIconPrimitive } from "@videojs/react/icons";
-import { PlaybackRateRadioGroup, Menu } from "@videojs/react";
+import { PlaybackRateRadioGroup } from "@videojs/react/ui/playback-rate-radio-group";
+import { Menu } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -19855,7 +19919,8 @@ import "virtual:vjsc/css/<hash>/base.css";
 import "virtual:vjsc/css/<hash>/menus.css";
 import { Text as TextPrimitive } from "@videojs/react";
 import { SwitchesIcon as SwitchesIconPrimitive } from "@videojs/react/icons";
-import { QualityRadioGroup, Menu } from "@videojs/react";
+import { QualityRadioGroup } from "@videojs/react/ui/quality-radio-group";
+import { Menu } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -21107,7 +21172,8 @@ import { ButtonTooltip } from '../buttons/button-tooltip';
 import { PlaybackRateButton } from '../buttons/playback-rate-button';
 import { RadioItem } from './radio-item';
 import { Text as TextPrimitive } from "@videojs/react";
-import { Menu, PlaybackRateRadioGroup } from "@videojs/react";
+import { Menu } from "@videojs/react";
+import { PlaybackRateRadioGroup } from "@videojs/react/ui/playback-rate-radio-group";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -21149,7 +21215,8 @@ import { MenuChevron } from './menu-chevron';
 import { RadioItem } from './radio-item';
 import { Text as TextPrimitive } from "@videojs/react";
 import { SpeechIcon as SpeechIconPrimitive } from "@videojs/react/icons";
-import { AudioTrackRadioGroup, Menu } from "@videojs/react";
+import { AudioTrackRadioGroup } from "@videojs/react/ui/audio-track-radio-group";
+import { Menu } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -21207,7 +21274,7 @@ import { ButtonTooltip } from '../buttons/button-tooltip';
 import { RadioItem } from './radio-item';
 import { Menu } from "@videojs/react";
 import { CaptionsOffIcon as CaptionsOffIconPrimitive, CaptionsOnIcon as CaptionsOnIconPrimitive } from "@videojs/react/icons";
-import { CaptionsRadioGroup } from "@videojs/react";
+import { CaptionsRadioGroup } from "@videojs/react/ui/captions-radio-group";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -21249,7 +21316,8 @@ import { MenuChevron } from './menu-chevron';
 import { RadioItem } from './radio-item';
 import { Text as TextPrimitive } from "@videojs/react";
 import { CaptionsOffIcon as CaptionsOffIconPrimitive } from "@videojs/react/icons";
-import { CaptionsRadioGroup, Menu } from "@videojs/react";
+import { CaptionsRadioGroup } from "@videojs/react/ui/captions-radio-group";
+import { Menu } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -21320,7 +21388,8 @@ import { MenuChevron } from './menu-chevron';
 import { RadioItem } from './radio-item';
 import { Text as TextPrimitive } from "@videojs/react";
 import { SpeedIcon as SpeedIconPrimitive } from "@videojs/react/icons";
-import { PlaybackRateRadioGroup, Menu } from "@videojs/react";
+import { PlaybackRateRadioGroup } from "@videojs/react/ui/playback-rate-radio-group";
+import { Menu } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -21371,7 +21440,8 @@ import { MenuChevron } from './menu-chevron';
 import { RadioItem } from './radio-item';
 import { Text as TextPrimitive } from "@videojs/react";
 import { SwitchesIcon as SwitchesIconPrimitive } from "@videojs/react/icons";
-import { QualityRadioGroup, Menu } from "@videojs/react";
+import { QualityRadioGroup } from "@videojs/react/ui/quality-radio-group";
+import { Menu } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -22676,7 +22746,8 @@ import "virtual:vjsc/css/<hash>/common.css";
 import "virtual:vjsc/css/<hash>/menus.css";
 import "virtual:vjsc/css/<hash>/popups.css";
 import { Text as TextPrimitive } from "@videojs/react";
-import { Menu, PlaybackRateRadioGroup } from "@videojs/react";
+import { Menu } from "@videojs/react";
+import { PlaybackRateRadioGroup } from "@videojs/react/ui/playback-rate-radio-group";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -22721,7 +22792,8 @@ import "virtual:vjsc/css/<hash>/base.css";
 import "virtual:vjsc/css/<hash>/menus.css";
 import { Text as TextPrimitive } from "@videojs/react";
 import { SpeechIcon as SpeechIconPrimitive } from "@videojs/react/icons/minimal";
-import { AudioTrackRadioGroup, Menu } from "@videojs/react";
+import { AudioTrackRadioGroup } from "@videojs/react/ui/audio-track-radio-group";
+import { Menu } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -22785,7 +22857,7 @@ import "virtual:vjsc/css/<hash>/menus.css";
 import "virtual:vjsc/css/<hash>/popups.css";
 import { Menu } from "@videojs/react";
 import { CaptionsOffIcon as CaptionsOffIconPrimitive, CaptionsOnIcon as CaptionsOnIconPrimitive } from "@videojs/react/icons/minimal";
-import { CaptionsRadioGroup } from "@videojs/react";
+import { CaptionsRadioGroup } from "@videojs/react/ui/captions-radio-group";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -22830,7 +22902,8 @@ import "virtual:vjsc/css/<hash>/base.css";
 import "virtual:vjsc/css/<hash>/menus.css";
 import { Text as TextPrimitive } from "@videojs/react";
 import { CaptionsOffIcon as CaptionsOffIconPrimitive } from "@videojs/react/icons/minimal";
-import { CaptionsRadioGroup, Menu } from "@videojs/react";
+import { CaptionsRadioGroup } from "@videojs/react/ui/captions-radio-group";
+import { Menu } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -22907,7 +22980,8 @@ import "virtual:vjsc/css/<hash>/base.css";
 import "virtual:vjsc/css/<hash>/menus.css";
 import { Text as TextPrimitive } from "@videojs/react";
 import { SpeedIcon as SpeedIconPrimitive } from "@videojs/react/icons/minimal";
-import { PlaybackRateRadioGroup, Menu } from "@videojs/react";
+import { PlaybackRateRadioGroup } from "@videojs/react/ui/playback-rate-radio-group";
+import { Menu } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -22961,7 +23035,8 @@ import "virtual:vjsc/css/<hash>/base.css";
 import "virtual:vjsc/css/<hash>/menus.css";
 import { Text as TextPrimitive } from "@videojs/react";
 import { SwitchesIcon as SwitchesIconPrimitive } from "@videojs/react/icons/minimal";
-import { QualityRadioGroup, Menu } from "@videojs/react";
+import { QualityRadioGroup } from "@videojs/react/ui/quality-radio-group";
+import { Menu } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -24215,7 +24290,8 @@ import { ButtonTooltip } from '../buttons/button-tooltip';
 import { PlaybackRateButton } from '../buttons/playback-rate-button';
 import { RadioItem } from './radio-item';
 import { Text as TextPrimitive } from "@videojs/react";
-import { Menu, PlaybackRateRadioGroup } from "@videojs/react";
+import { Menu } from "@videojs/react";
+import { PlaybackRateRadioGroup } from "@videojs/react/ui/playback-rate-radio-group";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -24257,7 +24333,8 @@ import { MenuChevron } from './menu-chevron';
 import { RadioItem } from './radio-item';
 import { Text as TextPrimitive } from "@videojs/react";
 import { SpeechIcon as SpeechIconPrimitive } from "@videojs/react/icons/minimal";
-import { AudioTrackRadioGroup, Menu } from "@videojs/react";
+import { AudioTrackRadioGroup } from "@videojs/react/ui/audio-track-radio-group";
+import { Menu } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -24315,7 +24392,7 @@ import { ButtonTooltip } from '../buttons/button-tooltip';
 import { RadioItem } from './radio-item';
 import { Menu } from "@videojs/react";
 import { CaptionsOffIcon as CaptionsOffIconPrimitive, CaptionsOnIcon as CaptionsOnIconPrimitive } from "@videojs/react/icons/minimal";
-import { CaptionsRadioGroup } from "@videojs/react";
+import { CaptionsRadioGroup } from "@videojs/react/ui/captions-radio-group";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -24357,7 +24434,8 @@ import { MenuChevron } from './menu-chevron';
 import { RadioItem } from './radio-item';
 import { Text as TextPrimitive } from "@videojs/react";
 import { CaptionsOffIcon as CaptionsOffIconPrimitive } from "@videojs/react/icons/minimal";
-import { CaptionsRadioGroup, Menu } from "@videojs/react";
+import { CaptionsRadioGroup } from "@videojs/react/ui/captions-radio-group";
+import { Menu } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -24428,7 +24506,8 @@ import { MenuChevron } from './menu-chevron';
 import { RadioItem } from './radio-item';
 import { Text as TextPrimitive } from "@videojs/react";
 import { SpeedIcon as SpeedIconPrimitive } from "@videojs/react/icons/minimal";
-import { PlaybackRateRadioGroup, Menu } from "@videojs/react";
+import { PlaybackRateRadioGroup } from "@videojs/react/ui/playback-rate-radio-group";
+import { Menu } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
@@ -24479,7 +24558,8 @@ import { MenuChevron } from './menu-chevron';
 import { RadioItem } from './radio-item';
 import { Text as TextPrimitive } from "@videojs/react";
 import { SwitchesIcon as SwitchesIconPrimitive } from "@videojs/react/icons/minimal";
-import { QualityRadioGroup, Menu } from "@videojs/react";
+import { QualityRadioGroup } from "@videojs/react/ui/quality-radio-group";
+import { Menu } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 

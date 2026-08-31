@@ -33,6 +33,11 @@
       "development": "./dist/dev/index.js",
       "default": "./dist/default/index.js"
     },
+    "./ui/*-radio-group": {
+      "types": "./dist/dev/ui/*-radio-group/index.d.ts",
+      "development": "./dist/dev/ui/*-radio-group/index.js",
+      "default": "./dist/default/ui/*-radio-group/index.js"
+    },
     "./*.css": "./dist/default/*.css",
     "./icons": {
       "types": "./dist/dev/icons/index.d.ts",

@@ -8,6 +8,13 @@ import { createRenderTargetTransform } from './render-target.ts';
 
 type CoreSchema = typeof coreSchema;
 
+const componentSources = {
+  AudioTrackRadioGroup: '@videojs/react/ui/audio-track-radio-group',
+  CaptionsRadioGroup: '@videojs/react/ui/captions-radio-group',
+  PlaybackRateRadioGroup: '@videojs/react/ui/playback-rate-radio-group',
+  QualityRadioGroup: '@videojs/react/ui/quality-radio-group',
+} as const satisfies Partial<Record<keyof CoreSchema['definitions'], string>>;
+
 export const reactComponentTarget: ComponentTarget<CoreSchema> = defineComponentTarget<CoreSchema>()(({
   target,
   code,
@@ -45,13 +52,14 @@ export const reactComponentTarget: ComponentTarget<CoreSchema> = defineComponent
     resolve: ({ component, part }) => {
       const path = part ? part.split('.') : [];
       const propsPath = path.length === 0 ? ['Props'] : [...path.slice(0, -1), `${path.at(-1)}Props`];
+      const source = componentSources[component as keyof typeof componentSources] ?? '@videojs/react';
 
       return imported({
-        from: '@videojs/react',
+        from: source,
         name: component,
         ...(path.length > 0 ? { path } : {}),
         props: {
-          from: '@videojs/react',
+          from: source,
           name: component,
           path: propsPath,
         },
