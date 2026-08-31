@@ -188,7 +188,7 @@ import basicUsageHtmlTs from "@/components/docs/demos/{name}/html/css/BasicUsage
 
 After imports, the page follows this order:
 
-1. **Import** — render the public React export, the HTML registration module, and the HTML CDN note with `<ComponentImports>`.
+1. **Import** — render the public React export and the HTML registration module with `<ComponentImports>`.
 2. **Anatomy** — show part nesting with self-closing placeholders for each framework using `<FrameworkCase>`, following the [Base UI anatomy convention](https://base-ui.com/react/overview/quick-start). No hooks, state, handlers, or option mapping — working code belongs in Examples.
 3. **Prose sections** (optional, as needed):
    - **Behavior** — state transitions, timing, interaction logic
@@ -206,7 +206,7 @@ After imports, the page follows this order:
 
 `component` is the named export from `@videojs/react`. `html` is the suffix of the side-effect registration import from `@videojs/html/ui/`.
 
-For HTML readers the component also notes that no per-component CDN bundle exists and links to the <DocsLink slug="concepts/cdn">CDN</DocsLink> concept, so individual pages never make CDN claims of their own.
+The component renders only those package imports. UI components have no per-component CDN bundle, and that story belongs to the <DocsLink slug="concepts/cdn">CDN</DocsLink> concept, so individual pages never make CDN claims of their own.
 
 ```mdx
 <ComponentReference component="PlayButton" />
