@@ -212,14 +212,14 @@ Some bundlers default to an IIFE output format. Loading that bundle without `typ
 
 ## Use your player
 
-Import the elements and write them in a single-file component. Vue renders them as-is, so the markup matches the custom-element API exactly.
+Import the elements in a single-file component, take the source as a prop, and bind it on the media element. Vue needs one build change to leave these tags alone, which the `vite.config.ts` tab covers.
 
 <ContentWidth>
   <VueUsageCodeBlock client:idle />
 </ContentWidth>
 
 <Aside type="caution" title="Tell the Vue compiler about these tags">
-Vue resolves hyphenated tags as components and warns when it can't find one. List the Video.js tags your templates use in the `isCustomElement` compiler option — <DocsLink slug="how-to/use-videojs-with-vue">Use Video.js with Vue and Nuxt</DocsLink> has the Vite and Nuxt configuration, plus how to read player state and pass objects as properties.
+Without `isCustomElement`, Vue resolves hyphenated tags as components and warns that it can't find them. The `vite.config.ts` tab lists exactly the tags this player renders — add a tag there whenever you add one to a template. <DocsLink slug="how-to/use-videojs-with-vue">Use Video.js with Vue and Nuxt</DocsLink> has the Nuxt equivalent, plus how to read player state and pass objects as properties.
 </Aside>
 </FrameworkCase>
 
@@ -227,7 +227,7 @@ Vue resolves hyphenated tags as components and warns when it can't find one. Lis
 
 ## Use your player
 
-Import the elements and write them in a component. Svelte compiles them to real custom elements, so the markup matches the custom-element API exactly.
+Import the elements in a component, take the source as a prop, and bind it on the media element. Svelte compiles these tags to real custom elements, with no compiler configuration to add.
 
 <ContentWidth>
   <SvelteUsageCodeBlock client:idle />
