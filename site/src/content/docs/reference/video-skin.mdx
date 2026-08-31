@@ -2,14 +2,14 @@
 title: VideoSkin
 frameworkTitle:
   html: video-skin
-description: The video preset's default skin with the full on-demand control layout
+description: The video preset's default skin with the modern, frosted look
 ---
 
 import DocsLink from '@/components/docs/DocsLink.astro';
 import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 import SkinImports from '@/components/docs/api-reference/SkinImports.astro';
 
-The default skin of the video preset: the complete control layout for on-demand video. <DocsLink slug="reference/video-minimal-skin">MinimalVideoSkin</DocsLink> is the same preset's other variant. See <DocsLink slug="concepts/skins">Skins</DocsLink> for how packaged skins work and <DocsLink slug="concepts/presets">Presets</DocsLink> for what the video preset ships.
+The default skin of the video preset: the control layout for on-demand video with the modern, frosted look. <DocsLink slug="reference/video-minimal-skin">MinimalVideoSkin</DocsLink> is the same preset's other variant. See <DocsLink slug="concepts/skins">Skins</DocsLink> for how packaged skins work and <DocsLink slug="concepts/presets">Presets</DocsLink> for what the video preset ships.
 
 ## Import
 
@@ -53,4 +53,4 @@ See <DocsLink slug="how-to/add-a-poster-and-loading-placeholder">Add a poster an
 
 ## Styling
 
-Packaged skins style themselves and expose four CSS custom properties: `--media-accent-color`, `--media-accent-text-color`, `--media-border-radius`, and `--media-scale-unit`. Everything else inside the skin is private and may change between releases. <DocsLink slug="how-to/customize-skins">Customize skins</DocsLink> covers the properties and the ejection path when you need deeper changes.
+Packaged skins style themselves and expose a small set of public CSS custom properties. Everything else inside the skin is private and may change between releases. <DocsLink slug="how-to/customize-skins">Customize skins</DocsLink> documents the properties and the ejection path when you need deeper changes.
