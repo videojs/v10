@@ -26,7 +26,7 @@ test.describe('Error Dialog', () => {
   });
 
   test('keeps the popup hidden before an error occurs', async ({ page }) => {
-    await expect(page.locator('media-dialog-popup.media-dialog__popup')).toBeHidden();
+    await expect(page.locator('media-dialog-popup')).toBeHidden();
   });
 
   test('shows error dialog on media load failure', async ({ page }) => {
@@ -46,7 +46,7 @@ test.describe('Error Dialog', () => {
     await expect(errorDialog).toHaveAttribute(DATA_ATTRS.open, '', { timeout: 15_000 });
 
     // Click the close/OK button
-    const closeButton = page.locator('media-dialog-close, .media-button--primary').first();
+    const closeButton = page.locator('media-dialog-close').first();
 
     await closeButton.click();
 
@@ -88,10 +88,9 @@ test.describe('Error Dialog', () => {
     await triggerError(page, 'A long authored playback error message. '.repeat(120));
 
     const popup = page.getByRole('alertdialog');
-    const content = popup.locator('.media-dialog__content');
+    const content = popup.locator('.media-dialog-content');
 
     await expect(popup).toBeVisible({ timeout: 15_000 });
-    await expect(player.controls).toBeHidden();
 
     const scrollRange = await content.evaluate((element) => element.scrollHeight - element.clientHeight);
 

@@ -27,10 +27,7 @@ const menu = '[role="menu"]';
 const item = '[role="menuitem"]';
 const option = '[role="menuitemradio"]';
 const activeSubmenu = `${menu}[data-submenu][data-open]:not([data-ending-style])`;
-const playbackRateOptions = [
-  `#playback-rate-menu ${option}`,
-  withinControls(`.media-menu--playback-rate ${option}`),
-].join(', ');
+const playbackRateOptions = `${option}:visible`;
 
 export const SELECTORS = {
   // Player containers
@@ -78,7 +75,7 @@ export const SELECTORS = {
   // HTML: <media-time-slider>, React: the generic slider inside a preset-specific time layout.
   timeSlider:
     'media-time-slider, .media-time-slider, .video-time-slider-group .media-slider, .audio-time-slider-group .media-slider',
-  volumeSlider: 'media-volume-slider, .media-volume-slider, .media-popover--volume .media-slider',
+  volumeSlider: 'media-volume-slider, .media-volume-slider',
   sliderThumb: 'media-slider-thumb, .media-slider-thumb, .media-slider__thumb',
 
   // Display elements
@@ -87,10 +84,10 @@ export const SELECTORS = {
   duration: [
     'media-time[type="duration"]',
     'media-time[type="remaining"]',
-    '[data-type="duration"].media-time',
-    '[data-type="remaining"].media-time',
+    'time[data-type="duration"]',
+    'time[data-type="remaining"]',
   ].join(', '),
-  timeToggle: 'media-time[toggle], time.media-time[role="button"]',
+  timeToggle: 'media-time[toggle], time[role="button"][data-type]',
   poster: 'media-poster, img[data-loaded]',
   bufferingIndicator: 'media-buffering-indicator, .media-buffering-indicator',
   thumbnail:

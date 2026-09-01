@@ -118,7 +118,9 @@ for (const { name, path } of UI_VIDEO_PAGES) {
 
     test('uses the available menu space for size clamps', async () => {
       const size = await panel.evaluate((element) => {
-        const menu = element.closest<HTMLElement>('.media-menu')!;
+        const menu = element.closest<HTMLElement>('.media-menu-popup');
+        if (!menu) throw new Error('Menu popup is not attached');
+
         const probe = menu.cloneNode(false);
         if (!(probe instanceof HTMLElement)) throw new Error('Menu probe is not an element');
 

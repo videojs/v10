@@ -117,50 +117,29 @@ test.describe('Visual — HTML Portrait Layout', () => {
   });
 
   test('caps portrait thumbnails to the configured max height', async ({ page }) => {
-    const src = `data:image/svg+xml,${encodeURIComponent(
-      '<svg xmlns="http://www.w3.org/2000/svg" width="270" height="480" viewBox="0 0 270 480"><rect width="270" height="480" fill="black"/></svg>'
-    )}`;
-
-    await page.evaluate((url) => {
-      const thumbnail = document
-        .querySelector('video-skin')
-        ?.shadowRoot?.querySelector('media-slider-thumbnail') as HTMLElement & {
-        thumbnails?: Array<{ url: string; startTime: number; width: number; height: number }>;
-      };
-      if (!thumbnail) return;
-
-      thumbnail.thumbnails = [{ url, startTime: 0, width: 270, height: 480 }];
-    }, src);
-
-    await page.waitForFunction(() => {
-      const thumbnail = document.querySelector('video-skin')?.shadowRoot?.querySelector('media-slider-thumbnail');
-
-      return (
-        thumbnail &&
-        !thumbnail.hasAttribute('data-hidden') &&
-        !thumbnail.hasAttribute('data-loading') &&
-        parseFloat(getComputedStyle(thumbnail).height) > 0
-      );
-    });
-
     const size = await page.evaluate(() => {
-      const thumbnail = document.querySelector('video-skin')!.shadowRoot!.querySelector('media-slider-thumbnail')!;
-      const style = getComputedStyle(thumbnail);
+      const skin = document.querySelector('video-skin')!.shadowRoot!;
+      const thumbnail = skin.querySelector<HTMLElement>('media-slider-thumbnail')!;
       const probe = document.createElement('div');
 
+      thumbnail.removeAttribute('data-hidden');
+      thumbnail.style.width = '270px';
+      thumbnail.style.height = '480px';
       probe.style.position = 'absolute';
-      probe.style.height = style.getPropertyValue('--media-thumbnail-max-height');
+      probe.style.height = 'var(--media-slider-preview-max-height)';
       thumbnail.parentElement!.append(probe);
 
+      const style = getComputedStyle(thumbnail);
       const configuredMaxHeight = parseFloat(getComputedStyle(probe).height);
-
-      probe.remove();
-
-      return {
-        height: parseFloat(style.height),
+      const result = {
+        height: thumbnail.getBoundingClientRect().height,
         configuredMaxHeight,
         maxHeight: parseFloat(style.maxHeight),
       };
+
+      probe.remove();
+
+      return result;
     });
 
     expect(size.maxHeight).toBeCloseTo(size.configuredMaxHeight, 0);

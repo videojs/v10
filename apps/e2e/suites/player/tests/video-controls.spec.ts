@@ -155,7 +155,7 @@ for (const { name, path } of UI_VIDEO_PAGES) {
       await expect(player.volumeSlider).toBeVisible();
 
       const triggerBox = await player.muteButton.boundingBox();
-      const popupBox = await page.locator('.media-popover--volume').first().boundingBox();
+      const popupBox = await page.locator('.media-volume-popover').first().boundingBox();
       if (!triggerBox || !popupBox) throw new Error('Volume popover not visible');
 
       expect(popupBox.y + popupBox.height).toBeLessThanOrEqual(triggerBox.y);

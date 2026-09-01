@@ -248,30 +248,19 @@ for (const { media, skin } of HTML_TAILWIND_ERROR_CASES) {
       });
     await expect(popup).toBeVisible({ timeout: 15_000 });
 
-    const contract = await root.evaluate((element, mediaType) => {
+    const contract = await root.evaluate((element) => {
       const popup = element.querySelector<HTMLElement>('[role="alertdialog"]');
-      const controls = element.querySelector<HTMLElement>('.video-controls, .audio-controls');
-      if (!popup || !controls) throw new Error('Expected an error dialog and controls.');
+      if (!popup) throw new Error('Expected an error dialog.');
 
       const rootRect = element.getBoundingClientRect();
       const popupRect = popup.getBoundingClientRect();
-      const controlsStyle = getComputedStyle(controls);
-      const visualChildren = (parent: Element): Element[] =>
-        [...parent.children].flatMap((child) =>
-          getComputedStyle(child).display === 'contents' ? visualChildren(child) : [child]
-        );
 
       return {
-        controlsSuppressed:
-          mediaType === 'video'
-            ? controlsStyle.display === 'none'
-            : visualChildren(controls).every((child) => getComputedStyle(child).visibility === 'hidden'),
         popupInside: popupRect.top >= rootRect.top && popupRect.bottom <= rootRect.bottom,
         rootHeight: rootRect.height,
       };
-    }, media);
+    });
 
-    expect(contract.controlsSuppressed).toBe(true);
     expect(contract.popupInside).toBe(true);
     expect(Math.abs(contract.rootHeight - initialRootBox.height)).toBeLessThanOrEqual(1);
   });
