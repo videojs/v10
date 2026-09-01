@@ -46,6 +46,7 @@ export const playbackFeature = definePlayerFeature({
 
     const sync = () => {
       const starved = media.readyState < HTMLMediaElement.HAVE_FUTURE_DATA && !media.paused;
+
       if (!starved) starvedAt = null;
       else starvedAt ??= media.currentTime;
 

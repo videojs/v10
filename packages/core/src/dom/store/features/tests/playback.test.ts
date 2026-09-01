@@ -46,6 +46,7 @@ describe('playbackFeature', () => {
       });
 
       const store = createStore<PlayerTarget>()(playbackFeature);
+
       store.attach({ media: video, container: null });
 
       expect(store.state.waiting).toBe(true);
@@ -66,6 +67,7 @@ describe('playbackFeature', () => {
       });
 
       const store = createStore<PlayerTarget>()(playbackFeature);
+
       store.attach({ media: video, container: null });
 
       video.dispatchEvent(new Event('timeupdate'));
@@ -81,6 +83,7 @@ describe('playbackFeature', () => {
       });
 
       const store = createStore<PlayerTarget>()(playbackFeature);
+
       store.attach({ media: video, container: null });
 
       video.currentTime = 12;
