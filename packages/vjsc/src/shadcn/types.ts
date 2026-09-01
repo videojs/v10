@@ -59,6 +59,8 @@ export type RegistryThemeOptions = DistributiveOmit<RegistryItem, 'files' | 'nam
   readonly target: string;
   /** Authored CSS files relative to the VJSC graph root. */
   readonly include?: readonly string[] | undefined;
+  /** Tailwind CSS source whose `@theme inline` and `@utility` rules extend the registry item. */
+  readonly tailwind?: string | undefined;
 };
 
 export interface RegistryStylesOptions {

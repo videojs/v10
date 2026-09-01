@@ -1,4 +1,4 @@
-import { posix } from 'node:path';
+import { posix, resolve } from 'node:path';
 
 import type { Plugin } from 'rolldown';
 
@@ -24,8 +24,13 @@ export function vjscRegistryPlugin<Node extends ModuleMeta>(options: VjscRegistr
       if (!graph) this.error('The Shadcn registry requires vjscPlugin in the same build.');
 
       const output = options.output ? normalizeOutput(options.output) : '';
+      const files = await createShadcnRegistryFiles(graph, options);
 
-      for (const file of await createShadcnRegistryFiles(graph, options)) {
+      if (options.styles?.theme?.tailwind) {
+        this.addWatchFile(resolve(graph.root, options.styles.theme.tailwind));
+      }
+
+      for (const file of files) {
         const source = file.editable && options.format ? await options.format(file) : file.content;
 
         this.emitFile({

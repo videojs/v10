@@ -6,6 +6,7 @@ import type { ModuleMeta } from '../components/meta';
 import { bundleStyles, type GraphModule, type Graph } from '../graph';
 import { escapesRoot, toPosixPath } from '../utils/path';
 import { type ImportReplacement, replaceImportSpecifiers } from './analyze';
+import { readTailwindRegistryTheme } from './tailwind';
 import type {
   RegistryModuleTarget,
   RegistryStylesheetOutput,
@@ -79,7 +80,7 @@ export async function createShadcnRegistryFiles<Meta extends ModuleMeta>(
 
   const published = describePublishedModules(graph.modules, sourceItems);
   const publications = canonicalPublishedModules(graph, published);
-  const styleItems = describeStyleItems(graph, sourceItems, options);
+  const styleItems = await describeStyleItems(graph, sourceItems, options);
   const builtItems = await Promise.all([
     ...[...published.values()].map((publication) =>
       buildPublishedItem(publication, graph.modules, publications, graph, options)
@@ -164,11 +165,11 @@ async function createFileItems<Meta extends ModuleMeta>(
   });
 }
 
-function describeStyleItems<Meta extends ModuleMeta>(
+async function describeStyleItems<Meta extends ModuleMeta>(
   graph: Graph<Meta>,
   sourceItems: readonly SourceItem<Meta>[],
   options: VjscRegistryOptions<Meta>
-): StyleItem<Meta>[] {
+): Promise<StyleItem<Meta>[]> {
   const styles = options.styles;
   if (!styles) return [];
 
@@ -184,12 +185,22 @@ function describeStyleItems<Meta extends ModuleMeta>(
   }
 
   if (styles.theme) {
-    const { target, include, ...manifest } = styles.theme;
+    const { target, include, tailwind, ...manifest } = styles.theme;
+    const tailwindTheme = tailwind ? await readTailwindRegistryTheme(graph.root, tailwind) : undefined;
+    const cssVars = tailwindTheme
+      ? {
+          ...manifest.cssVars,
+          theme: { ...tailwindTheme.cssVars, ...manifest.cssVars?.theme },
+        }
+      : manifest.cssVars;
+    const css = tailwindTheme ? { ...tailwindTheme.css, ...manifest.css } : manifest.css;
 
     items.push({
       name: styleItemName(target),
       type: 'registry:style',
       ...manifest,
+      cssVars,
+      css,
       build: { kind: 'style', group: 'support', modules: [], target, include },
     });
   }
@@ -695,6 +706,10 @@ function validateOptions<Meta extends ModuleMeta>(options: VjscRegistryOptions<M
 
   if (!options.paths.import || options.paths.import.startsWith('.')) {
     throw new Error(`Shadcn registry import path must be an absolute module specifier.`);
+  }
+
+  if (options.styles?.theme?.tailwind) {
+    validateRelativePath(options.styles.theme.tailwind, 'Shadcn registry Tailwind source');
   }
 }
 
