@@ -20,7 +20,7 @@ describe('createReactPackageSkins', () => {
     );
 
     expect(files.get('packages/react/src/presets/video/skin.tsx')).toContain('export interface VideoSkinProps');
-    expect(files.get('packages/react/src/presets/video/skin.tsx')).toContain('poster={renderPoster}');
+    expect(files.get('packages/react/src/presets/video/skin.tsx')).toContain('<Skin {...props} />');
     expect(files.get('packages/react/src/internal/skins/default-video/skin.tsx')).toContain(
       "from '../shared/components/button'"
     );

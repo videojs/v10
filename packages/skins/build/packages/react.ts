@@ -198,8 +198,6 @@ function reactSkinWrapper(options: {
 }): string {
   const props = `${options.component}Props`;
   const base = options.video ? 'BaseVideoSkinProps' : 'BaseSkinProps';
-  const parameters = options.video ? `{ renderPoster, ...props }: ${props}` : `props: ${props}`;
-  const forwarded = options.video ? 'poster={renderPoster} {...props}' : '{...props}';
 
   return `'use client';
 
@@ -209,8 +207,8 @@ import type { ${base} } from '../types';
 
 export interface ${props} extends ${base} {}
 
-export function ${options.component}(${parameters}) {
-  return <Skin ${forwarded} />;
+export function ${options.component}(props: ${props}) {
+  return <Skin {...props} />;
 }
 `;
 }

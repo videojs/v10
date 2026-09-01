@@ -17,7 +17,6 @@ export default styles({
         '[--media-shadow-subtle-current-color:oklch(from_var(--media-shadow-current-color)_l_c_h/calc(alpha*0.4))]',
         'outline-2 -outline-offset-4 outline-transparent transition-[outline-offset,outline-color] duration-100 ease-out motion-reduce:duration-50',
         'focus-visible:outline-[var(--media-focus-ring-color,light-dark(rgb(0_0_0),rgb(255_255_255)))] focus-visible:outline-offset-2 forced-colors:focus-visible:outline-[CanvasText]',
-        'pointer-fine:not-data-controls-visible:cursor-none',
         'after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit]',
         'forced-colors:after:shadow-[inset_0_0_0_1px_CanvasText] [&:fullscreen]:after:hidden',
         '[&:fullscreen]:[--media-video-border-radius:0] [&:fullscreen]:[--media-object-fit:contain]',

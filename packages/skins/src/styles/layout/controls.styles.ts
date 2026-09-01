@@ -12,7 +12,7 @@ export default styles({
       utilities: [
         '@lg/media-root:bg-media-popover @lg/media-root:text-media-popover-foreground',
         '@lg/media-root:backdrop-blur-lg @lg/media-root:backdrop-saturate-150',
-        '@lg/media-root:ring-1 @lg/media-root:ring-media-border @lg/media-root:shadow-media-sm',
+        '@lg/media-root:shadow-media-sm',
         '@lg/media-root:after:pointer-events-none @lg/media-root:after:absolute @lg/media-root:after:inset-0',
         '@lg/media-root:after:z-10 @lg/media-root:after:rounded-[inherit]',
         '@lg/media-root:after:shadow-media-surface-inset',

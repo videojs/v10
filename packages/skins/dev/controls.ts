@@ -40,6 +40,10 @@ function createOptions(preview: PreviewOptions): HTMLFormElement {
       ['css', 'CSS'],
       ['tailwind', 'Tailwind'],
     ]),
+    createSelect('scheme', 'Color scheme', preview.colorScheme, [
+      ['dark', 'Dark'],
+      ['light', 'Light'],
+    ]),
     createSelect(
       'media',
       'Media',
@@ -136,6 +140,7 @@ function createCopyButton(preview: PreviewOptions): HTMLButtonElement {
       `framework=${preview.framework}`,
       `skin=${preview.skin}`,
       `style=${preview.styleMode}`,
+      `scheme=${preview.colorScheme}`,
       `media=${preview.mediaId} (${preview.media.label})`,
       `captions=${preview.captionsMode}`,
       `width=${width}px (${formatRem(width)})`,

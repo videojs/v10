@@ -11,7 +11,10 @@ export default styles({
       ],
       variants: {
         default: 'rounded-[9999px] px-2.5',
-        minimal: 'rounded-[--spacing(2)] px-2',
+        minimal: [
+          'rounded-[--spacing(2)] px-2',
+          'shadow-[0_0_0_1px_var(--media-border),0_4px_6px_-1px_oklch(0_0_0/0.2),0_2px_4px_-2px_oklch(0_0_0/0.2)]!',
+        ],
       },
     },
     shortcut: {

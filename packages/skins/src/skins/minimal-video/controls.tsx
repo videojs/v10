@@ -1,6 +1,7 @@
 import * as $ from '@videojs/core/vjsc';
 
 import { AirPlayButton } from '../../components/buttons/airplay-button';
+import { ButtonTooltip } from '../../components/buttons/button-tooltip';
 import { CaptionsButton } from '../../components/buttons/captions-button';
 import { CastButton } from '../../components/buttons/cast-button';
 import { FullscreenButton } from '../../components/buttons/fullscreen-button';
@@ -19,7 +20,9 @@ export function MinimalVideoControls() {
       <$.Controls.Content className={[controlsStyles.root, styles.content]}>
         <$.Tooltip.Provider>
           <$.Controls.Group className={styles.start}>
-            <PlayButton />
+            <ButtonTooltip side="top">
+              <PlayButton />
+            </ButtonTooltip>
             <VolumePopover showTooltip side="right" orientation="horizontal" />
           </$.Controls.Group>
 
@@ -33,13 +36,23 @@ export function MinimalVideoControls() {
           </$.Controls.Group>
 
           <$.Controls.Group className={styles.end}>
-            <CaptionsButton />
+            <ButtonTooltip side="top">
+              <CaptionsButton />
+            </ButtonTooltip>
             <VideoSettingsMenu />
             <$.Controls.Group className={styles.trailing}>
-              <CastButton />
-              <AirPlayButton />
-              <PiPButton />
-              <FullscreenButton />
+              <ButtonTooltip side="top">
+                <CastButton />
+              </ButtonTooltip>
+              <ButtonTooltip side="top">
+                <AirPlayButton />
+              </ButtonTooltip>
+              <ButtonTooltip side="top">
+                <PiPButton />
+              </ButtonTooltip>
+              <ButtonTooltip side="top">
+                <FullscreenButton />
+              </ButtonTooltip>
             </$.Controls.Group>
           </$.Controls.Group>
         </$.Tooltip.Provider>

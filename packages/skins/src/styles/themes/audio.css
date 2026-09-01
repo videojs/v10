@@ -6,6 +6,7 @@
     --media-controls-foreground: var(--media-foreground);
     --media-popover: var(--media-controls);
     --media-popover-foreground: var(--media-foreground);
+    --media-surface-border: oklch(0 0 0 / 0.05);
     --media-primary: var(--media-accent-color, var(--media-foreground));
     --media-primary-foreground: var(--media-accent-text-color, contrast-color(var(--media-primary)));
     --media-border: light-dark(oklch(0 0 0 / 0.1), oklch(1 0 0 / 0.1));
@@ -24,6 +25,7 @@
     .media-skin:is([data-preset="audio"], [data-preset="live-audio"]) {
       --media-controls: var(--media-background);
       --media-popover: var(--media-background);
+      --media-surface-border: light-dark(oklch(0 0 0 / 0.05), transparent);
     }
   }
 }

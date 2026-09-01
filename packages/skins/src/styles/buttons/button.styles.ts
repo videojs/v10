@@ -17,6 +17,9 @@ export default styles({
         'motion-reduce:scale-100 motion-reduce:will-change-auto motion-reduce:[transition-property:background-color,color]',
         'aria-disabled:cursor-not-allowed aria-disabled:opacity-50',
       ],
+      variants: {
+        minimal: 'supports-[corner-shape:squircle]:rounded-2xl',
+      },
     },
     icon: {
       className: 'media-button-icon',

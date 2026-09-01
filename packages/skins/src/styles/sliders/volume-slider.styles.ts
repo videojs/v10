@@ -9,7 +9,7 @@ export default styles({
     },
     thumb: {
       className: 'media-volume-slider-thumb',
-      utilities: 'size-3 scale-100 opacity-100',
+      utilities: 'scale-100 opacity-100',
     },
   },
 });

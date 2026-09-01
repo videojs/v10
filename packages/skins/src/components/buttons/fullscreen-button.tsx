@@ -7,16 +7,13 @@ import type { SkinComponentMeta } from '../../meta';
 import buttonStyles from '../../styles/buttons/button.styles';
 import styles from '../../styles/buttons/fullscreen-button.styles';
 import { Button } from './button';
-import { ButtonTooltip } from './button-tooltip';
 
 export function FullscreenButton({ className, ...props }: Props<CoreProps> = {}) {
   return (
-    <ButtonTooltip side="top">
-      <$.FullscreenButton $render={Button} className={[styles.root, className]} {...props}>
-        <FullscreenEnterIcon className={[buttonStyles.icon, styles.enterIcon]} />
-        <FullscreenExitIcon className={[buttonStyles.icon, styles.exitIcon]} />
-      </$.FullscreenButton>
-    </ButtonTooltip>
+    <$.FullscreenButton $render={Button} className={[styles.root, className]} {...props}>
+      <FullscreenEnterIcon className={[buttonStyles.icon, styles.enterIcon]} />
+      <FullscreenExitIcon className={[buttonStyles.icon, styles.exitIcon]} />
+    </$.FullscreenButton>
   );
 }
 
@@ -24,5 +21,5 @@ export const meta = {
   name: 'fullscreen-button',
   type: 'component',
   title: 'Fullscreen Button',
-  description: 'A button that enters and exits fullscreen with state-aware icons and an accessible tooltip.',
+  description: 'A button that enters and exits fullscreen with state-aware icons.',
 } as const satisfies SkinComponentMeta;

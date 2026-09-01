@@ -10,8 +10,8 @@ export function LivePlaybackHotkeys({ disabled = false }: LivePlaybackHotkeysPro
       <$.Hotkey disabled={disabled} keys="Space" action="togglePaused" />
       <$.Hotkey disabled={disabled} keys="k" action="togglePaused" />
       <$.Hotkey disabled={disabled} keys="m" action="toggleMuted" />
-      <$.Hotkey disabled={disabled} keys="ArrowUp" action="volumeStep" value={0.05} />
-      <$.Hotkey disabled={disabled} keys="ArrowDown" action="volumeStep" value={-0.05} />
+      <$.Hotkey disabled={disabled} keys="ArrowUp" action="volumeStep" />
+      <$.Hotkey disabled={disabled} keys="ArrowDown" action="volumeStep" />
     </>
   );
 }

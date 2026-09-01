@@ -30,6 +30,7 @@ export function resolveSkinStyles(module: TransformModule): StyleTransformOption
 export function validateSkinConfig(parameters: URLSearchParams): SkinTransformConfig | null {
   const target = parameters.get('target');
   const skin = parameters.get('skin');
+
   const style = parameters.get('style');
   if ((target !== 'react' && target !== 'html') || (style !== 'tailwind' && style !== 'css')) return null;
 

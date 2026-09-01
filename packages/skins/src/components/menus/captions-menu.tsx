@@ -1,35 +1,22 @@
 import type { MenuProps } from '@videojs/core';
 import * as $ from '@videojs/core/vjsc';
-import { CaptionsOffIcon, CaptionsOnIcon } from '@videojs/icons/vjsc';
-import { type ClassNameValue, type Props, Template } from 'vjsc/components';
+import { type Props, type PropsOf, Template } from 'vjsc/components';
 
 import type { SkinComponentMeta } from '../../meta';
-import buttonStyles from '../../styles/buttons/button.styles';
-import captionsButtonStyles from '../../styles/buttons/captions-button.styles';
 import styles from '../../styles/menus/menu.styles';
 import popupStyles from '../../styles/popups/popup.styles';
-import { Button } from '../buttons/button';
-import { ButtonTooltip } from '../buttons/button-tooltip';
+import { CaptionsButton } from '../buttons/captions-button';
 import { RadioItem } from './radio-item';
 
 export interface CaptionsMenuProps extends MenuProps {
-  className?: ClassNameValue;
+  className?: PropsOf<typeof $.Menu.Trigger>['className'];
 }
 
 export function CaptionsMenu({ className, ...props }: Props<CaptionsMenuProps> = {}) {
   return (
     <$.Menu.Root side="top" align="center" boundary="viewport" {...props}>
       <$.CaptionsRadioGroup.Root>
-        <ButtonTooltip side="top">
-          <$.Menu.Trigger
-            $render={Button}
-            aria-label="Enable captions"
-            className={[captionsButtonStyles.root, className]}
-          >
-            <CaptionsOffIcon className={[buttonStyles.icon, captionsButtonStyles.offIcon]} />
-            <CaptionsOnIcon className={[buttonStyles.icon, captionsButtonStyles.onIcon]} />
-          </$.Menu.Trigger>
-        </ButtonTooltip>
+        <$.Menu.Trigger $render={CaptionsButton} className={className} />
         <$.Menu.Popup className={[popupStyles.popup, popupStyles.surface, styles.popup]}>
           <$.Menu.Content className={styles.content}>
             <$.CaptionsRadioGroup.Options className={styles.radioGroup}>

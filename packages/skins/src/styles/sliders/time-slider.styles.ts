@@ -34,7 +34,7 @@ export default styles({
     thumb: {
       className: 'media-time-slider-thumb',
       utilities: [
-        'size-3 opacity-0 data-interactive:opacity-100 focus-visible:opacity-100',
+        'opacity-0 data-interactive:opacity-100 focus-visible:opacity-100',
         'pointer-fine:group-hover/slider:scale-100 pointer-fine:group-hover/slider:opacity-100',
       ],
       variants: { default: 'scale-80', minimal: 'scale-70 data-interactive:scale-100' },

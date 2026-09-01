@@ -29,7 +29,9 @@ export function VolumePopover({
           <MuteButton className={[className]} />
         </$.VolumePopover.Trigger>
       </ButtonTooltip>
-      <$.VolumePopover.Popup className={[popupStyles.popup, popupStyles.transition, popupStyles.surface, styles.popup]}>
+      <$.VolumePopover.Popup
+        className={[popupStyles.popup, popupStyles.safeArea, popupStyles.transition, popupStyles.surface, styles.popup]}
+      >
         <VolumeSlider orientation={orientation} />
       </$.VolumePopover.Popup>
     </$.VolumePopover.Root>

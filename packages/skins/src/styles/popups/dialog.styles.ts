@@ -32,7 +32,7 @@ export default styles({
       variants: {
         default: [
           'bg-media-popover text-media-popover-foreground backdrop-blur-lg backdrop-saturate-150',
-          'ring-1 ring-media-border shadow-media-sm',
+          'shadow-media-sm',
           'after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit]',
           'after:shadow-media-surface-inset',
           'opaque:bg-media-background opaque:backdrop-filter-none',
@@ -67,7 +67,7 @@ export default styles({
     },
     close: {
       className: 'media-dialog-close',
-      utilities: 'h-media-control w-full flex-1 bg-media-accent! px-4 py-2 font-medium text-media-accent-text!',
+      utilities: 'h-media-control w-full flex-1 bg-media-primary! px-4 py-2 font-medium text-media-primary-foreground!',
     },
   },
 });

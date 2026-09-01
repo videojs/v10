@@ -7,16 +7,13 @@ import type { SkinComponentMeta } from '../../meta';
 import styles from '../../styles/buttons/airplay-button.styles';
 import buttonStyles from '../../styles/buttons/button.styles';
 import { Button } from './button';
-import { ButtonTooltip } from './button-tooltip';
 
 export function AirPlayButton({ className, ...props }: Props<CoreProps> = {}) {
   return (
-    <ButtonTooltip side="top">
-      <$.AirPlayButton $render={Button} className={[styles.root, className]} {...props}>
-        <AirPlayEnterIcon className={[buttonStyles.icon, styles.enterIcon]} />
-        <AirPlayExitIcon className={[buttonStyles.icon, styles.exitIcon]} />
-      </$.AirPlayButton>
-    </ButtonTooltip>
+    <$.AirPlayButton $render={Button} className={[styles.root, className]} {...props}>
+      <AirPlayEnterIcon className={[buttonStyles.icon, styles.enterIcon]} />
+      <AirPlayExitIcon className={[buttonStyles.icon, styles.exitIcon]} />
+    </$.AirPlayButton>
   );
 }
 

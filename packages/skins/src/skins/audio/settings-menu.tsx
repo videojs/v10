@@ -1,7 +1,6 @@
 import type { MenuProps } from '@videojs/core';
-import { speedText } from '@videojs/core/i18n/text/menu';
 import * as $ from '@videojs/core/vjsc';
-import { type Props, type PropsOf, Template, Text } from 'vjsc/components';
+import { type Props, type PropsOf, Template } from 'vjsc/components';
 
 import { ButtonTooltip } from '../../components/buttons/button-tooltip';
 import { PlaybackRateButton } from '../../components/buttons/playback-rate-button';
@@ -17,7 +16,7 @@ export function AudioSettingsMenu({
   return (
     <$.Menu.Root side="top" align="center" boundary="viewport" {...props}>
       <$.PlaybackRateRadioGroup.Root>
-        <ButtonTooltip label={<Text token={speedText.key}>{speedText.text}</Text>} side="top">
+        <ButtonTooltip boundary="viewport" side="top">
           <$.Menu.Trigger $render={PlaybackRateButton} className={className} />
         </ButtonTooltip>
         <$.Menu.Popup className={[popupStyles.popup, popupStyles.surface, styles.popup, audioSettingsMenuStyles.popup]}>

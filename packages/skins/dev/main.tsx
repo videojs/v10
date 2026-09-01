@@ -14,6 +14,9 @@ import './styles.css';
 
 const captions = new URL('./captions.vtt', import.meta.url).href;
 const preview = readPreviewOptions();
+
+document.documentElement.dataset.colorScheme = preview.colorScheme;
+
 const Skin = await loadSkin(preview);
 
 if (preview.styleMode === 'tailwind') await import('../src/styles/tailwind.compiler.css');

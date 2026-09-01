@@ -48,8 +48,8 @@ export default styles({
         'max-h-[min(var(--media-menu-available-height,--spacing(56)),--spacing(56))] overscroll-none',
         'h-(--media-menu-height) w-(--media-menu-width)',
         'motion-reduce:[--media-menu-transition-duration:0ms]',
-        '[transition-property:opacity,filter,transform,scale,width,height]',
-        '[transition-duration:100ms,100ms,100ms,100ms,250ms,250ms] ease-out',
+        '[transition-property:opacity,filter,transform,scale]',
+        '[transition-duration:100ms] ease-out',
         'data-starting-style:[transition-duration:100ms] data-starting-style:[transition-property:opacity,filter,transform,scale]',
         'data-ending-style:[transition-duration:100ms] data-ending-style:[transition-property:opacity,filter,transform,scale]',
         'motion-reduce:[transition-duration:0ms]!',
@@ -58,6 +58,13 @@ export default styles({
         default: 'rounded-[--spacing(3)]',
         minimal: 'rounded-[--spacing(2.5)]',
       },
+    },
+    resizablePopup: {
+      className: 'media-menu-resizable-popup',
+      utilities: [
+        '[transition-property:opacity,filter,transform,scale,width,height]',
+        '[transition-duration:100ms,100ms,100ms,100ms,var(--media-menu-transition-duration),var(--media-menu-transition-duration)]',
+      ],
     },
     content: {
       className: 'media-menu-content',

@@ -7,6 +7,10 @@ export default styles({
       className: 'media-seek-button',
       utilities: [],
     },
+    content: {
+      className: 'media-seek-button-content',
+      utilities: 'relative grid',
+    },
     backwardIcon: {
       className: 'media-seek-button-backward-icon',
       utilities: '-scale-x-100',

@@ -7,21 +7,20 @@ import { Poster } from '../../components/layout/poster';
 import type { SkinMeta } from '../../meta';
 import { VideoGestures } from '../video/gestures';
 import { VideoHotkeys } from '../video/hotkeys';
+import videoSkinStyles from '../video/skin.styles';
 import { VideoStatusIndicators } from '../video/status-indicators';
 import { DefaultVideoControls } from './controls';
 
 export interface DefaultVideoSkinProps extends Omit<PropsOf<typeof Container>, 'children'> {
   children?: VjscNode;
-  poster?: string | PropsOf<typeof Poster>['children'];
+  renderPoster?: PropsOf<typeof Poster>['children'];
 }
 
-export function DefaultVideoSkin({ children, className, poster, ...props }: DefaultVideoSkinProps = {}) {
-  const isPosterString = typeof poster === 'string';
-
+export function DefaultVideoSkin({ children, className, renderPoster, ...props }: DefaultVideoSkinProps = {}) {
   return (
-    <Container className={className} data-theme="default" data-preset="video" {...props}>
+    <Container className={[videoSkinStyles.root, className]} data-theme="default" data-preset="video" {...props}>
       <Slot>{children}</Slot>
-      <Poster src={isPosterString ? poster : undefined}>{isPosterString ? undefined : poster}</Poster>
+      <Poster>{renderPoster}</Poster>
       <BufferingIndicator />
       <ErrorDialog />
 

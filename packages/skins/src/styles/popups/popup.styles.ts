@@ -19,6 +19,14 @@ export default styles({
         'data-[side=bottom]:[--media-popup-translate-y-distance:calc(var(--media-popup-translate-distance)*-1)]',
         'data-[side=left]:[--media-popup-translate-x-distance:var(--media-popup-translate-distance)]',
         'data-[side=right]:[--media-popup-translate-x-distance:calc(var(--media-popup-translate-distance)*-1)]',
+      ],
+      variants: {
+        minimal: 'data-starting-style:filter-none',
+      },
+    },
+    safeArea: {
+      className: 'media-popup-safe-area',
+      utilities: [
         'before:pointer-events-auto before:absolute',
         'data-[side=top]:before:inset-x-0 data-[side=top]:before:top-full',
         'data-[side=bottom]:before:inset-x-0 data-[side=bottom]:before:bottom-full',
@@ -27,9 +35,6 @@ export default styles({
         'data-[side=top]:before:h-(--media-popup-side-offset) data-[side=bottom]:before:h-(--media-popup-side-offset)',
         'data-[side=left]:before:w-(--media-popup-side-offset) data-[side=right]:before:w-(--media-popup-side-offset)',
       ],
-      variants: {
-        minimal: 'data-starting-style:filter-none',
-      },
     },
     transition: {
       className: 'media-popup-transition',
@@ -42,7 +47,7 @@ export default styles({
       className: 'media-popup-surface',
       utilities: [
         'bg-media-popover text-media-popover-foreground backdrop-blur-lg backdrop-saturate-150',
-        'ring-1 ring-media-border shadow-media-sm',
+        'shadow-media-sm',
         'after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit]',
         'after:shadow-media-surface-inset',
         'opaque:bg-media-background opaque:backdrop-filter-none',

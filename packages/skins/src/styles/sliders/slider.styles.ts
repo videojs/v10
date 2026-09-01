@@ -52,7 +52,7 @@ export default styles({
     thumb: {
       className: 'media-slider-thumb',
       utilities: [
-        'absolute z-10 top-1/2 left-(--media-slider-fill) -translate-x-1/2 -translate-y-1/2 rounded-media-control bg-current',
+        'absolute z-10 top-1/2 left-(--media-slider-fill) size-3 -translate-x-1/2 -translate-y-1/2 rounded-media-control bg-current',
         'select-none transition-none motion-safe:transition-[opacity,height,width,outline-offset,left,top,scale] motion-safe:duration-100 motion-safe:ease-out',
         'group-data-dragging/slider:motion-safe:transition-[opacity,height,width,outline-offset,scale]',
         'group-data-dragging/slider:scale-90',

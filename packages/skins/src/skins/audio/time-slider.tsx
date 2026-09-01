@@ -4,6 +4,7 @@ import { Box, type Props } from 'vjsc/components';
 
 import { SliderBuffer, SliderFill, SliderThumb, SliderTrack } from '../../components/sliders/slider';
 import popupStyles from '../../styles/popups/popup.styles';
+import tooltipStyles from '../../styles/popups/tooltip.styles';
 import sliderStyles from '../../styles/sliders/slider.styles';
 import styles from './time-slider.styles';
 
@@ -20,7 +21,7 @@ export function AudioTimeSlider({
       </$.TimeSlider.Track>
       <$.TimeSlider.Thumb $render={SliderThumb} className={styles.thumb} />
       <$.TimeSlider.Preview className={sliderStyles.preview} overflow={previewOverflow}>
-        <Box className={[sliderStyles.previewContent, popupStyles.surface, styles.previewContent]}>
+        <Box className={[sliderStyles.previewContent, popupStyles.surface, tooltipStyles.popup, styles.previewContent]}>
           <$.TimeSlider.Value className={styles.value} type="pointer" />
         </Box>
       </$.TimeSlider.Preview>

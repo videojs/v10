@@ -34,7 +34,7 @@ export default styles({
     },
     title: {
       className: 'audio-dialog-title',
-      utilities: 'm-0 text-media-lg font-semibold leading-tight',
+      utilities: 'm-0 text-media font-semibold leading-tight',
     },
     description: {
       className: 'audio-dialog-description',
@@ -46,7 +46,7 @@ export default styles({
     },
     close: {
       className: 'audio-dialog-close',
-      utilities: 'h-media-control w-auto flex-none bg-media-accent px-3 font-medium text-media-accent-text',
+      utilities: 'h-media-control w-auto flex-none bg-media-primary! px-3 font-medium text-media-primary-foreground!',
     },
   },
 });

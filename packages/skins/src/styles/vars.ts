@@ -120,6 +120,10 @@ export const vars = {
     kind: 'internal',
     description: 'Scoped small surface shadow.',
   },
+  '--media-surface-border': {
+    kind: 'internal',
+    description: 'Scoped surface hairline color.',
+  },
   '--media-caption-controls-y': {
     kind: 'internal',
     description: 'Caption offset while controls are visible.',

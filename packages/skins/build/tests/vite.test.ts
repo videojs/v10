@@ -12,6 +12,9 @@ const defaultControlsUrl = `/../src/skins/default-video/controls.tsx${reactTarge
 const htmlContainerUrl = '/../src/components/layout/container.tsx?style=tailwind&target=html&skin=minimal-video';
 const playButtonUrl = `/../src/components/buttons/play-button.tsx${reactTarget}`;
 const settingsMenuUrl = `/../src/components/menus/settings-menu.tsx${reactTarget}`;
+const reactCaptionsMenuUrl =
+  '/../src/components/menus/captions-menu.tsx?style=css&target=react&skin=default-live-video';
+const htmlCaptionsMenuUrl = '/../src/components/menus/captions-menu.tsx?style=css&target=html&skin=default-live-video';
 const htmlAudioSettingsMenuUrl = '/../src/skins/audio/settings-menu.tsx?style=css&target=html&skin=default-audio';
 const volumePopoverUrl = `/../src/components/controls/volume-popover.tsx${reactTarget}`;
 const htmlPosterUrl = '/../src/components/layout/poster.tsx?style=tailwind&target=html&skin=default-video';
@@ -132,6 +135,7 @@ describe('Skins Vite workflow', () => {
     expect(settingsMenu?.code).toContain('children: /* @__PURE__ */ _jsxDEV(Menu.Trigger');
     expect(settingsMenu?.code).toContain('render: /* @__PURE__ */ _jsxDEV(Button');
     expect(settingsMenu?.code).toContain('resolveClassName(className, state)');
+    expect(settingsMenu?.code).toContain('media-menu-resizable-popup');
     expect(volumePopover?.code).toContain(
       'VolumePopoverPrimitive.Trigger, { render: /* @__PURE__ */ _jsxDEV(MuteButton'
     );
@@ -143,7 +147,18 @@ describe('Skins Vite workflow', () => {
     const code = settingsMenu?.code ?? '';
 
     expect(code).toContain('/components/buttons/playback-rate-button.tsx?skin=default-audio&style=css&target=html');
-    expect(code).toMatch(/_jsxDEV\(PlaybackRateButton, \{\s+commandfor:[\s\S]*?class: className/);
+    expect(code).toMatch(/_jsxDEV\(PlaybackRateButton, \{\s+commandfor:[\s\S]*?className/);
+    expect(code).not.toContain('media-menu-resizable-popup');
+  }, 30_000);
+
+  it('uses the captions button itself as the menu trigger', async () => {
+    const react = await server.transformRequest(reactCaptionsMenuUrl);
+    const html = await server.transformRequest(htmlCaptionsMenuUrl);
+
+    expect(react?.code).toMatch(/_jsxDEV\(MenuPrimitive\.Trigger, \{\s+render: .*_jsxDEV\(CaptionsButton/);
+    expect(react?.code).not.toContain('ButtonTooltip');
+    expect(html?.code).toMatch(/_jsxDEV\(CaptionsButton, \{\s+commandfor:[\s\S]*?className/);
+    expect(html?.code).not.toContain('data-vjsc-render-captions-button');
   }, 30_000);
 
   it('emits base visibility styles for stateful button icons', async () => {

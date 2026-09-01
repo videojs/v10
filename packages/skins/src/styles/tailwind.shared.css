@@ -42,5 +42,7 @@
 }
 
 @utility shadow-media-sm {
-  box-shadow: var(--media-shadow-sm);
+  box-shadow:
+    0 0 0 1px var(--media-surface-border, var(--media-border)),
+    var(--media-shadow-sm);
 }

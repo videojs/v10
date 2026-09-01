@@ -1,6 +1,7 @@
 import * as $ from '@videojs/core/vjsc';
 
 import { AirPlayButton } from '../../components/buttons/airplay-button';
+import { ButtonTooltip } from '../../components/buttons/button-tooltip';
 import { CaptionsButton } from '../../components/buttons/captions-button';
 import { CastButton } from '../../components/buttons/cast-button';
 import { FullscreenButton } from '../../components/buttons/fullscreen-button';
@@ -20,7 +21,9 @@ export function DefaultVideoControls() {
       <$.Controls.Content className={[controlsStyles.root, controlsStyles.surface, styles.content]}>
         <$.Tooltip.Provider>
           <$.Controls.Group className={[popupStyles.surface, styles.primary]}>
-            <PlayButton />
+            <ButtonTooltip side="top">
+              <PlayButton />
+            </ButtonTooltip>
             <VolumePopover className={styles.volumeButton} />
 
             <$.Controls.Group className={styles.timeSliderGroup}>
@@ -29,15 +32,25 @@ export function DefaultVideoControls() {
               <$.Time.Value className={styles.remainingValue} type="remaining" toggle />
             </$.Controls.Group>
 
-            <CaptionsButton className={styles.captionsButton} />
+            <ButtonTooltip side="top">
+              <CaptionsButton className={styles.captionsButton} />
+            </ButtonTooltip>
             <VideoSettingsMenu className={styles.settingsButton} />
           </$.Controls.Group>
 
           <$.Controls.Group className={[popupStyles.surface, styles.secondary]}>
-            <CastButton />
-            <AirPlayButton />
-            <PiPButton />
-            <FullscreenButton />
+            <ButtonTooltip side="top">
+              <CastButton />
+            </ButtonTooltip>
+            <ButtonTooltip side="top">
+              <AirPlayButton />
+            </ButtonTooltip>
+            <ButtonTooltip side="top">
+              <PiPButton />
+            </ButtonTooltip>
+            <ButtonTooltip side="top">
+              <FullscreenButton />
+            </ButtonTooltip>
           </$.Controls.Group>
         </$.Tooltip.Provider>
       </$.Controls.Content>

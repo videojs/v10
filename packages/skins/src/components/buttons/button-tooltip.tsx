@@ -15,7 +15,9 @@ export function ButtonTooltip({ children, label, ...props }: PropsWithChildren<B
   return (
     <$.Tooltip.Root {...props}>
       <$.Tooltip.Trigger>{children}</$.Tooltip.Trigger>
-      <$.Tooltip.Popup className={[popupStyles.popup, popupStyles.transition, popupStyles.surface, styles.popup]}>
+      <$.Tooltip.Popup
+        className={[popupStyles.popup, popupStyles.safeArea, popupStyles.transition, popupStyles.surface, styles.popup]}
+      >
         {label ?? <$.Tooltip.Label />}
         {!label && <$.Tooltip.Shortcut className={styles.shortcut} />}
       </$.Tooltip.Popup>

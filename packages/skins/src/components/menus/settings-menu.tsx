@@ -26,7 +26,10 @@ export function SettingsMenu({ children, className, ...props }: PropsWithChildre
           </Text>
         </$.Menu.Trigger>
       </ButtonTooltip>
-      <$.Menu.Popup keepMounted className={[popupStyles.popup, popupStyles.surface, styles.popup]}>
+      <$.Menu.Popup
+        keepMounted
+        className={[popupStyles.popup, popupStyles.surface, styles.popup, styles.resizablePopup]}
+      >
         <$.Menu.Content className={styles.content}>{children}</$.Menu.Content>
       </$.Menu.Popup>
     </$.Menu.Root>

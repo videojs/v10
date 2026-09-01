@@ -1,5 +1,6 @@
 import * as $ from '@videojs/core/vjsc';
 
+import { ButtonTooltip } from '../../components/buttons/button-tooltip';
 import { SeekButton } from '../../components/buttons/seek-button';
 import { VolumePopover } from '../../components/controls/volume-popover';
 import audioControlsStyles from '../../styles/layout/audio-controls.styles';
@@ -16,8 +17,12 @@ export function DefaultAudioControls() {
         <$.Tooltip.Provider>
           <$.Controls.Group className={styles.start}>
             <AudioPlayButton />
-            <SeekButton className={styles.seekButton} seconds={-10} />
-            <SeekButton className={styles.seekButton} seconds={10} />
+            <ButtonTooltip boundary="viewport" side="top">
+              <SeekButton className={styles.seekButton} seconds={-10} />
+            </ButtonTooltip>
+            <ButtonTooltip boundary="viewport" side="top">
+              <SeekButton className={styles.seekButton} seconds={10} />
+            </ButtonTooltip>
           </$.Controls.Group>
 
           <$.Controls.Group className={styles.timeSliderGroup}>
@@ -28,7 +33,7 @@ export function DefaultAudioControls() {
 
           <$.Controls.Group className={styles.end}>
             <AudioSettingsMenu />
-            <VolumePopover />
+            <VolumePopover boundary="viewport" />
           </$.Controls.Group>
         </$.Tooltip.Provider>
       </$.Controls.Content>

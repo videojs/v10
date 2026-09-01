@@ -7,16 +7,13 @@ import type { SkinComponentMeta } from '../../meta';
 import buttonStyles from '../../styles/buttons/button.styles';
 import styles from '../../styles/buttons/captions-button.styles';
 import { Button } from './button';
-import { ButtonTooltip } from './button-tooltip';
 
 export function CaptionsButton({ className, ...props }: Props<CoreProps> = {}) {
   return (
-    <ButtonTooltip side="top">
-      <$.CaptionsButton $render={Button} className={[styles.root, className]} {...props}>
-        <CaptionsOffIcon className={[buttonStyles.icon, styles.offIcon]} />
-        <CaptionsOnIcon className={[buttonStyles.icon, styles.onIcon]} />
-      </$.CaptionsButton>
-    </ButtonTooltip>
+    <$.CaptionsButton $render={Button} className={[styles.root, className]} {...props}>
+      <CaptionsOffIcon className={[buttonStyles.icon, styles.offIcon]} />
+      <CaptionsOnIcon className={[buttonStyles.icon, styles.onIcon]} />
+    </$.CaptionsButton>
   );
 }
 

@@ -151,6 +151,7 @@ export const reactComponentTarget: ComponentTarget<CoreSchema> = defineComponent
         target: () => reactComponentTarget,
         targets: {
           Button: { element: Button },
+          CaptionsButton: { element: Button, kind: 'component' },
           PlaybackRateButton: { element: Button, kind: 'component' },
           SliderBuffer: { element: Div },
           SliderFill: { element: Div },

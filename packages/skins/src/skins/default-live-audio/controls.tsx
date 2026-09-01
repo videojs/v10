@@ -21,7 +21,7 @@ export function DefaultLiveAudioControls() {
           <Box aria-hidden="true" className={styles.spacer} />
 
           <$.Controls.Group className={styles.end}>
-            <VolumePopover />
+            <VolumePopover boundary="viewport" />
           </$.Controls.Group>
         </$.Tooltip.Provider>
       </$.Controls.Content>

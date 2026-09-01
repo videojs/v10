@@ -190,12 +190,14 @@ export const htmlComponentTarget: ComponentTarget<CoreSchema> = defineComponentT
           const controlledId = id(popup ? 'popup' : 'content');
 
           if (popup) {
-            const playbackRateButtonProps = renderTargetProps(trigger.props, 'PlaybackRateButton');
+            const componentProps =
+              renderTargetProps(trigger.props, 'CaptionsButton') ??
+              renderTargetProps(trigger.props, 'PlaybackRateButton');
 
             return [
               trigger.replaceWith(
-                playbackRateButtonProps ? (
-                  <Host commandfor={controlledId} {...playbackRateButtonProps}>
+                componentProps ? (
+                  <Host commandfor={controlledId} {...componentProps}>
                     {trigger.children}
                   </Host>
                 ) : (
@@ -309,6 +311,7 @@ export const htmlComponentTarget: ComponentTarget<CoreSchema> = defineComponentT
         target: () => htmlComponentTarget,
         targets: {
           Button: { element: Button },
+          CaptionsButton: { element: htmlElementTarget('CaptionsButton', element), kind: 'component' },
           PlaybackRateButton: { element: PlaybackRateButton, kind: 'component' },
           SliderBuffer: { element: Div },
           SliderFill: { element: Div },

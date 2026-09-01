@@ -15,6 +15,7 @@ export default styles({
       utilities: [
         'after:hidden!',
         'relative z-20 flex items-center gap-2 rounded-[--spacing(3.5)] bg-media-controls p-1 text-media-controls-foreground',
+        'shadow-[0_0_0_1px_var(--media-border)]',
         'text-shadow-media',
         '[--media-popover-side-offset:--spacing(3)] [--media-tooltip-side-offset:var(--media-popover-side-offset)]',
         '[--media-popover-boundary-offset:--spacing(3)] [--media-tooltip-boundary-offset:var(--media-popover-boundary-offset)]',

@@ -27,6 +27,7 @@ export const errorSource = {
 export const mediaIds = [...SOURCE_IDS, 'error'] as const;
 
 export type CaptionsMode = 'multiple' | 'single';
+export type ColorScheme = 'dark' | 'light';
 export type Framework = 'html' | 'react';
 export type MediaId = (typeof mediaIds)[number];
 export type SkinName =
@@ -42,6 +43,7 @@ export type StyleMode = 'css' | 'tailwind';
 
 export interface PreviewOptions {
   readonly captionsMode: CaptionsMode;
+  readonly colorScheme: ColorScheme;
   readonly framework: Framework;
   readonly isAudio: boolean;
   readonly isLive: boolean;
@@ -64,6 +66,7 @@ export function readPreviewOptions(search = location.search): PreviewOptions {
   const isLive = skin.includes('-live-');
   const styleMode = params.get('style') === 'tailwind' ? 'tailwind' : 'css';
   const captionsMode = params.get('captions') === 'multiple' ? 'multiple' : 'single';
+  const colorScheme = params.get('scheme') === 'light' ? 'light' : 'dark';
   const requestedMedia = params.get('media');
   const mediaId = isMediaId(requestedMedia) ? requestedMedia : isLive ? 'hls-live' : 'mp4-1';
   const requestedWidth = Number.parseInt(params.get('width') ?? '', 10);
@@ -75,6 +78,7 @@ export function readPreviewOptions(search = location.search): PreviewOptions {
 
   return {
     captionsMode,
+    colorScheme,
     framework,
     isAudio,
     isLive,
