@@ -44,6 +44,21 @@
       "development": "./dist/dev/icons/*/index.js",
       "default": "./dist/default/icons/*/index.js"
     },
+    "./extensions/*": {
+      "types": "./dist/dev/extensions/*/index.d.ts",
+      "development": "./dist/dev/extensions/*/index.js",
+      "default": "./dist/default/extensions/*/index.js"
+    },
+    "./media/google-cast": {
+      "types": "./dist/dev/extensions/google-cast/index.d.ts",
+      "development": "./dist/dev/extensions/google-cast/index.js",
+      "default": "./dist/default/extensions/google-cast/index.js"
+    },
+    "./media/mux-data": {
+      "types": "./dist/dev/extensions/mux-data/index.d.ts",
+      "development": "./dist/dev/extensions/mux-data/index.js",
+      "default": "./dist/default/extensions/mux-data/index.js"
+    },
     "./media/mux-video/hls-js": {
       "types": "./dist/dev/media/mux-video/hls-js.d.ts",
       "development": "./dist/dev/media/mux-video/hls-js.js",

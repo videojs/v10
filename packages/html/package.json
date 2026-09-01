@@ -116,6 +116,21 @@
       "development": "./dist/dev/define/feature/*.js",
       "default": "./dist/default/define/feature/*.js"
     },
+    "./extensions/*": {
+      "types": "./dist/dev/define/extensions/*.d.ts",
+      "development": "./dist/dev/define/extensions/*.js",
+      "default": "./dist/default/define/extensions/*.js"
+    },
+    "./media/google-cast": {
+      "types": "./dist/dev/define/extensions/google-cast.d.ts",
+      "development": "./dist/dev/define/extensions/google-cast.js",
+      "default": "./dist/default/define/extensions/google-cast.js"
+    },
+    "./media/mux-data": {
+      "types": "./dist/dev/define/extensions/mux-data.d.ts",
+      "development": "./dist/dev/define/extensions/mux-data.js",
+      "default": "./dist/default/define/extensions/mux-data.js"
+    },
     "./media/mux-video": {
       "types": "./dist/dev/define/media/mux-video/index.d.ts",
       "development": "./dist/dev/define/media/mux-video/index.js",
@@ -135,6 +150,11 @@
       "types": "./cdn/media/*.dev.d.ts",
       "development": "./cdn/media/*.dev.js",
       "default": "./cdn/media/*.js"
+    },
+    "./cdn/extensions/*": {
+      "types": "./cdn/extensions/*.dev.d.ts",
+      "development": "./cdn/extensions/*.dev.js",
+      "default": "./cdn/extensions/*.js"
     },
     "./cdn/i18n": {
       "types": "./dist/dev/i18n/index.d.ts",

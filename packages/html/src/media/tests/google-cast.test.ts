@@ -5,9 +5,9 @@ import { getMediaComponents } from '@videojs/media/dom/media-host';
 import { HTMLVideoElementHost } from '@videojs/media/dom/video-host';
 import { afterEach, describe, expect, it } from 'vite-plus/test';
 
+import { GoogleCastElement } from '../../extensions/google-cast';
 import { mediaContext } from '../../player/context';
 import { UIElement } from '../../ui/ui-element';
-import { GoogleCastElement } from '../google-cast';
 
 class TestMediaProvider extends UIElement {
   readonly #provider = new ContextProvider(this, {

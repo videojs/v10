@@ -1,7 +1,7 @@
 import type { PropertyDeclarationMap } from '@videojs/element';
 import { MuxData, type MuxDataProps } from '@videojs/media/dom/mux';
 
-import { MediaComponentElement } from '../media-component-element';
+import { MediaComponentElement } from '../../media/media-component-element';
 
 /**
  * Adds [Mux Data](https://www.mux.com/data) monitoring to the surrounding player's media.

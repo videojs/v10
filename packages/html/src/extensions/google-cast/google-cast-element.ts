@@ -1,7 +1,7 @@
 import type { PropertyDeclarationMap } from '@videojs/element';
 import { GoogleCast, type GoogleCastProps } from '@videojs/media/dom/google-cast';
 
-import { MediaComponentElement } from '../media-component-element';
+import { MediaComponentElement } from '../../media/media-component-element';
 
 /**
  * Adds Google Cast support to the surrounding player's media.

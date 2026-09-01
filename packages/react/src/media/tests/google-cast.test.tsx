@@ -5,8 +5,8 @@ import { HlsJsMedia } from '@videojs/media/dom/hls-js';
 import { getMediaComponents } from '@videojs/media/dom/media-host';
 import { describe, expect, it } from 'vite-plus/test';
 
+import { GoogleCast } from '../../extensions/google-cast';
 import { createPlayerWrapper } from '../../testing/mocks';
-import { GoogleCast } from '../google-cast';
 
 function setup(media: Media | null = new HlsJsMedia()) {
   const { value, Wrapper } = createPlayerWrapper();

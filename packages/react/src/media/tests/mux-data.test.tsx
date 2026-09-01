@@ -4,8 +4,8 @@ import { addMediaComponent, getMediaComponents } from '@videojs/media/dom/media-
 import { MuxData as MuxDataComponent, MuxMedia } from '@videojs/media/dom/mux';
 import { describe, expect, it, vi } from 'vite-plus/test';
 
+import { MuxData } from '../../extensions/mux-data';
 import { createPlayerWrapper } from '../../testing/mocks';
-import { MuxData } from '../mux-data';
 
 function setup() {
   const media = new MuxMedia();

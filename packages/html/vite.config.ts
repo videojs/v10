@@ -116,33 +116,43 @@ const cdnPresets = [
 ];
 const mediaDir = 'src/define/media';
 const mediaDirPath = resolve(packageDir, mediaDir);
+const extensionsDir = 'src/define/extensions';
+const extensionsDirPath = resolve(packageDir, extensionsDir);
 
 /**
- * Media entries, one bundle per module under `src/define/media` — or per flavor, for a module that is a directory.
+ * One CDN bundle per definition module — or per flavor, for a module that is a directory.
  *
  * Discovered from the definitions so the npm and CDN delivery surfaces cannot drift. A directory ships its index as the
  * flavor-neutral bundle and each flavor beside it, so `media/mux-video/spf` reads the same as the npm subpath it
- * mirrors. The installation page derives CDN URLs from npm media subpaths, so the two layouts matching is what keeps a
- * flavor reachable there without a translation step.
+ * mirrors.
  *
  * A CDN page picks bundles at runtime rather than by import path, so this is where two flavors of one element can end
  * up in a single realm — see the tag-collision note in `define/media/mux-video/spf`.
  */
-const cdnMediaEntries = readdirSync(mediaDirPath, { withFileTypes: true })
-  .flatMap((entry) => {
-    if (entry.isDirectory()) {
-      return globSync(`${mediaDir}/${entry.name}/*.ts`, { cwd: packageDir }).map((src) => {
-        const flavor = basename(src, '.ts');
+function getCdnDefinitionEntries(dir: string, dirPath: string, subpath: string) {
+  return readdirSync(dirPath, { withFileTypes: true })
+    .flatMap((entry) => {
+      if (entry.isDirectory()) {
+        return globSync(`${dir}/${entry.name}/*.ts`, { cwd: packageDir }).map((src) => {
+          const flavor = basename(src, '.ts');
 
-        return { src, name: flavor === 'index' ? `media/${entry.name}` : `media/${entry.name}/${flavor}` };
-      });
-    }
+          return { src, name: flavor === 'index' ? `${subpath}/${entry.name}` : `${subpath}/${entry.name}/${flavor}` };
+        });
+      }
 
-    return entry.name.endsWith('.ts')
-      ? [{ src: `${mediaDir}/${entry.name}`, name: `media/${basename(entry.name, '.ts')}` }]
-      : [];
-  })
-  .sort((a, b) => a.name.localeCompare(b.name));
+      return entry.name.endsWith('.ts')
+        ? [{ src: `${dir}/${entry.name}`, name: `${subpath}/${basename(entry.name, '.ts')}` }]
+        : [];
+    })
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+const cdnMediaEntries = getCdnDefinitionEntries(mediaDir, mediaDirPath, 'media');
+const cdnExtensionEntries = getCdnDefinitionEntries(extensionsDir, extensionsDirPath, 'extensions');
+const cdnLegacyExtensionEntries = cdnExtensionEntries.map(({ src, name }) => ({
+  src,
+  name: name.replace(/^extensions\//, 'media/'),
+}));
 
 const cdnLocaleEntries = localeTags.map((tag) => ({
   src: `src/cdn/locales/${tag}.ts`,
@@ -161,6 +171,8 @@ export const entries = [
   ...cdnLocaleEntries,
   ...cdnPresets.map((name) => ({ src: `src/cdn/${name}.ts`, name })),
   ...cdnMediaEntries,
+  ...cdnExtensionEntries,
+  ...cdnLegacyExtensionEntries,
 ];
 
 /**
