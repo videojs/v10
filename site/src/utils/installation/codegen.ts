@@ -190,8 +190,7 @@ function generateMediaMarkup(
   return `${mediaEl}
 ${indent}<!--
 ${indent}    Mux Data monitors playback quality. It is a separate,
-${indent}    opt-in component, included here by default for Mux-hosted
-${indent}    playback — no environment key required.
+${indent}    opt-in component, included by default for Mux-hosted playback.
 ${indent}  -->
 ${indent}<mux-data></mux-data>`;
 }
