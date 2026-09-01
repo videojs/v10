@@ -1,7 +1,7 @@
 import type { MenuProps } from '@videojs/core';
 import * as $ from '@videojs/core/vjsc';
 import { CaptionsOffIcon, CaptionsOnIcon } from '@videojs/icons/vjsc';
-import { type ClassNameValue, Template } from 'vjsc/components';
+import { type Props, type PropsOf, Template } from 'vjsc/components';
 
 import type { SkinComponentMeta } from '../../meta';
 import buttonStyles from '../../styles/buttons/button.styles';
@@ -12,12 +12,10 @@ import { Button } from '../buttons/button';
 import { ButtonTooltip } from '../buttons/button-tooltip';
 import { RadioItem } from './radio-item';
 
-export interface CaptionsMenuProps extends MenuProps {
-  className?: ClassNameValue;
-  triggerClassName?: ClassNameValue;
-}
-
-export function CaptionsMenu({ className, triggerClassName, ...props }: CaptionsMenuProps = {}) {
+export function CaptionsMenu({
+  className,
+  ...props
+}: Props<MenuProps & { className?: PropsOf<typeof $.Menu.Trigger>['className'] }> = {}) {
   return (
     <$.Menu.Root side="top" align="center" boundary="viewport" {...props}>
       <$.CaptionsRadioGroup.Root>
@@ -25,13 +23,13 @@ export function CaptionsMenu({ className, triggerClassName, ...props }: Captions
           <$.Menu.Trigger
             $render={Button}
             aria-label="Enable captions"
-            className={[captionsButtonStyles.root, triggerClassName]}
+            className={[captionsButtonStyles.root, className]}
           >
             <CaptionsOffIcon className={[buttonStyles.icon, captionsButtonStyles.offIcon]} />
             <CaptionsOnIcon className={[buttonStyles.icon, captionsButtonStyles.onIcon]} />
           </$.Menu.Trigger>
         </ButtonTooltip>
-        <$.Menu.Popup className={[popupStyles.popup, popupStyles.surface, styles.popup, className]}>
+        <$.Menu.Popup className={[popupStyles.popup, popupStyles.surface, styles.popup]}>
           <$.Menu.Content className={styles.content}>
             <$.CaptionsRadioGroup.Options className={styles.radioGroup}>
               <Template name="captions-option">

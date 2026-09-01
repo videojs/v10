@@ -1,17 +1,13 @@
 import { qualityText } from '@videojs/core/i18n/text/menu';
 import { SwitchesIcon } from '@videojs/icons/vjsc';
-import { type ClassNameValue, Template, Text } from 'vjsc/components';
+import { type Props, Template, Text } from 'vjsc/components';
 
 import type { SkinComponentMeta } from '../../meta';
 import styles from '../../styles/menus/menu.styles';
 import { MenuChevron } from './menu-chevron';
 import { RadioItem } from './radio-item';
 
-export interface QualityMenuProps extends MenuProps {
-  className?: ClassNameValue;
-}
-
-export function QualityMenu({ className, ...props }: QualityMenuProps = {}) {
+export function QualityMenu({ ...props }: Props<MenuProps> = {}) {
   return (
     <$.Menu.Root {...props}>
       <$.QualityRadioGroup.Root>
@@ -23,7 +19,7 @@ export function QualityMenu({ className, ...props }: QualityMenuProps = {}) {
             <MenuChevron />
           </Text>
         </$.Menu.Trigger>
-        <$.Menu.Content className={[styles.content, className]}>
+        <$.Menu.Content className={styles.content}>
           <$.Menu.Item className={styles.backItem}>
             <MenuChevron back />
             <Text token={qualityText.key}>{qualityText.text}</Text>

@@ -1,17 +1,13 @@
 import { audioText } from '@videojs/core/i18n/text/menu';
 import { SpeechIcon } from '@videojs/icons/vjsc';
-import { type ClassNameValue, Template, Text } from 'vjsc/components';
+import { type Props, Template, Text } from 'vjsc/components';
 
 import type { SkinComponentMeta } from '../../meta';
 import styles from '../../styles/menus/menu.styles';
 import { MenuChevron } from './menu-chevron';
 import { RadioItem } from './radio-item';
 
-export interface AudioTrackMenuProps extends MenuProps {
-  className?: ClassNameValue;
-}
-
-export function AudioTrackMenu({ className, ...props }: AudioTrackMenuProps = {}) {
+export function AudioTrackMenu({ ...props }: Props<MenuProps> = {}) {
   return (
     <$.Menu.Root {...props}>
       <$.AudioTrackRadioGroup.Root>
@@ -23,7 +19,7 @@ export function AudioTrackMenu({ className, ...props }: AudioTrackMenuProps = {}
             <MenuChevron />
           </Text>
         </$.Menu.Trigger>
-        <$.Menu.Content className={[styles.content, className]}>
+        <$.Menu.Content className={styles.content}>
           <$.Menu.Item className={styles.backItem}>
             <MenuChevron back />
             <Text token={audioText.key}>{audioText.text}</Text>

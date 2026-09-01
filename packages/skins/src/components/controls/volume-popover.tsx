@@ -1,6 +1,6 @@
 import type { VolumePopoverProps as CoreProps, VolumeSliderProps as CoreVolumeSliderProps } from '@videojs/core';
 import * as $ from '@videojs/core/vjsc';
-import type { ClassNameValue, Props } from 'vjsc/components';
+import type { Props, PropsOf } from 'vjsc/components';
 
 import type { SkinComponentMeta } from '../../meta';
 import popupStyles from '../../styles/popups/popup.styles';
@@ -11,17 +11,15 @@ import { VolumeSlider } from '../sliders/volume-slider';
 
 export function VolumePopover({
   className,
-  popupClassName,
   showTooltip = false,
   side = 'top',
   orientation = 'vertical',
   ...props
 }: Props<
   CoreProps & {
-    className?: string | undefined;
+    className?: PropsOf<typeof MuteButton>['className'];
     orientation?: CoreVolumeSliderProps['orientation'];
     showTooltip?: boolean;
-    popupClassName?: ClassNameValue;
   }
 > = {}) {
   return (
@@ -31,9 +29,7 @@ export function VolumePopover({
           <MuteButton className={className} />
         </$.VolumePopover.Trigger>
       </ButtonTooltip>
-      <$.VolumePopover.Popup
-        className={[popupStyles.popup, popupStyles.transition, popupStyles.surface, styles.popup, popupClassName]}
-      >
+      <$.VolumePopover.Popup className={[popupStyles.popup, popupStyles.transition, popupStyles.surface, styles.popup]}>
         <VolumeSlider orientation={orientation} />
       </$.VolumePopover.Popup>
     </$.VolumePopover.Root>

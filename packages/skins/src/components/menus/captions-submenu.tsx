@@ -1,17 +1,13 @@
 import { captionsText } from '@videojs/core/i18n/text/menu';
 import { CaptionsOffIcon } from '@videojs/icons/vjsc';
-import { type ClassNameValue, Template, Text } from 'vjsc/components';
+import { type Props, Template, Text } from 'vjsc/components';
 
 import type { SkinComponentMeta } from '../../meta';
 import styles from '../../styles/menus/menu.styles';
 import { MenuChevron } from './menu-chevron';
 import { RadioItem } from './radio-item';
 
-export interface CaptionsSubmenuProps extends MenuProps {
-  className?: ClassNameValue;
-}
-
-export function CaptionsSubmenu({ className, ...props }: CaptionsSubmenuProps = {}) {
+export function CaptionsSubmenu({ ...props }: Props<MenuProps> = {}) {
   return (
     <$.Menu.Root {...props}>
       <$.CaptionsRadioGroup.Root>
@@ -23,7 +19,7 @@ export function CaptionsSubmenu({ className, ...props }: CaptionsSubmenuProps = 
             <MenuChevron />
           </Text>
         </$.Menu.Trigger>
-        <$.Menu.Content className={[styles.content, className]}>
+        <$.Menu.Content className={styles.content}>
           <$.Menu.Item className={styles.backItem}>
             <MenuChevron back />
             <Text token={captionsText.key}>{captionsText.text}</Text>

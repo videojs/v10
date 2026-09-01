@@ -18,6 +18,12 @@ const schema = defineSchema('@fixture/components', {
       Root: defineComponent(),
     },
   }),
+  Menu: defineComponent({
+    name: 'Menu',
+    parts: {
+      Trigger: defineComponent(),
+    },
+  }),
 });
 
 const target = defineComponentTarget<typeof schema>()(({ element, imported }) => ({
@@ -30,6 +36,11 @@ const target = defineComponentTarget<typeof schema>()(({ element, imported }) =>
         path: part ? [part] : undefined,
         props: { from: '@fixture/react', name: component, path: [part ? `${part}Props` : 'Props'] },
       }),
+    rules: {
+      Menu: {
+        Trigger: () => undefined,
+      },
+    },
   },
   primitives: {
     Box: element('div', {
@@ -49,6 +60,7 @@ describe('targetTypePlugin', () => {
     const source = await transform(`
       'use client';
       import * as $ from '@fixture/components';
+      import * as TypeOnly from '@fixture/components';
       import { Box, type ClassNameValue, type Props, type PropsOf, type VjscNode } from 'vjsc/components';
       import { Local } from './local';
       import { setup } from './setup';
@@ -58,6 +70,8 @@ describe('targetTypePlugin', () => {
         child?: VjscNode;
       }
 
+      export type CanonicalType = typeof TypeOnly.Menu.Trigger;
+
       export function PlayButton(
         { custom, ...props }: Props<
           {
@@ -65,6 +79,9 @@ describe('targetTypePlugin', () => {
             VjscNode?: string;
             child?: VjscNode;
             popupClassName?: ClassNameValue;
+            controlClassName?: PropsOf<typeof Local>['className'];
+            tooltipClassName?: PropsOf<typeof $.Tooltip.Root>['className'];
+            menuClassName?: PropsOf<typeof $.Menu.Trigger>['className'];
             label?: 'VjscNode';
           } & { nested?: { value: string } }
         > = {}
@@ -82,7 +99,7 @@ describe('targetTypePlugin', () => {
     `);
 
     expect(source).toContain('PlayButton as PlayButtonPrimitive');
-    expect(source).toContain('Tooltip } from "@fixture/react";');
+    expect(source).toContain('Tooltip as TooltipPrimitive');
     expect(source).toContain('import type { ClassValue } from "clsx";');
     expect(source).toContain('import type { ComponentProps, ReactNode } from "react";');
     expect(source).toContain('interface Alias extends NonNullable<ComponentProps<typeof Local>>');
@@ -92,15 +109,19 @@ describe('targetTypePlugin', () => {
     expect(source).toContain('VjscNode?: string');
     expect(source).toContain('child?: ReactNode');
     expect(source).toContain('popupClassName?: ClassValue');
+    expect(source).toContain("controlClassName?: NonNullable<ComponentProps<typeof Local>>['className']");
+    expect(source).toContain("tooltipClassName?: TooltipPrimitive.RootProps['className']");
+    expect(source).toContain("menuClassName?: MenuPrimitive.TriggerProps['className']");
     expect(source).toContain(`label?: 'VjscNode'`);
     expect(source).toContain('nested?: { value: string }');
     expect(source).not.toContain('type VjscNode');
     expect(source).toContain('{ custom, ...props }: PlayButtonProps = {}');
     expect(source).toContain('export type PanelProps = Omit<ComponentProps<"div">, "children">');
-    expect(source).toContain('export type ButtonTooltipProps = Omit<Tooltip.RootProps, "children">');
-    expect(source).not.toContain('Tooltip.Root.RootProps');
+    expect(source).toContain('export type ButtonTooltipProps = Omit<TooltipPrimitive.RootProps, "children">');
+    expect(source).not.toContain('TooltipPrimitive.Root.RootProps');
     expect(source).not.toContain("from 'vjsc/components'");
     expect(source).not.toContain("from '@fixture/components'");
+    expect(source).toContain('import type * as TypeOnly from "@fixture/components";');
     expect(source).toContain("import { setup } from './setup';");
     expect(source).not.toContain("from './build-only'");
     expect(source.indexOf(`'use client'`)).toBeLessThan(source.indexOf('import type { ComponentProps, ReactNode }'));

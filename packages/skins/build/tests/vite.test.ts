@@ -129,7 +129,8 @@ describe('Skins Vite workflow', () => {
     const settingsMenu = await server.transformRequest(settingsMenuUrl);
     const volumePopover = await server.transformRequest(volumePopoverUrl);
 
-    expect(settingsMenu?.code).toContain('children: /* @__PURE__ */ _jsxDEV(Menu.Trigger');
+    expect(settingsMenu?.code).toContain('children: /* @__PURE__ */ _jsxDEV(MenuPrimitive.Trigger');
+    expect(settingsMenu?.code).toContain('resolveClassName(className, state)');
     expect(volumePopover?.code).toContain(
       'VolumePopoverPrimitive.Trigger, { render: /* @__PURE__ */ _jsxDEV(MuteButton'
     );
@@ -141,7 +142,7 @@ describe('Skins Vite workflow', () => {
     const code = settingsMenu?.code ?? '';
 
     expect(code).toContain('/components/buttons/playback-rate-button.tsx?skin=default-audio&style=css&target=html');
-    expect(code).toContain('_jsxDEV(PlaybackRateButton, { commandfor:');
+    expect(code).toMatch(/_jsxDEV\(PlaybackRateButton, \{\s+commandfor:[\s\S]*?class: className/);
   }, 30_000);
 
   it('emits base visibility styles for stateful button icons', async () => {

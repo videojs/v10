@@ -1,15 +1,15 @@
 import * as $ from '@videojs/core/vjsc';
-import { Box, type Props } from 'vjsc/components';
+import { Box } from 'vjsc/components';
 
 import type { SkinComponentMeta } from '../../meta';
 import styles from '../../styles/popups/dialog.styles';
 import { Button } from '../buttons/button';
 
-export function ErrorDialog({ className, ...props }: Props = {}) {
+export function ErrorDialog() {
   return (
     <$.ErrorDialog.Root className={styles.root}>
       <$.ErrorDialog.Backdrop className={styles.backdrop} />
-      <$.ErrorDialog.Popup className={[styles.popup, className]} {...props}>
+      <$.ErrorDialog.Popup className={styles.popup}>
         <Box className={styles.content}>
           <$.ErrorDialog.Title className={styles.title} />
           <$.ErrorDialog.Description className={styles.description} />

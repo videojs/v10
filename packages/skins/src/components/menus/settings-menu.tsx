@@ -2,7 +2,7 @@ import type { MenuProps } from '@videojs/core';
 import { settingsText } from '@videojs/core/i18n/text/menu';
 import * as $ from '@videojs/core/vjsc';
 import { GearIcon } from '@videojs/icons/vjsc';
-import { type PropsWithChildren, Text } from 'vjsc/components';
+import { type PropsOf, type PropsWithChildren, Text } from 'vjsc/components';
 
 import type { SkinComponentMeta } from '../../meta';
 import buttonStyles from '../../styles/buttons/button.styles';
@@ -15,18 +15,18 @@ export function SettingsMenu({
   children,
   className,
   ...props
-}: PropsWithChildren<MenuProps> & { className?: string | undefined }) {
+}: PropsWithChildren<MenuProps & { className?: PropsOf<typeof $.Menu.Trigger>['className'] }>) {
   return (
     <$.Menu.Root side="top" align="center" {...props}>
       <ButtonTooltip label={<Text token={settingsText.key}>{settingsText.text}</Text>} side="top">
-        <$.Menu.Trigger $render={Button} className={styles.settingsTrigger}>
+        <$.Menu.Trigger $render={Button} className={[styles.settingsTrigger, className]}>
           <GearIcon className={[buttonStyles.icon, styles.settingsTriggerIcon]} />
           <Text className={styles.triggerLabel} token={settingsText.key}>
             {settingsText.text}
           </Text>
         </$.Menu.Trigger>
       </ButtonTooltip>
-      <$.Menu.Popup keepMounted className={[popupStyles.popup, popupStyles.surface, styles.popup, className]}>
+      <$.Menu.Popup keepMounted className={[popupStyles.popup, popupStyles.surface, styles.popup]}>
         <$.Menu.Content className={styles.content}>{children}</$.Menu.Content>
       </$.Menu.Popup>
     </$.Menu.Root>

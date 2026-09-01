@@ -5,6 +5,7 @@ import type {
   Function as OxcFunction,
   Program,
   TSType,
+  TSTypeQuery,
   TSTypeReference,
 } from '@oxc-project/types';
 import { walk } from 'oxc-walker';
@@ -67,7 +68,15 @@ export function targetTypePlugin(options: ComponentTargetPluginOptions): Plugin 
 
         const imports = createTargetModuleImports(transform.ast, transform.magicString);
         const typeImports = new TargetTypeImports(transform.ast, transform.magicString);
-        let changed = transformSourceTypes(code, transform.ast, bindings, targets, typeImports, transform.magicString);
+        let changed = transformSourceTypes(
+          code,
+          transform.ast,
+          bindings,
+          targets,
+          imports,
+          typeImports,
+          transform.magicString
+        );
 
         walk(transform.ast, {
           enter(node, parent) {
@@ -88,7 +97,7 @@ export function targetTypePlugin(options: ComponentTargetPluginOptions): Plugin 
             const interfaceName = `${node.id.name}Props`;
             const heritage = targetHeritage(props, helper.includesChildren);
             const members = helper.inlineMembers
-              .map((type) => rewriteSourceTypeText(code, type, bindings, targets, typeImports))
+              .map((type) => rewriteSourceTypeText(code, type, bindings, targets, imports, typeImports))
               .filter(Boolean);
 
             if (helper.includesChildren && props.children && props.children !== 'children') {
@@ -175,7 +184,8 @@ function transformSourceTypes(
   ast: Program,
   bindings: CanonicalBindings,
   targets: readonly ComponentTarget[],
-  imports: TargetTypeImports,
+  imports: ModuleImports,
+  typeImports: TargetTypeImports,
   magicString: RolldownMagicString
 ): boolean {
   let changed = false;
@@ -188,14 +198,10 @@ function transformSourceTypes(
         bindings.sourceTypes.get(node.expression.name) === 'PropsOf'
       ) {
         const query = node.typeArguments?.params[0];
-        if (query?.type !== 'TSTypeQuery' || query.exprName.type !== 'Identifier') return;
+        const props = propsOfType(query, bindings, targets, imports, typeImports);
+        if (!props) return;
 
-        const targetType = uniqueTargetType('PropsOf', targets);
-        if (!targetType) return;
-
-        const componentProps = imports.reference(targetType);
-
-        magicString.overwrite(node.start, node.end, `NonNullable<${componentProps}<typeof ${query.exprName.name}>>`);
+        magicString.overwrite(node.start, node.end, props);
         changed = true;
         this.skip();
         return;
@@ -208,14 +214,10 @@ function transformSourceTypes(
 
       if (sourceType === 'PropsOf') {
         const query = node.typeArguments?.params[0];
-        if (query?.type !== 'TSTypeQuery' || query.exprName.type !== 'Identifier') return;
+        const props = propsOfType(query, bindings, targets, imports, typeImports);
+        if (!props) return;
 
-        const targetType = uniqueTargetType('PropsOf', targets);
-        if (!targetType) return;
-
-        const componentProps = imports.reference(targetType);
-
-        magicString.overwrite(node.start, node.end, `NonNullable<${componentProps}<typeof ${query.exprName.name}>>`);
+        magicString.overwrite(node.start, node.end, props);
         changed = true;
         this.skip();
         return;
@@ -226,7 +228,7 @@ function transformSourceTypes(
       const targetImport = uniqueTargetType(sourceType, targets);
       if (!targetImport) return;
 
-      magicString.overwrite(node.start, node.end, imports.reference(targetImport));
+      magicString.overwrite(node.start, node.end, typeImports.reference(targetImport));
       changed = true;
       this.skip();
     },
@@ -283,7 +285,8 @@ function rewriteSourceTypeText(
   type: TSType,
   bindings: CanonicalBindings,
   targets: readonly ComponentTarget[],
-  imports: TargetTypeImports
+  imports: ModuleImports,
+  typeImports: TargetTypeImports
 ): string {
   const edits: SourceEdit[] = [];
 
@@ -292,16 +295,69 @@ function rewriteSourceTypeText(
       if (node.type !== 'TSTypeReference' || node.typeName.type !== 'Identifier') return;
 
       const name = bindings.sourceTypes.get(node.typeName.name);
+
+      if (name === 'PropsOf') {
+        const query = node.typeArguments?.params[0];
+        const props = propsOfType(query, bindings, targets, imports, typeImports);
+        if (!props) return;
+
+        edits.push({
+          start: node.start,
+          end: node.end,
+          content: props,
+        });
+        this.skip();
+        return;
+      }
+
       if (name !== 'ClassNameValue' && !name?.startsWith('Vjsc')) return;
 
       const target = uniqueTargetType(name, targets);
       if (!target) return;
 
-      edits.push({ start: node.typeName.start, end: node.typeName.end, content: imports.reference(target) });
+      edits.push({ start: node.typeName.start, end: node.typeName.end, content: typeImports.reference(target) });
     },
   });
 
   return renderSourceRange(createSourceText(code, edits), type.start + 1, type.end - 1).value.trim();
+}
+
+function propsOfType(
+  type: TSType | undefined,
+  bindings: CanonicalBindings,
+  targets: readonly ComponentTarget[],
+  imports: ModuleImports,
+  typeImports: TargetTypeImports
+): string | undefined {
+  if (type?.type !== 'TSTypeQuery') return undefined;
+
+  const path = typeQueryPath(type.exprName);
+  const canonical = boundCanonicalPath(path, bindings);
+
+  if (canonical) {
+    const configured = configuredRule(canonical);
+    const rule = isTargetElement(configured) ? configured : canonical.target.components.resolve(canonical);
+    if (!isTargetElement(rule)) return undefined;
+
+    return targetProps({ target: canonical.target, element: rule }, imports, typeImports)?.type;
+  }
+
+  if (path.length !== 1) return undefined;
+
+  const target = uniqueTargetType('PropsOf', targets);
+  if (!target) return undefined;
+
+  const componentProps = typeImports.reference(target);
+
+  return `NonNullable<${componentProps}<typeof ${path[0]}>>`;
+}
+
+function typeQueryPath(name: TSTypeQuery['exprName']): string[] {
+  if (name.type === 'Identifier') return [name.name];
+
+  if (name.type !== 'TSQualifiedName') return [];
+
+  return [...typeQueryPath(name.left), name.right.name];
 }
 
 function forwardedBinding(parameter: OxcFunction['params'][number] | undefined): string | undefined {
@@ -436,7 +492,10 @@ function targetHeritage(props: ResolvedProps, includesChildren: boolean): string
 }
 
 function canonicalPath(name: JSXElementName, bindings: CanonicalBindings): CanonicalPath | undefined {
-  const path = jsxNamePath(name);
+  return boundCanonicalPath(jsxNamePath(name), bindings);
+}
+
+function boundCanonicalPath(path: readonly string[], bindings: CanonicalBindings): CanonicalPath | undefined {
   if (path.length === 0) return undefined;
 
   const namespace = bindings.namespaces.get(path[0]!);

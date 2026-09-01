@@ -7,7 +7,6 @@ import popupStyles from '../../styles/popups/popup.styles';
 import { AudioPlayButton } from '../audio/play-button';
 import { AudioSettingsMenu } from '../audio/settings-menu';
 import { AudioTimeSlider } from '../audio/time-slider';
-import volumePopoverStyles from '../audio/volume-popover.styles';
 import styles from './controls.styles';
 
 export function MinimalAudioControls() {
@@ -31,12 +30,7 @@ export function MinimalAudioControls() {
           </$.Controls.Group>
 
           <$.Controls.Group className={styles.end}>
-            <VolumePopover
-              popupClassName={volumePopoverStyles.popup}
-              showTooltip
-              side="left"
-              orientation="horizontal"
-            />
+            <VolumePopover showTooltip side="left" orientation="horizontal" />
             <AudioSettingsMenu />
           </$.Controls.Group>
         </$.Tooltip.Provider>
