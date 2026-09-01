@@ -169,6 +169,32 @@ describe('MuxData', () => {
     expect(updateData).toHaveBeenCalledWith(expect.objectContaining({ video_id: 'abc123' }));
   });
 
+  it('emits videochange for a new video loaded after the source was cleared', async () => {
+    const { sdk, monitor, emit } = createSdk();
+    const data = new MuxData({ MuxDataSdk: sdk, envKey: 'key' });
+    const video = document.createElement('video');
+    const media = new FakeMedia();
+
+    media.src = 'https://stream.mux.com/abc123.m3u8';
+
+    data.setMedia(media);
+    data.attach(video);
+    await settle();
+
+    media.src = '';
+    media.dispatchEvent(new Event('loadstart'));
+    await settle();
+
+    expect(emit).not.toHaveBeenCalled();
+
+    media.src = 'https://stream.mux.com/def456.m3u8';
+    media.dispatchEvent(new Event('loadstart'));
+    await settle();
+
+    expect(monitor).toHaveBeenCalledTimes(1);
+    expect(emit).toHaveBeenCalledWith('videochange', expect.objectContaining({ video_id: 'def456' }));
+  });
+
   it('hooks a new engine into the live monitor instead of re-monitoring', async () => {
     const { sdk, monitor, addHLSJS, removeHLSJS, destroy } = createSdk();
     const data = new MuxData({ MuxDataSdk: sdk, envKey: 'key' });

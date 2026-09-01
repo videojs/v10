@@ -36,11 +36,8 @@ type LiveMuxMonitor = Extract<NonNullable<HTMLVideoElement['mux']>, { deleted: f
 
 /**
  * What Mux Data needs from the media it monitors: the source being played, a `loadstart` hinting that the source or
- * engine may have changed, and — for engine-backed playback — the engine itself.
- *
- * `loadstart` is a hint, not a command: medias fire it for same-video reasons too (remote playback engaging, engine
- * rebuilds, MediaSource re-attachment), and how often varies by media. Mux Data reads the current `src` and `engine` on
- * each hint and reacts only to what actually changed, so redundant hints are free.
+ * engine may have changed, and — for engine-backed playback — the engine itself. Redundant hints are free — Mux Data
+ * reacts only to what actually changed — so medias can fire `loadstart` as often as their flavor requires.
  *
  * `engine` is deliberately untyped. Every engine-backed media host exposes one, but they are unrelated types (an hls.js
  * instance, a dash.js player, an SPF composition), and which of them Mux Data can hook is decided by
@@ -262,12 +259,13 @@ export class MuxData implements MuxDataProps {
     const src = media.src;
     if (src === this.#monitoredSrc) return;
 
+    // A cleared source isn't a new video (the element's own events wind the view down), and it isn't tracked: the
+    // video that loads next is still compared against the last video the monitor was told about.
+    if (!src) return;
+
     const isFirstSource = !this.#monitoredSrc;
 
     this.#monitoredSrc = src;
-
-    // A cleared source isn't a new video; the element's own events wind the view down.
-    if (!src) return;
 
     // A monitor started before the first source has its pending view: name the video rather than change it.
     if (isFirstSource) {
