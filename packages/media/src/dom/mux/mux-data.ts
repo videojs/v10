@@ -1,7 +1,7 @@
 import Mux from 'mux-embed';
 
 import { getPlayerVersion } from './env';
-import { toMuxDataEngineOptions } from './mux-data-engine';
+import { type MuxDataEngineOptions, toMuxDataEngineOptions } from './mux-data-engine';
 import type { MuxDataOptions, MuxDataSdk } from './types';
 
 export interface MuxDataProps {
@@ -280,19 +280,23 @@ export class MuxData implements MuxDataProps {
   #syncEngineHook(mux: LiveMuxMonitor, engine: MuxDataMedia['engine']) {
     if (engine === this.#monitoredEngine) return;
 
-    const options = toMuxDataEngineOptions(engine);
-    const hook = options.hlsjs ? 'hlsjs' : options.dashjs ? 'dashjs' : null;
-
     if (this.#engineHook === 'hlsjs') mux.removeHLSJS();
 
     if (this.#engineHook === 'dashjs') mux.removeDashJS();
+
+    const options = toMuxDataEngineOptions(engine);
 
     if (options.hlsjs) mux.addHLSJS({ hlsjs: options.hlsjs, Hls: options.Hls });
 
     if (options.dashjs) mux.addDashJS({ dashjs: options.dashjs });
 
+    this.#trackEngine(engine, options);
+  }
+
+  /** Record which engine the monitor reflects and which telemetry hook carries it. */
+  #trackEngine(engine: MuxDataMedia['engine'], options: MuxDataEngineOptions) {
     this.#monitoredEngine = engine ?? null;
-    this.#engineHook = hook;
+    this.#engineHook = options.hlsjs ? 'hlsjs' : options.dashjs ? 'dashjs' : null;
   }
 
   #monitor(target: HTMLVideoElement, media: MuxDataMedia) {
@@ -309,8 +313,7 @@ export class MuxData implements MuxDataProps {
     const engineOptions = toMuxDataEngineOptions(media.engine);
 
     this.#monitoredSrc = media.src;
-    this.#monitoredEngine = media.engine ?? null;
-    this.#engineHook = engineOptions.hlsjs ? 'hlsjs' : engineOptions.dashjs ? 'dashjs' : null;
+    this.#trackEngine(media.engine, engineOptions);
 
     this.MuxDataSdk?.monitor(target, {
       debug,
