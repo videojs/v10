@@ -72,6 +72,15 @@ describe('targetTypePlugin', () => {
 
       export type CanonicalType = typeof TypeOnly.Menu.Trigger;
 
+      export interface NamedButtonProps extends BuildOnly {
+        named?: boolean;
+        className?: ClassNameValue;
+      }
+
+      export function NamedButton({ named, ...props }: Props<NamedButtonProps> = {}) {
+        return <$.PlayButton {...props} />;
+      }
+
       export function PlayButton(
         { custom, ...props }: Props<
           {
@@ -101,9 +110,13 @@ describe('targetTypePlugin', () => {
     expect(source).toContain('PlayButton as PlayButtonPrimitive');
     expect(source).toContain('Tooltip as TooltipPrimitive');
     expect(source).toContain('import type { ClassValue } from "clsx";');
-    expect(source).toContain('import type { ComponentProps, ReactNode } from "react";');
+    expect(source).toMatch(/import type \{ (?:ComponentProps, ReactNode|ReactNode, ComponentProps) \} from "react";/);
     expect(source).toContain('interface Alias extends NonNullable<ComponentProps<typeof Local>>');
     expect(source).toContain('child?: ReactNode;');
+    expect(source).toContain('export interface NamedButtonProps extends Omit<PlayButtonPrimitive.Props, "children">');
+    expect(source).toContain('named?: boolean;');
+    expect(source).toContain('className?: ClassValue;');
+    expect(source).toContain('{ named, ...props }: NamedButtonProps = {}');
     expect(source).toContain('export interface PlayButtonProps extends Omit<PlayButtonPrimitive.Props, "children">');
     expect(source).toContain('custom?: boolean');
     expect(source).toContain('VjscNode?: string');
@@ -124,7 +137,7 @@ describe('targetTypePlugin', () => {
     expect(source).toContain('import type * as TypeOnly from "@fixture/components";');
     expect(source).toContain("import { setup } from './setup';");
     expect(source).not.toContain("from './build-only'");
-    expect(source.indexOf(`'use client'`)).toBeLessThan(source.indexOf('import type { ComponentProps, ReactNode }'));
+    expect(source.indexOf(`'use client'`)).toBeLessThan(source.indexOf('import type'));
   });
 });
 

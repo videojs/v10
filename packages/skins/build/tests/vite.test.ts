@@ -129,7 +129,8 @@ describe('Skins Vite workflow', () => {
     const settingsMenu = await server.transformRequest(settingsMenuUrl);
     const volumePopover = await server.transformRequest(volumePopoverUrl);
 
-    expect(settingsMenu?.code).toContain('children: /* @__PURE__ */ _jsxDEV(MenuPrimitive.Trigger');
+    expect(settingsMenu?.code).toContain('children: /* @__PURE__ */ _jsxDEV(Menu.Trigger');
+    expect(settingsMenu?.code).toContain('render: /* @__PURE__ */ _jsxDEV(Button');
     expect(settingsMenu?.code).toContain('resolveClassName(className, state)');
     expect(volumePopover?.code).toContain(
       'VolumePopoverPrimitive.Trigger, { render: /* @__PURE__ */ _jsxDEV(MuteButton'

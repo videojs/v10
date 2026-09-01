@@ -6,11 +6,12 @@ import type { SkinComponentMeta } from '../../meta';
 import popupStyles from '../../styles/popups/popup.styles';
 import styles from '../../styles/popups/tooltip.styles';
 
-export function ButtonTooltip({
-  children,
-  label,
-  ...props
-}: PropsWithChildren<TooltipProps> & { children: VjscElement; label?: VjscNode }) {
+export interface ButtonTooltipProps extends TooltipProps {
+  children: VjscElement;
+  label?: VjscNode;
+}
+
+export function ButtonTooltip({ children, label, ...props }: PropsWithChildren<ButtonTooltipProps>) {
   return (
     <$.Tooltip.Root {...props}>
       <$.Tooltip.Trigger>{children}</$.Tooltip.Trigger>

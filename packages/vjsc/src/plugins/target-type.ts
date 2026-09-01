@@ -4,6 +4,7 @@ import type {
   JSXOpeningElement,
   Function as OxcFunction,
   Program,
+  TSInterfaceDeclaration,
   TSType,
   TSTypeQuery,
   TSTypeReference,
@@ -47,6 +48,12 @@ interface PropsHelper {
   readonly reference: TSTypeReference;
   readonly includesChildren: boolean;
   readonly inlineMembers: readonly TSType[];
+  readonly sourceInterface?: SourcePropsInterface | undefined;
+}
+
+interface SourcePropsInterface {
+  readonly declaration: TSInterfaceDeclaration;
+  readonly exported: boolean;
 }
 
 interface ResolvedProps {
@@ -68,6 +75,7 @@ export function targetTypePlugin(options: ComponentTargetPluginOptions): Plugin 
 
         const imports = createTargetModuleImports(transform.ast, transform.magicString);
         const typeImports = new TargetTypeImports(transform.ast, transform.magicString);
+        const sourceInterfaces = collectSourceInterfaces(transform.ast);
         let changed = transformSourceTypes(
           code,
           transform.ast,
@@ -82,7 +90,7 @@ export function targetTypePlugin(options: ComponentTargetPluginOptions): Plugin 
           enter(node, parent) {
             if (node.type !== 'FunctionDeclaration' || !node.id || !node.body) return;
 
-            const helper = propsHelper(node.params[0]);
+            const helper = propsHelper(node.params[0], sourceInterfaces);
             if (!helper) return;
 
             const forwarded = forwardedBinding(node.params[0]);
@@ -94,7 +102,7 @@ export function targetTypePlugin(options: ComponentTargetPluginOptions): Plugin 
             const props = targetProps(root, imports, typeImports);
             if (!props) return;
 
-            const interfaceName = `${node.id.name}Props`;
+            const interfaceName = helper.sourceInterface?.declaration.id.name ?? `${node.id.name}Props`;
             const heritage = targetHeritage(props, helper.includesChildren);
             const members = helper.inlineMembers
               .map((type) => rewriteSourceTypeText(code, type, bindings, targets, imports, typeImports))
@@ -104,12 +112,29 @@ export function targetTypePlugin(options: ComponentTargetPluginOptions): Plugin 
               members.push(`children?: ${props.type}[${JSON.stringify(props.children)}];`);
             }
 
-            const insertion = parent?.type === 'ExportNamedDeclaration' ? parent.start : node.start;
-            const declaration = members.length
-              ? `export interface ${interfaceName} extends ${heritage} {\n${members.join('\n')}\n}\n`
-              : `export type ${interfaceName} = ${heritage};\n`;
+            if (helper.sourceInterface) {
+              const source = helper.sourceInterface;
 
-            transform.magicString!.appendLeft(insertion, declaration);
+              if (!source.exported) transform.magicString!.appendLeft(source.declaration.start, 'export ');
+
+              transform.magicString!.overwrite(
+                source.declaration.id.end,
+                source.declaration.body.start,
+                ` extends ${heritage} `
+              );
+
+              if (members.length > 0) {
+                transform.magicString!.appendLeft(source.declaration.body.end - 1, `\n${members.join('\n')}\n`);
+              }
+            } else {
+              const insertion = parent?.type === 'ExportNamedDeclaration' ? parent.start : node.start;
+              const declaration = members.length
+                ? `export interface ${interfaceName} extends ${heritage} {\n${members.join('\n')}\n}\n`
+                : `export type ${interfaceName} = ${heritage};\n`;
+
+              transform.magicString!.appendLeft(insertion, declaration);
+            }
+
             transform.magicString!.overwrite(helper.annotation.start, helper.annotation.end, interfaceName);
             changed = true;
             this.skip();
@@ -244,7 +269,10 @@ function uniqueTargetType(name: string, targets: readonly ComponentTarget[]): Ta
   return references[0];
 }
 
-function propsHelper(parameter: OxcFunction['params'][number] | undefined): PropsHelper | undefined {
+function propsHelper(
+  parameter: OxcFunction['params'][number] | undefined,
+  sourceInterfaces: ReadonlyMap<string, SourcePropsInterface>
+): PropsHelper | undefined {
   const pattern = parameter?.type === 'AssignmentPattern' ? parameter.left : parameter;
   const annotation = pattern && 'typeAnnotation' in pattern ? pattern.typeAnnotation?.typeAnnotation : undefined;
   if (!annotation) return undefined;
@@ -264,10 +292,36 @@ function propsHelper(parameter: OxcFunction['params'][number] | undefined): Prop
         ...types.filter((candidate) => candidate.type === 'TSTypeLiteral'),
         ...inlineTypeMembers(type.typeArguments?.params[0]),
       ],
+      sourceInterface: sourcePropsInterface(type.typeArguments?.params[0], sourceInterfaces),
     };
   }
 
   return undefined;
+}
+
+function collectSourceInterfaces(ast: Program): ReadonlyMap<string, SourcePropsInterface> {
+  const interfaces = new Map<string, SourcePropsInterface>();
+
+  for (const statement of ast.body) {
+    const declaration = statement.type === 'ExportNamedDeclaration' ? statement.declaration : statement;
+    if (declaration?.type !== 'TSInterfaceDeclaration') continue;
+
+    interfaces.set(declaration.id.name, {
+      declaration,
+      exported: statement.type === 'ExportNamedDeclaration',
+    });
+  }
+
+  return interfaces;
+}
+
+function sourcePropsInterface(
+  type: TSType | undefined,
+  interfaces: ReadonlyMap<string, SourcePropsInterface>
+): SourcePropsInterface | undefined {
+  return type?.type === 'TSTypeReference' && type.typeName.type === 'Identifier'
+    ? interfaces.get(type.typeName.name)
+    : undefined;
 }
 
 function inlineTypeMembers(type: TSType | undefined): TSType[] {

@@ -2,7 +2,7 @@ import type { MenuProps } from '@videojs/core';
 import { settingsText } from '@videojs/core/i18n/text/menu';
 import * as $ from '@videojs/core/vjsc';
 import { GearIcon } from '@videojs/icons/vjsc';
-import { type PropsOf, type PropsWithChildren, Text } from 'vjsc/components';
+import { type ClassNameValue, type PropsWithChildren, Text } from 'vjsc/components';
 
 import type { SkinComponentMeta } from '../../meta';
 import buttonStyles from '../../styles/buttons/button.styles';
@@ -11,11 +11,11 @@ import popupStyles from '../../styles/popups/popup.styles';
 import { Button } from '../buttons/button';
 import { ButtonTooltip } from '../buttons/button-tooltip';
 
-export function SettingsMenu({
-  children,
-  className,
-  ...props
-}: PropsWithChildren<MenuProps & { className?: PropsOf<typeof $.Menu.Trigger>['className'] }>) {
+export interface SettingsMenuProps extends MenuProps {
+  className?: ClassNameValue;
+}
+
+export function SettingsMenu({ children, className, ...props }: PropsWithChildren<SettingsMenuProps>) {
   return (
     <$.Menu.Root side="top" align="center" {...props}>
       <ButtonTooltip label={<Text token={settingsText.key}>{settingsText.text}</Text>} side="top">

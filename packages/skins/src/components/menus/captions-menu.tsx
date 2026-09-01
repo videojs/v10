@@ -1,7 +1,7 @@
 import type { MenuProps } from '@videojs/core';
 import * as $ from '@videojs/core/vjsc';
 import { CaptionsOffIcon, CaptionsOnIcon } from '@videojs/icons/vjsc';
-import { type Props, type PropsOf, Template } from 'vjsc/components';
+import { type ClassNameValue, type Props, Template } from 'vjsc/components';
 
 import type { SkinComponentMeta } from '../../meta';
 import buttonStyles from '../../styles/buttons/button.styles';
@@ -12,10 +12,11 @@ import { Button } from '../buttons/button';
 import { ButtonTooltip } from '../buttons/button-tooltip';
 import { RadioItem } from './radio-item';
 
-export function CaptionsMenu({
-  className,
-  ...props
-}: Props<MenuProps & { className?: PropsOf<typeof $.Menu.Trigger>['className'] }> = {}) {
+export interface CaptionsMenuProps extends MenuProps {
+  className?: ClassNameValue;
+}
+
+export function CaptionsMenu({ className, ...props }: Props<CaptionsMenuProps> = {}) {
   return (
     <$.Menu.Root side="top" align="center" boundary="viewport" {...props}>
       <$.CaptionsRadioGroup.Root>
