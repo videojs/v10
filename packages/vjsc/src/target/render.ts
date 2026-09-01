@@ -82,6 +82,14 @@ function renderTargetNode(node: TargetNode, context: TargetRenderContext): strin
 }
 
 export function renderTargetAttributes(node: TargetNode, context: TargetRenderContext): string[] {
+  return renderAttributesFor(node, context, context.target.jsx.attributes);
+}
+
+function renderAttributesFor(
+  node: TargetNode,
+  context: TargetRenderContext,
+  attributeMode: ComponentTarget['jsx']['attributes']
+): string[] {
   const attributes: string[] = [];
   const props = node.props as Readonly<Record<PropertyKey, unknown>>;
 
@@ -93,7 +101,7 @@ export function renderTargetAttributes(node: TargetNode, context: TargetRenderCo
     const value = props[property];
 
     if (property === SOURCE_PROPS) {
-      if (isSourcePropsToken(value)) attributes.push(...renderSourceProps(value, context.target.jsx.attributes));
+      if (isSourcePropsToken(value)) attributes.push(...renderSourceProps(value, attributeMode));
 
       continue;
     }
@@ -108,7 +116,7 @@ export function renderTargetAttributes(node: TargetNode, context: TargetRenderCo
 
     if (typeof property !== 'string' || value === undefined) continue;
 
-    const attribute = renderAttribute(property, value, context);
+    const attribute = renderAttribute(property, value, context, attributeMode);
 
     if (attribute) attributes.push(attribute);
   }
@@ -150,8 +158,13 @@ function renderTargetReplacement(replacement: TargetReplacement, context: Target
   return renderSourceRange(source, replacement.branchStart, replacement.branchEnd).value;
 }
 
-function renderAttribute(name: string, value: unknown, context: TargetRenderContext): string | undefined {
-  const targetName = targetAttributeName(name, context.target.jsx.attributes);
+function renderAttribute(
+  name: string,
+  value: unknown,
+  context: TargetRenderContext,
+  attributeMode: ComponentTarget['jsx']['attributes']
+): string | undefined {
+  const targetName = targetAttributeName(name, attributeMode);
 
   if (isSourcePropToken(value)) return renderSourcePropAttribute(targetName, value);
 
@@ -263,7 +276,11 @@ function renderWithProps(
 
   const attributes = isExpressionNode(props)
     ? [`{...${renderTargetExpression(props, context)}}`]
-    : renderTargetAttributes({ [TARGET_NODE]: true, type: TARGET_HOST, props: { ...props }, key: null }, context);
+    : renderAttributesFor(
+        { [TARGET_NODE]: true, type: TARGET_HOST, props: { ...props }, key: null },
+        context,
+        children.rootComponent ? 'react' : context.target.jsx.attributes
+      );
 
   if (children.rootOpeningEnd === undefined) {
     const host = context.target.jsx.host;

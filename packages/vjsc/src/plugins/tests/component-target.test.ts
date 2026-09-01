@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vite-plus/test';
 
 import { defineComponent, defineSchema } from '../../components/definition';
 import { defineComponentTarget } from '../../target/definition';
-import { jsx } from '../../target/jsx-runtime';
+import { Host, jsx } from '../../target/jsx-runtime';
 import { readComponentSource } from '../component-meta';
 import { componentSourcePlugin } from '../component-source';
 import { type ComponentTargetSelection, componentTargetPlugin } from '../component-target';
@@ -99,6 +99,7 @@ const htmlTarget = defineComponentTarget<typeof schema>()(({ target, element, un
         }),
       rules: {
         OptionGroup: { Root: unwrap() },
+        Poster: ({ props, children }) => jsx(Host, { ...props, className: 'poster', children }),
         PlayButton: () =>
           jsx(Svg, {
             viewBox: '0 0 18 18',
@@ -272,6 +273,20 @@ describe('componentTargetPlugin', () => {
     expect(source).toContain(
       '<svg viewBox="0 0 18 18" preserveAspectRatio="xMidYMid meet" stroke-width={2} xlink:href="#icon" />'
     );
+  });
+
+  it('preserves component prop names when forwarding HTML host props', async () => {
+    const source = await transform(
+      `
+        import * as $ from '@fixture/components';
+        const CustomPoster = (props) => <img {...props} />;
+        export const poster = <$.Poster src="poster.jpg"><CustomPoster /></$.Poster>;
+      `,
+      { targets: [htmlTarget] }
+    );
+
+    expect(source).toMatch(/<CustomPoster\s+className="poster"\s+src="poster\.jpg"\s*\/>/);
+    expect(source).not.toContain('class="poster"');
   });
 
   it('lowers canonical components retained by an outer rewrite', async () => {

@@ -58,7 +58,21 @@ export function Host(props) {
   }
 
   const current = child[element];
-  return htmlElement(current.type, { ...current.attributes, ...attributes }, current.children);
+  return htmlElement(current.type, mergeHostAttributes(current.attributes, attributes), current.children);
+}
+
+function mergeHostAttributes(current, forwarded) {
+  const attributes = { ...current, ...forwarded };
+  const className = [current.class, current.className, forwarded.class, forwarded.className]
+    .flat(Infinity)
+    .filter(Boolean);
+
+  delete attributes.className;
+
+  if (className.length > 0) attributes.class = className;
+  else delete attributes.class;
+
+  return attributes;
 }
 
 function renderAttributes(attributes, context) {

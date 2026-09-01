@@ -30,11 +30,12 @@ describe('htmlRuntimePlugin', () => {
   it('forwards host attributes to one dynamic element child', async () => {
     const runtime = await loadRuntime();
     const output = runtime.jsx(runtime.Host, {
+      class: ['trigger', 'active'],
       id: 'trigger',
-      children: runtime.jsx('button', { className: ['button', 'active'] }),
+      children: runtime.jsx('button', { className: 'button' }),
     });
 
-    expect(String(output)).toBe('<button class="button active" id="trigger"></button>');
+    expect(String(output)).toBe('<button class="button trigger active" id="trigger"></button>');
   });
 
   it('flattens class arrays after HTML attribute normalization', async () => {
