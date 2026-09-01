@@ -2,11 +2,17 @@ import corePackage from '../../../core/package.json' with { type: 'json' };
 import htmlPackage from '../../../html/package.json' with { type: 'json' };
 import reactPackage from '../../../react/package.json' with { type: 'json' };
 
-export interface RegistryTarget {
-  readonly framework: 'html' | 'react';
-  readonly styling: 'css' | 'tailwind';
-  readonly output: string;
-}
+export type RegistryTarget =
+  | {
+      readonly framework: 'react';
+      readonly styling: 'css' | 'tailwind';
+      readonly output: string;
+    }
+  | {
+      readonly framework: 'html';
+      readonly styling: 'css';
+      readonly output: string;
+    };
 
 export const registryPaths = {
   install: '@components/videojs',
@@ -16,8 +22,7 @@ export const registryPaths = {
 export const registryTargets = [
   { framework: 'react', styling: 'tailwind', output: 'r/react' },
   { framework: 'react', styling: 'css', output: 'r/react/css' },
-  { framework: 'html', styling: 'tailwind', output: 'r/html' },
-  { framework: 'html', styling: 'css', output: 'r/html/css' },
+  { framework: 'html', styling: 'css', output: 'r/html' },
 ] as const satisfies readonly RegistryTarget[];
 
 export const packageRequirements = {

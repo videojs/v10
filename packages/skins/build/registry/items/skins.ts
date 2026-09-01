@@ -21,7 +21,7 @@ export async function htmlSkinItem(
   const directory = meta.style.theme === 'minimal' ? `skins/${skin.preset}/minimal` : `skins/${skin.preset}`;
   const template = createSourceOwnedHtml(skin.template);
 
-  const styleTarget = target.styling === 'css' ? `${directory}/skin.css` : 'styles/theme.css';
+  const styleTarget = `${directory}/skin.css`;
   const styleImport = relativeRegistryImport(`${directory}/skin.ts`, styleTarget);
 
   const registration = `${`import '${styleImport}';`}\n\n${createHtmlSkinRegistration(
@@ -43,10 +43,7 @@ export async function htmlSkinItem(
       type: 'registry:file',
       content: registration,
     },
-  ];
-
-  if (target.styling === 'css') {
-    files.push({
+    {
       path: 'skin.css',
       target: `${registryPaths.install}/${directory}/skin.css`,
       type: 'registry:style',
@@ -54,8 +51,8 @@ export async function htmlSkinItem(
         label: name,
         files: ['./styles/base.css'],
       }),
-    });
-  }
+    },
+  ];
 
   return {
     name,
@@ -65,7 +62,7 @@ export async function htmlSkinItem(
     categories: ['media', 'skins', skin.preset],
     docs: skinDocs(skin.root, meta, meta.name, target, directory),
     dependencies: ['@videojs/html'],
-    registryDependencies: target.styling === 'tailwind' ? ['@videojs/_style-theme'] : [],
+    registryDependencies: [],
     files,
     meta: {
       role: 'skin',
@@ -108,11 +105,12 @@ export function skinItem(
     description: meta.description,
     categories: ['media', 'skins', preset],
     docs: skinDocs(module, meta, skin, target, directory),
-    registryDependencies: [...reactHelperDependency(target), '@videojs/_style-theme'],
+    registryDependencies: reactHelperDependency(target),
     meta: registryMeta,
     group: 'skins',
     target: (candidate, root) => skinModuleTarget(candidate, root, skin),
     stylesheet: target.styling === 'css' ? { target: `${directory}/skin.css` } : undefined,
+    theme: true,
   };
 }
 

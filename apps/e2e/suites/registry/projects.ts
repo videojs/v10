@@ -1,11 +1,16 @@
-export interface RegistryConsumerProject {
+interface RegistryConsumerProjectBase {
   readonly name: string;
   readonly directory: string;
-  readonly framework: 'html' | 'react';
-  readonly styling: 'css' | 'tailwind';
-  readonly skin: 'video' | 'video-minimal';
   readonly port: number;
 }
+
+export type RegistryConsumerProject = RegistryConsumerProjectBase &
+  (
+    | { readonly framework: 'react'; readonly styling: 'css' | 'tailwind' }
+    | { readonly framework: 'html'; readonly styling: 'css' }
+  );
+
+export const registryConsumerSkins = ['video', 'video-minimal'] as const;
 
 /** External projects exercised against the local, hosted registry output. */
 export const registryConsumerProjects = [
@@ -14,7 +19,6 @@ export const registryConsumerProjects = [
     directory: 'next-react-tailwind',
     framework: 'react',
     styling: 'tailwind',
-    skin: 'video',
     port: 5310,
   },
   {
@@ -22,23 +26,13 @@ export const registryConsumerProjects = [
     directory: 'next-react-css',
     framework: 'react',
     styling: 'css',
-    skin: 'video-minimal',
     port: 5311,
-  },
-  {
-    name: 'vite-html-tailwind',
-    directory: 'vite-html-tailwind',
-    framework: 'html',
-    styling: 'tailwind',
-    skin: 'video',
-    port: 5312,
   },
   {
     name: 'vite-html-css',
     directory: 'vite-html-css',
     framework: 'html',
     styling: 'css',
-    skin: 'video-minimal',
-    port: 5313,
+    port: 5312,
   },
 ] as const satisfies readonly RegistryConsumerProject[];

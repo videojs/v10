@@ -30,6 +30,7 @@ export function componentItem(
     meta: registryMeta,
     group: 'ui',
     target: `ui/${meta.name}.tsx`,
+    theme: true,
   };
 }
 

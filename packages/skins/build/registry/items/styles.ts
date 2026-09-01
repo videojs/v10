@@ -3,7 +3,7 @@ import type { VideojsRegistryMeta } from '../meta.ts';
 import type { RegistryTarget } from '../targets.ts';
 
 export function registryStyles(target: RegistryTarget): RegistryStylesOptions | undefined {
-  if (target.framework === 'html' && target.styling === 'css') return undefined;
+  if (target.framework === 'html') return undefined;
 
   const meta = {
     role: 'support',

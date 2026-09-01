@@ -24,6 +24,7 @@ interface SourceBuild<Meta extends ModuleMeta> {
   readonly filename?: string | undefined;
   readonly imports?: Readonly<Record<string, string>> | undefined;
   readonly stylesheet?: RegistryStylesheetOutput | undefined;
+  readonly theme: boolean;
 }
 
 interface StyleBuild<Meta extends ModuleMeta> {
@@ -135,7 +136,7 @@ async function resolveSourceItems<Meta extends ModuleMeta>(
     const resolved = await options.items.resolve({ graph, module });
     if (!resolved) continue;
 
-    const { group, target, filename, imports, stylesheet, ...item } = resolved;
+    const { group, target, filename, imports, stylesheet, theme, ...item } = resolved;
     const build: SourceBuild<Meta> = {
       kind: 'source',
       module,
@@ -144,6 +145,7 @@ async function resolveSourceItems<Meta extends ModuleMeta>(
       ...(filename ? { filename } : {}),
       ...(imports ? { imports } : {}),
       ...(stylesheet ? { stylesheet } : {}),
+      theme: theme ?? false,
     };
 
     items.push({ ...item, build } as SourceItem<Meta>);
@@ -400,12 +402,12 @@ function sourceStyleOutputs<Meta extends ModuleMeta>(
 ): { readonly dependencies: string[]; readonly imports: string[] } {
   const styles = options.styles;
   const hasStyles = modules.some((module) => module.styles.files.length > 0 || module.styles.assets.length > 0);
-  if (!hasStyles) return { dependencies: [], imports: [] };
+  if (!hasStyles && !item.build.theme) return { dependencies: [], imports: [] };
 
   const dependencies = new Set<string>();
   const targets = new Set<string>();
 
-  if (styles?.theme) {
+  if (styles?.theme && (hasStyles || item.build.theme)) {
     targets.add(styles.theme.target);
 
     if (styles.theme.target !== item.build.stylesheet?.target) dependencies.add(styleItemName(styles.theme.target));

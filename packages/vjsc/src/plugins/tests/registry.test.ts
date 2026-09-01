@@ -194,6 +194,34 @@ describe('vjscRegistryPlugin', () => {
     });
   });
 
+  it('imports an explicitly requested theme without captured style assets', async () => {
+    const root = setup({
+      'components/root.tsx': `export const Root = <main />; ${meta('root', 'block')}`,
+      'styles/base.css': ':root { --accent: red; }',
+    });
+    const output = await build(root, {
+      styles: {
+        theme: {
+          target: 'styles/theme.css',
+          include: ['./styles/base.css'],
+          title: 'Theme',
+          description: 'Shared theme.',
+        },
+      },
+      items: {
+        resolve({ module }) {
+          const item = describeItem(module);
+
+          return item ? { ...item, theme: true } : null;
+        },
+      },
+    });
+    const item = registryItem(output, 'items', 'root');
+
+    expect(item.registryDependencies).toContain('@example/_style-theme');
+    expect(registryFile(output, 'items', item, '/root.tsx')).toContain(`import '../styles/theme.css';`);
+  });
+
   it('emits asynchronously prepared source-owned files', async () => {
     const root = setup({
       'components/root.tsx': `export const Root = <main />; ${meta('root', 'block')}`,

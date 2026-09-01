@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 import type { FullConfig } from '@playwright/test';
 import { isString } from '@videojs/utils/predicate';
 
-import { registryConsumerProjects, type RegistryConsumerProject } from '../projects.ts';
+import { registryConsumerProjects, registryConsumerSkins, type RegistryConsumerProject } from '../projects.ts';
 
 interface WorkspacePackage {
   readonly directory: string;
@@ -82,8 +82,8 @@ async function createConsumer(
 
   await configurePackage(project, projectDir, overrides);
   await configureShadcn(project, projectDir, registryUrl);
-  await exerciseRegistryCli(project, projectDir);
   await applyOverlay(project, projectDir);
+  await exerciseRegistryCli(project, projectDir);
 
   console.log(`Installed ${project.name} in ${elapsed(started)}.`);
 }
@@ -130,12 +130,6 @@ async function configurePackage(
   // SAFETY: the official scaffolds produce a package.json object; the fields read below are optional and object-spread
   // preserves the rest of that document.
   const manifest = JSON.parse(await readFile(path, 'utf8')) as PackageManifest;
-  const devDependencies = { ...manifest.devDependencies };
-
-  if (project.framework === 'html' && project.styling === 'tailwind') {
-    devDependencies['@tailwindcss/vite'] = '4.3.3';
-    devDependencies.tailwindcss = '4.3.3';
-  }
 
   await writeFile(
     path,
@@ -144,7 +138,6 @@ async function configurePackage(
         ...manifest,
         private: true,
         packageManager: 'pnpm@11.17.0',
-        devDependencies,
       },
       null,
       2
@@ -172,7 +165,7 @@ async function configureShadcn(
 ): Promise<void> {
   const sourceDir = resolve(projectDir, 'src');
   const css = project.framework === 'react' ? 'src/app/globals.css' : 'src/style.css';
-  const registryPath = [project.framework, project.styling === 'css' ? 'css' : undefined].filter(Boolean).join('/');
+  const path = registryPath(project);
 
   await mkdir(resolve(sourceDir, 'lib'), { recursive: true });
   await writeFile(
@@ -198,7 +191,7 @@ async function configureShadcn(
           hooks: '@/hooks',
         },
         registries: {
-          '@videojs': `${registryUrl}/${registryPath}/{name}.json`,
+          '@videojs': `${registryUrl}/${path}/{name}.json`,
         },
       },
       null,
@@ -211,15 +204,25 @@ async function exerciseRegistryCli(project: RegistryConsumerProject, projectDir:
   const search = await shadcn(['search', '@videojs', '--query', 'video', '--json', '--cwd', projectDir], projectDir);
   if (!search.stdout.includes('video')) throw new Error(`${project.name} could not find the Video Skin.`);
 
-  const view = await shadcn(['view', `@videojs/${project.skin}`, '--cwd', projectDir], projectDir);
-  if (!view.stdout.includes(project.skin)) throw new Error(`${project.name} could not view ${project.skin}.`);
+  for (const skin of registryConsumerSkins) {
+    const view = await shadcn(['view', `@videojs/${skin}`, '--cwd', projectDir], projectDir);
+    if (!view.stdout.includes(skin)) throw new Error(`${project.name} could not view ${skin}.`);
+  }
 
-  await shadcn(['add', `@videojs/${project.skin}`, '--yes', '--silent', '--cwd', projectDir], projectDir);
+  await shadcn(
+    ['add', ...registryConsumerSkins.map((skin) => `@videojs/${skin}`), '--yes', '--silent', '--cwd', projectDir],
+    projectDir
+  );
 
-  const skinDir = project.skin === 'video' ? 'skins/video' : 'skins/video/minimal';
   const extension = project.framework === 'react' ? 'tsx' : 'html';
 
-  await readFile(resolve(projectDir, `src/components/videojs/${skinDir}/skin.${extension}`), 'utf8');
+  await Promise.all(
+    registryConsumerSkins.map((skin) => {
+      const skinDir = skin === 'video' ? 'skins/video' : 'skins/video/minimal';
+
+      return readFile(resolve(projectDir, `src/components/videojs/${skinDir}/skin.${extension}`), 'utf8');
+    })
+  );
 
   const installedFiles = await readdir(resolve(projectDir, 'src/components/videojs'), { recursive: true });
 
@@ -231,21 +234,17 @@ async function exerciseRegistryCli(project: RegistryConsumerProject, projectDir:
 async function applyOverlay(project: RegistryConsumerProject, projectDir: string): Promise<void> {
   if (project.framework === 'react') {
     const appDir = resolve(projectDir, 'src/app');
-    const player = project.skin === 'video' ? 'player.tsx' : 'minimal-player.tsx';
 
-    await cp(resolve(overlaysDir, 'next', player), resolve(appDir, 'player.tsx'));
+    await cp(resolve(overlaysDir, 'next/player.tsx'), resolve(appDir, 'player.tsx'));
     await cp(resolve(overlaysDir, 'next/page.tsx'), resolve(appDir, 'page.tsx'));
     return;
   }
 
   const sourceDir = resolve(projectDir, 'src');
-  const main = project.skin === 'video' ? 'main.ts' : 'minimal-main.ts';
-  const style = project.styling === 'tailwind' ? 'tailwind.css' : 'style.css';
-  const viteConfig = project.styling === 'tailwind' ? 'tailwind.vite.config.ts' : 'vite.config.ts';
 
-  await cp(resolve(overlaysDir, 'vite', main), resolve(sourceDir, 'main.ts'));
-  await cp(resolve(overlaysDir, 'vite', style), resolve(sourceDir, 'style.css'));
-  await cp(resolve(overlaysDir, 'vite', viteConfig), resolve(projectDir, 'vite.config.ts'));
+  await cp(resolve(overlaysDir, 'vite/main.ts'), resolve(sourceDir, 'main.ts'));
+  await cp(resolve(overlaysDir, 'vite/style.css'), resolve(sourceDir, 'style.css'));
+  await cp(resolve(overlaysDir, 'vite/vite.config.ts'), resolve(projectDir, 'vite.config.ts'));
 }
 
 async function configureViteTypes(projectDir: string): Promise<void> {
@@ -355,17 +354,29 @@ async function registryPackageRoots(): Promise<Set<string>> {
   const roots = new Set<string>();
 
   for (const project of registryConsumerProjects) {
-    const directory = [project.framework, project.styling === 'css' ? 'css' : undefined].filter(Boolean).join('/');
-    const item = JSON.parse(await readFile(resolve(registryDir, directory, `${project.skin}.json`), 'utf8'));
+    const directory = registryPath(project);
+    const items = await Promise.all(
+      registryConsumerSkins.map((skin) =>
+        readFile(resolve(registryDir, directory, `${skin}.json`), 'utf8').then(JSON.parse)
+      )
+    );
 
-    for (const dependency of item.dependencies ?? []) {
-      const match = /^(@videojs\/[^@]+)@/.exec(dependency);
+    for (const item of items) {
+      for (const dependency of item.dependencies ?? []) {
+        const match = /^(@videojs\/[^@]+)@/.exec(dependency);
 
-      if (match?.[1]) roots.add(match[1]);
+        if (match?.[1]) roots.add(match[1]);
+      }
     }
   }
 
   return roots;
+}
+
+function registryPath(project: RegistryConsumerProject): string {
+  if (project.framework === 'html') return 'html';
+
+  return project.styling === 'css' ? 'react/css' : 'react';
 }
 
 async function readWorkspacePackages(): Promise<Map<string, WorkspacePackage>> {
