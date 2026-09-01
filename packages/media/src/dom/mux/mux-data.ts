@@ -287,12 +287,11 @@ export class MuxData implements MuxDataProps {
 
     if (this.#engineHook === 'dashjs') mux.removeDashJS();
 
-    if (options.hlsjs)
-      mux.addHLSJS(options.Hls ? { hlsjs: options.hlsjs, Hls: options.Hls } : { hlsjs: options.hlsjs });
+    if (options.hlsjs) mux.addHLSJS({ hlsjs: options.hlsjs, Hls: options.Hls });
 
     if (options.dashjs) mux.addDashJS({ dashjs: options.dashjs });
 
-    this.#monitoredEngine = engine;
+    this.#monitoredEngine = engine ?? null;
     this.#engineHook = hook;
   }
 
