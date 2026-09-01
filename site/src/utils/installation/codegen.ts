@@ -324,8 +324,7 @@ function generateReactMediaJsx(rendererJsx: string, renderer: Renderer, indent: 
 
   return `${rendererJsx}
 ${indent}{/* Mux Data monitors playback quality. It is a separate, opt-in
-${indent}    component, rendered here by default for Mux-hosted playback —
-${indent}    no environment key required. */}
+${indent}    component, rendered by default for Mux-hosted playback. */}
 ${indent}<MuxData />`;
 }
 
