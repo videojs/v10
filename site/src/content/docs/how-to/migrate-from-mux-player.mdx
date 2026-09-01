@@ -81,7 +81,7 @@ From the CDN, load the video <DocsLink slug="concepts/presets">preset</DocsLink>
 ```html
 <script type="module" src="{{VJS10_HTML_CDN_BASE}}/video.js"></script>
 <script type="module" src="{{VJS10_HTML_CDN_BASE}}/media/mux-video.js"></script>
-<script type="module" src="{{VJS10_HTML_CDN_BASE}}/media/mux-data.js"></script>
+<script type="module" src="{{VJS10_HTML_CDN_BASE}}/extensions/mux-data.js"></script>
 
 <video-player content-title="Test VOD">
   <video-skin style="aspect-ratio: 16 / 9">
@@ -109,7 +109,7 @@ If you use a bundler instead of the CDN, the imports are the same three pieces:
 import '@videojs/html/video/player';
 import '@videojs/html/video/skin';
 import '@videojs/html/media/mux-video';
-import '@videojs/html/media/mux-data';
+import '@videojs/html/extensions/mux-data';
 ```
 
 </FrameworkCase>
@@ -143,7 +143,7 @@ Start with the general-purpose `@videojs/react/video` <DocsLink slug="concepts/p
 
 import '@videojs/react/video/skin.css';
 import { VideoPlayer, VideoSkin } from '@videojs/react/video';
-import { MuxData } from '@videojs/react/media/mux-data';
+import { MuxData } from '@videojs/react/extensions/mux-data';
 import { MuxVideo } from '@videojs/react/media/mux-video';
 
 export function MyPlayer() {
@@ -172,7 +172,7 @@ The `'use client'` directive is there because the player owns browser state.
 </FrameworkCase>
 
 <Aside type="caution" title="Analytics changes from opt-out to opt-in">
-Mux Player monitors playback by default. Video.js sends no Mux Data beacons unless you add the `MuxData` component shown above. Keep it when you want a behaviorally equivalent migration; omit it only when you intend to stop monitoring.
+Mux Player monitors playback by default. Video.js sends no Mux Data beacons unless you add the `MuxData` extension shown above. Keep it when you want a behaviorally equivalent migration; omit it only when you intend to stop monitoring.
 </Aside>
 
 A few things worth calling out:
@@ -303,7 +303,7 @@ Signed playback behaves the way it does in Mux Player: a token replaces every ot
 
 ## Analytics moves to its own element
 
-Mux Player's analytics settings become attributes, properties, or props on the <DocsLink slug="reference/mux-data">Mux Data</DocsLink> component, placed inside the player.
+Mux Player's analytics settings become attributes, properties, or props on the <DocsLink slug="reference/mux-data">Mux Data extension</DocsLink>, placed inside the player.
 
 <FrameworkCase frameworks={["html"]}>
 | Mux Player | Video.js v10 |
@@ -337,7 +337,7 @@ Your metadata keys don't change. They're the same `snake_case` names Mux Data ha
 
 Mux Player used the same title for analytics and on-screen display. Video.js separates them.
 
-For analytics, use `metadata.video_title` on the Mux Data component.
+For analytics, use `metadata.video_title` on the Mux Data extension.
 
 <FrameworkCase frameworks={["html"]}>
 For display, use `content-title` on the player.

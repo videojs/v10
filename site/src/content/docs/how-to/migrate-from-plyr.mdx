@@ -17,7 +17,7 @@ Start with the Minimal skin, move media settings into markup, and replace calls 
 - **Streaming behavior becomes player state.** HLS, DASH, and Mux integrations expose renditions, tracks, and live state to the UI instead of leaving that wiring to application code.
 - **React uses native components and hooks.** `@videojs/react` owns its lifecycle instead of wrapping an imperative constructor around framework-owned DOM.
 - **The UI is composable.** Buttons, sliders, menus, gestures, and hotkeys are individual accessible components. Start with the Minimal or Default skin, then [eject it](#eject-a-skin) when you need to change the structure.
-- **Remote playback is built in.** The video skins include AirPlay and Cast controls. Follow <DocsLink slug="how-to/cast-to-airplay-and-chromecast">Cast to AirPlay and Chromecast</DocsLink> to add the Google Cast integration.
+- **Remote playback is built in.** The video skins include AirPlay and Cast controls. Follow <DocsLink slug="how-to/cast-to-airplay-and-chromecast">Cast to AirPlay and Chromecast</DocsLink> to add the Google Cast extension.
 
 <Aside type="note">
 Video.js v10 is still moving toward GA. Features like ads, playlists, preference persistence, and cue-point APIs are active areas, so check [Known gaps](#known-gaps) when those features matter to your migration.

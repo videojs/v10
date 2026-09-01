@@ -8,7 +8,7 @@ import { TabsRoot, TabsList, TabsPanel, Tab } from '@/components/Tabs';
 import DocsLink from '@/components/docs/DocsLink.astro';
 import DocsLinkCard from '@/components/docs/DocsLinkCard.astro';
 
-Video.js v10 is built around a three-part architecture that separates concerns and maximizes flexibility. Each part is designed to work independently or together, allowing you to use as much or as little of Video.js as you need.
+Video.js v10 separates player responsibilities into parts that work independently or together, so you can use as much or as little of Video.js as you need.
 
 For the reasoning behind this design, see <DocsLink slug="concepts/why-videojs">Why Video.js?</DocsLink>.
 
@@ -142,9 +142,13 @@ Media elements are discovered automatically. Plain `<video>` and `<audio>` eleme
 ```
 </FrameworkCase>
 
+<DocsLinkCard slug="concepts/media-sources">Learn more about media</DocsLinkCard>
+
+<DocsLink slug="concepts/extensions">Extensions</DocsLink> sit alongside state, UI, and media. Add one when a player needs optional behavior such as Google Cast or Mux Data monitoring; it uses the active media without rendering UI or playing media itself.
+
 ## Presets
 
-**Presets** preconfigure these parts for a specific use case.
+**Presets** preconfigure the state, UI, and media for a specific use case. Add extensions when that player also needs an optional integration.
 
 <FrameworkCase frameworks={["react"]}>
 The default presets are `@videojs/react/video` and `@videojs/react/audio`, covering the baseline set of controls you'd expect from the HTML `<video>` and `<audio>` tags. 

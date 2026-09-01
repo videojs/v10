@@ -1,9 +1,10 @@
 ---
 title: useMediaComponent
-description: Hook that registers a media component with the current Player media host
+description: Hook for registering a custom extension with the current Player media host
 ---
 
 import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
 
 ## Import
 
@@ -13,7 +14,7 @@ import { useMediaComponent } from "@videojs/react";
 
 ## Usage
 
-Pass a media component class from a component rendered inside `Player`.
+Build a React <DocsLink slug="concepts/extensions">extension</DocsLink> by passing its media component class from a component rendered inside `Player`.
 
 ```tsx
 import { MuxData as MuxDataComponent } from "@videojs/media/dom/mux";

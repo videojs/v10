@@ -1,6 +1,6 @@
 ---
 title: Mux Data
-description: Monitor playback quality and viewer experience by adding the Mux Data component to a player
+description: Monitor playback quality and viewer experience by adding the Mux Data extension to a player
 ---
 
 import FrameworkCase from '@/components/docs/FrameworkCase.astro';
@@ -8,12 +8,12 @@ import DocsLink from '@/components/docs/DocsLink.astro';
 import DocsLinkCard from '@/components/docs/DocsLinkCard.astro';
 import Aside from '@/components/Aside.astro';
 
-[Mux Data](https://www.mux.com/data) measures playback quality: startup time, rebuffering, playback failures, and watch time. Add the Mux Data component to a player and it monitors whichever media that player is playing:
+[Mux Data](https://www.mux.com/data) measures playback quality: startup time, rebuffering, playback failures, and watch time. Add the Mux Data <DocsLink slug="concepts/extensions">extension</DocsLink> to a player and it monitors whichever media that player is playing:
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx title="App.tsx"
 import { Container, createPlayer } from '@videojs/react';
-import { MuxData } from '@videojs/react/media/mux-data';
+import { MuxData } from '@videojs/react/extensions/mux-data';
 import { MuxVideo } from '@videojs/react/media/mux-video';
 import { videoFeatures } from '@videojs/react/video';
 
@@ -42,13 +42,13 @@ export default function App() {
 </video-player>
 ```
 
-Register the `<mux-data>` element by importing `@videojs/html/media/mux-data`.
+Register the `<mux-data>` element by importing `@videojs/html/extensions/mux-data`.
 </FrameworkCase>
 
-That's the whole setup for Mux-hosted playback — no environment key required. The component renders nothing; place it inside the player, as a sibling of the media element.
+That's the whole setup for Mux-hosted playback — no environment key required. The extension renders nothing; place it inside the player, as a sibling of the media element.
 
 <Aside type="note">
-Mux Data is opt-in. No media element monitors playback on its own, Mux ones included, so nothing is measured and no beacons are sent until you add this component.
+Mux Data is opt-in. No media element monitors playback on its own, Mux ones included, so nothing is measured and no beacons are sent until you add the extension.
 </Aside>
 
 ## Environment key
@@ -75,7 +75,7 @@ An explicit key always wins, so set one to send Mux-hosted views to a specific e
 
 ## Any media element works
 
-The component attaches to the media the player is using, not to a specific element type, so it monitors <DocsLink slug="reference/mux-video">MuxVideo</DocsLink>, <DocsLink slug="reference/hlsjs-video">HlsJsVideo</DocsLink>, <DocsLink slug="reference/dash-video">DashVideo</DocsLink>, and the rest alike.
+The extension attaches to the media the player is using, not to a specific element type, so it monitors <DocsLink slug="reference/mux-video">MuxVideo</DocsLink>, <DocsLink slug="reference/hlsjs-video">HlsJsVideo</DocsLink>, <DocsLink slug="reference/dash-video">DashVideo</DocsLink>, and the rest alike.
 
 How much it reports depends on the engine playing the stream. Every media gets the playback metrics the media element itself can tell us. On top of that, the component recognizes [hls.js](https://github.com/video-dev/hls.js/) and [dash.js](https://github.com/Dash-Industry-Forum/dash.js) engines and hands them to the Mux Data SDK, which adds stream-level detail: rendition switches, segment request timing and throughput, and engine errors. Media with no JavaScript engine, like native HLS or a plain `<video>`, report the element-level metrics alone.
 

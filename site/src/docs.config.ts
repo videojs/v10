@@ -57,6 +57,7 @@ export const sidebar: Sidebar = [
       { slug: 'concepts/ui-components' },
       { slug: 'concepts/accessibility' },
       { slug: 'concepts/media-sources' },
+      { slug: 'concepts/extensions' },
       { slug: 'concepts/mux-data' },
       { slug: 'concepts/security' },
       { slug: 'concepts/custom-element-lifecycle', frameworks: ['html'] },
@@ -99,7 +100,7 @@ export const sidebar: Sidebar = [
   {
     sidebarLabel: 'API Reference',
     llmsDescription:
-      'Reference for every public export, grouped by what it is: skins, UI components, media components, player features, and utilities.',
+      'Reference for every public export, grouped by what it is: skins, UI components, media components, extensions, player features, and utilities.',
     contents: [
       {
         sidebarLabel: 'Skins',
@@ -138,12 +139,10 @@ export const sidebar: Sidebar = [
           { slug: 'reference/error-dialog' },
           { slug: 'reference/fullscreen-button' },
           { slug: 'reference/gesture' },
-          { slug: 'reference/google-cast' },
           { slug: 'reference/hotkey' },
           { slug: 'reference/live-button' },
           { slug: 'reference/menu' },
           { slug: 'reference/mute-button' },
-          { slug: 'reference/mux-data' },
           { slug: 'reference/pip-button' },
           { slug: 'reference/play-button' },
           { slug: 'reference/playback-rate-button' },
@@ -191,6 +190,12 @@ export const sidebar: Sidebar = [
           { slug: 'reference/vimeo-video' },
           { slug: 'reference/youtube-video' },
         ],
+      },
+      {
+        sidebarLabel: 'Extensions',
+        defaultOpen: false,
+        llmsDescription: 'API reference for extensions that connect external services to the player.',
+        contents: [{ slug: 'reference/google-cast' }, { slug: 'reference/mux-data' }],
       },
       {
         sidebarLabel: 'Player Features',

@@ -1,0 +1,75 @@
+---
+title: Extensions
+description: Add optional services and behavior to a player's media without replacing its UI or playback component
+---
+
+import FrameworkCase from '@/components/docs/FrameworkCase.astro';
+import DocsLink from '@/components/docs/DocsLink.astro';
+import DocsLinkCard from '@/components/docs/DocsLinkCard.astro';
+
+Extensions add optional behavior to the media in a player. They do not render UI or play media themselves, so you can compose them with the state, UI, and media components you already use.
+
+Video.js includes two extensions:
+
+- <DocsLink slug="reference/google-cast">GoogleCast</DocsLink> connects the media to the Google Cast SDK and configures the receiver and load request.
+- <DocsLink slug="reference/mux-data">MuxData</DocsLink> connects the media to Mux Data for playback monitoring.
+
+## Add extensions to a player
+
+Place extensions inside the player, alongside its media component. Each extension finds the active media and follows it if the player switches media.
+
+<FrameworkCase frameworks={["react"]}>
+```tsx title="App.tsx"
+import { GoogleCast } from '@videojs/react/extensions/google-cast';
+import { MuxData } from '@videojs/react/extensions/mux-data';
+import { MuxVideo } from '@videojs/react/media/mux-video';
+import { VideoPlayer, VideoSkin } from '@videojs/react/video';
+
+export default function App() {
+  return (
+    <VideoPlayer>
+      <VideoSkin>
+        <MuxVideo source={{ playbackId: 'PLAYBACK_ID' }} playsInline />
+        <MuxData />
+        <GoogleCast />
+      </VideoSkin>
+    </VideoPlayer>
+  );
+}
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```html title="index.html"
+<script type="module">
+  import '@videojs/html/video/player';
+  import '@videojs/html/video/skin';
+  import '@videojs/html/media/mux-video';
+  import '@videojs/html/extensions/mux-data';
+  import '@videojs/html/extensions/google-cast';
+</script>
+
+<video-player>
+  <video-skin>
+    <mux-video src="https://stream.mux.com/PLAYBACK_ID.m3u8" playsinline></mux-video>
+    <mux-data></mux-data>
+    <google-cast></google-cast>
+  </video-skin>
+</video-player>
+```
+</FrameworkCase>
+
+Removing an extension removes only that behavior. The media and the rest of the player keep working.
+
+## Extensions and UI work together
+
+An extension can provide behavior that a UI component controls. For example, the Google Cast extension provides the configurable Cast route, while <DocsLink slug="reference/cast-button">CastButton</DocsLink> renders the control that starts and ends a Cast session. Mux Data is renderless and needs no matching UI.
+
+## Build a custom extension
+
+React integrations can use <DocsLink slug="reference/use-media-component">useMediaComponent</DocsLink> to register a media component with the active media host. It handles media changes and cleanup. HTML integrations can extend the same media-component model, but its custom-element base is not yet a public API.
+
+## See also
+
+<DocsLinkCard slug="concepts/mux-data">Monitor playback with Mux Data</DocsLinkCard>
+<DocsLinkCard slug="how-to/cast-to-airplay-and-chromecast">Cast to AirPlay and Chromecast</DocsLinkCard>

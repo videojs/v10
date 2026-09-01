@@ -168,13 +168,13 @@ video.source = {
 
 ## Analytics and casting
 
-MuxVideo plays Mux streams. It doesn't monitor them or cast them — <DocsLink slug="concepts/mux-data">Mux Data</DocsLink> and the <DocsLink slug="how-to/cast-to-airplay-and-chromecast">Google Cast integration</DocsLink> are separate components you add to the player alongside it. Mux Data needs no environment key here, since Mux attributes the views to the environment that owns the playback ID:
+MuxVideo plays Mux streams. It doesn't monitor them or cast them — <DocsLink slug="concepts/mux-data">Mux Data</DocsLink> and <DocsLink slug="how-to/cast-to-airplay-and-chromecast">Google Cast</DocsLink> are separate extensions you add to the player alongside it. Mux Data needs no environment key here, since Mux attributes the views to the environment that owns the playback ID:
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
 import { createPlayer } from '@videojs/react';
-import { GoogleCast } from '@videojs/react/media/google-cast';
-import { MuxData } from '@videojs/react/media/mux-data';
+import { GoogleCast } from '@videojs/react/extensions/google-cast';
+import { MuxData } from '@videojs/react/extensions/mux-data';
 import { MuxVideo } from '@videojs/react/media/mux-video';
 import { videoFeatures } from '@videojs/react/video';
 
@@ -197,8 +197,8 @@ export function MuxPlayer() {
 <script type="module">
   import '@videojs/html/video/player';
   import '@videojs/html/media/mux-video';
-  import '@videojs/html/media/mux-data';
-  import '@videojs/html/media/google-cast';
+  import '@videojs/html/extensions/mux-data';
+  import '@videojs/html/extensions/google-cast';
 </script>
 
 <video-player>

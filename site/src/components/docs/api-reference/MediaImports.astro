@@ -1,12 +1,5 @@
 ---
-import type { BundledLanguage } from 'shiki';
-
-import ServerCode from '@/components/Code/ServerCode.astro';
-import CodeFrame from '@/components/typography/CodeFrame.astro';
-import P from '@/components/typography/P.astro';
-import { VJS10_HTML_CDN_BASE } from '@/consts';
-import DocsLink from '../DocsLink.astro';
-import FrameworkCase from '../FrameworkCase.astro';
+import ModuleImports from './ModuleImports.astro';
 
 interface Props {
   /** Module name: the suffix of the `media/` subpath on both platforms and of the CDN bundle. */
@@ -16,36 +9,6 @@ interface Props {
 }
 
 const { media, react } = Astro.props;
-
-const cdnCode = `<script type="module" src="${VJS10_HTML_CDN_BASE}/media/${media}.js"></script>`;
-
-const imports: Array<{ code: string; framework: 'react' | 'html'; lang: BundledLanguage }> = [
-  {
-    code: `import { ${react} } from '@videojs/react/media/${media}';`,
-    framework: 'react',
-    lang: 'tsx',
-  },
-  {
-    code: `import '@videojs/html/media/${media}';`,
-    framework: 'html',
-    lang: 'ts',
-  },
-];
 ---
 
-{
-  imports.map(({ code, framework, lang }) => (
-    <FrameworkCase frameworks={[framework]}>
-      <CodeFrame lang={lang}>
-        <ServerCode code={code} lang={lang} />
-      </CodeFrame>
-    </FrameworkCase>
-  ))
-}
-
-<FrameworkCase frameworks={['html']}>
-  <P>Or load it from the <DocsLink slug="concepts/cdn">CDN</DocsLink>:</P>
-  <CodeFrame lang="html">
-    <ServerCode code={cdnCode} lang="html" />
-  </CodeFrame>
-</FrameworkCase>
+<ModuleImports name={media} react={react} subpath="media" />

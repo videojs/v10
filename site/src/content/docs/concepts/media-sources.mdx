@@ -44,7 +44,7 @@ The shape answers one question: does this option describe the source, or how to 
 | How to interpret it | `source.type` | `'video/mp4'` |
 | How Video.js plays it | `source`, at the top level | `preferPlayback`, `maxAutoResolution`, `capRenditionToPlayerSize` |
 | How a specific engine behaves | `source.engine`, under that engine's name | hls.js's `maxBufferLength`, in `source.engine.hlsJs` |
-| A side-car component's own settings | that component's props | <DocsLink slug="concepts/mux-data">Mux Data</DocsLink>, <DocsLink slug="reference/google-cast">GoogleCast</DocsLink> |
+| An extension's own settings | that extension's props | <DocsLink slug="concepts/mux-data">Mux Data</DocsLink>, <DocsLink slug="reference/google-cast">GoogleCast</DocsLink> |
 
 `type` is worth reaching for when the URL lies about its contents. Video.js infers the content type from the file extension, so a manifest served from an extensionless or signed URL may need to say so explicitly:
 
@@ -516,8 +516,8 @@ Media elements used to take a `config` object: one untyped bag holding engine op
 | `config.contentType` | `source.type` |
 | `config.hlsJs` | `source.engine.hlsJs` |
 | `config.dashJs` | `source.engine.dashJs` |
-| `config.muxData` | the <DocsLink slug="concepts/mux-data">Mux Data</DocsLink> component's own props |
-| `config.googleCast` | the <DocsLink slug="reference/google-cast">GoogleCast</DocsLink> component's own props |
+| `config.muxData` | the <DocsLink slug="concepts/mux-data">Mux Data</DocsLink> extension's own props |
+| `config.googleCast` | the <DocsLink slug="reference/google-cast">GoogleCast</DocsLink> extension's own props |
 | `config` on VimeoVideo | `source.engine.vimeo` |
 
 The engine keys keep their names, so their contents move across unchanged — what moves is the object they sit in.
