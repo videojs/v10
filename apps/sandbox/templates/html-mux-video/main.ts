@@ -52,7 +52,7 @@ async function render() {
         <mux-video${srcAttr} ${mediaAttrs} playsinline crossorigin>
           ${renderChapters(getChapters(state.source))}
         </mux-video>
-        <!-- Mux Data and Cast are opt-in media components; no env key is needed for Mux-hosted sources. -->
+        <!-- Mux Data and Cast are opt-in extensions; no env key is needed for Mux-hosted sources. -->
         <mux-data player-software-name="mux-video"></mux-data>
         <google-cast></google-cast>
       </${tag}>

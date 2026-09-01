@@ -41,7 +41,7 @@ function App() {
             playsInline
             crossOrigin=""
           />
-          {/* Mux Data is an opt-in media component. It hands the dash.js engine to the Mux Data
+          {/* Mux Data is an opt-in extension. It hands the dash.js engine to the Mux Data
               SDK, so views carry stream-level detail. These streams aren't Mux-hosted, so the
               sandbox env key is what attributes the views. */}
           <MuxData playerSoftwareName="dash-video" envKey="o9b7ge20gji31ao0rub18505f" />

@@ -75,7 +75,7 @@ function App() {
           >
             <Chapters tracks={getChapters(source)} />
           </MuxVideo>
-          {/* Mux Data and Cast are opt-in media components; no env key is needed for Mux-hosted sources. */}
+          {/* Mux Data and Cast are opt-in extensions; no env key is needed for Mux-hosted sources. */}
           <MuxData playerSoftwareName="mux-video" />
           <GoogleCast />
         </VideoSkinComponent>
