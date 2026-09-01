@@ -7,7 +7,7 @@ import Aside from '@/components/Aside.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
 import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 
-Mux Player combines HLS playback, UI, analytics, captions, remote playback, and keyboard shortcuts in one element. Video.js v10 composes those responsibilities from a player, media component, skin, and optional integrations.
+Mux Player combines HLS playback, UI, analytics, captions, remote playback, and keyboard shortcuts in one element. Video.js v10 composes those responsibilities from a player, media component, skin, and optional <DocsLink slug="concepts/extensions">extensions</DocsLink>.
 
 This guide moves a working Mux Player embed to those pieces, then maps the settings and APIs you are most likely to need next.
 
@@ -103,7 +103,7 @@ From the CDN, load the video <DocsLink slug="concepts/presets">preset</DocsLink>
 </script>
 ```
 
-If you use a bundler instead of the CDN, the imports are the same three pieces:
+If you use a bundler instead of the CDN, the imports are the same three pieces plus the Mux Data extension:
 
 ```js
 import '@videojs/html/video/player';
@@ -181,7 +181,7 @@ A few things worth calling out:
 - **MuxVideo supplies the poster.** It builds the image URL from the playback ID, and the skin displays it automatically. The example keeps the frame from two seconds in by configuring MuxVideo. Set `poster` on the player only when you want to use your own URL.
 - **You didn't add a storyboard track, and you get hover previews.** The Mux media adds and maintains the thumbnail track itself, and removes it for live streams, where storyboards don't exist.
 - **Analytics needs no environment key.** Mux resolves the environment from the playback ID. See <DocsLink slug="concepts/mux-data">Mux Data</DocsLink>.
-- **Chromecast is opt-in.** Follow <DocsLink slug="how-to/cast-to-airplay-and-chromecast">Cast to AirPlay and Chromecast</DocsLink> when you want it; leave the integration out when you don't.
+- **Chromecast is opt-in.** Follow <DocsLink slug="how-to/cast-to-airplay-and-chromecast">Cast to AirPlay and Chromecast</DocsLink> when you want it; leave the extension out when you don't.
 
 ### Move your layout styles
 

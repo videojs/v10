@@ -55,6 +55,18 @@ The default presets play through the browser's own `<video>` and `<audio>`. Ever
 
 Each path mirrors its npm subpath. Elements with more than one playback engine keep the extra flavors in a directory named for the element, such as `media/mux-video/spf.js`. Load one flavor per page: every flavor claims the same tag name, and the first registration wins.
 
+## Extension bundles
+
+Each <DocsLink slug="concepts/extensions">extension</DocsLink> is its own bundle under `extensions/`, loaded beside the player and media bundles:
+
+```html
+<script type="module" src="{{VJS10_HTML_CDN_BASE}}/video.js"></script>
+<script type="module" src="{{VJS10_HTML_CDN_BASE}}/media/mux-video.js"></script>
+<script type="module" src="{{VJS10_HTML_CDN_BASE}}/extensions/mux-data.js"></script>
+```
+
+As with media, each path mirrors its npm subpath: `extensions/mux-data.js` registers the element that `@videojs/html/extensions/mux-data` does.
+
 ## Locales
 
 English ships inside the skin bundles. Each other locale is a bundle under `locales/` that registers its translations on import. Load it before the player script to avoid a flash of English:

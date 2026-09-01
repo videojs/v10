@@ -292,6 +292,20 @@ Every media page opens with an `## Import` section rendered by `<MediaImports>`,
 
 Unlike UI components, every media module ships a matching CDN bundle, so for HTML readers the component names that bundle and links the <DocsLink slug="concepts/cdn">CDN</DocsLink> concept. A unit test enforces the Import section on every page that renders `<MediaReference />`.
 
+## Create an extension reference page
+
+Extension reference pages document the <DocsLink slug="concepts/extensions">extensions</DocsLink> that add optional behavior to a player's media, such as Google Cast and Mux Data. They are hand-authored today: no generator produces their API tables.
+
+Every extension page opens with an `## Import` section rendered by `<ExtensionImports>`, placed after the intro prose and before the first body section:
+
+```mdx
+## Import
+
+<ExtensionImports extension="mux-data" react="MuxData" />
+```
+
+`extension` is the module name: the suffix of `@videojs/react/extensions/{extension}` and `@videojs/html/extensions/{extension}`, and of the CDN bundle `extensions/{extension}.js`. `react` is the named export from the React subpath. A unit test enforces the section on every extension reference page.
+
 ## Create a feature reference page
 
 Feature reference pages document the feature modules passed to `createPlayer`. They open with an `## Import` section rendered by `<FeatureImports>`, placed after the intro prose and before `<FeatureReference />`:
@@ -311,10 +325,11 @@ Open `site/src/docs.config.ts` and add your page to the appropriate category und
 - **Skins** — the packaged skins each preset ships. Prose-only pages today (no generated skin JSON), opening with `<SkinImports preset="..." react="..." />`
 - **UI Components** — UI component reference pages, sorted alphabetically
 - **Media Components** — media elements that handle streaming protocols and playback
+- **Extensions** — extensions that add optional behavior to the player's media, such as Google Cast and Mux Data
 - **Player Features** — feature modules passed to `createPlayer`
 - **Utilities** — hooks, utilities, controllers, and mixins. Keep primary integration APIs at the top level and put lower-level implementation APIs in the single Advanced subgroup.
 
-Skins, UI Components, Media Components, and Player Features are flat by design. Do not add nested subsections to them. Mark framework-specific entries with `frameworks: ['react']` or `frameworks: ['html']` on the entry itself.
+Skins, UI Components, Media Components, Extensions, and Player Features are flat by design. Do not add nested subsections to them. Mark framework-specific entries with `frameworks: ['react']` or `frameworks: ['html']` on the entry itself.
 
 ```ts
 {

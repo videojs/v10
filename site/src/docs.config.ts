@@ -66,7 +66,7 @@ export const sidebar: Sidebar = [
   {
     sidebarLabel: 'How to',
     llmsDescription:
-      "Task-oriented guides that each answer one goal in the reader's words. Some cover custom player UI; others configure a preset, skin, media component, or integration. Guides lead with the recommended path, then the constraints and variations needed to apply it.",
+      "Task-oriented guides that each answer one goal in the reader's words. Some cover custom player UI; others configure a preset, skin, media component, or extension. Guides lead with the recommended path, then the constraints and variations needed to apply it.",
     contents: [
       { slug: 'how-to/customize-skins' },
       { slug: 'how-to/build-your-own-component' },
