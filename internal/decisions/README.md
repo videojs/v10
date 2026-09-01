@@ -41,6 +41,7 @@ Add alternatives, consequences, or source links only when they materially explai
 
 | Area | Decisions |
 | --- | --- |
+| `media/` | Media contracts, hosts, and third-party integrations such as Mux Data |
 | `player/` | Provider, container, media discovery, and player composition |
 | `spf/` | Stream-processing ownership and coordination |
 | `store/` | State-management contracts |
