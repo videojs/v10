@@ -293,6 +293,25 @@ const SOURCE_MAP = {
     drm: true,
     poster: `https://image.mux.com/${DRM_PLAYBACK_ID}/thumbnail.webp?token=${DRM_TOKENS.thumbnail}`,
   },
+  'hls-drm-ezdrm': {
+    // EZDRM's FairPlay demo. No custom header — the asset is identified by the
+    // license URL path — and the SPC goes up as a raw octet-stream body, the same
+    // convention Mux uses. Its `skd://` carries the content id after a `;`, where
+    // Mux and Axinom each delimit differently.
+    label: 'HLS - DRM FairPlay (EZDRM)',
+    type: 'hls',
+    subType: 'mp4',
+    drm: true,
+    source: {
+      src: 'https://na-fps.ezdrm.com/demo/ezdrm/master.m3u8',
+      drm: {
+        'com.apple.fps': {
+          licenseUrl: 'https://fps.ezdrm.com/api/licenses/b99ed9e5-c641-49d1-bfa8-43692b686ddb',
+          serverCertificateUrl: 'https://fps.ezdrm.com/demo/video/eleisure.cer',
+        },
+      },
+    },
+  },
   'mp4-1': {
     label: 'MP4 - Dancing Dude',
     url: 'https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/highest.mp4',
