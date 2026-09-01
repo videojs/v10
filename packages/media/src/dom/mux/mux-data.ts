@@ -286,7 +286,7 @@ export class MuxData implements MuxDataProps {
 
     const options = toMuxDataEngineOptions(engine);
 
-    if (options.hlsjs) mux.addHLSJS({ hlsjs: options.hlsjs, Hls: options.Hls });
+    if (options.hlsjs && options.Hls) mux.addHLSJS({ hlsjs: options.hlsjs, Hls: options.Hls });
 
     if (options.dashjs) mux.addDashJS({ dashjs: options.dashjs });
 
