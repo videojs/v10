@@ -41,7 +41,7 @@ export default defineConfig({
           'package.json',
           { pattern: 'pnpm-lock.yaml', base: 'workspace' },
         ],
-        output: ['dist/registry/r/**'],
+        output: ['dist/shadcn/r/**'],
       },
       'validate:shadcn:schema': {
         command: registryTargets.map(
@@ -57,7 +57,7 @@ export default defineConfig({
         input: [
           'build/registry/validate.ts',
           'dist/registry/source/r/**',
-          'dist/registry/r/**',
+          'dist/shadcn/r/**',
           { pattern: 'packages/*/package.json', base: 'workspace' },
         ],
         output: [],

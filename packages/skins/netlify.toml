@@ -1,0 +1,3 @@
+[build]
+  command = "pnpm exec vp run --no-cache @videojs/skins#build:shadcn"
+  publish = "packages/skins/dist/shadcn"

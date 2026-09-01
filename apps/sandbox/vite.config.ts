@@ -171,7 +171,7 @@ export default defineConfig({
           'scripts/generate-cdn-locale-loaders.ts',
           'scripts/sync-source-owned-skins.ts',
           'templates/**',
-          { pattern: 'packages/skins/dist/registry/r/**', base: 'workspace' },
+          { pattern: 'packages/skins/dist/shadcn/r/**', base: 'workspace' },
         ],
         output: ['src/**', 'app/_generated/**', 'app/shared/i18n/cdn-locale-loaders.generated.ts'],
       },

@@ -8,7 +8,7 @@ import { registryTargets } from './targets.ts';
 
 const packageDir = resolve(import.meta.dirname, '../..');
 const workspaceDir = resolve(packageDir, '../..');
-const hostedDir = resolve(packageDir, 'dist/registry/r');
+const hostedDir = resolve(packageDir, 'dist/shadcn/r');
 const catalogs = registryTargets.map((target) => target.output.replace(/^r\//, ''));
 
 const versions = await workspacePackageVersions();

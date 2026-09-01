@@ -6,7 +6,7 @@ import { registryTargets } from './targets.ts';
 
 const packageDir = resolve(import.meta.dirname, '../..');
 const sourceDir = resolve(packageDir, 'dist/registry/source');
-const hostedDir = resolve(packageDir, 'dist/registry/r');
+const hostedDir = resolve(packageDir, 'dist/shadcn/r');
 const shadcnBin = resolve(packageDir, 'node_modules/shadcn/dist/index.js');
 const catalogs = Object.groupBy(registryTargets, ({ framework }) => framework);
 
