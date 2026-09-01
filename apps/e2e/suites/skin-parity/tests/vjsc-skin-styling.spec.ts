@@ -9,7 +9,7 @@ const CASES = [
 const WIDTHS = [320, 800] as const;
 const BUFFERING_INDICATOR_SELECTOR =
   '.media-buffering-indicator, media-buffering-indicator, [class~="peer/buffering"], [class~="hidden"][class~="place-content-center"]';
-const CONTROLS_SELECTOR = 'media-controls-content.media-controls, .media-controls';
+const CONTROLS_SELECTOR = '.video-controls';
 
 test.describe.configure({ mode: 'serial' });
 
@@ -992,7 +992,7 @@ async function hideControls(root: Locator) {
 
     const controls = element.querySelector<HTMLElement>(controlsSelector);
     const backdrop = inspect(
-      element.querySelector('.media-controls-backdrop') ??
+      element.querySelector('.video-controls-backdrop') ??
         controls?.querySelector(':scope > [aria-hidden="true"]') ??
         controls?.previousElementSibling ??
         null
@@ -1649,9 +1649,9 @@ async function compactDefaultControlsMotionContract(root: Locator) {
 
       return null;
     };
-    const controls = deepQuery(element, '.media-controls');
-    const primary = controls && deepQuery(controls, '.media-controls-primary, [class~="origin-bottom"]');
-    const secondary = controls && deepQuery(controls, '.media-controls-secondary, [class~="origin-top"]');
+    const controls = deepQuery(element, '.video-controls');
+    const primary = controls && deepQuery(controls, '.video-controls-primary, [class~="origin-bottom"]');
+    const secondary = controls && deepQuery(controls, '.video-controls-secondary, [class~="origin-top"]');
     const inspect = (target: HTMLElement) => {
       const style = getComputedStyle(target);
 
@@ -2292,14 +2292,14 @@ async function volumeMaskContract(root: Locator, width: number) {
       const value = className(target);
 
       return (
-        value.includes('media-time-controls') ||
-        value.includes('media-time-slider-group') ||
-        value.includes('@container/media-time-controls')
+        value.includes('video-time-controls') ||
+        value.includes('video-time-slider-group') ||
+        value.includes('@container/video-time-controls')
       );
     });
     const buttonGroups = descendants.filter((target) => className(target).includes('media-button-group'));
     const end =
-      descendants.find((target) => className(target).includes('media-controls-end')) ??
+      descendants.find((target) => className(target).includes('video-controls-end')) ??
       buttonGroups.at(-1) ??
       descendants.find((target) => {
         const value = className(target);

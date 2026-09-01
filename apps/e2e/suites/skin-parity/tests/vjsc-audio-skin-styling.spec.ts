@@ -146,7 +146,7 @@ for (const variant of CASES) {
         await expect(rate).toHaveAttribute('aria-expanded', 'true');
 
         contracts.push({
-          controls: await surfaceContract(root.locator('.media-controls').first()),
+          controls: await surfaceContract(root.locator('.audio-controls').first()),
           popup: await surfaceContract(visibleMenuPopup(page)),
         });
       }
@@ -243,7 +243,7 @@ async function layoutContract(root: Locator) {
     buttons.push({ label: await button.getAttribute('aria-label'), rect: await relativeRect(button) });
   }
 
-  const classedControls = root.locator('.media-controls').first();
+  const classedControls = root.locator('.audio-controls').first();
   const tooltipGroup = root.locator('media-tooltip-group').first();
   const controlsLocator = (await classedControls.count()) > 0 ? classedControls : tooltipGroup.locator('..');
   const controls =

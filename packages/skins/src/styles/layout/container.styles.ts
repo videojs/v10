@@ -3,6 +3,10 @@ import { styles } from 'vjsc/styles';
 export default styles({
   file: 'container.css',
   rules: {
+    skin: {
+      className: 'media-skin',
+      utilities: [],
+    },
     root: {
       className: 'media-container',
       scopeRoot: true,

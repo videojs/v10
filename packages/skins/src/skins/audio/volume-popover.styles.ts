@@ -1,10 +1,10 @@
 import { styles } from 'vjsc/styles';
 
 export default styles({
-  file: 'popups.css',
+  file: 'audio/volume-popover.css',
   rules: {
     popup: {
-      className: 'media-audio-volume-popover',
+      className: 'audio-volume-popover',
       utilities: [
         'data-[side=left]:rounded-none data-[side=left]:border-0 data-[side=left]:py-0 data-[side=left]:ps-16 data-[side=left]:pe-2',
         'data-[side=left]:bg-transparent! data-[side=left]:bg-linear-to-l data-[side=left]:from-media-controls data-[side=left]:from-80% data-[side=left]:to-transparent',

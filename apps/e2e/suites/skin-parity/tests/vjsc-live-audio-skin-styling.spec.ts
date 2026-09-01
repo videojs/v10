@@ -122,7 +122,7 @@ for (const variant of CASES) {
 
         await expect(volume).toBeVisible();
         contracts.push({
-          controls: await surfaceContract(root.locator('.media-controls').first()),
+          controls: await surfaceContract(root.locator('.audio-controls').first()),
           popup: await surfaceContract(popupAncestor(volume)),
         });
       }
@@ -197,7 +197,7 @@ async function layoutContract(root: Locator) {
         width: round(rect.width),
       };
     };
-    const controls = [...element.querySelectorAll<HTMLElement>('.media-controls')].find((candidate) => {
+    const controls = [...element.querySelectorAll<HTMLElement>('.audio-controls')].find((candidate) => {
       const rect = candidate.getBoundingClientRect();
 
       return getComputedStyle(candidate).display !== 'contents' && rect.width > 0 && rect.height > 0;

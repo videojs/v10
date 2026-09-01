@@ -48,6 +48,16 @@ describe('stylePlugin', () => {
     expect(source).toContain('buttonClass = "grid p-0"');
   });
 
+  it('preserves semantic hooks without utilities in Tailwind output', async () => {
+    const hookStyles = createResolvedStyles([rule(['root'], 'video-controls', [])]);
+    const { source } = await transform(
+      `import styles from './fixtures/button.styles'; export const root = <div className={styles.root} />;`,
+      { resolvedStyles: hookStyles, mode: 'tailwind' }
+    );
+
+    expect(source).toContain('className={"video-controls"}');
+  });
+
   it('combines normalized variants in selection order', async () => {
     const input = `
       import styles from './fixtures/button.styles';

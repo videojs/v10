@@ -11,7 +11,7 @@ test('installs a styled player with an attached media element', async ({ page })
   await page.goto('/');
 
   const skin = page.locator('.media-skin');
-  const controls = page.locator('media-controls, .media-controls').first();
+  const controls = page.locator('media-controls, .video-controls, .audio-controls').first();
   const media = page.locator('video');
 
   await expect(skin).toBeVisible();

@@ -104,19 +104,25 @@ describe('Skins Vite workflow', () => {
       if (variant.framework === 'react') expect(result?.code, url).toContain('$RefreshReg$');
 
       const controls = await server.transformRequest(controlsUrl(variant));
+      const controlsClass = preset.includes('audio') ? 'audio-controls' : 'video-controls';
+
+      expect(controls?.code, url).toContain(controlsClass);
 
       if (variant.style === 'css') {
         const code = controls?.code ?? '';
+        const controlsStyle = encodeURIComponent(`${preset}/controls.css`);
 
         expect(code, url).toContain('virtual:vjsc/css');
         expect(code, url).toContain('/base.css');
-        expect(code.indexOf('/base.css'), url).toBeLessThan(code.indexOf('/controls.css'));
+        expect(code, url).toContain(controlsStyle);
+        expect(code.indexOf('/base.css'), url).toBeLessThan(code.indexOf(controlsStyle));
       } else expect(controls?.code, url).not.toContain('virtual:vjsc/css');
     }
 
     const htmlContainer = await server.transformRequest(htmlContainerUrl);
 
     expect(htmlContainer?.code).toContain('/src/define/ui/container.ts');
+    expect(htmlContainer?.code).toContain('media-skin');
   }, 30_000);
 
   it('passes trigger props to the concrete React render element', async () => {

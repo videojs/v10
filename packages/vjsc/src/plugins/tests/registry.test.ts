@@ -124,7 +124,7 @@ describe('vjscRegistryPlugin', () => {
   });
 
   it('derives shared style items, dependencies, and imports from graph ownership', async () => {
-    const virtualStyle = 'virtual:vjsc/css/buttons.css';
+    const virtualStyle = 'virtual:vjsc/css/current/audio%2Fbuttons.css';
     const root = setup({
       'components/root.tsx': `import ${JSON.stringify(virtualStyle)}; export const Root = <main />; ${meta('root', 'block')}`,
       'styles/base.css': ':root { --accent: red; }',
@@ -159,20 +159,20 @@ describe('vjscRegistryPlugin', () => {
 
             if (!id.endsWith('/components/root.tsx')) return null;
 
-            return { meta: { moduleStyles: { files: ['buttons.css'], assets: [virtualStyle] } } };
+            return { meta: { moduleStyles: { files: ['audio/buttons.css'], assets: [virtualStyle] } } };
           },
         },
       ]
     );
     const item = registryItem(output, 'items', 'root');
-    const style = registryItem(output, 'support', '_style-buttons');
+    const style = registryItem(output, 'support', '_style-audio-buttons');
     const theme = registryItem(output, 'support', '_style-theme');
     const source = registryFile(output, 'items', item, '/root.tsx');
 
-    expect(item.registryDependencies).toEqual(['@example/_style-buttons', '@example/_style-theme']);
-    expect(source).toContain(`import '../styles/buttons.css';`);
+    expect(item.registryDependencies).toEqual(['@example/_style-audio-buttons', '@example/_style-theme']);
+    expect(source).toContain(`import '../styles/audio/buttons.css';`);
     expect(source).toContain(`import '../styles/theme.css';`);
-    expect(registryFile(output, 'support', style, '/buttons.css')).toContain('color: var(--accent)');
+    expect(registryFile(output, 'support', style, '/audio/buttons.css')).toContain('color: var(--accent)');
     expect(registryFile(output, 'support', theme, '/theme.css')).toContain('--accent: red');
   });
 

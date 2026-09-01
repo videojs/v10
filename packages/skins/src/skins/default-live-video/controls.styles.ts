@@ -1,10 +1,10 @@
 import { styles } from 'vjsc/styles';
 
 export default styles({
-  file: 'controls.css',
+  file: 'live-video/controls.css',
   rules: {
-    root: {
-      className: 'media-controls',
+    content: {
+      className: 'video-controls-content',
       utilities: [
         'group/controls contents p-1 text-white',
         '[--media-popover-side-offset:--spacing(3)] [--media-tooltip-side-offset:var(--media-popover-side-offset)]',
@@ -21,7 +21,7 @@ export default styles({
       ],
     },
     backdrop: {
-      className: 'media-controls-backdrop',
+      className: 'video-controls-backdrop',
       utilities: [
         'pointer-events-none absolute inset-0 z-10 rounded-[inherit]',
         'bg-linear-to-t from-black/50 via-black/30 via-25% to-transparent',
@@ -29,7 +29,7 @@ export default styles({
       ],
     },
     primary: {
-      className: 'media-controls-primary',
+      className: 'video-controls-primary',
       utilities: [
         'absolute inset-x-2 bottom-2 z-10 flex origin-bottom items-center gap-px rounded-media-control p-1',
         '@lg/media-root:contents',
@@ -45,11 +45,11 @@ export default styles({
       ],
     },
     spacer: {
-      className: 'media-controls-spacer',
+      className: 'video-controls-spacer',
       utilities: 'flex-1',
     },
     captionsMenu: {
-      className: 'media-controls-captions-menu',
+      className: 'video-controls-captions-menu',
       utilities: '@max-lg/media-root:hidden',
     },
   },

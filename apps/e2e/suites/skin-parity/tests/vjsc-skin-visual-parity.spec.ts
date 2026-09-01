@@ -37,7 +37,7 @@ const CASES = [
   { framework: 'html', skin: 'minimal-video' },
 ] as const;
 const WIDTHS = [320, 800] as const;
-const CONTROLS_SELECTOR = '.media-controls--root, .media-controls';
+const CONTROLS_SELECTOR = '.video-controls';
 
 test.describe('VJSC skin visual parity audit', () => {
   test.skip(

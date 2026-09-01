@@ -9,7 +9,7 @@ describe('graphPlugin', () => {
   it('reads stylesheet ownership from final transformed imports', async () => {
     const filename = resolve(import.meta.dirname, 'fixtures/graph-entry.ts');
     const id = `${filename}?target=react`;
-    const styleId = 'virtual:vjsc/css/current/buttons.css';
+    const styleId = 'virtual:vjsc/css/current/audio%2Fbuttons.css';
     const staleStyleId = 'virtual:vjsc/css/stale/buttons.css';
     const graph = createGraphCapability();
     const bundle = await rolldown({
@@ -52,7 +52,7 @@ describe('graphPlugin', () => {
     await bundle.generate({ format: 'es' });
 
     expect(graph.api.modules.get(id)?.styles).toEqual({
-      files: ['buttons.css'],
+      files: ['audio/buttons.css'],
       assets: [styleId],
     });
 

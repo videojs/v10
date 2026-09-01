@@ -406,7 +406,8 @@ function readAccessPath(expression: Expression): string[] | undefined {
 }
 
 function renderStyleRule(rule: ResolvedStyleRule, options: StyleTransformOptions, listItem: boolean): string {
-  const groups = options.mode === 'css' ? [rule.className] : utilityGroupsForRule(rule, options.variants);
+  const utilityGroups = utilityGroupsForRule(rule, options.variants);
+  const groups = options.mode === 'css' || utilityGroups.length === 0 ? [rule.className] : utilityGroups;
   const values = groups.filter(Boolean);
 
   if (listItem) return values.length > 0 ? values.map((value) => JSON.stringify(value)).join(', ') : '""';

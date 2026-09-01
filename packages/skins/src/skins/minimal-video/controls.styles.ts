@@ -1,10 +1,10 @@
 import { styles } from 'vjsc/styles';
 
 export default styles({
-  file: 'controls.css',
+  file: 'video/controls.css',
   rules: {
-    root: {
-      className: 'media-controls',
+    content: {
+      className: 'video-controls-content',
       utilities: [
         'group/controls absolute inset-x-1 bottom-1 z-20 flex flex-wrap items-center gap-x-2 rounded-xl bg-transparent text-white',
         'text-shadow-media opaque:bg-black',
@@ -20,7 +20,7 @@ export default styles({
       ],
     },
     backdrop: {
-      className: 'media-controls-backdrop',
+      className: 'video-controls-backdrop',
       utilities: [
         'pointer-events-none absolute inset-0 z-10 rounded-[inherit]',
         'bg-linear-to-t from-black/70 via-black/50 via-[length:calc(var(--media-spacing)*30)] to-transparent',
@@ -28,11 +28,11 @@ export default styles({
       ],
     },
     start: {
-      className: 'media-controls-start',
+      className: 'video-controls-start',
       utilities: 'flex flex-1 items-center gap-px @2xl/media-root:flex-none',
     },
     end: {
-      className: 'media-controls-end',
+      className: 'video-controls-end',
       utilities: [
         'flex flex-1 items-center justify-end gap-px @2xl/media-root:flex-none',
         '@max-2xl/media-root:[mask-repeat:no-repeat]',
@@ -43,13 +43,13 @@ export default styles({
       ],
     },
     trailing: {
-      className: 'media-controls-trailing',
+      className: 'video-controls-trailing',
       utilities: 'flex items-center gap-px',
     },
     timeSliderGroup: {
-      className: 'media-time-slider-group',
+      className: 'video-time-slider-group',
       utilities: [
-        '@container/media-time-controls -order-1 flex flex-none basis-full flex-row-reverse items-center gap-3 px-1.5',
+        '@container/video-time-controls -order-1 flex flex-none basis-full flex-row-reverse items-center gap-3 px-1.5',
         '[--media-slider-height:--spacing(5)]',
         '@2xl/media-root:order-none @2xl/media-root:min-w-0 @2xl/media-root:flex-1 @2xl/media-root:flex-row',
         '@2xl/media-root:[--media-slider-height:--spacing(8)]',
@@ -61,11 +61,11 @@ export default styles({
       ],
     },
     timeGroup: {
-      className: 'media-time-group',
+      className: 'video-time-group',
       utilities: 'flex items-center gap-1',
     },
     currentValue: {
-      className: 'media-time-current-value',
+      className: 'video-time-current-value',
       utilities: [
         'hidden cursor-pointer rounded-sm tabular-nums outline-2 -outline-offset-2 outline-transparent',
         'supports-[corner-shape:squircle]:rounded-2xl supports-[corner-shape:squircle]:[corner-shape:squircle]',
@@ -74,11 +74,11 @@ export default styles({
       ],
     },
     timeSeparator: {
-      className: 'media-time-separator',
+      className: 'video-time-separator',
       utilities: 'hidden @2xl/media-root:inline @2xl/media-root:text-current/60',
     },
     durationValue: {
-      className: 'media-time-duration-value',
+      className: 'video-time-duration-value',
       utilities: 'tabular-nums @2xl/media-root:text-current/60',
     },
   },

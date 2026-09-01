@@ -8,6 +8,7 @@ import { PiPButton } from '../../components/buttons/pip-button';
 import { PlayButton } from '../../components/buttons/play-button';
 import { VolumePopover } from '../../components/controls/volume-popover';
 import { TimeSlider } from '../../components/sliders/time-slider';
+import controlsStyles from '../../styles/layout/controls.styles';
 import { VideoSettingsMenu } from '../video/settings-menu';
 import styles from './controls.styles';
 
@@ -15,7 +16,7 @@ export function MinimalVideoControls() {
   return (
     <$.Controls.Root>
       <$.Controls.Backdrop className={styles.backdrop} />
-      <$.Controls.Content className={['media-controls', styles.root]}>
+      <$.Controls.Content className={[controlsStyles.root, styles.content]}>
         <$.Tooltip.Provider>
           <$.Controls.Group className={styles.start}>
             <PlayButton />

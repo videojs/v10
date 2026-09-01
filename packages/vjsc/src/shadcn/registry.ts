@@ -201,7 +201,7 @@ function describeStyleItems<Meta extends ModuleMeta>(
     const label = basename(target, '.css');
 
     items.push({
-      name: styleItemName(target),
+      name: styleAssetItemName(asset),
       type: 'registry:style',
       title: `${options.name} ${label} styles`,
       description: `Shared ${label} styles installed with the source modules that use them.`,
@@ -391,9 +391,14 @@ function sourceStyleOutputs<Meta extends ModuleMeta>(
   const hasStyles = modules.some((module) => module.styles.files.length > 0 || module.styles.assets.length > 0);
   if (!hasStyles) return { dependencies: [], imports: [] };
 
+  const dependencies = new Set<string>();
   const targets = new Set<string>();
 
-  if (styles?.theme) targets.add(styles.theme.target);
+  if (styles?.theme) {
+    targets.add(styles.theme.target);
+
+    if (styles.theme.target !== item.build.stylesheet?.target) dependencies.add(styleItemName(styles.theme.target));
+  }
 
   if (item.build.stylesheet) {
     targets.add(item.build.stylesheet.target);
@@ -401,18 +406,17 @@ function sourceStyleOutputs<Meta extends ModuleMeta>(
     for (const module of modules) {
       for (const filename of module.styles.files) {
         const target = styleFileTarget(styles?.files, filename);
+        if (!target) continue;
 
-        if (target) targets.add(target);
+        targets.add(target);
+        dependencies.add(styleAssetItemName(filename));
       }
     }
   }
 
   const imports = [...targets].sort();
-  const dependencies = imports
-    .filter((target) => target !== item.build.stylesheet?.target)
-    .map((target) => styleItemName(target));
 
-  return { dependencies, imports };
+  return { dependencies: [...dependencies].sort(), imports };
 }
 
 function styleFileEntries<Meta extends ModuleMeta>(
@@ -674,6 +678,12 @@ function styleItemName(target: string): string {
   validateRelativePath(target, 'Shadcn registry style target');
 
   return `_style-${basename(target, '.css')}`;
+}
+
+function styleAssetItemName(asset: string): string {
+  validateRelativePath(asset, 'VJSC style asset');
+
+  return `_style-${asset.slice(0, -'.css'.length).replaceAll('/', '-')}`;
 }
 
 function validateOptions<Meta extends ModuleMeta>(options: VjscRegistryOptions<Meta>): void {

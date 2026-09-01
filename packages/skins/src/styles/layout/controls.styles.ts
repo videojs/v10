@@ -1,10 +1,14 @@
 import { styles } from 'vjsc/styles';
 
 export default styles({
-  file: 'controls.css',
+  file: 'video/controls.css',
   rules: {
+    root: {
+      className: 'video-controls',
+      utilities: [],
+    },
     surface: {
-      className: 'media-controls-surface',
+      className: 'video-controls-surface',
       utilities: [
         '@lg/media-root:bg-media-popover @lg/media-root:text-media-popover-foreground',
         '@lg/media-root:backdrop-blur-lg @lg/media-root:backdrop-saturate-150',

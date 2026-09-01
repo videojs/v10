@@ -17,7 +17,7 @@ export function DefaultVideoControls() {
   return (
     <$.Controls.Root>
       <$.Controls.Backdrop className={styles.backdrop} />
-      <$.Controls.Content className={['media-controls', controlsStyles.surface, styles.root]}>
+      <$.Controls.Content className={[controlsStyles.root, controlsStyles.surface, styles.content]}>
         <$.Tooltip.Provider>
           <$.Controls.Group className={[popupStyles.surface, styles.primary]}>
             <PlayButton />

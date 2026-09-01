@@ -1,10 +1,10 @@
 import { styles } from 'vjsc/styles';
 
 export default styles({
-  file: 'controls.css',
+  file: 'video/controls.css',
   rules: {
-    root: {
-      className: 'media-controls',
+    content: {
+      className: 'video-controls-content',
       utilities: [
         'group/controls contents p-1 text-white',
         '[--media-popover-side-offset:--spacing(3)]',
@@ -22,7 +22,7 @@ export default styles({
       ],
     },
     backdrop: {
-      className: 'media-controls-backdrop',
+      className: 'video-controls-backdrop',
       utilities: [
         'pointer-events-none absolute inset-0 z-10 rounded-[inherit]',
         'bg-linear-to-t from-black/50 via-black/30 via-25% to-transparent',
@@ -30,7 +30,7 @@ export default styles({
       ],
     },
     primary: {
-      className: 'media-controls-primary',
+      className: 'video-controls-primary',
       utilities: [
         'absolute inset-x-2 bottom-2 z-10 flex origin-bottom items-center rounded-media-control',
         'p-1',
@@ -47,7 +47,7 @@ export default styles({
       ],
     },
     secondary: {
-      className: 'media-controls-secondary',
+      className: 'video-controls-secondary',
       utilities: [
         'absolute top-2 right-2 z-10 flex origin-top items-center gap-px rounded-media-control',
         'p-1',
@@ -64,27 +64,27 @@ export default styles({
       ],
     },
     captionsButton: {
-      className: 'media-controls-captions-button',
+      className: 'video-controls-captions-button',
       utilities: '@max-lg/media-root:hidden',
     },
     volumeButton: {
-      className: 'media-controls-volume-button',
+      className: 'video-controls-volume-button',
       utilities: 'ms-px',
     },
     settingsButton: {
-      className: 'media-controls-settings-button',
+      className: 'video-controls-settings-button',
       utilities: '@lg/media-root:ms-px',
     },
     timeSliderGroup: {
-      className: 'media-time-slider-group',
+      className: 'video-time-slider-group',
       utilities: ['@container/media-time flex flex-1 items-center gap-2.5 px-2 @lg/media-root:px-3'],
     },
     currentValue: {
-      className: 'media-time-current-value',
+      className: 'video-time-current-value',
       utilities: 'tabular-nums @max-[16rem]/media-time:hidden',
     },
     remainingValue: {
-      className: 'media-time-remaining-value',
+      className: 'video-time-remaining-value',
       utilities: [
         'cursor-pointer tabular-nums rounded-sm outline-2 -outline-offset-2 outline-transparent',
         '@max-[16rem]/media-time:hidden',

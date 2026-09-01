@@ -6,7 +6,7 @@ import styles from '../../styles/layout/container.styles';
 
 export function Container({ children, className, ...props }: PropsWithChildren) {
   return (
-    <$.Container className={[styles.root, className]} {...props}>
+    <$.Container className={[styles.skin, styles.root, className]} {...props}>
       {children}
     </$.Container>
   );

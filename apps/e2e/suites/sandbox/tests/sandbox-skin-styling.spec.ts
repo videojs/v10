@@ -250,7 +250,7 @@ for (const { media, skin } of HTML_TAILWIND_ERROR_CASES) {
 
     const contract = await root.evaluate((element, mediaType) => {
       const popup = element.querySelector<HTMLElement>('[role="alertdialog"]');
-      const controls = element.querySelector<HTMLElement>('.media-controls');
+      const controls = element.querySelector<HTMLElement>('.video-controls, .audio-controls');
       if (!popup || !controls) throw new Error('Expected an error dialog and controls.');
 
       const rootRect = element.getBoundingClientRect();

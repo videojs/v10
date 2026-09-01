@@ -14,12 +14,7 @@ export interface MinimalAudioSkinProps extends Omit<PropsOf<typeof Container>, '
 
 export function MinimalAudioSkin({ children, className, ...props }: MinimalAudioSkinProps = {}) {
   return (
-    <Container
-      className={['media-skin', audioSkinStyles.root, className]}
-      data-theme="minimal"
-      data-preset="audio"
-      {...props}
-    >
+    <Container className={[audioSkinStyles.root, className]} data-theme="minimal" data-preset="audio" {...props}>
       <Slot>{children}</Slot>
       <AudioErrorDialog />
       <MinimalAudioControls />

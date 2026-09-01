@@ -19,7 +19,7 @@ export function MinimalLiveVideoSkin({ children, className, poster, ...props }: 
   const isPosterString = typeof poster === 'string';
 
   return (
-    <Container className={['media-skin', className]} data-theme="minimal" data-preset="live-video" {...props}>
+    <Container className={className} data-theme="minimal" data-preset="live-video" {...props}>
       <Slot>{children}</Slot>
       <Poster src={isPosterString ? poster : undefined}>{isPosterString ? undefined : poster}</Poster>
       <BufferingIndicator />

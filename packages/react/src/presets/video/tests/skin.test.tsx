@@ -34,8 +34,8 @@ describe('VideoSkin', () => {
       }),
     });
 
-    const controls = container.querySelector('.media-controls');
-    const controlsBackdrop = container.querySelector('.media-controls-backdrop');
+    const controls = container.querySelector('.video-controls');
+    const controlsBackdrop = container.querySelector('.video-controls-backdrop');
     const error = container.querySelector('[role="alertdialog"]');
     const errorBackdrop = container.querySelector('.media-dialog-backdrop');
 
@@ -45,7 +45,7 @@ describe('VideoSkin', () => {
     expect(errorBackdrop).not.toBeNull();
     expect(errorBackdrop?.parentElement).toBe(error?.parentElement);
     expect(error?.contains(errorBackdrop)).toBe(false);
-    expect(container.querySelector('.media-video-status-indicators')).not.toBeNull();
+    expect(container.querySelector('.video-status-indicators')).not.toBeNull();
   });
 
   it('draws its own poster image', () => {

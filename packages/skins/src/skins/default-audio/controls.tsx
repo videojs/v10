@@ -2,6 +2,7 @@ import * as $ from '@videojs/core/vjsc';
 
 import { SeekButton } from '../../components/buttons/seek-button';
 import { VolumePopover } from '../../components/controls/volume-popover';
+import audioControlsStyles from '../../styles/layout/audio-controls.styles';
 import popupStyles from '../../styles/popups/popup.styles';
 import { AudioPlayButton } from '../audio/play-button';
 import { AudioSettingsMenu } from '../audio/settings-menu';
@@ -11,7 +12,7 @@ import styles from './controls.styles';
 export function DefaultAudioControls() {
   return (
     <$.Controls.Root visibility="always">
-      <$.Controls.Content className={['media-controls', popupStyles.surface, styles.root]}>
+      <$.Controls.Content className={[audioControlsStyles.root, popupStyles.surface, styles.content]}>
         <$.Tooltip.Provider>
           <$.Controls.Group className={styles.start}>
             <AudioPlayButton />

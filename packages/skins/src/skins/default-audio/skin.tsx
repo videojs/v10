@@ -14,12 +14,7 @@ export interface DefaultAudioSkinProps extends Omit<PropsOf<typeof Container>, '
 
 export function DefaultAudioSkin({ children, className, ...props }: DefaultAudioSkinProps = {}) {
   return (
-    <Container
-      className={['media-skin', audioSkinStyles.root, className]}
-      data-theme="default"
-      data-preset="audio"
-      {...props}
-    >
+    <Container className={[audioSkinStyles.root, className]} data-theme="default" data-preset="audio" {...props}>
       <Slot>{children}</Slot>
       <AudioErrorDialog />
       <DefaultAudioControls />

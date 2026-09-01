@@ -14,12 +14,7 @@ export interface DefaultLiveAudioSkinProps extends Omit<PropsOf<typeof Container
 
 export function DefaultLiveAudioSkin({ children, className, ...props }: DefaultLiveAudioSkinProps = {}) {
   return (
-    <Container
-      className={['media-skin', audioSkinStyles.root, className]}
-      data-theme="default"
-      data-preset="live-audio"
-      {...props}
-    >
+    <Container className={[audioSkinStyles.root, className]} data-theme="default" data-preset="live-audio" {...props}>
       <Slot>{children}</Slot>
       <AudioErrorDialog />
       <DefaultLiveAudioControls />

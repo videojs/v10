@@ -104,7 +104,7 @@ for (const variant of CASES) {
     for (const style of STYLES) {
       const root = await openVariant(page, variant, style, 672);
 
-      contracts.push(await controlsVisibilityContract(root.locator('.media-controls').first()));
+      contracts.push(await controlsVisibilityContract(root.locator('.video-controls').first()));
     }
 
     expect(contracts[1]).toEqual(contracts[0]);
@@ -196,7 +196,7 @@ for (const variant of CASES) {
 
         await expect(volume).toBeVisible();
         contracts.push({
-          controls: await surfaceContract(root.locator('.media-controls').first()),
+          controls: await surfaceContract(root.locator('.video-controls').first()),
           popup: await surfaceContract(popupAncestor(volume)),
         });
       }
@@ -302,9 +302,7 @@ async function layoutContract(root: Locator) {
       };
     };
     const controls = [
-      ...element.querySelectorAll<HTMLElement>(
-        '.media-controls--primary, .media-controls-primary, [class~="origin-bottom"], media-controls-content.media-controls, .media-controls'
-      ),
+      ...element.querySelectorAll<HTMLElement>('.video-controls-primary, [class~="origin-bottom"], .video-controls'),
     ].find((candidate) => {
       const rect = candidate.getBoundingClientRect();
 
@@ -432,7 +430,7 @@ async function enterFullscreen(page: Page, root: Locator) {
   return root.evaluate((element) => {
     const style = getComputedStyle(element);
     const rect = element.getBoundingClientRect();
-    const controls = element.querySelector<HTMLElement>('.media-controls');
+    const controls = element.querySelector<HTMLElement>('.video-controls');
     const controlsRect = controls?.getBoundingClientRect();
 
     return {

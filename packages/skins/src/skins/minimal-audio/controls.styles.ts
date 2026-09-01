@@ -8,10 +8,10 @@ const timeButton = [
 ] as const;
 
 export default styles({
-  file: 'controls.css',
+  file: 'audio/controls.css',
   rules: {
-    root: {
-      className: 'media-controls-content',
+    content: {
+      className: 'audio-controls-content',
       utilities: [
         'after:hidden!',
         'relative z-20 flex items-center gap-2 rounded-[--spacing(3.5)] bg-media-controls p-1 text-media-controls-foreground',
@@ -21,34 +21,34 @@ export default styles({
       ],
     },
     start: {
-      className: 'media-controls-start',
+      className: 'audio-controls-start',
       utilities: 'flex items-center gap-px',
     },
     end: {
-      className: 'media-controls-end',
+      className: 'audio-controls-end',
       utilities: 'flex items-center gap-px',
     },
     timeSliderGroup: {
-      className: 'media-time-slider-group',
+      className: 'audio-time-slider-group',
       utilities: [
-        '@container/media-time-controls flex min-w-0 flex-1 flex-row-reverse items-center gap-3',
+        '@container/audio-time-controls flex min-w-0 flex-1 flex-row-reverse items-center gap-3',
         '@min-[42.001rem]/media-root:flex-row',
       ],
     },
     timeGroup: {
-      className: 'media-time-group',
+      className: 'audio-time-group',
       utilities: 'flex items-center gap-1',
     },
     currentValue: {
-      className: 'media-time-current-value',
+      className: 'audio-time-current-value',
       utilities: [...timeButton, 'hidden @min-[42.001rem]/media-root:inline'],
     },
     timeSeparator: {
-      className: 'media-time-separator',
+      className: 'audio-time-separator',
       utilities: ['hidden', '@min-[42.001rem]/media-root:inline @min-[42.001rem]/media-root:text-current/60'],
     },
     durationValue: {
-      className: 'media-time-duration-value',
+      className: 'audio-time-duration-value',
       utilities: 'tabular-nums @min-[42.001rem]/media-root:text-current/60',
     },
   },

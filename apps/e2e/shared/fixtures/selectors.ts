@@ -11,9 +11,9 @@
  * Each selector uses a CSS `,` (or) to match either renderer.
  */
 
-/** Toolbar: HTML renders `<media-controls-content>`, React renders `<div class="media-controls">`. */
+/** Toolbar: HTML renders `<media-controls>`, while source skins expose an audio or video controls hook. */
 function withinControls(selector: string): string {
-  return `media-controls ${selector}, .media-controls ${selector}`;
+  return `media-controls ${selector}, .video-controls ${selector}, .audio-controls ${selector}`;
 }
 
 function unchecked(selector: string): string {
@@ -41,7 +41,7 @@ export const SELECTORS = {
   container: '.media-skin',
 
   // Controls bar
-  controls: 'media-controls-content, .media-controls',
+  controls: 'media-controls-content, .video-controls, .audio-controls',
 
   // Buttons
   playButton: 'media-play-button, .media-play-button, .media-button--play, button[aria-keyshortcuts~="Space"]',
@@ -75,8 +75,9 @@ export const SELECTORS = {
   settingsSpeedItem: `${item}:has-text("Speed")`,
 
   // Sliders
-  // HTML: <media-time-slider>, React: horizontal .media-slider inside .media-time-controls
-  timeSlider: 'media-time-slider, .media-time-slider, .media-time-controls .media-slider',
+  // HTML: <media-time-slider>, React: the generic slider inside a preset-specific time layout.
+  timeSlider:
+    'media-time-slider, .media-time-slider, .video-time-slider-group .media-slider, .audio-time-slider-group .media-slider',
   volumeSlider: 'media-volume-slider, .media-volume-slider, .media-popover--volume .media-slider',
   sliderThumb: 'media-slider-thumb, .media-slider-thumb, .media-slider__thumb',
 
