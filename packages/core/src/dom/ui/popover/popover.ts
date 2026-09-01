@@ -181,6 +181,7 @@ export function createPopover(options: PopoverOptions): PopoverApi {
     const opening = layer.open(() => popupEl);
     if (!opening) return;
 
+    tryShowPopover(popupEl);
     options.group?.()?.open(groupMember);
 
     opening.then(() => {

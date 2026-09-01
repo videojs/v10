@@ -19,7 +19,7 @@ import { useOptionalControlsContext } from '../controls/context';
 import { usePositionedState } from '../hooks/use-positioned-state';
 import { MenuContextProvider, useOptionalMenuContext } from './context';
 
-export interface MenuRootProps extends MenuCore.Props {
+export interface MenuRootProps extends Omit<MenuCore.Props, 'boundary'> {
   /** Boundary used to constrain the root menu popup size. */
   boundary?: PositioningBoundary;
   /** Called when the menu open state changes (fires immediately, before animations). */

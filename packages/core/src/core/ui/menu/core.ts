@@ -1,7 +1,7 @@
 import { defaults } from '@videojs/utils/object';
 import type { NonNullableObject } from '@videojs/utils/types';
 
-import type { PopoverAlign, PopoverSide } from '../popover/core';
+import type { PopoverAlign, PopoverBoundary, PopoverSide } from '../popover/core';
 import type { TransitionFlags, TransitionState, TransitionStatus } from '../transition';
 import { getTransitionFlags } from '../transition';
 
@@ -12,6 +12,8 @@ export interface MenuProps {
   side?: PopoverSide | undefined;
   /** Alignment along the trigger's edge. Root menus only. */
   align?: PopoverAlign | undefined;
+  /** Boundary used to constrain the root menu popup. */
+  boundary?: PopoverBoundary | undefined;
   /** Controlled open state. */
   open?: boolean | undefined;
   /** Initial open state (uncontrolled). */
@@ -21,6 +23,8 @@ export interface MenuProps {
   /** Close the menu when clicking outside. Root menus only. */
   closeOnOutsideClick?: boolean | undefined;
 }
+
+type MenuCoreProps = Omit<MenuProps, 'boundary'>;
 
 export interface MenuTriggerProps {
   disabled?: boolean | undefined;
@@ -91,7 +95,7 @@ export interface MenuState extends TransitionFlags {
 
 /** Base menu logic: ARIA attributes and open/close state computation. */
 export class MenuCore {
-  static readonly defaultProps: NonNullableObject<MenuProps> = {
+  static readonly defaultProps: NonNullableObject<MenuCoreProps> = {
     side: 'bottom',
     align: 'start',
     open: false,
@@ -103,15 +107,15 @@ export class MenuCore {
   #props = { ...MenuCore.defaultProps };
   #input: MenuInput | null = null;
 
-  get props(): Readonly<NonNullableObject<MenuProps>> {
+  get props(): Readonly<NonNullableObject<MenuCoreProps>> {
     return this.#props;
   }
 
-  constructor(props?: MenuProps) {
+  constructor(props?: MenuCoreProps) {
     if (props) this.setProps(props);
   }
 
-  setProps(props: MenuProps): void {
+  setProps(props: MenuCoreProps): void {
     this.#props = defaults(props, MenuCore.defaultProps);
   }
 
@@ -155,7 +159,7 @@ export class MenuCore {
 }
 
 export namespace MenuCore {
-  export type Props = MenuProps;
+  export type Props = MenuCoreProps;
   export type State = MenuState;
   export type Input = MenuInput;
 }

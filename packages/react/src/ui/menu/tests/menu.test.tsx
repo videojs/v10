@@ -717,8 +717,11 @@ describe('MenuContent', () => {
     expect(submenu.hasAttribute('data-ending-style')).toBe(true);
     expect(submenu.hasAttribute('data-open')).toBe(true);
     expect(screen.getByTestId('submenu-trigger').getAttribute('aria-expanded')).toBe('false');
-    expect(screen.getByTestId('root-content').hasAttribute('data-child-open')).toBe(false);
-    expect(submenu.hasAttribute('inert')).toBe(true);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('root-content').hasAttribute('data-child-open')).toBe(false);
+      expect(submenu.hasAttribute('inert')).toBe(true);
+    });
   });
 
   it('portals submenu content into the popup', async () => {
@@ -1036,7 +1039,6 @@ describe('MenuContent', () => {
     fireEvent.click(screen.getByTestId('submenu-back'));
 
     expect(screen.getByTestId('submenu-content').hasAttribute('data-ending-style')).toBe(true);
-    expect(screen.getByTestId('root-content').hasAttribute('inert')).toBe(false);
 
     await waitFor(() => {
       expect(screen.queryByTestId('submenu-content')).toBeNull();

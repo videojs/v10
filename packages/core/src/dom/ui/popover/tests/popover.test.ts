@@ -38,6 +38,21 @@ describe('createPopover', () => {
       expect(popover.input.current).toEqual({ active: true, status: 'ending' });
     });
 
+    it('shows an already-mounted popup when a deferred open is committed', () => {
+      const { popover } = createTestPopover({ deferOpenChanges: true });
+      const popup = document.createElement('div');
+      const showPopover = vi.fn();
+
+      Object.defineProperty(popup, 'showPopover', { value: showPopover });
+      popover.setPopupElement(popup);
+
+      popover.open();
+      expect(showPopover).not.toHaveBeenCalled();
+
+      popover.syncOpen(true);
+      expect(showPopover).toHaveBeenCalledOnce();
+    });
+
     it('updates input state and calls onOpenChange when opening', () => {
       const { popover, onOpenChange } = createTestPopover();
 

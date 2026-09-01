@@ -19,7 +19,7 @@ import { useOptionalControlsContext } from '../controls/context';
 import { usePositionedState } from '../hooks/use-positioned-state';
 import { PopoverContextProvider } from './context';
 
-export interface PopoverRootProps extends CorePopoverProps {
+export interface PopoverRootProps extends Omit<CorePopoverProps, 'boundary'> {
   /** Boundary used to constrain the popup size. */
   boundary?: PositioningBoundary;
   /** Called when the popover open state changes (fires immediately, before animations). */
