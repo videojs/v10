@@ -18,7 +18,6 @@ const tailwindThemeVariables = {
   'color-media-primary': 'var(--media-primary)',
   'color-media-primary-foreground': 'var(--media-primary-foreground)',
   'color-media-ring': 'var(--media-ring)',
-  'font-media': '"Inter Variable", Inter, ui-sans-serif, system-ui, sans-serif',
   'text-media-xs': '0.7em',
   'text-media-sm': 'calc(var(--media-spacing) * 2.75)',
   'text-media': 'calc(var(--media-spacing) * 3.25)',
@@ -31,6 +30,9 @@ const tailwindThemeVariables = {
 } as const;
 
 const tailwindRegistryCss = {
+  '@utility font-media': {
+    'font-family': 'var(--media-font-family, "Inter Variable", Inter, ui-sans-serif, system-ui, sans-serif)',
+  },
   '@utility shadow-media-sm': {
     'box-shadow': 'var(--media-shadow-sm)',
   },

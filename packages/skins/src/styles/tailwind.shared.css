@@ -14,7 +14,6 @@
   --color-media-primary: var(--media-primary);
   --color-media-primary-foreground: var(--media-primary-foreground);
   --color-media-ring: var(--media-ring);
-  --font-media: var(--media-font-family, "Inter Variable", Inter, ui-sans-serif, system-ui, sans-serif);
   --text-media-xs: 0.7em;
   --text-media-sm: calc(var(--media-spacing) * 2.75);
   --text-media: calc(var(--media-spacing) * 3.25);
@@ -30,6 +29,10 @@
     inset 0 1px 0 0 rgb(255 255 255 / 0.25), inset 0 0 0 1px rgb(255 255 255 / 0.125);
   --shadow-media-surface-inset-forced: inset 0 1px 0 0 CanvasText, inset 0 0 0 1px CanvasText;
   --text-shadow-media: 0 1px 0 var(--media-shadow-current-color);
+}
+
+@utility font-media {
+  font-family: var(--media-font-family, "Inter Variable", Inter, ui-sans-serif, system-ui, sans-serif);
 }
 
 @custom-variant opaque {
