@@ -129,8 +129,8 @@ export function targetTypePlugin(options: ComponentTargetPluginOptions): Plugin 
             } else {
               const insertion = parent?.type === 'ExportNamedDeclaration' ? parent.start : node.start;
               const declaration = members.length
-                ? `export interface ${interfaceName} extends ${heritage} {\n${members.join('\n')}\n}\n`
-                : `export type ${interfaceName} = ${heritage};\n`;
+                ? `export interface ${interfaceName} extends ${heritage} {\n${members.join('\n')}\n}\n\n`
+                : `export type ${interfaceName} = ${heritage};\n\n`;
 
               transform.magicString!.appendLeft(insertion, declaration);
             }

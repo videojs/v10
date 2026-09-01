@@ -129,7 +129,9 @@ describe('targetTypePlugin', () => {
     expect(source).toContain('nested?: { value: string }');
     expect(source).not.toContain('type VjscNode');
     expect(source).toContain('{ custom, ...props }: PlayButtonProps = {}');
+    expect(source).toMatch(/}\n\nexport function PlayButton/);
     expect(source).toContain('export type PanelProps = Omit<ComponentProps<"div">, "children">');
+    expect(source).toMatch(/export type PanelProps = [^\n]+;\n\nexport function Panel/);
     expect(source).toContain('export type ButtonTooltipProps = Omit<TooltipPrimitive.RootProps, "children">');
     expect(source).not.toContain('TooltipPrimitive.Root.RootProps');
     expect(source).not.toContain("from 'vjsc/components'");
