@@ -10,10 +10,10 @@ import { useSyncProps } from '../../utils/use-sync-props';
 export type MuxDataProps = Partial<MuxDataComponentProps>;
 
 /**
- * Adds [Mux Data](https://www.mux.com/data) monitoring to the surrounding player's media.
+ * Adds the [Mux Data](https://www.mux.com/data) extension to the surrounding player's media.
  *
- * Renders nothing — place it inside the Player as a sibling of the media component (e.g. `<MuxVideo />`) and it
- * registers a `MuxData` media component with the active media.
+ * Renders nothing — place it inside the Player as a sibling of the media component (e.g. `<MuxVideo />`) and it follows
+ * the active media.
  *
  * Mux-hosted playback needs no `envKey`: the view reports the Mux playback ID as its `video_id`, which Mux attributes
  * to the owning environment. Set `envKey` to monitor sources Mux doesn't host.

@@ -61,7 +61,7 @@ describe('MediaComponentElement', () => {
     expect(el.componentDuringFieldInit).toBe(el.instance);
   });
 
-  it('registers the component with the media host from context', () => {
+  it('registers the extension component with the media host from context', () => {
     const host = new HTMLVideoElementHost();
     const provider = new TestMediaProvider();
     const el = new TestMediaComponentElement();

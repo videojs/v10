@@ -70,4 +70,14 @@ describe('generateComparisonReport', () => {
 
     assert.match(report, /@videojs\/store<\/b> — no changes/);
   });
+
+  it('groups extension entries in their own category', () => {
+    const base = [entry('@videojs/react/extensions/mux-data', 100, { category: 'extension' })];
+    const current = [entry('@videojs/react/extensions/mux-data', 101, { category: 'extension' })];
+
+    const report = generateComparisonReport(current, base);
+
+    assert.match(report, /<summary><b>Extensions \(1\)<\/b><\/summary>/);
+    assert.match(report, /`\/extensions\/mux-data`/);
+  });
 });

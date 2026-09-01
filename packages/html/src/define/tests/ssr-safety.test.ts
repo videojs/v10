@@ -30,4 +30,9 @@ describe('SSR-safe define imports', () => {
     await expect(import('../background/video')).resolves.toBeDefined();
     await expect(import('../media/hls-background-video')).resolves.toBeDefined();
   });
+
+  it('imports extensions without browser-only globals', async () => {
+    await expect(import('../extensions/google-cast')).resolves.toBeDefined();
+    await expect(import('../extensions/mux-data')).resolves.toBeDefined();
+  });
 });

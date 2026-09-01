@@ -5,9 +5,9 @@ import { MuxData } from '@videojs/media/dom/mux';
 import { HTMLVideoElementHost } from '@videojs/media/dom/video-host';
 import { afterEach, describe, expect, it } from 'vite-plus/test';
 
-import { MuxDataElement } from '../../extensions/mux-data';
 import { mediaContext } from '../../player/context';
 import { UIElement } from '../../ui/ui-element';
+import { MuxDataElement } from '../mux-data';
 
 class TestMediaProvider extends UIElement {
   readonly #provider = new ContextProvider(this, {

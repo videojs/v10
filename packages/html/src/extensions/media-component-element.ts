@@ -22,8 +22,8 @@ function resolveMediaHost(media: Media | null): MediaHost | null {
 }
 
 /**
- * Abstract base for elements that register a media component (e.g. Mux Data, Google Cast) with the media provided by
- * the surrounding player.
+ * Abstract base for extension elements that register a media component (e.g. Mux Data, Google Cast) with the media
+ * provided by the surrounding player.
  *
  * Place inside a player, as a sibling of the media element. The component is registered when a media host becomes
  * available, follows the media when it changes, is removed when this element disconnects, and is destroyed with this

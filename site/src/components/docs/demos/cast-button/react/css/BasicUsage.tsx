@@ -1,5 +1,5 @@
 import { CastButton, Container, createPlayer } from '@videojs/react';
-import { GoogleCast } from '@videojs/react/media/google-cast';
+import { GoogleCast } from '@videojs/react/extensions/google-cast';
 import { HlsJsVideo } from '@videojs/react/media/hlsjs-video';
 import { videoFeatures } from '@videojs/react/video';
 

@@ -149,10 +149,6 @@ function getCdnDefinitionEntries(dir: string, dirPath: string, subpath: string) 
 
 const cdnMediaEntries = getCdnDefinitionEntries(mediaDir, mediaDirPath, 'media');
 const cdnExtensionEntries = getCdnDefinitionEntries(extensionsDir, extensionsDirPath, 'extensions');
-const cdnLegacyExtensionEntries = cdnExtensionEntries.map(({ src, name }) => ({
-  src,
-  name: name.replace(/^extensions\//, 'media/'),
-}));
 
 const cdnLocaleEntries = localeTags.map((tag) => ({
   src: `src/cdn/locales/${tag}.ts`,
@@ -172,7 +168,6 @@ export const entries = [
   ...cdnPresets.map((name) => ({ src: `src/cdn/${name}.ts`, name })),
   ...cdnMediaEntries,
   ...cdnExtensionEntries,
-  ...cdnLegacyExtensionEntries,
 ];
 
 /**

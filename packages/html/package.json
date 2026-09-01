@@ -121,16 +121,6 @@
       "development": "./dist/dev/define/extensions/*.js",
       "default": "./dist/default/define/extensions/*.js"
     },
-    "./media/google-cast": {
-      "types": "./dist/dev/define/extensions/google-cast.d.ts",
-      "development": "./dist/dev/define/extensions/google-cast.js",
-      "default": "./dist/default/define/extensions/google-cast.js"
-    },
-    "./media/mux-data": {
-      "types": "./dist/dev/define/extensions/mux-data.d.ts",
-      "development": "./dist/dev/define/extensions/mux-data.js",
-      "default": "./dist/default/define/extensions/mux-data.js"
-    },
     "./media/mux-video": {
       "types": "./dist/dev/define/media/mux-video/index.d.ts",
       "development": "./dist/dev/define/media/mux-video/index.js",

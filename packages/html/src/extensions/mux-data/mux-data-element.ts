@@ -1,13 +1,12 @@
 import type { PropertyDeclarationMap } from '@videojs/element';
 import { MuxData, type MuxDataProps } from '@videojs/media/dom/mux';
 
-import { MediaComponentElement } from '../../media/media-component-element';
+import { MediaComponentElement } from '../media-component-element';
 
 /**
- * Adds [Mux Data](https://www.mux.com/data) monitoring to the surrounding player's media.
+ * Adds the [Mux Data](https://www.mux.com/data) extension to the surrounding player's media.
  *
- * Renders nothing — place it inside the player as a sibling of the media element and it registers a {@link MuxData}
- * media component with the active media host.
+ * Renders nothing — place it inside the player as a sibling of the media element and it follows the active media.
  *
  * Mux-hosted playback needs no `env-key`: the view reports the Mux playback ID as its `video_id`, which Mux attributes
  * to the owning environment. Set `env-key` to monitor sources Mux doesn't host.

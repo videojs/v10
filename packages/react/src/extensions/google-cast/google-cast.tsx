@@ -10,10 +10,10 @@ import { useSyncProps } from '../../utils/use-sync-props';
 export type GoogleCastProps = Partial<GoogleCastComponentProps>;
 
 /**
- * Adds Google Cast support to the surrounding player's media.
+ * Adds the Google Cast extension to the surrounding player's media.
  *
  * Renders nothing — place it inside the Player as a sibling of the media component (e.g. `<HlsJsVideo />`) and it
- * registers a `GoogleCast` media component with the active media.
+ * follows the active media.
  *
  * @example
  *   ```tsx

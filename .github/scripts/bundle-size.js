@@ -15,7 +15,7 @@
  * CSS files are minified with esbuild then brotli-compressed.
  *
  * Each entry includes a `category` field for grouped reporting in html/react:
- * preset, media, player, skin, ui, or feature.
+ * preset, media, extension, player, skin, ui, or feature.
  *
  * Usage: node .github/scripts/bundle-size.js [--root repo-root] [--json output.json]
  */
@@ -162,7 +162,7 @@ function buildPresetEntry(pkgShortName, config, distDir) {
  * @property {string} name
  * @property {number} size
  * @property {'root' | 'subpath'} type
- * @property {string} [category] - preset, media, player, skin, ui, feature (only for html/react)
+ * @property {string} [category] - preset, media, extension, player, skin, ui, feature (only for html/react)
  * @property {'js' | 'css'} format
  * @property {number} [totalSize] - Initial + lazy dynamic chunk size
  * @property {number} [lazySize] - Lazy dynamic chunk size
@@ -347,6 +347,8 @@ function categorize(name) {
   }
 
   if (subpath.startsWith('/media/')) return 'media';
+
+  if (subpath.startsWith('/extensions/')) return 'extension';
 
   if (subpath.startsWith('/ui/')) {
     // Skip compound component parts — only show main entries
