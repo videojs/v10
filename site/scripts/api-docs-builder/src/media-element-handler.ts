@@ -326,6 +326,8 @@ function publicImplementationFiles(entryPath: string, project: OxcProject, visit
   return [absolute, ...reexports];
 }
 
+const MEDIA_ELEMENT_FACTORIES = new Set(['CustomMediaElement', 'createMediaElement']);
+
 function findCustomMediaComposition(
   file: SourceFile,
   declaration: Class,
@@ -347,10 +349,28 @@ function findCustomMediaComposition(
     walkAst(expression, (node) => {
       if (found || node.type !== 'CallExpression' || node.callee.type !== 'Identifier') return;
 
-      if (node.callee.name !== 'CustomMediaElement' || node.arguments.length < 2) return;
+      if (!MEDIA_ELEMENT_FACTORIES.has(node.callee.name) || node.arguments.length < 1) return;
 
-      const target = node.arguments[0];
-      const host = node.arguments[1];
+      // `CustomMediaElement(tag, Host)` names the target first; `createMediaElement(Host, { tag })` from
+      // `@videojs/html` names the host first and defaults the target to `video`.
+      const fromFactory = node.callee.name === 'createMediaElement';
+      const host = fromFactory ? node.arguments[0] : node.arguments[1];
+      let target: Expression | undefined;
+
+      if (fromFactory) {
+        const options = node.arguments[1];
+        const tagProperty =
+          options?.type === 'ObjectExpression'
+            ? options.properties.find((entry) => entry.type === 'Property' && staticName(entry.key) === 'tag')
+            : undefined;
+
+        target =
+          tagProperty?.type === 'Property'
+            ? tagProperty.value
+            : ({ type: 'Literal', value: 'video', raw: "'video'", start: node.start, end: node.end } as Expression);
+      } else {
+        target = node.arguments[0]?.type === 'SpreadElement' ? undefined : node.arguments[0];
+      }
 
       if (
         !target ||
