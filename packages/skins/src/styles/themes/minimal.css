@@ -10,6 +10,9 @@
     --media-dialog-text-shadow: 0 1px 0 rgb(0 0 0 / 0.5);
     --media-tooltip-shadow:
       0 0 0 1px var(--media-border), 0 4px 6px -1px oklch(0 0 0 / 0.2), 0 2px 4px -2px oklch(0 0 0 / 0.2);
+    --media-dialog-duration: var(--media-duration);
+    --media-hidden-offset: 100%;
+    --media-indicator-hidden-offset: -100%;
     --media-menu-item-border-radius: calc(var(--media-spacing) * 1.5);
     --media-popover-boundary-offset: calc(var(--media-spacing) * 2);
     --media-popover-side-offset: calc(var(--media-spacing) * 5);

@@ -10,8 +10,8 @@ const compactSurface = [
 const compactHidden = [
   'media-max-compact:group-[:not([data-visible])]/controls:pointer-events-none',
   'media-max-compact:group-[:not([data-visible])]/controls:opacity-0',
-  'media-max-compact:motion-safe:group-[:not([data-visible])]/controls:scale-95',
-  'media-max-compact:pointer-fine:motion-safe:group-[:not([data-visible])]/controls:blur-sm',
+  'media-max-compact:group-[:not([data-visible])]/controls:scale-(--media-hidden-scale)',
+  'media-max-compact:pointer-fine:group-[:not([data-visible])]/controls:blur-(--media-hidden-blur)',
   'transition-[filter,opacity,scale,translate] duration-[calc(var(--media-controls-transition-duration)/2)] ease-out',
   'media-max-compact:group-[:not([data-visible])]/controls:duration-(--media-controls-transition-duration)',
 ] as const;
@@ -38,8 +38,8 @@ export default styles({
           'media-compact:surface-media media-compact:after:surface-media-inset',
           'media-wide:inset-x-3 media-wide:bottom-3',
           'media-compact:not-data-visible:pointer-events-none media-compact:not-data-visible:opacity-0',
-          'media-compact:motion-safe:not-data-visible:scale-95 media-compact:motion-safe:not-data-visible:translate-y-1',
-          'media-compact:pointer-fine:motion-safe:not-data-visible:blur-sm',
+          'media-compact:not-data-visible:scale-(--media-hidden-scale) media-compact:not-data-visible:translate-y-(--media-hidden-offset)',
+          'media-compact:pointer-fine:not-data-visible:blur-(--media-hidden-blur)',
           'media-compact:not-data-visible:duration-(--media-controls-transition-duration)',
         ],
         minimal: [
@@ -47,7 +47,7 @@ export default styles({
           'transition-[filter,opacity,translate]',
           'not-data-visible:pointer-events-none not-data-visible:opacity-0',
           'not-data-visible:duration-(--media-controls-transition-duration)',
-          'motion-safe:not-data-visible:translate-y-full pointer-fine:motion-safe:not-data-visible:blur-sm',
+          'not-data-visible:translate-y-(--media-hidden-offset) pointer-fine:not-data-visible:blur-(--media-hidden-blur)',
           'media-wide:inset-x-2 media-wide:bottom-2',
           'media-wide:[--media-popover-side-offset:--spacing(3)]',
           'media-wide:[--media-tooltip-side-offset:var(--media-popover-side-offset)]',
@@ -68,7 +68,7 @@ export default styles({
         ...compactSurface,
         'media-compact:contents',
         ...compactHidden,
-        'media-max-compact:motion-safe:group-[:not([data-visible])]/controls:translate-y-1',
+        'media-max-compact:group-[:not([data-visible])]/controls:translate-y-(--media-hidden-offset)',
       ],
     },
     secondary: {
@@ -78,7 +78,7 @@ export default styles({
         ...compactSurface,
         'media-compact:static media-compact:p-0',
         ...compactHidden,
-        'media-max-compact:motion-safe:group-[:not([data-visible])]/controls:-translate-y-1',
+        'media-max-compact:group-[:not([data-visible])]/controls:-translate-y-(--media-hidden-offset)',
       ],
     },
     spacer: {

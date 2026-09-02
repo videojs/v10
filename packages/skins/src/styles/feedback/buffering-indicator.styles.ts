@@ -8,7 +8,7 @@ export default styles({
       utilities: [
         'pointer-events-none absolute inset-0 hidden place-content-center text-media-controls-foreground',
         'before:absolute before:inset-0 before:bg-media-scrim/35 before:backdrop-blur-sm',
-        'not-data-visible:[--media-spinner-animation:none] data-visible:grid motion-reduce:[--media-spinner-animation:none]',
+        'not-data-visible:[--media-spinner-animation:none] data-visible:grid',
       ],
     },
     spinnerIcon: {

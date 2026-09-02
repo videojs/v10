@@ -40,6 +40,17 @@
     --media-duration: 150ms;
     --media-duration-slow: 200ms;
     --media-duration-slower: 250ms;
+    --media-dialog-duration: 350ms;
+    --media-dialog-delay: 100ms;
+    --media-hidden-scale: 0.95;
+    --media-hidden-blur: 8px;
+    --media-hidden-offset: calc(var(--media-spacing) * 1);
+    --media-indicator-hidden-scale: 0.9;
+    --media-indicator-hidden-offset: -25%;
+    --media-playback-hidden-scale: 0.85;
+    --media-icon-hidden-scale: 0;
+    --media-popup-hidden-scale: 0.95;
+    --media-popup-hidden-blur: 4px;
     --media-menu-item-border-radius: calc(var(--media-spacing) * 2);
     --media-menu-transition-duration: 250ms;
     --media-popover-boundary-offset: calc(var(--media-spacing) * 3);

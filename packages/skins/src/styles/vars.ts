@@ -284,6 +284,50 @@ export const vars = {
     kind: 'internal',
     description: 'Minimal theme tooltip shadow.',
   },
+  '--media-dialog-duration': {
+    kind: 'internal',
+    description: 'Dialog enter duration per theme, reduced with motion preferences.',
+  },
+  '--media-dialog-delay': {
+    kind: 'internal',
+    description: 'Dialog transition delay, removed with motion preferences.',
+  },
+  '--media-hidden-scale': {
+    kind: 'internal',
+    description: 'Scale applied to hidden controls; neutral under reduced motion.',
+  },
+  '--media-hidden-blur': {
+    kind: 'internal',
+    description: 'Blur applied to hidden controls and indicators on fine pointers; zero under reduced motion.',
+  },
+  '--media-hidden-offset': {
+    kind: 'internal',
+    description: 'Distance hidden controls slide per theme; zero under reduced motion.',
+  },
+  '--media-indicator-hidden-scale': {
+    kind: 'internal',
+    description: 'Scale applied to entering and leaving indicators; neutral under reduced motion.',
+  },
+  '--media-indicator-hidden-offset': {
+    kind: 'internal',
+    description: 'Distance leaving indicators slide per theme; zero under reduced motion.',
+  },
+  '--media-playback-hidden-scale': {
+    kind: 'internal',
+    description: 'Scale applied to the entering and leaving playback status; neutral under reduced motion.',
+  },
+  '--media-icon-hidden-scale': {
+    kind: 'internal',
+    description: 'Scale of an inactive swapped icon; neutral under reduced motion.',
+  },
+  '--media-popup-hidden-scale': {
+    kind: 'internal',
+    description: 'Scale applied to entering and leaving popups; neutral under reduced motion.',
+  },
+  '--media-popup-hidden-blur': {
+    kind: 'internal',
+    description: 'Blur applied to entering and leaving popups; zero under reduced motion.',
+  },
   '--media-caption-track-delay': {
     kind: 'runtime',
     description: 'Transition delay supplied by the Skin and consumed by native caption rendering.',

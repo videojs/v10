@@ -19,6 +19,21 @@
       --media-duration-slow: var(--media-duration-instant);
       --media-duration-slower: var(--media-duration-instant);
       --media-menu-transition-duration: 0ms;
+      --media-dialog-duration: var(--media-duration-instant);
+      --media-dialog-delay: 0ms;
+      --media-hidden-scale: 1;
+      --media-hidden-blur: 0px;
+      --media-hidden-offset: 0px;
+      --media-indicator-hidden-scale: 1;
+      --media-indicator-hidden-offset: 0px;
+      --media-playback-hidden-scale: 1;
+      --media-icon-hidden-scale: 1;
+      --media-popup-hidden-scale: 1;
+      --media-popup-hidden-blur: 0px;
+      --media-popup-translate-distance: 0px;
+      --media-spinner-animation: none;
+      --media-icon-airplay-fill-animation: none;
+      --media-icon-airplay-triangle-animation: none;
     }
   }
 

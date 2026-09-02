@@ -9,8 +9,6 @@ export default styles({
         'group/airplay',
         'not-data-[airplay-state=connected]:[--media-icon-airplay-fill-animation:none]',
         'not-data-[airplay-state=connected]:[--media-icon-airplay-triangle-animation:none]',
-        'motion-reduce:[--media-icon-airplay-fill-animation:none]',
-        'motion-reduce:[--media-icon-airplay-triangle-animation:none]',
       ],
     },
     enterIcon: {

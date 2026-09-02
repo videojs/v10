@@ -24,7 +24,6 @@ export default styles({
       utilities: [
         'col-start-1 row-start-1 size-media-icon drop-shadow-media-icon',
         'transition-[opacity,scale] duration-(--media-duration) ease-out',
-        'motion-reduce:transition-opacity',
       ],
     },
   },

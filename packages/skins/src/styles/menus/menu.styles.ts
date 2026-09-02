@@ -43,7 +43,6 @@ export default styles({
         'max-h-[min(var(--media-menu-available-height,--spacing(56)),--spacing(56))] overscroll-none',
         'h-(--media-menu-height) w-(--media-menu-width)',
         'transition-media-popup data-starting-style:transition-media-popup data-ending-style:transition-media-popup',
-        'motion-reduce:[transition-duration:0ms]!',
       ],
     },
     resizablePopup: {

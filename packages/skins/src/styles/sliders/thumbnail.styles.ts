@@ -29,7 +29,6 @@ export default styles({
         'absolute top-1/2 left-1/2 size-media-icon -translate-x-1/2 -translate-y-1/2 opacity-0',
         'transition-opacity duration-(--media-duration) ease-out',
         'group-not-has-[[role=img][data-loading]]/thumbnail:[--media-spinner-animation:none]',
-        'motion-reduce:[--media-spinner-animation:none]',
         'group-has-[[role=img][data-loading]]/thumbnail:opacity-100',
         'drop-shadow-media-icon',
       ],
