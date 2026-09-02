@@ -195,12 +195,13 @@ describe('Skins Vite workflow', () => {
     expect(code).not.toContain('media-menu-resizable-popup');
   }, 30_000);
 
-  it('uses the captions button itself as the menu trigger', async () => {
+  it('uses the captions button itself as the menu trigger and labels its tooltip from it', async () => {
     const react = await server.transformRequest(reactCaptionsMenuUrl);
     const html = await server.transformRequest(htmlCaptionsMenuUrl);
 
     expect(react?.code).toMatch(/_jsxDEV\(MenuPrimitive\.Trigger, \{\s+render: .*_jsxDEV\(CaptionsButton/);
-    expect(react?.code).not.toContain('ButtonTooltip');
+    expect(react?.code).toMatch(/_jsxDEV\(ButtonTooltip, \{[\s\S]*?_jsxDEV\(MenuPrimitive\.Trigger/);
+    expect(react?.code).not.toMatch(/_jsxDEV\(ButtonTooltip, \{\s+label:/);
     expect(html?.code).toMatch(/_jsxDEV\(CaptionsButton, \{\s+commandfor:[\s\S]*?className/);
     expect(html?.code).not.toContain('data-vjsc-render-captions-button');
   }, 30_000);

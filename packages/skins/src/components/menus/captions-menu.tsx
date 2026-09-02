@@ -5,6 +5,7 @@ import { type Props, type PropsOf, Template } from 'vjsc/components';
 import type { SkinComponentMeta } from '../../meta';
 import styles from '../../styles/menus/menu.styles';
 import popupStyles from '../../styles/popups/popup.styles';
+import { ButtonTooltip } from '../buttons/button-tooltip';
 import { CaptionsButton } from '../buttons/captions-button';
 import { RadioItem } from './radio-item';
 
@@ -16,7 +17,9 @@ export function CaptionsMenu({ className, ...props }: Props<CaptionsMenuProps> =
   return (
     <$.Menu.Root side="top" align="center" boundary="viewport" {...props}>
       <$.CaptionsRadioGroup.Root>
-        <$.Menu.Trigger $render={CaptionsButton} className={className} />
+        <ButtonTooltip side="top">
+          <$.Menu.Trigger $render={CaptionsButton} className={className} />
+        </ButtonTooltip>
         <$.Menu.Popup className={[popupStyles.popup, popupStyles.surface, styles.popup]}>
           <$.Menu.Content className={styles.content}>
             <$.CaptionsRadioGroup.Options className={styles.radioGroup}>
