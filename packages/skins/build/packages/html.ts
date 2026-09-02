@@ -195,7 +195,7 @@ function iconRegistrations(
   const families = new Map<string, Map<string, string>>();
 
   for (const module of modules) {
-    const imports = iconImports(module.source);
+    const imports = iconImports(module);
 
     for (const match of module.source.matchAll(/registerIcons\(['"]([^'"]+)['"],\s*\{([\s\S]*?)\}\);/g)) {
       const icons = families.get(match[1]!) ?? new Map<string, string>();

@@ -12,14 +12,14 @@ export const htmlRenderAliases: ReadonlyMap<string, string> = new Map([
 ]);
 
 /** Icon bindings a compiled HTML module imports from `@videojs/html/icons`, keyed by local name. */
-export function iconImports(source: string): ReadonlyMap<string, string> {
+export function iconImports(module: GraphModule): ReadonlyMap<string, string> {
   const imports = new Map<string, string>();
 
-  for (const match of source.matchAll(/import\s*\{([^}]*)\}\s*from\s*['"]@videojs\/html\/icons(?:\/minimal)?['"];?/g)) {
-    for (const specifier of match[1]!.split(',')) {
-      const [imported, local = imported] = specifier.trim().split(/\s+as\s+/);
+  for (const reference of module.imports) {
+    if (!/^@videojs\/html\/icons(?:\/minimal)?$/.test(reference.specifier)) continue;
 
-      if (imported && local && imported !== 'registerIcons') imports.set(local, imported);
+    for (const { imported, local } of reference.bindings) {
+      if (imported !== 'registerIcons') imports.set(local, imported);
     }
   }
 
@@ -31,7 +31,7 @@ export function htmlIconModule(modules: readonly GraphModule[]): string {
   const bindings = new Set<string>(['registerIcons']);
 
   for (const module of modules) {
-    for (const binding of iconImports(module.source).keys()) bindings.add(binding);
+    for (const binding of iconImports(module).keys()) bindings.add(binding);
   }
 
   return [...bindings]
