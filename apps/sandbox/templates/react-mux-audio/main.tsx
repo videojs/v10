@@ -10,7 +10,7 @@ import { MuxData } from '@videojs/react/extensions/mux-data';
 import { createRoot } from 'react-dom/client';
 
 function App() {
-  const { skin, styling, source, mediaProps } = useSandbox();
+  const { source, mediaProps } = useSandbox();
   const live = isLiveSource(source);
   const Player = live ? LiveAudioPlayer : AudioPlayer;
 
@@ -21,7 +21,7 @@ function App() {
   return (
     <SandboxI18nProvider>
       <Player>
-        <AudioSkinComponent skin={skin} styling={styling} live={live}>
+        <AudioSkinComponent live={live}>
           <MuxAudio {...(muxSource ? { source: muxSource } : { src: url ?? '' })} {...mediaProps} crossOrigin="" />
           {/* Mux Data and Cast are opt-in media components; no env key is needed for Mux-hosted sources. */}
           <MuxData playerSoftwareName="mux-audio" />

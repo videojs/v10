@@ -8,12 +8,12 @@ import { Audio } from '@videojs/react/audio';
 import { createRoot } from 'react-dom/client';
 
 function App() {
-  const { skin, styling, source, mediaProps } = useSandbox();
+  const { source, mediaProps } = useSandbox();
 
   return (
     <SandboxI18nProvider>
       <AudioPlayer>
-        <AudioSkinComponent skin={skin} styling={styling}>
+        <AudioSkinComponent>
           <Audio src={SOURCES[source].url} {...mediaProps} crossOrigin="" />
         </AudioSkinComponent>
       </AudioPlayer>

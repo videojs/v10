@@ -1,4 +1,4 @@
-import { PLATFORMS, STYLINGS } from '@app/constants';
+import { PLATFORMS, SKIN_SOURCES, STYLINGS } from '@app/constants';
 import { hasTailwindSkin, isMediaId, MEDIA, type MediaId, mediaSources } from '@app/media';
 import { DEFAULT_SANDBOX_LOCALE, SANDBOX_LOCALE_TAGS, type SandboxLocaleTag } from '@app/shared/i18n/locale-meta';
 import { defaultPlayerWidth, PLAYER_WIDTH } from '@app/shared/player-frame';
@@ -11,8 +11,9 @@ import {
   TEXT_DIRECTIONS,
   type TextDirection,
 } from '@app/shared/sandbox-listener';
+import { defaultSkinSource, skinSourceAvailable, skinStylings, tailwindSkinAvailable } from '@app/shared/skin-sources';
 import { DEFAULT_SOURCE, SOURCES, type SourceId } from '@app/shared/sources';
-import type { Platform, Styling } from '@app/types';
+import type { Platform, SkinSource, Styling } from '@app/types';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { Navbar } from './navbar';
@@ -31,9 +32,20 @@ function readMedia(params: URLSearchParams): MediaId {
   return isMediaId(value) ? value : 'video';
 }
 
-function readOption<T extends string>(values: readonly T[], value: string | null, fallback: T): T {
+function readOption<T extends string, Fallback>(
+  values: readonly T[],
+  value: string | null,
+  fallback: Fallback
+): T | Fallback {
   // SAFETY: the lookup narrows the query value to the option it matched.
   return value !== null && (values as readonly string[]).includes(value) ? (value as T) : fallback;
+}
+
+/** An explicit skin source the platform can load. Absent means the default for the styling. */
+function readSkins(value: string | null, platform: Platform): SkinSource | undefined {
+  const source = readOption(SKIN_SOURCES, value, undefined);
+
+  return source !== undefined && skinSourceAvailable(source, platform) ? source : undefined;
 }
 
 /** An explicit width, clamped to the control's range. Absent means the media's own default. */
@@ -46,10 +58,12 @@ function readWidth(value: string | null): number | undefined {
 function readParams() {
   const params = new URLSearchParams(location.search);
   const media = readMedia(params);
+  const platform = readOption(PLATFORMS, params.get('platform'), 'html');
 
   return {
-    platform: (params.get('platform') ?? 'html') as Platform,
-    styling: (params.get('styling') ?? 'css') as Styling,
+    platform,
+    styling: readOption(STYLINGS, params.get('styling'), 'css'),
+    skins: readSkins(params.get('skins'), platform),
     media,
     skin: (params.get('skin') ?? 'default') as 'default' | 'minimal',
     // An explicit `?source=` wins over where the media lands on entry, so a shared link reaches the source it names.
@@ -71,6 +85,7 @@ export function App() {
   const [platform, setPlatform] = useState<Platform>(initial.platform);
   const [styling, setStyling] = useState(initial.styling);
   const [media, setMedia] = useState<MediaId>(initial.media);
+  const [skins, setSkins] = useState(initial.skins);
   const [skin, setSkin] = useState(initial.skin);
   const [source, setSource] = useState(initial.source);
   const [autoplay, setAutoplay] = useState(initial.autoplay);
@@ -86,7 +101,10 @@ export function App() {
   const pagePath = getPagePath(platform, media);
   const descriptor = MEDIA[media];
   const availableSources = mediaSources(media, platform);
-  const tailwindAvailable = hasTailwindSkin(media, platform);
+  const tailwindAvailable = hasTailwindSkin(media, platform) && tailwindSkinAvailable(platform);
+  // Until a source is chosen, skins come from wherever the styling is published by default.
+  const skinSource = skins ?? defaultSkinSource(platform, styling);
+  const skinStylingsAvailable = skinStylings(platform, skinSource);
   // Until the control is touched, the preview opens at the width its skin would have taken on its own.
   const playerWidth = width ?? defaultPlayerWidth(descriptor.player);
   const resizable = descriptor.player !== 'background';
@@ -126,10 +144,13 @@ export function App() {
 
     if (width !== undefined) params.set('width', String(width));
 
+    if (skins !== undefined) params.set('skins', skins);
+
     history.replaceState(null, '', `/?${params}`);
   }, [
     platform,
     styling,
+    skins,
     media,
     skin,
     source,
@@ -212,7 +233,33 @@ export function App() {
     if (!tailwindAvailable && styling === 'tailwind') setStyling('css');
   }, [tailwindAvailable, styling]);
 
+  // After a platform switch, a source that cannot load here or that lacks the styling falls back to what it can do.
+  useEffect(() => {
+    if (skins !== undefined && !skinSourceAvailable(skins, platform)) setSkins(undefined);
+    else if (!skinStylingsAvailable.includes(styling)) setStyling(skinStylingsAvailable[0] ?? 'css');
+  }, [skins, platform, skinStylingsAvailable, styling]);
+
   const handleSourceChange = useCallback((value: string) => setSource(value as SourceId), []);
+
+  // Picking a styling an explicit source does not publish hands the choice back to that styling's default source.
+  const handleStylingChange = useCallback(
+    (value: Styling) => {
+      setStyling(value);
+
+      if (skins !== undefined && !skinStylings(platform, skins).includes(value)) setSkins(undefined);
+    },
+    [platform, skins]
+  );
+
+  // Picking a source that lacks the current styling switches to one it publishes.
+  const handleSkinsChange = useCallback(
+    (value: SkinSource) => {
+      setSkins(value);
+
+      if (!skinStylings(platform, value).includes(styling)) setStyling('css');
+    },
+    [platform, styling]
+  );
 
   return (
     <div className="flex h-screen flex-col overflow-hidden">
@@ -220,11 +267,13 @@ export function App() {
         platform={platform}
         onPlatformChange={setPlatform}
         styling={styling}
-        onStylingChange={setStyling}
+        onStylingChange={handleStylingChange}
         media={media}
         onMediaChange={setMedia}
         skin={skin}
         onSkinChange={setSkin}
+        skins={skinSource}
+        onSkinsChange={handleSkinsChange}
         source={source}
         onSourceChange={handleSourceChange}
         width={playerWidth}
@@ -252,12 +301,13 @@ export function App() {
         sources={SOURCES}
       />
       <Preview
-        key={`${pagePath}:${media}:${styling}`}
+        key={`${pagePath}:${media}:${styling}:${skinSource}`}
         ref={iframeRef}
         pagePath={pagePath}
         media={media}
         skin={skin}
         styling={styling}
+        skins={skinSource}
         source={source}
         autoplay={autoplay}
         muted={muted}

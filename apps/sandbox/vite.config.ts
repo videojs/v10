@@ -192,6 +192,9 @@ export default defineConfig({
   },
   root: 'src',
   appType: 'mpa',
+  define: {
+    __WORKSPACE_SKINS__: JSON.stringify(hasWorkspaceSkins),
+  },
   test: {
     // The shell's tables and helpers, not the templates: those run under Playwright from `apps/e2e`.
     root: __dirname,
@@ -202,6 +205,8 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': resolve(__dirname, 'app/_generated'),
+      // The registry's React CSS catalog, installed beside the Tailwind one under its own alias so the two never share files.
+      '@css': resolve(__dirname, 'app/_generated/css'),
       '@app': resolve(__dirname, 'app'),
       '@videojs/html/cdn/i18n': htmlCdnI18nRegistry,
       ...(existsSync(cdnSandboxMainTemplate) ? { [cdnSandboxMainSrc]: cdnSandboxMainTemplate } : {}),

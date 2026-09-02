@@ -4,17 +4,21 @@ import { DATA_ATTRS, SELECTORS } from '../../../shared/fixtures/selectors';
 
 const SANDBOX_BASE = process.env.SANDBOX_URL ?? 'http://localhost:5299';
 
+// Every skin source the sandbox can load without the workspace: the framework packages (CSS), the registry's html
+// install (CSS), and the registry's two React catalogs.
 const CASES = [
-  { platform: 'html', skin: 'default', styling: 'css' },
-  { platform: 'html', skin: 'minimal', styling: 'css' },
-  { platform: 'html', skin: 'default', styling: 'tailwind' },
-  { platform: 'html', skin: 'minimal', styling: 'tailwind' },
-  { platform: 'react', skin: 'default', styling: 'css' },
-  { platform: 'react', skin: 'minimal', styling: 'css' },
-  { platform: 'react', skin: 'default', styling: 'tailwind' },
-  { platform: 'react', skin: 'minimal', styling: 'tailwind' },
+  { platform: 'html', skin: 'default', styling: 'css', skins: 'package' },
+  { platform: 'html', skin: 'minimal', styling: 'css', skins: 'package' },
+  { platform: 'html', skin: 'default', styling: 'css', skins: 'registry' },
+  { platform: 'html', skin: 'minimal', styling: 'css', skins: 'registry' },
+  { platform: 'react', skin: 'default', styling: 'css', skins: 'package' },
+  { platform: 'react', skin: 'minimal', styling: 'css', skins: 'package' },
+  { platform: 'react', skin: 'default', styling: 'css', skins: 'registry' },
+  { platform: 'react', skin: 'minimal', styling: 'css', skins: 'registry' },
+  { platform: 'react', skin: 'default', styling: 'tailwind', skins: 'registry' },
+  { platform: 'react', skin: 'minimal', styling: 'tailwind', skins: 'registry' },
 ] as const;
-const HTML_TAILWIND_ERROR_CASES = [
+const HTML_REGISTRY_ERROR_CASES = [
   { media: 'video', skin: 'default' },
   { media: 'video', skin: 'minimal' },
   { media: 'audio', skin: 'default' },
@@ -24,10 +28,11 @@ const HTML_TAILWIND_ERROR_CASES = [
 test.use({ trace: 'off' });
 test.describe.configure({ mode: 'serial' });
 
-for (const { platform, skin, styling } of CASES) {
-  test(`${platform} ${skin} ${styling} uses public skin properties`, async ({ page }) => {
+for (const { platform, skin, styling, skins } of CASES) {
+  test(`${platform} ${skin} ${styling} from ${skins} uses public skin properties`, async ({ page }) => {
     const query = new URLSearchParams({
       styling,
+      skins,
       skin,
       source: 'mp4-1',
       autoplay: '0',
@@ -42,8 +47,9 @@ for (const { platform, skin, styling } of CASES) {
 
     await expect(root).toBeVisible({ timeout: 15_000 });
 
+    // The package's element hosts the skin's custom properties; every other install puts them on the container.
     const host =
-      platform === 'html' && styling === 'css' ? page.locator('video-skin, video-minimal-skin').first() : root;
+      platform === 'html' && skins === 'package' ? page.locator('video-skin, video-minimal-skin').first() : root;
 
     await host.evaluate((element) => {
       element.style.setProperty('--media-accent-color', '#123456');
@@ -84,11 +90,12 @@ for (const { platform, skin, styling } of CASES) {
     });
   });
 
-  test(`${platform} ${skin} ${styling} scales thumbnails in fullscreen`, async ({ page }) => {
+  test(`${platform} ${skin} ${styling} from ${skins} scales thumbnails in fullscreen`, async ({ page }) => {
     await page.setViewportSize({ width: 1920, height: 1080 });
 
     const query = new URLSearchParams({
       styling,
+      skins,
       skin,
       source: 'hls-1',
       autoplay: '0',
@@ -160,10 +167,11 @@ for (const { platform, skin, styling } of CASES) {
 }
 
 for (const media of ['video', 'audio'] as const) {
-  for (const { platform, skin, styling } of CASES) {
-    test(`${platform} ${skin} ${styling} selects the live ${media} skin`, async ({ page }) => {
+  for (const { platform, skin, styling, skins } of CASES) {
+    test(`${platform} ${skin} ${styling} from ${skins} selects the live ${media} skin`, async ({ page }) => {
       const query = new URLSearchParams({
         styling,
+        skins,
         skin,
         source: 'hls-live',
         autoplay: '0',
@@ -208,12 +216,13 @@ for (const media of ['video', 'audio'] as const) {
   }
 }
 
-for (const { media, skin } of HTML_TAILWIND_ERROR_CASES) {
-  test(`html ${skin} tailwind ${media} contains the error dialog without changing the closed layout`, async ({
+for (const { media, skin } of HTML_REGISTRY_ERROR_CASES) {
+  test(`html ${skin} from registry ${media} contains the error dialog without changing the closed layout`, async ({
     page,
   }) => {
     const query = new URLSearchParams({
-      styling: 'tailwind',
+      styling: 'css',
+      skins: 'registry',
       skin,
       source: 'mp4-1',
       autoplay: '0',
@@ -266,10 +275,11 @@ for (const { media, skin } of HTML_TAILWIND_ERROR_CASES) {
   });
 }
 
-for (const { platform, skin, styling } of CASES) {
-  test(`${platform} ${skin} ${styling} opens the volume popover`, async ({ page }) => {
+for (const { platform, skin, styling, skins } of CASES) {
+  test(`${platform} ${skin} ${styling} from ${skins} opens the volume popover`, async ({ page }) => {
     const query = new URLSearchParams({
       styling,
+      skins,
       skin,
       source: 'mp4-1',
       autoplay: '0',
@@ -309,10 +319,11 @@ for (const { platform, skin, styling } of CASES) {
   });
 }
 
-for (const styling of ['css', 'tailwind'] as const) {
-  test(`html minimal ${styling} keeps the thumbnail inside the player`, async ({ page }) => {
+for (const skins of ['package', 'registry'] as const) {
+  test(`html minimal from ${skins} keeps the thumbnail inside the player`, async ({ page }) => {
     const query = new URLSearchParams({
-      styling,
+      styling: 'css',
+      skins,
       skin: 'minimal',
       source: 'hls-1',
       autoplay: '0',

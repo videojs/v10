@@ -2,7 +2,7 @@ import '@app/styles.css';
 import { isMediaId, MEDIA, type MediaId } from '@app/media';
 import { renderChapters } from '@app/shared/html/chapters';
 import { createLatestLoader, renderMediaAttrs } from '@app/shared/html/sandbox';
-import { CSS_SKIN_TAGS, LIVE_AUDIO_CSS_SKIN_TAGS, LIVE_VIDEO_CSS_SKIN_TAGS } from '@app/shared/html/skin-tags';
+import { packageSkinTag, skinPreset } from '@app/shared/html/skin-tags';
 import { renderStoryboard } from '@app/shared/html/storyboard';
 import { loadAudioStylesheets, loadVideoStylesheets } from '@app/shared/html/stylesheets';
 import { ensureCdnSandboxLocale } from '@app/shared/i18n/cdn-sandbox-locales';
@@ -280,14 +280,9 @@ function getPlayerTag(live: boolean): string {
 }
 
 function getSkinTag(skin: Skin, live: boolean): string {
-  switch (descriptor.player) {
-    case 'background':
-      return 'background-video-skin';
-    case 'audio':
-      return live ? LIVE_AUDIO_CSS_SKIN_TAGS[skin] : CSS_SKIN_TAGS[skin].audio;
-    case 'video':
-      return live ? LIVE_VIDEO_CSS_SKIN_TAGS[skin] : CSS_SKIN_TAGS[skin].video;
-  }
+  if (descriptor.player === 'background') return 'background-video-skin';
+
+  return packageSkinTag(skinPreset(descriptor.player, live), skin);
 }
 
 function loadStylesheets(skin: Skin, live: boolean) {

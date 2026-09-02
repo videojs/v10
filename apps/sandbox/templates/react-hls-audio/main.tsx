@@ -8,14 +8,14 @@ import { HlsAudio } from '@videojs/react/media/hls-audio';
 import { createRoot } from 'react-dom/client';
 
 function App() {
-  const { skin, styling, source, mediaProps } = useSandbox();
+  const { source, mediaProps } = useSandbox();
   const live = isLiveSource(source);
   const Player = live ? LiveAudioPlayer : AudioPlayer;
 
   return (
     <SandboxI18nProvider>
       <Player>
-        <AudioSkinComponent skin={skin} styling={styling} live={live}>
+        <AudioSkinComponent live={live}>
           <HlsAudio src={SOURCES[source].url ?? ''} {...mediaProps} crossOrigin="" />
         </AudioSkinComponent>
       </Player>

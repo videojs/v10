@@ -18,7 +18,7 @@ import { createRoot } from 'react-dom/client';
 // integrations are hls.js and dash.js.
 
 function App() {
-  const { skin, styling, source, mediaProps } = useSandbox();
+  const { source, mediaProps } = useSandbox();
   const placeholder = getPlaceholderSrc(source);
   const live = isLiveSource(source);
   const Player = live ? LiveVideoPlayer : VideoPlayer;
@@ -45,8 +45,6 @@ function App() {
               />
             ) : undefined
           }
-          skin={skin}
-          styling={styling}
           live={live}
         >
           {/* The storyboard track is derived automatically from the Mux src. */}

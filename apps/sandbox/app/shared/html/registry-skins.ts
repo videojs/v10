@@ -1,70 +1,62 @@
 import type { Skin } from '@app/types';
 import { ContainerElement } from '@videojs/html';
 
-import { LIVE_AUDIO_TAILWIND_SKIN_TAGS, LIVE_VIDEO_TAILWIND_SKIN_TAGS, TAILWIND_SKIN_TAGS } from './skin-tags';
+import { registrySkinTag, type SkinPreset } from './skin-tags';
 
-interface TailwindSkinModule {
+interface RegistrySkinModule {
   readonly default: string;
 }
 
-type SkinLoader = () => Promise<readonly [TailwindSkinModule, unknown]>;
+type SkinLoader = () => Promise<readonly [RegistrySkinModule, unknown]>;
 
-const videoSkins = {
-  default: () =>
+/** The registry's html skins: a template installed as a file beside the module that registers its elements and CSS. */
+const registrySkins = {
+  'video/default': () =>
     Promise.all([
       import('@app/_generated/html/components/videojs/skins/video/skin.html?raw'),
       import('@app/_generated/html/components/videojs/skins/video/skin'),
     ]),
-  minimal: () =>
+  'video/minimal': () =>
     Promise.all([
       import('@app/_generated/html/components/videojs/skins/video/minimal/skin.html?raw'),
       import('@app/_generated/html/components/videojs/skins/video/minimal/skin'),
     ]),
-} satisfies Record<Skin, SkinLoader>;
-
-const liveVideoSkins = {
-  default: () =>
+  'live-video/default': () =>
     Promise.all([
       import('@app/_generated/html/components/videojs/skins/live-video/skin.html?raw'),
       import('@app/_generated/html/components/videojs/skins/live-video/skin'),
     ]),
-  minimal: () =>
+  'live-video/minimal': () =>
     Promise.all([
       import('@app/_generated/html/components/videojs/skins/live-video/minimal/skin.html?raw'),
       import('@app/_generated/html/components/videojs/skins/live-video/minimal/skin'),
     ]),
-} satisfies Record<Skin, SkinLoader>;
-
-const audioSkins = {
-  default: () =>
+  'audio/default': () =>
     Promise.all([
       import('@app/_generated/html/components/videojs/skins/audio/skin.html?raw'),
       import('@app/_generated/html/components/videojs/skins/audio/skin'),
     ]),
-  minimal: () =>
+  'audio/minimal': () =>
     Promise.all([
       import('@app/_generated/html/components/videojs/skins/audio/minimal/skin.html?raw'),
       import('@app/_generated/html/components/videojs/skins/audio/minimal/skin'),
     ]),
-} satisfies Record<Skin, SkinLoader>;
-
-const liveAudioSkins = {
-  default: () =>
+  'live-audio/default': () =>
     Promise.all([
       import('@app/_generated/html/components/videojs/skins/live-audio/skin.html?raw'),
       import('@app/_generated/html/components/videojs/skins/live-audio/skin'),
     ]),
-  minimal: () =>
+  'live-audio/minimal': () =>
     Promise.all([
       import('@app/_generated/html/components/videojs/skins/live-audio/minimal/skin.html?raw'),
       import('@app/_generated/html/components/videojs/skins/live-audio/minimal/skin'),
     ]),
-} satisfies Record<Skin, SkinLoader>;
+} satisfies Record<`${SkinPreset}/${Skin}`, SkinLoader>;
 
-function defineTailwindSkin(tagName: string, source: string): string {
+function defineRegistrySkin(tagName: string, source: string): string {
   if (customElements.get(tagName)) return tagName;
 
-  class SandboxTailwindSkinElement extends ContainerElement {
+  class SandboxRegistrySkinElement extends ContainerElement {
     #rendered = false;
 
     override connectedCallback(): void {
@@ -84,11 +76,11 @@ function defineTailwindSkin(tagName: string, source: string): string {
       const container = template.content.firstElementChild;
 
       if (!(container instanceof HTMLElement) || container.localName !== 'media-container') {
-        throw new Error(`Source-owned skin ${tagName} has no media-container root.`);
+        throw new Error(`Registry skin ${tagName} has no media-container root.`);
       }
 
       const marker = findMediaMarker(container);
-      if (!marker) throw new Error(`Source-owned skin ${tagName} has no media marker.`);
+      if (!marker) throw new Error(`Registry skin ${tagName} has no media marker.`);
 
       const poster = this.querySelector(':scope > [slot="poster"]');
 
@@ -118,7 +110,7 @@ function defineTailwindSkin(tagName: string, source: string): string {
     }
   }
 
-  customElements.define(tagName, SandboxTailwindSkinElement);
+  customElements.define(tagName, SandboxRegistrySkinElement);
   return tagName;
 }
 
@@ -135,26 +127,12 @@ function findMediaMarker(root: HTMLElement): Comment | null {
   return null;
 }
 
-async function loadTailwindSkin(loader: SkinLoader, tagName: string): Promise<string> {
+/** Define and return the element that renders a registry-installed html skin around the page's media. */
+export async function loadRegistrySkinTag(preset: SkinPreset, skin: Skin): Promise<string> {
+  const tagName = registrySkinTag(preset, skin);
   if (customElements.get(tagName)) return tagName;
 
-  const [module] = await loader();
+  const [module] = await registrySkins[`${preset}/${skin}`]();
 
-  return defineTailwindSkin(tagName, module.default);
-}
-
-export function loadSandboxVideoTailwindSkin(skin: Skin): Promise<string> {
-  return loadTailwindSkin(videoSkins[skin], TAILWIND_SKIN_TAGS[skin].video);
-}
-
-export function loadSandboxAudioTailwindSkin(skin: Skin): Promise<string> {
-  return loadTailwindSkin(audioSkins[skin], TAILWIND_SKIN_TAGS[skin].audio);
-}
-
-export function loadSandboxLiveVideoTailwindSkin(skin: Skin): Promise<string> {
-  return loadTailwindSkin(liveVideoSkins[skin], LIVE_VIDEO_TAILWIND_SKIN_TAGS[skin]);
-}
-
-export function loadSandboxLiveAudioTailwindSkin(skin: Skin): Promise<string> {
-  return loadTailwindSkin(liveAudioSkins[skin], LIVE_AUDIO_TAILWIND_SKIN_TAGS[skin]);
+  return defineRegistrySkin(tagName, module.default);
 }

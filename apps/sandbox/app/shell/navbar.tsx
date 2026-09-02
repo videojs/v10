@@ -1,4 +1,4 @@
-import type { SKINS } from '@app/constants';
+import { SKIN_SOURCES, type SKINS } from '@app/constants';
 import { hasSkinChoice, hasTailwindSkin, MEDIA, MEDIA_IDS, type MediaId } from '@app/media';
 import { SANDBOX_LOCALE_OPTION_GROUPS, type SandboxLocaleTag } from '@app/shared/i18n/locale-meta';
 import { PLAYER_WIDTH } from '@app/shared/player-frame';
@@ -10,8 +10,9 @@ import {
   TEXT_DIRECTIONS,
   type TextDirection,
 } from '@app/shared/sandbox-listener';
+import { skinSourceAvailable, tailwindSkinAvailable } from '@app/shared/skin-sources';
 import type { SandboxSource, SourceId } from '@app/shared/sources';
-import type { Platform, Skin, Styling } from '@app/types';
+import type { Platform, Skin, SkinSource, Styling } from '@app/types';
 import { useEffect, useId, useRef, useState } from 'react';
 
 type NavbarProps = {
@@ -23,6 +24,8 @@ type NavbarProps = {
   onMediaChange: (value: MediaId) => void;
   skin: Skin;
   onSkinChange: (value: Skin) => void;
+  skins: SkinSource;
+  onSkinsChange: (value: SkinSource) => void;
   source: SourceId;
   onSourceChange: (value: string) => void;
   width: number;
@@ -58,6 +61,12 @@ const PLATFORM_LABELS: Record<Platform, string> = {
   cdn: 'CDN',
 };
 
+const SKIN_SOURCE_LABELS: Record<SkinSource, string> = {
+  package: 'Framework package',
+  registry: 'Shadcn registry',
+  authored: 'Authored source',
+};
+
 const SCHEME_LABELS: Record<ColorScheme, string> = {
   auto: 'System',
   light: 'Light',
@@ -79,6 +88,8 @@ export function Navbar({
   onMediaChange,
   skin,
   onSkinChange,
+  skins,
+  onSkinsChange,
   source,
   onSourceChange,
   width,
@@ -130,7 +141,7 @@ export function Navbar({
           options={stylings.map((s) => ({
             value: s,
             label: s === 'css' ? 'CSS' : 'Tailwind',
-            disabled: s === 'tailwind' && !hasTailwindSkin(media, platform),
+            disabled: s === 'tailwind' && !(hasTailwindSkin(media, platform) && tailwindSkinAvailable(platform)),
           }))}
         />
 
@@ -147,6 +158,18 @@ export function Navbar({
           onChange={(v) => onSkinChange(v as Skin)}
           options={SKIN_OPTIONS.map((s) => ({ value: s, label: capitalize(s) }))}
           disabled={!hasSkinChoice(media)}
+        />
+
+        <Select
+          label="Skins from"
+          value={skins}
+          onChange={(v) => onSkinsChange(v as SkinSource)}
+          options={SKIN_SOURCES.map((value) => ({
+            value,
+            label: SKIN_SOURCE_LABELS[value],
+            disabled: !skinSourceAvailable(value, platform),
+          }))}
+          disabled={!hasSkinChoice(media) || platform === 'cdn'}
         />
 
         <Select

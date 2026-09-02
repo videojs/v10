@@ -8,12 +8,12 @@ import { ShakaVideo } from '@videojs/react/media/shaka-video';
 import { createRoot } from 'react-dom/client';
 
 function App() {
-  const { skin, styling, source, mediaProps } = useSandbox();
+  const { source, mediaProps } = useSandbox();
 
   return (
     <SandboxI18nProvider>
       <VideoPlayer>
-        <VideoSkinComponent skin={skin} styling={styling}>
+        <VideoSkinComponent>
           {/* Shaka plays DASH and HLS from the same element, so the source list here is not
               narrowed to one manifest format the way the dash.js sandbox is. */}
           <ShakaVideo src={SOURCES[source].url ?? ''} {...mediaProps} playsInline crossOrigin="" />

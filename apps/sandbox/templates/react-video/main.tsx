@@ -10,13 +10,13 @@ import { Video } from '@videojs/react/video';
 import { createRoot } from 'react-dom/client';
 
 function App() {
-  const { skin, styling, source, mediaProps } = useSandbox();
+  const { source, mediaProps } = useSandbox();
 
   return (
     <SandboxI18nProvider>
       <VideoPlayer poster={getPosterSrc(source)}>
         {/* The skin renders its own <img> from `poster`; supplying one is what lets it carry a CORS mode. */}
-        <VideoSkinComponent renderPoster={<img alt="" crossOrigin="" />} skin={skin} styling={styling}>
+        <VideoSkinComponent renderPoster={<img alt="" crossOrigin="" />}>
           <Video src={SOURCES[source].url} {...mediaProps} playsInline crossOrigin="">
             <Chapters tracks={getChapters(source)} />
             <Storyboard src={getStoryboardSrc(source)} />

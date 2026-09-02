@@ -24,7 +24,8 @@
     "composite": false,
     "noEmit": true,
     "paths": {
-      "@app/*": ["./app/*"]
+      "@app/*": ["./app/*"],
+      "@css/*": ["./app/_generated/css/*"]
     }
   },
   "include": ["app", "src", "templates", "scripts", "types"],

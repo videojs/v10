@@ -9,12 +9,12 @@ import { MuxData } from '@videojs/react/extensions/mux-data';
 import { createRoot } from 'react-dom/client';
 
 function App() {
-  const { skin, styling, source, mediaProps } = useSandbox();
+  const { source, mediaProps } = useSandbox();
 
   return (
     <SandboxI18nProvider>
       <VideoPlayer>
-        <VideoSkinComponent skin={skin} styling={styling}>
+        <VideoSkinComponent>
           <DashVideo src={SOURCES[source].url ?? ''} {...mediaProps} playsInline crossOrigin="" />
           {/* Mux Data is an opt-in media component. It hands the dash.js engine to the Mux Data
               SDK, so views carry stream-level detail. These streams aren't Mux-hosted, so the

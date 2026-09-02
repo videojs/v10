@@ -13,7 +13,7 @@ import {
 import { getChapters, getPlaceholderSrc, getPosterSrc, getStoryboardSrc, isLiveSource, SOURCES } from '../sources';
 import { renderChapters } from './chapters';
 import { bindSandboxHtmlLocaleChange, prepareSandboxHtmlLocale, wrapSandboxHtmlI18n } from './i18n';
-import { loadAudioSkinTag, loadVideoSkinTag } from './skins';
+import { loadHtmlSkinTag } from './skins';
 import { renderStoryboard } from './storyboard';
 
 /** Tag for markup literals. `String.raw`, so a template reads as the HTML it produces. */
@@ -98,15 +98,10 @@ export function createLatestLoader() {
 }
 
 function loadSkinTag(player: HtmlSandboxPlayer, state: SandboxState, live: boolean): Promise<string> {
-  switch (player) {
-    case 'video':
-      return loadVideoSkinTag(state.skin, state.styling, { live });
-    case 'audio':
-      return loadAudioSkinTag(state.skin, state.styling, { live });
-    // One element with no skin or styling variants, imported by the template.
-    case 'background':
-      return Promise.resolve('background-video-skin');
-  }
+  // The background skin is one element with no skin or styling variants, imported by the template.
+  if (player === 'background') return Promise.resolve('background-video-skin');
+
+  return loadHtmlSkinTag({ player, live, skin: state.skin, styling: state.styling, source: state.skins });
 }
 
 function describeSource(state: SandboxState, playbackOverrides: boolean) {

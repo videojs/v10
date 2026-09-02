@@ -1,116 +1,126 @@
 import { PLAYER_FRAME_CLASSES } from '@app/shared/player-frame';
-import type { Skin, Styling } from '@app/types';
+import type { Skin, SkinSource, Styling } from '@app/types';
 import type { AudioSkinProps } from '@videojs/react/audio';
 import type { VideoSkinProps } from '@videojs/react/video';
 import type { ComponentType } from 'react';
 import { createElement, useEffect, useState } from 'react';
 
 import { useDirection } from './use-direction';
+import { useSandbox } from './use-sandbox';
 
-async function loadTailwindVideoSkin(skin: Skin, live: boolean): Promise<ComponentType<VideoSkinProps>> {
-  if (live) {
-    if (skin === 'default') {
-      const { DefaultLiveVideoSkin } = await import('@app/_generated/components/videojs/skins/live-video/skin');
+type SkinPreset = 'video' | 'audio' | 'live-video' | 'live-audio';
+type SkinKey = `${SkinPreset}/${Skin}`;
+type Loader = () => Promise<object>;
 
-      return DefaultLiveVideoSkin;
-    }
-
-    const { MinimalLiveVideoSkin } = await import('@app/_generated/components/videojs/skins/live-video/minimal/skin');
-
-    return MinimalLiveVideoSkin;
-  }
-
-  if (skin === 'default') {
-    const { DefaultVideoSkin } = await import('@app/_generated/components/videojs/skins/video/skin');
-
-    return DefaultVideoSkin;
-  }
-
-  const { MinimalVideoSkin } = await import('@app/_generated/components/videojs/skins/video/minimal/skin');
-
-  return MinimalVideoSkin;
+interface SkinRequest {
+  readonly preset: SkinPreset;
+  readonly skin: Skin;
+  readonly styling: Styling;
+  readonly source: SkinSource;
 }
 
-async function loadVideoSkinComponent(
-  skin: Skin,
-  styling: Styling,
-  live: boolean
-): Promise<ComponentType<VideoSkinProps>> {
-  if (styling === 'tailwind') return loadTailwindVideoSkin(skin, live);
+/** One module per preset in `@videojs/react`, exporting both skins, with a stylesheet per skin beside it. */
+const packageSkins: Record<
+  SkinPreset,
+  { module: Loader; styles: Record<Skin, Loader>; components: Record<Skin, string> }
+> = {
+  video: {
+    module: () => import('@videojs/react/video'),
+    styles: {
+      default: () => import('@videojs/react/video/skin.css'),
+      minimal: () => import('@videojs/react/video/minimal-skin.css'),
+    },
+    components: { default: 'VideoSkin', minimal: 'MinimalVideoSkin' },
+  },
+  'live-video': {
+    module: () => import('@videojs/react/live-video'),
+    styles: {
+      default: () => import('@videojs/react/live-video/skin.css'),
+      minimal: () => import('@videojs/react/live-video/minimal-skin.css'),
+    },
+    components: { default: 'LiveVideoSkin', minimal: 'MinimalLiveVideoSkin' },
+  },
+  audio: {
+    module: () => import('@videojs/react/audio'),
+    styles: {
+      default: () => import('@videojs/react/audio/skin.css'),
+      minimal: () => import('@videojs/react/audio/minimal-skin.css'),
+    },
+    components: { default: 'AudioSkin', minimal: 'MinimalAudioSkin' },
+  },
+  'live-audio': {
+    module: () => import('@videojs/react/live-audio'),
+    styles: {
+      default: () => import('@videojs/react/live-audio/skin.css'),
+      minimal: () => import('@videojs/react/live-audio/minimal-skin.css'),
+    },
+    components: { default: 'LiveAudioSkin', minimal: 'MinimalLiveAudioSkin' },
+  },
+};
 
-  if (live) {
-    const module = await import('@videojs/react/live-video');
+/**
+ * The registry installs: the Tailwind catalog under `@`, the CSS catalog under `@css`. Both use the catalog's export
+ * names.
+ */
+const registrySkins: Record<Styling, Record<SkinKey, Loader>> = {
+  tailwind: {
+    'video/default': () => import('@app/_generated/components/videojs/skins/video/skin'),
+    'video/minimal': () => import('@app/_generated/components/videojs/skins/video/minimal/skin'),
+    'live-video/default': () => import('@app/_generated/components/videojs/skins/live-video/skin'),
+    'live-video/minimal': () => import('@app/_generated/components/videojs/skins/live-video/minimal/skin'),
+    'audio/default': () => import('@app/_generated/components/videojs/skins/audio/skin'),
+    'audio/minimal': () => import('@app/_generated/components/videojs/skins/audio/minimal/skin'),
+    'live-audio/default': () => import('@app/_generated/components/videojs/skins/live-audio/skin'),
+    'live-audio/minimal': () => import('@app/_generated/components/videojs/skins/live-audio/minimal/skin'),
+  },
+  css: {
+    'video/default': () => import('@css/components/videojs/skins/video/skin'),
+    'video/minimal': () => import('@css/components/videojs/skins/video/minimal/skin'),
+    'live-video/default': () => import('@css/components/videojs/skins/live-video/skin'),
+    'live-video/minimal': () => import('@css/components/videojs/skins/live-video/minimal/skin'),
+    'audio/default': () => import('@css/components/videojs/skins/audio/skin'),
+    'audio/minimal': () => import('@css/components/videojs/skins/audio/minimal/skin'),
+    'live-audio/default': () => import('@css/components/videojs/skins/live-audio/skin'),
+    'live-audio/minimal': () => import('@css/components/videojs/skins/live-audio/minimal/skin'),
+  },
+};
 
-    if (skin === 'default') {
-      await import('@videojs/react/live-video/skin.css');
-      return module.LiveVideoSkin;
-    }
+const registryComponents: Record<SkinKey, string> = {
+  'video/default': 'DefaultVideoSkin',
+  'video/minimal': 'MinimalVideoSkin',
+  'live-video/default': 'DefaultLiveVideoSkin',
+  'live-video/minimal': 'MinimalLiveVideoSkin',
+  'audio/default': 'DefaultAudioSkin',
+  'audio/minimal': 'MinimalAudioSkin',
+  'live-audio/default': 'DefaultLiveAudioSkin',
+  'live-audio/minimal': 'MinimalLiveAudioSkin',
+};
 
-    await import('@videojs/react/live-video/minimal-skin.css');
-    return module.MinimalLiveVideoSkin;
-  }
+function pickComponent<Props>(module: object, name: string, key: string): ComponentType<Props> {
+  // SAFETY: a module namespace is a plain object keyed by export name; the value is checked below.
+  const component = (module as Record<string, unknown>)[name];
+  if (typeof component !== 'function') throw new Error(`Skin module ${key} did not export ${name}.`);
 
-  const module = await import('@videojs/react/video');
-
-  if (skin === 'default') {
-    await import('@videojs/react/video/skin.css');
-    return module.VideoSkin;
-  }
-
-  await import('@videojs/react/video/minimal-skin.css');
-  return module.MinimalVideoSkin;
+  // SAFETY: a skin module exports its skin as a React component under the catalogued name.
+  return component as ComponentType<Props>;
 }
 
-async function loadAudioSkinComponent(
-  skin: Skin,
-  styling: Styling,
-  live: boolean
-): Promise<ComponentType<AudioSkinProps>> {
-  if (styling === 'tailwind') {
-    if (live) {
-      if (skin === 'default') {
-        const { DefaultLiveAudioSkin } = await import('@app/_generated/components/videojs/skins/live-audio/skin');
+async function loadSkinComponent<Props>(request: SkinRequest): Promise<ComponentType<Props>> {
+  const { preset, skin, styling, source } = request;
+  const key: SkinKey = `${preset}/${skin}`;
 
-        return DefaultLiveAudioSkin;
-      }
+  switch (source) {
+    case 'package': {
+      const entry = packageSkins[preset];
+      const [module] = await Promise.all([entry.module(), entry.styles[skin]()]);
 
-      const { MinimalLiveAudioSkin } = await import('@app/_generated/components/videojs/skins/live-audio/minimal/skin');
-
-      return MinimalLiveAudioSkin;
+      return pickComponent(module, entry.components[skin], key);
     }
-
-    if (skin === 'default') {
-      const { DefaultAudioSkin } = await import('@app/_generated/components/videojs/skins/audio/skin');
-
-      return DefaultAudioSkin;
-    }
-
-    const { MinimalAudioSkin } = await import('@app/_generated/components/videojs/skins/audio/minimal/skin');
-
-    return MinimalAudioSkin;
+    case 'registry':
+      return pickComponent(await registrySkins[styling][key](), registryComponents[key], key);
+    case 'authored':
+      throw new Error('Authored skins are compiled from the workspace; see `authored-skins.ts`.');
   }
-
-  if (live) {
-    const module = await import('@videojs/react/live-audio');
-
-    if (skin === 'default') {
-      await import('@videojs/react/live-audio/skin.css');
-      return module.LiveAudioSkin;
-    }
-
-    await import('@videojs/react/live-audio/minimal-skin.css');
-    return module.MinimalLiveAudioSkin;
-  }
-
-  const module = await import('@videojs/react/audio');
-
-  if (skin === 'default') {
-    await import('@videojs/react/audio/skin.css');
-    return module.AudioSkin;
-  }
-
-  await import('@videojs/react/audio/minimal-skin.css');
-  return module.MinimalAudioSkin;
 }
 
 function useLoadedComponent<Props>(
@@ -128,10 +138,11 @@ function useLoadedComponent<Props>(
 
         setComponent(() => resolved);
       })
-      .catch(() => {
+      .catch((error) => {
         if (!active) return;
-        // Intentionally ignore load errors to avoid unhandled promise rejections.
-        // The component will remain null, and callers can handle absence as needed.
+
+        // The component stays null; the page shows nothing rather than a half-styled player.
+        console.error('Failed to load skin', error);
       });
 
     return () => {
@@ -144,8 +155,6 @@ function useLoadedComponent<Props>(
   return component;
 }
 
-type VideoSkinComponentProps = { skin: Skin; styling: Styling; live?: boolean } & VideoSkinProps;
-
 /** The skin derives `dir` from its locale unless given one, so a pinned direction has to arrive as a prop. */
 function useDirectionProps(): { dir?: 'ltr' | 'rtl' } {
   const direction = useDirection();
@@ -153,18 +162,23 @@ function useDirectionProps(): { dir?: 'ltr' | 'rtl' } {
   return direction === 'auto' ? {} : { dir: direction };
 }
 
+type VideoSkinComponentProps = { live?: boolean } & VideoSkinProps;
+
 /**
- * Loads the video skin for the given skin/styling, framed the way every sandbox page frames a player unless a
- * `className` says otherwise. When `live` is true, the `live-video` skin variant is used instead.
+ * Loads the video skin the shell selected, from the source it selected, framed the way every sandbox page frames a
+ * player unless a `className` says otherwise. When `live` is true, the `live-video` skin variant is used instead.
  */
 export function VideoSkinComponent({
-  skin,
-  styling,
   live = false,
   className = PLAYER_FRAME_CLASSES.video,
   ...props
 }: VideoSkinComponentProps) {
-  const Component = useLoadedComponent(() => loadVideoSkinComponent(skin, styling, live), [skin, styling, live]);
+  const { skin, styling, skins } = useSandbox();
+  const preset: SkinPreset = live ? 'live-video' : 'video';
+  const Component = useLoadedComponent<VideoSkinProps>(
+    () => loadSkinComponent({ preset, skin, styling, source: skins }),
+    [preset, skin, styling, skins]
+  );
   const directionProps = useDirectionProps();
 
   if (!Component) return null;
@@ -172,16 +186,19 @@ export function VideoSkinComponent({
   return createElement(Component, { ...props, ...directionProps, className });
 }
 
-type AudioSkinComponentProps = { skin: Skin; styling: Styling; live?: boolean } & AudioSkinProps;
+type AudioSkinComponentProps = { live?: boolean } & AudioSkinProps;
 
 export function AudioSkinComponent({
-  skin,
-  styling,
   live = false,
   className = PLAYER_FRAME_CLASSES.audio,
   ...props
 }: AudioSkinComponentProps) {
-  const Component = useLoadedComponent(() => loadAudioSkinComponent(skin, styling, live), [skin, styling, live]);
+  const { skin, styling, skins } = useSandbox();
+  const preset: SkinPreset = live ? 'live-audio' : 'audio';
+  const Component = useLoadedComponent<AudioSkinProps>(
+    () => loadSkinComponent({ preset, skin, styling, source: skins }),
+    [preset, skin, styling, skins]
+  );
   const directionProps = useDirectionProps();
 
   if (!Component) return null;

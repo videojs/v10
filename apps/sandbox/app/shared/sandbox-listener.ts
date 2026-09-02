@@ -1,6 +1,6 @@
-import { SKINS, STYLINGS } from '@app/constants';
+import { SKIN_SOURCES, SKINS, STYLINGS } from '@app/constants';
 import { DEFAULT_SANDBOX_LOCALE, SANDBOX_LOCALE_TAGS, type SandboxLocaleTag } from '@app/shared/i18n/locale-meta';
-import type { Skin, Styling } from '@app/types';
+import type { Skin, SkinSource, Styling } from '@app/types';
 import type { MediaResolution } from '@videojs/media';
 import { isBoolean, isNumber, isString } from '@videojs/utils/predicate';
 
@@ -35,13 +35,15 @@ export interface SandboxState {
   skin: Skin;
   source: SourceId;
   styling: Styling;
+  /** Where the skin comes from. Changing it remounts the page, like styling. */
+  skins: SkinSource;
   autoplay: boolean;
   muted: boolean;
   loop: boolean;
   preload: PreloadValue;
 }
 
-type StreamedKey = Exclude<keyof SandboxState, 'styling'>;
+type StreamedKey = Exclude<keyof SandboxState, 'styling' | 'skins'>;
 
 function isOneOf<T extends string>(values: readonly T[], value: unknown): value is T {
   // SAFETY: the tuple is widened to strings only for the lookup; the guard narrows the value back to `T`.
@@ -54,6 +56,10 @@ function parseSkin(value: unknown): Skin | undefined {
 
 function parseStyling(value: unknown): Styling | undefined {
   return isOneOf(STYLINGS, value) ? value : undefined;
+}
+
+function parseSkinSource(value: unknown): SkinSource | undefined {
+  return isOneOf(SKIN_SOURCES, value) ? value : undefined;
 }
 
 function parseSource(value: unknown): SourceId | undefined {
@@ -80,10 +86,14 @@ function readFlag(name: string): boolean {
 
 /** The selections the page URL names, with the shell's defaults for the rest. */
 export function readSandboxState(): SandboxState {
+  const styling = parseStyling(params.get('styling')) ?? 'css';
+
   return {
     skin: parseSkin(params.get('skin')) ?? 'default',
     source: parseSource(params.get('source')) ?? DEFAULT_SOURCE,
-    styling: parseStyling(params.get('styling')) ?? 'css',
+    styling,
+    // The packages ship CSS; a page asked for Tailwind without a source is the registry install.
+    skins: parseSkinSource(params.get('skins')) ?? (styling === 'tailwind' ? 'registry' : 'package'),
     autoplay: readFlag('autoplay'),
     muted: readFlag('muted'),
     loop: readFlag('loop'),

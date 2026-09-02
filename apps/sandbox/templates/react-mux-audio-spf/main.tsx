@@ -15,7 +15,7 @@ import { createRoot } from 'react-dom/client';
 // the unsupported-source error rather than play.
 
 function App() {
-  const { skin, styling, source, mediaProps } = useSandbox();
+  const { source, mediaProps } = useSandbox();
   const live = isLiveSource(source);
   const Player = live ? LiveAudioPlayer : AudioPlayer;
 
@@ -26,7 +26,7 @@ function App() {
   return (
     <SandboxI18nProvider>
       <Player>
-        <AudioSkinComponent skin={skin} styling={styling} live={live}>
+        <AudioSkinComponent live={live}>
           <MuxAudio {...(muxSource ? { source: muxSource } : { src: url ?? '' })} {...mediaProps} crossOrigin="" />
           {/*
             Both are opt-in media components, and no env key is needed for Mux-hosted sources.

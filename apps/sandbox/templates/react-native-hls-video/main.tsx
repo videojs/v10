@@ -10,7 +10,7 @@ import { NativeHlsVideo } from '@videojs/react/media/native-hls-video';
 import { createRoot } from 'react-dom/client';
 
 function App() {
-  const { skin, styling, source, mediaProps } = useSandbox();
+  const { source, mediaProps } = useSandbox();
   const live = isLiveSource(source);
   const Player = live ? LiveVideoPlayer : VideoPlayer;
 
@@ -23,7 +23,7 @@ function App() {
     <SandboxI18nProvider>
       <Player poster={getPosterSrc(source)}>
         {/* The skin renders its own <img> from `poster`; supplying one is what lets it carry a CORS mode. */}
-        <VideoSkinComponent renderPoster={<img alt="" crossOrigin="" />} skin={skin} styling={styling} live={live}>
+        <VideoSkinComponent renderPoster={<img alt="" crossOrigin="" />} live={live}>
           <NativeHlsVideo
             {...(hlsSource ? { source: hlsSource } : { src: url ?? '' })}
             {...mediaProps}

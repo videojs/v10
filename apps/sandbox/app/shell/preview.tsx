@@ -2,7 +2,7 @@ import type { MediaId } from '@app/media';
 import type { SandboxLocaleTag } from '@app/shared/i18n/locale-meta';
 import type { ColorScheme, PreloadValue, TextDirection } from '@app/shared/sandbox-listener';
 import type { SourceId } from '@app/shared/sources';
-import type { Skin, Styling } from '@app/types';
+import type { Skin, SkinSource, Styling } from '@app/types';
 import { forwardRef, useEffect, useRef, useState } from 'react';
 
 type PreviewProps = {
@@ -10,6 +10,7 @@ type PreviewProps = {
   media: MediaId;
   skin: Skin;
   styling: Styling;
+  skins: SkinSource;
   source: SourceId;
   autoplay: boolean;
   muted: boolean;
@@ -29,6 +30,7 @@ export const Preview = forwardRef<HTMLIFrameElement, PreviewProps>(function Prev
     media,
     skin,
     styling,
+    skins,
     source,
     autoplay,
     muted,
@@ -48,6 +50,7 @@ export const Preview = forwardRef<HTMLIFrameElement, PreviewProps>(function Prev
       media,
       skin,
       styling,
+      skins,
       source,
       autoplay: autoplay ? '1' : '0',
       muted: muted ? '1' : '0',

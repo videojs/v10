@@ -44,24 +44,34 @@ if (server) {
   });
 }
 
+/**
+ * The three catalogs the sandbox can load. The Tailwind install owns the `@` alias and the theme stylesheet; the CSS
+ * install lives under `@css`, so the two React variants never resolve into each other's files.
+ */
+const installs = [
+  { catalog: 'react', destination: 'components/videojs', alias: '@', theme: true },
+  { catalog: 'react/css', destination: 'css/components/videojs', alias: '@css', theme: false },
+  { catalog: 'html', destination: 'html/components/videojs', alias: '@', theme: false },
+] as const;
+
 await rm(generatedDir, { recursive: true, force: true });
 
 try {
-  await installFramework('react', resolve(generatedDir, 'components/videojs'), address);
-  await installFramework('html', resolve(generatedDir, 'html/components/videojs'), address);
+  for (const install of installs) await installCatalog(install, address);
 } finally {
   if (server) await close(server);
 }
 
 await runCommand('git', ['check-ignore', '--quiet', 'apps/sandbox/app/_generated'], workspaceDir);
 
-console.log('Installed 8 React and 8 HTML source-owned Sandbox skins from the local hosted registry.');
+console.log('Installed 8 React Tailwind, 8 React CSS, and 8 HTML source-owned Sandbox skins from the hosted registry.');
 
-async function installFramework(framework: 'react' | 'html', destination: string, address: string): Promise<void> {
-  const root = await mkdtemp(resolve(tmpdir(), `videojs-sandbox-${framework}-`));
+async function installCatalog(install: (typeof installs)[number], address: string): Promise<void> {
+  const root = await mkdtemp(resolve(tmpdir(), `videojs-sandbox-${install.catalog.replaceAll('/', '-')}-`));
+  const destination = resolve(generatedDir, install.destination);
 
   try {
-    await writeFixture(root, `${address}/${framework}`);
+    await writeFixture(root, `${address}/${install.catalog}`, install.alias);
 
     const items = presets.flatMap((preset) => variants.map((variant) => `@videojs/${preset}${variant}`));
 
@@ -74,16 +84,17 @@ async function installFramework(framework: 'react' | 'html', destination: string
     await mkdir(destination, { recursive: true });
     await cp(resolve(root, 'src/components/videojs'), destination, { recursive: true });
 
-    if (framework === 'react') {
-      await cp(resolve(root, 'src/index.css'), resolve(generatedDir, 'styles.css'));
+    if (install.catalog.startsWith('react')) {
       await cp(resolve(root, 'src/lib'), resolve(destination, '../../lib'), { recursive: true });
     }
+
+    if (install.theme) await cp(resolve(root, 'src/index.css'), resolve(generatedDir, 'styles.css'));
   } finally {
     await rm(root, { recursive: true, force: true });
   }
 }
 
-async function writeFixture(root: string, address: string): Promise<void> {
+async function writeFixture(root: string, address: string, alias: string): Promise<void> {
   const packageJson = {
     name: 'videojs-sandbox-skins',
     private: true,
@@ -111,11 +122,11 @@ async function writeFixture(root: string, address: string): Promise<void> {
       prefix: '',
     },
     aliases: {
-      components: '@/components',
-      ui: '@/components/ui',
-      utils: '@/lib/utils',
-      lib: '@/lib',
-      hooks: '@/hooks',
+      components: `${alias}/components`,
+      ui: `${alias}/components/ui`,
+      utils: `${alias}/lib/utils`,
+      lib: `${alias}/lib`,
+      hooks: `${alias}/hooks`,
     },
     registries: {
       '@videojs': `${address}/{name}.json`,
@@ -127,7 +138,7 @@ async function writeFixture(root: string, address: string): Promise<void> {
       module: 'ESNext',
       moduleResolution: 'Bundler',
       noEmit: true,
-      paths: { '@/*': ['./src/*'] },
+      paths: { [`${alias}/*`]: ['./src/*'] },
       skipLibCheck: true,
       strict: true,
       target: 'ES2022',
