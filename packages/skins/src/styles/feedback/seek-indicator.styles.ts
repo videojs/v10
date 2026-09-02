@@ -17,10 +17,10 @@ export default styles({
       utilities: [
         'hidden size-media-icon-lg group-data-direction/seek-status:block',
         'group-data-[direction=backward]/seek-status:[scale:-1_1]',
-        'motion-safe:transition-[translate,opacity] motion-safe:duration-media-slow motion-safe:ease-in-out',
-        'motion-safe:group-data-starting-style/seek-status:opacity-0 motion-safe:group-data-ending-style/seek-status:opacity-0',
-        'motion-safe:group-data-[direction=forward]/seek-status:group-data-starting-style/seek-status:[translate:-60%_0]',
-        'motion-safe:group-data-[direction=backward]/seek-status:group-data-starting-style/seek-status:[translate:60%_0]',
+        'transition-[translate,opacity] duration-media-slow ease-in-out',
+        'group-data-starting-style/seek-status:opacity-0 group-data-ending-style/seek-status:opacity-0',
+        'group-data-[direction=forward]/seek-status:group-data-starting-style/seek-status:-translate-x-media-hidden-seek-offset',
+        'group-data-[direction=backward]/seek-status:group-data-starting-style/seek-status:translate-x-media-hidden-seek-offset',
       ],
     },
     value: {

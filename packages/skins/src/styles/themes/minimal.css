@@ -8,9 +8,11 @@
     --media-shadow-surface: 0 1px 2px oklch(0 0 0 / 0.2);
     --media-shadow-thumb: 0 0 0 1px rgb(0 0 0 / 0.15), 0 1px 3px 0 rgb(0 0 0 / 0.15), 0 1px 2px -1px rgb(0 0 0 / 0.15);
     --media-text-shadow-dialog: 0 1px 0 rgb(0 0 0 / 0.5);
+    --media-backdrop-filter-dialog: blur(16px) saturate(120%);
     --media-shadow-tooltip:
       0 0 0 1px var(--media-border), 0 4px 6px -1px oklch(0 0 0 / 0.2), 0 2px 4px -2px oklch(0 0 0 / 0.2);
     --media-duration-dialog: var(--media-duration);
+    --media-duration-indicator: 400ms;
     --media-hidden-offset: 100%;
     --media-hidden-indicator-offset: -100%;
     --media-menu-item-radius: calc(var(--media-spacing) * 1.5);

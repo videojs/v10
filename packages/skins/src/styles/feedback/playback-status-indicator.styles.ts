@@ -21,7 +21,7 @@ export default styles({
         'data-starting-style:scale-media-hidden-playback data-starting-style:opacity-0',
         'data-ending-style:scale-media-hidden-playback data-ending-style:opacity-0 data-ending-style:duration-media-fast data-ending-style:ease-in',
       ],
-      variants: { default: 'rounded-media-pill bg-media-scrim/35 backdrop-blur-sm' },
+      variants: { default: 'rounded-media-pill bg-media-scrim/35 backdrop-filter-media-scrim' },
     },
     playIcon: {
       className: 'media-playback-status-indicator-play-icon',

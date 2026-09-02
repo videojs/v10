@@ -23,7 +23,7 @@ export default styles({
     chapterTrack: {
       className: 'media-time-slider-chapter-track',
       utilities: [
-        'motion-safe:transition-[height,width] motion-safe:duration-media-slow motion-safe:ease-out',
+        'transition-[height,width] duration-media-slow ease-out',
         'data-[orientation=horizontal]:clip-media-chapter-track-x data-[orientation=vertical]:clip-media-chapter-track-y',
         'group-data-highlighted/chapter:data-[orientation=horizontal]:h-1.75',
         'group-data-highlighted/chapter:data-[orientation=vertical]:w-1.75',

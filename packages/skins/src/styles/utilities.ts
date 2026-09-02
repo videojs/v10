@@ -76,6 +76,10 @@ export const utilities = {
     kind: 'utility',
     description: 'Transition delays from the theme, for example `delay-media-dialog`.',
   },
+  'backdrop-filter-media-*': {
+    kind: 'utility',
+    description: 'Backdrop filters from the theme, for example `backdrop-filter-media-scrim`.',
+  },
   'media-opaque': { kind: 'variant', description: 'Reduced transparency or high contrast.' },
   'media-compact': { kind: 'variant', description: 'Player at or above the compact breakpoint.' },
   'media-max-compact': { kind: 'variant', description: 'Player below the compact breakpoint.' },

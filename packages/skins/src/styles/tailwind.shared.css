@@ -44,12 +44,14 @@
   --radius-media-player: var(--media-video-border-radius);
   --radius-media-popup: var(--media-popup-radius);
 
-  /* Shadows. Contrast-aware ones read the current color; the rest alias theme tokens. */
+  /* Shadows and backdrop filters. Contrast-aware ones read the current color; the rest alias theme tokens. */
   --drop-shadow-media-icon: 0 1px 0 var(--media-shadow-current-color);
   --shadow-media-thumb: var(--media-shadow-thumb);
   --shadow-media-tooltip: var(--media-shadow-tooltip);
   --text-shadow-media: 0 1px 0 var(--media-shadow-current-color);
   --text-shadow-media-dialog: var(--media-text-shadow-dialog);
+  --backdrop-filter-media-scrim: var(--media-backdrop-filter-scrim);
+  --backdrop-filter-media-dialog: var(--media-backdrop-filter-dialog);
 
   /* Motion. Utilities such as `duration-media-fast` and `scale-media-hidden` follow reduced-motion preferences through the tokens. */
   --duration-media-instant: var(--media-duration-instant);
@@ -61,16 +63,21 @@
   --duration-media-controls-half: calc(var(--media-duration-controls) / 2);
   --duration-media-menu: var(--media-duration-menu);
   --duration-media-dialog: var(--media-duration-dialog);
+  --duration-media-indicator: var(--media-duration-indicator);
+  --duration-media-slider: var(--media-duration-slider);
   --delay-media-dialog: var(--media-delay-dialog);
   --scale-media-hidden: var(--media-hidden-scale);
   --scale-media-hidden-indicator: var(--media-hidden-indicator-scale);
   --scale-media-hidden-playback: var(--media-hidden-playback-scale);
   --scale-media-hidden-icon: var(--media-hidden-icon-scale);
   --scale-media-hidden-popup: var(--media-hidden-popup-scale);
+  --scale-media-hidden-preview: var(--media-hidden-preview-scale);
   --blur-media-hidden: var(--media-hidden-blur);
   --blur-media-hidden-popup: var(--media-hidden-popup-blur);
   --spacing-media-hidden-offset: var(--media-hidden-offset);
   --spacing-media-hidden-indicator-offset: var(--media-hidden-indicator-offset);
+  --spacing-media-hidden-preview-offset: var(--media-hidden-preview-offset);
+  --spacing-media-hidden-seek-offset: var(--media-hidden-seek-offset);
 }
 
 /* Transition durations from the theme, for example `duration-media-fast`. */
@@ -81,6 +88,11 @@
 /* Transition delays from the theme, for example `delay-media-dialog`. */
 @utility delay-media-* {
   transition-delay: --value(--delay-media-*);
+}
+
+/* Backdrop filters from the theme, for example `backdrop-filter-media-scrim`. */
+@utility backdrop-filter-media-* {
+  backdrop-filter: --value(--backdrop-filter-media-*);
 }
 
 /* Player font stack, overridable through the public `--media-font-family`. */

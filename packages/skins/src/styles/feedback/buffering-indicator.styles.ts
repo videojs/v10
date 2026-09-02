@@ -7,7 +7,7 @@ export default styles({
       className: 'media-buffering-indicator',
       utilities: [
         'pointer-events-none absolute inset-0 hidden place-content-center text-media-controls-foreground',
-        'before:absolute before:inset-0 before:bg-media-scrim/35 before:backdrop-blur-sm',
+        'before:absolute before:inset-0 before:bg-media-scrim/35 before:backdrop-filter-media-scrim',
         'not-data-visible:[--media-spinner-animation:none] data-visible:grid',
       ],
     },

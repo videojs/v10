@@ -10,13 +10,13 @@ export default styles({
     backdrop: {
       className: 'media-dialog-backdrop',
       utilities: [
-        'absolute inset-0 z-40 bg-media-scrim/20 backdrop-blur-lg opacity-100 backdrop-saturate-150',
+        'absolute inset-0 z-40 bg-media-scrim/20 opacity-100 backdrop-filter-media-dialog',
         'not-data-open:hidden transition-opacity delay-media-dialog duration-media-dialog ease-out',
         'data-starting-style:opacity-0 data-ending-style:opacity-0 data-ending-style:delay-0',
       ],
       variants: {
         default: 'data-ending-style:duration-media-slower',
-        minimal: 'backdrop-saturate-120 data-ending-style:duration-media-instant',
+        minimal: 'data-ending-style:duration-media-instant',
       },
     },
     popup: {

@@ -13,23 +13,28 @@
 
   @media (prefers-reduced-motion: reduce) {
     .media-skin {
-      --media-duration-controls: var(--media-duration-instant);
       --media-duration-fast: var(--media-duration-instant);
       --media-duration: var(--media-duration-instant);
       --media-duration-slow: var(--media-duration-instant);
       --media-duration-slower: var(--media-duration-instant);
-      --media-duration-menu: 0ms;
+      --media-duration-controls: var(--media-duration-instant);
       --media-duration-dialog: var(--media-duration-instant);
+      --media-duration-indicator: var(--media-duration-instant);
+      --media-duration-menu: 0ms;
+      --media-duration-slider: 0ms;
       --media-delay-dialog: 0ms;
       --media-hidden-scale: 1;
       --media-hidden-blur: 0px;
       --media-hidden-offset: 0px;
+      --media-hidden-icon-scale: 1;
       --media-hidden-indicator-scale: 1;
       --media-hidden-indicator-offset: 0px;
       --media-hidden-playback-scale: 1;
-      --media-hidden-icon-scale: 1;
       --media-hidden-popup-scale: 1;
       --media-hidden-popup-blur: 0px;
+      --media-hidden-preview-scale: 1;
+      --media-hidden-preview-offset: 0px;
+      --media-hidden-seek-offset: 0px;
       --media-popup-translate-distance: 0px;
       --media-spinner-animation: none;
       --media-icon-airplay-fill-animation: none;
@@ -42,6 +47,8 @@
       --media-popover: var(--media-background);
       --media-scrollbar-thumb-color: oklch(from currentColor l c h / 0.8);
       --media-backdrop-filter-surface: none;
+      --media-backdrop-filter-scrim: none;
+      --media-backdrop-filter-dialog: none;
       --media-shadow-surface-inset: inset 0 1px 0 0 rgb(255 255 255 / 0.25), inset 0 0 0 1px rgb(255 255 255 / 0.125);
 
       scrollbar-width: auto;

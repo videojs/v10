@@ -232,6 +232,14 @@ export const vars = {
     kind: 'internal',
     description: 'Backdrop filter shared by translucent surfaces; preferences switch it off.',
   },
+  '--media-backdrop-filter-scrim': {
+    kind: 'internal',
+    description: 'Backdrop filter behind buffering and playback status scrims; preferences switch it off.',
+  },
+  '--media-backdrop-filter-dialog': {
+    kind: 'internal',
+    description: 'Backdrop filter behind dialogs per theme; preferences switch it off.',
+  },
   '--media-shadow-surface-inset': {
     kind: 'internal',
     description: 'Inner highlight shared by translucent surfaces; preferences switch its strength.',
@@ -258,7 +266,15 @@ export const vars = {
   },
   '--media-duration-slower': {
     kind: 'internal',
-    description: 'Transition duration for posters, dialogs, and indicator entrances.',
+    description: 'Transition duration for posters, dialog exits, and the default indicator entrance.',
+  },
+  '--media-duration-indicator': {
+    kind: 'internal',
+    description: 'Indicator enter and leave duration per theme, reduced with motion preferences.',
+  },
+  '--media-duration-slider': {
+    kind: 'internal',
+    description: 'Slider fill and thumb tracking duration; zero under reduced motion.',
   },
   '--media-slider-preview-offset': {
     kind: 'internal',
@@ -327,6 +343,18 @@ export const vars = {
   '--media-hidden-popup-blur': {
     kind: 'internal',
     description: 'Blur applied to entering and leaving popups; zero under reduced motion.',
+  },
+  '--media-hidden-preview-scale': {
+    kind: 'internal',
+    description: 'Scale applied to hidden slider preview content; neutral under reduced motion.',
+  },
+  '--media-hidden-preview-offset': {
+    kind: 'internal',
+    description: 'Distance hidden slider preview content sits below its resting position; zero under reduced motion.',
+  },
+  '--media-hidden-seek-offset': {
+    kind: 'internal',
+    description: 'Distance the seek indicator icon slides in from; zero under reduced motion.',
   },
   '--media-caption-track-delay': {
     kind: 'runtime',
