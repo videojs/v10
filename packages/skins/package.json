@@ -18,7 +18,9 @@
   },
   "type": "module",
   "scripts": {
-    "dev": "vp -C dev dev --host",
+    "dev": "pnpm run --parallel \"/^dev:/\"",
+    "dev:generate": "vp run generate:watch",
+    "dev:playground": "vp -C dev dev --host",
     "test": "pnpm run test:types && vp test run",
     "test:types": "tsgo --project ./src/tsconfig.json",
     "clean": "rimraf --glob dist types '*.tsbuildinfo'"

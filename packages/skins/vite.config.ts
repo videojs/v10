@@ -32,6 +32,12 @@ export default defineConfig({
         ],
         output: ['dist/registry/source/**', ...generatedPackageOutputs],
       },
+      'generate:watch': {
+        // Keep the framework packages' skin inputs current while developing. Registry emission stays one-shot.
+        command: 'vp -C build pack --watch --no-clean',
+        cache: false,
+        dependsOn: workspaceTaskDependencies(),
+      },
       'build:shadcn': {
         command: 'node --import tsx build/registry/build.ts',
         dependsOn: ['generate'],

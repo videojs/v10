@@ -63,7 +63,7 @@ Add a shared recipe to `tailwind.css` as a flat `@utility`, describe it in `util
 Run these from `packages/skins`.
 
 ```bash
-pnpm dev                          # preview matrix
+pnpm dev                          # preview matrix, plus package inputs regenerated on change
 pnpm exec vp run generate         # regenerate package inputs and registries
 pnpm exec vp run validate:shadcn  # schema and policy checks on the hosted registry
 pnpm test                         # type check plus unit, build, and registry tests
