@@ -149,7 +149,7 @@ export { StatusIndicator } from './ui/status-indicator';
 export type { StatusIndicatorRootProps } from './ui/status-indicator/status-indicator-root';
 export type { StatusIndicatorValueProps } from './ui/status-indicator/status-indicator-value';
 export { Thumbnail } from './ui/thumbnail';
-export type { ThumbnailImgProps } from './ui/thumbnail/thumbnail-img';
+export type { ThumbnailImageProps } from './ui/thumbnail/thumbnail-image';
 export type { ThumbnailRootProps } from './ui/thumbnail/thumbnail-root';
 export { Time } from './ui/time';
 export { TimeSlider } from './ui/time-slider';

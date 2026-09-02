@@ -18,7 +18,7 @@ export default function TextTrackUsage() {
           <track kind="metadata" label="thumbnails" src="{{VJS10_DEMO_STORYBOARD_VTT}}" default />
         </Video>
         <Thumbnail.Root className="media-thumbnail" time={12}>
-          <Thumbnail.Img className="media-thumbnail-img" />
+          <Thumbnail.Image className="media-thumbnail-image" />
         </Thumbnail.Root>
       </Container>
     </Player>

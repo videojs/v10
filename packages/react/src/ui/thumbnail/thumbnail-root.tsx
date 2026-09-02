@@ -15,7 +15,7 @@ export interface ThumbnailRootProps extends UIComponentProps<'div', ThumbnailCor
  * Resolves, sizes, and clips a thumbnail for a point in time.
  *
  * Renders a `div` and exposes `data-hidden`, `data-loading`, and `data-error` for styling every layer in the preview.
- * Render `Thumbnail.Img` inside it for the image the root controls and measures.
+ * Render `Thumbnail.Image` inside it for the image the root controls and measures.
  */
 export const ThumbnailRoot = forwardRef(function ThumbnailRoot(
   componentProps: ThumbnailRootProps,

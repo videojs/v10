@@ -23,16 +23,16 @@ function wrapper(thumbnailTrackCrossOrigin: MediaTextTrackState['thumbnailTrackC
 
 function DefaultThumbnail({
   rootProps = {},
-  imgProps = {},
+  imageProps = {},
   children,
 }: {
   rootProps?: Thumbnail.RootProps | undefined;
-  imgProps?: Thumbnail.ImgProps | undefined;
+  imageProps?: Thumbnail.ImageProps | undefined;
   children?: ReactNode | undefined;
 }) {
   return (
     <Thumbnail.Root data-testid="thumbnail" {...rootProps}>
-      <Thumbnail.Img data-testid="image" {...imgProps} />
+      <Thumbnail.Image data-testid="image" {...imageProps} />
       {children}
     </Thumbnail.Root>
   );
@@ -41,10 +41,10 @@ function DefaultThumbnail({
 /** Render a thumbnail and return the `crossorigin` attribute on its image. */
 function renderCrossOrigin(
   thumbnailTrackCrossOrigin: MediaTextTrackState['thumbnailTrackCrossOrigin'],
-  imgProps: Thumbnail.ImgProps = {},
+  imageProps: Thumbnail.ImageProps = {},
   rootProps: Thumbnail.RootProps = {}
 ): string | null {
-  const { container } = render(<DefaultThumbnail rootProps={rootProps} imgProps={imgProps} />, {
+  const { container } = render(<DefaultThumbnail rootProps={rootProps} imageProps={imageProps} />, {
     wrapper: wrapper(thumbnailTrackCrossOrigin),
   });
 
@@ -90,7 +90,7 @@ describe('Thumbnail', () => {
 
     render(
       <Thumbnail.Root ref={rootRef}>
-        <Thumbnail.Img ref={imgRef} />
+        <Thumbnail.Image ref={imgRef} />
       </Thumbnail.Root>,
       { wrapper: wrapper() }
     );
@@ -102,7 +102,7 @@ describe('Thumbnail', () => {
   it('supports an image render override without replacing the root', () => {
     const { getByTestId } = render(
       <Thumbnail.Root data-testid="thumbnail" thumbnails={[{ url: 'thumbnail.jpg', startTime: 0 }]}>
-        <Thumbnail.Img render={(props) => <img {...props} data-testid="custom-image" />} />
+        <Thumbnail.Image render={(props) => <img {...props} data-testid="custom-image" />} />
       </Thumbnail.Root>,
       { wrapper: wrapper() }
     );
@@ -112,7 +112,7 @@ describe('Thumbnail', () => {
   });
 
   it('requires the image to be inside a root', () => {
-    expect(() => render(<Thumbnail.Img />)).toThrow(
+    expect(() => render(<Thumbnail.Image />)).toThrow(
       'Thumbnail compound components must be used within a Thumbnail.Root'
     );
   });

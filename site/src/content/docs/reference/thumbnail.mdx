@@ -53,7 +53,7 @@ That track is cross-origin, and a cross-origin `<track>` only loads when the med
     />
   </Video>
   <Thumbnail.Root time={12}>
-    <Thumbnail.Img />
+    <Thumbnail.Image />
   </Thumbnail.Root>
   ```
 </FrameworkCase>
@@ -83,7 +83,7 @@ A same-origin track needs none of this.
 <FrameworkCase frameworks={["react"]}>
   ```tsx
   <Thumbnail.Root time={12}>
-    <Thumbnail.Img />
+    <Thumbnail.Image />
   </Thumbnail.Root>
   ```
 </FrameworkCase>
@@ -96,7 +96,7 @@ A same-origin track needs none of this.
 
 ## Behavior
 
-`Thumbnail.Root` resolves an image for the current `time`. `Thumbnail.Img` renders the selected image and reports its loading lifecycle to the root.
+`Thumbnail.Root` resolves an image for the current `time`. `Thumbnail.Image` renders the selected image and reports its loading lifecycle to the root.
 
 Supported source formats:
 
@@ -117,7 +117,7 @@ Opt out to fetch them without CORS:
 <FrameworkCase frameworks={["react"]}>
 ```tsx
 <Thumbnail.Root time={12}>
-  <Thumbnail.Img crossOrigin={null} />
+  <Thumbnail.Image crossOrigin={null} />
 </Thumbnail.Root>
 ```
 </FrameworkCase>
@@ -156,11 +156,11 @@ media-thumbnail[data-error] {
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
-React renders a root `<div>` around an `<img>`. State attributes belong to `Thumbnail.Root`, while image attributes and `render` belong to `Thumbnail.Img`:
+React renders a root `<div>` around an `<img>`. State attributes belong to `Thumbnail.Root`, while image attributes and `render` belong to `Thumbnail.Image`:
 
 ```tsx
 <Thumbnail.Root className="media-thumbnail" time={12}>
-  <Thumbnail.Img className="media-thumbnail-img" loading="eager" />
+  <Thumbnail.Image className="media-thumbnail-image" loading="eager" />
   <div className="media-thumbnail-overlay" aria-hidden />
 </Thumbnail.Root>
 ```

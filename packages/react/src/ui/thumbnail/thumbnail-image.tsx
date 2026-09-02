@@ -1,4 +1,4 @@
-import type { ThumbnailCore, ThumbnailFetchPriority, ThumbnailImageProps } from '@videojs/core';
+import type { ThumbnailCore, ThumbnailFetchPriority } from '@videojs/core';
 import type { MediaTextTrackState } from '@videojs/media';
 import { isNull, isUndefined } from '@videojs/utils/predicate';
 import type { ForwardedRef } from 'react';
@@ -8,20 +8,20 @@ import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
 import { useThumbnailContext } from './context';
 
-export interface ThumbnailImgProps extends Omit<
+export interface ThumbnailImageProps extends Omit<
   UIComponentProps<'img', ThumbnailCore.State>,
   'crossOrigin' | 'fetchPriority' | 'loading' | 'src'
 > {
   /** CORS setting for the selected image. Leave unset to follow the media element, or pass `null` to opt out. */
-  crossOrigin?: ThumbnailImageProps['crossOrigin'];
+  crossOrigin?: ThumbnailCore.ImageProps['crossOrigin'];
   /** Image loading strategy. */
-  loading?: ThumbnailImageProps['loading'];
+  loading?: ThumbnailCore.ImageProps['loading'];
   /** Image fetch priority hint. */
-  fetchPriority?: ThumbnailImageProps['fetchPriority'];
+  fetchPriority?: ThumbnailCore.ImageProps['fetchPriority'];
 }
 
 function resolveCrossOrigin(
-  explicit: ThumbnailImageProps['crossOrigin'],
+  explicit: ThumbnailCore.ImageProps['crossOrigin'],
   inherits: boolean,
   inherited: MediaTextTrackState['thumbnailTrackCrossOrigin'] | undefined
 ) {
@@ -38,8 +38,8 @@ function resolveCrossOrigin(
  * Renders an `img`, so native image attributes and the `render` escape hatch remain available without replacing the
  * root that owns thumbnail state.
  */
-export const ThumbnailImg = forwardRef(function ThumbnailImg(
-  componentProps: ThumbnailImgProps,
+export const ThumbnailImage = forwardRef(function ThumbnailImage(
+  componentProps: ThumbnailImageProps,
   forwardedRef: ForwardedRef<HTMLImageElement>
 ) {
   const { render, className, style, crossOrigin, loading, fetchPriority, ...elementProps } = componentProps;
@@ -87,6 +87,6 @@ export const ThumbnailImg = forwardRef(function ThumbnailImg(
   );
 });
 
-export namespace ThumbnailImg {
-  export type Props = ThumbnailImgProps;
+export namespace ThumbnailImage {
+  export type Props = ThumbnailImageProps;
 }
