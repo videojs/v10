@@ -19,6 +19,7 @@ const captions = new URL('./captions.vtt', import.meta.url).href;
 const preview = readPreviewOptions();
 
 document.documentElement.dataset.colorScheme = preview.colorScheme;
+document.documentElement.dir = preview.direction;
 
 const variants: readonly PreviewOptions[] = preview.compare
   ? [

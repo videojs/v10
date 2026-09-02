@@ -55,6 +55,10 @@ function createOptions(preview: PreviewOptions): HTMLFormElement {
       ['single', 'Single track'],
       ['multiple', 'Multiple tracks'],
     ]),
+    createSelect('dir', 'Direction', preview.direction, [
+      ['ltr', 'Left to right'],
+      ['rtl', 'Right to left'],
+    ]),
     createSelect('compare', 'Compare', preview.compare ? 'styles' : 'off', [
       ['off', 'Off'],
       ['styles', 'CSS vs Tailwind'],

@@ -12,7 +12,7 @@ Follow one skin from source to output.
 2. **Components pair markup with styles.** [`src/components/`](./src/components) holds the target-neutral UI. Every `x.tsx` sits beside an `x.styles.ts` that lists Tailwind classes per rule, with `default` and `minimal` variants where the themes differ. Skin-only overrides live beside the skin, for example [`src/skins/default-video/controls.styles.ts`](./src/skins/default-video/controls.styles.ts).
 3. **Classes resolve through tokens.** Style modules read `--media-*` tokens through Tailwind theme keys such as `duration-media-fast`, never literal values that vary per theme. Tokens are declared in [`src/styles/themes/`](./src/styles/themes) and classified in [`src/styles/vars.ts`](./src/styles/vars.ts).
 4. **The build lowers everything per target.** The [vjsc](../vjsc) compiler, configured in [`build/`](./build), turns each module into React and HTML implementations, compiles class lists into scoped CSS for the CSS targets, and emits Shadcn registry items.
-5. **The playground shows the result.** [`dev/`](./dev) renders every skin across framework, styling, width, and color scheme. Add `compare=styles` to the URL to see the CSS and Tailwind variants together, and use the copy button for a report with environment details.
+5. **The playground shows the result.** [`dev/`](./dev) renders every skin across framework, styling, width, and color scheme. Add `compare=styles` to the URL to see the CSS and Tailwind variants together, `dir=rtl` to flip the text direction, and use the copy button for a report with environment details.
 
 ## Where things live
 
