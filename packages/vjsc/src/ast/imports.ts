@@ -11,9 +11,14 @@ export interface ModuleImport {
 export interface ModuleImportsOptions {
   readonly collisionSuffix?: string | undefined;
   readonly defaultImportName?: string | undefined;
+  /**
+   * Whether the collection emits `import type` statements. Type collections may reuse any existing import, including
+   * type-only ones, because a value import also provides its type.
+   */
+  readonly kind?: 'value' | 'type' | undefined;
 }
 
-/** Collect collision-safe runtime imports and insert them together. */
+/** Collect collision-safe runtime or type-only imports and insert them together. */
 export class ModuleImports {
   readonly #ast: Program;
   readonly #magicString: RolldownMagicString;
@@ -31,7 +36,9 @@ export class ModuleImports {
     this.#usedNames = collectIdentifierNames(ast);
 
     for (const statement of ast.body) {
-      if (statement.type !== 'ImportDeclaration' || statement.importKind === 'type') continue;
+      if (statement.type !== 'ImportDeclaration') continue;
+
+      if (statement.importKind === 'type' && options.kind !== 'type') continue;
 
       this.#collectExisting(statement);
     }
@@ -76,8 +83,9 @@ export class ModuleImports {
         const specifiers = [...imports].map(([imported, local]) =>
           imported === local ? imported : `${imported} as ${local}`
         );
+        const keyword = this.#options.kind === 'type' ? 'import type' : 'import';
 
-        return `import { ${specifiers.join(', ')} } from ${JSON.stringify(source)};`;
+        return `${keyword} { ${specifiers.join(', ')} } from ${JSON.stringify(source)};`;
       }),
       ...this.#statements,
     ];
@@ -89,7 +97,9 @@ export class ModuleImports {
     const source = declaration.source.value;
 
     for (const specifier of declaration.specifiers) {
-      if (specifier.type !== 'ImportSpecifier' || specifier.importKind === 'type') continue;
+      if (specifier.type !== 'ImportSpecifier') continue;
+
+      if (specifier.importKind === 'type' && this.#options.kind !== 'type') continue;
 
       const imported = specifier.imported.type === 'Identifier' ? specifier.imported.name : specifier.imported.value;
 

@@ -11,7 +11,6 @@ import { walk } from 'oxc-walker';
 import type { Plugin, RolldownMagicString } from 'rolldown';
 
 import { createSourceText, jsxNamePath, type ModuleImports, renderSourceRange, type SourceEdit } from '../ast';
-import { collectIdentifierNames, insertModuleImports } from '../ast/imports';
 import {
   boundCanonicalPath,
   type CanonicalBindings,
@@ -32,7 +31,7 @@ import {
   type TargetPropsReference,
   type TargetReference,
 } from '../target/definition';
-import { createTargetModuleImports } from '../target/module-imports';
+import { createTargetModuleImports, createTargetTypeImports } from '../target/module-imports';
 import { SCRIPT_MODULE_ID } from '../utils/module-id';
 import { type ComponentTargetPluginOptions, selectComponentTargets } from './component-target';
 
@@ -67,7 +66,7 @@ export function targetTypePlugin(options: ComponentTargetPluginOptions): Plugin 
         if (bindings.sourceTypes.size === 0) return null;
 
         const imports = createTargetModuleImports(transform.ast, transform.magicString);
-        const typeImports = new TargetTypeImports(transform.ast, transform.magicString);
+        const typeImports = createTargetTypeImports(transform.ast, transform.magicString);
         const sourceInterfaces = collectSourceInterfaces(transform.ast);
         let changed = transformSourceTypes(
           code,
@@ -181,7 +180,7 @@ function transformSourceTypes(
   bindings: TypeBindings,
   targets: readonly ComponentTarget[],
   imports: ModuleImports,
-  typeImports: TargetTypeImports,
+  typeImports: ModuleImports,
   magicString: RolldownMagicString
 ): boolean {
   let changed = false;
@@ -311,7 +310,7 @@ function rewriteSourceTypeText(
   bindings: TypeBindings,
   targets: readonly ComponentTarget[],
   imports: ModuleImports,
-  typeImports: TargetTypeImports
+  typeImports: ModuleImports
 ): string {
   const edits: SourceEdit[] = [];
 
@@ -352,7 +351,7 @@ function propsOfType(
   bindings: TypeBindings,
   targets: readonly ComponentTarget[],
   imports: ModuleImports,
-  typeImports: TargetTypeImports
+  typeImports: ModuleImports
 ): string | undefined {
   if (type?.type !== 'TSTypeQuery') return undefined;
 
@@ -451,7 +450,7 @@ function openingTarget(
 function targetProps(
   resolved: { readonly target: ComponentTarget; readonly element: TargetElement },
   imports: ModuleImports,
-  typeImports: TargetTypeImports
+  typeImports: ModuleImports
 ): ResolvedProps | undefined {
   return targetReferenceProps(resolved.element[TARGET_ELEMENT], resolved.target, imports, typeImports, new Set());
 }
@@ -460,7 +459,7 @@ function targetReferenceProps(
   reference: TargetReference,
   target: ComponentTarget,
   imports: ModuleImports,
-  typeImports: TargetTypeImports,
+  typeImports: ModuleImports,
   seen: Set<TargetReference>
 ): ResolvedProps | undefined {
   if (seen.has(reference)) throw new Error('vjsc/target: component target references form a cycle.');
@@ -486,7 +485,7 @@ function renderPropsReference(
   reference: Exclude<TargetReference, { kind: 'component' }>,
   props: TargetPropsReference,
   imports: ModuleImports,
-  typeImports: TargetTypeImports
+  typeImports: ModuleImports
 ): string {
   let local: string;
 
@@ -521,77 +520,4 @@ function sameTargetElement(
   right: { readonly target: ComponentTarget; readonly element: TargetElement }
 ): boolean {
   return left.target === right.target && left.element[TARGET_ELEMENT] === right.element[TARGET_ELEMENT];
-}
-
-class TargetTypeImports {
-  readonly #ast: Program;
-  readonly #magicString: RolldownMagicString;
-  readonly #used: Set<string>;
-  readonly #existing = new Map<string, string>();
-  readonly #requested = new Map<string, Map<string, string>>();
-
-  constructor(ast: Program, magicString: RolldownMagicString) {
-    this.#ast = ast;
-    this.#magicString = magicString;
-    this.#used = collectIdentifierNames(ast);
-
-    for (const statement of ast.body) {
-      if (statement.type !== 'ImportDeclaration') continue;
-
-      for (const specifier of statement.specifiers) {
-        if (specifier.type !== 'ImportSpecifier') continue;
-
-        this.#existing.set(`${statement.source.value}\0${importedName(specifier)}`, specifier.local.name);
-      }
-    }
-  }
-
-  reference(target: TargetImport): string {
-    const key = `${target.from}\0${target.name}`;
-    let local = this.#existing.get(key);
-    if (local) return target.path?.length ? `${local}.${target.path.join('.')}` : local;
-
-    let requested = this.#requested.get(target.from);
-
-    if (!requested) {
-      requested = new Map();
-      this.#requested.set(target.from, requested);
-    }
-
-    local = requested.get(target.name);
-
-    if (!local) {
-      local = this.#allocate(target.name);
-      requested.set(target.name, local);
-    }
-
-    return target.path?.length ? `${local}.${target.path.join('.')}` : local;
-  }
-
-  commit(): void {
-    const statements = [...this.#requested].map(([source, imports]) => {
-      const specifiers = [...imports].map(([imported, local]) =>
-        imported === local ? imported : `${imported} as ${local}`
-      );
-
-      return `import type { ${specifiers.join(', ')} } from ${JSON.stringify(source)};`;
-    });
-
-    insertModuleImports(this.#ast, this.#magicString, statements);
-  }
-
-  #allocate(preferred: string): string {
-    if (!this.#used.has(preferred)) {
-      this.#used.add(preferred);
-      return preferred;
-    }
-
-    let suffix = 2;
-    let candidate = `${preferred}Type`;
-
-    while (this.#used.has(candidate)) candidate = `${preferred}Type${suffix++}`;
-
-    this.#used.add(candidate);
-    return candidate;
-  }
 }
