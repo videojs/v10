@@ -2,6 +2,7 @@ export {
   type VjscComponentSchemaOptions,
   vjscComponentSchemaPlugin,
   type EntriesOptions,
+  type MetaOptions,
   type SourceEntry,
   type TransformModule,
   type VjscPluginOptions,

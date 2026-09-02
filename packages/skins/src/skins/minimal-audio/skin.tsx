@@ -2,7 +2,7 @@ import { type PropsOf, Slot, type VjscNode } from 'vjsc/components';
 
 import { StatusAnnouncer } from '../../components/feedback/status-announcer';
 import { Container } from '../../components/layout/container';
-import type { SkinMeta } from '../../meta';
+import type { SkinDescription } from '../../meta';
 import { AudioErrorDialog } from '../audio/error-dialog';
 import audioSkinStyles from '../audio/skin.styles';
 import { PlaybackHotkeys } from '../shared/playback-hotkeys';
@@ -25,8 +25,6 @@ export function MinimalAudioSkin({ children, className, ...props }: MinimalAudio
 }
 
 export const meta = {
-  name: 'minimal-audio',
-  type: 'skin',
   title: 'Minimal Audio Skin',
   description: 'A compact on-demand audio skin with responsive time, volume, speed, and feedback controls.',
-} as const satisfies SkinMeta;
+} as const satisfies SkinDescription;

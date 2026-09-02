@@ -2,7 +2,7 @@ import { type PropsOf, Slot, type VjscNode } from 'vjsc/components';
 
 import { StatusAnnouncer } from '../../components/feedback/status-announcer';
 import { Container } from '../../components/layout/container';
-import type { SkinMeta } from '../../meta';
+import type { SkinDescription } from '../../meta';
 import { AudioErrorDialog } from '../audio/error-dialog';
 import audioSkinStyles from '../audio/skin.styles';
 import { LivePlaybackHotkeys } from '../shared/live-playback-hotkeys';
@@ -25,8 +25,6 @@ export function DefaultLiveAudioSkin({ children, className, ...props }: DefaultL
 }
 
 export const meta = {
-  name: 'default-live-audio',
-  type: 'skin',
   title: 'Default Live Audio Skin',
   description: 'A complete live audio skin with play, live-edge, volume, error, and keyboard feedback controls.',
-} as const satisfies SkinMeta;
+} as const satisfies SkinDescription;

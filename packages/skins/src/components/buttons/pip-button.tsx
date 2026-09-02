@@ -3,7 +3,7 @@ import * as $ from '@videojs/core/vjsc';
 import { PipEnterIcon, PipExitIcon } from '@videojs/icons/vjsc';
 import type { Props } from 'vjsc/components';
 
-import type { SkinComponentMeta } from '../../meta';
+import type { SkinComponentDescription } from '../../meta';
 import buttonStyles from '../../styles/buttons/button.styles';
 import styles from '../../styles/buttons/pip-button.styles';
 import { Button } from './button';
@@ -18,8 +18,6 @@ export function PiPButton({ className, ...props }: Props<CoreProps> = {}) {
 }
 
 export const meta = {
-  name: 'pip-button',
-  type: 'component',
   title: 'Picture-in-Picture Button',
   description: 'A state-aware button that enters and exits picture-in-picture.',
-} as const satisfies SkinComponentMeta;
+} as const satisfies SkinComponentDescription;

@@ -4,7 +4,7 @@ import { BufferingIndicator } from '../../components/feedback/buffering-indicato
 import { ErrorDialog } from '../../components/feedback/error-dialog';
 import { Container } from '../../components/layout/container';
 import { Poster } from '../../components/layout/poster';
-import type { SkinMeta } from '../../meta';
+import type { SkinDescription } from '../../meta';
 import { VideoGestures } from '../video/gestures';
 import { VideoHotkeys } from '../video/hotkeys';
 import videoSkinStyles from '../video/skin.styles';
@@ -34,8 +34,6 @@ export function DefaultVideoSkin({ children, className, renderPoster, ...props }
 }
 
 export const meta = {
-  name: 'default-video',
-  type: 'skin',
   title: 'Default Video Skin',
   description: 'A complete on-demand video skin with responsive controls, settings, feedback, and input controls.',
-} as const satisfies SkinMeta;
+} as const satisfies SkinDescription;

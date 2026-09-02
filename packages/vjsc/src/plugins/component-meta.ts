@@ -11,7 +11,7 @@ import { isPlainObject } from '@videojs/utils/predicate';
 import type { Plugin, RolldownMagicString } from 'rolldown';
 
 import type { ComponentMeta } from '../components/meta';
-import { SCRIPT_MODULE_ID } from '../utils/module-id';
+import { parseModuleId, SCRIPT_MODULE_ID, type TransformModule } from '../utils/module-id';
 
 export interface ModuleBuildMeta {
   readonly moduleMeta?: ComponentMeta | undefined;
@@ -45,7 +45,16 @@ interface ExportedMeta {
  *
  * @param exportName - Metadata export to extract. Defaults to `meta`.
  */
-export function componentMetaPlugin(exportName = 'meta'): Plugin {
+export interface ComponentMetaPluginOptions {
+  /** Metadata export to extract. Defaults to `meta`. */
+  readonly exportName?: string | undefined;
+  /** Fields a module's metadata starts from, typically derived from its path, which the authored export may override. */
+  readonly defaults?: ((module: TransformModule) => Readonly<Record<string, unknown>>) | undefined;
+}
+
+export function componentMetaPlugin(options: string | ComponentMetaPluginOptions = {}): Plugin {
+  const { exportName = 'meta', defaults } = typeof options === 'string' ? { exportName: options } : options;
+
   return {
     name: 'vjsc:component-meta',
     transform: {
@@ -54,7 +63,7 @@ export function componentMetaPlugin(exportName = 'meta'): Plugin {
         const exported = findExportedMeta(transform.ast, exportName);
         if (!exported?.declarator.init) return null;
 
-        const moduleMeta = parseComponentMeta(exported.declarator.init, id, exportName);
+        const moduleMeta = parseComponentMeta(exported.declarator.init, id, exportName, defaults?.(parseModuleId(id)));
         const magicString = transform.magicString;
         if (!magicString) throw new Error('vjsc: Rolldown did not provide MagicString to the component metadata pass.');
 
@@ -144,10 +153,18 @@ function removeDeclarator(magicString: RolldownMagicString, exported: ExportedMe
   }
 }
 
-function parseComponentMeta(expression: Expression, id: string, exportName: string): ComponentMeta {
-  const value = staticValue(expression, id);
+function parseComponentMeta(
+  expression: Expression,
+  id: string,
+  exportName: string,
+  defaults: Readonly<Record<string, unknown>> = {}
+): ComponentMeta {
+  const authored = staticValue(expression, id);
+  if (!isPlainObject(authored)) throw nonStaticMeta(id);
 
-  if (!isPlainObject(value) || typeof value.name !== 'string' || value.name.length === 0) {
+  const value = { ...defaults, ...authored };
+
+  if (typeof value.name !== 'string' || value.name.length === 0) {
     throw new Error(`Component metadata \`${exportName}\` in ${id} must contain a non-empty literal \`name\`.`);
   }
 

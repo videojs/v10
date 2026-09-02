@@ -4,7 +4,7 @@ import { BufferingIndicator } from '../../components/feedback/buffering-indicato
 import { ErrorDialog } from '../../components/feedback/error-dialog';
 import { Container } from '../../components/layout/container';
 import { Poster } from '../../components/layout/poster';
-import type { SkinMeta } from '../../meta';
+import type { SkinDescription } from '../../meta';
 import { LiveVideoGestures } from '../live-video/gestures';
 import { LiveVideoHotkeys } from '../live-video/hotkeys';
 import { LiveVideoStatusIndicators } from '../live-video/status-indicators';
@@ -32,8 +32,6 @@ export function MinimalLiveVideoSkin({ children, className, renderPoster, ...pro
 }
 
 export const meta = {
-  name: 'minimal-live-video',
-  type: 'skin',
   title: 'Minimal Live Video Skin',
   description: 'A compact live video skin with live-edge, captions, remote playback, feedback, and input controls.',
-} as const satisfies SkinMeta;
+} as const satisfies SkinDescription;

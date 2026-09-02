@@ -2,7 +2,7 @@ import { captionsText } from '@videojs/core/i18n/text/menu';
 import { CaptionsOffIcon } from '@videojs/icons/vjsc';
 import { type Props, Template, Text } from 'vjsc/components';
 
-import type { SkinComponentMeta } from '../../meta';
+import type { SkinComponentDescription } from '../../meta';
 import styles from '../../styles/menus/menu.styles';
 import { MenuChevron } from './menu-chevron';
 import { RadioItem } from './radio-item';
@@ -41,8 +41,6 @@ import type { MenuProps } from '@videojs/core';
 import * as $ from '@videojs/core/vjsc';
 
 export const meta = {
-  name: 'captions-submenu',
-  type: 'component',
   title: 'Captions Submenu',
   description: 'A submenu for selecting captions or turning them off.',
-} as const satisfies SkinComponentMeta;
+} as const satisfies SkinComponentDescription;

@@ -3,7 +3,7 @@ import * as $ from '@videojs/core/vjsc';
 import { ChevronIcon } from '@videojs/icons/vjsc';
 import type { Props } from 'vjsc/components';
 
-import type { SkinComponentMeta } from '../../meta';
+import type { SkinComponentDescription } from '../../meta';
 import styles from '../../styles/feedback/seek-indicator.styles';
 
 export function SeekIndicator({ className, ...props }: Props<CoreProps> = {}) {
@@ -16,8 +16,6 @@ export function SeekIndicator({ className, ...props }: Props<CoreProps> = {}) {
 }
 
 export const meta = {
-  name: 'seek-indicator',
-  type: 'component',
   title: 'Seek Indicator',
   description: 'Visual feedback for forward and backward seek actions.',
-} as const satisfies SkinComponentMeta;
+} as const satisfies SkinComponentDescription;

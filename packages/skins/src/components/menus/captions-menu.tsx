@@ -2,7 +2,7 @@ import type { MenuProps } from '@videojs/core';
 import * as $ from '@videojs/core/vjsc';
 import { type Props, type PropsOf, Template } from 'vjsc/components';
 
-import type { SkinComponentMeta } from '../../meta';
+import type { SkinComponentDescription } from '../../meta';
 import styles from '../../styles/menus/menu.styles';
 import popupStyles from '../../styles/popups/popup.styles';
 import { ButtonTooltip } from '../buttons/button-tooltip';
@@ -37,8 +37,6 @@ export function CaptionsMenu({ className, ...props }: Props<CaptionsMenuProps> =
 }
 
 export const meta = {
-  name: 'captions-menu',
-  type: 'component',
   title: 'Captions Menu',
   description: 'A captions button and popup for selecting a text track.',
-} as const satisfies SkinComponentMeta;
+} as const satisfies SkinComponentDescription;

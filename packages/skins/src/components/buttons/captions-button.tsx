@@ -3,7 +3,7 @@ import * as $ from '@videojs/core/vjsc';
 import { CaptionsOffIcon, CaptionsOnIcon } from '@videojs/icons/vjsc';
 import type { Props } from 'vjsc/components';
 
-import type { SkinComponentMeta } from '../../meta';
+import type { SkinComponentDescription } from '../../meta';
 import buttonStyles from '../../styles/buttons/button.styles';
 import styles from '../../styles/buttons/captions-button.styles';
 import { Button } from './button';
@@ -18,8 +18,6 @@ export function CaptionsButton({ className, ...props }: Props<CoreProps> = {}) {
 }
 
 export const meta = {
-  name: 'captions-button',
-  type: 'component',
   title: 'Captions Button',
   description: 'A state-aware button that toggles captions and subtitles.',
-} as const satisfies SkinComponentMeta;
+} as const satisfies SkinComponentDescription;

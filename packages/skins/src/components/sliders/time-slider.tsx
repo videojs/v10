@@ -3,7 +3,7 @@ import * as $ from '@videojs/core/vjsc';
 import { SpinnerIcon } from '@videojs/icons/vjsc';
 import { Box, type Props, Template } from 'vjsc/components';
 
-import type { SkinComponentMeta } from '../../meta';
+import type { SkinComponentDescription } from '../../meta';
 import popupStyles from '../../styles/popups/popup.styles';
 import sliderStyles from '../../styles/sliders/slider.styles';
 import thumbnailStyles from '../../styles/sliders/thumbnail.styles';
@@ -41,8 +41,6 @@ export function TimeSlider({ className, previewOverflow = 'visible', ...props }:
 }
 
 export const meta = {
-  name: 'time-slider',
-  type: 'component',
   title: 'Time Slider',
   description: 'A playback timeline for seeking, with current and buffered progress plus time and thumbnail previews.',
-} as const satisfies SkinComponentMeta;
+} as const satisfies SkinComponentDescription;

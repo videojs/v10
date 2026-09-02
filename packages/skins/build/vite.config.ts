@@ -4,7 +4,14 @@ import { defineConfig } from 'vite-plus';
 import type { UserConfig as PackUserConfig } from 'vite-plus/pack';
 
 import { vjscPlugin, vjscRegistryPlugin } from '../../vjsc/src/plugins/index.ts';
-import { packageDir, resolveBuildComponents, resolveBuildStyles, skinEntries, skinUtils } from './config.ts';
+import {
+  packageDir,
+  resolveBuildComponents,
+  resolveBuildStyles,
+  skinEntries,
+  skinMetaDefaults,
+  skinUtils,
+} from './config.ts';
 import { packageSkinsPlugin } from './packages/plugin.ts';
 import { formatSource } from './registry/format.ts';
 import { registryItems } from './registry/items/index.ts';
@@ -39,6 +46,7 @@ export const skinBuildConfig: PackUserConfig = {
         components: resolveBuildComponents,
         styles: resolveBuildStyles,
       },
+      meta: { defaults: skinMetaDefaults },
     }),
     ...registryTargets.map((target) =>
       vjscRegistryPlugin({

@@ -12,7 +12,7 @@ import {
 } from '@videojs/icons/vjsc';
 import { Box, type Props } from 'vjsc/components';
 
-import type { SkinComponentMeta } from '../../meta';
+import type { SkinComponentDescription } from '../../meta';
 import indicatorStyles from '../../styles/feedback/indicator.styles';
 import playbackStyles from '../../styles/feedback/playback-status-indicator.styles';
 import styles from '../../styles/feedback/status-indicator.styles';
@@ -51,8 +51,6 @@ export function PlaybackStatusIndicator({ className, ...props }: Props<Omit<Core
 }
 
 export const meta = {
-  name: 'status-indicator',
-  type: 'component',
   title: 'Status Indicator',
   description: 'Visual feedback for captions, fullscreen, picture-in-picture, and playback actions.',
-} as const satisfies SkinComponentMeta;
+} as const satisfies SkinComponentDescription;

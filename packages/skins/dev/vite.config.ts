@@ -8,6 +8,7 @@ import { defineConfig } from 'vite-plus';
 
 import { iconElementSourcePlugin } from '../../icons/vjsc/vite.ts';
 import { vjscPlugin } from '../../vjsc/src/vite/index.ts';
+import { skinMetaDefaults } from '../build/config.ts';
 import { resolveSkinComponents, resolveSkinStyles } from '../build/transform.ts';
 
 const packageDir = resolve(import.meta.dirname, '..');
@@ -39,6 +40,7 @@ export default defineConfig({
         components: resolveSkinComponents,
         styles: resolveSkinStyles,
       },
+      meta: { defaults: skinMetaDefaults },
       candidates: true,
     }),
     tailwindcss(),

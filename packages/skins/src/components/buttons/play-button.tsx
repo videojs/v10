@@ -3,7 +3,7 @@ import * as $ from '@videojs/core/vjsc';
 import { PauseIcon, PlayIcon, RestartIcon } from '@videojs/icons/vjsc';
 import type { Props } from 'vjsc/components';
 
-import type { SkinComponentMeta } from '../../meta';
+import type { SkinComponentDescription } from '../../meta';
 import buttonStyles from '../../styles/buttons/button.styles';
 import styles from '../../styles/buttons/play-button.styles';
 import { Button } from './button';
@@ -19,8 +19,6 @@ export function PlayButton({ className, ...props }: Props<CoreProps> = {}) {
 }
 
 export const meta = {
-  name: 'play-button',
-  type: 'component',
   title: 'Play Button',
   description: 'A three-state button that plays, pauses, or restarts media with matching icons.',
-} as const satisfies SkinComponentMeta;
+} as const satisfies SkinComponentDescription;

@@ -1,7 +1,14 @@
+import { basename } from 'node:path';
+
 import { type OutputChunk, type Plugin, rolldown } from 'rolldown';
 import { describe, expect, it } from 'vite-plus/test';
 
-import { componentMetaPlugin, readComponentMeta, readComponentSource } from '../component-meta';
+import {
+  type ComponentMetaPluginOptions,
+  componentMetaPlugin,
+  readComponentMeta,
+  readComponentSource,
+} from '../component-meta';
 import { componentSourcePlugin } from './helpers/component-source';
 
 const MODULE_ID = '\0fixture.tsx?target=react';
@@ -24,6 +31,14 @@ describe('componentMetaPlugin', () => {
     expect(result.code).toContain('retained');
   });
 
+  it('starts from path-derived defaults that the authored export may override', async () => {
+    const result = await build(`export const meta = { title: 'Poster' } as const;`, {
+      defaults: (module) => ({ name: basename(module.filename, '.tsx').replace(/^\0/, ''), type: 'component' }),
+    });
+
+    expect(readComponentMeta(result.meta)).toEqual({ name: 'fixture', type: 'component', title: 'Poster' });
+  });
+
   it('rejects metadata that requires evaluation', async () => {
     await expect(build(`const name = 'poster'; export const meta = { name };`)).rejects.toThrow(
       'must contain only static literal values'
@@ -31,7 +46,10 @@ describe('componentMetaPlugin', () => {
   });
 });
 
-async function build(source: string): Promise<{ code: string; meta: unknown }> {
+async function build(
+  source: string,
+  options: ComponentMetaPluginOptions = {}
+): Promise<{ code: string; meta: unknown }> {
   let meta: unknown;
   const inspect: Plugin = {
     name: 'fixture:inspect',
@@ -42,7 +60,7 @@ async function build(source: string): Promise<{ code: string; meta: unknown }> {
   const bundle = await rolldown({
     input: 'fixture',
     experimental: { nativeMagicString: true },
-    plugins: [fixturePlugin(source), componentMetaPlugin(), componentSourcePlugin(), inspect],
+    plugins: [fixturePlugin(source), componentMetaPlugin(options), componentSourcePlugin(), inspect],
   });
   const output = await bundle.generate({ format: 'es' });
   const chunk = output.output.find((item): item is OutputChunk => item.type === 'chunk');

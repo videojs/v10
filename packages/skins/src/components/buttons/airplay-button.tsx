@@ -3,7 +3,7 @@ import * as $ from '@videojs/core/vjsc';
 import { AirPlayEnterIcon, AirPlayExitIcon } from '@videojs/icons/vjsc';
 import type { Props } from 'vjsc/components';
 
-import type { SkinComponentMeta } from '../../meta';
+import type { SkinComponentDescription } from '../../meta';
 import styles from '../../styles/buttons/airplay-button.styles';
 import buttonStyles from '../../styles/buttons/button.styles';
 import { Button } from './button';
@@ -18,8 +18,6 @@ export function AirPlayButton({ className, ...props }: Props<CoreProps> = {}) {
 }
 
 export const meta = {
-  name: 'airplay-button',
-  type: 'component',
   title: 'AirPlay Button',
   description: 'A state-aware button that starts and stops AirPlay playback.',
-} as const satisfies SkinComponentMeta;
+} as const satisfies SkinComponentDescription;

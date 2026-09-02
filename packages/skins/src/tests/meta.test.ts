@@ -1,29 +1,19 @@
+import { readdirSync } from 'node:fs';
+import { resolve } from 'node:path';
+
 import { describe, expect, it } from 'vite-plus/test';
 
-import { type SkinMeta, skinStyles } from '../meta';
-import { meta as defaultAudio } from '../skins/default-audio/skin';
-import { meta as defaultLiveAudio } from '../skins/default-live-audio/skin';
-import { meta as defaultLiveVideo } from '../skins/default-live-video/skin';
-import { meta as defaultVideo } from '../skins/default-video/skin';
-import { meta as minimalAudio } from '../skins/minimal-audio/skin';
-import { meta as minimalLiveAudio } from '../skins/minimal-live-audio/skin';
-import { meta as minimalLiveVideo } from '../skins/minimal-live-video/skin';
-import { meta as minimalVideo } from '../skins/minimal-video/skin';
+import { skinStyles } from '../meta';
 
-const published: readonly SkinMeta[] = [
-  defaultVideo,
-  minimalVideo,
-  defaultLiveVideo,
-  minimalLiveVideo,
-  defaultLiveAudio,
-  minimalLiveAudio,
-  defaultAudio,
-  minimalAudio,
-];
+const skinsDir = resolve(import.meta.dirname, '../skins');
+const skinDirectories = readdirSync(skinsDir, { withFileTypes: true })
+  .filter((entry) => entry.isDirectory() && readdirSync(resolve(skinsDir, entry.name)).includes('skin.tsx'))
+  .map((entry) => entry.name)
+  .sort();
 
 describe('skinStyles', () => {
-  it('describes exactly the published skins', () => {
-    expect(Object.keys(skinStyles).sort()).toEqual(published.map((meta) => meta.name).sort());
+  it('describes exactly the published skin directories', () => {
+    expect(Object.keys(skinStyles).sort()).toEqual(skinDirectories);
   });
 
   it('derives each scope from its theme and preset', () => {

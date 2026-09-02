@@ -2,6 +2,7 @@ export { type VjscComponentSchemaOptions, vjscComponentSchemaPlugin } from './co
 export { type VjscRegistryOptions, vjscRegistryPlugin } from './registry';
 export {
   type EntriesOptions,
+  type MetaOptions,
   type SourceEntry,
   type VjscPluginOptions,
   vjscPlugin,

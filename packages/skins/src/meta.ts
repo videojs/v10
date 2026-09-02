@@ -21,6 +21,12 @@ export interface SkinStyle {
 
 export type SkinModuleMeta = SkinComponentMeta | SkinMeta;
 
+/** What a component module authors: `name` and `type` come from its path at build time. */
+export type SkinComponentDescription = Pick<SkinComponentMeta, 'title' | 'description'>;
+
+/** What a skin module authors: `name` and `type` come from its path at build time. */
+export type SkinDescription = Pick<SkinMeta, 'title' | 'description'>;
+
 export const skinStyles = {
   'default-video': {
     scope: '.media-skin[data-theme="default"][data-preset="video"]',

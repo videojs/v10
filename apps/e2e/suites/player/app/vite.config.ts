@@ -5,6 +5,7 @@ import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite-plus';
 import { vjscPlugin } from 'vjsc/vite';
 
+import { skinMetaDefaults } from '../../../../../packages/skins/build/config.ts';
 import { resolveSkinComponents, resolveSkinStyles } from '../../../../../packages/skins/build/transform.ts';
 
 const packageDir = import.meta.dirname;
@@ -46,7 +47,10 @@ export default defineConfig({
     __DEV__: 'true',
   },
   plugins: [
-    vjscPlugin({ transform: { components: resolveSkinComponents, styles: resolveSkinStyles } }),
+    vjscPlugin({
+      transform: { components: resolveSkinComponents, styles: resolveSkinStyles },
+      meta: { defaults: skinMetaDefaults },
+    }),
     react({ jsxImportSource: 'react' }),
   ],
   resolve: {

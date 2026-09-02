@@ -3,7 +3,7 @@ import * as $ from '@videojs/core/vjsc';
 import { SeekIcon } from '@videojs/icons/vjsc';
 import { Box, type Props, Text } from 'vjsc/components';
 
-import type { SkinComponentMeta } from '../../meta';
+import type { SkinComponentDescription } from '../../meta';
 import buttonStyles from '../../styles/buttons/button.styles';
 import styles from '../../styles/buttons/seek-button.styles';
 import { Button } from './button';
@@ -22,8 +22,6 @@ export function SeekButton({ className, seconds = 10, ...props }: Props<CoreProp
 }
 
 export const meta = {
-  name: 'seek-button',
-  type: 'component',
   title: 'Seek Button',
   description: 'A button that skips playback forward or backward with a direction-aware icon and value.',
-} as const satisfies SkinComponentMeta;
+} as const satisfies SkinComponentDescription;
