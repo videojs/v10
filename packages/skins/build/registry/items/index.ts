@@ -1,50 +1,9 @@
 import type { VjscRegistryOptions } from '../../../../vjsc/src/shadcn/index.ts';
 import type { SkinModuleMeta } from '../../../src/meta.ts';
-import { skinUtils } from '../../config.ts';
-import { renderHtmlSkins } from '../../packages/html.ts';
-import { parseVariant } from '../../variants.ts';
 import type { RegistryTarget } from '../targets.ts';
-import { componentItem } from './components.ts';
-import { htmlSkinItem, skinItem } from './skins.ts';
-import {
-  isPrivateComponent,
-  privateComponentItem,
-  privateModuleItem,
-  privateModuleName,
-  utilsItem,
-} from './support.ts';
+import { htmlRegistryItems } from './html.ts';
+import { reactRegistryItems } from './react.ts';
 
 export function registryItems(target: RegistryTarget): VjscRegistryOptions<SkinModuleMeta>['items'] {
-  return {
-    resolve({ module }) {
-      if (target.framework === 'html') return null;
-
-      if (module.filename === skinUtils) return utilsItem(target);
-
-      const variant = parseVariant(new URLSearchParams(module.params));
-      if (!variant || variant.target !== target.framework || variant.style !== target.styling) return null;
-
-      const meta = module.meta;
-      if (meta?.type === 'skin') return variant.skin === meta.name ? skinItem(module, meta, target) : null;
-
-      if (meta?.type === 'component') {
-        if (variant.skin !== undefined) return null;
-
-        return isPrivateComponent(meta.name) ? privateComponentItem(meta, target) : componentItem(module, meta, target);
-      }
-
-      if (variant.skin !== undefined) return null;
-
-      const name = privateModuleName(module);
-
-      return name ? privateModuleItem(module, name, target) : null;
-    },
-    async create({ graph }) {
-      if (target.framework !== 'html') return [];
-
-      const skins = await renderHtmlSkins(graph, { styling: target.styling });
-
-      return Promise.all(skins.map((skin) => htmlSkinItem(skin, graph, target)));
-    },
-  };
+  return target.framework === 'html' ? htmlRegistryItems(target) : reactRegistryItems(target);
 }

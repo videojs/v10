@@ -56,8 +56,30 @@ export interface RenderHtmlSkinsOptions {
   readonly styling: 'css' | 'tailwind';
 }
 
-/** Render the complete static markup for every HTML Skin in one styling catalog. */
-export async function renderHtmlSkins(
+/** Renders per finalized module set, so package generation and the registry share one render per build. */
+const renders = new WeakMap<
+  ReadonlyMap<string, GraphModule<SkinModuleMeta>>,
+  Map<string, Promise<RenderedHtmlSkin[]>>
+>();
+
+/** Render the complete static markup for every HTML Skin in one styling catalog, once per build. */
+export function renderHtmlSkins(
+  graph: Graph<SkinModuleMeta>,
+  options: RenderHtmlSkinsOptions
+): Promise<RenderedHtmlSkin[]> {
+  const byStyling = renders.get(graph.modules) ?? new Map<string, Promise<RenderedHtmlSkin[]>>();
+  let rendered = byStyling.get(options.styling);
+
+  if (!rendered) {
+    rendered = renderHtmlSkinsUncached(graph, options);
+    byStyling.set(options.styling, rendered);
+  }
+
+  renders.set(graph.modules, byStyling);
+  return rendered;
+}
+
+async function renderHtmlSkinsUncached(
   graph: Graph<SkinModuleMeta>,
   options: RenderHtmlSkinsOptions
 ): Promise<RenderedHtmlSkin[]> {
