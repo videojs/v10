@@ -18,7 +18,7 @@ const menuItemOption = [
 
 const menuItemHighlight = [
   'media-anchored:data-highlighted:[anchor-name:--media-menu-item-highlight-anchor]',
-  'media-anchored:data-highlighted:bg-transparent',
+  'media-anchored:media-highlighted:bg-transparent',
 ] as const;
 
 const menuHighlight = [

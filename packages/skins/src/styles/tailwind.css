@@ -138,13 +138,15 @@
   }
 }
 
-/* Hovered, focused, expanded, or highlighted control or menu item that is not disabled. Hover needs a hover-capable pointer. */
+/* Hovered, focused, expanded, or highlighted control or menu item that is not disabled. Hover needs a hover-capable pointer.
+   The disabled check sits in :where() so the variant adds no specificity beyond the state itself, which lets a later
+   media-highlighted rule override an earlier one. */
 @custom-variant media-highlighted {
-  &:where(:focus-visible, [aria-expanded="true"], [data-highlighted]):not([aria-disabled="true"]) {
+  &:where(:focus-visible, [aria-expanded="true"], [data-highlighted]):where(:not([aria-disabled="true"])) {
     @slot;
   }
   @media (hover: hover) {
-    &:hover:not([aria-disabled="true"]) {
+    &:hover:where(:not([aria-disabled="true"])) {
       @slot;
     }
   }
