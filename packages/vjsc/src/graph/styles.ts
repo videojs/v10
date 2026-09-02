@@ -36,7 +36,7 @@ export async function bundleStyles<Node extends ModuleMeta>(
   }
 
   if (options.includeAssets !== false) {
-    for (const module of modules) {
+    for (const module of orderByDependencies(modules)) {
       for (const id of module.styles.assets) {
         if (id.endsWith('/base.css')) continue;
 
@@ -53,13 +53,37 @@ export async function bundleStyles<Node extends ModuleMeta>(
     }
   }
 
-  const source = `${[...styles]
-    .sort(([left], [right]) => left.localeCompare(right))
-    .map(([, content]) => content.trim())
+  const source = `${[...styles.values()]
+    .map((content) => content.trim())
     .filter(Boolean)
     .join('\n\n')}\n`;
 
   return mergeStyles(source, `${options.label}.css`);
+}
+
+/** Order modules so dependencies precede their importers and composed styles override the primitives they extend. */
+function orderByDependencies<Node extends ModuleMeta>(modules: readonly GraphModule<Node>[]): GraphModule<Node>[] {
+  const selected = new Map(modules.map((module) => [module.id, module]));
+  const ordered: GraphModule<Node>[] = [];
+  const visited = new Set<string>();
+
+  const visit = (module: GraphModule<Node>): void => {
+    if (visited.has(module.id)) return;
+
+    visited.add(module.id);
+
+    for (const reference of module.imports) {
+      const dependency = reference.resolvedId ? selected.get(reference.resolvedId) : undefined;
+
+      if (dependency) visit(dependency);
+    }
+
+    ordered.push(module);
+  };
+
+  for (const module of modules) visit(module);
+
+  return ordered;
 }
 
 function mergeStyles(source: string, filename: string): string {
