@@ -1508,6 +1508,14 @@ describe('Media element pipeline (end-to-end)', () => {
       ]);
     });
 
+    it('discovers elements built with createMediaElement as well as CustomMediaElement', () => {
+      // SimpleVideo composes through the factory (default target), MixinVideo names its target in the options object,
+      // and ComplexVideo composes through CustomMediaElement directly.
+      expect(findElement('SimpleVideo')!.reference.platforms.html.target).toBe('video');
+      expect(findElement('MixinVideo')!.reference.platforms.html.target).toBe('video');
+      expect(findElement('ComplexVideo')!.reference.platforms.html.target).toBe('video');
+    });
+
     it('does not treat the UI container as a media element', () => {
       expect(findElement('ContainerElement')).toBeUndefined();
     });
