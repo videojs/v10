@@ -3,9 +3,9 @@ import { createDialog, createTransition } from '@videojs/core/dom';
 import { useSnapshot } from '@videojs/store/react';
 import { useLayoutEffect, useRef, useState } from 'react';
 
+import { useCommittedRef } from '../../utils/use-committed-ref';
 import { useDestroy } from '../../utils/use-destroy';
 import { useIsomorphicLayoutEffect } from '../../utils/use-isomorphic-layout-effect';
-import { useLatestRef } from '../../utils/use-latest-ref';
 import { useSafeId } from '../../utils/use-safe-id';
 import type { DialogContextValue } from './context';
 
@@ -31,9 +31,9 @@ export function useDialogRoot({
 }: UseDialogRootOptions): DialogContextValue {
   const isControlled = controlledOpen !== undefined;
   const initialOpenRef = useRef(!isControlled && defaultOpen);
-  const onOpenChangeRef = useLatestRef(onOpenChangeProp);
-  const onOpenChangeCompleteRef = useLatestRef(onOpenChangeCompleteProp);
-  const closeOnEscapeRef = useLatestRef(closeOnEscape);
+  const onOpenChangeRef = useCommittedRef(onOpenChangeProp);
+  const onOpenChangeCompleteRef = useCommittedRef(onOpenChangeCompleteProp);
+  const closeOnEscapeRef = useCommittedRef(closeOnEscape);
 
   const [dialog] = useState(() =>
     createDialog({

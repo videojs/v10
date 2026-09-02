@@ -12,9 +12,9 @@ import { useEffect, useRef, useState } from 'react';
 
 import { useOptionalContainer } from '../../player/context';
 import { useOptionalPopupGroup } from '../../player/popup-group-context';
+import { useCommittedRef } from '../../utils/use-committed-ref';
 import { useDestroy } from '../../utils/use-destroy';
 import { useIsomorphicLayoutEffect } from '../../utils/use-isomorphic-layout-effect';
-import { useLatestRef } from '../../utils/use-latest-ref';
 import { useSafeId } from '../../utils/use-safe-id';
 import { useOptionalControlsContext } from '../controls/context';
 import { usePositionedState } from '../hooks/use-positioned-state';
@@ -49,18 +49,18 @@ export function PopoverRoot({
   const isControlled = !isUndefined(controlledOpen);
   const initialOpenRef = useRef(!isControlled && defaultOpen);
 
-  // Keep refs that always point to the latest values so the
-  // createPopover closure never reads stale props.
-  const onOpenChangeRef = useLatestRef(onOpenChangeProp);
-  const onOpenChangeCompleteRef = useLatestRef(onOpenChangeCompleteProp);
+  // Publish props once their render commits so the retained createPopover closure
+  // never adopts values from an abandoned render.
+  const onOpenChangeRef = useCommittedRef(onOpenChangeProp);
+  const onOpenChangeCompleteRef = useCommittedRef(onOpenChangeCompleteProp);
 
-  const closeOnEscapeRef = useLatestRef(coreProps.closeOnEscape);
-  const closeOnOutsideClickRef = useLatestRef(coreProps.closeOnOutsideClick);
-  const openOnHoverRef = useLatestRef(openOnHover);
-  const delayRef = useLatestRef(delay);
-  const closeDelayRef = useLatestRef(closeDelay);
+  const closeOnEscapeRef = useCommittedRef(coreProps.closeOnEscape);
+  const closeOnOutsideClickRef = useCommittedRef(coreProps.closeOnOutsideClick);
+  const openOnHoverRef = useCommittedRef(openOnHover);
+  const delayRef = useCommittedRef(delay);
+  const closeDelayRef = useCommittedRef(closeDelay);
 
-  const popupGroupRef = useLatestRef(popupGroup);
+  const popupGroupRef = useCommittedRef(popupGroup);
 
   const [popover] = useState(() => {
     const instance = createPopover({

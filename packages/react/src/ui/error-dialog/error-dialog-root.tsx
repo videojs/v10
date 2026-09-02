@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 import { useRef } from 'react';
 
 import { useContainer, usePlayer } from '../../player/context';
-import { useLatestRef } from '../../utils/use-latest-ref';
+import { useCommittedRef } from '../../utils/use-committed-ref';
 import { DialogContextProvider } from '../dialog/context';
 import { useDialogRoot } from '../dialog/use-dialog-root';
 import { ErrorDialogContextProvider } from './context';
@@ -21,7 +21,7 @@ export function ErrorDialogRoot({ children }: ErrorDialogRootProps): ReactNode {
 
   if (errorState?.error) lastError.current = errorState.error;
 
-  const errorStateRef = useLatestRef(errorState);
+  const errorStateRef = useCommittedRef(errorState);
   const dialogContext = useDialogRoot({
     open: Boolean(errorState?.error),
     onOpenChange(nextOpen) {

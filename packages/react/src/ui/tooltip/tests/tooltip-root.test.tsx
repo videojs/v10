@@ -1,13 +1,23 @@
 import { cleanup, render, waitFor } from '@testing-library/react';
-import { StrictMode } from 'react';
+import type { TooltipApi } from '@videojs/core/dom';
+import { StrictMode, useLayoutEffect } from 'react';
 import { renderToString } from 'react-dom/server';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { Tooltip } from '..';
 import { MockErrorBoundary } from '../../../testing/mocks';
+import { useTooltipContext } from '../context';
 
 function Throw(): null {
   throw new Error('abandon render');
+}
+
+function CaptureTooltip({ onCapture }: { onCapture: (tooltip: TooltipApi) => void }): null {
+  const { tooltip } = useTooltipContext();
+
+  useLayoutEffect(() => onCapture(tooltip), [onCapture, tooltip]);
+
+  return null;
 }
 
 afterEach(() => {
@@ -65,5 +75,39 @@ describe('TooltipRoot', () => {
 
     await waitFor(() => expect(getByTestId('popup')).toBeDefined());
     expect(onOpenChange).toHaveBeenCalledExactlyOnceWith(true, expect.any(Object));
+  });
+
+  it('keeps the committed onOpenChange when a re-render is abandoned', () => {
+    const committed = vi.fn();
+    const abandoned = vi.fn();
+    let tooltip: TooltipApi | null = null;
+    const capture = (instance: TooltipApi) => {
+      tooltip = instance;
+    };
+
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    const { rerender } = render(
+      <MockErrorBoundary>
+        <Tooltip.Root onOpenChange={committed}>
+          <CaptureTooltip onCapture={capture} />
+        </Tooltip.Root>
+      </MockErrorBoundary>
+    );
+
+    rerender(
+      <MockErrorBoundary>
+        <Tooltip.Root onOpenChange={abandoned}>
+          <CaptureTooltip onCapture={capture} />
+        </Tooltip.Root>
+        <Throw />
+      </MockErrorBoundary>
+    );
+
+    // The retained tooltip outlives the abandoned render and must still call the committed callback.
+    tooltip!.open();
+
+    expect(committed).toHaveBeenCalledExactlyOnceWith(true, { reason: 'hover' });
+    expect(abandoned).not.toHaveBeenCalled();
   });
 });
