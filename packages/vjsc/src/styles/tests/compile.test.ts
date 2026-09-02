@@ -3,7 +3,7 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vite-plus/test';
 
 import { compileStyles } from '../compile';
-import { loadDesignSystem } from '../design-system';
+import { type DesignSystem, loadDesignSystem } from '../design-system';
 import type { ResolvedStyles, ResolvedStyleRule } from '../resolved';
 
 const designPath = resolve(import.meta.dirname, 'fixtures/tailwind.css');
@@ -55,6 +55,33 @@ describe('compileStyles', () => {
     expect(css).toMatch(/\.media-restart-icon \{\s+opacity: 0;\s+display: none;/);
     expect(css).not.toContain('group\\/play');
     expect(css).not.toContain(':where(');
+  });
+
+  it('reuses compiled output for identical rules, variants, and scope', async () => {
+    const design = await loadDesignSystem(designPath);
+    let compiles = 0;
+    const counted: DesignSystem = {
+      ...design,
+      compileCss(css) {
+        compiles += 1;
+        return design.compileCss(css);
+      },
+    };
+    const options = { design: counted, scope: '.media-skin-video', variants: ['default'] };
+    const first = await compileStyles({ ...options, styles: resolvedStyles([rule('root', 'media-button', ['grid'])]) });
+    const second = await compileStyles({
+      ...options,
+      styles: resolvedStyles([rule('root', 'media-button', ['grid'])]),
+    });
+    const changed = await compileStyles({
+      ...options,
+      styles: resolvedStyles([rule('root', 'media-button', ['flex'])]),
+    });
+
+    expect(compiles).toBe(2);
+    expect(second).toEqual(first);
+    expect(second).not.toBe(first);
+    expect(changed.get('buttons.css')).not.toEqual(first.get('buttons.css'));
   });
 
   it('folds stacked group conditions and negative calculations into reviewable CSS', async () => {

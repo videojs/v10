@@ -13,16 +13,66 @@ export interface CompileStylesOptions {
   readonly ruleClassNames?: ReadonlySet<string> | undefined;
 }
 
+/** Compiled outputs per design system, keyed by the exact rules, variants, and scope that produced them. */
+const compiledStyles = new WeakMap<DesignSystem, Map<string, Promise<ReadonlyMap<string, string>>>>();
+
 /** Compile semantic rules and group the resulting CSS by each definition's explicit output file. */
 export async function compileStyles(options: CompileStylesOptions): Promise<Map<string, string>> {
   const variants = options.variants ?? [];
   const groupOwners = collectGroupOwners(options.styles.rules, variants);
+  const selected = selectRules(options);
+  const key = compileKey(options, selected, groupOwners, variants);
+  const cache = compiledStyles.get(options.design) ?? new Map<string, Promise<ReadonlyMap<string, string>>>();
 
+  compiledStyles.set(options.design, cache);
+
+  let compiled = cache.get(key);
+
+  if (!compiled) {
+    const pending = compileSelectedStyles(options, selected, groupOwners, variants);
+
+    cache.set(key, pending);
+    pending.catch(() => {
+      if (cache.get(key) === pending) cache.delete(key);
+    });
+    compiled = pending;
+  }
+
+  return new Map(await compiled);
+}
+
+function selectRules(options: CompileStylesOptions): ResolvedStyleRule[] {
+  return [...options.styles.rules]
+    .filter((rule) => !options.ruleClassNames || options.ruleClassNames.has(rule.className))
+    .sort((a, b) => a.className.localeCompare(b.className));
+}
+
+/** Everything the compiled CSS depends on besides the design system itself. */
+function compileKey(
+  options: CompileStylesOptions,
+  selected: readonly ResolvedStyleRule[],
+  groupOwners: ReadonlyMap<string, string>,
+  variants: readonly string[]
+): string {
+  return JSON.stringify([
+    options.scope ?? null,
+    variants,
+    options.ruleClassNames ? [...options.ruleClassNames] : null,
+    [...groupOwners].sort(([left], [right]) => left.localeCompare(right)),
+    selected.map((rule) => [rule.className, rule.file, rule.layer, rule.scopeRoot, utilitiesForRule(rule, variants)]),
+    options.ruleClassNames ? null : [...new Set(options.styles.rules.map((rule) => rule.file))].sort(),
+  ]);
+}
+
+async function compileSelectedStyles(
+  options: CompileStylesOptions,
+  selected: readonly ResolvedStyleRule[],
+  groupOwners: ReadonlyMap<string, string>,
+  variants: readonly string[]
+): Promise<ReadonlyMap<string, string>> {
   const byFile = new Map<string, StyleOutputFile & { rules: StyleOutputRule[] }>();
 
-  for (const rule of [...options.styles.rules].sort((a, b) => a.className.localeCompare(b.className))) {
-    if (options.ruleClassNames && !options.ruleClassNames.has(rule.className)) continue;
-
+  for (const rule of selected) {
     const compiled = compileRule(rule, options.design, variants);
     if (compiled.candidates.length === 0) continue;
 
