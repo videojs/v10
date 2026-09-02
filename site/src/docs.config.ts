@@ -257,6 +257,7 @@ export const sidebar: Sidebar = [
               { slug: 'reference/i-18-n-controller', sidebarLabel: 'I18nController', frameworks: ['html'] },
               { slug: 'reference/merge-props', frameworks: ['react'] },
               { slug: 'reference/render-element', frameworks: ['react'] },
+              { slug: 'reference/create-media-component', frameworks: ['react'] },
               { slug: 'reference/use-attach-media', frameworks: ['react'] },
               { slug: 'reference/use-audio-track-options', frameworks: ['react'] },
               { slug: 'reference/use-button', frameworks: ['react'] },

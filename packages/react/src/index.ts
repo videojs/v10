@@ -169,6 +169,18 @@ export type { VolumeIndicatorValueProps } from './ui/volume-indicator/volume-ind
 export { VolumePopover } from './ui/volume-popover';
 export { VolumeSlider } from './ui/volume-slider';
 // Utilities
+export {
+  createMediaComponent,
+  type MediaAdapterConstructor,
+  type MediaAdapterProps,
+  type MediaAdapterTarget,
+  type MediaComponent,
+  type MediaComponentOptions,
+  type MediaComponentProps,
+  type MediaRenderArgs,
+  type MediaRenderFunction,
+  type MediaTargetAttributes,
+} from './media/create-media-component';
 export { mergeProps } from './utils/merge-props';
 export type { HTMLProps, RenderFunction, RenderProp, UIComponentProps } from './utils/types';
 export { useAttachMedia } from './utils/use-attach-media';

@@ -1966,7 +1966,7 @@ describe('Media element pipeline (end-to-end)', () => {
       expect(props.streamType.default).toBe("'unknown'");
     });
 
-    it('extracts the React surface from a static defaultProps that spreads the parent host', () => {
+    it('extracts the React surface of a createMediaComponent component from the adapter static defaultProps', () => {
       const react = findElement('ExtendingVideo')!.reference.platforms.react;
 
       expect(react).toMatchObject({ target: 'video', acceptsNativeProps: true });
