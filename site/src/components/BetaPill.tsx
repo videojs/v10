@@ -4,7 +4,7 @@ interface BetaPillProps {
   className?: string;
   style?: React.CSSProperties;
   compact?: boolean;
-  /** Replaces the default "v10 beta" text, e.g. with the documented package version. */
+  /** Replaces the default "v10 rc" text, e.g. with the documented package version. */
   label?: string;
 }
 
@@ -25,11 +25,11 @@ export default function BetaPill({ className, style, compact, label }: BetaPillP
       ) : compact ? (
         <>
           <span>v10</span>
-          <span className="hidden whitespace-pre uppercase sm:inline"> beta</span>
+          <span className="hidden whitespace-pre uppercase sm:inline"> rc</span>
         </>
       ) : (
         <>
-          v10<span className="whitespace-pre uppercase"> beta</span>
+          v10<span className="whitespace-pre uppercase"> rc</span>
         </>
       )}
     </span>

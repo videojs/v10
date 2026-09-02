@@ -2,7 +2,7 @@
 
 [![package-badge]][package]
 
-> **⚠️ Beta** Experimental adoption in real projects.
+> **⚠️ Release candidate** Experimental adoption in real projects.
 
 The Video.js 10 CLI. Read documentation from your terminal and generate installation snippets tailored to your setup (framework, preset, skin, media engine, package manager).
 
