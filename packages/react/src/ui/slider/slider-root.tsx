@@ -2,7 +2,7 @@ import { SliderCore, SliderDataAttrs } from '@videojs/core';
 import { getSliderCSSVars } from '@videojs/core/dom';
 import { translateText } from '@videojs/core/i18n';
 import type { ForwardedRef } from 'react';
-import { forwardRef, useState } from 'react';
+import { forwardRef } from 'react';
 
 import { useTranslator } from '../../i18n/context';
 import type { UIComponentProps } from '../../utils/types';
@@ -41,10 +41,9 @@ export const SliderRoot = forwardRef(function SliderRoot(
     ...elementProps
   } = componentProps;
 
-  const [core] = useState(() => new SliderCore());
+  // Project this render's props. The core is render-local, so the retained slider only ever sees the committed one.
+  const core = new SliderCore({ label, min, max, step, largeStep, orientation, disabled, thumbAlignment });
   const translator = useTranslator();
-
-  core.setProps({ label, min, max, step, largeStep, orientation, disabled, thumbAlignment });
 
   const {
     state,

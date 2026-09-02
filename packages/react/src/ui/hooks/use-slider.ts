@@ -13,9 +13,8 @@ import { applyStyles } from '@videojs/utils/dom';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 import { useOptionalPlayer } from '../../player/context';
+import { useCommittedRef } from '../../utils/use-committed-ref';
 import { useDestroy } from '../../utils/use-destroy';
-import { useForceRender } from '../../utils/use-force-render';
-import { useLatestRef } from '../../utils/use-latest-ref';
 
 export interface UseSliderOptions<State extends SliderState = SliderState> extends Pick<
   SliderOptions,
@@ -59,7 +58,8 @@ export interface UseSliderReturnValue<State extends SliderState = SliderState> {
 export function useSlider<State extends SliderState = SliderState>(
   options: UseSliderOptions<State>
 ): UseSliderReturnValue<State> {
-  const optionsRef = useLatestRef(options);
+  // The retained slider reads options through this ref, so only committed renders reach its callbacks.
+  const optionsRef = useCommittedRef(options);
 
   const controls = useOptionalPlayer(selectControls);
   const requestControlsLock = controls?.requestControlsLock;
@@ -74,7 +74,6 @@ export function useSlider<State extends SliderState = SliderState>(
 
   const rootElementRef = useRef<HTMLElement | null>(null);
   const thumbElementRef = useRef<HTMLElement | null>(null);
-  const forceRender = useForceRender();
 
   // Lazy-init the slider handle. Stable across re-renders.
   const [slider] = useState<SliderApi>(() => {
@@ -87,7 +86,10 @@ export function useSlider<State extends SliderState = SliderState>(
       getStepPercent: () => optionsRef.current.getStepPercent(),
       getLargeStepPercent: () => optionsRef.current.getLargeStepPercent(),
       changeThrottle: optionsRef.current.changeThrottle,
-      adjustPercent: optionsRef.current.adjustPercent,
+      adjustPercent: optionsRef.current.adjustPercent
+        ? (rawPercent, thumbSize, trackSize) =>
+            optionsRef.current.adjustPercent?.(rawPercent, thumbSize, trackSize) ?? rawPercent
+        : undefined,
       onValueChange: (percent) => optionsRef.current.onValueChange?.(percent),
       onValueCommit: (percent) => optionsRef.current.onValueCommit?.(percent),
       onPressStart: () => {
@@ -119,14 +121,6 @@ export function useSlider<State extends SliderState = SliderState>(
   // Compute derived state from input + caller-provided projection.
   const state = options.computeState(input);
 
-  // Force a synchronous re-render after mount so edge thumb alignment
-  // can read DOM measurements from the now-populated element refs.
-  useLayoutEffect(() => {
-    if (state.thumbAlignment === 'edge' && rootElementRef.current && thumbElementRef.current) {
-      forceRender();
-    }
-  }, [state.thumbAlignment]);
-
   // Adjust CSS var percents for edge thumb alignment using live DOM measurements.
   const cssVars = options.getCSSVars(slider.adjustForAlignment(state));
 
@@ -141,10 +135,14 @@ export function useSlider<State extends SliderState = SliderState>(
     [slider]
   );
 
+  useLayoutEffect(() => slider.input.subscribe(syncStyles), [slider, syncStyles]);
+
+  // Edge alignment needs DOM measurements that only exist after commit, and the render above adjusted percents
+  // through the previously committed options. Re-apply the committed CSS vars on mount and whenever alignment
+  // changes so the DOM never keeps a stale adjustment.
   useLayoutEffect(() => {
     syncStyles();
-    return slider.input.subscribe(syncStyles);
-  }, [slider, syncStyles]);
+  }, [syncStyles, state.thumbAlignment]);
 
   // Ref callbacks for root and thumb elements.
   const rootRef = useCallback(
