@@ -1,8 +1,8 @@
 import { resolve } from 'node:path';
 
 import type { Plugin } from 'vite';
-import { findGraph, type Graph } from 'vjsc/graph';
 
+import { findGraph, type Graph } from '../../../vjsc/src/graph/index.ts';
 import type { SkinModuleMeta } from '../../src/meta.ts';
 import type { GeneratedPackageFile } from './files.ts';
 import { syncGeneratedFiles } from './files.ts';

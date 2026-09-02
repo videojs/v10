@@ -1,8 +1,7 @@
 import { resolve } from 'node:path';
 
-import type { Graph, GraphModule } from 'vjsc/graph';
-import { bundleStyles, collectModules, renderHtml } from 'vjsc/graph';
-
+import type { Graph, GraphModule } from '../../../vjsc/src/graph/index.ts';
+import { bundleStyles, collectModules, renderHtml } from '../../../vjsc/src/graph/index.ts';
 import { isSkinName, type SkinMeta, type SkinModuleMeta, type SkinName } from '../../src/meta.ts';
 import { skinBaseStylesheet, skinPreset, skinPresets, type SkinPreset } from '../skin.ts';
 import type { GeneratedPackageFile } from './files.ts';

@@ -1,14 +1,14 @@
-/** @jsxImportSource vjsc/target */
+/** @jsxImportSource ../../../vjsc/src/target */
 
 import type coreSchema from '@videojs/core/vjsc';
+
 import {
   type ComponentRules,
   type ComponentTarget,
   defineComponentTarget,
   type TemplateTargetDefinition,
-} from 'vjsc/target';
-import { Host } from 'vjsc/target/jsx-runtime';
-
+} from '../../../vjsc/src/target/index.ts';
+import { Host } from '../../../vjsc/src/target/jsx-runtime.ts';
 import { createRenderTargetTransform } from './render-target.ts';
 
 type CoreSchema = typeof coreSchema;

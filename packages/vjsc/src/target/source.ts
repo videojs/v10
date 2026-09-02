@@ -3,8 +3,8 @@ import type { JSXAttribute, JSXElement, JSXElementName, JSXOpeningElement } from
 import { createSourceText, renderSourceRange, type SourceText } from '../ast';
 import { type SourceProps, type TargetOutput, type TargetReplacement, TARGET_REPLACEMENT } from './definition';
 
-export const SOURCE_PROPS = Symbol('vjsc/source-props');
-export const SOURCE_PROP = Symbol('vjsc/source-prop');
+export const SOURCE_PROPS = Symbol.for('vjsc/source-props');
+export const SOURCE_PROP = Symbol.for('vjsc/source-prop');
 export const SOURCE_CHILDREN = Symbol.for('vjsc/source-children');
 
 export interface SourcePropsToken {
