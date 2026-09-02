@@ -1,13 +1,8 @@
 import type { Graph, GraphModule } from '../../../vjsc/src/graph/index.ts';
-import {
-  bundleStyles,
-  collectModules,
-  relativeImport,
-  rewriteImports,
-  stripStyleImports,
-} from '../../../vjsc/src/graph/index.ts';
-import { isSkinName, type SkinMeta, type SkinModuleMeta, type SkinName } from '../../src/meta.ts';
-import { skinBaseStylesheet, skinPreset, skinPresets, type SkinPreset } from '../skin.ts';
+import { bundleStyles, relativeImport, rewriteImports, stripStyleImports } from '../../../vjsc/src/graph/index.ts';
+import type { SkinModuleMeta } from '../../src/meta.ts';
+import { skinBaseStylesheet, skinPresets } from '../skin.ts';
+import { type SkinRoot, skinRoots } from '../variants.ts';
 import type { GeneratedPackageFile } from './files.ts';
 import { addCopiedFiles, addGenerated, generatedFiles, pascalCase } from './utils.ts';
 
@@ -25,23 +20,12 @@ export interface CreateReactPackageSkinsOptions {
   readonly baseStyles?: readonly string[] | undefined;
 }
 
-interface ReactSkin {
-  readonly root: ReactSkinRoot;
-  readonly modules: readonly GraphModule<SkinModuleMeta>[];
-  readonly preset: SkinPreset;
-  readonly theme: SkinMeta['style']['theme'];
-}
-
-type ReactSkinRoot = GraphModule<SkinMeta & { readonly name: SkinName }> & {
-  readonly meta: SkinMeta & { readonly name: SkinName };
-};
-
 /** Generate package-local React Skin implementations from one finalized VJSC module graph. */
 export async function createReactPackageSkins(
   graph: Graph<SkinModuleMeta>,
   options: CreateReactPackageSkinsOptions
 ): Promise<GeneratedPackageFile[]> {
-  const skins = reactSkins(graph);
+  const skins = skinRoots(graph, { target: 'react', style: 'css' });
   const sharedSourcePaths = collectSharedSourcePaths(skins);
   const destinations = new Map<string, string>();
 
@@ -124,36 +108,8 @@ export function reactPackageSkinOwnedPaths(): string[] {
   ];
 }
 
-function reactSkins(graph: Graph<SkinModuleMeta>): ReactSkin[] {
-  const roots = [...graph.modules.values()].filter(
-    (module): module is ReactSkinRoot =>
-      module.meta?.type === 'skin' &&
-      isSkinName(module.meta.name) &&
-      module.params.target === 'react' &&
-      module.params.style === 'css' &&
-      module.params.skin === module.meta.name
-  );
-
-  if (roots.length !== skinPresets.length * 2) {
-    throw new Error(`Expected ${skinPresets.length * 2} React CSS Skin roots, received ${roots.length}.`);
-  }
-
-  return roots
-    .map((root) => {
-      const preset = skinPreset(root.meta.name);
-
-      return {
-        root,
-        modules: collectModules(graph, root.id),
-        preset,
-        theme: root.meta.style.theme,
-      };
-    })
-    .sort((left, right) => left.root.meta.name.localeCompare(right.root.meta.name));
-}
-
 function reactModulePath(
-  skin: ReactSkin,
+  skin: SkinRoot,
   module: GraphModule<SkinModuleMeta>,
   sharedSourcePaths: ReadonlySet<string>
 ): string {
@@ -168,7 +124,7 @@ function reactModulePath(
     : `${internalRoot}/${skin.root.meta.name}/${module.sourcePath}`;
 }
 
-function collectSharedSourcePaths(skins: readonly ReactSkin[]): ReadonlySet<string> {
+function collectSharedSourcePaths(skins: readonly SkinRoot[]): ReadonlySet<string> {
   const sources = new Map<string, Set<string>>();
 
   for (const skin of skins) {
@@ -219,7 +175,7 @@ export function ${options.component}(props: ${props}) {
 }
 
 function modulesByDestination(
-  skins: readonly ReactSkin[],
+  skins: readonly SkinRoot[],
   destinations: ReadonlyMap<string, string>
 ): Array<readonly [string, readonly GraphModule<SkinModuleMeta>[]]> {
   const grouped = new Map<string, Map<string, GraphModule<SkinModuleMeta>>>();

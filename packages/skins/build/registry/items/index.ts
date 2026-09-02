@@ -2,6 +2,7 @@ import type { VjscRegistryOptions } from '../../../../vjsc/src/shadcn/index.ts';
 import type { SkinModuleMeta } from '../../../src/meta.ts';
 import { skinUtils } from '../../config.ts';
 import { renderHtmlSkins } from '../../packages/html.ts';
+import { parseVariant } from '../../variants.ts';
 import type { RegistryTarget } from '../targets.ts';
 import { componentItem } from './components.ts';
 import { htmlSkinItem, skinItem } from './skins.ts';
@@ -20,18 +21,19 @@ export function registryItems(target: RegistryTarget): VjscRegistryOptions<SkinM
 
       if (module.filename === skinUtils) return utilsItem(target);
 
-      if (module.params.target !== target.framework || module.params.style !== target.styling) return null;
+      const variant = parseVariant(new URLSearchParams(module.params));
+      if (!variant || variant.target !== target.framework || variant.style !== target.styling) return null;
 
       const meta = module.meta;
-      if (meta?.type === 'skin') return module.params.skin === meta.name ? skinItem(module, meta, target) : null;
+      if (meta?.type === 'skin') return variant.skin === meta.name ? skinItem(module, meta, target) : null;
 
       if (meta?.type === 'component') {
-        if (module.params.skin !== undefined) return null;
+        if (variant.skin !== undefined) return null;
 
         return isPrivateComponent(meta.name) ? privateComponentItem(meta, target) : componentItem(module, meta, target);
       }
 
-      if (module.params.skin !== undefined) return null;
+      if (variant.skin !== undefined) return null;
 
       const name = privateModuleName(module);
 

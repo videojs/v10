@@ -1,9 +1,10 @@
 import type { Graph, GraphModule } from '../../../vjsc/src/graph/index.ts';
-import { bundleStyles, collectModules, renderHtml } from '../../../vjsc/src/graph/index.ts';
-import { isSkinName, type SkinMeta, type SkinModuleMeta, type SkinName } from '../../src/meta.ts';
-import { skinBaseStylesheet, skinPreset, skinPresets, type SkinPreset } from '../skin.ts';
+import { bundleStyles, renderHtml } from '../../../vjsc/src/graph/index.ts';
+import type { SkinModuleMeta } from '../../src/meta.ts';
+import { skinBaseStylesheet } from '../skin.ts';
 import { iconImports } from '../target/html-render.ts';
 import { htmlComponentTarget } from '../target/html.tsx';
+import { type SkinRoot, skinRoots } from '../variants.ts';
 import type { GeneratedPackageFile } from './files.ts';
 import { addCopiedFiles, addGenerated, generatedFiles, pascalCase } from './utils.ts';
 
@@ -15,17 +16,9 @@ export interface CreateHtmlPackageSkinsOptions {
   readonly baseStyles?: readonly string[] | undefined;
 }
 
-export interface RenderedHtmlSkin {
-  readonly root: HtmlSkinRoot;
-  readonly modules: readonly GraphModule<SkinModuleMeta>[];
-  readonly preset: SkinPreset;
-  readonly theme: SkinMeta['style']['theme'];
+export interface RenderedHtmlSkin extends SkinRoot {
   readonly template: string;
 }
-
-type HtmlSkinRoot = GraphModule<SkinMeta & { readonly name: SkinName }> & {
-  readonly meta: SkinMeta & { readonly name: SkinName };
-};
 
 /** Generate package-local HTML Skin templates, registrations, and styles from one finalized VJSC module graph. */
 export async function createHtmlPackageSkins(
@@ -68,7 +61,7 @@ export async function renderHtmlSkins(
   graph: Graph<SkinModuleMeta>,
   options: RenderHtmlSkinsOptions
 ): Promise<RenderedHtmlSkin[]> {
-  const skins = htmlSkins(graph, options.styling);
+  const skins = skinRoots(graph, { target: 'html', style: options.styling });
   const render = htmlComponentTarget.render ?? {};
 
   const templates = await renderHtml(
@@ -95,33 +88,6 @@ export async function renderHtmlSkins(
 
 export function htmlPackageSkinOwnedPaths(): string[] {
   return [internalRoot, `${packageRoot}/presets/background/skin.ts`, `${packageRoot}/define/background/skin.css`];
-}
-
-function htmlSkins(
-  graph: Graph<SkinModuleMeta>,
-  styling: RenderHtmlSkinsOptions['styling']
-): Array<Omit<RenderedHtmlSkin, 'template'>> {
-  const roots = [...graph.modules.values()].filter(
-    (module): module is HtmlSkinRoot =>
-      module.meta?.type === 'skin' &&
-      isSkinName(module.meta.name) &&
-      module.params.target === 'html' &&
-      module.params.style === styling &&
-      module.params.skin === module.meta.name
-  );
-
-  if (roots.length !== skinPresets.length * 2) {
-    throw new Error(`Expected ${skinPresets.length * 2} HTML CSS Skin roots, received ${roots.length}.`);
-  }
-
-  return roots
-    .map((root) => ({
-      root,
-      modules: collectModules(graph, root.id),
-      preset: skinPreset(root.meta.name),
-      theme: root.meta.style.theme,
-    }))
-    .sort((left, right) => left.root.meta.name.localeCompare(right.root.meta.name));
 }
 
 function htmlTemplateModule(html: string): string {
