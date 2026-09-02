@@ -30,6 +30,7 @@
     --media-shadow-surface-inset: inset 0 1px 0 0 rgb(255 255 255 / 0.1), inset 0 0 0 1px rgb(255 255 255 / 0.05);
     --media-shadow-thumb: 0 0 0 1px rgb(0 0 0 / 0.1), 0 1px 3px 0 rgb(0 0 0 / 0.35), 0 1px 2px -1px rgb(0 0 0 / 0.35);
     --media-shadow-tooltip: 0 0 0 1px var(--media-border), var(--media-shadow-surface);
+    --media-shadow-separator: 0 1px 0 0 oklch(1 0 0 / 0.075);
     --media-shadow-current-color: oklch(from currentColor 0 0 0 / clamp(0, calc((l - 0.5) * 0.5), 0.15));
     --media-shadow-subtle-current-color: oklch(from var(--media-shadow-current-color) l c h / calc(alpha * 0.4));
     --media-text-shadow-dialog: 0 1px 0 rgb(0 0 0 / 0.25);

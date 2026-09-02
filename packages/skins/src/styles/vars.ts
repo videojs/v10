@@ -304,6 +304,10 @@ export const vars = {
     kind: 'internal',
     description: 'Color of the live-edge indicator dot.',
   },
+  '--media-shadow-separator': {
+    kind: 'internal',
+    description: 'Highlight drawn under default menu separators.',
+  },
   '--media-shadow-thumb': {
     kind: 'internal',
     description: 'Theme shadow beneath slider thumbs.',

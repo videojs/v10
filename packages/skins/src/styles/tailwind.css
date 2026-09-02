@@ -49,6 +49,7 @@
   /* Shadows and backdrop filters. Contrast-aware ones read the current color; the rest alias theme tokens. */
   --drop-shadow-media-icon: 0 1px 0 var(--media-shadow-current-color);
   --shadow-media-hairline: 0 0 0 1px var(--media-border);
+  --shadow-media-separator: var(--media-shadow-separator);
   --shadow-media-thumb: var(--media-shadow-thumb);
   --shadow-media-tooltip: var(--media-shadow-tooltip);
   --text-shadow-media: 0 1px 0 var(--media-shadow-current-color);
