@@ -91,8 +91,13 @@ export class SliderCore {
     focused: false,
   };
 
-  #props = { ...SliderCore.defaultProps };
+  #props = { ...this.#defaultProps };
   #input: SliderInput = { ...SliderCore.defaultInput };
+
+  /** Subclasses extend `defaultProps`; resolving through the instantiated class keeps their extra keys in `#props`. */
+  get #defaultProps(): NonNullableObject<SliderProps> {
+    return (this.constructor as typeof SliderCore).defaultProps;
+  }
 
   get props(): Readonly<NonNullableObject<SliderProps>> {
     return this.#props;
@@ -107,7 +112,7 @@ export class SliderCore {
   }
 
   setProps(props: SliderProps): void {
-    this.#props = defaults(props, SliderCore.defaultProps);
+    this.#props = defaults(props, this.#defaultProps);
   }
 
   setInput(input: SliderInput): void {
