@@ -126,19 +126,49 @@ function reactModulePath(
     : `${internalRoot}/${skin.root.meta.name}/${module.sourcePath}`;
 }
 
+/**
+ * Source paths whose generated module can be emitted once for every skin. A shared module resolves its imports through
+ * one skin, so its own source must be identical across skins and every module it imports must be shared as well;
+ * otherwise a minimal skin would import the default skin's copy of, say, an icon-bearing button.
+ */
 function collectSharedSourcePaths(skins: readonly SkinRoot[]): ReadonlySet<string> {
-  const sources = new Map<string, Set<string>>();
+  const variants = new Map<string, Set<string>>();
+  const dependencies = new Map<string, Set<string>>();
 
   for (const skin of skins) {
-    for (const module of skin.modules) {
-      const variants = sources.get(module.sourcePath) ?? new Set<string>();
+    const modules = new Map(skin.modules.map((module) => [module.id, module]));
 
-      variants.add(stripStyleImports(module.source));
-      sources.set(module.sourcePath, variants);
+    for (const module of skin.modules) {
+      const sources = variants.get(module.sourcePath) ?? new Set<string>();
+      const imported = dependencies.get(module.sourcePath) ?? new Set<string>();
+
+      sources.add(stripStyleImports(module.source));
+
+      for (const reference of module.imports) {
+        const dependency = reference.resolvedId === undefined ? undefined : modules.get(reference.resolvedId);
+
+        if (dependency) imported.add(dependency.sourcePath);
+      }
+
+      variants.set(module.sourcePath, sources);
+      dependencies.set(module.sourcePath, imported);
     }
   }
 
-  return new Set([...sources].filter(([, variants]) => variants.size === 1).map(([sourcePath]) => sourcePath));
+  const shared = new Set([...variants].filter(([, sources]) => sources.size === 1).map(([sourcePath]) => sourcePath));
+
+  for (let changed = true; changed;) {
+    changed = false;
+
+    for (const sourcePath of [...shared]) {
+      if ([...(dependencies.get(sourcePath) ?? [])].every((dependency) => shared.has(dependency))) continue;
+
+      shared.delete(sourcePath);
+      changed = true;
+    }
+  }
+
+  return shared;
 }
 
 function reactFrameworkImport(specifier: string): string | undefined {
