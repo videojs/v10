@@ -152,8 +152,6 @@ export const htmlComponentTarget: ComponentTarget<CoreSchema> = defineComponentT
   const Span = element('span');
   const Sup = element('sup');
   const HtmlTemplate = element('template');
-  const PlaybackRateButton = htmlElementTarget('PlaybackRateButton', element);
-
   const I18nText = element('media-text', {
     import: { from: '@videojs/html/i18n', sideEffect: true },
   });
@@ -307,8 +305,8 @@ export const htmlComponentTarget: ComponentTarget<CoreSchema> = defineComponentT
     },
     renderTargets: {
       Button: { element: Button },
-      CaptionsButton: { element: htmlElementTarget('CaptionsButton', element), kind: 'component' },
-      PlaybackRateButton: { element: PlaybackRateButton, kind: 'component' },
+      CaptionsButton: { component: true },
+      PlaybackRateButton: { component: true },
       SliderBuffer: { element: Div },
       SliderFill: { element: Div },
       SliderThumb: { element: Div },

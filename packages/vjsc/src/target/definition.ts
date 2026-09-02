@@ -269,12 +269,18 @@ export interface JsxOptions {
   readonly className?: JsxClassNameOptions | undefined;
 }
 
-/** The element a target renders for one shared component declared with `defineRenderTarget`. */
-export interface RenderTargetRule {
+/** A `$render` binding declared with `defineRenderTarget`: the target picks the element that carries its classes. */
+export interface RenderTargetHost {
   readonly element: TargetElement;
-  /** `component` hosts delegate to a canonical component; `style` hosts only carry the shared classes. */
-  readonly kind?: 'component' | 'style' | undefined;
+  readonly component?: false | undefined;
 }
+
+/** A `$render` binding that is an authored component: the canonical host delegates to it, so no element is needed. */
+export interface RenderTargetComponent {
+  readonly component: true;
+}
+
+export type RenderTargetRule = RenderTargetHost | RenderTargetComponent;
 
 export type RenderTargetRules = Readonly<Record<string, RenderTargetRule>>;
 

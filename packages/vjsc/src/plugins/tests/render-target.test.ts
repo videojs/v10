@@ -31,7 +31,7 @@ const htmlTarget = defineComponentTarget<typeof schema>()(({ element }) => ({
   components: { resolve: ({ component }) => element(`media-${component.toLowerCase()}`) },
   renderTargets: {
     Button: { element: element('button') },
-    CaptionsButton: { element: element('media-captionsbutton'), kind: 'component' },
+    CaptionsButton: { component: true },
   },
   jsx: { importSource: 'vjsc/html-runtime', attributes: 'html' },
 }));

@@ -31,8 +31,8 @@ interface RenderTargetDefinition {
 
 interface ResolvedRenderTarget {
   readonly target: ComponentTarget;
-  readonly element: TargetElement;
-  readonly kind: 'component' | 'style';
+  /** Absent for component delegates: the canonical host renders the authored component itself. */
+  readonly element: TargetElement | undefined;
   readonly name: string;
 }
 
@@ -301,7 +301,7 @@ function resolveRenderTarget(name: string, target: ComponentTarget, pos: number)
     );
   }
 
-  return { target, element: configured.element, kind: configured.kind ?? 'style', name };
+  return { target, element: configured.component ? undefined : configured.element, name };
 }
 
 function renderDefinition(
@@ -311,6 +311,15 @@ function renderDefinition(
   typeImports: ModuleImports
 ): string {
   const prefix = definition.exported ? 'export ' : '';
+
+  if (!resolved.element) {
+    throw sourceError(
+      `Render target \`${definition.name}\` is declared with defineRenderTarget() but the target lists it as a component.\n` +
+        'Reason: a style host needs an element to carry its classes; only authored components delegate without one.\n' +
+        `Recommendation: give \`${definition.name}\` an \`element\` in the target's \`renderTargets\`.`,
+      definition.start
+    );
+  }
 
   if (resolved.target.jsx.attributes === 'html') {
     return `${prefix}const ${definition.local} = ${JSON.stringify(definition.className)};`;
@@ -357,7 +366,7 @@ function lowerRenderDirective(
     return;
   }
 
-  if (resolved.kind === 'component') {
+  if (!resolved.element) {
     magicString.overwrite(directive.start, directive.end, renderTargetMarker(resolved.name));
     wrapRenderComponent(code, opening, local, magicString);
     return;
