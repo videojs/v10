@@ -1,9 +1,10 @@
 import { ControlsCore, ControlsDataAttrs } from '@videojs/core';
-import { logMissingFeature, selectControls } from '@videojs/core/dom';
+import { selectControls } from '@videojs/core/dom';
 import type { ReactNode } from 'react';
 import { useState } from 'react';
 
 import { usePlayer } from '../../player/context';
+import { useLogMissingFeature } from '../hooks/use-log-missing-feature';
 import { ControlsContextProvider } from './context';
 
 export interface ControlsRootProps {
@@ -15,11 +16,9 @@ export function ControlsRoot({ children }: ControlsRootProps): ReactNode {
   const controls = usePlayer(selectControls);
   const [core] = useState(() => new ControlsCore());
 
-  if (!controls) {
-    if (__DEV__) logMissingFeature('Controls.Root', 'controls');
+  useLogMissingFeature(!controls, 'Controls.Root', 'controls');
 
-    return null;
-  }
+  if (!controls) return null;
 
   core.setMedia(controls);
   const state = core.getState();

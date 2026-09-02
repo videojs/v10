@@ -1,5 +1,5 @@
 import { LiveButtonCore, LiveButtonDataAttrs, type LiveButtonMediaState } from '@videojs/core';
-import { logMissingFeature, selectBuffer, selectLive, selectTime } from '@videojs/core/dom';
+import { selectBuffer, selectLive, selectTime } from '@videojs/core/dom';
 import { translateText } from '@videojs/core/i18n';
 import { forwardRef, type ReactNode, useLayoutEffect, useState } from 'react';
 
@@ -8,6 +8,7 @@ import { usePlayer } from '../../player/context';
 import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
 import { useButton } from '../hooks/use-button';
+import { useLogMissingFeature } from '../hooks/use-log-missing-feature';
 import { useOptionalTooltipContext } from '../tooltip/context';
 
 const DISPLAY_NAME = 'LiveButton';
@@ -75,11 +76,9 @@ export const LiveButton = forwardRef<HTMLButtonElement, LiveButtonProps>(
       return () => tooltipCtx.setContent(undefined);
     }, [tooltipCtx, labelText]);
 
-    if (!media || !state) {
-      if (__DEV__) logMissingFeature(DISPLAY_NAME, selectLive.displayName ?? 'live');
+    useLogMissingFeature(!media, DISPLAY_NAME, selectLive.displayName ?? 'live');
 
-      return null;
-    }
+    if (!media || !state) return null;
 
     const attrs = core.getAttrs(state);
     const labelAttr = attrs['aria-label'];

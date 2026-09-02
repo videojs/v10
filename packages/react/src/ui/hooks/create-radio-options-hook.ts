@@ -1,11 +1,11 @@
 import type { RadioOption, RadioOptionsState } from '@videojs/core';
-import { logMissingFeature } from '@videojs/core/dom';
 import { type Text, type TextParams, translateText } from '@videojs/core/i18n';
 import type { UnknownState } from '@videojs/store';
 import { useCallback, useState } from 'react';
 
 import { useTranslator } from '../../i18n/context';
 import { usePlayer } from '../../player/context';
+import { useLogMissingFeature } from './use-log-missing-feature';
 
 interface RadioOptionsCore<Props, Media, State extends RadioOptionsState> {
   setProps(props: Props): void;
@@ -61,11 +61,9 @@ export function createRadioOptionsHook<Props, Media, State extends RadioOptionsS
 
     const setValue = useCallback((value: string) => core.selectValue(media!, value), [core, media]);
 
-    if (!media) {
-      if (__DEV__) logMissingFeature(name, selector.displayName ?? feature);
+    useLogMissingFeature(!media, name, selector.displayName ?? feature);
 
-      return null;
-    }
+    if (!media) return null;
 
     core.setMedia(media);
     const state = core.getState();
