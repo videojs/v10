@@ -4,7 +4,7 @@ import { type Graph, type GraphModule, bundleStyles } from '../../../../vjsc/src
 import type { RegistryCreatedItem, RegistryModuleItem } from '../../../../vjsc/src/shadcn/index.ts';
 import { isSkinName, type SkinModuleMeta, type SkinName } from '../../../src/meta.ts';
 import { createHtmlSkinRegistration, createSourceOwnedHtml, type RenderedHtmlSkin } from '../../packages/html.ts';
-import { skinDirectory, skinPreset } from '../../skin.ts';
+import { skinBaseStylesheet, skinDirectory, skinPreset } from '../../skin.ts';
 import type { VideojsRegistryMeta } from '../meta.ts';
 import { packageRequirements, registryPaths, type RegistryTarget } from '../targets.ts';
 import { exportedComponentName } from './components.ts';
@@ -49,7 +49,7 @@ export async function htmlSkinItem(
       type: 'registry:style',
       content: await bundleStyles(graph, skin.modules, {
         label: name,
-        files: ['./styles/base.css'],
+        files: [`./styles/${skinBaseStylesheet(skin.preset)}`],
       }),
     },
   ];

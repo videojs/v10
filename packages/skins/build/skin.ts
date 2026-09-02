@@ -20,6 +20,11 @@ export function skinDirectory(name: SkinName): string {
   return name.startsWith('minimal-') ? `skins/${preset}/minimal` : `skins/${preset}`;
 }
 
+/** Runtime stylesheet entry carrying the shared tokens plus one preset's tokens, relative to `src/styles`. */
+export function skinBaseStylesheet(preset: SkinPreset): string {
+  return preset === 'audio' || preset === 'live-audio' ? 'base.audio.css' : 'base.video.css';
+}
+
 export function isSkinPreset(value: string): value is SkinPreset {
   return skinPresets.some((preset) => preset === value);
 }

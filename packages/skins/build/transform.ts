@@ -5,6 +5,7 @@ import type { StyleTransformOptions } from 'vjsc/styles';
 import type { ComponentTarget } from 'vjsc/target';
 
 import { type SkinName, skinStyles } from '../src/meta.ts';
+import { skinBaseStylesheet } from './skin.ts';
 import { createComponentTargets } from './target/index.ts';
 
 const stylesDir = resolve(import.meta.dirname, '../src/styles');
@@ -63,7 +64,7 @@ export function createStyleOptions(config: SkinTransformConfig): StyleTransformO
         variants,
         stylesheet: {
           input: resolve(stylesDir, 'tailwind.compiler.css'),
-          base: resolve(stylesDir, 'base.css'),
+          base: resolve(stylesDir, skinBaseStylesheet(skin?.preset ?? 'video')),
           scope: skin?.scope ?? '.media-skin',
         },
       };

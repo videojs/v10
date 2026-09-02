@@ -2,10 +2,8 @@
 /* Preference overrides win over theme tokens regardless of selector specificity. */
 @layer base.theme, base.preferences;
 
-@import "./captions.css";
 @import "./themes/theme.css";
 @import "./themes/minimal.css";
-@import "./themes/audio.css";
 @import "./themes/preferences.css";
 
 @layer base {

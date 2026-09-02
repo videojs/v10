@@ -2,6 +2,9 @@
 
 @import "tailwindcss" theme(inline);
 @import "./base.css";
+@import "./captions.css";
+@import "./themes/video.css";
+@import "./themes/audio.css";
 @import "./tailwind.shared.css";
 
 @source "../**/*.tsx";

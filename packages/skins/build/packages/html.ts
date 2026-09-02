@@ -4,7 +4,7 @@ import type { Graph, GraphModule } from 'vjsc/graph';
 import { bundleStyles, collectModules, renderHtml } from 'vjsc/graph';
 
 import { isSkinName, type SkinMeta, type SkinModuleMeta, type SkinName } from '../../src/meta.ts';
-import { skinPreset, skinPresets, type SkinPreset } from '../skin.ts';
+import { skinBaseStylesheet, skinPreset, skinPresets, type SkinPreset } from '../skin.ts';
 import type { GeneratedPackageFile } from './files.ts';
 import { addCopiedFiles, addGenerated, generatedFiles, pascalCase } from './utils.ts';
 
@@ -47,7 +47,7 @@ export async function createHtmlPackageSkins(
       `${root}/skin.css`,
       await bundleStyles(graph, skin.modules, {
         label: name,
-        files: options.baseStyles ?? ['./styles/base.css'],
+        files: options.baseStyles ?? [`./styles/${skinBaseStylesheet(skin.preset)}`],
       })
     );
   }

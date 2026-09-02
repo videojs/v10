@@ -15,7 +15,7 @@ export function registryStyles(target: RegistryTarget): RegistryStylesOptions | 
   return {
     theme: {
       target: 'styles/theme.css',
-      include: ['./styles/base.css'],
+      include: ['./styles/base.css', './styles/captions.css', './styles/themes/video.css', './styles/themes/audio.css'],
       title: 'Video.js media theme',
       description: 'Scoped media tokens, resets, preferences, and Tailwind compiler integration.',
       docs: 'Installed automatically with Video.js skins and UI components.',
