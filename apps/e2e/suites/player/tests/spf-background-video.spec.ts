@@ -228,7 +228,11 @@ test.describe('SPF background video', () => {
     // The component exposes no Media, so the prop firing at all is the contract.
     // It can only fire because the component re-dispatches on the `<video>`,
     // whose own `error` stays null throughout.
-    await page.waitForFunction(() => window.__backgroundVideoErrors > 0, undefined, { timeout: 20_000 });
+    await page.waitForFunction(
+      () => ((window as Window & { __backgroundVideoErrors?: number }).__backgroundVideoErrors ?? 0) > 0,
+      undefined,
+      { timeout: 20_000 }
+    );
 
     const videoError = await page.evaluate(() => document.querySelector('video')?.error?.code ?? null);
 

@@ -13,13 +13,15 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
   ],
-  webServer: process.env.SANDBOX_URL
-    ? undefined
+  ...(process.env.SANDBOX_URL
+    ? {}
     : {
-        command: 'pnpm dev:sandbox --port 5299',
-        cwd: resolve(import.meta.dirname, '../../../..'),
-        port: 5299,
-        reuseExistingServer: !process.env.CI,
-        timeout: 300_000,
-      },
+        webServer: {
+          command: 'pnpm dev:sandbox --port 5299',
+          cwd: resolve(import.meta.dirname, '../../../..'),
+          port: 5299,
+          reuseExistingServer: !process.env.CI,
+          timeout: 300_000,
+        },
+      }),
 });

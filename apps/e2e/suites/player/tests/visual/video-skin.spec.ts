@@ -36,7 +36,7 @@ for (const { name, path } of VISUAL_PAGES) {
       await expect(player.playerRoot).toHaveScreenshot(`video-${name.toLowerCase()}-default.png`);
     });
 
-    test('storyboard thumbnail on hover', async ({ page }) => {
+    test('storyboard thumbnail on hover', async () => {
       await player.hoverTimeSlider(50);
 
       // Wait for thumbnail to finish loading (deterministic, no fixed timeout)

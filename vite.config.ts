@@ -177,7 +177,8 @@ export default defineConfig({
       'typecheck:workspace': {
         command: 'tsgo --build',
         cache: false,
-        dependsOn: ['@videojs/skins#generate'],
+        // The E2E suites are not project references, so type-check them as a task alongside the build graph.
+        dependsOn: ['@videojs/skins#generate', '@videojs/e2e#typecheck'],
       },
     },
   },

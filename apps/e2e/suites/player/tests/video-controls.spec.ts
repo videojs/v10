@@ -299,7 +299,7 @@ for (const { name, path } of UI_VIDEO_PAGES) {
       await expect(player.bufferingIndicator).not.toHaveAttribute(DATA_ATTRS.visible);
     });
 
-    test('play button shows its tooltip on hover', async ({ page }) => {
+    test('play button shows its tooltip on hover', async () => {
       await player.showControls();
       await player.playButton.hover();
 

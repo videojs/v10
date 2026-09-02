@@ -1,13 +1,24 @@
 {
+  "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "target": "ES2022",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
+    "composite": false,
+    "incremental": false,
+    "allowImportingTsExtensions": true,
+    "isolatedDeclarations": false,
     "jsx": "react-jsx",
-    "strict": true,
-    "skipLibCheck": true,
+    "lib": ["ES2024", "DOM", "DOM.Iterable"],
+    "types": ["node"],
     "noEmit": true,
-    "isolatedModules": true
+    "paths": {
+      "vjsc/*": ["../../packages/vjsc/src/*"]
+    }
   },
-  "include": ["fixtures/**/*.ts", "page-objects/**/*.ts", "tests/**/*.ts", "apps/**/*.ts", "apps/**/*.tsx"]
+  "include": ["shared/**/*.ts", "suites/**/*.ts", "suites/**/*.tsx", "scripts/**/*.ts"],
+  "exclude": [
+    "suites/registry/.generated/**",
+    "suites/registry/overlays/**",
+    "suites/player/app/src/_generated/**",
+    "suites/player/app/src/pages/**",
+    "**/node_modules/**"
+  ]
 }

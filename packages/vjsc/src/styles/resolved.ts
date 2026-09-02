@@ -175,9 +175,11 @@ function resolveModuleRules(definition: StyleDefinition, modulePath: string): Re
 
   visitStyleRules(definition.rules, (tokenPath, rule) => {
     const utilityGroups = splitUtilityGroups(rule.utilities);
-    const variantGroups = Object.fromEntries(
-      Object.entries(rule.variants ?? {}).map(([name, value]) => [name, Object.freeze(splitUtilityGroups(value))])
-    );
+    const variantGroups: Record<string, readonly string[]> = {};
+
+    for (const [name, value] of Object.entries(rule.variants ?? {})) {
+      if (value !== undefined) variantGroups[name] = Object.freeze(splitUtilityGroups(value));
+    }
 
     moduleRules.set(
       tokenKey(tokenPath),

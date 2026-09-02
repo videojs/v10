@@ -87,7 +87,7 @@ async function openVariant(
 
     if (sizingTarget instanceof HTMLElement) sizingTarget.style.width = `${playerWidth}px`;
   }, width);
-  await page.locator('video').evaluateAll((elements) => {
+  await page.locator('video').evaluateAll((elements: HTMLVideoElement[]) => {
     for (const element of elements) {
       element.pause();
       element.currentTime = 0;

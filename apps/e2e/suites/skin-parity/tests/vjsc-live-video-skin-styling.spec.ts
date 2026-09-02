@@ -50,7 +50,7 @@ for (const variant of CASES) {
   });
 
   test(`${variant.framework} ${variant.skin} preserves live controls and popup motion`, async ({ page }) => {
-    const contracts = [];
+    const contracts: Awaited<ReturnType<typeof interactionContract>>[] = [];
 
     for (const style of STYLES) {
       await test.step(style, async () => {
@@ -60,8 +60,8 @@ for (const variant of CASES) {
       });
     }
 
-    expect(contracts[1]).toEqual(contracts[0]);
-    expect(contracts[0]).toMatchObject({
+    expect(contracts[1]!).toEqual(contracts[0]!);
+    expect(contracts[0]!).toMatchObject({
       nestedButtons: 0,
       noPlaybackRate: true,
       noSeek: true,
@@ -99,7 +99,7 @@ for (const variant of CASES) {
   });
 
   test(`${variant.framework} ${variant.skin} keeps controls visibility in sync`, async ({ page }) => {
-    const contracts = [];
+    const contracts: Awaited<ReturnType<typeof controlsVisibilityContract>>[] = [];
 
     for (const style of STYLES) {
       const root = await openVariant(page, variant, style, 672);
@@ -107,8 +107,8 @@ for (const variant of CASES) {
       contracts.push(await controlsVisibilityContract(root.locator('.video-controls').first()));
     }
 
-    expect(contracts[1]).toEqual(contracts[0]);
-    expect(contracts[0].hidden).toMatchObject({ pointerEvents: 'none' });
+    expect(contracts[1]!).toEqual(contracts[0]!);
+    expect(contracts[0]!.hidden).toMatchObject({ pointerEvents: 'none' });
   });
 
   test(`${variant.framework} ${variant.skin} keeps fullscreen layout in sync`, async ({ page }) => {
@@ -128,7 +128,7 @@ for (const variant of CASES) {
   });
 
   test(`${variant.framework} ${variant.skin} keeps error-dialog styling in sync`, async ({ page }) => {
-    const contracts = [];
+    const contracts: Awaited<ReturnType<typeof popupContract>>[] = [];
 
     for (const style of STYLES) {
       await test.step(style, async () => {
@@ -142,7 +142,7 @@ for (const variant of CASES) {
       });
     }
 
-    expect(contracts[1]).toEqual(contracts[0]);
+    expect(contracts[1]!).toEqual(contracts[0]!);
   });
 
   test(`${variant.framework} ${variant.skin} keeps keyboard feedback in sync`, async ({ page }) => {
@@ -160,7 +160,7 @@ for (const variant of CASES) {
       });
     }
 
-    expect(contracts[1]).toEqual(contracts[0]);
+    expect(contracts[1]!).toEqual(contracts[0]!);
   });
 
   test(`${variant.framework} ${variant.skin} removes movement under reduced motion`, async ({ page }) => {
@@ -201,7 +201,7 @@ for (const variant of CASES) {
         });
       }
 
-      expect(contracts[1]).toEqual(contracts[0]);
+      expect(contracts[1]!).toEqual(contracts[0]!);
     });
   }
 }

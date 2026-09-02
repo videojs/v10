@@ -80,7 +80,7 @@ async function createConsumer(
 
   if (project.framework === 'html') await configureViteTypes(projectDir);
 
-  await configurePackage(project, projectDir, overrides);
+  await configurePackage(projectDir, overrides);
   await configureShadcn(project, projectDir, registryUrl);
   await applyOverlay(project, projectDir);
   await exerciseRegistryCli(project, projectDir);
@@ -121,11 +121,7 @@ async function scaffoldVite(project: RegistryConsumerProject): Promise<void> {
   );
 }
 
-async function configurePackage(
-  project: RegistryConsumerProject,
-  projectDir: string,
-  overrides: Readonly<Record<string, string>>
-): Promise<void> {
+async function configurePackage(projectDir: string, overrides: Readonly<Record<string, string>>): Promise<void> {
   const path = resolve(projectDir, 'package.json');
   // SAFETY: the official scaffolds produce a package.json object; the fields read below are optional and object-spread
   // preserves the rest of that document.

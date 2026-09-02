@@ -48,7 +48,7 @@ for (const variant of CASES) {
   });
 
   test(`${variant.framework} ${variant.skin} preserves audio interactions and popup styling`, async ({ page }) => {
-    const contracts = [];
+    const contracts: Awaited<ReturnType<typeof interactionContract>>[] = [];
 
     for (const style of STYLES) {
       await test.step(style, async () => {
@@ -59,10 +59,10 @@ for (const variant of CASES) {
     }
 
     for (const key of ['button', 'hover', 'menu', 'popover', 'tooltip'] as const) {
-      expect(contracts[1][key], `${key}: Tailwind matches CSS`).toEqual(contracts[0][key]);
+      expect(contracts[1]![key], `${key}: Tailwind matches CSS`).toEqual(contracts[0]![key]);
     }
 
-    expect(contracts[0]).toMatchObject({
+    expect(contracts[0]!).toMatchObject({
       nestedButtons: 0,
       playbackRateChanged: true,
       tooltip: { visible: true },
@@ -70,7 +70,7 @@ for (const variant of CASES) {
   });
 
   test(`${variant.framework} ${variant.skin} keeps error-dialog styling in sync`, async ({ page }) => {
-    const contracts = [];
+    const contracts: Awaited<ReturnType<typeof popupContract>>[] = [];
 
     for (const style of STYLES) {
       await test.step(style, async () => {
@@ -84,11 +84,11 @@ for (const variant of CASES) {
       });
     }
 
-    expect(contracts[1]).toEqual(contracts[0]);
+    expect(contracts[1]!).toEqual(contracts[0]!);
   });
 
   test(`${variant.framework} ${variant.skin} keeps seek preview and dragging in sync`, async ({ page }) => {
-    const contracts = [];
+    const contracts: Awaited<ReturnType<typeof audioSeekContract>>[] = [];
 
     for (const style of STYLES) {
       await test.step(style, async () => {
@@ -97,12 +97,12 @@ for (const variant of CASES) {
       });
     }
 
-    expect(contracts[1]).toEqual(contracts[0]);
-    expect(contracts[0]).toMatchObject({
+    expect(contracts[1]!).toEqual(contracts[0]!);
+    expect(contracts[0]!).toMatchObject({
       dragging: { fillIsImmediate: true, lag: 0, thumbPositionIsImmediate: true },
       restingFillTransitions: true,
     });
-    expect(contracts[0].previewOffsets.every((offset) => Math.abs(offset) <= 1)).toBe(true);
+    expect(contracts[0]!.previewOffsets.every((offset) => Math.abs(offset) <= 1)).toBe(true);
   });
 
   test(`${variant.framework} ${variant.skin} removes movement under reduced motion`, async ({ page }) => {
@@ -151,7 +151,7 @@ for (const variant of CASES) {
         });
       }
 
-      expect(contracts[1]).toEqual(contracts[0]);
+      expect(contracts[1]!).toEqual(contracts[0]!);
     });
   }
 }
@@ -185,7 +185,7 @@ async function openVariant(
 
     element.style.translate = `0 ${Math.round(top) - top}px`;
   });
-  await root.locator('audio').evaluateAll((elements) => {
+  await root.locator('audio').evaluateAll((elements: HTMLMediaElement[]) => {
     for (const element of elements) {
       element.pause();
       element.currentTime = 0;

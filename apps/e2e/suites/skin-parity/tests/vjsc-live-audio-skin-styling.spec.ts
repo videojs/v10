@@ -48,7 +48,7 @@ for (const variant of CASES) {
   });
 
   test(`${variant.framework} ${variant.skin} preserves live audio controls and popup styling`, async ({ page }) => {
-    const contracts = [];
+    const contracts: Awaited<ReturnType<typeof interactionContract>>[] = [];
 
     for (const style of STYLES) {
       await test.step(style, async () => {
@@ -59,10 +59,10 @@ for (const variant of CASES) {
     }
 
     for (const key of ['button', 'popover', 'tooltip'] as const) {
-      expect(contracts[1][key], `${key}: Tailwind matches CSS`).toEqual(contracts[0][key]);
+      expect(contracts[1]![key], `${key}: Tailwind matches CSS`).toEqual(contracts[0]![key]);
     }
 
-    expect(contracts[0]).toMatchObject({
+    expect(contracts[0]!).toMatchObject({
       nestedButtons: 0,
       noPlaybackRate: true,
       noSeek: true,
@@ -73,7 +73,7 @@ for (const variant of CASES) {
   });
 
   test(`${variant.framework} ${variant.skin} keeps error-dialog styling in sync`, async ({ page }) => {
-    const contracts = [];
+    const contracts: Awaited<ReturnType<typeof popupContract>>[] = [];
 
     for (const style of STYLES) {
       await test.step(style, async () => {
@@ -87,7 +87,7 @@ for (const variant of CASES) {
       });
     }
 
-    expect(contracts[1]).toEqual(contracts[0]);
+    expect(contracts[1]!).toEqual(contracts[0]!);
   });
 
   test(`${variant.framework} ${variant.skin} removes popup movement under reduced motion`, async ({ page }) => {
@@ -127,7 +127,7 @@ for (const variant of CASES) {
         });
       }
 
-      expect(contracts[1]).toEqual(contracts[0]);
+      expect(contracts[1]!).toEqual(contracts[0]!);
     });
   }
 }
@@ -175,7 +175,7 @@ async function openVariant(
 
     element.style.translate = `0 ${Math.round(top) - top}px`;
   });
-  await root.locator('audio').evaluateAll((elements) => {
+  await root.locator('audio').evaluateAll((elements: HTMLMediaElement[]) => {
     for (const element of elements) element.pause();
   });
   await page.evaluate(() => document.fonts.ready.then(() => undefined));

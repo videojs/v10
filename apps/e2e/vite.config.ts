@@ -7,6 +7,12 @@ const testInputs = [...cachedTaskInputs, '!playwright-report/**', '!test-results
 export default defineConfig({
   run: {
     tasks: {
+      typecheck: {
+        command: 'tsgo --project tsconfig.json --noEmit',
+        dependsOn: workspaceTaskDependencies(),
+        input: testInputs,
+        output: [],
+      },
       'prepare:player': {
         command: 'pnpm generate-pages',
         dependsOn: workspaceTaskDependencies(),

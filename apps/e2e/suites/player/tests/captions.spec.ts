@@ -80,7 +80,7 @@ test.describe('Captions sideloaded before an hls.js source', () => {
    */
   const englishCues = (page: Page) => {
     return page.evaluate(() => {
-      const media = document.querySelector('hlsjs-video');
+      const media = document.querySelector<HTMLVideoElement>('hlsjs-video');
       const track = Array.from(media?.textTracks ?? []).find(({ label }) => label === 'English');
       if (!track) return -1;
 
@@ -104,7 +104,7 @@ test.describe('Captions sideloaded before an hls.js source', () => {
    */
   const showEnglishTrack = (page: Page) => {
     return page.waitForFunction(() => {
-      const media = document.querySelector('hlsjs-video');
+      const media = document.querySelector<HTMLVideoElement>('hlsjs-video');
       const track = Array.from(media?.textTracks ?? []).find(({ label }) => label === 'English');
       if (!track) return false;
 
@@ -114,12 +114,12 @@ test.describe('Captions sideloaded before an hls.js source', () => {
   };
 
   const waitForManifest = (page: Page) => {
-    return page.waitForFunction(() => (document.querySelector('hlsjs-video')?.readyState ?? 0) >= 1);
+    return page.waitForFunction(() => (document.querySelector<HTMLVideoElement>('hlsjs-video')?.readyState ?? 0) >= 1);
   };
 
   const setSource = (page: Page, url: string) => {
     return page.evaluate((src) => {
-      const media = document.querySelector('hlsjs-video');
+      const media = document.querySelector<HTMLVideoElement>('hlsjs-video');
 
       if (media) media.src = src;
     }, url);

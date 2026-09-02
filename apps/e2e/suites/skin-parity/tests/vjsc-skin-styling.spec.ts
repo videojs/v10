@@ -1091,7 +1091,7 @@ async function enterFullscreen(page: Page, root: Locator) {
   await expect.poll(() => page.evaluate(() => document.fullscreenElement !== null)).toBe(true);
   await page.waitForTimeout(300);
 
-  return root.evaluate((element) => {
+  return root.evaluate((element: HTMLElement) => {
     const inspect = (target: Element | null) => {
       if (!(target instanceof HTMLElement || target instanceof SVGElement)) return null;
 
@@ -1127,7 +1127,7 @@ async function enterFullscreen(page: Page, root: Locator) {
       },
       scale: Number.parseFloat(style.getPropertyValue('--media-scale')),
       play: inspect(play),
-      icon: inspect(icon),
+      icon: inspect(icon ?? null),
       previewValueBottomInPreviewHeights:
         previewHeight > 0 ? Math.round((previewValueBottom / previewHeight) * 10) / 10 : null,
     };
@@ -1406,7 +1406,7 @@ async function indicatorContract(indicator: Locator) {
 }
 
 async function setDirection(page: Page, direction: 'ltr' | 'rtl') {
-  await page.locator('html').evaluate((element, value) => {
+  await page.locator('html').evaluate((element: HTMLElement, value) => {
     element.dir = value;
   }, direction);
 }
@@ -1420,12 +1420,12 @@ async function enableCaptions(page: Page, root: Locator) {
   // while the React skin renders it within the group.
   const video = page.locator('video').first();
 
-  await video.evaluate((element) => {
+  await video.evaluate((element: HTMLVideoElement) => {
     element.pause();
     element.currentTime = 2;
   });
   await expect
-    .poll(() => video.evaluate((element) => element.textTracks[0]?.activeCues?.length ?? 0))
+    .poll(() => video.evaluate((element: HTMLVideoElement) => element.textTracks[0]?.activeCues?.length ?? 0))
     .toBeGreaterThan(0);
   await page.waitForTimeout(100);
 }
@@ -1697,7 +1697,7 @@ async function triggerMediaError(page: Page, message?: string): Promise<Locator>
   await page
     .locator('video')
     .first()
-    .evaluate((element, errorMessage) => {
+    .evaluate((element: HTMLVideoElement, errorMessage) => {
       if (errorMessage) {
         Object.defineProperty(element, 'error', {
           configurable: true,
@@ -1759,7 +1759,7 @@ async function errorDialogContract(root: Locator, dialog: Locator) {
   const rootRect = await root.boundingBox();
   if (!rootRect) throw new Error('Expected the media player to have a rendered box.');
 
-  return dialog.evaluate((element, playerRect) => {
+  return dialog.evaluate((element: HTMLElement, playerRect) => {
     const surface = element.querySelector<HTMLElement>('.media-dialog__popup, .media-dialog-popup') ?? element;
     const title = element.querySelector<HTMLElement>('h2, media-dialog-title');
     const description = element.querySelector<HTMLElement>('p, media-dialog-description');
@@ -2432,7 +2432,7 @@ async function popupContract(root: Locator, popup: Locator) {
 }
 
 async function skinContract(root: Locator) {
-  return root.evaluate((element) => {
+  return root.evaluate((element: HTMLElement) => {
     const rootRect = element.getBoundingClientRect();
     const round = (value: number) => Math.round(value * 10) / 10;
     const relativeRect = (rect: DOMRect) => ({
