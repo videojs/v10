@@ -118,6 +118,7 @@ export function createMenuPopup(): MenuPopupApi {
           styles: {
             insetInlineStart: '0px',
             insetInlineEnd: 'auto',
+            insetBlockEnd: 'auto',
             width: width === undefined ? 'max-content' : `${width}px`,
             height: 'auto',
             minWidth: '0px',
