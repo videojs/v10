@@ -1,25 +1,22 @@
 import type { AnyPlayerStore } from '@videojs/core/dom';
+import { fullscreenFeature } from '@videojs/core/dom';
 import { ContextProvider } from '@videojs/element/context';
-import type { MediaFullscreenState } from '@videojs/media';
-import { createStore } from '@videojs/store';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vite-plus/test';
 
 import { containerContext, playerContext } from '../../../player/context';
+import { createTestPlayerStore } from '../../../testing/create-test-player-store';
 import { UIElement } from '../../ui-element';
 import { FullscreenButtonElement } from '../fullscreen-button-element';
 
 class TestFullscreenProvider extends UIElement {
   readonly requestFullscreen = vi.fn();
-  readonly store = createStore<unknown>()<MediaFullscreenState>({
-    name: 'fullscreen',
-    state: () => ({
-      fullscreen: false,
-      fullscreenAvailability: 'available',
-      requestFullscreen: this.requestFullscreen,
-      exitFullscreen: vi.fn(),
-      toggleFullscreen: vi.fn(),
-    }),
-  }) as unknown as AnyPlayerStore;
+  readonly store: AnyPlayerStore = createTestPlayerStore([fullscreenFeature], {
+    fullscreen: false,
+    fullscreenAvailability: 'available',
+    requestFullscreen: this.requestFullscreen,
+    exitFullscreen: vi.fn(),
+    toggleFullscreen: vi.fn(),
+  });
   readonly containerProvider: ContextProvider<typeof containerContext> = new ContextProvider(this, {
     context: containerContext,
     initialValue: { container: this, registerContainer: () => () => {} },

@@ -1,29 +1,18 @@
 import type { AnyPlayerStore } from '@videojs/core/dom';
+import { textTrackFeature } from '@videojs/core/dom';
 import { ContextProvider } from '@videojs/element/context';
 import type { MediaTextTrackState } from '@videojs/media';
-import { createStore } from '@videojs/store';
-import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
+import { afterEach, describe, expect, it } from 'vite-plus/test';
 
 import { playerContext } from '../../../player/context';
+import { createTestPlayerStore } from '../../../testing/create-test-player-store';
 import { UIElement } from '../../ui-element';
 import { ThumbnailElement } from '../thumbnail-element';
 
 function createTextTrackStore(
   thumbnailTrackCrossOrigin: MediaTextTrackState['thumbnailTrackCrossOrigin']
 ): AnyPlayerStore {
-  return createStore<unknown>()<MediaTextTrackState>({
-    name: 'textTrack',
-    state: () => ({
-      chaptersCues: [],
-      thumbnailCues: [],
-      thumbnailTrackSrc: null,
-      thumbnailTrackCrossOrigin,
-      textTrackList: [],
-      subtitlesShowing: false,
-      toggleSubtitles: vi.fn(),
-      selectSubtitlesTrack: vi.fn(),
-    }),
-  }) as unknown as AnyPlayerStore;
+  return createTestPlayerStore([textTrackFeature], { thumbnailTrackCrossOrigin });
 }
 
 class TestPlayerProviderElement extends UIElement {

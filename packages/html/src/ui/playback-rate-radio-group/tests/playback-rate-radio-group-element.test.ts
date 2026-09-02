@@ -1,10 +1,11 @@
 import type { AnyPlayerStore } from '@videojs/core/dom';
+import { playbackRateFeature } from '@videojs/core/dom';
 import { ContextProvider } from '@videojs/element/context';
 import type { MediaPlaybackRateState } from '@videojs/media';
-import { createStore } from '@videojs/store';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { playerContext } from '../../../player/context';
+import { createTestPlayerStore } from '../../../testing/create-test-player-store';
 import { MenuElement } from '../../menu/menu-element';
 import { MenuItemIndicatorElement } from '../../menu/menu-item-indicator-element';
 import { MenuRadioGroupElement } from '../../menu/menu-radio-group-element';
@@ -61,16 +62,7 @@ function createPlaybackRateStore({
   playbackRate?: number | undefined;
   setPlaybackRate?: ((rate: number) => void) | undefined;
 } = {}): AnyPlayerStore {
-  return createStore<unknown>()<MediaPlaybackRateState>({
-    name: 'playbackRate',
-    state: () => {
-      return {
-        playbackRates,
-        playbackRate,
-        setPlaybackRate,
-      };
-    },
-  }) as unknown as AnyPlayerStore;
+  return createTestPlayerStore([playbackRateFeature], { playbackRates, playbackRate, setPlaybackRate });
 }
 
 class TestPlayerProviderElement extends UIElement {
