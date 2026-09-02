@@ -10,6 +10,8 @@ export {
   type ComponentTarget,
   type ComponentTargetOptions,
   defineComponentTarget,
+  isTargetElement,
+  isTargetUnwrap,
   readTargetReference,
   type JsxClassNameOptions,
   type JsxImportBinding,
