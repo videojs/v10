@@ -53,6 +53,15 @@ Avoid structural selectors such as `:has()`, `has-*`, `group-has-*`, descendants
 - Organize style modules and output assets by role (`buttons`, `sliders`, `popups`, `feedback`, `layout`). Keep skin-only layout in the skin rather than a generic primitive module.
 - Put common utilities in `utilities` and selected skin or target differences in `variants` instead of duplicating a rule.
 
+## Shared utilities and tokens
+
+- Put a recipe that several rules repeat into `packages/skins/src/styles/tailwind.shared.css` as an `@utility`, and prefix it at the use site instead of building class strings dynamically. Name property families `<property>-media-<token>` (`mask-media-volume`, `clip-media-x-*`) and multi-property recipes `<recipe>-media` (`surface-media`, `focus-ring-media`).
+- Keep `@utility` bodies flat declaration lists. The Shadcn registry exporter cannot represent nested rules, so state, pseudo-element, and media handling belongs on the use site through variants, and preference modes belong in `themes/preferences.css` through tokens.
+- Functional utilities read their argument with `--value([*])`; custom variants use the block form because the shorthand splits comma-separated media query lists.
+- Prefer a `--media-*` token with an `@theme inline` alias over literal values. Use `rounded-media-pill` rather than `rounded-full`, whose `calc(infinity * 1px)` the style pipeline cannot serialize.
+- The vjsc plugin writes `src/styles/candidates.generated.css` so Tailwind scans the utilities the transform resolves; raw style modules are not scanned.
+- Composed rules override the rules they extend by order in CSS output, but Tailwind output has no runtime class merging, so a same-property override across composed rules still needs `!` unless Tailwind emits the shorthand first.
+
 ## Example
 
 Input: “Add a tooltip to the volume-popover button.”
