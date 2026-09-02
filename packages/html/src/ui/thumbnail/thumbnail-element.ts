@@ -25,7 +25,7 @@ img {
 }`;
 
 export class ThumbnailElement extends UIElement {
-  static readonly tagName = 'media-thumbnail';
+  static readonly tagName: string = 'media-thumbnail';
 
   static override properties = {
     time: { type: Number },

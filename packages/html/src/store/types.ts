@@ -1,7 +1,7 @@
 import type { InferPlayerHtmlConfig, PlayerStore } from '@videojs/core/dom';
 import type { Constructor } from '@videojs/utils/types';
 
-import type { UIElement } from '@/ui/ui-element';
+import type { UIElement } from '../ui/ui-element';
 
 // ----------------------------------------
 // PlayerElement

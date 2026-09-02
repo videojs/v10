@@ -92,6 +92,9 @@ jobs:
       - name: Typecheck
         run: pnpm typecheck
 
+      - name: Check public declarations
+        run: pnpm exec vp run @videojs/html#check:public-types
+
   test:
     needs: install
     name: Test (${{ matrix.package }})
