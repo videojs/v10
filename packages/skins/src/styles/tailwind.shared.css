@@ -92,3 +92,16 @@
   transform: translateX(0.25px);
   transition: transform 300ms linear(0, -24 20%, 16 40%, -8 60%, 4 80%, 1);
 }
+
+@utility layer-media {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+}
+
+@utility object-media {
+  object-fit: var(--media-object-fit, contain);
+  object-position: var(--media-object-position, center);
+}

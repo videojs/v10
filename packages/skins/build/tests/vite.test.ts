@@ -225,7 +225,7 @@ describe('Skins Vite workflow', () => {
     const html = await server.transformRequest(htmlPosterUrl);
     const react = await server.transformRequest(reactPosterUrl);
 
-    expect(html?.code).toContain('[&>slot::slotted(img)]:absolute');
+    expect(html?.code).toContain('[&>slot::slotted(img)]:layer-media');
     expect(react?.code).not.toContain('::slotted');
   }, 30_000);
 
