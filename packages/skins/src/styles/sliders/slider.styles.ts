@@ -76,7 +76,7 @@ export default styles({
       className: 'media-slider-preview',
       utilities: [
         'group/preview relative h-1 [--media-slider-preview-max-height:var(--media-slider-preview-max-width)]',
-        '@media-wide/media-root:[--media-slider-preview-max-width:min(--spacing(48),100cqi)]',
+        'media-wide:[--media-slider-preview-max-width:min(--spacing(48),100cqi)]',
         'before:pointer-events-none before:absolute before:z-1 before:-translate-1/2 before:scale-50 before:opacity-0',
         'motion-safe:before:transition-[opacity,scale] motion-safe:before:duration-(--media-duration-slow) motion-safe:before:ease-out',
         'data-pointing:not-data-dragging:before:scale-100 data-pointing:not-data-dragging:before:opacity-100',
@@ -90,10 +90,10 @@ export default styles({
         minimal: [
           'min-w-full',
           '[--media-slider-preview-max-width:min(--spacing(28),100cqi)]',
-          '@media-compact/media-root:[--media-slider-preview-max-width:min(--spacing(36),100cqi)]',
+          'media-compact:[--media-slider-preview-max-width:min(--spacing(36),100cqi)]',
           '[--media-preview-end-inset:calc(100cqi-100%)]',
           '[--media-preview-left:clamp(calc(var(--media-slider-preview-max-width)/2),var(--media-slider-pointer),calc(100%-var(--media-slider-preview-max-width)/2+var(--media-preview-end-inset)))]',
-          '@media-wide/media-root:[--media-preview-left:var(--media-slider-pointer)]',
+          'media-wide:[--media-preview-left:var(--media-slider-pointer)]',
           'before:bg-current/35',
           'data-[orientation=horizontal]:before:top-1/2 data-[orientation=horizontal]:before:left-(--media-slider-pointer)',
           'data-[orientation=horizontal]:before:h-5 data-[orientation=horizontal]:before:w-px',

@@ -5,7 +5,7 @@ export default styles({
   rules: {
     captionsButton: {
       className: 'video-controls-captions-button',
-      utilities: '@max-media-compact/media-root:hidden',
+      utilities: 'media-max-compact:hidden',
     },
     volumeButton: {
       className: 'video-controls-volume-button',
@@ -13,11 +13,11 @@ export default styles({
     },
     settingsButton: {
       className: 'video-controls-settings-button',
-      utilities: '@media-compact/media-root:ms-px',
+      utilities: 'media-compact:ms-px',
     },
     timeSliderGroup: {
       className: 'video-time-slider-group',
-      utilities: '@container/media-time flex flex-1 items-center gap-2.5 px-2 @media-compact/media-root:px-3',
+      utilities: '@container/media-time flex flex-1 items-center gap-2.5 px-2 media-compact:px-3',
     },
     timeValue: {
       className: 'video-time-value',

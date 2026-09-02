@@ -51,8 +51,32 @@
   font-family: var(--media-font-family, "Inter Variable", Inter, ui-sans-serif, system-ui, sans-serif);
 }
 
-@custom-variant opaque {
+@custom-variant media-opaque {
   @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+    @slot;
+  }
+}
+
+@custom-variant media-compact {
+  @container media-root (width >= theme(--container-media-compact)) {
+    @slot;
+  }
+}
+
+@custom-variant media-max-compact {
+  @container media-root (width < theme(--container-media-compact)) {
+    @slot;
+  }
+}
+
+@custom-variant media-wide {
+  @container media-root (width >= theme(--container-media-wide)) {
+    @slot;
+  }
+}
+
+@custom-variant media-max-wide {
+  @container media-root (width < theme(--container-media-wide)) {
     @slot;
   }
 }

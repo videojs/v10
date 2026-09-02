@@ -25,15 +25,15 @@ export default styles({
     },
     currentValue: {
       className: 'media-time-current-value',
-      utilities: 'hidden @media-wide/media-root:inline',
+      utilities: 'hidden media-wide:inline',
     },
     separator: {
       className: 'media-time-separator',
-      utilities: 'hidden @media-wide/media-root:inline @media-wide/media-root:text-current/60',
+      utilities: 'hidden media-wide:inline media-wide:text-current/60',
     },
     durationValue: {
       className: 'media-time-duration-value',
-      utilities: 'tabular-nums @media-wide/media-root:text-current/60',
+      utilities: 'tabular-nums media-wide:text-current/60',
     },
   },
 });

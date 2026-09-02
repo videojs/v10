@@ -7,7 +7,7 @@ export default styles({
       className: 'audio-time-slider-group',
       utilities: [
         '@container/audio-time-controls flex min-w-0 flex-1 flex-row-reverse items-center gap-3',
-        '@media-wide/media-root:flex-row',
+        'media-wide:flex-row',
       ],
     },
   },

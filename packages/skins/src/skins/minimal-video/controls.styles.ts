@@ -5,18 +5,18 @@ export default styles({
   rules: {
     content: {
       className: 'video-controls-wrap',
-      utilities: 'flex-wrap @media-wide/media-root:flex-nowrap',
+      utilities: 'flex-wrap media-wide:flex-nowrap',
     },
     start: {
       className: 'video-controls-start',
-      utilities: 'flex flex-1 items-center gap-px @media-wide/media-root:flex-none',
+      utilities: 'flex flex-1 items-center gap-px media-wide:flex-none',
     },
     end: {
       className: 'video-controls-end',
       utilities: [
-        'flex flex-1 items-center justify-end gap-px @media-wide/media-root:flex-none',
-        '@max-media-wide/media-root:mask-media-volume @max-media-wide/media-root:[mask-size:400%_100%]',
-        'group-has-[[data-volume-level][aria-expanded=true]]/controls:@max-media-wide/media-root:mask-media-volume-open',
+        'flex flex-1 items-center justify-end gap-px media-wide:flex-none',
+        'media-max-wide:mask-media-volume media-max-wide:[mask-size:400%_100%]',
+        'group-has-[[data-volume-level][aria-expanded=true]]/controls:media-max-wide:mask-media-volume-open',
       ],
     },
     trailing: {
@@ -28,10 +28,10 @@ export default styles({
       utilities: [
         '@container/video-time-controls -order-1 flex flex-none basis-full flex-row-reverse items-center gap-3 px-1.5',
         '[--media-slider-height:--spacing(5)]',
-        '@media-wide/media-root:order-none @media-wide/media-root:min-w-0 @media-wide/media-root:flex-1 @media-wide/media-root:flex-row',
-        '@media-wide/media-root:[--media-slider-height:--spacing(8)]',
-        '@media-wide/media-root:mask-media-volume @media-wide/media-root:[mask-size:200%_100%]',
-        'group-has-[[data-volume-level][aria-expanded=true]]/controls:@media-wide/media-root:mask-media-volume-open',
+        'media-wide:order-none media-wide:min-w-0 media-wide:flex-1 media-wide:flex-row',
+        'media-wide:[--media-slider-height:--spacing(8)]',
+        'media-wide:mask-media-volume media-wide:[mask-size:200%_100%]',
+        'group-has-[[data-volume-level][aria-expanded=true]]/controls:media-wide:mask-media-volume-open',
       ],
     },
   },

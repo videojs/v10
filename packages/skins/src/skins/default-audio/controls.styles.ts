@@ -5,7 +5,7 @@ export default styles({
   rules: {
     seekButton: {
       className: 'audio-seek-button',
-      utilities: '@max-media-compact/media-root:hidden',
+      utilities: 'media-max-compact:hidden',
     },
     timeSliderGroup: {
       className: 'audio-time-slider-group',

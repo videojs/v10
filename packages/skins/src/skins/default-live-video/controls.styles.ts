@@ -9,7 +9,7 @@ export default styles({
     },
     captionsMenu: {
       className: 'video-controls-captions-menu',
-      utilities: '@max-media-compact/media-root:hidden',
+      utilities: 'media-max-compact:hidden',
     },
   },
 });

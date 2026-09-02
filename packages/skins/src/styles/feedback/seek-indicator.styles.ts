@@ -7,7 +7,7 @@ export default styles({
       className: 'media-seek-indicator',
       utilities: [
         'group/seek-status col-start-2 row-start-1 grid place-content-center gap-1 p-4 text-center',
-        '@media-wide/media-root:p-6',
+        'media-wide:p-6',
         'data-[direction=backward]:col-start-1 data-[direction=backward]:justify-self-start',
         'data-[direction=forward]:col-start-3 data-[direction=forward]:justify-self-end',
       ],

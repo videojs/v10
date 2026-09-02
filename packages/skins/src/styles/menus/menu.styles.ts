@@ -91,7 +91,7 @@ export default styles({
     },
     separator: {
       className: 'media-menu-separator',
-      utilities: 'my-1 block border-b border-media-border opaque:border-media-foreground/25',
+      utilities: 'my-1 block border-b border-media-border media-opaque:border-media-foreground/25',
     },
     hint: {
       className: 'media-menu-hint',
