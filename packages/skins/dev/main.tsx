@@ -7,7 +7,7 @@ import { VideoPlayer } from '../../react/src/presets/video/player';
 import { createPreviewControls } from './controls';
 import { assignHtmlMediaSource, defineHtmlMedia, renderHtmlMedia } from './html-media';
 import { loadSkin } from './loaders';
-import { readPreviewOptions } from './options';
+import { type PreviewOptions, readPreviewOptions, type StyleMode } from './options';
 import { ReactPreviewMedia } from './react-media';
 import { installErrorLog } from './report';
 
@@ -20,11 +20,19 @@ const preview = readPreviewOptions();
 
 document.documentElement.dataset.colorScheme = preview.colorScheme;
 
-const Skin = await loadSkin(preview);
+const variants: readonly PreviewOptions[] = preview.compare
+  ? [
+      { ...preview, styleMode: 'css' },
+      { ...preview, styleMode: 'tailwind' },
+    ]
+  : [preview];
+const skins = await Promise.all(variants.map((variant) => loadSkin(variant)));
 
-if (preview.styleMode === 'tailwind') await import('../src/styles/tailwind.dev.css');
+if (variants.some((variant) => variant.styleMode === 'tailwind')) await import('../src/styles/tailwind.dev.css');
 
 type PreviewRoot = HTMLElement & { __videojsSkinsReactRoot?: ReturnType<typeof createRoot> };
+type ReactSkin = React.ComponentType<React.PropsWithChildren<{ className?: string }>>;
+type HtmlSkin = (props?: { className?: string }) => { toString(): string };
 
 const rootElement = document.getElementById('root');
 if (!rootElement) throw new Error('Expected the skin preview root to exist.');
@@ -32,6 +40,9 @@ if (!rootElement) throw new Error('Expected the skin preview root to exist.');
 const root: PreviewRoot = rootElement;
 
 root.dataset.mediaKind = preview.isAudio ? 'audio' : 'video';
+
+if (preview.compare) root.dataset.compare = 'styles';
+
 root.__videojsSkinsReactRoot?.unmount();
 delete root.__videojsSkinsReactRoot;
 
@@ -42,8 +53,14 @@ const controls = createPreviewControls(preview, (width) => {
 root.before(controls.options, controls.width);
 
 if (preview.framework === 'react') {
-  // SAFETY: VJSC transforms the selected React target into a React component before the module loads.
-  renderReact(<App Skin={Skin as React.ComponentType<React.PropsWithChildren<{ className?: string }>>} />);
+  renderReact(
+    <>
+      {variants.map((variant, index) => (
+        // SAFETY: VJSC transforms the selected React target into a React component before the module loads.
+        <PreviewVariant key={variant.styleMode} variant={variant} Skin={skins[index] as ReactSkin} />
+      ))}
+    </>
+  );
 } else {
   if (preview.isAudio && preview.isLive) await import('../../html/src/define/live-audio/player');
   else if (preview.isAudio) await import('../../html/src/define/audio/player');
@@ -54,13 +71,7 @@ if (preview.framework === 'react') {
 
   await defineHtmlMedia(mediaOptions);
 
-  // SAFETY: VJSC transforms the selected HTML target into a string-rendering function before the module loads.
-  const render = Skin as (props?: { className?: string }) => { toString(): string };
   const posterAttribute = preview.poster ? ` poster="${escapeAttribute(preview.poster)}"` : '';
-  const output = String(render({ className: 'preview-player' })).replace(
-    '<slot></slot>',
-    renderHtmlMedia(mediaOptions)
-  );
   const playerTag = preview.isAudio
     ? preview.isLive
       ? 'live-audio-player'
@@ -69,8 +80,41 @@ if (preview.framework === 'react') {
       ? 'live-video-player'
       : 'video-player';
 
-  root.innerHTML = `<${playerTag}${posterAttribute}>${output}</${playerTag}>`;
+  root.innerHTML = variants
+    .map((variant, index) => {
+      // SAFETY: VJSC transforms the selected HTML target into a string-rendering function before the module loads.
+      const render = skins[index] as HtmlSkin;
+      const output = String(render({ className: 'preview-player' })).replace(
+        '<slot></slot>',
+        renderHtmlMedia(mediaOptions)
+      );
+      const player = `<${playerTag}${posterAttribute}>${output}</${playerTag}>`;
+
+      return preview.compare ? compareSection(variant.styleMode, player) : player;
+    })
+    .join('');
   assignHtmlMediaSource(root, preview.media.source);
+}
+
+function PreviewVariant({ variant, Skin }: { variant: PreviewOptions; Skin: ReactSkin }) {
+  const app = <App Skin={Skin} />;
+
+  if (!preview.compare) return app;
+
+  return (
+    <section className="preview-compare-item" data-style={variant.styleMode}>
+      <h2>{styleLabel(variant.styleMode)}</h2>
+      {app}
+    </section>
+  );
+}
+
+function compareSection(styleMode: StyleMode, player: string): string {
+  return `<section class="preview-compare-item" data-style="${styleMode}"><h2>${styleLabel(styleMode)}</h2>${player}</section>`;
+}
+
+function styleLabel(styleMode: StyleMode): string {
+  return styleMode === 'css' ? 'CSS' : 'Tailwind';
 }
 
 function App({ Skin }: { Skin: React.ComponentType<React.PropsWithChildren<{ className?: string }>> }) {

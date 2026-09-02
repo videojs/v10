@@ -55,6 +55,10 @@ function createOptions(preview: PreviewOptions): HTMLFormElement {
       ['single', 'Single track'],
       ['multiple', 'Multiple tracks'],
     ]),
+    createSelect('compare', 'Compare', preview.compare ? 'styles' : 'off', [
+      ['off', 'Off'],
+      ['styles', 'CSS vs Tailwind'],
+    ]),
     createReportControls(preview),
     createPreferenceBadges()
   );

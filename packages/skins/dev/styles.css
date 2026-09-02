@@ -220,3 +220,24 @@ body {
   color: light-dark(rgb(0 0 0 / 55%), rgb(255 255 255 / 55%));
   font-size: 0.75rem;
 }
+
+#root[data-compare] {
+  grid-auto-flow: row;
+  gap: 1.5rem;
+  align-content: start;
+}
+
+.preview-compare-item {
+  display: grid;
+  gap: 0.5rem;
+  justify-items: center;
+}
+
+.preview-compare-item h2 {
+  margin: 0;
+  color: light-dark(rgb(0 0 0 / 60%), rgb(255 255 255 / 60%));
+  font-size: 0.75rem;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}

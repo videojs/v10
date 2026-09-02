@@ -59,16 +59,18 @@ export function renderHtmlMedia({
           : ''
       }${storyboardTrack}`;
 
-  return `<${tag} id="preview-media"${sourceAttribute} playsinline crossorigin="anonymous">${videoTracks}${chapterTracks}</${tag}>`;
+  return `<${tag} data-preview-media${sourceAttribute} playsinline crossorigin="anonymous">${videoTracks}${chapterTracks}</${tag}>`;
 }
 
 export function assignHtmlMediaSource(root: ParentNode, source: SandboxSource['source']): void {
   if (!source) return;
 
-  const element = root.querySelector<HTMLElement & { source: NonNullable<SandboxSource['source']> }>('#preview-media');
-  if (!element) throw new Error('Expected the structured-source media element to exist.');
+  const elements = root.querySelectorAll<HTMLElement & { source: NonNullable<SandboxSource['source']> }>(
+    '[data-preview-media]'
+  );
+  if (elements.length === 0) throw new Error('Expected the structured-source media element to exist.');
 
-  element.source = source;
+  for (const element of elements) element.source = source;
 }
 
 function escapeAttribute(value: string): string {
