@@ -30,7 +30,9 @@ export default defineConfig({
       candidates: true,
     }),
     tailwindcss(),
-    react({ jsxImportSource: 'react' }),
+    // The entry mounts the preview with top-level awaits and must never hot swap. Without a refresh boundary, updates
+    // that reach it, such as rebuilt workspace dist files or context modules, fall through to a full reload.
+    react({ jsxImportSource: 'react', exclude: [/\/dev\/main\.tsx$/] }),
   ],
   resolve: {
     alias: [
