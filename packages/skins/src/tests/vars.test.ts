@@ -47,6 +47,8 @@ describe('vars', () => {
       (property) =>
         !property.startsWith('--media-') &&
         property !== '--spacing' &&
+        // Tailwind functional utilities read their argument through `--value()`.
+        property !== '--value' &&
         !/^--(?:color|container|drop-shadow|ease|font|radius|shadow|spacing|text|text-shadow)-media(?:-|$)/.test(
           property
         )
