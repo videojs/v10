@@ -101,7 +101,7 @@ export default styles({
     },
     badge: {
       className: 'media-menu-badge',
-      utilities: 'rounded-media-control bg-media-control-hover px-1.5 text-media-xs font-semibold',
+      utilities: 'rounded-media-control bg-media-accent px-1.5 text-media-xs font-semibold',
     },
     itemIndicator: {
       className: 'media-menu-item-indicator',

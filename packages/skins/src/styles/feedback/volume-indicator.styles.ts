@@ -32,7 +32,7 @@ export default styles({
           'before:col-start-2 before:row-start-1 before:h-0.75 before:w-full before:rounded-media-pill',
           'before:bg-current/20 before:shadow-[0_1px_0_var(--media-shadow-subtle-current-color)]',
           'after:col-start-2 after:row-start-1 after:h-0.75 after:w-[var(--media-volume-fill,0%)] after:justify-self-start',
-          'after:rounded-media-pill after:bg-media-accent',
+          'after:rounded-media-pill after:bg-media-primary',
           'after:transition-[width] after:duration-media-slow after:ease-linear',
           'motion-safe:group-[:is([data-min],[data-max]):not([data-starting-style],[data-ending-style])]/volume-status:nudge-media',
         ],

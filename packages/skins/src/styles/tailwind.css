@@ -2,10 +2,9 @@
 
 @theme inline {
   /* Colors alias the scoped `--media-*` tokens so `bg-media-popover` and friends follow the active Skin, preset, and preference. */
-  --color-media-accent: var(--media-primary);
+  --color-media-accent: var(--media-accent);
   --color-media-background: var(--media-background);
   --color-media-border: var(--media-border);
-  --color-media-control-hover: var(--media-accent);
   --color-media-controls: var(--media-controls);
   --color-media-controls-foreground: var(--media-controls-foreground);
   --color-media-foreground: var(--media-foreground);

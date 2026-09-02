@@ -29,7 +29,7 @@ export default styles({
       className: 'media-slider-fill',
       utilities: [
         ...trackLayer,
-        'bg-media-accent',
+        'bg-media-primary',
         'data-[orientation=horizontal]:inset-y-0 data-[orientation=horizontal]:left-0 data-[orientation=horizontal]:w-full',
         'data-[orientation=horizontal]:clip-media-x-[--media-slider-fill]',
         'group-data-dragging/slider:data-[orientation=horizontal]:clip-media-x-[--media-slider-pointer]',
