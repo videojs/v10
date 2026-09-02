@@ -8,12 +8,11 @@ import { type GraphModuleInput, finalizeGraph } from '../graph/finalize';
 import type { GraphImport, Graph } from '../graph/types';
 import { analyzeImports } from '../shadcn/analyze';
 import { toArray } from '../utils/array';
-import { moduleFilename, moduleId, normalizeResolvedId, parseModuleId } from '../utils/module-id';
+import { moduleFilename, moduleId, normalizeResolvedId, parseModuleId, SCRIPT_MODULE_ID } from '../utils/module-id';
 import { isInsideRoot } from '../utils/path';
 import { readModuleBuildMeta } from './component-meta';
 import type { EntriesOptions } from './vjsc';
 
-const SCRIPT_ID = /\.[cm]?[jt]sx?(?:\?|$)/;
 const VIRTUAL_STYLE_ID = /(?:^|\0)virtual:vjsc\/css\//;
 
 export interface GraphCapability<Node extends ModuleMeta = ModuleMeta> {
@@ -118,7 +117,7 @@ export function graphPlugin<Node extends ModuleMeta>(
           continue;
         }
 
-        if (!SCRIPT_ID.test(id)) continue;
+        if (!SCRIPT_MODULE_ID.test(id)) continue;
 
         const parsed = parseModuleId(id);
         if (!isAbsolute(parsed.filename) || !isInsideRoot(root, parsed.filename)) continue;

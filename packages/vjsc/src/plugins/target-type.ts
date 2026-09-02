@@ -25,9 +25,9 @@ import {
   type TargetReference,
 } from '../target/definition';
 import { createTargetModuleImports } from '../target/module-imports';
+import { SCRIPT_MODULE_ID } from '../utils/module-id';
 import { type ComponentTargetPluginOptions, selectComponentTargets } from './component-target';
 
-const SCRIPT_ID = /\.[cm]?[jt]sx?(?:\?|$)/;
 const COMPONENT_SOURCE = 'vjsc/components';
 
 interface CanonicalPath {
@@ -65,7 +65,7 @@ export function targetTypePlugin(options: ComponentTargetPluginOptions): Plugin 
   return {
     name: 'vjsc:target-types',
     transform: {
-      filter: { id: SCRIPT_ID, code: 'vjsc/components' },
+      filter: { id: SCRIPT_MODULE_ID, code: 'vjsc/components' },
       handler(code, id, transform) {
         const targets = selectComponentTargets(options.targets, id);
         if (targets.length === 0 || !transform.ast || !transform.magicString) return null;

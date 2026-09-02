@@ -3,9 +3,8 @@ import { walk } from 'oxc-walker';
 import type { Plugin } from 'rolldown';
 
 import { createTargetModuleImports } from '../target/module-imports';
+import { SCRIPT_MODULE_ID } from '../utils/module-id';
 import { type ComponentTargetPluginOptions, selectComponentTargets } from './component-target';
-
-const SCRIPT_ID = /\.[cm]?[jt]sx?(?:\?|$)/;
 
 interface ImportBinding {
   readonly imported: string;
@@ -16,7 +15,7 @@ export function reactTargetPropsPlugin(options: ComponentTargetPluginOptions): P
   return {
     name: 'vjsc:react-target-props',
     transform: {
-      filter: { id: SCRIPT_ID, code: 'className' },
+      filter: { id: SCRIPT_MODULE_ID, code: 'className' },
       handler(code, id, transform) {
         const targets = selectComponentTargets(options.targets, id);
         if (!targets.some((target) => target.jsx.attributes === 'react')) return null;

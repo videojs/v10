@@ -10,8 +10,7 @@ import type {
 import type { Plugin, RolldownMagicString } from 'rolldown';
 
 import type { ComponentMeta } from '../components/meta';
-
-const SCRIPT_ID = /\.[cm]?[jt]sx?(?:\?|$)/;
+import { SCRIPT_MODULE_ID } from '../utils/module-id';
 
 export interface ModuleBuildMeta {
   readonly moduleMeta?: ComponentMeta | undefined;
@@ -49,7 +48,7 @@ export function componentMetaPlugin(exportName = 'meta'): Plugin {
   return {
     name: 'vjsc:component-meta',
     transform: {
-      filter: { id: SCRIPT_ID, code: exportName },
+      filter: { id: SCRIPT_MODULE_ID, code: exportName },
       handler(_code, id, transform) {
         const exported = findExportedMeta(transform.ast, exportName);
         if (!exported?.declarator.init) return null;

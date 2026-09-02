@@ -1,6 +1,9 @@
 import { realpathSync } from 'node:fs';
 import { isAbsolute, resolve } from 'node:path';
 
+/** Matches script module ids, with or without a transform query, for plugin transform filters. */
+export const SCRIPT_MODULE_ID = /\.[cm]?[jt]sx?(?:\?|$)/;
+
 export interface TransformModule {
   readonly id: string;
   readonly filename: string;

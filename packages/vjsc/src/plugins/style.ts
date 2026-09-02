@@ -30,11 +30,9 @@ import {
   type ResolvedStyleRule,
   utilityGroupsForRule,
 } from '../styles/resolved';
-import { moduleFilename, parseModuleId, type TransformModule } from '../utils/module-id';
+import { moduleFilename, parseModuleId, type TransformModule, SCRIPT_MODULE_ID } from '../utils/module-id';
 import { toPosixPath } from '../utils/path';
 import { mergeModuleBuildMeta } from './component-meta';
-
-const SCRIPT_ID = /\.[cm]?[jt]sx?(?:\?|$)/;
 
 type InternalStyleTransformOptions = StyleTransformOptions & { readonly resolvedStyles?: ResolvedStyles | undefined };
 
@@ -143,7 +141,7 @@ export function stylePlugin(
       return cssById.get(publicId)?.source ?? null;
     },
     transform: {
-      filter: { id: SCRIPT_ID, code: '.styles' },
+      filter: { id: SCRIPT_MODULE_ID, code: '.styles' },
       async handler(_code, id, transform) {
         const options: InternalStyleTransformOptions | null = isFunction(config)
           ? await config(parseModuleId(id))

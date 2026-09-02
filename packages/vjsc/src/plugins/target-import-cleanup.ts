@@ -2,15 +2,14 @@ import type { ImportDeclaration, Node, Program } from '@oxc-project/types';
 import { walk } from 'oxc-walker';
 import type { Plugin } from 'rolldown';
 
+import { SCRIPT_MODULE_ID } from '../utils/module-id';
 import { type ComponentTargetPluginOptions, selectComponentTargets } from './component-target';
-
-const SCRIPT_ID = /\.[cm]?[jt]sx?(?:\?|$)/;
 
 export function targetImportCleanupPlugin(options: ComponentTargetPluginOptions): Plugin {
   return {
     name: 'vjsc:target-import-cleanup',
     transform: {
-      filter: { id: SCRIPT_ID, code: 'import' },
+      filter: { id: SCRIPT_MODULE_ID, code: 'import' },
       handler(_code, id, transform) {
         const targets = selectComponentTargets(options.targets, id);
         if (targets.length === 0 || !transform.ast || !transform.magicString) return null;

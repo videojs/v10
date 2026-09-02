@@ -1,16 +1,15 @@
 import { walk } from 'oxc-walker';
 import type { Plugin } from 'rolldown';
 
+import { SCRIPT_MODULE_ID } from '../utils/module-id';
 import { type ComponentTargetPluginOptions, selectComponentTargets } from './component-target';
-
-const SCRIPT_ID = /\.[cm]?[jt]sx?(?:\?|$)/;
 
 /** Report compiler directives that were not consumed by a selected target transform. */
 export function compilerDirectivePlugin(options: ComponentTargetPluginOptions): Plugin {
   return {
     name: 'vjsc:compiler-directive',
     transform: {
-      filter: { id: SCRIPT_ID, code: /\$[A-Za-z]/ },
+      filter: { id: SCRIPT_MODULE_ID, code: /\$[A-Za-z]/ },
       handler(_code, id, transform) {
         if (selectComponentTargets(options.targets, id).length === 0 || !transform.ast) return null;
 

@@ -28,9 +28,7 @@ import {
   createTargetReplacement,
   singleJsxElementChild,
 } from '../target/source';
-import { parseModuleId, type TransformModule } from '../utils/module-id';
-
-const SCRIPT_ID = /\.[cm]?[jt]sx?(?:\?|$)/;
+import { parseModuleId, type TransformModule, SCRIPT_MODULE_ID } from '../utils/module-id';
 
 export type ComponentTargetSelection =
   | readonly ComponentTarget[]
@@ -70,7 +68,7 @@ export function componentTargetPlugin(options: ComponentTargetPluginOptions): Pl
   return {
     name: 'vjsc:component-target',
     transform: {
-      filter: { id: SCRIPT_ID, code: '<' },
+      filter: { id: SCRIPT_MODULE_ID, code: '<' },
       handler(code, id, transform) {
         const targets = selectComponentTargets(options.targets, id);
         if (targets.length === 0 || !transform.ast || !transform.magicString) return null;
@@ -163,7 +161,7 @@ export function primitiveTargetPlugin(options: ComponentTargetPluginOptions): Pl
   return {
     name: 'vjsc:primitive-target',
     transform: {
-      filter: { id: SCRIPT_ID, code: '<' },
+      filter: { id: SCRIPT_MODULE_ID, code: '<' },
       handler(code, id, transform) {
         const targets = selectComponentTargets(options.targets, id);
         if (targets.length === 0 || !transform.ast || !transform.magicString) return null;
