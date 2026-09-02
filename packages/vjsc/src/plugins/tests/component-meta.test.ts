@@ -2,7 +2,7 @@ import { type OutputChunk, type Plugin, rolldown } from 'rolldown';
 import { describe, expect, it } from 'vite-plus/test';
 
 import { componentMetaPlugin, readComponentMeta, readComponentSource } from '../component-meta';
-import { componentSourcePlugin } from '../component-source';
+import { componentSourcePlugin } from './helpers/component-source';
 
 const MODULE_ID = '\0fixture.tsx?target=react';
 

@@ -4,8 +4,8 @@ import { describe, expect, it } from 'vite-plus/test';
 
 import type { ComponentTarget } from '../../target/definition';
 import { readComponentSource } from '../component-meta';
-import { componentSourcePlugin } from '../component-source';
 import { reactTargetPropsPlugin } from '../react-target-props';
+import { componentSourcePlugin } from './helpers/component-source';
 
 const MODULE_ID = '\0fixture.tsx?target=react';
 const reactTarget = {

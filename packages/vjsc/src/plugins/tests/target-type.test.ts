@@ -4,10 +4,10 @@ import { describe, expect, it } from 'vite-plus/test';
 import { defineComponent, defineSchema } from '../../components/definition';
 import { defineComponentTarget } from '../../target/definition';
 import { readComponentSource } from '../component-meta';
-import { componentSourcePlugin } from '../component-source';
 import { componentTargetPlugin } from '../component-target';
 import { targetImportCleanupPlugin } from '../target-import-cleanup';
 import { targetTypePlugin } from '../target-type';
+import { componentSourcePlugin } from './helpers/component-source';
 
 const MODULE_ID = '\0fixture.tsx?target=react';
 const schema = defineSchema('@fixture/components', {

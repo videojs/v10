@@ -11,7 +11,6 @@ import { loadDesignSystem } from '../../styles/design-system';
 import type { ResolvedStyles, ResolvedStyleRule } from '../../styles/resolved';
 import { toPosixPath } from '../../utils/path';
 import { readComponentSource, readModuleStyles } from '../component-meta';
-import { componentSourcePlugin } from '../component-source';
 import {
   CANDIDATES_ALIAS,
   parseCandidateManifest,
@@ -20,6 +19,7 @@ import {
   type StylePluginConfig,
   stylePlugin,
 } from '../style';
+import { componentSourcePlugin } from './helpers/component-source';
 
 const filename = resolve(import.meta.dirname, 'component.tsx');
 const modulePath = resolve(import.meta.dirname, 'fixtures/button.styles.ts');

@@ -1,9 +1,9 @@
 import type { Plugin } from 'rolldown';
 
-import { SCRIPT_MODULE_ID } from '../utils/module-id';
-import { mergeModuleBuildMeta } from './component-meta';
+import { SCRIPT_MODULE_ID } from '../../../utils/module-id';
+import { mergeModuleBuildMeta } from '../../component-meta';
 
-/** Capture final transformed component source in module metadata. */
+/** Capture final transformed component source in module metadata for assertions. */
 export function componentSourcePlugin(capture?: (id: string, source: string, meta: unknown) => void): Plugin {
   return {
     name: 'vjsc:component-source',

@@ -49,15 +49,6 @@ export function hasParts<Props extends object, Parts extends ComponentParts>(
 
 export type InferProps<T> = T extends ComponentPartDefinition<infer Props, ComponentParts | undefined> ? Props : never;
 
-export type InferParts<T> = T extends ComponentPartDefinition<object, infer Parts> ? keyof NonNullable<Parts> : never;
-
-export type InferPartProps<T, K extends string> =
-  T extends ComponentPartDefinition<object, infer Parts>
-    ? K extends keyof NonNullable<Parts>
-      ? InferProps<NonNullable<Parts>[K]>
-      : never
-    : never;
-
 export function defineComponent<Props extends object = EmptyProps>(): ComponentPartDefinition<Props>;
 
 export function defineComponent<

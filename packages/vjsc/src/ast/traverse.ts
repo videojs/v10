@@ -1,43 +1,4 @@
-import type {
-  JSXAttribute,
-  JSXElement,
-  JSXElementName,
-  JSXOpeningElement,
-  Node,
-  Function as OxcFunction,
-} from '@oxc-project/types';
-import { walk } from 'oxc-walker';
-
-/** Collect function declarations beneath an AST node in source order. */
-export function collectFunctionDeclarations(root: Node): OxcFunction[] {
-  const declarations: OxcFunction[] = [];
-
-  walk(root, {
-    enter(node) {
-      if (node.type === 'FunctionDeclaration') declarations.push(node);
-    },
-  });
-
-  return declarations;
-}
-
-/** Find the first JSX element with the given dotted element name. */
-export function findJsxElement(root: Node, name: string): JSXElement | undefined {
-  let found: JSXElement | undefined;
-
-  walk(root, {
-    enter(node) {
-      if (found || node.type !== 'JSXElement') return;
-
-      if (jsxNamePath(node.openingElement.name).join('.') !== name) return;
-
-      found = node;
-      this.skip();
-    },
-  });
-
-  return found;
-}
+import type { JSXAttribute, JSXElement, JSXElementName, JSXOpeningElement } from '@oxc-project/types';
 
 /** Find a named JSX attribute on an element or opening element. */
 export function findJsxAttribute(node: JSXElement | JSXOpeningElement, name: string): JSXAttribute | undefined {
