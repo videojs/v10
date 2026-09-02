@@ -163,7 +163,7 @@ function readAtRule(source: string, start: number, name: string, path: string): 
 
 /** Parse block contents into nested Shadcn `css` entries. */
 function parseBlock(body: string, path: string): TailwindRegistryCss {
-  const entries: Record<string, string | TailwindRegistryCss> = {};
+  const entries = new Map<string, string | TailwindRegistryCss>();
   let index = 0;
 
   while (index < body.length) {
@@ -171,9 +171,9 @@ function parseBlock(body: string, path: string): TailwindRegistryCss {
     if (!statement) break;
 
     if (statement.block !== undefined) {
-      entries[statement.text] = parseBlock(statement.block, path);
+      entries.set(statement.text, parseBlock(statement.block, path));
     } else if (statement.text.startsWith('@')) {
-      entries[statement.text] = {};
+      entries.set(statement.text, {});
     } else {
       const colon = statement.text.indexOf(':');
 
@@ -182,13 +182,13 @@ function parseBlock(body: string, path: string): TailwindRegistryCss {
           `Shadcn registry Tailwind source \`${path}\` contains an invalid declaration: \`${statement.text}\`.`
         );
 
-      entries[statement.text.slice(0, colon).trim()] = statement.text.slice(colon + 1).trim();
+      entries.set(statement.text.slice(0, colon).trim(), statement.text.slice(colon + 1).trim());
     }
 
     index = statement.end;
   }
 
-  return entries;
+  return Object.fromEntries(entries);
 }
 
 /** Read one declaration, statement at-rule, or block opener, ending after its `;` or matching `}`. */
