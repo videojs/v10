@@ -70,7 +70,7 @@ const modules = {
     import('../src/skins/minimal-audio/skin.tsx?style=css&target=html&skin=minimal-audio'),
   'html/minimal-audio/tailwind': () =>
     import('../src/skins/minimal-audio/skin.tsx?style=tailwind&target=html&skin=minimal-audio'),
-} as const satisfies Record<`${Framework}/${SkinName}/${StyleMode}`, () => Promise<SkinModule>>;
+} as const satisfies Record<`${Framework}/${SkinName}/${StyleMode}`, () => Promise<object>>;
 
 type ModuleKey = keyof typeof modules;
 
@@ -118,7 +118,7 @@ const packaged = {
   },
 } as const satisfies Record<
   SkinName,
-  { html: () => Promise<object>; react: () => Promise<SkinModule>; reactStyles: () => Promise<object> }
+  { html: () => Promise<object>; react: () => Promise<object>; reactStyles: () => Promise<object> }
 >;
 
 // SAFETY: the catalog lists every skin name exactly once, so the entries cover the full `SkinName` key set.
@@ -127,19 +127,23 @@ const skinExports = Object.fromEntries(skinCatalog.map((entry) => [entry.name, e
   string
 >;
 
-type SkinModule = Partial<Record<string, PreviewSkin>>;
-
 /** Load one statically discoverable authored Skin transform, or the packaged skin the framework package ships. */
 export async function loadSkin(options: PreviewOptions): Promise<PreviewSkin> {
   if (options.source === 'generated') return loadPackagedSkin(options);
 
   const key: ModuleKey = `${options.framework}/${options.skin}/${options.styleMode}`;
-  // SAFETY: every static module is transformed to the framework-specific Skin export selected below.
-  const loaded = (await modules[key]()) as SkinModule;
-  const Skin = loaded[skinExports[options.skin]];
-  if (!Skin) throw new Error(`Skin module \`${key}\` did not export \`${skinExports[options.skin]}\`.`);
 
-  return Skin;
+  return skinExport(await modules[key](), skinExports[options.skin], key);
+}
+
+/** Read the Skin export from a loaded module; every transform exports its Skin as a component or render function. */
+function skinExport(loaded: object, name: string, key: string): PreviewSkin {
+  // SAFETY: a module namespace is a plain object keyed by export name; the value is validated below.
+  const exported = (loaded as Record<string, unknown>)[name];
+  if (typeof exported !== 'function') throw new Error(`Skin module \`${key}\` did not export \`${name}\`.`);
+
+  // SAFETY: React components and HTML render functions are the only functions a Skin module exports under its name.
+  return exported as PreviewSkin;
 }
 
 async function loadPackagedSkin(options: PreviewOptions): Promise<PreviewSkin> {
@@ -156,9 +160,6 @@ async function loadPackagedSkin(options: PreviewOptions): Promise<PreviewSkin> {
   }
 
   const [loaded] = await Promise.all([modules.react(), modules.reactStyles()]);
-  // SAFETY: every packaged preset module exports the catalog's `component` as a React skin component.
-  const Skin = (loaded as SkinModule)[entry.component];
-  if (!Skin) throw new Error(`Packaged skin \`${options.skin}\` did not export \`${entry.component}\`.`);
 
-  return Skin;
+  return skinExport(loaded, entry.component, `packaged/${options.skin}`);
 }

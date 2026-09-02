@@ -1,5 +1,7 @@
 import { resolve } from 'node:path';
 
+import type { PluginOption } from 'vite-plus';
+
 import { iconElementSourcePlugin } from '../../icons/vjsc/vite.ts';
 import { vjscPlugin } from '../../vjsc/src/vite/index.ts';
 import { skinMetaDefaults } from './config.ts';
@@ -19,8 +21,8 @@ export interface SkinsSourceOptions {
   readonly frameworks?: 'source' | 'package' | undefined;
 }
 
-/** The plugins the preset produces. Consumers spread them into their own `plugins` array. */
-export type SkinsSourcePlugin = ReturnType<typeof iconElementSourcePlugin> | ReturnType<typeof vjscPlugin>[number];
+/** The plugins the preset produces, in the consumer's own plugin type so a config can spread them directly. */
+export type SkinsSourcePlugin = PluginOption;
 
 export interface SkinsSourceConfig {
   readonly plugins: SkinsSourcePlugin[];
@@ -50,14 +52,16 @@ export function createSkinsSourceConfig(options: SkinsSourceOptions = {}): Skins
         ]
       : [];
 
-  const plugins: SkinsSourcePlugin[] = [
+  // SAFETY: the compiler and icon plugins are Vite plugins typed against the compiler's own Vite copy. Comparing that
+  // shape with this package's plugin type exceeds the checker's depth limit, while the runtime objects are the same.
+  const plugins = [
     iconElementSourcePlugin(),
     ...vjscPlugin({
       transform: { components: resolveSkinComponents, styles: resolveSkinStyles },
       meta: { defaults: skinMetaDefaults },
       candidates: options.tailwind === true,
     }),
-  ];
+  ] as unknown as SkinsSourcePlugin[];
 
   return {
     plugins,
