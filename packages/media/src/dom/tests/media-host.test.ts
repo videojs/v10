@@ -1,37 +1,37 @@
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { HTMLAudioElementHost } from '../audio-host';
-import { addMediaComponent, type MediaComponent } from '../media-host';
+import { addMediaExtension, type MediaExtension } from '../media-host';
 
 afterEach(() => {
   document.body.innerHTML = '';
 });
 
-class MutedOverride implements MediaComponent {
+class MutedOverride implements MediaExtension {
   get targetOverride() {
     return { muted: true };
   }
 }
 
-class VolumeOverride implements MediaComponent {
+class VolumeOverride implements MediaExtension {
   get targetOverride() {
     return { volume: 0.5 };
   }
 }
 
-class ContentDataOverride implements MediaComponent {
+class ContentDataOverride implements MediaExtension {
   get targetOverride() {
     return { contentData: { title: 'Component title' } };
   }
 }
 
-class AttachTracking implements MediaComponent {
+class AttachTracking implements MediaExtension {
   attach = vi.fn();
   detach = vi.fn();
   destroy = vi.fn();
 }
 
-class CastLikeOverride implements MediaComponent {
+class CastLikeOverride implements MediaExtension {
   readonly api = {
     muted: false,
     playCount: 0,
@@ -55,7 +55,7 @@ describe('HTMLMediaElementHost', () => {
       audio.muted = false;
       host.attach(audio);
 
-      addMediaComponent(host, new MutedOverride());
+      addMediaExtension(host, new MutedOverride());
 
       expect(host.muted).toBe(true);
     });
@@ -67,7 +67,7 @@ describe('HTMLMediaElementHost', () => {
       audio.defaultMuted = true;
       host.attach(audio);
 
-      addMediaComponent(host, new MutedOverride());
+      addMediaExtension(host, new MutedOverride());
 
       // `defaultMuted` isn't overridden, so it reads from the target.
       expect(host.defaultMuted).toBe(true);
@@ -90,7 +90,7 @@ describe('HTMLMediaElementHost', () => {
       audio.muted = true;
       host.attach(audio);
 
-      addMediaComponent(host, new VolumeOverride());
+      addMediaExtension(host, new VolumeOverride());
 
       expect(host.volume).toBe(0.5);
       expect(host.muted).toBe(true);
@@ -113,7 +113,7 @@ describe('HTMLMediaElementHost', () => {
 
       expect(host.contentData).toBeUndefined();
 
-      addMediaComponent(host, new ContentDataOverride());
+      addMediaExtension(host, new ContentDataOverride());
 
       expect(host.contentData).toEqual({ title: 'Component title' });
       expect(host.title).toBe('Legacy title');
@@ -128,7 +128,7 @@ describe('HTMLMediaElementHost', () => {
 
       const component = new CastLikeOverride();
 
-      addMediaComponent(host, component);
+      addMediaExtension(host, component);
 
       host.muted = true;
 
@@ -155,7 +155,7 @@ describe('HTMLMediaElementHost', () => {
 
       const component = new AttachTracking();
 
-      addMediaComponent(host, component);
+      addMediaExtension(host, component);
 
       expect(component.attach).toHaveBeenCalledWith(audio);
     });
@@ -165,7 +165,7 @@ describe('HTMLMediaElementHost', () => {
 
       const component = new AttachTracking();
 
-      addMediaComponent(host, component);
+      addMediaExtension(host, component);
 
       expect(component.attach).not.toHaveBeenCalled();
     });
@@ -179,8 +179,8 @@ describe('HTMLMediaElementHost', () => {
 
       const component = new AttachTracking();
 
-      addMediaComponent(host, component);
-      addMediaComponent(host, new MutedOverride());
+      addMediaExtension(host, component);
+      addMediaExtension(host, new MutedOverride());
 
       host.destroy();
 
@@ -198,7 +198,7 @@ describe('HTMLMediaElementHost', () => {
 
       const component = new AttachTracking();
 
-      addMediaComponent(host, component);
+      addMediaExtension(host, component);
 
       host.destroy();
 
@@ -214,7 +214,7 @@ describe('HTMLMediaElementHost', () => {
 
       const component = new CastLikeOverride();
 
-      addMediaComponent(host, component);
+      addMediaExtension(host, component);
 
       await host.play();
 

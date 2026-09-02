@@ -1,5 +1,5 @@
 import { ContextProvider } from '@videojs/element/context';
-import { getMediaComponents, HTMLVideoElementHost, type Media } from '@videojs/media/dom';
+import { getMediaExtensions, HTMLVideoElementHost, type Media } from '@videojs/media/dom';
 import { MuxDataExtension as MuxDataExtensionBase } from '@videojs/mux-data';
 import { afterEach, describe, expect, it } from 'vite-plus/test';
 
@@ -49,7 +49,7 @@ describe('MuxDataExtension', () => {
 
     provider.innerHTML = '<test-mux-data></test-mux-data>';
 
-    expect(getMediaComponents(host).get(MuxDataExtensionBase)).toBeInstanceOf(MuxDataExtensionBase);
+    expect(getMediaExtensions(host).get(MuxDataExtensionBase)).toBeInstanceOf(MuxDataExtensionBase);
   });
 
   it('leaves the component to the base class lazy getter', () => {
@@ -63,7 +63,7 @@ describe('MuxDataExtension', () => {
 
     provider.setMedia(host as unknown as Media);
 
-    expect(getMediaComponents(host).get(MuxDataExtensionBase)).toBeInstanceOf(MuxDataExtensionBase);
+    expect(getMediaExtensions(host).get(MuxDataExtensionBase)).toBeInstanceOf(MuxDataExtensionBase);
   });
 
   it('forwards attributes to the component', () => {
@@ -77,7 +77,7 @@ describe('MuxDataExtension', () => {
     el.setAttribute('debug', '');
     el.setAttribute('disable-cookies', '');
 
-    const component = getMediaComponents(host).get(MuxDataExtensionBase)!;
+    const component = getMediaExtensions(host).get(MuxDataExtensionBase)!;
 
     expect(component.envKey).toBe('test-key');
     expect(component.playerSoftwareName).toBe('mux-video');
@@ -97,7 +97,7 @@ describe('MuxDataExtension', () => {
 
     el.metadata = metadata;
 
-    expect(getMediaComponents(host).get(MuxDataExtensionBase)!.metadata).toEqual(metadata);
+    expect(getMediaExtensions(host).get(MuxDataExtensionBase)!.metadata).toEqual(metadata);
   });
 
   it('removes the component when the element disconnects', () => {
@@ -107,6 +107,6 @@ describe('MuxDataExtension', () => {
 
     el.remove();
 
-    expect(getMediaComponents(host).get(MuxDataExtensionBase)).toBeUndefined();
+    expect(getMediaExtensions(host).get(MuxDataExtensionBase)).toBeUndefined();
   });
 });

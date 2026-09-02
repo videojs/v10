@@ -1,6 +1,6 @@
 import { ContextProvider } from '@videojs/element/context';
 import { GoogleCastExtension as GoogleCastExtensionBase } from '@videojs/google-cast';
-import { getMediaComponents, HTMLVideoElementHost, type Media } from '@videojs/media/dom';
+import { getMediaExtensions, HTMLVideoElementHost, type Media } from '@videojs/media/dom';
 import { afterEach, describe, expect, it } from 'vite-plus/test';
 
 import { mediaContext } from '../../player/context';
@@ -42,7 +42,7 @@ describe('GoogleCastExtension', () => {
 
     provider.setMedia(host as unknown as Media);
 
-    expect(getMediaComponents(host).get(GoogleCastExtensionBase)).toBeInstanceOf(GoogleCastExtensionBase);
+    expect(getMediaExtensions(host).get(GoogleCastExtensionBase)).toBeInstanceOf(GoogleCastExtensionBase);
   });
 
   it('leaves the component to the base class lazy getter', () => {
@@ -57,7 +57,7 @@ describe('GoogleCastExtension', () => {
 
     provider.setMedia({ host } as unknown as Media);
 
-    expect(getMediaComponents(host).get(GoogleCastExtensionBase)).toBeInstanceOf(GoogleCastExtensionBase);
+    expect(getMediaExtensions(host).get(GoogleCastExtensionBase)).toBeInstanceOf(GoogleCastExtensionBase);
   });
 
   it('ignores media that is not a media host', () => {
@@ -66,7 +66,7 @@ describe('GoogleCastExtension', () => {
     provider.setMedia(host as unknown as Media);
     provider.setMedia(document.createElement('video') as unknown as Media);
 
-    expect(getMediaComponents(host).get(GoogleCastExtensionBase)).toBeUndefined();
+    expect(getMediaExtensions(host).get(GoogleCastExtensionBase)).toBeUndefined();
   });
 
   it('forwards attributes to the component', () => {
@@ -79,7 +79,7 @@ describe('GoogleCastExtension', () => {
     el.setAttribute('stream-type', 'live');
     el.setAttribute('src', 'https://example.com/stream.m3u8');
 
-    const component = getMediaComponents(host).get(GoogleCastExtensionBase)!;
+    const component = getMediaExtensions(host).get(GoogleCastExtensionBase)!;
 
     expect(component.receiver).toBe('APP_ID');
     expect(component.contentType).toBe('application/x-mpegURL');
@@ -105,8 +105,8 @@ describe('GoogleCastExtension', () => {
     provider.setMedia(host as unknown as Media);
     provider.setMedia(nextHost as unknown as Media);
 
-    expect(getMediaComponents(host).get(GoogleCastExtensionBase)).toBeUndefined();
-    expect(getMediaComponents(nextHost).get(GoogleCastExtensionBase)).toBeInstanceOf(GoogleCastExtensionBase);
+    expect(getMediaExtensions(host).get(GoogleCastExtensionBase)).toBeUndefined();
+    expect(getMediaExtensions(nextHost).get(GoogleCastExtensionBase)).toBeInstanceOf(GoogleCastExtensionBase);
   });
 
   it('removes the component when the element disconnects', () => {
@@ -116,7 +116,7 @@ describe('GoogleCastExtension', () => {
 
     el.remove();
 
-    expect(getMediaComponents(host).get(GoogleCastExtensionBase)).toBeUndefined();
+    expect(getMediaExtensions(host).get(GoogleCastExtensionBase)).toBeUndefined();
   });
 
   it('removes the component on destroy', () => {
@@ -126,6 +126,6 @@ describe('GoogleCastExtension', () => {
 
     el.destroy();
 
-    expect(getMediaComponents(host).get(GoogleCastExtensionBase)).toBeUndefined();
+    expect(getMediaExtensions(host).get(GoogleCastExtensionBase)).toBeUndefined();
   });
 });

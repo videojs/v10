@@ -1,7 +1,7 @@
 import type { PropertyDeclarationMap } from '@videojs/element';
 import { MuxDataExtension as MuxDataExtensionBase, type MuxDataExtensionProps } from '@videojs/mux-data';
 
-import { MediaComponentElement } from '../media-component-element';
+import { MediaExtensionElement } from '../media-extension-element';
 
 /**
  * Adds the [Mux Data](https://www.mux.com/data) extension to the surrounding player's media.
@@ -22,7 +22,7 @@ import { MediaComponentElement } from '../media-component-element';
  *   </video-player>
  *   ```;
  */
-export class MuxDataExtension extends MediaComponentElement<MuxDataExtensionBase> {
+export class MuxDataExtension extends MediaExtensionElement<MuxDataExtensionBase> {
   static readonly tagName = 'mux-data';
 
   static override properties = {

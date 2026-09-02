@@ -1,4 +1,4 @@
-import { addMediaComponent, type HTMLMediaTargetLike, HTMLVideoElementHost } from '@videojs/media/dom';
+import { addMediaExtension, type HTMLMediaTargetLike, HTMLVideoElementHost } from '@videojs/media/dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { GoogleCastProvider } from '../google-cast-provider';
@@ -108,7 +108,7 @@ describe('GoogleCastExtension', () => {
 
     host.attach(target as Parameters<HTMLVideoElementHost['attach']>[0]);
 
-    addMediaComponent(host, new GoogleCastExtension());
+    addMediaExtension(host, new GoogleCastExtension());
     expect(ensureCastFramework).not.toHaveBeenCalled();
 
     // The component's override must expose `remote` as an accessor so host
@@ -123,7 +123,7 @@ describe('GoogleCastExtension', () => {
 
     const host = new HTMLVideoElementHost();
 
-    addMediaComponent(host, new GoogleCastExtension());
+    addMediaExtension(host, new GoogleCastExtension());
 
     void host.remote;
 

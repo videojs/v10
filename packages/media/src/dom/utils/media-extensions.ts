@@ -1,27 +1,27 @@
 import type {
   HTMLMediaElementHost,
-  MediaComponent,
-  MediaComponentConstructor,
-  MediaComponents,
+  MediaExtension,
+  MediaExtensionConstructor,
+  MediaExtensions,
   HTMLMediaTargetLike as TargetLike,
 } from '../media-host';
 
 export type MediaHost<T extends TargetLike = any> = HTMLMediaElementHost<T, any>;
 
-const componentRegistry = new WeakMap<MediaHost, MediaComponents>();
+const componentRegistry = new WeakMap<MediaHost, MediaExtensions>();
 
-export function getMediaComponents(host: MediaHost) {
+export function getMediaExtensions(host: MediaHost) {
   let map = componentRegistry.get(host);
 
-  if (!map) componentRegistry.set(host, (map = new Map() as MediaComponents));
+  if (!map) componentRegistry.set(host, (map = new Map() as MediaExtensions));
 
   return map;
 }
 
-export function addMediaComponent<T extends MediaComponent>(host: MediaHost, component: T) {
-  const components = getMediaComponents(host);
+export function addMediaExtension<T extends MediaExtension>(host: MediaHost, component: T) {
+  const components = getMediaExtensions(host);
   // Get the component's constructor to use as the key for the component in the registry.
-  const ctor = component.constructor as MediaComponentConstructor<T>;
+  const ctor = component.constructor as MediaExtensionConstructor<T>;
 
   const previous = components.get(ctor);
 
@@ -57,7 +57,7 @@ export function setMediaProp<T extends TargetLike, K extends keyof T>(host: Medi
  * target.
  */
 export function getMediaOwner<T extends TargetLike>(host: MediaHost<T>, prop: keyof T): Partial<T> | null {
-  for (const component of getMediaComponents(host).values()) {
+  for (const component of getMediaExtensions(host).values()) {
     const override = component.targetOverride as Partial<T> | null | undefined;
     if (override?.[prop] !== undefined) return override;
   }

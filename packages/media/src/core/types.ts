@@ -575,7 +575,7 @@ export interface Media<Events extends { [K in keyof Events]: EventLike } = Media
 // Composed shapes
 // ----------------------------------------
 
-export interface MediaFullEvents
+export interface CommonMediaEvents
   extends
     MediaEvents,
     MediaPauseEvents,
@@ -590,7 +590,7 @@ export interface MediaFullEvents
     MediaLiveEvents,
     MediaContentDataEvents {}
 
-export interface MediaFull<Events extends { [K in keyof Events]: EventLike } = MediaFullEvents>
+export interface CommonMedia<Events extends { [K in keyof Events]: EventLike } = CommonMediaEvents>
   extends
     Media<Events>,
     MediaPauseCapability,
@@ -609,20 +609,20 @@ export interface MediaFull<Events extends { [K in keyof Events]: EventLike } = M
     MediaControlsCapability,
     MediaAutoplayCapability {}
 
-export interface VideoEvents extends MediaFullEvents, MediaPictureInPictureEvents, MediaVideoDimensionsEvents {}
+export interface VideoEvents extends CommonMediaEvents, MediaPictureInPictureEvents, MediaVideoDimensionsEvents {}
 
 export interface Video
   extends
-    MediaFull<VideoEvents>,
+    CommonMedia<VideoEvents>,
     MediaPlaysInlineCapability,
     MediaPosterCapability,
     MediaFullscreenCapability,
     MediaPictureInPictureCapability,
     MediaVideoDimensionsCapability {}
 
-export interface AudioEvents extends MediaFullEvents {}
+export interface AudioEvents extends CommonMediaEvents {}
 
-export interface Audio extends MediaFull<AudioEvents> {}
+export interface Audio extends CommonMedia<AudioEvents> {}
 
 // ----------------------------------------
 // Target shapes

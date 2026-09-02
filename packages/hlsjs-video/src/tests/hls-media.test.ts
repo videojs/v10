@@ -1,5 +1,5 @@
 import { MediaError, type RemotePlaybackLike } from '@videojs/media';
-import { addMediaComponent, CustomMediaElement, type MediaComponent } from '@videojs/media/dom';
+import { addMediaExtension, CustomMediaElement, type MediaExtension } from '@videojs/media/dom';
 import { NativeHlsMedia } from '@videojs/native-hls-video';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
@@ -807,13 +807,13 @@ describe('HlsJsMedia', () => {
 
       media.attach(video);
 
-      const component: MediaComponent = {
+      const component: MediaExtension = {
         get targetOverride() {
           return { remote: { state: 'connected' } as RemotePlaybackLike, load };
         },
       };
 
-      addMediaComponent(media, component);
+      addMediaExtension(media, component);
 
       return { media };
     }

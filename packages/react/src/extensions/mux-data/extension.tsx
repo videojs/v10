@@ -3,7 +3,7 @@
 import { MuxDataExtension, type MuxDataExtensionProps } from '@videojs/mux-data';
 import type { ReactNode } from 'react';
 
-import { useMediaComponent } from '../../utils/use-media-component';
+import { useMediaExtension } from '../../utils/use-media-extension';
 import { useSyncProps } from '../../utils/use-sync-props';
 
 export type MuxDataProps = Partial<MuxDataExtensionProps>;
@@ -29,7 +29,7 @@ export type MuxDataProps = Partial<MuxDataExtensionProps>;
  *   ```;
  */
 export function MuxData(props: MuxDataProps): ReactNode {
-  const component = useMediaComponent(MuxDataExtension);
+  const component = useMediaExtension(MuxDataExtension);
   const { MuxDataSdk, ...rest } = props;
 
   // `useSyncProps` treats an `undefined` prop as "reset to the default", but

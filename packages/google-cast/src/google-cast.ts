@@ -1,5 +1,5 @@
 import type { MediaStreamType } from '@videojs/media';
-import type { HTMLMediaElementHost, HTMLMediaTargetLike, MediaComponent } from '@videojs/media/dom';
+import type { HTMLMediaElementHost, HTMLMediaTargetLike, MediaExtension } from '@videojs/media/dom';
 
 import { GoogleCastProvider } from './google-cast-provider';
 import { requiresCastFramework } from './utils';
@@ -19,7 +19,7 @@ export interface GoogleCastExtensionProps {
   customData?: Record<string, unknown> | null | undefined;
 }
 
-export class GoogleCastExtension implements GoogleCastExtensionProps, MediaComponent {
+export class GoogleCastExtension implements GoogleCastExtensionProps, MediaExtension {
   static defaultProps: GoogleCastExtensionProps = {
     src: undefined,
     contentType: undefined,

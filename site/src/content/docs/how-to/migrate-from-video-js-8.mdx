@@ -251,7 +251,7 @@ These are the ones that need a decision rather than a rename, so each has a sect
 
 | Video.js 8 | Where it lives now |
 |---|---|
-| `techOrder`, `html5.vhs.*` | [Techs become media components](#techs-become-media-components) |
+| `techOrder`, `html5.vhs.*` | [Techs become media components](#techs-become-media-extensions) |
 | `children`, `controlBar: { … }` | [Customize your player](#customize-your-player) |
 | `userActions.hotkeys`, `userActions.click`, `userActions.doubleClick` | [Customize your player](#customize-your-player) |
 | `plugins`, `videojs.registerPlugin` | [Plugins](#plugins) |
@@ -471,7 +471,7 @@ That's a deliberate choice rather than a missing feature. v8 plugins existed lar
 
 Audit your plugins and sort them into four piles:
 
-- **Formats and techs** (`videojs-contrib-*`, YouTube, Vimeo, Mux). Replace with the matching media component. See [Techs become media components](#techs-become-media-components).
+- **Formats and techs** (`videojs-contrib-*`, YouTube, Vimeo, Mux). Replace with the matching media component. See [Techs become media components](#techs-become-media-extensions).
 - **UI additions** (extra buttons, overlays, custom control bars). Rebuild as components in an ejected skin, or with <DocsLink slug="how-to/build-your-own-component">your own component</DocsLink>. This is usually less code than the plugin was.
 - **Workarounds** for v8 limitations. Check whether the limitation still exists before you port anything.
 - **Genuinely missing features** (ads, playlists). These need real work, and some have no home yet. Get them on the list early, because they'll drive your timeline.

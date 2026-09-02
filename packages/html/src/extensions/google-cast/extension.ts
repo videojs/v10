@@ -1,7 +1,7 @@
 import type { PropertyDeclarationMap } from '@videojs/element';
 import { GoogleCastExtension as GoogleCastExtensionBase, type GoogleCastExtensionProps } from '@videojs/google-cast';
 
-import { MediaComponentElement } from '../media-component-element';
+import { MediaExtensionElement } from '../media-extension-element';
 
 /**
  * Adds the Google Cast extension to the surrounding player's media.
@@ -16,7 +16,7 @@ import { MediaComponentElement } from '../media-component-element';
  *   </video-player>
  *   ```;
  */
-export class GoogleCastExtension extends MediaComponentElement<GoogleCastExtensionBase> {
+export class GoogleCastExtension extends MediaExtensionElement<GoogleCastExtensionBase> {
   static readonly tagName = 'google-cast';
 
   static override properties = {

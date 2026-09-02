@@ -1,0 +1,32 @@
+---
+title: useMediaExtension
+description: Hook for registering a custom extension with the current Player media host
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+
+## Import
+
+```tsx
+import { useMediaExtension } from "@videojs/react";
+```
+
+## Usage
+
+Build a React <DocsLink slug="concepts/overview">extension</DocsLink> by passing its media extension class from a component rendered inside `Player`.
+
+```tsx
+import { MuxDataExtension } from "@videojs/mux-data";
+import { useMediaExtension } from "@videojs/react";
+
+function CustomMuxData() {
+  useMediaExtension(MuxDataExtension);
+
+  return null;
+}
+```
+
+The hook creates one instance, follows media changes, and destroys the extension on unmount. A plain `<video>` element is not a media-extension host, so registration is skipped for it.
+
+<UtilReference util="useMediaExtension" />

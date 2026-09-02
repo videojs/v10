@@ -3,23 +3,23 @@ import type { EventListenerFor, EventType, QueriedElement } from '@videojs/utils
 import { EMPTY_REMOTE, EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES } from '../../core/constants';
 import {
   type EventLike,
-  type MediaFull,
+  type CommonMedia,
   type MediaStreamType,
   MediaStreamTypes,
   type MediaTargetLike,
   type TextTrackKind,
   type TextTrackLike,
 } from '../../core/types';
-import { getMediaComponents, getMediaOwner, getMediaProp, setMediaProp } from '../utils';
+import { getMediaExtensions, getMediaOwner, getMediaProp, setMediaProp } from '../utils';
 
-export { addMediaComponent, getMediaComponents, getMediaOwner, getMediaProp, setMediaProp } from '../utils';
+export { addMediaExtension, getMediaExtensions, getMediaOwner, getMediaProp, setMediaProp } from '../utils';
 
 export interface HTMLMediaTargetLike extends MediaTargetLike, EventTarget {
   querySelector<E extends Element = Element>(selectors: string): E | null;
   querySelectorAll<E extends Element = Element>(selectors: string): NodeListOf<E> | never[];
 }
 
-export interface MediaComponent<Target extends HTMLMediaTargetLike = HTMLMediaTargetLike> {
+export interface MediaExtension<Target extends HTMLMediaTargetLike = HTMLMediaTargetLike> {
   readonly targetOverride?: Partial<Target> | null;
   setMedia?(host: HTMLMediaElementHost<Target, any>): void;
   attach?(target: Target): void;
@@ -27,18 +27,18 @@ export interface MediaComponent<Target extends HTMLMediaTargetLike = HTMLMediaTa
   destroy?(): void;
 }
 
-export interface MediaComponentConstructor<T extends MediaComponent = MediaComponent> {
+export interface MediaExtensionConstructor<T extends MediaExtension = MediaExtension> {
   new (...args: any[]): T;
 }
 
-export interface MediaComponents extends Map<MediaComponentConstructor, MediaComponent> {
-  get<T extends MediaComponent>(component: MediaComponentConstructor<T>): T | undefined;
-  set<T extends MediaComponent>(component: MediaComponentConstructor<T>, instance: T): this;
+export interface MediaExtensions extends Map<MediaExtensionConstructor, MediaExtension> {
+  get<T extends MediaExtension>(component: MediaExtensionConstructor<T>): T | undefined;
+  set<T extends MediaExtension>(component: MediaExtensionConstructor<T>, instance: T): this;
 }
 
 export class HTMLMediaElementHost<Target extends HTMLMediaTargetLike, Events extends { [K in keyof Events]: EventLike }>
   extends EventTarget
-  implements MediaFull
+  implements CommonMedia
 {
   #target: Target | null = null;
   #eventTypes = new Set<string>();
@@ -57,7 +57,7 @@ export class HTMLMediaElementHost<Target extends HTMLMediaTargetLike, Events ext
       target.addEventListener(type, this.#forwardEvent);
     }
 
-    for (const component of getMediaComponents(this).values()) {
+    for (const component of getMediaExtensions(this).values()) {
       component.attach?.(target);
     }
   }
@@ -65,7 +65,7 @@ export class HTMLMediaElementHost<Target extends HTMLMediaTargetLike, Events ext
   detach() {
     if (!this.#target) return;
 
-    for (const component of getMediaComponents(this).values()) {
+    for (const component of getMediaExtensions(this).values()) {
       component.detach?.();
     }
 
@@ -79,11 +79,11 @@ export class HTMLMediaElementHost<Target extends HTMLMediaTargetLike, Events ext
   destroy() {
     this.detach();
     this.#eventTypes.clear();
-    // Media components are owned by whoever registered them (e.g. `<mux-data>`,
+    // Media extensions are owned by whoever registered them (e.g. `<mux-data>`,
     // `<google-cast>`), which may outlive this host. `detach()` above releases
     // them from the target, so only drop the registrations here and leave
     // destruction to the owner.
-    getMediaComponents(this).clear();
+    getMediaExtensions(this).clear();
   }
 
   querySelectorAll<E extends Element = Element, S extends string = string>(selectors: S) {

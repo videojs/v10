@@ -1,12 +1,12 @@
 import { ContextProvider } from '@videojs/element/context';
-import { getMediaComponents, HTMLVideoElementHost, type Media, type MediaComponent } from '@videojs/media/dom';
+import { getMediaExtensions, HTMLVideoElementHost, type Media, type MediaExtension } from '@videojs/media/dom';
 import { afterEach, describe, expect, it } from 'vite-plus/test';
 
 import { mediaContext } from '../../player/context';
 import { UIElement } from '../../ui/ui-element';
-import { MediaComponentElement } from '../media-component-element';
+import { MediaExtensionElement } from '../media-extension-element';
 
-class FakeComponent implements MediaComponent {
+class FakeComponent implements MediaExtension {
   destroyed = false;
   destroy() {
     this.destroyed = true;
@@ -24,7 +24,7 @@ class TestMediaProvider extends UIElement {
   }
 }
 
-class TestMediaComponentElement extends MediaComponentElement<FakeComponent> {
+class TestMediaExtensionElement extends MediaExtensionElement<FakeComponent> {
   static readonly tagName = 'test-media-component';
 
   /**
@@ -44,15 +44,15 @@ class TestMediaComponentElement extends MediaComponentElement<FakeComponent> {
 }
 
 customElements.define('test-media-component-provider', TestMediaProvider);
-customElements.define(TestMediaComponentElement.tagName, TestMediaComponentElement);
+customElements.define(TestMediaExtensionElement.tagName, TestMediaExtensionElement);
 
 afterEach(() => {
   document.body.innerHTML = '';
 });
 
-describe('MediaComponentElement', () => {
+describe('MediaExtensionElement', () => {
   it('resolves the component before subclass fields initialize', () => {
-    const el = new TestMediaComponentElement();
+    const el = new TestMediaExtensionElement();
 
     expect(el.componentDuringFieldInit).toBeInstanceOf(FakeComponent);
     // Created once and reused, not re-created per access.
@@ -62,19 +62,19 @@ describe('MediaComponentElement', () => {
   it('registers the extension component with the media host from context', () => {
     const host = new HTMLVideoElementHost();
     const provider = new TestMediaProvider();
-    const el = new TestMediaComponentElement();
+    const el = new TestMediaExtensionElement();
 
     provider.append(el);
     document.body.append(provider);
     provider.setMedia(host as unknown as Media);
 
-    expect(getMediaComponents(host).get(FakeComponent)).toBe(el.instance);
+    expect(getMediaExtensions(host).get(FakeComponent)).toBe(el.instance);
   });
 
   it('destroys the component when the element is destroyed', () => {
     const host = new HTMLVideoElementHost();
     const provider = new TestMediaProvider();
-    const el = new TestMediaComponentElement();
+    const el = new TestMediaExtensionElement();
 
     provider.append(el);
     document.body.append(provider);
@@ -83,15 +83,15 @@ describe('MediaComponentElement', () => {
     el.destroy();
 
     expect(el.instance.destroyed).toBe(true);
-    expect(getMediaComponents(host).get(FakeComponent)).toBeUndefined();
+    expect(getMediaExtensions(host).get(FakeComponent)).toBeUndefined();
   });
 
   it('does not create a component when destroyed before use', () => {
-    const el = new TestMediaComponentElement();
+    const el = new TestMediaExtensionElement();
 
     // `componentDuringFieldInit` already forced creation, so assert through a
     // subclass that never touches it.
-    class Untouched extends MediaComponentElement<FakeComponent> {
+    class Untouched extends MediaExtensionElement<FakeComponent> {
       created = 0;
       protected createComponent(): FakeComponent {
         this.created++;

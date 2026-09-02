@@ -1,4 +1,4 @@
-import { addMediaComponent, HTMLVideoElementHost } from '@videojs/media/dom';
+import { addMediaExtension, HTMLVideoElementHost } from '@videojs/media/dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { GoogleCastExtension } from '../index';
@@ -49,7 +49,7 @@ function setup() {
 
   const googleCast = new GoogleCastExtension();
 
-  addMediaComponent(host, googleCast);
+  addMediaExtension(host, googleCast);
 
   const provider = mocks.FakeProvider.instances.at(-1)!;
 

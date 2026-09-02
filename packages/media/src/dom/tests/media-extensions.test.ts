@@ -1,28 +1,28 @@
 import { afterEach, describe, expect, it } from 'vite-plus/test';
 
 import { HTMLAudioElementHost } from '../audio-host';
-import type { MediaComponent } from '../media-host';
-import { addMediaComponent, getMediaProp } from '../utils';
+import type { MediaExtension } from '../media-host';
+import { addMediaExtension, getMediaProp } from '../utils';
 
 afterEach(() => {
   document.body.innerHTML = '';
 });
 
-class DetachableComponent implements MediaComponent {
+class DetachableComponent implements MediaExtension {
   detachCount = 0;
   detach() {
     this.detachCount++;
   }
 }
 
-describe('addMediaComponent', () => {
+describe('addMediaExtension', () => {
   it('detaches the component when it is unregistered', () => {
     const host = new HTMLAudioElementHost();
 
     host.attach(document.createElement('audio'));
     const component = new DetachableComponent();
 
-    const remove = addMediaComponent(host, component);
+    const remove = addMediaExtension(host, component);
 
     remove();
 
@@ -36,9 +36,9 @@ describe('addMediaComponent', () => {
     const first = new DetachableComponent();
     const second = new DetachableComponent();
 
-    const removeFirst = addMediaComponent(host, first);
+    const removeFirst = addMediaExtension(host, first);
 
-    addMediaComponent(host, second);
+    addMediaExtension(host, second);
     removeFirst();
 
     expect(first.detachCount).toBe(1);

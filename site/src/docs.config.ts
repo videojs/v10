@@ -271,7 +271,7 @@ export const sidebar: Sidebar = [
               { slug: 'reference/use-hotkey-shortcut', frameworks: ['react'] },
               { slug: 'reference/use-latest-ref', frameworks: ['react'] },
               { slug: 'reference/use-media-attach', frameworks: ['react'] },
-              { slug: 'reference/use-media-component', frameworks: ['react'] },
+              { slug: 'reference/use-media-extension', frameworks: ['react'] },
               { slug: 'reference/use-media-instance', frameworks: ['react'] },
               { slug: 'reference/use-menu-context', frameworks: ['react'] },
               { slug: 'reference/use-optional-container', frameworks: ['react'] },
