@@ -21,7 +21,7 @@
 
     /* Matches the `--container-media-wide` layout breakpoint. */
     @container media-root (width >= 42rem) {
-      :scope[data-theme="minimal"][data-controls-visible] {
+      :scope[data-theme="minimal"][data-controls-visible] video {
         --media-caption-track-y: calc(var(--media-spacing) * -12);
       }
     }
