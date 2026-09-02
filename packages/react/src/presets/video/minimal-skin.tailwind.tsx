@@ -35,7 +35,7 @@ import {
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
 
-import { useTranslator } from '@/i18n/context';
+import { useTranslator } from '../../i18n/context';
 import {
   AirPlayEnterIcon,
   AirPlayExitIcon,
@@ -60,41 +60,40 @@ import {
   VolumeHighIcon,
   VolumeLowIcon,
   VolumeOffIcon,
-} from '@/icons/minimal';
-import { Container } from '@/player/container';
-import { usePlayer } from '@/player/context';
-import { AirPlayButton } from '@/ui/airplay-button';
-import { useAudioTrackOptions } from '@/ui/audio-track';
-import { AudioTrackRadioGroup } from '@/ui/audio-track-radio-group';
-import { BufferingIndicator } from '@/ui/buffering-indicator';
-import { CaptionsButton } from '@/ui/captions-button';
-import { CaptionsRadioGroup, useCaptionsOptions } from '@/ui/captions-radio-group';
-import { CastButton } from '@/ui/cast-button';
-import { Controls } from '@/ui/controls';
-import { ErrorDialog } from '@/ui/error-dialog';
-import { FullscreenButton } from '@/ui/fullscreen-button';
-import { Gesture } from '@/ui/gesture';
-import { Hotkey } from '@/ui/hotkey';
-import { Menu } from '@/ui/menu';
-import { MuteButton } from '@/ui/mute-button';
-import { PiPButton } from '@/ui/pip-button';
-import { PlayButton } from '@/ui/play-button';
-import { usePlaybackRateOptions } from '@/ui/playback-rate';
-import { PlaybackRateRadioGroup } from '@/ui/playback-rate-radio-group';
-import { Popover } from '@/ui/popover';
-import { Poster } from '@/ui/poster';
-import { useQualityOptions } from '@/ui/quality';
-import { QualityRadioGroup } from '@/ui/quality-radio-group';
-import { SeekIndicator } from '@/ui/seek-indicator';
-import { Slider } from '@/ui/slider';
-import { StatusAnnouncer } from '@/ui/status-announcer';
-import { StatusIndicator } from '@/ui/status-indicator';
-import { Time } from '@/ui/time';
-import { TimeSlider } from '@/ui/time-slider';
-import { Tooltip } from '@/ui/tooltip';
-import { VolumeIndicator } from '@/ui/volume-indicator';
-import { VolumeSlider } from '@/ui/volume-slider';
-
+} from '../../icons/minimal';
+import { Container } from '../../player/container';
+import { usePlayer } from '../../player/context';
+import { AirPlayButton } from '../../ui/airplay-button';
+import { useAudioTrackOptions } from '../../ui/audio-track';
+import { AudioTrackRadioGroup } from '../../ui/audio-track-radio-group';
+import { BufferingIndicator } from '../../ui/buffering-indicator';
+import { CaptionsButton } from '../../ui/captions-button';
+import { CaptionsRadioGroup, useCaptionsOptions } from '../../ui/captions-radio-group';
+import { CastButton } from '../../ui/cast-button';
+import { Controls } from '../../ui/controls';
+import { ErrorDialog } from '../../ui/error-dialog';
+import { FullscreenButton } from '../../ui/fullscreen-button';
+import { Gesture } from '../../ui/gesture';
+import { Hotkey } from '../../ui/hotkey';
+import { Menu } from '../../ui/menu';
+import { MuteButton } from '../../ui/mute-button';
+import { PiPButton } from '../../ui/pip-button';
+import { PlayButton } from '../../ui/play-button';
+import { usePlaybackRateOptions } from '../../ui/playback-rate';
+import { PlaybackRateRadioGroup } from '../../ui/playback-rate-radio-group';
+import { Popover } from '../../ui/popover';
+import { Poster } from '../../ui/poster';
+import { useQualityOptions } from '../../ui/quality';
+import { QualityRadioGroup } from '../../ui/quality-radio-group';
+import { SeekIndicator } from '../../ui/seek-indicator';
+import { Slider } from '../../ui/slider';
+import { StatusAnnouncer } from '../../ui/status-announcer';
+import { StatusIndicator } from '../../ui/status-indicator';
+import { Time } from '../../ui/time';
+import { TimeSlider } from '../../ui/time-slider';
+import { Tooltip } from '../../ui/tooltip';
+import { VolumeIndicator } from '../../ui/volume-indicator';
+import { VolumeSlider } from '../../ui/volume-slider';
 import type { MinimalVideoSkinProps } from './minimal-skin';
 
 const TOP_STATUS_ACTIONS = ['toggleSubtitles', 'toggleFullscreen', 'togglePictureInPicture'] as const;

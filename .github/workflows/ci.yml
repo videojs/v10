@@ -92,8 +92,11 @@ jobs:
       - name: Typecheck
         run: pnpm typecheck
 
-      - name: Check public declarations
+      - name: Check public declarations (html)
         run: pnpm exec vp run @videojs/html#check:public-types
+
+      - name: Check public declarations (react)
+        run: pnpm exec vp run @videojs/react#check:public-types
 
   test:
     needs: install

@@ -16,20 +16,27 @@ import {
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
 
-import { PauseIcon, PlayIcon, RestartIcon, SpinnerIcon, VolumeHighIcon, VolumeLowIcon, VolumeOffIcon } from '@/icons';
-import { Container } from '@/player/container';
-import { usePlayer } from '@/player/context';
-import { BufferingIndicator } from '@/ui/buffering-indicator';
-import { ErrorDialog } from '@/ui/error-dialog';
-import { Hotkey } from '@/ui/hotkey';
-import { LiveButton } from '@/ui/live-button';
-import { MuteButton } from '@/ui/mute-button';
-import { PlayButton } from '@/ui/play-button';
-import { Popover } from '@/ui/popover';
-import { StatusAnnouncer } from '@/ui/status-announcer';
-import { Tooltip } from '@/ui/tooltip';
-import { VolumeSlider } from '@/ui/volume-slider';
-
+import {
+  PauseIcon,
+  PlayIcon,
+  RestartIcon,
+  SpinnerIcon,
+  VolumeHighIcon,
+  VolumeLowIcon,
+  VolumeOffIcon,
+} from '../../icons';
+import { Container } from '../../player/container';
+import { usePlayer } from '../../player/context';
+import { BufferingIndicator } from '../../ui/buffering-indicator';
+import { ErrorDialog } from '../../ui/error-dialog';
+import { Hotkey } from '../../ui/hotkey';
+import { LiveButton } from '../../ui/live-button';
+import { MuteButton } from '../../ui/mute-button';
+import { PlayButton } from '../../ui/play-button';
+import { Popover } from '../../ui/popover';
+import { StatusAnnouncer } from '../../ui/status-announcer';
+import { Tooltip } from '../../ui/tooltip';
+import { VolumeSlider } from '../../ui/volume-slider';
 import type { LiveAudioSkinProps } from './skin';
 
 const Button = forwardRef<HTMLButtonElement, ComponentProps<'button'>>(function Button({ className, ...props }, ref) {

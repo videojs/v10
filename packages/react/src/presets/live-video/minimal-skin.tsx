@@ -4,7 +4,7 @@ import { captionsText } from '@videojs/core/i18n/text/menu';
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
 
-import { useTranslator } from '@/i18n/context';
+import { useTranslator } from '../../i18n/context';
 import {
   AirPlayEnterIcon,
   AirPlayExitIcon,
@@ -24,32 +24,31 @@ import {
   VolumeHighIcon,
   VolumeLowIcon,
   VolumeOffIcon,
-} from '@/icons/minimal';
-import { Container } from '@/player/container';
-import { usePlayer } from '@/player/context';
-import { AirPlayButton } from '@/ui/airplay-button';
-import { BufferingIndicator } from '@/ui/buffering-indicator';
-import { CaptionsButton } from '@/ui/captions-button';
-import { useCaptionsOptions } from '@/ui/captions-radio-group';
-import { CastButton } from '@/ui/cast-button';
-import { Controls } from '@/ui/controls';
-import { ErrorDialog } from '@/ui/error-dialog';
-import { FullscreenButton } from '@/ui/fullscreen-button';
-import { Gesture } from '@/ui/gesture';
-import { Hotkey } from '@/ui/hotkey';
-import { LiveButton } from '@/ui/live-button';
-import { Menu } from '@/ui/menu';
-import { MuteButton } from '@/ui/mute-button';
-import { PiPButton } from '@/ui/pip-button';
-import { PlayButton } from '@/ui/play-button';
-import { Popover } from '@/ui/popover';
-import { Poster } from '@/ui/poster';
-import { StatusAnnouncer } from '@/ui/status-announcer';
-import { StatusIndicator } from '@/ui/status-indicator';
-import { Tooltip } from '@/ui/tooltip';
-import { VolumeIndicator } from '@/ui/volume-indicator';
-import { VolumeSlider } from '@/ui/volume-slider';
-
+} from '../../icons/minimal';
+import { Container } from '../../player/container';
+import { usePlayer } from '../../player/context';
+import { AirPlayButton } from '../../ui/airplay-button';
+import { BufferingIndicator } from '../../ui/buffering-indicator';
+import { CaptionsButton } from '../../ui/captions-button';
+import { useCaptionsOptions } from '../../ui/captions-radio-group';
+import { CastButton } from '../../ui/cast-button';
+import { Controls } from '../../ui/controls';
+import { ErrorDialog } from '../../ui/error-dialog';
+import { FullscreenButton } from '../../ui/fullscreen-button';
+import { Gesture } from '../../ui/gesture';
+import { Hotkey } from '../../ui/hotkey';
+import { LiveButton } from '../../ui/live-button';
+import { Menu } from '../../ui/menu';
+import { MuteButton } from '../../ui/mute-button';
+import { PiPButton } from '../../ui/pip-button';
+import { PlayButton } from '../../ui/play-button';
+import { Popover } from '../../ui/popover';
+import { Poster } from '../../ui/poster';
+import { StatusAnnouncer } from '../../ui/status-announcer';
+import { StatusIndicator } from '../../ui/status-indicator';
+import { Tooltip } from '../../ui/tooltip';
+import { VolumeIndicator } from '../../ui/volume-indicator';
+import { VolumeSlider } from '../../ui/volume-slider';
 import type { BaseVideoSkinProps } from '../types';
 
 const TOP_STATUS_ACTIONS = ['toggleSubtitles', 'toggleFullscreen', 'togglePictureInPicture'] as const;

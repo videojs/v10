@@ -22,8 +22,8 @@ import {
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
 
-import { DEFAULT_SEEK_STEP } from '@/constants';
-import { useTranslator } from '@/i18n/context';
+import { DEFAULT_SEEK_STEP } from '../../constants';
+import { useTranslator } from '../../i18n/context';
 import {
   CheckIcon,
   PauseIcon,
@@ -34,26 +34,25 @@ import {
   VolumeHighIcon,
   VolumeLowIcon,
   VolumeOffIcon,
-} from '@/icons/minimal';
-import { Container } from '@/player/container';
-import { usePlayer } from '@/player/context';
-import { BufferingIndicator } from '@/ui/buffering-indicator';
-import { ErrorDialog } from '@/ui/error-dialog';
-import { Hotkey } from '@/ui/hotkey';
-import { Menu } from '@/ui/menu';
-import { MuteButton } from '@/ui/mute-button';
-import { PlayButton } from '@/ui/play-button';
-import { usePlaybackRateOptions } from '@/ui/playback-rate';
-import { PlaybackRateButton } from '@/ui/playback-rate-button';
-import { PlaybackRateRadioGroup as PlaybackRateRadioGroupComponent } from '@/ui/playback-rate-radio-group';
-import { Popover } from '@/ui/popover';
-import { SeekButton } from '@/ui/seek-button';
-import { StatusAnnouncer } from '@/ui/status-announcer';
-import { Time } from '@/ui/time';
-import { TimeSlider } from '@/ui/time-slider';
-import { Tooltip } from '@/ui/tooltip';
-import { VolumeSlider } from '@/ui/volume-slider';
-
+} from '../../icons/minimal';
+import { Container } from '../../player/container';
+import { usePlayer } from '../../player/context';
+import { BufferingIndicator } from '../../ui/buffering-indicator';
+import { ErrorDialog } from '../../ui/error-dialog';
+import { Hotkey } from '../../ui/hotkey';
+import { Menu } from '../../ui/menu';
+import { MuteButton } from '../../ui/mute-button';
+import { PlayButton } from '../../ui/play-button';
+import { usePlaybackRateOptions } from '../../ui/playback-rate';
+import { PlaybackRateButton } from '../../ui/playback-rate-button';
+import { PlaybackRateRadioGroup as PlaybackRateRadioGroupComponent } from '../../ui/playback-rate-radio-group';
+import { Popover } from '../../ui/popover';
+import { SeekButton } from '../../ui/seek-button';
+import { StatusAnnouncer } from '../../ui/status-announcer';
+import { Time } from '../../ui/time';
+import { TimeSlider } from '../../ui/time-slider';
+import { Tooltip } from '../../ui/tooltip';
+import { VolumeSlider } from '../../ui/volume-slider';
 import type { MinimalAudioSkinProps } from './minimal-skin';
 
 /* --------------------------------------- Components ---------------------------------------- */
