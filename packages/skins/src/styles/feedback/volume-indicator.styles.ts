@@ -14,8 +14,7 @@ export default styles({
       variants: {
         default: [
           'w-[min(80%,12rem)] [transform:translateX(0)]',
-          'motion-safe:[&:is([data-min],[data-max]):not([data-starting-style],[data-ending-style])]:[transform:translateX(0.25px)]',
-          'motion-safe:[&:is([data-min],[data-max]):not([data-starting-style],[data-ending-style])]:[transition:transform_300ms_linear(0,-24_20%,16_40%,-8_60%,4_80%,1)]',
+          'motion-safe:[&:is([data-min],[data-max]):not([data-starting-style],[data-ending-style])]:nudge-media',
         ],
       },
     },
@@ -35,8 +34,7 @@ export default styles({
           'after:col-start-2 after:row-start-1 after:h-0.75 after:w-[var(--media-volume-fill,0%)] after:justify-self-start',
           'after:rounded-media-pill after:bg-media-accent',
           'after:transition-[width] after:duration-(--media-duration-slow) after:ease-linear',
-          'motion-safe:group-[:is([data-min],[data-max]):not([data-starting-style],[data-ending-style])]/volume-status:[transform:translateX(0.25px)]',
-          'motion-safe:group-[:is([data-min],[data-max]):not([data-starting-style],[data-ending-style])]/volume-status:[transition:transform_300ms_linear(0,-24_20%,16_40%,-8_60%,4_80%,1)]',
+          'motion-safe:group-[:is([data-min],[data-max]):not([data-starting-style],[data-ending-style])]/volume-status:nudge-media',
         ],
       },
     },

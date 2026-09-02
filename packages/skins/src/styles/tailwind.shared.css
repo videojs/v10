@@ -76,3 +76,19 @@
   outline: 2px solid transparent;
   outline-offset: -2px;
 }
+
+@utility mask-media-volume {
+  mask-repeat: no-repeat;
+  mask-position: 100% 0;
+  transition: mask-position var(--media-duration-instant) ease-out;
+}
+
+@utility mask-media-volume-open {
+  mask-image: linear-gradient(to right, transparent 10%, black 25%, black 100%);
+  mask-position: 0 0;
+}
+
+@utility nudge-media {
+  transform: translateX(0.25px);
+  transition: transform 300ms linear(0, -24 20%, 16 40%, -8 60%, 4 80%, 1);
+}
