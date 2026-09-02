@@ -8,11 +8,12 @@ import {
 import { useSnapshot } from '@videojs/store/react';
 import { isUndefined } from '@videojs/utils/predicate';
 import type { ReactNode } from 'react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { useOptionalContainer } from '../../player/context';
 import { useOptionalPopupGroup } from '../../player/popup-group-context';
 import { useDestroy } from '../../utils/use-destroy';
+import { useIsomorphicLayoutEffect } from '../../utils/use-isomorphic-layout-effect';
 import { useLatestRef } from '../../utils/use-latest-ref';
 import { useSafeId } from '../../utils/use-safe-id';
 import { useOptionalControlsContext } from '../controls/context';
@@ -52,6 +53,7 @@ export function TooltipRoot({
   core.setProps(coreProps);
 
   const isControlled = !isUndefined(controlledOpen);
+  const initialOpenRef = useRef(!isControlled && defaultOpen);
 
   const groupFromContext = useTooltipGroup();
 
@@ -85,11 +87,6 @@ export function TooltipRoot({
       popupGroup: () => popupGroupRef.current,
     });
 
-    // Apply defaultOpen on creation (uncontrolled only)
-    if (!isControlled && defaultOpen) {
-      instance.open();
-    }
-
     return instance;
   });
 
@@ -98,14 +95,21 @@ export function TooltipRoot({
   const anchorName = useSafeId();
   const popupId = useSafeId('tooltip');
 
-  // Sync controlled open prop -> internal input state.
-  useEffect(() => {
-    if (isUndefined(controlledOpen)) return;
+  // Commit the initial uncontrolled default or the current controlled value.
+  useIsomorphicLayoutEffect(() => {
+    let nextOpen = controlledOpen;
+
+    if (isUndefined(nextOpen)) {
+      if (!initialOpenRef.current) return;
+
+      initialOpenRef.current = false;
+      nextOpen = true;
+    }
 
     const { active: inputOpen } = tooltip.input.current;
-    if (controlledOpen === inputOpen) return;
+    if (nextOpen === inputOpen) return;
 
-    if (controlledOpen) {
+    if (nextOpen) {
       tooltip.open();
     } else {
       tooltip.close();
