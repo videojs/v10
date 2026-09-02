@@ -32,11 +32,12 @@ describe('SliderThumbnailElement', () => {
     expect(el).toBeInstanceOf(ThumbnailElement);
   });
 
-  it('renders no image of its own', () => {
+  it('draws a fallback image in its shadow root', () => {
     const el = createElement(SliderThumbnailElement);
+    const img = el.shadowRoot!.querySelector('img');
 
-    expect(el.shadowRoot).toBeNull();
-    expect(el.querySelector('img')).toBeNull();
+    expect(img!.getAttribute('part')).toBe('image');
+    expect(img!.getAttribute('aria-hidden')).toBe('true');
   });
 
   it('inherits time property from ThumbnailElement', () => {

@@ -78,7 +78,22 @@ describe('ThumbnailElement', () => {
     document.body.innerHTML = '';
   });
 
-  it('renders nothing of its own and uses a supplied light-DOM image', async () => {
+  it('draws a fallback image in its shadow root when none is supplied', async () => {
+    const thumbnail = document.createElement(ThumbnailElement.tagName) as ThumbnailElement;
+
+    thumbnail.thumbnails = [{ url: 'thumb.jpg', startTime: 0 }];
+    document.body.append(thumbnail);
+    await thumbnail.updateComplete;
+
+    const fallback = thumbnail.shadowRoot!.querySelector('img');
+
+    expect(fallback!.getAttribute('part')).toBe('image');
+    expect(fallback!.getAttribute('aria-hidden')).toBe('true');
+    expect(fallback!.getAttribute('src')).toBe('thumb.jpg');
+    expect(thumbnail.querySelector('img')).toBeNull();
+  });
+
+  it('uses a supplied light-DOM image in place of the fallback', async () => {
     const thumbnail = document.createElement(ThumbnailElement.tagName) as ThumbnailElement;
     const img = document.createElement('img');
 
@@ -88,8 +103,8 @@ describe('ThumbnailElement', () => {
     document.body.append(thumbnail);
     await thumbnail.updateComplete;
 
-    expect(thumbnail.shadowRoot).toBeNull();
     expect(img.getAttribute('src')).toBe('thumb.jpg');
+    expect(thumbnail.shadowRoot!.querySelector('img')).toBeNull();
   });
 
   it('owns src and srcset on the supplied image', async () => {
@@ -124,12 +139,34 @@ describe('ThumbnailElement', () => {
     document.body.append(thumbnail);
     await thumbnail.updateComplete;
 
+    const fallback = thumbnail.shadowRoot!.querySelector('img')!;
+
+    expect(fallback.getAttribute('src')).toBe('thumb.jpg');
+
     const img = document.createElement('img');
 
     Object.defineProperty(img, 'complete', { value: false, configurable: true });
     thumbnail.append(img);
 
     await vi.waitFor(() => expect(img.getAttribute('src')).toBe('thumb.jpg'));
+    expect(fallback.isConnected).toBe(false);
+    expect(fallback.hasAttribute('src')).toBe(false);
+  });
+
+  it('draws the fallback again when the supplied image is removed', async () => {
+    const thumbnail = document.createElement(ThumbnailElement.tagName) as ThumbnailElement;
+    const img = document.createElement('img');
+
+    Object.defineProperty(img, 'complete', { value: false, configurable: true });
+    thumbnail.thumbnails = [{ url: 'thumb.jpg', startTime: 0 }];
+    thumbnail.append(img);
+    document.body.append(thumbnail);
+    await thumbnail.updateComplete;
+
+    img.remove();
+
+    await vi.waitFor(() => expect(thumbnail.shadowRoot!.querySelector('img')?.getAttribute('src')).toBe('thumb.jpg'));
+    expect(img.hasAttribute('src')).toBe(false);
   });
 
   it('moves source ownership to a replacement image', async () => {
@@ -149,19 +186,6 @@ describe('ThumbnailElement', () => {
 
     await vi.waitFor(() => expect(second.getAttribute('src')).toBe('thumb.jpg'));
     expect(first.hasAttribute('src')).toBe(false);
-  });
-
-  it('warns when a thumbnail resolves without an image', async () => {
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    const thumbnail = document.createElement(ThumbnailElement.tagName) as ThumbnailElement;
-
-    thumbnail.thumbnails = [{ url: 'thumb.jpg', startTime: 0 }];
-    document.body.append(thumbnail);
-    await thumbnail.updateComplete;
-
-    expect(warn).toHaveBeenCalledWith(expect.stringContaining('has no image to put it in'));
-
-    warn.mockRestore();
   });
 
   describe('crossorigin', () => {
