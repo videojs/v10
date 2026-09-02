@@ -16,8 +16,11 @@ import {
   UIElement,
   videoFeatures,
 } from '@videojs/html';
+import { MuxDataElement } from '@videojs/html/extensions/mux-data';
 import { createI18n, type Locale } from '@videojs/html/i18n';
 import '@videojs/html/media/hls-video';
+import '@videojs/html/media/mux-audio';
+import '@videojs/html/media/mux-video';
 import '@videojs/html/ui/play-button';
 import '@videojs/html/ui/slider-thumbnail';
 import '@videojs/html/ui/thumbnail';
@@ -60,6 +63,13 @@ const skin: VideoSkinElement = document.createElement('video-skin');
 const player: VideoPlayerElement = document.createElement('video-player');
 const hls: HTMLElementTagNameMap['hls-video'] = document.createElement('hls-video');
 
+// The Mux entries resolve without `mux-embed`'s own types, which that package does not publish.
+const muxVideo: HTMLElementTagNameMap['mux-video'] = document.createElement('mux-video');
+const muxAudio: HTMLElementTagNameMap['mux-audio'] = document.createElement('mux-audio');
+const muxData = new MuxDataElement();
+
+muxData.metadata = { video_title: 'Title', view_session_id: 'session' };
+
 // Define modules must register tag names for both the base and the derived thumbnail element.
 const thumbnail: ThumbnailElement = document.createElement('media-thumbnail');
 const sliderThumbnail: SliderThumbnailElement = document.createElement('media-slider-thumbnail');
@@ -82,6 +92,9 @@ void [
   skin,
   player,
   hls,
+  muxVideo,
+  muxAudio,
+  muxData,
   thumbnail,
   sliderThumbnail,
   playButton,

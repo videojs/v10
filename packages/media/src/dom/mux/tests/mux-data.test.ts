@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { MuxData } from '..';
-import type { MuxDataSdk } from '../types';
+import type { MuxDataSdk } from '../mux-data';
 
 function createSdk() {
   const emit = vi.fn();

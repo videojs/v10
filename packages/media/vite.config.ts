@@ -54,6 +54,13 @@ export default defineConfig({
         input: cachedTaskInputs,
         output: ['dist/**'],
       },
+      'check:public-types': {
+        // Compiles a strict consumer (`skipLibCheck: false`) against the emitted declarations through the package
+        // `exports` map. The source typecheck cannot see what the dts pipeline emits, so this is the only place a
+        // consumer-facing declaration error surfaces before publish.
+        command: 'tsgo --project tests/public-types/tsconfig.json',
+        dependsOn: ['build'],
+      },
       'test:ci': packageTestTask(),
     },
   },

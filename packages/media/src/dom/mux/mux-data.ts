@@ -1,10 +1,57 @@
+// `mux-embed` publishes no `types`, so its declarations are pulled in by path for this implementation alone. Nothing
+// exported from here names them: the public types below spell out the shapes Mux Data relies on, and the declaration
+// emit drops the directive, so consumers typecheck against this module without `mux-embed`'s types in reach.
+/// <reference path="../../../node_modules/mux-embed/dist/types/mux-embed.d.ts" />
 import Mux from 'mux-embed';
 
 import { getPlayerVersion } from './env';
 import { type MuxDataEngineOptions, toMuxDataEngineOptions } from './mux-data-engine';
-import type { MuxDataOptions, MuxDataSdk } from './types';
+
+/**
+ * Metadata reported with a Mux Data view, keyed the way the beacons spell it.
+ *
+ * The keys named here are the ones Mux Data reads or fills in itself; any other key the Mux Data SDK documents is
+ * accepted alongside them.
+ *
+ * @see https://docs.mux.com/guides/data/make-your-data-actionable-with-metadata
+ */
+export interface MuxDataMetadata {
+  /** Mux Data environment key. Filled in from {@link MuxDataProps.envKey}. */
+  env_key?: string;
+  /** Identifies the video within the environment. Derived from the source when omitted; see {@link toVideoId}. */
+  video_id?: string;
+  /** Groups the views of one player into a session. Generated once per {@link MuxData} when omitted. */
+  view_session_id?: string;
+  player_software_name?: string;
+  player_software?: string;
+  player_software_version?: string;
+  player_init_time?: number;
+  [key: string]: string | number | boolean | undefined;
+}
+
+/** The `mux-embed` monitor options Mux Data passes: element-level settings, engine hooks, and the view's metadata. */
+export interface MuxDataMonitorOptions extends MuxDataEngineOptions {
+  debug?: boolean;
+  beaconCollectionDomain?: string;
+  disableCookies?: boolean;
+  data?: MuxDataMetadata;
+}
+
+/**
+ * What Mux Data needs from the SDK it monitors with: the surface of `mux-embed` this integration calls. The bundled SDK
+ * is the default; a page that loads its own passes that instead.
+ */
+export interface MuxDataSdk {
+  /** Start monitoring a media element, installing the SDK's monitor handle on it. */
+  monitor(target: HTMLMediaElement, options?: MuxDataMonitorOptions): void;
+  utils: {
+    generateUUID(): string;
+    now(): number;
+  };
+}
 
 export interface MuxDataProps {
+  /** The Mux Data SDK to monitor with. `undefined` turns monitoring off. */
   MuxDataSdk: MuxDataSdk | undefined;
   beaconCollectionDomain: string | undefined;
   debug: boolean;
@@ -13,7 +60,7 @@ export interface MuxDataProps {
   playerSoftwareName: string | undefined;
   playerSoftwareVersion: string | undefined;
   playerInitTime: number | undefined;
-  metadata: MuxDataOptions['data'] | undefined;
+  metadata: MuxDataMetadata | undefined;
 }
 
 export const muxDataDefaultProps: MuxDataProps = {
@@ -54,7 +101,7 @@ export class MuxData implements MuxDataProps {
   #beaconCollectionDomain: string | undefined = muxDataDefaultProps.beaconCollectionDomain;
   #debug = muxDataDefaultProps.debug;
   #disableCookies = muxDataDefaultProps.disableCookies;
-  #metadata: MuxDataOptions['data'] | undefined = muxDataDefaultProps.metadata;
+  #metadata: MuxDataMetadata | undefined = muxDataDefaultProps.metadata;
   #envKey: string | undefined = muxDataDefaultProps.envKey;
   #playerSoftwareName: string | undefined = muxDataDefaultProps.playerSoftwareName;
   #playerSoftwareVersion: string | undefined = muxDataDefaultProps.playerSoftwareVersion;
@@ -342,7 +389,7 @@ export class MuxData implements MuxDataProps {
     const view_session_id = metadata.view_session_id ?? (this.#viewSessionId ??= this.MuxDataSdk?.utils.generateUUID());
     const video_id = toVideoId({ metadata, src: media.src });
 
-    const derived: NonNullable<MuxDataOptions['data']> = {};
+    const derived: MuxDataMetadata = {};
 
     if (view_session_id) derived.view_session_id = view_session_id;
 
