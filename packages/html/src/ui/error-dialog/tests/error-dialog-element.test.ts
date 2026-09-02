@@ -1,9 +1,12 @@
+import { type AnyPlayerStore, errorFeature, type PlayerTarget } from '@videojs/core/dom';
 import { registerI18n, resetI18nRegistry } from '@videojs/core/i18n';
 import { ContextProvider } from '@videojs/element/context';
+import type { ErrorLike } from '@videojs/media';
+import { createStore, flush } from '@videojs/store';
 import { afterEach, describe, expect, it } from 'vite-plus/test';
 
 import { MediaI18nProviderElement } from '../../../i18n';
-import { containerContext } from '../../../player/context';
+import { containerContext, playerContext } from '../../../player/context';
 import { DialogCloseElement } from '../../dialog/dialog-close-element';
 import { DialogDescriptionElement } from '../../dialog/dialog-description-element';
 import { DialogPopupElement } from '../../dialog/dialog-popup-element';
@@ -38,6 +41,52 @@ class TestContainerProviderElement extends UIElement {
       registerContainer: () => () => {},
     },
   });
+}
+
+class TestErrorProviderElement extends UIElement {
+  readonly #media = document.createElement('video');
+  readonly #errorStore = createStore<PlayerTarget>()(errorFeature);
+  // SAFETY: The error feature is the only slice the error dialog reads from the player store.
+  readonly store = this.#errorStore as unknown as AnyPlayerStore;
+  readonly provider = new ContextProvider(this, { context: playerContext, initialValue: this.store });
+
+  #error: ErrorLike | null = null;
+
+  constructor() {
+    super();
+    Object.defineProperty(this.#media, 'error', { configurable: true, get: () => this.#error });
+    this.#errorStore.attach({ media: this.#media, container: null });
+  }
+
+  get error(): ErrorLike | null {
+    return this.#errorStore.state.error;
+  }
+
+  setError(error: ErrorLike): void {
+    this.#error = error;
+    this.#media.dispatchEvent(new Event('error'));
+    flush();
+  }
+}
+
+function createErrorDialogWithClose(): {
+  provider: TestErrorProviderElement;
+  dialog: ErrorDialogElement;
+  close: DialogCloseElement;
+} {
+  ensureDefined(DialogCloseElement.tagName, DialogCloseElement);
+
+  const provider = createElement(TestErrorProviderElement);
+  const dialog = createElement(ErrorDialogElement);
+  const popup = createElement(DialogPopupElement);
+  const close = document.createElement(DialogCloseElement.tagName) as DialogCloseElement;
+
+  popup.append(close);
+  dialog.append(popup);
+  provider.append(dialog);
+  document.body.append(provider);
+
+  return { provider, dialog, close };
 }
 
 afterEach(() => {
@@ -175,5 +224,44 @@ describe('ErrorDialogElement', () => {
     document.body.removeChild(el);
 
     expect(el.isConnected).toBe(false);
+  });
+  it('restores the current error and dismissal behavior after rapid remove and reappend cycles', async () => {
+    const { provider, dialog, close } = createErrorDialogWithClose();
+    const error = { code: 4, message: 'Unsupported source' };
+
+    provider.setError(error);
+    await dialog.updateComplete;
+    await close.updateComplete;
+
+    expect(dialog.hasAttribute('data-open')).toBe(true);
+
+    for (let cycle = 0; cycle < 3; cycle++) {
+      dialog.remove();
+      provider.append(dialog);
+    }
+
+    await dialog.updateComplete;
+    await close.updateComplete;
+
+    expect(dialog.hasAttribute('data-open')).toBe(true);
+    expect(provider.error).toEqual(error);
+
+    close.click();
+
+    expect(provider.error).toBeNull();
+  });
+
+  it('releases dismissal behavior when destroyed while connected', async () => {
+    const { provider, dialog, close } = createErrorDialogWithClose();
+    const error = { code: 4, message: 'Unsupported source' };
+
+    provider.setError(error);
+    await dialog.updateComplete;
+    await close.updateComplete;
+
+    dialog.destroy();
+    close.click();
+
+    expect(provider.error).toEqual(error);
   });
 });

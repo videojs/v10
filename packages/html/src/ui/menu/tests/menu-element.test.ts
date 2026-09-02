@@ -401,4 +401,52 @@ describe('MenuElement', () => {
     root.open = false;
     await waitForAssertion(() => expect(provider.releaseControlsLock).toHaveBeenCalledOnce());
   });
+
+  it('restores open state and trigger behavior after rapid remove and reappend cycles', async () => {
+    const trigger = document.createElement('button');
+    const root = document.createElement(MenuElement.tagName) as MenuElement;
+    const onOpenChange = vi.fn();
+
+    root.id = 'reconnecting-menu';
+    root.open = true;
+    trigger.setAttribute('commandfor', root.id);
+    root.addEventListener('open-change', onOpenChange);
+    document.body.append(trigger, root);
+    await root.updateComplete;
+    onOpenChange.mockClear();
+
+    for (let cycle = 0; cycle < 3; cycle++) {
+      root.remove();
+      document.body.append(root);
+    }
+
+    await root.updateComplete;
+
+    expect(root.open).toBe(true);
+    expect(root.hasAttribute('data-open')).toBe(true);
+    expect(onOpenChange).not.toHaveBeenCalled();
+
+    trigger.click();
+
+    expect(root.open).toBe(false);
+    expect(onOpenChange).toHaveBeenCalledOnce();
+  });
+
+  it('releases trigger behavior when destroyed while connected', async () => {
+    const trigger = document.createElement('button');
+    const root = document.createElement(MenuElement.tagName) as MenuElement;
+    const onOpenChange = vi.fn();
+
+    root.id = 'destroyed-menu';
+    trigger.setAttribute('commandfor', root.id);
+    root.addEventListener('open-change', onOpenChange);
+    document.body.append(trigger, root);
+    await root.updateComplete;
+
+    root.destroy();
+    trigger.click();
+
+    expect(root.open).toBe(false);
+    expect(onOpenChange).not.toHaveBeenCalled();
+  });
 });

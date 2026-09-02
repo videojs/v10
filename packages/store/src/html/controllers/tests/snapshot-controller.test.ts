@@ -127,6 +127,40 @@ describe('SnapshotController', () => {
     });
   });
 
+  describe('hostDestroyed', () => {
+    it('releases the subscription for good', () => {
+      const state = createState({ volume: 1 });
+      const host = createTestHost();
+      const controller = new SnapshotController(host, state, (s) => s.volume);
+
+      document.body.appendChild(host);
+      controller.hostDestroyed();
+
+      const updateCount = host.updateCount;
+
+      state.replace({ volume: 0.5 });
+      flush();
+
+      expect(host.updateCount).toBe(updateCount);
+    });
+
+    it('ignores tracking and reconnection after destruction', () => {
+      const state1 = createState({ volume: 1 });
+      const state2 = createState({ volume: 0.5 });
+      const subscribe = vi.spyOn(state2, 'subscribe');
+      const host = createTestHost();
+      const controller = new SnapshotController(host, state1, (s) => s.volume);
+
+      document.body.appendChild(host);
+      controller.hostDestroyed();
+
+      controller.track(state2);
+      controller.hostConnected();
+
+      expect(subscribe).not.toHaveBeenCalled();
+    });
+  });
+
   describe('track', () => {
     it('switches to a different state container', async () => {
       const state1 = createState({ volume: 1, muted: false });

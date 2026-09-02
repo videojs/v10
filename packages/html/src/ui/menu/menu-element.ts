@@ -108,21 +108,25 @@ export class MenuElement extends UIElement {
 
     applyElementProps(this, { onFocusOut: this.#handleFocusOut }, { signal: this.#disconnect.signal });
 
+    // One controller lives for the element's lifetime and retargets each connection's API.
     if (this.#snapshot) this.#snapshot.track(this.#menu.input);
     else this.#snapshot = new SnapshotController(this, this.#menu.input);
+
+    // A reconnect recreates the API closed and schedules no update. `syncOpen`
+    // commits without the cancelable open-change request, so replay directly.
+    if (this.hasUpdated && this.open) this.#menu.syncOpen(true);
+
+    this.requestUpdate();
   }
 
   override disconnectedCallback(): void {
-    this.#releaseControlsVisibilityLock();
     super.disconnectedCallback();
-    this.#position.cleanup();
-    this.#cleanupTrigger();
-    this.#popup?.destroy();
-    this.#popup = null;
-    this.#menu?.destroy();
-    this.#menu = null;
-    this.#disconnect?.abort();
-    this.#disconnect = null;
+    this.#disposeConnection();
+  }
+
+  override destroyCallback(): void {
+    this.#disposeConnection();
+    super.destroyCallback();
   }
 
   close(reason: MenuOpenChangeReason = 'imperative-action'): void {
@@ -240,5 +244,17 @@ export class MenuElement extends UIElement {
     this.#triggerAbort?.abort();
     this.#triggerAbort = null;
     this.#currentTrigger = null;
+  }
+
+  /** Tear down the APIs, lock, and listeners owned by the current connection. Runs on disconnect and on destroy. */
+  #disposeConnection(): void {
+    this.#releaseControlsVisibilityLock();
+    this.#cleanupTrigger();
+    this.#popup?.destroy();
+    this.#popup = null;
+    this.#menu?.destroy();
+    this.#menu = null;
+    this.#disconnect?.abort();
+    this.#disconnect = null;
   }
 }
