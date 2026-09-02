@@ -85,7 +85,10 @@ export const utilities = {
   'media-max-compact': { kind: 'variant', description: 'Player below the compact breakpoint.' },
   'media-wide': { kind: 'variant', description: 'Player at or above the wide breakpoint.' },
   'media-max-wide': { kind: 'variant', description: 'Player below the wide breakpoint.' },
-  'media-highlighted': { kind: 'variant', description: 'Hovered, focused, or expanded control that is not disabled.' },
+  'media-highlighted': {
+    kind: 'variant',
+    description: 'Hovered, focused, expanded, or highlighted control or menu item that is not disabled.',
+  },
   'media-transitioning': {
     kind: 'variant',
     description: 'Element entering or leaving through starting and ending styles.',

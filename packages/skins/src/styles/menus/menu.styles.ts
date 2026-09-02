@@ -3,11 +3,11 @@ import { styles } from 'vjsc/styles';
 const menuItem = [
   'relative flex cursor-pointer select-none items-center gap-1.5 rounded-media-menu-item px-2 py-1.5 text-start whitespace-nowrap',
   'focus-ring-media',
-  'hover:highlight-media data-highlighted:highlight-media',
+  'media-highlighted:highlight-media',
   'focus-visible:outline-media-ring focus-visible:outline-offset-2',
   'text-shadow-media',
   'transition-[background-color,color] duration-media-fast [transition-timing-function:ease-in-out]',
-  'media-anchored:duration-media-instant media-anchored:hover:duration-media-slow media-anchored:data-highlighted:duration-media-slow',
+  'media-anchored:duration-media-instant media-anchored:media-highlighted:duration-media-slow',
 ] as const;
 
 const menuItemOption = [
@@ -112,26 +112,18 @@ export default styles({
     },
     triggerItemIcon: {
       className: 'media-menu-trigger-item-icon',
-      utilities: [
-        ...menuIcon,
-        'size-media-icon',
-        'group-hover/menu-trigger-item:text-inherit group-data-highlighted/menu-trigger-item:text-inherit',
-      ],
+      utilities: [...menuIcon, 'size-media-icon', 'group-media-highlighted/menu-trigger-item:text-inherit'],
     },
     radioItemIcon: {
       className: 'media-menu-radio-item-icon',
-      utilities: [
-        ...menuIcon,
-        'size-media-icon',
-        'group-hover/menu-radio-item:text-inherit group-data-highlighted/menu-radio-item:text-inherit',
-      ],
+      utilities: [...menuIcon, 'size-media-icon', 'group-media-highlighted/menu-radio-item:text-inherit'],
     },
     forwardChevron: {
       className: 'media-menu-forward-chevron',
       utilities: [
         ...menuChevron,
         '[&:dir(rtl)]:[scale:-1_1]',
-        'group-hover/menu-trigger-item:text-inherit group-data-highlighted/menu-trigger-item:text-inherit',
+        'group-media-highlighted/menu-trigger-item:text-inherit',
       ],
     },
     backChevron: {
@@ -139,7 +131,7 @@ export default styles({
       utilities: [
         ...menuChevron,
         'rotate-180 [&:dir(rtl)]:rotate-0 [&:dir(rtl)]:[scale:1_1]',
-        'group-hover/menu-back-item:text-inherit group-data-highlighted/menu-back-item:text-inherit',
+        'group-media-highlighted/menu-back-item:text-inherit',
       ],
     },
     settingsTrigger: {

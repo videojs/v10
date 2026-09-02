@@ -135,9 +135,9 @@
   }
 }
 
-/* Hovered, focused, or expanded control that is not disabled. */
+/* Hovered, focused, expanded, or highlighted control or menu item that is not disabled. Hover needs a hover-capable pointer. */
 @custom-variant media-highlighted {
-  &:where(:focus-visible, [aria-expanded="true"]):not([aria-disabled="true"]) {
+  &:where(:focus-visible, [aria-expanded="true"], [data-highlighted]):not([aria-disabled="true"]) {
     @slot;
   }
   @media (hover: hover) {
