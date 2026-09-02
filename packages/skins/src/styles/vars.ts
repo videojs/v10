@@ -116,7 +116,7 @@ export const vars = {
     kind: 'internal',
     description: 'Scoped focus-ring color, contrast-aware per preset and forced-colors mode.',
   },
-  '--media-shadow-sm': {
+  '--media-shadow-surface': {
     kind: 'internal',
     description: 'Scoped small surface shadow.',
   },
@@ -136,7 +136,7 @@ export const vars = {
     kind: 'internal',
     description: 'Theme color used to derive legible accent text when no public accent is configured.',
   },
-  '--media-controls-transition-duration': {
+  '--media-duration-controls': {
     kind: 'internal',
     description: 'Controls visibility transition duration.',
   },
@@ -144,7 +144,7 @@ export const vars = {
     kind: 'internal',
     description: 'Shared control icon size.',
   },
-  '--media-menu-item-border-radius': {
+  '--media-menu-item-radius': {
     kind: 'internal',
     description: 'Corner radius shared by menu items and the moving highlight.',
   },
@@ -152,7 +152,7 @@ export const vars = {
     kind: 'internal',
     description: 'Anchor name used by the menu highlight.',
   },
-  '--media-menu-transition-duration': {
+  '--media-duration-menu': {
     kind: 'internal',
     description: 'Duration shared by settings menu panel and size transitions.',
   },
@@ -228,11 +228,11 @@ export const vars = {
     kind: 'internal',
     description: 'Theme gradient painted behind Minimal status and volume indicators.',
   },
-  '--media-surface-backdrop-filter': {
+  '--media-backdrop-filter-surface': {
     kind: 'internal',
     description: 'Backdrop filter shared by translucent surfaces; preferences switch it off.',
   },
-  '--media-surface-inset-shadow': {
+  '--media-shadow-surface-inset': {
     kind: 'internal',
     description: 'Inner highlight shared by translucent surfaces; preferences switch its strength.',
   },
@@ -272,23 +272,23 @@ export const vars = {
     kind: 'internal',
     description: 'Color of the live-edge indicator dot.',
   },
-  '--media-thumb-shadow': {
+  '--media-shadow-thumb': {
     kind: 'internal',
     description: 'Theme shadow beneath slider thumbs.',
   },
-  '--media-dialog-text-shadow': {
+  '--media-text-shadow-dialog': {
     kind: 'internal',
     description: 'Theme text shadow inside dialog popups.',
   },
-  '--media-tooltip-shadow': {
+  '--media-shadow-tooltip': {
     kind: 'internal',
     description: 'Minimal theme tooltip shadow.',
   },
-  '--media-dialog-duration': {
+  '--media-duration-dialog': {
     kind: 'internal',
     description: 'Dialog enter duration per theme, reduced with motion preferences.',
   },
-  '--media-dialog-delay': {
+  '--media-delay-dialog': {
     kind: 'internal',
     description: 'Dialog transition delay, removed with motion preferences.',
   },
@@ -304,27 +304,27 @@ export const vars = {
     kind: 'internal',
     description: 'Distance hidden controls slide per theme; zero under reduced motion.',
   },
-  '--media-indicator-hidden-scale': {
+  '--media-hidden-indicator-scale': {
     kind: 'internal',
     description: 'Scale applied to entering and leaving indicators; neutral under reduced motion.',
   },
-  '--media-indicator-hidden-offset': {
+  '--media-hidden-indicator-offset': {
     kind: 'internal',
     description: 'Distance leaving indicators slide per theme; zero under reduced motion.',
   },
-  '--media-playback-hidden-scale': {
+  '--media-hidden-playback-scale': {
     kind: 'internal',
     description: 'Scale applied to the entering and leaving playback status; neutral under reduced motion.',
   },
-  '--media-icon-hidden-scale': {
+  '--media-hidden-icon-scale': {
     kind: 'internal',
     description: 'Scale of an inactive swapped icon; neutral under reduced motion.',
   },
-  '--media-popup-hidden-scale': {
+  '--media-hidden-popup-scale': {
     kind: 'internal',
     description: 'Scale applied to entering and leaving popups; neutral under reduced motion.',
   },
-  '--media-popup-hidden-blur': {
+  '--media-hidden-popup-blur': {
     kind: 'internal',
     description: 'Blur applied to entering and leaving popups; zero under reduced motion.',
   },

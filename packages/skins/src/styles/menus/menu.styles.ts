@@ -49,7 +49,7 @@ export default styles({
       className: 'media-menu-resizable-popup',
       utilities: [
         '[transition-property:opacity,filter,transform,scale,width,height]',
-        '[transition-duration:var(--media-duration-fast),var(--media-duration-fast),var(--media-duration-fast),var(--media-duration-fast),var(--media-menu-transition-duration),var(--media-menu-transition-duration)]',
+        '[transition-duration:var(--media-duration-fast),var(--media-duration-fast),var(--media-duration-fast),var(--media-duration-fast),var(--media-duration-menu),var(--media-duration-menu)]',
       ],
     },
     content: {

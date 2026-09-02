@@ -1,7 +1,7 @@
 @layer components {
   @scope (.media-skin) {
     :scope {
-      --media-caption-track-duration: var(--media-controls-transition-duration);
+      --media-caption-track-duration: var(--media-duration-controls);
       --media-caption-track-delay: 25ms;
       --media-caption-track-y: calc(var(--media-spacing) * -2);
     }

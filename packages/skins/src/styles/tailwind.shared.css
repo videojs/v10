@@ -39,17 +39,17 @@
 
   /* Radii: controls follow the theme shape, popups follow the popup shape, pills stay round. */
   --radius-media-control: var(--media-control-radius);
-  --radius-media-menu-item: var(--media-menu-item-border-radius);
+  --radius-media-menu-item: var(--media-menu-item-radius);
   --radius-media-pill: 9999px;
   --radius-media-player: var(--media-video-border-radius);
   --radius-media-popup: var(--media-popup-radius);
 
   /* Shadows. Contrast-aware ones read the current color; the rest alias theme tokens. */
   --drop-shadow-media-icon: 0 1px 0 var(--media-shadow-current-color);
-  --shadow-media-thumb: var(--media-thumb-shadow);
-  --shadow-media-tooltip: var(--media-tooltip-shadow);
+  --shadow-media-thumb: var(--media-shadow-thumb);
+  --shadow-media-tooltip: var(--media-shadow-tooltip);
   --text-shadow-media: 0 1px 0 var(--media-shadow-current-color);
-  --text-shadow-media-dialog: var(--media-dialog-text-shadow);
+  --text-shadow-media-dialog: var(--media-text-shadow-dialog);
 
   /* Motion. Utilities such as `duration-media-fast` and `scale-media-hidden` follow reduced-motion preferences through the tokens. */
   --duration-media-instant: var(--media-duration-instant);
@@ -57,20 +57,20 @@
   --duration-media-base: var(--media-duration);
   --duration-media-slow: var(--media-duration-slow);
   --duration-media-slower: var(--media-duration-slower);
-  --duration-media-controls: var(--media-controls-transition-duration);
-  --duration-media-controls-half: calc(var(--media-controls-transition-duration) / 2);
-  --duration-media-menu: var(--media-menu-transition-duration);
-  --duration-media-dialog: var(--media-dialog-duration);
-  --delay-media-dialog: var(--media-dialog-delay);
+  --duration-media-controls: var(--media-duration-controls);
+  --duration-media-controls-half: calc(var(--media-duration-controls) / 2);
+  --duration-media-menu: var(--media-duration-menu);
+  --duration-media-dialog: var(--media-duration-dialog);
+  --delay-media-dialog: var(--media-delay-dialog);
   --scale-media-hidden: var(--media-hidden-scale);
-  --scale-media-hidden-indicator: var(--media-indicator-hidden-scale);
-  --scale-media-hidden-playback: var(--media-playback-hidden-scale);
-  --scale-media-hidden-icon: var(--media-icon-hidden-scale);
-  --scale-media-hidden-popup: var(--media-popup-hidden-scale);
+  --scale-media-hidden-indicator: var(--media-hidden-indicator-scale);
+  --scale-media-hidden-playback: var(--media-hidden-playback-scale);
+  --scale-media-hidden-icon: var(--media-hidden-icon-scale);
+  --scale-media-hidden-popup: var(--media-hidden-popup-scale);
   --blur-media-hidden: var(--media-hidden-blur);
-  --blur-media-hidden-popup: var(--media-popup-hidden-blur);
+  --blur-media-hidden-popup: var(--media-hidden-popup-blur);
   --spacing-media-hidden-offset: var(--media-hidden-offset);
-  --spacing-media-hidden-indicator-offset: var(--media-indicator-hidden-offset);
+  --spacing-media-hidden-indicator-offset: var(--media-hidden-indicator-offset);
 }
 
 /* Transition durations from the theme, for example `duration-media-fast`. */
@@ -145,8 +145,8 @@
 @utility surface-media {
   box-shadow:
     0 0 0 1px var(--media-surface-border, var(--media-border)),
-    var(--media-shadow-sm);
-  backdrop-filter: var(--media-surface-backdrop-filter);
+    var(--media-shadow-surface);
+  backdrop-filter: var(--media-backdrop-filter-surface);
 }
 
 /* Inner highlight for a surface; apply through `after:`. */
@@ -156,7 +156,7 @@
   z-index: 10;
   pointer-events: none;
   border-radius: inherit;
-  box-shadow: var(--media-surface-inset-shadow);
+  box-shadow: var(--media-shadow-surface-inset);
 }
 
 /* Removes surface chrome from a popup that should sit flat on the controls. */
@@ -226,7 +226,7 @@
   inset: anchor(inside);
   overflow-anchor: none;
   pointer-events: none;
-  border-radius: var(--media-menu-item-border-radius);
+  border-radius: var(--media-menu-item-radius);
   background-color: var(--media-accent);
   transition: inset var(--media-duration-fast) ease-in-out;
 }

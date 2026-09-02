@@ -26,13 +26,13 @@
     --media-live-color: oklch(0.65 0.22 27);
 
     /* Shadows and surfaces. */
-    --media-shadow-sm: 0 1px 3px 0 oklch(0 0 0 / 0.15), 0 1px 2px -1px oklch(0 0 0 / 0.15);
-    --media-thumb-shadow: 0 0 0 1px rgb(0 0 0 / 0.1), 0 1px 3px 0 rgb(0 0 0 / 0.35), 0 1px 2px -1px rgb(0 0 0 / 0.35);
-    --media-dialog-text-shadow: 0 1px 0 rgb(0 0 0 / 0.25);
+    --media-shadow-surface: 0 1px 3px 0 oklch(0 0 0 / 0.15), 0 1px 2px -1px oklch(0 0 0 / 0.15);
+    --media-shadow-thumb: 0 0 0 1px rgb(0 0 0 / 0.1), 0 1px 3px 0 rgb(0 0 0 / 0.35), 0 1px 2px -1px rgb(0 0 0 / 0.35);
+    --media-text-shadow-dialog: 0 1px 0 rgb(0 0 0 / 0.25);
     --media-shadow-current-color: oklch(from currentColor 0 0 0 / clamp(0, calc((l - 0.5) * 0.5), 0.15));
     --media-shadow-subtle-current-color: oklch(from var(--media-shadow-current-color) l c h / calc(alpha * 0.4));
-    --media-surface-backdrop-filter: blur(16px) saturate(150%);
-    --media-surface-inset-shadow: inset 0 1px 0 0 rgb(255 255 255 / 0.1), inset 0 0 0 1px rgb(255 255 255 / 0.05);
+    --media-backdrop-filter-surface: blur(16px) saturate(150%);
+    --media-shadow-surface-inset: inset 0 1px 0 0 rgb(255 255 255 / 0.1), inset 0 0 0 1px rgb(255 255 255 / 0.05);
 
     /* Controls. */
     --media-control-corner-shape: round;
@@ -41,27 +41,27 @@
     --media-default-accent-color: oklch(1 0 0);
 
     /* Motion. Preferences collapse durations and neutralize hidden-state values under reduced motion. */
-    --media-controls-transition-duration: 100ms;
+    --media-duration-controls: 100ms;
     --media-duration-instant: 50ms;
     --media-duration-fast: 100ms;
     --media-duration: 150ms;
     --media-duration-slow: 200ms;
     --media-duration-slower: 250ms;
-    --media-dialog-duration: 350ms;
-    --media-dialog-delay: 100ms;
+    --media-duration-dialog: 350ms;
+    --media-delay-dialog: 100ms;
     --media-hidden-scale: 0.95;
     --media-hidden-blur: 8px;
     --media-hidden-offset: calc(var(--media-spacing) * 1);
-    --media-indicator-hidden-scale: 0.9;
-    --media-indicator-hidden-offset: -25%;
-    --media-playback-hidden-scale: 0.85;
-    --media-icon-hidden-scale: 0;
-    --media-popup-hidden-scale: 0.95;
-    --media-popup-hidden-blur: 4px;
+    --media-hidden-indicator-scale: 0.9;
+    --media-hidden-indicator-offset: -25%;
+    --media-hidden-playback-scale: 0.85;
+    --media-hidden-icon-scale: 0;
+    --media-hidden-popup-scale: 0.95;
+    --media-hidden-popup-blur: 4px;
 
     /* Popups and menus. */
-    --media-menu-item-border-radius: calc(var(--media-spacing) * 2);
-    --media-menu-transition-duration: 250ms;
+    --media-menu-item-radius: calc(var(--media-spacing) * 2);
+    --media-duration-menu: 250ms;
     --media-popover-boundary-offset: calc(var(--media-spacing) * 3);
     --media-popover-side-offset: calc(var(--media-spacing) * 3);
     --media-popup-radius: calc(var(--media-spacing) * 3);

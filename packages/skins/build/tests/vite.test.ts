@@ -219,7 +219,7 @@ describe('Skins Vite workflow', () => {
     if (isUndefined(css)) throw new Error(`Expected Vite to load \`${resolvedId}\`.`);
 
     expect(css).toMatch(
-      /\.media-play-button-restart-icon \{\s+scale: var\(--media-icon-hidden-scale\) var\(--media-icon-hidden-scale\);\s+opacity: 0;/
+      /\.media-play-button-restart-icon \{\s+scale: var\(--media-hidden-icon-scale\) var\(--media-hidden-icon-scale\);\s+opacity: 0;/
     );
   }, 30_000);
 
