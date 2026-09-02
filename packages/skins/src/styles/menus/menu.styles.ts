@@ -23,14 +23,7 @@ const menuItemHighlight = [
 
 const menuHighlight = [
   '[anchor-scope:--media-menu-item-highlight-anchor]',
-  'supports-[top:anchor(top)]:before:absolute',
-  'supports-[top:anchor(top)]:before:[position-anchor:--media-menu-item-highlight-anchor]',
-  'supports-[top:anchor(top)]:before:[inset:anchor(inside)]',
-  'supports-[top:anchor(top)]:before:[overflow-anchor:none]',
-  'supports-[top:anchor(top)]:before:pointer-events-none',
-  'supports-[top:anchor(top)]:before:rounded-(--media-menu-item-border-radius)',
-  'supports-[top:anchor(top)]:before:bg-media-control-hover',
-  'supports-[top:anchor(top)]:before:transition-[inset] supports-[top:anchor(top)]:before:duration-(--media-duration-fast) supports-[top:anchor(top)]:before:[transition-timing-function:ease-in-out]',
+  'supports-[top:anchor(top)]:before:anchor-media-highlight',
   'supports-[top:anchor(top)]:has-data-[highlighted=]:before:duration-0',
 ] as const;
 

@@ -116,3 +116,14 @@
   transition-property: --value([*]);
   will-change: --value([*]);
 }
+
+@utility anchor-media-highlight {
+  position: absolute;
+  position-anchor: --media-menu-item-highlight-anchor;
+  inset: anchor(inside);
+  overflow-anchor: none;
+  pointer-events: none;
+  border-radius: var(--media-menu-item-border-radius);
+  background-color: var(--media-accent);
+  transition: inset var(--media-duration-fast) ease-in-out;
+}
