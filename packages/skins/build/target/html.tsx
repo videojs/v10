@@ -1,8 +1,7 @@
-/** @jsxImportSource ../../../vjsc/src/target */
+/** @jsxImportSource vjsc/target */
 /* oxlint-disable react/jsx-key -- Target arrays describe generated siblings, not React reconciliation. */
 
 import type coreSchema from '@videojs/core/vjsc';
-
 import {
   type ComponentRules,
   type ComponentTarget,
@@ -10,8 +9,9 @@ import {
   type TargetHelpers,
   defineComponentTarget,
   type TemplateTargetDefinition,
-} from '../../../vjsc/src/target/index.ts';
-import { Host } from '../../../vjsc/src/target/jsx-runtime.ts';
+} from 'vjsc/target';
+import { Host } from 'vjsc/target/jsx-runtime';
+
 import { htmlIconModule, htmlRenderAliases } from './html-render.ts';
 
 type CoreSchema = typeof coreSchema;

@@ -1,8 +1,9 @@
 import { resolve } from 'node:path';
 
-import type { TransformModule } from '../../vjsc/src/plugins/index.ts';
-import type { StyleTransformOptions } from '../../vjsc/src/styles/index.ts';
-import type { ComponentTarget } from '../../vjsc/src/target/index.ts';
+import type { TransformModule } from 'vjsc/plugins';
+import type { StyleTransformOptions } from 'vjsc/styles';
+import type { ComponentTarget } from 'vjsc/target';
+
 import { skinStyles } from '../src/meta.ts';
 import { skinBaseStylesheet } from './skin.ts';
 import { createComponentTargets } from './target/index.ts';

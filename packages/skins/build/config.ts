@@ -1,6 +1,7 @@
 import { relative, resolve } from 'node:path';
 
-import type { EntriesOptions, TransformModule } from '../../vjsc/src/plugins/index.ts';
+import type { EntriesOptions, TransformModule } from 'vjsc/plugins';
+
 import { resolveSkinComponents, resolveSkinStyles } from './transform.ts';
 import { variantParams, variantsFor } from './variants.ts';
 

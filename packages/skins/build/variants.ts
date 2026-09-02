@@ -1,4 +1,5 @@
-import { collectModules, type Graph, type GraphModule } from '../../vjsc/src/graph/index.ts';
+import { collectModules, type Graph, type GraphModule } from 'vjsc/graph';
+
 import {
   isSkinName,
   type SkinMeta,

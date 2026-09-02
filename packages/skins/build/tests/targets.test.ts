@@ -3,9 +3,9 @@ import { resolve } from 'node:path';
 
 import coreSchema from '@videojs/core/vjsc';
 import { describe, expect, it } from 'vitest';
+import type { ComponentPartDefinition, ComponentParts } from 'vjsc/components';
+import { type ComponentPath, isTargetElement, readTargetReference } from 'vjsc/target';
 
-import type { ComponentPartDefinition, ComponentParts } from '../../../vjsc/src/components/index.ts';
-import { type ComponentPath, isTargetElement, readTargetReference } from '../../../vjsc/src/target/index.ts';
 import { htmlComponentTarget } from '../target/html.tsx';
 import { reactComponentTarget } from '../target/react.tsx';
 

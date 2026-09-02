@@ -1,5 +1,6 @@
-import type { Graph, GraphModule } from '../../../vjsc/src/graph/index.ts';
-import { bundleStyles, renderHtml } from '../../../vjsc/src/graph/index.ts';
+import type { Graph, GraphModule } from 'vjsc/graph';
+import { bundleStyles, renderHtml } from 'vjsc/graph';
+
 import type { SkinModuleMeta } from '../../src/meta.ts';
 import { skinCatalogEntry } from '../catalog.ts';
 import { skinBaseStylesheet } from '../skin.ts';

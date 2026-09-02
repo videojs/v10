@@ -1,4 +1,5 @@
-import type { VjscRegistryOptions } from '../../../../vjsc/src/shadcn/index.ts';
+import type { VjscRegistryOptions } from 'vjsc/shadcn';
+
 import type { SkinModuleMeta } from '../../../src/meta.ts';
 import { skinUtils } from '../../config.ts';
 import { parseVariant } from '../../variants.ts';

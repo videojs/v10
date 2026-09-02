@@ -1,12 +1,8 @@
-import { ModuleImports } from '../../vjsc/src/ast/index.ts';
-import type { ComponentSchema } from '../../vjsc/src/components/index.ts';
-import {
-  type ComponentTarget,
-  defineComponentTarget,
-  type SourceProps,
-  type TargetTransform,
-} from '../../vjsc/src/target/index.ts';
-import { jsx } from '../../vjsc/src/target/jsx-runtime.ts';
+import { ModuleImports } from 'vjsc/ast';
+import type { ComponentSchema } from 'vjsc/components';
+import { type ComponentTarget, defineComponentTarget, type SourceProps, type TargetTransform } from 'vjsc/target';
+import { jsx } from 'vjsc/target/jsx-runtime';
+
 import { iconNames } from './icon-names.ts';
 
 export interface IconTargetOptions {

@@ -1,5 +1,6 @@
+import type { ComponentTarget } from 'vjsc/target';
+
 import { createHtmlIconTarget, createReactIconTarget } from '../../../icons/vjsc/target.ts';
-import type { ComponentTarget } from '../../../vjsc/src/target/index.ts';
 import { skinStyles } from '../../src/meta.ts';
 import type { SkinTransformConfig } from '../transform.ts';
 import { htmlComponentTarget } from './html.tsx';

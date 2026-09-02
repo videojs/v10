@@ -1,8 +1,8 @@
 import { resolve } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
+import type { Graph } from 'vjsc/graph';
 
-import type { Graph } from '../../../../vjsc/src/graph/index.ts';
 import type { SkinModuleMeta } from '../../../src/meta.ts';
 import { createReactPackageSkins } from '../react.ts';
 

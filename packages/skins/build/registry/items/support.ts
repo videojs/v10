@@ -1,5 +1,6 @@
-import type { GraphModule } from '../../../../vjsc/src/graph/index.ts';
-import type { RegistryModuleItem } from '../../../../vjsc/src/shadcn/index.ts';
+import type { GraphModule } from 'vjsc/graph';
+import type { RegistryModuleItem } from 'vjsc/shadcn';
+
 import type { SkinModuleMeta } from '../../../src/meta.ts';
 import { skinModuleSourcePath } from '../../config.ts';
 import type { VideojsRegistryMeta } from '../meta.ts';

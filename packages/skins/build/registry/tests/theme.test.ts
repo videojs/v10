@@ -3,8 +3,7 @@ import { dirname, join, resolve } from 'node:path';
 
 import { isPlainObject, isString } from '@videojs/utils/predicate';
 import { describe, expect, it } from 'vitest';
-
-import { type DesignSystem, loadDesignSystem } from '../../../../vjsc/src/styles/design-system.ts';
+import { type DesignSystem, loadDesignSystem } from 'vjsc/graph';
 
 const packageDir = resolve(import.meta.dirname, '../../..');
 const registryDir = resolve(packageDir, 'dist/registry/source/r/react');

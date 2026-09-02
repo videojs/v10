@@ -1,7 +1,8 @@
 import { posix } from 'node:path';
 
-import { type Graph, type GraphModule, bundleStyles } from '../../../../vjsc/src/graph/index.ts';
-import type { RegistryCreatedItem, RegistryModuleItem } from '../../../../vjsc/src/shadcn/index.ts';
+import { type Graph, type GraphModule, bundleStyles } from 'vjsc/graph';
+import type { RegistryCreatedItem, RegistryModuleItem } from 'vjsc/shadcn';
+
 import { isSkinName, type SkinModuleMeta, type SkinName } from '../../../src/meta.ts';
 import { skinCatalogEntry } from '../../catalog.ts';
 import { createHtmlSkinRegistration, createSourceOwnedHtml, type RenderedHtmlSkin } from '../../packages/html.ts';

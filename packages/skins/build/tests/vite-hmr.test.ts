@@ -5,8 +5,7 @@ import { isObject, isString, isUndefined } from '@videojs/utils/predicate';
 import react from '@vitejs/plugin-react';
 import { createServer, type ViteDevServer } from 'vite';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-
-import { vjscPlugin } from '../../../vjsc/src/vite/index.ts';
+import { vjscPlugin } from 'vjsc/vite';
 
 const packageDir = resolve(import.meta.dirname, '../..');
 const cssUrl = '/fixture.tsx?style=css';

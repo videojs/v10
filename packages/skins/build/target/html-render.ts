@@ -1,6 +1,6 @@
 import { resolve } from 'node:path';
 
-import type { GraphModule } from '../../../vjsc/src/graph/index.ts';
+import type { GraphModule } from 'vjsc/graph';
 
 /**
  * Runtime modules the rendered templates need, resolved from workspace source because rendering runs outside the

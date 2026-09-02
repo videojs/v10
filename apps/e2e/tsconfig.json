@@ -8,10 +8,7 @@
     "jsx": "react-jsx",
     "lib": ["ES2024", "DOM", "DOM.Iterable"],
     "types": ["node"],
-    "noEmit": true,
-    "paths": {
-      "vjsc/*": ["../../packages/vjsc/src/*"]
-    }
+    "noEmit": true
   },
   "include": ["shared/**/*.ts", "suites/**/*.ts", "suites/**/*.tsx", "scripts/**/*.ts"],
   "exclude": [

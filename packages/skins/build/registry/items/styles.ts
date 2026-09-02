@@ -1,7 +1,8 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-import type { RegistryStylesOptions } from '../../../../vjsc/src/shadcn/index.ts';
+import type { RegistryStylesOptions } from 'vjsc/shadcn';
+
 import { utilities } from '../../../src/styles/utilities.ts';
 import { vars } from '../../../src/styles/vars.ts';
 import type { VideojsRegistryMeta } from '../meta.ts';

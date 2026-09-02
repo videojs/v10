@@ -1,9 +1,9 @@
 import { resolve } from 'node:path';
 
 import type { PluginOption } from 'vite-plus';
+import { vjscPlugin } from 'vjsc/vite';
 
 import { iconElementSourcePlugin } from '../../icons/vjsc/vite.ts';
-import { vjscPlugin } from '../../vjsc/src/vite/index.ts';
 import { skinMetaDefaults } from './config.ts';
 import { resolveSkinComponents, resolveSkinStyles } from './transform.ts';
 

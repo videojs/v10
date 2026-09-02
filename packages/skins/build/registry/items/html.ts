@@ -1,4 +1,5 @@
-import type { VjscRegistryOptions } from '../../../../vjsc/src/shadcn/index.ts';
+import type { VjscRegistryOptions } from 'vjsc/shadcn';
+
 import type { SkinModuleMeta } from '../../../src/meta.ts';
 import { renderHtmlSkins } from '../../packages/html.ts';
 import type { RegistryTarget } from '../targets.ts';

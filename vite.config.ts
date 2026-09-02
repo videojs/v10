@@ -125,23 +125,6 @@ export default defineConfig({
         },
       },
       {
-        // Build tooling must run one copy of the compiler: import vjsc source, never the built package.
-        files: ['packages/skins/build/**', 'packages/icons/vjsc/**'],
-        rules: {
-          'no-restricted-imports': [
-            'error',
-            {
-              patterns: [
-                {
-                  regex: '^vjsc(?:/|$)',
-                  message: 'Import vjsc source relatively from build tooling so one compiler instance runs per build.',
-                },
-              ],
-            },
-          ],
-        },
-      },
-      {
         files: ['**/*.astro'],
         rules: {
           'no-unused-vars': 'off',

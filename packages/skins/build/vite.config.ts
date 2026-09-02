@@ -2,8 +2,8 @@ import { resolve } from 'node:path';
 
 import { defineConfig } from 'vite-plus';
 import type { UserConfig as PackUserConfig } from 'vite-plus/pack';
+import { vjscPlugin, vjscRegistryPlugin } from 'vjsc/plugins';
 
-import { vjscPlugin, vjscRegistryPlugin } from '../../vjsc/src/plugins/index.ts';
 import { skinCatalog } from './catalog.ts';
 import {
   packageDir,
