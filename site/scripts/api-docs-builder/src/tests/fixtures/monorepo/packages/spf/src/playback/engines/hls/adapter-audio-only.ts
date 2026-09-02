@@ -1,19 +1,15 @@
 /**
- * Mock SPF audio-only adapter mixin — mirrors HlsAudioMediaMixin.
+ * Mock SPF audio-only adapter mixin — mirrors HlsAudioMixin.
  *
  * Exercises:
  *   - Cross-package mixin resolution (host lives in core, mixin in spf)
- *   - Defaults declared in the mixin's own file (spfAudioOnlyMediaDefaultProps)
+ *   - Defaults declared as `static defaultProps` on the mixin's inner class (SpfAudioOnly.defaultProps), the shape
+ *     the SPF adapters use, reached through the composed adapter's extends chain
  *   - `@fires`-declared events: `audiomodechange` also has a dispatch site,
  *     `manifestparsed` is dispatched from a helper the builder never scans —
  *     the @fires tag is its only source.
  */
 type Constructor<T = object> = new (...args: any[]) => T;
-
-export const spfAudioOnlyMediaDefaultProps = {
-  src: '',
-  preload: '',
-};
 
 /**
  * Adds SPF audio-only HLS playback to a host.
@@ -21,10 +17,15 @@ export const spfAudioOnlyMediaDefaultProps = {
  * @fires audiomodechange - Fired when the audio-only rendition changes.
  * @fires manifestparsed - Fired after the multivariant playlist is parsed.
  */
-export const SpfAudioOnlyMediaMixin = <Base extends Constructor>(BaseClass: Base) => {
-  class SpfAudioOnlyMedia extends BaseClass {
-    #src: string = spfAudioOnlyMediaDefaultProps.src;
-    #preload: string = spfAudioOnlyMediaDefaultProps.preload;
+export const SpfAudioOnlyMixin = <Base extends Constructor>(BaseClass: Base) => {
+  class SpfAudioOnly extends BaseClass {
+    static readonly defaultProps = {
+      src: '',
+      preload: '',
+    };
+
+    #src: string = SpfAudioOnly.defaultProps.src;
+    #preload: string = SpfAudioOnly.defaultProps.preload;
 
     /** Source URL of the HLS manifest. */
     get src(): string {
@@ -46,5 +47,5 @@ export const SpfAudioOnlyMediaMixin = <Base extends Constructor>(BaseClass: Base
     }
   }
 
-  return SpfAudioOnlyMedia as unknown as Base & Constructor<{ src: string; preload: string }>;
+  return SpfAudioOnly as unknown as Base & Constructor<{ src: string; preload: string }>;
 };

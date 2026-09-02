@@ -1,5 +1,5 @@
 /**
- * Mock shared media host base — mirrors the real media-host.ts.
+ * Mock shared media host base — mirrors the real html-media-adapter.ts.
  *
  * Exercises method extraction: the builder collects public instance methods
  * from this class (per media type) for the reference's `methods` field.
@@ -9,7 +9,7 @@
  * native HTMLMediaElement members surface in `nativeProperties`; non-native
  * accessors (e.g. `streamType`) and re-declared natives (`src`) do not.
  */
-export class HTMLMediaElementHost {
+export class HTMLMediaAdapter {
   // Lifecycle methods — excluded from `methods`.
   attach(_target: EventTarget): void {}
   detach(): void {}

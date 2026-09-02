@@ -1,5 +1,5 @@
 /**
- * Mock mixin-chain leaf class — mirrors MuxVideoMedia / NativeHlsMedia.
+ * Mock mixin-chain leaf class — mirrors MuxVideoAdapter / NativeHlsAdapter.
  *
  * Exercises: a class extending MixinB(MixinA(BaseHost)) — a chain of two
  * mixins of different syntactic shapes. The builder must walk the

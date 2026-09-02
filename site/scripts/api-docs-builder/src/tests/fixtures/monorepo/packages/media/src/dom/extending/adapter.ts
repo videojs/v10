@@ -1,27 +1,27 @@
 /**
- * Mock extending host — mirrors MuxVideoMedia extending HlsMedia.
+ * Mock extending host — mirrors MuxVideoAdapter extending HlsMedia.
  *
  * Exercises: host inheritance. The builder must walk the extends chain
  * to extract properties from both this class and its parent (ComplexHost).
  * Child properties override parent properties of the same name. Defaults
- * spread the parent's defaultProps (mirrors muxMediaDefaultProps) — the
- * builder must resolve the spread through the import. `customDomain`
+ * spread the parent's `static defaultProps` (mirrors MuxVideoAdapter) — the
+ * builder must resolve the spread through the class. `customDomain`
  * deliberately has no default.
  */
-import { ComplexHost, complexMediaDefaultProps } from '../complex';
-
-export const extendingMediaDefaultProps = {
-  ...complexMediaDefaultProps,
-  playbackId: '',
-  tokens: { drm: '' },
-  maxResolution: 1080,
-};
+import { ComplexHost } from '../complex';
 
 export class ExtendingHost extends ComplexHost {
+  static readonly defaultProps = {
+    ...ComplexHost.defaultProps,
+    playbackId: '',
+    tokens: { drm: '' },
+    maxResolution: 1080,
+  };
+
   #playbackId: string = '';
   #customDomain: string = '';
-  #tokens: Record<string, string> = { ...extendingMediaDefaultProps.tokens };
-  #maxResolution: number = extendingMediaDefaultProps.maxResolution;
+  #tokens: Record<string, string> = { ...ExtendingHost.defaultProps.tokens };
+  #maxResolution: number = ExtendingHost.defaultProps.maxResolution;
 
   /** The playback ID for the video. */
   get playbackId(): string {

@@ -9,20 +9,20 @@
  *   - A `@fires` event that is ALSO part of the native contract (streamtypechange,
  *     in VideoEvents via MediaStreamTypeEvents) — mirrors HlsMedia. It must surface
  *     in the described element-specific list even though it is a native event.
- *   - Defaults declared in the mixin's own file (mirrors muxDataMediaDefaultProps)
+ *   - Defaults declared as `static defaultProps` on the mixin's inner class (mirrors MuxMixin)
  */
 type Constructor<T = object> = new (...args: any[]) => T;
-
-export const mixinAFooDefaultProps = {
-  foo: '',
-};
 
 /**
  * @fires streamtypechange - Fired when the detected stream type changes.
  */
 export function MixinAFooMixin<Base extends Constructor>(BaseClass: Base) {
   class MixinAFoo extends BaseClass {
-    #foo: string = '';
+    static readonly defaultProps = {
+      foo: '',
+    };
+
+    #foo: string = MixinAFoo.defaultProps.foo;
 
     /** Mixin A documentation. */
     get foo(): string {

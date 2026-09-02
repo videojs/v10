@@ -5,9 +5,9 @@
  * mixin chain may override without re-declaring the description (tests
  * description fallback through the chain).
  */
-import { HTMLVideoElementHost } from '../simple';
+import { HTMLVideoAdapter } from '../simple';
 
-export class MixinBaseHost extends HTMLVideoElementHost {
+export class MixinBaseHost extends HTMLVideoAdapter {
   #src: string = '';
 
   /** Source URL of the media. */

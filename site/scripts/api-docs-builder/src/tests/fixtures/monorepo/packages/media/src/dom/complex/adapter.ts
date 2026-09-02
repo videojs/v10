@@ -4,23 +4,23 @@
  * Exercises: multiple getter/setter pairs with JSDoc descriptions,
  * readonly properties, boolean type, overlap with native attributes
  * (src, preload) that should be deduplicated by the builder, and default
- * values declared in a co-located `*DefaultProps` export (mirrors
- * hlsMediaDefaultProps) including a const-object member reference.
+ * values declared as a `static defaultProps` literal on the class (mirrors HlsJsAdapter)
+ * including a member reference back into it.
  */
 import { MediaStreamTypes } from '../../core/types';
-import { HTMLVideoElementHost } from '../simple';
+import { HTMLVideoAdapter } from '../simple';
 
-export const complexMediaDefaultProps = {
-  src: '',
-  type: undefined,
-  preferPlayback: 'mse',
-  config: {},
-  debug: false,
-  preload: 'metadata',
-  streamType: MediaStreamTypes.UNKNOWN,
-};
+export class ComplexHost extends HTMLVideoAdapter {
+  static readonly defaultProps = {
+    src: '',
+    type: undefined,
+    preferPlayback: 'mse',
+    config: {},
+    debug: false,
+    preload: 'metadata',
+    streamType: MediaStreamTypes.UNKNOWN,
+  };
 
-export class ComplexHost extends HTMLVideoElementHost {
   #src: string = '';
   #type: string | undefined;
   #preferPlayback: string | undefined = 'mse';
@@ -28,7 +28,7 @@ export class ComplexHost extends HTMLVideoElementHost {
   #debug: boolean = false;
   #preload: string = 'metadata';
   #engine: object | null = null;
-  #streamType: string = complexMediaDefaultProps.streamType;
+  #streamType: string = ComplexHost.defaultProps.streamType;
 
   get src(): string {
     return this.#src;

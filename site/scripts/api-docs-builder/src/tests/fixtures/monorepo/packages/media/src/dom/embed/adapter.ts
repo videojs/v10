@@ -1,15 +1,15 @@
-/** Mock iframe-backed media host — mirrors VimeoMedia. */
+/** Mock iframe-backed media host — mirrors VimeoAdapter. */
 import type { EmbedSource } from './source';
 
-export const embedMediaDefaultProps = {
-  src: '',
-  autoplay: false,
-  source: null,
-};
-
 export class EmbedHost extends EventTarget {
-  #src = embedMediaDefaultProps.src;
-  #autoplay = embedMediaDefaultProps.autoplay;
+  static readonly defaultProps = {
+    src: '',
+    autoplay: false,
+    source: null,
+  };
+
+  #src = EmbedHost.defaultProps.src;
+  #autoplay = EmbedHost.defaultProps.autoplay;
   #source: EmbedSource | null = null;
 
   get src(): string {
