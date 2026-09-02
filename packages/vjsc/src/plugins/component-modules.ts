@@ -1,9 +1,15 @@
 import { readFile } from 'node:fs/promises';
-import { extname } from 'node:path';
 
-import type { ModuleType, Plugin } from 'rolldown';
+import type { Plugin } from 'rolldown';
 
-import { isScriptModule, moduleFilename, moduleId, parseModuleId, type TransformModule } from '../utils/module-id';
+import {
+  isScriptModule,
+  moduleFilename,
+  moduleId,
+  parseModuleId,
+  scriptModuleType,
+  type TransformModule,
+} from '../utils/module-id';
 
 export interface ComponentModulesPluginOptions {
   readonly select?: ((module: TransformModule) => boolean | Promise<boolean>) | undefined;
@@ -85,19 +91,4 @@ async function selectModule(
   const parsed = parseModuleId(id);
 
   return parsed.params.size > 0 && isScriptModule(id) && (select ? await select(parsed) : true) ? parsed : null;
-}
-
-function scriptModuleType(filename: string): ModuleType {
-  switch (extname(filename)) {
-    case '.tsx':
-      return 'tsx';
-    case '.jsx':
-      return 'jsx';
-    case '.ts':
-    case '.mts':
-    case '.cts':
-      return 'ts';
-    default:
-      return 'js';
-  }
 }

@@ -4,6 +4,7 @@ import { dirname, resolve } from 'node:path';
 import { type ReturnedRule, transform as transformCss } from 'lightningcss';
 
 import type { ModuleMeta } from '../components/meta';
+import { setUnique } from '../utils/map';
 import { isInsideRoot } from '../utils/path';
 import type { GraphModule, Graph } from './types';
 
@@ -33,7 +34,9 @@ export async function bundleStyles<Node extends ModuleMeta>(
     const filename = resolve(graph.root, path);
 
     assertInsideRoot(graph.root, filename, path);
-    addUnique(styles, path, await inlineLocalCssImports(filename, graph.root, new Set()), options.label);
+    setUnique(styles, path, await inlineLocalCssImports(filename, graph.root, new Set()), () =>
+      conflictingStyle(options.label, path)
+    );
   }
 
   if (options.includeAssets !== false) {
@@ -49,7 +52,7 @@ export async function bundleStyles<Node extends ModuleMeta>(
           throw new Error(`VJSC graph style \`${options.label}\` has no captured asset: \`${id}\`.`);
         }
 
-        addUnique(styles, id, source, options.label);
+        setUnique(styles, id, source, () => conflictingStyle(options.label, id));
         owners.set(id, [owners.get(id), module.sourcePath].filter(Boolean).join(', '));
       }
     }
@@ -225,12 +228,6 @@ function assertInsideRoot(root: string, filename: string, source: string): void 
   if (!isInsideRoot(root, filename)) throw new Error(`VJSC graph style is outside its root: \`${source}\`.`);
 }
 
-function addUnique(files: Map<string, string>, path: string, content: string, label: string): void {
-  const previous = files.get(path);
-
-  if (previous !== undefined && previous !== content) {
-    throw new Error(`VJSC graph style \`${label}\` has conflicting contents for \`${path}\`.`);
-  }
-
-  files.set(path, content);
+function conflictingStyle(label: string, path: string): string {
+  return `VJSC graph style \`${label}\` has conflicting contents for \`${path}\`.`;
 }

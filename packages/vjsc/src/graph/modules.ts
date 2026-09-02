@@ -1,7 +1,8 @@
-import { extname, posix } from 'node:path';
+import { posix } from 'node:path';
 
 import type { ModuleMeta } from '../components/meta';
 import { replaceImportSpecifiers } from '../shadcn/analyze';
+import { stripScriptExtension } from '../utils/path';
 import type { GraphImport, GraphModule, Graph } from './types';
 
 export interface GraphImportContext<Node extends ModuleMeta = ModuleMeta> {
@@ -51,9 +52,7 @@ export function rewriteImports<Node extends ModuleMeta>(
 
 /** Build an extensionless relative module specifier between two generated module paths. */
 export function relativeImport(importer: string, dependency: string): string {
-  let path = posix.relative(posix.dirname(importer), dependency);
-
-  if (/\.[cm]?[jt]sx?$/.test(path)) path = path.slice(0, -extname(path).length);
+  const path = stripScriptExtension(posix.relative(posix.dirname(importer), dependency));
 
   return path.startsWith('.') ? path : `./${path}`;
 }

@@ -60,3 +60,15 @@ function resolveModuleFilename(filename: string): string {
     return resolve(filename);
   }
 }
+
+/** The Rolldown module type for a script filename. */
+export function scriptModuleType(filename: string): 'js' | 'jsx' | 'ts' | 'tsx' {
+  const name = moduleFilename(filename);
+  if (name.endsWith('.tsx')) return 'tsx';
+
+  if (name.endsWith('.jsx')) return 'jsx';
+
+  if (/\.[cm]?ts$/.test(name)) return 'ts';
+
+  return 'js';
+}

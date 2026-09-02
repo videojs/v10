@@ -5,6 +5,7 @@ import { isString } from '@videojs/utils/predicate';
 import { type Declaration, type DeclarationBlock, transform } from 'lightningcss';
 
 import { withoutNullValues } from '../styles/css-ast';
+import { setUnique } from '../utils/map';
 import { isInsideRoot } from '../utils/path';
 
 const encoder = new TextEncoder();
@@ -87,7 +88,7 @@ function collectThemeVariables(block: DeclarationBlock, variables: Map<string, s
       );
     }
 
-    addUnique(
+    addUniqueValue(
       variables,
       declaration.value.name.slice(2),
       declarationValue(declaration, important),
@@ -145,7 +146,7 @@ function recordRegistryAtRule(css: Map<string, TailwindRegistryCss>, rule: Scann
     if (!Object.values(value).every(isString)) throw new Error(`${label} must be a flat declaration list.`);
   }
 
-  addUnique(css, `@${rule.name} ${rule.prelude}`, value, label);
+  addUniqueValue(css, `@${rule.name} ${rule.prelude}`, value, label);
 }
 
 function readAtRuleName(source: string, start: number): string | undefined {
@@ -328,12 +329,12 @@ function renderDeclaration(declaration: Declaration, important: boolean): Render
   };
 }
 
-function addUnique<Value>(values: Map<string, Value>, name: string, value: Value, label: string): void {
-  const previous = values.get(name);
-
-  if (previous !== undefined && JSON.stringify(previous) !== JSON.stringify(value)) {
-    throw new Error(`${label} defines \`${name}\` more than once with conflicting values.`);
-  }
-
-  values.set(name, value);
+function addUniqueValue<Value>(values: Map<string, Value>, name: string, value: Value, label: string): void {
+  setUnique(
+    values,
+    name,
+    value,
+    () => `${label} defines \`${name}\` more than once with conflicting values.`,
+    (previous, next) => JSON.stringify(previous) === JSON.stringify(next)
+  );
 }

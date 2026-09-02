@@ -2,6 +2,7 @@ import { rolldown } from 'rolldown';
 
 import type { ModuleMeta } from '../components/meta';
 import { HTML_RUNTIME } from '../plugins/html-runtime';
+import { scriptModuleType } from '../utils/module-id';
 import type { Graph } from './types';
 
 const entryId = '\0vjsc:module-graph-html-entry';
@@ -98,7 +99,7 @@ export async function renderHtml<Node extends ModuleMeta>(
           const module = modules.get(id);
           if (!module) return null;
 
-          return { code: module.source, moduleType: moduleType(module.filename) };
+          return { code: module.source, moduleType: scriptModuleType(module.filename) };
         },
       },
     ],
@@ -138,16 +139,6 @@ function importKey(importer: string, specifier: string): string {
 
 function virtualId(specifier: string): string {
   return `\0vjsc:module-graph-html-module:${specifier}`;
-}
-
-function moduleType(filename: string): 'js' | 'jsx' | 'ts' | 'tsx' {
-  if (filename.endsWith('.tsx')) return 'tsx';
-
-  if (filename.endsWith('.ts')) return 'ts';
-
-  if (filename.endsWith('.jsx')) return 'jsx';
-
-  return 'js';
 }
 
 function formatHtml(html: string): string {

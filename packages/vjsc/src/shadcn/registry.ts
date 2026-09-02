@@ -3,8 +3,16 @@ import { basename, dirname, isAbsolute, posix, relative } from 'node:path';
 import { type Registry, type RegistryItem, registryItemSchema, registrySchema } from 'shadcn/schema';
 
 import type { ModuleMeta } from '../components/meta';
-import { bundleStyles, type GraphModule, type Graph } from '../graph';
-import { escapesRoot, toPosixPath } from '../utils/path';
+import {
+  bundleStyles,
+  collectModules,
+  type GraphModule,
+  type Graph,
+  relativeImport,
+  stripStyleImports,
+} from '../graph';
+import { setUnique } from '../utils/map';
+import { escapesRoot, stripScriptExtension, toPosixPath } from '../utils/path';
 import { type ImportReplacement, replaceImportSpecifiers } from './analyze';
 import { readTailwindRegistryTheme } from './tailwind';
 import type {
@@ -181,7 +189,7 @@ async function describeStyleItems<Meta extends ModuleMeta>(
   for (const item of sourceItems) {
     if (item.build.stylesheet) continue;
 
-    for (const module of collectReachableModules(graph.modules, item.build.module)) {
+    for (const module of collectModules(graph, item.build.module.id)) {
       relevantModules.set(module.id, module);
     }
   }
@@ -277,29 +285,7 @@ function canonicalPublishedModules<Meta extends ModuleMeta>(
 function moduleSourceKey(module: GraphModule, assets: ReadonlyMap<string, string>): string {
   const styles = module.styles.assets.map((id) => assets.get(id) ?? id).sort();
 
-  return `${module.filename}\0${stripVirtualCssImports(module.source)}\0${styles.join('\0')}`;
-}
-
-function collectReachableModules<Meta extends ModuleMeta>(
-  modules: ReadonlyMap<string, GraphModule<Meta>>,
-  root: GraphModule<Meta>
-): GraphModule<Meta>[] {
-  const collected = new Map<string, GraphModule<Meta>>();
-
-  const visit = (module: GraphModule<Meta>): void => {
-    if (collected.has(module.id)) return;
-
-    collected.set(module.id, module);
-
-    for (const graphImport of module.imports) {
-      const dependency = graphImport.resolvedId ? modules.get(graphImport.resolvedId) : undefined;
-
-      if (dependency) visit(dependency);
-    }
-  };
-
-  visit(root);
-  return [...collected.values()];
+  return `${module.filename}\0${stripStyleImports(module.source)}\0${styles.join('\0')}`;
 }
 
 function collectOwnedModules<Meta extends ModuleMeta>(
@@ -360,7 +346,7 @@ async function buildPublishedItem<Meta extends ModuleMeta>(
       for (const dependency of rewritten.dependencies) dependencies.add(dependency);
 
       const path = posix.join('files', item.name, module.outputPath);
-      let source = stripVirtualCssImports(rewritten.source);
+      let source = stripStyleImports(rewritten.source);
 
       if (module.id === root.id) {
         for (const styleTarget of [...styleOutputs.imports].sort().reverse()) {
@@ -548,10 +534,6 @@ async function registryStyles<Meta extends ModuleMeta>(
   });
 }
 
-function stripVirtualCssImports(source: string): string {
-  return source.replace(/import\s+["']virtual:vjsc\/css\/[^"']+["'];?\s*/g, '').replace(/\n{3,}/g, '\n\n');
-}
-
 function addStyleImport(source: string, specifier: string): string {
   const pragma = /^(\/\*\* @jsxImportSource [^*]+\*\/\s*)/;
   const statement = `import '${specifier}';\n`;
@@ -675,16 +657,6 @@ function targetForModule<Meta extends ModuleMeta>(
 
   validateRelativePath(target, `Shadcn item ${item.name} target`);
   return target;
-}
-
-function relativeImport(importerTarget: string, dependencyTarget: string): string {
-  const specifier = posix.relative(posix.dirname(importerTarget), stripScriptExtension(dependencyTarget));
-
-  return specifier.startsWith('.') ? specifier : `./${specifier}`;
-}
-
-function stripScriptExtension(path: string): string {
-  return path.replace(/\.(?:[cm]?[jt]sx?)$/, '');
 }
 
 function styleItemName(target: string): string {
@@ -841,26 +813,19 @@ function validateItemName(name: string): void {
   }
 }
 
+function normalizePath(path: string): string {
+  return path ? posix.normalize(toPosixPath(path)).replace(/^\.\//, '') : '';
+}
+
 function assertNoCollision(paths: Map<string, string>, path: string, id: string, kind: string): void {
-  const previous = paths.get(path);
-
-  if (previous && previous !== id) {
-    throw new Error(`Shadcn registry ${kind} collision: \`${previous}\` and \`${id}\` both map to \`${path}\`.`);
-  }
-
-  paths.set(path, id);
+  setUnique(
+    paths,
+    path,
+    id,
+    (previous) => `Shadcn registry ${kind} collision: \`${previous}\` and \`${id}\` both map to \`${path}\`.`
+  );
 }
 
 function addUnique(files: Map<string, string>, path: string, content: string, kind: string): void {
-  const previous = files.get(path);
-
-  if (previous !== undefined && previous !== content) {
-    throw new Error(`Shadcn registry ${kind} collision: \`${path}\`.`);
-  }
-
-  files.set(path, content);
-}
-
-function normalizePath(path: string): string {
-  return path ? posix.normalize(toPosixPath(path)).replace(/^\.\//, '') : '';
+  setUnique(files, path, content, () => `Shadcn registry ${kind} collision: \`${path}\`.`);
 }

@@ -2,7 +2,7 @@ import type { Program } from '@oxc-project/types';
 import MagicString from 'magic-string';
 import type { ModuleType, Plugin, RolldownMagicString, TransformPluginContext, TransformResult } from 'rolldown';
 
-import { moduleFilename } from '../utils/module-id';
+import { moduleFilename, scriptModuleType } from '../utils/module-id';
 
 interface RolldownTransformOptions {
   readonly moduleType: ModuleType;
@@ -93,16 +93,6 @@ function isPositionedError(error: unknown): error is PositionedError {
   return error instanceof Error && 'pos' in error && typeof error.pos === 'number';
 }
 
-function scriptModuleType(filename: string): ModuleType {
-  if (/\.tsx$/.test(filename)) return 'tsx';
-
-  if (/\.jsx$/.test(filename)) return 'jsx';
-
-  if (/\.(?:ts|mts|cts)$/.test(filename)) return 'ts';
-
-  return 'js';
-}
-
 function parserLanguage(moduleType: ModuleType, filename: string): 'js' | 'jsx' | 'ts' | 'tsx' | 'dts' {
   if (/\.d\.(?:ts|mts|cts)$/.test(filename)) return 'dts';
 
@@ -112,5 +102,5 @@ function parserLanguage(moduleType: ModuleType, filename: string): 'js' | 'jsx' 
 
   if (moduleType === 'tsx') return 'tsx';
 
-  return scriptModuleType(filename) as 'js' | 'jsx' | 'ts' | 'tsx';
+  return scriptModuleType(filename);
 }

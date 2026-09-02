@@ -7,6 +7,7 @@ import type {
   VariableDeclaration,
   VariableDeclarator,
 } from '@oxc-project/types';
+import { isPlainObject } from '@videojs/utils/predicate';
 import type { Plugin, RolldownMagicString } from 'rolldown';
 
 import type { ComponentMeta } from '../components/meta';
@@ -69,7 +70,7 @@ export function componentMetaPlugin(exportName = 'meta'): Plugin {
 }
 
 export function readModuleBuildMeta(meta: unknown): ModuleBuildMeta | undefined {
-  if (!isRecord(meta)) return undefined;
+  if (!isPlainObject(meta)) return undefined;
 
   const moduleMeta = isComponentMeta(meta.moduleMeta) ? meta.moduleMeta : undefined;
   const moduleSource = typeof meta.moduleSource === 'string' ? meta.moduleSource : undefined;
@@ -89,9 +90,9 @@ export function readComponentSource(meta: unknown): string | undefined {
 }
 
 export function readModuleStyles(meta: unknown): ModuleBuildMeta['moduleStyles'] {
-  if (!isRecord(meta)) return undefined;
+  if (!isPlainObject(meta)) return undefined;
 
-  const value = isRecord(meta.moduleStyles) ? meta.moduleStyles : meta;
+  const value = isPlainObject(meta.moduleStyles) ? meta.moduleStyles : meta;
 
   const files = readStringArray(value.files);
   const assets = readStringArray(value.assets);
@@ -104,7 +105,7 @@ export function mergeModuleBuildMeta(
   update: Partial<ModuleBuildMeta>
 ): Readonly<Record<string, unknown>> {
   return {
-    ...(isRecord(meta) ? meta : {}),
+    ...(isPlainObject(meta) ? meta : {}),
     ...update,
   };
 }
@@ -146,7 +147,7 @@ function removeDeclarator(magicString: RolldownMagicString, exported: ExportedMe
 function parseComponentMeta(expression: Expression, id: string, exportName: string): ComponentMeta {
   const value = staticValue(expression, id);
 
-  if (!isRecord(value) || typeof value.name !== 'string' || value.name.length === 0) {
+  if (!isPlainObject(value) || typeof value.name !== 'string' || value.name.length === 0) {
     throw new Error(`Component metadata \`${exportName}\` in ${id} must contain a non-empty literal \`name\`.`);
   }
 
@@ -231,10 +232,6 @@ function nonStaticMeta(id: string): Error {
   return new Error(`Component metadata in ${id} must contain only static literal values.`);
 }
 
-function isRecord(value: unknown): value is Readonly<Record<string, unknown>> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
-
 function isComponentMeta(value: unknown): value is ComponentMeta {
-  return isRecord(value) && typeof value.name === 'string';
+  return isPlainObject(value) && typeof value.name === 'string';
 }
