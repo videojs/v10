@@ -9,12 +9,16 @@ import { createThumbnail, selectTextTrack } from '@videojs/core/dom';
 import type { MediaTextTrackState } from '@videojs/media';
 import { isNull, isUndefined } from '@videojs/utils/predicate';
 import type { CSSProperties } from 'react';
-import { forwardRef, useMemo, useRef, useState } from 'react';
+import { forwardRef, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import { useOptionalPlayer } from '../../player/context';
 import type { UIComponentProps } from '../../utils/types';
 import { useDestroy } from '../../utils/use-destroy';
+import { useForceRender } from '../../utils/use-force-render';
 import { renderElement } from '../../utils/use-render';
+
+// `ThumbnailCore` holds no state, so one shared instance projects every render.
+const thumbnailCore = new ThumbnailCore();
 
 export interface ThumbnailProps extends UIComponentProps<'div', ThumbnailCore.State>, ThumbnailCore.Props {
   /** Pre-parsed thumbnail images — bypasses the automatic `<track>` detection. */
@@ -56,25 +60,22 @@ export const Thumbnail = forwardRef<HTMLDivElement, ThumbnailProps>(function Thu
     ...elementProps
   } = componentProps;
 
-  const [core] = useState(() => new ThumbnailCore());
-
   const divRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
-
+  const committedSrcRef = useRef('');
   const textTrack = useOptionalPlayer(selectTextTrack);
 
-  // Force re-render when the handle's state changes (img load/error, resize).
-  const [, setRenderToken] = useState(0);
-
+  // Re-render when the handle's state changes (img load/error, resize).
+  const forceRender = useForceRender();
   const [handle] = useState(() =>
     createThumbnail({
       getContainer: () => divRef.current,
       getImg: () => imgRef.current,
-      onStateChange: () => setRenderToken((n) => n + 1),
+      onStateChange: forceRender,
     })
   );
 
-  useDestroy(handle, () => handle.connect());
+  useDestroy(handle);
 
   // Resolve thumbnails: external prop takes priority over auto <track> path.
   const thumbnails = useMemo(() => {
@@ -85,14 +86,29 @@ export const Thumbnail = forwardRef<HTMLDivElement, ThumbnailProps>(function Thu
       : [];
   }, [externalThumbnails, textTrack]);
 
-  const thumbnail = useMemo(() => core.findActiveThumbnail(thumbnails, time), [core, thumbnails, time]);
+  const thumbnail = useMemo(() => thumbnailCore.findActiveThumbnail(thumbnails, time), [thumbnails, time]);
 
   const resolvedCrossOrigin = resolveCrossOrigin(crossOrigin, externalThumbnails, textTrack?.thumbnailTrackCrossOrigin);
+  const src = thumbnail?.url;
 
-  // Track src changes via the handle.
-  handle.updateSrc(thumbnail?.url);
+  // Project the requested source during render and publish it to the retained handle only once this render commits,
+  // so an abandoned render never restarts loading or rebinds listeners for a source that was never shown.
+  const srcPending = (src ?? '') !== committedSrcRef.current;
+  const projected = srcPending
+    ? { loading: Boolean(src), error: false }
+    : { loading: handle.loading, error: handle.error };
 
-  const state = core.getState(handle.loading, handle.error, thumbnail);
+  useLayoutEffect(() => {
+    handle.updateSrc(src);
+    committedSrcRef.current = src ?? '';
+    handle.connect();
+
+    // The handle can settle differently from the projection (e.g. a sheet already known to fail), so correct the
+    // committed tree before paint.
+    if (handle.loading !== projected.loading || handle.error !== projected.error) forceRender();
+  });
+
+  const state = thumbnailCore.getState(projected.loading, projected.error, thumbnail);
 
   // Compute styles declaratively from resize result.
   let containerStyle: CSSProperties = { overflow: 'hidden' };
@@ -100,7 +116,7 @@ export const Thumbnail = forwardRef<HTMLDivElement, ThumbnailProps>(function Thu
 
   if (thumbnail && handle.naturalWidth && handle.naturalHeight) {
     const constraints = handle.readConstraints();
-    const result = core.resize(thumbnail, handle.naturalWidth, handle.naturalHeight, constraints);
+    const result = thumbnailCore.resize(thumbnail, handle.naturalWidth, handle.naturalHeight, constraints);
 
     if (result) {
       containerStyle = {
@@ -126,7 +142,7 @@ export const Thumbnail = forwardRef<HTMLDivElement, ThumbnailProps>(function Thu
       stateAttrMap: ThumbnailDataAttrs,
       ref: [forwardedRef, divRef],
       props: [
-        core.getAttrs(state),
+        thumbnailCore.getAttrs(state),
         { style: containerStyle },
         elementProps,
         {
@@ -136,7 +152,7 @@ export const Thumbnail = forwardRef<HTMLDivElement, ThumbnailProps>(function Thu
               alt=""
               aria-hidden="true"
               decoding="async"
-              src={thumbnail?.url}
+              src={src}
               crossOrigin={resolvedCrossOrigin}
               loading={loading}
               style={imgStyle}

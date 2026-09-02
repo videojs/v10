@@ -23,15 +23,15 @@ export interface ThumbnailApi {
 export function createThumbnail(options: CreateThumbnailOptions): ThumbnailApi {
   const { getContainer, getImg, onStateChange } = options;
   const core = new ThumbnailCore();
-  const abort = new AbortController();
-  const signal = abort.signal;
 
   let loading = false;
   let error = false;
   let naturalWidth = 0;
   let naturalHeight = 0;
   let lastSrc = '';
-  let imgBound = false;
+  let boundImg: HTMLImageElement | null = null;
+  let stopListeningImg: (() => void) | null = null;
+  let observedContainer: HTMLElement | null = null;
   let stopObservingResize: (() => void) | null = null;
 
   // Sprite sheets that have already failed, so re-entering one does not restart the loading state.
@@ -40,11 +40,9 @@ export function createThumbnail(options: CreateThumbnailOptions): ThumbnailApi {
   // --- img event listeners ---
 
   function onImgLoad() {
-    const img = getImg();
-
-    if (img) {
-      naturalWidth = img.naturalWidth;
-      naturalHeight = img.naturalHeight;
+    if (boundImg) {
+      naturalWidth = boundImg.naturalWidth;
+      naturalHeight = boundImg.naturalHeight;
     }
 
     // A sheet that succeeds on a later attempt stops counting as failed.
@@ -66,30 +64,42 @@ export function createThumbnail(options: CreateThumbnailOptions): ThumbnailApi {
     onStateChange();
   }
 
-  function bindImg(img: HTMLImageElement): void {
-    listen(img, 'load', onImgLoad, { signal });
-    listen(img, 'error', onImgError, { signal });
+  // --- Element bindings ---
+  //
+  // Render overrides and remounts can hand back a different img or container for the same source, so every binding
+  // pass retargets the listeners and resize observation to whichever elements are in the DOM now.
+
+  function bindImg(img: HTMLImageElement | null): void {
+    if (img === boundImg) return;
+
+    stopListeningImg?.();
+    stopListeningImg = null;
+    boundImg = img;
+
+    if (!img) return;
+
+    const stopLoad = listen(img, 'load', onImgLoad);
+    const stopError = listen(img, 'error', onImgError);
+
+    stopListeningImg = () => {
+      stopLoad();
+      stopError();
+    };
   }
 
-  // --- Lazy binding ---
+  function observeContainer(container: HTMLElement | null): void {
+    if (container === observedContainer) return;
+
+    stopObservingResize?.();
+    stopObservingResize = null;
+    observedContainer = container;
+
+    if (container) stopObservingResize = observeResize(container, onStateChange);
+  }
 
   function ensureBindings(): void {
-    if (!imgBound) {
-      const img = getImg();
-
-      if (img) {
-        bindImg(img);
-        imgBound = true;
-      }
-    }
-
-    if (!stopObservingResize) {
-      const container = getContainer();
-
-      if (container) {
-        stopObservingResize = observeResize(container, onStateChange);
-      }
-    }
+    bindImg(getImg());
+    observeContainer(getContainer());
   }
 
   // --- src tracking ---
@@ -123,28 +133,37 @@ export function createThumbnail(options: CreateThumbnailOptions): ThumbnailApi {
   function connect(): void {
     ensureBindings();
 
-    // Handle the case where the img already loaded or errored before listeners
-    // were bound (e.g., cached image in React where mount happens before useEffect).
-    const img = getImg();
+    // Settle an image that loaded or failed before its listeners were bound (e.g. a cached image in React, where the
+    // element mounts before the effect runs). Notify only when something changed so callers can connect on every commit.
+    const img = boundImg;
+    if (!img?.complete || !lastSrc) return;
 
-    if (img?.complete && lastSrc) {
-      if (img.naturalWidth > 0) {
-        naturalWidth = img.naturalWidth;
-        naturalHeight = img.naturalHeight;
-        loading = false;
-        error = false;
-      } else {
-        markFailed();
-      }
+    const wasLoading = loading;
+    const wasError = error;
+    const previousWidth = naturalWidth;
+    const previousHeight = naturalHeight;
 
-      onStateChange();
+    if (img.naturalWidth > 0) {
+      naturalWidth = img.naturalWidth;
+      naturalHeight = img.naturalHeight;
+      loading = false;
+      error = false;
+    } else {
+      markFailed();
     }
+
+    const changed =
+      loading !== wasLoading ||
+      error !== wasError ||
+      naturalWidth !== previousWidth ||
+      naturalHeight !== previousHeight;
+
+    if (changed) onStateChange();
   }
 
   function destroy(): void {
-    abort.abort();
-    stopObservingResize?.();
-    stopObservingResize = null;
+    bindImg(null);
+    observeContainer(null);
   }
 
   return {
