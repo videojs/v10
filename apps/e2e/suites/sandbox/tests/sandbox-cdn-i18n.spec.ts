@@ -27,7 +27,7 @@ async function getPreviewFrame(page: Page, path: string): Promise<Frame> {
 test.describe('Sandbox CDN i18n', () => {
   test('direct CDN page shows Spanish play label', async ({ page }) => {
     await page.goto(
-      `${SANDBOX_BASE}/cdn/?preset=video&locale=es&styling=css&skin=default&source=hls-1&autoplay=0&muted=0&loop=0&preload=metadata`,
+      `${SANDBOX_BASE}/cdn/?media=video&locale=es&styling=css&skin=default&source=hls-1&autoplay=0&muted=0&loop=0&preload=metadata`,
       { waitUntil: 'domcontentloaded' }
     );
     const player = new PlayerPage(page);
@@ -37,7 +37,7 @@ test.describe('Sandbox CDN i18n', () => {
 
   test('shell iframe shows Spanish play label', async ({ page }) => {
     await page.goto(
-      `${SANDBOX_BASE}/?platform=cdn&preset=video&locale=es&styling=css&skin=default&source=hls-1&autoplay=0&muted=0&loop=0&preload=metadata`,
+      `${SANDBOX_BASE}/?platform=cdn&media=video&locale=es&styling=css&skin=default&source=hls-1&autoplay=0&muted=0&loop=0&preload=metadata`,
       { waitUntil: 'domcontentloaded' }
     );
     const frame = await getPreviewFrame(page, '/cdn/');
@@ -50,7 +50,7 @@ test.describe('Sandbox CDN i18n', () => {
 
   test('direct CDN page applies RTL direction to the document and player', async ({ page }) => {
     await page.goto(
-      `${SANDBOX_BASE}/cdn/?preset=video&locale=ar&styling=css&skin=default&source=hls-1&autoplay=0&muted=0&loop=0&preload=metadata`,
+      `${SANDBOX_BASE}/cdn/?media=video&locale=ar&styling=css&skin=default&source=hls-1&autoplay=0&muted=0&loop=0&preload=metadata`,
       { waitUntil: 'domcontentloaded' }
     );
 

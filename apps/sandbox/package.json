@@ -6,7 +6,8 @@
   "scripts": {
     "preview": "vp preview",
     "reset": "tsx scripts/reset.ts",
-    "sync": "tsx scripts/sync.ts"
+    "sync": "tsx scripts/sync.ts",
+    "test": "vp test run"
   },
   "dependencies": {
     "@videojs/core": "workspace:*",
@@ -39,7 +40,8 @@
     "tailwindcss": "^4.3.3",
     "tsx": "^4.23.1",
     "vite": "^8.2.2",
-    "vite-plus": "catalog:"
+    "vite-plus": "catalog:",
+    "vitest": "catalog:"
   },
   "packageManager": "pnpm@11.17.0",
   "stackblitz": {

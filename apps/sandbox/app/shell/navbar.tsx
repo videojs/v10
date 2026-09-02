@@ -1,8 +1,9 @@
 import type { SKINS } from '@app/constants';
+import { hasSkinChoice, hasTailwindSkin, MEDIA, MEDIA_IDS, type MediaId } from '@app/media';
 import { SANDBOX_LOCALE_OPTION_GROUPS, type SandboxLocaleTag } from '@app/shared/i18n/locale-meta';
 import { PRELOAD_VALUES, type PreloadValue } from '@app/shared/sandbox-listener';
 import type { SandboxSource, SourceId } from '@app/shared/sources';
-import type { Platform, Preset, Skin, Styling } from '@app/types';
+import type { Platform, Skin, Styling } from '@app/types';
 import { useEffect, useId, useRef, useState } from 'react';
 
 type NavbarProps = {
@@ -10,8 +11,8 @@ type NavbarProps = {
   onPlatformChange: (value: Platform) => void;
   styling: Styling;
   onStylingChange: (value: Styling) => void;
-  preset: Preset;
-  onPresetChange: (value: Preset) => void;
+  media: MediaId;
+  onMediaChange: (value: MediaId) => void;
   skin: Skin;
   onSkinChange: (value: Skin) => void;
   source: SourceId;
@@ -29,65 +30,10 @@ type NavbarProps = {
   accentColor: string;
   onAccentColorChange: (value: string) => void;
   availableSources: readonly SourceId[];
-  isBackgroundVideo: boolean;
-  isSpfBackgroundVideo: boolean;
-  isSpfHls: boolean;
-  isMuxVideo: boolean;
-  isMuxAudio: boolean;
-  isEmbedMedia: boolean;
   platforms: readonly Platform[];
   stylings: readonly Styling[];
-  presets: readonly Preset[];
   sources: Record<SourceId, SandboxSource>;
 };
-
-/**
- * What the selected media will do with a source, when that's worth labelling for someone smoke-testing. The plain HLS
- * presets are the SPF engine: no TS transmux pipeline and no EME, so it refuses MPEG-TS on format and encrypted
- * renditions on protection. Derived from the pair rather than stored on the source, since every source here plays fine
- * under some other media.
- *
- * Keyed on the _preset_, not a single is-SPF-HLS flag, because the variants answer differently and a note promising the
- * wrong outcome is worse than none — a reviewer would file the difference as a bug:
- *
- * - **DRM.** Mux encrypts video renditions and leaves audio clear. The audio-only engine resolves only the audio
- *   rendition, so it never fetches an encrypted playlist and plays the source instead of refusing it.
- * - **MPEG-TS.** Under audio-only, which specific failure depends on whether the source carries an audio rendition of its
- *   own or muxes audio into its video renditions — an absent type reports nothing and stalls silently rather than
- *   surfacing a verdict (see `internal/design/spf/features/errors.md`). Both mean nothing plays, so the note stops at
- *   that rather than naming a verdict that only appears for one of them.
- */
-function expectedOutcomeNote(source: SandboxSource, preset: Preset): string | undefined {
-  // The background presets are the same engine again, error surface included:
-  // `collectErrors` is composed, the one-shot selection carries capability
-  // constraints, and the adapter promotes the first fatal condition. Nothing
-  // reaches the media element even so — MPEG-TS and encryption both leave
-  // `HTMLMediaElement.error` null, measured on Chromium and WebKit — so that
-  // promoted condition is the only signal there is. Kept separate from the plain
-  // HLS branch below because this composition's fatal set is wider: it is
-  // video-only, so an absent video type is fatal here too.
-  if (preset === 'hls-background-video' || preset === 'mux-background-video') {
-    if (source.drm) return 'expects protected error';
-
-    if (source.subType && source.subType !== 'mp4') return 'expects unsupported-format error';
-
-    return undefined;
-  }
-
-  if (preset !== 'hls-video' && preset !== 'hls-audio') return undefined;
-
-  const audioOnlyPreset = preset === 'hls-audio';
-
-  if (source.drm) {
-    return audioOnlyPreset ? 'plays — Mux leaves audio clear' : 'expects protected error';
-  }
-
-  if (source.subType && source.subType !== 'mp4') {
-    return audioOnlyPreset ? 'expects no playback' : 'expects unsupported-format error';
-  }
-
-  return undefined;
-}
 
 const SKIN_OPTIONS: readonly Skin[] = ['default', 'minimal'] satisfies readonly (typeof SKINS)[number][];
 
@@ -97,38 +43,13 @@ const PLATFORM_LABELS: Record<Platform, string> = {
   cdn: 'CDN',
 };
 
-const PRESET_LABELS: Record<Preset, string> = {
-  video: 'Video',
-  'hlsjs-video': 'HLS Video (hls.js)',
-  'native-hls-video': 'Native HLS Video',
-  'mux-video': 'Mux Video',
-  'mux-video-spf': 'Mux Video (SPF)',
-  'mux-audio': 'Mux Audio',
-  'mux-audio-spf': 'Mux Audio (SPF)',
-  'hls-video': 'HLS Video',
-  'hls-audio': 'HLS Audio',
-  'dash-video': 'DASH Video',
-  'shaka-video': 'Shaka Video',
-  audio: 'Audio',
-  'background-video': 'Background Video',
-  'hls-background-video': 'HLS Background Video (SPF)',
-  'mux-background-video': 'Mux Background Video (SPF)',
-  'vimeo-video': 'Vimeo Video',
-  'youtube-video': 'YouTube Video',
-  'cloudflare-video': 'Cloudflare Stream Video',
-  'spotify-audio': 'Spotify Audio',
-  'tiktok-video': 'TikTok Video',
-  'twitch-video': 'Twitch Video',
-  'wistia-video': 'Wistia Video',
-};
-
 export function Navbar({
   platform,
   onPlatformChange,
   styling,
   onStylingChange,
-  preset,
-  onPresetChange,
+  media,
+  onMediaChange,
   skin,
   onSkinChange,
   source,
@@ -146,17 +67,12 @@ export function Navbar({
   accentColor,
   onAccentColorChange,
   availableSources,
-  isBackgroundVideo,
-  isSpfBackgroundVideo,
-  isSpfHls,
-  isMuxVideo,
-  isMuxAudio,
-  isEmbedMedia,
   platforms,
   stylings,
-  presets,
   sources,
 }: NavbarProps) {
+  const { fixedSource, outcome } = MEDIA[media];
+
   return (
     <header className="flex h-14 shrink-0 items-center gap-6 border-b border-zinc-200 bg-white px-4 dark:border-zinc-800 dark:bg-zinc-950">
       <span className="text-sm font-semibold tracking-tight whitespace-nowrap text-zinc-950 dark:text-zinc-50">
@@ -180,15 +96,15 @@ export function Navbar({
           options={stylings.map((s) => ({
             value: s,
             label: s === 'css' ? 'CSS' : 'Tailwind',
-            disabled: s === 'tailwind' && (isBackgroundVideo || isEmbedMedia || platform === 'cdn'),
+            disabled: s === 'tailwind' && !hasTailwindSkin(media, platform),
           }))}
         />
 
         <Select
-          label="Preset"
-          value={preset}
-          onChange={(v) => onPresetChange(v as Preset)}
-          options={presets.map((p) => ({ value: p, label: PRESET_LABELS[p] }))}
+          label="Media"
+          value={media}
+          onChange={(v) => onMediaChange(v as MediaId)}
+          options={MEDIA_IDS.map((id) => ({ value: id, label: MEDIA[id].label }))}
         />
 
         <Select
@@ -196,36 +112,19 @@ export function Navbar({
           value={skin}
           onChange={(v) => onSkinChange(v as Skin)}
           options={SKIN_OPTIONS.map((s) => ({ value: s, label: capitalize(s) }))}
-          disabled={isBackgroundVideo}
+          disabled={!hasSkinChoice(media)}
         />
 
         <Select
           label="Source"
           value={source}
           onChange={onSourceChange}
-          options={availableSources
-            .filter((id) => {
-              // The empty-src entry carries no media, so it's offered wherever
-              // the preset can render one rather than being filtered by format.
-              if (sources[id].type === 'none') return true;
+          options={availableSources.map((id) => {
+            const note = outcome?.(sources[id]);
 
-              // Any HLS source, including formats the SPF engine can't play — reaching
-              // those failures on purpose is how the error paths get smoke-tested.
-              if (isSpfHls || isSpfBackgroundVideo) return sources[id].type === 'hls';
-
-              if (isMuxVideo || isMuxAudio) return sources[id].type !== 'dash';
-
-              return true;
-            })
-            .map((id) => {
-              const note = expectedOutcomeNote(sources[id], preset);
-
-              return { value: id, label: note ? `${sources[id].label} — ${note}` : sources[id].label };
-            })}
-          // `<background-video>` is the one background preset with a fixed source:
-          // it hands a progressive MP4 to the browser, where the SPF-backed pair
-          // stream whatever manifest they're pointed at.
-          disabled={(isBackgroundVideo && !isSpfBackgroundVideo) || isEmbedMedia}
+            return { value: id, label: note ? `${sources[id].label} — ${note}` : sources[id].label };
+          })}
+          disabled={fixedSource !== undefined}
         />
       </div>
 

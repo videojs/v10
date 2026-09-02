@@ -1,56 +1,39 @@
-import { EMBED_PRESETS, PLATFORMS, PRESETS, STYLINGS } from '@app/constants';
+import { PLATFORMS, STYLINGS } from '@app/constants';
+import { hasTailwindSkin, isMediaId, MEDIA, type MediaId, mediaSources } from '@app/media';
 import { DEFAULT_SANDBOX_LOCALE, SANDBOX_LOCALE_TAGS, type SandboxLocaleTag } from '@app/shared/i18n/locale-meta';
 import { DEFAULT_PRELOAD, PRELOAD_VALUES, type PreloadValue } from '@app/shared/sandbox-listener';
-import type { SourceId } from '@app/shared/sources';
-import {
-  DASH_SOURCE_IDS,
-  DEFAULT_BACKGROUND_SOURCE,
-  DEFAULT_DASH_SOURCE,
-  DEFAULT_SOURCE,
-  HLS_SOURCE_IDS,
-  isDrmSource,
-  isMuxSource,
-  MUX_SOURCE_IDS,
-  MUX_SPF_SOURCE_IDS,
-  NON_DASH_SOURCE_IDS,
-  SHAKA_SOURCE_IDS,
-  SOURCE_IDS,
-  SOURCES,
-  SPF_HLS_SOURCE_IDS,
-} from '@app/shared/sources';
-import type { Platform, Preset, Styling } from '@app/types';
+import { DEFAULT_SOURCE, SOURCES, type SourceId } from '@app/shared/sources';
+import type { Platform, Styling } from '@app/types';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { Navbar } from './navbar';
 import { Preview } from './preview';
 
-function getPagePath(platform: Platform, preset: Preset): string {
+function getPagePath(platform: Platform, media: MediaId): string {
   if (platform === 'cdn') return '/cdn/';
 
-  return `/${platform}-${preset}/`;
+  return `/${platform}-${media}/`;
 }
 
-/**
- * The SPF background presets default to their own source rather than the global one, which is MPEG-TS and so is a
- * failure case for that engine rather than a demo of it. Only when nothing was asked for — an explicit `?source=` still
- * wins, so a shared link reaches the source it names.
- */
-function isSpfBackgroundPreset(preset: Preset): boolean {
-  return preset === 'hls-background-video' || preset === 'mux-background-video';
+/** `preset` named this parameter before the skins' player presets took the word, so older links still resolve. */
+function readMedia(params: URLSearchParams): MediaId {
+  const value = params.get('media') ?? params.get('preset');
+
+  return isMediaId(value) ? value : 'video';
 }
 
 function readParams() {
   const params = new URLSearchParams(location.search);
   const preload = params.get('preload');
-  const preset = (params.get('preset') ?? 'video') as Preset;
+  const media = readMedia(params);
 
   return {
     platform: (params.get('platform') ?? 'html') as Platform,
     styling: (params.get('styling') ?? 'css') as Styling,
-    preset,
+    media,
     skin: (params.get('skin') ?? 'default') as 'default' | 'minimal',
-    source: (params.get('source') ??
-      (isSpfBackgroundPreset(preset) ? DEFAULT_BACKGROUND_SOURCE : DEFAULT_SOURCE)) as SourceId,
+    // An explicit `?source=` wins over where the media lands on entry, so a shared link reaches the source it names.
+    source: (params.get('source') ?? MEDIA[media].entrySource ?? DEFAULT_SOURCE) as SourceId,
     autoplay: params.get('autoplay') === '1',
     muted: params.get('muted') === '1',
     loop: params.get('loop') === '1',
@@ -70,7 +53,7 @@ export function App() {
   const initial = useMemo(readParams, []);
   const [platform, setPlatform] = useState<Platform>(initial.platform);
   const [styling, setStyling] = useState(initial.styling);
-  const [preset, setPreset] = useState<Preset>(initial.preset);
+  const [media, setMedia] = useState<MediaId>(initial.media);
   const [skin, setSkin] = useState(initial.skin);
   const [source, setSource] = useState(initial.source);
   const [autoplay, setAutoplay] = useState(initial.autoplay);
@@ -83,47 +66,17 @@ export function App() {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const previousPreviewState = useRef({ skin, source, autoplay, muted, loop, preload, accentColor });
 
-  const pagePath = getPagePath(platform, preset);
-
-  // `MuxVideo` is the only preset that turns a Mux DRM token into license URLs;
-  // the HLS presets take license servers through `source.drm`, whichever path
-  // they play. The CDN sandbox builds elements from attributes alone, so neither
-  // reaches it.
-  const structuredSource = platform !== 'cdn';
-  const hlsPreset = preset === 'hlsjs-video' || preset === 'native-hls-video';
-  const muxPreset = preset === 'mux-video' || preset === 'mux-audio';
-  const muxSpfPreset = preset === 'mux-video-spf' || preset === 'mux-audio-spf';
-  const spfHlsPreset = preset === 'hls-video' || preset === 'hls-audio';
-  // The SPF-backed background presets take the same HLS sources the plain HLS
-  // presets do — `<background-video>` is the one that stays fixed, since it hands a
-  // progressive MP4 to the browser rather than streaming a manifest.
-  const spfBackgroundPreset = isSpfBackgroundPreset(preset);
-  // No background preset has a Tailwind skin or a skin choice.
-  const backgroundPreset = preset === 'background-video' || spfBackgroundPreset;
-  const embedPreset = (EMBED_PRESETS as readonly Preset[]).includes(preset);
-  const availableSources =
-    preset === 'audio'
-      ? SOURCE_IDS
-      : preset === 'dash-video'
-        ? DASH_SOURCE_IDS
-        : preset === 'shaka-video'
-          ? SHAKA_SOURCE_IDS
-          : structuredSource && muxPreset
-            ? MUX_SOURCE_IDS
-            : structuredSource && hlsPreset
-              ? HLS_SOURCE_IDS
-              : structuredSource && muxSpfPreset
-                ? MUX_SPF_SOURCE_IDS
-                : spfHlsPreset || muxSpfPreset || spfBackgroundPreset
-                  ? SPF_HLS_SOURCE_IDS
-                  : NON_DASH_SOURCE_IDS;
+  const pagePath = getPagePath(platform, media);
+  const descriptor = MEDIA[media];
+  const availableSources = mediaSources(media, platform);
+  const tailwindAvailable = hasTailwindSkin(media, platform);
 
   // Keep the URL in sync with all state.
   useEffect(() => {
     const params = new URLSearchParams({
       platform,
       styling,
-      preset,
+      media,
       skin,
       source,
       autoplay: autoplay ? '1' : '0',
@@ -136,7 +89,7 @@ export function App() {
     if (accentColor) params.set('accent', accentColor);
 
     history.replaceState(null, '', `/?${params}`);
-  }, [platform, styling, preset, skin, source, autoplay, muted, loop, preload, accentColor, locale]);
+  }, [platform, styling, media, skin, source, autoplay, muted, loop, preload, accentColor, locale]);
 
   // Initial state is already present in the iframe URL. Stream only subsequent changes so HTML previews do not race
   // several identical async renders during startup. Locale changes are URL-owned by Preview because CDN must reload.
@@ -163,49 +116,27 @@ export function App() {
     previousPreviewState.current = { skin, source, autoplay, muted, loop, preload, accentColor };
   }, [skin, source, autoplay, muted, loop, preload, accentColor]);
 
-  // Constrain source to DASH when switching to dash-video
+  // Constrain the source to what the media offers on this platform.
   useEffect(() => {
-    if (preset === 'dash-video' && SOURCES[source].type !== 'dash') {
-      setSource(DEFAULT_DASH_SOURCE);
-    }
-  }, [preset, source]);
+    if (!availableSources.includes(source)) setSource(descriptor.fallbackSource ?? DEFAULT_SOURCE);
+  }, [availableSources, descriptor.fallbackSource, source]);
 
-  // Constrain source away from DASH for presets that cannot play it. Shaka is
-  // not one of them — it plays DASH and HLS from the same element.
-  useEffect(() => {
-    if (preset !== 'audio' && preset !== 'dash-video' && preset !== 'shaka-video' && SOURCES[source].type === 'dash') {
-      setSource(DEFAULT_SOURCE);
-    }
-  }, [preset, source]);
-
-  // Land the SPF background presets on their own default when *switched into*,
-  // rather than inheriting whatever the previous preset was showing —
-  // `readParams` covers the first-mount half. Keyed on entry, so a source picked
-  // afterwards sticks.
-  const previousPreset = useRef(preset);
+  // Land on the media's own source when *switched into*, rather than inheriting whatever the previous media was
+  // showing — `readParams` covers the first-mount half. Keyed on entry, so a source picked afterwards sticks. Declared
+  // after the constraint so the landing wins when both fire in one pass.
+  const previousMedia = useRef(media);
 
   useEffect(() => {
-    const entered = spfBackgroundPreset && previousPreset.current !== preset;
+    const entered = previousMedia.current !== media;
 
-    previousPreset.current = preset;
+    previousMedia.current = media;
 
-    if (entered) setSource(DEFAULT_BACKGROUND_SOURCE);
-  }, [preset, spfBackgroundPreset]);
+    if (entered && descriptor.entrySource) setSource(descriptor.entrySource);
+  }, [media, descriptor.entrySource]);
 
-  // Constrain source away from DRM the preset cannot license, and away from a
-  // playback ID a non-Mux preset has no URL for.
   useEffect(() => {
-    if ((isDrmSource(source) || isMuxSource(source)) && !availableSources.includes(source)) {
-      setSource(DEFAULT_SOURCE);
-    }
-  }, [availableSources, source]);
-
-  // CDN, background video, and third-party embeds do not have a Tailwind skin variant.
-  useEffect(() => {
-    if ((platform === 'cdn' || backgroundPreset || embedPreset) && styling === 'tailwind') {
-      setStyling('css');
-    }
-  }, [platform, backgroundPreset, embedPreset, styling]);
+    if (!tailwindAvailable && styling === 'tailwind') setStyling('css');
+  }, [tailwindAvailable, styling]);
 
   const handleSourceChange = useCallback((value: string) => setSource(value as SourceId), []);
 
@@ -216,8 +147,8 @@ export function App() {
         onPlatformChange={setPlatform}
         styling={styling}
         onStylingChange={setStyling}
-        preset={preset}
-        onPresetChange={setPreset}
+        media={media}
+        onMediaChange={setMedia}
         skin={skin}
         onSkinChange={setSkin}
         source={source}
@@ -235,22 +166,15 @@ export function App() {
         accentColor={accentColor}
         onAccentColorChange={setAccentColor}
         availableSources={availableSources}
-        isBackgroundVideo={backgroundPreset}
-        isSpfBackgroundVideo={spfBackgroundPreset}
-        isSpfHls={spfHlsPreset}
-        isMuxVideo={preset === 'mux-video'}
-        isMuxAudio={preset === 'mux-audio'}
-        isEmbedMedia={embedPreset}
         platforms={PLATFORMS}
         stylings={STYLINGS}
-        presets={PRESETS}
         sources={SOURCES}
       />
       <Preview
-        key={`${pagePath}:${preset}:${styling}`}
+        key={`${pagePath}:${media}:${styling}`}
         ref={iframeRef}
         pagePath={pagePath}
-        preset={preset}
+        media={media}
         skin={skin}
         styling={styling}
         source={source}

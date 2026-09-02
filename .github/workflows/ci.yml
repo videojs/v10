@@ -111,6 +111,7 @@ jobs:
           - '@videojs/element'
           - '@videojs/html'
           - '@videojs/react'
+          - '@videojs/sandbox'
 
     steps:
       - name: Checkout code

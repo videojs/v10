@@ -67,7 +67,7 @@ test.describe('Sandbox HTML i18n', () => {
   });
 
   test('shell iframe shows Spanish play label', async ({ page }) => {
-    await page.goto(`${SANDBOX_BASE}/?platform=html&preset=video&${QUERY}`, {
+    await page.goto(`${SANDBOX_BASE}/?platform=html&media=video&${QUERY}`, {
       waitUntil: 'domcontentloaded',
     });
     const frame = await getPreviewFrame(page, '/html-video/');
@@ -93,7 +93,7 @@ test.describe('Sandbox React i18n', () => {
   });
 
   test('shell iframe shows Spanish play label', async ({ page }) => {
-    await page.goto(`${SANDBOX_BASE}/?platform=react&preset=video&${QUERY}`, {
+    await page.goto(`${SANDBOX_BASE}/?platform=react&media=video&${QUERY}`, {
       waitUntil: 'domcontentloaded',
     });
     const frame = await getPreviewFrame(page, '/react-video/');

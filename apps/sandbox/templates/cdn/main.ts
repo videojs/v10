@@ -1,5 +1,5 @@
 import '@app/styles.css';
-import { EMBED_PRESETS } from '@app/constants';
+import { isMediaId, MEDIA, type MediaId } from '@app/media';
 import { renderChapters } from '@app/shared/html/chapters';
 import { createLatestLoader, renderMediaAttrs } from '@app/shared/html/sandbox';
 import { CSS_SKIN_TAGS, LIVE_AUDIO_CSS_SKIN_TAGS, LIVE_VIDEO_CSS_SKIN_TAGS } from '@app/shared/html/skin-tags';
@@ -10,28 +10,29 @@ import { syncDocumentLocale } from '@app/shared/i18n/document-locale';
 import type { SandboxLocaleTag } from '@app/shared/i18n/locale-meta';
 import { getInitialLocale, onLocaleChange, onSandboxStateChange, readSandboxState } from '@app/shared/sandbox-listener';
 import {
-  BACKGROUND_VIDEO_SRC,
-  CLOUDFLARE_VIDEO_SRC,
   getChapters,
   getPosterSrc,
   getStoryboardSrc,
   isLiveSource,
   SOURCES,
-  SPOTIFY_AUDIO_SRC,
-  TIKTOK_VIDEO_SRC,
-  TWITCH_VIDEO_SRC,
-  VIMEO_VIDEO_SRC,
-  WISTIA_VIDEO_SRC,
   withMuxMaxResolution,
-  YOUTUBE_VIDEO_SRC,
 } from '@app/shared/sources';
-import type { Preset, Skin } from '@app/types';
+import type { Skin } from '@app/types';
 import { getI18nTranslations } from '@videojs/html/cdn/i18n';
 
 const html = String.raw;
 
 const params = new URLSearchParams(location.search);
-const preset = (params.get('preset') ?? 'video') as Preset;
+
+/** `preset` named this parameter before the skins' player presets took the word, so older links still resolve. */
+function readMedia(): MediaId {
+  const value = params.get('media') ?? params.get('preset');
+
+  return isMediaId(value) ? value : 'video';
+}
+
+const media = readMedia();
+const descriptor = MEDIA[media];
 
 const state = readSandboxState();
 const loadLatest = createLatestLoader();
@@ -106,11 +107,13 @@ async function syncCdnI18nProvider(tag: SandboxLocaleTag, seq: number): Promise<
 
   // An embed plays in a cross-origin frame with no <video> of its own, so the
   // metadata gate the label check waits on never opens.
-  if (!import.meta.env.DEV || tag === 'en' || isEmbedPreset(preset)) return;
+  if (!import.meta.env.DEV || tag === 'en' || descriptor.embed) return;
 
   if (!document.querySelector('media-play-button')) return;
 
   const expected = getI18nTranslations(tag)['buttons.play'];
+  if (!expected) return;
+
   const playLabel = await waitForCdnPlayLabel(expected);
 
   if (seq !== localeApplySeq) return;
@@ -138,22 +141,9 @@ async function applyLocale(next: SandboxLocaleTag): Promise<void> {
 // CDN module loading — mirrors the exact import graph of each CDN bundle.
 // ---------------------------------------------------------------------------
 
-async function loadCdnPreset(preset: Preset, skin: Skin, live: boolean) {
-  switch (preset) {
+async function loadCdnPlayer(skin: Skin, live: boolean) {
+  switch (descriptor.player) {
     case 'video':
-    case 'hlsjs-video':
-    case 'mux-video':
-    case 'mux-video-spf':
-    case 'native-hls-video':
-    case 'hls-video':
-    case 'dash-video':
-    case 'shaka-video':
-    case 'vimeo-video':
-    case 'youtube-video':
-    case 'cloudflare-video':
-    case 'tiktok-video':
-    case 'twitch-video':
-    case 'wistia-video':
       if (live) {
         if (skin === 'minimal') await import('@videojs/html/cdn/live-video-minimal');
         else await import('@videojs/html/cdn/live-video');
@@ -164,10 +154,6 @@ async function loadCdnPreset(preset: Preset, skin: Skin, live: boolean) {
 
       break;
     case 'audio':
-    case 'mux-audio':
-    case 'mux-audio-spf':
-    case 'hls-audio':
-    case 'spotify-audio':
       if (live) {
         if (skin === 'minimal') await import('@videojs/html/cdn/live-audio-minimal');
         else await import('@videojs/html/cdn/live-audio');
@@ -177,25 +163,23 @@ async function loadCdnPreset(preset: Preset, skin: Skin, live: boolean) {
       }
 
       break;
-    case 'background-video':
-    case 'hls-background-video':
-    case 'mux-background-video':
-      // Player and skin are shared; the element each one renders is what differs,
-      // and that arrives from `loadCdnMedia`.
+    // Player and skin are shared; the element each one renders is what differs,
+    // and that arrives from `loadCdnMedia`.
+    case 'background':
       await import('@videojs/html/cdn/background');
       break;
   }
 }
 
-async function loadCdnMedia(preset: Preset) {
-  switch (preset) {
+async function loadCdnMedia(media: MediaId) {
+  switch (media) {
     case 'hlsjs-video':
       await import('@videojs/html/cdn/media/hlsjs-video');
       break;
     case 'mux-video':
       await import('@videojs/html/cdn/media/mux-video');
       break;
-    // One preset loads one flavor, so the SPF-backed element is the only claimant
+    // One media loads one flavor, so the SPF-backed element is the only claimant
     // and registers as `<mux-video>` — the CDN page is where that rule is visible,
     // since a page picks bundles at runtime rather than by import path.
     case 'mux-video-spf':
@@ -210,7 +194,7 @@ async function loadCdnMedia(preset: Preset) {
     // `<background-video>` rides along inside the `background` bundle above; the
     // SPF-backed tags are their own bundles, so the page loads them the way it
     // loads every other media element. Both tags are one element, and a CDN page
-    // loads bundles at runtime — so it loads only the one the preset names.
+    // loads bundles at runtime — so it loads only the one the media names.
     case 'hls-background-video':
       await import('@videojs/html/cdn/media/hls-background-video');
       break;
@@ -262,129 +246,54 @@ async function loadCdnMedia(preset: Preset) {
 // Rendering — produces the exact HTML markup the installation builder generates.
 // ---------------------------------------------------------------------------
 
-function isAudioPreset(preset: Preset): boolean {
-  return (
-    preset === 'audio' ||
-    preset === 'mux-audio' ||
-    preset === 'mux-audio-spf' ||
-    preset === 'hls-audio' ||
-    preset === 'spotify-audio'
-  );
-}
-
-function isEmbedPreset(preset: Preset): boolean {
-  return (EMBED_PRESETS as readonly Preset[]).includes(preset);
-}
-
 /**
  * An embed fills the skin box the way `<video>` does on its own.
  *
  * TikTok's host floors itself at the portrait 325x578 its player refuses to draw below, so a landscape box needs that
  * floor cleared.
  */
-function getEmbedMediaClass(preset: Preset): string {
-  return preset === 'tiktok-video' ? 'block w-full h-full min-w-0 min-h-0' : 'block w-full h-full';
+function getEmbedMediaClass(media: MediaId): string {
+  return media === 'tiktok-video' ? 'block w-full h-full min-w-0 min-h-0' : 'block w-full h-full';
 }
 
-/** The one source each embed plays: a provider page URL, not one of the picker's files. */
-const EMBED_SOURCES: Partial<Record<Preset, string>> = {
-  'vimeo-video': VIMEO_VIDEO_SRC,
-  'youtube-video': YOUTUBE_VIDEO_SRC,
-  'cloudflare-video': CLOUDFLARE_VIDEO_SRC,
-  'spotify-audio': SPOTIFY_AUDIO_SRC,
-  'tiktok-video': TIKTOK_VIDEO_SRC,
-  'twitch-video': TWITCH_VIDEO_SRC,
-  'wistia-video': WISTIA_VIDEO_SRC,
-};
-
-function isBackgroundPreset(preset: Preset): boolean {
-  return preset === 'background-video' || preset === 'hls-background-video' || preset === 'mux-background-video';
+function getPlayerTag(live: boolean): string {
+  switch (descriptor.player) {
+    case 'background':
+      return 'background-video-player';
+    case 'audio':
+      return live ? 'live-audio-player' : 'audio-player';
+    case 'video':
+      return live ? 'live-video-player' : 'video-player';
+  }
 }
 
-function getPlayerTag(preset: Preset, live: boolean): string {
-  if (isBackgroundPreset(preset)) return 'background-video-player';
-
-  if (isAudioPreset(preset)) return live ? 'live-audio-player' : 'audio-player';
-
-  return live ? 'live-video-player' : 'video-player';
+function getSkinTag(skin: Skin, live: boolean): string {
+  switch (descriptor.player) {
+    case 'background':
+      return 'background-video-skin';
+    case 'audio':
+      return live ? LIVE_AUDIO_CSS_SKIN_TAGS[skin] : CSS_SKIN_TAGS[skin].audio;
+    case 'video':
+      return live ? LIVE_VIDEO_CSS_SKIN_TAGS[skin] : CSS_SKIN_TAGS[skin].video;
+  }
 }
 
-function getSkinTag(preset: Preset, skin: Skin, live: boolean): string {
-  if (isBackgroundPreset(preset)) return 'background-video-skin';
-
-  if (isAudioPreset(preset)) return live ? LIVE_AUDIO_CSS_SKIN_TAGS[skin] : CSS_SKIN_TAGS[skin].audio;
-
-  if (live) return LIVE_VIDEO_CSS_SKIN_TAGS[skin];
-
-  return CSS_SKIN_TAGS[skin].video;
-}
-
-function getMediaTag(preset: Preset): string {
-  const tags: Partial<Record<Preset, string>> = {
-    'hlsjs-video': 'hlsjs-video',
-    'mux-video': 'mux-video',
-    'mux-video-spf': 'mux-video',
-    'mux-audio': 'mux-audio',
-    'mux-audio-spf': 'mux-audio',
-    'native-hls-video': 'native-hls-video',
-    'hls-video': 'hls-video',
-    'hls-audio': 'hls-audio',
-    'dash-video': 'dash-video',
-    'shaka-video': 'shaka-video',
-    'vimeo-video': 'vimeo-video',
-    'youtube-video': 'youtube-video',
-    'cloudflare-video': 'cloudflare-video',
-    'spotify-audio': 'spotify-audio',
-    'tiktok-video': 'tiktok-video',
-    'twitch-video': 'twitch-video',
-    'wistia-video': 'wistia-video',
-    audio: 'audio',
-    'background-video': 'background-video',
-    'hls-background-video': 'hls-background-video',
-    'mux-background-video': 'mux-background-video',
-  };
-
-  return tags[preset] ?? 'video';
-}
-
-function loadStylesheets(preset: Preset, skin: Skin, live: boolean) {
-  if (isAudioPreset(preset)) loadAudioStylesheets(skin, live);
-  else if (!isBackgroundPreset(preset)) loadVideoStylesheets(skin, live);
-  // Background CSS is loaded via dynamic import in loadCdnPreset.
-}
-
-function isVideoPreset(preset: Preset): boolean {
-  return (
-    preset === 'video' ||
-    preset === 'hlsjs-video' ||
-    preset === 'mux-video' ||
-    preset === 'mux-video-spf' ||
-    preset === 'native-hls-video' ||
-    preset === 'hls-video' ||
-    preset === 'dash-video' ||
-    preset === 'shaka-video'
-  );
-}
-
-function canPlayLive(preset: Preset): boolean {
-  return (
-    preset === 'hlsjs-video' ||
-    preset === 'mux-video' ||
-    preset === 'mux-video-spf' ||
-    preset === 'native-hls-video' ||
-    preset === 'hls-video' ||
-    preset === 'mux-audio' ||
-    preset === 'mux-audio-spf' ||
-    preset === 'hls-audio'
-  );
+function loadStylesheets(skin: Skin, live: boolean) {
+  if (descriptor.player === 'audio') loadAudioStylesheets(skin, live);
+  else if (descriptor.player === 'video') loadVideoStylesheets(skin, live);
+  // Background CSS is loaded via dynamic import in loadCdnPlayer.
 }
 
 async function render() {
-  const live = canPlayLive(preset) && isLiveSource(state.source);
+  const live = descriptor.live === true && isLiveSource(state.source);
+  const background = descriptor.player === 'background';
+  const embed = descriptor.embed === true;
+  // A skinned video element takes the source's chapters, storyboard, and poster; an embed brings its own.
+  const skinnedVideo = descriptor.player === 'video' && !embed;
 
   const loaded = await loadLatest(async () => {
-    await loadCdnPreset(preset, state.skin, live);
-    await loadCdnMedia(preset);
+    await loadCdnPlayer(state.skin, live);
+    await loadCdnMedia(media);
     return true;
   });
   if (!loaded) return;
@@ -392,15 +301,15 @@ async function render() {
   // Load the locale before rendering, but outside loadLatest so locale errors keep their specific message.
   await ensureCdnSandboxLocale(locale);
 
-  loadStylesheets(preset, state.skin, live);
+  loadStylesheets(state.skin, live);
 
   const root = document.getElementById('root')!;
-  const playerTag = getPlayerTag(preset, live);
-  const skinTag = getSkinTag(preset, state.skin, live);
-  const mediaTag = getMediaTag(preset);
+  const playerTag = getPlayerTag(live);
+  const skinTag = getSkinTag(state.skin, live);
+  const mediaTag = descriptor.tag;
   const source = SOURCES[state.source];
-  const storyboard = isVideoPreset(preset) ? getStoryboardSrc(state.source) : undefined;
-  const poster = isVideoPreset(preset) ? getPosterSrc(state.source) : undefined;
+  const storyboard = skinnedVideo ? getStoryboardSrc(state.source) : undefined;
+  const poster = skinnedVideo ? getPosterSrc(state.source) : undefined;
 
   // `<background-video>` renders a fixed progressive MP4, since a native element
   // has no manifest to pick renditions from. The SPF-backed tags take the picked
@@ -408,28 +317,26 @@ async function render() {
   // that name is worth keeping — `hls-background-video` is the same element against
   // an uncapped manifest.
   const backgroundSrc =
-    preset === 'mux-background-video'
+    media === 'mux-background-video'
       ? withMuxMaxResolution(source.url ?? '', '720p')
-      : preset === 'hls-background-video'
+      : media === 'hls-background-video'
         ? (source.url ?? '')
-        : BACKGROUND_VIDEO_SRC;
-  const sourceAttr = isBackgroundPreset(preset)
-    ? `src="${backgroundSrc}"`
-    : `src="${EMBED_SOURCES[preset] ?? source.url}"`;
+        : (descriptor.fixedSource ?? '');
+  const sourceAttr = background ? `src="${backgroundSrc}"` : `src="${descriptor.fixedSource ?? source.url}"`;
   // An embed hands playback to a provider that owns autoplay, looping, and how much
   // it preloads, so the settings menu has nothing to attach to — same as the
   // per-embed pages on the html and react platforms.
-  const mediaAttrs = isEmbedPreset(preset) ? '' : renderMediaAttrs(state);
-  const crossoriginAttr = isEmbedPreset(preset) ? '' : 'crossorigin';
-  const mediaClassAttr = isEmbedPreset(preset) ? `class="${getEmbedMediaClass(preset)}"` : '';
+  const mediaAttrs = embed ? '' : renderMediaAttrs(state);
+  const crossoriginAttr = embed ? '' : 'crossorigin';
+  const mediaClassAttr = embed ? `class="${getEmbedMediaClass(media)}"` : '';
 
   // Background video needs viewport dimensions instead of flex centering.
-  if (isBackgroundPreset(preset)) {
+  if (background) {
     root.className = '';
     root.style.cssText = 'width: 100vw; height: 100vh;';
   }
 
-  if (isBackgroundPreset(preset)) {
+  if (background) {
     root.innerHTML = wrapCdnPlayerI18n(
       playerTag,
       html`
@@ -442,7 +349,7 @@ async function render() {
     return;
   }
 
-  if (isAudioPreset(preset)) {
+  if (descriptor.player === 'audio') {
     root.innerHTML = html`
       <div class="mx-auto w-full max-w-xl">
         ${wrapCdnPlayerI18n(
@@ -462,7 +369,7 @@ async function render() {
   const skin = html`
     <${skinTag} class="aspect-video max-w-4xl mx-auto">
       <${mediaTag} ${mediaClassAttr} ${sourceAttr} ${mediaAttrs} playsinline ${crossoriginAttr}>
-        ${isVideoPreset(preset) ? renderChapters(getChapters(state.source)) : ''}
+        ${skinnedVideo ? renderChapters(getChapters(state.source)) : ''}
         ${renderStoryboard(storyboard)}
       </${mediaTag}>
       ${poster ? html`<img slot="poster" src="${poster}" alt="Video poster" crossorigin />` : ''}
@@ -475,7 +382,7 @@ async function render() {
 
   if (import.meta.env.DEV && !document.querySelector('media-i18n')) {
     throw new Error(
-      '[videojs/sandbox] CDN preset requires <media-i18n>. Run pnpm dev:sandbox (or pnpm exec tsx scripts/setup.ts).'
+      '[videojs/sandbox] The CDN page requires <media-i18n>. Run pnpm dev:sandbox (or pnpm exec tsx scripts/setup.ts).'
     );
   }
 }

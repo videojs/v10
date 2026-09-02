@@ -10,9 +10,11 @@ pnpm dev:sandbox             # sandbox + workspace package watch
 pnpm dev                     # also runs the docs site
 ```
 
-Open the printed URL. The root route renders an interactive shell — a navbar with dropdowns for platform (HTML, React, CDN), preset (`video`, `hlsjs-video`, `audio`, etc.), skin, styling (CSS or Tailwind), and source — that previews the selected combination in an iframe. Use the **Open** button to pop the preview out into its own tab.
+Open the printed URL. The root route renders an interactive shell — a navbar with dropdowns for platform (HTML, React, CDN), media (`video`, `hlsjs-video`, `audio`, etc.), skin, styling (CSS or Tailwind), and source — that previews the selected combination in an iframe. Every selection is in the URL, so a link reproduces a preview. Use the **Open** button to pop the preview out into its own tab.
 
-**Language** is in **Player settings** (gear icon) for every preset (HTML, React, and CDN). **CDN** registers copy through `@videojs/html/cdn/i18n` (the same registry as the CDN player bundle), not source `@videojs/html/i18n`. After pulling template changes, restart `pnpm dev:sandbox` so `scripts/setup.ts` refreshes `src/` from `templates/`.
+`app/media.ts` describes each media once: its label, player, element, which sources the picker offers, and which controls apply. The shell derives its constraints from that table, and the CDN page picks its bundles by the same id. Older links that say `?preset=` still resolve; `preset` now means the player preset a skin is built for (`video`, `audio`, `live-video`, `live-audio`).
+
+**Language** is in **Player settings** (gear icon) for every media (HTML, React, and CDN). **CDN** registers copy through `@videojs/html/cdn/i18n` (the same registry as the CDN player bundle), not source `@videojs/html/i18n`. After pulling template changes, restart `pnpm dev:sandbox` so `scripts/setup.ts` refreshes `src/` from `templates/`.
 
 The shell covers the main combinatorial matrix. One-off templates not in that matrix (e.g. `firefox-mse-repro`, `spf-segment-loading`, `hls-video-html`) are reachable by navigating directly to `/<template-name>/`. See `apps/sandbox/templates/` for the full list.
 

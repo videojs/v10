@@ -1,12 +1,13 @@
+import type { MediaId } from '@app/media';
 import type { SandboxLocaleTag } from '@app/shared/i18n/locale-meta';
 import type { PreloadValue } from '@app/shared/sandbox-listener';
 import type { SourceId } from '@app/shared/sources';
-import type { Preset, Skin, Styling } from '@app/types';
+import type { Skin, Styling } from '@app/types';
 import { forwardRef, useEffect, useRef, useState } from 'react';
 
 type PreviewProps = {
   pagePath: string;
-  preset: Preset;
+  media: MediaId;
   skin: Skin;
   styling: Styling;
   source: SourceId;
@@ -20,12 +21,12 @@ type PreviewProps = {
 };
 
 export const Preview = forwardRef<HTMLIFrameElement, PreviewProps>(function Preview(
-  { pagePath, preset, skin, styling, source, autoplay, muted, loop, preload, locale, accentColor, onLoad },
+  { pagePath, media, skin, styling, source, autoplay, muted, loop, preload, locale, accentColor, onLoad },
   ref
 ) {
   const buildUrl = (base: string, bustCache = false) => {
     const params = new URLSearchParams({
-      preset,
+      media,
       skin,
       styling,
       source,

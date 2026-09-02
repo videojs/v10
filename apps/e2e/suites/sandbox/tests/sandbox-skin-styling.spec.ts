@@ -187,7 +187,7 @@ for (const media of ['video', 'audio'] as const) {
   for (const skin of ['default', 'minimal'] as const) {
     test(`cdn ${skin} selects the live ${media} skin`, async ({ page }) => {
       const query = new URLSearchParams({
-        preset: `hls-${media}`,
+        media: `hls-${media}`,
         skin,
         source: 'hls-live',
         autoplay: '0',

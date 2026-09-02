@@ -175,6 +175,10 @@ export default defineConfig({
         ],
         output: ['src/**', 'app/_generated/**', 'app/shared/i18n/cdn-locale-loaders.generated.ts'],
       },
+      'test:ci': {
+        command: 'pnpm test',
+        cache: false,
+      },
       build: {
         command: 'vp build',
         dependsOn: ['setup', ...workspaceTaskDependencies(), '@videojs/html#build:cdn'],
@@ -188,6 +192,12 @@ export default defineConfig({
   },
   root: 'src',
   appType: 'mpa',
+  test: {
+    // The shell's tables and helpers, not the templates: those run under Playwright from `apps/e2e`.
+    root: __dirname,
+    include: ['app/tests/**/*.test.ts'],
+    environment: 'node',
+  },
   plugins: [sandboxTemplateSyncPlugin(), cdnSandboxI18nPlugin(), tailwindcss(), react(), serveAppShell()],
   resolve: {
     alias: {
