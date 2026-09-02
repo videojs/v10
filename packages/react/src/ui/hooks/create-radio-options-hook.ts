@@ -1,7 +1,6 @@
 import type { RadioOption, RadioOptionsState } from '@videojs/core';
 import { type Text, type TextParams, translateText } from '@videojs/core/i18n';
 import type { UnknownState } from '@videojs/store';
-import { useCallback, useState } from 'react';
 
 import { useTranslator } from '../../i18n/context';
 import { usePlayer } from '../../player/context';
@@ -51,15 +50,16 @@ export function createRadioOptionsHook<Props, Media, State extends RadioOptionsS
   props?: Props
 ) => RadioOptionsHookResult<StateOption<State>, State> | null {
   return function useRadioOptions(props?: Props): RadioOptionsHookResult<StateOption<State>, State> | null {
-    'use no memo';
-
     const media = usePlayer(selector);
     const t = useTranslator();
-    const [core] = useState(createCore);
+
+    // A render-local core keeps the projection pure: it derives only from this render's props and media, so nothing
+    // leaks from abandoned renders and memoizing compilers may cache it safely.
+    const core = createCore();
 
     core.setProps(props ?? ({} as Props));
 
-    const setValue = useCallback((value: string) => core.selectValue(media!, value), [core, media]);
+    const setValue = (value: string) => core.selectValue(media!, value);
 
     useLogMissingFeature(!media, name, selector.displayName ?? feature);
 

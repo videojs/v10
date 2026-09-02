@@ -33,8 +33,6 @@ const useCaptionsRadioOptions = createRadioOptionsHook({
  * @param props - Optional `label`, `formatTrack`, and `disabled` overrides.
  */
 export function useCaptionsOptions(props?: CaptionsOptionsProps): CaptionsOptionsResult | null {
-  'use no memo';
-
   const result = useCaptionsRadioOptions(props);
   if (!result) return null;
 

@@ -32,8 +32,6 @@ const useQualityRadioOptions = createRadioOptionsHook({
  * @param props - Optional `label`, `formatRendition`, and `disabled` overrides.
  */
 export function useQualityOptions(props?: QualityOptionsProps): QualityOptionsResult | null {
-  'use no memo';
-
   return useQualityRadioOptions(props);
 }
 
