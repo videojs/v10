@@ -37,8 +37,7 @@ export default styles({
       utilities: 'flex bottom-[calc(100%+var(--media-slider-preview-label-offset))] tabular-nums',
       variants: {
         default: 'left-1/2 flex-col items-center',
-        minimal:
-          '[left:var(--media-preview-left,var(--media-slider-pointer))] flex-row-reverse justify-center gap-2 px-3',
+        minimal: '[left:var(--media-preview-left,var(--media-slider-pointer))] flex-row-reverse justify-center gap-2',
       },
     },
     chapterTitle: {

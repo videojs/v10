@@ -32,6 +32,6 @@
       transparent
     );
     --media-caption-controls-y: calc(var(--media-spacing) * -18);
-    --media-slider-preview-offset: calc(var(--media-spacing) * 14);
+    --media-slider-preview-offset: calc(var(--media-spacing) * 11);
   }
 }
