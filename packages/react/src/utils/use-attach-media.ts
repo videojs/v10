@@ -7,7 +7,7 @@ import { useCallback } from 'react';
  *
  * @param media - Playback adapter to attach and detach.
  */
-export function useAttachMedia<T extends HTMLMediaElement>(media: EngineAdapter): RefCallback<T> {
+export function useAttachMedia<T = HTMLMediaElement>(media: EngineAdapter): RefCallback<T> {
   return useCallback(
     (element: T | null) => {
       if (element) media.attach?.(element);

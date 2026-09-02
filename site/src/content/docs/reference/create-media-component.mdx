@@ -1,0 +1,52 @@
+---
+title: createMediaComponent
+description: Build a React media component around a playback adapter that registers with the Player
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+
+## Import
+
+```tsx
+import { createMediaComponent } from "@videojs/react";
+```
+
+## Usage
+
+Pass an adapter class and a render callback. The component drives one adapter instance, syncs the adapter's props from the React props of the same name, and calls your callback with everything needed to render the target: the adapter, the remaining native props, the children, and a ref that attaches the adapter to the element it lands on. It registers with the surrounding <DocsLink slug="reference/player">Player</DocsLink>.
+
+```tsx
+import { HlsJsAdapter } from '@videojs/hlsjs-video';
+import { createMediaComponent, type MediaComponentProps } from '@videojs/react';
+
+export type MyHlsVideoProps = MediaComponentProps<typeof HlsJsAdapter>;
+
+export const MyHlsVideo = createMediaComponent(
+  HlsJsAdapter,
+  ({ props, children, ref }) => (
+    <video {...props} ref={ref}>
+      {children}
+    </video>
+  ),
+  { displayName: 'MyHlsVideo' }
+);
+```
+
+The target can be any element the adapter attaches to. Embeds render an `<iframe>`, and read values that must not change after the first render from `initialProps`:
+
+```tsx
+export const MyVimeoVideo = createMediaComponent(VimeoAdapter, ({ adapter, props, children, ref, initialProps }) => (
+  <iframe src={buildVimeoIframeSrc(initialProps.src ?? '', { ...VimeoAdapter.defaultProps, ...initialProps })} {...props} ref={ref}>
+    {children}
+  </iframe>
+));
+```
+
+Props matching the adapter's `defaultProps` are synced onto the adapter and reset to their defaults when omitted. Every other prop and the forwarded ref go to the rendered element, whose attribute type follows from the adapter's `attach()` target. Every built-in media component except `WistiaVideo` and `HlsBackgroundVideo` is created this way.
+
+## Who needs this
+
+Use `createMediaComponent` to expose an adapter as a React component, for example a third-party engine that implements the `@videojs/media` contract. For a component that needs its own effects or state beyond rendering, compose <DocsLink slug="reference/use-media-instance">useMediaInstance</DocsLink> and <DocsLink slug="reference/use-attach-media">useAttachMedia</DocsLink> directly.
+
+<UtilReference util="createMediaComponent" />
