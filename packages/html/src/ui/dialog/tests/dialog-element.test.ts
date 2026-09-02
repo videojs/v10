@@ -92,6 +92,51 @@ describe('DialogElement', () => {
     expect(onOpenChange).toHaveBeenCalledOnce();
     expect((onOpenChange.mock.calls[0]![0] as CustomEvent).detail).toEqual({ open: true });
   });
+
+  it('restores open state and dismissal behavior after rapid remove and reappend cycles', async () => {
+    const dialog = createElement(DialogElement);
+    const onOpenChange = vi.fn();
+
+    dialog.open = true;
+    dialog.addEventListener('open-change', onOpenChange);
+    document.body.append(dialog);
+    await dialog.updateComplete;
+    onOpenChange.mockClear();
+
+    for (let cycle = 0; cycle < 3; cycle++) {
+      dialog.remove();
+      document.body.append(dialog);
+    }
+
+    await dialog.updateComplete;
+    flush();
+
+    expect(dialog.open).toBe(true);
+    expect(dialog.hasAttribute('data-open')).toBe(true);
+    expect(onOpenChange).not.toHaveBeenCalled();
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+
+    expect(dialog.open).toBe(false);
+    expect(onOpenChange).toHaveBeenCalledOnce();
+  });
+
+  it('releases dismissal behavior when destroyed while connected', async () => {
+    const dialog = createElement(DialogElement);
+    const onOpenChange = vi.fn();
+
+    dialog.open = true;
+    document.body.append(dialog);
+    await dialog.updateComplete;
+    flush();
+    dialog.addEventListener('open-change', onOpenChange);
+
+    dialog.destroy();
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+
+    expect(dialog.open).toBe(true);
+    expect(onOpenChange).not.toHaveBeenCalled();
+  });
 });
 
 describe('DialogBackdropElement', () => {

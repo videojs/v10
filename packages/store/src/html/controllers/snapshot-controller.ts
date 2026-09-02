@@ -25,6 +25,7 @@ export class SnapshotController<T extends object, R = T> implements ReactiveCont
   #state: State<T>;
   #cached: R | undefined;
   #connected = false;
+  #destroyed = false;
   #tracking = true;
   #unsubscribe = noop;
 
@@ -78,6 +79,8 @@ export class SnapshotController<T extends object, R = T> implements ReactiveCont
   }
 
   hostConnected(): void {
+    if (this.#destroyed) return;
+
     this.#connected = true;
 
     if (this.#tracking) this.#subscribe();
@@ -88,6 +91,15 @@ export class SnapshotController<T extends object, R = T> implements ReactiveCont
     this.#unsubscribe();
     this.#unsubscribe = noop;
     this.#cached = undefined;
+  }
+
+  /**
+   * Release the subscription for good. A destroyed host may still be in the document, so this also ignores any later
+   * {@linkcode hostConnected} or {@linkcode track} call that would otherwise resubscribe.
+   */
+  hostDestroyed(): void {
+    this.#destroyed = true;
+    this.hostDisconnected();
   }
 
   #subscribe(): void {

@@ -17,6 +17,7 @@ import { tryHidePopover, tryShowPopover } from '@videojs/utils/dom';
 import { containerContext } from '../../player/context';
 import { popupGroupContext } from '../../player/popup-group-context';
 import { PositionController } from '../position-controller';
+import { RestoreGuard } from '../restore-guard';
 import { UIElement } from '../ui-element';
 
 /** @fires open-change - Fired when the popover's open state changes. */
@@ -53,6 +54,7 @@ export class PopoverElement extends UIElement {
   readonly #containerCtx = new ContextConsumer(this, { context: containerContext, subscribe: true });
   readonly #popupGroupCtx = new ContextConsumer(this, { context: popupGroupContext });
   readonly #position = new PositionController(this);
+  readonly #restoreGuard = new RestoreGuard();
   #popover: PopoverApi | null = null;
   #snapshot: SnapshotController<PopoverInput> | null = null;
 
@@ -70,9 +72,11 @@ export class PopoverElement extends UIElement {
 
     this.#disconnect = new AbortController();
 
-    this.#popover = createPopover({
+    const popover = createPopover({
       transition: createTransition(),
       onOpenChange: (nextOpen: boolean, details: PopoverChangeDetails) => {
+        if (this.#restoreGuard.active) return;
+
         this.open = nextOpen;
         this.dispatchEvent(new CustomEvent('open-change', { detail: { open: nextOpen, ...details } }));
       },
@@ -84,20 +88,27 @@ export class PopoverElement extends UIElement {
       group: () => this.#popupGroupCtx.value,
     });
 
+    this.#popover = popover;
+
     // Register self as the popup element — the element IS the popup.
-    this.#popover.setPopupElement(this);
+    popover.setPopupElement(this);
 
     // Apply popup event handlers (pointerenter/leave, focusout) to self.
-    applyElementProps(this, this.#popover.popupProps, { signal: this.#disconnect.signal });
+    applyElementProps(this, popover.popupProps, { signal: this.#disconnect.signal });
 
-    // Subscribe to interaction state for reactive updates.
-    // Reuse the controller across connect/disconnect cycles to avoid
-    // leaking stale controllers in the host's controller set.
+    // Subscribe to interaction state for reactive updates. One controller
+    // lives for the element's lifetime and retargets each connection's API.
     if (this.#snapshot) {
-      this.#snapshot.track(this.#popover.input);
+      this.#snapshot.track(popover.input);
     } else {
-      this.#snapshot = new SnapshotController(this, this.#popover.input);
+      this.#snapshot = new SnapshotController(this, popover.input);
     }
+
+    // A reconnect recreates the API closed and schedules no update, so replay
+    // the open state silently and refresh attributes, popover, and trigger.
+    if (this.hasUpdated && this.open) this.#restoreGuard.run(() => popover.open('imperative-action'));
+
+    this.requestUpdate();
   }
 
   protected override firstUpdated(changed: PropertyValues): void {
@@ -112,13 +123,11 @@ export class PopoverElement extends UIElement {
 
   override disconnectedCallback(): void {
     super.disconnectedCallback();
-    this.#disconnect?.abort();
-    this.#disconnect = null;
+    this.#disposeConnection();
   }
 
   override destroyCallback(): void {
-    this.#cleanupTrigger();
-    this.#popover?.destroy();
+    this.#disposeConnection();
     super.destroyCallback();
   }
 
@@ -225,5 +234,14 @@ export class PopoverElement extends UIElement {
     this.#triggerAbort?.abort();
     this.#triggerAbort = null;
     this.#currentTrigger = null;
+  }
+
+  /** Tear down the API and listeners owned by the current connection. Runs on disconnect and on destroy. */
+  #disposeConnection(): void {
+    this.#cleanupTrigger();
+    this.#disconnect?.abort();
+    this.#disconnect = null;
+    this.#popover?.destroy();
+    this.#popover = null;
   }
 }

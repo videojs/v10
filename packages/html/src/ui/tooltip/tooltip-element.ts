@@ -30,6 +30,7 @@ import { I18nController } from '../../i18n/controller';
 import { containerContext } from '../../player/context';
 import { popupGroupContext } from '../../player/popup-group-context';
 import { PositionController } from '../position-controller';
+import { RestoreGuard } from '../restore-guard';
 import { UIElement } from '../ui-element';
 import { tooltipGroupContext } from './context';
 import { TooltipLabelElement } from './tooltip-label-element';
@@ -82,6 +83,7 @@ export class TooltipElement extends UIElement {
   readonly #containerCtx = new ContextConsumer(this, { context: containerContext, subscribe: true });
   readonly #popupGroupCtx = new ContextConsumer(this, { context: popupGroupContext });
   readonly #position = new PositionController(this);
+  readonly #restoreGuard = new RestoreGuard();
   #tooltip: TooltipApi | null = null;
   #snapshot: SnapshotController<TooltipInput> | null = null;
 
@@ -99,9 +101,11 @@ export class TooltipElement extends UIElement {
 
     this.#disconnect = new AbortController();
 
-    this.#tooltip = createTooltip({
+    const tooltip = createTooltip({
       transition: createTransition(),
       onOpenChange: (nextOpen: boolean, details: TooltipChangeDetails) => {
+        if (this.#restoreGuard.active) return;
+
         this.open = nextOpen;
         this.dispatchEvent(new CustomEvent('open-change', { detail: { open: nextOpen, ...details } }));
       },
@@ -115,18 +119,27 @@ export class TooltipElement extends UIElement {
       popupGroup: () => this.#popupGroupCtx.value,
     });
 
+    this.#tooltip = tooltip;
+
     // Register self as the popup element — the element IS the popup.
-    this.#tooltip.setPopupElement(this);
+    tooltip.setPopupElement(this);
 
     // Apply popup event handlers (pointerenter/leave, focusout) to self.
-    applyElementProps(this, this.#tooltip.popupProps, { signal: this.#disconnect.signal });
+    applyElementProps(this, tooltip.popupProps, { signal: this.#disconnect.signal });
 
-    // Subscribe to interaction state for reactive updates.
+    // Subscribe to interaction state for reactive updates. One controller
+    // lives for the element's lifetime and retargets each connection's API.
     if (this.#snapshot) {
-      this.#snapshot.track(this.#tooltip.input);
+      this.#snapshot.track(tooltip.input);
     } else {
-      this.#snapshot = new SnapshotController(this, this.#tooltip.input);
+      this.#snapshot = new SnapshotController(this, tooltip.input);
     }
+
+    // A reconnect recreates the API closed and schedules no update, so replay
+    // the open state silently and refresh attributes, popover, and trigger.
+    if (this.hasUpdated && this.open) this.#restoreGuard.run(() => tooltip.open());
+
+    this.requestUpdate();
   }
 
   protected override firstUpdated(changed: PropertyValues): void {
@@ -141,11 +154,12 @@ export class TooltipElement extends UIElement {
 
   override disconnectedCallback(): void {
     super.disconnectedCallback();
-    this.#cleanupTrigger();
-    this.#tooltip?.destroy();
-    this.#tooltip = null;
-    this.#disconnect?.abort();
-    this.#disconnect = null;
+    this.#disposeConnection();
+  }
+
+  override destroyCallback(): void {
+    this.#disposeConnection();
+    super.destroyCallback();
   }
 
   close(reason: TooltipOpenChangeReason = 'imperative-action'): void {
@@ -277,5 +291,14 @@ export class TooltipElement extends UIElement {
     this.#triggerAbort?.abort();
     this.#triggerAbort = null;
     this.#currentTrigger = null;
+  }
+
+  /** Tear down the API and listeners owned by the current connection. Runs on disconnect and on destroy. */
+  #disposeConnection(): void {
+    this.#cleanupTrigger();
+    this.#disconnect?.abort();
+    this.#disconnect = null;
+    this.#tooltip?.destroy();
+    this.#tooltip = null;
   }
 }

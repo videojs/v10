@@ -65,7 +65,7 @@ export class ErrorDialogElement extends UIElement {
 
     if (this.destroyed) return;
 
-    this.#dialog = createDialog({
+    const dialog = createDialog({
       transition: createTransition(),
       onOpenChange: (nextOpen: boolean) => {
         if (!nextOpen) {
@@ -74,23 +74,34 @@ export class ErrorDialogElement extends UIElement {
       },
     });
 
+    this.#dialog = dialog;
+
+    // One controller per state lives for the element's lifetime and retargets each connection's API.
     if (this.#snapshot) {
-      this.#snapshot.track(this.#dialog.input);
+      this.#snapshot.track(dialog.input);
     } else {
-      this.#snapshot = new SnapshotController(this, this.#dialog.input);
+      this.#snapshot = new SnapshotController(this, dialog.input);
     }
 
     if (this.#modalitySnapshot) {
-      this.#modalitySnapshot.track(this.#dialog.modality);
+      this.#modalitySnapshot.track(dialog.modality);
     } else {
-      this.#modalitySnapshot = new SnapshotController(this, this.#dialog.modality);
+      this.#modalitySnapshot = new SnapshotController(this, dialog.modality);
     }
+
+    // A reconnect recreates the API closed and schedules no update; `willUpdate`
+    // reopens it from the current error state.
+    this.requestUpdate();
   }
 
   override disconnectedCallback(): void {
     super.disconnectedCallback();
-    this.#dialog?.destroy();
-    this.#dialog = null;
+    this.#disposeConnection();
+  }
+
+  override destroyCallback(): void {
+    this.#disposeConnection();
+    super.destroyCallback();
   }
 
   protected override willUpdate(_changed: PropertyValues): void {
@@ -186,5 +197,11 @@ export class ErrorDialogElement extends UIElement {
     }
 
     return this.#authoredCopyParts.has(el);
+  }
+
+  /** Tear down the API owned by the current connection. Runs on disconnect and on destroy. */
+  #disposeConnection(): void {
+    this.#dialog?.destroy();
+    this.#dialog = null;
   }
 }

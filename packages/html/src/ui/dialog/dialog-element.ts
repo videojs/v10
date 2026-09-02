@@ -11,6 +11,7 @@ import { ContextProvider } from '@videojs/element/context';
 import { SnapshotController } from '@videojs/store/html';
 
 import { PositionController } from '../position-controller';
+import { RestoreGuard } from '../restore-guard';
 import { UIElement } from '../ui-element';
 import { dialogContext } from './context';
 
@@ -38,6 +39,7 @@ export class DialogElementBase extends UIElement {
   readonly #stateAttrMap: StateAttrMap<DialogState>;
   readonly #provider = new ContextProvider(this, { context: dialogContext });
   readonly #position = new PositionController(this);
+  readonly #restoreGuard = new RestoreGuard();
   readonly #popupId: string;
   readonly #titleId: string;
   readonly #descriptionId: string;
@@ -70,10 +72,12 @@ export class DialogElementBase extends UIElement {
 
     if (this.destroyed) return;
 
-    this.#dialog = createDialog({
+    const dialog = createDialog({
       transition: createTransition(),
       closeOnEscape: () => this.closeOnEscape,
       onOpenChange: (nextOpen: boolean) => {
+        if (this.#restoreGuard.active) return;
+
         this.open = nextOpen;
         this.dispatchEvent(new CustomEvent('open-change', { detail: { open: nextOpen } }));
       },
@@ -82,11 +86,20 @@ export class DialogElementBase extends UIElement {
       },
     });
 
+    this.#dialog = dialog;
+
+    // One controller lives for the element's lifetime and retargets each connection's API.
     if (this.#snapshot) {
-      this.#snapshot.track(this.#dialog.input);
+      this.#snapshot.track(dialog.input);
     } else {
-      this.#snapshot = new SnapshotController(this, this.#dialog.input);
+      this.#snapshot = new SnapshotController(this, dialog.input);
     }
+
+    // A reconnect recreates the API closed and schedules no update, so replay
+    // the open state silently and refresh state attributes and the trigger.
+    if (this.hasUpdated && this.open) this.#restoreGuard.run(() => dialog.open());
+
+    this.requestUpdate();
   }
 
   protected override firstUpdated(changed: PropertyValues): void {
@@ -97,9 +110,12 @@ export class DialogElementBase extends UIElement {
 
   override disconnectedCallback(): void {
     super.disconnectedCallback();
-    this.#cleanupTrigger();
-    this.#dialog?.destroy();
-    this.#dialog = null;
+    this.#disposeConnection();
+  }
+
+  override destroyCallback(): void {
+    this.#disposeConnection();
+    super.destroyCallback();
   }
 
   close(): void {
@@ -176,6 +192,13 @@ export class DialogElementBase extends UIElement {
     this.#triggerAbort = null;
     this.#triggerElement = null;
     this.#dialog?.setTriggerElement(null);
+  }
+
+  /** Tear down the API and trigger listeners owned by the current connection. Runs on disconnect and on destroy. */
+  #disposeConnection(): void {
+    this.#cleanupTrigger();
+    this.#dialog?.destroy();
+    this.#dialog = null;
   }
 }
 
