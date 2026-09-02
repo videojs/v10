@@ -12,7 +12,12 @@ import { cloneCssAst, collectRuleClasses, withoutNullValues } from './css-ast';
 import type { DesignSystem } from './design-system';
 import type { StyleOutputFile } from './output';
 import { replaceRuleClasses } from './selectors';
-import { collectTailwindDefaults, inlinePrivateTailwindVariables, optimizeSemanticCss } from './tailwind-values';
+import {
+  collectTailwindDefaults,
+  dedupeRuleDeclarations,
+  inlinePrivateTailwindVariables,
+  optimizeSemanticCss,
+} from './tailwind-values';
 
 const encoder = new TextEncoder();
 
@@ -255,6 +260,10 @@ function semanticRootClass(rule: Rule, semanticClassNames: ReadonlySet<string>):
 }
 
 function renderRuleSet(template: StyleSheet, rules: readonly Rule[]): string {
+  const cloned = rules.map(cloneCssAst);
+
+  dedupeRuleDeclarations(cloned);
+
   const result = transform({
     filename: 'rendered.css',
     code: encoder.encode(''),
@@ -263,14 +272,14 @@ function renderRuleSet(template: StyleSheet, rules: readonly Rule[]): string {
       StyleSheet() {
         return withoutNullValues({
           ...cloneCssAst(template),
-          rules: rules.map(cloneCssAst),
+          rules: cloned,
           licenseComments: [],
         });
       },
     },
   });
 
-  return optimizeSemanticCss(decoder.decode(result.code).trim());
+  return decoder.decode(result.code).trim();
 }
 
 function assertNoRelationshipMarkers(rule: Rule, bindings: ReadonlyMap<string, string>): void {
