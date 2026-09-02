@@ -9,6 +9,12 @@
     );
     --media-caption-controls-y: calc(var(--media-spacing) * -14);
     --media-slider-preview-offset: calc(var(--media-spacing) * 9);
+    --media-thumbnail-gradient: linear-gradient(
+      to top,
+      oklch(from var(--media-scrim) l c h / 0.5),
+      oklch(from var(--media-scrim) l c h / 0.1),
+      transparent
+    );
   }
 
   .media-skin:is([data-preset="video"], [data-preset="live-video"])[data-theme="minimal"] {

@@ -21,6 +21,10 @@ export default styles({
         'transition-opacity duration-media-base ease-out',
         'data-loading:opacity-0',
       ],
+      variants: {
+        default:
+          'after:pointer-events-none after:absolute after:inset-0 after:rounded-[inherit] after:bg-(image:--media-thumbnail-gradient)',
+      },
     },
     spinnerIcon: {
       utilities: [

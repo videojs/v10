@@ -228,6 +228,10 @@ export const vars = {
     kind: 'internal',
     description: 'Theme gradient painted behind the video controls.',
   },
+  '--media-thumbnail-gradient': {
+    kind: 'internal',
+    description: 'Theme scrim over the default thumbnail preview that keeps the time label legible.',
+  },
   '--media-indicator-gradient': {
     kind: 'internal',
     description: 'Theme gradient painted behind Minimal status and volume indicators.',
