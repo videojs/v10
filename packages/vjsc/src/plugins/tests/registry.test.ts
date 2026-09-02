@@ -137,6 +137,16 @@ describe('vjscRegistryPlugin', () => {
         @utility shadow-control {
           box-shadow: var(--shadow-control);
         }
+
+        @utility tab-* {
+          tab-size: --value(integer);
+        }
+
+        @custom-variant opaque {
+          @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+            @slot;
+          }
+        }
       `,
     });
     const output = await build(
@@ -191,6 +201,10 @@ describe('vjscRegistryPlugin', () => {
     });
     expect(theme.css).toEqual({
       '@utility shadow-control': { 'box-shadow': 'var(--shadow-control)' },
+      '@utility tab-*': { 'tab-size': '--value(integer)' },
+      '@custom-variant opaque': {
+        '@media (prefers-reduced-transparency: reduce), (prefers-contrast: more)': { '@slot': {} },
+      },
     });
   });
 
