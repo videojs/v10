@@ -88,6 +88,9 @@ export function utilsItem(target: RegistryTarget): RegistryModuleItem<SkinModule
   };
 }
 
+/** Shared theme stylesheet item every skin depends on. */
+export const themeStyleDependency = '@videojs/_style-theme';
+
 export function reactHelperDependency(target: RegistryTarget): string[] {
   return target.framework === 'react' ? ['@videojs/_resolve-class-name'] : [];
 }

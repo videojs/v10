@@ -4,11 +4,11 @@ import { type Graph, type GraphModule, bundleStyles } from '../../../../vjsc/src
 import type { RegistryCreatedItem, RegistryModuleItem } from '../../../../vjsc/src/shadcn/index.ts';
 import { isSkinName, type SkinModuleMeta, type SkinName } from '../../../src/meta.ts';
 import { createHtmlSkinRegistration, createSourceOwnedHtml, type RenderedHtmlSkin } from '../../packages/html.ts';
-import { skinBaseStylesheet, skinDirectory, skinPreset } from '../../skin.ts';
+import { skinDirectory, skinPreset } from '../../skin.ts';
 import type { VideojsRegistryMeta } from '../meta.ts';
 import { packageRequirements, registryPaths, type RegistryTarget } from '../targets.ts';
 import { exportedComponentName } from './components.ts';
-import { reactHelperDependency } from './support.ts';
+import { reactHelperDependency, themeStyleDependency } from './support.ts';
 
 export async function htmlSkinItem(
   skin: RenderedHtmlSkin,
@@ -22,9 +22,11 @@ export async function htmlSkinItem(
   const template = createSourceOwnedHtml(skin.template);
 
   const styleTarget = `${directory}/skin.css`;
+  const themeImport = relativeRegistryImport(`${directory}/skin.ts`, 'styles/theme.css');
   const styleImport = relativeRegistryImport(`${directory}/skin.ts`, styleTarget);
 
-  const registration = `${`import '${styleImport}';`}\n\n${createHtmlSkinRegistration(
+  // The shared theme item must load before the skin's own scoped rules.
+  const registration = `import '${themeImport}';\nimport '${styleImport}';\n\n${createHtmlSkinRegistration(
     template,
     skin.modules,
     'registry'
@@ -47,10 +49,8 @@ export async function htmlSkinItem(
       path: 'skin.css',
       target: `${registryPaths.install}/${directory}/skin.css`,
       type: 'registry:style',
-      content: await bundleStyles(graph, skin.modules, {
-        label: name,
-        files: [`./styles/${skinBaseStylesheet(skin.preset)}`],
-      }),
+      // Theme tokens, resets, and presets ship once through the shared theme item.
+      content: await bundleStyles(graph, skin.modules, { label: name }),
     },
   ];
 
@@ -62,7 +62,7 @@ export async function htmlSkinItem(
     categories: ['media', 'skins', skin.preset],
     docs: skinDocs(skin.root, meta, meta.name, target, directory),
     dependencies: ['@videojs/html'],
-    registryDependencies: [],
+    registryDependencies: [themeStyleDependency],
     files,
     meta: {
       role: 'skin',
@@ -158,7 +158,7 @@ function skinDocs(
   const mediaEntry = preset.endsWith('audio') ? 'hls-audio' : 'hlsjs-video';
 
   if (target.framework === 'html') {
-    return `Installs editable ${meta.title} source under \`${registryPaths.install}/${directory}\`. Requires \`${packageRequirements.html}\`; import the matching Player and media registrations before using the installed light-DOM template.`;
+    return `Installs editable ${meta.title} source under \`${registryPaths.install}/${directory}\` together with the shared theme stylesheet. Requires \`${packageRequirements.html}\`; import the matching Player and media registrations before using the installed light-DOM template.`;
   }
 
   return `Requires \`${packageRequirements.react}\`, which is installed with this item.
