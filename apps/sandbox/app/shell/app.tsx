@@ -11,6 +11,7 @@ import {
 import { PLATFORMS, SKIN_SOURCES, STYLINGS } from '@app/constants';
 import { COMPARE_LABELS } from '@app/labels';
 import { hasTailwindSkin, isMediaId, MEDIA, type MediaId, mediaSources } from '@app/media';
+import { CAPTIONS_MODES, type CaptionsMode } from '@app/shared/captions';
 import { DEFAULT_SANDBOX_LOCALE, SANDBOX_LOCALE_TAGS, type SandboxLocaleTag } from '@app/shared/i18n/locale-meta';
 import { defaultPlayerWidth, PLAYER_WIDTH } from '@app/shared/player-frame';
 import {
@@ -78,6 +79,7 @@ function readParams() {
     muted: params.get('muted') === '1',
     loop: params.get('loop') === '1',
     preload: readOption(PRELOAD_VALUES, params.get('preload'), DEFAULT_PRELOAD),
+    captions: readOption(CAPTIONS_MODES, params.get('captions'), 'none'),
     accentColor: params.get('accent')?.trim() ?? '',
     locale: readOption(SANDBOX_LOCALE_TAGS, params.get('locale'), DEFAULT_SANDBOX_LOCALE),
     width: readWidth(params.get('width')),
@@ -110,6 +112,7 @@ export function App() {
   const [muted, setMuted] = useState(initial.muted);
   const [loop, setLoop] = useState(initial.loop);
   const [preload, setPreload] = useState<PreloadValue>(initial.preload);
+  const [captions, setCaptions] = useState<CaptionsMode>(initial.captions);
   const [accentColor, setAccentColor] = useState(initial.accentColor);
   const [locale, setLocale] = useState<SandboxLocaleTag>(initial.locale);
   const [width, setWidth] = useState(initial.width);
@@ -157,6 +160,7 @@ export function App() {
     muted,
     loop,
     preload,
+    captions,
     accentColor,
     playerWidth,
     scheme,
@@ -173,6 +177,7 @@ export function App() {
     muted,
     loop,
     preload,
+    captions,
     locale,
     accentColor,
     width: playerWidth,
@@ -197,6 +202,8 @@ export function App() {
       scheme,
       dir: direction,
     });
+
+    if (captions !== 'none') params.set('captions', captions);
 
     if (accentColor) params.set('accent', accentColor);
 
@@ -224,6 +231,7 @@ export function App() {
     muted,
     loop,
     preload,
+    captions,
     accentColor,
     locale,
     width,
@@ -263,6 +271,8 @@ export function App() {
 
     if (previous.preload !== preload) post({ type: 'preload-change', preload });
 
+    if (previous.captions !== captions) post({ type: 'captions-change', captions });
+
     if (previous.accentColor !== accentColor) post({ type: 'accent-change', accent: accentColor });
 
     if (previous.playerWidth !== playerWidth) post({ type: 'width-change', width: playerWidth });
@@ -280,13 +290,14 @@ export function App() {
       muted,
       loop,
       preload,
+      captions,
       accentColor,
       playerWidth,
       scheme,
       direction,
       mirroring,
     };
-  }, [skin, source, autoplay, muted, loop, preload, accentColor, playerWidth, scheme, direction, mirroring]);
+  }, [skin, source, autoplay, muted, loop, preload, captions, accentColor, playerWidth, scheme, direction, mirroring]);
 
   // Keep the last few errors the frames relay, tagged with the panel they came from, for the report.
   useEffect(() => {
@@ -438,6 +449,8 @@ export function App() {
         onLoopChange={setLoop}
         preload={preload}
         onPreloadChange={setPreload}
+        captions={captions}
+        onCaptionsChange={setCaptions}
         locale={locale}
         onLocaleChange={setLocale}
         accentColor={accentColor}

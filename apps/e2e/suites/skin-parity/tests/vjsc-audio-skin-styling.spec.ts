@@ -7,6 +7,7 @@ import {
   emulatePreference,
   expectRenderingParity,
   expectSameRendering,
+  frameRect,
   freezeSliderState,
   normalizeErrorDialogCopy,
   openComparison,
@@ -199,23 +200,12 @@ async function preparePanel({ root, section }: SkinPanel, width: number, expectP
 }
 
 async function layoutContract(root: Locator) {
-  const rootRect = await root.boundingBox();
+  // Frame coordinates throughout, since some parts are measured inside an evaluate.
+  const rootRect = await frameRect(root);
   const slider = root.getByRole('slider', { name: 'Seek' }).locator('..');
 
-  if (!rootRect) throw new Error('Expected an audio skin root.');
-
   const roundValue = (value: number) => Math.round(value * 2) / 2;
-  const relativeRect = async (target: Locator) => {
-    const rect = await target.boundingBox();
-    if (!rect) throw new Error('Expected a visible audio skin part.');
-
-    return {
-      height: roundValue(rect.height),
-      left: roundValue(rect.x - rootRect.x),
-      top: roundValue(rect.y - rootRect.y),
-      width: roundValue(rect.width),
-    };
-  };
+  const relativeRect = async (target: Locator) => relativeBox(await frameRect(target));
   const relativeBox = (rect: { height: number; width: number; x: number; y: number }) => ({
     height: roundValue(rect.height),
     left: roundValue(rect.x - rootRect.x),
@@ -408,8 +398,8 @@ async function audioSeekContract(root: Locator) {
     });
 
     const preview = slider.locator(':scope > :last-child > :last-child');
-    const previewBox = await preview.boundingBox();
-    if (!previewBox) throw new Error('Expected the audio seek preview to have a rendered box.');
+    // The pointer position above came from the frame, so the preview's box has to as well.
+    const previewBox = await frameRect(preview);
 
     const offset = Math.round((previewBox.x + previewBox.width / 2 - pointer) * 10) / 10;
 
@@ -445,9 +435,11 @@ async function audioSeekContract(root: Locator) {
   await page.mouse.move(pointerX, pointerY);
   await expect(slider).toHaveAttribute('data-dragging', '');
 
-  const dragging = await thumb.evaluate((element, expectedX) => {
+  // The pointer's offset within the slider: the mouse moved in page coordinates, the thumb reports frame ones.
+  const dragging = await thumb.evaluate((element, expectedOffset) => {
     const style = getComputedStyle(element);
     const root = element.parentElement;
+    const expectedX = (root?.getBoundingClientRect().x ?? 0) + expectedOffset;
     const fills = [...(root?.querySelectorAll('*') ?? [])]
       .map((target) => getComputedStyle(target))
       .filter((candidate) =>
@@ -468,7 +460,7 @@ async function audioSeekContract(root: Locator) {
       lag: lag <= 1 ? 0 : Math.ceil(lag),
       thumbPositionIsImmediate: !positionProperties.has('left') && !positionProperties.has('top'),
     };
-  }, pointerX);
+  }, box.width * 0.73);
 
   await page.mouse.up();
   return { dragging, previewOffsets, restingFillTransitions };

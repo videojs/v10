@@ -6,6 +6,7 @@ import {
   emulatePreference,
   expectRenderingParity,
   expectSameRendering,
+  frameRect,
   freezeSliderState,
   openComparison,
   openSourceComparison,
@@ -24,9 +25,9 @@ const BUFFERING_INDICATOR_SELECTOR =
   '.media-buffering-indicator, media-buffering-indicator, [class~="peer/buffering"], [class~="hidden"][class~="place-content-center"]';
 const CONTROLS_SELECTOR = '.video-controls';
 
-test('the dev width control resizes VJSC skins', async ({ page }) => {
+test('the sandbox width control resizes VJSC skins', async ({ page }) => {
   const { css } = await openVariants(page, REACT_DEFAULT, 384);
-  const range = page.getByRole('slider', { name: 'Player width' });
+  const range = page.getByRole('slider', { name: 'Width' });
 
   await range.fill('512');
 
@@ -161,7 +162,7 @@ for (const variant of CASES) {
   test(`${variant.framework} ${variant.skin} keeps popup styling in sync`, async ({ page }, testInfo) => {
     const name = `${variant.framework}-${variant.skin}-volume-popover.png`;
     const { css, tailwind } = await openVariants(page, variant, 800);
-    const cssPopup = await openVolumePopover(css.root);
+    const cssPopup = await openVolumePopover(css);
     const cssContract = await popupSurfaceContract(css.root, cssPopup);
     const cssSliderContract = await volumeSliderContract(cssPopup);
     const cssMotion = await popupMotionContract(cssPopup);
@@ -170,7 +171,7 @@ for (const variant of CASES) {
     expectPopupMotion(cssMotion);
 
     const reference = await snapshotReference(css.root, name);
-    const tailwindPopup = await openVolumePopover(tailwind.root);
+    const tailwindPopup = await openVolumePopover(tailwind);
     const tailwindContract = await popupSurfaceContract(tailwind.root, tailwindPopup);
     const tailwindSliderContract = await volumeSliderContract(tailwindPopup);
     const tailwindMotion = await popupMotionContract(tailwindPopup);
@@ -219,10 +220,10 @@ for (const variant of CASES) {
       for (const width of WIDTHS) {
         const { css, tailwind } = await openVariants(page, variant, width);
 
-        await openVolumePopover(css.root);
+        await openVolumePopover(css);
         const cssContract = await volumeMaskContract(css.root, width);
 
-        await openVolumePopover(tailwind.root);
+        await openVolumePopover(tailwind);
         const tailwindContract = await volumeMaskContract(tailwind.root, width);
 
         expect(tailwindContract).toEqual(cssContract);
@@ -482,7 +483,8 @@ for (const skin of ['default-video', 'minimal-video'] as const) {
 test('semantic CSS stays easy to override from unlayered consumer styles', async ({ page }) => {
   const { css } = await openVariants(page, REACT_DEFAULT, 800);
 
-  await page.addStyleTag({
+  // The consumer stylesheet has to land in the frame the player renders in.
+  await css.frame.addStyleTag({
     content: '.media-play-button { width: 44px; height: 44px; background: rgb(18 52 86); }',
   });
 
@@ -594,7 +596,8 @@ test('VJSC preserves the shared skin motion contract', async ({ page }) => {
   for (const variant of CASES) {
     const { panels } = await openVariants(page, variant, 800);
 
-    for (const { root, style } of panels) {
+    for (const panel of panels) {
+      const { root, style } = panel;
       const contract = await sharedMotionContract(root);
 
       expect(contract).toEqual({
@@ -650,7 +653,7 @@ test('VJSC preserves the shared skin motion contract', async ({ page }) => {
         },
       });
 
-      const popup = await openVolumePopover(root);
+      const popup = await openVolumePopover(panel);
 
       expectPopupMotion(await popupMotionContract(popup));
     }
@@ -921,9 +924,12 @@ async function seekDragContract(root: Locator) {
   await page.mouse.move(pointerX, pointerY);
   await expect(slider).toHaveAttribute('data-dragging', '');
 
-  const contract = await thumb.evaluate((element, expectedX) => {
+  // The pointer's offset within the slider: the mouse moved in page coordinates, the thumb reports frame ones.
+  const contract = await thumb.evaluate((element, expectedOffset) => {
     const style = getComputedStyle(element);
-    const slider = [...(element.parentElement?.closest('[data-orientation]')?.querySelectorAll('*') ?? [])];
+    const sliderElement = element.parentElement?.closest('[data-orientation]');
+    const expectedX = (sliderElement?.getBoundingClientRect().x ?? 0) + expectedOffset;
+    const slider = [...(sliderElement?.querySelectorAll('*') ?? [])];
     const fills = slider
       .map((target) => getComputedStyle(target))
       .filter((style) =>
@@ -944,7 +950,7 @@ async function seekDragContract(root: Locator) {
       lag: lag <= 1 ? 0 : Math.ceil(lag),
       thumbPositionIsImmediate: !positionProperties.has('left') && !positionProperties.has('top'),
     };
-  }, pointerX);
+  }, box.width * 0.73);
 
   await page.mouse.up();
   return contract;
@@ -1402,9 +1408,20 @@ async function indicatorContract(indicator: Locator) {
 }
 
 async function setDirection(page: Page, direction: 'ltr' | 'rtl') {
-  await page.locator('html').evaluate((element: HTMLElement, value) => {
-    element.dir = value;
-  }, direction);
+  for (const frame of page.frames()) {
+    if (frame === page.mainFrame()) continue;
+
+    // The player derives its direction from its locale, so the document alone is not enough: the sandbox pins both.
+    await frame.evaluate((value) => window.postMessage({ type: 'dir-change', dir: value }, '*'), direction);
+
+    const root = frame.getByRole('group', { name: 'Media player' });
+
+    await expect(frame.locator('html')).toHaveAttribute('dir', direction);
+    await expect(root).toHaveCSS('direction', direction);
+    // The html page renders its player again for the change; bring the controls back before the menus open.
+    await root.dispatchEvent('pointermove', { pointerType: 'mouse' });
+    await expect(root).toHaveAttribute('data-controls-visible', '');
+  }
 }
 
 async function enableCaptions({ root, section }: SkinPanel) {
@@ -1752,8 +1769,7 @@ async function errorDialogContainmentContract(root: Locator, dialog: Locator) {
 }
 
 async function errorDialogContract(root: Locator, dialog: Locator) {
-  const rootRect = await root.boundingBox();
-  if (!rootRect) throw new Error('Expected the media player to have a rendered box.');
+  const rootRect = await frameRect(root);
 
   return dialog.evaluate((element: HTMLElement, playerRect) => {
     const surface = element.querySelector<HTMLElement>('.media-dialog-popup') ?? element;
@@ -2147,15 +2163,16 @@ async function menuHighlightContract(menu: Locator) {
     }));
 }
 
-async function openVolumePopover(root: Locator): Promise<Locator> {
+async function openVolumePopover({ frame, root }: SkinPanel): Promise<Locator> {
   await root.getByRole('button', { name: 'Mute' }).hover();
   const slider = root.getByRole('slider', { name: 'Volume' });
 
   await expect(slider).toBeVisible();
-  // The inner locator is evaluated relative to each popover, so it must not carry the root scope.
+  // The inner locator is evaluated relative to each popover, so it must not carry the root scope, and it has to come
+  // from the panel's frame.
   const popup = root
     .locator('[popover]:visible')
-    .filter({ has: root.page().getByRole('slider', { name: 'Volume' }) })
+    .filter({ has: frame.getByRole('slider', { name: 'Volume' }) })
     .first();
 
   await expect(popup).toBeVisible();
@@ -2189,8 +2206,7 @@ async function muteTooltipContract(root: Locator, skin: SkinCase['skin']) {
 }
 
 async function popupSurfaceContract(root: Locator, popup: Locator) {
-  const rootRect = await root.boundingBox();
-  if (!rootRect) throw new Error('Expected the media player to have a rendered box.');
+  const rootRect = await frameRect(root);
 
   return popup.evaluate((element, playerRect) => {
     const style = getComputedStyle(element);
@@ -2397,8 +2413,7 @@ async function popupMotionContract(popup: Locator) {
 }
 
 async function popupContract(root: Locator, popup: Locator) {
-  const rootRect = await root.boundingBox();
-  if (!rootRect) throw new Error('Expected the media player to have a rendered box.');
+  const rootRect = await frameRect(root);
 
   return popup.evaluate((element, playerRect) => {
     const round = (value: number) => Math.round(value * 10) / 10;

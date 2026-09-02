@@ -1,5 +1,7 @@
 import type { MuxSource } from '@videojs/media/dom/mux';
 
+import { applyCaptionTracks } from '../captions';
+import { findMediaTag } from '../media-element';
 import { PLAYER_FRAME_CLASSES } from '../player-frame';
 import {
   getDirection,
@@ -201,7 +203,17 @@ export function createHtmlSandbox(options: HtmlSandboxOptions): void {
 
     const context = createContext(options, state, live);
 
-    root.innerHTML = wrapSandboxHtmlI18n(renderPlayer(options, skinTag, context));
+    const template = document.createElement('template');
+
+    template.innerHTML = wrapSandboxHtmlI18n(renderPlayer(options, skinTag, context));
+
+    // Subtitle tracks are the page's to add, so a template never has to spell them out. They go in while the markup is
+    // still inert: a custom media element reads its tracks when it upgrades, not when children arrive later.
+    const media = options.player === 'video' ? findMediaTag(template.content) : undefined;
+
+    if (media) applyCaptionTracks(media, state.captions);
+
+    root.replaceChildren(template.content);
     options.attach?.(context);
   }
 

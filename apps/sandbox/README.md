@@ -22,6 +22,8 @@ Open the printed URL. The root route renders an interactive shell — a navbar w
 
 **Width** sits in the navbar and sizes the player through `--sandbox-player-width`; until it is touched, a preview opens at its skin's own width. **Color scheme** and **Direction** are in **Player settings** and pin the preview's `color-scheme` and `dir`, where the defaults follow the operating system and the locale. All three travel in the URL (`width`, `scheme`, `dir`), so a direct page honours them too.
 
+**Captions**, also in **Player settings**, adds one or two subtitle tracks to a video so the captions menu has something to show; the tracks are the page's, so no template spells them out. The source picker also carries a **Missing file** entry that opens the player's error dialog without waiting on a network.
+
 **Language** is in **Player settings** (gear icon) for every media (HTML, React, and CDN). **CDN** registers copy through `@videojs/html/cdn/i18n` (the same registry as the CDN player bundle), not source `@videojs/html/i18n`. After pulling template changes, restart `pnpm dev:sandbox` so `scripts/setup.ts` refreshes `src/` from `templates/`.
 
 The shell covers the main combinatorial matrix. One-off templates not in that matrix (e.g. `firefox-mse-repro`, `spf-segment-loading`, `hls-video-html`) are reachable by navigating directly to `/<template-name>/`. See `apps/sandbox/templates/` for the full list.

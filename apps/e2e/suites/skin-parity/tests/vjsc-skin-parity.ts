@@ -1,8 +1,9 @@
-import { expect, type Locator, type Page, type TestInfo } from '@playwright/test';
+import { expect, type Frame, type Locator, type Page, type TestInfo } from '@playwright/test';
 
-import { skinCatalog } from '../../../../../packages/skins/build/catalog.ts';
+import { skinCatalog, skinCatalogEntry } from '../../../../../packages/skins/build/catalog.ts';
 import type { SkinPreset } from '../../../../../packages/skins/build/skin.ts';
 import type { SkinName } from '../../../../../packages/skins/src/meta.ts';
+import { SOURCES } from '../../../../sandbox/app/shared/sources.ts';
 import { expectVisualParity, type VisualCapture } from '../../../shared/fixtures/visual-parity';
 
 export type SkinStyle = 'css' | 'tailwind';
@@ -30,7 +31,9 @@ export interface SkinPanel {
   readonly style: SkinStyle;
   /** Whether the panel renders the authored source transform or the skin the framework package ships. */
   readonly source: SkinSource;
-  /** The compare section wrapping one variant. HTML players keep their media outside the accessible group. */
+  /** The sandbox frame rendering this variant; page-wide queries have to go through it. */
+  readonly frame: Frame;
+  /** The frame's document body. HTML players keep their media outside the accessible group. */
   readonly section: Locator;
   /** The accessible `Media player` group rendered by one variant. */
   readonly root: Locator;
@@ -52,7 +55,7 @@ export interface SourceComparison {
 
 type PanelPrepare = (panel: SkinPanel) => Promise<void>;
 
-/** Open the playground once with both stylings of one skin rendered together, then ready each panel in order. */
+/** Open the sandbox once with both stylings of one authored skin side by side, then ready each panel in order. */
 export async function openComparison(
   page: Page,
   params: Readonly<Record<string, string | number>>,
@@ -60,8 +63,8 @@ export async function openComparison(
 ): Promise<SkinComparison> {
   const panels = await openPanels(
     page,
-    { ...params, compare: 'styles' },
-    SKIN_STYLES.map((style) => ({ style, source: 'authored' as const, selector: `[data-style="${style}"]` })),
+    sandboxQuery(params, 'styling'),
+    SKIN_STYLES.map((style) => ({ style, source: 'authored' as const, panel: style })),
     prepare
   );
   const [css, tailwind] = panels;
@@ -70,7 +73,7 @@ export async function openComparison(
   return { css, tailwind, panels };
 }
 
-/** Open the playground once with the authored CSS skin beside the skin its framework package ships. */
+/** Open the sandbox once with the authored CSS skin beside the skin its framework package ships. */
 export async function openSourceComparison(
   page: Page,
   params: Readonly<Record<string, string | number>>,
@@ -79,8 +82,9 @@ export async function openSourceComparison(
   const sources: readonly SkinSource[] = ['authored', 'generated'];
   const panels = await openPanels(
     page,
-    { ...params, compare: 'source' },
-    sources.map((source) => ({ style: 'css' as const, source, selector: `[data-source="${source}"]` })),
+    sandboxQuery(params, 'skins'),
+    // The sandbox names the packaged panel after its skin source.
+    sources.map((source) => ({ style: 'css' as const, source, panel: source === 'generated' ? 'package' : source })),
     prepare
   );
   const [authored, generated] = panels;
@@ -89,23 +93,90 @@ export async function openSourceComparison(
   return { authored, generated, panels };
 }
 
+/**
+ * The sandbox query for one parity case. The playground's `framework`, `skin`, `media`, `width`, and `captions` become
+ * the sandbox's platform, skin theme, media template, source, width, and captions; the skin source is the authored one
+ * and the color scheme is dark, as the playground was. An HLS source needs an engine, so it opens the Mux template; the
+ * MP4 and the missing file play in the native element.
+ */
+function sandboxQuery(
+  params: Readonly<Record<string, string | number>>,
+  compare: 'styling' | 'skins'
+): URLSearchParams {
+  const { framework, skin, media = 'mp4-1', width, captions } = params;
+  const entry = skinCatalogEntry(String(skin) as SkinName);
+  const sourceId = String(media);
+  const source = SOURCES[sourceId as keyof typeof SOURCES];
+  if (!source) throw new Error(`Unknown sandbox source: ${sourceId}.`);
+
+  return new URLSearchParams({
+    platform: String(framework),
+    media: source.type === 'hls' ? `mux-${entry.media}` : entry.media,
+    skin: entry.theme,
+    skins: 'authored',
+    styling: 'css',
+    compare,
+    layout: 'column',
+    width: String(width),
+    source: sourceId,
+    captions: String(captions ?? (entry.media === 'video' ? 'single' : 'none')),
+    scheme: 'dark',
+    autoplay: '0',
+    muted: '0',
+    loop: '0',
+    preload: 'metadata',
+  });
+}
+
+/** The frame the sandbox renders for one compare panel. */
+async function panelFrame(page: Page, id: string): Promise<Frame> {
+  const iframe = page.locator(`iframe[data-panel="${id}"]`);
+
+  await expect(iframe).toBeAttached();
+
+  const src = await iframe.getAttribute('src');
+  if (!src) throw new Error(`Panel ${id} has no frame URL.`);
+
+  await expect
+    .poll(() =>
+      page
+        .frames()
+        .find((frame) => frame.url().endsWith(src))
+        ?.url()
+    )
+    .toBeDefined();
+
+  const frame = page.frames().find((frame) => frame.url().endsWith(src));
+  if (!frame) throw new Error(`Panel ${id} frame not found.`);
+
+  return frame;
+}
+
 async function openPanels(
   page: Page,
-  params: Readonly<Record<string, string | number>>,
-  sections: readonly { style: SkinStyle; source: SkinSource; selector: string }[],
+  query: URLSearchParams,
+  sections: readonly { style: SkinStyle; source: SkinSource; panel: string }[],
   prepare: PanelPrepare
 ): Promise<SkinPanel[]> {
-  const query = new URLSearchParams();
-
-  for (const [key, value] of Object.entries(params)) query.set(key, String(value));
-
   await page.goto(`/?${query}`, { waitUntil: 'domcontentloaded' });
 
-  const panels = sections.map(({ style, source, selector }): SkinPanel => {
-    const section = page.locator(`.preview-compare-item${selector}`);
+  const panels: SkinPanel[] = [];
 
-    return { style, source, section, root: section.getByRole('group', { name: 'Media player' }) };
-  });
+  for (const { style, source, panel } of sections) {
+    const frame = await panelFrame(page, panel);
+    const root = frame.getByRole('group', { name: 'Media player' });
+
+    // Each frame tracks its own input modality. The playground's one document had been clicked before any panel was
+    // focused programmatically, so `:focus-visible` stayed off; give every frame that same first pointer contact,
+    // just inside the frame and above its player.
+    await expect(root).toBeVisible();
+
+    const box = await root.boundingBox();
+
+    if (box) await page.mouse.click(box.x + box.width / 2, box.y - 8);
+
+    panels.push({ style, source, frame, section: frame.locator('body'), root });
+  }
 
   for (const panel of panels) await prepare(panel);
 
@@ -113,21 +184,38 @@ async function openPanels(
 }
 
 /**
+ * One element's box in its frame's coordinate space. `boundingBox()` answers in page coordinates, which is right for
+ * the mouse but not for comparing against `getBoundingClientRect()` inside the frame once panels sit below one
+ * another.
+ */
+export async function frameRect(target: Locator): Promise<{ x: number; y: number; width: number; height: number }> {
+  return target.evaluate((element) => {
+    const rect = element.getBoundingClientRect();
+
+    return { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
+  });
+}
+
+/**
  * Move one element onto whole device pixels right before it is captured. Layout above a panel can settle on fractions,
- * and two panels resting on different fractions rasterize every edge differently. The offset is a layout margin rather
- * than a transform because the compositor snaps transformed layers on its own and reintroduces the drift.
+ * and two panels resting on different fractions rasterize every edge differently. The offset is a relative position
+ * rather than a transform, because the compositor snaps transformed layers on its own and reintroduces the drift, and
+ * rather than a margin, because a centred player's auto margins read back as zero and an explicit one would move it out
+ * from under the pointer. Calling it again is a no-op.
  */
 export async function alignToPixelGrid(target: Locator) {
   await target.evaluate((element) => {
     if (!(element instanceof HTMLElement)) return;
 
-    element.style.marginTop = '';
-    element.style.marginLeft = '';
-
+    const style = getComputedStyle(element);
     const { left, top } = element.getBoundingClientRect();
+    const currentLeft = Number.parseFloat(style.left) || 0;
+    const currentTop = Number.parseFloat(style.top) || 0;
 
-    element.style.marginTop = `${Math.round(top) - top}px`;
-    element.style.marginLeft = `${Math.round(left) - left}px`;
+    if (style.position === 'static') element.style.position = 'relative';
+
+    element.style.top = `${currentTop + Math.round(top) - top}px`;
+    element.style.left = `${currentLeft + Math.round(left) - left}px`;
   });
 }
 
@@ -231,14 +319,45 @@ export async function releaseSliderState(
 
 /** Dismiss any open menu so the sibling player is not left behind an open popup before the next interaction. */
 export async function closeMenus(page: Page) {
-  const menus = page.locator('[role="menu"]:visible');
+  const frames = page.frames().filter((frame) => frame !== page.mainFrame());
+  const openMenus = async () => {
+    const counts = await Promise.all(frames.map((frame) => frame.locator('[role="menu"]:visible').count()));
 
-  for (let attempt = 0; attempt < 6 && (await menus.count()) > 0; attempt++) {
-    // Escape steps back one submenu at a time and needs focus inside the menu; a click outside dismisses the rest.
-    await (attempt < 3 ? page.keyboard.press('Escape') : page.mouse.click(1, 1));
+    return counts.reduce((total, count) => total + count, 0);
+  };
+
+  for (let attempt = 0; attempt < 6 && (await openMenus()) > 0; attempt++) {
+    // Escape steps back one submenu at a time and needs focus inside the menu, which the keyboard has where the menu
+    // was opened. A menu in a frame the keyboard left, or behind another frame's fullscreen player, only hears its own
+    // document, so the fallback is a pointer sequence dispatched inside each frame rather than a click that has to land.
+    if (attempt < 3) {
+      await page.keyboard.press('Escape');
+      continue;
+    }
+
+    for (const frame of frames) {
+      await frame.evaluate(() => {
+        if (!document.querySelector('[role="menu"]')) return;
+
+        for (const type of ['pointerdown', 'mousedown', 'pointerup', 'mouseup', 'click'] as const) {
+          const Event = type.startsWith('pointer') ? PointerEvent : MouseEvent;
+
+          document.body.dispatchEvent(
+            new Event(type, {
+              bubbles: true,
+              cancelable: true,
+              clientX: 1,
+              clientY: 1,
+              button: 0,
+              pointerType: 'mouse',
+            })
+          );
+        }
+      });
+    }
   }
 
-  await expect(menus).toHaveCount(0);
+  await expect.poll(openMenus).toBe(0);
 }
 
 /** Reads focus, pressed, and disabled paint for one shared button host. */
@@ -320,12 +439,14 @@ export async function controlsVisibilityContract(controls: Locator) {
 }
 
 /** Triggers keyboard feedback and verifies its rendered-presence lifecycle. */
-export async function feedbackContract(page: Page, root: Locator, key: string, selector: string) {
+export async function feedbackContract({ frame, root }: SkinPanel, key: string, selector: string) {
+  const page = root.page();
+
   await root.focus();
   await page.keyboard.press(key);
   await page.clock.runFor(150);
 
-  const indicator = page.locator(selector).filter({ visible: true }).first();
+  const indicator = frame.locator(selector).filter({ visible: true }).first();
 
   await indicator.waitFor({ state: 'visible' });
 

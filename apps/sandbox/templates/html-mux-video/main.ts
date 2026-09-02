@@ -1,5 +1,6 @@
 import '@app/styles.css';
 import '@videojs/html/video/player';
+import '@videojs/html/live-video/player';
 import '@videojs/html/extensions/google-cast';
 import '@videojs/html/extensions/mux-data';
 import '@videojs/html/media/mux-video';

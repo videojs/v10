@@ -159,14 +159,9 @@ for (const variant of CASES) {
 
     for (const panel of comparison.panels) {
       contracts.push({
-        captions: await feedbackContract(
-          page,
-          panel.root,
-          'c',
-          '[data-status="captions-on"], [data-status="captions-off"]'
-        ),
-        playback: await feedbackContract(page, panel.root, 'k', '[data-status="play"], [data-status="pause"]'),
-        volume: await feedbackContract(page, panel.root, 'ArrowUp', '[data-level]:not([role])'),
+        captions: await feedbackContract(panel, 'c', '[data-status="captions-on"], [data-status="captions-off"]'),
+        playback: await feedbackContract(panel, 'k', '[data-status="play"], [data-status="pause"]'),
+        volume: await feedbackContract(panel, 'ArrowUp', '[data-level]:not([role])'),
       });
     }
 

@@ -2,6 +2,7 @@ import type { CompareMode } from '@app/compare';
 import { SKIN_SOURCES, type SKINS } from '@app/constants';
 import { PLATFORM_LABELS, SKIN_LABELS, SKIN_SOURCE_LABELS, STYLING_LABELS } from '@app/labels';
 import { hasSkinChoice, hasTailwindSkin, MEDIA, MEDIA_IDS, type MediaId } from '@app/media';
+import { CAPTIONS_MODES, type CaptionsMode } from '@app/shared/captions';
 import { SANDBOX_LOCALE_OPTION_GROUPS, type SandboxLocaleTag } from '@app/shared/i18n/locale-meta';
 import { PLAYER_WIDTH } from '@app/shared/player-frame';
 import {
@@ -46,6 +47,8 @@ type NavbarProps = {
   onLoopChange: (value: boolean) => void;
   preload: PreloadValue;
   onPreloadChange: (value: PreloadValue) => void;
+  captions: CaptionsMode;
+  onCaptionsChange: (value: CaptionsMode) => void;
   locale: SandboxLocaleTag;
   onLocaleChange: (value: SandboxLocaleTag) => void;
   accentColor: string;
@@ -62,6 +65,12 @@ type NavbarProps = {
 };
 
 const SKIN_OPTIONS: readonly Skin[] = ['default', 'minimal'] satisfies readonly (typeof SKINS)[number][];
+
+const CAPTIONS_LABELS: Record<CaptionsMode, string> = {
+  none: 'None',
+  single: 'One track',
+  multiple: 'Two tracks',
+};
 
 const SCHEME_LABELS: Record<ColorScheme, string> = {
   auto: 'System',
@@ -102,6 +111,8 @@ export function Navbar({
   onLoopChange,
   preload,
   onPreloadChange,
+  captions,
+  onCaptionsChange,
   locale,
   onLocaleChange,
   accentColor,
@@ -204,6 +215,8 @@ export function Navbar({
           onLoopChange={onLoopChange}
           preload={preload}
           onPreloadChange={onPreloadChange}
+          captions={captions}
+          onCaptionsChange={onCaptionsChange}
           locale={locale}
           onLocaleChange={onLocaleChange}
           accentColor={accentColor}
@@ -285,6 +298,8 @@ type SettingsMenuProps = {
   onLoopChange: (value: boolean) => void;
   preload: PreloadValue;
   onPreloadChange: (value: PreloadValue) => void;
+  captions: CaptionsMode;
+  onCaptionsChange: (value: CaptionsMode) => void;
   locale: SandboxLocaleTag;
   onLocaleChange: (value: SandboxLocaleTag) => void;
   accentColor: string;
@@ -305,6 +320,8 @@ function SettingsMenu({
   onLoopChange,
   preload,
   onPreloadChange,
+  captions,
+  onCaptionsChange,
   locale,
   onLocaleChange,
   accentColor,
@@ -322,6 +339,7 @@ function SettingsMenu({
   const mutedId = useId();
   const loopId = useId();
   const preloadId = useId();
+  const captionsId = useId();
   const localeId = useId();
   const accentColorId = useId();
   const schemeId = useId();
@@ -415,6 +433,13 @@ function SettingsMenu({
             value={preload}
             onChange={(value) => onPreloadChange(value as PreloadValue)}
             options={PRELOAD_VALUES.map((value) => ({ value, label: value }))}
+          />
+          <SelectItem
+            id={captionsId}
+            label="Captions"
+            value={captions}
+            onChange={(value) => onCaptionsChange(value as CaptionsMode)}
+            options={CAPTIONS_MODES.map((value) => ({ value, label: CAPTIONS_LABELS[value] }))}
           />
           <PreferenceBadges preferences={preferences} />
         </div>

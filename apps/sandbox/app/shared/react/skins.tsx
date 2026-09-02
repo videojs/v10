@@ -2,9 +2,11 @@ import { PLAYER_FRAME_CLASSES } from '@app/shared/player-frame';
 import type { Skin, SkinSource, Styling } from '@app/types';
 import type { AudioSkinProps } from '@videojs/react/audio';
 import type { VideoSkinProps } from '@videojs/react/video';
-import type { ComponentType } from 'react';
-import { createElement, useEffect, useState } from 'react';
+import type { ComponentType, RefObject } from 'react';
+import { createElement, useEffect, useRef, useState } from 'react';
 
+import { applyCaptionTracks, type CaptionsMode } from '../captions';
+import { findMediaElement } from '../media-element';
 import { useDirection } from './use-direction';
 import { useSandbox } from './use-sandbox';
 
@@ -159,6 +161,17 @@ function useLoadedComponent<Props>(
   return component;
 }
 
+/** Subtitle tracks are the page's to add, so a template never has to spell them out. */
+function useCaptionTracks(root: RefObject<HTMLElement | null>, captions: CaptionsMode, deps: readonly unknown[]) {
+  useEffect(() => {
+    const media = root.current ? findMediaElement(root.current) : undefined;
+
+    if (media) applyCaptionTracks(media, captions);
+    // the media element changes with the source and the skin, which the caller lists
+    // oxlint-disable-next-line react/exhaustive-deps
+  }, [captions, ...deps]);
+}
+
 /** The skin derives `dir` from its locale unless given one, so a pinned direction has to arrive as a prop. */
 function useDirectionProps(): { dir?: 'ltr' | 'rtl' } {
   const direction = useDirection();
@@ -177,17 +190,21 @@ export function VideoSkinComponent({
   className = PLAYER_FRAME_CLASSES.video,
   ...props
 }: VideoSkinComponentProps) {
-  const { skin, styling, skins } = useSandbox();
+  const { skin, styling, skins, source, captions } = useSandbox();
   const preset: SkinPreset = live ? 'live-video' : 'video';
   const Component = useLoadedComponent<VideoSkinProps>(
     () => loadSkinComponent({ preset, skin, styling, source: skins }),
     [preset, skin, styling, skins]
   );
   const directionProps = useDirectionProps();
+  const rootRef = useRef<HTMLElement>(null);
+
+  useCaptionTracks(rootRef, captions, [Component, source]);
 
   if (!Component) return null;
 
-  return createElement(Component, { ...props, ...directionProps, className });
+  // SAFETY: React 19 hands `ref` to a function component as a prop, and every skin spreads its props onto the container.
+  return createElement(Component, { ...props, ...directionProps, className, ref: rootRef } as VideoSkinProps);
 }
 
 type AudioSkinComponentProps = { live?: boolean } & AudioSkinProps;

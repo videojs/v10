@@ -327,6 +327,13 @@ const SOURCE_MAP = {
     url: 'https://dash.akamaized.net/envivio/EnvivioDash3/manifest.mpd',
     type: 'dash',
   },
+  // A file that does not exist, so the player's error dialog can be looked at
+  // without waiting for a network to fail.
+  error: {
+    label: 'Missing file (error dialog)',
+    url: '/missing-video-that-does-not-exist.mp4',
+    type: 'mp4',
+  },
   // Empty src — exercises source teardown with nothing re-attaching, and the
   // engine's fresh-but-attached "no source" state. `src` forwards to the host
   // property rather than being mirrored onto the inner native element, so this

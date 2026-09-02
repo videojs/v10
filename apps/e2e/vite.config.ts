@@ -26,7 +26,7 @@ export default defineConfig({
       },
       'test:skin-parity': {
         command: 'playwright test --config suites/skin-parity/playwright.config.ts',
-        dependsOn: [...workspaceTaskDependencies(), '@videojs/skins#generate'],
+        dependsOn: [...workspaceTaskDependencies(), '@videojs/sandbox#setup', '@videojs/skins#generate'],
         cache: false,
       },
       'test:sandbox': {

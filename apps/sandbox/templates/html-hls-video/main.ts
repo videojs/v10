@@ -1,5 +1,6 @@
 import '@app/styles.css';
 import '@videojs/html/video/player';
+import '@videojs/html/live-video/player';
 import '@videojs/html/media/hls-video';
 import { createHtmlSandbox, html } from '@app/shared/html/sandbox';
 

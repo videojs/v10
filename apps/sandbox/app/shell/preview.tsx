@@ -1,6 +1,7 @@
 import { COMPARE_LAYOUTS, type CompareLayout, type ComparePanel } from '@app/compare';
 import { LAYOUT_LABELS } from '@app/labels';
 import type { MediaId } from '@app/media';
+import type { CaptionsMode } from '@app/shared/captions';
 import type { SandboxLocaleTag } from '@app/shared/i18n/locale-meta';
 import type { ColorScheme, PreloadValue, TextDirection } from '@app/shared/sandbox-listener';
 import type { SourceId } from '@app/shared/sources';
@@ -16,6 +17,7 @@ export interface FrameParams {
   readonly muted: boolean;
   readonly loop: boolean;
   readonly preload: PreloadValue;
+  readonly captions: CaptionsMode;
   readonly locale: SandboxLocaleTag;
   readonly accentColor: string;
   readonly width: number;
@@ -60,6 +62,8 @@ function buildUrl(panel: ComparePanel, params: FrameParams, bustCache = false): 
     scheme: params.scheme,
     dir: params.direction,
   });
+
+  if (params.captions !== 'none') query.set('captions', params.captions);
 
   if (params.accentColor) query.set('accent', params.accentColor);
 

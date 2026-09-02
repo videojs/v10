@@ -4,6 +4,7 @@ import type { Skin, SkinSource, Styling } from '@app/types';
 import type { MediaResolution } from '@videojs/media';
 import { isBoolean, isNumber, isString } from '@videojs/utils/predicate';
 
+import { CAPTIONS_MODES, type CaptionsMode } from './captions';
 import { setDocumentDirection } from './i18n/document-locale';
 import { DEFAULT_SOURCE, SOURCES, type SourceId } from './sources';
 
@@ -41,6 +42,8 @@ export interface SandboxState {
   muted: boolean;
   loop: boolean;
   preload: PreloadValue;
+  /** Subtitle tracks the page adds to a video. */
+  captions: CaptionsMode;
 }
 
 type StreamedKey = Exclude<keyof SandboxState, 'styling' | 'skins'>;
@@ -75,6 +78,10 @@ function parsePreload(value: unknown): PreloadValue | undefined {
   return isOneOf(PRELOAD_VALUES, value) ? value : undefined;
 }
 
+function parseCaptions(value: unknown): CaptionsMode | undefined {
+  return isOneOf(CAPTIONS_MODES, value) ? value : undefined;
+}
+
 function parseLocale(value: unknown): SandboxLocaleTag | undefined {
   return isOneOf(SANDBOX_LOCALE_TAGS, value) ? value : undefined;
 }
@@ -98,6 +105,7 @@ export function readSandboxState(): SandboxState {
     muted: readFlag('muted'),
     loop: readFlag('loop'),
     preload: parsePreload(params.get('preload')) ?? DEFAULT_PRELOAD,
+    captions: parseCaptions(params.get('captions')) ?? 'none',
   };
 }
 
@@ -135,7 +143,7 @@ export function subscribe<T>(
   return subscribeMessage(`${name}-change`, (data) => parse(data[name]), callback);
 }
 
-const streamedKeys: readonly StreamedKey[] = ['skin', 'source', 'autoplay', 'muted', 'loop', 'preload'];
+const streamedKeys: readonly StreamedKey[] = ['skin', 'source', 'autoplay', 'muted', 'loop', 'preload', 'captions'];
 
 const streamed: { [K in StreamedKey]: (value: unknown) => SandboxState[K] | undefined } = {
   skin: parseSkin,
@@ -144,6 +152,7 @@ const streamed: { [K in StreamedKey]: (value: unknown) => SandboxState[K] | unde
   muted: parseFlag,
   loop: parseFlag,
   preload: parsePreload,
+  captions: parseCaptions,
 };
 
 function streamKey<K extends StreamedKey>(key: K, callback: (change: Partial<SandboxState>) => void): () => void {

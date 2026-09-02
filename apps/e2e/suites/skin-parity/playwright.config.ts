@@ -17,15 +17,16 @@ export default defineConfig({
   projects: [
     {
       name: 'vjsc-chromium',
-      // Both stacked players must fit without scrolling: a capture that scrolls moves the pointer off hovered controls.
+      // Both stacked panels must fit without scrolling: a capture that scrolls moves the pointer off hovered controls.
       use: { ...devices['Desktop Chrome'], baseURL: 'http://localhost:5190', viewport: { width: 1280, height: 1600 } },
     },
   ],
+  // The sandbox hosts the comparison: its compare mode renders the two variants in two frames of the same template.
   webServer: {
-    command: 'pnpm exec vp -C dev dev --host --port 5190 --strictPort',
-    cwd: resolve(import.meta.dirname, '../../../../packages/skins'),
+    command: 'pnpm dev:sandbox --port 5190 --strictPort',
+    cwd: resolve(import.meta.dirname, '../../../..'),
     port: 5190,
     reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
+    timeout: 300_000,
   },
 });

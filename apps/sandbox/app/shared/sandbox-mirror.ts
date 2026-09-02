@@ -1,5 +1,6 @@
 import { isBoolean, isNumber, isString } from '@videojs/utils/predicate';
 
+import { findMediaElement, type MediaLike } from './media-element';
 import { parseFlag, readFlag, subscribe, subscribeMessage } from './sandbox-listener';
 
 /** The playback state one compare panel reports and the other applies. Moves state, not coordinates. */
@@ -19,9 +20,6 @@ interface MirroredTextTrack {
   readonly mode: TextTrackMode;
 }
 
-/** A native media element or a custom one that speaks its API, such as `<mux-video>`. */
-type MediaLike = HTMLMediaElement;
-
 const EVENTS = ['play', 'pause', 'seeked', 'volumechange', 'ratechange'] as const;
 const TEXT_TRACK_MODES: readonly TextTrackMode[] = ['disabled', 'hidden', 'showing'];
 /** Seeks closer than this are the drift of two players running, not a seek worth mirroring. */
@@ -32,21 +30,6 @@ let media: MediaLike | undefined;
 let unbind: (() => void) | undefined;
 let applying = false;
 let lastReported = '';
-
-function isMediaLike(element: Element): element is MediaLike {
-  return 'currentTime' in element && 'paused' in element && 'play' in element && typeof element.play === 'function';
-}
-
-/** The page's media element: native, or the custom element wrapping one, wherever the skin put it. */
-function findMedia(): MediaLike | undefined {
-  for (const element of document.querySelectorAll('*')) {
-    if (element.localName.startsWith('media-')) continue;
-
-    if (isMediaLike(element)) return element;
-  }
-
-  return undefined;
-}
 
 function snapshot(element: MediaLike): MirroredState {
   return {
@@ -159,10 +142,10 @@ function parseState(data: Record<string, unknown>): MirroredState | undefined {
 export function installSandboxMirror(): void {
   if (window.parent === window) return;
 
-  const observer = new MutationObserver(() => bind(findMedia()));
+  const observer = new MutationObserver(() => bind(findMediaElement()));
 
   observer.observe(document.documentElement, { childList: true, subtree: true });
-  bind(findMedia());
+  bind(findMediaElement());
 
   subscribe('mirror', parseFlag, (value) => {
     enabled = value;

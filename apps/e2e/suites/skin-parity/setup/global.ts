@@ -1,42 +1,50 @@
+import { resolve } from 'node:path';
+
 import type { FullConfig } from '@playwright/test';
 
-/** Dynamic skin imports as Vite rewrites them inside the served playground loader. */
+/** Dynamic skin imports as Vite rewrites them inside the served authored-skin loaders. */
 const SKIN_MODULE = /import\("([^"]+\/skin\.tsx\?[^"]+)"\)/g;
-/** Dynamic imports in the served playground entry: the framework players and the Tailwind stylesheet. */
-const ENTRY_MODULE = /import\("([^"]+)"\)/g;
 const CONCURRENCY = 4;
+const workspaceDir = resolve(import.meta.dirname, '../../../../..');
+const sandboxAppDir = resolve(workspaceDir, 'apps/sandbox/app');
+/** The template pages the parity cases open, one per player. */
+const TEMPLATE_ENTRIES = [
+  '/html-video/main.ts',
+  '/react-video/main.tsx',
+  '/html-mux-video/main.ts',
+  '/react-mux-video/main.tsx',
+  '/html-audio/main.ts',
+  '/react-audio/main.tsx',
+  '/html-mux-audio/main.ts',
+  '/react-mux-audio/main.tsx',
+];
 
 /**
- * Compile every authored skin, framework player, and the Tailwind entry before the first case runs. Cold VJSC and
- * Tailwind transforms otherwise land inside test timeouts, and parallel workers would race the same compilations. The
- * URLs come from the served modules, so the warm-up follows whatever Vite rewrites the imports to.
+ * Compile every authored skin, the template entries, and the authored Tailwind entry before the first case runs. Cold
+ * VJSC and Tailwind transforms otherwise land inside test timeouts, and parallel workers would race the same
+ * compilations. The skin URLs come from the served loader module, so the warm-up follows whatever Vite rewrites the
+ * imports to.
  */
 export default async function setup(config: FullConfig): Promise<void> {
   const baseURL = config.projects.find((project) => project.use.baseURL)?.use.baseURL;
-  if (!baseURL) throw new Error('Skin parity needs a project `baseURL` to warm the playground.');
+  if (!baseURL) throw new Error('Skin parity needs a project `baseURL` to warm the sandbox.');
 
   const started = performance.now();
-  const [loaders, entry] = await Promise.all([fetchText(baseURL, '/loaders.ts'), fetchText(baseURL, '/main.tsx')]);
+  const loaders = await fetchText(baseURL, `/@fs${resolve(sandboxAppDir, 'shared/authored-skins.ts')}`);
   const skins = [...loaders.matchAll(SKIN_MODULE)].map((match) => match[1]!);
-  const entries = [...entry.matchAll(ENTRY_MODULE)].map((match) => match[1]!);
-  // Vite appends cache-busting queries after hot updates, so classify each URL by its path.
-  const isStylesheet = (url: string) => new URL(url, baseURL).pathname.endsWith('.css');
-  const stylesheets = entries.filter(isStylesheet);
-  const players = entries.filter((url) => !isStylesheet(url));
+  if (skins.length === 0) throw new Error('Could not find the authored skin modules to warm.');
 
-  if (skins.length === 0 || stylesheets.length === 0) throw new Error('Could not find the playground modules to warm.');
-
-  await inBatches([...skins, ...players], async (url) => {
+  await inBatches([...skins, ...TEMPLATE_ENTRIES], async (url) => {
     await fetchText(baseURL, url);
   });
   // Tailwind compiles against the candidates every skin module recorded above, so it goes last.
-  await inBatches(stylesheets, async (url) => {
-    await fetchText(baseURL, url);
-  });
+  await fetchText(baseURL, `/@fs${resolve(sandboxAppDir, 'styles.authored.css')}`);
 
   const seconds = ((performance.now() - started) / 1000).toFixed(1);
 
-  console.log(`Warmed ${skins.length} skin modules, ${players.length} players, and Tailwind in ${seconds}s.`);
+  console.log(
+    `Warmed ${skins.length} skin modules, ${TEMPLATE_ENTRIES.length} templates, and Tailwind in ${seconds}s.`
+  );
 }
 
 async function fetchText(baseURL: string, path: string): Promise<string> {
