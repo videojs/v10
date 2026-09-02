@@ -19,7 +19,7 @@ document.documentElement.dataset.colorScheme = preview.colorScheme;
 
 const Skin = await loadSkin(preview);
 
-if (preview.styleMode === 'tailwind') await import('../src/styles/tailwind.compiler.css');
+if (preview.styleMode === 'tailwind') await import('../src/styles/tailwind.dev.css');
 
 type PreviewRoot = HTMLElement & { __videojsSkinsReactRoot?: ReturnType<typeof createRoot> };
 

@@ -39,6 +39,7 @@ export const skinBuildConfig: PackUserConfig = {
         components: resolveBuildComponents,
         styles: resolveBuildStyles,
       },
+      candidates: resolve(packageDir, 'src/styles/candidates.generated.css'),
     }),
     ...registryTargets.map((target) =>
       vjscRegistryPlugin({

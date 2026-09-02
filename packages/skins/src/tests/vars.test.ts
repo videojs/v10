@@ -15,6 +15,7 @@ describe('vars', () => {
           entry.isFile() &&
           /\.(?:css|ts|tsx)$/.test(entry.name) &&
           entry.name !== 'vars.ts' &&
+          !entry.name.includes('.generated.') &&
           !entry.parentPath.includes('/src/tests')
       )
       .map((entry) => resolve(entry.parentPath, entry.name));
@@ -33,7 +34,13 @@ describe('vars', () => {
     const stylesRoot = resolve(import.meta.dirname, '../styles');
     const entries = await readdir(stylesRoot, { recursive: true, withFileTypes: true });
     const files = entries
-      .filter((entry) => entry.isFile() && /\.(?:css|ts)$/.test(entry.name) && entry.name !== 'vars.ts')
+      .filter(
+        (entry) =>
+          entry.isFile() &&
+          /\.(?:css|ts)$/.test(entry.name) &&
+          entry.name !== 'vars.ts' &&
+          !entry.name.includes('.generated.')
+      )
       .map((entry) => resolve(entry.parentPath, entry.name));
     const customProperties = new Set<string>();
 

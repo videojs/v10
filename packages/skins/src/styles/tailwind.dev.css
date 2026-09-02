@@ -1,0 +1,4 @@
+@import "./tailwind.compiler.css";
+@import "./candidates.generated.css";
+
+@source "../**/*.tsx";

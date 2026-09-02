@@ -7,9 +7,6 @@
 @import "./themes/audio.css";
 @import "./tailwind.shared.css";
 
-@source "../**/*.tsx";
-@source "../**/*.styles.ts";
-
 @theme inline {
   --spacing: var(--media-spacing);
 }

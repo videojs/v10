@@ -50,6 +50,7 @@ packages/core/src/core/ui/schema.generated.ts
 packages/html/vjsc/entries.generated.ts
 packages/icons/vjsc/schema.generated.ts
 packages/react/vjsc/entries.generated.ts
+packages/skins/src/styles/candidates.generated.css
 packages/skins/vjsc/registry/
 # Framework Skin sources are generated from the canonical VJSC component graph.
 packages/html/src/presets/background/skin.ts
