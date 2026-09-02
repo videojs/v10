@@ -6,7 +6,7 @@ description: Hook to observe every cue on a text track
 import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
 import DocsLink from "@/components/docs/DocsLink.astro";
 
-`useTextCues` returns a fresh array containing every cue on a text track. It updates when cues change, a native `<track>` finishes loading, or the media starts loading a new source.
+`useTextCues` returns a fresh array containing every cue on a text track. It updates on native `cuechange`, when a native `<track>` finishes loading, when the media starts loading a new source, and when cues are written through <DocsLink slug="reference/use-create-text-track">`useCreateTextTrack`</DocsLink>. Cues added directly with the native `TextTrack.addCue()` do not fire an event and are picked up at the next refresh.
 
 ## Import
 

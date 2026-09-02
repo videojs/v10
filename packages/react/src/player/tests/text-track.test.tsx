@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { createMockStore } from '../../testing/mocks';
 import { PlayerContextProvider, type PlayerContextValue } from '../context';
-import { useActiveTextCues, useActiveTextTrack, useTextCues, useTextTrack } from '../text-track';
+import { useActiveTextCues, useActiveTextTrack, useCreateTextTrack, useTextCues } from '../text-track';
 
 class FakeTextTrack extends EventTarget implements TextTrackLike {
   readonly id = '';
@@ -98,17 +98,17 @@ function createWrapper(media: FakeMedia) {
 
 afterEach(cleanup);
 
-describe('useTextTrack', () => {
+describe('useCreateTextTrack', () => {
   it('creates a track for the component lifetime', () => {
     const media = new FakeMedia();
-    const { result, unmount } = renderHook(() => useTextTrack({ kind: 'metadata', label: 'Ads' }), {
+    const { result, unmount } = renderHook(() => useCreateTextTrack({ kind: 'metadata', label: 'Ads' }), {
       wrapper: createWrapper(media),
     });
 
-    expect(result.current).toMatchObject({ kind: 'metadata', label: 'Ads', mode: 'hidden' });
+    expect(result.current?.track).toMatchObject({ kind: 'metadata', label: 'Ads', mode: 'hidden' });
     expect(media.textTracks.length).toBe(1);
 
-    const track = result.current;
+    const track = result.current?.track;
 
     unmount();
 
@@ -118,17 +118,41 @@ describe('useTextTrack', () => {
 
   it('replaces the owned track when its options change', () => {
     const media = new FakeMedia();
-    const { result, rerender } = renderHook(({ kind }: { kind: TextTrackKind }) => useTextTrack({ kind }), {
+    const { result, rerender } = renderHook(({ kind }: { kind: TextTrackKind }) => useCreateTextTrack({ kind }), {
       initialProps: { kind: 'metadata' },
       wrapper: createWrapper(media),
     });
-    const first = result.current;
+    const first = result.current?.track;
 
     rerender({ kind: 'chapters' });
 
     expect(first?.mode).toBe('disabled');
-    expect(result.current).toMatchObject({ kind: 'chapters', mode: 'hidden' });
+    expect(result.current?.track).toMatchObject({ kind: 'chapters', mode: 'hidden' });
     expect(media.textTracks.length).toBe(1);
+  });
+
+  it('refreshes cue observers when cues are written through the handle', () => {
+    const media = new FakeMedia();
+    const cue = { startTime: 0, endTime: 1 };
+    const { result } = renderHook(
+      () => {
+        const created = useCreateTextTrack({ kind: 'metadata' });
+        const cues = useTextCues(created?.track ?? null);
+
+        return { created, cues };
+      },
+      { wrapper: createWrapper(media) }
+    );
+
+    expect(result.current.cues).toEqual([]);
+
+    act(() => result.current.created?.addCue(cue));
+
+    expect(result.current.cues).toEqual([cue]);
+
+    act(() => result.current.created?.removeCue(cue));
+
+    expect(result.current.cues).toEqual([]);
   });
 });
 
@@ -155,6 +179,20 @@ describe('useActiveTextTrack', () => {
     });
 
     expect(result.current).toBeNull();
+  });
+
+  it('keeps one subscription across renders with an inline kind array', () => {
+    const media = new FakeMedia();
+    const addEventListener = vi.spyOn(media.textTracks, 'addEventListener');
+    const { rerender } = renderHook(() => useActiveTextTrack(['captions', 'subtitles']), {
+      wrapper: createWrapper(media),
+    });
+    const initialCalls = addEventListener.mock.calls.length;
+
+    rerender();
+    rerender();
+
+    expect(addEventListener.mock.calls.length).toBe(initialCalls);
   });
 });
 

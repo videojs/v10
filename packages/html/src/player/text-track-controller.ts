@@ -2,9 +2,11 @@ import type { ReactiveController, ReactiveControllerHost } from '@videojs/elemen
 import { ContextConsumer } from '@videojs/element/context';
 import { isMediaTextTrackCapable, type Media, type TextCueLike, type TextTrackLike } from '@videojs/media';
 import {
+  addTextTrackCue,
   type CreateTextTrackOptions,
   createTextTrack,
   getTextTrackCues,
+  removeTextTrackCue,
   type TextTrackHandle,
   type TextTrackKindFilter,
   watchActiveTextTrack,
@@ -99,16 +101,16 @@ export class TextTrackController implements ReactiveController {
     return this.#activeCues;
   }
 
-  /** Add a cue to the current track and refresh the controller snapshots. */
+  /** Add a cue to the current track. Every observer of the track, including this controller, refreshes. */
   addCue(cue: TextCueLike): void {
-    this.#track?.addCue?.(cue);
-    this.#syncCues();
+    if (this.#handle) this.#handle.addCue(cue);
+    else if (this.#track) addTextTrackCue(this.#track, cue);
   }
 
-  /** Remove a cue from the current track and refresh the controller snapshots. */
+  /** Remove a cue from the current track. Every observer of the track, including this controller, refreshes. */
   removeCue(cue: TextCueLike): void {
-    this.#track?.removeCue?.(cue);
-    this.#syncCues();
+    if (this.#handle) this.#handle.removeCue(cue);
+    else if (this.#track) removeTextTrackCue(this.#track, cue);
   }
 
   hostConnected(): void {

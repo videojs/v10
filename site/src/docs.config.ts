@@ -236,7 +236,7 @@ export const sidebar: Sidebar = [
           { slug: 'reference/use-player', frameworks: ['react'] },
           { slug: 'reference/use-media', frameworks: ['react'] },
           { slug: 'reference/use-container', frameworks: ['react'] },
-          { slug: 'reference/use-text-track', frameworks: ['react'] },
+          { slug: 'reference/use-create-text-track', frameworks: ['react'] },
           { slug: 'reference/use-active-text-track', frameworks: ['react'] },
           { slug: 'reference/use-text-cues', frameworks: ['react'] },
           { slug: 'reference/use-active-text-cues', frameworks: ['react'] },

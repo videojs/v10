@@ -1,32 +1,48 @@
-import { isMediaTextTrackCapable, type Media, type TextCueLike, type TextTrackLike } from '@videojs/media';
+import {
+  isMediaTextTrackCapable,
+  type Media,
+  type TextCueLike,
+  type TextTrackKind,
+  type TextTrackLike,
+} from '@videojs/media';
 import {
   type CreateTextTrackOptions,
   createTextTrack,
   getActiveTextTrack,
   getTextTrackCues,
+  type TextTrackHandle,
   type TextTrackKindFilter,
   watchActiveTextTrack,
   watchTextTrackCues,
 } from '@videojs/media/dom';
 import { noop } from '@videojs/utils/function';
+import { isString } from '@videojs/utils/predicate';
 import { useCallback, useMemo, useSyncExternalStore } from 'react';
 
 import { useMedia } from './context';
 
-export type UseTextTrackOptions = CreateTextTrackOptions;
+export type UseCreateTextTrackOptions = CreateTextTrackOptions;
+
+/**
+ * A text track owned by a component, with cue writers that keep `useTextCues` and `useActiveTextCues` observers in
+ * sync.
+ */
+export type CreatedTextTrack = Omit<TextTrackHandle, 'destroy'>;
 
 /**
  * Create a programmatic native text track owned by the calling component.
  *
- * The track follows the current player media and is removed when the component unmounts or the options change.
+ * The track follows the current player media and is removed when the component unmounts or the options change. Add and
+ * remove cues through the returned `addCue` and `removeCue` so cue observers refresh; native `TextTrack.addCue()` fires
+ * no event.
  *
  * @param options - Track metadata and initial mode.
  */
-export function useTextTrack(options: UseTextTrackOptions): TextTrackLike | null {
+export function useCreateTextTrack(options: UseCreateTextTrackOptions): CreatedTextTrack | null {
   const media = useMedia();
   const { kind, label, language, mode } = options;
   const store = useMemo(
-    () => createManagedTextTrackStore(media, { kind, label, language, mode }),
+    () => createOwnedTextTrackStore(media, { kind, label, language, mode }),
     [media, kind, label, language, mode]
   );
 
@@ -43,17 +59,19 @@ export function useTextTrack(options: UseTextTrackOptions): TextTrackLike | null
  */
 export function useActiveTextTrack(kind: TextTrackKindFilter): TextTrackLike | null {
   const media = useMedia();
+  const key = isString(kind) ? kind : kind.join(',');
+  const kinds = useMemo(() => key.split(',') as TextTrackKind[], [key]);
   const subscribe = useCallback(
     (onChange: () => void) => {
       if (!isMediaTextTrackCapable(media)) return noop;
 
-      return watchActiveTextTrack(media, kind, onChange);
+      return watchActiveTextTrack(media, kinds, onChange);
     },
-    [media, kind]
+    [media, kinds]
   );
   const getSnapshot = useCallback(
-    () => (isMediaTextTrackCapable(media) ? getActiveTextTrack(media, kind) : null),
-    [media, kind]
+    () => (isMediaTextTrackCapable(media) ? getActiveTextTrack(media, kinds) : null),
+    [media, kinds]
   );
 
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
@@ -62,8 +80,8 @@ export function useActiveTextTrack(kind: TextTrackKindFilter): TextTrackLike | n
 /**
  * Observe all cues on a text track.
  *
- * The returned array is replaced when the native track emits a cue change, its `<track>` element loads, or its media
- * source starts loading.
+ * The returned array is replaced when the native track emits a cue change, its `<track>` element loads, its media
+ * source starts loading, or cues are added or removed through a `CreatedTextTrack` or `addTextTrackCue()`.
  *
  * @param track - Text track to observe, or `null` when unavailable.
  */
@@ -92,24 +110,24 @@ interface TextCueStore {
   subscribe(onChange: () => void): () => void;
 }
 
-interface ManagedTextTrackStore {
-  getSnapshot(): TextTrackLike | null;
+interface OwnedTextTrackStore {
+  getSnapshot(): CreatedTextTrack | null;
   subscribe(onChange: () => void): () => void;
 }
 
-function createManagedTextTrackStore(media: Media | null, options: CreateTextTrackOptions): ManagedTextTrackStore {
-  let handle: ReturnType<typeof createTextTrack> = null;
-  let track: TextTrackLike | null = null;
+function createOwnedTextTrackStore(media: Media | null, options: CreateTextTrackOptions): OwnedTextTrackStore {
+  let handle: TextTrackHandle | null = null;
+  let snapshot: CreatedTextTrack | null = null;
   const subscribers = new Set<() => void>();
 
   return {
-    getSnapshot: () => track,
+    getSnapshot: () => snapshot,
     subscribe(onChange) {
       subscribers.add(onChange);
 
       if (subscribers.size === 1 && isMediaTextTrackCapable(media)) {
         handle = createTextTrack(media, options);
-        track = handle?.track ?? null;
+        snapshot = handle ? { track: handle.track, addCue: handle.addCue, removeCue: handle.removeCue } : null;
 
         for (const subscriber of subscribers) subscriber();
       }
@@ -121,7 +139,7 @@ function createManagedTextTrackStore(media: Media | null, options: CreateTextTra
 
         handle?.destroy();
         handle = null;
-        track = null;
+        snapshot = null;
       };
     },
   };

@@ -15,7 +15,7 @@ describe('@videojs/react player exports', () => {
   });
 
   it('exports the text track hooks', () => {
-    expect(ReactApi).toHaveProperty('useTextTrack');
+    expect(ReactApi).toHaveProperty('useCreateTextTrack');
     expect(ReactApi).toHaveProperty('useActiveTextTrack');
     expect(ReactApi).toHaveProperty('useTextCues');
     expect(ReactApi).toHaveProperty('useActiveTextCues');
