@@ -14,6 +14,16 @@ import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
 import { UIElement } from '../ui-element';
 
+const SHADOW_CSS = `\
+:host {
+  display: inline-block;
+  overflow: hidden;
+}
+img,
+::slotted(img) {
+  display: block;
+}`;
+
 /** What an element composes: whatever fills a slot, or the element's own children. */
 function composedChildren(element: Element): Element[] {
   if (element instanceof HTMLSlotElement) {
@@ -36,11 +46,24 @@ function findImage(element: Element): HTMLImageElement | null {
   return null;
 }
 
+/** The image the element draws when none is supplied, reachable from outside as `::part(image)`. */
+function createFallbackImage(): HTMLImageElement {
+  const img = document.createElement('img');
+
+  img.alt = '';
+  img.setAttribute('part', 'image');
+  img.setAttribute('aria-hidden', 'true');
+  img.setAttribute('decoding', 'async');
+
+  return img;
+}
+
 /**
- * `<media-thumbnail>` — resolves and sizes a time-based thumbnail into an image supplied as a child.
+ * `<media-thumbnail>` — resolves and sizes a time-based thumbnail into an image.
  *
- * The element owns `src` and `srcset` on the active image. It renders no image of its own, so include one:
- * `<media-thumbnail time="12"><img alt=""></media-thumbnail>`.
+ * The element owns `src` and `srcset` on the active image. Left empty, it draws an image of its own in its shadow root.
+ * Supply an `<img>` child instead — `<media-thumbnail time="12"><img alt=""></media-thumbnail>` — to compose overlays
+ * or loading indicators beside the image the element controls.
  */
 export class ThumbnailElement extends UIElement {
   static readonly tagName = 'media-thumbnail';
@@ -58,6 +81,8 @@ export class ThumbnailElement extends UIElement {
   fetchPriority: ThumbnailCore.Props['fetchPriority'];
 
   readonly #core = new ThumbnailCore();
+  readonly #shadow = this.attachShadow({ mode: 'open' });
+  readonly #fallback = createFallbackImage();
   readonly #children = new MutationObserver(() => this.requestUpdate());
   readonly #textTracks = new PlayerController(this, playerContext, selectTextTrack);
 
@@ -66,7 +91,15 @@ export class ThumbnailElement extends UIElement {
   #externalThumbnails: ThumbnailImage[] | undefined;
   #lastTextTrack: MediaTextTrackState | undefined;
   #api: ThumbnailApi | null = null;
-  #warnedMissingImage = false;
+
+  constructor() {
+    super();
+
+    const style = document.createElement('style');
+
+    style.textContent = SHADOW_CSS;
+    this.#shadow.append(style, document.createElement('slot'), this.#fallback);
+  }
 
   /**
    * Set thumbnail images directly, bypassing the automatic `<track>` detection. When set, this takes priority over the
@@ -130,21 +163,19 @@ export class ThumbnailElement extends UIElement {
     }
 
     const thumbnail = this.#core.findActiveThumbnail(this.#thumbnails, this.time);
-    const img = findImage(this);
+    const img = findImage(this) ?? this.#fallback;
 
     this.#adopt(img);
 
     // Sync img attributes from element properties.
-    if (img) {
-      applyElementProps(img, {
-        crossorigin: this.#core.resolveCrossOrigin(this.crossOrigin, this.#inheritedCrossOrigin(textTrack)),
-        loading: this.loading,
-        fetchpriority: this.fetchPriority,
-      });
-    }
+    applyElementProps(img, {
+      crossorigin: this.#core.resolveCrossOrigin(this.crossOrigin, this.#inheritedCrossOrigin(textTrack)),
+      loading: this.loading,
+      fetchpriority: this.fetchPriority,
+    });
 
     // Track src changes via the thumbnail API.
-    this.#api?.updateSrc(img ? thumbnail?.url : undefined);
+    this.#api?.updateSrc(thumbnail?.url);
     this.#applySource(thumbnail?.url);
     this.#api?.connect();
 
@@ -224,6 +255,11 @@ export class ThumbnailElement extends UIElement {
 
     this.#img = next;
 
+    // The fallback only occupies the shadow root while it is the active image,
+    // so a supplied image never sits beside a hidden one.
+    if (next === this.#fallback) this.#shadow.append(this.#fallback);
+    else if (next) this.#fallback.remove();
+
     // Reset the request even when the next image will receive the same URL. A
     // replacement image is a new download with its own lifecycle.
     this.#api?.updateSrc(undefined);
@@ -231,18 +267,7 @@ export class ThumbnailElement extends UIElement {
 
   #applySource(src: string | undefined): void {
     const img = this.#img;
-
-    if (!img) {
-      if (__DEV__ && src && !this.#warnedMissingImage) {
-        this.#warnedMissingImage = true;
-        console.warn(
-          `<${this.localName}> resolved a thumbnail but has no image to put it in. ` +
-            `Add one as a child: <${this.localName}><img alt=""></${this.localName}>`
-        );
-      }
-
-      return;
-    }
+    if (!img) return;
 
     // A srcset candidate wins over src, so the root has to clear both parts of
     // the source contract before applying the selected thumbnail URL.

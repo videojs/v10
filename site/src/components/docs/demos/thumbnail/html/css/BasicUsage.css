@@ -14,14 +14,9 @@
 
 .media-thumbnail {
   display: block;
-  overflow: hidden;
   width: auto;
   min-width: 0;
   max-width: 240px;
-}
-
-.media-thumbnail-img {
-  display: block;
 }
 
 .media-thumbnail[data-hidden] {

@@ -68,9 +68,7 @@ That track is cross-origin, and a cross-origin `<track>` only loads when the med
       default
     />
   </video>
-  <media-thumbnail time="12">
-    <img alt="" decoding="async" />
-  </media-thumbnail>
+  <media-thumbnail time="12"></media-thumbnail>
   ```
 </FrameworkCase>
 
@@ -96,6 +94,8 @@ A same-origin track needs none of this.
     <img alt="" decoding="async" />
   </media-thumbnail>
   ```
+
+  The `<img>` is optional. Leave it out and the element draws one of its own in its shadow DOM.
 </FrameworkCase>
 
 ## Behavior
@@ -156,9 +156,14 @@ media-thumbnail[data-loading] {
 media-thumbnail[data-error] {
   outline: 1px solid #ef4444;
 }
+```
 
+The image the element draws is exposed as a part. An `<img>` you supply is an ordinary child, so style it as a descendant:
+
+```css
+media-thumbnail::part(image),
 media-thumbnail > img {
-  display: block;
+  border-radius: 4px;
 }
 ```
 </FrameworkCase>
