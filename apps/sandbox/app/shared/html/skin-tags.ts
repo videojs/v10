@@ -19,3 +19,8 @@ export function packageSkinTag(preset: SkinPreset, skin: Skin): string {
 export function registrySkinTag(preset: SkinPreset, skin: Skin): string {
   return `${packageSkinTag(preset, skin)}-tailwind`;
 }
+
+/** The element the sandbox defines around a compiled authored skin, one per styling since each is its own module. */
+export function authoredSkinTag(preset: SkinPreset, skin: Skin, styling: 'css' | 'tailwind'): string {
+  return `${packageSkinTag(preset, skin)}-authored-${styling}`;
+}

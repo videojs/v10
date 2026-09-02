@@ -53,10 +53,31 @@ const registrySkins = {
     ]),
 } satisfies Record<`${SkinPreset}/${Skin}`, SkinLoader>;
 
-function defineRegistrySkin(tagName: string, source: string): string {
+/** A skin shipped as markup: where the page's media goes, and where a slotted poster image goes. */
+export interface SkinTemplate {
+  readonly markup: string;
+  /** The node the media element replaces. */
+  readonly media: (container: HTMLElement) => ChildNode | null;
+  /** The node a slotted poster replaces, or that is unwrapped to its own children when none is slotted. */
+  readonly poster: (container: HTMLElement) => Element | null;
+}
+
+/** The registry rewrites the media slot into a comment and renders the poster's fallback image in place. */
+const registryTemplate = (markup: string): SkinTemplate => ({
+  markup,
+  media: findMediaMarker,
+  poster: (container) => container.querySelector('media-poster img'),
+});
+
+/**
+ * Define an element that stamps a skin template around its own children: the media element takes the template's media
+ * position, an `<img slot="poster">` child takes the poster's, and the container's classes and attributes move onto the
+ * host so the page's frame classes still apply.
+ */
+export function defineTemplateSkin(tagName: string, source: SkinTemplate): string {
   if (customElements.get(tagName)) return tagName;
 
-  class SandboxRegistrySkinElement extends ContainerElement {
+  class SandboxTemplateSkinElement extends ContainerElement {
     #rendered = false;
 
     override connectedCallback(): void {
@@ -71,16 +92,16 @@ function defineRegistrySkin(tagName: string, source: string): string {
 
       const template = document.createElement('template');
 
-      template.innerHTML = source;
+      template.innerHTML = source.markup;
 
       const container = template.content.firstElementChild;
 
       if (!(container instanceof HTMLElement) || container.localName !== 'media-container') {
-        throw new Error(`Registry skin ${tagName} has no media-container root.`);
+        throw new Error(`Skin ${tagName} has no media-container root.`);
       }
 
-      const marker = findMediaMarker(container);
-      if (!marker) throw new Error(`Registry skin ${tagName} has no media marker.`);
+      const marker = source.media(container);
+      if (!marker) throw new Error(`Skin ${tagName} has no place for the media element.`);
 
       const poster = this.querySelector(':scope > [slot="poster"]');
 
@@ -90,9 +111,13 @@ function defineRegistrySkin(tagName: string, source: string): string {
 
       marker.remove();
 
+      const posterTarget = source.poster(container);
+
       if (poster instanceof HTMLImageElement) {
         poster.removeAttribute('slot');
-        container.querySelector('media-poster img')?.replaceWith(poster);
+        posterTarget?.replaceWith(poster);
+      } else if (posterTarget instanceof HTMLSlotElement) {
+        posterTarget.replaceWith(...posterTarget.childNodes);
       }
 
       container.classList.add(...this.classList);
@@ -110,7 +135,7 @@ function defineRegistrySkin(tagName: string, source: string): string {
     }
   }
 
-  customElements.define(tagName, SandboxRegistrySkinElement);
+  customElements.define(tagName, SandboxTemplateSkinElement);
   return tagName;
 }
 
@@ -134,5 +159,5 @@ export async function loadRegistrySkinTag(preset: SkinPreset, skin: Skin): Promi
 
   const [module] = await registrySkins[`${preset}/${skin}`]();
 
-  return defineRegistrySkin(tagName, module.default);
+  return defineTemplateSkin(tagName, registryTemplate(module.default));
 }

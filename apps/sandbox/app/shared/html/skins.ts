@@ -36,6 +36,12 @@ async function loadRegistrySkin({ skin }: HtmlSkinRequest, preset: SkinPreset): 
   return loadRegistrySkinTag(preset, skin);
 }
 
+async function loadAuthoredSkin({ skin, styling }: HtmlSkinRequest, preset: SkinPreset): Promise<string> {
+  const { loadAuthoredHtmlSkinTag } = await import('./authored-skins');
+
+  return loadAuthoredHtmlSkinTag(preset, skin, styling);
+}
+
 /**
  * Loads and registers the skin a page asked for and returns its custom element tag name. The html registry publishes
  * one CSS flavour, so its `styling` is not consulted; the packages ship CSS only.
@@ -49,6 +55,6 @@ export function loadHtmlSkinTag(request: HtmlSkinRequest): Promise<string> {
     case 'registry':
       return loadRegistrySkin(request, preset);
     case 'authored':
-      return Promise.reject(new Error('Authored skins are compiled from the workspace; see `authored-skins.ts`.'));
+      return loadAuthoredSkin(request, preset);
   }
 }

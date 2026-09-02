@@ -118,8 +118,12 @@ async function loadSkinComponent<Props>(request: SkinRequest): Promise<Component
     }
     case 'registry':
       return pickComponent(await registrySkins[styling][key](), registryComponents[key], key);
-    case 'authored':
-      throw new Error('Authored skins are compiled from the workspace; see `authored-skins.ts`.');
+    case 'authored': {
+      const { authoredExportName, loadAuthoredSkinModule } = await import('@app/shared/authored-skins');
+      const module = await loadAuthoredSkinModule('react', preset, skin, styling);
+
+      return pickComponent(module, authoredExportName(preset, skin), key);
+    }
   }
 }
 

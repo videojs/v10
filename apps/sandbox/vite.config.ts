@@ -21,6 +21,15 @@ const cdnSandboxMainSrc = resolve(__dirname, 'src/cdn/main.ts');
 const cdnSandboxMainTemplate = resolve(__dirname, 'templates/cdn/main.ts');
 const hasWorkspaceSkins = existsSync(resolve(__dirname, '../../packages/skins/package.json'));
 
+// Inside the workspace the skins' Vite preset compiles authored skins on request, straight from `packages/skins/src`.
+// It is imported lazily because nothing outside the workspace has it. Its `vjsc` dedupe entry is dropped because the
+// sandbox does not depend on the compiler; the icons and skins packages already share one copy through the store.
+const skinsSource = hasWorkspaceSkins
+  ? await import('../../packages/skins/build/vite.ts').then(({ createSkinsSourceConfig }) =>
+      createSkinsSourceConfig({ tailwind: true, frameworks: 'package' })
+    )
+  : undefined;
+
 /** True when the importer is one of the prebuilt @videojs/html CDN chunks. */
 function isHtmlCdnChunk(importer?: string): boolean {
   return importer !== undefined && normalizePath(importer).startsWith(`${htmlCdnDir}/`);
@@ -193,6 +202,7 @@ export default defineConfig({
   root: 'src',
   appType: 'mpa',
   define: {
+    __DEV__: 'true',
     __WORKSPACE_SKINS__: JSON.stringify(hasWorkspaceSkins),
   },
   test: {
@@ -201,7 +211,16 @@ export default defineConfig({
     include: ['app/tests/**/*.test.ts'],
     environment: 'node',
   },
-  plugins: [sandboxTemplateSyncPlugin(), cdnSandboxI18nPlugin(), tailwindcss(), react(), serveAppShell()],
+  plugins: [
+    sandboxTemplateSyncPlugin(),
+    cdnSandboxI18nPlugin(),
+    ...(skinsSource?.plugins ?? []),
+    tailwindcss(),
+    // Explicit, because a compiled authored module with nothing left to lower keeps its JSX, and the nearest tsconfig
+    // under `packages/skins/src` would otherwise send that JSX to the compiler's own runtime.
+    react({ jsxImportSource: 'react' }),
+    serveAppShell(),
+  ],
   resolve: {
     alias: {
       '@': resolve(__dirname, 'app/_generated'),
@@ -212,7 +231,17 @@ export default defineConfig({
       ...(existsSync(cdnSandboxMainTemplate) ? { [cdnSandboxMainSrc]: cdnSandboxMainTemplate } : {}),
     },
     conditions: ['development', 'import', 'module', 'browser', 'default'],
-    dedupe: ['@videojs/core', '@videojs/html', '@videojs/icons', '@videojs/utils', 'react', 'react-dom'],
+    // Authored skins import the framework packages from inside `packages/skins`, which depends on neither; dedupe
+    // resolves them from here, which is also what keeps one copy of each in the page.
+    dedupe: [
+      '@videojs/core',
+      '@videojs/html',
+      '@videojs/icons',
+      '@videojs/react',
+      '@videojs/utils',
+      'react',
+      'react-dom',
+    ],
   },
   optimizeDeps: {
     // The Sandbox can load every media adapter and generated React skin. Prebundle their runtime dependencies before
@@ -228,7 +257,15 @@ export default defineConfig({
       'react/jsx-dev-runtime',
       'react/jsx-runtime',
     ],
-    exclude: ['@videojs/core', '@videojs/html', '@videojs/react', '@videojs/spf', '@videojs/store', '@videojs/utils'],
+    exclude: [
+      '@videojs/core',
+      '@videojs/html',
+      '@videojs/react',
+      '@videojs/spf',
+      '@videojs/store',
+      '@videojs/utils',
+      ...(skinsSource?.optimizeDeps.exclude ?? []),
+    ],
     noDiscovery: true,
   },
   server: {
