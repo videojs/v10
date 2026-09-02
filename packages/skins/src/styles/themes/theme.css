@@ -1,5 +1,7 @@
 @layer base.theme {
+  /* Default theme tokens. Minimal, preset, and preference files override these in later layers. */
   .media-skin {
+    /* Colors. */
     --media-background: oklch(0 0 0);
     --media-foreground: oklch(1 0 0);
     --media-controls: oklch(0 0 0 / 0.35);
@@ -22,6 +24,8 @@
     --media-ring: oklch(1 0 0);
     --media-scrim: oklch(0 0 0);
     --media-live-color: oklch(0.65 0.22 27);
+
+    /* Shadows and surfaces. */
     --media-shadow-sm: 0 1px 3px 0 oklch(0 0 0 / 0.15), 0 1px 2px -1px oklch(0 0 0 / 0.15);
     --media-thumb-shadow: 0 0 0 1px rgb(0 0 0 / 0.1), 0 1px 3px 0 rgb(0 0 0 / 0.35), 0 1px 2px -1px rgb(0 0 0 / 0.35);
     --media-dialog-text-shadow: 0 1px 0 rgb(0 0 0 / 0.25);
@@ -30,11 +34,14 @@
     --media-surface-backdrop-filter: blur(16px) saturate(150%);
     --media-surface-inset-shadow: inset 0 1px 0 0 rgb(255 255 255 / 0.1), inset 0 0 0 1px rgb(255 255 255 / 0.05);
 
+    /* Controls. */
     --media-control-corner-shape: round;
     --media-control-radius: calc(infinity * 1px);
     --media-control-size: calc(var(--media-spacing) * 9);
-    --media-controls-transition-duration: 100ms;
     --media-default-accent-color: oklch(1 0 0);
+
+    /* Motion. Preferences collapse durations and neutralize hidden-state values under reduced motion. */
+    --media-controls-transition-duration: 100ms;
     --media-duration-instant: 50ms;
     --media-duration-fast: 100ms;
     --media-duration: 150ms;
@@ -51,15 +58,21 @@
     --media-icon-hidden-scale: 0;
     --media-popup-hidden-scale: 0.95;
     --media-popup-hidden-blur: 4px;
+
+    /* Popups and menus. */
     --media-menu-item-border-radius: calc(var(--media-spacing) * 2);
     --media-menu-transition-duration: 250ms;
     --media-popover-boundary-offset: calc(var(--media-spacing) * 3);
     --media-popover-side-offset: calc(var(--media-spacing) * 3);
     --media-popup-radius: calc(var(--media-spacing) * 3);
     --media-popup-translate-distance: calc(var(--media-scale-unit, 16px) * 0.5);
-    --media-slider-preview-label-offset: calc(var(--media-spacing) * 12.5);
     --media-tooltip-boundary-offset: var(--media-popover-boundary-offset);
     --media-tooltip-side-offset: var(--media-popover-side-offset);
+
+    /* Sliders. */
+    --media-slider-preview-label-offset: calc(var(--media-spacing) * 12.5);
+
+    /* Player frame and scale. */
     --media-video-border-radius: var(--media-border-radius, 28px);
     --media-scale: 1;
     --media-scrollbar-thumb-color: oklch(from currentColor l c h / 0.3);

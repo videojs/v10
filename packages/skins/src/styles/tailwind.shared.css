@@ -1,196 +1,93 @@
+/* Tailwind theme keys and utilities shared by every Skin. Registry consumers receive this file as `cssVars.theme` and `css`. */
+
 @theme inline {
+  /* Colors alias the scoped `--media-*` tokens so `bg-media-popover` and friends follow the active Skin, preset, and preference. */
   --color-media-accent: var(--media-primary);
   --color-media-accent-text: var(--media-accent-foreground);
-
   --color-media-background: var(--media-background);
   --color-media-border: var(--media-border);
-
   --color-media-control-hover: var(--media-accent);
   --color-media-controls: var(--media-controls);
   --color-media-controls-foreground: var(--media-controls-foreground);
-
   --color-media-foreground: var(--media-foreground);
-
+  --color-media-live: var(--media-live-color);
   --color-media-muted: var(--media-muted);
   --color-media-muted-foreground: var(--media-muted-foreground);
-
   --color-media-popover: var(--media-popover);
   --color-media-popover-foreground: var(--media-popover-foreground);
-
   --color-media-primary: var(--media-primary);
   --color-media-primary-foreground: var(--media-primary-foreground);
-
   --color-media-ring: var(--media-ring);
   --color-media-scrim: var(--media-scrim);
-  --color-media-live: var(--media-live-color);
 
+  /* Player layout breakpoints, measured against the `media-root` container. */
   --container-media-compact: 32rem;
   --container-media-wide: 42rem;
 
+  /* Type scale in player spacing units so it grows with `--media-scale-unit`. */
   --text-media-xs: 0.7em;
   --text-media-sm: calc(var(--media-spacing) * 2.75);
   --text-media: calc(var(--media-spacing) * 3.25);
   --text-media-lg: calc(var(--media-spacing) * 3.75);
 
+  /* Icon and control sizes derived from `--media-icon-size` and `--media-control-size`. */
   --spacing-media-icon-sm: calc(var(--media-icon-size, calc(var(--media-spacing) * 4.5)) * 7 / 9);
   --spacing-media-icon: var(--media-icon-size, calc(var(--media-spacing) * 4.5));
   --spacing-media-icon-lg: calc(var(--media-icon-size, calc(var(--media-spacing) * 4.5)) * 1.5);
   --spacing-media-icon-xl: calc(var(--media-icon-size, calc(var(--media-spacing) * 4.5)) * 2);
-
   --spacing-media-control: var(--media-control-size);
 
+  /* Radii: controls follow the theme shape, popups follow the popup shape, pills stay round. */
   --radius-media-control: var(--media-control-radius);
   --radius-media-pill: 9999px;
   --radius-media-popup: var(--media-popup-radius);
 
+  /* Contrast-aware shadows for icons and text drawn over media. */
   --drop-shadow-media-icon: 0 1px 0 var(--media-shadow-current-color);
   --text-shadow-media: 0 1px 0 var(--media-shadow-current-color);
 }
 
+/* Player font stack, overridable through the public `--media-font-family`. */
 @utility font-media {
   font-family: var(--media-font-family, "Inter Variable", Inter, ui-sans-serif, system-ui, sans-serif);
 }
 
+/* Reduced transparency or high contrast. */
 @custom-variant media-opaque {
   @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
     @slot;
   }
 }
 
+/* Player at or above the compact breakpoint. */
 @custom-variant media-compact {
   @container media-root (width >= theme(--container-media-compact)) {
     @slot;
   }
 }
 
+/* Player below the compact breakpoint. */
 @custom-variant media-max-compact {
   @container media-root (width < theme(--container-media-compact)) {
     @slot;
   }
 }
 
+/* Player at or above the wide breakpoint. */
 @custom-variant media-wide {
   @container media-root (width >= theme(--container-media-wide)) {
     @slot;
   }
 }
 
+/* Player below the wide breakpoint. */
 @custom-variant media-max-wide {
   @container media-root (width < theme(--container-media-wide)) {
     @slot;
   }
 }
 
-@utility surface-media {
-  box-shadow:
-    0 0 0 1px var(--media-surface-border, var(--media-border)),
-    var(--media-shadow-sm);
-  backdrop-filter: var(--media-surface-backdrop-filter);
-}
-
-@utility surface-media-inset {
-  position: absolute;
-  inset: 0;
-  z-index: 10;
-  pointer-events: none;
-  border-radius: inherit;
-  box-shadow: var(--media-surface-inset-shadow);
-}
-
-@utility focus-ring-media {
-  outline: 2px solid transparent;
-  outline-offset: -2px;
-}
-
-@utility mask-media-volume {
-  mask-repeat: no-repeat;
-  mask-position: 100% 0;
-  transition: mask-position var(--media-duration-instant) ease-out;
-}
-
-@utility mask-media-volume-open {
-  mask-image: linear-gradient(to right, transparent 10%, black 25%, black 100%);
-  mask-position: 0 0;
-}
-
-@utility nudge-media {
-  transform: translateX(0.25px);
-  transition: transform 300ms linear(0, -24 20%, 16 40%, -8 60%, 4 80%, 1);
-}
-
-@utility layer-media {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  border-radius: inherit;
-}
-
-@utility object-media {
-  object-fit: var(--media-object-fit, contain);
-  object-position: var(--media-object-position, center);
-}
-
-@utility transition-media-popup {
-  transition-property: opacity, filter, transform, scale;
-  transition-duration: var(--media-duration-fast);
-  transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
-}
-
-@utility motion-media-* {
-  transition-property: --value([*]);
-  will-change: --value([*]);
-}
-
-@utility anchor-media-highlight {
-  position: absolute;
-  position-anchor: --media-menu-item-highlight-anchor;
-  inset: anchor(inside);
-  overflow-anchor: none;
-  pointer-events: none;
-  border-radius: var(--media-menu-item-border-radius);
-  background-color: var(--media-accent);
-  transition: inset var(--media-duration-fast) ease-in-out;
-}
-
-@utility surface-media-none {
-  background-color: transparent;
-  box-shadow: none;
-  backdrop-filter: none;
-}
-
-@utility clip-media-x-* {
-  clip-path: inset(0 calc(100% - var(--value([*]))) 0 0 round var(--media-control-radius));
-}
-
-@utility clip-media-y-* {
-  clip-path: inset(calc(100% - var(--value([*]))) 0 0 0 round var(--media-control-radius));
-}
-
-@utility clip-media-chapter-x {
-  clip-path: inset(0 calc(100% - var(--media-slider-chapter-end)) 0 var(--media-slider-chapter-start));
-}
-
-@utility clip-media-chapter-y {
-  clip-path: inset(calc(100% - var(--media-slider-chapter-end)) 0 var(--media-slider-chapter-start) 0);
-}
-
-@utility clip-media-chapter-track-x {
-  clip-path: inset(
-    0 calc(100% - var(--media-slider-chapter-end) + var(--media-spacing) * var(--media-chapter-inset-end)) 0
-      calc(var(--media-slider-chapter-start) + var(--media-spacing) * var(--media-chapter-inset-start)) round
-      var(--media-control-radius)
-  );
-}
-
-@utility clip-media-chapter-track-y {
-  clip-path: inset(
-    calc(100% - var(--media-slider-chapter-end) + var(--media-spacing) * var(--media-chapter-inset-end)) 0
-      calc(var(--media-slider-chapter-start) + var(--media-spacing) * var(--media-chapter-inset-start)) 0 round
-      var(--media-control-radius)
-  );
-}
-
+/* Hovered, focused, or expanded control that is not disabled. */
 @custom-variant media-highlighted {
   &:where(:focus-visible, [aria-expanded="true"]):not([aria-disabled="true"]) {
     @slot;
@@ -202,7 +99,136 @@
   }
 }
 
+/* Accent background and text for a highlighted control or menu item. */
 @utility highlight-media {
   background-color: var(--media-accent);
   color: var(--media-accent-foreground);
+}
+
+/* Translucent surface chrome: hairline, shadow, and backdrop blur. Preferences switch the tokens. */
+@utility surface-media {
+  box-shadow:
+    0 0 0 1px var(--media-surface-border, var(--media-border)),
+    var(--media-shadow-sm);
+  backdrop-filter: var(--media-surface-backdrop-filter);
+}
+
+/* Inner highlight for a surface; apply through `after:`. */
+@utility surface-media-inset {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+  border-radius: inherit;
+  box-shadow: var(--media-surface-inset-shadow);
+}
+
+/* Removes surface chrome from a popup that should sit flat on the controls. */
+@utility surface-media-none {
+  background-color: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+/* Inset focus ring revealed with `focus-visible:outline-media-ring focus-visible:outline-offset-2`. */
+@utility focus-ring-media {
+  outline: 2px solid transparent;
+  outline-offset: -2px;
+}
+
+/* Fades trailing controls while the horizontal volume popover is open; pair with `mask-media-volume-open`. */
+@utility mask-media-volume {
+  mask-repeat: no-repeat;
+  mask-position: 100% 0;
+  transition: mask-position var(--media-duration-instant) ease-out;
+}
+
+/* Open state of `mask-media-volume`. */
+@utility mask-media-volume-open {
+  mask-image: linear-gradient(to right, transparent 10%, black 25%, black 100%);
+  mask-position: 0 0;
+}
+
+/* Springy nudge for feedback at a limit, such as volume at zero or full. */
+@utility nudge-media {
+  transform: translateX(0.25px);
+  transition: transform 300ms linear(0, -24 20%, 16 40%, -8 60%, 4 80%, 1);
+}
+
+/* Absolutely positioned layer filling its parent and inheriting its radius. */
+@utility layer-media {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+}
+
+/* Media and poster fit, overridable through the public `--media-object-fit` and `--media-object-position`. */
+@utility object-media {
+  object-fit: var(--media-object-fit, contain);
+  object-position: var(--media-object-position, center);
+}
+
+/* Enter and exit transition for popups and menus. */
+@utility transition-media-popup {
+  transition-property: opacity, filter, transform, scale;
+  transition-duration: var(--media-duration-fast);
+  transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
+}
+
+/* Transitions and hints the listed properties, for example `motion-media-[scale,opacity]`. */
+@utility motion-media-* {
+  transition-property: --value([*]);
+  will-change: --value([*]);
+}
+
+/* Anchor-positioned highlight that follows the highlighted menu item; apply through `before:`. */
+@utility anchor-media-highlight {
+  position: absolute;
+  position-anchor: --media-menu-item-highlight-anchor;
+  inset: anchor(inside);
+  overflow-anchor: none;
+  pointer-events: none;
+  border-radius: var(--media-menu-item-border-radius);
+  background-color: var(--media-accent);
+  transition: inset var(--media-duration-fast) ease-in-out;
+}
+
+/* Horizontal slider layer clipped to a progress variable, for example `clip-media-x-[--media-slider-fill]`. */
+@utility clip-media-x-* {
+  clip-path: inset(0 calc(100% - var(--value([*]))) 0 0 round var(--media-control-radius));
+}
+
+/* Vertical slider layer clipped to a progress variable. */
+@utility clip-media-y-* {
+  clip-path: inset(calc(100% - var(--value([*]))) 0 0 0 round var(--media-control-radius));
+}
+
+/* Horizontal chapter segment clipped to its start and end. */
+@utility clip-media-chapter-x {
+  clip-path: inset(0 calc(100% - var(--media-slider-chapter-end)) 0 var(--media-slider-chapter-start));
+}
+
+/* Vertical chapter segment clipped to its start and end. */
+@utility clip-media-chapter-y {
+  clip-path: inset(calc(100% - var(--media-slider-chapter-end)) 0 var(--media-slider-chapter-start) 0);
+}
+
+/* Horizontal chapter track with the inter-chapter gap and rounded ends. */
+@utility clip-media-chapter-track-x {
+  clip-path: inset(
+    0 calc(100% - var(--media-slider-chapter-end) + var(--media-spacing) * var(--media-chapter-inset-end)) 0
+      calc(var(--media-slider-chapter-start) + var(--media-spacing) * var(--media-chapter-inset-start)) round
+      var(--media-control-radius)
+  );
+}
+
+/* Vertical chapter track with the inter-chapter gap and rounded ends. */
+@utility clip-media-chapter-track-y {
+  clip-path: inset(
+    calc(100% - var(--media-slider-chapter-end) + var(--media-spacing) * var(--media-chapter-inset-end)) 0
+      calc(var(--media-slider-chapter-start) + var(--media-spacing) * var(--media-chapter-inset-start)) 0 round
+      var(--media-control-radius)
+  );
 }
