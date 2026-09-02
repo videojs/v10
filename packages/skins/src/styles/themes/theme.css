@@ -65,7 +65,7 @@
     --media-popover-boundary-offset: calc(var(--media-spacing) * 3);
     --media-popover-side-offset: calc(var(--media-spacing) * 3);
     --media-popup-radius: calc(var(--media-spacing) * 3);
-    --media-popup-translate-distance: calc(var(--media-scale-unit, 16px) * 0.5);
+    --media-popup-translate-distance: calc(var(--media-spacing) * 2);
     --media-tooltip-boundary-offset: var(--media-popover-boundary-offset);
     --media-tooltip-side-offset: var(--media-popover-side-offset);
 
