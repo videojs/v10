@@ -15,6 +15,8 @@ const SCRIPT_ID = /\.[cm]?[jt]sx?(?:\?|$)/;
 
 export interface ModuleBuildMeta {
   readonly moduleMeta?: ComponentMeta | undefined;
+  /** Whether the metadata export was removed from the transformed source, so the graph can skip re-parsing. */
+  readonly metaRemoved?: boolean | undefined;
   readonly moduleSource?: string | undefined;
   readonly moduleStyles?:
     | {
@@ -60,7 +62,7 @@ export function componentMetaPlugin(exportName = 'meta'): Plugin {
 
         return {
           code: magicString,
-          meta: mergeModuleBuildMeta(this.getModuleInfo(id)?.meta, { moduleMeta }),
+          meta: mergeModuleBuildMeta(this.getModuleInfo(id)?.meta, { moduleMeta, metaRemoved: true }),
         };
       },
     },
@@ -73,9 +75,10 @@ export function readModuleBuildMeta(meta: unknown): ModuleBuildMeta | undefined 
   const moduleMeta = isComponentMeta(meta.moduleMeta) ? meta.moduleMeta : undefined;
   const moduleSource = typeof meta.moduleSource === 'string' ? meta.moduleSource : undefined;
   const moduleStyles = readModuleStyles(meta.moduleStyles);
-  if (!moduleMeta && moduleSource === undefined && moduleStyles === undefined) return undefined;
+  const metaRemoved = meta.metaRemoved === true ? true : undefined;
+  if (!moduleMeta && moduleSource === undefined && moduleStyles === undefined && !metaRemoved) return undefined;
 
-  return { ...meta, moduleMeta, moduleSource, moduleStyles };
+  return { ...meta, moduleMeta, moduleSource, moduleStyles, metaRemoved };
 }
 
 export function readComponentMeta(meta: unknown): ComponentMeta | undefined {

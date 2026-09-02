@@ -103,7 +103,7 @@ export function graphPlugin<Node extends ModuleMeta>(
     async buildEnd(error) {
       if (error) return;
 
-      const modules: GraphModuleInput<Node>[] = [];
+      const candidates: string[] = [];
 
       for (const hostId of this.getModuleIds()) {
         const id = normalizeResolvedId(hostId);
@@ -125,53 +125,64 @@ export function graphPlugin<Node extends ModuleMeta>(
 
         if (!entriesOptions && parsed.params.size === 0) continue;
 
-        const entry = entries.get(id) ?? {
-          filename: parsed.filename,
-          params: Object.fromEntries(parsed.params),
-        };
-        const info = this.getModuleInfo(hostId);
-        const source = info?.code;
-
-        if (source === null || source === undefined) this.error(`VJSC graph has no transformed output for \`${id}\`.`);
-
-        const references = analyzeImports(source, entry.filename);
-        const buildMeta = readModuleBuildMeta(info?.meta);
-        const styles = importedModuleStyles(references);
-        const imports: GraphImport[] = [];
-
-        for (const reference of references) {
-          const resolved = await this.resolve(reference.specifier, id);
-          const resolvedId = resolved ? normalizeResolvedId(resolved.id) : undefined;
-
-          if (reference.specifier.startsWith('.') && !resolvedId) {
-            this.error(
-              `VJSC graph cannot resolve relative import \`${reference.specifier}\` from \`${entry.filename}\`.`
-            );
-          }
-
-          if (
-            reference.specifier.startsWith('.') &&
-            resolvedId &&
-            isAbsolute(moduleFilename(resolvedId)) &&
-            !isInsideRoot(root, moduleFilename(resolvedId))
-          ) {
-            this.error(
-              `VJSC graph relative import \`${reference.specifier}\` from \`${entry.filename}\` resolves outside the graph root.`
-            );
-          }
-
-          imports.push({ ...reference, ...(resolvedId ? { resolvedId } : {}) });
-        }
-
-        modules.push({
-          id,
-          ...entry,
-          source,
-          imports,
-          styles,
-          ...(buildMeta?.moduleMeta ? { meta: buildMeta.moduleMeta as unknown as Node } : {}),
-        });
+        candidates.push(hostId);
       }
+
+      const modules = await Promise.all(
+        candidates.map(async (hostId): Promise<GraphModuleInput<Node>> => {
+          const id = normalizeResolvedId(hostId);
+          const parsed = parseModuleId(id);
+          const entry = entries.get(id) ?? {
+            filename: parsed.filename,
+            params: Object.fromEntries(parsed.params),
+          };
+          const info = this.getModuleInfo(hostId);
+          const source = info?.code;
+
+          if (source === null || source === undefined) {
+            this.error(`VJSC graph has no transformed output for \`${id}\`.`);
+          }
+
+          const references = analyzeImports(source, entry.filename);
+          const buildMeta = readModuleBuildMeta(info?.meta);
+          const styles = importedModuleStyles(references);
+          const imports = await Promise.all(
+            references.map(async (reference): Promise<GraphImport> => {
+              const resolved = await this.resolve(reference.specifier, id);
+              const resolvedId = resolved ? normalizeResolvedId(resolved.id) : undefined;
+
+              if (reference.specifier.startsWith('.') && !resolvedId) {
+                this.error(
+                  `VJSC graph cannot resolve relative import \`${reference.specifier}\` from \`${entry.filename}\`.`
+                );
+              }
+
+              if (
+                reference.specifier.startsWith('.') &&
+                resolvedId &&
+                isAbsolute(moduleFilename(resolvedId)) &&
+                !isInsideRoot(root, moduleFilename(resolvedId))
+              ) {
+                this.error(
+                  `VJSC graph relative import \`${reference.specifier}\` from \`${entry.filename}\` resolves outside the graph root.`
+                );
+              }
+
+              return { ...reference, ...(resolvedId ? { resolvedId } : {}) };
+            })
+          );
+
+          return {
+            id,
+            ...entry,
+            source,
+            imports,
+            styles,
+            ...(buildMeta?.moduleMeta ? { meta: buildMeta.moduleMeta as unknown as Node } : {}),
+            ...(buildMeta?.metaRemoved ? { metaRemoved: true } : {}),
+          };
+        })
+      );
 
       capability.finalize(finalizeGraph(root, modules, assets));
     },

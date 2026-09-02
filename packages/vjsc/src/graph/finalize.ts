@@ -7,7 +7,13 @@ import { moduleFilename } from '../utils/module-id';
 import { escapesRoot, toPosixPath } from '../utils/path';
 import type { GraphModule, Graph } from './types';
 
-export type GraphModuleInput<Node extends ModuleMeta = ModuleMeta> = Omit<GraphModule<Node>, 'sourcePath'>;
+export type GraphModuleInput<Node extends ModuleMeta = ModuleMeta> = Omit<GraphModule<Node>, 'sourcePath'> & {
+  /** Set by the component metadata pass when it removed the `meta` export, so finalization skips re-parsing. */
+  readonly metaRemoved?: boolean | undefined;
+};
+
+/** Cheap prefilter for a `meta` variable export; only matching sources are parsed. */
+const META_EXPORT = /\bexport\s+(?:const|let|var)\b[^;{]*\bmeta\b/;
 
 /** Normalize and validate the immutable graph exposed after the build has completed. */
 export function finalizeGraph<Node extends ModuleMeta>(
@@ -38,8 +44,11 @@ export function finalizeGraph<Node extends ModuleMeta>(
       throw new Error(`VJSC graph module has an empty name: \`${input.id}\`.`);
     }
 
-    assertMetaRemoved(input);
-    modules.set(input.id, { ...input, filename, sourcePath });
+    if (!input.metaRemoved && META_EXPORT.test(input.source)) assertMetaRemoved(input);
+
+    const { metaRemoved: _metaRemoved, ...module } = input;
+
+    modules.set(input.id, { ...module, filename, sourcePath });
   }
 
   for (const module of modules.values()) {

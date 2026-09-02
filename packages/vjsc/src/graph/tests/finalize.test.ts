@@ -20,9 +20,17 @@ describe('finalizeGraph', () => {
       finalizeGraph(root, [fixtureModule(root, `export const meta = { name: 'root' };`)], new Map())
     ).toThrow('Module metadata remains in transformed source');
   });
+
+  it('trusts the metadata pass instead of re-parsing when it recorded the removal', () => {
+    const root = resolve('/project');
+    const module = fixtureModule(root, `export const meta = { name: 'root' };`, { metaRemoved: true });
+    const graph = finalizeGraph(root, [module], new Map());
+
+    expect(graph.modules.get(module.id)).not.toHaveProperty('metaRemoved');
+  });
 });
 
-function fixtureModule(root: string, source: string): GraphModuleInput {
+function fixtureModule(root: string, source: string, extra: Partial<GraphModuleInput> = {}): GraphModuleInput {
   const filename = resolve(root, 'root.ts');
 
   return {
@@ -32,5 +40,6 @@ function fixtureModule(root: string, source: string): GraphModuleInput {
     source,
     imports: [],
     styles: { files: [], assets: [] },
+    ...extra,
   };
 }
