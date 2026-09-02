@@ -1,5 +1,5 @@
 import { TimeSliderCore, TimeSliderDataAttrs } from '@videojs/core';
-import { getTimeSliderCSSVars, logMissingFeature, selectBuffer, selectPlayback, selectTime } from '@videojs/core/dom';
+import { getTimeSliderCSSVars, selectBuffer, selectPlayback, selectTime } from '@videojs/core/dom';
 import { translateText } from '@videojs/core/i18n';
 import { formatTime } from '@videojs/utils/time';
 import { forwardRef, useEffect, useState } from 'react';
@@ -9,6 +9,7 @@ import { usePlayer } from '../../player/context';
 import type { UIComponentProps } from '../../utils/types';
 import { useLatestRef } from '../../utils/use-latest-ref';
 import { renderElement } from '../../utils/use-render';
+import { useLogMissingFeature } from '../hooks/use-log-missing-feature';
 import { useSlider } from '../hooks/use-slider';
 import { SliderProvider } from '../slider/context';
 
@@ -115,11 +116,9 @@ export const TimeSliderRoot = forwardRef<HTMLDivElement, TimeSliderRootProps>(
         },
       });
 
-    if (!time) {
-      if (__DEV__) logMissingFeature('TimeSlider', 'time');
+    useLogMissingFeature(!time, 'TimeSlider', 'time');
 
-      return null;
-    }
+    if (!time) return null;
 
     return (
       <SliderProvider

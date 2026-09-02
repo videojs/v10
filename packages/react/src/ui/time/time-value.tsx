@@ -1,5 +1,5 @@
 import { TimeCore, TimeDataAttrs } from '@videojs/core';
-import { logMissingFeature, selectTime } from '@videojs/core/dom';
+import { selectTime } from '@videojs/core/dom';
 import { translateText } from '@videojs/core/i18n';
 import { durationSuffixText, elapsedSuffixText, remainingSuffixText } from '@videojs/core/i18n/text/time';
 import { isInteractiveActivation } from '@videojs/utils/dom';
@@ -11,6 +11,7 @@ import { useLocale, useTranslator } from '../../i18n/context';
 import { usePlayer } from '../../player/context';
 import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
+import { useLogMissingFeature } from '../hooks/use-log-missing-feature';
 
 export interface ValueProps extends Omit<UIComponentProps<'time', TimeCore.State>, 'children'>, TimeCore.Props {}
 
@@ -52,11 +53,9 @@ export const Value = forwardRef(function Value(
     toggle,
   });
 
-  if (!time) {
-    if (__DEV__) logMissingFeature('Time.Value', 'time');
+  useLogMissingFeature(!time, 'Time.Value', 'time');
 
-    return null;
-  }
+  if (!time) return null;
 
   core.setMedia(time);
   core.setFormatLocale(locale);

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 
-import { useLatestRef } from './use-latest-ref';
+import { useCommittedRef } from './use-committed-ref';
 
 interface Destroyable {
   destroy(): void;
@@ -20,8 +20,8 @@ interface Destroyable {
  */
 export function useDestroy(instance: Destroyable, setup?: () => void, teardown?: () => void): void {
   const pendingRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const setupRef = useLatestRef(setup);
-  const teardownRef = useLatestRef(teardown);
+  const setupRef = useCommittedRef(setup);
+  const teardownRef = useCommittedRef(teardown);
 
   useEffect(() => {
     if (pendingRef.current !== null) {

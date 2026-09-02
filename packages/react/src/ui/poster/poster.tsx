@@ -1,11 +1,12 @@
 import { PosterCore, PosterDataAttrs, type PosterImageLoadState } from '@videojs/core';
-import { logMissingFeature, selectMetadata, selectPlayback } from '@videojs/core/dom';
+import { selectMetadata, selectPlayback } from '@videojs/core/dom';
 import type { ForwardedRef } from 'react';
 import { forwardRef, useCallback, useEffect, useRef, useState } from 'react';
 
 import { usePlayer } from '../../player/context';
 import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
+import { useLogMissingFeature } from '../hooks/use-log-missing-feature';
 
 export interface PosterProps extends UIComponentProps<'img', PosterCore.State> {}
 
@@ -120,11 +121,9 @@ export const Poster = forwardRef(function Poster(
     [src, authoredSrcSet]
   );
 
-  if (!playback || !state) {
-    if (__DEV__) logMissingFeature('Poster', 'playback');
+  useLogMissingFeature(!playback, 'Poster', 'playback');
 
-    return null;
-  }
+  if (!playback || !state) return null;
 
   return renderElement(
     'img',

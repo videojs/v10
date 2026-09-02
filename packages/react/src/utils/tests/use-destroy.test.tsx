@@ -1,7 +1,8 @@
 import { render, renderHook } from '@testing-library/react';
-import { StrictMode } from 'react';
+import { type ReactNode, StrictMode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
+import { MockErrorBoundary } from '../../testing/mocks';
 import { useDestroy } from '../use-destroy';
 
 describe('useDestroy', () => {
@@ -145,5 +146,39 @@ describe('useDestroy', () => {
 
     expect(teardown).not.toHaveBeenCalled();
     expect(instance.destroy).not.toHaveBeenCalled();
+  });
+
+  it('runs the committed teardown rather than one from an abandoned render', () => {
+    const instance = { destroy: vi.fn() };
+    const committedTeardown = vi.fn();
+    const abandonedTeardown = vi.fn();
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    function TestComponent({ teardown, abandon = false }: { teardown: () => void; abandon?: boolean }): ReactNode {
+      useDestroy(instance, undefined, teardown);
+
+      if (abandon) throw new Error('abandon render');
+
+      return null;
+    }
+
+    const { rerender } = render(
+      <MockErrorBoundary>
+        <TestComponent teardown={committedTeardown} />
+      </MockErrorBoundary>
+    );
+
+    // The boundary swallows the throw and unmounts the component, which tears down the committed instance.
+    rerender(
+      <MockErrorBoundary>
+        <TestComponent teardown={abandonedTeardown} abandon />
+      </MockErrorBoundary>
+    );
+    vi.runAllTimers();
+
+    expect(committedTeardown).toHaveBeenCalledOnce();
+    expect(abandonedTeardown).not.toHaveBeenCalled();
+    expect(instance.destroy).toHaveBeenCalledOnce();
+    consoleError.mockRestore();
   });
 });

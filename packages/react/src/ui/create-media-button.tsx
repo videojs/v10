@@ -1,5 +1,4 @@
 import type { InferComponentState, InferMediaState, MediaButtonComponent, StateAttrMap } from '@videojs/core';
-import { logMissingFeature } from '@videojs/core/dom';
 import { isText, translateText } from '@videojs/core/i18n';
 import type { Selector } from '@videojs/store';
 import { isUndefined } from '@videojs/utils/predicate';
@@ -11,6 +10,7 @@ import { useContainer, usePlayer } from '../player/context';
 import type { renderElement as renderElementFn } from '../utils/use-render';
 import { renderElement } from '../utils/use-render';
 import { useButton } from './hooks/use-button';
+import { useLogMissingFeature } from './hooks/use-log-missing-feature';
 import { useHotkeyShortcut } from './hotkey/use-hotkey-shortcut';
 import { useOptionalMenuTriggerChildContext } from './menu/context';
 import { useOptionalTooltipContext } from './tooltip/context';
@@ -133,11 +133,9 @@ export function createMediaButton<Core extends Required<MediaButtonComponent>, P
       return () => setTooltipContent(undefined);
     }, [setTooltipContent, tooltipText, shortcut.shortcut]);
 
-    if (!feature || !state) {
-      if (__DEV__) logMissingFeature(displayName, selector.displayName ?? displayName);
+    useLogMissingFeature(!feature, displayName, selector.displayName ?? displayName);
 
-      return null;
-    }
+    if (!feature || !state) return null;
 
     if (!supported) return null;
 

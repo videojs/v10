@@ -1,5 +1,5 @@
 import { VolumeSliderCore, VolumeSliderDataAttrs } from '@videojs/core';
-import { createWheelStep, getSliderCSSVars, logMissingFeature, selectVolume } from '@videojs/core/dom';
+import { createWheelStep, getSliderCSSVars, selectVolume } from '@videojs/core/dom';
 import { translateText } from '@videojs/core/i18n';
 import { listen } from '@videojs/utils/dom';
 import { forwardRef, useCallback, useRef, useState } from 'react';
@@ -9,6 +9,7 @@ import { usePlayer } from '../../player/context';
 import type { UIComponentProps } from '../../utils/types';
 import { useLatestRef } from '../../utils/use-latest-ref';
 import { renderElement } from '../../utils/use-render';
+import { useLogMissingFeature } from '../hooks/use-log-missing-feature';
 import { useSlider } from '../hooks/use-slider';
 import { SliderProvider } from '../slider/context';
 
@@ -109,11 +110,9 @@ export const VolumeSliderRoot = forwardRef<HTMLDivElement, VolumeSliderRootProps
       [wheelHandler]
     );
 
-    if (!volume) {
-      if (__DEV__) logMissingFeature('VolumeSlider', 'volume');
+    useLogMissingFeature(!volume, 'VolumeSlider', 'volume');
 
-      return null;
-    }
+    if (!volume) return null;
 
     if (state.hidden) return null;
 

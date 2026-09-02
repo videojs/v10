@@ -1,5 +1,5 @@
 import { BufferingIndicatorCore, BufferingIndicatorDataAttrs } from '@videojs/core';
-import { logMissingFeature, selectPlayback } from '@videojs/core/dom';
+import { selectPlayback } from '@videojs/core/dom';
 import type { ForwardedRef } from 'react';
 import { forwardRef, useState, useSyncExternalStore } from 'react';
 
@@ -8,6 +8,7 @@ import type { UIComponentProps } from '../../utils/types';
 import { useDestroy } from '../../utils/use-destroy';
 import { useIsomorphicLayoutEffect } from '../../utils/use-isomorphic-layout-effect';
 import { renderElement } from '../../utils/use-render';
+import { useLogMissingFeature } from '../hooks/use-log-missing-feature';
 
 export interface BufferingIndicatorProps
   extends UIComponentProps<'div', BufferingIndicatorCore.State>, BufferingIndicatorCore.Props {}
@@ -54,11 +55,9 @@ export const BufferingIndicator = forwardRef(function BufferingIndicator(
     if (playback) core.update(playback);
   }, [core, delay, playback]);
 
-  if (!playback) {
-    if (__DEV__) logMissingFeature('BufferingIndicator', 'playback');
+  useLogMissingFeature(!playback, 'BufferingIndicator', 'playback');
 
-    return null;
-  }
+  if (!playback) return null;
 
   return renderElement(
     'div',
