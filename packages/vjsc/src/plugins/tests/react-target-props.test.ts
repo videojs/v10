@@ -14,6 +14,7 @@ const reactTarget = {
   primitives: {},
   types: {},
   transforms: [],
+  renderTargets: {},
   jsx: {
     importSource: 'react',
     attributes: 'react',

@@ -5,10 +5,10 @@ import { htmlAttributeName } from '../target/attributes';
 /** Attributes and children handed to one element or component by compiled HTML target JSX. */
 export type HtmlProps = Record<string, unknown>;
 
-/** A compiled HTML component renders props to a string-serializable value. */
-export type HtmlComponent = (props: HtmlProps) => unknown;
+/** A compiled HTML component renders its props to a string-serializable value. */
+export type HtmlComponent<Props extends HtmlProps = HtmlProps> = (props: Props) => unknown;
 
-export type HtmlElementType = string | typeof Fragment | HtmlComponent;
+export type HtmlElementType<Props extends HtmlProps = HtmlProps> = string | typeof Fragment | HtmlComponent<Props>;
 
 export const Fragment: unique symbol = Symbol('Fragment');
 
@@ -44,13 +44,14 @@ interface RenderContext {
   readonly scopes: Map<string, string>;
 }
 
-/** Create one static HTML node. Function components render immediately. */
-export function jsx(type: HtmlElementType, props?: HtmlProps | null): unknown {
+/** Create one static HTML node. Function components render immediately with the props they declare. */
+export function jsx<Props extends HtmlProps>(type: HtmlElementType<Props>, props?: Props | null): unknown {
   if (type === Fragment) return htmlFragment(props?.children);
 
-  if (typeof type === 'function') return type(props ?? {});
+  // SAFETY: JSX without attributes reaches a component as an empty props object, which every component must accept.
+  if (typeof type === 'function') return type(props ?? ({} as Props));
 
-  const { children, ...attributes } = props ?? {};
+  const { children, ...attributes }: HtmlProps = props ?? {};
 
   return htmlElement(type, attributes, children);
 }
