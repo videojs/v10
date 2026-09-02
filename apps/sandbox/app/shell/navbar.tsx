@@ -1,4 +1,6 @@
+import type { CompareMode } from '@app/compare';
 import { SKIN_SOURCES, type SKINS } from '@app/constants';
+import { PLATFORM_LABELS, SKIN_LABELS, SKIN_SOURCE_LABELS, STYLING_LABELS } from '@app/labels';
 import { hasSkinChoice, hasTailwindSkin, MEDIA, MEDIA_IDS, type MediaId } from '@app/media';
 import { SANDBOX_LOCALE_OPTION_GROUPS, type SandboxLocaleTag } from '@app/shared/i18n/locale-meta';
 import { PLAYER_WIDTH } from '@app/shared/player-frame';
@@ -31,6 +33,9 @@ type NavbarProps = {
   width: number;
   onWidthChange: (value: number) => void;
   widthDisabled: boolean;
+  compare: CompareMode;
+  onCompareChange: (value: CompareMode) => void;
+  compareOptions: readonly { value: CompareMode; label: string; disabled: boolean }[];
   autoplay: boolean;
   onAutoplayChange: (value: boolean) => void;
   muted: boolean;
@@ -54,18 +59,6 @@ type NavbarProps = {
 };
 
 const SKIN_OPTIONS: readonly Skin[] = ['default', 'minimal'] satisfies readonly (typeof SKINS)[number][];
-
-const PLATFORM_LABELS: Record<Platform, string> = {
-  html: 'HTML',
-  react: 'React',
-  cdn: 'CDN',
-};
-
-const SKIN_SOURCE_LABELS: Record<SkinSource, string> = {
-  package: 'Framework package',
-  registry: 'Shadcn registry',
-  authored: 'Authored source',
-};
 
 const SCHEME_LABELS: Record<ColorScheme, string> = {
   auto: 'System',
@@ -95,6 +88,9 @@ export function Navbar({
   width,
   onWidthChange,
   widthDisabled,
+  compare,
+  onCompareChange,
+  compareOptions,
   autoplay,
   onAutoplayChange,
   muted,
@@ -140,7 +136,7 @@ export function Navbar({
           onChange={(v) => onStylingChange(v as Styling)}
           options={stylings.map((s) => ({
             value: s,
-            label: s === 'css' ? 'CSS' : 'Tailwind',
+            label: STYLING_LABELS[s],
             disabled: s === 'tailwind' && !(hasTailwindSkin(media, platform) && tailwindSkinAvailable(platform)),
           }))}
         />
@@ -156,7 +152,7 @@ export function Navbar({
           label="Skin"
           value={skin}
           onChange={(v) => onSkinChange(v as Skin)}
-          options={SKIN_OPTIONS.map((s) => ({ value: s, label: capitalize(s) }))}
+          options={SKIN_OPTIONS.map((s) => ({ value: s, label: SKIN_LABELS[s] }))}
           disabled={!hasSkinChoice(media)}
         />
 
@@ -185,6 +181,13 @@ export function Navbar({
         />
 
         <WidthControl value={width} onChange={onWidthChange} disabled={widthDisabled} />
+
+        <Select
+          label="Compare"
+          value={compare}
+          onChange={(v) => onCompareChange(v as CompareMode)}
+          options={compareOptions.map((option) => ({ ...option }))}
+        />
       </div>
 
       <div className="ml-auto flex items-center gap-1">
@@ -226,10 +229,6 @@ export function Navbar({
       </div>
     </header>
   );
-}
-
-function capitalize(s: string): string {
-  return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
 type WidthControlProps = {
@@ -552,11 +551,16 @@ type SelectProps = {
 };
 
 function Select({ label, value, onChange, options, disabled }: SelectProps) {
+  const id = useId();
+
   return (
     <div className="flex items-center gap-2">
-      <span className="text-[13px] font-medium text-zinc-500 dark:text-zinc-400">{label}</span>
+      <label htmlFor={id} className="text-[13px] font-medium text-zinc-500 dark:text-zinc-400">
+        {label}
+      </label>
       <div className="relative">
         <select
+          id={id}
           value={value}
           onChange={(e) => onChange(e.target.value)}
           disabled={disabled}

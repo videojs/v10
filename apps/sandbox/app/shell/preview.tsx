@@ -1,124 +1,209 @@
+import { COMPARE_LAYOUTS, type CompareLayout, type ComparePanel } from '@app/compare';
+import { LAYOUT_LABELS } from '@app/labels';
 import type { MediaId } from '@app/media';
 import type { SandboxLocaleTag } from '@app/shared/i18n/locale-meta';
 import type { ColorScheme, PreloadValue, TextDirection } from '@app/shared/sandbox-listener';
 import type { SourceId } from '@app/shared/sources';
-import type { Skin, SkinSource, Styling } from '@app/types';
-import { forwardRef, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+
+/** Everything the frames share; the panels carry what differs. */
+export interface FrameParams {
+  readonly media: MediaId;
+  readonly source: SourceId;
+  readonly autoplay: boolean;
+  readonly muted: boolean;
+  readonly loop: boolean;
+  readonly preload: PreloadValue;
+  readonly locale: SandboxLocaleTag;
+  readonly accentColor: string;
+  readonly width: number;
+  readonly scheme: ColorScheme;
+  readonly direction: TextDirection;
+}
 
 type PreviewProps = {
-  pagePath: string;
-  media: MediaId;
-  skin: Skin;
-  styling: Styling;
-  skins: SkinSource;
-  source: SourceId;
-  autoplay: boolean;
-  muted: boolean;
-  loop: boolean;
-  preload: PreloadValue;
-  locale: SandboxLocaleTag;
-  accentColor: string;
-  width: number;
-  scheme: ColorScheme;
-  direction: TextDirection;
-  onLoad: () => void;
+  panels: readonly ComparePanel[];
+  layout: CompareLayout;
+  onLayoutChange: (layout: CompareLayout) => void;
+  summary: string;
+  params: FrameParams;
+  onFrame: (id: string, frame: HTMLIFrameElement | null) => void;
+  onFrameLoad: (id: string) => void;
 };
 
-export const Preview = forwardRef<HTMLIFrameElement, PreviewProps>(function Preview(
-  {
-    pagePath,
-    media,
-    skin,
-    styling,
-    skins,
-    source,
-    autoplay,
-    muted,
-    loop,
-    preload,
-    locale,
-    accentColor,
-    width,
-    scheme,
-    direction,
-    onLoad,
-  },
-  ref
-) {
-  const buildUrl = (base: string, bustCache = false) => {
-    const params = new URLSearchParams({
-      media,
-      skin,
-      styling,
-      skins,
-      source,
-      autoplay: autoplay ? '1' : '0',
-      muted: muted ? '1' : '0',
-      loop: loop ? '1' : '0',
-      preload,
-      locale,
-      width: String(width),
-      scheme,
-      dir: direction,
-    });
+function pagePath(panel: ComparePanel, media: MediaId): string {
+  if (panel.platform === 'cdn') return '/cdn/';
 
-    if (accentColor) params.set('accent', accentColor);
+  return `/${panel.platform}-${media}/`;
+}
 
-    if (bustCache) params.set('_', String(Date.now()));
+function buildUrl(panel: ComparePanel, params: FrameParams, bustCache = false): string {
+  const query = new URLSearchParams({
+    media: params.media,
+    skin: panel.skin,
+    styling: panel.styling,
+    skins: panel.skins,
+    source: params.source,
+    autoplay: params.autoplay ? '1' : '0',
+    muted: params.muted ? '1' : '0',
+    loop: params.loop ? '1' : '0',
+    preload: params.preload,
+    locale: params.locale,
+    width: String(params.width),
+    scheme: params.scheme,
+    dir: params.direction,
+  });
 
-    return `${base}?${params}`;
-  };
+  if (params.accentColor) query.set('accent', params.accentColor);
 
-  const reloadOnLocale = pagePath === '/cdn/';
+  if (bustCache) query.set('_', String(Date.now()));
+
+  return `${pagePath(panel, params.media)}?${query}`;
+}
+
+const LAYOUT_CLASSES: Record<CompareLayout, string> = {
+  row: 'grid-cols-2 grid-rows-1 overflow-hidden',
+  column: 'grid-cols-1 auto-rows-[40rem] overflow-y-auto',
+  auto: 'grid-cols-1 auto-rows-[40rem] overflow-y-auto @5xl:grid-cols-2 @5xl:grid-rows-1 @5xl:auto-rows-auto @5xl:overflow-hidden',
+};
+
+/** The preview area: a summary of the selection, then one frame, or two framed panels laid out by `layout`. */
+export function Preview({ panels, layout, onLayoutChange, summary, params, onFrame, onFrameLoad }: PreviewProps) {
+  const comparing = panels.length > 1;
+  const single = panels[0];
+
+  return (
+    <main className="@container flex min-h-0 flex-1 flex-col bg-zinc-50 dark:bg-zinc-900">
+      <div className="flex h-10 shrink-0 items-center gap-3 border-b border-zinc-200 bg-white px-4 dark:border-zinc-800 dark:bg-zinc-950">
+        <p
+          className="min-w-0 flex-1 truncate text-[13px] text-zinc-600 dark:text-zinc-300"
+          data-testid="selection-summary"
+        >
+          {summary}
+        </p>
+        {comparing ? (
+          <LayoutToggle value={layout} onChange={onLayoutChange} />
+        ) : (
+          single && <OpenLink href={buildUrl(single, params)} />
+        )}
+      </div>
+      <div className={comparing ? `grid min-h-0 flex-1 gap-3 p-3 ${LAYOUT_CLASSES[layout]}` : 'flex min-h-0 flex-1'}>
+        {panels.map((panel) => (
+          <PreviewPanel
+            key={`${panel.id}:${pagePath(panel, params.media)}:${panel.styling}:${panel.skins}`}
+            panel={panel}
+            params={params}
+            comparing={comparing}
+            onFrame={onFrame}
+            onFrameLoad={onFrameLoad}
+          />
+        ))}
+      </div>
+    </main>
+  );
+}
+
+type PreviewPanelProps = {
+  panel: ComparePanel;
+  params: FrameParams;
+  comparing: boolean;
+  onFrame: (id: string, frame: HTMLIFrameElement | null) => void;
+  onFrameLoad: (id: string) => void;
+};
+
+function PreviewPanel({ panel, params, comparing, onFrame, onFrameLoad }: PreviewPanelProps) {
+  const reloadOnLocale = panel.platform === 'cdn';
 
   // Capture the initial query so the iframe doesn't reload when autoplay/muted
   // toggle — those changes are streamed in via postMessage.
-  const [iframeUrl, setIframeUrl] = useState(() => buildUrl(pagePath));
-  const openUrl = buildUrl(pagePath);
-  const previousLocaleRef = useRef(locale);
+  const [iframeUrl, setIframeUrl] = useState(() => buildUrl(panel, params));
+  const previousLocaleRef = useRef(params.locale);
 
   // keep iframe `src` locale in sync; other toggles use postMessage.
   // oxlint-disable-next-line react/exhaustive-deps
   useEffect(() => {
-    if (previousLocaleRef.current === locale) return;
+    if (previousLocaleRef.current === params.locale) return;
 
-    previousLocaleRef.current = locale;
-    setIframeUrl(buildUrl(pagePath, reloadOnLocale));
-  }, [locale, pagePath, reloadOnLocale]);
+    previousLocaleRef.current = params.locale;
+    setIframeUrl(buildUrl(panel, params, reloadOnLocale));
+  }, [params.locale, reloadOnLocale]);
 
   return (
-    <main className="relative min-h-0 flex-1 bg-zinc-50 dark:bg-zinc-900">
-      <a
-        href={openUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="absolute top-3 right-3 z-10 inline-flex h-7 items-center gap-1 rounded-md bg-white bg-clip-border px-2.5 text-xs font-medium text-zinc-600 shadow-xs ring shadow-black/20 ring-zinc-800/10 transition-colors hover:bg-zinc-50 hover:text-zinc-950 dark:bg-zinc-800 dark:text-zinc-300 dark:ring-white/10 dark:hover:bg-zinc-800 dark:hover:text-zinc-50"
-        title="Open in new tab"
-      >
-        Open
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="size-3"
-          aria-hidden="true"
-        >
-          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-          <polyline points="15 3 21 3 21 9" />
-          <line x1="10" x2="21" y1="14" y2="3" />
-        </svg>
-      </a>
+    <section
+      data-panel={panel.id}
+      className={
+        comparing
+          ? 'flex min-h-0 flex-col overflow-hidden rounded-lg bg-white ring ring-zinc-200 dark:bg-zinc-950 dark:ring-zinc-800'
+          : 'relative flex min-h-0 flex-1 flex-col'
+      }
+    >
+      {comparing && (
+        <header className="flex h-8 shrink-0 items-center justify-between px-3 text-xs font-medium text-zinc-600 dark:text-zinc-300">
+          <span>{panel.label}</span>
+          <OpenLink href={buildUrl(panel, params)} />
+        </header>
+      )}
       <iframe
-        ref={ref}
+        ref={(frame) => onFrame(panel.id, frame)}
+        data-panel={panel.id}
         src={iframeUrl}
-        onLoad={onLoad}
-        className="absolute inset-0 h-full w-full border-0"
-        title="player demo"
+        onLoad={() => onFrameLoad(panel.id)}
+        className="min-h-0 w-full flex-1 border-0"
+        title={comparing ? `player demo (${panel.label})` : 'player demo'}
       />
-    </main>
+    </section>
   );
-});
+}
+
+function OpenLink({ href }: { href: string }) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="inline-flex h-7 shrink-0 items-center gap-1 rounded-md bg-white bg-clip-border px-2.5 text-xs font-medium text-zinc-600 shadow-xs ring shadow-black/20 ring-zinc-800/10 transition-colors hover:bg-zinc-50 hover:text-zinc-950 dark:bg-zinc-800 dark:text-zinc-300 dark:ring-white/10 dark:hover:bg-zinc-800 dark:hover:text-zinc-50"
+      title="Open in new tab"
+    >
+      Open
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="size-3"
+        aria-hidden="true"
+      >
+        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+        <polyline points="15 3 21 3 21 9" />
+        <line x1="10" x2="21" y1="14" y2="3" />
+      </svg>
+    </a>
+  );
+}
+
+/** Side by side, stacked, or whichever fits: the panels' arrangement while comparing. */
+function LayoutToggle({ value, onChange }: { value: CompareLayout; onChange: (layout: CompareLayout) => void }) {
+  return (
+    <div
+      role="radiogroup"
+      aria-label="Compare layout"
+      className="flex shrink-0 gap-0.5 rounded-md bg-zinc-100 p-0.5 dark:bg-zinc-800"
+    >
+      {COMPARE_LAYOUTS.map((layout) => (
+        <button
+          key={layout}
+          type="button"
+          role="radio"
+          aria-checked={layout === value}
+          onClick={() => onChange(layout)}
+          className="rounded px-2 py-0.5 text-xs font-medium text-zinc-600 transition-colors hover:text-zinc-950 aria-checked:bg-white aria-checked:text-zinc-950 aria-checked:shadow-xs dark:text-zinc-300 dark:hover:text-zinc-50 dark:aria-checked:bg-zinc-950 dark:aria-checked:text-zinc-50"
+        >
+          {LAYOUT_LABELS[layout]}
+        </button>
+      ))}
+    </div>
+  );
+}

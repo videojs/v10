@@ -1,4 +1,15 @@
+import {
+  COMPARE_AXES,
+  COMPARE_LAYOUTS,
+  compareAvailable,
+  type CompareLayout,
+  type CompareMode,
+  comparePanels,
+  type SkinSelection,
+  summarizeSelection,
+} from '@app/compare';
 import { PLATFORMS, SKIN_SOURCES, STYLINGS } from '@app/constants';
+import { COMPARE_LABELS } from '@app/labels';
 import { hasTailwindSkin, isMediaId, MEDIA, type MediaId, mediaSources } from '@app/media';
 import { DEFAULT_SANDBOX_LOCALE, SANDBOX_LOCALE_TAGS, type SandboxLocaleTag } from '@app/shared/i18n/locale-meta';
 import { defaultPlayerWidth, PLAYER_WIDTH } from '@app/shared/player-frame';
@@ -11,19 +22,13 @@ import {
   TEXT_DIRECTIONS,
   type TextDirection,
 } from '@app/shared/sandbox-listener';
-import { defaultSkinSource, skinSourceAvailable, skinStylings, tailwindSkinAvailable } from '@app/shared/skin-sources';
+import { skinSourceAvailable, skinStylings, tailwindSkinAvailable } from '@app/shared/skin-sources';
 import { DEFAULT_SOURCE, SOURCES, type SourceId } from '@app/shared/sources';
 import type { Platform, SkinSource, Styling } from '@app/types';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { Navbar } from './navbar';
-import { Preview } from './preview';
-
-function getPagePath(platform: Platform, media: MediaId): string {
-  if (platform === 'cdn') return '/cdn/';
-
-  return `/${platform}-${media}/`;
-}
+import { type FrameParams, Preview } from './preview';
 
 /** `preset` named this parameter before the skins' player presets took the word, so older links still resolve. */
 function readMedia(params: URLSearchParams): MediaId {
@@ -32,7 +37,7 @@ function readMedia(params: URLSearchParams): MediaId {
   return isMediaId(value) ? value : 'video';
 }
 
-function readOption<T extends string, Fallback>(
+function readOption<T extends string, const Fallback>(
   values: readonly T[],
   value: string | null,
   fallback: Fallback
@@ -77,7 +82,17 @@ function readParams() {
     width: readWidth(params.get('width')),
     scheme: readOption(COLOR_SCHEMES, params.get('scheme'), 'auto'),
     direction: readOption(TEXT_DIRECTIONS, params.get('dir'), 'auto'),
+    compare: readOption(COMPARE_AXES, params.get('compare'), 'off'),
+    layout: readOption(COMPARE_LAYOUTS, params.get('layout'), 'auto'),
   };
+}
+
+/** The preferences a frame applies to its document rather than renders from, repeated to it once it has loaded. */
+function postPreferences(target: Window, params: FrameParams): void {
+  target.postMessage({ type: 'accent-change', accent: params.accentColor }, '*');
+  target.postMessage({ type: 'width-change', width: params.width }, '*');
+  target.postMessage({ type: 'scheme-change', scheme: params.scheme }, '*');
+  target.postMessage({ type: 'dir-change', dir: params.direction }, '*');
 }
 
 export function App() {
@@ -97,19 +112,38 @@ export function App() {
   const [width, setWidth] = useState(initial.width);
   const [scheme, setScheme] = useState<ColorScheme>(initial.scheme);
   const [direction, setDirection] = useState<TextDirection>(initial.direction);
+  const [compare, setCompare] = useState<CompareMode>(initial.compare);
+  const [layout, setLayout] = useState<CompareLayout>(initial.layout);
 
-  const pagePath = getPagePath(platform, media);
   const descriptor = MEDIA[media];
   const availableSources = mediaSources(media, platform);
   const tailwindAvailable = hasTailwindSkin(media, platform) && tailwindSkinAvailable(platform);
-  // Until a source is chosen, skins come from wherever the styling is published by default.
-  const skinSource = skins ?? defaultSkinSource(platform, styling);
-  const skinStylingsAvailable = skinStylings(platform, skinSource);
   // Until the control is touched, the preview opens at the width its skin would have taken on its own.
   const playerWidth = width ?? defaultPlayerWidth(descriptor.player);
   const resizable = descriptor.player !== 'background';
 
-  const iframeRef = useRef<HTMLIFrameElement>(null);
+  // The frames: one for the selection, or two differing on the compared axis. The first panel is what the navbar
+  // reports as the resolved skin source.
+  const selection: SkinSelection = useMemo(
+    () => ({ platform, styling, skins, skin, media }),
+    [platform, styling, skins, skin, media]
+  );
+  const panels = useMemo(() => comparePanels(selection, compare), [selection, compare]);
+  const skinSource = panels[0]?.skins ?? 'package';
+  const skinStylingsAvailable = skinStylings(platform, skinSource);
+  const compareOptions = useMemo(
+    () => [
+      { value: 'off' as const, label: COMPARE_LABELS.off, disabled: false },
+      ...COMPARE_AXES.map((axis) => ({
+        value: axis,
+        label: COMPARE_LABELS[axis],
+        disabled: !compareAvailable(axis, selection),
+      })),
+    ],
+    [selection]
+  );
+
+  const frames = useRef(new Map<string, HTMLIFrameElement>());
   const previousPreviewState = useRef({
     skin,
     source,
@@ -122,6 +156,20 @@ export function App() {
     scheme,
     direction,
   });
+
+  const frameParams: FrameParams = {
+    media,
+    source,
+    autoplay,
+    muted,
+    loop,
+    preload,
+    locale,
+    accentColor,
+    width: playerWidth,
+    scheme,
+    direction,
+  };
 
   // Keep the URL in sync with all state.
   useEffect(() => {
@@ -146,6 +194,12 @@ export function App() {
 
     if (skins !== undefined) params.set('skins', skins);
 
+    if (compare !== 'off') {
+      params.set('compare', compare);
+
+      if (layout !== 'auto') params.set('layout', layout);
+    }
+
     history.replaceState(null, '', `/?${params}`);
   }, [
     platform,
@@ -163,6 +217,8 @@ export function App() {
     width,
     scheme,
     direction,
+    compare,
+    layout,
   ]);
 
   // The shell follows the scheme too, so its chrome and the preview agree; see `styles.css` for the `dark:` variant.
@@ -175,27 +231,32 @@ export function App() {
   // several identical async renders during startup. Locale changes are URL-owned by Preview because CDN must reload.
   useEffect(() => {
     const previous = previousPreviewState.current;
-    const target = iframeRef.current?.contentWindow;
+    const targets = [...frames.current.values()]
+      .map((frame) => frame.contentWindow)
+      .filter((window) => window !== null);
+    const post = (message: Record<string, unknown>) => {
+      for (const target of targets) target.postMessage(message, '*');
+    };
 
-    if (previous.skin !== skin) target?.postMessage({ type: 'skin-change', skin }, '*');
+    if (previous.skin !== skin) post({ type: 'skin-change', skin });
 
-    if (previous.source !== source) target?.postMessage({ type: 'source-change', source }, '*');
+    if (previous.source !== source) post({ type: 'source-change', source });
 
-    if (previous.autoplay !== autoplay) target?.postMessage({ type: 'autoplay-change', autoplay }, '*');
+    if (previous.autoplay !== autoplay) post({ type: 'autoplay-change', autoplay });
 
-    if (previous.muted !== muted) target?.postMessage({ type: 'muted-change', muted }, '*');
+    if (previous.muted !== muted) post({ type: 'muted-change', muted });
 
-    if (previous.loop !== loop) target?.postMessage({ type: 'loop-change', loop }, '*');
+    if (previous.loop !== loop) post({ type: 'loop-change', loop });
 
-    if (previous.preload !== preload) target?.postMessage({ type: 'preload-change', preload }, '*');
+    if (previous.preload !== preload) post({ type: 'preload-change', preload });
 
-    if (previous.accentColor !== accentColor) target?.postMessage({ type: 'accent-change', accent: accentColor }, '*');
+    if (previous.accentColor !== accentColor) post({ type: 'accent-change', accent: accentColor });
 
-    if (previous.playerWidth !== playerWidth) target?.postMessage({ type: 'width-change', width: playerWidth }, '*');
+    if (previous.playerWidth !== playerWidth) post({ type: 'width-change', width: playerWidth });
 
-    if (previous.scheme !== scheme) target?.postMessage({ type: 'scheme-change', scheme }, '*');
+    if (previous.scheme !== scheme) post({ type: 'scheme-change', scheme });
 
-    if (previous.direction !== direction) target?.postMessage({ type: 'dir-change', dir: direction }, '*');
+    if (previous.direction !== direction) post({ type: 'dir-change', dir: direction });
 
     previousPreviewState.current = {
       skin,
@@ -239,6 +300,11 @@ export function App() {
     else if (!skinStylingsAvailable.includes(styling)) setStyling(skinStylingsAvailable[0] ?? 'css');
   }, [skins, platform, skinStylingsAvailable, styling]);
 
+  // A comparison the selection can no longer make, such as skins for a background media, switches off.
+  useEffect(() => {
+    if (compare !== 'off' && !compareAvailable(compare, selection)) setCompare('off');
+  }, [compare, selection]);
+
   const handleSourceChange = useCallback((value: string) => setSource(value as SourceId), []);
 
   // Picking a styling an explicit source does not publish hands the choice back to that styling's default source.
@@ -261,6 +327,28 @@ export function App() {
     [platform, styling]
   );
 
+  const handleFrame = useCallback((id: string, frame: HTMLIFrameElement | null) => {
+    if (frame) frames.current.set(id, frame);
+    else frames.current.delete(id);
+  }, []);
+
+  // The URL carried these too, but a change made while the page was still loading has no other way in.
+  const handleFrameLoad = (id: string) => {
+    const target = frames.current.get(id)?.contentWindow;
+
+    if (target) postPreferences(target, frameParams);
+  };
+
+  const summary = summarizeSelection({
+    platform,
+    media,
+    skin,
+    styling,
+    skins: skinSource,
+    width: playerWidth,
+    source,
+  });
+
   return (
     <div className="flex h-screen flex-col overflow-hidden">
       <Navbar
@@ -279,6 +367,9 @@ export function App() {
         width={playerWidth}
         onWidthChange={setWidth}
         widthDisabled={!resizable}
+        compare={compare}
+        onCompareChange={setCompare}
+        compareOptions={compareOptions}
         autoplay={autoplay}
         onAutoplayChange={setAutoplay}
         muted={muted}
@@ -301,32 +392,13 @@ export function App() {
         sources={SOURCES}
       />
       <Preview
-        key={`${pagePath}:${media}:${styling}:${skinSource}`}
-        ref={iframeRef}
-        pagePath={pagePath}
-        media={media}
-        skin={skin}
-        styling={styling}
-        skins={skinSource}
-        source={source}
-        autoplay={autoplay}
-        muted={muted}
-        loop={loop}
-        preload={preload}
-        locale={locale}
-        accentColor={accentColor}
-        width={playerWidth}
-        scheme={scheme}
-        direction={direction}
-        onLoad={() => {
-          // The URL carried these too, but a change made while the page was still loading has no other way in.
-          const target = iframeRef.current?.contentWindow;
-
-          target?.postMessage({ type: 'accent-change', accent: accentColor }, '*');
-          target?.postMessage({ type: 'width-change', width: playerWidth }, '*');
-          target?.postMessage({ type: 'scheme-change', scheme }, '*');
-          target?.postMessage({ type: 'dir-change', dir: direction }, '*');
-        }}
+        panels={panels}
+        layout={layout}
+        onLayoutChange={setLayout}
+        summary={summary}
+        params={frameParams}
+        onFrame={handleFrame}
+        onFrameLoad={handleFrameLoad}
       />
     </div>
   );
