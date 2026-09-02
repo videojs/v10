@@ -105,3 +105,9 @@
   object-fit: var(--media-object-fit, contain);
   object-position: var(--media-object-position, center);
 }
+
+@utility transition-media-popup {
+  transition-property: opacity, filter, transform, scale;
+  transition-duration: var(--media-duration-fast);
+  transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
+}

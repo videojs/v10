@@ -39,7 +39,7 @@ export default styles({
     transition: {
       className: 'media-popup-transition',
       utilities: [
-        'transition-[opacity,filter,transform,scale] duration-(--media-duration-fast) ease-out motion-reduce:duration-0!',
+        'transition-media-popup motion-reduce:duration-0!',
         'data-ending-style:duration-(--media-duration-instant) motion-reduce:data-ending-style:duration-0!',
       ],
     },
