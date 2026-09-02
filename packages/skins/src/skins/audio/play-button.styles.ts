@@ -9,7 +9,7 @@ export default styles({
     },
     bufferingIndicator: {
       className: 'audio-play-button-buffering-indicator',
-      utilities: ['z-20 rounded-media-control text-inherit! before:hidden!', 'data-visible:bg-media-controls'],
+      utilities: ['z-20 rounded-media-control text-inherit! before:hidden', 'data-visible:bg-media-controls'],
     },
   },
 });
