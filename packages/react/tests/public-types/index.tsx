@@ -4,9 +4,6 @@
  * Resolves the package through its own `exports` map, so every import below lands on `dist/dev/**.d.ts` rather than
  * source. `skipLibCheck: false` makes the compiler check those declaration files themselves, which is what a strict
  * downstream project sees and what the source typecheck cannot observe.
- *
- * The Mux entries (`media/mux-*`, `extensions/mux-data`) stay out until `@videojs/media/dom/mux` stops leaking
- * `mux-embed` types, which that package does not publish through `types`.
  */
 import type { PlayerStore, UIComponentProps, VideoPlayerStore } from '@videojs/react';
 import {
@@ -30,6 +27,7 @@ import {
 import { AudioPlayer, AudioSkin, usePlayer as useAudioPlayer } from '@videojs/react/audio';
 import { BackgroundVideoPlayer, usePlayer as useBackgroundPlayer } from '@videojs/react/background';
 import { GoogleCast } from '@videojs/react/extensions/google-cast';
+import { MuxData, type MuxDataProps } from '@videojs/react/extensions/mux-data';
 import { createI18n, I18nProvider, type Locale, useTranslator } from '@videojs/react/i18n';
 import '@videojs/react/i18n/locales/en/register';
 import { type IconProps, PlayIcon } from '@videojs/react/icons';
@@ -37,6 +35,10 @@ import { PlayIcon as MinimalPlayIcon } from '@videojs/react/icons/minimal';
 import { LiveAudioPlayer, usePlayer as useLiveAudioPlayer } from '@videojs/react/live-audio';
 import { LiveVideoPlayer, LiveVideoSkin, usePlayer as useLiveVideoPlayer } from '@videojs/react/live-video';
 import { HlsVideo } from '@videojs/react/media/hls-video';
+import { MuxAudio } from '@videojs/react/media/mux-audio/hls-js';
+import { MuxAudio as SpfMuxAudio } from '@videojs/react/media/mux-audio/spf';
+import { MuxVideo } from '@videojs/react/media/mux-video/hls-js';
+import { MuxVideo as SpfMuxVideo } from '@videojs/react/media/mux-video/spf';
 import {
   MinimalVideoSkin,
   usePlayer as useVideoPlayer,
@@ -105,6 +107,21 @@ function Preset(): ReactNode {
   );
 }
 
+// The Mux entries resolve without `mux-embed`'s own types, which that package does not publish.
+function MuxPreset(): ReactNode {
+  const metadata: MuxDataProps['metadata'] = { video_title: 'Title', view_session_id: 'session' };
+
+  return (
+    <VideoPlayer>
+      <MuxVideo source={{ playbackId: 'abc123' }} />
+      <MuxAudio src="https://stream.mux.com/abc123.m3u8" />
+      <SpfMuxVideo source={{ playbackId: 'abc123' }} />
+      <SpfMuxAudio src="https://stream.mux.com/abc123.m3u8" />
+      <MuxData playerSoftwareName="mux-video" metadata={metadata} MuxDataSdk={undefined} />
+    </VideoPlayer>
+  );
+}
+
 // Every preset hook must resolve its store through the public feature types, not a synthesized barrel namespace.
 function PresetHooks(): ReactNode {
   const liveEdgeStart: number = useLiveVideoPlayer((state) => state.liveEdgeStart);
@@ -160,4 +177,4 @@ export type PublicTypeAssertions = [
 const locale: Locale = 'en';
 const i18n = createI18n();
 
-void [BoundConsumer, GenericConsumer, Preset, PresetHooks, Composed, merged, locale, i18n];
+void [BoundConsumer, GenericConsumer, Preset, MuxPreset, PresetHooks, Composed, merged, locale, i18n];

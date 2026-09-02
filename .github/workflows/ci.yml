@@ -92,6 +92,9 @@ jobs:
       - name: Typecheck
         run: pnpm typecheck
 
+      - name: Check public declarations (media)
+        run: pnpm exec vp run @videojs/media#check:public-types
+
       - name: Check public declarations (html)
         run: pnpm exec vp run @videojs/html#check:public-types
 

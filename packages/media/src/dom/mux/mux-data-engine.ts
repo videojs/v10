@@ -1,13 +1,20 @@
 import { hasMethods, isFunction, isObject, isString } from '@videojs/utils/predicate';
 
-import type { MuxDataOptions } from './types';
+/**
+ * A playback engine the way `mux-embed` types one: an object whose shape it reads at runtime. `mux-embed` publishes no
+ * `types`, so the shape is stated here rather than taken from it.
+ */
+export type MuxDataEngineHandle = Record<PropertyKey, unknown>;
 
 /** The `mux-embed` monitor options that hook a playback engine's own telemetry. */
-export type MuxDataEngineOptions = Partial<Pick<MuxDataOptions, 'Hls' | 'hlsjs' | 'dashjs'>>;
-
-type MuxDataHlsJsEngine = NonNullable<MuxDataOptions['hlsjs']>;
-type MuxDataHlsJsClass = NonNullable<MuxDataOptions['Hls']>;
-type MuxDataDashJsEngine = NonNullable<MuxDataOptions['dashjs']>;
+export interface MuxDataEngineOptions {
+  /** The hls.js instance being monitored. */
+  hlsjs?: MuxDataEngineHandle;
+  /** Hls.js's class, which `mux-embed` reads event names and error details from. */
+  Hls?: MuxDataEngineHandle;
+  /** The dash.js player being monitored. */
+  dashjs?: MuxDataEngineHandle;
+}
 
 const warnedEngines = new WeakSet<object>();
 
@@ -54,12 +61,12 @@ export function toMuxDataEngineOptions(engine: unknown): MuxDataEngineOptions {
 // through `on` / `off`; the rendition APIs are what tell the two engines apart.
 
 /** Hls.js: its monitor reads renditions from `levels`. */
-function isHlsJsEngine(engine: unknown): engine is MuxDataHlsJsEngine {
+function isHlsJsEngine(engine: unknown): engine is MuxDataEngineHandle {
   return hasMethods(engine, ['on', 'off']) && Array.isArray((engine as { levels?: unknown }).levels);
 }
 
 /** Dash.js: its monitor reads renditions through the track and rendition-list getters. */
-function isDashJsEngine(engine: unknown): engine is MuxDataDashJsEngine {
+function isDashJsEngine(engine: unknown): engine is MuxDataEngineHandle {
   if (!hasMethods(engine, ['on', 'off', 'getCurrentTrackFor'])) return false;
 
   // dash.js v5 replaced `getBitrateInfoListFor` with `getRepresentationsByType`.
@@ -68,11 +75,11 @@ function isDashJsEngine(engine: unknown): engine is MuxDataDashJsEngine {
 }
 
 /** Hls.js's own class, the only place its event names and error details are published. */
-function toHlsJsClass(engine: object): MuxDataHlsJsClass | undefined {
+function toHlsJsClass(engine: object): MuxDataEngineHandle | undefined {
   const engineClass: unknown = engine.constructor;
   if (!isFunction(engineClass)) return undefined;
 
-  const statics = engineClass as unknown as MuxDataHlsJsClass;
+  const statics = engineClass as unknown as MuxDataEngineHandle;
 
   return isObject(statics.Events) && isObject(statics.ErrorDetails) && isString(statics.version) ? statics : undefined;
 }
