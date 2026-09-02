@@ -3,6 +3,7 @@
 
 @source "../app";
 @source "../templates";
+@source "./_generated/components";
 @source "./_generated/html";
 
 :root {
