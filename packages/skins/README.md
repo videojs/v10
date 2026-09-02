@@ -12,7 +12,7 @@ Follow one skin from source to output.
 2. **Components pair markup with styles.** [`src/components/`](./src/components) holds the target-neutral UI. Every `x.tsx` sits beside an `x.styles.ts` that lists Tailwind classes per rule, with `default` and `minimal` variants where the themes differ. Skin-only overrides live beside the skin, for example [`src/skins/default-video/controls.styles.ts`](./src/skins/default-video/controls.styles.ts).
 3. **Classes resolve through tokens.** Style modules read `--media-*` tokens through Tailwind theme keys such as `duration-media-fast`, never literal values that vary per theme. Tokens are declared in [`src/styles/themes/`](./src/styles/themes) and classified in [`src/styles/vars.ts`](./src/styles/vars.ts).
 4. **The build lowers everything per target.** The [vjsc](../vjsc) compiler, configured in [`build/`](./build), turns each module into React and HTML implementations, compiles class lists into scoped CSS for the CSS targets, and emits Shadcn registry items. The build tooling and the playground consume the built `vjsc` package, so after a compiler change run `pnpm -F vjsc build` (or keep `pnpm -F vjsc dev` running) and restart the playground.
-5. **The playground shows the result.** [`dev/`](./dev) renders every skin across framework, styling, width, and color scheme. Add `compare=styles` to the URL to see the CSS and Tailwind variants together, `compare=source` to hold the authored skin against the CSS skin its framework package ships, `dir=rtl` to flip the text direction, and use the copy button for a report with environment details.
+5. **The sandbox shows the result.** `pnpm dev:sandbox` and pick **Authored source** under *Skins from* to render any skin straight from this source, on either platform and in either styling, at any width and color scheme. **Compare** puts CSS beside Tailwind (`compare=styling`) or the authored skin beside the one its framework package ships (`compare=skins`), **Direction** flips the text direction, and **Report** copies the environment details. The skin-parity suite in `apps/e2e` drives the same pages.
 
 ## Where things live
 
@@ -26,7 +26,6 @@ Follow one skin from source to output.
 | [`src/gaps.md`](./src/gaps.md)                                   | Deferred parity gaps. Maintain it with the `maintain-vjsc-skin-gaps` skill.                                                                |
 | [`src/tests/`](./src/tests)                                      | Contract tests for tokens, the utility catalog, metadata, and poster behavior.                                                             |
 | [`build/`](./build)                                              | Pack config, transform resolvers, framework targets, package writers, and the Shadcn registry.                                             |
-| [`dev/`](./dev)                                                  | The preview matrix and its Vite config.                                                                                                    |
 
 ## Styles and tokens
 
@@ -46,7 +45,6 @@ Three files in [`src/styles/`](./src/styles) chain together. Only the first ship
 | --------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
 | [`tailwind.css`](./src/styles/tailwind.css)       | The design system: theme keys that alias `--media-*` tokens, shared `@utility` recipes, and `media-*` variants. No Tailwind import and no `@source`, so it works inside a consumer's own setup.                              | Both entries below, the registry theme item, the docs generator, and the catalog tests.       |
 | [`tailwind.compiler.css`](./src/styles/tailwind.compiler.css)   | The build design system. Imports Tailwind, base, captions, presets, and the shared file, and aliases `--spacing` to the scaled media unit. No `@source`: the compiler applies class lists directly and never scans files. | [`build/transform.ts`](./build/transform.ts) and the registry theme test.                      |
-| [`tailwind.dev.css`](./src/styles/tailwind.dev.css)             | The playground entry. Extends the compiler entry, imports the plugin's candidate manifest through `vjsc:candidates`, and scans the dev TSX. The only place scanning happens.                                                | [`dev/main.tsx`](./dev/main.tsx) in Tailwind mode.                                             |
 
 Add a shared recipe to `tailwind.css` as a flat `@utility`, describe it in `utilities.ts`, and prefer a token plus theme key over a literal. The [component skill](../../.agents/skills/create-vjsc-component/SKILL.md) has the full rules.
 
@@ -63,7 +61,7 @@ Add a shared recipe to `tailwind.css` as a flat `@utility`, describe it in `util
 Run these from `packages/skins`.
 
 ```bash
-pnpm dev                          # preview matrix, plus package inputs regenerated on change
+pnpm dev                          # package inputs regenerated on change; preview in the sandbox
 pnpm exec vp run generate         # regenerate package inputs and registries
 pnpm exec vp run validate:shadcn  # schema and policy checks on the hosted registry
 pnpm test                         # type check plus unit, build, and registry tests

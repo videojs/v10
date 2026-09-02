@@ -18,9 +18,7 @@
   },
   "type": "module",
   "scripts": {
-    "dev": "pnpm run --parallel \"/^dev:/\"",
-    "dev:generate": "vp run generate:watch",
-    "dev:playground": "vp run playground",
+    "dev": "echo 'Preview skins in the sandbox: pnpm dev:sandbox, then pick Authored source.' && vp run generate:watch",
     "test": "pnpm run test:types && vp test run",
     "test:types": "tsgo --project ./src/tsconfig.json",
     "clean": "rimraf --glob dist types '*.tsbuildinfo'"

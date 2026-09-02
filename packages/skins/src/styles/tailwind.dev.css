@@ -1,4 +1,0 @@
-@import "./tailwind.compiler.css";
-@import "vjsc:candidates";
-
-@source "../**/*.tsx";

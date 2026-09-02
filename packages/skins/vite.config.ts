@@ -38,12 +38,6 @@ export default defineConfig({
         cache: false,
         dependsOn: workspaceTaskDependencies(),
       },
-      playground: {
-        // The playground compiles skins with the built compiler package, so the workspace builds come first.
-        command: 'vp -C dev dev --host',
-        cache: false,
-        dependsOn: workspaceTaskDependencies(),
-      },
       'build:shadcn': {
         command: 'node --import tsx build/registry/build.ts',
         dependsOn: ['generate'],
