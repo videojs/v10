@@ -287,6 +287,7 @@ export const sidebar: Sidebar = [
               { slug: 'reference/use-tap-gesture', frameworks: ['react'] },
               { slug: 'reference/use-tooltip-context', frameworks: ['react'] },
               { slug: 'reference/aria-key-shortcuts-controller', frameworks: ['html'] },
+              { slug: 'reference/create-media-element', frameworks: ['html'] },
               { slug: 'reference/media-attach-mixin', frameworks: ['html'] },
               { slug: 'reference/player-context', frameworks: ['html'] },
               { slug: 'reference/snapshot-controller', frameworks: ['html'] },
