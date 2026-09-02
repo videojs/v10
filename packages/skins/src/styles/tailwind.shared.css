@@ -22,6 +22,7 @@
 
   --color-media-ring: var(--media-ring);
   --color-media-scrim: var(--media-scrim);
+  --color-media-live: var(--media-live-color);
 
   --container-media-compact: 32rem;
   --container-media-wide: 42rem;

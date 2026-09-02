@@ -8,6 +8,10 @@
     --media-border: oklch(1 0 0 / 0.1);
     --media-frame-border: var(--media-border-color, light-dark(rgb(0 0 0 / 0.15), rgb(255 255 255 / 0.15)));
     --media-shadow-sm: 0 1px 2px oklch(0 0 0 / 0.2);
+    --media-thumb-shadow: 0 0 0 1px rgb(0 0 0 / 0.15), 0 1px 3px 0 rgb(0 0 0 / 0.15), 0 1px 2px -1px rgb(0 0 0 / 0.15);
+    --media-dialog-text-shadow: 0 1px 0 rgb(0 0 0 / 0.5);
+    --media-tooltip-shadow:
+      0 0 0 1px var(--media-border), 0 4px 6px -1px oklch(0 0 0 / 0.2), 0 2px 4px -2px oklch(0 0 0 / 0.2);
     --media-controls-gradient: linear-gradient(
       to top in oklab,
       oklch(from var(--media-scrim) l c h / 0.7),

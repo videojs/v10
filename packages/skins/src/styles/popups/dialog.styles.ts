@@ -25,7 +25,7 @@ export default styles({
       className: 'media-dialog-popup',
       utilities: [
         'absolute top-1/2 left-1/2 z-50 flex max-h-[calc(100%-0.5rem)] -translate-x-1/2 -translate-y-1/2 flex-col gap-3 text-media-popover-foreground outline-hidden not-data-open:hidden',
-        'transition-[opacity,scale] delay-100 ease-out motion-reduce:duration-(--media-duration-instant)',
+        'text-shadow-(--media-dialog-text-shadow) transition-[opacity,scale] delay-100 ease-out motion-reduce:duration-(--media-duration-instant)',
         'data-starting-style:scale-95 data-starting-style:opacity-0',
         'data-ending-style:scale-95 data-ending-style:opacity-0 data-ending-style:delay-0',
         'motion-reduce:delay-0',
@@ -34,11 +34,11 @@ export default styles({
         default: [
           'bg-media-popover surface-media after:surface-media-inset',
           'w-[calc(100%-1.5rem)] max-w-72 rounded-[--spacing(7)] p-3',
-          'text-shadow-[0_1px_0_rgb(0_0_0/0.25)] duration-350 data-ending-style:duration-(--media-duration-slower)',
+          'duration-350 data-ending-style:duration-(--media-duration-slower)',
         ],
         minimal: [
           'w-full max-w-64 p-4',
-          'text-shadow-[0_1px_0_rgb(0_0_0/0.5)] duration-(--media-duration) data-ending-style:duration-(--media-duration-instant)',
+          'duration-(--media-duration) data-ending-style:duration-(--media-duration-instant)',
         ],
       },
     },

@@ -10,7 +10,7 @@ export default styles({
         'text-media-sm leading-none font-semibold tracking-wider uppercase',
         'before:inline-block before:size-2 before:shrink-0 before:rounded-media-pill',
         'before:bg-current/40 before:transition-[background-color] before:duration-(--media-duration) before:ease-out',
-        'data-live-edge:before:bg-[oklch(0.65_0.22_27)]',
+        'data-live-edge:before:bg-media-live',
       ],
     },
   },

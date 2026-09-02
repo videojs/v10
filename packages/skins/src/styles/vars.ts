@@ -268,6 +268,22 @@ export const vars = {
     kind: 'internal',
     description: 'Distance between the time slider and its time or chapter label.',
   },
+  '--media-live-color': {
+    kind: 'internal',
+    description: 'Color of the live-edge indicator dot.',
+  },
+  '--media-thumb-shadow': {
+    kind: 'internal',
+    description: 'Theme shadow beneath slider thumbs.',
+  },
+  '--media-dialog-text-shadow': {
+    kind: 'internal',
+    description: 'Theme text shadow inside dialog popups.',
+  },
+  '--media-tooltip-shadow': {
+    kind: 'internal',
+    description: 'Minimal theme tooltip shadow.',
+  },
   '--media-caption-track-delay': {
     kind: 'runtime',
     description: 'Transition delay supplied by the Skin and consumed by native caption rendering.',

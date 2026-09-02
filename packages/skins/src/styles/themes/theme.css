@@ -22,7 +22,10 @@
     --media-frame-border: var(--media-border-color, light-dark(rgb(0 0 0 / 0.1), rgb(255 255 255 / 0.15)));
     --media-ring: oklch(1 0 0);
     --media-scrim: oklch(0 0 0);
+    --media-live-color: oklch(0.65 0.22 27);
     --media-shadow-sm: 0 1px 3px 0 oklch(0 0 0 / 0.15), 0 1px 2px -1px oklch(0 0 0 / 0.15);
+    --media-thumb-shadow: 0 0 0 1px rgb(0 0 0 / 0.1), 0 1px 3px 0 rgb(0 0 0 / 0.35), 0 1px 2px -1px rgb(0 0 0 / 0.35);
+    --media-dialog-text-shadow: 0 1px 0 rgb(0 0 0 / 0.25);
     --media-shadow-current-color: oklch(from currentColor 0 0 0 / clamp(0, calc((l - 0.5) * 0.5), 0.15));
     --media-shadow-subtle-current-color: oklch(from var(--media-shadow-current-color) l c h / calc(alpha * 0.4));
     --media-surface-backdrop-filter: blur(16px) saturate(150%);
