@@ -26,8 +26,6 @@ export default defineConfig({
         // so they must not participate in its own fingerprint.
         input: [
           ...cachedTaskInputs,
-          // The vjsc plugin rewrites this manifest while generating.
-          '!src/styles/candidates.generated.css',
           '!dist/registry',
           '!dist/registry/**',
           ...generatedPackageOutputs.map(({ pattern, base }) => ({ pattern: `!${pattern}`, base })),

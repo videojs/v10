@@ -27,7 +27,7 @@ export default defineConfig({
         components: resolveSkinComponents,
         styles: resolveSkinStyles,
       },
-      candidates: resolve(packageDir, 'src/styles/candidates.generated.css'),
+      candidates: true,
     }),
     tailwindcss(),
     react({ jsxImportSource: 'react' }),

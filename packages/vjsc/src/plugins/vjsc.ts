@@ -43,10 +43,11 @@ export interface VjscPluginOptions {
   readonly entries?: EntriesOptions | undefined;
   readonly transform: TransformOptions;
   /**
-   * Absolute path of a generated CSS file that lists every resolved style utility as a Tailwind `@source inline()`
-   * entry. Import it from a Tailwind entry so scanning sees computed candidates instead of raw style modules.
+   * Write every resolved style utility as a Tailwind `@source inline()` entry so scanning sees computed candidates
+   * instead of raw style modules. `true` writes the manifest to the Vite cache directory and aliases it as
+   * `vjsc:candidates` for Tailwind entries to import; a string sets an explicit path instead.
    */
-  readonly candidates?: string | undefined;
+  readonly candidates?: string | boolean | undefined;
 }
 
 /**

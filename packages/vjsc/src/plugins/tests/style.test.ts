@@ -11,7 +11,13 @@ import { loadDesignSystem } from '../../styles/design-system';
 import type { ResolvedStyles, ResolvedStyleRule } from '../../styles/resolved';
 import { readComponentSource, readModuleStyles } from '../component-meta';
 import { componentSourcePlugin } from '../component-source';
-import { renderCandidateManifest, type StylePluginConfig, stylePlugin } from '../style';
+import {
+  CANDIDATES_ALIAS,
+  renderCandidateManifest,
+  resolveCandidateManifestPath,
+  type StylePluginConfig,
+  stylePlugin,
+} from '../style';
 
 const filename = resolve(import.meta.dirname, 'component.tsx');
 const modulePath = resolve(import.meta.dirname, 'fixtures/button.styles.ts');
@@ -43,7 +49,30 @@ describe('renderCandidateManifest', () => {
   });
 });
 
+describe('resolveCandidateManifestPath', () => {
+  it('places the manifest in the owning package cache directory', () => {
+    const packageDir = resolve(import.meta.dirname, '../../..');
+
+    expect(resolveCandidateManifestPath(import.meta.dirname)).toBe(
+      resolve(packageDir, 'node_modules/.vite/vjsc/candidates.css')
+    );
+    expect(resolveCandidateManifestPath(packageDir, '.cache')).toBe(resolve(packageDir, '.cache/vjsc/candidates.css'));
+  });
+});
+
 describe('stylePlugin', () => {
+  it('aliases the default candidate manifest for Vite consumers', () => {
+    const plugin = stylePlugin({ resolvedStyles, mode: 'tailwind' }, {}, undefined, true) as Plugin & {
+      config(config: { root?: string }): { resolve: { alias: Array<{ find: string; replacement: string }> } } | null;
+    };
+
+    expect(plugin.config({ root: import.meta.dirname })).toEqual({
+      resolve: {
+        alias: [{ find: CANDIDATES_ALIAS, replacement: resolveCandidateManifestPath(import.meta.dirname) }],
+      },
+    });
+  });
+
   it('writes a candidate manifest for every resolved style module', async () => {
     const manifest = join(await mkdtemp(join(tmpdir(), 'vjsc-candidates-')), 'candidates.css');
     const plugin = stylePlugin({ resolvedStyles, mode: 'tailwind' }, {}, undefined, manifest);
