@@ -42,6 +42,11 @@ export interface TransformOptions {
 export interface VjscPluginOptions {
   readonly entries?: EntriesOptions | undefined;
   readonly transform: TransformOptions;
+  /**
+   * Absolute path of a generated CSS file that lists every resolved style utility as a Tailwind `@source inline()`
+   * entry. Import it from a Tailwind entry so scanning sees computed candidates instead of raw style modules.
+   */
+  readonly candidates?: string | undefined;
 }
 
 /**
@@ -96,7 +101,7 @@ export function createPluginPipeline<Node extends ModuleMeta = ModuleMeta>(
     htmlRuntimePlugin(),
     componentMetaPlugin(),
     targetJsxPlugin({ targets }),
-    stylePlugin(styles, diagnostics, styleLifecycle),
+    stylePlugin(styles, diagnostics, styleLifecycle, options.candidates),
     targetTransformPlugin({ targets }),
     compilerDirectivePlugin({ targets }),
     targetTypePlugin({ targets }),
