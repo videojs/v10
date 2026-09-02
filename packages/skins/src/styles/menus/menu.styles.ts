@@ -3,7 +3,7 @@ import { styles } from 'vjsc/styles';
 const menuItem = [
   'relative flex cursor-pointer select-none items-center gap-1.5 rounded-(--media-menu-item-border-radius) px-2 py-1.5 text-start whitespace-nowrap',
   'focus-ring-media',
-  'hover:bg-media-control-hover hover:text-media-accent-text data-highlighted:bg-media-control-hover data-highlighted:text-media-accent-text',
+  'hover:highlight-media data-highlighted:highlight-media',
   'focus-visible:outline-media-ring focus-visible:outline-offset-2',
   'text-shadow-media',
   'transition-[background-color,color] duration-(--media-duration-fast) [transition-timing-function:ease-in-out]',

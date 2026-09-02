@@ -166,3 +166,19 @@
       var(--media-control-radius)
   );
 }
+
+@custom-variant media-highlighted {
+  &:where(:focus-visible, [aria-expanded="true"]):not([aria-disabled="true"]) {
+    @slot;
+  }
+  @media (hover: hover) {
+    &:hover:not([aria-disabled="true"]) {
+      @slot;
+    }
+  }
+}
+
+@utility highlight-media {
+  background-color: var(--media-accent);
+  color: var(--media-accent-foreground);
+}
