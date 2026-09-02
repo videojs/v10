@@ -1,16 +1,12 @@
 'use client';
 
-import {
-  MuxData as MuxDataComponent,
-  muxDataDefaultProps,
-  type MuxDataProps as MuxDataComponentProps,
-} from '@videojs/mux-data';
+import { MuxDataExtension, type MuxDataExtensionProps } from '@videojs/mux-data';
 import type { ReactNode } from 'react';
 
 import { useMediaComponent } from '../../utils/use-media-component';
 import { useSyncProps } from '../../utils/use-sync-props';
 
-export type MuxDataProps = Partial<MuxDataComponentProps>;
+export type MuxDataProps = Partial<MuxDataExtensionProps>;
 
 /**
  * Adds the [Mux Data](https://www.mux.com/data) extension to the surrounding player's media.
@@ -33,18 +29,18 @@ export type MuxDataProps = Partial<MuxDataComponentProps>;
  *   ```;
  */
 export function MuxData(props: MuxDataProps): ReactNode {
-  const component = useMediaComponent(MuxDataComponent);
+  const component = useMediaComponent(MuxDataExtension);
   const { MuxDataSdk, ...rest } = props;
 
   // `useSyncProps` treats an `undefined` prop as "reset to the default", but
   // `MuxDataSdk={undefined}` is how consumers disable monitoring. Sync it here
   // instead: passing the prop wins even when its value is `undefined`, and only
   // omitting it falls back to the default SDK.
-  const sdk = 'MuxDataSdk' in props ? MuxDataSdk : muxDataDefaultProps.MuxDataSdk;
+  const sdk = 'MuxDataSdk' in props ? MuxDataSdk : MuxDataExtension.defaultProps.MuxDataSdk;
 
   if (component.MuxDataSdk !== sdk) component.MuxDataSdk = sdk;
 
-  useSyncProps(component, rest, muxDataDefaultProps);
+  useSyncProps(component, rest, MuxDataExtension.defaultProps);
 
   return null;
 }

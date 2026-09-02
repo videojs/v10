@@ -19,10 +19,10 @@ import '@videojs/html/extensions/mux-data';
 ```
 
 ```tsx
-import { MuxData } from '@videojs/react/extensions/mux-data';
+import { MuxDataExtension } from '@videojs/react/extensions/mux-data';
 ```
 
-Low-level consumers can import the framework-neutral `MuxData` extension from `@videojs/mux-data`.
+Low-level consumers can import the framework-neutral `MuxDataExtension` extension from `@videojs/mux-data`.
 
 ## License
 

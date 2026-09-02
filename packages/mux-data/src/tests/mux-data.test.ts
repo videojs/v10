@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
-import { MuxData } from '..';
+import { MuxDataExtension } from '..';
 import type { MuxDataSdk } from '../types';
 
 function createSdk() {
@@ -66,14 +66,14 @@ afterEach(() => {
   document.body.innerHTML = '';
 });
 
-describe('MuxData', () => {
+describe('MuxDataExtension', () => {
   it('accepts a player software name', () => {
-    expect(new MuxData({ playerSoftwareName: 'mux-video' }).playerSoftwareName).toBe('mux-video');
+    expect(new MuxDataExtension({ playerSoftwareName: 'mux-video' }).playerSoftwareName).toBe('mux-video');
   });
 
   it('monitors the attached target with the configured data', async () => {
     const { sdk, monitor } = createSdk();
-    const data = new MuxData({ MuxDataSdk: sdk, envKey: 'key', playerSoftwareName: 'mux-video' });
+    const data = new MuxDataExtension({ MuxDataSdk: sdk, envKey: 'key', playerSoftwareName: 'mux-video' });
     const video = document.createElement('video');
     const media = new FakeMedia();
 
@@ -94,7 +94,7 @@ describe('MuxData', () => {
 
   it('does not monitor before a target is attached', async () => {
     const { sdk, monitor } = createSdk();
-    const data = new MuxData({ MuxDataSdk: sdk });
+    const data = new MuxDataExtension({ MuxDataSdk: sdk });
     const media = new FakeMedia();
 
     media.src = 'https://stream.mux.com/abc123.m3u8';
@@ -108,7 +108,7 @@ describe('MuxData', () => {
 
   it('keeps the monitor across a same-source loadstart', async () => {
     const { sdk, monitor, emit, destroy } = createSdk();
-    const data = new MuxData({ MuxDataSdk: sdk, envKey: 'key' });
+    const data = new MuxDataExtension({ MuxDataSdk: sdk, envKey: 'key' });
     const video = document.createElement('video');
     const media = new FakeMedia();
 
@@ -129,7 +129,7 @@ describe('MuxData', () => {
 
   it('emits videochange on the live monitor when the source changes', async () => {
     const { sdk, monitor, emit, destroy } = createSdk();
-    const data = new MuxData({ MuxDataSdk: sdk, envKey: 'key' });
+    const data = new MuxDataExtension({ MuxDataSdk: sdk, envKey: 'key' });
     const video = document.createElement('video');
     const media = new FakeMedia();
 
@@ -150,7 +150,7 @@ describe('MuxData', () => {
 
   it('names the pending view instead of changing videos when the first source arrives', async () => {
     const { sdk, monitor, emit, updateData } = createSdk();
-    const data = new MuxData({ MuxDataSdk: sdk, envKey: 'key' });
+    const data = new MuxDataExtension({ MuxDataSdk: sdk, envKey: 'key' });
     const video = document.createElement('video');
     const media = new FakeMedia();
 
@@ -171,7 +171,7 @@ describe('MuxData', () => {
 
   it('emits videochange for a new video loaded after the source was cleared', async () => {
     const { sdk, monitor, emit } = createSdk();
-    const data = new MuxData({ MuxDataSdk: sdk, envKey: 'key' });
+    const data = new MuxDataExtension({ MuxDataSdk: sdk, envKey: 'key' });
     const video = document.createElement('video');
     const media = new FakeMedia();
 
@@ -197,7 +197,7 @@ describe('MuxData', () => {
 
   it('hooks a new engine into the live monitor instead of re-monitoring', async () => {
     const { sdk, monitor, addHLSJS, removeHLSJS, destroy } = createSdk();
-    const data = new MuxData({ MuxDataSdk: sdk, envKey: 'key' });
+    const data = new MuxDataExtension({ MuxDataSdk: sdk, envKey: 'key' });
     const video = document.createElement('video');
     const media = new FakeMedia();
 
@@ -230,7 +230,7 @@ describe('MuxData', () => {
 
   it('monitors a dash.js engine through the dash.js integration', async () => {
     const { sdk, monitor } = createSdk();
-    const data = new MuxData({ MuxDataSdk: sdk, envKey: 'key' });
+    const data = new MuxDataExtension({ MuxDataSdk: sdk, envKey: 'key' });
     const video = document.createElement('video');
     const media = new FakeMedia();
 
@@ -251,7 +251,7 @@ describe('MuxData', () => {
 
   it('monitors media with no engine from the media element alone', async () => {
     const { sdk, monitor } = createSdk();
-    const data = new MuxData({ MuxDataSdk: sdk, envKey: 'key' });
+    const data = new MuxDataExtension({ MuxDataSdk: sdk, envKey: 'key' });
     const video = document.createElement('video');
     const media = new FakeMedia();
 
@@ -271,7 +271,7 @@ describe('MuxData', () => {
 
   it('keeps one view session id across video changes', async () => {
     const { sdk, monitor, emit } = createSdk();
-    const data = new MuxData({ MuxDataSdk: sdk, envKey: 'key' });
+    const data = new MuxDataExtension({ MuxDataSdk: sdk, envKey: 'key' });
     const video = document.createElement('video');
     const media = new FakeMedia();
 
@@ -296,7 +296,7 @@ describe('MuxData', () => {
   it('honors a caller-supplied view session id and never mutates caller metadata', async () => {
     const { sdk, monitor } = createSdk();
     const metadata = { view_session_id: 'caller-session', video_title: 'Some Title' };
-    const data = new MuxData({ MuxDataSdk: sdk, envKey: 'key', metadata });
+    const data = new MuxDataExtension({ MuxDataSdk: sdk, envKey: 'key', metadata });
     const video = document.createElement('video');
     const media = new FakeMedia();
 
@@ -315,7 +315,7 @@ describe('MuxData', () => {
   it('does not write a generated view session id into caller metadata', async () => {
     const { sdk } = createSdk();
     const metadata = { video_title: 'Some Title' };
-    const data = new MuxData({ MuxDataSdk: sdk, envKey: 'key', metadata });
+    const data = new MuxDataExtension({ MuxDataSdk: sdk, envKey: 'key', metadata });
     const video = document.createElement('video');
     const media = new FakeMedia();
 
@@ -330,7 +330,7 @@ describe('MuxData', () => {
 
   it('destroys the old target monitor when attached to a new target', async () => {
     const { sdk, monitor, destroy } = createSdk();
-    const data = new MuxData({ MuxDataSdk: sdk, envKey: 'key' });
+    const data = new MuxDataExtension({ MuxDataSdk: sdk, envKey: 'key' });
     const first = document.createElement('video');
     const second = document.createElement('video');
     const media = new FakeMedia();
@@ -352,7 +352,7 @@ describe('MuxData', () => {
 
   it('follows the media when registered with another host', async () => {
     const { sdk, monitor, emit } = createSdk();
-    const data = new MuxData({ MuxDataSdk: sdk });
+    const data = new MuxDataExtension({ MuxDataSdk: sdk });
     const video = document.createElement('video');
     const first = new FakeMedia();
     const second = new FakeMedia();
@@ -378,7 +378,7 @@ describe('MuxData', () => {
   });
 
   it('destroys active monitoring on destroy', () => {
-    const data = new MuxData();
+    const data = new MuxDataExtension();
     const video = document.createElement('video');
     const destroy = vi.fn();
 
@@ -393,7 +393,7 @@ describe('MuxData', () => {
 
   it('stops syncing after destroy', async () => {
     const { sdk, monitor, emit } = createSdk();
-    const data = new MuxData({ MuxDataSdk: sdk, envKey: 'key' });
+    const data = new MuxDataExtension({ MuxDataSdk: sdk, envKey: 'key' });
     const video = document.createElement('video');
     const media = new FakeMedia();
 

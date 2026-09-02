@@ -1,1 +1,1 @@
-export * from './mux-data-element';
+export * from './extension';

@@ -4,7 +4,7 @@ import { getPlayerVersion } from './env';
 import { type MuxDataEngineOptions, toMuxDataEngineOptions } from './mux-data-engine';
 import type { MuxDataOptions, MuxDataSdk } from './types';
 
-export interface MuxDataProps {
+export interface MuxDataExtensionProps {
   MuxDataSdk: MuxDataSdk | undefined;
   beaconCollectionDomain: string | undefined;
   debug: boolean;
@@ -15,19 +15,6 @@ export interface MuxDataProps {
   playerInitTime: number | undefined;
   metadata: MuxDataOptions['data'] | undefined;
 }
-
-export const muxDataDefaultProps: MuxDataProps = {
-  MuxDataSdk: Mux,
-  beaconCollectionDomain: undefined,
-  debug: false,
-  disableCookies: false,
-  envKey: undefined,
-  playerSoftwareName: undefined,
-  playerSoftwareVersion: getPlayerVersion(),
-  // Generated per instance; see `#generatePlayerInitTime()`.
-  playerInitTime: undefined,
-  metadata: undefined,
-};
 
 const MUX_VIDEO_DOMAIN = 'mux.com';
 
@@ -48,16 +35,29 @@ export interface MuxDataMedia extends EventTarget {
   readonly src: string;
 }
 
-export class MuxData implements MuxDataProps {
-  #MuxDataSdk: MuxDataSdk | undefined = muxDataDefaultProps.MuxDataSdk;
+export class MuxDataExtension implements MuxDataExtensionProps {
+  static defaultProps: MuxDataExtensionProps = {
+    MuxDataSdk: Mux,
+    beaconCollectionDomain: undefined,
+    debug: false,
+    disableCookies: false,
+    envKey: undefined,
+    playerSoftwareName: undefined,
+    playerSoftwareVersion: getPlayerVersion(),
+    // Generated per instance; see `#generatePlayerInitTime()`.
+    playerInitTime: undefined,
+    metadata: undefined,
+  };
+
+  #MuxDataSdk: MuxDataSdk | undefined = MuxDataExtension.defaultProps.MuxDataSdk;
   #pendingSync: Promise<void> | null = null;
-  #beaconCollectionDomain: string | undefined = muxDataDefaultProps.beaconCollectionDomain;
-  #debug = muxDataDefaultProps.debug;
-  #disableCookies = muxDataDefaultProps.disableCookies;
-  #metadata: MuxDataOptions['data'] | undefined = muxDataDefaultProps.metadata;
-  #envKey: string | undefined = muxDataDefaultProps.envKey;
-  #playerSoftwareName: string | undefined = muxDataDefaultProps.playerSoftwareName;
-  #playerSoftwareVersion: string | undefined = muxDataDefaultProps.playerSoftwareVersion;
+  #beaconCollectionDomain: string | undefined = MuxDataExtension.defaultProps.beaconCollectionDomain;
+  #debug = MuxDataExtension.defaultProps.debug;
+  #disableCookies = MuxDataExtension.defaultProps.disableCookies;
+  #metadata: MuxDataOptions['data'] | undefined = MuxDataExtension.defaultProps.metadata;
+  #envKey: string | undefined = MuxDataExtension.defaultProps.envKey;
+  #playerSoftwareName: string | undefined = MuxDataExtension.defaultProps.playerSoftwareName;
+  #playerSoftwareVersion: string | undefined = MuxDataExtension.defaultProps.playerSoftwareVersion;
   #playerInitTime: number | undefined = this.#generatePlayerInitTime();
   #media: MuxDataMedia | null = null;
   #target: HTMLVideoElement | null = null;
@@ -68,7 +68,7 @@ export class MuxData implements MuxDataProps {
   // Generated once per instance, so the views of one player group into one session.
   #viewSessionId: string | undefined;
 
-  constructor(props: Partial<MuxDataProps> = {}) {
+  constructor(props: Partial<MuxDataExtensionProps> = {}) {
     Object.assign(this, props);
   }
 

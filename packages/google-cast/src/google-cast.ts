@@ -6,7 +6,7 @@ import { requiresCastFramework } from './utils';
 
 type MediaHost = HTMLMediaElementHost<HTMLMediaTargetLike, any>;
 
-export interface GoogleCastProps {
+export interface GoogleCastExtensionProps {
   /** Source URL loaded on the Cast receiver. Falls back to the host's `src` / `currentSrc`. */
   src?: string | undefined;
   /** MIME type of the Cast source. When unset, the receiver infers it from the URL. */
@@ -19,15 +19,15 @@ export interface GoogleCastProps {
   customData?: Record<string, unknown> | null | undefined;
 }
 
-export const googleCastDefaultProps: GoogleCastProps = {
-  src: undefined,
-  contentType: undefined,
-  streamType: undefined,
-  receiver: undefined,
-  customData: undefined,
-};
+export class GoogleCastExtension implements GoogleCastExtensionProps, MediaComponent {
+  static defaultProps: GoogleCastExtensionProps = {
+    src: undefined,
+    contentType: undefined,
+    streamType: undefined,
+    receiver: undefined,
+    customData: undefined,
+  };
 
-export class GoogleCast implements GoogleCastProps, MediaComponent {
   #src: string | undefined;
   #contentType: string | undefined;
   #streamType: MediaStreamType | undefined;
@@ -37,7 +37,7 @@ export class GoogleCast implements GoogleCastProps, MediaComponent {
   #provider: GoogleCastProvider | null = null;
   #override: Partial<HTMLMediaTargetLike> | null = null;
 
-  constructor(props: GoogleCastProps = {}) {
+  constructor(props: GoogleCastExtensionProps = {}) {
     Object.assign(this, props);
   }
 

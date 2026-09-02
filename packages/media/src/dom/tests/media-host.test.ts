@@ -202,7 +202,7 @@ describe('HTMLMediaElementHost', () => {
 
       host.destroy();
 
-      // `<mux-data>` / `MuxData` own their component and may outlive the host.
+      // `<mux-data>` / `MuxDataExtension` own their component and may outlive the host.
       expect(component.destroy).not.toHaveBeenCalled();
     });
 

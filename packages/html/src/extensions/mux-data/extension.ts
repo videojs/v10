@@ -1,5 +1,5 @@
 import type { PropertyDeclarationMap } from '@videojs/element';
-import { MuxData, type MuxDataProps } from '@videojs/mux-data';
+import { MuxDataExtension as MuxDataExtensionBase, type MuxDataExtensionProps } from '@videojs/mux-data';
 
 import { MediaComponentElement } from '../media-component-element';
 
@@ -22,7 +22,7 @@ import { MediaComponentElement } from '../media-component-element';
  *   </video-player>
  *   ```;
  */
-export class MuxDataElement extends MediaComponentElement<MuxData> {
+export class MuxDataExtension extends MediaComponentElement<MuxDataExtensionBase> {
   static readonly tagName = 'mux-data';
 
   static override properties = {
@@ -34,10 +34,10 @@ export class MuxDataElement extends MediaComponentElement<MuxData> {
     playerSoftwareVersion: { type: String, attribute: 'player-software-version' },
     playerInitTime: { type: Number, attribute: 'player-init-time' },
     // `metadata` and `MuxDataSdk` take objects, so they're property-only props.
-  } satisfies PropertyDeclarationMap<Exclude<keyof MuxDataProps, 'metadata' | 'MuxDataSdk'>>;
+  } satisfies PropertyDeclarationMap<Exclude<keyof MuxDataExtensionProps, 'metadata' | 'MuxDataSdk'>>;
 
-  protected createComponent(): MuxData {
-    return new MuxData();
+  protected createComponent(): MuxDataExtensionBase {
+    return new MuxDataExtensionBase();
   }
 
   /** Mux Data environment key for the beacons. Optional for Mux-hosted playback. */
@@ -104,20 +104,20 @@ export class MuxDataElement extends MediaComponentElement<MuxData> {
   }
 
   /** Custom view metadata forwarded to the Mux Data SDK. */
-  get metadata(): MuxDataProps['metadata'] {
+  get metadata(): MuxDataExtensionProps['metadata'] {
     return this.component.metadata;
   }
 
-  set metadata(value: MuxDataProps['metadata']) {
+  set metadata(value: MuxDataExtensionProps['metadata']) {
     this.component.metadata = value;
   }
 
   /** Mux Data SDK used for monitoring. Set to `undefined` to disable monitoring. */
-  get MuxDataSdk(): MuxDataProps['MuxDataSdk'] {
+  get MuxDataSdk(): MuxDataExtensionProps['MuxDataSdk'] {
     return this.component.MuxDataSdk;
   }
 
-  set MuxDataSdk(value: MuxDataProps['MuxDataSdk']) {
+  set MuxDataSdk(value: MuxDataExtensionProps['MuxDataSdk']) {
     this.component.MuxDataSdk = value;
   }
 }

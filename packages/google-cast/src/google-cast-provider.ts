@@ -1,7 +1,7 @@
 import type { HTMLMediaTargetLike } from '@videojs/media/dom';
 import { isCaptionOrSubtitleTrack } from '@videojs/utils/dom';
 
-import type { GoogleCastProps } from './index';
+import type { GoogleCastExtensionProps } from './index';
 import { castFramework, ensureCastFramework, googleCastInstances } from './registry';
 import { RemotePlayback, type RemotePlaybackHooks } from './remote-playback';
 import {
@@ -20,14 +20,14 @@ import {
 
 type RemotePlayerListener = (event?: cast.framework.RemotePlayerChangedEvent) => void;
 
-type GoogleCastConfig = GoogleCastProps;
+type GoogleCastConfig = GoogleCastExtensionProps;
 
 /**
- * Cast provider + lifecycle. Created by the {@link GoogleCast} component and installed as the host's `targetOverride`
- * while a cast session is connected, so its getters/setters route through the cast receiver; when disconnected the host
- * falls through to the attached target. Also owns the cast framework integration, the `RemotePlayback` instance exposed
- * via {@link GoogleCastProvider#remote}, and dispatches media events on the attached target (forwarded by the host)
- * while casting.
+ * Cast provider + lifecycle. Created by the {@link GoogleCastExtension} component and installed as the host's
+ * `targetOverride` while a cast session is connected, so its getters/setters route through the cast receiver; when
+ * disconnected the host falls through to the attached target. Also owns the cast framework integration, the
+ * `RemotePlayback` instance exposed via {@link GoogleCastProvider#remote}, and dispatches media events on the attached
+ * target (forwarded by the host) while casting.
  */
 export class GoogleCastProvider {
   target: HTMLMediaTargetLike | null = null;

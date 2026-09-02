@@ -7,7 +7,7 @@ date: 2026-09-01
 
 ## Decision
 
-`MuxData` starts one `mux-embed` monitor per target and keeps it alive for the target's lifetime. A source change is reported to the live monitor as `videochange`, and an engine swap re-hooks engine telemetry on the live monitor. The monitor is destroyed and re-created only when the target changes or when an option baked into `monitor()` itself changes (SDK, beacon domain, debug, cookies).
+`MuxDataExtension` starts one `mux-embed` monitor per target and keeps it alive for the target's lifetime. A source change is reported to the live monitor as `videochange`, and an engine swap re-hooks engine telemetry on the live monitor. The monitor is destroyed and re-created only when the target changes or when an option baked into `monitor()` itself changes (SDK, beacon domain, debug, cookies).
 
 ## Why
 

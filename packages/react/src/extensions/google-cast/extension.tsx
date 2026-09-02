@@ -1,16 +1,12 @@
 'use client';
 
-import {
-  GoogleCast as GoogleCastComponent,
-  googleCastDefaultProps,
-  type GoogleCastProps as GoogleCastComponentProps,
-} from '@videojs/google-cast';
+import { GoogleCastExtension, type GoogleCastExtensionProps } from '@videojs/google-cast';
 import type { ReactNode } from 'react';
 
 import { useMediaComponent } from '../../utils/use-media-component';
 import { useSyncProps } from '../../utils/use-sync-props';
 
-export type GoogleCastProps = Partial<GoogleCastComponentProps>;
+export type GoogleCastProps = Partial<GoogleCastExtensionProps>;
 
 /**
  * Adds the Google Cast extension to the surrounding player's media.
@@ -27,9 +23,9 @@ export type GoogleCastProps = Partial<GoogleCastComponentProps>;
  *   ```;
  */
 export function GoogleCast(props: GoogleCastProps): ReactNode {
-  const component = useMediaComponent(GoogleCastComponent);
+  const component = useMediaComponent(GoogleCastExtension);
 
-  useSyncProps(component, props, googleCastDefaultProps);
+  useSyncProps(component, props, GoogleCastExtension.defaultProps);
 
   return null;
 }

@@ -1,12 +1,12 @@
-import { MuxDataElement } from '../../extensions/mux-data';
+import { MuxDataExtension } from '../../extensions/mux-data';
 import { safeDefine } from '../../registration/safe-define';
 
-export { MuxDataElement };
+export { MuxDataExtension };
 
-safeDefine(MuxDataElement);
+safeDefine(MuxDataExtension);
 
 declare global {
   interface HTMLElementTagNameMap {
-    [MuxDataElement.tagName]: MuxDataElement;
+    [MuxDataExtension.tagName]: MuxDataExtension;
   }
 }

@@ -1,5 +1,5 @@
 import type { PropertyDeclarationMap } from '@videojs/element';
-import { GoogleCast, type GoogleCastProps } from '@videojs/google-cast';
+import { GoogleCastExtension as GoogleCastExtensionBase, type GoogleCastExtensionProps } from '@videojs/google-cast';
 
 import { MediaComponentElement } from '../media-component-element';
 
@@ -16,7 +16,7 @@ import { MediaComponentElement } from '../media-component-element';
  *   </video-player>
  *   ```;
  */
-export class GoogleCastElement extends MediaComponentElement<GoogleCast> {
+export class GoogleCastExtension extends MediaComponentElement<GoogleCastExtensionBase> {
   static readonly tagName = 'google-cast';
 
   static override properties = {
@@ -25,10 +25,10 @@ export class GoogleCastElement extends MediaComponentElement<GoogleCast> {
     streamType: { type: String, attribute: 'stream-type' },
     receiver: { type: String },
     // `customData` takes an object, so it's a property-only prop.
-  } satisfies PropertyDeclarationMap<Exclude<keyof GoogleCastProps, 'customData'>>;
+  } satisfies PropertyDeclarationMap<Exclude<keyof GoogleCastExtensionProps, 'customData'>>;
 
-  protected createComponent(): GoogleCast {
-    return new GoogleCast();
+  protected createComponent(): GoogleCastExtensionBase {
+    return new GoogleCastExtensionBase();
   }
 
   /** Source URL loaded on the Cast receiver. Falls back to the media's `src` / `currentSrc`. */
@@ -50,11 +50,11 @@ export class GoogleCastElement extends MediaComponentElement<GoogleCast> {
   }
 
   /** Stream type used on the Cast receiver. Falls back to the media's `streamType`. */
-  get streamType(): GoogleCastProps['streamType'] {
+  get streamType(): GoogleCastExtensionProps['streamType'] {
     return this.component.streamType;
   }
 
-  set streamType(value: GoogleCastProps['streamType'] | null) {
+  set streamType(value: GoogleCastExtensionProps['streamType'] | null) {
     this.component.streamType = value ?? undefined;
   }
 
@@ -68,11 +68,11 @@ export class GoogleCastElement extends MediaComponentElement<GoogleCast> {
   }
 
   /** Custom data sent to the Cast receiver with the load request. */
-  get customData(): GoogleCastProps['customData'] {
+  get customData(): GoogleCastExtensionProps['customData'] {
     return this.component.customData;
   }
 
-  set customData(value: GoogleCastProps['customData']) {
+  set customData(value: GoogleCastExtensionProps['customData']) {
     this.component.customData = value;
   }
 }

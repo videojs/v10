@@ -1,7 +1,7 @@
 import { addMediaComponent, HTMLVideoElementHost } from '@videojs/media/dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
-import { GoogleCast } from '../index';
+import { GoogleCastExtension } from '../index';
 
 const mocks = vi.hoisted(() => {
   class FakeRemote extends EventTarget {
@@ -47,7 +47,7 @@ function setup() {
 
   host.attach(video);
 
-  const googleCast = new GoogleCast();
+  const googleCast = new GoogleCastExtension();
 
   addMediaComponent(host, googleCast);
 
@@ -76,7 +76,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe('GoogleCast', () => {
+describe('GoogleCastExtension', () => {
   it('registers remote state listeners only once across media changes', () => {
     const { googleCast, provider } = setup();
     const nextHost = new HTMLVideoElementHost();

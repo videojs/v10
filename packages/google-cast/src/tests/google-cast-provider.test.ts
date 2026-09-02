@@ -2,7 +2,7 @@ import { addMediaComponent, type HTMLMediaTargetLike, HTMLVideoElementHost } fro
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { GoogleCastProvider } from '../google-cast-provider';
-import { GoogleCast } from '../index';
+import { GoogleCastExtension } from '../index';
 import { ensureCastFramework } from '../registry';
 
 vi.mock('../registry', async (importOriginal) => {
@@ -99,7 +99,7 @@ describe('GoogleCastProvider', () => {
   });
 });
 
-describe('GoogleCast', () => {
+describe('GoogleCastExtension', () => {
   it('loads the cast framework when the host remote is read while attached', () => {
     vi.stubGlobal('chrome', {});
 
@@ -108,7 +108,7 @@ describe('GoogleCast', () => {
 
     host.attach(target as Parameters<HTMLVideoElementHost['attach']>[0]);
 
-    addMediaComponent(host, new GoogleCast());
+    addMediaComponent(host, new GoogleCastExtension());
     expect(ensureCastFramework).not.toHaveBeenCalled();
 
     // The component's override must expose `remote` as an accessor so host
@@ -123,7 +123,7 @@ describe('GoogleCast', () => {
 
     const host = new HTMLVideoElementHost();
 
-    addMediaComponent(host, new GoogleCast());
+    addMediaComponent(host, new GoogleCastExtension());
 
     void host.remote;
 
