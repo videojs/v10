@@ -3,13 +3,13 @@ import { getMediaSnapshot, subscribeToInputActions } from '@videojs/core/dom';
 import { useEffect } from 'react';
 
 import { useContainer, usePlayer } from '../../player/context';
-import { useLatestRef } from '../../utils/use-latest-ref';
+import { useCommittedRef } from '../../utils/use-committed-ref';
 
 export function useInputActionSubscription(callback: (event: InputActionEvent, snapshot: MediaSnapshot) => void): void {
   const container = useContainer();
   const store = usePlayer();
-  const callbackRef = useLatestRef(callback);
-  const storeRef = useLatestRef(store);
+  const callbackRef = useCommittedRef(callback);
+  const storeRef = useCommittedRef(store);
 
   useEffect(() => {
     if (!container) return;
