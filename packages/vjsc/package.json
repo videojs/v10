@@ -39,6 +39,14 @@
       "types": "./dist/graph/index.d.ts",
       "default": "./dist/graph/index.js"
     },
+    "./html-runtime/jsx-runtime": {
+      "types": "./dist/html-runtime/jsx-runtime.d.ts",
+      "default": "./dist/html-runtime/jsx-runtime.js"
+    },
+    "./html-runtime/jsx-dev-runtime": {
+      "types": "./dist/html-runtime/jsx-dev-runtime.d.ts",
+      "default": "./dist/html-runtime/jsx-dev-runtime.js"
+    },
     "./target": {
       "types": "./dist/target/index.d.ts",
       "default": "./dist/target/index.js"

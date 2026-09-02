@@ -14,6 +14,8 @@ const pack: PackUserConfig = {
     'components/jsx-runtime': './src/components/jsx-runtime.ts',
     'components/jsx-dev-runtime': './src/components/jsx-dev-runtime.ts',
     'graph/index': './src/graph/index.ts',
+    'html-runtime/jsx-runtime': './src/html-runtime/jsx-runtime.ts',
+    'html-runtime/jsx-dev-runtime': './src/html-runtime/jsx-dev-runtime.ts',
     'target/index': './src/target/index.ts',
     'target/jsx-runtime': './src/target/jsx-runtime.ts',
     'target/jsx-dev-runtime': './src/target/jsx-dev-runtime.ts',
