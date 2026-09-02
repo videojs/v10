@@ -1,17 +1,17 @@
 /**
  * Build the CDN media manifest for the installation guide.
  *
- * Scans the built `@videojs/html` CDN media bundles and records which media subpaths actually ship a CDN build. The
+ * Scans the built `@videojs/cdn` media bundles and records which media subpaths actually ship a CDN build. The
  * installation page uses this to hide the CDN install option for a renderer that has no CDN bundle.
  *
  * Produces `site/src/content/cdn-media.json` as an array of `{ id }` entries (one per media subpath), consumed via the
  * `cdnMedia` content collection.
  *
- * Source of truth: the built output of `@videojs/html`'s `build:cdn` task (configured in
- * `packages/html/vite.config.ts`). Reading the build output — rather than a hand-maintained list — means a renderer
- * that fails to ship a CDN bundle correctly shows as no-CDN.
+ * Source of truth: the built output of `@videojs/cdn`'s `build:cdn` task (configured in `packages/cdn/vite.config.ts`).
+ * Reading the build output — rather than a hand-maintained list — means a renderer that fails to ship a CDN bundle
+ * correctly shows as no-CDN.
  *
- * Prerequisites: `@videojs/html`'s `build:cdn` (wired as a Vite+ task dependency).
+ * Prerequisites: `@videojs/cdn`'s `build:cdn` (wired as a Vite+ task dependency).
  */
 
 import { existsSync, mkdirSync, readdirSync, writeFileSync } from 'node:fs';
@@ -22,7 +22,7 @@ import { z } from 'astro/zod';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '../..');
-const CDN_MEDIA_DIR = resolve(ROOT, 'packages/html/cdn/media');
+const CDN_MEDIA_DIR = resolve(ROOT, 'packages/cdn/media');
 const OUTPUT = resolve(ROOT, 'site/src/content/cdn-media.json');
 
 const PREFIX = '\x1b[35m[cdn-manifest]\x1b[0m';
@@ -54,7 +54,7 @@ function collectSubpaths(dir: string, prefix = ''): string[] {
 function main() {
   if (!existsSync(CDN_MEDIA_DIR)) {
     log.error(`CDN media build not found at ${CDN_MEDIA_DIR}.`);
-    log.error("Run @videojs/html's build:cdn first (it's wired as a Vite+ task dependency).");
+    log.error("Run @videojs/cdn's build:cdn first (it's wired as a Vite+ task dependency).");
     process.exit(1);
   }
 

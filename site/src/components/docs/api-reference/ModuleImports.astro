@@ -4,7 +4,7 @@ import type { BundledLanguage } from 'shiki';
 import ServerCode from '@/components/Code/ServerCode.astro';
 import CodeFrame from '@/components/typography/CodeFrame.astro';
 import P from '@/components/typography/P.astro';
-import { VJS10_HTML_CDN_BASE } from '@/consts';
+import { VJS10_CDN_BASE } from '@/consts';
 import DocsLink from '../DocsLink.astro';
 import FrameworkCase from '../FrameworkCase.astro';
 
@@ -21,7 +21,7 @@ interface Props {
 
 const { name, package: pkg, react, subpath } = Astro.props;
 
-const cdnCode = `<script type="module" src="${VJS10_HTML_CDN_BASE}/${subpath}/${name}.js"></script>`;
+const cdnCode = `<script type="module" src="${VJS10_CDN_BASE}/${subpath}/${name}.js"></script>`;
 
 const imports: Array<{ code: string; framework: 'react' | 'html'; lang: BundledLanguage }> = [
   ...(pkg

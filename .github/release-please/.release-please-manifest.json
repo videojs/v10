@@ -1,4 +1,5 @@
 {
+  "packages/cdn": "10.0.0-beta.32",
   "packages/cli": "10.0.0-beta.32",
   "packages/cloudflare-video": "10.0.0-beta.32",
   "packages/core": "10.0.0-beta.32",

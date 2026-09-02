@@ -79,9 +79,9 @@ Here's a typical Mux Player embed. A playback ID, a title and viewer ID for anal
 From the CDN, load the video <DocsLink slug="concepts/presets">preset</DocsLink>, the Mux media, and analytics:
 
 ```html
-<script type="module" src="{{VJS10_HTML_CDN_BASE}}/video.js"></script>
-<script type="module" src="{{VJS10_HTML_CDN_BASE}}/media/mux-video.js"></script>
-<script type="module" src="{{VJS10_HTML_CDN_BASE}}/extensions/mux-data.js"></script>
+<script type="module" src="{{VJS10_CDN_BASE}}/video.js"></script>
+<script type="module" src="{{VJS10_CDN_BASE}}/media/mux-video.js"></script>
+<script type="module" src="{{VJS10_CDN_BASE}}/extensions/mux-data.js"></script>
 
 <video-player content-title="Test VOD">
   <video-skin style="aspect-ratio: 16 / 9">
@@ -577,8 +577,8 @@ Unlike Mux Player, you'll have to pick a live preset yourself; it won't switch a
 Register the live preset and Mux media. From the CDN:
 
 ```html
-<script type="module" src="{{VJS10_HTML_CDN_BASE}}/live-video.js"></script>
-<script type="module" src="{{VJS10_HTML_CDN_BASE}}/media/mux-video.js"></script>
+<script type="module" src="{{VJS10_CDN_BASE}}/live-video.js"></script>
+<script type="module" src="{{VJS10_CDN_BASE}}/media/mux-video.js"></script>
 
 <live-video-player>
   <live-video-skin>

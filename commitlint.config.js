@@ -16,6 +16,7 @@ export default {
       [
         'build',
         'cd',
+        'cdn',
         'ci',
         'claude',
         'cli',

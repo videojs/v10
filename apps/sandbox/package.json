@@ -10,6 +10,7 @@
     "test": "vp test run"
   },
   "dependencies": {
+    "@videojs/cdn": "workspace:*",
     "@videojs/cloudflare-video": "workspace:*",
     "@videojs/core": "workspace:*",
     "@videojs/dash-video": "workspace:*",

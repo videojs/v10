@@ -9,7 +9,7 @@ import DocsLink from '@/components/docs/DocsLink.astro';
 Video.js can run straight from `<script>` tags. Our CDN serves `@videojs/html` in prebuilt, browser-ready bundles which register custom elements. For many pages, it takes only one script tag:
 
 ```html title="index.html"
-<script type="module" src="{{VJS10_HTML_CDN_BASE}}/video.js"></script>
+<script type="module" src="{{VJS10_CDN_BASE}}/video.js"></script>
 
 <video-player>
   <video-skin>
@@ -23,7 +23,7 @@ Video.js can run straight from `<script>` tags. Our CDN serves `@videojs/html` i
 Every file the CDN serves follows one URL pattern:
 
 ```
-https://cdn.jsdelivr.net/npm/@videojs/html@<version>/cdn/<file>
+https://cdn.jsdelivr.net/npm/@videojs/cdn@<version>/<file>
 ```
 
 <Aside type="caution" title="Pin all your CDN URLs to the same version.">
@@ -32,7 +32,7 @@ Bundles share content-hashed chunks that change between releases. A tag like `@l
 
 ## Player bundles
 
-Each installation <DocsLink slug="concepts/presets">preset</DocsLink> ships its bundles at the root of `cdn/`: one per skin choice, plus a player-only bundle. For the video preset:
+Each installation <DocsLink slug="concepts/presets">preset</DocsLink> ships its bundles at the package root: one per skin choice, plus a player-only bundle. For the video preset:
 
 | File | Registers |
 | --- | --- |
@@ -49,8 +49,8 @@ A skin bundle registers every UI element its skin is built from. The CDN publish
 The default presets play through the browser's own `<video>` and `<audio>`. Every other <DocsLink slug="concepts/media-sources">media element</DocsLink> is its own bundle under `media/`, loaded beside the player bundle:
 
 ```html
-<script type="module" src="{{VJS10_HTML_CDN_BASE}}/video.js"></script>
-<script type="module" src="{{VJS10_HTML_CDN_BASE}}/media/hlsjs-video.js"></script>
+<script type="module" src="{{VJS10_CDN_BASE}}/video.js"></script>
+<script type="module" src="{{VJS10_CDN_BASE}}/media/hlsjs-video.js"></script>
 ```
 
 Each path mirrors its npm subpath. Elements with more than one playback engine keep the extra flavors in a directory named for the element, such as `media/mux-video/spf.js`. Load one flavor per page: every flavor claims the same tag name, and the first registration wins.
@@ -60,9 +60,9 @@ Each path mirrors its npm subpath. Elements with more than one playback engine k
 Each <DocsLink slug="concepts/overview">extension</DocsLink> is its own bundle under `extensions/`, loaded beside the player and media bundles:
 
 ```html
-<script type="module" src="{{VJS10_HTML_CDN_BASE}}/video.js"></script>
-<script type="module" src="{{VJS10_HTML_CDN_BASE}}/media/mux-video.js"></script>
-<script type="module" src="{{VJS10_HTML_CDN_BASE}}/extensions/mux-data.js"></script>
+<script type="module" src="{{VJS10_CDN_BASE}}/video.js"></script>
+<script type="module" src="{{VJS10_CDN_BASE}}/media/mux-video.js"></script>
+<script type="module" src="{{VJS10_CDN_BASE}}/extensions/mux-data.js"></script>
 ```
 
 As with media, each path mirrors its npm subpath: `extensions/mux-data.js` registers the element that `@videojs/html/extensions/mux-data` does.
@@ -72,8 +72,8 @@ As with media, each path mirrors its npm subpath: `extensions/mux-data.js` regis
 English ships inside the skin bundles. Each other locale is a bundle under `locales/` that registers its translations on import. Load it before the player script to avoid a flash of English:
 
 ```html
-<script type="module" src="{{VJS10_HTML_CDN_BASE}}/locales/es.js"></script>
-<script type="module" src="{{VJS10_HTML_CDN_BASE}}/video.js"></script>
+<script type="module" src="{{VJS10_CDN_BASE}}/locales/es.js"></script>
+<script type="module" src="{{VJS10_CDN_BASE}}/video.js"></script>
 ```
 
 One bundle exists per locale pack, plus bare-language aliases such as `pt`. For custom strings, see <DocsLink slug="how-to/internationalize-the-player">Internationalize the player</DocsLink>.
@@ -94,7 +94,7 @@ Every JavaScript entry has a `.dev.js` sibling, such as `video.dev.js`, built wi
 
 ## Shared chunks
 
-Everything else at the root, like the content-hashed `default-*.js` files, is a shared chunk the entries import by relative path. Entries share these chunks, so loading several bundles stays cheap. Chunk names change every release: never link a chunk directly, and never copy a lone entry file. To mirror the CDN, copy the whole `cdn/` directory and keep its layout; <DocsLink slug="how-to/self-host-the-player">Self-host the player</DocsLink> covers it.
+Everything else at the root, like the content-hashed `default-*.js` files, is a shared chunk the entries import by relative path. Entries share these chunks, so loading several bundles stays cheap. Chunk names change every release: never link a chunk directly, and never copy a lone entry file. To mirror the CDN, copy the whole package directory and keep its layout; <DocsLink slug="how-to/self-host-the-player">Self-host the player</DocsLink> covers it.
 
 ## Related guides
 

@@ -53,7 +53,7 @@ The Minimal skin is the closest built-in starting point for this migration.
 The easiest path is the CDN:
 
 ```html
-<script type="module" src="{{VJS10_HTML_CDN_BASE}}/video-minimal.js"></script>
+<script type="module" src="{{VJS10_CDN_BASE}}/video-minimal.js"></script>
 
 <video-player poster="/path/to/poster.jpg">
   <video-minimal-skin>
@@ -137,7 +137,7 @@ If you're using HLS or DASH to stream your media, you're in luck; we have prebui
 Replace `<video>` with `<hls-video>`. If you're using the CDN, add an additional script:
 
 ```html
-<script type="module" src="{{VJS10_HTML_CDN_BASE}}/media/hls-video.js"></script>
+<script type="module" src="{{VJS10_CDN_BASE}}/media/hls-video.js"></script>
 ```
 
 For a package-manager installation, install SPF and add its façade import:
@@ -177,7 +177,7 @@ Very similar to HLS in that we have a drop-in component.
 Replace `<video>` with `<dash-video>`. If you're using the CDN, add an additional script:
 
 ```html
-<script type="module" src="{{VJS10_HTML_CDN_BASE}}/media/dash-video.js"></script>
+<script type="module" src="{{VJS10_CDN_BASE}}/media/dash-video.js"></script>
 ```
 
 For a package-manager installation, install dash.js and add its façade import:
@@ -298,7 +298,7 @@ For CDN users:
 
 ```html
 <script type="module">
-  import { registerI18n } from '{{VJS10_HTML_CDN_BASE}}/i18n.js';
+  import { registerI18n } from '{{VJS10_CDN_BASE}}/i18n.js';
 
   registerI18n('en', {
     buttons: {
@@ -311,7 +311,7 @@ For CDN users:
   });
 </script>
 
-<script type="module" src="{{VJS10_HTML_CDN_BASE}}/video-minimal.js"></script>
+<script type="module" src="{{VJS10_CDN_BASE}}/video-minimal.js"></script>
 
 <video-player>
   <video-minimal-skin>

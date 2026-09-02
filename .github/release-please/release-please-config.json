@@ -13,6 +13,7 @@
       "type": "linked-versions",
       "groupName": "videojs",
       "components": [
+        "@videojs/cdn",
         "@videojs/cli",
         "@videojs/cloudflare-video",
         "@videojs/core",
@@ -43,6 +44,12 @@
     }
   ],
   "packages": {
+    "packages/cdn": {
+      "component": "@videojs/cdn",
+      "prerelease": true,
+      "prerelease-type": "beta",
+      "versioning": "prerelease"
+    },
     "packages/cli": {
       "component": "@videojs/cli",
       "prerelease": true,

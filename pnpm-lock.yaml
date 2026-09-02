@@ -138,6 +138,9 @@ importers:
 
   apps/sandbox:
     dependencies:
+      '@videojs/cdn':
+        specifier: workspace:*
+        version: link:../../packages/cdn
       '@videojs/cloudflare-video':
         specifier: workspace:*
         version: link:../../packages/cloudflare-video
@@ -274,6 +277,81 @@ importers:
       vitest:
         specifier: 4.1.10
         version: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.10)(@vitest/browser-preview@4.1.10)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(@voidzero-dev/vite-plus-core@0.2.8(@types/node@24.12.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.1)(typescript@6.0.2)(unrun@0.2.39)(yaml@2.9.0))(happy-dom@20.11.1)(jsdom@27.4.0(supports-color@8.1.1))
+
+  packages/cdn:
+    devDependencies:
+      '@videojs/cloudflare-video':
+        specifier: workspace:*
+        version: link:../cloudflare-video
+      '@videojs/core':
+        specifier: workspace:*
+        version: link:../core
+      '@videojs/dash-video':
+        specifier: workspace:*
+        version: link:../dash-video
+      '@videojs/google-cast':
+        specifier: workspace:*
+        version: link:../google-cast
+      '@videojs/hlsjs-video':
+        specifier: workspace:*
+        version: link:../hlsjs-video
+      '@videojs/html':
+        specifier: workspace:*
+        version: link:../html
+      '@videojs/mux-audio':
+        specifier: workspace:*
+        version: link:../mux-audio
+      '@videojs/mux-data':
+        specifier: workspace:*
+        version: link:../mux-data
+      '@videojs/mux-video':
+        specifier: workspace:*
+        version: link:../mux-video
+      '@videojs/native-hls-video':
+        specifier: workspace:*
+        version: link:../native-hls-video
+      '@videojs/shaka-video':
+        specifier: workspace:*
+        version: link:../shaka-video
+      '@videojs/spf':
+        specifier: workspace:*
+        version: link:../spf
+      '@videojs/spotify-audio':
+        specifier: workspace:*
+        version: link:../spotify-audio
+      '@videojs/tiktok-video':
+        specifier: workspace:*
+        version: link:../tiktok-video
+      '@videojs/twitch-video':
+        specifier: workspace:*
+        version: link:../twitch-video
+      '@videojs/vimeo-video':
+        specifier: workspace:*
+        version: link:../vimeo-video
+      '@videojs/wistia-video':
+        specifier: workspace:*
+        version: link:../wistia-video
+      '@videojs/youtube-video':
+        specifier: workspace:*
+        version: link:../youtube-video
+      happy-dom:
+        specifier: ^20.11.1
+        version: 20.11.1
+      rolldown:
+        specifier: ~1.2.5
+        version: 1.2.5
+      tsx:
+        specifier: ^4.23.1
+        version: 4.23.1
+      typescript:
+        specifier: ^6.0.2
+        version: 6.0.2
+      vite-plus:
+        specifier: 'catalog:'
+        version: 0.2.8(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.10)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(esbuild@0.28.1)(happy-dom@20.11.1)(jiti@2.7.0)(jsdom@27.4.0(supports-color@8.1.1))(terser@5.50.0)(tsx@4.23.1)(typescript@6.0.2)(unrun@0.2.39)(vite@8.2.2(@types/node@24.12.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.1)(yaml@2.9.0))(yaml@2.9.0)
+      vitest:
+        specifier: 4.1.10
+        version: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.10)(@vitest/browser-preview@4.1.10)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(happy-dom@20.11.1)(jsdom@27.4.0(supports-color@8.1.1))(vite@8.2.2(@types/node@24.12.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.1)(yaml@2.9.0))
 
   packages/cli:
     dependencies:
@@ -483,6 +561,9 @@ importers:
       '@videojs/shaka-video':
         specifier: workspace:*
         version: link:../shaka-video
+      '@videojs/skins':
+        specifier: workspace:*
+        version: link:../skins
       '@videojs/spotify-audio':
         specifier: workspace:*
         version: link:../spotify-audio
@@ -504,12 +585,6 @@ importers:
       happy-dom:
         specifier: ^20.11.1
         version: 20.11.1
-      rolldown:
-        specifier: ~1.2.5
-        version: 1.2.5
-      tsx:
-        specifier: ^4.23.1
-        version: 4.23.1
       typescript:
         specifier: ^6.0.2
         version: 6.0.2
@@ -1167,6 +1242,9 @@ importers:
       '@tailwindcss/vite':
         specifier: ^4.3.1
         version: 4.3.1(@voidzero-dev/vite-plus-core@0.2.8(@types/node@24.12.2)(@typescript/typescript6@6.0.0)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.1)(unrun@0.2.39)(yaml@2.9.0))
+      '@videojs/cdn':
+        specifier: workspace:*
+        version: link:../packages/cdn
       '@videojs/html':
         specifier: workspace:*
         version: link:../packages/html
