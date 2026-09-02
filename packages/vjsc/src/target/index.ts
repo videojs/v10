@@ -1,4 +1,5 @@
 export { htmlAttributeName } from './attributes';
+export { importedName } from './bindings';
 export {
   type ComponentPath,
   type ComponentResolver,
@@ -9,6 +10,7 @@ export {
   type ComponentTarget,
   type ComponentTargetOptions,
   defineComponentTarget,
+  readTargetReference,
   type JsxClassNameOptions,
   type JsxImportBinding,
   type JsxOptions,
@@ -26,9 +28,12 @@ export {
   type TargetImportOptions,
   type TargetOutput,
   type TargetPropsReference,
+  type TargetReference,
   type TargetTransform,
   type TargetTransformContext,
   type TemplateTargetDefinition,
   type TemplateTargetRule,
   type TypeMappings,
 } from './definition';
+export { createTargetModuleImports, createTargetTypeImports } from './module-imports';
+export { renderTargetElement, renderTargetPropsType } from './render';

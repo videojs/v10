@@ -1,28 +1,27 @@
 import {
   type CallExpression,
-  collectIdentifierNames,
-  type ImportDeclaration,
-  insertModuleImports,
   jsxNamePath,
   type JSXAttribute,
   type JSXOpeningElement,
+  type ModuleImports,
   type Program,
+  sourceError,
   type VariableDeclaration,
   type VariableDeclarator,
   walk,
-} from '../../../vjsc/src/ast';
+} from '../../../vjsc/src/ast/index.ts';
 import {
   type ComponentTarget,
+  createTargetModuleImports,
+  createTargetTypeImports,
+  importedName,
+  renderTargetElement,
+  renderTargetPropsType,
+  type SourceProps,
+  type TargetElement,
   type TargetTransform,
   type TargetTransformContext,
-  TARGET_ELEMENT,
-  type TargetElement,
-  type TargetPropsReference,
-  type TargetReference,
-  type SourceProps,
-} from '../../../vjsc/src/target/definition';
-import { createTargetModuleImports } from '../../../vjsc/src/target/module-imports';
-import { renderTargetElement } from '../../../vjsc/src/target/render';
+} from '../../../vjsc/src/target/index.ts';
 
 type MagicString = TargetTransformContext['magicString'];
 
@@ -63,7 +62,7 @@ export function createRenderTargetTransform(options: RenderTargetTransformOption
       const imports = collectImportedNames(context.ast);
       const canonical = collectCanonicalRoots(context.ast, [target]);
       const runtimeImports = createTargetModuleImports(context.ast, context.magicString);
-      const typeImports = new TypeImports(context.ast, context.magicString);
+      const typeImports = createTargetTypeImports(context.ast, context.magicString);
       let changed = false;
 
       for (const definition of definitions.values()) {
@@ -364,8 +363,8 @@ function resolveRenderTarget(
 function renderDefinition(
   definition: RenderTargetDefinition,
   resolved: ResolvedRenderTarget,
-  runtimeImports: ReturnType<typeof createTargetModuleImports>,
-  typeImports: TypeImports
+  runtimeImports: ModuleImports,
+  typeImports: ModuleImports
 ): string {
   const prefix = definition.exported ? 'export ' : '';
 
@@ -374,7 +373,7 @@ function renderDefinition(
   }
 
   const element = renderTargetElement(resolved.element, { target: resolved.target, imports: runtimeImports });
-  const props = renderPropsType(resolved.element[TARGET_ELEMENT], typeImports);
+  const props = renderTargetPropsType(resolved.element, typeImports);
 
   if (!props) {
     throw sourceError(
@@ -386,16 +385,6 @@ function renderDefinition(
   }
 
   return `${prefix}type ${definition.local}Props = ${props};\n\n${prefix}function ${definition.local}({ className, ...props }: ${definition.local}Props) {\n  return <${element} className={[${JSON.stringify(definition.className)}, className]} {...props} />;\n}`;
-}
-
-function renderPropsType(reference: TargetReference, imports: TypeImports): string | undefined {
-  if (reference.kind === 'component' || !reference.props) return undefined;
-
-  const props = reference.props;
-  const name = imports.reference(props);
-  const path = props.path?.length ? `.${props.path.join('.')}` : '';
-
-  return props.intrinsic ? `${name}${path}<${JSON.stringify(props.intrinsic)}>` : `${name}${path}`;
 }
 
 function lowerRenderDirective(
@@ -500,87 +489,4 @@ function renderClassNameValue(code: string, attribute: JSXAttribute): string {
 
 function jsxAttributeName(attribute: JSXAttribute): string | undefined {
   return attribute.name.type === 'JSXIdentifier' ? attribute.name.name : undefined;
-}
-
-function importedName(specifier: ImportDeclaration['specifiers'][number]): string {
-  if (specifier.type !== 'ImportSpecifier') return specifier.local.name;
-
-  return specifier.imported.type === 'Identifier' ? specifier.imported.name : specifier.imported.value;
-}
-
-function sourceError(message: string, pos: number): Error {
-  return Object.assign(new Error(message), { pos });
-}
-
-class TypeImports {
-  readonly #ast: Program;
-  readonly #magicString: MagicString;
-  readonly #used: Set<string>;
-  readonly #existing = new Map<string, string>();
-  readonly #requested = new Map<string, Map<string, string>>();
-
-  constructor(ast: Program, magicString: MagicString) {
-    this.#ast = ast;
-    this.#magicString = magicString;
-    this.#used = collectIdentifierNames(ast);
-
-    for (const statement of ast.body) {
-      if (statement.type !== 'ImportDeclaration') continue;
-
-      for (const specifier of statement.specifiers) {
-        if (specifier.type !== 'ImportSpecifier') continue;
-
-        this.#existing.set(`${statement.source.value}\0${importedName(specifier)}`, specifier.local.name);
-      }
-    }
-  }
-
-  reference(target: TargetPropsReference): string {
-    const key = `${target.from}\0${target.name}`;
-    let local = this.#existing.get(key);
-    if (local) return local;
-
-    let requested = this.#requested.get(target.from);
-
-    if (!requested) {
-      requested = new Map();
-      this.#requested.set(target.from, requested);
-    }
-
-    local = requested.get(target.name);
-
-    if (!local) {
-      local = this.#allocate(target.name);
-      requested.set(target.name, local);
-    }
-
-    return local;
-  }
-
-  commit(): void {
-    const statements = [...this.#requested].map(([source, imports]) => {
-      const specifiers = [...imports].map(([imported, local]) =>
-        imported === local ? imported : `${imported} as ${local}`
-      );
-
-      return `import type { ${specifiers.join(', ')} } from ${JSON.stringify(source)};`;
-    });
-
-    insertModuleImports(this.#ast, this.#magicString, statements);
-  }
-
-  #allocate(preferred: string): string {
-    if (!this.#used.has(preferred)) {
-      this.#used.add(preferred);
-      return preferred;
-    }
-
-    let suffix = 2;
-    let candidate = `${preferred}Type`;
-
-    while (this.#used.has(candidate)) candidate = `${preferred}Type${suffix++}`;
-
-    this.#used.add(candidate);
-    return candidate;
-  }
 }

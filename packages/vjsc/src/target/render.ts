@@ -37,6 +37,16 @@ export function renderTargetElement(element: TargetElement, context: TargetRende
   return renderTargetReference(element[TARGET_ELEMENT], context, new Set());
 }
 
+/** Render the public props type of an element target through a type import collection, if it declares one. */
+export function renderTargetPropsType(element: TargetElement, imports: ModuleImports): string | undefined {
+  const reference = element[TARGET_ELEMENT];
+  if (reference.kind === 'component' || !reference.props) return undefined;
+
+  const type = imports.reference(reference.props);
+
+  return reference.props.intrinsic ? `${type}<${JSON.stringify(reference.props.intrinsic)}>` : type;
+}
+
 export function renderTargetOutput(output: TargetOutput, context: TargetRenderContext): string {
   if (output === null || output === undefined || output === false) return '';
 

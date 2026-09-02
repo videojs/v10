@@ -394,6 +394,11 @@ export function createTargetElement<Props extends object = Record<string, unknow
   return Object.assign(element, { [TARGET_ELEMENT]: reference });
 }
 
+/** Read the reference a target element was created from. */
+export function readTargetReference(element: TargetElement): TargetReference {
+  return element[TARGET_ELEMENT];
+}
+
 export function isTargetElement(value: unknown): value is TargetElement {
   return typeof value === 'function' && TARGET_ELEMENT in value;
 }

@@ -1,4 +1,4 @@
-import { ModuleImports } from '../../vjsc/src/ast/imports.ts';
+import { ModuleImports } from '../../vjsc/src/ast/index.ts';
 import type { ComponentSchema } from '../../vjsc/src/components/index.ts';
 import {
   type ComponentTarget,

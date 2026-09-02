@@ -8,7 +8,7 @@ import { isFunction, isString } from '@videojs/utils/predicate';
 import { walk } from 'oxc-walker';
 import type { Plugin, RolldownMagicString } from 'rolldown';
 
-import type { SourceEdit } from '../ast';
+import { type SourceEdit, sourceError } from '../ast';
 import { insertModuleImports } from '../ast/imports';
 import { compileStyles } from '../styles/compile';
 import { type DesignSystem, loadDesignSystem } from '../styles/design-system';
@@ -502,10 +502,6 @@ function assertNoUntransformedReferences(
       Math.min(...[...unresolved.values()].flat())
     );
   }
-}
-
-function sourceError(message: string, pos: number): Error {
-  return Object.assign(new Error(message), { pos });
 }
 
 /** Merge the requested modules from a per-file cache so a shared style module is evaluated once per build. */
