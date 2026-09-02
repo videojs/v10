@@ -133,3 +133,35 @@
   box-shadow: none;
   backdrop-filter: none;
 }
+
+@utility clip-media-x-* {
+  clip-path: inset(0 calc(100% - var(--value([*]))) 0 0 round var(--media-control-radius));
+}
+
+@utility clip-media-y-* {
+  clip-path: inset(calc(100% - var(--value([*]))) 0 0 0 round var(--media-control-radius));
+}
+
+@utility clip-media-chapter-x {
+  clip-path: inset(0 calc(100% - var(--media-slider-chapter-end)) 0 var(--media-slider-chapter-start));
+}
+
+@utility clip-media-chapter-y {
+  clip-path: inset(calc(100% - var(--media-slider-chapter-end)) 0 var(--media-slider-chapter-start) 0);
+}
+
+@utility clip-media-chapter-track-x {
+  clip-path: inset(
+    0 calc(100% - var(--media-slider-chapter-end) + var(--media-spacing) * var(--media-chapter-inset-end)) 0
+      calc(var(--media-slider-chapter-start) + var(--media-spacing) * var(--media-chapter-inset-start)) round
+      var(--media-control-radius)
+  );
+}
+
+@utility clip-media-chapter-track-y {
+  clip-path: inset(
+    calc(100% - var(--media-slider-chapter-end) + var(--media-spacing) * var(--media-chapter-inset-end)) 0
+      calc(var(--media-slider-chapter-start) + var(--media-spacing) * var(--media-chapter-inset-start)) 0 round
+      var(--media-control-radius)
+  );
+}

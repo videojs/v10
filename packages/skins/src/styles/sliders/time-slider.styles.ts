@@ -17,16 +17,14 @@ export default styles({
         'group/chapter absolute inset-0 flex min-h-0 min-w-0 items-center justify-center',
         '[--media-chapter-inset-start:0.5] [--media-chapter-inset-end:0.5]',
         'first:[--media-chapter-inset-start:0] last:[--media-chapter-inset-end:0]',
-        'data-[orientation=horizontal]:[clip-path:inset(0_calc(100%-var(--media-slider-chapter-end))_0_var(--media-slider-chapter-start))]',
-        'data-[orientation=vertical]:[clip-path:inset(calc(100%-var(--media-slider-chapter-end))_0_var(--media-slider-chapter-start)_0)]',
+        'data-[orientation=horizontal]:clip-media-chapter-x data-[orientation=vertical]:clip-media-chapter-y',
       ],
     },
     chapterTrack: {
       className: 'media-time-slider-chapter-track',
       utilities: [
         'motion-safe:transition-[height,width] motion-safe:duration-(--media-duration-slow) motion-safe:ease-out',
-        'data-[orientation=horizontal]:[clip-path:inset(0_calc(100%-var(--media-slider-chapter-end)+var(--media-spacing)*var(--media-chapter-inset-end))_0_calc(var(--media-slider-chapter-start)+var(--media-spacing)*var(--media-chapter-inset-start))_round_var(--media-control-radius))]',
-        'data-[orientation=vertical]:[clip-path:inset(calc(100%-var(--media-slider-chapter-end)+var(--media-spacing)*var(--media-chapter-inset-end))_0_calc(var(--media-slider-chapter-start)+var(--media-spacing)*var(--media-chapter-inset-start))_0_round_var(--media-control-radius))]',
+        'data-[orientation=horizontal]:clip-media-chapter-track-x data-[orientation=vertical]:clip-media-chapter-track-y',
         'group-data-highlighted/chapter:data-[orientation=horizontal]:h-1.75',
         'group-data-highlighted/chapter:data-[orientation=vertical]:w-1.75',
       ],
