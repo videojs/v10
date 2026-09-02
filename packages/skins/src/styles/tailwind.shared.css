@@ -244,6 +244,14 @@
   transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
 }
 
+/* Enter, exit, and size transition for the resizable settings menu; the menu duration covers width and height. */
+@utility transition-media-menu-resize {
+  transition-property: opacity, filter, transform, scale, width, height;
+  transition-duration:
+    var(--media-duration-fast), var(--media-duration-fast), var(--media-duration-fast), var(--media-duration-fast),
+    var(--media-duration-menu), var(--media-duration-menu);
+}
+
 /* Transitions and hints the listed properties, for example `motion-media-[scale,opacity]`. */
 @utility motion-media-* {
   transition-property: --value([*]);

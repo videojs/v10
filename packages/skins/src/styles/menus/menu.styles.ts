@@ -6,7 +6,7 @@ const menuItem = [
   'media-highlighted:highlight-media',
   'focus-visible:outline-media-ring focus-visible:outline-offset-2',
   'text-shadow-media',
-  'transition-[background-color,color] duration-media-fast [transition-timing-function:ease-in-out]',
+  'transition-[background-color,color] duration-media-fast ease-in-out',
   'media-anchored:duration-media-instant media-anchored:media-highlighted:duration-media-slow',
 ] as const;
 
@@ -47,10 +47,7 @@ export default styles({
     },
     resizablePopup: {
       className: 'media-menu-resizable-popup',
-      utilities: [
-        '[transition-property:opacity,filter,transform,scale,width,height]',
-        '[transition-duration:var(--media-duration-fast),var(--media-duration-fast),var(--media-duration-fast),var(--media-duration-fast),var(--media-duration-menu),var(--media-duration-menu)]',
-      ],
+      utilities: 'transition-media-menu-resize',
     },
     content: {
       className: 'media-menu-content',

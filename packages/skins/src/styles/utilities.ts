@@ -44,6 +44,10 @@ export const utilities = {
     description: 'Media and poster fit, overridable through `--media-object-fit` and `--media-object-position`.',
   },
   'transition-media-popup': { kind: 'utility', description: 'Enter and exit transition for popups and menus.' },
+  'transition-media-menu-resize': {
+    kind: 'utility',
+    description: 'Enter, exit, and size transition for the resizable settings menu.',
+  },
   'motion-media-*': {
     kind: 'utility',
     description: 'Transitions and hints the listed properties, for example `motion-media-[scale,opacity]`.',

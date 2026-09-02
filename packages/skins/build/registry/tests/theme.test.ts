@@ -1,5 +1,5 @@
-import { mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
 
 import { isPlainObject, isString } from '@videojs/utils/predicate';
 import { describe, expect, it } from 'vitest';
@@ -31,7 +31,10 @@ describe('registry Tailwind theme', () => {
 
   it('compiles every shipped Tailwind class with only the exported theme', async () => {
     const full = await loadDesignSystem(compilerEntry);
-    const consumer = await loadDesignSystem(writeConsumerEntry(theme));
+    const consumerEntry = writeConsumerEntry(theme);
+    const consumer = await loadDesignSystem(consumerEntry);
+
+    rmSync(dirname(consumerEntry), { recursive: true, force: true });
     const candidates = shippedCandidates(full);
     const unsupported = candidates.filter((candidate) => !consumer.recognizesCandidate(candidate));
 
