@@ -27,11 +27,6 @@ export function DefaultLiveAudioSkin({ children, className, ...props }: DefaultL
 export const meta = {
   name: 'default-live-audio',
   type: 'skin',
-  style: {
-    scope: '.media-skin[data-theme="default"][data-preset="live-audio"]',
-    theme: 'default',
-    preset: 'live-audio',
-  },
   title: 'Default Live Audio Skin',
   description: 'A complete live audio skin with play, live-edge, volume, error, and keyboard feedback controls.',
 } as const satisfies SkinMeta;

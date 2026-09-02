@@ -1,5 +1,12 @@
 import { collectModules, type Graph, type GraphModule } from '../../vjsc/src/graph/index.ts';
-import { isSkinName, type SkinMeta, type SkinModuleMeta, type SkinName, skinStyles } from '../src/meta.ts';
+import {
+  isSkinName,
+  type SkinMeta,
+  type SkinModuleMeta,
+  type SkinName,
+  type SkinStyle,
+  skinStyles,
+} from '../src/meta.ts';
 import { registryTargets } from './registry/targets.ts';
 import { type SkinPreset, skinPreset, skinPresets } from './skin.ts';
 
@@ -21,7 +28,7 @@ export interface SkinRoot {
   readonly root: SkinRootModule;
   readonly modules: readonly GraphModule<SkinModuleMeta>[];
   readonly preset: SkinPreset;
-  readonly theme: SkinMeta['style']['theme'];
+  readonly theme: SkinStyle['theme'];
 }
 
 export type SkinRootModule = GraphModule<SkinMeta & { readonly name: SkinName }> & {
@@ -84,7 +91,7 @@ export function skinRoots(graph: Graph<SkinModuleMeta>, variant: Pick<SkinVarian
       root,
       modules: collectModules(graph, root.id),
       preset: skinPreset(root.meta.name),
-      theme: root.meta.style.theme,
+      theme: skinStyles[root.meta.name].theme,
     }))
     .sort((left, right) => left.root.meta.name.localeCompare(right.root.meta.name));
 }

@@ -27,11 +27,6 @@ export function DefaultAudioSkin({ children, className, ...props }: DefaultAudio
 export const meta = {
   name: 'default-audio',
   type: 'skin',
-  style: {
-    scope: '.media-skin[data-theme="default"][data-preset="audio"]',
-    theme: 'default',
-    preset: 'audio',
-  },
   title: 'Default Audio Skin',
   description: 'A complete on-demand audio skin with playback, seeking, volume, speed, and feedback controls.',
 } as const satisfies SkinMeta;

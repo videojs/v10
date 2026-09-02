@@ -36,11 +36,6 @@ export function MinimalVideoSkin({ children, className, renderPoster, ...props }
 export const meta = {
   name: 'minimal-video',
   type: 'skin',
-  style: {
-    scope: '.media-skin[data-theme="minimal"][data-preset="video"]',
-    theme: 'minimal',
-    preset: 'video',
-  },
   title: 'Minimal Video Skin',
   description: 'A compact on-demand video skin with wrapping controls and the complete video component set.',
 } as const satisfies SkinMeta;

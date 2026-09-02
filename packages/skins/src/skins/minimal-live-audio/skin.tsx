@@ -27,11 +27,6 @@ export function MinimalLiveAudioSkin({ children, className, ...props }: MinimalL
 export const meta = {
   name: 'minimal-live-audio',
   type: 'skin',
-  style: {
-    scope: '.media-skin[data-theme="minimal"][data-preset="live-audio"]',
-    theme: 'minimal',
-    preset: 'live-audio',
-  },
   title: 'Minimal Live Audio Skin',
   description: 'A compact live audio skin with play, live-edge, volume, error, and keyboard feedback controls.',
 } as const satisfies SkinMeta;

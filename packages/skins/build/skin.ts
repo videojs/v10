@@ -1,9 +1,9 @@
-import type { SkinMeta, SkinName } from '../src/meta.ts';
+import type { SkinName, SkinStyle } from '../src/meta.ts';
 
 export const skinPresets = ['audio', 'live-audio', 'live-video', 'video'] as const;
 
 export type SkinPreset = (typeof skinPresets)[number];
-export type SkinTheme = SkinMeta['style']['theme'];
+export type SkinTheme = SkinStyle['theme'];
 
 /** Resolve the public preset shared by a default or Minimal Skin. */
 export function skinPreset(name: SkinName): SkinPreset {

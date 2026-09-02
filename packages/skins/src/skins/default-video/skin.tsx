@@ -36,11 +36,6 @@ export function DefaultVideoSkin({ children, className, renderPoster, ...props }
 export const meta = {
   name: 'default-video',
   type: 'skin',
-  style: {
-    scope: '.media-skin[data-theme="default"][data-preset="video"]',
-    theme: 'default',
-    preset: 'video',
-  },
   title: 'Default Video Skin',
   description: 'A complete on-demand video skin with responsive controls, settings, feedback, and input controls.',
 } as const satisfies SkinMeta;

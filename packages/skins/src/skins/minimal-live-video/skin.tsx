@@ -34,11 +34,6 @@ export function MinimalLiveVideoSkin({ children, className, renderPoster, ...pro
 export const meta = {
   name: 'minimal-live-video',
   type: 'skin',
-  style: {
-    scope: '.media-skin[data-theme="minimal"][data-preset="live-video"]',
-    theme: 'minimal',
-    preset: 'live-video',
-  },
   title: 'Minimal Live Video Skin',
   description: 'A compact live video skin with live-edge, captions, remote playback, feedback, and input controls.',
 } as const satisfies SkinMeta;

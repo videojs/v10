@@ -2,7 +2,7 @@ import { posix } from 'node:path';
 
 import { type Graph, type GraphModule, bundleStyles } from '../../../../vjsc/src/graph/index.ts';
 import type { RegistryCreatedItem, RegistryModuleItem } from '../../../../vjsc/src/shadcn/index.ts';
-import { isSkinName, type SkinModuleMeta, type SkinName } from '../../../src/meta.ts';
+import { isSkinName, type SkinModuleMeta, type SkinName, skinStyles } from '../../../src/meta.ts';
 import { createHtmlSkinRegistration, createSourceOwnedHtml, type RenderedHtmlSkin } from '../../packages/html.ts';
 import { skinDirectory, skinPreset } from '../../skin.ts';
 import type { VideojsRegistryMeta } from '../meta.ts';
@@ -17,8 +17,8 @@ export async function htmlSkinItem(
 ): Promise<RegistryCreatedItem> {
   const meta = skin.root.meta;
 
-  const name = meta.style.theme === 'minimal' ? `${skin.preset}-minimal` : skin.preset;
-  const directory = meta.style.theme === 'minimal' ? `skins/${skin.preset}/minimal` : `skins/${skin.preset}`;
+  const name = skin.theme === 'minimal' ? `${skin.preset}-minimal` : skin.preset;
+  const directory = skinDirectory(meta.name);
   const template = createSourceOwnedHtml(skin.template);
 
   const styleTarget = `${directory}/skin.css`;
@@ -70,7 +70,7 @@ export async function htmlSkinItem(
       styling: target.styling,
       preset: skin.preset,
       media: skin.preset.endsWith('audio') ? 'audio' : 'video',
-      theme: meta.style.theme,
+      theme: skin.theme,
       public: true,
     } satisfies VideojsRegistryMeta,
     group: 'skins',
@@ -86,8 +86,8 @@ export function skinItem(
   if (!isSkinName(skin)) throw new Error(`Unknown Skin registry module: \`${skin}\`.`);
 
   const preset = skinPreset(skin);
-  const theme = meta.style.theme;
-  const directory = theme === 'minimal' ? `skins/${preset}/minimal` : `skins/${preset}`;
+  const theme = skinStyles[skin].theme;
+  const directory = skinDirectory(skin);
   const registryMeta = {
     role: 'skin',
     framework: target.framework,

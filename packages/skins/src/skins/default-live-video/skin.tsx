@@ -34,11 +34,6 @@ export function DefaultLiveVideoSkin({ children, className, renderPoster, ...pro
 export const meta = {
   name: 'default-live-video',
   type: 'skin',
-  style: {
-    scope: '.media-skin[data-theme="default"][data-preset="live-video"]',
-    theme: 'default',
-    preset: 'live-video',
-  },
   title: 'Default Live Video Skin',
   description: 'A complete live video skin with live-edge, captions, remote playback, feedback, and input controls.',
 } as const satisfies SkinMeta;

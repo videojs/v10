@@ -27,11 +27,6 @@ export function MinimalAudioSkin({ children, className, ...props }: MinimalAudio
 export const meta = {
   name: 'minimal-audio',
   type: 'skin',
-  style: {
-    scope: '.media-skin[data-theme="minimal"][data-preset="audio"]',
-    theme: 'minimal',
-    preset: 'audio',
-  },
   title: 'Minimal Audio Skin',
   description: 'A compact on-demand audio skin with responsive time, volume, speed, and feedback controls.',
 } as const satisfies SkinMeta;
