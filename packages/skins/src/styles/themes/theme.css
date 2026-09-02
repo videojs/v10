@@ -29,6 +29,7 @@
     --media-shadow-surface: 0 1px 3px 0 oklch(0 0 0 / 0.15), 0 1px 2px -1px oklch(0 0 0 / 0.15);
     --media-shadow-surface-inset: inset 0 1px 0 0 rgb(255 255 255 / 0.1), inset 0 0 0 1px rgb(255 255 255 / 0.05);
     --media-shadow-thumb: 0 0 0 1px rgb(0 0 0 / 0.1), 0 1px 3px 0 rgb(0 0 0 / 0.35), 0 1px 2px -1px rgb(0 0 0 / 0.35);
+    --media-shadow-tooltip: 0 0 0 1px var(--media-border), var(--media-shadow-surface);
     --media-shadow-current-color: oklch(from currentColor 0 0 0 / clamp(0, calc((l - 0.5) * 0.5), 0.15));
     --media-shadow-subtle-current-color: oklch(from var(--media-shadow-current-color) l c h / calc(alpha * 0.4));
     --media-text-shadow-dialog: 0 1px 0 rgb(0 0 0 / 0.25);
@@ -40,6 +41,7 @@
     --media-control-corner-shape: round;
     --media-control-radius: calc(infinity * 1px);
     --media-control-size: calc(var(--media-spacing) * 9);
+    --media-controls-radius: var(--media-control-radius);
     --media-default-accent-color: oklch(1 0 0);
 
     /* Motion. Preferences collapse durations and neutralize hidden-state values under reduced motion. */
@@ -75,6 +77,11 @@
     --media-popup-translate-distance: calc(var(--media-spacing) * 2);
     --media-tooltip-boundary-offset: var(--media-popover-boundary-offset);
     --media-tooltip-side-offset: var(--media-popover-side-offset);
+
+    /* Dialogs. */
+    --media-dialog-radius: calc(var(--media-spacing) * 7);
+    --media-dialog-width: calc(100% - var(--media-spacing) * 6);
+    --media-dialog-max-width: calc(var(--media-spacing) * 72);
 
     /* Sliders. */
     --media-slider-preview-label-offset: calc(var(--media-spacing) * 12.5);

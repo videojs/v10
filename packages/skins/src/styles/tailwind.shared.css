@@ -23,6 +23,7 @@
   /* Player layout breakpoints, measured against the `media-root` container. */
   --container-media-compact: 32rem;
   --container-media-wide: 42rem;
+  --container-media-dialog: var(--media-dialog-max-width);
 
   /* Type scale in player spacing units so it grows with `--media-scale-unit`. */
   --text-media-xs: 0.7em;
@@ -36,9 +37,12 @@
   --spacing-media-icon-lg: calc(var(--media-icon-size, calc(var(--media-spacing) * 4.5)) * 1.5);
   --spacing-media-icon-xl: calc(var(--media-icon-size, calc(var(--media-spacing) * 4.5)) * 2);
   --spacing-media-control: var(--media-control-size);
+  --spacing-media-dialog-width: var(--media-dialog-width);
 
-  /* Radii: controls follow the theme shape, popups follow the popup shape, pills stay round. */
+  /* Radii: controls follow the theme shape, the controls surface, popups, and dialogs follow their own, pills stay round. */
   --radius-media-control: var(--media-control-radius);
+  --radius-media-controls: var(--media-controls-radius);
+  --radius-media-dialog: var(--media-dialog-radius);
   --radius-media-menu-item: var(--media-menu-item-radius);
   --radius-media-pill: 9999px;
   --radius-media-player: var(--media-video-border-radius);
@@ -46,6 +50,7 @@
 
   /* Shadows and backdrop filters. Contrast-aware ones read the current color; the rest alias theme tokens. */
   --drop-shadow-media-icon: 0 1px 0 var(--media-shadow-current-color);
+  --shadow-media-hairline: 0 0 0 1px var(--media-border);
   --shadow-media-thumb: var(--media-shadow-thumb);
   --shadow-media-tooltip: var(--media-shadow-tooltip);
   --text-shadow-media: 0 1px 0 var(--media-shadow-current-color);

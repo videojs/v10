@@ -22,17 +22,17 @@ export default styles({
     popup: {
       className: 'media-dialog-popup',
       utilities: [
-        'absolute top-1/2 left-1/2 z-50 flex max-h-[calc(100%-0.5rem)] -translate-x-1/2 -translate-y-1/2 flex-col gap-3 text-media-popover-foreground outline-hidden not-data-open:hidden',
+        'absolute top-1/2 left-1/2 z-50 flex w-media-dialog-width max-w-media-dialog max-h-[calc(100%-0.5rem)] -translate-x-1/2 -translate-y-1/2 flex-col gap-3 rounded-media-dialog text-media-popover-foreground outline-hidden not-data-open:hidden',
         'text-shadow-media-dialog transition-[opacity,scale] delay-media-dialog duration-media-dialog ease-out',
         'media-transitioning:scale-media-hidden-popup media-transitioning:opacity-0 data-ending-style:delay-0',
       ],
       variants: {
         default: [
           'bg-media-popover surface-media after:surface-media-inset',
-          'w-[calc(100%-1.5rem)] max-w-72 rounded-[--spacing(7)] p-3',
+          'p-3',
           'data-ending-style:duration-media-slower',
         ],
-        minimal: ['w-full max-w-64 p-4', 'data-ending-style:duration-media-instant'],
+        minimal: ['p-4', 'data-ending-style:duration-media-instant'],
       },
     },
     content: {

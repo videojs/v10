@@ -108,6 +108,7 @@ export const utilities = {
   '--spacing-media-icon-lg': { kind: 'theme', description: 'Large indicator icon size.' },
   '--spacing-media-icon-xl': { kind: 'theme', description: 'Extra large indicator icon size.' },
   '--radius-media-pill': { kind: 'theme', description: 'Always-round radius for tracks and pills.' },
+  '--shadow-media-hairline': { kind: 'theme', description: 'One-pixel hairline in the theme border color.' },
   '--duration-media-controls-half': {
     kind: 'theme',
     description: 'Half the controls visibility duration, used while controls appear.',

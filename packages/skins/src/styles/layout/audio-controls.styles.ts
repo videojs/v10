@@ -10,10 +10,10 @@ export default styles({
     content: {
       className: 'audio-controls-content',
       utilities:
-        'relative z-20 flex items-center bg-media-controls p-1 text-media-controls-foreground text-shadow-media',
+        'relative z-20 flex items-center rounded-media-controls bg-media-controls p-1 text-media-controls-foreground text-shadow-media',
       variants: {
-        default: 'rounded-media-control surface-media after:surface-media-inset',
-        minimal: 'gap-2 rounded-[--spacing(3.5)] shadow-[0_0_0_1px_var(--media-border)]',
+        default: 'surface-media after:surface-media-inset',
+        minimal: 'gap-2 shadow-media-hairline',
       },
     },
     start: {

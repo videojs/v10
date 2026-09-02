@@ -33,7 +33,7 @@ export default styles({
         default: [
           'contents p-1 transition-[filter,opacity,scale,translate]',
           'media-compact:absolute media-compact:inset-x-2 media-compact:bottom-2 media-compact:z-10',
-          'media-compact:flex media-compact:items-center media-compact:rounded-media-control',
+          'media-compact:flex media-compact:items-center media-compact:rounded-media-controls',
           'media-compact:bg-media-popover media-compact:text-media-popover-foreground',
           'media-compact:surface-media media-compact:after:surface-media-inset',
           'media-wide:inset-x-3 media-wide:bottom-3',
@@ -43,7 +43,7 @@ export default styles({
           'media-compact:not-data-visible:duration-media-controls',
         ],
         minimal: [
-          'absolute inset-x-1 bottom-1 z-20 flex items-center gap-x-2 rounded-xl bg-transparent p-1 media-opaque:bg-media-background',
+          'absolute inset-x-1 bottom-1 z-20 flex items-center gap-x-2 rounded-media-controls bg-transparent p-1 media-opaque:bg-media-background',
           'transition-[filter,opacity,translate]',
           'not-data-visible:pointer-events-none not-data-visible:opacity-0',
           'not-data-visible:duration-media-controls',
@@ -64,7 +64,7 @@ export default styles({
     primary: {
       className: 'video-controls-primary',
       utilities: [
-        'absolute inset-x-2 bottom-2 z-10 flex origin-bottom items-center rounded-media-control p-1',
+        'absolute inset-x-2 bottom-2 z-10 flex origin-bottom items-center rounded-media-controls p-1',
         ...compactSurface,
         'media-compact:contents',
         ...compactHidden,
@@ -74,7 +74,7 @@ export default styles({
     secondary: {
       className: 'video-controls-secondary',
       utilities: [
-        'absolute top-2 right-2 z-10 flex origin-top items-center gap-px rounded-media-control p-1',
+        'absolute top-2 right-2 z-10 flex origin-top items-center gap-px rounded-media-controls p-1',
         ...compactSurface,
         'media-compact:static media-compact:p-0',
         ...compactHidden,

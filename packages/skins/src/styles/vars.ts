@@ -56,6 +56,10 @@ export const vars = {
     kind: 'internal',
     description: 'Theme control size.',
   },
+  '--media-controls-radius': {
+    kind: 'internal',
+    description: 'Theme corner radius of the controls surface.',
+  },
   '--media-control-corner-shape': {
     kind: 'internal',
     description: 'Theme control corner treatment.',
@@ -248,6 +252,18 @@ export const vars = {
     kind: 'internal',
     description: 'Theme corner radius shared by menu popups and slider thumbnails.',
   },
+  '--media-dialog-radius': {
+    kind: 'internal',
+    description: 'Theme corner radius of dialog popups.',
+  },
+  '--media-dialog-width': {
+    kind: 'internal',
+    description: 'Dialog popup width per theme.',
+  },
+  '--media-dialog-max-width': {
+    kind: 'internal',
+    description: 'Maximum dialog popup width per theme.',
+  },
   '--media-duration-instant': {
     kind: 'internal',
     description: 'Shortest transition duration, also the reduced-motion target for every longer duration.',
@@ -298,7 +314,7 @@ export const vars = {
   },
   '--media-shadow-tooltip': {
     kind: 'internal',
-    description: 'Minimal theme tooltip shadow.',
+    description: 'Theme tooltip shadow.',
   },
   '--media-duration-dialog': {
     kind: 'internal',

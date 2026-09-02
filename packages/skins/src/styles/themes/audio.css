@@ -21,6 +21,7 @@
   .media-skin:is([data-preset="audio"], [data-preset="live-audio"])[data-theme="minimal"] {
     --media-controls: var(--media-background);
     --media-popover: var(--media-background);
+    --media-controls-radius: calc(var(--media-spacing) * 3.5);
     --media-popover-boundary-offset: calc(var(--media-spacing) * 3);
   }
 
