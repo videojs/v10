@@ -11,7 +11,9 @@ describe('utilities', () => {
     const source = await readFile(resolve(import.meta.dirname, '../styles/tailwind.css'), 'utf8');
     const declared = [...source.matchAll(/@(utility|custom-variant)\s+([^\s{(;]+)/g)].map(([, , name]) => name!);
     const themeBlock = /@theme inline \{([\s\S]*?)\n\}/.exec(source)?.[1] ?? '';
-    const themeKeys = [...themeBlock.matchAll(/^\s*(--[a-z-]+):\s*([^;]+);/gm)].map(([, key, value]) => [key!, value!]);
+    const themeKeys = [...themeBlock.matchAll(/^\s*(--[a-z-]+):\s*([^;]+);/gm)].map(
+      ([, key, value]): [string, string] => [key!, value!]
+    );
     const aliases = themeKeys.filter(([, value]) => /^var\(--media-[a-z-]+\)$/.test(value)).map(([key]) => key);
     const computed = themeKeys.filter(([, value]) => !/^var\(--media-[a-z-]+\)$/.test(value)).map(([key]) => key);
 
