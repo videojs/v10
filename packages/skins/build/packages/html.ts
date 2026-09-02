@@ -1,9 +1,9 @@
-import { resolve } from 'node:path';
-
 import type { Graph, GraphModule } from '../../../vjsc/src/graph/index.ts';
 import { bundleStyles, collectModules, renderHtml } from '../../../vjsc/src/graph/index.ts';
 import { isSkinName, type SkinMeta, type SkinModuleMeta, type SkinName } from '../../src/meta.ts';
 import { skinBaseStylesheet, skinPreset, skinPresets, type SkinPreset } from '../skin.ts';
+import { iconImports } from '../target/html-render.ts';
+import { htmlComponentTarget } from '../target/html.tsx';
 import type { GeneratedPackageFile } from './files.ts';
 import { addCopiedFiles, addGenerated, generatedFiles, pascalCase } from './utils.ts';
 
@@ -32,7 +32,7 @@ export async function createHtmlPackageSkins(
   graph: Graph<SkinModuleMeta>,
   options: CreateHtmlPackageSkinsOptions
 ): Promise<GeneratedPackageFile[]> {
-  const skins = await renderHtmlSkins(graph, { workspaceDir: options.workspaceDir, styling: 'css' });
+  const skins = await renderHtmlSkins(graph, { styling: 'css' });
   const generated = new Map<string, string>();
 
   for (const skin of skins) {
@@ -60,7 +60,6 @@ export async function createHtmlPackageSkins(
 }
 
 export interface RenderHtmlSkinsOptions {
-  readonly workspaceDir: string;
   readonly styling: 'css' | 'tailwind';
 }
 
@@ -70,7 +69,7 @@ export async function renderHtmlSkins(
   options: RenderHtmlSkinsOptions
 ): Promise<RenderedHtmlSkin[]> {
   const skins = htmlSkins(graph, options.styling);
-  const iconModule = htmlIconModule(uniqueModules(skins.flatMap((skin) => skin.modules)));
+  const render = htmlComponentTarget.render ?? {};
 
   const templates = await renderHtml(
     graph,
@@ -80,20 +79,9 @@ export async function renderHtmlSkins(
       exportName: `${pascalCase(skin.theme)}${pascalCase(skin.preset)}Skin`,
     })),
     {
-      aliases: new Map([
-        ['@videojs/core/i18n/text/menu', resolve(options.workspaceDir, 'packages/core/src/core/i18n/text/menu.ts')],
-        ['@videojs/utils/string', resolve(options.workspaceDir, 'packages/utils/src/string/index.ts')],
-        ['vjsc/target', resolve(options.workspaceDir, 'packages/vjsc/src/target/attributes.ts')],
-      ]),
-      empty: (specifier) =>
-        specifier.startsWith('@videojs/html/ui/') ||
-        specifier === '@videojs/html/i18n' ||
-        specifier === 'vjsc/components' ||
-        specifier.startsWith('virtual:vjsc/css/'),
-      modules: new Map([
-        ['@videojs/html/icons', iconModule],
-        ['@videojs/html/icons/minimal', iconModule],
-      ]),
+      aliases: render.aliases,
+      empty: render.empty,
+      modules: render.modules?.(uniqueModules(skins.flatMap((skin) => skin.modules))),
     }
   );
 
@@ -211,19 +199,6 @@ export function createSourceOwnedHtml(template: string): string {
     .replaceAll('&lt;', '<');
 }
 
-function htmlIconModule(modules: readonly GraphModule<SkinModuleMeta>[]): string {
-  const bindings = new Set<string>(['registerIcons']);
-
-  for (const module of modules) {
-    for (const binding of iconImports(module.source).keys()) bindings.add(binding);
-  }
-
-  return [...bindings]
-    .sort()
-    .map((name) => `export const ${name} = ${name === 'registerIcons' ? '() => {}' : "''"};`)
-    .join('\n');
-}
-
 function iconRegistrations(
   modules: readonly GraphModule<SkinModuleMeta>[]
 ): ReadonlyMap<string, ReadonlyMap<string, string>> {
@@ -246,20 +221,6 @@ function iconRegistrations(
   }
 
   return families;
-}
-
-function iconImports(source: string): ReadonlyMap<string, string> {
-  const imports = new Map<string, string>();
-
-  for (const match of source.matchAll(/import\s*\{([^}]*)\}\s*from\s*['"]@videojs\/html\/icons(?:\/minimal)?['"];?/g)) {
-    for (const specifier of match[1]!.split(',')) {
-      const [imported, local = imported] = specifier.trim().split(/\s+as\s+/);
-
-      if (imported && local && imported !== 'registerIcons') imports.set(local, imported);
-    }
-  }
-
-  return imports;
 }
 
 function uniqueModules(modules: readonly GraphModule<SkinModuleMeta>[]): GraphModule<SkinModuleMeta>[] {

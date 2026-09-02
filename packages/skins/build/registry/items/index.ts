@@ -1,8 +1,6 @@
-import { resolve } from 'node:path';
-
 import type { VjscRegistryOptions } from '../../../../vjsc/src/shadcn/index.ts';
 import type { SkinModuleMeta } from '../../../src/meta.ts';
-import { packageDir, skinUtils } from '../../config.ts';
+import { skinUtils } from '../../config.ts';
 import { renderHtmlSkins } from '../../packages/html.ts';
 import type { RegistryTarget } from '../targets.ts';
 import { componentItem } from './components.ts';
@@ -42,10 +40,7 @@ export function registryItems(target: RegistryTarget): VjscRegistryOptions<SkinM
     async create({ graph }) {
       if (target.framework !== 'html') return [];
 
-      const skins = await renderHtmlSkins(graph, {
-        workspaceDir: resolve(packageDir, '../..'),
-        styling: target.styling,
-      });
+      const skins = await renderHtmlSkins(graph, { styling: target.styling });
 
       return Promise.all(skins.map((skin) => htmlSkinItem(skin, graph, target)));
     },

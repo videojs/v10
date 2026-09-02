@@ -29,6 +29,7 @@ export {
   type TargetOutput,
   type TargetPropsReference,
   type TargetReference,
+  type TargetRenderOptions,
   type TargetTransform,
   type TargetTransformContext,
   type TemplateTargetDefinition,

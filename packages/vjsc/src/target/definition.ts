@@ -12,6 +12,7 @@ import type {
   InferProps,
 } from '../components/definition';
 import type { BoxProps, SlotProps, TemplatePartProps, TemplateProps, TextProps } from '../components/jsx-runtime';
+import type { GraphModule } from '../graph/types';
 import { createTargetCode } from './expression';
 
 export const TARGET_ELEMENT = Symbol.for('vjsc/target-element');
@@ -268,6 +269,16 @@ export interface JsxOptions {
   readonly className?: JsxClassNameOptions | undefined;
 }
 
+/** How modules compiled for this target render statically outside a browser. */
+export interface TargetRenderOptions {
+  /** Redirect an external import to a concrete module file while rendering. */
+  readonly aliases?: ReadonlyMap<string, string> | undefined;
+  /** Imports that have no effect while rendering static markup, such as element registrations. */
+  readonly empty?: ((specifier: string) => boolean) | undefined;
+  /** Source for external modules needed only while rendering, given the graph modules being rendered. */
+  readonly modules?: ((modules: readonly GraphModule[]) => ReadonlyMap<string, string>) | undefined;
+}
+
 export interface TypeMappings {
   readonly [sourceType: string]: TargetImport | undefined;
 }
@@ -296,6 +307,8 @@ export interface ComponentTargetOptions<Schema extends ComponentSchema> {
   readonly types?: TypeMappings | undefined;
   readonly transforms?: readonly TargetTransform[] | undefined;
   readonly jsx: JsxOptions;
+  /** Static rendering policy for modules compiled with this target. */
+  readonly render?: TargetRenderOptions | undefined;
 }
 
 export interface ComponentTarget<Schema extends ComponentSchema = ComponentSchema> {
@@ -308,6 +321,7 @@ export interface ComponentTarget<Schema extends ComponentSchema = ComponentSchem
   readonly types: TypeMappings;
   readonly transforms: readonly TargetTransform[];
   readonly jsx: JsxOptions;
+  readonly render?: TargetRenderOptions | undefined;
 }
 
 export interface TargetElementOptions {
@@ -353,6 +367,7 @@ export function defineComponentTarget<const Schema extends ComponentSchema>(): (
       types: definition.types ?? {},
       transforms: definition.transforms ?? [],
       jsx: definition.jsx,
+      ...(definition.render ? { render: definition.render } : {}),
     };
   };
 }

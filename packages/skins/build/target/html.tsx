@@ -11,6 +11,7 @@ import {
   type TemplateTargetDefinition,
 } from '../../../vjsc/src/target/index.ts';
 import { Host } from '../../../vjsc/src/target/jsx-runtime.ts';
+import { htmlIconModule, htmlRenderAliases } from './html-render.ts';
 import { createRenderTargetTransform, renderTargetProps } from './render-target.ts';
 
 type CoreSchema = typeof coreSchema;
@@ -325,6 +326,23 @@ export const htmlComponentTarget: ComponentTarget<CoreSchema> = defineComponentT
       attributes: 'html',
       host: { from: 'vjsc/html-runtime/jsx-runtime', name: 'Host' },
       scope: { from: 'vjsc/html-runtime/jsx-runtime', name: 'Scope' },
+    },
+    render: {
+      aliases: htmlRenderAliases,
+      // Element registrations, the authoring runtime, and generated stylesheets have no effect on static markup.
+      empty: (specifier) =>
+        specifier.startsWith('@videojs/html/ui/') ||
+        specifier === '@videojs/html/i18n' ||
+        specifier === 'vjsc/components' ||
+        specifier.startsWith('virtual:vjsc/css/'),
+      modules: (modules) => {
+        const icons = htmlIconModule(modules);
+
+        return new Map([
+          ['@videojs/html/icons', icons],
+          ['@videojs/html/icons/minimal', icons],
+        ]);
+      },
     },
   };
 });
