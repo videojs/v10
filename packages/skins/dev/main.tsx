@@ -7,7 +7,7 @@ import { VideoPlayer } from '../../react/src/presets/video/player';
 import { createPreviewControls } from './controls';
 import { assignHtmlMediaSource, defineHtmlMedia, renderHtmlMedia } from './html-media';
 import { loadSkin } from './loaders';
-import { type PreviewOptions, readPreviewOptions, type StyleMode } from './options';
+import { type PreviewOptions, readPreviewOptions } from './options';
 import { ReactPreviewMedia } from './react-media';
 import { installErrorLog } from './report';
 
@@ -21,12 +21,18 @@ const preview = readPreviewOptions();
 document.documentElement.dataset.colorScheme = preview.colorScheme;
 document.documentElement.dir = preview.direction;
 
-const variants: readonly PreviewOptions[] = preview.compare
-  ? [
-      { ...preview, styleMode: 'css' },
-      { ...preview, styleMode: 'tailwind' },
-    ]
-  : [preview];
+const variants: readonly PreviewOptions[] =
+  preview.compare === 'styles'
+    ? [
+        { ...preview, styleMode: 'css' },
+        { ...preview, styleMode: 'tailwind' },
+      ]
+    : preview.compare === 'source'
+      ? [
+          { ...preview, source: 'authored' },
+          { ...preview, source: 'generated' },
+        ]
+      : [preview];
 const skins = await Promise.all(variants.map((variant) => loadSkin(variant)));
 
 if (variants.some((variant) => variant.styleMode === 'tailwind')) await import('../src/styles/tailwind.dev.css');
@@ -42,7 +48,7 @@ const root: PreviewRoot = rootElement;
 
 root.dataset.mediaKind = preview.isAudio ? 'audio' : 'video';
 
-if (preview.compare) root.dataset.compare = 'styles';
+if (preview.compare !== 'off') root.dataset.compare = preview.compare;
 
 root.__videojsSkinsReactRoot?.unmount();
 delete root.__videojsSkinsReactRoot;
@@ -58,7 +64,7 @@ if (preview.framework === 'react') {
     <>
       {variants.map((variant, index) => (
         // SAFETY: VJSC transforms the selected React target into a React component before the module loads.
-        <PreviewVariant key={variant.styleMode} variant={variant} Skin={skins[index] as ReactSkin} />
+        <PreviewVariant key={variantLabel(variant)} variant={variant} Skin={skins[index] as ReactSkin} />
       ))}
     </>
   );
@@ -91,7 +97,7 @@ if (preview.framework === 'react') {
       );
       const player = `<${playerTag}${posterAttribute}>${output}</${playerTag}>`;
 
-      return preview.compare ? compareSection(variant.styleMode, player) : player;
+      return preview.compare === 'off' ? player : compareSection(variant, player);
     })
     .join('');
   assignHtmlMediaSource(root, preview.media.source);
@@ -100,22 +106,25 @@ if (preview.framework === 'react') {
 function PreviewVariant({ variant, Skin }: { variant: PreviewOptions; Skin: ReactSkin }) {
   const app = <App Skin={Skin} />;
 
-  if (!preview.compare) return app;
+  if (preview.compare === 'off') return app;
 
   return (
-    <section className="preview-compare-item" data-style={variant.styleMode}>
-      <h2>{styleLabel(variant.styleMode)}</h2>
+    <section className="preview-compare-item" data-style={variant.styleMode} data-source={variant.source}>
+      <h2>{variantLabel(variant)}</h2>
       {app}
     </section>
   );
 }
 
-function compareSection(styleMode: StyleMode, player: string): string {
-  return `<section class="preview-compare-item" data-style="${styleMode}"><h2>${styleLabel(styleMode)}</h2>${player}</section>`;
+function compareSection(variant: PreviewOptions, player: string): string {
+  return `<section class="preview-compare-item" data-style="${variant.styleMode}" data-source="${variant.source}"><h2>${variantLabel(variant)}</h2>${player}</section>`;
 }
 
-function styleLabel(styleMode: StyleMode): string {
-  return styleMode === 'css' ? 'CSS' : 'Tailwind';
+/** Names the axis a compare section varies on: the styling output, or the authored versus packaged source. */
+function variantLabel(variant: PreviewOptions): string {
+  if (preview.compare === 'source') return variant.source === 'authored' ? 'Authored' : 'Packaged';
+
+  return variant.styleMode === 'css' ? 'CSS' : 'Tailwind';
 }
 
 function App({ Skin }: { Skin: React.ComponentType<React.PropsWithChildren<{ className?: string }>> }) {

@@ -1,17 +1,20 @@
 import { expect, type Locator, type Page, test } from '@playwright/test';
 
 import {
+  captureRendering,
   closeMenus,
   emulatePreference,
   expectRenderingParity,
   expectSameRendering,
   freezeSliderState,
   openComparison,
+  openSourceComparison,
   type SkinCase,
   skinCases,
   type SkinComparison,
   type SkinPanel,
   snapshotReference,
+  type SourceComparison,
 } from './vjsc-skin-parity';
 
 const CASES = skinCases('video');
@@ -60,6 +63,20 @@ for (const variant of CASES) {
       expect(tailwindContract).toEqual(cssContract);
       await expectRenderingParity(testInfo, comparison, snapshotName(variant, width));
     }
+  });
+
+  test(`${variant.framework} ${variant.skin} keeps the packaged skin in sync with the authored skin`, async ({
+    page,
+  }, testInfo) => {
+    const { authored, generated } = await openPackagedVariants(page, variant, 800);
+    const authoredContract = await skinContract(authored.root);
+    const generatedContract = await skinContract(generated.root);
+
+    expect(generatedContract).toEqual(authoredContract);
+
+    const reference = await captureRendering(authored.root, `${variant.framework}-${variant.skin}-packaged.png`);
+
+    await expectSameRendering(testInfo, reference, generated.root);
   });
 
   test(`${variant.framework} ${variant.skin} keeps button interaction styling in sync`, async ({ page }, testInfo) => {
@@ -726,6 +743,10 @@ test('reduced motion keeps CSS and Tailwind transitions in sync', async ({ page 
 
 async function openVariants(page: Page, variant: SkinCase, width: number, media = 'mp4-1'): Promise<SkinComparison> {
   return openComparison(page, { ...variant, media, width }, (panel) => preparePanel(panel, width));
+}
+
+async function openPackagedVariants(page: Page, variant: SkinCase, width: number): Promise<SourceComparison> {
+  return openSourceComparison(page, { ...variant, media: 'mp4-1', width }, (panel) => preparePanel(panel, width));
 }
 
 async function preparePanel({ root }: SkinPanel, width: number) {

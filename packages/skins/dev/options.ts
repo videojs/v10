@@ -37,11 +37,16 @@ export type StyleMode = 'css' | 'tailwind';
 
 export type Direction = 'ltr' | 'rtl';
 
+/** Two variants of one skin rendered together: CSS beside Tailwind, or the authored skin beside its packaged output. */
+export type CompareMode = 'off' | 'styles' | 'source';
+
+/** Whether a skin comes from the authored source transform or from the generated framework package. */
+export type SkinSource = 'authored' | 'generated';
+
 export interface PreviewOptions {
   readonly captionsMode: CaptionsMode;
   readonly colorScheme: ColorScheme;
-  /** Render the CSS and Tailwind variants of the same skin together. */
-  readonly compare: boolean;
+  readonly compare: CompareMode;
   readonly direction: Direction;
   readonly framework: Framework;
   readonly isAudio: boolean;
@@ -51,6 +56,7 @@ export interface PreviewOptions {
   readonly playerWidth: number;
   readonly poster: string | undefined;
   readonly skin: SkinName;
+  readonly source: SkinSource;
   readonly sourceId: Exclude<MediaId, 'error'> | null;
   readonly storyboard: string | undefined;
   readonly styleMode: StyleMode;
@@ -63,10 +69,11 @@ export function readPreviewOptions(search = location.search): PreviewOptions {
   const skin: SkinName = requestedSkin && isSkinName(requestedSkin) ? requestedSkin : 'default-video';
   const isAudio = skin.endsWith('-audio');
   const isLive = skin.includes('-live-');
-  const styleMode = params.get('style') === 'tailwind' ? 'tailwind' : 'css';
+  const compare = readCompareMode(params.get('compare'));
+  // Packaged skins ship the CSS styling only, so the source comparison pins the style mode.
+  const styleMode = compare !== 'source' && params.get('style') === 'tailwind' ? 'tailwind' : 'css';
   const captionsMode = params.get('captions') === 'multiple' ? 'multiple' : 'single';
   const colorScheme = params.get('scheme') === 'light' ? 'light' : 'dark';
-  const compare = params.get('compare') === 'styles';
   const direction = params.get('dir') === 'rtl' ? 'rtl' : 'ltr';
   const requestedMedia = params.get('media');
   const mediaId = isMediaId(requestedMedia) ? requestedMedia : isLive ? 'hls-live' : 'mp4-1';
@@ -90,10 +97,15 @@ export function readPreviewOptions(search = location.search): PreviewOptions {
     playerWidth,
     poster: sourceId ? getPosterSrc(sourceId) : undefined,
     skin,
+    source: 'authored',
     sourceId,
     storyboard: sourceId ? getStoryboardSrc(sourceId) : undefined,
     styleMode,
   };
+}
+
+function readCompareMode(value: string | null): CompareMode {
+  return value === 'styles' || value === 'source' ? value : 'off';
 }
 
 function isMediaId(value: string | null): value is MediaId {

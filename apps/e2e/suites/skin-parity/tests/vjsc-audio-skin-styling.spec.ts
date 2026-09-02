@@ -2,12 +2,15 @@ import { expect, type Locator, type Page, test } from '@playwright/test';
 
 import {
   buttonInteractionContract,
+  captureRendering,
   collectPageErrors,
   emulatePreference,
   expectRenderingParity,
+  expectSameRendering,
   freezeSliderState,
   normalizeErrorDialogCopy,
   openComparison,
+  openSourceComparison,
   popupAncestor,
   popupContract,
   releaseSliderState,
@@ -15,6 +18,7 @@ import {
   skinCases,
   type SkinComparison,
   type SkinPanel,
+  type SourceComparison,
   surfaceContract,
   waitForStableText,
 } from './vjsc-skin-parity';
@@ -36,6 +40,20 @@ for (const variant of CASES) {
     }
 
     expect(pageErrors).toEqual([]);
+  });
+
+  test(`${variant.framework} ${variant.skin} keeps the packaged skin in sync with the authored skin`, async ({
+    page,
+  }, testInfo) => {
+    const { authored, generated } = await openPackagedVariants(page, variant, 672);
+    const authoredContract = await layoutContract(authored.root);
+    const generatedContract = await layoutContract(generated.root);
+
+    expect(generatedContract).toEqual(authoredContract);
+
+    const reference = await captureRendering(authored.root, `${variant.framework}-${variant.skin}-packaged.png`);
+
+    await expectSameRendering(testInfo, reference, generated.root);
   });
 
   test(`${variant.framework} ${variant.skin} preserves audio interactions and popup styling`, async ({ page }) => {
@@ -155,6 +173,10 @@ async function openVariants(
   { media = 'mp4-1', expectPlay = true } = {}
 ): Promise<SkinComparison> {
   return openComparison(page, { ...variant, media, width }, (panel) => preparePanel(panel, width, expectPlay));
+}
+
+async function openPackagedVariants(page: Page, variant: SkinCase, width: number): Promise<SourceComparison> {
+  return openSourceComparison(page, { ...variant, media: 'mp4-1', width }, (panel) => preparePanel(panel, width, true));
 }
 
 async function preparePanel({ root, section }: SkinPanel, width: number, expectPlay: boolean) {

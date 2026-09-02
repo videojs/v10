@@ -64,7 +64,8 @@ export function buildReport(preview: PreviewOptions, width: number): string {
   const options = [
     `framework=${preview.framework}`,
     `skin=${preview.skin}`,
-    `style=${preview.compare ? 'css+tailwind' : preview.styleMode}`,
+    `style=${preview.compare === 'styles' ? 'css+tailwind' : preview.styleMode}`,
+    `source=${preview.compare === 'source' ? 'authored+packaged' : preview.source}`,
     `scheme=${preview.colorScheme}`,
     `dir=${preview.direction}`,
     `media=${preview.mediaId} (${preview.media.label})`,

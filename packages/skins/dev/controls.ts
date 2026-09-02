@@ -56,9 +56,10 @@ function createOptions(preview: PreviewOptions): HTMLFormElement {
       ['ltr', 'Left to right'],
       ['rtl', 'Right to left'],
     ]),
-    createSelect('compare', 'Compare', preview.compare ? 'styles' : 'off', [
+    createSelect('compare', 'Compare', preview.compare, [
       ['off', 'Off'],
       ['styles', 'CSS vs Tailwind'],
+      ['source', 'Authored vs packaged'],
     ]),
     createReportControls(preview),
     createPreferenceBadges()

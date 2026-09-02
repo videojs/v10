@@ -2,6 +2,7 @@ import { expect, type Locator, type Page, test } from '@playwright/test';
 
 import {
   buttonInteractionContract,
+  captureRendering,
   collectPageErrors,
   controlsVisibilityContract,
   emulatePreference,
@@ -11,6 +12,7 @@ import {
   freezeSliderState,
   normalizeErrorDialogCopy,
   openComparison,
+  openSourceComparison,
   popupAncestor,
   popupContract,
   type SkinCase,
@@ -18,6 +20,7 @@ import {
   type SkinComparison,
   type SkinPanel,
   snapshotReference,
+  type SourceComparison,
   surfaceContract,
   waitForStableText,
 } from './vjsc-skin-parity';
@@ -42,6 +45,22 @@ for (const variant of CASES) {
     }
 
     expect(pageErrors).toEqual([]);
+  });
+
+  test(`${variant.framework} ${variant.skin} keeps the packaged skin in sync with the authored skin`, async ({
+    page,
+  }, testInfo) => {
+    const { authored, generated, panels } = await openPackagedVariants(page, variant, 672);
+    const authoredContract = await layoutContract(authored.root);
+    const generatedContract = await layoutContract(generated.root);
+
+    expect(generatedContract).toEqual(authoredContract);
+
+    for (const panel of panels) await seekToLiveEdge(panel.root.getByRole('button', { name: /live/i }));
+
+    const reference = await captureRendering(authored.root, `${variant.framework}-${variant.skin}-packaged.png`);
+
+    await expectSameRendering(testInfo, reference, generated.root);
   });
 
   test(`${variant.framework} ${variant.skin} preserves live controls and popup motion`, async ({ page }) => {
@@ -210,6 +229,12 @@ async function openVariants(
 ): Promise<SkinComparison> {
   return openComparison(page, { ...variant, media, captions, width }, (panel) =>
     preparePanel(panel, width, expectPlay)
+  );
+}
+
+async function openPackagedVariants(page: Page, variant: SkinCase, width: number): Promise<SourceComparison> {
+  return openSourceComparison(page, { ...variant, media: 'hls-live', captions: 'single', width }, (panel) =>
+    preparePanel(panel, width, true)
   );
 }
 
