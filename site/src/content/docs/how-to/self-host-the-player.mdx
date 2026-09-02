@@ -32,7 +32,7 @@ You get one file (plus a sourcemap), no runtime requests to a CDN, and only the 
 
 ## Availability and constraints
 
-- HLS and other non-default media need their own module on top of the player, and your self-hosted build has to include it. When bundling, add the media import to your entry file (`import '@videojs/html/media/hlsjs-video';`) and use the matching `<hlsjs-video>` element with your `.m3u8` source. When mirroring the CDN files, serve the media file too and add its script tag (`<script type="module" src="/videojs/media/hlsjs-video.js"></script>`). The same pattern applies to every media module, including the smaller default HLS element (`media/hls-video`), and to every <DocsLink slug="concepts/extensions">extension</DocsLink> module, such as `extensions/mux-data`.
+- HLS and other non-default media need their own module on top of the player, and your self-hosted build has to include it. When bundling, add the media import to your entry file (`import '@videojs/html/media/hlsjs-video';`) and use the matching `<hlsjs-video>` element with your `.m3u8` source. When mirroring the CDN files, serve the media file too and add its script tag (`<script type="module" src="/videojs/media/hlsjs-video.js"></script>`). The same pattern applies to every media module, including the smaller default HLS element (`media/hls-video`), and to every <DocsLink slug="concepts/overview">extension</DocsLink> module, such as `extensions/mux-data`.
 
 ## Common variations
 

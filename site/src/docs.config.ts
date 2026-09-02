@@ -57,7 +57,6 @@ export const sidebar: Sidebar = [
       { slug: 'concepts/ui-components' },
       { slug: 'concepts/accessibility' },
       { slug: 'concepts/media-sources' },
-      { slug: 'concepts/extensions' },
       { slug: 'concepts/mux-data' },
       { slug: 'concepts/security' },
       { slug: 'concepts/custom-element-lifecycle', frameworks: ['html'] },

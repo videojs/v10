@@ -1,6 +1,6 @@
 ---
 title: Overview
-description: How Video.js players are structured — state, UI, and media
+description: How Video.js players are structured — state, UI, media, and extensions
 ---
 
 import FrameworkCase from '@/components/docs/FrameworkCase.astro';
@@ -12,7 +12,7 @@ Video.js v10 separates player responsibilities into parts that work independentl
 
 For the reasoning behind this design, see <DocsLink slug="concepts/why-videojs">Why Video.js?</DocsLink>.
 
-## 1. State management
+## State management
 <FrameworkCase frameworks={["react"]}>
 State is handled by a preset player component, which creates a central state store that all components can access. When you wrap your player in `VideoPlayer`, the components automatically connect to the state.
 
@@ -45,7 +45,7 @@ You can access state and actions from anywhere within `<video-player>` with <Doc
 
 <DocsLinkCard slug="concepts/features">Learn more about state and actions</DocsLinkCard>
 
-## 2. User interface
+## User interface
 
 Use a prebuilt **skin** or build your own from the individual **UI components**.
 
@@ -113,7 +113,7 @@ The easiest way to get started is to <DocsLink slug="how-to/customize-skins">eje
 <DocsLinkCard slug="concepts/ui-components">Learn more about UI components</DocsLinkCard>
 <DocsLinkCard slug="how-to/build-your-own-component">Build your own component</DocsLinkCard>
 
-## 3. Media
+## Media
 
 Media components are the components that actually display your media. They're essentially "players with no UI". They handle the video/audio rendering and expose a consistent API.
 
@@ -144,11 +144,43 @@ Media elements are discovered automatically. Plain `<video>` and `<audio>` eleme
 
 <DocsLinkCard slug="concepts/media-sources">Learn more about media</DocsLinkCard>
 
-<DocsLink slug="concepts/extensions">Extensions</DocsLink> sit alongside state, UI, and media. Add one when a player needs optional behavior such as Google Cast or Mux Data monitoring; it uses the active media without rendering UI or playing media itself.
+## Extensions
+
+Extensions add optional behavior to a player without rendering UI or playing media themselves. Place one inside the player, alongside the media component, and it attaches to whichever media the player is using and follows it if that changes. Remove it and only that behavior goes away.
+
+Video.js includes two: <DocsLink slug="reference/google-cast">GoogleCast</DocsLink> connects the media to the Google Cast SDK, and <DocsLink slug="reference/mux-data">MuxData</DocsLink> connects it to Mux Data for playback monitoring. Both are opt-in, so no media element casts or reports on its own.
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<VideoPlayer>
+  <VideoSkin>
+    <MuxVideo source={{ playbackId: 'PLAYBACK_ID' }} />
+    <MuxData /> {/* [!code focus] */}
+    <GoogleCast /> {/* [!code focus] */}
+  </VideoSkin>
+</VideoPlayer>
+```
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+```html
+<video-player>
+  <video-skin>
+    <mux-video src="https://stream.mux.com/PLAYBACK_ID.m3u8"></mux-video>
+    <mux-data></mux-data> <!-- [!code focus] -->
+    <google-cast></google-cast> <!-- [!code focus] -->
+  </video-skin>
+</video-player>
+```
+</FrameworkCase>
+
+An extension can provide behavior that a UI component controls: GoogleCast supplies the configurable Cast route, and <DocsLink slug="reference/cast-button">CastButton</DocsLink> renders the control that starts and ends a session. In React, <DocsLink slug="reference/use-media-component">useMediaComponent</DocsLink> is the hook for building your own.
+
+<DocsLinkCard slug="concepts/mux-data">Monitor playback with Mux Data</DocsLinkCard>
+<DocsLinkCard slug="how-to/cast-to-airplay-and-chromecast">Cast to AirPlay and Chromecast</DocsLinkCard>
 
 ## Presets
 
-**Presets** preconfigure the state, UI, and media for a specific use case. Add extensions when that player also needs an optional integration.
+**Presets** preconfigure the state, UI, and media for a specific use case. Extensions stay opt-in, so add them to a preset player when you need them.
 
 <FrameworkCase frameworks={["react"]}>
 The default presets are `@videojs/react/video` and `@videojs/react/audio`, covering the baseline set of controls you'd expect from the HTML `<video>` and `<audio>` tags. 
