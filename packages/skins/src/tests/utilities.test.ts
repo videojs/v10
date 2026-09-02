@@ -8,7 +8,7 @@ import { vars } from '../styles/vars';
 
 describe('utilities', () => {
   test('describes every shared utility, variant, and computed theme key', async () => {
-    const source = await readFile(resolve(import.meta.dirname, '../styles/tailwind.shared.css'), 'utf8');
+    const source = await readFile(resolve(import.meta.dirname, '../styles/tailwind.css'), 'utf8');
     const declared = [...source.matchAll(/@(utility|custom-variant)\s+([^\s{(;]+)/g)].map(([, , name]) => name!);
     const themeBlock = /@theme inline \{([\s\S]*?)\n\}/.exec(source)?.[1] ?? '';
     const themeKeys = [...themeBlock.matchAll(/^\s*(--[a-z-]+):\s*([^;]+);/gm)].map(([, key, value]) => [key!, value!]);

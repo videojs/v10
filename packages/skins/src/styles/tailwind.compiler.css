@@ -5,7 +5,7 @@
 @import "./captions.css";
 @import "./themes/video.css";
 @import "./themes/audio.css";
-@import "./tailwind.shared.css";
+@import "./tailwind.css";
 
 @theme inline {
   --spacing: var(--media-spacing);

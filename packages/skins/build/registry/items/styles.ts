@@ -7,7 +7,7 @@ import { vars } from '../../../src/styles/vars.ts';
 import type { VideojsRegistryMeta } from '../meta.ts';
 import type { RegistryTarget } from '../targets.ts';
 
-const sharedTailwindSource = resolve(import.meta.dirname, '../../../src/styles/tailwind.shared.css');
+const sharedTailwindSource = resolve(import.meta.dirname, '../../../src/styles/tailwind.css');
 
 export function registryStyles(target: RegistryTarget): RegistryStylesOptions {
   const meta = {
@@ -24,7 +24,7 @@ export function registryStyles(target: RegistryTarget): RegistryStylesOptions {
       title: 'Video.js media theme',
       description: 'Scoped media tokens, resets, preferences, and Tailwind compiler integration.',
       docs: themeDocs(target),
-      tailwind: target.styling === 'tailwind' ? './styles/tailwind.shared.css' : undefined,
+      tailwind: target.styling === 'tailwind' ? './styles/tailwind.css' : undefined,
       meta,
     },
     files: target.framework === 'react' && target.styling === 'css' ? 'styles' : undefined,

@@ -9,7 +9,7 @@ import { type DesignSystem, loadDesignSystem } from '../../../../vjsc/src/styles
 const packageDir = resolve(import.meta.dirname, '../../..');
 const registryDir = resolve(packageDir, 'dist/registry/source/r/react');
 const compilerEntry = resolve(packageDir, 'src/styles/tailwind.compiler.css');
-const sharedSource = readFileSync(resolve(packageDir, 'src/styles/tailwind.shared.css'), 'utf8');
+const sharedSource = readFileSync(resolve(packageDir, 'src/styles/tailwind.css'), 'utf8');
 
 interface ThemeItem {
   readonly cssVars?: { readonly theme?: Readonly<Record<string, string>> } | undefined;

@@ -32,7 +32,7 @@ describe('vars', () => {
 
   test('declares every internal token the shared theme keys alias', async () => {
     const stylesRoot = resolve(import.meta.dirname, '../styles');
-    const source = await readFile(resolve(stylesRoot, 'tailwind.shared.css'), 'utf8');
+    const source = await readFile(resolve(stylesRoot, 'tailwind.css'), 'utf8');
     const themeBlock = /@theme inline \{([\s\S]*?)\n\}/.exec(source)?.[1] ?? '';
     const themeFiles = (await readdir(resolve(stylesRoot, 'themes'))).filter((name) => name.endsWith('.css'));
     const kinds = new Map(Object.entries(vars).map(([name, variable]) => [name, variable.kind]));
