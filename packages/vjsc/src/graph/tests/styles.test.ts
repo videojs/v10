@@ -91,6 +91,7 @@ function fixtureModule(id: string, assets: readonly string[], dependencies: read
       start: 0,
       end: 0,
       quote: "'",
+      bindings: [],
       resolvedId,
     })),
     styles: { files: [], assets },

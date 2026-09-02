@@ -103,7 +103,7 @@ function fixtureGraph(): Graph<FixtureMeta> {
 function importReference(source: string, specifier: string) {
   const start = source.indexOf(`'${specifier}'`);
 
-  return { specifier, kind: 'static' as const, start, end: start + specifier.length + 2, quote: "'" };
+  return { specifier, kind: 'static' as const, start, end: start + specifier.length + 2, quote: "'", bindings: [] };
 }
 
 function registryItem(files: Awaited<ReturnType<typeof createShadcnRegistryFiles>>, path: string, name: string): any {

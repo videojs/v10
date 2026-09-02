@@ -55,5 +55,5 @@ export function Button() { return <button>Play</button>; }`;
 function importReference(source: string, specifier: string) {
   const start = source.indexOf(`'${specifier}'`);
 
-  return { specifier, kind: 'static' as const, start, end: start + specifier.length + 2, quote: "'" };
+  return { specifier, kind: 'static' as const, start, end: start + specifier.length + 2, quote: "'", bindings: [] };
 }
