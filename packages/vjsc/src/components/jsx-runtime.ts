@@ -65,10 +65,11 @@ export interface TemplatePartProps extends BaseProps {
 }
 
 export interface TextProps extends BaseProps {
-  /** Translation key used by framework targets when the children provide fallback text. */
+  /**
+   * Translation key for this text. The compiler only carries it; the selected target decides how a token is looked up
+   * and what renders when it is absent, with the children as fallback text.
+   */
   token?: string | undefined;
-  /** Optional data-part marker consumed by generated component behavior. */
-  'data-part'?: string | undefined;
 }
 
 export type BoxProps = BaseProps;
