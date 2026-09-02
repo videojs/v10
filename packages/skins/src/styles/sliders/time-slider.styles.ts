@@ -50,8 +50,7 @@ export default styles({
     },
     chapterTitle: {
       className: 'media-time-slider-chapter-title',
-      utilities:
-        'max-w-(--media-slider-preview-max-width) min-w-0 overflow-hidden text-ellipsis whitespace-nowrap empty:hidden',
+      utilities: 'max-w-(--media-slider-preview-max-width) min-w-0 truncate empty:hidden',
       variants: { default: 'px-6' },
     },
     value: {

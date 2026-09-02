@@ -99,7 +99,7 @@ export default styles({
     },
     hintLabel: {
       className: 'media-menu-hint-label',
-      utilities: 'max-w-24 overflow-hidden text-ellipsis whitespace-nowrap',
+      utilities: 'max-w-24 truncate',
     },
     tier: {
       className: 'media-menu-tier',
