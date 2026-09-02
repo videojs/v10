@@ -1,6 +1,4 @@
 import type {
-  ImportDeclaration,
-  JSXElementName,
   JSXOpeningElement,
   Function as OxcFunction,
   Program,
@@ -15,8 +13,18 @@ import type { Plugin, RolldownMagicString } from 'rolldown';
 import { createSourceText, jsxNamePath, type ModuleImports, renderSourceRange, type SourceEdit } from '../ast';
 import { collectIdentifierNames, insertModuleImports } from '../ast/imports';
 import {
+  boundCanonicalPath,
+  type CanonicalBindings,
+  canonicalPath,
+  collectCanonicalBindings,
+  collectPrimitiveBindings,
+  COMPONENT_SOURCE,
+  configuredRule,
+  importedName,
+  primitiveRule,
+} from '../target/bindings';
+import {
   type ComponentTarget,
-  type ComponentRule,
   isTargetElement,
   TARGET_ELEMENT,
   type TargetElement,
@@ -27,21 +35,6 @@ import {
 import { createTargetModuleImports } from '../target/module-imports';
 import { SCRIPT_MODULE_ID } from '../utils/module-id';
 import { type ComponentTargetPluginOptions, selectComponentTargets } from './component-target';
-
-const COMPONENT_SOURCE = 'vjsc/components';
-
-interface CanonicalPath {
-  readonly target: ComponentTarget;
-  readonly component: string;
-  readonly part: string | null;
-}
-
-interface CanonicalBindings {
-  readonly namespaces: ReadonlyMap<string, ComponentTarget>;
-  readonly named: ReadonlyMap<string, CanonicalPath>;
-  readonly primitives: ReadonlyMap<string, { readonly name: string; readonly target: ComponentTarget }>;
-  readonly sourceTypes: ReadonlyMap<string, string>;
-}
 
 interface PropsHelper {
   readonly annotation: TSType;
@@ -151,32 +144,16 @@ export function targetTypePlugin(options: ComponentTargetPluginOptions): Plugin 
   };
 }
 
-function collectBindings(ast: Program, targets: readonly ComponentTarget[]): CanonicalBindings {
-  const bySource = new Map(targets.map((target) => [target.source, target]));
+interface TypeBindings extends CanonicalBindings {
+  readonly primitives: ReadonlyMap<string, { readonly name: string; readonly target: ComponentTarget }>;
+  readonly sourceTypes: ReadonlyMap<string, string>;
+}
 
-  const namespaces = new Map<string, ComponentTarget>();
-  const named = new Map<string, CanonicalPath>();
-  const primitives = new Map<string, { name: string; target: ComponentTarget }>();
+function collectBindings(ast: Program, targets: readonly ComponentTarget[]): TypeBindings {
   const sourceTypes = new Map<string, string>();
 
   for (const statement of ast.body) {
-    if (statement.type !== 'ImportDeclaration') continue;
-
-    const target = bySource.get(statement.source.value);
-
-    if (target && statement.importKind !== 'type') {
-      for (const specifier of statement.specifiers) {
-        if (specifier.type === 'ImportNamespaceSpecifier') namespaces.set(specifier.local.name, target);
-
-        if (specifier.type === 'ImportSpecifier' && specifier.importKind !== 'type') {
-          const component = importedName(specifier);
-
-          named.set(specifier.local.name, { target, component, part: null });
-        }
-      }
-    }
-
-    if (statement.source.value !== COMPONENT_SOURCE) continue;
+    if (statement.type !== 'ImportDeclaration' || statement.source.value !== COMPONENT_SOURCE) continue;
 
     for (const specifier of statement.specifiers) {
       if (specifier.type !== 'ImportSpecifier') continue;
@@ -192,22 +169,16 @@ function collectBindings(ast: Program, targets: readonly ComponentTarget[]): Can
       ) {
         sourceTypes.set(specifier.local.name, name);
       }
-
-      if (specifier.importKind !== 'type' && name !== 'Template') {
-        const owners = targets.filter((candidate) => primitiveRule(candidate, name));
-
-        if (owners.length === 1) primitives.set(specifier.local.name, { name, target: owners[0]! });
-      }
     }
   }
 
-  return { namespaces, named, primitives, sourceTypes };
+  return { ...collectCanonicalBindings(ast, targets), primitives: collectPrimitiveBindings(ast, targets), sourceTypes };
 }
 
 function transformSourceTypes(
   _code: string,
   ast: Program,
-  bindings: CanonicalBindings,
+  bindings: TypeBindings,
   targets: readonly ComponentTarget[],
   imports: ModuleImports,
   typeImports: TargetTypeImports,
@@ -337,7 +308,7 @@ function inlineTypeMembers(type: TSType | undefined): TSType[] {
 function rewriteSourceTypeText(
   code: string,
   type: TSType,
-  bindings: CanonicalBindings,
+  bindings: TypeBindings,
   targets: readonly ComponentTarget[],
   imports: ModuleImports,
   typeImports: TargetTypeImports
@@ -378,7 +349,7 @@ function rewriteSourceTypeText(
 
 function propsOfType(
   type: TSType | undefined,
-  bindings: CanonicalBindings,
+  bindings: TypeBindings,
   targets: readonly ComponentTarget[],
   imports: ModuleImports,
   typeImports: TargetTypeImports
@@ -426,7 +397,7 @@ function forwardedBinding(parameter: OxcFunction['params'][number] | undefined):
 function forwardedTarget(
   declaration: OxcFunction,
   binding: string,
-  bindings: CanonicalBindings
+  bindings: TypeBindings
 ): { readonly target: ComponentTarget; readonly element: TargetElement } | undefined {
   const matches: Array<{ target: ComponentTarget; element: TargetElement }> = [];
 
@@ -455,7 +426,7 @@ function forwardedTarget(
 
 function openingTarget(
   opening: JSXOpeningElement,
-  bindings: CanonicalBindings
+  bindings: TypeBindings
 ): { readonly target: ComponentTarget; readonly element: TargetElement } | undefined {
   const path = canonicalPath(opening.name, bindings);
 
@@ -545,58 +516,11 @@ function targetHeritage(props: ResolvedProps, includesChildren: boolean): string
   return `Omit<${props.type}, ${[...omitted].map((name) => JSON.stringify(name)).join(' | ')}>`;
 }
 
-function canonicalPath(name: JSXElementName, bindings: CanonicalBindings): CanonicalPath | undefined {
-  return boundCanonicalPath(jsxNamePath(name), bindings);
-}
-
-function boundCanonicalPath(path: readonly string[], bindings: CanonicalBindings): CanonicalPath | undefined {
-  if (path.length === 0) return undefined;
-
-  const namespace = bindings.namespaces.get(path[0]!);
-
-  if (namespace && path.length > 1) {
-    return { target: namespace, component: path[1]!, part: path.length > 2 ? path.slice(2).join('.') : null };
-  }
-
-  const named = bindings.named.get(path[0]!);
-
-  return named ? { ...named, part: path.length > 1 ? path.slice(1).join('.') : null } : undefined;
-}
-
-function configuredRule(path: CanonicalPath): ComponentRule<object> | undefined {
-  let rule = path.target.components.rules[path.component] as ComponentRule<object> | undefined;
-  if (!path.part || !rule) return rule;
-
-  const parts = path.part.split('.');
-
-  for (const [index, part] of parts.entries()) {
-    if (!rule) return undefined;
-
-    if (typeof rule === 'function' || isTargetElement(rule)) {
-      return part === 'Root' && index === parts.length - 1 ? rule : undefined;
-    }
-
-    rule = (rule as Readonly<Record<string, ComponentRule<object> | undefined>>)[part];
-  }
-
-  return rule;
-}
-
 function sameTargetElement(
   left: { readonly target: ComponentTarget; readonly element: TargetElement },
   right: { readonly target: ComponentTarget; readonly element: TargetElement }
 ): boolean {
   return left.target === right.target && left.element[TARGET_ELEMENT] === right.element[TARGET_ELEMENT];
-}
-
-function importedName(specifier: ImportDeclaration['specifiers'][number]): string {
-  if (specifier.type !== 'ImportSpecifier') return specifier.local.name;
-
-  return specifier.imported.type === 'Identifier' ? specifier.imported.name : specifier.imported.value;
-}
-
-function primitiveRule(target: ComponentTarget, name: string): unknown {
-  return (target.primitives as Readonly<Record<string, unknown>>)[name];
 }
 
 class TargetTypeImports {

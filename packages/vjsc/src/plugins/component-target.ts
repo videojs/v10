@@ -1,20 +1,26 @@
 import { createHash } from 'node:crypto';
 
-import type { ImportDeclaration, JSXElement, JSXElementName, Program } from '@oxc-project/types';
+import type { JSXElement, Program } from '@oxc-project/types';
 import { walk } from 'oxc-walker';
 import type { Plugin } from 'rolldown';
 
 import { createSourceText, jsxNamePath, type ModuleImports, renderSourceRange, type SourceEdit } from '../ast';
 import type { ComponentPartDefinition, ComponentParts } from '../components/definition';
 import {
+  type CanonicalBindings,
+  type CanonicalPath,
+  canonicalPath,
+  collectCanonicalBindings,
+  collectPrimitiveBindings,
+  configuredRule,
+  resolveDefault,
+} from '../target/bindings';
+import {
   type ComponentRewrite,
   type ComponentRewriteContext,
   type ComponentTarget,
-  type ComponentPath,
-  type ComponentRule,
   isTargetUnwrap,
   isTargetElement,
-  type PrimitiveTargetRule,
   type SourcePart,
   type SourcePartCollection,
   type SourcePartFor,
@@ -36,17 +42,6 @@ export type ComponentTargetSelection =
 
 export interface ComponentTargetPluginOptions {
   readonly targets: ComponentTargetSelection;
-}
-
-interface CanonicalPath {
-  readonly target: ComponentTarget;
-  readonly component: string;
-  readonly part: string | null;
-}
-
-interface CanonicalBindings {
-  readonly namespaces: ReadonlyMap<string, ComponentTarget>;
-  readonly named: ReadonlyMap<string, CanonicalPath>;
 }
 
 interface ComponentSourceScope {
@@ -231,28 +226,6 @@ export function selectComponentTargets(selection: ComponentTargetSelection, id: 
   return selection(parseModuleId(id)) ?? [];
 }
 
-function collectCanonicalBindings(ast: Program, targets: readonly ComponentTarget[]): CanonicalBindings {
-  const bySource = new Map<string, ComponentTarget>();
-  const namespaces = new Map<string, ComponentTarget>();
-  const named = new Map<string, CanonicalPath>();
-
-  for (const target of targets) {
-    if (bySource.has(target.source)) {
-      throw new Error(`More than one component target was provided for \`${target.source}\`.`);
-    }
-
-    bySource.set(target.source, target);
-  }
-
-  for (const statement of ast.body) {
-    if (statement.type !== 'ImportDeclaration' || statement.importKind === 'type') continue;
-
-    collectImportBindings(statement, bySource, namespaces, named);
-  }
-
-  return { namespaces, named };
-}
-
 function collectComponentScopes(ast: Program, bindings: CanonicalBindings, id: string): ComponentSourceScopes {
   const nodes = new Map<JSXElement, ComponentSourceScope>();
   const stack: { readonly path: CanonicalPath; readonly scope: ComponentSourceScope }[] = [];
@@ -301,115 +274,6 @@ function enclosingScope(
   }
 
   return undefined;
-}
-
-function collectPrimitiveBindings(
-  ast: Program,
-  targets: readonly ComponentTarget[]
-): ReadonlyMap<
-  string,
-  { readonly name: string; readonly rule: PrimitiveTargetRule<object>; readonly target: ComponentTarget }
-> {
-  const bindings = new Map<
-    string,
-    { readonly name: string; readonly rule: PrimitiveTargetRule<object>; readonly target: ComponentTarget }
-  >();
-
-  for (const statement of ast.body) {
-    if (
-      statement.type !== 'ImportDeclaration' ||
-      statement.importKind === 'type' ||
-      statement.source.value !== 'vjsc/components'
-    ) {
-      continue;
-    }
-
-    for (const specifier of statement.specifiers) {
-      if (specifier.type !== 'ImportSpecifier' || specifier.importKind === 'type') continue;
-
-      const name = specifier.imported.type === 'Identifier' ? specifier.imported.name : specifier.imported.value;
-      if (name === 'Template') continue;
-
-      const owners = targets.flatMap((target) => {
-        const rule = primitiveRule(target, name);
-
-        return rule ? [{ target, rule }] : [];
-      });
-      if (owners.length > 1) throw new Error(`More than one component target defines the \`${name}\` primitive.`);
-
-      if (owners[0]) bindings.set(specifier.local.name, { name, ...owners[0] });
-    }
-  }
-
-  return bindings;
-}
-
-function collectImportBindings(
-  declaration: ImportDeclaration,
-  targets: ReadonlyMap<string, ComponentTarget>,
-  namespaces: Map<string, ComponentTarget>,
-  named: Map<string, CanonicalPath>
-): void {
-  const target = targets.get(declaration.source.value);
-  if (!target) return;
-
-  for (const specifier of declaration.specifiers) {
-    if (specifier.type === 'ImportNamespaceSpecifier') {
-      namespaces.set(specifier.local.name, target);
-    } else if (specifier.type === 'ImportSpecifier' && specifier.importKind !== 'type') {
-      const component = specifier.imported.type === 'Identifier' ? specifier.imported.name : specifier.imported.value;
-
-      named.set(specifier.local.name, { target, component, part: null });
-    }
-  }
-}
-
-function canonicalPath(name: JSXElementName, bindings: CanonicalBindings): CanonicalPath | undefined {
-  const path = jsxNamePath(name);
-  if (path.length === 0) return undefined;
-
-  const namespace = bindings.namespaces.get(path[0]!);
-
-  if (namespace && path.length > 1) {
-    return {
-      target: namespace,
-      component: path[1]!,
-      part: path.length > 2 ? path.slice(2).join('.') : null,
-    };
-  }
-
-  const named = bindings.named.get(path[0]!);
-  if (!named) return undefined;
-
-  return {
-    ...named,
-    part: path.length > 1 ? path.slice(1).join('.') : null,
-  };
-}
-
-function configuredRule(path: CanonicalPath): ComponentRule<object> | undefined {
-  let rule = path.target.components.rules[path.component] as ComponentRule<object> | undefined;
-  if (!path.part || !rule) return rule;
-
-  const parts = path.part.split('.');
-
-  for (const [index, part] of parts.entries()) {
-    if (!rule) return undefined;
-
-    if (typeof rule === 'function' || isTargetElement(rule)) {
-      return part === 'Root' && index === parts.length - 1 ? rule : undefined;
-    }
-
-    rule = (rule as Readonly<Record<string, ComponentRule<object> | undefined>>)[part];
-  }
-
-  return rule;
-}
-
-function resolveDefault(path: CanonicalPath): ComponentRule<object> | undefined {
-  const targetPath: ComponentPath = { component: path.component, part: path.part };
-
-  return path.target.components.resolve(targetPath) as ComponentRule<object> | undefined;
 }
 
 interface CollectedPart {
@@ -631,8 +495,4 @@ function collectJsxEdits(
   });
 
   return roots.sort((left, right) => left.start - right.start);
-}
-
-function primitiveRule(target: ComponentTarget, name: string): PrimitiveTargetRule<object> | undefined {
-  return (target.primitives as Readonly<Record<string, PrimitiveTargetRule<object> | undefined>>)[name];
 }
