@@ -1,6 +1,245 @@
-import type { Locator, Page } from '@playwright/test';
+import { expect, type Locator, type Page, type TestInfo } from '@playwright/test';
+
+import { skinCatalog } from '../../../../../packages/skins/build/catalog.ts';
+import type { SkinPreset } from '../../../../../packages/skins/build/skin.ts';
+import type { SkinName } from '../../../../../packages/skins/src/meta.ts';
+import { expectVisualParity, type VisualCapture } from '../../../shared/fixtures/visual-parity';
 
 export type SkinStyle = 'css' | 'tailwind';
+export type SkinFramework = 'react' | 'html';
+
+export const SKIN_STYLES: readonly SkinStyle[] = ['css', 'tailwind'];
+const FRAMEWORKS: readonly SkinFramework[] = ['react', 'html'];
+const CAPTURE_OPTIONS = { animations: 'disabled', caret: 'hide', scale: 'css' } as const;
+
+export interface SkinCase {
+  readonly framework: SkinFramework;
+  readonly skin: SkinName;
+}
+
+/** Every framework and skin pairing published for one preset: React first, then HTML, each in catalog order. */
+export function skinCases(preset: SkinPreset): readonly SkinCase[] {
+  const skins = skinCatalog.filter((entry) => entry.preset === preset);
+
+  return FRAMEWORKS.flatMap((framework) => skins.map((entry) => ({ framework, skin: entry.name })));
+}
+
+export type SkinSource = 'authored' | 'generated';
+
+export interface SkinPanel {
+  readonly style: SkinStyle;
+  /** Whether the panel renders the authored source transform or the skin the framework package ships. */
+  readonly source: SkinSource;
+  /** The compare section wrapping one variant. HTML players keep their media outside the accessible group. */
+  readonly section: Locator;
+  /** The accessible `Media player` group rendered by one variant. */
+  readonly root: Locator;
+}
+
+export interface SkinComparison {
+  readonly css: SkinPanel;
+  readonly tailwind: SkinPanel;
+  /** CSS first, then Tailwind. */
+  readonly panels: readonly SkinPanel[];
+}
+
+export interface SourceComparison {
+  readonly authored: SkinPanel;
+  readonly generated: SkinPanel;
+  /** Authored first, then generated. */
+  readonly panels: readonly SkinPanel[];
+}
+
+type PanelPrepare = (panel: SkinPanel) => Promise<void>;
+
+/** Open the playground once with both stylings of one skin rendered together, then ready each panel in order. */
+export async function openComparison(
+  page: Page,
+  params: Readonly<Record<string, string | number>>,
+  prepare: PanelPrepare
+): Promise<SkinComparison> {
+  const panels = await openPanels(
+    page,
+    { ...params, compare: 'styles' },
+    SKIN_STYLES.map((style) => ({ style, source: 'authored' as const, selector: `[data-style="${style}"]` })),
+    prepare
+  );
+  const [css, tailwind] = panels;
+  if (!css || !tailwind) throw new Error('Expected a CSS and a Tailwind panel.');
+
+  return { css, tailwind, panels };
+}
+
+/** Open the playground once with the authored CSS skin beside the skin its framework package ships. */
+export async function openSourceComparison(
+  page: Page,
+  params: Readonly<Record<string, string | number>>,
+  prepare: PanelPrepare
+): Promise<SourceComparison> {
+  const sources: readonly SkinSource[] = ['authored', 'generated'];
+  const panels = await openPanels(
+    page,
+    { ...params, compare: 'source' },
+    sources.map((source) => ({ style: 'css' as const, source, selector: `[data-source="${source}"]` })),
+    prepare
+  );
+  const [authored, generated] = panels;
+  if (!authored || !generated) throw new Error('Expected an authored and a generated panel.');
+
+  return { authored, generated, panels };
+}
+
+async function openPanels(
+  page: Page,
+  params: Readonly<Record<string, string | number>>,
+  sections: readonly { style: SkinStyle; source: SkinSource; selector: string }[],
+  prepare: PanelPrepare
+): Promise<SkinPanel[]> {
+  const query = new URLSearchParams();
+
+  for (const [key, value] of Object.entries(params)) query.set(key, String(value));
+
+  await page.goto(`/?${query}`, { waitUntil: 'domcontentloaded' });
+
+  const panels = sections.map(({ style, source, selector }): SkinPanel => {
+    const section = page.locator(`.preview-compare-item${selector}`);
+
+    return { style, source, section, root: section.getByRole('group', { name: 'Media player' }) };
+  });
+
+  for (const panel of panels) await prepare(panel);
+
+  return panels;
+}
+
+/**
+ * Move one element onto whole device pixels right before it is captured. Layout above a panel can settle on fractions,
+ * and two panels resting on different fractions rasterize every edge differently. The offset is a layout margin rather
+ * than a transform because the compositor snaps transformed layers on its own and reintroduces the drift.
+ */
+export async function alignToPixelGrid(target: Locator) {
+  await target.evaluate((element) => {
+    if (!(element instanceof HTMLElement)) return;
+
+    element.style.marginTop = '';
+    element.style.marginLeft = '';
+
+    const { left, top } = element.getBoundingClientRect();
+
+    element.style.marginTop = `${Math.round(top) - top}px`;
+    element.style.marginLeft = `${Math.round(left) - left}px`;
+  });
+}
+
+export interface RenderingOptions {
+  /** Elements whose paint depends on live media state; both captures mask them the same way. */
+  readonly mask?: readonly Locator[] | undefined;
+}
+
+/** Capture one rendering as the in-memory reference for a sibling panel on the same page. */
+export async function captureRendering(
+  target: Locator,
+  name: string,
+  { mask = [] }: RenderingOptions = {}
+): Promise<VisualCapture> {
+  await alignToPixelGrid(target);
+
+  return { name, image: await target.screenshot({ ...CAPTURE_OPTIONS, mask: [...mask] }) };
+}
+
+/** Assert one rendering against its stored baseline and return that same paint as the reference for its sibling. */
+export async function snapshotReference(
+  target: Locator,
+  name: string,
+  options: RenderingOptions = {}
+): Promise<VisualCapture> {
+  await alignToPixelGrid(target);
+  await expect(target).toHaveScreenshot(name, { mask: [...(options.mask ?? [])] });
+
+  return captureRendering(target, name, options);
+}
+
+/** Assert that one rendering matches a reference captured from the same page, pixel for pixel within tolerance. */
+export async function expectSameRendering(
+  testInfo: TestInfo,
+  reference: VisualCapture,
+  target: Locator,
+  { mask = [] }: RenderingOptions = {}
+) {
+  await alignToPixelGrid(target);
+
+  const actual = { name: reference.name, image: await target.screenshot({ ...CAPTURE_OPTIONS, mask: [...mask] }) };
+
+  await expectVisualParity(target.page(), testInfo, reference, actual);
+}
+
+export interface RenderingParityOptions {
+  /** The element to capture in each panel; defaults to the accessible player group. */
+  readonly target?: (panel: SkinPanel) => Locator;
+  /** Runs against each panel immediately before its capture, for state that drifts while the other panel is prepared. */
+  readonly before?: (panel: SkinPanel) => Promise<void>;
+  readonly mask?: (panel: SkinPanel) => readonly Locator[];
+}
+
+/** Hold the CSS panel to its baseline, then hold the Tailwind panel to that same CSS paint. */
+export async function expectRenderingParity(
+  testInfo: TestInfo,
+  comparison: SkinComparison,
+  name: string,
+  { target = (panel) => panel.root, before, mask }: RenderingParityOptions = {}
+) {
+  if (before) for (const panel of comparison.panels) await before(panel);
+
+  const reference = await snapshotReference(target(comparison.css), name, { mask: mask?.(comparison.css) });
+
+  await expectSameRendering(testInfo, reference, target(comparison.tailwind), { mask: mask?.(comparison.tailwind) });
+}
+
+/** Pin slider progress variables on the slider and every descendant so media state cannot differ between panels. */
+export async function freezeSliderState(
+  thumb: Locator,
+  properties: readonly string[] = ['--media-slider-buffer', '--media-slider-fill', '--media-slider-pointer']
+) {
+  await thumb.evaluateAll((thumbs, names: readonly string[]) => {
+    for (const element of thumbs) {
+      const slider = element.parentElement;
+      if (!slider) continue;
+
+      for (const target of [slider, ...slider.querySelectorAll<HTMLElement>('*')]) {
+        for (const name of names) target.style.setProperty(name, '0%', 'important');
+      }
+    }
+  }, properties);
+}
+
+/** Release variables pinned by `freezeSliderState` before measuring live slider behavior. */
+export async function releaseSliderState(
+  thumb: Locator,
+  properties: readonly string[] = ['--media-slider-buffer', '--media-slider-fill', '--media-slider-pointer']
+) {
+  await thumb.evaluateAll((thumbs, names: readonly string[]) => {
+    for (const element of thumbs) {
+      const slider = element.parentElement;
+      if (!slider) continue;
+
+      for (const target of [slider, ...slider.querySelectorAll<HTMLElement>('*')]) {
+        for (const name of names) target.style.removeProperty(name);
+      }
+    }
+  }, properties);
+}
+
+/** Dismiss any open menu so the sibling player is not left behind an open popup before the next interaction. */
+export async function closeMenus(page: Page) {
+  const menus = page.locator('[role="menu"]:visible');
+
+  for (let attempt = 0; attempt < 6 && (await menus.count()) > 0; attempt++) {
+    // Escape steps back one submenu at a time and needs focus inside the menu; a click outside dismisses the rest.
+    await (attempt < 3 ? page.keyboard.press('Escape') : page.mouse.click(1, 1));
+  }
+
+  await expect(menus).toHaveCount(0);
+}
 
 /** Reads focus, pressed, and disabled paint for one shared button host. */
 export async function buttonInteractionContract(page: Page, button: Locator) {

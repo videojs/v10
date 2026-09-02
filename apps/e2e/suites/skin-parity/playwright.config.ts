@@ -12,7 +12,8 @@ export default defineConfig({
   projects: [
     {
       name: 'vjsc-chromium',
-      use: { ...devices['Desktop Chrome'], baseURL: 'http://localhost:5190' },
+      // Both stacked players must fit without scrolling: a capture that scrolls moves the pointer off hovered controls.
+      use: { ...devices['Desktop Chrome'], baseURL: 'http://localhost:5190', viewport: { width: 1280, height: 1600 } },
     },
   ],
   webServer: {

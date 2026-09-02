@@ -1,3 +1,5 @@
+import { writeFile } from 'node:fs/promises';
+
 import { expect, type Page, type TestInfo } from '@playwright/test';
 
 export interface VisualCapture {
@@ -17,7 +19,12 @@ interface PixelComparison {
 }
 
 const MAXIMUM_CHANNEL_DELTA = 8;
-const MAXIMUM_MISMATCH_RATIO = 0.001;
+/**
+ * Two panels on one page still land text on different sub-pixel phases where popups stack half-pixel rows, which costs
+ * up to roughly a quarter percent of a player's pixels. The threshold sits just above that floor and far below the 5%
+ * baseline tolerance, so a real styling drift still fails while glyph anti-aliasing does not.
+ */
+const MAXIMUM_MISMATCH_RATIO = 0.003;
 
 /** Compare two captures pixel-for-pixel and attach useful artifacts when they differ. */
 export async function expectVisualParity(
@@ -39,16 +46,22 @@ export async function expectVisualParity(
     return;
   }
 
-  await Promise.all([
-    testInfo.attach(`${expected.name}-reference`, { body: expected.image, contentType: 'image/png' }),
-    testInfo.attach(`${actual.name}-actual`, { body: actual.image, contentType: 'image/png' }),
-    comparison.diff
-      ? testInfo.attach(`${actual.name}-diff`, {
-          body: Buffer.from(comparison.diff, 'base64'),
-          contentType: 'image/png',
-        })
-      : Promise.resolve(),
-  ]);
+  const stem = actual.name.replace(/\.png$/, '');
+  const artifacts = [
+    [`${stem}-parity-expected`, expected.image],
+    [`${stem}-parity-actual`, actual.image],
+    ...(comparison.diff ? [[`${stem}-parity-diff`, Buffer.from(comparison.diff, 'base64')] as const] : []),
+  ] as const;
+
+  // Write beside the other test artifacts so a failed run leaves the images on disk, not only in the report.
+  await Promise.all(
+    artifacts.map(async ([name, image]) => {
+      const path = testInfo.outputPath(`${name}.png`);
+
+      await writeFile(path, image);
+      await testInfo.attach(name, { path, contentType: 'image/png' });
+    })
+  );
 
   expect
     .soft(

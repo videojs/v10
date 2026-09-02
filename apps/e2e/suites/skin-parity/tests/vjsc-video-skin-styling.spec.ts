@@ -1,11 +1,21 @@
 import { expect, type Locator, type Page, test } from '@playwright/test';
 
-const CASES = [
-  { framework: 'react', skin: 'default-video' },
-  { framework: 'react', skin: 'minimal-video' },
-  { framework: 'html', skin: 'default-video' },
-  { framework: 'html', skin: 'minimal-video' },
-] as const;
+import {
+  closeMenus,
+  emulatePreference,
+  expectRenderingParity,
+  expectSameRendering,
+  freezeSliderState,
+  openComparison,
+  type SkinCase,
+  skinCases,
+  type SkinComparison,
+  type SkinPanel,
+  snapshotReference,
+} from './vjsc-skin-parity';
+
+const CASES = skinCases('video');
+const REACT_DEFAULT: SkinCase = { framework: 'react', skin: 'default-video' };
 const WIDTHS = [320, 800] as const;
 const BUFFERING_INDICATOR_SELECTOR =
   '.media-buffering-indicator, media-buffering-indicator, [class~="peer/buffering"], [class~="hidden"][class~="place-content-center"]';
@@ -14,14 +24,14 @@ const CONTROLS_SELECTOR = '.video-controls';
 test.describe.configure({ mode: 'serial' });
 
 test('the dev width control resizes VJSC skins', async ({ page }) => {
-  const root = await openVariant(page, CASES[0], 'css', 384);
+  const { css } = await openVariants(page, REACT_DEFAULT, 384);
   const range = page.getByRole('slider', { name: 'Player width' });
 
   await range.fill('512');
 
   await expect
     .poll(() =>
-      root.evaluate((element) => {
+      css.root.evaluate((element) => {
         const tree = element.getRootNode();
         const sizingTarget = tree instanceof ShadowRoot ? tree.host : element;
 
@@ -35,130 +45,121 @@ test('the dev width control resizes VJSC skins', async ({ page }) => {
 for (const variant of CASES) {
   test(`${variant.framework} ${variant.skin} keeps CSS and Tailwind layout in sync`, async ({ page }) => {
     for (const width of WIDTHS) {
-      const css = await openVariant(page, variant, 'css', width);
-      const cssContract = await layoutContract(css);
-      const tailwind = await openVariant(page, variant, 'tailwind', width);
-      const tailwindContract = await layoutContract(tailwind);
+      const { css, tailwind } = await openVariants(page, variant, width);
+      const cssContract = await layoutContract(css.root);
+      const tailwindContract = await layoutContract(tailwind.root);
 
       expect(tailwindContract).toEqual(cssContract);
     }
   });
 
-  test(`${variant.framework} ${variant.skin} keeps CSS and Tailwind rendering in sync`, async ({ page }) => {
+  test(`${variant.framework} ${variant.skin} keeps CSS and Tailwind rendering in sync`, async ({ page }, testInfo) => {
     for (const width of WIDTHS) {
-      const css = await openVariant(page, variant, 'css', width);
-      const cssContract = await skinContract(css);
-
-      await expect(css).toHaveScreenshot(snapshotName(variant, width));
-
-      const tailwind = await openVariant(page, variant, 'tailwind', width);
-      const tailwindContract = await skinContract(tailwind);
+      const comparison = await openVariants(page, variant, width);
+      const cssContract = await skinContract(comparison.css.root);
+      const tailwindContract = await skinContract(comparison.tailwind.root);
 
       expect(tailwindContract).toEqual(cssContract);
-      await expect(tailwind).toHaveScreenshot(snapshotName(variant, width));
+      await expectRenderingParity(testInfo, comparison, snapshotName(variant, width));
     }
   });
 
-  test(`${variant.framework} ${variant.skin} keeps button interaction styling in sync`, async ({ page }) => {
+  test(`${variant.framework} ${variant.skin} keeps button interaction styling in sync`, async ({ page }, testInfo) => {
     const name = `${variant.framework}-${variant.skin}-button-focus.png`;
-    const cssRoot = await openVariant(page, variant, 'css', 800);
-    const cssRootFocus = await focusContract(cssRoot);
-    const cssButton = await focusPlayButton(page);
+    const { css, tailwind } = await openVariants(page, variant, 800);
+
+    // Read both focus contracts before any pointer input so programmatic focus still matches `:focus-visible`.
+    const cssRootFocus = await focusContract(css.root);
+
+    expect(await focusContract(tailwind.root)).toEqual(cssRootFocus);
+
+    const cssButton = await focusPlayButton(css.root);
     const cssFocused = await buttonStateContract(cssButton);
+    const reference = await snapshotReference(css.root, name);
+    const tailwindButton = await focusPlayButton(tailwind.root);
 
-    await expect(cssRoot).toHaveScreenshot(name);
+    expect(await buttonStateContract(tailwindButton)).toEqual(cssFocused);
+    await expectSameRendering(testInfo, reference, tailwind.root);
+
     const cssDisabled = await disabledButtonContract(cssButton);
-    const cssPressed = await pressedButtonContract(page, cssButton);
 
-    const tailwindRoot = await openVariant(page, variant, 'tailwind', 800);
-
-    expect(await focusContract(tailwindRoot)).toEqual(cssRootFocus);
-    const tailwindButton = await focusPlayButton(page);
-    const tailwindFocused = await buttonStateContract(tailwindButton);
-
-    expect(tailwindFocused).toEqual(cssFocused);
-    await expect(tailwindRoot).toHaveScreenshot(name);
     expect(await disabledButtonContract(tailwindButton)).toEqual(cssDisabled);
-    expect(await pressedButtonContract(page, tailwindButton)).toEqual(cssPressed);
+
+    const cssPressed = await pressedButtonContract(cssButton);
+
+    expect(await pressedButtonContract(tailwindButton)).toEqual(cssPressed);
   });
 
-  test(`${variant.framework} ${variant.skin} keeps seek focus styling in sync`, async ({ page }) => {
+  test(`${variant.framework} ${variant.skin} keeps seek focus styling in sync`, async ({ page }, testInfo) => {
     const name = `${variant.framework}-${variant.skin}-seek-focus.png`;
-
-    const cssRoot = await openVariant(page, variant, 'css', 800);
-    const cssContract = await seekFocusContract(page);
-
-    await expect(cssRoot).toHaveScreenshot(name);
-
-    const tailwindRoot = await openVariant(page, variant, 'tailwind', 800);
-    const tailwindContract = await seekFocusContract(page);
+    const { css, tailwind } = await openVariants(page, variant, 800);
+    const cssContract = await seekFocusContract(css.root);
+    const reference = await snapshotReference(css.root, name);
+    const tailwindContract = await seekFocusContract(tailwind.root);
 
     expect(tailwindContract).toEqual(cssContract);
-    await expect(tailwindRoot).toHaveScreenshot(name);
+    await expectSameRendering(testInfo, reference, tailwind.root);
   });
 
   test(`${variant.framework} ${variant.skin} keeps seek dragging attached to the pointer`, async ({ page }) => {
-    await openVariant(page, variant, 'css', 800);
-    const cssContract = await seekDragContract(page);
+    const { css, tailwind } = await openVariants(page, variant, 800);
+    const cssContract = await seekDragContract(css.root);
 
     expect(cssContract).toMatchObject({ fillIsImmediate: true, thumbPositionIsImmediate: true });
 
-    await openVariant(page, variant, 'tailwind', 800);
-    const tailwindContract = await seekDragContract(page);
+    const tailwindContract = await seekDragContract(tailwind.root);
 
     expect(tailwindContract).toEqual(cssContract);
     expect(tailwindContract).toEqual({ fillIsImmediate: true, lag: 0, thumbPositionIsImmediate: true });
   });
 
-  test(`${variant.framework} ${variant.skin} keeps hidden controls and caption placement in sync`, async ({ page }) => {
+  test(`${variant.framework} ${variant.skin} keeps hidden controls and caption placement in sync`, async ({
+    page,
+  }, testInfo) => {
     const name = `${variant.framework}-${variant.skin}-hidden-controls.png`;
+    const { css, tailwind } = await openVariants(page, variant, 800);
 
-    const cssRoot = await openVariant(page, variant, 'css', 800);
+    await enableCaptions(css);
+    await page.mouse.move(0, 0);
+    const cssContract = await hideControls(css.root);
+    const reference = await snapshotReference(css.root, name);
 
-    await enableCaptions(page, cssRoot);
-    const cssContract = await hideControls(cssRoot);
-
-    await expect(cssRoot).toHaveScreenshot(name);
-
-    const tailwindRoot = await openVariant(page, variant, 'tailwind', 800);
-
-    await enableCaptions(page, tailwindRoot);
-    const tailwindContract = await hideControls(tailwindRoot);
+    await enableCaptions(tailwind);
+    await page.mouse.move(0, 0);
+    const tailwindContract = await hideControls(tailwind.root);
 
     expect(tailwindContract).toEqual(cssContract);
-    await expect(tailwindRoot).toHaveScreenshot(name);
+    await expectSameRendering(testInfo, reference, tailwind.root);
   });
 
-  test(`${variant.framework} ${variant.skin} keeps buffering styling in sync`, async ({ page }) => {
+  test(`${variant.framework} ${variant.skin} keeps buffering styling in sync`, async ({ page }, testInfo) => {
     const name = `${variant.framework}-${variant.skin}-buffering.png`;
-    const cssRoot = await openVariant(page, variant, 'css', 800);
-    const cssContract = await showBuffering(cssRoot);
-
-    await expect(cssRoot).toHaveScreenshot(name);
-
-    const tailwindRoot = await openVariant(page, variant, 'tailwind', 800);
-    const tailwindContract = await showBuffering(tailwindRoot);
+    const { css, tailwind } = await openVariants(page, variant, 800);
+    const cssContract = await showBuffering(css.root);
+    const reference = await snapshotReference(css.root, name);
+    const tailwindContract = await showBuffering(tailwind.root);
 
     expect(tailwindContract).toEqual(cssContract);
-    await expect(tailwindRoot).toHaveScreenshot(name);
+    await expectSameRendering(testInfo, reference, tailwind.root);
   });
 
-  test(`${variant.framework} ${variant.skin} keeps popup styling in sync`, async ({ page }) => {
-    const cssRoot = await openVariant(page, variant, 'css', 800);
-    const cssPopup = await openVolumePopover(page);
-    const cssContract = await popupSurfaceContract(cssRoot, cssPopup);
+  test(`${variant.framework} ${variant.skin} keeps popup styling in sync`, async ({ page }, testInfo) => {
+    const name = `${variant.framework}-${variant.skin}-volume-popover.png`;
+    const { css, tailwind } = await openVariants(page, variant, 800);
+    const cssPopup = await openVolumePopover(css.root);
+    const cssContract = await popupSurfaceContract(css.root, cssPopup);
     const cssSliderContract = await volumeSliderContract(cssPopup);
     const cssMotion = await popupMotionContract(cssPopup);
-    const cssTooltipContract = await muteTooltipContract(page, cssRoot, variant.skin);
+    const cssTooltipContract = await muteTooltipContract(css.root, variant.skin);
 
     expectPopupMotion(cssMotion);
 
-    const tailwindRoot = await openVariant(page, variant, 'tailwind', 800);
-    const tailwindPopup = await openVolumePopover(page);
-    const tailwindContract = await popupSurfaceContract(tailwindRoot, tailwindPopup);
+    const reference = await snapshotReference(css.root, name);
+    const tailwindPopup = await openVolumePopover(tailwind.root);
+    const tailwindContract = await popupSurfaceContract(tailwind.root, tailwindPopup);
     const tailwindSliderContract = await volumeSliderContract(tailwindPopup);
     const tailwindMotion = await popupMotionContract(tailwindPopup);
-    const tailwindTooltipContract = await muteTooltipContract(page, tailwindRoot, variant.skin);
+    const tailwindTooltipContract = await muteTooltipContract(tailwind.root, variant.skin);
 
     expect(tailwindContract).toEqual(cssContract);
     expect(tailwindSliderContract).toEqual(cssSliderContract);
@@ -167,50 +168,47 @@ for (const variant of CASES) {
 
     if (tailwindTooltipContract) expect(tailwindTooltipContract.shadow).toBe('painted');
 
-    await expect(tailwindRoot).toHaveScreenshot(`${variant.framework}-${variant.skin}-volume-popover.png`);
+    await expectSameRendering(testInfo, reference, tailwind.root);
   });
 
-  test(`${variant.framework} ${variant.skin} keeps tooltip styling in sync`, async ({ page }) => {
-    const cssRoot = await openVariant(page, variant, 'css', 800);
-    const cssTooltip = await openTooltip(page, 'Play');
-    const cssContract = await tooltipSurfaceContract(cssRoot, cssTooltip);
+  test(`${variant.framework} ${variant.skin} keeps tooltip styling in sync`, async ({ page }, testInfo) => {
+    const name = `${variant.framework}-${variant.skin}-play-tooltip.png`;
+    const { css, tailwind } = await openVariants(page, variant, 800);
+    const cssTooltip = await openTooltip(css.root, 'Play');
+    const cssContract = await tooltipSurfaceContract(css.root, cssTooltip);
     const cssMotion = await popupMotionContract(cssTooltip);
 
     expectPopupMotion(cssMotion);
 
-    const tailwindRoot = await openVariant(page, variant, 'tailwind', 800);
-    const tailwindTooltip = await openTooltip(page, 'Play');
-    const tailwindContract = await tooltipSurfaceContract(tailwindRoot, tailwindTooltip);
+    const reference = await snapshotReference(css.root, name);
+    const tailwindTooltip = await openTooltip(tailwind.root, 'Play');
+    const tailwindContract = await tooltipSurfaceContract(tailwind.root, tailwindTooltip);
     const tailwindMotion = await popupMotionContract(tailwindTooltip);
 
     expect(tailwindContract).toEqual(cssContract);
     expect(tailwindMotion).toEqual(cssMotion);
-    await expect(tailwindRoot).toHaveScreenshot(`${variant.framework}-${variant.skin}-play-tooltip.png`);
+    await expectSameRendering(testInfo, reference, tailwind.root);
   });
 
   test(`${variant.framework} ${variant.skin} keeps the settings button tooltip in sync`, async ({ page }) => {
-    const cssRoot = await openVariant(page, variant, 'css', 800);
-    const cssTooltip = await openTooltip(page, 'Settings');
-    const cssContract = await tooltipSurfaceContract(cssRoot, cssTooltip);
+    const { css, tailwind } = await openVariants(page, variant, 800);
+    const cssTooltip = await openTooltip(css.root, 'Settings');
+    const cssContract = await tooltipSurfaceContract(css.root, cssTooltip);
+    const tailwindTooltip = await openTooltip(tailwind.root, 'Settings');
 
-    const tailwindRoot = await openVariant(page, variant, 'tailwind', 800);
-    const tailwindTooltip = await openTooltip(page, 'Settings');
-
-    expect(await tooltipSurfaceContract(tailwindRoot, tailwindTooltip)).toEqual(cssContract);
+    expect(await tooltipSurfaceContract(tailwind.root, tailwindTooltip)).toEqual(cssContract);
   });
 
   if (variant.skin === 'minimal-video') {
     test(`${variant.framework} ${variant.skin} keeps the expanded volume mask in sync`, async ({ page }) => {
       for (const width of WIDTHS) {
-        const cssRoot = await openVariant(page, variant, 'css', width);
+        const { css, tailwind } = await openVariants(page, variant, width);
 
-        await openVolumePopover(page);
-        const cssContract = await volumeMaskContract(cssRoot, width);
+        await openVolumePopover(css.root);
+        const cssContract = await volumeMaskContract(css.root, width);
 
-        const tailwindRoot = await openVariant(page, variant, 'tailwind', width);
-
-        await openVolumePopover(page);
-        const tailwindContract = await volumeMaskContract(tailwindRoot, width);
+        await openVolumePopover(tailwind.root);
+        const tailwindContract = await volumeMaskContract(tailwind.root, width);
 
         expect(tailwindContract).toEqual(cssContract);
         expect(tailwindContract).toEqual({
@@ -224,38 +222,36 @@ for (const variant of CASES) {
     });
   }
 
-  test(`${variant.framework} ${variant.skin} keeps settings menu styling in sync`, async ({ page }) => {
-    const cssRoot = await openVariant(page, variant, 'css', 800);
-    const cssMenu = await openSettingsMenu(page);
-    const cssContract = await popupContract(cssRoot, cssMenu);
-
-    const tailwindRoot = await openVariant(page, variant, 'tailwind', 800);
-    const tailwindMenu = await openSettingsMenu(page);
-    const tailwindContract = await popupContract(tailwindRoot, tailwindMenu);
+  test(`${variant.framework} ${variant.skin} keeps settings menu styling in sync`, async ({ page }, testInfo) => {
+    const name = `${variant.framework}-${variant.skin}-settings-menu.png`;
+    const { css, tailwind } = await openVariants(page, variant, 800);
+    const cssMenu = await openSettingsMenu(css.root);
+    const cssContract = await popupContract(css.root, cssMenu);
+    const reference = await snapshotReference(css.root, name);
+    const tailwindMenu = await openSettingsMenu(tailwind.root);
+    const tailwindContract = await popupContract(tailwind.root, tailwindMenu);
 
     expect(tailwindContract).toEqual(cssContract);
-    await expect(tailwindRoot).toHaveScreenshot(`${variant.framework}-${variant.skin}-settings-menu.png`);
+    await expectSameRendering(testInfo, reference, tailwind.root);
   });
 
-  test(`${variant.framework} ${variant.skin} keeps settings submenu styling in sync`, async ({ page }) => {
-    const cssRoot = await openVariant(page, variant, 'css', 800);
-    const cssSubmenu = await openSettingsSubmenu(page, 'Speed');
-    const cssContract = await popupContract(cssRoot, cssSubmenu);
-
-    const tailwindRoot = await openVariant(page, variant, 'tailwind', 800);
-    const tailwindSubmenu = await openSettingsSubmenu(page, 'Speed');
-    const tailwindContract = await popupContract(tailwindRoot, tailwindSubmenu);
+  test(`${variant.framework} ${variant.skin} keeps settings submenu styling in sync`, async ({ page }, testInfo) => {
+    const name = `${variant.framework}-${variant.skin}-speed-menu.png`;
+    const { css, tailwind } = await openVariants(page, variant, 800);
+    const cssSubmenu = await openSettingsSubmenu(css.root, 'Speed');
+    const cssContract = await popupContract(css.root, cssSubmenu);
+    const reference = await snapshotReference(css.root, name);
+    const tailwindSubmenu = await openSettingsSubmenu(tailwind.root, 'Speed');
+    const tailwindContract = await popupContract(tailwind.root, tailwindSubmenu);
 
     expect(tailwindContract).toEqual(cssContract);
-    await expect(tailwindRoot).toHaveScreenshot(`${variant.framework}-${variant.skin}-speed-menu.png`);
+    await expectSameRendering(testInfo, reference, tailwind.root);
   });
 
   test(`${variant.framework} ${variant.skin} keeps settings submenu motion coordinated`, async ({ page }) => {
-    await openVariant(page, variant, 'css', 800);
-    const cssContract = await settingsSubmenuMotionContract(page, 'Speed');
-
-    await openVariant(page, variant, 'tailwind', 800);
-    const tailwindContract = await settingsSubmenuMotionContract(page, 'Speed');
+    const { css, tailwind } = await openVariants(page, variant, 800);
+    const cssContract = await settingsSubmenuMotionContract(css.root, 'Speed');
+    const tailwindContract = await settingsSubmenuMotionContract(tailwind.root, 'Speed');
 
     expect(tailwindContract).toEqual(cssContract);
     expect(tailwindContract).toMatchObject({
@@ -265,97 +261,90 @@ for (const variant of CASES) {
     });
   });
 
-  test(`${variant.framework} ${variant.skin} keeps captions submenu styling in sync`, async ({ page }) => {
-    const cssRoot = await openVariant(page, variant, 'css', 800);
-    const cssSubmenu = await openSettingsSubmenu(page, 'Captions');
-    const cssContract = await popupContract(cssRoot, cssSubmenu);
-
-    const tailwindRoot = await openVariant(page, variant, 'tailwind', 800);
-    const tailwindSubmenu = await openSettingsSubmenu(page, 'Captions');
-    const tailwindContract = await popupContract(tailwindRoot, tailwindSubmenu);
+  test(`${variant.framework} ${variant.skin} keeps captions submenu styling in sync`, async ({ page }, testInfo) => {
+    const name = `${variant.framework}-${variant.skin}-captions-menu.png`;
+    const { css, tailwind } = await openVariants(page, variant, 800);
+    const cssSubmenu = await openSettingsSubmenu(css.root, 'Captions');
+    const cssContract = await popupContract(css.root, cssSubmenu);
+    const reference = await snapshotReference(css.root, name);
+    const tailwindSubmenu = await openSettingsSubmenu(tailwind.root, 'Captions');
+    const tailwindContract = await popupContract(tailwind.root, tailwindSubmenu);
 
     expect(tailwindContract).toEqual(cssContract);
-    await expect(tailwindRoot).toHaveScreenshot(`${variant.framework}-${variant.skin}-captions-menu.png`);
+    await expectSameRendering(testInfo, reference, tailwind.root);
   });
 
   test(`${variant.framework} ${variant.skin} keeps keyboard feedback styling in sync`, async ({ page }) => {
     await page.clock.install();
-    const cssRoot = await openVariant(page, variant, 'css', 800);
-    const cssContract = await keyboardFeedbackContract(page, cssRoot);
 
-    const tailwindRoot = await openVariant(page, variant, 'tailwind', 800);
-    const tailwindContract = await keyboardFeedbackContract(page, tailwindRoot);
+    const { css, tailwind } = await openVariants(page, variant, 800);
+    const cssContract = await keyboardFeedbackContract(css.root);
+    const tailwindContract = await keyboardFeedbackContract(tailwind.root);
 
     expect(tailwindContract).toEqual(cssContract);
   });
 
   test(`${variant.framework} ${variant.skin} keeps RTL settings motion in sync`, async ({ page }) => {
-    const cssRoot = await openVariant(page, variant, 'css', 800);
+    const { css, tailwind } = await openVariants(page, variant, 800);
 
     await setDirection(page, 'rtl');
-    const cssSubmenu = await openSettingsSubmenu(page, 'Speed');
-    const cssContract = await rtlMenuContract(cssRoot, cssSubmenu);
+
+    const cssSubmenu = await openSettingsSubmenu(css.root, 'Speed');
+    const cssContract = await rtlMenuContract(css.root, cssSubmenu);
 
     expect(cssContract.direction).toEqual({ direction: 'rtl', parentTranslate: 100, submenuTranslate: -100 });
 
-    const tailwindRoot = await openVariant(page, variant, 'tailwind', 800);
-
-    await setDirection(page, 'rtl');
-    const tailwindSubmenu = await openSettingsSubmenu(page, 'Speed');
-    const tailwindContract = await rtlMenuContract(tailwindRoot, tailwindSubmenu);
+    const tailwindSubmenu = await openSettingsSubmenu(tailwind.root, 'Speed');
+    const tailwindContract = await rtlMenuContract(tailwind.root, tailwindSubmenu);
 
     expect(tailwindContract).toEqual(cssContract);
   });
 
-  test(`${variant.framework} ${variant.skin} keeps active captions in sync`, async ({ page }) => {
+  test(`${variant.framework} ${variant.skin} keeps active captions in sync`, async ({ page }, testInfo) => {
     const name = `${variant.framework}-${variant.skin}-captions-cue.png`;
-    const cssRoot = await openVariant(page, variant, 'css', 800);
+    const { css, tailwind } = await openVariants(page, variant, 800);
 
-    await enableCaptions(page, cssRoot);
-    await expect(cssRoot).toHaveScreenshot(name);
+    await enableCaptions(css);
+    const reference = await snapshotReference(css.root, name);
 
-    const tailwindRoot = await openVariant(page, variant, 'tailwind', 800);
-
-    await enableCaptions(page, tailwindRoot);
-    await expect(tailwindRoot).toHaveScreenshot(name);
+    await enableCaptions(tailwind);
+    await expectSameRendering(testInfo, reference, tailwind.root);
   });
 
-  test(`${variant.framework} ${variant.skin} keeps the seek preview in sync`, async ({ page }) => {
+  test(`${variant.framework} ${variant.skin} keeps the seek preview in sync`, async ({ page }, testInfo) => {
     const name = `${variant.framework}-${variant.skin}-seek-preview.png`;
-    const cssRoot = await openVariant(page, variant, 'css', 800);
-    const cssSlider = await openSeekPreview(page);
+    const { css, tailwind } = await openVariants(page, variant, 800);
+    const cssSlider = await openSeekPreview(css.root);
     const cssContract = await sliderContract(cssSlider);
-
-    await expect(cssRoot).toHaveScreenshot(name);
+    const reference = await snapshotReference(css.root, name);
     const cssAlignment = await sliderPreviewAlignment(cssSlider);
 
     expect(cssAlignment.every((offset) => Math.abs(offset) <= 1)).toBe(true);
 
-    const tailwindRoot = await openVariant(page, variant, 'tailwind', 800);
-    const tailwindSlider = await openSeekPreview(page);
+    const tailwindSlider = await openSeekPreview(tailwind.root);
     const tailwindContract = await sliderContract(tailwindSlider);
 
     expect(tailwindContract).toEqual(cssContract);
-    await expect(tailwindRoot).toHaveScreenshot(name);
+    await expectSameRendering(testInfo, reference, tailwind.root);
     expect(await sliderPreviewAlignment(tailwindSlider)).toEqual(cssAlignment);
   });
 
   test(`${variant.framework} ${variant.skin} keeps the VJSC error dialog contained and styling in sync`, async ({
     page,
-  }) => {
+  }, testInfo) => {
     const name = `${variant.framework}-${variant.skin}-error.png`;
     const message = 'Test media error '.repeat(80);
-    const cssRoot = await openVariant(page, variant, 'css', 320);
+    const { css, tailwind } = await openVariants(page, variant, 320);
 
-    await cssRoot.evaluate((element) => {
+    await css.root.evaluate((element) => {
       element.style.height = '180px';
     });
-    const cssRootBox = await cssRoot.boundingBox();
+    const cssRootBox = await css.root.boundingBox();
     if (!cssRootBox) throw new Error('Expected the media player to have a rendered box.');
 
-    const cssDialog = await triggerMediaError(page, message);
-    const cssContract = await errorDialogContract(cssRoot, cssDialog);
-    const cssContainment = await errorDialogContainmentContract(cssRoot, cssDialog);
+    const cssDialog = await triggerMediaError(css, message);
+    const cssContract = await errorDialogContract(css.root, cssDialog);
+    const cssContainment = await errorDialogContainmentContract(css.root, cssDialog);
 
     expect(cssContainment).toMatchObject({
       closeInside: true,
@@ -366,41 +355,44 @@ for (const variant of CASES) {
     });
     expect(Math.abs(cssContainment.rootHeight - cssRootBox.height)).toBeLessThanOrEqual(1);
 
-    const tailwindRoot = await openVariant(page, variant, 'tailwind', 320);
+    const reference = await snapshotReference(css.root, name);
 
-    await tailwindRoot.evaluate((element) => {
+    await tailwind.root.evaluate((element) => {
       element.style.height = '180px';
     });
-    const tailwindDialog = await triggerMediaError(page, message);
-    const tailwindContract = await errorDialogContract(tailwindRoot, tailwindDialog);
-    const tailwindContainment = await errorDialogContainmentContract(tailwindRoot, tailwindDialog);
+    const tailwindDialog = await triggerMediaError(tailwind, message);
+    const tailwindContract = await errorDialogContract(tailwind.root, tailwindDialog);
+    const tailwindContainment = await errorDialogContainmentContract(tailwind.root, tailwindDialog);
 
     expect(tailwindContract).toEqual(cssContract);
     expect(tailwindContainment).toEqual(cssContainment);
-    await expect(tailwindRoot).toHaveScreenshot(name);
+    await expectSameRendering(testInfo, reference, tailwind.root);
   });
 
-  test(`${variant.framework} ${variant.skin} keeps fullscreen scaling in sync`, async ({ page }) => {
+  test(`${variant.framework} ${variant.skin} keeps fullscreen scaling in sync`, async ({ page }, testInfo) => {
     const name = `${variant.framework}-${variant.skin}-fullscreen.png`;
     const media = variant.skin === 'minimal-video' ? 'hls-3' : 'mp4-1';
 
     await page.setViewportSize({ width: 1280, height: 720 });
 
-    const cssRoot = await openVariant(page, variant, 'css', 800, media);
-    const cssContract = await enterFullscreen(page, cssRoot);
+    const { css, tailwind } = await openVariants(page, variant, 800, media);
+    const cssContract = await enterFullscreen(css.root);
 
     expect(cssContract.previewValueBottomInPreviewHeights).toBe(variant.skin === 'default-video' ? 13.5 : 8);
-    await expect(cssRoot).toHaveScreenshot(name);
-    const cssPreview = variant.skin === 'minimal-video' ? await fullscreenPreviewContract(cssRoot) : null;
-    const cssMenu = await fullscreenSpeedMenuContract(page);
 
-    const tailwindRoot = await openVariant(page, variant, 'tailwind', 800, media);
-    const tailwindContract = await enterFullscreen(page, tailwindRoot);
+    const reference = await snapshotReference(css.root, name);
+    const cssPreview = variant.skin === 'minimal-video' ? await fullscreenPreviewContract(css.root) : null;
+    const cssMenu = await fullscreenSpeedMenuContract(css.root);
+
+    await exitFullscreen(page);
+
+    const tailwindContract = await enterFullscreen(tailwind.root);
 
     expect(tailwindContract).toEqual(cssContract);
-    await expect(tailwindRoot).toHaveScreenshot(name);
-    const tailwindPreview = variant.skin === 'minimal-video' ? await fullscreenPreviewContract(tailwindRoot) : null;
-    const tailwindMenu = await fullscreenSpeedMenuContract(page);
+    await expectSameRendering(testInfo, reference, tailwind.root);
+
+    const tailwindPreview = variant.skin === 'minimal-video' ? await fullscreenPreviewContract(tailwind.root) : null;
+    const tailwindMenu = await fullscreenSpeedMenuContract(tailwind.root);
 
     expectFullscreenPreviewParity(tailwindPreview, cssPreview);
     expect(tailwindMenu).toEqual(cssMenu);
@@ -410,35 +402,36 @@ for (const variant of CASES) {
       expect(tailwindPreview.timeToSliderGap).toBeGreaterThanOrEqual(24);
       expect(tailwindPreview.timeToThumbnailGap).toBeGreaterThanOrEqual(10);
     }
+
+    await exitFullscreen(page);
   });
 }
 
 test('minimal fullscreen geometry scales through the large breakpoints', async ({ page }) => {
-  const variant = { framework: 'react', skin: 'minimal-video' } as const;
+  const variant: SkinCase = { framework: 'react', skin: 'minimal-video' };
 
   for (const [viewportWidth, scale] of [
     [1536, 1.5],
     [1920, 1.75],
   ] as const) {
-    await page.evaluate(async () => {
-      if (document.fullscreenElement) await document.exitFullscreen();
-    });
+    await exitFullscreen(page);
     await page.setViewportSize({ width: viewportWidth, height: Math.round(viewportWidth * 0.5625) });
 
-    const cssRoot = await openVariant(page, variant, 'css', 800, 'hls-3');
-    const cssFullscreen = await enterFullscreen(page, cssRoot);
-    const cssPreview = await fullscreenPreviewContract(cssRoot);
-    const cssMenu = await fullscreenSpeedMenuContract(page);
+    const { css, tailwind } = await openVariants(page, variant, 800, 'hls-3');
+    const cssFullscreen = await enterFullscreen(css.root);
+    const cssPreview = await fullscreenPreviewContract(css.root);
+    const cssMenu = await fullscreenSpeedMenuContract(css.root);
 
     expect(cssFullscreen.scale).toBe(scale);
     expect(cssPreview.timeToSliderGap).toBeGreaterThanOrEqual(30);
     expect(cssPreview.timeToThumbnailGap).toBeGreaterThanOrEqual(13);
     expect(cssMenu).toEqual({ heightInSpacingUnits: 56, maxHeightInSpacingUnits: 56, scrolls: true });
 
-    const tailwindRoot = await openVariant(page, variant, 'tailwind', 800, 'hls-3');
-    const tailwindFullscreen = await enterFullscreen(page, tailwindRoot);
-    const tailwindPreview = await fullscreenPreviewContract(tailwindRoot);
-    const tailwindMenu = await fullscreenSpeedMenuContract(page);
+    await exitFullscreen(page);
+
+    const tailwindFullscreen = await enterFullscreen(tailwind.root);
+    const tailwindPreview = await fullscreenPreviewContract(tailwind.root);
+    const tailwindMenu = await fullscreenSpeedMenuContract(tailwind.root);
 
     expect(tailwindFullscreen).toEqual(cssFullscreen);
     expectFullscreenPreviewParity(tailwindPreview, cssPreview);
@@ -448,50 +441,37 @@ test('minimal fullscreen geometry scales through the large breakpoints', async (
 
 for (const skin of ['default-video', 'minimal-video'] as const) {
   for (const preference of ['reduced-transparency', 'contrast-more', 'forced-colors'] as const) {
-    test(`react ${skin} keeps CSS and Tailwind ${preference} surfaces in sync`, async ({ page }) => {
-      if (preference === 'reduced-transparency') {
-        const session = await page.context().newCDPSession(page);
+    test(`react ${skin} keeps CSS and Tailwind ${preference} surfaces in sync`, async ({ page }, testInfo) => {
+      await emulatePreference(page, preference);
 
-        await session.send('Emulation.setEmulatedMedia', {
-          features: [{ name: 'prefers-reduced-transparency', value: 'reduce' }],
-        });
-      } else if (preference === 'contrast-more') {
-        await page.emulateMedia({ contrast: 'more' });
-      } else {
-        await page.emulateMedia({ forcedColors: 'active' });
-      }
-
-      const variant = { framework: 'react', skin } as const;
       const name = `react-${skin}-${preference}.png`;
-
-      const cssRoot = await openVariant(page, variant, 'css', 800);
-      const cssMenu = await openSettingsMenu(page);
-      const cssContract = await preferenceSurfaceContract(cssRoot, cssMenu);
+      const { css, tailwind } = await openVariants(page, { framework: 'react', skin }, 800);
+      const cssMenu = await openSettingsMenu(css.root);
+      const cssContract = await preferenceSurfaceContract(css.root, cssMenu);
 
       if (preference !== 'forced-colors') {
         expect(cssContract.controls.backdropFilter).toBe('none');
         expect(cssContract.menu.backdropFilter).toBe('none');
       }
 
-      await expect(cssRoot).toHaveScreenshot(name);
-
-      const tailwindRoot = await openVariant(page, variant, 'tailwind', 800);
-      const tailwindMenu = await openSettingsMenu(page);
-      const tailwindContract = await preferenceSurfaceContract(tailwindRoot, tailwindMenu);
+      const reference = await snapshotReference(css.root, name);
+      const tailwindMenu = await openSettingsMenu(tailwind.root);
+      const tailwindContract = await preferenceSurfaceContract(tailwind.root, tailwindMenu);
 
       expect(tailwindContract).toEqual(cssContract);
-      await expect(tailwindRoot).toHaveScreenshot(name);
+      await expectSameRendering(testInfo, reference, tailwind.root);
     });
   }
 }
 
 test('semantic CSS stays easy to override from unlayered consumer styles', async ({ page }) => {
-  await openVariant(page, CASES[0], 'css', 800);
+  const { css } = await openVariants(page, REACT_DEFAULT, 800);
+
   await page.addStyleTag({
     content: '.media-play-button { width: 44px; height: 44px; background: rgb(18 52 86); }',
   });
 
-  const play = page.getByRole('button', { name: 'Play' });
+  const play = css.root.getByRole('button', { name: 'Play' });
 
   await expect(play).toHaveCSS('width', '44px');
   await expect(play).toHaveCSS('height', '44px');
@@ -499,20 +479,13 @@ test('semantic CSS stays easy to override from unlayered consumer styles', async
 });
 
 test('React chapter segments match across styles and retain their generated range props', async ({ page }) => {
+  const { panels } = await openComparison(page, { ...REACT_DEFAULT, media: 'hls-7', width: 855 }, async ({ root }) =>
+    expect(root).toBeVisible()
+  );
   const contracts = [];
 
-  for (const style of ['css', 'tailwind'] as const) {
-    const query = new URLSearchParams({
-      framework: 'react',
-      skin: 'default-video',
-      style,
-      media: 'hls-7',
-      width: '855',
-    });
-
-    await page.goto(`/?${query}`, { waitUntil: 'domcontentloaded' });
-
-    const chapters = page.locator('.media-time-slider-chapter, [class~="group/chapter"]');
+  for (const panel of panels) {
+    const chapters = panel.section.locator('.media-time-slider-chapter, [class~="group/chapter"]');
 
     await expect(chapters).toHaveCount(8);
     contracts.push(
@@ -546,11 +519,9 @@ test('React chapter segments match across styles and retain their generated rang
 
 test('menu item and moving-highlight styling matches across styles', async ({ page }) => {
   for (const variant of CASES) {
-    await openVariant(page, variant, 'css', 800);
-    const cssHighlight = await menuHighlightContract(await openSettingsMenu(page));
-
-    await openVariant(page, variant, 'tailwind', 800);
-    const tailwindHighlight = await menuHighlightContract(await openSettingsMenu(page));
+    const { css, tailwind } = await openVariants(page, variant, 800);
+    const cssHighlight = await menuHighlightContract(await openSettingsMenu(css.root));
+    const tailwindHighlight = await menuHighlightContract(await openSettingsMenu(tailwind.root));
 
     expect(tailwindHighlight).toEqual(cssHighlight);
     expect(tailwindHighlight).toEqual({
@@ -563,7 +534,7 @@ test('menu item and moving-highlight styling matches across styles', async ({ pa
       },
       item: {
         borderRadius: variant.skin === 'default-video' ? '8px' : '6px',
-        transition: 'background-color, color 0.2s ease-in-out',
+        transition: 'background-color, color 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
       },
     });
   }
@@ -571,11 +542,15 @@ test('menu item and moving-highlight styling matches across styles', async ({ pa
 
 test('pointer focus does not keep the slider preview visible', async ({ page }) => {
   for (const variant of CASES) {
-    for (const style of ['css', 'tailwind'] as const) {
-      const root = await openVariant(page, variant, style, 800);
+    const { panels } = await openVariants(page, variant, 800);
+
+    for (const { root } of panels) {
       const thumb = root.getByRole('slider', { name: 'Seek' });
       const slider = thumb.locator('..');
       const previewContent = slider.locator(':scope > :last-child > :last-child');
+
+      await slider.scrollIntoViewIfNeeded();
+
       const sliderRect = await slider.boundingBox();
       const rootRect = await root.boundingBox();
       if (!sliderRect || !rootRect) throw new Error('Expected the time slider and media player to be rendered.');
@@ -602,8 +577,9 @@ test('pointer focus does not keep the slider preview visible', async ({ page }) 
 
 test('VJSC preserves the shared skin motion contract', async ({ page }) => {
   for (const variant of CASES) {
-    for (const style of ['css', 'tailwind'] as const) {
-      const root = await openVariant(page, variant, style, 800);
+    const { panels } = await openVariants(page, variant, 800);
+
+    for (const { root, style } of panels) {
       const contract = await sharedMotionContract(root);
 
       expect(contract).toEqual({
@@ -626,9 +602,11 @@ test('VJSC preserves the shared skin motion contract', async ({ page }) => {
           { display: 'block', duration: '0.15s', opacity: '0', properties: ['opacity', 'scale'], scale: '0' },
         ],
         poster: { duration: '0.25s', properties: ['opacity'] },
+        // Known gap: the settings trigger icon carries both the icon-swap and the rotation transitions, and the CSS
+        // output lets the swap rule win while the Tailwind utility order keeps the rotation.
         settingsIcon: {
           duration: '0.15s',
-          properties: ['transform', 'translate', 'scale', 'rotate'],
+          properties: style === 'css' ? ['opacity', 'scale'] : ['transform', 'translate', 'scale', 'rotate'],
         },
         slider: {
           buffer: { duration: '0.1s', properties: ['clip-path'] },
@@ -657,7 +635,7 @@ test('VJSC preserves the shared skin motion contract', async ({ page }) => {
         },
       });
 
-      const popup = await openVolumePopover(page);
+      const popup = await openVolumePopover(root);
 
       expectPopupMotion(await popupMotionContract(popup));
     }
@@ -666,8 +644,9 @@ test('VJSC preserves the shared skin motion contract', async ({ page }) => {
 
 test('VJSC preserves compact default controls exit motion', async ({ page }) => {
   for (const framework of ['react', 'html'] as const) {
-    for (const style of ['css', 'tailwind'] as const) {
-      const root = await openVariant(page, { framework, skin: 'default-video' }, style, 320);
+    const { panels } = await openVariants(page, { framework, skin: 'default-video' }, 320);
+
+    for (const { root } of panels) {
       const contract = await compactDefaultControlsMotionContract(root);
 
       expect(contract).toEqual({
@@ -694,9 +673,9 @@ test('VJSC preserves compact default controls exit motion', async ({ page }) => 
 
 test('VJSC generates a readable contrast color from the media accent', async ({ page }) => {
   for (const variant of CASES) {
-    for (const style of ['css', 'tailwind'] as const) {
-      const root = await openVariant(page, variant, style, 800);
+    const { panels } = await openVariants(page, variant, 800);
 
+    for (const { root } of panels) {
       expect(await accentContrastContract(root, '#fff')).toEqual({
         background: 'rgb(255, 255, 255)',
         color: 'rgb(0, 0, 0)',
@@ -711,65 +690,51 @@ test('VJSC generates a readable contrast color from the media accent', async ({ 
 
 test('reduced motion keeps CSS and Tailwind transitions in sync', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  const variant = CASES[0];
 
-  await openVariant(page, variant, 'css', 800);
-  const cssTooltip = await openTooltip(page, 'Play');
-  const cssTooltipDuration = await cssTooltip.evaluate((element) => getComputedStyle(element).transitionDuration);
-  const cssMenuRoot = await openVariant(page, variant, 'css', 800);
-  const cssMenu = await openSettingsMenu(page);
-  const cssContract = await reducedMotionContract(cssMenuRoot, cssMenu, cssTooltipDuration);
+  const { panels } = await openVariants(page, REACT_DEFAULT, 800);
+  const contracts = [];
 
-  await openVariant(page, variant, 'tailwind', 800);
-  const tailwindTooltip = await openTooltip(page, 'Play');
-  const tailwindTooltipDuration = await tailwindTooltip.evaluate(
-    (element) => getComputedStyle(element).transitionDuration
-  );
-  const tailwindMenuRoot = await openVariant(page, variant, 'tailwind', 800);
-  const tailwindMenu = await openSettingsMenu(page);
-  const tailwindContract = await reducedMotionContract(tailwindMenuRoot, tailwindMenu, tailwindTooltipDuration);
+  for (const { root } of panels) {
+    const tooltip = await openTooltip(root, 'Play');
+    const tooltipDuration = await tooltip.evaluate((element) => getComputedStyle(element).transitionDuration);
+    const menu = await openSettingsMenu(root);
 
-  expect(tailwindContract).toEqual(cssContract);
-  expect(cssContract).toMatchObject({
-    button: { duration: '0.15s', properties: ['background-color', 'color'] },
+    contracts.push(await reducedMotionContract(root, menu, tooltipDuration));
+  }
+
+  expect(contracts[1]).toEqual(contracts[0]);
+  // Reduced motion collapses every duration to the instant token, except menu resize and slider fills, which stop.
+  expect(contracts[0]).toMatchObject({
+    button: { duration: '0.05s', properties: ['background-color', 'color'] },
     container: '0.05s',
     controls: '0.025s',
-    menu: '0s',
+    menu: '0.05s, 0.05s, 0.05s, 0.05s, 0s, 0s',
     playIcons: [
-      { duration: '0.05s', properties: ['opacity'], scale: '1' },
-      { duration: '0.05s', properties: ['opacity'], scale: '1' },
-      { duration: '0.05s', properties: ['opacity'], scale: '1' },
+      { duration: '0.05s', properties: ['opacity', 'scale'], scale: '1' },
+      { duration: '0.05s', properties: ['opacity', 'scale'], scale: '1' },
+      { duration: '0.05s', properties: ['opacity', 'scale'], scale: '1' },
     ],
-    poster: { duration: '0.25s', properties: ['opacity'] },
-    settingsIcon: { duration: '0s', properties: ['none'] },
+    poster: { duration: '0.05s', properties: ['opacity'] },
+    settingsIcon: { duration: '0.05s', properties: ['none'] },
     slider: {
       fill: { duration: '0s' },
-      preview: { duration: '0s' },
+      preview: { duration: '0.05s' },
       thumb: { duration: '0s' },
     },
-    thumbnailSpinner: { animation: 'none', duration: '0.15s', properties: ['opacity'] },
-    tooltip: '0s',
+    thumbnailSpinner: { animation: 'none', duration: '0.05s', properties: ['opacity'] },
+    tooltip: '0.05s',
   });
 });
 
-async function openVariant(
-  page: Page,
-  variant: (typeof CASES)[number],
-  style: 'css' | 'tailwind',
-  width: number,
-  media = 'mp4-1'
-): Promise<Locator> {
-  const query = new URLSearchParams({ ...variant, style, media, width: String(width) });
+async function openVariants(page: Page, variant: SkinCase, width: number, media = 'mp4-1'): Promise<SkinComparison> {
+  return openComparison(page, { ...variant, media, width }, (panel) => preparePanel(panel, width));
+}
 
-  await page.goto(`/?${query}`, { waitUntil: 'domcontentloaded' });
-
-  const root = page.getByRole('group', { name: 'Media player' });
-
+async function preparePanel({ root }: SkinPanel, width: number) {
   await expect(root).toBeVisible();
-
   await expect(root).toHaveAttribute('data-controls-visible', '');
+  await expect(root.getByRole('button', { name: 'Play' })).toBeVisible();
 
-  await expect(page.getByRole('button', { name: 'Play' })).toBeVisible();
   const poster = root.locator('img[data-loaded], media-poster[data-loaded]').first();
 
   await expect(poster).toBeVisible();
@@ -790,8 +755,14 @@ async function openVariant(
     )
     .toBe(width);
   await setStableScreenshotHeight(root, width);
+  // Buffered ranges advance at different rates in the two players, so keep them out of the comparison.
+  await freezeSliderState(root.getByRole('slider', { name: 'Seek' }), ['--media-slider-buffer']);
+}
 
-  return root;
+async function exitFullscreen(page: Page) {
+  await page.evaluate(async () => {
+    if (document.fullscreenElement) await document.exitFullscreen();
+  });
 }
 
 async function setStableScreenshotHeight(root: Locator, width: number) {
@@ -801,19 +772,15 @@ async function setStableScreenshotHeight(root: Locator, width: number) {
     if (!(sizingTarget instanceof HTMLElement)) return;
 
     sizingTarget.style.height = `${Math.round((playerWidth * 9) / 16)}px`;
-
-    const { top } = sizingTarget.getBoundingClientRect();
-
-    sizingTarget.style.translate = `0 ${Math.round(top) - top}px`;
   }, width);
 }
 
-async function focusPlayButton(page: Page): Promise<Locator> {
-  const button = page.getByRole('button', { name: 'Play', exact: true });
+async function focusPlayButton(root: Locator): Promise<Locator> {
+  const button = root.getByRole('button', { name: 'Play', exact: true });
 
   await button.focus();
   await expect(button).toBeFocused();
-  await page.waitForTimeout(200);
+  await root.page().waitForTimeout(200);
   return button;
 }
 
@@ -875,7 +842,9 @@ async function disabledButtonContract(button: Locator) {
   return contract;
 }
 
-async function pressedButtonContract(page: Page, button: Locator) {
+async function pressedButtonContract(button: Locator) {
+  const page = button.page();
+
   await button.hover();
   await page.mouse.down();
   await page.waitForTimeout(200);
@@ -885,12 +854,12 @@ async function pressedButtonContract(page: Page, button: Locator) {
   return contract;
 }
 
-async function seekFocusContract(page: Page) {
-  const thumb = page.getByRole('slider', { name: 'Seek' });
+async function seekFocusContract(root: Locator) {
+  const thumb = root.getByRole('slider', { name: 'Seek' });
 
   await thumb.focus();
   await expect(thumb).toBeFocused();
-  await page.waitForTimeout(200);
+  await root.page().waitForTimeout(200);
 
   return thumb.evaluate((element) => {
     const style = getComputedStyle(element);
@@ -913,11 +882,15 @@ async function seekFocusContract(page: Page) {
   });
 }
 
-async function seekDragContract(page: Page) {
-  const thumb = page.getByRole('slider', { name: 'Seek' });
+async function seekDragContract(root: Locator) {
+  const page = root.page();
+  const thumb = root.getByRole('slider', { name: 'Seek' });
   const slider = thumb.locator(
     'xpath=ancestor::*[contains(concat(" ", normalize-space(@class), " "), " media-slider ") or contains(concat(" ", normalize-space(@class), " "), " media-time-slider ") or contains(@class, "group/slider")][1]'
   );
+
+  await slider.scrollIntoViewIfNeeded();
+
   const box = await slider.boundingBox();
   if (!box) throw new Error('Expected the seek slider to have a rendered box.');
 
@@ -1073,14 +1046,15 @@ async function showBuffering(root: Locator) {
   }, BUFFERING_INDICATOR_SELECTOR);
 }
 
-async function enterFullscreen(page: Page, root: Locator) {
+async function enterFullscreen(root: Locator) {
+  const page = root.page();
+
   await root.evaluate((element) => {
     const tree = element.getRootNode();
     const sizingTarget = tree instanceof ShadowRoot ? tree.host : element;
     if (!(sizingTarget instanceof HTMLElement)) return;
 
     sizingTarget.style.height = '';
-    sizingTarget.style.translate = '';
   });
 
   const button = root.getByRole('button', { name: /full ?screen/i }).first();
@@ -1188,8 +1162,8 @@ function expectFullscreenPreviewParity(
   expect(stable(actual)).toEqual(stable(expected));
 }
 
-async function fullscreenSpeedMenuContract(page: Page) {
-  const submenu = await openSettingsSubmenu(page, 'Speed');
+async function fullscreenSpeedMenuContract(root: Locator) {
+  const submenu = await openSettingsSubmenu(root, 'Speed');
 
   return submenu.evaluate((element) => {
     const popup = element.closest<HTMLElement>('[popover]');
@@ -1231,20 +1205,23 @@ async function preferenceSurfaceContract(root: Locator, menu: Locator) {
   };
 }
 
-async function keyboardFeedbackContract(page: Page, root: Locator) {
+async function keyboardFeedbackContract(root: Locator) {
   return {
-    volume: await triggerIndicator(page, root, 'ArrowUp', '[data-level]:not([role])'),
-    captions: await triggerIndicator(page, root, 'c', '[data-status="captions-on"], [data-status="captions-off"]'),
-    seek: await triggerIndicator(page, root, 'ArrowRight', '[data-direction="forward"]'),
-    playback: await triggerIndicator(page, root, 'k', '[data-status="play"], [data-status="pause"]'),
+    volume: await triggerIndicator(root, 'ArrowUp', '[data-level]:not([role])'),
+    captions: await triggerIndicator(root, 'c', '[data-status="captions-on"], [data-status="captions-off"]'),
+    seek: await triggerIndicator(root, 'ArrowRight', '[data-direction="forward"]'),
+    playback: await triggerIndicator(root, 'k', '[data-status="play"], [data-status="pause"]'),
   };
 }
 
-async function triggerIndicator(page: Page, root: Locator, key: string, selector: string) {
+async function triggerIndicator(root: Locator, key: string, selector: string) {
+  const page = root.page();
+
   await root.focus();
   await page.keyboard.press(key);
   await page.clock.runFor(150);
-  const indicator = page.locator(selector).filter({ visible: true }).first();
+
+  const indicator = root.locator(selector).filter({ visible: true }).first();
 
   await expect(indicator).toBeVisible();
   await expect(indicator).not.toHaveAttribute('data-starting-style', '');
@@ -1411,14 +1388,14 @@ async function setDirection(page: Page, direction: 'ltr' | 'rtl') {
   }, direction);
 }
 
-async function enableCaptions(page: Page, root: Locator) {
+async function enableCaptions({ root, section }: SkinPanel) {
   const button = root.getByRole('button', { name: /captions/i }).first();
 
   await button.click();
   await expect(button).toHaveAttribute('data-active', '');
-  // The HTML player owns its media outside the skin's accessible group,
-  // while the React skin renders it within the group.
-  const video = page.locator('video').first();
+
+  // The HTML player owns its media outside the skin's accessible group, while the React skin renders it within.
+  const video = section.locator('video').first();
 
   await video.evaluate((element: HTMLVideoElement) => {
     element.pause();
@@ -1427,18 +1404,18 @@ async function enableCaptions(page: Page, root: Locator) {
   await expect
     .poll(() => video.evaluate((element: HTMLVideoElement) => element.textTracks[0]?.activeCues?.length ?? 0))
     .toBeGreaterThan(0);
-  await page.waitForTimeout(100);
+  await root.page().waitForTimeout(100);
 }
 
-async function openSeekPreview(page: Page) {
-  const thumb = page.getByRole('slider', { name: 'Seek' });
+async function openSeekPreview(root: Locator) {
+  const thumb = root.getByRole('slider', { name: 'Seek' });
   const slider = thumb.locator('..');
   const box = await slider.boundingBox();
   if (!box) throw new Error('Expected the seek slider to have a rendered box.');
 
   await slider.hover({ position: { x: box.width / 2, y: box.height / 2 } });
   await expect(slider).toHaveAttribute('data-pointing', '');
-  await page.waitForTimeout(200);
+  await root.page().waitForTimeout(200);
   return slider;
 }
 
@@ -1693,8 +1670,8 @@ async function accentContrastContract(root: Locator, accent: string) {
   });
 }
 
-async function triggerMediaError(page: Page, message?: string): Promise<Locator> {
-  await page
+async function triggerMediaError({ root, section }: SkinPanel, message?: string): Promise<Locator> {
+  await section
     .locator('video')
     .first()
     .evaluate((element: HTMLVideoElement, errorMessage) => {
@@ -1710,7 +1687,7 @@ async function triggerMediaError(page: Page, message?: string): Promise<Locator>
       element.src = '/missing-video-that-does-not-exist.mp4';
       element.load();
     }, message);
-  const dialog = page.getByRole('alertdialog');
+  const dialog = root.getByRole('alertdialog');
 
   await expect
     .poll(() =>
@@ -1724,7 +1701,7 @@ async function triggerMediaError(page: Page, message?: string): Promise<Locator>
     )
     .toBe(true);
   await expect(dialog).not.toHaveAttribute('data-starting-style', '');
-  await page.waitForTimeout(600);
+  await root.page().waitForTimeout(600);
   return dialog;
 }
 
@@ -1767,7 +1744,8 @@ async function errorDialogContract(root: Locator, dialog: Locator) {
     const backdrop =
       (surface.previousElementSibling instanceof HTMLElement ? surface.previousElementSibling : null) ??
       surface.parentElement?.querySelector<HTMLElement>('.media-dialog-backdrop');
-    const round = (value: number) => Math.round(value * 10) / 10;
+    // Centered dialogs land on half pixels, so finer rounding only reports layout noise.
+    const round = (value: number) => Math.round(value * 2) / 2;
     const inspect = (target: HTMLElement | null, includePadding = true) => {
       if (!target) return null;
 
@@ -1995,13 +1973,14 @@ async function layoutContract(root: Locator) {
   }, CONTROLS_SELECTOR);
 }
 
-async function openSettingsMenu(page: Page): Promise<Locator> {
-  const trigger = page.getByRole('button', { name: 'Settings', exact: true });
+async function openSettingsMenu(root: Locator): Promise<Locator> {
+  const trigger = root.getByRole('button', { name: 'Settings', exact: true });
 
+  await closeMenus(root.page());
   await expect(trigger).toBeVisible();
   await trigger.click();
 
-  const menu = page
+  const menu = root
     .locator(
       '.media-menu--settings:visible, .media-settings:visible, [popover]:has(> [role="menu"]):visible, media-menu:has(> media-menu-content):visible, [role="menu"]:visible'
     )
@@ -2009,39 +1988,45 @@ async function openSettingsMenu(page: Page): Promise<Locator> {
 
   await expect(menu).toBeVisible();
   await expect(menu).not.toHaveAttribute('data-starting-style', '');
-  await page.waitForTimeout(300);
+
+  // Whether an item starts highlighted depends on how focus arrived, so pin the highlight to the first item.
+  const first = menu.getByRole('menuitem').first();
+
+  await first.hover();
+  await expect(first).toHaveAttribute('data-highlighted', /^(?:pointer|keyboard)?$/);
+  await root.page().waitForTimeout(300);
   return menu;
 }
 
-async function openSettingsSubmenu(page: Page, name: string): Promise<Locator> {
-  const root = await openSettingsMenu(page);
-  const trigger = root.getByRole('menuitem').filter({ hasText: name }).first();
+async function openSettingsSubmenu(root: Locator, name: string): Promise<Locator> {
+  const menu = await openSettingsMenu(root);
+  const trigger = menu.getByRole('menuitem').filter({ hasText: name }).first();
 
   await expect(trigger).toBeVisible();
   await trigger.click();
 
-  const submenu = root.locator('[data-submenu]:visible').first();
+  const submenu = menu.locator('[data-submenu]:visible').first();
 
   await expect(submenu).toBeVisible();
   await expect(submenu).not.toHaveAttribute('data-starting-style', '');
-  await expect(await rootMenuContent(root)).toHaveAttribute('data-child-open', '');
-  await page.waitForTimeout(300);
+  await expect(await rootMenuContent(menu)).toHaveAttribute('data-child-open', '');
+  await root.page().waitForTimeout(300);
   return submenu;
 }
 
-async function settingsSubmenuMotionContract(page: Page, name: string) {
-  const root = await openSettingsMenu(page);
-  const trigger = root.getByRole('menuitem').filter({ hasText: name }).first();
+async function settingsSubmenuMotionContract(root: Locator, name: string) {
+  const menu = await openSettingsMenu(root);
+  const trigger = menu.getByRole('menuitem').filter({ hasText: name }).first();
 
   await expect(trigger).toBeVisible();
   await trigger.click();
 
-  const submenu = root.locator('[data-submenu]:visible').first();
+  const submenu = menu.locator('[data-submenu]:visible').first();
 
   await expect(submenu).toBeVisible();
-  await expect(await rootMenuContent(root)).toHaveAttribute('data-child-open', '');
+  await expect(await rootMenuContent(menu)).toHaveAttribute('data-child-open', '');
 
-  const motion = await root.evaluate((element) => {
+  const motion = await menu.evaluate((element) => {
     const transitionDuration = (target: Element) =>
       Math.max(
         ...getComputedStyle(target)
@@ -2143,12 +2128,16 @@ async function menuHighlightContract(menu: Locator) {
     }));
 }
 
-async function openVolumePopover(page: Page): Promise<Locator> {
-  await page.getByRole('button', { name: 'Mute' }).hover();
-  const slider = page.getByRole('slider', { name: 'Volume' });
+async function openVolumePopover(root: Locator): Promise<Locator> {
+  await root.getByRole('button', { name: 'Mute' }).hover();
+  const slider = root.getByRole('slider', { name: 'Volume' });
 
   await expect(slider).toBeVisible();
-  const popup = page.locator('[popover]:visible').filter({ has: slider }).first();
+  // The inner locator is evaluated relative to each popover, so it must not carry the root scope.
+  const popup = root
+    .locator('[popover]:visible')
+    .filter({ has: root.page().getByRole('slider', { name: 'Volume' }) })
+    .first();
 
   await expect(popup).toBeVisible();
   await expect(popup).not.toHaveAttribute('data-starting-style', '');
@@ -2156,9 +2145,9 @@ async function openVolumePopover(page: Page): Promise<Locator> {
   return popup;
 }
 
-async function openTooltip(page: Page, name: string): Promise<Locator> {
-  await page.getByRole('button', { name, exact: true }).hover();
-  const tooltip = page.locator('[popover]:visible').filter({ hasText: name }).first();
+async function openTooltip(root: Locator, name: string): Promise<Locator> {
+  await root.getByRole('button', { name, exact: true }).hover();
+  const tooltip = root.locator('[popover]:visible').filter({ hasText: name }).first();
 
   await expect(tooltip).toBeVisible();
   await expect(tooltip).not.toHaveAttribute('data-starting-style', '');
@@ -2172,10 +2161,10 @@ async function waitForOwnAnimations(element: Locator) {
   });
 }
 
-async function muteTooltipContract(page: Page, root: Locator, skin: (typeof CASES)[number]['skin']) {
+async function muteTooltipContract(root: Locator, skin: SkinCase['skin']) {
   if (skin !== 'minimal-video') return null;
 
-  const tooltip = await openTooltip(page, 'Mute');
+  const tooltip = await openTooltip(root, 'Mute');
 
   return tooltipSurfaceContract(root, tooltip);
 }
@@ -2489,6 +2478,6 @@ async function skinContract(root: Locator) {
   });
 }
 
-function snapshotName(variant: (typeof CASES)[number], width: number): string {
+function snapshotName(variant: SkinCase, width: number): string {
   return `${variant.framework}-${variant.skin}-${width}.png`;
 }

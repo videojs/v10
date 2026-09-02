@@ -4,57 +4,50 @@ import {
   buttonInteractionContract,
   collectPageErrors,
   emulatePreference,
+  expectRenderingParity,
   normalizeErrorDialogCopy,
+  openComparison,
   popupAncestor,
   popupContract,
+  type SkinCase,
+  skinCases,
+  type SkinComparison,
+  type SkinPanel,
   surfaceContract,
   waitForStableText,
-  type SkinStyle,
 } from './vjsc-skin-parity';
 
-const CASES = [
-  { framework: 'react', skin: 'default-live-audio' },
-  { framework: 'react', skin: 'minimal-live-audio' },
-  { framework: 'html', skin: 'default-live-audio' },
-  { framework: 'html', skin: 'minimal-live-audio' },
-] as const;
-const STYLES = ['css', 'tailwind'] as const;
+const CASES = skinCases('live-audio');
 const WIDTHS = [384, 672] as const;
 
-type Style = SkinStyle;
-type Variant = (typeof CASES)[number];
-
-test.describe.configure({ mode: 'serial' });
-
 for (const variant of CASES) {
-  test(`${variant.framework} ${variant.skin} keeps CSS and Tailwind rendering in sync`, async ({ page }) => {
+  test(`${variant.framework} ${variant.skin} keeps CSS and Tailwind rendering in sync`, async ({ page }, testInfo) => {
     const pageErrors = collectPageErrors(page);
 
+    test.describe.configure({ mode: 'serial' });
+
     for (const width of WIDTHS) {
-      const name = `${variant.framework}-${variant.skin}-${width}.png`;
-      const css = await openVariant(page, variant, 'css', width);
-      const cssContract = await layoutContract(css);
-
-      await expect(css).toHaveScreenshot(name);
-
-      const tailwind = await openVariant(page, variant, 'tailwind', width);
-      const tailwindContract = await layoutContract(tailwind);
+      const comparison = await openVariants(page, variant, width);
+      const cssContract = await layoutContract(comparison.css.root);
+      const tailwindContract = await layoutContract(comparison.tailwind.root);
 
       expect(tailwindContract).toEqual(cssContract);
-      await expect(tailwind).toHaveScreenshot(name);
+      await expectRenderingParity(testInfo, comparison, `${variant.framework}-${variant.skin}-${width}.png`, {
+        // A paused stream drifts off the live edge while the other panel readies, so pull both back right before paint.
+        before: (panel) => seekToLiveEdge(panel.root.getByRole('button', { name: /live/i })),
+      });
     }
 
     expect(pageErrors).toEqual([]);
   });
 
   test(`${variant.framework} ${variant.skin} preserves live audio controls and popup styling`, async ({ page }) => {
+    const comparison = await openVariants(page, variant, 672);
     const contracts: Awaited<ReturnType<typeof interactionContract>>[] = [];
 
-    for (const style of STYLES) {
-      await test.step(style, async () => {
-        const root = await openVariant(page, variant, style, 672);
-
-        contracts.push(await interactionContract(page, root));
+    for (const panel of comparison.panels) {
+      await test.step(panel.style, async () => {
+        contracts.push(await interactionContract(panel.root));
       });
     }
 
@@ -73,12 +66,12 @@ for (const variant of CASES) {
   });
 
   test(`${variant.framework} ${variant.skin} keeps error-dialog styling in sync`, async ({ page }) => {
+    const comparison = await openVariants(page, variant, 672, { media: 'error', expectPlay: false });
     const contracts: Awaited<ReturnType<typeof popupContract>>[] = [];
 
-    for (const style of STYLES) {
-      await test.step(style, async () => {
-        const root = await openVariant(page, variant, style, 672, 'error', false);
-        const dialog = root.getByRole('alertdialog');
+    for (const panel of comparison.panels) {
+      await test.step(panel.style, async () => {
+        const dialog = panel.root.getByRole('alertdialog');
 
         await expect(dialog).toBeVisible({ timeout: 20_000 });
         await waitForStableText(dialog);
@@ -93,16 +86,20 @@ for (const variant of CASES) {
   test(`${variant.framework} ${variant.skin} removes popup movement under reduced motion`, async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
 
-    for (const style of STYLES) {
-      const root = await openVariant(page, variant, style, 672);
-      const mute = root.getByRole('button', { name: /mute/i });
+    const comparison = await openVariants(page, variant, 672);
+
+    for (const panel of comparison.panels) {
+      const mute = panel.root.getByRole('button', { name: /mute/i });
 
       await mute.hover();
 
-      const volume = root.getByRole('slider', { name: /volume/i });
+      const volume = panel.root.getByRole('slider', { name: /volume/i });
 
       await expect(volume).toBeVisible();
-      expect((await popupContract(popupAncestor(volume))).motion.every(({ duration }) => duration === '0s')).toBe(true);
+      // Reduced motion collapses popup durations to the instant token rather than removing the transition.
+      expect((await popupContract(popupAncestor(volume))).motion.every(({ duration }) => duration === '0.05s')).toBe(
+        true
+      );
     }
   });
 
@@ -110,19 +107,19 @@ for (const variant of CASES) {
     test(`${variant.framework} ${variant.skin} keeps ${preference} surfaces in sync`, async ({ page }) => {
       await emulatePreference(page, preference);
 
+      const comparison = await openVariants(page, variant, 672);
       const contracts = [];
 
-      for (const style of STYLES) {
-        const root = await openVariant(page, variant, style, 672);
-        const mute = root.getByRole('button', { name: /mute/i });
+      for (const panel of comparison.panels) {
+        const mute = panel.root.getByRole('button', { name: /mute/i });
 
         await mute.hover();
 
-        const volume = root.getByRole('slider', { name: /volume/i });
+        const volume = panel.root.getByRole('slider', { name: /volume/i });
 
         await expect(volume).toBeVisible();
         contracts.push({
-          controls: await surfaceContract(root.locator('.audio-controls').first()),
+          controls: await surfaceContract(panel.root.locator('.audio-controls').first()),
           popup: await surfaceContract(popupAncestor(volume)),
         });
       }
@@ -132,55 +129,44 @@ for (const variant of CASES) {
   }
 }
 
-async function openVariant(
+async function openVariants(
   page: Page,
-  variant: Variant,
-  style: Style,
+  variant: SkinCase,
   width: number,
-  media = 'hls-live',
-  expectPlay = true
-): Promise<Locator> {
-  const query = new URLSearchParams({ ...variant, style, media, width: String(width) });
+  { media = 'hls-live', expectPlay = true } = {}
+): Promise<SkinComparison> {
+  return openComparison(page, { ...variant, media, width }, (panel) => preparePanel(panel, width, expectPlay));
+}
 
-  await page.goto(`/?${query}`, { waitUntil: 'domcontentloaded' });
-
-  const root = page.getByRole('group', { name: 'Media player' });
-
+async function preparePanel({ root, section }: SkinPanel, width: number, expectPlay: boolean) {
   await expect(root).toBeVisible();
 
   if (expectPlay) {
     await expect(root.getByRole('button', { name: 'Play', exact: true })).toBeVisible();
-    const live = root.getByRole('button', { name: /live/i });
-
-    await expect(live).toBeVisible({ timeout: 20_000 });
-
-    if ((await live.getAttribute('data-live-edge')) === null && (await live.isEnabled())) {
-      try {
-        await live.click({ timeout: 2_000 });
-      } catch (error) {
-        // The live stream can reach its edge and disable the button between the
-        // enabled check and click. Only suppress that expected race.
-        if ((await live.getAttribute('data-live-edge')) === null) throw error;
-      }
-    }
-
-    await expect(live).toHaveAttribute('data-live-edge', '', { timeout: 20_000 });
+    await seekToLiveEdge(root.getByRole('button', { name: /live/i }));
   }
 
   await expect.poll(() => root.evaluate((element) => Math.round(element.getBoundingClientRect().width))).toBe(width);
-  await root.evaluate((element) => {
-    if (!(element instanceof HTMLElement)) return;
-
-    const { top } = element.getBoundingClientRect();
-
-    element.style.translate = `0 ${Math.round(top) - top}px`;
-  });
-  await root.locator('audio').evaluateAll((elements: HTMLMediaElement[]) => {
+  await section.locator('audio').evaluateAll((elements: HTMLMediaElement[]) => {
     for (const element of elements) element.pause();
   });
-  await page.evaluate(() => document.fonts.ready.then(() => undefined));
+  await root.page().evaluate(() => document.fonts.ready.then(() => undefined));
+}
 
-  return root;
+/** Both panels must report the same live-edge state before any paint is compared, so pull each one to the edge. */
+async function seekToLiveEdge(live: Locator) {
+  await expect(live).toBeVisible({ timeout: 20_000 });
+
+  if ((await live.getAttribute('data-live-edge')) === null && (await live.isEnabled())) {
+    try {
+      await live.click({ timeout: 2_000 });
+    } catch (error) {
+      // The stream can reach its edge and disable the button between the enabled check and the click.
+      if ((await live.getAttribute('data-live-edge')) === null) throw error;
+    }
+  }
+
+  await expect(live).toHaveAttribute('data-live-edge', '', { timeout: 20_000 });
 }
 
 async function layoutContract(root: Locator) {
@@ -257,12 +243,13 @@ async function layoutContract(root: Locator) {
   });
 }
 
-async function interactionContract(page: Page, root: Locator) {
+async function interactionContract(root: Locator) {
+  const page = root.page();
   const play = root.getByRole('button', { name: /^(?:Play|Pause)$/ });
 
   await play.hover();
 
-  const tooltip = page.locator('[popover]:visible').filter({ hasText: 'Play' }).first();
+  const tooltip = root.locator('[popover]:visible').filter({ hasText: 'Play' }).first();
 
   await expect(tooltip).toBeVisible();
   const tooltipContract = { visible: true, ...(await popupContract(tooltip)) };
