@@ -17,6 +17,8 @@ import type { SandboxSource, SourceId } from '@app/shared/sources';
 import type { Platform, Skin, SkinSource, Styling } from '@app/types';
 import { useEffect, useId, useRef, useState } from 'react';
 
+import { PREFERENCE_QUERIES, type Preferences } from './report';
+
 type NavbarProps = {
   platform: Platform;
   onPlatformChange: (value: Platform) => void;
@@ -52,6 +54,7 @@ type NavbarProps = {
   onSchemeChange: (value: ColorScheme) => void;
   direction: TextDirection;
   onDirectionChange: (value: TextDirection) => void;
+  preferences: Preferences;
   availableSources: readonly SourceId[];
   platforms: readonly Platform[];
   stylings: readonly Styling[];
@@ -107,6 +110,7 @@ export function Navbar({
   onSchemeChange,
   direction,
   onDirectionChange,
+  preferences,
   availableSources,
   platforms,
   stylings,
@@ -208,6 +212,7 @@ export function Navbar({
           onSchemeChange={onSchemeChange}
           direction={direction}
           onDirectionChange={onDirectionChange}
+          preferences={preferences}
         />
         <a
           href="https://github.com/videojs/v10"
@@ -288,6 +293,7 @@ type SettingsMenuProps = {
   onSchemeChange: (value: ColorScheme) => void;
   direction: TextDirection;
   onDirectionChange: (value: TextDirection) => void;
+  preferences: Preferences;
 };
 
 function SettingsMenu({
@@ -307,6 +313,7 @@ function SettingsMenu({
   onSchemeChange,
   direction,
   onDirectionChange,
+  preferences,
 }: SettingsMenuProps) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -409,8 +416,29 @@ function SettingsMenu({
             onChange={(value) => onPreloadChange(value as PreloadValue)}
             options={PRELOAD_VALUES.map((value) => ({ value, label: value }))}
           />
+          <PreferenceBadges preferences={preferences} />
         </div>
       )}
+    </div>
+  );
+}
+
+/** The preferences the skins react to, as the browser reports them; DevTools' rendering emulation flips them live. */
+function PreferenceBadges({ preferences }: { preferences: Preferences }) {
+  return (
+    <div className="col-span-2 mt-2 border-t border-zinc-200 pt-2 dark:border-zinc-800">
+      <p className="mb-1.5 text-[11px] font-medium text-zinc-500 dark:text-zinc-400">Detected preferences</p>
+      <ul className="flex flex-wrap gap-1" aria-label="Detected preferences">
+        {PREFERENCE_QUERIES.map(([name]) => (
+          <li
+            key={name}
+            data-active={preferences[name]}
+            className="rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] text-zinc-500 data-[active=true]:bg-zinc-950 data-[active=true]:text-white dark:bg-zinc-800 dark:text-zinc-400 dark:data-[active=true]:bg-zinc-50 dark:data-[active=true]:text-zinc-950"
+          >
+            {name}: {preferences[name] ? 'on' : 'off'}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

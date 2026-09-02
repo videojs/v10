@@ -4,6 +4,10 @@
  */
 declare const __WORKSPACE_SKINS__: boolean;
 
+/** The checkout the sandbox was served from, for the copied report; `unknown` where there is no git metadata. */
+declare const __SANDBOX_BRANCH__: string;
+declare const __SANDBOX_COMMIT__: string;
+
 declare module '*.css';
 
 // Authored skin modules, addressed by the compiler query; their exports are checked at runtime by name.

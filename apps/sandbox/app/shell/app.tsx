@@ -29,6 +29,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { Navbar } from './navbar';
 import { type FrameParams, Preview } from './preview';
+import { describeError, MAX_ERRORS, type RelayedError, usePreferences } from './report';
 
 /** `preset` named this parameter before the skins' player presets took the word, so older links still resolve. */
 function readMedia(params: URLSearchParams): MediaId {
@@ -117,6 +118,8 @@ export function App() {
   const [compare, setCompare] = useState<CompareMode>(initial.compare);
   const [layout, setLayout] = useState<CompareLayout>(initial.layout);
   const [mirror, setMirror] = useState(initial.mirror);
+  const [errors, setErrors] = useState<readonly RelayedError[]>([]);
+  const preferences = usePreferences();
 
   const descriptor = MEDIA[media];
   const availableSources = mediaSources(media, platform);
@@ -285,6 +288,28 @@ export function App() {
     };
   }, [skin, source, autoplay, muted, loop, preload, accentColor, playerWidth, scheme, direction, mirroring]);
 
+  // Keep the last few errors the frames relay, tagged with the panel they came from, for the report.
+  useEffect(() => {
+    const collect = (event: MessageEvent) => {
+      if (event.data?.type !== 'sandbox-error') return;
+
+      const panel = [...frames.current.entries()].find(([, frame]) => frame.contentWindow === event.source)?.[0];
+      const entry: RelayedError = {
+        panel: panel ?? 'frame',
+        time: new Date().toISOString().slice(11, 19),
+        message: describeError(event.data.message),
+      };
+
+      setErrors((current) => [...current, entry].slice(-MAX_ERRORS));
+    };
+
+    window.addEventListener('message', collect);
+
+    return () => {
+      window.removeEventListener('message', collect);
+    };
+  }, []);
+
   // Relay one panel's playback state to the others; the frames apply only what differs, so nothing echoes.
   useEffect(() => {
     if (!mirroring) return;
@@ -421,6 +446,7 @@ export function App() {
         onSchemeChange={setScheme}
         direction={direction}
         onDirectionChange={setDirection}
+        preferences={preferences}
         availableSources={availableSources}
         platforms={PLATFORMS}
         stylings={STYLINGS}
@@ -432,6 +458,7 @@ export function App() {
         onLayoutChange={setLayout}
         onMirrorChange={setMirror}
         summary={summary}
+        report={{ build: { branch: __SANDBOX_BRANCH__, commit: __SANDBOX_COMMIT__ }, preferences, errors }}
         params={frameParams}
         onFrame={handleFrame}
         onFrameLoad={handleFrameLoad}

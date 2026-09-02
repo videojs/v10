@@ -232,6 +232,27 @@ preference('scheme', parseScheme, (scheme) => {
 // derive one from its locale; see `html/i18n.ts` and `react/skins.tsx`.
 let currentDirection: TextDirection = 'auto';
 
+/**
+ * Relay what goes wrong in a frame to the shell, which lists it in the copied report. Uncaught errors, unhandled
+ * rejections, and `console.error` all count; the console still receives each of them.
+ */
+function relayErrors(): void {
+  if (window.parent === window) return;
+
+  const relay = (message: string) => window.parent.postMessage({ type: 'sandbox-error', message }, '*');
+  const describe = (value: unknown) => (value instanceof Error ? `${value.name}: ${value.message}` : String(value));
+  const consoleError = console.error.bind(console);
+
+  window.addEventListener('error', (event) => relay(event.message || describe(event.error)));
+  window.addEventListener('unhandledrejection', (event) => relay(`Unhandled rejection: ${describe(event.reason)}`));
+  console.error = (...args: unknown[]) => {
+    relay(args.map(describe).join(' '));
+    consoleError(...args);
+  };
+}
+
+relayErrors();
+
 preference('dir', parseDirection, (direction) => {
   currentDirection = direction ?? 'auto';
   setDocumentDirection(currentDirection);

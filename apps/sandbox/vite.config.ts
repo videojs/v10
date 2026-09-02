@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, resolve } from 'node:path';
@@ -20,6 +21,15 @@ const htmlCdnSourceI18n = `${htmlPackageDir}/src/cdn/i18n.ts`;
 const cdnSandboxMainSrc = resolve(__dirname, 'src/cdn/main.ts');
 const cdnSandboxMainTemplate = resolve(__dirname, 'templates/cdn/main.ts');
 const hasWorkspaceSkins = existsSync(resolve(__dirname, '../../packages/skins/package.json'));
+
+/** Branch and commit for the copied report; falls back when the checkout has no git metadata, as on StackBlitz. */
+function describeGit(...args: string[]): string {
+  try {
+    return execFileSync('git', args, { cwd: __dirname, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
+  } catch {
+    return 'unknown';
+  }
+}
 
 // Inside the workspace the skins' Vite preset compiles authored skins on request, straight from `packages/skins/src`.
 // It is imported lazily because nothing outside the workspace has it. Its `vjsc` dedupe entry is dropped because the
@@ -204,6 +214,8 @@ export default defineConfig({
   define: {
     __DEV__: 'true',
     __WORKSPACE_SKINS__: JSON.stringify(hasWorkspaceSkins),
+    __SANDBOX_BRANCH__: JSON.stringify(describeGit('rev-parse', '--abbrev-ref', 'HEAD')),
+    __SANDBOX_COMMIT__: JSON.stringify(describeGit('rev-parse', '--short', 'HEAD')),
   },
   test: {
     // The shell's tables and helpers, not the templates: those run under Playwright from `apps/e2e`.

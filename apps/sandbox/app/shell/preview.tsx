@@ -6,6 +6,8 @@ import type { ColorScheme, PreloadValue, TextDirection } from '@app/shared/sandb
 import type { SourceId } from '@app/shared/sources';
 import { useEffect, useId, useRef, useState } from 'react';
 
+import { type ReportInput, buildReport } from './report';
+
 /** Everything the frames share; the panels carry what differs. */
 export interface FrameParams {
   readonly media: MediaId;
@@ -29,6 +31,8 @@ type PreviewProps = {
   onLayoutChange: (layout: CompareLayout) => void;
   onMirrorChange: (mirror: boolean) => void;
   summary: string;
+  /** Everything the report needs beyond the selection, gathered by the shell. */
+  report: Omit<ReportInput, 'url' | 'userAgent' | 'viewport' | 'panels' | 'summary'>;
   params: FrameParams;
   onFrame: (id: string, frame: HTMLIFrameElement | null) => void;
   onFrameLoad: (id: string) => void;
@@ -79,12 +83,22 @@ export function Preview({
   onLayoutChange,
   onMirrorChange,
   summary,
+  report,
   params,
   onFrame,
   onFrameLoad,
 }: PreviewProps) {
   const comparing = panels.length > 1;
   const single = panels[0];
+  const buildPreviewReport = () =>
+    buildReport({
+      ...report,
+      url: location.href,
+      summary,
+      panels: comparing ? panels.map((panel) => ({ label: panel.label, url: buildUrl(panel, params) })) : [],
+      userAgent: navigator.userAgent,
+      viewport: { width: innerWidth, height: innerHeight, scale: devicePixelRatio },
+    });
 
   return (
     <main className="@container flex min-h-0 flex-1 flex-col bg-zinc-50 dark:bg-zinc-900">
@@ -103,6 +117,7 @@ export function Preview({
         ) : (
           single && <OpenLink href={buildUrl(single, params)} />
         )}
+        <ReportButton build={buildPreviewReport} errors={report.errors.length} />
       </div>
       <div className={comparing ? `grid min-h-0 flex-1 gap-3 p-3 ${LAYOUT_CLASSES[layout]}` : 'flex min-h-0 flex-1'}>
         {panels.map((panel) => (
@@ -198,6 +213,67 @@ function OpenLink({ href }: { href: string }) {
         <line x1="10" x2="21" y1="14" y2="3" />
       </svg>
     </a>
+  );
+}
+
+const CHROME_BUTTON =
+  'inline-flex h-7 shrink-0 items-center gap-1 rounded-md bg-white bg-clip-border px-2.5 text-xs font-medium text-zinc-600 shadow-xs ring shadow-black/20 ring-zinc-800/10 transition-colors hover:bg-zinc-50 hover:text-zinc-950 dark:bg-zinc-800 dark:text-zinc-300 dark:ring-white/10 dark:hover:bg-zinc-800 dark:hover:text-zinc-50';
+
+/**
+ * Copies a markdown report for bug reports and shows it in a dialog, so it can be read or selected when the clipboard
+ * is unavailable. The badge counts the errors the frames relayed.
+ */
+function ReportButton({ build, errors }: { build: () => string; errors: number }) {
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const [report, setReport] = useState('');
+  const [copied, setCopied] = useState(false);
+
+  const open = async () => {
+    const text = build();
+
+    setReport(text);
+    setCopied(
+      await navigator.clipboard?.writeText(text).then(
+        () => true,
+        () => false
+      )
+    );
+    dialogRef.current?.showModal();
+  };
+
+  return (
+    <>
+      <button type="button" onClick={() => void open()} className={CHROME_BUTTON}>
+        Report
+        {errors > 0 && (
+          <span
+            className="rounded-full bg-red-600 px-1.5 text-[10px] leading-4 text-white"
+            aria-label={`${errors} errors`}
+          >
+            {errors}
+          </span>
+        )}
+      </button>
+      <dialog
+        ref={dialogRef}
+        aria-label="Preview report"
+        className="m-auto w-[min(48rem,90vw)] rounded-lg border border-zinc-200 bg-white p-4 text-zinc-950 shadow-lg backdrop:bg-black/40 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-50"
+      >
+        <div className="mb-2 flex items-center justify-between gap-3">
+          <p className="text-sm font-medium">{copied ? 'Copied to the clipboard.' : 'Select and copy the report.'}</p>
+          <button type="button" onClick={() => dialogRef.current?.close()} className={CHROME_BUTTON}>
+            Close
+          </button>
+        </div>
+        <textarea
+          readOnly
+          value={report}
+          aria-label="Report markdown"
+          rows={12}
+          className="w-full resize-y rounded-md border border-zinc-200 bg-zinc-50 p-2 font-mono text-xs text-zinc-800 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200"
+        />
+      </dialog>
+    </>
   );
 }
 
