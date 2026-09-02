@@ -1,6 +1,6 @@
 import type { CSSProperties, PropsWithChildren } from 'react';
 
-import type { Poster } from '@/ui/poster';
+import type { Poster } from '../ui/poster';
 
 /** Shared layout props for React skins, combined with any skin-specific props in `T`. */
 export type BaseSkinProps<T = unknown> = PropsWithChildren<
