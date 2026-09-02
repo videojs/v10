@@ -7,7 +7,7 @@ import { forwardRef, useCallback, useRef, useState } from 'react';
 import { useLocale, useTranslator } from '../../i18n/context';
 import { usePlayer } from '../../player/context';
 import type { UIComponentProps } from '../../utils/types';
-import { useLatestRef } from '../../utils/use-latest-ref';
+import { useCommittedRef } from '../../utils/use-committed-ref';
 import { renderElement } from '../../utils/use-render';
 import { useLogMissingFeature } from '../hooks/use-log-missing-feature';
 import { useSlider } from '../hooks/use-slider';
@@ -52,14 +52,15 @@ export const VolumeSliderRoot = forwardRef<HTMLDivElement, VolumeSliderRootProps
     const isUnavailable = volume?.volumeAvailability !== 'available';
     const isDisabled = Boolean(disabled) || isUnavailable;
 
-    const [core] = useState(() => new VolumeSliderCore());
+    // Project this render's props. The core is render-local, so retained handlers only ever see the committed one.
+    const core = new VolumeSliderCore({ label, orientation, step, largeStep, wheelStep, disabled, thumbAlignment });
 
-    core.setProps({ label, orientation, step, largeStep, wheelStep, disabled, thumbAlignment });
     core.setFormatLocale(locale);
 
-    // Keep refs to the latest dynamic values for stable closures.
-    const volumeRef = useLatestRef(volume);
-    const disabledRef = useLatestRef(isDisabled);
+    // The retained wheel handler reads these refs, so only committed renders reach it.
+    const coreRef = useCommittedRef(core);
+    const volumeRef = useCommittedRef(volume);
+    const disabledRef = useCommittedRef(isDisabled);
 
     const getPercent = () => (volumeRef.current?.volume ?? 0) * 100;
     const getStepPercent = () => core.getStepPercent();
@@ -90,7 +91,7 @@ export const VolumeSliderRoot = forwardRef<HTMLDivElement, VolumeSliderRootProps
       createWheelStep({
         isDisabled: () => disabledRef.current,
         getPercent: () => (volumeRef.current?.volume ?? 0) * 100,
-        getStepPercent: () => core.getWheelStepPercent(),
+        getStepPercent: () => coreRef.current.getWheelStepPercent(),
         onValueChange: (percent) => volumeRef.current?.setVolume(percent / 100),
       })
     );

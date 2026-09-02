@@ -1,8 +1,8 @@
 import { cleanup, render } from '@testing-library/react';
-import { createRef } from 'react';
+import { createRef, StrictMode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
-import { createPlayerWrapper } from '../../../testing/mocks';
+import { createPlayerWrapper, MockErrorBoundary } from '../../../testing/mocks';
 import { SliderFill } from '../../slider/slider-fill';
 import { SliderThumb } from '../../slider/slider-thumb';
 import { SliderTrack } from '../../slider/slider-track';
@@ -11,7 +11,7 @@ import { VolumeSliderRoot } from '../volume-slider-root';
 
 // --- Hoisted mock data (available inside vi.mock factories) ---
 
-const { mockSliderApi, mockVolumeState, mutableVolume } = vi.hoisted(() => {
+const { mockSliderApi, mockVolumeState, mutableVolume, capturedSliderOptions } = vi.hoisted(() => {
   const volumeState = {
     volume: 0.8,
     muted: false,
@@ -20,31 +20,44 @@ const { mockSliderApi, mockVolumeState, mutableVolume } = vi.hoisted(() => {
     toggleMuted: vi.fn(),
   };
 
+  interface MockSliderOptions {
+    isDisabled?: () => boolean;
+    getPercent?: () => number;
+    getStepPercent?: () => number;
+  }
+
+  const capturedSliderOptions: { current: MockSliderOptions } = { current: {} };
+
   return {
-    mockSliderApi: () => ({
-      input: {
-        current: {
-          pointerPercent: 0,
-          dragPercent: 0,
-          dragging: false,
-          pointing: false,
-          focused: false,
+    capturedSliderOptions,
+    mockSliderApi: (options: MockSliderOptions) => {
+      capturedSliderOptions.current = options;
+
+      return {
+        input: {
+          current: {
+            pointerPercent: 0,
+            dragPercent: 0,
+            dragging: false,
+            pointing: false,
+            focused: false,
+          },
+          subscribe: vi.fn(() => vi.fn()),
         },
-        subscribe: vi.fn(() => vi.fn()),
-      },
-      rootProps: {
-        onPointerDown: vi.fn(),
-        onPointerMove: vi.fn(),
-        onPointerLeave: vi.fn(),
-      },
-      thumbProps: {
-        onKeyDownCapture: vi.fn(),
-        onFocus: vi.fn(),
-        onBlur: vi.fn(),
-      },
-      adjustForAlignment: <S,>(state: S): S => state,
-      destroy: vi.fn(),
-    }),
+        rootProps: {
+          onPointerDown: vi.fn(),
+          onPointerMove: vi.fn(),
+          onPointerLeave: vi.fn(),
+        },
+        thumbProps: {
+          onKeyDownCapture: vi.fn(),
+          onFocus: vi.fn(),
+          onBlur: vi.fn(),
+        },
+        adjustForAlignment: <S,>(state: S): S => state,
+        destroy: vi.fn(),
+      };
+    },
     mockVolumeState: volumeState,
     // Mutable holder so tests can swap between null and available volume.
     mutableVolume: {
@@ -85,8 +98,13 @@ vi.mock('@videojs/store/react', () => ({
   }),
 }));
 
+function Throw(): null {
+  throw new Error('abandon render');
+}
+
 afterEach(() => {
   cleanup();
+  vi.restoreAllMocks();
   mutableVolume.current = mockVolumeState;
   mockVolumeState.setVolume.mockClear();
   mockVolumeState.toggleMuted.mockClear();
@@ -170,6 +188,54 @@ describe('VolumeSliderRoot', () => {
 
     expect(el?.style.getPropertyValue('--media-slider-fill')).toBeTruthy();
     expect(el?.style.getPropertyValue('--media-slider-pointer')).toBeTruthy();
+  });
+});
+
+describe('VolumeSliderRoot projection', () => {
+  it('projects the latest committed props into the retained slider', () => {
+    const { Wrapper } = createPlayerWrapper();
+    const { rerender } = render(
+      <Wrapper>
+        <VolumeSliderRoot step={5} />
+      </Wrapper>
+    );
+
+    expect(capturedSliderOptions.current.getStepPercent?.()).toBe(5);
+
+    rerender(
+      <Wrapper>
+        <VolumeSliderRoot step={10} disabled />
+      </Wrapper>
+    );
+
+    expect(capturedSliderOptions.current.getStepPercent?.()).toBe(10);
+    expect(capturedSliderOptions.current.isDisabled?.()).toBe(true);
+    expect(capturedSliderOptions.current.getPercent?.()).toBe(80);
+  });
+
+  it('keeps the committed projection when a re-render is abandoned', () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    const { Wrapper } = createPlayerWrapper();
+    const { rerender } = render(
+      <Wrapper>
+        <MockErrorBoundary>
+          <VolumeSliderRoot step={5} />
+        </MockErrorBoundary>
+      </Wrapper>
+    );
+
+    rerender(
+      <Wrapper>
+        <MockErrorBoundary>
+          <VolumeSliderRoot step={10} disabled />
+          <Throw />
+        </MockErrorBoundary>
+      </Wrapper>
+    );
+
+    expect(capturedSliderOptions.current.getStepPercent?.()).toBe(5);
+    expect(capturedSliderOptions.current.isDisabled?.()).toBe(false);
   });
 });
 
@@ -287,6 +353,33 @@ describe('VolumeSliderRoot wheel handling', () => {
 
     el.dispatchEvent(new WheelEvent('wheel', { deltaY: -120, bubbles: true }));
     expect(mockVolumeState.setVolume).toHaveBeenCalled();
+  });
+
+  it('honors disabled prop changes under StrictMode', () => {
+    const { Wrapper } = createPlayerWrapper();
+    const { container, rerender } = render(
+      <StrictMode>
+        <Wrapper>
+          <VolumeSliderRoot disabled />
+        </Wrapper>
+      </StrictMode>
+    );
+
+    const el = container.querySelector('[data-orientation]') as HTMLElement;
+
+    el.dispatchEvent(new WheelEvent('wheel', { deltaY: -120, bubbles: true }));
+    expect(mockVolumeState.setVolume).not.toHaveBeenCalled();
+
+    rerender(
+      <StrictMode>
+        <Wrapper>
+          <VolumeSliderRoot disabled={false} />
+        </Wrapper>
+      </StrictMode>
+    );
+
+    el.dispatchEvent(new WheelEvent('wheel', { deltaY: -120, bubbles: true }));
+    expect(mockVolumeState.setVolume).toHaveBeenCalledOnce();
   });
 
   it('attaches wheel handling when volume appears after initial null', () => {

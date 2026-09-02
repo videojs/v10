@@ -1,8 +1,8 @@
 import { cleanup, fireEvent, render } from '@testing-library/react';
-import { createRef } from 'react';
+import { createRef, StrictMode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
-import { createPlayerWrapper } from '../../../testing/mocks';
+import { createPlayerWrapper, MockErrorBoundary } from '../../../testing/mocks';
 import { SliderBuffer } from '../slider-buffer';
 import { SliderFill } from '../slider-fill';
 import { SliderRoot } from '../slider-root';
@@ -10,40 +10,50 @@ import { SliderThumb } from '../slider-thumb';
 import { SliderTrack } from '../slider-track';
 import { SliderValue } from '../slider-value';
 
-const { mockSliderApi, sliderOptionsRef } = vi.hoisted(() => {
-  const sliderOptionsRef: {
-    current:
-      | {
-          onPressStart?: () => void;
-          onPressEnd?: () => void;
-          onDragStart?: () => void;
-          onDragEnd?: () => void;
-        }
-      | undefined;
-  } = { current: undefined };
+const { mockSliderApi, sliderOptionsRef, sliderInputRef } = vi.hoisted(() => {
+  interface MockSliderOptions {
+    getElement?: () => HTMLElement;
+    getThumbElement?: () => HTMLElement | null;
+    isDisabled?: () => boolean;
+    getPercent?: () => number;
+    adjustPercent?: (raw: number, thumb: number, track: number) => number;
+    onValueChange?: (percent: number) => void;
+    onValueCommit?: (percent: number) => void;
+    onPressStart?: () => void;
+    onPressEnd?: () => void;
+    onDragStart?: () => void;
+    onDragEnd?: () => void;
+  }
+
+  interface MockSliderInput {
+    pointerPercent: number;
+    dragPercent: number;
+    dragging: boolean;
+    pointing: boolean;
+    focused: boolean;
+  }
+
+  const sliderOptionsRef: { current: MockSliderOptions | undefined } = { current: undefined };
+  const sliderInputRef: { current: MockSliderInput | undefined } = { current: undefined };
 
   return {
     sliderOptionsRef,
-    mockSliderApi: (options?: {
-      getElement?: () => HTMLElement;
-      getThumbElement?: () => HTMLElement | null;
-      adjustPercent?: (raw: number, thumb: number, track: number) => number;
-      onPressStart?: () => void;
-      onPressEnd?: () => void;
-      onDragStart?: () => void;
-      onDragEnd?: () => void;
-    }) => {
+    sliderInputRef,
+    mockSliderApi: (options?: MockSliderOptions) => {
+      const input: MockSliderInput = {
+        pointerPercent: 0,
+        dragPercent: 0,
+        dragging: false,
+        pointing: false,
+        focused: false,
+      };
+
       sliderOptionsRef.current = options;
+      sliderInputRef.current = input;
 
       return {
         input: {
-          current: {
-            pointerPercent: 0,
-            dragPercent: 0,
-            dragging: false,
-            pointing: false,
-            focused: false,
-          },
+          current: input,
           subscribe: vi.fn(() => vi.fn()),
         },
         rootProps: {
@@ -94,7 +104,14 @@ vi.mock('@videojs/store/react', () => ({
   ),
 }));
 
-afterEach(cleanup);
+function Throw(): null {
+  throw new Error('abandon render');
+}
+
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+});
 
 describe('SliderRoot', () => {
   it('renders a div element', () => {
@@ -153,6 +170,119 @@ describe('SliderRoot', () => {
 
     sliderOptionsRef.current?.onPressEnd?.();
     expect(releaseControlsLock).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps holding the controls lock across re-renders during a press', () => {
+    const releaseControlsLock = vi.fn();
+    const requestControlsLock = vi.fn(() => releaseControlsLock);
+    const { Wrapper } = createPlayerWrapper({
+      userActive: true,
+      controlsVisible: true,
+      requestControlsLock,
+      toggleControls: vi.fn(),
+    });
+
+    const { rerender } = render(<SliderRoot value={10} />, { wrapper: Wrapper });
+
+    sliderOptionsRef.current?.onPressStart?.();
+    rerender(<SliderRoot value={20} />);
+
+    expect(requestControlsLock).toHaveBeenCalledTimes(1);
+    expect(releaseControlsLock).not.toHaveBeenCalled();
+
+    sliderOptionsRef.current?.onPressEnd?.();
+    expect(releaseControlsLock).toHaveBeenCalledTimes(1);
+  });
+
+  it('maps value callbacks and thumb ARIA through the latest committed props while dragging', () => {
+    const onValueChange = vi.fn();
+    const onValueCommit = vi.fn();
+    const { container, rerender } = render(
+      <SliderRoot value={50} max={100} onValueChange={onValueChange} onValueCommit={onValueCommit}>
+        <SliderThumb data-testid="thumb" />
+      </SliderRoot>
+    );
+
+    Object.assign(sliderInputRef.current!, { dragging: true, pointerPercent: 75, dragPercent: 75 });
+    rerender(
+      <SliderRoot value={150} max={200} onValueChange={onValueChange} onValueCommit={onValueCommit}>
+        <SliderThumb data-testid="thumb" />
+      </SliderRoot>
+    );
+
+    const root = container.firstElementChild as HTMLElement;
+    const thumb = container.querySelector('[data-testid="thumb"]');
+
+    expect(root.hasAttribute('data-dragging')).toBe(true);
+    expect(thumb?.getAttribute('aria-valuenow')).toBe('150');
+    expect(thumb?.getAttribute('aria-valuemax')).toBe('200');
+
+    sliderOptionsRef.current?.onValueChange?.(75);
+    sliderOptionsRef.current?.onValueCommit?.(75);
+
+    expect(onValueChange).toHaveBeenCalledExactlyOnceWith(150);
+    expect(onValueCommit).toHaveBeenCalledExactlyOnceWith(150);
+  });
+
+  it('keeps the committed projection when a re-render is abandoned', () => {
+    const committed = vi.fn();
+    const abandoned = vi.fn();
+
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    const { rerender } = render(
+      <MockErrorBoundary>
+        <SliderRoot value={50} max={100} onValueChange={committed} />
+      </MockErrorBoundary>
+    );
+
+    rerender(
+      <MockErrorBoundary>
+        <SliderRoot value={50} max={200} disabled onValueChange={abandoned} />
+        <Throw />
+      </MockErrorBoundary>
+    );
+
+    // The retained slider outlives the abandoned render and must still project the committed props.
+    expect(sliderOptionsRef.current?.getPercent?.()).toBe(50);
+    expect(sliderOptionsRef.current?.isDisabled?.()).toBe(false);
+
+    sliderOptionsRef.current?.onValueChange?.(50);
+
+    expect(committed).toHaveBeenCalledExactlyOnceWith(50);
+    expect(abandoned).not.toHaveBeenCalled();
+  });
+
+  it('projects the latest committed props under StrictMode', () => {
+    const first = vi.fn();
+    const second = vi.fn();
+    const { container, rerender } = render(
+      <StrictMode>
+        <SliderRoot value={50} max={100} onValueChange={first}>
+          <SliderThumb data-testid="thumb" />
+        </SliderRoot>
+      </StrictMode>
+    );
+
+    rerender(
+      <StrictMode>
+        <SliderRoot value={50} max={200} onValueChange={second}>
+          <SliderThumb data-testid="thumb" />
+        </SliderRoot>
+      </StrictMode>
+    );
+
+    const root = container.firstElementChild as HTMLElement;
+    const thumb = container.querySelector('[data-testid="thumb"]');
+
+    expect(thumb?.getAttribute('aria-valuemax')).toBe('200');
+    expect(root.style.getPropertyValue('--media-slider-fill')).toBe('25.000%');
+    expect(sliderOptionsRef.current?.getPercent?.()).toBe(25);
+
+    sliderOptionsRef.current?.onValueChange?.(50);
+
+    expect(second).toHaveBeenCalledExactlyOnceWith(100);
+    expect(first).not.toHaveBeenCalled();
   });
 });
 
@@ -357,6 +487,28 @@ describe('thumbAlignment', () => {
     );
 
     // thumbHalf = (20/200 * 100) / 2 = 5%.  Adjusted 0% → 5%.
+    expect(root.style.getPropertyValue('--media-slider-fill')).toBe('5.000%');
+  });
+
+  it('applies edge alignment in the same commit that switches alignment on', () => {
+    const { container, rerender } = render(
+      <SliderRoot value={0}>
+        <SliderThumb />
+      </SliderRoot>
+    );
+
+    const root = container.firstElementChild as HTMLElement;
+    const thumb = root.querySelector('[role="slider"]') as HTMLElement;
+
+    Object.defineProperty(root, 'offsetWidth', { value: 200, configurable: true });
+    Object.defineProperty(thumb, 'offsetWidth', { value: 20, configurable: true });
+
+    rerender(
+      <SliderRoot value={0} thumbAlignment="edge">
+        <SliderThumb />
+      </SliderRoot>
+    );
+
     expect(root.style.getPropertyValue('--media-slider-fill')).toBe('5.000%');
   });
 

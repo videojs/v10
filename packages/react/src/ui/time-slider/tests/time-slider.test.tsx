@@ -5,7 +5,7 @@ import { createRef } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { I18nProvider } from '../../../i18n';
-import { createPlayerWrapper } from '../../../testing/mocks';
+import { createPlayerWrapper, MockErrorBoundary } from '../../../testing/mocks';
 import { SliderBuffer } from '../../slider/slider-buffer';
 import { SliderFill } from '../../slider/slider-fill';
 import { SliderThumb } from '../../slider/slider-thumb';
@@ -26,7 +26,15 @@ const {
   mockTextTrackState,
   capturedSliderOptions,
 } = vi.hoisted(() => {
-  const capturedSliderOptions: { current: { onDragStart?: () => void; onDragEnd?: () => void } } = {
+  const capturedSliderOptions: {
+    current: {
+      isDisabled?: () => boolean;
+      getPercent?: () => number;
+      onValueCommit?: (percent: number) => void;
+      onDragStart?: () => void;
+      onDragEnd?: () => void;
+    };
+  } = {
     current: {},
   };
   const mockSliderInput = {
@@ -121,8 +129,13 @@ vi.mock('@videojs/store/react', () => ({
   }),
 }));
 
+function Throw(): null {
+  throw new Error('abandon render');
+}
+
 afterEach(() => {
   cleanup();
+  vi.restoreAllMocks();
   Object.assign(mockSliderInput, {
     pointerPercent: 0,
     dragPercent: 0,
@@ -451,6 +464,68 @@ describe('TimeSlider compound', () => {
     expect(thumb?.getAttribute('aria-valuetext')).toBe(
       `${formatTimeAsPhrase(30, { locale: 'fr' })} sur ${formatTimeAsPhrase(120, { locale: 'fr' })}`
     );
+  });
+
+  it('announces the pointer position on the thumb while dragging', () => {
+    mockSliderInput.dragging = true;
+    mockSliderInput.pointerPercent = 75;
+    mockSliderInput.dragPercent = 75;
+
+    const { Wrapper } = createPlayerWrapper();
+    const { container } = render(
+      <Wrapper>
+        <TimeSliderRoot>
+          <SliderThumb data-testid="thumb" />
+        </TimeSliderRoot>
+      </Wrapper>
+    );
+
+    const thumb = container.querySelector('[data-testid="thumb"]');
+
+    expect(thumb?.getAttribute('aria-valuenow')).toBe('90');
+    expect(thumb?.getAttribute('aria-valuetext')).toContain(formatTimeAsPhrase(90));
+    expect(container.querySelector('[data-orientation]')?.hasAttribute('data-dragging')).toBe(true);
+  });
+
+  it('seeks through the committed media when a value commits', () => {
+    mockTimeState.seek.mockClear();
+
+    const { Wrapper } = createPlayerWrapper();
+
+    render(
+      <Wrapper>
+        <TimeSliderRoot />
+      </Wrapper>
+    );
+
+    capturedSliderOptions.current.onValueCommit?.(50);
+
+    expect(mockTimeState.seek).toHaveBeenCalledExactlyOnceWith(60);
+  });
+
+  it('keeps the committed projection when a re-render is abandoned', () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    const { Wrapper } = createPlayerWrapper();
+    const { rerender } = render(
+      <Wrapper>
+        <MockErrorBoundary>
+          <TimeSliderRoot />
+        </MockErrorBoundary>
+      </Wrapper>
+    );
+
+    rerender(
+      <Wrapper>
+        <MockErrorBoundary>
+          <TimeSliderRoot disabled />
+          <Throw />
+        </MockErrorBoundary>
+      </Wrapper>
+    );
+
+    expect(capturedSliderOptions.current.isDisabled?.()).toBe(false);
+    expect(capturedSliderOptions.current.getPercent?.()).toBe(25);
   });
 
   it('SliderValue displays formatted time', () => {

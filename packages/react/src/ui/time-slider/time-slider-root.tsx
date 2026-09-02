@@ -2,12 +2,12 @@ import { TimeSliderCore, TimeSliderDataAttrs } from '@videojs/core';
 import { getTimeSliderCSSVars, selectBuffer, selectPlayback, selectTime } from '@videojs/core/dom';
 import { translateText } from '@videojs/core/i18n';
 import { formatTime } from '@videojs/utils/time';
-import { forwardRef, useEffect, useState } from 'react';
+import { forwardRef, useEffect, useLayoutEffect, useState } from 'react';
 
 import { useLocale, useTranslator } from '../../i18n/context';
 import { usePlayer } from '../../player/context';
 import type { UIComponentProps } from '../../utils/types';
-import { useLatestRef } from '../../utils/use-latest-ref';
+import { useCommittedRef } from '../../utils/use-committed-ref';
 import { renderElement } from '../../utils/use-render';
 import { useLogMissingFeature } from '../hooks/use-log-missing-feature';
 import { useSlider } from '../hooks/use-slider';
@@ -46,9 +46,9 @@ export const TimeSliderRoot = forwardRef<HTMLDivElement, TimeSliderRootProps>(
     const translator = useTranslator();
     const locale = useLocale();
 
-    const [core] = useState(() => new TimeSliderCore());
-
-    core.setProps({
+    // Project this render's props and media. The core is render-local, so the retained slider only ever sees the
+    // committed one.
+    const core = new TimeSliderCore({
       label,
       step,
       largeStep,
@@ -58,17 +58,25 @@ export const TimeSliderRoot = forwardRef<HTMLDivElement, TimeSliderRootProps>(
       pauseOnDrag,
       changeThrottle,
     });
+
     core.setFormatLocale(locale);
 
-    // Keep a ref to the latest media state for callbacks that fire outside the render cycle.
-    const mediaRef = useLatestRef(time && buffer ? { ...time, ...buffer } : null);
-    const playbackRef = useLatestRef(playback);
+    const media = time && buffer ? { ...time, ...buffer } : null;
+    const playbackRef = useCommittedRef(playback);
+
+    // Whether a drag paused playback must outlive renders, so it lives on a retained core whose only input,
+    // `pauseOnDrag`, is committed from a layout effect instead of being written during render.
+    const [dragCore] = useState(() => new TimeSliderCore());
+
+    useLayoutEffect(() => {
+      dragCore.setProps({ pauseOnDrag });
+    }, [dragCore, pauseOnDrag]);
 
     // Resume playback if the slider unmounts mid-drag — createSlider's destroy()
     // does not fire onDragEnd, so without this the player would stay paused.
     useEffect(() => {
-      return () => core.endDrag(playbackRef.current);
-    }, [core]);
+      return () => dragCore.endDrag(playbackRef.current);
+    }, [dragCore, playbackRef]);
 
     const duration = time?.duration ?? 0;
 
@@ -77,7 +85,7 @@ export const TimeSliderRoot = forwardRef<HTMLDivElement, TimeSliderRootProps>(
         computeState: (input) => {
           core.setInput(input);
 
-          if (!time || !buffer) {
+          if (!media) {
             core.setMedia({
               currentTime: 0,
               duration: 0,
@@ -87,7 +95,7 @@ export const TimeSliderRoot = forwardRef<HTMLDivElement, TimeSliderRootProps>(
               seekable: [],
             });
           } else {
-            core.setMedia({ ...time, ...buffer });
+            core.setMedia(media);
           }
 
           return core.getState();
@@ -102,16 +110,14 @@ export const TimeSliderRoot = forwardRef<HTMLDivElement, TimeSliderRootProps>(
           core.adjustPercentForAlignment(rawPercent, thumbSize, trackSize),
         getCSSVars: getTimeSliderCSSVars,
         onValueCommit: (percent) => {
-          const media = mediaRef.current;
-
           if (media) media.seek(core.rawValueFromPercent(percent));
         },
         onDragStart: () => {
-          core.startDrag(playbackRef.current);
+          dragCore.startDrag(playbackRef.current);
           onDragStart?.();
         },
         onDragEnd: () => {
-          core.endDrag(playbackRef.current);
+          dragCore.endDrag(playbackRef.current);
           onDragEnd?.();
         },
       });
