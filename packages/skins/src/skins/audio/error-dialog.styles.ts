@@ -17,14 +17,13 @@ export default styles({
         'absolute inset-0 z-50 flex h-full max-h-none w-full translate-none flex-row items-center rounded-media-pill py-0 pe-1 outline-hidden not-data-open:hidden',
         'bg-media-background text-media-controls-foreground backdrop-filter-media-dialog',
         'transition-[opacity,filter] duration-media-slower ease-out',
-        'data-starting-style:blur-media-hidden-popup data-starting-style:opacity-0',
-        'data-ending-style:blur-media-hidden-popup data-ending-style:opacity-0',
+        'media-transitioning:blur-media-hidden-popup media-transitioning:opacity-0',
       ],
       variants: {
         default: 'gap-3 px-5',
         minimal: [
           'gap-4 px-3 backdrop-filter-none transition-[opacity,filter,scale]',
-          '[&:is([data-starting-style],[data-ending-style])]:scale-media-hidden-popup',
+          'media-transitioning:scale-media-hidden-popup',
         ],
       },
     },

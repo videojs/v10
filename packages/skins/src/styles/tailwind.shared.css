@@ -147,6 +147,20 @@
   }
 }
 
+/* Element entering or leaving through starting and ending styles. */
+@custom-variant media-transitioning {
+  &:is([data-starting-style], [data-ending-style]) {
+    @slot;
+  }
+}
+
+/* Browsers with CSS anchor positioning. */
+@custom-variant media-anchored {
+  @supports (top: anchor(top)) {
+    @slot;
+  }
+}
+
 /* Accent background and text for a highlighted control or menu item. */
 @utility highlight-media {
   background-color: var(--media-accent);

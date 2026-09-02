@@ -12,7 +12,7 @@ export default styles({
       utilities: [
         'absolute inset-0 z-40 bg-media-scrim/20 opacity-100 backdrop-filter-media-dialog',
         'not-data-open:hidden transition-opacity delay-media-dialog duration-media-dialog ease-out',
-        'data-starting-style:opacity-0 data-ending-style:opacity-0 data-ending-style:delay-0',
+        'media-transitioning:opacity-0 data-ending-style:delay-0',
       ],
       variants: {
         default: 'data-ending-style:duration-media-slower',
@@ -24,8 +24,7 @@ export default styles({
       utilities: [
         'absolute top-1/2 left-1/2 z-50 flex max-h-[calc(100%-0.5rem)] -translate-x-1/2 -translate-y-1/2 flex-col gap-3 text-media-popover-foreground outline-hidden not-data-open:hidden',
         'text-shadow-media-dialog transition-[opacity,scale] delay-media-dialog duration-media-dialog ease-out',
-        'data-starting-style:scale-media-hidden-popup data-starting-style:opacity-0',
-        'data-ending-style:scale-media-hidden-popup data-ending-style:opacity-0 data-ending-style:delay-0',
+        'media-transitioning:scale-media-hidden-popup media-transitioning:opacity-0 data-ending-style:delay-0',
       ],
       variants: {
         default: [

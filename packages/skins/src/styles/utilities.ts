@@ -86,6 +86,11 @@ export const utilities = {
   'media-wide': { kind: 'variant', description: 'Player at or above the wide breakpoint.' },
   'media-max-wide': { kind: 'variant', description: 'Player below the wide breakpoint.' },
   'media-highlighted': { kind: 'variant', description: 'Hovered, focused, or expanded control that is not disabled.' },
+  'media-transitioning': {
+    kind: 'variant',
+    description: 'Element entering or leaving through starting and ending styles.',
+  },
+  'media-anchored': { kind: 'variant', description: 'Browsers with CSS anchor positioning.' },
   '--container-media-compact': {
     kind: 'theme',
     description: 'Compact layout breakpoint for `media-compact` variants.',

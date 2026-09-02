@@ -18,8 +18,8 @@ export default styles({
       utilities: [
         'group/playback-status col-start-2 row-start-1 grid place-content-center p-4 text-center',
         'transition-[opacity,scale] duration-media-slow ease-out',
-        'data-starting-style:scale-media-hidden-playback data-starting-style:opacity-0',
-        'data-ending-style:scale-media-hidden-playback data-ending-style:opacity-0 data-ending-style:duration-media-fast data-ending-style:ease-in',
+        'media-transitioning:scale-media-hidden-playback media-transitioning:opacity-0',
+        'data-ending-style:duration-media-fast data-ending-style:ease-in',
       ],
       variants: { default: 'rounded-media-pill bg-media-scrim/35 backdrop-filter-media-scrim' },
     },
