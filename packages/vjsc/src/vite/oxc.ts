@@ -2,12 +2,16 @@ import type { Program } from '@oxc-project/types';
 import MagicString from 'magic-string';
 import type { ModuleType, Plugin, RolldownMagicString, TransformPluginContext, TransformResult } from 'rolldown';
 
-import { moduleFilename, scriptModuleType } from '../utils/module-id';
+import { moduleFilename, SCRIPT_MODULE_ID, scriptModuleType } from '../utils/module-id';
+
+/** Module types the parser reads; a stylesheet or asset reaches a transform without an AST. */
+const SCRIPT_MODULE_TYPES: ReadonlySet<ModuleType> = new Set(['js', 'jsx', 'ts', 'tsx']);
 
 interface RolldownTransformOptions {
   readonly moduleType: ModuleType;
   readonly ssr?: boolean | undefined;
-  readonly ast: Program;
+  /** Present for script modules only. */
+  readonly ast: Program | undefined;
   readonly magicString: RolldownMagicString;
 }
 
@@ -46,7 +50,12 @@ export function viteOxcPlugin(plugin: Plugin): ViteOxcPlugin {
     const filename = moduleFilename(id);
     const moduleType = options?.moduleType ?? scriptModuleType(filename);
     const magicString = new MagicString(code, { filename });
-    const ast = this.parse(code, { lang: parserLanguage(moduleType, filename) });
+    // A transform filtered to stylesheets, as the graph plugin's is for its virtual styles, receives CSS here; parsing
+    // that as a script fails the build. The id check covers hosts that pass no module type and would fall back to `js`.
+    const ast =
+      SCRIPT_MODULE_TYPES.has(moduleType) && SCRIPT_MODULE_ID.test(id)
+        ? this.parse(code, { lang: parserLanguage(moduleType, filename) })
+        : undefined;
 
     let result: TransformResult;
 
