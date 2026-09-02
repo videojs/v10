@@ -4,6 +4,7 @@ import { defineConfig } from 'vite-plus';
 import type { UserConfig as PackUserConfig } from 'vite-plus/pack';
 
 import { vjscPlugin, vjscRegistryPlugin } from '../../vjsc/src/plugins/index.ts';
+import { skinCatalog } from './catalog.ts';
 import {
   packageDir,
   resolveBuildComponents,
@@ -68,6 +69,18 @@ export const skinBuildConfig: PackUserConfig = {
         styles: registryStyles(target),
       })
     ),
+    {
+      name: 'skins:catalog',
+      generateBundle() {
+        for (const target of registryTargets) {
+          this.emitFile({
+            type: 'asset',
+            fileName: `${target.output}/catalog.json`,
+            source: `${JSON.stringify(skinCatalog, null, 2)}\n`,
+          });
+        }
+      },
+    },
     packageSkinsPlugin({
       workspaceDir: resolve(packageDir, '../..'),
       format: formatSource,

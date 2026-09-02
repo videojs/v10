@@ -27,7 +27,7 @@ async function validateCatalog(path: (typeof catalogs)[number]): Promise<Registr
     .map((entry) => entry.name)
     .sort();
 
-  const expected = ['registry.json', ...registry.items.map((item) => `${item.name}.json`)].sort();
+  const expected = ['catalog.json', 'registry.json', ...registry.items.map((item) => `${item.name}.json`)].sort();
 
   if (files.join('\n') !== expected.join('\n')) {
     throw new Error(

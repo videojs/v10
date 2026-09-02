@@ -1,6 +1,7 @@
 import type { Graph, GraphModule } from '../../../vjsc/src/graph/index.ts';
 import { bundleStyles, renderHtml } from '../../../vjsc/src/graph/index.ts';
 import type { SkinModuleMeta } from '../../src/meta.ts';
+import { skinCatalogEntry } from '../catalog.ts';
 import { skinBaseStylesheet } from '../skin.ts';
 import { iconImports } from '../target/html-render.ts';
 import { htmlComponentTarget } from '../target/html.tsx';
@@ -91,7 +92,7 @@ async function renderHtmlSkinsUncached(
     skins.map((skin) => ({
       name: skin.root.meta.name,
       moduleId: skin.root.id,
-      exportName: `${pascalCase(skin.theme)}${pascalCase(skin.preset)}Skin`,
+      exportName: skinCatalogEntry(skin.root.meta.name).exportName,
     })),
     {
       aliases: render.aliases,

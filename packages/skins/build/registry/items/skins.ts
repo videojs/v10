@@ -2,7 +2,8 @@ import { posix } from 'node:path';
 
 import { type Graph, type GraphModule, bundleStyles } from '../../../../vjsc/src/graph/index.ts';
 import type { RegistryCreatedItem, RegistryModuleItem } from '../../../../vjsc/src/shadcn/index.ts';
-import { isSkinName, type SkinModuleMeta, type SkinName, skinStyles } from '../../../src/meta.ts';
+import { isSkinName, type SkinModuleMeta, type SkinName } from '../../../src/meta.ts';
+import { skinCatalogEntry } from '../../catalog.ts';
 import { createHtmlSkinRegistration, createSourceOwnedHtml, type RenderedHtmlSkin } from '../../packages/html.ts';
 import { skinDirectory, skinPreset } from '../../skin.ts';
 import type { VideojsRegistryMeta } from '../meta.ts';
@@ -17,8 +18,7 @@ export async function htmlSkinItem(
 ): Promise<RegistryCreatedItem> {
   const meta = skin.root.meta;
 
-  const name = skin.theme === 'minimal' ? `${skin.preset}-minimal` : skin.preset;
-  const directory = skinDirectory(meta.name);
+  const { registryItem: name, directory } = skinCatalogEntry(meta.name);
   const template = createSourceOwnedHtml(skin.template);
 
   const styleTarget = `${directory}/skin.css`;
@@ -85,9 +85,7 @@ export function skinItem(
   const skin = meta.name;
   if (!isSkinName(skin)) throw new Error(`Unknown Skin registry module: \`${skin}\`.`);
 
-  const preset = skinPreset(skin);
-  const theme = skinStyles[skin].theme;
-  const directory = skinDirectory(skin);
+  const { preset, theme, directory, registryItem } = skinCatalogEntry(skin);
   const registryMeta = {
     role: 'skin',
     framework: target.framework,
@@ -99,7 +97,7 @@ export function skinItem(
   } satisfies VideojsRegistryMeta;
 
   return {
-    name: theme === 'minimal' ? `${preset}-minimal` : preset,
+    name: registryItem,
     type: 'registry:block',
     title: meta.title,
     description: meta.description,

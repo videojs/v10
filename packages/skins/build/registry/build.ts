@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process';
-import { rm } from 'node:fs/promises';
+import { copyFile, rm } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
 import { registryTargets } from './targets.ts';
@@ -23,6 +23,7 @@ async function buildCatalogs(targets: readonly (typeof registryTargets)[number][
       '--output',
       resolve(hostedDir, output),
     ]);
+    await copyFile(resolve(sourceDir, target.output, 'catalog.json'), resolve(hostedDir, output, 'catalog.json'));
   }
 }
 

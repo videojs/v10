@@ -1,4 +1,5 @@
-import type { PreviewOptions } from './options';
+import { skinCatalog } from '../build/catalog.ts';
+import type { Framework, PreviewOptions, SkinName, StyleMode } from './options';
 
 export type HtmlPreviewSkin = (props?: { className?: string }) => { toString(): string };
 export type ReactPreviewSkin = React.ComponentType<React.PropsWithChildren<{ className?: string }>>;
@@ -69,23 +70,16 @@ const modules = {
     import('../src/skins/minimal-audio/skin.tsx?style=css&target=html&skin=minimal-audio'),
   'html/minimal-audio/tailwind': () =>
     import('../src/skins/minimal-audio/skin.tsx?style=tailwind&target=html&skin=minimal-audio'),
-} as const;
+} as const satisfies Record<`${Framework}/${SkinName}/${StyleMode}`, () => Promise<SkinModule>>;
 
 type ModuleKey = keyof typeof modules;
 
-const skinExports = {
-  'default-video': 'DefaultVideoSkin',
-  'minimal-video': 'MinimalVideoSkin',
-  'default-live-video': 'DefaultLiveVideoSkin',
-  'minimal-live-video': 'MinimalLiveVideoSkin',
-  'default-live-audio': 'DefaultLiveAudioSkin',
-  'minimal-live-audio': 'MinimalLiveAudioSkin',
-  'default-audio': 'DefaultAudioSkin',
-  'minimal-audio': 'MinimalAudioSkin',
-} as const satisfies Record<PreviewOptions['skin'], string>;
+const skinExports = Object.fromEntries(skinCatalog.map((entry) => [entry.name, entry.exportName])) as Record<
+  SkinName,
+  string
+>;
 
-type SkinExport = (typeof skinExports)[keyof typeof skinExports];
-type SkinModule = Partial<Record<SkinExport, PreviewSkin>>;
+type SkinModule = Partial<Record<string, PreviewSkin>>;
 
 /** Load one statically discoverable authored Skin transform. */
 export async function loadSkin(options: PreviewOptions): Promise<PreviewSkin> {

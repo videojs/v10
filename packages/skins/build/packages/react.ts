@@ -1,10 +1,11 @@
 import type { Graph, GraphModule } from '../../../vjsc/src/graph/index.ts';
 import { bundleStyles, relativeImport, rewriteImports, stripStyleImports } from '../../../vjsc/src/graph/index.ts';
 import type { SkinModuleMeta } from '../../src/meta.ts';
+import { skinCatalogEntry } from '../catalog.ts';
 import { skinBaseStylesheet, skinPresets } from '../skin.ts';
 import { type SkinRoot, skinRoots } from '../variants.ts';
 import type { GeneratedPackageFile } from './files.ts';
-import { addCopiedFiles, addGenerated, generatedFiles, pascalCase } from './utils.ts';
+import { addCopiedFiles, addGenerated, generatedFiles } from './utils.ts';
 
 const packageRoot = 'packages/react/src';
 const internalRoot = `${packageRoot}/internal/skins`;
@@ -60,9 +61,10 @@ export async function createReactPackageSkins(
 
   for (const skin of skins) {
     const publicRoot = `${packageRoot}/presets/${skin.preset}`;
+    const entry = skinCatalogEntry(skin.root.meta.name);
     const publicName = skin.theme === 'minimal' ? 'minimal-skin' : 'skin';
-    const component = `${skin.theme === 'minimal' ? 'Minimal' : ''}${pascalCase(skin.preset)}Skin`;
-    const generatedComponent = `${pascalCase(skin.theme)}${pascalCase(skin.preset)}Skin`;
+    const component = entry.component;
+    const generatedComponent = entry.exportName;
     const generatedRoot = destinations.get(skin.root.id)!;
 
     addGenerated(

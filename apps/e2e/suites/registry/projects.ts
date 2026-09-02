@@ -1,3 +1,5 @@
+import { skinCatalog } from '../../../../packages/skins/build/catalog.ts';
+
 interface RegistryConsumerProjectBase {
   readonly name: string;
   readonly directory: string;
@@ -10,7 +12,10 @@ export type RegistryConsumerProject = RegistryConsumerProjectBase &
     | { readonly framework: 'html'; readonly styling: 'css' }
   );
 
-export const registryConsumerSkins = ['video', 'video-minimal'] as const;
+/** The on-demand video skins every consumer installs, by registry item name. */
+export const registryConsumerSkins = skinCatalog
+  .filter((entry) => entry.preset === 'video')
+  .map((entry) => entry.registryItem);
 
 /** External projects exercised against the local, hosted registry output. */
 export const registryConsumerProjects = [

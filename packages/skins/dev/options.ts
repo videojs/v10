@@ -5,6 +5,7 @@ import {
   getStoryboardSrc,
   type SandboxSource,
 } from '../../../apps/sandbox/app/shared/sources';
+import { isSkinName, type SkinName } from '../src/meta';
 
 export const previewWidth = {
   default: 960,
@@ -30,15 +31,8 @@ export type CaptionsMode = 'multiple' | 'single';
 export type ColorScheme = 'dark' | 'light';
 export type Framework = 'html' | 'react';
 export type MediaId = (typeof mediaIds)[number];
-export type SkinName =
-  | 'default-video'
-  | 'minimal-video'
-  | 'default-live-video'
-  | 'minimal-live-video'
-  | 'default-live-audio'
-  | 'minimal-live-audio'
-  | 'default-audio'
-  | 'minimal-audio';
+export type { SkinName };
+
 export type StyleMode = 'css' | 'tailwind';
 
 export type Direction = 'ltr' | 'rtl';
@@ -66,7 +60,7 @@ export function readPreviewOptions(search = location.search): PreviewOptions {
   const params = new URLSearchParams(search);
   const framework = params.get('framework') === 'html' ? 'html' : 'react';
   const requestedSkin = params.get('skin');
-  const skin: SkinName = isSkinName(requestedSkin) ? requestedSkin : 'default-video';
+  const skin: SkinName = requestedSkin && isSkinName(requestedSkin) ? requestedSkin : 'default-video';
   const isAudio = skin.endsWith('-audio');
   const isLive = skin.includes('-live-');
   const styleMode = params.get('style') === 'tailwind' ? 'tailwind' : 'css';
@@ -104,17 +98,4 @@ export function readPreviewOptions(search = location.search): PreviewOptions {
 
 function isMediaId(value: string | null): value is MediaId {
   return value === 'error' || (value !== null && Object.hasOwn(SOURCES, value));
-}
-
-function isSkinName(value: string | null): value is SkinName {
-  return (
-    value === 'default-video' ||
-    value === 'minimal-video' ||
-    value === 'default-live-video' ||
-    value === 'minimal-live-video' ||
-    value === 'default-live-audio' ||
-    value === 'minimal-live-audio' ||
-    value === 'default-audio' ||
-    value === 'minimal-audio'
-  );
 }
