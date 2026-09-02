@@ -1,23 +1,14 @@
 import '@app/styles.css';
 import { EMBED_PRESETS } from '@app/constants';
 import { renderChapters } from '@app/shared/html/chapters';
-import { createHtmlSandboxState, createLatestLoader, renderMediaAttrs } from '@app/shared/html/sandbox-state';
+import { createLatestLoader, renderMediaAttrs } from '@app/shared/html/sandbox';
 import { CSS_SKIN_TAGS, LIVE_AUDIO_CSS_SKIN_TAGS, LIVE_VIDEO_CSS_SKIN_TAGS } from '@app/shared/html/skin-tags';
 import { renderStoryboard } from '@app/shared/html/storyboard';
 import { loadAudioStylesheets, loadVideoStylesheets } from '@app/shared/html/stylesheets';
 import { ensureCdnSandboxLocale } from '@app/shared/i18n/cdn-sandbox-locales';
 import { syncDocumentLocale } from '@app/shared/i18n/document-locale';
 import type { SandboxLocaleTag } from '@app/shared/i18n/locale-meta';
-import {
-  getInitialLocale,
-  onAutoplayChange,
-  onLocaleChange,
-  onLoopChange,
-  onMutedChange,
-  onPreloadChange,
-  onSkinChange,
-  onSourceChange,
-} from '@app/shared/sandbox-listener';
+import { getInitialLocale, onLocaleChange, onSandboxStateChange, readSandboxState } from '@app/shared/sandbox-listener';
 import {
   BACKGROUND_VIDEO_SRC,
   CLOUDFLARE_VIDEO_SRC,
@@ -42,7 +33,7 @@ const html = String.raw;
 const params = new URLSearchParams(location.search);
 const preset = (params.get('preset') ?? 'video') as Preset;
 
-const state = createHtmlSandboxState();
+const state = readSandboxState();
 const loadLatest = createLatestLoader();
 let locale = getInitialLocale();
 let localeApplySeq = 0;
@@ -496,33 +487,8 @@ async function init(): Promise<void> {
 
 void init();
 
-onSkinChange((skin) => {
-  state.skin = skin;
-  render();
-});
-
-onSourceChange((source) => {
-  state.source = source;
-  render();
-});
-
-onAutoplayChange((autoplay) => {
-  state.autoplay = autoplay;
-  render();
-});
-
-onMutedChange((muted) => {
-  state.muted = muted;
-  render();
-});
-
-onLoopChange((loop) => {
-  state.loop = loop;
-  render();
-});
-
-onPreloadChange((preload) => {
-  state.preload = preload;
+onSandboxStateChange((change) => {
+  Object.assign(state, change);
   render();
 });
 

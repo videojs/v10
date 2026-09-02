@@ -3,37 +3,17 @@ import { Chapters } from '@app/shared/react/chapters';
 import { LiveVideoPlayer, VideoPlayer } from '@app/shared/react/players';
 import { SandboxI18nProvider } from '@app/shared/react/sandbox-i18n';
 import { VideoSkinComponent } from '@app/shared/react/skins';
-import { useAutoplay } from '@app/shared/react/use-autoplay';
-import { useLoop } from '@app/shared/react/use-loop';
-import { useMuted } from '@app/shared/react/use-muted';
-import { usePlaceholder } from '@app/shared/react/use-placeholder';
-import { usePoster } from '@app/shared/react/use-poster';
-import { usePreload } from '@app/shared/react/use-preload';
-import { useSkin } from '@app/shared/react/use-skin';
-import { useSource } from '@app/shared/react/use-source';
-import { getChapters, isLiveSource, SOURCES } from '@app/shared/sources';
-import type { Styling } from '@app/types';
+import { useSandbox } from '@app/shared/react/use-sandbox';
+import { getChapters, getPlaceholderSrc, getPosterSrc, isLiveSource, SOURCES } from '@app/shared/sources';
 import { GoogleCast } from '@videojs/react/extensions/google-cast';
 import { MuxData } from '@videojs/react/extensions/mux-data';
 import { MuxVideo } from '@videojs/react/media/mux-video';
-import { useMemo } from 'react';
 import { createRoot } from 'react-dom/client';
 
-function readStyling(): Styling {
-  return new URLSearchParams(location.search).get('styling') === 'tailwind' ? 'tailwind' : 'css';
-}
-
 function App() {
-  const skin = useSkin();
-  const source = useSource();
-  const styling = useMemo(readStyling, []);
-  const poster = usePoster();
-  const placeholder = usePlaceholder();
+  const { skin, styling, source, mediaProps } = useSandbox();
+  const placeholder = getPlaceholderSrc(source);
   const live = isLiveSource(source);
-  const autoplay = useAutoplay();
-  const muted = useMuted();
-  const loop = useLoop();
-  const preload = usePreload();
   const Player = live ? LiveVideoPlayer : VideoPlayer;
 
   // A source carrying signed tokens has no room in a plain `src`. A Mux
@@ -42,7 +22,7 @@ function App() {
 
   return (
     <SandboxI18nProvider>
-      <Player poster={poster}>
+      <Player poster={getPosterSrc(source)}>
         <VideoSkinComponent
           renderPoster={
             placeholder ? (
@@ -66,16 +46,13 @@ function App() {
           {/* The storyboard track is derived automatically from the Mux src. */}
           <MuxVideo
             {...(muxSource ? { source: muxSource } : { src: url ?? '' })}
-            autoPlay={autoplay}
-            muted={muted}
-            loop={loop}
-            preload={preload}
+            {...mediaProps}
             playsInline
             crossOrigin=""
           >
             <Chapters tracks={getChapters(source)} />
           </MuxVideo>
-          {/* Mux Data and Cast are opt-in extensions; no env key is needed for Mux-hosted sources. */}
+          {/* Mux Data and Cast are opt-in media components; no env key is needed for Mux-hosted sources. */}
           <MuxData playerSoftwareName="mux-video" />
           <GoogleCast />
         </VideoSkinComponent>

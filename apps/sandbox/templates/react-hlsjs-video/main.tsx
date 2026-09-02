@@ -4,35 +4,14 @@ import { LiveVideoPlayer, VideoPlayer } from '@app/shared/react/players';
 import { SandboxI18nProvider } from '@app/shared/react/sandbox-i18n';
 import { VideoSkinComponent } from '@app/shared/react/skins';
 import { Storyboard } from '@app/shared/react/storyboard';
-import { useAutoplay } from '@app/shared/react/use-autoplay';
-import { useLoop } from '@app/shared/react/use-loop';
-import { useMuted } from '@app/shared/react/use-muted';
-import { usePoster } from '@app/shared/react/use-poster';
-import { usePreload } from '@app/shared/react/use-preload';
-import { useSkin } from '@app/shared/react/use-skin';
-import { useSource } from '@app/shared/react/use-source';
-import { useStoryboard } from '@app/shared/react/use-storyboard';
-import { getChapters, isLiveSource, SOURCES } from '@app/shared/sources';
-import type { Styling } from '@app/types';
+import { useSandbox } from '@app/shared/react/use-sandbox';
+import { getChapters, getPosterSrc, getStoryboardSrc, isLiveSource, SOURCES } from '@app/shared/sources';
 import { HlsJsVideo } from '@videojs/react/media/hlsjs-video';
-import { useMemo } from 'react';
 import { createRoot } from 'react-dom/client';
 
-function readStyling(): Styling {
-  return new URLSearchParams(location.search).get('styling') === 'tailwind' ? 'tailwind' : 'css';
-}
-
 function App() {
-  const skin = useSkin();
-  const source = useSource();
-  const styling = useMemo(readStyling, []);
-  const poster = usePoster();
-  const storyboard = useStoryboard();
+  const { skin, styling, source, mediaProps } = useSandbox();
   const live = isLiveSource(source);
-  const autoplay = useAutoplay();
-  const muted = useMuted();
-  const loop = useLoop();
-  const preload = usePreload();
   const Player = live ? LiveVideoPlayer : VideoPlayer;
 
   // A source carrying DRM license servers has no room in a plain `src`.
@@ -40,7 +19,7 @@ function App() {
 
   return (
     <SandboxI18nProvider>
-      <Player poster={poster}>
+      <Player poster={getPosterSrc(source)}>
         {/* The skin renders its own <img> from `poster`; supplying one is what lets it carry a CORS mode. */}
         <VideoSkinComponent
           renderPoster={<img alt="" crossOrigin="" />}
@@ -51,15 +30,12 @@ function App() {
         >
           <HlsJsVideo
             {...(hlsSource ? { source: hlsSource } : { src: url ?? '' })}
-            autoPlay={autoplay}
-            muted={muted}
-            loop={loop}
-            preload={preload}
+            {...mediaProps}
             playsInline
             crossOrigin=""
           >
             <Chapters tracks={getChapters(source)} />
-            <Storyboard src={storyboard} />
+            <Storyboard src={getStoryboardSrc(source)} />
           </HlsJsVideo>
         </VideoSkinComponent>
       </Player>

@@ -2,32 +2,15 @@ import '@app/styles.css';
 import { AudioPlayer, LiveAudioPlayer } from '@app/shared/react/players';
 import { SandboxI18nProvider } from '@app/shared/react/sandbox-i18n';
 import { AudioSkinComponent } from '@app/shared/react/skins';
-import { useAutoplay } from '@app/shared/react/use-autoplay';
-import { useLoop } from '@app/shared/react/use-loop';
-import { useMuted } from '@app/shared/react/use-muted';
-import { usePreload } from '@app/shared/react/use-preload';
-import { useSkin } from '@app/shared/react/use-skin';
-import { useSource } from '@app/shared/react/use-source';
+import { useSandbox } from '@app/shared/react/use-sandbox';
 import { isLiveSource, SOURCES } from '@app/shared/sources';
-import type { Styling } from '@app/types';
 import { GoogleCast } from '@videojs/react/extensions/google-cast';
-import { MuxData } from '@videojs/react/extensions/mux-data';
 import { MuxAudio } from '@videojs/react/media/mux-audio';
-import { useMemo } from 'react';
+import { MuxData } from '@videojs/react/extensions/mux-data';
 import { createRoot } from 'react-dom/client';
 
-function readStyling(): Styling {
-  return new URLSearchParams(location.search).get('styling') === 'tailwind' ? 'tailwind' : 'css';
-}
-
 function App() {
-  const skin = useSkin();
-  const source = useSource();
-  const styling = useMemo(() => readStyling(), []);
-  const autoplay = useAutoplay();
-  const muted = useMuted();
-  const loop = useLoop();
-  const preload = usePreload();
+  const { skin, styling, source, mediaProps } = useSandbox();
   const live = isLiveSource(source);
   const Player = live ? LiveAudioPlayer : AudioPlayer;
 
@@ -39,15 +22,8 @@ function App() {
     <SandboxI18nProvider>
       <Player>
         <AudioSkinComponent skin={skin} styling={styling} live={live} className="mx-auto w-full max-w-xl">
-          <MuxAudio
-            {...(muxSource ? { source: muxSource } : { src: url ?? '' })}
-            autoPlay={autoplay}
-            muted={muted}
-            loop={loop}
-            preload={preload}
-            crossOrigin=""
-          />
-          {/* Mux Data and Cast are opt-in extensions; no env key is needed for Mux-hosted sources. */}
+          <MuxAudio {...(muxSource ? { source: muxSource } : { src: url ?? '' })} {...mediaProps} crossOrigin="" />
+          {/* Mux Data and Cast are opt-in media components; no env key is needed for Mux-hosted sources. */}
           <MuxData playerSoftwareName="mux-audio" />
           <GoogleCast />
         </AudioSkinComponent>

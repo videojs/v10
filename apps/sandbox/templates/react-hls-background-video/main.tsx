@@ -2,7 +2,7 @@ import '@app/styles.css';
 import '@videojs/react/background/skin.css';
 import { BackgroundVideoPlayer } from '@app/shared/react/players';
 import { SandboxI18nProvider } from '@app/shared/react/sandbox-i18n';
-import { useSource } from '@app/shared/react/use-source';
+import { useSandbox } from '@app/shared/react/use-sandbox';
 import { SOURCES } from '@app/shared/sources';
 import { BackgroundVideoSkin } from '@videojs/react/background';
 import { HlsBackgroundVideo } from '@videojs/react/media/hls-background-video';
@@ -21,7 +21,7 @@ import { createRoot } from 'react-dom/client';
 // pointed at a URL that caps the manifest instead.
 
 function App() {
-  const source = useSource();
+  const { source } = useSandbox();
 
   return (
     <SandboxI18nProvider>
