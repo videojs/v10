@@ -1,9 +1,13 @@
 import { skinCatalog } from '../../../../packages/skins/build/catalog.ts';
 
+/** The tool that scaffolds, builds, and serves a consumer. Bundler compatibility is a property of the packages. */
+export type RegistryConsumerBundler = 'next' | 'vite' | 'webpack' | 'rspack';
+
 interface RegistryConsumerProjectBase {
   readonly name: string;
   readonly directory: string;
   readonly port: number;
+  readonly bundler: RegistryConsumerBundler;
 }
 
 export type RegistryConsumerProject = RegistryConsumerProjectBase &
@@ -24,6 +28,7 @@ export const registryConsumerProjects = [
     directory: 'next-react-tailwind',
     framework: 'react',
     styling: 'tailwind',
+    bundler: 'next',
     port: 5310,
   },
   {
@@ -31,6 +36,7 @@ export const registryConsumerProjects = [
     directory: 'next-react-css',
     framework: 'react',
     styling: 'css',
+    bundler: 'next',
     port: 5311,
   },
   {
@@ -38,6 +44,23 @@ export const registryConsumerProjects = [
     directory: 'vite-html-css',
     framework: 'html',
     styling: 'css',
+    bundler: 'vite',
     port: 5312,
+  },
+  {
+    name: 'webpack-react-css',
+    directory: 'webpack-react-css',
+    framework: 'react',
+    styling: 'css',
+    bundler: 'webpack',
+    port: 5313,
+  },
+  {
+    name: 'rspack-html-css',
+    directory: 'rspack-html-css',
+    framework: 'html',
+    styling: 'css',
+    bundler: 'rspack',
+    port: 5314,
   },
 ] as const satisfies readonly RegistryConsumerProject[];

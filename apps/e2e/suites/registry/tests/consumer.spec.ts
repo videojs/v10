@@ -61,7 +61,8 @@ test('installs a styled player with an attached media element', async ({ page })
     expect(iconBox?.width).toBeGreaterThan(10);
     expect(iconBox?.height).toBeGreaterThan(10);
 
-    if (test.info().project.name.startsWith('next-')) {
+    // The React page carries a probe that reports whether the media element reached the player store.
+    if ((await consumer.locator('[data-media-probe]').count()) > 0) {
       await expect(consumer.locator('[data-media-probe]')).toHaveAttribute('data-attached', 'true');
     }
   }

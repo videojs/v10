@@ -75,10 +75,9 @@ async function createConsumer(
   const started = performance.now();
   const projectDir = resolve(generatedDir, project.directory);
 
-  if (project.framework === 'react') await scaffoldNext(project);
-  else await scaffoldVite(project);
+  await scaffold(project);
 
-  if (project.framework === 'html') await configureViteTypes(projectDir);
+  if (project.bundler === 'vite') await configureViteTypes(projectDir);
 
   await configurePackage(projectDir, overrides);
   await configureShadcn(project, projectDir, registryUrl);
@@ -86,6 +85,19 @@ async function createConsumer(
   await exerciseRegistryCli(project, projectDir);
 
   console.log(`Installed ${project.name} in ${elapsed(started)}.`);
+}
+
+async function scaffold(project: RegistryConsumerProject): Promise<void> {
+  switch (project.bundler) {
+    case 'next':
+      return scaffoldNext(project);
+    case 'vite':
+      return scaffoldVite(project);
+    // No official scaffold to run: the overlay is the whole project.
+    case 'webpack':
+    case 'rspack':
+      return cp(resolve(overlaysDir, project.bundler), resolve(generatedDir, project.directory), { recursive: true });
+  }
 }
 
 async function scaffoldNext(project: RegistryConsumerProject): Promise<void> {
@@ -160,7 +172,7 @@ async function configureShadcn(
   registryUrl: string
 ): Promise<void> {
   const sourceDir = resolve(projectDir, 'src');
-  const css = project.framework === 'react' ? 'src/app/globals.css' : 'src/style.css';
+  const css = project.bundler === 'next' ? 'src/app/globals.css' : 'src/style.css';
   const path = registryPath(project);
 
   await mkdir(resolve(sourceDir, 'lib'), { recursive: true });
@@ -227,20 +239,28 @@ async function exerciseRegistryCli(project: RegistryConsumerProject, projectDir:
   }
 }
 
+/** The player page is shared per framework; each bundler adds only what mounts and serves it. */
 async function applyOverlay(project: RegistryConsumerProject, projectDir: string): Promise<void> {
-  if (project.framework === 'react') {
-    const appDir = resolve(projectDir, 'src/app');
-
-    await cp(resolve(overlaysDir, 'next/player.tsx'), resolve(appDir, 'player.tsx'));
-    await cp(resolve(overlaysDir, 'next/page.tsx'), resolve(appDir, 'page.tsx'));
-    return;
-  }
-
   const sourceDir = resolve(projectDir, 'src');
 
-  await cp(resolve(overlaysDir, 'vite/main.ts'), resolve(sourceDir, 'main.ts'));
-  await cp(resolve(overlaysDir, 'vite/style.css'), resolve(sourceDir, 'style.css'));
-  await cp(resolve(overlaysDir, 'vite/vite.config.ts'), resolve(projectDir, 'vite.config.ts'));
+  if (project.framework === 'react') {
+    const pageDir = project.bundler === 'next' ? resolve(sourceDir, 'app') : sourceDir;
+
+    await cp(resolve(overlaysDir, 'react/player.tsx'), resolve(pageDir, 'player.tsx'));
+
+    if (project.bundler === 'next') await cp(resolve(overlaysDir, 'next/page.tsx'), resolve(pageDir, 'page.tsx'));
+  } else {
+    await cp(resolve(overlaysDir, 'html/main.ts'), resolve(sourceDir, 'main.ts'));
+    await cp(resolve(overlaysDir, 'html/style.css'), resolve(sourceDir, 'style.css'));
+
+    if (project.bundler === 'vite') {
+      await cp(resolve(overlaysDir, 'vite/vite.config.ts'), resolve(projectDir, 'vite.config.ts'));
+    }
+  }
+
+  if (project.bundler === 'webpack' || project.bundler === 'rspack') {
+    await cp(resolve(overlaysDir, 'static/serve.mjs'), resolve(projectDir, 'serve.mjs'));
+  }
 }
 
 async function configureViteTypes(projectDir: string): Promise<void> {
@@ -277,7 +297,7 @@ async function verifyConsumer(project: RegistryConsumerProject): Promise<void> {
   const started = performance.now();
   const projectDir = resolve(generatedDir, project.directory);
 
-  if (project.framework === 'react') {
+  if (project.bundler === 'next') {
     await run('pnpm', ['--ignore-workspace', 'run', 'lint'], projectDir);
   }
 
@@ -292,21 +312,8 @@ async function verifyConsumer(project: RegistryConsumerProject): Promise<void> {
 
 async function startConsumer(project: RegistryConsumerProject): Promise<void> {
   const projectDir = resolve(generatedDir, project.directory);
-  const args =
-    project.framework === 'react'
-      ? ['--ignore-workspace', 'run', 'start', '--hostname', '127.0.0.1', '--port', String(project.port)]
-      : [
-          '--ignore-workspace',
-          'exec',
-          'vite',
-          'preview',
-          '--host',
-          '127.0.0.1',
-          '--port',
-          String(project.port),
-          '--strictPort',
-        ];
-  const child = spawn('pnpm', args, {
+  const [executable, args] = consumerServer(project);
+  const child = spawn(executable, args, {
     cwd: projectDir,
     detached: true,
     env: consumerEnvironment(),
@@ -315,6 +322,24 @@ async function startConsumer(project: RegistryConsumerProject): Promise<void> {
 
   children.push(child);
   await waitForUrl(`http://127.0.0.1:${project.port}`);
+}
+
+/** Next and Vite serve their own builds; a plain bundle is served from `dist/` by the overlay's static server. */
+function consumerServer(project: RegistryConsumerProject): [string, string[]] {
+  const port = String(project.port);
+
+  switch (project.bundler) {
+    case 'next':
+      return ['pnpm', ['--ignore-workspace', 'run', 'start', '--hostname', '127.0.0.1', '--port', port]];
+    case 'vite':
+      return [
+        'pnpm',
+        ['--ignore-workspace', 'exec', 'vite', 'preview', '--host', '127.0.0.1', '--port', port, '--strictPort'],
+      ];
+    case 'webpack':
+    case 'rspack':
+      return [process.execPath, ['serve.mjs', 'dist', port]];
+  }
 }
 
 async function packRegistryPackages(): Promise<Readonly<Record<string, string>>> {
