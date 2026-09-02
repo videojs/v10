@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
-import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, rename, stat, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 
 import type { Expression, ImportDeclaration, Node, Program } from '@oxc-project/types';
@@ -619,17 +619,27 @@ function escapeGlobPath(path: string): string {
   return path.replace(/[[\]{}()*?!]/g, '\\$&');
 }
 
-function createCandidateManifest(path: string): CandidateManifest {
+export function createCandidateManifest(path: string): CandidateManifest {
   const rulesByModule = new Map<string, ReadonlyMap<string, ResolvedStyleRule>>();
   const persisted = new Set<string>();
   let written: string | undefined;
+  let queue = Promise.resolve();
 
-  const write = async (content: string): Promise<void> => {
-    if (content === written) return;
+  // Modules compile in parallel, so writes queue up and land through a rename: two overlapping writes would interleave
+  // their bytes, and Tailwind must never read a half-written manifest.
+  const write = (content: string): Promise<void> => {
+    queue = queue.then(async () => {
+      if (content === written) return;
 
-    await mkdir(dirname(path), { recursive: true });
-    await writeFile(path, content);
-    written = content;
+      const staging = `${path}.${process.pid}.tmp`;
+
+      await mkdir(dirname(path), { recursive: true });
+      await writeFile(staging, content);
+      await rename(staging, path);
+      written = content;
+    });
+
+    return queue;
   };
 
   return {
