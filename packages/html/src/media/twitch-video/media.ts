@@ -1,5 +1,5 @@
-import { CustomMediaElement } from '@videojs/media/dom/custom-media-element';
-import { buildTwitchIframeSrc, TwitchMedia } from '@videojs/media/dom/twitch';
+import { CustomMediaElement } from '@videojs/media/dom';
+import { buildTwitchIframeSrc, TwitchMedia } from '@videojs/twitch-video';
 import { escapeHtml } from '@videojs/utils/string';
 
 import { MediaAttachMixin } from '../../store/media-attach-mixin';

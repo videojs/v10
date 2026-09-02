@@ -138,9 +138,21 @@ importers:
 
   apps/sandbox:
     dependencies:
+      '@videojs/cloudflare-video':
+        specifier: workspace:*
+        version: link:../../packages/cloudflare-video
       '@videojs/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@videojs/dash-video':
+        specifier: workspace:*
+        version: link:../../packages/dash-video
+      '@videojs/google-cast':
+        specifier: workspace:*
+        version: link:../../packages/google-cast
+      '@videojs/hlsjs-video':
+        specifier: workspace:*
+        version: link:../../packages/hlsjs-video
       '@videojs/html':
         specifier: workspace:*
         version: link:../../packages/html
@@ -150,18 +162,51 @@ importers:
       '@videojs/media':
         specifier: workspace:*
         version: link:../../packages/media
+      '@videojs/mux-audio':
+        specifier: workspace:*
+        version: link:../../packages/mux-audio
+      '@videojs/mux-data':
+        specifier: workspace:*
+        version: link:../../packages/mux-data
+      '@videojs/mux-video':
+        specifier: workspace:*
+        version: link:../../packages/mux-video
+      '@videojs/native-hls-video':
+        specifier: workspace:*
+        version: link:../../packages/native-hls-video
       '@videojs/react':
         specifier: workspace:*
         version: link:../../packages/react
+      '@videojs/shaka-video':
+        specifier: workspace:*
+        version: link:../../packages/shaka-video
       '@videojs/spf':
         specifier: workspace:*
         version: link:../../packages/spf
+      '@videojs/spotify-audio':
+        specifier: workspace:*
+        version: link:../../packages/spotify-audio
       '@videojs/store':
         specifier: workspace:*
         version: link:../../packages/store
+      '@videojs/tiktok-video':
+        specifier: workspace:*
+        version: link:../../packages/tiktok-video
+      '@videojs/twitch-video':
+        specifier: workspace:*
+        version: link:../../packages/twitch-video
       '@videojs/utils':
         specifier: workspace:*
         version: link:../../packages/utils
+      '@videojs/vimeo-video':
+        specifier: workspace:*
+        version: link:../../packages/vimeo-video
+      '@videojs/wistia-video':
+        specifier: workspace:*
+        version: link:../../packages/wistia-video
+      '@videojs/youtube-video':
+        specifier: workspace:*
+        version: link:../../packages/youtube-video
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
@@ -249,6 +294,25 @@ importers:
         specifier: 4.1.10
         version: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.10)(@vitest/browser-preview@4.1.10)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(happy-dom@20.11.1)(jsdom@27.4.0(supports-color@8.1.1))(vite@8.2.2(@types/node@24.12.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.1)(yaml@2.9.0))
 
+  packages/cloudflare-video:
+    dependencies:
+      '@videojs/media':
+        specifier: workspace:*
+        version: link:../media
+      '@videojs/utils':
+        specifier: workspace:*
+        version: link:../utils
+    devDependencies:
+      jsdom:
+        specifier: ^26.1.0
+        version: 26.1.0(supports-color@8.1.1)
+      vite-plus:
+        specifier: 'catalog:'
+        version: 0.2.8(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.10)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(esbuild@0.28.1)(happy-dom@20.11.1)(jiti@2.7.0)(jsdom@26.1.0(supports-color@8.1.1))(terser@5.50.0)(tsx@4.23.1)(typescript@6.0.2)(unrun@0.2.39)(vite@8.2.2(@types/node@24.12.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.1)(yaml@2.9.0))(yaml@2.9.0)
+      vitest:
+        specifier: 4.1.10
+        version: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.10)(@vitest/browser-preview@4.1.10)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(happy-dom@20.11.1)(jsdom@26.1.0(supports-color@8.1.1))(vite@8.2.2(@types/node@24.12.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.1)(yaml@2.9.0))
+
   packages/core:
     dependencies:
       '@videojs/media':
@@ -277,6 +341,28 @@ importers:
         specifier: workspace:*
         version: link:../vjsc
 
+  packages/dash-video:
+    dependencies:
+      '@videojs/media':
+        specifier: workspace:*
+        version: link:../media
+      '@videojs/utils':
+        specifier: workspace:*
+        version: link:../utils
+      dashjs:
+        specifier: 5.2.0
+        version: 5.2.0(@svta/cml-cta@1.0.6(@svta/cml-structured-field-values@1.1.3(@svta/cml-utils@1.5.0))(@svta/cml-utils@1.5.0))(@svta/cml-structured-field-values@1.1.3(@svta/cml-utils@1.5.0))(@svta/cml-utils@1.5.0)
+    devDependencies:
+      jsdom:
+        specifier: ^26.1.0
+        version: 26.1.0(supports-color@8.1.1)
+      vite-plus:
+        specifier: 'catalog:'
+        version: 0.2.8(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.10)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(esbuild@0.28.1)(happy-dom@20.11.1)(jiti@2.7.0)(jsdom@26.1.0(supports-color@8.1.1))(terser@5.50.0)(tsx@4.23.1)(typescript@6.0.2)(unrun@0.2.39)(vite@8.2.2(@types/node@24.12.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.1)(yaml@2.9.0))(yaml@2.9.0)
+      vitest:
+        specifier: 4.1.10
+        version: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.10)(@vitest/browser-preview@4.1.10)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(happy-dom@20.11.1)(jsdom@26.1.0(supports-color@8.1.1))(vite@8.2.2(@types/node@24.12.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.1)(yaml@2.9.0))
+
   packages/element:
     dependencies:
       '@lit/context':
@@ -293,6 +379,56 @@ importers:
         specifier: 4.1.10
         version: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.10)(@vitest/browser-preview@4.1.10)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(happy-dom@20.11.1)(jsdom@27.4.0(supports-color@8.1.1))(vite@8.2.2(@types/node@24.12.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.1)(yaml@2.9.0))
 
+  packages/google-cast:
+    dependencies:
+      '@videojs/media':
+        specifier: workspace:*
+        version: link:../media
+      '@videojs/utils':
+        specifier: workspace:*
+        version: link:../utils
+    devDependencies:
+      '@types/chrome':
+        specifier: ^0.1.40
+        version: 0.1.40
+      '@types/chromecast-caf-sender':
+        specifier: ^1.0.11
+        version: 1.0.11
+      jsdom:
+        specifier: ^26.1.0
+        version: 26.1.0(supports-color@8.1.1)
+      vite-plus:
+        specifier: 'catalog:'
+        version: 0.2.8(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.10)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(esbuild@0.28.1)(happy-dom@20.11.1)(jiti@2.7.0)(jsdom@26.1.0(supports-color@8.1.1))(terser@5.50.0)(tsx@4.23.1)(typescript@6.0.2)(unrun@0.2.39)(vite@8.2.2(@types/node@24.12.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.1)(yaml@2.9.0))(yaml@2.9.0)
+      vitest:
+        specifier: 4.1.10
+        version: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.10)(@vitest/browser-preview@4.1.10)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(happy-dom@20.11.1)(jsdom@26.1.0(supports-color@8.1.1))(vite@8.2.2(@types/node@24.12.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.1)(yaml@2.9.0))
+
+  packages/hlsjs-video:
+    dependencies:
+      '@videojs/media':
+        specifier: workspace:*
+        version: link:../media
+      '@videojs/native-hls-video':
+        specifier: workspace:*
+        version: link:../native-hls-video
+      '@videojs/utils':
+        specifier: workspace:*
+        version: link:../utils
+      hls.js:
+        specifier: 1.6.7
+        version: 1.6.7
+    devDependencies:
+      jsdom:
+        specifier: ^26.1.0
+        version: 26.1.0(supports-color@8.1.1)
+      vite-plus:
+        specifier: 'catalog:'
+        version: 0.2.8(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.10)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(esbuild@0.28.1)(happy-dom@20.11.1)(jiti@2.7.0)(jsdom@26.1.0(supports-color@8.1.1))(terser@5.50.0)(tsx@4.23.1)(typescript@6.0.2)(unrun@0.2.39)(vite@8.2.2(@types/node@24.12.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.1)(yaml@2.9.0))(yaml@2.9.0)
+      vitest:
+        specifier: 4.1.10
+        version: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.10)(@vitest/browser-preview@4.1.10)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(happy-dom@20.11.1)(jsdom@26.1.0(supports-color@8.1.1))(vite@8.2.2(@types/node@24.12.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.1)(yaml@2.9.0))
+
   packages/html:
     dependencies:
       '@videojs/core':
@@ -304,6 +440,9 @@ importers:
       '@videojs/media':
         specifier: workspace:*
         version: link:../media
+      '@videojs/native-hls-video':
+        specifier: workspace:*
+        version: link:../native-hls-video
       '@videojs/spf':
         specifier: workspace:*
         version: link:../spf
@@ -317,9 +456,51 @@ importers:
       '@testing-library/dom':
         specifier: ^10.4.1
         version: 10.4.1
+      '@videojs/cloudflare-video':
+        specifier: workspace:*
+        version: link:../cloudflare-video
+      '@videojs/dash-video':
+        specifier: workspace:*
+        version: link:../dash-video
+      '@videojs/google-cast':
+        specifier: workspace:*
+        version: link:../google-cast
+      '@videojs/hlsjs-video':
+        specifier: workspace:*
+        version: link:../hlsjs-video
       '@videojs/icons':
         specifier: workspace:*
         version: link:../icons
+      '@videojs/mux-audio':
+        specifier: workspace:*
+        version: link:../mux-audio
+      '@videojs/mux-data':
+        specifier: workspace:*
+        version: link:../mux-data
+      '@videojs/mux-video':
+        specifier: workspace:*
+        version: link:../mux-video
+      '@videojs/shaka-video':
+        specifier: workspace:*
+        version: link:../shaka-video
+      '@videojs/spotify-audio':
+        specifier: workspace:*
+        version: link:../spotify-audio
+      '@videojs/tiktok-video':
+        specifier: workspace:*
+        version: link:../tiktok-video
+      '@videojs/twitch-video':
+        specifier: workspace:*
+        version: link:../twitch-video
+      '@videojs/vimeo-video':
+        specifier: workspace:*
+        version: link:../vimeo-video
+      '@videojs/wistia-video':
+        specifier: workspace:*
+        version: link:../wistia-video
+      '@videojs/youtube-video':
+        specifier: workspace:*
+        version: link:../youtube-video
       happy-dom:
         specifier: ^20.11.1
         version: 20.11.1
@@ -387,31 +568,123 @@ importers:
       '@videojs/utils':
         specifier: workspace:*
         version: link:../utils
-      '@vimeo/player':
-        specifier: ^2.30.3
-        version: 2.30.4
-      '@wistia/wistia-player':
-        specifier: ^0.7.12
-        version: 0.7.13(webpack@5.109.2(csso@5.0.5)(esbuild@0.28.1)(lightningcss@1.33.0)(postcss@8.5.26))
+    devDependencies:
+      jsdom:
+        specifier: ^26.1.0
+        version: 26.1.0(supports-color@8.1.1)
+      vite-plus:
+        specifier: 'catalog:'
+        version: 0.2.8(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.10)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(esbuild@0.28.1)(happy-dom@20.11.1)(jiti@2.7.0)(jsdom@26.1.0(supports-color@8.1.1))(terser@5.50.0)(tsx@4.23.1)(typescript@6.0.2)(unrun@0.2.39)(vite@8.2.2(@types/node@24.12.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.1)(yaml@2.9.0))(yaml@2.9.0)
+      vitest:
+        specifier: 4.1.10
+        version: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.10)(@vitest/browser-preview@4.1.10)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(happy-dom@20.11.1)(jsdom@26.1.0(supports-color@8.1.1))(vite@8.2.2(@types/node@24.12.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.1)(yaml@2.9.0))
+
+  packages/mux:
+    dependencies:
+      '@videojs/media':
+        specifier: workspace:*
+        version: link:../media
+      '@videojs/utils':
+        specifier: workspace:*
+        version: link:../utils
+    devDependencies:
+      jsdom:
+        specifier: ^26.1.0
+        version: 26.1.0(supports-color@8.1.1)
+      vite-plus:
+        specifier: 'catalog:'
+        version: 0.2.8(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.10)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(esbuild@0.28.1)(happy-dom@20.11.1)(jiti@2.7.0)(jsdom@26.1.0(supports-color@8.1.1))(terser@5.50.0)(tsx@4.23.1)(typescript@6.0.2)(unrun@0.2.39)(vite@8.2.2(@types/node@24.12.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.1)(yaml@2.9.0))(yaml@2.9.0)
+      vitest:
+        specifier: 4.1.10
+        version: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.10)(@vitest/browser-preview@4.1.10)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(happy-dom@20.11.1)(jsdom@26.1.0(supports-color@8.1.1))(vite@8.2.2(@types/node@24.12.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.1)(yaml@2.9.0))
+
+  packages/mux-audio:
+    dependencies:
+      '@videojs/mux-video':
+        specifier: workspace:*
+        version: link:../mux-video
+      '@videojs/spf':
+        specifier: workspace:*
+        version: link:../spf
+      '@videojs/utils':
+        specifier: workspace:*
+        version: link:../utils
+    devDependencies:
+      jsdom:
+        specifier: ^26.1.0
+        version: 26.1.0(supports-color@8.1.1)
+      vite-plus:
+        specifier: 'catalog:'
+        version: 0.2.8(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.10)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(esbuild@0.28.1)(happy-dom@20.11.1)(jiti@2.7.0)(jsdom@26.1.0(supports-color@8.1.1))(terser@5.50.0)(tsx@4.23.1)(typescript@6.0.2)(unrun@0.2.39)(vite@8.2.2(@types/node@24.12.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.1)(yaml@2.9.0))(yaml@2.9.0)
+      vitest:
+        specifier: 4.1.10
+        version: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.10)(@vitest/browser-preview@4.1.10)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(happy-dom@20.11.1)(jsdom@26.1.0(supports-color@8.1.1))(vite@8.2.2(@types/node@24.12.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.1)(yaml@2.9.0))
+
+  packages/mux-data:
+    dependencies:
+      '@videojs/utils':
+        specifier: workspace:*
+        version: link:../utils
+      mux-embed:
+        specifier: 5.17.10
+        version: 5.17.10
+    devDependencies:
+      '@videojs/mux':
+        specifier: workspace:*
+        version: link:../mux
       dashjs:
-        specifier: ^5.2.0
+        specifier: 5.2.0
         version: 5.2.0(@svta/cml-cta@1.0.6(@svta/cml-structured-field-values@1.1.3(@svta/cml-utils@1.5.0))(@svta/cml-utils@1.5.0))(@svta/cml-structured-field-values@1.1.3(@svta/cml-utils@1.5.0))(@svta/cml-utils@1.5.0)
       hls.js:
-        specifier: ^1.6.7
-        version: 1.6.15
-      mux-embed:
-        specifier: ^5.17.10
-        version: 5.17.10
-      shaka-player:
-        specifier: ^5.2.4
-        version: 5.2.6
+        specifier: 1.6.7
+        version: 1.6.7
+      jsdom:
+        specifier: ^26.1.0
+        version: 26.1.0(supports-color@8.1.1)
+      vite-plus:
+        specifier: 'catalog:'
+        version: 0.2.8(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.10)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(esbuild@0.28.1)(happy-dom@20.11.1)(jiti@2.7.0)(jsdom@26.1.0(supports-color@8.1.1))(terser@5.50.0)(tsx@4.23.1)(typescript@6.0.2)(unrun@0.2.39)(vite@8.2.2(@types/node@24.12.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.1)(yaml@2.9.0))(yaml@2.9.0)
+      vitest:
+        specifier: 4.1.10
+        version: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.10)(@vitest/browser-preview@4.1.10)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(happy-dom@20.11.1)(jsdom@26.1.0(supports-color@8.1.1))(vite@8.2.2(@types/node@24.12.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.1)(yaml@2.9.0))
+
+  packages/mux-video:
+    dependencies:
+      '@videojs/hlsjs-video':
+        specifier: workspace:*
+        version: link:../hlsjs-video
+      '@videojs/media':
+        specifier: workspace:*
+        version: link:../media
+      '@videojs/spf':
+        specifier: workspace:*
+        version: link:../spf
+      '@videojs/utils':
+        specifier: workspace:*
+        version: link:../utils
     devDependencies:
-      '@types/chrome':
-        specifier: ^0.1.40
-        version: 0.1.40
-      '@types/chromecast-caf-sender':
-        specifier: ^1.0.11
-        version: 1.0.11
+      '@videojs/mux':
+        specifier: workspace:*
+        version: link:../mux
+      jsdom:
+        specifier: ^26.1.0
+        version: 26.1.0(supports-color@8.1.1)
+      vite-plus:
+        specifier: 'catalog:'
+        version: 0.2.8(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.10)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(esbuild@0.28.1)(happy-dom@20.11.1)(jiti@2.7.0)(jsdom@26.1.0(supports-color@8.1.1))(terser@5.50.0)(tsx@4.23.1)(typescript@6.0.2)(unrun@0.2.39)(vite@8.2.2(@types/node@24.12.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.1)(yaml@2.9.0))(yaml@2.9.0)
+      vitest:
+        specifier: 4.1.10
+        version: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.10)(@vitest/browser-preview@4.1.10)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(happy-dom@20.11.1)(jsdom@26.1.0(supports-color@8.1.1))(vite@8.2.2(@types/node@24.12.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.1)(yaml@2.9.0))
+
+  packages/native-hls-video:
+    dependencies:
+      '@videojs/media':
+        specifier: workspace:*
+        version: link:../media
+      '@videojs/utils':
+        specifier: workspace:*
+        version: link:../utils
+    devDependencies:
       jsdom:
         specifier: ^26.1.0
         version: 26.1.0(supports-color@8.1.1)
@@ -430,6 +703,9 @@ importers:
       '@videojs/media':
         specifier: workspace:*
         version: link:../media
+      '@videojs/native-hls-video':
+        specifier: workspace:*
+        version: link:../native-hls-video
       '@videojs/spf':
         specifier: workspace:*
         version: link:../spf
@@ -446,12 +722,51 @@ importers:
       '@types/react':
         specifier: ^19.2.17
         version: 19.2.17
+      '@videojs/cloudflare-video':
+        specifier: workspace:*
+        version: link:../cloudflare-video
+      '@videojs/dash-video':
+        specifier: workspace:*
+        version: link:../dash-video
+      '@videojs/google-cast':
+        specifier: workspace:*
+        version: link:../google-cast
+      '@videojs/hlsjs-video':
+        specifier: workspace:*
+        version: link:../hlsjs-video
       '@videojs/icons':
         specifier: workspace:*
         version: link:../icons
-      '@wistia/wistia-player':
-        specifier: ^0.7.12
-        version: 0.7.13(webpack@5.109.2(csso@5.0.5)(esbuild@0.28.1)(lightningcss@1.33.0)(postcss@8.5.26))
+      '@videojs/mux-audio':
+        specifier: workspace:*
+        version: link:../mux-audio
+      '@videojs/mux-data':
+        specifier: workspace:*
+        version: link:../mux-data
+      '@videojs/mux-video':
+        specifier: workspace:*
+        version: link:../mux-video
+      '@videojs/shaka-video':
+        specifier: workspace:*
+        version: link:../shaka-video
+      '@videojs/spotify-audio':
+        specifier: workspace:*
+        version: link:../spotify-audio
+      '@videojs/tiktok-video':
+        specifier: workspace:*
+        version: link:../tiktok-video
+      '@videojs/twitch-video':
+        specifier: workspace:*
+        version: link:../twitch-video
+      '@videojs/vimeo-video':
+        specifier: workspace:*
+        version: link:../vimeo-video
+      '@videojs/wistia-video':
+        specifier: workspace:*
+        version: link:../wistia-video
+      '@videojs/youtube-video':
+        specifier: workspace:*
+        version: link:../youtube-video
       jsdom:
         specifier: ^26.1.0
         version: 26.1.0(supports-color@8.1.1)
@@ -464,6 +779,28 @@ importers:
       typescript:
         specifier: 6.0.2
         version: 6.0.2
+      vite-plus:
+        specifier: 'catalog:'
+        version: 0.2.8(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.10)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(esbuild@0.28.1)(happy-dom@20.11.1)(jiti@2.7.0)(jsdom@26.1.0(supports-color@8.1.1))(terser@5.50.0)(tsx@4.23.1)(typescript@6.0.2)(unrun@0.2.39)(vite@8.2.2(@types/node@24.12.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.1)(yaml@2.9.0))(yaml@2.9.0)
+      vitest:
+        specifier: 4.1.10
+        version: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.10)(@vitest/browser-preview@4.1.10)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(happy-dom@20.11.1)(jsdom@26.1.0(supports-color@8.1.1))(vite@8.2.2(@types/node@24.12.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.1)(yaml@2.9.0))
+
+  packages/shaka-video:
+    dependencies:
+      '@videojs/media':
+        specifier: workspace:*
+        version: link:../media
+      '@videojs/utils':
+        specifier: workspace:*
+        version: link:../utils
+      shaka-player:
+        specifier: 5.2.4
+        version: 5.2.4
+    devDependencies:
+      jsdom:
+        specifier: ^26.1.0
+        version: 26.1.0(supports-color@8.1.1)
       vite-plus:
         specifier: 'catalog:'
         version: 0.2.8(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.10)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(esbuild@0.28.1)(happy-dom@20.11.1)(jiti@2.7.0)(jsdom@26.1.0(supports-color@8.1.1))(terser@5.50.0)(tsx@4.23.1)(typescript@6.0.2)(unrun@0.2.39)(vite@8.2.2(@types/node@24.12.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.1)(yaml@2.9.0))(yaml@2.9.0)
@@ -571,6 +908,25 @@ importers:
         specifier: 4.1.10
         version: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.10)(@vitest/browser-preview@4.1.10)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(happy-dom@20.11.1)(jsdom@26.1.0(supports-color@8.1.1))(vite@8.2.2(@types/node@24.12.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.1)(yaml@2.9.0))
 
+  packages/spotify-audio:
+    dependencies:
+      '@videojs/media':
+        specifier: workspace:*
+        version: link:../media
+      '@videojs/utils':
+        specifier: workspace:*
+        version: link:../utils
+    devDependencies:
+      jsdom:
+        specifier: ^26.1.0
+        version: 26.1.0(supports-color@8.1.1)
+      vite-plus:
+        specifier: 'catalog:'
+        version: 0.2.8(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.10)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(esbuild@0.28.1)(happy-dom@20.11.1)(jiti@2.7.0)(jsdom@26.1.0(supports-color@8.1.1))(terser@5.50.0)(tsx@4.23.1)(typescript@6.0.2)(unrun@0.2.39)(vite@8.2.2(@types/node@24.12.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.1)(yaml@2.9.0))(yaml@2.9.0)
+      vitest:
+        specifier: 4.1.10
+        version: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.10)(@vitest/browser-preview@4.1.10)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(happy-dom@20.11.1)(jsdom@26.1.0(supports-color@8.1.1))(vite@8.2.2(@types/node@24.12.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.1)(yaml@2.9.0))
+
   packages/store:
     dependencies:
       '@videojs/utils':
@@ -602,6 +958,44 @@ importers:
         specifier: 4.1.10
         version: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.10)(@vitest/browser-preview@4.1.10)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(happy-dom@20.11.1)(jsdom@26.1.0(supports-color@8.1.1))(vite@8.2.2(@types/node@24.12.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.1)(yaml@2.9.0))
 
+  packages/tiktok-video:
+    dependencies:
+      '@videojs/media':
+        specifier: workspace:*
+        version: link:../media
+      '@videojs/utils':
+        specifier: workspace:*
+        version: link:../utils
+    devDependencies:
+      jsdom:
+        specifier: ^26.1.0
+        version: 26.1.0(supports-color@8.1.1)
+      vite-plus:
+        specifier: 'catalog:'
+        version: 0.2.8(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.10)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(esbuild@0.28.1)(happy-dom@20.11.1)(jiti@2.7.0)(jsdom@26.1.0(supports-color@8.1.1))(terser@5.50.0)(tsx@4.23.1)(typescript@6.0.2)(unrun@0.2.39)(vite@8.2.2(@types/node@24.12.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.1)(yaml@2.9.0))(yaml@2.9.0)
+      vitest:
+        specifier: 4.1.10
+        version: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.10)(@vitest/browser-preview@4.1.10)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(happy-dom@20.11.1)(jsdom@26.1.0(supports-color@8.1.1))(vite@8.2.2(@types/node@24.12.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.1)(yaml@2.9.0))
+
+  packages/twitch-video:
+    dependencies:
+      '@videojs/media':
+        specifier: workspace:*
+        version: link:../media
+      '@videojs/utils':
+        specifier: workspace:*
+        version: link:../utils
+    devDependencies:
+      jsdom:
+        specifier: ^26.1.0
+        version: 26.1.0(supports-color@8.1.1)
+      vite-plus:
+        specifier: 'catalog:'
+        version: 0.2.8(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.10)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(esbuild@0.28.1)(happy-dom@20.11.1)(jiti@2.7.0)(jsdom@26.1.0(supports-color@8.1.1))(terser@5.50.0)(tsx@4.23.1)(typescript@6.0.2)(unrun@0.2.39)(vite@8.2.2(@types/node@24.12.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.1)(yaml@2.9.0))(yaml@2.9.0)
+      vitest:
+        specifier: 4.1.10
+        version: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.10)(@vitest/browser-preview@4.1.10)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(happy-dom@20.11.1)(jsdom@26.1.0(supports-color@8.1.1))(vite@8.2.2(@types/node@24.12.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.1)(yaml@2.9.0))
+
   packages/utils:
     devDependencies:
       jsdom:
@@ -613,6 +1007,28 @@ importers:
       vitest:
         specifier: 4.1.10
         version: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.10)(@vitest/browser-preview@4.1.10)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(happy-dom@20.11.1)(jsdom@27.4.0(supports-color@8.1.1))(vite@8.2.2(@types/node@24.12.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.1)(yaml@2.9.0))
+
+  packages/vimeo-video:
+    dependencies:
+      '@videojs/media':
+        specifier: workspace:*
+        version: link:../media
+      '@videojs/utils':
+        specifier: workspace:*
+        version: link:../utils
+      '@vimeo/player':
+        specifier: 2.30.3
+        version: 2.30.3
+    devDependencies:
+      jsdom:
+        specifier: ^26.1.0
+        version: 26.1.0(supports-color@8.1.1)
+      vite-plus:
+        specifier: 'catalog:'
+        version: 0.2.8(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.10)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(esbuild@0.28.1)(happy-dom@20.11.1)(jiti@2.7.0)(jsdom@26.1.0(supports-color@8.1.1))(terser@5.50.0)(tsx@4.23.1)(typescript@6.0.2)(unrun@0.2.39)(vite@8.2.2(@types/node@24.12.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.1)(yaml@2.9.0))(yaml@2.9.0)
+      vitest:
+        specifier: 4.1.10
+        version: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.10)(@vitest/browser-preview@4.1.10)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(happy-dom@20.11.1)(jsdom@26.1.0(supports-color@8.1.1))(vite@8.2.2(@types/node@24.12.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.1)(yaml@2.9.0))
 
   packages/vjsc:
     dependencies:
@@ -659,6 +1075,47 @@ importers:
       vitest:
         specifier: 4.1.10
         version: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.10)(@vitest/browser-preview@4.1.10)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(@voidzero-dev/vite-plus-core@0.2.8(@types/node@24.12.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.1)(typescript@6.0.2)(unrun@0.2.39)(yaml@2.9.0))(happy-dom@20.11.1)(jsdom@27.4.0(supports-color@8.1.1))
+
+  packages/wistia-video:
+    dependencies:
+      '@videojs/media':
+        specifier: workspace:*
+        version: link:../media
+      '@videojs/utils':
+        specifier: workspace:*
+        version: link:../utils
+      '@wistia/wistia-player':
+        specifier: 0.7.12
+        version: 0.7.12(webpack@5.109.2(csso@5.0.5)(esbuild@0.28.1)(lightningcss@1.33.0)(postcss@8.5.26))
+    devDependencies:
+      jsdom:
+        specifier: ^26.1.0
+        version: 26.1.0(supports-color@8.1.1)
+      vite-plus:
+        specifier: 'catalog:'
+        version: 0.2.8(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.10)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(esbuild@0.28.1)(happy-dom@20.11.1)(jiti@2.7.0)(jsdom@26.1.0(supports-color@8.1.1))(terser@5.50.0)(tsx@4.23.1)(typescript@6.0.2)(unrun@0.2.39)(vite@8.2.2(@types/node@24.12.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.1)(yaml@2.9.0))(yaml@2.9.0)
+      vitest:
+        specifier: 4.1.10
+        version: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.10)(@vitest/browser-preview@4.1.10)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(happy-dom@20.11.1)(jsdom@26.1.0(supports-color@8.1.1))(vite@8.2.2(@types/node@24.12.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.1)(yaml@2.9.0))
+
+  packages/youtube-video:
+    dependencies:
+      '@videojs/media':
+        specifier: workspace:*
+        version: link:../media
+      '@videojs/utils':
+        specifier: workspace:*
+        version: link:../utils
+    devDependencies:
+      jsdom:
+        specifier: ^26.1.0
+        version: 26.1.0(supports-color@8.1.1)
+      vite-plus:
+        specifier: 'catalog:'
+        version: 0.2.8(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.10)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(esbuild@0.28.1)(happy-dom@20.11.1)(jiti@2.7.0)(jsdom@26.1.0(supports-color@8.1.1))(terser@5.50.0)(tsx@4.23.1)(typescript@6.0.2)(unrun@0.2.39)(vite@8.2.2(@types/node@24.12.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.1)(yaml@2.9.0))(yaml@2.9.0)
+      vitest:
+        specifier: 4.1.10
+        version: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.10)(@vitest/browser-preview@4.1.10)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(happy-dom@20.11.1)(jsdom@26.1.0(supports-color@8.1.1))(vite@8.2.2(@types/node@24.12.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.1)(yaml@2.9.0))
 
   site:
     dependencies:
@@ -4607,8 +5064,8 @@ packages:
     engines: {node: '>=20'}
     hasBin: true
 
-  '@vimeo/player@2.30.4':
-    resolution: {integrity: sha512-M8m1UAhJSb+KCWuXDLWHViwj+3YY/0ogwFquRfMHs9e9LYjXT9iB7n+sOCKwUusbiXuU2HKmXx+FEGHtYZfUSg==}
+  '@vimeo/player@2.30.3':
+    resolution: {integrity: sha512-3skwNetfstLG/KvbfrwhUDms3Cd68LfqbN2DNYijcMV+oPGf5GzekVBxNCrxbeLXyVZMNZCXWV0DQQAwcQJ/iA==}
 
   '@vitejs/plugin-react@5.2.0':
     resolution: {integrity: sha512-YmKkfhOAi3wsB1PhJq5Scj3GXMn3WvtQ/JC0xoopuHoXSdmtdStOpFrYaT1kie2YgFBcIe64ROzMYRjCrYOdYw==}
@@ -4903,8 +5360,8 @@ packages:
     resolution: {integrity: sha512-kMwLlxUbduttIgaPdSkmEarFpP+mSY8FEm+QWMBRJwxOHWkri+cxd8KZHO9EMrB9vgUuz+5WEaCawaL5wGVoXg==}
     engines: {node: '>=18.0.0'}
 
-  '@wistia/wistia-player@0.7.13':
-    resolution: {integrity: sha512-BE+nRBTZnE3YSL648FX4brog1Z465dWXmUAvlHoezC5Y+ZAmsb0v52OCvI49VnlVQabWyf/lc62byXZnAvWnMA==}
+  '@wistia/wistia-player@0.7.12':
+    resolution: {integrity: sha512-cP3+Y6xXAzw2RQZJH7K5fGTSrPexeCINjo6zhAuVmQqPS084QEHIBrO/uf32VgF2Pho2jkMzpdzZ6OKn+2wa/A==}
 
   '@xtuc/ieee754@1.2.0':
     resolution: {integrity: sha512-DX8nKgqcGwsc0eJSqYt5lwP4DH5FlHnmuWWBRy7X0NcaGR0ZtuyeESgMwTYVEtxmsNGY+qit4QYT/MIYTOTPeA==}
@@ -6640,6 +7097,9 @@ packages:
 
   hls.js@1.6.15:
     resolution: {integrity: sha512-E3a5VwgXimGHwpRGV+WxRTKeSp2DW5DI5MWv34ulL3t5UNmyJWCQ1KmLEHbYzcfThfXG8amBL+fCYPneGHC4VA==}
+
+  hls.js@1.6.7:
+    resolution: {integrity: sha512-QW2fnwDGKGc9DwQUGLbmMOz8G48UZK7PVNJPcOUql1b8jubKx4/eMHNP5mGqr6tYlJNDG1g10Lx2U/qPzL6zwQ==}
 
   hono@4.13.1:
     resolution: {integrity: sha512-kdJoFVv2xmayw6cY09H7AbMJMt8Jn5jdlEdXsP7AGBdF2DIptVlKlOLKXP41yPip4/a3yQPv9gVcJYI8YY04dw==}
@@ -8834,8 +9294,8 @@ packages:
     engines: {node: '>=20.18.1'}
     hasBin: true
 
-  shaka-player@5.2.6:
-    resolution: {integrity: sha512-/AIgm9CzhTJu5Ba5l6kKczQn7k6MeMqpQmbtvRrUfgYnWxnQfZ20bhQd7TtD5sCypE9x+nr9vxA6bVBlz+nP8A==}
+  shaka-player@5.2.4:
+    resolution: {integrity: sha512-vf81av2EIcb03jRpeeZBhrPT3PMyggXnZA9k4sxGBxpr/H6v0iEL6b51T2Kwz5YNrQG/yDYoadgBW+oW40LeoA==}
     engines: {node: '>=18'}
 
   sharp@0.34.5:
@@ -9866,18 +10326,6 @@ packages:
 
   wrappy@1.0.2:
     resolution: {integrity: sha512-l4Sp/DRseor9wL6EvV2+TuQn63dMkPjZ/sp9XkghTEbV9KlPS1xUsZ3u7/IQO4wxtcFB4bgpQPRcR3QCvezPcQ==}
-
-  ws@8.20.0:
-    resolution: {integrity: sha512-sAt8BhgNbzCtgGbt2OxmpuryO63ZoDk/sqaB/znQm94T4fCEsy/yV+7CdC1kJhOU9lboAEU7R3kquuycDoibVA==}
-    engines: {node: '>=10.0.0'}
-    peerDependencies:
-      bufferutil: ^4.0.1
-      utf-8-validate: '>=5.0.2'
-    peerDependenciesMeta:
-      bufferutil:
-        optional: true
-      utf-8-validate:
-        optional: true
 
   ws@8.21.0:
     resolution: {integrity: sha512-Vsp28b7DRcimFQvrqu2Wek3z1iYxDCWqHYB8Qsnk/S4RfaCQzPGPyBNuVjJV3cd6UiKtUtp6sNM77gWvzcCH+g==}
@@ -13587,7 +14035,7 @@ snapshots:
       - rollup
       - supports-color
 
-  '@vimeo/player@2.30.4':
+  '@vimeo/player@2.30.3':
     dependencies:
       native-promise-only: 0.8.1
       weakmap-polyfill: 2.0.4
@@ -14269,7 +14717,7 @@ snapshots:
       '@whatwg-node/promise-helpers': 1.3.2
       tslib: 2.8.1
 
-  '@wistia/wistia-player@0.7.13(webpack@5.109.2(csso@5.0.5)(esbuild@0.28.1)(lightningcss@1.33.0)(postcss@8.5.26))':
+  '@wistia/wistia-player@0.7.12(webpack@5.109.2(csso@5.0.5)(esbuild@0.28.1)(lightningcss@1.33.0)(postcss@8.5.26))':
     dependencies:
       dotenv-webpack: 9.0.0(webpack@5.109.2(csso@5.0.5)(esbuild@0.28.1)(lightningcss@1.33.0)(postcss@8.5.26))
       iso8601-duration: 2.1.4
@@ -16250,6 +16698,8 @@ snapshots:
 
   hls.js@1.6.15: {}
 
+  hls.js@1.6.7: {}
+
   hono@4.13.1: {}
 
   hosted-git-info@7.0.2:
@@ -16685,7 +17135,7 @@ snapshots:
       whatwg-encoding: 3.1.1
       whatwg-mimetype: 4.0.0
       whatwg-url: 14.2.0
-      ws: 8.20.0
+      ws: 8.21.0
       xml-name-validator: 5.0.0
     transitivePeerDependencies:
       - bufferutil
@@ -19138,7 +19588,7 @@ snapshots:
       - supports-color
       - typescript
 
-  shaka-player@5.2.6: {}
+  shaka-player@5.2.4: {}
 
   sharp@0.34.5:
     dependencies:
@@ -20741,8 +21191,6 @@ snapshots:
       strip-ansi: 7.2.0
 
   wrappy@1.0.2: {}
-
-  ws@8.20.0: {}
 
   ws@8.21.0: {}
 

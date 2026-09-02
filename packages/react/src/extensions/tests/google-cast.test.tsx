@@ -1,8 +1,8 @@
 import { render } from '@testing-library/react';
+import { GoogleCast as GoogleCastComponent } from '@videojs/google-cast';
+import { HlsJsMedia } from '@videojs/hlsjs-video';
 import type { Media } from '@videojs/media';
-import { GoogleCast as GoogleCastComponent } from '@videojs/media/dom/google-cast';
-import { HlsJsMedia } from '@videojs/media/dom/hls-js';
-import { getMediaComponents } from '@videojs/media/dom/media-host';
+import { getMediaComponents } from '@videojs/media/dom';
 import { describe, expect, it } from 'vite-plus/test';
 
 import { createPlayerWrapper } from '../../testing/mocks';

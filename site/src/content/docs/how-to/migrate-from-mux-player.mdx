@@ -105,6 +105,10 @@ From the CDN, load the video <DocsLink slug="concepts/presets">preset</DocsLink>
 
 If you use a bundler instead of the CDN, the imports are the same three pieces plus the Mux Data extension:
 
+```bash
+npm install @videojs/html @videojs/mux-video @videojs/mux-data
+```
+
 ```js
 import '@videojs/html/video/player';
 import '@videojs/html/video/skin';
@@ -133,7 +137,7 @@ export function MyPlayer() {
 `@videojs/react` gives you real React components rather than one component wrapping a custom element.
 
 ```bash
-npm install @videojs/react
+npm install @videojs/react @videojs/mux-video @videojs/mux-data
 ```
 
 Start with the general-purpose `@videojs/react/video` <DocsLink slug="concepts/presets">preset</DocsLink>, then add the Mux media and analytics components:

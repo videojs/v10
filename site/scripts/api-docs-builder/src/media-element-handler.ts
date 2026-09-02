@@ -293,13 +293,16 @@ function discoverMediaElements(monorepoRoot: string, project: OxcProject): Media
         const host = project.resolveName(mediaDeclaration.file.filePath, composition.hostClassName);
         if (!host || host.declaration.type !== 'ClassDeclaration') continue;
 
+        // The composition may name the host through an import alias; property extraction needs the declared name.
+        const hostClassName = host.declaration.id?.name ?? composition.hostClassName;
+
         sources.push({
           defineFilePath: filePath,
           className: stripElementSuffix(name),
           tagName,
           mediaFilePath: mediaDeclaration.file.filePath,
           hostFilePath: host.file.filePath,
-          hostClassName: composition.hostClassName,
+          hostClassName,
           mediaType: composition.mediaType,
           targetTag: composition.targetTag,
         });

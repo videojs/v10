@@ -26,6 +26,22 @@ Quality selection applies to streaming sources. A progressive MP4 plays at one f
 
 <CustomUiNote />
 
+## Installation
+
+This guide uses the hls.js media component, so install its adapter with the framework façade:
+
+<FrameworkCase frameworks={["react"]}>
+```bash
+pnpm add @videojs/react @videojs/hlsjs-video
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```bash
+pnpm add @videojs/html @videojs/hlsjs-video
+```
+</FrameworkCase>
+
 ## Recommended approach
 
 Let automatic quality selection do its job by default, and offer a quality menu for users who want to pin a rendition. Render the menu only when quality selection is available.

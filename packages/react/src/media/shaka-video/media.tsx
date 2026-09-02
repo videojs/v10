@@ -1,9 +1,7 @@
 'use client';
 
-import type { ShakaMediaProps } from '@videojs/media/dom/shaka';
-import { ShakaMedia, shakaMediaDefaultProps } from '@videojs/media/dom/shaka';
-import type { ReactNode, VideoHTMLAttributes } from 'react';
-import { forwardRef } from 'react';
+import { ShakaMedia, shakaMediaDefaultProps, type ShakaMediaProps } from '@videojs/shaka-video';
+import { forwardRef, type ReactNode, type VideoHTMLAttributes } from 'react';
 
 import { useAttachMedia } from '../../utils/use-attach-media';
 import { useComposedRefs } from '../../utils/use-composed-refs';

@@ -1,4 +1,4 @@
-import type { MuxSource } from '@videojs/media/dom/mux';
+import type { MuxSource } from '@videojs/mux-video';
 
 import { getMuxAssetId } from './mux';
 

@@ -1,4 +1,4 @@
-import { CustomMediaElement } from '@videojs/media/dom/custom-media-element';
+import { CustomMediaElement } from '@videojs/media/dom';
 import { HlsVideoMedia } from '@videojs/spf/hls-video';
 
 import { MediaAttachMixin } from '../../store/media-attach-mixin';

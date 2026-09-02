@@ -1,7 +1,7 @@
 'use client';
 
 import { type MediaStreamType, MediaStreamTypes } from '@videojs/media';
-import type { MuxContentData } from '@videojs/media/dom/mux/source';
+import type { MuxContentData } from '@videojs/mux-video';
 import { useCallback, useSyncExternalStore } from 'react';
 
 /**

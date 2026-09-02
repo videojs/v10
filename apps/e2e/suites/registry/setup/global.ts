@@ -39,6 +39,12 @@ const overlaysDir = resolve(suiteDir, 'overlays');
 const require = createRequire(import.meta.url);
 const shadcnBin = require.resolve('shadcn');
 const children: ChildProcess[] = [];
+/**
+ * Packages the overlays import beyond what the registry items declare. The validation video plays through
+ * `@videojs/react/media/hlsjs-video` and `@videojs/html/media/hlsjs-video`, whose adapter package is an optional peer
+ * of the framework packages, so a consumer installs it explicitly, exactly as a real app would.
+ */
+const overlayDependencies = ['@videojs/hlsjs-video'];
 
 export default async function setup(_config: FullConfig): Promise<() => Promise<void>> {
   await rm(generatedDir, { recursive: true, force: true });
@@ -146,6 +152,10 @@ async function configurePackage(projectDir: string, overrides: Readonly<Record<s
         ...manifest,
         private: true,
         packageManager: 'pnpm@11.17.0',
+        dependencies: {
+          ...manifest.dependencies,
+          ...Object.fromEntries(overlayDependencies.map((name) => [name, overrides[name]])),
+        },
       },
       null,
       2
@@ -372,7 +382,7 @@ async function packRegistryPackages(): Promise<Readonly<Record<string, string>>>
 }
 
 async function registryPackageRoots(): Promise<Set<string>> {
-  const roots = new Set<string>();
+  const roots = new Set<string>(overlayDependencies);
 
   for (const project of registryConsumerProjects) {
     const directory = registryPath(project);

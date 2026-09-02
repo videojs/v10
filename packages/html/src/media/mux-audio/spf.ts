@@ -1,5 +1,5 @@
-import { CustomMediaElement } from '@videojs/media/dom/custom-media-element';
-import { MuxAudioMedia } from '@videojs/spf/mux-audio';
+import { CustomMediaElement } from '@videojs/media/dom';
+import { MuxAudioMedia } from '@videojs/mux-audio/spf';
 
 import { MediaAttachMixin } from '../../store/media-attach-mixin';
 import { MuxAudioMixin } from './mixin';

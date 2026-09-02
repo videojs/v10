@@ -1,8 +1,6 @@
 import { ContextProvider } from '@videojs/element/context';
-import type { Media } from '@videojs/media/dom';
-import { GoogleCast } from '@videojs/media/dom/google-cast';
-import { getMediaComponents } from '@videojs/media/dom/media-host';
-import { HTMLVideoElementHost } from '@videojs/media/dom/video-host';
+import { GoogleCast } from '@videojs/google-cast';
+import { getMediaComponents, HTMLVideoElementHost, type Media } from '@videojs/media/dom';
 import { afterEach, describe, expect, it } from 'vite-plus/test';
 
 import { mediaContext } from '../../player/context';

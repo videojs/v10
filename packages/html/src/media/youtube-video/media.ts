@@ -1,6 +1,6 @@
-import { CustomMediaElement } from '@videojs/media/dom/custom-media-element';
-import { buildYouTubeIframeSrc, YouTubeMedia } from '@videojs/media/dom/youtube';
+import { CustomMediaElement } from '@videojs/media/dom';
 import { escapeHtml } from '@videojs/utils/string';
+import { buildYouTubeIframeSrc, YouTubeMedia } from '@videojs/youtube-video';
 
 import { MediaAttachMixin } from '../../store/media-attach-mixin';
 

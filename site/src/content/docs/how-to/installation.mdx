@@ -11,6 +11,7 @@ import HTMLInstallTabs from '@/components/installation/HTMLInstallTabs.astro';
 import NoCdnMediaNote from '@/components/installation/NoCdnMediaNote.astro';
 import HTMLUsageCodeBlock from '@/components/installation/HTMLUsageCodeBlock';
 import ReactCreateCodeBlock from '@/components/installation/ReactCreateCodeBlock';
+import ReactInstallTabs from '@/components/installation/ReactInstallTabs';
 import ReactUsageCodeBlock from '@/components/installation/ReactUsageCodeBlock';
 import ContentWidth from '@/components/frames/ContentWidth.astro';
 import Aside from '@/components/Aside.astro';
@@ -20,7 +21,6 @@ import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 import HumanCase from '@/components/docs/HumanCase.astro';
 import LLMCase from '@/components/docs/LLMCase.astro';
 import CopyMarkdownButton from '@/components/CopyMarkdownButton.tsx';
-import { TabsRoot, TabsList, TabsPanel, Tab } from '@/components/Tabs.tsx';
 
 <Aside type="caution" title="Beta Software">
 Video.js v10 is currently in _beta_. The API may evolve with [feedback&#x1F64F;](https://github.com/videojs/v10/issues). See the [Changelog](https://github.com/videojs/v10/blob/main/CHANGELOG.md) for recent updates and the <DocsLink slug="concepts/v10-roadmap">Roadmap</DocsLink> for more details on what's coming.
@@ -126,34 +126,7 @@ Video.js supports a wide range of file types and hosting services. It's easy to 
   <HTMLInstallTabs />
 </FrameworkCase>
 <FrameworkCase frameworks={["react"]}>
-  <TabsRoot client:idle>
-    <TabsList client:idle label="Installation">
-      <Tab client:idle value="npm" initial>npm</Tab>
-      <Tab client:idle value="pnpm">pnpm</Tab>
-      <Tab client:idle value="yarn">yarn</Tab>
-      <Tab client:idle value="bun">bun</Tab>
-    </TabsList>
-    <TabsPanel client:idle value="npm" initial>
-      ```bash
-      npm install @videojs/react
-      ```
-    </TabsPanel>
-    <TabsPanel client:idle value="pnpm">
-      ```bash
-      pnpm add @videojs/react
-      ```
-    </TabsPanel>
-    <TabsPanel client:idle value="yarn">
-      ```bash
-      yarn add @videojs/react
-      ```
-    </TabsPanel>
-    <TabsPanel client:idle value="bun">
-      ```bash
-      bun add @videojs/react
-      ```
-    </TabsPanel>
-  </TabsRoot>
+  <ReactInstallTabs client:idle />
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>

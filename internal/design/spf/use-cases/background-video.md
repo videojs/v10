@@ -28,8 +28,8 @@ is the narrower "deliver video-only despite mixed source" use case.
 Phase 1 implemented ([#1586](https://github.com/videojs/v10/issues/1586)):
 `createBackgroundVideoEngine` ships under `@videojs/spf/hls`, beside the other
 HLS engines; `HlsBackgroundVideoMediaElement` and the host-bound
-`HlsBackgroundVideoMedia` ship under `@videojs/spf/hls-background-video`, with
-`@videojs/spf/mux-background-video` re-exporting them under Mux-flavored names.
+`HlsBackgroundVideoMedia` ship under `@videojs/spf/hls-background-video`; html and
+react alias them as `<mux-background-video>` / `MuxBackgroundVideo`.
 The adapter carries no client-side cap: it pins the largest rendition the
 manifest offers, and narrowing that set is a delivery param on the URL. The
 max-resolution picker primitives (`maxResolutionToPixelArea`,

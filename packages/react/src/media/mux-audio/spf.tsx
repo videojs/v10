@@ -1,9 +1,9 @@
 'use client';
 
+import type { MuxMediaProps } from '@videojs/mux-audio/spf';
+import { MuxAudioMedia, muxMediaDefaultProps } from '@videojs/mux-audio/spf';
 import type { HlsAudioMediaProps } from '@videojs/spf/hls-audio';
 import { hlsAudioMediaDefaultProps } from '@videojs/spf/hls-audio';
-import type { MuxMediaProps } from '@videojs/spf/mux-audio';
-import { MuxAudioMedia, muxMediaDefaultProps } from '@videojs/spf/mux-audio';
 import type { AudioHTMLAttributes, ReactNode } from 'react';
 import { forwardRef } from 'react';
 

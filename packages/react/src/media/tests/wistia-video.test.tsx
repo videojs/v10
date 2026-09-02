@@ -3,15 +3,19 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { WistiaVideo } from '../wistia-video';
 
-// Connecting a real player reaches for Wistia's CDN and runs an embed, where this component only renders
-// the tag and writes attributes. `@videojs/media` is what depends on the package; this one names it as a
-// devDependency so the specifier below can resolve, and imports it nowhere else.
-vi.mock('@wistia/wistia-player', () => {
+// Connecting a real player reaches for Wistia's CDN and runs an embed, where this component only renders the tag and
+// writes attributes. Reuse the adapter's engine-free helpers while replacing the entry that registers the real player.
+vi.mock('@videojs/wistia-video', async () => {
+  const helpers = await vi.importActual<typeof import('@videojs/wistia-video/helpers')>(
+    '@videojs/wistia-video/helpers'
+  );
+
   class WistiaPlayer extends HTMLElement {
     static observedAttributes: string[] = [];
   }
+
   customElements.define('wistia-player', WistiaPlayer);
-  return { WistiaPlayer };
+  return { ...helpers, WISTIA_PLAYER_TAG: 'wistia-player' };
 });
 
 const SRC = 'https://wesleyluyten.wistia.com/medias/oifkgmxnkb';

@@ -140,7 +140,11 @@ Replace `<video>` with `<hls-video>`. If you're using the CDN, add an additional
 <script type="module" src="{{VJS10_HTML_CDN_BASE}}/media/hls-video.js"></script>
 ```
 
-Or add an additional import:
+For a package-manager installation, install SPF and add its façade import:
+
+```bash
+npm install @videojs/html @videojs/spf
+```
 
 ```js
 import '@videojs/html/media/hls-video';
@@ -151,6 +155,10 @@ import '@videojs/html/media/hls-video';
 <FrameworkCase frameworks={["react"]}>
 
 Replace `<Video>` with `<HlsVideo>` and add the import:
+
+```bash
+npm install @videojs/react @videojs/spf
+```
 
 ```js
 import { HlsVideo } from '@videojs/react/media/hls-video';
@@ -172,7 +180,11 @@ Replace `<video>` with `<dash-video>`. If you're using the CDN, add an additiona
 <script type="module" src="{{VJS10_HTML_CDN_BASE}}/media/dash-video.js"></script>
 ```
 
-Or add an additional import:
+For a package-manager installation, install dash.js and add its façade import:
+
+```bash
+npm install @videojs/html @videojs/dash-video
+```
 
 ```js
 import '@videojs/html/media/dash-video';
@@ -183,6 +195,10 @@ import '@videojs/html/media/dash-video';
 <FrameworkCase frameworks={["react"]}>
 
 Replace `<Video>` with `<DashVideo>` and update your import:
+
+```bash
+npm install @videojs/react @videojs/dash-video
+```
 
 ```js
 import { DashVideo } from '@videojs/react/media/dash-video';
@@ -200,6 +216,10 @@ Vimeo is supported through a prebuilt component.
 
 Replace `<video>` with `<vimeo-video>` and add the module import:
 
+```bash
+npm install @videojs/html @videojs/vimeo-video
+```
+
 ```js
 import '@videojs/html/media/vimeo-video';
 ```
@@ -209,6 +229,10 @@ import '@videojs/html/media/vimeo-video';
 <FrameworkCase frameworks={["react"]}>
 
 Replace `<Video>` with `<VimeoVideo>` and add the import:
+
+```bash
+npm install @videojs/react @videojs/vimeo-video
+```
 
 ```js
 import { VimeoVideo } from '@videojs/react/media/vimeo-video';

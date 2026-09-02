@@ -11,8 +11,8 @@
  * HLS Medias are: wiring an engine directly shouldn't pull an adapter in with it. Its host is local and narrow, so this
  * entry carries no `@videojs/media` dependency either.
  *
- * `@videojs/spf/mux-background-video` re-exports everything here under Mux-flavored names. Same classes, so the import
- * path is a naming choice and nothing more.
+ * Html and react expose everything here as `<mux-background-video>` / `MuxBackgroundVideo` too. Same classes, so the
+ * name is a naming choice and nothing more.
  */
 export type { HlsBackgroundVideoMediaAPI, HlsBackgroundVideoMediaProps, HlsVideoMediaError } from './adapter';
 export {

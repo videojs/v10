@@ -1,4 +1,4 @@
-import { WistiaMedia } from '@videojs/media/dom/wistia';
+import { WistiaMedia } from '@videojs/wistia-video';
 
 import { MediaAttachMixin } from '../../store/media-attach-mixin';
 

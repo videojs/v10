@@ -1,11 +1,11 @@
 import { ContextConsumer } from '@videojs/element/context';
-import type { Media } from '@videojs/media/dom';
 import {
   addMediaComponent,
   HTMLMediaElementHost,
   type HTMLMediaTargetLike,
+  type Media,
   type MediaComponent,
-} from '@videojs/media/dom/media-host';
+} from '@videojs/media/dom';
 
 import { mediaContext } from '../player/context';
 import { UIElement } from '../ui/ui-element';

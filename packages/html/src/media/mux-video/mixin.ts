@@ -1,5 +1,5 @@
 import { type MediaStreamType, MediaStreamTypes } from '@videojs/media';
-import type { MuxContentData, MuxSourceBase } from '@videojs/media/dom/mux/source';
+import type { MuxContentData, MuxSourceBase } from '@videojs/mux-video';
 import { isUndefined } from '@videojs/utils/predicate';
 import type { AnyConstructor, Constructor } from '@videojs/utils/types';
 

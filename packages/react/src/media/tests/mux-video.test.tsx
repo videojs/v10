@@ -1,6 +1,6 @@
 import { render } from '@testing-library/react';
-import { HlsJsMedia } from '@videojs/media/dom/hls-js';
-import { MuxMedia } from '@videojs/media/dom/mux';
+import { HlsJsMedia } from '@videojs/hlsjs-video';
+import { MuxMedia } from '@videojs/mux-video';
 import type { ReactElement } from 'react';
 import { describe, expect, it, vi } from 'vite-plus/test';
 

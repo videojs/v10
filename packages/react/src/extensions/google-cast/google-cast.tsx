@@ -1,7 +1,10 @@
 'use client';
 
-import type { GoogleCastProps as GoogleCastComponentProps } from '@videojs/media/dom/google-cast';
-import { GoogleCast as GoogleCastComponent, googleCastDefaultProps } from '@videojs/media/dom/google-cast';
+import {
+  GoogleCast as GoogleCastComponent,
+  googleCastDefaultProps,
+  type GoogleCastProps as GoogleCastComponentProps,
+} from '@videojs/google-cast';
 import type { ReactNode } from 'react';
 
 import { useMediaComponent } from '../../utils/use-media-component';

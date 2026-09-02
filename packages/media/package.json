@@ -1,7 +1,7 @@
 {
   "name": "@videojs/media",
   "version": "10.0.0-beta.32",
-  "description": "Media contracts, hosts, and playback engines for Video.js",
+  "description": "Engine-neutral media contracts and browser hosts for Video.js",
   "keywords": [
     "media",
     "player",
@@ -33,27 +33,6 @@
       "development": "./dist/dev/dom.js",
       "default": "./dist/default/dom.js"
     },
-    "./dom/dash": {
-      "types": "./dist/dev/dom/dash/index.d.ts",
-      "browser": {
-        "development": "./dist/dev/dom/dash/index.js",
-        "default": "./dist/default/dom/dash/index.js"
-      },
-      "default": "./dist/default/dom/dash/server.js"
-    },
-    "./dom/wistia": {
-      "types": "./dist/dev/dom/wistia/index.d.ts",
-      "browser": {
-        "development": "./dist/dev/dom/wistia/index.js",
-        "default": "./dist/default/dom/wistia/index.js"
-      },
-      "default": "./dist/default/dom/wistia/server.js"
-    },
-    "./dom/*": {
-      "types": "./dist/dev/dom/*/index.d.ts",
-      "development": "./dist/dev/dom/*/index.js",
-      "default": "./dist/default/dom/*/index.js"
-    },
     "./media-tracks": {
       "types": "./dist/dev/media-tracks.d.ts",
       "development": "./dist/dev/media-tracks.js",
@@ -71,17 +50,9 @@
     "clean": "rimraf --glob dist types '*.tsbuildinfo'"
   },
   "dependencies": {
-    "@videojs/utils": "workspace:*",
-    "@vimeo/player": "^2.30.3",
-    "@wistia/wistia-player": "^0.7.12",
-    "dashjs": "^5.2.0",
-    "hls.js": "^1.6.7",
-    "mux-embed": "^5.17.10",
-    "shaka-player": "^5.2.4"
+    "@videojs/utils": "workspace:*"
   },
   "devDependencies": {
-    "@types/chrome": "^0.1.40",
-    "@types/chromecast-caf-sender": "^1.0.11",
     "jsdom": "^26.1.0",
     "vite-plus": "catalog:",
     "vitest": "catalog:"

@@ -16,6 +16,23 @@
     { "path": "packages/media" },
     { "path": "packages/media/src/dom" },
 
+    { "path": "packages/cloudflare-video" },
+    { "path": "packages/dash-video" },
+    { "path": "packages/google-cast" },
+    { "path": "packages/hlsjs-video" },
+    { "path": "packages/mux" },
+    { "path": "packages/mux-audio" },
+    { "path": "packages/mux-data" },
+    { "path": "packages/mux-video" },
+    { "path": "packages/native-hls-video" },
+    { "path": "packages/shaka-video" },
+    { "path": "packages/spotify-audio" },
+    { "path": "packages/tiktok-video" },
+    { "path": "packages/twitch-video" },
+    { "path": "packages/vimeo-video" },
+    { "path": "packages/wistia-video" },
+    { "path": "packages/youtube-video" },
+
     { "path": "packages/core" },
     { "path": "packages/core/src/dom" },
 

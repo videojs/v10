@@ -1,5 +1,5 @@
-import { CustomMediaElement } from '@videojs/media/dom/custom-media-element';
-import { DashMedia } from '@videojs/media/dom/dash';
+import { DashMedia } from '@videojs/dash-video';
+import { CustomMediaElement } from '@videojs/media/dom';
 
 import { MediaAttachMixin } from '../../store/media-attach-mixin';
 

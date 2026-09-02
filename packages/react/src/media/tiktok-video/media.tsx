@@ -1,9 +1,12 @@
 'use client';
 
-import type { TikTokMediaProps } from '@videojs/media/dom/tiktok';
-import { buildTikTokIframeSrc, TikTokMedia, tiktokMediaDefaultProps } from '@videojs/media/dom/tiktok';
-import type { ReactNode } from 'react';
-import { forwardRef, useState } from 'react';
+import {
+  buildTikTokIframeSrc,
+  TikTokMedia,
+  tiktokMediaDefaultProps,
+  type TikTokMediaProps,
+} from '@videojs/tiktok-video';
+import { forwardRef, type ReactNode, useState } from 'react';
 
 import { useAttachIframe } from '../../utils/use-attach-iframe';
 import { useComposedRefs } from '../../utils/use-composed-refs';

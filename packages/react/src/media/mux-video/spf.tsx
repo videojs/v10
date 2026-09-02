@@ -1,9 +1,9 @@
 'use client';
 
+import type { MuxMediaProps } from '@videojs/mux-video/spf';
+import { MuxVideoMedia, muxMediaDefaultProps } from '@videojs/mux-video/spf';
 import type { HlsVideoMediaProps } from '@videojs/spf/hls-video';
 import { hlsVideoMediaDefaultProps } from '@videojs/spf/hls-video';
-import type { MuxMediaProps } from '@videojs/spf/mux-video';
-import { MuxVideoMedia, muxMediaDefaultProps } from '@videojs/spf/mux-video';
 import type { ReactNode, VideoHTMLAttributes } from 'react';
 import { forwardRef } from 'react';
 

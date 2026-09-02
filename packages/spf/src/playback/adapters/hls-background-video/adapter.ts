@@ -83,8 +83,8 @@ const FATAL_SVTA_CODES: ReadonlySet<number> = new Set<number>([
  * playlist resolves, which is after the pick is made, so the selection clears rather than quietly appending bytes
  * nothing can decode.
  *
- * `@videojs/spf/mux-background-video` is this same Media under a Mux-flavored name — an alias, not a variant. Nothing
- * about the surface changes with the import path.
+ * `<mux-background-video>` in html and react is this same Media under a Mux-flavored name — an alias, not a variant.
+ * Nothing about the surface changes with the name.
  *
  * Everything else the use case fixes rather than exposes: video-only, looping, muted, autoplaying, loading as soon as
  * there is a source. `attach` writes that onto the element and nothing here declares `loop` / `muted` / `autoplay` /

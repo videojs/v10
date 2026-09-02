@@ -1,5 +1,5 @@
 import type { PropertyDeclarationMap } from '@videojs/element';
-import { GoogleCast, type GoogleCastProps } from '@videojs/media/dom/google-cast';
+import { GoogleCast, type GoogleCastProps } from '@videojs/google-cast';
 
 import { MediaComponentElement } from '../media-component-element';
 

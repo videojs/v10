@@ -1,7 +1,10 @@
 'use client';
 
-import type { MuxDataProps as MuxDataComponentProps } from '@videojs/media/dom/mux';
-import { MuxData as MuxDataComponent, muxDataDefaultProps } from '@videojs/media/dom/mux';
+import {
+  MuxData as MuxDataComponent,
+  muxDataDefaultProps,
+  type MuxDataProps as MuxDataComponentProps,
+} from '@videojs/mux-data';
 import type { ReactNode } from 'react';
 
 import { useMediaComponent } from '../../utils/use-media-component';

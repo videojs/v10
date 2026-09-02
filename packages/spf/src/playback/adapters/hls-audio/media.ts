@@ -1,4 +1,4 @@
-import { HTMLAudioElementHost } from '@videojs/media/dom/audio-host';
+import { HTMLAudioElementHost } from '@videojs/media/dom';
 
 import { HlsAudioMediaMixin } from './adapter';
 

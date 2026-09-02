@@ -1,6 +1,5 @@
-import { CustomMediaElement } from '@videojs/media/dom/custom-media-element';
-import type { TikTokMediaProps } from '@videojs/media/dom/tiktok';
-import { buildTikTokIframeSrc, TikTokMedia } from '@videojs/media/dom/tiktok';
+import { CustomMediaElement } from '@videojs/media/dom';
+import { buildTikTokIframeSrc, TikTokMedia, type TikTokMediaProps } from '@videojs/tiktok-video';
 import { escapeHtml } from '@videojs/utils/string';
 
 import { MediaAttachMixin } from '../../store/media-attach-mixin';

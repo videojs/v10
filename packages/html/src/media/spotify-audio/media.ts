@@ -1,5 +1,5 @@
-import { CustomMediaElement } from '@videojs/media/dom/custom-media-element';
-import { buildSpotifyIframeSrc, SpotifyMedia } from '@videojs/media/dom/spotify';
+import { CustomMediaElement } from '@videojs/media/dom';
+import { buildSpotifyIframeSrc, SpotifyMedia } from '@videojs/spotify-audio';
 import { escapeHtml } from '@videojs/utils/string';
 
 import { MediaAttachMixin } from '../../store/media-attach-mixin';

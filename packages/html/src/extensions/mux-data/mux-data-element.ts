@@ -1,5 +1,5 @@
 import type { PropertyDeclarationMap } from '@videojs/element';
-import { MuxData, type MuxDataProps } from '@videojs/media/dom/mux';
+import { MuxData, type MuxDataProps } from '@videojs/mux-data';
 
 import { MediaComponentElement } from '../media-component-element';
 

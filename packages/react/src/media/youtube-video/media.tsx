@@ -1,9 +1,12 @@
 'use client';
 
-import type { YouTubeMediaProps } from '@videojs/media/dom/youtube';
-import { buildYouTubeIframeSrc, YouTubeMedia, youtubeMediaDefaultProps } from '@videojs/media/dom/youtube';
-import type { ReactNode } from 'react';
-import { forwardRef, useState } from 'react';
+import {
+  buildYouTubeIframeSrc,
+  YouTubeMedia,
+  youtubeMediaDefaultProps,
+  type YouTubeMediaProps,
+} from '@videojs/youtube-video';
+import { forwardRef, type ReactNode, useState } from 'react';
 
 import { useAttachIframe } from '../../utils/use-attach-iframe';
 import { useComposedRefs } from '../../utils/use-composed-refs';
