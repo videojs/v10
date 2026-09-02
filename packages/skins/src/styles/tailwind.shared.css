@@ -127,3 +127,9 @@
   background-color: var(--media-accent);
   transition: inset var(--media-duration-fast) ease-in-out;
 }
+
+@utility surface-media-none {
+  background-color: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+}
