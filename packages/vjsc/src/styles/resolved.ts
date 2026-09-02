@@ -1,19 +1,16 @@
-import { readFile, realpath } from 'node:fs/promises';
-import { resolve } from 'node:path';
+import { realpath } from 'node:fs/promises';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-import type { Expression, Program } from '@oxc-project/types';
-import { parseSync } from 'oxc-parser';
-import { walk } from 'oxc-walker';
 import { type OutputChunk, rolldown } from 'rolldown';
 import { twMerge } from 'tailwind-merge';
 
 import { toArray } from '../utils/array';
 import { splitClassNames } from './class-names';
 import { getStyleDefinition, type StyleDefinition, type StyleValue, validateStyleDefinition } from './define';
-import { resolveStyleModule } from './modules';
 import { visitStyleRules } from './tree';
 
-const STYLE_RUNTIME_ID = '\0vjsc:styles-runtime';
+const STYLE_RUNTIME_ENTRY = resolveStyleRuntimeEntry();
 
 export interface ResolvedStyleRule {
   readonly modulePath: string;
@@ -85,56 +82,40 @@ export function utilitiesForRule(rule: ResolvedStyleRule, variants: readonly str
   return utilityGroupsForRule(rule, variants).flatMap(splitClassNames);
 }
 
-/** Collect the exact semantic rules referenced by JSX source. */
-export async function collectReferencedStyleRules(
-  files: readonly string[],
-  styles: ResolvedStyles
-): Promise<ReadonlySet<string>> {
-  const referenced = new Set<string>();
-
-  for (const file of files.filter((entry) => /\.(?:[cm]?ts|tsx)$/.test(entry))) {
-    const sourceText = await readFile(file, 'utf8');
-    const parsed = parseSync(file, sourceText);
-    if (parsed.errors.length > 0) throw new Error(parsed.errors.map((error) => error.message).join('\n'));
-
-    const bindings = styleBindings(parsed.program, file, styles);
-    if (bindings.size === 0) continue;
-
-    walk(parsed.program, {
-      enter(node) {
-        if (
-          node.type !== 'JSXAttribute' ||
-          node.name.type !== 'JSXIdentifier' ||
-          node.name.name !== 'className' ||
-          node.value?.type !== 'JSXExpressionContainer' ||
-          node.value.expression.type === 'JSXEmptyExpression'
-        ) {
-          return;
-        }
-
-        walk(node.value.expression, {
-          enter(expression) {
-            if (expression.type !== 'MemberExpression') return;
-
-            const path = readAccessPath(expression);
-            const [root, ...tokenPath] = path ?? [];
-            const modulePath = root ? bindings.get(root) : undefined;
-            const rule = modulePath ? ruleForToken(styles, modulePath, tokenPath) : undefined;
-            if (!rule) return;
-
-            referenced.add(rule.className);
-            this.skip();
-          },
-        });
-      },
-    });
-  }
-
-  return referenced;
-}
-
 export function isGroupMarker(value: string): boolean {
   return value === 'group' || value.startsWith('group/');
+}
+
+/** Map each named group marker to the semantic classes that declare it under the selected variants. */
+export function collectGroupOwners(
+  rules: readonly ResolvedStyleRule[],
+  variants: readonly string[] = []
+): ReadonlyMap<string, readonly string[]> {
+  const owners = new Map<string, string[]>();
+
+  for (const rule of rules) {
+    for (const utility of utilitiesForRule(rule, variants)) {
+      if (!isGroupMarker(utility)) continue;
+
+      const classNames = owners.get(utility) ?? [];
+
+      if (!classNames.includes(rule.className)) classNames.push(rule.className);
+
+      owners.set(utility, classNames);
+    }
+  }
+
+  return owners;
+}
+
+/**
+ * The `vjsc/styles` module that evaluated style modules import. From source it is the sibling authoring entry; from the
+ * built package it is the public export, so the evaluator never carries a second copy of `styles()`.
+ */
+function resolveStyleRuntimeEntry(): string {
+  const here = fileURLToPath(import.meta.url);
+
+  return here.endsWith('.ts') ? resolve(dirname(here), 'index.ts') : fileURLToPath(import.meta.resolve('vjsc/styles'));
 }
 
 /** Merge loaded modules into one set, validating class and output-file ownership across the set. */
@@ -219,40 +200,6 @@ function resolveModuleRules(definition: StyleDefinition, modulePath: string): Re
   return moduleRules;
 }
 
-function styleBindings(ast: Program, filename: string, styles: ResolvedStyles): ReadonlyMap<string, string> {
-  const bindings = new Map<string, string>();
-
-  for (const statement of ast.body) {
-    if (statement.type !== 'ImportDeclaration' || !statement.source.value.startsWith('.')) continue;
-
-    const defaults = statement.specifiers.filter((specifier) => specifier.type === 'ImportDefaultSpecifier');
-    if (defaults.length !== 1 || statement.specifiers.length !== 1) continue;
-
-    const modulePath = resolveStyleModule(filename, statement.source.value, styles);
-
-    if (modulePath) bindings.set(defaults[0]!.local.name, modulePath);
-  }
-
-  return bindings;
-}
-
-function readAccessPath(expression: Expression): string[] | undefined {
-  if (expression.type === 'Identifier') return [expression.name];
-
-  if (expression.type !== 'MemberExpression') return undefined;
-
-  const object = readAccessPath(expression.object);
-  if (!object) return undefined;
-
-  if (!expression.computed) return [...object, expression.property.name];
-
-  if (expression.property.type === 'Literal' && typeof expression.property.value === 'string') {
-    return [...object, expression.property.value];
-  }
-
-  return undefined;
-}
-
 function splitUtilityGroups(value: StyleValue): string[] {
   const values = toArray(value);
 
@@ -307,10 +254,7 @@ async function evaluateStyleModule(
       {
         name: 'vjsc:styles-runtime',
         resolveId(source) {
-          return source === 'vjsc/styles' ? STYLE_RUNTIME_ID : null;
-        },
-        load(id) {
-          return id === STYLE_RUNTIME_ID ? styleRuntimeSource() : null;
+          return source === 'vjsc/styles' ? STYLE_RUNTIME_ENTRY : null;
         },
       },
     ],
@@ -333,28 +277,4 @@ async function evaluateStyleModule(
   } finally {
     await bundle.close();
   }
-}
-
-function styleRuntimeSource(): string {
-  return `
-    const styleDefinition = Symbol.for('vjsc/styles/definition');
-    const isRule = (value) => value && typeof value === 'object' && 'className' in value && 'utilities' in value;
-    const references = (tree) => Object.fromEntries(
-      Object.entries(tree).map(([name, value]) => [name, isRule(value) ? value.className : references(value)])
-    );
-    const freeze = (value) => {
-      for (const child of Object.values(value)) if (child && typeof child === 'object') freeze(child);
-      return Object.freeze(value);
-    };
-    export function styles(definition) {
-      const result = references(definition.rules);
-      Object.defineProperty(result, styleDefinition, {
-        configurable: false,
-        enumerable: false,
-        value: Object.freeze({ ...definition }),
-        writable: false,
-      });
-      return freeze(result);
-    }
-  `;
 }

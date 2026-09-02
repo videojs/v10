@@ -1,7 +1,13 @@
 import { type Selector, type SelectorComponent, transform } from 'lightningcss';
 
 import type { DesignSystem } from './design-system';
-import { isGroupMarker, type ResolvedStyles, type ResolvedStyleRule, utilitiesForRule } from './resolved';
+import {
+  collectGroupOwners,
+  isGroupMarker,
+  type ResolvedStyles,
+  type ResolvedStyleRule,
+  utilitiesForRule,
+} from './resolved';
 
 const encoder = new TextEncoder();
 
@@ -28,7 +34,7 @@ export interface StyleDiagnostic {
 
 /** Diagnose relationships and structural selectors using only the resolved local styles. */
 export function diagnoseStyles(styles: ResolvedStyles, variants: readonly string[] = []): readonly StyleDiagnostic[] {
-  const owners = collectGroupOwners(styles.rules, variants);
+  const owners = new Set(collectGroupOwners(styles.rules, variants).keys());
   const diagnostics: StyleDiagnostic[] = [];
 
   for (const rule of styles.rules) {
@@ -108,7 +114,7 @@ export function diagnoseCompiledStyles(
   ruleClassNames: ReadonlySet<string>,
   variants: readonly string[] = []
 ): readonly StyleDiagnostic[] {
-  const groupOwners = collectGroupOwners(styles.rules, variants);
+  const groupOwners = new Set(collectGroupOwners(styles.rules, variants).keys());
   const diagnostics: StyleDiagnostic[] = [];
 
   for (const rule of styles.rules) {
@@ -155,18 +161,6 @@ function createDiagnostic(
     rule,
     utilities: [...new Set(utilities)],
   };
-}
-
-function collectGroupOwners(rules: readonly ResolvedStyleRule[], variants: readonly string[]): ReadonlySet<string> {
-  const owners = new Set<string>();
-
-  for (const rule of rules) {
-    for (const utility of utilitiesForRule(rule, variants)) {
-      if (isGroupMarker(utility)) owners.add(utility);
-    }
-  }
-
-  return owners;
 }
 
 function usesPeerRelationship(candidate: string): boolean {

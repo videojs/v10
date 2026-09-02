@@ -1,7 +1,13 @@
 import type { DesignSystem } from './design-system';
 import type { StyleOutputFile, StyleOutputRule } from './output';
 import { renderStylesheets } from './render';
-import { isGroupMarker, type ResolvedStyles, type ResolvedStyleRule, utilitiesForRule } from './resolved';
+import {
+  collectGroupOwners,
+  isGroupMarker,
+  type ResolvedStyles,
+  type ResolvedStyleRule,
+  utilitiesForRule,
+} from './resolved';
 
 export interface CompileStylesOptions {
   readonly design: DesignSystem;
@@ -19,7 +25,7 @@ const compiledStyles = new WeakMap<DesignSystem, Map<string, Promise<ReadonlyMap
 /** Compile semantic rules and group the resulting CSS by each definition's explicit output file. */
 export async function compileStyles(options: CompileStylesOptions): Promise<Map<string, string>> {
   const variants = options.variants ?? [];
-  const groupOwners = collectGroupOwners(options.styles.rules, variants);
+  const groupOwners = uniqueGroupOwners(options.styles.rules, variants);
   const selected = selectRules(options);
   const key = compileKey(options, selected, groupOwners, variants);
   const cache = compiledStyles.get(options.design) ?? new Map<string, Promise<ReadonlyMap<string, string>>>();
@@ -154,29 +160,22 @@ function compileRule(rule: ResolvedStyleRule, design: DesignSystem, variants: re
   return { className: rule.className, candidates, scopeRoot: rule.scopeRoot };
 }
 
-function collectGroupOwners(
+/** Each relationship marker must have exactly one owner before its consumers can be scoped to it. */
+function uniqueGroupOwners(
   rules: readonly ResolvedStyleRule[],
   variants: readonly string[]
 ): ReadonlyMap<string, string> {
-  const groupOwners = new Map<string, string>();
+  const owners = new Map<string, string>();
 
-  for (const rule of rules) {
-    for (const utility of utilitiesForRule(rule, variants)) {
-      if (!isGroupMarker(utility)) continue;
-
-      registerRelationshipOwner(groupOwners, utility, rule);
+  for (const [utility, classNames] of collectGroupOwners(rules, variants)) {
+    if (classNames.length > 1) {
+      throw new Error(
+        `Style relationship marker \`${utility}\` maps to both \`${classNames[0]}\` and \`${classNames[1]}\`.`
+      );
     }
+
+    owners.set(utility, classNames[0]!);
   }
 
-  return groupOwners;
-}
-
-function registerRelationshipOwner(owners: Map<string, string>, utility: string, rule: ResolvedStyleRule): void {
-  const previous = owners.get(utility);
-
-  if (previous && previous !== rule.className) {
-    throw new Error(`Style relationship marker \`${utility}\` maps to both \`${previous}\` and \`${rule.className}\`.`);
-  }
-
-  owners.set(utility, rule.className);
+  return owners;
 }
