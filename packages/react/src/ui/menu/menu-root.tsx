@@ -12,8 +12,8 @@ import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 
 import { useOptionalContainer, useOptionalPlayer } from '../../player/context';
 import { useOptionalPopupGroup } from '../../player/popup-group-context';
+import { useCommittedRef } from '../../utils/use-committed-ref';
 import { useDestroy } from '../../utils/use-destroy';
-import { useLatestRef } from '../../utils/use-latest-ref';
 import { useSafeId } from '../../utils/use-safe-id';
 import { useOptionalControlsContext } from '../controls/context';
 import { usePositionedState } from '../hooks/use-positioned-state';
@@ -52,14 +52,14 @@ export function MenuRoot({
   const [uncontrolledOpen, setUncontrolledOpen] = useState(defaultOpen);
   const resolvedOpen = controlledOpen ?? uncontrolledOpen;
 
-  const onOpenChangeRef = useLatestRef(onOpenChangeProp);
-  const onOpenChangeCompleteRef = useLatestRef(onOpenChangeCompleteProp);
+  const onOpenChangeRef = useCommittedRef(onOpenChangeProp);
+  const onOpenChangeCompleteRef = useCommittedRef(onOpenChangeCompleteProp);
 
-  const closeOnEscapeRef = useLatestRef(closeOnEscape);
-  const closeOnOutsideClickRef = useLatestRef(closeOnOutsideClick);
+  const closeOnEscapeRef = useCommittedRef(closeOnEscape);
+  const closeOnOutsideClickRef = useCommittedRef(closeOnOutsideClick);
 
-  const popupGroupRef = useLatestRef(popupGroup);
-  const isSubmenuRef = useLatestRef(isSubmenu);
+  const popupGroupRef = useCommittedRef(popupGroup);
+  const isSubmenuRef = useCommittedRef(isSubmenu);
 
   const [menu] = useState(() => {
     const instance = createMenu({

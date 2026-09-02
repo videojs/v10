@@ -12,9 +12,9 @@ import { useEffect, useRef, useState } from 'react';
 
 import { useOptionalContainer } from '../../player/context';
 import { useOptionalPopupGroup } from '../../player/popup-group-context';
+import { useCommittedRef } from '../../utils/use-committed-ref';
 import { useDestroy } from '../../utils/use-destroy';
 import { useIsomorphicLayoutEffect } from '../../utils/use-isomorphic-layout-effect';
-import { useLatestRef } from '../../utils/use-latest-ref';
 import { useSafeId } from '../../utils/use-safe-id';
 import { useOptionalControlsContext } from '../controls/context';
 import { usePositionedState } from '../hooks/use-positioned-state';
@@ -54,17 +54,17 @@ export function TooltipRoot({
 
   const groupFromContext = useTooltipGroup();
 
-  // Keep refs that always point to the latest values so the
-  // createTooltip closure never reads stale props.
-  const onOpenChangeRef = useLatestRef(onOpenChangeProp);
-  const onOpenChangeCompleteRef = useLatestRef(onOpenChangeCompleteProp);
-  const delayRef = useLatestRef(delay);
-  const closeDelayRef = useLatestRef(closeDelay);
-  const disableHoverablePopupRef = useLatestRef(disableHoverablePopup);
-  const disabledRef = useLatestRef(disabled);
-  const stickyRef = useLatestRef(sticky);
-  const groupRef = useLatestRef(groupFromContext);
-  const popupGroupRef = useLatestRef(popupGroup);
+  // Publish props once their render commits so the retained createTooltip closure
+  // never adopts values from an abandoned render.
+  const onOpenChangeRef = useCommittedRef(onOpenChangeProp);
+  const onOpenChangeCompleteRef = useCommittedRef(onOpenChangeCompleteProp);
+  const delayRef = useCommittedRef(delay);
+  const closeDelayRef = useCommittedRef(closeDelay);
+  const disableHoverablePopupRef = useCommittedRef(disableHoverablePopup);
+  const disabledRef = useCommittedRef(disabled);
+  const stickyRef = useCommittedRef(sticky);
+  const groupRef = useCommittedRef(groupFromContext);
+  const popupGroupRef = useCommittedRef(popupGroup);
 
   const [tooltip] = useState(() => {
     const instance = createTooltip({

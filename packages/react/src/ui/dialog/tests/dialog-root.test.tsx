@@ -1,13 +1,23 @@
 import { cleanup, render, waitFor } from '@testing-library/react';
-import { StrictMode } from 'react';
+import type { DialogApi } from '@videojs/core/dom';
+import { StrictMode, useLayoutEffect } from 'react';
 import { renderToString } from 'react-dom/server';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { Dialog } from '..';
 import { MockErrorBoundary } from '../../../testing/mocks';
+import { useDialogContext } from '../context';
 
 function Throw(): null {
   throw new Error('abandon render');
+}
+
+function CaptureDialog({ onCapture }: { onCapture: (dialog: DialogApi) => void }): null {
+  const { dialog } = useDialogContext();
+
+  useLayoutEffect(() => onCapture(dialog), [onCapture, dialog]);
+
+  return null;
 }
 
 afterEach(() => {
@@ -65,5 +75,39 @@ describe('DialogRoot', () => {
 
     await waitFor(() => expect(getByRole('dialog')).toBeDefined());
     expect(onOpenChange).toHaveBeenCalledExactlyOnceWith(true);
+  });
+
+  it('keeps the committed onOpenChange when a re-render is abandoned', () => {
+    const committed = vi.fn();
+    const abandoned = vi.fn();
+    let dialog: DialogApi | null = null;
+    const capture = (instance: DialogApi) => {
+      dialog = instance;
+    };
+
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    const { rerender } = render(
+      <MockErrorBoundary>
+        <Dialog.Root onOpenChange={committed}>
+          <CaptureDialog onCapture={capture} />
+        </Dialog.Root>
+      </MockErrorBoundary>
+    );
+
+    rerender(
+      <MockErrorBoundary>
+        <Dialog.Root onOpenChange={abandoned}>
+          <CaptureDialog onCapture={capture} />
+        </Dialog.Root>
+        <Throw />
+      </MockErrorBoundary>
+    );
+
+    // The retained dialog outlives the abandoned render and must still call the committed callback.
+    dialog!.open();
+
+    expect(committed).toHaveBeenCalledExactlyOnceWith(true);
+    expect(abandoned).not.toHaveBeenCalled();
   });
 });
