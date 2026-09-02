@@ -160,6 +160,15 @@ export const reactComponentTarget: ComponentTarget<CoreSchema> = defineComponent
         },
       }),
     ],
-    jsx: { importSource: 'react', attributes: 'react' },
+    jsx: {
+      importSource: 'react',
+      attributes: 'react',
+      className: {
+        merge: { from: '@videojs/utils/style', name: 'cn' },
+        resolve: { from: '@videojs/utils/style', name: 'resolveClassName' },
+        // Every React UI component accepts a state callback for `className` except the plain Container.
+        stateAware: ({ source, imported }) => source === '@videojs/react' && imported !== 'Container',
+      },
+    },
   };
 });

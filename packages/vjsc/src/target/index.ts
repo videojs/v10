@@ -9,6 +9,8 @@ export {
   type ComponentTarget,
   type ComponentTargetOptions,
   defineComponentTarget,
+  type JsxClassNameOptions,
+  type JsxImportBinding,
   type JsxOptions,
   type PrimitiveRewriteContext,
   type PrimitiveRules,

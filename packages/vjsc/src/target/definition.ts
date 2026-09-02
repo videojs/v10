@@ -241,6 +241,22 @@ export type ComponentResolver<Schema extends ComponentSchema> = (
   path: ComponentPath<Schema>
 ) => TargetElement | ComponentRewrite<unknown> | undefined;
 
+/** A local import binding as seen on a JSX element the target lowers. */
+export interface JsxImportBinding {
+  readonly source: string;
+  readonly imported: string;
+}
+
+/** How a target merges authored `className` arrays into its runtime's class-name contract. */
+export interface JsxClassNameOptions {
+  /** Runtime that merges class-name values into one string. */
+  readonly merge: TargetImport;
+  /** Runtime that resolves a state-aware class-name value before merging. Required when `stateAware` matches. */
+  readonly resolve?: TargetImport | undefined;
+  /** Whether an element rendered by this import accepts a state callback for `className`. */
+  stateAware?(binding: JsxImportBinding): boolean;
+}
+
 export interface JsxOptions {
   readonly importSource: string;
   readonly attributes: 'html' | 'react';
@@ -248,6 +264,8 @@ export interface JsxOptions {
   readonly host?: TargetImport | undefined;
   /** Runtime boundary used to resolve component-scoped identifier placeholders. */
   readonly scope?: TargetImport | undefined;
+  /** Lower `className={[...]}` arrays through the target's class-name runtime. Arrays are left as-is when unset. */
+  readonly className?: JsxClassNameOptions | undefined;
 }
 
 export interface TypeMappings {
