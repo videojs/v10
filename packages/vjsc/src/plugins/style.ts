@@ -29,6 +29,7 @@ import {
   utilityGroupsForRule,
 } from '../styles/resolved';
 import { moduleFilename, parseModuleId, type TransformModule } from '../utils/module-id';
+import { toPosixPath } from '../utils/path';
 import { mergeModuleBuildMeta } from './component-meta';
 
 const SCRIPT_ID = /\.[cm]?[jt]sx?(?:\?|$)/;
@@ -76,8 +77,14 @@ interface ViteUserConfig {
   readonly cacheDir?: string | undefined;
 }
 
+/** Vite configuration that lets Tailwind entries import the candidate manifest and recompile when it changes. */
+interface CandidateManifestViteConfig {
+  readonly resolve: { readonly alias: Array<{ find: string; replacement: string }> };
+  readonly server: { readonly watch: { readonly ignored: string[] } };
+}
+
 type StylePluginHooks = Plugin & {
-  config?(config: ViteUserConfig): { resolve: { alias: Array<{ find: string; replacement: string }> } } | null;
+  config?(config: ViteUserConfig): CandidateManifestViteConfig | null;
 };
 
 export function stylePlugin(
@@ -109,7 +116,12 @@ export function stylePlugin(
       const current = useManifest(resolve(userConfig.root ?? process.cwd()), userConfig.cacheDir);
       if (!current) return null;
 
-      return { resolve: { alias: [{ find: CANDIDATES_ALIAS, replacement: current.path }] } };
+      // Vite's watcher skips node_modules and its cache directory, so re-include the manifest; otherwise Tailwind
+      // keeps the CSS it compiled before style modules recorded their utilities.
+      return {
+        resolve: { alias: [{ find: CANDIDATES_ALIAS, replacement: current.path }] },
+        server: { watch: { ignored: [`!${escapeGlobPath(toPosixPath(current.path))}`] } },
+      };
     },
     options(options) {
       cwd = resolve(options.cwd ?? process.cwd());
@@ -553,9 +565,12 @@ interface CandidateManifest {
   record(styles: ResolvedStyles): Promise<void>;
 }
 
-/** Render every utility of the given rules, including variant utilities, as Tailwind `@source inline()` entries. */
-export function renderCandidateManifest(rules: Iterable<ResolvedStyleRule>): string {
-  const candidates = new Set<string>();
+/**
+ * Render every utility of the given rules, including variant utilities, as Tailwind `@source inline()` entries. Extra
+ * candidates carry over entries from an earlier session so a restart never shrinks the manifest.
+ */
+export function renderCandidateManifest(rules: Iterable<ResolvedStyleRule>, extra: Iterable<string> = []): string {
+  const candidates = new Set<string>(extra);
 
   for (const rule of rules) {
     for (const utility of rule.utilities) candidates.add(utility);
@@ -590,8 +605,18 @@ function packageRoot(root: string): string {
   return directory;
 }
 
+/** Read the candidates an existing manifest lists. */
+export function parseCandidateManifest(content: string): string[] {
+  return [...content.matchAll(/^@source inline\(("(?:[^"\\]|\\.)*")\);$/gm)].map(([, json]) => JSON.parse(json!));
+}
+
+function escapeGlobPath(path: string): string {
+  return path.replace(/[[\]{}()*?!]/g, '\\$&');
+}
+
 function createCandidateManifest(path: string): CandidateManifest {
   const rulesByModule = new Map<string, readonly ResolvedStyleRule[]>();
+  const persisted = new Set<string>();
   let written: string | undefined;
 
   const write = async (content: string): Promise<void> => {
@@ -610,11 +635,12 @@ function createCandidateManifest(path: string): CandidateManifest {
       written = await readFile(path, 'utf8').catch(() => undefined);
 
       if (written === undefined) await write(renderCandidateManifest([]));
+      else for (const candidate of parseCandidateManifest(written)) persisted.add(candidate);
     },
     async record(styles) {
       for (const [modulePath, rules] of styles.modules) rulesByModule.set(modulePath, [...rules.values()]);
 
-      await write(renderCandidateManifest([...rulesByModule.values()].flat()));
+      await write(renderCandidateManifest([...rulesByModule.values()].flat(), persisted));
     },
   };
 }

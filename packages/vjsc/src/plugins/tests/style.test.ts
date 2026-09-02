@@ -1,4 +1,4 @@
-import { mkdtemp, readFile } from 'node:fs/promises';
+import { mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 
@@ -9,10 +9,12 @@ import { describe, expect, it } from 'vite-plus/test';
 import { compileStyles } from '../../styles/compile';
 import { loadDesignSystem } from '../../styles/design-system';
 import type { ResolvedStyles, ResolvedStyleRule } from '../../styles/resolved';
+import { toPosixPath } from '../../utils/path';
 import { readComponentSource, readModuleStyles } from '../component-meta';
 import { componentSourcePlugin } from '../component-source';
 import {
   CANDIDATES_ALIAS,
+  parseCandidateManifest,
   renderCandidateManifest,
   resolveCandidateManifestPath,
   type StylePluginConfig,
@@ -61,16 +63,35 @@ describe('resolveCandidateManifestPath', () => {
 });
 
 describe('stylePlugin', () => {
-  it('aliases the default candidate manifest for Vite consumers', () => {
+  it('aliases the default candidate manifest and re-includes it in the Vite watcher', () => {
     const plugin = stylePlugin({ resolvedStyles, mode: 'tailwind' }, {}, undefined, true) as Plugin & {
-      config(config: { root?: string }): { resolve: { alias: Array<{ find: string; replacement: string }> } } | null;
+      config(config: { root?: string }): {
+        resolve: { alias: Array<{ find: string; replacement: string }> };
+        server: { watch: { ignored: string[] } };
+      } | null;
     };
+    const manifest = resolveCandidateManifestPath(import.meta.dirname);
 
     expect(plugin.config({ root: import.meta.dirname })).toEqual({
-      resolve: {
-        alias: [{ find: CANDIDATES_ALIAS, replacement: resolveCandidateManifestPath(import.meta.dirname) }],
-      },
+      resolve: { alias: [{ find: CANDIDATES_ALIAS, replacement: manifest }] },
+      server: { watch: { ignored: [`!${toPosixPath(manifest)}`] } },
     });
+  });
+
+  it('keeps candidates from an earlier session until modules record again', async () => {
+    const manifest = join(await mkdtemp(join(tmpdir(), 'vjsc-candidates-')), 'candidates.css');
+    const plugin = stylePlugin({ resolvedStyles, mode: 'tailwind' }, {}, undefined, manifest);
+
+    await writeFile(manifest, renderCandidateManifest([rule(['old'], 'media-old', ['persisted-class'])]));
+    await transform(
+      `import styles from './fixtures/button.styles'; export const root = <div className={styles.button} />;`,
+      undefined,
+      plugin
+    );
+
+    const content = await readFile(manifest, 'utf8');
+
+    expect(parseCandidateManifest(content)).toEqual(['grid', 'p-0', 'persisted-class', 'shrink-0', 'size-4']);
   });
 
   it('writes a candidate manifest for every resolved style module', async () => {
