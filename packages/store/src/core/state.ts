@@ -1,6 +1,8 @@
 import { noop } from '@videojs/utils/function';
 import { shallowEqual } from '@videojs/utils/object';
 
+import type { AnySlice } from './slice';
+
 export type StateChange = () => void;
 
 export type UnknownState = Record<string, unknown>;
@@ -40,13 +42,18 @@ export function flush(): void {
 
 const hasOwnProp = Object.prototype.hasOwnProperty;
 
+// Snapshots are frozen copies, so membership lives beside them instead of on them.
+const snapshotSlices = new WeakMap<object, ReadonlySet<AnySlice>>();
+
 class StateContainer<T> implements WritableState<T> {
   #current: T;
+  #slices: ReadonlySet<AnySlice> | undefined;
   #listeners = new Set<StateChange>();
   #pending = false;
 
-  constructor(initial: T) {
-    this.#current = Object.freeze({ ...initial });
+  constructor(initial: T, slices?: ReadonlySet<AnySlice>) {
+    this.#slices = slices;
+    this.#current = this.#publish({ ...initial });
   }
 
   get current(): Readonly<T> {
@@ -70,7 +77,7 @@ class StateContainer<T> implements WritableState<T> {
     }
 
     if (changed) {
-      this.#current = Object.freeze(next);
+      this.#current = this.#publish(next);
       this.#markPending();
     }
   }
@@ -80,7 +87,7 @@ class StateContainer<T> implements WritableState<T> {
     // resolved title stays the same. Preserve the public snapshot in that case.
     if (shallowEqual(this.#current, next)) return;
 
-    this.#current = Object.freeze({ ...next });
+    this.#current = this.#publish({ ...next });
     this.#markPending();
   }
 
@@ -117,10 +124,28 @@ class StateContainer<T> implements WritableState<T> {
     pendingContainers.add(this);
     scheduleFlush();
   }
+
+  #publish(next: T): T {
+    const snapshot = Object.freeze(next);
+
+    if (this.#slices) snapshotSlices.set(snapshot as object, this.#slices);
+
+    return snapshot;
+  }
 }
 
-export function createState<T>(initial: T): WritableState<T> {
-  return new StateContainer(initial);
+/**
+ * @param initial - Initial state; the container publishes frozen copies.
+ * @param slices - Slices the state was built from. Every snapshot the container publishes is tagged with them so
+ *   `createSelector` can check membership by identity. Copies of a snapshot carry no tag.
+ */
+export function createState<T>(initial: T, slices?: ReadonlySet<AnySlice>): WritableState<T> {
+  return new StateContainer(initial, slices);
+}
+
+/** Returns the slices a store-owned snapshot was built from, or `undefined` for any other object. */
+export function getSnapshotSlices(snapshot: object): ReadonlySet<AnySlice> | undefined {
+  return snapshotSlices.get(snapshot);
 }
 
 export function isState(value: unknown): value is State<object> {

@@ -1,6 +1,6 @@
 import { assertType, describe, expect, it, vi } from 'vite-plus/test';
 
-import { combine } from '../combine';
+import { collectSlices, combine } from '../combine';
 import { defineSlice, type InferSliceTarget } from '../slice';
 import { createStore } from '../store';
 
@@ -118,5 +118,23 @@ describe('combine', () => {
     expect(store.label).toBe('second');
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('duplicate derived key "label"'));
     warn.mockRestore();
+  });
+});
+
+describe('collectSlices', () => {
+  it('returns a leaf slice by itself', () => {
+    const a = slice({ state: () => ({ count: 0 }) });
+
+    expect([...collectSlices(a)]).toEqual([a]);
+  });
+
+  it('includes every slice nested through combine', () => {
+    const a = slice({ state: () => ({ count: 0 }) });
+    const b = slice({ state: () => ({ label: '' }) });
+    const c = slice({ state: () => ({ flag: false }) });
+    const inner = combine(a, b);
+    const outer = combine(inner, c);
+
+    expect(collectSlices(outer)).toEqual(new Set([outer, inner, a, b, c]));
   });
 });

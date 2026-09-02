@@ -15,6 +15,8 @@ type CombinedTarget<Slices extends readonly AnySlice[]> = Slices extends readonl
   ? unknown
   : UnionToIntersection<InferSliceTarget<Slices[number]>>;
 
+const combinedSlices = new WeakMap<AnySlice, readonly AnySlice[]>();
+
 /**
  * Combines multiple slices into a single slice.
  *
@@ -33,7 +35,7 @@ export function combine<const Slices extends readonly AnySlice[]>(
     warnDuplicates('derived', derivedDefinitions);
   }
 
-  return {
+  const combined: Slice<Target, SourceState, UnionSliceDerivedState<Slices>> = {
     state: (ctx: StateContext<Target>) => {
       const states = slices.map((slice) => slice.state(ctx));
 
@@ -59,6 +61,26 @@ export function combine<const Slices extends readonly AnySlice[]>(
       }
     },
   };
+
+  combinedSlices.set(combined, slices);
+
+  return combined;
+}
+
+/**
+ * Collects a slice together with every slice nested inside it through `combine()`.
+ *
+ * Stores tag their snapshots with this set so selectors can check membership by slice identity instead of guessing from
+ * state keys.
+ */
+export function collectSlices(slice: AnySlice, into = new Set<AnySlice>()): ReadonlySet<AnySlice> {
+  into.add(slice);
+
+  for (const child of combinedSlices.get(slice) ?? []) {
+    collectSlices(child, into);
+  }
+
+  return into;
 }
 
 function warnDuplicates(namespace: string, objects: readonly object[]): void {

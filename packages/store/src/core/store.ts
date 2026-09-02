@@ -1,6 +1,7 @@
 import { isNull, isObject } from '@videojs/utils/predicate';
 
 import { AbortControllerRegistry } from './abort-controller-registry';
+import { collectSlices } from './combine';
 import type { StoreCallbacks } from './config';
 import { throwDestroyedError, throwNoTargetError } from './errors';
 import type {
@@ -71,7 +72,7 @@ export function createStore<Target = unknown>(): StoreFactory<Target> {
     sourceState = initialSourceState;
     const initialDerivedState = derive(sourceState);
 
-    state = createState(publish(sourceState, initialDerivedState));
+    state = createState(publish(sourceState, initialDerivedState), collectSlices(slice));
 
     const store = {
       [STORE_SYMBOL]: true,

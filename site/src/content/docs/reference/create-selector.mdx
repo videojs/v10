@@ -17,6 +17,8 @@ import { createSelector } from "@videojs/store";
 
 `createSelector` creates a type-safe selector function for a given slice. The returned selector extracts that slice's state from the full store state, or returns `undefined` if the slice is not configured.
 
+Store state remembers which slice objects built it, so a selector matches by identity: pass the same slice object to `createStore` (directly or through `combine`) and to `createSelector`. Two slices with the same keys are not interchangeable. Plain objects and copied snapshots carry no slice record and fall back to checking for the slice's first state key.
+
 The built-in selectors (<DocsLink slug="reference/feature-playback">`selectPlayback`</DocsLink>, <DocsLink slug="reference/feature-buffer">`selectBuffer`</DocsLink>, etc.) are all created with `createSelector`. Use it to create selectors for custom slices.
 
 ```ts title="my-custom-selector.ts"
