@@ -41,17 +41,40 @@ export async function compileStyles(options: CompileStylesOptions): Promise<Map<
     });
   }
 
+  const files = orderOutputFiles([...byFile.values()], options);
   const rendered = await renderStylesheets({
     design: options.design,
     ...(options.scope ? { scope: options.scope } : {}),
-    files: [...byFile.values()],
+    files,
   });
 
   const outputFiles = options.ruleClassNames
-    ? new Set([...byFile.keys()])
-    : new Set(options.styles.rules.map((rule) => rule.file));
+    ? files.map((file) => file.name)
+    : [...new Set(options.styles.rules.map((rule) => rule.file))].sort();
 
-  return new Map([...outputFiles].sort().map((file) => [file, rendered.get(file) ?? '']));
+  return new Map(outputFiles.map((file) => [file, rendered.get(file) ?? '']));
+}
+
+/** Order files by their first referenced class so a module's assets follow its class composition, else by name. */
+function orderOutputFiles(files: readonly StyleOutputFile[], options: CompileStylesOptions): StyleOutputFile[] {
+  const byName = (left: StyleOutputFile, right: StyleOutputFile) => left.name.localeCompare(right.name);
+
+  if (!options.ruleClassNames) return [...files].sort(byName);
+
+  const fileByClass = new Map(options.styles.rules.map((rule) => [rule.className, rule.file]));
+  const positions = new Map<string, number>();
+
+  for (const className of options.ruleClassNames) {
+    const file = fileByClass.get(className);
+
+    if (file !== undefined && !positions.has(file)) positions.set(file, positions.size);
+  }
+
+  return [...files].sort(
+    (left, right) =>
+      (positions.get(left.name) ?? Number.POSITIVE_INFINITY) -
+        (positions.get(right.name) ?? Number.POSITIVE_INFINITY) || byName(left, right)
+  );
 }
 
 function compileRule(rule: ResolvedStyleRule, design: DesignSystem, variants: readonly string[]): StyleOutputRule {

@@ -95,6 +95,18 @@ describe('compileStyles', () => {
     expect(rootBase).toBeGreaterThanOrEqual(0);
     expect(rootResponsive).toBeGreaterThan(rootBase);
   });
+  it('orders referenced output files by their first composed class', async () => {
+    const popup = { ...rule('popup', 'media-popup', ['m-0']), file: 'popups.css' };
+    const menu = { ...rule('menu', 'media-menu-popup', ['p-1']), file: 'menus.css' };
+    const styles = await compileStyles({
+      design: await loadDesignSystem(designPath),
+      styles: resolvedStyles([menu, popup]),
+      ruleClassNames: new Set(['media-popup', 'media-menu-popup']),
+    });
+
+    expect([...styles.keys()]).toEqual(['popups.css', 'menus.css']);
+  });
+
   it('combines selected variants in order across rules', async () => {
     const button = rule('root', 'media-button', ['grid', 'p-3'], {
       compact: ['p-1'],

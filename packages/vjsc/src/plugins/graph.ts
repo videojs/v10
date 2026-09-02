@@ -217,7 +217,8 @@ function importedModuleStyles(references: readonly GraphImport[]): GraphModuleIn
 
   return {
     files: [...new Set(files)].sort(),
-    assets: [...new Set(assets)].sort(),
+    // Keep import order: bundled styles rely on it so composed overrides follow the rules they extend.
+    assets: [...new Set(assets)],
   };
 }
 

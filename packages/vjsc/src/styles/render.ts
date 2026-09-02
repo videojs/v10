@@ -37,7 +37,7 @@ export async function renderStylesheets(options: RenderStylesheetsOptions): Prom
 
   const files = new Map<string, string>();
 
-  for (const file of [...options.files].sort((a, b) => a.name.localeCompare(b.name))) {
+  for (const file of options.files) {
     const analyzed = analyzedFiles.get(file);
     if (!analyzed) throw new Error(`Style output '${file.name}' was not compiled.`);
 
