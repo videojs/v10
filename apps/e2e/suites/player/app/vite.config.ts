@@ -4,11 +4,11 @@ import { resolve } from 'node:path';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite-plus';
 
-import { skinMetaDefaults } from '../../../../../packages/skins/build/config.ts';
-import { resolveSkinComponents, resolveSkinStyles } from '../../../../../packages/skins/build/transform.ts';
-import { vjscPlugin } from '../../../../../packages/vjsc/src/vite/index.ts';
+import { createSkinsSourceConfig } from '../../../../../packages/skins/build/vite.ts';
 
 const packageDir = import.meta.dirname;
+// Source skin pages compile authored skins on request; packaged pages keep the built framework packages.
+const skins = createSkinsSourceConfig({ frameworks: 'package' });
 
 function getPageEntries(): Record<string, string> {
   const entries: Record<string, string> = {};
@@ -46,29 +46,12 @@ export default defineConfig({
   define: {
     __DEV__: 'true',
   },
-  plugins: [
-    vjscPlugin({
-      transform: { components: resolveSkinComponents, styles: resolveSkinStyles },
-      meta: { defaults: skinMetaDefaults },
-    }),
-    react({ jsxImportSource: 'react' }),
-  ],
+  plugins: [...skins.plugins, react({ jsxImportSource: 'react' })],
   resolve: {
-    dedupe: ['@videojs/html', '@videojs/react', 'react', 'react-dom', 'vjsc'],
+    ...skins.resolve,
+    dedupe: [...skins.resolve.dedupe, '@videojs/html', '@videojs/react'],
   },
-  optimizeDeps: {
-    exclude: [
-      '@videojs/core',
-      '@videojs/html',
-      '@videojs/icons',
-      '@videojs/react',
-      '@videojs/spf',
-      '@videojs/store',
-      '@videojs/utils',
-      'vjsc',
-      'vjsc/styles',
-    ],
-  },
+  optimizeDeps: { exclude: skins.optimizeDeps.exclude },
   build: {
     outDir: resolve(packageDir, 'dist'),
     emptyOutDir: true,

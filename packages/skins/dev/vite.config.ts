@@ -3,15 +3,12 @@ import { resolve } from 'node:path';
 
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
-import { normalizePath } from 'vite';
 import { defineConfig } from 'vite-plus';
 
-import { iconElementSourcePlugin } from '../../icons/vjsc/vite.ts';
-import { vjscPlugin } from '../../vjsc/src/vite/index.ts';
-import { skinMetaDefaults } from '../build/config.ts';
-import { resolveSkinComponents, resolveSkinStyles } from '../build/transform.ts';
+import { createSkinsSourceConfig } from '../build/vite.ts';
 
 const packageDir = resolve(import.meta.dirname, '..');
+const skins = createSkinsSourceConfig({ tailwind: true, frameworks: 'source' });
 
 /** Branch and commit for the copied preview report; falls back when the checkout has no git metadata. */
 function describeGit(...args: string[]): string {
@@ -21,10 +18,6 @@ function describeGit(...args: string[]): string {
     return 'unknown';
   }
 }
-const reactSourceDir = normalizePath(resolve(packageDir, '../react/src'));
-const htmlDefineDir = normalizePath(resolve(packageDir, '../html/src/define'));
-const htmlIconDir = normalizePath(resolve(packageDir, '../html/src/icons'));
-const htmlIconElementDir = normalizePath(resolve(packageDir, '../html/src/icons/element'));
 
 export default defineConfig({
   root: import.meta.dirname,
@@ -34,30 +27,15 @@ export default defineConfig({
     __PREVIEW_COMMIT__: JSON.stringify(describeGit('rev-parse', '--short', 'HEAD')),
   },
   plugins: [
-    iconElementSourcePlugin(),
-    vjscPlugin({
-      transform: {
-        components: resolveSkinComponents,
-        styles: resolveSkinStyles,
-      },
-      meta: { defaults: skinMetaDefaults },
-      candidates: true,
-    }),
+    ...skins.plugins,
     tailwindcss(),
     // The entry mounts the preview with top-level awaits and must never hot swap. Without a refresh boundary, updates
     // that reach it, such as rebuilt workspace dist files or context modules, fall through to a full reload.
     react({ jsxImportSource: 'react', exclude: [/\/dev\/main\.tsx$/] }),
   ],
   resolve: {
-    alias: [
-      { find: /^@\//, replacement: `${reactSourceDir}/` },
-      { find: /^@videojs\/react(?=\/|$)/, replacement: reactSourceDir },
-      { find: /^@videojs\/html\/icons\/element(?=\/|$)/, replacement: htmlIconElementDir },
-      { find: /^@videojs\/html\/icons(?=\/|$)/, replacement: htmlIconDir },
-      { find: /^@videojs\/html(?=\/|$)/, replacement: htmlDefineDir },
-    ],
+    ...skins.resolve,
     conditions: ['development', 'import', 'module', 'browser', 'default'],
-    dedupe: ['react', 'react-dom'],
   },
   optimizeDeps: {
     // The preview imports every media adapter up front. Prebundle their runtime dependencies before serving so Vite
@@ -73,7 +51,7 @@ export default defineConfig({
       'react/jsx-dev-runtime',
       'react/jsx-runtime',
     ],
-    exclude: ['vjsc', 'vjsc/styles', '@videojs/core', '@videojs/icons', '@videojs/react', '@videojs/utils'],
+    exclude: skins.optimizeDeps.exclude,
     noDiscovery: true,
   },
   server: {
