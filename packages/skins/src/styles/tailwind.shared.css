@@ -159,7 +159,7 @@
   }
 }
 
-/* Browsers with CSS anchor positioning. */
+/* Browsers with CSS anchor positioning. Declared after `media-highlighted` so anchored overrides of highlighted menu items win at equal specificity. */
 @custom-variant media-anchored {
   @supports (top: anchor(top)) {
     @slot;
