@@ -10,26 +10,26 @@ import { PlayButton } from '../../components/buttons/play-button';
 import { VolumePopover } from '../../components/controls/volume-popover';
 import { TimeSlider } from '../../components/sliders/time-slider';
 import controlsStyles from '../../styles/layout/controls.styles';
-import popupStyles from '../../styles/popups/popup.styles';
+import timeStyles from '../../styles/layout/time.styles';
 import { VideoSettingsMenu } from '../video/settings-menu';
 import styles from './controls.styles';
 
 export function DefaultVideoControls() {
   return (
     <$.Controls.Root>
-      <$.Controls.Backdrop className={styles.backdrop} />
-      <$.Controls.Content className={[controlsStyles.root, controlsStyles.surface, styles.content]}>
+      <$.Controls.Backdrop className={controlsStyles.backdrop} />
+      <$.Controls.Content className={[controlsStyles.root, controlsStyles.content]}>
         <$.Tooltip.Provider>
-          <$.Controls.Group className={[popupStyles.surface, styles.primary]}>
+          <$.Controls.Group className={controlsStyles.primary}>
             <ButtonTooltip side="top">
               <PlayButton />
             </ButtonTooltip>
             <VolumePopover className={styles.volumeButton} />
 
             <$.Controls.Group className={styles.timeSliderGroup}>
-              <$.Time.Value className={styles.currentValue} type="current" />
+              <$.Time.Value className={[timeStyles.value, styles.timeValue]} type="current" />
               <TimeSlider />
-              <$.Time.Value className={styles.remainingValue} type="remaining" toggle />
+              <$.Time.Value className={[timeStyles.toggle, styles.timeValue]} type="remaining" toggle />
             </$.Controls.Group>
 
             <ButtonTooltip side="top">
@@ -38,7 +38,7 @@ export function DefaultVideoControls() {
             <VideoSettingsMenu className={styles.settingsButton} />
           </$.Controls.Group>
 
-          <$.Controls.Group className={[popupStyles.surface, styles.secondary]}>
+          <$.Controls.Group className={controlsStyles.secondary}>
             <ButtonTooltip side="top">
               <CastButton />
             </ButtonTooltip>

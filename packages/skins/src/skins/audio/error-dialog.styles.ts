@@ -14,9 +14,9 @@ export default styles({
     popup: {
       className: 'audio-dialog-popup',
       utilities: [
-        'absolute inset-0 z-50 flex h-full max-h-none w-full translate-none flex-row items-center rounded-[99px] py-0 pe-1 outline-hidden not-data-open:hidden',
+        'absolute inset-0 z-50 flex h-full max-h-none w-full translate-none flex-row items-center rounded-media-pill py-0 pe-1 outline-hidden not-data-open:hidden',
         'bg-media-background text-media-controls-foreground backdrop-blur-lg backdrop-saturate-150',
-        'transition-[opacity,filter] duration-250 ease-out',
+        'transition-[opacity,filter] duration-(--media-duration-slower) ease-out',
         'data-starting-style:blur-xs data-starting-style:opacity-0',
         'data-ending-style:blur-xs data-ending-style:opacity-0',
       ],

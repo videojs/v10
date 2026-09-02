@@ -11,21 +11,20 @@ import { PlayButton } from '../../components/buttons/play-button';
 import { VolumePopover } from '../../components/controls/volume-popover';
 import { CaptionsMenu } from '../../components/menus/captions-menu';
 import controlsStyles from '../../styles/layout/controls.styles';
-import popupStyles from '../../styles/popups/popup.styles';
 import styles from './controls.styles';
 
 export function DefaultLiveVideoControls() {
   return (
     <$.Controls.Root>
-      <$.Controls.Backdrop className={styles.backdrop} />
-      <$.Controls.Content className={[controlsStyles.root, controlsStyles.surface, styles.content]}>
+      <$.Controls.Backdrop className={controlsStyles.backdrop} />
+      <$.Controls.Content className={[controlsStyles.root, controlsStyles.content, styles.spaced]}>
         <$.Tooltip.Provider>
-          <$.Controls.Group className={[popupStyles.surface, styles.primary]}>
+          <$.Controls.Group className={[controlsStyles.primary, styles.spaced]}>
             <ButtonTooltip side="top">
               <PlayButton />
             </ButtonTooltip>
             <LiveButton />
-            <Box aria-hidden="true" className={styles.spacer} />
+            <Box aria-hidden="true" className={controlsStyles.spacer} />
             <VolumePopover />
             <CaptionsMenu className={styles.captionsMenu} />
             <ButtonTooltip side="top">

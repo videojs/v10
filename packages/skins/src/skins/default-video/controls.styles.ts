@@ -3,69 +3,9 @@ import { styles } from 'vjsc/styles';
 export default styles({
   file: 'video/controls.css',
   rules: {
-    content: {
-      className: 'video-controls-content',
-      utilities: [
-        'group/controls contents p-1 text-white',
-        '[--media-popover-side-offset:--spacing(3)]',
-        '[--media-tooltip-side-offset:var(--media-popover-side-offset)]',
-        '[--media-popover-boundary-offset:0.75rem] [--media-tooltip-boundary-offset:var(--media-popover-boundary-offset)]',
-        '@lg/media-root:absolute @lg/media-root:inset-x-2 @lg/media-root:bottom-2 @lg/media-root:z-10',
-        '@lg/media-root:flex @lg/media-root:items-center @lg/media-root:rounded-media-control',
-        'text-shadow-media',
-        '@2xl/media-root:inset-x-3 @2xl/media-root:bottom-3',
-        '@lg/media-root:not-data-visible:pointer-events-none @lg/media-root:not-data-visible:opacity-0',
-        '@lg/media-root:motion-safe:not-data-visible:scale-95 @lg/media-root:motion-safe:not-data-visible:translate-y-1',
-        '@lg/media-root:pointer-fine:motion-safe:not-data-visible:blur-sm',
-        'transition-[filter,opacity,scale,translate] duration-[calc(var(--media-controls-transition-duration)/2)] ease-out',
-        '@lg/media-root:not-data-visible:duration-(--media-controls-transition-duration)',
-      ],
-    },
-    backdrop: {
-      className: 'video-controls-backdrop',
-      utilities: [
-        'pointer-events-none absolute inset-0 z-10 rounded-[inherit]',
-        'bg-linear-to-t from-black/50 via-black/30 via-25% to-transparent',
-        'transition-opacity duration-(--media-controls-transition-duration) ease-out not-data-visible:opacity-0',
-      ],
-    },
-    primary: {
-      className: 'video-controls-primary',
-      utilities: [
-        'absolute inset-x-2 bottom-2 z-10 flex origin-bottom items-center rounded-media-control',
-        'p-1',
-        '@lg/media-root:contents',
-        '@lg/media-root:rounded-none @lg/media-root:bg-transparent @lg/media-root:shadow-none @lg/media-root:ring-0',
-        '@lg/media-root:backdrop-filter-none @lg/media-root:after:hidden',
-        '@max-lg/media-root:group-[:not([data-visible])]/controls:pointer-events-none',
-        '@max-lg/media-root:group-[:not([data-visible])]/controls:opacity-0',
-        '@max-lg/media-root:motion-safe:group-[:not([data-visible])]/controls:scale-95',
-        '@max-lg/media-root:motion-safe:group-[:not([data-visible])]/controls:translate-y-1',
-        '@max-lg/media-root:pointer-fine:motion-safe:group-[:not([data-visible])]/controls:blur-sm',
-        'transition-[filter,opacity,scale,translate] duration-[calc(var(--media-controls-transition-duration)/2)] ease-out',
-        '@max-lg/media-root:group-[:not([data-visible])]/controls:duration-(--media-controls-transition-duration)',
-      ],
-    },
-    secondary: {
-      className: 'video-controls-secondary',
-      utilities: [
-        'absolute top-2 right-2 z-10 flex origin-top items-center gap-px rounded-media-control',
-        'p-1',
-        '@lg/media-root:static @lg/media-root:flex @lg/media-root:p-0',
-        '@lg/media-root:rounded-none @lg/media-root:bg-transparent @lg/media-root:shadow-none @lg/media-root:ring-0',
-        '@lg/media-root:backdrop-filter-none @lg/media-root:after:hidden',
-        '@max-lg/media-root:group-[:not([data-visible])]/controls:pointer-events-none',
-        '@max-lg/media-root:group-[:not([data-visible])]/controls:opacity-0',
-        '@max-lg/media-root:motion-safe:group-[:not([data-visible])]/controls:scale-95',
-        '@max-lg/media-root:motion-safe:group-[:not([data-visible])]/controls:-translate-y-1',
-        '@max-lg/media-root:pointer-fine:motion-safe:group-[:not([data-visible])]/controls:blur-sm',
-        'transition-[filter,opacity,scale,translate] duration-[calc(var(--media-controls-transition-duration)/2)] ease-out',
-        '@max-lg/media-root:group-[:not([data-visible])]/controls:duration-(--media-controls-transition-duration)',
-      ],
-    },
     captionsButton: {
       className: 'video-controls-captions-button',
-      utilities: '@max-lg/media-root:hidden',
+      utilities: '@max-media-compact/media-root:hidden',
     },
     volumeButton: {
       className: 'video-controls-volume-button',
@@ -73,24 +13,15 @@ export default styles({
     },
     settingsButton: {
       className: 'video-controls-settings-button',
-      utilities: '@lg/media-root:ms-px',
+      utilities: '@media-compact/media-root:ms-px',
     },
     timeSliderGroup: {
       className: 'video-time-slider-group',
-      utilities: ['@container/media-time flex flex-1 items-center gap-2.5 px-2 @lg/media-root:px-3'],
+      utilities: '@container/media-time flex flex-1 items-center gap-2.5 px-2 @media-compact/media-root:px-3',
     },
-    currentValue: {
-      className: 'video-time-current-value',
-      utilities: 'tabular-nums @max-[16rem]/media-time:hidden',
-    },
-    remainingValue: {
-      className: 'video-time-remaining-value',
-      utilities: [
-        'cursor-pointer tabular-nums rounded-sm outline-2 -outline-offset-2 outline-transparent',
-        '@max-[16rem]/media-time:hidden',
-        'transition-[outline-color,outline-offset] duration-100 ease-out',
-        'focus-visible:outline-white focus-visible:outline-offset-2',
-      ],
+    timeValue: {
+      className: 'video-time-value',
+      utilities: '@max-[16rem]/media-time:hidden',
     },
   },
 });

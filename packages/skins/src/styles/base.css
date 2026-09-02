@@ -1,4 +1,6 @@
 @layer base, components, utilities;
+/* Preference overrides win over theme tokens regardless of selector specificity. */
+@layer base.theme, base.preferences;
 
 @import "./captions.css";
 @import "./themes/theme.css";

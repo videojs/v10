@@ -39,22 +39,13 @@ export default styles({
     transition: {
       className: 'media-popup-transition',
       utilities: [
-        'transition-[opacity,filter,transform,scale] duration-100 ease-out motion-reduce:duration-0!',
-        'data-ending-style:duration-50 motion-reduce:data-ending-style:duration-0!',
+        'transition-[opacity,filter,transform,scale] duration-(--media-duration-fast) ease-out motion-reduce:duration-0!',
+        'data-ending-style:duration-(--media-duration-instant) motion-reduce:data-ending-style:duration-0!',
       ],
     },
     surface: {
       className: 'media-popup-surface',
-      utilities: [
-        'bg-media-popover text-media-popover-foreground backdrop-blur-lg backdrop-saturate-150',
-        'shadow-media-sm',
-        'after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit]',
-        'after:shadow-media-surface-inset',
-        'opaque:bg-media-background opaque:backdrop-filter-none',
-        'opaque:after:shadow-media-surface-inset-opaque',
-        'forced-colors:bg-[Canvas] forced-colors:text-[CanvasText] forced-colors:ring-[CanvasText]',
-        'forced-colors:after:shadow-media-surface-inset-forced',
-      ],
+      utilities: 'bg-media-popover text-media-popover-foreground surface-media after:surface-media-inset',
       variants: {
         minimal: 'after:hidden',
       },

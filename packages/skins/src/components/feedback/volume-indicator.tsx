@@ -4,12 +4,13 @@ import { VolumeHighIcon, VolumeLowIcon, VolumeOffIcon } from '@videojs/icons/vjs
 import type { Props } from 'vjsc/components';
 
 import type { SkinComponentMeta } from '../../meta';
+import indicatorStyles from '../../styles/feedback/indicator.styles';
 import styles from '../../styles/feedback/volume-indicator.styles';
 
 export function VolumeIndicator({ className, ...props }: Props<CoreProps> = {}) {
   return (
-    <$.VolumeIndicator.Root className={[styles.root, className]} {...props}>
-      <$.VolumeIndicator.Fill className={styles.fill}>
+    <$.VolumeIndicator.Root className={[indicatorStyles.root, styles.root, className]} {...props}>
+      <$.VolumeIndicator.Fill className={[indicatorStyles.content, styles.fill]}>
         <VolumeHighIcon className={styles.highIcon} />
         <VolumeLowIcon className={styles.lowIcon} />
         <VolumeOffIcon className={styles.offIcon} />

@@ -1,4 +1,4 @@
-@layer base {
+@layer base.theme {
   .media-skin:is([data-preset="audio"], [data-preset="live-audio"]) {
     --media-background: light-dark(oklch(1 0 0), oklch(0 0 0));
     --media-foreground: light-dark(oklch(0 0 0), oklch(1 0 0));
@@ -13,18 +13,20 @@
     --media-ring: var(--media-foreground);
     --media-default-accent-color: light-dark(oklch(0 0 0), oklch(1 0 0));
     --media-internal-accent-text-fallback: light-dark(oklch(1 0 0), oklch(0 0 0));
-    --media-focus-ring-color: light-dark(oklch(0 0 0), oklch(1 0 0));
+    --media-popover-boundary-offset: calc(var(--media-spacing) * 2);
+    --media-popover-side-offset: calc(var(--media-spacing) * 3);
+    --media-slider-preview-label-offset: calc(var(--media-spacing) * 10);
   }
 
   .media-skin:is([data-preset="audio"], [data-preset="live-audio"])[data-theme="minimal"] {
     --media-controls: var(--media-background);
     --media-popover: var(--media-background);
+    --media-popover-boundary-offset: calc(var(--media-spacing) * 3);
   }
 
   @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
     .media-skin:is([data-preset="audio"], [data-preset="live-audio"]) {
       --media-controls: var(--media-background);
-      --media-popover: var(--media-background);
       --media-surface-border: light-dark(oklch(0 0 0 / 0.05), transparent);
     }
   }

@@ -10,14 +10,15 @@ import { PlayButton } from '../../components/buttons/play-button';
 import { VolumePopover } from '../../components/controls/volume-popover';
 import { TimeSlider } from '../../components/sliders/time-slider';
 import controlsStyles from '../../styles/layout/controls.styles';
+import timeStyles from '../../styles/layout/time.styles';
 import { VideoSettingsMenu } from '../video/settings-menu';
 import styles from './controls.styles';
 
 export function MinimalVideoControls() {
   return (
     <$.Controls.Root>
-      <$.Controls.Backdrop className={styles.backdrop} />
-      <$.Controls.Content className={[controlsStyles.root, styles.content]}>
+      <$.Controls.Backdrop className={controlsStyles.backdrop} />
+      <$.Controls.Content className={[controlsStyles.root, controlsStyles.content, styles.content]}>
         <$.Tooltip.Provider>
           <$.Controls.Group className={styles.start}>
             <ButtonTooltip side="top">
@@ -27,10 +28,10 @@ export function MinimalVideoControls() {
           </$.Controls.Group>
 
           <$.Controls.Group className={styles.timeSliderGroup}>
-            <$.Time.Group className={styles.timeGroup}>
-              <$.Time.Value className={styles.currentValue} type="current" toggle />
-              <$.Time.Separator className={styles.timeSeparator} />
-              <$.Time.Value className={styles.durationValue} type="duration" />
+            <$.Time.Group className={timeStyles.group}>
+              <$.Time.Value className={[timeStyles.toggle, timeStyles.currentValue]} type="current" toggle />
+              <$.Time.Separator className={timeStyles.separator} />
+              <$.Time.Value className={timeStyles.durationValue} type="duration" />
             </$.Time.Group>
             <TimeSlider previewOverflow="clamp" />
           </$.Controls.Group>

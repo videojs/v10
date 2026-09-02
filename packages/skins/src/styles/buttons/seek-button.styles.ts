@@ -17,7 +17,7 @@ export default styles({
     },
     label: {
       className: 'media-seek-button-label',
-      utilities: 'absolute bottom-[-3px] text-[0.715em] font-medium tracking-[-0.05em] tabular-nums',
+      utilities: 'absolute bottom-[-3px] text-media-xs font-medium tracking-[-0.05em] tabular-nums',
     },
     backwardLabel: {
       className: 'media-seek-button-backward-label',

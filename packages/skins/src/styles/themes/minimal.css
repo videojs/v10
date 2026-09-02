@@ -1,4 +1,4 @@
-@layer base {
+@layer base.theme {
   .media-skin[data-theme="minimal"] {
     --media-caption-controls-y: calc(var(--media-spacing) * -18);
     --media-control-corner-shape: squircle;
@@ -6,9 +6,27 @@
     --media-control-size: calc(var(--media-spacing) * 9.5);
     --media-popover: oklch(0 0 0 / 0.5);
     --media-border: oklch(1 0 0 / 0.1);
+    --media-frame-border: var(--media-border-color, light-dark(rgb(0 0 0 / 0.15), rgb(255 255 255 / 0.15)));
     --media-shadow-sm: 0 1px 2px oklch(0 0 0 / 0.2);
+    --media-controls-gradient: linear-gradient(
+      to top in oklab,
+      oklch(from var(--media-scrim) l c h / 0.7),
+      oklch(from var(--media-scrim) l c h / 0.5) calc(var(--media-spacing) * 30),
+      transparent
+    );
+    --media-indicator-gradient: linear-gradient(
+      to bottom,
+      oklch(from var(--media-scrim) l c h / 0.35),
+      oklch(from var(--media-scrim) l c h / 0.2) calc(var(--media-spacing) * 12),
+      transparent
+    );
     --media-menu-item-border-radius: calc(var(--media-spacing) * 1.5);
+    --media-popover-boundary-offset: calc(var(--media-spacing) * 2);
+    --media-popover-side-offset: calc(var(--media-spacing) * 5);
+    --media-popup-radius: calc(var(--media-spacing) * 2.5);
     --media-popup-translate-distance: calc(var(--media-spacing) * 2);
+    --media-slider-preview-offset: calc(var(--media-spacing) * 14);
+    --media-slider-preview-label-offset: calc(var(--media-spacing) * 7);
     --media-video-border-radius: var(--media-border-radius, 12px);
   }
 }

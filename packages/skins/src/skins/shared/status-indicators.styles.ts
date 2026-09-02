@@ -5,7 +5,8 @@ export default styles({
   rules: {
     root: {
       className: 'video-status-indicators',
-      utilities: ['pointer-events-none absolute inset-0 grid grid-cols-3 items-center justify-items-center text-white'],
+      utilities:
+        'pointer-events-none absolute inset-0 grid grid-cols-3 items-center justify-items-center text-media-controls-foreground',
     },
   },
 });

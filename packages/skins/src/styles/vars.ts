@@ -114,7 +114,7 @@ export const vars = {
   },
   '--media-ring': {
     kind: 'internal',
-    description: 'Scoped focus-ring color.',
+    description: 'Scoped focus-ring color, contrast-aware per preset and forced-colors mode.',
   },
   '--media-shadow-sm': {
     kind: 'internal',
@@ -135,10 +135,6 @@ export const vars = {
   '--media-internal-accent-text-fallback': {
     kind: 'internal',
     description: 'Theme color used to derive legible accent text when no public accent is configured.',
-  },
-  '--media-focus-ring-color': {
-    kind: 'internal',
-    description: 'Contrast-aware focus-ring color selected by the active Skin.',
   },
   '--media-controls-transition-duration': {
     kind: 'internal',
@@ -215,6 +211,62 @@ export const vars = {
   '--media-spacing': {
     kind: 'internal',
     description: 'Scoped Tailwind spacing unit scaled for fullscreen UI.',
+  },
+  '--media-scrim': {
+    kind: 'internal',
+    description: 'Opaque base color for translucent overlays such as backdrops, indicator pills, and thumbnails.',
+  },
+  '--media-frame-border': {
+    kind: 'internal',
+    description: 'Resolved hairline drawn around the player, derived from the public border color.',
+  },
+  '--media-controls-gradient': {
+    kind: 'internal',
+    description: 'Theme gradient painted behind the video controls.',
+  },
+  '--media-indicator-gradient': {
+    kind: 'internal',
+    description: 'Theme gradient painted behind Minimal status and volume indicators.',
+  },
+  '--media-surface-backdrop-filter': {
+    kind: 'internal',
+    description: 'Backdrop filter shared by translucent surfaces; preferences switch it off.',
+  },
+  '--media-surface-inset-shadow': {
+    kind: 'internal',
+    description: 'Inner highlight shared by translucent surfaces; preferences switch its strength.',
+  },
+  '--media-popup-radius': {
+    kind: 'internal',
+    description: 'Theme corner radius shared by menu popups and slider thumbnails.',
+  },
+  '--media-duration-instant': {
+    kind: 'internal',
+    description: 'Shortest transition duration, also the reduced-motion target for every longer duration.',
+  },
+  '--media-duration-fast': {
+    kind: 'internal',
+    description: 'Transition duration for hover, focus, and highlight changes.',
+  },
+  '--media-duration': {
+    kind: 'internal',
+    description: 'Transition duration for icon swaps and control state changes.',
+  },
+  '--media-duration-slow': {
+    kind: 'internal',
+    description: 'Transition duration for previews, fills, and status entrances.',
+  },
+  '--media-duration-slower': {
+    kind: 'internal',
+    description: 'Transition duration for posters, dialogs, and indicator entrances.',
+  },
+  '--media-slider-preview-offset': {
+    kind: 'internal',
+    description: 'Distance between the time slider and its thumbnail preview.',
+  },
+  '--media-slider-preview-label-offset': {
+    kind: 'internal',
+    description: 'Distance between the time slider and its time or chapter label.',
   },
   '--media-caption-track-delay': {
     kind: 'runtime',

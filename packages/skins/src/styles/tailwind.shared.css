@@ -1,33 +1,48 @@
 @theme inline {
   --color-media-accent: var(--media-primary);
   --color-media-accent-text: var(--media-accent-foreground);
+
   --color-media-background: var(--media-background);
   --color-media-border: var(--media-border);
+
   --color-media-control-hover: var(--media-accent);
   --color-media-controls: var(--media-controls);
   --color-media-controls-foreground: var(--media-controls-foreground);
+
   --color-media-foreground: var(--media-foreground);
+
   --color-media-muted: var(--media-muted);
   --color-media-muted-foreground: var(--media-muted-foreground);
+
   --color-media-popover: var(--media-popover);
   --color-media-popover-foreground: var(--media-popover-foreground);
+
   --color-media-primary: var(--media-primary);
   --color-media-primary-foreground: var(--media-primary-foreground);
+
   --color-media-ring: var(--media-ring);
+  --color-media-scrim: var(--media-scrim);
+
+  --container-media-compact: 32rem;
+  --container-media-wide: 42rem;
+
   --text-media-xs: 0.7em;
   --text-media-sm: calc(var(--media-spacing) * 2.75);
   --text-media: calc(var(--media-spacing) * 3.25);
   --text-media-lg: calc(var(--media-spacing) * 3.75);
+
+  --spacing-media-icon-sm: calc(var(--media-icon-size, calc(var(--media-spacing) * 4.5)) * 7 / 9);
   --spacing-media-icon: var(--media-icon-size, calc(var(--media-spacing) * 4.5));
   --spacing-media-icon-lg: calc(var(--media-icon-size, calc(var(--media-spacing) * 4.5)) * 1.5);
   --spacing-media-icon-xl: calc(var(--media-icon-size, calc(var(--media-spacing) * 4.5)) * 2);
+
   --spacing-media-control: var(--media-control-size);
+
   --radius-media-control: var(--media-control-radius);
+  --radius-media-pill: 9999px;
+  --radius-media-popup: var(--media-popup-radius);
+
   --drop-shadow-media-icon: 0 1px 0 var(--media-shadow-current-color);
-  --shadow-media-surface-inset: inset 0 1px 0 0 rgb(255 255 255 / 0.1), inset 0 0 0 1px rgb(255 255 255 / 0.05);
-  --shadow-media-surface-inset-opaque:
-    inset 0 1px 0 0 rgb(255 255 255 / 0.25), inset 0 0 0 1px rgb(255 255 255 / 0.125);
-  --shadow-media-surface-inset-forced: inset 0 1px 0 0 CanvasText, inset 0 0 0 1px CanvasText;
   --text-shadow-media: 0 1px 0 var(--media-shadow-current-color);
 }
 
@@ -41,8 +56,23 @@
   }
 }
 
-@utility shadow-media-sm {
+@utility surface-media {
   box-shadow:
     0 0 0 1px var(--media-surface-border, var(--media-border)),
     var(--media-shadow-sm);
+  backdrop-filter: var(--media-surface-backdrop-filter);
+}
+
+@utility surface-media-inset {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+  border-radius: inherit;
+  box-shadow: var(--media-surface-inset-shadow);
+}
+
+@utility focus-ring-media {
+  outline: 2px solid transparent;
+  outline-offset: -2px;
 }

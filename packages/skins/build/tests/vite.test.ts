@@ -36,15 +36,59 @@ const skins = [
   'minimal-audio',
 ] as const;
 const skinContracts = {
-  'default-video': { exportName: 'DefaultVideoSkin', theme: 'default', preset: 'video' },
-  'minimal-video': { exportName: 'MinimalVideoSkin', theme: 'minimal', preset: 'video' },
-  'default-live-video': { exportName: 'DefaultLiveVideoSkin', theme: 'default', preset: 'live-video' },
-  'minimal-live-video': { exportName: 'MinimalLiveVideoSkin', theme: 'minimal', preset: 'live-video' },
-  'default-live-audio': { exportName: 'DefaultLiveAudioSkin', theme: 'default', preset: 'live-audio' },
-  'minimal-live-audio': { exportName: 'MinimalLiveAudioSkin', theme: 'minimal', preset: 'live-audio' },
-  'default-audio': { exportName: 'DefaultAudioSkin', theme: 'default', preset: 'audio' },
-  'minimal-audio': { exportName: 'MinimalAudioSkin', theme: 'minimal', preset: 'audio' },
-} as const satisfies Record<(typeof skins)[number], { exportName: string; theme: string; preset: string }>;
+  'default-video': {
+    exportName: 'DefaultVideoSkin',
+    theme: 'default',
+    preset: 'video',
+    stylesheet: 'video/controls.css',
+  },
+  'minimal-video': {
+    exportName: 'MinimalVideoSkin',
+    theme: 'minimal',
+    preset: 'video',
+    stylesheet: 'video/controls.css',
+  },
+  'default-live-video': {
+    exportName: 'DefaultLiveVideoSkin',
+    theme: 'default',
+    preset: 'live-video',
+    stylesheet: 'live-video/controls.css',
+  },
+  'minimal-live-video': {
+    exportName: 'MinimalLiveVideoSkin',
+    theme: 'minimal',
+    preset: 'live-video',
+    stylesheet: 'live-video/controls.css',
+  },
+  // Live audio controls are fully shared with the audio controls module.
+  'default-live-audio': {
+    exportName: 'DefaultLiveAudioSkin',
+    theme: 'default',
+    preset: 'live-audio',
+    stylesheet: 'audio/controls.css',
+  },
+  'minimal-live-audio': {
+    exportName: 'MinimalLiveAudioSkin',
+    theme: 'minimal',
+    preset: 'live-audio',
+    stylesheet: 'audio/controls.css',
+  },
+  'default-audio': {
+    exportName: 'DefaultAudioSkin',
+    theme: 'default',
+    preset: 'audio',
+    stylesheet: 'audio/controls.css',
+  },
+  'minimal-audio': {
+    exportName: 'MinimalAudioSkin',
+    theme: 'minimal',
+    preset: 'audio',
+    stylesheet: 'audio/controls.css',
+  },
+} as const satisfies Record<
+  (typeof skins)[number],
+  { exportName: string; theme: string; preset: string; stylesheet: string }
+>;
 const styles = ['css', 'tailwind'] as const;
 const variants = frameworks.flatMap((framework) =>
   skins.flatMap((skin) => styles.map((style) => ({ framework, skin, style })))
@@ -94,7 +138,7 @@ describe('Skins Vite workflow', () => {
     for (const variant of variants) {
       const url = skinUrl(variant);
       const result = await server.transformRequest(url);
-      const { exportName: skinExport, theme, preset } = skinContracts[variant.skin];
+      const { exportName: skinExport, theme, preset, stylesheet } = skinContracts[variant.skin];
 
       expect(result?.code, url).toContain(skinExport);
       expect(result?.code, url).toContain('data-theme');
@@ -113,7 +157,7 @@ describe('Skins Vite workflow', () => {
 
       if (variant.style === 'css') {
         const code = controls?.code ?? '';
-        const controlsStyle = encodeURIComponent(`${preset}/controls.css`);
+        const controlsStyle = encodeURIComponent(stylesheet);
 
         expect(code, url).toContain('virtual:vjsc/css');
         expect(code, url).toContain('/base.css');

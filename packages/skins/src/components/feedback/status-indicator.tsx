@@ -13,6 +13,7 @@ import {
 import { Box, type Props } from 'vjsc/components';
 
 import type { SkinComponentMeta } from '../../meta';
+import indicatorStyles from '../../styles/feedback/indicator.styles';
 import playbackStyles from '../../styles/feedback/playback-status-indicator.styles';
 import styles from '../../styles/feedback/status-indicator.styles';
 
@@ -22,8 +23,12 @@ const PLAYBACK_STATUS_ACTIONS = ['togglePaused'] as const;
 
 export function StatusIndicator({ className, ...props }: Props<Omit<CoreProps, 'actions'>> = {}) {
   return (
-    <$.StatusIndicator.Root actions={TOP_STATUS_ACTIONS} className={[styles.root, className]} {...props}>
-      <Box className={styles.content}>
+    <$.StatusIndicator.Root
+      actions={TOP_STATUS_ACTIONS}
+      className={[indicatorStyles.root, styles.root, className]}
+      {...props}
+    >
+      <Box className={[indicatorStyles.content, styles.content]}>
         <CaptionsOnIcon className={styles.captionsOnIcon} />
         <CaptionsOffIcon className={styles.captionsOffIcon} />
         <FullscreenEnterIcon className={styles.fullscreenEnterIcon} />

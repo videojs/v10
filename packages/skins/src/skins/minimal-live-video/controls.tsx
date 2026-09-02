@@ -16,8 +16,8 @@ import styles from './controls.styles';
 export function MinimalLiveVideoControls() {
   return (
     <$.Controls.Root>
-      <$.Controls.Backdrop className={styles.backdrop} />
-      <$.Controls.Content className={[controlsStyles.root, styles.content]}>
+      <$.Controls.Backdrop className={controlsStyles.backdrop} />
+      <$.Controls.Content className={[controlsStyles.root, controlsStyles.content]}>
         <$.Tooltip.Provider>
           <$.Controls.Group className={styles.start}>
             <ButtonTooltip side="top">
@@ -27,7 +27,7 @@ export function MinimalLiveVideoControls() {
             <VolumePopover showTooltip side="right" orientation="horizontal" />
           </$.Controls.Group>
 
-          <Box aria-hidden="true" className={styles.spacer} />
+          <Box aria-hidden="true" className={controlsStyles.spacer} />
 
           <$.Controls.Group className={styles.end}>
             <CaptionsMenu />

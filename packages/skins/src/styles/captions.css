@@ -19,7 +19,8 @@
       --media-caption-track-y: var(--media-caption-controls-y);
     }
 
-    @container media-root (width > 672px) {
+    /* Matches the `--container-media-wide` layout breakpoint. */
+    @container media-root (width >= 42rem) {
       :scope[data-theme="minimal"][data-controls-visible] {
         --media-caption-track-y: calc(var(--media-spacing) * -12);
       }

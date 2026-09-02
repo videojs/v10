@@ -14,10 +14,10 @@ export default styles({
     },
     previewContent: {
       className: 'audio-time-slider-preview-content',
-      utilities: 'bottom-[calc(100%+--spacing(10))] tabular-nums',
+      utilities: 'bottom-[calc(100%+var(--media-slider-preview-label-offset))] tabular-nums',
       variants: {
         default: 'left-1/2',
-        minimal: ['[left:var(--media-preview-left,var(--media-slider-pointer))]', 'after:hidden'],
+        minimal: '[left:var(--media-preview-left,var(--media-slider-pointer))]',
       },
     },
     value: {

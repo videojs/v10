@@ -4,7 +4,7 @@ import { ButtonTooltip } from '../../components/buttons/button-tooltip';
 import { SeekButton } from '../../components/buttons/seek-button';
 import { VolumePopover } from '../../components/controls/volume-popover';
 import audioControlsStyles from '../../styles/layout/audio-controls.styles';
-import popupStyles from '../../styles/popups/popup.styles';
+import timeStyles from '../../styles/layout/time.styles';
 import { AudioPlayButton } from '../audio/play-button';
 import { AudioSettingsMenu } from '../audio/settings-menu';
 import { AudioTimeSlider } from '../audio/time-slider';
@@ -13,9 +13,9 @@ import styles from './controls.styles';
 export function DefaultAudioControls() {
   return (
     <$.Controls.Root visibility="always">
-      <$.Controls.Content className={[audioControlsStyles.root, popupStyles.surface, styles.content]}>
+      <$.Controls.Content className={[audioControlsStyles.root, audioControlsStyles.content]}>
         <$.Tooltip.Provider>
-          <$.Controls.Group className={styles.start}>
+          <$.Controls.Group className={audioControlsStyles.start}>
             <AudioPlayButton />
             <ButtonTooltip boundary="viewport" side="top">
               <SeekButton className={styles.seekButton} seconds={-10} />
@@ -26,12 +26,12 @@ export function DefaultAudioControls() {
           </$.Controls.Group>
 
           <$.Controls.Group className={styles.timeSliderGroup}>
-            <$.Time.Value className={styles.currentValue} type="current" />
+            <$.Time.Value className={timeStyles.value} type="current" />
             <AudioTimeSlider previewOverflow="visible" />
-            <$.Time.Value className={styles.remainingValue} type="remaining" toggle />
+            <$.Time.Value className={[timeStyles.toggle, styles.remainingValue]} type="remaining" toggle />
           </$.Controls.Group>
 
-          <$.Controls.Group className={styles.end}>
+          <$.Controls.Group className={audioControlsStyles.end}>
             <AudioSettingsMenu />
             <VolumePopover boundary="viewport" />
           </$.Controls.Group>

@@ -2,12 +2,12 @@ import { styles } from 'vjsc/styles';
 
 const menuItem = [
   'relative flex cursor-pointer select-none items-center gap-1.5 rounded-(--media-menu-item-border-radius) px-2 py-1.5 text-start whitespace-nowrap',
-  'outline-2 -outline-offset-2 outline-transparent',
+  'focus-ring-media',
   'hover:bg-media-control-hover hover:text-media-accent-text data-highlighted:bg-media-control-hover data-highlighted:text-media-accent-text',
-  'focus-visible:outline-white focus-visible:outline-offset-2',
+  'focus-visible:outline-media-ring focus-visible:outline-offset-2',
   'text-shadow-media',
-  'transition-[background-color,color] duration-100 [transition-timing-function:ease-in-out] motion-reduce:duration-50',
-  'supports-[top:anchor(top)]:duration-50 supports-[top:anchor(top)]:hover:duration-200 supports-[top:anchor(top)]:data-highlighted:duration-200',
+  'transition-[background-color,color] duration-(--media-duration-fast) [transition-timing-function:ease-in-out]',
+  'supports-[top:anchor(top)]:duration-(--media-duration-instant) supports-[top:anchor(top)]:hover:duration-(--media-duration-slow) supports-[top:anchor(top)]:data-highlighted:duration-(--media-duration-slow)',
 ] as const;
 
 const menuItemOption = [
@@ -30,13 +30,15 @@ const menuHighlight = [
   'supports-[top:anchor(top)]:before:pointer-events-none',
   'supports-[top:anchor(top)]:before:rounded-(--media-menu-item-border-radius)',
   'supports-[top:anchor(top)]:before:bg-media-control-hover',
-  'supports-[top:anchor(top)]:before:transition-[inset] supports-[top:anchor(top)]:before:duration-100 supports-[top:anchor(top)]:before:[transition-timing-function:ease-in-out]',
+  'supports-[top:anchor(top)]:before:transition-[inset] supports-[top:anchor(top)]:before:duration-(--media-duration-fast) supports-[top:anchor(top)]:before:[transition-timing-function:ease-in-out]',
   'supports-[top:anchor(top)]:has-data-[highlighted=]:before:duration-0',
 ] as const;
 
 const menuGroup = ['flex [max-height:inherit] flex-col gap-0.5', ...menuHighlight] as const;
 
-const menuIcon = ['size-media-icon shrink-0 drop-shadow-media-icon'] as const;
+const menuIcon = ['shrink-0 drop-shadow-media-icon text-media-muted-foreground'] as const;
+
+const menuChevron = [...menuIcon, 'size-media-icon-sm'] as const;
 
 export default styles({
   file: 'menus.css',
@@ -44,26 +46,21 @@ export default styles({
     popup: {
       className: 'media-menu-popup',
       utilities: [
-        'm-0 min-w-44 max-w-(--media-menu-available-width) overflow-hidden! border-0 p-1 [--media-popup-side-offset:var(--media-popover-side-offset)]',
+        'm-0 min-w-44 max-w-(--media-menu-available-width) overflow-hidden! rounded-media-popup border-0 p-1 [--media-popup-side-offset:var(--media-popover-side-offset)]',
         'max-h-[min(var(--media-menu-available-height,--spacing(56)),--spacing(56))] overscroll-none',
         'h-(--media-menu-height) w-(--media-menu-width)',
-        'motion-reduce:[--media-menu-transition-duration:0ms]',
         '[transition-property:opacity,filter,transform,scale]',
-        '[transition-duration:100ms] ease-out',
-        'data-starting-style:[transition-duration:100ms] data-starting-style:[transition-property:opacity,filter,transform,scale]',
-        'data-ending-style:[transition-duration:100ms] data-ending-style:[transition-property:opacity,filter,transform,scale]',
+        '[transition-duration:var(--media-duration-fast)] ease-out',
+        'data-starting-style:[transition-duration:var(--media-duration-fast)] data-starting-style:[transition-property:opacity,filter,transform,scale]',
+        'data-ending-style:[transition-duration:var(--media-duration-fast)] data-ending-style:[transition-property:opacity,filter,transform,scale]',
         'motion-reduce:[transition-duration:0ms]!',
       ],
-      variants: {
-        default: 'rounded-[--spacing(3)]',
-        minimal: 'rounded-[--spacing(2.5)]',
-      },
     },
     resizablePopup: {
       className: 'media-menu-resizable-popup',
       utilities: [
         '[transition-property:opacity,filter,transform,scale,width,height]',
-        '[transition-duration:100ms,100ms,100ms,100ms,var(--media-menu-transition-duration),var(--media-menu-transition-duration)]',
+        '[transition-duration:var(--media-duration-fast),var(--media-duration-fast),var(--media-duration-fast),var(--media-duration-fast),var(--media-menu-transition-duration),var(--media-menu-transition-duration)]',
       ],
     },
     content: {
@@ -104,11 +101,7 @@ export default styles({
     },
     separator: {
       className: 'media-menu-separator',
-      utilities: [
-        'my-1 block border-b border-media-border',
-        'opaque:border-white/25',
-        'forced-colors:border-[CanvasText]',
-      ],
+      utilities: 'my-1 block border-b border-media-border opaque:border-media-foreground/25',
     },
     hint: {
       className: 'media-menu-hint',
@@ -134,7 +127,7 @@ export default styles({
       className: 'media-menu-trigger-item-icon',
       utilities: [
         ...menuIcon,
-        'text-media-muted-foreground',
+        'size-media-icon',
         'group-hover/menu-trigger-item:text-inherit group-data-highlighted/menu-trigger-item:text-inherit',
       ],
     },
@@ -142,23 +135,23 @@ export default styles({
       className: 'media-menu-radio-item-icon',
       utilities: [
         ...menuIcon,
-        'text-media-muted-foreground',
+        'size-media-icon',
         'group-hover/menu-radio-item:text-inherit group-data-highlighted/menu-radio-item:text-inherit',
       ],
     },
     forwardChevron: {
       className: 'media-menu-forward-chevron',
       utilities: [
-        ...menuIcon,
-        'size-3.5 text-media-muted-foreground [&:dir(rtl)]:[scale:-1_1]',
+        ...menuChevron,
+        '[&:dir(rtl)]:[scale:-1_1]',
         'group-hover/menu-trigger-item:text-inherit group-data-highlighted/menu-trigger-item:text-inherit',
       ],
     },
     backChevron: {
       className: 'media-menu-back-chevron',
       utilities: [
-        ...menuIcon,
-        'size-3.5 rotate-180 text-media-muted-foreground [&:dir(rtl)]:rotate-0 [&:dir(rtl)]:[scale:1_1]',
+        ...menuChevron,
+        'rotate-180 [&:dir(rtl)]:rotate-0 [&:dir(rtl)]:[scale:1_1]',
         'group-hover/menu-back-item:text-inherit group-data-highlighted/menu-back-item:text-inherit',
       ],
     },
@@ -169,7 +162,7 @@ export default styles({
     settingsTriggerIcon: {
       className: 'media-settings-menu-trigger-icon',
       utilities: [
-        'transition-transform duration-150 ease-in-out motion-reduce:transition-none! motion-reduce:duration-0!',
+        'transition-transform duration-(--media-duration) ease-in-out motion-reduce:transition-none!',
         'group-aria-expanded/settings:rotate-90',
       ],
     },

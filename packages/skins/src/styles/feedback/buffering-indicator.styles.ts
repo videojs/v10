@@ -6,8 +6,8 @@ export default styles({
     root: {
       className: 'media-buffering-indicator',
       utilities: [
-        'pointer-events-none absolute inset-0 hidden place-content-center text-white',
-        'before:absolute before:inset-0 before:bg-black/35 before:backdrop-blur-sm',
+        'pointer-events-none absolute inset-0 hidden place-content-center text-media-controls-foreground',
+        'before:absolute before:inset-0 before:bg-media-scrim/35 before:backdrop-blur-sm',
         'not-data-visible:[--media-spinner-animation:none] data-visible:grid motion-reduce:[--media-spinner-animation:none]',
       ],
     },
