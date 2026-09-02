@@ -146,9 +146,7 @@ Media elements are discovered automatically. Plain `<video>` and `<audio>` eleme
 
 ## Extensions
 
-Extensions add optional behavior to a player without rendering UI or playing media themselves. Place one inside the player, alongside the media component, and it attaches to whichever media the player is using and follows it if that changes. Remove it and only that behavior goes away.
-
-Video.js includes two: <DocsLink slug="reference/google-cast">GoogleCast</DocsLink> connects the media to the Google Cast SDK, and <DocsLink slug="reference/mux-data">MuxData</DocsLink> connects it to Mux Data for playback monitoring. Both are opt-in, so no media element casts or reports on its own.
+Extensions add behavior to a player without rendering UI or playing media themselves.
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
@@ -173,10 +171,7 @@ Video.js includes two: <DocsLink slug="reference/google-cast">GoogleCast</DocsLi
 ```
 </FrameworkCase>
 
-An extension can provide behavior that a UI component controls: GoogleCast supplies the configurable Cast route, and <DocsLink slug="reference/cast-button">CastButton</DocsLink> renders the control that starts and ends a session. In React, <DocsLink slug="reference/use-media-component">useMediaComponent</DocsLink> is the hook for building your own.
-
-<DocsLinkCard slug="concepts/mux-data">Monitor playback with Mux Data</DocsLinkCard>
-<DocsLinkCard slug="how-to/cast-to-airplay-and-chromecast">Cast to AirPlay and Chromecast</DocsLinkCard>
+An extension can provide behavior that a UI component controls: GoogleCast supplies the configurable Cast route, and <DocsLink slug="reference/cast-button">CastButton</DocsLink> renders the control that starts and ends a session.
 
 ## Presets
 
