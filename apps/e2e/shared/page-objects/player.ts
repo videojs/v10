@@ -6,7 +6,7 @@ import { DATA_ATTRS, SELECTORS } from '../fixtures/selectors';
  * Page Object Model for the Video.js player.
  *
  * Uses cross-renderer selectors that work for both: - HTML (Web Components): custom element tags like
- * `media-play-button` - React: standard elements with CSS classes like `.media-button--play`
+ * `media-play-button` - React: standard elements with CSS classes like `.media-play-button`
  *
  * Both renderers share the same data attributes for state, so all assertions against `data-paused`, `data-muted`, etc.
  * are portable.

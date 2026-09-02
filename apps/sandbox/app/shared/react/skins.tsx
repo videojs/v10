@@ -4,38 +4,28 @@ import type { VideoSkinProps } from '@videojs/react/video';
 import type { ComponentType } from 'react';
 import { createElement, useEffect, useState } from 'react';
 
-type GeneratedVideoSkinProps = Omit<VideoSkinProps, 'renderPoster'> & {
-  poster?: VideoSkinProps['renderPoster'];
-};
-
-function adaptTailwindVideoSkin(Component: ComponentType<GeneratedVideoSkinProps>): ComponentType<VideoSkinProps> {
-  return function SandboxTailwindVideoSkin({ renderPoster, ...props }) {
-    return <Component poster={renderPoster} {...props} />;
-  };
-}
-
 async function loadTailwindVideoSkin(skin: Skin, live: boolean): Promise<ComponentType<VideoSkinProps>> {
   if (live) {
     if (skin === 'default') {
       const { DefaultLiveVideoSkin } = await import('@app/_generated/components/videojs/skins/live-video/skin');
 
-      return adaptTailwindVideoSkin(DefaultLiveVideoSkin);
+      return DefaultLiveVideoSkin;
     }
 
     const { MinimalLiveVideoSkin } = await import('@app/_generated/components/videojs/skins/live-video/minimal/skin');
 
-    return adaptTailwindVideoSkin(MinimalLiveVideoSkin);
+    return MinimalLiveVideoSkin;
   }
 
   if (skin === 'default') {
     const { DefaultVideoSkin } = await import('@app/_generated/components/videojs/skins/video/skin');
 
-    return adaptTailwindVideoSkin(DefaultVideoSkin);
+    return DefaultVideoSkin;
   }
 
   const { MinimalVideoSkin } = await import('@app/_generated/components/videojs/skins/video/minimal/skin');
 
-  return adaptTailwindVideoSkin(MinimalVideoSkin);
+  return MinimalVideoSkin;
 }
 
 async function loadVideoSkinComponent(

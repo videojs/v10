@@ -512,7 +512,7 @@ test('React chapter segments match across styles and retain their generated rang
 
     await page.goto(`/?${query}`, { waitUntil: 'domcontentloaded' });
 
-    const chapters = page.locator('.media-slider__chapter, .media-time-slider-chapter, [class~="group/chapter"]');
+    const chapters = page.locator('.media-time-slider-chapter, [class~="group/chapter"]');
 
     await expect(chapters).toHaveCount(8);
     contracts.push(
@@ -1715,7 +1715,7 @@ async function triggerMediaError(page: Page, message?: string): Promise<Locator>
   await expect
     .poll(() =>
       dialog.evaluate((element) => {
-        const target = element.querySelector('.media-dialog__popup, .media-dialog-popup') ?? element;
+        const target = element.querySelector('.media-dialog-popup') ?? element;
         const rect = target.getBoundingClientRect();
         const style = getComputedStyle(target);
 
@@ -1760,13 +1760,13 @@ async function errorDialogContract(root: Locator, dialog: Locator) {
   if (!rootRect) throw new Error('Expected the media player to have a rendered box.');
 
   return dialog.evaluate((element: HTMLElement, playerRect) => {
-    const surface = element.querySelector<HTMLElement>('.media-dialog__popup, .media-dialog-popup') ?? element;
+    const surface = element.querySelector<HTMLElement>('.media-dialog-popup') ?? element;
     const title = element.querySelector<HTMLElement>('h2, media-dialog-title');
     const description = element.querySelector<HTMLElement>('p, media-dialog-description');
     const close = element.querySelector<HTMLElement>('button, media-dialog-close');
     const backdrop =
       (surface.previousElementSibling instanceof HTMLElement ? surface.previousElementSibling : null) ??
-      surface.parentElement?.querySelector<HTMLElement>('.media-dialog__backdrop, .media-dialog-backdrop');
+      surface.parentElement?.querySelector<HTMLElement>('.media-dialog-backdrop');
     const round = (value: number) => Math.round(value * 10) / 10;
     const inspect = (target: HTMLElement | null, includePadding = true) => {
       if (!target) return null;
@@ -2118,7 +2118,7 @@ async function menuHighlightContract(menu: Locator) {
   return content
     .evaluate((element) => {
       const item = element.querySelector('[role="menuitem"][data-highlighted]');
-      const back = element.parentElement?.querySelector<HTMLElement>('.media-menu__back, .media-menu-back-item');
+      const back = element.parentElement?.querySelector<HTMLElement>('.media-menu-back-item');
 
       if (!item) throw new Error('Expected the settings menu to have a highlighted item.');
 
@@ -2267,10 +2267,8 @@ async function volumeSliderContract(popup: Locator) {
         scale: style.scale,
       };
     };
-    const track =
-      root.querySelector('.media-slider__track, .media-slider-track, media-slider-track') ?? root.firstElementChild;
-    const fill =
-      track?.querySelector('.media-slider__fill, .media-slider-fill, media-slider-fill') ?? track?.firstElementChild;
+    const track = root.querySelector('.media-slider-track, media-slider-track') ?? root.firstElementChild;
+    const fill = track?.querySelector('.media-slider-fill, media-slider-fill') ?? track?.firstElementChild;
     if (!track || !fill) throw new Error('Expected the volume slider track and fill to be rendered.');
 
     return {
@@ -2426,7 +2424,7 @@ async function popupContract(root: Locator, popup: Locator) {
       align: element.getAttribute('data-align'),
       popup: inspect(element),
       item: inspect(visible('[role^="menuitem"]')),
-      separator: inspect(visible('[role="separator"], .media-menu__separator, .media-separator')),
+      separator: inspect(visible('[role="separator"], .media-separator')),
     };
   }, rootRect);
 }

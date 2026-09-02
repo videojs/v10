@@ -59,7 +59,7 @@ test.describe('Visual — Live Button', () => {
       const container = document.querySelector('video-skin')?.shadowRoot?.querySelector('media-container');
       const liveButton = document.createElement('button');
 
-      liveButton.className = 'media-button media-button--live';
+      liveButton.className = 'media-button';
       liveButton.setAttribute('aria-disabled', 'true');
       liveButton.setAttribute('data-live-edge', '');
 
