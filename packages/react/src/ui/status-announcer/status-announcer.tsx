@@ -7,6 +7,7 @@ import { useLocale, useTranslator } from '../../i18n/context';
 import { useContainer, usePlayer } from '../../player/context';
 import type { UIComponentProps } from '../../utils/types';
 import { useDestroy } from '../../utils/use-destroy';
+import { useIsomorphicLayoutEffect } from '../../utils/use-isomorphic-layout-effect';
 import { renderElement } from '../../utils/use-render';
 
 export interface StatusAnnouncerProps
@@ -26,14 +27,18 @@ export const StatusAnnouncer = forwardRef(function StatusAnnouncer(
   const container = useContainer();
 
   useDestroy(core);
-  core.setProps({
-    closeDelay,
-    labels: {
-      ...createStatusAnnouncerLabels(translator, locale),
-      ...labels,
-    },
-    shouldAnnounce: () => shouldAnnounceStatusChange(container),
-  });
+
+  // Commit props before the passive store subscription below so announcements never read props from an abandoned render.
+  useIsomorphicLayoutEffect(() => {
+    core.setProps({
+      closeDelay,
+      labels: {
+        ...createStatusAnnouncerLabels(translator, locale),
+        ...labels,
+      },
+      shouldAnnounce: () => shouldAnnounceStatusChange(container),
+    });
+  }, [core, closeDelay, translator, locale, labels, container]);
 
   useEffect(() => subscribeToStatusAnnouncer(store, core), [core, store]);
 

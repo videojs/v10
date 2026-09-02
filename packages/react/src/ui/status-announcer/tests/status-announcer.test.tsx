@@ -1,9 +1,12 @@
 import { act, cleanup, render } from '@testing-library/react';
+import { StatusAnnouncerCore } from '@videojs/core';
 import type { UnknownStore } from '@videojs/store';
-import type { ReactNode } from 'react';
+import { isString } from '@videojs/utils/predicate';
+import { type ReactNode, StrictMode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { PlayerContextProvider, type PlayerContextValue } from '../../../player/context';
+import { MockErrorBoundary } from '../../../testing/mocks';
 import { StatusAnnouncer } from '../status-announcer';
 
 afterEach(cleanup);
@@ -65,6 +68,68 @@ describe('StatusAnnouncer', () => {
     await act(async () => {});
 
     expect(getByRole('status').textContent).toBe('Custom playing');
+  });
+
+  it('does not publish props from an abandoned render to the retained core', () => {
+    const labels: string[] = [];
+    const originalSetProps = StatusAnnouncerCore.prototype.setProps;
+    const setProps = vi
+      .spyOn(StatusAnnouncerCore.prototype, 'setProps')
+      .mockImplementation(function (this: StatusAnnouncerCore, props) {
+        if (isString(props.labels?.playing)) labels.push(props.labels.playing);
+
+        originalSetProps.call(this, props);
+      });
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const value = createPlayerContextValue(createTestStore().store);
+
+    function Thrower({ abandon }: { abandon: boolean }): ReactNode {
+      if (abandon) throw new Error('abandon render');
+
+      return null;
+    }
+
+    const { rerender } = render(
+      <PlayerContextProvider value={value}>
+        <MockErrorBoundary>
+          <StatusAnnouncer labels={{ playing: 'Committed' }} />
+          <Thrower abandon={false} />
+        </MockErrorBoundary>
+      </PlayerContextProvider>
+    );
+
+    expect(labels).toContain('Committed');
+
+    rerender(
+      <PlayerContextProvider value={value}>
+        <MockErrorBoundary>
+          <StatusAnnouncer labels={{ playing: 'Abandoned' }} />
+          <Thrower abandon />
+        </MockErrorBoundary>
+      </PlayerContextProvider>
+    );
+
+    expect(labels).not.toContain('Abandoned');
+    setProps.mockRestore();
+    consoleError.mockRestore();
+  });
+
+  it('announces with the committed labels under StrictMode', async () => {
+    const { store, setState } = createTestStore({ paused: true });
+    const { getByRole } = render(
+      <StrictMode>
+        <PlayerContextProvider value={createPlayerContextValue(store)}>
+          <StatusAnnouncer labels={{ playing: 'Strict playing' }} />
+        </PlayerContextProvider>
+      </StrictMode>
+    );
+
+    await act(async () => {});
+
+    setState({ paused: false });
+    await act(async () => {});
+
+    expect(getByRole('status').textContent).toBe('Strict playing');
   });
 
   it('uses the next store snapshot as baseline when the store changes', async () => {
