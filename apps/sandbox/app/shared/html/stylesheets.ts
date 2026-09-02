@@ -20,21 +20,40 @@ const liveAudioStylesheets = {
   minimal: new URL('@videojs/html/live-audio/minimal-skin.css', import.meta.url).href,
 } satisfies Record<Skin, string>;
 
-function loadStylesheet(id: string, url: string): Promise<void> {
-  const existing = document.querySelector(`link[rel="stylesheet"][data-sandbox-stylesheet="${id}"]`);
+const loading = new Map<string, { href: string; promise: Promise<void> }>();
 
-  existing?.remove();
+/**
+ * One stylesheet per slot. A repeat request for the same URL shares the in-flight load, and a new URL replaces the old
+ * sheet only once it has loaded: renders can overlap, and removing a `<link>` another render still awaits would leave
+ * that render hanging.
+ */
+function loadStylesheet(id: string, url: string): Promise<void> {
+  const current = loading.get(id);
+  if (current?.href === url) return current.promise;
 
   const link = document.createElement('link');
+  const promise = new Promise<void>((resolve, reject) => {
+    link.addEventListener(
+      'load',
+      () => {
+        for (const stale of document.querySelectorAll(`link[rel="stylesheet"][data-sandbox-stylesheet="${id}"]`)) {
+          if (stale !== link) stale.remove();
+        }
 
-  return new Promise((resolve, reject) => {
-    link.addEventListener('load', () => resolve(), { once: true });
+        resolve();
+      },
+      { once: true }
+    );
     link.addEventListener('error', () => reject(new Error(`Could not load skin stylesheet: ${url}`)), { once: true });
     link.dataset.sandboxStylesheet = id;
     link.rel = 'stylesheet';
     link.href = url;
     document.head.appendChild(link);
   });
+
+  loading.set(id, { href: url, promise });
+
+  return promise;
 }
 
 export function loadVideoStylesheets(skin: Skin, live = false): Promise<void> {

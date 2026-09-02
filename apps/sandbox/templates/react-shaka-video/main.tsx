@@ -13,7 +13,7 @@ function App() {
   return (
     <SandboxI18nProvider>
       <VideoPlayer>
-        <VideoSkinComponent skin={skin} styling={styling} className="mx-auto aspect-video max-w-4xl">
+        <VideoSkinComponent skin={skin} styling={styling}>
           {/* Shaka plays DASH and HLS from the same element, so the source list here is not
               narrowed to one manifest format the way the dash.js sandbox is. */}
           <ShakaVideo src={SOURCES[source].url ?? ''} {...mediaProps} playsInline crossOrigin="" />

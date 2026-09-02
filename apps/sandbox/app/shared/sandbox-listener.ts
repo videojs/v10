@@ -2,8 +2,9 @@ import { SKINS, STYLINGS } from '@app/constants';
 import { DEFAULT_SANDBOX_LOCALE, SANDBOX_LOCALE_TAGS, type SandboxLocaleTag } from '@app/shared/i18n/locale-meta';
 import type { Skin, Styling } from '@app/types';
 import type { MediaResolution } from '@videojs/media';
-import { isBoolean, isString } from '@videojs/utils/predicate';
+import { isBoolean, isNumber, isString } from '@videojs/utils/predicate';
 
+import { setDocumentDirection } from './i18n/document-locale';
 import { DEFAULT_SOURCE, SOURCES, type SourceId } from './sources';
 
 export const PRELOAD_VALUES = ['none', 'metadata', 'auto'] as const;
@@ -15,6 +16,14 @@ const RESOLUTION_PATTERN = /^\d+p$/;
 
 export const PREFER_PLAYBACK_VALUES = ['mse', 'native'] as const;
 export type PreferPlaybackValue = (typeof PREFER_PLAYBACK_VALUES)[number];
+
+/** `auto` follows the operating system. */
+export const COLOR_SCHEMES = ['auto', 'light', 'dark'] as const;
+export type ColorScheme = (typeof COLOR_SCHEMES)[number];
+
+/** `auto` follows the locale. */
+export const TEXT_DIRECTIONS = ['auto', 'ltr', 'rtl'] as const;
+export type TextDirection = (typeof TEXT_DIRECTIONS)[number];
 
 const params = new URLSearchParams(window.location.search);
 
@@ -150,21 +159,73 @@ export function onLocaleChange(callback: (locale: SandboxLocaleTag) => void): ()
   });
 }
 
-function applyAccentColor(value: string) {
-  if (value) {
-    document.documentElement.style.setProperty('--media-accent-color', value);
-  } else {
-    document.documentElement.style.removeProperty('--media-accent-color');
-  }
+function parseAccent(value: unknown): string | undefined {
+  return isString(value) ? value.trim() : undefined;
 }
 
-applyAccentColor(params.get('accent')?.trim() ?? '');
+/** A width arrives as a query string or as a number from the shell; either way it is CSS pixels. */
+function parseWidth(value: unknown): number | undefined {
+  const width = isString(value) ? Number.parseInt(value, 10) : isNumber(value) ? value : Number.NaN;
 
-window.addEventListener('message', (event) => {
-  if (event.data?.type !== 'accent-color-change' || !isString(event.data.accentColor)) return;
+  return Number.isFinite(width) && width > 0 ? width : undefined;
+}
 
-  applyAccentColor(event.data.accentColor.trim());
+function parseScheme(value: unknown): ColorScheme | undefined {
+  return isOneOf(COLOR_SCHEMES, value) ? value : undefined;
+}
+
+function parseDirection(value: unknown): TextDirection | undefined {
+  return isOneOf(TEXT_DIRECTIONS, value) ? value : undefined;
+}
+
+/**
+ * A preference the page applies to its document rather than renders from: read once from the query string, then kept
+ * current from the shell's `<name>-change` messages. Absent means the page's own default.
+ */
+function preference<T>(
+  name: string,
+  parse: (value: unknown) => T | undefined,
+  apply: (value: T | undefined) => void
+): void {
+  apply(parse(params.get(name)));
+  subscribe(name, parse, apply);
+}
+
+const { style } = document.documentElement;
+
+preference('accent', parseAccent, (accent) => {
+  if (accent) style.setProperty('--media-accent-color', accent);
+  else style.removeProperty('--media-accent-color');
 });
+
+// The templates cap the player at `--sandbox-player-width`, falling back to the skin's own width when unset.
+preference('width', parseWidth, (width) => {
+  if (width) style.setProperty('--sandbox-player-width', `${width}px`);
+  else style.removeProperty('--sandbox-player-width');
+});
+
+// `color-scheme` and the `dark:` variant both key off this attribute; see `styles.css`.
+preference('scheme', parseScheme, (scheme) => {
+  if (scheme && scheme !== 'auto') document.documentElement.dataset.colorScheme = scheme;
+  else delete document.documentElement.dataset.colorScheme;
+});
+
+// The page flips with the document, and the player takes the same value as its own `dir` because it would otherwise
+// derive one from its locale; see `html/i18n.ts` and `react/skins.tsx`.
+let currentDirection: TextDirection = 'auto';
+
+preference('dir', parseDirection, (direction) => {
+  currentDirection = direction ?? 'auto';
+  setDocumentDirection(currentDirection);
+});
+
+export function getDirection(): TextDirection {
+  return currentDirection;
+}
+
+export function onDirectionChange(callback: (direction: TextDirection) => void): () => void {
+  return subscribe('dir', parseDirection, callback);
+}
 
 function readResolution(name: string): MediaResolution | undefined {
   const value = params.get(name);

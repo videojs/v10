@@ -14,6 +14,8 @@ Open the printed URL. The root route renders an interactive shell — a navbar w
 
 `app/media.ts` describes each media once: its label, player, element, which sources the picker offers, and which controls apply. The shell derives its constraints from that table, and the CDN page picks its bundles by the same id. Older links that say `?preset=` still resolve; `preset` now means the player preset a skin is built for (`video`, `audio`, `live-video`, `live-audio`).
 
+**Width** sits in the navbar and sizes the player through `--sandbox-player-width`; until it is touched, a preview opens at its skin's own width. **Color scheme** and **Direction** are in **Player settings** and pin the preview's `color-scheme` and `dir`, where the defaults follow the operating system and the locale. All three travel in the URL (`width`, `scheme`, `dir`), so a direct page honours them too.
+
 **Language** is in **Player settings** (gear icon) for every media (HTML, React, and CDN). **CDN** registers copy through `@videojs/html/cdn/i18n` (the same registry as the CDN player bundle), not source `@videojs/html/i18n`. After pulling template changes, restart `pnpm dev:sandbox` so `scripts/setup.ts` refreshes `src/` from `templates/`.
 
 The shell covers the main combinatorial matrix. One-off templates not in that matrix (e.g. `firefox-mse-repro`, `spf-segment-loading`, `hls-video-html`) are reachable by navigating directly to `/<template-name>/`. See `apps/sandbox/templates/` for the full list.

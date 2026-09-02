@@ -1,6 +1,6 @@
 import type { MediaId } from '@app/media';
 import type { SandboxLocaleTag } from '@app/shared/i18n/locale-meta';
-import type { PreloadValue } from '@app/shared/sandbox-listener';
+import type { ColorScheme, PreloadValue, TextDirection } from '@app/shared/sandbox-listener';
 import type { SourceId } from '@app/shared/sources';
 import type { Skin, Styling } from '@app/types';
 import { forwardRef, useEffect, useRef, useState } from 'react';
@@ -17,11 +17,30 @@ type PreviewProps = {
   preload: PreloadValue;
   locale: SandboxLocaleTag;
   accentColor: string;
+  width: number;
+  scheme: ColorScheme;
+  direction: TextDirection;
   onLoad: () => void;
 };
 
 export const Preview = forwardRef<HTMLIFrameElement, PreviewProps>(function Preview(
-  { pagePath, media, skin, styling, source, autoplay, muted, loop, preload, locale, accentColor, onLoad },
+  {
+    pagePath,
+    media,
+    skin,
+    styling,
+    source,
+    autoplay,
+    muted,
+    loop,
+    preload,
+    locale,
+    accentColor,
+    width,
+    scheme,
+    direction,
+    onLoad,
+  },
   ref
 ) {
   const buildUrl = (base: string, bustCache = false) => {
@@ -35,6 +54,9 @@ export const Preview = forwardRef<HTMLIFrameElement, PreviewProps>(function Prev
       loop: loop ? '1' : '0',
       preload,
       locale,
+      width: String(width),
+      scheme,
+      dir: direction,
     });
 
     if (accentColor) params.set('accent', accentColor);

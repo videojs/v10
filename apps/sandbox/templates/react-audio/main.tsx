@@ -13,7 +13,7 @@ function App() {
   return (
     <SandboxI18nProvider>
       <AudioPlayer>
-        <AudioSkinComponent skin={skin} styling={styling} className="mx-auto w-full max-w-xl">
+        <AudioSkinComponent skin={skin} styling={styling}>
           <Audio src={SOURCES[source].url} {...mediaProps} crossOrigin="" />
         </AudioSkinComponent>
       </AudioPlayer>

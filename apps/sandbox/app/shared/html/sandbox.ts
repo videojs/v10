@@ -1,7 +1,10 @@
 import type { MuxSource } from '@videojs/media/dom/mux';
 
+import { PLAYER_FRAME_CLASSES } from '../player-frame';
 import {
+  getDirection,
   getInitialPlaybackOverrides,
+  onDirectionChange,
   onSandboxStateChange,
   type PlaybackOverrides,
   readSandboxState,
@@ -51,8 +54,6 @@ export interface HtmlSandboxOptions {
    * `src`. Neither renders by default.
    */
   readonly poster?: 'image' | 'derived';
-  /** Classes on the skin element, replacing the player's default. */
-  readonly className?: string;
   /**
    * Fold the query-string playback overrides into the initial source. That forces the object form, so the engine is
    * built with them rather than reconfigured afterwards.
@@ -63,12 +64,6 @@ export interface HtmlSandboxOptions {
   /** Runs once the markup is in the document, for what an attribute cannot carry: assigning `context.source`. */
   readonly attach?: (context: HtmlSandboxContext) => void;
 }
-
-const SKIN_CLASSES: Record<HtmlSandboxPlayer, string> = {
-  video: 'aspect-video max-w-4xl mx-auto',
-  audio: '',
-  background: '',
-};
 
 /** Render the user-controlled media attributes (autoplay/muted/loop/preload) as HTML attributes. */
 export function renderMediaAttrs(state: SandboxState): string {
@@ -146,8 +141,6 @@ function renderPlayer(options: HtmlSandboxOptions, skinTag: string, context: Htm
   const { live, state } = context;
   const posterSrc = poster === undefined ? undefined : getPosterSrc(state.source);
   const placeholder = poster === 'derived' ? getPlaceholderSrc(state.source) : undefined;
-  const className = options.className ?? SKIN_CLASSES[player];
-  const classAttr = className ? ` class="${className}"` : '';
   const children = html`
     ${placeholder ? `<img slot="poster" alt="" crossorigin style="background: url('${placeholder}') var(--media-object-position, center) / contain no-repeat">` : ''}
     ${options.media(context)}
@@ -166,9 +159,9 @@ function renderPlayer(options: HtmlSandboxOptions, skinTag: string, context: Htm
     const playerTag = live ? 'live-audio-player' : 'audio-player';
 
     return html`
-      <div class="w-full max-w-xl mx-auto">
+      <div class="${PLAYER_FRAME_CLASSES.audio}">
         <${playerTag}>
-          <${skinTag}${classAttr}>${children}</${skinTag}>
+          <${skinTag}>${children}</${skinTag}>
         </${playerTag}>
       </div>
     `;
@@ -179,7 +172,7 @@ function renderPlayer(options: HtmlSandboxOptions, skinTag: string, context: Htm
 
   return html`
     <${playerTag}${posterAttr}>
-      <${skinTag}${classAttr}>${children}</${skinTag}>
+      <${skinTag} class="${PLAYER_FRAME_CLASSES.video}">${children}</${skinTag}>
     </${playerTag}>
   `;
 }
@@ -194,7 +187,7 @@ function getRoot(): HTMLElement {
 /**
  * Mount a preview page: read the shell's selections, load the skin they name, render the player around the template's
  * media markup, and render again as the shell streams changes. A locale change applies in place through `<media-i18n>`
- * once the player is up.
+ * once the player is up; a direction change renders again, since the provider owns the pinned `dir`.
  */
 export function createHtmlSandbox(options: HtmlSandboxOptions): void {
   const state = readSandboxState();
@@ -218,6 +211,16 @@ export function createHtmlSandbox(options: HtmlSandboxOptions): void {
 
   onSandboxStateChange((change) => {
     Object.assign(state, change);
+    void render();
+  });
+
+  // The shell repeats the direction after load, so only an actual change is worth a render.
+  let direction = getDirection();
+
+  onDirectionChange((next) => {
+    if (next === direction) return;
+
+    direction = next;
     void render();
   });
 

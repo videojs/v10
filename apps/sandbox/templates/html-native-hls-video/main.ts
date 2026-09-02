@@ -7,7 +7,6 @@ createHtmlSandbox({
   player: 'video',
   live: true,
   poster: 'image',
-  className: 'w-full aspect-video max-w-4xl mx-auto',
   media: ({ src, attrs, chapters, storyboard }) => html`
     <native-hls-video${src} ${attrs} playsinline crossorigin>
       ${chapters}

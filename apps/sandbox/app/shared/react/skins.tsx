@@ -1,8 +1,11 @@
+import { PLAYER_FRAME_CLASSES } from '@app/shared/player-frame';
 import type { Skin, Styling } from '@app/types';
 import type { AudioSkinProps } from '@videojs/react/audio';
 import type { VideoSkinProps } from '@videojs/react/video';
 import type { ComponentType } from 'react';
 import { createElement, useEffect, useState } from 'react';
+
+import { useDirection } from './use-direction';
 
 async function loadTailwindVideoSkin(skin: Skin, live: boolean): Promise<ComponentType<VideoSkinProps>> {
   if (live) {
@@ -143,19 +146,45 @@ function useLoadedComponent<Props>(
 
 type VideoSkinComponentProps = { skin: Skin; styling: Styling; live?: boolean } & VideoSkinProps;
 
-/** Loads the video skin for the given skin/styling. When `live` is true, the `live-video` skin variant is used instead. */
-export function VideoSkinComponent({ skin, styling, live = false, ...props }: VideoSkinComponentProps) {
+/** The skin derives `dir` from its locale unless given one, so a pinned direction has to arrive as a prop. */
+function useDirectionProps(): { dir?: 'ltr' | 'rtl' } {
+  const direction = useDirection();
+
+  return direction === 'auto' ? {} : { dir: direction };
+}
+
+/**
+ * Loads the video skin for the given skin/styling, framed the way every sandbox page frames a player unless a
+ * `className` says otherwise. When `live` is true, the `live-video` skin variant is used instead.
+ */
+export function VideoSkinComponent({
+  skin,
+  styling,
+  live = false,
+  className = PLAYER_FRAME_CLASSES.video,
+  ...props
+}: VideoSkinComponentProps) {
   const Component = useLoadedComponent(() => loadVideoSkinComponent(skin, styling, live), [skin, styling, live]);
+  const directionProps = useDirectionProps();
+
   if (!Component) return null;
 
-  return createElement(Component, props);
+  return createElement(Component, { ...props, ...directionProps, className });
 }
 
 type AudioSkinComponentProps = { skin: Skin; styling: Styling; live?: boolean } & AudioSkinProps;
 
-export function AudioSkinComponent({ skin, styling, live = false, ...props }: AudioSkinComponentProps) {
+export function AudioSkinComponent({
+  skin,
+  styling,
+  live = false,
+  className = PLAYER_FRAME_CLASSES.audio,
+  ...props
+}: AudioSkinComponentProps) {
   const Component = useLoadedComponent(() => loadAudioSkinComponent(skin, styling, live), [skin, styling, live]);
+  const directionProps = useDirectionProps();
+
   if (!Component) return null;
 
-  return createElement(Component, props);
+  return createElement(Component, { ...props, ...directionProps, className });
 }

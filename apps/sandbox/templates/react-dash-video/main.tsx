@@ -14,7 +14,7 @@ function App() {
   return (
     <SandboxI18nProvider>
       <VideoPlayer>
-        <VideoSkinComponent skin={skin} styling={styling} className="mx-auto aspect-video max-w-4xl">
+        <VideoSkinComponent skin={skin} styling={styling}>
           <DashVideo src={SOURCES[source].url ?? ''} {...mediaProps} playsInline crossOrigin="" />
           {/* Mux Data is an opt-in media component. It hands the dash.js engine to the Mux Data
               SDK, so views carry stream-level detail. These streams aren't Mux-hosted, so the

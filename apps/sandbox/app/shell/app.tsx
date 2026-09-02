@@ -1,7 +1,16 @@
 import { PLATFORMS, STYLINGS } from '@app/constants';
 import { hasTailwindSkin, isMediaId, MEDIA, type MediaId, mediaSources } from '@app/media';
 import { DEFAULT_SANDBOX_LOCALE, SANDBOX_LOCALE_TAGS, type SandboxLocaleTag } from '@app/shared/i18n/locale-meta';
-import { DEFAULT_PRELOAD, PRELOAD_VALUES, type PreloadValue } from '@app/shared/sandbox-listener';
+import { defaultPlayerWidth, PLAYER_WIDTH } from '@app/shared/player-frame';
+import {
+  COLOR_SCHEMES,
+  type ColorScheme,
+  DEFAULT_PRELOAD,
+  PRELOAD_VALUES,
+  type PreloadValue,
+  TEXT_DIRECTIONS,
+  type TextDirection,
+} from '@app/shared/sandbox-listener';
 import { DEFAULT_SOURCE, SOURCES, type SourceId } from '@app/shared/sources';
 import type { Platform, Styling } from '@app/types';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -22,9 +31,20 @@ function readMedia(params: URLSearchParams): MediaId {
   return isMediaId(value) ? value : 'video';
 }
 
+function readOption<T extends string>(values: readonly T[], value: string | null, fallback: T): T {
+  // SAFETY: the lookup narrows the query value to the option it matched.
+  return value !== null && (values as readonly string[]).includes(value) ? (value as T) : fallback;
+}
+
+/** An explicit width, clamped to the control's range. Absent means the media's own default. */
+function readWidth(value: string | null): number | undefined {
+  const width = Number.parseInt(value ?? '', 10);
+
+  return Number.isFinite(width) ? Math.min(PLAYER_WIDTH.max, Math.max(PLAYER_WIDTH.min, width)) : undefined;
+}
+
 function readParams() {
   const params = new URLSearchParams(location.search);
-  const preload = params.get('preload');
   const media = readMedia(params);
 
   return {
@@ -37,15 +57,12 @@ function readParams() {
     autoplay: params.get('autoplay') === '1',
     muted: params.get('muted') === '1',
     loop: params.get('loop') === '1',
-    preload: PRELOAD_VALUES.includes(preload as PreloadValue) ? (preload as PreloadValue) : DEFAULT_PRELOAD,
+    preload: readOption(PRELOAD_VALUES, params.get('preload'), DEFAULT_PRELOAD),
     accentColor: params.get('accent')?.trim() ?? '',
-    locale: (() => {
-      const value = params.get('locale');
-
-      return SANDBOX_LOCALE_TAGS.includes(value as SandboxLocaleTag)
-        ? (value as SandboxLocaleTag)
-        : DEFAULT_SANDBOX_LOCALE;
-    })(),
+    locale: readOption(SANDBOX_LOCALE_TAGS, params.get('locale'), DEFAULT_SANDBOX_LOCALE),
+    width: readWidth(params.get('width')),
+    scheme: readOption(COLOR_SCHEMES, params.get('scheme'), 'auto'),
+    direction: readOption(TEXT_DIRECTIONS, params.get('dir'), 'auto'),
   };
 }
 
@@ -62,14 +79,31 @@ export function App() {
   const [preload, setPreload] = useState<PreloadValue>(initial.preload);
   const [accentColor, setAccentColor] = useState(initial.accentColor);
   const [locale, setLocale] = useState<SandboxLocaleTag>(initial.locale);
-
-  const iframeRef = useRef<HTMLIFrameElement>(null);
-  const previousPreviewState = useRef({ skin, source, autoplay, muted, loop, preload, accentColor });
+  const [width, setWidth] = useState(initial.width);
+  const [scheme, setScheme] = useState<ColorScheme>(initial.scheme);
+  const [direction, setDirection] = useState<TextDirection>(initial.direction);
 
   const pagePath = getPagePath(platform, media);
   const descriptor = MEDIA[media];
   const availableSources = mediaSources(media, platform);
   const tailwindAvailable = hasTailwindSkin(media, platform);
+  // Until the control is touched, the preview opens at the width its skin would have taken on its own.
+  const playerWidth = width ?? defaultPlayerWidth(descriptor.player);
+  const resizable = descriptor.player !== 'background';
+
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const previousPreviewState = useRef({
+    skin,
+    source,
+    autoplay,
+    muted,
+    loop,
+    preload,
+    accentColor,
+    playerWidth,
+    scheme,
+    direction,
+  });
 
   // Keep the URL in sync with all state.
   useEffect(() => {
@@ -84,12 +118,37 @@ export function App() {
       loop: loop ? '1' : '0',
       preload,
       locale,
+      scheme,
+      dir: direction,
     });
 
     if (accentColor) params.set('accent', accentColor);
 
+    if (width !== undefined) params.set('width', String(width));
+
     history.replaceState(null, '', `/?${params}`);
-  }, [platform, styling, media, skin, source, autoplay, muted, loop, preload, accentColor, locale]);
+  }, [
+    platform,
+    styling,
+    media,
+    skin,
+    source,
+    autoplay,
+    muted,
+    loop,
+    preload,
+    accentColor,
+    locale,
+    width,
+    scheme,
+    direction,
+  ]);
+
+  // The shell follows the scheme too, so its chrome and the preview agree; see `styles.css` for the `dark:` variant.
+  useEffect(() => {
+    if (scheme === 'auto') delete document.documentElement.dataset.colorScheme;
+    else document.documentElement.dataset.colorScheme = scheme;
+  }, [scheme]);
 
   // Initial state is already present in the iframe URL. Stream only subsequent changes so HTML previews do not race
   // several identical async renders during startup. Locale changes are URL-owned by Preview because CDN must reload.
@@ -109,12 +168,27 @@ export function App() {
 
     if (previous.preload !== preload) target?.postMessage({ type: 'preload-change', preload }, '*');
 
-    if (previous.accentColor !== accentColor) {
-      target?.postMessage({ type: 'accent-color-change', accentColor }, '*');
-    }
+    if (previous.accentColor !== accentColor) target?.postMessage({ type: 'accent-change', accent: accentColor }, '*');
 
-    previousPreviewState.current = { skin, source, autoplay, muted, loop, preload, accentColor };
-  }, [skin, source, autoplay, muted, loop, preload, accentColor]);
+    if (previous.playerWidth !== playerWidth) target?.postMessage({ type: 'width-change', width: playerWidth }, '*');
+
+    if (previous.scheme !== scheme) target?.postMessage({ type: 'scheme-change', scheme }, '*');
+
+    if (previous.direction !== direction) target?.postMessage({ type: 'dir-change', dir: direction }, '*');
+
+    previousPreviewState.current = {
+      skin,
+      source,
+      autoplay,
+      muted,
+      loop,
+      preload,
+      accentColor,
+      playerWidth,
+      scheme,
+      direction,
+    };
+  }, [skin, source, autoplay, muted, loop, preload, accentColor, playerWidth, scheme, direction]);
 
   // Constrain the source to what the media offers on this platform.
   useEffect(() => {
@@ -153,6 +227,9 @@ export function App() {
         onSkinChange={setSkin}
         source={source}
         onSourceChange={handleSourceChange}
+        width={playerWidth}
+        onWidthChange={setWidth}
+        widthDisabled={!resizable}
         autoplay={autoplay}
         onAutoplayChange={setAutoplay}
         muted={muted}
@@ -165,6 +242,10 @@ export function App() {
         onLocaleChange={setLocale}
         accentColor={accentColor}
         onAccentColorChange={setAccentColor}
+        scheme={scheme}
+        onSchemeChange={setScheme}
+        direction={direction}
+        onDirectionChange={setDirection}
         availableSources={availableSources}
         platforms={PLATFORMS}
         stylings={STYLINGS}
@@ -184,8 +265,17 @@ export function App() {
         preload={preload}
         locale={locale}
         accentColor={accentColor}
+        width={playerWidth}
+        scheme={scheme}
+        direction={direction}
         onLoad={() => {
-          iframeRef.current?.contentWindow?.postMessage({ type: 'accent-color-change', accentColor }, '*');
+          // The URL carried these too, but a change made while the page was still loading has no other way in.
+          const target = iframeRef.current?.contentWindow;
+
+          target?.postMessage({ type: 'accent-change', accent: accentColor }, '*');
+          target?.postMessage({ type: 'width-change', width: playerWidth }, '*');
+          target?.postMessage({ type: 'scheme-change', scheme }, '*');
+          target?.postMessage({ type: 'dir-change', dir: direction }, '*');
         }}
       />
     </div>

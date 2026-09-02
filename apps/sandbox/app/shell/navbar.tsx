@@ -1,7 +1,15 @@
 import type { SKINS } from '@app/constants';
 import { hasSkinChoice, hasTailwindSkin, MEDIA, MEDIA_IDS, type MediaId } from '@app/media';
 import { SANDBOX_LOCALE_OPTION_GROUPS, type SandboxLocaleTag } from '@app/shared/i18n/locale-meta';
-import { PRELOAD_VALUES, type PreloadValue } from '@app/shared/sandbox-listener';
+import { PLAYER_WIDTH } from '@app/shared/player-frame';
+import {
+  COLOR_SCHEMES,
+  type ColorScheme,
+  PRELOAD_VALUES,
+  type PreloadValue,
+  TEXT_DIRECTIONS,
+  type TextDirection,
+} from '@app/shared/sandbox-listener';
 import type { SandboxSource, SourceId } from '@app/shared/sources';
 import type { Platform, Skin, Styling } from '@app/types';
 import { useEffect, useId, useRef, useState } from 'react';
@@ -17,6 +25,9 @@ type NavbarProps = {
   onSkinChange: (value: Skin) => void;
   source: SourceId;
   onSourceChange: (value: string) => void;
+  width: number;
+  onWidthChange: (value: number) => void;
+  widthDisabled: boolean;
   autoplay: boolean;
   onAutoplayChange: (value: boolean) => void;
   muted: boolean;
@@ -29,6 +40,10 @@ type NavbarProps = {
   onLocaleChange: (value: SandboxLocaleTag) => void;
   accentColor: string;
   onAccentColorChange: (value: string) => void;
+  scheme: ColorScheme;
+  onSchemeChange: (value: ColorScheme) => void;
+  direction: TextDirection;
+  onDirectionChange: (value: TextDirection) => void;
   availableSources: readonly SourceId[];
   platforms: readonly Platform[];
   stylings: readonly Styling[];
@@ -43,6 +58,18 @@ const PLATFORM_LABELS: Record<Platform, string> = {
   cdn: 'CDN',
 };
 
+const SCHEME_LABELS: Record<ColorScheme, string> = {
+  auto: 'System',
+  light: 'Light',
+  dark: 'Dark',
+};
+
+const DIRECTION_LABELS: Record<TextDirection, string> = {
+  auto: 'Locale',
+  ltr: 'Left to right',
+  rtl: 'Right to left',
+};
+
 export function Navbar({
   platform,
   onPlatformChange,
@@ -54,6 +81,9 @@ export function Navbar({
   onSkinChange,
   source,
   onSourceChange,
+  width,
+  onWidthChange,
+  widthDisabled,
   autoplay,
   onAutoplayChange,
   muted,
@@ -66,6 +96,10 @@ export function Navbar({
   onLocaleChange,
   accentColor,
   onAccentColorChange,
+  scheme,
+  onSchemeChange,
+  direction,
+  onDirectionChange,
   availableSources,
   platforms,
   stylings,
@@ -126,6 +160,8 @@ export function Navbar({
           })}
           disabled={fixedSource !== undefined}
         />
+
+        <WidthControl value={width} onChange={onWidthChange} disabled={widthDisabled} />
       </div>
 
       <div className="ml-auto flex items-center gap-1">
@@ -142,6 +178,10 @@ export function Navbar({
           onLocaleChange={onLocaleChange}
           accentColor={accentColor}
           onAccentColorChange={onAccentColorChange}
+          scheme={scheme}
+          onSchemeChange={onSchemeChange}
+          direction={direction}
+          onDirectionChange={onDirectionChange}
         />
         <a
           href="https://github.com/videojs/v10"
@@ -169,6 +209,46 @@ function capitalize(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
+type WidthControlProps = {
+  value: number;
+  onChange: (value: number) => void;
+  disabled: boolean;
+};
+
+/** The player's width in the preview, with ticks at the widths the skins' layouts change around. */
+function WidthControl({ value, onChange, disabled }: WidthControlProps) {
+  const id = useId();
+  const stopsId = useId();
+
+  return (
+    <div className="flex items-center gap-2">
+      <label htmlFor={id} className="text-[13px] font-medium text-zinc-500 dark:text-zinc-400">
+        Width
+      </label>
+      <input
+        id={id}
+        type="range"
+        min={PLAYER_WIDTH.min}
+        max={PLAYER_WIDTH.max}
+        step={1}
+        list={stopsId}
+        value={value}
+        disabled={disabled}
+        onChange={(event) => onChange(event.target.valueAsNumber)}
+        className="h-8 w-28 cursor-pointer accent-zinc-950 disabled:pointer-events-none disabled:opacity-50 dark:accent-zinc-50"
+      />
+      <datalist id={stopsId}>
+        {PLAYER_WIDTH.stops.map((stop) => (
+          <option key={stop} value={stop} />
+        ))}
+      </datalist>
+      <output htmlFor={id} className="w-14 text-[13px] font-medium text-zinc-700 tabular-nums dark:text-zinc-200">
+        {value}px
+      </output>
+    </div>
+  );
+}
+
 type SettingsMenuProps = {
   autoplay: boolean;
   onAutoplayChange: (value: boolean) => void;
@@ -182,6 +262,10 @@ type SettingsMenuProps = {
   onLocaleChange: (value: SandboxLocaleTag) => void;
   accentColor: string;
   onAccentColorChange: (value: string) => void;
+  scheme: ColorScheme;
+  onSchemeChange: (value: ColorScheme) => void;
+  direction: TextDirection;
+  onDirectionChange: (value: TextDirection) => void;
 };
 
 function SettingsMenu({
@@ -197,6 +281,10 @@ function SettingsMenu({
   onLocaleChange,
   accentColor,
   onAccentColorChange,
+  scheme,
+  onSchemeChange,
+  direction,
+  onDirectionChange,
 }: SettingsMenuProps) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -207,6 +295,8 @@ function SettingsMenu({
   const preloadId = useId();
   const localeId = useId();
   const accentColorId = useId();
+  const schemeId = useId();
+  const directionId = useId();
 
   useEffect(() => {
     if (!open) return;
@@ -273,6 +363,20 @@ function SettingsMenu({
             optionGroups={SANDBOX_LOCALE_OPTION_GROUPS}
           />
           <ColorItem id={accentColorId} value={accentColor} onChange={onAccentColorChange} />
+          <SelectItem
+            id={schemeId}
+            label="Color scheme"
+            value={scheme}
+            onChange={(value) => onSchemeChange(value as ColorScheme)}
+            options={COLOR_SCHEMES.map((value) => ({ value, label: SCHEME_LABELS[value] }))}
+          />
+          <SelectItem
+            id={directionId}
+            label="Direction"
+            value={direction}
+            onChange={(value) => onDirectionChange(value as TextDirection)}
+            options={TEXT_DIRECTIONS.map((value) => ({ value, label: DIRECTION_LABELS[value] }))}
+          />
           <CheckboxItem id={autoplayId} label="Autoplay" checked={autoplay} onChange={onAutoplayChange} />
           <CheckboxItem id={mutedId} label="Muted" checked={muted} onChange={onMutedChange} />
           <CheckboxItem id={loopId} label="Loop" checked={loop} onChange={onLoopChange} />

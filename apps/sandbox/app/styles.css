@@ -6,8 +6,30 @@
 @source "./_generated/components";
 @source "./_generated/html";
 
+/* The shell's scheme control pins `data-color-scheme`; without it the operating system decides. */
 :root {
   color-scheme: light dark;
+}
+
+:root[data-color-scheme="light"] {
+  color-scheme: light;
+}
+
+:root[data-color-scheme="dark"] {
+  color-scheme: dark;
+}
+
+/* `dark:` follows the resolved scheme, so the control and the operating system drive the same switch. */
+@custom-variant dark {
+  &:where(:root[data-color-scheme="dark"], :root[data-color-scheme="dark"] *) {
+    @slot;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    &:where(:root:not([data-color-scheme="light"]), :root:not([data-color-scheme="light"]) *) {
+      @slot;
+    }
+  }
 }
 
 @theme {

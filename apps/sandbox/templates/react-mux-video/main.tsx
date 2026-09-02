@@ -41,7 +41,6 @@ function App() {
           skin={skin}
           styling={styling}
           live={live}
-          className="mx-auto aspect-video max-w-4xl"
         >
           {/* The storyboard track is derived automatically from the Mux src. */}
           <MuxVideo

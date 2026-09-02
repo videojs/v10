@@ -26,7 +26,7 @@ function App() {
   return (
     <SandboxI18nProvider>
       <Player>
-        <AudioSkinComponent skin={skin} styling={styling} live={live} className="mx-auto w-full max-w-xl">
+        <AudioSkinComponent skin={skin} styling={styling} live={live}>
           <MuxAudio {...(muxSource ? { source: muxSource } : { src: url ?? '' })} {...mediaProps} crossOrigin="" />
           {/*
             Both are opt-in media components, and no env key is needed for Mux-hosted sources.

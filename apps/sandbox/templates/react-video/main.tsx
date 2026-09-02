@@ -16,12 +16,7 @@ function App() {
     <SandboxI18nProvider>
       <VideoPlayer poster={getPosterSrc(source)}>
         {/* The skin renders its own <img> from `poster`; supplying one is what lets it carry a CORS mode. */}
-        <VideoSkinComponent
-          renderPoster={<img alt="" crossOrigin="" />}
-          skin={skin}
-          styling={styling}
-          className="mx-auto aspect-video max-w-4xl"
-        >
+        <VideoSkinComponent renderPoster={<img alt="" crossOrigin="" />} skin={skin} styling={styling}>
           <Video src={SOURCES[source].url} {...mediaProps} playsInline crossOrigin="">
             <Chapters tracks={getChapters(source)} />
             <Storyboard src={getStoryboardSrc(source)} />

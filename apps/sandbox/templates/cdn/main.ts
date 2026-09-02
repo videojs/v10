@@ -8,7 +8,15 @@ import { loadAudioStylesheets, loadVideoStylesheets } from '@app/shared/html/sty
 import { ensureCdnSandboxLocale } from '@app/shared/i18n/cdn-sandbox-locales';
 import { syncDocumentLocale } from '@app/shared/i18n/document-locale';
 import type { SandboxLocaleTag } from '@app/shared/i18n/locale-meta';
-import { getInitialLocale, onLocaleChange, onSandboxStateChange, readSandboxState } from '@app/shared/sandbox-listener';
+import { PLAYER_FRAME_CLASSES } from '@app/shared/player-frame';
+import {
+  getDirection,
+  getInitialLocale,
+  onDirectionChange,
+  onLocaleChange,
+  onSandboxStateChange,
+  readSandboxState,
+} from '@app/shared/sandbox-listener';
 import {
   getChapters,
   getPosterSrc,
@@ -41,10 +49,14 @@ let localeApplySeq = 0;
 
 type LitElementLike = HTMLElement & { requestUpdate?: () => void; updateComplete?: Promise<unknown> };
 
+/** The provider carries the pinned direction as its own `dir`, which it keeps over the one its locale implies. */
 function wrapCdnPlayerI18n(playerTag: string, inner: string): string {
+  const direction = getDirection();
+  const dir = direction === 'auto' ? '' : ` dir="${direction}"`;
+
   return html`
     <${playerTag}>
-      <media-i18n>
+      <media-i18n${dir}>
         ${inner}
       </media-i18n>
     </${playerTag}>
@@ -351,7 +363,7 @@ async function render() {
 
   if (descriptor.player === 'audio') {
     root.innerHTML = html`
-      <div class="mx-auto w-full max-w-xl">
+      <div class="${PLAYER_FRAME_CLASSES.audio}">
         ${wrapCdnPlayerI18n(
           playerTag,
           html`
@@ -367,7 +379,7 @@ async function render() {
   }
 
   const skin = html`
-    <${skinTag} class="aspect-video max-w-4xl mx-auto">
+    <${skinTag} class="${PLAYER_FRAME_CLASSES.video}">
       <${mediaTag} ${mediaClassAttr} ${sourceAttr} ${mediaAttrs} playsinline ${crossoriginAttr}>
         ${skinnedVideo ? renderChapters(getChapters(state.source)) : ''}
         ${renderStoryboard(storyboard)}
@@ -396,6 +408,16 @@ void init();
 
 onSandboxStateChange((change) => {
   Object.assign(state, change);
+  render();
+});
+
+// The shell repeats the direction after load, so only an actual change is worth a render.
+let direction = getDirection();
+
+onDirectionChange((next) => {
+  if (next === direction) return;
+
+  direction = next;
   render();
 });
 
