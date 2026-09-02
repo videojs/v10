@@ -22,7 +22,9 @@ import {
 import { isStyleModulePath, resolveStyleModule, resolveStyleModuleFile } from '../styles/modules';
 import type { StyleTransformOptions } from '../styles/options';
 import {
-  resolveStyles,
+  createResolvedStyles,
+  type LoadedStyleModule,
+  loadStyleModule,
   ruleForToken,
   type ResolvedStyles,
   type ResolvedStyleRule,
@@ -40,8 +42,8 @@ export type StylePluginConfig =
   | InternalStyleTransformOptions
   | ((module: TransformModule) => StyleTransformOptions | null | Promise<StyleTransformOptions | null>);
 
-interface CachedStyles {
-  readonly styles: ResolvedStyles;
+interface CachedStyleModule {
+  readonly module: LoadedStyleModule;
   readonly versions: ReadonlyMap<string, number>;
 }
 
@@ -94,7 +96,7 @@ export function stylePlugin(
   candidates?: string | boolean
 ): Plugin {
   const designs = new Map<string, Promise<CachedDesignSystem>>();
-  const styleCache = new Map<string, Promise<CachedStyles>>();
+  const styleCache = new Map<string, Promise<CachedStyleModule>>();
   const cssById = new Map<string, VirtualCssModule>();
   const cssByOwner = new Map<string, ReadonlySet<string>>();
   const reportedWarnings = new Set<string>();
@@ -508,21 +510,30 @@ function sourceError(message: string, pos: number): Error {
   return Object.assign(new Error(message), { pos });
 }
 
+/** Merge the requested modules from a per-file cache so a shared style module is evaluated once per build. */
 async function cachedStyles(
-  cache: Map<string, Promise<CachedStyles>>,
+  cache: Map<string, Promise<CachedStyleModule>>,
   files: readonly string[]
 ): Promise<ResolvedStyles> {
-  const key = [...files].sort().join('\0');
-  const cached = await cache.get(key);
-  if (cached && (await versionsMatch(cached.versions))) return cached.styles;
+  const moduleFiles = [...new Set(files.map((file) => resolve(file)))].sort();
 
-  const loading = resolveStyles(files).then(async (styles) => ({
-    styles,
-    versions: await fileVersions(styles.watchFiles),
+  return createResolvedStyles(await Promise.all(moduleFiles.map((file) => cachedStyleModule(cache, file))));
+}
+
+async function cachedStyleModule(
+  cache: Map<string, Promise<CachedStyleModule>>,
+  file: string
+): Promise<LoadedStyleModule> {
+  const cached = await cache.get(file);
+  if (cached && (await versionsMatch(cached.versions))) return cached.module;
+
+  const loading = loadStyleModule(file).then(async (module) => ({
+    module,
+    versions: await fileVersions(module.watchFiles),
   }));
 
-  cache.set(key, loading);
-  return (await loading).styles;
+  cache.set(file, loading);
+  return (await loading).module;
 }
 
 async function fileVersions(files: Iterable<string>): Promise<ReadonlyMap<string, number>> {
@@ -615,7 +626,7 @@ function escapeGlobPath(path: string): string {
 }
 
 function createCandidateManifest(path: string): CandidateManifest {
-  const rulesByModule = new Map<string, readonly ResolvedStyleRule[]>();
+  const rulesByModule = new Map<string, ReadonlyMap<string, ResolvedStyleRule>>();
   const persisted = new Set<string>();
   let written: string | undefined;
 
@@ -638,9 +649,20 @@ function createCandidateManifest(path: string): CandidateManifest {
       else for (const candidate of parseCandidateManifest(written)) persisted.add(candidate);
     },
     async record(styles) {
-      for (const [modulePath, rules] of styles.modules) rulesByModule.set(modulePath, [...rules.values()]);
+      let changed = written === undefined;
 
-      await write(renderCandidateManifest([...rulesByModule.values()].flat(), persisted));
+      for (const [modulePath, rules] of styles.modules) {
+        if (rulesByModule.get(modulePath) === rules) continue;
+
+        rulesByModule.set(modulePath, rules);
+        changed = true;
+      }
+
+      if (!changed) return;
+
+      const rules = [...rulesByModule.values()].flatMap((moduleRules) => [...moduleRules.values()]);
+
+      await write(renderCandidateManifest(rules, persisted));
     },
   };
 }

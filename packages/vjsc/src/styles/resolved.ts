@@ -34,22 +34,36 @@ export interface ResolvedStyles {
   readonly watchFiles: readonly string[];
 }
 
+/** One evaluated style module with its normalized rules, reusable across every set that imports it. */
+export interface LoadedStyleModule {
+  readonly modulePath: string;
+  readonly definition: StyleDefinition;
+  readonly rules: ReadonlyMap<string, ResolvedStyleRule>;
+  readonly watchFiles: readonly string[];
+}
+
 /** Evaluate controlled style modules and normalize their explicit definitions. */
 export async function resolveStyles(files: readonly string[]): Promise<ResolvedStyles> {
   const moduleFiles = [...new Set(files.map((file) => resolve(file)))].sort();
 
-  const loaded = await Promise.all(
-    moduleFiles.map(async (inputFile) => {
-      const modulePath = await realpath(inputFile);
-      const evaluated = await evaluateStyleModule(modulePath);
-      const definition = getStyleDefinition(evaluated.module.default);
-      if (!definition) throw new Error(`Style module \`${inputFile}\` must default-export \`styles({...})\`.`);
+  return createResolvedStyles(await Promise.all(moduleFiles.map(loadStyleModule)));
+}
 
-      return { definition, modulePath, watchFiles: evaluated.watchFiles };
-    })
-  );
+/** Evaluate one style module and normalize its rules independently of the other modules a source imports. */
+export async function loadStyleModule(file: string): Promise<LoadedStyleModule> {
+  const modulePath = await realpath(resolve(file));
+  const evaluated = await evaluateStyleModule(modulePath);
+  const definition = getStyleDefinition(evaluated.module.default);
+  if (!definition) throw new Error(`Style module \`${file}\` must default-export \`styles({...})\`.`);
 
-  return createResolvedStyles(loaded);
+  validateStyleDefinition(definition);
+
+  return {
+    modulePath,
+    definition,
+    rules: resolveModuleRules(definition, modulePath),
+    watchFiles: evaluated.watchFiles,
+  };
 }
 
 export function ruleForToken(
@@ -123,37 +137,64 @@ export function isGroupMarker(value: string): boolean {
   return value === 'group' || value.startsWith('group/');
 }
 
-function createResolvedStyles(
-  loaded: readonly { definition: StyleDefinition; modulePath: string; watchFiles: readonly string[] }[]
-): ResolvedStyles {
+/** Merge loaded modules into one set, validating class and output-file ownership across the set. */
+export function createResolvedStyles(loaded: readonly LoadedStyleModule[]): ResolvedStyles {
   const modules = new Map<string, ReadonlyMap<string, ResolvedStyleRule>>();
   const rules: ResolvedStyleRule[] = [];
   const classes = new Map<string, ResolvedStyleRule>();
   const files = new Map<string, string>();
   const watchFiles = new Set<string>();
 
-  for (const { definition, modulePath, watchFiles: moduleWatchFiles } of loaded) {
-    for (const file of moduleWatchFiles) watchFiles.add(file);
+  for (const module of loaded) {
+    for (const file of module.watchFiles) watchFiles.add(file);
 
-    validateStyleDefinition(definition);
-
-    const layer = definition.layer ?? 'components';
-    const previousLayer = files.get(definition.file);
+    const layer = module.definition.layer ?? 'components';
+    const previousLayer = files.get(module.definition.file);
 
     if (previousLayer && previousLayer !== layer) {
-      throw new Error(`Style output \`${definition.file}\` is assigned to both \`${previousLayer}\` and \`${layer}\`.`);
+      throw new Error(
+        `Style output \`${module.definition.file}\` is assigned to both \`${previousLayer}\` and \`${layer}\`.`
+      );
     }
 
-    files.set(definition.file, layer);
+    files.set(module.definition.file, layer);
 
-    const moduleRules = new Map<string, ResolvedStyleRule>();
+    for (const resolvedRule of module.rules.values()) {
+      const previous = classes.get(resolvedRule.className);
 
-    visitStyleRules(definition.rules, (tokenPath, rule) => {
-      const utilityGroups = splitUtilityGroups(rule.utilities);
-      const variantGroups = Object.fromEntries(
-        Object.entries(rule.variants ?? {}).map(([name, value]) => [name, Object.freeze(splitUtilityGroups(value))])
-      );
-      const resolvedRule: ResolvedStyleRule = Object.freeze({
+      if (previous) {
+        throw new Error(
+          `Style class \`${resolvedRule.className}\` is defined by both \`${displayRule(previous)}\` and \`${displayRule(resolvedRule)}\`.`
+        );
+      }
+
+      classes.set(resolvedRule.className, resolvedRule);
+      rules.push(resolvedRule);
+    }
+
+    modules.set(module.modulePath, module.rules);
+  }
+
+  return Object.freeze({
+    modules,
+    rules: Object.freeze(rules),
+    watchFiles: Object.freeze([...watchFiles].sort()),
+  });
+}
+
+function resolveModuleRules(definition: StyleDefinition, modulePath: string): ReadonlyMap<string, ResolvedStyleRule> {
+  const layer = definition.layer ?? 'components';
+  const moduleRules = new Map<string, ResolvedStyleRule>();
+
+  visitStyleRules(definition.rules, (tokenPath, rule) => {
+    const utilityGroups = splitUtilityGroups(rule.utilities);
+    const variantGroups = Object.fromEntries(
+      Object.entries(rule.variants ?? {}).map(([name, value]) => [name, Object.freeze(splitUtilityGroups(value))])
+    );
+
+    moduleRules.set(
+      tokenKey(tokenPath),
+      Object.freeze({
         modulePath,
         tokenPath: Object.freeze(tokenPath),
         className: rule.className,
@@ -171,29 +212,11 @@ function createResolvedStyles(
             ])
           )
         ),
-      });
-
-      const previous = classes.get(resolvedRule.className);
-
-      if (previous) {
-        throw new Error(
-          `Style class \`${resolvedRule.className}\` is defined by both \`${displayRule(previous)}\` and \`${displayRule(resolvedRule)}\`.`
-        );
-      }
-
-      classes.set(resolvedRule.className, resolvedRule);
-      moduleRules.set(tokenKey(tokenPath), resolvedRule);
-      rules.push(resolvedRule);
-    });
-
-    modules.set(modulePath, moduleRules);
-  }
-
-  return Object.freeze({
-    modules,
-    rules: Object.freeze(rules),
-    watchFiles: Object.freeze([...watchFiles].sort()),
+      })
+    );
   });
+
+  return moduleRules;
 }
 
 function styleBindings(ast: Program, filename: string, styles: ResolvedStyles): ReadonlyMap<string, string> {
