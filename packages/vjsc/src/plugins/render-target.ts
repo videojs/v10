@@ -1,31 +1,24 @@
-import {
-  type CallExpression,
-  jsxNamePath,
-  type JSXAttribute,
-  type JSXOpeningElement,
-  type ModuleImports,
-  type Program,
-  sourceError,
-  type VariableDeclaration,
-  type VariableDeclarator,
-  walk,
-} from '../../../vjsc/src/ast/index.ts';
-import {
-  type ComponentTarget,
-  createTargetModuleImports,
-  createTargetTypeImports,
-  importedName,
-  renderTargetElement,
-  renderTargetPropsType,
-  type SourceProps,
-  type TargetElement,
-  type TargetTransform,
-  type TargetTransformContext,
-} from '../../../vjsc/src/target/index.ts';
+import type {
+  CallExpression,
+  JSXAttribute,
+  JSXOpeningElement,
+  Program,
+  VariableDeclaration,
+  VariableDeclarator,
+} from '@oxc-project/types';
+import { walk } from 'oxc-walker';
+import type { Plugin } from 'rolldown';
+
+import { jsxNamePath, type ModuleImports, sourceError } from '../ast';
+import { importedName, isComponentImport } from '../target/bindings';
+import type { ComponentTarget, TargetElement, TargetTransformContext } from '../target/definition';
+import { createTargetModuleImports, createTargetTypeImports } from '../target/module-imports';
+import { renderTargetElement, renderTargetPropsType } from '../target/render';
+import { renderTargetMarker } from '../target/render-target';
+import { SCRIPT_MODULE_ID } from '../utils/module-id';
+import { type ComponentTargetPluginOptions, selectComponentTargets } from './component-target';
 
 type MagicString = TargetTransformContext['magicString'];
-
-const RENDER_TARGET_SOURCE = /(?:^|\/)render$/;
 
 interface RenderTargetDefinition {
   readonly exported: boolean;
@@ -43,108 +36,86 @@ interface ResolvedRenderTarget {
   readonly name: string;
 }
 
-interface RenderTargetTransformOptions {
-  readonly target: () => ComponentTarget;
-  readonly targets: Readonly<
-    Record<string, { readonly element: TargetElement; readonly kind?: 'component' | 'style' | undefined }>
-  >;
-}
-
-/** Lower Skin-owned shared components and `$render` directives for one framework target. */
-export function createRenderTargetTransform(options: RenderTargetTransformOptions): TargetTransform {
+/** Lower `defineRenderTarget` declarations and `$render` directives for the target that owns them. */
+export function renderTargetPlugin(options: ComponentTargetPluginOptions): Plugin {
   return {
-    name: 'videojs:render-targets',
-    transform(context) {
-      if (!context.code.includes('defineRenderTarget') && !context.code.includes('$render')) return false;
+    name: 'vjsc:render-target',
+    transform: {
+      filter: { id: SCRIPT_MODULE_ID, code: /defineRenderTarget|\$render/ },
+      handler(code, id, transform) {
+        const targets = selectComponentTargets(options.targets, id);
+        if (targets.length === 0 || !transform.ast || !transform.magicString) return null;
 
-      const target = options.target();
-      const definitions = collectDefinitions(context.ast);
-      const imports = collectImportedNames(context.ast);
-      const canonical = collectCanonicalRoots(context.ast, [target]);
-      const runtimeImports = createTargetModuleImports(context.ast, context.magicString);
-      const typeImports = createTargetTypeImports(context.ast, context.magicString);
-      let changed = false;
+        const owners = targets.filter((target) => Object.keys(target.renderTargets).length > 0);
+        if (owners.length > 1) throw new Error('Only one component target per module may define render targets.');
 
-      for (const definition of definitions.values()) {
-        const resolved = resolveRenderTarget(definition.name, target, options.targets, definition.start);
-        const replacement = renderDefinition(definition, resolved, runtimeImports, typeImports);
+        const changed = lowerRenderTargets(
+          { code, id, ast: transform.ast, magicString: transform.magicString },
+          owners[0] ?? targets[0]!
+        );
 
-        context.magicString.overwrite(definition.start, definition.end, replacement);
-        changed = true;
-      }
-
-      walk(context.ast, {
-        enter(node, parent) {
-          if (node.type !== 'JSXAttribute' || node.name.type !== 'JSXIdentifier' || node.name.name !== '$render')
-            return;
-
-          if (parent?.type !== 'JSXOpeningElement' || !isCanonicalOpening(parent, canonical)) {
-            throw sourceError(
-              '`$render` can only be used on a canonical component or part.\n' +
-                'Reason: framework targets can only compose render props while lowering known component contracts.\n' +
-                'Recommendation: move `$render` to the canonical component or part that owns the generated element.',
-              node.start
-            );
-          }
-
-          const local = renderTargetIdentifier(node);
-          const name = definitions.get(local)?.name ?? imports.get(local);
-
-          if (!name) {
-            throw sourceError(
-              `Cannot resolve render target \`${local}\`.\n` +
-                'Reason: `$render` must reference a local definition or a named relative import.\n' +
-                'Recommendation: pass a directly imported shared component or define it with defineRenderTarget().',
-              node.start
-            );
-          }
-
-          const resolved = resolveRenderTarget(name, target, options.targets, node.start);
-
-          lowerRenderDirective(context.code, parent, node, local, resolved, context.magicString);
-
-          changed = true;
-          this.skip();
-        },
-      });
-
-      if (changed) {
-        removeFactoryImports(context.ast, context.magicString);
-        runtimeImports.commit();
-        typeImports.commit();
-      }
-
-      return changed;
+        return changed ? { code: transform.magicString } : null;
+      },
     },
   };
 }
 
-function removeFactoryImports(ast: Program, magicString: MagicString): void {
-  for (const statement of ast.body) {
-    if (
-      statement.type !== 'ImportDeclaration' ||
-      statement.importKind === 'type' ||
-      !RENDER_TARGET_SOURCE.test(statement.source.value)
-    ) {
-      continue;
-    }
+function lowerRenderTargets(context: TargetTransformContext, target: ComponentTarget): boolean {
+  const definitions = collectDefinitions(context.ast);
+  const imports = collectImportedNames(context.ast);
+  const canonical = collectCanonicalRoots(context.ast, [target]);
+  const runtimeImports = createTargetModuleImports(context.ast, context.magicString);
+  const typeImports = createTargetTypeImports(context.ast, context.magicString);
+  let changed = false;
 
-    const factories = statement.specifiers.filter(
-      (specifier) => specifier.type === 'ImportSpecifier' && importedName(specifier) === 'defineRenderTarget'
-    );
-    if (factories.length === 0) continue;
+  for (const definition of definitions.values()) {
+    const resolved = resolveRenderTarget(definition.name, target, definition.start);
+    const replacement = renderDefinition(definition, resolved, runtimeImports, typeImports);
 
-    if (statement.specifiers.length !== factories.length) {
-      throw sourceError(
-        'defineRenderTarget() must use a dedicated import declaration.\n' +
-          'Reason: the compiler removes this build-only import after lowering the shared component.\n' +
-          'Recommendation: import defineRenderTarget() separately from other render-target helpers.',
-        statement.start
-      );
-    }
-
-    magicString.remove(statement.start, statement.end);
+    context.magicString.overwrite(definition.start, definition.end, replacement);
+    changed = true;
   }
+
+  walk(context.ast, {
+    enter(node, parent) {
+      if (node.type !== 'JSXAttribute' || node.name.type !== 'JSXIdentifier' || node.name.name !== '$render') return;
+
+      if (parent?.type !== 'JSXOpeningElement' || !isCanonicalOpening(parent, canonical)) {
+        throw sourceError(
+          '`$render` can only be used on a canonical component or part.\n' +
+            'Reason: framework targets can only compose render props while lowering known component contracts.\n' +
+            'Recommendation: move `$render` to the canonical component or part that owns the generated element.',
+          node.start
+        );
+      }
+
+      const local = renderTargetIdentifier(node);
+      const name = definitions.get(local)?.name ?? imports.get(local);
+
+      if (!name) {
+        throw sourceError(
+          `Cannot resolve render target \`${local}\`.\n` +
+            'Reason: `$render` must reference a local definition or a named relative import.\n' +
+            'Recommendation: pass a directly imported shared component or define it with defineRenderTarget().',
+          node.start
+        );
+      }
+
+      const resolved = resolveRenderTarget(name, target, node.start);
+
+      lowerRenderDirective(context.code, parent, node, local, resolved, context.magicString);
+
+      changed = true;
+      this.skip();
+    },
+  });
+
+  if (changed) {
+    runtimeImports.commit();
+    typeImports.commit();
+  }
+
+  return changed;
 }
 
 function collectDefinitions(ast: Program): ReadonlyMap<string, RenderTargetDefinition> {
@@ -192,22 +163,8 @@ function readDefinition(
   const call = declarator.init;
   if (!isDefinitionCall(call, factories)) return undefined;
 
-  const name = call.arguments[0];
-  const className = call.arguments[1];
-
-  if (name?.type !== 'Literal' || typeof name.value !== 'string') {
-    throw sourceError('defineRenderTarget() requires a literal target name.', call.start);
-  }
-
-  if (name.value !== declarator.id.name) {
-    throw sourceError(
-      `Render target export \`${declarator.id.name}\` must match its semantic name \`${name.value}\`.\n` +
-        'Reason: named imports carry the render-target identity during isolated transforms.\n' +
-        `Recommendation: rename the export or use defineRenderTarget(${JSON.stringify(declarator.id.name)}, ...).`,
-      declarator.id.start
-    );
-  }
-
+  // The exported identifier is the render target's name: named imports carry it through isolated transforms.
+  const className = call.arguments[0];
   const resolvedClassName = readClassName(className);
 
   if (resolvedClassName === undefined) {
@@ -222,7 +179,7 @@ function readDefinition(
   return {
     exported,
     local: declarator.id.name,
-    name: name.value,
+    name: declarator.id.name,
     className: resolvedClassName,
     start,
     end,
@@ -245,20 +202,12 @@ function importedFactories(ast: Program): ReadonlySet<string> {
   const factories = new Set<string>();
 
   for (const statement of ast.body) {
-    if (
-      statement.type !== 'ImportDeclaration' ||
-      statement.importKind === 'type' ||
-      !RENDER_TARGET_SOURCE.test(statement.source.value)
-    ) {
-      continue;
-    }
+    if (!isComponentImport(statement)) continue;
 
     for (const specifier of statement.specifiers) {
       if (specifier.type !== 'ImportSpecifier' || specifier.importKind === 'type') continue;
 
-      const imported = importedName(specifier);
-
-      if (imported === 'defineRenderTarget') factories.add(specifier.local.name);
+      if (importedName(specifier) === 'defineRenderTarget') factories.add(specifier.local.name);
     }
   }
 
@@ -340,19 +289,14 @@ function renderTargetIdentifier(attribute: JSXAttribute): string {
   return expression.name;
 }
 
-function resolveRenderTarget(
-  name: string,
-  target: ComponentTarget,
-  targets: RenderTargetTransformOptions['targets'],
-  pos: number
-): ResolvedRenderTarget {
-  const configured = targets[name];
+function resolveRenderTarget(name: string, target: ComponentTarget, pos: number): ResolvedRenderTarget {
+  const configured = target.renderTargets[name];
 
   if (!configured) {
     throw sourceError(
-      `The selected Skin target does not define shared component \`${name}\`.\n` +
-        'Reason: each `$render` binding requires an explicit React or HTML element contract.\n' +
-        `Recommendation: add \`${name}\` to the Skin target's render-target transform.`,
+      `The selected component target does not define render target \`${name}\`.\n` +
+        'Reason: each `$render` binding requires an explicit element contract per target.\n' +
+        `Recommendation: add \`${name}\` to the target's \`renderTargets\`.`,
       pos
     );
   }
@@ -451,20 +395,6 @@ function wrapRenderComponent(code: string, opening: JSXOpeningElement, local: st
   if (close < opening.name.end) throw sourceError('VJSC could not expand the `$render` host.', opening.start);
 
   magicString.overwrite(close, opening.end, `><${local} /></${name}>`);
-}
-
-export function renderTargetMarker(name: string): string {
-  return `data-vjsc-render-${name.replaceAll(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase()}`;
-}
-
-/** Consume one target-owned render marker from canonical component props. */
-export function renderTargetProps<Props extends object>(
-  props: SourceProps<Props>,
-  name: string
-): SourceProps<Props> | undefined {
-  const marker = renderTargetMarker(name) as keyof Props & string;
-
-  return props.has(marker) ? (props.omit(marker) as SourceProps<Props>) : undefined;
 }
 
 function attributeWhitespaceStart(code: string, opening: JSXOpeningElement, attribute: JSXAttribute): number {

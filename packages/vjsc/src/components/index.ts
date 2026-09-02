@@ -36,3 +36,4 @@ export {
   type VjscNode,
 } from './jsx-runtime';
 export type { ComponentMeta, ModuleMeta } from './meta';
+export { defineRenderTarget, type RenderTargetDefinition } from './render';

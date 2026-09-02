@@ -269,6 +269,15 @@ export interface JsxOptions {
   readonly className?: JsxClassNameOptions | undefined;
 }
 
+/** The element a target renders for one shared component declared with `defineRenderTarget`. */
+export interface RenderTargetRule {
+  readonly element: TargetElement;
+  /** `component` hosts delegate to a canonical component; `style` hosts only carry the shared classes. */
+  readonly kind?: 'component' | 'style' | undefined;
+}
+
+export type RenderTargetRules = Readonly<Record<string, RenderTargetRule>>;
+
 /** How modules compiled for this target render statically outside a browser. */
 export interface TargetRenderOptions {
   /** Redirect an external import to a concrete module file while rendering. */
@@ -306,6 +315,8 @@ export interface ComponentTargetOptions<Schema extends ComponentSchema> {
   readonly primitives?: PrimitiveRules | undefined;
   readonly types?: TypeMappings | undefined;
   readonly transforms?: readonly TargetTransform[] | undefined;
+  /** Elements for shared components declared with `defineRenderTarget`, keyed by their exported name. */
+  readonly renderTargets?: RenderTargetRules | undefined;
   readonly jsx: JsxOptions;
   /** Static rendering policy for modules compiled with this target. */
   readonly render?: TargetRenderOptions | undefined;
@@ -320,6 +331,7 @@ export interface ComponentTarget<Schema extends ComponentSchema = ComponentSchem
   readonly primitives: PrimitiveRules;
   readonly types: TypeMappings;
   readonly transforms: readonly TargetTransform[];
+  readonly renderTargets: RenderTargetRules;
   readonly jsx: JsxOptions;
   readonly render?: TargetRenderOptions | undefined;
 }
@@ -366,6 +378,7 @@ export function defineComponentTarget<const Schema extends ComponentSchema>(): (
       primitives: definition.primitives ?? {},
       types: definition.types ?? {},
       transforms: definition.transforms ?? [],
+      renderTargets: definition.renderTargets ?? {},
       jsx: definition.jsx,
       ...(definition.render ? { render: definition.render } : {}),
     };

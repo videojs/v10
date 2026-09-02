@@ -6,13 +6,13 @@ import type coreSchema from '@videojs/core/vjsc';
 import {
   type ComponentRules,
   type ComponentTarget,
+  consumeRenderTarget,
   type TargetHelpers,
   defineComponentTarget,
   type TemplateTargetDefinition,
 } from '../../../vjsc/src/target/index.ts';
 import { Host } from '../../../vjsc/src/target/jsx-runtime.ts';
 import { htmlIconModule, htmlRenderAliases } from './html-render.ts';
-import { createRenderTargetTransform, renderTargetProps } from './render-target.ts';
 
 type CoreSchema = typeof coreSchema;
 
@@ -191,9 +191,7 @@ export const htmlComponentTarget: ComponentTarget<CoreSchema> = defineComponentT
           const controlledId = id(popup ? 'popup' : 'content');
 
           if (popup) {
-            const componentProps =
-              renderTargetProps(trigger.props, 'CaptionsButton') ??
-              renderTargetProps(trigger.props, 'PlaybackRateButton');
+            const componentProps = consumeRenderTarget(trigger.props);
 
             return [
               trigger.replaceWith(
@@ -307,20 +305,15 @@ export const htmlComponentTarget: ComponentTarget<CoreSchema> = defineComponentT
         'captions-option': optionTemplate,
       },
     },
-    transforms: [
-      createRenderTargetTransform({
-        target: () => htmlComponentTarget,
-        targets: {
-          Button: { element: Button },
-          CaptionsButton: { element: htmlElementTarget('CaptionsButton', element), kind: 'component' },
-          PlaybackRateButton: { element: PlaybackRateButton, kind: 'component' },
-          SliderBuffer: { element: Div },
-          SliderFill: { element: Div },
-          SliderThumb: { element: Div },
-          SliderTrack: { element: Div },
-        },
-      }),
-    ],
+    renderTargets: {
+      Button: { element: Button },
+      CaptionsButton: { element: htmlElementTarget('CaptionsButton', element), kind: 'component' },
+      PlaybackRateButton: { element: PlaybackRateButton, kind: 'component' },
+      SliderBuffer: { element: Div },
+      SliderFill: { element: Div },
+      SliderThumb: { element: Div },
+      SliderTrack: { element: Div },
+    },
     jsx: {
       importSource: 'vjsc/html-runtime',
       attributes: 'html',

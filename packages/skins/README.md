@@ -22,7 +22,7 @@ Follow one skin from source to output.
 | [`src/skins/`](./src/skins)                                      | One folder per skin (`default-video`, `minimal-audio`, and so on), plus `video/`, `live-video/`, `audio/`, and `shared/` for reused parts. |
 | [`src/styles/`](./src/styles)                                    | Base resets, themes, tokens, the shared Tailwind source, and style modules grouped like the components.                                    |
 | [`src/presets/`](./src/presets)                                  | The handwritten background preset, copied into both packages as is.                                                                        |
-| [`src/meta.ts`](./src/meta.ts), [`src/render.ts`](./src/render.ts) | Skin and component metadata for the registry, and render targets that pick an element per framework.                                     |
+| [`src/meta.ts`](./src/meta.ts)                                   | Skin and component metadata for the registry. Shared parts use `defineRenderTarget` from `vjsc/components`.                              |
 | [`src/gaps.md`](./src/gaps.md)                                   | Deferred parity gaps. Maintain it with the `maintain-vjsc-skin-gaps` skill.                                                                |
 | [`src/tests/`](./src/tests)                                      | Contract tests for tokens, the utility catalog, metadata, and poster behavior.                                                             |
 | [`build/`](./build)                                              | Pack config, transform resolvers, framework targets, package writers, and the Shadcn registry.                                             |

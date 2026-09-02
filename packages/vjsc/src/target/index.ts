@@ -19,6 +19,8 @@ export {
   type PrimitiveRewriteContext,
   type PrimitiveRules,
   type PrimitiveTargetRule,
+  type RenderTargetRule,
+  type RenderTargetRules,
   type SourcePart,
   type SourcePartCollection,
   type SourcePartFor,
@@ -40,3 +42,4 @@ export {
 } from './definition';
 export { createTargetModuleImports, createTargetTypeImports } from './module-imports';
 export { renderTargetElement, renderTargetPropsType } from './render';
+export { consumeRenderTarget, renderTargetMarker, renderTargetProps } from './render-target';

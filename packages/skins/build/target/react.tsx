@@ -9,7 +9,6 @@ import {
   type TemplateTargetDefinition,
 } from '../../../vjsc/src/target/index.ts';
 import { Host } from '../../../vjsc/src/target/jsx-runtime.ts';
-import { createRenderTargetTransform } from './render-target.ts';
 
 type CoreSchema = typeof coreSchema;
 
@@ -146,20 +145,15 @@ export const reactComponentTarget: ComponentTarget<CoreSchema> = defineComponent
       VjscNode: { from: 'react', name: 'ReactNode' },
       VjscElement: { from: 'react', name: 'ReactElement' },
     },
-    transforms: [
-      createRenderTargetTransform({
-        target: () => reactComponentTarget,
-        targets: {
-          Button: { element: Button },
-          CaptionsButton: { element: Button, kind: 'component' },
-          PlaybackRateButton: { element: Button, kind: 'component' },
-          SliderBuffer: { element: Div },
-          SliderFill: { element: Div },
-          SliderThumb: { element: Div },
-          SliderTrack: { element: Div },
-        },
-      }),
-    ],
+    renderTargets: {
+      Button: { element: Button },
+      CaptionsButton: { element: Button, kind: 'component' },
+      PlaybackRateButton: { element: Button, kind: 'component' },
+      SliderBuffer: { element: Div },
+      SliderFill: { element: Div },
+      SliderThumb: { element: Div },
+      SliderTrack: { element: Div },
+    },
     jsx: {
       importSource: 'react',
       attributes: 'react',

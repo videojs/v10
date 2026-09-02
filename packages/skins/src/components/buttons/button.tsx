@@ -1,9 +1,10 @@
+import { defineRenderTarget } from 'vjsc/components';
+
 import type { SkinComponentMeta } from '../../meta';
-import { defineRenderTarget } from '../../render';
 import styles from '../../styles/buttons/button.styles';
 
 /** Shared button carrying the base interactive styles used by media controls. */
-export const Button = defineRenderTarget('Button', [styles.root]);
+export const Button = defineRenderTarget([styles.root]);
 
 export const meta = {
   name: 'button',
