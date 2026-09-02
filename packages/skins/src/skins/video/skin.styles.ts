@@ -5,6 +5,8 @@ export default styles({
   prefix: 'video-skin',
   rules: {
     root: {
+      // The skin root shares the container's scope root, so its rules must also match `:scope`.
+      scopeRoot: true,
       utilities: 'pointer-fine:not-data-controls-visible:cursor-none',
     },
   },
