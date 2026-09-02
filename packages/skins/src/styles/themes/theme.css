@@ -62,4 +62,27 @@
     background: var(--media-scrollbar-thumb-color);
     border-radius: 9999px;
   }
+
+  .media-skin:fullscreen {
+    --media-object-fit: contain;
+    --media-video-border-radius: 0;
+  }
+
+  @media (min-width: 1280px) {
+    .media-skin:fullscreen {
+      --media-scale: 1.25;
+    }
+  }
+
+  @media (min-width: 1536px) {
+    .media-skin:fullscreen {
+      --media-scale: 1.5;
+    }
+  }
+
+  @media (min-width: 1920px) {
+    .media-skin:fullscreen {
+      --media-scale: 1.75;
+    }
+  }
 }
