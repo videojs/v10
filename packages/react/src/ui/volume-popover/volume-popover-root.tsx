@@ -2,7 +2,7 @@ import { VolumePopoverCore } from '@videojs/core';
 import { selectVolume } from '@videojs/core/dom';
 import type { MediaVolumeState } from '@videojs/media';
 import type { ReactNode } from 'react';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 
 import { usePlayer } from '../../player/context';
 import { Popover } from '../popover';
@@ -24,9 +24,8 @@ export interface VolumePopoverRootProps extends PopoverRootProps {}
 /** Owns volume availability and the popover interaction lifecycle. */
 export function VolumePopoverRoot({ children, ...props }: VolumePopoverRootProps): ReactNode {
   const volume = usePlayer(selectVolume);
-  const [core] = useState(() => new VolumePopoverCore(props));
+  const core = new VolumePopoverCore(props);
 
-  core.setProps(props);
   core.setMedia(volume ?? unavailableVolume);
 
   return (

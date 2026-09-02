@@ -6,11 +6,14 @@ import {
 } from '@videojs/core';
 import { getStateDataAttrs } from '@videojs/core/dom';
 import type { CSSProperties, ReactElement } from 'react';
-import { Fragment, forwardRef, useMemo, useState } from 'react';
+import { Fragment, forwardRef, useMemo } from 'react';
 
 import type { HTMLProps, UIComponentProps } from '../../../utils/types';
 import { renderElement } from '../../../utils/use-render';
 import { useSliderContext, useSliderPointerValue } from '../../slider/context';
+
+// `SliderSegmentsCore` holds no state, so one shared instance projects every render.
+const segmentsCore = new SliderSegmentsCore();
 
 type SegmentProps = Omit<HTMLProps<HTMLElement>, 'ref'>;
 
@@ -29,16 +32,14 @@ export const SliderSegments = forwardRef<HTMLDivElement, SliderSegmentsProps>(
     const slider = useSliderContext();
     const pointerValue = useSliderPointerValue();
 
-    const [core] = useState(() => new SliderSegmentsCore());
-
     const geometry = useMemo(
-      () => core.getGeometry({ ranges, min, max, orientation: slider.state.orientation }),
-      [core, ranges, min, max, slider.state.orientation]
+      () => segmentsCore.getGeometry({ ranges, min, max, orientation: slider.state.orientation }),
+      [ranges, min, max, slider.state.orientation]
     );
     const sliderAttrs = getStateDataAttrs(slider.state, slider.stateAttrMap);
 
     const segments = geometry.map((segment) => {
-      const state = core.getState(segment, slider.state, pointerValue);
+      const state = segmentsCore.getState(segment, slider.state, pointerValue);
       const segmentStyle = {
         [TimeSliderChapterCSSVars.start]: state.startPercent,
         [TimeSliderChapterCSSVars.end]: state.endPercent,
@@ -59,7 +60,7 @@ export const SliderSegments = forwardRef<HTMLDivElement, SliderSegmentsProps>(
       );
     });
 
-    const state = geometry.length > 0 ? core.getState(geometry[0]!, slider.state, pointerValue) : null;
+    const state = geometry.length > 0 ? segmentsCore.getState(geometry[0]!, slider.state, pointerValue) : null;
     if (!state) return null;
 
     return renderElement(

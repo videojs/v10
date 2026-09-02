@@ -35,8 +35,6 @@ export const Value = forwardRef(function Value(
   const translator = useTranslator();
   const locale = useLocale();
 
-  const [core] = useState(() => new TimeCore());
-
   const defaultType = type ?? TimeCore.defaultProps.type;
   const [activeType, setActiveType] = useState(defaultType);
 
@@ -46,7 +44,7 @@ export const Value = forwardRef(function Value(
     setActiveType(defaultType);
   }, [defaultType, toggle]);
 
-  core.setProps({
+  const core = new TimeCore({
     type: activeType,
     negativeSign,
     label,

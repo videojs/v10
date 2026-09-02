@@ -1,7 +1,7 @@
 import { LiveButtonCore, LiveButtonDataAttrs, type LiveButtonMediaState } from '@videojs/core';
 import { selectBuffer, selectLive, selectTime } from '@videojs/core/dom';
 import { translateText } from '@videojs/core/i18n';
-import { forwardRef, type ReactNode, useLayoutEffect, useState } from 'react';
+import { forwardRef, type ReactNode, useLayoutEffect } from 'react';
 
 import { useTranslator } from '../../i18n/context';
 import { usePlayer } from '../../player/context';
@@ -52,9 +52,7 @@ export const LiveButton = forwardRef<HTMLButtonElement, LiveButtonProps>(
 
     const tooltipCtx = useOptionalTooltipContext();
     const translator = useTranslator();
-    const [core] = useState(() => new LiveButtonCore());
-
-    core.setProps({ label, disabled });
+    const core = new LiveButtonCore({ label, disabled });
 
     const { getButtonProps, buttonRef } = useButton({
       displayName: DISPLAY_NAME,

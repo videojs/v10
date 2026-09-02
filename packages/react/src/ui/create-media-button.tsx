@@ -3,7 +3,7 @@ import { isText, translateText } from '@videojs/core/i18n';
 import type { Selector } from '@videojs/store';
 import { isUndefined } from '@videojs/utils/predicate';
 import type { ForwardedRef, ForwardRefExoticComponent, RefAttributes } from 'react';
-import { forwardRef, useLayoutEffect, useState } from 'react';
+import { forwardRef, useLayoutEffect } from 'react';
 
 import { useTranslator } from '../i18n/context';
 import { useContainer, usePlayer } from '../player/context';
@@ -88,11 +88,13 @@ export function createMediaButton<Core extends Required<MediaButtonComponent>, P
     const shortcut = useHotkeyShortcut(hotkeyAction, hotkeyValue?.(coreProps));
     const translator = useTranslator();
 
-    const [core] = useState(() => new CoreClass());
-
     if (corePropKeys.has('menuTrigger') && isUndefined(coreProps.menuTrigger)) {
       coreProps.menuTrigger = menuTriggerChild;
     }
+
+    // Project this render's props and media onto a render-local core so an abandoned render never mutates the
+    // committed one.
+    const core = new CoreClass();
 
     core.setProps(coreProps);
 

@@ -29,10 +29,6 @@ export function useDialogRoot({
   idPrefix = 'dialog',
   interactionRoot,
 }: UseDialogRootOptions): DialogContextValue {
-  const [core] = useState(coreFactory);
-
-  core.setProps({ open: controlledOpen, defaultOpen, closeOnEscape });
-
   const isControlled = controlledOpen !== undefined;
   const initialOpenRef = useRef(!isControlled && defaultOpen);
   const onOpenChangeRef = useLatestRef(onOpenChangeProp);
@@ -51,9 +47,6 @@ export function useDialogRoot({
   const popupId = useSafeId(`${idPrefix}-popup`);
   const titleId = useSafeId(`${idPrefix}-title`);
   const descriptionId = useSafeId(`${idPrefix}-desc`);
-
-  core.setTitleId(titleId);
-  core.setDescriptionId(descriptionId);
 
   useLayoutEffect(() => {
     dialog.setInteractionRoot(interactionRoot ?? null);
@@ -83,8 +76,12 @@ export function useDialogRoot({
 
   const input = useSnapshot(dialog.input);
   const modality = useSnapshot(dialog.modality);
+  const core = coreFactory();
 
+  core.setProps({ open: controlledOpen, defaultOpen, closeOnEscape });
   core.setInput(input);
+  core.setTitleId(titleId);
+  core.setDescriptionId(descriptionId);
   core.setDocumentModal(modality.documentModal);
 
   return {

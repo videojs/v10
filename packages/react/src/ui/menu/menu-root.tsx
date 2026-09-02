@@ -48,8 +48,6 @@ export function MenuRoot({
   const isSubmenu = parentMenu !== null;
   const { side, align, closeOnEscape, closeOnOutsideClick } = coreProps;
 
-  const [core] = useState(() => new MenuCore(coreProps));
-
   const isControlled = controlledOpen !== undefined;
   const [uncontrolledOpen, setUncontrolledOpen] = useState(defaultOpen);
   const resolvedOpen = controlledOpen ?? uncontrolledOpen;
@@ -108,11 +106,13 @@ export function MenuRoot({
     return controlsState?.requestControlsLock();
   }, [controlsState?.requestControlsLock, input.active, isSubmenu]);
 
-  const preferredState = useMemo(() => {
-    core.setProps({ side, align, closeOnEscape, closeOnOutsideClick });
+  const projection = useMemo(() => {
+    const core = new MenuCore({ side, align, closeOnEscape, closeOnOutsideClick });
+
     core.setInput({ ...input, isSubmenu });
-    return core.getState();
-  }, [core, input, side, align, closeOnEscape, closeOnOutsideClick, isSubmenu]);
+    return { core, state: core.getState() };
+  }, [input, side, align, closeOnEscape, closeOnOutsideClick, isSubmenu]);
+  const { core, state: preferredState } = projection;
   const { state, preferredSide, setPositionedSide } = usePositionedState(preferredState);
 
   const contextValue = useMemo(

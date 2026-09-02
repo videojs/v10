@@ -32,8 +32,6 @@ const useAudioTrackRadioOptions = createRadioOptionsHook({
  * @param props - Optional `label`, `formatTrack`, and `disabled` overrides.
  */
 export function useAudioTrackOptions(props?: AudioTrackOptionsProps): AudioTrackOptionsResult | null {
-  'use no memo';
-
   return useAudioTrackRadioOptions(props);
 }
 

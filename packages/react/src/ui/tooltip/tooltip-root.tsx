@@ -48,9 +48,6 @@ export function TooltipRoot({
   const container = useOptionalContainer();
   const popupGroup = useOptionalPopupGroup();
   const controls = useOptionalControlsContext();
-  const [core] = useState(() => new TooltipCore(coreProps));
-
-  core.setProps(coreProps);
 
   const isControlled = !isUndefined(controlledOpen);
   const initialOpenRef = useRef(!isControlled && defaultOpen);
@@ -127,6 +124,7 @@ export function TooltipRoot({
   useDestroy(tooltip);
 
   const input = useSnapshot(tooltip.input);
+  const core = new TooltipCore(coreProps);
 
   core.setInput(input);
   const { state, preferredSide, setPositionedSide } = usePositionedState(core.getState());

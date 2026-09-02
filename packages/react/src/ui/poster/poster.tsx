@@ -49,7 +49,7 @@ export const Poster = forwardRef(function Poster(
   const playback = usePlayer(selectPlayback);
   const metadata = usePlayer(selectMetadata);
 
-  const [core] = useState(() => new PosterCore());
+  const core = new PosterCore();
 
   // The metadata feature is optional: without it nothing resolves a URL, and
   // this stays a visibility wrapper around whatever `src` was passed.
