@@ -23,14 +23,33 @@ export interface ComponentModulesPluginOptions {
  * @param options - Controls which query-bearing modules participate.
  */
 export function componentModulesPlugin(options: ComponentModulesPluginOptions = {}): Plugin {
+  const selections = new Map<string, Promise<TransformModule | null>>();
+  const selectedModule = (id: string): Promise<TransformModule | null> => {
+    let selection = selections.get(id);
+
+    if (!selection) {
+      selection = selectModule(id, options.select);
+      selections.set(id, selection);
+    }
+
+    return selection;
+  };
+
   return {
     name: 'vjsc:component-modules',
+    buildStart() {
+      selections.clear();
+    },
     resolveId: {
       order: 'pre',
       async handler(id, importer, resolveOptions) {
-        const selected = await selectedModule(id, options.select);
-        const inherited = importer ? await selectedModule(importer, options.select) : null;
-        if (!selected && (!inherited || !id.startsWith('.'))) return null;
+        // Only query-bearing ids can be selected, and only relative ids can inherit a selection.
+        const relative = id.startsWith('.');
+        if (!id.includes('?') && (!relative || !importer?.includes('?'))) return null;
+
+        const selected = id.includes('?') ? await selectedModule(id) : null;
+        const inherited = relative && importer?.includes('?') ? await selectedModule(importer) : null;
+        if (!selected && (!inherited || !relative)) return null;
 
         const resolved = await this.resolve(selected?.filename ?? id, importer ? moduleFilename(importer) : undefined, {
           ...resolveOptions,
@@ -45,7 +64,7 @@ export function componentModulesPlugin(options: ComponentModulesPluginOptions = 
       },
     },
     async load(id) {
-      const selected = await selectedModule(id, options.select);
+      const selected = id.includes('?') ? await selectedModule(id) : null;
       if (!selected) return null;
 
       this.addWatchFile(selected.filename);
@@ -59,7 +78,7 @@ export function componentModulesPlugin(options: ComponentModulesPluginOptions = 
   };
 }
 
-async function selectedModule(
+async function selectModule(
   id: string,
   select: ComponentModulesPluginOptions['select']
 ): Promise<TransformModule | null> {
