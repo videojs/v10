@@ -1,9 +1,8 @@
-import { CustomMediaElement } from '@videojs/media/dom';
 import { MuxVideoAdapter } from '@videojs/mux-video';
 
-import { MediaAttachMixin } from '../../store/media-attach-mixin';
+import { createMediaElement } from '../create-media-element';
 import { MuxVideoMixin } from './mixin';
 
-const MuxVideoBase = MuxVideoMixin(MediaAttachMixin(CustomMediaElement('video', MuxVideoAdapter)));
+const MuxVideoBase = MuxVideoMixin(createMediaElement(MuxVideoAdapter));
 
 export class MuxVideo extends MuxVideoBase {}

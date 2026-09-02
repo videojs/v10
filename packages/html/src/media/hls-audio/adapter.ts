@@ -1,6 +1,5 @@
-import { CustomMediaElement } from '@videojs/media/dom';
 import { HlsAudioAdapter } from '@videojs/spf/hls-audio';
 
-import { MediaAttachMixin } from '../../store/media-attach-mixin';
+import { createMediaElement } from '../create-media-element';
 
-export class HlsAudio extends MediaAttachMixin(CustomMediaElement('audio', HlsAudioAdapter)) {}
+export class HlsAudio extends createMediaElement(HlsAudioAdapter, { tag: 'audio' }) {}

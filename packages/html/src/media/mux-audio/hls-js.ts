@@ -1,9 +1,8 @@
-import { CustomMediaElement } from '@videojs/media/dom';
 import { MuxAudioAdapter } from '@videojs/mux-audio';
 
-import { MediaAttachMixin } from '../../store/media-attach-mixin';
+import { createMediaElement } from '../create-media-element';
 import { MuxAudioMixin } from './mixin';
 
-const MuxAudioBase = MuxAudioMixin(MediaAttachMixin(CustomMediaElement('audio', MuxAudioAdapter)));
+const MuxAudioBase = MuxAudioMixin(createMediaElement(MuxAudioAdapter, { tag: 'audio' }));
 
 export class MuxAudio extends MuxAudioBase {}

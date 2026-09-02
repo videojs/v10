@@ -1,6 +1,5 @@
 import { DashAdapter } from '@videojs/dash-video';
-import { CustomMediaElement } from '@videojs/media/dom';
 
-import { MediaAttachMixin } from '../../store/media-attach-mixin';
+import { createMediaElement } from '../create-media-element';
 
-export class DashVideo extends MediaAttachMixin(CustomMediaElement('video', DashAdapter)) {}
+export class DashVideo extends createMediaElement(DashAdapter) {}

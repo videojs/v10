@@ -1,6 +1,5 @@
 import { HlsJsAdapter } from '@videojs/hlsjs-video';
-import { CustomMediaElement } from '@videojs/media/dom';
 
-import { MediaAttachMixin } from '../../store/media-attach-mixin';
+import { createMediaElement } from '../create-media-element';
 
-export class HlsJsVideo extends MediaAttachMixin(CustomMediaElement('video', HlsJsAdapter)) {}
+export class HlsJsVideo extends createMediaElement(HlsJsAdapter) {}

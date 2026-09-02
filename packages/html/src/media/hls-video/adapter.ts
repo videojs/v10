@@ -1,6 +1,5 @@
-import { CustomMediaElement } from '@videojs/media/dom';
 import { HlsVideoAdapter } from '@videojs/spf/hls-video';
 
-import { MediaAttachMixin } from '../../store/media-attach-mixin';
+import { createMediaElement } from '../create-media-element';
 
-export class HlsVideo extends MediaAttachMixin(CustomMediaElement('video', HlsVideoAdapter)) {}
+export class HlsVideo extends createMediaElement(HlsVideoAdapter) {}

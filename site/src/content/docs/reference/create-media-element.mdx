@@ -1,0 +1,46 @@
+---
+title: createMediaElement
+description: Build a custom media element around a playback adapter that registers with the player
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+
+## Import
+
+```ts
+import { createMediaElement } from "@videojs/html";
+```
+
+## Usage
+
+Pass an adapter class. The returned element renders a `<video>` in its shadow root, drives it through the adapter, and registers itself with the surrounding <DocsLink slug="reference/player">player</DocsLink> on connect.
+
+```ts
+import { createMediaElement } from '@videojs/html';
+import { HlsJsAdapter } from '@videojs/hlsjs-video';
+
+export class MyHlsVideo extends createMediaElement(HlsJsAdapter) {}
+
+customElements.define('my-hls-video', MyHlsVideo);
+```
+
+Pass `tag: 'audio'` for an audio adapter. Embeds pass `tag: 'iframe'` and a `template` that renders the provider's iframe from the element's initial attributes:
+
+```ts
+import { createMediaElement } from '@videojs/html';
+import { VimeoAdapter } from '@videojs/vimeo-video';
+
+export class MyVimeoVideo extends createMediaElement(VimeoAdapter, {
+  tag: 'iframe',
+  template: (attrs) => `<iframe part="iframe" src="${attrs.src ?? ''}" allowfullscreen></iframe>`,
+}) {}
+```
+
+Every built-in media element except `<wistia-video>` and `<background-video>` is created this way. Subclass the result to add element behavior, such as extra observed attributes.
+
+## Who needs this
+
+Use `createMediaElement` to expose an adapter as a custom element, for example a third-party engine that implements the `@videojs/media` contract. For an element that already renders its own media, or whose media is not a native `<video>` or `<audio>`, apply <DocsLink slug="reference/media-attach-mixin">MediaAttachMixin</DocsLink> to it directly.
+
+<UtilReference util="createMediaElement" />
