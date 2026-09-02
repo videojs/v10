@@ -1,3 +1,5 @@
+import { kebabCase } from '@videojs/utils/string';
+
 import { isStyleRule, visitStyleRules } from './tree';
 
 const styleDefinition = Symbol.for('vjsc/styles/definition');
@@ -5,8 +7,11 @@ const styleDefinition = Symbol.for('vjsc/styles/definition');
 export type StyleValue = string | readonly string[];
 
 export interface StyleRule {
-  /** The stable semantic class emitted for CSS output. */
-  readonly className: string;
+  /**
+   * The stable semantic class emitted for CSS output. Defaults to the module `prefix` for a `root` rule and to
+   * `prefix-<kebab-case path>` for every other rule.
+   */
+  readonly className?: string | undefined;
   /** Also match this class when it is colocated on the configured CSS scope root. */
   readonly scopeRoot?: boolean | undefined;
   /** Tailwind utilities shared by every configured variant. */
@@ -22,6 +27,8 @@ export type StyleTree = {
 export interface StyleDefinition<Rules extends StyleTree = StyleTree> {
   /** CSS asset path used when the style transform emits CSS. */
   readonly file: string;
+  /** Class-name prefix rules derive their `className` from when they do not declare one. */
+  readonly prefix?: string | undefined;
   /** Cascade layer containing the emitted rules. Defaults to `components`. */
   readonly layer?: string | undefined;
   readonly description?: string | undefined;
@@ -44,7 +51,7 @@ type DefinedStyles<Rules extends StyleTree> = StyleReferences<Rules> & {
 export function styles<const Rules extends StyleTree>(definition: StyleDefinition<Rules>): StyleReferences<Rules> {
   validateStyleDefinition(definition);
 
-  const references = createReferences(definition.rules) as DefinedStyles<Rules>;
+  const references = createReferences(definition, definition.rules) as DefinedStyles<Rules>;
 
   Object.defineProperty(references, styleDefinition, {
     configurable: false,
@@ -64,11 +71,38 @@ export function getStyleDefinition(value: unknown): StyleDefinition | undefined 
 
 export { isStyleRule };
 
-function createReferences(tree: StyleTree): Record<string, unknown> {
+/** Resolve the class a rule emits, deriving it from the module prefix when the rule declares none. */
+export function ruleClassName(
+  definition: Pick<StyleDefinition, 'prefix'>,
+  path: readonly string[],
+  rule: StyleRule
+): string {
+  if (rule.className !== undefined) return rule.className;
+
+  if (definition.prefix === undefined) {
+    throw new Error(
+      `Style rule \`${path.join('.')}\` needs a \`className\` or a module \`prefix\` to derive one from.`
+    );
+  }
+
+  if (path.length === 1 && path[0] === 'root') return definition.prefix;
+
+  return `${definition.prefix}-${path.map(kebabCase).join('-')}`;
+}
+
+function createReferences(
+  definition: Pick<StyleDefinition, 'prefix'>,
+  tree: StyleTree,
+  path: readonly string[] = []
+): Record<string, unknown> {
   const references: Record<string, unknown> = {};
 
   for (const [name, value] of Object.entries(tree)) {
-    references[name] = isStyleRule(value) ? value.className : createReferences(value);
+    const rulePath = [...path, name];
+
+    references[name] = isStyleRule(value)
+      ? ruleClassName(definition, rulePath, value)
+      : createReferences(definition, value, rulePath);
   }
 
   return references;
@@ -104,8 +138,12 @@ export function validateStyleDefinition(definition: StyleDefinition): void {
     throw new Error(`Style layer \`${layer}\` must be a CSS layer name.`);
   }
 
+  if (definition.prefix !== undefined && !/^[_a-zA-Z][-_a-zA-Z0-9]*$/.test(definition.prefix)) {
+    throw new Error(`Style prefix \`${definition.prefix}\` must be one unprefixed CSS class name.`);
+  }
+
   visitStyleRules(definition.rules, (path, rule) => {
-    if (!/^[_a-zA-Z][-_a-zA-Z0-9]*$/.test(rule.className)) {
+    if (!/^[_a-zA-Z][-_a-zA-Z0-9]*$/.test(ruleClassName(definition, path, rule))) {
       throw new Error(`Style rule \`${path.join('.')}\` must declare one unprefixed CSS class name.`);
     }
   });

@@ -2,9 +2,9 @@ import { styles } from 'vjsc/styles';
 
 export default styles({
   file: 'indicators.css',
+  prefix: 'media-seek-indicator',
   rules: {
     root: {
-      className: 'media-seek-indicator',
       utilities: [
         'group/seek-status col-start-2 row-start-1 grid place-content-center gap-1 p-4 text-center',
         'media-wide:p-6',
@@ -13,7 +13,6 @@ export default styles({
       ],
     },
     icon: {
-      className: 'media-seek-indicator-icon',
       utilities: [
         'hidden size-media-icon-lg group-data-direction/seek-status:block',
         'group-data-[direction=backward]/seek-status:[scale:-1_1]',
@@ -24,7 +23,6 @@ export default styles({
       ],
     },
     value: {
-      className: 'media-seek-indicator-value',
       utilities: 'tabular-nums',
     },
   },

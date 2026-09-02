@@ -2,17 +2,15 @@ import { styles } from 'vjsc/styles';
 
 export default styles({
   file: 'time.css',
+  prefix: 'media-time',
   rules: {
     group: {
-      className: 'media-time-group',
       utilities: 'flex items-center gap-1',
     },
     value: {
-      className: 'media-time-value',
       utilities: 'tabular-nums',
     },
     toggle: {
-      className: 'media-time-toggle',
       utilities: [
         'cursor-pointer rounded-sm tabular-nums focus-ring-media',
         'transition-[outline-color,outline-offset] duration-media-fast ease-out',
@@ -24,15 +22,12 @@ export default styles({
       },
     },
     currentValue: {
-      className: 'media-time-current-value',
       utilities: 'hidden media-wide:inline',
     },
     separator: {
-      className: 'media-time-separator',
       utilities: 'hidden media-wide:inline media-wide:text-current/60',
     },
     durationValue: {
-      className: 'media-time-duration-value',
       utilities: 'tabular-nums media-wide:text-current/60',
     },
   },

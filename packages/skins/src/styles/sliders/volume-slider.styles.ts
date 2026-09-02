@@ -2,13 +2,12 @@ import { styles } from 'vjsc/styles';
 
 export default styles({
   file: 'sliders.css',
+  prefix: 'media-volume-slider',
   rules: {
     root: {
-      className: 'media-volume-slider',
       utilities: [],
     },
     thumb: {
-      className: 'media-volume-slider-thumb',
       utilities: 'scale-100 opacity-100',
     },
   },

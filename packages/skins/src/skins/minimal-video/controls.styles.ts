@@ -2,17 +2,16 @@ import { styles } from 'vjsc/styles';
 
 export default styles({
   file: 'video/controls.css',
+  prefix: 'video-controls',
   rules: {
     content: {
       className: 'video-controls-wrap',
       utilities: 'flex-wrap media-wide:flex-nowrap',
     },
     start: {
-      className: 'video-controls-start',
       utilities: 'flex flex-1 items-center gap-px media-wide:flex-none',
     },
     end: {
-      className: 'video-controls-end',
       utilities: [
         'flex flex-1 items-center justify-end gap-px media-wide:flex-none',
         'media-max-wide:mask-media-volume media-max-wide:[mask-size:400%_100%]',
@@ -20,7 +19,6 @@ export default styles({
       ],
     },
     trailing: {
-      className: 'video-controls-trailing',
       utilities: 'flex items-center gap-px',
     },
     timeSliderGroup: {

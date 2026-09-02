@@ -2,17 +2,15 @@ import { styles } from 'vjsc/styles';
 
 export default styles({
   file: 'video/controls.css',
+  prefix: 'video-controls',
   rules: {
     captionsButton: {
-      className: 'video-controls-captions-button',
       utilities: 'media-max-compact:hidden',
     },
     volumeButton: {
-      className: 'video-controls-volume-button',
       utilities: 'ms-px',
     },
     settingsButton: {
-      className: 'video-controls-settings-button',
       utilities: 'media-compact:ms-px',
     },
     timeSliderGroup: {

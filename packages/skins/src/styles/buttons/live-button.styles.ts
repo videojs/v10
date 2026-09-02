@@ -2,9 +2,9 @@ import { styles } from 'vjsc/styles';
 
 export default styles({
   file: 'buttons.css',
+  prefix: 'media-live-button',
   rules: {
     root: {
-      className: 'media-live-button',
       utilities: [
         'inline-flex! w-auto items-center gap-1.5 px-3 py-2',
         'text-media-sm leading-none font-semibold tracking-wider uppercase',

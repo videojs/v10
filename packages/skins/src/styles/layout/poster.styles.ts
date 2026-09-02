@@ -2,9 +2,9 @@ import { styles } from 'vjsc/styles';
 
 export default styles({
   file: 'poster.css',
+  prefix: 'media-poster',
   rules: {
     root: {
-      className: 'media-poster',
       utilities: [
         'pointer-events-none layer-media object-media',
         'transition-opacity duration-media-slower not-data-visible:opacity-0',

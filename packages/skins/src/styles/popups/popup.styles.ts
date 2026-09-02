@@ -2,6 +2,7 @@ import { styles } from 'vjsc/styles';
 
 export default styles({
   file: 'popups.css',
+  prefix: 'media-popup',
   rules: {
     popup: {
       className: 'media-popup',
@@ -21,7 +22,6 @@ export default styles({
       },
     },
     safeArea: {
-      className: 'media-popup-safe-area',
       utilities: [
         'before:pointer-events-auto before:absolute',
         'data-[side=top]:before:inset-x-0 data-[side=top]:before:top-full',
@@ -33,11 +33,9 @@ export default styles({
       ],
     },
     transition: {
-      className: 'media-popup-transition',
       utilities: ['transition-media-popup data-ending-style:duration-media-instant'],
     },
     surface: {
-      className: 'media-popup-surface',
       utilities: 'bg-media-popover text-media-popover-foreground surface-media after:surface-media-inset',
       variants: {
         minimal: 'after:hidden',

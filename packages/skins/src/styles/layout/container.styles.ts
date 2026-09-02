@@ -2,9 +2,9 @@ import { styles } from 'vjsc/styles';
 
 export default styles({
   file: 'container.css',
+  prefix: 'media',
   rules: {
     skin: {
-      className: 'media-skin',
       utilities: [],
     },
     root: {

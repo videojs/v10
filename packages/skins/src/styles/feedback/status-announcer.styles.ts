@@ -2,9 +2,9 @@ import { styles } from 'vjsc/styles';
 
 export default styles({
   file: 'indicators.css',
+  prefix: 'media-status-announcer',
   rules: {
     root: {
-      className: 'media-status-announcer',
       utilities: 'sr-only',
     },
   },

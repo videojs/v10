@@ -2,6 +2,7 @@ import { styles } from 'vjsc/styles';
 
 export default styles({
   file: 'popups.css',
+  prefix: 'media-tooltip',
   rules: {
     popup: {
       className: 'media-tooltip',
@@ -15,7 +16,6 @@ export default styles({
       },
     },
     shortcut: {
-      className: 'media-tooltip-shortcut',
       utilities:
         'min-w-[1.5em] rounded-[--spacing(1)] bg-media-muted p-[0.1em] text-center text-media-sm [font-family:inherit] font-semibold leading-tight',
       variants: { minimal: '-me-1' },

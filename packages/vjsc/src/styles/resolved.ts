@@ -7,7 +7,13 @@ import { twMerge } from 'tailwind-merge';
 
 import { toArray } from '../utils/array';
 import { splitClassNames } from './class-names';
-import { getStyleDefinition, type StyleDefinition, type StyleValue, validateStyleDefinition } from './define';
+import {
+  getStyleDefinition,
+  ruleClassName,
+  type StyleDefinition,
+  type StyleValue,
+  validateStyleDefinition,
+} from './define';
 import { visitStyleRules } from './tree';
 
 const STYLE_RUNTIME_ENTRY = resolveStyleRuntimeEntry();
@@ -178,7 +184,7 @@ function resolveModuleRules(definition: StyleDefinition, modulePath: string): Re
       Object.freeze({
         modulePath,
         tokenPath: Object.freeze(tokenPath),
-        className: rule.className,
+        className: ruleClassName(definition, tokenPath, rule),
         file: definition.file,
         layer,
         scopeRoot: rule.scopeRoot ?? false,

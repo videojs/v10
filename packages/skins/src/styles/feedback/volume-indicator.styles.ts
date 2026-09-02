@@ -7,9 +7,9 @@ const iconVariants = {
 
 export default styles({
   file: 'indicators.css',
+  prefix: 'media-volume-indicator',
   rules: {
     root: {
-      className: 'media-volume-indicator',
       utilities: 'group/volume-status',
       variants: {
         default: [
@@ -19,7 +19,6 @@ export default styles({
       },
     },
     fill: {
-      className: 'media-volume-indicator-fill',
       utilities: 'rounded-[inherit]',
       variants: {
         default: [
@@ -39,22 +38,18 @@ export default styles({
       },
     },
     value: {
-      className: 'media-volume-indicator-value',
       utilities: [],
       variants: { default: 'ml-auto mix-blend-difference', minimal: 'col-start-3 row-start-1' },
     },
     highIcon: {
-      className: 'media-volume-indicator-high-icon',
       utilities: 'hidden shrink-0 group-data-[level=high]/volume-status:block',
       variants: iconVariants,
     },
     lowIcon: {
-      className: 'media-volume-indicator-low-icon',
       utilities: 'hidden shrink-0 group-data-[level=low]/volume-status:block',
       variants: iconVariants,
     },
     offIcon: {
-      className: 'media-volume-indicator-off-icon',
       utilities: 'hidden shrink-0 group-data-[level=off]/volume-status:block',
       variants: iconVariants,
     },

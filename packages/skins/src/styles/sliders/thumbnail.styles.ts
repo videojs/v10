@@ -2,9 +2,9 @@ import { styles } from 'vjsc/styles';
 
 export default styles({
   file: 'sliders.css',
+  prefix: 'media-slider-thumbnail',
   rules: {
     root: {
-      className: 'media-slider-thumbnail',
       utilities: [
         'group/thumbnail pointer-events-none overflow-hidden rounded-media-popup bg-media-scrim/90',
         'bottom-[calc(100%+var(--media-slider-preview-offset))]',
@@ -16,7 +16,6 @@ export default styles({
       },
     },
     image: {
-      className: 'media-slider-thumbnail-image',
       utilities: [
         'relative block max-h-(--media-slider-preview-max-height) max-w-(--media-slider-preview-max-width) overflow-clip rounded-[inherit]',
         'transition-opacity duration-media-base ease-out',
@@ -24,7 +23,6 @@ export default styles({
       ],
     },
     spinnerIcon: {
-      className: 'media-slider-thumbnail-spinner-icon',
       utilities: [
         'absolute top-1/2 left-1/2 size-media-icon -translate-x-1/2 -translate-y-1/2 opacity-0',
         'transition-opacity duration-media-base ease-out',

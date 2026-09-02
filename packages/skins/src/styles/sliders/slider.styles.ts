@@ -8,9 +8,9 @@ const trackLayer = [
 
 export default styles({
   file: 'sliders.css',
+  prefix: 'media-slider',
   rules: {
     root: {
-      className: 'media-slider',
       utilities: [
         'group/slider relative flex flex-1 cursor-pointer items-center justify-center outline-hidden',
         'rounded-media-pill',
@@ -19,14 +19,12 @@ export default styles({
       ],
     },
     track: {
-      className: 'media-slider-track',
       utilities: [
         'relative isolate w-full select-none overflow-hidden rounded-media-pill bg-current/20',
         'data-[orientation=horizontal]:h-1 data-[orientation=vertical]:h-full data-[orientation=vertical]:w-1',
       ],
     },
     fill: {
-      className: 'media-slider-fill',
       utilities: [
         ...trackLayer,
         'bg-media-primary',
@@ -39,7 +37,6 @@ export default styles({
       ],
     },
     buffer: {
-      className: 'media-slider-buffer',
       utilities: [
         ...trackLayer,
         'bg-current/20',
@@ -50,7 +47,6 @@ export default styles({
       ],
     },
     thumb: {
-      className: 'media-slider-thumb',
       utilities: [
         'absolute z-10 top-1/2 left-(--media-slider-fill) size-3 -translate-x-1/2 -translate-y-1/2 rounded-media-control bg-current',
         'select-none transition-[opacity,height,width,outline-offset,left,top,scale] duration-media-slider ease-out',
@@ -73,7 +69,6 @@ export default styles({
       },
     },
     preview: {
-      className: 'media-slider-preview',
       utilities: [
         'group/preview relative h-1 [--media-slider-preview-max-height:var(--media-slider-preview-max-width)]',
         'media-wide:[--media-slider-preview-max-width:min(--spacing(48),100cqi)]',
@@ -103,7 +98,6 @@ export default styles({
       },
     },
     previewContent: {
-      className: 'media-slider-preview-content',
       utilities: [
         'absolute max-w-(--media-slider-preview-max-width) -translate-x-1/2 translate-y-media-hidden-preview-offset scale-media-hidden-preview opacity-0',
         'origin-bottom blur-media-hidden',

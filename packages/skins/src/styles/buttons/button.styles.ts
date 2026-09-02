@@ -2,9 +2,9 @@ import { styles } from 'vjsc/styles';
 
 export default styles({
   file: 'buttons.css',
+  prefix: 'media-button',
   rules: {
     root: {
-      className: 'media-button',
       utilities: [
         'grid size-media-control min-h-0 shrink-0 touch-manipulation select-none place-items-center rounded-media-control border-0 bg-transparent p-0 text-center text-inherit [corner-shape:var(--media-control-corner-shape)] [text-shadow:inherit]',
         'cursor-pointer focus-ring-media',
@@ -20,7 +20,6 @@ export default styles({
       },
     },
     icon: {
-      className: 'media-button-icon',
       utilities: [
         'col-start-1 row-start-1 size-media-icon drop-shadow-media-icon',
         'transition-[opacity,scale] duration-media-base ease-out',

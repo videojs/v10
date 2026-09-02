@@ -3,9 +3,9 @@ import { styles } from 'vjsc/styles';
 /** Shared floating indicator shell used by status and volume feedback. */
 export default styles({
   file: 'indicators.css',
+  prefix: 'media-indicator',
   rules: {
     root: {
-      className: 'media-indicator',
       utilities: [
         'pointer-events-none absolute origin-top text-inherit',
         'duration-media-fast ease-out',
@@ -30,7 +30,6 @@ export default styles({
       },
     },
     content: {
-      className: 'media-indicator-content',
       utilities: 'items-center justify-between gap-2 px-2.5 py-1',
       variants: {
         minimal: 'media-opaque:rounded-media-control media-opaque:bg-media-background',

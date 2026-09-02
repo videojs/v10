@@ -35,9 +35,9 @@ const menuChevron = [...menuIcon, 'size-media-icon-sm'] as const;
 
 export default styles({
   file: 'menus.css',
+  prefix: 'media-menu',
   rules: {
     popup: {
-      className: 'media-menu-popup',
       utilities: [
         'm-0 min-w-44 max-w-(--media-menu-available-width) overflow-hidden! rounded-media-popup border-0 p-1 [--media-popup-side-offset:var(--media-popover-side-offset)]',
         'max-h-[min(var(--media-menu-available-height,--spacing(56)),--spacing(56))] overscroll-none',
@@ -46,11 +46,9 @@ export default styles({
       ],
     },
     resizablePopup: {
-      className: 'media-menu-resizable-popup',
       utilities: 'transition-media-menu-resize',
     },
     content: {
-      className: 'media-menu-content',
       utilities: [
         ...menuHighlight,
         'absolute max-h-[inherit] overflow-auto overscroll-none outline-hidden',
@@ -68,55 +66,42 @@ export default styles({
       ],
     },
     radioGroup: {
-      className: 'media-menu-radio-group',
       utilities: menuGroup,
     },
     radioItem: {
-      className: 'media-menu-radio-item',
       utilities: ['group/menu-radio-item', ...menuItem, ...menuItemOption, ...menuItemHighlight],
     },
     triggerItem: {
-      className: 'media-menu-trigger-item',
       utilities: ['group/menu-trigger-item', ...menuItem, ...menuItemOption, ...menuItemHighlight],
     },
     backItem: {
-      className: 'media-menu-back-item',
       utilities: ['group/menu-back-item', ...menuItem, 'mb-0.5 w-full'],
     },
     separator: {
-      className: 'media-menu-separator',
       utilities: 'my-1 block border-b border-media-border media-opaque:border-media-foreground/25',
     },
     hint: {
-      className: 'media-menu-hint',
       utilities: 'ms-auto inline-flex min-w-0 items-center gap-1 ps-2 text-current/65',
     },
     hintLabel: {
-      className: 'media-menu-hint-label',
       utilities: 'max-w-24 truncate',
     },
     tier: {
-      className: 'media-menu-tier',
       utilities: 'ps-0.5 pt-px text-media-xs font-semibold leading-none text-current/70',
     },
     badge: {
-      className: 'media-menu-badge',
       utilities: 'rounded-media-control bg-media-accent px-1.5 text-media-xs font-semibold',
     },
     itemIndicator: {
-      className: 'media-menu-item-indicator',
       utilities: 'ms-auto -me-1 shrink-0 opacity-0 group-aria-checked/menu-radio-item:opacity-100',
     },
     triggerItemIcon: {
-      className: 'media-menu-trigger-item-icon',
       utilities: [...menuIcon, 'size-media-icon', 'group-media-highlighted/menu-trigger-item:text-inherit'],
     },
     radioItemIcon: {
-      className: 'media-menu-radio-item-icon',
       utilities: [...menuIcon, 'size-media-icon', 'group-media-highlighted/menu-radio-item:text-inherit'],
     },
     forwardChevron: {
-      className: 'media-menu-forward-chevron',
       utilities: [
         ...menuChevron,
         '[&:dir(rtl)]:[scale:-1_1]',
@@ -124,7 +109,6 @@ export default styles({
       ],
     },
     backChevron: {
-      className: 'media-menu-back-chevron',
       utilities: [
         ...menuChevron,
         'rotate-180 [&:dir(rtl)]:rotate-0 [&:dir(rtl)]:[scale:1_1]',

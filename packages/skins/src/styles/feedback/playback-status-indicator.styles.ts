@@ -12,9 +12,9 @@ const iconVariants = {
 
 export default styles({
   file: 'indicators.css',
+  prefix: 'media-playback-status-indicator',
   rules: {
     root: {
-      className: 'media-playback-status-indicator',
       utilities: [
         'group/playback-status col-start-2 row-start-1 grid place-content-center p-4 text-center',
         'transition-[opacity,scale] duration-media-slow ease-out',
@@ -24,7 +24,6 @@ export default styles({
       variants: { default: 'rounded-media-pill bg-media-scrim/35 backdrop-filter-media-scrim' },
     },
     playIcon: {
-      className: 'media-playback-status-indicator-play-icon',
       utilities: [
         ...icon,
         'group-data-[status=play]/playback-status:scale-100 group-data-[status=play]/playback-status:opacity-100',
@@ -35,7 +34,6 @@ export default styles({
       },
     },
     pauseIcon: {
-      className: 'media-playback-status-indicator-pause-icon',
       utilities: [
         ...icon,
         'group-data-[status=pause]/playback-status:scale-100 group-data-[status=pause]/playback-status:opacity-100',

@@ -2,20 +2,18 @@ import { styles } from 'vjsc/styles';
 
 export default styles({
   file: 'buttons.css',
+  prefix: 'media-cast-button',
   rules: {
     root: {
-      className: 'media-cast-button',
       utilities: 'group/cast',
     },
     enterIcon: {
-      className: 'media-cast-button-enter-icon',
       utilities: [
         'opacity-0 group-not-data-[cast-state=connected]/cast:scale-100',
         'group-not-data-[cast-state=connected]/cast:opacity-100',
       ],
     },
     exitIcon: {
-      className: 'media-cast-button-exit-icon',
       utilities: [
         'opacity-0 group-data-[cast-state=connected]/cast:scale-100',
         'group-data-[cast-state=connected]/cast:opacity-100',

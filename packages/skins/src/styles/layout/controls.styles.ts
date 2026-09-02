@@ -18,13 +18,12 @@ const compactHidden = [
 
 export default styles({
   file: 'video/controls.css',
+  prefix: 'video-controls',
   rules: {
     root: {
-      className: 'video-controls',
       utilities: [],
     },
     content: {
-      className: 'video-controls-content',
       utilities: [
         'group/controls text-media-controls-foreground text-shadow-media',
         'duration-media-controls-half ease-out',
@@ -55,14 +54,12 @@ export default styles({
       },
     },
     backdrop: {
-      className: 'video-controls-backdrop',
       utilities: [
         'pointer-events-none absolute inset-0 z-10 rounded-[inherit] bg-(image:--media-controls-gradient)',
         'transition-opacity duration-media-controls ease-out not-data-visible:opacity-0',
       ],
     },
     primary: {
-      className: 'video-controls-primary',
       utilities: [
         'absolute inset-x-2 bottom-2 z-10 flex origin-bottom items-center rounded-media-controls p-1',
         ...compactSurface,
@@ -72,7 +69,6 @@ export default styles({
       ],
     },
     secondary: {
-      className: 'video-controls-secondary',
       utilities: [
         'absolute top-2 right-2 z-10 flex origin-top items-center gap-px rounded-media-controls p-1',
         ...compactSurface,
@@ -82,7 +78,6 @@ export default styles({
       ],
     },
     spacer: {
-      className: 'video-controls-spacer',
       utilities: 'flex-1',
     },
   },

@@ -2,17 +2,15 @@ import { styles } from 'vjsc/styles';
 
 export default styles({
   file: 'sliders.css',
+  prefix: 'media-time-slider',
   rules: {
     root: {
-      className: 'media-time-slider',
       utilities: [],
     },
     chapters: {
-      className: 'media-time-slider-chapters',
       utilities: 'relative flex size-full min-h-0 min-w-0 flex-1 items-center rounded-[inherit]',
     },
     chapter: {
-      className: 'media-time-slider-chapter',
       utilities: [
         'group/chapter absolute inset-0 flex min-h-0 min-w-0 items-center justify-center',
         '[--media-chapter-inset-start:0.5] [--media-chapter-inset-end:0.5]',
@@ -21,7 +19,6 @@ export default styles({
       ],
     },
     chapterTrack: {
-      className: 'media-time-slider-chapter-track',
       utilities: [
         'transition-[height,width] duration-media-slow ease-out',
         'data-[orientation=horizontal]:clip-media-chapter-track-x data-[orientation=vertical]:clip-media-chapter-track-y',
@@ -30,7 +27,6 @@ export default styles({
       ],
     },
     thumb: {
-      className: 'media-time-slider-thumb',
       utilities: [
         'opacity-0 data-interactive:opacity-100 focus-visible:opacity-100',
         'pointer-fine:group-hover/slider:scale-100 pointer-fine:group-hover/slider:opacity-100',
@@ -38,7 +34,6 @@ export default styles({
       variants: { default: 'scale-80', minimal: 'scale-70 data-interactive:scale-100' },
     },
     previewContent: {
-      className: 'media-time-slider-preview-content',
       utilities: 'flex bottom-[calc(100%+var(--media-slider-preview-label-offset))] tabular-nums',
       variants: {
         default: 'left-1/2 flex-col items-center',
@@ -47,12 +42,10 @@ export default styles({
       },
     },
     chapterTitle: {
-      className: 'media-time-slider-chapter-title',
       utilities: 'max-w-(--media-slider-preview-max-width) min-w-0 truncate empty:hidden',
       variants: { default: 'px-6' },
     },
     value: {
-      className: 'media-time-slider-value',
       utilities: 'tabular-nums',
     },
   },

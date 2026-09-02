@@ -2,17 +2,15 @@ import { styles } from 'vjsc/styles';
 
 export default styles({
   file: 'buttons.css',
+  prefix: 'media-play-button',
   rules: {
     root: {
-      className: 'media-play-button',
       utilities: 'group/play',
     },
     restartIcon: {
-      className: 'media-play-button-restart-icon',
       utilities: 'scale-media-hidden-icon opacity-0 group-data-ended/play:scale-100 group-data-ended/play:opacity-100',
     },
     playIcon: {
-      className: 'media-play-button-play-icon',
       utilities: [
         'scale-media-hidden-icon opacity-0',
         'group-not-data-ended/play:group-data-paused/play:opacity-100',
@@ -22,7 +20,6 @@ export default styles({
       ],
     },
     pauseIcon: {
-      className: 'media-play-button-pause-icon',
       utilities: [
         'scale-media-hidden-icon opacity-0',
         'group-data-started/play:group-not-data-paused/play:group-not-data-ended/play:opacity-100',
