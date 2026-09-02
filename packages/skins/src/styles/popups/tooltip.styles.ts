@@ -11,7 +11,7 @@ export default styles({
       ],
       variants: {
         default: 'px-2.5',
-        minimal: ['px-2', 'shadow-(--media-tooltip-shadow)!'],
+        minimal: ['px-2', 'shadow-media-tooltip!'],
       },
     },
     shortcut: {

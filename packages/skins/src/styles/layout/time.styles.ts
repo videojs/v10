@@ -15,7 +15,7 @@ export default styles({
       className: 'media-time-toggle',
       utilities: [
         'cursor-pointer rounded-sm tabular-nums focus-ring-media',
-        'transition-[outline-color,outline-offset] duration-(--media-duration-fast) ease-out',
+        'transition-[outline-color,outline-offset] duration-media-fast ease-out',
         'focus-visible:outline-media-ring focus-visible:outline-offset-2',
       ],
       variants: {

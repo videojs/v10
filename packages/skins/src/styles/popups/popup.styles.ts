@@ -7,10 +7,10 @@ export default styles({
       className: 'media-popup',
       utilities: [
         'm-0 overflow-visible border-0 text-inherit',
-        'data-starting-style:opacity-0 data-starting-style:blur-(--media-popup-hidden-blur)',
-        '[&:is([data-starting-style],[data-ending-style])]:[scale:var(--media-popup-hidden-scale)]',
+        'data-starting-style:opacity-0 data-starting-style:blur-media-hidden-popup',
+        '[&:is([data-starting-style],[data-ending-style])]:scale-media-hidden-popup',
         'data-starting-style:[transform:translate(var(--media-popup-translate-x-distance,0),var(--media-popup-translate-y-distance,0))]',
-        'data-ending-style:opacity-0 data-ending-style:blur-(--media-popup-hidden-blur) data-ending-style:transform-none',
+        'data-ending-style:opacity-0 data-ending-style:blur-media-hidden-popup data-ending-style:transform-none',
         'data-[side=top]:origin-bottom data-[side=bottom]:origin-top data-[side=left]:origin-right data-[side=right]:origin-left',
         'data-[side=top]:[--media-popup-translate-y-distance:var(--media-popup-translate-distance)]',
         'data-[side=bottom]:[--media-popup-translate-y-distance:calc(var(--media-popup-translate-distance)*-1)]',
@@ -35,7 +35,7 @@ export default styles({
     },
     transition: {
       className: 'media-popup-transition',
-      utilities: ['transition-media-popup data-ending-style:duration-(--media-duration-instant)'],
+      utilities: ['transition-media-popup data-ending-style:duration-media-instant'],
     },
     surface: {
       className: 'media-popup-surface',

@@ -7,7 +7,7 @@ export default styles({
       className: 'media-poster',
       utilities: [
         'pointer-events-none layer-media object-media',
-        'transition-opacity duration-(--media-duration-slower) not-data-visible:opacity-0',
+        'transition-opacity duration-media-slower not-data-visible:opacity-0',
         '[&:is(img):not([src]):not([srcset])]:invisible',
         '[&_img]:layer-media [&_img]:object-media',
       ],

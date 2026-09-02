@@ -218,7 +218,9 @@ describe('Skins Vite workflow', () => {
     const css = isString(loaded) ? loaded : loaded?.code;
     if (isUndefined(css)) throw new Error(`Expected Vite to load \`${resolvedId}\`.`);
 
-    expect(css).toMatch(/\.media-play-button-restart-icon \{\s+scale: var\(--media-icon-hidden-scale\);\s+opacity: 0;/);
+    expect(css).toMatch(
+      /\.media-play-button-restart-icon \{\s+scale: var\(--media-icon-hidden-scale\) var\(--media-icon-hidden-scale\);\s+opacity: 0;/
+    );
   }, 30_000);
 
   it('includes Shadow DOM utilities only for HTML targets', async () => {

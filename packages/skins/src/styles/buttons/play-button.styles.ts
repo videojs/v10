@@ -9,13 +9,12 @@ export default styles({
     },
     restartIcon: {
       className: 'media-play-button-restart-icon',
-      utilities:
-        'scale-(--media-icon-hidden-scale) opacity-0 group-data-ended/play:scale-100 group-data-ended/play:opacity-100',
+      utilities: 'scale-media-hidden-icon opacity-0 group-data-ended/play:scale-100 group-data-ended/play:opacity-100',
     },
     playIcon: {
       className: 'media-play-button-play-icon',
       utilities: [
-        'scale-(--media-icon-hidden-scale) opacity-0',
+        'scale-media-hidden-icon opacity-0',
         'group-not-data-ended/play:group-data-paused/play:opacity-100',
         'group-not-data-ended/play:group-data-paused/play:scale-100',
         'group-not-data-ended/play:group-not-data-started/play:opacity-100',
@@ -25,7 +24,7 @@ export default styles({
     pauseIcon: {
       className: 'media-play-button-pause-icon',
       utilities: [
-        'scale-(--media-icon-hidden-scale) opacity-0',
+        'scale-media-hidden-icon opacity-0',
         'group-data-started/play:group-not-data-paused/play:group-not-data-ended/play:opacity-100',
         'group-data-started/play:group-not-data-paused/play:group-not-data-ended/play:scale-100',
       ],

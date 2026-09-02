@@ -39,12 +39,48 @@
 
   /* Radii: controls follow the theme shape, popups follow the popup shape, pills stay round. */
   --radius-media-control: var(--media-control-radius);
+  --radius-media-menu-item: var(--media-menu-item-border-radius);
   --radius-media-pill: 9999px;
+  --radius-media-player: var(--media-video-border-radius);
   --radius-media-popup: var(--media-popup-radius);
 
-  /* Contrast-aware shadows for icons and text drawn over media. */
+  /* Shadows. Contrast-aware ones read the current color; the rest alias theme tokens. */
   --drop-shadow-media-icon: 0 1px 0 var(--media-shadow-current-color);
+  --shadow-media-thumb: var(--media-thumb-shadow);
+  --shadow-media-tooltip: var(--media-tooltip-shadow);
   --text-shadow-media: 0 1px 0 var(--media-shadow-current-color);
+  --text-shadow-media-dialog: var(--media-dialog-text-shadow);
+
+  /* Motion. Utilities such as `duration-media-fast` and `scale-media-hidden` follow reduced-motion preferences through the tokens. */
+  --duration-media-instant: var(--media-duration-instant);
+  --duration-media-fast: var(--media-duration-fast);
+  --duration-media-base: var(--media-duration);
+  --duration-media-slow: var(--media-duration-slow);
+  --duration-media-slower: var(--media-duration-slower);
+  --duration-media-controls: var(--media-controls-transition-duration);
+  --duration-media-controls-half: calc(var(--media-controls-transition-duration) / 2);
+  --duration-media-menu: var(--media-menu-transition-duration);
+  --duration-media-dialog: var(--media-dialog-duration);
+  --delay-media-dialog: var(--media-dialog-delay);
+  --scale-media-hidden: var(--media-hidden-scale);
+  --scale-media-hidden-indicator: var(--media-indicator-hidden-scale);
+  --scale-media-hidden-playback: var(--media-playback-hidden-scale);
+  --scale-media-hidden-icon: var(--media-icon-hidden-scale);
+  --scale-media-hidden-popup: var(--media-popup-hidden-scale);
+  --blur-media-hidden: var(--media-hidden-blur);
+  --blur-media-hidden-popup: var(--media-popup-hidden-blur);
+  --spacing-media-hidden-offset: var(--media-hidden-offset);
+  --spacing-media-hidden-indicator-offset: var(--media-indicator-hidden-offset);
+}
+
+/* Transition durations from the theme, for example `duration-media-fast`. */
+@utility duration-media-* {
+  transition-duration: --value(--duration-media-*);
+}
+
+/* Transition delays from the theme, for example `delay-media-dialog`. */
+@utility delay-media-* {
+  transition-delay: --value(--delay-media-*);
 }
 
 /* Player font stack, overridable through the public `--media-font-family`. */

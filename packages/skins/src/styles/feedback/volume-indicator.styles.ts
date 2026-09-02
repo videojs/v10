@@ -25,7 +25,7 @@ export default styles({
         default: [
           'flex w-full bg-left bg-no-repeat',
           '[background-image:linear-gradient(currentColor,currentColor)]',
-          '[background-size:var(--media-volume-fill,0%)_100%] transition-[background-size] duration-(--media-duration-slow) ease-linear',
+          '[background-size:var(--media-volume-fill,0%)_100%] transition-[background-size] duration-media-slow ease-linear',
         ],
         minimal: [
           'grid w-[min(80%,14rem)] grid-cols-[auto_minmax(0,1fr)_auto] [transform:translateX(0)]',
@@ -33,7 +33,7 @@ export default styles({
           'before:bg-current/20 before:shadow-[0_1px_0_var(--media-shadow-subtle-current-color)]',
           'after:col-start-2 after:row-start-1 after:h-0.75 after:w-[var(--media-volume-fill,0%)] after:justify-self-start',
           'after:rounded-media-pill after:bg-media-accent',
-          'after:transition-[width] after:duration-(--media-duration-slow) after:ease-linear',
+          'after:transition-[width] after:duration-media-slow after:ease-linear',
           'motion-safe:group-[:is([data-min],[data-max]):not([data-starting-style],[data-ending-style])]/volume-status:nudge-media',
         ],
       },

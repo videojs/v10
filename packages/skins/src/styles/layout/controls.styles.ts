@@ -10,10 +10,10 @@ const compactSurface = [
 const compactHidden = [
   'media-max-compact:group-[:not([data-visible])]/controls:pointer-events-none',
   'media-max-compact:group-[:not([data-visible])]/controls:opacity-0',
-  'media-max-compact:group-[:not([data-visible])]/controls:scale-(--media-hidden-scale)',
-  'media-max-compact:pointer-fine:group-[:not([data-visible])]/controls:blur-(--media-hidden-blur)',
-  'transition-[filter,opacity,scale,translate] duration-[calc(var(--media-controls-transition-duration)/2)] ease-out',
-  'media-max-compact:group-[:not([data-visible])]/controls:duration-(--media-controls-transition-duration)',
+  'media-max-compact:group-[:not([data-visible])]/controls:scale-media-hidden',
+  'media-max-compact:pointer-fine:group-[:not([data-visible])]/controls:blur-media-hidden',
+  'transition-[filter,opacity,scale,translate] duration-media-controls-half ease-out',
+  'media-max-compact:group-[:not([data-visible])]/controls:duration-media-controls',
 ] as const;
 
 export default styles({
@@ -27,7 +27,7 @@ export default styles({
       className: 'video-controls-content',
       utilities: [
         'group/controls text-media-controls-foreground text-shadow-media',
-        'duration-[calc(var(--media-controls-transition-duration)/2)] ease-out',
+        'duration-media-controls-half ease-out',
       ],
       variants: {
         default: [
@@ -38,16 +38,16 @@ export default styles({
           'media-compact:surface-media media-compact:after:surface-media-inset',
           'media-wide:inset-x-3 media-wide:bottom-3',
           'media-compact:not-data-visible:pointer-events-none media-compact:not-data-visible:opacity-0',
-          'media-compact:not-data-visible:scale-(--media-hidden-scale) media-compact:not-data-visible:translate-y-(--media-hidden-offset)',
-          'media-compact:pointer-fine:not-data-visible:blur-(--media-hidden-blur)',
-          'media-compact:not-data-visible:duration-(--media-controls-transition-duration)',
+          'media-compact:not-data-visible:scale-media-hidden media-compact:not-data-visible:translate-y-media-hidden-offset',
+          'media-compact:pointer-fine:not-data-visible:blur-media-hidden',
+          'media-compact:not-data-visible:duration-media-controls',
         ],
         minimal: [
           'absolute inset-x-1 bottom-1 z-20 flex items-center gap-x-2 rounded-xl bg-transparent p-1 media-opaque:bg-media-background',
           'transition-[filter,opacity,translate]',
           'not-data-visible:pointer-events-none not-data-visible:opacity-0',
-          'not-data-visible:duration-(--media-controls-transition-duration)',
-          'not-data-visible:translate-y-(--media-hidden-offset) pointer-fine:not-data-visible:blur-(--media-hidden-blur)',
+          'not-data-visible:duration-media-controls',
+          'not-data-visible:translate-y-media-hidden-offset pointer-fine:not-data-visible:blur-media-hidden',
           'media-wide:inset-x-2 media-wide:bottom-2',
           'media-wide:[--media-popover-side-offset:--spacing(3)]',
           'media-wide:[--media-tooltip-side-offset:var(--media-popover-side-offset)]',
@@ -58,7 +58,7 @@ export default styles({
       className: 'video-controls-backdrop',
       utilities: [
         'pointer-events-none absolute inset-0 z-10 rounded-[inherit] bg-(image:--media-controls-gradient)',
-        'transition-opacity duration-(--media-controls-transition-duration) ease-out not-data-visible:opacity-0',
+        'transition-opacity duration-media-controls ease-out not-data-visible:opacity-0',
       ],
     },
     primary: {
@@ -68,7 +68,7 @@ export default styles({
         ...compactSurface,
         'media-compact:contents',
         ...compactHidden,
-        'media-max-compact:group-[:not([data-visible])]/controls:translate-y-(--media-hidden-offset)',
+        'media-max-compact:group-[:not([data-visible])]/controls:translate-y-media-hidden-offset',
       ],
     },
     secondary: {
@@ -78,7 +78,7 @@ export default styles({
         ...compactSurface,
         'media-compact:static media-compact:p-0',
         ...compactHidden,
-        'media-max-compact:group-[:not([data-visible])]/controls:-translate-y-(--media-hidden-offset)',
+        'media-max-compact:group-[:not([data-visible])]/controls:-translate-y-media-hidden-offset',
       ],
     },
     spacer: {

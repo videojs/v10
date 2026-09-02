@@ -11,29 +11,29 @@ export default styles({
       className: 'media-dialog-backdrop',
       utilities: [
         'absolute inset-0 z-40 bg-media-scrim/20 backdrop-blur-lg opacity-100 backdrop-saturate-150',
-        'not-data-open:hidden transition-opacity delay-(--media-dialog-delay) duration-(--media-dialog-duration) ease-out',
+        'not-data-open:hidden transition-opacity delay-media-dialog duration-media-dialog ease-out',
         'data-starting-style:opacity-0 data-ending-style:opacity-0 data-ending-style:delay-0',
       ],
       variants: {
-        default: 'data-ending-style:duration-(--media-duration-slower)',
-        minimal: 'backdrop-saturate-120 data-ending-style:duration-(--media-duration-instant)',
+        default: 'data-ending-style:duration-media-slower',
+        minimal: 'backdrop-saturate-120 data-ending-style:duration-media-instant',
       },
     },
     popup: {
       className: 'media-dialog-popup',
       utilities: [
         'absolute top-1/2 left-1/2 z-50 flex max-h-[calc(100%-0.5rem)] -translate-x-1/2 -translate-y-1/2 flex-col gap-3 text-media-popover-foreground outline-hidden not-data-open:hidden',
-        'text-shadow-(--media-dialog-text-shadow) transition-[opacity,scale] delay-(--media-dialog-delay) duration-(--media-dialog-duration) ease-out',
-        'data-starting-style:scale-(--media-popup-hidden-scale) data-starting-style:opacity-0',
-        'data-ending-style:scale-(--media-popup-hidden-scale) data-ending-style:opacity-0 data-ending-style:delay-0',
+        'text-shadow-media-dialog transition-[opacity,scale] delay-media-dialog duration-media-dialog ease-out',
+        'data-starting-style:scale-media-hidden-popup data-starting-style:opacity-0',
+        'data-ending-style:scale-media-hidden-popup data-ending-style:opacity-0 data-ending-style:delay-0',
       ],
       variants: {
         default: [
           'bg-media-popover surface-media after:surface-media-inset',
           'w-[calc(100%-1.5rem)] max-w-72 rounded-[--spacing(7)] p-3',
-          'data-ending-style:duration-(--media-duration-slower)',
+          'data-ending-style:duration-media-slower',
         ],
-        minimal: ['w-full max-w-64 p-4', 'data-ending-style:duration-(--media-duration-instant)'],
+        minimal: ['w-full max-w-64 p-4', 'data-ending-style:duration-media-instant'],
       },
     },
     content: {

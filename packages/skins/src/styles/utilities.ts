@@ -68,6 +68,14 @@ export const utilities = {
     kind: 'utility',
     description: 'Vertical chapter track with the inter-chapter gap and rounded ends.',
   },
+  'duration-media-*': {
+    kind: 'utility',
+    description: 'Transition durations from the theme, for example `duration-media-fast`.',
+  },
+  'delay-media-*': {
+    kind: 'utility',
+    description: 'Transition delays from the theme, for example `delay-media-dialog`.',
+  },
   'media-opaque': { kind: 'variant', description: 'Reduced transparency or high contrast.' },
   'media-compact': { kind: 'variant', description: 'Player at or above the compact breakpoint.' },
   'media-max-compact': { kind: 'variant', description: 'Player below the compact breakpoint.' },
@@ -88,6 +96,10 @@ export const utilities = {
   '--spacing-media-icon-lg': { kind: 'theme', description: 'Large indicator icon size.' },
   '--spacing-media-icon-xl': { kind: 'theme', description: 'Extra large indicator icon size.' },
   '--radius-media-pill': { kind: 'theme', description: 'Always-round radius for tracks and pills.' },
+  '--duration-media-controls-half': {
+    kind: 'theme',
+    description: 'Half the controls visibility duration, used while controls appear.',
+  },
   '--drop-shadow-media-icon': { kind: 'theme', description: 'Contrast-aware drop shadow for icons over media.' },
   '--text-shadow-media': { kind: 'theme', description: 'Contrast-aware text shadow for text over media.' },
 } as const satisfies Readonly<Record<string, TailwindRule>>;

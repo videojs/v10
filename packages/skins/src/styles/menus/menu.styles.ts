@@ -1,13 +1,13 @@
 import { styles } from 'vjsc/styles';
 
 const menuItem = [
-  'relative flex cursor-pointer select-none items-center gap-1.5 rounded-(--media-menu-item-border-radius) px-2 py-1.5 text-start whitespace-nowrap',
+  'relative flex cursor-pointer select-none items-center gap-1.5 rounded-media-menu-item px-2 py-1.5 text-start whitespace-nowrap',
   'focus-ring-media',
   'hover:highlight-media data-highlighted:highlight-media',
   'focus-visible:outline-media-ring focus-visible:outline-offset-2',
   'text-shadow-media',
-  'transition-[background-color,color] duration-(--media-duration-fast) [transition-timing-function:ease-in-out]',
-  'supports-[top:anchor(top)]:duration-(--media-duration-instant) supports-[top:anchor(top)]:hover:duration-(--media-duration-slow) supports-[top:anchor(top)]:data-highlighted:duration-(--media-duration-slow)',
+  'transition-[background-color,color] duration-media-fast [transition-timing-function:ease-in-out]',
+  'supports-[top:anchor(top)]:duration-media-instant supports-[top:anchor(top)]:hover:duration-media-slow supports-[top:anchor(top)]:data-highlighted:duration-media-slow',
 ] as const;
 
 const menuItemOption = [
@@ -58,7 +58,7 @@ export default styles({
         ...menuHighlight,
         'absolute max-h-[inherit] overflow-auto overscroll-none outline-hidden',
         'not-data-submenu:flex not-data-submenu:flex-col not-data-submenu:gap-0.5',
-        'transition-[translate,filter] duration-(--media-menu-transition-duration) ease-out',
+        'transition-[translate,filter] duration-media-menu ease-out',
         'not-data-submenu:inset-x-1 not-data-submenu:top-1',
         'not-data-submenu:data-[child-open]:-translate-x-full',
         'not-data-submenu:data-[child-open]:[&:dir(rtl)]:translate-x-full',
@@ -151,7 +151,7 @@ export default styles({
     settingsTriggerIcon: {
       className: 'media-settings-menu-trigger-icon',
       utilities: [
-        'transition-transform duration-(--media-duration) ease-in-out motion-reduce:transition-none!',
+        'transition-transform duration-media-base ease-in-out motion-reduce:transition-none!',
         'group-aria-expanded/settings:rotate-90',
       ],
     },
