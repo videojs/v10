@@ -73,7 +73,7 @@ export interface FairPlayContext {
   readonly config: DrmSystemConfig;
   /** Aborted when the source is replaced or the media detaches. */
   signal: AbortSignal;
-  /** Surface an error on the media host. Non-fatal ones are announced only. */
+  /** Surface an error on the media adapter. Non-fatal ones are announced only. */
   reportError(error: MediaError): void;
 }
 

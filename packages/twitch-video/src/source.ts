@@ -1,7 +1,7 @@
 import { isNil, isString } from '@videojs/utils/predicate';
 
 import { TWITCH_PLAYER_ORIGIN } from './player-api';
-import { type TwitchMediaProps, twitchMediaDefaultProps } from './props';
+import type { TwitchAdapterProps } from './props';
 
 /**
  * Twitch engine options, spelled exactly as Twitch spells them (https://dev.twitch.tv/docs/embed/video-and-clips/).
@@ -78,7 +78,8 @@ export function parseTwitchSource(src: string): ParsedTwitchSource | null {
 }
 
 /** Build the iframe `src` URL for an initial Twitch embed from the given props. */
-export function buildTwitchIframeSrc(src: string, props: Partial<TwitchMediaProps> = {}) {
+// Literal fallbacks mirror `TwitchAdapter.defaultProps`; the class imports this module, so it cannot be imported back.
+export function buildTwitchIframeSrc(src: string, props: Partial<TwitchAdapterProps> = {}) {
   const parsed = parseTwitchSource(src);
   if (!parsed) return '';
 
@@ -91,8 +92,8 @@ export function buildTwitchIframeSrc(src: string, props: Partial<TwitchMediaProp
     // Both default to on in the embed, so only turning them off says anything.
     controls: props.controls === true ? null : false,
     autoplay: props.autoplay === true ? null : false,
-    muted: props.defaultMuted ?? twitchMediaDefaultProps.defaultMuted,
-    preload: props.preload ?? twitchMediaDefaultProps.preload,
+    muted: props.defaultMuted ?? false,
+    preload: props.preload ?? 'metadata',
     // Twitch-specific knobs (`time`, `collection`, …) flow through here.
     ...twitch,
   };

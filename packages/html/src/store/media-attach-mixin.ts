@@ -52,7 +52,7 @@ export function createMediaAttachMixin(context: MediaContext): MediaAttachMixin 
       override disconnectedCallback() {
         // Detach the store while the media chain is still live so features
         // (e.g. remote-playback) can clean up against the real underlying
-        // element. Destroying the media host first would null the layer
+        // element. Destroying the media adapter first would null the layer
         // chain's target before listeners get a chance to unwind.
         this.#releaseMedia?.();
         this.#releaseMedia = null;

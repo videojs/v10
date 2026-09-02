@@ -5,8 +5,8 @@ import Hls from 'hls.js';
 
 import type { HlsEngineHost } from './types';
 
-export function HlsJsMediaStreamTypeMixin<Base extends Constructor<HlsEngineHost>>(BaseClass: Base) {
-  class HlsJsMediaStreamType extends (BaseClass as Constructor<HlsEngineHost>) {
+export function HlsJsStreamTypeMixin<Base extends Constructor<HlsEngineHost>>(BaseClass: Base) {
+  class HlsJsStreamType extends (BaseClass as Constructor<HlsEngineHost>) {
     #streamType: MediaStreamType = MediaStreamTypes.UNKNOWN;
     #isUserStreamType = false;
 
@@ -49,5 +49,5 @@ export function HlsJsMediaStreamTypeMixin<Base extends Constructor<HlsEngineHost
     }
   }
 
-  return HlsJsMediaStreamType as unknown as Base & Constructor<{ streamType: MediaStreamType }>;
+  return HlsJsStreamType as unknown as Base & Constructor<{ streamType: MediaStreamType }>;
 }

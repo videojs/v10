@@ -1,11 +1,11 @@
 import { type MediaStreamType, MediaStreamTypes } from '@videojs/media';
 import type { Constructor } from '@videojs/utils/types';
 
-import type { NativeMediaHost } from './errors';
+import type { NativeHlsHost } from './errors';
 
 /** @fires streamtypechange - Fired when the detected stream type changes. Read `streamType` for the new value. */
-export function NativeHlsMediaStreamTypeMixin<Base extends Constructor<NativeMediaHost>>(BaseClass: Base) {
-  class NativeHlsMediaStreamType extends (BaseClass as Constructor<NativeMediaHost>) {
+export function NativeHlsStreamTypeMixin<Base extends Constructor<NativeHlsHost>>(BaseClass: Base) {
+  class NativeHlsStreamType extends (BaseClass as Constructor<NativeHlsHost>) {
     #streamType: MediaStreamType = MediaStreamTypes.UNKNOWN;
     #isUserStreamType = false;
     #disconnect: AbortController | null = null;
@@ -86,5 +86,5 @@ export function NativeHlsMediaStreamTypeMixin<Base extends Constructor<NativeMed
     }
   }
 
-  return NativeHlsMediaStreamType as unknown as Base & Constructor<{ streamType: MediaStreamType }>;
+  return NativeHlsStreamType as unknown as Base & Constructor<{ streamType: MediaStreamType }>;
 }

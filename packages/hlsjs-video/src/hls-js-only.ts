@@ -1,26 +1,26 @@
 import type {
-  MediaEngineHost,
+  EngineAdapter,
   MediaError,
   MediaLiveCapability,
   MediaResolution,
   MediaSourceCapability,
   MediaStreamTypeCapability,
 } from '@videojs/media';
-import { HTMLVideoElementHost } from '@videojs/media/dom';
+import { HTMLVideoAdapter } from '@videojs/media/dom';
 import { MediaTracksMixin, type WithMediaTracks } from '@videojs/media/media-tracks';
 import type { MixinReturn } from '@videojs/utils/types';
 import Hls, { type HlsConfig } from 'hls.js';
 
-import { HlsJsMediaAirPlayMixin } from './airplay-bridge';
+import { HlsJsAirPlayMixin } from './airplay-bridge';
 import { createCapLevelController, DEFAULT_MIN_AUTO_RESOLUTION, type RenditionCapPolicy } from './cap-level';
 import { setupDrm } from './drm';
-import { HlsJsMediaErrorsMixin } from './errors';
-import { HlsJsMediaLiveMixin } from './live';
-import { HlsJsMediaMediaTracksMixin } from './media-tracks';
-import { HlsJsMediaMetadataTracksMixin } from './metadata-tracks';
-import { HlsJsMediaPreloadMixin } from './preload';
-import { HlsJsMediaStreamTypeMixin } from './stream-type';
-import { HlsJsMediaTextTracksMixin, withPreservedTextTracks } from './text-tracks';
+import { HlsJsErrorsMixin } from './errors';
+import { HlsJsLiveMixin } from './live';
+import { HlsJsMediaTracksMixin } from './media-tracks';
+import { HlsJsMetadataTracksMixin } from './metadata-tracks';
+import { HlsJsPreloadMixin } from './preload';
+import { HlsJsStreamTypeMixin } from './stream-type';
+import { HlsJsTextTracksMixin, withPreservedTextTracks } from './text-tracks';
 
 export const defaultHlsConfig: Partial<HlsConfig> = {
   backBufferLength: 30,
@@ -38,7 +38,7 @@ export interface HlsJsOnlyMediaParams {
   config: Partial<HlsConfig>;
 }
 
-class HlsJsOnlyMediaBase extends HTMLVideoElementHost implements MediaEngineHost<Hls, HTMLVideoElement> {
+class HlsJsOnlyAdapterCore extends HTMLVideoAdapter implements EngineAdapter<Hls, HTMLVideoElement> {
   #engine: Hls | null = null;
   #capPolicy: RenditionCapPolicy = {
     maxAutoResolution: undefined,
@@ -136,18 +136,16 @@ interface HlsJsMediaCapabilities
   readonly error: MediaError | null;
 }
 
-const HlsJsOnlyMediaComposed = HlsJsMediaAirPlayMixin(
-  HlsJsMediaPreloadMixin(
-    HlsJsMediaLiveMixin(
-      HlsJsMediaStreamTypeMixin(
-        HlsJsMediaMediaTracksMixin(
-          HlsJsMediaMetadataTracksMixin(
-            HlsJsMediaTextTracksMixin(HlsJsMediaErrorsMixin(MediaTracksMixin(HlsJsOnlyMediaBase)))
-          )
+const HlsJsOnlyAdapterComposed = HlsJsAirPlayMixin(
+  HlsJsPreloadMixin(
+    HlsJsLiveMixin(
+      HlsJsStreamTypeMixin(
+        HlsJsMediaTracksMixin(
+          HlsJsMetadataTracksMixin(HlsJsTextTracksMixin(HlsJsErrorsMixin(MediaTracksMixin(HlsJsOnlyAdapterCore))))
         )
       )
     )
   )
-) as unknown as MixinReturn<WithMediaTracks<typeof HlsJsOnlyMediaBase>, HlsJsMediaCapabilities>;
+) as unknown as MixinReturn<WithMediaTracks<typeof HlsJsOnlyAdapterCore>, HlsJsMediaCapabilities>;
 
-export class HlsJsOnlyMedia extends HlsJsOnlyMediaComposed {}
+export class HlsJsOnlyAdapter extends HlsJsOnlyAdapterComposed {}

@@ -1,6 +1,6 @@
 import { serializeEmbedParams } from '@videojs/media/dom';
 
-import type { TikTokMediaProps } from './props';
+import type { TikTokAdapterProps } from './props';
 
 /**
  * TikTok engine options, spelled exactly as TikTok spells them (https://developers.tiktok.com/doc/embed-player). They
@@ -85,14 +85,14 @@ export function parseTikTokSource(src: string): ParsedTikTokSource | null {
  * inside the frame — which a frame under a player skin never gets. The host parks the player as soon as it is up, so
  * this buys one that answers commands, not a video that plays.
  */
-export function shouldBootstrapTikTokEmbed(props: Partial<TikTokMediaProps> = {}) {
+export function shouldBootstrapTikTokEmbed(props: Partial<TikTokAdapterProps> = {}) {
   // `preload="none"` trades those working controls back for an untouched network, and `controls` hands the player
   // to TikTok's own chrome, which the host must not park playback out from under.
   return !props.autoplay && props.preload !== 'none' && props.controls !== true;
 }
 
 /** Build the iframe `src` URL for a TikTok embed from the given props. */
-export function buildTikTokIframeSrc(src: string, props: Partial<TikTokMediaProps> = {}) {
+export function buildTikTokIframeSrc(src: string, props: Partial<TikTokAdapterProps> = {}) {
   const parsed = parseTikTokSource(src);
   if (!parsed) return '';
 

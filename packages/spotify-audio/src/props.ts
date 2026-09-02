@@ -9,20 +9,9 @@ import type { SpotifySource } from './source';
  * no artwork of its own to replace and `playsInline` no inline-playback switch, so those two are kept for a uniform
  * prop shape but are stored and reported without effect.
  */
-export interface SpotifyMediaProps extends Pick<
+export interface SpotifyAdapterProps extends Pick<
   Video,
   'src' | 'autoplay' | 'loop' | 'controls' | 'playsInline' | 'preload' | 'poster'
 > {
   source: SpotifySource | null;
 }
-
-export const spotifyMediaDefaultProps: SpotifyMediaProps = {
-  src: '',
-  autoplay: false,
-  loop: false,
-  controls: false,
-  playsInline: true,
-  preload: 'metadata',
-  poster: '',
-  source: null,
-};

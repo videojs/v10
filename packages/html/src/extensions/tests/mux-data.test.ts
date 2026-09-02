@@ -1,5 +1,5 @@
 import { ContextProvider } from '@videojs/element/context';
-import { getMediaExtensions, HTMLVideoElementHost, type Media } from '@videojs/media/dom';
+import { getMediaExtensions, HTMLVideoAdapter, type Media } from '@videojs/media/dom';
 import { MuxDataExtension as MuxDataExtensionBase } from '@videojs/mux-data';
 import { afterEach, describe, expect, it } from 'vite-plus/test';
 
@@ -22,7 +22,7 @@ customElements.define('test-mux-data-provider', TestMediaProvider);
 customElements.define('test-mux-data', MuxDataExtension);
 
 function setup() {
-  const host = new HTMLVideoElementHost();
+  const host = new HTMLVideoAdapter();
   const provider = new TestMediaProvider();
   const el = new MuxDataExtension();
 
@@ -41,7 +41,7 @@ afterEach(() => {
 
 describe('MuxDataExtension', () => {
   it('registers when parsed into a connected player that already has media', () => {
-    const host = new HTMLVideoElementHost();
+    const host = new HTMLVideoAdapter();
     const provider = new TestMediaProvider();
 
     document.body.append(provider);
@@ -58,7 +58,7 @@ describe('MuxDataExtension', () => {
     // context callback registers the component from within that constructor.
     expect(Object.getOwnPropertyNames(new MuxDataExtension())).not.toContain('component');
   });
-  it('registers a MuxDataExtension component with the media host from context', () => {
+  it('registers a MuxDataExtension component with the media adapter from context', () => {
     const { host, provider } = setup();
 
     provider.setMedia(host as unknown as Media);

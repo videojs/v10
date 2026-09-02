@@ -1,17 +1,17 @@
 import type { Constructor } from '@videojs/utils/types';
 
-import type { NativeMediaHost } from './errors';
+import type { NativeHlsHost } from './errors';
 import { getStreamInfoFromSrc, looksLikeM3u8 } from './m3u8-utils';
 
 /** @fires targetlivewindowchange - Fired when the target live window changes. Read `targetLiveWindow` for the new value. */
-export function NativeHlsMediaLiveMixin<Base extends Constructor<NativeMediaHost>>(BaseClass: Base) {
+export function NativeHlsLiveMixin<Base extends Constructor<NativeHlsHost>>(BaseClass: Base) {
   // Native HLS does not expose manifest-level `HOLD-BACK` / `PART-HOLD-BACK`
   // through a JS API, so we fetch the m3u8 ourselves and parse the relevant
   // tags to derive `targetLiveWindow` and `liveEdgeStart` — mirroring the
   // approach in `muxinc/elements`.
   //
   // See https://github.com/muxinc/elements/blob/main/packages/playback-core/src/index.ts
-  class NativeHlsMediaLive extends (BaseClass as Constructor<NativeMediaHost>) {
+  class NativeHlsLive extends (BaseClass as Constructor<NativeHlsHost>) {
     #targetLiveWindow = Number.NaN;
     #liveEdgeStartOffset: number | undefined;
     #disconnect: AbortController | null = null;
@@ -124,6 +124,6 @@ export function NativeHlsMediaLiveMixin<Base extends Constructor<NativeMediaHost
     }
   }
 
-  return NativeHlsMediaLive as unknown as Base &
+  return NativeHlsLive as unknown as Base &
     Constructor<{ readonly liveEdgeStart: number; readonly targetLiveWindow: number }>;
 }

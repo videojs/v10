@@ -9,8 +9,8 @@ import type { HlsEngineHost } from './types';
  * Hls.js forcibly clears all cues from text tracks on manifest loads and media attaches. This mixin re-enables those
  * tracks by forcing `mode = 'hidden'` and reloading the track source when cues have been wiped.
  */
-export function HlsJsMediaMetadataTracksMixin<Base extends Constructor<HlsEngineHost>>(BaseClass: Base) {
-  class HlsJsMediaMetadataTracks extends (BaseClass as Constructor<HlsEngineHost>) {
+export function HlsJsMetadataTracksMixin<Base extends Constructor<HlsEngineHost>>(BaseClass: Base) {
+  class HlsJsMetadataTracks extends (BaseClass as Constructor<HlsEngineHost>) {
     constructor(...args: any[]) {
       super(...args);
 
@@ -56,5 +56,5 @@ export function HlsJsMediaMetadataTracksMixin<Base extends Constructor<HlsEngine
     }
   }
 
-  return HlsJsMediaMetadataTracks as unknown as Base;
+  return HlsJsMetadataTracks as unknown as Base;
 }

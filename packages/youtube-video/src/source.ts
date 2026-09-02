@@ -1,6 +1,6 @@
 import { serializeEmbedParams } from '@videojs/media/dom';
 
-import { type YouTubeMediaProps, youtubeMediaDefaultProps } from './props';
+import type { YouTubeAdapterProps } from './props';
 
 /**
  * YouTube engine options, spelled exactly as YouTube spells them
@@ -114,7 +114,8 @@ export function parseYouTubeSource(src: string): ParsedYouTubeSource | null {
 }
 
 /** Build the iframe `src` URL for an initial YouTube embed from the given props. */
-export function buildYouTubeIframeSrc(src: string, props: Partial<YouTubeMediaProps> = {}) {
+// Literal fallbacks mirror `YouTubeAdapter.defaultProps`; the class imports this module, so it cannot be imported back.
+export function buildYouTubeIframeSrc(src: string, props: Partial<YouTubeAdapterProps> = {}) {
   const parsed = parseYouTubeSource(src);
   if (!parsed) return '';
 
@@ -125,8 +126,8 @@ export function buildYouTubeIframeSrc(src: string, props: Partial<YouTubeMediaPr
     autoplay: props.autoplay,
     loop: props.loop,
     mute: props.defaultMuted,
-    playsinline: props.playsInline ?? youtubeMediaDefaultProps.playsInline,
-    preload: props.preload ?? youtubeMediaDefaultProps.preload,
+    playsinline: props.playsInline ?? true,
+    preload: props.preload ?? 'metadata',
     // https://developers.google.com/youtube/player_parameters#Parameters
     enablejsapi: 1,
     rel: 0,

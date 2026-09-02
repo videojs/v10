@@ -1,6 +1,6 @@
 import { ContextProvider } from '@videojs/element/context';
 import { GoogleCastExtension as GoogleCastExtensionBase } from '@videojs/google-cast';
-import { getMediaExtensions, HTMLVideoElementHost, type Media } from '@videojs/media/dom';
+import { getMediaExtensions, HTMLVideoAdapter, type Media } from '@videojs/media/dom';
 import { afterEach, describe, expect, it } from 'vite-plus/test';
 
 import { mediaContext } from '../../player/context';
@@ -22,7 +22,7 @@ customElements.define('test-cast-provider', TestMediaProvider);
 customElements.define('test-google-cast', GoogleCastExtension);
 
 function setup() {
-  const host = new HTMLVideoElementHost();
+  const host = new HTMLVideoAdapter();
   const provider = new TestMediaProvider();
   const el = new GoogleCastExtension();
 
@@ -37,7 +37,7 @@ afterEach(() => {
 });
 
 describe('GoogleCastExtension', () => {
-  it('registers a GoogleCastExtension component with the media host from context', () => {
+  it('registers a GoogleCastExtension component with the media adapter from context', () => {
     const { host, provider } = setup();
 
     provider.setMedia(host as unknown as Media);
@@ -52,15 +52,15 @@ describe('GoogleCastExtension', () => {
     expect(Object.getOwnPropertyNames(new GoogleCastExtension())).not.toContain('component');
   });
 
-  it('resolves the host from a media element host property', () => {
+  it('resolves the adapter from a media element adapter property', () => {
     const { host, provider } = setup();
 
-    provider.setMedia({ host } as unknown as Media);
+    provider.setMedia({ adapter: host } as unknown as Media);
 
     expect(getMediaExtensions(host).get(GoogleCastExtensionBase)).toBeInstanceOf(GoogleCastExtensionBase);
   });
 
-  it('ignores media that is not a media host', () => {
+  it('ignores media that is not a media adapter', () => {
     const { host, provider } = setup();
 
     provider.setMedia(host as unknown as Media);
@@ -100,7 +100,7 @@ describe('GoogleCastExtension', () => {
 
   it('moves the component when the media changes', () => {
     const { host, provider } = setup();
-    const nextHost = new HTMLVideoElementHost();
+    const nextHost = new HTMLVideoAdapter();
 
     provider.setMedia(host as unknown as Media);
     provider.setMedia(nextHost as unknown as Media);

@@ -1,7 +1,7 @@
 // The player API module is internal apart from the protocol typings, which
 // describe what the embed posts and what it accepts.
 
-export * from './media';
+export * from './adapter';
 export type {
   TwitchCommandMessage,
   TwitchEmbedMessage,
@@ -11,5 +11,5 @@ export type {
   TwitchPlayerState,
   TwitchVideoStats,
 } from './player-api';
-export * from './props';
+export type { TwitchAdapterProps } from './props';
 export * from './source';

@@ -28,7 +28,7 @@ import { HlsJsVideo } from '@videojs/react/media/hlsjs-video';
 Low-level consumers can import the Media and supported hls.js class directly:
 
 ```ts
-import { Hls, HlsJsMedia } from '@videojs/hlsjs-video';
+import { Hls, HlsJsAdapter } from '@videojs/hlsjs-video';
 ```
 
 ## License

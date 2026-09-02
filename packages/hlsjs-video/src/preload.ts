@@ -16,8 +16,8 @@ export type PreloadType = '' | 'none' | 'metadata' | 'auto';
  * Loading is started at most once per source. Widening the limits afterwards is a plain config write, never a second
  * `startLoad()`.
  */
-export function HlsJsMediaPreloadMixin<Base extends Constructor<HlsEngineHost>>(BaseClass: Base) {
-  class HlsJsMediaPreload extends (BaseClass as Constructor<HlsEngineHost>) {
+export function HlsJsPreloadMixin<Base extends Constructor<HlsEngineHost>>(BaseClass: Base) {
+  class HlsJsPreload extends (BaseClass as Constructor<HlsEngineHost>) {
     #preloadAbort: AbortController | null = null;
     #preload: PreloadType = 'metadata';
     #defaultMaxBufferLength: number | undefined;
@@ -116,5 +116,5 @@ export function HlsJsMediaPreloadMixin<Base extends Constructor<HlsEngineHost>>(
     }
   }
 
-  return HlsJsMediaPreload as unknown as Base & Constructor<{ preload: PreloadType }>;
+  return HlsJsPreload as unknown as Base & Constructor<{ preload: PreloadType }>;
 }

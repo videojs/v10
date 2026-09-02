@@ -1,9 +1,9 @@
 import type { MediaVideoRenditionCapability, MediaVideoTrackCapability } from '@videojs/media';
-import type { HTMLVideoElementHost } from '@videojs/media/dom';
+import type { HTMLVideoAdapter } from '@videojs/media/dom';
 import type { Constructor } from '@videojs/utils/types';
 import * as dashjs from 'dashjs';
 
-type DashEngineHost = HTMLVideoElementHost & {
+type DashEngineHost = HTMLVideoAdapter & {
   readonly engine?: dashjs.MediaPlayerClass | null;
 };
 
@@ -19,8 +19,8 @@ type MediaTracksHost = DashEngineHost & MediaVideoTrackCapability & MediaVideoRe
  * Requires the media-tracks mixin (track-list infrastructure) to be applied earlier in the chain so the host exposes
  * `addVideoTrack`, `videoRenditions`, and friends.
  */
-export function DashMediaMediaTracksMixin<Base extends Constructor<MediaTracksHost>>(BaseClass: Base) {
-  class DashMediaMediaTracks extends (BaseClass as Constructor<MediaTracksHost>) {
+export function DashMediaTracksMixin<Base extends Constructor<MediaTracksHost>>(BaseClass: Base) {
+  class DashMediaTracks extends (BaseClass as Constructor<MediaTracksHost>) {
     // The source is announced as a whole, so the URL it resolved to last is what
     // tells a new stream apart from a settings-only change.
     #src = '';
@@ -165,7 +165,7 @@ export function DashMediaMediaTracksMixin<Base extends Constructor<MediaTracksHo
     }
   }
 
-  return DashMediaMediaTracks as unknown as Base;
+  return DashMediaTracks as unknown as Base;
 }
 
 /**

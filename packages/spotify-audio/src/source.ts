@@ -1,6 +1,6 @@
 import { serializeEmbedParams } from '@videojs/media/dom';
 
-import type { SpotifyMediaProps } from './props';
+import type { SpotifyAdapterProps } from './props';
 
 /**
  * Spotify engine options, spelled exactly as Spotify spells them (https://developer.spotify.com/documentation/embeds).
@@ -73,7 +73,7 @@ export function parseSpotifySource(src: string): ParsedSpotifySource | null {
 }
 
 /** Build the iframe `src` URL for an initial Spotify embed from the given props. */
-export function buildSpotifyIframeSrc(src: string, props: Partial<SpotifyMediaProps> = {}) {
+export function buildSpotifyIframeSrc(src: string, props: Partial<SpotifyAdapterProps> = {}) {
   const parsed = parseSpotifySource(src);
   if (!parsed) return '';
 

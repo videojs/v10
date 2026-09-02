@@ -1,13 +1,11 @@
 import type { MediaStreamType } from '@videojs/media';
-import type { HTMLMediaElementHost, HTMLMediaTargetLike, MediaExtension } from '@videojs/media/dom';
+import type { AnyHTMLMediaAdapter, HTMLMediaTargetLike, MediaExtension } from '@videojs/media/dom';
 
 import { GoogleCastProvider } from './google-cast-provider';
 import { requiresCastFramework } from './utils';
 
-type MediaHost = HTMLMediaElementHost<HTMLMediaTargetLike, any>;
-
 export interface GoogleCastExtensionProps {
-  /** Source URL loaded on the Cast receiver. Falls back to the host's `src` / `currentSrc`. */
+  /** Source URL loaded on the Cast receiver. Falls back to the adapter's `src` / `currentSrc`. */
   src?: string | undefined;
   /** MIME type of the Cast source. When unset, the receiver infers it from the URL. */
   contentType?: string | undefined;
@@ -20,7 +18,7 @@ export interface GoogleCastExtensionProps {
 }
 
 export class GoogleCastExtension implements GoogleCastExtensionProps, MediaExtension {
-  static defaultProps: GoogleCastExtensionProps = {
+  static readonly defaultProps: GoogleCastExtensionProps = {
     src: undefined,
     contentType: undefined,
     streamType: undefined,
@@ -33,7 +31,7 @@ export class GoogleCastExtension implements GoogleCastExtensionProps, MediaExten
   #streamType: MediaStreamType | undefined;
   #receiver: string | undefined;
   #customData: Record<string, unknown> | null | undefined;
-  #media: MediaHost | null = null;
+  #adapter: AnyHTMLMediaAdapter | null = null;
   #provider: GoogleCastProvider | null = null;
   #override: Partial<HTMLMediaTargetLike> | null = null;
 
@@ -41,10 +39,10 @@ export class GoogleCastExtension implements GoogleCastExtensionProps, MediaExten
     Object.assign(this, props);
   }
 
-  setMedia(host: MediaHost) {
+  setAdapter(adapter: AnyHTMLMediaAdapter) {
     if (!requiresCastFramework()) return;
 
-    this.#media = host;
+    this.#adapter = adapter;
 
     if (!this.#provider) {
       this.#provider = new GoogleCastProvider(this);
@@ -65,7 +63,7 @@ export class GoogleCastExtension implements GoogleCastExtensionProps, MediaExten
   destroy() {
     this.#provider?.destroy();
     this.#provider = null;
-    this.#media = null;
+    this.#adapter = null;
   }
 
   #onStateChange = () => {
@@ -94,7 +92,9 @@ export class GoogleCastExtension implements GoogleCastExtensionProps, MediaExten
 
   /** Source URL loaded on the Cast receiver. Falls back to a `<source>` child, `src`, then `currentSrc`. */
   get src() {
-    return this.#src ?? this.#media?.querySelector('source')?.src ?? this.#media?.src ?? this.#media?.currentSrc ?? '';
+    return (
+      this.#src ?? this.#adapter?.querySelector('source')?.src ?? this.#adapter?.src ?? this.#adapter?.currentSrc ?? ''
+    );
   }
 
   set src(value: string | undefined) {
@@ -116,9 +116,9 @@ export class GoogleCastExtension implements GoogleCastExtensionProps, MediaExten
     this.#load();
   }
 
-  /** Stream type used on the Cast receiver. Falls back to the host's `streamType` if it exposes one. */
+  /** Stream type used on the Cast receiver. Falls back to the adapter's `streamType` if it exposes one. */
   get streamType() {
-    return this.#streamType ?? (this.#media as { streamType?: MediaStreamType } | null)?.streamType;
+    return this.#streamType ?? (this.#adapter as { streamType?: MediaStreamType } | null)?.streamType;
   }
 
   set streamType(value: MediaStreamType | undefined) {
@@ -153,8 +153,8 @@ export class GoogleCastExtension implements GoogleCastExtensionProps, MediaExten
   }
 
   #load() {
-    if (this.#media?.remote.state === 'connected') {
-      this.#media.load();
+    if (this.#adapter?.remote.state === 'connected') {
+      this.#adapter.load();
     }
   }
 }

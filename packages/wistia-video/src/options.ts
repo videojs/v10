@@ -1,12 +1,12 @@
 import { isBoolean, isNumber, isString } from '@videojs/utils/predicate';
 import { kebabCase } from '@videojs/utils/string';
 
-import type { WistiaMediaProps } from './props';
+import type { WistiaAdapterProps } from './props';
 import { type WistiaSource, wistiaControlProps, wistiaPlayerDefaultOptions } from './source';
 
 /** The media props that configure a Wistia player rather than name the media it plays. */
 export type WistiaMediaOptionsProps = {
-  [Key in 'autoplay' | 'controls' | 'loop' | 'poster' | 'preload']?: WistiaMediaProps[Key] | undefined;
+  [Key in 'autoplay' | 'controls' | 'loop' | 'poster' | 'preload']?: WistiaAdapterProps[Key] | undefined;
 };
 
 /**

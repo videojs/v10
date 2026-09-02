@@ -13,8 +13,8 @@ const hlsErrorTypeToCode: Record<string, number> = {
   [Hls.ErrorTypes.OTHER_ERROR]: MediaError.MEDIA_ERR_CUSTOM,
 };
 
-export function HlsJsMediaErrorsMixin<Base extends Constructor<HlsEngineHost>>(BaseClass: Base) {
-  class HlsJsMediaErrors extends BaseClass {
+export function HlsJsErrorsMixin<Base extends Constructor<HlsEngineHost>>(BaseClass: Base) {
+  class HlsJsErrors extends BaseClass {
     #disconnect: AbortController | null = null;
     #error: MediaError | null = null;
 
@@ -71,5 +71,5 @@ export function HlsJsMediaErrorsMixin<Base extends Constructor<HlsEngineHost>>(B
     }
   }
 
-  return HlsJsMediaErrors as unknown as MixinReturn<Base, { readonly error: MediaError | null }>;
+  return HlsJsErrors as unknown as MixinReturn<Base, { readonly error: MediaError | null }>;
 }

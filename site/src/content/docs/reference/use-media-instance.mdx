@@ -16,11 +16,11 @@ import { useMediaInstance } from "@videojs/react";
 Pass a media class to create one instance and attach it to the surrounding player.
 
 ```tsx
-import { HlsJsMedia } from "@videojs/hlsjs-video";
+import { HlsJsAdapter } from "@videojs/hlsjs-video";
 import { useAttachMedia, useMediaInstance } from "@videojs/react";
 
 function CustomHlsVideo() {
-  const media = useMediaInstance(HlsJsMedia);
+  const media = useMediaInstance(HlsJsAdapter);
   const attachRef = useAttachMedia(media);
 
   return <video ref={attachRef} />;

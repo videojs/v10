@@ -27,7 +27,7 @@ import { MuxVideo } from '@videojs/react/media/mux-video';
 Low-level consumers can import the Media directly:
 
 ```ts
-import { MuxMedia } from '@videojs/mux-video';
+import { MuxVideoAdapter } from '@videojs/mux-video';
 ```
 
 ## License

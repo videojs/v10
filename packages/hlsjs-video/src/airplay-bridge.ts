@@ -14,8 +14,8 @@ import type { HlsEngineHost } from './types';
  *
  * No-op on non-WebKit platforms (Chromium, Firefox).
  */
-export function HlsJsMediaAirPlayMixin<Base extends Constructor<HlsEngineHost>>(BaseClass: Base) {
-  class HlsJsMediaAirPlay extends (BaseClass as Constructor<HlsEngineHost>) {
+export function HlsJsAirPlayMixin<Base extends Constructor<HlsEngineHost>>(BaseClass: Base) {
+  class HlsJsAirPlay extends (BaseClass as Constructor<HlsEngineHost>) {
     #sourceEl: HTMLSourceElement | null = null;
     #disconnect: AbortController | null = null;
     /**
@@ -103,5 +103,5 @@ export function HlsJsMediaAirPlayMixin<Base extends Constructor<HlsEngineHost>>(
     }
   }
 
-  return HlsJsMediaAirPlay as unknown as Base;
+  return HlsJsAirPlay as unknown as Base;
 }

@@ -241,7 +241,7 @@ DOM-free, so the codes are usable from any layer: `SvtaError`
 | `firstFatal` / `hasUnsupportedFeatureCause` | `playback/adapters/hls-video/error-surface.ts` | The shared half of the promotion step, plus the `HlsVideoMediaError` type. Only the *policy* — which codes are fatal — stays per adapter. All three adapters share `firstFatal`; the `ErrorLike` mapping and its 99001 substitution are the video and audio ones only |
 | `UNSUPPORTED_PLAYBACK_FEATURE_MESSAGE`, `UNPLAYABLE_SOURCE_MESSAGE`, and the two notice strings | `playback/primitives/error-messages.ts` | **Console-only** copy, plain constants. Nothing here is viewer-facing; separate exports so a composition that logs neither notice doesn't carry the bytes. The generic one exists for a composition whose failures don't all reduce to a missing feature — see the background adapter below |
 
-**Adapters** — `playback/adapters/hls-video/adapter.ts`,
+**Adapters** — `playback/adapters/hls-video/mixin.ts`,
 `hls-audio/adapter.ts`, and `hls-background-video/adapter.ts`. Each owns
 `FATAL_SVTA_CODES` (its fatality allow-list — the audio-only set is
 narrower, since it composes no video selection and so can never report
@@ -403,7 +403,7 @@ limitations*).
   - `packages/spf/src/playback/behaviors/tests/resolve-track.test.ts` —
     reports unsupported DRM through the seam for an encrypted playlist;
     nothing for a playable rendition; nothing when no seam is wired
-  - `packages/spf/src/playback/adapters/hls-video/tests/adapter.test.ts` →
+  - `packages/spf/src/playback/adapters/hls-video/tests/mixin.test.ts` →
     *error surface* — fatal condition surfaces as an `ErrorLike` and
     fires `'error'`; first fatal wins; non-fatal reports stay in the
     sequence only; fires once per distinct condition; clears on
@@ -417,7 +417,7 @@ limitations*).
     once, with the conditions attached, silent for a verdict with no
     unsupported cause, and the alternative-Media sentence appended when
     the class names one
-  - `packages/spf/src/playback/adapters/hls-background-video/tests/adapter.test.ts`
+  - `packages/spf/src/playback/adapters/hls-background-video/tests/mixin.test.ts`
     → *error surface* — nothing before a report; a verdict with no cause
     behind it keeps its own code and fires `'error'`; a *cause* with no
     verdict behind it surfaces too, for container and encryption alike (the
@@ -426,8 +426,8 @@ limitations*).
     once, with the conditions attached and no prose on `message`, **including
     for a verdict that substitutes nothing**; fires once per distinct
     condition; clears on per-source reset without announcing the clear
-  - `packages/html/src/media/hls-background-video/tests/media.test.ts` and
-    `packages/react/src/media/hls-background-video/tests/media.test.tsx`
+  - `packages/html/src/media/hls-background-video/tests/adapter.test.ts` and
+    `packages/react/src/media/hls-background-video/tests/adapter.test.tsx`
     → the forward — the element re-fires `'error'` on itself and exposes
     the condition while the inner `<video>`'s own `error` stays null; the
     React component's `onError` fires with the `<video>` as target, and
@@ -546,7 +546,7 @@ settled against.
   open question ("single error vs per-source") this feature answers.
 - **Adapter surface shape.** Whether this is a `HlsVideoMediaErrorsMixin`
   sibling to the existing mixins or folded into
-  `adapters/hls-video/adapter.ts`. The mixin precedent is strong, and
+  `adapters/hls-video/mixin.ts`. The mixin precedent is strong, and
   [engine-adapter-integration](./engine-adapter-integration.md) lists
   "curated state / error introspection" as not-implemented — this is
   the error half of it.

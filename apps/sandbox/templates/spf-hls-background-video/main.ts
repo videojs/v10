@@ -2,7 +2,7 @@ import '@app/styles.css';
 // SPF HLS Background Video — sandbox demo
 // http://localhost:5173/spf-hls-background-video/
 //
-// Drives `HlsBackgroundVideoMediaElement` directly, one layer below the
+// Drives `HlsBackgroundVideoAdapterCore` directly, one layer below the
 // `<hls-background-video>` element. The diagnostic strip surfaces three signals
 // reviewers should verify:
 //   - loadActivated is true from frame 0 (no preload-gate or play-event needed)
@@ -17,7 +17,7 @@ import '@app/styles.css';
 import { SOURCES } from '@app/shared/sources';
 import { effect, snapshot } from '@videojs/spf';
 import type { BackgroundVideoEngineState } from '@videojs/spf/hls';
-import { HlsBackgroundVideoMediaElement } from '@videojs/spf/hls-background-video';
+import { HlsBackgroundVideoAdapterCore } from '@videojs/spf/hls-background-video';
 
 // ── DOM refs ──────────────────────────────────────────────────────────────────
 const video = document.getElementById('bg-video') as HTMLVideoElement;
@@ -79,7 +79,7 @@ function trackDimensions(track: VideoTrack): { w: number; h: number } {
 
 // ── Adapter lifecycle ─────────────────────────────────────────────────────────
 let currentSourceId: keyof typeof SOURCES = DEFAULT_ID;
-let adapter!: HlsBackgroundVideoMediaElement;
+let adapter!: HlsBackgroundVideoAdapterCore;
 let stopDiag: () => void = () => {};
 
 function rebuildAdapter(): void {
@@ -88,7 +88,7 @@ function rebuildAdapter(): void {
   video.pause();
   adapter?.destroy();
 
-  adapter = new HlsBackgroundVideoMediaElement();
+  adapter = new HlsBackgroundVideoAdapterCore();
   // src before attach: the engine starts resolving the presentation before
   // play() (called inside attach) runs, so no teardown races the play promise.
   adapter.src = SOURCES[currentSourceId].url ?? '';

@@ -1,5 +1,5 @@
 import { ContextProvider } from '@videojs/element/context';
-import { getMediaExtensions, HTMLVideoElementHost, type Media, type MediaExtension } from '@videojs/media/dom';
+import { getMediaExtensions, HTMLVideoAdapter, type Media, type MediaExtension } from '@videojs/media/dom';
 import { afterEach, describe, expect, it } from 'vite-plus/test';
 
 import { mediaContext } from '../../player/context';
@@ -59,8 +59,8 @@ describe('MediaExtensionElement', () => {
     expect(el.componentDuringFieldInit).toBe(el.instance);
   });
 
-  it('registers the extension component with the media host from context', () => {
-    const host = new HTMLVideoElementHost();
+  it('registers the extension component with the media adapter from context', () => {
+    const host = new HTMLVideoAdapter();
     const provider = new TestMediaProvider();
     const el = new TestMediaExtensionElement();
 
@@ -72,7 +72,7 @@ describe('MediaExtensionElement', () => {
   });
 
   it('destroys the component when the element is destroyed', () => {
-    const host = new HTMLVideoElementHost();
+    const host = new HTMLVideoAdapter();
     const provider = new TestMediaProvider();
     const el = new TestMediaExtensionElement();
 

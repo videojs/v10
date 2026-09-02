@@ -1,8 +1,8 @@
 import { MediaStreamTypes } from '@videojs/media';
-import { HTMLVideoElementHost } from '@videojs/media/dom';
+import { HTMLVideoAdapter } from '@videojs/media/dom';
 import { describe, expect, it, vi } from 'vite-plus/test';
 
-import { ShakaMediaStreamTypeMixin } from '../stream-type';
+import { ShakaStreamTypeMixin } from '../stream-type';
 
 function createEngine({ live = false, inProgress = false } = {}) {
   const listeners = new Map<string, Set<(event: unknown) => void>>();
@@ -29,7 +29,7 @@ function createEngine({ live = false, inProgress = false } = {}) {
   return engine;
 }
 
-class FakeHost extends HTMLVideoElementHost {
+class FakeHost extends HTMLVideoAdapter {
   engine: ReturnType<typeof createEngine> | null;
 
   constructor(engine: ReturnType<typeof createEngine> | null = null) {
@@ -38,20 +38,20 @@ class FakeHost extends HTMLVideoElementHost {
   }
 }
 
-const ShakaMediaStreamType = ShakaMediaStreamTypeMixin(FakeHost as any) as unknown as new (
+const ShakaStreamType = ShakaStreamTypeMixin(FakeHost as any) as unknown as new (
   engine?: ReturnType<typeof createEngine> | null
 ) => FakeHost & { streamType: string };
 
-describe('ShakaMediaStreamTypeMixin', () => {
+describe('ShakaStreamTypeMixin', () => {
   it('starts unknown', () => {
-    const media = new ShakaMediaStreamType(createEngine());
+    const media = new ShakaStreamType(createEngine());
 
     expect(media.streamType).toBe(MediaStreamTypes.UNKNOWN);
   });
 
   it('detects live once the source is loaded', () => {
     const engine = createEngine({ live: true });
-    const media = new ShakaMediaStreamType(engine);
+    const media = new ShakaStreamType(engine);
     const onChange = vi.fn();
 
     media.addEventListener('streamtypechange', onChange);
@@ -64,7 +64,7 @@ describe('ShakaMediaStreamTypeMixin', () => {
 
   it('detects on-demand from a parsed manifest', () => {
     const engine = createEngine();
-    const media = new ShakaMediaStreamType(engine);
+    const media = new ShakaStreamType(engine);
 
     engine.emit('manifestparsed');
 
@@ -73,7 +73,7 @@ describe('ShakaMediaStreamTypeMixin', () => {
 
   it('treats an in-progress recording as live', () => {
     const engine = createEngine({ live: false, inProgress: true });
-    const media = new ShakaMediaStreamType(engine);
+    const media = new ShakaStreamType(engine);
 
     engine.emit('manifestparsed');
 
@@ -82,7 +82,7 @@ describe('ShakaMediaStreamTypeMixin', () => {
 
   it('forgets the detection when a new load starts', () => {
     const engine = createEngine({ live: true });
-    const media = new ShakaMediaStreamType(engine);
+    const media = new ShakaStreamType(engine);
 
     engine.emit('loaded');
 
@@ -93,7 +93,7 @@ describe('ShakaMediaStreamTypeMixin', () => {
 
   it('lets a user value win over detection until cleared', () => {
     const engine = createEngine({ live: true });
-    const media = new ShakaMediaStreamType(engine);
+    const media = new ShakaStreamType(engine);
 
     media.streamType = MediaStreamTypes.ON_DEMAND;
     engine.emit('loaded');
@@ -106,7 +106,7 @@ describe('ShakaMediaStreamTypeMixin', () => {
 
   it('stops detecting once destroyed', () => {
     const engine = createEngine({ live: true });
-    const media = new ShakaMediaStreamType(engine);
+    const media = new ShakaStreamType(engine);
 
     media.destroy();
     engine.emit('loaded');

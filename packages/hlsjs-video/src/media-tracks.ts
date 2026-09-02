@@ -46,8 +46,8 @@ function getAudioTrackKind(audioTrack: HlsJsMediaAudioTrack): string {
  * Requires the media-tracks mixin (track-list infrastructure) to be applied earlier in the chain so the host exposes
  * `addVideoTrack`, `videoRenditions`, and friends.
  */
-export function HlsJsMediaMediaTracksMixin<Base extends Constructor<MediaTracksHost>>(BaseClass: Base) {
-  class HlsJsMediaMediaTracks extends (BaseClass as Constructor<MediaTracksHost>) {
+export function HlsJsMediaTracksMixin<Base extends Constructor<MediaTracksHost>>(BaseClass: Base) {
+  class HlsJsMediaTracks extends (BaseClass as Constructor<MediaTracksHost>) {
     #levelIdMap = new Map<string, string>();
     #currentVideoTrack: VideoTrackLike | null = null;
 
@@ -225,5 +225,5 @@ export function HlsJsMediaMediaTracksMixin<Base extends Constructor<MediaTracksH
     }
   }
 
-  return HlsJsMediaMediaTracks as unknown as Base;
+  return HlsJsMediaTracks as unknown as Base;
 }

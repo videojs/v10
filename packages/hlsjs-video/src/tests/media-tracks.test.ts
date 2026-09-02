@@ -1,11 +1,11 @@
-import { HTMLVideoElementHost } from '@videojs/media/dom';
+import { HTMLVideoAdapter } from '@videojs/media/dom';
 import { MediaTracksMixin } from '@videojs/media/media-tracks';
 import Hls from 'hls.js';
 import { describe, expect, it } from 'vite-plus/test';
 
-import { HlsJsMediaMediaTracksMixin } from '../media-tracks';
+import { HlsJsMediaTracksMixin } from '../media-tracks';
 
-class FakeHost extends HTMLVideoElementHost {
+class FakeHost extends HTMLVideoAdapter {
   engine: Hls | null;
 
   constructor(engine: Hls | null = null) {
@@ -14,7 +14,7 @@ class FakeHost extends HTMLVideoElementHost {
   }
 }
 
-const HlsJsMediaMediaTracks = HlsJsMediaMediaTracksMixin(MediaTracksMixin(FakeHost));
+const HlsJsMediaTracks = HlsJsMediaTracksMixin(MediaTracksMixin(FakeHost));
 
 function createEngine(): Hls {
   const listeners = new Map<string, Set<(...args: any[]) => void>>();
@@ -63,10 +63,10 @@ function flush() {
   return Promise.resolve();
 }
 
-describe('HlsJsMediaMediaTracksMixin', () => {
+describe('HlsJsMediaTracksMixin', () => {
   it('mirrors manifest levels into a selected video track with renditions', () => {
     const engine = createEngine();
-    const host = new HlsJsMediaMediaTracks(engine);
+    const host = new HlsJsMediaTracks(engine);
 
     manifestParsed(engine, [
       { url: ['high.m3u8'], width: 1920, height: 1080, videoCodec: 'avc1', bitrate: 6_000_000 },
@@ -82,7 +82,7 @@ describe('HlsJsMediaMediaTracksMixin', () => {
 
   it('mirrors alternate audio tracks', () => {
     const engine = createEngine();
-    const host = new HlsJsMediaMediaTracks(engine);
+    const host = new HlsJsMediaTracks(engine);
 
     audioTracksUpdated(engine, [
       { id: 0, default: true, name: 'English', lang: 'en' },
@@ -98,7 +98,7 @@ describe('HlsJsMediaMediaTracksMixin', () => {
 
   it('enables the audio track announced by the engine', () => {
     const engine = createEngine();
-    const host = new HlsJsMediaMediaTracks(engine);
+    const host = new HlsJsMediaTracks(engine);
 
     audioTracksUpdated(engine, [
       { id: 0, default: true, name: 'English', lang: 'en' },
@@ -116,7 +116,7 @@ describe('HlsJsMediaMediaTracksMixin', () => {
 
   it('forwards a rendition selection to engine.nextLevel', async () => {
     const engine = createEngine();
-    const host = new HlsJsMediaMediaTracks(engine);
+    const host = new HlsJsMediaTracks(engine);
 
     manifestParsed(engine, [{ url: ['a'] }, { url: ['b'] }, { url: ['c'] }]);
 
@@ -128,7 +128,7 @@ describe('HlsJsMediaMediaTracksMixin', () => {
 
   it('marks the active rendition from LEVEL_SWITCHED', () => {
     const engine = createEngine();
-    const host = new HlsJsMediaMediaTracks(engine);
+    const host = new HlsJsMediaTracks(engine);
 
     manifestParsed(engine, [{ url: ['a'] }, { url: ['b'] }, { url: ['c'] }]);
 
@@ -140,7 +140,7 @@ describe('HlsJsMediaMediaTracksMixin', () => {
 
   it('forwards an audio track selection to engine.audioTrack', async () => {
     const engine = createEngine();
-    const host = new HlsJsMediaMediaTracks(engine);
+    const host = new HlsJsMediaTracks(engine);
 
     audioTracksUpdated(engine, [
       { id: 0, default: true, name: 'English', lang: 'en' },
@@ -158,7 +158,7 @@ describe('HlsJsMediaMediaTracksMixin', () => {
 
   it('prunes renditions dropped from a LEVELS_UPDATED event', () => {
     const engine = createEngine();
-    const host = new HlsJsMediaMediaTracks(engine);
+    const host = new HlsJsMediaTracks(engine);
 
     const levels = [{ url: ['a'] }, { url: ['b'] }, { url: ['c'] }];
 
@@ -172,7 +172,7 @@ describe('HlsJsMediaMediaTracksMixin', () => {
 
   it('prunes renditions when LEVELS_UPDATED carries new level object references', () => {
     const engine = createEngine();
-    const host = new HlsJsMediaMediaTracks(engine);
+    const host = new HlsJsMediaTracks(engine);
 
     const levels = [{ url: ['a'] }, { url: ['b'] }, { url: ['c'] }];
 
@@ -186,7 +186,7 @@ describe('HlsJsMediaMediaTracksMixin', () => {
 
   it('switches to the newly enabled audio track when multiple are enabled', async () => {
     const engine = createEngine();
-    const host = new HlsJsMediaMediaTracks(engine);
+    const host = new HlsJsMediaTracks(engine);
 
     audioTracksUpdated(engine, [
       { id: 0, default: true, name: 'English', lang: 'en' },
@@ -206,7 +206,7 @@ describe('HlsJsMediaMediaTracksMixin', () => {
 
   it('keeps the audio selection when a group switch re-emits the same track set', async () => {
     const engine = createEngine();
-    const host = new HlsJsMediaMediaTracks(engine);
+    const host = new HlsJsMediaTracks(engine);
 
     const audioTracks = [
       { id: 0, default: true, name: 'English', lang: 'en' },
@@ -240,7 +240,7 @@ describe('HlsJsMediaMediaTracksMixin', () => {
 
   it('rebuilds the audio track list when the track set changes', () => {
     const engine = createEngine();
-    const host = new HlsJsMediaMediaTracks(engine);
+    const host = new HlsJsMediaTracks(engine);
 
     audioTracksUpdated(engine, [
       { id: 0, default: true, name: 'English', lang: 'en' },
@@ -258,7 +258,7 @@ describe('HlsJsMediaMediaTracksMixin', () => {
 
   it('clears all media tracks on DESTROYING', () => {
     const engine = createEngine();
-    const host = new HlsJsMediaMediaTracks(engine);
+    const host = new HlsJsMediaTracks(engine);
 
     manifestParsed(engine, [{ url: ['a'] }]);
     audioTracksUpdated(engine, [{ id: 0, default: true }]);

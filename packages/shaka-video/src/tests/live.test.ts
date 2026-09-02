@@ -1,7 +1,7 @@
-import { HTMLVideoElementHost } from '@videojs/media/dom';
+import { HTMLVideoAdapter } from '@videojs/media/dom';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
-import { ShakaMediaLiveMixin } from '../live';
+import { ShakaLiveMixin } from '../live';
 
 function createEngine({ live = false, inProgress = false, maxSegmentDuration = 2, seekEnd = 100 } = {}) {
   const listeners = new Map<string, Set<(event: unknown) => void>>();
@@ -32,7 +32,7 @@ function createEngine({ live = false, inProgress = false, maxSegmentDuration = 2
   return engine;
 }
 
-class FakeHost extends HTMLVideoElementHost {
+class FakeHost extends HTMLVideoAdapter {
   engine: ReturnType<typeof createEngine> | null;
 
   constructor(engine: ReturnType<typeof createEngine> | null = null) {
@@ -41,7 +41,7 @@ class FakeHost extends HTMLVideoElementHost {
   }
 }
 
-const ShakaMediaLive = ShakaMediaLiveMixin(FakeHost as any) as unknown as new (
+const ShakaLive = ShakaLiveMixin(FakeHost as any) as unknown as new (
   engine?: ReturnType<typeof createEngine> | null
 ) => FakeHost & { readonly liveEdgeStart: number; readonly targetLiveWindow: number };
 
@@ -49,7 +49,7 @@ function setupWithTarget(engine: ReturnType<typeof createEngine>) {
   const video = document.createElement('video');
 
   document.body.appendChild(video);
-  const media = new ShakaMediaLive(engine);
+  const media = new ShakaLive(engine);
 
   media.attach(video);
   return { media, video };
@@ -59,9 +59,9 @@ afterEach(() => {
   document.body.innerHTML = '';
 });
 
-describe('ShakaMediaLiveMixin', () => {
+describe('ShakaLiveMixin', () => {
   it('has no live window before anything loads', () => {
-    const media = new ShakaMediaLive(createEngine());
+    const media = new ShakaLive(createEngine());
 
     expect(media.targetLiveWindow).toBeNaN();
     expect(media.liveEdgeStart).toBeNaN();
@@ -69,7 +69,7 @@ describe('ShakaMediaLiveMixin', () => {
 
   it('stays without a live window for on-demand loads', () => {
     const engine = createEngine();
-    const media = new ShakaMediaLive(engine);
+    const media = new ShakaLive(engine);
 
     engine.emit('loaded');
 
@@ -79,7 +79,7 @@ describe('ShakaMediaLiveMixin', () => {
 
   it('derives a sliding window and the live edge for live loads', () => {
     const engine = createEngine({ live: true, maxSegmentDuration: 2, seekEnd: 100 });
-    const media = new ShakaMediaLive(engine);
+    const media = new ShakaLive(engine);
     const onChange = vi.fn();
 
     media.addEventListener('targetlivewindowchange', onChange);
@@ -93,7 +93,7 @@ describe('ShakaMediaLiveMixin', () => {
 
   it('treats an in-progress recording as a growing window', () => {
     const engine = createEngine({ live: false, inProgress: true });
-    const media = new ShakaMediaLive(engine);
+    const media = new ShakaLive(engine);
 
     engine.emit('manifestparsed');
 
@@ -102,7 +102,7 @@ describe('ShakaMediaLiveMixin', () => {
 
   it('reads the live edge off the current seek range', () => {
     const engine = createEngine({ live: true, maxSegmentDuration: 2, seekEnd: 100 });
-    const media = new ShakaMediaLive(engine);
+    const media = new ShakaLive(engine);
 
     engine.emit('manifestparsed');
 
@@ -113,7 +113,7 @@ describe('ShakaMediaLiveMixin', () => {
 
   it('resets when a new load starts', () => {
     const engine = createEngine({ live: true });
-    const media = new ShakaMediaLive(engine);
+    const media = new ShakaLive(engine);
 
     engine.emit('manifestparsed');
 
@@ -179,7 +179,7 @@ describe('ShakaMediaLiveMixin', () => {
 
     video.autoplay = true;
     document.body.appendChild(video);
-    const media = new ShakaMediaLive(engine);
+    const media = new ShakaLive(engine);
 
     media.attach(video);
     engine.emit('loaded');

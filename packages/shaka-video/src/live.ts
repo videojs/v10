@@ -2,8 +2,8 @@ import type { Constructor } from '@videojs/utils/types';
 
 import type { ShakaEngineHost } from './types';
 
-export function ShakaMediaLiveMixin<Base extends Constructor<ShakaEngineHost>>(BaseClass: Base) {
-  class ShakaMediaLive extends (BaseClass as Constructor<ShakaEngineHost>) {
+export function ShakaLiveMixin<Base extends Constructor<ShakaEngineHost>>(BaseClass: Base) {
+  class ShakaLive extends (BaseClass as Constructor<ShakaEngineHost>) {
     #targetLiveWindow = Number.NaN;
     #liveEdgeStartOffset: number | undefined;
     #seekToLiveAbort: AbortController | null = null;
@@ -165,6 +165,6 @@ export function ShakaMediaLiveMixin<Base extends Constructor<ShakaEngineHost>>(B
     }
   }
 
-  return ShakaMediaLive as unknown as Base &
+  return ShakaLive as unknown as Base &
     Constructor<{ readonly liveEdgeStart: number; readonly targetLiveWindow: number }>;
 }

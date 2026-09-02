@@ -656,7 +656,7 @@ export interface VideoTargetLike
   requestFullscreen(): Promise<unknown>;
 }
 
-export interface MediaEngineHost<Engine = unknown, Target = unknown> {
+export interface EngineAdapter<Engine = unknown, Target = unknown> {
   readonly engine: Engine | null;
   attach?(target: Target): void;
   detach?(): void;

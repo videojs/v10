@@ -2,7 +2,7 @@ import { type DrmSystemConfig, type DrmSystemsConfig, KeySystems, MediaError } f
 import { isWebKitAirPlayCapable } from '@videojs/utils/dom';
 import type { Constructor } from '@videojs/utils/types';
 
-import type { NativeMediaHost } from './errors';
+import type { NativeHlsHost } from './errors';
 import {
   createDrmError,
   type FairPlayContext,
@@ -17,7 +17,7 @@ import { createFairPlayWebKit } from './fairplay-webkit';
  * What the mixin needs from whatever it is composed onto: the DRM half of the source, and somewhere to put an error the
  * media element never reports.
  */
-export type NativeHlsDrmHost = NativeMediaHost & {
+export type NativeHlsDrmHost = NativeHlsHost & {
   readonly source: {
     drm?: DrmSystemsConfig | undefined;
     engine?: { nativeHls?: { drmSystems?: DrmSystemsConfig | undefined } | undefined } | undefined;
@@ -40,8 +40,8 @@ export type NativeHlsDrmHost = NativeMediaHost & {
  * Encrypted content with nothing configured fails loudly. Safari otherwise stalls without explanation, which is
  * indistinguishable from a slow network.
  */
-export function NativeHlsMediaDrmMixin<Base extends Constructor<NativeHlsDrmHost>>(BaseClass: Base) {
-  class NativeHlsMediaDrm extends (BaseClass as Constructor<NativeHlsDrmHost>) {
+export function NativeHlsDrmMixin<Base extends Constructor<NativeHlsDrmHost>>(BaseClass: Base) {
+  class NativeHlsDrm extends (BaseClass as Constructor<NativeHlsDrmHost>) {
     #disconnect: AbortController | null = null;
     #active: { keySystem: FairPlayKeySystem; disconnect: AbortController } | null = null;
     #useWebKit = false;
@@ -202,5 +202,5 @@ export function NativeHlsMediaDrmMixin<Base extends Constructor<NativeHlsDrmHost
     }
   }
 
-  return NativeHlsMediaDrm as unknown as Base;
+  return NativeHlsDrm as unknown as Base;
 }

@@ -1,6 +1,6 @@
 # @videojs/vimeo-video
 
-The Video.js playback adapter for Vimeo. It owns the supported `@vimeo/player` runtime and exposes `VimeoMedia` for
+The Video.js playback adapter for Vimeo. It owns the supported `@vimeo/player` runtime and exposes `VimeoAdapter` for
 low-level use.
 
 ## Installation

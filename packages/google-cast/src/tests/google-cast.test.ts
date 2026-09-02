@@ -1,4 +1,4 @@
-import { addMediaExtension, HTMLVideoElementHost } from '@videojs/media/dom';
+import { addMediaExtension, HTMLVideoAdapter } from '@videojs/media/dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { GoogleCastExtension } from '../index';
@@ -42,7 +42,7 @@ vi.mock('../google-cast-provider', () => ({
 }));
 
 function setup() {
-  const host = new HTMLVideoElementHost();
+  const host = new HTMLVideoAdapter();
   const video = document.createElement('video');
 
   host.attach(video);
@@ -77,22 +77,22 @@ afterEach(() => {
 });
 
 describe('GoogleCastExtension', () => {
-  it('registers remote state listeners only once across media changes', () => {
+  it('registers remote state listeners only once across adapter changes', () => {
     const { googleCast, provider } = setup();
-    const nextHost = new HTMLVideoElementHost();
+    const nextAdapter = new HTMLVideoAdapter();
 
-    googleCast.setMedia(nextHost);
+    googleCast.setAdapter(nextAdapter);
 
     expect(provider.remote.listenerCounts.get('connect')).toBe(1);
     expect(provider.remote.listenerCounts.get('disconnect')).toBe(1);
   });
 
-  it('keeps the provider override when media changes during a connected session', () => {
+  it('keeps the provider override when the adapter changes during a connected session', () => {
     const { googleCast, provider } = setup();
-    const nextHost = new HTMLVideoElementHost();
+    const nextAdapter = new HTMLVideoAdapter();
 
     connect(provider);
-    googleCast.setMedia(nextHost);
+    googleCast.setAdapter(nextAdapter);
 
     expect(googleCast.targetOverride).toBe(provider);
   });

@@ -8,22 +8,9 @@ import type { TwitchSource } from './source';
  * start (a live channel never ends, so it never repeats); `playsInline`, which Twitch decides for itself on a phone;
  * and `poster`, which the embed draws itself and offers no way to replace.
  */
-export interface TwitchMediaProps extends Pick<
+export interface TwitchAdapterProps extends Pick<
   Video,
   'src' | 'autoplay' | 'defaultMuted' | 'muted' | 'loop' | 'controls' | 'playsInline' | 'preload' | 'poster'
 > {
   source: TwitchSource | null;
 }
-
-export const twitchMediaDefaultProps: TwitchMediaProps = {
-  src: '',
-  autoplay: false,
-  defaultMuted: false,
-  muted: false,
-  loop: false,
-  controls: false,
-  playsInline: true,
-  preload: 'metadata',
-  poster: '',
-  source: null,
-};

@@ -6,6 +6,6 @@ export type {
   SpotifyPlaybackState,
   SpotifyPlaybackUpdateEvent,
 } from './iframe-api';
-export * from './media';
-export * from './props';
+export * from './adapter';
+export type { SpotifyAdapterProps } from './props';
 export * from './source';

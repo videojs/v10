@@ -41,6 +41,7 @@
     "clean": "rimraf --glob dist types '*.tsbuildinfo'"
   },
   "dependencies": {
+    "@videojs/media": "workspace:*",
     "@videojs/utils": "workspace:*",
     "mux-embed": "5.17.10"
   },

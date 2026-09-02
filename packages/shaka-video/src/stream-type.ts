@@ -3,8 +3,8 @@ import type { Constructor } from '@videojs/utils/types';
 
 import type { ShakaEngineHost } from './types';
 
-export function ShakaMediaStreamTypeMixin<Base extends Constructor<ShakaEngineHost>>(BaseClass: Base) {
-  class ShakaMediaStreamType extends (BaseClass as Constructor<ShakaEngineHost>) {
+export function ShakaStreamTypeMixin<Base extends Constructor<ShakaEngineHost>>(BaseClass: Base) {
+  class ShakaStreamType extends (BaseClass as Constructor<ShakaEngineHost>) {
     #streamType: MediaStreamType = MediaStreamTypes.UNKNOWN;
     #isUserStreamType = false;
 
@@ -79,5 +79,5 @@ export function ShakaMediaStreamTypeMixin<Base extends Constructor<ShakaEngineHo
     }
   }
 
-  return ShakaMediaStreamType as unknown as Base & Constructor<{ streamType: MediaStreamType }>;
+  return ShakaStreamType as unknown as Base & Constructor<{ streamType: MediaStreamType }>;
 }

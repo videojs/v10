@@ -1,20 +1,20 @@
 import { MediaError } from '@videojs/media';
-import { HTMLVideoElementHost } from '@videojs/media/dom';
+import { HTMLVideoAdapter } from '@videojs/media/dom';
 import { describe, expect, it, vi } from 'vite-plus/test';
 
-import { NativeHlsMediaErrorsMixin } from '../errors';
+import { NativeHlsErrorsMixin } from '../errors';
 
-class FakeHost extends HTMLVideoElementHost {
+class FakeHost extends HTMLVideoAdapter {
   // Re-expose the now-protected `target` for test assertions.
   override get target(): HTMLVideoElement | null {
     return super.target as HTMLVideoElement | null;
   }
 }
 
-const NativeHlsMediaErrors = NativeHlsMediaErrorsMixin(FakeHost);
+const NativeHlsErrors = NativeHlsErrorsMixin(FakeHost);
 
 function setup() {
-  const host = new NativeHlsMediaErrors();
+  const host = new NativeHlsErrors();
   const video = document.createElement('video');
 
   host.attach(video);
@@ -29,7 +29,7 @@ function fireNativeError(video: HTMLVideoElement, code: number, message = '') {
   video.dispatchEvent(new Event('error'));
 }
 
-describe('NativeHlsMediaErrorsMixin', () => {
+describe('NativeHlsErrorsMixin', () => {
   it('dispatches an error event with a MediaError for native errors', () => {
     const { host, video } = setup();
 
@@ -194,7 +194,7 @@ describe('NativeHlsMediaErrorsMixin', () => {
   });
 
   it('has target set when error handler fires during attach', () => {
-    const host = new NativeHlsMediaErrors();
+    const host = new NativeHlsErrors();
     const video = document.createElement('video');
 
     let targetDuringError: EventTarget | null = 'unset' as any;
@@ -215,7 +215,7 @@ describe('NativeHlsMediaErrorsMixin', () => {
   });
 
   it('does not register listeners when base attach guard rejects same target', () => {
-    const host = new NativeHlsMediaErrors();
+    const host = new NativeHlsErrors();
     const video = document.createElement('video');
 
     host.attach(video);

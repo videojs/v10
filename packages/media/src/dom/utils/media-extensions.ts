@@ -1,25 +1,23 @@
 import type {
-  HTMLMediaElementHost,
+  AnyHTMLMediaAdapter,
   MediaExtension,
   MediaExtensionConstructor,
   MediaExtensions,
   HTMLMediaTargetLike as TargetLike,
-} from '../media-host';
+} from '../html-media-adapter';
 
-export type MediaHost<T extends TargetLike = any> = HTMLMediaElementHost<T, any>;
+const componentRegistry = new WeakMap<AnyHTMLMediaAdapter, MediaExtensions>();
 
-const componentRegistry = new WeakMap<MediaHost, MediaExtensions>();
+export function getMediaExtensions(adapter: AnyHTMLMediaAdapter) {
+  let map = componentRegistry.get(adapter);
 
-export function getMediaExtensions(host: MediaHost) {
-  let map = componentRegistry.get(host);
-
-  if (!map) componentRegistry.set(host, (map = new Map() as MediaExtensions));
+  if (!map) componentRegistry.set(adapter, (map = new Map() as MediaExtensions));
 
   return map;
 }
 
-export function addMediaExtension<T extends MediaExtension>(host: MediaHost, component: T) {
-  const components = getMediaExtensions(host);
+export function addMediaExtension<T extends MediaExtension>(adapter: AnyHTMLMediaAdapter, component: T) {
+  const components = getMediaExtensions(adapter);
   // Get the component's constructor to use as the key for the component in the registry.
   const ctor = component.constructor as MediaExtensionConstructor<T>;
 
@@ -29,10 +27,10 @@ export function addMediaExtension<T extends MediaExtension>(host: MediaHost, com
 
   components.set(ctor, component);
 
-  component.setMedia?.(host);
+  component.setAdapter?.(adapter);
 
-  // @ts-expect-error `target` is protected, but these helpers are the host's own machinery.
-  if (host.target) component.attach?.(host.target);
+  // @ts-expect-error `target` is protected, but these helpers are the adapter's own machinery.
+  if (adapter.target) component.attach?.(adapter.target);
 
   return () => {
     if (components.get(ctor) === component) {
@@ -42,12 +40,19 @@ export function addMediaExtension<T extends MediaExtension>(host: MediaHost, com
   };
 }
 
-export function getMediaProp<T extends TargetLike, K extends keyof T>(host: MediaHost<T>, prop: K): T[K] | undefined {
-  return getMediaOwner(host, prop)?.[prop];
+export function getMediaProp<T extends TargetLike, K extends keyof T>(
+  adapter: AnyHTMLMediaAdapter<T>,
+  prop: K
+): T[K] | undefined {
+  return getMediaOwner(adapter, prop)?.[prop];
 }
 
-export function setMediaProp<T extends TargetLike, K extends keyof T>(host: MediaHost<T>, prop: K, value: T[K]): void {
-  const own = getMediaOwner(host, prop);
+export function setMediaProp<T extends TargetLike, K extends keyof T>(
+  adapter: AnyHTMLMediaAdapter<T>,
+  prop: K,
+  value: T[K]
+): void {
+  const own = getMediaOwner(adapter, prop);
 
   if (own) (own as Record<K, T[K]>)[prop] = value;
 }
@@ -56,12 +61,12 @@ export function setMediaProp<T extends TargetLike, K extends keyof T>(host: Medi
  * Find the object that owns a media property: the first component `override` exposing it, otherwise the attached
  * target.
  */
-export function getMediaOwner<T extends TargetLike>(host: MediaHost<T>, prop: keyof T): Partial<T> | null {
-  for (const component of getMediaExtensions(host).values()) {
+export function getMediaOwner<T extends TargetLike>(adapter: AnyHTMLMediaAdapter<T>, prop: keyof T): Partial<T> | null {
+  for (const component of getMediaExtensions(adapter).values()) {
     const override = component.targetOverride as Partial<T> | null | undefined;
     if (override?.[prop] !== undefined) return override;
   }
 
-  // @ts-expect-error `target` is protected, but these helpers are the host's own machinery.
-  return host.target;
+  // @ts-expect-error `target` is protected, but these helpers are the adapter's own machinery.
+  return adapter.target;
 }

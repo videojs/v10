@@ -21,7 +21,7 @@ import '@videojs/html/media/dash-video';
 import { DashVideo } from '@videojs/react/media/dash-video';
 ```
 
-Low-level consumers can import `DashMedia` from `@videojs/dash-video`.
+Low-level consumers can import `DashAdapter` from `@videojs/dash-video`.
 
 ## License
 

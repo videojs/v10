@@ -30,7 +30,7 @@ async function resolveBrowserPackageEntry(specifier: string) {
 
 describe('@videojs/dash-video server package imports', () => {
   it('imports the published entry without browser globals', async () => {
-    await importPackageEntry('@videojs/dash-video', 'DashMedia');
+    await importPackageEntry('@videojs/dash-video', 'DashAdapter');
   });
 
   it('resolves the browser implementation in browser builds', async () => {

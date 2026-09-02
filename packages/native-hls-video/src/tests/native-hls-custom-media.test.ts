@@ -1,19 +1,19 @@
 import { MediaError } from '@videojs/media';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
-import { NativeHlsMedia } from '../index';
+import { NativeHlsAdapter } from '../index';
 
 afterEach(() => {
   document.body.innerHTML = '';
 });
 
-describe('NativeHlsMedia', () => {
+describe('NativeHlsAdapter', () => {
   it('dispatches only the enriched ErrorEvent when a native error fires', () => {
     const video = document.createElement('video');
 
     document.body.appendChild(video);
 
-    const media = new NativeHlsMedia();
+    const media = new NativeHlsAdapter();
 
     media.attach(video);
 

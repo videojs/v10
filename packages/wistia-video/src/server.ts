@@ -1,8 +1,9 @@
+import type { WistiaAdapterProps } from './props';
 import type { WistiaSource } from './source';
 
 export * from './helpers';
 
-export type { WistiaPlayer } from './media';
+export type { WistiaPlayer } from './adapter';
 
 export const WISTIA_PLAYER_TAG = 'wistia-player';
 
@@ -16,7 +17,22 @@ export const WISTIA_PLAYER_TAG = 'wistia-player';
  * The members are the ones the normalizer installs on a real player, declared as plain fields: enough for a platform
  * package to subclass this and for a render to read a value back, and no further, since nothing on a server plays.
  */
-export class WistiaMedia extends (globalThis.HTMLElement ?? class {}) {
+export class WistiaAdapter extends (globalThis.HTMLElement ??
+  class {
+    // Mirrors the browser adapter's defaults; the server test checks the two entries expose the same surface.
+    static readonly defaultProps: WistiaAdapterProps = {
+      src: '',
+      autoplay: false,
+      defaultMuted: false,
+      muted: false,
+      loop: false,
+      controls: false,
+      playsInline: true,
+      preload: 'metadata',
+      poster: '',
+      source: null,
+    };
+  }) {
   src = '';
   source: WistiaSource | null = null;
   defaultMuted = false;

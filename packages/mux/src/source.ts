@@ -215,7 +215,7 @@ export interface MuxContentData extends MediaContentData {
 }
 
 /**
- * Build the poster image URL a source describes. Read through `MuxMedia`'s `contentData`.
+ * Build the poster image URL a source describes. Read through `MuxVideoAdapter`'s `contentData`.
  *
  * @internal
  */
@@ -234,7 +234,7 @@ export function createMuxPosterURL(source?: MuxSourceBase | null): string | unde
 }
 
 /**
- * Build the storyboard (thumbnail sprite) VTT URL a source describes. Read through `MuxMedia`'s `contentData`.
+ * Build the storyboard (thumbnail sprite) VTT URL a source describes. Read through `MuxVideoAdapter`'s `contentData`.
  *
  * @internal
  */

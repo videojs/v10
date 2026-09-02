@@ -697,6 +697,9 @@ importers:
 
   packages/mux-data:
     dependencies:
+      '@videojs/media':
+        specifier: workspace:*
+        version: link:../media
       '@videojs/utils':
         specifier: workspace:*
         version: link:../utils

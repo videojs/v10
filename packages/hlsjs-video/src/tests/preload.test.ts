@@ -1,8 +1,8 @@
-import { HTMLVideoElementHost } from '@videojs/media/dom';
+import { HTMLVideoAdapter } from '@videojs/media/dom';
 import Hls from 'hls.js';
 import { describe, expect, it, vi } from 'vite-plus/test';
 
-import { HlsJsMediaPreloadMixin } from '../preload';
+import { HlsJsPreloadMixin } from '../preload';
 
 function createEngine(): Hls {
   const listeners = new Map<string, Set<(...args: any[]) => void>>();
@@ -29,7 +29,7 @@ function createEngine(): Hls {
   } as unknown as Hls;
 }
 
-class FakeHost extends HTMLVideoElementHost {
+class FakeHost extends HTMLVideoAdapter {
   engine: Hls | null;
 
   constructor(engine: Hls | null = null) {
@@ -43,9 +43,9 @@ class FakeHost extends HTMLVideoElementHost {
   }
 }
 
-const PreloadHost = HlsJsMediaPreloadMixin(FakeHost);
+const PreloadHost = HlsJsPreloadMixin(FakeHost);
 
-describe('HlsJsMediaPreloadMixin', () => {
+describe('HlsJsPreloadMixin', () => {
   it('defaults preload to metadata', () => {
     const host = new PreloadHost(null);
 

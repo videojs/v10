@@ -11,22 +11,9 @@ import type { TikTokSource } from './source';
  * of by handing playback to TikTok's own chrome. That buys commands the embed answers, not metadata — TikTok reports a
  * duration of 0 until it plays.
  */
-export interface TikTokMediaProps extends Pick<
+export interface TikTokAdapterProps extends Pick<
   Video,
   'src' | 'autoplay' | 'defaultMuted' | 'muted' | 'loop' | 'controls' | 'playsInline' | 'preload' | 'poster'
 > {
   source: TikTokSource | null;
 }
-
-export const tiktokMediaDefaultProps: TikTokMediaProps = {
-  src: '',
-  autoplay: false,
-  defaultMuted: false,
-  muted: false,
-  loop: false,
-  controls: false,
-  playsInline: true,
-  preload: 'metadata',
-  poster: '',
-  source: null,
-};

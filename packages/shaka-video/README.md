@@ -21,7 +21,7 @@ import '@videojs/html/media/shaka-video';
 import { ShakaVideo } from '@videojs/react/media/shaka-video';
 ```
 
-Low-level consumers can import `ShakaMedia` and the supported `shaka` runtime from `@videojs/shaka-video`.
+Low-level consumers can import `ShakaAdapter` and the supported `shaka` runtime from `@videojs/shaka-video`.
 
 ## License
 

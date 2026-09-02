@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vite-plus/test';
 
-import { HTMLAudioElementHost } from '../audio-host';
-import type { MediaExtension } from '../media-host';
+import { HTMLAudioAdapter } from '../html-audio-adapter';
+import type { MediaExtension } from '../html-media-adapter';
 import { addMediaExtension, getMediaProp } from '../utils';
 
 afterEach(() => {
@@ -17,7 +17,7 @@ class DetachableComponent implements MediaExtension {
 
 describe('addMediaExtension', () => {
   it('detaches the component when it is unregistered', () => {
-    const host = new HTMLAudioElementHost();
+    const host = new HTMLAudioAdapter();
 
     host.attach(document.createElement('audio'));
     const component = new DetachableComponent();
@@ -30,7 +30,7 @@ describe('addMediaExtension', () => {
   });
 
   it('detaches the previous component when another instance replaces it', () => {
-    const host = new HTMLAudioElementHost();
+    const host = new HTMLAudioAdapter();
 
     host.attach(document.createElement('audio'));
     const first = new DetachableComponent();
@@ -49,7 +49,7 @@ describe('addMediaExtension', () => {
 
 describe('getMediaProp', () => {
   it('returns the owner value', () => {
-    const host = new HTMLAudioElementHost();
+    const host = new HTMLAudioAdapter();
     const audio = document.createElement('audio');
 
     audio.loop = true;
@@ -59,7 +59,7 @@ describe('getMediaProp', () => {
   });
 
   it('returns undefined when nothing is attached', () => {
-    const host = new HTMLAudioElementHost();
+    const host = new HTMLAudioAdapter();
 
     expect(getMediaProp(host, 'loop')).toBeUndefined();
   });

@@ -55,8 +55,8 @@ const sameIds = (a: { id: string }[], b: { id: string }[]): boolean =>
  * Requires the media-tracks mixin (track-list infrastructure) earlier in the chain so the host exposes `addVideoTrack`,
  * `videoRenditions`, and friends.
  */
-export function HlsVideoMediaMediaTracksMixin<Base extends Constructor<MediaTracksHost>>(BaseClass: Base) {
-  class HlsVideoMediaMediaTracks extends (BaseClass as Constructor<MediaTracksHost>) {
+export function HlsVideoMediaTracksMixin<Base extends Constructor<MediaTracksHost>>(BaseClass: Base) {
+  class HlsVideoMediaTracks extends (BaseClass as Constructor<MediaTracksHost>) {
     #abort = new AbortController();
     #destroyed = false;
     // Memoized SPF model — the last `computed` result per type — so a DOM
@@ -232,5 +232,5 @@ export function HlsVideoMediaMediaTracksMixin<Base extends Constructor<MediaTrac
     }
   }
 
-  return HlsVideoMediaMediaTracks as unknown as Base;
+  return HlsVideoMediaTracks as unknown as Base;
 }

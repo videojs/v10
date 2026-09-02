@@ -98,8 +98,8 @@ function withReadableCues<T>(track: TextTrack, action: () => T): T {
  * `CUES_PARSED` with VTTCues. This mixin creates `<track>` elements on the media target and forwards cues into them. It
  * also syncs user track-mode changes back to hls.js via `engine.subtitleTrack`.
  */
-export function HlsJsMediaTextTracksMixin<Base extends Constructor<HlsEngineHost>>(BaseClass: Base) {
-  class HlsJsMediaTextTracks extends (BaseClass as Constructor<HlsEngineHost>) {
+export function HlsJsTextTracksMixin<Base extends Constructor<HlsEngineHost>>(BaseClass: Base) {
+  class HlsJsTextTracks extends (BaseClass as Constructor<HlsEngineHost>) {
     #disconnect: AbortController | null = null;
 
     constructor(...args: any[]) {
@@ -229,7 +229,7 @@ export function HlsJsMediaTextTracksMixin<Base extends Constructor<HlsEngineHost
     }
   }
 
-  return HlsJsMediaTextTracks as unknown as Base;
+  return HlsJsTextTracks as unknown as Base;
 }
 
 function addTextTrack(

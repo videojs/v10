@@ -1,3 +1,4 @@
+import { HTMLVideoAdapter } from '@videojs/media/dom';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { MuxDataExtension } from '..';
@@ -29,9 +30,22 @@ function createSdk() {
   return { sdk, monitor, emit, updateData, addHLSJS, removeHLSJS, addDashJS, removeDashJS, destroy };
 }
 
-class FakeMedia extends EventTarget {
+/** A real adapter whose `src` lives on the adapter, so tests can set it without attaching a target. */
+class FakeAdapter extends HTMLVideoAdapter {
+  #src = '';
+
+  override get src() {
+    return this.#src;
+  }
+
+  override set src(value: string) {
+    this.#src = value;
+  }
+}
+
+/** Shaped like the hls.js- and dash.js-backed adapters: the same adapter, fronting a JS engine. */
+class FakeEngineAdapter extends FakeAdapter {
   engine: unknown = null;
-  src = '';
 }
 
 /** Shaped like an hls.js instance, class statics included. */
@@ -75,11 +89,11 @@ describe('MuxDataExtension', () => {
     const { sdk, monitor } = createSdk();
     const data = new MuxDataExtension({ MuxDataSdk: sdk, envKey: 'key', playerSoftwareName: 'mux-video' });
     const video = document.createElement('video');
-    const media = new FakeMedia();
+    const adapter = new FakeEngineAdapter();
 
-    media.src = 'https://stream.mux.com/abc123.m3u8';
+    adapter.src = 'https://stream.mux.com/abc123.m3u8';
 
-    data.setMedia(media);
+    data.setAdapter(adapter);
     data.attach(video);
 
     await settle();
@@ -95,11 +109,11 @@ describe('MuxDataExtension', () => {
   it('does not monitor before a target is attached', async () => {
     const { sdk, monitor } = createSdk();
     const data = new MuxDataExtension({ MuxDataSdk: sdk });
-    const media = new FakeMedia();
+    const adapter = new FakeEngineAdapter();
 
-    media.src = 'https://stream.mux.com/abc123.m3u8';
+    adapter.src = 'https://stream.mux.com/abc123.m3u8';
 
-    data.setMedia(media);
+    data.setAdapter(adapter);
 
     await settle();
 
@@ -110,16 +124,16 @@ describe('MuxDataExtension', () => {
     const { sdk, monitor, emit, destroy } = createSdk();
     const data = new MuxDataExtension({ MuxDataSdk: sdk, envKey: 'key' });
     const video = document.createElement('video');
-    const media = new FakeMedia();
+    const adapter = new FakeEngineAdapter();
 
-    media.src = 'https://stream.mux.com/abc123.m3u8';
+    adapter.src = 'https://stream.mux.com/abc123.m3u8';
 
-    data.setMedia(media);
+    data.setAdapter(adapter);
     data.attach(video);
     await settle();
 
     // e.g. remote playback engaging or a MediaSource re-attach reruns `load()`.
-    media.dispatchEvent(new Event('loadstart'));
+    adapter.dispatchEvent(new Event('loadstart'));
     await settle();
 
     expect(monitor).toHaveBeenCalledTimes(1);
@@ -131,16 +145,16 @@ describe('MuxDataExtension', () => {
     const { sdk, monitor, emit, destroy } = createSdk();
     const data = new MuxDataExtension({ MuxDataSdk: sdk, envKey: 'key' });
     const video = document.createElement('video');
-    const media = new FakeMedia();
+    const adapter = new FakeEngineAdapter();
 
-    media.src = 'https://stream.mux.com/abc123.m3u8';
+    adapter.src = 'https://stream.mux.com/abc123.m3u8';
 
-    data.setMedia(media);
+    data.setAdapter(adapter);
     data.attach(video);
     await settle();
 
-    media.src = 'https://stream.mux.com/def456.m3u8';
-    media.dispatchEvent(new Event('loadstart'));
+    adapter.src = 'https://stream.mux.com/def456.m3u8';
+    adapter.dispatchEvent(new Event('loadstart'));
     await settle();
 
     expect(monitor).toHaveBeenCalledTimes(1);
@@ -152,16 +166,16 @@ describe('MuxDataExtension', () => {
     const { sdk, monitor, emit, updateData } = createSdk();
     const data = new MuxDataExtension({ MuxDataSdk: sdk, envKey: 'key' });
     const video = document.createElement('video');
-    const media = new FakeMedia();
+    const adapter = new FakeEngineAdapter();
 
-    data.setMedia(media);
+    data.setAdapter(adapter);
     data.attach(video);
     await settle();
 
     expect(monitor).toHaveBeenCalledTimes(1);
 
-    media.src = 'https://stream.mux.com/abc123.m3u8';
-    media.dispatchEvent(new Event('loadstart'));
+    adapter.src = 'https://stream.mux.com/abc123.m3u8';
+    adapter.dispatchEvent(new Event('loadstart'));
     await settle();
 
     expect(monitor).toHaveBeenCalledTimes(1);
@@ -173,22 +187,22 @@ describe('MuxDataExtension', () => {
     const { sdk, monitor, emit } = createSdk();
     const data = new MuxDataExtension({ MuxDataSdk: sdk, envKey: 'key' });
     const video = document.createElement('video');
-    const media = new FakeMedia();
+    const adapter = new FakeEngineAdapter();
 
-    media.src = 'https://stream.mux.com/abc123.m3u8';
+    adapter.src = 'https://stream.mux.com/abc123.m3u8';
 
-    data.setMedia(media);
+    data.setAdapter(adapter);
     data.attach(video);
     await settle();
 
-    media.src = '';
-    media.dispatchEvent(new Event('loadstart'));
+    adapter.src = '';
+    adapter.dispatchEvent(new Event('loadstart'));
     await settle();
 
     expect(emit).not.toHaveBeenCalled();
 
-    media.src = 'https://stream.mux.com/def456.m3u8';
-    media.dispatchEvent(new Event('loadstart'));
+    adapter.src = 'https://stream.mux.com/def456.m3u8';
+    adapter.dispatchEvent(new Event('loadstart'));
     await settle();
 
     expect(monitor).toHaveBeenCalledTimes(1);
@@ -199,19 +213,19 @@ describe('MuxDataExtension', () => {
     const { sdk, monitor, addHLSJS, removeHLSJS, destroy } = createSdk();
     const data = new MuxDataExtension({ MuxDataSdk: sdk, envKey: 'key' });
     const video = document.createElement('video');
-    const media = new FakeMedia();
+    const adapter = new FakeEngineAdapter();
 
-    media.src = 'https://stream.mux.com/abc123.m3u8';
+    adapter.src = 'https://stream.mux.com/abc123.m3u8';
 
-    data.setMedia(media);
+    data.setAdapter(adapter);
     data.attach(video);
     await settle();
 
     // An engine rebuild with the same source reruns `load()` with a new instance.
     const engine = new FakeHlsJsEngine();
 
-    media.engine = engine;
-    media.dispatchEvent(new Event('loadstart'));
+    adapter.engine = engine;
+    adapter.dispatchEvent(new Event('loadstart'));
     await settle();
 
     expect(monitor).toHaveBeenCalledTimes(1);
@@ -220,8 +234,8 @@ describe('MuxDataExtension', () => {
 
     const rebuilt = new FakeHlsJsEngine();
 
-    media.engine = rebuilt;
-    media.dispatchEvent(new Event('loadstart'));
+    adapter.engine = rebuilt;
+    adapter.dispatchEvent(new Event('loadstart'));
     await settle();
 
     expect(removeHLSJS).toHaveBeenCalledTimes(1);
@@ -232,32 +246,32 @@ describe('MuxDataExtension', () => {
     const { sdk, monitor } = createSdk();
     const data = new MuxDataExtension({ MuxDataSdk: sdk, envKey: 'key' });
     const video = document.createElement('video');
-    const media = new FakeMedia();
+    const adapter = new FakeEngineAdapter();
 
-    media.engine = new FakeDashJsEngine();
-    media.src = 'https://example.com/manifest.mpd';
+    adapter.engine = new FakeDashJsEngine();
+    adapter.src = 'https://example.com/manifest.mpd';
 
-    data.setMedia(media);
+    data.setAdapter(adapter);
     data.attach(video);
 
     await settle();
 
     const [, options] = monitor.mock.lastCall!;
 
-    expect(options.dashjs).toBe(media.engine);
+    expect(options.dashjs).toBe(adapter.engine);
     expect(options).not.toHaveProperty('hlsjs');
     expect(options).not.toHaveProperty('Hls');
   });
 
-  it('monitors media with no engine from the media element alone', async () => {
+  it('monitors an adapter with no engine from the media element alone', async () => {
     const { sdk, monitor } = createSdk();
     const data = new MuxDataExtension({ MuxDataSdk: sdk, envKey: 'key' });
     const video = document.createElement('video');
-    const media = new FakeMedia();
+    const adapter = new FakeAdapter();
 
-    media.src = 'https://example.com/video.mp4';
+    adapter.src = 'https://example.com/video.mp4';
 
-    data.setMedia(media);
+    data.setAdapter(adapter);
     data.attach(video);
 
     await settle();
@@ -273,11 +287,11 @@ describe('MuxDataExtension', () => {
     const { sdk, monitor, emit } = createSdk();
     const data = new MuxDataExtension({ MuxDataSdk: sdk, envKey: 'key' });
     const video = document.createElement('video');
-    const media = new FakeMedia();
+    const adapter = new FakeEngineAdapter();
 
-    media.src = 'https://stream.mux.com/abc123.m3u8';
+    adapter.src = 'https://stream.mux.com/abc123.m3u8';
 
-    data.setMedia(media);
+    data.setAdapter(adapter);
     data.attach(video);
     await settle();
 
@@ -286,8 +300,8 @@ describe('MuxDataExtension', () => {
 
     expect(view_session_id).toBeTruthy();
 
-    media.src = 'https://stream.mux.com/def456.m3u8';
-    media.dispatchEvent(new Event('loadstart'));
+    adapter.src = 'https://stream.mux.com/def456.m3u8';
+    adapter.dispatchEvent(new Event('loadstart'));
     await settle();
 
     expect(emit).toHaveBeenCalledWith('videochange', expect.objectContaining({ view_session_id }));
@@ -298,11 +312,11 @@ describe('MuxDataExtension', () => {
     const metadata = { view_session_id: 'caller-session', video_title: 'Some Title' };
     const data = new MuxDataExtension({ MuxDataSdk: sdk, envKey: 'key', metadata });
     const video = document.createElement('video');
-    const media = new FakeMedia();
+    const adapter = new FakeEngineAdapter();
 
-    media.src = 'https://stream.mux.com/abc123.m3u8';
+    adapter.src = 'https://stream.mux.com/abc123.m3u8';
 
-    data.setMedia(media);
+    data.setAdapter(adapter);
     data.attach(video);
     await settle();
 
@@ -317,11 +331,11 @@ describe('MuxDataExtension', () => {
     const metadata = { video_title: 'Some Title' };
     const data = new MuxDataExtension({ MuxDataSdk: sdk, envKey: 'key', metadata });
     const video = document.createElement('video');
-    const media = new FakeMedia();
+    const adapter = new FakeEngineAdapter();
 
-    media.src = 'https://stream.mux.com/abc123.m3u8';
+    adapter.src = 'https://stream.mux.com/abc123.m3u8';
 
-    data.setMedia(media);
+    data.setAdapter(adapter);
     data.attach(video);
     await settle();
 
@@ -333,11 +347,11 @@ describe('MuxDataExtension', () => {
     const data = new MuxDataExtension({ MuxDataSdk: sdk, envKey: 'key' });
     const first = document.createElement('video');
     const second = document.createElement('video');
-    const media = new FakeMedia();
+    const adapter = new FakeEngineAdapter();
 
-    media.src = 'https://stream.mux.com/abc123.m3u8';
+    adapter.src = 'https://stream.mux.com/abc123.m3u8';
 
-    data.setMedia(media);
+    data.setAdapter(adapter);
     data.attach(first);
     await settle();
 
@@ -350,21 +364,21 @@ describe('MuxDataExtension', () => {
     expect(monitor).toHaveBeenLastCalledWith(second, expect.anything());
   });
 
-  it('follows the media when registered with another host', async () => {
+  it('follows the adapter when registered with another target', async () => {
     const { sdk, monitor, emit } = createSdk();
     const data = new MuxDataExtension({ MuxDataSdk: sdk });
     const video = document.createElement('video');
-    const first = new FakeMedia();
-    const second = new FakeMedia();
+    const first = new FakeEngineAdapter();
+    const second = new FakeEngineAdapter();
 
     first.src = 'https://stream.mux.com/abc123.m3u8';
     second.src = 'https://stream.mux.com/def456.m3u8';
 
-    data.setMedia(first);
+    data.setAdapter(first);
     data.attach(video);
     await settle();
 
-    data.setMedia(second);
+    data.setAdapter(second);
     await settle();
 
     expect(monitor).toHaveBeenCalledTimes(1);
@@ -395,11 +409,11 @@ describe('MuxDataExtension', () => {
     const { sdk, monitor, emit } = createSdk();
     const data = new MuxDataExtension({ MuxDataSdk: sdk, envKey: 'key' });
     const video = document.createElement('video');
-    const media = new FakeMedia();
+    const adapter = new FakeEngineAdapter();
 
-    media.src = 'https://stream.mux.com/abc123.m3u8';
+    adapter.src = 'https://stream.mux.com/abc123.m3u8';
 
-    data.setMedia(media);
+    data.setAdapter(adapter);
     data.attach(video);
 
     await settle();
@@ -407,8 +421,8 @@ describe('MuxDataExtension', () => {
     expect(monitor).toHaveBeenCalledTimes(1);
 
     data.destroy();
-    media.src = 'https://stream.mux.com/def456.m3u8';
-    media.dispatchEvent(new Event('loadstart'));
+    adapter.src = 'https://stream.mux.com/def456.m3u8';
+    adapter.dispatchEvent(new Event('loadstart'));
 
     await settle();
 

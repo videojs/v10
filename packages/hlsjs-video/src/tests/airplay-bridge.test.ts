@@ -2,7 +2,7 @@ import type { Constructor } from '@videojs/utils/types';
 import Hls from 'hls.js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
-import { HlsJsMediaAirPlayMixin } from '../airplay-bridge';
+import { HlsJsAirPlayMixin } from '../airplay-bridge';
 import type { HlsEngineHost } from '../types';
 
 function createEngine(url = ''): Hls {
@@ -42,7 +42,7 @@ class FakeHost extends EventTarget {
     this.target = target;
   }
 
-  // Mirrors `HTMLMediaElementHost`: media props forward to the attached target
+  // Mirrors `HTMLMediaAdapter`: media props forward to the attached target
   // and are dropped while nothing is attached.
   get disableRemotePlayback(): boolean {
     return this.target?.disableRemotePlayback ?? false;
@@ -58,9 +58,7 @@ function simulateHlsJsMmsAttach(video: HTMLVideoElement) {
   video.disableRemotePlayback = true;
 }
 
-const AirPlayHost = HlsJsMediaAirPlayMixin(
-  FakeHost as unknown as Constructor<HlsEngineHost>
-) as unknown as typeof FakeHost;
+const AirPlayHost = HlsJsAirPlayMixin(FakeHost as unknown as Constructor<HlsEngineHost>) as unknown as typeof FakeHost;
 
 function createVideo(initialWireless = false): HTMLVideoElement & { webkitCurrentPlaybackTargetIsWireless: boolean } {
   const video = document.createElement('video') as HTMLVideoElement & {
@@ -78,7 +76,7 @@ function createVideo(initialWireless = false): HTMLVideoElement & { webkitCurren
   return video;
 }
 
-describe('HlsJsMediaAirPlayMixin', () => {
+describe('HlsJsAirPlayMixin', () => {
   beforeEach(() => {
     // Stub the WebKit AirPlay capability check (jsdom lacks it).
     (globalThis as any).WebKitPlaybackTargetAvailabilityEvent = class {};

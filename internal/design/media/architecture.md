@@ -17,7 +17,7 @@ Treating every media target as a complete `HTMLMediaElement` coupled player stat
 - Keep media contracts structural and DOM-free. Minimal event, target, range, and track shapes allow browser objects to satisfy them without making browser types the abstraction boundary.
 - Require a feature to narrow to the capability it needs. The base player target cannot imply support for optional media behavior.
 - Put native-element forwarding in DOM host classes, where platform behavior belongs, rather than in the shared contract.
-- Expose engine ownership through `MediaEngineHost`; keep engine-specific state off the common media surface.
+- Expose engine ownership through `EngineAdapter`; keep engine-specific state off the common media surface.
 - Make engine destruction asynchronous so source or configuration replacement can wait for network and MediaSource cleanup.
 - Keep HTML custom elements as adapters over media hosts rather than a second media hierarchy.
 

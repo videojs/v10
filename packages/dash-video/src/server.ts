@@ -1,22 +1,20 @@
-import { HTMLVideoElementHost } from '@videojs/media/dom';
+import { HTMLVideoAdapter } from '@videojs/media/dom';
 import { MediaTracksMixin } from '@videojs/media/media-tracks';
 
-import type { DashMediaProps, DashSource } from './media';
+import type { DashAdapterProps, DashSource } from './adapter';
 
-export type { DashEngineConfig, DashMediaProps, DashSource } from './media';
-
-export const dashMediaDefaultProps: DashMediaProps = {
-  src: '',
-  source: null,
-};
-
-const DashMediaHost = MediaTracksMixin(HTMLVideoElementHost);
+export type { DashEngineConfig, DashAdapterProps, DashSource } from './adapter';
 
 /** An inert DASH host used when the package is evaluated outside a browser. */
-export class DashMedia extends DashMediaHost implements DashMediaProps {
+export class DashAdapter extends MediaTracksMixin(HTMLVideoAdapter) implements DashAdapterProps {
+  static readonly defaultProps: DashAdapterProps = {
+    src: '',
+    source: null,
+  };
+
   readonly engine = null;
-  #src = dashMediaDefaultProps.src;
-  #source: DashSource | null = dashMediaDefaultProps.source;
+  #src = DashAdapter.defaultProps.src;
+  #source: DashSource | null = DashAdapter.defaultProps.source;
 
   get src() {
     return this.#src;

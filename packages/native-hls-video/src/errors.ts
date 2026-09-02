@@ -1,11 +1,11 @@
 import { MediaError } from '@videojs/media';
-import type { HTMLVideoElementHost } from '@videojs/media/dom';
+import type { HTMLVideoAdapter } from '@videojs/media/dom';
 import type { Constructor } from '@videojs/utils/types';
 
-export type NativeMediaHost = HTMLVideoElementHost;
+export type NativeHlsHost = HTMLVideoAdapter;
 
-export function NativeHlsMediaErrorsMixin<Base extends Constructor<NativeMediaHost>>(BaseClass: Base) {
-  class NativeHlsMediaErrors extends (BaseClass as Constructor<NativeMediaHost>) {
+export function NativeHlsErrorsMixin<Base extends Constructor<NativeHlsHost>>(BaseClass: Base) {
+  class NativeHlsErrors extends (BaseClass as Constructor<NativeHlsHost>) {
     #disconnect: AbortController | null = null;
     #error: MediaError | null = null;
 
@@ -81,6 +81,6 @@ export function NativeHlsMediaErrorsMixin<Base extends Constructor<NativeMediaHo
     }
   }
 
-  return NativeHlsMediaErrors as unknown as Base &
+  return NativeHlsErrors as unknown as Base &
     Constructor<{ readonly error: MediaError | null; setError(error: MediaError): void }>;
 }

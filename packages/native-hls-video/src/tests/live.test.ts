@@ -1,16 +1,16 @@
-import { HTMLVideoElementHost } from '@videojs/media/dom';
+import { HTMLVideoAdapter } from '@videojs/media/dom';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
-import { NativeHlsMediaLiveMixin } from '../live';
+import { NativeHlsLiveMixin } from '../live';
 
-class FakeHost extends HTMLVideoElementHost {
+class FakeHost extends HTMLVideoAdapter {
   // Re-expose the now-protected `target` for test assertions.
   override get target(): HTMLVideoElement | null {
     return super.target as HTMLVideoElement | null;
   }
 }
 
-const NativeHlsMediaLive = NativeHlsMediaLiveMixin(FakeHost);
+const NativeHlsLive = NativeHlsLiveMixin(FakeHost);
 
 function createVideoWithSrc(src: string, seekableEnd: number | null = null): HTMLVideoElement {
   const video = document.createElement('video');
@@ -61,10 +61,10 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe('NativeHlsMediaLiveMixin', () => {
+describe('NativeHlsLiveMixin', () => {
   describe('defaults', () => {
     it('returns `NaN` for both properties before a playlist is parsed', () => {
-      const host = new NativeHlsMediaLive();
+      const host = new NativeHlsLive();
 
       expect(host.liveEdgeStart).toBeNaN();
       expect(host.targetLiveWindow).toBeNaN();
@@ -84,7 +84,7 @@ describe('NativeHlsMediaLiveMixin', () => {
     it('derives `targetLiveWindow=0` and offset from `#EXT-X-TARGETDURATION`', async () => {
       mockFetch({ 'https://example.com/live.m3u8': playlist });
 
-      const host = new NativeHlsMediaLive();
+      const host = new NativeHlsLive();
       const video = createVideoWithSrc('https://example.com/live.m3u8', 60);
 
       const handler = vi.fn();
@@ -117,7 +117,7 @@ describe('NativeHlsMediaLiveMixin', () => {
     it('derives `targetLiveWindow=Infinity`', async () => {
       mockFetch({ 'https://example.com/dvr.m3u8': playlist });
 
-      const host = new NativeHlsMediaLive();
+      const host = new NativeHlsLive();
       const video = createVideoWithSrc('https://example.com/dvr.m3u8', 60);
 
       host.attach(video);
@@ -143,7 +143,7 @@ describe('NativeHlsMediaLiveMixin', () => {
     it('leaves `targetLiveWindow=NaN` for on-demand', async () => {
       mockFetch({ 'https://example.com/vod.m3u8': playlist });
 
-      const host = new NativeHlsMediaLive();
+      const host = new NativeHlsLive();
       const video = createVideoWithSrc('https://example.com/vod.m3u8', 60);
 
       host.attach(video);
@@ -168,7 +168,7 @@ describe('NativeHlsMediaLiveMixin', () => {
     it('uses `PART-TARGET * 2` for the offset', async () => {
       mockFetch({ 'https://example.com/ll.m3u8': playlist });
 
-      const host = new NativeHlsMediaLive();
+      const host = new NativeHlsLive();
       const video = createVideoWithSrc('https://example.com/ll.m3u8', 60);
 
       host.attach(video);
@@ -191,7 +191,7 @@ describe('NativeHlsMediaLiveMixin', () => {
         'https://example.com/media.m3u8': media,
       });
 
-      const host = new NativeHlsMediaLive();
+      const host = new NativeHlsLive();
       const video = createVideoWithSrc('https://example.com/master.m3u8', 60);
 
       host.attach(video);
@@ -209,7 +209,7 @@ describe('NativeHlsMediaLiveMixin', () => {
 
       vi.stubGlobal('fetch', fetchSpy);
 
-      const host = new NativeHlsMediaLive();
+      const host = new NativeHlsLive();
       const video = createVideoWithSrc('https://example.com/video.mp4', 60);
 
       host.attach(video);
@@ -226,7 +226,7 @@ describe('NativeHlsMediaLiveMixin', () => {
     it('leaves values at `NaN` on fetch failure', async () => {
       mockFetch({ 'https://example.com/missing.m3u8': { status: 404 } });
 
-      const host = new NativeHlsMediaLive();
+      const host = new NativeHlsLive();
       const video = createVideoWithSrc('https://example.com/missing.m3u8', 60);
 
       host.attach(video);
@@ -242,7 +242,7 @@ describe('NativeHlsMediaLiveMixin', () => {
 
       mockFetch({ 'https://example.com/live.m3u8': playlist });
 
-      const host = new NativeHlsMediaLive();
+      const host = new NativeHlsLive();
       const video = createVideoWithSrc('https://example.com/live.m3u8', 60);
 
       host.attach(video);
@@ -262,7 +262,7 @@ describe('NativeHlsMediaLiveMixin', () => {
 
       mockFetch({ 'https://example.com/live.m3u8': playlist });
 
-      const host = new NativeHlsMediaLive();
+      const host = new NativeHlsLive();
       const video = createVideoWithSrc('https://example.com/live.m3u8', 60);
 
       host.attach(video);

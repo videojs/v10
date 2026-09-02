@@ -2,7 +2,7 @@ import { type DrmSystemsConfig, MediaError } from '@videojs/media';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { NativeHlsDrmErrors } from '../fairplay';
-import { NativeHlsMedia } from '../index';
+import { NativeHlsAdapter } from '../index';
 
 const LICENSE_URL = 'https://license.test/fairplay';
 const CERTIFICATE_URL = 'https://license.test/appcert';
@@ -157,7 +157,7 @@ function setup(
 
   document.body.append(video);
 
-  const media = new NativeHlsMedia();
+  const media = new NativeHlsAdapter();
 
   media.attach(video);
   media.source = {
@@ -193,7 +193,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe('NativeHlsMediaDrmMixin', () => {
+describe('NativeHlsDrmMixin', () => {
   it('carries the DRM configuration across an `src` assignment', () => {
     const { media } = setup();
 
@@ -212,7 +212,7 @@ describe('NativeHlsMediaDrmMixin', () => {
 
     document.body.append(video);
 
-    const media = new NativeHlsMedia();
+    const media = new NativeHlsAdapter();
 
     media.attach(video);
     video.setMediaKeys = vi.fn(async () => {});

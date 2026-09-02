@@ -2,13 +2,12 @@
  * The Mux Media over the SPF HLS engine — Mux identity in, playback out.
  *
  * The hls.js-backed counterpart lives at `@videojs/mux-video`. That is the PRD's three-import-paths design: the import
- * path picks the engine, and nothing else about the surface changes. The class is named for its flavor rather than
- * sharing that one's `MuxMedia`, so it stays symmetrical with `@videojs/mux-audio/spf` — which needs a distinct name
- * whatever this one is called.
+ * path picks the engine, and nothing else about the surface changes, so both flavors export a `MuxVideoAdapter`.
  *
- * `MuxMediaMixin` and the `MuxMedia*` types are the Mux identity both flavors share, so they keep the unqualified name.
+ * `MuxMixin` and `MuxAdapterProps` are the Mux identity `@videojs/mux-audio/spf` shares with this entry, so they keep
+ * the unqualified name.
  */
 export type { MuxContentData, MuxSourceBase } from '@videojs/mux';
-export type { MuxMediaAPI, MuxMediaProps } from './adapter';
-export { MuxMediaMixin, muxMediaDefaultProps } from './adapter';
-export { MuxVideoMedia } from './media';
+export type { MuxAdapterAPI, MuxAdapterProps } from './mixin';
+export { MuxMixin } from './mixin';
+export { MuxVideoAdapter } from './adapter';

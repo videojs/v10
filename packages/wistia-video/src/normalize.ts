@@ -5,7 +5,7 @@ import { parseWistiaMediaId, parseWistiaStartTime, type WistiaSource } from './s
 
 /**
  * The members of Wistia's `<wistia-player>` that {@link normalizeWistiaPlayer} reads, described structurally and used
- * as its argument type: `WistiaMedia` and React both pass Wistia's own element, so a member Wistia renames or drops
+ * as its argument type: `WistiaAdapter` and React both pass Wistia's own element, so a member Wistia renames or drops
  * fails to compile rather than quietly disabling a store feature at runtime.
  */
 export interface WistiaPlayerMembers {
@@ -57,7 +57,7 @@ export const WISTIA_EVENT_ALIASES: Readonly<Record<string, readonly string[]>> =
  * Wistia names differently or not at all, and the events it spells its own way.
  *
  * Applied to the element rather than wrapped around it, so the player a consumer holds and the media the store drives
- * are one object — `WistiaMedia` calls this on itself, React on the element it renders. Idempotent.
+ * are one object — `WistiaAdapter` calls this on itself, React on the element it renders. Idempotent.
  *
  * `controls` is deliberately not among the members: Wistia has one already and it means the player's control instances,
  * which its internals read. Turning chrome on and off is `wistiaControlProps`.

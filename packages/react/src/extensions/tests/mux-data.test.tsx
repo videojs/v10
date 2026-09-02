@@ -2,14 +2,14 @@ import { render } from '@testing-library/react';
 import type { Media } from '@videojs/media';
 import { addMediaExtension, getMediaExtensions } from '@videojs/media/dom';
 import { MuxDataExtension } from '@videojs/mux-data';
-import { MuxMedia } from '@videojs/mux-video';
+import { MuxVideoAdapter } from '@videojs/mux-video';
 import { describe, expect, it, vi } from 'vite-plus/test';
 
 import { createPlayerWrapper } from '../../testing/mocks';
 import { MuxData } from '../mux-data';
 
 function setup() {
-  const media = new MuxMedia();
+  const media = new MuxVideoAdapter();
   const { value, Wrapper } = createPlayerWrapper();
 
   value.media = media as unknown as Media;
@@ -66,7 +66,7 @@ describe('MuxData', () => {
     expect(getMediaExtensions(media).get(MuxDataExtension)!.disableCookies).toBe(false);
   });
 
-  it('keeps the component alive when the media host is destroyed while mounted', () => {
+  it('keeps the component alive when the media adapter is destroyed while mounted', () => {
     const { media, Wrapper } = setup();
     const destroy = vi.spyOn(MuxDataExtension.prototype, 'destroy');
 
@@ -80,7 +80,7 @@ describe('MuxData', () => {
     expect(destroy).not.toHaveBeenCalled();
     expect(getMediaExtensions(media).get(MuxDataExtension)).toBeUndefined();
 
-    const next = new MuxMedia();
+    const next = new MuxVideoAdapter();
 
     addMediaExtension(next, component);
     expect(getMediaExtensions(next).get(MuxDataExtension)).toBe(component);

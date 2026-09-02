@@ -5,8 +5,8 @@ import Hls from 'hls.js';
 
 import type { HlsEngineHost, HlsPlaylistTypes } from './types';
 
-export function HlsJsMediaLiveMixin<Base extends Constructor<HlsEngineHost>>(BaseClass: Base) {
-  class HlsJsMediaLive extends (BaseClass as Constructor<HlsEngineHost>) {
+export function HlsJsLiveMixin<Base extends Constructor<HlsEngineHost>>(BaseClass: Base) {
+  class HlsJsLive extends (BaseClass as Constructor<HlsEngineHost>) {
     #targetLiveWindow = Number.NaN;
     #liveEdgeStartOffset: number | undefined;
     #seekToLiveAbort: AbortController | null = null;
@@ -135,7 +135,7 @@ export function HlsJsMediaLiveMixin<Base extends Constructor<HlsEngineHost>>(Bas
     }
   }
 
-  return HlsJsMediaLive as unknown as Base &
+  return HlsJsLive as unknown as Base &
     Constructor<{ readonly liveEdgeStart: number; readonly targetLiveWindow: number }>;
 }
 

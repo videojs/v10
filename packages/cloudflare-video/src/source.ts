@@ -1,6 +1,6 @@
 import { serializeEmbedParams } from '@videojs/media/dom';
 
-import { type CloudflareMediaProps, cloudflareMediaDefaultProps } from './props';
+import type { CloudflareAdapterProps } from './props';
 
 /**
  * Cloudflare Stream engine options, spelled exactly as Cloudflare spells them
@@ -76,7 +76,8 @@ export function parseCloudflareSource(src: string): ParsedCloudflareSource | nul
 }
 
 /** Build the iframe `src` URL for an initial Cloudflare Stream embed from the given props. */
-export function buildCloudflareIframeSrc(src: string, props: Partial<CloudflareMediaProps> = {}) {
+// Literal fallbacks mirror `CloudflareAdapter.defaultProps`; the class imports this module, so it cannot be imported back.
+export function buildCloudflareIframeSrc(src: string, props: Partial<CloudflareAdapterProps> = {}) {
   const parsed = parseCloudflareSource(src);
   if (!parsed) return '';
 
@@ -98,7 +99,7 @@ export function buildCloudflareIframeSrc(src: string, props: Partial<CloudflareM
     // `||` rather than `??`: `preload` is empty for a bare `preload` attribute,
     // and empty serializes to `1`, which is not one of the values Cloudflare
     // accepts.
-    preload: props.preload || cloudflareMediaDefaultProps.preload,
+    preload: props.preload || 'metadata',
     // Cloudflare reads `poster` as an image URL, so an unset one has to be absent
     // rather than empty: empty serializes to `1`, and the embed rejects that with
     // "poster value should be a valid encoded URL" instead of painting its own

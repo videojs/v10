@@ -1,11 +1,11 @@
 import { MediaError } from '@videojs/media';
-import { HTMLVideoElementHost } from '@videojs/media/dom';
+import { HTMLVideoAdapter } from '@videojs/media/dom';
 import Hls from 'hls.js';
 import { describe, expect, it, vi } from 'vite-plus/test';
 
-import { HlsJsMediaErrorsMixin } from '../errors';
+import { HlsJsErrorsMixin } from '../errors';
 
-class FakeHost extends HTMLVideoElementHost {
+class FakeHost extends HTMLVideoAdapter {
   engine: Hls | null;
 
   constructor(engine: Hls | null = null) {
@@ -14,7 +14,7 @@ class FakeHost extends HTMLVideoElementHost {
   }
 }
 
-const HlsJsMediaErrors = HlsJsMediaErrorsMixin(FakeHost);
+const HlsJsErrors = HlsJsErrorsMixin(FakeHost);
 
 function createEngine(): Hls {
   const listeners = new Map<string, Set<(...args: any[]) => void>>();
@@ -36,7 +36,7 @@ function createEngine(): Hls {
 
 function setup() {
   const engine = createEngine();
-  const host = new HlsJsMediaErrors(engine);
+  const host = new HlsJsErrors(engine);
   const video = document.createElement('video');
 
   host.attach(video);
@@ -44,7 +44,7 @@ function setup() {
   return { engine, host, video };
 }
 
-describe('HlsJsMediaErrorsMixin', () => {
+describe('HlsJsErrorsMixin', () => {
   it('dispatches an error event on the host for fatal errors', () => {
     const { engine, host } = setup();
 

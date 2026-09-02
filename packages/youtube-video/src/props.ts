@@ -2,7 +2,7 @@ import type { MediaPreloadType } from '@videojs/media';
 
 import type { YouTubeSource } from './source';
 
-export interface YouTubeMediaProps {
+export interface YouTubeAdapterProps {
   src: string;
   autoplay: boolean;
   defaultMuted: boolean;
@@ -14,16 +14,3 @@ export interface YouTubeMediaProps {
   poster: string;
   source: YouTubeSource | null;
 }
-
-export const youtubeMediaDefaultProps: YouTubeMediaProps = {
-  src: '',
-  autoplay: false,
-  defaultMuted: false,
-  muted: false,
-  loop: false,
-  controls: false,
-  playsInline: true,
-  preload: 'metadata',
-  poster: '',
-  source: null,
-};

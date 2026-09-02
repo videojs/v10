@@ -1,3 +1,5 @@
+import { isEngineAdapter } from '@videojs/media';
+import type { AnyHTMLMediaAdapter } from '@videojs/media/dom';
 import Mux from 'mux-embed';
 
 import { getPlayerVersion } from './env';
@@ -22,21 +24,15 @@ const MUX_VIDEO_DOMAIN = 'mux.com';
 type LiveMuxMonitor = Extract<NonNullable<HTMLVideoElement['mux']>, { deleted: false }>;
 
 /**
- * What Mux Data needs from the media it monitors: the source being played, a `loadstart` hinting that the source or
- * engine may have changed, and — for engine-backed playback — the engine itself. Redundant hints are free — Mux Data
- * reacts only to what actually changed — so medias can fire `loadstart` as often as their flavor requires.
- *
- * `engine` is deliberately untyped. Every engine-backed media host exposes one, but they are unrelated types (an hls.js
- * instance, a dash.js player, an SPF composition), and which of them Mux Data can hook is decided by
- * {@link toMuxDataEngineOptions}, not by this contract. Media with no JS engine simply omit it.
+ * The JS engine behind `adapter`, if it fronts one. Engines are unrelated types (an hls.js instance, a dash.js player,
+ * an SPF composition); which of them Mux Data can hook is decided by {@link toMuxDataEngineOptions}, not here.
  */
-export interface MuxDataMedia extends EventTarget {
-  readonly engine?: unknown;
-  readonly src: string;
+function engineOf(adapter: AnyHTMLMediaAdapter): unknown {
+  return isEngineAdapter(adapter) ? adapter.engine : null;
 }
 
 export class MuxDataExtension implements MuxDataExtensionProps {
-  static defaultProps: MuxDataExtensionProps = {
+  static readonly defaultProps: MuxDataExtensionProps = {
     MuxDataSdk: Mux,
     beaconCollectionDomain: undefined,
     debug: false,
@@ -59,11 +55,11 @@ export class MuxDataExtension implements MuxDataExtensionProps {
   #playerSoftwareName: string | undefined = MuxDataExtension.defaultProps.playerSoftwareName;
   #playerSoftwareVersion: string | undefined = MuxDataExtension.defaultProps.playerSoftwareVersion;
   #playerInitTime: number | undefined = this.#generatePlayerInitTime();
-  #media: MuxDataMedia | null = null;
+  #adapter: AnyHTMLMediaAdapter | null = null;
   #target: HTMLVideoElement | null = null;
   // What the live monitor currently reflects, so a sync can react only to what changed.
   #monitoredSrc: string | null = null;
-  #monitoredEngine: MuxDataMedia['engine'] = null;
+  #monitoredEngine: unknown = null;
   #engineHook: 'hlsjs' | 'dashjs' | null = null;
   // Generated once per instance, so the views of one player group into one session.
   #viewSessionId: string | undefined;
@@ -72,12 +68,12 @@ export class MuxDataExtension implements MuxDataExtensionProps {
     Object.assign(this, props);
   }
 
-  setMedia(media: MuxDataMedia) {
-    if (this.#media === media) return;
+  setAdapter(adapter: AnyHTMLMediaAdapter) {
+    if (this.#adapter === adapter) return;
 
-    this.#media?.removeEventListener('loadstart', this.#syncMonitor);
-    this.#media = media;
-    this.#media.addEventListener('loadstart', this.#syncMonitor);
+    this.#adapter?.removeEventListener('loadstart', this.#syncMonitor);
+    this.#adapter = adapter;
+    this.#adapter.addEventListener('loadstart', this.#syncMonitor);
 
     this.#syncMonitor();
   }
@@ -97,8 +93,8 @@ export class MuxDataExtension implements MuxDataExtensionProps {
 
   destroy() {
     this.detach();
-    this.#media?.removeEventListener('loadstart', this.#syncMonitor);
-    this.#media = null;
+    this.#adapter?.removeEventListener('loadstart', this.#syncMonitor);
+    this.#adapter = null;
   }
 
   get MuxDataSdk() {
@@ -244,19 +240,19 @@ export class MuxDataExtension implements MuxDataExtensionProps {
     this.#pendingSync = null;
 
     const target = this.#target;
-    const media = this.#media;
-    if (!this.MuxDataSdk || !target || !media) return;
+    const adapter = this.#adapter;
+    if (!this.MuxDataSdk || !target || !adapter) return;
 
     const mux = target.mux;
 
     if (!mux || mux.deleted) {
-      this.#monitor(target, media);
+      this.#monitor(target, adapter);
       return;
     }
 
-    this.#syncEngineHook(mux, media.engine);
+    this.#syncEngineHook(mux, engineOf(adapter));
 
-    const src = media.src;
+    const src = adapter.src;
     if (src === this.#monitoredSrc) return;
 
     // A cleared source isn't a new video (the element's own events wind the view down), and it isn't tracked: the
@@ -269,15 +265,15 @@ export class MuxDataExtension implements MuxDataExtensionProps {
 
     // A monitor started before the first source has its pending view: name the video rather than change it.
     if (isFirstSource) {
-      mux.updateData(this.#videoData(media));
+      mux.updateData(this.#videoData(adapter));
       return;
     }
 
-    mux.emit('videochange', this.#videoData(media));
+    mux.emit('videochange', this.#videoData(adapter));
   }
 
   /** Keep engine telemetry hooked to the engine actually playing, without restarting the monitor. */
-  #syncEngineHook(mux: LiveMuxMonitor, engine: MuxDataMedia['engine']) {
+  #syncEngineHook(mux: LiveMuxMonitor, engine: unknown) {
     if (engine === this.#monitoredEngine) return;
 
     if (this.#engineHook === 'hlsjs') mux.removeHLSJS();
@@ -294,12 +290,12 @@ export class MuxDataExtension implements MuxDataExtensionProps {
   }
 
   /** Record which engine the monitor reflects and which telemetry hook carries it. */
-  #trackEngine(engine: MuxDataMedia['engine'], options: MuxDataEngineOptions) {
+  #trackEngine(engine: unknown, options: MuxDataEngineOptions) {
     this.#monitoredEngine = engine ?? null;
     this.#engineHook = options.hlsjs ? 'hlsjs' : options.dashjs ? 'dashjs' : null;
   }
 
-  #monitor(target: HTMLVideoElement, media: MuxDataMedia) {
+  #monitor(target: HTMLVideoElement, adapter: AnyHTMLMediaAdapter) {
     const {
       debug,
       beaconCollectionDomain,
@@ -310,10 +306,10 @@ export class MuxDataExtension implements MuxDataExtensionProps {
       playerInitTime: player_init_time,
     } = this;
 
-    const engineOptions = toMuxDataEngineOptions(media.engine);
+    const engineOptions = toMuxDataEngineOptions(engineOf(adapter));
 
-    this.#monitoredSrc = media.src;
-    this.#trackEngine(media.engine, engineOptions);
+    this.#monitoredSrc = adapter.src;
+    this.#trackEngine(engineOf(adapter), engineOptions);
 
     this.MuxDataSdk?.monitor(target, {
       debug,
@@ -328,7 +324,7 @@ export class MuxDataExtension implements MuxDataExtensionProps {
         ...(player_software_name ? { player_software: player_software_name } : {}),
         ...(player_software_version ? { player_software_version } : {}),
         ...(player_init_time ? { player_init_time } : {}),
-        ...this.#videoData(media),
+        ...this.#videoData(adapter),
       },
     });
   }
@@ -337,10 +333,10 @@ export class MuxDataExtension implements MuxDataExtensionProps {
    * The video-scoped beacon data: the session id, the derived `video_id`, and the caller's metadata, which may override
    * both. Built fresh per use — the caller's `metadata` object is never mutated.
    */
-  #videoData(media: MuxDataMedia) {
+  #videoData(adapter: AnyHTMLMediaAdapter) {
     const metadata = this.metadata ?? {};
     const view_session_id = metadata.view_session_id ?? (this.#viewSessionId ??= this.MuxDataSdk?.utils.generateUUID());
-    const video_id = toVideoId({ metadata, src: media.src });
+    const video_id = toVideoId({ metadata, src: adapter.src });
 
     const derived: NonNullable<MuxDataOptions['data']> = {};
 

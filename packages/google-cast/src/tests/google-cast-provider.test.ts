@@ -1,4 +1,4 @@
-import { addMediaExtension, type HTMLMediaTargetLike, HTMLVideoElementHost } from '@videojs/media/dom';
+import { addMediaExtension, type HTMLMediaTargetLike, HTMLVideoAdapter } from '@videojs/media/dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { GoogleCastProvider } from '../google-cast-provider';
@@ -103,10 +103,10 @@ describe('GoogleCastExtension', () => {
   it('loads the cast framework when the host remote is read while attached', () => {
     vi.stubGlobal('chrome', {});
 
-    const host = new HTMLVideoElementHost();
+    const host = new HTMLVideoAdapter();
     const { target } = createTarget();
 
-    host.attach(target as Parameters<HTMLVideoElementHost['attach']>[0]);
+    host.attach(target as Parameters<HTMLVideoAdapter['attach']>[0]);
 
     addMediaExtension(host, new GoogleCastExtension());
     expect(ensureCastFramework).not.toHaveBeenCalled();
@@ -121,7 +121,7 @@ describe('GoogleCastExtension', () => {
   it('does not load the cast framework when the host remote is read before attach', () => {
     vi.stubGlobal('chrome', {});
 
-    const host = new HTMLVideoElementHost();
+    const host = new HTMLVideoAdapter();
 
     addMediaExtension(host, new GoogleCastExtension());
 

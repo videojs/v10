@@ -1,14 +1,15 @@
-import { MuxMedia } from '@videojs/mux-video';
+import { MuxVideoAdapter } from '@videojs/mux-video';
 import { describe, expect, it } from 'vite-plus/test';
 
-import { MuxAudioMedia } from '..';
+import { MuxAudioAdapter } from '..';
 
-describe('MuxAudioMedia', () => {
-  it('is the hls.js-backed Mux Media, playable through an <audio> element', () => {
-    const media = new MuxAudioMedia();
+describe('MuxAudioAdapter', () => {
+  it('is the hls.js-backed Mux adapter, playable through an <audio> element', () => {
+    const adapter = new MuxAudioAdapter();
 
-    expect(media).toBeInstanceOf(MuxMedia);
-    expect(media.src).toBe('');
-    expect(media.source).toBeNull();
+    expect(adapter).toBeInstanceOf(MuxVideoAdapter);
+    expect(MuxAudioAdapter.defaultProps).toBe(MuxVideoAdapter.defaultProps);
+    expect(adapter.src).toBe('');
+    expect(adapter.source).toBeNull();
   });
 });
