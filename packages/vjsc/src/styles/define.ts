@@ -1,5 +1,6 @@
 import { kebabCase } from '@videojs/utils/string';
 
+import type { StyleVariantName } from './index';
 import { isStyleRule, visitStyleRules } from './tree';
 
 const styleDefinition = Symbol.for('vjsc/styles/definition');
@@ -17,7 +18,7 @@ export interface StyleRule {
   /** Tailwind utilities shared by every configured variant. */
   readonly utilities: StyleValue;
   /** Utilities appended when a source transform selects a matching variant. */
-  readonly variants?: Readonly<Record<string, StyleValue>> | undefined;
+  readonly variants?: Readonly<Partial<Record<StyleVariantName, StyleValue>>> | undefined;
 }
 
 export type StyleTree = {
