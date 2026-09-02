@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import { resolve } from 'node:path';
 
 import tailwindcss from '@tailwindcss/vite';
@@ -10,6 +11,15 @@ import { vjscPlugin } from '../../vjsc/src/vite/index.ts';
 import { resolveSkinComponents, resolveSkinStyles } from '../build/transform.ts';
 
 const packageDir = resolve(import.meta.dirname, '..');
+
+/** Branch and commit for the copied preview report; falls back when the checkout has no git metadata. */
+function describeGit(...args: string[]): string {
+  try {
+    return execFileSync('git', args, { cwd: packageDir, encoding: 'utf8' }).trim();
+  } catch {
+    return 'unknown';
+  }
+}
 const reactSourceDir = normalizePath(resolve(packageDir, '../react/src'));
 const htmlDefineDir = normalizePath(resolve(packageDir, '../html/src/define'));
 const htmlIconDir = normalizePath(resolve(packageDir, '../html/src/icons'));
@@ -19,6 +29,8 @@ export default defineConfig({
   root: import.meta.dirname,
   define: {
     __DEV__: 'true',
+    __PREVIEW_BRANCH__: JSON.stringify(describeGit('rev-parse', '--abbrev-ref', 'HEAD')),
+    __PREVIEW_COMMIT__: JSON.stringify(describeGit('rev-parse', '--short', 'HEAD')),
   },
   plugins: [
     iconElementSourcePlugin(),

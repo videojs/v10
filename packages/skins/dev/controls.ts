@@ -1,5 +1,6 @@
 import { SOURCES } from '../../../apps/sandbox/app/shared/sources';
 import { errorSource, mediaIds, previewWidth, type PreviewOptions } from './options';
+import { buildReport, createPreferenceBadges, formatRem } from './report';
 
 export interface PreviewControls {
   readonly options: HTMLFormElement;
@@ -54,7 +55,8 @@ function createOptions(preview: PreviewOptions): HTMLFormElement {
       ['single', 'Single track'],
       ['multiple', 'Multiple tracks'],
     ]),
-    createCopyButton(preview)
+    createReportControls(preview),
+    createPreferenceBadges()
   );
   form.addEventListener('change', (event) => {
     if (!(event.target instanceof HTMLSelectElement)) return;
@@ -126,39 +128,40 @@ function createWidthControl(initialWidth: number, setPlayerWidth: (width: number
   return section;
 }
 
-function createCopyButton(preview: PreviewOptions): HTMLButtonElement {
+/**
+ * Copies a markdown report for bug reports and shows it inline so it can be read or selected when the clipboard is
+ * unavailable.
+ */
+function createReportControls(preview: PreviewOptions): DocumentFragment {
+  const fragment = document.createDocumentFragment();
   const button = document.createElement('button');
+  const output = document.createElement('pre');
 
   button.className = 'preview-copy';
   button.type = 'button';
-  button.textContent = 'Copy details';
+  button.textContent = 'Copy report';
+  output.className = 'preview-report';
+  output.hidden = true;
   button.addEventListener('click', async () => {
-    const width = getPlayerWidth();
-    const details = [
-      'Video.js skins preview',
-      `URL: ${location.href}`,
-      `framework=${preview.framework}`,
-      `skin=${preview.skin}`,
-      `style=${preview.styleMode}`,
-      `scheme=${preview.colorScheme}`,
-      `media=${preview.mediaId} (${preview.media.label})`,
-      `captions=${preview.captionsMode}`,
-      `width=${width}px (${formatRem(width)})`,
-    ].join('\n');
+    const report = buildReport(preview, getPlayerWidth());
+
+    output.textContent = report;
+    output.hidden = false;
 
     try {
-      await navigator.clipboard.writeText(details);
+      await navigator.clipboard.writeText(report);
       button.textContent = 'Copied';
     } catch {
-      button.textContent = 'Copy failed';
+      button.textContent = 'Select the report below';
     }
 
     setTimeout(() => {
-      button.textContent = 'Copy details';
+      button.textContent = 'Copy report';
     }, 3000);
   });
+  fragment.append(button, output);
 
-  return button;
+  return fragment;
 }
 
 function createSelect(
@@ -186,8 +189,4 @@ function getPlayerWidth(): number {
   const root = document.getElementById('root');
 
   return Number.parseInt(root?.style.getPropertyValue('--preview-player-width') ?? '', 10) || previewWidth.default;
-}
-
-function formatRem(width: number): string {
-  return `${Math.round((width / 16) * 100) / 100}rem`;
 }

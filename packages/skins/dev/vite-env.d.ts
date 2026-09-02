@@ -47,3 +47,6 @@ declare module '*&skin=minimal-audio' {
     | import('react').ComponentType<import('react').PropsWithChildren<{ className?: string }>>
     | ((props?: { className?: string }) => { toString(): string });
 }
+
+declare const __PREVIEW_BRANCH__: string;
+declare const __PREVIEW_COMMIT__: string;

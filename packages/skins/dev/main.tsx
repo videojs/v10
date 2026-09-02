@@ -9,8 +9,11 @@ import { assignHtmlMediaSource, defineHtmlMedia, renderHtmlMedia } from './html-
 import { loadSkin } from './loaders';
 import { readPreviewOptions } from './options';
 import { ReactPreviewMedia } from './react-media';
+import { installErrorLog } from './report';
 
 import './styles.css';
+
+installErrorLog();
 
 const captions = new URL('./captions.vtt', import.meta.url).href;
 const preview = readPreviewOptions();

@@ -168,3 +168,55 @@ body {
   outline: 2px solid light-dark(#111, white);
   outline-offset: 2px;
 }
+
+.preview-report {
+  flex-basis: 100%;
+  margin: 0;
+  padding: 0.75rem;
+  overflow-x: auto;
+  color: light-dark(rgb(0 0 0 / 80%), rgb(255 255 255 / 80%));
+  font-size: 0.75rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  border: 1px solid light-dark(rgb(0 0 0 / 15%), rgb(255 255 255 / 15%));
+  border-radius: 0.375rem;
+  background: light-dark(#f5f5f5, #111);
+}
+
+.preview-preferences {
+  display: flex;
+  flex-basis: 100%;
+  flex-wrap: wrap;
+  gap: 0.375rem 0.75rem;
+  align-items: center;
+}
+
+.preview-preferences ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.preview-preferences li {
+  padding: 0.125rem 0.5rem;
+  color: light-dark(rgb(0 0 0 / 60%), rgb(255 255 255 / 60%));
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 1px solid light-dark(rgb(0 0 0 / 15%), rgb(255 255 255 / 15%));
+  border-radius: 9999px;
+}
+
+.preview-preferences li[data-active="true"] {
+  color: #111;
+  border-color: #fcd34d;
+  background: #fcd34d;
+}
+
+.preview-preferences-hint {
+  margin: 0;
+  color: light-dark(rgb(0 0 0 / 55%), rgb(255 255 255 / 55%));
+  font-size: 0.75rem;
+}

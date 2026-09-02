@@ -41,9 +41,14 @@ export type SkinName =
   | 'minimal-audio';
 export type StyleMode = 'css' | 'tailwind';
 
+export type Direction = 'ltr' | 'rtl';
+
 export interface PreviewOptions {
   readonly captionsMode: CaptionsMode;
   readonly colorScheme: ColorScheme;
+  /** Render the CSS and Tailwind variants of the same skin together. */
+  readonly compare: boolean;
+  readonly direction: Direction;
   readonly framework: Framework;
   readonly isAudio: boolean;
   readonly isLive: boolean;
@@ -67,6 +72,8 @@ export function readPreviewOptions(search = location.search): PreviewOptions {
   const styleMode = params.get('style') === 'tailwind' ? 'tailwind' : 'css';
   const captionsMode = params.get('captions') === 'multiple' ? 'multiple' : 'single';
   const colorScheme = params.get('scheme') === 'light' ? 'light' : 'dark';
+  const compare = params.get('compare') === 'styles';
+  const direction = params.get('dir') === 'rtl' ? 'rtl' : 'ltr';
   const requestedMedia = params.get('media');
   const mediaId = isMediaId(requestedMedia) ? requestedMedia : isLive ? 'hls-live' : 'mp4-1';
   const requestedWidth = Number.parseInt(params.get('width') ?? '', 10);
@@ -79,6 +86,8 @@ export function readPreviewOptions(search = location.search): PreviewOptions {
   return {
     captionsMode,
     colorScheme,
+    compare,
+    direction,
     framework,
     isAudio,
     isLive,
