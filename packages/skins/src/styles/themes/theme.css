@@ -85,7 +85,7 @@
     --media-dialog-max-width: calc(var(--media-spacing) * 72);
 
     /* Sliders. */
-    --media-slider-preview-label-offset: calc(var(--media-spacing) * 12.5);
+    --media-slider-preview-label-offset: calc(var(--media-spacing) * 10.5);
 
     /* Player frame and scale. */
     --media-video-border-radius: var(--media-border-radius, 28px);

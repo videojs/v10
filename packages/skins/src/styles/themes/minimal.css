@@ -23,7 +23,7 @@
     --media-popup-translate-distance: calc(var(--media-spacing) * 2);
     --media-dialog-width: 100%;
     --media-dialog-max-width: calc(var(--media-spacing) * 64);
-    --media-slider-preview-label-offset: calc(var(--media-spacing) * 7);
+    --media-slider-preview-label-offset: calc(var(--media-spacing) * 5);
     --media-video-border-radius: var(--media-border-radius, 12px);
   }
 }
