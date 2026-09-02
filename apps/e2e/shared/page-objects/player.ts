@@ -248,6 +248,21 @@ export class PlayerPage {
     }, SELECTORS.media);
   }
 
+  /** Read the current playhead of the backing media element. */
+  async getCurrentTime(): Promise<number> {
+    return this.page.evaluate((selector) => {
+      const media = document.querySelector<HTMLMediaElement>(selector);
+      const actual = media?.querySelector<HTMLMediaElement>('video') ?? media;
+
+      return actual?.currentTime ?? 0;
+    }, SELECTORS.media);
+  }
+
+  /** Wait until playback has advanced past `seconds`, so later seeks and gestures act on a moving timeline. */
+  async waitForPlayback(seconds = 0): Promise<void> {
+    await expect.poll(() => this.getCurrentTime(), { timeout: 10_000 }).toBeGreaterThan(seconds);
+  }
+
   /** Click at a percentage position on the time slider. */
   async seekTo(percent: number): Promise<void> {
     // Wait for readyState >= 1 (HAVE_METADATA) and a non-zero duration.
@@ -264,6 +279,12 @@ export class PlayerPage {
       { timeout: 30_000 }
     );
 
+    const duration = await this.page.evaluate((selector) => {
+      const media = document.querySelector<HTMLMediaElement>(selector);
+      const actual = media?.querySelector<HTMLMediaElement>('video') ?? media;
+
+      return actual?.duration ?? 0;
+    }, SELECTORS.media);
     const box = await this.timeSlider.boundingBox();
     if (!box) throw new Error('Time slider not visible');
 
@@ -272,8 +293,13 @@ export class PlayerPage {
 
     await this.page.mouse.click(x, y);
 
-    // Wait for the seek to complete
-    await this.page.waitForTimeout(500);
+    // Wait for the seek to land near the clicked position; keyframe alignment and slider rounding shift it a little.
+    const target = duration * (percent / 100);
+    const tolerance = Math.max(2, duration * 0.05);
+
+    await expect
+      .poll(async () => Math.abs((await this.getCurrentTime()) - target), { timeout: 10_000 })
+      .toBeLessThanOrEqual(tolerance);
   }
 
   /** Hover over the time slider at a percentage position. */

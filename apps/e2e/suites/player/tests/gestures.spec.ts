@@ -62,7 +62,7 @@ test.describe('Mouse Gestures', () => {
   test('click on slider does not trigger container gesture', async ({ page }) => {
     // Start playback so the slider has a seekable range
     await player.play();
-    await page.waitForTimeout(500);
+    await player.waitForPlayback();
 
     // Click the time slider — should seek, not toggle play/pause.
     // Wait briefly after seek to give any leaked gesture time to fire.
@@ -107,7 +107,7 @@ test.describe('React Mouse Gestures', () => {
 
   test('click on slider does not trigger container gesture', async ({ page }) => {
     await player.play();
-    await page.waitForTimeout(500);
+    await player.waitForPlayback();
 
     // Click the time slider — should seek, not toggle play/pause.
     // Wait briefly after seek to give any leaked gesture time to fire.
@@ -135,7 +135,6 @@ test.describe('Touch Gestures', () => {
     const { x, y } = await getCenter(player);
 
     await page.touchscreen.tap(x, y);
-    await page.waitForTimeout(300);
 
     // Controls should respond to the tap gesture
     await expect(player.controls).toBeAttached();
@@ -144,7 +143,7 @@ test.describe('Touch Gestures', () => {
   test('double-tap right side seeks forward', async ({ page }) => {
     // Start playback first so seek has buffered data
     await player.play();
-    await page.waitForTimeout(500);
+    await player.waitForPlayback();
 
     // Get a point in the right third of the player
     const box = await player.playerRoot.boundingBox();
@@ -165,7 +164,7 @@ test.describe('Touch Gestures', () => {
   test('double-tap left side seeks backward', async ({ page }) => {
     // Play and seek forward first so there's room to seek back
     await player.play();
-    await page.waitForTimeout(1_000);
+    await player.waitForPlayback(1);
 
     // Get a point in the left third of the player
     const box = await player.playerRoot.boundingBox();

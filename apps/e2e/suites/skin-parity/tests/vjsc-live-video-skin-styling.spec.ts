@@ -29,8 +29,6 @@ for (const variant of CASES) {
   test(`${variant.framework} ${variant.skin} keeps CSS and Tailwind rendering in sync`, async ({ page }, testInfo) => {
     const pageErrors = collectPageErrors(page);
 
-    test.describe.configure({ mode: 'serial' });
-
     for (const width of WIDTHS) {
       const comparison = await openVariants(page, variant, width);
       const cssContract = await layoutContract(comparison.css.root);

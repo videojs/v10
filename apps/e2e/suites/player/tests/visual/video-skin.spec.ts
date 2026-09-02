@@ -29,10 +29,8 @@ for (const { name, path } of VISUAL_PAGES) {
       await player.waitForMediaReady();
     });
 
-    test('default paused state', async ({ page }) => {
+    test('default paused state', async () => {
       await player.showControls();
-      await page.waitForTimeout(300);
-
       await expect(player.playerRoot).toHaveScreenshot(`video-${name.toLowerCase()}-default.png`);
     });
 
@@ -167,9 +165,9 @@ test.describe('Visual — Captions', () => {
     await expect(page.locator(SELECTORS.activeMenuOptions)).toHaveCount(2);
     await page.locator(SELECTORS.activeMenuOptions).nth(1).dispatchEvent('click');
 
-    // Play briefly so the caption cue at 0:00 activates, then pause
+    // Play to the same frame the baseline holds; the caption cue at 0:00 is active by then.
     await player.play();
-    await page.waitForTimeout(500);
+    await player.waitForPlayback(0.5);
     await player.pause();
     await player.showControls();
 
@@ -190,10 +188,8 @@ test.describe('Visual — Mobile Layout', () => {
     await player.waitForMediaReady();
   });
 
-  test('mobile layout', async ({ page }) => {
+  test('mobile layout', async () => {
     await player.showControls();
-    await page.waitForTimeout(300);
-
     await expect(player.playerRoot).toHaveScreenshot('mobile-default.png');
   });
 });

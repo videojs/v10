@@ -25,7 +25,8 @@ export function suiteConfig(name: string): PlaywrightTestConfig {
       },
     },
     use: {
-      trace: CI ? 'on-first-retry' : 'on',
+      // Recording every local run slows the transform-heavy suites; keep traces only where they help debug.
+      trace: CI ? 'on-first-retry' : 'retain-on-failure',
       screenshot: 'only-on-failure',
       video: CI ? 'on-first-retry' : 'off',
       actionTimeout: 10_000,

@@ -4,11 +4,16 @@ import { defineConfig, devices } from '@playwright/test';
 
 import { suiteConfig } from '../../shared/playwright.ts';
 
+/** CI shards the suite per preset; one value restricts the run to that preset's spec. */
+const preset = process.env.VJSC_SKIN_PRESET;
+
 export default defineConfig({
   ...suiteConfig('skin-parity'),
   testDir: resolve(import.meta.dirname, 'tests'),
-  // Every case shares one transform-heavy development server. Bound cold browser graphs so they cannot exhaust it.
-  workers: 2,
+  testMatch: preset ? `**/vjsc-${preset}-skin-styling.spec.ts` : '**/*.spec.ts',
+  // The warm-up compiles every skin and the Tailwind entry before the first case, so workers never race cold transforms.
+  globalSetup: resolve(import.meta.dirname, 'setup/global.ts'),
+  workers: process.env.CI ? 2 : 4,
   projects: [
     {
       name: 'vjsc-chromium',

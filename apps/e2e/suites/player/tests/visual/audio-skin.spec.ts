@@ -23,9 +23,7 @@ for (const { name, path } of VISUAL_PAGES) {
       await player.waitForMediaReady();
     });
 
-    test('default paused state', async ({ page }) => {
-      await page.waitForTimeout(300);
-
+    test('default paused state', async () => {
       await expect(player.playerRoot).toHaveScreenshot(`audio-${name.toLowerCase()}-default.png`);
     });
   });

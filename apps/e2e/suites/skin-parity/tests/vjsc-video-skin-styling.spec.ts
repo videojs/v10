@@ -21,8 +21,6 @@ const BUFFERING_INDICATOR_SELECTOR =
   '.media-buffering-indicator, media-buffering-indicator, [class~="peer/buffering"], [class~="hidden"][class~="place-content-center"]';
 const CONTROLS_SELECTOR = '.video-controls';
 
-test.describe.configure({ mode: 'serial' });
-
 test('the dev width control resizes VJSC skins', async ({ page }) => {
   const { css } = await openVariants(page, REACT_DEFAULT, 384);
   const range = page.getByRole('slider', { name: 'Player width' });
