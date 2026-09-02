@@ -84,6 +84,7 @@ function readParams() {
     direction: readOption(TEXT_DIRECTIONS, params.get('dir'), 'auto'),
     compare: readOption(COMPARE_AXES, params.get('compare'), 'off'),
     layout: readOption(COMPARE_LAYOUTS, params.get('layout'), 'auto'),
+    mirror: params.get('mirror') === '1',
   };
 }
 
@@ -93,6 +94,7 @@ function postPreferences(target: Window, params: FrameParams): void {
   target.postMessage({ type: 'width-change', width: params.width }, '*');
   target.postMessage({ type: 'scheme-change', scheme: params.scheme }, '*');
   target.postMessage({ type: 'dir-change', dir: params.direction }, '*');
+  target.postMessage({ type: 'mirror-change', mirror: params.mirror }, '*');
 }
 
 export function App() {
@@ -114,6 +116,7 @@ export function App() {
   const [direction, setDirection] = useState<TextDirection>(initial.direction);
   const [compare, setCompare] = useState<CompareMode>(initial.compare);
   const [layout, setLayout] = useState<CompareLayout>(initial.layout);
+  const [mirror, setMirror] = useState(initial.mirror);
 
   const descriptor = MEDIA[media];
   const availableSources = mediaSources(media, platform);
@@ -155,8 +158,11 @@ export function App() {
     playerWidth,
     scheme,
     direction,
+    mirroring: false,
   });
 
+  // Mirroring only means something between two panels.
+  const mirroring = mirror && compare !== 'off';
   const frameParams: FrameParams = {
     media,
     source,
@@ -169,6 +175,7 @@ export function App() {
     width: playerWidth,
     scheme,
     direction,
+    mirror: mirroring,
   };
 
   // Keep the URL in sync with all state.
@@ -198,6 +205,8 @@ export function App() {
       params.set('compare', compare);
 
       if (layout !== 'auto') params.set('layout', layout);
+
+      if (mirror) params.set('mirror', '1');
     }
 
     history.replaceState(null, '', `/?${params}`);
@@ -219,6 +228,7 @@ export function App() {
     direction,
     compare,
     layout,
+    mirror,
   ]);
 
   // The shell follows the scheme too, so its chrome and the preview agree; see `styles.css` for the `dark:` variant.
@@ -258,6 +268,8 @@ export function App() {
 
     if (previous.direction !== direction) post({ type: 'dir-change', dir: direction });
 
+    if (previous.mirroring !== mirroring) post({ type: 'mirror-change', mirror: mirroring });
+
     previousPreviewState.current = {
       skin,
       source,
@@ -269,8 +281,31 @@ export function App() {
       playerWidth,
       scheme,
       direction,
+      mirroring,
     };
-  }, [skin, source, autoplay, muted, loop, preload, accentColor, playerWidth, scheme, direction]);
+  }, [skin, source, autoplay, muted, loop, preload, accentColor, playerWidth, scheme, direction, mirroring]);
+
+  // Relay one panel's playback state to the others; the frames apply only what differs, so nothing echoes.
+  useEffect(() => {
+    if (!mirroring) return;
+
+    const relay = (event: MessageEvent) => {
+      if (event.data?.type !== 'sandbox-mirror') return;
+
+      for (const frame of frames.current.values()) {
+        const target = frame.contentWindow;
+
+        if (target && target !== event.source)
+          target.postMessage({ type: 'mirror-apply', state: event.data.state }, '*');
+      }
+    };
+
+    window.addEventListener('message', relay);
+
+    return () => {
+      window.removeEventListener('message', relay);
+    };
+  }, [mirroring]);
 
   // Constrain the source to what the media offers on this platform.
   useEffect(() => {
@@ -395,6 +430,7 @@ export function App() {
         panels={panels}
         layout={layout}
         onLayoutChange={setLayout}
+        onMirrorChange={setMirror}
         summary={summary}
         params={frameParams}
         onFrame={handleFrame}

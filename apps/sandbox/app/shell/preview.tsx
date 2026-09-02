@@ -4,7 +4,7 @@ import type { MediaId } from '@app/media';
 import type { SandboxLocaleTag } from '@app/shared/i18n/locale-meta';
 import type { ColorScheme, PreloadValue, TextDirection } from '@app/shared/sandbox-listener';
 import type { SourceId } from '@app/shared/sources';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 
 /** Everything the frames share; the panels carry what differs. */
 export interface FrameParams {
@@ -19,12 +19,15 @@ export interface FrameParams {
   readonly width: number;
   readonly scheme: ColorScheme;
   readonly direction: TextDirection;
+  /** Mirror playback between compare panels. */
+  readonly mirror: boolean;
 }
 
 type PreviewProps = {
   panels: readonly ComparePanel[];
   layout: CompareLayout;
   onLayoutChange: (layout: CompareLayout) => void;
+  onMirrorChange: (mirror: boolean) => void;
   summary: string;
   params: FrameParams;
   onFrame: (id: string, frame: HTMLIFrameElement | null) => void;
@@ -56,6 +59,8 @@ function buildUrl(panel: ComparePanel, params: FrameParams, bustCache = false): 
 
   if (params.accentColor) query.set('accent', params.accentColor);
 
+  if (params.mirror) query.set('mirror', '1');
+
   if (bustCache) query.set('_', String(Date.now()));
 
   return `${pagePath(panel, params.media)}?${query}`;
@@ -68,7 +73,16 @@ const LAYOUT_CLASSES: Record<CompareLayout, string> = {
 };
 
 /** The preview area: a summary of the selection, then one frame, or two framed panels laid out by `layout`. */
-export function Preview({ panels, layout, onLayoutChange, summary, params, onFrame, onFrameLoad }: PreviewProps) {
+export function Preview({
+  panels,
+  layout,
+  onLayoutChange,
+  onMirrorChange,
+  summary,
+  params,
+  onFrame,
+  onFrameLoad,
+}: PreviewProps) {
   const comparing = panels.length > 1;
   const single = panels[0];
 
@@ -82,7 +96,10 @@ export function Preview({ panels, layout, onLayoutChange, summary, params, onFra
           {summary}
         </p>
         {comparing ? (
-          <LayoutToggle value={layout} onChange={onLayoutChange} />
+          <>
+            <MirrorToggle value={params.mirror} onChange={onMirrorChange} />
+            <LayoutToggle value={layout} onChange={onLayoutChange} />
+          </>
         ) : (
           single && <OpenLink href={buildUrl(single, params)} />
         )}
@@ -181,6 +198,26 @@ function OpenLink({ href }: { href: string }) {
         <line x1="10" x2="21" y1="14" y2="3" />
       </svg>
     </a>
+  );
+}
+
+/** Play, pause, seek, volume, rate, and captions in one panel reach the other. */
+function MirrorToggle({ value, onChange }: { value: boolean; onChange: (mirror: boolean) => void }) {
+  const id = useId();
+
+  return (
+    <div className="flex shrink-0 items-center gap-1.5">
+      <input
+        id={id}
+        type="checkbox"
+        checked={value}
+        onChange={(event) => onChange(event.target.checked)}
+        className="size-3.5 cursor-pointer rounded border-zinc-300 accent-zinc-950 dark:border-zinc-700 dark:accent-zinc-50"
+      />
+      <label htmlFor={id} className="cursor-pointer text-xs font-medium text-zinc-600 dark:text-zinc-300">
+        Mirror playback
+      </label>
+    </div>
   );
 }
 

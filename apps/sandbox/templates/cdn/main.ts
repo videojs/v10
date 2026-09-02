@@ -17,6 +17,7 @@ import {
   onSandboxStateChange,
   readSandboxState,
 } from '@app/shared/sandbox-listener';
+import { installSandboxMirror } from '@app/shared/sandbox-mirror';
 import {
   getChapters,
   getPosterSrc,
@@ -45,6 +46,8 @@ const descriptor = MEDIA[media];
 const state = readSandboxState();
 const loadLatest = createLatestLoader();
 let locale = getInitialLocale();
+
+installSandboxMirror();
 let localeApplySeq = 0;
 
 type LitElementLike = HTMLElement & { requestUpdate?: () => void; updateComplete?: Promise<unknown> };

@@ -10,6 +10,7 @@ import {
   readSandboxState,
   type SandboxState,
 } from '../sandbox-listener';
+import { installSandboxMirror } from '../sandbox-mirror';
 import { getChapters, getPlaceholderSrc, getPosterSrc, getStoryboardSrc, isLiveSource, SOURCES } from '../sources';
 import { renderChapters } from './chapters';
 import { bindSandboxHtmlLocaleChange, prepareSandboxHtmlLocale, wrapSandboxHtmlI18n } from './i18n';
@@ -188,6 +189,8 @@ export function createHtmlSandbox(options: HtmlSandboxOptions): void {
   const state = readSandboxState();
   const loadLatest = createLatestLoader();
   const root = getRoot();
+
+  installSandboxMirror();
 
   async function render(): Promise<void> {
     await prepareSandboxHtmlLocale();

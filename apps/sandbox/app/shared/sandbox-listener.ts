@@ -67,7 +67,7 @@ function parseSource(value: unknown): SourceId | undefined {
   return isString(value) && value in SOURCES ? (value as SourceId) : undefined;
 }
 
-function parseFlag(value: unknown): boolean | undefined {
+export function parseFlag(value: unknown): boolean | undefined {
   return isBoolean(value) ? value : undefined;
 }
 
@@ -80,7 +80,7 @@ function parseLocale(value: unknown): SandboxLocaleTag | undefined {
 }
 
 /** A query flag is `1` or absent, where the streamed value is a boolean. */
-function readFlag(name: string): boolean {
+export function readFlag(name: string): boolean {
   return params.get(name) === '1';
 }
 
@@ -102,19 +102,18 @@ export function readSandboxState(): SandboxState {
 }
 
 /**
- * Listen for the shell's `<name>-change` messages. The payload field named `name` has to pass `parse`; a message that
- * fails it is dropped, so a malformed post cannot put the page into a state the shell would never send.
+ * Listen for one message type from the shell. The payload has to pass `parse`; a message that fails it is dropped, so a
+ * malformed post cannot put the page into a state the shell would never send.
  */
-function subscribe<T>(
-  name: string,
-  parse: (value: unknown) => T | undefined,
+export function subscribeMessage<T>(
+  type: string,
+  parse: (data: Record<string, unknown>) => T | undefined,
   callback: (value: T) => void
 ): () => void {
-  const type = `${name}-change`;
   const handler = (event: MessageEvent) => {
     if (event.data?.type !== type) return;
 
-    const value = parse(event.data[name]);
+    const value = parse(event.data);
     if (value === undefined) return;
 
     callback(value);
@@ -125,6 +124,15 @@ function subscribe<T>(
   return () => {
     window.removeEventListener('message', handler);
   };
+}
+
+/** Listen for the shell's `<name>-change` messages, whose payload field is named `name`. */
+export function subscribe<T>(
+  name: string,
+  parse: (value: unknown) => T | undefined,
+  callback: (value: T) => void
+): () => void {
+  return subscribeMessage(`${name}-change`, (data) => parse(data[name]), callback);
 }
 
 const streamedKeys: readonly StreamedKey[] = ['skin', 'source', 'autoplay', 'muted', 'loop', 'preload'];

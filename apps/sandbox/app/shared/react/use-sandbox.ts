@@ -6,6 +6,8 @@ import {
 } from '@app/shared/sandbox-listener';
 import { useEffect, useState } from 'react';
 
+import { installSandboxMirror } from './../sandbox-mirror';
+
 /** The attributes the settings menu controls, as props for a media component. */
 export interface SandboxMediaProps {
   autoPlay: boolean;
@@ -23,6 +25,7 @@ export function useSandbox(): Sandbox {
   const [state, setState] = useState(readSandboxState);
 
   useEffect(() => onSandboxStateChange((change) => setState((current) => ({ ...current, ...change }))), []);
+  useEffect(() => installSandboxMirror(), []);
 
   const { autoplay, muted, loop, preload } = state;
 
