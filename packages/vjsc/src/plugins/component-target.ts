@@ -230,6 +230,7 @@ function collectComponentScopes(ast: Program, bindings: CanonicalBindings, id: s
   const nodes = new Map<JSXElement, ComponentSourceScope>();
   const stack: { readonly path: CanonicalPath; readonly scope: ComponentSourceScope }[] = [];
   const moduleKey = createHash('sha256').update(id).digest('base64url').slice(0, 8);
+  let ordinal = 0;
 
   walk(ast, {
     enter(node) {
@@ -244,7 +245,8 @@ function collectComponentScopes(ast: Program, bindings: CanonicalBindings, id: s
       const scope: ComponentSourceScope = owner ?? {
         root: node,
         target: path.target,
-        prefix: `${moduleKey}-${node.start.toString(36)}`,
+        // Number scopes in source order rather than by byte offset so unrelated edits do not churn generated ids.
+        prefix: `${moduleKey}-${(ordinal++).toString(36)}`,
         used: false,
       };
 
