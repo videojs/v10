@@ -7,9 +7,9 @@ const SOURCE_SKINS = [
 
 const POSTER_SKINS = [
   { framework: 'packaged HTML', path: '/pages/html-video-mp4.html', selector: 'img[slot="poster"]' },
-  { framework: 'packaged React', path: '/pages/react-video-mp4.html', selector: '.media-skin > img' },
+  { framework: 'packaged React', path: '/pages/react-video-mp4.html', selector: '.media-poster img' },
   { framework: 'VJSC HTML', path: '/pages/source-html-video-mp4.html', selector: 'media-poster img' },
-  { framework: 'VJSC React', path: '/pages/source-react-video-mp4.html', selector: 'img.media-poster' },
+  { framework: 'VJSC React', path: '/pages/source-react-video-mp4.html', selector: '.media-poster img' },
 ] as const;
 
 for (const { framework, path } of SOURCE_SKINS) {
@@ -21,11 +21,11 @@ for (const { framework, path } of SOURCE_SKINS) {
 
     test('renders media and poster in one container composition', async ({ page }) => {
       const skin = page.locator('[data-source-skin]');
-      const posterImage = skin.locator('media-poster img, img.media-poster').first();
+      const posterImage = skin.locator('media-poster img, .media-poster img').first();
 
       await expect(skin).toBeAttached();
       await expect(page.locator('video')).toBeAttached();
-      await expect(skin.locator('media-poster, img.media-poster')).toBeAttached();
+      await expect(skin.locator('media-poster, .media-poster')).toBeAttached();
       await expect(skin.locator('media-controls-content, .video-controls')).toBeAttached();
       await expect(skin.locator('media-controls-backdrop, .video-controls-backdrop')).toBeAttached();
       await expect(skin.locator('media-seek-button, .media-seek-button')).toHaveCount(0);
@@ -33,7 +33,7 @@ for (const { framework, path } of SOURCE_SKINS) {
     });
 
     test('hides the poster once playback starts', async ({ page }) => {
-      const poster = page.locator('media-poster, img.media-poster').first();
+      const poster = page.locator('media-poster, .media-poster').first();
 
       await expect(poster).toHaveAttribute('data-visible', '');
       await expect(poster).toHaveCSS('opacity', '1');

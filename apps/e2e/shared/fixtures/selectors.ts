@@ -83,7 +83,7 @@ export const SELECTORS = {
     'time[data-type="remaining"]',
   ].join(', '),
   timeToggle: 'media-time[toggle], time[role="button"][data-type]',
-  poster: 'media-poster, img[data-loaded]',
+  poster: 'media-poster, .media-poster',
   bufferingIndicator: 'media-buffering-indicator, .media-buffering-indicator',
   thumbnail: 'media-slider-thumbnail, .media-slider-thumbnail-image, [role="img"]:has(> img[aria-hidden="true"])',
 

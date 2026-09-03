@@ -19,6 +19,8 @@ const htmlAudioSettingsMenuUrl = '/../src/skins/audio/settings-menu.tsx?style=cs
 const volumePopoverUrl = `/../src/components/controls/volume-popover.tsx${reactTarget}`;
 const htmlPosterUrl = '/../src/components/layout/poster.tsx?style=tailwind&target=html&skin=default-video';
 const reactPosterUrl = '/../src/components/layout/poster.tsx?style=tailwind&target=react&skin=default-video';
+// The Minimal controls reach across to the volume popover trigger with `group-has-*`, a tracked parity gap.
+const minimalControlsUrl = '/../src/skins/minimal-video/controls.tsx?style=tailwind&target=react&skin=minimal-video';
 const buttonStyles = resolve(packageDir, 'src/styles/buttons/button.styles.ts');
 const controlsStyles = resolve(packageDir, 'src/skins/default-video/controls.styles.ts');
 const designStyles = resolve(packageDir, 'src/styles/base.css');
@@ -126,7 +128,7 @@ describe('Skins Vite workflow', () => {
   }, 30_000);
 
   it('reports VJSC style diagnostics through the Vite logger', async () => {
-    await server.transformRequest(`${reactPosterUrl}&diagnostics=1`);
+    await server.transformRequest(`${minimalControlsUrl}&diagnostics=1`);
     const warnings = [...warn.mock.calls, ...warnOnce.mock.calls].flat().join('\n');
 
     expect(warnings).toContain('[VJSC_STYLE_COMPLEX_SELECTOR]');
@@ -236,11 +238,10 @@ describe('Skins Vite workflow', () => {
     const html = await server.transformRequest(htmlPosterUrl);
     const react = await server.transformRequest(reactPosterUrl);
 
-    expect(html?.code).toContain('[&:is(img):not([src]):not([srcset])]:invisible');
-    expect(html?.code).toContain('[&>slot>img:not([src]):not([srcset])]:invisible');
+    expect(html?.code).toContain('[&:not([src]):not([srcset])]:invisible');
     expect(html?.code).toContain('[&>slot::slotted(img:not([src]):not([srcset]))]:invisible');
-    expect(react?.code).toContain('[&:is(img):not([src]):not([srcset])]:invisible');
-    expect(react?.code).not.toContain('&>slot>img');
+    expect(react?.code).toContain('[&:not([src]):not([srcset])]:invisible');
+    expect(react?.code).not.toContain('::slotted');
   }, 30_000);
 
   it('invalidates transformed owners for component, style, and design changes', async () => {

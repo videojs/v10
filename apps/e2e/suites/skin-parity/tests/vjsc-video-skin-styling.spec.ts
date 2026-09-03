@@ -757,7 +757,7 @@ async function preparePanel({ root }: SkinPanel, width: number) {
   await expect(root).toHaveAttribute('data-controls-visible', '');
   await expect(root.getByRole('button', { name: 'Play' })).toBeVisible();
 
-  const poster = root.locator('img[data-loaded], media-poster[data-loaded]').first();
+  const poster = root.locator('.media-poster[data-loaded], media-poster[data-loaded]').first();
 
   await expect(poster).toBeVisible();
   await expect(poster).toHaveCSS('opacity', '1');
@@ -1524,7 +1524,7 @@ async function sharedMotionContract(root: Locator) {
     });
   const controls = root.locator(CONTROLS_SELECTOR).first();
   const button = root.getByRole('button', { name: 'Play', exact: true });
-  const poster = root.locator(':scope > .media-poster, :scope > img, :scope > media-poster').first();
+  const poster = root.locator(':scope > .media-poster, :scope > media-poster').first();
   const settingsIcon = root.getByRole('button', { name: 'Settings', exact: true }).locator('svg, media-icon').first();
   const playIconCandidates = await root
     .getByRole('button', { name: 'Play', exact: true })
@@ -1869,7 +1869,7 @@ async function reducedMotionContract(root: Locator, menu: Locator, tooltipDurati
       })
     )
   );
-  const poster = root.locator(':scope > .media-poster, :scope > img, :scope > media-poster').first();
+  const poster = root.locator(':scope > .media-poster, :scope > media-poster').first();
   const settingsIcon = root.getByRole('button', { name: 'Settings', exact: true }).locator('svg, media-icon').first();
   const seekThumb = root.getByRole('slider', { name: 'Seek' });
   const seekSlider = seekThumb.locator('..');
@@ -1983,7 +1983,7 @@ async function layoutContract(root: Locator) {
 
     return {
       root: inspect(element),
-      poster: inspect(query('img[data-loaded], media-poster[data-loaded]'), { includeRadius: false }),
+      poster: inspect(query('.media-poster[data-loaded], media-poster[data-loaded]'), { includeRadius: false }),
       controls: inspect(query(controlsSelector), { includeGap: false }),
       primary: inspect(play?.parentElement ?? null, { includeGap: false }),
       timeline: inspect(seek?.parentElement?.parentElement ?? null, {
@@ -2466,7 +2466,7 @@ async function skinContract(root: Locator) {
     const mute = element.querySelector<HTMLElement>('[role="button"][aria-label="Mute"]');
     const seek = element.querySelector<HTMLElement>('[role="slider"][aria-label="Seek"]');
     const controls = play?.closest<HTMLElement>('[data-interactive], media-controls');
-    const poster = element.querySelector<HTMLElement>('img[data-visible], .media-poster, media-poster');
+    const poster = element.querySelector<HTMLElement>('.media-poster, media-poster');
 
     const inspect = (target: HTMLElement | null | undefined) => {
       if (!target) return null;
