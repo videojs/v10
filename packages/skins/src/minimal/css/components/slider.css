@@ -68,11 +68,8 @@
       transition: clip-path var(--media-track-transition-duration) ease-out;
     }
   }
-  &[data-dragging] {
-    .media-slider__fill,
-    .media-slider__buffer {
-      transition-duration: 0ms;
-    }
+  &:is([data-dragging], :focus-within) {
+    --media-track-transition-duration: 0ms;
   }
 
   /* Buffer */

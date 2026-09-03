@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 import { DATA_ATTRS } from '../fixtures/selectors';
+import { holdVolumeKey, neverReverses, stays } from '../fixtures/volume-slider';
 
 const SANDBOX_BASE = process.env.SANDBOX_URL ?? 'http://localhost:5299';
 
@@ -36,7 +37,9 @@ for (const { platform, skin, styling } of CASES) {
       preload: 'metadata',
     });
 
-    await page.goto(`${SANDBOX_BASE}/${platform}-video/?${query}`, { waitUntil: 'domcontentloaded' });
+    await page.goto(`${SANDBOX_BASE}/${platform}-video/?${query}`, {
+      waitUntil: 'domcontentloaded',
+    });
 
     const root = page.getByRole('group', { name: 'Media player' }).first();
 
@@ -92,7 +95,9 @@ for (const { platform, skin, styling } of CASES) {
       preload: 'metadata',
     });
 
-    await page.goto(`${SANDBOX_BASE}/${platform}-video/?${query}`, { waitUntil: 'domcontentloaded' });
+    await page.goto(`${SANDBOX_BASE}/${platform}-video/?${query}`, {
+      waitUntil: 'domcontentloaded',
+    });
 
     const root = page.getByRole('group', { name: 'Media player' }).first();
     const slider = page.getByRole('slider', { name: 'Seek' }).first().locator('..');
@@ -102,7 +107,9 @@ for (const { platform, skin, styling } of CASES) {
     await expect(root).toBeVisible({ timeout: 15_000 });
     await slider.hover();
     await expect(thumbnail).toBeAttached({ timeout: 15_000 });
-    await expect(thumbnail).not.toHaveAttribute(DATA_ATTRS.loading, { timeout: 15_000 });
+    await expect(thumbnail).not.toHaveAttribute(DATA_ATTRS.loading, {
+      timeout: 15_000,
+    });
 
     // Layout sizes, not bounding rects: the preview scales in over 150ms and a transform would skew the comparison.
     const measure = () =>
@@ -151,6 +158,107 @@ for (const { platform, skin, styling } of CASES) {
   });
 }
 
+test('react default css mp4-1 keeps repeated volume keys within range', async ({ page }) => {
+  const query = new URLSearchParams({
+    styling: 'css',
+    skin: 'default',
+    source: 'mp4-1',
+    autoplay: '0',
+    muted: '0',
+    loop: '0',
+    preload: 'metadata',
+  });
+
+  await page.addInitScript(() => {
+    const forwarded = new WeakSet<Event>();
+
+    document.addEventListener(
+      'volumechange',
+      (event) => {
+        if (forwarded.has(event)) return;
+
+        event.stopImmediatePropagation();
+
+        setTimeout(() => {
+          const next = new Event('volumechange');
+
+          forwarded.add(next);
+          event.target?.dispatchEvent(next);
+        }, 100);
+      },
+      true
+    );
+  });
+
+  await page.goto(`${SANDBOX_BASE}/react-video/?${query}`, {
+    waitUntil: 'domcontentloaded',
+  });
+
+  const muteButton = page.getByRole('button', { name: 'Mute' }).first();
+  const volumeThumb = page.getByRole('slider', { name: 'Volume' }).first();
+  const volumeSlider = volumeThumb.locator('..');
+
+  await expect(page.getByRole('group', { name: 'Media player' }).first()).toBeVisible({ timeout: 15_000 });
+  await muteButton.hover();
+  await volumeThumb.focus();
+  await page.waitForTimeout(300);
+
+  for (const [key, value] of [
+    ['ArrowDown', 0],
+    ['ArrowUp', 100],
+  ] as const) {
+    const result = await holdVolumeKey(page, volumeSlider, key);
+    const direction = key === 'ArrowUp' ? 'up' : 'down';
+
+    await expect(volumeThumb).toHaveAttribute('aria-valuenow', String(value));
+    expect(neverReverses(result.frames, direction), JSON.stringify(result.frames)).toBe(true);
+    expect(Math.min(...result.frames)).toBeGreaterThanOrEqual(-0.01);
+    expect(Math.max(...result.frames)).toBeLessThanOrEqual(100.01);
+    expect(Math.min(...result.gaps), JSON.stringify(result.gaps)).toBeGreaterThanOrEqual(-0.02);
+    expect(stays(result.release, result.beforeRelease), JSON.stringify(result.release)).toBe(true);
+  }
+});
+
+test('react volume slider keeps controls visible while a key is held', async ({ page }) => {
+  const query = new URLSearchParams({
+    styling: 'css',
+    skin: 'default',
+    source: 'mp4-1',
+    autoplay: '0',
+    muted: '0',
+    loop: '0',
+    preload: 'metadata',
+  });
+
+  await page.goto(`${SANDBOX_BASE}/react-video/?${query}`, {
+    waitUntil: 'domcontentloaded',
+  });
+
+  const player = page.getByRole('group', { name: 'Media player' }).first();
+  const controls = player.locator('.media-controls').first();
+  const muteButton = player.getByRole('button', { name: 'Mute' }).first();
+  const volumeThumb = player.getByRole('slider', { name: 'Volume' }).first();
+
+  await expect(player).toBeVisible({ timeout: 15_000 });
+  await player.getByRole('button', { name: 'Play' }).first().click();
+  await player.hover();
+  await muteButton.hover();
+  await expect(volumeThumb).toBeVisible();
+  await volumeThumb.focus();
+  await page.keyboard.down('ArrowDown');
+
+  try {
+    for (let index = 0; index < 8; index++) {
+      await page.waitForTimeout(500);
+      await page.keyboard.down('ArrowDown');
+    }
+
+    await expect(controls).toHaveAttribute(DATA_ATTRS.visible, '');
+  } finally {
+    await page.keyboard.up('ArrowDown');
+  }
+});
+
 for (const { media, skin } of HTML_TAILWIND_ERROR_CASES) {
   test(`html ${skin} tailwind ${media} contains the error dialog without changing the closed layout`, async ({
     page,
@@ -165,7 +273,9 @@ for (const { media, skin } of HTML_TAILWIND_ERROR_CASES) {
       preload: 'metadata',
     });
 
-    await page.goto(`${SANDBOX_BASE}/html-${media}/?${query}`, { waitUntil: 'domcontentloaded' });
+    await page.goto(`${SANDBOX_BASE}/html-${media}/?${query}`, {
+      waitUntil: 'domcontentloaded',
+    });
 
     const root = page.getByRole('group', { name: 'Media player' }).first();
 
@@ -228,7 +338,9 @@ for (const { platform, skin, styling } of CASES) {
       preload: 'metadata',
     });
 
-    await page.goto(`${SANDBOX_BASE}/${platform}-video/?${query}`, { waitUntil: 'domcontentloaded' });
+    await page.goto(`${SANDBOX_BASE}/${platform}-video/?${query}`, {
+      waitUntil: 'domcontentloaded',
+    });
 
     const root = page.getByRole('group', { name: 'Media player' }).first();
 
@@ -294,7 +406,9 @@ for (const { skin, styling, radius } of HOST_CSS_CASES) {
       preload: 'metadata',
     });
 
-    await page.goto(`${SANDBOX_BASE}/react-video/?${query}`, { waitUntil: 'domcontentloaded' });
+    await page.goto(`${SANDBOX_BASE}/react-video/?${query}`, {
+      waitUntil: 'domcontentloaded',
+    });
 
     const root = page.getByRole('group', { name: 'Media player' }).first();
 
@@ -347,7 +461,9 @@ for (const styling of ['css', 'tailwind'] as const) {
       preload: 'metadata',
     });
 
-    await page.goto(`${SANDBOX_BASE}/html-video/?${query}`, { waitUntil: 'domcontentloaded' });
+    await page.goto(`${SANDBOX_BASE}/html-video/?${query}`, {
+      waitUntil: 'domcontentloaded',
+    });
 
     const root = page.getByRole('group', { name: 'Media player' }).first();
     const slider = page.getByRole('slider', { name: 'Seek' }).first();
@@ -364,7 +480,9 @@ for (const styling of ['css', 'tailwind'] as const) {
     for (const x of [sliderBox.x + 1, sliderBox.x + sliderBox.width - 1]) {
       await page.mouse.move(x, sliderBox.y + sliderBox.height / 2);
       await expect(thumbnailImage).toBeAttached({ timeout: 15_000 });
-      await expect(thumbnailImage).not.toHaveAttribute('data-loading', { timeout: 15_000 });
+      await expect(thumbnailImage).not.toHaveAttribute('data-loading', {
+        timeout: 15_000,
+      });
       await expect(thumbnail).toHaveCSS('scale', '1');
 
       const [rootBox, thumbnailBox] = await Promise.all([root.boundingBox(), thumbnail.boundingBox()]);

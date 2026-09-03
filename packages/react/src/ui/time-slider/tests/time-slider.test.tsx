@@ -52,6 +52,7 @@ const {
         },
         thumbProps: {
           onKeyDownCapture: vi.fn(),
+          onKeyUpCapture: vi.fn(),
           onFocus: vi.fn(),
           onBlur: vi.fn(),
         },

@@ -3,7 +3,7 @@ import { styles } from 'vjsc/styles';
 const trackLayer = [
   'pointer-events-none absolute rounded-[inherit]',
   'motion-safe:transition-[clip-path] motion-safe:duration-200 motion-safe:ease-out',
-  'group-data-dragging/slider:duration-0 group-data-seeking/slider:duration-0',
+  'group-data-dragging/slider:duration-0 group-data-seeking/slider:duration-0 group-focus-within/slider:duration-0',
 ] as const;
 
 export default styles({
@@ -55,6 +55,7 @@ export default styles({
         'absolute z-10 top-1/2 left-(--media-slider-fill) -translate-x-1/2 -translate-y-1/2 rounded-media-control bg-current',
         'select-none transition-none motion-safe:transition-[opacity,height,width,outline-offset,left,top,scale] motion-safe:duration-150 motion-safe:ease-out',
         'group-data-dragging/slider:motion-safe:transition-[opacity,height,width,outline-offset,scale]',
+        'group-focus-within/slider:motion-safe:transition-[opacity,height,width,outline-offset,scale]',
         'group-data-dragging/slider:scale-90',
         'data-[orientation=vertical]:top-[calc(100%-var(--media-slider-fill))] data-[orientation=vertical]:left-1/2',
         'group-data-dragging/slider:data-[orientation=horizontal]:left-(--media-slider-pointer)',
