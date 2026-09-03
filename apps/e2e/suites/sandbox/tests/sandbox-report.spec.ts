@@ -53,10 +53,10 @@ test.describe('Sandbox report', () => {
     await expect(dialog).toBeHidden();
   });
 
-  test('shows the detected preferences in the settings menu and follows emulation', async ({ page }) => {
+  test('shows the detected preferences in the options panel and follows emulation', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto(`${SANDBOX_BASE}/?platform=html&media=video&${QUERY}`, { waitUntil: 'domcontentloaded' });
-    await page.getByRole('button', { name: 'Player settings' }).click();
+    await page.getByRole('button', { name: 'Options' }).click();
 
     const badges = page.getByRole('list', { name: 'Detected preferences' });
 

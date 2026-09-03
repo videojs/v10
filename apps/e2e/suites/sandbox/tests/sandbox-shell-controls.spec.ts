@@ -23,6 +23,12 @@ async function getPreviewFrame(page: Page, path: string): Promise<Frame> {
   return frame;
 }
 
+/** The width control lives in the options panel, which opens closed. */
+async function openOptions(page: Page): Promise<void> {
+  await page.getByRole('button', { name: 'Options' }).click();
+  await expect(page.getByRole('complementary', { name: 'Options' })).toBeVisible();
+}
+
 async function playerWidth(scope: Page | Frame): Promise<number> {
   const root = scope.getByRole('group', { name: 'Media player' }).first();
 
@@ -41,6 +47,9 @@ test.describe('Sandbox shell controls', () => {
     });
 
     const frame = await getPreviewFrame(page, '/html-video/');
+
+    await openOptions(page);
+
     const slider = page.getByRole('slider', { name: 'Width' });
 
     await expect(slider).toHaveValue('480');
@@ -57,6 +66,7 @@ test.describe('Sandbox shell controls', () => {
 
     const frame = await getPreviewFrame(page, '/react-audio/');
 
+    await openOptions(page);
     await expect(page.getByRole('slider', { name: 'Width' })).toHaveValue('576');
     await expect.poll(() => playerWidth(frame)).toBe(576);
     await expect(page).not.toHaveURL(/[?&]width=/);
@@ -95,7 +105,7 @@ test.describe('Sandbox shell controls', () => {
     await expect(root).toBeVisible({ timeout: 15_000 });
     await expect(root).toHaveCSS('direction', 'ltr');
 
-    await page.getByRole('button', { name: 'Player settings' }).click();
+    await openOptions(page);
     await page.getByLabel('Direction').selectOption('rtl');
 
     await expect(frame.locator('html')).toHaveAttribute('dir', 'rtl');

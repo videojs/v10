@@ -1,10 +1,13 @@
 import type { MediaPlayer } from '@app/media';
 
-/** The shell's width control, in CSS pixels. The stops are the rem widths the skins' layouts change around. */
+/**
+ * The shell's width control, in CSS pixels. The stops are the rem widths the skins' layouts change around, then the
+ * end.
+ */
 export const PLAYER_WIDTH = {
   min: 240,
-  max: 960,
-  stops: [384, 512, 672, 960],
+  max: 1360,
+  stops: [384, 512, 672, 960, 1360],
 } as const;
 
 /** The width a preview opens at before the control is touched: the video skins' `4xl` cap or the audio skins' `xl`. */

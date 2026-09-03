@@ -5,7 +5,7 @@ import type { CaptionsMode } from '@app/shared/captions';
 import type { SandboxLocaleTag } from '@app/shared/i18n/locale-meta';
 import type { ColorScheme, PreloadValue, TextDirection } from '@app/shared/sandbox-listener';
 import type { SourceId } from '@app/shared/sources';
-import { useEffect, useId, useRef, useState } from 'react';
+import { type ReactNode, useEffect, useId, useRef, useState } from 'react';
 
 import { type ReportInput, buildReport } from './report';
 
@@ -32,6 +32,8 @@ type PreviewProps = {
   layout: CompareLayout;
   onLayoutChange: (layout: CompareLayout) => void;
   onMirrorChange: (mirror: boolean) => void;
+  /** The skin controls, shown at the start of the header. */
+  controls: ReactNode;
   summary: string;
   /** Everything the report needs beyond the selection, gathered by the shell. */
   report: Omit<ReportInput, 'url' | 'userAgent' | 'viewport' | 'panels' | 'summary'>;
@@ -80,12 +82,16 @@ const LAYOUT_CLASSES: Record<CompareLayout, string> = {
   auto: 'grid-cols-1 auto-rows-[40rem] overflow-y-auto @5xl:grid-cols-2 @5xl:grid-rows-1 @5xl:auto-rows-auto @5xl:overflow-hidden',
 };
 
-/** The preview area: a summary of the selection, then one frame, or two framed panels laid out by `layout`. */
+/**
+ * The preview area: the skin controls and the preview actions, then one frame, or two framed panels laid out by
+ * `layout`.
+ */
 export function Preview({
   panels,
   layout,
   onLayoutChange,
   onMirrorChange,
+  controls,
   summary,
   report,
   params,
@@ -106,22 +112,23 @@ export function Preview({
 
   return (
     <main className="@container flex min-h-0 flex-1 flex-col bg-zinc-50 dark:bg-zinc-900">
-      <div className="flex h-10 shrink-0 items-center gap-3 border-b border-zinc-200 bg-white px-4 dark:border-zinc-800 dark:bg-zinc-950">
-        <p
-          className="min-w-0 flex-1 truncate text-[13px] text-zinc-600 dark:text-zinc-300"
-          data-testid="selection-summary"
-        >
+      <div className="flex min-h-10 shrink-0 flex-wrap items-center gap-x-3 gap-y-1.5 border-b border-zinc-200 bg-white px-4 py-1.5 dark:border-zinc-800 dark:bg-zinc-950">
+        {controls}
+        {/* The selection in words stays in the tree for assistive technology and tests; the controls say it visually. */}
+        <p className="sr-only" data-testid="selection-summary">
           {summary}
         </p>
-        {comparing ? (
-          <>
-            <MirrorToggle value={params.mirror} onChange={onMirrorChange} />
-            <LayoutToggle value={layout} onChange={onLayoutChange} />
-          </>
-        ) : (
-          single && <OpenLink href={buildUrl(single, params)} />
-        )}
-        <ReportButton build={buildPreviewReport} errors={report.errors.length} />
+        <div className="ml-auto flex shrink-0 items-center gap-3">
+          {comparing ? (
+            <>
+              <MirrorToggle value={params.mirror} onChange={onMirrorChange} />
+              <LayoutToggle value={layout} onChange={onLayoutChange} />
+            </>
+          ) : (
+            single && <OpenLink href={buildUrl(single, params)} />
+          )}
+          <ReportButton build={buildPreviewReport} errors={report.errors.length} />
+        </div>
       </div>
       <div className={comparing ? `grid min-h-0 flex-1 gap-3 p-3 ${LAYOUT_CLASSES[layout]}` : 'flex min-h-0 flex-1'}>
         {panels.map((panel) => (

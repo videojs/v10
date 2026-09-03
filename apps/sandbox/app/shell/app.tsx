@@ -26,9 +26,10 @@ import {
 import { skinSourceAvailable, skinStylings, tailwindSkinAvailable } from '@app/shared/skin-sources';
 import { DEFAULT_SOURCE, SOURCES, type SourceId } from '@app/shared/sources';
 import type { Platform, SkinSource, Styling } from '@app/types';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 
-import { Navbar } from './navbar';
+import { Navbar, SkinControls } from './navbar';
+import { OptionsPanel } from './options-panel';
 import { type FrameParams, Preview } from './preview';
 import { describeError, MAX_ERRORS, type RelayedError, usePreferences } from './report';
 
@@ -91,6 +92,25 @@ function readParams() {
   };
 }
 
+/** Whether the options panel is open outlives the page: it is chrome, not part of the selection the URL carries. */
+const OPTIONS_STORAGE_KEY = 'sandbox:options';
+
+function readOptionsOpen(): boolean {
+  try {
+    return localStorage.getItem(OPTIONS_STORAGE_KEY) === 'open';
+  } catch {
+    return false;
+  }
+}
+
+function storeOptionsOpen(open: boolean): void {
+  try {
+    localStorage.setItem(OPTIONS_STORAGE_KEY, open ? 'open' : 'closed');
+  } catch {
+    // Storage can be unavailable; the panel then opens closed next time.
+  }
+}
+
 /** The preferences a frame applies to its document rather than renders from, repeated to it once it has loaded. */
 function postPreferences(target: Window, params: FrameParams): void {
   target.postMessage({ type: 'accent-change', accent: params.accentColor }, '*');
@@ -122,6 +142,8 @@ export function App() {
   const [layout, setLayout] = useState<CompareLayout>(initial.layout);
   const [mirror, setMirror] = useState(initial.mirror);
   const [errors, setErrors] = useState<readonly RelayedError[]>([]);
+  const [optionsOpen, setOptionsOpen] = useState(readOptionsOpen);
+  const optionsId = useId();
   const preferences = usePreferences();
 
   const descriptor = MEDIA[media];
@@ -378,6 +400,19 @@ export function App() {
 
   const handleSourceChange = useCallback((value: string) => setSource(value as SourceId), []);
 
+  const handleOptionsToggle = useCallback(() => {
+    setOptionsOpen((open) => {
+      storeOptionsOpen(!open);
+
+      return !open;
+    });
+  }, []);
+
+  const handleOptionsClose = useCallback(() => {
+    storeOptionsOpen(false);
+    setOptionsOpen(false);
+  }, []);
+
   // Picking a styling an explicit source does not publish hands the choice back to that styling's default source.
   const handleStylingChange = useCallback(
     (value: Styling) => {
@@ -425,57 +460,74 @@ export function App() {
       <Navbar
         platform={platform}
         onPlatformChange={setPlatform}
-        styling={styling}
-        onStylingChange={handleStylingChange}
         media={media}
         onMediaChange={setMedia}
-        skin={skin}
-        onSkinChange={setSkin}
-        skins={skinSource}
-        onSkinsChange={handleSkinsChange}
         source={source}
         onSourceChange={handleSourceChange}
-        width={playerWidth}
-        onWidthChange={setWidth}
-        widthDisabled={!resizable}
-        compare={compare}
-        onCompareChange={setCompare}
-        compareOptions={compareOptions}
-        autoplay={autoplay}
-        onAutoplayChange={setAutoplay}
-        muted={muted}
-        onMutedChange={setMuted}
-        loop={loop}
-        onLoopChange={setLoop}
-        preload={preload}
-        onPreloadChange={setPreload}
-        captions={captions}
-        onCaptionsChange={setCaptions}
-        locale={locale}
-        onLocaleChange={setLocale}
-        accentColor={accentColor}
-        onAccentColorChange={setAccentColor}
-        scheme={scheme}
-        onSchemeChange={setScheme}
-        direction={direction}
-        onDirectionChange={setDirection}
-        preferences={preferences}
         availableSources={availableSources}
         platforms={PLATFORMS}
-        stylings={STYLINGS}
         sources={SOURCES}
+        optionsId={optionsId}
+        optionsOpen={optionsOpen}
+        onOptionsToggle={handleOptionsToggle}
       />
-      <Preview
-        panels={panels}
-        layout={layout}
-        onLayoutChange={setLayout}
-        onMirrorChange={setMirror}
-        summary={summary}
-        report={{ build: { branch: __SANDBOX_BRANCH__, commit: __SANDBOX_COMMIT__ }, preferences, errors }}
-        params={frameParams}
-        onFrame={handleFrame}
-        onFrameLoad={handleFrameLoad}
-      />
+      <div className="flex min-h-0 flex-1">
+        <Preview
+          panels={panels}
+          layout={layout}
+          onLayoutChange={setLayout}
+          onMirrorChange={setMirror}
+          controls={
+            <SkinControls
+              platform={platform}
+              media={media}
+              styling={styling}
+              onStylingChange={handleStylingChange}
+              skin={skin}
+              onSkinChange={setSkin}
+              skins={skinSource}
+              onSkinsChange={handleSkinsChange}
+              compare={compare}
+              onCompareChange={setCompare}
+              compareOptions={compareOptions}
+              stylings={STYLINGS}
+            />
+          }
+          summary={summary}
+          report={{ build: { branch: __SANDBOX_BRANCH__, commit: __SANDBOX_COMMIT__ }, preferences, errors }}
+          params={frameParams}
+          onFrame={handleFrame}
+          onFrameLoad={handleFrameLoad}
+        />
+        {optionsOpen && (
+          <OptionsPanel
+            id={optionsId}
+            onClose={handleOptionsClose}
+            width={playerWidth}
+            onWidthChange={setWidth}
+            widthDisabled={!resizable}
+            scheme={scheme}
+            onSchemeChange={setScheme}
+            direction={direction}
+            onDirectionChange={setDirection}
+            locale={locale}
+            onLocaleChange={setLocale}
+            accentColor={accentColor}
+            onAccentColorChange={setAccentColor}
+            autoplay={autoplay}
+            onAutoplayChange={setAutoplay}
+            muted={muted}
+            onMutedChange={setMuted}
+            loop={loop}
+            onLoopChange={setLoop}
+            preload={preload}
+            onPreloadChange={setPreload}
+            captions={captions}
+            onCaptionsChange={setCaptions}
+            preferences={preferences}
+          />
+        )}
+      </div>
     </div>
   );
 }
