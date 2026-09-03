@@ -14,16 +14,18 @@ import { useSyncProps } from '../../utils/use-sync-props';
 import { MuxStoryboard } from './storyboard';
 
 // `src` and `source` come from `MuxMediaProps`: the Mux Media owns both, and its
-// `source` is the structured Mux one rather than the generic engine's.
+// `source` is the structured Mux one rather than the generic engine's. Both are
+// omitted from the base rather than intersected with it — the two `source` types
+// describe different things, and an intersection satisfies neither.
 export interface MuxVideoProps
   extends
     Omit<VideoHTMLAttributes<HTMLVideoElement>, keyof HlsVideoMediaProps | keyof MuxMediaProps>,
-    Partial<Omit<HlsVideoMediaProps, 'src'>>,
+    Partial<Omit<HlsVideoMediaProps, 'src' | 'source'>>,
     Partial<MuxMediaProps> {
   children?: ReactNode;
 }
 
-const muxVideoDefaultProps: Omit<HlsVideoMediaProps, 'src'> & MuxMediaProps = {
+const muxVideoDefaultProps: Omit<HlsVideoMediaProps, 'src' | 'source'> & MuxMediaProps = {
   ...hlsVideoMediaDefaultProps,
   ...muxMediaDefaultProps,
 };

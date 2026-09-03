@@ -91,6 +91,25 @@ const DRM_SYSTEMS = {
   },
 } as const;
 
+/**
+ * Axinom's entitlement message for the `hls-drm-axinom` asset, sent as the `X-AxDRM-Message` request header. Published
+ * test-vector credential, scoped to that one asset's content key (`302f80dd-411e-4886-bca5-bb1f8018a024`) — tokens and
+ * assets are paired, so it licenses nothing else.
+ *
+ * Sent as a per-system `headers` entry, which is the only way this provider authenticates — the license URL carries no
+ * credential of its own.
+ */
+export const AXINOM_TOKEN =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ewogICJ2ZXJzaW9uIjogMSwKICAiY29tX2tleV9pZCI6ICI2OWU1NDA4OC1lOWUwLTQ1MzAtOGMxYS0xZWI2ZGNkMGQxNGUiLAogICJtZXNzYWdlIjogewogICAgInR5cGUiOiAiZW50aXRsZW1lbnRfbWVzc2FnZSIsCiAgICAidmVyc2lvbiI6IDIsCiAgICAibGljZW5zZSI6IHsKICAgICAgImFsbG93X3BlcnNpc3RlbmNlIjogdHJ1ZQogICAgfSwKICAgICJjb250ZW50X2tleXNfc291cmNlIjogewogICAgICAiaW5saW5lIjogWwogICAgICAgIHsKICAgICAgICAgICJpZCI6ICIzMDJmODBkZC00MTFlLTQ4ODYtYmNhNS1iYjFmODAxOGEwMjQiLAogICAgICAgICAgImVuY3J5cHRlZF9rZXkiOiAicm9LQWcwdDdKaTFpNDNmd3YremZ0UT09IiwKICAgICAgICAgICJ1c2FnZV9wb2xpY3kiOiAiUG9saWN5IEEiCiAgICAgICAgfQogICAgICBdCiAgICB9LAogICAgImNvbnRlbnRfa2V5X3VzYWdlX3BvbGljaWVzIjogWwogICAgICB7CiAgICAgICAgIm5hbWUiOiAiUG9saWN5IEEiLAogICAgICAgICJwbGF5cmVhZHkiOiB7CiAgICAgICAgICAibWluX2RldmljZV9zZWN1cml0eV9sZXZlbCI6IDE1MCwKICAgICAgICAgICJwbGF5X2VuYWJsZXJzIjogWwogICAgICAgICAgICAiNzg2NjI3RDgtQzJBNi00NEJFLThGODgtMDhBRTI1NUIwMUE3IgogICAgICAgICAgXQogICAgICAgIH0KICAgICAgfQogICAgXQogIH0KfQ._NfhLVY7S6k8TJDWPeMPhUawhympnrk6WAZHOVjER6M';
+
+/**
+ * The multi-key sibling of {@link AXINOM_TOKEN}, for `hls-drm-axinom-multikey`: Axinom's MultiKey vector declares a
+ * distinct content key per quality tier, and this published token carries all three (`b54ec914-…`, `c83c4ea8-…`,
+ * `c868c702-…`). The asset that makes SPF's eager per-key session fan-out observable — three license POSTs at startup.
+ */
+export const AXINOM_MULTIKEY_TOKEN =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ewogICJ2ZXJzaW9uIjogMSwKICAiY29tX2tleV9pZCI6ICI2OWU1NDA4OC1lOWUwLTQ1MzAtOGMxYS0xZWI2ZGNkMGQxNGUiLAogICJtZXNzYWdlIjogewogICAgInR5cGUiOiAiZW50aXRsZW1lbnRfbWVzc2FnZSIsCiAgICAidmVyc2lvbiI6IDIsCiAgICAibGljZW5zZSI6IHsKICAgICAgImFsbG93X3BlcnNpc3RlbmNlIjogdHJ1ZQogICAgfSwKICAgICJjb250ZW50X2tleXNfc291cmNlIjogewogICAgICAiaW5saW5lIjogWwogICAgICAgIHsKICAgICAgICAgICJpZCI6ICJiNTRlYzkxNC0xOTJkLTRlYTEtYWMxOS1mNDI5ZWI0OTgyNjgiLAogICAgICAgICAgImVuY3J5cHRlZF9rZXkiOiAiR1ZERnJZUU9Bb1kzZmpxVVVtamswQT09IiwKICAgICAgICAgICJ1c2FnZV9wb2xpY3kiOiAiUG9saWN5IEEiCiAgICAgICAgfSwKICAgICAgICB7CiAgICAgICAgICAiaWQiOiAiYzgzYzRlYTgtMGYyYS00NTIzLTg1MWMtZmJlY2NkYzBmMjAyIiwKICAgICAgICAgICJlbmNyeXB0ZWRfa2V5IjogIlRKZGZsWmJLYmZXQXl5K1dta21UUEE9PSIsCiAgICAgICAgICAidXNhZ2VfcG9saWN5IjogIlBvbGljeSBBIgogICAgICAgIH0sCiAgICAgICAgewogICAgICAgICAgImlkIjogImM4NjhjNzAyLWM3MWItNDA2NC1hZTJiLWMyNGY3Y2MxMDc5MiIsCiAgICAgICAgICAiZW5jcnlwdGVkX2tleSI6ICJ4QXJpUkpOcUFTdXp6RExDRzNXSjdnPT0iLAogICAgICAgICAgInVzYWdlX3BvbGljeSI6ICJQb2xpY3kgQSIKICAgICAgICB9CiAgICAgIF0KICAgIH0sCiAgICAiY29udGVudF9rZXlfdXNhZ2VfcG9saWNpZXMiOiBbCiAgICAgIHsKICAgICAgICAibmFtZSI6ICJQb2xpY3kgQSIsCiAgICAgICAgInBsYXlyZWFkeSI6IHsKICAgICAgICAgICJtaW5fZGV2aWNlX3NlY3VyaXR5X2xldmVsIjogMTUwLAogICAgICAgICAgInBsYXlfZW5hYmxlcnMiOiBbCiAgICAgICAgICAgICI3ODY2MjdEOC1DMkE2LTQ0QkUtOEY4OC0wOEFFMjU1QjAxQTciCiAgICAgICAgICBdCiAgICAgICAgfQogICAgICB9CiAgICBdCiAgfQp9.XC0YIbZpKGFc3IZROklP4LvISc6cZGpE9UL-XcpcqWg';
+
 const SOURCE_MAP = {
   'hls-1': {
     label: 'HLS - Big Buck Bunny',
@@ -293,6 +312,23 @@ const SOURCE_MAP = {
     drm: true,
     poster: `https://image.mux.com/${DRM_PLAYBACK_ID}/thumbnail.webp?token=${DRM_TOKENS.thumbnail}`,
   },
+  // Third-party DRM, for proving the engine is not shaped around one provider.
+  // Every one is HLS + fMP4/CMAF with a public license server, verified reachable
+  // 2026-08-24. They are here to be *played*, unlike `hls-drm-unlicensed`.
+  'hls-drm-widevine-cwip': {
+    // Google/Shaka's Angel One, licensed by the Widevine interop proxy with no auth
+    // at all. The only source here using SAMPLE-AES-CTR, so it is also the only one
+    // that reaches the `cenc` branch of `declaredEncryptionScheme` — Mux packages
+    // SAMPLE-AES (cbcs) exclusively.
+    label: 'HLS - DRM Widevine (Shaka/CWIP, no auth)',
+    type: 'hls',
+    subType: 'mp4',
+    drm: true,
+    source: {
+      src: 'https://storage.googleapis.com/shaka-demo-assets/angel-one-widevine-hls/hls.m3u8',
+      drm: { 'com.widevine.alpha': { licenseUrl: 'https://cwip-shaka-proxy.appspot.com/no_auth' } },
+    },
+  },
   'hls-drm-ezdrm': {
     // EZDRM's FairPlay demo. No custom header — the asset is identified by the
     // license URL path — and the SPC goes up as a raw octet-stream body, the same
@@ -308,6 +344,77 @@ const SOURCE_MAP = {
         'com.apple.fps': {
           licenseUrl: 'https://fps.ezdrm.com/api/licenses/b99ed9e5-c641-49d1-bfa8-43692b686ddb',
           serverCertificateUrl: 'https://fps.ezdrm.com/demo/video/eleisure.cer',
+        },
+      },
+    },
+  },
+  'hls-drm-playready-msft': {
+    // Microsoft's public PlayReady test server, configured entirely through its
+    // own URL query. Lets the PlayReady vertical be exercised without Mux as a
+    // second variable; still needs a PlayReady CDM, so Windows/Edge only.
+    label: 'HLS - DRM PlayReady (Microsoft)',
+    type: 'hls',
+    subType: 'mp4',
+    drm: true,
+    source: {
+      src: 'https://test.playready.microsoft.com/media/dash/APPLEENC_CBCS_BBB_1080p/1080p_alternate.m3u8',
+      drm: {
+        'com.microsoft.playready': {
+          licenseUrl:
+            'https://test.playready.microsoft.com/service/rightsmanager.asmx?cfg=(persist:false,ck:W31bfVt9W31bfVt9W31bfQ==,ckt:aescbc)',
+        },
+      },
+    },
+  },
+  'hls-drm-axinom': {
+    // Axinom's H.264 CMAF cbcs vector — the same packaging Mux produces, from a
+    // different packager, declaring Widevine and FairPlay in one manifest.
+    //
+    // Licensed by the `X-AxDRM-Message` entitlement, which is what a per-system
+    // `headers` config exists for — a license URL alone cannot authenticate here.
+    // {@link AXINOM_TOKEN} is paired with this asset's content key.
+    //
+    // Widevine only, though the manifest declares FairPlay too. Over MSE the SPC
+    // is generated from an appended segment's `sinf`, which carries no IV, and
+    // Axinom answers `An initialization vector must be provided with every key in
+    // the entitlement message` — its published tokens carry none either. Shaka
+    // plays this asset by letting Safari play it natively, which is not a route
+    // an MSE engine has. Naming FairPlay here would report a licensing failure
+    // that says more about the request shape than about this source.
+    label: 'HLS - DRM Widevine (Axinom)',
+    type: 'hls',
+    subType: 'mp4',
+    drm: true,
+    source: {
+      src: 'https://media.axprod.net/TestVectors/Cmaf/protected_1080p_h264_cbcs/manifest.m3u8',
+      drm: {
+        'com.widevine.alpha': {
+          licenseUrl: 'https://drm-widevine-licensing.axtest.net/AcquireLicense',
+          headers: { 'X-AxDRM-Message': AXINOM_TOKEN },
+        },
+      },
+    },
+  },
+  'hls-drm-axinom-multikey': {
+    // Axinom's H.264 CMAF cbcs MultiKey vector: a distinct Widevine key per
+    // quality tier (three KEYIDs across the ladder), the studio-policy shape
+    // nothing else in this set exercises. SPF licenses every declared key
+    // eagerly at startup, so this asset shows three license POSTs before the
+    // first frame — the fan-out the pinning test in exchange-licenses pins.
+    //
+    // Widevine only, for the same reason as `hls-drm-axinom`: its FairPlay
+    // request over MSE cannot convey the `skd://keyid:iv` content id this
+    // provider keys on.
+    label: 'HLS - DRM Widevine multi-key (Axinom)',
+    type: 'hls',
+    subType: 'mp4',
+    drm: true,
+    source: {
+      src: 'https://media.axprod.net/TestVectors/MultiKey/Cmaf_h264_1080p_cbcs/manifest.m3u8',
+      drm: {
+        'com.widevine.alpha': {
+          licenseUrl: 'https://drm-widevine-licensing.axtest.net/AcquireLicense',
+          headers: { 'X-AxDRM-Message': AXINOM_MULTIKEY_TOKEN },
         },
       },
     },
@@ -363,15 +470,17 @@ export const HLS_SOURCE_IDS = SOURCE_IDS.filter(
  */
 export const MUX_SOURCE_IDS = SOURCE_IDS.filter((id) => SOURCES[id].type !== 'dash' && id !== 'hls-drm-unlicensed');
 /**
- * The SPF engine has no EME, so it can license neither DRM asset. It still gets the unlicensed one: refusing a
- * protected source visibly is the behavior worth reaching here, unlike the licensable assets that would only fail
- * obscurely. Signed playback is not DRM and stays — SPF plays it once the token authorizes the URL.
+ * The SPF Mux presets read `source.drm`, so they license both protected assets: `mux-drm` from the token its license
+ * servers derive from, `hls-drm` from the servers it names outright. The unlicensed asset stays alongside them, as the
+ * one DRM source here that carries no credentials — refusing a protected source visibly is a behavior worth reaching.
+ * Signed playback is not DRM and stays either way; SPF plays it once the token authorizes the URL.
  */
-export const MUX_SPF_SOURCE_IDS = SOURCE_IDS.filter(
-  (id) => SOURCES[id].type !== 'dash' && (!isDrmSource(id) || id === 'hls-drm-unlicensed')
-);
-/** The plain HLS presets are the same engine without the Mux source, so they drop what only a playback ID reaches. */
-export const SPF_HLS_SOURCE_IDS = MUX_SPF_SOURCE_IDS.filter((id) => !isMuxSource(id));
+export const MUX_SPF_SOURCE_IDS = SOURCE_IDS.filter((id) => SOURCES[id].type !== 'dash');
+/**
+ * The plain HLS presets are the same engine reached through `<hls-video>`, which takes a structured `source` of its
+ * own, so it licenses `source.drm` exactly as the Mux flavor does. Only what a playback ID reaches is dropped.
+ */
+export const SPF_HLS_SOURCE_IDS = SOURCE_IDS.filter((id) => SOURCES[id].type !== 'dash' && !isMuxSource(id));
 export const DASH_SOURCE_IDS = SOURCE_IDS.filter((id) => SOURCES[id].type === 'dash');
 /**
  * Shaka plays DASH and HLS from one element, so it is the only preset offered both. The DRM assets are left out until
@@ -484,4 +593,30 @@ export function getStoryboardSrc(source: SourceId): string | undefined {
 
 export function getChapters(source: SourceId): readonly ChapterTrack[] {
   return SOURCES[source].chapters ?? [];
+}
+
+/** Key system per `drm=` query value, the sandbox's shorthand for the EME ids. */
+export const KEY_SYSTEM_BY_DRM_PARAM: Record<string, string> = {
+  widevine: 'com.widevine.alpha',
+  playready: 'com.microsoft.playready',
+  fairplay: 'com.apple.fps',
+};
+
+/**
+ * Narrow a source's `drm` to the one key system a `drm=` query value names, so a browser with several CDMs negotiates
+ * the one under test — Edge on Windows has Widevine AND PlayReady, and unfiltered Widevine wins, which makes the Mux
+ * source untestable for PlayReady.
+ *
+ * Returns the source untouched when the param is absent or unrecognized, or when the source names no DRM at all. Copies
+ * rather than mutating: `SOURCES` is a shared module-level object, and a template that re-renders on source change
+ * would otherwise carry the narrowed config into every later source.
+ */
+export function restrictDrmSystems<T extends { drm?: Record<string, unknown> }>(
+  source: T | undefined,
+  param: string | null
+): T | undefined {
+  const keySystem = KEY_SYSTEM_BY_DRM_PARAM[param ?? ''];
+  if (!source?.drm || !keySystem || !(keySystem in source.drm)) return source;
+
+  return { ...source, drm: { [keySystem]: source.drm[keySystem] } };
 }

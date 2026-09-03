@@ -47,6 +47,60 @@ export const SVTA_UNSUPPORTED_AUDIO_FORMAT = 1005;
 export const SVTA_UNSUPPORTED_DRM_SYSTEM = 4008;
 
 /**
+ * SVTA 4 [Content Protection] 004 — bad license request. Used when the license server could not be reached or refused
+ * the CDM's message: from the client there is one observable ("the exchange failed at the server"), and which side was
+ * at fault lives in `data`, not the code.
+ */
+export const SVTA_BAD_LICENSE_REQUEST = 4004;
+
+/**
+ * SVTA 4 [Content Protection] 010 — DRM initialization error. The key system negotiated but MediaKeys could not be
+ * created or attached, so decryption never became possible for this source.
+ */
+export const SVTA_DRM_INITIALIZATION_ERROR = 4010;
+
+/**
+ * SVTA 4 [Content Protection] 013 — DRM certificate error. The server (application) certificate could not be fetched or
+ * was rejected by the CDM; without it FairPlay can never produce a license request.
+ */
+export const SVTA_DRM_CERTIFICATE_ERROR = 4013;
+
+/**
+ * SVTA 4 [Content Protection] 016 — DRM license response rejected. The server answered **200 with a license body** and
+ * the CDM refused it (`MediaKeySession.update()` threw). Not a server-side rejection: a non-2xx license response throws
+ * inside `fetchDrm` and reports {@link SVTA_BAD_LICENSE_REQUEST} instead. So this code proves the license URL,
+ * credentials, and request shaping all worked, and narrows the fault to the license's own contents — a security-level
+ * mismatch between the challenge and the issued license, for one.
+ */
+export const SVTA_DRM_LICENSE_RESPONSE_REJECTED = 4016;
+
+/**
+ * SVTA 4 [Content Protection] 021 — failed to generate DRM license request. The CDM could not produce a license request
+ * from the init data (`MediaKeySession.generateRequest()` threw); nothing ever reached the server.
+ */
+export const SVTA_DRM_LICENSE_REQUEST_GENERATION_FAILED = 4021;
+
+/**
+ * SVTA 4 [Content Protection] 003 — license expired. A key's status transitioned to `expired` (short license windows,
+ * long sessions). Browsers queue decode on a missing key, so without this cause the expiry presents as a silent
+ * mid-playback stall; reported so the stall is diagnosable. Re-requesting is a policy decision that lives downstream.
+ */
+export const SVTA_LICENSE_EXPIRED = 4003;
+
+/**
+ * SVTA 4 [Content Protection] 007 — insufficient output protection. A key went `output-restricted`: the CDM refuses to
+ * decode onto the current output path (HDCP downgrade, an external display, screen mirroring). Presents as a black
+ * frame or stall with no media error — nothing else in the pipeline observes the restriction.
+ */
+export const SVTA_INSUFFICIENT_OUTPUT_PROTECTION = 4007;
+
+/**
+ * SVTA 4 [Content Protection] 014 — DRM session error. A key reported `internal-error`: the CDM failed in a way it does
+ * not attribute (its own defect, a corrupted key store). Reported for diagnosability; recovery is downstream.
+ */
+export const SVTA_DRM_SESSION_ERROR = 4014;
+
+/**
  * SVTA 2 [Playback] 011 — no video track the environment can play.
  *
  * Covers both ways a composition can end up with nothing to select: renditions that existed and were all excluded as
@@ -71,12 +125,31 @@ export const SVTA_NO_SUPPORTED_AUDIO_TRACK = 2012;
  * fatal condition would make it useless for the notices it belongs on.
  *
  * Index `001`: the spec defines only `99000` (Unknown) for the custom category and leaves the rest to the publisher, so
- * this is the first code we define.
+ * this is the first code we define. Later custom codes follow the `99CII` convention (see
+ * {@link SVTA_UNSUPPORTED_ENCRYPTION_METHOD}); this cross-category "can't play this" surface stays in the general
+ * `990XX` bucket.
  *
  * Five digits, and deliberately not special-cased anywhere: {@link svtaCategory} and {@link svtaIndex} decompose it
  * correctly by arithmetic alone, because every standard category is below `8000` and custom starts at `99000`.
  */
 export const SVTA_UNSUPPORTED_PLAYBACK_FEATURE = 99001;
+
+/**
+ * SVTA 99 [Custom] 408 — the source is encrypted with a scheme this engine has no decryptor for, and it is **not** a
+ * DRM key system: HLS `METHOD=AES-128` / `SAMPLE-AES` under the `identity` keyformat (clear-key over HTTP). The non-DRM
+ * counterpart of {@link SVTA_UNSUPPORTED_DRM_SYSTEM} — reported so the diagnosis names the real gap, an unsupported
+ * encryption method, rather than blaming a DRM system that was never involved. `data` carries the HLS `method` and
+ * `keyFormat`. Actually decrypting such content is a deferred feature — see
+ * `internal/design/spf/features/clear-key-aes.md`.
+ *
+ * **The `99CII` custom-code convention.** SVTA 2070 leaves the whole `99xxx` category to the publisher (defining only
+ * `99000` Unknown). Rather than number custom codes sequentially, they mirror the standard taxonomy in their index
+ * digits: `99` + `C` (the standard category this parallels) + `II` (the index within it). So a content-protection
+ * (category 4) custom cause is `994II`, and `99408` deliberately echoes standard `4008` as its non-DRM sibling.
+ * {@link svtaCategory} / {@link svtaIndex} still decompose it by arithmetic (category `99`, index `408`); the parallel
+ * is a reading convention, not something the math needs. General, cross-category custom codes stay in `990XX`.
+ */
+export const SVTA_UNSUPPORTED_ENCRYPTION_METHOD = 99408;
 
 /**
  * The error's domain — `code / 1000`, per the spec's "divide by one thousand to obtain the error category". Works

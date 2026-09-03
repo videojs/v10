@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "dev:https": "vite --host --config vite.config.https.ts",
     "preview": "vp preview",
     "reset": "tsx scripts/reset.ts",
     "sync": "tsx scripts/sync.ts"
@@ -25,6 +26,7 @@
     "@types/prompts": "^2.4.9",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-basic-ssl": "^2.3.0",
     "@vitejs/plugin-react": "^6.0.4",
     "chalk": "^5.6.2",
     "diff": "^8.0.4",

@@ -7,6 +7,9 @@ import { cachedTaskInputs, packageTestTask, workspaceTaskDependencies } from '..
 
 const createPackConfig = (mode: PackageBuildMode): PackUserConfig => ({
   ...packageBuildConfig(mode, 'neutral'),
+  define: {
+    __DEV__: mode === 'dev' ? 'true' : 'false',
+  },
   entry: {
     index: 'src/index.ts',
     dom: 'src/dom.ts',
@@ -32,6 +35,9 @@ export default defineConfig({
       },
       'test:ci': packageTestTask(),
     },
+  },
+  define: {
+    __DEV__: 'true',
   },
   test: {
     coverage: {

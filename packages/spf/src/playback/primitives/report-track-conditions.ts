@@ -13,8 +13,15 @@
  * mixed source — some renditions encrypted or MPEG-TS, others playable — log its causes and still play.
  */
 import {
+  type DrmSystemsConfig,
+  firstNonDrmEncryptionKey,
+  type KeySystemModule,
+  keySystemCandidates,
+} from '../../media/drm';
+import {
   SVTA_UNSUPPORTED_AUDIO_FORMAT,
   SVTA_UNSUPPORTED_DRM_SYSTEM,
+  SVTA_UNSUPPORTED_ENCRYPTION_METHOD,
   SVTA_UNSUPPORTED_VIDEO_FORMAT,
   type SvtaError,
 } from '../../media/errors';
@@ -58,6 +65,28 @@ const CAPABILITY_PRUNED_TYPES: ReadonlySet<TrackType> = new Set<TrackType>(['vid
  * type.
  */
 export function reportUnsupportedTrackConditions(track: ResolvedTrack): readonly SvtaError[] {
+  return unsupportedTrackConditions(track, Boolean(getMediaPlaylistMetadata(track)?.encrypted));
+}
+
+/**
+ * DRM-composed variant of {@link reportUnsupportedTrackConditions}: encryption is only a cause when no configured key
+ * system serves the rendition's declared keys — mirroring what `makeCanPlayTrackWithDrm` prunes on, so a reported cause
+ * still always has a corresponding exclusion.
+ */
+export function makeReportUnsupportedTrackConditionsWithDrm(
+  drm: DrmSystemsConfig,
+  keySystems: readonly KeySystemModule[]
+): ReportUnsupportedTrackConditions {
+  return (track) => {
+    const metadata = getMediaPlaylistMetadata(track);
+    const unservable =
+      Boolean(metadata?.encrypted) && keySystemCandidates(metadata?.keys ?? [], drm, keySystems).length === 0;
+
+    return unsupportedTrackConditions(track, unservable);
+  };
+}
+
+function unsupportedTrackConditions(track: ResolvedTrack, encryptionUnsupported: boolean): readonly SvtaError[] {
   if (!CAPABILITY_PRUNED_TYPES.has(track.type)) return [];
 
   const conditions: SvtaError[] = [];
@@ -69,8 +98,20 @@ export function reportUnsupportedTrackConditions(track: ResolvedTrack): readonly
     conditions.push({ code: formatCode, data: { ...data, mimeType: track.mimeType } });
   }
 
-  if (getMediaPlaylistMetadata(track)?.encrypted) {
-    conditions.push({ code: SVTA_UNSUPPORTED_DRM_SYSTEM, data });
+  if (encryptionUnsupported) {
+    // Name the real gap, as `setupMediaKeys` does at negotiation: a non-DRM
+    // `identity`-keyformat key (clear-key AES) is an unsupported encryption
+    // method, not a DRM system. Absent keys default to the DRM assumption.
+    const nonDrmKey = firstNonDrmEncryptionKey(getMediaPlaylistMetadata(track)?.keys ?? []);
+
+    conditions.push(
+      nonDrmKey
+        ? {
+            code: SVTA_UNSUPPORTED_ENCRYPTION_METHOD,
+            data: { ...data, method: nonDrmKey.method, keyFormat: nonDrmKey.keyFormat },
+          }
+        : { code: SVTA_UNSUPPORTED_DRM_SYSTEM, data }
+    );
   }
 
   return conditions;

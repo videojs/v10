@@ -1,3 +1,32 @@
+// The `source.drm`-shaped license-server contract the engine's `drm` config
+// takes — accepts `@videojs/media`'s shape, so adapter-held configs pass
+// through without the package dependency, and additionally takes a resolver
+// per URL for license servers only known once a source is set.
+export type { DrmSystemConfig, DrmSystemsConfig, DrmUrl } from '../../../media/drm';
+// The unit of DRM composability: one value per key system, carrying that
+// system's whole contribution to negotiation, init data, and license shaping.
+// `config.keySystems` is public, so without these a consumer could neither
+// narrow the default nor reconstruct it — `[widevineKeySystem]` alone drops
+// PlayReady's and FairPlay's code from the bundle.
+export type { KeySystemModule } from '../../../media/drm';
+export {
+  DEFAULT_KEY_SYSTEMS,
+  clearKeySystem,
+  fairPlayKeySystem,
+  playReadyKeySystem,
+  widevineKeySystem,
+} from '../../../media/dom/key-systems';
+// Opt-in, tree-shakable transforms for providers off the raw-wire default: a
+// form-encoding `licenseRequest` factory (the `spc=` FairPlay dialect), plus
+// `licenseResponse` unwrappers — a FairPlay CKC unwrapper (XML/JSON envelopes)
+// and a JSON license unwrapper. Imported only when dropped into a
+// `source.drm[ks]` slot, so a composition that needs none pays for none.
+export {
+  detectFairPlayCkc,
+  formEncodeLicenseRequest,
+  type FormEncodeLicenseRequestOptions,
+  unwrapJsonLicense,
+} from '../../../media/dom/license-transforms';
 // SVTA 2070 error vocabulary — the codes reported on `state.errors` and
 // surfaced through the adapter's `error`.
 export type { SvtaError } from '../../../media/errors';

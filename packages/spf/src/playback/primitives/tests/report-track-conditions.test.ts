@@ -1,14 +1,22 @@
 import { describe, expect, it } from 'vite-plus/test';
 
+import type { KeySystemModule } from '../../../media/drm';
 import {
   SVTA_UNSUPPORTED_AUDIO_FORMAT,
   SVTA_UNSUPPORTED_DRM_SYSTEM,
+  SVTA_UNSUPPORTED_ENCRYPTION_METHOD,
   SVTA_UNSUPPORTED_VIDEO_FORMAT,
 } from '../../../media/errors';
 import { MEDIA_PLAYLIST_METADATA_KEY, type ResolvedTrack, type TrackType } from '../../../media/types';
-import { reportUnsupportedTrackConditions } from '../report-track-conditions';
+import {
+  makeReportUnsupportedTrackConditionsWithDrm,
+  reportUnsupportedTrackConditions,
+} from '../report-track-conditions';
 
-const track = (type: TrackType, opts: { mimeType?: string; encrypted?: boolean } = {}): ResolvedTrack =>
+const track = (
+  type: TrackType,
+  opts: { mimeType?: string; encrypted?: boolean; keys?: object[] } = {}
+): ResolvedTrack =>
   ({
     id: `${type}-1`,
     type,
@@ -24,6 +32,7 @@ const track = (type: TrackType, opts: { mimeType?: string; encrypted?: boolean }
         mediaSequence: 0,
         endList: true,
         encrypted: opts.encrypted ?? false,
+        ...(opts.keys && { keys: opts.keys }),
       },
     },
   }) as unknown as ResolvedTrack;
@@ -45,6 +54,16 @@ describe('reportUnsupportedTrackConditions', () => {
 
   it('reports unsupported DRM for an encrypted rendition', () => {
     expect(codes(track('video', { encrypted: true }))).toEqual([SVTA_UNSUPPORTED_DRM_SYSTEM]);
+  });
+
+  it('reports an unsupported encryption method for a clear-key (identity-keyformat) rendition', () => {
+    // AES-128 with no KEYFORMAT is clear-key, not DRM — the cause names the method.
+    const conditions = reportUnsupportedTrackConditions(
+      track('video', { encrypted: true, keys: [{ method: 'AES-128' }] })
+    );
+
+    expect(conditions.map((error) => error.code)).toEqual([SVTA_UNSUPPORTED_ENCRYPTION_METHOD]);
+    expect(conditions[0]?.data).toMatchObject({ trackType: 'video', trackId: 'video-1', method: 'AES-128' });
   });
 
   it('reports both causes when a rendition is encrypted MPEG-TS', () => {
@@ -99,5 +118,46 @@ describe('reportUnsupportedTrackConditions', () => {
     expect(conditions).not.toHaveLength(0);
 
     for (const condition of conditions) expect(condition.message).toBeUndefined();
+  });
+});
+
+describe('makeReportUnsupportedTrackConditionsWithDrm', () => {
+  const WIDEVINE_KEY = {
+    method: 'SAMPLE-AES',
+    uri: 'data:text/plain;base64,cGluZw==',
+    keyFormat: 'urn:uuid:edef8ba9-79d6-4ace-a3c8-27dcd51d21ed',
+  };
+  const FAIRPLAY_KEY = {
+    method: 'SAMPLE-AES',
+    uri: 'skd://mux?keyId=abc',
+    keyFormat: 'com.apple.streamingkeydelivery',
+  };
+  // Stand-in modules rather than the real ones: this reporter is DOM-free, and
+  // so is its project — importing `media/dom` here would be the placement bug.
+  const keySystems: KeySystemModule[] = [
+    { keySystem: 'com.widevine.alpha', keyFormats: ['urn:uuid:edef8ba9-79d6-4ace-a3c8-27dcd51d21ed'] },
+    { keySystem: 'com.apple.fps', keyFormats: ['com.apple.streamingkeydelivery'] },
+  ];
+  const report = makeReportUnsupportedTrackConditionsWithDrm(
+    { 'com.widevine.alpha': { licenseUrl: 'https://license.example.com/widevine' } },
+    keySystems
+  );
+
+  it('reports no DRM cause when the declared keys reach a configured system', () => {
+    expect(report(track('video', { encrypted: true, keys: [WIDEVINE_KEY] }))).toEqual([]);
+  });
+
+  it('keeps the DRM cause when no configured system serves the declared keys', () => {
+    expect(report(track('video', { encrypted: true, keys: [FAIRPLAY_KEY] })).map((error) => error.code)).toEqual([
+      SVTA_UNSUPPORTED_DRM_SYSTEM,
+    ]);
+  });
+
+  it('keeps the format causes independent of key servability', () => {
+    expect(
+      report(track('video', { mimeType: 'video/mp2t', encrypted: true, keys: [WIDEVINE_KEY] })).map(
+        (error) => error.code
+      )
+    ).toEqual([SVTA_UNSUPPORTED_VIDEO_FORMAT]);
   });
 });

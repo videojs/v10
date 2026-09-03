@@ -17,6 +17,9 @@ const MuxAudioMediaBase = MuxMediaMixin(HlsAudioMedia);
  * fetched. That is the one place this diverges from the hls.js-backed `<mux-audio>`, which runs the full engine and
  * downloads video renditions it never shows.
  *
+ * `source.drm` is accepted but inert, unlike on the video flavor: the audio-only engine composes no EME. Mux encrypts
+ * video renditions and leaves audio clear, so a protected playback ID still plays here.
+ *
  * `contentData` is kept rather than dropped, for the same reason its hls.js counterpart has it: a playback ID played as
  * audio is usually a _video_ asset, whose poster and storyboard exist and which an audio skin may well want. The
  * element ignores it either way. Mux publishes neither for a genuinely audio-only asset, so those URLs 404 — see the

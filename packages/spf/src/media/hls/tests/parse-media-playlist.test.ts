@@ -1197,3 +1197,117 @@ ${keyLines}
     });
   });
 });
+
+describe('parseMediaPlaylist (key metadata)', () => {
+  const withKey = (keyLines: string) => `#EXTM3U
+#EXT-X-TARGETDURATION:4
+#EXT-X-MAP:URI="init.mp4"
+${keyLines}
+#EXTINF:4.0,
+0.m4s
+#EXT-X-ENDLIST
+`;
+
+  const unresolved: PartiallyResolvedVideoTrack = {
+    id: 'v-1',
+    type: 'video',
+    url: 'https://example.com/v.m3u8',
+    bandwidth: 1000,
+    codecs: ['avc1.4d401f'],
+    mimeType: 'video/mp4',
+  };
+
+  it('surfaces no keys for a clear playlist or METHOD=NONE', () => {
+    expect(getMediaPlaylistMetadata(parseMediaPlaylist(withKey(''), unresolved))?.keys).toBeUndefined();
+    expect(
+      getMediaPlaylistMetadata(parseMediaPlaylist(withKey('#EXT-X-KEY:METHOD=NONE'), unresolved))?.keys
+    ).toBeUndefined();
+  });
+
+  // Key URIs are opaque identifiers for every DRM system — a `data:` PSSH/PRO
+  // payload, a FairPlay `skd://` — and only `identity`/AES-128 names a fetchable
+  // resource. Three real providers delimit the FairPlay form three different ways,
+  // so the parser must hand every one of them back untouched.
+  it.each([
+    ['Axinom keyid:iv', 'skd://302f80dd-411e-4886-bca5-bb1f8018a024:77FD1889AAF4143B085548B3C0F95B9A'],
+    ['EZDRM host/;id', 'skd://fps.ezdrm.com/;b99ed9e5-c641-49d1-bfa8-43692b686ddb'],
+    ['bare id', 'skd://9fd385d5-f389-48b5-b7c3-b1863ee10888'],
+    ['data: payload', 'data:text/plain;base64,AAAAPnBzc2gAAAAA'],
+  ])('preserves an opaque %s key URI verbatim', (_label, uri) => {
+    const track = parseMediaPlaylist(
+      withKey(`#EXT-X-KEY:METHOD=SAMPLE-AES,URI="${uri}",KEYFORMAT="com.apple.streamingkeydelivery"`),
+      unresolved
+    );
+
+    expect(getMediaPlaylistMetadata(track)?.keys?.[0]?.uri).toBe(uri);
+  });
+
+  it('still resolves a relative AES-128 key URI against the playlist', () => {
+    const track = parseMediaPlaylist(withKey('#EXT-X-KEY:METHOD=AES-128,URI="keys/1.bin"'), unresolved);
+
+    expect(getMediaPlaylistMetadata(track)?.keys?.[0]?.uri).toBe('https://example.com/keys/1.bin');
+  });
+
+  it('surfaces a DRM key declaration with raw attribute values', () => {
+    const track = parseMediaPlaylist(
+      withKey(
+        '#EXT-X-KEY:METHOD=SAMPLE-AES,URI="skd://k",IV=0x9c7db8778570d05c3177c349fd9236aa,KEYFORMAT="com.apple.streamingkeydelivery"'
+      ),
+      unresolved
+    );
+
+    expect(getMediaPlaylistMetadata(track)?.keys).toEqual([
+      {
+        method: 'SAMPLE-AES',
+        uri: 'skd://k',
+        iv: '0x9c7db8778570d05c3177c349fd9236aa',
+        keyFormat: 'com.apple.streamingkeydelivery',
+      },
+    ]);
+  });
+
+  it('resolves a relative key URI against the playlist URL', () => {
+    const track = parseMediaPlaylist(withKey('#EXT-X-KEY:METHOD=AES-128,URI="keys/k.bin"'), unresolved);
+
+    expect(getMediaPlaylistMetadata(track)?.keys).toEqual([
+      { method: 'AES-128', uri: 'https://example.com/keys/k.bin' },
+    ]);
+  });
+
+  it('dedupes a key re-declared between segment runs', () => {
+    const track = parseMediaPlaylist(
+      `#EXTM3U
+#EXT-X-TARGETDURATION:4
+#EXT-X-MAP:URI="init.mp4"
+#EXT-X-KEY:METHOD=AES-128,URI="k.bin"
+#EXTINF:4.0,
+0.m4s
+#EXT-X-KEY:METHOD=AES-128,URI="k.bin"
+#EXTINF:4.0,
+1.m4s
+#EXT-X-ENDLIST
+`,
+      unresolved
+    );
+
+    expect(getMediaPlaylistMetadata(track)?.keys).toHaveLength(1);
+  });
+
+  it('surfaces all three Mux key systems from the DRM fixture', () => {
+    // The manifest-driven init-data source for the EME pipeline: Mux carries a
+    // complete Widevine PSSH as a data: URI plus the KEYID extension attribute.
+    const video = parseMediaPlaylist(drmCmafVideo, unresolved);
+    const keys = getMediaPlaylistMetadata(video)?.keys;
+
+    expect(keys?.map((k) => k.keyFormat)).toEqual([
+      'urn:uuid:edef8ba9-79d6-4ace-a3c8-27dcd51d21ed',
+      'com.microsoft.playready',
+      'com.apple.streamingkeydelivery',
+    ]);
+    const widevine = keys?.[0];
+
+    expect(widevine?.method).toBe('SAMPLE-AES');
+    expect(widevine?.uri).toMatch(/^data:text\/plain;base64,AAAAlnBzc2g/);
+    expect(widevine?.keyId).toBe('0xbfd7ce06e7f24ca811498a15d29b0376');
+  });
+});
