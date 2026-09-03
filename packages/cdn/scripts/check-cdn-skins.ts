@@ -15,6 +15,8 @@ const HTML_DIST_DIR = resolve(
 );
 const PREFIX = '\x1b[35m[check-cdn-skins]\x1b[0m';
 const forbiddenRuntime = /(?:virtual:vjsc|vjsc\/components|vjsc\/target|@videojs\/core\/vjsc)/;
+// A light-DOM rule that lives only in `global.css`; a skin sheet is linked inside a shadow root and must not carry it.
+const globalOnlyRule = 'media-container video::-webkit-media-text-track-container';
 const skins = [
   {
     entry: 'video',
@@ -77,11 +79,14 @@ const skins = [
 function main(): void {
   if (!existsSync(CDN_DIR)) fail(`CDN build not found at ${CDN_DIR}. Run \`pnpm build:cdn\` first.`);
 
+  assert(readCdn('global.css').includes(globalOnlyRule), 'global.css lost its light-DOM rules');
+
   for (const skin of skins) {
     const stylesheet = readCdn(`${skin.entry}.css`);
 
     assert(stylesheet.length > 10_000, `${skin.entry}.css is unexpectedly incomplete`);
     assert(stylesheet.includes(skin.scope), `${skin.entry}.css is missing its skin scope`);
+    assert(!stylesheet.includes(globalOnlyRule), `${skin.entry}.css embeds the light-DOM global.css rules`);
 
     const registration = readSource(`internal/skins/${skin.generated}/register.js`);
     const expectedSources = registrationImports(registration);
