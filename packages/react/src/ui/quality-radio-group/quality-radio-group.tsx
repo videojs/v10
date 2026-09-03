@@ -33,8 +33,8 @@ export interface QualityRadioGroupProps
  *   <QualityRadioGroup
  *     renderItem={(props, item) => (
  *       <Menu.RadioItem {...props}>
- *         {item.label}
- *         {item.tier ? <sup>{item.tier}</sup> : null}
+ *         {item.parts.primary}
+ *         {item.parts.tier ? <sup>{item.parts.tier}</sup> : null}
  *         <Menu.ItemIndicator checked={item.checked} />
  *       </Menu.RadioItem>
  *     )}

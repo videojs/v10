@@ -59,7 +59,7 @@ The <DocsLink slug="reference/feature-quality">quality feature</DocsLink> mirror
 
 - `videoRenditionList` holds each rendition's `id`, `width`, `height`, `bitrate`, `frameRate`, `codec`, and whether it's `selected`.
 - `activeVideoRendition` is the rendition currently playing. When the engine doesn't report one directly, the player matches it from the video's current dimensions.
-- `selectVideoRendition(value)` pins one rendition; pass `'auto'` to return control to the engine's adaptive selection.
+- `selectVideoRendition(index)` pins the rendition at that position in `videoRenditionList`; pass `null` to return control to the engine's adaptive selection. Indexes stay unambiguous when rendition identifiers repeat or are missing.
 
 <FrameworkCase frameworks={["react"]}>
 
@@ -101,9 +101,10 @@ function PinLowestRendition() {
   const renditions = usePlayer((s) => s.videoRenditionList);
 
   const lowest = [...renditions].sort((a, b) => (a.height ?? 0) - (b.height ?? 0))[0];
+  const lowestIndex = lowest ? renditions.indexOf(lowest) : -1;
 
   return (
-    <button type="button" onClick={() => lowest?.id && store.selectVideoRendition(lowest.id)}>
+    <button type="button" disabled={lowestIndex === -1} onClick={() => store.selectVideoRendition(lowestIndex)}>
       Data saver
     </button>
   );
@@ -124,7 +125,7 @@ export default function App() {
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
 
-Access the player store through the <DocsLink slug="reference/player-controller">player controller</DocsLink> and call `selectVideoRendition` with a rendition `id` from `videoRenditionList`, or `'auto'` to restore adaptive selection.
+Access the player store through the <DocsLink slug="reference/player-controller">player controller</DocsLink> and call `selectVideoRendition` with the rendition's index in `videoRenditionList`, or `null` to restore adaptive selection.
 
 </FrameworkCase>
 

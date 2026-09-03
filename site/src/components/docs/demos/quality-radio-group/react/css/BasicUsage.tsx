@@ -19,10 +19,10 @@ function QualityMenu(): ReactNode {
             renderItem={(props, item) => (
               <Menu.RadioItem {...props} className="menu-item">
                 <span>
-                  {item.label}
-                  {item.tier ? <sup className="menu-tier">{item.tier}</sup> : null}
+                  {item.parts.primary}
+                  {item.parts.tier ? <sup className="menu-tier">{item.parts.tier}</sup> : null}
                 </span>
-                {item.badge ? <span className="menu-badge">{item.badge}</span> : null}
+                {item.parts.bitrate ? <span className="menu-badge">{item.parts.bitrate}</span> : null}
                 <Menu.ItemIndicator checked={item.checked} forceMount className="menu-indicator">
                   ✓
                 </Menu.ItemIndicator>

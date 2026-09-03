@@ -20,7 +20,7 @@ function SettingsMenu(): ReactNode {
   const audioTrack = useAudioTrackOptions();
   const captions = useCaptionsOptions();
   const hasPlaybackRate = playbackRate?.state.availability === 'available';
-  const hasQuality = quality?.state.availability === 'available';
+  const hasQuality = quality?.availability === 'available';
   const hasAudioTrack = audioTrack?.state.availability === 'available';
   const hasCaptions = captions?.state.availability === 'available';
   if (!hasPlaybackRate && !hasQuality && !hasAudioTrack && !hasCaptions) return null;
@@ -55,7 +55,7 @@ function SettingsMenu(): ReactNode {
                   className="menu-group"
                   value={quality.value}
                   onValueChange={quality.setValue}
-                  aria-label="Quality"
+                  aria-label={quality.label}
                 >
                   {quality.options.map((option) => (
                     <Menu.RadioItem
@@ -65,10 +65,10 @@ function SettingsMenu(): ReactNode {
                       className="menu-item"
                     >
                       <span>
-                        {option.label}
-                        {option.tier ? <sup className="menu-tier">{option.tier}</sup> : null}
+                        {option.parts.primary}
+                        {option.parts.tier ? <sup className="menu-tier">{option.parts.tier}</sup> : null}
                       </span>
-                      {option.badge ? <span className="menu-badge">{option.badge}</span> : null}
+                      {option.parts.bitrate ? <span className="menu-badge">{option.parts.bitrate}</span> : null}
                       <Menu.ItemIndicator
                         checked={option.value === quality.value}
                         forceMount

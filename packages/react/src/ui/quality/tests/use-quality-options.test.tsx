@@ -26,7 +26,7 @@ function renderQualityOptions({
 }: {
   videoRenditionList?: MediaVideoRendition[];
   activeVideoRendition?: MediaVideoRendition | null | undefined;
-  selectVideoRendition?: (value: string) => void;
+  selectVideoRendition?: (index: number | null) => void;
   formatRendition?: ((rendition: MediaVideoRendition) => string) | undefined;
   locale?: string | undefined;
 } = {}) {
@@ -59,12 +59,17 @@ function QualityRadioGroup({
   return (
     <>
       <span data-testid="selected-label">{selectedLabel}</span>
-      <Menu.RadioGroup value={value} onValueChange={setValue} aria-label="Quality">
+      <Menu.RadioGroup
+        value={value}
+        onValueChange={setValue}
+        aria-label={quality.label}
+        data-availability={quality.availability}
+      >
         {options.map((option) => (
-          <Menu.RadioItem key={option.value} value={option.value} disabled={option.disabled}>
-            {option.label}
-            {option.tier ? <sup>{option.tier}</sup> : null}
-            {option.badge ? <span>{option.badge}</span> : null}
+          <Menu.RadioItem key={option.value} value={option.value} disabled={option.disabled} data-label={option.label}>
+            {option.parts.primary}
+            {option.parts.tier ? <sup>{option.parts.tier}</sup> : null}
+            {option.parts.bitrate ? <span>{option.parts.bitrate}</span> : null}
           </Menu.RadioItem>
         ))}
       </Menu.RadioGroup>
@@ -76,6 +81,7 @@ describe('useQualityOptions', () => {
   it('renders Auto and rendition options', () => {
     renderQualityOptions();
 
+    expect(screen.getByRole('group', { name: 'Quality' }).getAttribute('data-availability')).toBe('available');
     expect(screen.getByRole('menuitemradio', { name: 'Auto' }).getAttribute('aria-checked')).toBe('true');
     expect(screen.getByRole('menuitemradio', { name: '1080p HD' }).getAttribute('aria-checked')).toBe('false');
     expect(screen.getByRole('menuitemradio', { name: '720p' }).getAttribute('aria-checked')).toBe('false');
@@ -89,7 +95,7 @@ describe('useQualityOptions', () => {
 
     fireEvent.click(screen.getByRole('menuitemradio', { name: '720p' }));
 
-    expect(selectVideoRendition).toHaveBeenCalledWith('1');
+    expect(selectVideoRendition).toHaveBeenCalledWith(1);
   });
 
   it('renders the active rendition in the Auto option', () => {
@@ -130,8 +136,11 @@ describe('useQualityOptions', () => {
       ],
     });
 
-    expect(screen.getByRole('menuitemradio', { name: '1080p HD 6 Mbps' })).toBeTruthy();
-    expect(screen.getByRole('menuitemradio', { name: '1080p HD 3 Mbps' })).toBeTruthy();
+    const high = screen.getByRole('menuitemradio', { name: '1080p HD 6 Mbps' });
+    const low = screen.getByRole('menuitemradio', { name: '1080p HD 3 Mbps' });
+
+    expect(high.getAttribute('data-label')).toBe('1080p HD 6 Mbps');
+    expect(low.getAttribute('data-label')).toBe('1080p HD 3 Mbps');
     expect(screen.getByRole('menuitemradio', { name: '720p' })).toBeTruthy();
   });
 

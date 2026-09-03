@@ -28,9 +28,9 @@ export class QualityRadioGroupElement extends MenuRadioGroupElement {
   readonly #i18n = new I18nController(this, i18nContext);
   readonly #mediaState = new PlayerController(this, playerContext, selectQuality);
   readonly #options = new RadioOptionsController<QualityRadioGroupOption>(this, {
-    renderItem: (item, label, option) => this.#setContent(item, label, option.tier, option.badge),
+    renderItem: (item, label, option) => this.#setContent(item, label, option),
     setItemAttributes: (item, option) => item.setAttribute('data-rendition', option.value),
-    getOptionCacheKey: (option) => `${option.tier ?? ''}:${option.badge ?? ''}`,
+    getOptionCacheKey: (option) => `${option.parts.tier ?? ''}:${option.parts.bitrate ?? ''}`,
     onValueChange: (value) => {
       const media = this.#mediaState.value;
 
@@ -67,13 +67,15 @@ export class QualityRadioGroupElement extends MenuRadioGroupElement {
     if (state) applyStateDataAttrs(this, state, QualityRadioGroupDataAttrs);
   }
 
-  #setContent(item: MenuRadioItemElement, label: string, tier: string | undefined, badge: string | undefined): void {
+  #setContent(item: MenuRadioItemElement, label: string, option: QualityRadioGroupOption): void {
     const labelPart = item.querySelector<HTMLElement>('[data-part~="label"]');
     const tierPart = item.querySelector<HTMLElement>('[data-part~="tier"]');
-    const badgePart = item.querySelector<HTMLElement>('[data-part~="badge"]');
+    const bitratePart = item.querySelector<HTMLElement>('[data-part~="bitrate"]');
+    const { tier, bitrate } = option.parts;
+    const primary = translateText(option.parts.primary, this.#i18n.value, option.labelParams);
 
     if (labelPart) {
-      labelPart.textContent = label;
+      labelPart.textContent = primary;
     }
 
     if (tierPart) {
@@ -81,13 +83,13 @@ export class QualityRadioGroupElement extends MenuRadioGroupElement {
       tierPart.hidden = !tier;
     }
 
-    if (badgePart) {
-      badgePart.textContent = badge ?? '';
-      badgePart.hidden = !badge;
+    if (bitratePart) {
+      bitratePart.textContent = bitrate ?? '';
+      bitratePart.hidden = !bitrate;
     }
 
-    if (!labelPart && !tierPart && !badgePart) {
-      item.textContent = [label, tier, badge].filter(Boolean).join(' ');
+    if (!labelPart && !tierPart && !bitratePart) {
+      item.textContent = label;
     }
   }
 }

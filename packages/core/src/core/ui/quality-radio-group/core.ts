@@ -17,10 +17,30 @@ export interface QualityRadioGroupProps {
   disabled?: boolean | undefined;
 }
 
-export interface QualityRadioGroupOption extends RadioOption {
+export interface QualityRadioGroupOptionParts {
+  /**
+   * Main visible text. Translate it with the option's `labelParams`; the automatic option interpolates the active
+   * rendition.
+   */
+  primary: Text | string;
+  /** Resolution tier such as `HD`, `4K`, or `8K`. */
   tier?: string | undefined;
-  badge?: string | undefined;
+  /** Bitrate text, present only when renditions share a size and need disambiguating. */
+  bitrate?: string | undefined;
 }
+
+export interface QualityRadioGroupAutoOption extends RadioOption {
+  kind: 'auto';
+  parts: QualityRadioGroupOptionParts;
+}
+
+export interface QualityRadioGroupRenditionOption extends RadioOption {
+  kind: 'rendition';
+  rendition: MediaVideoRendition;
+  parts: QualityRadioGroupOptionParts;
+}
+
+export type QualityRadioGroupOption = QualityRadioGroupAutoOption | QualityRadioGroupRenditionOption;
 
 export interface QualityRadioGroupState extends RadioOptionsState<QualityRadioGroupOption> {}
 
@@ -71,7 +91,7 @@ function formatRenditionLabel(rendition: MediaVideoRendition): Text | string {
   return qualityText;
 }
 
-function formatRenditionBadge(
+function formatRenditionBitrateLabel(
   rendition: MediaVideoRendition,
   renditions: readonly MediaVideoRendition[] = []
 ): string | undefined {
@@ -93,8 +113,14 @@ function formatRenditionTier(rendition: MediaVideoRendition): string | undefined
   return undefined;
 }
 
-function getRenditionValue(rendition: MediaVideoRendition, index: number): string {
-  return rendition.id || String(index);
+function getRenditionOptionValue(index: number): string {
+  return `rendition:${index}`;
+}
+
+function formatOptionLabel(primary: Text | string, tier?: string, bitrate?: string): Text | string {
+  if (!tier && !bitrate) return primary;
+
+  return [resolveText(primary), tier, bitrate].filter(Boolean).join(' ');
 }
 
 function isSameRendition(a: MediaVideoRendition, b: MediaVideoRendition): boolean {
@@ -117,7 +143,9 @@ export class QualityRadioGroupCore {
   };
 
   readonly state = createState<QualityRadioGroupState>({
-    options: [{ value: QUALITY_AUTO_VALUE, label: autoText, disabled: false }],
+    options: [
+      { kind: 'auto', value: QUALITY_AUTO_VALUE, label: autoText, disabled: false, parts: { primary: autoText } },
+    ],
     value: QUALITY_AUTO_VALUE,
     disabled: true,
     hidden: true,
@@ -151,13 +179,13 @@ export class QualityRadioGroupCore {
     return formatRenditionLabel(rendition);
   }
 
-  getRenditionBadge(
+  getRenditionBitrateLabel(
     rendition: MediaVideoRendition,
     renditions: readonly MediaVideoRendition[] = []
   ): string | undefined {
     if (this.#props.formatRendition !== QualityRadioGroupCore.defaultProps.formatRendition) return undefined;
 
-    return formatRenditionBadge(rendition, renditions);
+    return formatRenditionBitrateLabel(rendition, renditions);
   }
 
   getRenditionTier(rendition: MediaVideoRendition): string | undefined {
@@ -166,8 +194,8 @@ export class QualityRadioGroupCore {
     return formatRenditionTier(rendition);
   }
 
-  getRenditionValue(rendition: MediaVideoRendition, index: number): string {
-    return getRenditionValue(rendition, index);
+  getRenditionValue(_rendition: MediaVideoRendition, index: number): string {
+    return getRenditionOptionValue(index);
   }
 
   getAttrs(state: QualityRadioGroupState) {
@@ -188,15 +216,21 @@ export class QualityRadioGroupCore {
     const availability: QualityRadioGroupState['availability'] =
       media.videoRenditionList.length > 1 ? 'available' : 'unavailable';
     const toOption = (rendition: MediaVideoRendition, index: number): QualityRadioGroupOption => {
+      const primary = this.getRenditionLabel(rendition);
       const tier = this.getRenditionTier(rendition);
-      const badge = this.getRenditionBadge(rendition, media.videoRenditionList);
+      const bitrate = this.getRenditionBitrateLabel(rendition, media.videoRenditionList);
 
       return {
+        kind: 'rendition',
         value: this.getRenditionValue(rendition, index),
-        label: this.getRenditionLabel(rendition),
+        label: formatOptionLabel(primary, tier, bitrate),
         disabled: false,
-        ...(tier && { tier }),
-        ...(badge && { badge }),
+        rendition,
+        parts: {
+          primary,
+          ...(tier && { tier }),
+          ...(bitrate && { bitrate }),
+        },
       };
     };
     const activeIndex =
@@ -205,10 +239,13 @@ export class QualityRadioGroupCore {
         : media.videoRenditionList.findIndex((rendition) => isSameRendition(rendition, media.activeVideoRendition!));
     const active =
       media.activeVideoRendition && activeIndex !== -1 ? toOption(media.activeVideoRendition, activeIndex) : undefined;
+    const autoLabel = selectedIndex === -1 && active ? autoWithLabelText : autoText;
     const autoOption: QualityRadioGroupOption = {
+      kind: 'auto',
       value: QUALITY_AUTO_VALUE,
-      label: selectedIndex === -1 && active ? autoWithLabelText : autoText,
+      label: autoLabel,
       disabled: false,
+      parts: { primary: autoLabel },
       ...(selectedIndex === -1 && active && { labelParams: { label: resolveText(active.label) } }),
     };
 
@@ -231,16 +268,16 @@ export class QualityRadioGroupCore {
     if (this.#props.disabled) return;
 
     if (value === QUALITY_AUTO_VALUE) {
-      media.selectVideoRendition(value);
+      media.selectVideoRendition(null);
       return;
     }
 
-    const hasValue = media.videoRenditionList.some(
-      (rendition, index) => this.getRenditionValue(rendition, index) === value
+    const index = media.videoRenditionList.findIndex(
+      (rendition, renditionIndex) => this.getRenditionValue(rendition, renditionIndex) === value
     );
-    if (!hasValue) return;
+    if (index === -1) return;
 
-    media.selectVideoRendition(value);
+    media.selectVideoRendition(index);
   }
 
   selectValue(media: MediaQualityState, value: string): void {

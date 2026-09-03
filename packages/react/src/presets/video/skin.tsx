@@ -179,10 +179,10 @@ function SettingsMenu(): ReactNode {
                   renderItem={(props, item) => (
                     <Menu.RadioItem {...props} className="media-menu__item">
                       <bdi dir="auto">
-                        {item.label}
-                        {item.tier ? <sup className="media-menu__tier">{item.tier}</sup> : null}
+                        {item.parts.primary}
+                        {item.parts.tier ? <sup className="media-menu__tier">{item.parts.tier}</sup> : null}
                       </bdi>
-                      {item.badge ? <span className="media-badge">{item.badge}</span> : null}
+                      {item.parts.bitrate ? <span className="media-badge">{item.parts.bitrate}</span> : null}
                       <Menu.ItemIndicator checked={item.checked} forceMount className="media-menu__indicator">
                         <CheckIcon className="media-icon" />
                       </Menu.ItemIndicator>
