@@ -5,7 +5,7 @@ import { createLogger, createServer, type ViteDevServer } from 'vite';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
 const packageDir = resolve(import.meta.dirname, '../..');
-const configFile = resolve(packageDir, 'dev/vite.config.ts');
+const configFile = resolve(import.meta.dirname, 'vite.config.ts');
 const reactTarget = '?style=css&target=react&skin=default-video';
 const defaultSkinUrl = `/../src/skins/default-video/skin.tsx${reactTarget}`;
 const defaultControlsUrl = `/../src/skins/default-video/controls.tsx${reactTarget}`;
