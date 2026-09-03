@@ -58,7 +58,7 @@ describe('validateInstallationOptions', () => {
 });
 
 describe('generateHTMLInstallCode', () => {
-  const manifest = ['hlsjs-video', 'dash-video', 'mux-video', 'mux-audio'];
+  const manifest = ['hlsjs-video', 'dash-video', 'mux-video', 'mux-audio', 'mux-data'];
 
   it('returns install commands for all methods', () => {
     const result = generateHTMLInstallCode(baseHTML, manifest);
@@ -80,6 +80,13 @@ describe('generateHTMLInstallCode', () => {
     const result = generateHTMLInstallCode({ ...baseHTML, renderer: 'hls' }, manifest);
 
     expect(result.cdn).toContain('media/hlsjs-video.js');
+  });
+
+  it('includes the Mux Data media script alongside Mux media in CDN output', () => {
+    const result = generateHTMLInstallCode({ ...baseHTML, renderer: 'mux-video' }, manifest);
+
+    expect(result.cdn).toContain('media/mux-video.js');
+    expect(result.cdn).toContain('media/mux-data.js');
   });
 });
 
@@ -168,6 +175,21 @@ describe('generateHTMLUsageCode', () => {
     expect(result.imports).toContain("import '@videojs/html/media/mux-video'");
   });
 
+  it('adds the Mux Data component and import alongside Mux video by default', () => {
+    const result = generateHTMLUsageCode({ ...baseHTML, renderer: 'mux-video' });
+
+    expect(result.html).toContain('<mux-data></mux-data>');
+    expect(result.html).toContain('Mux Data monitors playback quality');
+    expect(result.imports).toContain("import '@videojs/html/media/mux-data'");
+  });
+
+  it('does not add Mux Data for non-Mux media', () => {
+    const result = generateHTMLUsageCode({ ...baseHTML, renderer: 'hls' });
+
+    expect(result.html).not.toContain('mux-data');
+    expect(result.imports).not.toContain('mux-data');
+  });
+
   it('uses the vimeo-video tag and media import, without playsinline (iframe)', () => {
     const result = generateHTMLUsageCode({ ...baseHTML, renderer: 'vimeo' });
 
@@ -220,6 +242,8 @@ describe('generateHTMLUsageCode', () => {
     expect(result.html).toContain('<mux-audio src=');
     expect(result.html).not.toContain('playsinline');
     expect(result.imports).toContain("import '@videojs/html/media/mux-audio'");
+    expect(result.html).toContain('<mux-data></mux-data>');
+    expect(result.imports).toContain("import '@videojs/html/media/mux-data'");
   });
 
   it('uses minimal skin tag', () => {
@@ -298,6 +322,8 @@ describe('generateHTMLUsageCode', () => {
     expect(result.imports).toContain("import '@videojs/html/live-audio/player'");
     expect(result.imports).toContain("import '@videojs/html/live-audio/skin'");
     expect(result.imports).toContain("import '@videojs/html/media/mux-audio'");
+    expect(result.html).toContain('<mux-data></mux-data>');
+    expect(result.imports).toContain("import '@videojs/html/media/mux-data'");
   });
 
   it('defaults live use cases to a live source URL', () => {
@@ -350,6 +376,21 @@ describe('generateReactCreateCode', () => {
 
     expect(code).toContain("import { MuxVideo } from '@videojs/react/media/mux-video'");
     expect(code).toContain('<MuxVideo src={src} playsInline />');
+  });
+
+  it('renders and imports the Mux Data component alongside Mux video by default', () => {
+    const code = generateReactCreateCode({ ...baseReact, renderer: 'mux-video' })['MyPlayer.tsx'];
+
+    expect(code).toContain("import { MuxData } from '@videojs/react/media/mux-data'");
+    expect(code).toContain('<MuxData />');
+    expect(code).toContain('Mux Data monitors playback quality');
+  });
+
+  it('does not add Mux Data for non-Mux media', () => {
+    const code = generateReactCreateCode({ ...baseReact, renderer: 'hls' })['MyPlayer.tsx'];
+
+    expect(code).not.toContain('MuxData');
+    expect(code).not.toContain('mux-data');
   });
 
   it('uses separate media import for Vimeo without playsInline (iframe)', () => {
@@ -476,6 +517,8 @@ describe('generateReactCreateCode', () => {
     expect(code).toContain("import { MuxAudio } from '@videojs/react/media/mux-audio'");
     expect(code).toContain("import '@videojs/react/live-audio/skin.css'");
     expect(code).not.toContain('playsInline');
+    expect(code).toContain("import { MuxData } from '@videojs/react/media/mux-data'");
+    expect(code).toContain('<MuxData />');
   });
 
   it('uses the minimal live audio skin component', () => {
