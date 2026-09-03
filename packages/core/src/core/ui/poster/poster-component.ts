@@ -1,5 +1,14 @@
 import { defineComponent } from 'vjsc/components';
 
-import type { PosterProps } from './core';
+import type { PosterImageProps } from './core';
+import { PosterDataAttrs } from './data';
 
-export default defineComponent<PosterProps>({ name: 'Poster' });
+export default defineComponent({
+  name: 'Poster',
+  root: 'Root',
+  parts: {
+    Root: defineComponent(),
+    Image: defineComponent<PosterImageProps>(),
+  },
+  dataAttrs: PosterDataAttrs,
+});

@@ -1,13 +1,12 @@
-import { PosterCore, PosterDataAttrs, type PosterImageLoadState } from '@videojs/core';
-import { logMissingFeature, selectMetadata, selectPlayback } from '@videojs/core/dom';
+import type { PosterCore, PosterImageLoadState } from '@videojs/core';
 import type { ForwardedRef } from 'react';
-import { forwardRef, useCallback, useEffect, useRef, useState } from 'react';
+import { forwardRef, useEffect, useRef, useState } from 'react';
 
-import { usePlayer } from '../../player/context';
 import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
+import { usePosterContext } from './context';
 
-export interface PosterProps extends UIComponentProps<'img', PosterCore.State> {}
+export interface PosterImageProps extends UIComponentProps<'img', PosterCore.State> {}
 
 /** The source currently requested from the image, and how it is faring. */
 interface ImageRequest {
@@ -17,54 +16,24 @@ interface ImageRequest {
 }
 
 /**
- * Displays the video poster image. Shows before playback starts, hides after.
+ * Displays the poster image managed by `Poster.Root`.
  *
- * Renders an `<img>`, so `srcset`, `sizes`, `loading`, and the rest of the image attributes are yours. Leave the source
- * off and the player's resolved `poster` fills it in.
- *
- * The image is decorative unless you say otherwise. Describe a poster that carries meaning by passing your own `alt`.
- *
- * @example
- *   ```tsx
- *   <VideoPlayer poster="poster.jpg">
- *   <Poster />
- *   </VideoPlayer>
- *
- *   <Poster srcSet="poster-480.jpg 480w, poster-1080.jpg 1080w" sizes="100vw" />
- *
- *   <Poster
- *   render={({ src, ...props }: ComponentProps<'img'>) =>
- *   src ? <Image {...props} src={src} alt="" fill /> : null
- *   }
- *   />
- *   ```;
+ * Renders an `img`, so `srcSet`, `sizes`, `loading`, and the rest of the native image attributes remain available.
+ * Leave the source off and the player's resolved poster fills it in. The image is decorative unless you supply `alt`.
  */
-export const Poster = forwardRef(function Poster(
-  componentProps: PosterProps,
+export const PosterImage = forwardRef(function PosterImage(
+  componentProps: PosterImageProps,
   forwardedRef: ForwardedRef<HTMLImageElement>
 ) {
   const { render, className, style, ...elementProps } = componentProps;
+  const { state, setImageLoadState } = usePosterContext();
 
-  const playback = usePlayer(selectPlayback);
-  const metadata = usePlayer(selectMetadata);
-
-  const [core] = useState(() => new PosterCore());
-
-  // The metadata feature is optional: without it nothing resolves a URL, and
-  // this stays a visibility wrapper around whatever `src` was passed.
-  if (playback) {
-    core.setMedia({
-      started: playback.started,
-      poster: metadata?.poster ?? '',
-    });
-  }
-
-  const { src: authoredSrc, srcSet: authoredSrcSet } = elementProps as { src?: string; srcSet?: string };
+  const { src: authoredSrc, srcSet: authoredSrcSet } = elementProps;
 
   // Either authored source makes the image yours, matching `hasSource` in the
   // HTML element. Filling `src` alongside a `srcset` would inject the player's
   // poster into your candidate set as the 1x entry.
-  const src = authoredSrc ?? (authoredSrcSet === undefined && playback ? core.getState().src : '');
+  const src = authoredSrc ?? (authoredSrcSet === undefined ? state.src : '');
 
   const initialLoadState: PosterImageLoadState = !src && authoredSrcSet === undefined ? 'none' : 'loading';
   const [request, setRequest] = useState<ImageRequest>(() => ({
@@ -73,6 +42,7 @@ export const Poster = forwardRef(function Poster(
     state: initialLoadState,
   }));
   const imgRef = useRef<HTMLImageElement | null>(null);
+  const didCheckInitialImageRef = useRef(false);
 
   // Keep only the active request. Retaining a settled source by value would
   // resurrect its old state when the image moved A -> B -> A, even though the
@@ -84,9 +54,11 @@ export const Poster = forwardRef(function Poster(
 
   const loadState = matchesRequest ? request.state : initialLoadState;
 
-  if (playback) core.setImageLoadState(loadState);
+  useEffect(() => {
+    setImageLoadState(loadState);
+  }, [authoredSrcSet, loadState, setImageLoadState, src]);
 
-  const state = playback ? core.getState() : null;
+  useEffect(() => () => setImageLoadState('none'), [setImageLoadState]);
 
   // An image can already be settled when we first see it — hydrated from server
   // markup, say — in which case neither `load` nor `error` ever fires. Decoded
@@ -98,8 +70,11 @@ export const Poster = forwardRef(function Poster(
   // pixels in place until the new one settles, so reading them again would call
   // the new source loaded while it is still fetching. `load` and `error` cover
   // every source after this one, the way the HTML element reads an image once.
-  // oxlint-disable-next-line react/exhaustive-deps -- reads the first source only, at mount
   useEffect(() => {
+    if (didCheckInitialImageRef.current) return;
+
+    didCheckInitialImageRef.current = true;
+
     const img = imgRef.current;
     if (!img) return;
 
@@ -107,31 +82,18 @@ export const Poster = forwardRef(function Poster(
     else if (img.complete && (img.getAttribute('src') || img.hasAttribute('srcset'))) {
       setRequest({ src, srcSet: authoredSrcSet, state: 'error' });
     }
-  }, []);
+  }, [authoredSrcSet, src]);
 
   // Recorded against the source this render asked for, not the one on the
   // element: a `render` override is free to rewrite it.
-  const handleLoad = useCallback(
-    () => setRequest({ src, srcSet: authoredSrcSet, state: 'loaded' }),
-    [src, authoredSrcSet]
-  );
-  const handleError = useCallback(
-    () => setRequest({ src, srcSet: authoredSrcSet, state: 'error' }),
-    [src, authoredSrcSet]
-  );
-
-  if (!playback || !state) {
-    if (__DEV__) logMissingFeature('Poster', 'playback');
-
-    return null;
-  }
+  const handleLoad = () => setRequest({ src, srcSet: authoredSrcSet, state: 'loaded' });
+  const handleError = () => setRequest({ src, srcSet: authoredSrcSet, state: 'error' });
 
   return renderElement(
     'img',
     { render, className, style },
     {
       state,
-      stateAttrMap: PosterDataAttrs,
       ref: [forwardedRef, imgRef],
       props: [
         { alt: '' },
@@ -147,7 +109,6 @@ export const Poster = forwardRef(function Poster(
   );
 });
 
-export namespace Poster {
-  export type Props = PosterProps;
-  export type State = PosterCore.State;
+export namespace PosterImage {
+  export type Props = PosterImageProps;
 }

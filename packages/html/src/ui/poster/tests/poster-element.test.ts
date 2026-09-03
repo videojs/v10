@@ -115,10 +115,37 @@ afterEach(() => {
 });
 
 describe('PosterElement', () => {
-  it('renders nothing of its own, working on the light DOM', async () => {
-    const { poster } = await mount();
+  it('sets its fallback image aside while a skin supplies one', async () => {
+    const { poster, skinImage, setPoster } = await mount();
 
-    expect(poster.shadowRoot).toBeNull();
+    await setPoster('poster.jpg');
+
+    expect(poster.shadowRoot!.querySelector('img')).toBeNull();
+    expect(skinImage.getAttribute('src')).toBe('poster.jpg');
+  });
+
+  it('fills a fallback image of its own when none is supplied', async () => {
+    ensureDefined(TestProviderElement);
+    ensureDefined(PosterElement);
+
+    const provider = document.createElement(TestProviderElement.tagName) as TestProviderElement;
+
+    provider.innerHTML = `<${PosterElement.tagName}></${PosterElement.tagName}>`;
+    document.body.appendChild(provider);
+
+    const poster = provider.querySelector(PosterElement.tagName) as PosterElement;
+
+    provider.store.attach({ media: document.createElement('video'), container: null });
+    setUserPoster(provider.store, 'poster.jpg');
+
+    const fallback = poster.shadowRoot!.querySelector('img')!;
+
+    // The player context resolves a tick after connect.
+    await vi.waitFor(() => expect(fallback.getAttribute('src')).toBe('poster.jpg'));
+
+    expect(fallback.getAttribute('part')).toBe('image');
+    expect(fallback.getAttribute('alt')).toBe('');
+    expect(poster.hasAttribute('data-loading')).toBe(true);
   });
 
   it('picks up a plain child image, including one added after mount', async () => {
@@ -140,6 +167,10 @@ describe('PosterElement', () => {
     await new Promise((resolve) => setTimeout(resolve, 0));
     await poster.updateComplete;
 
+    const fallback = poster.shadowRoot!.querySelector('img')!;
+
+    expect(fallback.getAttribute('src')).toBe('poster.jpg');
+
     // No slot is involved here, so nothing announces the image arriving.
     const image = document.createElement('img');
 
@@ -147,6 +178,11 @@ describe('PosterElement', () => {
     poster.appendChild(image);
 
     await vi.waitFor(() => expect(image.getAttribute('src')).toBe('poster.jpg'));
+
+    // The fallback steps out of the tree rather than sitting hidden beside
+    // the supplied image, and stops downloading what it was pointed at.
+    expect(fallback.isConnected).toBe(false);
+    expect(fallback.hasAttribute('src')).toBe(false);
   });
 
   it('fills the source of the image the skin supplied', async () => {
@@ -369,29 +405,5 @@ describe('PosterElement', () => {
 
     expect(poster.hasAttribute('data-loaded')).toBe(false);
     expect(poster.hasAttribute('data-loading')).toBe(true);
-  });
-
-  it('warns when a poster resolves with no image to put it in', async () => {
-    ensureDefined(TestProviderElement);
-    ensureDefined(PosterElement);
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-
-    const provider = document.createElement(TestProviderElement.tagName) as TestProviderElement;
-
-    document.body.appendChild(provider);
-
-    const poster = document.createElement(PosterElement.tagName) as PosterElement;
-
-    provider.appendChild(poster);
-    provider.store.attach({ media: document.createElement('video'), container: null });
-    await poster.updateComplete;
-
-    setUserPoster(provider.store, 'poster.jpg');
-    poster.requestUpdate();
-    await poster.updateComplete;
-
-    expect(warn).toHaveBeenCalledWith(expect.stringContaining('no image to put it in'));
-
-    warn.mockRestore();
   });
 });

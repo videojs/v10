@@ -6,6 +6,21 @@ import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
 import { UIElement } from '../ui-element';
 
+const SHADOW_CSS = `\
+:host {
+  display: block;
+}
+img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: var(--media-object-fit, contain);
+  object-position: var(--media-object-position, center);
+}
+img:not([src]) {
+  visibility: hidden;
+}`;
+
 /** What an element composes: whatever fills a slot, or the element's own children. */
 function composedChildren(element: Element): Element[] {
   if (element instanceof HTMLSlotElement) {
@@ -52,6 +67,20 @@ function hasOwnSource(img: HTMLImageElement): boolean {
   return !!img.getAttribute('src') || img.hasAttribute('srcset');
 }
 
+/**
+ * The image the element draws when none is supplied, reachable from outside as `::part(image)`. Decorative by default,
+ * like the one each skin carries: a resolved URL says nothing about what it depicts.
+ */
+function createFallbackImage(): HTMLImageElement {
+  const img = document.createElement('img');
+
+  img.alt = '';
+  img.setAttribute('part', 'image');
+  img.setAttribute('decoding', 'async');
+
+  return img;
+}
+
 /** How the current source is faring. */
 type ImageLoadState = 'pending' | 'loaded' | 'error';
 
@@ -62,13 +91,16 @@ type ImageLoadState = 'pending' | 'loaded' | 'error';
  * `<img>` as the fallback, while here an image with no source of its own is the one this element fills in. Give the
  * child a `src`, a `srcset`, or `<source>` candidates and it is yours, left alone.
  *
- * Renders no image of its own, so include one: `<media-poster><img alt=""></media-poster>`. Inside a skin, an `<img
- * slot="poster">` of yours replaces the one the skin carries.
+ * Left empty, the element draws an image of its own in its shadow root. Supply one as a child to describe it or wrap
+ * it: `<media-poster><img alt="Keynote speaker"></media-poster>`. Inside a skin, an `<img slot="poster">` of yours
+ * replaces the one the skin carries.
  */
 export class PosterElement extends UIElement {
   static readonly tagName = 'media-poster';
 
   readonly #core = new PosterCore();
+  readonly #shadow = this.attachShadow({ mode: 'open' });
+  readonly #fallback = createFallbackImage();
   readonly #children = new MutationObserver(() => this.requestUpdate());
 
   readonly #playback = new PlayerController(this, playerContext, selectPlayback);
@@ -81,7 +113,15 @@ export class PosterElement extends UIElement {
 
   #imageEvents: AbortController | null = null;
   #disconnect: AbortController | null = null;
-  #warnedMissingImage = false;
+
+  constructor() {
+    super();
+
+    const style = document.createElement('style');
+
+    style.textContent = SHADOW_CSS;
+    this.#shadow.append(style, document.createElement('slot'), this.#fallback);
+  }
 
   override connectedCallback(): void {
     super.connectedCallback();
@@ -131,7 +171,7 @@ export class PosterElement extends UIElement {
 
     const { src } = this.#core.getState();
 
-    this.#adopt(findImage(this));
+    this.#adopt(findImage(this) ?? this.#fallback);
     this.#applySource(src);
 
     this.#core.setImageLoadState(this.#loadState);
@@ -155,6 +195,11 @@ export class PosterElement extends UIElement {
     this.#owned = next !== null && !hasSource(next);
     this.#imageLoadState = 'pending';
 
+    // The fallback only occupies the shadow root while it is the active image,
+    // so a supplied image never sits beside a hidden one.
+    if (next === this.#fallback) this.#shadow.append(this.#fallback);
+    else if (next) this.#fallback.remove();
+
     if (!next) return;
 
     // An image that finished before we started listening never fires again, so
@@ -176,20 +221,7 @@ export class PosterElement extends UIElement {
 
   #applySource(src: string): void {
     const img = this.#image;
-
-    if (!img) {
-      if (__DEV__ && src && !this.#warnedMissingImage) {
-        this.#warnedMissingImage = true;
-        console.warn(
-          `<${this.localName}> resolved a poster but has no image to put it in. ` +
-            `Add one as a child: <${this.localName}><img alt=""></${this.localName}>`
-        );
-      }
-
-      return;
-    }
-
-    if (!this.#owned) return;
+    if (!img || !this.#owned) return;
 
     if (!src) {
       this.#imageLoadState = 'pending';
