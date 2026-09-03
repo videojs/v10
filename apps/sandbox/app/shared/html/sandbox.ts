@@ -1,4 +1,5 @@
 import type { MuxSource } from '@videojs/media/dom/mux';
+import { escapeHtml } from '@videojs/utils/string';
 
 import { applyCaptionTracks } from '../captions';
 import { findMediaTag } from '../media-element';
@@ -114,7 +115,7 @@ function describeSource(state: SandboxState, playbackOverrides: boolean) {
 
   return {
     url,
-    src: initial ? '' : ` src="${url}"`,
+    src: initial ? '' : ` src="${escapeHtml(url)}"`,
     source: initial ? { ...initial, ...overrides } : undefined,
   };
 }
@@ -140,9 +141,9 @@ function renderPlayer(options: HtmlSandboxOptions, skinTag: string, context: Htm
   const posterSrc = poster === undefined ? undefined : getPosterSrc(state.source);
   const placeholder = poster === 'derived' ? getPlaceholderSrc(state.source) : undefined;
   const children = html`
-    ${placeholder ? `<img slot="poster" alt="" crossorigin style="background: url('${placeholder}') var(--media-object-position, center) / contain no-repeat">` : ''}
+    ${placeholder ? `<img slot="poster" alt="" crossorigin style="background: url('${escapeHtml(placeholder)}') var(--media-object-position, center) / contain no-repeat">` : ''}
     ${options.media(context)}
-    ${poster === 'image' && posterSrc ? html`<img slot="poster" src="${posterSrc}" alt="Video poster" crossorigin />` : ''}
+    ${poster === 'image' && posterSrc ? html`<img slot="poster" src="${escapeHtml(posterSrc)}" alt="Video poster" crossorigin />` : ''}
   `;
 
   if (player === 'background') {
@@ -166,7 +167,7 @@ function renderPlayer(options: HtmlSandboxOptions, skinTag: string, context: Htm
   }
 
   const playerTag = live ? 'live-video-player' : 'video-player';
-  const posterAttr = poster === 'derived' && posterSrc ? ` poster="${posterSrc}"` : '';
+  const posterAttr = poster === 'derived' && posterSrc ? ` poster="${escapeHtml(posterSrc)}"` : '';
 
   return html`
     <${playerTag}${posterAttr}>
@@ -188,7 +189,7 @@ function getRoot(): HTMLElement {
  * once the player is up; a direction change renders again, since the provider owns the pinned `dir`.
  */
 export function createHtmlSandbox(options: HtmlSandboxOptions): void {
-  const state = readSandboxState();
+  const state = readSandboxState('html');
   const loadLatest = createLatestLoader();
   const root = getRoot();
 

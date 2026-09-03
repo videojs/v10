@@ -22,7 +22,7 @@ export interface Sandbox extends SandboxState {
 
 /** The shell's selections for this page, kept current as it streams changes after load. */
 export function useSandbox(): Sandbox {
-  const [state, setState] = useState(readSandboxState);
+  const [state, setState] = useState(() => readSandboxState('react'));
 
   useEffect(() => onSandboxStateChange((change) => setState((current) => ({ ...current, ...change }))), []);
   useEffect(() => installSandboxMirror(), []);

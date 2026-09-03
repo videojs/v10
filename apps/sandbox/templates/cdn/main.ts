@@ -1,5 +1,6 @@
 import '@app/styles.css';
 import { isMediaId, MEDIA, type MediaId } from '@app/media';
+import { applyCaptionTracks } from '@app/shared/captions';
 import { renderChapters } from '@app/shared/html/chapters';
 import { createLatestLoader, renderMediaAttrs } from '@app/shared/html/sandbox';
 import { packageSkinTag, skinPreset } from '@app/shared/html/skin-tags';
@@ -8,6 +9,7 @@ import { loadAudioStylesheets, loadVideoStylesheets } from '@app/shared/html/sty
 import { ensureCdnSandboxLocale } from '@app/shared/i18n/cdn-sandbox-locales';
 import { syncDocumentLocale } from '@app/shared/i18n/document-locale';
 import type { SandboxLocaleTag } from '@app/shared/i18n/locale-meta';
+import { findMediaTag } from '@app/shared/media-element';
 import { PLAYER_FRAME_CLASSES } from '@app/shared/player-frame';
 import {
   getDirection,
@@ -28,6 +30,7 @@ import {
 } from '@app/shared/sources';
 import type { Skin } from '@app/types';
 import { getI18nTranslations } from '@videojs/html/cdn/i18n';
+import { escapeHtml } from '@videojs/utils/string';
 
 const html = String.raw;
 
@@ -43,7 +46,7 @@ function readMedia(): MediaId {
 const media = readMedia();
 const descriptor = MEDIA[media];
 
-const state = readSandboxState();
+const state = readSandboxState('cdn');
 const loadLatest = createLatestLoader();
 let locale = getInitialLocale();
 
@@ -332,7 +335,7 @@ async function render() {
       : media === 'hls-background-video'
         ? (source.url ?? '')
         : (descriptor.fixedSource ?? '');
-  const sourceAttr = background ? `src="${backgroundSrc}"` : `src="${descriptor.fixedSource ?? source.url}"`;
+  const sourceAttr = `src="${escapeHtml(background ? backgroundSrc : (descriptor.fixedSource ?? source.url ?? ''))}"`;
   // An embed hands playback to a provider that owns autoplay, looping, and how much
   // it preloads, so the settings menu has nothing to attach to — same as the
   // per-embed pages on the html and react platforms.
@@ -382,11 +385,21 @@ async function render() {
         ${skinnedVideo ? renderChapters(getChapters(state.source)) : ''}
         ${renderStoryboard(storyboard)}
       </${mediaTag}>
-      ${poster ? html`<img slot="poster" src="${poster}" alt="Video poster" crossorigin />` : ''}
+      ${poster ? html`<img slot="poster" src="${escapeHtml(poster)}" alt="Video poster" crossorigin />` : ''}
     </${skinTag}>
   `;
 
-  root.innerHTML = wrapCdnPlayerI18n(playerTag, skin);
+  const template = document.createElement('template');
+
+  template.innerHTML = wrapCdnPlayerI18n(playerTag, skin);
+
+  // Subtitle tracks go in while the markup is still inert, as on the html pages: a custom media element reads its
+  // tracks when it upgrades. An embed hands captions to its provider, so it gets none.
+  const mediaElement = skinnedVideo ? findMediaTag(template.content) : undefined;
+
+  if (mediaElement) applyCaptionTracks(mediaElement, state.captions);
+
+  root.replaceChildren(template.content);
 
   await syncCdnI18nProvider(locale, localeApplySeq);
 

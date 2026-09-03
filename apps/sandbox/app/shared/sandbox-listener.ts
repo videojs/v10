@@ -1,11 +1,12 @@
 import { SKIN_SOURCES, SKINS, STYLINGS } from '@app/constants';
 import { DEFAULT_SANDBOX_LOCALE, SANDBOX_LOCALE_TAGS, type SandboxLocaleTag } from '@app/shared/i18n/locale-meta';
-import type { Skin, SkinSource, Styling } from '@app/types';
+import type { Platform, Skin, SkinSource, Styling } from '@app/types';
 import type { MediaResolution } from '@videojs/media';
 import { isBoolean, isNumber, isString } from '@videojs/utils/predicate';
 
 import { CAPTIONS_MODES, type CaptionsMode } from './captions';
 import { setDocumentDirection } from './i18n/document-locale';
+import { defaultSkinSource } from './skin-sources';
 import { DEFAULT_SOURCE, SOURCES, type SourceId } from './sources';
 
 export const PRELOAD_VALUES = ['none', 'metadata', 'auto'] as const;
@@ -91,16 +92,18 @@ export function readFlag(name: string): boolean {
   return params.get(name) === '1';
 }
 
-/** The selections the page URL names, with the shell's defaults for the rest. */
-export function readSandboxState(): SandboxState {
+/**
+ * The selections the page URL names, with the shell's defaults for the rest. The platform decides where skins come from
+ * when the URL does not say, since only React has a Tailwind registry install.
+ */
+export function readSandboxState(platform: Platform): SandboxState {
   const styling = parseStyling(params.get('styling')) ?? 'css';
 
   return {
     skin: parseSkin(params.get('skin')) ?? 'default',
     source: parseSource(params.get('source')) ?? DEFAULT_SOURCE,
     styling,
-    // The packages ship CSS; a page asked for Tailwind without a source is the registry install.
-    skins: parseSkinSource(params.get('skins')) ?? (styling === 'tailwind' ? 'registry' : 'package'),
+    skins: parseSkinSource(params.get('skins')) ?? defaultSkinSource(platform, styling),
     autoplay: readFlag('autoplay'),
     muted: readFlag('muted'),
     loop: readFlag('loop'),
