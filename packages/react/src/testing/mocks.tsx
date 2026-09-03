@@ -6,7 +6,7 @@
  * shared here.
  */
 
-import type { ReactNode } from 'react';
+import { Component, type ErrorInfo, type ReactNode } from 'react';
 import type { Mock } from 'vite-plus/test';
 import { vi } from 'vite-plus/test';
 
@@ -65,4 +65,24 @@ export function createPlayerWrapper(storeState: Record<string, unknown> = {}): {
       );
     },
   };
+}
+
+/**
+ * Swallow a render error thrown by a descendant so tests can assert what an abandoned render did not commit.
+ *
+ * Renders `null` once a descendant throws. Pair with a component that throws conditionally to abandon a re-render after
+ * a successful mount.
+ */
+export class MockErrorBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
+  override state = { failed: false };
+
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+
+  override componentDidCatch(_error: Error, _info: ErrorInfo) {}
+
+  override render() {
+    return this.state.failed ? null : this.props.children;
+  }
 }

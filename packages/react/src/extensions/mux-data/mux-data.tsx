@@ -4,6 +4,7 @@ import type { MuxDataProps as MuxDataComponentProps } from '@videojs/media/dom/m
 import { MuxData as MuxDataComponent, muxDataDefaultProps } from '@videojs/media/dom/mux';
 import type { ReactNode } from 'react';
 
+import { useIsomorphicLayoutEffect } from '../../utils/use-isomorphic-layout-effect';
 import { useMediaComponent } from '../../utils/use-media-component';
 import { useSyncProps } from '../../utils/use-sync-props';
 
@@ -39,7 +40,9 @@ export function MuxData(props: MuxDataProps): ReactNode {
   // omitting it falls back to the default SDK.
   const sdk = 'MuxDataSdk' in props ? MuxDataSdk : muxDataDefaultProps.MuxDataSdk;
 
-  if (component.MuxDataSdk !== sdk) component.MuxDataSdk = sdk;
+  useIsomorphicLayoutEffect(() => {
+    if (component.MuxDataSdk !== sdk) component.MuxDataSdk = sdk;
+  }, [component, sdk]);
 
   useSyncProps(component, rest, muxDataDefaultProps);
 

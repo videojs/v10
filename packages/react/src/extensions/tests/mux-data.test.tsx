@@ -4,7 +4,7 @@ import { addMediaComponent, getMediaComponents } from '@videojs/media/dom/media-
 import { MuxData as MuxDataComponent, MuxMedia } from '@videojs/media/dom/mux';
 import { describe, expect, it, vi } from 'vite-plus/test';
 
-import { createPlayerWrapper } from '../../testing/mocks';
+import { createPlayerWrapper, MockErrorBoundary } from '../../testing/mocks';
 import { MuxData } from '../mux-data';
 
 function setup() {
@@ -53,6 +53,47 @@ describe('MuxData', () => {
 
     rerender(<MuxData />);
     expect(component.MuxDataSdk).toBeDefined();
+  });
+
+  it('does not apply MuxDataSdk from an abandoned render', () => {
+    const { media, Wrapper } = setup();
+    const committedSdk = {
+      monitor: vi.fn(),
+      utils: { now: () => 0 },
+    } as unknown as NonNullable<MuxDataComponent['MuxDataSdk']>;
+    const abandonedSdk = {
+      monitor: vi.fn(),
+      utils: { now: () => 1 },
+    } as unknown as NonNullable<MuxDataComponent['MuxDataSdk']>;
+
+    function Throw({ fail = false }: { fail?: boolean }) {
+      if (fail) throw new Error('abandon render');
+
+      return null;
+    }
+
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const { rerender } = render(
+      <MockErrorBoundary>
+        <Wrapper>
+          <MuxData MuxDataSdk={committedSdk} />
+          <Throw />
+        </Wrapper>
+      </MockErrorBoundary>
+    );
+    const component = getMediaComponents(media).get(MuxDataComponent)!;
+
+    rerender(
+      <MockErrorBoundary>
+        <Wrapper>
+          <MuxData MuxDataSdk={abandonedSdk} />
+          <Throw fail />
+        </Wrapper>
+      </MockErrorBoundary>
+    );
+
+    expect(component.MuxDataSdk).toBe(committedSdk);
+    consoleError.mockRestore();
   });
 
   it('resets a removed prop to its default', () => {

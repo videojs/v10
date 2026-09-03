@@ -6,6 +6,7 @@ import { forwardRef, useState, useSyncExternalStore } from 'react';
 import { usePlayer } from '../../player/context';
 import type { UIComponentProps } from '../../utils/types';
 import { useDestroy } from '../../utils/use-destroy';
+import { useIsomorphicLayoutEffect } from '../../utils/use-isomorphic-layout-effect';
 import { renderElement } from '../../utils/use-render';
 
 export interface BufferingIndicatorProps
@@ -40,15 +41,18 @@ export const BufferingIndicator = forwardRef(function BufferingIndicator(
   const [core] = useState(() => new BufferingIndicatorCore());
 
   useDestroy(core);
-  core.setProps({ delay });
-
-  if (playback) core.update(playback);
 
   const state = useSyncExternalStore(
     (cb) => core.state.subscribe(cb),
     () => core.state.current,
     () => core.state.current
   );
+
+  useIsomorphicLayoutEffect(() => {
+    core.setProps({ delay });
+
+    if (playback) core.update(playback);
+  }, [core, delay, playback]);
 
   if (!playback) {
     if (__DEV__) logMissingFeature('BufferingIndicator', 'playback');
