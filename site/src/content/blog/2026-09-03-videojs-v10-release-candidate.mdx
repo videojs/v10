@@ -1,0 +1,42 @@
+---
+title: 'Video.js v10 Release Candidate'
+description: 'Video.js v10 is now a release candidate. The API is stable, the media component family has grown, and it is ready for you to migrate real projects ahead of 10.0.0.'
+authors: [darius-cepulis]
+---
+
+We're excited to announce the Release Candidate of Video.js v10. The project has come a long way since [its tech preview 10 months ago](https://www.youtube.com/watch?v=dR4Wmj_BIsQ&t=4s&pp=ygUTdmlkZW8uanMgMTAgZGVtdXhlZA%3D%3D). And now, we want you to start building with it. With your feedback, a few more docs, and maybe a last-minute fix or two, we're looking forward to shipping 10.0.0 very soon.
+
+Try it out at [videojs.org/docs](https://videojs.org/docs)
+
+## What is version 10?
+
+Video.js v10 is a ground-up rewrite of not only Video.js, but also of [Plyr](https://github.com/sampotts/plyr/discussions/2871), [Vidstack](https://github.com/vidstack/player/discussions/1747), and [Media Chrome](https://www.mux.com/blog/from-media-chrome-to-video-js-v10-the-evolution-of-html-first-video-players). It's a big shift in how web media players are built.
+
+Why are we making this change? Like we said in our [beta blog post](https://videojs.org/blog/videojs-v10-beta-hello-world-again), we're:
+
+- Shrinking bundle sizes, and then shrinking them more (88% reduction in default bundle size)
+- Allowing deep customization using the familiar development patterns of your chosen framework — including new first-class React, Typescript, and Tailwind support
+- Making the defaults look beautiful and perform beautifully
+- Designing the codebase and docs so AI agents building your player alongside you can actually be good at it
+
+Do [check that blog post out](https://videojs.org/blog/videojs-v10-beta-hello-world-again); Steve did a great job of laying it all out.
+
+### What's new since beta
+
+We promised GA mid-2026. And if you _really squint…_ September is still closer to the middle of the year than the end… right?
+
+It's taken a while because we put in a lot of work. Dozens of releases, hundreds of fixes and features, almost a thousand PRs. In that time, we've gone from a foundation to a mature player:
+
+- SPF, our in-house engine composition framework, went from a spike to prod-ready, while still maintaining those svelte bundle sizes
+- There are dozens of new UI components, from menus to hotkey/gesture input systems. Our preset skins support them all so they're easy to use out of the box
+- We stressed and validated our architecture with tough features like live, internationalization, DRM, and the dreaded _Google Cast_
+- The media component family got bigger. HLS and Mux have been joined by DASH, Shaka, Vimeo, YouTube, Cloudflare Stream, Wistia, Twitch, TikTok, Spotify, and more
+- We let our API simmer and it's more flavorful than ever. After feedback and testing, we've made 34 breaking changes, each bringing us closer to that Just Works™ Developer Experience. And now, we're ready to call that API stable.
+
+## Now's the time to try it out
+
+This is a big change. We think it's worth it. But we'd love to hear what **you** think.
+
+Video.js v10 is ready for you to migrate your projects over. And when you do, tell us how it goes. Join us on [Discord](https://discord.gg/JBqHh485uF) or [leave an issue](https://github.com/videojs/v10/).
+
+You (or your agent) can get started at [videojs.org/docs](https://videojs.org/docs)
