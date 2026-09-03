@@ -1,0 +1,101 @@
+---
+title: Install skins from the Shadcn registry
+description: Install a Video.js skin's source into your project with the Shadcn CLI, then edit its controls, markup, and styles as code you own
+ogTitle: Shadcn registry
+---
+
+import Aside from '@/components/Aside.astro';
+import DocsLink from '@/components/docs/DocsLink.astro';
+import DocsLinkCard from '@/components/docs/DocsLinkCard.astro';
+import FrameworkCase from '@/components/docs/FrameworkCase.astro';
+import ContentWidth from '@/components/frames/ContentWidth.astro';
+import RegistryCatalog from '@/components/registry/RegistryCatalog.astro';
+import RegistryCommand from '@/components/registry/RegistryCommand.astro';
+import RegistryStyling from '@/components/registry/RegistryStyling.astro';
+import ShadcnCommand from '@/components/registry/ShadcnCommand.astro';
+
+A packaged skin is one import. When you need to rearrange controls, change markup, or own every style, install the skin's source instead. The Shadcn CLI copies it from the Video.js registry into your project, where it becomes files you edit like any other component.
+
+<Aside type="note">
+Start with a packaged skin. Install the source once the public CSS custom properties in <DocsLink slug="how-to/customize-skins">Customize skins</DocsLink> stop being enough.
+</Aside>
+
+## Choose your styling
+
+<FrameworkCase frameworks={["react"]}>
+The React catalogs publish every skin in Tailwind CSS 4 and in vanilla CSS. Pick the one your project uses. The choice selects the catalog URL below; item names stay the same.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+The HTML catalog publishes every skin in vanilla CSS. Skins arrive as light-DOM markup, a registration module, and a stylesheet.
+</FrameworkCase>
+
+<ContentWidth>
+  <RegistryStyling />
+</ContentWidth>
+
+## Set up the registry
+
+Initialize Shadcn if your project has no `components.json` yet:
+
+<ShadcnCommand action="init" />
+
+The registry is a Shadcn namespace. Every command below refers to items as `@videojs/<item>`, so the CLI needs to know where the namespace lives.
+
+## Install a skin
+
+Add the `@videojs` namespace to `components.json`, then add the skin. Default skins are named after their preset, and Minimal skins add `-minimal`:
+
+<ContentWidth>
+  <RegistryCommand items={["video"]} />
+</ContentWidth>
+
+The CLI installs the skin's files under `components/videojs/skins/<preset>`, Minimal variants under `components/videojs/skins/<preset>/minimal`, and the UI components they share under `components/videojs/ui`. It also installs the theme stylesheet the skins read their tokens from, and adds the framework package to your dependencies.
+
+<FrameworkCase frameworks={["react"]}>
+The player and media stay imports from `@videojs/react`. Import the skin component from the installed `skin.tsx` and place your media inside it, exactly where the packaged skin sat.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+The player and media stay imports from `@videojs/html`. Import the installed `skin.ts` once to register the skin's elements and load its styles, then paste the markup from `skin.html` inside your player, around the media element. The markup is plain light DOM, so every control is in your page.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+
+## Install one UI component
+
+The React catalogs also publish each styled UI component on its own. Add a component the same way, and it brings the components and styles it depends on:
+
+<ShadcnCommand action="add @videojs/play-button" />
+
+</FrameworkCase>
+
+## Inspect and update
+
+The standard Shadcn commands work with the namespace:
+
+```bash
+npx shadcn@latest search @videojs --query volume
+npx shadcn@latest view @videojs/video
+npx shadcn@latest add @videojs/video --overwrite
+```
+
+Installed files are yours, so an update is a reinstall. Commit your changes first, run `add` with `--overwrite`, and review the diff in version control before you keep it.
+
+## Catalog
+
+<RegistryCatalog />
+
+Background video stays a package skin; the registry publishes no source for it.
+
+<FrameworkCase frameworks={["react"]}>
+The React catalogs also list every UI component. Run `search @videojs` to see them.
+</FrameworkCase>
+
+## Related guides
+
+<DocsLinkCard slug="how-to/customize-skins" description="What packaged skins let you change, and when to install the source instead">Customize skins</DocsLinkCard>
+
+<DocsLinkCard slug="concepts/skins" description="How packaged and installed skins relate to presets and UI components">Skins</DocsLinkCard>
+
+<DocsLinkCard slug="how-to/build-your-own-component" description="Connect custom UI to player state and actions">Build your own component</DocsLinkCard>

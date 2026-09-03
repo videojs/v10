@@ -1,0 +1,21 @@
+---
+/**
+ * The styling select box for the registry commands on the page. React chooses between Tailwind CSS and vanilla CSS;
+ * HTML skins only ship as vanilla CSS, so the HTML docs state that instead of offering a choice.
+ */
+import P from '@/components/typography/P.astro';
+import { isValidFramework } from '@/types/docs';
+
+import RegistryStylingSelect from './RegistryStylingSelect';
+
+const { framework } = Astro.params;
+if (!isValidFramework(framework)) throw new Error(`RegistryStyling needs a framework route, received ${framework}.`);
+---
+
+{
+  framework === 'react' ? (
+    <RegistryStylingSelect client:idle framework={framework} />
+  ) : (
+    <P>HTML skins install as vanilla CSS.</P>
+  )
+}

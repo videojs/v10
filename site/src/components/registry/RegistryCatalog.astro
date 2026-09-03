@@ -1,0 +1,38 @@
+---
+/** Every skin the registry publishes, with the item name the `add` command takes and where its source lands. */
+import MarkdownCode from '@/components/typography/MarkdownCode.astro';
+import Table from '@/components/typography/Table.astro';
+import Tbody from '@/components/typography/Tbody.astro';
+import Td from '@/components/typography/Td.astro';
+import Th from '@/components/typography/Th.astro';
+import Thead from '@/components/typography/Thead.astro';
+import Tr from '@/components/typography/Tr.astro';
+import { REGISTRY_NAMESPACE, REGISTRY_SKINS } from '@/utils/installation/shadcn';
+---
+
+<Table>
+  <Thead>
+    <Tr>
+      <Th>Skin</Th>
+      <Th>Item</Th>
+      <Th>Installs to</Th>
+    </Tr>
+  </Thead>
+  <Tbody>
+    {
+      REGISTRY_SKINS.map((skin) => (
+        <Tr>
+          <Td>{skin.label}</Td>
+          <Td>
+            <MarkdownCode>
+              {REGISTRY_NAMESPACE}/{skin.item}
+            </MarkdownCode>
+          </Td>
+          <Td>
+            <MarkdownCode>{skin.directory}</MarkdownCode>
+          </Td>
+        </Tr>
+      ))
+    }
+  </Tbody>
+</Table>

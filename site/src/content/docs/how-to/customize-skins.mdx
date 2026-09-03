@@ -4,10 +4,14 @@ description: Learn the public customization surface for packaged Video.js skins 
 ---
 
 import FrameworkCase from '@/components/docs/FrameworkCase.astro';
-import EjectedSkin from '@/components/docs/EjectedSkin.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
+import DocsLinkCard from '@/components/docs/DocsLinkCard.astro';
+import ContentWidth from '@/components/frames/ContentWidth.astro';
+import RegistryCatalog from '@/components/registry/RegistryCatalog.astro';
+import RegistryCommand from '@/components/registry/RegistryCommand.astro';
+import RegistryStyling from '@/components/registry/RegistryStyling.astro';
 
-Video.js v10 comes with two pre-built skins: Default and Minimal. Start with their public CSS custom properties. When you need to change controls, layout, or interactions, eject the closest skin by copying its code into your project and making it your own.
+Video.js v10 comes with two pre-built skins: Default and Minimal. Start with their public CSS custom properties. When you need to change controls, layout, or interactions, eject the closest skin: install its source from the Shadcn registry and make it your own.
 
 ## Basic customization
 
@@ -95,101 +99,47 @@ For anything deeper, eject instead of reaching into the packaged skin. There are
 
 ## Eject a skin
 
-Eject as soon as the packaged skin no longer matches the player you need. Once ejected, removing a control is removing a component, and changing an overlay or interaction is editing code you own.
+Eject as soon as the packaged skin no longer matches the player you need. Ejecting installs the skin's source into your project with the Shadcn CLI. Once installed, removing a control is removing a component, and changing an overlay or interaction is editing code you own.
 
-An ejected skin is app code, so its markup, class names, and styles are yours to change. If none of the packaged skins is a useful starting point, build a custom UI from the player, container, and individual <DocsLink slug="concepts/ui-components">UI components</DocsLink> instead.
+An installed skin is app code, so its markup, class names, and styles are yours to change. If none of the packaged skins is a useful starting point, build a custom UI from the player, container, and individual <DocsLink slug="concepts/ui-components">UI components</DocsLink> instead.
 
-Soon, we'll have a CLI that ejects skins in your preferred framework and style. For now, we invite you to try these copy-paste-ready implementations.
-
-To eject a skin:
-
-1. Choose the closest implementation below.
-2. Copy every file shown for your framework into your project.
-3. Replace the packaged skin with the copied component or player markup, then edit the files you own.
-
-{/*TODO: Add StyleCase for tailwind variants once tailwind is a supported style (see #840)*/}
-
-#### Default video skin
+### Choose your styling
 
 <FrameworkCase frameworks={["react"]}>
-  <EjectedSkin id="default-video-react" />
+The registry publishes React skins in Tailwind CSS 4 and in vanilla CSS. The choice selects the catalog the commands below point at.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-  <EjectedSkin id="default-video" />
+The registry publishes HTML skins in vanilla CSS, as light-DOM markup with a registration module and a stylesheet.
 </FrameworkCase>
 
-#### Default audio skin
+<ContentWidth>
+  <RegistryStyling />
+</ContentWidth>
+
+### Install the skin
+
+Add the `@videojs` namespace to `components.json`, then add the skin. Swap `video` for the item of the skin you want from the table below:
+
+<ContentWidth>
+  <RegistryCommand items={["video"]} />
+</ContentWidth>
+
+<RegistryCatalog />
+
+Background video stays a package skin; the registry publishes no source for it.
+
+### Use the installed skin
 
 <FrameworkCase frameworks={["react"]}>
-  <EjectedSkin id="default-audio-react" />
+The player and media stay imports from `@videojs/react`. Import the skin component from the installed `skin.tsx` and render it where the packaged skin was, with your media inside. Then edit the files under `components/videojs`: delete a control to remove it, add a <DocsLink slug="reference/seek-button">SeekButton</DocsLink> to the control bar to gain one, and change the classes or the stylesheet to restyle.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-  <EjectedSkin id="default-audio" />
+The player and media stay imports from `@videojs/html`. Import the installed `skin.ts` once to register the skin's elements and load its styles, then paste the markup from `skin.html` inside your player, around the media element. Every control is now in your page: delete an element to remove it, add a <DocsLink slug="reference/seek-button">SeekButton</DocsLink> to gain one, and edit the stylesheet to restyle.
 </FrameworkCase>
 
-#### Minimal video skin
-
-<FrameworkCase frameworks={["react"]}>
-  <EjectedSkin id="minimal-video-react" />
-</FrameworkCase>
-
-<FrameworkCase frameworks={["html"]}>
-  <EjectedSkin id="minimal-video" />
-</FrameworkCase>
-
-#### Minimal audio skin
-
-<FrameworkCase frameworks={["react"]}>
-  <EjectedSkin id="minimal-audio-react" />
-</FrameworkCase>
-
-<FrameworkCase frameworks={["html"]}>
-  <EjectedSkin id="minimal-audio" />
-</FrameworkCase>
-
-#### Default live video skin
-
-The live skins swap the duration and current-time displays for a Live button. They build on the live presets, so the player reports live-edge state.
-
-<FrameworkCase frameworks={["react"]}>
-  <EjectedSkin id="default-live-video-react" />
-</FrameworkCase>
-
-<FrameworkCase frameworks={["html"]}>
-  <EjectedSkin id="default-live-video" />
-</FrameworkCase>
-
-#### Default live audio skin
-
-<FrameworkCase frameworks={["react"]}>
-  <EjectedSkin id="default-live-audio-react" />
-</FrameworkCase>
-
-<FrameworkCase frameworks={["html"]}>
-  <EjectedSkin id="default-live-audio" />
-</FrameworkCase>
-
-#### Minimal live video skin
-
-<FrameworkCase frameworks={["react"]}>
-  <EjectedSkin id="minimal-live-video-react" />
-</FrameworkCase>
-
-<FrameworkCase frameworks={["html"]}>
-  <EjectedSkin id="minimal-live-video" />
-</FrameworkCase>
-
-#### Minimal live audio skin
-
-<FrameworkCase frameworks={["react"]}>
-  <EjectedSkin id="minimal-live-audio-react" />
-</FrameworkCase>
-
-<FrameworkCase frameworks={["html"]}>
-  <EjectedSkin id="minimal-live-audio" />
-</FrameworkCase>
+<DocsLinkCard slug="how-to/install-skins-from-the-registry" description="Set up the registry, install a skin, and keep it current">Install skins from the Shadcn registry</DocsLinkCard>
 
 ## Related guides
 

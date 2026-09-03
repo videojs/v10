@@ -1,0 +1,29 @@
+---
+/** The install-the-source section of a skin reference page: styling choice, then the registry command for the skin. */
+import DocsLink from '@/components/docs/DocsLink.astro';
+import P from '@/components/typography/P.astro';
+import { REGISTRY_SKINS } from '@/utils/installation/shadcn';
+
+import RegistryCommand from './RegistryCommand.astro';
+import RegistryStyling from './RegistryStyling.astro';
+
+interface Props {
+  /** Registry item name, such as `video` or `video-minimal`. */
+  item: string;
+}
+
+const { item } = Astro.props;
+const skin = REGISTRY_SKINS.find((candidate) => candidate.item === item);
+if (!skin) throw new Error(`Unknown registry skin: ${item}.`);
+---
+
+<P>
+  To own this skin's markup, controls, and styles, install its source with the Shadcn CLI. The player and media stay
+  package imports; the skin becomes files under <code>{skin.directory}</code>. See{' '}
+  <DocsLink slug="how-to/install-skins-from-the-registry">Install skins from the Shadcn registry</DocsLink> for the
+  full workflow.
+</P>
+
+<RegistryStyling />
+
+<RegistryCommand items={[item]} />

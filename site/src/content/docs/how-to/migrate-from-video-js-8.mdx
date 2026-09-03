@@ -349,7 +349,7 @@ video-player {
 
 ### Level 3: eject
 
-**Ejecting** means copying the skin's source into your project and editing it, the way you would a shadcn component. The packaged skin isn't compiled magic; it's a tree of components, so ejecting starts as copy and paste. <DocsLink slug="how-to/customize-skins">Customize skins</DocsLink> has copy-paste-ready implementations for every packaged skin.
+**Ejecting** means installing the skin's source into your project and editing it, the way you would a shadcn component, because it is one. The packaged skin isn't compiled magic; it's a tree of components, and `npx shadcn@latest add @videojs/video` copies that tree into your project. <DocsLink slug="how-to/install-skins-from-the-registry">Install skins from the Shadcn registry</DocsLink> covers the setup for every packaged skin.
 
 This is where v8's `controlBar` config and `addChild` calls end up, and honestly it's the better trade. Instead of `controlBar: { pictureInPictureToggle: false }`, you delete a line. Instead of subclassing a component to change its behavior, you edit the markup.
 
@@ -443,7 +443,7 @@ export function MyPlayer() {
 
 Those hotkey and gesture declarations are where `userActions` went. v8's `userActions.hotkeys` was a function you wrote; here each shortcut is a component with a key and an action, and `userActions.click` and `doubleClick` become gestures with a region. The packaged skins already include a sensible set of both, which is why you don't see them in the earlier examples.
 
-Ejecting is also where you take on the skin's CSS. The packaged skins ship styles for everything above; a bare layout renders unstyled until you bring those along, which is why <DocsLink slug="how-to/customize-skins">Customize skins</DocsLink> hands you the CSS next to the markup.
+Ejecting is also where you take on the skin's CSS. The packaged skins ship styles for everything above; a bare layout renders unstyled until you bring those along, which is why the registry installs the skin's stylesheet next to its markup.
 
 ## Plugins
 

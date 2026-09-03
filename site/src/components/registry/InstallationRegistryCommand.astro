@@ -1,0 +1,14 @@
+---
+/** The registry command for whatever skin the installation page's pickers selected. */
+import { isValidFramework } from '@/types/docs';
+
+import InstallationRegistryCommandClient from './InstallationRegistryCommand';
+
+const { framework } = Astro.params;
+
+if (!isValidFramework(framework)) {
+  throw new Error(`InstallationRegistryCommand needs a framework route, received ${framework}.`);
+}
+---
+
+<InstallationRegistryCommandClient client:idle framework={framework} />

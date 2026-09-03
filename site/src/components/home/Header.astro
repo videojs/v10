@@ -1,9 +1,7 @@
 ---
 import MuxLogoSmall from '@/assets/logos/mux-small.svg?react';
 import BetaPill from '@/components/BetaPill';
-import FrameworkControl from '@/components/home/FrameworkControl';
 import HeroVideo from '@/components/home/HeroVideo';
-import SkinControl from '@/components/home/SkinControl';
 import { MUX_URL } from '@/consts';
 
 interface Props {
@@ -15,7 +13,7 @@ const { poster } = Astro.props;
 
 <header
   class="relative mx-auto mb-25 grid w-full max-w-305 grid-cols-1 px-5 pt-19 [grid-template-areas:var(--grid-template-areas)] md:py-0 md:[grid-template-areas:var(--md-grid-template-areas)]"
-  style="--grid-template-areas: 'pill' 'title' 'description' 'video' 'mux' 'control'; --md-grid-template-areas: 'video' 'mux' 'description' 'control'"
+  style="--grid-template-areas: 'pill' 'title' 'description' 'video' 'mux'; --md-grid-template-areas: 'video' 'mux' 'description'"
 >
   <BetaPill
     className="mb-7 justify-self-center sm:hidden"
@@ -46,7 +44,7 @@ const { poster } = Astro.props;
     <HeroVideo client:load className="absolute inset-0" poster={poster} />
   </div>
   <p
-    class="mb-11 flex items-center justify-center gap-1.5 text-p3 md:mb-20 md:justify-end md:gap-2 md:pr-6 md:font-display md:text-(length:--md-text) md:uppercase"
+    class="flex items-center justify-center gap-1.5 text-p3 md:justify-end md:gap-2 md:pr-6 md:font-display md:text-(length:--md-text) md:uppercase"
     style="grid-area:mux;--md-text:0.6875rem;"
   >
     Video hosting sponsored by <a
@@ -59,11 +57,4 @@ const { poster } = Astro.props;
       <MuxLogoSmall width="100%" />
     </a>
   </p>
-  <div
-    class="grid grid-cols-1 items-center justify-center gap-9 md:grid-cols-2"
-    style="grid-area:control"
-  >
-    <SkinControl client:idle />
-    <FrameworkControl client:idle className="hidden md:grid" />
-  </div>
 </header>

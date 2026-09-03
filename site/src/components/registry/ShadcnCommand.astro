@@ -1,0 +1,32 @@
+---
+/** One Shadcn CLI action, such as `init` or `view @videojs/video`, in every package manager's spelling. */
+import ServerCode from '@/components/Code/ServerCode.astro';
+import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs.tsx';
+import { SHADCN_RUNNERS, shadcnCommand, type ShadcnRunner } from '@/utils/installation/shadcn';
+
+interface Props {
+  action: string;
+}
+
+const { action } = Astro.props;
+const runners = Object.keys(SHADCN_RUNNERS) as ShadcnRunner[];
+---
+
+<TabsRoot client:idle maxWidth={false}>
+  <TabsList client:idle label="Package manager">
+    {
+      runners.map((runner, index) => (
+        <Tab client:idle value={runner} initial={index === 0}>
+          {runner}
+        </Tab>
+      ))
+    }
+  </TabsList>
+  {
+    runners.map((runner, index) => (
+      <TabsPanel client:idle value={runner} initial={index === 0}>
+        <ServerCode code={shadcnCommand(runner, action)} lang="bash" />
+      </TabsPanel>
+    ))
+  }
+</TabsRoot>

@@ -1,5 +1,6 @@
 import { VJS10_DEMO_VIDEO, VJS10_HTML_CDN_BASE } from '@/consts';
-import type { Skin } from '@/stores/homePageDemos';
+
+type Skin = 'default' | 'minimal';
 
 export function generateHTMLCode(skin: Skin): string {
   const skinTag = skin === 'default' ? 'video-skin' : 'video-minimal-skin';

@@ -2,6 +2,7 @@ import bash from 'shiki/langs/bash.mjs';
 import css from 'shiki/langs/css.mjs';
 import html from 'shiki/langs/html.mjs';
 import javascript from 'shiki/langs/javascript.mjs';
+import json from 'shiki/langs/json.mjs';
 import tsx from 'shiki/langs/tsx.mjs';
 import ts from 'shiki/langs/typescript.mjs';
 
@@ -14,7 +15,7 @@ import createHighlighter, { getOrCreateCachedHighlighter } from './createHighlig
 // build and dominate first-render cost on code-heavy pages.
 const serverHighlighter = await getOrCreateCachedHighlighter('server', () =>
   createHighlighter({
-    langs: [bash, css, html, javascript, ts, tsx],
+    langs: [bash, css, html, javascript, json, ts, tsx],
   })
 );
 

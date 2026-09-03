@@ -8,7 +8,9 @@ import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
 import DocsLinkCard from '@/components/docs/DocsLinkCard.astro';
 import Aside from '@/components/Aside.astro';
-import EjectedSkin from '@/components/docs/EjectedSkin.astro';
+import ContentWidth from '@/components/frames/ContentWidth.astro';
+import RegistryCommand from '@/components/registry/RegistryCommand.astro';
+import RegistryStyling from '@/components/registry/RegistryStyling.astro';
 
 <Aside type="note" title="New in version 10">
 In prior versions of Video.js, skins were CSS-only themes applied to the same set of default controls. In version 10 the concept of skins has been expanded to include the UI components, so each skin can be completely unique and only include the UI components it needs.
@@ -18,7 +20,7 @@ A skin wraps the media component and provides the player's complete interface. I
 
 ## Packaged and ejected skins
 
-When you choose a skin you have two options for how you use it: **packaged** or **ejected**. It's usually easiest to start with a packaged skin and later eject its internal components into your project when you need more customization.
+When you choose a skin you have two options for how you use it: **packaged** or **ejected**. It's usually easiest to start with a packaged skin and later eject it, installing its source into your project, when you need more customization.
 
 Packaged skins cover common visual changes through documented CSS custom properties. Packaged video skins also let you replace the poster. When you need more than that, eject and change the components and styles directly.
 
@@ -67,17 +69,17 @@ Don't depend on elements, class names, or undocumented custom properties inside 
 
 ### Ejected skin
 
-An ejected skin exposes its UI components and styles as app code that you own. You can add, remove, rearrange, or restyle any part of it.
+An ejected skin exposes its UI components and styles as app code that you own. You can add, remove, rearrange, or restyle any part of it. The Shadcn CLI installs it from the Video.js registry:
 
-<FrameworkCase frameworks={["html"]}>
-  <EjectedSkin id="default-video" />
-</FrameworkCase>
+<ContentWidth>
+  <RegistryStyling />
+</ContentWidth>
 
-<FrameworkCase frameworks={["react"]}>
-  <EjectedSkin id="default-video-react" />
-</FrameworkCase>
+<ContentWidth>
+  <RegistryCommand items={["video"]} />
+</ContentWidth>
 
-<DocsLinkCard slug="how-to/customize-skins">Read more about ejecting skins</DocsLinkCard>
+<DocsLinkCard slug="how-to/install-skins-from-the-registry">Read more about installing skins</DocsLinkCard>
 <DocsLinkCard slug="concepts/ui-components">Read more about UI components</DocsLinkCard>
 
 ## Skins, features, and presets
@@ -108,7 +110,7 @@ Either way the styles travel inside the skin's JavaScript and apply when the ele
 
 </FrameworkCase>
 
-To use Tailwind or change the underlying CSS, [eject the skin](../how-to/customize-skins#eject-a-skin) and edit its styles in your app.
+To use Tailwind CSS or change the underlying CSS, [eject the skin](../how-to/customize-skins#eject-a-skin) and edit its styles in your app. The registry publishes React skins in Tailwind CSS 4 and vanilla CSS, and HTML skins in vanilla CSS.
 
 ### Shared limitations
 
@@ -121,5 +123,5 @@ To use Tailwind or change the underlying CSS, [eject the skin](../how-to/customi
 
 ### Ejected Tailwind
 
-- Ejected skins establish their own spacing scale but otherwise assume the default configuration. A future CLI eject command will support custom class prefixes. For now, edit the ejected skin to use your prefix.
-- Ejected skins currently support Tailwind 4.3.x.
+- Ejected skins bring their theme keys and `media-*` variants into your Tailwind build through the installed theme stylesheet, and otherwise assume the default configuration. To use a class prefix, edit the installed skin.
+- Ejected skins target Tailwind 4.3.x.
