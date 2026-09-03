@@ -165,7 +165,18 @@ React renders a root `<div>` around an `<img>`. State attributes belong to `Thum
 </Thumbnail.Root>
 ```
 
+The root clips to the selected tile while the image inside spans the whole sprite sheet, so anything after the image in flow lands past the clip edge. Position the root and lay overlays over it:
+
 ```css
+.media-thumbnail {
+  position: relative;
+}
+
+.media-thumbnail-overlay {
+  position: absolute;
+  inset: 0;
+}
+
 .media-thumbnail[data-hidden] {
   display: none;
 }
