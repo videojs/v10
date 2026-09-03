@@ -1,9 +1,9 @@
 import { type PosterImageLoadState, type PosterState } from '@videojs/core';
-import { createContext, type Dispatch, type ProviderProps, type SetStateAction, useContext } from 'react';
+import { createContext, type ProviderProps, useContext } from 'react';
 
 export interface PosterContextValue {
   state: PosterState;
-  setImageLoadState: Dispatch<SetStateAction<PosterImageLoadState>>;
+  setImageLoadState: (state: PosterImageLoadState) => void;
 }
 
 const PosterContext = createContext<PosterContextValue | null>(null);

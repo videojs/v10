@@ -1,8 +1,10 @@
 import type { PosterCore, PosterImageLoadState } from '@videojs/core';
 import type { ForwardedRef } from 'react';
-import { forwardRef, useEffect, useRef, useState } from 'react';
+import { forwardRef, useCallback, useLayoutEffect, useRef, useState } from 'react';
 
 import type { UIComponentProps } from '../../utils/types';
+import { useComposedRefs } from '../../utils/use-composed-refs';
+import { useLatestRef } from '../../utils/use-latest-ref';
 import { renderElement } from '../../utils/use-render';
 import { usePosterContext } from './context';
 
@@ -41,8 +43,8 @@ export const PosterImage = forwardRef(function PosterImage(
     srcSet: authoredSrcSet,
     state: initialLoadState,
   }));
-  const imgRef = useRef<HTMLImageElement | null>(null);
   const didCheckInitialImageRef = useRef(false);
+  const requested = useLatestRef({ src, srcSet: authoredSrcSet });
 
   // Keep only the active request. Retaining a settled source by value would
   // resurrect its old state when the image moved A -> B -> A, even though the
@@ -54,11 +56,15 @@ export const PosterImage = forwardRef(function PosterImage(
 
   const loadState = matchesRequest ? request.state : initialLoadState;
 
-  useEffect(() => {
+  // Before paint, so the root's first frame already carries `data-loading` for a
+  // source that is resolving instead of flashing the layers keyed off that state.
+  // The reset lives in the same effect: a passive cleanup would run after this
+  // layout write when Strict Mode re-runs effects, leaving the root at `none`.
+  useLayoutEffect(() => {
     setImageLoadState(loadState);
-  }, [authoredSrcSet, loadState, setImageLoadState, src]);
 
-  useEffect(() => () => setImageLoadState('none'), [setImageLoadState]);
+    return () => setImageLoadState('none');
+  }, [authoredSrcSet, loadState, setImageLoadState, src]);
 
   // An image can already be settled when we first see it — hydrated from server
   // markup, say — in which case neither `load` nor `error` ever fires. Decoded
@@ -70,19 +76,24 @@ export const PosterImage = forwardRef(function PosterImage(
   // pixels in place until the new one settles, so reading them again would call
   // the new source loaded while it is still fetching. `load` and `error` cover
   // every source after this one, the way the HTML element reads an image once.
-  useEffect(() => {
-    if (didCheckInitialImageRef.current) return;
+  // The check rides on the ref, so an override that renders nothing until a
+  // source resolves is still read the moment its image mounts.
+  const checkInitialImage = useCallback(
+    (img: HTMLImageElement | null) => {
+      if (!img || didCheckInitialImageRef.current) return;
 
-    didCheckInitialImageRef.current = true;
+      didCheckInitialImageRef.current = true;
 
-    const img = imgRef.current;
-    if (!img) return;
+      const { src, srcSet } = requested.current;
 
-    if (img.naturalWidth > 0) setRequest({ src, srcSet: authoredSrcSet, state: 'loaded' });
-    else if (img.complete && (img.getAttribute('src') || img.hasAttribute('srcset'))) {
-      setRequest({ src, srcSet: authoredSrcSet, state: 'error' });
-    }
-  }, [authoredSrcSet, src]);
+      if (img.naturalWidth > 0) setRequest({ src, srcSet, state: 'loaded' });
+      else if (img.complete && (img.getAttribute('src') || img.hasAttribute('srcset'))) {
+        setRequest({ src, srcSet, state: 'error' });
+      }
+    },
+    [requested]
+  );
+  const ref = useComposedRefs(forwardedRef, checkInitialImage);
 
   // Recorded against the source this render asked for, not the one on the
   // element: a `render` override is free to rewrite it.
@@ -94,7 +105,7 @@ export const PosterImage = forwardRef(function PosterImage(
     { render, className, style },
     {
       state,
-      ref: [forwardedRef, imgRef],
+      ref,
       props: [
         { alt: '' },
         elementProps,

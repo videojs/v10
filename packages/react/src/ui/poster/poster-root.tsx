@@ -26,7 +26,7 @@ export const PosterRoot = forwardRef(function PosterRoot(
   const metadata = usePlayer(selectMetadata);
 
   const [core] = useState(() => new PosterCore());
-  const [imageLoadState, setImageLoadState] = useState<PosterImageLoadState>('none');
+  const [reportedLoadState, setImageLoadState] = useState<PosterImageLoadState | null>(null);
 
   if (!playback) {
     if (__DEV__) logMissingFeature('Poster.Root', 'playback');
@@ -40,7 +40,11 @@ export const PosterRoot = forwardRef(function PosterRoot(
     started: playback.started,
     poster: metadata?.poster ?? '',
   });
-  core.setImageLoadState(imageLoadState);
+
+  // Until the image reports, a resolved poster is on its way. Server markup then
+  // already carries `data-loading`, and hydration lands on the state the image
+  // reports first rather than flashing the layers keyed off that attribute.
+  core.setImageLoadState(reportedLoadState ?? (metadata?.poster ? 'loading' : 'none'));
 
   const state = core.getState();
 

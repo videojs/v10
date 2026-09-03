@@ -1,4 +1,5 @@
 import { cleanup, fireEvent, render } from '@testing-library/react';
+import { renderToString } from 'react-dom/server';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { Poster } from '..';
@@ -178,6 +179,31 @@ describe('Poster', () => {
     naturalWidth.mockRestore();
   });
 
+  it('reads a cached image that an override mounts only once a source resolved', () => {
+    const naturalWidth = vi.spyOn(HTMLImageElement.prototype, 'naturalWidth', 'get').mockReturnValue(1280);
+    const { getByTestId, rerender } = render(
+      <Poster.Root data-testid="poster">
+        <Poster.Image render={() => null} />
+      </Poster.Root>,
+      { wrapper: wrapper({ poster: 'poster.jpg' }) }
+    );
+
+    expect(getByTestId('poster').hasAttribute('data-loading')).toBe(true);
+
+    // What the documented `renderPoster` pattern does: nothing until `src` arrives,
+    // then an image the browser may already have, which never fires `load`.
+    rerender(
+      <Poster.Root data-testid="poster">
+        <Poster.Image render={(props) => <img {...props} data-testid="image" alt="" />} />
+      </Poster.Root>
+    );
+
+    expect(getByTestId('poster').hasAttribute('data-loaded')).toBe(true);
+    expect(getByTestId('poster').hasAttribute('data-loading')).toBe(false);
+
+    naturalWidth.mockRestore();
+  });
+
   it('waits on an override that sources the image some other way', () => {
     const { getByTestId } = render(
       <Poster.Root data-testid="poster">
@@ -249,5 +275,25 @@ describe('Poster', () => {
 
   it('requires the image to be inside a root', () => {
     expect(() => render(<Poster.Image />)).toThrow('Poster compound components must be used within a Poster.Root');
+  });
+
+  it('marks a resolved poster as loading in server markup, before the image can report', () => {
+    const Loading = wrapper({ poster: 'poster.jpg' });
+    const Idle = wrapper();
+
+    expect(
+      renderToString(
+        <Loading>
+          <DefaultPoster />
+        </Loading>
+      )
+    ).toContain('data-loading');
+    expect(
+      renderToString(
+        <Idle>
+          <DefaultPoster />
+        </Idle>
+      )
+    ).not.toContain('data-loading');
   });
 });
