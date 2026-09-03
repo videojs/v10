@@ -1,0 +1,61 @@
+---
+title: TextTrackController
+description: Reactive controller to create or observe a text track and its cues
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+
+`TextTrackController` gives an HTML custom element reactive access to a text track and its cue snapshots. Create an owned track by passing track options, or observe an existing enabled track by passing one or more kinds.
+
+The controller consumes the media attached to the nearest player. It reconnects when that media changes and requests a host update when its track or cues change.
+
+## Import
+
+```ts
+import { TextTrackController } from '@videojs/html';
+```
+
+## Usage
+
+### Create a track
+
+Pass an options object to create a programmatic native track. The controller defaults it to `hidden` mode and removes it when the host disconnects or switches media.
+
+```ts title="ad-cue-source.ts"
+import { TextTrackController, UIElement } from '@videojs/html';
+
+class AdCueSourceElement extends UIElement {
+  readonly #track = new TextTrackController(this, {
+    kind: 'metadata',
+    label: 'ad-cues',
+  });
+
+  addAdCue(start: number, end: number, id: string) {
+    this.#track.addCue(new VTTCue(start, end, id));
+  }
+
+  protected override update() {
+    this.dataset.activeAd = this.#track.activeCues[0]?.text ?? '';
+  }
+}
+```
+
+### Observe a track
+
+Pass a kind or array of kinds to follow an existing enabled track. A `showing` track takes precedence over a `hidden` track.
+
+```ts title="chapter-title.ts"
+import { TextTrackController, UIElement } from '@videojs/html';
+
+class ChapterTitleElement extends UIElement {
+  readonly #track = new TextTrackController(this, 'chapters');
+
+  protected override update() {
+    this.textContent = this.#track.activeCues[0]?.text ?? '';
+  }
+}
+```
+
+Read `.value` for the current track, `.cues` for every cue, and `.activeCues` for cues at the current playback position. Call `.addCue()` and `.removeCue()` to mutate the current track and refresh both snapshots.
+
+<UtilReference util="TextTrackController" />

@@ -232,6 +232,7 @@ export const sidebar: Sidebar = [
           { slug: 'reference/create-player', frameworks: ['react'] },
           { slug: 'reference/html-create-player', sidebarLabel: 'createPlayer', frameworks: ['html'] },
           { slug: 'reference/player-controller', frameworks: ['html'] },
+          { slug: 'reference/text-track-controller', frameworks: ['html'] },
           { slug: 'reference/use-player', frameworks: ['react'] },
           { slug: 'reference/use-media', frameworks: ['react'] },
           { slug: 'reference/use-container', frameworks: ['react'] },
