@@ -164,6 +164,19 @@ media-thumbnail > img {
   border-radius: 4px;
 }
 ```
+
+The element clips to the selected tile while the image inside spans the whole sprite sheet, so anything after the image in flow lands past the clip edge. Position the element and lay overlays over it:
+
+```css
+media-thumbnail {
+  position: relative;
+}
+
+media-thumbnail > .overlay {
+  position: absolute;
+  inset: 0;
+}
+```
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
