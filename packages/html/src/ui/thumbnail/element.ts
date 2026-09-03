@@ -85,6 +85,9 @@ export class ThumbnailElement extends UIElement {
   readonly #shadow = this.attachShadow({ mode: 'open' });
   readonly #fallback = createFallbackImage();
   readonly #children = new MutationObserver(() => this.requestUpdate());
+  // An image assigned through a forwarding slot lives outside this subtree, so its
+  // attributes are watched on the image itself.
+  readonly #imageAttributes = new MutationObserver(() => this.requestUpdate());
   readonly #textTracks = new PlayerController(this, playerContext, selectTextTrack);
 
   #slots: AbortController | null = null;
@@ -263,6 +266,11 @@ export class ThumbnailElement extends UIElement {
     }
 
     this.#img = next;
+    this.#imageAttributes.disconnect();
+
+    if (next && next !== this.#fallback) {
+      this.#imageAttributes.observe(next, { attributes: true, attributeFilter: ['src', 'srcset'] });
+    }
 
     // The fallback only occupies the shadow root while it is the active image,
     // so a supplied image never sits beside a hidden one.

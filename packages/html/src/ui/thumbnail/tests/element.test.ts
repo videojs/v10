@@ -178,6 +178,10 @@ describe('ThumbnailElement', () => {
 
     await vi.waitFor(() => expect(img.getAttribute('src')).toBe('thumb.jpg'));
     expect(fallback.isConnected).toBe(false);
+
+    // The image is outside the thumbnail's subtree, so its attributes are watched directly.
+    img.setAttribute('srcset', 'late-authored-2x.jpg 2x');
+    await vi.waitFor(() => expect(img.hasAttribute('srcset')).toBe(false));
   });
 
   it('draws the fallback again when the supplied image is removed', async () => {
