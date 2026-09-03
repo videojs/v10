@@ -35,7 +35,7 @@
     --media-shadow-subtle-current-color: oklch(from var(--media-shadow-current-color) l c h / calc(alpha * 0.4));
     --media-text-shadow-dialog: 0 1px 0 rgb(0 0 0 / 0.25);
     --media-backdrop-filter-surface: blur(16px) saturate(150%);
-    --media-backdrop-filter-backdrop: blur(8px);
+    --media-backdrop-filter-indicator: blur(8px);
     --media-backdrop-filter-dialog: blur(16px) saturate(150%);
 
     /* Controls. */

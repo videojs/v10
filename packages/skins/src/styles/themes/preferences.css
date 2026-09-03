@@ -47,7 +47,7 @@
       --media-popover: var(--media-background);
       --media-scrollbar-thumb-color: oklch(from currentColor l c h / 0.8);
       --media-backdrop-filter-surface: none;
-      --media-backdrop-filter-backdrop: none;
+      --media-backdrop-filter-indicator: none;
       --media-backdrop-filter-dialog: none;
       --media-shadow-surface-inset: inset 0 1px 0 0 rgb(255 255 255 / 0.25), inset 0 0 0 1px rgb(255 255 255 / 0.125);
 

@@ -240,9 +240,9 @@ export const vars = {
     kind: 'internal',
     description: 'Backdrop filter shared by translucent surfaces; preferences switch it off.',
   },
-  '--media-backdrop-filter-backdrop': {
+  '--media-backdrop-filter-indicator': {
     kind: 'internal',
-    description: 'Backdrop filter behind buffering and playback status backdrops; preferences switch it off.',
+    description: 'Backdrop filter behind the buffering and playback status indicators; preferences switch it off.',
   },
   '--media-backdrop-filter-dialog': {
     kind: 'internal',
