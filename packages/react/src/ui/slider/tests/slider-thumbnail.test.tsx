@@ -2,8 +2,8 @@ import { cleanup, render } from '@testing-library/react';
 import { createRef } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
+import * as Slider from '../index.parts';
 import { SliderRoot } from '../slider-root';
-import { SliderThumbnail } from '../slider-thumbnail';
 
 const { mockSliderApi, mockThumbnailApi } = vi.hoisted(() => ({
   mockSliderApi: () => ({
@@ -64,11 +64,11 @@ vi.mock('@videojs/store/react', () => ({
 
 afterEach(cleanup);
 
-describe('SliderThumbnail', () => {
+describe('Slider.Thumbnail', () => {
   it('renders inside SliderRoot context', () => {
     const { container } = render(
       <SliderRoot>
-        <SliderThumbnail data-testid="thumbnail" />
+        <Slider.Thumbnail.Root data-testid="thumbnail" />
       </SliderRoot>
     );
 
@@ -76,7 +76,9 @@ describe('SliderThumbnail', () => {
   });
 
   it('throws outside of SliderRoot', () => {
-    expect(() => render(<SliderThumbnail />)).toThrow('Slider compound components must be used within a Slider.Root');
+    expect(() => render(<Slider.Thumbnail.Root />)).toThrow(
+      'Slider compound components must be used within a Slider.Root'
+    );
   });
 
   it('forwards ref', () => {
@@ -84,7 +86,7 @@ describe('SliderThumbnail', () => {
 
     render(
       <SliderRoot>
-        <SliderThumbnail ref={ref} />
+        <Slider.Thumbnail.Root ref={ref} />
       </SliderRoot>
     );
 
@@ -94,7 +96,7 @@ describe('SliderThumbnail', () => {
   it('renders a div with thumbnail ARIA attributes', () => {
     const { container } = render(
       <SliderRoot>
-        <SliderThumbnail data-testid="thumbnail" />
+        <Slider.Thumbnail.Root data-testid="thumbnail" />
       </SliderRoot>
     );
 
@@ -108,7 +110,7 @@ describe('SliderThumbnail', () => {
   it('applies data-hidden when no thumbnails are available', () => {
     const { container } = render(
       <SliderRoot>
-        <SliderThumbnail data-testid="thumbnail" />
+        <Slider.Thumbnail.Root data-testid="thumbnail" />
       </SliderRoot>
     );
 
@@ -117,10 +119,10 @@ describe('SliderThumbnail', () => {
     expect(el?.hasAttribute('data-hidden')).toBe(true);
   });
 
-  it('renders an img child element', () => {
+  it('renders a default img child element', () => {
     const { container } = render(
       <SliderRoot>
-        <SliderThumbnail data-testid="thumbnail" />
+        <Slider.Thumbnail.Root data-testid="thumbnail" />
       </SliderRoot>
     );
 
@@ -140,7 +142,7 @@ describe('SliderThumbnail', () => {
 
     const { container } = render(
       <SliderRoot>
-        <SliderThumbnail data-testid="thumbnail" thumbnails={thumbnails} />
+        <Slider.Thumbnail.Root data-testid="thumbnail" thumbnails={thumbnails} />
       </SliderRoot>
     );
 
@@ -155,7 +157,7 @@ describe('SliderThumbnail', () => {
   it('forwards crossOrigin to inner img', () => {
     const { container } = render(
       <SliderRoot>
-        <SliderThumbnail
+        <Slider.Thumbnail.Root
           data-testid="thumbnail"
           crossOrigin="anonymous"
           thumbnails={[{ url: 'thumb.jpg', startTime: 0 }]}
@@ -166,5 +168,20 @@ describe('SliderThumbnail', () => {
     const img = container.querySelector('[data-testid="thumbnail"] img');
 
     expect(img?.getAttribute('crossorigin')).toBe('anonymous');
+  });
+
+  it('renders a shared image part when composed explicitly', () => {
+    const { container } = render(
+      <SliderRoot>
+        <Slider.Thumbnail.Root data-testid="thumbnail">
+          <Slider.Thumbnail.Image data-testid="thumbnail-image" />
+        </Slider.Thumbnail.Root>
+      </SliderRoot>
+    );
+
+    const img = container.querySelector('[data-testid="thumbnail-image"]');
+
+    expect(img?.tagName).toBe('IMG');
+    expect(container.querySelectorAll('[data-testid="thumbnail-image"]')).toHaveLength(1);
   });
 });

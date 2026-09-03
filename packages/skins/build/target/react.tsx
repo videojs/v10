@@ -89,15 +89,24 @@ export const reactComponentTarget: ComponentTarget<CoreSchema> = defineComponent
         Poster: ({ props, children }) => <target.Poster render={children} {...props} />,
         Slider: {
           Thumbnail: {
-            Root: Div,
-            Image: imported({
+            Root: imported({
               from: '@videojs/react',
               name: 'Slider',
-              path: ['Thumbnail'],
+              path: ['Thumbnail', 'Root'],
               props: {
                 from: '@videojs/react',
                 name: 'Slider',
-                path: ['ThumbnailProps'],
+                path: ['Thumbnail', 'RootProps'],
+              },
+            }),
+            Image: imported({
+              from: '@videojs/react',
+              name: 'Slider',
+              path: ['Thumbnail', 'Image'],
+              props: {
+                from: '@videojs/react',
+                name: 'Slider',
+                path: ['Thumbnail', 'ImageProps'],
               },
             }),
           },
