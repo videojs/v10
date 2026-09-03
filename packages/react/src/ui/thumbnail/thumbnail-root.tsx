@@ -1,7 +1,7 @@
 import { mapCuesToThumbnails, ThumbnailCore, ThumbnailDataAttrs } from '@videojs/core';
 import { createThumbnail, selectTextTrack } from '@videojs/core/dom';
 import type { CSSProperties, ForwardedRef } from 'react';
-import { forwardRef, useMemo, useRef, useState } from 'react';
+import { forwardRef, useCallback, useMemo, useRef, useState } from 'react';
 
 import { useOptionalPlayer } from '../../player/context';
 import type { UIComponentProps } from '../../utils/types';
@@ -39,6 +39,19 @@ export const ThumbnailRoot = forwardRef(function ThumbnailRoot(
   );
 
   useDestroy(handle, () => handle.connect());
+
+  // The image reports itself through this ref, so a mount, unmount, or `render` swap rebinds without an effect.
+  const imageRef = useCallback(
+    (img: HTMLImageElement | null) => {
+      const previous = imgRef.current;
+
+      imgRef.current = img;
+
+      if (img) handle.connect();
+      else if (previous) handle.disconnectImg(previous);
+    },
+    [handle]
+  );
 
   // A supplied list takes priority over automatic <track> detection.
   const thumbnails = useMemo(() => {
@@ -81,14 +94,13 @@ export const ThumbnailRoot = forwardRef(function ThumbnailRoot(
   return (
     <ThumbnailProvider
       value={{
+        core,
         state,
         src: thumbnail?.url,
         imageStyle,
-        thumbnailTrackCrossOrigin: textTrack?.thumbnailTrackCrossOrigin ?? undefined,
-        inheritsCrossOrigin: !externalThumbnails?.length,
-        imageRef: imgRef,
-        connectImage: handle.connect,
-        disconnectImage: handle.disconnectImg,
+        // Only `<track>`-sourced thumbnails follow the media element's CORS mode.
+        inheritedCrossOrigin: externalThumbnails?.length ? undefined : textTrack?.thumbnailTrackCrossOrigin,
+        imageRef,
       }}
     >
       {renderElement(

@@ -1,8 +1,6 @@
 import type { ThumbnailCore, ThumbnailFetchPriority } from '@videojs/core';
-import type { MediaTextTrackState } from '@videojs/media';
-import { isNull, isUndefined } from '@videojs/utils/predicate';
 import type { ForwardedRef } from 'react';
-import { forwardRef, useLayoutEffect } from 'react';
+import { forwardRef } from 'react';
 
 import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
@@ -20,18 +18,6 @@ export interface ThumbnailImageProps extends Omit<
   fetchPriority?: ThumbnailCore.ImageProps['fetchPriority'];
 }
 
-function resolveCrossOrigin(
-  explicit: ThumbnailCore.ImageProps['crossOrigin'],
-  inherits: boolean,
-  inherited: MediaTextTrackState['thumbnailTrackCrossOrigin'] | undefined
-) {
-  if (isNull(explicit)) return undefined;
-
-  if (!isUndefined(explicit)) return explicit;
-
-  return inherits ? (inherited ?? undefined) : undefined;
-}
-
 /**
  * Displays the image selected and measured by `Thumbnail.Root`.
  *
@@ -43,27 +29,7 @@ export const ThumbnailImage = forwardRef(function ThumbnailImage(
   forwardedRef: ForwardedRef<HTMLImageElement>
 ) {
   const { render, className, style, crossOrigin, loading, fetchPriority, ...elementProps } = componentProps;
-  const {
-    state,
-    src,
-    imageStyle,
-    thumbnailTrackCrossOrigin,
-    inheritsCrossOrigin,
-    imageRef,
-    connectImage,
-    disconnectImage,
-  } = useThumbnailContext();
-
-  const resolvedCrossOrigin = resolveCrossOrigin(crossOrigin, inheritsCrossOrigin, thumbnailTrackCrossOrigin);
-
-  useLayoutEffect(() => {
-    const img = imageRef.current;
-    if (!img) return;
-
-    connectImage();
-
-    return () => disconnectImage(img);
-  }, [connectImage, disconnectImage, imageRef, render]);
+  const { core, state, src, imageStyle, inheritedCrossOrigin, imageRef } = useThumbnailContext();
 
   return renderElement(
     'img',
@@ -76,7 +42,7 @@ export const ThumbnailImage = forwardRef(function ThumbnailImage(
         elementProps,
         {
           src,
-          crossOrigin: resolvedCrossOrigin,
+          crossOrigin: core.resolveCrossOrigin(crossOrigin, inheritedCrossOrigin),
           loading,
           style: imageStyle,
           // SAFETY: The core and React types contain the same fetch-priority literals; React alone omits `undefined`.

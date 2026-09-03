@@ -1,16 +1,15 @@
-import type { ThumbnailState } from '@videojs/core';
-import type { MediaTextTrackState } from '@videojs/media';
-import { createContext, type CSSProperties, type ProviderProps, type RefObject, useContext } from 'react';
+import type { ThumbnailCore, ThumbnailState } from '@videojs/core';
+import { createContext, type CSSProperties, type ProviderProps, type RefCallback, useContext } from 'react';
 
 export interface ThumbnailContextValue {
+  core: ThumbnailCore;
   state: ThumbnailState;
   src: string | undefined;
   imageStyle: CSSProperties | undefined;
-  thumbnailTrackCrossOrigin: MediaTextTrackState['thumbnailTrackCrossOrigin'] | undefined;
-  inheritsCrossOrigin: boolean;
-  imageRef: RefObject<HTMLImageElement | null>;
-  connectImage: () => void;
-  disconnectImage: (img: HTMLImageElement) => void;
+  /** CORS mode inherited from the media element, supplied only for `<track>`-sourced thumbnails. */
+  inheritedCrossOrigin: ThumbnailCore.ImageProps['crossOrigin'];
+  /** Attach to the image so the root can track its loading lifecycle. */
+  imageRef: RefCallback<HTMLImageElement>;
 }
 
 const ThumbnailContext = createContext<ThumbnailContextValue | null>(null);
