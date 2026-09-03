@@ -5,6 +5,7 @@ import {
   type CompareLayout,
   type CompareMode,
   comparePanels,
+  resolveSkinSource,
   type SkinSelection,
   summarizeSelection,
 } from '@app/compare';
@@ -161,7 +162,9 @@ export function App() {
   );
   const panels = useMemo(() => comparePanels(selection, compare), [selection, compare]);
   const skinSource = panels[0]?.skins ?? 'package';
-  const skinStylingsAvailable = skinStylings(platform, skinSource);
+  // The stylings the selection itself can show. A styling comparison puts CSS in the first panel, so constraining by
+  // that panel's source would send a Tailwind selection back to CSS.
+  const skinStylingsAvailable = skinStylings(platform, resolveSkinSource(platform, styling, skins));
   const compareOptions = useMemo(
     () => [
       { value: 'off' as const, label: COMPARE_LABELS.off, disabled: false },

@@ -105,6 +105,9 @@ function bind(element: MediaLike | undefined): void {
 
     element.textTracks.removeEventListener('change', report);
   };
+
+  // The sibling should not wait for the next media event to learn where this player already is.
+  report();
 }
 
 function parseTextTrack(value: unknown): MirroredTextTrack | undefined {
@@ -150,6 +153,7 @@ export function installSandboxMirror(): void {
   subscribe('mirror', parseFlag, (value) => {
     enabled = value;
     lastReported = '';
+    report();
   });
   subscribeMessage('mirror-apply', parseState, apply);
 }

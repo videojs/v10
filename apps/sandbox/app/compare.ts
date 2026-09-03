@@ -36,7 +36,7 @@ export interface ComparePanel {
 }
 
 /** The source a panel loads: the explicit choice when it publishes the styling on that platform, else the default. */
-function resolveSkinSource(platform: Platform, styling: Styling, skins: SkinSource | undefined): SkinSource {
+export function resolveSkinSource(platform: Platform, styling: Styling, skins: SkinSource | undefined): SkinSource {
   if (skins !== undefined && skinSourceAvailable(skins, platform) && skinStylings(platform, skins).includes(styling)) {
     return skins;
   }
