@@ -3,6 +3,7 @@
  * The styling select box for the registry commands on the page. React chooses between Tailwind CSS and vanilla CSS;
  * HTML skins only ship as vanilla CSS, so the HTML docs state that instead of offering a choice.
  */
+import ContentWidth from '@/components/frames/ContentWidth.astro';
 import P from '@/components/typography/P.astro';
 import { isValidFramework } from '@/types/docs';
 
@@ -14,9 +15,9 @@ if (!isValidFramework(framework)) throw new Error(`RegistryStyling needs a frame
 
 {
   framework === 'react' ? (
-    <div class="mx-auto my-6 max-w-3xl">
+    <ContentWidth>
       <RegistryStylingClient client:idle framework={framework} />
-    </div>
+    </ContentWidth>
   ) : (
     <P>HTML skins install as vanilla CSS.</P>
   )
