@@ -72,6 +72,7 @@ type MockEngine = {
   representations: MockRepresentation[];
   currentRepresentation: MockRepresentation | null;
   attachView: ReturnType<typeof vi.fn>;
+  destroy: ReturnType<typeof vi.fn>;
   attachSource: ReturnType<typeof vi.fn>;
   updateSettings: ReturnType<typeof vi.fn>;
   resetSettings: ReturnType<typeof vi.fn>;
@@ -150,6 +151,8 @@ describe('DashMedia', () => {
       media.destroy();
 
       expect(engine.attachView).toHaveBeenCalledWith(null);
+      expect(engine.attachView).toHaveBeenCalledOnce();
+      expect(engine.destroy).toHaveBeenCalledOnce();
     });
   });
 
