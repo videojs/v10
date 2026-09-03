@@ -16,7 +16,7 @@ Start with the path that matches the change you want:
 | If you want to… | Use this path |
 | --------------- | ------------- |
 | Change colors, typography, sizing, or how the poster fills the player | [Style a packaged skin](#style-a-packaged-skin). The skin stays in the Video.js package, and you set its supported CSS properties. |
-| Add, remove, rearrange, or deeply restyle controls; change layout or interactions | [Eject and edit a skin](#eject-and-edit-a-skin). Ejecting copies the skin's source files into your project so you can change them. |
+| Add, remove, rearrange, or deeply restyle controls; change layout or interactions | [Install and edit a skin](#install-and-edit-a-skin). Installing the source copies the skin's files into your project so you can change them. |
 
 ## Style a packaged skin
 
@@ -114,11 +114,11 @@ Packaged video skins also let you replace the poster through the `renderPoster` 
 
 See <DocsLink slug="reference/poster">Poster</DocsLink>.
 
-Packaged skins do not provide settings for adding, removing, or rearranging controls, or for replacing built-in feedback and interactions. To make those changes, [eject the closest skin](#eject-and-edit-a-skin) and edit its source.
+Packaged skins do not provide settings for adding, removing, or rearranging controls, or for replacing built-in feedback and interactions. To make those changes, [install the closest skin's source](#install-and-edit-a-skin) and edit it.
 
-## Eject and edit a skin
+## Install and edit a skin
 
-If a packaged skin is close to the interface you want, eject it and edit the copy in your project. Ejecting turns the skin's controls, layout, styles, and interactions into app code that you own.
+If a packaged skin is close to the interface you want, install an editable copy in your project. Video.js calls this **source-owned UI** because the skin's controls, layout, styles, and interactions become app code that you own.
 
 Video.js publishes the skin source in a catalog of installable files. The [`shadcn` CLI](https://ui.shadcn.com/docs/cli) is the command-line tool that copies those files into your project, whether you use React or HTML.
 
@@ -158,7 +158,7 @@ Install the skin closest to the interface you want. Default skins use the preset
 
 <RegistryCatalog />
 
-The paths in the table start from the component location configured in `components.json`. The background video skin cannot be ejected.
+The paths in the table start from the component location configured in `components.json`. The background video skin has no installable source.
 
 ### Use the installed skin
 
@@ -192,7 +192,7 @@ The files for the control bar, gestures, keyboard shortcuts, settings menu, and 
 The `skin.html` file contains the layout. The `skin.ts` module registers the custom elements and loads `skin.css`. Elements use class names that start with `media-`; change a class in `skin.html` or a rule in the stylesheet to change one part of the interface.
 </FrameworkCase>
 
-### Inspect or update an ejected skin
+### Inspect or update installed source
 
 Use the CLI's `search` command to find source and `view` to inspect it before installation:
 

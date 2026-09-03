@@ -15,14 +15,14 @@ In prior versions of Video.js, skins were CSS-only themes applied to the same se
 
 A skin wraps the media component and provides the player's complete interface. It combines a specific set of UI components with the styles that arrange and present them.
 
-## Packaged and ejected skins
+## Packaged skins and editable source
 
-When you choose a skin you have two options for how you use it: **packaged** or **ejected**. It's usually easiest to start with a packaged skin and later eject its internal components into your project when you need more customization.
+When you choose a skin, you have two options for how you use it: use the **packaged skin** or install its **editable source**. It's usually easiest to start with a packaged skin and install an editable copy in your project later, when you need more customization.
 
-Packaged skins cover common visual changes through documented CSS custom properties. Packaged video skins also let you replace the poster. When you need more than that, eject the skin and change the components and styles directly.
+Packaged skins cover common visual changes through documented CSS custom properties. Packaged video skins also let you replace the poster. When you need more than that, install the skin's source and change the components and styles directly.
 
-| Packaged skin | Ejected skin |
-|---------------|--------------|
+| Packaged skin | Editable source |
+|---------------|-----------------|
 | Single component | Many UI components |
 | Documented CSS custom properties | Components and styles you own |
 | Future design updates auto-applied by bumping the version | Future design updates manually applied, or intentionally ignored |
@@ -66,11 +66,11 @@ Don't depend on elements, class names, or undocumented custom properties inside 
 
 <DocsLinkCard slug="how-to/customize-skins" anchor="style-a-packaged-skin">Style a packaged skin</DocsLinkCard>
 
-### Ejected skin
+### Editable source
 
-An ejected skin is the same skin as app code that you own. Its UI components and styles become files in your project, so you can add, remove, rearrange, or restyle any part of it.
+An editable copy is the same skin as app code that you own. Video.js also calls this **source-owned UI**. Its UI components and styles become files in your project, so you can add, remove, rearrange, or restyle any part of it.
 
-<DocsLinkCard slug="how-to/customize-skins" anchor="eject-and-edit-a-skin">Eject and edit a skin</DocsLinkCard>
+<DocsLinkCard slug="how-to/customize-skins" anchor="install-and-edit-a-skin">Install and edit a skin</DocsLinkCard>
 
 ### Custom interface
 

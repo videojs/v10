@@ -22,7 +22,7 @@ export default function InstallationRegistryCommandClient({ framework }: Props) 
     return (
       <p className={clsx(shared.p, shared.prose)}>
         {$useCase === 'background-video'
-          ? 'The background video skin cannot be ejected.'
+          ? 'The background video skin has no installable source.'
           : 'Select the Default or Minimal skin above to copy its source.'}
       </p>
     );
