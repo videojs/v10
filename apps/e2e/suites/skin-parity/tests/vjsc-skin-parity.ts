@@ -224,6 +224,18 @@ export interface RenderingOptions {
   readonly mask?: readonly Locator[] | undefined;
 }
 
+/**
+ * Wait for the frame's web fonts before a capture. Inter loads one static weight at a time, on first use, so text that
+ * just appeared—an error description, a menu label—can still paint in its fallback face while the sibling panel,
+ * captured a moment later, already has the real one.
+ */
+export async function settleFonts(target: Locator) {
+  await target.evaluate((element) => {
+    element.getBoundingClientRect();
+    return document.fonts.ready.then(() => undefined);
+  });
+}
+
 /** Capture one rendering as the in-memory reference for a sibling panel on the same page. */
 export async function captureRendering(
   target: Locator,
@@ -231,6 +243,7 @@ export async function captureRendering(
   { mask = [] }: RenderingOptions = {}
 ): Promise<VisualCapture> {
   await alignToPixelGrid(target);
+  await settleFonts(target);
 
   return { name, image: await target.screenshot({ ...CAPTURE_OPTIONS, mask: [...mask] }) };
 }
@@ -242,6 +255,7 @@ export async function snapshotReference(
   options: RenderingOptions = {}
 ): Promise<VisualCapture> {
   await alignToPixelGrid(target);
+  await settleFonts(target);
   await expect(target).toHaveScreenshot(name, { mask: [...(options.mask ?? [])] });
 
   return captureRendering(target, name, options);
@@ -255,6 +269,7 @@ export async function expectSameRendering(
   { mask = [] }: RenderingOptions = {}
 ) {
   await alignToPixelGrid(target);
+  await settleFonts(target);
 
   const actual = { name: reference.name, image: await target.screenshot({ ...CAPTURE_OPTIONS, mask: [...mask] }) };
 
