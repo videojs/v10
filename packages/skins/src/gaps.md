@@ -20,9 +20,3 @@ This file tracks known parity and anatomy work carried forward from the retired 
 
 These selectors currently preserve observable parity. Keep them as known ownership concerns rather than introducing new anatomy solely to remove a diagnostic warning.
 
-### Thumbnail loading ownership
-
-- Source: `e20e54255` / #2259 and `packages/skins/src/styles/sliders/thumbnail.styles.ts`
-- Gap: No observable parity gap is known. React now reports `data-loading` on `Slider.Thumbnail.Root`, but the HTML root is still a plain wrapper around `<media-slider-thumbnail>`, so the styles keep `has-*` and `group-has-*` selectors beside the root-state variants until both targets share one anatomy.
-- Affected: Default and Minimal skins; HTML target; CSS and Tailwind outputs.
-- Recommendation: Once `<media-slider-thumbnail>` adopts a supplied `<img>` child, map the HTML root to that element, drop the descendant selectors, and verify generated output for both targets.
