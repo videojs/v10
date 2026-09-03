@@ -9,6 +9,7 @@ import type { ThumbnailApi } from '@videojs/core/dom';
 import { applyElementProps, applyStateDataAttrs, createThumbnail, selectTextTrack } from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import type { MediaTextTrackState } from '@videojs/media';
+import { listen } from '@videojs/utils/dom';
 
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
@@ -86,6 +87,7 @@ export class ThumbnailElement extends UIElement {
   readonly #children = new MutationObserver(() => this.requestUpdate());
   readonly #textTracks = new PlayerController(this, playerContext, selectTextTrack);
 
+  #slots: AbortController | null = null;
   #img: HTMLImageElement | null = null;
   #thumbnails: ThumbnailImage[] = [];
   #externalThumbnails: ThumbnailImage[] | undefined;
@@ -130,6 +132,11 @@ export class ThumbnailElement extends UIElement {
       attributes: true,
       attributeFilter: ['src', 'srcset'],
     });
+
+    // Nodes assigned to a forwarding slot are not children of this subtree, so an image slotted
+    // in later never shows up as a mutation. The slot announces it with `slotchange` instead.
+    this.#slots = new AbortController();
+    listen(this, 'slotchange', () => this.requestUpdate(), { signal: this.#slots.signal });
   }
 
   override disconnectedCallback(): void {
@@ -137,6 +144,8 @@ export class ThumbnailElement extends UIElement {
 
     this.#adopt(null);
     this.#children.disconnect();
+    this.#slots?.abort();
+    this.#slots = null;
     this.#api?.destroy();
     this.#api = null;
   }

@@ -94,13 +94,11 @@ A same-origin track needs none of this.
     <img alt="" decoding="async" />
   </media-thumbnail>
   ```
-
-  The `<img>` is optional. Leave it out and the element draws one of its own in its shadow DOM.
 </FrameworkCase>
 
 ## Behavior
 
-The thumbnail root resolves an image for the current `time`, owns `src` and `srcset` on it, and reports its loading lifecycle. In React, render that image with `Thumbnail.Image`. In HTML, `<media-thumbnail>` draws an image of its own in its shadow DOM; supply an `<img>` child to replace it and compose overlays or loading indicators beside it.
+The thumbnail root resolves an image for the current `time`, owns `src` and `srcset` on it, and reports its loading lifecycle. In React, render that image with `Thumbnail.Image`. In HTML, the `<img>` child is optional: leave it out and `<media-thumbnail>` draws an image of its own in its shadow DOM; supply one to replace it and compose overlays or loading indicators beside it.
 
 Supported source formats:
 
