@@ -1,6 +1,5 @@
-import { CustomMediaElement } from '@videojs/media/dom';
 import { ShakaAdapter } from '@videojs/shaka-video';
 
-import { MediaAttachMixin } from '../../store/media-attach-mixin';
+import { createMediaElement } from '../create-media-element';
 
-export class ShakaVideo extends MediaAttachMixin(CustomMediaElement('video', ShakaAdapter)) {}
+export class ShakaVideo extends createMediaElement(ShakaAdapter) {}
