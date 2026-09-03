@@ -15,6 +15,7 @@ export const slider = {
     'group/slider relative flex flex-1 items-center justify-center rounded-(--media-track-border-radius) outline-none cursor-pointer',
     '[--media-track-border-radius:99px]',
     '[--media-track-transition-duration:100ms]',
+    'data-dragging:[--media-track-transition-duration:0ms] focus-within:[--media-track-transition-duration:0ms]',
     '[--media-chapter-gap:calc(var(--media-spacing)*1)] [--media-internal-chapter-inset-start:calc(var(--media-chapter-gap)/2)] [--media-internal-chapter-inset-end:calc(var(--media-chapter-gap)/2)]',
     // Horizontal
     'data-[orientation=horizontal]:min-w-20 data-[orientation=horizontal]:w-(--media-slider-width,100%) data-[orientation=horizontal]:h-(--media-slider-height,--spacing(8))',
@@ -50,8 +51,7 @@ export const slider = {
   fill: {
     base: cn(
       'absolute rounded-[inherit] pointer-events-none',
-      'motion-safe:transition-[clip-path] motion-safe:duration-(--media-track-transition-duration) motion-safe:ease-out',
-      'group-data-dragging/slider:duration-0'
+      'motion-safe:transition-[clip-path] motion-safe:duration-(--media-track-transition-duration) motion-safe:ease-out'
     ),
     fill: cn(
       'bg-(--media-internal-accent-color)',
