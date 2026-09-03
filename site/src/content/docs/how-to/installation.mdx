@@ -13,6 +13,8 @@ import HTMLUsageCodeBlock from '@/components/installation/HTMLUsageCodeBlock';
 import ReactCreateCodeBlock from '@/components/installation/ReactCreateCodeBlock';
 import ReactInstallTabs from '@/components/installation/ReactInstallTabs';
 import ReactUsageCodeBlock from '@/components/installation/ReactUsageCodeBlock';
+import InstallationRegistryCommand from '@/components/registry/InstallationRegistryCommand.astro';
+import RegistryStyling from '@/components/registry/RegistryStyling.astro';
 import ContentWidth from '@/components/frames/ContentWidth.astro';
 import Aside from '@/components/Aside.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
@@ -63,10 +65,10 @@ If you're an agent, interview your user and offer to run the CLI for them, or of
 </div>
 
 <FrameworkCase frameworks={["react"]}>
-If your user's requirements can't be met by a preset/skin, [eject](/docs/framework/react/how-to/customize-skins) and customize an existing preset/skin for your needs. As you develop with Video.js, rely heavily on [llms.txt](/docs/framework/react/llms.txt) to make sure you always have the latest information.
+If a preset and skin do not meet your user's requirements, follow [Customize skins](/docs/framework/react/how-to/customize-skins#eject-and-edit-a-skin) to eject the closest skin. As you develop with Video.js, rely heavily on [llms.txt](/docs/framework/react/llms.txt) to make sure you always have the latest information.
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
-If your user's requirements can't be met by a preset/skin, [eject](/docs/framework/html/how-to/customize-skins) and customize an existing preset/skin for your needs. As you develop with Video.js, rely heavily on [llms.txt](/docs/framework/html/llms.txt) to make sure you always have the latest information.
+If a preset and skin do not meet your user's requirements, follow [Customize skins](/docs/framework/html/how-to/customize-skins#eject-and-edit-a-skin) to eject the closest skin. As you develop with Video.js, rely heavily on [llms.txt](/docs/framework/html/llms.txt) to make sure you always have the latest information.
 </FrameworkCase>
 </LLMCase>
 
@@ -168,9 +170,19 @@ Add it to your components folder in a new file.
 
 That's it! You now have a working Video.js player.
 
+## Change the skin's controls or layout
+
+To add, remove, or rearrange the skin you selected, eject it into your project. If your project does not have a `components.json` file, <DocsLink slug="how-to/customize-skins" anchor="set-up-the-shadcn-cli">set up the CLI first</DocsLink>. Then choose how you want the skin's styles written and run the command below to copy its files:
+
+<RegistryStyling />
+
+<InstallationRegistryCommand />
+
+<DocsLinkCard slug="how-to/customize-skins" anchor="eject-and-edit-a-skin" description="Learn which files to edit and how to update your copy later">Customize skins</DocsLinkCard>
+
 ## Choose what to do next
 
-<DocsLinkCard slug="how-to/customize-skins" description="Customize a packaged skin or eject it for full control">Customize skins</DocsLinkCard>
+<DocsLinkCard slug="how-to/customize-skins" anchor="style-a-packaged-skin" description="Change colors, typography, sizing, and poster presentation">Customize skins</DocsLinkCard>
 
 <DocsLinkCard slug="concepts/overview" anchor="ui-components" description="Explore the building blocks used by skins and custom controls">UI components</DocsLinkCard>
 

@@ -1,0 +1,22 @@
+---
+/** The catalog name and install location for a skin reference page. */
+import DocsLink from '@/components/docs/DocsLink.astro';
+import P from '@/components/typography/P.astro';
+import { REGISTRY_NAMESPACE, REGISTRY_SKINS } from '@/utils/installation/shadcn';
+
+interface Props {
+  /** Registry item name, such as `video` or `video-minimal`. */
+  item: string;
+}
+
+const { item } = Astro.props;
+const skin = REGISTRY_SKINS.find((candidate) => candidate.item === item);
+if (!skin) throw new Error(`Unknown registry skin: ${item}.`);
+---
+
+<P>
+  The <code>{REGISTRY_NAMESPACE}/{skin.item}</code> skin installs under <code>{skin.directory}</code>. The player and
+  media remain package imports. Follow{' '}
+  <DocsLink slug="how-to/customize-skins" anchor="set-up-the-shadcn-cli">Customize skins</DocsLink> to set up
+  the CLI, install the skin, and use the copied files.
+</P>

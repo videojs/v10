@@ -158,13 +158,7 @@ export default defineConfig({
       'prepare:dev': {
         command: 'node -e ""',
         cache: false,
-        dependsOn: [
-          'site#api-docs:generate',
-          'site#ejected-skins',
-          'site#cdn-manifest',
-          '@videojs/sandbox#setup',
-          '@videojs/skins#generate',
-        ],
+        dependsOn: ['site#api-docs:generate', 'site#cdn-manifest', '@videojs/sandbox#setup', '@videojs/skins#generate'],
       },
       'typecheck:workspace': {
         command: 'tsgo --build',

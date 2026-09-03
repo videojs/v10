@@ -72,7 +72,7 @@ jobs:
         run: pnpm build:packages
 
       - name: Generate site content
-        run: pnpm exec vp run site#api-docs:generate && pnpm exec vp run site#ejected-skins && pnpm exec vp run site#cdn-manifest
+        run: pnpm exec vp run site#api-docs:generate && pnpm exec vp run site#cdn-manifest
 
       - name: Astro check
         run: cd site && pnpm astro check --minimumSeverity warning

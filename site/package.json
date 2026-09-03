@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "api-docs": "vp run site#api-docs:generate",
-    "clean": "rimraf --glob dist .netlify 'src/content/generated-*-reference' src/content/cdn-media.json src/content/ejected-skins.json",
+    "clean": "rimraf --glob dist .netlify 'src/content/generated-*-reference' src/content/cdn-media.json",
     "astro": "astro",
     "check:anchors": "tsx scripts/check-anchors.ts",
     "test": "vp test run",
