@@ -10,7 +10,7 @@ export default styles({
     },
     backdrop: {
       utilities: [
-        'absolute inset-0 z-40 bg-media-scrim/20 opacity-100 backdrop-filter-media-dialog',
+        'absolute inset-0 z-40 bg-media-backdrop/20 opacity-100 backdrop-filter-media-dialog',
         'not-data-open:hidden transition-opacity delay-media-dialog duration-media-dialog ease-out',
         'media-transitioning:opacity-0 data-ending-style:delay-0',
       ],

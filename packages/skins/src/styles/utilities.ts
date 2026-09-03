@@ -82,7 +82,7 @@ export const utilities = {
   },
   'backdrop-filter-media-*': {
     kind: 'utility',
-    description: 'Backdrop filters from the theme, for example `backdrop-filter-media-scrim`.',
+    description: 'Backdrop filters from the theme, for example `backdrop-filter-media-backdrop`.',
   },
   'media-opaque': { kind: 'variant', description: 'Reduced transparency or high contrast.' },
   'media-compact': { kind: 'variant', description: 'Player at or above the compact breakpoint.' },

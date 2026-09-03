@@ -22,7 +22,7 @@
     --media-muted-foreground: oklch(1 0 0 / 0.65);
     --media-border: oklch(0 0 0 / 0.1);
     --media-ring: oklch(1 0 0);
-    --media-scrim: oklch(0 0 0);
+    --media-backdrop: oklch(0 0 0);
     --media-live-color: oklch(0.65 0.22 27);
 
     /* Shadows and surfaces. Preferences switch the backdrop filters off and strengthen the inset highlight. */
@@ -35,7 +35,7 @@
     --media-shadow-subtle-current-color: oklch(from var(--media-shadow-current-color) l c h / calc(alpha * 0.4));
     --media-text-shadow-dialog: 0 1px 0 rgb(0 0 0 / 0.25);
     --media-backdrop-filter-surface: blur(16px) saturate(150%);
-    --media-backdrop-filter-scrim: blur(8px);
+    --media-backdrop-filter-backdrop: blur(8px);
     --media-backdrop-filter-dialog: blur(16px) saturate(150%);
 
     /* Controls. */

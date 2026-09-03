@@ -14,7 +14,7 @@ export default styles({
       variants: {
         default: [
           'top-3 rounded-media-control font-medium',
-          'bg-media-scrim/25 text-media-popover-foreground surface-media after:surface-media-inset',
+          'bg-media-backdrop/25 text-media-popover-foreground surface-media after:surface-media-inset',
           'media-opaque:bg-media-background',
           'pointer-coarse:motion-media-[scale,translate,opacity]',
           'pointer-fine:motion-media-[scale,translate,filter,opacity]',

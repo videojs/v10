@@ -16,7 +16,7 @@
   --color-media-primary: var(--media-primary);
   --color-media-primary-foreground: var(--media-primary-foreground);
   --color-media-ring: var(--media-ring);
-  --color-media-scrim: var(--media-scrim);
+  --color-media-backdrop: var(--media-backdrop);
 
   /* Player layout breakpoints, measured against the `media-root` container. */
   --container-media-compact: 32rem;
@@ -54,7 +54,7 @@
   --shadow-media-tooltip: var(--media-shadow-tooltip);
   --text-shadow-media: 0 1px 0 var(--media-shadow-current-color);
   --text-shadow-media-dialog: var(--media-text-shadow-dialog);
-  --backdrop-filter-media-scrim: var(--media-backdrop-filter-scrim);
+  --backdrop-filter-media-backdrop: var(--media-backdrop-filter-backdrop);
   --backdrop-filter-media-dialog: var(--media-backdrop-filter-dialog);
 
   /* Motion. Utilities such as `duration-media-fast` and `scale-media-hidden` follow reduced-motion preferences through the tokens. */
@@ -94,7 +94,7 @@
   transition-delay: --value(--delay-media-*);
 }
 
-/* Backdrop filters from the theme, for example `backdrop-filter-media-scrim`. */
+/* Backdrop filters from the theme, for example `backdrop-filter-media-backdrop`. */
 @utility backdrop-filter-media-* {
   backdrop-filter: --value(--backdrop-filter-media-*);
 }

@@ -21,7 +21,7 @@ export default styles({
         'media-transitioning:scale-media-hidden-playback media-transitioning:opacity-0',
         'data-ending-style:duration-media-fast data-ending-style:ease-in',
       ],
-      variants: { default: 'rounded-media-pill bg-media-scrim/35 backdrop-filter-media-scrim' },
+      variants: { default: 'rounded-media-pill bg-media-backdrop/35 backdrop-filter-media-backdrop' },
     },
     playIcon: {
       utilities: [

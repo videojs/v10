@@ -216,7 +216,7 @@ export const vars = {
     kind: 'internal',
     description: 'Scoped Tailwind spacing unit scaled for fullscreen UI.',
   },
-  '--media-scrim': {
+  '--media-backdrop': {
     kind: 'internal',
     description: 'Opaque base color for translucent overlays such as backdrops, indicator pills, and thumbnails.',
   },
@@ -230,7 +230,7 @@ export const vars = {
   },
   '--media-thumbnail-gradient': {
     kind: 'internal',
-    description: 'Theme scrim over the default thumbnail preview that keeps the time label legible.',
+    description: 'Theme backdrop over the default thumbnail preview that keeps the time label legible.',
   },
   '--media-indicator-gradient': {
     kind: 'internal',
@@ -240,9 +240,9 @@ export const vars = {
     kind: 'internal',
     description: 'Backdrop filter shared by translucent surfaces; preferences switch it off.',
   },
-  '--media-backdrop-filter-scrim': {
+  '--media-backdrop-filter-backdrop': {
     kind: 'internal',
-    description: 'Backdrop filter behind buffering and playback status scrims; preferences switch it off.',
+    description: 'Backdrop filter behind buffering and playback status backdrops; preferences switch it off.',
   },
   '--media-backdrop-filter-dialog': {
     kind: 'internal',
