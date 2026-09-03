@@ -1,7 +1,7 @@
 import { cn } from '@videojs/utils/style';
 
 const previewContent = cn(
-  'absolute [left:var(--media-preview-left,var(--media-slider-pointer))] max-w-(--media-max-size)',
+  'absolute [left:var(--media-preview-left,var(--media-slider-pointer))] max-w-(--media-preview-max-size)',
   '-translate-x-1/2 translate-y-2 scale-80 opacity-0 blur-lg origin-bottom',
   'transition-[filter,opacity,scale] duration-150 ease-out',
   'group-data-pointing/slider:scale-100 group-data-pointing/slider:opacity-100',
@@ -97,9 +97,9 @@ export const slider = {
     interactive: cn('pointer-fine:group-hover/slider:opacity-100 pointer-fine:group-hover/slider:scale-100'),
   },
   preview: cn(
-    '[--media-max-size-factor:28]',
-    '[--media-max-size:min(calc(var(--media-spacing)*var(--media-max-size-factor)),100cqi)]',
-    '@lg/media-root:[--media-max-size-factor:36] @2xl/media-root:[--media-max-size-factor:48]',
+    '[--media-preview-max-size-factor:28]',
+    '[--media-preview-max-size:min(calc(var(--media-spacing)*var(--media-preview-max-size-factor)),100cqi)]',
+    '@lg/media-root:[--media-preview-max-size-factor:36] @2xl/media-root:[--media-preview-max-size-factor:48]',
     'min-w-full h-1',
     'before:absolute before:z-1 before:bg-current/35 before:pointer-events-none',
     'before:-translate-1/2 before:opacity-0 before:scale-50',
@@ -112,7 +112,7 @@ export const slider = {
   ),
   thumbnail: cn(
     previewContent,
-    '[--media-thumbnail-max-width:var(--media-max-size)] [--media-thumbnail-max-height:var(--media-max-size)]',
+    '[--media-thumbnail-max-width:var(--media-preview-max-size)] [--media-thumbnail-max-height:var(--media-preview-max-size)]',
     '[bottom:calc(100%+--spacing(11))]'
   ),
   value: cn(previewContent, '[bottom:calc(100%+--spacing(5))] flex flex-row-reverse justify-center gap-2 tabular-nums'),

@@ -44,10 +44,16 @@ Set these CSS custom properties directly on the skin:
 | ------------- | ----------- | ---- | ------- |
 | `--media-accent-color` | The color of slider fills and accented controls | [`<color>`](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value) | `#f5c518` |
 | `--media-accent-text-color` | The color of text and icons shown on the accent color | [`<color>`](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value) | `black` |
+| `--media-border-color` | The color of the video container's hairline border. Set it to `transparent` to remove the border | [`<color>`](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value) | `transparent` |
 | `--media-border-radius` | The border radius of the media player | A valid [border-radius value](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/border-radius#values) | `1rem` |
+| `--media-font-family` | The font family used by the player interface | A valid [`font-family`](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/font-family) value | `"Inter Variable", Inter, ui-sans-serif, system-ui, sans-serif` |
+| `--media-object-fit` | How the video and poster fit within the player | A valid [`object-fit`](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/object-fit) value | `cover` |
+| `--media-object-position` | How the video and poster are positioned within the player | A valid [`object-position`](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/object-position) value | `center` |
 | `--media-scale-unit` | The base sizing unit for skin spacing and icons | [`<length>`](https://developer.mozilla.org/en-US/docs/Web/CSS/length) | `1rem` |
 
 If you omit `--media-accent-text-color`, the skins choose a contrasting text color from `--media-accent-color` using [`contrast-color()`](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Values/color_value/contrast-color). You only need to set it when you want to override that result.
+
+Choose a legible sans serif designed for user interfaces for `--media-font-family`, such as Inter or Geist. The `system-ui` family uses the platform's interface font, such as San Francisco on macOS and Segoe UI on Windows.
 
 ### Set the audio color scheme
 
@@ -75,7 +81,7 @@ You can also add your own class names to the skins.
 
 ## Where packaged customization stops
 
-The four properties above are the public styling controls for packaged skins. Don't depend on the elements, classnames, or other custom properties inside a packaged skin. They may change between releases.
+The properties above are the public styling controls for packaged skins. Don't depend on the elements, classnames, or other custom properties inside a packaged skin. They may change between releases.
 
 <FrameworkCase frameworks={["html"]}>
 

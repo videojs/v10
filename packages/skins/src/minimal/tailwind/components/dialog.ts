@@ -3,7 +3,7 @@ import { cn } from '@videojs/utils/style';
 export const dialog = {
   root: '',
   backdrop: cn(
-    'absolute inset-0 z-20 pointer-events-none bg-black/20 backdrop-blur-lg backdrop-saturate-120 opacity-100 not-data-open:hidden',
+    'absolute inset-0 z-40 pointer-events-none bg-black/20 backdrop-blur-lg backdrop-saturate-120 opacity-100 not-data-open:hidden',
     'transition-opacity',
     'duration-(--media-dialog-transition-duration)',
     'delay-(--media-dialog-transition-delay)',
@@ -11,7 +11,7 @@ export const dialog = {
     'data-starting-style:opacity-0 data-ending-style:opacity-0 data-ending-style:delay-0'
   ),
   popup: cn(
-    'flex absolute top-1/2 left-1/2 z-20 max-w-64 max-h-[calc(100%-0.5rem)] not-data-open:hidden',
+    'flex absolute top-1/2 left-1/2 z-50 max-w-64 max-h-[calc(100%-0.5rem)] not-data-open:hidden',
     '-translate-x-1/2 -translate-y-1/2 flex-col gap-3 p-4 text-white outline-none',
     'text-shadow-2xs text-shadow-black/50',
     'transition-[opacity,scale]',

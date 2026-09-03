@@ -88,7 +88,7 @@ export default styles({
     },
     currentValue: {
       className: 'media-time-current-value',
-      utilities: 'tabular-nums',
+      utilities: 'tabular-nums @max-[16rem]/media-time:hidden',
     },
     remainingValue: {
       className: 'media-time-remaining-value',

@@ -9,7 +9,7 @@
     flex-direction: row-reverse;
   }
 
-  > .media-time:last-child {
+  > .media-time {
     @container media-time-controls (width < 256px) {
       display: none;
     }

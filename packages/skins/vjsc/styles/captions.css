@@ -7,7 +7,7 @@
     }
 
     video::-webkit-media-text-track-container {
-      z-index: 1;
+      z-index: 20;
       font-family: inherit;
       scale: 0.98;
       translate: 0 var(--media-caption-track-y);

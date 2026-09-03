@@ -12,7 +12,7 @@ export const container = cn(
   baseContainer,
   '[&:has([role=alertdialog][data-open])_.media-controls_*]:invisible',
   '[--media-default-accent-color:light-dark(oklch(0_0_0),oklch(1_0_0))]',
-  '[--media-internal-accent-text-base:light-dark(oklch(1_0_0),oklch(0_0_0))]',
+  '[--media-internal-accent-text-fallback:light-dark(oklch(1_0_0),oklch(0_0_0))]',
   '[--media-focus-ring-color:light-dark(oklch(0_0_0),oklch(1_0_0))]',
   '[--media-controls-background-color:light-dark(oklch(1_0_0),oklch(0_0_0))]',
   '[--media-controls-backdrop-filter:blur(16px)_saturate(1.5)]',
@@ -87,7 +87,7 @@ export const slider = {
 export const dialog = {
   ...baseDialog,
   popup: cn(
-    'absolute inset-0 z-20 flex items-center gap-4 rounded-full ps-3 pe-1 not-data-open:hidden outline-none',
+    'absolute inset-0 z-50 flex items-center gap-4 rounded-full ps-3 pe-1 not-data-open:hidden outline-none',
     '[background-color:oklch(from_var(--media-controls-background-color)_l_c_h/1)]',
     'transition-[opacity,filter,scale] ease-out',
     'duration-(--media-dialog-transition-duration)',

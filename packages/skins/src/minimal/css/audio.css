@@ -15,11 +15,11 @@
 
 /* Container */
 /* :where() keeps the media-type class at zero specificity so component state rules (for example dialog
-   `:not([data-open])`) still outrank these entry rules as they did before the shared-class rename. */
+   `:not([data-open])`) still outrank these entry rules. */
 
 .media-skin--minimal:where(.media-skin--audio) {
   --media-default-accent-color: light-dark(oklch(0 0 0), oklch(1 0 0));
-  --media-internal-accent-text-base: light-dark(oklch(1 0 0), oklch(0 0 0));
+  --media-internal-accent-text-fallback: light-dark(oklch(1 0 0), oklch(0 0 0));
   --media-focus-ring-color: light-dark(oklch(0 0 0), oklch(1 0 0));
 
   --media-controls-background-color: light-dark(oklch(1 0 0), oklch(0 0 0));
@@ -59,7 +59,7 @@
 .media-skin--minimal:where(.media-skin--audio) .media-dialog__popup {
   position: absolute;
   inset: 0;
-  z-index: 20;
+  z-index: 50;
   display: flex;
   gap: calc(var(--media-spacing) * 4);
   align-items: center;

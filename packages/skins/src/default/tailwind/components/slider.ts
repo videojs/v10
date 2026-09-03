@@ -1,7 +1,7 @@
 import { cn } from '@videojs/utils/style';
 
 const previewContent = cn(
-  'absolute left-1/2 max-w-(--media-max-size)',
+  'absolute left-1/2 max-w-(--media-preview-max-size)',
   '-translate-x-1/2 translate-y-2 scale-80 opacity-0 blur-lg origin-bottom',
   'transition-[filter,opacity,scale] duration-150 ease-out',
   'group-data-pointing/slider:scale-100 group-data-pointing/slider:opacity-100',
@@ -106,10 +106,10 @@ export const slider = {
     ),
   },
   preview: cn(
-    '[--media-max-size-factor:36]',
-    '[--media-max-size:min(calc(var(--media-spacing)*var(--media-max-size-factor)),100cqi)]',
-    '@2xl/media-root:[--media-max-size-factor:48]',
-    'min-w-(--media-max-size) h-1',
+    '[--media-preview-max-size-factor:36]',
+    '[--media-preview-max-size:min(calc(var(--media-spacing)*var(--media-preview-max-size-factor)),100cqi)]',
+    '@2xl/media-root:[--media-preview-max-size-factor:48]',
+    'min-w-(--media-preview-max-size) h-1',
     'before:absolute before:z-1 before:top-1/2 before:left-1/2 before:size-1 before:bg-current before:rounded-full before:pointer-events-none',
     'before:shadow-[0_0_0_1px_var(--media-shadow-current-color,oklch(0_0_0/0.15)),0_1px_2px_0_oklch(0_0_0/0.35)]',
     'before:-translate-1/2 before:opacity-0 before:scale-50',
@@ -118,9 +118,10 @@ export const slider = {
   ),
   thumbnail: cn(
     previewContent,
-    '[--media-thumbnail-max-width:var(--media-max-size)] [--media-thumbnail-max-height:var(--media-max-size)]',
+    '[--media-thumbnail-max-width:var(--media-preview-max-size)] [--media-thumbnail-max-height:var(--media-preview-max-size)]',
     '[bottom:calc(100%+--spacing(9))]'
   ),
   value: cn(previewContent, '[bottom:calc(100%+--spacing(10.5))] flex flex-col items-center tabular-nums'),
-  chapterTitle: 'min-w-0 max-w-(--media-max-size) px-6 overflow-hidden text-ellipsis whitespace-nowrap empty:hidden',
+  chapterTitle:
+    'min-w-0 max-w-(--media-preview-max-size) px-6 overflow-hidden text-ellipsis whitespace-nowrap empty:hidden',
 };
