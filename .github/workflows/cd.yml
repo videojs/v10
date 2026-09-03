@@ -73,7 +73,8 @@ jobs:
 
       - name: Verify release checkout
         if: ${{ steps.release.outputs.releases_created == 'true' }}
-        run: node -e "process.exit(require('./packages/html/package.json').version === process.env.VERSION ? 0 : 1)"
+        run: |
+          node -e "process.exit(require('./packages/html/package.json').version === process.env.VERSION ? 0 : 1)"
         env:
           VERSION: ${{ steps.release.outputs['packages/html--version'] }}
 
