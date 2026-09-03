@@ -2,7 +2,7 @@
 
 [![package-badge]][package]
 
-> **⚠️ Release candidate** Experimental adoption in real projects.
+> **⚠️ Release candidate** Close to stable. Adoption in real projects encouraged.
 
 ## Overview
 
