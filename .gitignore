@@ -22,6 +22,7 @@ dist/
 lib/
 out/
 packages/*/types/
+apps/*/types/
 *.tsbuildinfo
 .vite/
 .vite-hooks/_/
@@ -37,8 +38,8 @@ site/src/content/generated-util-reference/
 site/src/content/generated-feature-reference/
 site/src/content/generated-media-reference/
 site/src/content/generated-preset-reference/
-site/src/content/ejected-skins.json
 site/src/content/cdn-media.json
+site/src/content/ejected-skins.json
 packages/cli/docs/
 packages/html/docs/
 packages/react/docs/
@@ -50,8 +51,15 @@ packages/html/vjsc/entries.generated.ts
 packages/icons/vjsc/schema.generated.ts
 packages/react/vjsc/entries.generated.ts
 packages/skins/vjsc/registry/
-packages/html/src/__generated__/skins/
-packages/react/src/__generated__/skins/
+# Framework Skin sources are generated from the canonical VJSC component graph.
+packages/html/src/presets/background/skin.ts
+packages/html/src/define/background/skin.css
+packages/html/src/internal/skins/
+packages/react/src/internal/skins/
+packages/react/src/presets/*/skin.tsx
+packages/react/src/presets/*/skin.css
+packages/react/src/presets/*/minimal-skin.tsx
+packages/react/src/presets/*/minimal-skin.css
 
 # -------------------------
 # Merge & Patch Backups

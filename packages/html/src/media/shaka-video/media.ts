@@ -1,5 +1,5 @@
-import { CustomMediaElement } from '@videojs/media/dom/custom-media-element';
-import { ShakaMedia } from '@videojs/media/dom/shaka';
+import { CustomMediaElement } from '@videojs/media/dom';
+import { ShakaMedia } from '@videojs/shaka-video';
 
 import { MediaAttachMixin } from '../../store/media-attach-mixin';
 

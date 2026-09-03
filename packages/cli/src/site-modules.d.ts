@@ -63,7 +63,9 @@ declare module '@/utils/installation/codegen' {
     cdnMediaSubpaths: readonly string[]
   ): Record<'cdn' | 'npm' | 'pnpm' | 'yarn' | 'bun', string>;
 
-  export function generateReactInstallCode(): Record<'npm' | 'pnpm' | 'yarn' | 'bun', string>;
+  export function generateReactInstallCode(
+    opts?: Pick<InstallationOptions, 'renderer'>
+  ): Record<'npm' | 'pnpm' | 'yarn' | 'bun', string>;
 
   export function generateHTMLUsageCode(
     opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer' | 'sourceUrl' | 'installMethod'>

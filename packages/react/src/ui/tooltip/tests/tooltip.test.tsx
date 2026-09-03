@@ -1,9 +1,10 @@
 import { render, waitFor } from '@testing-library/react';
-import { popup } from '@videojs/skins/default/tailwind/video.tailwind';
 import { useLayoutEffect } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { Tooltip, useOptionalTooltipContext } from '..';
+
+const shortcutClassName = 'test-tooltip-shortcut';
 
 function makeDOMRect(x: number, y: number, width: number, height: number): DOMRect {
   return new DOMRect(x, y, width, height);
@@ -59,13 +60,13 @@ describe('Tooltip', () => {
     });
   });
 
-  it('renders label and kbd shortcut with skin popup.tooltipShortcut from context', async () => {
+  it('renders label and kbd shortcut from context', async () => {
     const { container } = render(
       <Tooltip.Root defaultOpen>
         <TooltipContent label="Play" shortcut="K" />
         <Tooltip.Popup data-testid="popup">
           <Tooltip.Label />
-          <Tooltip.Shortcut className={popup.tooltipShortcut} />
+          <Tooltip.Shortcut className={shortcutClassName} />
         </Tooltip.Popup>
       </Tooltip.Root>
     );
@@ -86,7 +87,7 @@ describe('Tooltip', () => {
         <TooltipContent label="Play" />
         <Tooltip.Popup data-testid="popup">
           <Tooltip.Label />
-          <Tooltip.Shortcut className={popup.tooltipShortcut} />
+          <Tooltip.Shortcut className={shortcutClassName} />
         </Tooltip.Popup>
       </Tooltip.Root>
     );
@@ -103,7 +104,7 @@ describe('Tooltip', () => {
           render={(props, state) => (
             <div {...props} data-open={String(state.open)} data-side={state.side} data-testid="popup">
               <Tooltip.Label />
-              <Tooltip.Shortcut className={popup.tooltipShortcut} />
+              <Tooltip.Shortcut className={shortcutClassName} />
             </div>
           )}
         />

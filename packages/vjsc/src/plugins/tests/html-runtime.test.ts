@@ -1,20 +1,9 @@
-import { resolve } from 'node:path';
-
-import { rolldown } from 'rolldown';
 import { describe, expect, it } from 'vite-plus/test';
 
-import { HTML_RUNTIME } from '../html-runtime';
+import * as runtime from '../../html-runtime/jsx-runtime';
 
-interface HtmlRuntime {
-  readonly Fragment: symbol;
-  readonly Host: (props: Record<string, unknown>) => unknown;
-  readonly Scope: (props: Record<string, unknown>) => unknown;
-  jsx(type: string | symbol | ((props: Record<string, unknown>) => unknown), props: Record<string, unknown>): unknown;
-}
-
-describe('htmlRuntimePlugin', () => {
+describe('html-runtime/jsx-runtime', () => {
   it('resolves scoped IDs uniquely for repeated component instances', async () => {
-    const runtime = await loadRuntime();
     const component = () =>
       runtime.jsx(runtime.Scope, {
         prefix: 'fixture',
@@ -28,24 +17,22 @@ describe('htmlRuntimePlugin', () => {
   });
 
   it('forwards host attributes to one dynamic element child', async () => {
-    const runtime = await loadRuntime();
     const output = runtime.jsx(runtime.Host, {
+      class: ['trigger', 'active'],
       id: 'trigger',
-      children: runtime.jsx('button', { className: ['button', 'active'] }),
+      children: runtime.jsx('button', { className: 'button' }),
     });
 
-    expect(String(output)).toBe('<button class="button active" id="trigger"></button>');
+    expect(String(output)).toBe('<button class="button trigger active" id="trigger"></button>');
   });
 
   it('flattens class arrays after HTML attribute normalization', async () => {
-    const runtime = await loadRuntime();
     const output = runtime.jsx('media-icon', { class: ['icon', ['active', false, undefined]] });
 
     expect(String(output)).toBe('<media-icon class="icon active"></media-icon>');
   });
 
   it('escapes attribute and child text with the shared HTML contract', async () => {
-    const runtime = await loadRuntime();
     const value = `&<>"'\``;
     const output = runtime.jsx('span', { title: value, children: value });
 
@@ -53,7 +40,6 @@ describe('htmlRuntimePlugin', () => {
   });
 
   it('serializes SVG attribute names without corrupting case-sensitive names', async () => {
-    const runtime = await loadRuntime();
     const output = runtime.jsx('svg', {
       viewBox: '0 0 18 18',
       preserveAspectRatio: 'xMidYMid meet',
@@ -66,30 +52,3 @@ describe('htmlRuntimePlugin', () => {
     );
   });
 });
-
-async function loadRuntime(): Promise<HtmlRuntime> {
-  const build = await rolldown({
-    input: 'runtime',
-    experimental: { nativeMagicString: true },
-    plugins: [
-      {
-        name: 'test-runtime',
-        resolveId(id) {
-          if (id === 'runtime') return id;
-
-          return id === 'vjsc/target' ? resolve(import.meta.dirname, '../../target/index.ts') : null;
-        },
-        load(id) {
-          return id === 'runtime' ? HTML_RUNTIME : null;
-        },
-      },
-    ],
-  });
-  const { output } = await build.generate({ format: 'esm' });
-  const chunk = output.find((item) => item.type === 'chunk');
-  if (!chunk) throw new Error('Expected the HTML runtime bundle to contain a chunk.');
-
-  const url = `data:text/javascript;base64,${Buffer.from(chunk.code).toString('base64')}`;
-
-  return (await import(url)) as HtmlRuntime;
-}

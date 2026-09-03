@@ -7,7 +7,7 @@ import { describe, expect, it } from 'vite-plus/test';
 import { discoverSchema } from '../discover';
 
 describe('discoverSchema', () => {
-  it('discovers manifest definitions and named source files', () => {
+  it('discovers component definitions and named source files', () => {
     const root = mkdtempSync(join(tmpdir(), 'vjsc-schema-discovery-'));
     const componentsDir = join(root, 'components');
     const iconsDir = join(root, 'icons');
@@ -38,7 +38,7 @@ describe('discoverSchema', () => {
 
     expect(discovered.components).toMatchObject([
       {
-        kind: 'manifest',
+        kind: 'definition',
         fileName: component,
         name: 'PlayButton',
         definition: { name: 'PlayButton', root: 'Root', parts: { Root: {} } },

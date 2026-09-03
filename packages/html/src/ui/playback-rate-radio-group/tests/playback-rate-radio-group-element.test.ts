@@ -255,9 +255,9 @@ describe('PlaybackRateButtonElement', () => {
   });
 
   it('disables the trigger when there are no playback rates', async () => {
-    const { trigger } = setup({ playbackRates: [] });
+    const { menu, options, trigger } = setup({ playbackRates: [] });
 
-    await trigger.updateComplete;
+    await waitForMenu(menu, trigger, options);
 
     expect(trigger.getAttribute('aria-disabled')).toBe('true');
   });

@@ -1,15 +1,19 @@
 import '@videojs/html/i18n';
 import { syncDocumentLocale } from '../i18n/document-locale';
 import { ensureSandboxLocale, type SandboxLocaleTag } from '../i18n/sandbox-locales';
-import { getInitialLocale, onLocaleChange } from '../sandbox-listener';
+import { getDirection, getInitialLocale, onLocaleChange } from '../sandbox-listener';
 
 let locale: SandboxLocaleTag = getInitialLocale();
 let localeApplySeq = 0;
 
 syncDocumentLocale(locale);
 
+/** The provider carries the pinned direction as its own `dir`, which it keeps over the one its locale implies. */
 export function wrapSandboxHtmlI18n(content: string): string {
-  return `<media-i18n>${content}</media-i18n>`;
+  const direction = getDirection();
+  const dir = direction === 'auto' ? '' : ` dir="${direction}"`;
+
+  return `<media-i18n${dir}>${content}</media-i18n>`;
 }
 
 export async function prepareSandboxHtmlLocale(): Promise<void> {

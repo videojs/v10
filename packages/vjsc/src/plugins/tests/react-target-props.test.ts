@@ -4,18 +4,26 @@ import { describe, expect, it } from 'vite-plus/test';
 
 import type { ComponentTarget } from '../../target/definition';
 import { readComponentSource } from '../component-meta';
-import { componentSourcePlugin } from '../component-source';
 import { reactTargetPropsPlugin } from '../react-target-props';
+import { componentSourcePlugin } from './helpers/component-source';
 
 const MODULE_ID = '\0fixture.tsx?target=react';
 const reactTarget = {
   source: '@fixture/components',
-  resolve: () => undefined,
-  components: {},
+  components: { resolve: () => undefined, rules: {} },
   primitives: {},
   types: {},
   transforms: [],
-  jsx: { importSource: 'react', attributes: 'react' },
+  renderTargets: {},
+  jsx: {
+    importSource: 'react',
+    attributes: 'react',
+    className: {
+      merge: { from: '@videojs/utils/style', name: 'cn' },
+      resolve: { from: '@videojs/utils/style', name: 'resolveClassName' },
+      stateAware: ({ source, imported }) => source === '@videojs/react' && imported !== 'Container',
+    },
+  },
 } satisfies ComponentTarget;
 
 describe('reactTargetPropsPlugin', () => {
@@ -53,6 +61,32 @@ describe('reactTargetPropsPlugin', () => {
     expect(source).toContain(`import { cn, resolveClassName } from "@videojs/utils/style";`);
     expect(source).toContain(`className={state => cn('poster', resolveClassName(className, state))}`);
     expect(source).toContain(`className={cn('container', className)}`);
+  });
+
+  it('leaves class arrays alone for targets without a class-name runtime', async () => {
+    let meta: unknown;
+    const inspect: Plugin = {
+      name: 'fixture:inspect',
+      buildEnd() {
+        meta = this.getModuleInfo(MODULE_ID)?.meta;
+      },
+    };
+    const bundle = await rolldown({
+      input: 'fixture',
+      experimental: { nativeMagicString: true },
+      external: (id) => !id.startsWith('.') && !id.startsWith('\0'),
+      transform: { jsx: 'preserve' },
+      plugins: [
+        fixturePlugin(`export const View = ({ className }) => <div className={['view', className]} />;`),
+        reactTargetPropsPlugin({ targets: [{ ...reactTarget, jsx: { importSource: 'react', attributes: 'react' } }] }),
+        componentSourcePlugin(),
+        inspect,
+      ],
+    });
+
+    await bundle.generate({ format: 'es' });
+
+    expect(readComponentSource(meta)).toContain(`className={['view', className]}`);
   });
 });
 

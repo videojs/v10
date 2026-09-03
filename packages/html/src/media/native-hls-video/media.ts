@@ -1,5 +1,5 @@
-import { CustomMediaElement } from '@videojs/media/dom/custom-media-element';
-import { NativeHlsMedia } from '@videojs/media/dom/native-hls';
+import { CustomMediaElement } from '@videojs/media/dom';
+import { NativeHlsMedia } from '@videojs/native-hls-video';
 
 import { MediaAttachMixin } from '../../store/media-attach-mixin';
 

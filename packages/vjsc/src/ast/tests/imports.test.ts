@@ -14,8 +14,12 @@ describe('ModuleImports', () => {
     expect(imports.reference({ from: 'library', name: 'existing' })).toBe('local');
     expect(imports.reference({ from: 'library', name: 'requested' })).toBe('requestedImport');
     expect(imports.reference({ from: 'library', name: 'namespace', path: ['part'] })).toBe('namespace.part');
+    imports.statement('setup(requestedImport);');
     imports.commit();
 
     expect(magicString.toString()).toContain(`import { requested as requestedImport, namespace } from "library";`);
+    expect(magicString.toString()).toContain(
+      `import { requested as requestedImport, namespace } from "library";\nsetup(requestedImport);`
+    );
   });
 });

@@ -1,13 +1,19 @@
 import { type Selector, type SelectorComponent, transform } from 'lightningcss';
 
 import type { DesignSystem } from './design-system';
-import { isGroupMarker, type StyleManifest, type StyleManifestRule, utilitiesForRule } from './manifest';
+import {
+  collectGroupOwners,
+  isGroupMarker,
+  type ResolvedStyles,
+  type ResolvedStyleRule,
+  utilitiesForRule,
+} from './resolved';
 
 const encoder = new TextEncoder();
 
 export type ComplexSelectorDiagnosticLevel = 'warn' | 'error' | 'off';
 
-export interface VjscDiagnosticsOptions {
+export interface StyleDiagnosticsOptions {
   /** How suspicious structural selectors are reported. Hard isolation errors always throw. @default 'warn' */
   readonly complexSelectors?: ComplexSelectorDiagnosticLevel | undefined;
 }
@@ -22,19 +28,16 @@ export type StyleDiagnosticCode =
 export interface StyleDiagnostic {
   readonly code: StyleDiagnosticCode;
   readonly kind: 'error' | 'complex-selector';
-  readonly rule: StyleManifestRule;
+  readonly rule: ResolvedStyleRule;
   readonly utilities: readonly string[];
 }
 
-/** Diagnose relationships and structural selectors using only the imported local manifest. */
-export function diagnoseStyleManifest(
-  manifest: StyleManifest,
-  variants: readonly string[] = []
-): readonly StyleDiagnostic[] {
-  const owners = collectGroupOwners(manifest.rules, variants);
+/** Diagnose relationships and structural selectors using only the resolved local styles. */
+export function diagnoseStyles(styles: ResolvedStyles, variants: readonly string[] = []): readonly StyleDiagnostic[] {
+  const owners = new Set(collectGroupOwners(styles.rules, variants).keys());
   const diagnostics: StyleDiagnostic[] = [];
 
-  for (const rule of manifest.rules) {
+  for (const rule of styles.rules) {
     const utilities = utilitiesForRule(rule, variants);
     const peers = utilities.filter(usesPeerRelationship);
     const implicitAncestors = utilities.filter(usesImplicitAncestor);
@@ -65,7 +68,7 @@ export function diagnoseStyleManifest(
 
 /** Inspect Tailwind-expanded CSS so custom utilities cannot conceal structural selectors. */
 export function diagnoseCompiledCandidate(
-  rule: StyleManifestRule,
+  rule: ResolvedStyleRule,
   candidate: string,
   css: string,
   groupOwners: ReadonlySet<string>
@@ -106,15 +109,15 @@ export function diagnoseCompiledCandidate(
 
 /** Diagnose Tailwind-expanded candidates for the semantic rules referenced by one source module. */
 export function diagnoseCompiledStyles(
-  manifest: StyleManifest,
+  styles: ResolvedStyles,
   design: DesignSystem,
   ruleClassNames: ReadonlySet<string>,
   variants: readonly string[] = []
 ): readonly StyleDiagnostic[] {
-  const groupOwners = collectGroupOwners(manifest.rules, variants);
+  const groupOwners = new Set(collectGroupOwners(styles.rules, variants).keys());
   const diagnostics: StyleDiagnostic[] = [];
 
-  for (const rule of manifest.rules) {
+  for (const rule of styles.rules) {
     if (!ruleClassNames.has(rule.className)) continue;
 
     for (const candidate of utilitiesForRule(rule, variants)) {
@@ -149,7 +152,7 @@ export function formatStyleDiagnostic(diagnostic: StyleDiagnostic): string {
 
 function createDiagnostic(
   code: StyleDiagnosticCode,
-  rule: StyleManifestRule,
+  rule: ResolvedStyleRule,
   utilities: readonly string[]
 ): StyleDiagnostic {
   return {
@@ -158,18 +161,6 @@ function createDiagnostic(
     rule,
     utilities: [...new Set(utilities)],
   };
-}
-
-function collectGroupOwners(rules: readonly StyleManifestRule[], variants: readonly string[]): ReadonlySet<string> {
-  const owners = new Set<string>();
-
-  for (const rule of rules) {
-    for (const utility of utilitiesForRule(rule, variants)) {
-      if (isGroupMarker(utility)) owners.add(utility);
-    }
-  }
-
-  return owners;
 }
 
 function usesPeerRelationship(candidate: string): boolean {

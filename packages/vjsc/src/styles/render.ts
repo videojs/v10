@@ -12,7 +12,12 @@ import { cloneCssAst, collectRuleClasses, withoutNullValues } from './css-ast';
 import type { DesignSystem } from './design-system';
 import type { StyleOutputFile } from './output';
 import { replaceRuleClasses } from './selectors';
-import { collectTailwindDefaults, inlinePrivateTailwindVariables, optimizeSemanticCss } from './tailwind-values';
+import {
+  collectTailwindDefaults,
+  dedupeRuleDeclarations,
+  inlinePrivateTailwindVariables,
+  optimizeSemanticCss,
+} from './tailwind-values';
 
 const encoder = new TextEncoder();
 
@@ -37,7 +42,7 @@ export async function renderStylesheets(options: RenderStylesheetsOptions): Prom
 
   const files = new Map<string, string>();
 
-  for (const file of [...options.files].sort((a, b) => a.name.localeCompare(b.name))) {
+  for (const file of options.files) {
     const analyzed = analyzedFiles.get(file);
     if (!analyzed) throw new Error(`Style output '${file.name}' was not compiled.`);
 
@@ -50,8 +55,9 @@ export async function renderStylesheets(options: RenderStylesheetsOptions): Prom
 function wrapFileCss(css: string, scope: string | undefined, file: StyleOutputFile): string {
   const relationshipOwners = new Set(file.groupOwners.values());
   const scopeRootClasses = new Set(file.rules.filter((rule) => rule.scopeRoot).map((rule) => rule.className));
-  const scoped = scope ? `@scope (${scope}) {\n${css}\n}` : css;
-  const wrapped = `@layer ${file.layer} {\n${scoped}\n}`;
+  const split = scope ? splitSlottedRules(css) : { scoped: css, unscoped: '' };
+  const scoped = scope ? `@scope (${scope}) {\n${split.scoped}\n}` : split.scoped;
+  const wrapped = `@layer ${file.layer} {\n${scoped}\n${split.unscoped}\n}`;
 
   return optimizeSemanticCss(
     decoder.decode(
@@ -77,6 +83,49 @@ function wrapFileCss(css: string, scope: string | undefined, file: StyleOutputFi
           },
         },
       }).code
+    )
+  );
+}
+
+/** Slotted nodes sit outside a shadow tree's CSS scope, so keep their anchored selectors outside the outer scope. */
+function splitSlottedRules(css: string): { scoped: string; unscoped: string } {
+  let hasSlottedRules = false;
+  const scoped = filterTopLevelRules(css, (rule) => {
+    const slotted = isSlottedStyleRule(rule);
+
+    hasSlottedRules ||= slotted;
+
+    return !slotted;
+  });
+
+  return {
+    scoped,
+    unscoped: hasSlottedRules ? filterTopLevelRules(css, isSlottedStyleRule) : '',
+  };
+}
+
+function filterTopLevelRules(css: string, include: (rule: Rule) => boolean): string {
+  return decoder.decode(
+    transform({
+      filename: 'semantic.css',
+      code: encoder.encode(css),
+      visitor: {
+        StyleSheet(stylesheet) {
+          return withoutNullValues({
+            ...cloneCssAst(stylesheet),
+            rules: stylesheet.rules.filter(include).map((rule) => cloneCssAst(rule)),
+          });
+        },
+      },
+    }).code
+  );
+}
+
+function isSlottedStyleRule(rule: Rule): boolean {
+  return (
+    rule.type === 'style' &&
+    rule.value.selectors.some((selector) =>
+      selector.some((component) => component.type === 'pseudo-element' && component.kind === 'slotted')
     )
   );
 }
@@ -211,6 +260,10 @@ function semanticRootClass(rule: Rule, semanticClassNames: ReadonlySet<string>):
 }
 
 function renderRuleSet(template: StyleSheet, rules: readonly Rule[]): string {
+  const cloned = rules.map(cloneCssAst);
+
+  dedupeRuleDeclarations(cloned);
+
   const result = transform({
     filename: 'rendered.css',
     code: encoder.encode(''),
@@ -219,14 +272,14 @@ function renderRuleSet(template: StyleSheet, rules: readonly Rule[]): string {
       StyleSheet() {
         return withoutNullValues({
           ...cloneCssAst(template),
-          rules: rules.map(cloneCssAst),
+          rules: cloned,
           licenseComments: [],
         });
       },
     },
   });
 
-  return optimizeSemanticCss(decoder.decode(result.code).trim());
+  return decoder.decode(result.code).trim();
 }
 
 function assertNoRelationshipMarkers(rule: Rule, bindings: ReadonlyMap<string, string>): void {

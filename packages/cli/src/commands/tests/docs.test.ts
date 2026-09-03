@@ -51,6 +51,7 @@ vi.mock('@clack/prompts', () => ({
 
 import * as p from '@clack/prompts';
 
+import cdnPackage from '../../../../cdn/package.json' with { type: 'json' };
 import { getConfigValue } from '../../utils/config.js';
 import { docExistsInAnyFramework, readBundledDoc, readLlmsTxt } from '../../utils/docs.js';
 import { handleDocs } from '../docs.js';
@@ -364,7 +365,7 @@ describe('handleDocs', () => {
         ]);
         const out = output();
 
-        expect(out).toContain('cdn/live-video.js');
+        expect(out).toContain(`@videojs/cdn@${cdnPackage.version}/live-video.js`);
         expect(out).toContain('media/hlsjs-video.js');
       });
     });

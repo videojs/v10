@@ -374,7 +374,7 @@ After Step 1's report:
   - **HTML custom element** — `packages/html/src/media/<key>-video/`
     (~5 LOC; wraps the media host in `CustomMediaElement` +
     `MediaAttachMixin`) + `packages/html/src/define/media/<key>-video.ts`
-    + `packages/html/src/cdn/media/<key>-video.ts` for the CDN entry.
+    + `packages/cdn/src/media/<key>-video.ts` for the CDN entry.
     Worked example: `hls-video/media.ts` →
     `class HlsVideo extends MediaAttachMixin(CustomMediaElement('video', HlsVideoMedia)) {}`.
   - **React component** — `packages/react/src/media/<key>-video/`
@@ -444,7 +444,7 @@ typical for use-case implementations:
 - **HTML custom element + define entry + CDN entry** —
   `packages/html/src/media/<key>-video/media.ts`,
   `packages/html/src/define/media/<key>-video.ts`,
-  `packages/html/src/cdn/media/<key>-video.ts`. Inline implementation;
+  `packages/cdn/src/media/<key>-video.ts`. Inline implementation;
   ~5 LOC + boilerplate.
 - **React component** — `packages/react/src/media/<key>-video/media.tsx`
   exposing the props surface; ~37 LOC. Inline implementation.

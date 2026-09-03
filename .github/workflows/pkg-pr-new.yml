@@ -87,11 +87,9 @@ jobs:
       - name: Build packages
         run: pnpm build:packages
 
-      # `build:packages` runs the `build` task, which does not produce
-      # @videojs/html's `cdn/` tree; `build:cdn` is a separate task. `cdn` is in
-      # that package's `files`, and the sandbox resolves its CDN demos through
-      # the published export map, so skipping this leaves `./cdn/*` pointing at
-      # nothing in the preview tarball.
+      # `build:packages` intentionally excludes @videojs/cdn because its browser
+      # bundles have a separate task. The sandbox resolves its CDN demos through
+      # that package's published export map, so build it before packing previews.
       - name: Build CDN bundles
         run: pnpm build:cdn
 
@@ -113,15 +111,36 @@ jobs:
       # open a running player built from the pull request. Its `dev` script
       # regenerates the gitignored src/ from templates/ on boot, so the sandbox
       # still works even though src/ is never part of the upload.
+      # The template is apps/sandbox alone: no workspace catalog to resolve its `catalog:` specs, and no preview of
+      # the private packages its `workspace:` ranges name. Rewrite its manifest in place; this checkout is disposable.
+      - name: Prepare the StackBlitz template
+        run: pnpm --filter @videojs/sandbox exec tsx scripts/prepare-template.ts
+
       - name: Publish preview packages
         env:
           VIDEOJS_SKIP_PACKAGE_DOCS: '1'
         run: >
           pnpm exec pkg-pr-new publish --pnpm --previewVersion --peerDeps --packageManager=pnpm
+          './packages/cdn'
           './packages/core'
           './packages/element'
           './packages/html'
           './packages/media'
+          './packages/cloudflare-video'
+          './packages/spotify-audio'
+          './packages/tiktok-video'
+          './packages/twitch-video'
+          './packages/youtube-video'
+          './packages/native-hls-video'
+          './packages/dash-video'
+          './packages/google-cast'
+          './packages/hlsjs-video'
+          './packages/mux-audio'
+          './packages/mux-data'
+          './packages/mux-video'
+          './packages/shaka-video'
+          './packages/vimeo-video'
+          './packages/wistia-video'
           './packages/react'
           './packages/spf'
           './packages/store'

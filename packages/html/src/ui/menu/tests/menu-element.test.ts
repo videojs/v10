@@ -309,32 +309,35 @@ describe('MenuElement', () => {
 
   it('relays radio-group state to its nested trigger', async () => {
     class TestMenuRadioGroupElement extends MenuRadioGroupElement {
-      publish(disabled: boolean, availability: 'available' | 'unavailable'): void {
-        this.publishMenuTriggerState(disabled, availability);
+      publish(disabled: boolean, availability: 'available' | 'unavailable', hidden = false): void {
+        this.publishMenuOptionState(disabled, hidden, availability);
       }
     }
     const testTag = 'test-menu-radio-group';
 
     defineElement(testTag, TestMenuRadioGroupElement);
     const { root, content } = createMenu();
+    const settingsTrigger = document.createElement('button');
     const trigger = createItem('Quality');
-    const hint = document.createElement('span');
+    const value = document.createElement('span');
     const submenu = document.createElement(MenuContentElement.tagName) as MenuContentElement;
     const group = document.createElement(testTag) as TestMenuRadioGroupElement;
     const selected = document.createElement(MenuRadioItemElement.tagName) as MenuRadioItemElement;
 
+    root.id = 'settings-menu';
+    settingsTrigger.setAttribute('commandfor', root.id);
     submenu.id = 'quality-menu';
     trigger.commandfor = submenu.id;
-    hint.dataset.part = 'hint';
+    value.dataset.part = 'value';
     group.value = 'auto';
     selected.value = 'auto';
     selected.textContent = 'Auto';
     group.append(selected);
     submenu.append(group);
-    trigger.append(hint);
+    trigger.append(value);
     content.append(trigger, submenu);
     root.open = true;
-    document.body.append(root);
+    document.body.append(settingsTrigger, root);
 
     await Promise.all([root.updateComplete, content.updateComplete, group.updateComplete, submenu.updateComplete]);
     trigger.click();
@@ -343,11 +346,43 @@ describe('MenuElement', () => {
     await waitForAssertion(() => {
       expect(submenu.open).toBe(false);
       expect(content.hasAttribute('inert')).toBe(false);
-      expect(hint.textContent).toBe('Auto');
+      expect(value.textContent).toBe('Auto');
     });
 
     expect(trigger.getAttribute('data-availability')).toBe('unavailable');
     expect(trigger.getAttribute('aria-disabled')).toBe('true');
+    expect(settingsTrigger.getAttribute('data-availability')).toBe('unavailable');
+  });
+
+  it('keeps the root open when nested option contexts refresh', async () => {
+    const { root, content } = createMenu();
+    const settingsTrigger = document.createElement('button');
+    const trigger = createItem('Quality');
+    const submenu = document.createElement(MenuContentElement.tagName) as MenuContentElement;
+    const group = document.createElement(MenuRadioGroupElement.tagName) as MenuRadioGroupElement;
+    const selected = document.createElement(MenuRadioItemElement.tagName) as MenuRadioItemElement;
+
+    root.id = 'settings-menu-refresh';
+    settingsTrigger.setAttribute('commandfor', root.id);
+    submenu.id = 'quality-menu-refresh';
+    trigger.commandfor = submenu.id;
+    group.value = 'auto';
+    selected.value = 'auto';
+    selected.textContent = 'Auto';
+    group.append(selected);
+    submenu.append(group);
+    content.append(trigger, submenu);
+    document.body.append(settingsTrigger, root);
+
+    await Promise.all([root.updateComplete, content.updateComplete, group.updateComplete, submenu.updateComplete]);
+    settingsTrigger.click();
+    await waitForAssertion(() => expect(root.open).toBe(true));
+
+    root.requestUpdate();
+    await Promise.all([root.updateComplete, content.updateComplete, submenu.updateComplete]);
+
+    expect(root.open).toBe(true);
+    expect(settingsTrigger.getAttribute('aria-expanded')).toBe('true');
   });
 
   it('requests open changes before committing them', async () => {

@@ -187,6 +187,7 @@ export const sidebar: Sidebar = [
           { slug: 'reference/twitch-video' },
           { slug: 'reference/video' },
           { slug: 'reference/vimeo-video' },
+          { slug: 'reference/wistia-video' },
           { slug: 'reference/youtube-video' },
         ],
       },

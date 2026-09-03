@@ -22,10 +22,11 @@ function escapeHtml(value: string): string {
 }
 
 export function extractTemplateLiteral(source: string): string {
-  const match = source.match(
-    /function\s+getTemplateHTML\s*\([^)]*\)\s*\{[\s\S]*?return\s+(?:\/\*html\*\/\s*)?`([\s\S]*?)`\s*;?\s*\}/
-  );
-  if (!match) throw new Error('Could not extract getTemplateHTML template literal');
+  const match =
+    source.match(
+      /function\s+getTemplateHTML\s*\([^)]*\)\s*\{[\s\S]*?return\s+(?:\/\*\s*html\s*\*\/\s*)?`([\s\S]*?)`\s*;?\s*\}/
+    ) ?? source.match(/createTemplate\s*\(\s*(?:\/\*\s*html\s*\*\/\s*)?`([\s\S]*?)`\s*\)/);
+  if (!match) throw new Error('Could not extract HTML template literal');
 
   return match[1];
 }

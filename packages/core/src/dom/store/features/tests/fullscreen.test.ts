@@ -1,4 +1,4 @@
-import { HTMLVideoElementHost } from '@videojs/media/dom/video-host';
+import { HTMLVideoElementHost } from '@videojs/media/dom';
 import { createStore } from '@videojs/store';
 import type { WebKitVideoElement } from '@videojs/utils/dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';

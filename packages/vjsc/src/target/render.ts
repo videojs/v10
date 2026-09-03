@@ -1,8 +1,8 @@
-import { type ModuleImports, sliceSource } from '../ast';
+import { createSourceText, type ModuleImports, renderSourceRange, sliceSource } from '../ast';
 import { htmlAttributeName } from './attributes';
 import {
   type ComponentTarget,
-  type ComponentTargetPath,
+  type ComponentPath,
   isTargetElement,
   TARGET_ELEMENT,
   TARGET_FRAGMENT,
@@ -14,12 +14,14 @@ import {
   type TargetNode,
   type TargetOutput,
   type TargetReference,
+  type TargetReplacement,
 } from './definition';
 import { isTargetExpression, isTargetWithProps, readTargetExpression } from './expression';
 import {
   isSourceChildrenToken,
   isSourcePropsToken,
   isSourcePropToken,
+  isTargetReplacement,
   SOURCE_PROPS,
   type SourceChildrenToken,
   type SourcePropsToken,
@@ -33,6 +35,16 @@ export interface TargetRenderContext {
 
 export function renderTargetElement(element: TargetElement, context: TargetRenderContext): string {
   return renderTargetReference(element[TARGET_ELEMENT], context, new Set());
+}
+
+/** Render the public props type of an element target through a type import collection, if it declares one. */
+export function renderTargetPropsType(element: TargetElement, imports: ModuleImports): string | undefined {
+  const reference = element[TARGET_ELEMENT];
+  if (reference.kind === 'component' || !reference.props) return undefined;
+
+  const type = imports.reference(reference.props);
+
+  return reference.props.intrinsic ? `${type}<${JSON.stringify(reference.props.intrinsic)}>` : type;
 }
 
 export function renderTargetOutput(output: TargetOutput, context: TargetRenderContext): string {
@@ -51,6 +63,8 @@ export function renderTargetOutput(output: TargetOutput, context: TargetRenderCo
   if (isTargetExpression(output)) return `{${renderTargetExpression(readTargetExpression(output), context)}}`;
 
   if (isTargetWithProps(output)) return renderWithProps(output.children, output.props, context);
+
+  if (isTargetReplacement(output)) return renderTargetReplacement(output, context);
 
   if (isTargetNode(output)) return renderTargetNode(output, context);
 
@@ -78,6 +92,14 @@ function renderTargetNode(node: TargetNode, context: TargetRenderContext): strin
 }
 
 export function renderTargetAttributes(node: TargetNode, context: TargetRenderContext): string[] {
+  return renderAttributesFor(node, context, context.target.jsx.attributes);
+}
+
+function renderAttributesFor(
+  node: TargetNode,
+  context: TargetRenderContext,
+  attributeMode: ComponentTarget['jsx']['attributes']
+): string[] {
   const attributes: string[] = [];
   const props = node.props as Readonly<Record<PropertyKey, unknown>>;
 
@@ -89,7 +111,7 @@ export function renderTargetAttributes(node: TargetNode, context: TargetRenderCo
     const value = props[property];
 
     if (property === SOURCE_PROPS) {
-      if (isSourcePropsToken(value)) attributes.push(...renderSourceProps(value, context.target.jsx.attributes));
+      if (isSourcePropsToken(value)) attributes.push(...renderSourceProps(value, attributeMode));
 
       continue;
     }
@@ -104,7 +126,7 @@ export function renderTargetAttributes(node: TargetNode, context: TargetRenderCo
 
     if (typeof property !== 'string' || value === undefined) continue;
 
-    const attribute = renderAttribute(property, value, context);
+    const attribute = renderAttribute(property, value, context, attributeMode);
 
     if (attribute) attributes.push(attribute);
   }
@@ -121,6 +143,8 @@ function renderChildren(value: unknown, context: TargetRenderContext): string {
 
   if (isTargetWithProps(value)) return renderWithProps(value.children, value.props, context);
 
+  if (isTargetReplacement(value)) return renderTargetReplacement(value, context);
+
   if (isTargetNode(value)) return renderTargetNode(value, context);
 
   if (Array.isArray(value)) return value.map((child) => renderChildren(child, context)).join('');
@@ -134,8 +158,23 @@ function renderChildren(value: unknown, context: TargetRenderContext): string {
   throw new Error('vjsc/target: target JSX contains an unsupported child value.');
 }
 
-function renderAttribute(name: string, value: unknown, context: TargetRenderContext): string | undefined {
-  const targetName = targetAttributeName(name, context.target.jsx.attributes);
+function renderTargetReplacement(replacement: TargetReplacement, context: TargetRenderContext): string {
+  const output = renderTargetOutput(replacement.output, context);
+  const source = createSourceText(replacement.source.code, [
+    ...replacement.source.edits,
+    { start: replacement.partStart, end: replacement.partEnd, content: output },
+  ]);
+
+  return renderSourceRange(source, replacement.branchStart, replacement.branchEnd).value;
+}
+
+function renderAttribute(
+  name: string,
+  value: unknown,
+  context: TargetRenderContext,
+  attributeMode: ComponentTarget['jsx']['attributes']
+): string | undefined {
+  const targetName = targetAttributeName(name, attributeMode);
 
   if (isSourcePropToken(value)) return renderSourcePropAttribute(targetName, value);
 
@@ -247,7 +286,11 @@ function renderWithProps(
 
   const attributes = isExpressionNode(props)
     ? [`{...${renderTargetExpression(props, context)}}`]
-    : renderTargetAttributes({ [TARGET_NODE]: true, type: TARGET_HOST, props: { ...props }, key: null }, context);
+    : renderAttributesFor(
+        { [TARGET_NODE]: true, type: TARGET_HOST, props: { ...props }, key: null },
+        context,
+        children.rootComponent ? 'react' : context.target.jsx.attributes
+      );
 
   if (children.rootOpeningEnd === undefined) {
     const host = context.target.jsx.host;
@@ -286,8 +329,8 @@ function renderTargetReference(
 
   if (reference.kind === 'import') return context.imports.reference(reference.import);
 
-  const path: ComponentTargetPath = { component: reference.component, part: reference.part };
-  const resolved = context.target.resolve(path);
+  const path: ComponentPath = { component: reference.component, part: reference.part };
+  const resolved = context.target.components.resolve(path);
 
   if (!resolved || !isTargetElement(resolved)) {
     throw new Error(

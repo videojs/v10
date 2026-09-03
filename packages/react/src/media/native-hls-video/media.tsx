@@ -1,9 +1,7 @@
 'use client';
 
-import type { NativeHlsMediaProps } from '@videojs/media/dom/native-hls';
-import { NativeHlsMedia, nativeHlsMediaDefaultProps } from '@videojs/media/dom/native-hls';
-import type { ReactNode, VideoHTMLAttributes } from 'react';
-import { forwardRef } from 'react';
+import { NativeHlsMedia, nativeHlsMediaDefaultProps, type NativeHlsMediaProps } from '@videojs/native-hls-video';
+import { forwardRef, type ReactNode, type VideoHTMLAttributes } from 'react';
 
 import { useAttachMedia } from '../../utils/use-attach-media';
 import { useComposedRefs } from '../../utils/use-composed-refs';

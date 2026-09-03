@@ -2,12 +2,20 @@ import type { Node } from '@oxc-project/types';
 import { parseSync } from 'oxc-parser';
 import { walk } from 'oxc-walker';
 
+/** One name an `import` declaration binds; `default` and `*` name the default and namespace imports. */
+export interface ImportBinding {
+  readonly imported: string;
+  readonly local: string;
+}
+
 export interface ImportReference {
   readonly specifier: string;
   readonly kind: 'static' | 'dynamic' | 'type';
   readonly start: number;
   readonly end: number;
   readonly quote: string;
+  /** Value bindings of an `import` declaration; empty for side-effect, re-export, dynamic, and type references. */
+  readonly bindings: readonly ImportBinding[];
 }
 
 export interface ImportReplacement extends ImportReference {
@@ -34,6 +42,7 @@ export function analyzeImports(source: string, fileName: string): ImportReferenc
         start: literal.start,
         end: literal.end,
         quote: source[literal.start] === '`' ? '`' : source[literal.start] === '"' ? '"' : "'",
+        bindings: node.type === 'ImportDeclaration' && kind === 'static' ? importBindings(node) : [],
       });
     },
   });
@@ -104,6 +113,24 @@ function importReference(
   if (node.type === 'TSImportType') return { literal: node.source, kind: 'type' };
 
   return undefined;
+}
+
+function importBindings(node: Extract<Node, { type: 'ImportDeclaration' }>): ImportBinding[] {
+  const bindings: ImportBinding[] = [];
+
+  for (const specifier of node.specifiers) {
+    if (specifier.type === 'ImportDefaultSpecifier')
+      bindings.push({ imported: 'default', local: specifier.local.name });
+    else if (specifier.type === 'ImportNamespaceSpecifier')
+      bindings.push({ imported: '*', local: specifier.local.name });
+    else if (specifier.importKind !== 'type') {
+      const imported = specifier.imported.type === 'Identifier' ? specifier.imported.name : specifier.imported.value;
+
+      bindings.push({ imported, local: specifier.local.name });
+    }
+  }
+
+  return bindings;
 }
 
 function escapeSpecifier(specifier: string, quote: string): string {

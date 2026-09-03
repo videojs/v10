@@ -1,7 +1,9 @@
+import type { JSXElement } from '@oxc-project/types';
 import { parseSync } from 'oxc-parser';
+import { walk } from 'oxc-walker';
 import { describe, expect, it } from 'vite-plus/test';
 
-import { collectFunctionDeclarations, findJsxAttribute, findJsxElement, jsxNamePath } from '..';
+import { findJsxAttribute, jsxNamePath } from '..';
 
 const source = `
 export function Root() {
@@ -12,24 +14,11 @@ export function Root() {
 }
 `;
 const ast = parseSync('fixture.tsx', source).program;
-
-describe('collectFunctionDeclarations', () => {
-  it('collects nested declarations in source order', () => {
-    expect(collectFunctionDeclarations(ast).map((declaration) => declaration.id?.name)).toEqual(['Root', 'Nested']);
-  });
-});
-
-describe('findJsxElement', () => {
-  it('finds member-expression elements by dotted name', () => {
-    expect(findJsxElement(ast, 'UI.Popover.Root')).toBeDefined();
-  });
-});
+const element = findElement('UI.Popover.Root');
 
 describe('findJsxAttribute', () => {
   it('finds named attributes on JSX elements', () => {
-    const element = findJsxElement(ast, 'UI.Popover.Root');
-
-    expect(element && findJsxAttribute(element, 'selectedLabel')?.name).toMatchObject({
+    expect(findJsxAttribute(element, 'selectedLabel')?.name).toMatchObject({
       type: 'JSXIdentifier',
       name: 'selectedLabel',
     });
@@ -38,8 +27,24 @@ describe('findJsxAttribute', () => {
 
 describe('jsxNamePath', () => {
   it('reads member-expression names as paths', () => {
-    const element = findJsxElement(ast, 'UI.Popover.Root');
+    expect(jsxNamePath(element.openingElement.name)).toEqual(['UI', 'Popover', 'Root']);
+  });
 
-    expect(element && jsxNamePath(element.openingElement.name)).toEqual(['UI', 'Popover', 'Root']);
+  it('reads plain identifiers as single-segment paths', () => {
+    expect(jsxNamePath(findElement('Nested').openingElement.name)).toEqual(['Nested']);
   });
 });
+
+function findElement(name: string): JSXElement {
+  let found: JSXElement | undefined;
+
+  walk(ast, {
+    enter(node) {
+      if (node.type === 'JSXElement' && jsxNamePath(node.openingElement.name).join('.') === name) found = node;
+    },
+  });
+
+  if (!found) throw new Error(`Fixture has no <${name}> element.`);
+
+  return found;
+}

@@ -20,7 +20,7 @@ import { usePositionedState } from '../hooks/use-positioned-state';
 import { type TooltipContent, TooltipContextProvider } from './context';
 import { useTooltipGroup } from './group-context';
 
-export interface TooltipRootProps extends CoreTooltipProps {
+export interface TooltipRootProps extends Omit<CoreTooltipProps, 'boundary'> {
   /** Boundary used to constrain the popup size. */
   boundary?: PositioningBoundary;
   /** Called when the tooltip open state changes (fires immediately, before animations). */

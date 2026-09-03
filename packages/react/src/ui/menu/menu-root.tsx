@@ -1,4 +1,4 @@
-import { MenuCore } from '@videojs/core';
+import { MenuCore, type MenuOptionState, resolveMenuOptionState } from '@videojs/core';
 import {
   createMenu,
   createTransition,
@@ -8,7 +8,7 @@ import {
 } from '@videojs/core/dom';
 import { useSnapshot } from '@videojs/store/react';
 import type { ReactNode } from 'react';
-import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
 
 import { useOptionalContainer, useOptionalPlayer } from '../../player/context';
 import { useOptionalPopupGroup } from '../../player/popup-group-context';
@@ -19,7 +19,7 @@ import { useOptionalControlsContext } from '../controls/context';
 import { usePositionedState } from '../hooks/use-positioned-state';
 import { MenuContextProvider, useOptionalMenuContext } from './context';
 
-export interface MenuRootProps extends MenuCore.Props {
+export interface MenuRootProps extends Omit<MenuCore.Props, 'boundary'> {
   /** Boundary used to constrain the root menu popup size. */
   boundary?: PositioningBoundary;
   /** Called when the menu open state changes (fires immediately, before animations). */
@@ -115,6 +115,40 @@ export function MenuRoot({
   }, [core, input, side, align, closeOnEscape, closeOnOutsideClick, isSubmenu]);
   const { state, preferredSide, setPositionedSide } = usePositionedState(preferredState);
 
+  const [optionStates, setOptionStates] = useState<ReadonlyMap<symbol, MenuOptionState>>(() => new Map());
+  const [optionSource] = useState(() => Symbol('menu'));
+  const setOptionState = useCallback((source: symbol, optionState: MenuOptionState | null) => {
+    setOptionStates((current) => {
+      const previous = current.get(source);
+      if (optionState && isSameOptionState(previous, optionState)) return current;
+
+      if (!optionState && !previous) return current;
+
+      const next = new Map(current);
+
+      if (optionState) next.set(source, optionState);
+      else next.delete(source);
+
+      return next;
+    });
+  }, []);
+  const optionState = useMemo(() => resolveMenuOptionState(optionStates.values()), [optionStates]);
+  const setParentOptionState = parentMenu?.setOptionState;
+
+  useEffect(() => {
+    if (!optionState?.disabled && !optionState?.hidden) return;
+
+    menu.close('imperative-action');
+  }, [menu, optionState?.disabled, optionState?.hidden]);
+
+  useLayoutEffect(() => {
+    if (!setParentOptionState) return undefined;
+
+    setParentOptionState(optionSource, optionState);
+
+    return () => setParentOptionState(optionSource, null);
+  }, [optionSource, optionState, setParentOptionState]);
+
   const contextValue = useMemo(
     () => ({
       core,
@@ -127,11 +161,32 @@ export function MenuRoot({
       anchorName,
       boundary,
       container,
+      optionState,
+      setOptionState,
     }),
-    [core, menu, parentMenu, state, preferredSide, setPositionedSide, contentId, anchorName, boundary, container]
+    [
+      core,
+      menu,
+      parentMenu,
+      state,
+      preferredSide,
+      setPositionedSide,
+      contentId,
+      anchorName,
+      boundary,
+      container,
+      optionState,
+      setOptionState,
+    ]
   );
 
   return <MenuContextProvider value={contextValue}>{children}</MenuContextProvider>;
+}
+
+function isSameOptionState(a: MenuOptionState | undefined, b: MenuOptionState): boolean {
+  return (
+    a?.value === b.value && a.disabled === b.disabled && a.hidden === b.hidden && a.availability === b.availability
+  );
 }
 
 export namespace MenuRoot {

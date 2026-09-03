@@ -7,15 +7,23 @@ import type {
   VariableDeclaration,
   VariableDeclarator,
 } from '@oxc-project/types';
+import { isPlainObject } from '@videojs/utils/predicate';
 import type { Plugin, RolldownMagicString } from 'rolldown';
 
 import type { ComponentMeta } from '../components/meta';
+import { parseModuleId, SCRIPT_MODULE_ID, type TransformModule } from '../utils/module-id';
 
-const SCRIPT_ID = /\.[cm]?[jt]sx?(?:\?|$)/;
-
-export interface ComponentModuleMeta {
-  readonly componentMeta?: ComponentMeta | undefined;
-  readonly componentSource?: string | undefined;
+export interface ModuleBuildMeta {
+  readonly moduleMeta?: ComponentMeta | undefined;
+  /** Whether the metadata export was removed from the transformed source, so the graph can skip re-parsing. */
+  readonly metaRemoved?: boolean | undefined;
+  readonly moduleSource?: string | undefined;
+  readonly moduleStyles?:
+    | {
+        readonly files: readonly string[];
+        readonly assets: readonly string[];
+      }
+    | undefined;
   readonly [key: string]: unknown;
 }
 
@@ -37,16 +45,25 @@ interface ExportedMeta {
  *
  * @param exportName - Metadata export to extract. Defaults to `meta`.
  */
-export function componentMetaPlugin(exportName = 'meta'): Plugin {
+export interface ComponentMetaPluginOptions {
+  /** Metadata export to extract. Defaults to `meta`. */
+  readonly exportName?: string | undefined;
+  /** Fields a module's metadata starts from, typically derived from its path, which the authored export may override. */
+  readonly defaults?: ((module: TransformModule) => Readonly<Record<string, unknown>>) | undefined;
+}
+
+export function componentMetaPlugin(options: string | ComponentMetaPluginOptions = {}): Plugin {
+  const { exportName = 'meta', defaults } = typeof options === 'string' ? { exportName: options } : options;
+
   return {
     name: 'vjsc:component-meta',
     transform: {
-      filter: { id: SCRIPT_ID, code: exportName },
+      filter: { id: SCRIPT_MODULE_ID, code: exportName },
       handler(_code, id, transform) {
         const exported = findExportedMeta(transform.ast, exportName);
         if (!exported?.declarator.init) return null;
 
-        const componentMeta = parseComponentMeta(exported.declarator.init, id, exportName);
+        const moduleMeta = parseComponentMeta(exported.declarator.init, id, exportName, defaults?.(parseModuleId(id)));
         const magicString = transform.magicString;
         if (!magicString) throw new Error('vjsc: Rolldown did not provide MagicString to the component metadata pass.');
 
@@ -54,39 +71,56 @@ export function componentMetaPlugin(exportName = 'meta'): Plugin {
 
         return {
           code: magicString,
-          meta: mergeComponentModuleMeta(this.getModuleInfo(id)?.meta, { componentMeta }),
+          meta: mergeModuleBuildMeta(this.getModuleInfo(id)?.meta, { moduleMeta, metaRemoved: true }),
         };
       },
     },
   };
 }
 
-export function readComponentModuleMeta(meta: unknown): ComponentModuleMeta | undefined {
-  if (!isRecord(meta)) return undefined;
+export function readModuleBuildMeta(meta: unknown): ModuleBuildMeta | undefined {
+  if (!isPlainObject(meta)) return undefined;
 
-  const componentMeta = isComponentMeta(meta.componentMeta) ? meta.componentMeta : undefined;
-  const componentSource = typeof meta.componentSource === 'string' ? meta.componentSource : undefined;
-  if (!componentMeta && componentSource === undefined) return undefined;
+  const moduleMeta = isComponentMeta(meta.moduleMeta) ? meta.moduleMeta : undefined;
+  const moduleSource = typeof meta.moduleSource === 'string' ? meta.moduleSource : undefined;
+  const moduleStyles = readModuleStyles(meta.moduleStyles);
+  const metaRemoved = meta.metaRemoved === true ? true : undefined;
+  if (!moduleMeta && moduleSource === undefined && moduleStyles === undefined && !metaRemoved) return undefined;
 
-  return { ...meta, componentMeta, componentSource };
+  return { ...meta, moduleMeta, moduleSource, moduleStyles, metaRemoved };
 }
 
 export function readComponentMeta(meta: unknown): ComponentMeta | undefined {
-  return readComponentModuleMeta(meta)?.componentMeta;
+  return readModuleBuildMeta(meta)?.moduleMeta;
 }
 
 export function readComponentSource(meta: unknown): string | undefined {
-  return readComponentModuleMeta(meta)?.componentSource;
+  return readModuleBuildMeta(meta)?.moduleSource;
 }
 
-export function mergeComponentModuleMeta(
+export function readModuleStyles(meta: unknown): ModuleBuildMeta['moduleStyles'] {
+  if (!isPlainObject(meta)) return undefined;
+
+  const value = isPlainObject(meta.moduleStyles) ? meta.moduleStyles : meta;
+
+  const files = readStringArray(value.files);
+  const assets = readStringArray(value.assets);
+
+  return files && assets ? { files, assets } : undefined;
+}
+
+export function mergeModuleBuildMeta(
   meta: unknown,
-  update: Partial<ComponentModuleMeta>
+  update: Partial<ModuleBuildMeta>
 ): Readonly<Record<string, unknown>> {
   return {
-    ...(isRecord(meta) ? meta : {}),
+    ...(isPlainObject(meta) ? meta : {}),
     ...update,
   };
+}
+
+function readStringArray(value: unknown): readonly string[] | undefined {
+  return Array.isArray(value) && value.every((entry) => typeof entry === 'string') ? value : undefined;
 }
 
 function findExportedMeta(ast: Program | undefined, exportName: string): ExportedMeta | undefined {
@@ -119,10 +153,18 @@ function removeDeclarator(magicString: RolldownMagicString, exported: ExportedMe
   }
 }
 
-function parseComponentMeta(expression: Expression, id: string, exportName: string): ComponentMeta {
-  const value = staticValue(expression, id);
+function parseComponentMeta(
+  expression: Expression,
+  id: string,
+  exportName: string,
+  defaults: Readonly<Record<string, unknown>> = {}
+): ComponentMeta {
+  const authored = staticValue(expression, id);
+  if (!isPlainObject(authored)) throw nonStaticMeta(id);
 
-  if (!isRecord(value) || typeof value.name !== 'string' || value.name.length === 0) {
+  const value = { ...defaults, ...authored };
+
+  if (typeof value.name !== 'string' || value.name.length === 0) {
     throw new Error(`Component metadata \`${exportName}\` in ${id} must contain a non-empty literal \`name\`.`);
   }
 
@@ -207,10 +249,6 @@ function nonStaticMeta(id: string): Error {
   return new Error(`Component metadata in ${id} must contain only static literal values.`);
 }
 
-function isRecord(value: unknown): value is Readonly<Record<string, unknown>> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
-
 function isComponentMeta(value: unknown): value is ComponentMeta {
-  return isRecord(value) && typeof value.name === 'string';
+  return isPlainObject(value) && typeof value.name === 'string';
 }

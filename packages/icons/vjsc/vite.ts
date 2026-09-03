@@ -6,6 +6,7 @@ import type { Plugin } from 'vite';
 import { optimizeSvg } from '../scripts/internal/svg.ts';
 
 const elementId = '@videojs/icons/element';
+const elementBaseId = `${elementId}/base`;
 const familyName = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const iconsRoot = resolve(import.meta.dirname, '..');
 const assetsRoot = resolve(iconsRoot, 'src/assets');
@@ -20,6 +21,8 @@ export function iconElementSourcePlugin(): Plugin {
       server.watcher.add(assetsRoot);
     },
     resolveId(id) {
+      if (id === elementBaseId) return elementSource;
+
       return iconFamily(id) ? `\0${id}` : null;
     },
     load(id) {

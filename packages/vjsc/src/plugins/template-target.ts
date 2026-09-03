@@ -23,9 +23,8 @@ import {
   type SourceChildrenToken,
   singleJsxElementChild,
 } from '../target/source';
+import { SCRIPT_MODULE_ID } from '../utils/module-id';
 import { type ComponentTargetPluginOptions, selectComponentTargets } from './component-target';
-
-const SCRIPT_ID = /\.[cm]?[jt]sx?(?:\?|$)/;
 
 interface TemplateBinding {
   readonly local: string;
@@ -42,7 +41,7 @@ export function templateTargetPlugin(options: ComponentTargetPluginOptions): Plu
   return {
     name: 'vjsc:template-target',
     transform: {
-      filter: { id: SCRIPT_ID, code: 'Template' },
+      filter: { id: SCRIPT_MODULE_ID, code: 'Template' },
       handler(code, id, transform) {
         const targets = selectComponentTargets(options.targets, id);
         if (targets.length === 0 || !transform.ast || !transform.magicString) return null;

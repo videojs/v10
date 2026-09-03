@@ -3,10 +3,10 @@ import { registerI18n, resetI18nRegistry } from '@videojs/core/i18n';
 import { createRef } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
+import { CaptionsRadioGroup } from '..';
 import { I18nProvider } from '../../../i18n';
 import { createPlayerWrapper } from '../../../testing/mocks';
 import { Menu } from '../../menu';
-import { CaptionsRadioGroup, type CaptionsRadioGroupItemState } from '../captions-radio-group';
 
 afterEach(() => {
   resetI18nRegistry();
@@ -43,11 +43,13 @@ function renderCaptionsRadioGroup({
   });
   const content = (
     <Menu.Root defaultOpen>
-      <Menu.Popup>
-        <Menu.Content>
-          {group ?? <CaptionsRadioGroup renderItem={(props) => <Menu.RadioItem {...props} />} />}
-        </Menu.Content>
-      </Menu.Popup>
+      <CaptionsRadioGroup.Root>
+        <Menu.Popup>
+          <Menu.Content>
+            {group ?? <CaptionsRadioGroup.Options renderItem={(props) => <Menu.RadioItem {...props} />} />}
+          </Menu.Content>
+        </Menu.Popup>
+      </CaptionsRadioGroup.Root>
     </Menu.Root>
   );
 
@@ -58,11 +60,11 @@ function renderCaptionsRadioGroup({
 
 describe('CaptionsRadioGroup', () => {
   it('renders generated radio item props and item state', () => {
-    const states: CaptionsRadioGroupItemState[] = [];
+    const states: CaptionsRadioGroup.ItemState[] = [];
 
     renderCaptionsRadioGroup({
       group: (
-        <CaptionsRadioGroup
+        <CaptionsRadioGroup.Options
           renderItem={(props, state) => {
             states.push(state);
             return <Menu.RadioItem {...props} />;
@@ -95,7 +97,7 @@ describe('CaptionsRadioGroup', () => {
 
     renderCaptionsRadioGroup({
       group: (
-        <CaptionsRadioGroup
+        <CaptionsRadioGroup.Options
           ref={ref}
           data-testid="group"
           className={(state) => `captions-${state.availability}`}
@@ -128,7 +130,7 @@ describe('CaptionsRadioGroup', () => {
   it('supports custom group and item roots', () => {
     renderCaptionsRadioGroup({
       group: (
-        <CaptionsRadioGroup
+        <CaptionsRadioGroup.Options
           render={(props, state) => <section {...props} data-value={state.value} />}
           renderItem={(props, state) => (
             <Menu.RadioItem {...props}>

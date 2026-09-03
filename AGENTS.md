@@ -74,11 +74,11 @@ Checked-in skills are direct children of `.agents/skills/`. `pnpm install` expos
 
 - API: `design-api`, `review-api`
 - Bundler plugins: `create-rolldown-plugin`, `create-vite-plugin`, `transform-rolldown-code`
+- VJSC component anatomy: `create-vjsc-component`
 - UI implementation: `create-html-component`, `create-react-component`, `implement-ui-transition`, `implement-accessible-ui`
 - UI review: `review-html-component`, `review-react-component`, `review-accessibility`
 - UI design: `write-html-component-design`, `write-react-component-design`, `review-html-component-design`, `review-react-component-design`
 - Docs and records: `write-docs`, `review-docs`, `write-api-reference`, `write-design-doc`, `write-rfc`
-- Site styling: `migrate-css-to-tailwind`, `review-tailwind-migration`
 - Toolchain workflows: `configure-vite-plus`
 - Skin parity: `maintain-vjsc-skin-gaps`
 - Delivery: `investigate-issue`, `create-issue`, `review-branch`, `commit-pr`

@@ -1,95 +1,25 @@
 import '@app/styles.css';
-import { renderChapters } from '@app/shared/html/chapters';
-import { bindSandboxHtmlLocaleChange, prepareSandboxHtmlLocale, wrapSandboxHtmlI18n } from '@app/shared/html/i18n';
 import '@videojs/html/video/player';
+import '@videojs/html/live-video/player';
 import '@videojs/html/media/hlsjs-video';
-import { createHtmlSandboxState, createLatestLoader, renderMediaAttrs } from '@app/shared/html/sandbox-state';
-import { loadVideoSkinTag } from '@app/shared/html/skins';
-import { renderStoryboard } from '@app/shared/html/storyboard';
-import {
-  getInitialPlaybackOverrides,
-  onAutoplayChange,
-  onLoopChange,
-  onMutedChange,
-  onPreloadChange,
-  onSkinChange,
-  onSourceChange,
-} from '@app/shared/sandbox-listener';
-import { getChapters, getPosterSrc, getStoryboardSrc, isLiveSource, SOURCES } from '@app/shared/sources';
+import { createHtmlSandbox, html } from '@app/shared/html/sandbox';
 
-const html = String.raw;
-
-const state = createHtmlSandboxState();
-const loadLatest = createLatestLoader();
-
-async function render() {
-  await prepareSandboxHtmlLocale();
-
-  const live = isLiveSource(state.source);
-  const tag = await loadLatest(() => loadVideoSkinTag(state.skin, state.styling, { live }));
-  if (!tag) return;
-
-  const storyboard = getStoryboardSrc(state.source);
-  const poster = getPosterSrc(state.source);
-  const mediaAttrs = renderMediaAttrs(state);
-  const playerTag = live ? 'live-video-player' : 'video-player';
-
+createHtmlSandbox({
+  player: 'video',
+  live: true,
+  poster: 'image',
   // A source carrying DRM license servers has no room in the `src` attribute, so
   // it is assigned as an object below instead. Query-string playback overrides
   // need the object for the same reason, and need it before the first load so the
   // engine is built with them rather than reconfigured afterwards.
-  const overrides = getInitialPlaybackOverrides();
-  const { source, url } = SOURCES[state.source];
-  const initialSource = source ?? (Object.keys(overrides).length > 0 ? { src: url } : undefined);
-  const srcAttr = initialSource ? '' : ` src="${url}"`;
-
-  document.getElementById('root')!.innerHTML = wrapSandboxHtmlI18n(html`
-    <${playerTag}>
-      <${tag} class="aspect-video max-w-4xl mx-auto">
-        <hlsjs-video${srcAttr} ${mediaAttrs} playsinline crossorigin>
-          ${renderChapters(getChapters(state.source))}
-          ${renderStoryboard(storyboard)}
-        </hlsjs-video>
-        ${poster ? html`<img slot="poster" src="${poster}" alt="Video poster" crossorigin />` : ''}
-      </${tag}>
-    </${playerTag}>
-  `);
-
-  if (initialSource) {
-    document.querySelector('hlsjs-video')!.source = { ...initialSource, ...overrides };
-  }
-}
-
-render();
-
-onSkinChange((skin) => {
-  state.skin = skin;
-  render();
+  playbackOverrides: true,
+  media: ({ src, attrs, chapters, storyboard }) => html`
+    <hlsjs-video${src} ${attrs} playsinline crossorigin>
+      ${chapters}
+      ${storyboard}
+    </hlsjs-video>
+  `,
+  attach: ({ source }) => {
+    if (source) document.querySelector('hlsjs-video')!.source = source;
+  },
 });
-
-onSourceChange((source) => {
-  state.source = source;
-  render();
-});
-
-onAutoplayChange((autoplay) => {
-  state.autoplay = autoplay;
-  render();
-});
-
-onMutedChange((muted) => {
-  state.muted = muted;
-  render();
-});
-
-onLoopChange((loop) => {
-  state.loop = loop;
-  render();
-});
-
-onPreloadChange((preload) => {
-  state.preload = preload;
-  render();
-});
-
-bindSandboxHtmlLocaleChange(render);

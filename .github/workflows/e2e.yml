@@ -55,21 +55,15 @@ jobs:
       - name: Build CDN bundles
         run: pnpm build:cdn
 
-      - name: Build ejected skins
-        run: pnpm exec vp run site#ejected-skins
-
       - name: Generate E2E test pages
         run: pnpm --dir apps/e2e generate-pages
 
-      - name: Sync ejected skins to E2E app
-        run: pnpm --dir apps/e2e sync-ejected-skins
-
       - name: Run E2E tests
-        run: pnpm --dir apps/e2e exec playwright test --project=vite-${{ matrix.browser }}
+        run: pnpm --dir apps/e2e exec playwright test --config suites/player/playwright.config.ts --project=vite-${{ matrix.browser }}
 
       - name: Run sandbox E2E tests
         if: matrix.browser == 'chromium'
-        run: pnpm --dir apps/e2e test:sandbox
+        run: pnpm exec vp run '@videojs/e2e#test:sandbox'
 
       - name: Upload test report
         if: always()
@@ -85,4 +79,127 @@ jobs:
         with:
           name: playwright-traces-${{ matrix.browser }}
           path: apps/e2e/test-results/
+          retention-days: 7
+
+  skin-parity:
+    name: Skin parity (${{ matrix.preset }})
+    if: github.event_name == 'push' || contains(github.event.pull_request.labels.*.name, 'test:e2e')
+    runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.59.1-noble
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        preset: [video, live-video, audio, live-audio]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version-file: '.nvmrc'
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Restore Vite Task cache
+        uses: actions/cache/restore@v6
+        with:
+          path: node_modules/.vite/task-cache
+          key: vite-task-${{ runner.os }}-${{ runner.arch }}-restore-only-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}
+          restore-keys: |
+            vite-task-${{ runner.os }}-${{ runner.arch }}-packages-
+
+      - name: Run skin parity E2E tests
+        run: pnpm exec vp run '@videojs/e2e#test:skin-parity'
+        env:
+          VJSC_SKIN_PRESET: ${{ matrix.preset }}
+
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-skin-parity-${{ matrix.preset }}
+          path: apps/e2e/playwright-report/skin-parity/
+          retention-days: 14
+
+      - name: Upload test traces
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-traces-skin-parity-${{ matrix.preset }}
+          path: apps/e2e/test-results/skin-parity/
+          retention-days: 7
+
+  registry:
+    name: Registry consumers
+    runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.59.1-noble
+    timeout-minutes: 10
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version-file: '.nvmrc'
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Restore Vite Task cache
+        id: vite-task-cache
+        uses: actions/cache/restore@v6
+        with:
+          path: node_modules/.vite/task-cache
+          key: vite-task-${{ runner.os }}-${{ runner.arch }}-registry-${{ github.sha }}
+          restore-keys: |
+            vite-task-${{ runner.os }}-${{ runner.arch }}-registry-
+            vite-task-${{ runner.os }}-${{ runner.arch }}-packages-
+
+      - name: Validate registry consumers
+        if: github.event_name == 'pull_request'
+        run: pnpm exec vp run '@videojs/e2e#test:registry'
+
+      - name: Validate registry consumers without task cache
+        if: github.event_name == 'push'
+        run: pnpm exec vp run '@videojs/e2e#test:registry:full'
+
+      - name: Save Vite Task cache
+        if: success()
+        uses: actions/cache/save@v6
+        with:
+          path: node_modules/.vite/task-cache
+          key: ${{ steps.vite-task-cache.outputs.cache-primary-key }}
+
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-registry
+          path: apps/e2e/playwright-report/registry/
+          retention-days: 14
+
+      - name: Upload test traces
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-traces-registry
+          path: apps/e2e/test-results/registry/
           retention-days: 7

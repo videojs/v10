@@ -1,0 +1,101 @@
+{
+  "name": "@videojs/cdn",
+  "version": "10.0.0-beta.32",
+  "description": "Browser-ready Video.js distribution bundles",
+  "keywords": [
+    "cdn",
+    "html",
+    "media",
+    "player",
+    "videojs"
+  ],
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/videojs/v10",
+    "directory": "packages/cdn"
+  },
+  "files": [
+    "*.css",
+    "*.d.ts",
+    "*.js",
+    "*.js.map",
+    "chunks",
+    "extensions",
+    "locales",
+    "media"
+  ],
+  "type": "module",
+  "sideEffects": [
+    "./**/*.js"
+  ],
+  "exports": {
+    "./package.json": "./package.json",
+    "./extensions/*": {
+      "types": "./extensions/*.dev.d.ts",
+      "development": "./extensions/*.dev.js",
+      "default": "./extensions/*.js"
+    },
+    "./media/*": {
+      "types": "./media/*.dev.d.ts",
+      "development": "./media/*.dev.js",
+      "default": "./media/*.js"
+    },
+    "./i18n": {
+      "types": "./i18n.dev.d.ts",
+      "development": "./i18n.dev.js",
+      "default": "./i18n.js"
+    },
+    "./i18n-registry": {
+      "types": "./i18n.dev.d.ts",
+      "development": "./i18n.dev.js",
+      "default": "./i18n.js"
+    },
+    "./locales/*": {
+      "types": "./locales/*.dev.d.ts",
+      "development": "./locales/*.dev.js",
+      "default": "./locales/*.js"
+    },
+    "./*.css": "./*.css",
+    "./*": {
+      "types": "./*.dev.d.ts",
+      "development": "./*.dev.js",
+      "default": "./*.js"
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build:archive": "node --import tsx ./scripts/build-dist-archive.ts",
+    "check:cdn": "node --import tsx ./scripts/check-cdn-self-contained.ts && node --import tsx ./scripts/check-cdn-skins.ts",
+    "test": "vp test run",
+    "clean": "rimraf --glob '*.css' '*.d.ts' '*.js' '*.js.map' archive chunks extensions locales media 'src/locales/*.ts'"
+  },
+  "devDependencies": {
+    "@videojs/cloudflare-video": "workspace:*",
+    "@videojs/core": "workspace:*",
+    "@videojs/dash-video": "workspace:*",
+    "@videojs/google-cast": "workspace:*",
+    "@videojs/hlsjs-video": "workspace:*",
+    "@videojs/html": "workspace:*",
+    "@videojs/mux-audio": "workspace:*",
+    "@videojs/mux-data": "workspace:*",
+    "@videojs/mux-video": "workspace:*",
+    "@videojs/native-hls-video": "workspace:*",
+    "@videojs/shaka-video": "workspace:*",
+    "@videojs/spf": "workspace:*",
+    "@videojs/spotify-audio": "workspace:*",
+    "@videojs/tiktok-video": "workspace:*",
+    "@videojs/twitch-video": "workspace:*",
+    "@videojs/vimeo-video": "workspace:*",
+    "@videojs/wistia-video": "workspace:*",
+    "@videojs/youtube-video": "workspace:*",
+    "happy-dom": "^20.11.1",
+    "rolldown": "~1.2.5",
+    "tsx": "^4.23.1",
+    "typescript": "^6.0.2",
+    "vite-plus": "catalog:",
+    "vitest": "catalog:"
+  }
+}

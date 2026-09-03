@@ -1,9 +1,7 @@
 'use client';
 
-import type { VimeoMediaProps } from '@videojs/media/dom/vimeo';
-import { buildVimeoIframeSrc, VimeoMedia, vimeoMediaDefaultProps } from '@videojs/media/dom/vimeo';
-import type { ReactNode } from 'react';
-import { forwardRef, useState } from 'react';
+import { buildVimeoIframeSrc, VimeoMedia, vimeoMediaDefaultProps, type VimeoMediaProps } from '@videojs/vimeo-video';
+import { forwardRef, type ReactNode, useState } from 'react';
 
 import { useAttachIframe } from '../../utils/use-attach-iframe';
 import { useComposedRefs } from '../../utils/use-composed-refs';

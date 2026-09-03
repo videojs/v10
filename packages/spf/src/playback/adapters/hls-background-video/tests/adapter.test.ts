@@ -6,8 +6,7 @@
  * attach rather than exposed, and the picker takes the largest rendition on offer, since narrowing the set is the
  * manifest's job rather than a property here.
  *
- * `@videojs/spf/mux-background-video` re-exports these same classes, so its own test asserts identity and leans on this
- * file for behavior.
+ * `<mux-background-video>` in html and react is an alias of these same classes, so this file carries the behavior.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 

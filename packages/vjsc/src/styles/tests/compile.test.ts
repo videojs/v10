@@ -3,8 +3,8 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vite-plus/test';
 
 import { compileStyles } from '../compile';
-import { loadDesignSystem } from '../design-system';
-import type { StyleManifest, StyleManifestRule } from '../manifest';
+import { type DesignSystem, loadDesignSystem } from '../design-system';
+import type { ResolvedStyles, ResolvedStyleRule } from '../resolved';
 
 const designPath = resolve(import.meta.dirname, 'fixtures/tailwind.css');
 
@@ -13,7 +13,7 @@ describe('compileStyles', () => {
     const container = { ...rule('root', 'media-container', ['block']), scopeRoot: true };
     const styles = await compileStyles({
       design: await loadDesignSystem(designPath),
-      manifest: manifest([container]),
+      styles: resolvedStyles([container]),
       scope: '.media-skin-video',
     });
 
@@ -23,19 +23,65 @@ describe('compileStyles', () => {
 
   it('rewrites named group variants to their semantic owner', async () => {
     const playButton = rule('playButton', 'media-play-button', ['group/play']);
-    const restartIcon = rule('restartIcon', 'media-restart-icon', ['hidden', 'group-data-ended/play:block']);
+    const buttonIcon = rule('buttonIcon', 'media-button-icon', ['size-4']);
+    const pauseIcon = rule('pauseIcon', 'media-pause-icon', [
+      'hidden',
+      'opacity-0',
+      'group-data-started/play:group-not-data-paused/play:group-not-data-ended/play:block',
+      'group-data-started/play:group-not-data-paused/play:group-not-data-ended/play:opacity-100',
+    ]);
+    const playIcon = rule('playIcon', 'media-play-icon', [
+      'hidden',
+      'opacity-0',
+      'group-not-data-ended/play:group-data-paused/play:block',
+      'group-not-data-ended/play:group-data-paused/play:opacity-100',
+    ]);
+    const restartIcon = rule('restartIcon', 'media-restart-icon', [
+      'hidden',
+      'opacity-0',
+      'group-data-ended/play:block',
+      'group-data-ended/play:opacity-100',
+    ]);
     const styles = await compileStyles({
       design: await loadDesignSystem(designPath),
-      manifest: manifest([playButton, restartIcon]),
+      styles: resolvedStyles([buttonIcon, playButton, pauseIcon, playIcon, restartIcon]),
       scope: '.media-skin-video',
     });
+    const css = styles.get('buttons.css') ?? '';
 
-    expect(styles.get('buttons.css')).toContain('@scope (.media-skin-video)');
-    expect(styles.get('buttons.css')).toContain('@scope (.media-play-button)');
-    expect(styles.get('buttons.css')).toContain('&[data-ended]');
-    expect(styles.get('buttons.css')).toContain('.media-restart-icon');
-    expect(styles.get('buttons.css')).not.toContain('group\\/play');
-    expect(styles.get('buttons.css')).not.toContain(':where(');
+    expect(css).toContain('@scope (.media-skin-video)');
+    expect(css).toContain('@scope (.media-play-button)');
+    expect(css).toContain('&[data-ended]');
+    expect(css).toMatch(/\.media-restart-icon \{\s+opacity: 0;\s+display: none;/);
+    expect(css).not.toContain('group\\/play');
+    expect(css).not.toContain(':where(');
+  });
+
+  it('reuses compiled output for identical rules, variants, and scope', async () => {
+    const design = await loadDesignSystem(designPath);
+    let compiles = 0;
+    const counted: DesignSystem = {
+      ...design,
+      compileCss(css) {
+        compiles += 1;
+        return design.compileCss(css);
+      },
+    };
+    const options = { design: counted, scope: '.media-skin-video', variants: ['default'] };
+    const first = await compileStyles({ ...options, styles: resolvedStyles([rule('root', 'media-button', ['grid'])]) });
+    const second = await compileStyles({
+      ...options,
+      styles: resolvedStyles([rule('root', 'media-button', ['grid'])]),
+    });
+    const changed = await compileStyles({
+      ...options,
+      styles: resolvedStyles([rule('root', 'media-button', ['flex'])]),
+    });
+
+    expect(compiles).toBe(2);
+    expect(second).toEqual(first);
+    expect(second).not.toBe(first);
+    expect(changed.get('buttons.css')).not.toEqual(first.get('buttons.css'));
   });
 
   it('folds stacked group conditions and negative calculations into reviewable CSS', async () => {
@@ -47,7 +93,7 @@ describe('compileStyles', () => {
     ]);
     const styles = await compileStyles({
       design: await loadDesignSystem(designPath),
-      manifest: manifest([muteButton, highIcon]),
+      styles: resolvedStyles([muteButton, highIcon]),
       scope: '.media-skin-video',
     });
 
@@ -65,7 +111,7 @@ describe('compileStyles', () => {
     const root = rule('root', 'media-layout-root', ['contents', '@lg/media-root:flex']);
     const styles = await compileStyles({
       design: await loadDesignSystem(designPath),
-      manifest: manifest([primary, root]),
+      styles: resolvedStyles([primary, root]),
       scope: '.media-skin-video',
     });
 
@@ -76,6 +122,18 @@ describe('compileStyles', () => {
     expect(rootBase).toBeGreaterThanOrEqual(0);
     expect(rootResponsive).toBeGreaterThan(rootBase);
   });
+  it('orders referenced output files by their first composed class', async () => {
+    const popup = { ...rule('popup', 'media-popup', ['m-0']), file: 'popups.css' };
+    const menu = { ...rule('menu', 'media-menu-popup', ['p-1']), file: 'menus.css' };
+    const styles = await compileStyles({
+      design: await loadDesignSystem(designPath),
+      styles: resolvedStyles([menu, popup]),
+      ruleClassNames: new Set(['media-popup', 'media-menu-popup']),
+    });
+
+    expect([...styles.keys()]).toEqual(['popups.css', 'menus.css']);
+  });
+
   it('combines selected variants in order across rules', async () => {
     const button = rule('root', 'media-button', ['grid', 'p-3'], {
       compact: ['p-1'],
@@ -84,7 +142,7 @@ describe('compileStyles', () => {
     const icon = rule('icon', 'media-icon', ['size-4'], { interactive: ['pointer-events-none'] });
     const styles = await compileStyles({
       design: await loadDesignSystem(designPath),
-      manifest: manifest([button, icon]),
+      styles: resolvedStyles([button, icon]),
       variants: ['compact', 'interactive', 'spacious'],
     });
 
@@ -93,14 +151,31 @@ describe('compileStyles', () => {
     expect(styles.get('buttons.css')).toContain('pointer-events: none');
   });
 
-  it('ignores selected variants absent from an isolated manifest', async () => {
+  it('ignores selected variants absent from the resolved styles', async () => {
     const styles = await compileStyles({
       design: await loadDesignSystem(designPath),
-      manifest: manifest([rule('root', 'media-button', ['grid'])]),
+      styles: resolvedStyles([rule('root', 'media-button', ['grid'])]),
       variants: ['shadow-dom'],
     });
 
     expect(styles.get('buttons.css')).toContain('display: grid');
+  });
+
+  it('emits slotted shadow selectors outside the incompatible outer scope', async () => {
+    const poster = rule('root', 'media-poster', ['relative'], {
+      'shadow-dom': ['[&>slot::slotted(img:not([src]))]:invisible'],
+    });
+    const styles = await compileStyles({
+      design: await loadDesignSystem(designPath),
+      styles: resolvedStyles([poster]),
+      scope: '.media-skin-video',
+      variants: ['shadow-dom'],
+    });
+    const css = styles.get('buttons.css') ?? '';
+
+    expect(css).toContain('@scope (.media-skin-video)');
+    expect(css).toContain('.media-poster > slot::slotted(img:not([src]))');
+    expect(css).toMatch(/}\s*\.media-poster > slot::slotted/);
   });
 });
 
@@ -109,7 +184,7 @@ function rule(
   className: string,
   utilities: readonly string[],
   variantGroups: Readonly<Record<string, readonly string[]>> = {}
-): StyleManifestRule {
+): ResolvedStyleRule {
   return {
     modulePath: 'test.styles.ts',
     tokenPath: token.split('.'),
@@ -124,6 +199,6 @@ function rule(
   };
 }
 
-function manifest(rules: readonly StyleManifestRule[]): StyleManifest {
+function resolvedStyles(rules: readonly ResolvedStyleRule[]): ResolvedStyles {
   return { modules: new Map(), rules, watchFiles: [] };
 }

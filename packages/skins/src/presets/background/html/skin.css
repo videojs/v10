@@ -1,0 +1,39 @@
+background-video-player {
+  display: contents;
+}
+
+background-video-skin {
+  --media-object-fit: cover;
+  position: relative;
+  display: block;
+  width: 100%;
+  min-width: 300px;
+  height: 100%;
+  min-height: 150px;
+  object-fit: var(--media-object-fit);
+}
+
+/*
+ * Whatever the skin holds that isn't the placeholder image is the media, and gets
+ * stretched over the host. Matched by what it is *not*, because there is no shared
+ * base element or attribute the media flavors have in common — naming them by tag
+ * meant a new one silently rendered at 0×0, having no box for its inner `<video>`
+ * to be positioned against.
+ *
+ * `:not()` takes the specificity of its most specific argument, so this stays at
+ * (0,0,2) — exactly where the tag-name selectors it replaces were.
+ */
+background-video-skin > :not(img, picture) {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: var(--media-object-fit);
+}
+
+background-video-skin > img,
+background-video-skin > picture {
+  width: 100%;
+  height: 100%;
+  object-fit: var(--media-object-fit);
+}

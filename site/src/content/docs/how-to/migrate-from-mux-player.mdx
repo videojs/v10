@@ -79,9 +79,9 @@ Here's a typical Mux Player embed. A playback ID, a title and viewer ID for anal
 From the CDN, load the video <DocsLink slug="concepts/presets">preset</DocsLink>, the Mux media, and analytics:
 
 ```html
-<script type="module" src="{{VJS10_HTML_CDN_BASE}}/video.js"></script>
-<script type="module" src="{{VJS10_HTML_CDN_BASE}}/media/mux-video.js"></script>
-<script type="module" src="{{VJS10_HTML_CDN_BASE}}/extensions/mux-data.js"></script>
+<script type="module" src="{{VJS10_CDN_BASE}}/video.js"></script>
+<script type="module" src="{{VJS10_CDN_BASE}}/media/mux-video.js"></script>
+<script type="module" src="{{VJS10_CDN_BASE}}/extensions/mux-data.js"></script>
 
 <video-player content-title="Test VOD">
   <video-skin style="aspect-ratio: 16 / 9">
@@ -104,6 +104,10 @@ From the CDN, load the video <DocsLink slug="concepts/presets">preset</DocsLink>
 ```
 
 If you use a bundler instead of the CDN, the imports are the same three pieces plus the Mux Data extension:
+
+```bash
+npm install @videojs/html @videojs/mux-video @videojs/mux-data
+```
 
 ```js
 import '@videojs/html/video/player';
@@ -133,7 +137,7 @@ export function MyPlayer() {
 `@videojs/react` gives you real React components rather than one component wrapping a custom element.
 
 ```bash
-npm install @videojs/react
+npm install @videojs/react @videojs/mux-video @videojs/mux-data
 ```
 
 Start with the general-purpose `@videojs/react/video` <DocsLink slug="concepts/presets">preset</DocsLink>, then add the Mux media and analytics components:
@@ -573,8 +577,8 @@ Unlike Mux Player, you'll have to pick a live preset yourself; it won't switch a
 Register the live preset and Mux media. From the CDN:
 
 ```html
-<script type="module" src="{{VJS10_HTML_CDN_BASE}}/live-video.js"></script>
-<script type="module" src="{{VJS10_HTML_CDN_BASE}}/media/mux-video.js"></script>
+<script type="module" src="{{VJS10_CDN_BASE}}/live-video.js"></script>
+<script type="module" src="{{VJS10_CDN_BASE}}/media/mux-video.js"></script>
 
 <live-video-player>
   <live-video-skin>

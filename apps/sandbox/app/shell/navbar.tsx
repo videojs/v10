@@ -1,162 +1,50 @@
-import type { SKINS } from '@app/constants';
-import { SANDBOX_LOCALE_OPTION_GROUPS, type SandboxLocaleTag } from '@app/shared/i18n/locale-meta';
-import { PRELOAD_VALUES, type PreloadValue } from '@app/shared/sandbox-listener';
+import type { CompareMode } from '@app/compare';
+import { SKIN_SOURCES, type SKINS } from '@app/constants';
+import { PLATFORM_LABELS, SKIN_LABELS, SKIN_SOURCE_LABELS, STYLING_LABELS } from '@app/labels';
+import { hasSkinChoice, hasTailwindSkin, MEDIA, MEDIA_IDS, type MediaId } from '@app/media';
+import { skinSourceAvailable, tailwindSkinAvailable } from '@app/shared/skin-sources';
 import type { SandboxSource, SourceId } from '@app/shared/sources';
-import type { Platform, Preset, Skin, Styling } from '@app/types';
-import { useEffect, useId, useRef, useState } from 'react';
+import type { Platform, Skin, SkinSource, Styling } from '@app/types';
+import { useId } from 'react';
 
 type NavbarProps = {
   platform: Platform;
   onPlatformChange: (value: Platform) => void;
-  styling: Styling;
-  onStylingChange: (value: Styling) => void;
-  preset: Preset;
-  onPresetChange: (value: Preset) => void;
-  skin: Skin;
-  onSkinChange: (value: Skin) => void;
+  media: MediaId;
+  onMediaChange: (value: MediaId) => void;
   source: SourceId;
   onSourceChange: (value: string) => void;
-  autoplay: boolean;
-  onAutoplayChange: (value: boolean) => void;
-  muted: boolean;
-  onMutedChange: (value: boolean) => void;
-  loop: boolean;
-  onLoopChange: (value: boolean) => void;
-  preload: PreloadValue;
-  onPreloadChange: (value: PreloadValue) => void;
-  locale: SandboxLocaleTag;
-  onLocaleChange: (value: SandboxLocaleTag) => void;
-  accentColor: string;
-  onAccentColorChange: (value: string) => void;
   availableSources: readonly SourceId[];
-  isBackgroundVideo: boolean;
-  isSpfBackgroundVideo: boolean;
-  isSpfHls: boolean;
-  isMuxVideo: boolean;
-  isMuxAudio: boolean;
-  isEmbedMedia: boolean;
   platforms: readonly Platform[];
-  stylings: readonly Styling[];
-  presets: readonly Preset[];
   sources: Record<SourceId, SandboxSource>;
+  /** The options panel this bar's toggle opens and closes. */
+  optionsId: string;
+  optionsOpen: boolean;
+  onOptionsToggle: () => void;
 };
-
-/**
- * What the selected media will do with a source, when that's worth labelling for someone smoke-testing. The plain HLS
- * presets are the SPF engine: no TS transmux pipeline and no EME, so it refuses MPEG-TS on format and encrypted
- * renditions on protection. Derived from the pair rather than stored on the source, since every source here plays fine
- * under some other media.
- *
- * Keyed on the _preset_, not a single is-SPF-HLS flag, because the variants answer differently and a note promising the
- * wrong outcome is worse than none — a reviewer would file the difference as a bug:
- *
- * - **DRM.** Mux encrypts video renditions and leaves audio clear. The audio-only engine resolves only the audio
- *   rendition, so it never fetches an encrypted playlist and plays the source instead of refusing it.
- * - **MPEG-TS.** Under audio-only, which specific failure depends on whether the source carries an audio rendition of its
- *   own or muxes audio into its video renditions — an absent type reports nothing and stalls silently rather than
- *   surfacing a verdict (see `internal/design/spf/features/errors.md`). Both mean nothing plays, so the note stops at
- *   that rather than naming a verdict that only appears for one of them.
- */
-function expectedOutcomeNote(source: SandboxSource, preset: Preset): string | undefined {
-  // The background presets are the same engine again, error surface included:
-  // `collectErrors` is composed, the one-shot selection carries capability
-  // constraints, and the adapter promotes the first fatal condition. Nothing
-  // reaches the media element even so — MPEG-TS and encryption both leave
-  // `HTMLMediaElement.error` null, measured on Chromium and WebKit — so that
-  // promoted condition is the only signal there is. Kept separate from the plain
-  // HLS branch below because this composition's fatal set is wider: it is
-  // video-only, so an absent video type is fatal here too.
-  if (preset === 'hls-background-video' || preset === 'mux-background-video') {
-    if (source.drm) return 'expects protected error';
-
-    if (source.subType && source.subType !== 'mp4') return 'expects unsupported-format error';
-
-    return undefined;
-  }
-
-  if (preset !== 'hls-video' && preset !== 'hls-audio') return undefined;
-
-  const audioOnlyPreset = preset === 'hls-audio';
-
-  if (source.drm) {
-    return audioOnlyPreset ? 'plays — Mux leaves audio clear' : 'expects protected error';
-  }
-
-  if (source.subType && source.subType !== 'mp4') {
-    return audioOnlyPreset ? 'expects no playback' : 'expects unsupported-format error';
-  }
-
-  return undefined;
-}
 
 const SKIN_OPTIONS: readonly Skin[] = ['default', 'minimal'] satisfies readonly (typeof SKINS)[number][];
 
-const PLATFORM_LABELS: Record<Platform, string> = {
-  html: 'HTML',
-  react: 'React',
-  cdn: 'CDN',
-};
+const ICON_BUTTON =
+  'inline-flex size-8 items-center justify-center rounded-md text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-950 aria-expanded:bg-zinc-100 aria-expanded:text-zinc-950 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-50 dark:aria-expanded:bg-zinc-800 dark:aria-expanded:text-zinc-50';
 
-const PRESET_LABELS: Record<Preset, string> = {
-  video: 'Video',
-  'hlsjs-video': 'HLS Video (hls.js)',
-  'native-hls-video': 'Native HLS Video',
-  'mux-video': 'Mux Video',
-  'mux-video-spf': 'Mux Video (SPF)',
-  'mux-audio': 'Mux Audio',
-  'mux-audio-spf': 'Mux Audio (SPF)',
-  'hls-video': 'HLS Video',
-  'hls-audio': 'HLS Audio',
-  'dash-video': 'DASH Video',
-  'shaka-video': 'Shaka Video',
-  audio: 'Audio',
-  'background-video': 'Background Video',
-  'hls-background-video': 'HLS Background Video (SPF)',
-  'mux-background-video': 'Mux Background Video (SPF)',
-  'vimeo-video': 'Vimeo Video',
-  'youtube-video': 'YouTube Video',
-  'cloudflare-video': 'Cloudflare Stream Video',
-  'spotify-audio': 'Spotify Audio',
-  'tiktok-video': 'TikTok Video',
-  'twitch-video': 'Twitch Video',
-  'wistia-video': 'Wistia Video',
-};
-
+/** What plays: the platform, the media, and its source. The skin controls sit in the preview's header below. */
 export function Navbar({
   platform,
   onPlatformChange,
-  styling,
-  onStylingChange,
-  preset,
-  onPresetChange,
-  skin,
-  onSkinChange,
+  media,
+  onMediaChange,
   source,
   onSourceChange,
-  autoplay,
-  onAutoplayChange,
-  muted,
-  onMutedChange,
-  loop,
-  onLoopChange,
-  preload,
-  onPreloadChange,
-  locale,
-  onLocaleChange,
-  accentColor,
-  onAccentColorChange,
   availableSources,
-  isBackgroundVideo,
-  isSpfBackgroundVideo,
-  isSpfHls,
-  isMuxVideo,
-  isMuxAudio,
-  isEmbedMedia,
   platforms,
-  stylings,
-  presets,
   sources,
+  optionsId,
+  optionsOpen,
+  onOptionsToggle,
 }: NavbarProps) {
+  const { fixedSource, outcome } = MEDIA[media];
+
   return (
     <header className="flex h-14 shrink-0 items-center gap-6 border-b border-zinc-200 bg-white px-4 dark:border-zinc-800 dark:bg-zinc-950">
       <span className="text-sm font-semibold tracking-tight whitespace-nowrap text-zinc-950 dark:text-zinc-50">
@@ -165,7 +53,7 @@ export function Navbar({
 
       <div className="h-5 w-px bg-zinc-200 dark:bg-zinc-800" />
 
-      <div className="flex items-center gap-4 overflow-auto p-2">
+      <div className="flex min-w-0 items-center gap-4 overflow-x-auto py-2">
         <Select
           label="Platform"
           value={platform}
@@ -174,82 +62,57 @@ export function Navbar({
         />
 
         <Select
-          label="Styling"
-          value={styling}
-          onChange={(v) => onStylingChange(v as Styling)}
-          options={stylings.map((s) => ({
-            value: s,
-            label: s === 'css' ? 'CSS' : 'Tailwind',
-            disabled: s === 'tailwind' && (isBackgroundVideo || isEmbedMedia || platform === 'cdn'),
-          }))}
-        />
-
-        <Select
-          label="Preset"
-          value={preset}
-          onChange={(v) => onPresetChange(v as Preset)}
-          options={presets.map((p) => ({ value: p, label: PRESET_LABELS[p] }))}
-        />
-
-        <Select
-          label="Skin"
-          value={skin}
-          onChange={(v) => onSkinChange(v as Skin)}
-          options={SKIN_OPTIONS.map((s) => ({ value: s, label: capitalize(s) }))}
-          disabled={isBackgroundVideo}
+          label="Media"
+          value={media}
+          onChange={(v) => onMediaChange(v as MediaId)}
+          options={MEDIA_IDS.map((id) => ({ value: id, label: MEDIA[id].label }))}
         />
 
         <Select
           label="Source"
           value={source}
           onChange={onSourceChange}
-          options={availableSources
-            .filter((id) => {
-              // The empty-src entry carries no media, so it's offered wherever
-              // the preset can render one rather than being filtered by format.
-              if (sources[id].type === 'none') return true;
+          options={availableSources.map((id) => {
+            const note = outcome?.(sources[id]);
 
-              // Any HLS source, including formats the SPF engine can't play — reaching
-              // those failures on purpose is how the error paths get smoke-tested.
-              if (isSpfHls || isSpfBackgroundVideo) return sources[id].type === 'hls';
-
-              if (isMuxVideo || isMuxAudio) return sources[id].type !== 'dash';
-
-              return true;
-            })
-            .map((id) => {
-              const note = expectedOutcomeNote(sources[id], preset);
-
-              return { value: id, label: note ? `${sources[id].label} — ${note}` : sources[id].label };
-            })}
-          // `<background-video>` is the one background preset with a fixed source:
-          // it hands a progressive MP4 to the browser, where the SPF-backed pair
-          // stream whatever manifest they're pointed at.
-          disabled={(isBackgroundVideo && !isSpfBackgroundVideo) || isEmbedMedia}
+            return { value: id, label: note ? `${sources[id].label} — ${note}` : sources[id].label };
+          })}
+          disabled={fixedSource !== undefined}
         />
       </div>
 
       <div className="ml-auto flex items-center gap-1">
-        <SettingsMenu
-          autoplay={autoplay}
-          onAutoplayChange={onAutoplayChange}
-          muted={muted}
-          onMutedChange={onMutedChange}
-          loop={loop}
-          onLoopChange={onLoopChange}
-          preload={preload}
-          onPreloadChange={onPreloadChange}
-          locale={locale}
-          onLocaleChange={onLocaleChange}
-          accentColor={accentColor}
-          onAccentColorChange={onAccentColorChange}
-        />
-        <a
-          href="https://github.com/videojs/v10"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex size-8 items-center justify-center rounded-md text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-950 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-50"
+        <button
+          type="button"
+          aria-label="Options"
+          aria-expanded={optionsOpen}
+          aria-controls={optionsId}
+          onClick={onOptionsToggle}
+          className={ICON_BUTTON}
         >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="size-4"
+            aria-hidden="true"
+          >
+            <line x1="21" x2="14" y1="4" y2="4" />
+            <line x1="10" x2="3" y1="4" y2="4" />
+            <line x1="21" x2="12" y1="12" y2="12" />
+            <line x1="8" x2="3" y1="12" y2="12" />
+            <line x1="21" x2="16" y1="20" y2="20" />
+            <line x1="12" x2="3" y1="20" y2="20" />
+            <line x1="14" x2="14" y1="2" y2="6" />
+            <line x1="8" x2="8" y1="10" y2="14" />
+            <line x1="16" x2="16" y1="18" y2="22" />
+          </svg>
+        </button>
+        <a href="https://github.com/videojs/v10" target="_blank" rel="noopener noreferrer" className={ICON_BUTTON}>
           <span className="sr-only">GitHub repository</span>
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -266,243 +129,80 @@ export function Navbar({
   );
 }
 
-function capitalize(s: string): string {
-  return s.charAt(0).toUpperCase() + s.slice(1);
-}
-
-type SettingsMenuProps = {
-  autoplay: boolean;
-  onAutoplayChange: (value: boolean) => void;
-  muted: boolean;
-  onMutedChange: (value: boolean) => void;
-  loop: boolean;
-  onLoopChange: (value: boolean) => void;
-  preload: PreloadValue;
-  onPreloadChange: (value: PreloadValue) => void;
-  locale: SandboxLocaleTag;
-  onLocaleChange: (value: SandboxLocaleTag) => void;
-  accentColor: string;
-  onAccentColorChange: (value: string) => void;
+type SkinControlsProps = {
+  platform: Platform;
+  media: MediaId;
+  styling: Styling;
+  onStylingChange: (value: Styling) => void;
+  skin: Skin;
+  onSkinChange: (value: Skin) => void;
+  skins: SkinSource;
+  onSkinsChange: (value: SkinSource) => void;
+  compare: CompareMode;
+  onCompareChange: (value: CompareMode) => void;
+  compareOptions: readonly { value: CompareMode; label: string; disabled: boolean }[];
+  stylings: readonly Styling[];
 };
 
-function SettingsMenu({
-  autoplay,
-  onAutoplayChange,
-  muted,
-  onMutedChange,
-  loop,
-  onLoopChange,
-  preload,
-  onPreloadChange,
-  locale,
-  onLocaleChange,
-  accentColor,
-  onAccentColorChange,
-}: SettingsMenuProps) {
-  const [open, setOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const menuId = useId();
-  const autoplayId = useId();
-  const mutedId = useId();
-  const loopId = useId();
-  const preloadId = useId();
-  const localeId = useId();
-  const accentColorId = useId();
-
-  useEffect(() => {
-    if (!open) return;
-
-    const handlePointerDown = (event: PointerEvent) => {
-      if (!containerRef.current?.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    };
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setOpen(false);
-    };
-    // Clicks inside the preview iframe don't bubble to the parent document, so
-    // also close when the parent window loses focus (e.g. iframe takes focus).
-    const handleBlur = () => setOpen(false);
-
-    document.addEventListener('pointerdown', handlePointerDown);
-    document.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('blur', handleBlur);
-    return () => {
-      document.removeEventListener('pointerdown', handlePointerDown);
-      document.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('blur', handleBlur);
-    };
-  }, [open]);
-
+/** How it is skinned: the skin, its styling, where the skin comes from, and what to compare it against. */
+export function SkinControls({
+  platform,
+  media,
+  styling,
+  onStylingChange,
+  skin,
+  onSkinChange,
+  skins,
+  onSkinsChange,
+  compare,
+  onCompareChange,
+  compareOptions,
+  stylings,
+}: SkinControlsProps) {
   return (
-    <div ref={containerRef} className="relative">
-      <button
-        type="button"
-        aria-label="Player settings"
-        aria-haspopup="menu"
-        aria-expanded={open}
-        aria-controls={menuId}
-        onClick={() => setOpen((value) => !value)}
-        className="inline-flex size-8 items-center justify-center rounded-md text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-950 aria-expanded:bg-zinc-100 aria-expanded:text-zinc-950 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-50 dark:aria-expanded:bg-zinc-800 dark:aria-expanded:text-zinc-50"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="size-4"
-          aria-hidden="true"
-        >
-          <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
-          <circle cx="12" cy="12" r="3" />
-        </svg>
-      </button>
-      {open && (
-        <div
-          id={menuId}
-          role="menu"
-          className="absolute top-full right-0 z-20 mt-2 grid max-h-[min(24rem,70vh)] auto-rows-[1.75rem] grid-cols-[1fr_auto] items-center gap-x-6 gap-y-1 overflow-y-auto rounded-md border border-zinc-200 bg-white p-3 shadow-md shadow-black/5 dark:border-zinc-800 dark:bg-zinc-950"
-        >
-          <SelectItem
-            id={localeId}
-            label="Language"
-            value={locale}
-            onChange={(value) => onLocaleChange(value as SandboxLocaleTag)}
-            optionGroups={SANDBOX_LOCALE_OPTION_GROUPS}
-          />
-          <ColorItem id={accentColorId} value={accentColor} onChange={onAccentColorChange} />
-          <CheckboxItem id={autoplayId} label="Autoplay" checked={autoplay} onChange={onAutoplayChange} />
-          <CheckboxItem id={mutedId} label="Muted" checked={muted} onChange={onMutedChange} />
-          <CheckboxItem id={loopId} label="Loop" checked={loop} onChange={onLoopChange} />
-          <SelectItem
-            id={preloadId}
-            label="Preload"
-            value={preload}
-            onChange={(value) => onPreloadChange(value as PreloadValue)}
-            options={PRELOAD_VALUES.map((value) => ({ value, label: value }))}
-          />
-        </div>
-      )}
-    </div>
-  );
-}
-
-type ColorItemProps = {
-  id: string;
-  value: string;
-  onChange: (value: string) => void;
-};
-
-function ColorItem({ id, value, onChange }: ColorItemProps) {
-  const pickerValue = /^#[\da-f]{6}$/i.test(value) ? value : '#ff0000';
-
-  return (
-    <>
-      <label htmlFor={id} className="cursor-pointer text-[13px] font-medium text-zinc-700 dark:text-zinc-200">
-        Accent color
-      </label>
-      <div className="flex items-center gap-1.5 justify-self-start">
-        <input
-          id={id}
-          type="text"
-          value={value}
-          onChange={(event) => onChange(event.target.value)}
-          placeholder="Default"
-          spellCheck={false}
-          className="h-7 w-28 rounded border-none bg-white bg-clip-border px-2 text-[13px] font-medium text-zinc-950 shadow-xs ring shadow-black/20 ring-zinc-800/10 focus:outline-2 focus:outline-offset-2 focus:outline-zinc-950 dark:bg-zinc-900 dark:text-zinc-50 dark:ring-white/10 dark:focus:outline-zinc-50"
-        />
-        <input
-          type="color"
-          value={pickerValue}
-          onChange={(event) => onChange(event.target.value)}
-          aria-label="Choose accent color"
-          className="size-7 cursor-pointer rounded border-none bg-transparent p-0"
-        />
-      </div>
-    </>
-  );
-}
-
-type CheckboxItemProps = {
-  id: string;
-  label: string;
-  checked: boolean;
-  onChange: (value: boolean) => void;
-};
-
-function CheckboxItem({ id, label, checked, onChange }: CheckboxItemProps) {
-  return (
-    <>
-      <label htmlFor={id} className="cursor-pointer text-[13px] font-medium text-zinc-700 dark:text-zinc-200">
-        {label}
-      </label>
-      <input
-        id={id}
-        type="checkbox"
-        checked={checked}
-        onChange={(event) => onChange(event.target.checked)}
-        className="size-3.5 cursor-pointer justify-self-start rounded border-zinc-300 accent-zinc-950 dark:border-zinc-700 dark:accent-zinc-50"
+    <div className="flex min-w-0 items-center gap-3 overflow-x-auto">
+      <Select
+        label="Skin"
+        size="sm"
+        value={skin}
+        onChange={(v) => onSkinChange(v as Skin)}
+        options={SKIN_OPTIONS.map((s) => ({ value: s, label: SKIN_LABELS[s] }))}
+        disabled={!hasSkinChoice(media)}
       />
-    </>
-  );
-}
 
-type SelectItemProps = {
-  id: string;
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  options?: SelectOption[];
-  optionGroups?: SelectOptionGroup[];
-};
+      <Select
+        label="Styling"
+        size="sm"
+        value={styling}
+        onChange={(v) => onStylingChange(v as Styling)}
+        options={stylings.map((s) => ({
+          value: s,
+          label: STYLING_LABELS[s],
+          disabled: s === 'tailwind' && !(hasTailwindSkin(media, platform) && tailwindSkinAvailable(platform)),
+        }))}
+      />
 
-function SelectItem({ id, label, value, onChange, options, optionGroups }: SelectItemProps) {
-  return (
-    <>
-      <label htmlFor={id} className="cursor-pointer text-[13px] font-medium text-zinc-700 dark:text-zinc-200">
-        {label}
-      </label>
-      <div className="relative justify-self-start">
-        <select
-          id={id}
-          value={value}
-          onChange={(event) => onChange(event.target.value)}
-          className="h-7 cursor-pointer appearance-none rounded border-none bg-white bg-clip-border pr-7 pl-2 text-[13px] font-medium text-zinc-950 shadow-xs ring shadow-black/20 ring-zinc-800/10 transition-colors hover:bg-zinc-50 focus:outline-2 focus:outline-offset-2 focus:outline-zinc-950 dark:bg-zinc-900 dark:text-zinc-50 dark:ring-white/10 dark:hover:bg-zinc-900 dark:focus:outline-zinc-50"
-        >
-          {optionGroups
-            ? optionGroups.map((group) => (
-                <optgroup key={group.label} label={group.label}>
-                  {group.options.map((opt) => (
-                    <option key={opt.value} value={opt.value} disabled={opt.disabled}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </optgroup>
-              ))
-            : options?.map((opt) => (
-                <option key={opt.value} value={opt.value} disabled={opt.disabled}>
-                  {opt.label}
-                </option>
-              ))}
-        </select>
-        <svg
-          className="pointer-events-none absolute top-1/2 right-1.5 size-3 -translate-y-1/2 text-zinc-500 dark:text-zinc-400"
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden="true"
-        >
-          <path d="m6 9 6 6 6-6" />
-        </svg>
-      </div>
-    </>
+      <Select
+        label="Skins from"
+        size="sm"
+        value={skins}
+        onChange={(v) => onSkinsChange(v as SkinSource)}
+        options={SKIN_SOURCES.map((value) => ({
+          value,
+          label: SKIN_SOURCE_LABELS[value],
+          disabled: !skinSourceAvailable(value, platform),
+        }))}
+        disabled={!hasSkinChoice(media) || platform === 'cdn'}
+      />
+
+      <Select
+        label="Compare"
+        size="sm"
+        value={compare}
+        onChange={(v) => onCompareChange(v as CompareMode)}
+        options={compareOptions.map((option) => ({ ...option }))}
+      />
+    </div>
   );
 }
 
@@ -512,29 +212,45 @@ type SelectOption = {
   disabled?: boolean;
 };
 
-type SelectOptionGroup = {
-  label: string;
-  options: SelectOption[];
-};
-
 type SelectProps = {
   label: string;
   value: string;
   onChange: (value: string) => void;
   options: SelectOption[];
   disabled?: boolean;
+  /** `md` fills the navbar; `sm` fits the preview header. */
+  size?: 'md' | 'sm';
 };
 
-function Select({ label, value, onChange, options, disabled }: SelectProps) {
+const SELECT_SIZES = {
+  md: {
+    label: 'text-[13px]',
+    select: 'h-8 rounded-md pr-8 pl-3 text-[13px]',
+    chevron: 'right-2 size-3.5',
+  },
+  sm: {
+    label: 'text-xs',
+    select: 'h-7 rounded pr-7 pl-2 text-xs',
+    chevron: 'right-1.5 size-3',
+  },
+} as const;
+
+function Select({ label, value, onChange, options, disabled, size = 'md' }: SelectProps) {
+  const id = useId();
+  const sizes = SELECT_SIZES[size];
+
   return (
-    <div className="flex items-center gap-2">
-      <span className="text-[13px] font-medium text-zinc-500 dark:text-zinc-400">{label}</span>
+    <div className="flex shrink-0 items-center gap-2">
+      <label htmlFor={id} className={`${sizes.label} font-medium whitespace-nowrap text-zinc-500 dark:text-zinc-400`}>
+        {label}
+      </label>
       <div className="relative">
         <select
+          id={id}
           value={value}
           onChange={(e) => onChange(e.target.value)}
           disabled={disabled}
-          className="h-8 appearance-none rounded-md border-none bg-white bg-clip-border pr-8 pl-3 text-[13px] font-medium text-zinc-950 shadow-xs ring shadow-black/20 ring-zinc-800/10 transition-colors hover:bg-zinc-50 focus:outline-2 focus:outline-offset-2 focus:outline-zinc-950 disabled:pointer-events-none disabled:opacity-50 dark:bg-zinc-900 dark:text-zinc-50 dark:ring-white/10 dark:hover:bg-zinc-900 dark:focus:outline-zinc-50"
+          className={`${sizes.select} appearance-none border-none bg-white bg-clip-border font-medium text-zinc-950 shadow-xs ring shadow-black/20 ring-zinc-800/10 transition-colors hover:bg-zinc-50 focus:outline-2 focus:outline-offset-2 focus:outline-zinc-950 disabled:pointer-events-none disabled:opacity-50 dark:bg-zinc-900 dark:text-zinc-50 dark:ring-white/10 dark:hover:bg-zinc-900 dark:focus:outline-zinc-50`}
         >
           {options.map((opt) => (
             <option key={opt.value} value={opt.value} disabled={opt.disabled}>
@@ -543,7 +259,7 @@ function Select({ label, value, onChange, options, disabled }: SelectProps) {
           ))}
         </select>
         <svg
-          className="pointer-events-none absolute top-1/2 right-2 size-3.5 -translate-y-1/2 text-zinc-500 dark:text-zinc-400"
+          className={`${sizes.chevron} pointer-events-none absolute top-1/2 -translate-y-1/2 text-zinc-500 dark:text-zinc-400`}
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 24 24"
           fill="none"

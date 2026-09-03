@@ -1,4 +1,4 @@
-import type { MuxSource } from '@videojs/media/dom/mux';
+import type { MuxSource } from '@videojs/mux-video';
 
 import { getMuxAssetId } from './mux';
 
@@ -326,6 +326,13 @@ const SOURCE_MAP = {
     label: 'DASH - Envivio Test Stream',
     url: 'https://dash.akamaized.net/envivio/EnvivioDash3/manifest.mpd',
     type: 'dash',
+  },
+  // A file that does not exist, so the player's error dialog can be looked at
+  // without waiting for a network to fail.
+  error: {
+    label: 'Missing file (error dialog)',
+    url: '/missing-video-that-does-not-exist.mp4',
+    type: 'mp4',
   },
   // Empty src — exercises source teardown with nothing re-attaching, and the
   // engine's fresh-but-attached "no source" state. `src` forwards to the host

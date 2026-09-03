@@ -3,10 +3,7 @@ import type { UserConfig as PackUserConfig } from 'vite-plus/pack';
 
 import { type PackageBuildMode, packageBuildConfig, packageBuildModes } from '../../build/pack.ts';
 import { cachedTaskInputs, packageTestTask, workspaceTaskDependencies } from '../../build/task.ts';
-import type {
-  ComponentSchemaPluginOptions,
-  componentSchemaPlugin as createComponentSchemaPlugin,
-} from '../vjsc/src/plugins/component-schema.ts';
+import { vjscComponentSchemaPlugin } from '../vjsc/src/plugins/component-schema.ts';
 import { LOCALES, localeAliases } from './src/core/i18n/locales.ts';
 import en from './src/core/i18n/locales/en.ts';
 
@@ -32,7 +29,7 @@ const createPackConfig = (mode: PackageBuildMode): PackUserConfig => ({
       : false,
   deps: { neverBundle: ['vjsc/components'] },
   plugins: [
-    componentSchemaPlugin({
+    vjscComponentSchemaPlugin({
       file: 'vjsc',
       declaration: mode === 'dev',
       source: '@videojs/core/vjsc',
@@ -63,8 +60,16 @@ export default defineConfig({
           ...cachedTaskInputs,
           { pattern: '!packages/cli/docs', base: 'workspace' },
           { pattern: '!packages/cli/docs/**', base: 'workspace' },
-          { pattern: '!packages/html/cdn', base: 'workspace' },
-          { pattern: '!packages/html/cdn/**', base: 'workspace' },
+          { pattern: '!packages/cdn/*.css', base: 'workspace' },
+          { pattern: '!packages/cdn/*.d.ts', base: 'workspace' },
+          { pattern: '!packages/cdn/*.js', base: 'workspace' },
+          { pattern: '!packages/cdn/*.js.map', base: 'workspace' },
+          { pattern: '!packages/cdn/archive/**', base: 'workspace' },
+          { pattern: '!packages/cdn/chunks/**', base: 'workspace' },
+          { pattern: '!packages/cdn/extensions/**', base: 'workspace' },
+          { pattern: '!packages/cdn/locales/**', base: 'workspace' },
+          { pattern: '!packages/cdn/media/**', base: 'workspace' },
+          { pattern: '!packages/cdn/src/locales/**', base: 'workspace' },
         ],
         output: [
           'dist/**',
@@ -111,27 +116,3 @@ export default defineConfig({
   },
   pack: packageBuildModes.map(createPackConfig),
 });
-
-/** Load the private compiler after Vite+ has built Core's workspace dependencies. */
-function componentSchemaPlugin(config: ComponentSchemaPluginOptions) {
-  let plugin: ReturnType<typeof createComponentSchemaPlugin>;
-
-  return {
-    name: 'vjsc:deferred-component-schema',
-    async options(options) {
-      const module = await import('vjsc/plugins');
-
-      plugin = module.componentSchemaPlugin(config);
-      return plugin.options.call(this, options);
-    },
-    resolveId(id) {
-      return plugin.resolveId.call(this, id);
-    },
-    load: {
-      order: 'pre',
-      handler(id) {
-        return plugin.load.handler.call(this, id);
-      },
-    },
-  } satisfies ReturnType<typeof createComponentSchemaPlugin>;
-}

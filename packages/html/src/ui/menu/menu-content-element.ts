@@ -1,4 +1,4 @@
-import { MenuContentDataAttrs, MenuCore } from '@videojs/core';
+import { MenuContentDataAttrs, MenuCore, type MenuOptionState, resolveMenuOptionState } from '@videojs/core';
 import {
   applyElementProps,
   applyStateDataAttrs,
@@ -14,9 +14,7 @@ import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextConsumer, ContextProvider } from '@videojs/element/context';
 
 import { UIElement } from '../ui-element';
-import { type MenuContextValue, type MenuTriggerState, menuContext } from './context';
-
-const defaultTriggerState: MenuTriggerState = { hint: '', disabled: false };
+import { type MenuContextValue, menuContext } from './context';
 let idCounter = 0;
 
 /** One accessible menu page. Root and nested pages are sibling children of `<media-menu>`. */
@@ -43,8 +41,13 @@ export class MenuContentElement extends UIElement {
   #disconnect: AbortController | null = null;
   #cleanupRegistration: (() => void) | null = null;
   #cleanupParentRegistration: (() => void) | null = null;
-  #triggerState = defaultTriggerState;
+  readonly #optionStates = new Map<symbol, MenuOptionState>();
+  readonly #optionSource = Symbol('menu');
+  #optionState: MenuOptionState | null = null;
+  #optionParent: MenuContextValue | null = null;
   #stateTrigger: HTMLElement | null = null;
+  #triggerWasDisabled = false;
+  #triggerWasHidden = false;
   #wasActive = false;
   #normalizing = false;
 
@@ -117,6 +120,8 @@ export class MenuContentElement extends UIElement {
       this.#setupMenu(root, parentMenu);
     }
 
+    this.#setOptionParent(parentContent?.context ?? root);
+
     const menu = this.#menu;
     if (!menu) return;
 
@@ -135,7 +140,7 @@ export class MenuContentElement extends UIElement {
     if (trigger) {
       menu.setTriggerElement(trigger);
       applyElementProps(trigger, this.#core.getTriggerAttrs(state, active ? this.id : undefined));
-      this.#syncTriggerState(trigger);
+      this.#syncOptionState(trigger);
     }
 
     if (isSubmenu && active && !this.#wasActive) menu.highlightFirstItem({ preventScroll: true });
@@ -147,7 +152,7 @@ export class MenuContentElement extends UIElement {
       menu,
       popup: root.popup,
       state,
-      setTriggerState: this.#setTriggerState,
+      setOptionState: this.#setOptionState,
     };
     this.#provider.setValue(this.#context);
     root.popup.sync();
@@ -200,7 +205,10 @@ export class MenuContentElement extends UIElement {
     this.#cleanupRegistration = null;
     this.#cleanupParentRegistration?.();
     this.#cleanupParentRegistration = null;
-    this.#clearTriggerState();
+    this.#setOptionParent(null);
+    this.#clearOptionState();
+    this.#optionStates.clear();
+    this.#optionState = null;
 
     if (this.#ownsMenu) this.#menu?.destroy();
 
@@ -254,47 +262,83 @@ export class MenuContentElement extends UIElement {
     this.#menu?.contentProps.onFocusOut(event);
   };
 
-  #setTriggerState = (triggerState: MenuTriggerState): void => {
-    this.#triggerState = triggerState;
+  #setOptionState = (source: symbol, optionState: MenuOptionState | null): void => {
+    const previous = this.#optionStates.get(source);
+    if (optionState && isSameOptionState(previous, optionState)) return;
 
-    if (triggerState.disabled && this.open && this.#parentMenu) this.close('imperative-action');
+    if (!optionState && !previous) return;
 
-    this.#syncTriggerState(this.#findTrigger());
+    if (optionState) this.#optionStates.set(source, optionState);
+    else this.#optionStates.delete(source);
+
+    this.#optionState = resolveMenuOptionState(this.#optionStates.values());
+
+    if ((this.#optionState?.disabled || this.#optionState?.hidden) && this.open && this.#parentMenu) {
+      this.close('imperative-action');
+    }
+
+    this.#syncOptionState(this.#findTrigger());
+    this.#optionParent?.setOptionState(this.#optionSource, this.#optionState);
   };
 
-  #syncTriggerState(trigger: HTMLElement | null): void {
+  #setOptionParent(parent: MenuContextValue | null): void {
+    if (parent?.menu === this.#optionParent?.menu) {
+      this.#optionParent = parent;
+      return;
+    }
+
+    this.#optionParent?.setOptionState(this.#optionSource, null);
+    this.#optionParent = parent;
+    this.#optionParent?.setOptionState(this.#optionSource, this.#optionState);
+  }
+
+  #syncOptionState(trigger: HTMLElement | null): void {
     if (trigger !== this.#stateTrigger) {
-      this.#clearTriggerState();
+      this.#clearOptionState();
       this.#stateTrigger = trigger;
+      this.#triggerWasDisabled = trigger ? isTriggerExplicitlyDisabled(trigger) : false;
+      this.#triggerWasHidden = trigger?.hidden === true;
     }
 
     if (!trigger) return;
 
-    const disabled = this.#triggerState.disabled || isTriggerExplicitlyDisabled(trigger);
+    const disabled = this.#optionState?.disabled || this.#triggerWasDisabled;
 
     applyElementProps(trigger, {
+      disabled: disabled || undefined,
       'aria-disabled': disabled ? 'true' : undefined,
-      'data-availability': this.#triggerState.availability,
+      'data-availability': this.#optionState?.availability,
+      hidden: this.#triggerWasHidden || this.#optionState?.hidden || undefined,
     });
-    const hint = trigger.querySelector<HTMLElement>('[data-part~="hint"]');
+    const value = trigger.querySelector<HTMLElement>('[data-part~="value"], [data-part~="hint"]');
 
-    if (hint && hint.textContent !== this.#triggerState.hint) hint.textContent = this.#triggerState.hint;
+    if (value && value.textContent !== this.#optionState?.value) value.textContent = this.#optionState?.value ?? '';
   }
 
-  #clearTriggerState(): void {
+  #clearOptionState(): void {
     const trigger = this.#stateTrigger;
     if (!trigger) return;
 
     applyElementProps(trigger, {
-      'aria-disabled': isTriggerExplicitlyDisabled(trigger) ? 'true' : undefined,
+      disabled: this.#triggerWasDisabled || undefined,
+      'aria-disabled': this.#triggerWasDisabled ? 'true' : undefined,
       'data-availability': undefined,
+      hidden: this.#triggerWasHidden || undefined,
     });
-    const hint = trigger.querySelector<HTMLElement>('[data-part~="hint"]');
+    const value = trigger.querySelector<HTMLElement>('[data-part~="value"], [data-part~="hint"]');
 
-    if (hint?.textContent) hint.textContent = '';
+    if (value?.textContent) value.textContent = '';
 
     this.#stateTrigger = null;
+    this.#triggerWasDisabled = false;
+    this.#triggerWasHidden = false;
   }
+}
+
+function isSameOptionState(a: MenuOptionState | undefined, b: MenuOptionState): boolean {
+  return (
+    a?.value === b.value && a.disabled === b.disabled && a.hidden === b.hidden && a.availability === b.availability
+  );
 }
 
 function isTriggerExplicitlyDisabled(trigger: HTMLElement): boolean {

@@ -1,6 +1,7 @@
 playwright-report/
 test-results/
 blob-report/
-apps/vite/src/_generated/
-apps/vite/src/pages/
-apps/vite/src/index.html
+suites/player/app/src/_generated/
+suites/player/app/src/pages/
+suites/player/app/src/index.html
+suites/registry/.generated/

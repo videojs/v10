@@ -1,0 +1,9 @@
+/*
+ * Tailwind for authored skins compiled from the workspace: the skins' own entry, then the utilities the compiler
+ * recorded while transforming them. A page loads this beside `styles.css` only when it shows an authored Tailwind skin,
+ * so nothing outside the workspace ever resolves the path.
+ */
+@import "../../../packages/skins/src/styles/tailwind.compiler.css";
+@import "vjsc:candidates";
+
+@source "../../../packages/skins/src/**/*.tsx";

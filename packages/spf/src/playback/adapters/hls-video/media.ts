@@ -1,4 +1,4 @@
-import { HTMLVideoElementHost } from '@videojs/media/dom/video-host';
+import { HTMLVideoElementHost } from '@videojs/media/dom';
 import { MediaTracksMixin } from '@videojs/media/media-tracks';
 
 import { HlsVideoMediaMixin } from './adapter';

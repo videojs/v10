@@ -1,5 +1,5 @@
-import { buildCloudflareIframeSrc, CloudflareMedia } from '@videojs/media/dom/cloudflare';
-import { CustomMediaElement } from '@videojs/media/dom/custom-media-element';
+import { buildCloudflareIframeSrc, CloudflareMedia } from '@videojs/cloudflare-video';
+import { CustomMediaElement } from '@videojs/media/dom';
 import { escapeHtml } from '@videojs/utils/string';
 
 import { MediaAttachMixin } from '../../store/media-attach-mixin';

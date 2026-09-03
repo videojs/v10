@@ -3,7 +3,7 @@
   "compilerOptions": {
     "allowImportingTsExtensions": true,
     "jsx": "react-jsx",
-    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "lib": ["ES2024", "DOM", "DOM.Iterable"],
     "paths": {
       "@videojs/react/video": ["../react/src/presets/video/index.ts"],
       "vjsc/*": ["../vjsc/src/*"]
@@ -11,8 +11,9 @@
     "types": ["node"],
     "declarationDir": "types"
   },
-  "include": ["src", "dev", "vjsc/*.ts", "vjsc/target"],
+  "include": ["build", "src/*.ts", "src/styles/utilities.ts", "src/styles/vars.ts"],
   "references": [
+    { "path": "../../apps/sandbox/tsconfig.shared.json" },
     { "path": "../core" },
     { "path": "../html" },
     { "path": "../icons" },

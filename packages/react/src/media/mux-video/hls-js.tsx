@@ -1,11 +1,8 @@
 'use client';
 
-import type { HlsMediaProps } from '@videojs/media/dom/hls-js';
-import { hlsMediaDefaultProps } from '@videojs/media/dom/hls-js';
-import type { MuxMediaProps } from '@videojs/media/dom/mux';
-import { MuxMedia, muxMediaDefaultProps } from '@videojs/media/dom/mux';
-import type { ReactNode, VideoHTMLAttributes } from 'react';
-import { forwardRef } from 'react';
+import { hlsMediaDefaultProps, type HlsMediaProps } from '@videojs/hlsjs-video';
+import { MuxMedia, muxMediaDefaultProps, type MuxMediaProps } from '@videojs/mux-video';
+import { forwardRef, type ReactNode, type VideoHTMLAttributes } from 'react';
 
 import { useAttachMedia } from '../../utils/use-attach-media';
 import { useComposedRefs } from '../../utils/use-composed-refs';

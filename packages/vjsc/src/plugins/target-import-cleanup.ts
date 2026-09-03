@@ -2,15 +2,14 @@ import type { ImportDeclaration, Node, Program } from '@oxc-project/types';
 import { walk } from 'oxc-walker';
 import type { Plugin } from 'rolldown';
 
+import { SCRIPT_MODULE_ID } from '../utils/module-id';
 import { type ComponentTargetPluginOptions, selectComponentTargets } from './component-target';
-
-const SCRIPT_ID = /\.[cm]?[jt]sx?(?:\?|$)/;
 
 export function targetImportCleanupPlugin(options: ComponentTargetPluginOptions): Plugin {
   return {
     name: 'vjsc:target-import-cleanup',
     transform: {
-      filter: { id: SCRIPT_ID, code: 'import' },
+      filter: { id: SCRIPT_MODULE_ID, code: 'import' },
       handler(_code, id, transform) {
         const targets = selectComponentTargets(options.targets, id);
         if (targets.length === 0 || !transform.ast || !transform.magicString) return null;
@@ -29,13 +28,18 @@ export function targetImportCleanupPlugin(options: ComponentTargetPluginOptions)
         let changed = false;
 
         for (const declaration of declarations) {
-          const kept = declaration.specifiers.filter((specifier) => referenced.has(localName(specifier)));
-          if (kept.length === declaration.specifiers.length) continue;
+          const kept = declaration.specifiers.filter((specifier) => referenced.all.has(localName(specifier)));
+          const typeOnly = kept.length > 0 && kept.every((specifier) => !referenced.runtime.has(localName(specifier)));
+          if (kept.length === declaration.specifiers.length && (!typeOnly || isTypeOnlyImport(declaration))) continue;
 
           if (kept.length === 0) {
             transform.magicString.remove(declaration.start, declaration.end);
           } else {
-            transform.magicString.overwrite(declaration.start, declaration.end, renderImport(declaration, kept));
+            transform.magicString.overwrite(
+              declaration.start,
+              declaration.end,
+              renderImport(declaration, kept, typeOnly)
+            );
           }
 
           changed = true;
@@ -54,8 +58,12 @@ function isTypeOnlyImport(declaration: ImportDeclaration): boolean {
   );
 }
 
-function referencedBindings(ast: Program, imported: ReadonlySet<string>): ReadonlySet<string> {
-  const referenced = new Set<string>();
+function referencedBindings(
+  ast: Program,
+  imported: ReadonlySet<string>
+): { readonly all: ReadonlySet<string>; readonly runtime: ReadonlySet<string> } {
+  const all = new Set<string>();
+  const runtime = new Set<string>();
 
   walk(ast, {
     enter(node, parent) {
@@ -65,14 +73,28 @@ function referencedBindings(ast: Program, imported: ReadonlySet<string>): Readon
         !isImportBinding(parent) &&
         !isPropertyName(node, parent)
       ) {
-        referenced.add(node.name);
+        all.add(node.name);
+
+        if (!isTypeReference(parent)) runtime.add(node.name);
       }
 
-      if (node.type === 'JSXIdentifier' && imported.has(node.name)) referenced.add(node.name);
+      if (node.type === 'JSXIdentifier' && imported.has(node.name)) {
+        all.add(node.name);
+        runtime.add(node.name);
+      }
     },
   });
 
-  return referenced;
+  return { all, runtime };
+}
+
+function isTypeReference(parent: Node | null): boolean {
+  return (
+    parent?.type === 'TSQualifiedName' ||
+    parent?.type === 'TSTypeQuery' ||
+    parent?.type === 'TSTypeReference' ||
+    parent?.type === 'TSInterfaceHeritage'
+  );
 }
 
 function isPropertyName(node: { readonly type: 'Identifier'; readonly name: string }, parent: Node | null): boolean {
@@ -98,9 +120,10 @@ function isImportBinding(parent: Node | null): boolean {
 
 function renderImport(
   declaration: ImportDeclaration,
-  specifiers: readonly ImportDeclaration['specifiers'][number][]
+  specifiers: readonly ImportDeclaration['specifiers'][number][],
+  typeOnly = false
 ): string {
-  const prefix = declaration.importKind === 'type' ? 'import type ' : 'import ';
+  const prefix = typeOnly || declaration.importKind === 'type' ? 'import type ' : 'import ';
   const defaultSpecifier = specifiers.find((specifier) => specifier.type === 'ImportDefaultSpecifier');
   const namespace = specifiers.find((specifier) => specifier.type === 'ImportNamespaceSpecifier');
   const named = specifiers.filter((specifier) => specifier.type === 'ImportSpecifier');
@@ -118,7 +141,9 @@ function renderImport(
         specifier.imported.type === 'Identifier' ? specifier.imported.name : JSON.stringify(specifier.imported.value);
       const alias = imported === specifier.local.name ? imported : `${imported} as ${specifier.local.name}`;
 
-      return declaration.importKind !== 'type' && specifier.importKind === 'type' ? `type ${alias}` : alias;
+      return !typeOnly && declaration.importKind !== 'type' && specifier.importKind === 'type'
+        ? `type ${alias}`
+        : alias;
     });
 
     clauses.push(`{ ${entries.join(', ')} }`);

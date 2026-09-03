@@ -4,24 +4,32 @@ import type { BundledLanguage } from 'shiki';
 import ServerCode from '@/components/Code/ServerCode.astro';
 import CodeFrame from '@/components/typography/CodeFrame.astro';
 import P from '@/components/typography/P.astro';
-import { VJS10_HTML_CDN_BASE } from '@/consts';
+import { VJS10_CDN_BASE } from '@/consts';
 import DocsLink from '../DocsLink.astro';
 import FrameworkCase from '../FrameworkCase.astro';
 
 interface Props {
   /** Module name: the suffix shared by the React, HTML, and CDN subpaths. */
   name: string;
+  /** Package that ships the module's adapter or extension, installed beside the framework package. */
+  package?: string;
   /** Named export from the React module. */
   react: string;
   /** Public module family shared by the React, HTML, and CDN imports. */
   subpath: 'extensions' | 'media';
 }
 
-const { name, react, subpath } = Astro.props;
+const { name, package: pkg, react, subpath } = Astro.props;
 
-const cdnCode = `<script type="module" src="${VJS10_HTML_CDN_BASE}/${subpath}/${name}.js"></script>`;
+const cdnCode = `<script type="module" src="${VJS10_CDN_BASE}/${subpath}/${name}.js"></script>`;
 
 const imports: Array<{ code: string; framework: 'react' | 'html'; lang: BundledLanguage }> = [
+  ...(pkg
+    ? [
+        { code: `pnpm add @videojs/react ${pkg}`, framework: 'react' as const, lang: 'bash' as const },
+        { code: `pnpm add @videojs/html ${pkg}`, framework: 'html' as const, lang: 'bash' as const },
+      ]
+    : []),
   {
     code: `import { ${react} } from '@videojs/react/${subpath}/${name}';`,
     framework: 'react',

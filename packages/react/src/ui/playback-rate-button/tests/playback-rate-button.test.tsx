@@ -1,5 +1,4 @@
 import { render, waitFor } from '@testing-library/react';
-import { popup } from '@videojs/skins/default/tailwind/video.tailwind';
 import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vite-plus/test';
 
@@ -8,6 +7,8 @@ import { createMockStore } from '../../../testing/mocks';
 import { Hotkey } from '../../hotkey/hotkey';
 import { Tooltip } from '../../tooltip';
 import { PlaybackRateButton } from '../playback-rate-button';
+
+const shortcutClassName = 'test-tooltip-shortcut';
 
 function createContextValue(container: HTMLElement): PlayerContextValue {
   return {
@@ -38,7 +39,7 @@ describe('PlaybackRateButton', () => {
           <Tooltip.Trigger render={<PlaybackRateButton data-testid="button" />} />
           <Tooltip.Popup data-testid="popup">
             <Tooltip.Label />
-            <Tooltip.Shortcut className={popup.tooltipShortcut} />
+            <Tooltip.Shortcut className={shortcutClassName} />
           </Tooltip.Popup>
         </Tooltip.Root>
         <Hotkey keys=">" action="speedUp" />

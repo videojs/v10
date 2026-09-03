@@ -2,10 +2,10 @@ import type { ImportDeclaration, JSXElementName, Program } from '@oxc-project/ty
 import { walk } from 'oxc-walker';
 import type { Plugin } from 'rolldown';
 
+import type { JsxClassNameOptions } from '../target/definition';
 import { createTargetModuleImports } from '../target/module-imports';
+import { SCRIPT_MODULE_ID } from '../utils/module-id';
 import { type ComponentTargetPluginOptions, selectComponentTargets } from './component-target';
-
-const SCRIPT_ID = /\.[cm]?[jt]sx?(?:\?|$)/;
 
 interface ImportBinding {
   readonly imported: string;
@@ -16,12 +16,14 @@ export function reactTargetPropsPlugin(options: ComponentTargetPluginOptions): P
   return {
     name: 'vjsc:react-target-props',
     transform: {
-      filter: { id: SCRIPT_ID, code: 'className' },
+      filter: { id: SCRIPT_MODULE_ID, code: 'className' },
       handler(code, id, transform) {
-        const targets = selectComponentTargets(options.targets, id);
-        if (!targets.some((target) => target.jsx.attributes === 'react')) return null;
+        const targets = selectComponentTargets(options.targets, id).filter((target) => target.jsx.className);
+        if (targets.length === 0 || !transform.ast || !transform.magicString) return null;
 
-        if (!transform.ast || !transform.magicString) return null;
+        if (targets.length > 1) throw new Error('Only one component target per module may lower `className` arrays.');
+
+        const className = targets[0]!.jsx.className!;
 
         const bindings = importBindings(transform.ast);
         const imports = createTargetModuleImports(transform.ast, transform.magicString);
@@ -42,19 +44,18 @@ export function reactTargetPropsPlugin(options: ComponentTargetPluginOptions): P
 
             const values = node.value.expression.elements.filter((value) => value !== null);
             const forwarded = values.find((value) => value.type === 'Identifier' && value.name === 'className');
-            const callback = Boolean(forwarded && acceptsClassNameCallback(parent.name, bindings));
-            const cn = imports.reference({ from: '@videojs/utils/style', name: 'cn' });
+            const callback = Boolean(forwarded && acceptsClassNameCallback(parent.name, bindings, className));
+            const cn = imports.reference(className.merge);
             const args = values
               .filter((value) => value !== forwarded)
               .map((value) => code.slice(value.start, value.end));
 
             if (callback) {
-              const resolveClassName = imports.reference({
-                from: '@videojs/utils/style',
-                name: 'resolveClassName',
-              });
+              if (!className.resolve) {
+                throw new Error('The component target marks an element as state-aware but has no `className.resolve`.');
+              }
 
-              args.push(`${resolveClassName}(className, state)`);
+              args.push(`${imports.reference(className.resolve)}(className, state)`);
             } else if (forwarded) {
               args.push('className');
             }
@@ -98,11 +99,15 @@ function collectImportBindings(declaration: ImportDeclaration, bindings: Map<str
   }
 }
 
-function acceptsClassNameCallback(name: JSXElementName, bindings: ReadonlyMap<string, ImportBinding>): boolean {
+function acceptsClassNameCallback(
+  name: JSXElementName,
+  bindings: ReadonlyMap<string, ImportBinding>,
+  className: JsxClassNameOptions
+): boolean {
   const root = jsxNameRoot(name);
   const binding = root ? bindings.get(root) : undefined;
 
-  return binding?.source === '@videojs/react' && binding.imported !== 'Container';
+  return Boolean(binding && className.stateAware?.(binding));
 }
 
 function jsxNameRoot(name: JSXElementName): string | undefined {

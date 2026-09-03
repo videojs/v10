@@ -23,14 +23,14 @@ describe('ejected skin configuration', () => {
     expect(new Set(SKINS.map(({ id }) => id)).size).toBe(SKINS.length);
   });
 
-  it('defines both platforms and styling modes', () => {
+  it('defines both platforms using the remaining CSS sources', () => {
     expect(new Set(SKINS.map(({ platform }) => platform))).toEqual(new Set(['html', 'react']));
-    expect(new Set(SKINS.map(({ style }) => style))).toEqual(new Set(['css', 'tailwind']));
+    expect(new Set(SKINS.map(({ style }) => style))).toEqual(new Set(['css']));
   });
 
-  it('defines every preset, skin, platform, and styling combination', () => {
-    expect(SKINS).toHaveLength(32);
-    expect(SKINS.filter(({ live }) => live)).toHaveLength(16);
+  it('only defines source-backed combinations', () => {
+    expect(SKINS).toHaveLength(16);
+    expect(SKINS.filter(({ live }) => live)).toHaveLength(8);
   });
 });
 
@@ -39,6 +39,12 @@ describe('ejected HTML skins', () => {
     const source = `function getTemplateHTML() { return /*html*/ \`\n  <button>\${label}</button>\n\`; }`;
 
     expect(evaluateTemplate(extractTemplateLiteral(source), { label: 'Play' })).toBe('<button>Play</button>');
+  });
+
+  it('extracts a generated skin template', () => {
+    const source = 'export const template = createTemplate(/* html */ `<button>Play</button>`);';
+
+    expect(extractTemplateLiteral(source)).toBe('<button>Play</button>');
   });
 
   it('collects imported names and aliases', () => {
@@ -118,32 +124,18 @@ describe('ejected HTML skins', () => {
       `<live-video-player poster="${DEMO_LIVE_POSTER_SRC}">`
     );
   });
-
-  it('does not link a generated stylesheet for Tailwind skins', () => {
-    const skin = SKINS.find(({ id }) => id === 'minimal-live-video-tailwind');
-    if (skin?.platform !== 'html') throw new Error('Missing live Tailwind HTML skin fixture');
-
-    expect(prependHtmlSkinScripts('<media-controls></media-controls>', skin)).not.toContain('player.css');
-  });
 });
 
 describe('ejected React skins', () => {
-  it('produces CSS and Tailwind players with matching dependencies', async () => {
+  it('produces CSS skin sources with matching dependencies', async () => {
     const cssSkin = SKINS.find(({ id }) => id === 'default-live-video-react');
-    const tailwindSkin = SKINS.find(({ id }) => id === 'default-live-video-react-tailwind');
+    if (cssSkin?.platform !== 'react') throw new Error('Missing live React skin fixture');
 
-    if (cssSkin?.platform !== 'react' || tailwindSkin?.platform !== 'react') {
-      throw new Error('Missing live React skin fixtures');
-    }
-
-    const [cssEntry, tailwindEntry] = await Promise.all([buildEjectedSkin(cssSkin), buildEjectedSkin(tailwindSkin)]);
+    const cssEntry = await buildEjectedSkin(cssSkin);
     const cssSource = cssEntry.tsx?.['LiveVideoPlayer.tsx'];
-    const tailwindSource = tailwindEntry.tsx?.['LiveVideoPlayer.tsx'];
 
     expect(cssSource).toContain("import './player.css';");
-    expect(tailwindSource).not.toContain("import './player.css';");
-    expect(tailwindSource).toContain('export function LiveVideoPlayer');
-    expect(tailwindSource).not.toContain('export function LiveVideoSkinTailwind');
+    expect(cssSource).toContain('export function LiveVideoSkin');
   });
 });
 

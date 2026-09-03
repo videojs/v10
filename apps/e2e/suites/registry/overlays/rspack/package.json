@@ -1,0 +1,13 @@
+{
+  "name": "rspack-html-css",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "build": "rspack build --mode production"
+  },
+  "devDependencies": {
+    "@rspack/cli": "2.2.2",
+    "@rspack/core": "2.2.2",
+    "typescript": "5.9.3"
+  }
+}

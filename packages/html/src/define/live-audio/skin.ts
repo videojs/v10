@@ -1,5 +1,5 @@
 import { LiveAudioSkinElement } from '../../presets/live-audio/skin';
 import { safeDefine } from '../../registration/safe-define';
-import './ui';
+import '../../internal/skins/default-live-audio/register';
 
 safeDefine(LiveAudioSkinElement);

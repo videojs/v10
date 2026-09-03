@@ -1,6 +1,2 @@
-export {
-  QualityRadioGroup,
-  type QualityRadioGroupItemProps,
-  type QualityRadioGroupItemState,
-  type QualityRadioGroupProps,
-} from './quality-radio-group';
+export * as QualityRadioGroup from './index.parts';
+export { QualityRadioGroupLegacy } from './quality-radio-group';

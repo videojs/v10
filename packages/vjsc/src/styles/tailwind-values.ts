@@ -118,6 +118,13 @@ export function optimizeSemanticCss(css: string): string {
     .trim();
 }
 
+/** Drop exact duplicate declarations from every style rule in place, keeping the last occurrence. */
+export function dedupeRuleDeclarations(rules: readonly Rule[]): void {
+  visitCssRules(rules, (rule) => {
+    if (rule.type === 'style' && rule.value.declarations) removeExactDuplicateDeclarations(rule.value.declarations);
+  });
+}
+
 function removeExactDuplicateDeclarations(block: DeclarationBlock): void {
   if (block.declarations) block.declarations = keepLastExactDeclaration(block.declarations);
 

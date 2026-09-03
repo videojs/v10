@@ -1,19 +1,23 @@
 /**
  * Generates Vite test pages from PageEntry definitions.
  *
- * Reads the media type configs and page arrays, then writes .ts/.tsx + .html files to `apps/vite/src/pages/`, which is
- * gitignored — every page there comes from this script, including the special ones (ejected skins, captions, background
- * video), which take their own templates rather than the player shell.
+ * Reads the media type configs and page arrays, then writes .ts/.tsx + .html files to `suites/player/app/src/pages/`,
+ * which is gitignored — every page there comes from this script, including the special ones (ejected skins, captions,
+ * background video), which take their own templates rather than the player shell.
  *
  * Run: `pnpm --dir apps/e2e generate-pages`
  */
 
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
+import { dirname, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const OUT_DIR = resolve(__dirname, '../apps/vite/src/pages');
+const OUT_DIR = resolve(__dirname, '../suites/player/app/src/pages');
+const SOURCE_VIDEO_SKIN = relative(
+  OUT_DIR,
+  resolve(__dirname, '../../../packages/skins/src/skins/default-video/skin.tsx')
+).replaceAll('\\', '/');
 
 // ---------------------------------------------------------------------------
 // Media type config — maps media element name to its import + attributes
@@ -134,8 +138,8 @@ const REACT_MEDIA: Record<string, { component: string; importPath: string }> = {
 
 // CDN import paths (override standard imports)
 const CDN_IMPORTS: Record<string, string[]> = {
-  video: ['@videojs/html/cdn/video'],
-  'hlsjs-video': ['@videojs/html/cdn/video', '@videojs/html/cdn/media/hlsjs-video'],
+  video: ['@videojs/cdn/video'],
+  'hlsjs-video': ['@videojs/cdn/video', '@videojs/cdn/media/hlsjs-video'],
 };
 
 // ---------------------------------------------------------------------------
@@ -148,7 +152,7 @@ interface PageDef {
   framework: 'html' | 'react';
   media: string;
   resource: string;
-  category?: 'cdn' | 'ejected-html' | 'ejected-react' | 'captions' | 'background' | 'source-html' | 'source-react';
+  category?: 'cdn' | 'captions' | 'background' | 'background-preset' | 'source-html' | 'source-react';
 }
 
 // ---------------------------------------------------------------------------
@@ -356,6 +360,55 @@ createRoot(document.getElementById('root')!).render(<App />);
 `;
 }
 
+/** The handwritten Background preset, kept separate from the engine-only fixtures above. */
+function backgroundPresetPage(framework: PageDef['framework'], resource: string): string {
+  if (framework === 'react') {
+    return `import {
+  BackgroundVideo,
+  BackgroundVideoPlayer,
+  BackgroundVideoSkin,
+} from '@videojs/react/background';
+import '@videojs/react/background/skin.css';
+import { createRoot } from 'react-dom/client';
+import { MEDIA } from '../resources';
+
+function App() {
+  return (
+    <BackgroundVideoPlayer>
+      <BackgroundVideoSkin
+        className="background-preset"
+        style={{ width: 640, height: 360, objectFit: 'contain' }}
+      >
+        <img alt="" data-background-poster src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" />
+        <BackgroundVideo data-background-media src={MEDIA.${resource}.url} />
+      </BackgroundVideoSkin>
+    </BackgroundVideoPlayer>
+  );
+}
+
+createRoot(document.getElementById('root')!).render(<App />);
+`;
+  }
+
+  return `import '@videojs/html/background/player';
+import '@videojs/html/background/skin';
+import '@videojs/html/background/video';
+import { MEDIA } from '../resources';
+
+document.getElementById('root')!.innerHTML = String.raw\`
+  <background-video-player>
+    <background-video-skin
+      class="background-preset"
+      style="width: 640px; height: 360px; --media-object-fit: contain"
+    >
+      <img alt="" data-background-poster src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" />
+      <background-video data-background-media src="\${MEDIA.${resource}.url}"></background-video>
+    </background-video-skin>
+  </background-video-player>
+\`;
+`;
+}
+
 function captionsPage(resource: string): string {
   const captionVtt = 'WEBVTT\\n\\n00:00:00.000 --> 00:00:30.000\\nThis is a test caption';
 
@@ -381,77 +434,9 @@ document.getElementById('root')!.innerHTML = html\`
 `;
 }
 
-function ejectedHtmlPage(resource: string): string {
-  // Path from pages/ to the site content
-  const jsonPath = '../../../../../../site/src/content/ejected-skins.json';
-
-  return `import '@videojs/html/icons/element';
-import ejectedSkins from '${jsonPath}';
-import { MEDIA } from '../resources';
-
-interface EjectedSkinEntry {
-  id: string;
-  html?: string;
-  css?: string;
-}
-
-const skin = (ejectedSkins as EjectedSkinEntry[]).find((s) => s.id === 'default-video');
-
-if (!skin?.html || !skin?.css) {
-  throw new Error('Ejected skin "default-video" not found. Run \\\`pnpm -F site ejected-skins\\\` first.');
-}
-
-const style = document.createElement('style');
-style.textContent = skin.css;
-document.head.appendChild(style);
-
-const playerMatch = skin.html.match(/<video-player\\b[^>]*>[\\s\\S]*<\\/video-player>/);
-
-if (!playerMatch) {
-  throw new Error('Could not find <video-player> in ejected HTML output.');
-}
-
-const root = document.getElementById('root')!;
-root.innerHTML = \`<div style="max-width: 800px; aspect-ratio: 16/9">\${playerMatch[0]}</div>\`;
-
-const video = root.querySelector('video');
-const poster = root.querySelector('media-poster img');
-
-if (!video || !poster) {
-  throw new Error('Ejected skin "default-video" is missing video media.');
-}
-
-video.src = MEDIA.${resource}.url;
-video.crossOrigin = 'anonymous';
-video.innerHTML = \`<track kind="metadata" label="thumbnails" src="\${MEDIA.${resource}.storyboard}" default />\`;
-poster.src = MEDIA.${resource}.poster;
-poster.alt = 'Video poster';
-
-// Ejected layouts have no <video-skin>, so register the player (context owner)
-// before the light DOM UI elements that consume it.
-await import('@videojs/html/video/player');
-await import('@videojs/html/video/ui');
-`;
-}
-
-function ejectedReactPage(resource: string): string {
-  return `import { createRoot } from 'react-dom/client';
-import { VideoPlayer } from '../_generated/ejected-react-video-skin';
-import { MEDIA } from '../resources';
-
-function App() {
-  return <VideoPlayer src={MEDIA.${resource}.url} poster={MEDIA.${resource}.poster} style={{ maxWidth: 800, aspectRatio: '16/9' }} />;
-}
-
-createRoot(document.getElementById('root')!).render(<App />);
-`;
-}
-
 function sourceHtmlPage(resource: string): string {
-  const source = '../../../../../../packages/skins/vjsc/skins/default-video/skin.tsx';
-
   return `import '@videojs/html/video/player';
-import { DefaultVideoSkin } from '${source}?style=css&target=html&skin=default-video';
+import { DefaultVideoSkin } from '${SOURCE_VIDEO_SKIN}?style=css&target=html&skin=default-video';
 import { MEDIA } from '../resources';
 
 const skin = String(
@@ -470,12 +455,10 @@ document.getElementById('root')!.innerHTML = \`<video-player poster="\${MEDIA.${
 }
 
 function sourceReactPage(resource: string): string {
-  const source = '../../../../../../packages/skins/vjsc/skins/default-video/skin.tsx';
-
   return `import { createPlayer } from '@videojs/react';
 import { Video, videoFeatures } from '@videojs/react/video';
 import { createRoot } from 'react-dom/client';
-import { DefaultVideoSkin } from '${source}?style=css&target=react&skin=default-video';
+import { DefaultVideoSkin } from '${SOURCE_VIDEO_SKIN}?style=css&target=react&skin=default-video';
 import { MEDIA } from '../resources';
 
 const { Player } = createPlayer({ features: videoFeatures });
@@ -544,6 +527,22 @@ const PAGES: PageDef[] = [
     resource: 'hlsFmp4',
     category: 'background',
   },
+  {
+    name: 'HTML Background Preset',
+    path: 'html-background-preset',
+    framework: 'html',
+    media: 'hls-background-video',
+    resource: 'mp4',
+    category: 'background-preset',
+  },
+  {
+    name: 'React Background Preset',
+    path: 'react-background-preset',
+    framework: 'react',
+    media: 'hls-background-video',
+    resource: 'mp4',
+    category: 'background-preset',
+  },
   { name: 'HTML DASH Video', path: 'html-dash-video', framework: 'html', media: 'dash-video', resource: 'dash' },
   {
     name: 'HTML Shaka Video HLS',
@@ -607,24 +606,6 @@ const PAGES: PageDef[] = [
     category: 'captions',
   },
 
-  // Ejected Skins
-  {
-    name: 'Ejected HTML Video MP4',
-    path: 'ejected-html-video-mp4',
-    framework: 'html',
-    media: 'video',
-    resource: 'mp4',
-    category: 'ejected-html',
-  },
-  {
-    name: 'Ejected React Video MP4',
-    path: 'ejected-react-video-mp4',
-    framework: 'react',
-    media: 'video',
-    resource: 'mp4',
-    category: 'ejected-react',
-  },
-
   // Generated canonical Skin fixtures for focused container/parity coverage.
   {
     name: 'Source HTML Video MP4',
@@ -680,12 +661,10 @@ function generatePage(page: PageDef): { ts: string; html: string; ext: string } 
       page.framework === 'react'
         ? reactBackgroundVideoPage(page.media, page.resource)
         : backgroundVideoPage(config, page.resource);
+  } else if (page.category === 'background-preset') {
+    ts = backgroundPresetPage(page.framework, page.resource);
   } else if (page.category === 'captions') {
     ts = captionsPage(page.resource);
-  } else if (page.category === 'ejected-html') {
-    ts = ejectedHtmlPage(page.resource);
-  } else if (page.category === 'ejected-react') {
-    ts = ejectedReactPage(page.resource);
   } else if (page.category === 'source-html') {
     ts = sourceHtmlPage(page.resource);
   } else if (page.category === 'source-react') {

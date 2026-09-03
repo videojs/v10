@@ -1,0 +1,23 @@
+import type { PiPButtonProps as CoreProps } from '@videojs/core';
+import * as $ from '@videojs/core/vjsc';
+import { PipEnterIcon, PipExitIcon } from '@videojs/icons/vjsc';
+import type { Props } from 'vjsc/components';
+
+import type { SkinComponentDescription } from '../../meta';
+import buttonStyles from '../../styles/buttons/button.styles';
+import styles from '../../styles/buttons/pip-button.styles';
+import { Button } from './button';
+
+export function PiPButton({ className, ...props }: Props<CoreProps> = {}) {
+  return (
+    <$.PiPButton $render={Button} className={[styles.root, className]} {...props}>
+      <PipEnterIcon className={[buttonStyles.icon, styles.enterIcon]} />
+      <PipExitIcon className={[buttonStyles.icon, styles.exitIcon]} />
+    </$.PiPButton>
+  );
+}
+
+export const meta = {
+  title: 'Picture-in-Picture Button',
+  description: 'A state-aware button that enters and exits picture-in-picture.',
+} as const satisfies SkinComponentDescription;

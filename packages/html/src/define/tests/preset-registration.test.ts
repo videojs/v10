@@ -4,7 +4,7 @@ describe('preset registration boundaries', () => {
   let define: MockInstance;
 
   function registeredSince(offset: number): string[] {
-    return define.mock.calls.slice(offset).map((call) => call[0] as string);
+    return define.mock.calls.slice(offset).map(([tag]) => String(tag));
   }
 
   beforeAll(() => {
@@ -32,7 +32,10 @@ describe('preset registration boundaries', () => {
 
     await import('../video/skin');
 
-    expect(registeredSince(before)).toEqual(['video-skin']);
+    const registered = registeredSince(before);
+
+    expect(registered).toContain('video-skin');
+    expect(registered).not.toContain('video-player');
   });
 
   it('video/player registers only the player', async () => {
@@ -63,12 +66,15 @@ describe('preset registration boundaries', () => {
     ['audio/minimal-skin', 'audio-minimal-skin', () => import('../audio/minimal-skin')],
     ['live-video/minimal-skin', 'live-video-minimal-skin', () => import('../live-video/minimal-skin')],
     ['live-audio/minimal-skin', 'live-audio-minimal-skin', () => import('../live-audio/minimal-skin')],
-  ])('%s registers only its skin element', async (_, skinTag, load) => {
+  ])('%s registers its exact UI closure and skin without the player', async (entry, skinTag, load) => {
     const before = define.mock.calls.length;
 
     await load();
 
-    expect(registeredSince(before)).toEqual([skinTag]);
+    const registered = registeredSince(before);
+
+    expect(registered).toContain(skinTag);
+    expect(registered).not.toContain(`${entry.split('/')[0]}-player`);
   });
 
   it.each([

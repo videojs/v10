@@ -10,6 +10,17 @@
 provides a complete set of components, hooks, and utilities for creating feature-rich, accessible
 video and audio players with React.
 
+Playback engines are optional adapter packages. Install the adapter that matches the component you import, for
+example:
+
+```bash
+pnpm add @videojs/react @videojs/dash-video
+```
+
+```tsx
+import { DashVideo } from '@videojs/react/media/dash-video';
+```
+
 ## Documentation
 
 Read the docs at [videojs.org](https://videojs.org/docs/framework/react), or after installing,

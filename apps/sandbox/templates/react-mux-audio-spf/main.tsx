@@ -1,19 +1,12 @@
 import '@app/styles.css';
-import { AudioPlayer } from '@app/shared/react/players';
+import { AudioPlayer, LiveAudioPlayer } from '@app/shared/react/players';
 import { SandboxI18nProvider } from '@app/shared/react/sandbox-i18n';
 import { AudioSkinComponent } from '@app/shared/react/skins';
-import { useAutoplay } from '@app/shared/react/use-autoplay';
-import { useLoop } from '@app/shared/react/use-loop';
-import { useMuted } from '@app/shared/react/use-muted';
-import { usePreload } from '@app/shared/react/use-preload';
-import { useSkin } from '@app/shared/react/use-skin';
-import { useSource } from '@app/shared/react/use-source';
-import { SOURCES } from '@app/shared/sources';
-import type { Styling } from '@app/types';
+import { useSandbox } from '@app/shared/react/use-sandbox';
+import { isLiveSource, SOURCES } from '@app/shared/sources';
 import { GoogleCast } from '@videojs/react/extensions/google-cast';
 import { MuxData } from '@videojs/react/extensions/mux-data';
 import { MuxAudio } from '@videojs/react/media/mux-audio/spf';
-import { useMemo } from 'react';
 import { createRoot } from 'react-dom/client';
 
 // The SPF-backed counterpart to `react-mux-audio`. See that page's HTML sibling
@@ -21,18 +14,10 @@ import { createRoot } from 'react-dom/client';
 // appends fMP4/CMAF only, so MPEG-TS and DRM playback IDs are expected to surface
 // the unsupported-source error rather than play.
 
-function readStyling(): Styling {
-  return new URLSearchParams(location.search).get('styling') === 'tailwind' ? 'tailwind' : 'css';
-}
-
 function App() {
-  const skin = useSkin();
-  const source = useSource();
-  const styling = useMemo(readStyling, []);
-  const autoplay = useAutoplay();
-  const muted = useMuted();
-  const loop = useLoop();
-  const preload = usePreload();
+  const { source, mediaProps } = useSandbox();
+  const live = isLiveSource(source);
+  const Player = live ? LiveAudioPlayer : AudioPlayer;
 
   // A source carrying signed tokens has no room in a plain `src`. A `drm.token`
   // is accepted but inert on this flavor.
@@ -40,16 +25,9 @@ function App() {
 
   return (
     <SandboxI18nProvider>
-      <AudioPlayer>
-        <AudioSkinComponent skin={skin} styling={styling} className="mx-auto w-full max-w-xl">
-          <MuxAudio
-            {...(muxSource ? { source: muxSource } : { src: url ?? '' })}
-            autoPlay={autoplay}
-            muted={muted}
-            loop={loop}
-            preload={preload}
-            crossOrigin=""
-          />
+      <Player>
+        <AudioSkinComponent live={live}>
+          <MuxAudio {...(muxSource ? { source: muxSource } : { src: url ?? '' })} {...mediaProps} crossOrigin="" />
           {/*
             Both are opt-in media components, and no env key is needed for Mux-hosted sources.
             Mux Data monitors this flavor from the media element alone: its engine integrations are
@@ -58,7 +36,7 @@ function App() {
           <MuxData playerSoftwareName="mux-audio" />
           <GoogleCast />
         </AudioSkinComponent>
-      </AudioPlayer>
+      </Player>
     </SandboxI18nProvider>
   );
 }

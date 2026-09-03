@@ -10,6 +10,20 @@ import Aside from '@/components/Aside.astro';
 
 [Mux Data](https://www.mux.com/data) measures playback quality: startup time, rebuffering, playback failures, and watch time. Add the Mux Data <DocsLink slug="concepts/overview">extension</DocsLink> to a player and it monitors whichever media that player is playing:
 
+Install the extension alongside the framework façade. The MuxVideo example also installs the Mux playback adapter:
+
+<FrameworkCase frameworks={["react"]}>
+```bash
+pnpm add @videojs/react @videojs/mux-video @videojs/mux-data
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```bash
+pnpm add @videojs/html @videojs/mux-video @videojs/mux-data
+```
+</FrameworkCase>
+
 <FrameworkCase frameworks={["react"]}>
 ```tsx title="App.tsx"
 import { Container, createPlayer } from '@videojs/react';

@@ -11,6 +11,22 @@ Play live streams: show a live badge, jump to the live edge, and support DVR win
 
 <CustomUiNote />
 
+## Installation
+
+The examples use HlsJsVideo, so install hls.js with the framework façade:
+
+<FrameworkCase frameworks={["react"]}>
+```bash
+pnpm add @videojs/react @videojs/hlsjs-video
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```bash
+pnpm add @videojs/html @videojs/hlsjs-video
+```
+</FrameworkCase>
+
 ## Recommended approach
 
 Use the live feature bundle with a streaming media element, and give users a `LiveButton`: it shows whether playback is at the live edge and seeks back to it when activated.

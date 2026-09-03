@@ -1,11 +1,11 @@
-import { VJS10_DEMO_VIDEO, VJS10_HTML_CDN_BASE } from '@/consts';
+import { VJS10_DEMO_VIDEO, VJS10_CDN_BASE } from '@/consts';
 import type { Skin } from '@/stores/homePageDemos';
 
 export function generateHTMLCode(skin: Skin): string {
   const skinTag = skin === 'default' ? 'video-skin' : 'video-minimal-skin';
   const cdnFile = skin === 'default' ? 'video' : 'video-minimal';
 
-  return `<script type="module" src="${VJS10_HTML_CDN_BASE}/${cdnFile}.js"></script>
+  return `<script type="module" src="${VJS10_CDN_BASE}/${cdnFile}.js"></script>
 
 <video-player>
   <${skinTag}>

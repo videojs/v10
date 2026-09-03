@@ -1,44 +1,25 @@
 import '@app/styles.css';
-import { AudioPlayer } from '@app/shared/react/players';
+import { AudioPlayer, LiveAudioPlayer } from '@app/shared/react/players';
+import { SandboxI18nProvider } from '@app/shared/react/sandbox-i18n';
 import { AudioSkinComponent } from '@app/shared/react/skins';
-import { useAutoplay } from '@app/shared/react/use-autoplay';
-import { useLoop } from '@app/shared/react/use-loop';
-import { useMuted } from '@app/shared/react/use-muted';
-import { usePreload } from '@app/shared/react/use-preload';
-import { useSkin } from '@app/shared/react/use-skin';
-import { useSource } from '@app/shared/react/use-source';
-import { SOURCES } from '@app/shared/sources';
-import type { Styling } from '@app/types';
+import { useSandbox } from '@app/shared/react/use-sandbox';
+import { isLiveSource, SOURCES } from '@app/shared/sources';
 import { HlsAudio } from '@videojs/react/media/hls-audio';
-import { useMemo } from 'react';
 import { createRoot } from 'react-dom/client';
 
-function readStyling(): Styling {
-  return new URLSearchParams(location.search).get('styling') === 'tailwind' ? 'tailwind' : 'css';
-}
-
 function App() {
-  const skin = useSkin();
-  const source = useSource();
-  const styling = useMemo(readStyling, []);
-  const autoplay = useAutoplay();
-  const muted = useMuted();
-  const loop = useLoop();
-  const preload = usePreload();
+  const { source, mediaProps } = useSandbox();
+  const live = isLiveSource(source);
+  const Player = live ? LiveAudioPlayer : AudioPlayer;
 
   return (
-    <AudioPlayer>
-      <AudioSkinComponent skin={skin} styling={styling} className="mx-auto w-full max-w-xl">
-        <HlsAudio
-          src={SOURCES[source].url ?? ''}
-          autoPlay={autoplay}
-          muted={muted}
-          loop={loop}
-          preload={preload}
-          crossOrigin=""
-        />
-      </AudioSkinComponent>
-    </AudioPlayer>
+    <SandboxI18nProvider>
+      <Player>
+        <AudioSkinComponent live={live}>
+          <HlsAudio src={SOURCES[source].url ?? ''} {...mediaProps} crossOrigin="" />
+        </AudioSkinComponent>
+      </Player>
+    </SandboxI18nProvider>
   );
 }
 

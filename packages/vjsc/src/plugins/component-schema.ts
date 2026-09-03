@@ -2,10 +2,10 @@ import { resolve } from 'node:path';
 
 import type { Plugin } from 'rolldown';
 
-import { type CreateSchemaModuleOptions, createSchemaModule } from '../components/schema/generate';
+import { type ComponentSchemaOptions, createComponentSchema } from '../components/schema/generate';
 import { addInputEntries } from './input';
 
-export interface ComponentSchemaPluginOptions extends Omit<CreateSchemaModuleOptions, 'cwd' | 'output'> {
+export interface VjscComponentSchemaOptions extends Omit<ComponentSchemaOptions, 'cwd' | 'output'> {
   readonly file?: string | undefined;
   /** Add a companion declaration entry when the host has a declaration pipeline. */
   readonly declaration?: boolean | undefined;
@@ -17,15 +17,15 @@ export interface ComponentSchemaPluginOptions extends Omit<CreateSchemaModuleOpt
  *
  * @example
  *   ```ts
- *   componentSchemaPlugin({
- *     source: '@videojs/core/vjsc',
+ *   vjscComponentSchemaPlugin({
+ *     source: '@example/components',
  *     include: ['./src/components/*-component.ts'],
  *   });
  *   ```;
  *
  * @param config - Component discovery and output settings.
  */
-export function componentSchemaPlugin(config: ComponentSchemaPluginOptions): Plugin {
+export function vjscComponentSchemaPlugin(config: VjscComponentSchemaOptions): Plugin {
   const entry = config.file ?? 'component-schema';
   const moduleId = `\0vjsc:component-schema:${entry}`;
 
@@ -56,7 +56,7 @@ export function componentSchemaPlugin(config: ComponentSchemaPluginOptions): Plu
       handler(id) {
         if (id !== output && id !== declarationOutput) return null;
 
-        const generated = createSchemaModule({
+        const generated = createComponentSchema({
           cwd,
           source: config.source,
           include: config.include,

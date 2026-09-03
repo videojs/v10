@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vite-plus/test';
 
-import { MenuCore, type MenuInput } from '../core';
+import { MenuCore, type MenuInput, resolveMenuOptionState } from '../core';
 
 function createInput(overrides: Partial<MenuInput> = {}): MenuInput {
   return {
@@ -226,5 +226,51 @@ describe('MenuCore', () => {
       expect(_props).toBeDefined();
       expect(_input).toBeDefined();
     });
+  });
+});
+
+describe('resolveMenuOptionState', () => {
+  it('preserves the value for one option menu', () => {
+    expect(
+      resolveMenuOptionState([{ value: 'Auto', disabled: false, hidden: false, availability: 'available' }])
+    ).toEqual({
+      value: 'Auto',
+      disabled: false,
+      hidden: false,
+      availability: 'available',
+    });
+  });
+
+  it('makes a parent available when any nested menu is available', () => {
+    expect(
+      resolveMenuOptionState([
+        { value: 'Auto', disabled: false, hidden: false, availability: 'available' },
+        { value: '', disabled: true, hidden: true, availability: 'unavailable' },
+      ])
+    ).toEqual({ value: '', disabled: false, hidden: false, availability: 'available' });
+  });
+
+  it('distinguishes unsupported collections from unavailable options', () => {
+    expect(
+      resolveMenuOptionState([
+        { value: '', disabled: true, hidden: false, availability: 'unsupported' },
+        { value: '', disabled: true, hidden: false, availability: 'unsupported' },
+      ])
+    ).toEqual({ value: '', disabled: true, hidden: false, availability: 'unsupported' });
+    expect(
+      resolveMenuOptionState([
+        { value: '', disabled: true, hidden: false, availability: 'unsupported' },
+        { value: '', disabled: true, hidden: false, availability: 'unavailable' },
+      ])
+    ).toEqual({ value: '', disabled: true, hidden: false, availability: 'unavailable' });
+  });
+
+  it('hides a parent only when every nested menu is hidden', () => {
+    expect(
+      resolveMenuOptionState([
+        { value: '', disabled: true, hidden: true, availability: 'unavailable' },
+        { value: '', disabled: true, hidden: true, availability: 'unsupported' },
+      ])
+    ).toEqual({ value: '', disabled: true, hidden: true, availability: 'unavailable' });
   });
 });

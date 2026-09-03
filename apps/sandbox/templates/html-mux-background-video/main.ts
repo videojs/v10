@@ -1,10 +1,9 @@
 import '@app/styles.css';
-import { bindSandboxHtmlLocaleChange, prepareSandboxHtmlLocale, wrapSandboxHtmlI18n } from '@app/shared/html/i18n';
 import '@videojs/html/background/player';
 import '@videojs/html/background/skin';
 import '@videojs/html/media/mux-background-video';
-import { getInitialSource, onSourceChange } from '@app/shared/sandbox-listener';
-import { SOURCES, type SourceId, withMuxMaxResolution } from '@app/shared/sources';
+import { createHtmlSandbox, html } from '@app/shared/html/sandbox';
+import { withMuxMaxResolution } from '@app/shared/sources';
 
 // `<mux-background-video>` is `<hls-background-video>` under its Mux-flavored tag
 // — the same element, so `html-hls-background-video` is the same page with the
@@ -19,29 +18,9 @@ import { SOURCES, type SourceId, withMuxMaxResolution } from '@app/shared/source
 // Takes the same source picker as its HLS-named sibling — see that page for what
 // each source shape is there to reach.
 
-const html = String.raw;
-
-let source: SourceId = getInitialSource();
-
-async function render() {
-  await prepareSandboxHtmlLocale();
-
-  const src = withMuxMaxResolution(SOURCES[source].url ?? '', '720p');
-
-  document.getElementById('root')!.innerHTML = wrapSandboxHtmlI18n(html`
-    <background-video-player>
-      <background-video-skin>
-        <mux-background-video src="${src}" crossorigin></mux-background-video>
-      </background-video-skin>
-    </background-video-player>
-  `);
-}
-
-render();
-
-onSourceChange((next) => {
-  source = next;
-  render();
+createHtmlSandbox({
+  player: 'background',
+  media: ({ url }) => html`
+    <mux-background-video src="${withMuxMaxResolution(url, '720p')}" crossorigin></mux-background-video>
+  `,
 });
-
-bindSandboxHtmlLocaleChange(render);

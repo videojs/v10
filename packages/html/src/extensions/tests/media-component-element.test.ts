@@ -1,7 +1,5 @@
 import { ContextProvider } from '@videojs/element/context';
-import type { Media } from '@videojs/media/dom';
-import { getMediaComponents, type MediaComponent } from '@videojs/media/dom/media-host';
-import { HTMLVideoElementHost } from '@videojs/media/dom/video-host';
+import { getMediaComponents, HTMLVideoElementHost, type Media, type MediaComponent } from '@videojs/media/dom';
 import { afterEach, describe, expect, it } from 'vite-plus/test';
 
 import { mediaContext } from '../../player/context';

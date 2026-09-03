@@ -1,7 +1,8 @@
 import { render } from '@testing-library/react';
 import type { Media } from '@videojs/media';
-import { addMediaComponent, getMediaComponents } from '@videojs/media/dom/media-host';
-import { MuxData as MuxDataComponent, MuxMedia } from '@videojs/media/dom/mux';
+import { addMediaComponent, getMediaComponents } from '@videojs/media/dom';
+import { MuxDataExtension } from '@videojs/mux-data';
+import { MuxMedia } from '@videojs/mux-video';
 import { describe, expect, it, vi } from 'vite-plus/test';
 
 import { createPlayerWrapper } from '../../testing/mocks';
@@ -21,7 +22,7 @@ describe('MuxData', () => {
 
     render(<MuxData />, { wrapper: Wrapper });
 
-    expect(getMediaComponents(media).get(MuxDataComponent)).toBeInstanceOf(MuxDataComponent);
+    expect(getMediaComponents(media).get(MuxDataExtension)).toBeInstanceOf(MuxDataExtension);
   });
 
   it('syncs props to the component', () => {
@@ -29,7 +30,7 @@ describe('MuxData', () => {
 
     render(<MuxData envKey="test-key" playerSoftwareName="mux-video" disableCookies />, { wrapper: Wrapper });
 
-    const component = getMediaComponents(media).get(MuxDataComponent)!;
+    const component = getMediaComponents(media).get(MuxDataExtension)!;
 
     expect(component.envKey).toBe('test-key');
     expect(component.playerSoftwareName).toBe('mux-video');
@@ -41,10 +42,10 @@ describe('MuxData', () => {
     const MuxDataSdk = {
       monitor: vi.fn(),
       utils: { now: () => 0 },
-    } as unknown as NonNullable<MuxDataComponent['MuxDataSdk']>;
+    } as unknown as NonNullable<MuxDataExtension['MuxDataSdk']>;
 
     const { rerender } = render(<MuxData MuxDataSdk={MuxDataSdk} />, { wrapper: Wrapper });
-    const component = getMediaComponents(media).get(MuxDataComponent)!;
+    const component = getMediaComponents(media).get(MuxDataExtension)!;
 
     expect(component.MuxDataSdk).toBe(MuxDataSdk);
 
@@ -62,27 +63,27 @@ describe('MuxData', () => {
 
     rerender(<MuxData />);
 
-    expect(getMediaComponents(media).get(MuxDataComponent)!.disableCookies).toBe(false);
+    expect(getMediaComponents(media).get(MuxDataExtension)!.disableCookies).toBe(false);
   });
 
   it('keeps the component alive when the media host is destroyed while mounted', () => {
     const { media, Wrapper } = setup();
-    const destroy = vi.spyOn(MuxDataComponent.prototype, 'destroy');
+    const destroy = vi.spyOn(MuxDataExtension.prototype, 'destroy');
 
     render(<MuxData />, { wrapper: Wrapper });
-    const component = getMediaComponents(media).get(MuxDataComponent)!;
+    const component = getMediaComponents(media).get(MuxDataExtension)!;
 
     media.destroy();
 
     // The host detaches and unregisters components it doesn't own; this one is
     // owned by the still-mounted `MuxData` and follows the next media.
     expect(destroy).not.toHaveBeenCalled();
-    expect(getMediaComponents(media).get(MuxDataComponent)).toBeUndefined();
+    expect(getMediaComponents(media).get(MuxDataExtension)).toBeUndefined();
 
     const next = new MuxMedia();
 
     addMediaComponent(next, component);
-    expect(getMediaComponents(next).get(MuxDataComponent)).toBe(component);
+    expect(getMediaComponents(next).get(MuxDataExtension)).toBe(component);
 
     destroy.mockRestore();
   });
@@ -94,6 +95,6 @@ describe('MuxData', () => {
 
     unmount();
 
-    expect(getMediaComponents(media).get(MuxDataComponent)).toBeUndefined();
+    expect(getMediaComponents(media).get(MuxDataExtension)).toBeUndefined();
   });
 });

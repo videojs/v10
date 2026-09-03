@@ -1,80 +1,60 @@
-import type { Skin, Styling } from '@app/types';
+import type { Skin, SkinSource, Styling } from '@app/types';
 
-import { CSS_SKIN_TAGS, LIVE_VIDEO_CSS_SKIN_TAGS } from './skin-tags';
+import { packageSkinTag, type SkinPreset, skinPreset } from './skin-tags';
 import { loadAudioStylesheets, loadVideoStylesheets } from './stylesheets';
 
-async function loadVideoCssSkin(skin: Skin): Promise<string> {
-  if (skin === 'default') {
-    await import('@videojs/html/video/skin');
-  } else {
-    await import('@videojs/html/video/minimal-skin');
-  }
-
-  loadVideoStylesheets(skin);
-
-  return CSS_SKIN_TAGS[skin].video;
+export interface HtmlSkinRequest {
+  readonly player: 'video' | 'audio';
+  readonly live: boolean;
+  readonly skin: Skin;
+  readonly styling: Styling;
+  readonly source: SkinSource;
 }
 
-async function loadAudioCssSkin(skin: Skin): Promise<string> {
-  if (skin === 'default') {
-    await import('@videojs/html/audio/skin');
-  } else {
-    await import('@videojs/html/audio/minimal-skin');
-  }
+/** The framework package's skin modules, which register the custom element for each preset and skin. */
+const packageSkins = {
+  'video/default': () => import('@videojs/html/video/skin'),
+  'video/minimal': () => import('@videojs/html/video/minimal-skin'),
+  'live-video/default': () => import('@videojs/html/live-video/skin'),
+  'live-video/minimal': () => import('@videojs/html/live-video/minimal-skin'),
+  'audio/default': () => import('@videojs/html/audio/skin'),
+  'audio/minimal': () => import('@videojs/html/audio/minimal-skin'),
+  'live-audio/default': () => import('@videojs/html/live-audio/skin'),
+  'live-audio/minimal': () => import('@videojs/html/live-audio/minimal-skin'),
+} satisfies Record<`${SkinPreset}/${Skin}`, () => Promise<unknown>>;
 
-  loadAudioStylesheets(skin);
+async function loadPackageSkin({ player, live, skin }: HtmlSkinRequest, preset: SkinPreset): Promise<string> {
+  await packageSkins[`${preset}/${skin}`]();
+  await (player === 'audio' ? loadAudioStylesheets(skin, live) : loadVideoStylesheets(skin, live));
 
-  return CSS_SKIN_TAGS[skin].audio;
+  return packageSkinTag(preset, skin);
 }
 
-async function loadVideoTailwindSkin(skin: Skin): Promise<string> {
-  const { loadSandboxVideoTailwindSkin } = await import('./tailwind-skins');
+async function loadRegistrySkin({ skin }: HtmlSkinRequest, preset: SkinPreset): Promise<string> {
+  const { loadRegistrySkinTag } = await import('./registry-skins');
 
-  return loadSandboxVideoTailwindSkin(skin);
+  return loadRegistrySkinTag(preset, skin);
 }
 
-async function loadAudioTailwindSkin(skin: Skin): Promise<string> {
-  const { loadSandboxAudioTailwindSkin } = await import('./tailwind-skins');
+async function loadAuthoredSkin({ skin, styling }: HtmlSkinRequest, preset: SkinPreset): Promise<string> {
+  const { loadAuthoredHtmlSkinTag } = await import('./authored-skins');
 
-  return loadSandboxAudioTailwindSkin(skin);
+  return loadAuthoredHtmlSkinTag(preset, skin, styling);
 }
-
-async function loadLiveVideoCssSkin(skin: Skin): Promise<string> {
-  if (skin === 'default') {
-    await import('@videojs/html/live-video/skin');
-  } else {
-    await import('@videojs/html/live-video/minimal-skin');
-  }
-
-  loadVideoStylesheets(skin);
-
-  return LIVE_VIDEO_CSS_SKIN_TAGS[skin];
-}
-
-async function loadLiveVideoTailwindSkin(skin: Skin): Promise<string> {
-  const { loadSandboxLiveVideoTailwindSkin } = await import('./tailwind-skins');
-
-  return loadSandboxLiveVideoTailwindSkin(skin);
-}
-
-type VideoSkinOptions = { live?: boolean };
 
 /**
- * Loads and registers the video skin for the given skin / styling combination and returns its custom element tag name.
- * Pass `live: true` to swap in the `live-video` skin variant (same feature set, trimmed time UI).
+ * Loads and registers the skin a page asked for and returns its custom element tag name. The html registry publishes
+ * one CSS flavour, so its `styling` is not consulted; the packages ship CSS only.
  */
-export function loadVideoSkinTag(
-  skin: Skin,
-  styling: Styling,
-  { live = false }: VideoSkinOptions = {}
-): Promise<string> {
-  if (live) {
-    return styling === 'tailwind' ? loadLiveVideoTailwindSkin(skin) : loadLiveVideoCssSkin(skin);
+export function loadHtmlSkinTag(request: HtmlSkinRequest): Promise<string> {
+  const preset = skinPreset(request.player, request.live);
+
+  switch (request.source) {
+    case 'package':
+      return loadPackageSkin(request, preset);
+    case 'registry':
+      return loadRegistrySkin(request, preset);
+    case 'authored':
+      return loadAuthoredSkin(request, preset);
   }
-
-  return styling === 'tailwind' ? loadVideoTailwindSkin(skin) : loadVideoCssSkin(skin);
-}
-
-export function loadAudioSkinTag(skin: Skin, styling: Styling): Promise<string> {
-  return styling === 'tailwind' ? loadAudioTailwindSkin(skin) : loadAudioCssSkin(skin);
 }

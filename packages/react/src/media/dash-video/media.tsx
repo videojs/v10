@@ -1,9 +1,7 @@
 'use client';
 
-import type { DashMediaProps } from '@videojs/media/dom/dash';
-import { DashMedia, dashMediaDefaultProps } from '@videojs/media/dom/dash';
-import type { ReactNode, VideoHTMLAttributes } from 'react';
-import { forwardRef } from 'react';
+import { DashMedia, dashMediaDefaultProps, type DashMediaProps } from '@videojs/dash-video';
+import { forwardRef, type ReactNode, type VideoHTMLAttributes } from 'react';
 
 import { useAttachMedia } from '../../utils/use-attach-media';
 import { useComposedRefs } from '../../utils/use-composed-refs';

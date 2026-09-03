@@ -3,15 +3,15 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { loadDesignSystem } from '../design-system';
-import { diagnoseCompiledCandidate, diagnoseStyleManifest, formatStyleDiagnostic } from '../diagnostics';
-import type { StyleManifest, StyleManifestRule } from '../manifest';
+import { diagnoseCompiledCandidate, diagnoseStyles, formatStyleDiagnostic } from '../diagnostics';
+import type { ResolvedStyles, ResolvedStyleRule } from '../resolved';
 
 const designPath = resolve(import.meta.dirname, 'fixtures/diagnostics.css');
 
 describe('style diagnostics', () => {
   it('rejects peers, implicit ancestors, and unowned groups with actionable messages', () => {
-    const diagnostics = diagnoseStyleManifest(
-      manifest([
+    const diagnostics = diagnoseStyles(
+      resolvedStyles([
         rule('peer', ['peer/dialog', 'peer-data-open/dialog:hidden']),
         rule('ancestor', ['in-data-open:hidden']),
         rule('group', ['group-data-open/menu:block']),
@@ -31,16 +31,16 @@ describe('style diagnostics', () => {
   });
 
   it('allows named groups whose owners and consumers are local', () => {
-    const diagnostics = diagnoseStyleManifest(
-      manifest([rule('owner', ['group/menu']), rule('consumer', ['group-data-open/menu:block'])])
+    const diagnostics = diagnoseStyles(
+      resolvedStyles([rule('owner', ['group/menu']), rule('consumer', ['group-data-open/menu:block'])])
     );
 
     expect(diagnostics).toEqual([]);
   });
 
   it('ignores delimiters inside arbitrary group variant values', () => {
-    const diagnostics = diagnoseStyleManifest(
-      manifest([
+    const diagnostics = diagnoseStyles(
+      resolvedStyles([
         rule('unnamed-owner', ['group']),
         rule('unnamed-consumer', ['group-data-[url=https://example.com/video]:block']),
         rule('named-owner', ['group/menu']),
@@ -52,8 +52,8 @@ describe('style diagnostics', () => {
   });
 
   it('warns for structural selectors but not self state selectors', () => {
-    const diagnostics = diagnoseStyleManifest(
-      manifest([
+    const diagnostics = diagnoseStyles(
+      resolvedStyles([
         rule('safe', ['data-open:block', '[&:fullscreen]:block', 'before:block']),
         rule('complex', [
           'has-[img]:hidden',
@@ -88,8 +88,8 @@ describe('style diagnostics', () => {
   });
 
   it('warns for :has() even when its named group owner is local', () => {
-    const diagnostics = diagnoseStyleManifest(
-      manifest([rule('owner', ['group/thumbnail']), rule('spinner', ['group-has-[img]/thumbnail:block'])])
+    const diagnostics = diagnoseStyles(
+      resolvedStyles([rule('owner', ['group/thumbnail']), rule('spinner', ['group-has-[img]/thumbnail:block'])])
     );
 
     expect(diagnostics).toMatchObject([{ code: 'VJSC_STYLE_COMPLEX_SELECTOR', kind: 'complex-selector' }]);
@@ -118,7 +118,7 @@ describe('style diagnostics', () => {
   });
 });
 
-function rule(token: string, utilities: readonly string[]): StyleManifestRule {
+function rule(token: string, utilities: readonly string[]): ResolvedStyleRule {
   return {
     modulePath: 'test.styles.ts',
     tokenPath: token.split('.'),
@@ -133,6 +133,6 @@ function rule(token: string, utilities: readonly string[]): StyleManifestRule {
   };
 }
 
-function manifest(rules: readonly StyleManifestRule[]): StyleManifest {
+function resolvedStyles(rules: readonly ResolvedStyleRule[]): ResolvedStyles {
   return { modules: new Map(), rules, watchFiles: [] };
 }

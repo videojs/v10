@@ -95,6 +95,16 @@ export function createMenuPopup(): MenuPopupApi {
     );
   }
 
+  function getVerticalScrollbarWidth(content: HTMLElement): number {
+    if (content.scrollHeight <= content.clientHeight) return 0;
+
+    const style = getComputedStyle(content);
+    const inlineBorder =
+      (Number.parseFloat(style.borderInlineStartWidth) || 0) + (Number.parseFloat(style.borderInlineEndWidth) || 0);
+
+    return Math.max(0, content.offsetWidth - content.clientWidth - inlineBorder);
+  }
+
   function measureContent(content: HTMLElement, availableWidth: number | null) {
     const children = getElementChildren(
       content,
@@ -157,8 +167,15 @@ export function createMenuPopup(): MenuPopupApi {
     const contentAvailableWidth = availableWidth === null ? null : Math.max(0, availableWidth - inlinePadding);
     const size = measureContent(current.element, contentAvailableWidth);
 
-    element.style.setProperty(MenuCSSVars.width, `${Math.ceil(size.width + inlinePadding)}px`);
-    element.style.setProperty(MenuCSSVars.height, `${Math.ceil(size.height + blockPadding)}px`);
+    const width = Math.ceil(size.width + inlinePadding);
+    const height = Math.ceil(size.height + blockPadding);
+
+    element.style.setProperty(MenuCSSVars.width, `${width}px`);
+    element.style.setProperty(MenuCSSVars.height, `${height}px`);
+
+    const scrollbarWidth = getVerticalScrollbarWidth(current.element);
+
+    if (scrollbarWidth > 0) element.style.setProperty(MenuCSSVars.width, `${width + scrollbarWidth}px`);
   }
 
   function setElement(next: HTMLElement | null): void {

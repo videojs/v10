@@ -1,20 +1,18 @@
 import { afterAll, beforeAll, describe, expect, it, type MockInstance, vi } from 'vite-plus/test';
 
 /**
- * Tests that composite define files register all expected custom elements and that provider/parent elements are defined
- * before consumer/child elements.
+ * Tests that direct UI define files register one element while preset composites register complete UI blocks.
  *
  * Tests run sequentially. Each dynamically imports a composite define file and checks the batch of
  * `customElements.define()` calls that resulted. Because modules are cached within a test file, shared sub-elements
- * (e.g. slider parts) are only registered by the first composite that imports them — subsequent composites skip them
- * via `safeDefine`. This is intentional and tested.
+ * (e.g. slider parts) are only registered once and subsequent imports skip them via `safeDefine`.
  */
 describe('composite define registration', () => {
   let spy: MockInstance;
 
   /** Tag names registered since `offset` (the call count before an import). */
   function batchSince(offset: number): string[] {
-    return spy.mock.calls.slice(offset).map((call) => call[0] as string);
+    return spy.mock.calls.slice(offset).map(([tag]) => String(tag));
   }
 
   beforeAll(() => {
@@ -80,55 +78,38 @@ describe('composite define registration', () => {
     });
   });
 
-  // ── Slider composites ────────────────────────────────────────────────
+  // ── Exact UI entries ─────────────────────────────────────────────────
 
   describe('ui/time-slider', () => {
-    it('registers media-time-slider before sub-elements', async () => {
+    it('registers only media-time-slider', async () => {
       const before = spy.mock.calls.length;
 
       await import('../ui/time-slider');
       const batch = batchSince(before);
 
-      // Parent slider must be first (provider for sliderContext)
-      expect(batch[0]).toBe('media-time-slider');
-
-      // All sub-elements registered (first composite to claim them)
-      expect(batch).toContain('media-slider-buffer');
-      expect(batch).toContain('media-slider-fill');
-      expect(batch).toContain('media-slider-thumb');
-      expect(batch).toContain('media-slider-track');
-      expect(batch).toContain('media-slider-value');
-      expect(batch).not.toContain('media-time-slider-chapters');
-      expect(batch).not.toContain('media-time-slider-chapter-title');
+      expect(batch).toEqual(['media-time-slider']);
     });
   });
 
   describe('ui/time-slider-chapters', () => {
-    it('registers the opt-in chapter elements', async () => {
+    it('registers only the chapter collection', async () => {
       const before = spy.mock.calls.length;
 
       await import('../ui/time-slider-chapters');
       const batch = batchSince(before);
 
-      expect(batch).toContain('media-time-slider-chapters');
-      expect(batch).toContain('media-time-slider-chapter-title');
+      expect(batch).toEqual(['media-time-slider-chapters']);
     });
   });
 
   describe('ui/volume-slider', () => {
-    it('registers media-volume-slider and skips already-defined sub-elements', async () => {
+    it('registers only media-volume-slider', async () => {
       const before = spy.mock.calls.length;
 
       await import('../ui/volume-slider');
       const batch = batchSince(before);
 
-      expect(batch).toContain('media-volume-slider');
-
-      // Sub-elements already registered by time-slider — safeDefine skips them
-      expect(batch).not.toContain('media-slider-fill');
-      expect(batch).not.toContain('media-slider-thumb');
-      expect(batch).not.toContain('media-slider-track');
-      expect(batch).not.toContain('media-slider-value');
+      expect(batch).toEqual(['media-volume-slider']);
     });
   });
 
@@ -139,66 +120,53 @@ describe('composite define registration', () => {
       await import('../ui/slider');
       const batch = batchSince(before);
 
-      expect(batch).toContain('media-slider');
+      expect(batch).toEqual(['media-slider']);
     });
   });
 
-  // ── Other composites ─────────────────────────────────────────────────
+  // ── Other exact entries ──────────────────────────────────────────────
 
   describe('ui/time', () => {
-    it('registers media-time before sub-elements', async () => {
+    it('registers only media-time', async () => {
       const before = spy.mock.calls.length;
 
       await import('../ui/time');
       const batch = batchSince(before);
 
-      expect(batch[0]).toBe('media-time');
-      expect(batch).toContain('media-time-group');
-      expect(batch).toContain('media-time-separator');
+      expect(batch).toEqual(['media-time']);
     });
   });
 
   describe('ui/alert-dialog', () => {
-    it('registers media-alert-dialog before sub-elements', async () => {
+    it('registers only media-alert-dialog', async () => {
       const before = spy.mock.calls.length;
 
       await import('../ui/alert-dialog');
       const batch = batchSince(before);
 
-      expect(batch[0]).toBe('media-alert-dialog');
-      expect(batch).toContain('media-dialog-backdrop');
-      expect(batch).toContain('media-dialog-close');
-      expect(batch).toContain('media-dialog-description');
-      expect(batch).toContain('media-dialog-popup');
-      expect(batch).toContain('media-dialog-title');
+      expect(batch).toEqual(['media-alert-dialog']);
     });
   });
 
   describe('ui/error-dialog', () => {
-    it('registers media-error-dialog and reuses dialog parts', async () => {
+    it('registers only media-error-dialog', async () => {
       const before = spy.mock.calls.length;
 
       await import('../ui/error-dialog');
       const batch = batchSince(before);
 
-      expect(batch).toContain('media-error-dialog');
-      expect(batch).not.toContain('media-dialog-backdrop');
-      expect(batch).not.toContain('media-dialog-close');
-      expect(batch).not.toContain('media-dialog-popup');
+      expect(batch).toEqual(['media-error-dialog']);
     });
   });
 
   describe('ui/controls', () => {
-    it('registers media-controls before sub-elements', async () => {
+    it('registers only media-controls', async () => {
       const before = spy.mock.calls.length;
 
       await import('../ui/controls');
       const batch = batchSince(before);
 
-      expect(batch[0]).toBe('media-controls');
-      expect(batch).toContain('media-controls-backdrop');
-      expect(batch).toContain('media-controls-content');
-      expect(batch).toContain('media-controls-group');
+      expect(batch).toEqual(['media-controls']);
     });
   });
 

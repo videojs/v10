@@ -75,6 +75,10 @@ Choose a variation based on the source you already have:
 HlsBackgroundVideo plays an HLS video without adding controls, audio, or captions. Pass a complete HLS URL through `src`:
 
 <FrameworkCase frameworks={["react"]}>
+```bash
+pnpm add @videojs/react @videojs/spf
+```
+
 ```tsx
 import { HlsBackgroundVideo } from '@videojs/react/media/hls-background-video';
 
@@ -88,6 +92,10 @@ import { HlsBackgroundVideo } from '@videojs/react/media/hls-background-video';
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
+```bash
+pnpm add @videojs/html @videojs/spf
+```
+
 ```html
 <script type="module">
   import '@videojs/html/media/hls-background-video';
@@ -106,6 +114,8 @@ Your HLS stream must be unencrypted and use fragmented MP4 video segments, also 
 ### Play a Mux HLS URL
 
 MuxBackgroundVideo is a Mux-named alias for HlsBackgroundVideo. Pass a complete Mux HLS URL, not a bare playback ID or `source` object:
+
+It uses the same `@videojs/spf` installation shown for HlsBackgroundVideo above.
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx

@@ -80,7 +80,7 @@ Here's a standard v8 setup: one file, captions, a poster, and the default skin.
 v10 ships web components, so the migration keeps its declarative feel. One script from the CDN gives you the video <DocsLink slug="concepts/presets">preset</DocsLink>: a player, a skin, and a media element that already fit together.
 
 ```html
-<script type="module" src="{{VJS10_HTML_CDN_BASE}}/video.js"></script>
+<script type="module" src="{{VJS10_CDN_BASE}}/video.js"></script>
 
 <video-player poster="/poster.jpg">
   <video-skin class="aspect-video">
@@ -106,7 +106,7 @@ Four differences worth understanding, because each one is a pattern you'll see a
 - **The poster is player metadata, not a media attribute.** Set `poster` on `<video-player>`, and the skin, not the browser, controls how it appears. For more advanced control (like supplying your own image element), see <DocsLink slug="how-to/add-a-poster-and-loading-placeholder">Add a poster and loading placeholder</DocsLink>.
 - **Your `<track>` elements don't change.** Captions, subtitles, chapters, and thumbnails are all still tracks, and the skin shows the matching controls when it finds them.
 
-There's also a minimal skin, closer to v8's control bar if the default's frosted look is too much of a change. Swap `cdn/video.js` for `cdn/video-minimal.js`.
+There's also a minimal skin, closer to v8's control bar if the default's frosted look is too much of a change. Swap `video.js` for `video-minimal.js`.
 
 </FrameworkCase>
 
@@ -283,11 +283,25 @@ v10 replaces the whole mechanism with a choice you make in markup. You pick the 
 
 Each needs its own import.
 
+Package-manager installations also need the matching adapter. The default HLS component shown below uses
+`@videojs/spf`; HlsJsVideo and the default Mux components use `@videojs/hls.js`; DASH uses `@videojs/dash.js`; Vimeo
+uses `@videojs/vimeo`; and Shaka and Wistia use `@videojs/shaka` and `@videojs/wistia`.
+
 <FrameworkCase frameworks={["html"]}>
 For HLS from the CDN:
 
 ```html
-<script type="module" src="{{VJS10_HTML_CDN_BASE}}/media/hls-video.js"></script>
+<script type="module" src="{{VJS10_CDN_BASE}}/media/hls-video.js"></script>
+```
+
+With a package manager, install SPF and import the HTML registration instead:
+
+```bash
+npm install @videojs/html @videojs/spf
+```
+
+```ts
+import '@videojs/html/media/hls-video';
 ```
 
 Then swap the tag:
@@ -303,6 +317,10 @@ Then swap the tag:
 
 <FrameworkCase frameworks={["react"]}>
 For HLS, import the component and swap it for `<Video>`:
+
+```bash
+npm install @videojs/react @videojs/spf
+```
 
 ```tsx
 import { HlsVideo } from '@videojs/react/media/hls-video';

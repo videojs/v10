@@ -7,8 +7,11 @@ import { resolveImports } from './resolve-css-imports.ts';
 import type { BuildPlugin } from './types.ts';
 
 interface CopyCssPluginOptions {
-  skinsDir: string;
   outDir: string;
+  /** Package root whose CSS files are copied. Defaults to the current working directory. */
+  rootDir?: string;
+  /** Glob, relative to `rootDir`, selecting the CSS files to copy. Defaults to every `.css` file under `src`. */
+  pattern?: string;
   inline?: boolean;
   rebuild?: boolean;
   /**
@@ -27,8 +30,9 @@ function mirrorSrcTree(file: string): string {
 
 export function copyCssPlugin(options: CopyCssPluginOptions): BuildPlugin {
   const {
-    skinsDir,
     outDir,
+    rootDir = process.cwd(),
+    pattern = 'src/**/*.css',
     inline = true,
     rebuild = true,
     rename = mirrorSrcTree,
@@ -38,8 +42,12 @@ export function copyCssPlugin(options: CopyCssPluginOptions): BuildPlugin {
   let poll: ReturnType<typeof setInterval> | undefined;
   let state = new Map<string, string>();
 
+  function getSourceCssFiles() {
+    return globSync(pattern, { cwd: rootDir });
+  }
+
   function getCssFiles() {
-    return new Set([...globSync('src/**/*.css'), ...globSync(join(skinsDir, '**/*.css'))]);
+    return new Set(getSourceCssFiles().map((file) => join(rootDir, file)));
   }
 
   function getState() {
@@ -53,15 +61,16 @@ export function copyCssPlugin(options: CopyCssPluginOptions): BuildPlugin {
   }
 
   function writeCss() {
-    for (const file of globSync('src/**/*.css')) {
+    for (const file of getSourceCssFiles()) {
       const target = rename(file);
       if (target === null) continue;
 
-      const content = readFileSync(file, 'utf-8');
-      let output = inline ? resolveImports(content, dirname(file), skinsDir, omitImport) : content;
+      const source = join(rootDir, file);
+      const content = readFileSync(source, 'utf-8');
+      let output = inline ? resolveImports(content, dirname(source), omitImport) : content;
 
       if (minify) {
-        output = transform({ filename: file, code: Buffer.from(output), minify: true }).code.toString();
+        output = transform({ filename: source, code: Buffer.from(output), minify: true }).code.toString();
       }
 
       const outFile = join(outDir, target);

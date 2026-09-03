@@ -1,7 +1,7 @@
 import {
   type ComponentDefinition,
-  type ComponentManifest,
-  type ComponentRecord,
+  type ComponentPartDefinition,
+  type ComponentParts,
   type EmptyProps,
   hasParts,
   type InferProps,
@@ -41,9 +41,13 @@ export type PropsWithChildren<CoreProps extends object = EmptyProps> = Props<Cor
 /** Props accepted by another VJSC component. Targets replace this with their public props export. */
 export type PropsOf<Component extends (props: never) => unknown> = NonNullable<Parameters<Component>[0]>;
 
-type ComponentAttributes<Props extends object> = Omit<PropsWithChildren<Props>, 'className'> & {
-  className?: ClassNameValue;
-};
+/** Compile-time props whose meaning is owned by the selected framework target. */
+export type CompilerDirectives = { [Name in `$${string}`]?: unknown };
+
+type ComponentAttributes<Props extends object> = Omit<PropsWithChildren<Props>, 'className'> &
+  CompilerDirectives & {
+    className?: ClassNameValue;
+  };
 
 export interface SlotProps {
   name?: string | undefined;
@@ -61,10 +65,11 @@ export interface TemplatePartProps extends BaseProps {
 }
 
 export interface TextProps extends BaseProps {
-  /** Translation key used by framework targets when the children provide fallback text. */
+  /**
+   * Translation key for this text. The compiler only carries it; the selected target decides how a token is looked up
+   * and what renders when it is absent, with the children as fallback text.
+   */
   token?: string | undefined;
-  /** Optional data-part marker consumed by generated component behavior. */
-  'data-part'?: string | undefined;
 }
 
 export type BoxProps = BaseProps;
@@ -75,23 +80,23 @@ export interface Component<Props extends object> {
 }
 
 type InferComponentProps<Node> =
-  Node extends ComponentDefinition<infer Props, ComponentRecord | undefined> ? Props : never;
+  Node extends ComponentPartDefinition<infer Props, ComponentParts | undefined> ? Props : never;
 
 type ResolvedComponentProps<Node> = [NonNullable<InferComponentProps<Node>>] extends [never]
   ? EmptyProps
   : NonNullable<InferComponentProps<Node>>;
 
-type CompoundComponent<Parts extends ComponentRecord> = {
-  [K in keyof Parts & string]: Parts[K] extends ComponentDefinition<object, infer ChildParts>
-    ? ChildParts extends ComponentRecord
+type CompoundComponent<Parts extends ComponentParts> = {
+  [K in keyof Parts & string]: Parts[K] extends ComponentPartDefinition<object, infer ChildParts>
+    ? ChildParts extends ComponentParts
       ? CompoundComponent<ChildParts>
       : Component<ResolvedComponentProps<Parts[K]>>
     : Component<ResolvedComponentProps<Parts[K]>>;
 };
 
-export type CreateComponentResult<M> =
-  M extends ComponentDefinition<object, infer Parts>
-    ? Parts extends ComponentRecord
+export type ComponentFrom<M> =
+  M extends ComponentPartDefinition<object, infer Parts>
+    ? Parts extends ComponentParts
       ? CompoundComponent<Parts>
       : Component<InferProps<M>>
     : Component<InferProps<M>>;
@@ -113,19 +118,23 @@ export const Template = Object.assign(createRuntimeComponentPart<TemplateProps>(
 });
 export const Text = createRuntimeComponentPart<TextProps>('Text', null);
 
-export function createComponent<Props extends object>(manifest: ComponentManifest<Props, undefined>): Component<Props>;
-export function createComponent<const Parts extends ComponentRecord>(
-  manifest: ComponentManifest<object, Parts>
+export function createComponent<Props extends object>(
+  definition: ComponentDefinition<Props, undefined>
+): Component<Props>;
+export function createComponent<const Parts extends ComponentParts>(
+  definition: ComponentDefinition<object, Parts>
 ): CompoundComponent<Parts>;
-export function createComponent(manifest: ComponentManifest): Component<object> | Record<string, unknown> {
-  if (!hasParts(manifest)) {
-    return createRuntimeComponentPart(manifest.name, null);
+export function createComponent(
+  definition: ComponentDefinition<object, ComponentParts | undefined>
+): Component<object> | Record<string, unknown> {
+  if (!hasParts(definition)) {
+    return createRuntimeComponentPart(definition.name, null);
   }
 
-  return createComponentParts(manifest.name, manifest.parts);
+  return createComponentParts(definition.name, definition.parts);
 }
 
-function createComponentParts(name: string, parts: ComponentRecord, prefix = ''): Record<string, unknown> {
+function createComponentParts(name: string, parts: ComponentParts, prefix = ''): Record<string, unknown> {
   const compound: Record<string, unknown> = {};
 
   for (const part of Object.keys(parts)) {

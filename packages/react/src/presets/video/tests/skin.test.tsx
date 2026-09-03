@@ -34,10 +34,10 @@ describe('VideoSkin', () => {
       }),
     });
 
-    const controls = container.querySelector('.media-controls--root');
-    const controlsBackdrop = container.querySelector('.media-controls__backdrop');
-    const error = container.querySelector('.media-dialog__popup');
-    const errorBackdrop = container.querySelector('.media-dialog__backdrop');
+    const controls = container.querySelector('.video-controls');
+    const controlsBackdrop = container.querySelector('.video-controls-backdrop');
+    const error = container.querySelector('[role="alertdialog"]');
+    const errorBackdrop = container.querySelector('.media-dialog-backdrop');
 
     expect(controlsBackdrop).not.toBeNull();
     expect(controlsBackdrop?.parentElement).toBe(controls?.parentElement);
@@ -45,14 +45,14 @@ describe('VideoSkin', () => {
     expect(errorBackdrop).not.toBeNull();
     expect(errorBackdrop?.parentElement).toBe(error?.parentElement);
     expect(error?.contains(errorBackdrop)).toBe(false);
-    expect(container.querySelector('.media-input-indicator')).not.toBeNull();
+    expect(container.querySelector('.video-status-indicators')).not.toBeNull();
   });
 
   it('draws its own poster image', () => {
     const { container } = render(<VideoSkin />, { wrapper: wrapper() });
 
     // The skin reaches the poster as a direct child, so it carries no class of its own.
-    const img = container.querySelector('.media-skin--default > img');
+    const img = container.querySelector('.media-skin[data-preset="video"] > img');
 
     expect(img?.getAttribute('src')).toBe('poster.jpg');
   });
@@ -67,7 +67,7 @@ describe('VideoSkin', () => {
 
     const custom = container.querySelector('[data-testid="custom"]');
 
-    expect(container.querySelectorAll('.media-skin--default > img')).toHaveLength(1);
+    expect(container.querySelectorAll('.media-skin[data-preset="video"] > img')).toHaveLength(1);
     expect(custom?.getAttribute('src')).toBe('poster.jpg');
     expect(custom?.getAttribute('style')).toContain('poster-placeholder.jpg');
   });
@@ -77,7 +77,7 @@ describe('VideoSkin', () => {
       wrapper: wrapper(),
     });
 
-    expect(container.querySelector('.media-skin--default > img')).toBeNull();
+    expect(container.querySelector('.media-skin[data-preset="video"] > img')).toBeNull();
 
     const custom = container.querySelector('[data-testid="custom"]');
 

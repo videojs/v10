@@ -1,25 +1,47 @@
 @import "tailwindcss" source(none);
+@import "./_generated/styles.css";
 
 @source "../app";
 @source "../templates";
-/*
- * Normally the Tailwind skin would be ejected into the consuming project.
- * @videojs/skins is private, so the sandbox scans the copies bundled into the
- * public packages. Keep these paths narrow: scanning either package root follows
- * workspace symlinks across thousands of generated files and blocks cold requests.
- */
-@source "../node_modules/@videojs/html/dist/default/define/audio";
-@source "../node_modules/@videojs/html/dist/default/define/live-audio";
-@source "../node_modules/@videojs/html/dist/default/define/live-video";
-@source "../node_modules/@videojs/html/dist/default/define/video";
-@source "../node_modules/@videojs/html/dist/default/skins/dist/default";
-@source "../node_modules/@videojs/react/dist/default/presets";
-@source "../node_modules/@videojs/react/dist/default/skins/dist/default";
+@source "./_generated/components";
+@source "./_generated/html";
 
+/* The shell's scheme control pins `data-color-scheme`; without it the operating system decides. */
 :root {
   color-scheme: light dark;
 }
 
+:root[data-color-scheme="light"] {
+  color-scheme: light;
+}
+
+:root[data-color-scheme="dark"] {
+  color-scheme: dark;
+}
+
+/* `dark:` follows the resolved scheme, so the control and the operating system drive the same switch. */
+@custom-variant dark {
+  &:where(:root[data-color-scheme="dark"], :root[data-color-scheme="dark"] *) {
+    @slot;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    &:where(:root:not([data-color-scheme="light"]), :root:not([data-color-scheme="light"]) *) {
+      @slot;
+    }
+  }
+}
+
 @theme {
   --font-sans: InterVariable, Inter, ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+  video-player,
+  live-video-player,
+  audio-player,
+  live-audio-player,
+  media-i18n {
+    display: contents;
+  }
 }

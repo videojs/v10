@@ -101,6 +101,40 @@ afterEach(() => {
 });
 
 describe('ControlsElement', () => {
+  it('keeps controls visible without controls state when requested', async () => {
+    const controls = createDefinedElement(ControlsElement);
+    const content = createDefinedElement(ControlsContentElement);
+
+    controls.visibility = 'always';
+    controls.append(content);
+    document.body.append(controls);
+
+    await controls.updateComplete;
+
+    expect(content.hasAttribute('data-visible')).toBe(true);
+    expect(content.hasAttribute('data-user-active')).toBe(true);
+  });
+
+  it('keeps controls visible while preserving user activity when requested', async () => {
+    const provider = document.createElement('test-controls-player-provider') as TestPlayerProviderElement;
+    const controls = createDefinedElement(ControlsElement);
+    const content = createDefinedElement(ControlsContentElement);
+
+    controls.visibility = 'always';
+    controls.append(content);
+    document.body.append(provider);
+    provider.append(controls);
+
+    await controls.updateComplete;
+
+    provider.setVisible(false);
+
+    await waitForAssertion(() => {
+      expect(content.hasAttribute('data-visible')).toBe(true);
+      expect(content.hasAttribute('data-user-active')).toBe(false);
+    });
+  });
+
   it('keeps interactivity on the content rather than the context host', async () => {
     const provider = document.createElement('test-controls-player-provider') as TestPlayerProviderElement;
     const controls = createDefinedElement(ControlsElement);

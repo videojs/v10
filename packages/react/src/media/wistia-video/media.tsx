@@ -1,9 +1,5 @@
 'use client';
 
-import type { WistiaMediaProps, WistiaPlayer, WistiaSource } from '@videojs/media/dom/wistia';
-// In a browser this entry is where `@wistia/wistia-player` is imported, so the tag below cannot outrun its
-// definition. Off one it resolves to the server bundle, which reaches for none of it and leaves the tag to
-// render as the plain markup a client then hydrates.
 import {
   normalizeWistiaPlayer,
   parseWistiaMediaId,
@@ -11,10 +7,24 @@ import {
   WISTIA_PLAYER_TAG,
   wistiaAttributes,
   wistiaMediaOptions,
+  type WistiaMediaProps,
+  type WistiaPlayer,
   wistiaPlayerStyle,
-} from '@videojs/media/dom/wistia';
-import type { ForwardRefExoticComponent, HTMLAttributes, RefAttributes, RefCallback } from 'react';
-import { createElement, forwardRef, useCallback, useState } from 'react';
+  type WistiaSource,
+} from '@videojs/wistia-video';
+// In a browser this entry is where `@wistia/wistia-player` is imported, so the tag below cannot outrun its
+// definition. Off one it resolves to the server bundle, which reaches for none of it and leaves the tag to
+// render as the plain markup a client then hydrates.
+import {
+  createElement,
+  forwardRef,
+  type ForwardRefExoticComponent,
+  type HTMLAttributes,
+  type RefAttributes,
+  type RefCallback,
+  useCallback,
+  useState,
+} from 'react';
 
 import { useMediaAttach } from '../../player/context';
 import { useComposedRefs } from '../../utils/use-composed-refs';
@@ -26,7 +36,7 @@ export interface WistiaVideoProps extends Partial<Omit<WistiaMediaProps, 'source
 
 /**
  * Wistia is the one media here that ships a web component of its own, so this renders that component rather than a
- * player of its own making, and `@videojs/media/dom/wistia` registers it statically — the element the ref hands back is
+ * player of its own making, and `@videojs/wistia-video` registers it statically — the element the ref hands back is
  * already a Wistia player. Wistia's own React wrapper defines it from an effect, a tick too late: the store reads a
  * media once, as it attaches, and a bare `HTMLElement` is a media that cannot seek, buffer, or name a source.
  *

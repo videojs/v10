@@ -3,10 +3,10 @@ import { registerI18n, resetI18nRegistry } from '@videojs/core/i18n';
 import { createRef } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
+import { PlaybackRateRadioGroup } from '..';
 import { I18nProvider } from '../../../i18n';
 import { createPlayerWrapper } from '../../../testing/mocks';
 import { Menu } from '../../menu';
-import { PlaybackRateRadioGroup, type PlaybackRateRadioGroupItemState } from '../playback-rate-radio-group';
 
 afterEach(() => {
   resetI18nRegistry();
@@ -29,11 +29,13 @@ function renderPlaybackRateRadioGroup({
   const { Wrapper } = createPlayerWrapper({ playbackRates, playbackRate, setPlaybackRate });
   const content = (
     <Menu.Root defaultOpen>
-      <Menu.Popup>
-        <Menu.Content>
-          {group ?? <PlaybackRateRadioGroup renderItem={(props) => <Menu.RadioItem {...props} />} />}
-        </Menu.Content>
-      </Menu.Popup>
+      <PlaybackRateRadioGroup.Root>
+        <Menu.Popup>
+          <Menu.Content>
+            {group ?? <PlaybackRateRadioGroup.Options renderItem={(props) => <Menu.RadioItem {...props} />} />}
+          </Menu.Content>
+        </Menu.Popup>
+      </PlaybackRateRadioGroup.Root>
     </Menu.Root>
   );
 
@@ -44,11 +46,11 @@ function renderPlaybackRateRadioGroup({
 
 describe('PlaybackRateRadioGroup', () => {
   it('renders generated radio item props and item state', () => {
-    const states: PlaybackRateRadioGroupItemState[] = [];
+    const states: PlaybackRateRadioGroup.ItemState[] = [];
 
     renderPlaybackRateRadioGroup({
       group: (
-        <PlaybackRateRadioGroup
+        <PlaybackRateRadioGroup.Options
           renderItem={(props, state) => {
             states.push(state);
             return <Menu.RadioItem {...props} />;
@@ -82,7 +84,7 @@ describe('PlaybackRateRadioGroup', () => {
 
     renderPlaybackRateRadioGroup({
       group: (
-        <PlaybackRateRadioGroup
+        <PlaybackRateRadioGroup.Options
           ref={ref}
           data-testid="group"
           className={(state) => `rate-${state.availability}`}
@@ -115,7 +117,7 @@ describe('PlaybackRateRadioGroup', () => {
   it('supports custom group and item roots', () => {
     renderPlaybackRateRadioGroup({
       group: (
-        <PlaybackRateRadioGroup
+        <PlaybackRateRadioGroup.Options
           render={(props, state) => <section {...props} data-value={state.value} />}
           renderItem={(props, state) => (
             <Menu.RadioItem {...props}>
