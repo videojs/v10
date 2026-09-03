@@ -24,13 +24,22 @@ jobs:
       id-token: write
 
     steps:
+      # release-please needs a token other than GITHUB_TOKEN so the release
+      # branch push, the release PR, and the published releases still trigger
+      # release-pr.yml, CI, and changelog-prose.yml
+      # (see https://github.com/peter-evans/create-pull-request/issues/48).
+      # A GitHub App installation token attributes the release PRs and tags to
+      # the app's bot user rather than a maintainer.
+      - uses: actions/create-github-app-token@v2
+        id: app-token
+        with:
+          app-id: ${{ vars.RELEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+
       - uses: googleapis/release-please-action@v4
         id: release
         with:
-          # Use a fine grained token for release-please so this workflow
-          # can trigger other workflows like release-pr.yml
-          # see https://github.com/peter-evans/create-pull-request/issues/48
-          token: ${{ secrets.V10_WORKFLOW_TRIGGER_WORKFLOW_GH_TOKEN }}
+          token: ${{ steps.app-token.outputs.token }}
           config-file: .github/release-please/release-please-config.json
           manifest-file: .github/release-please/.release-please-manifest.json
 
@@ -61,7 +70,8 @@ jobs:
 
       - name: Verify release checkout
         if: ${{ steps.release.outputs.releases_created == 'true' }}
-        run: node -e "process.exit(require('./packages/cdn/package.json').version === process.env.VERSION ? 0 : 1)"
+        run: |
+          node -e "process.exit(require('./packages/cdn/package.json').version === process.env.VERSION ? 0 : 1)"
         env:
           VERSION: ${{ steps.release.outputs['packages/cdn--version'] }}
 
