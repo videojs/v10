@@ -62,7 +62,13 @@ try {
   if (server) await close(server);
 }
 
-await runCommand('git', ['check-ignore', '--quiet', 'apps/sandbox/app/_generated'], workspaceDir);
+// CI containers check the repository out under another user, and git refuses such trees unless the directory is
+// marked safe, so mark it for this one command rather than requiring a global config step.
+await runCommand(
+  'git',
+  ['-c', `safe.directory=${workspaceDir}`, 'check-ignore', '--quiet', 'apps/sandbox/app/_generated'],
+  workspaceDir
+);
 
 console.log('Installed 8 React Tailwind, 8 React CSS, and 8 HTML source-owned Sandbox skins from the hosted registry.');
 
