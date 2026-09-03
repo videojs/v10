@@ -140,6 +140,10 @@ export class ThumbnailElement extends UIElement {
     // in later never shows up as a mutation. The slot announces it with `slotchange` instead.
     this.#slots = new AbortController();
     listen(this, 'slotchange', () => this.requestUpdate(), { signal: this.#slots.signal });
+
+    // Disconnecting let go of the image, and reconnecting alone schedules no update,
+    // so a moved element adopts its image and reapplies the source here.
+    this.requestUpdate();
   }
 
   override disconnectedCallback(): void {
