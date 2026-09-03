@@ -22,11 +22,13 @@ export default defineConfig({
     },
   ],
   // The app folder is not a workspace package, so run vite from the e2e package, which owns the dependency, and point
-  // it at the app config; the config resolves its own root.
+  // it at the app config; the config resolves its own root. npx walks up to the binary the way the old layout relied on.
   webServer: {
-    command: 'pnpm exec vite --config suites/player/app/vite.config.ts --port 5180',
+    command: 'npx vite --config suites/player/app/vite.config.ts --port 5180',
     cwd: resolve(import.meta.dirname, '../..'),
     port: 5180,
+    stdout: 'pipe',
+    stderr: 'pipe',
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
   },
