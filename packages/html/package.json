@@ -24,6 +24,7 @@
   "type": "module",
   "sideEffects": [
     "./dist/*/define/**/*.js",
+    "./dist/*/internal/skins/*/register.js",
     "./dist/*/i18n/index.js",
     "./dist/*/i18n/locales/*/register.js",
     "./dist/*/icons/element/**/*.js",
