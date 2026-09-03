@@ -1060,6 +1060,21 @@ function extractStaticProperties(filePath: string, project: OxcProject): StaticM
   return properties;
 }
 
+/** The tag name of the first JSX element a render callback returns, or undefined when it renders none. */
+function renderedRootTag(render: Expression): string | undefined {
+  let tag: string | undefined;
+
+  walkAst(render, (node) => {
+    if (tag || node.type !== 'JSXElement') return;
+
+    const name = node.openingElement.name;
+
+    if (name.type === 'JSXIdentifier') tag = name.name;
+  });
+
+  return tag;
+}
+
 function extractReactReference(
   monorepoRoot: string,
   source: MediaElementSource,
@@ -1113,6 +1128,34 @@ function extractReactReference(
         if (name === 'HTMLAudioElement') target = 'audio';
 
         if (name === 'HTMLIFrameElement') target = 'iframe';
+      }
+
+      // `createMediaComponent(Adapter, render)` from `@videojs/react`: the target is whatever element `render` returns,
+      // native video/audio props are spread onto it, and props sync against the adapter's static `defaultProps`.
+      if (
+        initializer.type === 'CallExpression' &&
+        initializer.callee.type === 'Identifier' &&
+        initializer.callee.name === 'createMediaComponent'
+      ) {
+        const [adapter, renderer] = initializer.arguments;
+        const rootTag = renderer && renderer.type !== 'SpreadElement' ? renderedRootTag(renderer) : undefined;
+
+        if (rootTag === 'video' || rootTag === 'audio' || rootTag === 'iframe') {
+          target = rootTag;
+          acceptsNativeProps = rootTag !== 'iframe';
+        }
+
+        if (adapter?.type === 'Identifier') {
+          defaultsExpression = {
+            type: 'MemberExpression',
+            object: adapter,
+            property: { type: 'Identifier', name: 'defaultProps', start: adapter.start, end: adapter.end },
+            computed: false,
+            optional: false,
+            start: adapter.start,
+            end: adapter.end,
+          } as Expression;
+        }
       }
     }
 

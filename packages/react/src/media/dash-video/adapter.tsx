@@ -1,30 +1,20 @@
 'use client';
 
-import { DashAdapter, type DashAdapterProps } from '@videojs/dash-video';
-import { forwardRef, type ReactNode, type VideoHTMLAttributes } from 'react';
+import { DashAdapter } from '@videojs/dash-video';
 
-import { useAttachMedia } from '../../utils/use-attach-media';
-import { useComposedRefs } from '../../utils/use-composed-refs';
-import { useMediaInstance } from '../../utils/use-media-instance';
-import { useSyncProps } from '../../utils/use-sync-props';
+import { createMediaComponent, type MediaComponentProps } from '../create-media-component';
 
-export interface DashVideoProps
-  extends Omit<VideoHTMLAttributes<HTMLVideoElement>, keyof DashAdapterProps>, Partial<DashAdapterProps> {
-  children?: ReactNode;
-}
+export type DashVideoProps = MediaComponentProps<typeof DashAdapter>;
 
-export const DashVideo = forwardRef<HTMLVideoElement, DashVideoProps>(function DashVideo({ children, ...props }, ref) {
-  const media = useMediaInstance(DashAdapter);
-  const attachRef = useAttachMedia(media);
-  const composedRef = useComposedRefs(attachRef, ref);
-  const htmlProps = useSyncProps(media, props, DashAdapter.defaultProps);
-
-  return (
-    <video ref={composedRef} {...htmlProps}>
+export const DashVideo = createMediaComponent(
+  DashAdapter,
+  ({ props, children, ref }) => (
+    <video {...props} ref={ref}>
       {children}
     </video>
-  );
-});
+  ),
+  { displayName: 'DashVideo' }
+);
 
 export namespace DashVideo {
   export type Props = DashVideoProps;
