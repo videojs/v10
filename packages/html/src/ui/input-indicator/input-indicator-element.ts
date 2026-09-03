@@ -16,7 +16,7 @@ import type { PropertyValues } from '@videojs/element';
 import { ContextConsumer } from '@videojs/element/context';
 import type { State as StoreState } from '@videojs/store';
 
-import { containerContext, playerContext } from '../../player/context';
+import { type ContainerContextConsumer, containerContext, playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
 import { UIElement } from '../ui-element';
 import type { LiveIndicator } from './live-indicator';
@@ -44,7 +44,7 @@ export abstract class InputIndicatorElement<IndicatorState extends IndicatorLife
   protected abstract syncCoreProps(): void;
 
   protected readonly player = new PlayerController(this, playerContext);
-  protected readonly container = new ContextConsumer(this, {
+  protected readonly container: ContainerContextConsumer = new ContextConsumer(this, {
     context: containerContext,
     callback: () => this.#reconnect(),
     subscribe: true,

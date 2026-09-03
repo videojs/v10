@@ -4,9 +4,6 @@
     "composite": false,
     "incremental": false,
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
-    "paths": {
-      "@/*": ["./src/*"]
-    },
     "useDefineForClassFields": false
   },
   "include": ["src/**/*.ts"]

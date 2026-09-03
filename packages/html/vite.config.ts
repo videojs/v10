@@ -27,8 +27,6 @@ const skinsDir = resolve(packageDir, '../skins/src');
 /** The light-DOM sheet every non-background skin pulls in. Kept out of the shadow sheets. */
 const globalCss = resolve(packageDir, 'src/define/global.css');
 
-const srcDir = new URL('./src', import.meta.url).pathname;
-const srcAlias = { '@': srcDir };
 const localeTags = [...LOCALES, ...localeAliases(LOCALES)];
 
 const defineEntries = Object.fromEntries(
@@ -90,7 +88,6 @@ const createPackConfig = (mode: PackageBuildMode): PackUserConfig => ({
   deps: {
     alwaysBundle: [/^@videojs\/icons/, /^@videojs\/skins/],
   },
-  alias: srcAlias,
   plugins: [
     copyCssPlugin({ skinsDir, outDir: `dist/${mode}` }),
     inlineCssPlugin({ skinsDir, minify: !isDevBuildMode(mode) }),
@@ -257,7 +254,6 @@ for (const mode of cdnBuildModes) {
       ],
     },
     outDir: cdnOutDir,
-    alias: srcAlias,
     define: {
       __DEV__: isProd ? 'false' : 'true',
     },
@@ -317,6 +313,13 @@ export default defineConfig({
         // inspect files emitted by the other config. They remain outputs only.
         input: [...cachedTaskInputs, '!src/cdn/locales/', '!src/cdn/locales/**', '!cdn/', '!cdn/**'],
         output: ['src/cdn/locales/**', 'cdn/**'],
+      },
+      'check:public-types': {
+        // Compiles a strict consumer (`skipLibCheck: false`) against the emitted declarations through the package
+        // `exports` map. The source typecheck cannot see what the dts pipeline emits, so this is the only place a
+        // consumer-facing declaration error surfaces before publish.
+        command: 'tsgo --project tests/public-types/tsconfig.json',
+        dependsOn: ['build'],
       },
       'test:ci': packageTestTask(),
     },
