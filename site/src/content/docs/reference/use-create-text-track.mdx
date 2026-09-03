@@ -1,0 +1,68 @@
+---
+title: useCreateTextTrack
+description: Hook to create a programmatic text track for the current media
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+
+`useCreateTextTrack` creates a native text track owned by the calling component. It follows the media attached to the current player and removes the track when the component unmounts, its options change, or the player switches media.
+
+The track starts in `hidden` mode unless you pass a different mode. Hidden tracks load and update cues without asking the browser to render them, which fits chapters and metadata.
+
+## Import
+
+```tsx
+import { useCreateTextTrack } from '@videojs/react';
+```
+
+## Usage
+
+The hook returns `null` until media is available, then an object with the `track` and `addCue` and `removeCue` writers. Write cues through those functions rather than the native track: `TextTrack.addCue()` fires no event, so <DocsLink slug="reference/use-text-cues">`useTextCues`</DocsLink> and <DocsLink slug="reference/use-active-text-cues">`useActiveTextCues`</DocsLink> only refresh for cues written this way. They also wait for the backing native `<track>` to finish loading, because browsers discard cues added before that point. The hook removes the whole track, including its cues, during cleanup.
+
+```tsx title="Chapters.tsx"
+import { useEffect } from 'react';
+import { useCreateTextTrack } from '@videojs/react';
+
+export function ChapterTrack() {
+  const chapters = useCreateTextTrack({
+    kind: 'chapters',
+    label: 'Sections',
+  });
+
+  useEffect(() => {
+    if (!chapters) return;
+
+    const introduction = new VTTCue(0, 30, 'Introduction');
+    chapters.addCue(introduction);
+
+    return () => chapters.removeCue(introduction);
+  }, [chapters]);
+
+  return null;
+}
+```
+
+Pass `chapters.track` to <DocsLink slug="reference/use-text-cues">`useTextCues`</DocsLink> or <DocsLink slug="reference/use-active-text-cues">`useActiveTextCues`</DocsLink> to read the cues back.
+
+## Use native tracks for WebVTT files
+
+Render the native lowercase `<track>` element when the cues come from a URL. You do not need a Video.js `Track` component.
+
+```tsx
+import { Video } from '@videojs/react/video';
+
+<Video>
+  <track
+    kind="captions"
+    src="/captions/en.vtt"
+    srcLang="en"
+    label="English"
+    default
+  />
+</Video>
+```
+
+Use `useCreateTextTrack` when your application creates cues in JavaScript. Use <DocsLink slug="reference/use-active-text-track">`useActiveTextTrack`</DocsLink> to observe a track supplied by markup, a manifest, or another part of the application.
+
+<UtilReference util="useCreateTextTrack" />

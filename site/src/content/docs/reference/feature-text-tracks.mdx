@@ -23,7 +23,7 @@ When a thumbnail track is present, `thumbnailTrackCrossOrigin` reports the media
 ### Selector
 
 <FrameworkCase frameworks={["react"]}>
-Pass `selectTextTrack` to <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> to subscribe to text track state. Returns `undefined` if the text tracks feature is not configured.
+Pass `selectTextTrack` to <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> to subscribe to text track state. Returns `undefined` if the text tracks feature is not configured. For direct access to a native track and its cues, use <DocsLink slug="reference/use-active-text-track">`useActiveTextTrack`</DocsLink>. Create a programmatic track with <DocsLink slug="reference/use-create-text-track">`useCreateTextTrack`</DocsLink>.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>

@@ -1,0 +1,36 @@
+---
+title: useActiveTextCues
+description: Hook to observe text cues at the current playback position
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+
+`useActiveTextCues` returns a fresh array of the cues active at the current playback position. It returns an empty array while the track is unavailable or no cue is active.
+
+## Import
+
+```tsx
+import { useActiveTextCues } from '@videojs/react';
+```
+
+## Usage
+
+Find an enabled captions or subtitles track, then render its current cue text.
+
+```tsx title="CurrentCaption.tsx"
+import { useActiveTextCues, useActiveTextTrack } from '@videojs/react';
+
+const captionKinds = ['captions', 'subtitles'] as const;
+
+export function CurrentCaption() {
+  const track = useActiveTextTrack(captionKinds);
+  const cues = useActiveTextCues(track);
+
+  return <output>{cues.map((cue) => cue.text).filter(Boolean).join('\n')}</output>;
+}
+```
+
+Use <DocsLink slug="reference/use-text-cues">`useTextCues`</DocsLink> when you need the complete cue list, such as a chapter menu or transcript.
+
+<UtilReference util="useActiveTextCues" />

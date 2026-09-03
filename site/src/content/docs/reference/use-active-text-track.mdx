@@ -1,0 +1,37 @@
+---
+title: useActiveTextTrack
+description: Hook to observe the active text track for one or more kinds
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+
+`useActiveTextTrack` returns the enabled track that matches the requested kind. It updates when tracks are added or removed and when their modes change.
+
+A `showing` track takes precedence over a `hidden` track. Hidden chapter and metadata tracks still count as active because the browser loads and updates their cues without rendering text.
+
+## Import
+
+```tsx
+import { useActiveTextTrack } from '@videojs/react';
+```
+
+## Usage
+
+Pass one kind or a stable array of kinds. The hook returns `null` until matching media and a matching enabled track are available.
+
+```tsx title="CaptionLanguage.tsx"
+import { useActiveTextTrack } from '@videojs/react';
+
+const captionKinds = ['captions', 'subtitles'] as const;
+
+export function CaptionLanguage() {
+  const track = useActiveTextTrack(captionKinds);
+
+  return <output>{track?.label ?? 'Captions off'}</output>;
+}
+```
+
+Pass the returned track to <DocsLink slug="reference/use-text-cues">`useTextCues`</DocsLink> for every cue or <DocsLink slug="reference/use-active-text-cues">`useActiveTextCues`</DocsLink> for cues at the current playback position.
+
+<UtilReference util="useActiveTextTrack" />
