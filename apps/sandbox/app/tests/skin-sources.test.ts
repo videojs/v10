@@ -30,7 +30,19 @@ describe('defaultSkinSource', () => {
     expect(defaultSkinSource('html', 'css')).toBe('package');
     expect(defaultSkinSource('react', 'css')).toBe('package');
     expect(defaultSkinSource('react', 'tailwind')).toBe('registry');
-    expect(defaultSkinSource('html', 'tailwind')).toBe('authored');
+    // The authored sources exist only in the workspace, which the test config declares; without them the packages'
+    // CSS skin is the only thing an html Tailwind page can load.
+    expect(defaultSkinSource('html', 'tailwind')).toBe(
+      skinSourceAvailable('authored', 'html') ? 'authored' : 'package'
+    );
+  });
+
+  it('never names a source the page cannot load', () => {
+    for (const platform of ['html', 'react', 'cdn'] as const) {
+      for (const styling of ['css', 'tailwind'] as const) {
+        expect(skinSourceAvailable(defaultSkinSource(platform, styling), platform)).toBe(true);
+      }
+    }
   });
 });
 

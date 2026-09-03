@@ -45,13 +45,20 @@ export function skinSourceAvailable(source: SkinSource, platform: Platform): boo
 }
 
 /**
- * Where skins come from when nothing was asked for: the framework packages for CSS, and for Tailwind the registry on
- * React or the authored sources on html, the only place an html Tailwind skin exists.
+ * Where skins come from when nothing was asked for: the framework packages for CSS, and for Tailwind the first source
+ * that both exists here and publishes it: the registry on React, the authored sources on html, the only place an html
+ * Tailwind skin exists. With neither available, the packages' CSS skin loads rather than modules that are not there.
  */
 export function defaultSkinSource(platform: Platform, styling: Styling): SkinSource {
   if (styling === 'css') return 'package';
 
-  return platform === 'html' ? 'authored' : 'registry';
+  const preferred: readonly SkinSource[] = platform === 'html' ? ['authored', 'registry'] : ['registry', 'authored'];
+
+  return (
+    preferred.find(
+      (source) => skinSourceAvailable(source, platform) && skinStylings(platform, source).includes(styling)
+    ) ?? 'package'
+  );
 }
 
 /** Whether any loadable source offers Tailwind on the platform. */
