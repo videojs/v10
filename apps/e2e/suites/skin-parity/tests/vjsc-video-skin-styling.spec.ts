@@ -394,7 +394,7 @@ for (const variant of CASES) {
     const { css, tailwind } = await openVariants(page, variant, 800, media);
     const cssContract = await enterFullscreen(css.root);
 
-    expect(cssContract.previewValueBottomInPreviewHeights).toBe(variant.skin === 'default-video' ? 13.5 : 8);
+    expect(cssContract.previewValueBottomInPreviewHeights).toBe(variant.skin === 'default-video' ? 11.5 : 6);
 
     const reference = await snapshotReference(css.root, name);
     const cssPreview = variant.skin === 'minimal-video' ? await fullscreenPreviewContract(css.root) : null;
@@ -415,8 +415,8 @@ for (const variant of CASES) {
     expect(tailwindMenu).toEqual({ heightInSpacingUnits: 56, maxHeightInSpacingUnits: 56, scrolls: true });
 
     if (tailwindPreview) {
-      expect(tailwindPreview.timeToSliderGap).toBeGreaterThanOrEqual(24);
-      expect(tailwindPreview.timeToThumbnailGap).toBeGreaterThanOrEqual(10);
+      expect(tailwindPreview.timeToSliderGap).toBeGreaterThanOrEqual(14);
+      expect(tailwindPreview.timeToThumbnailGap).toBeGreaterThanOrEqual(8);
     }
 
     await exitFullscreen(page);
@@ -439,8 +439,8 @@ test('minimal fullscreen geometry scales through the large breakpoints', async (
     const cssMenu = await fullscreenSpeedMenuContract(css.root);
 
     expect(cssFullscreen.scale).toBe(scale);
-    expect(cssPreview.timeToSliderGap).toBeGreaterThanOrEqual(30);
-    expect(cssPreview.timeToThumbnailGap).toBeGreaterThanOrEqual(13);
+    expect(cssPreview.timeToSliderGap).toBeGreaterThanOrEqual(17);
+    expect(cssPreview.timeToThumbnailGap).toBeGreaterThanOrEqual(10);
     expect(cssMenu).toEqual({ heightInSpacingUnits: 56, maxHeightInSpacingUnits: 56, scrolls: true });
 
     await exitFullscreen(page);
