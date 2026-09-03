@@ -133,6 +133,21 @@ describe('SliderThumbnail', () => {
     expect(img?.getAttribute('decoding')).toBe('async');
   });
 
+  it('renders overlay children beside the image', () => {
+    const { container } = render(
+      <SliderRoot>
+        <SliderThumbnail data-testid="thumbnail">
+          <div data-testid="overlay" />
+        </SliderThumbnail>
+      </SliderRoot>
+    );
+
+    const el = container.querySelector('[data-testid="thumbnail"]');
+
+    expect(el?.querySelector('img')).toBeTruthy();
+    expect(el?.querySelector('[data-testid="overlay"]')).toBeTruthy();
+  });
+
   it('accepts thumbnails prop', () => {
     const thumbnails = [
       { url: 'thumb-0.jpg', startTime: 0 },

@@ -12,11 +12,13 @@ export interface SliderThumbnailProps
 export const SliderThumbnail = forwardRef<HTMLDivElement, SliderThumbnailProps>(
   function SliderThumbnail(componentProps, forwardedRef) {
     const pointerValue = useSliderPointerValue();
-    const { crossOrigin, fetchPriority, loading, ...rootProps } = componentProps;
+    const { crossOrigin, fetchPriority, loading, children, ...rootProps } = componentProps;
 
+    // Children are sibling layers beside the controlled image, as on `Thumbnail.Root`.
     return (
       <Thumbnail.Root ref={forwardedRef} {...rootProps} time={pointerValue}>
         <Thumbnail.Image crossOrigin={crossOrigin} fetchPriority={fetchPriority} loading={loading} />
+        {children}
       </Thumbnail.Root>
     );
   }
