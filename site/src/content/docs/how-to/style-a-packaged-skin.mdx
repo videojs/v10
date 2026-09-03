@@ -1,0 +1,106 @@
+---
+title: Style a packaged skin
+description: Change a packaged Video.js skin's colors, typography, sizing, and poster presentation
+---
+
+import FrameworkCase from '@/components/docs/FrameworkCase.astro';
+import DocsLink from '@/components/docs/DocsLink.astro';
+import DocsLinkCard from '@/components/docs/DocsLinkCard.astro';
+
+Use a packaged skin's public settings to match it to your site without copying its source into your project.
+
+## Set the skin's styles
+
+Packaged skins expose [CSS custom properties](https://developer.mozilla.org/en-US/docs/Web/CSS/Using_CSS_custom_properties) for their supported visual changes. Set them on the skin or any element that contains it:
+
+<FrameworkCase frameworks={["html"]}>
+
+```html
+<video-skin style="--media-accent-color: #f5c518; --media-border-radius: 1rem">
+  <video src="video.mp4"></video>
+</video-skin>
+```
+
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+
+```tsx
+<VideoSkin
+  style={
+    {
+      '--media-accent-color': '#f5c518',
+      '--media-border-radius': '1rem',
+    } as React.CSSProperties
+  }
+>
+  <Video src="video.mp4" />
+</VideoSkin>
+```
+
+</FrameworkCase>
+
+| Property name | What it changes | Value | Example |
+| ------------- | --------------- | ----- | ------- |
+| `--media-accent-color` | Slider fills, highlighted controls and menu items, and primary actions | [`<color>`](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value) | `#f5c518` |
+| `--media-accent-text-color` | Text and icons shown on the accent color | [`<color>`](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value) | `black` |
+| `--media-border-color` | The hairline around the player | [`<color>`](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value) | `transparent` |
+| `--media-border-radius` | The player corner radius | A valid [border-radius value](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/border-radius#values) | `1rem` |
+| `--media-font-family` | The player interface font stack | A valid [font-family value](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/font-family) | `Roboto, sans-serif` |
+| `--media-object-fit` | How the media and poster fill the player | A valid [object-fit value](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/object-fit) | `cover` |
+| `--media-object-position` | Where the media and poster sit when they do not fill the player | A valid [object-position value](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/object-position) | `top` |
+| `--media-scale-unit` | The base size for skin spacing, icons, and text | [`<length>`](https://developer.mozilla.org/en-US/docs/Web/CSS/length) | `1rem` |
+
+If you omit `--media-accent-text-color`, the skins choose a contrasting text color from `--media-accent-color` using [`contrast-color()`](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Values/color_value/contrast-color). Set it only when you want a different result.
+
+The skins use [`Inter`](https://rsms.me/inter/) when your page loads it and fall back to the system UI font. Video.js does not load the webfont for you. Set `--media-font-family` to use another font.
+
+The media element and poster share `--media-object-fit` and `--media-object-position`, so a `cover` poster stays aligned with `cover` video. See <DocsLink slug="how-to/add-a-poster-and-loading-placeholder">Add a poster and loading placeholder</DocsLink>.
+
+## Set the color scheme
+
+The audio skins adapt their main palette for light and dark mode using [`light-dark()`](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Values/color_value/light-dark). They read the inherited [`color-scheme`](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/color-scheme), so set it on the player or an element that contains it:
+
+```css
+:root {
+  color-scheme: light dark;
+}
+```
+
+The video skins keep their dark controls in both color schemes. Only their hairline border follows the scheme, and `--media-border-color` replaces it.
+
+## Scale from the document font size
+
+The skins derive control spacing, icon sizes, and text from `--media-scale-unit`. It defaults to `16px`, so the player does not change with the document root font size or your app's Tailwind spacing scale. Set it to `1rem` to make the interface scale from the document root font size:
+
+```css
+.player {
+  --media-scale-unit: 1rem;
+}
+```
+
+In fullscreen, the skins increase the unit up to 1.75 times on displays 1920 pixels and wider. This keeps controls legible from a distance.
+
+You can also add your own class names to the skins.
+
+## Know where packaged styling stops
+
+The properties above are the public styling settings for packaged skins. Do not depend on the elements, class names, or other custom properties inside a packaged skin. They may change between releases.
+
+<FrameworkCase frameworks={["html"]}>
+
+Packaged video skins also let you replace the poster through the `poster` slot.
+
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+
+Packaged video skins also let you replace the poster through the `renderPoster` prop.
+
+</FrameworkCase>
+
+See <DocsLink slug="reference/poster">Poster</DocsLink>.
+
+Packaged skins do not provide settings for adding, removing, or rearranging controls, or for replacing built-in feedback and interactions. To make those changes, eject the closest skin and edit its source.
+
+<DocsLinkCard slug="how-to/change-a-skins-controls-and-layout" description="Copy a skin into your project, then edit its controls, layout, and interactions">Change a skin's controls and layout</DocsLinkCard>

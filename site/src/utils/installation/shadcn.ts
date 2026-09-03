@@ -1,3 +1,5 @@
+import { getInstallationPreset, type Skin, type UseCase } from './types';
+
 export type RegistryFramework = 'html' | 'react';
 export type RegistryStyling = 'css' | 'tailwind';
 export type ShadcnRunner = 'npm' | 'pnpm' | 'yarn' | 'bun';
@@ -108,4 +110,13 @@ export function registryInstallCommands(
   if (items.length > 0) commands.push(shadcnAddCommand(runner, items));
 
   return commands.join('\n');
+}
+
+/** The catalog name for an installation selection, or `null` when that selection cannot be ejected. */
+export function registrySkinItem({ useCase, skin }: { useCase: UseCase; skin: Skin }): string | null {
+  if (useCase === 'background-video' || skin === 'none') return null;
+
+  const preset = getInstallationPreset(useCase).flag;
+
+  return skin.startsWith('minimal-') ? `${preset}-minimal` : preset;
 }

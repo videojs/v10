@@ -5,6 +5,7 @@ import {
   REGISTRY_SKINS,
   registryInstallCommands,
   registryNamespaceUrl,
+  registrySkinItem,
   registryStylings,
   resolveRegistryStyling,
   shadcnAddCommand,
@@ -70,6 +71,19 @@ describe('registryInstallCommands', () => {
     expect(registryInstallCommands('npm', 'html', 'css', [])).toBe(
       'npx shadcn@latest registry add @videojs=https://shadcn.videojs.org/r/html/{name}.json'
     );
+  });
+});
+
+describe('registrySkinItem', () => {
+  it('maps the installation selection onto a skin name', () => {
+    expect(registrySkinItem({ useCase: 'default-video', skin: 'video' })).toBe('video');
+    expect(registrySkinItem({ useCase: 'default-video', skin: 'minimal-video' })).toBe('video-minimal');
+    expect(registrySkinItem({ useCase: 'live-audio', skin: 'minimal-audio' })).toBe('live-audio-minimal');
+  });
+
+  it('leaves package-only selections alone', () => {
+    expect(registrySkinItem({ useCase: 'background-video', skin: 'video' })).toBeNull();
+    expect(registrySkinItem({ useCase: 'default-video', skin: 'none' })).toBeNull();
   });
 });
 
