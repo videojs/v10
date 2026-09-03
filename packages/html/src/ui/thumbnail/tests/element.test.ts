@@ -153,6 +153,33 @@ describe('ThumbnailElement', () => {
     expect(fallback.hasAttribute('src')).toBe(false);
   });
 
+  it('adopts an image assigned to a forwarding slot after mount', async () => {
+    const host = document.createElement('div');
+    const shadow = host.attachShadow({ mode: 'open' });
+    const thumbnail = document.createElement(ThumbnailElement.tagName) as ThumbnailElement;
+    const slot = document.createElement('slot');
+
+    slot.name = 'image';
+    thumbnail.thumbnails = [{ url: 'thumb.jpg', startTime: 0 }];
+    thumbnail.append(slot);
+    shadow.append(thumbnail);
+    document.body.append(host);
+    await thumbnail.updateComplete;
+
+    const fallback = thumbnail.shadowRoot!.querySelector('img')!;
+
+    expect(fallback.getAttribute('src')).toBe('thumb.jpg');
+
+    const img = document.createElement('img');
+
+    Object.defineProperty(img, 'complete', { value: false, configurable: true });
+    img.slot = 'image';
+    host.append(img);
+
+    await vi.waitFor(() => expect(img.getAttribute('src')).toBe('thumb.jpg'));
+    expect(fallback.isConnected).toBe(false);
+  });
+
   it('draws the fallback again when the supplied image is removed', async () => {
     const thumbnail = document.createElement(ThumbnailElement.tagName) as ThumbnailElement;
     const img = document.createElement('img');
