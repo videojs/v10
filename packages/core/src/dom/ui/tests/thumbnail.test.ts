@@ -501,6 +501,28 @@ describe('createThumbnail', () => {
 
       handle.destroy();
     });
+
+    it('stays quiet when a settled image is handed back after a ref swap', () => {
+      const img = createMockImg();
+      const onStateChange = vi.fn();
+
+      Object.defineProperty(img, 'complete', { value: true, configurable: true });
+
+      const handle = createThumbnail(createOptions({ getImg: () => img, onStateChange }));
+
+      handle.updateSrc('sprite.jpg');
+      handle.connect();
+      expect(onStateChange).toHaveBeenCalledOnce();
+
+      // React detaches and reattaches the same node when a callback ref changes identity.
+      handle.disconnectImg(img);
+      handle.connect();
+
+      expect(handle.loading).toBe(false);
+      expect(onStateChange).toHaveBeenCalledOnce();
+
+      handle.destroy();
+    });
   });
 
   describe('destroy', () => {

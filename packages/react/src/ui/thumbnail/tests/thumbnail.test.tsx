@@ -117,6 +117,35 @@ describe('Thumbnail', () => {
     );
   });
 
+  it('settles a cached image once, even when a render override swaps refs every render', () => {
+    const complete = vi.spyOn(HTMLImageElement.prototype, 'complete', 'get').mockReturnValue(true);
+    const naturalWidth = vi.spyOn(HTMLImageElement.prototype, 'naturalWidth', 'get').mockReturnValue(1280);
+    const naturalHeight = vi.spyOn(HTMLImageElement.prototype, 'naturalHeight', 'get').mockReturnValue(720);
+    const thumbnails = [{ url: 'thumbnail.jpg', startTime: 0 }];
+
+    // An inline ref on the rendered element composes into a new callback each
+    // render, so React detaches and reattaches the same image every time.
+    const { getByTestId, rerender } = render(
+      <Thumbnail.Root data-testid="thumbnail" thumbnails={thumbnails}>
+        <Thumbnail.Image render={<img ref={(node) => void node} data-testid="image" />} />
+      </Thumbnail.Root>,
+      { wrapper: wrapper() }
+    );
+
+    rerender(
+      <Thumbnail.Root data-testid="thumbnail" thumbnails={thumbnails} time={1}>
+        <Thumbnail.Image render={<img ref={(node) => void node} data-testid="image" />} />
+      </Thumbnail.Root>
+    );
+
+    expect(getByTestId('thumbnail').hasAttribute('data-loading')).toBe(false);
+    expect(getByTestId('image').getAttribute('src')).toBe('thumbnail.jpg');
+
+    complete.mockRestore();
+    naturalWidth.mockRestore();
+    naturalHeight.mockRestore();
+  });
+
   describe('crossOrigin', () => {
     it('inherits the media element CORS mode when unset', () => {
       expect(renderCrossOrigin('anonymous')).toBe('anonymous');

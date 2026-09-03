@@ -136,18 +136,28 @@ export function createThumbnail(options: CreateThumbnailOptions): ThumbnailApi {
 
     checkedImg = img;
 
-    if (img.complete && lastSrc) {
-      if (img.naturalWidth > 0) {
-        naturalWidth = img.naturalWidth;
-        naturalHeight = img.naturalHeight;
-        loading = false;
-        error = false;
-      } else {
-        markFailed();
-      }
+    if (!img.complete || !lastSrc) return;
 
-      onStateChange();
+    const previous = { loading, error, naturalWidth, naturalHeight };
+
+    if (img.naturalWidth > 0) {
+      naturalWidth = img.naturalWidth;
+      naturalHeight = img.naturalHeight;
+      loading = false;
+      error = false;
+    } else {
+      markFailed();
     }
+
+    // A renderer may hand the same settled image back after a ref swap. Announcing an
+    // unchanged state would schedule another render, whose ref swap lands right back here.
+    const changed =
+      previous.loading !== loading ||
+      previous.error !== error ||
+      previous.naturalWidth !== naturalWidth ||
+      previous.naturalHeight !== naturalHeight;
+
+    if (changed) onStateChange();
   }
 
   function disconnectImg(img: HTMLImageElement): void {

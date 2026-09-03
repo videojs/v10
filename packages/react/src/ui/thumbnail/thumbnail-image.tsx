@@ -3,6 +3,7 @@ import type { ForwardedRef } from 'react';
 import { forwardRef } from 'react';
 
 import type { UIComponentProps } from '../../utils/types';
+import { useComposedRefs } from '../../utils/use-composed-refs';
 import { renderElement } from '../../utils/use-render';
 import { useThumbnailContext } from './context';
 
@@ -31,12 +32,16 @@ export const ThumbnailImage = forwardRef(function ThumbnailImage(
   const { render, className, style, crossOrigin, loading, fetchPriority, ...elementProps } = componentProps;
   const { core, state, src, imageStyle, inheritedCrossOrigin, imageRef } = useThumbnailContext();
 
+  // One stable callback, so React does not detach and reattach the image on every render
+  // and the root only hears about mounts, unmounts, and `render` swaps.
+  const ref = useComposedRefs(forwardedRef, imageRef);
+
   return renderElement(
     'img',
     { render, className, style },
     {
       state,
-      ref: [forwardedRef, imageRef],
+      ref,
       props: [
         { alt: '', 'aria-hidden': 'true', decoding: 'async' },
         elementProps,
