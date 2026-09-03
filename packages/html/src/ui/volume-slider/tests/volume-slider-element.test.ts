@@ -9,6 +9,23 @@ import { SliderThumbElement } from '../../slider/slider-thumb-element';
 import { UIElement } from '../../ui-element';
 import { VolumeSliderElement } from '../volume-slider-element';
 
+class ResizeObserverStub {
+  static instances: ResizeObserverStub[] = [];
+
+  readonly observe = vi.fn();
+  readonly unobserve = vi.fn();
+  readonly disconnect = vi.fn();
+
+  constructor(_callback: ResizeObserverCallback) {
+    ResizeObserverStub.instances.push(this);
+  }
+}
+
+function stubResizeObserver(): void {
+  ResizeObserverStub.instances.length = 0;
+  vi.stubGlobal('ResizeObserver', ResizeObserverStub);
+}
+
 let tagCounter = 0;
 
 function uniqueTag(base: string): string {
@@ -22,7 +39,10 @@ function createElement<Element extends HTMLElement>(Base: abstract new () => Ele
   return document.createElement(tag) as Element;
 }
 
-function createVolumeStore(volumeAvailability: MediaVolumeState['volumeAvailability']): AnyPlayerStore {
+function createVolumeStore(
+  volumeAvailability: MediaVolumeState['volumeAvailability'],
+  setVolume = vi.fn()
+): AnyPlayerStore {
   return createStore<unknown>()<MediaVolumeState>({
     name: 'volume',
     state: () => ({
@@ -32,7 +52,7 @@ function createVolumeStore(volumeAvailability: MediaVolumeState['volumeAvailabil
       // Mute has an availability of its own, and this slider reads the level's;
       // these tests vary that one and leave the mute available throughout.
       mutedAvailability: 'available',
-      setVolume: vi.fn(),
+      setVolume,
       toggleMuted: vi.fn(),
     }),
   }) as unknown as AnyPlayerStore;
@@ -54,6 +74,7 @@ if (!customElements.get('test-volume-slider-player')) {
 }
 
 afterEach(() => {
+  vi.unstubAllGlobals();
   document.body.innerHTML = '';
 });
 
@@ -156,5 +177,56 @@ describe('VolumeSliderElement', () => {
 
     // Verifies no errors during disconnect/cleanup.
     expect(slider.isConnected).toBe(false);
+  });
+
+  it('recreates its API and rebinds wheel listeners once after a reconnect', async () => {
+    stubResizeObserver();
+    const setVolume = vi.fn();
+    const provider = document.createElement('test-volume-slider-player') as TestPlayerProviderElement;
+
+    provider.store = createVolumeStore('available', setVolume);
+    const slider = createElement(VolumeSliderElement);
+
+    document.body.append(provider);
+    provider.append(slider);
+    await slider.updateComplete;
+
+    const firstObserver = ResizeObserverStub.instances[0]!;
+
+    expect(ResizeObserverStub.instances).toHaveLength(1);
+
+    slider.remove();
+    provider.append(slider);
+    await slider.updateComplete;
+
+    expect(firstObserver.disconnect).toHaveBeenCalledOnce();
+    expect(ResizeObserverStub.instances).toHaveLength(2);
+    expect(ResizeObserverStub.instances[1]!.disconnect).not.toHaveBeenCalled();
+
+    slider.dispatchEvent(new WheelEvent('wheel', { bubbles: true, cancelable: true, deltaY: 1 }));
+
+    expect(setVolume).toHaveBeenCalledOnce();
+  });
+
+  it('releases its API and wheel listener when destroyed while connected', async () => {
+    stubResizeObserver();
+    const setVolume = vi.fn();
+    const provider = document.createElement('test-volume-slider-player') as TestPlayerProviderElement;
+
+    provider.store = createVolumeStore('available', setVolume);
+    const slider = createElement(VolumeSliderElement);
+
+    document.body.append(provider);
+    provider.append(slider);
+    await slider.updateComplete;
+
+    const observer = ResizeObserverStub.instances[0]!;
+
+    slider.destroy();
+
+    expect(observer.disconnect).toHaveBeenCalledOnce();
+
+    slider.dispatchEvent(new WheelEvent('wheel', { bubbles: true, cancelable: true, deltaY: 1 }));
+    expect(setVolume).not.toHaveBeenCalled();
   });
 });
