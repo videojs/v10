@@ -1,4 +1,5 @@
 import type { MediaPictureInPictureState } from '@videojs/media';
+import { hasMetadata, isMediaSourceCapable } from '@videojs/media';
 import { listen, type WebKitVideoElement } from '@videojs/utils/dom';
 
 import { definePlayerFeature } from '../../feature';
@@ -19,6 +20,7 @@ export const pipFeature = definePlayerFeature({
 
     async requestPictureInPicture() {
       const { media, container } = target();
+      if (!isMediaSourceCapable(media) || !hasMetadata(media)) return;
 
       // Exit fullscreen first if active
       if (isFullscreen(container, media)) {
@@ -38,6 +40,8 @@ export const pipFeature = definePlayerFeature({
       const { media, container } = target();
       if (isPictureInPicture(media)) return exitPictureInPicture(media);
 
+      if (!isMediaSourceCapable(media) || !hasMetadata(media)) return;
+
       if (isFullscreen(container, media)) {
         await exitFullscreen(media);
       }
@@ -48,24 +52,29 @@ export const pipFeature = definePlayerFeature({
 
   attach({ target, signal, set }) {
     const { media } = target;
+    const supported = isPictureInPictureEnabled() && isPictureInPictureCapable(media);
 
     // Both halves have to hold: the browser has to offer picture-in-picture, and
     // this media has to be able to enter it. Asking only the browser leaves an
     // embed that has no picture-in-picture — YouTube, Cloudflare Stream — showing
     // a control that silently does nothing.
-    set({
-      pipAvailability: isPictureInPictureEnabled() && isPictureInPictureCapable(media) ? 'available' : 'unsupported',
-    });
-
     const sync = () =>
       set({
         pip: isPictureInPicture(media),
+        pipAvailability: supported
+          ? isMediaSourceCapable(media) && hasMetadata(media)
+            ? 'available'
+            : 'unavailable'
+          : 'unsupported',
       });
 
     sync();
 
     listen(media, 'enterpictureinpicture', sync, { signal });
     listen(media, 'leavepictureinpicture', sync, { signal });
+    listen(media, 'loadstart', sync, { signal });
+    listen(media, 'loadedmetadata', sync, { signal });
+    listen(media, 'emptied', sync, { signal });
 
     // iOS Safari presentation mode change (covers PiP)
     const video = media as WebKitVideoElement;

@@ -159,6 +159,15 @@ describe('seekStep', () => {
 
     expect(seek).toHaveBeenCalledWith(20);
   });
+
+  it('seeks before the time range is known', () => {
+    const seek = vi.fn();
+    const store = mockStore({ currentTime: 0, duration: 0, seeking: false, seek });
+
+    resolveHotkeyAction('seekStep')!({ store, value: 5, key: '' });
+
+    expect(seek).toHaveBeenCalledWith(5);
+  });
 });
 
 describe('volumeStep', () => {
@@ -278,6 +287,22 @@ describe('seekToPercent', () => {
     const store = mockStore({ currentTime: 0, duration: 200, seeking: false, seek });
 
     resolveHotkeyAction('seekToPercent')!({ store, key: '3' });
+
+    expect(seek).toHaveBeenCalledWith(60);
+  });
+
+  it('uses the seekable end when duration is unknown', () => {
+    const seek = vi.fn();
+    const store = mockStore({
+      currentTime: 0,
+      duration: 0,
+      seeking: false,
+      seek,
+      buffered: [],
+      seekable: [[10, 120]],
+    });
+
+    resolveHotkeyAction('seekToPercent')!({ store, value: 50, key: '' });
 
     expect(seek).toHaveBeenCalledWith(60);
   });

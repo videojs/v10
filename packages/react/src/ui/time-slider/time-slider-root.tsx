@@ -1,6 +1,7 @@
 import { TimeSliderCore, TimeSliderDataAttrs } from '@videojs/core';
 import { getTimeSliderCSSVars, logMissingFeature, selectBuffer, selectPlayback, selectTime } from '@videojs/core/dom';
 import { translateText } from '@videojs/core/i18n';
+import { hasTimeRange } from '@videojs/media';
 import { formatTime } from '@videojs/utils/time';
 import { forwardRef, useEffect, useState } from 'react';
 
@@ -69,8 +70,6 @@ export const TimeSliderRoot = forwardRef<HTMLDivElement, TimeSliderRootProps>(
       return () => core.endDrag(playbackRef.current);
     }, [core]);
 
-    const duration = time?.duration ?? 0;
-
     const { state, input, cssVars, rootRef, thumbRef, rootProps, rootStyle, thumbProps } =
       useSlider<TimeSliderCore.State>({
         computeState: (input) => {
@@ -95,7 +94,7 @@ export const TimeSliderRoot = forwardRef<HTMLDivElement, TimeSliderRootProps>(
         getStepPercent: () => core.getStepPercent(),
         getLargeStepPercent: () => core.getLargeStepPercent(),
         orientation,
-        disabled,
+        disabled: disabled || !time || !buffer || !hasTimeRange({ ...time, ...buffer }),
         changeThrottle,
         adjustPercent: (rawPercent, thumbSize, trackSize) =>
           core.adjustPercentForAlignment(rawPercent, thumbSize, trackSize),
@@ -144,7 +143,7 @@ export const TimeSliderRoot = forwardRef<HTMLDivElement, TimeSliderRootProps>(
               ),
             };
           },
-          formatValue: (value) => formatTime(value, duration, { locale }),
+          formatValue: (value) => formatTime(value, state.duration, { locale }),
         }}
       >
         {renderElement(

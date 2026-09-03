@@ -63,3 +63,8 @@ export const positionText = {
   key: `${prefix}position`,
   text: '{current} of {duration}',
 } as const satisfies Text;
+
+export const unknownText = {
+  key: `${prefix}unknown`,
+  text: 'Media not loaded, unknown time.',
+} as const satisfies Text;

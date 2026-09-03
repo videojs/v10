@@ -1,4 +1,4 @@
-import type { MediaTimeState } from '@videojs/media';
+import type { MediaBufferState, MediaTimeState } from '@videojs/media';
 import { formatTimeAsPhrase } from '@videojs/utils/time';
 import { describe, expect, it } from 'vite-plus/test';
 
@@ -7,12 +7,15 @@ import { TimeCore } from '../core';
 
 const t = createTranslator(flattenTranslations(translations), 'en');
 
-function createMediaState(overrides: Partial<MediaTimeState> = {}): MediaTimeState {
+type TimeMedia = MediaTimeState & Pick<MediaBufferState, 'seekable'>;
+
+function createMediaState(overrides: Partial<TimeMedia> = {}): TimeMedia {
   return {
     currentTime: 90,
     duration: 300,
     seeking: false,
     seek: async () => 0,
+    seekable: [],
     ...overrides,
   };
 }
@@ -40,6 +43,40 @@ describe('TimeCore', () => {
   });
 
   describe('getState', () => {
+    it('is disabled without a duration or seekable range', () => {
+      const core = new TimeCore();
+
+      core.setMedia(createMediaState({ duration: 0, seekable: [] }));
+
+      const state = core.getState();
+
+      expect(state.disabled).toBe(true);
+      expect(core.getAttrs(state)['aria-label']).toMatchObject({
+        key: 'time.unknown',
+        text: 'Media not loaded, unknown time.',
+      });
+    });
+
+    it('is enabled when a seekable range is available', () => {
+      const core = new TimeCore();
+
+      core.setMedia(createMediaState({ duration: 0, seekable: [[10, 120]] }));
+
+      expect(core.getState().disabled).toBe(false);
+    });
+
+    it('uses the seekable end when duration is unknown', () => {
+      const duration = new TimeCore({ type: 'duration' });
+      const remaining = new TimeCore({ type: 'remaining' });
+      const media = createMediaState({ currentTime: 30, duration: 0, seekable: [[10, 120]] });
+
+      duration.setMedia(media);
+      remaining.setMedia(media);
+
+      expect(duration.getState()).toMatchObject({ seconds: 120, text: '2:00' });
+      expect(remaining.getState()).toMatchObject({ seconds: -90, text: '1:30' });
+    });
+
     it('returns current time state', () => {
       const core = new TimeCore({ type: 'current' });
 
@@ -47,6 +84,7 @@ describe('TimeCore', () => {
       const state = core.getState();
 
       expect(state.type).toBe('current');
+      expect(state.disabled).toBe(false);
       expect(state.seconds).toBe(90);
       expect(state.negative).toBe(false);
       expect(state.text).toBe('1:30');
@@ -189,12 +227,12 @@ describe('TimeCore', () => {
 
     it.each([
       ['current', { currentTime: 0 }, 'Show remaining time, 0 seconds elapsed.'],
-      ['duration', { duration: 0 }, 'Show remaining time, 0 seconds duration.'],
+      ['duration', { duration: 0 }, 'Show remaining time, 5 minutes duration.'],
       ['remaining', { currentTime: 300 }, 'Show duration, 0 seconds remaining.'],
-    ] as const)('includes zero in the %s toggle label', (type, media, expected) => {
+    ] as const)('includes the resolved time in the %s toggle label', (type, media, expected) => {
       const core = new TimeCore({ type, toggle: true });
 
-      core.setMedia(createMediaState(media));
+      core.setMedia(createMediaState({ ...media, seekable: [[0, 300]] }));
       const state = core.getState();
 
       expect(translateText(core.getLabel(state), t, core.getLabelParams(state))).toBe(expected);

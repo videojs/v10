@@ -26,6 +26,10 @@
     height: var(--media-slider-height, calc(var(--media-spacing) * 20));
   }
 
+  &[data-disabled] {
+    pointer-events: none;
+  }
+
   /* Track */
   .media-slider__track {
     position: relative;

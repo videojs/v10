@@ -18,6 +18,11 @@
 
 .media-skin--default .media-time {
   font-variant-numeric: tabular-nums;
+  transition: opacity 0.2s ease;
+
+  &[data-disabled] {
+    opacity: 0.5;
+  }
 }
 
 .media-skin--default .media-time[role="button"] {

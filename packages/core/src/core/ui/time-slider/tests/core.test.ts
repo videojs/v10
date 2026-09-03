@@ -158,6 +158,33 @@ describe('TimeSliderCore', () => {
       expect(state.fillPercent).toBe(0);
       expect(state.value).toBe(0);
     });
+
+    it('is disabled without a duration or seekable range', () => {
+      const core = new TimeSliderCore();
+
+      core.setInput(createInput());
+      core.setMedia(createMediaState({ duration: 0, seekable: [] }));
+      const state = core.getState();
+
+      expect(state.disabled).toBe(true);
+      expect(core.getAttrs(state)).toMatchObject({ 'aria-disabled': 'true', tabIndex: -1 });
+      expect(core.getAttrs(state)['aria-valuetext']).toMatchObject({
+        key: 'time.unknown',
+        text: 'Media not loaded, unknown time.',
+      });
+    });
+
+    it('uses the seekable end when duration is unavailable', () => {
+      const core = new TimeSliderCore();
+
+      core.setInput(createInput());
+      core.setMedia(createMediaState({ duration: 0, seekable: [[10, 120]] }));
+      const state = core.getState();
+
+      expect(state.disabled).toBe(false);
+      expect(state.duration).toBe(120);
+      expect(core.getAttrs(state)['aria-valuemax']).toBe(120);
+    });
   });
 
   describe('getAttrs', () => {
@@ -187,21 +214,6 @@ describe('TimeSliderCore', () => {
       const attrs = core.getAttrs(state);
 
       expect(attrs['aria-label']).toBe('Scrub');
-    });
-
-    it('shows both times when duration is 0', () => {
-      const core = new TimeSliderCore();
-
-      core.setInput(createInput());
-      core.setMedia(createMediaState({ currentTime: 0, duration: 0 }));
-      const state = core.getState();
-      const attrs = core.getAttrs(state);
-
-      expect(attrs['aria-valuetext']).toMatchObject({ key: 'time.position', text: '{current} of {duration}' });
-      expect(core.getValueTextParams(state)).toEqual({
-        current: formatTimeAsPhrase(0),
-        duration: formatTimeAsPhrase(0),
-      });
     });
 
     it('announces drag position in valuetext during drag', () => {

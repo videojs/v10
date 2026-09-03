@@ -54,6 +54,7 @@ export default {
     toggleElapsed: 'Pārslēgties starp pagājušo un atlikušo laiku.',
     toggleDuration: 'Pārslēgties starp ilgumu un atlikušo laiku.',
     position: '{current} no {duration}',
+    unknown: 'Multivide nav ielādēta, laiks nav zināms.',
   },
   playback: {
     rate: 'Atskaņošanas ātrums {rate}',

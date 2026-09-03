@@ -54,6 +54,7 @@ export default {
     toggleElapsed: 'गेलेला वेळ आणि उरलेला वेळ यांमध्ये टॉगल करा.',
     toggleDuration: 'कालावधी आणि उरलेला वेळ यांमध्ये टॉगल करा.',
     position: '{duration} पैकी {current}',
+    unknown: 'मीडिया लोड झालेला नाही, वेळ अज्ञात आहे.',
   },
   playback: {
     rate: 'प्लेबॅक दर {rate}',

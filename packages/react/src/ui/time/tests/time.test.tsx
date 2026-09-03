@@ -1,4 +1,5 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import type { MediaBufferState, MediaTimeState } from '@videojs/media';
 import { formatTimeAsPhrase } from '@videojs/utils/time';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
@@ -12,12 +13,17 @@ vi.mock('@videojs/store/react', () => ({
   ),
 }));
 
+const buffered: MediaBufferState['buffered'] = [];
+const seekable: MediaBufferState['seekable'] = [];
+
 const timeState = {
   currentTime: 90,
   duration: 300,
   seeking: false,
-  seek: vi.fn(),
-};
+  seek: vi.fn(async () => 0),
+  buffered,
+  seekable,
+} satisfies MediaTimeState & MediaBufferState;
 
 function setup(props: Value.Props = {}, state = timeState) {
   const { Wrapper } = createPlayerWrapper(state);
@@ -32,6 +38,35 @@ function setup(props: Value.Props = {}, state = timeState) {
 afterEach(cleanup);
 
 describe('Time.Value', () => {
+  it('is disabled when the time range is unknown', () => {
+    setup({}, { ...timeState, duration: 0, seekable: [] });
+
+    const time = screen.getByTestId('time');
+
+    expect(time.hasAttribute('data-disabled')).toBe(true);
+    expect(time.getAttribute('aria-label')).toBe('Media not loaded, unknown time.');
+    expect(time.hasAttribute('datetime')).toBe(false);
+  });
+
+  it('is enabled when a seekable range is available', () => {
+    setup({}, { ...timeState, duration: 0, seekable: [[10, 120]] });
+
+    expect(screen.getByTestId('time').hasAttribute('data-disabled')).toBe(false);
+  });
+
+  it('removes unavailable toggles from the tab order', () => {
+    setup({ toggle: true }, { ...timeState, duration: 0, seekable: [] });
+
+    const time = screen.getByTestId('time');
+
+    expect(time.getAttribute('aria-disabled')).toBe('true');
+    expect(time.getAttribute('tabindex')).toBe('-1');
+
+    fireEvent.click(time);
+
+    expect(time.getAttribute('data-type')).toBe('current');
+  });
+
   it('renders current time by default', () => {
     setup();
 

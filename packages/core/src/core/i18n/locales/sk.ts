@@ -54,6 +54,7 @@ export default {
     toggleElapsed: 'Prepínanie medzi uplynulým a zostávajúcim časom.',
     toggleDuration: 'Prepínanie medzi trvaním a zostávajúcim časom.',
     position: '{current} z {duration}',
+    unknown: 'Médium sa nenačítalo, čas nie je známy.',
   },
   playback: {
     rate: 'Rýchlosť prehrávania {rate}',

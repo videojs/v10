@@ -20,7 +20,7 @@ function enablePictureInPicture() {
  * nor the property, so a bare element reads as media that cannot enter picture-in-picture at all.
  */
 function createPipCapableVideo(): HTMLVideoElement {
-  const video = createMockVideo();
+  const video = createMockVideo({ readyState: HTMLMediaElement.HAVE_METADATA });
 
   video.requestPictureInPicture = async () => ({}) as PictureInPictureWindow;
   return video;
@@ -48,7 +48,7 @@ describe('pipFeature', () => {
 
   describe('attach', () => {
     it('syncs initial state on attach', () => {
-      const video = createMockVideo();
+      const video = createMockVideo({ readyState: HTMLMediaElement.HAVE_METADATA });
 
       const store = createStore<PlayerTarget>()(pipFeature);
 
@@ -64,6 +64,30 @@ describe('pipFeature', () => {
       const store = createStore<PlayerTarget>()(pipFeature);
 
       store.attach({ media: video, container: null });
+
+      expect(store.state.pipAvailability).toBe('available');
+    });
+
+    it('keeps PiP unavailable until metadata is loaded', () => {
+      enablePictureInPicture();
+
+      const video = createPipCapableVideo();
+
+      Object.defineProperty(video, 'readyState', {
+        value: HTMLMediaElement.HAVE_NOTHING,
+        configurable: true,
+      });
+      const store = createStore<PlayerTarget>()(pipFeature);
+
+      store.attach({ media: video, container: null });
+
+      expect(store.state.pipAvailability).toBe('unavailable');
+
+      Object.defineProperty(video, 'readyState', {
+        value: HTMLMediaElement.HAVE_METADATA,
+        configurable: true,
+      });
+      video.dispatchEvent(new Event('loadedmetadata'));
 
       expect(store.state.pipAvailability).toBe('available');
     });
@@ -86,7 +110,7 @@ describe('pipFeature', () => {
 
       // iPhone Safari reaches picture-in-picture through presentation mode rather
       // than through `requestPictureInPicture`, so the media is capable without it.
-      const video = createMockVideo() as WebKitVideoElement;
+      const video = createMockVideo({ readyState: HTMLMediaElement.HAVE_METADATA }) as WebKitVideoElement;
 
       video.webkitSetPresentationMode = () => {};
       const store = createStore<PlayerTarget>()(pipFeature);
@@ -133,7 +157,9 @@ describe('pipFeature', () => {
     });
 
     it('syncs pip on webkitpresentationmodechanged event (iOS Safari)', () => {
-      const video = createMockVideo() as HTMLVideoElement & WebKitVideoElement;
+      const video = createMockVideo({
+        readyState: HTMLMediaElement.HAVE_METADATA,
+      }) as HTMLVideoElement & WebKitVideoElement;
 
       video.webkitPresentationMode = 'inline';
 
@@ -158,8 +184,25 @@ describe('pipFeature', () => {
   });
 
   describe('actions', () => {
+    it('requestPictureInPicture() does nothing before metadata is loaded', async () => {
+      const video = createPipCapableVideo();
+
+      Object.defineProperty(video, 'readyState', {
+        value: HTMLMediaElement.HAVE_NOTHING,
+        configurable: true,
+      });
+      video.requestPictureInPicture = vi.fn().mockResolvedValue({});
+      const store = createStore<PlayerTarget>()(pipFeature);
+
+      store.attach({ media: video, container: null });
+
+      await store.requestPictureInPicture();
+
+      expect(video.requestPictureInPicture).not.toHaveBeenCalled();
+    });
+
     it('requestPictureInPicture() calls requestPictureInPicture on video', async () => {
-      const video = createMockVideo();
+      const video = createMockVideo({ readyState: HTMLMediaElement.HAVE_METADATA });
 
       video.requestPictureInPicture = vi.fn().mockResolvedValue({});
 
@@ -173,7 +216,9 @@ describe('pipFeature', () => {
     });
 
     it('requestPictureInPicture() uses webkitSetPresentationMode first when available (iOS Safari)', async () => {
-      const video = createMockVideo() as HTMLVideoElement & WebKitVideoElement;
+      const video = createMockVideo({
+        readyState: HTMLMediaElement.HAVE_METADATA,
+      }) as HTMLVideoElement & WebKitVideoElement;
 
       video.requestPictureInPicture = vi.fn().mockResolvedValue({});
       video.webkitSetPresentationMode = vi.fn();
@@ -193,7 +238,7 @@ describe('pipFeature', () => {
 
       document.exitPictureInPicture = vi.fn().mockResolvedValue(undefined);
 
-      const video = createMockVideo();
+      const video = createMockVideo({ readyState: HTMLMediaElement.HAVE_METADATA });
 
       // Set the video as the current PiP element
       Object.defineProperty(document, 'pictureInPictureElement', {
@@ -244,7 +289,7 @@ describe('pipFeature', () => {
 
       document.exitFullscreen = vi.fn().mockResolvedValue(undefined);
 
-      const video = createMockVideo();
+      const video = createMockVideo({ readyState: HTMLMediaElement.HAVE_METADATA });
 
       video.requestPictureInPicture = vi.fn().mockResolvedValue({});
       const container = document.createElement('div');
@@ -273,7 +318,7 @@ describe('pipFeature', () => {
 
       document.exitFullscreen = vi.fn().mockResolvedValue(undefined);
 
-      const video = createMockVideo();
+      const video = createMockVideo({ readyState: HTMLMediaElement.HAVE_METADATA });
 
       video.requestPictureInPicture = vi.fn().mockResolvedValue({});
 
@@ -415,7 +460,7 @@ describe('pipFeature with HTMLVideoElementHost', () => {
 
   describe('actions', () => {
     it('requestPictureInPicture() delegates to underlying video', async () => {
-      const video = createMockVideo();
+      const video = createMockVideo({ readyState: HTMLMediaElement.HAVE_METADATA });
 
       video.requestPictureInPicture = vi.fn().mockResolvedValue({});
       const host = new HTMLVideoElementHost();
@@ -432,7 +477,9 @@ describe('pipFeature with HTMLVideoElementHost', () => {
     });
 
     it('requestPictureInPicture() prefers webkitSetPresentationMode on the underlying video (iOS Safari)', async () => {
-      const video = createMockVideo() as HTMLVideoElement & WebKitVideoElement;
+      const video = createMockVideo({
+        readyState: HTMLMediaElement.HAVE_METADATA,
+      }) as HTMLVideoElement & WebKitVideoElement;
 
       video.requestPictureInPicture = vi.fn().mockResolvedValue({});
       video.webkitSetPresentationMode = vi.fn();
@@ -484,7 +531,7 @@ describe('pipFeature with HTMLVideoElementHost', () => {
 
       document.exitFullscreen = vi.fn().mockResolvedValue(undefined);
 
-      const video = createMockVideo();
+      const video = createMockVideo({ readyState: HTMLMediaElement.HAVE_METADATA });
 
       video.requestPictureInPicture = vi.fn().mockResolvedValue({});
       const container = document.createElement('div');

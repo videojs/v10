@@ -16,6 +16,7 @@ export const slider = {
     '[--media-track-border-radius:99px]',
     '[--media-track-transition-duration:100ms]',
     '[--media-chapter-gap:calc(var(--media-spacing)*1)] [--media-internal-chapter-inset-start:calc(var(--media-chapter-gap)/2)] [--media-internal-chapter-inset-end:calc(var(--media-chapter-gap)/2)]',
+    'data-disabled:pointer-events-none',
     // Horizontal
     'data-[orientation=horizontal]:min-w-20 data-[orientation=horizontal]:w-(--media-slider-width,100%) data-[orientation=horizontal]:h-(--media-slider-height,--spacing(8))',
     // Vertical

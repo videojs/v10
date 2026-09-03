@@ -54,6 +54,7 @@ export default {
     toggleElapsed: 'Geçen süre ile kalan süre arasında geçiş yapın.',
     toggleDuration: 'Toplam süre ile kalan süre arasında geçiş yapın.',
     position: '{current} / {duration}',
+    unknown: 'Medya yüklenmedi, süre bilinmiyor.',
   },
   playback: {
     rate: 'Oynatma Hızı {rate}',

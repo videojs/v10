@@ -130,6 +130,8 @@ afterEach(() => {
     pointing: false,
     focused: false,
   });
+  mockTimeState.duration = 120;
+  mockBufferState.seekable = [[0, 120]];
 });
 
 // --- Tests ---
@@ -198,6 +200,27 @@ describe('TimeSliderRoot', () => {
     expect(el?.style.getPropertyValue('--media-slider-fill')).toBeTruthy();
     expect(el?.style.getPropertyValue('--media-slider-pointer')).toBeTruthy();
     expect(el?.style.getPropertyValue('--media-slider-buffer')).toBeTruthy();
+  });
+
+  it('disables the slider when the time range is unknown', () => {
+    mockTimeState.duration = 0;
+    mockBufferState.seekable = [];
+    const { Wrapper } = createPlayerWrapper();
+    const { container } = render(
+      <Wrapper>
+        <TimeSliderRoot>
+          <SliderThumb data-testid="thumb" />
+        </TimeSliderRoot>
+      </Wrapper>
+    );
+
+    const root = container.querySelector('[data-disabled]');
+    const thumb = container.querySelector('[data-testid="thumb"]');
+
+    expect(root).toBeTruthy();
+    expect(thumb?.getAttribute('aria-disabled')).toBe('true');
+    expect(thumb?.getAttribute('aria-valuetext')).toBe('Media not loaded, unknown time.');
+    expect(thumb?.getAttribute('tabindex')).toBe('-1');
   });
 });
 
@@ -466,6 +489,21 @@ describe('TimeSlider compound', () => {
     const output = container.querySelector('[data-testid="value"]');
 
     expect(output?.textContent).toBeTruthy();
+  });
+
+  it('formats values using the seekable end when duration is unknown', () => {
+    mockTimeState.duration = 0;
+    mockBufferState.seekable = [[0, 3700]];
+    const { Wrapper } = createPlayerWrapper();
+    const { container } = render(
+      <Wrapper>
+        <TimeSliderRoot>
+          <SliderValue data-testid="value" />
+        </TimeSliderRoot>
+      </Wrapper>
+    );
+
+    expect(container.querySelector('[data-testid="value"]')?.textContent).toBe('0:00:30');
   });
 });
 

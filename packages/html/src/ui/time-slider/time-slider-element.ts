@@ -14,6 +14,7 @@ import {
 import { type Text, translateText } from '@videojs/core/i18n';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextProvider } from '@videojs/element/context';
+import { hasTimeRange } from '@videojs/media';
 import { applyStyles } from '@videojs/utils/dom';
 import { formatTime } from '@videojs/utils/time';
 
@@ -75,7 +76,12 @@ export class TimeSliderElement extends UIElement {
       getElement: () => this,
       getThumbElement: () => this.querySelector<HTMLElement>('media-slider-thumb'),
       getOrientation: () => this.orientation,
-      isDisabled: () => this.disabled || !this.#timeState.value,
+      isDisabled: () => {
+        const time = this.#timeState.value;
+        const buffer = this.#bufferState.value;
+
+        return this.disabled || !time || !buffer || !hasTimeRange({ ...time, ...buffer });
+      },
       getPercent: () => {
         const media = this.#timeState.value;
         if (!media) return 0;

@@ -1,5 +1,5 @@
 import { TimeCore, TimeDataAttrs } from '@videojs/core';
-import { logMissingFeature, selectTime } from '@videojs/core/dom';
+import { logMissingFeature, selectBuffer, selectTime } from '@videojs/core/dom';
 import { translateText } from '@videojs/core/i18n';
 import { durationSuffixText, elapsedSuffixText, remainingSuffixText } from '@videojs/core/i18n/text/time';
 import { isInteractiveActivation } from '@videojs/utils/dom';
@@ -31,6 +31,7 @@ export const Value = forwardRef(function Value(
   const { render, className, style, type, negativeSign, label, toggle = false, ...elementProps } = componentProps;
 
   const time = usePlayer(selectTime);
+  const buffer = usePlayer(selectBuffer);
   const translator = useTranslator();
   const locale = useLocale();
 
@@ -58,7 +59,7 @@ export const Value = forwardRef(function Value(
     return null;
   }
 
-  core.setMedia(time);
+  core.setMedia({ ...time, seekable: buffer?.seekable ?? [] });
   core.setFormatLocale(locale);
   const state = core.getState();
   const attrs = core.getAttrs(state, defaultType);
@@ -96,13 +97,13 @@ export const Value = forwardRef(function Value(
   };
 
   const handleClick = (event: MouseEvent<HTMLTimeElement>) => {
-    if (event.defaultPrevented) return;
+    if (event.defaultPrevented || state.disabled) return;
 
     toggleType();
   };
 
   const handleKeyDown = (event: KeyboardEvent<HTMLTimeElement>) => {
-    if (event.defaultPrevented || !isInteractiveActivation(event.nativeEvent)) return;
+    if (event.defaultPrevented || state.disabled || !isInteractiveActivation(event.nativeEvent)) return;
 
     // Prevent space from scrolling page.
     event.preventDefault();
@@ -121,7 +122,7 @@ export const Value = forwardRef(function Value(
       ref: [forwardedRef],
       props: [
         {
-          dateTime: toggle ? undefined : state.datetime,
+          dateTime: toggle || state.disabled ? undefined : state.datetime,
           children: content,
           ...attrs,
           'aria-label': translateText(attrs['aria-label'], translator, resolvedLabelParams),

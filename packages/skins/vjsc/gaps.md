@@ -2,6 +2,13 @@
 
 This file tracks observable behavior in `packages/skins/src` that is not yet implemented in VJSC. Remove an entry once it is implemented and verified for every affected skin, target, and styling output.
 
+## Disabled pre-metadata controls
+
+- Source: `b9cd65e08` and `packages/skins/src/{default,minimal}/{css,tailwind}/components/{slider,time}.*`
+- Gap: Legacy sliders ignore pointer input and time values render at reduced opacity before media metadata is available, while VJSC does not yet apply equivalent disabled-state styling.
+- Affected: Default and Minimal skins; HTML and React targets; CSS and Tailwind outputs.
+- Recommendation: Expose the disabled state in the VJSC time and slider rules, preserve the existing time-button focus transition, and add pre-metadata matrix coverage.
+
 ## RTL control layout
 
 - Source: `caf179b83` / #2281

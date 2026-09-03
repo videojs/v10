@@ -1,6 +1,8 @@
 import { isFunction, isObject, isUndefined } from '@videojs/utils/predicate';
 
 import { EMPTY_REMOTE, EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES } from './constants';
+import type { MediaBufferState, MediaTimeState } from './state';
+import { MediaReadyState } from './types';
 import type {
   MediaAudioTrackCapability,
   MediaBufferCapability,
@@ -20,8 +22,23 @@ import type {
   MediaVolumeCapability,
 } from './types';
 
-export function hasMetadata(media: MediaSourceCapability): boolean {
-  return media.readyState >= 1;
+export function hasMetadata(media: Pick<MediaSourceCapability, 'readyState'>): boolean {
+  return media.readyState >= MediaReadyState.HAVE_METADATA;
+}
+
+export type MediaTimeRangeState = Pick<MediaTimeState, 'duration'> & Pick<MediaBufferState, 'seekable'>;
+
+export function getTimeRangeEnd(media: MediaTimeRangeState): number {
+  if (Number.isFinite(media.duration) && media.duration > 0) return media.duration;
+
+  const end = media.seekable.at(-1)?.[1];
+  if (end === undefined || !Number.isFinite(end) || end <= 0) return 0;
+
+  return end;
+}
+
+export function hasTimeRange(media: MediaTimeRangeState): boolean {
+  return getTimeRangeEnd(media) > 0;
 }
 
 export function isMediaPauseCapable(value: unknown): value is MediaPauseCapability {

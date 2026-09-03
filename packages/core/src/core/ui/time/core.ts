@@ -1,4 +1,4 @@
-import type { MediaTimeState } from '@videojs/media';
+import { getTimeRangeEnd, hasTimeRange, type MediaBufferState, type MediaTimeState } from '@videojs/media';
 import { defaults } from '@videojs/utils/object';
 import { formatTime, formatTimeAsPhrase, secondsToIsoDuration } from '@videojs/utils/time';
 import type { NonNullableObject } from '@videojs/utils/types';
@@ -13,6 +13,7 @@ import {
   showRemainingText,
   toggleDurationText,
   toggleElapsedText,
+  unknownText,
 } from '../../i18n/text/time';
 import { resolveLabel } from '../utils/resolve-label';
 
@@ -33,6 +34,8 @@ export interface TimeProps {
 export interface TimeState {
   /** Time display type. */
   type: TimeType;
+  /** Whether the time value is unavailable. */
+  disabled: boolean;
   /** Raw value in seconds. */
   seconds: number;
   /** Whether the time value is negative (remaining time before end). */
@@ -72,7 +75,7 @@ export class TimeCore {
   };
 
   #props: NonNullableObject<TimeProps> = { ...TimeCore.defaultProps };
-  #media: MediaTimeState | null = null;
+  #media: (MediaTimeState & Pick<MediaBufferState, 'seekable'>) | null = null;
   #formatLocale: string | string[] | undefined;
 
   constructor(props?: TimeProps) {
@@ -83,7 +86,7 @@ export class TimeCore {
     this.#props = defaults(props, TimeCore.defaultProps);
   }
 
-  setMedia(media: MediaTimeState): void {
+  setMedia(media: MediaTimeState & Pick<MediaBufferState, 'seekable'>): void {
     this.#media = media;
   }
 
@@ -94,15 +97,16 @@ export class TimeCore {
 
   #getSeconds(): number {
     const media = this.#media!;
+    const duration = getTimeRangeEnd(media);
     const { type } = this.#props;
 
     switch (type) {
       case 'current':
         return media.currentTime;
       case 'duration':
-        return media.duration;
+        return duration;
       case 'remaining':
-        return media.currentTime - media.duration;
+        return media.currentTime - duration;
       default:
         return 0;
     }
@@ -111,9 +115,10 @@ export class TimeCore {
   #getText(): string {
     const media = this.#media!;
     const seconds = this.#getSeconds();
+    const duration = getTimeRangeEnd(media);
     const options = this.#formatLocale === undefined ? undefined : { locale: this.#formatLocale };
 
-    return formatTime(Math.abs(seconds), media.duration, options);
+    return formatTime(Math.abs(seconds), duration, options);
   }
 
   #getPhrase(): string {
@@ -146,6 +151,8 @@ export class TimeCore {
     const custom = resolveLabel(this.#props.label, state);
     if (custom !== undefined) return custom;
 
+    if (state.disabled) return unknownText;
+
     if (!this.#props.toggle) {
       return DEFAULT_LABELS[this.#props.type];
     }
@@ -157,7 +164,7 @@ export class TimeCore {
 
   getLabelParams(state: TimeState): { duration: string } | undefined {
     const custom = resolveLabel(this.#props.label, state);
-    if (custom !== undefined || !this.#props.toggle) return undefined;
+    if (custom !== undefined || state.disabled || !this.#props.toggle) return undefined;
 
     const options = this.#formatLocale === undefined ? undefined : { locale: this.#formatLocale };
     const duration = formatTimeAsPhrase(Math.abs(state.seconds), options);
@@ -172,16 +179,17 @@ export class TimeCore {
     }
   }
 
-  getDescription(type = this.#props.type): Text | undefined {
-    return this.#props.toggle ? TOGGLE_DESCRIPTIONS[type] : undefined;
+  getDescription(state: TimeState, type = this.#props.type): Text | undefined {
+    return this.#props.toggle && !state.disabled ? TOGGLE_DESCRIPTIONS[type] : undefined;
   }
 
   getAttrs(state: TimeState, type = this.#props.type) {
     return {
       'aria-label': this.getLabel(state, type),
-      'aria-description': this.getDescription(type),
+      'aria-description': this.getDescription(state, type),
+      'aria-disabled': this.#props.toggle && state.disabled ? 'true' : undefined,
       role: this.#props.toggle ? 'button' : undefined,
-      tabIndex: this.#props.toggle ? 0 : undefined,
+      tabIndex: this.#props.toggle ? (state.disabled ? -1 : 0) : undefined,
     };
   }
 
@@ -190,6 +198,7 @@ export class TimeCore {
 
     return {
       type: this.#props.type,
+      disabled: !hasTimeRange(this.#media!),
       seconds,
       negative: this.#props.type === 'remaining' && seconds < 0,
       text: this.#getText(),

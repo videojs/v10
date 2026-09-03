@@ -1,9 +1,11 @@
+import { getTimeRangeEnd } from '@videojs/media';
 import { isUndefined } from '@videojs/utils/predicate';
 
 import type { HotkeyActionName } from '../../core/ui/hotkey/core';
 import { MEDIA_INPUT_ACTION_OVERRIDES } from '../media-actions';
 import type { AnyPlayerStore } from '../player';
 import {
+  selectBuffer,
   selectFullscreen,
   selectPiP,
   selectPlayback,
@@ -67,7 +69,11 @@ const HOTKEY_ACTIONS: Record<HotkeyActionName, HotkeyActionResolver> = {
 
   seekToPercent({ store, value, key }) {
     const time = selectTime(store.state);
-    if (!time || time.duration <= 0) return;
+    if (!time) return;
+
+    const buffer = selectBuffer(store.state);
+    const duration = getTimeRangeEnd({ duration: time.duration, seekable: buffer?.seekable ?? [] });
+    if (duration <= 0) return;
 
     let percent: number;
 
@@ -79,7 +85,7 @@ const HOTKEY_ACTIONS: Record<HotkeyActionName, HotkeyActionResolver> = {
       return;
     }
 
-    time.seek((percent / 100) * time.duration);
+    time.seek((percent / 100) * duration);
   },
 };
 

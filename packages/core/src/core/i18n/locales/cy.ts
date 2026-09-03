@@ -54,6 +54,7 @@ export default {
     toggleElapsed: "Toglo rhwng yr amser a aeth heibio a'r amser sy'n weddill.",
     toggleDuration: "Toglo rhwng yr hyd a'r amser sy'n weddill.",
     position: '{current} o {duration}',
+    unknown: "Nid yw'r cyfrwng wedi llwytho, amser anhysbys.",
   },
   playback: {
     rate: 'Cyfradd Chwarae {rate}',

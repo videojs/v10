@@ -1,8 +1,9 @@
 import { TimeCore, TimeDataAttrs, type TimeType } from '@videojs/core';
-import { applyElementProps, applyStateDataAttrs, logMissingFeature, selectTime } from '@videojs/core/dom';
+import { applyElementProps, applyStateDataAttrs, logMissingFeature, selectBuffer, selectTime } from '@videojs/core/dom';
 import { type Text, translateText } from '@videojs/core/i18n';
 import { durationSuffixText, elapsedSuffixText, remainingSuffixText } from '@videojs/core/i18n/text/time';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
+import { hasTimeRange } from '@videojs/media';
 import { isInteractiveActivation } from '@videojs/utils/dom';
 import { formatTimeAsPhrase } from '@videojs/utils/time';
 
@@ -29,6 +30,7 @@ export class TimeElement extends UIElement {
 
   readonly #core = new TimeCore();
   readonly #state = new PlayerController(this, playerContext, selectTime);
+  readonly #buffer = new PlayerController(this, playerContext, selectBuffer);
   readonly #i18n = new I18nController(this, i18nContext);
 
   readonly #signSpan = document.createElement('span');
@@ -90,7 +92,7 @@ export class TimeElement extends UIElement {
       label: this.label,
       toggle: this.toggle,
     });
-    this.#core.setMedia(media);
+    this.#core.setMedia({ ...media, seekable: this.#buffer.value?.seekable ?? [] });
     this.#core.setFormatLocale(this.#i18n.locale);
     const state = this.#core.getState();
 
@@ -107,9 +109,10 @@ export class TimeElement extends UIElement {
     applyElementProps(this, {
       'aria-label': label,
       'aria-description': description,
+      'aria-disabled': attrs['aria-disabled'],
       role: this.toggle ? attrs.role : 'time',
       tabIndex: attrs.tabIndex,
-      datetime: this.toggle ? undefined : state.datetime,
+      datetime: this.toggle || state.disabled ? undefined : state.datetime,
     });
     applyStateDataAttrs(this, state, TimeDataAttrs);
   }
@@ -130,7 +133,7 @@ export class TimeElement extends UIElement {
   }
 
   #handleClick = (event: MouseEvent): void => {
-    if (event.defaultPrevented || !this.toggle || !this.#state.value) return;
+    if (event.defaultPrevented || !this.toggle || !this.#state.value || !this.#hasTimeRange()) return;
 
     this.#toggleType();
   };
@@ -138,7 +141,7 @@ export class TimeElement extends UIElement {
   #handleKeyDown = (event: KeyboardEvent): void => {
     if (event.defaultPrevented || !isInteractiveActivation(event)) return;
 
-    if (!this.toggle || !this.#state.value) return;
+    if (!this.toggle || !this.#state.value || !this.#hasTimeRange()) return;
 
     // Prevent space from scrolling page.
     event.preventDefault();
@@ -156,6 +159,13 @@ export class TimeElement extends UIElement {
     }
 
     this.requestUpdate();
+  }
+
+  #hasTimeRange(): boolean {
+    const media = this.#state.value;
+    if (!media) return false;
+
+    return hasTimeRange({ ...media, seekable: this.#buffer.value?.seekable ?? [] });
   }
 
   #syncListeners(): void {
@@ -176,6 +186,7 @@ export class TimeElement extends UIElement {
     applyElementProps(this, {
       'aria-label': undefined,
       'aria-description': undefined,
+      'aria-disabled': undefined,
       role: undefined,
       tabIndex: undefined,
       datetime: undefined,

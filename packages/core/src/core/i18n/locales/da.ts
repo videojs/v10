@@ -54,6 +54,7 @@ export default {
     toggleElapsed: 'Skift mellem forløbet og resterende tid.',
     toggleDuration: 'Skift mellem varighed og resterende tid.',
     position: '{current} af {duration}',
+    unknown: 'Mediet er ikke indlæst, tidspunktet er ukendt.',
   },
   playback: {
     rate: 'Afspilningsrate {rate}',

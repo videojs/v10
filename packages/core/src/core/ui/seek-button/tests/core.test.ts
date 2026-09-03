@@ -45,7 +45,9 @@ describe('SeekButtonCore', () => {
 
     it('accepts disabled via constructor', () => {
       const core = new SeekButtonCore({ disabled: true });
-      const attrs = core.getAttrs(createState());
+
+      core.setMedia(createMediaState());
+      const attrs = core.getAttrs(core.getState());
 
       expect(attrs['aria-disabled']).toBe('true');
     });
@@ -218,6 +220,15 @@ describe('SeekButtonCore', () => {
 
       await core.seek(media);
       expect(media.seek).not.toHaveBeenCalled();
+    });
+
+    it('forwards seeks when the timeline is not known yet', async () => {
+      const core = new SeekButtonCore();
+      const media = createMediaState({ duration: 0 });
+
+      await core.seek(media);
+
+      expect(media.seek).toHaveBeenCalledWith(30);
     });
   });
 });

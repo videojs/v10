@@ -54,6 +54,7 @@ export default {
     toggleElapsed: 'Byt mellom avspelt tid og tid att.',
     toggleDuration: 'Byt mellom varigheit og tid att.',
     position: '{current} av {duration}',
+    unknown: 'Mediet er ikkje lasta inn, ukjend tid.',
   },
   playback: {
     rate: 'Avspelingshastigheit {rate}',
