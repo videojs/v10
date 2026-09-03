@@ -6,7 +6,7 @@ import type { RegistryCreatedItem, RegistryModuleItem } from 'vjsc/shadcn';
 import { isSkinName, type SkinModuleMeta, type SkinName } from '../../../src/meta.ts';
 import { skinCatalogEntry } from '../../catalog.ts';
 import { createHtmlSkinRegistration, createSourceOwnedHtml, type RenderedHtmlSkin } from '../../packages/html.ts';
-import { skinDirectory, skinPreset } from '../../skin.ts';
+import { isSkinPreset, skinDirectory, skinPreset } from '../../skin.ts';
 import type { VideojsRegistryMeta } from '../meta.ts';
 import { packageRequirements, registryPaths, type RegistryTarget } from '../targets.ts';
 import { exportedComponentName } from './components.ts';
@@ -119,7 +119,7 @@ function relativeRegistryImport(importer: string, target: string): string {
   return specifier.startsWith('.') ? specifier : `./${specifier}`;
 }
 
-function skinModuleTarget(
+export function skinModuleTarget(
   module: GraphModule<SkinModuleMeta>,
   root: GraphModule<SkinModuleMeta>,
   skin: SkinName
@@ -138,9 +138,14 @@ function skinModuleTarget(
   if (!match) throw new Error(`Unsupported registry source: \`${sourcePath}\`.`);
 
   const [, owner, filename] = match;
-  const directory = owner && isSkinName(owner) ? skinDirectory(owner) : `skins/${owner}`;
+  if (owner && isSkinName(owner)) return `${skinDirectory(owner)}/${filename}`;
 
-  return `${directory}/${filename}`;
+  // A preset directory such as `skins/audio` serves both of its themes and is also the default theme's own directory.
+  // Each theme compiles the module with its own variants, so the Minimal theme keeps its copy beside its skin instead
+  // of overwriting the default theme's.
+  if (owner && isSkinPreset(owner)) return `${skinDirectory(skin)}/${filename}`;
+
+  return `skins/${owner}/${filename}`;
 }
 
 function skinDocs(
