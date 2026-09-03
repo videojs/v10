@@ -208,6 +208,8 @@ export function createSandboxConfig(skinsSource?: SkinsSource) {
         'test:ci': {
           command: 'pnpm test',
           cache: false,
+          // The shell helpers import built workspace packages, so their builds must exist before vitest resolves them.
+          dependsOn: workspaceTaskDependencies(),
         },
         build: {
           command: `vp build${workspaceConfig}`,
