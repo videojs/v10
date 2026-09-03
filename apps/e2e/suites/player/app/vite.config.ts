@@ -41,7 +41,7 @@ function getPageEntries(): Record<string, string> {
 }
 
 export default defineConfig({
-  root: 'src',
+  root: resolve(packageDir, 'src'),
   appType: 'mpa',
   define: {
     __DEV__: 'true',

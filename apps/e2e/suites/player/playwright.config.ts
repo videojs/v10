@@ -21,9 +21,11 @@ export default defineConfig({
       use: { ...devices['Desktop Firefox'], baseURL: 'http://localhost:5180' },
     },
   ],
+  // The app folder is not a workspace package, so run vite from the e2e package, which owns the dependency, and point
+  // it at the app config; the config resolves its own root.
   webServer: {
-    command: 'pnpm exec vite --port 5180',
-    cwd: resolve(import.meta.dirname, 'app'),
+    command: 'pnpm exec vite --config suites/player/app/vite.config.ts --port 5180',
+    cwd: resolve(import.meta.dirname, '../..'),
     port: 5180,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
