@@ -57,9 +57,11 @@ async function renderCrossOrigin(
 ): Promise<string | null> {
   const provider = document.createElement('test-thumbnail-player') as TestPlayerProviderElement;
   const thumbnail = document.createElement(ThumbnailElement.tagName) as ThumbnailElement;
+  const img = document.createElement('img');
 
   configure?.(thumbnail);
   provider.setStore(createTextTrackStore(mediaCrossOrigin));
+  thumbnail.append(img);
   provider.append(thumbnail);
   document.body.append(provider);
 
@@ -68,12 +70,171 @@ async function renderCrossOrigin(
     await nextFrame();
   }
 
-  return thumbnail.shadowRoot!.querySelector('img')!.getAttribute('crossorigin');
+  return img.getAttribute('crossorigin');
 }
 
 describe('ThumbnailElement', () => {
   afterEach(() => {
     document.body.innerHTML = '';
+  });
+
+  it('draws a fallback image in its shadow root when none is supplied', async () => {
+    const thumbnail = document.createElement(ThumbnailElement.tagName) as ThumbnailElement;
+
+    thumbnail.thumbnails = [{ url: 'thumb.jpg', startTime: 0 }];
+    document.body.append(thumbnail);
+    await thumbnail.updateComplete;
+
+    const fallback = thumbnail.shadowRoot!.querySelector('img');
+
+    expect(fallback!.getAttribute('part')).toBe('image');
+    expect(fallback!.getAttribute('aria-hidden')).toBe('true');
+    expect(fallback!.getAttribute('src')).toBe('thumb.jpg');
+    expect(thumbnail.querySelector('img')).toBeNull();
+  });
+
+  it('uses a supplied light-DOM image in place of the fallback', async () => {
+    const thumbnail = document.createElement(ThumbnailElement.tagName) as ThumbnailElement;
+    const img = document.createElement('img');
+
+    Object.defineProperty(img, 'complete', { value: false, configurable: true });
+    thumbnail.thumbnails = [{ url: 'thumb.jpg', startTime: 0 }];
+    thumbnail.append(img);
+    document.body.append(thumbnail);
+    await thumbnail.updateComplete;
+
+    expect(img.getAttribute('src')).toBe('thumb.jpg');
+    expect(thumbnail.shadowRoot!.querySelector('img')).toBeNull();
+  });
+
+  it('owns src and srcset on the supplied image', async () => {
+    const thumbnail = document.createElement(ThumbnailElement.tagName) as ThumbnailElement;
+    const img = document.createElement('img');
+
+    Object.defineProperty(img, 'complete', { value: false, configurable: true });
+    img.setAttribute('src', 'authored.jpg');
+    img.setAttribute('srcset', 'authored-2x.jpg 2x');
+    thumbnail.thumbnails = [{ url: 'thumb.jpg', startTime: 0 }];
+    thumbnail.append(img);
+    document.body.append(thumbnail);
+    await thumbnail.updateComplete;
+
+    expect(img.getAttribute('src')).toBe('thumb.jpg');
+    expect(img.hasAttribute('srcset')).toBe(false);
+
+    img.setAttribute('srcset', 'late-authored-2x.jpg 2x');
+    await vi.waitFor(() => expect(img.hasAttribute('srcset')).toBe(false));
+
+    thumbnail.thumbnails = [];
+    await thumbnail.updateComplete;
+
+    expect(img.hasAttribute('src')).toBe(false);
+    expect(img.hasAttribute('srcset')).toBe(false);
+  });
+
+  it('adopts an image added after mount', async () => {
+    const thumbnail = document.createElement(ThumbnailElement.tagName) as ThumbnailElement;
+
+    thumbnail.thumbnails = [{ url: 'thumb.jpg', startTime: 0 }];
+    document.body.append(thumbnail);
+    await thumbnail.updateComplete;
+
+    const fallback = thumbnail.shadowRoot!.querySelector('img')!;
+
+    expect(fallback.getAttribute('src')).toBe('thumb.jpg');
+
+    const img = document.createElement('img');
+
+    Object.defineProperty(img, 'complete', { value: false, configurable: true });
+    thumbnail.append(img);
+
+    await vi.waitFor(() => expect(img.getAttribute('src')).toBe('thumb.jpg'));
+    expect(fallback.isConnected).toBe(false);
+    expect(fallback.hasAttribute('src')).toBe(false);
+  });
+
+  it('adopts an image assigned to a forwarding slot after mount', async () => {
+    const host = document.createElement('div');
+    const shadow = host.attachShadow({ mode: 'open' });
+    const thumbnail = document.createElement(ThumbnailElement.tagName) as ThumbnailElement;
+    const slot = document.createElement('slot');
+
+    slot.name = 'image';
+    thumbnail.thumbnails = [{ url: 'thumb.jpg', startTime: 0 }];
+    thumbnail.append(slot);
+    shadow.append(thumbnail);
+    document.body.append(host);
+    await thumbnail.updateComplete;
+
+    const fallback = thumbnail.shadowRoot!.querySelector('img')!;
+
+    expect(fallback.getAttribute('src')).toBe('thumb.jpg');
+
+    const img = document.createElement('img');
+
+    Object.defineProperty(img, 'complete', { value: false, configurable: true });
+    img.slot = 'image';
+    host.append(img);
+
+    await vi.waitFor(() => expect(img.getAttribute('src')).toBe('thumb.jpg'));
+    expect(fallback.isConnected).toBe(false);
+
+    // The image is outside the thumbnail's subtree, so its attributes are watched directly.
+    img.setAttribute('srcset', 'late-authored-2x.jpg 2x');
+    await vi.waitFor(() => expect(img.hasAttribute('srcset')).toBe(false));
+  });
+
+  it('binds its image again after being moved in the document', async () => {
+    const thumbnail = document.createElement(ThumbnailElement.tagName) as ThumbnailElement;
+
+    thumbnail.thumbnails = [{ url: 'thumb.jpg', startTime: 0 }];
+    document.body.append(thumbnail);
+    await thumbnail.updateComplete;
+
+    const fallback = thumbnail.shadowRoot!.querySelector('img')!;
+    const host = document.createElement('div');
+
+    document.body.append(host);
+    host.append(thumbnail);
+
+    // Disconnecting let go of the image; nothing but the reconnect itself brings the source back.
+    expect(fallback.hasAttribute('src')).toBe(false);
+    await vi.waitFor(() => expect(fallback.getAttribute('src')).toBe('thumb.jpg'));
+  });
+
+  it('draws the fallback again when the supplied image is removed', async () => {
+    const thumbnail = document.createElement(ThumbnailElement.tagName) as ThumbnailElement;
+    const img = document.createElement('img');
+
+    Object.defineProperty(img, 'complete', { value: false, configurable: true });
+    thumbnail.thumbnails = [{ url: 'thumb.jpg', startTime: 0 }];
+    thumbnail.append(img);
+    document.body.append(thumbnail);
+    await thumbnail.updateComplete;
+
+    img.remove();
+
+    await vi.waitFor(() => expect(thumbnail.shadowRoot!.querySelector('img')?.getAttribute('src')).toBe('thumb.jpg'));
+    expect(img.hasAttribute('src')).toBe(false);
+  });
+
+  it('moves source ownership to a replacement image', async () => {
+    const thumbnail = document.createElement(ThumbnailElement.tagName) as ThumbnailElement;
+    const first = document.createElement('img');
+
+    Object.defineProperty(first, 'complete', { value: false, configurable: true });
+    thumbnail.thumbnails = [{ url: 'thumb.jpg', startTime: 0 }];
+    thumbnail.append(first);
+    document.body.append(thumbnail);
+    await thumbnail.updateComplete;
+
+    const second = document.createElement('img');
+
+    Object.defineProperty(second, 'complete', { value: false, configurable: true });
+    first.replaceWith(second);
+
+    await vi.waitFor(() => expect(second.getAttribute('src')).toBe('thumb.jpg'));
+    expect(first.hasAttribute('src')).toBe(false);
   });
 
   describe('crossorigin', () => {

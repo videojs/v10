@@ -82,7 +82,6 @@ const componentParts: ComponentPartNameMap = {
     Buffer: 'SliderBuffer',
     Thumb: 'SliderThumb',
     'Thumbnail.Root': 'SliderThumbnail',
-    'Thumbnail.Image': 'SliderThumbnail',
     Preview: 'SliderPreview',
     Value: 'SliderValue',
   },
@@ -262,7 +261,7 @@ export const htmlComponentTarget: ComponentTarget<CoreSchema> = defineComponentT
         },
         Slider: {
           Thumbnail: {
-            Root: Div,
+            Image: ({ props }) => <Img alt="" aria-hidden="true" decoding="async" {...props} />,
           },
         },
         Tooltip: ({ props, parts, id }) => {

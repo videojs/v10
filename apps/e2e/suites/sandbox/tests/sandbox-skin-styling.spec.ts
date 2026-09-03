@@ -345,13 +345,12 @@ for (const skins of ['package', 'registry'] as const) {
     const sliderBox = await slider.boundingBox();
     if (!sliderBox) throw new Error('Time slider is not visible');
 
-    const thumbnailImage = page.locator('media-slider-thumbnail').first();
-    const thumbnail = thumbnailImage.locator('xpath=..');
+    const thumbnail = page.locator('media-slider-thumbnail').first();
 
     for (const x of [sliderBox.x + 1, sliderBox.x + sliderBox.width - 1]) {
       await page.mouse.move(x, sliderBox.y + sliderBox.height / 2);
-      await expect(thumbnailImage).toBeAttached({ timeout: 15_000 });
-      await expect(thumbnailImage).not.toHaveAttribute('data-loading', { timeout: 15_000 });
+      await expect(thumbnail).toBeAttached({ timeout: 15_000 });
+      await expect(thumbnail).not.toHaveAttribute('data-loading', { timeout: 15_000 });
       await expect(thumbnail).toHaveCSS('scale', '1');
 
       const [rootBox, thumbnailBox] = await Promise.all([root.boundingBox(), thumbnail.boundingBox()]);

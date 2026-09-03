@@ -32,14 +32,11 @@ describe('SliderThumbnailElement', () => {
     expect(el).toBeInstanceOf(ThumbnailElement);
   });
 
-  it('has a shadow root with an img element', () => {
+  it('draws a fallback image in its shadow root', () => {
     const el = createElement(SliderThumbnailElement);
-
-    expect(el.shadowRoot).toBeTruthy();
-
     const img = el.shadowRoot!.querySelector('img');
 
-    expect(img).toBeTruthy();
+    expect(img!.getAttribute('part')).toBe('image');
     expect(img!.getAttribute('aria-hidden')).toBe('true');
   });
 
@@ -64,12 +61,16 @@ describe('SliderThumbnailElement', () => {
   it('reads pointerValue from slider context as time', async () => {
     const slider = createElement(SliderElement);
     const thumbnail = createElement(SliderThumbnailElement);
+    const img = document.createElement('img');
+
+    Object.defineProperty(img, 'complete', { value: false, configurable: true });
 
     thumbnail.thumbnails = [
       { url: 'thumb-0.jpg', startTime: 0 },
       { url: 'thumb-30.jpg', startTime: 30 },
       { url: 'thumb-60.jpg', startTime: 60 },
     ];
+    thumbnail.append(img);
 
     slider.appendChild(thumbnail);
     document.body.appendChild(slider);
@@ -78,16 +79,18 @@ describe('SliderThumbnailElement', () => {
     await thumbnail.updateComplete;
 
     // In idle state, pointerPercent=0 → pointerValue=0 → selects 'thumb-0.jpg'.
-    const img = thumbnail.shadowRoot!.querySelector('img');
-
-    expect(img!.getAttribute('src')).toBe('thumb-0.jpg');
+    expect(img.getAttribute('src')).toBe('thumb-0.jpg');
   });
 
   it('does not have data-hidden when thumbnails match', async () => {
     const slider = createElement(SliderElement);
     const thumbnail = createElement(SliderThumbnailElement);
+    const img = document.createElement('img');
+
+    Object.defineProperty(img, 'complete', { value: false, configurable: true });
 
     thumbnail.thumbnails = [{ url: 'thumb.jpg', startTime: 0 }];
+    thumbnail.append(img);
 
     slider.appendChild(thumbnail);
     document.body.appendChild(slider);
