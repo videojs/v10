@@ -275,23 +275,23 @@ Media Chrome and Video.js both use names beginning with `--media-`, but that sha
 |---|---|---|
 | `--media-accent-color` or `--media-range-bar-color` | `--media-accent-color` | Closest match for slider fills and accented controls. |
 | `--media-primary-color` | no direct equivalent | Often colors every control icon in Media Chrome; Video.js's accent variable has narrower semantics. |
-| `--media-secondary-color` | no direct equivalent | Author CSS or own the skin's source when you need this palette role. |
-| `--media-control-background` | no direct equivalent | Author CSS or own the skin's source. |
-| `--media-control-hover-background` | no direct equivalent | Author CSS or own the skin's source. |
-| `--media-range-track-height` | no direct equivalent | Author slider CSS or own the skin's source. |
+| `--media-secondary-color` | no direct equivalent | Author CSS or eject when you need this palette role. |
+| `--media-control-background` | no direct equivalent | Author CSS or eject. |
+| `--media-control-hover-background` | no direct equivalent | Author CSS or eject. |
+| `--media-range-track-height` | no direct equivalent | Author slider CSS or eject. |
 
 The packaged Video.js skins expose `--media-accent-color`, `--media-accent-text-color`, `--media-border-radius`, and `--media-scale-unit` for broad customization. Do not assume another Media Chrome variable will work because its name starts with `--media-`.
 
 ## Themes become skins
 
-Media Chrome's `<template>`-based themes (`media-theme`) become Video.js <DocsLink slug="concepts/skins">skins</DocsLink> and <DocsLink slug="concepts/presets">presets</DocsLink>. Start from a preset, then <DocsLink slug="how-to/customize-skins" anchor="own-and-customize-the-source">install an editable copy of its skin</DocsLink>, rather than authoring a template.
+Media Chrome's `<template>`-based themes (`media-theme`) become Video.js <DocsLink slug="concepts/skins">skins</DocsLink> and <DocsLink slug="concepts/presets">presets</DocsLink>. Start from a preset, then <DocsLink slug="how-to/customize-skins" anchor="eject-a-skin">eject its skin</DocsLink>, rather than authoring a template.
 
 <FrameworkCase frameworks={["html"]}>
 Ready-made HTML skins keep their controls inside Shadow DOM. Code outside the skin sees a click as coming from the skin, not the button inside it. Some control events also stay inside the skin. Do not use an outside listener to identify which built-in button was clicked.
 
 Keep playback event handlers on your `<video>` or `<audio>`. When you build a custom control bar, attach click and input handlers directly to those controls. With a ready-made skin, read media or player state instead of listening for clicks inside the skin.
 
-Keep the skin when its CSS variables and content slots cover your changes. Build a custom control bar when you want to start from scratch. Own the skin's source when you want its existing layout and styles but need to change the controls inside it.
+Keep the skin when its CSS variables and content slots cover your changes. Build a custom control bar when you want to start from scratch. Eject the skin when you want its existing layout and styles but need to change the controls inside it.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>

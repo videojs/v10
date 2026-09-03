@@ -208,7 +208,7 @@ ${mediaComment}
 <${playerTag}>
   <!--
     Skins contain the entire player UI and are easily swappable.
-    Each one can be installed as Source-Owned UI for full control and customization
+    They can each be "ejected" for full control and customization
     of UI components.
    -->
   <${skinTag}>

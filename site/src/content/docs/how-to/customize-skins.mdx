@@ -1,6 +1,6 @@
 ---
 title: Customize skins
-description: Customize a packaged Video.js skin, install an editable copy, or build your own player interface
+description: Customize a packaged Video.js skin, eject it into your project, or build your own player interface
 ---
 
 import Aside from '@/components/Aside.astro';
@@ -12,17 +12,17 @@ import RegistryCommand from '@/components/registry/RegistryCommand.astro';
 import RegistryStyling from '@/components/registry/RegistryStyling.astro';
 import ShadcnCommand from '@/components/registry/ShadcnCommand.astro';
 
-Video.js v10 comes with two pre-built skins: Default and Minimal. Start by changing the packaged skin. If you need to change its controls, layout, or behavior, install an editable copy of the closest skin instead.
+Video.js v10 comes with two pre-built skins: Default and Minimal. Start by changing the packaged skin. If you need to change its controls, layout, or behavior, eject the closest skin instead.
 
 ## Choose how much control you need
 
 | Goal | Starting point |
 | ---- | -------------- |
 | Change colors, type, sizing, or the poster | Customize the packaged skin with its public settings |
-| Add, remove, or rearrange controls; change a layout or interaction | Install an editable copy of the closest skin |
+| Add, remove, or rearrange controls; change a layout or interaction | Eject the closest skin |
 | Create an interface that does not resemble an existing skin | Compose your own interface from individual UI components |
 
-Video.js calls the second option **Source-Owned UI** because the skin's components and styles become files in your project. This guide uses “editable copy” for the same idea.
+Ejecting copies the skin's components and styles into your project, where you own and edit them.
 
 ## Customize a packaged skin
 
@@ -116,11 +116,11 @@ Packaged video skins also let you replace the poster through the `renderPoster` 
 
 See <DocsLink slug="reference/poster">Poster</DocsLink>.
 
-For deeper changes, install the skin's source instead of reaching into the packaged skin. Packaged skins do not provide settings for adding, removing, or rearranging controls, or for replacing built-in feedback and interactions. For example, the audio skins include 10-second skip buttons, but the video skins do not. To add them to a video skin, install an editable copy and place a <DocsLink slug="reference/seek-button">SeekButton</DocsLink> in its control bar.
+For deeper changes, eject the skin instead of reaching into the packaged skin. Packaged skins do not provide settings for adding, removing, or rearranging controls, or for replacing built-in feedback and interactions. For example, the audio skins include 10-second skip buttons, but the video skins do not. To add them to a video skin, eject it and place a <DocsLink slug="reference/seek-button">SeekButton</DocsLink> in its control bar.
 
-## Own and customize the source
+## Eject a skin
 
-The [Shadcn CLI](https://ui.shadcn.com/docs/cli) is a command-line tool that copies component source into your project. The Video.js registry is the catalog it copies from. Once installed, a skin is app code: remove a control by deleting its component, or change an overlay by editing the files in your project.
+The [Shadcn CLI](https://ui.shadcn.com/docs/cli) ejects a skin by copying its source into your project. The Video.js registry is the catalog it copies from. Once ejected, a skin is app code: remove a control by deleting its component, or change an overlay by editing the files in your project.
 
 <Aside type="note">
 Commit your work before installing or updating source. You can then review every file the CLI adds or replaces.
@@ -160,7 +160,7 @@ An **item** is a named group of files in the registry. Install the item for the 
 
 The paths in the table start from the component location configured in `components.json`.
 
-Background video remains a packaged skin. The registry does not provide an editable copy.
+Background video remains a packaged skin. The registry does not provide an ejected version.
 
 ### Use the installed skin
 
@@ -201,7 +201,7 @@ Run `search @videojs` to see the available components.
 The HTML registry currently provides complete skins rather than individual UI components.
 </FrameworkCase>
 
-### Inspect or update installed source
+### Inspect or update an ejected skin
 
 Use Shadcn's `search` command to find an item and `view` to inspect it before installation:
 
