@@ -1,4 +1,4 @@
-import type { EventListenerFor, EventType, QueriedElement } from '@videojs/utils/dom';
+import { findTrackElement, type EventListenerFor, type EventType, type QueriedElement } from '@videojs/utils/dom';
 
 import { EMPTY_REMOTE, EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES } from '../../core/constants';
 import {
@@ -10,6 +10,7 @@ import {
   type TextTrackKind,
   type TextTrackLike,
 } from '../../core/types';
+import { createTextTrackElement } from '../text-track';
 import { getMediaComponents, getMediaOwner, getMediaProp, setMediaProp } from '../utils';
 
 export { addMediaComponent, getMediaComponents, getMediaOwner, getMediaProp, setMediaProp } from '../utils';
@@ -308,7 +309,36 @@ export class HTMLMediaElementHost<Target extends HTMLMediaTargetLike, Events ext
   addTextTrack(kind: TextTrackKind, label?: string, language?: string) {
     const owner = getMediaOwner(this, 'addTextTrack');
 
+    if (owner instanceof HTMLMediaElement) {
+      const element = createTextTrackElement(owner, kind, label, language);
+      const track = element.track;
+
+      if (!track) {
+        element.remove();
+
+        // SAFETY: the native fallback implements the host's TextTrackLike contract when available.
+        return owner.addTextTrack?.(kind, label, language) as TextTrackLike;
+      }
+
+      track.mode = 'hidden';
+
+      // SAFETY: native TextTrack satisfies the framework-neutral TextTrackLike contract.
+      return track as TextTrackLike;
+    }
+
+    // SAFETY: a media component's addTextTrack override implements the host's TextTrackLike contract.
     return owner?.addTextTrack?.(kind, label, language) as TextTrackLike;
+  }
+
+  removeTextTrack(track: TextTrackLike) {
+    const owner = getMediaOwner(this, 'removeTextTrack');
+
+    if (owner?.removeTextTrack) {
+      owner.removeTextTrack(track);
+      return;
+    }
+
+    if (this.target) findTrackElement(this.target, track)?.remove();
   }
 
   get remote() {

@@ -47,6 +47,54 @@ class CastLikeOverride implements MediaComponent {
 }
 
 describe('HTMLMediaElementHost', () => {
+  describe('text tracks', () => {
+    it('creates removable track elements on native media targets', () => {
+      const descriptor = Object.getOwnPropertyDescriptor(HTMLTrackElement.prototype, 'track');
+      const tracks = new WeakMap<HTMLTrackElement, TextTrack>();
+
+      Object.defineProperty(HTMLTrackElement.prototype, 'track', {
+        configurable: true,
+        get() {
+          let track = tracks.get(this);
+
+          if (!track) {
+            // SAFETY: this native-shaped test double covers the properties used by HTMLMediaElementHost.
+            track = {
+              kind: this.kind,
+              label: this.label,
+              language: this.srclang,
+              mode: 'disabled',
+            } as TextTrack;
+            tracks.set(this, track);
+          }
+
+          return track;
+        },
+      });
+
+      const host = new HTMLAudioElementHost();
+      const audio = document.createElement('audio');
+
+      try {
+        host.attach(audio);
+
+        const track = host.addTextTrack('metadata', 'Ads', 'en');
+        const element = audio.querySelector('track');
+
+        expect(element).toMatchObject({ kind: 'metadata', label: 'Ads', srclang: 'en' });
+        expect(element?.track).toBe(track);
+        expect(track.mode).toBe('hidden');
+
+        host.removeTextTrack(track);
+
+        expect(audio.querySelector('track')).toBeNull();
+      } finally {
+        if (descriptor) Object.defineProperty(HTMLTrackElement.prototype, 'track', descriptor);
+        else Reflect.deleteProperty(HTMLTrackElement.prototype, 'track');
+      }
+    });
+  });
+
   describe('component overrides', () => {
     it('returns the override value when a component exposes the property', () => {
       const host = new HTMLAudioElementHost();

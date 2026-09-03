@@ -242,7 +242,9 @@ export interface TextTrackLike {
   readonly src?: string;
   mode: 'showing' | 'disabled' | 'hidden';
   readonly cues: TextCueListLike | null;
+  readonly activeCues?: TextCueListLike | null;
   addCue?(cue: TextCueLike): void;
+  removeCue?(cue: TextCueLike): void;
 }
 
 export interface TextTrackListEvents {
@@ -261,6 +263,7 @@ export interface TextTrackListLike extends EventTargetLike<TextTrackListEvents> 
 export interface MediaTextTrackCapability {
   readonly textTracks: TextTrackListLike;
   addTextTrack(kind: TextTrackKind, label?: string, language?: string): TextTrackLike;
+  removeTextTrack?(track: TextTrackLike): void;
 }
 
 // ----------------------------------------

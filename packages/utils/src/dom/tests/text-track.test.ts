@@ -78,4 +78,15 @@ describe('findTrackElement', () => {
     expect(findTrackElement(video, captionsTrack)).toBe(captionsEl);
     expect(findTrackElement(video, chaptersTrack)).toBe(chaptersEl);
   });
+
+  it('finds a track element forwarded through a shadow root', () => {
+    const host = document.createElement('div');
+    const root = host.attachShadow({ mode: 'open' });
+    const el = document.createElement('track');
+    const track = mockTrackProperty(el);
+
+    root.append(el);
+
+    expect(findTrackElement(host, track)).toBe(el);
+  });
 });
