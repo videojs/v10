@@ -1,5 +1,8 @@
 ---
-/** The namespace entry and `add` command for registry items, following the page's styling select box. */
+/**
+ * The `registry add` and `add` commands for registry items, following the page's styling select box. Without items it
+ * only registers the `@videojs` namespace.
+ */
 import { isValidFramework } from '@/types/docs';
 import type { ShadcnRunner } from '@/utils/installation/shadcn';
 
@@ -7,12 +10,12 @@ import RegistryCommandClient from './RegistryCommandClient';
 
 interface Props {
   /** Registry item names, without the `@videojs/` namespace. */
-  items: string[];
+  items?: string[];
   /** Show one package manager instead of tabs. */
   runner?: ShadcnRunner;
 }
 
-const { items, runner } = Astro.props;
+const { items = [], runner } = Astro.props;
 const { framework } = Astro.params;
 if (!isValidFramework(framework)) throw new Error(`RegistryCommand needs a framework route, received ${framework}.`);
 ---

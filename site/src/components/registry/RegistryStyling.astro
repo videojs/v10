@@ -14,7 +14,9 @@ if (!isValidFramework(framework)) throw new Error(`RegistryStyling needs a frame
 
 {
   framework === 'react' ? (
-    <RegistryStylingSelect client:idle framework={framework} />
+    <div class="mx-auto my-6 max-w-3xl">
+      <RegistryStylingSelect client:idle framework={framework} />
+    </div>
   ) : (
     <P>HTML skins install as vanilla CSS.</P>
   )

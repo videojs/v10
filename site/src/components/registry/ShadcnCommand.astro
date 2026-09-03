@@ -12,7 +12,7 @@ const { action } = Astro.props;
 const runners = Object.keys(SHADCN_RUNNERS) as ShadcnRunner[];
 ---
 
-<TabsRoot client:idle maxWidth={false}>
+<TabsRoot client:idle>
   <TabsList client:idle label="Package manager">
     {
       runners.map((runner, index) => (

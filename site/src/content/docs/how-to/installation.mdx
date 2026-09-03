@@ -199,15 +199,11 @@ That's it! You now have a working Video.js player.
 
 ## Own the skin source
 
-The skin above is one import from the package. To edit its controls, markup, or styles, install the skin's source from the Shadcn registry instead. Add the `@videojs` namespace to your `components.json`, then add the skin your choices above selected:
+The skin above is one import from the package. To edit its controls, markup, or styles, install the skin's source from the Shadcn registry instead and make it Source-Owned UI. The first command registers the `@videojs` namespace in `components.json`; the second adds the skin your choices above selected:
 
-<ContentWidth>
-  <RegistryStyling />
-</ContentWidth>
+<RegistryStyling />
 
-<ContentWidth>
-  <InstallationRegistryCommand />
-</ContentWidth>
+<InstallationRegistryCommand />
 
 <DocsLinkCard slug="how-to/install-skins-from-the-registry" description="Set up the registry, install a skin, and keep it current">Install skins from the Shadcn registry</DocsLinkCard>
 

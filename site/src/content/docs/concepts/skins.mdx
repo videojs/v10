@@ -8,7 +8,6 @@ import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
 import DocsLinkCard from '@/components/docs/DocsLinkCard.astro';
 import Aside from '@/components/Aside.astro';
-import ContentWidth from '@/components/frames/ContentWidth.astro';
 import RegistryCommand from '@/components/registry/RegistryCommand.astro';
 import RegistryStyling from '@/components/registry/RegistryStyling.astro';
 
@@ -18,13 +17,13 @@ In prior versions of Video.js, skins were CSS-only themes applied to the same se
 
 A skin wraps the media component and provides the player's complete interface. It combines a specific set of UI components with the styles that arrange and present them.
 
-## Packaged and ejected skins
+## Packaged skins and Source-Owned UI
 
-When you choose a skin you have two options for how you use it: **packaged** or **ejected**. It's usually easiest to start with a packaged skin and later eject it, installing its source into your project, when you need more customization.
+When you choose a skin you have two ways to use it: as a **packaged** skin, or as **Source-Owned UI**. It's usually easiest to start with a packaged skin and install its source later, when you need more customization.
 
-Packaged skins cover common visual changes through documented CSS custom properties. Packaged video skins also let you replace the poster. When you need more than that, eject and change the components and styles directly.
+Packaged skins cover common visual changes through documented CSS custom properties. Packaged video skins also let you replace the poster. When you need more than that, install the skin's source and change the components and styles directly.
 
-| Packaged | Ejected |
+| Packaged | Source-Owned UI |
 |----------|-----------------|
 | Single component | Many UI components |
 | Documented CSS custom properties | Components and styles you own |
@@ -67,17 +66,13 @@ export function Player() {
 
 Don't depend on elements, class names, or undocumented custom properties inside a packaged skin. They may change between releases.
 
-### Ejected skin
+### Source-Owned UI
 
-An ejected skin exposes its UI components and styles as app code that you own. You can add, remove, rearrange, or restyle any part of it. The Shadcn CLI installs it from the Video.js registry:
+Source-Owned UI is the same skin as app code that you own: its UI components and styles become files in your project. You can add, remove, rearrange, or restyle any part of it. The Shadcn CLI installs it from the Video.js registry, which publishes React skins in Tailwind CSS 4 and vanilla CSS, and HTML skins in vanilla CSS:
 
-<ContentWidth>
-  <RegistryStyling />
-</ContentWidth>
+<RegistryStyling />
 
-<ContentWidth>
-  <RegistryCommand items={["video"]} />
-</ContentWidth>
+<RegistryCommand items={["video"]} />
 
 <DocsLinkCard slug="how-to/install-skins-from-the-registry">Read more about installing skins</DocsLinkCard>
 <DocsLinkCard slug="concepts/ui-components">Read more about UI components</DocsLinkCard>
@@ -91,37 +86,3 @@ You'll find a preconfigured player, its typed hook, a skin, and the matching fea
 <PresetReference />
 
 <DocsLinkCard slug="concepts/presets">Read about presets</DocsLinkCard>
-
-## Styling
-
-Packaged skins use vanilla CSS. Their documented CSS custom properties cover common visual changes.
-
-<FrameworkCase frameworks={["react"]}>
-
-Import the stylesheet listed for each skin in the [preset table](#skins-features-and-presets).
-
-</FrameworkCase>
-
-<FrameworkCase frameworks={["html"]}>
-
-The skin registration entry point imports its styles automatically.
-
-Either way the styles travel inside the skin's JavaScript and apply when the element upgrades, so there is no stylesheet to add. The CDN publishes them as files as well, which matters when you want the player's box styled before that upgrade — see <DocsLink slug="how-to/self-host-the-player">Self-host the player</DocsLink>.
-
-</FrameworkCase>
-
-To use Tailwind CSS or change the underlying CSS, [eject the skin](../how-to/customize-skins#eject-a-skin) and edit its styles in your app. The registry publishes React skins in Tailwind CSS 4 and vanilla CSS, and HTML skins in vanilla CSS.
-
-### Shared limitations
-
-- Skin spacing and icons use a fixed `16px` base by default. Vanilla CSS font sizes use the same base, while Tailwind font sizes use rem units and assume a 16px root font size.
-- The default font stack includes [`Inter`](https://rsms.me/inter/), but we do not load the webfont for you. If Inter is unavailable, the skin uses system fonts.
-
-### Ejected vanilla CSS
-
-- We use a [BEM](https://en.bem.info/methodology/quick-start/) classname structure and every component classname is scoped with a `media-` prefix.
-
-### Ejected Tailwind
-
-- Ejected skins bring their theme keys and `media-*` variants into your Tailwind build through the installed theme stylesheet, and otherwise assume the default configuration. To use a class prefix, edit the installed skin.
-- Ejected skins target Tailwind 4.3.x.

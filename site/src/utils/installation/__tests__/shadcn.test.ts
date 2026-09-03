@@ -3,14 +3,14 @@ import { describe, expect, it } from 'vitest';
 import {
   defaultRegistryStyling,
   REGISTRY_SKINS,
-  registryComponentsJson,
-  registryItemUrl,
+  registryInstallCommands,
   registryNamespaceUrl,
   registrySkinItem,
   registryStylings,
   resolveRegistryStyling,
   shadcnAddCommand,
   shadcnCommand,
+  shadcnRegistryAddCommand,
 } from '../shadcn';
 
 describe('registryNamespaceUrl', () => {
@@ -18,12 +18,6 @@ describe('registryNamespaceUrl', () => {
     expect(registryNamespaceUrl('react', 'tailwind')).toBe('https://shadcn.videojs.org/r/react/{name}.json');
     expect(registryNamespaceUrl('react', 'css')).toBe('https://shadcn.videojs.org/r/react/css/{name}.json');
     expect(registryNamespaceUrl('html', 'css')).toBe('https://shadcn.videojs.org/r/html/{name}.json');
-  });
-
-  it('formats one item URL from the same template', () => {
-    expect(registryItemUrl('react', 'css', 'video-minimal')).toBe(
-      'https://shadcn.videojs.org/r/react/css/video-minimal.json'
-    );
   });
 });
 
@@ -52,11 +46,31 @@ describe('shadcnAddCommand', () => {
   });
 });
 
-describe('registryComponentsJson', () => {
-  it('writes the registries entry Shadcn reads', () => {
-    expect(JSON.parse(registryComponentsJson('react', 'tailwind'))).toEqual({
-      registries: { '@videojs': 'https://shadcn.videojs.org/r/react/{name}.json' },
-    });
+describe('shadcnRegistryAddCommand', () => {
+  it('registers the namespace against the chosen catalog', () => {
+    expect(shadcnRegistryAddCommand('npm', 'react', 'tailwind')).toBe(
+      'npx shadcn@latest registry add @videojs=https://shadcn.videojs.org/r/react/{name}.json'
+    );
+    expect(shadcnRegistryAddCommand('yarn', 'html', 'css')).toBe(
+      'yarn dlx shadcn@latest registry add @videojs=https://shadcn.videojs.org/r/html/{name}.json'
+    );
+  });
+});
+
+describe('registryInstallCommands', () => {
+  it('registers the namespace before adding the items', () => {
+    expect(registryInstallCommands('pnpm', 'react', 'css', ['video-minimal'])).toBe(
+      [
+        'pnpm dlx shadcn@latest registry add @videojs=https://shadcn.videojs.org/r/react/css/{name}.json',
+        'pnpm dlx shadcn@latest add @videojs/video-minimal',
+      ].join('\n')
+    );
+  });
+
+  it('only registers the namespace when there is nothing to add', () => {
+    expect(registryInstallCommands('npm', 'html', 'css', [])).toBe(
+      'npx shadcn@latest registry add @videojs=https://shadcn.videojs.org/r/html/{name}.json'
+    );
   });
 });
 

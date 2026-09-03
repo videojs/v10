@@ -8,13 +8,12 @@ import Aside from '@/components/Aside.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
 import DocsLinkCard from '@/components/docs/DocsLinkCard.astro';
 import FrameworkCase from '@/components/docs/FrameworkCase.astro';
-import ContentWidth from '@/components/frames/ContentWidth.astro';
 import RegistryCatalog from '@/components/registry/RegistryCatalog.astro';
 import RegistryCommand from '@/components/registry/RegistryCommand.astro';
 import RegistryStyling from '@/components/registry/RegistryStyling.astro';
 import ShadcnCommand from '@/components/registry/ShadcnCommand.astro';
 
-A packaged skin is one import. When you need to rearrange controls, change markup, or own every style, install the skin's source instead. The Shadcn CLI copies it from the Video.js registry into your project, where it becomes files you edit like any other component.
+A packaged skin is one import. When you need to rearrange controls, change markup, or own every style, install the skin's source instead. We call the result Source-Owned UI: the Shadcn CLI copies the skin from the Video.js registry into your project, where it becomes files you edit like any other component.
 
 <Aside type="note">
 Start with a packaged skin. Install the source once the public CSS custom properties in <DocsLink slug="how-to/customize-skins">Customize skins</DocsLink> stop being enough.
@@ -23,16 +22,14 @@ Start with a packaged skin. Install the source once the public CSS custom proper
 ## Choose your styling
 
 <FrameworkCase frameworks={["react"]}>
-The React catalogs publish every skin in Tailwind CSS 4 and in vanilla CSS. Pick the one your project uses. The choice selects the catalog URL below; item names stay the same.
+The React catalogs publish every skin in Tailwind CSS 4 and in vanilla CSS. Pick the one your project uses. The choice selects the catalog the `@videojs` namespace points at; item names stay the same.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
 The HTML catalog publishes every skin in vanilla CSS. Skins arrive as light-DOM markup, a registration module, and a stylesheet.
 </FrameworkCase>
 
-<ContentWidth>
-  <RegistryStyling />
-</ContentWidth>
+<RegistryStyling />
 
 ## Set up the registry
 
@@ -40,17 +37,17 @@ Initialize Shadcn if your project has no `components.json` yet:
 
 <ShadcnCommand action="init" />
 
-The registry is a Shadcn namespace. Every command below refers to items as `@videojs/<item>`, so the CLI needs to know where the namespace lives.
+Then register the Video.js registry as the `@videojs` namespace. The command writes the catalog URL into `components.json`, so every later command can refer to items as `@videojs/<item>`:
+
+<RegistryCommand />
 
 ## Install a skin
 
-Add the `@videojs` namespace to `components.json`, then add the skin. Default skins are named after their preset, and Minimal skins add `-minimal`:
+Default skins are named after their preset, and Minimal skins add `-minimal`:
 
-<ContentWidth>
-  <RegistryCommand items={["video"]} />
-</ContentWidth>
+<ShadcnCommand action="add @videojs/video" />
 
-The CLI installs the skin's files under `components/videojs/skins/<preset>`, Minimal variants under `components/videojs/skins/<preset>/minimal`, and the UI components they share under `components/videojs/ui`. It also installs the theme stylesheet the skins read their tokens from, and adds the framework package to your dependencies.
+The CLI installs the skin's files under `components/videojs/skins/<preset>`, Minimal variants under `components/videojs/skins/<preset>/minimal`, the UI components the skin composes, and the theme stylesheet they all read their tokens from at `components/videojs/styles/theme.css`. It also adds the framework package to your dependencies.
 
 <FrameworkCase frameworks={["react"]}>
 The player and media stay imports from `@videojs/react`. Import the skin component from the installed `skin.tsx` and place your media inside it, exactly where the packaged skin sat.
@@ -94,8 +91,8 @@ The React catalogs also list every UI component. Run `search @videojs` to see th
 
 ## Related guides
 
-<DocsLinkCard slug="how-to/customize-skins" description="What packaged skins let you change, and when to install the source instead">Customize skins</DocsLinkCard>
+<DocsLinkCard slug="how-to/customize-skins" description="What packaged skins let you change, and what the installed source gives you">Customize skins</DocsLinkCard>
 
-<DocsLinkCard slug="concepts/skins" description="How packaged and installed skins relate to presets and UI components">Skins</DocsLinkCard>
+<DocsLinkCard slug="concepts/skins" description="How packaged skins and Source-Owned UI relate to presets and UI components">Skins</DocsLinkCard>
 
 <DocsLinkCard slug="how-to/build-your-own-component" description="Connect custom UI to player state and actions">Build your own component</DocsLinkCard>

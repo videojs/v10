@@ -74,28 +74,42 @@ export function resolveRegistryStyling(framework: RegistryFramework, styling: Re
   return styling && registryStylings(framework).includes(styling) ? styling : defaultRegistryStyling(framework);
 }
 
-/** The `{name}` template Shadcn expects in `components.json` for one catalog. */
+/** The `{name}` template Shadcn stores in `components.json` for one catalog. */
 export function registryNamespaceUrl(framework: RegistryFramework, styling: RegistryStyling): string {
   const catalog = framework === 'react' && styling === 'css' ? 'react/css' : framework;
 
   return `${REGISTRY_ORIGIN}/r/${catalog}/{name}.json`;
 }
 
-export function registryItemUrl(framework: RegistryFramework, styling: RegistryStyling, item: string): string {
-  return registryNamespaceUrl(framework, styling).replace('{name}', item);
-}
-
-/** The `components.json` fragment that maps the `@videojs` namespace onto one catalog. */
-export function registryComponentsJson(framework: RegistryFramework, styling: RegistryStyling): string {
-  return JSON.stringify({ registries: { [REGISTRY_NAMESPACE]: registryNamespaceUrl(framework, styling) } }, null, 2);
-}
-
 export function shadcnCommand(runner: ShadcnRunner, action: string): string {
   return `${SHADCN_RUNNERS[runner]} ${action}`;
 }
 
+/** Points the `@videojs` namespace at one catalog; Shadcn writes it into `components.json`. */
+export function shadcnRegistryAddCommand(
+  runner: ShadcnRunner,
+  framework: RegistryFramework,
+  styling: RegistryStyling
+): string {
+  return shadcnCommand(runner, `registry add ${REGISTRY_NAMESPACE}=${registryNamespaceUrl(framework, styling)}`);
+}
+
 export function shadcnAddCommand(runner: ShadcnRunner, items: readonly string[]): string {
   return shadcnCommand(runner, `add ${items.map((item) => `${REGISTRY_NAMESPACE}/${item}`).join(' ')}`);
+}
+
+/** Every command one install needs, in order: register the namespace, then add the items, if any. */
+export function registryInstallCommands(
+  runner: ShadcnRunner,
+  framework: RegistryFramework,
+  styling: RegistryStyling,
+  items: readonly string[]
+): string {
+  const commands = [shadcnRegistryAddCommand(runner, framework, styling)];
+
+  if (items.length > 0) commands.push(shadcnAddCommand(runner, items));
+
+  return commands.join('\n');
 }
 
 /**
