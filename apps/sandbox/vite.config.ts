@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { existsSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, resolve } from 'node:path';
 
@@ -151,6 +151,9 @@ function serveAppShell(): Plugin {
     name: 'serve-app-shell',
     buildStart() {
       const html = readFileSync(shellSrc, 'utf-8').replace(/(src|href)="\.\/([^"]+)"/g, '$1="../app/$2"');
+
+      // Unit tests load this config without the setup task, so the scratch tree may not exist yet.
+      mkdirSync(dirname(shellDest), { recursive: true });
 
       writeFileSync(shellDest, html);
     },
