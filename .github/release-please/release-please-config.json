@@ -4,6 +4,7 @@
   "tag-separator": "@",
   "include-component-in-tag": true,
   "include-v-in-tag": false,
+  "release-as": "10.0.0-rc.1",
   "plugins": [
     {
       "type": "node-workspace",
@@ -47,163 +48,163 @@
     "packages/cdn": {
       "component": "@videojs/cdn",
       "prerelease": true,
-      "prerelease-type": "beta",
+      "prerelease-type": "rc",
       "versioning": "prerelease"
     },
     "packages/cli": {
       "component": "@videojs/cli",
       "prerelease": true,
-      "prerelease-type": "beta",
+      "prerelease-type": "rc",
       "versioning": "prerelease"
     },
     "packages/cloudflare-video": {
       "component": "@videojs/cloudflare-video",
       "prerelease": true,
-      "prerelease-type": "beta",
+      "prerelease-type": "rc",
       "versioning": "prerelease"
     },
     "packages/core": {
       "component": "@videojs/core",
       "prerelease": true,
-      "prerelease-type": "beta",
+      "prerelease-type": "rc",
       "versioning": "prerelease"
     },
     "packages/dash-video": {
       "component": "@videojs/dash-video",
       "prerelease": true,
-      "prerelease-type": "beta",
+      "prerelease-type": "rc",
       "versioning": "prerelease"
     },
     "packages/element": {
       "component": "@videojs/element",
       "prerelease": true,
-      "prerelease-type": "beta",
+      "prerelease-type": "rc",
       "versioning": "prerelease"
     },
     "packages/google-cast": {
       "component": "@videojs/google-cast",
       "prerelease": true,
-      "prerelease-type": "beta",
+      "prerelease-type": "rc",
       "versioning": "prerelease"
     },
     "packages/hlsjs-video": {
       "component": "@videojs/hlsjs-video",
       "prerelease": true,
-      "prerelease-type": "beta",
+      "prerelease-type": "rc",
       "versioning": "prerelease"
     },
     "packages/html": {
       "component": "@videojs/html",
       "prerelease": true,
-      "prerelease-type": "beta",
+      "prerelease-type": "rc",
       "versioning": "prerelease"
     },
     "packages/icons": {
       "component": "@videojs/icons",
       "prerelease": true,
-      "prerelease-type": "beta",
+      "prerelease-type": "rc",
       "versioning": "prerelease"
     },
     "packages/media": {
       "component": "@videojs/media",
       "prerelease": true,
-      "prerelease-type": "beta",
+      "prerelease-type": "rc",
       "versioning": "prerelease"
     },
     "packages/mux-audio": {
       "component": "@videojs/mux-audio",
       "prerelease": true,
-      "prerelease-type": "beta",
+      "prerelease-type": "rc",
       "versioning": "prerelease"
     },
     "packages/mux-data": {
       "component": "@videojs/mux-data",
       "prerelease": true,
-      "prerelease-type": "beta",
+      "prerelease-type": "rc",
       "versioning": "prerelease"
     },
     "packages/mux-video": {
       "component": "@videojs/mux-video",
       "prerelease": true,
-      "prerelease-type": "beta",
+      "prerelease-type": "rc",
       "versioning": "prerelease"
     },
     "packages/native-hls-video": {
       "component": "@videojs/native-hls-video",
       "prerelease": true,
-      "prerelease-type": "beta",
+      "prerelease-type": "rc",
       "versioning": "prerelease"
     },
     "packages/react": {
       "component": "@videojs/react",
       "prerelease": true,
-      "prerelease-type": "beta",
+      "prerelease-type": "rc",
       "versioning": "prerelease"
     },
     "packages/shaka-video": {
       "component": "@videojs/shaka-video",
       "prerelease": true,
-      "prerelease-type": "beta",
+      "prerelease-type": "rc",
       "versioning": "prerelease"
     },
     "packages/skins": {
       "component": "@videojs/skins",
       "prerelease": true,
-      "prerelease-type": "beta",
+      "prerelease-type": "rc",
       "versioning": "prerelease"
     },
     "packages/spf": {
       "component": "@videojs/spf",
       "prerelease": true,
-      "prerelease-type": "beta",
+      "prerelease-type": "rc",
       "versioning": "prerelease"
     },
     "packages/spotify-audio": {
       "component": "@videojs/spotify-audio",
       "prerelease": true,
-      "prerelease-type": "beta",
+      "prerelease-type": "rc",
       "versioning": "prerelease"
     },
     "packages/store": {
       "component": "@videojs/store",
       "prerelease": true,
-      "prerelease-type": "beta",
+      "prerelease-type": "rc",
       "versioning": "prerelease"
     },
     "packages/tiktok-video": {
       "component": "@videojs/tiktok-video",
       "prerelease": true,
-      "prerelease-type": "beta",
+      "prerelease-type": "rc",
       "versioning": "prerelease"
     },
     "packages/twitch-video": {
       "component": "@videojs/twitch-video",
       "prerelease": true,
-      "prerelease-type": "beta",
+      "prerelease-type": "rc",
       "versioning": "prerelease"
     },
     "packages/utils": {
       "component": "@videojs/utils",
       "prerelease": true,
-      "prerelease-type": "beta",
+      "prerelease-type": "rc",
       "versioning": "prerelease"
     },
     "packages/vimeo-video": {
       "component": "@videojs/vimeo-video",
       "prerelease": true,
-      "prerelease-type": "beta",
+      "prerelease-type": "rc",
       "versioning": "prerelease"
     },
     "packages/wistia-video": {
       "component": "@videojs/wistia-video",
       "prerelease": true,
-      "prerelease-type": "beta",
+      "prerelease-type": "rc",
       "versioning": "prerelease"
     },
     "packages/youtube-video": {
       "component": "@videojs/youtube-video",
       "prerelease": true,
-      "prerelease-type": "beta",
+      "prerelease-type": "rc",
       "versioning": "prerelease"
     }
   }
