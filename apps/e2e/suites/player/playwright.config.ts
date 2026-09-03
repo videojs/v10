@@ -21,10 +21,10 @@ export default defineConfig({
       use: { ...devices['Desktop Firefox'], baseURL: 'http://localhost:5180' },
     },
   ],
-  // The app folder is not a workspace package, so run vite from the e2e package, which owns the dependency, and point
-  // it at the app config; the config resolves its own root. npx walks up to the binary the way the old layout relied on.
+  // The workspace overrides vite with the Vite+ core package, which only ships the vp binary, and the app folder is not
+  // a workspace package, so run Vite+ from the e2e package and point it at the app directory.
   webServer: {
-    command: 'npx vite --config suites/player/app/vite.config.ts --port 5180',
+    command: 'pnpm exec vp -C suites/player/app dev --port 5180 --strictPort',
     cwd: resolve(import.meta.dirname, '../..'),
     port: 5180,
     stdout: 'pipe',
