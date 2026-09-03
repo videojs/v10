@@ -184,6 +184,24 @@ describe('ThumbnailElement', () => {
     await vi.waitFor(() => expect(img.hasAttribute('srcset')).toBe(false));
   });
 
+  it('binds its image again after being moved in the document', async () => {
+    const thumbnail = document.createElement(ThumbnailElement.tagName) as ThumbnailElement;
+
+    thumbnail.thumbnails = [{ url: 'thumb.jpg', startTime: 0 }];
+    document.body.append(thumbnail);
+    await thumbnail.updateComplete;
+
+    const fallback = thumbnail.shadowRoot!.querySelector('img')!;
+    const host = document.createElement('div');
+
+    document.body.append(host);
+    host.append(thumbnail);
+
+    // Disconnecting let go of the image; nothing but the reconnect itself brings the source back.
+    expect(fallback.hasAttribute('src')).toBe(false);
+    await vi.waitFor(() => expect(fallback.getAttribute('src')).toBe('thumb.jpg'));
+  });
+
   it('draws the fallback again when the supplied image is removed', async () => {
     const thumbnail = document.createElement(ThumbnailElement.tagName) as ThumbnailElement;
     const img = document.createElement('img');
