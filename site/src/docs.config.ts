@@ -24,6 +24,8 @@ export const sidebar: Sidebar = [
     contents: [
       { slug: 'how-to/installation' },
       { slug: 'concepts/overview' },
+      { slug: 'concepts/why-videojs' },
+      { slug: 'concepts/v10-roadmap', sidebarLabel: 'Roadmap' },
       {
         sidebarLabel: 'Migrate to Video.js 10',
         defaultOpen: false,
@@ -36,8 +38,6 @@ export const sidebar: Sidebar = [
           { slug: 'how-to/migrate-from-media-chrome', sidebarLabel: 'From Media Chrome' },
         ],
       },
-      { slug: 'concepts/why-videojs' },
-      { slug: 'concepts/v10-roadmap', sidebarLabel: 'Roadmap' },
     ],
   },
   {
@@ -107,6 +107,7 @@ export const sidebar: Sidebar = [
   },
   {
     sidebarLabel: 'Components',
+    defaultOpen: false,
     llmsDescription: 'API reference for skins, interface components, media components, and service integrations.',
     contents: [
       {
@@ -208,6 +209,7 @@ export const sidebar: Sidebar = [
   },
   {
     sidebarLabel: 'Helpers',
+    defaultOpen: false,
     llmsDescription: 'Reference for player features and lower-level tools used to build or extend a player.',
     contents: [
       {
