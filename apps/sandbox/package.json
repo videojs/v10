@@ -46,6 +46,6 @@
   "packageManager": "pnpm@11.17.0",
   "stackblitz": {
     "installDependencies": false,
-    "startCommand": "pnpm install --ignore-scripts --config.nodeLinker=hoisted && pnpm dev"
+    "startCommand": "pnpm install --ignore-scripts --config.nodeLinker=hoisted --config.blockExoticSubdeps=false && pnpm --config.verifyDepsBeforeRun=false exec vp run dev"
   }
 }

@@ -7,6 +7,12 @@ import type { Platform, SkinSource, Styling } from '@app/types';
 export const WORKSPACE_SKINS: boolean = __WORKSPACE_SKINS__;
 
 /**
+ * Registry skins exist where setup could install them: always in the workspace, elsewhere only if the hosted registry
+ * answered.
+ */
+export const REGISTRY_SKINS: boolean = __REGISTRY_SKINS__;
+
+/**
  * The stylings a skin source offers on a platform. The framework packages ship CSS. The registry publishes CSS for both
  * platforms and Tailwind for React only, so the html registry install is a CSS skin. The authored sources compile to
  * either. The CDN bundles are the packages' CSS skins.
@@ -28,7 +34,14 @@ export function skinStylings(platform: Platform, source: SkinSource): readonly S
 export function skinSourceAvailable(source: SkinSource, platform: Platform): boolean {
   if (platform === 'cdn') return source === 'package';
 
-  return source !== 'authored' || WORKSPACE_SKINS;
+  switch (source) {
+    case 'package':
+      return true;
+    case 'registry':
+      return REGISTRY_SKINS;
+    case 'authored':
+      return WORKSPACE_SKINS;
+  }
 }
 
 /**

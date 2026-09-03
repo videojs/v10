@@ -3,6 +3,7 @@
  * `vite.config.ts`.
  */
 declare const __WORKSPACE_SKINS__: boolean;
+declare const __REGISTRY_SKINS__: boolean;
 
 /** The checkout the sandbox was served from, for the copied report; `unknown` where there is no git metadata. */
 declare const __SANDBOX_BRANCH__: string;

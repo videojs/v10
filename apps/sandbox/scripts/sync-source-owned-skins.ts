@@ -19,6 +19,7 @@ const generatedDir = resolve(projectDir, 'app/_generated');
 const presets = ['video', 'audio', 'live-video', 'live-audio'] as const;
 const variants = ['', '-minimal'] as const;
 
+const inWorkspace = existsSync(resolve(workspaceDir, 'pnpm-workspace.yaml'));
 const localRegistry = existsSync(resolve(registryDir, 'react/registry.json'));
 const server = localRegistry ? createServer() : undefined;
 const address = server
@@ -58,19 +59,40 @@ await rm(generatedDir, { recursive: true, force: true });
 
 try {
   for (const install of installs) await installCatalog(install, address);
+} catch (error) {
+  // Inside the workspace the registry is the local build, so a failure there is a bug. Outside it, a StackBlitz
+  // template for instance, the hosted registry may be unreachable or not deployed yet; the sandbox still has the
+  // package skins, so keep going without the registry ones.
+  if (localRegistry) throw error;
+
+  await writeEmptyRegistry();
+  console.warn(`Registry skins unavailable from ${address}; the sandbox offers the package skins only.`);
+  console.warn(error instanceof Error ? error.message.split('\n')[0] : String(error));
 } finally {
   if (server) await close(server);
 }
 
 // CI containers check the repository out under another user, and git refuses such trees unless the directory is
 // marked safe, so mark it for this one command rather than requiring a global config step.
-await runCommand(
-  'git',
-  ['-c', `safe.directory=${workspaceDir}`, 'check-ignore', '--quiet', 'apps/sandbox/app/_generated'],
-  workspaceDir
-);
+if (inWorkspace) {
+  await runCommand(
+    'git',
+    ['-c', `safe.directory=${workspaceDir}`, 'check-ignore', '--quiet', 'apps/sandbox/app/_generated'],
+    workspaceDir
+  );
+}
 
-console.log('Installed 8 React Tailwind, 8 React CSS, and 8 HTML source-owned Sandbox skins from the hosted registry.');
+if (existsSync(resolve(generatedDir, 'components/videojs/skins'))) {
+  console.log(`Installed 8 React Tailwind, 8 React CSS, and 8 HTML source-owned Sandbox skins from ${address}.`);
+}
+
+/** What `app/styles.css` imports and scans, with nothing in it, so the app compiles without the registry skins. */
+async function writeEmptyRegistry(): Promise<void> {
+  await rm(generatedDir, { recursive: true, force: true });
+  await mkdir(resolve(generatedDir, 'components'), { recursive: true });
+  await mkdir(resolve(generatedDir, 'html'), { recursive: true });
+  await writeFile(resolve(generatedDir, 'styles.css'), '/* No registry skins were installed. */\n');
+}
 
 async function installCatalog(install: (typeof installs)[number], address: string): Promise<void> {
   const root = await mkdtemp(resolve(tmpdir(), `videojs-sandbox-${install.catalog.replaceAll('/', '-')}-`));

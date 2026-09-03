@@ -113,6 +113,11 @@ jobs:
       # open a running player built from the pull request. Its `dev` script
       # regenerates the gitignored src/ from templates/ on boot, so the sandbox
       # still works even though src/ is never part of the upload.
+      # The template is apps/sandbox alone: no workspace catalog to resolve its `catalog:` specs, and no preview of
+      # the private packages its `workspace:` ranges name. Rewrite its manifest in place; this checkout is disposable.
+      - name: Prepare the StackBlitz template
+        run: pnpm --filter @videojs/sandbox exec tsx scripts/prepare-template.ts
+
       - name: Publish preview packages
         env:
           VIDEOJS_SKIP_PACKAGE_DOCS: '1'

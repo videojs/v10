@@ -7,7 +7,6 @@ import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig, normalizePath, type Plugin, type PluginOption } from 'vite-plus';
 
-import { cachedTaskInputs, cachedTaskOutputs, workspaceTaskDependencies } from '../../build/task.ts';
 import { mirrorTemplatesToSrc } from './scripts/shared';
 
 // Locate @videojs/html through Node resolution rather than a workspace-relative
@@ -20,7 +19,43 @@ const htmlCdnSourceI18n = `${htmlPackageDir}/src/cdn/i18n.ts`;
 
 const cdnSandboxMainSrc = resolve(__dirname, 'src/cdn/main.ts');
 const cdnSandboxMainTemplate = resolve(__dirname, 'templates/cdn/main.ts');
+// The StackBlitz template pkg.pr.new uploads is this directory alone, with the framework packages installed from the
+// preview. Tasks that build sibling packages only exist inside the workspace.
+const hasWorkspace = existsSync(resolve(__dirname, '../../pnpm-workspace.yaml'));
 const hasWorkspaceSkins = existsSync(resolve(__dirname, '../../packages/skins/package.json'));
+
+type TaskPath = string | { auto: boolean } | { pattern: string; base: 'package' | 'workspace' };
+
+// Copies of the shared helpers in `build/task.ts`. This file may not import from outside the directory: Vite+ fails to
+// start when a config import is missing, and the template has no `build/` beside it.
+/** Stable automatic inputs shared by cached build and generator tasks. */
+const cachedTaskInputs: TaskPath[] = [
+  { auto: true },
+  '!*.tsbuildinfo',
+  '!**/*.tsbuildinfo',
+  '!node_modules/.astro',
+  '!node_modules/.astro/**',
+  '!node_modules/.vite',
+  '!node_modules/.vite/**',
+  { pattern: '!node_modules/.modules.yaml', base: 'workspace' },
+];
+
+/** Stable automatic outputs shared by cached tasks with dynamic write sets. */
+const cachedTaskOutputs: TaskPath[] = [
+  { auto: true },
+  '!*.tsbuildinfo',
+  '!**/*.tsbuildinfo',
+  '!node_modules/.astro',
+  '!node_modules/.astro/**',
+  '!node_modules/.vite',
+  '!node_modules/.vite/**',
+  { pattern: '!node_modules/.modules.yaml', base: 'workspace' },
+];
+
+/** Build the same task in each workspace dependency used by this package; nothing to build outside the workspace. */
+function workspaceTaskDependencies(task = 'build') {
+  return hasWorkspace ? [{ task, from: ['dependencies', 'devDependencies'] as const }] : [];
+}
 
 /** Branch and commit for the copied report; falls back when the checkout has no git metadata, as on StackBlitz. */
 function describeGit(...args: string[]): string {
@@ -188,11 +223,14 @@ export function createSandboxConfig(skinsSource?: SkinsSource) {
         dev: {
           command: `vp dev --host${workspaceConfig}`,
           cache: false,
-          dependsOn: ['setup', ...workspaceTaskDependencies(), '@videojs/html#build:cdn'],
+          dependsOn: ['setup', ...workspaceTaskDependencies(), ...(hasWorkspace ? ['@videojs/html#build:cdn'] : [])],
         },
         setup: {
           command: 'tsx scripts/setup.ts',
-          dependsOn: ['@videojs/core#build', ...(hasWorkspaceSkins ? ['@videojs/skins#build:shadcn'] : [])],
+          dependsOn: [
+            ...(hasWorkspace ? ['@videojs/core#build'] : []),
+            ...(hasWorkspaceSkins ? ['@videojs/skins#build:shadcn'] : []),
+          ],
           // Setup deterministically mirrors tracked templates into the gitignored
           // scratch tree. Keep that generated tree out of its own fingerprint.
           input: [
@@ -213,7 +251,7 @@ export function createSandboxConfig(skinsSource?: SkinsSource) {
         },
         build: {
           command: `vp build${workspaceConfig}`,
-          dependsOn: ['setup', ...workspaceTaskDependencies(), '@videojs/html#build:cdn'],
+          dependsOn: ['setup', ...workspaceTaskDependencies(), ...(hasWorkspace ? ['@videojs/html#build:cdn'] : [])],
           // The app-shell plugin creates this file for the build and removes it
           // afterwards. Workspace dependencies are fingerprinted through the task
           // graph, not their mutable package-local node_modules links.
@@ -227,6 +265,11 @@ export function createSandboxConfig(skinsSource?: SkinsSource) {
     define: {
       __DEV__: 'true',
       __WORKSPACE_SKINS__: JSON.stringify(skinsSource !== undefined),
+      // Setup installs the registry skins from the local build inside the workspace; elsewhere they exist only when the
+      // hosted registry answered. The dev server and build load this file after setup, so the check is current.
+      __REGISTRY_SKINS__: JSON.stringify(
+        hasWorkspace || existsSync(resolve(__dirname, 'app/_generated/components/videojs/skins'))
+      ),
       __SANDBOX_BRANCH__: JSON.stringify(describeGit('rev-parse', '--abbrev-ref', 'HEAD')),
       __SANDBOX_COMMIT__: JSON.stringify(describeGit('rev-parse', '--short', 'HEAD')),
     },
