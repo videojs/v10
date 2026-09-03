@@ -4,8 +4,8 @@ import { SandboxI18nProvider } from '@app/shared/react/sandbox-i18n';
 import { VideoSkinComponent } from '@app/shared/react/skins';
 import { useSandbox } from '@app/shared/react/use-sandbox';
 import { SOURCES } from '@app/shared/sources';
-import { DashVideo } from '@videojs/react/media/dash-video';
 import { MuxData } from '@videojs/react/extensions/mux-data';
+import { DashVideo } from '@videojs/react/media/dash-video';
 import { createRoot } from 'react-dom/client';
 
 function App() {

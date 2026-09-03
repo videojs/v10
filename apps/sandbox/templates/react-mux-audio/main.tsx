@@ -5,8 +5,8 @@ import { AudioSkinComponent } from '@app/shared/react/skins';
 import { useSandbox } from '@app/shared/react/use-sandbox';
 import { isLiveSource, SOURCES } from '@app/shared/sources';
 import { GoogleCast } from '@videojs/react/extensions/google-cast';
-import { MuxAudio } from '@videojs/react/media/mux-audio';
 import { MuxData } from '@videojs/react/extensions/mux-data';
+import { MuxAudio } from '@videojs/react/media/mux-audio';
 import { createRoot } from 'react-dom/client';
 
 function App() {
