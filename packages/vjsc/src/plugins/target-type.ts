@@ -1,5 +1,6 @@
 import type {
   JSXOpeningElement,
+  Node,
   Function as OxcFunction,
   Program,
   TSInterfaceDeclaration,
@@ -94,13 +95,27 @@ export function targetTypePlugin(options: ComponentTargetPluginOptions): Plugin 
             const props = targetProps(root, imports, typeImports);
             if (!props) return;
 
+            // Children are typed by the part that renders them. That is usually the root, but a
+            // compound wrapper may hand them to a nested part instead, such as an image's `render`.
+            const childrenPart = helper.includesChildren ? childrenTarget(node, node.params[0], bindings) : undefined;
+            const childrenProps =
+              childrenPart && !sameTargetElement(root, childrenPart)
+                ? targetProps(childrenPart, imports, typeImports)
+                : undefined;
+
             const interfaceName = helper.sourceInterface?.declaration.id.name ?? `${node.id.name}Props`;
-            const heritage = targetHeritage(props, helper.includesChildren);
+            const heritage = targetHeritage(props, helper.includesChildren && !childrenProps);
             const members = helper.inlineMembers
               .map((type) => rewriteSourceTypeText(code, type, bindings, targets, imports, typeImports))
               .filter(Boolean);
 
-            if (helper.includesChildren && props.children && props.children !== 'children') {
+            if (declaresChildren(helper)) {
+              // The authored props already say what children are; only the heritage needs to make room.
+            } else if (childrenProps) {
+              members.push(
+                `children?: ${childrenProps.type}[${JSON.stringify(childrenProps.children ?? 'children')}];`
+              );
+            } else if (helper.includesChildren && props.children && props.children !== 'children') {
               members.push(`children?: ${props.type}[${JSON.stringify(props.children)}];`);
             }
 
@@ -186,7 +201,7 @@ function transformSourceTypes(
   let changed = false;
 
   walk(ast, {
-    enter(node) {
+    enter(node, parent) {
       if (
         node.type === 'TSInterfaceHeritage' &&
         node.expression.type === 'Identifier' &&
@@ -209,10 +224,11 @@ function transformSourceTypes(
 
       if (sourceType === 'PropsOf') {
         const query = node.typeArguments?.params[0];
-        const props = propsOfType(query, bindings, targets, imports, typeImports);
+        const props = propsOfReference(query, bindings, targets, imports, typeImports);
         if (!props) return;
 
-        magicString.overwrite(node.start, node.end, props);
+        for (const edit of propsOfEdits(node, parent, props)) magicString.overwrite(edit.start, edit.end, edit.content);
+
         changed = true;
         this.skip();
         return;
@@ -269,6 +285,19 @@ function propsHelper(
   return undefined;
 }
 
+/** Whether the authored props declare `children` themselves, inline or on the source interface. */
+function declaresChildren(helper: PropsHelper): boolean {
+  const members = [
+    ...helper.inlineMembers.flatMap((type) => (type.type === 'TSTypeLiteral' ? type.members : [])),
+    ...(helper.sourceInterface?.declaration.body.body ?? []),
+  ];
+
+  return members.some(
+    (member) =>
+      member.type === 'TSPropertySignature' && member.key.type === 'Identifier' && member.key.name === 'children'
+  );
+}
+
 function collectSourceInterfaces(ast: Program): ReadonlyMap<string, SourcePropsInterface> {
   const interfaces = new Map<string, SourcePropsInterface>();
 
@@ -315,21 +344,17 @@ function rewriteSourceTypeText(
   const edits: SourceEdit[] = [];
 
   walk(type, {
-    enter(node) {
+    enter(node, parent) {
       if (node.type !== 'TSTypeReference' || node.typeName.type !== 'Identifier') return;
 
       const name = bindings.sourceTypes.get(node.typeName.name);
 
       if (name === 'PropsOf') {
         const query = node.typeArguments?.params[0];
-        const props = propsOfType(query, bindings, targets, imports, typeImports);
+        const props = propsOfReference(query, bindings, targets, imports, typeImports);
         if (!props) return;
 
-        edits.push({
-          start: node.start,
-          end: node.end,
-          content: props,
-        });
+        edits.push(...propsOfEdits(node, parent, props));
         this.skip();
         return;
       }
@@ -353,6 +378,16 @@ function propsOfType(
   imports: ModuleImports,
   typeImports: ModuleImports
 ): string | undefined {
+  return propsOfReference(type, bindings, targets, imports, typeImports)?.type;
+}
+
+function propsOfReference(
+  type: TSType | undefined,
+  bindings: TypeBindings,
+  targets: readonly ComponentTarget[],
+  imports: ModuleImports,
+  typeImports: ModuleImports
+): ResolvedProps | undefined {
   if (type?.type !== 'TSTypeQuery') return undefined;
 
   const path = typeQueryPath(type.exprName);
@@ -363,7 +398,7 @@ function propsOfType(
     const rule = isTargetElement(configured) ? configured : canonical.target.components.resolve(canonical);
     if (!isTargetElement(rule)) return undefined;
 
-    return targetProps({ target: canonical.target, element: rule }, imports, typeImports)?.type;
+    return targetProps({ target: canonical.target, element: rule }, imports, typeImports);
   }
 
   if (path.length !== 1) return undefined;
@@ -373,7 +408,33 @@ function propsOfType(
 
   const componentProps = typeImports.reference(target);
 
-  return `NonNullable<${componentProps}<typeof ${path[0]}>>`;
+  return { type: `NonNullable<${componentProps}<typeof ${path[0]}>>` };
+}
+
+/**
+ * Replace a `PropsOf<typeof Part>` reference, and when it indexes `['children']` on a part whose target calls children
+ * something else, such as `render`, the index follows the target's name.
+ */
+function propsOfEdits(node: TSTypeReference, parent: Node | null | undefined, props: ResolvedProps): SourceEdit[] {
+  const edits: SourceEdit[] = [{ start: node.start, end: node.end, content: props.type }];
+
+  if (
+    props.children &&
+    props.children !== 'children' &&
+    parent?.type === 'TSIndexedAccessType' &&
+    parent.objectType === node &&
+    parent.indexType.type === 'TSLiteralType' &&
+    parent.indexType.literal.type === 'Literal' &&
+    parent.indexType.literal.value === 'children'
+  ) {
+    edits.push({
+      start: parent.indexType.start,
+      end: parent.indexType.end,
+      content: JSON.stringify(props.children),
+    });
+  }
+
+  return edits;
 }
 
 function typeQueryPath(name: TSTypeQuery['exprName']): string[] {
@@ -391,6 +452,58 @@ function forwardedBinding(parameter: OxcFunction['params'][number] | undefined):
   const rest = pattern.properties.find((property) => property.type === 'RestElement');
 
   return rest?.type === 'RestElement' && rest.argument.type === 'Identifier' ? rest.argument.name : undefined;
+}
+
+/** The local name the component destructures its `children` prop into, if any. */
+function childrenBinding(parameter: OxcFunction['params'][number] | undefined): string | undefined {
+  const pattern = parameter?.type === 'AssignmentPattern' ? parameter.left : parameter;
+  if (pattern?.type !== 'ObjectPattern') return undefined;
+
+  for (const property of pattern.properties) {
+    if (property.type !== 'Property' || property.key.type !== 'Identifier' || property.key.name !== 'children') {
+      continue;
+    }
+
+    const value = property.value.type === 'AssignmentPattern' ? property.value.left : property.value;
+
+    return value.type === 'Identifier' ? value.name : undefined;
+  }
+
+  return undefined;
+}
+
+/** The single target element that renders the component's `children`, when exactly one does. */
+function childrenTarget(
+  declaration: OxcFunction,
+  parameter: OxcFunction['params'][number] | undefined,
+  bindings: TypeBindings
+): { readonly target: ComponentTarget; readonly element: TargetElement } | undefined {
+  const binding = childrenBinding(parameter);
+  if (!binding) return undefined;
+
+  const matches: Array<{ target: ComponentTarget; element: TargetElement }> = [];
+
+  walk(declaration, {
+    enter(node, parent) {
+      if (
+        node.type !== 'JSXExpressionContainer' ||
+        node.expression.type !== 'Identifier' ||
+        node.expression.name !== binding ||
+        parent?.type !== 'JSXElement'
+      ) {
+        return;
+      }
+
+      const resolved = openingTarget(parent.openingElement, bindings);
+
+      if (resolved) matches.push(resolved);
+    },
+  });
+
+  const first = matches[0];
+  if (!first) return undefined;
+
+  return matches.every((match) => sameTargetElement(first, match)) ? first : undefined;
 }
 
 function forwardedTarget(

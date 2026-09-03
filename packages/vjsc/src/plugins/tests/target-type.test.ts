@@ -24,6 +24,14 @@ const schema = defineSchema('@fixture/components', {
       Trigger: defineComponent(),
     },
   }),
+  Poster: defineComponent({
+    name: 'Poster',
+    root: 'Root',
+    parts: {
+      Root: defineComponent(),
+      Image: defineComponent<{ src?: string | undefined }>(),
+    },
+  }),
 });
 
 const target = defineComponentTarget<typeof schema>()(({ element, imported }) => ({
@@ -34,7 +42,12 @@ const target = defineComponentTarget<typeof schema>()(({ element, imported }) =>
         from: '@fixture/react',
         name: component,
         path: part ? [part] : undefined,
-        props: { from: '@fixture/react', name: component, path: [part ? `${part}Props` : 'Props'] },
+        props: {
+          from: '@fixture/react',
+          name: component,
+          path: [part ? `${part}Props` : 'Props'],
+          children: component === 'Poster' && part === 'Image' ? 'render' : undefined,
+        },
       }),
     rules: {
       Menu: {
@@ -51,6 +64,7 @@ const target = defineComponentTarget<typeof schema>()(({ element, imported }) =>
     ClassNameValue: { from: 'clsx', name: 'ClassValue' },
     PropsOf: { from: 'react', name: 'ComponentProps' },
     VjscNode: { from: 'react', name: 'ReactNode' },
+    VjscElement: { from: 'react', name: 'ReactElement' },
   },
   jsx: { importSource: 'react', attributes: 'react' },
 }));
@@ -140,6 +154,55 @@ describe('targetTypePlugin', () => {
     expect(source).toContain("import { setup } from './setup';");
     expect(source).not.toContain("from './build-only'");
     expect(source.indexOf(`'use client'`)).toBeLessThan(source.indexOf('import type'));
+  });
+
+  it('types children by the part that renders them', async () => {
+    const source = await transform(`
+      import * as $ from '@fixture/components';
+      import { type PropsOf, type PropsWithChildren } from 'vjsc/components';
+
+      export interface PosterProps {
+        renderImage?: PropsOf<typeof $.Poster.Image>['children'];
+      }
+
+      export function Poster({ children, className, renderImage, ...props }: PropsWithChildren<PosterProps> = {}) {
+        return (
+          <$.Poster.Root className={className}>
+            <$.Poster.Image {...props}>{renderImage}</$.Poster.Image>
+            {children}
+          </$.Poster.Root>
+        );
+      }
+    `);
+
+    expect(source).toContain(
+      'export interface PosterProps extends Omit<PosterPrimitive.ImageProps, "children" | "render">'
+    );
+    expect(source).toContain('renderImage?: PosterPrimitive.ImageProps["render"];');
+    expect(source).toContain('children?: PosterPrimitive.RootProps["children"];');
+  });
+
+  it('leaves children alone when the authored props declare them', async () => {
+    const source = await transform(`
+      import * as $ from '@fixture/components';
+      import { type PropsWithChildren, type VjscElement } from 'vjsc/components';
+
+      export interface FramedPosterProps {
+        children: VjscElement;
+      }
+
+      export function FramedPoster({ children, ...props }: PropsWithChildren<FramedPosterProps>) {
+        return (
+          <$.Poster.Root {...props}>
+            <$.Poster.Image>{children}</$.Poster.Image>
+          </$.Poster.Root>
+        );
+      }
+    `);
+
+    expect(source).toContain('export interface FramedPosterProps extends Omit<Poster.RootProps, "children">');
+    expect(source).toContain('children: ReactElement;');
+    expect(source).not.toContain('children?:');
   });
 });
 
