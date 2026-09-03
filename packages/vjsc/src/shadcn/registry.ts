@@ -255,31 +255,67 @@ function describePublishedModules<Meta extends ModuleMeta>(
   return published;
 }
 
+/**
+ * Map every unpublished module onto the published module it can stand in for. Two modules are interchangeable only when
+ * their own source and styles match and every module they import is interchangeable too: a component whose source never
+ * changes between skins still differs once it renders a dependency that does.
+ */
 function canonicalPublishedModules<Meta extends ModuleMeta>(
   graph: Graph<Meta>,
   published: ReadonlyMap<string, PublishedModule<Meta>>
 ): ReadonlyMap<string, PublishedModule<Meta>> {
   const canonical = new Map(published);
-  const bySource = new Map<string, PublishedModule<Meta>[]>();
+  const closureKey = moduleClosureKeys(graph);
+  const byClosure = new Map<string, PublishedModule<Meta>[]>();
 
   for (const publication of published.values()) {
-    const key = moduleSourceKey(publication.module, graph.assets);
-    const candidates = bySource.get(key) ?? [];
+    const key = closureKey(publication.module);
+    const candidates = byClosure.get(key) ?? [];
 
     candidates.push(publication);
-    bySource.set(key, candidates);
+    byClosure.set(key, candidates);
   }
 
   for (const module of graph.modules.values()) {
     if (canonical.has(module.id)) continue;
 
-    const candidates = bySource.get(moduleSourceKey(module, graph.assets));
+    const candidates = byClosure.get(closureKey(module));
     const publication = candidates?.length === 1 ? candidates[0] : undefined;
 
     if (publication) canonical.set(module.id, publication);
   }
 
   return canonical;
+}
+
+/** A key for a module's source together with the sources of everything it imports, memoized across the graph. */
+function moduleClosureKeys<Meta extends ModuleMeta>(graph: Graph<Meta>): (module: GraphModule<Meta>) => string {
+  const keys = new Map<string, string>();
+  const visiting = new Set<string>();
+
+  const closureKey = (module: GraphModule<Meta>): string => {
+    const known = keys.get(module.id);
+    if (known !== undefined) return known;
+
+    // A cycle contributes its entry point's identity; the modules on the cycle still key on their own sources.
+    if (visiting.has(module.id)) return `cycle:${module.filename}`;
+
+    visiting.add(module.id);
+
+    const dependencies = module.imports.map((graphImport) => {
+      const dependency = graphImport.resolvedId ? graph.modules.get(graphImport.resolvedId) : undefined;
+
+      return dependency ? closureKey(dependency) : `external:${graphImport.specifier}`;
+    });
+    const key = [moduleSourceKey(module, graph.assets), ...dependencies].join('\n');
+
+    visiting.delete(module.id);
+    keys.set(module.id, key);
+
+    return key;
+  };
+
+  return closureKey;
 }
 
 function moduleSourceKey(module: GraphModule, assets: ReadonlyMap<string, string>): string {
