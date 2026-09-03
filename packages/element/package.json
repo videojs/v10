@@ -47,7 +47,7 @@
     "@lit/context": "^1.1.0"
   },
   "devDependencies": {
-    "happy-dom": "^20.11.1",
+    "happy-dom": "^20.11.2",
     "vite-plus": "catalog:",
     "vitest": "catalog:"
   }
