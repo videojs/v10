@@ -12,10 +12,10 @@
   "scripts": {
     "prepare": "vp config --no-agent",
     "postinstall": "node build/scripts/link-aliases.mjs",
-    "build:packages": "vp run --fail-if-no-match --filter='./packages/*' --filter='!@videojs/cli' build",
+    "build:packages": "vp run --fail-if-no-match --filter='./packages/*' --filter='!@videojs/cdn' --filter='!@videojs/cli' build",
     "build:cli": "vp run @videojs/cli#build",
     "build:sandbox": "vp run @videojs/sandbox#build",
-    "build:cdn": "vp run @videojs/html#build:cdn",
+    "build:cdn": "vp run @videojs/cdn#build:cdn",
     "build:shadcn": "vp run @videojs/skins#build:shadcn",
     "build:site": "vp run site#build",
     "build": "vp run -r build",

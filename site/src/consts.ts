@@ -1,3 +1,4 @@
+import cdnPackage from '../../packages/cdn/package.json' with { type: 'json' };
 import htmlPackage from '../../packages/html/package.json' with { type: 'json' };
 
 // Always https://videojs.org. Unlike Astro.site, which varies per deploy
@@ -18,14 +19,8 @@ export const THEME_KEY = 'vjs-site-theme';
 export const BANNER_DISMISS_KEY = 'vjs-legacy-banner-dismissed';
 export const BLOG_PAGE_SIZE = 10;
 export const VJS10_VERSION = htmlPackage.version;
-export const VJS10_HTML_CDN_BASE = `https://cdn.jsdelivr.net/npm/@videojs/html@${VJS10_VERSION}/cdn`;
-
-// The beta.32 release job checked out the commit before its version bump, so its
-// archive upload rebuilt beta.31 instead. Future releases use the current package
-// version; keep the latest available archive in docs until beta.32 is backfilled.
-const VJS10_HTML_ARCHIVE_VERSION_OVERRIDES = new Map([['10.0.0-beta.32', '10.0.0-beta.31']]);
-
-export const VJS10_HTML_ARCHIVE_VERSION = VJS10_HTML_ARCHIVE_VERSION_OVERRIDES.get(VJS10_VERSION) ?? VJS10_VERSION;
+export const VJS10_CDN_BASE = `https://cdn.jsdelivr.net/npm/@videojs/cdn@${cdnPackage.version}`;
+export const VJS10_CDN_ARCHIVE_VERSION = cdnPackage.version;
 
 export function isPrereleaseSite(siteUrl: URL | undefined): boolean {
   return siteUrl?.origin === PRERELEASE_URL.origin;
@@ -82,6 +77,7 @@ export const VJS10_DEMO_STORYBOARD_VTT = `https://image.mux.com/${VJS10_DEMO_VID
 // value matches the sample used by the site's DASH reference demo.
 export const VJS10_DEMO_DASH = 'https://dash.akamaized.net/akamai/streamroot/050714/Spring_4Ktest.mpd';
 export const VJS10_DEMO_VIMEO = 'https://vimeo.com/76979871';
+export const VJS10_DEMO_WISTIA = 'https://wesleyluyten.wistia.com/medias/oifkgmxnkb';
 export const VJS10_DEMO_YOUTUBE = 'https://www.youtube.com/watch?v=aqz-KE-bpKQ';
 export const VJS10_DEMO_CLOUDFLARE = 'https://watch.videodelivery.net/bfbd585059e33391d67b0f1d15fe6ea4';
 // An episode rather than a track: Spotify plays episodes in full for a

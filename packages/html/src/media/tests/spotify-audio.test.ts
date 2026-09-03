@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vite-plus/test';
 
-import { SpotifyAudio } from '../spotify-audio/media';
+import { SpotifyAudio } from '../spotify-audio/adapter';
 
 describe('SpotifyAudio', () => {
   it('hides the embed unless it is showing Spotify’s own chrome', () => {

@@ -1,5 +1,5 @@
 // Adapted from `media-played-ranges-mixin@0.1.0` from `muxinc/media-elements`,
-// ported to TypeScript and reshaped as a class mixin to fit the v10 media-host
+// ported to TypeScript and reshaped as a class mixin to fit the v10 media-adapter
 // architecture.
 //
 // Source: https://github.com/muxinc/media-elements
@@ -15,7 +15,7 @@ export interface PlayedRange {
   end: number;
 }
 
-/** Surface a media host must expose for played-range tracking. */
+/** Surface a media adapter must expose for played-range tracking. */
 export interface MediaPlayedRangesHost extends EventTarget {
   currentTime: number;
   paused: boolean;
@@ -29,14 +29,14 @@ export interface MediaPlayedRangesAPI {
 }
 
 /**
- * Mixin that tracks played ranges for media hosts lacking a native `HTMLMediaElement.played` (e.g. iframe-based embeds
- * like Vimeo).
+ * Mixin that tracks played ranges for media adapters lacking a native `HTMLMediaElement.played` (e.g. iframe-based
+ * embeds like Vimeo).
  *
  * Listens for standard media events the host dispatches on itself (`play`, `pause`, `ended`, `seeking`, `seeked`) and
  * derives a `TimeRanges`-like `played` value from the host's `currentTime` / `paused`.
  *
  * @example
- *   class VimeoMedia extends MediaPlayedRangesMixin(EventTarget) { ... }
+ *   class VimeoAdapter extends MediaPlayedRangesMixin(EventTarget) { ... }
  */
 export function MediaPlayedRangesMixin<Base extends Constructor<EventTarget & { destroy?(): void }>>(
   BaseClass: Base

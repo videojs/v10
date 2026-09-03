@@ -110,7 +110,7 @@ function isAttributeAlias(prop: string, properties: PropertyConfigs, hostPrototy
   return !!attribute && attribute in hostPrototype;
 }
 
-/** Coerce an attribute string to the type the host property already holds. */
+/** Coerce an attribute string to the type the adapter property already holds. */
 function propertyValueFor(attrValue: string | null, current: unknown, config?: PropertyConfig): unknown {
   if (typeof current === 'boolean') return attrValue !== null;
 
@@ -119,18 +119,18 @@ function propertyValueFor(attrValue: string | null, current: unknown, config?: P
   return attrValue ?? (config && 'empty' in config ? config.empty : '');
 }
 
-export interface MediaHost extends EventTarget {
+export interface PlaybackAdapter extends EventTarget {
   attach(target: EventTarget | null): void;
   detach(): void;
   destroy(): void;
-  /** Index signature for dynamic property forwarding (includes the host's protected `target`). */
+  /** Index signature for dynamic property forwarding (includes the adapter's protected `target`). */
   [key: string]: any;
 }
 
-type CustomMediaConstructor<T extends Constructor<MediaHost>> = Constructor<
+type CustomMediaConstructor<T extends Constructor<PlaybackAdapter>> = Constructor<
   HTMLElement &
     InstanceType<T> & {
-      readonly host: InstanceType<T>;
+      readonly adapter: InstanceType<T>;
       attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null): void;
     }
 > & {
@@ -140,9 +140,9 @@ type CustomMediaConstructor<T extends Constructor<MediaHost>> = Constructor<
   readonly observedAttributes: string[];
 };
 
-export function CustomMediaElement<T extends Constructor<MediaHost>>(
+export function CustomMediaElement<T extends Constructor<PlaybackAdapter>>(
   tag: string,
-  MediaHost: T
+  PlaybackAdapter: T
 ): CustomMediaConstructor<T> {
   // Embed hosts (iframe) drive an external player rather than a native media
   // element, so attribute changes are not mirrored onto the iframe target and
@@ -188,13 +188,17 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
 
       const properties = ctor.properties as PropertyConfigs;
 
-      for (let proto = MediaHost.prototype; proto && proto !== Object.prototype; proto = Object.getPrototypeOf(proto)) {
+      for (
+        let proto = PlaybackAdapter.prototype;
+        proto && proto !== Object.prototype;
+        proto = Object.getPrototypeOf(proto)
+      ) {
         for (const prop of Object.getOwnPropertyNames(proto)) {
           if (prop in CustomMedia.prototype || excludedProperties.includes(prop)) continue;
 
           // An alias keeps reflecting its attribute through the `properties`
-          // loop below rather than reaching the host.
-          if (isAttributeAlias(prop, properties, MediaHost.prototype)) continue;
+          // loop below rather than reaching the adapter.
+          if (isAttributeAlias(prop, properties, PlaybackAdapter.prototype)) continue;
 
           const descriptor = Object.getOwnPropertyDescriptor(proto, prop);
           if (!descriptor) continue;
@@ -260,7 +264,7 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
       }
     }
 
-    #mediaHost: MediaHost;
+    #mediaHost: PlaybackAdapter;
     #bridgedEventTypes = new Set<string>();
     #childMap = new Map<HTMLTrackElement | HTMLSourceElement, HTMLTrackElement | HTMLSourceElement>();
     #childObserver?: MutationObserver;
@@ -276,7 +280,7 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
         const allowedKeys = getAttrsFromProps(ctor.properties);
         const disallowedKeys = [...mediaHostAttrToProp.keys()];
         const pickedAttrs = pick(namedNodeMapToObject(this.attributes), allowedKeys);
-        // Embed templates (iframe) need host-bound attrs (e.g. `src`) to build the initial URL.
+        // Embed templates (iframe) need adapter-bound attrs (e.g. `src`) to build the initial URL.
         const attrs: Record<string, string> = syncTargetAttributes ? omit(pickedAttrs, disallowedKeys) : pickedAttrs;
 
         if (tag && !attrs.part) attrs.part = tag;
@@ -284,7 +288,7 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
         this.shadowRoot!.innerHTML = ctor.getTemplateHTML(attrs);
       }
 
-      this.#mediaHost = new MediaHost();
+      this.#mediaHost = new PlaybackAdapter();
       this.#attachToTarget();
 
       this.#childObserver = new MutationObserver(this.#syncMediaChildAttribute.bind(this));
@@ -305,7 +309,7 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
       this.#mediaHost.attach(target);
     }
 
-    get host(): MediaHost {
+    get adapter(): PlaybackAdapter {
       return this.#mediaHost;
     }
 
@@ -331,7 +335,7 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
       if (this.hasAttribute('keep-alive')) return;
 
       // Defer so a synchronous reparent (remove + insert) doesn't tear down
-      // the host and its registered components.
+      // the adapter and its registered components.
       queueMicrotask(() => {
         if (!this.isConnected) this.#mediaHost.destroy();
       });

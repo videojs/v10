@@ -67,6 +67,12 @@ If a style depends on a Video.js `data-*` state, Svelte may remove its selector 
 
 If you need to pass structured data, such as a Mux source, an HTML attribute will not work because attributes contain text. Pass the object directly, and Svelte assigns it to the custom element's JavaScript property:
 
+The Mux media ships as its own adapter package, so add it to the HTML installation used by this example:
+
+```bash
+pnpm add @videojs/html @videojs/mux-video
+```
+
 ```svelte
 <script lang="ts">
   import '@videojs/html/video/player';

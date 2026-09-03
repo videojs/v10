@@ -29,7 +29,7 @@ import {
   withMuxMaxResolution,
 } from '@app/shared/sources';
 import type { Skin } from '@app/types';
-import { getI18nTranslations } from '@videojs/html/cdn/i18n';
+import { getI18nTranslations } from '@videojs/cdn/i18n';
 import { escapeHtml } from '@videojs/utils/string';
 
 const html = String.raw;
@@ -163,28 +163,28 @@ async function loadCdnPlayer(skin: Skin, live: boolean) {
   switch (descriptor.player) {
     case 'video':
       if (live) {
-        if (skin === 'minimal') await import('@videojs/html/cdn/live-video-minimal');
-        else await import('@videojs/html/cdn/live-video');
+        if (skin === 'minimal') await import('@videojs/cdn/live-video-minimal');
+        else await import('@videojs/cdn/live-video');
       } else {
-        if (skin === 'minimal') await import('@videojs/html/cdn/video-minimal');
-        else await import('@videojs/html/cdn/video');
+        if (skin === 'minimal') await import('@videojs/cdn/video-minimal');
+        else await import('@videojs/cdn/video');
       }
 
       break;
     case 'audio':
       if (live) {
-        if (skin === 'minimal') await import('@videojs/html/cdn/live-audio-minimal');
-        else await import('@videojs/html/cdn/live-audio');
+        if (skin === 'minimal') await import('@videojs/cdn/live-audio-minimal');
+        else await import('@videojs/cdn/live-audio');
       } else {
-        if (skin === 'minimal') await import('@videojs/html/cdn/audio-minimal');
-        else await import('@videojs/html/cdn/audio');
+        if (skin === 'minimal') await import('@videojs/cdn/audio-minimal');
+        else await import('@videojs/cdn/audio');
       }
 
       break;
     // Player and skin are shared; the element each one renders is what differs,
     // and that arrives from `loadCdnMedia`.
     case 'background':
-      await import('@videojs/html/cdn/background');
+      await import('@videojs/cdn/background');
       break;
   }
 }
@@ -192,70 +192,70 @@ async function loadCdnPlayer(skin: Skin, live: boolean) {
 async function loadCdnMedia(media: MediaId) {
   switch (media) {
     case 'hlsjs-video':
-      await import('@videojs/html/cdn/media/hlsjs-video');
+      await import('@videojs/cdn/media/hlsjs-video');
       break;
     case 'mux-video':
-      await import('@videojs/html/cdn/media/mux-video');
+      await import('@videojs/cdn/media/mux-video');
       break;
     // One media loads one flavor, so the SPF-backed element is the only claimant
     // and registers as `<mux-video>` — the CDN page is where that rule is visible,
     // since a page picks bundles at runtime rather than by import path.
     case 'mux-video-spf':
-      await import('@videojs/html/cdn/media/mux-video/spf');
+      await import('@videojs/cdn/media/mux-video/spf');
       break;
     case 'mux-audio':
-      await import('@videojs/html/cdn/media/mux-audio');
+      await import('@videojs/cdn/media/mux-audio');
       break;
     case 'mux-audio-spf':
-      await import('@videojs/html/cdn/media/mux-audio/spf');
+      await import('@videojs/cdn/media/mux-audio/spf');
       break;
     // `<background-video>` rides along inside the `background` bundle above; the
     // SPF-backed tags are their own bundles, so the page loads them the way it
     // loads every other media element. Both tags are one element, and a CDN page
     // loads bundles at runtime — so it loads only the one the media names.
     case 'hls-background-video':
-      await import('@videojs/html/cdn/media/hls-background-video');
+      await import('@videojs/cdn/media/hls-background-video');
       break;
     case 'mux-background-video':
-      await import('@videojs/html/cdn/media/mux-background-video');
+      await import('@videojs/cdn/media/mux-background-video');
       break;
     case 'native-hls-video':
-      await import('@videojs/html/cdn/media/native-hls-video');
+      await import('@videojs/cdn/media/native-hls-video');
       break;
     case 'hls-video':
-      await import('@videojs/html/cdn/media/hls-video');
+      await import('@videojs/cdn/media/hls-video');
       break;
     case 'hls-audio':
-      await import('@videojs/html/cdn/media/hls-audio');
+      await import('@videojs/cdn/media/hls-audio');
       break;
     case 'dash-video':
-      await import('@videojs/html/cdn/media/dash-video');
+      await import('@videojs/cdn/media/dash-video');
       break;
     case 'shaka-video':
-      await import('@videojs/html/cdn/media/shaka-video');
+      await import('@videojs/cdn/media/shaka-video');
       break;
     // Each embed is one bundle beside the rest, so a page reaches a third-party
     // player the same way it reaches an HLS one — no npm-only step.
     case 'vimeo-video':
-      await import('@videojs/html/cdn/media/vimeo-video');
+      await import('@videojs/cdn/media/vimeo-video');
       break;
     case 'youtube-video':
-      await import('@videojs/html/cdn/media/youtube-video');
+      await import('@videojs/cdn/media/youtube-video');
       break;
     case 'cloudflare-video':
-      await import('@videojs/html/cdn/media/cloudflare-video');
+      await import('@videojs/cdn/media/cloudflare-video');
       break;
     case 'spotify-audio':
-      await import('@videojs/html/cdn/media/spotify-audio');
+      await import('@videojs/cdn/media/spotify-audio');
       break;
     case 'tiktok-video':
-      await import('@videojs/html/cdn/media/tiktok-video');
+      await import('@videojs/cdn/media/tiktok-video');
       break;
     case 'twitch-video':
-      await import('@videojs/html/cdn/media/twitch-video');
+      await import('@videojs/cdn/media/twitch-video');
       break;
     case 'wistia-video':
-      await import('@videojs/html/cdn/media/wistia-video');
+      await import('@videojs/cdn/media/wistia-video');
       break;
   }
 }

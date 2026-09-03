@@ -7,7 +7,7 @@ date: 2026-09-01
 
 ## Decision
 
-`MuxData` starts one `mux-embed` monitor per target and keeps it alive for the target's lifetime. A source change is reported to the live monitor as `videochange`, and an engine swap re-hooks engine telemetry on the live monitor. The monitor is destroyed and re-created only when the target changes or when an option baked into `monitor()` itself changes (SDK, beacon domain, debug, cookies).
+`MuxDataExtension` starts one `mux-embed` monitor per target and keeps it alive for the target's lifetime. A source change is reported to the live monitor as `videochange`, and an engine swap re-hooks engine telemetry on the live monitor. The monitor is destroyed and re-created only when the target changes or when an option baked into `monitor()` itself changes (SDK, beacon domain, debug, cookies).
 
 ## Why
 
@@ -25,4 +25,4 @@ Three properties of the contract shaped the details:
 - mux-embed SDK behavior (`videochange` resets the view and arms `viewstart` on `play`; the element monitor's event list), as shipped in the `mux-embed` npm package: https://www.npmjs.com/package/mux-embed
 - `playback-core` destroy-per-source and its `muxDataKeepSession` workaround: https://github.com/muxinc/elements/blob/e1a32eb3fb147fcbd42f810ecf54101f4582f868/packages/playback-core/src/index.ts#L671-L679 and https://github.com/muxinc/elements/blob/e1a32eb3fb147fcbd42f810ecf54101f4582f868/packages/playback-core/src/index.ts#L697-L740
 - Bug and fix: https://github.com/videojs/v10/issues/2562, https://github.com/videojs/v10/pull/2565. Inheriting work: https://github.com/videojs/v10/issues/1845
-- Implementation: [`mux-data.ts`](/packages/media/src/dom/mux/mux-data.ts), [`mux-data.test.ts`](/packages/media/src/dom/mux/tests/mux-data.test.ts)
+- Implementation: [`mux-data.ts`](/packages/mux-data/src/mux-data.ts), [`mux-data.test.ts`](/packages/mux-data/src/tests/mux-data.test.ts)

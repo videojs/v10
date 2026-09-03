@@ -10,7 +10,7 @@ Engine variant that delivers audio-only playback. Composes regardless of
 source shape: handles both truly audio-only HLS sources (manifests with
 no video stream-inf entries) and mixed-AV sources (video / subtitle
 renditions ignored at composition time). The variant decision is encoded
-in the adapter choice — instantiating `HlsAudioMediaElement`
+in the adapter choice — instantiating `HlsAudioAdapterCore`
 opts the consumer into audio-only delivery.
 
 This is a Player-level composition variant per [`../features/clusters.md` §
@@ -24,7 +24,7 @@ single composition with two variant-decision-source paths
 ## Status
 
 - **Composition:** Phase 1 implemented. `createHlsAudioEngine` and
-  `HlsAudioMediaElement` ship in `packages/spf/src/playback/engines/hls/`
+  `HlsAudioAdapterCore` ship in `packages/spf/src/playback/engines/hls/`
   and re-export from `@videojs/spf/hls`. The adapter handles both truly
   audio-only HLS sources and mixed-AV sources (video / subtitle renditions
   ignored at composition time). Phases 2 (audio-abr, multi-language-audio)
@@ -75,7 +75,7 @@ below).
 
 | Phase | What |
 |---|---|
-| **1 — Basic functionality** *(implemented)* | Parallel engine-factory + adapter pair. `createHlsAudioEngine` composes the audio-side subset of `createHlsVideoEngine`'s behavior list, subtracting video-side and text-track behaviors entirely (Phase 1 ships without subtitle support). `HlsAudioMediaElement` wraps the engine with the same `shareSignals`-based pattern as `HlsVideoMediaElement`. See *Implementation surface* below |
+| **1 — Basic functionality** *(implemented)* | Parallel engine-factory + adapter pair. `createHlsAudioEngine` composes the audio-side subset of `createHlsVideoEngine`'s behavior list, subtracting video-side and text-track behaviors entirely (Phase 1 ships without subtitle support). `HlsAudioAdapterCore` wraps the engine with the same `shareSignals`-based pattern as `HlsVideoAdapterCore`. See *Implementation surface* below |
 | **2 — Features/functionality relevant to the use case** | Compose constituent feature behaviors as they land: [`audio-abr`](../features/audio-abr.md) when implemented (multi-bitrate audio support in the variant), [`multi-language-audio`](../features/multi-language-audio.md) when implemented (language selection within the variant). Both are additive — the variant gains capability as the constituent features get built |
 | **3 — Optimizations** | Alternative default configurations for the audio-only delivery context: shorter forward-buffer targets (audio is lower-bandwidth; less ahead-buffering needed), possibly different `preload` defaults. The Path-A (update existing behavior's defaults) vs Path-B (audio-only-specific buffer-management behavior) judgment call applies — see [`README.md` § Implementation note](./README.md#implementation-note-customizing-behaviors-for-use-cases) |
 
@@ -112,7 +112,7 @@ bandwidth, the seed becomes unnecessary and is omitted. Returns when
 
 **None.** This use case ships as an *independent adapter* paired with its own
 engine factory. The variant-decision is encoded in the adapter choice itself —
-consumers instantiate `HlsAudioMediaElement` to opt in. No runtime
+consumers instantiate `HlsAudioAdapterCore` to opt in. No runtime
 variant-decision behavior is needed.
 
 ### Alternative implementations (Phase 3 candidates)
@@ -139,8 +139,8 @@ Phase 1 baseline:
   inherits all of it.
 - **[`engine-adapter-integration`](../features/engine-adapter-integration.md)** —
   used with an alternative adapter shape. The variant ships its own
-  `HlsAudioMediaElement`-style adapter parallel to
-  `HlsVideoMediaElement`. The `shareSignals` mechanism + mixin pattern compose
+  `HlsAudioAdapterCore`-style adapter parallel to
+  `HlsVideoAdapterCore`. The `shareSignals` mechanism + mixin pattern compose
   unchanged; the consumer-facing API differs.
 - **[`mse-mms-pipeline`](../features/mse-mms-pipeline.md)** — used as-is.
   `MediaSource` + `endOfStream` gate compose unchanged across variants (per the
@@ -163,15 +163,15 @@ Phase 2:
 ## Customer-policy surface
 
 The variant ships as an **independent adapter** parallel to
-`HlsVideoMediaElement`:
+`HlsVideoAdapterCore`:
 
 ```ts
 // Default (mixed AV delivery)
-const player = new HlsVideoMediaElement();
+const player = new HlsVideoAdapterCore();
 player.src = mixedSourceUrl;
 
 // Audio-only mode override
-const audioPlayer = new HlsAudioMediaElement();
+const audioPlayer = new HlsAudioAdapterCore();
 audioPlayer.src = sameMixedSourceUrl;
 ```
 
@@ -190,13 +190,13 @@ The variant composes identically regardless of signal source. Two paths
 exist; both target the same `createHlsAudioEngine` factory:
 
 **1. Adapter-upfront (implemented; Phase 1).** Selecting
-`HlsAudioMediaElement` over `HlsVideoMediaElement` *is* the
+`HlsAudioAdapterCore` over `HlsVideoAdapterCore` *is* the
 variant choice. No detect-from-parser logic, no runtime config branch.
 Used by consumers that know they want audio-only delivery (the
 delivery-mode-choice scenarios in *Target delivery context*).
 
 **2. Detect-from-parser (future).** A routing-from-default-adapter path
-where `HlsVideoMediaElement` (or a higher-level adapter) detects an
+where `HlsVideoAdapterCore` (or a higher-level adapter) detects an
 audio-only source shape from the parsed presentation
 (`presentation.videoTracks` empty) and switches its internal engine
 factory to `createHlsAudioEngine` for that source. Targets the
@@ -218,7 +218,7 @@ artifact; how the variant is signaled is orthogonal.
   as a registry-level concern; may surface a future "use-case adapter factory"
   pattern.
 - **Default-adapter routing change (when Variant-decision path 2 lands).**
-  Detect-from-parser routing in `HlsVideoMediaElement` would change the
+  Detect-from-parser routing in `HlsVideoAdapterCore` would change the
   default engine for audio-only sources from `createHlsVideoEngine` (current
   tolerance) to `createHlsAudioEngine` (explicit composition). Compatible
   in observable behavior — both produce working audio playback — but the
@@ -264,9 +264,9 @@ Phase 1 implementation pass (kept for traceability):
   single `createHlsAudioEngine` serving both, and the two docs
   consolidated into this one. Variant-decision source remains the
   orthogonal axis (see *Variant-decision signal source* above).
-- **Adapter naming** — `HlsAudioMediaElement` (with
-  `HlsAudioMediaMixin` for mixin consumers and
-  `hlsAudioMediaDefaultProps` for default values), matching the
+- **Adapter naming** — `HlsAudioAdapterCore` (with
+  `HlsAudioMixin` for mixin consumers and
+  `hlsAudioAdapterDefaultProps` for default values), matching the
   `Simple{Variant}HlsMediaElement` naming pattern.
 - **Subtitle / text-track handling for Phase 1** — *subtracted entirely.*
   Phase 1 ships without subtitles to keep the initial surface lean; future
@@ -291,10 +291,10 @@ parallel to the existing `hls-video` pair.
 
 | Export | File | Purpose |
 |---|---|---|
-| `HlsAudioMediaElement` | `hls-audio/adapter.ts` | Standalone adapter, no base class |
-| `HlsAudioMediaMixin` | `hls-audio/adapter.ts` | Mixin for adapters with a custom base |
-| `HlsAudioMediaProps` / `…API` | `hls-audio/adapter.ts` | Adapter API surface — same WHATWG src/preload/play contract as `HlsVideoMediaElement` |
-| `hlsAudioMediaDefaultProps` | `hls-audio/adapter.ts` | Default-prop constants |
+| `HlsAudioAdapterCore` | `hls-audio/adapter.ts` | Standalone adapter, no base class |
+| `HlsAudioMixin` | `hls-audio/adapter.ts` | Mixin for adapters with a custom base |
+| `HlsAudioAdapterProps` / `…API` | `hls-audio/adapter.ts` | Adapter API surface — same WHATWG src/preload/play contract as `HlsVideoAdapterCore` |
+| `hlsAudioAdapterDefaultProps` | `hls-audio/adapter.ts` | Default-prop constants |
 
 Public re-export: `@videojs/spf/hls` — all of the above ship via
 `packages/spf/src/playback/engines/hls/index.ts`.
@@ -303,7 +303,7 @@ Public re-export: `@videojs/spf/hls` — all of the above ship via
 
 | Export | File | Purpose |
 |---|---|---|
-| `HlsAudioMedia` | `index.ts` | Applies `HlsAudioMediaMixin` to `HTMLAudioElementHost` (audio host, not video — symmetric with `mux-audio`) |
+| `HlsAudioAdapter` | `index.ts` | Applies `HlsAudioMixin` to `HTMLAudioAdapter` (audio host, not video — symmetric with `mux-audio`) |
 
 Public re-export: `@videojs/spf/hls-audio`.
 
@@ -311,17 +311,17 @@ Public re-export: `@videojs/spf/hls-audio`.
 
 | Export | File | Purpose |
 |---|---|---|
-| `HlsAudio` | `media/hls-audio/media.ts` | Applies `MediaAttachMixin` + `CustomMediaElement('audio', HlsAudioMedia)` |
+| `HlsAudio` | `media/hls-audio/adapter.ts` | Applies `MediaAttachMixin` + `CustomMediaElement('audio', HlsAudioAdapter)` |
 | `HlsAudioElement` (tag `hls-audio`) | `media/hls-audio/element.ts` | Custom-element implementation; `define/media/hls-audio.ts` registers it via `safeDefine` |
 
-CDN entry: `packages/html/src/cdn/media/hls-audio.ts` →
-`@videojs/html/cdn/media/hls-audio`.
+CDN entry: `packages/html/src/define/media/hls-audio.ts` →
+`@videojs/cdn/media/hls-audio`.
 
 **React — component** (`packages/react/src/media/hls-audio/`):
 
 | Export | File | Purpose |
 |---|---|---|
-| `HlsAudio` | `index.tsx` | React component rendering an `<audio>` element bound to `HlsAudioMedia`; props mirror the HTML element's WHATWG-style attribute surface |
+| `HlsAudio` | `index.tsx` | React component rendering an `<audio>` element bound to `HlsAudioAdapter`; props mirror the HTML element's WHATWG-style attribute surface |
 
 Public re-export: `@videojs/react/media/hls-audio`.
 
@@ -359,9 +359,9 @@ configuration drives end-of-stream correctly with no per-type changes.
     `TYPE=SUBTITLES` rendition
   - `"cleans up on destroy"` — `engine.destroy()` does not throw
 
-- `hls-audio/tests/adapter.test.ts` — 28 tests covering the WHATWG
+- `hls-audio/tests/mixin.test.ts` — 28 tests covering the WHATWG
   `src`/`preload`/`play()`/`attach`/`detach`/`destroy` contract on
-  `HlsAudioMediaElement`. Mirrors `adapter.test.ts` semantically
+  `HlsAudioAdapterCore`. Mirrors `adapter.test.ts` semantically
   (the variant differs in composition, not in adapter contract).
 
 **Sandbox demos** (templates checked in; `src/` is mirrored from
@@ -386,7 +386,7 @@ configuration drives end-of-stream correctly with no per-type changes.
 
 - **[`audio-playback`](../features/audio-playback.md)** — constituent baseline.
 - **[`engine-adapter-integration`](../features/engine-adapter-integration.md)** —
-  constituent; variant adapter parallels `HlsVideoMediaElement`.
+  constituent; variant adapter parallels `HlsVideoAdapterCore`.
 - **[`mse-mms-pipeline`](../features/mse-mms-pipeline.md)** — constituent;
   composes unchanged.
 - **[`buffer-management`](../features/buffer-management.md)** — constituent;
@@ -412,11 +412,11 @@ configuration drives end-of-stream correctly with no per-type changes.
 - [SPF Epics Working Doc](https://www.notion.so/35f97a7f89d08123a13fecab1ca1cac4) — Notion epic #4b
 - [`packages/spf/docs/hls-engine.md`](../../../../packages/spf/docs/hls-engine.md) — current HLS engine composition walkthrough; the variant subtracts from this baseline
 - [`packages/spf/src/playback/engines/hls/engine-audio-only.ts`](../../../../packages/spf/src/playback/engines/hls/engine-audio-only.ts) — Phase 1 engine factory
-- [`packages/spf/src/playback/adapters/hls-audio/adapter.ts`](../../../../packages/spf/src/playback/adapters/hls-audio/adapter.ts) — Phase 1 adapter
+- [`packages/spf/src/playback/adapters/hls-audio/mixin.ts`](../../../../packages/spf/src/playback/adapters/hls-audio/mixin.ts) — Phase 1 adapter
 - [`packages/spf/src/playback/engines/hls/tests/engine-audio-only.test.ts`](../../../../packages/spf/src/playback/engines/hls/tests/engine-audio-only.test.ts) — Phase 1 engine integration tests
-- [`packages/spf/src/playback/adapters/hls-audio/tests/adapter.test.ts`](../../../../packages/spf/src/playback/adapters/hls-audio/tests/adapter.test.ts) — Phase 1 adapter tests
-- [`packages/spf/src/playback/adapters/hls-audio/media.ts`](../../../../packages/spf/src/playback/adapters/hls-audio/media.ts) — Phase 1 media wrapper
-- [`packages/html/src/media/hls-audio/media.ts`](../../../../packages/html/src/media/hls-audio/media.ts) — Phase 1 HTML custom element
-- [`packages/react/src/media/hls-audio/media.tsx`](../../../../packages/react/src/media/hls-audio/media.tsx) — Phase 1 React component
+- [`packages/spf/src/playback/adapters/hls-audio/tests/mixin.test.ts`](../../../../packages/spf/src/playback/adapters/hls-audio/tests/mixin.test.ts) — Phase 1 adapter tests
+- [`packages/spf/src/playback/adapters/hls-audio/adapter.ts`](../../../../packages/spf/src/playback/adapters/hls-audio/adapter.ts) — Phase 1 media wrapper
+- [`packages/html/src/media/hls-audio/adapter.ts`](../../../../packages/html/src/media/hls-audio/adapter.ts) — Phase 1 HTML custom element
+- [`packages/react/src/media/hls-audio/adapter.tsx`](../../../../packages/react/src/media/hls-audio/adapter.tsx) — Phase 1 React component
 - [`apps/sandbox/templates/html-hls-audio/`](../../../../apps/sandbox/templates/html-hls-audio/) — Phase 1 HTML sandbox demo template
 - [`apps/sandbox/templates/react-hls-audio/`](../../../../apps/sandbox/templates/react-hls-audio/) — Phase 1 React sandbox demo template

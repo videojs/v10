@@ -4,7 +4,7 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const referenceDirectory = resolve(process.cwd(), 'src/content/docs/reference');
-const importPattern = /## Import\n\n<MediaImports media="[^"]+" react="[^"]+" \/>/;
+const importPattern = /## Import\n\n<MediaImports media="[^"]+" (?:package="@videojs\/[^"]+" )?react="[^"]+" \/>/;
 
 function readReferencePages() {
   return readdirSync(referenceDirectory)

@@ -112,6 +112,12 @@ Scoped styles cannot reach controls inside a packaged skin. Use its CSS custom p
 
 If you need to pass structured data, such as a Mux source, an HTML attribute will not work because attributes contain text. Vue's [`.prop` modifier](https://vuejs.org/api/built-in-directives.html#v-bind) assigns the value to the element's JavaScript property:
 
+The Mux media ships as its own adapter package, so add it to the HTML installation used by this example:
+
+```bash
+pnpm add @videojs/html @videojs/mux-video
+```
+
 ```vue
 <script setup lang="ts">
 import '@videojs/html/video/player';

@@ -160,7 +160,7 @@ without them in view.
 | Error representation + emission | The error shape (SVTA category + index, plus context: track type, URL, the constraint or tag that triggered it) and the mechanism producers emit onto. Emission is **stacked** per SVTA Principle 6 — many errors across the timeline, most non-fatal — not a single latched slot | category+index | **Implemented** | Foundation for every later phase. Landed as an append-only sequence in a slot owned by `collectErrors`, with severity decided above it |
 | Capability-pruned-to-empty surfacing | Replace both `track-switching.ts` `console.error`s. When a type *has* tracks but the hard-constraint pre-pass pruned every one, emit rather than only clearing the selection. Container/TS falls out for free — it reaches this site via `canPlayTrack` asserting `NON_FMP4_CONTAINER_MIMES` unplayable | 1004 / 1005 → 2011 / 2012 | **Implemented** (one of two `console.error`s — the other is an invariant assertion) | The convergence point for two distinct causes (unsupported container, undecodable codec) and one transient one (every CDN in failover cooldown). Stacking carries the cause code before the outcome code, preserving what the replaced `console.error` string held — and the causes now also decide which code the adapter surfaces. The existing `hasTracksOfType` guard already separates "no tracks of this type" (legitimate) from "all pruned" (error) |
 | DRM detection via `EXT-X-KEY` | Recognize an encrypted source and fail clearly rather than appending undecryptable segments. New parser surface — `EXT-X-KEY` is unparsed today | 4008 | **Implemented** — media-playlist detection only | The one first-cut producer needing parser work. Placement decides *when* the verdict lands: `EXT-X-KEY` in the media playlist means post-track-resolution; `EXT-X-SESSION-KEY` in the multivariant would allow pre-resolution. Detection only — actually playing encrypted content is [drm-support](./drm-support.md) |
-| Fatal derivation + adapter mapping | Derive a single fatal verdict from the emitted sequence; map it to `MediaError` at the adapter and dispatch `error`. Per-source reset. Only fatal errors reach the adapter | → 99001 → `MediaError` code | **Implemented**, plus cause-driven code substitution | Direct precedent: `packages/media/src/dom/hls-js/errors.ts:46` is `if (!data.fatal) return;`, and `native-hls/errors.ts:54` hard-codes `fatal: true`. Both are mixins owning `error: MediaError \| null`, dispatching `ErrorEvent`, clearing per source. Fatality is derived here, not asserted by producers — see *Likely cross-cutting impact*. The adapter surfaces a *code*, never prose; `packages/core` maps it to localized copy |
+| Fatal derivation + adapter mapping | Derive a single fatal verdict from the emitted sequence; map it to `MediaError` at the adapter and dispatch `error`. Per-source reset. Only fatal errors reach the adapter | → 99001 → `MediaError` code | **Implemented**, plus cause-driven code substitution | Direct precedent: `packages/hlsjs-video/src/errors.ts:46` is `if (!data.fatal) return;`, and `native-hls/errors.ts:54` hard-codes `fatal: true`. Both are mixins owning `error: MediaError \| null`, dispatching `ErrorEvent`, clearing per source. Fatality is derived here, not asserted by producers — see *Likely cross-cutting impact*. The adapter surfaces a *code*, never prose; `packages/core` maps it to localized copy |
 | Degraded-but-playable notices | The non-fatal tier: sources that play but aren't fully supported — LL-HLS (plays as standard live), DVR/EVENT (plays as simple live). Emit without failing | 2039 | **Partially implemented** — detected and announced, to a console rather than as emitted conditions | The PRD's "feature that doesn't exist on the Media in use" case where the answer is "it plays, but not the way you asked." `parseMediaPlaylist` detects both (`lowLatency`, `playlistType === 'EVENT'`) and the adapter warns once per source. Neither reaches `errors` as a 2039, because *Non-fatal destination* is unresolved — so nothing observable carries them yet. Depends on [ll-hls-support](./ll-hls-support.md) / [dvr-event-stream-support](./dvr-event-stream-support.md) for what "not fully supported" means per source |
 | Runtime producers *(later)* | The three swallowed sites: manifest fetch/parse failure, and a live media-playlist reload rejection | 2014 / 2005 / 2017 | **Not implemented** | Deferred deliberately — these are runtime, not the PRD's ask. The live-reload one forces the recoverable-vs-fatal question immediately (a single failed reload is not fatal), which is why it isn't first |
 | Retry-exhaustion intake *(later)* | Receive [network-resilience](./network-resilience.md)'s retry-exhaustion verdict as an emitted error | 3008 + 5-digit HTTP | **Not implemented** | That doc's open question "retry-exhaustion error surfacing — state slot vs callback vs both" resolves against this feature's phase 1 |
@@ -241,7 +241,7 @@ DOM-free, so the codes are usable from any layer: `SvtaError`
 | `firstFatal` / `hasUnsupportedFeatureCause` | `playback/adapters/hls-video/error-surface.ts` | The shared half of the promotion step, plus the `HlsVideoMediaError` type. Only the *policy* — which codes are fatal — stays per adapter. All three adapters share `firstFatal`; the `ErrorLike` mapping and its 99001 substitution are the video and audio ones only |
 | `UNSUPPORTED_PLAYBACK_FEATURE_MESSAGE`, `UNPLAYABLE_SOURCE_MESSAGE`, and the two notice strings | `playback/primitives/error-messages.ts` | **Console-only** copy, plain constants. Nothing here is viewer-facing; separate exports so a composition that logs neither notice doesn't carry the bytes. The generic one exists for a composition whose failures don't all reduce to a missing feature — see the background adapter below |
 
-**Adapters** — `playback/adapters/hls-video/adapter.ts`,
+**Adapters** — `playback/adapters/hls-video/mixin.ts`,
 `hls-audio/adapter.ts`, and `hls-background-video/adapter.ts`. Each owns
 `FATAL_SVTA_CODES` (its fatality allow-list — the audio-only set is
 narrower, since it composes no video selection and so can never report
@@ -403,7 +403,7 @@ limitations*).
   - `packages/spf/src/playback/behaviors/tests/resolve-track.test.ts` —
     reports unsupported DRM through the seam for an encrypted playlist;
     nothing for a playable rendition; nothing when no seam is wired
-  - `packages/spf/src/playback/adapters/hls-video/tests/adapter.test.ts` →
+  - `packages/spf/src/playback/adapters/hls-video/tests/mixin.test.ts` →
     *error surface* — fatal condition surfaces as an `ErrorLike` and
     fires `'error'`; first fatal wins; non-fatal reports stay in the
     sequence only; fires once per distinct condition; clears on
@@ -417,7 +417,7 @@ limitations*).
     once, with the conditions attached, silent for a verdict with no
     unsupported cause, and the alternative-Media sentence appended when
     the class names one
-  - `packages/spf/src/playback/adapters/hls-background-video/tests/adapter.test.ts`
+  - `packages/spf/src/playback/adapters/hls-background-video/tests/mixin.test.ts`
     → *error surface* — nothing before a report; a verdict with no cause
     behind it keeps its own code and fires `'error'`; a *cause* with no
     verdict behind it surfaces too, for container and encryption alike (the
@@ -426,8 +426,8 @@ limitations*).
     once, with the conditions attached and no prose on `message`, **including
     for a verdict that substitutes nothing**; fires once per distinct
     condition; clears on per-source reset without announcing the clear
-  - `packages/html/src/media/hls-background-video/tests/media.test.ts` and
-    `packages/react/src/media/hls-background-video/tests/media.test.tsx`
+  - `packages/html/src/media/hls-background-video/tests/adapter.test.ts` and
+    `packages/react/src/media/hls-background-video/tests/adapter.test.tsx`
     → the forward — the element re-fires `'error'` on itself and exposes
     the condition while the inner `<video>`'s own `error` stays null; the
     React component's `onError` fires with the `<video>` as target, and
@@ -546,7 +546,7 @@ settled against.
   open question ("single error vs per-source") this feature answers.
 - **Adapter surface shape.** Whether this is a `HlsVideoMediaErrorsMixin`
   sibling to the existing mixins or folded into
-  `adapters/hls-video/adapter.ts`. The mixin precedent is strong, and
+  `adapters/hls-video/mixin.ts`. The mixin precedent is strong, and
   [engine-adapter-integration](./engine-adapter-integration.md) lists
   "curated state / error introspection" as not-implemented — this is
   the error half of it.
@@ -713,7 +713,7 @@ Kept for traceability.
 - `packages/media/src/core/media-error.ts` — the `MediaError` contract
   phase 4 maps onto (codes 1–5 + `MEDIA_ERR_CUSTOM`, `fatal`,
   `context`, `data`, default messages)
-- `packages/media/src/dom/hls-js/errors.ts`,
+- `packages/hlsjs-video/src/errors.ts`,
   `packages/media/src/dom/native-hls/errors.ts` — the adapter mixin
   precedent, including the fatal-only filter
 - [clusters.md § Multi-writer state slots](./clusters.md#multi-writer-state-slots)

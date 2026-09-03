@@ -138,8 +138,8 @@ const REACT_MEDIA: Record<string, { component: string; importPath: string }> = {
 
 // CDN import paths (override standard imports)
 const CDN_IMPORTS: Record<string, string[]> = {
-  video: ['@videojs/html/cdn/video'],
-  'hlsjs-video': ['@videojs/html/cdn/video', '@videojs/html/cdn/media/hlsjs-video'],
+  video: ['@videojs/cdn/video'],
+  'hlsjs-video': ['@videojs/cdn/video', '@videojs/cdn/media/hlsjs-video'],
 };
 
 // ---------------------------------------------------------------------------

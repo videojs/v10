@@ -1,12 +1,12 @@
-import { GoogleCastElement } from '../../extensions/google-cast';
+import { GoogleCastExtension } from '../../extensions/google-cast';
 import { safeDefine } from '../../registration/safe-define';
 
-export { GoogleCastElement };
+export { GoogleCastExtension };
 
-safeDefine(GoogleCastElement);
+safeDefine(GoogleCastExtension);
 
 declare global {
   interface HTMLElementTagNameMap {
-    [GoogleCastElement.tagName]: GoogleCastElement;
+    [GoogleCastExtension.tagName]: GoogleCastExtension;
   }
 }

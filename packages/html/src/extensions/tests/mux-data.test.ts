@@ -1,13 +1,11 @@
 import { ContextProvider } from '@videojs/element/context';
-import type { Media } from '@videojs/media/dom';
-import { getMediaComponents } from '@videojs/media/dom/media-host';
-import { MuxData } from '@videojs/media/dom/mux';
-import { HTMLVideoElementHost } from '@videojs/media/dom/video-host';
+import { getMediaExtensions, HTMLVideoAdapter, type Media } from '@videojs/media/dom';
+import { MuxDataExtension as MuxDataExtensionBase } from '@videojs/mux-data';
 import { afterEach, describe, expect, it } from 'vite-plus/test';
 
 import { mediaContext } from '../../player/context';
 import { UIElement } from '../../ui/ui-element';
-import { MuxDataElement } from '../mux-data';
+import { MuxDataExtension } from '../mux-data';
 
 class TestMediaProvider extends UIElement {
   readonly #provider = new ContextProvider(this, {
@@ -21,12 +19,12 @@ class TestMediaProvider extends UIElement {
 }
 
 customElements.define('test-mux-data-provider', TestMediaProvider);
-customElements.define('test-mux-data', MuxDataElement);
+customElements.define('test-mux-data', MuxDataExtension);
 
 function setup() {
-  const host = new HTMLVideoElementHost();
+  const host = new HTMLVideoAdapter();
   const provider = new TestMediaProvider();
-  const el = new MuxDataElement();
+  const el = new MuxDataExtension();
 
   // Prevent the real Mux SDK from initializing (and beaconing) in tests.
   el.MuxDataSdk = undefined;
@@ -41,9 +39,9 @@ afterEach(() => {
   document.body.innerHTML = '';
 });
 
-describe('MuxDataElement', () => {
+describe('MuxDataExtension', () => {
   it('registers when parsed into a connected player that already has media', () => {
-    const host = new HTMLVideoElementHost();
+    const host = new HTMLVideoAdapter();
     const provider = new TestMediaProvider();
 
     document.body.append(provider);
@@ -51,21 +49,21 @@ describe('MuxDataElement', () => {
 
     provider.innerHTML = '<test-mux-data></test-mux-data>';
 
-    expect(getMediaComponents(host).get(MuxData)).toBeInstanceOf(MuxData);
+    expect(getMediaExtensions(host).get(MuxDataExtensionBase)).toBeInstanceOf(MuxDataExtensionBase);
   });
 
   it('leaves the component to the base class lazy getter', () => {
     // An own `component` field would shadow the getter and be initialized after
     // the base constructor — too late for a connected upgrade, where the media
     // context callback registers the component from within that constructor.
-    expect(Object.getOwnPropertyNames(new MuxDataElement())).not.toContain('component');
+    expect(Object.getOwnPropertyNames(new MuxDataExtension())).not.toContain('component');
   });
-  it('registers a MuxData component with the media host from context', () => {
+  it('registers a MuxDataExtension component with the media adapter from context', () => {
     const { host, provider } = setup();
 
     provider.setMedia(host as unknown as Media);
 
-    expect(getMediaComponents(host).get(MuxData)).toBeInstanceOf(MuxData);
+    expect(getMediaExtensions(host).get(MuxDataExtensionBase)).toBeInstanceOf(MuxDataExtensionBase);
   });
 
   it('forwards attributes to the component', () => {
@@ -79,7 +77,7 @@ describe('MuxDataElement', () => {
     el.setAttribute('debug', '');
     el.setAttribute('disable-cookies', '');
 
-    const component = getMediaComponents(host).get(MuxData)!;
+    const component = getMediaExtensions(host).get(MuxDataExtensionBase)!;
 
     expect(component.envKey).toBe('test-key');
     expect(component.playerSoftwareName).toBe('mux-video');
@@ -99,7 +97,7 @@ describe('MuxDataElement', () => {
 
     el.metadata = metadata;
 
-    expect(getMediaComponents(host).get(MuxData)!.metadata).toEqual(metadata);
+    expect(getMediaExtensions(host).get(MuxDataExtensionBase)!.metadata).toEqual(metadata);
   });
 
   it('removes the component when the element disconnects', () => {
@@ -109,6 +107,6 @@ describe('MuxDataElement', () => {
 
     el.remove();
 
-    expect(getMediaComponents(host).get(MuxData)).toBeUndefined();
+    expect(getMediaExtensions(host).get(MuxDataExtensionBase)).toBeUndefined();
   });
 });

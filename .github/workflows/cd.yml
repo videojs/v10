@@ -24,22 +24,13 @@ jobs:
       id-token: write
 
     steps:
-      # release-please needs a token other than GITHUB_TOKEN so the release
-      # branch push, the release PR, and the published releases still trigger
-      # release-pr.yml, CI, and changelog-prose.yml
-      # (see https://github.com/peter-evans/create-pull-request/issues/48).
-      # A GitHub App installation token attributes the release PRs and tags to
-      # the app's bot user rather than a maintainer.
-      - uses: actions/create-github-app-token@v2
-        id: app-token
-        with:
-          app-id: ${{ vars.RELEASE_APP_ID }}
-          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
-
       - uses: googleapis/release-please-action@v4
         id: release
         with:
-          token: ${{ steps.app-token.outputs.token }}
+          # Use a fine grained token for release-please so this workflow
+          # can trigger other workflows like release-pr.yml
+          # see https://github.com/peter-evans/create-pull-request/issues/48
+          token: ${{ secrets.V10_WORKFLOW_TRIGGER_WORKFLOW_GH_TOKEN }}
           config-file: .github/release-please/release-please-config.json
           manifest-file: .github/release-please/.release-please-manifest.json
 
@@ -51,8 +42,8 @@ jobs:
           fetch-depth: 0 # Fetch all history for all tags and branches
           # release-please creates the tags while this job is running, so the
           # triggering SHA is still the commit before the release PR. Build the
-          # exact commit tagged for @videojs/html instead.
-          ref: ${{ steps.release.outputs['packages/html--sha'] }}
+          # exact commit tagged for @videojs/cdn instead.
+          ref: ${{ steps.release.outputs['packages/cdn--sha'] }}
 
       - name: Setup pnpm
         if: ${{ steps.release.outputs.releases_created == 'true' }}
@@ -70,10 +61,9 @@ jobs:
 
       - name: Verify release checkout
         if: ${{ steps.release.outputs.releases_created == 'true' }}
-        run: |
-          node -e "process.exit(require('./packages/html/package.json').version === process.env.VERSION ? 0 : 1)"
+        run: node -e "process.exit(require('./packages/cdn/package.json').version === process.env.VERSION ? 0 : 1)"
         env:
-          VERSION: ${{ steps.release.outputs['packages/html--version'] }}
+          VERSION: ${{ steps.release.outputs['packages/cdn--version'] }}
 
       - name: Restore Vite Task cache
         if: ${{ steps.release.outputs.releases_created == 'true' }}
@@ -100,11 +90,11 @@ jobs:
       # CDN at runtime, which would break self-hosted and archive installs.
       - name: Check CDN bundles are self-contained
         if: ${{ steps.release.outputs.releases_created == 'true' }}
-        run: pnpm -F @videojs/html check:cdn
+        run: pnpm -F @videojs/cdn check:cdn
 
       - name: Build distribution archive
         if: ${{ steps.release.outputs.releases_created == 'true' }}
-        run: pnpm -F @videojs/html build:archive
+        run: pnpm -F @videojs/cdn build:archive
 
       # The site build emits per-framework markdown to site/dist/docs/framework/{html,react}/.
       # The @videojs/html and @videojs/react packages' prepack scripts (fired by `pnpm publish`
@@ -124,26 +114,26 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      # Attach the archive to the @videojs/html release so installers outside npm
+      # Attach the archive to the @videojs/cdn release so installers outside npm
       # (Composer, Drupal) have a stable, versioned download. Use the outputs from
       # the release that this run created, matching the SHA checked out above.
       - name: Upload distribution archive to the release
         if: ${{ steps.release.outputs.releases_created == 'true' }}
         run: |
           gh release upload "$RELEASE_TAG" \
-            "packages/html/archive/videojs-html-${VERSION}.zip" \
-            "packages/html/archive/videojs-html-${VERSION}.tar.gz" \
-            packages/html/archive/SHA256SUMS \
+            "packages/cdn/archive/videojs-cdn-${VERSION}.zip" \
+            "packages/cdn/archive/videojs-cdn-${VERSION}.tar.gz" \
+            packages/cdn/archive/SHA256SUMS \
             --clobber
 
           ASSETS=$(gh release view "$RELEASE_TAG" --json assets --jq '.assets[].name')
-          grep -Fx "videojs-html-${VERSION}.zip" <<< "$ASSETS"
-          grep -Fx "videojs-html-${VERSION}.tar.gz" <<< "$ASSETS"
+          grep -Fx "videojs-cdn-${VERSION}.zip" <<< "$ASSETS"
+          grep -Fx "videojs-cdn-${VERSION}.tar.gz" <<< "$ASSETS"
           grep -Fx "SHA256SUMS" <<< "$ASSETS"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          RELEASE_TAG: ${{ steps.release.outputs['packages/html--tag_name'] }}
-          VERSION: ${{ steps.release.outputs['packages/html--version'] }}
+          RELEASE_TAG: ${{ steps.release.outputs['packages/cdn--tag_name'] }}
+          VERSION: ${{ steps.release.outputs['packages/cdn--version'] }}
 
       - name: Update site/v10 branch
         if: ${{ steps.release.outputs.releases_created == 'true' }}

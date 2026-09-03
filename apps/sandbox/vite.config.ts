@@ -9,13 +9,12 @@ import { defineConfig, normalizePath, type Plugin, type PluginOption } from 'vit
 
 import { mirrorTemplatesToSrc } from './scripts/shared';
 
-// Locate @videojs/html through Node resolution rather than a workspace-relative
+// Locate @videojs/cdn through Node resolution rather than a workspace-relative
 // path, so the sandbox also works when the package is installed from a registry.
-// The manifest is the anchor because cdn/ only exists after `pnpm build:cdn`.
-const htmlPackageDir = normalizePath(dirname(createRequire(__filename).resolve('@videojs/html/package.json')));
-const htmlCdnDir = `${htmlPackageDir}/cdn`;
-const htmlCdnI18nRegistry = `${htmlCdnDir}/i18n.dev.js`;
-const htmlCdnSourceI18n = `${htmlPackageDir}/src/cdn/i18n.ts`;
+// The manifest is the anchor because bundles only exist after `pnpm build:cdn`.
+const cdnDir = normalizePath(dirname(createRequire(__filename).resolve('@videojs/cdn/package.json')));
+const cdnI18nRegistry = `${cdnDir}/i18n.dev.js`;
+const cdnSourceI18n = `${cdnDir}/src/i18n.ts`;
 
 const cdnSandboxMainSrc = resolve(__dirname, 'src/cdn/main.ts');
 const cdnSandboxMainTemplate = resolve(__dirname, 'templates/cdn/main.ts');
@@ -81,36 +80,32 @@ export interface SkinsSource {
 // dev and build commands read `vite.workspace.config.ts` instead, which adds the preset once its dependencies exist.
 const workspaceConfig = hasWorkspaceSkins ? ' --config vite.workspace.config.ts' : '';
 
-/** True when the importer is one of the prebuilt @videojs/html CDN chunks. */
-function isHtmlCdnChunk(importer?: string): boolean {
-  return importer !== undefined && normalizePath(importer).startsWith(`${htmlCdnDir}/`);
+/** True when the importer is one of the prebuilt @videojs/cdn chunks. */
+function isCdnChunk(importer?: string): boolean {
+  return importer !== undefined && normalizePath(importer).startsWith(`${cdnDir}/`);
 }
 
 /** True when this import should share the single CDN i18n registry module instance. */
 function resolvesToCdnI18nRegistry(source: string, importer?: string): boolean {
   const normalizedSource = normalizePath(source);
 
-  if (
-    source === '@videojs/html/cdn/i18n' ||
-    normalizedSource === htmlCdnI18nRegistry ||
-    normalizedSource === htmlCdnSourceI18n
-  ) {
+  if (source === '@videojs/cdn/i18n' || normalizedSource === cdnI18nRegistry || normalizedSource === cdnSourceI18n) {
     return true;
   }
 
   const isRelativeI18nChunk =
     source === './i18n.dev.js' || source === '../i18n.dev.js' || source.endsWith('/i18n.dev.js');
-  if (isRelativeI18nChunk && isHtmlCdnChunk(importer)) return true;
+  if (isRelativeI18nChunk && isCdnChunk(importer)) return true;
 
-  if (source === '@videojs/core/i18n' && isHtmlCdnChunk(importer)) {
+  if (source === '@videojs/core/i18n' && isCdnChunk(importer)) {
     return true;
   }
 
   return false;
 }
 
-function resolveHtmlCdnDevEntry(subpath: string): string | null {
-  const devPath = resolve(htmlCdnDir, `${subpath}.dev.js`);
+function resolveCdnDevEntry(subpath: string): string | null {
+  const devPath = resolve(cdnDir, `${subpath}.dev.js`);
 
   return existsSync(devPath) ? devPath : null;
 }
@@ -122,7 +117,7 @@ function cdnSandboxI18nPlugin(): Plugin {
     enforce: 'pre',
     resolveId: {
       filter: {
-        id: /^@videojs\/(?:core\/i18n|html\/cdn(?:\/.*)?)$|(?:^|\/)i18n\.dev\.js$|\/src\/cdn\/(?:i18n\.ts|main\.ts)$/,
+        id: /^@videojs\/(?:core\/i18n|cdn(?:\/.*)?)$|(?:^|\/)i18n\.dev\.js$|\/cdn\/src\/i18n\.ts$|\/src\/cdn\/main\.ts$/,
       },
       handler(source, importer) {
         if (source === cdnSandboxMainSrc && existsSync(cdnSandboxMainTemplate)) {
@@ -130,13 +125,13 @@ function cdnSandboxI18nPlugin(): Plugin {
         }
 
         if (resolvesToCdnI18nRegistry(source, importer)) {
-          return htmlCdnI18nRegistry;
+          return cdnI18nRegistry;
         }
 
-        const cdnEntryMatch = source.match(/^@videojs\/html\/cdn\/(.+)$/);
+        const cdnEntryMatch = source.match(/^@videojs\/cdn\/(.+)$/);
 
         if (cdnEntryMatch && cdnEntryMatch[1] !== 'i18n') {
-          const devEntry = resolveHtmlCdnDevEntry(cdnEntryMatch[1]);
+          const devEntry = resolveCdnDevEntry(cdnEntryMatch[1]);
           if (devEntry) return devEntry;
         }
 
@@ -223,7 +218,7 @@ export function createSandboxConfig(skinsSource?: SkinsSource) {
         dev: {
           command: `vp dev --host${workspaceConfig}`,
           cache: false,
-          dependsOn: ['setup', ...workspaceTaskDependencies(), ...(hasWorkspace ? ['@videojs/html#build:cdn'] : [])],
+          dependsOn: ['setup', ...workspaceTaskDependencies(), ...(hasWorkspace ? ['@videojs/cdn#build:cdn'] : [])],
         },
         setup: {
           command: 'tsx scripts/setup.ts',
@@ -251,7 +246,7 @@ export function createSandboxConfig(skinsSource?: SkinsSource) {
         },
         build: {
           command: `vp build${workspaceConfig}`,
-          dependsOn: ['setup', ...workspaceTaskDependencies(), ...(hasWorkspace ? ['@videojs/html#build:cdn'] : [])],
+          dependsOn: ['setup', ...workspaceTaskDependencies(), ...(hasWorkspace ? ['@videojs/cdn#build:cdn'] : [])],
           // The app-shell plugin creates this file for the build and removes it
           // afterwards. Workspace dependencies are fingerprinted through the task
           // graph, not their mutable package-local node_modules links.
@@ -295,7 +290,7 @@ export function createSandboxConfig(skinsSource?: SkinsSource) {
         // The registry's React CSS catalog, installed beside the Tailwind one under its own alias so the two never share files.
         '@css': resolve(__dirname, 'app/_generated/css'),
         '@app': resolve(__dirname, 'app'),
-        '@videojs/html/cdn/i18n': htmlCdnI18nRegistry,
+        '@videojs/cdn/i18n': cdnI18nRegistry,
         ...(existsSync(cdnSandboxMainTemplate) ? { [cdnSandboxMainSrc]: cdnSandboxMainTemplate } : {}),
       },
       conditions: ['development', 'import', 'module', 'browser', 'default'],

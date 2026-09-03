@@ -15,11 +15,15 @@ import type {
 import { extractCSSVars } from './css-vars-handler.js';
 import { collectDispatchedEvents, collectFires } from './event-handler.js';
 import { abbreviateType, formatDetailedType } from './formatter.js';
-import type { NamedDeclaration, OxcProject, ResolvedMember, ResolvedType, SourceFile } from './oxc-project.js';
 import {
   expressionText,
   getJSDocDescription,
+  type NamedDeclaration,
+  type OxcProject,
   OxcProject as Project,
+  type ResolvedMember,
+  type ResolvedType,
+  type SourceFile,
   sourceText,
   staticName,
   unwrapExpression,
@@ -36,12 +40,7 @@ import type {
   ReactMediaReference,
 } from './types.js';
 
-const HOST_BASE_CLASSES = new Set([
-  'HTMLMediaElementHost',
-  'HTMLVideoElementHost',
-  'HTMLAudioElementHost',
-  'EventTarget',
-]);
+const HOST_BASE_CLASSES = new Set(['HTMLMediaAdapter', 'HTMLVideoAdapter', 'HTMLAudioAdapter', 'EventTarget']);
 const EXCLUDED_METHOD_NAMES = new Set([
   'attach',
   'detach',
@@ -94,10 +93,10 @@ const INFERRED_MEDIA_PROPERTY_TYPES: Readonly<Record<string, string>> = {
 type InferredClassPropertyTypes = Readonly<Record<string, Readonly<Record<string, string>>>>;
 
 const INFERRED_CLASS_PROPERTY_TYPES: InferredClassPropertyTypes = {
-  HlsJsMedia: { engine: 'Hls | null', error: 'MediaError | null' },
+  HlsJsAdapter: { engine: 'Hls | null', error: 'MediaError | null' },
   NativeHlsMediaBase: { engine: 'null' },
   ShakaMediaBase: { error: 'MediaError | null' },
-  TikTokMedia: { engine: 'Window | null' },
+  TikTokAdapter: { engine: 'Window | null' },
 };
 
 interface MediaElementSource {
@@ -146,22 +145,16 @@ export function generateMediaElementReferences(monorepoRoot: string): MediaEleme
     ...extractEventsFromTypes(mediaTypesPath, 'MediaStreamTypeEvents', project),
     ...extractEventsFromTypes(mediaTypesPath, 'MediaLiveEvents', project),
   ]);
-  const mediaHostPath = path.join(monorepoRoot, 'packages/media/src/dom/media-host/media-host.ts');
-  const videoHostPath = path.join(monorepoRoot, 'packages/media/src/dom/video-host/video-host.ts');
-  const audioHostPath = path.join(monorepoRoot, 'packages/media/src/dom/audio-host/audio-host.ts');
-  const baseMethods = extractPublicMethodNames(mediaHostPath, 'HTMLMediaElementHost', project);
-  const videoMethods = mergeNames(
-    baseMethods,
-    extractPublicMethodNames(videoHostPath, 'HTMLVideoElementHost', project)
-  );
-  const audioMethods = mergeNames(
-    baseMethods,
-    extractPublicMethodNames(audioHostPath, 'HTMLAudioElementHost', project)
-  );
+  const mediaHostPath = path.join(monorepoRoot, 'packages/media/src/dom/html-media-adapter/html-media-adapter.ts');
+  const videoHostPath = path.join(monorepoRoot, 'packages/media/src/dom/html-video-adapter/html-video-adapter.ts');
+  const audioHostPath = path.join(monorepoRoot, 'packages/media/src/dom/html-audio-adapter/html-audio-adapter.ts');
+  const baseMethods = extractPublicMethodNames(mediaHostPath, 'HTMLMediaAdapter', project);
+  const videoMethods = mergeNames(baseMethods, extractPublicMethodNames(videoHostPath, 'HTMLVideoAdapter', project));
+  const audioMethods = mergeNames(baseMethods, extractPublicMethodNames(audioHostPath, 'HTMLAudioAdapter', project));
   const nativeNames = collectNativeMemberNames();
-  const baseHost = extractHostProperties(mediaHostPath, 'HTMLMediaElementHost', project, nativeNames);
-  const videoHost = extractHostProperties(videoHostPath, 'HTMLVideoElementHost', project, nativeNames);
-  const audioHost = extractHostProperties(audioHostPath, 'HTMLAudioElementHost', project, nativeNames);
+  const baseHost = extractHostProperties(mediaHostPath, 'HTMLMediaAdapter', project, nativeNames);
+  const videoHost = extractHostProperties(videoHostPath, 'HTMLVideoAdapter', project, nativeNames);
+  const audioHost = extractHostProperties(audioHostPath, 'HTMLAudioAdapter', project, nativeNames);
   const videoBaseSurface = { ...baseHost.properties, ...videoHost.properties };
   const audioBaseSurface = { ...baseHost.properties, ...audioHost.properties };
   const videoCSSVars = cssVarsRecord(extractCSSVars(customMediaPath, project, 'Video'));
@@ -293,13 +286,16 @@ function discoverMediaElements(monorepoRoot: string, project: OxcProject): Media
         const host = project.resolveName(mediaDeclaration.file.filePath, composition.hostClassName);
         if (!host || host.declaration.type !== 'ClassDeclaration') continue;
 
+        // The composition may name the host through an import alias; property extraction needs the declared name.
+        const hostClassName = host.declaration.id?.name ?? composition.hostClassName;
+
         sources.push({
           defineFilePath: filePath,
           className: stripElementSuffix(name),
           tagName,
           mediaFilePath: mediaDeclaration.file.filePath,
           hostFilePath: host.file.filePath,
-          hostClassName: composition.hostClassName,
+          hostClassName,
           mediaType: composition.mediaType,
           targetTag: composition.targetTag,
         });
@@ -788,14 +784,23 @@ function collectFileDefaults(filePath: string, project: OxcProject): Map<string,
 
   for (const statement of file.program.body) {
     const declaration = statement.type === 'ExportNamedDeclaration' ? statement.declaration : statement;
-    if (declaration?.type !== 'VariableDeclaration') continue;
 
-    for (const variable of declaration.declarations) {
-      const name = staticName(variable.id);
-      const object = variable.init ? unwrapObjectExpression(variable.init) : undefined;
-      if (!name?.endsWith('DefaultProps') || !object) continue;
+    // An adapter's `static defaultProps`: declared on the class itself, on a mixin it composes, or inherited.
+    if (declaration?.type === 'ClassDeclaration' && declaration.id) {
+      const reference = {
+        type: 'MemberExpression',
+        object: declaration.id,
+        property: { type: 'Identifier', name: 'defaultProps', start: declaration.id.start, end: declaration.id.end },
+        computed: false,
+        optional: false,
+        start: declaration.id.start,
+        end: declaration.id.end,
+      } as Expression;
+      const resolved = resolveDefaultsObject(file, reference, project);
+      if (!resolved) continue;
 
-      for (const [property, value] of objectEntries(object, file, project, new Set())) defaults.set(property, value);
+      for (const [property, value] of objectEntries(resolved.object, resolved.file, project, new Set()))
+        defaults.set(property, value);
     }
   }
 
@@ -820,12 +825,12 @@ function objectEntries(
       continue;
     }
 
-    if (property.type !== 'SpreadElement' || property.argument.type !== 'Identifier') continue;
+    if (property.type !== 'SpreadElement') continue;
 
-    const resolved = resolveConstObject(file.filePath, property.argument.name, project);
+    const resolved = resolveDefaultsObject(file, property.argument, project);
     if (!resolved) continue;
 
-    const key = `${resolved.file.filePath}#${property.argument.name}`;
+    const key = `${resolved.file.filePath}#${expressionText(file, property.argument)}`;
     if (visited.has(key)) continue;
 
     visited.add(key);
@@ -854,12 +859,12 @@ function objectNames(
       continue;
     }
 
-    if (property.type !== 'SpreadElement' || property.argument.type !== 'Identifier') continue;
+    if (property.type !== 'SpreadElement') continue;
 
-    const resolved = resolveConstObject(file.filePath, property.argument.name, project);
+    const resolved = resolveDefaultsObject(file, property.argument, project);
     if (!resolved) continue;
 
-    const key = `${resolved.file.filePath}#${property.argument.name}`;
+    const key = `${resolved.file.filePath}#${expressionText(file, property.argument)}`;
     if (visited.has(key)) continue;
 
     visited.add(key);
@@ -881,6 +886,86 @@ function resolveConstObject(
   const object = unwrapObjectExpression(resolved.declaration.init);
 
   return object ? { file: resolved.file, object } : undefined;
+}
+
+/**
+ * Resolve the object literal behind a defaults expression: an adapter's `static defaultProps`, which may itself alias a
+ * const or spread a parent adapter's defaults.
+ */
+function resolveDefaultsObject(
+  file: SourceFile,
+  expression: Expression,
+  project: OxcProject,
+  visited: Set<string> = new Set()
+): { file: SourceFile; object: ObjectExpression } | undefined {
+  const value = unwrapExpression(expression);
+  if (value.type === 'ObjectExpression') return { file, object: value };
+
+  if (value.type === 'Identifier') return resolveConstObject(file.filePath, value.name, project);
+
+  if (
+    value.type !== 'MemberExpression' ||
+    value.computed ||
+    value.object.type !== 'Identifier' ||
+    value.property.type !== 'Identifier'
+  ) {
+    return undefined;
+  }
+
+  const owner = project.resolveName(file.filePath, value.object.name);
+  if (!owner) return undefined;
+
+  const key = `${owner.file.filePath}#${value.object.name}.${value.property.name}`;
+  if (visited.has(key)) return undefined;
+
+  visited.add(key);
+
+  // A const object's member (`defaults.streamType`) resolves through the const itself.
+  if (owner.declaration.type === 'VariableDeclarator') {
+    return resolveConstObject(owner.file.filePath, value.object.name, project);
+  }
+
+  if (owner.declaration.type !== 'ClassDeclaration') return undefined;
+
+  const member = owner.declaration.body.body.find(
+    (entry) => entry.type === 'PropertyDefinition' && entry.static && staticName(entry.key) === value.property.name
+  );
+
+  if (member?.type === 'PropertyDefinition' && member.value) {
+    return resolveDefaultsObject(owner.file, member.value, project, visited);
+  }
+
+  // Not declared here: inherited through the extends chain. A mixin's inner class may declare the static (the SPF
+  // adapters do), so each mixin is checked before falling through to the base class.
+  // The parent may be named through a local alias (`const AdapterBase = Mixin(Host)`), so resolve that first.
+  const superClass = owner.declaration.superClass
+    ? unwrapExpression(resolveLocalExpression(owner.file, owner.declaration.superClass, project))
+    : undefined;
+  if (!superClass) return undefined;
+
+  if (superClass.type === 'CallExpression') {
+    const { mixins, base } = unwindMixinChain(superClass);
+
+    for (const mixin of mixins) {
+      const inner = resolveMixin(owner.file.filePath, mixin, project);
+      const member = inner?.declaration.body.body.find(
+        (entry) => entry.type === 'PropertyDefinition' && entry.static && staticName(entry.key) === value.property.name
+      );
+
+      if (inner && member?.type === 'PropertyDefinition' && member.value) {
+        return resolveDefaultsObject(inner.file, member.value, project, visited);
+      }
+    }
+
+    const parent = unwrapExpression(base);
+    if (parent.type !== 'Identifier') return undefined;
+
+    return resolveDefaultsObject(owner.file, { ...value, object: { ...parent } } as Expression, project, visited);
+  }
+
+  if (superClass.type !== 'Identifier') return undefined;
+
+  return resolveDefaultsObject(owner.file, { ...value, object: { ...superClass } } as Expression, project, visited);
 }
 
 function serializeDefault(expression: Expression, file: SourceFile, project: OxcProject): string | undefined {
@@ -965,7 +1050,7 @@ function extractReactReference(
   const reactDirectory = path.join(monorepoRoot, 'packages/react/src/media', directory);
   const sourceBaseName = path.basename(source.mediaFilePath, path.extname(source.mediaFilePath));
   const candidates = [
-    path.join(reactDirectory, 'media.tsx'),
+    path.join(reactDirectory, 'adapter.tsx'),
     path.join(reactDirectory, `${sourceBaseName}.tsx`),
     path.join(reactDirectory, 'index.ts'),
   ];
@@ -983,7 +1068,7 @@ function extractReactReference(
 
   let target: MediaTargetTag | undefined;
   let acceptsNativeProps = false;
-  let defaultsName: string | undefined;
+  let defaultsExpression: Expression | undefined;
 
   walkAst(file.program, (node) => {
     if (node.type === 'TSInterfaceDeclaration' && node.id.name === `${source.className}Props`) {
@@ -1014,14 +1099,14 @@ function extractReactReference(
     if (node.type === 'CallExpression' && node.callee.type === 'Identifier' && node.callee.name === 'useSyncProps') {
       const defaults = node.arguments[2];
 
-      if (defaults?.type === 'Identifier') defaultsName = defaults.name;
+      if (defaults && defaults.type !== 'SpreadElement') defaultsExpression = defaults;
     }
   });
 
   if (!target) return undefined;
 
   const props: Record<string, HostPropertyDef> = {};
-  const resolved = defaultsName ? resolveConstObject(filePath, defaultsName, project) : undefined;
+  const resolved = defaultsExpression ? resolveDefaultsObject(file, defaultsExpression, project) : undefined;
 
   if (resolved) {
     const defaults = objectEntries(resolved.object, resolved.file, project, new Set());

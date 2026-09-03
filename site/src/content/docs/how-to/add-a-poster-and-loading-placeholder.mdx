@@ -19,6 +19,12 @@ Some media components choose a poster for you. For example, `MuxVideo` creates o
 
 <FrameworkCase frameworks={["react"]}>
 
+Install the React façade and the Mux playback adapter:
+
+```bash
+pnpm add @videojs/react @videojs/mux-video
+```
+
 ```tsx
 import '@videojs/react/video/skin.css';
 import { MuxVideo } from '@videojs/react/media/mux-video';
@@ -45,6 +51,12 @@ export function MyPlayer() {
 
 <FrameworkCase frameworks={["html"]}>
 
+Install the HTML façade and the Mux playback adapter:
+
+```bash
+pnpm add @videojs/html @videojs/mux-video
+```
+
 ```html
 <video-player>
   <video-skin>
@@ -55,6 +67,11 @@ export function MyPlayer() {
     ></mux-video>
   </video-skin>
 </video-player>
+<script type="module">
+  import '@videojs/html/video/player';
+  import '@videojs/html/video/skin';
+  import '@videojs/html/media/mux-video';
+</script>
 ```
 
 </FrameworkCase>

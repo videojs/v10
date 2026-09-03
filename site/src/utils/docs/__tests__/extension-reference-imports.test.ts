@@ -15,7 +15,11 @@ describe('extension reference imports', () => {
       const source = readFileSync(resolve(referenceDirectory, file), 'utf8');
 
       expect(source, file).toContain('/components/docs/api-reference/ExtensionImports.astro');
-      expect(source, file).toContain(`## Import\n\n<ExtensionImports extension="${extension}" react="${react}" />`);
+      expect(source, file).toMatch(
+        new RegExp(
+          `## Import\\n\\n<ExtensionImports extension="${extension}" (?:package="@videojs/[^"]+" )?react="${react}" />`
+        )
+      );
       expect(source, file).not.toContain('<MediaImports');
     }
   });

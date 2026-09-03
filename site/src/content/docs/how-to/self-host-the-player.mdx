@@ -32,7 +32,7 @@ You get one file (plus a sourcemap), no runtime requests to a CDN, and only the 
 
 ## Availability and constraints
 
-- HLS and other non-default media need their own module on top of the player, and your self-hosted build has to include it. When bundling, add the media import to your entry file (`import '@videojs/html/media/hlsjs-video';`) and use the matching `<hlsjs-video>` element with your `.m3u8` source. When mirroring the CDN files, serve the media file too and add its script tag (`<script type="module" src="/videojs/media/hlsjs-video.js"></script>`). The same pattern applies to every media module, including the smaller default HLS element (`media/hls-video`), and to every <DocsLink slug="concepts/overview">extension</DocsLink> module, such as `extensions/mux-data`.
+- HLS and other non-default media need their own module on top of the player, and your self-hosted build has to include it. When bundling HlsJsVideo, install `@videojs/hls.js` with `@videojs/html`, add `import '@videojs/html/media/hlsjs-video';` to the entry file, and use `<hlsjs-video>` for the `.m3u8` source. The smaller default HlsVideo uses `@videojs/spf`; DASH, Shaka, Vimeo, and Wistia use `@videojs/dash.js`, `@videojs/shaka`, `@videojs/vimeo`, and `@videojs/wistia`. When mirroring the CDN package, adapters are already bundled: serve the matching media file and add its script tag, such as `<script type="module" src="/videojs/media/hlsjs-video.js"></script>`.
 
 ## Common variations
 
@@ -40,20 +40,20 @@ Bundle a single file when you already build your front end. Download the release
 
 ### Download the release archive
 
-[Video.js releases](https://github.com/videojs/v10/releases) provide a `videojs-html-<version>.zip` (and a `.tar.gz`) holding the prebuilt player. Use it when your deployment installs dependencies outside npm, or when you want a versioned artifact to vendor into your own repository.
+[Video.js releases](https://github.com/videojs/v10/releases) provide a `videojs-cdn-<version>.zip` (and a `.tar.gz`) holding the prebuilt player. Use it when your deployment installs dependencies outside npm, or when you want a versioned artifact to vendor into your own repository.
 
 Unpack it into whatever your server treats as static files:
 
 ```bash
-VIDEOJS_VERSION={{VJS10_HTML_ARCHIVE_VERSION}}
-curl -fLO "https://github.com/videojs/v10/releases/download/@videojs/html@${VIDEOJS_VERSION}/videojs-html-${VIDEOJS_VERSION}.zip"
-unzip "videojs-html-${VIDEOJS_VERSION}.zip" -d public/
+VIDEOJS_VERSION={{VJS10_CDN_ARCHIVE_VERSION}}
+curl -fLO "https://github.com/videojs/v10/releases/download/@videojs/cdn@${VIDEOJS_VERSION}/videojs-cdn-${VIDEOJS_VERSION}.zip"
+unzip "videojs-cdn-${VIDEOJS_VERSION}.zip" -d public/
 ```
 
 Then point a script tag at the player you want:
 
 ```html
-<script type="module" src="/videojs-html-{{VJS10_HTML_ARCHIVE_VERSION}}/video.js"></script>
+<script type="module" src="/videojs-cdn-{{VJS10_CDN_ARCHIVE_VERSION}}/video.js"></script>
 ```
 
 The archive holds the same production bundles the CDN serves, minus sourcemaps and development builds. Every path inside it is relative, so it runs from any origin with no outbound requests. `SHA256SUMS` on the release verifies the download.
@@ -66,18 +66,18 @@ For Composer-based projects such as Drupal, declare the archive as a package:
     {
       "type": "package",
       "package": {
-        "name": "videojs/html",
-        "version": "{{VJS10_HTML_ARCHIVE_VERSION}}",
+        "name": "videojs/cdn",
+        "version": "{{VJS10_CDN_ARCHIVE_VERSION}}",
         "type": "drupal-library",
         "dist": {
           "type": "zip",
-          "url": "https://github.com/videojs/v10/releases/download/@videojs/html@{{VJS10_HTML_ARCHIVE_VERSION}}/videojs-html-{{VJS10_HTML_ARCHIVE_VERSION}}.zip"
+          "url": "https://github.com/videojs/v10/releases/download/@videojs/cdn@{{VJS10_CDN_ARCHIVE_VERSION}}/videojs-cdn-{{VJS10_CDN_ARCHIVE_VERSION}}.zip"
         }
       }
     }
   ],
   "require": {
-    "videojs/html": "{{VJS10_HTML_ARCHIVE_VERSION}}"
+    "videojs/cdn": "{{VJS10_CDN_ARCHIVE_VERSION}}"
   }
 }
 ```
@@ -88,17 +88,17 @@ Composer strips the archive's top-level directory, so the player lands directly 
 
 To skip the bundler, copy the prebuilt CDN bundle to your server as-is.
 
-<Aside type="caution" title="Copy the whole cdn/ directory">
+<Aside type="caution" title="Copy the whole package directory">
   The CDN entry files like `video.js` and `media/hlsjs-video.js` are not standalone. They import
   shared, content-hashed chunks (`default-*.js`, `ui-*.js`, and more) that live alongside them.
-  Copying a single file breaks at runtime, so mirror the entire `cdn/` directory and keep its layout
+  Copying a single file breaks at runtime, so mirror the entire `@videojs/cdn` directory and keep its layout
   intact.
 </Aside>
 
 ```bash
-npm install @videojs/html
+npm install @videojs/cdn
 mkdir -p public
-cp -r node_modules/@videojs/html/cdn public/videojs
+cp -r node_modules/@videojs/cdn public/videojs
 ```
 
 Then point the script tag at your copy instead of the CDN:
@@ -107,13 +107,13 @@ Then point the script tag at your copy instead of the CDN:
 <script type="module" src="/videojs/video.js"></script>
 ```
 
-The file name matches your player: `video.js`, `audio.js`, `background.js`, and so on. Every option is present in the `cdn/` folder you copied.
+The file name matches your player: `video.js`, `audio.js`, `background.js`, and so on. Every option is present in the package directory you copied.
 
-Hashed chunk names change between releases, so re-copy the directory whenever you upgrade `@videojs/html`.
+Hashed chunk names change between releases, so re-copy the directory whenever you upgrade `@videojs/cdn`.
 
 ## Stylesheets
 
-The skin bundles inline their CSS and apply it when the custom elements upgrade, so a mirrored copy renders correctly with no extra `<link>`. Alongside the bundles, `cdn/` publishes those styles as separate files for the one thing a script cannot do: style the page before that upgrade happens.
+Every bundle inlines its own CSS and applies it when the custom element upgrades, so a mirrored copy renders correctly with no extra `<link>`. Alongside the bundles, `@videojs/cdn` publishes those styles as separate files for the one thing a script cannot do: style the page before that upgrade happens.
 
 `global.css` holds the light-DOM rules — `display: contents` on `<video-player>`, and the box the media and poster stretch to fill. Link it ahead of the bundle and the player reserves its space on first paint instead of on upgrade:
 
@@ -139,5 +139,4 @@ There is no console error. The media module for your format isn't part of your s
 ## Related guides
 
 - <DocsLink slug="how-to/installation">Installation</DocsLink>
-- <DocsLink slug="concepts/cdn">CDN</DocsLink>
 - <DocsLink slug="concepts/media-sources">Media sources</DocsLink>
