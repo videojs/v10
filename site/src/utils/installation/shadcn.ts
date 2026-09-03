@@ -112,7 +112,7 @@ export function registryInstallCommands(
   return commands.join('\n');
 }
 
-/** The catalog name for an installation selection, or `null` when that selection cannot be ejected. */
+/** The catalog name for an installation selection, or `null` when that selection has no installable source. */
 export function registrySkinItem({ useCase, skin }: { useCase: UseCase; skin: Skin }): string | null {
   if (useCase === 'background-video' || skin === 'none') return null;
 

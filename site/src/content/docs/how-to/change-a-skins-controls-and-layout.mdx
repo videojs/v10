@@ -12,7 +12,7 @@ import RegistryCommand from '@/components/registry/RegistryCommand.astro';
 import RegistryStyling from '@/components/registry/RegistryStyling.astro';
 import ShadcnCommand from '@/components/registry/ShadcnCommand.astro';
 
-If a packaged skin is close to the interface you want, eject it and edit the copy in your project. Ejecting turns the skin's controls, layout, styles, and interactions into app code that you own.
+If a packaged skin is close to the interface you want, install an editable copy in your project. Video.js calls this **Source-Owned UI** because the skin's controls, layout, styles, and interactions become app code that you own.
 
 Video.js publishes the skin source in a catalog of installable files. The [`shadcn` CLI](https://ui.shadcn.com/docs/cli) is the command-line tool that copies those files into your project, whether you use React or HTML.
 
@@ -52,7 +52,7 @@ Install the skin closest to the interface you want. Default skins use the preset
 
 <RegistryCatalog />
 
-The paths in the table start from the component location configured in `components.json`. The background video skin cannot be ejected.
+The paths in the table start from the component location configured in `components.json`. The background video skin has no installable source.
 
 ## Use the installed skin
 
@@ -86,7 +86,7 @@ The files for the control bar, gestures, keyboard shortcuts, settings menu, and 
 The `skin.html` file contains the layout. The `skin.ts` module registers the custom elements and loads `skin.css`. Elements use class names that start with `media-`; change a class in `skin.html` or a rule in the stylesheet to change one part of the interface.
 </FrameworkCase>
 
-## Inspect or update an ejected skin
+## Inspect or update installed source
 
 Use the CLI's `search` command to find source and `view` to inspect it before installation:
 
