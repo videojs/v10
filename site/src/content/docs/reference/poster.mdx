@@ -42,13 +42,15 @@ import basicUsageHtmlTs from "@/components/docs/demos/poster/html/css/BasicUsage
     <img alt="" />
   </media-poster>
   ```
-
-  The `<img>` is optional. Leave it out and the element draws one of its own in its shadow DOM.
 </FrameworkCase>
 
 ## Behavior
 
 The poster shows before playback starts. Once the user plays or seeks, it hides; pausing does not bring it back. Loading a new source shows it again.
+
+<FrameworkCase frameworks={["html"]}>
+The `<img>` child is optional. Leave it out and `<media-poster>` draws one of its own in its shadow DOM.
+</FrameworkCase>
 
 You can set the poster URL on the player. This is useful when you want to change the poster from inside a skin, or keep all your media metadata in one place:
 
