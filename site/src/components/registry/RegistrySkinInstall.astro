@@ -1,11 +1,8 @@
 ---
-/** The install-the-source section of a skin reference page: styling choice, then the registry commands for the skin. */
+/** The registry item and install location for a skin reference page. */
 import DocsLink from '@/components/docs/DocsLink.astro';
 import P from '@/components/typography/P.astro';
-import { REGISTRY_SKINS } from '@/utils/installation/shadcn';
-
-import RegistryCommand from './RegistryCommand.astro';
-import RegistryStyling from './RegistryStyling.astro';
+import { REGISTRY_NAMESPACE, REGISTRY_SKINS } from '@/utils/installation/shadcn';
 
 interface Props {
   /** Registry item name, such as `video` or `video-minimal`. */
@@ -18,13 +15,8 @@ if (!skin) throw new Error(`Unknown registry skin: ${item}.`);
 ---
 
 <P>
-  To own this skin's markup, controls, and styles, install its source with the Shadcn CLI. The player and media stay
-  package imports; the skin becomes files under <code>{skin.directory}</code>. The first command registers the{' '}
-  <code>@videojs</code> namespace, the second installs the skin. See{' '}
-  <DocsLink slug="how-to/install-skins-from-the-registry">Install skins from the Shadcn registry</DocsLink> for the
-  full workflow.
+  The registry item <code>{REGISTRY_NAMESPACE}/{skin.item}</code> installs this skin's editable source under{' '}
+  <code>{skin.directory}</code>. The player and media remain package imports. Follow{' '}
+  <DocsLink slug="how-to/customize-skins" anchor="own-and-customize-the-source">Customize skins</DocsLink> to connect
+  the Video.js registry, install the item, and use the files in your project.
 </P>
-
-<RegistryStyling />
-
-<RegistryCommand items={[item]} />

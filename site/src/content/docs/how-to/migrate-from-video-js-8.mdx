@@ -345,11 +345,11 @@ video-player {
 }
 ```
 
-`--media-accent-color` reaches the sliders, the active buttons, and the accent surfaces at once. Video.js derives a readable text color to sit on top of it; override that with `--media-accent-text-color` if you'd rather choose. `--media-border-radius` rounds the player, and `--media-scale-unit` scales the whole control bar, which is the closest thing to v8's `font-size` trick for sizing controls. <DocsLink slug="how-to/customize-skins">Customize skins</DocsLink> has the full list.
+`--media-accent-color` reaches the sliders, the active buttons, and the accent surfaces at once. Video.js derives a readable text color to sit on top of it; override that with `--media-accent-text-color` if you'd rather choose. `--media-border-radius` rounds the player, and `--media-scale-unit` scales the whole control bar, which is the closest thing to v8's `font-size` trick for sizing controls. <DocsLink slug="how-to/customize-skins" anchor="customize-a-packaged-skin">Customize skins</DocsLink> has the full list.
 
 ### Level 3: own the source
 
-**Source-Owned UI** means installing the skin's source into your project and editing it, the way you would a shadcn component, because it is one. The packaged skin isn't compiled magic; it's a tree of components, and `npx shadcn@latest add @videojs/video` copies that tree into your project. <DocsLink slug="how-to/install-skins-from-the-registry">Install skins from the Shadcn registry</DocsLink> covers the setup for every packaged skin.
+For changes to controls, layout, or interactions, install an editable copy of the skin in your project. Video.js calls this **Source-Owned UI** because the components and styles become files you own. <DocsLink slug="how-to/customize-skins" anchor="own-and-customize-the-source">Customize skins</DocsLink> covers the setup and available skins.
 
 This is where v8's `controlBar` config and `addChild` calls end up, and honestly it's the better trade. Instead of `controlBar: { pictureInPictureToggle: false }`, you delete a line. Instead of subclassing a component to change its behavior, you edit the markup.
 

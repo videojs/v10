@@ -460,13 +460,13 @@ Give the skin a class you own:
 ```
 </FrameworkCase>
 
-`--media-accent-color` reaches the sliders, the active buttons, and the accent surfaces. Video.js derives a readable text color to sit on top of it; override that with `--media-accent-text-color` if you'd rather choose. `--media-border-radius` rounds the player, and `--media-scale-unit` scales the whole control bar at once. <DocsLink slug="how-to/customize-skins">Customize skins</DocsLink> has the full list.
+`--media-accent-color` reaches the sliders, the active buttons, and the accent surfaces. Video.js derives a readable text color to sit on top of it; override that with `--media-accent-text-color` if you'd rather choose. `--media-border-radius` rounds the player, and `--media-scale-unit` scales the whole control bar at once. <DocsLink slug="how-to/customize-skins" anchor="customize-a-packaged-skin">Customize skins</DocsLink> has the full list.
 
 The skins use a different visual design, so you may not need to replace Mux Player's `primaryColor` and `secondaryColor` directly. Start with `--media-accent-color`. Restyle individual surfaces, or own the skin's source, only when you need a closer palette match.
 
 ### Level 3: own the source
 
-**Source-Owned UI** means installing the skin's source into your project and editing it, the way you would a shadcn component, because it is one. The packaged skin isn't compiled magic; it's a tree of components, and `npx shadcn@latest add @videojs/video` copies that tree into your project. <DocsLink slug="how-to/install-skins-from-the-registry">Install skins from the Shadcn registry</DocsLink> covers the setup for every packaged skin.
+For changes to controls, layout, or interactions, install an editable copy of the skin in your project. Video.js calls this **Source-Owned UI** because the components and styles become files you own. <DocsLink slug="how-to/customize-skins" anchor="own-and-customize-the-source">Customize skins</DocsLink> covers the setup and available skins.
 
 This is the level that per-control tweaks need, and it's a genuine step up in effort from a Mux Player attribute. `forward-seek-offset="30"` was one character. In Video.js, the skins bake their seek step into their keyboard shortcuts and gestures, so changing it means editing those lines:
 

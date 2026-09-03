@@ -23,7 +23,6 @@ export const sidebar: Sidebar = [
     llmsDescription: 'Installation, project setup, and introductory guides.',
     contents: [
       { slug: 'how-to/installation' },
-      { slug: 'how-to/install-skins-from-the-registry', sidebarLabel: 'Shadcn registry' },
       {
         sidebarLabel: 'Migrate to Video.js 10',
         llmsDescription:

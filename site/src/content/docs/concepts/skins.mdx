@@ -8,8 +8,6 @@ import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
 import DocsLinkCard from '@/components/docs/DocsLinkCard.astro';
 import Aside from '@/components/Aside.astro';
-import RegistryCommand from '@/components/registry/RegistryCommand.astro';
-import RegistryStyling from '@/components/registry/RegistryStyling.astro';
 
 <Aside type="note" title="New in version 10">
 In prior versions of Video.js, skins were CSS-only themes applied to the same set of default controls. In version 10 the concept of skins has been expanded to include the UI components, so each skin can be completely unique and only include the UI components it needs.
@@ -17,14 +15,14 @@ In prior versions of Video.js, skins were CSS-only themes applied to the same se
 
 A skin wraps the media component and provides the player's complete interface. It combines a specific set of UI components with the styles that arrange and present them.
 
-## Packaged skins and Source-Owned UI
+## Packaged skins and editable source
 
-When you choose a skin you have two ways to use it: as a **packaged** skin, or as **Source-Owned UI**. It's usually easiest to start with a packaged skin and install its source later, when you need more customization.
+You can use a skin as one packaged component or copy its source into your project. It is usually easiest to start with the package and copy the source later, when you need more control.
 
 Packaged skins cover common visual changes through documented CSS custom properties. Packaged video skins also let you replace the poster. When you need more than that, install the skin's source and change the components and styles directly.
 
-| Packaged | Source-Owned UI |
-|----------|-----------------|
+| Packaged skin | Editable source |
+|---------------|-----------------|
 | Single component | Many UI components |
 | Documented CSS custom properties | Components and styles you own |
 | Future design updates auto-applied by bumping the version | Future design updates manually applied, or intentionally ignored |
@@ -66,16 +64,19 @@ export function Player() {
 
 Don't depend on elements, class names, or undocumented custom properties inside a packaged skin. They may change between releases.
 
-### Source-Owned UI
+### Editable source
 
-Source-Owned UI is the same skin as app code that you own: its UI components and styles become files in your project. You can add, remove, rearrange, or restyle any part of it. The Shadcn CLI installs it from the Video.js registry, which publishes React skins in Tailwind CSS 4 and vanilla CSS, and HTML skins in vanilla CSS:
+An editable copy is the same skin as app code that you own. Video.js also calls this **Source-Owned UI**. Its UI components and styles become files in your project, so you can add, remove, rearrange, or restyle any part of it.
 
-<RegistryStyling />
+The Shadcn command-line tool copies the files from the Video.js registry, a catalog of skin and component source. The registry provides React skins with Tailwind CSS or regular CSS, and HTML skins with regular CSS.
 
-<RegistryCommand items={["video"]} />
+<DocsLinkCard slug="how-to/customize-skins" anchor="own-and-customize-the-source">Install and customize an editable skin</DocsLinkCard>
 
-<DocsLinkCard slug="how-to/install-skins-from-the-registry">Read more about installing skins</DocsLinkCard>
-<DocsLinkCard slug="concepts/ui-components">Read more about UI components</DocsLinkCard>
+### Custom interface
+
+You can also build an interface without starting from a skin. In that model, you choose and arrange individual <DocsLink slug="concepts/ui-components">UI components</DocsLink> around the media. This takes more work, but it avoids inheriting a skin's layout and interactions.
+
+<DocsLinkCard slug="how-to/customize-skins" anchor="build-a-custom-interface">Choose a customization path</DocsLinkCard>
 
 ## Skins, features, and presets
 

@@ -5,7 +5,6 @@ import {
   REGISTRY_SKINS,
   registryInstallCommands,
   registryNamespaceUrl,
-  registrySkinItem,
   registryStylings,
   resolveRegistryStyling,
   shadcnAddCommand,
@@ -74,18 +73,7 @@ describe('registryInstallCommands', () => {
   });
 });
 
-describe('registrySkinItem', () => {
-  it('maps the installation selection onto a registry item', () => {
-    expect(registrySkinItem({ useCase: 'default-video', skin: 'video' })).toBe('video');
-    expect(registrySkinItem({ useCase: 'default-video', skin: 'minimal-video' })).toBe('video-minimal');
-    expect(registrySkinItem({ useCase: 'live-audio', skin: 'minimal-audio' })).toBe('live-audio-minimal');
-  });
-
-  it('leaves package-only selections alone', () => {
-    expect(registrySkinItem({ useCase: 'background-video', skin: 'video' })).toBeNull();
-    expect(registrySkinItem({ useCase: 'default-video', skin: 'none' })).toBeNull();
-  });
-
+describe('REGISTRY_SKINS', () => {
   it('names every published skin', () => {
     expect(REGISTRY_SKINS.map((skin) => skin.item)).toEqual([
       'video',
