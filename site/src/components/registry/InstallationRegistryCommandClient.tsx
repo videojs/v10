@@ -12,7 +12,7 @@ interface Props {
 }
 
 /** The registry command for the skin the installation page's pickers chose, in the package manager chosen above. */
-export default function InstallationRegistryCommand({ framework }: Props) {
+export default function InstallationRegistryCommandClient({ framework }: Props) {
   const $useCase = useStore(useCase);
   const $skin = useStore(skin);
   const $installMethod = useStore(installMethod);

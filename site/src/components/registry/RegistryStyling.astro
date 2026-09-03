@@ -6,7 +6,7 @@
 import P from '@/components/typography/P.astro';
 import { isValidFramework } from '@/types/docs';
 
-import RegistryStylingSelect from './RegistryStylingSelect';
+import RegistryStylingClient from './RegistryStylingClient';
 
 const { framework } = Astro.params;
 if (!isValidFramework(framework)) throw new Error(`RegistryStyling needs a framework route, received ${framework}.`);
@@ -15,7 +15,7 @@ if (!isValidFramework(framework)) throw new Error(`RegistryStyling needs a frame
 {
   framework === 'react' ? (
     <div class="mx-auto my-6 max-w-3xl">
-      <RegistryStylingSelect client:idle framework={framework} />
+      <RegistryStylingClient client:idle framework={framework} />
     </div>
   ) : (
     <P>HTML skins install as vanilla CSS.</P>

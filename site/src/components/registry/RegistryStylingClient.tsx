@@ -14,7 +14,7 @@ interface Props {
 }
 
 /** Picks the styling catalog every registry command on the page installs from. */
-export default function RegistryStylingSelect({ framework }: Props) {
+export default function RegistryStylingClient({ framework }: Props) {
   const $styling = useStore(registryStyling);
   const value = resolveRegistryStyling(framework, $styling);
 
