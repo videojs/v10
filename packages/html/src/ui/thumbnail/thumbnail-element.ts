@@ -9,7 +9,6 @@ import type { ThumbnailApi } from '@videojs/core/dom';
 import { applyElementProps, applyStateDataAttrs, createThumbnail, selectTextTrack } from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import type { MediaTextTrackState } from '@videojs/media';
-import { isNull, isUndefined } from '@videojs/utils/predicate';
 
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
@@ -32,7 +31,7 @@ export class ThumbnailElement extends UIElement {
     crossOrigin: { type: String, attribute: 'crossorigin' },
     loading: { type: String },
     fetchPriority: { type: String, attribute: 'fetchpriority' },
-  } satisfies PropertyDeclarationMap<keyof ThumbnailCore.Props>;
+  } satisfies PropertyDeclarationMap<Exclude<keyof ThumbnailCore.Props, 'thumbnails'>>;
 
   time = 0;
   crossOrigin: ThumbnailCore.Props['crossOrigin'];
@@ -119,7 +118,7 @@ export class ThumbnailElement extends UIElement {
 
     // Sync img attributes from element properties.
     applyElementProps(this.#img, {
-      crossorigin: this.#resolveCrossOrigin(textTrack),
+      crossorigin: this.#core.resolveCrossOrigin(this.crossOrigin, this.#inheritedCrossOrigin(textTrack)),
       loading: this.loading,
       fetchpriority: this.fetchPriority,
     });
@@ -161,21 +160,11 @@ export class ThumbnailElement extends UIElement {
 
   /**
    * Leaving `crossOrigin` unset means "follow the media element", so thumbnails keep working on a CORS-enabled player
-   * without a skin having to thread an attribute through. `null` opts out and fetches the sprites no-CORS, which is
-   * also what removing the attribute produces. A bare `crossorigin` is passed straight through, since the CORS-settings
-   * attribute reads it as Anonymous.
-   *
-   * Only the `<track>` path inherits: `thumbnails` set directly may point at a host that has nothing to do with the
-   * media element.
+   * without a skin having to thread an attribute through. Only the `<track>` path inherits: `thumbnails` set directly
+   * may point at a host that has nothing to do with the media element.
    */
-  #resolveCrossOrigin(textTrack: MediaTextTrackState | undefined): string | undefined {
-    if (isNull(this.crossOrigin)) return undefined;
-
-    if (!isUndefined(this.crossOrigin)) return this.crossOrigin;
-
-    if (this.#externalThumbnails) return undefined;
-
-    return textTrack?.thumbnailTrackCrossOrigin ?? undefined;
+  #inheritedCrossOrigin(textTrack: MediaTextTrackState | undefined): ThumbnailCore.Props['crossOrigin'] {
+    return this.#externalThumbnails ? undefined : textTrack?.thumbnailTrackCrossOrigin;
   }
 
   #applyResize(result: ThumbnailResizeResult): void {
