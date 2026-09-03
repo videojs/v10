@@ -1,5 +1,9 @@
-import type { HTMLMediaTargetLike, MediaExtension } from '@videojs/media/dom/media-host';
-import { addMediaExtension, HTMLMediaElementHost } from '@videojs/media/dom/media-host';
+import {
+  addMediaExtension,
+  HTMLMediaElementHost,
+  type HTMLMediaTargetLike,
+  type MediaExtension,
+} from '@videojs/media/dom';
 import { useEffect, useState } from 'react';
 
 import { useMedia } from '../player/context';
