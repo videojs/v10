@@ -13,4 +13,4 @@ interface Props {
 const { media, package: pkg, react } = Astro.props;
 ---
 
-<ModuleImports name={media} package={pkg} react={react} subpath="media" />
+<ModuleImports name={media} package={pkg} packageOnlyInstall={true} react={react} subpath="media" />
