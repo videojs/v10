@@ -30,7 +30,7 @@ const { poster } = Astro.props;
   </h1>
   {/* the additional px-5 is intentional */}
   <p
-    class="mx-auto mb-20 w-full max-w-195 px-5 text-center text-p2 text-balance text-warm-gray md:mb-25 lg:text-p1 dark:text-manila-light"
+    class="mx-auto w-full max-w-195 px-5 text-center text-p2 text-balance text-warm-gray lg:text-p1 dark:text-manila-light"
     style="grid-area:description"
   >
     For over 15 years, Video.js has been the world's web video player. Now
@@ -44,7 +44,7 @@ const { poster } = Astro.props;
     <HeroVideo client:load className="absolute inset-0" poster={poster} />
   </div>
   <p
-    class="flex items-center justify-center gap-1.5 text-p3 md:justify-end md:gap-2 md:pr-6 md:font-display md:text-(length:--md-text) md:uppercase"
+    class="mb-11 md:mb-20 flex items-center justify-center gap-1.5 text-p3 md:justify-end md:gap-2 md:pr-6 md:font-display md:text-(length:--md-text) md:uppercase"
     style="grid-area:mux;--md-text:0.6875rem;"
   >
     Video hosting sponsored by <a
