@@ -1,25 +1,24 @@
 import type { Sidebar } from '@/types/docs';
 
 export const sidebar: Sidebar = [
-  // {
-  //   sidebarLabel: 'Site development',
-  //   devOnly: true,
-  //   contents: [
-  //     {
-  //       slug: 'how-to/write-guides',
-  //       sidebarLabel: 'Writing guides',
-  //       devOnly: true,
-  //     },
-  //     {
-  //       slug: 'reference/write-references',
-  //       sidebarLabel: 'Writing references',
-  //       devOnly: true,
-  //     },
-  //   ],
-  // },
+  {
+    sidebarLabel: 'Site development',
+    devOnly: true,
+    contents: [
+      {
+        slug: 'how-to/write-guides',
+        sidebarLabel: 'Writing guides',
+        devOnly: true,
+      },
+      {
+        slug: 'reference/write-references',
+        sidebarLabel: 'Writing references',
+        devOnly: true,
+      },
+    ],
+  },
   {
     sidebarLabel: 'Start here',
-    defaultOpen: true,
     llmsDescription: 'Install Video.js, understand its main pieces, or move an existing player to Video.js 10.',
     contents: [
       { slug: 'how-to/installation' },
@@ -42,7 +41,6 @@ export const sidebar: Sidebar = [
   },
   {
     sidebarLabel: 'Tooling',
-    defaultOpen: false,
     llmsDescription: 'Guidance for AI tools, browser support, TypeScript, bundlers, and loading Video.js from a CDN.',
     contents: [
       { slug: 'how-to/build-with-ai' },
@@ -54,7 +52,6 @@ export const sidebar: Sidebar = [
   },
   {
     sidebarLabel: 'Concepts',
-    defaultOpen: false,
     llmsDescription:
       'Understanding-oriented pages that explain how and why things work. Read these to build a mental model of the library.',
     contents: [
@@ -71,7 +68,6 @@ export const sidebar: Sidebar = [
   },
   {
     sidebarLabel: 'How to',
-    defaultOpen: false,
     llmsDescription:
       "Task-oriented guides that each answer one goal in the reader's words. Some cover custom player UI; others configure a preset, skin, media component, or extension. Guides lead with the recommended path, then the constraints and variations needed to apply it.",
     contents: [
@@ -107,7 +103,6 @@ export const sidebar: Sidebar = [
   },
   {
     sidebarLabel: 'Components',
-    defaultOpen: false,
     llmsDescription: 'API reference for skins, interface components, media components, and service integrations.',
     contents: [
       {
@@ -209,7 +204,6 @@ export const sidebar: Sidebar = [
   },
   {
     sidebarLabel: 'Helpers',
-    defaultOpen: false,
     llmsDescription: 'Reference for player features and lower-level tools used to build or extend a player.',
     contents: [
       {
