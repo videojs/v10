@@ -345,11 +345,11 @@ video-player {
 }
 ```
 
-`--media-accent-color` reaches the sliders, the active buttons, and the accent surfaces at once. Video.js derives a readable text color to sit on top of it; override that with `--media-accent-text-color` if you'd rather choose. `--media-border-radius` rounds the player, and `--media-scale-unit` scales the whole control bar, which is the closest thing to v8's `font-size` trick for sizing controls. <DocsLink slug="how-to/style-a-packaged-skin">Style a packaged skin</DocsLink> has the full list.
+`--media-accent-color` reaches the sliders, the active buttons, and the accent surfaces at once. Video.js derives a readable text color to sit on top of it; override that with `--media-accent-text-color` if you'd rather choose. `--media-border-radius` rounds the player, and `--media-scale-unit` scales the whole control bar, which is the closest thing to v8's `font-size` trick for sizing controls. <DocsLink slug="how-to/customize-skins" anchor="style-a-packaged-skin">Customize skins</DocsLink> has the full list.
 
 ### Level 3: own the source
 
-For changes to controls, layout, or interactions, install an editable copy of the skin in your project. Video.js calls this **Source-Owned UI** because the components and styles become files you own. <DocsLink slug="how-to/change-a-skins-controls-and-layout">Change a skin's controls and layout</DocsLink> covers the setup and available skins.
+For changes to controls, layout, or interactions, install an editable copy of the skin in your project. Video.js calls this **source-owned UI** because the components and styles become files you own. <DocsLink slug="how-to/customize-skins" anchor="install-and-edit-a-skin">Customize skins</DocsLink> covers the setup and available skins.
 
 This is where v8's `controlBar` config and `addChild` calls end up, and honestly it's the better trade. Instead of `controlBar: { pictureInPictureToggle: false }`, you delete a line. Instead of subclassing a component to change its behavior, you edit the markup.
 
@@ -652,4 +652,4 @@ Ordered roughly by how likely each is to block a v8 migration.
 
 - <DocsLink slug="concepts/features">Features</DocsLink> and <DocsLink slug="concepts/presets">Presets</DocsLink>
 - <DocsLink slug="concepts/media-sources">Media sources</DocsLink>
-- <DocsLink slug="concepts/skins">Skins</DocsLink>, <DocsLink slug="how-to/style-a-packaged-skin">Style a packaged skin</DocsLink>, and <DocsLink slug="how-to/change-a-skins-controls-and-layout">Change a skin's controls and layout</DocsLink>
+- <DocsLink slug="concepts/skins">Skins</DocsLink> and <DocsLink slug="how-to/customize-skins">Customize skins</DocsLink>
