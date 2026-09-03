@@ -211,6 +211,29 @@ describe('VolumeSliderCore', () => {
     });
   });
 
+  describe('getWheelStepPercent', () => {
+    it('uses the default wheel step', () => {
+      const core = new VolumeSliderCore({ min: 0, max: 100 });
+
+      expect(core.props).toMatchObject({ wheelStep: 5 });
+      expect(core.getWheelStepPercent()).toBe(5);
+    });
+
+    it('uses an explicit wheel step', () => {
+      const core = new VolumeSliderCore({ min: 0, max: 100, wheelStep: 10 });
+
+      expect(core.props).toMatchObject({ wheelStep: 10 });
+      expect(core.getWheelStepPercent()).toBe(10);
+    });
+
+    it('keeps subclass defaults when constructed without props', () => {
+      const core = new VolumeSliderCore();
+
+      expect(core.props).toMatchObject({ step: 5, wheelStep: 5 });
+      expect(core.getWheelStepPercent()).toBe(5);
+    });
+  });
+
   describe('setProps', () => {
     it('updates label', () => {
       const core = new VolumeSliderCore();

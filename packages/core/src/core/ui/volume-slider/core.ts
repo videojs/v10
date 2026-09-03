@@ -1,5 +1,4 @@
 import type { MediaFeatureAvailability, MediaVolumeState } from '@videojs/media';
-import { defaults } from '@videojs/utils/object';
 import { formatPercent } from '@videojs/utils/percent';
 import type { NonNullableObject } from '@videojs/utils/types';
 
@@ -43,7 +42,7 @@ export class VolumeSliderCore extends SliderCore {
   }
 
   override setProps(props: VolumeSliderProps): void {
-    super.setProps(defaults(props, VolumeSliderCore.defaultProps));
+    super.setProps(props);
   }
 
   setMedia(media: MediaVolumeState): void {
