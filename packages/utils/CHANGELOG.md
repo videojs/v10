@@ -1,5 +1,12 @@
 # Changelog
 
+## [10.0.0-beta.33](https://github.com/videojs/v10/compare/@videojs/utils@10.0.0-beta.32...@videojs/utils@10.0.0-beta.33) (2026-09-04)
+
+
+### Features
+
+* **skin:** generate framework skins from registry ([#2545](https://github.com/videojs/v10/issues/2545)) ([60c7b0b](https://github.com/videojs/v10/commit/60c7b0ba5441b4463e4d04f6a71660ae24eeb345))
+
 ## [10.0.0-beta.32](https://github.com/videojs/v10/compare/@videojs/utils@10.0.0-beta.31...@videojs/utils@10.0.0-beta.32) (2026-08-26)
 
 

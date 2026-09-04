@@ -1,6 +1,6 @@
 {
   "name": "@videojs/google-cast",
-  "version": "10.0.0-beta.32",
+  "version": "10.0.0-beta.33",
   "description": "Google Cast extension for Video.js",
   "keywords": [
     "cast",

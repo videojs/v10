@@ -1,5 +1,40 @@
 # Changelog
 
+## [10.0.0-beta.33](https://github.com/videojs/v10/compare/@videojs/media@10.0.0-beta.32...@videojs/media@10.0.0-beta.33) (2026-09-04)
+
+
+### ⚠ BREAKING CHANGES
+
+* **packages:** adapter renaming ([#2602](https://github.com/videojs/v10/issues/2602))
+* **packages:** MediaComponent => MediaExtension ([#2601](https://github.com/videojs/v10/issues/2601))
+* **packages:** extension renaming ([#2600](https://github.com/videojs/v10/issues/2600))
+* **packages:** playback adapters packages ([#2567](https://github.com/videojs/v10/issues/2567))
+
+### Features
+
+* **packages:** add wistia video media ([#2305](https://github.com/videojs/v10/issues/2305)) ([306c733](https://github.com/videojs/v10/commit/306c7333fc100308a7ac59c8edaa08dbc5c64d58))
+
+
+### Bug Fixes
+
+* **media:** keep one Mux Data view per viewing across loadstarts ([#2565](https://github.com/videojs/v10/issues/2565)) ([722ba02](https://github.com/videojs/v10/commit/722ba02ebf7d25e36035472f5cb0a3d7d7477796))
+* Track disableRemotePlayback Preference ([#1889](https://github.com/videojs/v10/issues/1889)) ([0eadc6d](https://github.com/videojs/v10/commit/0eadc6d77a0df2629f25e5684af35e89ad5a305f))
+
+
+### Code Refactoring
+
+* **packages:** adapter renaming ([#2602](https://github.com/videojs/v10/issues/2602)) ([b964889](https://github.com/videojs/v10/commit/b964889fdf68a4cdaf4686ef96bb0e8c8f2f4abd))
+* **packages:** extension renaming ([#2600](https://github.com/videojs/v10/issues/2600)) ([7075d1f](https://github.com/videojs/v10/commit/7075d1f9e111d6d0eb70f319c6d05beacb88d833))
+* **packages:** MediaComponent =&gt; MediaExtension ([#2601](https://github.com/videojs/v10/issues/2601)) ([eebe675](https://github.com/videojs/v10/commit/eebe675408e50bcd3893d01f56dbb7a92a2fb5d1))
+* **packages:** playback adapters packages ([#2567](https://github.com/videojs/v10/issues/2567)) ([12b08e3](https://github.com/videojs/v10/commit/12b08e3b0c3c07e5948f74a8cf6fce96c8b8eba7))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.33
+
 ## [10.0.0-beta.32](https://github.com/videojs/v10/compare/@videojs/media@10.0.0-beta.31...@videojs/media@10.0.0-beta.32) (2026-08-26)
 
 
