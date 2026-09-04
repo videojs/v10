@@ -2,6 +2,103 @@
 
 All notable changes to this project will be documented in this file.
 
+## [@videojs/core@10.0.0-beta.33] - 2026-09-04
+
+### 🚀 Features
+- *(packages)* Add wistia video media ([#2305](https://github.com/videojs/v10/pull/2305)) by [@luwes](https://github.com/luwes)
+- *(html)* Publish skin stylesheets to the CDN build ([#2340](https://github.com/videojs/v10/pull/2340)) by [@luwes](https://github.com/luwes)
+- *(site)* Show the documented Video.js version in the docs navbar ([#2467](https://github.com/videojs/v10/pull/2467)) by [@decepulis](https://github.com/decepulis)
+- *(skin)* Add VJSC video skins ([#2479](https://github.com/videojs/v10/pull/2479)) by [@mihar-22](https://github.com/mihar-22)
+- *(vjsc)* Add named render targets ([#2527](https://github.com/videojs/v10/pull/2527)) by [@mihar-22](https://github.com/mihar-22)
+- *(packages)* Share menu option state across targets ([#2528](https://github.com/videojs/v10/pull/2528)) by [@mihar-22](https://github.com/mihar-22)
+- *(skin)* Define Shadcn registry catalog ([#2544](https://github.com/videojs/v10/pull/2544)) by [@mihar-22](https://github.com/mihar-22)
+- *(skin)* Generate framework skins from registry ([#2545](https://github.com/videojs/v10/pull/2545)) by [@mihar-22](https://github.com/mihar-22)
+- *(html)* Generate VJSC skin templates ([#2546](https://github.com/videojs/v10/pull/2546)) by [@mihar-22](https://github.com/mihar-22)
+- *(sandbox)* Fold the skins playground into the sandbox ([#2586](https://github.com/videojs/v10/pull/2586)) by [@mihar-22](https://github.com/mihar-22)
+
+### 🐛 Bug Fixes
+- *(site)* Split changelog from root llms index ([#2444](https://github.com/videojs/v10/pull/2444)) by [@decepulis](https://github.com/decepulis)
+- *(ci)* Restore codex agent workflows ([#2443](https://github.com/videojs/v10/pull/2443)) by [@decepulis](https://github.com/decepulis)
+- *(html)* Remove tailwind skin elements ([#2434](https://github.com/videojs/v10/pull/2434)) by [@mihar-22](https://github.com/mihar-22)
+- *(packages)* Scope error dialogs to player containers ([#2449](https://github.com/videojs/v10/pull/2449)) by [@mihar-22](https://github.com/mihar-22)
+- *(packages)* Hide source-less poster images ([#2453](https://github.com/videojs/v10/pull/2453)) by [@mihar-22](https://github.com/mihar-22)
+- *(packages)* Preserve fullscreen after pointer activation ([#2472](https://github.com/videojs/v10/pull/2472)) by [@sampotts](https://github.com/sampotts)
+- *(packages)* Reject invalid gesture types ([#2473](https://github.com/videojs/v10/pull/2473)) by [@sampotts](https://github.com/sampotts)
+- *(packages)* Isolate focused slider hotkeys ([#2474](https://github.com/videojs/v10/pull/2474)) by [@sampotts](https://github.com/sampotts)
+- *(core)* Suppress repeated volume boundary feedback ([#2475](https://github.com/videojs/v10/pull/2475)) by [@sampotts](https://github.com/sampotts)
+- *(packages)* Contain error dialogs in player layouts ([#2451](https://github.com/videojs/v10/pull/2451)) by [@mihar-22](https://github.com/mihar-22)
+- Track disableRemotePlayback Preference ([#1889](https://github.com/videojs/v10/pull/1889)) by [@spuppo-mux](https://github.com/spuppo-mux)
+- *(site)* Repair broken docs anchors and add built-page anchor checker ([#2457](https://github.com/videojs/v10/pull/2457)) by [@decepulis](https://github.com/decepulis)
+- *(site)* Convert docs link cards to clean markdown list items ([#2466](https://github.com/videojs/v10/pull/2466)) by [@decepulis](https://github.com/decepulis)
+- *(packages)* Restore ejected player registration and slider press locking ([#2505](https://github.com/videojs/v10/pull/2505)) by [@luwes](https://github.com/luwes)
+- *(packages)* Align dialog styles across skins ([#2481](https://github.com/videojs/v10/pull/2481)) by [@sampotts](https://github.com/sampotts)
+- *(packages)* Share input action defaults ([#2484](https://github.com/videojs/v10/pull/2484)) by [@sampotts](https://github.com/sampotts)
+- Scale seek-bar thumbnails to fill their box ([#2517](https://github.com/videojs/v10/pull/2517)) by [@sampotts](https://github.com/sampotts)
+- *(core)* Avoid Turbopack circular dependency ([#2561](https://github.com/videojs/v10/pull/2561)) by [@sampotts](https://github.com/sampotts)
+- *(spf)* Never adopt the UA-default preload on attach ([#2534](https://github.com/videojs/v10/pull/2534)) by [@cjpillsbury](https://github.com/cjpillsbury)
+- *(spf)* Probe codec support through ManagedMediaSource where classic MSE is absent ([#2564](https://github.com/videojs/v10/pull/2564)) by [@cjpillsbury](https://github.com/cjpillsbury)
+- *(core)* Stop waiting from latching when readyState never recovers ([#2574](https://github.com/videojs/v10/pull/2574)) by [@cjpillsbury](https://github.com/cjpillsbury)
+- *(media)* Keep one Mux Data view per viewing across loadstarts ([#2565](https://github.com/videojs/v10/pull/2565)) by [@cjpillsbury](https://github.com/cjpillsbury)
+- *(vjsc)* Clear stale generated styles during vite hmr ([#2433](https://github.com/videojs/v10/pull/2433)) by [@mihar-22](https://github.com/mihar-22)
+- *(skin)* Harden non-video VJSC parity ([#2530](https://github.com/videojs/v10/pull/2530)) by [@mihar-22](https://github.com/mihar-22)
+- *(skins)* Harden shadcn registry delivery ([#2576](https://github.com/videojs/v10/pull/2576)) by [@mihar-22](https://github.com/mihar-22)
+- *(skins)* Improve generated skin parity ([#2580](https://github.com/videojs/v10/pull/2580)) by [@mihar-22](https://github.com/mihar-22)
+
+### 💼 Other
+- *(skin)* Generate hosted Shadcn registry ([#2547](https://github.com/videojs/v10/pull/2547)) by [@mihar-22](https://github.com/mihar-22)
+
+### 🚜 Refactor
+- *(packages)* Scope legacy skins on a shared media-skin class ([#2522](https://github.com/videojs/v10/pull/2522)) by [@sampotts](https://github.com/sampotts)
+- *(packages)* [**breaking**] Move integrations to extension paths ([#2577](https://github.com/videojs/v10/pull/2577)) by [@decepulis](https://github.com/decepulis)
+- *(skin)* Simplify VJSC style architecture ([#2529](https://github.com/videojs/v10/pull/2529)) by [@mihar-22](https://github.com/mihar-22)
+- *(skin)* Cut internal consumers over to VJSC ([#2548](https://github.com/videojs/v10/pull/2548)) by [@mihar-22](https://github.com/mihar-22)
+- *(skin)* Remove legacy skin implementation ([#2550](https://github.com/videojs/v10/pull/2550)) by [@mihar-22](https://github.com/mihar-22)
+- *(vjsc)* Streamline registry build and validation ([#2554](https://github.com/videojs/v10/pull/2554)) by [@mihar-22](https://github.com/mihar-22)
+- *(vjsc)* Clarify compiler and skin build structure ([#2557](https://github.com/videojs/v10/pull/2557)) by [@mihar-22](https://github.com/mihar-22)
+- *(skins)* Consolidate design system tokens and utilities ([#2581](https://github.com/videojs/v10/pull/2581)) by [@mihar-22](https://github.com/mihar-22)
+- *(vjsc)* Tighten the compiler and skins build boundary ([#2585](https://github.com/videojs/v10/pull/2585)) by [@mihar-22](https://github.com/mihar-22)
+- *(packages)* [**breaking**] Playback adapters packages ([#2567](https://github.com/videojs/v10/pull/2567)) by [@mihar-22](https://github.com/mihar-22)
+- *(html)* New @videojs/cdn package ([#2598](https://github.com/videojs/v10/pull/2598)) by [@mihar-22](https://github.com/mihar-22)
+- *(packages)* [**breaking**] Extension renaming ([#2600](https://github.com/videojs/v10/pull/2600)) by [@mihar-22](https://github.com/mihar-22)
+- *(packages)* [**breaking**] MediaComponent => MediaExtension ([#2601](https://github.com/videojs/v10/pull/2601)) by [@mihar-22](https://github.com/mihar-22)
+- *(packages)* [**breaking**] Adapter renaming ([#2602](https://github.com/videojs/v10/pull/2602)) by [@mihar-22](https://github.com/mihar-22)
+- *(packages)* Bucket adapters and extensions under packages/ ([#2635](https://github.com/videojs/v10/pull/2635)) by [@luwes](https://github.com/luwes)
+
+### 📚 Documentation
+- *(site)* Restore the 10.0.0-beta.32 raw changelog ([#2442](https://github.com/videojs/v10/pull/2442)) by [@decepulis](https://github.com/decepulis)
+- *(site)* Add changelog prose for 10.0.0-beta.32 ([#2450](https://github.com/videojs/v10/pull/2450)) by [@decepulis](https://github.com/decepulis)
+- Correct live preset feature and skin descriptions ([#2458](https://github.com/videojs/v10/pull/2458)) by [@decepulis](https://github.com/decepulis)
+- *(site)* Add LiveButton reference page ([#2459](https://github.com/videojs/v10/pull/2459)) by [@decepulis](https://github.com/decepulis)
+- *(site)* Tighten the Mux Player migration guide ([#2460](https://github.com/videojs/v10/pull/2460)) by [@decepulis](https://github.com/decepulis)
+- *(site)* Document imperative control in the migration guides ([#2461](https://github.com/videojs/v10/pull/2461)) by [@decepulis](https://github.com/decepulis)
+- *(site)* Make the React Player provider model explicit ([#2462](https://github.com/videojs/v10/pull/2462)) by [@decepulis](https://github.com/decepulis)
+- *(site)* Structure poster guidance as a decision hierarchy ([#2463](https://github.com/videojs/v10/pull/2463)) by [@decepulis](https://github.com/decepulis)
+- *(site)* Lead HLS and Mux flavor choices with the default ([#2464](https://github.com/videojs/v10/pull/2464)) by [@decepulis](https://github.com/decepulis)
+- *(site)* Surface seek buttons for skin customizers and Plyr migrators ([#2465](https://github.com/videojs/v10/pull/2465)) by [@decepulis](https://github.com/decepulis)
+- *(site)* Link the roadmap and beta announcement to shipped guides ([#2468](https://github.com/videojs/v10/pull/2468)) by [@decepulis](https://github.com/decepulis)
+- *(agents)* Encode Diátaxis boundaries in the writing skills ([#2469](https://github.com/videojs/v10/pull/2469)) by [@decepulis](https://github.com/decepulis)
+- *(site)* Fix self-hosted archive example ([#2446](https://github.com/videojs/v10/pull/2446)) by [@mihar-22](https://github.com/mihar-22)
+- *(site)* Map the CDN layout in a concept page ([#2511](https://github.com/videojs/v10/pull/2511)) by [@decepulis](https://github.com/decepulis)
+- *(site)* Open every media reference page with an Import section ([#2518](https://github.com/videojs/v10/pull/2518)) by [@decepulis](https://github.com/decepulis)
+- *(site)* Open every feature reference page with an Import section ([#2519](https://github.com/videojs/v10/pull/2519)) by [@decepulis](https://github.com/decepulis)
+- *(site)* Open util reference pages with the template's Import section ([#2520](https://github.com/videojs/v10/pull/2520)) by [@decepulis](https://github.com/decepulis)
+- *(site)* Stub reference pages for the nine packaged skins ([#2523](https://github.com/videojs/v10/pull/2523)) by [@decepulis](https://github.com/decepulis)
+- *(site)* Introduce extensions ([#2578](https://github.com/videojs/v10/pull/2578)) by [@decepulis](https://github.com/decepulis)
+- *(site)* Install skins with the Shadcn CLI instead of ejected scripts ([#2615](https://github.com/videojs/v10/pull/2615)) by [@mihar-22](https://github.com/mihar-22)
+- *(site)* Label beta API references ([#2513](https://github.com/videojs/v10/pull/2513)) by [@decepulis](https://github.com/decepulis)
+- *(site)* Mention lightweight HLS option ([#2575](https://github.com/videojs/v10/pull/2575)) by [@decepulis](https://github.com/decepulis)
+- *(site)* Simplify media reference installs ([#2634](https://github.com/videojs/v10/pull/2634)) by [@mihar-22](https://github.com/mihar-22)
+
+### 🧪 Testing
+- *(e2e)* Cover handled arrow key scrolling ([#2471](https://github.com/videojs/v10/pull/2471)) by [@sampotts](https://github.com/sampotts)
+- *(skin)* Harden background preset contract ([#2488](https://github.com/videojs/v10/pull/2488)) by [@mihar-22](https://github.com/mihar-22)
+- *(skin)* Validate Shadcn registry installs ([#2551](https://github.com/videojs/v10/pull/2551)) by [@mihar-22](https://github.com/mihar-22)
+
+### ⚙️ Miscellaneous Tasks
+- *(cd)* Attribute release-please to a GitHub App ([#2616](https://github.com/videojs/v10/pull/2616)) by [@decepulis](https://github.com/decepulis)
+- *(preview)* Skip pnpm's lockfile check when publishing previews ([#2630](https://github.com/videojs/v10/pull/2630)) by [@mihar-22](https://github.com/mihar-22)
+- *(cd)* Restore the GitHub App token and valid YAML in the release workflow ([#2632](https://github.com/videojs/v10/pull/2632)) by [@decepulis](https://github.com/decepulis)
+
 ## [@videojs/core@10.0.0-beta.32] - 2026-08-26
 
 ### 🚀 Features
@@ -1842,6 +1939,7 @@ All notable changes to this project will be documented in this file.
 * @decepulis made their first contribution in [#118](https://github.com/videojs/v10/pull/118)
 * @heff made their first contribution
 
+[@videojs/core@10.0.0-beta.33]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.32...@videojs/core@10.0.0-beta.33
 [@videojs/core@10.0.0-beta.32]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.31...@videojs/core@10.0.0-beta.32
 [@videojs/core@10.0.0-beta.31]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.30...@videojs/core@10.0.0-beta.31
 [@videojs/core@10.0.0-beta.30]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.29...@videojs/core@10.0.0-beta.30

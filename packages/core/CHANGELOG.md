@@ -1,5 +1,48 @@
 # Changelog
 
+## [10.0.0-beta.33](https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.32...@videojs/core@10.0.0-beta.33) (2026-09-04)
+
+
+### ⚠ BREAKING CHANGES
+
+* **packages:** adapter renaming ([#2602](https://github.com/videojs/v10/issues/2602))
+* **packages:** playback adapters packages ([#2567](https://github.com/videojs/v10/issues/2567))
+
+### Features
+
+* **packages:** share menu option state across targets ([#2528](https://github.com/videojs/v10/issues/2528)) ([4392cd6](https://github.com/videojs/v10/commit/4392cd6f7fa92dd3bb329b5a92206f5bf27a75b2))
+* **skin:** add VJSC video skins ([#2479](https://github.com/videojs/v10/issues/2479)) ([f3640c7](https://github.com/videojs/v10/commit/f3640c7ae912fd20e2da40109228871d48c2bfc8))
+* **vjsc:** add named render targets ([#2527](https://github.com/videojs/v10/issues/2527)) ([5b606d2](https://github.com/videojs/v10/commit/5b606d2026bb9528167f64b4b731145ceb1224f2))
+
+
+### Bug Fixes
+
+* **core:** avoid Turbopack circular dependency ([#2561](https://github.com/videojs/v10/issues/2561)) ([d5cffbd](https://github.com/videojs/v10/commit/d5cffbd9f790b277d9dc1805df765a990be26b1d))
+* **core:** stop waiting from latching when readyState never recovers ([#2574](https://github.com/videojs/v10/issues/2574)) ([2d05ded](https://github.com/videojs/v10/commit/2d05ded2f36fe368cda4abc7a7451b2145b87914))
+* **core:** suppress repeated volume boundary feedback ([#2475](https://github.com/videojs/v10/issues/2475)) ([29ad654](https://github.com/videojs/v10/commit/29ad6547f061c304a87ed723197a8486a896a614))
+* **packages:** isolate focused slider hotkeys ([#2474](https://github.com/videojs/v10/issues/2474)) ([0f7b08f](https://github.com/videojs/v10/commit/0f7b08f8a9c8948cf35a0b1c8d4d411f1bf166c3))
+* **packages:** preserve fullscreen after pointer activation ([#2472](https://github.com/videojs/v10/issues/2472)) ([b526c44](https://github.com/videojs/v10/commit/b526c444efae99873946eafa607673b19c6978f0))
+* **packages:** restore ejected player registration and slider press locking ([#2505](https://github.com/videojs/v10/issues/2505)) ([36bb836](https://github.com/videojs/v10/commit/36bb83600622aff75169f4fe5d039f17e9f1f7d9))
+* **packages:** scope error dialogs to player containers ([#2449](https://github.com/videojs/v10/issues/2449)) ([9fbc979](https://github.com/videojs/v10/commit/9fbc9790189b5df8d5d047eaf01605d6e8d7fb6b))
+* **packages:** share input action defaults ([#2484](https://github.com/videojs/v10/issues/2484)) ([db1221c](https://github.com/videojs/v10/commit/db1221c7ebd019b58dced646fc4223d816e48bca))
+* scale seek-bar thumbnails to fill their box ([#2517](https://github.com/videojs/v10/issues/2517)) ([28ea8ad](https://github.com/videojs/v10/commit/28ea8add9a80d165fdc2b5690c1307952ec9c03c))
+* **skins:** improve generated skin parity ([#2580](https://github.com/videojs/v10/issues/2580)) ([c8b7006](https://github.com/videojs/v10/commit/c8b7006a55f71b2a0d257413cac2091792278560))
+
+
+### Code Refactoring
+
+* **packages:** adapter renaming ([#2602](https://github.com/videojs/v10/issues/2602)) ([b964889](https://github.com/videojs/v10/commit/b964889fdf68a4cdaf4686ef96bb0e8c8f2f4abd))
+* **packages:** playback adapters packages ([#2567](https://github.com/videojs/v10/issues/2567)) ([12b08e3](https://github.com/videojs/v10/commit/12b08e3b0c3c07e5948f74a8cf6fce96c8b8eba7))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/media bumped to 10.0.0-beta.33
+    * @videojs/store bumped to 10.0.0-beta.33
+    * @videojs/utils bumped to 10.0.0-beta.33
+
 ## [10.0.0-beta.32](https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.31...@videojs/core@10.0.0-beta.32) (2026-08-26)
 
 

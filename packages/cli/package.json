@@ -1,6 +1,6 @@
 {
   "name": "@videojs/cli",
-  "version": "10.0.0-beta.32",
+  "version": "10.0.0-beta.33",
   "description": "Video.js documentation CLI",
   "license": "Apache-2.0",
   "repository": {

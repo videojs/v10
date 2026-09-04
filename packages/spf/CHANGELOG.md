@@ -1,5 +1,32 @@
 # Changelog
 
+## [10.0.0-beta.33](https://github.com/videojs/v10/compare/@videojs/spf@10.0.0-beta.32...@videojs/spf@10.0.0-beta.33) (2026-09-04)
+
+
+### ⚠ BREAKING CHANGES
+
+* **packages:** adapter renaming ([#2602](https://github.com/videojs/v10/issues/2602))
+* **packages:** playback adapters packages ([#2567](https://github.com/videojs/v10/issues/2567))
+
+### Bug Fixes
+
+* **spf:** never adopt the UA-default preload on attach ([#2534](https://github.com/videojs/v10/issues/2534)) ([5ed7e4c](https://github.com/videojs/v10/commit/5ed7e4c29b63432049c4b15d934327793c796057))
+* **spf:** probe codec support through ManagedMediaSource where classic MSE is absent ([#2564](https://github.com/videojs/v10/issues/2564)) ([4161db6](https://github.com/videojs/v10/commit/4161db6d0905ce4e8664b8edc841d60ecf10b302))
+
+
+### Code Refactoring
+
+* **packages:** adapter renaming ([#2602](https://github.com/videojs/v10/issues/2602)) ([b964889](https://github.com/videojs/v10/commit/b964889fdf68a4cdaf4686ef96bb0e8c8f2f4abd))
+* **packages:** playback adapters packages ([#2567](https://github.com/videojs/v10/issues/2567)) ([12b08e3](https://github.com/videojs/v10/commit/12b08e3b0c3c07e5948f74a8cf6fce96c8b8eba7))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/media bumped to 10.0.0-beta.33
+    * @videojs/utils bumped to 10.0.0-beta.33
+
 ## [10.0.0-beta.32](https://github.com/videojs/v10/compare/@videojs/spf@10.0.0-beta.31...@videojs/spf@10.0.0-beta.32) (2026-08-26)
 
 
