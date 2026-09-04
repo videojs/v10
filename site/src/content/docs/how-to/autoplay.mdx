@@ -70,11 +70,12 @@ Calling `play()` from player state returns the native promise from the media ele
 ## Availability and constraints
 
 - Autoplay can fail. Browsers decide per page load based on audio state, whether the user has interacted with your site before, browser settings, and platform policy.
-- Muted autoplay is broadly allowed. Unmuted autoplay is blocked on first visit in most browsers; do not rely on it.
+- Muted autoplay is broadly allowed for video. Unmuted autoplay is blocked on first visit in most browsers; do not rely on it.
+- Chrome grants the muted exemption to video elements only. Muted autoplay on an audio element works in Firefox and macOS Safari, but Chrome and other Chromium browsers block it until the user interacts with the page, and nothing retries the attempt afterward. Start audio components (Audio, HlsAudio, MuxAudio, and the like) from a user action instead.
 - Without inline playback, iPhone Safari opens the video in fullscreen when playback starts.
 - Low-power mode and data-saver settings can block even muted autoplay. This is why the recommended approach keeps a manual play control.
 - Programmatic volume control is unsupported on some platforms. The <DocsLink slug="reference/feature-volume">volume feature</DocsLink> exposes this as `volumeAvailability: 'available' | 'unavailable' | 'unsupported'`; iOS Safari reports `'unsupported'`, and `'unavailable'` means the feature hasn't attached to a media element yet.
-- This guide applies to media components that render a video element (Video, HlsJsVideo, DashVideo, MuxVideo, and the like). Embed components (YouTube, Vimeo, TikTok, Twitch) forward autoplay to the third-party player, which applies its own autoplay rules; muted and inline behavior varies by provider.
+- The recommended approach above targets media components that render a video element (Video, HlsJsVideo, DashVideo, MuxVideo, and the like). Embed components (YouTube, Vimeo, TikTok, Twitch) forward autoplay to the third-party player, which applies its own autoplay rules; muted and inline behavior varies by provider.
 
 ## Common variations
 

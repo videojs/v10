@@ -81,6 +81,12 @@ Video.js does not replace the native audio API. Use `src` for one URL or add chi
 
 See MDN for the complete [`<audio>` element](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/audio), [`HTMLAudioElement`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLAudioElement), and shared [`HTMLMediaElement`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement) APIs.
 
+## Autoplay
+
+Muting does not enable autoplay for audio. Chrome grants the muted-autoplay exemption to video elements only, so an audio element stays blocked until the user interacts with the page, and the attempt is not retried once they do. Firefox and macOS Safari decide on audibility instead, and allow it.
+
+Start audio playback from a user action when it needs to be reliable. See <DocsLink slug="how-to/autoplay">Autoplay</DocsLink>.
+
 ## Examples
 
 ### Basic Usage
