@@ -65,6 +65,9 @@ const componentParts: ComponentPartNameMap = {
     Popup: 'Popover',
     Arrow: 'Popover',
   },
+  Poster: {
+    Root: 'Poster',
+  },
   PlaybackRateRadioGroup: {
     Options: 'PlaybackRateRadioGroup',
   },
@@ -245,13 +248,9 @@ export const htmlComponentTarget: ComponentTarget<CoreSchema> = defineComponentT
             </target.VolumePopover.Popup>,
           ];
         },
-        Poster: ({ props }) => (
-          <target.Poster {...props}>
-            <Slot name="poster">
-              <Img alt="" decoding="async" />
-            </Slot>
-          </target.Poster>
-        ),
+        Poster: {
+          Image: ({ props }) => <Img alt="" decoding="async" {...props} />,
+        },
         PlaybackRateRadioGroup: {
           Root: unwrap(),
           Value: ({ props }) => <Span data-part="value" {...props} />,

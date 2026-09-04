@@ -231,12 +231,14 @@ React buttons do not include visible content either. Use a button's `render` pro
 <FrameworkCase frameworks={["react"]}>
 These are PascalCase components rather than tags — `TimeSlider`, `VolumeSlider`, `BufferingIndicator`, `Poster`, `QualityRadioGroup` — and the compound parts are namespaced, so `media-slider-track` becomes `TimeSlider.Track`. See the <DocsLink slug="concepts/ui-components">UI components</DocsLink> concept for the full set.
 
-`Poster` is the one rename that changes shape. Put the poster URL on `VideoPlayer`; `Poster` renders the image and accepts image attributes such as `alt`, `srcSet`, and `sizes`:
+`Poster` is the one rename that changes shape. Put the poster URL on `VideoPlayer`; `Poster.Root` owns its state and `Poster.Image` accepts image attributes such as `alt`, `srcSet`, and `sizes`:
 
 ```tsx
 <VideoPlayer poster="/poster.jpg">
   <Container>
-    <Poster alt="" />
+    <Poster.Root>
+      <Poster.Image alt="" />
+    </Poster.Root>
   </Container>
 </VideoPlayer>
 ```

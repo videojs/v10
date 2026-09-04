@@ -115,6 +115,10 @@ export function defineTemplateSkin(tagName: string, source: SkinTemplate): strin
 
       if (poster instanceof HTMLImageElement) {
         poster.removeAttribute('slot');
+
+        // The template's image carries the skin's image class, which a slotted poster takes over.
+        if (posterTarget) poster.classList.add(...posterTarget.classList);
+
         posterTarget?.replaceWith(poster);
       } else if (posterTarget instanceof HTMLSlotElement) {
         posterTarget.replaceWith(...posterTarget.childNodes);

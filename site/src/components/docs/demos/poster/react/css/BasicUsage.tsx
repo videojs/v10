@@ -9,7 +9,9 @@ export default function BasicUsage() {
       <Container className="media-container">
         <Video src="{{VJS10_DEMO_VIDEO_MP4}}" playsInline />
 
-        <Poster className="media-poster" />
+        <Poster.Root className="media-poster">
+          <Poster.Image className="media-poster-image" />
+        </Poster.Root>
 
         <PlayButton
           className="media-play-button"

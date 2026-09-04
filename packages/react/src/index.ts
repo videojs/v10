@@ -124,7 +124,9 @@ export {
 export { PlaybackRateButton, type PlaybackRateButtonProps } from './ui/playback-rate-button/playback-rate-button';
 export { PlaybackRateRadioGroupLegacy as PlaybackRateRadioGroup } from './ui/playback-rate-radio-group';
 export { Popover, type PopoverContextValue, usePopoverContext } from './ui/popover';
-export { Poster, type PosterProps } from './ui/poster/poster';
+export { Poster } from './ui/poster';
+export type { PosterImageProps } from './ui/poster/poster-image';
+export type { PosterRootProps } from './ui/poster/poster-root';
 export {
   type QualityOption,
   type QualityOptionsProps,

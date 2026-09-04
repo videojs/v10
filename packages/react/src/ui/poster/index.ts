@@ -1,1 +1,1 @@
-export { Poster, type PosterProps } from './poster';
+export * as Poster from './index.parts';
