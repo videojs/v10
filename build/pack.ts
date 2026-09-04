@@ -15,7 +15,8 @@ export const baseConfig = {
       nativeMagicString: true,
     },
   },
-  ignoreWatch: [/[/\\]packages[/\\][^/\\]+[/\\]dist(?:[/\\]|$)/],
+  // Matches `packages/<name>/dist` and bucketed `packages/<bucket>/<name>/dist`.
+  ignoreWatch: [/[/\\]packages[/\\](?:[^/\\]+[/\\])?[^/\\]+[/\\]dist(?:[/\\]|$)/],
   report: process.env.CI === 'true',
 } satisfies PackUserConfig;
 

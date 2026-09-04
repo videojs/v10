@@ -32,11 +32,34 @@ function readJson(path) {
   return JSON.parse(stripped);
 }
 
-/** Lists package directory names that contain a package.json. */
+/**
+ * Lists package directories relative to `packages/`, e.g. `core` or `adapters/mux-video`. A direct child without a
+ * package.json is treated as a bucket and its children are listed instead.
+ */
 function getPackageDirs() {
-  return readdirSync(PACKAGES_DIR, { withFileTypes: true })
-    .filter((d) => d.isDirectory() && existsSync(join(PACKAGES_DIR, d.name, 'package.json')))
-    .map((d) => d.name);
+  const dirs = [];
+
+  for (const entry of readdirSync(PACKAGES_DIR, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue;
+
+    if (existsSync(join(PACKAGES_DIR, entry.name, 'package.json'))) {
+      dirs.push(entry.name);
+      continue;
+    }
+
+    for (const child of readdirSync(join(PACKAGES_DIR, entry.name), { withFileTypes: true })) {
+      if (child.isDirectory() && existsSync(join(PACKAGES_DIR, entry.name, child.name, 'package.json'))) {
+        dirs.push(`${entry.name}/${child.name}`);
+      }
+    }
+  }
+
+  return dirs;
+}
+
+/** The package's own directory name, without any bucket prefix. */
+function packageDirName(dir) {
+  return dir.slice(dir.lastIndexOf('/') + 1);
 }
 
 function readPackageJson(dir) {
@@ -94,7 +117,8 @@ function checkCommitlintScopes() {
   const scopes = new Set([...match[1].matchAll(/'([^']+)'/g)].map((m) => m[1]));
 
   for (const dir of getPackageDirs()) {
-    const scope = SCOPE_ALIASES.get(dir) ?? dir;
+    const name = packageDirName(dir);
+    const scope = SCOPE_ALIASES.get(name) ?? name;
 
     if (!scopes.has(scope)) {
       warnings.push(`Package dir "${dir}" missing from commitlint scope-enum (expected scope: "${scope}")`);
@@ -180,7 +204,7 @@ function checkPackageMetadata() {
     if (pkg.private) continue;
 
     // Skip packages that don't need library metadata.
-    if (METADATA_EXCLUDE.has(dir)) continue;
+    if (METADATA_EXCLUDE.has(packageDirName(dir))) continue;
 
     // publishConfig.access is required for scoped public packages.
     if (pkg.publishConfig?.access !== 'public') {

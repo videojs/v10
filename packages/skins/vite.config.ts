@@ -65,6 +65,8 @@ export default defineConfig({
           'dist/registry/source/r/**',
           'dist/shadcn/r/**',
           { pattern: 'packages/*/package.json', base: 'workspace' },
+          { pattern: 'packages/adapters/*/package.json', base: 'workspace' },
+          { pattern: 'packages/extensions/*/package.json', base: 'workspace' },
         ],
         output: [],
       },

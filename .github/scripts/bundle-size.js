@@ -432,21 +432,45 @@ function resolveWildcard(pkgDir, exportKey, exportValue) {
     }));
 }
 
+/**
+ * Package directories under `packages/`, sorted. A direct child without a package.json is a bucket (e.g. `adapters/`)
+ * whose children are packages.
+ */
+function listPackageDirs() {
+  const dirs = [];
+
+  for (const entry of readdirSync(PACKAGES_DIR, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue;
+
+    const dir = join(PACKAGES_DIR, entry.name);
+
+    if (existsSync(join(dir, 'package.json'))) {
+      dirs.push(dir);
+      continue;
+    }
+
+    for (const child of readdirSync(dir, { withFileTypes: true })) {
+      if (child.isDirectory() && existsSync(join(dir, child.name, 'package.json'))) {
+        dirs.push(join(dir, child.name));
+      }
+    }
+  }
+
+  return dirs.sort((a, b) => basename(a).localeCompare(basename(b)));
+}
+
 /** Discover packages and their entry points from the filesystem. */
 function discoverPackages() {
   const packages = [];
 
-  for (const dirName of readdirSync(PACKAGES_DIR).sort()) {
+  for (const pkgDir of listPackageDirs()) {
+    const dirName = basename(pkgDir);
     if (SKIP_PACKAGES.has(dirName)) continue;
 
-    const pkgJsonPath = join(PACKAGES_DIR, dirName, 'package.json');
-    if (!existsSync(pkgJsonPath)) continue;
-
-    const pkgJson = JSON.parse(readFileSync(pkgJsonPath, 'utf8'));
+    const pkgJson = JSON.parse(readFileSync(join(pkgDir, 'package.json'), 'utf8'));
     if (!pkgJson.exports) continue;
 
     const pkgName = pkgJson.name;
-    const pkgDir = join(PACKAGES_DIR, dirName);
     const external = pkgJson.peerDependencies
       ? Object.keys(pkgJson.peerDependencies)
       : [];

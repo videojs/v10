@@ -5,6 +5,7 @@ import { parseWorkspaceCatalog, prepareTemplateManifest } from '../../scripts/te
 const workspaceYaml = `
 packages:
   - 'packages/*'
+  - 'packages/adapters/*'
 
 catalog:
   vite: npm:@voidzero-dev/vite-plus-core@0.2.8

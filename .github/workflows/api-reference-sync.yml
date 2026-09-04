@@ -323,7 +323,7 @@ jobs:
             - `site/src/content/docs/concepts/` — concept pages mentioning these APIs
             - `site/src/content/docs/how-to/` — how-to guides mentioning these APIs
             - `site/src/components/docs/demos/` — demo code using changed props/state/signatures
-            - `packages/*/README.md` — package READMEs mentioning these APIs
+            - `packages/**/README.md` — package READMEs mentioning these APIs
 
             Use Grep and Glob to search efficiently. Look for:
             - The component/util name (PascalCase, camelCase)

@@ -410,14 +410,34 @@ function registryPath(project: RegistryConsumerProject): string {
   return project.styling === 'css' ? 'react/css' : 'react';
 }
 
-async function readWorkspacePackages(): Promise<Map<string, WorkspacePackage>> {
-  const packages = new Map<string, WorkspacePackage>();
+/** Package directories under `packages/`, descending one level into bucket directories such as `adapters/`. */
+async function workspacePackageDirs(): Promise<string[]> {
   const directory = resolve(workspaceDir, 'packages');
+  const dirs: string[] = [];
 
   for (const entry of await readdir(directory, { withFileTypes: true })) {
     if (!entry.isDirectory()) continue;
 
     const packageDir = resolve(directory, entry.name);
+    const manifest = await readFile(resolve(packageDir, 'package.json'), 'utf8').catch(() => undefined);
+
+    if (manifest !== undefined) {
+      dirs.push(packageDir);
+      continue;
+    }
+
+    for (const child of await readdir(packageDir, { withFileTypes: true })) {
+      if (child.isDirectory()) dirs.push(resolve(packageDir, child.name));
+    }
+  }
+
+  return dirs;
+}
+
+async function readWorkspacePackages(): Promise<Map<string, WorkspacePackage>> {
+  const packages = new Map<string, WorkspacePackage>();
+
+  for (const packageDir of await workspacePackageDirs()) {
     const source = await readFile(resolve(packageDir, 'package.json'), 'utf8').catch(() => undefined);
     if (!source) continue;
 

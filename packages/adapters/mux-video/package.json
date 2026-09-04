@@ -1,0 +1,60 @@
+{
+  "name": "@videojs/mux-video",
+  "version": "10.0.0-beta.32",
+  "description": "Mux playback adapter for Video.js, over hls.js",
+  "keywords": [
+    "hls",
+    "media",
+    "mux",
+    "streaming",
+    "videojs"
+  ],
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/videojs/v10",
+    "directory": "packages/adapters/mux-video"
+  },
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "main": "dist/default/index.js",
+  "module": "dist/default/index.js",
+  "types": "dist/dev/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/dev/index.d.ts",
+      "development": "./dist/dev/index.js",
+      "default": "./dist/default/index.js"
+    },
+    "./spf": {
+      "types": "./dist/dev/spf.d.ts",
+      "development": "./dist/dev/spf.js",
+      "default": "./dist/default/spf.js"
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build:watch": "vp pack --watch ./src --no-clean",
+    "dev": "pnpm run build:watch",
+    "test": "vp test run",
+    "test:watch": "vp test",
+    "clean": "rimraf --glob dist types '*.tsbuildinfo'"
+  },
+  "dependencies": {
+    "@videojs/hlsjs-video": "workspace:*",
+    "@videojs/media": "workspace:*",
+    "@videojs/spf": "workspace:*",
+    "@videojs/utils": "workspace:*"
+  },
+  "devDependencies": {
+    "@videojs/mux": "workspace:*",
+    "jsdom": "^26.1.0",
+    "vite-plus": "catalog:",
+    "vitest": "catalog:"
+  }
+}

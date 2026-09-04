@@ -40,6 +40,8 @@ supportedArchitectures:
 
 packages:
   - 'packages/*'
+  - 'packages/adapters/*'
+  - 'packages/extensions/*'
   - 'apps/*'
   - site
 

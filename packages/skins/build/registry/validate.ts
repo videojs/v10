@@ -63,22 +63,41 @@ function validatePackagePins(items: readonly RegistryItem[], versions: ReadonlyM
   }
 }
 
-async function workspacePackageVersions(): Promise<ReadonlyMap<string, string>> {
+/** Package directories under `packages/`, descending one level into bucket directories such as `adapters/`. */
+async function workspacePackageDirs(): Promise<string[]> {
   const packagesDir = resolve(workspaceDir, 'packages');
-  const entries = await readdir(packagesDir, { withFileTypes: true });
+  const dirs: string[] = [];
 
+  for (const entry of await readdir(packagesDir, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue;
+
+    const dir = resolve(packagesDir, entry.name);
+    const manifest = await readFile(resolve(dir, 'package.json'), 'utf8').catch(() => undefined);
+
+    if (manifest !== undefined) {
+      dirs.push(dir);
+      continue;
+    }
+
+    for (const child of await readdir(dir, { withFileTypes: true })) {
+      if (child.isDirectory()) dirs.push(resolve(dir, child.name));
+    }
+  }
+
+  return dirs;
+}
+
+async function workspacePackageVersions(): Promise<ReadonlyMap<string, string>> {
   const manifests = await Promise.all(
-    entries
-      .filter((entry) => entry.isDirectory())
-      .map(async (entry) => {
-        const source = await readFile(resolve(packagesDir, entry.name, 'package.json'), 'utf8').catch(() => undefined);
-        if (!source) return undefined;
+    (await workspacePackageDirs()).map(async (dir) => {
+      const source = await readFile(resolve(dir, 'package.json'), 'utf8').catch(() => undefined);
+      if (!source) return undefined;
 
-        const manifest = JSON.parse(source);
-        if (!isPlainObject(manifest) || !isString(manifest.name) || !isString(manifest.version)) return undefined;
+      const manifest = JSON.parse(source);
+      if (!isPlainObject(manifest) || !isString(manifest.name) || !isString(manifest.version)) return undefined;
 
-        return [manifest.name, manifest.version] as const;
-      })
+      return [manifest.name, manifest.version] as const;
+    })
   );
 
   return new Map(manifests.filter((entry) => entry !== undefined));
