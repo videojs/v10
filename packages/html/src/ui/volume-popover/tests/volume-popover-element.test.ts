@@ -1,27 +1,25 @@
 import type { AnyPlayerStore } from '@videojs/core/dom';
+import { volumeFeature } from '@videojs/core/dom';
 import { ContextProvider } from '@videojs/element/context';
 import type { MediaVolumeState } from '@videojs/media';
-import { createStore } from '@videojs/store';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { playerContext } from '../../../player/context';
+import { createTestPlayerStore } from '../../../testing/create-test-player-store';
 import { UIElement } from '../../ui-element';
 import { VolumePopoverElement } from '../volume-popover-element';
 
 let tagCounter = 0;
 
 function createVolumeStore(volumeAvailability: MediaVolumeState['volumeAvailability']): AnyPlayerStore {
-  return createStore<unknown>()<MediaVolumeState>({
-    name: 'volume',
-    state: () => ({
-      volume: 1,
-      muted: false,
-      volumeAvailability,
-      mutedAvailability: 'available',
-      setVolume: vi.fn(),
-      toggleMuted: vi.fn(),
-    }),
-  }) as unknown as AnyPlayerStore;
+  return createTestPlayerStore([volumeFeature], {
+    volume: 1,
+    muted: false,
+    volumeAvailability,
+    mutedAvailability: 'available',
+    setVolume: vi.fn(),
+    toggleMuted: vi.fn(),
+  });
 }
 
 class TestPlayerProviderElement extends UIElement {

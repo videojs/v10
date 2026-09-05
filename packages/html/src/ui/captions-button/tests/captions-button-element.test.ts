@@ -1,10 +1,11 @@
 import type { AnyPlayerStore } from '@videojs/core/dom';
+import { textTrackFeature } from '@videojs/core/dom';
 import { ContextProvider } from '@videojs/element/context';
 import type { MediaTextTrackState } from '@videojs/media';
-import { createStore } from '@videojs/store';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { playerContext } from '../../../player/context';
+import { createTestPlayerStore } from '../../../testing/create-test-player-store';
 import { UIElement } from '../../ui-element';
 import { CaptionsButtonElement } from '../captions-button-element';
 
@@ -35,19 +36,12 @@ async function waitForAssertion(assertion: () => void): Promise<void> {
 }
 
 function createTextTrackStore(textTrackList: MediaTextTrackState['textTrackList']): AnyPlayerStore {
-  return createStore<unknown>()<MediaTextTrackState>({
-    name: 'textTrack',
-    state: () => ({
-      chaptersCues: [],
-      thumbnailCues: [],
-      thumbnailTrackSrc: null,
-      thumbnailTrackCrossOrigin: null,
-      textTrackList,
-      subtitlesShowing: false,
-      toggleSubtitles: vi.fn(),
-      selectSubtitlesTrack: vi.fn(),
-    }),
-  }) as unknown as AnyPlayerStore;
+  return createTestPlayerStore([textTrackFeature], {
+    textTrackList,
+    subtitlesShowing: false,
+    toggleSubtitles: vi.fn(),
+    selectSubtitlesTrack: vi.fn(),
+  });
 }
 
 class TestPlayerProviderElement extends UIElement {

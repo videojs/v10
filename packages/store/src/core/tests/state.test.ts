@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vite-plus/test';
 
-import { createState, flush, isState } from '../state';
+import type { AnySlice } from '../slice';
+import { createState, flush, getSnapshotSlices, isState } from '../state';
 
 describe('createState', () => {
   interface TestState {
@@ -144,5 +145,38 @@ describe('createState', () => {
       expect(isState(42)).toBe(false);
       expect(isState('string')).toBe(false);
     });
+  });
+});
+
+describe('getSnapshotSlices', () => {
+  const slice: AnySlice = { state: () => ({ volume: 1 }) };
+  const slices = new Set([slice]);
+
+  it('returns undefined for untagged containers and plain objects', () => {
+    const state = createState({ volume: 1 });
+
+    expect(getSnapshotSlices(state.current)).toBeUndefined();
+    expect(getSnapshotSlices({ volume: 1 })).toBeUndefined();
+  });
+
+  it('tags the initial snapshot and every snapshot after patch or replace', () => {
+    const state = createState({ volume: 1 }, slices);
+    const initial = state.current;
+
+    state.patch({ volume: 0.5 });
+    const patched = state.current;
+
+    state.replace({ volume: 0.25 });
+    const replaced = state.current;
+
+    expect(getSnapshotSlices(initial)).toBe(slices);
+    expect(getSnapshotSlices(patched)).toBe(slices);
+    expect(getSnapshotSlices(replaced)).toBe(slices);
+  });
+
+  it('does not tag copies of a snapshot', () => {
+    const state = createState({ volume: 1 }, slices);
+
+    expect(getSnapshotSlices({ ...state.current })).toBeUndefined();
   });
 });

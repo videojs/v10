@@ -1,11 +1,13 @@
 import { POPUP_HOST_ATTR } from '@videojs/core';
 import type { AnyPlayerStore } from '@videojs/core/dom';
+import { controlsFeature } from '@videojs/core/dom';
 import { ContextProvider } from '@videojs/element/context';
 import type { MediaControlsState } from '@videojs/media';
-import { createStore, flush } from '@videojs/store';
+import { flush } from '@videojs/store';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { playerContext } from '../../../player/context';
+import { createTestPlayerStore } from '../../../testing/create-test-player-store';
 import { MenuElement } from '../../menu/menu-element';
 import { PopoverElement } from '../../popover/popover-element';
 import { TooltipElement } from '../../tooltip/tooltip-element';
@@ -36,23 +38,7 @@ function defineElement(tagName: string, Base: CustomElementConstructor): void {
 }
 
 function createControlsStore(): AnyPlayerStore {
-  return createStore<unknown>()<MediaControlsState>({
-    name: 'controls',
-    state: ({ get, set }) => {
-      return {
-        userActive: true,
-        controlsVisible: true,
-        requestControlsLock: () => () => {},
-        toggleControls() {
-          const visible = !(get().controlsVisible as boolean);
-
-          set({ userActive: visible, controlsVisible: visible });
-
-          return visible;
-        },
-      };
-    },
-  }) as unknown as AnyPlayerStore;
+  return createTestPlayerStore([controlsFeature]);
 }
 
 class TestPlayerProviderElement extends UIElement {

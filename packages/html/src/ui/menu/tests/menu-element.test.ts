@@ -1,10 +1,11 @@
 import type { AnyPlayerStore } from '@videojs/core/dom';
+import { controlsFeature } from '@videojs/core/dom';
 import { ContextProvider } from '@videojs/element/context';
-import type { MediaControlsState } from '@videojs/media';
-import { createStore, flush } from '@videojs/store';
+import { flush } from '@videojs/store';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { playerContext } from '../../../player/context';
+import { createTestPlayerStore } from '../../../testing/create-test-player-store';
 import { ControlsElement } from '../../controls/controls-element';
 import { UIElement } from '../../ui-element';
 import { MenuContentElement } from '../menu-content-element';
@@ -403,15 +404,9 @@ describe('MenuElement', () => {
     class TestPlayerProviderElement extends UIElement {
       readonly releaseControlsLock = vi.fn();
       readonly requestControlsLock = vi.fn(() => this.releaseControlsLock);
-      readonly store = createStore<unknown>()<MediaControlsState>({
-        name: 'controls',
-        state: () => ({
-          userActive: true,
-          controlsVisible: true,
-          requestControlsLock: this.requestControlsLock,
-          toggleControls: () => true,
-        }),
-      }) as unknown as AnyPlayerStore;
+      readonly store: AnyPlayerStore = createTestPlayerStore([controlsFeature], {
+        requestControlsLock: this.requestControlsLock,
+      });
       readonly provider = new ContextProvider(this, { context: playerContext, initialValue: this.store });
 
       override connectedCallback(): void {

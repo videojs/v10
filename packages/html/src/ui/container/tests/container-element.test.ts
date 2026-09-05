@@ -1,12 +1,14 @@
 import type { AnyPlayerStore } from '@videojs/core/dom';
+import { controlsFeature } from '@videojs/core/dom';
 import { registerI18n } from '@videojs/core/i18n';
 import { ContextProvider } from '@videojs/element/context';
 import type { MediaControlsState } from '@videojs/media';
-import { createStore, flush } from '@videojs/store';
+import { flush } from '@videojs/store';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { MediaI18nProviderElement } from '../../../i18n/provider-element';
 import { playerContext } from '../../../player/context';
+import { createTestPlayerStore } from '../../../testing/create-test-player-store';
 import { UIElement } from '../../ui-element';
 import { ContainerElement } from '../container-element';
 
@@ -20,20 +22,7 @@ function createElement<Element extends HTMLElement>(Base: abstract new () => Ele
 }
 
 function createControlsStore(): AnyPlayerStore {
-  return createStore<unknown>()<MediaControlsState>({
-    name: 'controls',
-    state: ({ get, set }) => ({
-      userActive: true,
-      controlsVisible: true,
-      requestControlsLock: () => () => {},
-      toggleControls() {
-        const visible = !(get().controlsVisible as boolean);
-
-        set({ userActive: visible, controlsVisible: visible });
-        return visible;
-      },
-    }),
-  }) as unknown as AnyPlayerStore;
+  return createTestPlayerStore([controlsFeature]);
 }
 
 class TestPlayerProviderElement extends UIElement {
