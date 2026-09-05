@@ -347,6 +347,64 @@ describe('createThumbnail', () => {
       handle.destroy();
     });
 
+    it('retargets img listeners and resize observation when the elements change', () => {
+      let img = document.createElement('img');
+      let container = createMockContainer();
+      const firstImg = img;
+      const onStateChange = vi.fn();
+      const handle = createThumbnail(
+        createOptions({ getContainer: () => container, getImg: () => img, onStateChange })
+      );
+
+      Object.defineProperty(firstImg, 'complete', { value: false, configurable: true });
+      handle.updateSrc('sprite.jpg');
+      handle.connect();
+
+      expect(ResizeObserverStub.instances).toHaveLength(1);
+      expect(ResizeObserverStub.instances[0]!.observe).toHaveBeenCalledWith(container);
+
+      img = document.createElement('img');
+      container = createMockContainer();
+      Object.defineProperty(img, 'complete', { value: false, configurable: true });
+      handle.connect();
+
+      expect(ResizeObserverStub.instances[0]!.disconnect).toHaveBeenCalledOnce();
+      expect(ResizeObserverStub.instances).toHaveLength(2);
+      expect(ResizeObserverStub.instances[1]!.observe).toHaveBeenCalledWith(container);
+
+      firstImg.dispatchEvent(new Event('error'));
+
+      expect(onStateChange).not.toHaveBeenCalled();
+      expect(handle.error).toBe(false);
+
+      img.dispatchEvent(new Event('error'));
+
+      expect(onStateChange).toHaveBeenCalledOnce();
+      expect(handle.error).toBe(true);
+
+      handle.destroy();
+    });
+
+    it('does not notify again when connect finds an already-settled img unchanged', () => {
+      const img = createMockImg();
+      const container = createMockContainer();
+      const onStateChange = vi.fn();
+      const handle = createThumbnail(
+        createOptions({ getContainer: () => container, getImg: () => img, onStateChange })
+      );
+
+      handle.updateSrc('sprite.jpg');
+      handle.connect();
+
+      expect(onStateChange).toHaveBeenCalledOnce();
+
+      handle.connect();
+
+      expect(onStateChange).toHaveBeenCalledOnce();
+
+      handle.destroy();
+    });
+
     it('detects already-loaded img on connect', () => {
       const img = createMockImg();
 
