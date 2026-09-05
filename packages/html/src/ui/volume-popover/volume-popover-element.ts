@@ -1,5 +1,5 @@
-import { VolumePopoverCore, VolumePopoverDataAttrs } from '@videojs/core';
-import { applyElementProps, applyStateDataAttrs, selectVolume } from '@videojs/core/dom';
+import { VolumePopoverCore, VolumePopoverStateDataAttrs } from '@videojs/core';
+import { applyStateDataAttrs, selectVolume } from '@videojs/core/dom';
 import type { PropertyValues } from '@videojs/element';
 import type { MediaVolumeState } from '@videojs/media';
 
@@ -39,19 +39,12 @@ export class VolumePopoverElement extends PopoverElement {
 
     const state = this.#core.getState();
 
-    applyStateDataAttrs(this, state, VolumePopoverDataAttrs);
+    applyStateDataAttrs(this, state, VolumePopoverStateDataAttrs);
     this.hidden = state.hidden;
 
     if (state.hidden) {
       this.close();
-
-      if (this.triggerElement) {
-        applyElementProps(this.triggerElement, {
-          'aria-expanded': undefined,
-          'aria-haspopup': undefined,
-          'aria-controls': undefined,
-        });
-      }
+      this.disconnectTrigger();
     }
   }
 }

@@ -126,8 +126,9 @@ export class PopoverElement extends UIElement {
     this.#popover?.close(reason);
   }
 
-  protected get triggerElement(): HTMLElement | null {
-    return this.#currentTrigger;
+  protected disconnectTrigger(): void {
+    this.#position.cleanup();
+    this.#cleanupTrigger();
   }
 
   protected override willUpdate(changed: PropertyValues): void {
@@ -214,16 +215,19 @@ export class PopoverElement extends UIElement {
   }
 
   #cleanupTrigger(): void {
-    if (this.#currentTrigger) {
-      applyElementProps(this.#currentTrigger, {
-        'aria-expanded': undefined,
-        'aria-haspopup': undefined,
-        'aria-controls': undefined,
-      });
-    }
+    if (this.#currentTrigger) this.#clearTriggerAttrs(this.#currentTrigger);
 
     this.#triggerAbort?.abort();
     this.#triggerAbort = null;
+    this.#popover?.setTriggerElement(null);
     this.#currentTrigger = null;
+  }
+
+  #clearTriggerAttrs(trigger: HTMLElement): void {
+    applyElementProps(trigger, {
+      'aria-expanded': undefined,
+      'aria-haspopup': undefined,
+      'aria-controls': undefined,
+    });
   }
 }

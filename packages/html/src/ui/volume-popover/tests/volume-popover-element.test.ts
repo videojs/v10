@@ -45,7 +45,17 @@ function createPopover(): VolumePopoverElement {
   return document.createElement(tag) as VolumePopoverElement;
 }
 
+function createPlayerProvider(): TestPlayerProviderElement {
+  // SAFETY: The tag is registered to TestPlayerProviderElement above.
+  return document.createElement('test-volume-popover-player') as TestPlayerProviderElement;
+}
+
+function makeDOMRect(x: number, y: number, width: number, height: number): DOMRect {
+  return new DOMRect(x, y, width, height);
+}
+
 afterEach(() => {
+  vi.restoreAllMocks();
   document.body.innerHTML = '';
 });
 
@@ -59,7 +69,7 @@ describe('VolumePopoverElement', () => {
     ['unavailable', true],
     ['unsupported', true],
   ] as const)('reflects %s volume controls with hidden=%s', async (volumeAvailability, hidden) => {
-    const provider = document.createElement('test-volume-popover-player') as TestPlayerProviderElement;
+    const provider = createPlayerProvider();
 
     provider.store = createVolumeStore(volumeAvailability);
     const trigger = document.createElement('button');
@@ -76,5 +86,52 @@ describe('VolumePopoverElement', () => {
     expect(trigger.hasAttribute('aria-expanded')).toBe(!hidden);
     expect(trigger.hasAttribute('aria-haspopup')).toBe(!hidden);
     expect(trigger.hasAttribute('aria-controls')).toBe(!hidden);
+  });
+
+  it('does not attach popover interactions when volume controls are unavailable', async () => {
+    const provider = createPlayerProvider();
+
+    provider.store = createVolumeStore('unsupported');
+    const trigger = document.createElement('button');
+    const popover = createPopover();
+    const onOpenChange = vi.fn();
+
+    popover.addEventListener('open-change', onOpenChange);
+    document.body.append(provider);
+    provider.append(trigger, popover);
+    await popover.updateComplete;
+
+    trigger.click();
+    await popover.updateComplete;
+
+    expect(onOpenChange).not.toHaveBeenCalled();
+    expect(popover.hasAttribute('data-open')).toBe(false);
+    expect(trigger.hasAttribute('aria-expanded')).toBe(false);
+    expect(trigger.hasAttribute('aria-haspopup')).toBe(false);
+    expect(trigger.hasAttribute('aria-controls')).toBe(false);
+  });
+
+  it('preserves the collision-adjusted side', async () => {
+    const provider = createPlayerProvider();
+    const trigger = document.createElement('button');
+    const popover = createPopover();
+
+    popover.id = 'volume-popover';
+    popover.open = true;
+    popover.side = 'top';
+    popover.boundary = 'viewport';
+    trigger.setAttribute('commandfor', popover.id);
+
+    vi.spyOn(trigger, 'getBoundingClientRect').mockReturnValue(makeDOMRect(100, 10, 40, 20));
+    vi.spyOn(popover, 'getBoundingClientRect').mockReturnValue(makeDOMRect(0, 0, 100, 60));
+    vi.spyOn(document.documentElement, 'getBoundingClientRect').mockReturnValue(makeDOMRect(0, 0, 300, 200));
+    Object.defineProperty(popover, 'offsetWidth', { configurable: true, value: 100 });
+    Object.defineProperty(popover, 'offsetHeight', { configurable: true, value: 60 });
+
+    document.body.append(provider);
+    provider.append(trigger, popover);
+    await popover.updateComplete;
+
+    expect(popover.getAttribute('data-side')).toBe('bottom');
   });
 });
