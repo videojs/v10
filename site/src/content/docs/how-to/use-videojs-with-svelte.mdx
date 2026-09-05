@@ -20,9 +20,9 @@ If your component needs to react to player state or call a player action, wait u
   let paused = true;
 
   onMount(() => {
-    const sync = () => (paused = player.store.paused);
+    const sync = () => (paused = player.paused);
     sync();
-    return player.store.subscribe(sync);
+    return player.subscribe(sync);
   });
 </script>
 
@@ -30,7 +30,7 @@ If your component needs to react to player state or call a player action, wait u
 <p>{paused ? 'Paused' : 'Playing'}</p>
 ```
 
-Return the store's unsubscribe function from `onMount` so Svelte cleans up the subscription. Use the store for player state and actions.
+Return the unsubscribe function from `onMount` so Svelte cleans up the subscription. The player element exposes its configured state and actions directly.
 
 When you need the native event itself, attach a listener to the `<video>`, `<audio>`, or media custom element:
 

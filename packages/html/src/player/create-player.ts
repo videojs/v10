@@ -10,10 +10,10 @@ import {
 } from '@videojs/core/dom';
 import { combine, createStore } from '@videojs/store';
 
-import type { PlayerElementConstructor } from '../store/types';
 import { containerContext, mediaContext, type PlayerContext, playerContext } from './context';
 import { createPlayerController, type PlayerController } from './player-controller';
 import { createPlayerElement } from './player-element';
+import type { PlayerElementConstructor } from './types';
 
 export interface CreatePlayerConfig<Features extends AnyPlayerFeature[]> {
   features: Features;

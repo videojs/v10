@@ -39,6 +39,19 @@ class PlayButton extends UIElement {
 
 `PlayerElement` and `PlayerController` are scoped to the created player's feature set. The element owns its store and attachment lifecycle; the configured controller does not need a context argument. `ContainerElement` consumes the shared player context, so the same class works with any created player.
 
+Read state, call actions, and subscribe directly through a player element reference:
+
+```ts
+player.paused;
+await player.play();
+
+const unsubscribe = player.subscribe(() => {
+  console.log(player.currentTime);
+});
+```
+
+Element and configuration properties keep their existing meaning when a state name conflicts. Use `player.store` to access a conflicting store member, such as the resolved content `title`.
+
 Use split elements (recommended for reusable skins/layouts):
 
 ```ts title="player.ts"

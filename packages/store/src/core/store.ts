@@ -291,3 +291,13 @@ export type InferStoreTarget<S extends AnyStore> = S extends { readonly target: 
   : never;
 
 export type InferStoreState<S extends AnyStore> = S extends { readonly state: infer State } ? State : never;
+
+/**
+ * An object that owns a store and exposes its state and actions as direct, read-only properties.
+ *
+ * Members already defined by the host keep their host meaning. Access the store directly when a state member collides.
+ */
+export type StoreHost<Store extends AnyStore, Host extends object = object> = Host & {
+  readonly store: Store;
+  subscribe(callback: StateChange, options?: SubscribeOptions): () => void;
+} & Readonly<Omit<InferStoreState<Store>, keyof Host | 'store' | 'subscribe'>>;
