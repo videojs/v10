@@ -1,8 +1,8 @@
 import type { PlayerStore } from '@videojs/core/dom';
-import type { ReactiveController, ReactiveControllerHost } from '@videojs/element';
+import type { ReactiveControllerHost } from '@videojs/element';
 import { ContextConsumer } from '@videojs/element/context';
 import type { InferStoreState, Selector } from '@videojs/store';
-import { StoreController } from '@videojs/store/html';
+import { SnapshotController } from '@videojs/store/html';
 
 import type { PlayerContext } from './context';
 
@@ -31,12 +31,12 @@ export type PlayerControllerHost = ReactiveControllerHost & HTMLElement;
  *   }
  *   ```;
  */
-export class PlayerController<Store extends PlayerStore, Result = Store> implements ReactiveController {
+export class PlayerController<Store extends PlayerStore, Result = Store> {
   readonly #host: PlayerControllerHost;
   readonly #selector: Selector<InferStoreState<Store>, Result> | undefined;
 
-  #consumer: ContextConsumer<PlayerContext<Store>, PlayerControllerHost>;
-  #store: StoreController<Store, Result> | null = null;
+  readonly #consumer: ContextConsumer<PlayerContext<Store>, PlayerControllerHost>;
+  #snapshot: SnapshotController<object, Result> | null = null;
 
   /**
    * @param host - The host element that owns this controller.
@@ -65,11 +65,9 @@ export class PlayerController<Store extends PlayerStore, Result = Store> impleme
 
     this.#consumer = new ContextConsumer(host, {
       context,
-      callback: (ctx) => this.#connect(ctx),
+      callback: (store) => this.#connect(store),
       subscribe: true,
     });
-
-    host.addController(this);
   }
 
   get value(): Result | undefined {
@@ -79,28 +77,29 @@ export class PlayerController<Store extends PlayerStore, Result = Store> impleme
     // Without selector: return store directly
     if (!this.#selector) return store as unknown as Result;
 
-    // With selector: use StoreController
-    return this.#store?.value;
+    // With selector: the subscribing context callback has already retargeted the snapshot.
+    return this.#snapshot?.value;
   }
 
   get displayName(): string | undefined {
     return this.#selector?.displayName;
   }
 
-  hostConnected(): void {
-    const store = this.#consumer.value;
+  #connect(store: Store | undefined): void {
+    if (!this.#selector) return;
 
-    if (store) this.#connect(store);
-  }
-
-  hostDisconnected(): void {
-    this.#store = null;
-  }
-
-  #connect(store: Store): void {
-    if (!this.#store && this.#selector) {
-      this.#store = new StoreController(this.#host, store, this.#selector);
+    if (!store) {
+      this.#snapshot?.untrack();
+      return;
     }
+
+    if (!this.#snapshot) {
+      // SAFETY: `store.$state` holds `InferStoreState<Store>`, which is what this selector reads.
+      this.#snapshot = new SnapshotController(this.#host, store.$state, this.#selector as Selector<object, Result>);
+      return;
+    }
+
+    this.#snapshot.track(store.$state);
   }
 }
 
