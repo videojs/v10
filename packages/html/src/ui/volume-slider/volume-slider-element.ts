@@ -68,7 +68,7 @@ export class VolumeSliderElement extends UIElement {
     const isDisabled = () => {
       const volume = this.#volumeState.value;
 
-      return this.disabled || !volume || volume.volumeAvailability !== 'available';
+      return this.destroyed || this.disabled || !volume || volume.volumeAvailability !== 'available';
     };
 
     const getPercent = () => (this.#volumeState.value?.volume ?? 0) * 100;
@@ -110,6 +110,7 @@ export class VolumeSliderElement extends UIElement {
     applyElementProps(this, wheelProps, { signal });
     applyStyles(this, this.#slider.rootStyle);
     this.#slider.input.subscribe(() => this.requestUpdate(), { signal });
+    this.requestUpdate();
 
     if (__DEV__ && !this.#volumeState.value) {
       logMissingFeature(this.localName, this.#volumeState.displayName!);
@@ -117,16 +118,25 @@ export class VolumeSliderElement extends UIElement {
   }
 
   override disconnectedCallback(): void {
-    this.#releaseControlsVisibilityLock();
+    this.#disposeSlider();
     super.disconnectedCallback();
-    this.#disconnect?.abort();
-    this.#disconnect = null;
   }
 
   override destroyCallback(): void {
-    this.#releaseControlsVisibilityLock();
-    this.#slider?.destroy();
+    this.#disposeSlider();
     super.destroyCallback();
+  }
+
+  // Each connection owns one slider API. Destroying it on disconnect releases
+  // the ResizeObserver and pointer capture instead of leaking them on reconnect.
+  #disposeSlider(): void {
+    this.#releaseControlsVisibilityLock();
+
+    this.#disconnect?.abort();
+    this.#disconnect = null;
+
+    this.#slider?.destroy();
+    this.#slider = null;
   }
 
   #releaseControlsVisibilityLock(): void {

@@ -75,7 +75,7 @@ export class TimeSliderElement extends UIElement {
       getElement: () => this,
       getThumbElement: () => this.querySelector<HTMLElement>('media-slider-thumb'),
       getOrientation: () => this.orientation,
-      isDisabled: () => this.disabled || !this.#timeState.value,
+      isDisabled: () => this.destroyed || this.disabled || !this.#timeState.value,
       getPercent: () => {
         const media = this.#timeState.value;
         if (!media) return 0;
@@ -109,6 +109,7 @@ export class TimeSliderElement extends UIElement {
     applyElementProps(this, this.#slider.rootProps, { signal });
     applyStyles(this, this.#slider.rootStyle);
     this.#slider.input.subscribe(() => this.requestUpdate(), { signal });
+    this.requestUpdate();
 
     if (__DEV__ && !this.#timeState.value) {
       logMissingFeature(this.localName, this.#timeState.displayName!);
@@ -116,18 +117,26 @@ export class TimeSliderElement extends UIElement {
   }
 
   override disconnectedCallback(): void {
-    this.#releaseControlsVisibilityLock();
-    this.#resumeIfDragPaused();
+    this.#disposeSlider();
     super.disconnectedCallback();
-    this.#disconnect?.abort();
-    this.#disconnect = null;
   }
 
   override destroyCallback(): void {
+    this.#disposeSlider();
+    super.destroyCallback();
+  }
+
+  // Each connection owns one slider API. Destroying it on disconnect releases
+  // the ResizeObserver and pointer capture instead of leaking them on reconnect.
+  #disposeSlider(): void {
     this.#releaseControlsVisibilityLock();
     this.#resumeIfDragPaused();
+
+    this.#disconnect?.abort();
+    this.#disconnect = null;
+
     this.#slider?.destroy();
-    super.destroyCallback();
+    this.#slider = null;
   }
 
   // createSlider's destroy() does not fire onDragEnd, so a teardown mid-drag
