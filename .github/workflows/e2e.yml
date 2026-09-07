@@ -259,6 +259,58 @@ jobs:
           path: apps/e2e/test-results/skin-parity/
           retention-days: 7
 
+  # Baselines only match when recorded in the image the suites run in. Label a pull request `record:snapshots` to
+  # record the player visual specs here; download the artifact, copy the `*-snapshots` directories into place, and
+  # commit them.
+  snapshots:
+    name: Record snapshots
+    needs: [changes, build]
+    if: ${{ !cancelled() && needs.build.result == 'success' && contains(github.event.pull_request.labels.*.name, 'record:snapshots') }}
+    runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.59.1-noble
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version-file: '.nvmrc'
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Restore Vite Task cache
+        uses: actions/cache/restore@v6
+        with:
+          path: node_modules/.vite/task-cache
+          key: vite-task-${{ runner.os }}-${{ runner.arch }}-e2e-${{ github.sha }}-${{ github.run_attempt }}
+          restore-keys: |
+            vite-task-${{ runner.os }}-${{ runner.arch }}-e2e-
+            vite-task-${{ runner.os }}-${{ runner.arch }}-packages-
+
+      - name: Replay the build
+        run: pnpm build:packages && pnpm build:cdn && pnpm exec vp run '@videojs/e2e#prepare:player'
+
+      - name: Record player visual snapshots
+        working-directory: apps/e2e
+        run: pnpm exec playwright test --config suites/player/playwright.config.ts visual --update-snapshots --project=vite-chromium --project=vite-webkit
+
+      - name: Upload snapshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-snapshots
+          path: apps/e2e/suites/player/tests/**/*-snapshots/
+          retention-days: 7
+
   registry:
     name: Registry consumers
     runs-on: ubuntu-latest
