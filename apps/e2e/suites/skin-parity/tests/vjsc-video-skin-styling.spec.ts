@@ -396,9 +396,10 @@ for (const variant of CASES) {
     expect(tailwindMenu).toEqual(cssMenu);
     expect(tailwindMenu).toEqual({ heightInSpacingUnits: 56, maxHeightInSpacingUnits: 56, scrolls: true });
 
+    // Gaps measured once Inter has loaded the label; the fallback face reads about two pixels larger.
     if (tailwindPreview) {
       expect(tailwindPreview.timeToSliderGap).toBeGreaterThanOrEqual(14);
-      expect(tailwindPreview.timeToThumbnailGap).toBeGreaterThanOrEqual(8);
+      expect(tailwindPreview.timeToThumbnailGap).toBeGreaterThanOrEqual(6);
     }
 
     await exitFullscreen(page);
@@ -422,7 +423,7 @@ test('minimal fullscreen geometry scales through the large breakpoints', async (
 
     expect(cssFullscreen.scale).toBe(scale);
     expect(cssPreview.timeToSliderGap).toBeGreaterThanOrEqual(17);
-    expect(cssPreview.timeToThumbnailGap).toBeGreaterThanOrEqual(10);
+    expect(cssPreview.timeToThumbnailGap).toBeGreaterThanOrEqual(7);
     expect(cssMenu).toEqual({ heightInSpacingUnits: 56, maxHeightInSpacingUnits: 56, scrolls: true });
 
     await exitFullscreen(page);
@@ -1110,9 +1111,6 @@ async function enterFullscreen(root: Locator) {
 }
 
 async function fullscreenPreviewContract(root: Locator) {
-  // The gaps are measured against the time label's box, which follows its font's metrics until Inter has loaded.
-  await settleFonts(root);
-
   const slider = root.getByRole('slider', { name: 'Seek' }).locator('..');
   const box = await slider.boundingBox();
   if (!box) throw new Error('Expected the fullscreen seek slider to have a rendered box.');
@@ -1126,6 +1124,9 @@ async function fullscreenPreviewContract(root: Locator) {
   await expect(thumbnail).not.toHaveAttribute('data-loading', '', { timeout: 20_000 });
   await expect.poll(() => thumbnail.evaluate((element) => element.getBoundingClientRect().height)).toBeGreaterThan(0);
   await settleAnimations(slider.locator(':scope > :last-child'));
+  // The time label appears with the preview and is the first use of its weight, so its box follows the fallback font's
+  // metrics until Inter has loaded it.
+  await settleFonts(slider);
 
   return slider.evaluate((element) => {
     const preview = element.lastElementChild;
@@ -1239,6 +1240,8 @@ async function triggerIndicator(root: Locator, key: string, selector: string) {
 
   await expect(indicator).toBeVisible();
   await expect(indicator).not.toHaveAttribute('data-starting-style', '');
+  // The indicator's label is the first use of its weight, so Inter starts loading it now, not when the page loaded.
+  await settleFonts(indicator);
   const contract = await indicatorContract(indicator);
 
   await page.clock.runFor(1_000);
@@ -1696,6 +1699,8 @@ async function accentContrastContract(root: Locator, accent: string) {
 
   await target.hover();
   await root.page().waitForTimeout(200);
+  // The color transitions in oklab, and a computed color read mid-transition serializes in that space.
+  await settleAnimations(target);
 
   return target.evaluate((element) => {
     const style = getComputedStyle(element);
