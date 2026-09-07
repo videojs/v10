@@ -17,7 +17,7 @@ import { createSelector } from "@videojs/store";
 
 `createSelector` creates a type-safe selector function for a given slice. The returned selector extracts that slice's state from the full store state, or returns `undefined` if the slice is not configured.
 
-The built-in selectors (<DocsLink slug="reference/feature-playback">`selectPlayback`</DocsLink>, <DocsLink slug="reference/feature-buffer">`selectBuffer`</DocsLink>, etc.) are all created with `createSelector`. Use it to create selectors for custom slices.
+The built-in selectors (<DocsLink slug="components/feature-playback">`selectPlayback`</DocsLink>, <DocsLink slug="components/feature-buffer">`selectBuffer`</DocsLink>, etc.) are all created with `createSelector`. Use it to create selectors for custom slices.
 
 ```ts title="my-custom-selector.ts"
 import { createSelector } from '@videojs/store';
@@ -30,11 +30,11 @@ const state = selectCustom(store.state);
 ```
 
 <FrameworkCase frameworks={["react"]}>
-Pass selectors to <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> or <DocsLink slug="reference/use-store">`useStore`</DocsLink> for reactive subscriptions.
+Pass selectors to <DocsLink slug="components/use-player">`usePlayer`</DocsLink> or <DocsLink slug="components/use-store">`useStore`</DocsLink> for reactive subscriptions.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-Pass selectors to <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> or <DocsLink slug="reference/store-controller">`StoreController`</DocsLink> for reactive subscriptions.
+Pass selectors to <DocsLink slug="components/player-controller">`PlayerController`</DocsLink> or <DocsLink slug="components/store-controller">`StoreController`</DocsLink> for reactive subscriptions.
 </FrameworkCase>
 
 <UtilReference util="createSelector" />

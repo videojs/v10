@@ -39,10 +39,10 @@ A `State` container is a reactive primitive that holds an object value and notif
 | Hook                                                       | Input          | Subscribes to                    |
 | ---------------------------------------------------------- | -------------- | -------------------------------- |
 | `useSnapshot`                                              | `State<T>`     | Raw state container              |
-| <DocsLink slug="reference/use-store">`useStore`</DocsLink> | Store instance | Store-backed state with features |
+| <DocsLink slug="components/use-store">`useStore`</DocsLink> | Store instance | Store-backed state with features |
 
-Use `useSnapshot` when working with standalone `State` containers outside the player store system -- for example, custom state in component libraries. For player state, use <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> or <DocsLink slug="reference/use-store">`useStore`</DocsLink>.
+Use `useSnapshot` when working with standalone `State` containers outside the player store system -- for example, custom state in component libraries. For player state, use <DocsLink slug="components/use-player">`usePlayer`</DocsLink> or <DocsLink slug="components/use-store">`useStore`</DocsLink>.
 
-`useSnapshot` is built on <DocsLink slug="reference/use-selector">`useSelector`</DocsLink> and uses `shallowEqual` by default. The HTML equivalent is `SnapshotController`.
+`useSnapshot` is built on <DocsLink slug="components/use-selector">`useSelector`</DocsLink> and uses `shallowEqual` by default. The HTML equivalent is `SnapshotController`.
 
 <UtilReference util="useSnapshot" />

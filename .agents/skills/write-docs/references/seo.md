@@ -72,7 +72,7 @@ Set directly in the page or layout. Include "video player" and relevant keywords
 
 ## Body content keywords
 
-The installation page (`how-to/installation.mdx`) uses `<FrameworkCase>` to show framework-specific intro text with target keywords:
+The installation page (`guides/installation.mdx`) uses `<FrameworkCase>` to show framework-specific intro text with target keywords:
 
 - **React:** "React video player component library"
 - **HTML:** "HTML video player built on custom elements"

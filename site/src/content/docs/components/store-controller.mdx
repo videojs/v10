@@ -41,14 +41,14 @@ class PlayButton extends HTMLElement {
 
 ### StoreController vs PlayerController vs SnapshotController
 
-| | `StoreController` | <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> | <DocsLink slug="reference/snapshot-controller">`SnapshotController`</DocsLink> |
+| | `StoreController` | <DocsLink slug="components/player-controller">`PlayerController`</DocsLink> | <DocsLink slug="components/snapshot-controller">`SnapshotController`</DocsLink> |
 |---|---|---|---|
 | **Input** | Any store or context | Player store context | `State` container |
 | **Typed to** | Generic store | Player features | Raw state |
 | **Use case** | General-purpose store access | Player UI elements | Low-level state subscription |
 
-<DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> is a typed wrapper around `StoreController` scoped to the player store. For player UI, prefer `PlayerController`. Use `StoreController` when working with a custom store outside the player system.
+<DocsLink slug="components/player-controller">`PlayerController`</DocsLink> is a typed wrapper around `StoreController` scoped to the player store. For player UI, prefer `PlayerController`. Use `StoreController` when working with a custom store outside the player system.
 
-When you pass a selector, `StoreController` internally creates a <DocsLink slug="reference/snapshot-controller">`SnapshotController`</DocsLink> on the store's `$state` container. Without a selector, no subscription is created -- you get the store instance for imperative access to actions.
+When you pass a selector, `StoreController` internally creates a <DocsLink slug="components/snapshot-controller">`SnapshotController`</DocsLink> on the store's `$state` container. Without a selector, no subscription is created -- you get the store instance for imperative access to actions.
 
 <UtilReference util="StoreController" />

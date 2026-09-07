@@ -59,7 +59,7 @@ HTML-specific explanation or code example.
 ## See also
 
 - <DocsLink slug="concepts/related-concept">Related concept</DocsLink>
-- <DocsLink slug="reference/related-component">Component reference</DocsLink>
+- <DocsLink slug="components/related-component">Component reference</DocsLink>
 ```
 
 ## Checklist

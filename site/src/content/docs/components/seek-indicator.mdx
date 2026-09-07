@@ -47,7 +47,7 @@ import basicUsageHtmlTs from "@/components/docs/demos/seek-indicator/html/css/Ba
 
 ## Behavior
 
-`SeekIndicator` displays feedback for seek actions emitted by a <DocsLink slug="reference/hotkey">`Hotkey`</DocsLink> or <DocsLink slug="reference/gesture">`Gesture`</DocsLink> in the same player `Container`. It does not react to current-time changes or seek commands invoked directly through the player store.
+`SeekIndicator` displays feedback for seek actions emitted by a <DocsLink slug="components/hotkey">`Hotkey`</DocsLink> or <DocsLink slug="components/gesture">`Gesture`</DocsLink> in the same player `Container`. It does not react to current-time changes or seek commands invoked directly through the player store.
 
 | Action | Direction | Value |
 | --- | --- | --- |
@@ -109,7 +109,7 @@ React renders standard DOM elements. Add a `className` to the Root:
 
 ## Accessibility
 
-`SeekIndicator` is visual feedback and does not create a live region. Keep the same seek operation available through keyboard-operable controls, and pair it with <DocsLink slug="reference/status-announcer">`StatusAnnouncer`</DocsLink> when changes should be announced to screen readers. Do not make `SeekIndicator.Value` a live region because rapid seek input would produce repeated announcements.
+`SeekIndicator` is visual feedback and does not create a live region. Keep the same seek operation available through keyboard-operable controls, and pair it with <DocsLink slug="components/status-announcer">`StatusAnnouncer`</DocsLink> when changes should be announced to screen readers. Do not make `SeekIndicator.Value` a live region because rapid seek input would produce repeated announcements.
 
 ## Examples
 

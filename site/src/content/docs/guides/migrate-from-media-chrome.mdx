@@ -16,7 +16,7 @@ Scoped to apps that compose their own player from Media Chrome elements. If you 
 
 ## Before you begin
 
-Install Video.js and choose a <DocsLink slug="concepts/presets">preset</DocsLink> (see <DocsLink slug="how-to/installation">Installation</DocsLink>). Start with its ready-made skin if those controls fit your player. If you need to keep a custom control bar, build it from the individual Video.js UI components instead.
+Install Video.js and choose a <DocsLink slug="concepts/presets">preset</DocsLink> (see <DocsLink slug="guides/installation">Installation</DocsLink>). Start with its ready-made skin if those controls fit your player. If you need to keep a custom control bar, build it from the individual Video.js UI components instead.
 
 <FrameworkCase frameworks={["html"]}>
 ```bash
@@ -123,7 +123,7 @@ export function MyPlayer() {
 }
 ```
 
-A preset player carries a fixed set of <DocsLink slug="concepts/features">features</DocsLink>. When you need a different set, build your own with <DocsLink slug="reference/create-player">`createPlayer`</DocsLink>. Hand it a feature list and you get back a typed `Player` component and `usePlayer` hook, the same pair the preset is made of. Call it once, outside your component, and reuse it.
+A preset player carries a fixed set of <DocsLink slug="concepts/features">features</DocsLink>. When you need a different set, build your own with <DocsLink slug="components/create-player">`createPlayer`</DocsLink>. Hand it a feature list and you get back a typed `Player` component and `usePlayer` hook, the same pair the preset is made of. Call it once, outside your component, and reuse it.
 
 ```tsx
 import { createPlayer } from '@videojs/react';
@@ -132,7 +132,7 @@ import { videoFeatures } from '@videojs/react/video';
 const { Player } = createPlayer({ features: videoFeatures });
 ```
 
-Read player state with <DocsLink slug="reference/use-player">`usePlayer`</DocsLink>, <DocsLink slug="reference/use-media">`useMedia`</DocsLink>, and <DocsLink slug="reference/use-store">`useStore`</DocsLink>. Player hooks must run in a descendant component rendered inside `VideoPlayer` or the `Player` returned by `createPlayer`. A hook in the same component that returns the provider is still outside that provider.
+Read player state with <DocsLink slug="components/use-player">`usePlayer`</DocsLink>, <DocsLink slug="components/use-media">`useMedia`</DocsLink>, and <DocsLink slug="components/use-store">`useStore`</DocsLink>. Player hooks must run in a descendant component rendered inside `VideoPlayer` or the `Player` returned by `createPlayer`. A hook in the same component that returns the provider is still outside that provider.
 
 </FrameworkCase>
 
@@ -156,7 +156,7 @@ Media Chrome configures behavior through `<media-controller>` attributes. Video.
 | `defaultsubtitles` | `<track default>` for authored tracks | Add `default` to an authored captions or subtitles track. Tracks discovered from a provider or manifest don't have one generic player-level default flag. |
 | `defaultstreamtype` | `streamType` feature | Partial: derived from the media, with no pre-load default. |
 | `liveedgeoffset`, `seektoliveoffset` | live media engine | Live-edge behavior lives in the playback engine, not a UI attribute. |
-| `lang` | i18n translator | Localization is configured through the <DocsLink slug="how-to/internationalize-the-player">translator and locale registry</DocsLink>. |
+| `lang` | i18n translator | Localization is configured through the <DocsLink slug="guides/internationalize-the-player">translator and locale registry</DocsLink>. |
 
 ### Hotkeys
 
@@ -208,7 +208,7 @@ Unchanged names: `media-play-button`, `media-mute-button`, `media-fullscreen-but
 Matching tag names do not mean matching appearance. Media Chrome buttons include default icons and styles. Individual Video.js buttons provide behavior, state, and an accessible name, but no visible content or finished styling. Add text, an SVG, or a `<media-icon>`, plus your own CSS. Without visible content, a button can work while showing nothing. Sliders also need their child elements and CSS. Use a ready-made skin when you want finished controls.
 </Aside>
 
-Video.js sliders use `media-slider-track`, `media-slider-fill`, and `media-slider-thumb`. See <DocsLink slug="reference/time-slider">`media-time-slider`</DocsLink> and <DocsLink slug="reference/volume-slider">`media-volume-slider`</DocsLink> for copy-paste markup and CSS.
+Video.js sliders use `media-slider-track`, `media-slider-fill`, and `media-slider-thumb`. See <DocsLink slug="components/time-slider">`media-time-slider`</DocsLink> and <DocsLink slug="components/volume-slider">`media-volume-slider`</DocsLink> for copy-paste markup and CSS.
 
 <FrameworkCase frameworks={["html"]}>
 Media Chrome's named icon slots do not carry over. Remove attributes such as `slot="play"` and put the icon directly inside the Video.js button. Import `@videojs/html/icons/element` to use `<media-icon>`, as shown in [Map the controller](#map-the-controller). Set `family="minimal"` to use the Minimal skin's icon designs. You can also use your own text or SVG.
@@ -286,7 +286,7 @@ The packaged Video.js skins expose `--media-accent-color`, `--media-accent-text-
 
 ## Themes become skins
 
-Media Chrome's `<template>`-based themes (`media-theme`) become Video.js <DocsLink slug="concepts/skins">skins</DocsLink> and <DocsLink slug="concepts/presets">presets</DocsLink>. Start from a preset, then <DocsLink slug="how-to/customize-skins" anchor="eject-and-edit-a-skin">eject its skin</DocsLink>, rather than authoring a template.
+Media Chrome's `<template>`-based themes (`media-theme`) become Video.js <DocsLink slug="concepts/skins">skins</DocsLink> and <DocsLink slug="concepts/presets">presets</DocsLink>. Start from a preset, then <DocsLink slug="guides/customize-skins" anchor="eject-and-edit-a-skin">eject its skin</DocsLink>, rather than authoring a template.
 
 <FrameworkCase frameworks={["html"]}>
 Ready-made HTML skins keep their controls inside Shadow DOM. Code outside the skin sees a click as coming from the skin, not the button inside it. Some control events also stay inside the skin. Do not use an outside listener to identify which built-in button was clicked.
@@ -315,7 +315,7 @@ player.store.state.toggleFullscreen();
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
-Select an action with the same <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> hook you read state with:
+Select an action with the same <DocsLink slug="components/use-player">`usePlayer`</DocsLink> hook you read state with:
 
 ```tsx
 import { usePlayer } from '@videojs/react/video';
@@ -331,7 +331,7 @@ function FullscreenShortcut() {
 The Media Chrome habit of scripting the media element directly still works, unchanged. The media is a plain child of the player, and Video.js derives player state from the native media events, so `video.play()` or `video.currentTime = 30` never leaves the controls out of sync. The media element also stays the way to swap `src`, replace the media component, and listen for native events.
 
 <FrameworkCase frameworks={["react"]}>
-Put a `ref` on the media component to reach the rendered `HTMLVideoElement`; there's no `media` slot to reach through. For the Video.js media object, call <DocsLink slug="reference/use-media">`useMedia`</DocsLink> from a component inside the player; media that wrap a playback engine expose it there through the `engine` escape hatch.
+Put a `ref` on the media component to reach the rendered `HTMLVideoElement`; there's no `media` slot to reach through. For the Video.js media object, call <DocsLink slug="components/use-media">`useMedia`</DocsLink> from a component inside the player; media that wrap a playback engine expose it there through the `engine` escape hatch.
 </FrameworkCase>
 
 ## Known gaps
@@ -410,6 +410,6 @@ Work against the store directly: `selectVolume(store.state).setVolume(…)` on i
 
 ## See also
 
-- <DocsLink slug="how-to/installation">Installation</DocsLink>
+- <DocsLink slug="guides/installation">Installation</DocsLink>
 - <DocsLink slug="concepts/ui-components">UI components</DocsLink>
-- <DocsLink slug="concepts/skins">Skins</DocsLink> and <DocsLink slug="how-to/customize-skins">Customize skins</DocsLink>
+- <DocsLink slug="concepts/skins">Skins</DocsLink> and <DocsLink slug="guides/customize-skins">Customize skins</DocsLink>

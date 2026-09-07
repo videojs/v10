@@ -6,7 +6,7 @@ description: How to create API reference pages for the Video.js documentation si
 import Aside from '@/components/Aside.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
 
-This guide covers how to create API reference pages — component references, media references, and util references (hooks, controllers, mixins) under `reference/` in the docs sidebar.
+This guide covers how to create API reference pages — component references, media references, and util references (hooks, controllers, mixins) under `components/` in the docs sidebar.
 
 <Aside type="tip">
 Reference pages use the portable `write-api-reference` agent skill. Invoke `/write-api-reference play-button` in clients that expose skills as slash commands.
@@ -138,7 +138,7 @@ All demo videos use `autoplay muted playsinline loop` (React: `autoPlay muted pl
 
 ## Create the MDX reference page
 
-Create `site/src/content/docs/reference/{name}.mdx` with this structure:
+Create `site/src/content/docs/components/{name}.mdx` with this structure:
 
 ### Frontmatter
 
@@ -148,12 +148,12 @@ title: PlayButton
 frameworkTitle:
   html: media-play-button
 description: A button component for playing and pausing media playback
-stability: beta
+stability: experimental
 ---
 ```
 
 Use `frameworkTitle` to show the HTML custom element tag name when the HTML framework is selected.
-Add `stability: beta` when the individual API is available for testing but may still change. The page header and sidebar display the status automatically.
+Add `stability: experimental` when the individual API is available for testing but may still change. The whole of v10 is in beta, so "beta" on one page says nothing; "experimental" marks the APIs that are less settled than the rest. The page header and sidebar display the status automatically.
 
 ### Imports
 
@@ -339,8 +339,8 @@ Skins, UI Components, Media Components, Extensions, and Player Features are flat
   sidebarLabel: 'UI Components',
   contents: [
     // sorted alphabetically
-    { slug: 'reference/play-button' },
-    { slug: 'reference/your-component' }, // add here
+    { slug: 'components/play-button' },
+    { slug: 'components/your-component' }, // add here
   ],
 },
 ```
@@ -357,10 +357,10 @@ Skins, UI Components, Media Components, Extensions, and Player Features are flat
 For reference, look at existing pages:
 
 **Component pages:**
-- <DocsLink slug="reference/play-button">PlayButton</DocsLink> — single-part, interactive
-- <DocsLink slug="reference/controls">Controls</DocsLink> — behavior-heavy (auto-hide)
-- <DocsLink slug="reference/time">Time</DocsLink> — multi-part, formatting
+- <DocsLink slug="components/play-button">PlayButton</DocsLink> — single-part, interactive
+- <DocsLink slug="components/controls">Controls</DocsLink> — behavior-heavy (auto-hide)
+- <DocsLink slug="components/time">Time</DocsLink> — multi-part, formatting
 
 **Util pages:**
-- <DocsLink slug="reference/use-player">usePlayer</DocsLink> — React hook, multi-overload
-- <DocsLink slug="reference/player-controller">PlayerController</DocsLink> — HTML controller
+- <DocsLink slug="components/use-player">usePlayer</DocsLink> — React hook, multi-overload
+- <DocsLink slug="components/player-controller">PlayerController</DocsLink> — HTML controller

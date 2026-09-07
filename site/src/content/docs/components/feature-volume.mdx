@@ -19,13 +19,13 @@ Controls volume level and mute state. These capabilities have independent availa
 ### Selector
 
 <FrameworkCase frameworks={["react"]}>
-Pass `selectVolume` to <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> to subscribe to volume state. Returns `undefined` if the volume feature is not configured.
+Pass `selectVolume` to <DocsLink slug="components/use-player">`usePlayer`</DocsLink> to subscribe to volume state. Returns `undefined` if the volume feature is not configured.
 
 Check `volumeAvailability` before showing a volume-level control, and check `mutedAvailability` before showing a mute control.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-Pass `selectVolume` to <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> to subscribe to volume state. Returns `undefined` if the volume feature is not configured.
+Pass `selectVolume` to <DocsLink slug="components/player-controller">`PlayerController`</DocsLink> to subscribe to volume state. Returns `undefined` if the volume feature is not configured.
 
 Check `volumeAvailability` before showing a volume-level control, and check `mutedAvailability` before showing a mute control.
 </FrameworkCase>

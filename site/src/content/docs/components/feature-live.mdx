@@ -15,11 +15,11 @@ Tracks when playback is at the live edge and what kind of live window the stream
 
 Both values are `NaN` when the media does not provide live-edge information.
 
-Use the <DocsLink slug="reference/feature-buffer">buffer feature</DocsLink> to find the times a viewer can seek to. Its `seekable` value contains `[start, end]` pairs. On a sliding live stream, the oldest and newest available times both move forward.
+Use the <DocsLink slug="components/feature-buffer">buffer feature</DocsLink> to find the times a viewer can seek to. Its `seekable` value contains `[start, end]` pairs. On a sliding live stream, the oldest and newest available times both move forward.
 
-The live presets do not include the <DocsLink slug="reference/feature-stream-type">stream type feature</DocsLink>, so `selectStreamType` returns `undefined` unless you add it to a custom player.
+The live presets do not include the <DocsLink slug="components/feature-stream-type">stream type feature</DocsLink>, so `selectStreamType` returns `undefined` unless you add it to a custom player.
 
-The <DocsLink slug="reference/feature-time">time feature</DocsLink> reports the end of the available live video as `duration`, even when the browser reports `Infinity`. To check for live playback, use `!Number.isNaN(targetLiveWindow)` instead of checking `duration`.
+The <DocsLink slug="components/feature-time">time feature</DocsLink> reports the end of the available live video as `duration`, even when the browser reports `Infinity`. To check for live playback, use `!Number.isNaN(targetLiveWindow)` instead of checking `duration`.
 
 ## Import
 
@@ -30,11 +30,11 @@ The <DocsLink slug="reference/feature-time">time feature</DocsLink> reports the 
 ### Selector
 
 <FrameworkCase frameworks={["react"]}>
-Pass `selectLive` to <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> to subscribe to live state. Returns `undefined` if the live feature is not configured.
+Pass `selectLive` to <DocsLink slug="components/use-player">`usePlayer`</DocsLink> to subscribe to live state. Returns `undefined` if the live feature is not configured.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-Pass `selectLive` to <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> to subscribe to live state. Returns `undefined` if the live feature is not configured.
+Pass `selectLive` to <DocsLink slug="components/player-controller">`PlayerController`</DocsLink> to subscribe to live state. Returns `undefined` if the live feature is not configured.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
@@ -124,5 +124,5 @@ export function CustomLiveButton() {
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-Read the same three selectors with <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink>. Call `selectTime`'s `seek()` action with the last end time from `selectBuffer` when `selectLive` reports a live source.
+Read the same three selectors with <DocsLink slug="components/player-controller">`PlayerController`</DocsLink>. Call `selectTime`'s `seek()` action with the last end time from `selectBuffer` when `selectLive` reports a live source.
 </FrameworkCase>

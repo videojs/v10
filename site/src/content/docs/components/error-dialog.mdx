@@ -57,7 +57,7 @@ import basicUsageHtmlTs from "@/components/docs/demos/error-dialog/html/css/Basi
 
 ## Behavior
 
-`ErrorDialog` is a specialized root driven by the player's <DocsLink slug="reference/feature-error">error feature</DocsLink>. It uses alert semantics and reuses the backdrop, popup, title, description, and close parts from <DocsLink slug="reference/dialog">`Dialog`</DocsLink>; it is not nested inside `AlertDialog`. It opens when the attached media reports an error and stays hidden otherwise. Closing it dismisses the current error in the player store.
+`ErrorDialog` is a specialized root driven by the player's <DocsLink slug="components/feature-error">error feature</DocsLink>. It uses alert semantics and reuses the backdrop, popup, title, description, and close parts from <DocsLink slug="components/dialog">`Dialog`</DocsLink>; it is not nested inside `AlertDialog`. It opens when the attached media reports an error and stays hidden otherwise. Closing it dismisses the current error in the player store.
 
 The title, description, and close label use localized default text. Provide children to any of those parts to replace its default content. Known media error codes use the matching translated message, while custom error messages are shown as written.
 

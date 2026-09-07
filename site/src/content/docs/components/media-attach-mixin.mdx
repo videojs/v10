@@ -12,7 +12,7 @@ import DocsLink from "@/components/docs/DocsLink.astro";
 import { MediaAttachMixin } from "@videojs/html";
 ```
 
-`MediaAttachMixin` creates a class that registers itself with the <DocsLink slug="reference/player">player</DocsLink> on connect. Apply it to custom media elements so they automatically wire to the store.
+`MediaAttachMixin` creates a class that registers itself with the <DocsLink slug="components/player">player</DocsLink> on connect. Apply it to custom media elements so they automatically wire to the store.
 
 Built-in elements, like `<hlsjs-video>`, `<dash-video>`, `<hls-video>`, and `<background-video>`, all use this mixin internally.
 
@@ -49,7 +49,7 @@ export class BackgroundVideo extends MediaAttachMixin(HTMLElement) {
 
 ## Factory function
 
-`MediaAttachMixin` is pre-configured with the default `mediaContext` published by <DocsLink slug="reference/player">`PlayerElement`</DocsLink>. Call `createMediaAttachMixin` only when a custom player publishes a matching custom `MediaContext`:
+`MediaAttachMixin` is pre-configured with the default `mediaContext` published by <DocsLink slug="components/player">`PlayerElement`</DocsLink>. Call `createMediaAttachMixin` only when a custom player publishes a matching custom `MediaContext`:
 
 ```ts
 import { createMediaAttachMixin } from '@videojs/html';

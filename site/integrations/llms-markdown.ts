@@ -151,7 +151,7 @@ export default function llmsMarkdown(): AstroIntegration {
             const framework = frameworkAttr || undefined;
 
             // Write markdown file as sibling to the directory
-            // docs/framework/html/how-to/slug -> docs/framework/html/how-to/slug.md
+            // docs/framework/html/guides/slug -> docs/framework/html/guides/slug.md
             const mdPath = join(siteDir, `${pathname}.md`);
             const footer = generatePageFooter(pathname, framework, siteUrl);
 

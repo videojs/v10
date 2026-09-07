@@ -78,12 +78,12 @@ Use `UIElement` for most custom controls. Use the specialized bases when your el
 
 `PlayerElement` follows the `UIElement` lifecycle. It detaches the store's current media target immediately in `disconnectedCallback()`, but keeps the store so a brief move can reconnect with its state intact. It destroys the store only from `destroyCallback()`.
 
-Built-in custom media elements compose `CustomMediaElement(...)` with <DocsLink slug="reference/media-attach-mixin">`MediaAttachMixin`</DocsLink>. `CustomMediaElement` queues one microtask after disconnection and destroys its media adapter only if it remains disconnected. This protects a synchronous move, but not a longer detached period. Its `keep-alive` attribute skips that automatic media-adapter destruction.
+Built-in custom media elements compose `CustomMediaElement(...)` with <DocsLink slug="components/media-attach-mixin">`MediaAttachMixin`</DocsLink>. `CustomMediaElement` queues one microtask after disconnection and destroys its media adapter only if it remains disconnected. This protects a synchronous move, but not a longer detached period. Its `keep-alive` attribute skips that automatic media-adapter destruction.
 
-Player roots use the configured <DocsLink slug="reference/player">`PlayerElement`</DocsLink> returned by `createPlayer`.
+Player roots use the configured <DocsLink slug="components/player">`PlayerElement`</DocsLink> returned by `createPlayer`.
 
 ## See also
 
-- <DocsLink slug="how-to/build-your-own-component">Build your own UI component</DocsLink>
-- <DocsLink slug="reference/player">`PlayerElement`</DocsLink>
-- <DocsLink slug="reference/media-attach-mixin">`MediaAttachMixin`</DocsLink>
+- <DocsLink slug="guides/build-your-own-component">Build your own UI component</DocsLink>
+- <DocsLink slug="components/player">`PlayerElement`</DocsLink>
+- <DocsLink slug="components/media-attach-mixin">`MediaAttachMixin`</DocsLink>

@@ -42,7 +42,7 @@ Each installation <DocsLink slug="concepts/presets">preset</DocsLink> ships its 
 
 The other presets follow the same pattern. Background video is the exception: one bundle, `background.js`, registers the player, the skin, and the `<background-video>` media element.
 
-A skin bundle registers every UI element its skin is built from. The CDN publishes no per-component bundles, though. If you have <DocsLink slug="how-to/customize-skins" anchor="eject-and-edit-a-skin">ejected a skin</DocsLink> and need to add new components, install from npm instead of from the CDN.
+A skin bundle registers every UI element its skin is built from. The CDN publishes no per-component bundles, though. If you have <DocsLink slug="guides/customize-skins" anchor="eject-and-edit-a-skin">ejected a skin</DocsLink> and need to add new components, install from npm instead of from the CDN.
 
 ## Media bundles
 
@@ -76,7 +76,7 @@ English ships inside the skin bundles. Each other locale is a bundle under `loca
 <script type="module" src="{{VJS10_CDN_BASE}}/video.js"></script>
 ```
 
-One bundle exists per locale pack, plus bare-language aliases such as `pt`. For custom strings, see <DocsLink slug="how-to/internationalize-the-player">Internationalize the player</DocsLink>.
+One bundle exists per locale pack, plus bare-language aliases such as `pt`. For custom strings, see <DocsLink slug="guides/internationalize-the-player">Internationalize the player</DocsLink>.
 
 ## Stylesheets
 
@@ -86,7 +86,7 @@ The skin bundles inline their CSS, so no `<link>` is required to render. The sep
 - The skin sheets, such as `video.css` beside `video.js`, style declaratively rendered skins.
 - `shared.css` is the base that hand-written shadow skins build on.
 
-<DocsLink slug="how-to/self-host-the-player">Self-host the player</DocsLink> shows both in use.
+<DocsLink slug="guides/self-host-the-player">Self-host the player</DocsLink> shows both in use.
 
 ## Development bundles
 
@@ -94,10 +94,10 @@ Every JavaScript entry has a `.dev.js` sibling, such as `video.dev.js`, built wi
 
 ## Shared chunks
 
-Everything else at the root, like the content-hashed `default-*.js` files, is a shared chunk the entries import by relative path. Entries share these chunks, so loading several bundles stays cheap. Chunk names change every release: never link a chunk directly, and never copy a lone entry file. To mirror the CDN, copy the whole package directory and keep its layout; <DocsLink slug="how-to/self-host-the-player">Self-host the player</DocsLink> covers it.
+Everything else at the root, like the content-hashed `default-*.js` files, is a shared chunk the entries import by relative path. Entries share these chunks, so loading several bundles stays cheap. Chunk names change every release: never link a chunk directly, and never copy a lone entry file. To mirror the CDN, copy the whole package directory and keep its layout; <DocsLink slug="guides/self-host-the-player">Self-host the player</DocsLink> covers it.
 
 ## Related guides
 
-- <DocsLink slug="how-to/installation">Installation</DocsLink>
-- <DocsLink slug="how-to/self-host-the-player">Self-host the player</DocsLink>
-- <DocsLink slug="how-to/internationalize-the-player">Internationalize the player</DocsLink>
+- <DocsLink slug="guides/installation">Installation</DocsLink>
+- <DocsLink slug="guides/self-host-the-player">Self-host the player</DocsLink>
+- <DocsLink slug="guides/internationalize-the-player">Internationalize the player</DocsLink>

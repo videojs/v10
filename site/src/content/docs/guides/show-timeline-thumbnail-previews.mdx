@@ -24,14 +24,14 @@ import basicUsageHtmlTs from '@/components/docs/demos/seek-preview/html/css/Basi
 Show preview frames along the timeline while the user scrubs, like YouTube's seek previews.
 
 <Aside type="tip" title="Using Mux?">
-With <DocsLink slug="reference/mux-video">MuxVideo</DocsLink>, the storyboard track is wired up for you — skip adding the track and go straight to the slider thumbnail. For other services, generate the storyboard on their platform and add the track yourself.
+With <DocsLink slug="components/mux-video">MuxVideo</DocsLink>, the storyboard track is wired up for you — skip adding the track and go straight to the slider thumbnail. For other services, generate the storyboard on their platform and add the track yourself.
 </Aside>
 
 <CustomUiNote />
 
 ## Recommended approach
 
-Add a `kind="metadata"` track labeled `thumbnails` whose cues reference storyboard images, then put a slider thumbnail inside the <DocsLink slug="reference/time-slider">TimeSlider</DocsLink>. Scrubbing shows the frame under the pointer. The slider thumbnail reads the pointer time from the slider, so you never pass `time`; it otherwise accepts the same props as the standalone <DocsLink slug="reference/thumbnail">Thumbnail</DocsLink>.
+Add a `kind="metadata"` track labeled `thumbnails` whose cues reference storyboard images, then put a slider thumbnail inside the <DocsLink slug="components/time-slider">TimeSlider</DocsLink>. Scrubbing shows the frame under the pointer. The slider thumbnail reads the pointer time from the slider, so you never pass `time`; it otherwise accepts the same props as the standalone <DocsLink slug="components/thumbnail">Thumbnail</DocsLink>.
 
 <FrameworkCase frameworks={["react"]}>
 Compose `Slider.Thumbnail.Root` around `Slider.Thumbnail.Image`, and put image settings such as `crossOrigin`, `loading`, and `fetchPriority` on the image part. Inside a packaged skin, pass `renderThumbnail` to draw the image yourself; the skin still supplies `src` and sizing:
@@ -81,9 +81,9 @@ Compose `Slider.Thumbnail.Root` around `Slider.Thumbnail.Image`, and put image s
 
 ## How it works
 
-- Previews come from a storyboard: a `kind="metadata"` text track labeled `thumbnails` whose WebVTT cues map time ranges to image URLs (optionally with sprite coordinates). The <DocsLink slug="reference/feature-text-tracks">text track feature</DocsLink> exposes these as `thumbnailCues` and `thumbnailTrackSrc`.
+- Previews come from a storyboard: a `kind="metadata"` text track labeled `thumbnails` whose WebVTT cues map time ranges to image URLs (optionally with sprite coordinates). The <DocsLink slug="components/feature-text-tracks">text track feature</DocsLink> exposes these as `thumbnailCues` and `thumbnailTrackSrc`.
 - The slider thumbnail renders the storyboard frame for the slider's pointer position. While the pointer is over the slider, the slider sets `data-pointing` and the `--media-slider-pointer` CSS variable; the demo's CSS uses them to reveal the preview and position it over the pointer.
-- To render a storyboard frame outside the slider — a fixed preview for a chapter list, for example — use the standalone <DocsLink slug="reference/thumbnail">Thumbnail</DocsLink> component with an explicit `time`.
+- To render a storyboard frame outside the slider — a fixed preview for a chapter list, for example — use the standalone <DocsLink slug="components/thumbnail">Thumbnail</DocsLink> component with an explicit `time`.
 
 Each cue's text is an image URL. An optional `#xywh=x,y,w,h` fragment crops one frame out of a sprite sheet:
 
@@ -116,15 +116,15 @@ Regenerate the storyboard with a larger frame size, or split giant sprite sheets
 
 ## Related components
 
-- <DocsLink slug="reference/thumbnail">Thumbnail</DocsLink>
-- <DocsLink slug="reference/slider">Slider</DocsLink>
-- <DocsLink slug="reference/time-slider">Time slider</DocsLink>
+- <DocsLink slug="components/thumbnail">Thumbnail</DocsLink>
+- <DocsLink slug="components/slider">Slider</DocsLink>
+- <DocsLink slug="components/time-slider">Time slider</DocsLink>
 
 ## Related API
 
-- <DocsLink slug="reference/feature-text-tracks">Text track feature</DocsLink>
+- <DocsLink slug="components/feature-text-tracks">Text track feature</DocsLink>
 
 ## Related guides
 
-- <DocsLink slug="how-to/add-a-poster-and-loading-placeholder">Add a poster and loading placeholder</DocsLink>
-- <DocsLink slug="how-to/show-captions-and-subtitles">Show captions and subtitles</DocsLink>
+- <DocsLink slug="guides/add-a-poster-and-loading-placeholder">Add a poster and loading placeholder</DocsLink>
+- <DocsLink slug="guides/show-captions-and-subtitles">Show captions and subtitles</DocsLink>

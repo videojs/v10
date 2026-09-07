@@ -57,7 +57,7 @@ import basicUsageHtmlTs from "@/components/docs/demos/alert-dialog/html/css/Basi
 
 ## Behavior
 
-Use an alert dialog for an urgent message that interrupts the user and requires acknowledgement. Your application controls when it opens and supplies its content. `AlertDialog.Root` adds alert semantics, while the other `AlertDialog` parts are re-exported from <DocsLink slug="reference/dialog">`Dialog`</DocsLink>. For general modal content, including a player opened from a thumbnail, use `Dialog.Root` instead.
+Use an alert dialog for an urgent message that interrupts the user and requires acknowledgement. Your application controls when it opens and supplies its content. `AlertDialog.Root` adds alert semantics, while the other `AlertDialog` parts are re-exported from <DocsLink slug="components/dialog">`Dialog`</DocsLink>. For general modal content, including a player opened from a thumbnail, use `Dialog.Root` instead.
 
 <FrameworkCase frameworks={["react"]}>
 Use `open` with `onOpenChange` for controlled state, or `defaultOpen` for uncontrolled state. `Root` provides state without rendering an element, while `Popup` renders only while the dialog is open.

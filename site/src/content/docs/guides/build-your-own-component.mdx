@@ -17,12 +17,12 @@ Before building from scratch, check if an existing approach covers your use case
 <FrameworkCase frameworks={["react"]}>
 - **Change what a control renders**: use the `render` prop on any built-in component. See <DocsLink slug="concepts/ui-components">UI components</DocsLink>.
 - **Restyle a control**: use CSS custom properties and data attributes. See <DocsLink slug="concepts/ui-components">UI components</DocsLink>.
-- **Rearrange or remove controls**: eject a skin and modify it. See <DocsLink slug="how-to/customize-skins" anchor="eject-and-edit-a-skin">Customize skins</DocsLink>.
+- **Rearrange or remove controls**: eject a skin and modify it. See <DocsLink slug="guides/customize-skins" anchor="eject-and-edit-a-skin">Customize skins</DocsLink>.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
 - **Restyle a control**: use CSS custom properties and data attributes. See <DocsLink slug="concepts/ui-components">UI components</DocsLink>.
-- **Rearrange or remove controls**: eject a skin and modify it. See <DocsLink slug="how-to/customize-skins" anchor="eject-and-edit-a-skin">Customize skins</DocsLink>.
+- **Rearrange or remove controls**: eject a skin and modify it. See <DocsLink slug="guides/customize-skins" anchor="eject-and-edit-a-skin">Customize skins</DocsLink>.
 </FrameworkCase>
 
 Build a custom component when you need new behavior, a new state display, or integration with an external system.
@@ -33,10 +33,10 @@ Need access to player state or actions? You'll want to familiarize yourself with
 
 | State | Actions | Feature |
 |-------|---------|---------|
-| `paused`, `ended` | `play()`, `pause()` | <DocsLink slug="reference/feature-playback">Playback</DocsLink> |
-| `currentTime`, `duration` | `seek()` | <DocsLink slug="reference/feature-time">Time</DocsLink> |
-| `volume`, `muted` | `setVolume()`, `toggleMuted()` | <DocsLink slug="reference/feature-volume">Volume</DocsLink> |
-| `fullscreen` | `requestFullscreen()`, `exitFullscreen()` | <DocsLink slug="reference/feature-fullscreen">Fullscreen</DocsLink> |
+| `paused`, `ended` | `play()`, `pause()` | <DocsLink slug="components/feature-playback">Playback</DocsLink> |
+| `currentTime`, `duration` | `seek()` | <DocsLink slug="components/feature-time">Time</DocsLink> |
+| `volume`, `muted` | `setVolume()`, `toggleMuted()` | <DocsLink slug="components/feature-volume">Volume</DocsLink> |
+| `fullscreen` | `requestFullscreen()`, `exitFullscreen()` | <DocsLink slug="components/feature-fullscreen">Fullscreen</DocsLink> |
 
 Browse the full list in the **Features** section of the sidebar.
 
@@ -44,7 +44,7 @@ Features for platform-dependent capabilities also expose one or more **availabil
 
 <FrameworkCase frameworks={["react"]}>
 
-Access state and actions with <DocsLink slug="reference/use-player">`usePlayer`</DocsLink>:
+Access state and actions with <DocsLink slug="components/use-player">`usePlayer`</DocsLink>:
 
 ```tsx
 import { usePlayer } from '@videojs/react';
@@ -65,7 +65,7 @@ store.seek(30);
 
 <FrameworkCase frameworks={["html"]}>
 
-Access state and actions with <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> and a feature selector:
+Access state and actions with <DocsLink slug="components/player-controller">`PlayerController`</DocsLink> and a feature selector:
 
 ```ts
 import { PlayerController, playerContext, selectPlayback } from '@videojs/html';
@@ -98,7 +98,7 @@ this.#store.value.setVolume(0.5);
 
 <FrameworkCase frameworks={["react"]}>
 
-Your component needs to be inside <DocsLink slug="reference/player">`<Player>`</DocsLink> to access state. Place it inside <DocsLink slug="reference/player-container">`<Container>`</DocsLink> if it should also participate in fullscreen and respond to user activity:
+Your component needs to be inside <DocsLink slug="components/player">`<Player>`</DocsLink> to access state. Place it inside <DocsLink slug="components/player-container">`<Container>`</DocsLink> if it should also participate in fullscreen and respond to user activity:
 
 ```tsx
 import { Container } from '@videojs/react';
@@ -117,7 +117,7 @@ import { Container } from '@videojs/react';
 
 <FrameworkCase frameworks={["html"]}>
 
-Your element needs to be inside <DocsLink slug="reference/player">`<video-player>`</DocsLink> to access state. Place it inside <DocsLink slug="reference/player-container">`<media-container>`</DocsLink> if it should also participate in fullscreen and respond to user activity. `<video-skin>` slots its children into `<media-container>`, so a child of the skin works:
+Your element needs to be inside <DocsLink slug="components/player">`<video-player>`</DocsLink> to access state. Place it inside <DocsLink slug="components/player-container">`<media-container>`</DocsLink> if it should also participate in fullscreen and respond to user activity. `<video-skin>` slots its children into `<media-container>`, so a child of the skin works:
 
 ```html
 <video-player> <!-- [!code focus] -->
@@ -208,7 +208,7 @@ A "skip intro" button that appears during the first 30 seconds of playback and s
   </TabsPanel>
 </TabsRoot>
 
-Your component needs to be inside a player, such as <DocsLink slug="reference/player">`<VideoPlayer>`</DocsLink>, to access state. Place it inside <DocsLink slug="reference/player-container">`<Container>`</DocsLink> if it should also participate in fullscreen and respond to user activity:
+Your component needs to be inside a player, such as <DocsLink slug="components/player">`<VideoPlayer>`</DocsLink>, to access state. Place it inside <DocsLink slug="components/player-container">`<Container>`</DocsLink> if it should also participate in fullscreen and respond to user activity:
 
 ```tsx
 import { Container } from '@videojs/react';
@@ -334,7 +334,7 @@ export default function App() {
   </TabsPanel>
 </TabsRoot>
 
-Your element needs to be inside <DocsLink slug="reference/player">`<video-player>`</DocsLink> to access state. Place it inside <DocsLink slug="reference/player-container">`<media-container>`</DocsLink> if it should also participate in fullscreen and respond to user activity. `<video-skin>` slots its children into `<media-container>`, so a child of the skin works:
+Your element needs to be inside <DocsLink slug="components/player">`<video-player>`</DocsLink> to access state. Place it inside <DocsLink slug="components/player-container">`<media-container>`</DocsLink> if it should also participate in fullscreen and respond to user activity. `<video-skin>` slots its children into `<media-container>`, so a child of the skin works:
 
 ```html
 <video-player> <!-- [!code focus] -->
@@ -357,16 +357,16 @@ Custom components read player state and dispatch actions through <DocsLink slug=
 
 | State | Actions | Feature |
 |-------|---------|---------|
-| `paused`, `ended` | `play()`, `pause()` | <DocsLink slug="reference/feature-playback">Playback</DocsLink> |
-| `currentTime`, `duration` | `seek()` | <DocsLink slug="reference/feature-time">Time</DocsLink> |
-| `volume`, `muted` | `setVolume()`, `toggleMuted()` | <DocsLink slug="reference/feature-volume">Volume</DocsLink> |
-| `fullscreen` | `requestFullscreen()`, `exitFullscreen()` | <DocsLink slug="reference/feature-fullscreen">Fullscreen</DocsLink> |
+| `paused`, `ended` | `play()`, `pause()` | <DocsLink slug="components/feature-playback">Playback</DocsLink> |
+| `currentTime`, `duration` | `seek()` | <DocsLink slug="components/feature-time">Time</DocsLink> |
+| `volume`, `muted` | `setVolume()`, `toggleMuted()` | <DocsLink slug="components/feature-volume">Volume</DocsLink> |
+| `fullscreen` | `requestFullscreen()`, `exitFullscreen()` | <DocsLink slug="components/feature-fullscreen">Fullscreen</DocsLink> |
 
 Browse the full list in the **Features** section of the sidebar.
 
 <FrameworkCase frameworks={["react"]}>
 
-Access state and actions with the <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> hook from your player's preset. It knows which features that preset has, so state and actions are typed. (The standalone `usePlayer` export from `@videojs/react` returns an untyped store, so its values are `unknown` in TypeScript.) If you built the player with a custom feature set through <DocsLink slug="reference/create-player">`createPlayer`</DocsLink> — the escape hatch for custom feature sets — use the `usePlayer` it returns instead.
+Access state and actions with the <DocsLink slug="components/use-player">`usePlayer`</DocsLink> hook from your player's preset. It knows which features that preset has, so state and actions are typed. (The standalone `usePlayer` export from `@videojs/react` returns an untyped store, so its values are `unknown` in TypeScript.) If you built the player with a custom feature set through <DocsLink slug="components/create-player">`createPlayer`</DocsLink> — the escape hatch for custom feature sets — use the `usePlayer` it returns instead.
 
 ```tsx
 import { usePlayer } from '@videojs/react/video';
@@ -387,7 +387,7 @@ store.seek(30);
 
 <FrameworkCase frameworks={["html"]}>
 
-Extend `MediaElement` from `@videojs/html` so <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> can schedule DOM updates when state changes, and access state and actions with a feature selector:
+Extend `MediaElement` from `@videojs/html` so <DocsLink slug="components/player-controller">`PlayerController`</DocsLink> can schedule DOM updates when state changes, and access state and actions with a feature selector:
 
 ```ts
 import { PlayerController, playerContext, selectPlayback } from '@videojs/html';
@@ -404,7 +404,7 @@ if (playback?.paused) {
 
 Each selector returns both state and actions for that feature. Use separate controllers when you need multiple features (the [full example](#full-example) demonstrates this).
 
-Without a selector, `PlayerController` returns the full store without subscribing to changes. Create the controller with the typed context that <DocsLink slug="reference/html-create-player">`createPlayer`</DocsLink> returns — the shared `playerContext` types the store's members as `unknown` — and guard the value, which stays `undefined` until a player provides the store:
+Without a selector, `PlayerController` returns the full store without subscribing to changes. Create the controller with the typed context that <DocsLink slug="components/html-create-player">`createPlayer`</DocsLink> returns — the shared `playerContext` types the store's members as `unknown` — and guard the value, which stays `undefined` until a player provides the store:
 
 ```ts
 import { createPlayer, PlayerController } from '@videojs/html';
@@ -448,7 +448,7 @@ Use CSS custom properties and data attributes. See <DocsLink slug="concepts/ui-c
 
 ### Rearrange or remove controls
 
-Eject a skin and modify it. See <DocsLink slug="how-to/customize-skins" anchor="eject-and-edit-a-skin">Customize skins</DocsLink>.
+Eject a skin and modify it. See <DocsLink slug="guides/customize-skins" anchor="eject-and-edit-a-skin">Customize skins</DocsLink>.
 
 ## Troubleshooting
 
@@ -462,11 +462,11 @@ In React, the component sits outside the player (such as `<VideoPlayer>`), so `u
 
 ## Related API
 
-- <DocsLink slug="reference/use-player">usePlayer</DocsLink>
-- <DocsLink slug="reference/player-controller">PlayerController</DocsLink>
-- <DocsLink slug="reference/create-player">createPlayer</DocsLink>
-- <DocsLink slug="reference/player-container">Player container</DocsLink>
+- <DocsLink slug="components/use-player">usePlayer</DocsLink>
+- <DocsLink slug="components/player-controller">PlayerController</DocsLink>
+- <DocsLink slug="components/create-player">createPlayer</DocsLink>
+- <DocsLink slug="components/player-container">Player container</DocsLink>
 
 ## Related guides
 
-- <DocsLink slug="how-to/customize-skins">Customize skins</DocsLink>
+- <DocsLink slug="guides/customize-skins">Customize skins</DocsLink>

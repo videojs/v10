@@ -22,7 +22,7 @@ import { useMedia } from "@videojs/react";
 
 The media object may be an `HTMLVideoElement` or a Video.js media object that controls one. It always provides `play()`. Check `isMediaPauseCapable(media)` before using `pause()` because lightweight media implementations do not have to provide it.
 
-With a packaged preset, import `useMedia` from `@videojs/react`. With a player made by <DocsLink slug="reference/create-player">`createPlayer`</DocsLink>, use the `useMedia` hook returned by that call. It is connected to the new player's context.
+With a packaged preset, import `useMedia` from `@videojs/react`. With a player made by <DocsLink slug="components/create-player">`createPlayer`</DocsLink>, use the `useMedia` hook returned by that call. It is connected to the new player's context.
 
 ```tsx
 const { Player, useMedia } = createPlayer({ features: videoFeatures });
@@ -32,7 +32,7 @@ const { Player, useMedia } = createPlayer({ features: videoFeatures });
 
 A React ref on `<MuxVideo>` or `<HlsJsVideo>` receives the rendered `HTMLVideoElement`. `useMedia()` receives the Video.js media object attached to the player. Use the ref for browser video APIs. Use `useMedia()` for Video.js properties such as `streamType` and `targetLiveWindow`.
 
-To attach your own media object, see <DocsLink slug="reference/use-media-attach">`useMediaAttach`</DocsLink>.
+To attach your own media object, see <DocsLink slug="components/use-media-attach">`useMediaAttach`</DocsLink>.
 
 ```tsx title="LiveDetails.tsx"
 import { isMediaLiveCapable, isMediaStreamTypeCapable, useMedia } from '@videojs/react';

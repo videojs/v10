@@ -26,7 +26,7 @@ Show controls while the user is active, fade them out during undisturbed playbac
 
 ## Recommended approach
 
-Wrap your control UI in <DocsLink slug="reference/controls">Controls</DocsLink>. It reads controls visibility from player state, so the whole control bar shows and hides as one unit.
+Wrap your control UI in <DocsLink slug="components/controls">Controls</DocsLink>. It reads controls visibility from player state, so the whole control bar shows and hides as one unit.
 
 <FrameworkCase frameworks={["react"]}>
   <StyleCase styles={["css"]}>
@@ -53,7 +53,7 @@ Wrap your control UI in <DocsLink slug="reference/controls">Controls</DocsLink>.
 
 ## How it works
 
-The <DocsLink slug="reference/feature-controls">controls feature</DocsLink> tracks activity on the player container:
+The <DocsLink slug="components/feature-controls">controls feature</DocsLink> tracks activity on the player container:
 
 - `userActive` is `true` while the user interacts — pointer movement, keyboard input, or focus — and flips to `false` after two seconds of inactivity.
 - `controlsVisible` derives from activity and playback: controls stay visible while paused or while a remote playback session is connecting or connected, regardless of idle state.
@@ -108,18 +108,18 @@ A tap on the media toggles controls. If a custom overlay covers the media and sw
 
 ### Controls flicker on Android while tapping
 
-Use the skin gestures (`tap` with the `toggleControls` action) rather than adding your own tap handlers next to the built-in behavior; competing handlers invert each other. See <DocsLink slug="how-to/add-keyboard-shortcuts-and-gestures">Add keyboard shortcuts and gestures</DocsLink>.
+Use the skin gestures (`tap` with the `toggleControls` action) rather than adding your own tap handlers next to the built-in behavior; competing handlers invert each other. See <DocsLink slug="guides/add-keyboard-shortcuts-and-gestures">Add keyboard shortcuts and gestures</DocsLink>.
 
 ## Related components
 
-- <DocsLink slug="reference/controls">Controls</DocsLink>
-- <DocsLink slug="reference/player-container">Player container</DocsLink>
+- <DocsLink slug="components/controls">Controls</DocsLink>
+- <DocsLink slug="components/player-container">Player container</DocsLink>
 
 ## Related API
 
-- <DocsLink slug="reference/feature-controls">Controls feature</DocsLink>
+- <DocsLink slug="components/feature-controls">Controls feature</DocsLink>
 
 ## Related guides
 
-- <DocsLink slug="how-to/add-keyboard-shortcuts-and-gestures">Add keyboard shortcuts and gestures</DocsLink>
+- <DocsLink slug="guides/add-keyboard-shortcuts-and-gestures">Add keyboard shortcuts and gestures</DocsLink>
 - <DocsLink slug="concepts/accessibility">Accessibility</DocsLink>

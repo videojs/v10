@@ -8,7 +8,7 @@ import FeatureReference from "@/components/docs/api-reference/FeatureReference.a
 import DocsLink from "@/components/docs/DocsLink.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 
-Tracks playback position and duration. During live playback, the browser may report `Infinity` as the duration. The player reports the end of the last available <DocsLink slug="reference/feature-buffer">seekable range</DocsLink> instead, so the value stays finite and moves forward with the stream. This is the newest available time, not the length of the rewindable window; its first available time may be greater than zero. Use <DocsLink slug="reference/feature-live">live state</DocsLink> or <DocsLink slug="reference/feature-stream-type">stream type</DocsLink> to check whether the source is live.
+Tracks playback position and duration. During live playback, the browser may report `Infinity` as the duration. The player reports the end of the last available <DocsLink slug="components/feature-buffer">seekable range</DocsLink> instead, so the value stays finite and moves forward with the stream. This is the newest available time, not the length of the rewindable window; its first available time may be greater than zero. Use <DocsLink slug="components/feature-live">live state</DocsLink> or <DocsLink slug="components/feature-stream-type">stream type</DocsLink> to check whether the source is live.
 
 ## Import
 
@@ -19,11 +19,11 @@ Tracks playback position and duration. During live playback, the browser may rep
 ### Selector
 
 <FrameworkCase frameworks={["react"]}>
-Pass `selectTime` to <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> to subscribe to time state. Returns `undefined` if the time feature is not configured.
+Pass `selectTime` to <DocsLink slug="components/use-player">`usePlayer`</DocsLink> to subscribe to time state. Returns `undefined` if the time feature is not configured.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-Pass `selectTime` to <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> to subscribe to time state. Returns `undefined` if the time feature is not configured.
+Pass `selectTime` to <DocsLink slug="components/player-controller">`PlayerController`</DocsLink> to subscribe to time state. Returns `undefined` if the time feature is not configured.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>

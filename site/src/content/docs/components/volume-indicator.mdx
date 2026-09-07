@@ -51,7 +51,7 @@ import basicUsageHtmlTs from "@/components/docs/demos/volume-indicator/html/css/
 
 ## Behavior
 
-`VolumeIndicator` displays feedback for `toggleMuted` and `volumeStep` actions emitted by a <DocsLink slug="reference/hotkey">`Hotkey`</DocsLink> or <DocsLink slug="reference/gesture">`Gesture`</DocsLink> in the same player `Container`. It does not react to mute buttons, volume sliders, direct player-store changes, or volume changes on their own.
+`VolumeIndicator` displays feedback for `toggleMuted` and `volumeStep` actions emitted by a <DocsLink slug="components/hotkey">`Hotkey`</DocsLink> or <DocsLink slug="components/gesture">`Gesture`</DocsLink> in the same player `Container`. It does not react to mute buttons, volume sliders, direct player-store changes, or volume changes on their own.
 
 The input event arrives before its action is resolved. The indicator uses the media snapshot from that moment to predict the next mute state and volume. `toggleMuted` predicts the opposite mute state. `volumeStep` adds its `value` to the snapshot volume and clamps the result from 0 to 1. A step whose clamped result is above 0 also predicts that mute will clear.
 
@@ -112,7 +112,7 @@ React renders standard DOM elements. Add separate `className` values to the Root
 
 ## Accessibility
 
-`VolumeIndicator` is visual feedback and does not create a live region. Keep volume and mute available through keyboard-operable controls, and pair the player with <DocsLink slug="reference/status-announcer">`StatusAnnouncer`</DocsLink> when state changes should be announced to screen readers. Do not make `VolumeIndicator.Value` a live region.
+`VolumeIndicator` is visual feedback and does not create a live region. Keep volume and mute available through keyboard-operable controls, and pair the player with <DocsLink slug="components/status-announcer">`StatusAnnouncer`</DocsLink> when state changes should be announced to screen readers. Do not make `VolumeIndicator.Value` a live region.
 
 ## Examples
 

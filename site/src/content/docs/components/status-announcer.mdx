@@ -43,7 +43,7 @@ import basicUsageHtmlTs from "@/components/docs/demos/status-announcer/html/css/
 
 ## Behavior
 
-`StatusAnnouncer` watches player-store snapshots, so it reports changes made by buttons, sliders, custom controls, or direct player actions. It does not depend on <DocsLink slug="reference/hotkey">`Hotkey`</DocsLink> or <DocsLink slug="reference/gesture">`Gesture`</DocsLink> events.
+`StatusAnnouncer` watches player-store snapshots, so it reports changes made by buttons, sliders, custom controls, or direct player actions. It does not depend on <DocsLink slug="components/hotkey">`Hotkey`</DocsLink> or <DocsLink slug="components/gesture">`Gesture`</DocsLink> events.
 
 The first snapshot establishes a baseline without announcing it. Later changes are handled in two groups:
 
@@ -112,7 +112,7 @@ The `status` role provides implicit polite live-region behavior, so the componen
 
 Debounced volume and completed-seek announcements are suppressed while an element with `role="slider"` inside the same Container has focus. The focused slider provides its own value feedback, and suppressing the separate status message avoids duplicate announcements. A focused slider outside that Container does not suppress it.
 
-Use <DocsLink slug="reference/seek-indicator">`SeekIndicator`</DocsLink> for temporary visual seek feedback. Keep that visual value out of a live region; `StatusAnnouncer` owns the accessible announcement.
+Use <DocsLink slug="components/seek-indicator">`SeekIndicator`</DocsLink> for temporary visual seek feedback. Keep that visual value out of a live region; `StatusAnnouncer` owns the accessible announcement.
 
 ## Examples
 

@@ -68,7 +68,7 @@ If you omit `--media-accent-text-color`, the skins choose a contrasting text col
 
 The skins use [`Inter`](https://rsms.me/inter/) when your page loads it and fall back to the system UI font. Video.js does not load the webfont for you. Set `--media-font-family` to use another font.
 
-The media element and poster share `--media-object-fit` and `--media-object-position`, so a `cover` poster stays aligned with `cover` video. See <DocsLink slug="how-to/add-a-poster-and-loading-placeholder">Add a poster and loading placeholder</DocsLink>.
+The media element and poster share `--media-object-fit` and `--media-object-position`, so a `cover` poster stays aligned with `cover` video. See <DocsLink slug="guides/add-a-poster-and-loading-placeholder">Add a poster and loading placeholder</DocsLink>.
 
 ### Set the color scheme
 
@@ -112,7 +112,7 @@ Packaged video skins also let you replace the poster through the `renderPoster` 
 
 </FrameworkCase>
 
-See <DocsLink slug="reference/poster">Poster</DocsLink>.
+See <DocsLink slug="components/poster">Poster</DocsLink>.
 
 Packaged skins do not provide settings for adding, removing, or rearranging controls, or for replacing built-in feedback and interactions. To make those changes, [eject the closest skin](#eject-and-edit-a-skin) and edit its source.
 
@@ -207,4 +207,4 @@ Installed files belong to your project, so an update replaces your local copy. C
 npx shadcn@latest add @videojs/video --overwrite
 ```
 
-To understand how skins fit into Video.js, read <DocsLink slug="concepts/skins">Skins</DocsLink>. To create a control instead of editing one, follow <DocsLink slug="how-to/build-your-own-component">Build your own component</DocsLink>.
+To understand how skins fit into Video.js, read <DocsLink slug="concepts/skins">Skins</DocsLink>. To create a control instead of editing one, follow <DocsLink slug="guides/build-your-own-component">Build your own component</DocsLink>.

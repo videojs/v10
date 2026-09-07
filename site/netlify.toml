@@ -43,21 +43,32 @@
   force = true
 
 
-# SimpleHls* was renamed to Hls*, taking the reference slugs with it
+# Docs sections were renamed: how-to → guides, reference → components. Keep every old URL (and its .md twin) alive.
 [[redirects]]
-  from = "/docs/framework/:framework/reference/simple-hls-video"
-  to = "/docs/framework/:framework/reference/hls-video"
+  from = "/docs/framework/:framework/how-to/*"
+  to = "/docs/framework/:framework/guides/:splat"
   status = 301
 
 [[redirects]]
-  from = "/docs/framework/:framework/reference/simple-hls-audio-only"
-  to = "/docs/framework/:framework/reference/hls-audio"
+  from = "/docs/framework/:framework/reference/*"
+  to = "/docs/framework/:framework/components/:splat"
+  status = 301
+
+# SimpleHls* was renamed to Hls*, taking the reference slugs with it
+[[redirects]]
+  from = "/docs/framework/:framework/components/simple-hls-video"
+  to = "/docs/framework/:framework/components/hls-video"
+  status = 301
+
+[[redirects]]
+  from = "/docs/framework/:framework/components/simple-hls-audio-only"
+  to = "/docs/framework/:framework/components/hls-audio"
   status = 301
 
 # useMediaComponent was renamed to useMediaExtension, taking the reference slug with it
 [[redirects]]
-  from = "/docs/framework/:framework/reference/use-media-component"
-  to = "/docs/framework/:framework/reference/use-media-extension"
+  from = "/docs/framework/:framework/components/use-media-component"
+  to = "/docs/framework/:framework/components/use-media-extension"
   status = 301
 
 # Redirect old theme demo pages to home

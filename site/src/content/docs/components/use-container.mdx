@@ -28,8 +28,8 @@ export function ContainerStatus() {
 }
 ```
 
-Calling this hook outside `Player` throws because it reads through `usePlayerContext`. If a component can also work outside a player, use <DocsLink slug="reference/use-optional-container">`useOptionalContainer`</DocsLink> instead.
+Calling this hook outside `Player` throws because it reads through `usePlayerContext`. If a component can also work outside a player, use <DocsLink slug="components/use-optional-container">`useOptionalContainer`</DocsLink> instead.
 
-`useContainer` reads the registered container. <DocsLink slug="reference/use-container-attach">`useContainerAttach`</DocsLink> returns the setter used to register a custom container and is only needed when replacing the built-in `Container`.
+`useContainer` reads the registered container. <DocsLink slug="components/use-container-attach">`useContainerAttach`</DocsLink> returns the setter used to register a custom container and is only needed when replacing the built-in `Container`.
 
 <UtilReference util="useContainer" />

@@ -45,7 +45,7 @@ Use `.track(state)` to switch to a different `State` container at runtime.
 
 Both are reactive controllers, but they operate at different levels:
 
-|                | `SnapshotController`           | <DocsLink slug="reference/store-controller">`StoreController`</DocsLink> |
+|                | `SnapshotController`           | <DocsLink slug="components/store-controller">`StoreController`</DocsLink> |
 | -------------- | ------------------------------ | ------------------------------------------------------------------------ |
 | **Input**      | `State` container              | Store instance or context                                                |
 | **Subscribes** | Always                         | Only with a selector                                                     |
@@ -53,13 +53,13 @@ Both are reactive controllers, but they operate at different levels:
 
 `SnapshotController` is lower-level. It works with `State` containers directly -- the reactive primitives that back a store. Use it when building custom controllers or working outside the player store system.
 
-<DocsLink slug="reference/store-controller">`StoreController`</DocsLink> is
+<DocsLink slug="components/store-controller">`StoreController`</DocsLink> is
 higher-level. It resolves a store from a context or direct reference and
 internally creates a `SnapshotController` when you pass a selector. Use it for
 player UI elements.
 
 ### Lifecycle
 
-`SnapshotController` subscribes on `hostConnected()` and unsubscribes on `hostDisconnected()`. The React equivalent is <DocsLink slug="reference/use-snapshot">`useSnapshot`</DocsLink>.
+`SnapshotController` subscribes on `hostConnected()` and unsubscribes on `hostDisconnected()`. The React equivalent is <DocsLink slug="components/use-snapshot">`useSnapshot`</DocsLink>.
 
 <UtilReference util="SnapshotController" />

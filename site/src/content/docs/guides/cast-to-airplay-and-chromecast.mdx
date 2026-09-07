@@ -26,7 +26,7 @@ Send playback to an Apple TV over AirPlay or a Chromecast over Google Cast while
 
 ## Recommended approach
 
-Use the <DocsLink slug="reference/google-cast">GoogleCast extension</DocsLink> with a <DocsLink slug="reference/cast-button">CastButton</DocsLink>, and add an <DocsLink slug="reference/airplay-button">AirPlayButton</DocsLink> for Safari. The prebuilt skins already include both buttons; add `GoogleCast` next to a streaming media component to enable the configurable Cast route.
+Use the <DocsLink slug="components/google-cast">GoogleCast extension</DocsLink> with a <DocsLink slug="components/cast-button">CastButton</DocsLink>, and add an <DocsLink slug="components/airplay-button">AirPlayButton</DocsLink> for Safari. The prebuilt skins already include both buttons; add `GoogleCast` next to a streaming media component to enable the configurable Cast route.
 
 <FrameworkCase frameworks={["react"]}>
   <StyleCase styles={["css"]}>
@@ -55,7 +55,7 @@ The demo pairs the streaming media component with the `GoogleCast` extension in 
 
 ## How it works
 
-The <DocsLink slug="reference/feature-remote-playback">remote playback feature</DocsLink> gives AirPlay and Google Cast one state shape:
+The <DocsLink slug="components/feature-remote-playback">remote playback feature</DocsLink> gives AirPlay and Google Cast one state shape:
 
 - `remotePlaybackAvailability` is `'available'` when a remote device can be reached, `'unavailable'` when the API exists but no device is reachable, and `'unsupported'` when the browser has no remote playback route.
 - `remotePlaybackState` is `'disconnected'`, `'connecting'`, or `'connected'`.
@@ -96,7 +96,7 @@ By default, Video.js sends the current source to Google's Default Media Receiver
 
 </FrameworkCase>
 
-Use `src` and `contentType` when the receiver should load a different source than the browser. `streamType` and `customData` let you describe that source and attach application-specific data. See the <DocsLink slug="reference/google-cast">GoogleCast reference</DocsLink> for the exact option types and HTML property mapping.
+Use `src` and `contentType` when the receiver should load a different source than the browser. `streamType` and `customData` let you describe that source and attach application-specific data. See the <DocsLink slug="components/google-cast">GoogleCast reference</DocsLink> for the exact option types and HTML property mapping.
 
 ### Read connection state
 
@@ -118,14 +118,14 @@ The user dismissed the picker or the device disconnected. `remotePlaybackState` 
 
 ## Related components
 
-- <DocsLink slug="reference/cast-button">Cast button</DocsLink>
-- <DocsLink slug="reference/airplay-button">AirPlay button</DocsLink>
-- <DocsLink slug="reference/google-cast">GoogleCast</DocsLink>
+- <DocsLink slug="components/cast-button">Cast button</DocsLink>
+- <DocsLink slug="components/airplay-button">AirPlay button</DocsLink>
+- <DocsLink slug="components/google-cast">GoogleCast</DocsLink>
 
 ## Related API
 
-- <DocsLink slug="reference/feature-remote-playback">Remote playback feature</DocsLink>
-- <DocsLink slug="reference/hlsjs-video">HlsJsVideo</DocsLink>
+- <DocsLink slug="components/feature-remote-playback">Remote playback feature</DocsLink>
+- <DocsLink slug="components/hlsjs-video">HlsJsVideo</DocsLink>
 
 ## Related guides
 

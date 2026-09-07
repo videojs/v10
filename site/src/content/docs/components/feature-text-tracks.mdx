@@ -10,9 +10,9 @@ import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 
 Manages subtitles, captions, chapters, and thumbnail tracks.
 
-A default `kind="chapters"` track can also divide the <DocsLink slug="reference/time-slider">time slider</DocsLink> into chapter ranges and label the chapter at the current interaction position.
+A default `kind="chapters"` track can also divide the <DocsLink slug="components/time-slider">time slider</DocsLink> into chapter ranges and label the chapter at the current interaction position.
 
-When a thumbnail track is present, `thumbnailTrackCrossOrigin` reports the media element's CORS mode, or `null` when the media is not CORS-enabled. <DocsLink slug="reference/thumbnail">Thumbnail</DocsLink> reads it to fetch sprite sheets the same way the browser fetched the track.
+When a thumbnail track is present, `thumbnailTrackCrossOrigin` reports the media element's CORS mode, or `null` when the media is not CORS-enabled. <DocsLink slug="components/thumbnail">Thumbnail</DocsLink> reads it to fetch sprite sheets the same way the browser fetched the track.
 
 ## Import
 
@@ -23,11 +23,11 @@ When a thumbnail track is present, `thumbnailTrackCrossOrigin` reports the media
 ### Selector
 
 <FrameworkCase frameworks={["react"]}>
-Pass `selectTextTrack` to <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> to subscribe to text track state. Returns `undefined` if the text tracks feature is not configured.
+Pass `selectTextTrack` to <DocsLink slug="components/use-player">`usePlayer`</DocsLink> to subscribe to text track state. Returns `undefined` if the text tracks feature is not configured.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-Pass `selectTextTrack` to <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> to subscribe to text track state. Returns `undefined` if the text tracks feature is not configured.
+Pass `selectTextTrack` to <DocsLink slug="components/player-controller">`PlayerController`</DocsLink> to subscribe to text track state. Returns `undefined` if the text tracks feature is not configured.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>

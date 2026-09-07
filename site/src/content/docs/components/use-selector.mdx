@@ -39,11 +39,11 @@ Both `useStore` and `useSnapshot` are built on `useSelector`:
 
 | Hook                                                             | Input                     | Use case                                |
 | ---------------------------------------------------------------- | ------------------------- | --------------------------------------- |
-| <DocsLink slug="reference/use-store">`useStore`</DocsLink>       | Store instance            | Player and store access with selector   |
-| <DocsLink slug="reference/use-snapshot">`useSnapshot`</DocsLink> | `State` container         | Subscribe to raw state changes          |
+| <DocsLink slug="components/use-store">`useStore`</DocsLink>       | Store instance            | Player and store access with selector   |
+| <DocsLink slug="components/use-snapshot">`useSnapshot`</DocsLink> | `State` container         | Subscribe to raw state changes          |
 | `useSelector`                                                    | Custom subscribe/snapshot | Full control over subscription plumbing |
 
-Prefer <DocsLink slug="reference/use-store">`useStore`</DocsLink> for store-backed state and <DocsLink slug="reference/use-snapshot">`useSnapshot`</DocsLink> for `State` containers. Use `useSelector` when you need to integrate with a non-standard external source or customize the equality comparison.
+Prefer <DocsLink slug="components/use-store">`useStore`</DocsLink> for store-backed state and <DocsLink slug="components/use-snapshot">`useSnapshot`</DocsLink> for `State` containers. Use `useSelector` when you need to integrate with a non-standard external source or customize the equality comparison.
 
 ### Equality comparison
 

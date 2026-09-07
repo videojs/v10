@@ -12,7 +12,7 @@ import DocsLink from "@/components/docs/DocsLink.astro";
 import { useAudioTrackOptions } from "@videojs/react";
 ```
 
-`useAudioTrackOptions` returns the currently enabled audio track, the available options, and a `setValue` callback for wiring track selection into a menu. It returns `null` when the <DocsLink slug="reference/feature-audio-track">audio track feature</DocsLink> is not configured.
+`useAudioTrackOptions` returns the currently enabled audio track, the available options, and a `setValue` callback for wiring track selection into a menu. It returns `null` when the <DocsLink slug="components/feature-audio-track">audio track feature</DocsLink> is not configured.
 
 ```tsx title="AudioMenu.tsx"
 import { Menu, useAudioTrackOptions } from "@videojs/react";
@@ -36,6 +36,6 @@ function AudioMenu() {
 
 Option labels use the track label, then language, then kind. Pass `formatTrack` to customize the visible labels.
 
-See <DocsLink slug="reference/audio-track-radio-group">AudioTrackRadioGroup</DocsLink> for the component-level pattern, and <DocsLink slug="reference/menu">Menu</DocsLink> for a complete settings menu example.
+See <DocsLink slug="components/audio-track-radio-group">AudioTrackRadioGroup</DocsLink> for the component-level pattern, and <DocsLink slug="components/menu">Menu</DocsLink> for a complete settings menu example.
 
 <UtilReference util="useAudioTrackOptions" />

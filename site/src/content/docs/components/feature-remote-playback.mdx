@@ -11,7 +11,7 @@ import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 
 Controls remote playback to devices like Chromecast (Chromium) and AirPlay (Safari). Exits fullscreen before initiating a remote playback session.
 
-<DocsLinkCard slug="how-to/cast-to-airplay-and-chromecast">Cast to AirPlay and Chromecast</DocsLinkCard>
+<DocsLinkCard slug="guides/cast-to-airplay-and-chromecast">Cast to AirPlay and Chromecast</DocsLinkCard>
 
 ## Import
 
@@ -22,11 +22,11 @@ Controls remote playback to devices like Chromecast (Chromium) and AirPlay (Safa
 ### Selector
 
 <FrameworkCase frameworks={["react"]}>
-Pass `selectRemotePlayback` to <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> to subscribe to remote playback state. Returns `undefined` if the remote playback feature is not configured.
+Pass `selectRemotePlayback` to <DocsLink slug="components/use-player">`usePlayer`</DocsLink> to subscribe to remote playback state. Returns `undefined` if the remote playback feature is not configured.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-Pass `selectRemotePlayback` to <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> to subscribe to remote playback state. Returns `undefined` if the remote playback feature is not configured.
+Pass `selectRemotePlayback` to <DocsLink slug="components/player-controller">`PlayerController`</DocsLink> to subscribe to remote playback state. Returns `undefined` if the remote playback feature is not configured.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>

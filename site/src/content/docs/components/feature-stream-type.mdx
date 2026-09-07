@@ -14,7 +14,7 @@ Tracks whether the current source is live, on-demand, or not known yet. Use it t
 
 HLS media reads the stream type from the loaded playlist. If you set `streamType` yourself, your value takes priority until you set it back to `'unknown'`. Other media falls back to the browser's duration: `Infinity` means live, a finite positive value means on-demand, and any other value means unknown.
 
-Add `streamTypeFeature` to a custom player when you need `streamType` in player state. The live presets separately include the <DocsLink slug="reference/feature-live">live feature</DocsLink>, which tracks the live edge.
+Add `streamTypeFeature` to a custom player when you need `streamType` in player state. The live presets separately include the <DocsLink slug="components/feature-live">live feature</DocsLink>, which tracks the live edge.
 
 ## Import
 
@@ -25,11 +25,11 @@ Add `streamTypeFeature` to a custom player when you need `streamType` in player 
 ### Selector
 
 <FrameworkCase frameworks={["react"]}>
-Pass `selectStreamType` to <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> to subscribe to stream type state. Returns `undefined` if the stream type feature is not configured.
+Pass `selectStreamType` to <DocsLink slug="components/use-player">`usePlayer`</DocsLink> to subscribe to stream type state. Returns `undefined` if the stream type feature is not configured.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-Pass `selectStreamType` to <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> to subscribe to stream type state. Returns `undefined` if the stream type feature is not configured.
+Pass `selectStreamType` to <DocsLink slug="components/player-controller">`PlayerController`</DocsLink> to subscribe to stream type state. Returns `undefined` if the stream type feature is not configured.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>

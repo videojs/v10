@@ -19,7 +19,7 @@ import basicUsageHtml from '@/components/docs/demos/play-button/html/css/BasicUs
 import basicUsageHtmlCss from '@/components/docs/demos/play-button/html/css/BasicUsage.css?raw';
 import basicUsageHtmlTs from '@/components/docs/demos/play-button/html/css/BasicUsage.ts?raw';
 
-What is a guide? In this context, it's a document in the docs that's not an API reference. For API references, see <DocsLink slug="reference/write-references">Write reference pages</DocsLink>.
+What is a guide? In this context, it's a document in the docs that's not an API reference. For API references, see <DocsLink slug="writing-style/write-references">Write reference pages</DocsLink>.
 
 <Aside type="tip">
 Oh hey by the way. A lot of this knowledge is encoded in the `write-docs` and `review-docs` Claude skills. You should still read it, but, now your LLM can help you along the way, too.
@@ -30,8 +30,8 @@ Oh hey by the way. A lot of this knowledge is encoded in the `write-docs` and `r
 First, read and understand [Diátaxis](https://diataxis.fr/). We organize documentation into three modes:
 
 1. **Concept pages** (`src/content/docs/concepts/`): Explain a reusable mental model — design rationale, trade-offs, and context that helps readers with several tasks. Diátaxis calls this mode "explanation." If the background matters to only one outcome, keep it in that how-to instead.
-2. **How-to guides** (`src/content/docs/how-to/`): Help the reader achieve a specific outcome — one page per thing they want to do (Autoplay, Play live streams, Self-host the player). Address a real goal, assume competence, and include only the explanation needed to complete or adapt the task.
-3. **Reference pages** (`src/content/docs/reference/`): Describe the exact machinery — components, features, hooks, utilities, options, state, and behavior. These are scaffolded using `write-api-reference` and the api-docs-builder. Again, see <DocsLink slug="reference/write-references">Write reference pages</DocsLink> for details.
+2. **How-to guides** (`src/content/docs/guides/`): Help the reader achieve a specific outcome — one page per thing they want to do (Autoplay, Play live streams, Self-host the player). Address a real goal, assume competence, and include only the explanation needed to complete or adapt the task.
+3. **Reference pages** (`src/content/docs/components/`): Describe the exact machinery — components, features, hooks, utilities, options, state, and behavior. These are scaffolded using `write-api-reference` and the api-docs-builder. Again, see <DocsLink slug="writing-style/write-references">Write reference pages</DocsLink> for details.
 
 <Aside type="note">
 Diátaxis has a fourth mode — learning-oriented **tutorials**. We don't have a tutorials section yet — something we've intentionally chosen to omit, for now.
@@ -85,7 +85,7 @@ One goal per page. Titles are goal-oriented and in the reader's words: each comp
 Our guides are [MDX](https://mdxjs.com) files placed in the matching directory:
 
 - Concept pages go in `src/content/docs/concepts/[slug].mdx`
-- How-to guides go in `src/content/docs/how-to/[slug].mdx`
+- How-to guides go in `src/content/docs/guides/[slug].mdx`
 
 Every guide needs a frontmatter block with `title` and `description`:
 
@@ -107,7 +107,7 @@ Next, open `src/docs.config.ts` and add your guide to the appropriate section of
 
 ```ts
 {
-  slug: 'how-to/write-guides'
+  slug: 'writing-style/write-guides'
 }
 ```
 
@@ -115,7 +115,7 @@ The sidebar label defaults to the guide's `title` frontmatter; override it with 
 
 ```ts
 {
-  slug: 'how-to/write-guides',
+  slug: 'writing-style/write-guides',
   sidebarLabel: 'Writing guides',
   frameworks: ['react'] // Only for React
 }
@@ -551,7 +551,7 @@ function Component() {
 
 ### `<Demo>`, for a live preview with tabbed source code
 
-Use `<Demo>` to show a live, interactive example alongside the code that produces it. This is the standard pattern on reference pages (e.g., <DocsLink slug="reference/play-button">PlayButton</DocsLink>).
+Use `<Demo>` to show a live, interactive example alongside the code that produces it. This is the standard pattern on reference pages (e.g., <DocsLink slug="components/play-button">PlayButton</DocsLink>).
 
 Pass the source files via the `files` prop — each entry has a `title`, `code` (a `?raw` import), and `lang` — and place the rendered demo in the default slot. Any `css` file in `files` is automatically scoped to the demo, so the demo's styles won't leak into the page.
 
@@ -635,7 +635,7 @@ import MinimalFrame from '@/components/frames/Minimal.astro';
 
 ### `<TabsRoot>` supports arbitrary content, too
 
-You can place any old content underneath `<TabsPanel>`, and it'll show alongside whatever tabbed content you're showing. This is a pattern we've used so far to display code alongside a rendered example (e.g., <DocsLink slug="reference/play-button">PlayButton</DocsLink>).
+You can place any old content underneath `<TabsPanel>`, and it'll show alongside whatever tabbed content you're showing. This is a pattern we've used so far to display code alongside a rendered example (e.g., <DocsLink slug="components/play-button">PlayButton</DocsLink>).
 
 ```mdx
 import { MyDemo } from '@/examples/react/MyDemo';

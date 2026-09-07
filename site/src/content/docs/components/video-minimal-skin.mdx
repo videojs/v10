@@ -10,7 +10,7 @@ import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 import SkinImports from '@/components/docs/api-reference/SkinImports.astro';
 import RegistrySkinInstall from '@/components/registry/RegistrySkinInstall.astro';
 
-The minimal skin of the video preset: the same player and the same controls in a visually lighter design, closer to a classic control bar. <DocsLink slug="reference/video-skin">VideoSkin</DocsLink> is the same preset's other variant. See <DocsLink slug="concepts/skins">Skins</DocsLink> for how packaged skins work and <DocsLink slug="concepts/presets">Presets</DocsLink> for what the video preset ships.
+The minimal skin of the video preset: the same player and the same controls in a visually lighter design, closer to a classic control bar. <DocsLink slug="components/video-skin">VideoSkin</DocsLink> is the same preset's other variant. See <DocsLink slug="concepts/skins">Skins</DocsLink> for how packaged skins work and <DocsLink slug="concepts/presets">Presets</DocsLink> for what the video preset ships.
 
 ## Import
 
@@ -50,7 +50,7 @@ The skin renders a poster image before playback starts. Pass `renderPoster` to r
 The skin renders a poster image before playback starts. An element with `slot="poster"` replaces it.
 </FrameworkCase>
 
-See <DocsLink slug="how-to/add-a-poster-and-loading-placeholder">Add a poster and loading placeholder</DocsLink> for complete examples.
+See <DocsLink slug="guides/add-a-poster-and-loading-placeholder">Add a poster and loading placeholder</DocsLink> for complete examples.
 
 ## Thumbnail
 
@@ -66,7 +66,7 @@ See <DocsLink slug="how-to/show-timeline-thumbnail-previews">Show timeline thumb
 
 ## Styling
 
-Packaged skins style themselves and expose a small set of public CSS custom properties. Everything else inside the skin is private and may change between releases. <DocsLink slug="how-to/customize-skins" anchor="style-a-packaged-skin">Customize skins</DocsLink> documents the properties. When you need deeper changes, eject the skin.
+Packaged skins style themselves and expose a small set of public CSS custom properties. Everything else inside the skin is private and may change between releases. <DocsLink slug="guides/customize-skins" anchor="style-a-packaged-skin">Customize skins</DocsLink> documents the properties. When you need deeper changes, eject the skin.
 
 ## Eject the skin
 

@@ -10,7 +10,7 @@ import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 
 Tracks buffered and seekable time ranges. Each range is a `[start, end]` pair rather than a browser `TimeRanges` object.
 
-During live playback, `seekable` tells you which times remain available. The first start is the oldest available time, and the last end is the newest. Both values can move forward as a sliding live stream drops older video and adds new video. See <DocsLink slug="reference/feature-live">live state</DocsLink> for the live-edge values.
+During live playback, `seekable` tells you which times remain available. The first start is the oldest available time, and the last end is the newest. Both values can move forward as a sliding live stream drops older video and adds new video. See <DocsLink slug="components/feature-live">live state</DocsLink> for the live-edge values.
 
 ## Import
 
@@ -21,11 +21,11 @@ During live playback, `seekable` tells you which times remain available. The fir
 ### Selector
 
 <FrameworkCase frameworks={["react"]}>
-Pass `selectBuffer` to <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> to subscribe to buffer state. Returns `undefined` if the buffer feature is not configured.
+Pass `selectBuffer` to <DocsLink slug="components/use-player">`usePlayer`</DocsLink> to subscribe to buffer state. Returns `undefined` if the buffer feature is not configured.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-Pass `selectBuffer` to <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> to subscribe to buffer state. Returns `undefined` if the buffer feature is not configured.
+Pass `selectBuffer` to <DocsLink slug="components/player-controller">`PlayerController`</DocsLink> to subscribe to buffer state. Returns `undefined` if the buffer feature is not configured.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>

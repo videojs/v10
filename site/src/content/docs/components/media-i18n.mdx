@@ -18,7 +18,7 @@ One import registers both `<media-i18n>` and `<media-text>`.
 
 `<media-i18n>` applies the i18n provider mixin to a subtree. Wrap a player, standalone controls, or one of several players that need different locales with this element. Without it, HTML controls use English defaults.
 
-Set `lang` on the provider or an ancestor. Built-in packs lazy-load automatically; register locale strings with <DocsLink slug="reference/register-i18n">`registerI18n`</DocsLink> when you need custom copy or synchronous first paint. See <DocsLink slug="reference/translation-phrases">Translation keys</DocsLink> for supported keys.
+Set `lang` on the provider or an ancestor. Built-in packs lazy-load automatically; register locale strings with <DocsLink slug="components/register-i18n">`registerI18n`</DocsLink> when you need custom copy or synchronous first paint. See <DocsLink slug="components/translation-phrases">Translation keys</DocsLink> for supported keys.
 
 ```html
 <script type="module">
@@ -39,7 +39,7 @@ Set `lang` on the provider or an ancestor. Built-in packs lazy-load automaticall
 
 ## Related
 
-- <DocsLink slug="reference/media-text">`<media-text>`</DocsLink>: Renders translated text content
-- <DocsLink slug="how-to/internationalize-the-player">Internationalize the player</DocsLink>
+- <DocsLink slug="components/media-text">`<media-text>`</DocsLink>: Renders translated text content
+- <DocsLink slug="guides/internationalize-the-player">Internationalize the player</DocsLink>
 
 </FrameworkCase>

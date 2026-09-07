@@ -47,7 +47,7 @@ Opens the WebKit AirPlay playback target picker and reflects session state. AirP
 
 The button is hidden until `availability` is `"available"`: the HTML custom element receives the native `hidden` attribute, and the React component returns `null`. An explicitly disabled, otherwise available button stays visible and focusable with `aria-disabled="true"` and `data-disabled`, but does not open the picker.
 
-The component consumes the unified <DocsLink slug="reference/feature-remote-playback">`remotePlayback`</DocsLink> store feature alongside `CastButton`: both buttons drive their state from the same feature, but each only surfaces on its supported platform (WebKit for AirPlay, Chromium for Cast).
+The component consumes the unified <DocsLink slug="components/feature-remote-playback">`remotePlayback`</DocsLink> store feature alongside `CastButton`: both buttons drive their state from the same feature, but each only surfaces on its supported platform (WebKit for AirPlay, Chromium for Cast).
 
 WebKit does not expose a `"connecting"` intermediate state — the `state` slice flips directly between `"disconnected"` and `"connected"` when the AirPlay session changes. When connected, the picker itself acts as the disconnect UI.
 

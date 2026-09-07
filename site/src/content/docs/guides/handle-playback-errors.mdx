@@ -13,7 +13,7 @@ Surface terminal playback errors instead of leaving a dead player, and give user
 
 ## Recommended approach
 
-Render an <DocsLink slug="reference/error-dialog">ErrorDialog</DocsLink> inside the player container. It reads error state, presents the failure, and dismisses cleanly. The prebuilt skins include one.
+Render an <DocsLink slug="components/error-dialog">ErrorDialog</DocsLink> inside the player container. It reads error state, presents the failure, and dismisses cleanly. The prebuilt skins include one.
 
 <FrameworkCase frameworks={["react"]}>
 
@@ -66,7 +66,7 @@ The dialog renders its text into the child parts — a title, the error descript
 
 ## How it works
 
-The <DocsLink slug="reference/feature-error">error feature</DocsLink> mirrors the media element's error into player state:
+The <DocsLink slug="components/feature-error">error feature</DocsLink> mirrors the media element's error into player state:
 
 - `error` holds the media's `MediaError` — `code`, `message` — or `null` when there is none.
 - `dismissError()` clears the error from player state (the media element keeps its own error until a new load).
@@ -107,13 +107,13 @@ The failure is probably permanent for that source, such as a 404, revoked token,
 
 ## Related components
 
-- <DocsLink slug="reference/buffering-indicator">Buffering indicator</DocsLink>
+- <DocsLink slug="components/buffering-indicator">Buffering indicator</DocsLink>
 
 ## Related API
 
-- <DocsLink slug="reference/feature-error">Error feature</DocsLink>
+- <DocsLink slug="components/feature-error">Error feature</DocsLink>
 
 ## Related guides
 
 - <DocsLink slug="concepts/media-sources">Media sources</DocsLink>
-- <DocsLink slug="how-to/autoplay">Autoplay</DocsLink>
+- <DocsLink slug="guides/autoplay">Autoplay</DocsLink>

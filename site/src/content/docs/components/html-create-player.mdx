@@ -19,7 +19,7 @@ import { createPlayer } from "@videojs/html";
 import { videoFeatures } from "@videojs/html/video";
 ```
 
-`createPlayer` is the entry point for custom HTML player compositions. It accepts a `features` array and returns the configured `PlayerElement`, a <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> already bound to that player, and `playerContext` as a lower-level escape hatch. Import `ContainerElement` separately when you need a custom container.
+`createPlayer` is the entry point for custom HTML player compositions. It accepts a `features` array and returns the configured `PlayerElement`, a <DocsLink slug="components/player-controller">`PlayerController`</DocsLink> already bound to that player, and `playerContext` as a lower-level escape hatch. Import `ContainerElement` separately when you need a custom container.
 
 ```ts title="player.ts"
 import { createPlayer, UIElement, selectPlayback } from '@videojs/html';

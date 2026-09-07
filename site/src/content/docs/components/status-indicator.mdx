@@ -47,7 +47,7 @@ import basicUsageHtmlTs from "@/components/docs/demos/status-indicator/html/css/
 
 ## Behavior
 
-`StatusIndicator` displays feedback for actions emitted by a <DocsLink slug="reference/hotkey">`Hotkey`</DocsLink> or <DocsLink slug="reference/gesture">`Gesture`</DocsLink> in the same player `Container`. It does not react to buttons, direct player-store changes, or media state changes on their own.
+`StatusIndicator` displays feedback for actions emitted by a <DocsLink slug="components/hotkey">`Hotkey`</DocsLink> or <DocsLink slug="components/gesture">`Gesture`</DocsLink> in the same player `Container`. It does not react to buttons, direct player-store changes, or media state changes on their own.
 
 The input event arrives before its action is resolved. The indicator uses the media snapshot from that moment to predict the next visual status:
 
@@ -127,7 +127,7 @@ React renders standard DOM elements. Add a `className` to the Root:
 
 ## Accessibility
 
-`StatusIndicator` is visual feedback and does not create a live region. Keep every action available through keyboard-operable controls, and pair the player with <DocsLink slug="reference/status-announcer">`StatusAnnouncer`</DocsLink> when state changes should be announced to screen readers. Do not make `StatusIndicator.Value` a live region.
+`StatusIndicator` is visual feedback and does not create a live region. Keep every action available through keyboard-operable controls, and pair the player with <DocsLink slug="components/status-announcer">`StatusAnnouncer`</DocsLink> when state changes should be announced to screen readers. Do not make `StatusIndicator.Value` a live region.
 
 ## Examples
 
