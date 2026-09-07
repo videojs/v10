@@ -1,5 +1,6 @@
 import { DocSearch } from '@docsearch/react';
 import { useStore } from '@nanostores/react';
+import clsx from 'clsx';
 
 import { GITHUB_REPO_URL } from '@/consts';
 import {
@@ -18,8 +19,9 @@ interface SearchProps {
 export default function Search({ className }: SearchProps) {
   const framework = useStore(currentFramework);
 
+  // A flex wrapper keeps the button's box on whole pixels; an inline strut would add a half-pixel line box.
   return (
-    <div className={className}>
+    <div className={clsx('flex', className)}>
       <DocSearch
         appId={DOCSEARCH_APP_ID}
         apiKey={DOCSEARCH_API_KEY}

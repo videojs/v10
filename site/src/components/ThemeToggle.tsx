@@ -11,9 +11,9 @@ type Preference = 'system' | 'light' | 'dark';
 type Theme = 'light' | 'dark';
 
 const themeOptions = [
-  { value: 'system' as const, label: <Computer width="1.5rem" aria-hidden="true" />, 'aria-label': 'System' },
-  { value: 'light' as const, label: <Sun width="1.5rem" aria-hidden="true" />, 'aria-label': 'Light' },
-  { value: 'dark' as const, label: <Moon width="1.5rem" aria-hidden="true" />, 'aria-label': 'Dark' },
+  { value: 'system' as const, label: <Computer className="size-6" aria-hidden="true" />, 'aria-label': 'System' },
+  { value: 'light' as const, label: <Sun className="size-6" aria-hidden="true" />, 'aria-label': 'Light' },
+  { value: 'dark' as const, label: <Moon className="size-6" aria-hidden="true" />, 'aria-label': 'Dark' },
 ];
 
 function initPreference(): Preference {

@@ -2,9 +2,13 @@
 
 Interface glyphs for the docs site, imported as React components through `?react` (SVGR).
 
-- Stroke icons (`arrow-*`, `chevron-*`, `check`, `copy`, `check-circle`, `x-circle`, `x`, `info`, `lightbulb`,
-  `alert`, `alert-diamond`, `sun`, `moon`, `computer`, `radio`, `image`, `cloud-upload`, `film`, `music-note`,
-  `live-streaming`, `at-sign`, `globe`, `link-square`, `book`, `puzzle`, `code`, `pen`) come from [Huge Icons](https://hugeicons.com) via
-  [Icônes](https://icones.js.org) (`hugeicons:*`), MIT licence. Root `width`/`height` attributes are removed so
-  callers size them with CSS; they inherit `currentColor`.
+- Interface glyphs come from [Octicons](https://primer.style/octicons) via [Icônes](https://icones.js.org)
+  (`octicon:*`), MIT licence. Each file is the variant authored for the size it renders at: plain names are the 16px
+  drawings, `*-24` files and the picker/theme glyphs (`cloud-upload`, `computer`, `film`, `image`, `live-streaming`,
+  `moon`, `radio`, `sun`) are 24px drawings. Render them only at that size (`size-4` or `size-6`), never through `em`
+  units, so strokes stay on whole pixels.
+- `music-note` and `puzzle` have no Octicon; they come from
+  [Fluent UI System Icons](https://github.com/microsoft/fluentui-system-icons) (`fluent:*-regular`), MIT licence, at
+  24px and 16px respectively.
+- Root `width`/`height` attributes are removed so callers size them with CSS; they inherit `currentColor`.
 - `arrow`, `dial-inner`, `dial-outer`, `triangle-arrow` are Video.js originals.

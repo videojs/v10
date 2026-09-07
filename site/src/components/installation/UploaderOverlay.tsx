@@ -76,7 +76,7 @@ export default function UploaderOverlay({ state, error, playbackId, onLogin, onR
     return (
       <OverlayWrapper>
         <div className="flex items-center gap-2">
-          <CheckCircle className="text-orange size-4.5" aria-hidden="true" />
+          <CheckCircle className="text-orange size-4" aria-hidden="true" />
           <p className="font-bold">Ready to play</p>
         </div>
         <p className="text-p3 text-center">

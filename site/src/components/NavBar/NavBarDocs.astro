@@ -40,7 +40,7 @@ const { class: className } = Astro.props;
   ]}
   style="height:var(--nav-h)"
 >
-  <a href="/" class="flex h-5 items-center gap-2 sm:h-6 sm:gap-3">
+  <a href="/" class="flex h-5 items-end gap-2 sm:h-6 sm:gap-3">
     <CompactLogo height="100%" className="xs:hidden w-auto" />
     <Logo height="100%" className="hidden xs:inline w-auto" />
     <span class="sr-only">Video.js video player</span>
@@ -73,7 +73,7 @@ const { class: className } = Astro.props;
         >
           {link.label}{" "}
           {link.external ? (
-            <ArrowUpRight className="size-[1em]" aria-hidden="true" />
+            <ArrowUpRight className="size-4" aria-hidden="true" />
           ) : null}
         </a>
       ))
@@ -81,24 +81,24 @@ const { class: className } = Astro.props;
     <a
       href={DISCORD_INVITE_URL}
       class={clsx(
-        "my-1 flex items-center rounded-xs px-3 py-2 font-display font-bold uppercase intent:bg-hover",
+        "flex size-10 self-center items-center justify-center rounded-xs intent:bg-hover",
       )}
       aria-label="Discord"
       target="_blank"
       rel="noopener noreferrer"
     >
-      <Discord width="1.5em" height="1.5em" />
+      <Discord className="size-6" />
     </a>
     <a
       href={GITHUB_REPO_URL}
       class={clsx(
-        "my-1 flex items-center rounded-xs px-3 py-2 font-display font-bold uppercase intent:bg-hover",
+        "flex size-10 self-center items-center justify-center rounded-xs intent:bg-hover",
       )}
       aria-label="GitHub"
       target="_blank"
       rel="noopener noreferrer"
     >
-      <GitHub width="1.5em" height="1.5em" />
+      <GitHub className="size-6" />
     </a>
   </div>
 

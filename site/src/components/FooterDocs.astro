@@ -54,7 +54,7 @@ const { class: className } = Astro.props;
             >
               {link.label}{" "}
               {link.external ? (
-                <ArrowUpRight className="size-[1em]" aria-hidden="true" />
+                <ArrowUpRight className="size-4" aria-hidden="true" />
               ) : null}
             </a>
           ))
@@ -68,7 +68,7 @@ const { class: className } = Astro.props;
             target="_blank"
             rel="noopener noreferrer"
           >
-            <Discord width="1.5em" height="1.5em" />
+            <Discord className="size-6" />
           </a>
           <a
             href={GITHUB_REPO_URL}
@@ -77,7 +77,7 @@ const { class: className } = Astro.props;
             target="_blank"
             rel="noopener noreferrer"
           >
-            <GitHub width="1.5em" height="1.5em" />
+            <GitHub className="size-6" />
           </a>
         </span>
       </div>
@@ -92,7 +92,7 @@ const { class: className } = Astro.props;
           target="_blank"
           rel="noopener noreferrer"
         >
-          <Discord width="1.5em" height="1.5em" />
+          <Discord className="size-6" />
         </a>
         <a
           href={GITHUB_REPO_URL}
@@ -101,7 +101,7 @@ const { class: className } = Astro.props;
           target="_blank"
           rel="noopener noreferrer"
         >
-          <GitHub width="1.5em" height="1.5em" />
+          <GitHub className="size-6" />
         </a>
         <div class="ml-auto">
           <ThemeToggle client:idle />

@@ -193,7 +193,7 @@ export default function MuxUploaderPanel() {
       >
         <span slot="heading" className="flex flex-col items-center gap-4">
           <span className="corner-squircle border-line bg-surface-raised text-orange dark:bg-faded-black flex size-14 items-center justify-center rounded-2xl border shadow-xs">
-            <CloudUpload className="size-7" aria-hidden="true" />
+            <CloudUpload className="size-6" aria-hidden="true" />
           </span>
           <span className="flex flex-col gap-1">
             <span className="text-p15 font-bold text-balance">Drop a video to host it for free on Mux</span>

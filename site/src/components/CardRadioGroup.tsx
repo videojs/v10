@@ -97,7 +97,7 @@ export default function CardRadioGroup<T extends string = string>({
                   : 'scale-75 border-line-strong bg-transparent text-transparent opacity-0 group-intent:opacity-100'
               )}
             >
-              <Check className="size-3" />
+              <Check className="size-4" />
             </span>
           </Radio.Root>
         );
