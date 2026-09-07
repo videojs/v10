@@ -9,6 +9,8 @@
 
 // Stub — the builder walks the prototype chain and stops here.
 export class HTMLVideoAdapter {
+  static readonly host = 'video';
+
   attach(_target: EventTarget): void {}
   detach(): void {}
   destroy(): void {}
@@ -16,6 +18,8 @@ export class HTMLVideoAdapter {
 
 // Stub — audio counterpart, also a prototype-chain stop.
 export class HTMLAudioAdapter {
+  static readonly host = 'audio';
+
   attach(_target: EventTarget): void {}
   detach(): void {}
   destroy(): void {}
