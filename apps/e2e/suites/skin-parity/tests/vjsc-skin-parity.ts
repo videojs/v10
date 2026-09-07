@@ -453,6 +453,20 @@ export async function controlsVisibilityContract(controls: Locator) {
   });
 }
 
+/**
+ * Hold the media at one mid-range volume before a volume shortcut. The indicator shakes and reports the level it lands
+ * on, so two panels only agree when the key moves them both away from the same level and neither reaches a boundary.
+ */
+export async function presetVolume({ section }: SkinPanel, level = 0.5) {
+  const video = section.locator('video').first();
+
+  await video.evaluate((element: HTMLVideoElement, value) => {
+    element.muted = false;
+    element.volume = value;
+  }, level);
+  await expect.poll(() => video.evaluate((element: HTMLVideoElement) => element.volume)).toBe(level);
+}
+
 /** Triggers keyboard feedback and verifies its rendered-presence lifecycle. */
 export async function feedbackContract({ frame, root }: SkinPanel, key: string, selector: string) {
   const page = root.page();

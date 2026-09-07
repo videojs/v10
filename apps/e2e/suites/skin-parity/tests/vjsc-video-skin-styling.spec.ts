@@ -10,6 +10,7 @@ import {
   freezeSliderState,
   openComparison,
   openSourceComparison,
+  presetVolume,
   type SkinCase,
   skinCases,
   type SkinComparison,
@@ -294,8 +295,8 @@ for (const variant of CASES) {
     await page.clock.install();
 
     const { css, tailwind } = await openVariants(page, variant, 800);
-    const cssContract = await keyboardFeedbackContract(css.root);
-    const tailwindContract = await keyboardFeedbackContract(tailwind.root);
+    const cssContract = await keyboardFeedbackContract(css);
+    const tailwindContract = await keyboardFeedbackContract(tailwind);
 
     expect(tailwindContract).toEqual(cssContract);
   });
@@ -1230,7 +1231,11 @@ async function preferenceSurfaceContract(root: Locator, menu: Locator) {
   };
 }
 
-async function keyboardFeedbackContract(root: Locator) {
+async function keyboardFeedbackContract(panel: SkinPanel) {
+  const { root } = panel;
+
+  await presetVolume(panel);
+
   return {
     volume: await triggerIndicator(root, 'ArrowUp', '[data-level]:not([role])'),
     captions: await triggerIndicator(root, 'c', '[data-status="captions-on"], [data-status="captions-off"]'),
