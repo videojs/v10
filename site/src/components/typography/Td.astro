@@ -12,7 +12,8 @@ type Props<Tag extends HTMLTag = 'td'> = Polymorphic<{ as: Tag }> & {
 
 const { as: Tag = 'td', class: className, ...props } = Astro.props;
 
-const html = highlightInlineCodeHtml(await Astro.slots.render('default'));
+// An empty cell has no default slot, and `render` returns undefined for it.
+const html = highlightInlineCodeHtml((await Astro.slots.render('default')) ?? '');
 ---
 
 <Tag class={twMerge("px-3 py-3 align-top sm:px-4", className)} {...props} set:html={html} />
