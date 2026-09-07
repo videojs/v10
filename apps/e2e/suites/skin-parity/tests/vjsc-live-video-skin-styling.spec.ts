@@ -9,18 +9,17 @@ import {
   expectRenderingParity,
   expectSameRendering,
   feedbackContract,
-  presetVolume,
   freezeSliderState,
   normalizeErrorDialogCopy,
   openComparison,
   openSourceComparison,
   popupAncestor,
   popupContract,
+  presetVolume,
   type SkinCase,
   skinCases,
   type SkinComparison,
   type SkinPanel,
-  snapshotReference,
   type SourceComparison,
   surfaceContract,
   waitForStableText,
@@ -125,7 +124,7 @@ for (const variant of CASES) {
     const name = `${variant.framework}-${variant.skin}-fullscreen.png`;
     const { css, tailwind } = await openVariants(page, variant, 800);
     const cssContract = await enterFullscreen(css.root);
-    const reference = await snapshotReference(css.root, name);
+    const reference = await captureRendering(css.root, name);
 
     await exitFullscreen(page);
 
