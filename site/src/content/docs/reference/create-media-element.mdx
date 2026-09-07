@@ -20,9 +20,11 @@ Pass an adapter class. The returned element renders the adapter's host element i
 import { createMediaElement } from '@videojs/html';
 import { HlsJsAdapter } from '@videojs/hlsjs-video';
 
-export class MyHlsVideo extends createMediaElement(HlsJsAdapter) {}
+export class MyHlsVideoElement extends createMediaElement(HlsJsAdapter) {
+  static readonly tagName = 'my-hls-video';
+}
 
-customElements.define('my-hls-video', MyHlsVideo);
+customElements.define(MyHlsVideoElement.tagName, MyHlsVideoElement);
 ```
 
 Embeds pass a `template` that renders the provider's `<iframe>` from the element's initial attributes:
@@ -32,7 +34,7 @@ import { createMediaElement } from '@videojs/html';
 import { escapeHtml } from '@videojs/utils/string';
 import { VimeoAdapter } from '@videojs/vimeo-video';
 
-export class MyVimeoVideo extends createMediaElement(VimeoAdapter, {
+export class MyVimeoVideoElement extends createMediaElement(VimeoAdapter, {
   template: (attrs) => `<iframe part="iframe" src="${escapeHtml(attrs.src ?? '')}" allowfullscreen></iframe>`,
 }) {}
 ```

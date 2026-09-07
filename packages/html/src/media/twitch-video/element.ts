@@ -1,10 +1,10 @@
+import { buildTwitchIframeSrc, TwitchAdapter } from '@videojs/twitch-video';
 import { escapeHtml } from '@videojs/utils/string';
-import { buildVimeoIframeSrc, VimeoAdapter } from '@videojs/vimeo-video';
 
 import { createMediaElement } from '../create-media-element';
 
 const template = (attrs: Record<string, string>): string => {
-  const initialSrc = buildVimeoIframeSrc(attrs.src ?? '', templateAttrsToEmbedProps(attrs));
+  const initialSrc = buildTwitchIframeSrc(attrs.src ?? '', templateAttrsToEmbedProps(attrs));
   const srcAttr = initialSrc ? ` src="${escapeHtml(initialSrc)}"` : '';
 
   return /*html*/ `
@@ -29,8 +29,9 @@ const template = (attrs: Record<string, string>): string => {
     <iframe
       part="iframe"
       ${srcAttr}
-      allow="accelerometer; fullscreen; autoplay; encrypted-media; gyroscope; picture-in-picture"
-      allowfullscreen
+      allow="accelerometer; fullscreen; autoplay; encrypted-media; picture-in-picture;"
+      sandbox="allow-modals allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
+      scrolling="no"
       frameborder="0"
       width="100%"
       height="100%"
@@ -50,4 +51,6 @@ function templateAttrsToEmbedProps(attrs: Record<string, string>) {
   };
 }
 
-export class VimeoVideo extends createMediaElement(VimeoAdapter, { template }) {}
+export class TwitchVideoElement extends createMediaElement(TwitchAdapter, { template }) {
+  static readonly tagName = 'twitch-video';
+}

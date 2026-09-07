@@ -1,8 +1,8 @@
 import type { HlsBackgroundVideoAdapter } from '@videojs/spf/hls-background-video';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
-import { MuxBackgroundVideo } from '../../mux-background-video';
-import { HlsBackgroundVideo } from '../index';
+import { MuxBackgroundVideoElement } from '../../mux-background-video';
+import { HlsBackgroundVideoElement } from '../index';
 
 /** SVTA 2011 — no video track this environment can play. */
 const NO_SUPPORTED_VIDEO_TRACK = 2011;
@@ -27,12 +27,12 @@ let tagCounter = 0;
 function defineElement() {
   const tag = `test-hls-background-video-${++tagCounter}`;
 
-  customElements.define(tag, class extends HlsBackgroundVideo {});
+  customElements.define(tag, class extends HlsBackgroundVideoElement {});
   return tag;
 }
 
 // innerHTML on a connected container so attributes are present when the constructor runs.
-function create(tag: string, attrs: Record<string, string> = {}): HlsBackgroundVideo {
+function create(tag: string, attrs: Record<string, string> = {}): HlsBackgroundVideoElement {
   const container = document.createElement('div');
 
   document.body.appendChild(container);
@@ -41,17 +41,17 @@ function create(tag: string, attrs: Record<string, string> = {}): HlsBackgroundV
     .join('');
 
   container.innerHTML = `<${tag}${attrStr}></${tag}>`;
-  return container.querySelector(tag) as HlsBackgroundVideo;
+  return container.querySelector(tag) as HlsBackgroundVideoElement;
 }
 
 /** The Media the element registers, which is what the engine hangs off. */
-function mediaOf(element: HlsBackgroundVideo) {
+function mediaOf(element: HlsBackgroundVideoElement) {
   return element.getMediaTarget() as unknown as HlsBackgroundVideoAdapter;
 }
 
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 
-describe('HlsBackgroundVideo', () => {
+describe('HlsBackgroundVideoElement', () => {
   it('renders a video into its shadow root', () => {
     const element = create(defineElement());
 
@@ -106,7 +106,7 @@ describe('HlsBackgroundVideo', () => {
     // `max-resolution` is a URL param, `preload` means nothing to an engine that
     // loads immediately, and `audio` / `debug` from the package this replaces are
     // gone for good.
-    expect(HlsBackgroundVideo.observedAttributes).toEqual(['src']);
+    expect(HlsBackgroundVideoElement.observedAttributes).toEqual(['src']);
   });
 
   // The engine's reported sequence is the only failure signal this composition
@@ -148,8 +148,9 @@ describe('HlsBackgroundVideo', () => {
     });
   });
 
-  it('is what <mux-background-video> resolves to', () => {
-    // An alias, so there is one implementation to test rather than two.
-    expect(MuxBackgroundVideo).toBe(HlsBackgroundVideo);
+  it('is what <mux-background-video> extends', () => {
+    // An alias tag over the same implementation, so there is one element to test rather than two.
+    expect(Object.getPrototypeOf(MuxBackgroundVideoElement)).toBe(HlsBackgroundVideoElement);
+    expect(MuxBackgroundVideoElement.tagName).toBe('mux-background-video');
   });
 });

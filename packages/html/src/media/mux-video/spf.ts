@@ -12,4 +12,6 @@ const MuxVideoBase = MuxVideoMixin(createMediaElement(MuxVideoAdapter));
  * the surface moves. Deliberately not exported from this directory's barrel, so importing one flavor never pulls the
  * other's engine in with it.
  */
-export class MuxVideo extends MuxVideoBase {}
+export class MuxVideoElement extends MuxVideoBase {
+  static readonly tagName = 'mux-video';
+}

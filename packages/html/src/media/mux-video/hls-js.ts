@@ -5,4 +5,6 @@ import { MuxVideoMixin } from './mixin';
 
 const MuxVideoBase = MuxVideoMixin(createMediaElement(MuxVideoAdapter));
 
-export class MuxVideo extends MuxVideoBase {}
+export class MuxVideoElement extends MuxVideoBase {
+  static readonly tagName = 'mux-video';
+}

@@ -49,7 +49,9 @@ const HlsBackgroundVideoBase = MediaAttachMixin(HTMLElementBase) as unknown as C
  */
 // Deliberately not `CustomMediaElement`, matching `<background-video>`: a
 // background video needs one property, not the full WHATWG media API.
-export class HlsBackgroundVideo extends HlsBackgroundVideoBase {
+export class HlsBackgroundVideoElement extends HlsBackgroundVideoBase {
+  static readonly tagName = 'hls-background-video';
+
   static shadowRootOptions = { mode: 'open' as ShadowRootMode };
   static template = backgroundVideoTemplate;
 
@@ -63,7 +65,7 @@ export class HlsBackgroundVideo extends HlsBackgroundVideoBase {
   constructor() {
     super();
 
-    const ctor = this.constructor as typeof HlsBackgroundVideo;
+    const ctor = this.constructor as typeof HlsBackgroundVideoElement;
 
     renderHost(
       this,

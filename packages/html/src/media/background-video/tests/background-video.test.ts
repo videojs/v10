@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vite-plus/test';
 
-import { BackgroundVideo } from '../index';
+import { BackgroundVideoElement } from '../index';
 
 afterEach(() => {
   document.body.innerHTML = '';
@@ -11,7 +11,7 @@ let tagCounter = 0;
 function defineElement() {
   const tag = `test-background-video-${++tagCounter}`;
 
-  customElements.define(tag, class extends BackgroundVideo {});
+  customElements.define(tag, class extends BackgroundVideoElement {});
   return tag;
 }
 
@@ -31,7 +31,7 @@ function create(tag: string, attrs: Record<string, string> = {}): Element {
   return container.querySelector(tag)!;
 }
 
-describe('BackgroundVideo', () => {
+describe('BackgroundVideoElement', () => {
   describe('XSS prevention', () => {
     it('does not inject nodes when a whitelisted attribute value contains a quote breakout', () => {
       const tag = defineElement();
@@ -74,7 +74,7 @@ describe('BackgroundVideo', () => {
     it('preserves safe whitelisted attribute values correctly', () => {
       const tag = defineElement();
       // Test template generation directly — happy-dom may return null for IDL attrs (crossorigin) on shadow DOM elements.
-      const Ctor = customElements.get(tag) as typeof BackgroundVideo;
+      const Ctor = customElements.get(tag) as typeof BackgroundVideoElement;
       const attrs = {
         crossorigin: 'anonymous',
         preload: 'metadata',

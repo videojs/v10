@@ -1,11 +1,9 @@
-import { HlsAudio } from '../../media/hls-audio';
+import { HlsAudioElement } from '../../media/hls-audio';
 import { safeDefine } from '../../registration/safe-define';
 
-export class HlsAudioElement extends HlsAudio {
-  static readonly tagName = 'hls-audio';
-}
-
 safeDefine(HlsAudioElement);
+
+export { HlsAudioElement };
 
 declare global {
   interface HTMLElementTagNameMap {

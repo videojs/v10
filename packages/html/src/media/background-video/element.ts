@@ -8,7 +8,9 @@ const HTMLElementBase = globalThis.HTMLElement ?? class {};
 
 // Not a `CustomMediaElement`: a background video has no adapter and needs one attribute, not the full media API. It
 // renders through the same `renderHost` the media elements use.
-export class BackgroundVideo extends MediaAttachMixin(HTMLElementBase) {
+export class BackgroundVideoElement extends MediaAttachMixin(HTMLElementBase) {
+  static readonly tagName = 'background-video';
+
   static shadowRootOptions = { mode: 'open' as ShadowRootMode };
   static template = backgroundVideoTemplate;
   static get observedAttributes() {
@@ -18,7 +20,7 @@ export class BackgroundVideo extends MediaAttachMixin(HTMLElementBase) {
   constructor() {
     super();
 
-    const ctor = this.constructor as typeof BackgroundVideo;
+    const ctor = this.constructor as typeof BackgroundVideoElement;
 
     renderHost(
       this,

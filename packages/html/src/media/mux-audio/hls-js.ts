@@ -5,4 +5,6 @@ import { MuxAudioMixin } from './mixin';
 
 const MuxAudioBase = MuxAudioMixin(createMediaElement(MuxAudioAdapter));
 
-export class MuxAudio extends MuxAudioBase {}
+export class MuxAudioElement extends MuxAudioBase {
+  static readonly tagName = 'mux-audio';
+}

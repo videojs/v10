@@ -1,10 +1,10 @@
-import { buildCloudflareIframeSrc, CloudflareAdapter } from '@videojs/cloudflare-video';
 import { escapeHtml } from '@videojs/utils/string';
+import { buildVimeoIframeSrc, VimeoAdapter } from '@videojs/vimeo-video';
 
 import { createMediaElement } from '../create-media-element';
 
 const template = (attrs: Record<string, string>): string => {
-  const initialSrc = buildCloudflareIframeSrc(attrs.src ?? '', templateAttrsToEmbedProps(attrs));
+  const initialSrc = buildVimeoIframeSrc(attrs.src ?? '', templateAttrsToEmbedProps(attrs));
   const srcAttr = initialSrc ? ` src="${escapeHtml(initialSrc)}"` : '';
 
   return /*html*/ `
@@ -45,10 +45,11 @@ function templateAttrsToEmbedProps(attrs: Record<string, string>) {
     defaultMuted: attrs.muted !== undefined,
     loop: attrs.loop !== undefined,
     controls: attrs.controls !== undefined,
+    playsInline: attrs.playsinline !== undefined,
     preload: (attrs.preload as 'none' | 'metadata' | 'auto' | undefined) ?? 'metadata',
-    // The Stream embed paints the poster itself, so it is part of the URL.
-    poster: attrs.poster ?? '',
   };
 }
 
-export class CloudflareVideo extends createMediaElement(CloudflareAdapter, { template }) {}
+export class VimeoVideoElement extends createMediaElement(VimeoAdapter, { template }) {
+  static readonly tagName = 'vimeo-video';
+}
