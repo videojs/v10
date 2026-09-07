@@ -13,9 +13,32 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Pull requests run the browser suites when they touch code the suites render; the `test:e2e` label forces them.
+  changes:
+    name: Changed areas
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    outputs:
+      e2e: ${{ steps.filter.outputs.e2e }}
+    steps:
+      - name: Detect e2e-relevant changes
+        id: filter
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          files=$(gh api "repos/$GH_REPO/pulls/$NUMBER/files" --paginate --jq '.[].filename')
+          if grep -Eq '^(apps/e2e/|apps/sandbox/|packages/|\.github/workflows/e2e\.yml$|pnpm-lock\.yaml$)' <<<"$files"; then
+            echo "e2e=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "e2e=false" >> "$GITHUB_OUTPUT"
+          fi
+
   e2e:
     name: E2E (${{ matrix.browser }})
-    if: github.event_name == 'push' || contains(github.event.pull_request.labels.*.name, 'test:e2e')
+    needs: changes
+    if: ${{ !cancelled() && (github.event_name == 'push' || needs.changes.outputs.e2e == 'true' || contains(github.event.pull_request.labels.*.name, 'test:e2e')) }}
     runs-on: ubuntu-latest
     container:
       image: mcr.microsoft.com/playwright:v1.59.1-noble
@@ -83,7 +106,8 @@ jobs:
 
   skin-parity:
     name: Skin parity (${{ matrix.preset }})
-    if: github.event_name == 'push' || contains(github.event.pull_request.labels.*.name, 'test:e2e')
+    needs: changes
+    if: ${{ !cancelled() && (github.event_name == 'push' || needs.changes.outputs.e2e == 'true' || contains(github.event.pull_request.labels.*.name, 'test:e2e')) }}
     runs-on: ubuntu-latest
     container:
       image: mcr.microsoft.com/playwright:v1.59.1-noble
