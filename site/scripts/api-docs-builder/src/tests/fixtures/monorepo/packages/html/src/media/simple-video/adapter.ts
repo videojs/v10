@@ -8,7 +8,7 @@
 import { SimpleHost } from '../../../../media/src/dom/simple';
 
 // Stub — the builder parses the AST, it doesn't run the code.
-function createMediaElement(host: any, options?: { tag?: string }) {
+function createMediaElement(host: any, options?: { template?: (attrs: Record<string, string>) => string }) {
   return host;
 }
 

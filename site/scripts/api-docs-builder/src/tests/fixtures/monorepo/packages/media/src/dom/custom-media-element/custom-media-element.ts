@@ -60,10 +60,12 @@ function getCommonTemplateHTML(tag: string) {
 }
 
 // Stub — the builder parses the AST, it doesn't run the code.
-// Mirrors the real CustomMediaElement factory signature.
-export function CustomMediaElement(tag: string, Host: any) {
+// Mirrors the real CustomMediaElement factory signature: the target is the host's static `host`.
+export function CustomMediaElement(Host: any) {
+  const tag: string = Host.host;
+
   class CustomMedia {
-    static getTemplateHTML = tag === 'video' ? getVideoTemplateHTML : getCommonTemplateHTML(tag);
+    static template = tag === 'video' ? getVideoTemplateHTML : getCommonTemplateHTML(tag);
     static shadowRootOptions = { mode: 'open' };
 
     static properties = {

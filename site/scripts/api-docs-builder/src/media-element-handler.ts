@@ -288,6 +288,8 @@ function discoverMediaElements(monorepoRoot: string, project: OxcProject): Media
 
         // The composition may name the host through an import alias; property extraction needs the declared name.
         const hostClassName = host.declaration.id?.name ?? composition.hostClassName;
+        const targetTag = resolveHostTag(host.file, host.declaration, project, new Set());
+        if (!targetTag) continue;
 
         sources.push({
           defineFilePath: filePath,
@@ -296,8 +298,8 @@ function discoverMediaElements(monorepoRoot: string, project: OxcProject): Media
           mediaFilePath: mediaDeclaration.file.filePath,
           hostFilePath: host.file.filePath,
           hostClassName,
-          mediaType: composition.mediaType,
-          targetTag: composition.targetTag,
+          mediaType: targetTag === 'audio' || (targetTag === 'iframe' && name.endsWith('Audio')) ? 'audio' : 'video',
+          targetTag,
         });
       }
     }
@@ -327,12 +329,16 @@ function publicImplementationFiles(entryPath: string, project: OxcProject, visit
 }
 
 const MEDIA_ELEMENT_FACTORIES = new Set(['CustomMediaElement', 'createMediaElement']);
+const HOST_BASE_TAGS: Readonly<Record<string, MediaTargetTag>> = {
+  HTMLVideoAdapter: 'video',
+  HTMLAudioAdapter: 'audio',
+};
 
 function findCustomMediaComposition(
   file: SourceFile,
   declaration: Class,
   project: OxcProject
-): { hostClassName: string; mediaType: 'video' | 'audio'; targetTag: MediaTargetTag } | undefined {
+): { hostClassName: string } | undefined {
   const expressions: Expression[] = [];
 
   if (declaration.superClass) expressions.push(resolveLocalExpression(file, declaration.superClass, project));
@@ -344,61 +350,71 @@ function findCustomMediaComposition(
   }
 
   for (const expression of expressions) {
-    let found: { hostClassName: string; mediaType: 'video' | 'audio'; targetTag: MediaTargetTag } | undefined;
+    let found: { hostClassName: string } | undefined;
 
     walkAst(expression, (node) => {
       if (found || node.type !== 'CallExpression' || node.callee.type !== 'Identifier') return;
 
       if (!MEDIA_ELEMENT_FACTORIES.has(node.callee.name) || node.arguments.length < 1) return;
 
-      // `CustomMediaElement(tag, Host)` names the target first; `createMediaElement(Host, { tag })` from
-      // `@videojs/html` names the host first and defaults the target to `video`.
-      const fromFactory = node.callee.name === 'createMediaElement';
-      const host = fromFactory ? node.arguments[0] : node.arguments[1];
-      let target: Expression | undefined;
+      // `CustomMediaElement(Host)` from `@videojs/media/dom` and `createMediaElement(Host, options?)` from
+      // `@videojs/html` both name the host first; the target comes from the host's static `host`.
+      const host = node.arguments[0];
+      if (!host || host.type !== 'Identifier') return;
 
-      if (fromFactory) {
-        const options = node.arguments[1];
-        const tagProperty =
-          options?.type === 'ObjectExpression'
-            ? options.properties.find((entry) => entry.type === 'Property' && staticName(entry.key) === 'tag')
-            : undefined;
-
-        target =
-          tagProperty?.type === 'Property'
-            ? tagProperty.value
-            : ({ type: 'Literal', value: 'video', raw: "'video'", start: node.start, end: node.end } as Expression);
-      } else {
-        target = node.arguments[0]?.type === 'SpreadElement' ? undefined : node.arguments[0];
-      }
-
-      if (
-        !target ||
-        target.type !== 'Literal' ||
-        typeof target.value !== 'string' ||
-        !['video', 'audio', 'iframe'].includes(target.value) ||
-        !host ||
-        host.type !== 'Identifier'
-      ) {
-        return;
-      }
-
-      const targetTag = target.value as MediaTargetTag;
-
-      found = {
-        hostClassName: host.name,
-        targetTag,
-        mediaType:
-          targetTag === 'audio' || (targetTag === 'iframe' && declaration.id?.name.endsWith('Audio'))
-            ? 'audio'
-            : 'video',
-      };
+      found = { hostClassName: host.name };
     });
 
     if (found) return found;
   }
 
   return undefined;
+}
+
+/**
+ * The element a host attaches to, read from its static `host` or inherited from the base adapter it extends.
+ *
+ * Follows the extends chain through mixin calls (`MuxMixin(HlsAudioAdapter)`) and hoisted bases, stopping at the
+ * `HTMLVideoAdapter` / `HTMLAudioAdapter` roots or the first class that declares the static itself.
+ */
+function resolveHostTag(
+  file: SourceFile,
+  declaration: Class,
+  project: OxcProject,
+  visited: Set<string>
+): MediaTargetTag | undefined {
+  const declared = staticStringClassProperty(declaration, 'host');
+  if (declared === 'video' || declared === 'audio' || declared === 'iframe') return declared;
+
+  if (!declaration.superClass) return undefined;
+
+  return resolveHostTagFromBase(resolveLocalExpression(file, declaration.superClass, project), file, project, visited);
+}
+
+function resolveHostTagFromBase(
+  expression: Expression,
+  file: SourceFile,
+  project: OxcProject,
+  visited: Set<string>
+): MediaTargetTag | undefined {
+  const value = resolveLocalExpression(file, expression, project);
+
+  if (value.type === 'CallExpression') {
+    return resolveHostTagFromBase(unwindMixinChain(value).base, file, project, visited);
+  }
+
+  if (value.type !== 'Identifier') return undefined;
+
+  const known = HOST_BASE_TAGS[value.name];
+  const resolved = project.resolveName(file.filePath, value.name);
+  if (!resolved || resolved.declaration.type !== 'ClassDeclaration') return known;
+
+  const key = `${resolved.file.filePath}#${value.name}`;
+  if (visited.has(key)) return known;
+
+  visited.add(key);
+
+  return resolveHostTag(resolved.file, resolved.declaration, project, visited) ?? known;
 }
 
 function extractHostProperties(

@@ -6,4 +6,6 @@
  */
 import { HTMLMediaAdapter } from '../html-media-adapter';
 
-export class HTMLAudioAdapter extends HTMLMediaAdapter {}
+export class HTMLAudioAdapter extends HTMLMediaAdapter {
+  static readonly host = 'audio';
+}

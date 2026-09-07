@@ -11,6 +11,6 @@ function MediaAttachMixin(base: any) {
   return base;
 }
 
-const ExtendingVideoBase = MediaAttachMixin(CustomMediaElement('video', ExtendingHost));
+const ExtendingVideoBase = MediaAttachMixin(CustomMediaElement(ExtendingHost));
 
 export class ExtendingVideo extends (ExtendingVideoBase as typeof ExtendingVideoBase) {}

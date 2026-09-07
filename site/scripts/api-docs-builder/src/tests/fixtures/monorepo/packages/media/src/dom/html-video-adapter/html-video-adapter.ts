@@ -9,6 +9,8 @@
 import { HTMLMediaAdapter } from '../html-media-adapter';
 
 export class HTMLVideoAdapter extends HTMLMediaAdapter {
+  static readonly host = 'video';
+
   requestFullscreen(): Promise<void> {
     return Promise.resolve();
   }

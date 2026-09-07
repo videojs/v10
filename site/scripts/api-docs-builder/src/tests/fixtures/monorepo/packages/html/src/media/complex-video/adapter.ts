@@ -13,4 +13,4 @@ function MediaAttachMixin(base: any) {
   return base;
 }
 
-export class ComplexVideo extends MediaAttachMixin(CustomMediaElement('video', ComplexHost)) {}
+export class ComplexVideo extends MediaAttachMixin(CustomMediaElement(ComplexHost)) {}

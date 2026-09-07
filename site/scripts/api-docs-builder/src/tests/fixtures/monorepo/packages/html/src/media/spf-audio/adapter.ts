@@ -1,8 +1,8 @@
 /**
  * Mock audio-only media element — mirrors HlsAudio.
  *
- * Exercises: audio media type ('audio' tag argument) with a cross-package
- * mixin host.
+ * Exercises: audio media type, inherited from the `HTMLAudioAdapter` root of a
+ * cross-package mixin host.
  */
 import { CustomMediaElement } from '../../../../media/src/dom/custom-media-element';
 import { SpfAudioHost } from '../../../../media/src/dom/spf-audio';
@@ -12,4 +12,4 @@ function MediaAttachMixin(base: any) {
   return base;
 }
 
-export class SpfAudio extends MediaAttachMixin(CustomMediaElement('audio', SpfAudioHost)) {}
+export class SpfAudio extends MediaAttachMixin(CustomMediaElement(SpfAudioHost)) {}

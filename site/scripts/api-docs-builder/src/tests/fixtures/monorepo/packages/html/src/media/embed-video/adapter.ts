@@ -5,6 +5,6 @@ function MediaAttachMixin(base: any) {
   return base;
 }
 
-class EmbedCustomMediaElement extends CustomMediaElement('iframe', EmbedHost) {}
+class EmbedCustomMediaElement extends CustomMediaElement(EmbedHost) {}
 
 export class EmbedVideo extends MediaAttachMixin(EmbedCustomMediaElement) {}

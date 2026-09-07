@@ -1509,8 +1509,8 @@ describe('Media element pipeline (end-to-end)', () => {
     });
 
     it('discovers elements built with createMediaElement as well as CustomMediaElement', () => {
-      // SimpleVideo composes through the factory (default target), MixinVideo names its target in the options object,
-      // and ComplexVideo composes through CustomMediaElement directly.
+      // SimpleVideo composes through the factory, MixinVideo through the factory with an options object, and
+      // ComplexVideo through CustomMediaElement directly; each target comes from the host's static `host`.
       expect(findElement('SimpleVideo')!.reference.platforms.html.target).toBe('video');
       expect(findElement('MixinVideo')!.reference.platforms.html.target).toBe('video');
       expect(findElement('ComplexVideo')!.reference.platforms.html.target).toBe('video');
