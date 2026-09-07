@@ -1109,6 +1109,8 @@ async function fullscreenPreviewContract(root: Locator) {
 
   const thumbnail = slider.locator(':scope > :last-child > :first-child');
 
+  // The thumbnail keeps a placeholder box until its storyboard image arrives, so the gaps depend on the loaded image.
+  await expect(thumbnail).not.toHaveAttribute('data-loading', '', { timeout: 20_000 });
   await expect.poll(() => thumbnail.evaluate((element) => element.getBoundingClientRect().height)).toBeGreaterThan(0);
 
   return slider.evaluate((element) => {
