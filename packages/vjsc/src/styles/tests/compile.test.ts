@@ -178,9 +178,9 @@ describe('compileStyles', () => {
     expect(css).toMatch(/}\s*\.media-poster > slot::slotted/);
   });
 
-  it('emits shadow host rules outside the scope with the scope root as an ancestor', async () => {
+  it('emits shadow host rules outside the scope without changing specificity or conditions', async () => {
     const thumbnail = {
-      ...rule('image', 'media-thumbnail-image', ['block', 'data-loading:opacity-0']),
+      ...rule('image', 'media-thumbnail-image', ['block', 'data-loading:opacity-0', 'sm:flex']),
       shadowHost: true,
     };
     const spinner = rule('spinner', 'media-thumbnail-spinner', ['absolute']);
@@ -198,8 +198,11 @@ describe('compileStyles', () => {
     expect(scoped).toContain('@scope (.media-skin-video)');
     expect(scoped).toContain('.media-thumbnail-spinner');
     expect(scoped).not.toContain('.media-thumbnail-image');
-    expect(unscoped).toContain('.media-skin-video .media-thumbnail-image {');
-    expect(unscoped).toContain('.media-skin-video .media-thumbnail-image[data-loading] {');
+    expect(unscoped).toContain(':where(.media-skin-video) .media-thumbnail-image {');
+    expect(unscoped).toContain(':where(.media-skin-video) .media-thumbnail-image[data-loading] {');
+    expect(unscoped).toMatch(
+      /@media[^{}]+\{\s*:where\(\.media-skin-video\) \.media-thumbnail-image \{\s*display: flex;/
+    );
   });
 });
 

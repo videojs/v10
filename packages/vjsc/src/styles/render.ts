@@ -8,7 +8,7 @@ import {
   transform,
 } from 'lightningcss';
 
-import { cloneCssAst, collectRuleClasses, withoutNullValues } from './css-ast';
+import { cloneCssAst, collectRuleClasses, hasNestedCssRules, withoutNullValues } from './css-ast';
 import type { DesignSystem } from './design-system';
 import type { StyleOutputFile } from './output';
 import { replaceRuleClasses } from './selectors';
@@ -91,13 +91,13 @@ function wrapFileCss(css: string, scope: string | undefined, file: StyleOutputFi
 /**
  * Keep the rules `@scope` cannot serve outside the scope block. Slotted nodes sit outside a shadow tree's CSS scope,
  * and WebKit never matches a scoped rule whose subject hosts a shadow root; those rules take the scope root as an
- * ancestor instead. Only top-level rules move, so a shadow host keeps its scoped rules under conditional at-rules.
+ * ancestor instead. Conditional at-rules retain their conditions when their matching rules move.
  */
 function splitUnscopedRules(css: string, scope: string, shadowHostClasses: ReadonlySet<string>) {
   let hasSlottedRules = false;
   let hasShadowHostRules = false;
   const isShadowHostRule = (rule: Rule) => isShadowHostStyleRule(rule, shadowHostClasses);
-  const scoped = filterTopLevelRules(css, (rule) => {
+  const scoped = filterCssRules(css, (rule) => {
     const slotted = isSlottedStyleRule(rule);
     const shadowHost = !slotted && isShadowHostRule(rule);
 
@@ -107,15 +107,15 @@ function splitUnscopedRules(css: string, scope: string, shadowHostClasses: Reado
     return !slotted && !shadowHost;
   });
 
-  const slotted = hasSlottedRules ? filterTopLevelRules(css, isSlottedStyleRule) : '';
-  const shadowHosts = hasShadowHostRules ? prefixScope(filterTopLevelRules(css, isShadowHostRule), scope) : '';
+  const slotted = hasSlottedRules ? filterCssRules(css, isSlottedStyleRule) : '';
+  const shadowHosts = hasShadowHostRules ? prefixScope(filterCssRules(css, isShadowHostRule), scope) : '';
 
   return { scoped, unscoped: `${slotted}\n${shadowHosts}` };
 }
 
-/** Prefix every selector with the scope root as an ancestor, standing in for the `@scope` block the rule left. */
+/** Prefix every selector with the scope root as a zero-specificity ancestor, standing in for the `@scope` block. */
 function prefixScope(css: string, scope: string): string {
-  const root = parseSelector(scope);
+  const root = parseSelector(`:where(${scope})`);
 
   return decoder.decode(
     transform({
@@ -158,7 +158,7 @@ function parseSelector(text: string): Selector {
   return parsed;
 }
 
-function filterTopLevelRules(css: string, include: (rule: Rule) => boolean): string {
+function filterCssRules(css: string, include: (rule: Rule) => boolean): string {
   return decoder.decode(
     transform({
       filename: 'semantic.css',
@@ -167,12 +167,35 @@ function filterTopLevelRules(css: string, include: (rule: Rule) => boolean): str
         StyleSheet(stylesheet) {
           return withoutNullValues({
             ...cloneCssAst(stylesheet),
-            rules: stylesheet.rules.filter(include).map((rule) => cloneCssAst(rule)),
+            rules: filterNestedRules(stylesheet.rules, include),
           });
         },
       },
     }).code
   );
+}
+
+function filterNestedRules(rules: readonly Rule[], include: (rule: Rule) => boolean): Rule[] {
+  const filtered: Rule[] = [];
+
+  for (const rule of rules) {
+    if (hasNestedCssRules(rule)) {
+      const nested = filterNestedRules(rule.value.rules, include);
+
+      if (nested.length > 0) {
+        const cloned = cloneCssAst(rule);
+
+        cloned.value.rules = nested;
+        filtered.push(withoutNullValues(cloned));
+      }
+
+      continue;
+    }
+
+    if (include(rule)) filtered.push(cloneCssAst(rule));
+  }
+
+  return filtered;
 }
 
 /** A rule whose selectors all start from a class of an element that hosts a shadow root. */
