@@ -11,9 +11,9 @@ export const shared = {
   pre: 'shiki astro-code',
   em: 'italic',
   li: '',
-  ol: 'list-decimal list-outside pl-4 space-y-1',
-  p: 'my-4',
+  ol: 'list-decimal list-outside pl-4 space-y-1 leading-relaxed',
+  p: 'my-4 leading-relaxed',
   prose: 'mx-auto max-w-3xl',
   strong: 'font-bold',
-  ul: 'list-disc list-outside pl-4 space-y-1',
+  ul: 'list-disc list-outside pl-4 space-y-1 leading-relaxed',
 } as const;
