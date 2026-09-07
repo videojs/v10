@@ -4,6 +4,7 @@ import { defineConfig, devices } from '@playwright/test';
 
 import { suiteConfig } from '../../shared/playwright.ts';
 
+/** The sandbox shell itself: its controls, compare and mirror modes, report, and localization. */
 export default defineConfig({
   ...suiteConfig('sandbox'),
   testDir: resolve(import.meta.dirname, 'tests'),

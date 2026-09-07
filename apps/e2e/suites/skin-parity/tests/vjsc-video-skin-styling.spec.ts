@@ -26,25 +26,6 @@ const BUFFERING_INDICATOR_SELECTOR =
   '.media-buffering-indicator, media-buffering-indicator, [class~="peer/buffering"], [class~="hidden"][class~="place-content-center"]';
 const CONTROLS_SELECTOR = '.video-controls';
 
-test('the sandbox width control resizes VJSC skins', async ({ page }) => {
-  const { css } = await openVariants(page, REACT_DEFAULT, 384);
-  const range = page.getByRole('slider', { name: 'Width' });
-
-  await range.fill('512');
-
-  await expect
-    .poll(() =>
-      css.root.evaluate((element) => {
-        const tree = element.getRootNode();
-        const sizingTarget = tree instanceof ShadowRoot ? tree.host : element;
-
-        return Math.round(sizingTarget.getBoundingClientRect().width);
-      })
-    )
-    .toBe(512);
-  await expect.poll(() => new URL(page.url()).searchParams.get('width')).toBe('512');
-});
-
 for (const variant of CASES) {
   test(`${variant.framework} ${variant.skin} keeps CSS and Tailwind layout in sync`, async ({ page }) => {
     for (const width of WIDTHS) {
@@ -480,21 +461,6 @@ for (const skin of ['default-video', 'minimal-video'] as const) {
     });
   }
 }
-
-test('semantic CSS stays easy to override from unlayered consumer styles', async ({ page }) => {
-  const { css } = await openVariants(page, REACT_DEFAULT, 800);
-
-  // The consumer stylesheet has to land in the frame the player renders in.
-  await css.frame.addStyleTag({
-    content: '.media-play-button { width: 44px; height: 44px; background: rgb(18 52 86); }',
-  });
-
-  const play = css.root.getByRole('button', { name: 'Play' });
-
-  await expect(play).toHaveCSS('width', '44px');
-  await expect(play).toHaveCSS('height', '44px');
-  await expect(play).toHaveCSS('background-color', 'rgb(18, 52, 86)');
-});
 
 test('React chapter segments match across styles and retain their generated range props', async ({ page }) => {
   const { panels } = await openComparison(page, { ...REACT_DEFAULT, media: 'hls-7', width: 855 }, async ({ root }) =>

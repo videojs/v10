@@ -4,6 +4,11 @@ import { defineConfig, devices } from '@playwright/test';
 
 import { suiteConfig } from '../../shared/playwright.ts';
 
+/**
+ * Product behavior and visual regression of the built packages, served by the e2e app on Chromium and WebKit. A test
+ * here asserts one expected outcome. Comparisons between skin outputs belong in `skin-parity`; the sandbox shell's own
+ * behavior belongs in `sandbox`.
+ */
 export default defineConfig({
   ...suiteConfig('player'),
   testDir: resolve(import.meta.dirname, 'tests'),
