@@ -19,7 +19,8 @@ jobs:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     outputs:
-      e2e: ${{ steps.filter.outputs.e2e }}
+      player: ${{ steps.filter.outputs.player }}
+      skins: ${{ steps.filter.outputs.skins }}
     steps:
       - name: Detect e2e-relevant changes
         id: filter
@@ -29,16 +30,17 @@ jobs:
           NUMBER: ${{ github.event.pull_request.number }}
         run: |
           files=$(gh api "repos/$GH_REPO/pulls/$NUMBER/files" --paginate --jq '.[].filename')
-          if grep -Eq '^(apps/e2e/|apps/sandbox/|packages/|\.github/workflows/e2e\.yml$|pnpm-lock\.yaml$)' <<<"$files"; then
-            echo "e2e=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "e2e=false" >> "$GITHUB_OUTPUT"
-          fi
+          flag() {
+            if grep -Eq "$2" <<<"$files"; then echo "$1=true" >> "$GITHUB_OUTPUT"; else echo "$1=false" >> "$GITHUB_OUTPUT"; fi
+          }
+          # The player suite renders the built packages; skin parity compiles the authored skins in the sandbox.
+          flag player '^(apps/e2e/|apps/sandbox/|packages/|\.github/workflows/e2e\.yml$|pnpm-lock\.yaml$)'
+          flag skins '^(apps/e2e/(shared|suites/skin-parity)/|apps/sandbox/|packages/(skins|vjsc|html|react)/|\.github/workflows/e2e\.yml$|pnpm-lock\.yaml$)'
 
   e2e:
     name: E2E (${{ matrix.browser }})
     needs: changes
-    if: ${{ !cancelled() && (github.event_name == 'push' || needs.changes.outputs.e2e == 'true' || contains(github.event.pull_request.labels.*.name, 'test:e2e')) }}
+    if: ${{ !cancelled() && (github.event_name == 'push' || needs.changes.outputs.player == 'true' || contains(github.event.pull_request.labels.*.name, 'test:e2e')) }}
     runs-on: ubuntu-latest
     container:
       image: mcr.microsoft.com/playwright:v1.59.1-noble
@@ -46,7 +48,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        browser: [chromium, webkit]
+        # WebKit doubles the wall time, so pull requests run Chromium only and main covers both.
+        browser: ${{ fromJSON(github.event_name == 'push' && '["chromium", "webkit"]' || '["chromium"]') }}
 
     steps:
       - name: Checkout code
@@ -107,7 +110,7 @@ jobs:
   skin-parity:
     name: Skin parity (${{ matrix.preset }})
     needs: changes
-    if: ${{ !cancelled() && (github.event_name == 'push' || needs.changes.outputs.e2e == 'true' || contains(github.event.pull_request.labels.*.name, 'test:e2e')) }}
+    if: ${{ !cancelled() && (github.event_name == 'push' || needs.changes.outputs.skins == 'true' || contains(github.event.pull_request.labels.*.name, 'test:e2e')) }}
     runs-on: ubuntu-latest
     container:
       image: mcr.microsoft.com/playwright:v1.59.1-noble
