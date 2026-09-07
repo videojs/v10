@@ -21,6 +21,8 @@ When prose conflicts with executable sources, follow the executable source and u
 - `packages/store`: framework-neutral state plus `/html` and `/react` bindings.
 - `packages/spf`: stream-processing primitives, DOM bindings, playback engine, and the SPF-backed Medias. Depends on `packages/media`, never the reverse.
 - `packages/media`: media contracts and state; browser hosts and third-party playback engines live under `/dom`.
+- `packages/adapters/*`: one playback adapter package per engine or embed (`hlsjs-video`, `mux-video`, `youtube-video`, …) plus the private `mux` helper they share.
+- `packages/extensions/*`: player extensions such as `google-cast` and `mux-data`.
 - `packages/core`: runtime-neutral player logic; DOM bindings live under `/dom`.
 - `packages/html`, `packages/react`: platform players.
 - `packages/icons`, `packages/skins`: private shared assets and styling.

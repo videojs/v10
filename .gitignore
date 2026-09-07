@@ -22,6 +22,8 @@ dist/
 lib/
 out/
 packages/*/types/
+packages/adapters/*/types/
+packages/extensions/*/types/
 apps/*/types/
 *.tsbuildinfo
 .vite/
@@ -46,6 +48,8 @@ packages/react/docs/
 
 # VJSC
 packages/*/.vjsc/
+packages/adapters/*/.vjsc/
+packages/extensions/*/.vjsc/
 packages/core/src/core/ui/schema.generated.ts
 packages/html/vjsc/entries.generated.ts
 packages/icons/vjsc/schema.generated.ts

@@ -34,8 +34,7 @@
     "@videojs/vimeo-video": "workspace:*",
     "@videojs/wistia-video": "workspace:*",
     "@videojs/youtube-video": "workspace:*",
-    "clsx": "^2.1.1",
-    "tailwind-merge": "^3.5.0"
+    "cn": "^0.2.5"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",
