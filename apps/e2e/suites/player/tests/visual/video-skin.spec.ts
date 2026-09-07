@@ -114,7 +114,10 @@ test.describe('Visual — HTML Portrait Layout', () => {
     expect(box!.width / box!.height).toBeCloseTo(16 / 9, 1);
   });
 
-  test('caps portrait thumbnails to the configured max height', async ({ page }) => {
+  test('caps portrait thumbnails to the configured max height', async ({ page, browserName }) => {
+    // WebKit skips `@scope` rules on elements that host a shadow root, so the thumbnail keeps no max height there.
+    test.fixme(browserName === 'webkit', 'WebKit does not apply scoped rules to shadow hosts');
+
     const size = await page.evaluate(() => {
       const skin = document.querySelector('video-skin')!.shadowRoot!;
       const thumbnail = skin.querySelector<HTMLElement>('media-slider-thumbnail')!;
