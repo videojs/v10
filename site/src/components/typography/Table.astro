@@ -1,4 +1,10 @@
 ---
+/**
+ * Framed table shared by Markdown tables, API reference tables, and hand-written tables in Astro components.
+ *
+ * The frame clips a horizontally scrolling table; `Thead`, `Tr`, `Th`, and `Td` carry the matching header, divider,
+ * and cell styles so every table on the site reads the same way.
+ */
 import type { HTMLTag, Polymorphic } from 'astro/types';
 import { clsx } from 'clsx';
 import { twMerge } from '@/utils/twMerge';
@@ -12,20 +18,18 @@ type Props<Tag extends HTMLTag = 'table'> = Polymorphic<{ as: Tag }> & {
 const { as: Tag = 'table', maxWidth = true, outerClass, class: className, ...props } = Astro.props;
 ---
 
-<div class={twMerge(clsx("my-8", maxWidth && "mx-auto max-w-3xl"), outerClass)}>
-  <div class="-mx-4 flex overflow-x-auto">
-    <div
-      class="pointer-events-none sticky left-0 z-10 shrink-0 basis-4 bg-linear-to-r from-manila-light to-transparent dark:from-faded-black"
-      aria-hidden="true"
-    >
-    </div>
-    <Tag class={twMerge("w-full border-collapse", className)} {...props}>
+<div
+  class={twMerge(
+    clsx(
+      "my-8 overflow-hidden rounded-lg border border-line corner-squircle",
+      maxWidth && "mx-auto max-w-3xl",
+    ),
+    outerClass,
+  )}
+>
+  <div class="overflow-x-auto scrollbar-thin">
+    <Tag class={twMerge("w-full border-collapse text-left text-p3", className)} {...props}>
       <slot />
     </Tag>
-    <div
-      class="pointer-events-none sticky right-0 z-10 shrink-0 basis-4 bg-linear-to-l from-manila-light to-transparent dark:from-faded-black"
-      aria-hidden="true"
-    >
-    </div>
   </div>
 </div>

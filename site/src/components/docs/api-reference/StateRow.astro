@@ -1,7 +1,7 @@
 ---
 import MarkdownCode from '@/components/typography/MarkdownCode.astro';
-import Td from '@/components/typography/Td.astro';
 import DetailRow from './DetailRow.astro';
+import InlineCode from './InlineCode.astro';
 
 interface Props {
   name: string;
@@ -10,9 +10,10 @@ interface Props {
   description?: string;
   componentName: string;
   kind?: string;
+  toggleColumn?: boolean;
 }
 
-const { name, type, detailedType, description, componentName, kind = 'state' } = Astro.props;
+const { name, type, detailedType, description, componentName, kind = 'state', toggleColumn } = Astro.props;
 
 const id = `${componentName}-${kind}-${name}`;
 ---
@@ -20,15 +21,15 @@ const id = `${componentName}-${kind}-${name}`;
 <DetailRow
   id={id}
   name={name}
-  type={type}
   detailedType={detailedType}
   description={description}
-  colspan={3}
+  colspan={2}
+  toggleColumn={toggleColumn}
 >
-  <Td class="align-top">
+  <td>
     <MarkdownCode>{name}</MarkdownCode>
-  </Td>
-  <Td class="align-top">
-    <MarkdownCode>{type}</MarkdownCode>
-  </Td>
+  </td>
+  <td class="w-full">
+    <InlineCode code={type} />
+  </td>
 </DetailRow>

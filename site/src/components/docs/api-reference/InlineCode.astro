@@ -1,0 +1,18 @@
+---
+/**
+ * Syntax-highlighted inline code chip for types, defaults, and other short snippets in API reference tables.
+ */
+import { type InlineLang, highlightInline } from '@/components/Code/inlineHighlighter';
+import { shared } from '@/components/typography/styles';
+import { twMerge } from '@/utils/twMerge';
+
+interface Props {
+  code: string;
+  lang?: InlineLang;
+  class?: string;
+}
+
+const { code, lang = 'ts', class: className } = Astro.props;
+---
+
+<code class={twMerge(shared.code, className)} data-code-inline set:html={highlightInline(code, lang)} />

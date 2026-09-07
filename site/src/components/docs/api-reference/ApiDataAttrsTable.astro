@@ -1,14 +1,14 @@
 ---
 /**
  * Renders the data attributes table for API reference.
+ *
+ * Attributes that carry a value get a Type column; a set of boolean presence attributes renders as a plain
+ * name/description list instead of an empty column.
  */
-import Table from '@/components/typography/Table.astro';
-import Tbody from '@/components/typography/Tbody.astro';
-import Th from '@/components/typography/Th.astro';
-import Thead from '@/components/typography/Thead.astro';
-import Tr from '@/components/typography/Tr.astro';
 import type { DataAttrDef } from '@/types/component-reference';
+import ApiTable from './ApiTable.astro';
 import DataAttrRow from './DataAttrRow.astro';
+import SimpleRow from './SimpleRow.astro';
 
 interface Props {
   dataAttributes: Record<string, DataAttrDef>;
@@ -18,27 +18,33 @@ interface Props {
 const { dataAttributes, componentName } = Astro.props;
 
 const attrs = Object.entries(dataAttributes);
+const hasTypes = attrs.some(([, def]) => Boolean(def.type));
+const toggleColumn = attrs.some(([, def]) => Boolean(def.detailedType));
 ---
 
-<Table maxWidth={false} outerClass="my-6">
-  <Thead>
-    <Tr>
-      <Th>Attribute</Th>
-      <Th>Type</Th>
-      <Th>Details</Th>
-    </Tr>
-  </Thead>
-  <Tbody>
-    {
-      attrs.map(([name, def]) => (
+{
+  hasTypes ? (
+    <ApiTable columns={["Attribute", "Type"]} toggle={toggleColumn}>
+      {attrs.map(([name, def]) => (
         <DataAttrRow
           name={name}
           type={def.type}
           detailedType={def.detailedType}
           description={def.description}
           componentName={componentName}
+          toggleColumn={toggleColumn}
         />
-      ))
-    }
-  </Tbody>
-</Table>
+      ))}
+    </ApiTable>
+  ) : (
+    <ApiTable columns={["Attribute", "Description"]}>
+      {attrs.map(([name, def]) => (
+        <SimpleRow
+          id={`${componentName}-attr-${name}`}
+          name={name}
+          description={def.description}
+        />
+      ))}
+    </ApiTable>
+  )
+}

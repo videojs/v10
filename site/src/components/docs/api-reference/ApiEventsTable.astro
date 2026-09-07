@@ -1,12 +1,7 @@
 ---
-import MarkdownCode from '@/components/typography/MarkdownCode.astro';
-import Table from '@/components/typography/Table.astro';
-import Tbody from '@/components/typography/Tbody.astro';
-import Td from '@/components/typography/Td.astro';
-import Th from '@/components/typography/Th.astro';
-import Thead from '@/components/typography/Thead.astro';
-import Tr from '@/components/typography/Tr.astro';
 import type { ComponentEventDef } from '@/types/component-reference';
+import ApiTable from './ApiTable.astro';
+import SimpleRow from './SimpleRow.astro';
 
 interface Props {
   events: ComponentEventDef[];
@@ -15,23 +10,6 @@ interface Props {
 const { events } = Astro.props;
 ---
 
-<Table maxWidth={false} outerClass="my-6">
-  <Thead>
-    <Tr>
-      <Th>Event</Th>
-      <Th>Description</Th>
-    </Tr>
-  </Thead>
-  <Tbody>
-    {
-      events.map((event) => (
-        <Tr>
-          <Td class="align-top">
-            <MarkdownCode>{event.name}</MarkdownCode>
-          </Td>
-          <Td class="align-top">{event.description ?? ''}</Td>
-        </Tr>
-      ))
-    }
-  </Tbody>
-</Table>
+<ApiTable columns={["Event", "Description"]}>
+  {events.map((event) => <SimpleRow name={event.name} description={event.description} />)}
+</ApiTable>

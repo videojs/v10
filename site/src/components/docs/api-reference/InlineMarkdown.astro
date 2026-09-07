@@ -1,5 +1,6 @@
 ---
-import { renderInlineMarkdown } from '@/utils/docs/renderInlineMarkdown';
+import { highlightInline } from '@/components/Code/inlineHighlighter';
+import { renderInlineMarkdown, setInlineCodeHighlighter } from '@/utils/docs/renderInlineMarkdown';
 
 interface Props {
   content?: string;
@@ -8,7 +9,9 @@ interface Props {
 
 const { content, fallback = '-' } = Astro.props;
 
-const html = content ? renderInlineMarkdown(content) : fallback;
+setInlineCodeHighlighter((code) => highlightInline(code));
+
+const html = content ? renderInlineMarkdown(content, { highlight: true }) : fallback;
 ---
 
 <Fragment set:html={html} />

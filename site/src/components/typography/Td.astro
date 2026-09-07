@@ -1,6 +1,9 @@
 ---
-
+/**
+ * Table cell. Renders its slot to HTML first so plain inline code chips in the cell can be syntax highlighted.
+ */
 import type { HTMLTag, Polymorphic } from 'astro/types';
+import { highlightInlineCodeHtml } from '@/components/Code/inlineHighlighter';
 import { twMerge } from '@/utils/twMerge';
 
 type Props<Tag extends HTMLTag = 'td'> = Polymorphic<{ as: Tag }> & {
@@ -8,8 +11,8 @@ type Props<Tag extends HTMLTag = 'td'> = Polymorphic<{ as: Tag }> & {
 };
 
 const { as: Tag = 'td', class: className, ...props } = Astro.props;
+
+const html = highlightInlineCodeHtml(await Astro.slots.render('default'));
 ---
 
-<Tag class={twMerge("px-4 py-2", className)} {...props}>
-  <slot />
-</Tag>
+<Tag class={twMerge("px-3 py-3 align-top sm:px-4", className)} {...props} set:html={html} />

@@ -89,3 +89,19 @@
   border: 0;
   border-radius: 0;
 }
+
+/*
+ * Inline snippets highlighted by `highlightInline` carry both palettes; pick the dark one under `.dark`. They render
+ * at the table text size rather than the relative inline-code size so the token colors stay legible.
+ */
+[data-code-inline] {
+  font-size: var(--text-p3);
+}
+
+[data-code-inline] span {
+  color: var(--shiki-light);
+}
+
+:where(.dark, .dark *) [data-code-inline] span {
+  color: var(--shiki-dark);
+}
