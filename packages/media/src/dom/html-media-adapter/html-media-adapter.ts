@@ -27,6 +27,36 @@ export interface HTMLMediaTargetLike extends MediaTargetLike, EventTarget {
  */
 export type AdapterHost = 'video' | 'audio' | 'iframe';
 
+/** How a property maps to the content attribute that drives it. */
+export interface AttributeConfig {
+  type: BooleanConstructor | NumberConstructor | StringConstructor;
+  /** The attribute name when it is not the lowercased property name. */
+  attribute?: string;
+  /** The value the property takes when the attribute is removed, when that is not the empty string. */
+  empty?: unknown;
+}
+
+export type AttributeConfigs = Record<string, AttributeConfig>;
+
+/**
+ * The content attributes every native media element accepts, keyed by the property that reflects each one.
+ *
+ * `defaultMuted` shares the `muted` attribute with the `muted` property, which owns it: a `<video muted>` starts muted,
+ * and toggling the attribute later toggles playback muting the way the property does.
+ */
+export const mediaContentAttributes: AttributeConfigs = {
+  autoplay: { type: Boolean },
+  controls: { type: Boolean },
+  controlsList: { type: String },
+  crossOrigin: { type: String, empty: null },
+  defaultMuted: { type: Boolean, attribute: 'muted' },
+  disableRemotePlayback: { type: Boolean },
+  loading: { type: String },
+  loop: { type: Boolean },
+  preload: { type: String, empty: null },
+  src: { type: String, empty: '' },
+};
+
 /** An {@link HTMLMediaAdapter} over any target and event map: the shape extensions and element façades share. */
 export type AnyHTMLMediaAdapter<Target extends HTMLMediaTargetLike = any> = HTMLMediaAdapter<Target, any>;
 

@@ -6,7 +6,7 @@ import { createPlayer } from '../../player/create-player';
 import { createMediaElement } from '../create-media-element';
 
 class FakeAdapter extends HTMLVideoAdapter {
-  static defaultProps = { src: '' };
+  static readonly defaultProps = { src: '' };
 
   #src = '';
 
@@ -20,7 +20,7 @@ class FakeAdapter extends HTMLVideoAdapter {
 }
 
 class FakeAudioAdapter extends HTMLAudioAdapter {
-  static defaultProps = { src: '' };
+  static readonly defaultProps = { src: '' };
 
   #src = '';
 
@@ -35,6 +35,7 @@ class FakeAudioAdapter extends HTMLAudioAdapter {
 
 class FakeEmbedAdapter extends EventTarget {
   static readonly host = 'iframe' as const;
+  static readonly defaultProps = {};
 
   target: EventTarget | null = null;
 
