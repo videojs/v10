@@ -203,6 +203,7 @@
   --color-surface: var(--surface);
   --color-surface-raised: var(--surface-raised);
   --color-muted: var(--muted);
+  --color-hover: var(--hover);
 }
 
 :root {
@@ -212,6 +213,7 @@
   --surface: color-mix(in srgb, var(--color-manila-light) 78%, white);
   --surface-raised: color-mix(in srgb, var(--color-manila-light) 55%, white);
   --muted: color-mix(in srgb, var(--color-faded-black) 65%, transparent);
+  --hover: var(--color-manila-50);
 }
 
 .dark {
@@ -220,6 +222,7 @@
   --surface: var(--color-soot);
   --surface-raised: var(--color-warm-gray);
   --muted: color-mix(in srgb, var(--color-manila-light) 60%, transparent);
+  --hover: var(--color-warm-gray);
 }
 
 @custom-variant intent (&:hover, &:focus-within);

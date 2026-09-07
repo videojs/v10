@@ -52,7 +52,7 @@ const { class: className } = Astro.props;
     <GetStartedLink
       client:idle
       className={clsx(
-        "flex items-center rounded-xs px-5 py-2 font-display text-h3 uppercase intent:bg-manila-dark dark:intent:bg-warm-gray",
+        "flex items-center rounded-xs px-5 py-2 font-display text-h3 uppercase intent:bg-hover",
         isDocsActive ? "relative z-10 text-orange" : "",
       )}
       aria-current={isDocsActive ? "page" : undefined}
@@ -68,7 +68,7 @@ const { class: className } = Astro.props;
         <a
           href={link.href}
           class:list={[
-            "flex items-center rounded-xs px-5 py-2 font-display text-h3 uppercase intent:bg-manila-dark dark:intent:bg-warm-gray",
+            "flex items-center rounded-xs px-5 py-2 font-display text-h3 uppercase intent:bg-hover",
           ]}
         >
           {link.label}{" "}
@@ -81,7 +81,7 @@ const { class: className } = Astro.props;
     <a
       href={DISCORD_INVITE_URL}
       class={clsx(
-        "my-1 flex items-center rounded-xs px-3 py-2 font-display font-bold uppercase intent:bg-manila-dark dark:intent:bg-warm-gray",
+        "my-1 flex items-center rounded-xs px-3 py-2 font-display font-bold uppercase intent:bg-hover",
       )}
       aria-label="Discord"
       target="_blank"
@@ -92,7 +92,7 @@ const { class: className } = Astro.props;
     <a
       href={GITHUB_REPO_URL}
       class={clsx(
-        "my-1 flex items-center rounded-xs px-3 py-2 font-display font-bold uppercase intent:bg-manila-dark dark:intent:bg-warm-gray",
+        "my-1 flex items-center rounded-xs px-3 py-2 font-display font-bold uppercase intent:bg-hover",
       )}
       aria-label="GitHub"
       target="_blank"

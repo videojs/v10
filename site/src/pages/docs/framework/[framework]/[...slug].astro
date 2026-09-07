@@ -7,7 +7,6 @@ import ApiStabilityBadge from '@/components/docs/ApiStabilityBadge.astro';
 import Breadcrumbs from '@/components/docs/Breadcrumbs.astro';
 import DocsNavigation from '@/components/docs/DocsNavigation.astro';
 import EditPageButton from '@/components/docs/EditPageButton.astro';
-import { Selectors } from '@/components/docs/Selectors';
 import { TableOfContents } from '@/components/docs/TableOfContents';
 import JsonLd from '@/components/JsonLd.astro';
 import defaultMarkdownComponents from '@/components/typography/defaultMarkdownComponents';
@@ -19,6 +18,7 @@ import { SUPPORTED_FRAMEWORKS } from '@/types/docs';
 import {
   filterSidebar,
   findFirstGuide,
+  findGuideBySlug,
   getAdjacentGuides,
   getAllGuideSlugs,
   getSectionsForGuide,
@@ -103,7 +103,7 @@ const crumbs = [
     label,
     href: index === 0 && tab ? `/docs/framework/${framework}/${findFirstGuide(framework, tab.contents)}` : undefined,
   })),
-  { label: getDocTitle(doc, framework) },
+  { label: findGuideBySlug(slug, filteredSidebar)?.sidebarLabel ?? getDocTitle(doc, framework) },
 ];
 
 // Build JSON-LD schema for TechArticle
@@ -129,14 +129,11 @@ const jsonLdSchema = createTechArticleSchema({
     ]}
     style="
       --xl-grid-cols: minmax(0, 1fr) calc(var(--spacing) * 59);
-      --grid-template-areas: 'selectors' 'toc' 'article';
-      --grid-rows: min-content min-content minmax(0, 1fr);
+      --grid-template-areas: 'toc' 'article';
+      --grid-rows: min-content minmax(0, 1fr);
       --xl-grid-template-areas: 'article toc';
     "
   >
-    <div class="md:hidden" style="grid-area: selectors;">
-      <Selectors client:idle currentFramework={framework} currentSlug={slug} />
-    </div>
     <div
       class="sticky z-20 overflow-y-auto"
       style="grid-area: toc; top: var(--nav-h); max-height: calc(100vh - var(--nav-h));"

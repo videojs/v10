@@ -24,7 +24,7 @@ const { page, label = 'Blog pagination' } = Astro.props;
         <a
           href={page.url.prev}
           aria-label={`Go to page ${page.currentPage - 1}`}
-          class="grid items-center rounded-xs border border-manila-75 bg-manila-50 p-4 dark:border-line dark:bg-warm-gray intent:bg-manila-dark dark:intent:bg-soot"
+          class="grid items-center rounded-xs border border-manila-75 bg-manila-50 p-4 dark:border-line dark:bg-warm-gray intent:bg-hover"
         >
           <ChevronDown className="size-4 rotate-90" aria-hidden="true" />
         </a>
@@ -43,7 +43,7 @@ const { page, label = 'Blog pagination' } = Astro.props;
         <a
           href={page.url.next}
           aria-label={`Go to page ${page.currentPage + 1}`}
-          class="grid items-center rounded-xs border border-manila-75 bg-manila-50 p-4 dark:border-line dark:bg-warm-gray intent:bg-manila-dark dark:intent:bg-soot"
+          class="grid items-center rounded-xs border border-manila-75 bg-manila-50 p-4 dark:border-line dark:bg-warm-gray intent:bg-hover"
         >
           <ChevronDown className="size-4 -rotate-90" aria-hidden="true" />
         </a>

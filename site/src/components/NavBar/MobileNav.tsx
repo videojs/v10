@@ -101,7 +101,7 @@ export default function MobileNav({ navLinks, currentPath, children, compact, pi
               {navLinks.map((link) => {
                 const isActive = link.matchPath && currentPath.startsWith(link.matchPath);
                 const className = clsx(
-                  'intent:bg-manila-dark dark:intent:bg-warm-gray flex items-center justify-center px-5 py-3.5 font-display uppercase font-bold text-h5 text-center border-t border-faded-black dark:border-manila-dark',
+                  'intent:bg-hover flex items-center justify-center px-5 py-3.5 font-display uppercase font-bold text-h5 text-center border-t border-faded-black dark:border-manila-dark',
                   isActive ? 'text-stroke-faded-black dark:text-stroke-manila-light' : ''
                 );
 
@@ -127,7 +127,7 @@ export default function MobileNav({ navLinks, currentPath, children, compact, pi
               <a
                 href={DISCORD_INVITE_URL}
                 className={clsx(
-                  'intent:bg-manila-dark dark:intent:bg-warm-gray flex items-center justify-center px-5 py-3.5 font-display uppercase font-bold text-h5 text-center border-t border-faded-black dark:border-manila-dark'
+                  'intent:bg-hover flex items-center justify-center px-5 py-3.5 font-display uppercase font-bold text-h5 text-center border-t border-faded-black dark:border-manila-dark'
                 )}
                 target="_blank"
                 rel="noopener"
@@ -137,7 +137,7 @@ export default function MobileNav({ navLinks, currentPath, children, compact, pi
               <a
                 href={GITHUB_REPO_URL}
                 className={clsx(
-                  'intent:bg-manila-dark dark:intent:bg-warm-gray flex items-center justify-center px-5 py-3.5 font-display uppercase font-bold text-h5 text-center border-t border-faded-black dark:border-manila-dark',
+                  'intent:bg-hover flex items-center justify-center px-5 py-3.5 font-display uppercase font-bold text-h5 text-center border-t border-faded-black dark:border-manila-dark',
                   'border-b'
                 )}
                 target="_blank"

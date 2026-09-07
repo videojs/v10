@@ -58,7 +58,9 @@ const docsSidebarId = 'docs-sidebar';
         framework={framework}
         docTitles={docTitles}
         docStabilities={docStabilities}
-      />
+      >
+        <Selectors client:idle currentFramework={framework} currentSlug={slug} />
+      </DocsSidebar>
     </NavBarDocs>
     <aside
       id={docsSidebarId}

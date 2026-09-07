@@ -32,7 +32,7 @@ export function Tooltip({ content, children, side = 'top', sideOffset = 5, class
         <BaseTooltip.Positioner side={side} sideOffset={sideOffset}>
           <BaseTooltip.Popup
             className={clsx(
-              'bg-manila-50 dark:bg-soot text-p3 px-3 py-2 rounded-xs border border-manila-75 dark:border-line',
+              'bg-surface-raised dark:bg-soot text-p3 px-3 py-1.5 rounded-lg corner-squircle border border-line shadow-lg',
               'z-50 max-w-xs',
               className
             )}

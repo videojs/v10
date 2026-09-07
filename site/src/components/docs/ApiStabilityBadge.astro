@@ -10,8 +10,7 @@ const labels = {
   experimental: 'Experimental',
 } satisfies Record<DocStability, string>;
 
-// A dev server that cached frontmatter before a rename can hand us a value the map doesn't know; show it raw.
-const label = labels[stability] ?? stability;
+const label = labels[stability];
 ---
 
 <span

@@ -12,7 +12,7 @@
  */
 
 import clsx from 'clsx';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 
 import Check from '@/assets/icons/check.svg?react';
 import CopyIcon from '@/assets/icons/copy.svg?react';
@@ -32,42 +32,11 @@ interface TabsRootProps {
 }
 export function TabsRoot({ children, maxWidth = true, className, id: propId, variant = 'compact' }: TabsRootProps) {
   const ref = useRef<HTMLDivElement>(null);
-  const isHydrated = useIsHydrated();
 
-  /**
-   * When this component initializes, it generates an ID for itself, and then uses that ID to
-   *
-   * - Set [role="tab"] ID
-   * - Set [role="tab"][aria-controls]
-   * - Set [role="tabpanel"] ID
-   * - Set [role="tabpanel"][aria-labelledby]
-   *
-   * This allows tabs and tabpanels to be associated without relying on context or parent-child relationships, as well
-   * as complying with WAI-ARIA authoring practices.
-   */
-  useEffect(() => {
-    // I know this isHydrated check looks weird,
-    // but it actually delays this effect until later,
-    // giving tab and tabpanel elements time to mount.
-    if (!isHydrated) return;
-
-    const id = propId || Date.now().toString();
-    const tabs = ref.current?.querySelectorAll('[role="tab"]') || [];
-    const panels = ref.current?.querySelectorAll('[role="tabpanel"]') || [];
-
-    tabs.forEach((tab) => {
-      const value = tab.getAttribute('data-value');
-
-      tab.id = `tab-${id}-${value}`;
-      tab.setAttribute('aria-controls', `panel-${id}-${value}`);
-    });
-    panels.forEach((panel) => {
-      const value = panel.getAttribute('data-value');
-
-      panel.id = `panel-${id}-${value}`;
-      panel.setAttribute('aria-labelledby', `tab-${id}-${value}`);
-    });
-  }, [isHydrated, propId]);
+  // A stable id shared with the tab and panel islands through the DOM. `useId` matches between server and client, so
+  // the descendants can derive their own ids without a context and without patching attributes after hydration.
+  const generatedId = useId();
+  const id = propId ?? generatedId;
 
   return (
     <div
@@ -84,6 +53,7 @@ export function TabsRoot({ children, maxWidth = true, className, id: propId, var
         )
       )}
       data-tabs-root
+      data-tabs-id={id}
     >
       {children}
     </div>
@@ -125,7 +95,7 @@ export function TabsList({ label, children, variant = 'compact' }: TabsListProps
           'ml-auto shrink-0 size-7 flex items-center justify-center cursor-pointer disabled:cursor-wait rounded-md corner-squircle',
           variant === 'compact'
             ? 'text-manila-light/60 intent:text-manila-light intent:bg-manila-light/10'
-            : 'intent:bg-manila-dark dark:intent:bg-warm-gray'
+            : 'intent:bg-hover'
         )}
         copied={<Check className="text-gold size-4" />}
       >
@@ -145,6 +115,14 @@ export function Tab({ value, children, initial, variant = 'compact' }: TabProps)
   const isHydrated = useIsHydrated();
   const ref = useRef<HTMLButtonElement>(null);
   const [isActive, setIsActive] = useState(initial);
+  const [ids, setIds] = useState<{ id: string; controls: string } | null>(null);
+
+  // Read the root's id from the DOM after mount so React owns these attributes and hydration stays clean.
+  useEffect(() => {
+    const base = ref.current?.closest('[data-tabs-root]')?.getAttribute('data-tabs-id');
+
+    if (base) setIds({ id: `tab-${base}-${value}`, controls: `panel-${base}-${value}` });
+  }, [value]);
 
   const onClick = () => {
     if (ref.current) {
@@ -246,6 +224,8 @@ export function Tab({ value, children, initial, variant = 'compact' }: TabProps)
         ref={ref}
         type="button"
         role="tab"
+        id={ids?.id}
+        aria-controls={ids?.controls}
         aria-selected={isActive}
         tabIndex={isActive ? 0 : -1}
         onClick={onClick}
@@ -295,6 +275,13 @@ interface TabsPanelProps {
 export function TabsPanel({ value, children, initial, className, variant = 'compact' }: TabsPanelProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [isActive, setIsActive] = useState(initial);
+  const [ids, setIds] = useState<{ id: string; labelledBy: string } | null>(null);
+
+  useEffect(() => {
+    const base = ref.current?.closest('[data-tabs-root]')?.getAttribute('data-tabs-id');
+
+    if (base) setIds({ id: `panel-${base}-${value}`, labelledBy: `tab-${base}-${value}` });
+  }, [value]);
 
   // Observe the corresponding Tab element's data-tab-active attribute
   // to sync panel visibility with tab activation
@@ -325,6 +312,8 @@ export function TabsPanel({ value, children, initial, className, variant = 'comp
     <div
       ref={ref}
       role="tabpanel"
+      id={ids?.id}
+      aria-labelledby={ids?.labelledBy}
       hidden={!isActive}
       data-value={value}
       className={twMerge(clsx('overflow-auto scrollbar-thin px-6 py-4 max-h-96 flex-1'), className)}

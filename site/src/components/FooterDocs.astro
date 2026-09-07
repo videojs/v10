@@ -42,7 +42,7 @@ const { class: className } = Astro.props;
       >
         <GetStartedLink
           client:idle
-          className="flex items-center rounded-xs px-2 py-2 font-display font-bold uppercase @4xl:px-5 intent:bg-manila-dark dark:intent:bg-warm-gray"
+          className="flex items-center rounded-xs px-2 py-2 font-display font-bold uppercase @4xl:px-5 intent:bg-hover"
         >
           Docs
         </GetStartedLink>
@@ -50,7 +50,7 @@ const { class: className } = Astro.props;
           navLinks.map((link) => (
             <a
               href={link.href}
-              class="flex items-center gap-1.5 rounded-xs px-2 py-2 font-display font-bold uppercase @4xl:px-5 intent:bg-manila-dark dark:intent:bg-warm-gray"
+              class="flex items-center gap-1.5 rounded-xs px-2 py-2 font-display font-bold uppercase @4xl:px-5 intent:bg-hover"
             >
               {link.label}{" "}
               {link.external ? (
@@ -63,7 +63,7 @@ const { class: className } = Astro.props;
         <span class="hidden @4xl:flex">
           <a
             href={DISCORD_INVITE_URL}
-            class="flex items-center rounded-xs px-2 py-2 font-display font-bold uppercase @4xl:px-5 intent:bg-manila-dark dark:intent:bg-warm-gray"
+            class="flex items-center rounded-xs px-2 py-2 font-display font-bold uppercase @4xl:px-5 intent:bg-hover"
             aria-label="Discord"
             target="_blank"
             rel="noopener noreferrer"
@@ -72,7 +72,7 @@ const { class: className } = Astro.props;
           </a>
           <a
             href={GITHUB_REPO_URL}
-            class="flex items-center rounded-xs px-2 py-2 font-display font-bold uppercase @4xl:px-5 intent:bg-manila-dark dark:intent:bg-warm-gray"
+            class="flex items-center rounded-xs px-2 py-2 font-display font-bold uppercase @4xl:px-5 intent:bg-hover"
             aria-label="GitHub"
             target="_blank"
             rel="noopener noreferrer"
@@ -87,7 +87,7 @@ const { class: className } = Astro.props;
         {/* Narrow containers: icons keep their own row below the link block */}
         <a
           href={DISCORD_INVITE_URL}
-          class="flex items-center rounded-xs px-2 py-2 font-display font-bold uppercase @4xl:hidden intent:bg-manila-dark dark:intent:bg-warm-gray"
+          class="flex items-center rounded-xs px-2 py-2 font-display font-bold uppercase @4xl:hidden intent:bg-hover"
           aria-label="Discord"
           target="_blank"
           rel="noopener noreferrer"
@@ -96,7 +96,7 @@ const { class: className } = Astro.props;
         </a>
         <a
           href={GITHUB_REPO_URL}
-          class="flex items-center rounded-xs px-2 py-2 font-display font-bold uppercase @4xl:hidden intent:bg-manila-dark dark:intent:bg-warm-gray"
+          class="flex items-center rounded-xs px-2 py-2 font-display font-bold uppercase @4xl:hidden intent:bg-hover"
           aria-label="GitHub"
           target="_blank"
           rel="noopener noreferrer"

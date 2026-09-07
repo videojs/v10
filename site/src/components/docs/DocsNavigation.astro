@@ -2,6 +2,7 @@
 import ArrowLeft from '@/assets/icons/arrow-left.svg?react';
 import ArrowRight from '@/assets/icons/arrow-right.svg?react';
 import type { Guide, SupportedFramework } from '@/types/docs';
+import { filterSidebar, getSectionsForGuide } from '@/utils/docs/sidebar';
 
 type Props = {
   prev: Guide | null;
@@ -14,6 +15,13 @@ const { prev, next, framework, docTitles } = Astro.props;
 
 function getGuideUrl(framework: SupportedFramework, slug: string): string {
   return `/docs/framework/${framework}/${slug}`;
+}
+
+// The innermost sidebar section, so "Previous · Getting Started" says where the link leads.
+const filteredSidebar = filterSidebar(framework);
+
+function getSection(slug: string): string | undefined {
+  return getSectionsForGuide(slug, filteredSidebar).at(-1);
 }
 ---
 
@@ -28,8 +36,8 @@ function getGuideUrl(framework: SupportedFramework, slug: string): string {
         class="grid items-center gap-x-2 rounded-xs border border-manila-dark p-4 dark:border-line intent:bg-manila-75 dark:intent:bg-warm-gray"
         style="grid-template-areas: 'empty direction' 'icon title'; grid-template-columns: auto minmax(0,1fr); grid-template-rows: auto minmax(0,1fr);"
       >
-        <div class="text-p3" style="grid-area: direction;">
-          Previous
+        <div class="text-p4 text-muted" style="grid-area: direction;">
+          Previous{getSection(prev.slug) && <> · {getSection(prev.slug)}</>}
         </div>
         <div class="text-p2 font-bold text-balance" style="grid-area: title">
           {prev.sidebarLabel || docTitles.get(prev.slug)}
@@ -49,8 +57,8 @@ function getGuideUrl(framework: SupportedFramework, slug: string): string {
         class="grid items-center gap-x-2 rounded-xs border border-manila-dark p-4 text-right dark:border-line intent:bg-manila-75 dark:intent:bg-warm-gray"
         style="grid-template-areas: 'direction empty' 'title icon';grid-template-columns: minmax(0,1fr) auto; grid-template-rows: auto minmax(0,1fr);"
       >
-        <div class="text-p3" style="grid-area: direction;">
-          Next
+        <div class="text-p4 text-muted" style="grid-area: direction;">
+          {getSection(next.slug) && <>{getSection(next.slug)} · </>}Next
         </div>
         <div class="text-p2 font-bold text-balance" style="grid-area: title">
           {next.sidebarLabel || docTitles.get(next.slug)}
