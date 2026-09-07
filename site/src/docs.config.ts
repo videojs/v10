@@ -167,7 +167,6 @@ export const sidebar: Sidebar = [
           { slug: 'components/player' },
           { slug: 'components/player-container' },
           { slug: 'components/controls' },
-          { slug: 'components/i18n-provider', frameworks: ['react'] },
         ],
       },
       {
@@ -280,11 +279,6 @@ export const sidebar: Sidebar = [
           { slug: 'components/use-media', frameworks: ['react'] },
           { slug: 'components/use-container', frameworks: ['react'] },
           { slug: 'components/use-store', frameworks: ['react'] },
-          { slug: 'components/create-i18n' },
-          { slug: 'components/use-translator', frameworks: ['react'] },
-          { slug: 'components/use-locale', frameworks: ['react'] },
-          { slug: 'components/media-i18n', sidebarLabel: 'media-i18n', frameworks: ['html'] },
-          { slug: 'components/media-text', sidebarLabel: 'media-text', frameworks: ['html'] },
         ],
       },
       {
@@ -328,7 +322,6 @@ export const sidebar: Sidebar = [
         frameworks: ['html'],
         llmsDescription: 'API reference for the reactive controllers that connect custom elements to player state.',
         contents: [
-          { slug: 'components/i-18-n-controller', sidebarLabel: 'I18nController' },
           { slug: 'components/aria-key-shortcuts-controller' },
           { slug: 'components/snapshot-controller' },
           { slug: 'components/store-controller' },
@@ -336,9 +329,16 @@ export const sidebar: Sidebar = [
         ],
       },
       {
-        sidebarLabel: 'Advanced',
-        llmsDescription: 'Lower-level translation, player context, lifecycle, attachment, and state tools.',
+        sidebarLabel: 'i18n',
+        llmsDescription:
+          'API reference for translating the player: providers, hooks, elements, the phrase registry, and contexts.',
         contents: [
+          { slug: 'components/i18n-provider', frameworks: ['react'] },
+          { slug: 'components/create-i18n' },
+          { slug: 'components/use-translator', frameworks: ['react'] },
+          { slug: 'components/use-locale', frameworks: ['react'] },
+          { slug: 'components/media-i18n', sidebarLabel: 'media-i18n', frameworks: ['html'] },
+          { slug: 'components/media-text', sidebarLabel: 'media-text', frameworks: ['html'] },
           { slug: 'components/translation-phrases', sidebarLabel: 'Translation keys' },
           { slug: 'components/register-i18n', sidebarLabel: 'registerI18n' },
           { slug: 'components/get-i18n-translations', sidebarLabel: 'getI18nTranslations' },
@@ -347,6 +347,13 @@ export const sidebar: Sidebar = [
           { slug: 'components/create-translator', sidebarLabel: 'createTranslator' },
           { slug: 'components/i-18-n-context', sidebarLabel: 'I18nContext', frameworks: ['react'] },
           { slug: 'components/html-i-18-n-context', sidebarLabel: 'i18nContext', frameworks: ['html'] },
+          { slug: 'components/i-18-n-controller', sidebarLabel: 'I18nController' },
+        ],
+      },
+      {
+        sidebarLabel: 'Advanced',
+        llmsDescription: 'Lower-level translation, player context, lifecycle, attachment, and state tools.',
+        contents: [
           { slug: 'components/merge-props', frameworks: ['react'] },
           { slug: 'components/render-element', frameworks: ['react'] },
           { slug: 'components/media-attach-mixin', frameworks: ['html'] },
