@@ -13,4 +13,6 @@ function MediaAttachMixin(base: any) {
 
 const ExtendingVideoBase = MediaAttachMixin(CustomMediaElement(ExtendingHost));
 
-export class ExtendingVideo extends (ExtendingVideoBase as typeof ExtendingVideoBase) {}
+export class ExtendingVideoElement extends (ExtendingVideoBase as typeof ExtendingVideoBase) {
+  static readonly tagName = 'extending-video';
+}

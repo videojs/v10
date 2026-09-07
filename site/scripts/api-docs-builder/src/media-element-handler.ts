@@ -275,19 +275,25 @@ function discoverMediaElements(monorepoRoot: string, project: OxcProject): Media
       const file = project.source(filePath);
       if (!file) continue;
 
-      for (const statement of file.program.body) {
-        if (statement.type !== 'ExportNamedDeclaration' || statement.declaration?.type !== 'ClassDeclaration') continue;
-
-        const declaration = statement.declaration;
+      for (const candidate of registeredElements(file, project)) {
+        const { file: elementFile, declaration } = candidate;
         const name = declaration.id?.name;
         const tagName = staticStringClassProperty(declaration, 'tagName');
-        const base = declaration.superClass;
-        if (!name || !tagName || base?.type !== 'Identifier') continue;
+        if (!name || !tagName) continue;
 
-        const mediaDeclaration = project.resolveName(filePath, base.name);
-        if (!mediaDeclaration || mediaDeclaration.declaration.type !== 'ClassDeclaration') continue;
+        // The element class composes the factory in its own extends clause; an older shape subclassed a media class
+        // declared elsewhere, so follow one identifier up when the composition is not here.
+        let composition = findCustomMediaComposition(elementFile, declaration, project);
+        let mediaDeclaration = { file: elementFile, declaration };
 
-        const composition = findCustomMediaComposition(mediaDeclaration.file, mediaDeclaration.declaration, project);
+        if (!composition && declaration.superClass?.type === 'Identifier') {
+          const base = project.resolveName(elementFile.filePath, declaration.superClass.name);
+          if (!base || base.declaration.type !== 'ClassDeclaration') continue;
+
+          mediaDeclaration = { file: base.file, declaration: base.declaration };
+          composition = findCustomMediaComposition(base.file, base.declaration, project);
+        }
+
         if (!composition) continue;
 
         const host = project.resolveName(mediaDeclaration.file.filePath, composition.hostClassName);
@@ -299,7 +305,7 @@ function discoverMediaElements(monorepoRoot: string, project: OxcProject): Media
         if (!targetTag) continue;
 
         // An iframe says nothing about what it plays, so an embed's media type comes from its class name
-        // (`SpotifyAudio` against `VimeoVideo`); the `*Element` export in the define file carries a suffix.
+        // (`SpotifyAudio` against `VimeoVideo`); the element class carries an `Element` suffix.
         const className = stripElementSuffix(name);
         const isAudio = targetTag === 'audio' || (targetTag === 'iframe' && className.endsWith('Audio'));
 
@@ -318,6 +324,46 @@ function discoverMediaElements(monorepoRoot: string, project: OxcProject): Media
   }
 
   return sources;
+}
+
+/**
+ * The element classes a define file registers: what it passes to `safeDefine()`, resolved to the class declaration in
+ * the media directory, plus any class it declares itself with a static `tagName`.
+ */
+function registeredElements(file: SourceFile, project: OxcProject): { file: SourceFile; declaration: Class }[] {
+  const elements: { file: SourceFile; declaration: Class }[] = [];
+  const seen = new Set<string>();
+
+  for (const statement of file.program.body) {
+    if (
+      statement.type === 'ExpressionStatement' &&
+      statement.expression.type === 'CallExpression' &&
+      statement.expression.callee.type === 'Identifier' &&
+      statement.expression.callee.name === 'safeDefine' &&
+      statement.expression.arguments[0]?.type === 'Identifier'
+    ) {
+      const resolved = project.resolveName(file.filePath, statement.expression.arguments[0].name);
+      const key = resolved && `${resolved.file.filePath}#${statement.expression.arguments[0].name}`;
+
+      if (resolved?.declaration.type === 'ClassDeclaration' && key && !seen.has(key)) {
+        seen.add(key);
+        elements.push({ file: resolved.file, declaration: resolved.declaration });
+      }
+
+      continue;
+    }
+
+    if (statement.type === 'ExportNamedDeclaration' && statement.declaration?.type === 'ClassDeclaration') {
+      const key = `${file.filePath}#${statement.declaration.id?.name}`;
+
+      if (!seen.has(key)) {
+        seen.add(key);
+        elements.push({ file, declaration: statement.declaration });
+      }
+    }
+  }
+
+  return elements;
 }
 
 function publicImplementationFiles(entryPath: string, project: OxcProject, visited: Set<string>): string[] {

@@ -9,4 +9,6 @@ function MediaAttachMixin(base: any) {
   return base;
 }
 
-export class BackgroundVideo extends MediaAttachMixin(Object) {}
+export class BackgroundVideoElement extends MediaAttachMixin(Object) {
+  static readonly tagName = 'background-video';
+}

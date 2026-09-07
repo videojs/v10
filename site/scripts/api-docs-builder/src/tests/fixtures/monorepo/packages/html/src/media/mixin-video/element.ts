@@ -11,4 +11,6 @@ function createMediaElement(adapter: any, options?: { template?: (attrs: Record<
   return adapter;
 }
 
-export class MixinVideo extends createMediaElement(MixinHost, { template: () => '<video></video>' }) {}
+export class MixinVideoElement extends createMediaElement(MixinHost, { template: () => '<video></video>' }) {
+  static readonly tagName = 'mixin-video';
+}

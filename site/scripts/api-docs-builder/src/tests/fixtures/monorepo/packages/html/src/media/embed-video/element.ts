@@ -7,4 +7,6 @@ function MediaAttachMixin(base: any) {
 
 class EmbedCustomMediaElement extends CustomMediaElement(EmbedHost) {}
 
-export class EmbedVideo extends MediaAttachMixin(EmbedCustomMediaElement) {}
+export class EmbedVideoElement extends MediaAttachMixin(EmbedCustomMediaElement) {
+  static readonly tagName = 'embed-video';
+}

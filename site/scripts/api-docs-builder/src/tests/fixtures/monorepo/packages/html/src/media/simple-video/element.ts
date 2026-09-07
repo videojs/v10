@@ -12,4 +12,6 @@ function createMediaElement(adapter: any, options?: { template?: (attrs: Record<
   return adapter;
 }
 
-export class SimpleVideo extends createMediaElement(SimpleHost) {}
+export class SimpleVideoElement extends createMediaElement(SimpleHost) {
+  static readonly tagName = 'simple-video';
+}

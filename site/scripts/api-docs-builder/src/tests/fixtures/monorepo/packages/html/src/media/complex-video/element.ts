@@ -13,4 +13,6 @@ function MediaAttachMixin(base: any) {
   return base;
 }
 
-export class ComplexVideo extends MediaAttachMixin(CustomMediaElement(ComplexHost)) {}
+export class ComplexVideoElement extends MediaAttachMixin(CustomMediaElement(ComplexHost)) {
+  static readonly tagName = 'complex-video';
+}

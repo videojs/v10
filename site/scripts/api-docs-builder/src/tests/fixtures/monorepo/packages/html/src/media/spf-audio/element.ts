@@ -12,4 +12,6 @@ function MediaAttachMixin(base: any) {
   return base;
 }
 
-export class SpfAudio extends MediaAttachMixin(CustomMediaElement(SpfAudioHost)) {}
+export class SpfAudioElement extends MediaAttachMixin(CustomMediaElement(SpfAudioHost)) {
+  static readonly tagName = 'spf-audio';
+}

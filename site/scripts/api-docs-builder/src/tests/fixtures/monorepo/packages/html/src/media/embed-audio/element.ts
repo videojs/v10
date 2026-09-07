@@ -11,4 +11,6 @@ function MediaAttachMixin(base: any) {
   return base;
 }
 
-export class EmbedAudio extends MediaAttachMixin(CustomMediaElement(EmbedHost)) {}
+export class EmbedAudioElement extends MediaAttachMixin(CustomMediaElement(EmbedHost)) {
+  static readonly tagName = 'embed-audio';
+}
