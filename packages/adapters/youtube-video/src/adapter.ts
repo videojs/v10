@@ -3,7 +3,7 @@
 // Source: https://github.com/muxinc/media-elements
 
 import { EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES, MediaError, type TextTrackListLike, type Video } from '@videojs/media';
-import { type AdapterHost, createTimeRange, MediaPlayedRangesMixin } from '@videojs/media/dom';
+import { createTimeRange, MediaPlayedRangesMixin } from '@videojs/media/dom';
 import { createPublicPromise, noop, type PublicPromise, tryCall } from '@videojs/utils/function';
 import { deepEqual } from '@videojs/utils/object';
 import { isNumber, isUndefined } from '@videojs/utils/predicate';
@@ -24,7 +24,7 @@ import type { YouTubeAdapterProps } from './props';
 import { buildYouTubeIframeSrc, parseYouTubeSource, type YouTubeSource } from './source';
 
 export class YouTubeAdapter extends MediaPlayedRangesMixin(EventTarget) implements Partial<Video> {
-  static readonly host: AdapterHost = 'iframe';
+  static readonly host = 'iframe';
 
   static readonly defaultProps: YouTubeAdapterProps = {
     src: '',

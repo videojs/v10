@@ -3,7 +3,7 @@
 // License: MIT
 
 import { EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES, MediaError, type Video } from '@videojs/media';
-import { type AdapterHost, createTimeRange, MediaPlayedRangesMixin } from '@videojs/media/dom';
+import { createTimeRange, MediaPlayedRangesMixin } from '@videojs/media/dom';
 import { createPublicPromise, type PublicPromise } from '@videojs/utils/function';
 import { deepEqual } from '@videojs/utils/object';
 import { isNumber, isUndefined } from '@videojs/utils/predicate';
@@ -35,7 +35,7 @@ import { buildTwitchIframeSrc, parseTwitchSource, type TwitchSource } from './so
  *   new value.
  */
 export class TwitchAdapter extends MediaPlayedRangesMixin(EventTarget) implements Partial<Video> {
-  static readonly host: AdapterHost = 'iframe';
+  static readonly host = 'iframe';
 
   static readonly defaultProps: TwitchAdapterProps = {
     src: '',

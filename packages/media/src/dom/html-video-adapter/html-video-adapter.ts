@@ -2,18 +2,14 @@ import type { WebKitDocument, WebKitPresentationMode, WebKitVideoElement } from 
 import { isFunction } from '@videojs/utils/predicate';
 
 import type { Video, VideoEvents, VideoTargetLike } from '../../core/types';
-import {
-  type AdapterHost,
-  getMediaProp,
-  HTMLMediaAdapter,
-  type HTMLMediaTargetLike,
-  setMediaProp,
-} from '../html-media-adapter';
+import { getMediaProp, HTMLMediaAdapter, type HTMLMediaTargetLike, setMediaProp } from '../html-media-adapter';
 
 export interface HTMLVideoTargetLike extends VideoTargetLike, HTMLMediaTargetLike {}
 
 export class HTMLVideoAdapter extends HTMLMediaAdapter<HTMLVideoTargetLike, VideoEvents> implements Video {
-  static readonly host: AdapterHost = 'video';
+  // Typed to admit `'audio'` so an adapter built on the video base can override it and play in an `<audio>`, as the
+  // hls.js-backed `MuxAudioAdapter` does. Element façades treat anything not narrowed to `'audio'` as a video.
+  static readonly host: 'video' | 'audio' = 'video';
 
   get poster() {
     return getMediaProp(this, 'poster') ?? '';

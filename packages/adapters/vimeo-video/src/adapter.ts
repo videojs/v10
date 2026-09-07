@@ -8,7 +8,7 @@ import {
   type TextTrackListLike,
   type Video,
 } from '@videojs/media';
-import { type AdapterHost, createTimeRange, MediaPlayedRangesMixin, serializeEmbedParams } from '@videojs/media/dom';
+import { createTimeRange, MediaPlayedRangesMixin, serializeEmbedParams } from '@videojs/media/dom';
 import { createPublicPromise, type PublicPromise, tryCall } from '@videojs/utils/function';
 import { deepEqual } from '@videojs/utils/object';
 import { isNull, isString, isUndefined } from '@videojs/utils/predicate';
@@ -65,7 +65,7 @@ export interface VimeoAdapterProps {
  *   for the new value.
  */
 export class VimeoAdapter extends MediaPlayedRangesMixin(EventTarget) implements Partial<Video> {
-  static readonly host: AdapterHost = 'iframe';
+  static readonly host = 'iframe';
 
   static readonly defaultProps: VimeoAdapterProps = {
     src: '',
