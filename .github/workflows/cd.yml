@@ -120,7 +120,7 @@ jobs:
 
       - name: Publish
         if: ${{ steps.release.outputs.releases_created == 'true' }}
-        run: pnpm --fail-if-no-match -r publish --filter "./packages/*" --access public --provenance --no-git-checks
+        run: pnpm --fail-if-no-match -r publish --filter "./packages/**" --access public --provenance --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 

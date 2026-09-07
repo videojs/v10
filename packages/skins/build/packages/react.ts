@@ -173,7 +173,7 @@ function collectSharedSourcePaths(skins: readonly SkinRoot[]): ReadonlySet<strin
 }
 
 function reactFrameworkImport(specifier: string): string | undefined {
-  if (specifier === '@videojs/react' || radioGroupImports.has(specifier) || specifier === 'clsx') {
+  if (specifier === '@videojs/react' || radioGroupImports.has(specifier) || specifier === 'cn') {
     return `${packageRoot}/internal/skin-primitives.ts`;
   }
 

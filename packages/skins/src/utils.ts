@@ -1,4 +1,4 @@
-import type { ClassValue } from 'clsx';
+import type { ClassValue } from 'cn';
 
 export { cn } from '@videojs/utils/style';
 

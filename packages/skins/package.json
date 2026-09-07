@@ -33,7 +33,7 @@
     "@videojs/icons": "workspace:*",
     "@videojs/utils": "workspace:*",
     "@vitejs/plugin-react": "^6.0.4",
-    "clsx": "^2.1.1",
+    "cn": "^0.2.5",
     "dashjs": "^5.2.0",
     "hls.js": "^1.6.7",
     "mux-embed": "5.17.10",

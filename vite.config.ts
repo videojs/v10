@@ -32,6 +32,8 @@ const ignoredPaths = [
   '**/packages/cdn/src/locales/**',
   '**/styles/vjs.css',
   '**/packages/*/types/**',
+  '**/packages/adapters/*/types/**',
+  '**/packages/extensions/*/types/**',
   'packages/core/src/core/ui/components.generated.ts',
   'tools/oxlint/anti-slop/**',
 ];
