@@ -847,7 +847,7 @@ async function pressedButtonContract(button: Locator) {
 /** Wait for the element's running transitions to finish, so a contract reads settled values rather than a frame of them. */
 async function settleAnimations(target: Locator) {
   await target.evaluate((element) =>
-    Promise.all(element.getAnimations().map((animation) => animation.finished.catch(() => undefined)))
+    Promise.all(element.getAnimations({ subtree: true }).map((animation) => animation.finished.catch(() => undefined)))
   );
 }
 
@@ -1118,9 +1118,11 @@ async function fullscreenPreviewContract(root: Locator) {
 
   const thumbnail = slider.locator(':scope > :last-child > :first-child');
 
-  // The thumbnail keeps a placeholder box until its storyboard image arrives, so the gaps depend on the loaded image.
+  // The thumbnail keeps a placeholder box until its storyboard image arrives, so the gaps depend on the loaded image,
+  // and the preview scales in, so they also depend on the transition having finished.
   await expect(thumbnail).not.toHaveAttribute('data-loading', '', { timeout: 20_000 });
   await expect.poll(() => thumbnail.evaluate((element) => element.getBoundingClientRect().height)).toBeGreaterThan(0);
+  await settleAnimations(slider.locator(':scope > :last-child'));
 
   return slider.evaluate((element) => {
     const preview = element.lastElementChild;
