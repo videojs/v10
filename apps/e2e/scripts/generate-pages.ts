@@ -153,6 +153,20 @@ interface PageDef {
   media: string;
   resource: string;
   category?: 'cdn' | 'captions' | 'background' | 'background-preset' | 'source-html' | 'source-react';
+  /** The packaged skin theme; the default skin unless set. */
+  skin?: 'minimal';
+}
+
+type SkinTheme = NonNullable<PageDef['skin']> | 'default';
+
+/** The custom element a packaged HTML skin registers. */
+function htmlSkinTag(media: 'video' | 'audio', skin: SkinTheme): string {
+  return skin === 'minimal' ? `${media}-minimal-skin` : `${media}-skin`;
+}
+
+/** The entry a packaged skin ships under for both frameworks, as `video/skin` or `video/minimal-skin`. */
+function skinEntry(media: 'video' | 'audio', skin: SkinTheme): string {
+  return skin === 'minimal' ? `${media}/minimal-skin` : `${media}/skin`;
 }
 
 // ---------------------------------------------------------------------------
@@ -179,8 +193,9 @@ function resourceHasPoster(resource: string): boolean {
   return resource === 'mp4' || resource === 'hlsTs' || resource === 'hlsFmp4';
 }
 
-function htmlVideoPage(config: MediaTypeConfig, resource: string, imports: string[]): string {
+function htmlVideoPage(config: MediaTypeConfig, resource: string, imports: string[], skin: SkinTheme): string {
   const allImports = [...imports, `import { MEDIA } from '../resources';`].join('\n');
+  const tag = htmlSkinTag('video', skin);
 
   const storyboard = config.hasStoryboard
     ? `\n        <track kind="metadata" label="thumbnails" src="\${MEDIA.${resource}.storyboard}" default />`
@@ -199,18 +214,19 @@ const html = String.raw;
 
 document.getElementById('root')!.innerHTML = html\`
   <video-player>
-    <video-skin style="max-width: 800px; aspect-ratio: 16/9">
+    <${tag} style="max-width: 800px; aspect-ratio: 16/9">
       <${config.element} src="\${MEDIA.${resource}.url}"${attrs}>${storyboard}
       </${config.element}>${poster}
-    </video-skin>
+    </${tag}>
   </video-player>
 \`;
 `;
 }
 
-function htmlAudioPage(config: MediaTypeConfig, resource: string, imports: string[]): string {
+function htmlAudioPage(config: MediaTypeConfig, resource: string, imports: string[], skin: SkinTheme): string {
   const allImports = [...imports, `import { MEDIA } from '../resources';`].join('\n');
   const attrs = config.attrs ? ` ${config.attrs}` : '';
+  const tag = htmlSkinTag('audio', skin);
 
   return `${allImports}
 
@@ -219,23 +235,26 @@ const html = String.raw;
 document.getElementById('root')!.innerHTML = html\`
   <div style="max-width: 600px; margin: 0 auto">
     <audio-player>
-      <audio-skin>
+      <${tag}>
         <${config.element} src="\${MEDIA.${resource}.url}"${attrs}></${config.element}>
-      </audio-skin>
+      </${tag}>
     </audio-player>
   </div>
 \`;
 `;
 }
 
-function reactVideoPage(media: string, resource: string, config: MediaTypeConfig): string {
+function reactVideoPage(media: string, resource: string, config: MediaTypeConfig, skin: SkinTheme): string {
   const reactMedia = REACT_MEDIA[media];
   if (!reactMedia) throw new Error(`No React component mapping for media type: ${media}`);
 
   const isDefaultVideo = media === 'video';
+  const Skin = skin === 'minimal' ? 'MinimalVideoSkin' : 'VideoSkin';
+  const skinImport =
+    skin === 'minimal' ? `\nimport { MinimalVideoSkin } from '@videojs/react/video/minimal-skin';` : '';
   const mediaImport = isDefaultVideo
-    ? `import { Video, VideoPlayer, VideoSkin } from '@videojs/react/video';`
-    : `import { ${reactMedia.component} } from '${reactMedia.importPath}';\nimport { VideoPlayer, VideoSkin } from '@videojs/react/video';`;
+    ? `import { Video, VideoPlayer${skin === 'minimal' ? '' : ', VideoSkin'} } from '@videojs/react/video';${skinImport}`
+    : `import { ${reactMedia.component} } from '${reactMedia.importPath}';\nimport { VideoPlayer${skin === 'minimal' ? '' : ', VideoSkin'} } from '@videojs/react/video';${skinImport}`;
 
   const posterProp = config.hasPoster && resourceHasPoster(resource) ? ` poster={MEDIA.${resource}.poster}` : '';
   const storyboardTrack = config.hasStoryboard
@@ -243,17 +262,17 @@ function reactVideoPage(media: string, resource: string, config: MediaTypeConfig
     : '';
 
   return `${mediaImport}
-import '@videojs/react/video/skin.css';
+import '@videojs/react/${skinEntry('video', skin)}.css';
 import { createRoot } from 'react-dom/client';
 import { MEDIA } from '../resources';
 
 function App() {
   return (
     <VideoPlayer${posterProp}>
-      <VideoSkin style={{ maxWidth: 800, aspectRatio: '16/9' }}>
+      <${Skin} style={{ maxWidth: 800, aspectRatio: '16/9' }}>
         <${reactMedia.component} src={MEDIA.${resource}.url} playsInline crossOrigin="anonymous">${storyboardTrack}
         </${reactMedia.component}>
-      </VideoSkin>
+      </${Skin}>
     </VideoPlayer>
   );
 }
@@ -262,26 +281,29 @@ createRoot(document.getElementById('root')!).render(<App />);
 `;
 }
 
-function reactAudioPage(media: string, resource: string): string {
+function reactAudioPage(media: string, resource: string, skin: SkinTheme): string {
   const reactMedia = REACT_MEDIA[media];
   if (!reactMedia) throw new Error(`No React component mapping for media type: ${media}`);
 
   const isDefaultAudio = media === 'audio';
+  const Skin = skin === 'minimal' ? 'MinimalAudioSkin' : 'AudioSkin';
+  const skinImport =
+    skin === 'minimal' ? `\nimport { MinimalAudioSkin } from '@videojs/react/audio/minimal-skin';` : '';
   const mediaImport = isDefaultAudio
-    ? `import { Audio, AudioPlayer, AudioSkin } from '@videojs/react/audio';`
-    : `import { ${reactMedia.component} } from '${reactMedia.importPath}';\nimport { AudioPlayer, AudioSkin } from '@videojs/react/audio';`;
+    ? `import { Audio, AudioPlayer${skin === 'minimal' ? '' : ', AudioSkin'} } from '@videojs/react/audio';${skinImport}`
+    : `import { ${reactMedia.component} } from '${reactMedia.importPath}';\nimport { AudioPlayer${skin === 'minimal' ? '' : ', AudioSkin'} } from '@videojs/react/audio';${skinImport}`;
 
   return `${mediaImport}
-import '@videojs/react/audio/skin.css';
+import '@videojs/react/${skinEntry('audio', skin)}.css';
 import { createRoot } from 'react-dom/client';
 import { MEDIA } from '../resources';
 
 function App() {
   return (
     <AudioPlayer>
-      <AudioSkin style={{ maxWidth: 600, margin: '0 auto' }}>
+      <${Skin} style={{ maxWidth: 600, margin: '0 auto' }}>
         <${reactMedia.component} src={MEDIA.${resource}.url} />
-      </AudioSkin>
+      </${Skin}>
     </AudioPlayer>
   );
 }
@@ -585,6 +607,40 @@ const PAGES: PageDef[] = [
   // React Audio
   { name: 'React Audio MP4', path: 'react-audio-mp4', framework: 'react', media: 'audio', resource: 'mp4' },
 
+  // Minimal skins, for the layout snapshots
+  {
+    name: 'HTML Video Minimal MP4',
+    path: 'html-video-minimal-mp4',
+    framework: 'html',
+    media: 'video',
+    resource: 'mp4',
+    skin: 'minimal',
+  },
+  {
+    name: 'React Video Minimal MP4',
+    path: 'react-video-minimal-mp4',
+    framework: 'react',
+    media: 'video',
+    resource: 'mp4',
+    skin: 'minimal',
+  },
+  {
+    name: 'HTML Audio Minimal MP4',
+    path: 'html-audio-minimal-mp4',
+    framework: 'html',
+    media: 'audio',
+    resource: 'mp4',
+    skin: 'minimal',
+  },
+  {
+    name: 'React Audio Minimal MP4',
+    path: 'react-audio-minimal-mp4',
+    framework: 'react',
+    media: 'audio',
+    resource: 'mp4',
+    skin: 'minimal',
+  },
+
   // CDN
   { name: 'CDN Video MP4', path: 'cdn-video-mp4', framework: 'html', media: 'video', resource: 'mp4', category: 'cdn' },
   {
@@ -638,7 +694,10 @@ function getImports(page: PageDef, config: MediaTypeConfig): string[] {
   }
 
   const playerType = config.isAudio ? 'audio' : 'video';
-  const base = [`import '@videojs/html/${playerType}/player';`, `import '@videojs/html/${playerType}/skin';`];
+  const base = [
+    `import '@videojs/html/${playerType}/player';`,
+    `import '@videojs/html/${skinEntry(playerType, page.skin ?? 'default')}';`,
+  ];
 
   for (const imp of config.imports) {
     base.push(`import '${imp}';`);
@@ -670,11 +729,16 @@ function generatePage(page: PageDef): { ts: string; html: string; ext: string } 
   } else if (page.category === 'source-react') {
     ts = sourceReactPage(page.resource);
   } else if (page.framework === 'react') {
-    ts = config.isAudio ? reactAudioPage(page.media, page.resource) : reactVideoPage(page.media, page.resource, config);
+    ts = config.isAudio
+      ? reactAudioPage(page.media, page.resource, page.skin ?? 'default')
+      : reactVideoPage(page.media, page.resource, config, page.skin ?? 'default');
   } else {
     const imports = getImports(page, config);
+    const skin = page.skin ?? 'default';
 
-    ts = config.isAudio ? htmlAudioPage(config, page.resource, imports) : htmlVideoPage(config, page.resource, imports);
+    ts = config.isAudio
+      ? htmlAudioPage(config, page.resource, imports, skin)
+      : htmlVideoPage(config, page.resource, imports, skin);
   }
 
   const html = htmlShell(page.name, `${page.path}.${ext}`);
