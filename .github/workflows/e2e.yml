@@ -42,7 +42,7 @@ jobs:
   build:
     name: Build for browser suites
     needs: changes
-    if: ${{ !cancelled() && (github.event_name == 'push' || needs.changes.outputs.player == 'true' || needs.changes.outputs.skins == 'true' || contains(github.event.pull_request.labels.*.name, 'test:e2e')) }}
+    if: ${{ !cancelled() && (github.event_name == 'push' || needs.changes.outputs.player == 'true' || needs.changes.outputs.skins == 'true' || contains(github.event.pull_request.labels.*.name, 'test:e2e') || contains(github.event.pull_request.labels.*.name, 'record:snapshots')) }}
     runs-on: ubuntu-latest
     container:
       image: mcr.microsoft.com/playwright:v1.59.1-noble
