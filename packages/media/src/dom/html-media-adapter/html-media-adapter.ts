@@ -19,6 +19,14 @@ export interface HTMLMediaTargetLike extends MediaTargetLike, EventTarget {
   querySelectorAll<E extends Element = Element>(selectors: string): NodeListOf<E> | never[];
 }
 
+/**
+ * The native element an adapter drives, declared as its static `host`.
+ *
+ * Element façades read it to know what to render and attach to: `<video>` and `<audio>` for media adapters, `<iframe>`
+ * for embeds that drive an external player.
+ */
+export type AdapterHost = 'video' | 'audio' | 'iframe';
+
 /** An {@link HTMLMediaAdapter} over any target and event map: the shape extensions and element façades share. */
 export type AnyHTMLMediaAdapter<Target extends HTMLMediaTargetLike = any> = HTMLMediaAdapter<Target, any>;
 

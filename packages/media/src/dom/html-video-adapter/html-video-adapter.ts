@@ -2,11 +2,19 @@ import type { WebKitDocument, WebKitPresentationMode, WebKitVideoElement } from 
 import { isFunction } from '@videojs/utils/predicate';
 
 import type { Video, VideoEvents, VideoTargetLike } from '../../core/types';
-import { getMediaProp, HTMLMediaAdapter, type HTMLMediaTargetLike, setMediaProp } from '../html-media-adapter';
+import {
+  type AdapterHost,
+  getMediaProp,
+  HTMLMediaAdapter,
+  type HTMLMediaTargetLike,
+  setMediaProp,
+} from '../html-media-adapter';
 
 export interface HTMLVideoTargetLike extends VideoTargetLike, HTMLMediaTargetLike {}
 
 export class HTMLVideoAdapter extends HTMLMediaAdapter<HTMLVideoTargetLike, VideoEvents> implements Video {
+  static readonly host: AdapterHost = 'video';
+
   get poster() {
     return getMediaProp(this, 'poster') ?? '';
   }

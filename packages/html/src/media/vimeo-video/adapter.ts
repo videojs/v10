@@ -50,4 +50,4 @@ function templateAttrsToEmbedProps(attrs: Record<string, string>) {
   };
 }
 
-export class VimeoVideo extends createMediaElement(VimeoAdapter, { tag: 'iframe', template }) {}
+export class VimeoVideo extends createMediaElement(VimeoAdapter, { template }) {}

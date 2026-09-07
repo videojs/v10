@@ -55,4 +55,4 @@ function templateAttrsToEmbedProps(attrs: Record<string, string>) {
   };
 }
 
-export class SpotifyAudio extends createMediaElement(SpotifyAdapter, { tag: 'iframe', template }) {}
+export class SpotifyAudio extends createMediaElement(SpotifyAdapter, { template }) {}

@@ -87,7 +87,7 @@ describe('BackgroundVideo', () => {
       };
       const container = document.createElement('div');
 
-      container.innerHTML = (Ctor as any).getTemplateHTML(attrs);
+      container.innerHTML = (Ctor as any).template(attrs);
 
       const video = container.querySelector('video')!;
 

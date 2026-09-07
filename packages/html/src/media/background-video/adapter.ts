@@ -2,14 +2,14 @@ import type { Media } from '@videojs/media/dom';
 import { namedNodeMapToObject } from '@videojs/utils/dom';
 
 import { MediaAttachMixin } from '../../store/media-attach-mixin';
-import { getTemplateHTML } from './template';
+import { backgroundVideoTemplate } from './template';
 
 const HTMLElementBase = globalThis.HTMLElement ?? class {};
 
 // Don't extend CustomMediaMixin to save some bytes, background videos don't need the full Media API.
 export class BackgroundVideo extends MediaAttachMixin(HTMLElementBase) {
   static shadowRootOptions = { mode: 'open' as ShadowRootMode };
-  static getTemplateHTML = getTemplateHTML;
+  static template = backgroundVideoTemplate;
   static get observedAttributes() {
     return ['src'];
   }
@@ -30,7 +30,7 @@ export class BackgroundVideo extends MediaAttachMixin(HTMLElementBase) {
         disablepictureinpicture: '',
       };
 
-      this.shadowRoot!.innerHTML = getTemplateHTML(attrs);
+      this.shadowRoot!.innerHTML = backgroundVideoTemplate(attrs);
     }
 
     // Neither Chrome or Firefox support setting the muted attribute

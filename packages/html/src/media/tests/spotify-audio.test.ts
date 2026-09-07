@@ -4,7 +4,7 @@ import { SpotifyAudio } from '../spotify-audio/adapter';
 
 describe('SpotifyAudio', () => {
   it('hides the embed unless it is showing Spotify’s own chrome', () => {
-    const template = SpotifyAudio.getTemplateHTML({ src: 'https://open.spotify.com/track/1301WleyT98MSxVHPZCA6M' });
+    const template = SpotifyAudio.template({ src: 'https://open.spotify.com/track/1301WleyT98MSxVHPZCA6M' });
 
     // Left visible, Spotify's own player UI shows through the skin drawn over it.
     // Asserted against the template because no DOM implementation the tests run

@@ -60,4 +60,4 @@ function templateAttrsToEmbedProps(attrs: Record<string, string>): Partial<TikTo
   };
 }
 
-export class TikTokVideo extends createMediaElement(TikTokAdapter, { tag: 'iframe', template }) {}
+export class TikTokVideo extends createMediaElement(TikTokAdapter, { template }) {}

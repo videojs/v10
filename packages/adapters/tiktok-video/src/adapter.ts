@@ -2,7 +2,7 @@
 // ported to TypeScript and reshaped as a media adapter (mirrors `dom/youtube`).
 
 import { EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES, MediaError, type Video } from '@videojs/media';
-import { createTimeRange, MediaPlayedRangesMixin } from '@videojs/media/dom';
+import { type AdapterHost, createTimeRange, MediaPlayedRangesMixin } from '@videojs/media/dom';
 import { createPublicPromise, type PublicPromise, tryCall } from '@videojs/utils/function';
 import { deepEqual } from '@videojs/utils/object';
 import { isNumber, isUndefined } from '@videojs/utils/predicate';
@@ -33,6 +33,8 @@ import { buildTikTokIframeSrc, shouldBootstrapTikTokEmbed, type TikTokSource } f
  *   new value.
  */
 export class TikTokAdapter extends MediaPlayedRangesMixin(EventTarget) implements Partial<Video> {
+  static readonly host: AdapterHost = 'iframe';
+
   static readonly defaultProps: TikTokAdapterProps = {
     src: '',
     autoplay: false,

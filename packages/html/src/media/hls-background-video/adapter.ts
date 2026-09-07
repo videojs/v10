@@ -4,7 +4,7 @@ import { type CustomElement, namedNodeMapToObject } from '@videojs/utils/dom';
 import type { Constructor } from '@videojs/utils/types';
 
 import { MediaAttachMixin } from '../../store/media-attach-mixin';
-import { getTemplateHTML } from '../background-video/template';
+import { backgroundVideoTemplate } from '../background-video/template';
 
 const HTMLElementBase = globalThis.HTMLElement ?? class {};
 
@@ -51,7 +51,7 @@ const HlsBackgroundVideoBase = MediaAttachMixin(HTMLElementBase) as unknown as C
 // background video needs one property, not the full WHATWG media API.
 export class HlsBackgroundVideo extends HlsBackgroundVideoBase {
   static shadowRootOptions = { mode: 'open' as ShadowRootMode };
-  static getTemplateHTML = getTemplateHTML;
+  static template = backgroundVideoTemplate;
 
   static get observedAttributes(): string[] {
     return ['src'];
@@ -75,7 +75,7 @@ export class HlsBackgroundVideo extends HlsBackgroundVideoBase {
         disablepictureinpicture: '',
       };
 
-      this.shadowRoot!.innerHTML = getTemplateHTML(attrs);
+      this.shadowRoot!.innerHTML = backgroundVideoTemplate(attrs);
     }
 
     // Neither Chrome nor Firefox honor a `muted` attribute set after

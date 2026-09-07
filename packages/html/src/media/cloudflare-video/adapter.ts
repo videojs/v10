@@ -51,4 +51,4 @@ function templateAttrsToEmbedProps(attrs: Record<string, string>) {
   };
 }
 
-export class CloudflareVideo extends createMediaElement(CloudflareAdapter, { tag: 'iframe', template }) {}
+export class CloudflareVideo extends createMediaElement(CloudflareAdapter, { template }) {}

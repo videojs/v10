@@ -75,6 +75,8 @@ class TestAudioHost extends HTMLAudioAdapter {
 }
 
 class TestIframeHost extends EventTarget {
+  static readonly host = 'iframe' as const;
+
   target: EventTarget | null = null;
   attach(target: EventTarget | null) {
     this.target = target;
@@ -89,7 +91,7 @@ let tagCounter = 0;
 
 function defineVideoElement() {
   const tag = `test-video-${++tagCounter}`;
-  const Ctor = CustomMediaElement('video', TestVideoHost);
+  const Ctor = CustomMediaElement(TestVideoHost);
 
   customElements.define(tag, Ctor);
   return { Ctor, tag };
@@ -97,7 +99,7 @@ function defineVideoElement() {
 
 function defineVideoElementWithObjects() {
   const tag = `test-video-${++tagCounter}`;
-  const Ctor = CustomMediaElement('video', TestVideoHostWithObjects);
+  const Ctor = CustomMediaElement(TestVideoHostWithObjects);
 
   customElements.define(tag, Ctor);
   return { Ctor, tag };
@@ -105,7 +107,7 @@ function defineVideoElementWithObjects() {
 
 function defineAudioElement() {
   const tag = `test-audio-${++tagCounter}`;
-  const Ctor = CustomMediaElement('audio', TestAudioHost);
+  const Ctor = CustomMediaElement(TestAudioHost);
 
   customElements.define(tag, Ctor);
   return { Ctor, tag };
@@ -113,7 +115,7 @@ function defineAudioElement() {
 
 function defineIframeElement() {
   const tag = `test-iframe-${++tagCounter}`;
-  const Ctor = CustomMediaElement('iframe', TestIframeHost as never);
+  const Ctor = CustomMediaElement(TestIframeHost as never);
 
   customElements.define(tag, Ctor);
   return { Ctor, tag };
@@ -200,7 +202,7 @@ class TrackingVideoHost extends HTMLVideoAdapter {
 
 function defineTrackingVideoElement() {
   const tag = `test-video-${++tagCounter}`;
-  const Ctor = CustomMediaElement('video', TrackingVideoHost);
+  const Ctor = CustomMediaElement(TrackingVideoHost);
 
   customElements.define(tag, Ctor);
   return { Ctor, tag };
@@ -1074,7 +1076,7 @@ describe('CustomMediaElement', () => {
 
   describe('subclass properties override', () => {
     it('includes subclass-added properties in observedAttributes', () => {
-      const Base = CustomMediaElement('video', TestVideoHost);
+      const Base = CustomMediaElement(TestVideoHost);
 
       class Extended extends Base {
         static properties = {
@@ -1091,7 +1093,7 @@ describe('CustomMediaElement', () => {
     });
 
     it('defines property accessors for subclass-added properties', () => {
-      const Base = CustomMediaElement('video', TestVideoHost);
+      const Base = CustomMediaElement(TestVideoHost);
 
       class Extended extends Base {
         static properties = {
@@ -1113,7 +1115,7 @@ describe('CustomMediaElement', () => {
     });
 
     it('subclass property setter sets the attribute', () => {
-      const Base = CustomMediaElement('video', TestVideoHost);
+      const Base = CustomMediaElement(TestVideoHost);
 
       class Extended extends Base {
         static properties = {
@@ -1155,10 +1157,10 @@ describe('CustomMediaElement', () => {
       const { Ctor } = defineVideoElement();
       const maliciousValue = '"><script>window.__xss=1</script><video x="';
 
-      // JSDOM shadow DOM has parsing quirks; test getTemplateHTML directly in a plain container.
+      // JSDOM shadow DOM has parsing quirks; test template directly in a plain container.
       const container = document.createElement('div');
 
-      container.innerHTML = (Ctor as any).getTemplateHTML({ crossorigin: maliciousValue });
+      container.innerHTML = (Ctor as any).template({ crossorigin: maliciousValue });
 
       expect(container.querySelectorAll('script')).toHaveLength(0);
       expect(container.querySelectorAll('img[onerror]')).toHaveLength(0);
@@ -1169,10 +1171,10 @@ describe('CustomMediaElement', () => {
       const { Ctor } = defineVideoElement();
       const maliciousValue = '"><img src=x onerror="window.__xss=1">';
 
-      // JSDOM shadow DOM has parsing quirks; test getTemplateHTML directly in a plain container.
+      // JSDOM shadow DOM has parsing quirks; test template directly in a plain container.
       const container = document.createElement('div');
 
-      container.innerHTML = (Ctor as any).getTemplateHTML({ poster: maliciousValue });
+      container.innerHTML = (Ctor as any).template({ poster: maliciousValue });
 
       expect(container.querySelectorAll('img')).toHaveLength(0);
       expect((globalThis as any).__xss).toBeUndefined();

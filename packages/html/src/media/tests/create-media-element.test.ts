@@ -1,5 +1,5 @@
 import { backgroundFeatures } from '@videojs/core/dom';
-import { HTMLVideoAdapter } from '@videojs/media/dom';
+import { HTMLAudioAdapter, HTMLVideoAdapter } from '@videojs/media/dom';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { createPlayer } from '../../player/create-player';
@@ -19,6 +19,36 @@ class FakeAdapter extends HTMLVideoAdapter {
   }
 }
 
+class FakeAudioAdapter extends HTMLAudioAdapter {
+  static defaultProps = { src: '' };
+
+  #src = '';
+
+  get src() {
+    return this.#src;
+  }
+
+  set src(value: string) {
+    this.#src = value;
+  }
+}
+
+class FakeEmbedAdapter extends EventTarget {
+  static readonly host = 'iframe' as const;
+
+  target: EventTarget | null = null;
+
+  attach(target: EventTarget | null) {
+    this.target = target;
+  }
+
+  detach() {
+    this.target = null;
+  }
+
+  destroy() {}
+}
+
 let tagCounter = 0;
 
 function defineTestElement<Element extends CustomElementConstructor>(Base: Element): string {
@@ -33,7 +63,7 @@ afterEach(() => {
 });
 
 describe('createMediaElement', () => {
-  it('renders the native tag in the shadow root and attaches the adapter to it', () => {
+  it("renders the adapter's host element in the shadow root and attaches the adapter to it", () => {
     const el = document.createElement(defineTestElement(createMediaElement(FakeAdapter)));
 
     document.body.append(el);
@@ -44,19 +74,18 @@ describe('createMediaElement', () => {
     expect((el as unknown as { adapter: FakeAdapter }).adapter).toBeInstanceOf(FakeAdapter);
   });
 
-  it('mirrors attributes onto the adapter', () => {
-    const el = document.createElement(defineTestElement(createMediaElement(FakeAdapter, { tag: 'audio' })));
+  it('renders an <audio> for an audio adapter and mirrors attributes onto the adapter', () => {
+    const el = document.createElement(defineTestElement(createMediaElement(FakeAudioAdapter)));
 
     document.body.append(el);
     el.setAttribute('src', 'https://example.com/audio.m3u8');
 
-    expect((el as unknown as { adapter: FakeAdapter }).adapter.src).toBe('https://example.com/audio.m3u8');
+    expect((el as unknown as { adapter: FakeAudioAdapter }).adapter.src).toBe('https://example.com/audio.m3u8');
     expect(el.shadowRoot?.querySelector('audio')).toBeInstanceOf(HTMLAudioElement);
   });
 
-  it('renders a custom template around an iframe target', () => {
-    const Element = createMediaElement(FakeAdapter, {
-      tag: 'iframe',
+  it('renders the template around an embed adapter and attaches to its iframe', () => {
+    const Element = createMediaElement(FakeEmbedAdapter, {
       template: () => '<iframe part="iframe" title="Embedded player"></iframe>',
     });
     const el = document.createElement(defineTestElement(Element));
@@ -67,6 +96,7 @@ describe('createMediaElement', () => {
 
     expect(iframe?.getAttribute('title')).toBe('Embedded player');
     expect(el.shadowRoot?.querySelector('video')).toBeNull();
+    expect((el as unknown as { adapter: FakeEmbedAdapter }).adapter.target).toBe(iframe);
   });
 
   it('registers with the surrounding player and releases on disconnect', async () => {

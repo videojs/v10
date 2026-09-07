@@ -50,4 +50,4 @@ function templateAttrsToEmbedProps(attrs: Record<string, string>) {
   };
 }
 
-export class YouTubeVideo extends createMediaElement(YouTubeAdapter, { tag: 'iframe', template }) {}
+export class YouTubeVideo extends createMediaElement(YouTubeAdapter, { template }) {}

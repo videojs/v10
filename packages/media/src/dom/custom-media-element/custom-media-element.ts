@@ -3,6 +3,8 @@ import { omit, pick } from '@videojs/utils/object';
 import { kebabCase } from '@videojs/utils/string';
 import type { Constructor } from '@videojs/utils/types';
 
+import type { AdapterHost } from '../html-media-adapter';
+
 /** CSS custom property names for video elements. */
 export const VideoCSSVars = {
   /** Border radius of the video element. */
@@ -22,8 +24,8 @@ export const VideoCSSVars = {
 /** CSS custom property names for audio elements. */
 export const AudioCSSVars = {} as const;
 
-/** Helper function to generate the HTML template for video elements. */
-function getVideoTemplateHTML(attrs: Record<string, string>): string {
+/** The default shadow template for a `<video>` host. */
+function videoTemplate(attrs: Record<string, string>): string {
   return /*html*/ `
     <style>
       :host {
@@ -55,8 +57,8 @@ function getVideoTemplateHTML(attrs: Record<string, string>): string {
   `;
 }
 
-/** Helper function to generate the HTML template for other elements. */
-function getCommonTemplateHTML(tag: string) {
+/** The default shadow template for any other host. */
+function commonTemplate(tag: string) {
   return (attrs: Record<string, string>) => {
     return /*html*/ `
       <style>
@@ -127,7 +129,12 @@ export interface PlaybackAdapter extends EventTarget {
   [key: string]: any;
 }
 
-type CustomMediaConstructor<T extends Constructor<PlaybackAdapter>> = Constructor<
+/** An adapter class: constructible without arguments and declaring the native element it drives. */
+export interface PlaybackAdapterConstructor<T extends PlaybackAdapter = PlaybackAdapter> extends Constructor<T> {
+  readonly host: AdapterHost;
+}
+
+type CustomMediaConstructor<T extends PlaybackAdapterConstructor> = Constructor<
   HTMLElement &
     InstanceType<T> & {
       readonly adapter: InstanceType<T>;
@@ -135,15 +142,19 @@ type CustomMediaConstructor<T extends Constructor<PlaybackAdapter>> = Constructo
     }
 > & {
   properties: Record<string, { type: any; attribute?: string; empty?: unknown }>;
-  getTemplateHTML: (attrs: Record<string, string>) => string;
+  template: (attrs: Record<string, string>) => string;
   shadowRootOptions: ShadowRootInit;
   readonly observedAttributes: string[];
 };
 
-export function CustomMediaElement<T extends Constructor<PlaybackAdapter>>(
-  tag: string,
+/**
+ * Build a custom element around an adapter. The element renders the adapter's `host` element in its shadow root,
+ * attaches the adapter to it, and forwards the adapter's properties, events, and content attributes.
+ */
+export function CustomMediaElement<T extends PlaybackAdapterConstructor>(
   PlaybackAdapter: T
 ): CustomMediaConstructor<T> {
+  const tag = PlaybackAdapter.host;
   // Embed hosts (iframe) drive an external player rather than a native media
   // element, so attribute changes are not mirrored onto the iframe target and
   // there is no `<track>` / `<source>` syncing.
@@ -152,7 +163,7 @@ export function CustomMediaElement<T extends Constructor<PlaybackAdapter>>(
   let isDefined = false;
 
   class CustomMedia extends (globalThis.HTMLElement ?? class {}) {
-    static getTemplateHTML = tag.endsWith('video') ? getVideoTemplateHTML : getCommonTemplateHTML(tag);
+    static template = tag === 'video' ? videoTemplate : commonTemplate(tag);
     static shadowRootOptions: ShadowRootInit = { mode: 'open' };
     static properties = {
       autoPictureInPicture: { type: Boolean },
@@ -283,9 +294,9 @@ export function CustomMediaElement<T extends Constructor<PlaybackAdapter>>(
         // Embed templates (iframe) need adapter-bound attrs (e.g. `src`) to build the initial URL.
         const attrs: Record<string, string> = syncTargetAttributes ? omit(pickedAttrs, disallowedKeys) : pickedAttrs;
 
-        if (tag && !attrs.part) attrs.part = tag;
+        if (!attrs.part) attrs.part = tag;
 
-        this.shadowRoot!.innerHTML = ctor.getTemplateHTML(attrs);
+        this.shadowRoot!.innerHTML = ctor.template(attrs);
       }
 
       this.#mediaHost = new PlaybackAdapter();

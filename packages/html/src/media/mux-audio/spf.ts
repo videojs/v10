@@ -3,7 +3,7 @@ import { MuxAudioAdapter } from '@videojs/mux-audio/spf';
 import { createMediaElement } from '../create-media-element';
 import { MuxAudioMixin } from './mixin';
 
-const MuxAudioBase = MuxAudioMixin(createMediaElement(MuxAudioAdapter, { tag: 'audio' }));
+const MuxAudioBase = MuxAudioMixin(createMediaElement(MuxAudioAdapter));
 
 /**
  * `<mux-audio>` over the SPF audio-only Mux Media instead of the hls.js-backed one.

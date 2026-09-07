@@ -51,4 +51,4 @@ function templateAttrsToEmbedProps(attrs: Record<string, string>) {
   };
 }
 
-export class TwitchVideo extends createMediaElement(TwitchAdapter, { tag: 'iframe', template }) {}
+export class TwitchVideo extends createMediaElement(TwitchAdapter, { template }) {}

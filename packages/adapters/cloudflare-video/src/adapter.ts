@@ -3,7 +3,7 @@
 // Source: https://github.com/muxinc/media-elements
 
 import { EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES, MediaError, type TextTrackListLike, type Video } from '@videojs/media';
-import { createTimeRange, MediaPlayedRangesMixin } from '@videojs/media/dom';
+import { type AdapterHost, createTimeRange, MediaPlayedRangesMixin } from '@videojs/media/dom';
 import { createPublicPromise, type PublicPromise, tryCall } from '@videojs/utils/function';
 import { deepEqual } from '@videojs/utils/object';
 
@@ -16,6 +16,8 @@ import { type CloudflareStreamApi, type CloudflareStreamPlayerApi, loadCloudflar
  *   new value.
  */
 export class CloudflareAdapter extends MediaPlayedRangesMixin(EventTarget) implements Partial<Video> {
+  static readonly host: AdapterHost = 'iframe';
+
   static readonly defaultProps: CloudflareAdapterProps = {
     src: '',
     autoplay: false,
