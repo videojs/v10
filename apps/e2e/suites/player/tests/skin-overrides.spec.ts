@@ -16,7 +16,8 @@ test.describe('Skin overrides — React', () => {
       content: '.media-play-button { width: 44px; height: 44px; background: rgb(18 52 86); }',
     });
 
-    const play = player.playerRoot.getByRole('button', { name: 'Play' });
+    // WebKit also exposes the AirPlay button, whose name contains "Play".
+    const play = player.playerRoot.getByRole('button', { name: 'Play', exact: true });
 
     await expect(play).toHaveCSS('width', '44px');
     await expect(play).toHaveCSS('height', '44px');
