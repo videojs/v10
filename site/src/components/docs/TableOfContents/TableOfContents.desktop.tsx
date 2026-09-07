@@ -24,14 +24,19 @@ export function TableOfContentsDesktop({ headings, activeId, onNavigate, classNa
   return (
     <nav ref={navRef} aria-label="On this page" className={clsx('', className)}>
       <div className="py-8 pr-6">
-        <h2 className="text-p3 mb-3 font-bold">On this page</h2>
+        <h2 className="font-display text-h4 mb-3 uppercase select-none">On this page</h2>
         <ul className="space-y-3">
           {headings.map((heading) => (
             <li key={heading.slug}>
               <a
                 href={`#${heading.slug}`}
                 onClick={(e) => handleClick(e, heading.slug)}
-                className={clsx('text-p3 block', activeId === heading.slug && 'font-bold')}
+                className={clsx(
+                  'text-p3 block transition-colors',
+                  activeId === heading.slug
+                    ? 'text-orange font-semibold'
+                    : 'text-muted intent:text-faded-black dark:intent:text-manila-light'
+                )}
                 style={{ paddingLeft: `calc(${heading.depth - 2} * var(--spacing) * 4)` }}
                 aria-current={activeId === heading.slug ? 'location' : undefined}
               >
