@@ -1,0 +1,66 @@
+---
+title: Volume
+description: Volume level and mute state for the player store
+---
+
+import FeatureImports from "@/components/docs/api-reference/FeatureImports.astro";
+import FeatureReference from "@/components/docs/api-reference/FeatureReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+
+Controls volume level and mute state. These capabilities have independent availability values because media can support mute without supporting volume-level changes.
+
+## Import
+
+<FeatureImports feature="volume" />
+
+<FeatureReference feature="volume" />
+
+### Selector
+
+<FrameworkCase frameworks={["react"]}>
+Pass `selectVolume` to <DocsLink slug="api/use-player">`usePlayer`</DocsLink> to subscribe to volume state. Returns `undefined` if the volume feature is not configured.
+
+Check `volumeAvailability` before showing a volume-level control, and check `mutedAvailability` before showing a mute control.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+Pass `selectVolume` to <DocsLink slug="api/player-controller">`PlayerController`</DocsLink> to subscribe to volume state. Returns `undefined` if the volume feature is not configured.
+
+Check `volumeAvailability` before showing a volume-level control, and check `mutedAvailability` before showing a mute control.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+```tsx title="VolumeSlider.tsx"
+import { selectVolume, usePlayer } from '@videojs/react';
+
+function VolumeSlider() {
+  const vol = usePlayer(selectVolume);
+  if (!vol || vol.volumeAvailability !== 'available') return null;
+
+  return (
+    <input
+      type="range"
+      min={0}
+      max={1}
+      step={0.01}
+      value={vol.volume}
+      onChange={(e) => vol.setVolume(Number(e.target.value))}
+    />
+  );
+}
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```ts title="volume-slider.ts"
+import { createPlayer, UIElement, selectVolume } from '@videojs/html';
+import { videoFeatures } from '@videojs/html/video';
+
+const { PlayerController } = createPlayer({ features: videoFeatures });
+
+class VolumeSlider extends UIElement {
+  readonly #volume = new PlayerController(this, selectVolume);
+}
+```
+</FrameworkCase>

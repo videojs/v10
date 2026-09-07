@@ -33,10 +33,10 @@ Need access to player state or actions? You'll want to familiarize yourself with
 
 | State | Actions | Feature |
 |-------|---------|---------|
-| `paused`, `ended` | `play()`, `pause()` | <DocsLink slug="components/feature-playback">Playback</DocsLink> |
-| `currentTime`, `duration` | `seek()` | <DocsLink slug="components/feature-time">Time</DocsLink> |
-| `volume`, `muted` | `setVolume()`, `toggleMuted()` | <DocsLink slug="components/feature-volume">Volume</DocsLink> |
-| `fullscreen` | `requestFullscreen()`, `exitFullscreen()` | <DocsLink slug="components/feature-fullscreen">Fullscreen</DocsLink> |
+| `paused`, `ended` | `play()`, `pause()` | <DocsLink slug="api/feature-playback">Playback</DocsLink> |
+| `currentTime`, `duration` | `seek()` | <DocsLink slug="api/feature-time">Time</DocsLink> |
+| `volume`, `muted` | `setVolume()`, `toggleMuted()` | <DocsLink slug="api/feature-volume">Volume</DocsLink> |
+| `fullscreen` | `requestFullscreen()`, `exitFullscreen()` | <DocsLink slug="api/feature-fullscreen">Fullscreen</DocsLink> |
 
 Browse the full list in the **Features** section of the sidebar.
 
@@ -44,7 +44,7 @@ Features for platform-dependent capabilities also expose one or more **availabil
 
 <FrameworkCase frameworks={["react"]}>
 
-Access state and actions with <DocsLink slug="components/use-player">`usePlayer`</DocsLink>:
+Access state and actions with <DocsLink slug="api/use-player">`usePlayer`</DocsLink>:
 
 ```tsx
 import { usePlayer } from '@videojs/react';
@@ -65,7 +65,7 @@ store.seek(30);
 
 <FrameworkCase frameworks={["html"]}>
 
-Access state and actions with <DocsLink slug="components/player-controller">`PlayerController`</DocsLink> and a feature selector:
+Access state and actions with <DocsLink slug="api/player-controller">`PlayerController`</DocsLink> and a feature selector:
 
 ```ts
 import { PlayerController, playerContext, selectPlayback } from '@videojs/html';
@@ -357,16 +357,16 @@ Custom components read player state and dispatch actions through <DocsLink slug=
 
 | State | Actions | Feature |
 |-------|---------|---------|
-| `paused`, `ended` | `play()`, `pause()` | <DocsLink slug="components/feature-playback">Playback</DocsLink> |
-| `currentTime`, `duration` | `seek()` | <DocsLink slug="components/feature-time">Time</DocsLink> |
-| `volume`, `muted` | `setVolume()`, `toggleMuted()` | <DocsLink slug="components/feature-volume">Volume</DocsLink> |
-| `fullscreen` | `requestFullscreen()`, `exitFullscreen()` | <DocsLink slug="components/feature-fullscreen">Fullscreen</DocsLink> |
+| `paused`, `ended` | `play()`, `pause()` | <DocsLink slug="api/feature-playback">Playback</DocsLink> |
+| `currentTime`, `duration` | `seek()` | <DocsLink slug="api/feature-time">Time</DocsLink> |
+| `volume`, `muted` | `setVolume()`, `toggleMuted()` | <DocsLink slug="api/feature-volume">Volume</DocsLink> |
+| `fullscreen` | `requestFullscreen()`, `exitFullscreen()` | <DocsLink slug="api/feature-fullscreen">Fullscreen</DocsLink> |
 
 Browse the full list in the **Features** section of the sidebar.
 
 <FrameworkCase frameworks={["react"]}>
 
-Access state and actions with the <DocsLink slug="components/use-player">`usePlayer`</DocsLink> hook from your player's preset. It knows which features that preset has, so state and actions are typed. (The standalone `usePlayer` export from `@videojs/react` returns an untyped store, so its values are `unknown` in TypeScript.) If you built the player with a custom feature set through <DocsLink slug="components/create-player">`createPlayer`</DocsLink> — the escape hatch for custom feature sets — use the `usePlayer` it returns instead.
+Access state and actions with the <DocsLink slug="api/use-player">`usePlayer`</DocsLink> hook from your player's preset. It knows which features that preset has, so state and actions are typed. (The standalone `usePlayer` export from `@videojs/react` returns an untyped store, so its values are `unknown` in TypeScript.) If you built the player with a custom feature set through <DocsLink slug="api/create-player">`createPlayer`</DocsLink> — the escape hatch for custom feature sets — use the `usePlayer` it returns instead.
 
 ```tsx
 import { usePlayer } from '@videojs/react/video';
@@ -387,7 +387,7 @@ store.seek(30);
 
 <FrameworkCase frameworks={["html"]}>
 
-Extend `MediaElement` from `@videojs/html` so <DocsLink slug="components/player-controller">`PlayerController`</DocsLink> can schedule DOM updates when state changes, and access state and actions with a feature selector:
+Extend `MediaElement` from `@videojs/html` so <DocsLink slug="api/player-controller">`PlayerController`</DocsLink> can schedule DOM updates when state changes, and access state and actions with a feature selector:
 
 ```ts
 import { PlayerController, playerContext, selectPlayback } from '@videojs/html';
@@ -404,7 +404,7 @@ if (playback?.paused) {
 
 Each selector returns both state and actions for that feature. Use separate controllers when you need multiple features (the [full example](#full-example) demonstrates this).
 
-Without a selector, `PlayerController` returns the full store without subscribing to changes. Create the controller with the typed context that <DocsLink slug="components/html-create-player">`createPlayer`</DocsLink> returns — the shared `playerContext` types the store's members as `unknown` — and guard the value, which stays `undefined` until a player provides the store:
+Without a selector, `PlayerController` returns the full store without subscribing to changes. Create the controller with the typed context that <DocsLink slug="api/html-create-player">`createPlayer`</DocsLink> returns — the shared `playerContext` types the store's members as `unknown` — and guard the value, which stays `undefined` until a player provides the store:
 
 ```ts
 import { createPlayer, PlayerController } from '@videojs/html';
@@ -462,9 +462,9 @@ In React, the component sits outside the player (such as `<VideoPlayer>`), so `u
 
 ## Related API
 
-- <DocsLink slug="components/use-player">usePlayer</DocsLink>
-- <DocsLink slug="components/player-controller">PlayerController</DocsLink>
-- <DocsLink slug="components/create-player">createPlayer</DocsLink>
+- <DocsLink slug="api/use-player">usePlayer</DocsLink>
+- <DocsLink slug="api/player-controller">PlayerController</DocsLink>
+- <DocsLink slug="api/create-player">createPlayer</DocsLink>
 - <DocsLink slug="components/player-container">Player container</DocsLink>
 
 ## Related guides

@@ -106,7 +106,7 @@ customElements.define('my-player', MyPlayer);
 ### Access features in components
 
 <FrameworkCase frameworks={["react"]}>
-You access feature state and actions through <DocsLink slug="components/use-player">`usePlayer`</DocsLink>:
+You access feature state and actions through <DocsLink slug="api/use-player">`usePlayer`</DocsLink>:
 ```tsx
 // Subscribe to state (re-renders when selected values change)
 const { paused, volume } = usePlayer((s) => ({
@@ -122,7 +122,7 @@ store.setVolume(0.8);
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-You can access feature state and actions through <DocsLink slug="components/player-controller">`PlayerController`</DocsLink> and pre-built feature selectors (e.g. <DocsLink slug="components/feature-playback">`selectPlayback`</DocsLink>, <DocsLink slug="components/feature-volume">`selectVolume`</DocsLink>):
+You can access feature state and actions through <DocsLink slug="api/player-controller">`PlayerController`</DocsLink> and pre-built feature selectors (e.g. <DocsLink slug="api/feature-playback">`selectPlayback`</DocsLink>, <DocsLink slug="api/feature-volume">`selectVolume`</DocsLink>):
 ```ts
 import { selectPlayback } from '@videojs/html';
 
@@ -137,7 +137,7 @@ if (media?.paused) media.play();
 
 <FrameworkCase frameworks={["react"]}>
 ### Feature selectors
-Each feature also has a pre-built selector (e.g. <DocsLink slug="components/feature-playback">`selectPlayback`</DocsLink>, <DocsLink slug="components/feature-volume">`selectVolume`</DocsLink>) that returns just that feature's state and actions:
+Each feature also has a pre-built selector (e.g. <DocsLink slug="api/feature-playback">`selectPlayback`</DocsLink>, <DocsLink slug="api/feature-volume">`selectVolume`</DocsLink>) that returns just that feature's state and actions:
 
 ```tsx
 import { selectPlayback, usePlayer } from '@videojs/react';

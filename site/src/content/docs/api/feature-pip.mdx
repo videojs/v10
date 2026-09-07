@@ -1,0 +1,57 @@
+---
+title: Picture-in-picture
+description: Picture-in-picture state and actions for the player store
+---
+
+import FeatureImports from "@/components/docs/api-reference/FeatureImports.astro";
+import FeatureReference from "@/components/docs/api-reference/FeatureReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+
+Controls picture-in-picture mode.
+
+## Import
+
+<FeatureImports feature="pip" />
+
+<FeatureReference feature="pip" />
+
+### Selector
+
+<FrameworkCase frameworks={["react"]}>
+Pass `selectPiP` to <DocsLink slug="api/use-player">`usePlayer`</DocsLink> to subscribe to picture-in-picture state. Returns `undefined` if the PiP feature is not configured.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+Pass `selectPiP` to <DocsLink slug="api/player-controller">`PlayerController`</DocsLink> to subscribe to picture-in-picture state. Returns `undefined` if the PiP feature is not configured.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+```tsx title="PiPButton.tsx"
+import { selectPiP, usePlayer } from '@videojs/react';
+
+function PiPButton() {
+  const pip = usePlayer(selectPiP);
+  if (!pip || pip.availability !== 'available') return null;
+
+  return (
+    <button onClick={pip.toggle}>
+      {pip.active ? 'Exit PiP' : 'Picture-in-Picture'}
+    </button>
+  );
+}
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```ts title="pip-button.ts"
+import { createPlayer, UIElement, selectPiP } from '@videojs/html';
+import { videoFeatures } from '@videojs/html/video';
+
+const { PlayerController } = createPlayer({ features: videoFeatures });
+
+class PiPButton extends UIElement {
+  readonly #pip = new PlayerController(this, selectPiP);
+}
+```
+</FrameworkCase>

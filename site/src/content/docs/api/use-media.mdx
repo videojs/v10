@@ -1,0 +1,72 @@
+---
+title: useMedia
+description: Hook to access the media object from within a Player
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+import Demo from "@/components/docs/demos/Demo.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+import StyleCase from "@/components/docs/StyleCase.astro";
+import BasicUsageDemoReact from "@/components/docs/demos/use-media/react/css/BasicUsage";
+import basicUsageReactTsx from "@/components/docs/demos/use-media/react/css/BasicUsage.tsx?raw";
+import basicUsageReactCss from "@/components/docs/demos/use-media/react/css/BasicUsage.css?raw";
+
+## Import
+
+```tsx
+import { useMedia } from "@videojs/react";
+```
+
+`useMedia` returns the media object attached to the current player. It returns `null` until the media mounts. Call it inside the matching `Player`.
+
+The media object may be an `HTMLVideoElement` or a Video.js media object that controls one. It always provides `play()`. Check `isMediaPauseCapable(media)` before using `pause()` because lightweight media implementations do not have to provide it.
+
+With a packaged preset, import `useMedia` from `@videojs/react`. With a player made by <DocsLink slug="api/create-player">`createPlayer`</DocsLink>, use the `useMedia` hook returned by that call. It is connected to the new player's context.
+
+```tsx
+const { Player, useMedia } = createPlayer({ features: videoFeatures });
+```
+
+## Choose between `useMedia` and a ref
+
+A React ref on `<MuxVideo>` or `<HlsJsVideo>` receives the rendered `HTMLVideoElement`. `useMedia()` receives the Video.js media object attached to the player. Use the ref for browser video APIs. Use `useMedia()` for Video.js properties such as `streamType` and `targetLiveWindow`.
+
+To attach your own media object, see <DocsLink slug="api/use-media-attach">`useMediaAttach`</DocsLink>.
+
+```tsx title="LiveDetails.tsx"
+import { isMediaLiveCapable, isMediaStreamTypeCapable, useMedia } from '@videojs/react';
+
+export function LiveDetails() {
+  const media = useMedia();
+  if (!media) return null;
+
+  const streamType = isMediaStreamTypeCapable(media) ? media.streamType : 'unknown';
+  const targetLiveWindow = isMediaLiveCapable(media) ? media.targetLiveWindow : Number.NaN;
+
+  return <output>{streamType}: {String(targetLiveWindow)}</output>;
+}
+```
+
+## Access hls.js
+
+Media backed by hls.js also provides an `engine` property. That property is specific to hls.js, so keep direct engine calls in a small part of your app rather than treating them as part of the common `Media` API.
+
+## Examples
+
+### Basic Usage
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo
+      files={[
+        { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
+        { title: "App.css", code: basicUsageReactCss, lang: "css" },
+      ]}
+    >
+      <BasicUsageDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<UtilReference util="useMedia" />

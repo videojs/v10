@@ -1,0 +1,54 @@
+---
+title: usePlayerContext
+description: Hook to access the full player context value
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+
+## Import
+
+```tsx
+import { usePlayerContext } from "@videojs/react";
+```
+
+`usePlayerContext` returns the full `PlayerContextValue` object for lower-level integrations that need direct access to player context fields.
+
+```tsx title="DebugPanel.tsx"
+import { usePlayerContext } from "@videojs/react";
+
+function DebugPanel() {
+  const { store, media, container } = usePlayerContext();
+
+  return (
+    <pre>
+      {JSON.stringify(
+        {
+          hasStore: !!store,
+          hasMedia: !!media,
+          hasContainer: !!container,
+          tagName: media?.tagName,
+        },
+        null,
+        2,
+      )}
+    </pre>
+  );
+}
+```
+
+Throws an error if called outside a Player `Provider`.
+
+### Prefer higher-level hooks
+
+For most use cases, use the focused hooks instead:
+
+| Need                       | Hook                                                                                |
+| -------------------------- | ----------------------------------------------------------------------------------- |
+| Store access with selector | <DocsLink slug="api/use-player">`usePlayer`</DocsLink>                        |
+| Current media element      | <DocsLink slug="api/use-media">`useMedia`</DocsLink>                          |
+| Attach custom media        | <DocsLink slug="api/use-media-attach">`useMediaAttach`</DocsLink> |
+
+These hooks read from the same context internally. `usePlayerContext` exposes the raw context value -- use it when you need multiple context fields in one call or when building a custom abstraction over the player context.
+
+<UtilReference util="usePlayerContext" />

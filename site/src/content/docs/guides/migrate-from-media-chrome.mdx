@@ -123,7 +123,7 @@ export function MyPlayer() {
 }
 ```
 
-A preset player carries a fixed set of <DocsLink slug="concepts/features">features</DocsLink>. When you need a different set, build your own with <DocsLink slug="components/create-player">`createPlayer`</DocsLink>. Hand it a feature list and you get back a typed `Player` component and `usePlayer` hook, the same pair the preset is made of. Call it once, outside your component, and reuse it.
+A preset player carries a fixed set of <DocsLink slug="concepts/features">features</DocsLink>. When you need a different set, build your own with <DocsLink slug="api/create-player">`createPlayer`</DocsLink>. Hand it a feature list and you get back a typed `Player` component and `usePlayer` hook, the same pair the preset is made of. Call it once, outside your component, and reuse it.
 
 ```tsx
 import { createPlayer } from '@videojs/react';
@@ -132,7 +132,7 @@ import { videoFeatures } from '@videojs/react/video';
 const { Player } = createPlayer({ features: videoFeatures });
 ```
 
-Read player state with <DocsLink slug="components/use-player">`usePlayer`</DocsLink>, <DocsLink slug="components/use-media">`useMedia`</DocsLink>, and <DocsLink slug="components/use-store">`useStore`</DocsLink>. Player hooks must run in a descendant component rendered inside `VideoPlayer` or the `Player` returned by `createPlayer`. A hook in the same component that returns the provider is still outside that provider.
+Read player state with <DocsLink slug="api/use-player">`usePlayer`</DocsLink>, <DocsLink slug="api/use-media">`useMedia`</DocsLink>, and <DocsLink slug="api/use-store">`useStore`</DocsLink>. Player hooks must run in a descendant component rendered inside `VideoPlayer` or the `Player` returned by `createPlayer`. A hook in the same component that returns the provider is still outside that provider.
 
 </FrameworkCase>
 
@@ -315,7 +315,7 @@ player.store.state.toggleFullscreen();
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
-Select an action with the same <DocsLink slug="components/use-player">`usePlayer`</DocsLink> hook you read state with:
+Select an action with the same <DocsLink slug="api/use-player">`usePlayer`</DocsLink> hook you read state with:
 
 ```tsx
 import { usePlayer } from '@videojs/react/video';
@@ -331,7 +331,7 @@ function FullscreenShortcut() {
 The Media Chrome habit of scripting the media element directly still works, unchanged. The media is a plain child of the player, and Video.js derives player state from the native media events, so `video.play()` or `video.currentTime = 30` never leaves the controls out of sync. The media element also stays the way to swap `src`, replace the media component, and listen for native events.
 
 <FrameworkCase frameworks={["react"]}>
-Put a `ref` on the media component to reach the rendered `HTMLVideoElement`; there's no `media` slot to reach through. For the Video.js media object, call <DocsLink slug="components/use-media">`useMedia`</DocsLink> from a component inside the player; media that wrap a playback engine expose it there through the `engine` escape hatch.
+Put a `ref` on the media component to reach the rendered `HTMLVideoElement`; there's no `media` slot to reach through. For the Video.js media object, call <DocsLink slug="api/use-media">`useMedia`</DocsLink> from a component inside the player; media that wrap a playback engine expose it there through the `engine` escape hatch.
 </FrameworkCase>
 
 ## Known gaps

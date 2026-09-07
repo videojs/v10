@@ -47,7 +47,7 @@ LiveButton indicates whether playback is at the live edge and acts as a "go to l
 
 The button is also disabled whenever it has no live edge to seek to: the media is not live, the `seekable` ranges are still empty (before metadata loads, for example), or the last range ends at `Infinity`. It reports `disabled` in its state, sets `data-disabled`, and ignores activation until a seek target exists. Passing `disabled` forces the same state.
 
-The button combines three player features: <DocsLink slug="components/feature-live">live</DocsLink> for `liveEdgeStart` and `targetLiveWindow`, <DocsLink slug="components/feature-time">time</DocsLink> for `currentTime` and the `seek()` action, and <DocsLink slug="components/feature-buffer">buffer</DocsLink> for `seekable`. All three are included in the `liveVideoFeatures` and `liveAudioFeatures` presets, and the packaged live skins include the button.
+The button combines three player features: <DocsLink slug="api/feature-live">live</DocsLink> for `liveEdgeStart` and `targetLiveWindow`, <DocsLink slug="api/feature-time">time</DocsLink> for `currentTime` and the `seek()` action, and <DocsLink slug="api/feature-buffer">buffer</DocsLink> for `seekable`. All three are included in the `liveVideoFeatures` and `liveAudioFeatures` presets, and the packaged live skins include the button.
 
 Media counts as live while `targetLiveWindow` is not `NaN`. That value is how far behind the live edge viewers can seek: `0` means the stream is watchable only at the edge, and `Infinity` means the stream keeps its recording seekable so viewers can rewind and catch up, like a DVR. For on-demand media the button reports neither `live` nor `liveEdge` and stays inert.
 

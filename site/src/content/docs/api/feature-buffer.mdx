@@ -1,0 +1,61 @@
+---
+title: Buffer
+description: Buffered and seekable time range state for the player store
+---
+
+import FeatureImports from "@/components/docs/api-reference/FeatureImports.astro";
+import FeatureReference from "@/components/docs/api-reference/FeatureReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+
+Tracks buffered and seekable time ranges. Each range is a `[start, end]` pair rather than a browser `TimeRanges` object.
+
+During live playback, `seekable` tells you which times remain available. The first start is the oldest available time, and the last end is the newest. Both values can move forward as a sliding live stream drops older video and adds new video. See <DocsLink slug="api/feature-live">live state</DocsLink> for the live-edge values.
+
+## Import
+
+<FeatureImports feature="buffer" />
+
+<FeatureReference feature="buffer" />
+
+### Selector
+
+<FrameworkCase frameworks={["react"]}>
+Pass `selectBuffer` to <DocsLink slug="api/use-player">`usePlayer`</DocsLink> to subscribe to buffer state. Returns `undefined` if the buffer feature is not configured.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+Pass `selectBuffer` to <DocsLink slug="api/player-controller">`PlayerController`</DocsLink> to subscribe to buffer state. Returns `undefined` if the buffer feature is not configured.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+```tsx title="BufferedRanges.tsx"
+import { selectBuffer, usePlayer } from '@videojs/react';
+
+function BufferedRanges() {
+  const buffer = usePlayer(selectBuffer);
+  if (!buffer) return null;
+
+  return (
+    <ul>
+      {buffer.buffered.map(([start, end]) => (
+        <li key={`${start}-${end}`}>{start.toFixed(1)}–{end.toFixed(1)} seconds</li>
+      ))}
+    </ul>
+  );
+}
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```ts title="buffer-bar.ts"
+import { createPlayer, UIElement, selectBuffer } from '@videojs/html';
+import { videoFeatures } from '@videojs/html/video';
+
+const { PlayerController } = createPlayer({ features: videoFeatures });
+
+class BufferBar extends UIElement {
+  readonly #buffer = new PlayerController(this, selectBuffer);
+}
+```
+</FrameworkCase>

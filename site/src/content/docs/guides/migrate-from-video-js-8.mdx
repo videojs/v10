@@ -169,7 +169,7 @@ export function MyPlayer() {
 }
 ```
 
-`VideoPlayer` is the piece that owns the state. To read that state, the preset ships a matching <DocsLink slug="components/use-player">`usePlayer`</DocsLink> hook. There's no ref to manage and no disposal to remember.
+`VideoPlayer` is the piece that owns the state. To read that state, the preset ships a matching <DocsLink slug="api/use-player">`usePlayer`</DocsLink> hook. There's no ref to manage and no disposal to remember.
 
 Three differences worth understanding, because each one is a pattern you'll see again:
 
@@ -500,7 +500,7 @@ One category doesn't survive that translation, because those were never media ev
 
 ### Player state
 
-Use <DocsLink slug="components/player-controller">`PlayerController`</DocsLink> inside a custom element. Give it a selector for the feature you care about and it keeps your element in sync as that state changes:
+Use <DocsLink slug="api/player-controller">`PlayerController`</DocsLink> inside a custom element. Give it a selector for the feature you care about and it keeps your element in sync as that state changes:
 
 ```js
 import { PlayerController, playerContext, ReactiveElement, selectTime } from '@videojs/html';
@@ -516,7 +516,7 @@ class MyElapsed extends ReactiveElement {
 
 ### Player state
 
-Put standard media event props such as `onPlay`, `onTimeUpdate`, `onEnded`, and `onError` on `Video` or your chosen media component. Read player state through the preset's <DocsLink slug="components/use-player">`usePlayer`</DocsLink> hook, typed to that preset's features:
+Put standard media event props such as `onPlay`, `onTimeUpdate`, `onEnded`, and `onError` on `Video` or your chosen media component. Read player state through the preset's <DocsLink slug="api/use-player">`usePlayer`</DocsLink> hook, typed to that preset's features:
 
 ```tsx
 import { usePlayer } from '@videojs/react/video';
@@ -564,7 +564,7 @@ player.store.state.toggleFullscreen();
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
-Where v8 had you keep the `videojs()` return value in a ref, put the ref on the media component instead; its value is the rendered `HTMLVideoElement`, ready for every `media.*` entry in the table. The player's actions come from the same `usePlayer` hook you read state with — select `togglePaused`, `setPlaybackRate`, or `toggleFullscreen` from state and call it. Where `player.tech()` habits linger, <DocsLink slug="components/use-media">`useMedia`</DocsLink> returns the Video.js media object.
+Where v8 had you keep the `videojs()` return value in a ref, put the ref on the media component instead; its value is the rendered `HTMLVideoElement`, ready for every `media.*` entry in the table. The player's actions come from the same `usePlayer` hook you read state with — select `togglePaused`, `setPlaybackRate`, or `toggleFullscreen` from state and call it. Where `player.tech()` habits linger, <DocsLink slug="api/use-media">`useMedia`</DocsLink> returns the Video.js media object.
 </FrameworkCase>
 
 Swapping sources is the change most likely to surprise you. There's no `player.src()`; you set `src` on the media element, or replace the media element entirely, and the UI follows. Changing formats is changing tags.
@@ -589,7 +589,7 @@ See <DocsLink slug="guides/internationalize-the-player">Internationalize the pla
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
-To override individual strings, use <DocsLink slug="components/i18n-provider">`I18nProvider`</DocsLink> when you want them scoped to a subtree:
+To override individual strings, use <DocsLink slug="api/i18n-provider">`I18nProvider`</DocsLink> when you want them scoped to a subtree:
 
 ```tsx
 import { I18nProvider } from '@videojs/react/i18n';
@@ -639,11 +639,11 @@ You get `targetLiveWindow` and `liveEdgeStart` in state, plus a live button that
 The live composition is deliberately narrower than the video one. It leaves out playback rate, quality, and audio-track state, so those controls don't appear in a live skin's settings menu. If you need an omitted feature on a live player, build your own player from a feature list rather than taking the preset's.
 
 <FrameworkCase frameworks={["html"]}>
-That's what <DocsLink slug="components/html-create-player">`createPlayer`</DocsLink> is for. Hand it a feature list and you get back the mixins to define your own player element.
+That's what <DocsLink slug="api/html-create-player">`createPlayer`</DocsLink> is for. Hand it a feature list and you get back the mixins to define your own player element.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
-That's what <DocsLink slug="components/create-player">`createPlayer`</DocsLink> is for. Hand it a feature list and you get back a `Player` component and a `usePlayer` hook, the same pair every preset is built from.
+That's what <DocsLink slug="api/create-player">`createPlayer`</DocsLink> is for. Hand it a feature list and you get back a `Player` component and a `usePlayer` hook, the same pair every preset is built from.
 </FrameworkCase>
 
 ## Known gaps

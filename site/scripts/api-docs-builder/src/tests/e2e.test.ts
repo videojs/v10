@@ -1384,8 +1384,8 @@ describe('Preset pipeline (end-to-end)', () => {
       const playback = ref.features.find((f) => f.name === 'playback');
       const volume = ref.features.find((f) => f.name === 'volume');
 
-      expect(playback?.slug).toBe('components/feature-playback');
-      expect(volume?.slug).toBe('components/feature-volume');
+      expect(playback?.slug).toBe('api/feature-playback');
+      expect(volume?.slug).toBe('api/feature-volume');
     });
 
     it('flags hasReference true when the feature MDX page exists', () => {

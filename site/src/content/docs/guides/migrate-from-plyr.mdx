@@ -421,7 +421,7 @@ Control everything through the player's store. Every Plyr call has a matching st
 You can still script the media element directly when you want to. Plyr routed calls through its wrapper because the wrapper had to know about every change; Video.js derives player state from the native media events, so `video.play()` or `video.currentTime = 10` keeps every control in sync. The media element is also the way to change content: set `src` on the media component to swap sources, and replace the component when the media type changes, such as moving from `Video` to `HlsVideo`. The player UI follows the attached media.
 
 <FrameworkCase frameworks={["react"]}>
-Import the preset's <DocsLink slug="components/use-player">`usePlayer`</DocsLink> hook and call it from a descendant of `VideoPlayer`. The component that creates `VideoPlayer` cannot also consume its context, so put store access in a child component:
+Import the preset's <DocsLink slug="api/use-player">`usePlayer`</DocsLink> hook and call it from a descendant of `VideoPlayer`. The component that creates `VideoPlayer` cannot also consume its context, so put store access in a child component:
 
 ```tsx
 import '@videojs/react/video/minimal-skin.css';
@@ -446,11 +446,11 @@ export function AppVideoPlayer() {
 
 The same hook selects actions: `usePlayer((state) => state.togglePaused)` returns a function you can call from your own UI.
 
-When you need the element itself, put a `ref` on the media component; its value is the rendered `HTMLVideoElement`, so `ref.current.play()` works the way Plyr's underlying element did. For the Video.js media object, call <DocsLink slug="components/use-media">`useMedia`</DocsLink> from a component inside the player; media that wrap a playback engine expose it there through the `engine` escape hatch.
+When you need the element itself, put a `ref` on the media component; its value is the rendered `HTMLVideoElement`, so `ref.current.play()` works the way Plyr's underlying element did. For the Video.js media object, call <DocsLink slug="api/use-media">`useMedia`</DocsLink> from a component inside the player; media that wrap a playback engine expose it there through the `engine` escape hatch.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-The store's actions live on the player element's `store.state`: query `<video-player>` and call `player.store.state.togglePaused()`. Your media element is also a plain child in your markup, so you can query and drive it directly. To keep a custom element in sync with player state, use <DocsLink slug="components/player-controller">`PlayerController`</DocsLink>:
+The store's actions live on the player element's `store.state`: query `<video-player>` and call `player.store.state.togglePaused()`. Your media element is also a plain child in your markup, so you can query and drive it directly. To keep a custom element in sync with player state, use <DocsLink slug="api/player-controller">`PlayerController`</DocsLink>:
 
 ```js
 import { PlayerController, playerContext, ReactiveElement, selectTime } from '@videojs/html';

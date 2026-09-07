@@ -1,0 +1,128 @@
+---
+title: Live
+description: Live edge state for the player store
+---
+
+import FeatureImports from "@/components/docs/api-reference/FeatureImports.astro";
+import FeatureReference from "@/components/docs/api-reference/FeatureReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+
+Tracks when playback is at the live edge and what kind of live window the stream provides.
+
+- `liveEdgeStart` is the playback time where the live edge begins. Playback counts as live when `currentTime` reaches this value.
+- `targetLiveWindow` describes the kind of live window. Despite its name, it does not report a number of seconds: `0` means a sliding live window, `Infinity` means a live event with playback history, and `NaN` means on-demand or not known yet.
+
+Both values are `NaN` when the media does not provide live-edge information.
+
+Use the <DocsLink slug="api/feature-buffer">buffer feature</DocsLink> to find the times a viewer can seek to. Its `seekable` value contains `[start, end]` pairs. On a sliding live stream, the oldest and newest available times both move forward.
+
+The live presets do not include the <DocsLink slug="api/feature-stream-type">stream type feature</DocsLink>, so `selectStreamType` returns `undefined` unless you add it to a custom player.
+
+The <DocsLink slug="api/feature-time">time feature</DocsLink> reports the end of the available live video as `duration`, even when the browser reports `Infinity`. To check for live playback, use `!Number.isNaN(targetLiveWindow)` instead of checking `duration`.
+
+## Import
+
+<FeatureImports feature="live" />
+
+<FeatureReference feature="live" />
+
+### Selector
+
+<FrameworkCase frameworks={["react"]}>
+Pass `selectLive` to <DocsLink slug="api/use-player">`usePlayer`</DocsLink> to subscribe to live state. Returns `undefined` if the live feature is not configured.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+Pass `selectLive` to <DocsLink slug="api/player-controller">`PlayerController`</DocsLink> to subscribe to live state. Returns `undefined` if the live feature is not configured.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+```tsx title="LiveEdgeIndicator.tsx"
+import { selectLive, selectTime, usePlayer } from '@videojs/react';
+
+function LiveEdgeIndicator() {
+  const live = usePlayer(selectLive);
+  const time = usePlayer(selectTime);
+  if (!live || Number.isNaN(live.targetLiveWindow)) return null;
+
+  const atEdge = time != null && time.currentTime >= live.liveEdgeStart;
+  return <span className="live-indicator">{atEdge ? 'LIVE' : 'BEHIND LIVE'}</span>;
+}
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```ts title="live-edge-button.ts"
+import { createPlayer, UIElement, selectLive } from '@videojs/html';
+import { liveVideoFeatures } from '@videojs/html/live-video';
+
+const { PlayerController } = createPlayer({ features: liveVideoFeatures });
+
+class LiveEdgeButton extends UIElement {
+  readonly #live = new PlayerController(this, selectLive);
+}
+```
+</FrameworkCase>
+
+## Jump to the live edge
+
+Use the packaged live button for the usual jump-to-live behavior. It combines the live, time, and buffer features, then seeks to the end of the last `seekable` range. It also manages its accessible label and disabled state.
+
+<FrameworkCase frameworks={["react"]}>
+```tsx title="StationLiveButton.tsx"
+import { LiveButton } from '@videojs/react';
+
+export function StationLiveButton() {
+  return <LiveButton className="station-live-button">On air</LiveButton>;
+}
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```html title="index.html"
+<script type="module">
+  import '@videojs/html/ui/live-button';
+</script>
+
+<media-live-button class="station-live-button">On air</media-live-button>
+```
+</FrameworkCase>
+
+Put the button in your custom controls and style it there. Do not calculate the destination from `duration` or set `currentTime` to `Infinity`.
+
+If you need different behavior, you can combine the same public features yourself:
+
+- Read `targetLiveWindow` from `selectLive` to check that the source is live.
+- Read the newest available time from the last range returned by `selectBuffer`.
+- Call the `seek()` action returned by `selectTime` with that time.
+
+<FrameworkCase frameworks={["react"]}>
+```tsx title="CustomLiveButton.tsx"
+import { selectBuffer, selectLive, selectTime, usePlayer } from '@videojs/react';
+
+export function CustomLiveButton() {
+  const live = usePlayer(selectLive);
+  const time = usePlayer(selectTime);
+  const buffer = usePlayer(selectBuffer);
+  const newestTime = buffer?.seekable.at(-1)?.[1];
+
+  const jumpToLive = () => {
+    if (!time || newestTime === undefined || !Number.isFinite(newestTime)) return;
+    void time.seek(newestTime);
+  };
+
+  const disabled = !live || Number.isNaN(live.targetLiveWindow) || !Number.isFinite(newestTime);
+
+  return (
+    <button type="button" disabled={disabled} onClick={jumpToLive}>
+      Go live
+    </button>
+  );
+}
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+Read the same three selectors with <DocsLink slug="api/player-controller">`PlayerController`</DocsLink>. Call `selectTime`'s `seek()` action with the last end time from `selectBuffer` when `selectLive` reports a live source.
+</FrameworkCase>

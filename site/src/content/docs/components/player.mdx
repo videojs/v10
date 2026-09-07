@@ -63,7 +63,7 @@ const { Player, usePlayer, useMedia } = createPlayer({
 
 The <DocsLink slug="concepts/features">features</DocsLink> you pass determine what state is available in the store. `videoFeatures` is a <DocsLink slug="concepts/presets">preset</DocsLink> that includes playback, volume, fullscreen, and other standard video controls.
 
-<DocsLinkCard slug="components/create-player">createPlayer reference</DocsLinkCard>
+<DocsLinkCard slug="api/create-player">createPlayer reference</DocsLinkCard>
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
@@ -94,7 +94,7 @@ customElements.define('my-player', MyPlayer);
 customElements.define('my-container', MyContainer);
 ```
 
-<DocsLinkCard slug="components/html-create-player">`createPlayer` reference</DocsLinkCard>
+<DocsLinkCard slug="api/html-create-player">`createPlayer` reference</DocsLinkCard>
 </FrameworkCase>
 
 ## What lives inside it
@@ -127,7 +127,7 @@ Everything that needs player state goes inside `Player`: skins, containers, UI c
 <FrameworkCase frameworks={["react"]}>
 `Player` renders no DOM element of its own — it's purely a state wrapper. Put sizing, positioning, borders, backgrounds, and DOM measurements on the <DocsLink slug="components/player-container">`Container`</DocsLink>, not `Player`.
 
-`Player` is the Provider half of a React Context pair, with <DocsLink slug="components/use-player">`usePlayer`</DocsLink> as its consumer, and it renders nothing. If a component needs player state, lift `Player` above it the way you'd lift any Provider: wrapping a page section, a route, or even your whole app in `Player` costs nothing visually and keeps `usePlayer` available wherever you need it.
+`Player` is the Provider half of a React Context pair, with <DocsLink slug="api/use-player">`usePlayer`</DocsLink> as its consumer, and it renders nothing. If a component needs player state, lift `Player` above it the way you'd lift any Provider: wrapping a page section, a route, or even your whole app in `Player` costs nothing visually and keeps `usePlayer` available wherever you need it.
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
 Packaged skins make `<video-player>` boxless with `display: contents`. Width, height, positioning, transforms, and `getBoundingClientRect()` do not describe a visible player box there. Put layout and measurements on the <DocsLink slug="components/player-container">`<media-container>`</DocsLink> instead.
@@ -155,7 +155,7 @@ function PlayPauseButton() {
 }
 ```
 
-<DocsLinkCard slug="components/use-player">usePlayer reference</DocsLinkCard>
+<DocsLinkCard slug="api/use-player">usePlayer reference</DocsLinkCard>
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
 Use the preset's typed `PlayerController` to subscribe to store state from any custom element inside the player:
@@ -183,7 +183,7 @@ class PlayPauseButton extends UIElement {
 customElements.define('play-pause-button', PlayPauseButton);
 ```
 
-<DocsLinkCard slug="components/player-controller">PlayerController reference</DocsLinkCard>
+<DocsLinkCard slug="api/player-controller">PlayerController reference</DocsLinkCard>
 </FrameworkCase>
 
 ## Extended player layouts

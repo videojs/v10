@@ -2,7 +2,8 @@
 import clsx from 'clsx';
 
 import BookIcon from '@/assets/icons/book.svg?react';
-import CodeSquareIcon from '@/assets/icons/code-square.svg?react';
+import ApiIcon from '@/assets/icons/api.svg?react';
+import PuzzleIcon from '@/assets/icons/puzzle.svg?react';
 import PenIcon from '@/assets/icons/pen.svg?react';
 import { PreferenceUpdater } from '@/components/docs/PreferenceUpdater';
 import SidebarItem from '@/components/docs/SidebarItem.astro';
@@ -37,7 +38,8 @@ const activeTab = tabs.find(containsActivePath) ?? tabs[0];
 
 const TAB_ICONS = {
   Guide: BookIcon,
-  Components: CodeSquareIcon,
+  Components: PuzzleIcon,
+  API: ApiIcon,
   'Writing Style': PenIcon,
 } satisfies Record<string, typeof BookIcon>;
 ---

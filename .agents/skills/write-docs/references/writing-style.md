@@ -162,7 +162,7 @@ For more information about events, please refer to the Events page.
 
 ```markdown
 // ✅ Linked
-Within a `Player`, <DocsLink slug="components/use-player">`usePlayer`</DocsLink> is usually simpler.
+Within a `Player`, <DocsLink slug="api/use-player">`usePlayer`</DocsLink> is usually simpler.
 
 // ❌ Unlinked
 Within a `Player`, `usePlayer` is usually simpler.

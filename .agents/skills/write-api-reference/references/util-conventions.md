@@ -219,7 +219,7 @@ For example, `SubscriptionController` is discovered (matches `*Controller`) but 
 
 When adding a new util to the docs:
 1. Ensure the builder discovers it (check with `pnpm api-docs`)
-2. Create the MDX page at `site/src/content/docs/components/{slug}.mdx`
+2. Create the MDX page at `site/src/content/docs/api/{slug}.mdx`
 3. Add to the sidebar in `docs.config.ts`
 
 ## Tests

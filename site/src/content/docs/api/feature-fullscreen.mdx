@@ -1,0 +1,83 @@
+---
+title: Fullscreen
+description: Fullscreen state and actions for the player store
+---
+
+import FeatureImports from "@/components/docs/api-reference/FeatureImports.astro";
+import FeatureReference from "@/components/docs/api-reference/FeatureReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+
+Controls fullscreen mode. Tries the container element first, falls back to the media element.
+
+## Import
+
+<FeatureImports feature="fullscreen" />
+
+<FeatureReference feature="fullscreen" />
+
+### Selector
+
+<FrameworkCase frameworks={["react"]}>
+Pass `selectFullscreen` to <DocsLink slug="api/use-player">`usePlayer`</DocsLink> to subscribe to fullscreen state. Returns `undefined` if the fullscreen feature is not configured.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+Pass `selectFullscreen` to <DocsLink slug="api/player-controller">`PlayerController`</DocsLink> to subscribe to fullscreen state. Returns `undefined` if the fullscreen feature is not configured.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+```tsx title="FullscreenButton.tsx"
+import { selectFullscreen, usePlayer } from '@videojs/react';
+
+function FullscreenButton() {
+  const fs = usePlayer(selectFullscreen);
+  if (!fs || fs.fullscreenAvailability !== 'available') return null;
+
+  return (
+    <button onClick={fs.toggleFullscreen}>
+      {fs.fullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+    </button>
+  );
+}
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```ts title="fullscreen-button.ts"
+import { createPlayer, UIElement, selectFullscreen } from '@videojs/html';
+import { videoFeatures } from '@videojs/html/video';
+
+const { PlayerController } = createPlayer({ features: videoFeatures });
+
+class FullscreenButton extends UIElement {
+  readonly #fullscreen = new PlayerController(this, selectFullscreen);
+}
+```
+</FrameworkCase>
+
+### Screen orientation
+
+Add <DocsLink slug="api/feature-orientation-lock">`features.orientationLock`</DocsLink> to lock screen orientation while fullscreen is active. Unsupported browsers and rejected lock requests are ignored, so iOS Safari continues to use its normal fullscreen behavior.
+
+The feature locks to `landscape` unless the provider sets another Screen Orientation API type.
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<Player orientationLockType="portrait">
+  <Container>
+    <video src="/video.mp4" />
+  </Container>
+</Player>
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```html
+<my-player orientation-lock-type="portrait">
+  <video src="/video.mp4"></video>
+</my-player>
+```
+</FrameworkCase>
+
+See <DocsLink slug="api/feature-orientation-lock">Orientation lock</DocsLink> for the player setup.
