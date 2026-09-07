@@ -291,14 +291,19 @@ function discoverMediaElements(monorepoRoot: string, project: OxcProject): Media
         const targetTag = resolveHostTag(host.file, host.declaration, project, new Set());
         if (!targetTag) continue;
 
+        // An iframe says nothing about what it plays, so an embed's media type comes from its class name
+        // (`SpotifyAudio` against `VimeoVideo`); the `*Element` export in the define file carries a suffix.
+        const className = stripElementSuffix(name);
+        const isAudio = targetTag === 'audio' || (targetTag === 'iframe' && className.endsWith('Audio'));
+
         sources.push({
           defineFilePath: filePath,
-          className: stripElementSuffix(name),
+          className,
           tagName,
           mediaFilePath: mediaDeclaration.file.filePath,
           hostFilePath: host.file.filePath,
           hostClassName,
-          mediaType: targetTag === 'audio' || (targetTag === 'iframe' && name.endsWith('Audio')) ? 'audio' : 'video',
+          mediaType: isAudio ? 'audio' : 'video',
           targetTag,
         });
       }

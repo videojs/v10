@@ -1500,6 +1500,7 @@ describe('Media element pipeline (end-to-end)', () => {
       expect(names).toEqual([
         'BarrelVideo',
         'ComplexVideo',
+        'EmbedAudio',
         'EmbedVideo',
         'ExtendingVideo',
         'MixinVideo',
@@ -1526,7 +1527,7 @@ describe('Media element pipeline (end-to-end)', () => {
     });
 
     it('produces one result per media element', () => {
-      expect(results.length).toBe(7);
+      expect(results.length).toBe(8);
     });
 
     it('follows nested public index barrels without including sibling implementations', () => {
@@ -1862,6 +1863,15 @@ describe('Media element pipeline (end-to-end)', () => {
 
       expect(react).toMatchObject({ target: 'iframe', acceptsNativeProps: false });
       expect(Object.keys(react!.props).sort()).toEqual(['autoplay', 'source', 'src']);
+    });
+
+    it('classifies an iframe-backed element as audio from its media class name', () => {
+      const audio = findElement('EmbedAudio')!.reference;
+      const video = findElement('EmbedVideo')!.reference;
+
+      expect(audio.platforms.html.target).toBe('iframe');
+      expect(audio.mediaType).toBe('audio');
+      expect(video.mediaType).toBe('video');
     });
 
     it('extracts engine options by following the source property type', () => {
