@@ -20,22 +20,15 @@ export class BackgroundVideoElement extends MediaAttachMixin(HTMLElementBase) {
   constructor() {
     super();
 
-    const ctor = this.constructor as typeof BackgroundVideoElement;
-
-    renderHost(
-      this,
-      ctor.template,
-      {
-        ...namedNodeMapToObject(this.attributes),
-        ...(!this.hasAttribute('nomuted') && { muted: '' }),
-        ...(!this.hasAttribute('noloop') && { loop: '' }),
-        ...(!this.hasAttribute('noautoplay') && { autoplay: '' }),
-        playsinline: '',
-        disableremoteplayback: '',
-        disablepictureinpicture: '',
-      },
-      ctor.shadowRootOptions
-    );
+    renderHost(this, {
+      ...namedNodeMapToObject(this.attributes),
+      ...(!this.hasAttribute('nomuted') && { muted: '' }),
+      ...(!this.hasAttribute('noloop') && { loop: '' }),
+      ...(!this.hasAttribute('noautoplay') && { autoplay: '' }),
+      playsinline: '',
+      disableremoteplayback: '',
+      disablepictureinpicture: '',
+    });
 
     // Neither Chrome or Firefox support setting the muted attribute
     // after using document.createElement.

@@ -4,22 +4,24 @@ import { omit, pick } from '@videojs/utils/object';
 import type { AttributeRoutes } from './attributes';
 import type { MediaTemplate } from './templates';
 
+/** The statics an element class carries for `renderHost`: its template and, optionally, its shadow root options. */
+export interface HostElementConstructor {
+  template: MediaTemplate;
+  shadowRootOptions?: ShadowRootInit;
+}
+
 /**
- * Render the template into the element's shadow root. An existing root, such as a declarative one, is left as it is.
+ * Render the element's static `template` into its shadow root, attached with its static `shadowRootOptions`. An
+ * existing root, such as a declarative one, is left as it is.
  *
  * @param element - The custom element to render into.
- * @param template - Produces the shadow HTML from the attributes it may render.
  * @param attrs - The attributes handed to the template, typically from `initialAttributes`.
  */
-export function renderHost(
-  element: HTMLElement,
-  template: MediaTemplate,
-  attrs: Record<string, string>,
-  init: ShadowRootInit = { mode: 'open' }
-): ShadowRoot {
+export function renderHost(element: HTMLElement, attrs: Record<string, string>): ShadowRoot {
   if (element.shadowRoot) return element.shadowRoot;
 
-  const root = element.attachShadow(init);
+  const { template, shadowRootOptions = { mode: 'open' } } = element.constructor as unknown as HostElementConstructor;
+  const root = element.attachShadow(shadowRootOptions);
 
   root.innerHTML = template(attrs);
 

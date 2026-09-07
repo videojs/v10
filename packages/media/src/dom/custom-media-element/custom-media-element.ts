@@ -87,14 +87,7 @@ export function CustomMediaElement<T extends PlaybackAdapterConstructor>(
     constructor() {
       super();
 
-      const ctor = this.constructor as typeof CustomMedia;
-
-      renderHost(
-        this,
-        ctor.template,
-        { part: tag, ...initialAttributes(this, routes, { passthrough }) },
-        ctor.shadowRootOptions
-      );
+      renderHost(this, { part: tag, ...initialAttributes(this, routes, { passthrough }) });
 
       this.#attachment.attach();
       this.shadowRoot!.addEventListener('slotchange', () => {

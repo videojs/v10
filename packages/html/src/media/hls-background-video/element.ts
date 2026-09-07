@@ -65,22 +65,15 @@ export class HlsBackgroundVideoElement extends HlsBackgroundVideoBase {
   constructor() {
     super();
 
-    const ctor = this.constructor as typeof HlsBackgroundVideoElement;
-
-    renderHost(
-      this,
-      ctor.template,
-      {
-        ...namedNodeMapToObject(this.attributes),
-        muted: '',
-        loop: '',
-        autoplay: '',
-        playsinline: '',
-        disableremoteplayback: '',
-        disablepictureinpicture: '',
-      },
-      ctor.shadowRootOptions
-    );
+    renderHost(this, {
+      ...namedNodeMapToObject(this.attributes),
+      muted: '',
+      loop: '',
+      autoplay: '',
+      playsinline: '',
+      disableremoteplayback: '',
+      disablepictureinpicture: '',
+    });
 
     // Neither Chrome nor Firefox honor a `muted` attribute set after
     // `document.createElement`, and autoplay is refused without it. Attaching is
