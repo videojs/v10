@@ -1,7 +1,7 @@
 import { Dialog } from '@base-ui/react/dialog';
 import clsx from 'clsx';
-import { ArrowUpRight } from 'lucide-react';
 
+import ArrowUpRight from '@/assets/icons/arrow-up-right.svg?react';
 import Logo from '@/assets/logos/videojs.svg?react';
 import CompactLogo from '@/assets/logos/vjs.svg?react';
 import BetaPill from '@/components/BetaPill';
@@ -120,7 +120,7 @@ export default function MobileNav({ navLinks, currentPath, children, compact, pi
                     className={className}
                     aria-current={isActive ? 'page' : undefined}
                   >
-                    {link.label} {link.external ? <ArrowUpRight size="1em" aria-hidden="true" /> : null}
+                    {link.label} {link.external ? <ArrowUpRight className="size-[1em]" aria-hidden="true" /> : null}
                   </a>
                 );
               })}

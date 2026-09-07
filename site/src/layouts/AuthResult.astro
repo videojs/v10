@@ -1,5 +1,7 @@
 ---
-import { CircleCheck, XCircle } from 'lucide-react';
+import clsx from 'clsx';
+import CircleCheck from '@/assets/icons/check-circle.svg?react';
+import XCircle from '@/assets/icons/x-circle.svg?react';
 
 import Base from './Base.astro';
 
@@ -21,7 +23,7 @@ const iconClass = variant === 'error' ? 'text-red' : '';
     class="flex min-h-screen items-center justify-center p-6"
   >
     <div class="flex max-w-md flex-col items-center gap-4 text-center">
-      <Icon size={48} className={iconClass} />
+      <Icon className={clsx("size-12", iconClass)} />
       <div>
         <h1 class="text-h4">{title}</h1>
         <p class="text-p1">{description}</p>

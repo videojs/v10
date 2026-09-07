@@ -1,6 +1,10 @@
 import { useStore } from '@nanostores/react';
+import type { ReactNode } from 'react';
 
-import { Select } from '@/components/Select';
+import Css3Logo from '@/assets/logos/brands/css3.svg?react';
+import Html5Logo from '@/assets/logos/brands/html5.svg?react';
+import ReactLogo from '@/assets/logos/brands/react.svg?react';
+import SegmentedControl from '@/components/SegmentedControl';
 import { currentStyle as styleStore } from '@/stores/preferences';
 import type { AnySupportedStyle, SupportedFramework } from '@/types/docs';
 import {
@@ -15,20 +19,28 @@ import { setStylePreferenceClient, updateStyleAttribute } from '@/utils/docs/pre
 import { resolveFrameworkChange } from '@/utils/docs/routing';
 import useIsHydrated from '@/utils/useIsHydrated';
 
+const FRAMEWORK_ICONS = {
+  react: <ReactLogo className="size-4" />,
+  html: <Html5Logo className="size-4" />,
+} satisfies Record<SupportedFramework, ReactNode>;
+
+const STYLE_ICONS = {
+  css: <Css3Logo className="size-4" />,
+} satisfies Record<AnySupportedStyle, ReactNode>;
+
 interface SelectorProps {
   currentFramework: SupportedFramework;
   currentSlug: string;
+  className?: string;
 }
 
-export function Selectors({ currentFramework, currentSlug }: SelectorProps) {
+export function Selectors({ currentFramework, currentSlug, className }: SelectorProps) {
   const currentStyle = useStore(styleStore);
   const isHydrated = useIsHydrated();
   const hydrationSafeCurrentStyle = isHydrated ? currentStyle : null;
 
-  const handleFrameworkChange = (newFramework: SupportedFramework | null) => {
-    if (newFramework === null) return;
-
-    if (!isValidFramework(newFramework)) return;
+  const handleFrameworkChange = (newFramework: SupportedFramework) => {
+    if (!isValidFramework(newFramework) || newFramework === currentFramework) return;
 
     const { url, shouldReplace } = resolveFrameworkChange({
       currentFramework,
@@ -56,9 +68,7 @@ export function Selectors({ currentFramework, currentSlug }: SelectorProps) {
     }
   };
 
-  const handleStyleChange = (newStyle: AnySupportedStyle | null) => {
-    if (newStyle === null) return;
-
+  const handleStyleChange = (newStyle: AnySupportedStyle) => {
     if (!isValidStyleForFramework(currentFramework, newStyle)) return;
 
     // Update localStorage for this framework
@@ -69,40 +79,40 @@ export function Selectors({ currentFramework, currentSlug }: SelectorProps) {
     styleStore.set(newStyle);
   };
 
-  const availableStyles = FRAMEWORK_STYLES[currentFramework];
-
   const frameworkOptions = SUPPORTED_FRAMEWORKS.map((fw) => ({
     value: fw,
     label: FRAMEWORK_LABELS[fw],
+    icon: FRAMEWORK_ICONS[fw],
   }));
 
-  const styleOptions = availableStyles.map((st) => ({
+  const styleOptions = FRAMEWORK_STYLES[currentFramework].map((st) => ({
     value: st,
     label: STYLE_LABELS[st],
+    icon: STYLE_ICONS[st],
   }));
 
   return (
-    <div className="border-manila-75 dark:border-faded-black border-b px-6 pt-2.5 pb-6 md:py-6 xl:p-6">
-      <div
-        className="mx-auto grid w-full max-w-3xl grid-flow-col grid-cols-2 grid-rows-2 items-center gap-x-2 md:grid-flow-row md:grid-cols-(--md-grid-cols) md:gap-x-6 md:gap-y-2"
-        style={{ '--md-grid-cols': 'auto minmax(0, 1fr)' } as React.CSSProperties}
-      >
-        <span className="text-p3 text-faded-black dark:text-manila-light">Framework</span>
-        <Select
-          value={currentFramework}
-          onChange={handleFrameworkChange}
-          options={frameworkOptions}
-          aria-label="Select framework"
-          data-testid="select-framework"
-        />
-        <span className="text-p3 text-faded-black dark:text-manila-light">Style</span>
-        <Select
-          value={hydrationSafeCurrentStyle}
-          onChange={handleStyleChange}
-          options={styleOptions}
-          aria-label="Select style"
-          data-testid="select-style"
-        />
+    <div className={className ?? 'border-line border-b px-6 py-5'}>
+      <div className="mx-auto grid w-full max-w-3xl gap-4 sm:grid-cols-2 md:grid-cols-1">
+        <div className="grid gap-1.5">
+          <SegmentedControl
+            value={currentFramework}
+            onChange={handleFrameworkChange}
+            options={frameworkOptions}
+            aria-label="Select framework"
+            data-testid="select-framework"
+          />
+        </div>
+        <div className="grid gap-1.5">
+          <SegmentedControl
+            value={hydrationSafeCurrentStyle}
+            onChange={handleStyleChange}
+            options={styleOptions}
+            aria-label="Select style"
+            data-testid="select-style"
+            disabled={!isHydrated}
+          />
+        </div>
       </div>
     </div>
   );

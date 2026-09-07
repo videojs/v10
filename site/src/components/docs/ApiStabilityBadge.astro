@@ -1,5 +1,4 @@
 ---
-import Pill from '@/components/Pill';
 import type { DocStability } from '@/types/docs';
 
 type Props = {
@@ -8,13 +7,15 @@ type Props = {
 
 const { stability } = Astro.props;
 const labels = {
-  beta: 'Beta',
+  experimental: 'Experimental',
 } satisfies Record<DocStability, string>;
+
+// A dev server that cached frontmatter before a rename can hand us a value the map doesn't know; show it raw.
+const label = labels[stability] ?? stability;
 ---
 
-<Pill
-  size="compact"
-  className="h-5 shrink-0 px-2 font-display-compact uppercase sm:h-5 sm:px-2"
+<span
+  class="inline-flex h-4.5 shrink-0 items-center rounded-md corner-squircle bg-orange/12 px-1.5 font-mono text-p4 leading-none text-orange select-none dark:bg-orange/15"
 >
-  {labels[stability]}
-</Pill>
+  {label}
+</span>

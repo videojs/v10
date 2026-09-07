@@ -1,7 +1,10 @@
 ---
 
 import clsx from 'clsx';
-import { Info, Lightbulb, OctagonX, TriangleAlert } from 'lucide-react';
+import AlertDiamond from '@/assets/icons/alert-diamond.svg?react';
+import Alert from '@/assets/icons/alert.svg?react';
+import Info from '@/assets/icons/info.svg?react';
+import Lightbulb from '@/assets/icons/lightbulb.svg?react';
 import { twMerge } from '@/utils/twMerge';
 
 type AsideType = 'note' | 'tip' | 'caution' | 'danger';
@@ -18,8 +21,8 @@ if (!['note', 'tip', 'caution', 'danger'].includes(type)) throw new Error(`Inval
 const icons: Record<AsideType, typeof Info> = {
   note: Info,
   tip: Lightbulb,
-  caution: TriangleAlert,
-  danger: OctagonX,
+  caution: Alert,
+  danger: AlertDiamond,
 };
 
 const defaultTitles: Record<AsideType, string> = {
@@ -36,7 +39,7 @@ const renderTitle = title ?? defaultTitles[type];
 <aside
   class={twMerge(
     clsx(
-      "mx-auto my-8 flex w-full max-w-3xl overflow-hidden rounded-xs border border-manila-75 dark:border-warm-gray",
+      "mx-auto my-8 flex w-full max-w-3xl overflow-hidden rounded-xs border border-manila-75 dark:border-line",
     ),
     className,
   )}
@@ -54,8 +57,8 @@ const renderTitle = title ?? defaultTitles[type];
   <div class={clsx("flex flex-1 gap-4 p-4 pl-4")}>
     <div class="mt-0.75 shrink-0">
       <Icon
-        size={18}
         className={clsx(
+          "size-4.5",
           clsx(
             type === "note" && "text-magenta",
             type === "tip" && "text-magenta",

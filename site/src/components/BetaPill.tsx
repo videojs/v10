@@ -1,4 +1,5 @@
-import Pill from '@/components/Pill';
+import clsx from 'clsx';
+
 import { twMerge } from '@/utils/twMerge';
 
 interface BetaPillProps {
@@ -9,25 +10,25 @@ interface BetaPillProps {
   label?: string;
 }
 
+/** Quiet version tag that sits beside the logo: a small tinted chip in monospace instead of an outlined pill. */
 export default function BetaPill({ className, style, compact, label }: BetaPillProps) {
   return (
-    <Pill
-      className={twMerge(compact ? 'font-display-compact sm:font-display' : 'font-display', className)}
-      size={compact ? 'compact' : 'default'}
+    <span
+      className={twMerge(
+        clsx(
+          'inline-flex items-center rounded-md corner-squircle bg-orange/12 font-mono text-orange whitespace-nowrap select-none',
+          'dark:bg-orange/15',
+          compact ? 'h-5 px-1.5 text-p4' : 'h-6 px-2 text-p4 sm:text-p3'
+        ),
+        className
+      )}
       style={style}
     >
-      {label ? (
-        <span className="whitespace-nowrap">{label}</span>
-      ) : compact ? (
+      {label ?? (
         <>
-          <span>v10</span>
-          <span className="hidden whitespace-pre uppercase sm:inline"> rc</span>
-        </>
-      ) : (
-        <>
-          v10<span className="whitespace-pre uppercase"> rc</span>
+          v10<span className="hidden whitespace-pre uppercase sm:inline"> rc</span>
         </>
       )}
-    </Pill>
+    </span>
   );
 }

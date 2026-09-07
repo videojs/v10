@@ -1,7 +1,7 @@
 ---
 
 import type { Page } from 'astro';
-import { ChevronDown } from 'lucide-react';
+import ChevronDown from '@/assets/icons/chevron-down.svg?react';
 
 interface Props {
   page: Page;
@@ -24,17 +24,17 @@ const { page, label = 'Blog pagination' } = Astro.props;
         <a
           href={page.url.prev}
           aria-label={`Go to page ${page.currentPage - 1}`}
-          class="grid items-center rounded-xs border border-manila-75 bg-manila-50 p-4 dark:border-soot dark:bg-warm-gray intent:bg-manila-dark dark:intent:bg-soot"
+          class="grid items-center rounded-xs border border-manila-75 bg-manila-50 p-4 dark:border-line dark:bg-warm-gray intent:bg-manila-dark dark:intent:bg-soot"
         >
-          <ChevronDown size={16} className="rotate-90" />
+          <ChevronDown className="size-4 rotate-90" aria-hidden="true" />
         </a>
       ) : (
         <button
           disabled
           aria-label="Previous page (unavailable)"
-          class="grid items-center rounded-xs border border-manila-75 bg-manila-50 p-4 opacity-40 dark:border-soot dark:bg-warm-gray"
+          class="grid items-center rounded-xs border border-manila-75 bg-manila-50 p-4 opacity-40 dark:border-line dark:bg-warm-gray"
         >
-          <ChevronDown size={16} className="rotate-90" />
+          <ChevronDown className="size-4 rotate-90" aria-hidden="true" />
         </button>
       )
     }
@@ -43,17 +43,17 @@ const { page, label = 'Blog pagination' } = Astro.props;
         <a
           href={page.url.next}
           aria-label={`Go to page ${page.currentPage + 1}`}
-          class="grid items-center rounded-xs border border-manila-75 bg-manila-50 p-4 dark:border-soot dark:bg-warm-gray intent:bg-manila-dark dark:intent:bg-soot"
+          class="grid items-center rounded-xs border border-manila-75 bg-manila-50 p-4 dark:border-line dark:bg-warm-gray intent:bg-manila-dark dark:intent:bg-soot"
         >
-          <ChevronDown size={16} className="-rotate-90" />
+          <ChevronDown className="size-4 -rotate-90" aria-hidden="true" />
         </a>
       ) : (
         <button
           disabled
           aria-label="Next page (unavailable)"
-          class="grid items-center rounded-xs border border-manila-75 bg-manila-50 p-4 opacity-40 dark:border-soot dark:bg-warm-gray"
+          class="grid items-center rounded-xs border border-manila-75 bg-manila-50 p-4 opacity-40 dark:border-line dark:bg-warm-gray"
         >
-          <ChevronDown size={16} className="-rotate-90" />
+          <ChevronDown className="size-4 -rotate-90" aria-hidden="true" />
         </button>
       )
     }

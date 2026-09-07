@@ -1,6 +1,6 @@
 import clsx from 'clsx';
-import { CheckCircle } from 'lucide-react';
 
+import CheckCircle from '@/assets/icons/check-circle.svg?react';
 import { MUX_URL } from '@/consts';
 
 export type UploaderState = 'idle' | 'needs_login' | 'uploading' | 'preparing' | 'ready' | 'polling_error';
@@ -18,8 +18,8 @@ function OverlayWrapper({ children, className }: { children: React.ReactNode; cl
   return (
     <div
       className={clsx(
-        'absolute inset-0 flex flex-col items-center justify-center gap-3',
-        'bg-manila-light dark:bg-faded-black',
+        'absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-xl corner-squircle px-6 text-center',
+        'bg-manila-light/95 backdrop-blur-sm dark:bg-faded-black/95',
         className
       )}
     >
@@ -55,7 +55,7 @@ export default function UploaderOverlay({ state, error, playbackId, onLogin, onR
         <button
           type="button"
           onClick={onLogin}
-          className="bg-bright-yellow text-faded-black text-p3 intent:bg-bright-yellow/70 inline-flex cursor-pointer items-center gap-2 rounded-xs px-4 py-2 font-bold"
+          className="bg-faded-black text-manila-light dark:bg-manila-light dark:text-faded-black text-p3 intent:bg-orange intent:text-faded-black corner-squircle inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg px-5 font-semibold shadow-sm transition select-none"
         >
           Sign up or log in
         </button>
@@ -66,7 +66,7 @@ export default function UploaderOverlay({ state, error, playbackId, onLogin, onR
   if (state === 'preparing') {
     return (
       <OverlayWrapper>
-        <div className="border-bright-yellow h-6 w-6 animate-spin rounded-full border-2 border-t-transparent" />
+        <div className="border-orange h-6 w-6 animate-spin rounded-full border-2 border-t-transparent" />
         <p className="text-p3">Preparing video...</p>
       </OverlayWrapper>
     );
@@ -76,7 +76,7 @@ export default function UploaderOverlay({ state, error, playbackId, onLogin, onR
     return (
       <OverlayWrapper>
         <div className="flex items-center gap-2">
-          <CheckCircle size={18} className="text-orange text-p3" />
+          <CheckCircle className="text-orange size-4.5" aria-hidden="true" />
           <p className="font-bold">Ready to play</p>
         </div>
         <p className="text-p3 text-center">
@@ -97,7 +97,7 @@ export default function UploaderOverlay({ state, error, playbackId, onLogin, onR
 
   if (state === 'polling_error') {
     return (
-      <OverlayWrapper className="border-red border-solid">
+      <OverlayWrapper>
         <p className="text-p3 text-red">
           Error preparing video:
           {error}

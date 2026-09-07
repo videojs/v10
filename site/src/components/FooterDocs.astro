@@ -1,5 +1,5 @@
 ---
-import { ArrowUpRight } from 'lucide-react';
+import ArrowUpRight from '@/assets/icons/arrow-up-right.svg?react';
 import Discord from '@/assets/logos/discord.svg?react';
 import GitHub from '@/assets/logos/github.svg?react';
 import LogoMonoVersion from '@/assets/logos/videojs-mono.svg?react';
@@ -32,7 +32,7 @@ const { class: className } = Astro.props;
   ]}
 >
   <div
-    class="mb-2 items-start justify-between gap-3 border-faded-black px-5 pt-5 sm:mb-0 @4xl:flex-row @4xl:items-start @4xl:border-t @4xl:px-10 dark:border-warm-gray"
+    class="mb-2 items-start justify-between gap-3 border-faded-black px-5 pt-5 sm:mb-0 @4xl:flex-row @4xl:items-start @4xl:border-t @4xl:px-10 dark:border-line"
   >
     <nav
       class="flex flex-col gap-0 text-faded-black @4xl:-ml-5 @4xl:flex-row dark:text-manila-light"
@@ -54,7 +54,7 @@ const { class: className } = Astro.props;
             >
               {link.label}{" "}
               {link.external ? (
-                <ArrowUpRight size="1em" aria-hidden="true" />
+                <ArrowUpRight className="size-[1em]" aria-hidden="true" />
               ) : null}
             </a>
           ))

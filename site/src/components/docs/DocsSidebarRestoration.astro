@@ -1,7 +1,7 @@
 ---
 
 /**
- * Sidebar state persistence using sessionStorage
+ * Sidebar scroll persistence using sessionStorage
  * Progressive enhancement - only runs in browsers with view transitions
  */
 
@@ -15,7 +15,7 @@ const { docsSidebarId } = Astro.props;
   const STORAGE_KEY = "vjs-sidebar-state";
 
   window.addEventListener("pagereveal", () => {
-    // Restore sidebar state
+    // Restore sidebar scroll position
     const aside = document.getElementById(docsSidebarId);
 
     if (aside) {
@@ -28,32 +28,20 @@ const { docsSidebarId } = Astro.props;
           if (state.sidebarScroll !== undefined) {
             aside.scrollTop = state.sidebarScroll;
           }
-
-          if (state.detailsState) {
-            document
-              .querySelectorAll(`#${docsSidebarId} details[id]`)
-              .forEach((details) => {
-                const savedState = state.detailsState[details.id];
-
-                if (savedState !== undefined) {
-                  details.open = savedState;
-                }
-              });
-          }
         } catch (e) {
           console.error("[Sidebar] Failed to restore state", e);
         }
       }
 
-      // Auto-expand sections containing active link (override saved state)
+      // Keep the active link in view when arriving from a different section
       const activeLink = aside.querySelector('a[aria-current="page"]');
 
       if (activeLink) {
-        let parent = activeLink.closest("details");
+        const asideRect = aside.getBoundingClientRect();
+        const linkRect = activeLink.getBoundingClientRect();
 
-        while (parent && aside.contains(parent)) {
-          parent.open = true;
-          parent = parent.parentElement?.closest("details") ?? null;
+        if (linkRect.top < asideRect.top || linkRect.bottom > asideRect.bottom) {
+          activeLink.scrollIntoView({ block: "center" });
         }
       }
     }
@@ -81,21 +69,11 @@ const { docsSidebarId } = Astro.props;
     const aside = document.getElementById(docsSidebarId);
     if (!aside) return;
 
-    const detailsState = {};
-
-    document
-      .querySelectorAll(`#${docsSidebarId} details[id]`)
-      .forEach((details) => {
-        detailsState[details.id] = details.open;
-      });
-
-    const state = {
-      sidebarScroll: aside.scrollTop,
-      detailsState,
-    };
-
     try {
-      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      sessionStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ sidebarScroll: aside.scrollTop }),
+      );
     } catch (e) {
       console.error("[Sidebar] Failed to save state", e);
     }

@@ -8,6 +8,7 @@ import '@/styles/globals.css';
 
 import BannerInit from '@/components/BannerInit.astro';
 import { PreferenceSync } from '@/components/docs/PreferenceSync';
+import FooterEasterEgg from '@/components/FooterEasterEgg.astro';
 import LegacyBanner from '@/components/LegacyBanner.astro';
 import Posthog from '@/components/Posthog.astro';
 import PrereleaseBanner from '@/components/PrereleaseBanner.astro';
@@ -21,8 +22,13 @@ interface Props {
   canonical?: string;
   suffix?: string;
   withCompact?: boolean;
+  /**
+   * Pin the color-block easter egg behind the page so it is only revealed when the document rubber-bands past its
+   * end. The page content is painted above it, so nothing shows until the user overscrolls.
+   */
+  easterEgg?: boolean;
 }
-const { canonical, suffix } = Astro.props;
+const { canonical, suffix, easterEgg = false } = Astro.props;
 const canonicalURL = canonical || new URL(Astro.url.pathname, PRODUCTION_URL).href;
 
 const { title, description, image, twitterImage, withCompact } = Astro.props;
@@ -159,12 +165,15 @@ const fullTitle =
       "selection:bg-gold selection:text-faded-black",
     ]}
   >
+    {easterEgg && <FooterEasterEgg fixed data-overscroll-reveal />}
     <div
       class:list={[
         // BaseUI requires body.relative and div.isolate
         "isolate",
-        // background colors are applied here for a more consistent FilmGrain blending
+        // Opaque and stacked above the fixed easter egg so it only peeks out on overscroll
+        "relative z-0 min-h-screen bg-manila-light dark:bg-faded-black",
       ]}
+      data-overscroll-page
     >
       <a
         href="#main-content"
@@ -178,5 +187,56 @@ const fullTitle =
       <LegacyBanner />
       <slot />
     </div>
+    {
+      easterEgg && (
+        <script is:inline>
+          // Amplified overscroll: a trackpad's native rubber-band only moves a few pixels, and Chrome has none, so at
+          // the end of the page wheel deltas slide the page up over the pinned color blocks and it springs back when
+          // the gesture stops. Touch devices keep the browser's own rubber-band, which already reveals them.
+          (() => {
+            const page = document.querySelector("[data-overscroll-page]");
+            const reveal = document.querySelector("[data-overscroll-reveal]");
+            if (!page || !reveal) return;
+
+            let offset = 0;
+            let releaseTimer;
+
+            const atPageEnd = () =>
+              window.innerHeight + window.scrollY >=
+              document.documentElement.scrollHeight - 1;
+
+            const apply = () => {
+              page.style.transition = "none";
+              page.style.transform = offset ? `translate3d(0, ${-offset}px, 0)` : "";
+            };
+
+            const release = () => {
+              offset = 0;
+              page.style.transition = "transform 600ms cubic-bezier(0.2, 0.8, 0.2, 1)";
+              page.style.transform = "";
+            };
+
+            window.addEventListener(
+              "wheel",
+              (event) => {
+                const pulling = event.deltaY > 0 && atPageEnd();
+                if (!pulling && offset === 0) return;
+
+                const max = reveal.offsetHeight;
+                // Ease off as the blocks come fully into view so the pull feels elastic rather than linear.
+                const resistance = 1 - (offset / max) * 0.6;
+
+                offset = Math.min(max, Math.max(0, offset + event.deltaY * resistance));
+                apply();
+
+                clearTimeout(releaseTimer);
+                releaseTimer = setTimeout(release, 180);
+              },
+              { passive: true },
+            );
+          })();
+        </script>
+      )
+    }
   </body>
 </html>

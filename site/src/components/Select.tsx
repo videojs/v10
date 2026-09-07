@@ -1,13 +1,15 @@
 import { Select as BaseSelect } from '@base-ui/react/select';
 import clsx from 'clsx';
+import type { ReactNode } from 'react';
 
 import Check from '@/assets/icons/check.svg?react';
-import DropdownArrow from '@/assets/icons/dropdown-arrow.svg?react';
+import ChevronDown from '@/assets/icons/chevron-down.svg?react';
 import { twMerge } from '@/utils/twMerge';
 
 export interface SelectOption<T = string> {
   value: T | null;
   label: string;
+  icon?: ReactNode;
   disabled?: boolean;
 }
 
@@ -20,6 +22,7 @@ export interface SelectProps<T = string> {
   'data-testid'?: string;
 }
 
+/** Base UI select styled like the shadcn/ui select: a compact trigger and a floating, softly shadowed listbox. */
 export function Select<T extends string = string>({
   value,
   onChange,
@@ -28,31 +31,40 @@ export function Select<T extends string = string>({
   'aria-label': ariaLabel,
   'data-testid': dataTestId,
 }: SelectProps<T>) {
+  const selected = options.find((option) => option.value === value);
+
   return (
     <BaseSelect.Root value={value} onValueChange={onChange} items={options}>
       <BaseSelect.Trigger
         className={twMerge(
           clsx(
-            'inline-flex items-center gap-2 bg-manila-50 dark:bg-warm-gray intent:bg-manila-dark dark:intent:bg-soot border border-manila-dark dark:border-warm-gray rounded-xs text-p3 p-2 text-left'
+            'inline-flex h-9 min-w-0 items-center gap-2 rounded-lg corner-squircle border border-line bg-surface px-3 text-left text-p3 shadow-xs',
+            'intent:border-line-strong data-[popup-open]:border-line-strong cursor-pointer select-none',
+            'focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-gold'
           ),
           className
         )}
         aria-label={ariaLabel}
         data-testid={dataTestId}
       >
+        {selected?.icon && (
+          <span aria-hidden="true" className="inline-flex size-4 shrink-0 items-center justify-center">
+            {selected.icon}
+          </span>
+        )}
         <BaseSelect.Value className="min-w-0 flex-1 truncate" />
-        &nbsp;
-        <BaseSelect.Icon>
-          <DropdownArrow width={'1rem'} />
+        <BaseSelect.Icon className="text-muted flex shrink-0">
+          <ChevronDown className="size-4" />
         </BaseSelect.Icon>
       </BaseSelect.Trigger>
 
       <BaseSelect.Portal>
-        <BaseSelect.Positioner sideOffset={4} className="z-50">
+        <BaseSelect.Positioner sideOffset={6} className="z-50 outline-none">
           <BaseSelect.Popup
             className={clsx(
-              'border border-manila-dark dark:border-soot rounded-xs bg-manila-light dark:bg-soot shadow-xl text-p3',
-              'overflow-y-auto'
+              'origin-(--transform-origin) overflow-y-auto scrollbar-thin rounded-lg corner-squircle border border-line bg-surface-raised dark:bg-soot p-1 text-p3 shadow-lg',
+              'transition duration-150 ease-out starting-style:scale-95 starting-style:opacity-0 ending-style:scale-95 ending-style:opacity-0 ending-style:duration-100',
+              'motion-reduce:transition-none'
             )}
             style={
               {
@@ -68,16 +80,20 @@ export function Select<T extends string = string>({
                   value={option.value}
                   disabled={option.disabled}
                   className={clsx(
-                    'flex items-center gap-2 p-2',
+                    'relative flex items-center gap-2 rounded-md corner-squircle py-1.5 pr-8 pl-2 outline-none select-none',
                     option.disabled
                       ? 'opacity-50 cursor-default'
-                      : 'cursor-pointer intent:bg-manila-75 dark:intent:bg-warm-gray',
-                    option.value === value && 'bg-manila-75 dark:bg-warm-gray'
+                      : 'cursor-pointer data-[highlighted]:bg-surface dark:data-[highlighted]:bg-warm-gray'
                   )}
                 >
-                  <BaseSelect.ItemText>{option.label}</BaseSelect.ItemText>
-                  <BaseSelect.ItemIndicator className="ml-auto inline-flex items-center">
-                    <Check width={'1rem'} />
+                  {option.icon && (
+                    <span aria-hidden="true" className="inline-flex size-4 shrink-0 items-center justify-center">
+                      {option.icon}
+                    </span>
+                  )}
+                  <BaseSelect.ItemText className="min-w-0 flex-1 truncate">{option.label}</BaseSelect.ItemText>
+                  <BaseSelect.ItemIndicator className="absolute right-2 inline-flex items-center">
+                    <Check className="size-4" />
                   </BaseSelect.ItemIndicator>
                 </BaseSelect.Item>
               ))}

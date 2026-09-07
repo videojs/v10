@@ -6,7 +6,6 @@ import DocsSidebarRestoration from '@/components/docs/DocsSidebarRestoration.ast
 import { Selectors } from '@/components/docs/Selectors';
 import StyleInit from '@/components/docs/StyleInit.astro';
 import Footer from '@/components/FooterDocs.astro';
-import FooterEasterEgg from '@/components/FooterEasterEgg.astro';
 import NavBarDocs from '@/components/NavBar/NavBarDocs.astro';
 import { FRAMEWORK_LABELS, type SupportedFramework } from '@/types/docs';
 import { getDocTitle } from '@/utils/docs/title';
@@ -63,7 +62,7 @@ const docsSidebarId = 'docs-sidebar';
     </NavBarDocs>
     <aside
       id={docsSidebarId}
-      class="sticky z-10 hidden flex-col overflow-y-auto border-manila-75 md:flex md:border-r dark:border-warm-gray"
+      class="scrollbar-thin sticky z-10 hidden flex-col overflow-y-scroll border-line md:flex md:border-r"
       style="top: var(--nav-h); max-height: calc(100vh - var(--nav-h));"
     >
       <DocsSidebar framework={framework} docTitles={docTitles} docStabilities={docStabilities} class="flex-1">
@@ -79,7 +78,6 @@ const docsSidebarId = 'docs-sidebar';
         <slot />
       </div>
       <Footer class="mt-auto" />
-      <FooterEasterEgg variant="short" class="md:col-start-2" />
     </div>
   </div>
 </Base>

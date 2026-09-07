@@ -33,7 +33,7 @@ const scopedCss = cssFile && scopeId ? `@scope ([data-demo-scope="${scopeId}"]) 
 ---
 
 <div
-  class="mx-auto my-6 flex w-full max-w-3xl flex-col overflow-hidden rounded-xs border border-faded-black dark:border-manila-dark"
+  class="mx-auto my-6 flex w-full max-w-3xl flex-col overflow-hidden rounded-lg corner-squircle border border-line-strong dark:border-line"
 >
   {scopedCss && <style is:inline set:html={scopedCss} />}
   <div
@@ -45,7 +45,7 @@ const scopedCss = cssFile && scopeId ? `@scope ([data-demo-scope="${scopeId}"]) 
   <TabsRoot
     client:idle
     maxWidth={false}
-    className="my-0 rounded-none border-0 border-t border-faded-black dark:border-manila-dark"
+    className="my-0 rounded-none border-0 border-t border-line-strong dark:border-line"
   >
     <TabsList client:idle label="Demo source code">
       {

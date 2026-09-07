@@ -2,7 +2,7 @@
 
 import type { CollectionEntry } from 'astro:content';
 import { getCollection, render } from 'astro:content';
-import { ArrowUpRight } from 'lucide-react';
+import ArrowUpRight from '@/assets/icons/arrow-up-right.svg?react';
 import FormattedDate from '@/components/FormattedDate.astro';
 import defaultMarkdownComponents from '@/components/typography/defaultMarkdownComponents';
 import Blog from '@/layouts/Blog.astro';
@@ -59,7 +59,7 @@ const description =
         target="_blank"
         rel="noopener noreferrer"
       >
-        Compare changes on GitHub <ArrowUpRight size="1em" aria-hidden="true" />
+        Compare changes on GitHub <ArrowUpRight className="size-[1em]" aria-hidden="true" />
       </a>
     </header>
     <Content components={{ ...defaultMarkdownComponents }} />

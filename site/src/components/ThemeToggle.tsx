@@ -91,7 +91,7 @@ export function ThemeToggle() {
       document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#ebe4c1');
     } else if (theme === 'dark') {
       document.documentElement.classList.add('dark');
-      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#393836');
+      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#151414');
     }
 
     return () => {

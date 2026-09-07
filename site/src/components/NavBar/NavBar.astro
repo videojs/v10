@@ -1,6 +1,6 @@
 ---
 import clsx from 'clsx';
-import { ArrowUpRight } from 'lucide-react';
+import ArrowUpRight from '@/assets/icons/arrow-up-right.svg?react';
 import Discord from '@/assets/logos/discord.svg?react';
 import GitHub from '@/assets/logos/github.svg?react';
 import Logo from '@/assets/logos/videojs.svg?react';
@@ -66,7 +66,7 @@ const { class: className } = Astro.props;
         >
           {link.label}{" "}
           {link.external ? (
-            <ArrowUpRight size="1em" aria-hidden="true" />
+            <ArrowUpRight className="size-[1em]" aria-hidden="true" />
           ) : null}
         </a>
       ))

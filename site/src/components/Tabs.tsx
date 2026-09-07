@@ -12,9 +12,9 @@
  */
 
 import clsx from 'clsx';
-import { Check } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
+import Check from '@/assets/icons/check.svg?react';
 import CopyIcon from '@/assets/icons/copy.svg?react';
 import { twMerge } from '@/utils/twMerge';
 import useIsHydrated from '@/utils/useIsHydrated';
@@ -74,8 +74,11 @@ export function TabsRoot({ children, maxWidth = true, className, id: propId, var
       ref={ref}
       className={twMerge(
         clsx(
-          'overflow-hidden flex flex-col my-8 border border-faded-black dark:border-manila-dark rounded-xs bg-manila-light dark:bg-faded-black',
-          variant === 'compact' && 'border px-2.5 pb-2.5',
+          // The panel background fills the whole frame; the header sits flush on top of it with a hairline divider.
+          'overflow-hidden flex flex-col my-8 rounded-lg corner-squircle border border-faded-black/10 dark:border-line',
+          variant === 'compact'
+            ? 'bg-faded-black dark:bg-soot text-manila-light'
+            : 'bg-manila-light dark:bg-faded-black',
           maxWidth && 'w-full max-w-3xl mx-auto',
           className
         )
@@ -94,14 +97,21 @@ interface TabsListProps {
 }
 export function TabsList({ label, children, variant = 'compact' }: TabsListProps) {
   return (
-    <div className={clsx('w-full flex items-center p-0 h-12', variant === 'compact' ? 'p-0' : 'px-2.5')}>
+    <div
+      className={clsx(
+        'w-full flex items-center gap-1 h-10 pl-1.5 pr-1.5',
+        variant === 'compact' &&
+          'border-b border-manila-light/10 dark:border-line bg-manila-light/4 dark:bg-warm-gray/60',
+        variant === 'expanded' && 'px-2.5'
+      )}
+    >
       <div
         role="tablist"
         data-orientation="horizontal"
         aria-label={label}
         className={clsx(
-          'flex list-none p-0 m-0',
-          variant === 'compact' ? 'gap-0 border-y border-l border-manila-75' : 'gap-5 px-2.5'
+          'flex list-none p-0 m-0 min-w-0 overflow-x-auto scrollbar-thin',
+          variant === 'compact' ? 'gap-0.5' : 'gap-5 px-2.5'
         )}
       >
         {children}
@@ -112,11 +122,14 @@ export function TabsList({ label, children, variant = 'compact' }: TabsListProps
           target: '[role="tabpanel"]:not([hidden])',
         }}
         className={clsx(
-          'ml-auto sticky right-0 h-7 px-2.5 flex items-center justify-center cursor-pointer disabled:cursor-wait intent:bg-manila-dark dark:intent:bg-warm-gray rounded-xs'
+          'ml-auto shrink-0 size-7 flex items-center justify-center cursor-pointer disabled:cursor-wait rounded-md corner-squircle',
+          variant === 'compact'
+            ? 'text-manila-light/60 intent:text-manila-light intent:bg-manila-light/10'
+            : 'intent:bg-manila-dark dark:intent:bg-warm-gray'
         )}
-        copied={<Check size={20} />}
+        copied={<Check className="text-gold size-4" />}
       >
-        <CopyIcon width="1.25rem" height="1.25rem" />
+        <CopyIcon className="size-4" />
       </CopyButton>
     </div>
   );
@@ -228,7 +241,7 @@ export function Tab({ value, children, initial, variant = 'compact' }: TabProps)
   }, []);
 
   return (
-    <div key={value} className={clsx('flex', variant === 'compact' && 'border-r border-manila-75')}>
+    <div key={value} className="flex shrink-0">
       <button
         ref={ref}
         type="button"
@@ -239,14 +252,15 @@ export function Tab({ value, children, initial, variant = 'compact' }: TabProps)
         onKeyDown={onKeyDown}
         data-value={value}
         className={clsx(
-          'group flex items-center gap-2 text-p3',
+          'group flex items-center gap-2 text-p3 select-none',
           'no-underline',
           variant === 'expanded' && 'uppercase font-display',
           variant === 'expanded' && isActive && 'text-orange',
-          variant === 'compact' && 'px-2.5 z-0 h-7',
-          variant === 'compact' && isActive
-            ? 'bg-manila-50 dark:bg-warm-gray'
-            : 'intent:bg-manila-dark dark:intent:bg-soot',
+          variant === 'compact' && 'px-2.5 z-0 h-7 rounded-md corner-squircle',
+          variant === 'compact' &&
+            (isActive
+              ? 'bg-manila-light/12 text-manila-light'
+              : 'text-manila-light/60 intent:text-manila-light intent:bg-manila-light/6'),
           isHydrated ? 'cursor-pointer' : 'cursor-wait'
         )}
       >
@@ -313,10 +327,7 @@ export function TabsPanel({ value, children, initial, className, variant = 'comp
       role="tabpanel"
       hidden={!isActive}
       data-value={value}
-      className={twMerge(
-        clsx('overflow-auto p-6 max-h-96 flex-1', variant === 'compact' && 'bg-faded-black dark:bg-soot'),
-        className
-      )}
+      className={twMerge(clsx('overflow-auto scrollbar-thin px-6 py-4 max-h-96 flex-1'), className)}
     >
       {children}
     </div>

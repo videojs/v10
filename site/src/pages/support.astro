@@ -1,5 +1,5 @@
 ---
-import { ArrowUpRight } from 'lucide-react';
+import ArrowUpRight from '@/assets/icons/arrow-up-right.svg?react';
 import Footer from '@/components/Footer.astro';
 import NavBar from '@/components/NavBar/NavBar.astro';
 import { GITHUB_REPO_URL, MUX_SUPPORT_URL } from '@/consts';
@@ -76,13 +76,13 @@ const tiles = [
                 href={tile.cta.href}
                 target="_blank"
                 rel="noopener"
-                class="mt-5 inline-flex items-center gap-1 self-end rounded-xs border border-manila-75 bg-manila-50 px-4 py-2.5 text-p3 dark:border-soot dark:bg-warm-gray intent:bg-manila-dark dark:intent:bg-soot"
+                class="mt-5 inline-flex items-center gap-1 self-end rounded-xs border border-manila-75 bg-manila-50 px-4 py-2.5 text-p3 dark:border-line dark:bg-warm-gray intent:bg-manila-dark dark:intent:bg-soot"
               >
                 {tile.cta.label}
-                <ArrowUpRight size="1em" aria-hidden="true" />
+                <ArrowUpRight className="size-[1em]" aria-hidden="true" />
               </a>
             ) : (
-              <span class="mt-5 inline-flex items-center gap-1 self-end rounded-xs border border-manila-75 px-4 py-2.5 text-p3 text-warm-gray dark:border-soot dark:text-manila-dark">
+              <span class="mt-5 inline-flex items-center gap-1 self-end rounded-xs border border-manila-75 px-4 py-2.5 text-p3 text-warm-gray dark:border-line dark:text-manila-dark">
                 {tile.cta.label}
               </span>
             )}

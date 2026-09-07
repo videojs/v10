@@ -6,7 +6,7 @@ import { getDocTitle, isCodeIdentifier } from '../title';
 describe('getDocTitle', () => {
   // Mock fixtures
   const mockDocWithFrameworkTitle: CollectionEntry<'docs'> = {
-    id: 'reference/play-button',
+    id: 'components/play-button',
     collection: 'docs',
     data: {
       title: 'PlayButton',
@@ -18,7 +18,7 @@ describe('getDocTitle', () => {
     },
     // Mock required Astro fields
     body: '',
-    slug: 'reference/play-button',
+    slug: 'components/play-button',
   } as CollectionEntry<'docs'>;
 
   const mockDocWithoutFrameworkTitle: CollectionEntry<'docs'> = {
@@ -33,7 +33,7 @@ describe('getDocTitle', () => {
   } as CollectionEntry<'docs'>;
 
   const mockDocWithPartialFrameworkTitle: CollectionEntry<'docs'> = {
-    id: 'reference/mute-button',
+    id: 'components/mute-button',
     collection: 'docs',
     data: {
       title: 'MuteButton',
@@ -44,7 +44,7 @@ describe('getDocTitle', () => {
       },
     },
     body: '',
-    slug: 'reference/mute-button',
+    slug: 'components/mute-button',
   } as CollectionEntry<'docs'>;
 
   describe('with frameworkTitle defined', () => {

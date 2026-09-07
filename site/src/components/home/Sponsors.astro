@@ -63,7 +63,7 @@ const sponsors: SponsorItem[] = [
     </a>
     <div class="flex flex-col gap-2 p-2.5 md:px-15">
       <h3
-        class="mb-2.5 border-b border-manila-dark py-3 text-center font-display text-h5 font-bold text-orange uppercase md:mb-0 md:border-0 md:py-0 md:text-left dark:border-warm-gray"
+        class="mb-2.5 border-b border-manila-dark py-3 text-center font-display text-h5 font-bold text-orange uppercase md:mb-0 md:border-0 md:py-0 md:text-left dark:border-line"
       >
         Corporate Shepherd
       </h3>
@@ -81,13 +81,13 @@ const sponsors: SponsorItem[] = [
     class="relative z-0 mt-5 h-max overflow-hidden rounded-xs md:border md:border-faded-black dark:border-manila-light"
   >
     <div
-      class="grid gap-4 md:grid-separator-container md:grid-cols-4 md:gap-0 md:border md:border-manila-light dark:border-faded-black dark:text-manila-light"
+      class="grid gap-4 md:grid-separator-container md:grid-cols-4 md:gap-0 md:border md:border-manila-light dark:border-line dark:text-manila-light"
     >
       {
         sponsors.map(({ Logo, name, label, href, width, className }) => (
           <div
             class={clsx(
-              "h-auto rounded-xs border border-faded-black px-2.5 md:border-0 md:border-manila-dark md:px-0 dark:border-manila-light md:dark:border-warm-gray",
+              "h-auto rounded-xs border border-faded-black px-2.5 md:border-0 md:border-manila-dark md:px-0 dark:border-manila-light md:dark:border-line",
               className,
             )}
           >
@@ -110,7 +110,7 @@ const sponsors: SponsorItem[] = [
       }
       {
         sponsors.map(({ label }) => (
-          <div class="hidden border-manila-dark md:block dark:border-warm-gray">
+          <div class="hidden border-manila-dark md:block dark:border-line">
             <h3 class="relative grid h-full grid-cols-1 items-center bg-manila-light px-2.5 py-5 text-center font-display text-h5 font-bold text-orange uppercase md:grid-separators dark:bg-faded-black">
               {label}
             </h3>

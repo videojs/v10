@@ -1,5 +1,6 @@
 ---
-import { ChevronDown } from 'lucide-react';
+import ArrowLeft from '@/assets/icons/arrow-left.svg?react';
+import ArrowRight from '@/assets/icons/arrow-right.svg?react';
 import type { Guide, SupportedFramework } from '@/types/docs';
 
 type Props = {
@@ -24,7 +25,7 @@ function getGuideUrl(framework: SupportedFramework, slug: string): string {
     prev ? (
       <a
         href={getGuideUrl(framework, prev.slug)}
-        class="grid items-center gap-x-2 rounded-xs border border-manila-dark p-4 dark:border-warm-gray intent:bg-manila-75 dark:intent:bg-warm-gray"
+        class="grid items-center gap-x-2 rounded-xs border border-manila-dark p-4 dark:border-line intent:bg-manila-75 dark:intent:bg-warm-gray"
         style="grid-template-areas: 'empty direction' 'icon title'; grid-template-columns: auto minmax(0,1fr); grid-template-rows: auto minmax(0,1fr);"
       >
         <div class="text-p3" style="grid-area: direction;">
@@ -34,7 +35,7 @@ function getGuideUrl(framework: SupportedFramework, slug: string): string {
           {prev.sidebarLabel || docTitles.get(prev.slug)}
         </div>
         <div style="grid-area: icon">
-          <ChevronDown size={12} className="rotate-90" />
+          <ArrowLeft className="size-4" aria-hidden="true" />
         </div>
       </a>
     ) : (
@@ -45,7 +46,7 @@ function getGuideUrl(framework: SupportedFramework, slug: string): string {
     next ? (
       <a
         href={getGuideUrl(framework, next.slug)}
-        class="grid items-center gap-x-2 rounded-xs border border-manila-dark p-4 text-right dark:border-warm-gray intent:bg-manila-75 dark:intent:bg-warm-gray"
+        class="grid items-center gap-x-2 rounded-xs border border-manila-dark p-4 text-right dark:border-line intent:bg-manila-75 dark:intent:bg-warm-gray"
         style="grid-template-areas: 'direction empty' 'title icon';grid-template-columns: minmax(0,1fr) auto; grid-template-rows: auto minmax(0,1fr);"
       >
         <div class="text-p3" style="grid-area: direction;">
@@ -55,7 +56,7 @@ function getGuideUrl(framework: SupportedFramework, slug: string): string {
           {next.sidebarLabel || docTitles.get(next.slug)}
         </div>
         <div style="grid-area: icon">
-          <ChevronDown size={12} className="-rotate-90" />
+          <ArrowRight className="size-4" aria-hidden="true" />
         </div>
       </a>
     ) : (

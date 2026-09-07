@@ -1,10 +1,14 @@
 ---
 import clsx from 'clsx';
 
+import BookIcon from '@/assets/icons/book.svg?react';
+import CodeSquareIcon from '@/assets/icons/code-square.svg?react';
+import PenIcon from '@/assets/icons/pen.svg?react';
 import { PreferenceUpdater } from '@/components/docs/PreferenceUpdater';
 import SidebarItem from '@/components/docs/SidebarItem.astro';
-import type { DocStability, SupportedFramework } from '@/types/docs';
-import { filterSidebar } from '@/utils/docs/sidebar';
+import type { DocStability, SidebarItem as SidebarItemType, SupportedFramework } from '@/types/docs';
+import { isLink, isSection } from '@/types/docs';
+import { filterSidebar, findFirstGuide } from '@/utils/docs/sidebar';
 
 type Props = {
   framework: SupportedFramework;
@@ -15,14 +19,78 @@ type Props = {
 
 const { framework, docTitles, docStabilities, class: className } = Astro.props;
 const filteredSidebar = filterSidebar(framework);
+const currentPath = Astro.url.pathname;
+
+function containsActivePath(item: SidebarItemType): boolean {
+  if (isSection(item)) return item.contents.some(containsActivePath);
+
+  if (isLink(item)) return false;
+
+  return `/docs/framework/${framework}/${item.slug}` === currentPath;
+}
+
+// Top-level sections are the sidebar's switcher. Each entry links to its first guide; the entry that contains the
+// current page is open. Fall back to the first entry so index-style pages still show a navigation tree.
+const tabs = filteredSidebar.filter(isSection);
+const looseItems = filteredSidebar.filter((item) => !isSection(item));
+const activeTab = tabs.find(containsActivePath) ?? tabs[0];
+
+const TAB_ICONS = {
+  Guide: BookIcon,
+  Components: CodeSquareIcon,
+  'Writing Style': PenIcon,
+} satisfies Record<string, typeof BookIcon>;
 ---
 
 <div class={clsx("bg-manila-light dark:bg-faded-black", className)}>
   <slot />
   <PreferenceUpdater client:idle currentFramework={framework} />
-  <nav aria-label="Docs sidebar" class="p-6">
+  {
+    tabs.length > 1 && (
+      <nav aria-label="Docs sections" class="px-6 pt-5">
+        <div class="mx-auto grid w-full max-w-3xl gap-1 rounded-lg corner-squircle border border-line bg-surface p-1">
+          {tabs.map((tab) => {
+            const isActive = tab === activeTab;
+            const Icon = TAB_ICONS[tab.sidebarLabel as keyof typeof TAB_ICONS];
+
+            return (
+              <a
+                href={`/docs/framework/${framework}/${findFirstGuide(framework, tab.contents)}`}
+                aria-current={isActive ? "true" : undefined}
+                class:list={[
+                  "flex items-center gap-2.5 rounded-md corner-squircle px-3 py-1.5 text-p3 select-none",
+                  isActive
+                    ? "bg-surface-raised font-semibold text-faded-black shadow-xs dark:text-manila-light"
+                    : "text-muted intent:text-faded-black dark:intent:text-manila-light",
+                ]}
+              >
+                {Icon && (
+                  <Icon
+                    className={clsx("size-4 shrink-0", !isActive && "opacity-70")}
+                    aria-hidden="true"
+                  />
+                )}
+                <span class="flex-1">{tab.sidebarLabel}</span>
+                {tab.devOnly && (
+                  <span class="rounded-md corner-squircle bg-orange/12 px-1.5 py-0.5 font-mono text-p4 leading-none text-orange dark:bg-orange/15">
+                    dev only
+                  </span>
+                )}
+              </a>
+            );
+          })}
+        </div>
+      </nav>
+    )
+  }
+  <nav aria-label="Docs sidebar" class="px-6 pt-8 pb-6">
     {
-      filteredSidebar.map((item) => (
+      activeTab?.contents.map((item) => (
+        <SidebarItem item={item} framework={framework} docTitles={docTitles} docStabilities={docStabilities} />
+      ))
+    }
+    {
+      looseItems.map((item) => (
         <SidebarItem item={item} framework={framework} docTitles={docTitles} docStabilities={docStabilities} />
       ))
     }

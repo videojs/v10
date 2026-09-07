@@ -90,9 +90,9 @@
   --color-white: white;
   --color-black: black;
 
-  --color-faded-black: #1e1d1d;
-  --color-soot: #32302f;
-  --color-warm-gray: #403c38;
+  --color-faded-black: #151414;
+  --color-soot: #1b1a1a;
+  --color-warm-gray: #242322;
   --color-manila-dark: #bfb39e;
   --color-manila-75: #ccc3ab;
   --color-manila-50: #dcd2bb;
@@ -170,6 +170,11 @@
   --text-p3--letter-spacing: var(--tracking-normal);
   --text-p3--font-weight: var(--font-weight-normal);
 
+  --text-p4: 0.75rem; /* 12px */
+  --text-p4--line-height: 1.5;
+  --text-p4--letter-spacing: var(--tracking-normal);
+  --text-p4--font-weight: var(--font-weight-normal);
+
   --text-code: 0.875em; /* 14px */
   --text-code--line-height: inherit;
   --text-code--letter-spacing: var(--tracking-normal);
@@ -185,6 +190,36 @@
       transform: translate3d(0, 0, 0);
     }
   }
+}
+
+/*
+ * Semantic surface tokens. Light values keep the existing manila palette; dark
+ * values derive from manila-light at low opacity so borders and raised surfaces
+ * read as the same hue as the text, the way most dark UIs do.
+ */
+@theme inline {
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-muted: var(--muted);
+}
+
+:root {
+  --line: var(--color-manila-75);
+  --line-strong: var(--color-manila-dark);
+  /* Light surfaces sit above the page color rather than below it, so cards and inputs read as paper, not mud. */
+  --surface: color-mix(in srgb, var(--color-manila-light) 78%, white);
+  --surface-raised: color-mix(in srgb, var(--color-manila-light) 55%, white);
+  --muted: color-mix(in srgb, var(--color-faded-black) 65%, transparent);
+}
+
+.dark {
+  --line: color-mix(in srgb, var(--color-manila-light) 10%, transparent);
+  --line-strong: color-mix(in srgb, var(--color-manila-light) 18%, transparent);
+  --surface: var(--color-soot);
+  --surface-raised: var(--color-warm-gray);
+  --muted: color-mix(in srgb, var(--color-manila-light) 60%, transparent);
 }
 
 @custom-variant intent (&:hover, &:focus-within);
@@ -247,6 +282,31 @@
   &::-webkit-scrollbar-thumb {
     background: var(--color-manila-dark);
     border-radius: 9999px;
+  }
+}
+
+.dark * {
+  scrollbar-color: var(--line-strong) transparent;
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--line-strong);
+  }
+}
+
+/* Thin scrollbars for side navigation and code blocks. `scroll` keeps the track visible where the platform allows. */
+@utility scrollbar-thin {
+  scrollbar-width: thin;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+}
+
+/* Squircle corners where supported; falls back to the element's border-radius. */
+@utility corner-squircle {
+  @supports (corner-shape: squircle) {
+    corner-shape: squircle;
   }
 }
 

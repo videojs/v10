@@ -37,6 +37,9 @@ export default function Search({ className }: SearchProps) {
             name: DOCSEARCH_CHANGELOG_INDEX,
           },
         ]}
+        translations={{
+          button: { buttonText: 'Search documentation...', buttonAriaLabel: 'Search documentation' },
+        }}
         getMissingResultsUrl={({ query }) =>
           `${GITHUB_REPO_URL}issues/new?title=${encodeURIComponent(`Search: no results for "${query}"`)}&labels=search`
         }

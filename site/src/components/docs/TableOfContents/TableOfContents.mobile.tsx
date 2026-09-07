@@ -134,7 +134,7 @@ export function TableOfContentsMobile({ headings, activeId, onNavigate, classNam
               'starting-style:-translate-x-1 starting-style:scale-98 starting-style:opacity-0',
               'ending-style:-translate-x-1 ending-style:scale-98 ending-style:opacity-0 ending-style:duration-100 ending-style:ease-in',
               'motion-reduce:transition-none motion-reduce:starting-style:translate-x-0 motion-reduce:starting-style:scale-100 motion-reduce:ending-style:translate-x-0 motion-reduce:ending-style:scale-100',
-              'dark:border-soot dark:bg-soot'
+              'dark:border-line dark:bg-soot'
             )}
             style={{
               width: 'min(20rem, calc(100vw - 3rem))',
