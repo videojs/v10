@@ -16,6 +16,8 @@ export default styles({
       },
     },
     image: {
+      // The HTML thumbnail renders its image in a shadow root.
+      shadowHost: true,
       utilities: [
         'relative block max-h-(--media-slider-preview-max-height) max-w-(--media-slider-preview-max-width) overflow-clip rounded-[inherit]',
         'transition-opacity duration-media-base ease-out',

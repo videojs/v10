@@ -15,6 +15,11 @@ export interface StyleRule {
   readonly className?: string | undefined;
   /** Also match this class when it is colocated on the configured CSS scope root. */
   readonly scopeRoot?: boolean | undefined;
+  /**
+   * The styled element hosts a shadow root. WebKit does not match `@scope` rules whose subject hosts a shadow root, so
+   * these rules are emitted outside the scope block with the scope root as an ancestor instead.
+   */
+  readonly shadowHost?: boolean | undefined;
   /** Tailwind utilities shared by every configured variant. */
   readonly utilities: StyleValue;
   /** Utilities appended when a source transform selects a matching variant. */

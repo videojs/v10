@@ -55,7 +55,8 @@ export async function renderStylesheets(options: RenderStylesheetsOptions): Prom
 function wrapFileCss(css: string, scope: string | undefined, file: StyleOutputFile): string {
   const relationshipOwners = new Set(file.groupOwners.values());
   const scopeRootClasses = new Set(file.rules.filter((rule) => rule.scopeRoot).map((rule) => rule.className));
-  const split = scope ? splitSlottedRules(css) : { scoped: css, unscoped: '' };
+  const shadowHostClasses = new Set(file.rules.filter((rule) => rule.shadowHost).map((rule) => rule.className));
+  const split = scope ? splitUnscopedRules(css, scope, shadowHostClasses) : { scoped: css, unscoped: '' };
   const scoped = scope ? `@scope (${scope}) {\n${split.scoped}\n}` : split.scoped;
   const wrapped = `@layer ${file.layer} {\n${scoped}\n${split.unscoped}\n}`;
 
@@ -87,21 +88,74 @@ function wrapFileCss(css: string, scope: string | undefined, file: StyleOutputFi
   );
 }
 
-/** Slotted nodes sit outside a shadow tree's CSS scope, so keep their anchored selectors outside the outer scope. */
-function splitSlottedRules(css: string): { scoped: string; unscoped: string } {
+/**
+ * Keep the rules `@scope` cannot serve outside the scope block. Slotted nodes sit outside a shadow tree's CSS scope,
+ * and WebKit never matches a scoped rule whose subject hosts a shadow root; those rules take the scope root as an
+ * ancestor instead. Only top-level rules move, so a shadow host keeps its scoped rules under conditional at-rules.
+ */
+function splitUnscopedRules(css: string, scope: string, shadowHostClasses: ReadonlySet<string>) {
   let hasSlottedRules = false;
+  let hasShadowHostRules = false;
+  const isShadowHostRule = (rule: Rule) => isShadowHostStyleRule(rule, shadowHostClasses);
   const scoped = filterTopLevelRules(css, (rule) => {
     const slotted = isSlottedStyleRule(rule);
+    const shadowHost = !slotted && isShadowHostRule(rule);
 
     hasSlottedRules ||= slotted;
+    hasShadowHostRules ||= shadowHost;
 
-    return !slotted;
+    return !slotted && !shadowHost;
   });
 
-  return {
-    scoped,
-    unscoped: hasSlottedRules ? filterTopLevelRules(css, isSlottedStyleRule) : '',
-  };
+  const slotted = hasSlottedRules ? filterTopLevelRules(css, isSlottedStyleRule) : '';
+  const shadowHosts = hasShadowHostRules ? prefixScope(filterTopLevelRules(css, isShadowHostRule), scope) : '';
+
+  return { scoped, unscoped: `${slotted}\n${shadowHosts}` };
+}
+
+/** Prefix every selector with the scope root as an ancestor, standing in for the `@scope` block the rule left. */
+function prefixScope(css: string, scope: string): string {
+  const root = parseSelector(scope);
+
+  return decoder.decode(
+    transform({
+      filename: 'shadow-hosts.css',
+      code: encoder.encode(css),
+      visitor: {
+        Rule: {
+          style(rule) {
+            const selectors = rule.value.selectors.map((selector) => [
+              ...root.map(cloneCssAst),
+              { type: 'combinator', value: 'descendant' } as const,
+              ...selector.map(cloneCssAst),
+            ]);
+
+            return withoutNullValues({ ...cloneCssAst(rule), value: { ...cloneCssAst(rule.value), selectors } });
+          },
+        },
+      },
+    }).code
+  );
+}
+
+function parseSelector(text: string): Selector {
+  let parsed: Selector | undefined;
+
+  transform({
+    filename: 'selector.css',
+    code: encoder.encode(`${text} { --vjsc: 0; }`),
+    visitor: {
+      Rule: {
+        style(rule) {
+          parsed = cloneCssAst(rule.value.selectors[0]);
+        },
+      },
+    },
+  });
+
+  if (!parsed) throw new Error(`Could not parse the CSS scope selector '${text}'.`);
+
+  return parsed;
 }
 
 function filterTopLevelRules(css: string, include: (rule: Rule) => boolean): string {
@@ -118,6 +172,14 @@ function filterTopLevelRules(css: string, include: (rule: Rule) => boolean): str
         },
       },
     }).code
+  );
+}
+
+/** A rule whose selectors all start from a class of an element that hosts a shadow root. */
+function isShadowHostStyleRule(rule: Rule, shadowHostClasses: ReadonlySet<string>): boolean {
+  return (
+    rule.type === 'style' &&
+    rule.value.selectors.every((selector) => selector[0]?.type === 'class' && shadowHostClasses.has(selector[0].name))
   );
 }
 
