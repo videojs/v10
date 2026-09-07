@@ -1110,6 +1110,9 @@ async function enterFullscreen(root: Locator) {
 }
 
 async function fullscreenPreviewContract(root: Locator) {
+  // The gaps are measured against the time label's box, which follows its font's metrics until Inter has loaded.
+  await settleFonts(root);
+
   const slider = root.getByRole('slider', { name: 'Seek' }).locator('..');
   const box = await slider.boundingBox();
   if (!box) throw new Error('Expected the fullscreen seek slider to have a rendered box.');
@@ -1287,6 +1290,8 @@ async function indicatorContract(indicator: Locator) {
           width: round(width),
           height: round(height),
         },
+        // The level or status the indicator announces; a width difference alone does not say which panel diverged.
+        text: target.textContent?.trim() ?? '',
       };
     };
     const inspectProgress = (content: Element | null, progress: Element | undefined) => {
