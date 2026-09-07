@@ -2180,6 +2180,17 @@ describe('Media element pipeline (end-to-end)', () => {
       expect(ref.mediaType).toBe('audio');
     });
 
+    it('takes the media attributes of the audio host as standard and none of the video ones', () => {
+      const attributes = findElement('SpfAudio')!.reference.platforms.html.attributes;
+
+      expect(attributes.standard).toContain('src');
+      expect(attributes.standard).toContain('controls');
+      expect(attributes.standard).toContain('muted');
+      expect(attributes.standard).not.toContain('poster');
+      expect(attributes.standard).not.toContain('playsinline');
+      expect(attributes.custom['preload']).toBeUndefined();
+    });
+
     it('resolves the mixin through another package barrel', () => {
       const props = findElement('SpfAudio')!.reference.platforms.html.properties.definitions;
 

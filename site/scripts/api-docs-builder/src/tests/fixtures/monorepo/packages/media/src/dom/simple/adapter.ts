@@ -22,6 +22,12 @@ export class HTMLAudioAdapter {
 }
 
 export class SimpleHost extends HTMLVideoAdapter {
+  static readonly defaultProps = {
+    src: '',
+    source: null,
+    streamType: 'unknown',
+  };
+
   #src: string = '';
   #engine: object = {};
 

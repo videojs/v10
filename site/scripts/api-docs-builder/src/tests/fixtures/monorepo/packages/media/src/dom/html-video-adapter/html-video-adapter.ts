@@ -6,7 +6,7 @@
  * video-only native-property extraction (videoWidth) and a non-native helper
  * (isFullscreen) that must be filtered out of nativeProperties.
  */
-import { HTMLMediaAdapter } from '../html-media-adapter';
+import { HTMLMediaAdapter, mediaContentAttributes } from '../html-media-adapter';
 
 export class HTMLVideoAdapter extends HTMLMediaAdapter {
   static readonly host = 'video';
@@ -25,3 +25,12 @@ export class HTMLVideoAdapter extends HTMLMediaAdapter {
     return false;
   }
 }
+
+/** The content attributes a `<video>` accepts: the media ones plus its own. */
+export const videoContentAttributes = {
+  ...mediaContentAttributes,
+  autoPictureInPicture: { type: Boolean },
+  disablePictureInPicture: { type: Boolean },
+  playsInline: { type: Boolean },
+  poster: { type: String },
+};
