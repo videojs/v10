@@ -60,9 +60,9 @@ function getCommonTemplateHTML(tag: string) {
 }
 
 // Stub — the builder parses the AST, it doesn't run the code.
-// Mirrors the real CustomMediaElement factory signature: the target is the host's static `host`.
-export function CustomMediaElement(Host: any) {
-  const tag: string = Host.host;
+// Mirrors the real CustomMediaElement factory signature: the target is the adapter's static `host`.
+export function CustomMediaElement(Adapter: { readonly host: 'video' | 'audio' | 'iframe' }) {
+  const tag = Adapter.host;
 
   class CustomMedia {
     static template = tag === 'video' ? getVideoTemplateHTML : getCommonTemplateHTML(tag);

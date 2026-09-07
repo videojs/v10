@@ -7,8 +7,8 @@
 import { MixinHost } from '../../../../media/src/dom/mixin';
 
 // Stub — the builder parses the AST, it doesn't run the code.
-function createMediaElement(host: any, options?: { template?: (attrs: Record<string, string>) => string }) {
-  return host;
+function createMediaElement(adapter: any, options?: { template?: (attrs: Record<string, string>) => string }) {
+  return adapter;
 }
 
 export class MixinVideo extends createMediaElement(MixinHost, { template: () => '<video></video>' }) {}

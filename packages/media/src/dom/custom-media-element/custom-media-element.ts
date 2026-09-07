@@ -151,10 +151,8 @@ type CustomMediaConstructor<T extends PlaybackAdapterConstructor> = Constructor<
  * Build a custom element around an adapter. The element renders the adapter's `host` element in its shadow root,
  * attaches the adapter to it, and forwards the adapter's properties, events, and content attributes.
  */
-export function CustomMediaElement<T extends PlaybackAdapterConstructor>(
-  PlaybackAdapter: T
-): CustomMediaConstructor<T> {
-  const tag = PlaybackAdapter.host;
+export function CustomMediaElement<T extends PlaybackAdapterConstructor>(Adapter: T): CustomMediaConstructor<T> {
+  const tag = Adapter.host;
   // Embed hosts (iframe) drive an external player rather than a native media
   // element, so attribute changes are not mirrored onto the iframe target and
   // there is no `<track>` / `<source>` syncing.
@@ -199,17 +197,13 @@ export function CustomMediaElement<T extends PlaybackAdapterConstructor>(
 
       const properties = ctor.properties as PropertyConfigs;
 
-      for (
-        let proto = PlaybackAdapter.prototype;
-        proto && proto !== Object.prototype;
-        proto = Object.getPrototypeOf(proto)
-      ) {
+      for (let proto = Adapter.prototype; proto && proto !== Object.prototype; proto = Object.getPrototypeOf(proto)) {
         for (const prop of Object.getOwnPropertyNames(proto)) {
           if (prop in CustomMedia.prototype || excludedProperties.includes(prop)) continue;
 
           // An alias keeps reflecting its attribute through the `properties`
           // loop below rather than reaching the adapter.
-          if (isAttributeAlias(prop, properties, PlaybackAdapter.prototype)) continue;
+          if (isAttributeAlias(prop, properties, Adapter.prototype)) continue;
 
           const descriptor = Object.getOwnPropertyDescriptor(proto, prop);
           if (!descriptor) continue;
@@ -299,7 +293,7 @@ export function CustomMediaElement<T extends PlaybackAdapterConstructor>(
         this.shadowRoot!.innerHTML = ctor.template(attrs);
       }
 
-      this.#mediaHost = new PlaybackAdapter();
+      this.#mediaHost = new Adapter();
       this.#attachToTarget();
 
       this.#childObserver = new MutationObserver(this.#syncMediaChildAttribute.bind(this));
